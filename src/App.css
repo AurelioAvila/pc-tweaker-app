@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+:root,
+[data-theme="default"] {
+  --app-bg-a: #1e293b;
+  --app-bg-b: #0b1120;
+  --app-accent: #6366f1;
+  --app-accent2: #38bdf8;
+  --app-font: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Palette lifted from getcertsprint.com's own CSS variables. */
+[data-theme="certsprint"] {
+  --app-bg-a: #1b1230;
+  --app-bg-b: #10091f;
+  --app-accent: #ff5c8a;
+  --app-accent2: #35e0c0;
+  --app-font: Sora, Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;

@@ -3,6 +3,15 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
+/// A registry value of a supported type. Some Windows settings (mouse
+/// acceleration, menu delays, ...) are stored as REG_SZ strings rather than
+/// DWORDs, so tweaks need to preserve whichever type they found.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum RegValue {
+    Dword(u32),
+    Str(String),
+}
+
 /// A snapshot of a single registry value, taken right before a tweak is applied.
 /// `None` means the value did not exist beforehand, so rollback must delete it.
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -10,12 +19,25 @@ pub struct RegistrySnapshot {
     pub hive: String,
     pub path: String,
     pub name: String,
-    pub original_value: Option<u32>,
+    pub original_value: Option<RegValue>,
+}
+
+/// Any of the reversible actions a tweak can take. Cleanup-style actions
+/// (deleting/trashing files) are intentionally not represented here: they are
+/// one-shot and irreversible by nature, and are surfaced to the user as such.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(tag = "kind")]
+pub enum SnapshotEntry {
+    Registry(RegistrySnapshot),
+    PowerScheme { previous_guid: String },
+    Dns { interface: String, previous_servers: Vec<String> },
+    PowerSetting { ac_index: String, dc_index: String },
+    Composite { entries: Vec<SnapshotEntry> },
 }
 
 #[derive(Serialize, Deserialize, Default)]
 struct Store {
-    snapshots: HashMap<String, RegistrySnapshot>,
+    snapshots: HashMap<String, SnapshotEntry>,
 }
 
 pub struct RollbackStore {
@@ -48,18 +70,18 @@ impl RollbackStore {
         self.load().snapshots.contains_key(tweak_id)
     }
 
-    pub fn save_snapshot(&self, tweak_id: &str, snapshot: RegistrySnapshot) -> std::io::Result<()> {
+    pub fn save_entry(&self, tweak_id: &str, entry: SnapshotEntry) -> std::io::Result<()> {
         let mut store = self.load();
-        store.snapshots.insert(tweak_id.to_string(), snapshot);
+        store.snapshots.insert(tweak_id.to_string(), entry);
         self.save(&store)
     }
 
-    pub fn take_snapshot(&self, tweak_id: &str) -> Option<RegistrySnapshot> {
+    pub fn take_entry(&self, tweak_id: &str) -> Option<SnapshotEntry> {
         let mut store = self.load();
-        let snapshot = store.snapshots.remove(tweak_id);
-        if snapshot.is_some() {
+        let entry = store.snapshots.remove(tweak_id);
+        if entry.is_some() {
             let _ = self.save(&store);
         }
-        snapshot
+        entry
     }
 }

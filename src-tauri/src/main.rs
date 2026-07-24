@@ -5,7 +5,11 @@ fn main() {
     #[cfg(windows)]
     {
         let args: Vec<String> = std::env::args().collect();
-        if args.len() == 3 && (args[1] == "--elevated-apply" || args[1] == "--elevated-rollback") {
+        if args.len() == 3
+            && (args[1] == "--elevated-apply"
+                || args[1] == "--elevated-rollback"
+                || args[1] == "--elevated-cleanup")
+        {
             // Relaunched via UAC to perform exactly one privileged action headlessly.
             tauri_app_lib::run_elevated_headless(&args[1], &args[2]);
         }

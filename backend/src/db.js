@@ -4,7 +4,7 @@ const connectionString = process.env.DATABASE_URL;
 
 // The app boots even without a database configured, so `npm start` never
 // crashes just because Railway hasn't provisioned Postgres yet — routes that
-// need it fail with a clear 503 instead (see requireDb in routes).
+// need it check `isConfigured` themselves and fail with a clear 503 instead.
 const pool = connectionString
   ? new Pool({
       connectionString,

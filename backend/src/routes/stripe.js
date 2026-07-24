@@ -60,7 +60,13 @@ async function webhookHandler(req, res) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     const userId = session.client_reference_id;
-    if (userId && isConfigured) {
+    // "completed" fires as soon as checkout finishes, but for delayed payment
+    // methods (e.g. bank transfers) the money may not have arrived yet — only
+    // grant Pro once Stripe confirms payment_status is actually "paid".
+    // Delayed methods instead settle later via checkout.session.async_payment_succeeded,
+    // which isn't handled here yet (fine for now since card-only checkout always
+    // reports "paid" synchronously, but worth adding if other payment methods are enabled).
+    if (userId && isConfigured && session.payment_status === "paid") {
       try {
         await pool.query("UPDATE users SET is_pro = TRUE WHERE id = $1", [userId]);
       } catch (err) {

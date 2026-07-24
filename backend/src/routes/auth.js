@@ -35,6 +35,12 @@ router.post("/register", async (req, res) => {
     const token = signToken(result.rows[0].id);
     res.status(201).json({ token });
   } catch (err) {
+    // Two concurrent registrations for the same email both pass the SELECT
+    // check above before either INSERTs; the second hits the unique
+    // constraint here instead. Report it the same way as the normal case.
+    if (err.code === "23505") {
+      return res.status(409).json({ error: "an account with this email already exists" });
+    }
     console.error("register failed:", err);
     res.status(500).json({ error: "registration failed" });
   }

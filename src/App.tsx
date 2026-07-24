@@ -6,16 +6,12 @@ import { STRINGS, LANGUAGES, Lang, Strings, detectInitialLang, format } from "./
 import { THEMES, ThemeName, detectInitialTheme } from "./theme";
 import "./App.css";
 
-// Flipped to true once a real license/payment check lands. Every Pro
-// feature below is fully implemented already — this flag is the only gate.
-const IS_PRO_UNLOCKED = false;
-
 // Set at build time once the backend (backend/, deployed to Railway per the
 // project brief) is live: `VITE_API_BASE_URL=https://your-app.up.railway.app npm run build`.
 // Until then, auth/checkout calls fail honestly instead of faking success.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-type AuthState = { status: "anonymous" } | { status: "authenticated"; email: string };
+type AuthState = { status: "anonymous" } | { status: "authenticated"; email: string; isPro: boolean };
 
 type Category = "performance" | "privacy" | "ui" | "manutenzione" | "gaming";
 
@@ -587,6 +583,7 @@ function AccountMenu({
   onUpgrade: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const isPro = auth.status === "authenticated" && auth.isPro;
 
   return (
     <div className="relative">
@@ -611,9 +608,9 @@ function AccountMenu({
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{s.menu.plan}</p>
               <div className="mt-1 flex items-center justify-between">
                 <span className="text-sm font-semibold text-slate-100">
-                  {IS_PRO_UNLOCKED ? s.menu.planPro : s.menu.planFree}
+                  {isPro ? s.menu.planPro : s.menu.planFree}
                 </span>
-                {!IS_PRO_UNLOCKED && (
+                {!isPro && (
                   <button
                     onClick={() => {
                       setOpen(false);
@@ -699,8 +696,43 @@ function App() {
   const [auth, setAuth] = useState<AuthState>(() => {
     const email = localStorage.getItem("pc-tweaker-email");
     const token = localStorage.getItem("pc-tweaker-token");
-    return email && token ? { status: "authenticated", email } : { status: "anonymous" };
+    // isPro starts false and is corrected by refreshAccount() below as soon
+    // as it resolves — avoids briefly trusting a stale/forged local value.
+    return email && token ? { status: "authenticated", email, isPro: false } : { status: "anonymous" };
   });
+
+  const isProUnlocked = auth.status === "authenticated" && auth.isPro;
+
+  // Re-reads Pro status from the backend. Called on mount (if already logged
+  // in), right after login/register, and when the window regains focus —
+  // that last one is what picks up a Stripe payment completed in the system
+  // browser, since there's no deep link back into the app yet.
+  async function refreshAccount() {
+    if (!API_BASE_URL) return;
+    const token = localStorage.getItem("pc-tweaker-token");
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/account`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { email: string; isPro: boolean };
+      setAuth({ status: "authenticated", email: data.email, isPro: data.isPro });
+    } catch {
+      // Network hiccup: keep whatever Pro status we already had rather than
+      // dropping the user back to Free on a transient failure.
+    }
+  }
+
+  useEffect(() => {
+    refreshAccount();
+    function onFocus() {
+      refreshAccount();
+    }
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function logout() {
     localStorage.removeItem("pc-tweaker-email");
@@ -724,7 +756,8 @@ function App() {
     const data = (await res.json()) as { token: string };
     localStorage.setItem("pc-tweaker-token", data.token);
     localStorage.setItem("pc-tweaker-email", email);
-    setAuth({ status: "authenticated", email });
+    setAuth({ status: "authenticated", email, isPro: false });
+    await refreshAccount();
   }
 
   // Opens real Stripe Checkout in the system browser (Checkout can't run
@@ -797,7 +830,7 @@ function App() {
 
   async function toggle(tweak: TweakInfo) {
     const text = textFor(s.tweaks, tweak.id, tweak.name, tweak.description);
-    if (tweak.requires_pro && !IS_PRO_UNLOCKED) {
+    if (tweak.requires_pro && !isProUnlocked) {
       setPaywallFeature(text.name);
       return;
     }
@@ -955,7 +988,7 @@ function App() {
                 info={c}
                 text={textFor(s.cleanup, c.id, c.name, c.description)}
                 busy={busyId === c.id}
-                isPro={IS_PRO_UNLOCKED}
+                isPro={isProUnlocked}
                 onRequirePro={() => setPaywallFeature(textFor(s.cleanup, c.id, c.name, c.description).name)}
                 onRun={(info) => setConfirmCleanup(info)}
               />
@@ -964,7 +997,7 @@ function App() {
           {showCleanup && (
             <DuplicateFinder
               s={s}
-              isPro={IS_PRO_UNLOCKED}
+              isPro={isProUnlocked}
               onRequirePro={() => setPaywallFeature(s.duplicateFinder.title)}
               onToast={pushToast}
             />

@@ -715,6 +715,12 @@ function App() {
       const res = await fetch(`${API_BASE_URL}/api/account`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 401) {
+        // Token expired or was invalidated server-side: reflect that in the
+        // UI instead of silently keeping a stale "logged in" state forever.
+        logout();
+        return;
+      }
       if (!res.ok) return;
       const data = (await res.json()) as { email: string; isPro: boolean };
       setAuth({ status: "authenticated", email: data.email, isPro: data.isPro });

@@ -10,6 +10,13 @@ const accountRoutes = require("./routes/account");
 const { router: stripeRoutes, webhookHandler } = require("./routes/stripe");
 
 const app = express();
+
+// Railway (like Heroku) puts the app behind a reverse proxy that sets
+// X-Forwarded-For. Without this, express-rate-limit v7 throws at request
+// time instead of silently misbehaving — which would otherwise take down
+// /api/auth/register and /api/auth/login as soon as this is deployed there.
+app.set("trust proxy", 1);
+
 app.use(helmet());
 
 const allowedOrigins = (process.env.CORS_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);

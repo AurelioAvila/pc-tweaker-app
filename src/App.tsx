@@ -11,7 +11,9 @@ import "./App.css";
 // Until then, auth/checkout calls fail honestly instead of faking success.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-type AuthState = { status: "anonymous" } | { status: "authenticated"; email: string; isPro: boolean };
+type AuthState =
+  | { status: "anonymous" }
+  | { status: "authenticated"; email: string; isPro: boolean; emailVerified: boolean };
 
 type Category = "performance" | "privacy" | "ui" | "manutenzione" | "gaming";
 
@@ -470,16 +472,21 @@ function AuthSection({
   auth,
   onAuthenticate,
   onLogout,
+  onResendVerification,
+  onForgotPassword,
 }: {
   s: Strings;
   auth: AuthState;
   onAuthenticate: (mode: "login" | "register", email: string, password: string) => Promise<void>;
   onLogout: () => void;
+  onResendVerification: () => Promise<void>;
+  onForgotPassword: (email: string) => Promise<void>;
 }) {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
 
   if (auth.status === "authenticated") {
@@ -487,12 +494,88 @@ function AuthSection({
       <div className="border-b border-white/10 p-4">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{s.menu.account}</p>
         <p className="mb-2 truncate text-sm text-slate-300">{format(s.auth.loggedInAs, { email: auth.email })}</p>
+        {!auth.emailVerified && (
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-amber-400/10 px-2 py-1.5">
+            <span className="text-xs text-amber-300">{s.auth.emailNotVerified}</span>
+            <button
+              onClick={() => {
+                setError(null);
+                setInfo(null);
+                onResendVerification()
+                  .then(() => setInfo(s.auth.verificationSent))
+                  .catch((err) => setError(String(err instanceof Error ? err.message : err)));
+              }}
+              className="shrink-0 text-xs font-semibold text-amber-300 underline hover:text-amber-200"
+            >
+              {s.auth.resendVerification}
+            </button>
+          </div>
+        )}
+        {info && <p className="mb-2 text-xs text-emerald-400">{info}</p>}
+        {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
         <button
           onClick={onLogout}
           className="w-full rounded-lg bg-white/10 px-3 py-1.5 text-sm font-medium text-slate-200 hover:bg-white/15"
         >
           {s.auth.logout}
         </button>
+      </div>
+    );
+  }
+
+  if (mode === "forgot") {
+    return (
+      <div className="border-b border-white/10 p-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{s.menu.account}</p>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setError(null);
+            setInfo(null);
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+              setError(s.auth.emailInvalid);
+              return;
+            }
+            setWorking(true);
+            try {
+              await onForgotPassword(email);
+              setInfo(s.auth.forgotPasswordSent);
+            } catch (err) {
+              setError(String(err instanceof Error ? err.message : err));
+            } finally {
+              setWorking(false);
+            }
+          }}
+          className="flex flex-col gap-2"
+        >
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={s.auth.email}
+            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[var(--app-accent)]"
+          />
+          {info && <p className="text-xs text-emerald-400">{info}</p>}
+          {error && <p className="text-xs text-red-400">{error}</p>}
+          <button
+            type="submit"
+            disabled={working}
+            className="rounded-lg bg-[var(--app-accent)] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {working ? s.auth.working : s.auth.forgotPasswordButton}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMode("login");
+              setError(null);
+              setInfo(null);
+            }}
+            className="text-xs text-slate-400 hover:text-slate-200"
+          >
+            {s.auth.backToLogin}
+          </button>
+        </form>
       </div>
     );
   }
@@ -512,7 +595,9 @@ function AuthSection({
 
     setWorking(true);
     try {
-      await onAuthenticate(mode, email, password);
+      // Safe: the "forgot" mode returns its own JSX earlier above, so this
+      // code path only ever runs for "login" | "register".
+      await onAuthenticate(mode as "login" | "register", email, password);
     } catch (err) {
       setError(String(err instanceof Error ? err.message : err));
     } finally {
@@ -546,6 +631,18 @@ function AuthSection({
         >
           {working ? s.auth.working : mode === "login" ? s.auth.loginButton : s.auth.registerButton}
         </button>
+        {mode === "login" && (
+          <button
+            type="button"
+            onClick={() => {
+              setMode("forgot");
+              setError(null);
+            }}
+            className="text-xs text-slate-400 hover:text-slate-200"
+          >
+            {s.auth.forgotPasswordLink}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => {
@@ -570,6 +667,8 @@ function AccountMenu({
   auth,
   onAuthenticate,
   onLogout,
+  onResendVerification,
+  onForgotPassword,
   onUpgrade,
 }: {
   s: Strings;
@@ -580,6 +679,8 @@ function AccountMenu({
   auth: AuthState;
   onAuthenticate: (mode: "login" | "register", email: string, password: string) => Promise<void>;
   onLogout: () => void;
+  onResendVerification: () => Promise<void>;
+  onForgotPassword: (email: string) => Promise<void>;
   onUpgrade: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -602,7 +703,14 @@ function AccountMenu({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="animate-card absolute right-0 z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
-            <AuthSection s={s} auth={auth} onAuthenticate={onAuthenticate} onLogout={onLogout} />
+            <AuthSection
+              s={s}
+              auth={auth}
+              onAuthenticate={onAuthenticate}
+              onLogout={onLogout}
+              onResendVerification={onResendVerification}
+              onForgotPassword={onForgotPassword}
+            />
 
             <div className="border-b border-white/10 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{s.menu.plan}</p>
@@ -696,9 +804,12 @@ function App() {
   const [auth, setAuth] = useState<AuthState>(() => {
     const email = localStorage.getItem("pc-tweaker-email");
     const token = localStorage.getItem("pc-tweaker-token");
-    // isPro starts false and is corrected by refreshAccount() below as soon
-    // as it resolves — avoids briefly trusting a stale/forged local value.
-    return email && token ? { status: "authenticated", email, isPro: false } : { status: "anonymous" };
+    // isPro/emailVerified start false and are corrected by refreshAccount()
+    // below as soon as it resolves — avoids briefly trusting a stale/forged
+    // local value.
+    return email && token
+      ? { status: "authenticated", email, isPro: false, emailVerified: false }
+      : { status: "anonymous" };
   });
 
   const isProUnlocked = auth.status === "authenticated" && auth.isPro;
@@ -722,8 +833,8 @@ function App() {
         return;
       }
       if (!res.ok) return;
-      const data = (await res.json()) as { email: string; isPro: boolean };
-      setAuth({ status: "authenticated", email: data.email, isPro: data.isPro });
+      const data = (await res.json()) as { email: string; isPro: boolean; emailVerified: boolean };
+      setAuth({ status: "authenticated", email: data.email, isPro: data.isPro, emailVerified: data.emailVerified });
     } catch {
       // Network hiccup: keep whatever Pro status we already had rather than
       // dropping the user back to Free on a transient failure.
@@ -762,8 +873,35 @@ function App() {
     const data = (await res.json()) as { token: string };
     localStorage.setItem("pc-tweaker-token", data.token);
     localStorage.setItem("pc-tweaker-email", email);
-    setAuth({ status: "authenticated", email, isPro: false });
+    setAuth({ status: "authenticated", email, isPro: false, emailVerified: false });
     await refreshAccount();
+  }
+
+  async function resendVerification() {
+    if (!API_BASE_URL) throw new Error(s.auth.backendNotConfigured);
+    const token = localStorage.getItem("pc-tweaker-token");
+    if (!token) throw new Error(s.auth.loginRequiredForCheckout);
+    const res = await fetch(`${API_BASE_URL}/api/auth/resend-verification`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}) as { error?: string });
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
+  }
+
+  async function forgotPassword(email: string) {
+    if (!API_BASE_URL) throw new Error(s.auth.backendNotConfigured);
+    const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}) as { error?: string });
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
   }
 
   // Opens real Stripe Checkout in the system browser (Checkout can't run
@@ -919,6 +1057,8 @@ function App() {
               auth={auth}
               onAuthenticate={authenticate}
               onLogout={logout}
+              onResendVerification={resendVerification}
+              onForgotPassword={forgotPassword}
               onUpgrade={() => setPaywallFeature(s.menu.planPro)}
             />
           </div>

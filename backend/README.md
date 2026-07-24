@@ -7,14 +7,25 @@ instead of crashing, so you can deploy incrementally.
 
 ## Endpoints
 
-| Method | Path                  | Auth | Notes                                      |
-|--------|-----------------------|------|---------------------------------------------|
-| GET    | `/health`             | —    | `{ ok, databaseConfigured }`                |
-| POST   | `/api/auth/register`  | —    | `{ email, password }` → `{ token }`         |
-| POST   | `/api/auth/login`     | —    | `{ email, password }` → `{ token }`         |
-| GET    | `/api/account`        | Bearer | `{ email, isPro }`                        |
-| POST   | `/api/checkout`       | Bearer | `{ }` → `{ url }` (Stripe Checkout URL)   |
-| POST   | `/api/stripe-webhook` | Stripe signature | called by Stripe, not by the app |
+| Method | Path                            | Auth   | Notes                                              |
+|--------|----------------------------------|--------|-----------------------------------------------------|
+| GET    | `/health`                        | —      | `{ ok, databaseConfigured }`                        |
+| POST   | `/api/auth/register`             | —      | `{ email, password }` → `{ token }`, sends verification email |
+| POST   | `/api/auth/login`                | —      | `{ email, password }` → `{ token }`                 |
+| POST   | `/api/auth/logout-all`           | Bearer | Invalidates every token issued before now           |
+| GET    | `/api/auth/verify-email`         | —      | `?token=...` from the verification email; HTML page |
+| POST   | `/api/auth/resend-verification`  | Bearer | Resends the verification email                     |
+| POST   | `/api/auth/forgot-password`      | —      | `{ email }`, always `200` (doesn't leak account existence) |
+| GET    | `/api/auth/reset-password`       | —      | `?token=...` from the reset email; HTML form        |
+| POST   | `/api/auth/reset-password`       | —      | `{ token, newPassword }`, invalidates old sessions  |
+| GET    | `/api/account`                   | Bearer | `{ email, isPro, emailVerified }`                   |
+| POST   | `/api/checkout`                  | Bearer | `{ }` → `{ url }` (Stripe Checkout URL)             |
+| POST   | `/api/stripe-webhook`            | Stripe signature | called by Stripe, not by the app         |
+
+Sessions use a `token_version` column: bumping it (on password reset or
+`logout-all`) invalidates every previously issued JWT immediately, even
+though JWTs are otherwise stateless and normally can't be revoked before
+they expire.
 
 ## Local development
 
@@ -29,6 +40,24 @@ Without `DATABASE_URL` set, auth/account endpoints correctly respond `503`
 instead of crashing — useful for checking the server boots and routes are
 wired before you provision a database.
 
+Without `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` set, verification and
+password-reset emails aren't sent — the email content (including the link)
+is logged to the server console instead, so you can still test the whole
+flow locally without real SMTP credentials.
+
+### Testing against a real (in-memory) database without installing Postgres
+
+`DATABASE_URL=pgmem` runs the server against [pg-mem](https://github.com/oguimbal/pg-mem),
+an in-memory Postgres-compatible engine — useful for exercising the actual
+SQL (not just the "no database" error paths) without installing a real
+database:
+
+```bash
+DATABASE_URL=pgmem JWT_SECRET=test-secret npm start
+```
+
+Never use `pgmem` outside of local testing — data doesn't persist across restarts.
+
 ## Deploying to Railway
 
 1. **Create a new Railway project**, then "Deploy from GitHub repo" pointing
@@ -38,9 +67,11 @@ wired before you provision a database.
    set it by hand.
 3. **Set the remaining environment variables** on the service (Railway →
    Variables): `JWT_SECRET` (generate with `openssl rand -hex 32`),
-   `CORS_ORIGINS`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
-   `STRIPE_PRICE_ID`, `CHECKOUT_SUCCESS_URL`, `CHECKOUT_CANCEL_URL`. See
-   `.env.example` for what each one is.
+   `APP_URL` (your Railway URL, needed for email links), `CORS_ORIGINS`,
+   `SMTP_*`/`MAIL_FROM` (for real verification/reset emails — without these,
+   the server logs the email content instead of sending it), `STRIPE_SECRET_KEY`,
+   `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`, `CHECKOUT_SUCCESS_URL`,
+   `CHECKOUT_CANCEL_URL`. See `.env.example` for what each one is.
 4. Railway detects `npm start` automatically from `package.json`. On first
    boot the server creates the `users` table itself (`initSchema()` in
    `src/db.js`) — no separate migration step needed.
@@ -72,10 +103,12 @@ wired before you provision a database.
 
 ## What's intentionally not here
 
-- No email verification / password reset flow yet — add before shipping to
-  real users.
-- No refresh tokens — the JWT is long-lived (30 days) and there's no
-  revocation list. Fine for a v1, worth hardening later.
+- Registration doesn't require email verification before logging in (it's
+  tracked and nudged via the account menu, not enforced) — flip that to
+  blocking in `routes/auth.js` if you want it mandatory.
+- Rate limiting is per-IP (`express-rate-limit` default `req.ip` keying) —
+  fine behind Railway's single proxy (`trust proxy` is set for that), but
+  reconsider if you ever put another proxy/CDN in front of this one.
 - `is_pro` is a single boolean, not tied to a specific purchase/subscription
   record — sufficient for a one-time lifetime unlock, not for anything more
   complex (seats, renewals, refund tracking).

@@ -93,6 +93,13 @@ export interface Strings {
     emailInvalid: string;
     passwordTooShort: string;
     loginRequiredForCheckout: string;
+    forgotPasswordLink: string;
+    forgotPasswordButton: string;
+    forgotPasswordSent: string;
+    backToLogin: string;
+    emailNotVerified: string;
+    resendVerification: string;
+    verificationSent: string;
   };
   tweaks: Record<string, TweakText>;
   cleanup: Record<string, TweakText>;
@@ -185,6 +192,13 @@ const it: Strings = {
     emailInvalid: "Inserisci un'email valida.",
     passwordTooShort: "La password deve avere almeno 8 caratteri.",
     loginRequiredForCheckout: "Accedi o registrati prima di sbloccare Pro.",
+    forgotPasswordLink: "Password dimenticata?",
+    forgotPasswordButton: "Invia link di ripristino",
+    forgotPasswordSent: "Se l'email è registrata, riceverai un link per reimpostare la password.",
+    backToLogin: "Torna al login",
+    emailNotVerified: "Email non verificata",
+    resendVerification: "Invia di nuovo",
+    verificationSent: "Email di verifica inviata.",
   },
   tweaks: {
     dark_mode: {
@@ -342,6 +356,13 @@ const en: Strings = {
     emailInvalid: "Enter a valid email address.",
     passwordTooShort: "Password must be at least 8 characters.",
     loginRequiredForCheckout: "Log in or sign up before unlocking Pro.",
+    forgotPasswordLink: "Forgot password?",
+    forgotPasswordButton: "Send reset link",
+    forgotPasswordSent: "If that email is registered, you'll receive a password reset link.",
+    backToLogin: "Back to login",
+    emailNotVerified: "Email not verified",
+    resendVerification: "Resend",
+    verificationSent: "Verification email sent.",
   },
   tweaks: {
     dark_mode: {
@@ -495,6 +516,13 @@ const fr: Strings = {
     emailInvalid: "Saisissez une adresse e-mail valide.",
     passwordTooShort: "Le mot de passe doit contenir au moins 8 caractères.",
     loginRequiredForCheckout: "Connectez-vous ou inscrivez-vous avant de débloquer Pro.",
+    forgotPasswordLink: "Mot de passe oublié ?",
+    forgotPasswordButton: "Envoyer le lien de réinitialisation",
+    forgotPasswordSent: "Si cet e-mail est enregistré, vous recevrez un lien de réinitialisation.",
+    backToLogin: "Retour à la connexion",
+    emailNotVerified: "E-mail non vérifié",
+    resendVerification: "Renvoyer",
+    verificationSent: "E-mail de vérification envoyé.",
   },
   tweaks: {
     dark_mode: {
@@ -648,6 +676,13 @@ const es: Strings = {
     emailInvalid: "Introduce un correo electrónico válido.",
     passwordTooShort: "La contraseña debe tener al menos 8 caracteres.",
     loginRequiredForCheckout: "Inicia sesión o regístrate antes de desbloquear Pro.",
+    forgotPasswordLink: "¿Olvidaste la contraseña?",
+    forgotPasswordButton: "Enviar enlace de restablecimiento",
+    forgotPasswordSent: "Si ese correo está registrado, recibirás un enlace para restablecer la contraseña.",
+    backToLogin: "Volver al inicio de sesión",
+    emailNotVerified: "Correo no verificado",
+    resendVerification: "Reenviar",
+    verificationSent: "Correo de verificación enviado.",
   },
   tweaks: {
     dark_mode: {
@@ -801,6 +836,13 @@ const de: Strings = {
     emailInvalid: "Bitte eine gültige E-Mail-Adresse eingeben.",
     passwordTooShort: "Das Passwort muss mindestens 8 Zeichen lang sein.",
     loginRequiredForCheckout: "Vor dem Freischalten von Pro anmelden oder registrieren.",
+    forgotPasswordLink: "Passwort vergessen?",
+    forgotPasswordButton: "Link zum Zurücksetzen senden",
+    forgotPasswordSent: "Falls diese E-Mail registriert ist, erhältst du einen Link zum Zurücksetzen des Passworts.",
+    backToLogin: "Zurück zur Anmeldung",
+    emailNotVerified: "E-Mail nicht bestätigt",
+    resendVerification: "Erneut senden",
+    verificationSent: "Bestätigungs-E-Mail gesendet.",
   },
   tweaks: {
     dark_mode: {

@@ -1,83 +1,81 @@
 # PC Tweaker
 
-Un'app desktop per Windows (e in futuro macOS) che applica tweak di sistema —
-performance, privacy, gaming, manutenzione — con **rollback automatico**:
-ogni modifica salva il valore originale prima di essere applicata, così puoi
-sempre tornare indietro con un click.
+A desktop app for Windows (macOS planned) that applies system tweaks —
+performance, privacy, gaming, maintenance — with **automatic rollback**:
+every change saves the original value before it's applied, so you can always
+revert it with one click.
 
-> Stato: prototipo funzionante, in sviluppo attivo. Non ancora distribuito
-> pubblicamente — vedi [Download](#download) più sotto.
+> Status: working prototype, actively developed. Not publicly distributed
+> yet — see [Download](#download) below.
 
-## Cosa fa
+## What it does
 
-Ogni tweak è reale (nessun placeholder finto): legge/scrive il registro di
-Windows, il piano di alimentazione, i DNS di rete o pulisce file — sempre con
-uno snapshot precedente salvato per il ripristino.
+Every tweak is real (no fake placeholders): it reads/writes the Windows
+registry, the power plan, network DNS, or cleans up files — always with a
+snapshot of the previous state saved for rollback.
 
-- **Performance** — priorità processore, piano "Prestazioni elevate",
-  disattivazione Xbox Game Bar/Game DVR
-- **Gaming** — Pianificazione GPU con accelerazione hardware (HAGS),
-  riduzione del ritardo di input (disattiva l'accelerazione del puntatore),
-  Turbo Boost del processore, preset "Turbo Gaming" che li combina tutti
-- **Privacy** — disattivazione ID pubblicitario, tracciamento posizione,
-  ricerca Bing nel menu Start, riduzione telemetria, DNS privati (Cloudflare)
-- **Manutenzione** — pulizia file temporanei e cache Windows Update (spostati
-  nel Cestino, mai cancellati in modo definitivo), ricerca file duplicati per
-  hash con revisione manuale prima dell'eliminazione
-- **UI** — modalità scura, mostra file nascosti
+- **Performance** — CPU priority, "High performance" power plan, disabling
+  Xbox Game Bar/Game DVR
+- **Gaming** — Hardware-accelerated GPU Scheduling (HAGS), reduced input lag
+  (disables pointer acceleration), CPU Turbo Boost, a "Turbo Gaming" preset
+  that bundles all of the above
+- **Privacy** — disabling the advertising ID, location tracking, Bing search
+  in the Start menu, reduced telemetry, private DNS (Cloudflare)
+- **Maintenance** — cleaning temp files and the Windows Update cache (moved
+  to the Recycle Bin, never permanently deleted), duplicate file finder by
+  content hash with manual review before deletion
+- **UI** — dark mode, show hidden files
 
-Ogni tweak che richiede privilegi amministrativi chiede un consenso UAC
-esplicito **solo per quell'azione** — l'app stessa gira sempre senza
-privilegi elevati.
+Any tweak that needs administrator rights asks for an explicit UAC prompt
+**only for that action** — the app itself always runs unprivileged.
 
-## Multi-lingua e temi
+## Multi-language and themes
 
-L'interfaccia è disponibile in **italiano, inglese, francese, spagnolo e
-tedesco**, con più di 10 temi di colore selezionabili dal menu account.
+The interface is available in **English, Italian, French, Spanish, and
+German**, with 10+ color themes selectable from the account menu.
 
-## Modello Free / Pro
+## Free / Pro model
 
-Tweak singoli gratuiti, tweak avanzati e applicazione in batch riservati a
-Pro — pagamento unico, nessun abbonamento (via Stripe Checkout). Account con
-email e password per sincronizzare lo stato Pro tra installazioni.
+Single tweaks are free; advanced tweaks and batch presets are Pro — a
+one-time payment, no subscription (via Stripe Checkout). Email/password
+accounts sync Pro status across installs.
 
 ## Download
 
-**[⬇ Scarica l'ultima release (v0.1.0)](../../releases/latest)** — installer
-`.msi` o `.exe` per Windows x64.
+**[⬇ Download the latest release (v0.1.0)](../../releases/latest)** —
+`.msi` or `.exe` installer for Windows x64.
 
-Il repository è **privato**: il link funziona solo se hai accesso a questo
-repo (per ora solo tu). L'installer non è ancora firmato digitalmente
-(Authenticode) — Windows SmartScreen mostrerà un avviso ("Windows ha
-protetto il tuo PC") alla prima esecuzione: è normale per un eseguibile non
-firmato, clicca "Ulteriori informazioni" → "Esegui comunque".
+This repository is **private**: the link only works if you have access to
+it (currently just you). The installer isn't code-signed yet (Authenticode)
+— Windows SmartScreen will show a warning ("Windows protected your PC") on
+first run: that's expected for an unsigned executable, click "More info" →
+"Run anyway".
 
-Quando sarai pronto per una distribuzione pubblica reale: rendi il
-repository pubblico, firma il pacchetto con un certificato Authenticode (per
-far sparire l'avviso SmartScreen), ed eventualmente pubblica il link di
-download anche sul tuo sito — posso occuparmi sia della pipeline di build
-automatica ad ogni release che della pagina di download quando vuoi
-procedere.
+When you're ready for real public distribution: make the repository public,
+sign the package with an Authenticode certificate (to remove the SmartScreen
+warning), and optionally publish the download link on your own site too — I
+can set up both an automated build pipeline on every release and a download
+page whenever you want to move forward.
 
-## Sviluppo
+## Development
 
 ```bash
 npm install
-npm run tauri dev     # avvia l'app in modalità sviluppo
-npm run tauri build   # produce l'installer .msi in src-tauri/target/release/bundle/
+npm run tauri dev     # run the app in development mode
+npm run tauri build   # produce the .msi/.exe installer in src-tauri/target/release/bundle/
 ```
 
-Richiede Rust (tramite [rustup](https://rustup.rs)) e, su Windows, i
-[Build Tools per Visual Studio](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
-con il workload "Sviluppo di applicazioni desktop con C++".
+Requires Rust (via [rustup](https://rustup.rs)) and, on Windows, the
+[Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+with the "Desktop development with C++" workload.
 
 ## Backend
 
-Il backend Node.js/Express per account e pagamenti Stripe è in
-[`backend/`](backend/) — vedi [`backend/README.md`](backend/README.md) per la
-guida al deployment su Railway e alla configurazione di Stripe.
+The Node.js/Express backend for accounts and Stripe payments lives in
+[`backend/`](backend/) — see [`backend/README.md`](backend/README.md) for
+Railway deployment and Stripe setup instructions.
 
-## Stack tecnico
+## Tech stack
 
 [Tauri 2](https://tauri.app) (Rust) · React + TypeScript · Tailwind CSS 4 ·
 Express + PostgreSQL + Stripe (backend)

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openFolderDialog } from "@tauri-apps/plugin-dialog";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { STRINGS, LANGUAGES, Lang, Strings, detectInitialLang, format } from "./i18n";
 import { THEMES, ThemeName, detectInitialTheme } from "./theme";
 import "./App.css";
@@ -9,10 +10,10 @@ import "./App.css";
 // feature below is fully implemented already — this flag is the only gate.
 const IS_PRO_UNLOCKED = false;
 
-// Set this once a real backend (e.g. the Node.js/Railway API from the
-// project brief) is deployed. Until then, auth calls fail honestly instead
-// of faking a login that doesn't check anything.
-const API_BASE_URL = "";
+// Set at build time once the backend (backend/, deployed to Railway per the
+// project brief) is live: `VITE_API_BASE_URL=https://your-app.up.railway.app npm run build`.
+// Until then, auth/checkout calls fail honestly instead of faking success.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 type AuthState = { status: "anonymous" } | { status: "authenticated"; email: string };
 
@@ -645,16 +646,20 @@ function AccountMenu({
 
             <div className="border-b border-white/10 p-4">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{s.menu.theme}</p>
-              <div className="flex flex-col gap-1">
+              <div className="grid grid-cols-2 gap-1">
                 {THEMES.map((t) => (
                   <button
                     key={t.code}
                     onClick={() => setTheme(t.code)}
-                    className={`rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
-                      theme === t.code ? "bg-indigo-500/20 text-indigo-300" : "text-slate-300 hover:bg-white/5"
+                    className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors ${
+                      theme === t.code ? "bg-white/10 text-slate-100" : "text-slate-300 hover:bg-white/5"
                     }`}
                   >
-                    {t.label}
+                    <span
+                      className="h-4 w-4 shrink-0 rounded-full ring-1 ring-white/20"
+                      style={{ background: `linear-gradient(135deg, ${t.swatch[0]} 50%, ${t.swatch[1]} 50%)` }}
+                    />
+                    <span className="truncate">{t.label}</span>
                   </button>
                 ))}
               </div>
@@ -720,6 +725,30 @@ function App() {
     localStorage.setItem("pc-tweaker-token", data.token);
     localStorage.setItem("pc-tweaker-email", email);
     setAuth({ status: "authenticated", email });
+  }
+
+  // Opens real Stripe Checkout in the system browser (Checkout can't run
+  // inside the app's webview). Throws with a clear reason when the backend
+  // isn't configured or the user isn't logged in yet, instead of pretending
+  // to charge anything.
+  async function startCheckout() {
+    if (!API_BASE_URL) {
+      throw new Error(s.auth.backendNotConfigured);
+    }
+    const token = localStorage.getItem("pc-tweaker-token");
+    if (!token) {
+      throw new Error(s.auth.loginRequiredForCheckout);
+    }
+    const res = await fetch(`${API_BASE_URL}/api/checkout`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}) as { error?: string });
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
+    const data = (await res.json()) as { url: string };
+    await openUrl(data.url);
   }
 
   const CATEGORIES: { key: Category | "all"; label: string }[] = [
@@ -977,9 +1006,13 @@ function App() {
           s={s}
           featureName={paywallFeature}
           onClose={() => setPaywallFeature(null)}
-          onNotify={() => {
+          onNotify={async () => {
             setPaywallFeature(null);
-            pushToast("error", s.paywall.notConnectedToast);
+            try {
+              await startCheckout();
+            } catch (e) {
+              pushToast("error", String(e instanceof Error ? e.message : e));
+            }
           }}
         />
       )}

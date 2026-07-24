@@ -1,21 +1,86 @@
 @import "tailwindcss";
 
+/* The 10 themes below match getcertsprint.com's own theme picker exactly
+   (same CSS variable values), so switching themes here mirrors the site. */
 :root,
-[data-theme="default"] {
-  --app-bg-a: #1e293b;
-  --app-bg-b: #0b1120;
-  --app-accent: #6366f1;
-  --app-accent2: #38bdf8;
-  --app-font: Inter, ui-sans-serif, system-ui, sans-serif;
-}
-
-/* Palette lifted from getcertsprint.com's own CSS variables. */
-[data-theme="certsprint"] {
+[data-theme="violet"] {
   --app-bg-a: #1b1230;
   --app-bg-b: #10091f;
   --app-accent: #ff5c8a;
   --app-accent2: #35e0c0;
-  --app-font: Sora, Inter, ui-sans-serif, system-ui, sans-serif;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="teal_depths"] {
+  --app-bg-a: #0f2a2a;
+  --app-bg-b: #071a1a;
+  --app-accent: #35e0c0;
+  --app-accent2: #ff5c8a;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="amber_dusk"] {
+  --app-bg-a: #2a1d0f;
+  --app-bg-b: #1a1006;
+  --app-accent: #ffb84d;
+  --app-accent2: #5bd1ff;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="crimson_steel"] {
+  --app-bg-a: #2a121a;
+  --app-bg-b: #1a0a0f;
+  --app-accent: #ff4d6d;
+  --app-accent2: #4ce0b3;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="ocean_blue"] {
+  --app-bg-a: #0d1d33;
+  --app-bg-b: #050e1a;
+  --app-accent: #3d8bff;
+  --app-accent2: #ffb74d;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="forest_emerald"] {
+  --app-bg-a: #0e2318;
+  --app-bg-b: #06140d;
+  --app-accent: #2ecc71;
+  --app-accent2: #ff6f91;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="royal_gold"] {
+  --app-bg-a: #251a05;
+  --app-bg-b: #170f02;
+  --app-accent: #e8b923;
+  --app-accent2: #6f5bff;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="slate_mono"] {
+  --app-bg-a: #15181c;
+  --app-bg-b: #0b0d10;
+  --app-accent: #9aa5b1;
+  --app-accent2: #6ee7b7;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="indigo_night"] {
+  --app-bg-a: #131335;
+  --app-bg-b: #0a0a1f;
+  --app-accent: #6c63ff;
+  --app-accent2: #ffc155;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="coral_sunset"] {
+  --app-bg-a: #2a1712;
+  --app-bg-b: #1a0d08;
+  --app-accent: #ff7a45;
+  --app-accent2: #4dd9e8;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 @keyframes fade-in-up {

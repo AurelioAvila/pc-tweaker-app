@@ -92,6 +92,7 @@ export interface Strings {
     switchToLogin: string;
     emailInvalid: string;
     passwordTooShort: string;
+    loginRequiredForCheckout: string;
   };
   tweaks: Record<string, TweakText>;
   cleanup: Record<string, TweakText>;
@@ -162,7 +163,7 @@ const it: Strings = {
     planPro: "Pro",
     upgradeButton: "Passa a Pro",
     language: "Lingua",
-    theme: "Tema",
+    theme: "Themes",
     about: "Informazioni",
     aboutBody: "PC Tweaker — tweak di sistema con backup e ripristino automatico.",
     close: "Chiudi",
@@ -183,6 +184,7 @@ const it: Strings = {
     switchToLogin: "Hai già un account? Accedi",
     emailInvalid: "Inserisci un'email valida.",
     passwordTooShort: "La password deve avere almeno 8 caratteri.",
+    loginRequiredForCheckout: "Accedi o registrati prima di sbloccare Pro.",
   },
   tweaks: {
     dark_mode: {
@@ -319,7 +321,7 @@ const en: Strings = {
     planPro: "Pro",
     upgradeButton: "Upgrade to Pro",
     language: "Language",
-    theme: "Theme",
+    theme: "Themes",
     about: "About",
     aboutBody: "PC Tweaker — system tweaks with automatic backup and rollback.",
     close: "Close",
@@ -339,6 +341,7 @@ const en: Strings = {
     switchToLogin: "Already have an account? Log in",
     emailInvalid: "Enter a valid email address.",
     passwordTooShort: "Password must be at least 8 characters.",
+    loginRequiredForCheckout: "Log in or sign up before unlocking Pro.",
   },
   tweaks: {
     dark_mode: {
@@ -471,7 +474,7 @@ const fr: Strings = {
     planPro: "Pro",
     upgradeButton: "Passer à Pro",
     language: "Langue",
-    theme: "Thème",
+    theme: "Themes",
     about: "À propos",
     aboutBody: "PC Tweaker — optimisations système avec sauvegarde et restauration automatiques.",
     close: "Fermer",
@@ -491,6 +494,7 @@ const fr: Strings = {
     switchToLogin: "Déjà un compte ? Connectez-vous",
     emailInvalid: "Saisissez une adresse e-mail valide.",
     passwordTooShort: "Le mot de passe doit contenir au moins 8 caractères.",
+    loginRequiredForCheckout: "Connectez-vous ou inscrivez-vous avant de débloquer Pro.",
   },
   tweaks: {
     dark_mode: {
@@ -623,7 +627,7 @@ const es: Strings = {
     planPro: "Pro",
     upgradeButton: "Pasar a Pro",
     language: "Idioma",
-    theme: "Tema",
+    theme: "Themes",
     about: "Acerca de",
     aboutBody: "PC Tweaker — ajustes del sistema con copia de seguridad y restauración automáticas.",
     close: "Cerrar",
@@ -643,6 +647,7 @@ const es: Strings = {
     switchToLogin: "¿Ya tienes cuenta? Inicia sesión",
     emailInvalid: "Introduce un correo electrónico válido.",
     passwordTooShort: "La contraseña debe tener al menos 8 caracteres.",
+    loginRequiredForCheckout: "Inicia sesión o regístrate antes de desbloquear Pro.",
   },
   tweaks: {
     dark_mode: {
@@ -775,7 +780,7 @@ const de: Strings = {
     planPro: "Pro",
     upgradeButton: "Auf Pro upgraden",
     language: "Sprache",
-    theme: "Design",
+    theme: "Themes",
     about: "Info",
     aboutBody: "PC Tweaker — Systemoptimierungen mit automatischer Sicherung und Wiederherstellung.",
     close: "Schließen",
@@ -795,6 +800,7 @@ const de: Strings = {
     switchToLogin: "Schon ein Konto? Anmelden",
     emailInvalid: "Bitte eine gültige E-Mail-Adresse eingeben.",
     passwordTooShort: "Das Passwort muss mindestens 8 Zeichen lang sein.",
+    loginRequiredForCheckout: "Vor dem Freischalten von Pro anmelden oder registrieren.",
   },
   tweaks: {
     dark_mode: {

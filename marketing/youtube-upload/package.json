@@ -1,0 +1,12 @@
+{
+  "name": "pc-tweaker-youtube-upload",
+  "private": true,
+  "version": "1.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "upload": "node upload.js"
+  },
+  "dependencies": {
+    "googleapis": "^144.0.0"
+  }
+}

@@ -15,6 +15,14 @@ dist-ssr
 # YouTube upload credentials/tokens — never commit
 marketing/youtube-upload/client_secret*.json
 marketing/youtube-upload/token*.json
+marketing/youtube-upload/uploaded-log.json
+marketing/youtube-upload/auto-upload.log
+marketing/youtube-upload/node_modules
+marketing/to-publish/*.mp4
+marketing/to-publish/*.json
+!marketing/to-publish/README.md
+marketing/published/*.mp4
+marketing/published/*.json
 
 # Editor directories and files
 .vscode/*

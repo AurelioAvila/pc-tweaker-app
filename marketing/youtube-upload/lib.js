@@ -8,7 +8,7 @@ const DIR = __dirname;
 const TOKEN_PATH = path.join(DIR, "token.json");
 const PORT = 51789;
 const REDIRECT_URI = `http://localhost:${PORT}`;
-const SCOPES = ["https://www.googleapis.com/auth/youtube.upload"];
+const SCOPES = ["https://www.googleapis.com/auth/youtube"];
 
 function findClientSecretFile() {
   const file = fs.readdirSync(DIR).find((f) => f.startsWith("client_secret") && f.endsWith(".json"));

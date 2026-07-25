@@ -6,7 +6,7 @@ const { requireAuth } = require("../auth");
 const router = express.Router();
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-const stripe = stripeSecretKey ? new Stripe(stripeSecretKey) : null;
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: "2025-03-31.basil" }) : null;
 
 function requireStripe(req, res, next) {
   if (!stripe) {

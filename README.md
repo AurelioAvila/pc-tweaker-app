@@ -85,3 +85,7 @@ Railway deployment and Stripe setup instructions.
 
 [Tauri 2](https://tauri.app) (Rust) · React + TypeScript · Tailwind CSS 4 ·
 Express + PostgreSQL + Stripe (backend)
+
+## License
+
+[MIT](LICENSE)

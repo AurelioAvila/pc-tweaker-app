@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Prevents the WebView's default white background from showing through
+   below the app content (e.g. short tab + open account menu). */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background-color: var(--app-bg-b);
+}
+
 /* The 10 themes below match getcertsprint.com's own theme picker exactly
    (same CSS variable values), so switching themes here mirrors the site. */
 :root,

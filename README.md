@@ -89,3 +89,8 @@ Express + PostgreSQL + Stripe (backend)
 ## License
 
 [MIT](LICENSE)
+
+## Privacy
+
+[Privacy Policy](PRIVACY.md) — covers only the optional account system used
+for the Pro upgrade; the tweaks themselves never send data anywhere.

@@ -17,8 +17,8 @@ Esempio di `nome-video.json`:
 
 Ogni 30 minuti un'attività pianificata di Windows ("PCTweakerYouTubeUpload")
 controlla questa cartella. Se trova una coppia `.mp4`+`.json`, carica il
-video su YouTube come **non in elenco** (mai pubblico in automatico — lo
-decidi tu da YouTube Studio), poi sposta entrambi i file in
+video su YouTube come **pubblico da subito** (nessuna revisione manuale,
+scelta esplicita per automazione completa), poi sposta entrambi i file in
 `marketing/published/` così non viene ricaricato.
 
 Per controllare manualmente in qualsiasi momento, senza aspettare:

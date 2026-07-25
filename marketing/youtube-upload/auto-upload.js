@@ -1,8 +1,9 @@
 // Watches marketing/to-publish/ for <name>.mp4 + <name>.json pairs and
-// uploads each one to YouTube as "unlisted" (never public — a human always
-// reviews and flips visibility to Public from YouTube Studio). Successfully
-// uploaded pairs are moved to marketing/published/ so they're never
-// re-uploaded. Meant to be run periodically (see register-task.ps1).
+// uploads each one to YouTube as Public immediately — fully autonomous, no
+// human review step (explicit user choice 2026-07-25: full automation, no
+// per-video confirmation). Successfully uploaded pairs are moved to
+// marketing/published/ so they're never re-uploaded. Meant to be run
+// periodically (see register-task.ps1).
 
 const fs = require("fs");
 const path = require("path");
@@ -35,20 +36,20 @@ async function processOne(baseName) {
   const metaPath = path.join(QUEUE_DIR, `${baseName}.json`);
   const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
 
-  console.log(`[${new Date().toISOString()}] Uploading ${baseName}.mp4 as unlisted...`);
+  console.log(`[${new Date().toISOString()}] Uploading ${baseName}.mp4 as public...`);
   const result = await uploadVideo({
     videoPath,
     title: meta.title,
     description: meta.description,
     tags: meta.tags || [],
-    privacyStatus: "unlisted", // always unlisted — a human flips it to public
+    privacyStatus: "public",
   });
 
   fs.renameSync(videoPath, path.join(DONE_DIR, `${baseName}.mp4`));
   fs.renameSync(metaPath, path.join(DONE_DIR, `${baseName}.json`));
 
   appendLog({ baseName, videoId: result.id, url: result.url, uploadedAt: new Date().toISOString() });
-  console.log(`Done: ${result.url} (unlisted — review and publish from YouTube Studio)`);
+  console.log(`Done: ${result.url} (live now)`);
 }
 
 async function main() {

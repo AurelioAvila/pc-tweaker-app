@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# YouTube upload credentials/tokens — never commit
+marketing/youtube-upload/client_secret*.json
+marketing/youtube-upload/token*.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

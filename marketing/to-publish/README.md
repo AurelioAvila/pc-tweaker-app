@@ -21,6 +21,12 @@ video su YouTube come **pubblico da subito** (nessuna revisione manuale,
 scelta esplicita per automazione completa), poi sposta entrambi i file in
 `marketing/published/` così non viene ricaricato.
 
+Lo stesso file viene letto anche da `marketing/tiktok-upload/` e (una volta
+completato il setup Instagram - vedi `marketing/instagram-upload/`) da
+`marketing/instagram-upload/`: ognuno tiene il proprio log e pubblica in
+autonomia, senza spostare/cancellare i file (solo lo script YouTube possiede
+quel ciclo di vita).
+
 Per controllare manualmente in qualsiasi momento, senza aspettare:
 
 ```bash

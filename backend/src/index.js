@@ -90,6 +90,12 @@ serveMarkdownAsHtml("/privacy", path.join(__dirname, "..", "legal", "PRIVACY.md"
 app.get("/tiktokpEKDQseFFOg1tBMQ9QvfIZ64fDNQkDLt.txt", (_req, res) => {
   res.type("text/plain").send("tiktok-developers-site-verification=pEKDQseFFOg1tBMQ9QvfIZ64fDNQkDLt");
 });
+// TikTok issues a fresh token each time verification is (re)requested - the
+// old one above becomes stale but is left in place (harmless) rather than
+// removed, in case of another retry cycle.
+app.get("/tiktokHeKend3CcpkNmGCjEs2zET0AjYqOWn71.txt", (_req, res) => {
+  res.type("text/plain").send("tiktok-developers-site-verification=HeKend3CcpkNmGCjEs2zET0AjYqOWn71");
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/account", accountRoutes);

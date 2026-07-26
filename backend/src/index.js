@@ -1,5 +1,7 @@
 require("dotenv").config();
 
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -54,6 +56,37 @@ app.get("/tiktok-callback", (_req, res) => {
   </script>
 </body>
 </html>`);
+});
+
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function serveMarkdownAsHtml(routePath, mdFilePath, title) {
+  app.get(routePath, (_req, res) => {
+    const md = fs.readFileSync(mdFilePath, "utf8");
+    res.type("html").send(`<!DOCTYPE html>
+<html>
+<head><title>${title}</title></head>
+<body style="font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; line-height: 1.6;">
+<pre style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(md)}</pre>
+</body>
+</html>`);
+  });
+}
+
+// Terms of Service / Privacy Policy, served from the source-of-truth
+// markdown files at the repo root - needed as real, our-own-domain URLs for
+// the TikTok developer app review (github.com URLs can't be domain-verified
+// since we don't control that domain).
+serveMarkdownAsHtml("/terms", path.join(__dirname, "..", "..", "TERMS.md"), "PC Tweaker - Terms of Service");
+serveMarkdownAsHtml("/privacy", path.join(__dirname, "..", "..", "PRIVACY.md"), "PC Tweaker - Privacy Policy");
+
+// TikTok Developer Portal domain/URL-prefix verification file (one-off,
+// content dictated by TikTok when verifying app_basic_info URLs - safe to
+// leave in place afterward, it's just a static token file).
+app.get("/tiktokpEKDQseFFOg1tBMQ9QvfIZ64fDNQkDLt.txt", (_req, res) => {
+  res.type("text/plain").send("tiktok-developers-site-verification=pEKDQseFFOg1tBMQ9QvfIZ64fDNQkDLt");
 });
 
 app.use("/api/auth", authRoutes);

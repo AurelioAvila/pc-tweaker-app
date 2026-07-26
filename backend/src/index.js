@@ -75,12 +75,14 @@ function serveMarkdownAsHtml(routePath, mdFilePath, title) {
   });
 }
 
-// Terms of Service / Privacy Policy, served from the source-of-truth
-// markdown files at the repo root - needed as real, our-own-domain URLs for
-// the TikTok developer app review (github.com URLs can't be domain-verified
-// since we don't control that domain).
-serveMarkdownAsHtml("/terms", path.join(__dirname, "..", "..", "TERMS.md"), "PC Tweaker - Terms of Service");
-serveMarkdownAsHtml("/privacy", path.join(__dirname, "..", "..", "PRIVACY.md"), "PC Tweaker - Privacy Policy");
+// Terms of Service / Privacy Policy - copies kept in backend/legal/ (not the
+// repo-root ones) because Railway's deploy root is /backend, so anything
+// outside this folder never reaches the running server. Keep these two in
+// sync with the root TERMS.md/PRIVACY.md if those are ever edited. Needed as
+// real, our-own-domain URLs for the TikTok developer app review (github.com
+// URLs can't be domain-verified since we don't control that domain).
+serveMarkdownAsHtml("/terms", path.join(__dirname, "..", "legal", "TERMS.md"), "PC Tweaker - Terms of Service");
+serveMarkdownAsHtml("/privacy", path.join(__dirname, "..", "legal", "PRIVACY.md"), "PC Tweaker - Privacy Policy");
 
 // TikTok Developer Portal domain/URL-prefix verification file (one-off,
 // content dictated by TikTok when verifying app_basic_info URLs - safe to

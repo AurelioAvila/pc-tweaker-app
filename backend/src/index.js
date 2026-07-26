@@ -36,6 +36,26 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true, databaseConfigured: isConfigured });
 });
 
+// Pagina di callback per il login OAuth di TikTok (usata solo una volta in
+// locale da marketing/tiktok-upload/get-token.js per ottenere un refresh
+// token) - mostra il "code" a schermo cosi' l'utente puo' copiarlo a mano nel
+// terminale. TikTok non accetta redirect URI su localhost, serve un dominio
+// HTTPS reale - stesso schema gia' usato per getcertsprint.com.
+app.get("/tiktok-callback", (_req, res) => {
+  res.type("html").send(`<!DOCTYPE html>
+<html>
+<head><title>TikTok callback</title></head>
+<body style="font-family: monospace; padding: 40px;">
+  <h2>Copy the "code" value below and paste it into the terminal:</h2>
+  <p id="code" style="font-size: 18px; word-break: break-all; background:#eee; padding:12px;"></p>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById("code").textContent = params.get("code") || "(no code found in URL)";
+  </script>
+</body>
+</html>`);
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/account", accountRoutes);
 app.use("/api", stripeRoutes);

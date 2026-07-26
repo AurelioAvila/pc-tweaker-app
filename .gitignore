@@ -24,6 +24,12 @@ marketing/to-publish/*.json
 marketing/published/*.mp4
 marketing/published/*.json
 
+# TikTok upload credentials/tokens — never commit
+marketing/tiktok-upload/credentials.json
+marketing/tiktok-upload/uploaded-log.json
+marketing/tiktok-upload/auto-upload.log
+marketing/tiktok-upload/node_modules
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -101,7 +101,9 @@ def make_one_reel(index: int, category: str = None):
     final_video_path = os.path.join(TO_PUBLISH_DIR, f"{base_name}.mp4")
     os.replace(video_path, final_video_path)
 
-    description = f"{script}\n\nSearch 'PC Tweaker' - link in bio."
+    # script_writer.py's CTA pool always ends the script with some form of
+    # "link in bio" already - no need to append a second one here.
+    description = script
     meta = {
         "title": hook,
         "description": description,

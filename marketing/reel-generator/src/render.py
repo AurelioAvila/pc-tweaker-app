@@ -4,7 +4,35 @@ timed captions, and a persistent "PC Tweaker" watermark (no plain website
 domain to show - the app is distributed via winget/GitHub Releases, so the
 watermark reinforces the name to search instead of a URL).
 """
+import glob
+import os
 import random
+import shutil
+
+# moviepy 1.0.3's resize code still references Image.ANTIALIAS, which
+# Pillow removed in 10.0. Rather than pin an old Pillow (no prebuilt wheel
+# for newer Python versions - see requirements.txt), restore the constant
+# as an alias for its replacement before moviepy is imported.
+from PIL import Image
+if not hasattr(Image, "ANTIALIAS"):
+    Image.ANTIALIAS = Image.LANCZOS
+
+# This pipeline runs locally (Windows Scheduled Task), not in a fresh CI
+# container. Two local-only quirks to work around:
+# 1. A newly-run terminal session may not have picked up ImageMagick's PATH
+#    entry yet even right after installing it.
+# 2. ImageMagick 7's Windows installer only ships magick.exe, not the
+#    legacy convert.exe moviepy's own auto-detection assumes/caches - so
+#    auto-detect silently resolves to a binary that doesn't exist. Set
+#    IMAGEMAGICK_BINARY explicitly instead of trusting auto-detect.
+if not os.environ.get("IMAGEMAGICK_BINARY"):
+    magick_path = shutil.which("magick")
+    if not magick_path:
+        candidates = sorted(glob.glob(r"C:\Program Files\ImageMagick-*\magick.exe"), reverse=True)
+        magick_path = candidates[0] if candidates else None
+    if magick_path:
+        os.environ["IMAGEMAGICK_BINARY"] = magick_path
+        os.environ["PATH"] = os.path.dirname(magick_path) + os.pathsep + os.environ.get("PATH", "")
 
 from moviepy.editor import (
     VideoFileClip,

@@ -36,6 +36,13 @@ marketing/instagram-upload/uploaded-log.json
 marketing/instagram-upload/auto-upload.log
 marketing/instagram-upload/node_modules
 
+# Reel generator scratch/output — never commit rendered media
+marketing/reel-generator/output/*
+!marketing/reel-generator/output/.gitkeep
+marketing/reel-generator/generate.log
+marketing/reel-generator/__pycache__
+marketing/reel-generator/src/__pycache__
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

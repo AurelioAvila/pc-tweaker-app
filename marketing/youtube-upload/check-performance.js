@@ -8,13 +8,19 @@
 const { google } = require("googleapis");
 const { getAuthorizedClient } = require("./lib");
 
+const YPP_SUBSCRIBER_TARGET = 1000;
+const YPP_SHORTS_VIEWS_TARGET = 10_000_000; // views su Shorts pubblici, ultimi 90gg
+const YPP_WATCH_HOURS_TARGET = 4000; // alternativa long-form, ultimi 12 mesi - non tracciabile qui (serve YouTube Analytics API)
+
 async function main() {
   const maxResults = parseInt(process.argv[2] || "20", 10);
   const auth = await getAuthorizedClient();
   const youtube = google.youtube({ version: "v3", auth });
 
-  const channelRes = await youtube.channels.list({ part: ["contentDetails"], mine: true });
+  const channelRes = await youtube.channels.list({ part: ["contentDetails", "statistics", "snippet"], mine: true });
   const uploadsPlaylistId = channelRes.data.items[0].contentDetails.relatedPlaylists.uploads;
+  const channelStats = channelRes.data.items[0].statistics;
+  const channelTitle = channelRes.data.items[0].snippet.title;
 
   const itemsRes = await youtube.playlistItems.list({
     part: ["contentDetails"],
@@ -48,6 +54,15 @@ async function main() {
       };
     })
     .sort((a, b) => b.published - a.published);
+
+  const subs = parseInt(channelStats.subscriberCount || "0", 10);
+  const views90dApprox = videos.reduce((sum, v) => sum + v.views, 0);
+  const subsPct = Math.min(100, Math.round((100 * subs) / YPP_SUBSCRIBER_TARGET));
+  const viewsPct = Math.min(100, Math.round((100 * views90dApprox) / YPP_SHORTS_VIEWS_TARGET));
+  console.log(`\n=== Progresso monetizzazione (YPP) - ${channelTitle} ===`);
+  console.log(`Iscritti: ${subs}/${YPP_SUBSCRIBER_TARGET} (${subsPct}%)`);
+  console.log(`Views Shorts (~ultimi 90gg, approssimato su ${videos.length} video): ${views90dApprox.toLocaleString()}/${YPP_SHORTS_VIEWS_TARGET.toLocaleString()} (${viewsPct}%)`);
+  console.log("Nota: serve raggiungere ENTRAMBE le soglie (o l'alternativa 4000 ore long-form, non tracciata qui - richiede l'Analytics API separata). Su questo canale i video non sono tutti Short puri, quindi il percorso 4000 ore potrebbe essere piu' realistico di quello Shorts.\n");
 
   console.log("Video pubblici (piu' recente prima):");
   for (const v of videos) {

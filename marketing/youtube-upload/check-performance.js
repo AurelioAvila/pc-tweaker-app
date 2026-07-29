@@ -55,16 +55,19 @@ async function main() {
     })
     .sort((a, b) => b.published - a.published);
 
-  // BUG corretto il 2026-07-29: sommare solo le views dei video restituiti
-  // da questo giro (finestra limitata) sottostimava il totale reale -
-  // viewCount del canale e' un dato completo, non un'approssimazione.
+  // Corretto DUE VOLTE il 2026-07-29: 1) sommare solo i video restituiti in
+  // una finestra limitata sottostimava, 2) channelStats.viewCount sembrava
+  // il fix giusto ma si aggiorna con un ritardo reale rispetto al viewCount
+  // per-singolo-video (verificato: 290 vs 754 reali sommando i 5 video).
+  // Corretto sommando le views per-video (maxResults di default e' 20,
+  // gia' piu' del videoCount reale di questo canale).
   const subs = parseInt(channelStats.subscriberCount || "0", 10);
-  const totalViews = parseInt(channelStats.viewCount || "0", 10);
+  const totalViews = videos.reduce((sum, v) => sum + v.views, 0);
   const subsPct = Math.min(100, Math.round((100 * subs) / YPP_SUBSCRIBER_TARGET));
   const viewsPct = Math.min(100, Math.round((100 * totalViews) / YPP_SHORTS_VIEWS_TARGET));
   console.log(`\n=== Progresso monetizzazione (YPP) - ${channelTitle} ===`);
   console.log(`Iscritti: ${subs}/${YPP_SUBSCRIBER_TARGET} (${subsPct}%)`);
-  console.log(`Views totali canale (dato reale, accurato finche' il canale ha meno di 90gg di vita): ${totalViews.toLocaleString()}/${YPP_SHORTS_VIEWS_TARGET.toLocaleString()} (${viewsPct}%)`);
+  console.log(`Views totali canale (somma di tutti i ${videos.length} video, accurato finche' il canale ha meno di 90gg di vita): ${totalViews.toLocaleString()}/${YPP_SHORTS_VIEWS_TARGET.toLocaleString()} (${viewsPct}%)`);
   console.log("Nota: serve raggiungere ENTRAMBE le soglie (o l'alternativa 4000 ore long-form, non tracciata qui - richiede l'Analytics API separata). Su questo canale i video non sono tutti Short puri, quindi il percorso 4000 ore potrebbe essere piu' realistico di quello Shorts.\n");
 
   console.log("Video pubblici (piu' recente prima):");

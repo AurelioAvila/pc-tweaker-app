@@ -55,13 +55,16 @@ async function main() {
     })
     .sort((a, b) => b.published - a.published);
 
+  // BUG corretto il 2026-07-29: sommare solo le views dei video restituiti
+  // da questo giro (finestra limitata) sottostimava il totale reale -
+  // viewCount del canale e' un dato completo, non un'approssimazione.
   const subs = parseInt(channelStats.subscriberCount || "0", 10);
-  const views90dApprox = videos.reduce((sum, v) => sum + v.views, 0);
+  const totalViews = parseInt(channelStats.viewCount || "0", 10);
   const subsPct = Math.min(100, Math.round((100 * subs) / YPP_SUBSCRIBER_TARGET));
-  const viewsPct = Math.min(100, Math.round((100 * views90dApprox) / YPP_SHORTS_VIEWS_TARGET));
+  const viewsPct = Math.min(100, Math.round((100 * totalViews) / YPP_SHORTS_VIEWS_TARGET));
   console.log(`\n=== Progresso monetizzazione (YPP) - ${channelTitle} ===`);
   console.log(`Iscritti: ${subs}/${YPP_SUBSCRIBER_TARGET} (${subsPct}%)`);
-  console.log(`Views Shorts (~ultimi 90gg, approssimato su ${videos.length} video): ${views90dApprox.toLocaleString()}/${YPP_SHORTS_VIEWS_TARGET.toLocaleString()} (${viewsPct}%)`);
+  console.log(`Views totali canale (dato reale, accurato finche' il canale ha meno di 90gg di vita): ${totalViews.toLocaleString()}/${YPP_SHORTS_VIEWS_TARGET.toLocaleString()} (${viewsPct}%)`);
   console.log("Nota: serve raggiungere ENTRAMBE le soglie (o l'alternativa 4000 ore long-form, non tracciata qui - richiede l'Analytics API separata). Su questo canale i video non sono tutti Short puri, quindi il percorso 4000 ore potrebbe essere piu' realistico di quello Shorts.\n");
 
   console.log("Video pubblici (piu' recente prima):");

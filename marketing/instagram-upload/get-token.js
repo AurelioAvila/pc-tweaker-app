@@ -75,20 +75,42 @@ async function listPagesWithIgAccounts(longLivedUserToken) {
   return results;
 }
 
+async function getPageDirectly(longLivedUserToken, pageId) {
+  // Bypasses /me/accounts, which can come back empty for Business
+  // Portfolio-managed Pages even when you ARE an admin - queries this
+  // specific Page's own access_token and linked Instagram account
+  // directly instead. Discovered while setting up the getcertsprint bot.
+  const resp = await fetch(
+    `${API_BASE}/${pageId}?${new URLSearchParams({
+      fields: "name,access_token,instagram_business_account",
+      access_token: longLivedUserToken,
+    })}`,
+  );
+  const data = await resp.json();
+  return {
+    pageName: data.name || pageId,
+    pageId,
+    pageToken: data.access_token,
+    igUserId: data.instagram_business_account ? data.instagram_business_account.id : null,
+  };
+}
+
 async function main() {
   const appId = process.env.APP_ID;
   const appSecret = process.env.APP_SECRET;
   const shortToken = process.env.SHORT_TOKEN;
+  const pageId = process.env.PAGE_ID;
   if (!appId || !appSecret || !shortToken) {
     console.error("Set APP_ID, APP_SECRET and SHORT_TOKEN env vars first.");
     process.exit(1);
   }
 
   const longLived = await exchangeLongLivedToken(appId, appSecret, shortToken);
-  const pages = await listPagesWithIgAccounts(longLived);
+  const pages = pageId ? [await getPageDirectly(longLived, pageId)] : await listPagesWithIgAccounts(longLived);
 
-  if (pages.length === 0) {
-    console.log("No Facebook Pages found for this token (check pages_show_list scope).");
+  if (pages.length === 0 || !pages[0].pageToken) {
+    console.log("No Facebook Pages found for this token. Make sure the token has pages_show_list scope,");
+    console.log("or set PAGE_ID=<numeric Page ID> to query a Business-managed Page directly.");
     return;
   }
 

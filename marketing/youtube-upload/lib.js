@@ -78,4 +78,23 @@ async function uploadVideo({ videoPath, title, description, tags = [], privacySt
   return { id: res.data.id, url: `https://youtube.com/shorts/${res.data.id}` };
 }
 
-module.exports = { getAuthorizedClient, uploadVideo };
+async function postComment({ videoId, text }) {
+  // NOTA: la YouTube Data API v3 non espone un modo per FISSARE (pin) un
+  // commento in cima - quello resta un passo manuale da YouTube Studio
+  // (apri il video -> Commenti -> Fissa sul commento appena postato). Qui
+  // possiamo solo pubblicarlo, non fissarlo.
+  const auth = await getAuthorizedClient();
+  const youtube = google.youtube({ version: "v3", auth });
+  const res = await youtube.commentThreads.insert({
+    part: ["snippet"],
+    requestBody: {
+      snippet: {
+        videoId,
+        topLevelComment: { snippet: { textOriginal: text } },
+      },
+    },
+  });
+  return res.data.id;
+}
+
+module.exports = { getAuthorizedClient, uploadVideo, postComment };

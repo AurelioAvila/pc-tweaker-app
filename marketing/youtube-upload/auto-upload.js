@@ -7,7 +7,13 @@
 
 const fs = require("fs");
 const path = require("path");
-const { uploadVideo } = require("./lib");
+const { uploadVideo, postComment } = require("./lib");
+
+// CTA di default se il .json non specifica "ctaComment" - richiesto
+// 2026-07-29: funnel diretto verso lo strumento/link in un commento (non
+// "fissato", la API non lo permette - vedi nota in lib.js::postComment).
+const DEFAULT_CTA_COMMENT =
+  "Try PC Tweaker for free \u{1F447}\nhttps://github.com/AurelioAvila/pc-tweaker-app/releases";
 
 const ROOT = path.join(__dirname, "..");
 const QUEUE_DIR = path.join(ROOT, "to-publish");
@@ -48,8 +54,18 @@ async function processOne(baseName) {
   fs.renameSync(videoPath, path.join(DONE_DIR, `${baseName}.mp4`));
   fs.renameSync(metaPath, path.join(DONE_DIR, `${baseName}.json`));
 
-  appendLog({ baseName, videoId: result.id, url: result.url, uploadedAt: new Date().toISOString() });
-  console.log(`Done: ${result.url} (live now)`);
+  let commentPosted = false;
+  try {
+    await postComment({ videoId: result.id, text: meta.ctaComment || DEFAULT_CTA_COMMENT });
+    commentPosted = true;
+  } catch (err) {
+    // Un commento fallito non deve far sembrare fallito l'intero upload -
+    // il video e' comunque live, il commento e' solo un bonus per il funnel.
+    console.error(`Comment failed for ${baseName} (video still live):`, err.message);
+  }
+
+  appendLog({ baseName, videoId: result.id, url: result.url, uploadedAt: new Date().toISOString(), commentPosted });
+  console.log(`Done: ${result.url} (live now)${commentPosted ? ", CTA comment posted (remember to pin it manually in YouTube Studio)" : ""}`);
 }
 
 async function main() {

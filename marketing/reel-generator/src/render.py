@@ -46,11 +46,25 @@ from moviepy.editor import (
 
 TARGET_W, TARGET_H = 1080, 1920
 
-CAPTION_CHUNK_SIZE = 3
-CAPTION_FONTSIZE = 76
+# Bundled font instead of a generic system font (DejaVu Sans) - Poppins
+# ExtraBold (OFL-licensed, assets/fonts/) is the same rounded-bold style
+# used by the majority of high-retention TikTok/Reels caption overlays,
+# and bundling it as a file means rendering doesn't depend on whatever
+# fonts happen to be installed on the machine/CI runner.
+# ImageMagick's Windows build silently falls back to a default/thin font
+# (no error) when given a font path with backslashes - confirmed by
+# comparing the raw ImageMagick command with forward vs back slashes
+# (2026-07-30, this pipeline runs on Windows). Always use forward slashes.
+FONT_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "fonts", "Poppins-ExtraBold.ttf").replace(os.sep, "/")
+
+# 2 words/chunk instead of 3 - punchier, closer to the flash-caption pacing
+# real viral Shorts/Reels use, and pairs with the pop-in below.
+CAPTION_CHUNK_SIZE = 2
+CAPTION_FONTSIZE = 80
 CAPTION_Y = int(TARGET_H * 0.62)
 CAPTION_BAND_Y = int(TARGET_H * 0.56)
 CAPTION_BAND_HEIGHT = int(TARGET_H * 0.22)
+CAPTION_POP_SECONDS = 0.12  # quick scale-up on each chunk's entrance, not a static cut
 
 WATERMARK_TEXT = "PC Tweaker"
 WATERMARK_FONTSIZE = 34
@@ -111,6 +125,17 @@ def _caption_clips_from_words(word_timings: list, duration: float):
             end = min(last_start + last_dur + 0.3, duration)
         chunk_duration = max(end - start, 0.05)
 
+        # Quick scale pop-in (0.85x -> 1.0x over CAPTION_POP_SECONDS) instead
+        # of a static hard cut - makes each new chunk feel like a "hit" in
+        # sync with the word landing, the caption-motion style that reads as
+        # produced/edited rather than a flat subtitle track.
+        pop = min(CAPTION_POP_SECONDS, chunk_duration / 2)
+
+        def _pop_scale(t, pop=pop):
+            if t >= pop:
+                return 1.0
+            return 0.85 + 0.15 * (t / pop)
+
         txt_clip = (
             TextClip(
                 text,
@@ -120,10 +145,11 @@ def _caption_clips_from_words(word_timings: list, duration: float):
                 stroke_width=4,
                 method="caption",
                 size=(TARGET_W - 100, None),
-                font="DejaVu-Sans-Bold",
+                font=FONT_PATH,
             )
             .set_start(start)
             .set_duration(chunk_duration)
+            .resize(_pop_scale)
             .set_position(("center", CAPTION_Y))
         )
         clips.append(txt_clip)
@@ -186,7 +212,7 @@ def _watermark_clip(duration: float):
             stroke_width=2,
             method="caption",
             size=(TARGET_W - 100, None),
-            font="DejaVu-Sans-Bold",
+            font=FONT_PATH,
         )
         .set_duration(duration)
         .set_position(("center", WATERMARK_Y))

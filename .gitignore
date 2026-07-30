@@ -20,9 +20,11 @@ marketing/youtube-upload/auto-upload.log
 marketing/youtube-upload/node_modules
 marketing/to-publish/*.mp4
 marketing/to-publish/*.json
+marketing/to-publish/*.x-caption.txt
 !marketing/to-publish/README.md
 marketing/published/*.mp4
 marketing/published/*.json
+marketing/published/*.x-caption.txt
 
 # TikTok upload credentials/tokens — never commit
 marketing/tiktok-upload/credentials.json
@@ -35,6 +37,9 @@ marketing/instagram-upload/credentials.json
 marketing/instagram-upload/uploaded-log.json
 marketing/instagram-upload/auto-upload.log
 marketing/instagram-upload/node_modules
+
+# X (Twitter) manual-posting caption generator — logs only, no secrets
+marketing/x-upload/generate-captions.log
 
 # Reel generator scratch/output — never commit rendered media
 marketing/reel-generator/output/*

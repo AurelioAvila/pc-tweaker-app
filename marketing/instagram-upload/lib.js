@@ -10,7 +10,16 @@
 const fs = require("fs");
 const path = require("path");
 
-const API_BASE = "https://graph.facebook.com/v21.0";
+// This bot uses the Instagram API with Instagram Login (Instagram Business
+// Login) rather than the older Facebook-Login-for-Business flow - the
+// account was added as an "Instagram tester" on the Meta app and its token
+// was generated directly from the app's API Setup panel, bypassing the
+// Page-to-Instagram linking step entirely (that link kept failing with a
+// persistent Meta-side "collegamento non disponibile" error unrelated to
+// permissions). Tokens from this flow are scoped to graph.instagram.com,
+// NOT graph.facebook.com, and use an app-scoped IG user ID that differs
+// from the legacy Facebook-linked Instagram Business Account ID.
+const API_BASE = "https://graph.instagram.com/v21.0";
 const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
 const POLL_INTERVAL_MS = 10000;
 const POLL_TIMEOUT_MS = 300000;

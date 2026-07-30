@@ -1,9 +1,31 @@
 // Run ONCE, locally, to get a long-lived Instagram Page access token +
 // IG_USER_ID to save as credentials.
 //
-// Prerequisites (you do these, not automatable - see the getcertsprint
-// bot's SETUP.md for the detailed click-by-click version, the steps below
-// are the short version since a lot can be REUSED instead of redone):
+// NOTE (2026-07-30): the Page-to-Instagram linking step below hit a
+// persistent Meta-side "collegamento non e' al momento disponibile" error
+// that survived every fix (permissions, different accounts/sessions,
+// browsers, portfolios) - eventually confirmed to be an unrelated Meta
+// backend issue, not a config problem. The credentials actually in use for
+// this bot were obtained via the ALTERNATE route instead, which skips
+// Page linking entirely:
+//   1. developers.facebook.com/apps/<APP_ID>/roles/roles/ -> Aggiungi ->
+//      "Tester di Instagram" -> add the IG username (e.g. pctweaker10).
+//   2. On that Instagram account: Impostazioni -> App e siti web ->
+//      "Inviti di collaudo" -> accept the invite from the app.
+//   3. developers.facebook.com/apps/<APP_ID>/use_cases/customize/?use_case_enum=INSTAGRAM_BUSINESS&selected_tab=API-Setup
+//      -> section "2. Genera i token d'accesso" -> Aggiungi account ->
+//      pick the IG account -> "Genera token".
+// Tokens from this flow (Instagram API with Instagram Login) are scoped to
+// graph.instagram.com, NOT graph.facebook.com (see lib.js), and the
+// account ID shown next to "Genera token" is an app-scoped ID that
+// differs from the legacy Facebook-linked Instagram Business Account ID -
+// verify with `curl https://graph.instagram.com/v21.0/<id>?fields=username&access_token=<token>`
+// before saving to credentials.json. This is also how the Groomlyco/
+// Magdock4 accounts (separate project) got their tokens.
+//
+// Prerequisites for the ORIGINAL Page-linking route below (kept for
+// reference / in case Meta fixes the link issue later - see the
+// getcertsprint bot's SETUP.md for the detailed click-by-click version):
 // 1. Convert the PC Tweaker Instagram account to a Business account.
 // 2. Create (or reuse an existing) Facebook Page and link it to that
 //    Instagram account (Meta Business Suite -> Impostazioni -> Account

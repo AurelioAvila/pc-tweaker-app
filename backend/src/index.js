@@ -38,6 +38,34 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true, databaseConfigured: isConfigured });
 });
 
+// Landing page for the TikTok app review's "Website URL" field - there was
+// no route at all here before, so hitting the root just 404'd ("Cannot GET
+// /"), which is what got the app flagged with "Website error". This backend
+// is API-only (Railway), there's no separate marketing site, so serve a
+// minimal real page describing the app instead of leaving the root empty.
+app.get("/", (_req, res) => {
+  res.type("html").send(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>PC Tweaker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family: sans-serif; max-width: 700px; margin: 60px auto; padding: 0 20px; line-height: 1.6; color: #222;">
+<h1>PC Tweaker</h1>
+<p>A desktop app for Windows that applies system tweaks — performance,
+privacy, gaming, and maintenance — with automatic rollback: every change
+saves the original value before it's applied, so you can always revert it
+with one click.</p>
+<p>
+<a href="https://github.com/AurelioAvila/pc-tweaker-app#readme">Download &amp; documentation</a><br>
+<a href="/terms">Terms of Service</a><br>
+<a href="/privacy">Privacy Policy</a>
+</p>
+</body>
+</html>`);
+});
+
 // Pagina di callback per il login OAuth di TikTok (usata solo una volta in
 // locale da marketing/tiktok-upload/get-token.js per ottenere un refresh
 // token) - mostra il "code" a schermo cosi' l'utente puo' copiarlo a mano nel

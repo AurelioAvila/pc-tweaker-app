@@ -155,4 +155,52 @@ async function uploadVideo({ videoPath, caption, privacyLevel = "SELF_ONLY" }) {
   return { publishId, status };
 }
 
-module.exports = { uploadVideo };
+async function uploadVideoToInbox({ videoPath }) {
+  // Sends the video to the account's "Upload to TikTok" drafts inbox instead
+  // of publishing directly - unlike /video/init/, this isn't restricted to
+  // SELF_ONLY pre-audit, so it works today. Trade-off: the inbox endpoint
+  // doesn't accept a post_info, so no caption can be attached via API - the
+  // account owner has to paste it in manually when they open the draft.
+  const accessToken = await getAccessToken();
+  const videoSize = fs.statSync(videoPath).size;
+
+  const initResp = await fetch(`${API_BASE}/post/publish/inbox/video/init/`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      source_info: {
+        source: "FILE_UPLOAD",
+        video_size: videoSize,
+        chunk_size: videoSize,
+        total_chunk_count: 1,
+      },
+    }),
+  });
+  const initData = await initResp.json();
+  if (!initData.data) {
+    throw new Error(`init inbox failed (${initResp.status}): ${JSON.stringify(initData)}`);
+  }
+  const { publish_id: publishId, upload_url: uploadUrl } = initData.data;
+
+  const videoBytes = fs.readFileSync(videoPath);
+  const putResp = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "video/mp4",
+      "Content-Range": `bytes 0-${videoSize - 1}/${videoSize}`,
+    },
+    body: videoBytes,
+  });
+  if (!putResp.ok) {
+    throw new Error(`Video upload PUT failed: ${putResp.status} ${await putResp.text()}`);
+  }
+
+  const status = await pollPublishStatus(accessToken, publishId);
+  console.log(`[OK] Sent to TikTok drafts inbox: publish_id=${publishId}, status=${status}`);
+  return { publishId, status };
+}
+
+module.exports = { uploadVideo, uploadVideoToInbox };

@@ -14,7 +14,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { uploadVideo } = require("./lib");
+const { uploadVideo, uploadVideoToInbox } = require("./lib");
 
 const ROOT = path.join(__dirname, "..");
 const QUEUE_DIRS = [path.join(ROOT, "to-publish"), path.join(ROOT, "published")];
@@ -24,6 +24,14 @@ const LOG_PATH = path.join(__dirname, "uploaded-log.json");
 // app AND the account is set back to public - flipping this before then
 // just makes every call 403 with unaudited_client_can_only_post_to_private_accounts.
 const PRIVACY_LEVEL = process.env.TIKTOK_PRIVACY_LEVEL || "SELF_ONLY";
+
+// While the audit is pending, default to sending videos to the account's
+// drafts inbox instead of direct publish - it isn't restricted to SELF_ONLY,
+// so it works today (no need for the account to stay Private either). Set
+// TIKTOK_USE_INBOX=false once the audit is approved to go back to direct
+// publish. The inbox endpoint can't carry a caption via API, so we save it
+// next to the video for the account owner to paste in when they post it.
+const USE_INBOX = process.env.TIKTOK_USE_INBOX !== "false";
 
 function loadLog() {
   if (!fs.existsSync(LOG_PATH)) return [];
@@ -73,8 +81,17 @@ async function main() {
     try {
       const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
       const caption = buildCaption(meta);
-      console.log(`[${new Date().toISOString()}] Uploading ${baseName} to TikTok (${PRIVACY_LEVEL})...`);
-      const result = await uploadVideo({ videoPath, caption, privacyLevel: PRIVACY_LEVEL });
+      let result;
+      if (USE_INBOX) {
+        console.log(`[${new Date().toISOString()}] Sending ${baseName} to TikTok drafts inbox...`);
+        result = await uploadVideoToInbox({ videoPath });
+        const captionPath = path.join(path.dirname(videoPath), `${baseName}_tiktok_caption.txt`);
+        fs.writeFileSync(captionPath, caption, "utf8");
+        console.log(`  > caption ready to paste: ${captionPath}`);
+      } else {
+        console.log(`[${new Date().toISOString()}] Uploading ${baseName} to TikTok (${PRIVACY_LEVEL})...`);
+        result = await uploadVideo({ videoPath, caption, privacyLevel: PRIVACY_LEVEL });
+      }
       appendLog({
         baseName,
         publishId: result.publishId,

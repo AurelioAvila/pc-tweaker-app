@@ -92,6 +92,9 @@ export interface Strings {
     switchToLogin: string;
     emailInvalid: string;
     passwordTooShort: string;
+    firstName: string;
+    lastName: string;
+    registerDetailsRequired: string;
     loginRequiredForCheckout: string;
     forgotPasswordLink: string;
     forgotPasswordButton: string;
@@ -191,6 +194,9 @@ const it: Strings = {
     switchToLogin: "Hai già un account? Accedi",
     emailInvalid: "Inserisci un'email valida.",
     passwordTooShort: "La password deve avere almeno 8 caratteri.",
+    firstName: "Nome",
+    lastName: "Cognome",
+    registerDetailsRequired: "Nome, cognome e data di nascita sono obbligatori.",
     loginRequiredForCheckout: "Accedi o registrati prima di sbloccare Pro.",
     forgotPasswordLink: "Password dimenticata?",
     forgotPasswordButton: "Invia link di ripristino",
@@ -355,6 +361,9 @@ const en: Strings = {
     switchToLogin: "Already have an account? Log in",
     emailInvalid: "Enter a valid email address.",
     passwordTooShort: "Password must be at least 8 characters.",
+    firstName: "First name",
+    lastName: "Last name",
+    registerDetailsRequired: "First name, last name and date of birth are required.",
     loginRequiredForCheckout: "Log in or sign up before unlocking Pro.",
     forgotPasswordLink: "Forgot password?",
     forgotPasswordButton: "Send reset link",
@@ -515,6 +524,9 @@ const fr: Strings = {
     switchToLogin: "Déjà un compte ? Connectez-vous",
     emailInvalid: "Saisissez une adresse e-mail valide.",
     passwordTooShort: "Le mot de passe doit contenir au moins 8 caractères.",
+    firstName: "Prénom",
+    lastName: "Nom",
+    registerDetailsRequired: "Le prénom, le nom et la date de naissance sont obligatoires.",
     loginRequiredForCheckout: "Connectez-vous ou inscrivez-vous avant de débloquer Pro.",
     forgotPasswordLink: "Mot de passe oublié ?",
     forgotPasswordButton: "Envoyer le lien de réinitialisation",
@@ -675,6 +687,9 @@ const es: Strings = {
     switchToLogin: "¿Ya tienes cuenta? Inicia sesión",
     emailInvalid: "Introduce un correo electrónico válido.",
     passwordTooShort: "La contraseña debe tener al menos 8 caracteres.",
+    firstName: "Nombre",
+    lastName: "Apellido",
+    registerDetailsRequired: "Nombre, apellido y fecha de nacimiento son obligatorios.",
     loginRequiredForCheckout: "Inicia sesión o regístrate antes de desbloquear Pro.",
     forgotPasswordLink: "¿Olvidaste la contraseña?",
     forgotPasswordButton: "Enviar enlace de restablecimiento",
@@ -835,6 +850,9 @@ const de: Strings = {
     switchToLogin: "Schon ein Konto? Anmelden",
     emailInvalid: "Bitte eine gültige E-Mail-Adresse eingeben.",
     passwordTooShort: "Das Passwort muss mindestens 8 Zeichen lang sein.",
+    firstName: "Vorname",
+    lastName: "Nachname",
+    registerDetailsRequired: "Vorname, Nachname und Geburtsdatum sind erforderlich.",
     loginRequiredForCheckout: "Vor dem Freischalten von Pro anmelden oder registrieren.",
     forgotPasswordLink: "Passwort vergessen?",
     forgotPasswordButton: "Link zum Zurücksetzen senden",

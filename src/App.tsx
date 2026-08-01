@@ -477,7 +477,12 @@ function AuthSection({
 }: {
   s: Strings;
   auth: AuthState;
-  onAuthenticate: (mode: "login" | "register", email: string, password: string) => Promise<void>;
+  onAuthenticate: (
+    mode: "login" | "register",
+    email: string,
+    password: string,
+    registerDetails?: { firstName: string; lastName: string; dateOfBirth: string },
+  ) => Promise<void>;
   onLogout: () => void;
   onResendVerification: () => Promise<void>;
   onForgotPassword: (email: string) => Promise<void>;
@@ -485,6 +490,9 @@ function AuthSection({
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -592,12 +600,21 @@ function AuthSection({
       setError(s.auth.passwordTooShort);
       return;
     }
+    if (mode === "register" && (!firstName.trim() || !lastName.trim() || !dateOfBirth)) {
+      setError(s.auth.registerDetailsRequired);
+      return;
+    }
 
     setWorking(true);
     try {
       // Safe: the "forgot" mode returns its own JSX earlier above, so this
       // code path only ever runs for "login" | "register".
-      await onAuthenticate(mode as "login" | "register", email, password);
+      await onAuthenticate(
+        mode as "login" | "register",
+        email,
+        password,
+        mode === "register" ? { firstName, lastName, dateOfBirth } : undefined,
+      );
     } catch (err) {
       setError(String(err instanceof Error ? err.message : err));
     } finally {
@@ -609,6 +626,30 @@ function AuthSection({
     <div className="border-b border-white/10 p-4">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{s.menu.account}</p>
       <form onSubmit={submit} className="flex flex-col gap-2">
+        {mode === "register" && (
+          <>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder={s.auth.firstName}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[var(--app-accent)]"
+            />
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder={s.auth.lastName}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[var(--app-accent)]"
+            />
+            <input
+              type="date"
+              value={dateOfBirth}
+              onChange={(e) => setDateOfBirth(e.target.value)}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[var(--app-accent)]"
+            />
+          </>
+        )}
         <input
           type="email"
           value={email}
@@ -677,7 +718,12 @@ function AccountMenu({
   theme: ThemeName;
   setTheme: (t: ThemeName) => void;
   auth: AuthState;
-  onAuthenticate: (mode: "login" | "register", email: string, password: string) => Promise<void>;
+  onAuthenticate: (
+    mode: "login" | "register",
+    email: string,
+    password: string,
+    registerDetails?: { firstName: string; lastName: string; dateOfBirth: string },
+  ) => Promise<void>;
   onLogout: () => void;
   onResendVerification: () => Promise<void>;
   onForgotPassword: (email: string) => Promise<void>;
@@ -857,14 +903,19 @@ function App() {
     setAuth({ status: "anonymous" });
   }
 
-  async function authenticate(mode: "login" | "register", email: string, password: string) {
+  async function authenticate(
+    mode: "login" | "register",
+    email: string,
+    password: string,
+    registerDetails?: { firstName: string; lastName: string; dateOfBirth: string },
+  ) {
     if (!API_BASE_URL) {
       throw new Error(s.auth.backendNotConfigured);
     }
     const res = await fetch(`${API_BASE_URL}/api/auth/${mode}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, ...registerDetails }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}) as { error?: string });

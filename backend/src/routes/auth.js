@@ -31,9 +31,14 @@ async function sendVerificationEmail(userId, email) {
 }
 
 router.post("/register", async (req, res) => {
-  const { email, password } = req.body || {};
+  const { email, password, firstName, lastName, dateOfBirth } = req.body || {};
   if (!isValidEmail(email)) return res.status(400).json({ error: "invalid email" });
   if (!isValidPassword(password)) return res.status(400).json({ error: "password must be at least 8 characters" });
+  if (!firstName || !firstName.trim()) return res.status(400).json({ error: "first name is required" });
+  if (!lastName || !lastName.trim()) return res.status(400).json({ error: "last name is required" });
+  if (!dateOfBirth || !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
+    return res.status(400).json({ error: "date of birth is required (YYYY-MM-DD)" });
+  }
   if (!isConfigured) return res.status(503).json({ error: "database not configured (DATABASE_URL missing)" });
 
   try {
@@ -44,8 +49,8 @@ router.post("/register", async (req, res) => {
 
     const passwordHash = await hashPassword(password);
     const result = await pool.query(
-      "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, token_version",
-      [email.toLowerCase(), passwordHash],
+      "INSERT INTO users (email, password_hash, first_name, last_name, date_of_birth) VALUES ($1, $2, $3, $4, $5) RETURNING id, token_version",
+      [email.toLowerCase(), passwordHash, firstName.trim(), lastName.trim(), dateOfBirth],
     );
     const { id, token_version } = result.rows[0];
     const token = signToken(id, token_version);

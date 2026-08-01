@@ -34,17 +34,73 @@ if not os.environ.get("IMAGEMAGICK_BINARY"):
         os.environ["IMAGEMAGICK_BINARY"] = magick_path
         os.environ["PATH"] = os.path.dirname(magick_path) + os.pathsep + os.environ.get("PATH", "")
 
+import subprocess
+
 from moviepy.editor import (
     VideoFileClip,
     ImageClip,
     AudioFileClip,
     TextClip,
     ColorClip,
+    CompositeAudioClip,
     CompositeVideoClip,
     concatenate_videoclips,
 )
 
 TARGET_W, TARGET_H = 1080, 1920
+
+
+def _generate_bg_music(path: str, duration: float) -> None:
+    """Synthesized ambient bed (no external sample - avoids any copyright
+    risk), same pattern already used for CertSprint/Groomlyco/Magdock. Very
+    low volume under the narration, slow crescendo. These Reels previously
+    had zero background music, only the voice."""
+    fade_in = min(duration * 0.4, 6.0)
+    fade_out = min(duration * 0.15, 2.0)
+    fade_out_start = max(duration - fade_out, 0.0)
+    notes = [130.81, 164.81, 196.00]  # soft C major chord (C-E-G)
+    cmd = ["ffmpeg", "-y"]
+    for freq in notes:
+        cmd += ["-f", "lavfi", "-i", f"sine=frequency={freq}:duration={duration}"]
+    cmd += [
+        "-filter_complex",
+        f"amix=inputs={len(notes)}:duration=longest,"
+        f"volume=0.05,"
+        f"afade=t=in:st=0:d={fade_in:.3f},"
+        f"afade=t=out:st={fade_out_start:.3f}:d={fade_out:.3f}",
+        str(path),
+    ]
+    subprocess.run(cmd, check=True, capture_output=True)
+
+
+def _generate_whoosh(path: str, duration: float = 0.35) -> None:
+    """Synthesized whoosh (filtered noise burst with fades) marking scene
+    cuts - these Reels previously had a hard cut with no sound design there."""
+    subprocess.run([
+        "ffmpeg", "-y", "-f", "lavfi",
+        "-i", f"anoisesrc=color=pink:duration={duration}:sample_rate=44100",
+        "-af", (
+            "highpass=f=800,lowpass=f=6000,"
+            "afade=t=in:st=0:d=0.04,"
+            f"afade=t=out:st={duration - 0.12:.3f}:d=0.12,"
+            "volume=0.35"
+        ),
+        str(path),
+    ], check=True, capture_output=True)
+
+
+def _build_full_audio(voice_audio: AudioFileClip, duration: float, cut_times: list, tmp_path: str) -> CompositeAudioClip:
+    """Layers a quiet ambient bed plus a short whoosh on every scene cut
+    under the narration - narration itself is never touched/attenuated."""
+    bg_music_path = tmp_path + "_bgmusic.mp3"
+    _generate_bg_music(bg_music_path, duration)
+    bg_music = AudioFileClip(bg_music_path)
+
+    whoosh_path = tmp_path + "_whoosh.wav"
+    _generate_whoosh(whoosh_path)
+    whoosh_layers = [AudioFileClip(whoosh_path).set_start(t) for t in cut_times]
+
+    return CompositeAudioClip([bg_music, voice_audio, *whoosh_layers])
 
 # Bundled font instead of a generic system font (DejaVu Sans) - Poppins
 # ExtraBold (OFL-licensed, assets/fonts/) is the same rounded-bold style
@@ -178,8 +234,10 @@ def _slideshow_background(image_paths: list, image_starts: list, total_duration:
 
 def _multi_clip_background(video_paths: list, total_duration: float):
     """Cuts between several background clips every 4-7s instead of looping
-    one clip for the whole Reel."""
+    one clip for the whole Reel. Returns (composite_clip, cut_times) - the
+    cut times feed the whoosh sound design on each scene change."""
     clips = []
+    cut_times = []
     t = 0.0
     i = 0
     while t < total_duration:
@@ -188,9 +246,11 @@ def _multi_clip_background(video_paths: list, total_duration: float):
         clip = _fit_vertical(VideoFileClip(path))
         clip = _loop_to_duration(clip, segment_duration).set_start(t).set_duration(segment_duration)
         clips.append(clip)
+        if t > 0:
+            cut_times.append(t)
         t += segment_duration
         i += 1
-    return CompositeVideoClip(clips, size=(TARGET_W, TARGET_H)).set_duration(total_duration)
+    return CompositeVideoClip(clips, size=(TARGET_W, TARGET_H)).set_duration(total_duration), cut_times
 
 
 def _caption_band(duration: float):
@@ -225,7 +285,9 @@ def render_short(background_video_paths, audio_path: str, word_timings: list, ou
         background_video_paths = [background_video_paths]
 
     audio = AudioFileClip(audio_path)
-    background = _multi_clip_background(background_video_paths, audio.duration).set_audio(audio)
+    background, cut_times = _multi_clip_background(background_video_paths, audio.duration)
+    full_audio = _build_full_audio(audio, audio.duration, cut_times, output_path.replace(".mp4", ""))
+    background = background.set_audio(full_audio)
 
     band = _caption_band(audio.duration)
     captions = _caption_clips_from_words(word_timings, audio.duration)
@@ -246,7 +308,10 @@ def render_short(background_video_paths, audio_path: str, word_timings: list, ou
 
 def render_slideshow(image_paths: list, image_starts: list, audio_path: str, word_timings: list, output_path: str):
     audio = AudioFileClip(audio_path)
-    background = _slideshow_background(image_paths, image_starts, audio.duration).set_audio(audio)
+    background = _slideshow_background(image_paths, image_starts, audio.duration)
+    cut_times = [t for t in image_starts if t > 0]
+    full_audio = _build_full_audio(audio, audio.duration, cut_times, output_path.replace(".mp4", ""))
+    background = background.set_audio(full_audio)
 
     band = _caption_band(audio.duration)
     captions = _caption_clips_from_words(word_timings, audio.duration)

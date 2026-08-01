@@ -28,12 +28,18 @@ async function notifyTelegram(videoPath, caption) {
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
   const videoName = path.basename(videoPath);
-  const text = `🎬 PC Tweaker — ${videoName}\n\n${caption}`;
   try {
+    // Two separate messages: a label first, then the pure caption so it can
+    // be selected and pasted without needing to strip anything out.
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ chat_id: chatId, text }),
+      body: new URLSearchParams({ chat_id: chatId, text: `🎬 PC Tweaker — ${videoName}` }),
+    });
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ chat_id: chatId, text: caption }),
     });
   } catch (err) {
     console.log(`[WARN] Telegram notification failed for ${videoName}: ${err.message}`);

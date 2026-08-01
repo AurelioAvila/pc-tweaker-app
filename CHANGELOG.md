@@ -7,6 +7,14 @@ the git log.
 
 ## 2026-08-02
 
+- **Fixed**: app showed the Free plan for a real Pro account (`is_pro` was
+  still `true` in the database the whole time — verified directly). Root
+  cause: `VITE_API_BASE_URL` was never persisted anywhere, so any
+  `npm run tauri build` run without passing it inline on the command line
+  silently baked in an empty backend URL, making the app unable to fetch
+  `/api/account` at all and get stuck on its Free-by-default initial state.
+  Added a committed `.env` (not a secret — it's just the public Railway URL)
+  so every future build picks it up automatically.
 - **Fixed**: the "Game Sessions" toggle switch rendered crooked/misshapen —
   its `<button>` was missing the reset styles (`appearance-none`, `border-0`,
   `p-0`, `inline-flex items-center`) that the shared `Toggle` component

@@ -9,6 +9,11 @@ const transporter = isConfigured
       port: Number(SMTP_PORT) || 587,
       secure: Number(SMTP_PORT) === 465,
       auth: { user: SMTP_USER, pass: SMTP_PASS },
+      // Railway's network doesn't route IPv6 egress, but Node's DNS lookup
+      // for smtp.gmail.com can still return an AAAA (IPv6) record first,
+      // causing connect ENETUNREACH. Forcing IPv4 here fixes it regardless
+      // of what order the OS resolver returns addresses in.
+      family: 4,
     })
   : null;
 

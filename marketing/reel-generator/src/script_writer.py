@@ -13,25 +13,31 @@ TTS word timing, same mechanism as the getcertsprint bot.
 """
 import random
 
+# Rinforzati 2026-08-01 dopo la prima analisi cross-account reale: gli hook
+# in prima persona/conseguenza diretta (stress-test, POV, "la differenza si
+# vede solo quando e' troppo tardi") hanno performato 5-40x meglio degli
+# hook generici "ecco un'impostazione" su Groomlyco/Magdock - stessa logica
+# applicata qui, non solo teoria. Vedi
+# feedback_reinforce_winning_hooks nella memoria per i dati.
 HOOKS = {
     "mistakewarning": [
+        "I checked every default Windows setting for a week, this one shocked me.",
+        "The setting that only shows up as a problem when it's too late.",
         "Windows turned this on without asking you.",
-        "This default setting is working against you.",
         "You didn't enable this, Windows did.",
-        "Here's a setting you never agreed to.",
         "This has probably been on the whole time.",
     ],
     "contrarian": [
+        "I stress-tested three PC optimizers so you don't have to.",
         "Don't install a PC optimizer before hearing this.",
         "Most optimizer tools can't do this one thing.",
         "Here's what separates a safe tool from a risky one.",
-        "Before you download anything, check this first.",
     ],
     "beforeafter": [
+        "POV: your PC finally runs like it should.",
+        "Same PC, one setting flipped, here's the difference.",
         "Here's what one click actually changes.",
-        "Same PC, one setting flipped.",
         "This is the difference one preset makes.",
-        "Watch what changes with a single toggle.",
     ],
 }
 
@@ -112,10 +118,10 @@ def build_script_template(items, category: str) -> tuple:
 
 
 LISTTEASE_INTROS = [
+    "I went through {n} Windows settings that only bite you later.",
     "{n} things Windows does against you.",
     "Save this, {n} things to check right now.",
     "{n} settings Windows turns on without asking.",
-    "Check all {n} of these on your own PC.",
 ]
 
 

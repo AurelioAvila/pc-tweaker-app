@@ -58,3 +58,5 @@ marketing/reel-generator/src/__pycache__
 *.njsproj
 *.sln
 *.sw?
+marketing/youtube-upload/longform_output/*
+!marketing/youtube-upload/longform_output/.gitkeep

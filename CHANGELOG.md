@@ -1,0 +1,47 @@
+# Changelog
+
+All notable changes to PC Tweaker are logged here, newest first. Every
+update from here on (features, fixes, infra changes) gets an entry —
+this is the single source of truth for "what changed and why," not just
+the git log.
+
+## 2026-08-02
+
+- **Fixed**: registration now works from the packaged Windows app — CORS was
+  rejecting the WebView2 origin (`http://tauri.localhost`, not
+  `tauri://localhost`/`https://tauri.localhost` as first assumed).
+- **Fixed**: verification/reset emails never actually sent — Railway blocks
+  outbound SMTP ports, so requests hung for 2 minutes then failed. Switched
+  to Resend's HTTP API (`RESEND_API_KEY`), with a verified sending domain
+  (`pctweaker.getcertsprint.com`) so mail reaches any recipient, not just the
+  account owner's sandboxed address.
+- **Added**: first name, last name, and date of birth are now collected at
+  registration.
+- **Added**: automated Reel-generation pipeline (`marketing/reel-generator/`)
+  feeding the existing YouTube/TikTok/Instagram publishers, running on a
+  daily schedule.
+
+## 2026-07-26 — 2026-07-29
+
+- **Added**: fully automated YouTube upload pipeline (`marketing/youtube-upload/`) —
+  drop a video in `marketing/to-publish/`, it publishes automatically (public,
+  no manual review step, by explicit choice).
+- **Added**: TikTok automation via the Content Posting API
+  (`marketing/tiktok-upload/`).
+- **Added**: Instagram publisher code (`marketing/instagram-upload/`) —
+  built and ready, Meta/Page linking still pending a device-trust hold to clear.
+- **Added**: MIT license, privacy policy, GitHub Actions CI build.
+
+## 2026-07-25
+
+- **Fixed**: white background flash behind short tabs / the open account menu
+  (`html`/`body` had no background color set).
+- **Fixed**: Stripe checkout failing on Managed Payments accounts — pinned
+  the API version and added a required product tax code.
+- **Live**: Stripe payments went live (real card charges, real payouts).
+- **Released**: v0.1.1, backend deployed to Railway with Postgres.
+
+## Earlier
+
+See `git log` for the full history predating this changelog (initial app
+scaffold, rollback engine, tweak categories, i18n, themes, Pro tier).

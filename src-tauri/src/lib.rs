@@ -1,6 +1,7 @@
 mod cleanup;
 mod dns;
 mod elevation;
+mod game_sessions;
 mod gaming;
 mod power;
 mod rollback;
@@ -42,12 +43,14 @@ fn hive_str(h: &Hive) -> &'static str {
     }
 }
 
-fn store_for(app: &tauri::AppHandle) -> Result<RollbackStore, String> {
-    let dir = app
-        .path()
+pub fn store_for_dir(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    app.path()
         .app_data_dir()
-        .map_err(|e| format!("impossibile risolvere la cartella dati app: {}", e))?;
-    Ok(RollbackStore::new(dir))
+        .map_err(|e| format!("impossibile risolvere la cartella dati app: {}", e))
+}
+
+fn store_for(app: &tauri::AppHandle) -> Result<RollbackStore, String> {
+    Ok(RollbackStore::new(store_for_dir(app)?))
 }
 
 #[tauri::command]
@@ -293,6 +296,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            game_sessions::spawn_watcher(app.handle().clone());
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             list_tweaks,
             apply_tweak,
@@ -300,7 +307,12 @@ pub fn run() {
             list_cleanup_targets,
             run_cleanup,
             scan_duplicates,
-            delete_files
+            delete_files,
+            game_sessions::list_game_sessions,
+            game_sessions::game_sessions_enabled,
+            game_sessions::set_game_sessions_enabled,
+            game_sessions::add_game_session,
+            game_sessions::remove_game_session
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

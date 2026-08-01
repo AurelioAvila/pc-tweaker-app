@@ -27,6 +27,13 @@ export interface Strings {
   };
   badges: { admin: string; pro: string; soon: string };
   emptyCategory: string;
+  gameSessions: {
+    title: string;
+    subtitle: string;
+    active: string; // uses {name}
+    gamesCount: string; // uses {count}
+    addGame: string;
+  };
   paywall: {
     title: string;
     body: string; // uses {feature}
@@ -125,6 +132,13 @@ const it: Strings = {
   tabs: { all: "Tutti", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Manutenzione", gaming: "Gaming" },
   badges: { admin: "Admin", pro: "PRO", soon: "IN ARRIVO" },
   emptyCategory: "Nessun tweak disponibile in questa categoria — presto in arrivo.",
+  gameSessions: {
+    title: "Game Sessions",
+    subtitle: "Rileva automaticamente i tuoi giochi e applica/annulla il preset Turbo Gaming da solo.",
+    active: "Sessione attiva: {name}",
+    gamesCount: "{count} giochi registrati",
+    addGame: "+ Aggiungi gioco (.exe)",
+  },
   paywall: {
     title: "Funzione Pro",
     body: '"{feature}" fa parte della versione Pro di PC Tweaker. Sblocca con un pagamento unico, senza abbonamento: tweak avanzati, applicazione in batch e aggiornamenti futuri inclusi.',
@@ -294,6 +308,13 @@ const en: Strings = {
   tabs: { all: "All", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Maintenance", gaming: "Gaming" },
   badges: { admin: "Admin", pro: "PRO", soon: "COMING SOON" },
   emptyCategory: "No tweaks available in this category yet — more coming soon.",
+  gameSessions: {
+    title: "Game Sessions",
+    subtitle: "Auto-detects your games and applies/reverts the Turbo Gaming preset on its own.",
+    active: "Session active: {name}",
+    gamesCount: "{count} games registered",
+    addGame: "+ Add game (.exe)",
+  },
   paywall: {
     title: "Pro feature",
     body: '"{feature}" is part of PC Tweaker Pro. Unlock it with a one-time payment, no subscription: advanced tweaks, batch presets, and future updates included.',
@@ -457,6 +478,13 @@ const fr: Strings = {
   tabs: { all: "Tous", performance: "Performance", privacy: "Confidentialité", ui: "Interface", manutenzione: "Entretien", gaming: "Gaming" },
   badges: { admin: "Admin", pro: "PRO", soon: "BIENTÔT" },
   emptyCategory: "Aucune optimisation disponible dans cette catégorie pour l'instant — à venir.",
+  gameSessions: {
+    title: "Game Sessions",
+    subtitle: "Détecte automatiquement vos jeux et applique/annule le préréglage Turbo Gaming tout seul.",
+    active: "Session active : {name}",
+    gamesCount: "{count} jeux enregistrés",
+    addGame: "+ Ajouter un jeu (.exe)",
+  },
   paywall: {
     title: "Fonction Pro",
     body: '« {feature} » fait partie de PC Tweaker Pro. Débloquez-la avec un paiement unique, sans abonnement : optimisations avancées, application par lot et mises à jour futures incluses.',
@@ -620,6 +648,13 @@ const es: Strings = {
   tabs: { all: "Todos", performance: "Rendimiento", privacy: "Privacidad", ui: "Interfaz", manutenzione: "Mantenimiento", gaming: "Gaming" },
   badges: { admin: "Admin", pro: "PRO", soon: "PRÓXIMAMENTE" },
   emptyCategory: "Todavía no hay ajustes disponibles en esta categoría — próximamente.",
+  gameSessions: {
+    title: "Game Sessions",
+    subtitle: "Detecta automáticamente tus juegos y aplica/revierte el preset Turbo Gaming por sí solo.",
+    active: "Sesión activa: {name}",
+    gamesCount: "{count} juegos registrados",
+    addGame: "+ Añadir juego (.exe)",
+  },
   paywall: {
     title: "Función Pro",
     body: '"{feature}" forma parte de PC Tweaker Pro. Desbloquéala con un pago único, sin suscripción: ajustes avanzados, aplicación por lotes y futuras actualizaciones incluidas.',
@@ -783,6 +818,13 @@ const de: Strings = {
   tabs: { all: "Alle", performance: "Leistung", privacy: "Datenschutz", ui: "Oberfläche", manutenzione: "Wartung", gaming: "Gaming" },
   badges: { admin: "Admin", pro: "PRO", soon: "DEMNÄCHST" },
   emptyCategory: "In dieser Kategorie sind noch keine Optimierungen verfügbar — bald verfügbar.",
+  gameSessions: {
+    title: "Game Sessions",
+    subtitle: "Erkennt deine Spiele automatisch und wendet das Turbo-Gaming-Preset selbstständig an/rückgängig.",
+    active: "Sitzung aktiv: {name}",
+    gamesCount: "{count} Spiele registriert",
+    addGame: "+ Spiel hinzufügen (.exe)",
+  },
   paywall: {
     title: "Pro-Funktion",
     body: '„{feature}" ist Teil von PC Tweaker Pro. Freischalten mit einer einmaligen Zahlung, kein Abo: erweiterte Optimierungen, Batch-Anwendung und zukünftige Updates inklusive.',

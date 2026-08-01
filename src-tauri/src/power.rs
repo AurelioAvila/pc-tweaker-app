@@ -23,13 +23,26 @@ pub fn run_powercfg(args: &[&str]) -> Result<String, String> {
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
 }
 
+/// `true` for a token shaped like a GUID (8-4-4-4-12 hex groups). `powercfg`'s
+/// output label before the GUID is localized ("GUID:" in English, "GUID
+/// combinazione risparmio energia:" in Italian, etc.) so matching on the
+/// label text breaks on non-English Windows — the GUID's own shape doesn't
+/// change with the display language, so that's what this looks for instead.
+fn looks_like_guid(s: &str) -> bool {
+    let parts: Vec<&str> = s.split('-').collect();
+    parts.len() == 5
+        && [8, 4, 4, 4, 12]
+            .iter()
+            .zip(parts.iter())
+            .all(|(len, part)| part.len() == *len && part.chars().all(|c| c.is_ascii_hexdigit()))
+}
+
 #[cfg(windows)]
 pub fn active_scheme_guid() -> Result<String, String> {
     let stdout = run_powercfg(&["/getactivescheme"])?;
     stdout
-        .split("GUID:")
-        .nth(1)
-        .and_then(|rest| rest.trim().split_whitespace().next())
+        .split_whitespace()
+        .find(|tok| looks_like_guid(tok))
         .map(|s| s.to_string())
         .ok_or_else(|| "impossibile leggere il piano di alimentazione attivo".to_string())
 }

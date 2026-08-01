@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openFolderDialog } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { listen } from "@tauri-apps/api/event";
 import { STRINGS, LANGUAGES, Lang, Strings, detectInitialLang, format } from "./i18n";
 import { THEMES, ThemeName, detectInitialTheme } from "./theme";
 import "./App.css";
@@ -827,6 +828,130 @@ function AccountMenu({
   );
 }
 
+type GameEntry = { path: string; name: string };
+
+function GameSessionsPanel({
+  s,
+  isPro,
+  onRequirePro,
+}: {
+  s: Strings;
+  isPro: boolean;
+  onRequirePro: () => void;
+}) {
+  const [enabled, setEnabled] = useState(false);
+  const [games, setGames] = useState<GameEntry[]>([]);
+  const [activeGame, setActiveGame] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+
+  async function refresh() {
+    const [e, list] = await Promise.all([
+      invoke<boolean>("game_sessions_enabled"),
+      invoke<GameEntry[]>("list_game_sessions"),
+    ]);
+    setEnabled(e);
+    setGames(list);
+  }
+
+  useEffect(() => {
+    refresh().catch(() => {});
+    const unlisten = listen<{ active: boolean; name: string | null }>("game-session-changed", (event) => {
+      setActiveGame(event.payload.active ? event.payload.name : null);
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function toggleEnabled() {
+    if (!isPro) {
+      onRequirePro();
+      return;
+    }
+    const next = !enabled;
+    await invoke("set_game_sessions_enabled", { enabled: next });
+    setEnabled(next);
+  }
+
+  async function addGame() {
+    if (!isPro) {
+      onRequirePro();
+      return;
+    }
+    const path = await openFolderDialog({
+      multiple: false,
+      filters: [{ name: "Eseguibile", extensions: ["exe"] }],
+    });
+    if (!path || Array.isArray(path)) return;
+    await invoke("add_game_session", { path });
+    await refresh();
+  }
+
+  async function removeGame(path: string) {
+    await invoke("remove_game_session", { path });
+    await refresh();
+  }
+
+  return (
+    <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+            {s.gameSessions.title}
+            <span className="rounded-full bg-gradient-to-r from-amber-300 to-yellow-500 px-2 py-0.5 text-[10px] font-bold text-amber-950">
+              PRO
+            </span>
+          </p>
+          <p className="mt-0.5 text-xs text-slate-400">
+            {activeGame ? format(s.gameSessions.active, { name: activeGame }) : s.gameSessions.subtitle}
+          </p>
+        </div>
+        <button
+          role="switch"
+          aria-checked={enabled}
+          onClick={toggleEnabled}
+          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enabled ? "" : "bg-white/10"}`}
+          style={enabled ? { backgroundColor: "var(--app-accent)" } : undefined}
+        >
+          <span
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${enabled ? "translate-x-5" : "translate-x-0.5"}`}
+          />
+        </button>
+      </div>
+
+      {enabled && (
+        <div className="mt-3 border-t border-white/10 pt-3">
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="text-xs font-medium text-slate-400 hover:text-slate-200"
+          >
+            {format(s.gameSessions.gamesCount, { count: games.length })} {expanded ? "▲" : "▼"}
+          </button>
+          {expanded && (
+            <div className="mt-2 flex flex-col gap-1.5">
+              {games.map((g) => (
+                <div key={g.path} className="flex items-center justify-between gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-xs">
+                  <span className="truncate text-slate-300">{g.name}</span>
+                  <button onClick={() => removeGame(g.path)} className="shrink-0 text-slate-500 hover:text-red-400">
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={addGame}
+                className="mt-1 rounded-lg border border-dashed border-white/15 px-3 py-1.5 text-xs font-medium text-slate-400 hover:border-white/30 hover:text-slate-200"
+              >
+                {s.gameSessions.addGame}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [lang, setLangState] = useState<Lang>(() => detectInitialLang());
   const s = STRINGS[lang];
@@ -1128,6 +1253,12 @@ function App() {
             </button>
           ))}
         </nav>
+
+        <GameSessionsPanel
+          s={s}
+          isPro={isProUnlocked}
+          onRequirePro={() => setPaywallFeature(s.gameSessions.title)}
+        />
 
         <ul className="flex flex-col gap-3">
           {visibleTweaks.map((t, i) => {

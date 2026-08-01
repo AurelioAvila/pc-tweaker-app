@@ -7,6 +7,19 @@ the git log.
 
 ## 2026-08-02
 
+- **Added**: "Game Sessions" (Pro) — auto-detects when a registered game
+  launches and automatically applies the Turbo Gaming preset, then reverts
+  it the moment the game closes, using the app's existing rollback system.
+  Background watcher (`sysinfo`-based process polling, `src-tauri/src/game_sessions.rs`),
+  new "Add game" picker in the UI. Verified live end-to-end (registry values
+  and active power scheme actually changed and reverted, not just the
+  on-disk snapshot).
+- **Fixed**: found while testing the above — the "High performance power
+  plan" tweak (and Turbo Gaming, which bundles it) silently failed to read
+  the active power scheme on any non-English Windows install, because it
+  parsed `powercfg`'s output looking for the literal English label `"GUID:"`.
+  Now matches on the GUID's own shape (8-4-4-4-12 hex groups) instead of the
+  localized label text.
 - **Fixed**: registration now works from the packaged Windows app — CORS was
   rejecting the WebView2 origin (`http://tauri.localhost`, not
   `tauri://localhost`/`https://tauri.localhost` as first assumed).

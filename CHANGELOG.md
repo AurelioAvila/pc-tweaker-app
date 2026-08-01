@@ -7,6 +7,12 @@ the git log.
 
 ## 2026-08-02
 
+- **Fixed**: the "Game Sessions" toggle switch rendered crooked/misshapen —
+  its `<button>` was missing the reset styles (`appearance-none`, `border-0`,
+  `p-0`, `inline-flex items-center`) that the shared `Toggle` component
+  applies everywhere else, so the browser's default button box model
+  distorted the pill. Now uses the same reset + sizing as every other
+  toggle in the app.
 - **Added**: "Game Sessions" (Pro) — auto-detects when a registered game
   launches and automatically applies the Turbo Gaming preset, then reverts
   it the moment the game closes, using the app's existing rollback system.

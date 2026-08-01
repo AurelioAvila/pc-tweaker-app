@@ -908,14 +908,16 @@ function GameSessionsPanel({
           </p>
         </div>
         <button
+          type="button"
           role="switch"
           aria-checked={enabled}
           onClick={toggleEnabled}
-          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enabled ? "" : "bg-white/10"}`}
+          className={`relative inline-flex h-8 w-14 shrink-0 appearance-none items-center rounded-full border-0 p-0
+            outline-none transition-colors duration-300 ease-out ${enabled ? "" : "bg-white/15"}`}
           style={enabled ? { backgroundColor: "var(--app-accent)" } : undefined}
         >
           <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${enabled ? "translate-x-5" : "translate-x-0.5"}`}
+            className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ease-out ${enabled ? "translate-x-6" : "translate-x-0"}`}
           />
         </button>
       </div>

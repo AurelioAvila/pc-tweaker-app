@@ -68,8 +68,10 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
 3. **Set the remaining environment variables** on the service (Railway →
    Variables): `JWT_SECRET` (generate with `openssl rand -hex 32`),
    `APP_URL` (your Railway URL, needed for email links), `CORS_ORIGINS`,
-   `SMTP_*`/`MAIL_FROM` (for real verification/reset emails — without these,
-   the server logs the email content instead of sending it), `STRIPE_SECRET_KEY`,
+   `RESEND_API_KEY`/`MAIL_FROM` (for real verification/reset emails — without
+   this, the server logs the email content instead of sending it; use Resend
+   rather than `SMTP_*` on Railway, since it blocks outbound SMTP ports),
+   `STRIPE_SECRET_KEY`,
    `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`, `CHECKOUT_SUCCESS_URL`,
    `CHECKOUT_CANCEL_URL`. See `.env.example` for what each one is.
 4. Railway detects `npm start` automatically from `package.json`. On first

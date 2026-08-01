@@ -84,7 +84,7 @@ async function main() {
       let result;
       if (USE_INBOX) {
         console.log(`[${new Date().toISOString()}] Sending ${baseName} to TikTok drafts inbox...`);
-        result = await uploadVideoToInbox({ videoPath });
+        result = await uploadVideoToInbox({ videoPath, caption });
         const captionPath = path.join(path.dirname(videoPath), `${baseName}_tiktok_caption.txt`);
         fs.writeFileSync(captionPath, caption, "utf8");
         console.log(`  > caption ready to paste: ${captionPath}`);

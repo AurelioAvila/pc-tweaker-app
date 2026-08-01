@@ -18,6 +18,27 @@ const path = require("path");
 
 const API_BASE = "https://open.tiktokapis.com/v2";
 const TITLE_MAX_LEN = 2200; // real limit of the Content Posting API "title" field
+
+// Sends the ready-to-paste caption to Telegram as soon as a video lands in
+// drafts - the inbox endpoint can't attach a caption via API, so without
+// this it would have to be hunted down on the PC while publishing from the
+// phone. Silent no-op if not configured - must never fail the upload.
+async function notifyTelegram(videoPath, caption) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+  const videoName = path.basename(videoPath);
+  const text = `🎬 PC Tweaker — ${videoName}\n\n${caption}`;
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ chat_id: chatId, text }),
+    });
+  } catch (err) {
+    console.log(`[WARN] Telegram notification failed for ${videoName}: ${err.message}`);
+  }
+}
 const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
 
 function loadCredentials() {
@@ -155,7 +176,7 @@ async function uploadVideo({ videoPath, caption, privacyLevel = "SELF_ONLY" }) {
   return { publishId, status };
 }
 
-async function uploadVideoToInbox({ videoPath }) {
+async function uploadVideoToInbox({ videoPath, caption }) {
   // Sends the video to the account's "Upload to TikTok" drafts inbox instead
   // of publishing directly - unlike /video/init/, this isn't restricted to
   // SELF_ONLY pre-audit, so it works today. Trade-off: the inbox endpoint
@@ -200,6 +221,9 @@ async function uploadVideoToInbox({ videoPath }) {
 
   const status = await pollPublishStatus(accessToken, publishId);
   console.log(`[OK] Sent to TikTok drafts inbox: publish_id=${publishId}, status=${status}`);
+  if (caption) {
+    await notifyTelegram(videoPath, caption);
+  }
   return { publishId, status };
 }
 

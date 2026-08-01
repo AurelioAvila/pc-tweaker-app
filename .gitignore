@@ -60,3 +60,4 @@ marketing/reel-generator/src/__pycache__
 *.sw?
 marketing/youtube-upload/longform_output/*
 !marketing/youtube-upload/longform_output/.gitkeep
+marketing/tiktok-upload/run.bat

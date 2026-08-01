@@ -19,6 +19,20 @@ const path = require("path");
 const API_BASE = "https://open.tiktokapis.com/v2";
 const TITLE_MAX_LEN = 2200; // real limit of the Content Posting API "title" field
 
+const COUNTER_PATH = path.join(__dirname, "telegram_notify_counter.json");
+
+// Sequential counter so the Telegram label (e.g. "PC Tweaker #7") can be
+// matched in order to the notifications arriving in TikTok's Inbox.
+function nextCounter() {
+  let n = 0;
+  if (fs.existsSync(COUNTER_PATH)) {
+    n = JSON.parse(fs.readFileSync(COUNTER_PATH, "utf8")).n || 0;
+  }
+  n += 1;
+  fs.writeFileSync(COUNTER_PATH, JSON.stringify({ n }));
+  return n;
+}
+
 // Sends the ready-to-paste caption to Telegram as soon as a video lands in
 // drafts - the inbox endpoint can't attach a caption via API, so without
 // this it would have to be hunted down on the PC while publishing from the
@@ -28,13 +42,14 @@ async function notifyTelegram(videoPath, caption) {
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
   const videoName = path.basename(videoPath);
+  const n = nextCounter();
   try {
-    // Two separate messages: a label first, then the pure caption so it can
-    // be selected and pasted without needing to strip anything out.
+    // Two separate messages: a label first (with a sequential number), then
+    // the pure caption so it can be selected and pasted without stripping.
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ chat_id: chatId, text: `🎬 PC Tweaker — ${videoName}` }),
+      body: new URLSearchParams({ chat_id: chatId, text: `🎬 PC Tweaker #${n} — ${videoName}` }),
     });
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",

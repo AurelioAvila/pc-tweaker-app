@@ -39,10 +39,8 @@ fn run_sc(args: &[&str]) -> Result<String, String> {
 /// DISABLED) is always in English regardless of display language — so this
 /// matches on the value, the same fix applied earlier to the power-plan
 /// tweak's `powercfg` parsing for the same underlying reason.
-#[cfg(windows)]
-fn read_start_type() -> Result<String, String> {
-    let out = run_sc(&["qc", SERVICE_NAME])?;
-    for line in out.lines() {
+fn parse_start_type(output: &str) -> Result<String, String> {
+    for line in output.lines() {
         if line.contains("AUTO_START") || line.contains("DEMAND_START") || line.contains("DISABLED") {
             return Ok(line.trim().to_string());
         }
@@ -51,6 +49,10 @@ fn read_start_type() -> Result<String, String> {
 }
 
 #[cfg(windows)]
+fn read_start_type() -> Result<String, String> {
+    parse_start_type(&run_sc(&["qc", SERVICE_NAME])?)
+}
+
 fn start_type_flag(start_type: &str) -> &'static str {
     if start_type.contains("AUTO_START") {
         if start_type.contains("DELAYED") {
@@ -100,4 +102,39 @@ pub fn apply(_store: &RollbackStore) -> Result<(), String> {
 #[cfg(not(windows))]
 pub fn rollback(_store: &RollbackStore) -> Result<(), String> {
     Err("non supportato su questa piattaforma".to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression: `sc qc`'s field label is translated ("TIPO_AVVIO" on this
+    /// Italian machine, "START_TYPE" in English) but the enum value never is.
+    /// Parsing the label made the tweak fail outright on non-English Windows.
+    #[test]
+    fn reads_start_type_regardless_of_the_os_language() {
+        let italian = "NOME_SERVIZIO: WSearch\n        TIPO                      : 10  WIN32_OWN_PROCESS \n        TIPO_AVVIO                : 2   AUTO_START  (DELAYED)\n        CONTROLLO_ERRORE          : 1   NORMAL\n";
+        let english = "SERVICE_NAME: WSearch\n        TYPE               : 10  WIN32_OWN_PROCESS \n        START_TYPE         : 2   AUTO_START  (DELAYED)\n        ERROR_CONTROL      : 1   NORMAL\n";
+
+        for sample in [italian, english] {
+            let parsed = parse_start_type(sample).expect("should parse");
+            assert!(parsed.contains("AUTO_START"), "got: {}", parsed);
+            assert_eq!(start_type_flag(&parsed), "delayed-auto");
+        }
+    }
+
+    /// Rollback must restore the *exact* previous start type. Collapsing
+    /// delayed-auto into plain auto would silently change boot behaviour.
+    #[test]
+    fn maps_every_start_type_back_to_its_own_sc_flag() {
+        assert_eq!(start_type_flag("TIPO_AVVIO : 2   AUTO_START  (DELAYED)"), "delayed-auto");
+        assert_eq!(start_type_flag("START_TYPE : 2   AUTO_START"), "auto");
+        assert_eq!(start_type_flag("START_TYPE : 3   DEMAND_START"), "demand");
+        assert_eq!(start_type_flag("START_TYPE : 4   DISABLED"), "disabled");
+    }
+
+    #[test]
+    fn reports_an_error_when_the_start_type_is_missing() {
+        assert!(parse_start_type("SERVICE_NAME: WSearch\n  TYPE : 10\n").is_err());
+    }
 }

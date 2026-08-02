@@ -2,7 +2,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, OnceLock};
+
+static TMP_SEQ: AtomicU64 = AtomicU64::new(0);
 
 /// A registry value of a supported type. Some Windows settings (mouse
 /// acceleration, menu delays, ...) are stored as REG_SZ strings rather than
@@ -83,9 +86,20 @@ impl RollbackStore {
             fs::create_dir_all(parent)?;
         }
         let json = serde_json::to_string_pretty(store).unwrap();
-        let tmp = self.file_path.with_extension("json.tmp");
+        // Unique temp name per write: a fixed one would let two writers that
+        // aren't covered by the in-process lock (e.g. the elevated helper
+        // process) clobber each other's temp file and fail the rename.
+        let tmp = self.file_path.with_extension(format!(
+            "json.{}.{}.tmp",
+            std::process::id(),
+            TMP_SEQ.fetch_add(1, Ordering::Relaxed)
+        ));
         fs::write(&tmp, json)?;
-        fs::rename(&tmp, &self.file_path)
+        let result = fs::rename(&tmp, &self.file_path);
+        if result.is_err() {
+            let _ = fs::remove_file(&tmp);
+        }
+        result
     }
 
     pub fn is_applied(&self, tweak_id: &str) -> bool {
@@ -108,5 +122,146 @@ impl RollbackStore {
             let _ = self.save(&store);
         }
         entry
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_dir(tag: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "pct-test-{}-{}",
+            tag,
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    fn dummy(name: &str) -> SnapshotEntry {
+        SnapshotEntry::PowerScheme {
+            previous_guid: name.to_string(),
+        }
+    }
+
+    #[test]
+    fn saves_and_takes_a_single_entry() {
+        let dir = temp_dir("single");
+        let store = RollbackStore::new(dir.clone());
+
+        assert!(!store.is_applied("a"));
+        store.save_entry("a", dummy("guid-a")).unwrap();
+        assert!(store.is_applied("a"));
+
+        match store.take_entry("a") {
+            Some(SnapshotEntry::PowerScheme { previous_guid }) => assert_eq!(previous_guid, "guid-a"),
+            other => panic!("unexpected entry: {:?}", other.is_some()),
+        }
+        assert!(!store.is_applied("a"));
+        assert!(store.take_entry("a").is_none());
+
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    /// The regression this guards: concurrent writers used to read-modify-write
+    /// the same file with no lock, so one writer's snapshot could be silently
+    /// overwritten by another's — leaving a tweak applied with nothing to roll
+    /// back to. Without the lock this test loses entries; with it, all survive.
+    #[test]
+    fn concurrent_writers_never_lose_a_snapshot() {
+        let dir = temp_dir("concurrent");
+        const THREADS: usize = 8;
+        const PER_THREAD: usize = 40;
+
+        let handles: Vec<_> = (0..THREADS)
+            .map(|t| {
+                let dir = dir.clone();
+                std::thread::spawn(move || {
+                    let store = RollbackStore::new(dir);
+                    for i in 0..PER_THREAD {
+                        let id = format!("tweak-{}-{}", t, i);
+                        store.save_entry(&id, dummy(&id)).unwrap();
+                    }
+                })
+            })
+            .collect();
+
+        for h in handles {
+            h.join().expect("writer thread panicked");
+        }
+
+        let store = RollbackStore::new(dir.clone());
+        for t in 0..THREADS {
+            for i in 0..PER_THREAD {
+                let id = format!("tweak-{}-{}", t, i);
+                assert!(store.is_applied(&id), "lost snapshot {}", id);
+            }
+        }
+
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    /// Mixed apply/rollback traffic is the realistic shape: the Game Sessions
+    /// watcher reverts Turbo Gaming while the user toggles something else.
+    #[test]
+    fn concurrent_save_and_take_leave_a_consistent_file() {
+        let dir = temp_dir("mixed");
+        let seeded = RollbackStore::new(dir.clone());
+        for i in 0..40 {
+            seeded.save_entry(&format!("victim-{}", i), dummy("v")).unwrap();
+        }
+
+        let writer_dir = dir.clone();
+        let writer = std::thread::spawn(move || {
+            let store = RollbackStore::new(writer_dir);
+            for i in 0..40 {
+                store.save_entry(&format!("keeper-{}", i), dummy("k")).unwrap();
+            }
+        });
+
+        let taker_dir = dir.clone();
+        let taker = std::thread::spawn(move || {
+            let store = RollbackStore::new(taker_dir);
+            for i in 0..40 {
+                store.take_entry(&format!("victim-{}", i));
+            }
+        });
+
+        writer.join().unwrap();
+        taker.join().unwrap();
+
+        let store = RollbackStore::new(dir.clone());
+        for i in 0..40 {
+            assert!(store.is_applied(&format!("keeper-{}", i)), "lost keeper-{}", i);
+            assert!(!store.is_applied(&format!("victim-{}", i)), "victim-{} survived", i);
+        }
+
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    /// A crash between "write" and "replace" must not leave the app with an
+    /// unparseable snapshot file, which would strand every applied tweak.
+    #[test]
+    fn writes_are_committed_atomically_and_leave_no_temp_file() {
+        let dir = temp_dir("atomic");
+        let store = RollbackStore::new(dir.clone());
+        store.save_entry("a", dummy("guid")).unwrap();
+
+        let leftovers: Vec<_> = fs::read_dir(&dir)
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .map(|e| e.file_name().to_string_lossy().to_string())
+            .filter(|n| n.ends_with(".tmp"))
+            .collect();
+        assert!(leftovers.is_empty(), "temp files left behind: {:?}", leftovers);
+
+        let raw = fs::read_to_string(dir.join("rollback_store.json")).unwrap();
+        serde_json::from_str::<Store>(&raw).expect("snapshot file must always parse");
+
+        let _ = fs::remove_dir_all(dir);
     }
 }

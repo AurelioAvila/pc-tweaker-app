@@ -1,0 +1,39 @@
+name: Checks
+
+# Runs on every push and PR, not just releases: the point is to catch a
+# regression the moment it lands, while the change is still fresh, rather
+# than discovering it when tagging a release.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch: {}
+
+jobs:
+  checks:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: Translations (keys + placeholders across all languages)
+        run: npm run check:i18n
+
+      - name: Rust unit tests
+        run: npm run check:rust

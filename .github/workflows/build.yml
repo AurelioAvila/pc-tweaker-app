@@ -21,6 +21,10 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      # A release must never ship something the checks would have caught.
+      - name: Run checks
+        run: npm run check
+
       - name: Build Tauri app
         run: npm run tauri build
 

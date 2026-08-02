@@ -259,6 +259,14 @@ fn rollback_tweak(app: tauri::AppHandle, id: String) -> Result<(), String> {
     rollback_by_id(&store, &id)
 }
 
+/// Splits a batch into (needs-elevation, can-run-directly). Kept separate so
+/// the "every admin tweak ends up in one group, therefore one UAC prompt"
+/// guarantee is testable without actually elevating anything.
+#[cfg(windows)]
+fn split_by_elevation(ids: Vec<String>) -> (Vec<String>, Vec<String>) {
+    ids.into_iter().partition(|id| requires_admin_for(id))
+}
+
 /// Applies several tweaks at once (the Scan screen's "fix all").
 ///
 /// Applying them one by one would fire a separate UAC prompt for every
@@ -272,8 +280,7 @@ fn apply_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, 
     let store = store_for(&app)?;
     let mut failures = Vec::new();
 
-    let (needs_admin, direct): (Vec<String>, Vec<String>) =
-        ids.into_iter().partition(|id| requires_admin_for(id));
+    let (needs_admin, direct) = split_by_elevation(ids);
 
     for id in &direct {
         if let Err(e) = apply_by_id(&store, id) {
@@ -445,4 +452,73 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::*;
+
+    /// Every id the UI can show, gathered from the same places `list_tweaks`
+    /// gathers them.
+    fn all_visible_ids() -> Vec<String> {
+        let mut ids: Vec<String> = tweaks::all_tweaks().iter().map(|t| t.id.to_string()).collect();
+        ids.extend(
+            [
+                power::TWEAK_ID,
+                turbo::TWEAK_ID,
+                dns::TWEAK_ID,
+                gaming::INPUT_LAG_ID,
+                gaming::TURBO_BOOST_ID,
+                gaming::KEYBOARD_DELAY_ID,
+                game_priority::TWEAK_ID,
+                privacy_extra::ACTIVITY_HISTORY_ID,
+                services::WINDOWS_SEARCH_ID,
+            ]
+            .iter()
+            .map(|s| s.to_string()),
+        );
+        ids
+    }
+
+    /// Two tweaks sharing an id would silently collide in the rollback store:
+    /// applying one would overwrite the other's snapshot and their toggles
+    /// would appear linked. Cheap to prevent, nasty to debug.
+    #[test]
+    fn every_tweak_id_is_unique() {
+        let ids = all_visible_ids();
+        let mut seen = std::collections::HashSet::new();
+        for id in &ids {
+            assert!(seen.insert(id.clone()), "duplicate tweak id: {}", id);
+        }
+    }
+
+    /// The Scan screen's "fix all" must produce at most one elevation request,
+    /// no matter how many admin tweaks were selected — the whole point of
+    /// batching. This asserts the grouping without actually elevating.
+    #[test]
+    fn admin_tweaks_collapse_into_one_elevated_batch() {
+        let ids = all_visible_ids();
+        let expected_admin = ids.iter().filter(|id| requires_admin_for(id)).count();
+        assert!(expected_admin > 1, "test is meaningless without several admin tweaks");
+
+        let (needs_admin, direct) = split_by_elevation(ids.clone());
+
+        assert_eq!(needs_admin.len(), expected_admin);
+        assert_eq!(needs_admin.len() + direct.len(), ids.len(), "no tweak may be dropped");
+        assert!(direct.iter().all(|id| !requires_admin_for(id)));
+
+        // One payload -> one `run_elevated_action` call -> one UAC prompt.
+        let payload = needs_admin.join(",");
+        let round_tripped: Vec<&str> = payload.split(',').filter(|s| !s.is_empty()).collect();
+        assert_eq!(round_tripped, needs_admin, "payload must survive the join/split round trip");
+    }
+
+    /// No id may contain the separator used to pass the batch to the elevated
+    /// helper, or ids would be split into fragments and silently fail there.
+    #[test]
+    fn no_tweak_id_contains_the_batch_separator() {
+        for id in all_visible_ids() {
+            assert!(!id.contains(','), "id `{}` would break the batch payload", id);
+        }
+    }
 }

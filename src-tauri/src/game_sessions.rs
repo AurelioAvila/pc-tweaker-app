@@ -198,3 +198,35 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
         }
     });
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The watcher matches a registered game against running process names,
+    /// which Windows reports with its own casing — so the comparison has to be
+    /// case-insensitive or a registered game would simply never be detected.
+    #[test]
+    fn exe_basename_normalizes_case_and_separators() {
+        assert_eq!(exe_basename(r"C:\Games\VALORANT.exe"), "valorant.exe");
+        assert_eq!(exe_basename("C:/Games/Valorant.EXE"), "valorant.exe");
+        assert_eq!(exe_basename(r"D:\Steam\steamapps\common\CS2\cs2.exe"), "cs2.exe");
+    }
+
+    #[test]
+    fn exe_basename_survives_odd_paths() {
+        assert_eq!(exe_basename(""), "");
+        assert_eq!(exe_basename("game.exe"), "game.exe");
+        assert_eq!(exe_basename(r"C:\Program Files\My Game\my game.exe"), "my game.exe");
+    }
+
+    /// Windows paths are case-insensitive, so the same game picked twice with
+    /// different casing must be recognized as already registered.
+    #[test]
+    fn the_same_game_in_different_casing_is_the_same_game() {
+        let stored = r"C:\Games\Valorant.exe";
+        let picked_again = r"c:\games\VALORANT.EXE";
+        assert!(stored.eq_ignore_ascii_case(picked_again));
+        assert_eq!(exe_basename(stored), exe_basename(picked_again));
+    }
+}

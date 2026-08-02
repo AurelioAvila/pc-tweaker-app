@@ -7,6 +7,26 @@ the git log.
 
 ## 2026-08-02
 
+- **Added**: an automated check suite (`npm run check`), wired into CI so it
+  runs on **every push**, not just on release tags — and as a gate before the
+  release build itself.
+  - **19 Rust unit tests** covering the parts where a silent failure is
+    expensive: rollback-store integrity under concurrency, batch elevation
+    grouping, tweak-id uniqueness, the startup-approval byte encoding, and
+    both locale-dependent parsers.
+  - **Translation validation** (181 keys x 5 languages): TypeScript already
+    proves every key exists, but not that `{count}`/`{name}` placeholders
+    survive translation — a string that loses one still compiles and ships a
+    broken sentence to that language's users. Now checked, and verified to
+    actually fail when a placeholder is removed.
+  - The two concurrency tests were confirmed to be real regression tests by
+    temporarily removing the lock: they fail with exactly the reported
+    symptom (`lost keeper-0`) and pass again once it's restored.
+- **Fixed**: the snapshot file was written through a fixed temp-file name, so
+  two writers not covered by the in-process lock (the elevated helper is a
+  separate process) could clobber each other's temp file and fail the commit.
+  Temp names are now unique per process and per write, and a failed rename
+  cleans up after itself. Found by the new concurrency test.
 - **Added**: **Startup programs manager** (new "Avvio" section) — lists every
   program Windows launches at boot from both HKCU and HKLM, and toggles them
   through the same `StartupApproved` mechanism Task Manager itself uses, so

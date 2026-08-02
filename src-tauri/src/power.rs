@@ -96,3 +96,39 @@ pub fn apply(_store: &RollbackStore) -> Result<(), String> {
 pub fn rollback(_store: &RollbackStore) -> Result<(), String> {
     Err("non supportato su questa piattaforma".to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression: this used to parse for the literal label "GUID:", which
+    /// only exists on English Windows — on this Italian machine the same
+    /// command prints "GUID combinazione risparmio energia:" and the tweak
+    /// silently failed. Match the GUID's shape, never the localized label.
+    #[test]
+    fn finds_the_guid_regardless_of_the_os_language() {
+        let samples = [
+            // English
+            "Power Scheme GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c  (High performance)",
+            // Italian (real output captured from this machine)
+            "GUID combinazione risparmio energia: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c  (Prestazioni elevate)",
+            // German
+            "GUID des Energieschemas: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c  (Höchstleistung)",
+            // French
+            "GUID du mode d'alimentation : 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c  (Performances élevées)",
+        ];
+        for sample in samples {
+            let found = sample.split_whitespace().find(|t| looks_like_guid(t));
+            assert_eq!(found, Some(HIGH_PERFORMANCE_GUID), "failed on: {}", sample);
+        }
+    }
+
+    #[test]
+    fn rejects_things_that_only_look_like_guids() {
+        assert!(!looks_like_guid("GUID:"));
+        assert!(!looks_like_guid("8c5e7fda-e8bf-4a96-9a85"));
+        assert!(!looks_like_guid("8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c-extra"));
+        assert!(!looks_like_guid("zzzzzzzz-e8bf-4a96-9a85-a6e23a8c635c"));
+        assert!(!looks_like_guid(""));
+    }
+}

@@ -4,6 +4,7 @@ Requires the PEXELS_API_KEY environment variable (free, sign up at
 pexels.com/api). Same logic as the getcertsprint bot's footage.py, with
 gaming/tech-themed default queries instead of study-themed ones.
 """
+import json
 import os
 import random
 import requests
@@ -17,6 +18,29 @@ DEFAULT_QUERIES = [
 
 TARGET_RATIO = 9 / 16
 
+# Remembers which Pexels asset IDs were used recently so the same clip/photo
+# doesn't get picked again and again (this is what was making video covers
+# look repeated across posts - user feedback 2026-08-02). Capped so it
+# doesn't grow forever and eventually allows a clip to recirculate once the
+# small per-query result pool has been fully cycled through.
+_USED_IDS_PATH = os.path.join(os.path.dirname(__file__), "..", "used_backgrounds.json")
+_MAX_REMEMBERED = 200
+
+
+def _load_used_ids() -> set:
+    if not os.path.exists(_USED_IDS_PATH):
+        return set()
+    with open(_USED_IDS_PATH) as f:
+        return set(json.load(f))
+
+
+def _remember_used_id(asset_id) -> None:
+    ids = list(_load_used_ids())
+    ids.append(asset_id)
+    ids = ids[-_MAX_REMEMBERED:]
+    with open(_USED_IDS_PATH, "w") as f:
+        json.dump(ids, f)
+
 
 def download_background_video(output_path: str, query: str = None) -> str:
     api_key = os.environ["PEXELS_API_KEY"]
@@ -25,7 +49,13 @@ def download_background_video(output_path: str, query: str = None) -> str:
     resp = requests.get(
         "https://api.pexels.com/videos/search",
         headers={"Authorization": api_key},
-        params={"query": query, "orientation": "portrait", "per_page": 20},
+        # Pagina casuale invece della sola pagina 1 (fix 2026-08-02): prima
+        # si pescava sempre dai 20 risultati piu' popolari per quella query,
+        # cioe' esattamente i clip che usano migliaia di altri creator. La
+        # ricerca 2026 e' esplicita: riusare lo stesso stock footage diffuso
+        # fa declassare il video come "Low Value Content", e a noi causava
+        # anche clip ripetuti tra un video e l'altro. Bacino da 20 a 100.
+        params={"query": query, "orientation": "portrait", "per_page": 20, "page": random.randint(1, 5)},
         timeout=30,
     )
     resp.raise_for_status()
@@ -39,7 +69,14 @@ def download_background_video(output_path: str, query: str = None) -> str:
 
     results.sort(key=_aspect_diff)
     top_candidates = results[: max(1, len(results) // 3)]
-    video = random.choice(top_candidates)
+
+    used_ids = _load_used_ids()
+    fresh_candidates = [v for v in top_candidates if v.get("id") not in used_ids]
+    # If every top candidate has already been used recently (small query
+    # pool fully cycled), fall back to the full top-third rather than
+    # erroring out - better an occasional repeat than a failed run.
+    video = random.choice(fresh_candidates or top_candidates)
+    _remember_used_id(video.get("id"))
 
     files = sorted(
         video["video_files"],
@@ -65,7 +102,13 @@ def download_photo(output_path: str, query: str = None) -> str:
     resp = requests.get(
         "https://api.pexels.com/v1/search",
         headers={"Authorization": api_key},
-        params={"query": query, "orientation": "portrait", "per_page": 20},
+        # Pagina casuale invece della sola pagina 1 (fix 2026-08-02): prima
+        # si pescava sempre dai 20 risultati piu' popolari per quella query,
+        # cioe' esattamente i clip che usano migliaia di altri creator. La
+        # ricerca 2026 e' esplicita: riusare lo stesso stock footage diffuso
+        # fa declassare il video come "Low Value Content", e a noi causava
+        # anche clip ripetuti tra un video e l'altro. Bacino da 20 a 100.
+        params={"query": query, "orientation": "portrait", "per_page": 20, "page": random.randint(1, 5)},
         timeout=30,
     )
     resp.raise_for_status()
@@ -79,7 +122,11 @@ def download_photo(output_path: str, query: str = None) -> str:
 
     results.sort(key=_aspect_diff)
     top_candidates = results[: max(1, len(results) // 3)]
-    photo = random.choice(top_candidates)
+
+    used_ids = _load_used_ids()
+    fresh_candidates = [p for p in top_candidates if p.get("id") not in used_ids]
+    photo = random.choice(fresh_candidates or top_candidates)
+    _remember_used_id(photo.get("id"))
     photo_url = photo["src"]["large2x"]
 
     photo_resp = requests.get(photo_url, timeout=30, stream=True)

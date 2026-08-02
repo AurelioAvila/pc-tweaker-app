@@ -163,10 +163,14 @@ def _loop_to_duration(clip: VideoFileClip, duration: float) -> VideoFileClip:
     return concatenate_videoclips([clip] * n_loops).subclip(0, duration)
 
 
-def _caption_clips_from_words(word_timings: list, duration: float):
+def _caption_clips_from_words(word_timings: list, duration: float, skip_before: float = 0.0):
     """Builds caption chunks positioned at the REAL spoken time of each word
     (from edge-tts's WordBoundary events) instead of guessing an equal
-    split over the audio duration."""
+    split over the audio duration.
+
+    skip_before: quando c'e' l'hook card, le didascalie dei primi secondi
+    ripetono il testo gia' mostrato per intero dalla card - due riquadri
+    sovrapposti che dicono la stessa cosa. Si saltano."""
     if not word_timings:
         return []
 
@@ -185,6 +189,8 @@ def _caption_clips_from_words(word_timings: list, duration: float):
             last_word, last_start, last_dur = chunk[-1]
             end = min(last_start + last_dur + 0.3, duration)
         chunk_duration = max(end - start, 0.05)
+        if start < skip_before:
+            continue
 
         # Quick scale pop-in (0.85x -> 1.0x over CAPTION_POP_SECONDS) instead
         # of a static hard cut - makes each new chunk feel like a "hit" in
@@ -258,13 +264,71 @@ def _multi_clip_background(video_paths: list, total_duration: float):
     return CompositeVideoClip(clips, size=(TARGET_W, TARGET_H)).set_duration(total_duration), cut_times
 
 
-def _caption_band(duration: float):
+def _caption_band(duration: float, start: float = 0.0):
+    # start > 0 quando c'e' l'hook card: durante l'apertura l'unico elemento
+    # grafico deve essere la card, altrimenti si vedono due riquadri scuri
+    # sovrapposti.
     return (
         ColorClip(size=(TARGET_W, CAPTION_BAND_HEIGHT), color=(0, 0, 0))
         .set_opacity(0.35)
-        .set_duration(duration)
+        .set_start(start)
+        .set_duration(max(duration - start, 0.1))
         .set_position(("center", CAPTION_BAND_Y))
     )
+
+
+# HOOK CARD (aggiunto 2026-08-02) - la leva piu' importante emersa
+# dall'audit sulle view basse. Le didascalie sono sincronizzate a 2 parole
+# per volta, quindi al fotogramma 0 si leggeva solo un frammento senza
+# significato ("This is") proprio nei 3 secondi in cui lo spettatore decide
+# se restare. La ricerca 2026 (Hansen Insights, Aibrify, HypeNest) e' netta:
+# sotto l'80% di retention nei primi 3 secondi il video muore nel cold start
+# e non viene mai distribuito. Ora la promessa COMPLETA e' leggibile subito.
+HOOK_CARD_SECONDS = 2.8
+HOOK_CARD_FONTSIZE = 66
+HOOK_CARD_Y = int(TARGET_H * 0.20)
+
+
+def _hook_card_clip(hook_text: str, duration: float):
+    """Full hook sentence, legible in the very first frame.
+
+    No pop/fade on purpose: any entrance animation costs exactly the
+    milliseconds that decide whether the viewer stays."""
+    text = (hook_text or "").strip()
+    if not text:
+        return []
+
+    txt = TextClip(
+        text,
+        fontsize=HOOK_CARD_FONTSIZE,
+        color="white",
+        stroke_color="black",
+        stroke_width=5,
+        method="caption",
+        size=(TARGET_W - 140, None),
+        font=FONT_PATH,
+        align="center",
+    ).set_duration(duration)
+
+    card_w, card_h = txt.size
+    # 0.78 e non ~0.6: su sfondi chiari un nero al 60% legge come un riquadro
+    # grigio slavato, che fa sembrare il video amatoriale invece di un
+    # elemento grafico voluto.
+    backdrop = (
+        ColorClip(size=(card_w + 60, card_h + 50), color=(0, 0, 0))
+        .set_opacity(0.78)
+        .set_duration(duration)
+    )
+    card = (
+        CompositeVideoClip(
+            [backdrop, txt.set_position(("center", "center"))],
+            size=(card_w + 60, card_h + 50),
+        )
+        .set_duration(duration)
+        .set_start(0)
+        .set_position(("center", HOOK_CARD_Y))
+    )
+    return [card]
 
 
 def _watermark_clip(duration: float):
@@ -285,7 +349,7 @@ def _watermark_clip(duration: float):
     )
 
 
-def render_short(background_video_paths, audio_path: str, word_timings: list, output_path: str):
+def render_short(background_video_paths, audio_path: str, word_timings: list, output_path: str, hook: str = None):
     if isinstance(background_video_paths, str):
         background_video_paths = [background_video_paths]
 
@@ -294,10 +358,12 @@ def render_short(background_video_paths, audio_path: str, word_timings: list, ou
     full_audio = _build_full_audio(audio, audio.duration, cut_times, output_path.replace(".mp4", ""))
     background = background.set_audio(full_audio)
 
-    band = _caption_band(audio.duration)
-    captions = _caption_clips_from_words(word_timings, audio.duration)
+    hook_seconds = min(HOOK_CARD_SECONDS, audio.duration) if hook else 0.0
+    band = _caption_band(audio.duration, start=hook_seconds)
+    captions = _caption_clips_from_words(word_timings, audio.duration, skip_before=hook_seconds)
     watermark = _watermark_clip(audio.duration)
-    final = CompositeVideoClip([background, band, watermark] + captions, size=(TARGET_W, TARGET_H))
+    hook_card = _hook_card_clip(hook, hook_seconds) if hook else []
+    final = CompositeVideoClip([background, band, watermark] + captions + hook_card, size=(TARGET_W, TARGET_H))
     final = final.set_duration(audio.duration)
 
     final.write_videofile(
@@ -316,17 +382,19 @@ def render_short(background_video_paths, audio_path: str, word_timings: list, ou
     return output_path
 
 
-def render_slideshow(image_paths: list, image_starts: list, audio_path: str, word_timings: list, output_path: str):
+def render_slideshow(image_paths: list, image_starts: list, audio_path: str, word_timings: list, output_path: str, hook: str = None):
     audio = AudioFileClip(audio_path)
     background = _slideshow_background(image_paths, image_starts, audio.duration)
     cut_times = [t for t in image_starts if t > 0]
     full_audio = _build_full_audio(audio, audio.duration, cut_times, output_path.replace(".mp4", ""))
     background = background.set_audio(full_audio)
 
-    band = _caption_band(audio.duration)
-    captions = _caption_clips_from_words(word_timings, audio.duration)
+    hook_seconds = min(HOOK_CARD_SECONDS, audio.duration) if hook else 0.0
+    band = _caption_band(audio.duration, start=hook_seconds)
+    captions = _caption_clips_from_words(word_timings, audio.duration, skip_before=hook_seconds)
     watermark = _watermark_clip(audio.duration)
-    final = CompositeVideoClip([background, band, watermark] + captions, size=(TARGET_W, TARGET_H))
+    hook_card = _hook_card_clip(hook, hook_seconds) if hook else []
+    final = CompositeVideoClip([background, band, watermark] + captions + hook_card, size=(TARGET_W, TARGET_H))
     final = final.set_duration(audio.duration)
 
     final.write_videofile(

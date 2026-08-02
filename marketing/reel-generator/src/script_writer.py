@@ -65,6 +65,15 @@ CTA = [
     "Free to try, link in bio.",
     "One click, fully reversible, link in bio.",
     "PC Tweaker, link in bio.",
+    # Aggiunte 2026-08-02: ricerca 2026 (Hootsuite, Eclincher, TrueFuture
+    # Media) conferma che share/save sono il segnale di ranking piu' pesato
+    # su Instagram/TikTok (le DM share valgono 3-10x un like) - prima ogni
+    # CTA era solo "link in bio", zero richiesta esplicita di salvare o
+    # condividere. Queste varianti chiedono l'azione ad alto peso E
+    # nominano comunque il prodotto.
+    "Save this before you forget, then search PC Tweaker.",
+    "Send this to whoever's PC is a mess right now. PC Tweaker, link in bio.",
+    "Tag someone who needs this fix. PC Tweaker, link in bio.",
 ]
 
 TRANSITIONS = [
@@ -114,7 +123,10 @@ def build_script_template(items, category: str) -> tuple:
             word_count += _wc(reactions[i])
 
     parts.append(cta)
-    return " ".join(parts), item_word_starts
+    # Il terzo elemento e' la frase-hook parlata: serve alla hook card del
+    # render, che la mostra per intero nel primo fotogramma (vedi
+    # _hook_card_clip in src/render.py).
+    return " ".join(parts), item_word_starts, hook
 
 
 LISTTEASE_INTROS = [
@@ -139,7 +151,7 @@ def build_listtease_script_template(topic: str, items: list) -> tuple:
         word_count += _wc(item_text)
 
     parts.append(cta)
-    return " ".join(parts), item_word_starts
+    return " ".join(parts), item_word_starts, intro
 
 
 if __name__ == "__main__":

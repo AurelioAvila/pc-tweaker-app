@@ -62,10 +62,10 @@ def make_one_reel(index: int, category: str = None):
     if category == LISTTEASE_CATEGORY:
         n = random.choice([3, 4])
         topic, items = get_listtease_content(n=n)
-        script, item_word_starts = build_listtease_script_template(topic, items)
+        script, item_word_starts, spoken_hook = build_listtease_script_template(topic, items)
     else:
         topic, items = get_random_content_multi(category, n=2)
-        script, item_word_starts = build_script_template(items, category)
+        script, item_word_starts, spoken_hook = build_script_template(items, category)
 
     print(f"[{index}] ({category}) Script: {script}")
 
@@ -86,7 +86,7 @@ def make_one_reel(index: int, category: str = None):
             download_photo(p, query=query)
             image_paths.append(p)
         print(f"[{index}] (slideshow, {len(image_paths)} photos) queries: {queries}")
-        render_slideshow(image_paths, image_starts, audio_path, word_timings, video_path)
+        render_slideshow(image_paths, image_starts, audio_path, word_timings, video_path, hook=spoken_hook)
     else:
         queries = _resolve_item_queries(footage_query, NUM_BACKGROUND_CLIPS)
         background_paths = []
@@ -95,7 +95,7 @@ def make_one_reel(index: int, category: str = None):
             download_background_video(p, query=query)
             background_paths.append(p)
         print(f"[{index}] (multi-clip background, {len(background_paths)} clips) queries: {queries}")
-        render_short(background_paths, audio_path, word_timings, video_path)
+        render_short(background_paths, audio_path, word_timings, video_path, hook=spoken_hook)
 
     base_name = f"reel-{category}-{int(time.time())}-{random.randint(1000, 9999)}"
     final_video_path = os.path.join(TO_PUBLISH_DIR, f"{base_name}.mp4")

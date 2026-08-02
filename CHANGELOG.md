@@ -7,6 +7,46 @@ the git log.
 
 ## 2026-08-02
 
+- **Fixed (marketing/reel-generator)**: i Reel mostravano un frammento
+  senza senso nel primo fotogramma. Le didascalie sono sincronizzate a 2
+  parole per volta, quindi al fotogramma 0 si leggeva letteralmente
+  "This is" sopra uno sfondo quasi nero — proprio nei 3 secondi in cui lo
+  spettatore decide se restare. La ricerca 2026 e' netta: sotto l'80% di
+  retention nei primi 3 secondi il video muore nel cold start e non viene
+  mai distribuito, il che combacia coi numeri osservati (view 10-180,
+  reach ~= views). Aggiunta una **hook card** che mostra la frase-promessa
+  COMPLETA gia' leggibile nel primo fotogramma, senza animazioni
+  d'ingresso (un fade costa esattamente i millisecondi decisivi).
+  Didascalie e banda partono dopo la card, altrimenti due riquadri
+  sovrapposti dicono la stessa cosa e il video sembra amatoriale.
+  Verificato estraendo il fotogramma 0 di un Reel realmente prodotto.
+- **Fixed (marketing/reel-generator)**: `footage.py` chiedeva a Pexels
+  sempre e solo la pagina 1, quindi ogni video per una data query pescava
+  dagli stessi 20 clip piu' popolari — esattamente quelli usati da
+  migliaia di altri creator (declassati come "Low Value Content") e causa
+  delle ripetizioni tra un video e l'altro. Ora pagina casuale 1-5:
+  bacino da 20 a 100 clip. Verificato contro l'API reale che pagine
+  diverse restituiscono id completamente disgiunti.
+- **Added (marketing/youtube-upload)**: miniatura personalizzata per le
+  compilation long-form. Prima non ne veniva impostata nessuna, quindi
+  YouTube ne sceglieva una da un fotogramma a caso (tipicamente meta' di
+  una parola dei sottotitoli): su un video lungo la miniatura e' LA leva
+  del click. Generata con ffmpeg (nessuna dipendenza npm aggiunta):
+  fotogramma sfocato e scurito + titolo in grande + barra d'accento.
+  `uploadVideo` accetta ora `thumbnailPath` e non fallisce mai se l'API
+  la rifiuta (serve il canale con telefono verificato).
+  - Nota tecnica: il percorso del font va escapato (`C\:/...`) perche' nei
+    filtri ffmpeg i due punti separano le opzioni — senza, l'intera
+    filterchain va in "Error parsing filterchain" anche tra apici.
+- **Changed (marketing/youtube-upload)**: i titoli delle compilation
+  pescano da un pool di 5 varianti invece di essere una stringa fissa —
+  titoli quasi duplicati si cannibalizzano nella ricerca YouTube. I tag
+  API passano da 5 a 12: sono un canale diverso dagli hashtag visibili e
+  il campo regge ~500 caratteri, era largamente sottoutilizzato.
+- **Changed (marketing/reel-generator)**: aggiunte CTA orientate a
+  save/share al pool esistente (che era solo "link in bio") — nel ranking
+  2026 una condivisione in DM vale 3-10x un like e i save ~5x.
+
 - **Added**: an automated check suite (`npm run check`), wired into CI so it
   runs on **every push**, not just on release tags — and as a gate before the
   release build itself.

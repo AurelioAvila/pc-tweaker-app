@@ -64,7 +64,7 @@ async function getAuthorizedClient() {
   return getNewToken(oauth2Client);
 }
 
-async function uploadVideo({ videoPath, title, description, tags = [], privacyStatus = "unlisted" }) {
+async function uploadVideo({ videoPath, title, description, tags = [], privacyStatus = "unlisted", thumbnailPath = null }) {
   const auth = await getAuthorizedClient();
   const youtube = google.youtube({ version: "v3", auth });
   const res = await youtube.videos.insert({
@@ -75,6 +75,23 @@ async function uploadVideo({ videoPath, title, description, tags = [], privacySt
     },
     media: { body: fs.createReadStream(videoPath) },
   });
+
+  // Miniatura personalizzata (in pratica solo i long-form: sugli Shorts il
+  // feed parte in autoplay e la miniatura conta pochissimo). Non deve MAI
+  // far fallire una pubblicazione gia' andata a buon fine: i canali senza
+  // numero di telefono verificato non possono impostarla e l'API rifiuta.
+  if (thumbnailPath) {
+    try {
+      await youtube.thumbnails.set({
+        videoId: res.data.id,
+        media: { body: fs.createReadStream(thumbnailPath) },
+      });
+      console.log(`[thumbnail] miniatura personalizzata impostata su ${res.data.id}`);
+    } catch (err) {
+      console.warn(`[thumbnail] non impostata (${err.message}) - resta quella automatica`);
+    }
+  }
+
   return { id: res.data.id, url: `https://youtube.com/shorts/${res.data.id}` };
 }
 

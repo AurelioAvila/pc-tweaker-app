@@ -83,6 +83,66 @@ function buildDescription(clipMetas) {
   );
 }
 
+// I due punti della lettera di unita' ("C:/...") vanno protetti: nella
+// sintassi dei filtri ffmpeg ':' separa le opzioni, quindi un percorso
+// Windows non escapato rompe l'intera filterchain anche se e' tra apici
+// (verificato: "Error parsing filterchain" subito dopo il primo drawtext).
+const THUMB_FONT = path
+  .join(ROOT, "reel-generator", "assets", "fonts", "Poppins-ExtraBold.ttf")
+  .replace(/\\/g, "/")
+  .replace(/:/g, "\\:");
+
+/**
+ * Miniatura 1280x720: fotogramma del video sfocato e scurito + TITOLO in
+ * grande. Fatta con ffmpeg (drawtext) invece che con una libreria immagini
+ * per non aggiungere dipendenze npm a questo pacchetto.
+ *
+ * Lo sfondo va sfocato e scurito, altrimenti il bianco diventa illeggibile
+ * sulle zone chiare - ed e' esattamente cio' che rende inutili le miniature
+ * automatiche di YouTube.
+ */
+function buildThumbnail(videoPath, title) {
+  const out = path.join(OUTPUT_DIR, "thumbnail.jpg");
+
+  // drawtext non manda a capo da solo: spezziamo il titolo in righe da ~22
+  // caratteri su confine di parola, cosi' resta leggibile anche
+  // nell'anteprima piccola del feed mobile.
+  const words = title.toUpperCase().split(/\s+/);
+  const lines = [];
+  let current = "";
+  for (const w of words) {
+    if ((current + " " + w).trim().length > 22 && current) {
+      lines.push(current.trim());
+      current = w;
+    } else {
+      current = (current + " " + w).trim();
+    }
+  }
+  if (current) lines.push(current);
+
+  // ':' e '\' hanno significato nella sintassi dei filtri ffmpeg.
+  const esc = (s) => s.replace(/\\/g, "\\\\").replace(/:/g, "\\:").replace(/'/g, "");
+  const lineH = 96;
+  const startY = Math.round((720 - lines.length * lineH) / 2);
+  const drawtexts = lines
+    .map((line, i) =>
+      `drawtext=fontfile='${THUMB_FONT}':text='${esc(line)}':fontcolor=white:fontsize=76:` +
+      `borderw=7:bordercolor=black:x=(w-text_w)/2:y=${startY + i * lineH}`
+    )
+    .join(",");
+
+  const filter =
+    `scale=1280:720,boxblur=12:1,eq=brightness=-0.22,${drawtexts},` +
+    `drawbox=x=0:y=704:w=1280:h=16:color=0x00B0FF@1:t=fill`;
+
+  execFileSync(
+    "ffmpeg",
+    ["-y", "-ss", "3", "-i", videoPath, "-frames:v", "1", "-vf", filter, "-q:v", "2", out],
+    { stdio: "pipe" }
+  );
+  return out;
+}
+
 async function main() {
   const countArgIdx = process.argv.indexOf("--count");
   const count = countArgIdx !== -1 ? parseInt(process.argv[countArgIdx + 1], 10) : 6;
@@ -112,12 +172,39 @@ async function main() {
     { stdio: "inherit" }
   );
 
-  const title = `${bases.length} Windows Tweaks You Need To Know (2026)`;
+  // Pool di titoli invece di una stringa fissa: prima ogni compilation usciva
+  // con lo stesso identico schema, e su un canale YouTube titoli quasi
+  // duplicati si cannibalizzano nella ricerca e non danno a chi scorre nessun
+  // motivo per cliccare il nuovo invece del vecchio.
+  const TITLE_TEMPLATES = [
+    (n) => `${n} Windows Tweaks You Need To Know (2026)`,
+    (n) => `${n} Windows Settings You Should Change Today (2026)`,
+    (n) => `I Changed ${n} Windows Settings. Here's What Happened (2026)`,
+    (n) => `${n} Things Windows Turns On Without Asking You (2026)`,
+    (n) => `${n} Windows Tweaks That Actually Made a Difference (2026)`,
+  ];
+  const title = TITLE_TEMPLATES[Math.floor(Math.random() * TITLE_TEMPLATES.length)](bases.length);
   const description = buildDescription(clipMetas);
-  const tags = ["windows tweak", "pc optimizer", "windows 11 tips", "free software", "open source"];
+  // Tag API piu' ampi: il campo regge ~500 caratteri e i tag sono un canale
+  // diverso dagli hashtag visibili, conviene sfruttarlo invece di fermarsi a 5.
+  const tags = [
+    "windows tweak", "pc optimizer", "windows 11 tips", "free software", "open source",
+    "speed up pc", "windows 11 performance", "debloat windows", "pc maintenance",
+    "windows settings", "gaming pc optimization", "pc tweaker",
+  ];
+
+  // Miniatura col titolo in grande: su un long-form e' LA leva del click, e
+  // senza YouTube ne sceglie una da un fotogramma a caso (tipicamente meta'
+  // di una parola dei sottotitoli). Se fallisce si pubblica lo stesso.
+  let thumbnailPath = null;
+  try {
+    thumbnailPath = buildThumbnail(outputPath, title);
+  } catch (err) {
+    console.warn(`Miniatura non generata (${err.message}) - si prosegue senza`);
+  }
 
   console.log("Upload in corso...");
-  const result = await uploadVideo({ videoPath: outputPath, title, description, tags, privacyStatus: "public" });
+  const result = await uploadVideo({ videoPath: outputPath, title, description, tags, privacyStatus: "public", thumbnailPath });
   console.log(`[OK] Compilation pubblicata: video id=${result.id}`);
 
   appendLog({ date: new Date().toISOString(), videoId: result.id, clips: bases });

@@ -123,8 +123,8 @@ CAPTION_BAND_HEIGHT = int(TARGET_H * 0.22)
 CAPTION_POP_SECONDS = 0.12  # quick scale-up on each chunk's entrance, not a static cut
 
 WATERMARK_TEXT = "PC Tweaker"
-WATERMARK_FONTSIZE = 34
-WATERMARK_Y = int(TARGET_H * 0.06)  # near the top, clear of the Reels/TikTok bottom UI overlay
+WATERMARK_FONTSIZE = 52  # was 34 - too small to read at a glance (user feedback 2026-08-02)
+WATERMARK_Y = int(TARGET_H * 0.10)  # was 0.06 - too close to the very top edge/status bar; still clear of the Reels/TikTok bottom UI overlay
 
 SLIDESHOW_ZOOM_PER_SECOND = 0.03
 
@@ -302,6 +302,11 @@ def render_short(background_video_paths, audio_path: str, word_timings: list, ou
         audio_codec="aac",
         threads=4,
         preset="medium",
+        # moov atom in testa al file invece che in fondo - senza questo il
+        # player deve scaricare l'intero file prima di poter leggere i
+        # metadati, causando il classico 'primo tap non parte, secondo si'
+        # (segnalato dall'utente 2026-08-02, moviepy non lo aggiunge di default).
+        ffmpeg_params=["-movflags", "+faststart"],
     )
     return output_path
 
@@ -326,5 +331,10 @@ def render_slideshow(image_paths: list, image_starts: list, audio_path: str, wor
         audio_codec="aac",
         threads=4,
         preset="medium",
+        # moov atom in testa al file invece che in fondo - senza questo il
+        # player deve scaricare l'intero file prima di poter leggere i
+        # metadati, causando il classico 'primo tap non parte, secondo si'
+        # (segnalato dall'utente 2026-08-02, moviepy non lo aggiunge di default).
+        ffmpeg_params=["-movflags", "+faststart"],
     )
     return output_path

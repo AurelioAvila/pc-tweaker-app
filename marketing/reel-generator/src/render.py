@@ -73,17 +73,22 @@ def _generate_bg_music(path: str, duration: float) -> None:
     subprocess.run(cmd, check=True, capture_output=True)
 
 
-def _generate_whoosh(path: str, duration: float = 0.35) -> None:
-    """Synthesized whoosh (filtered noise burst with fades) marking scene
-    cuts - these Reels previously had a hard cut with no sound design there."""
+def _generate_whoosh(path: str, duration: float = 0.3) -> None:
+    """Synthesized whoosh marking scene cuts. The previous wide band
+    (800-6000Hz) at volume 0.35 let both the low "rumble" and the high hiss
+    of the raw pink noise through - without a frequency sweep (real whooshes
+    use a moving filter, not a fixed band) it read as a harsh scrape/rub
+    instead of a soft transition (user report 2026-08-02, same bug found on
+    the sibling Groomlyco/Magdock pipeline). Narrower/centered band, much
+    lower volume, longer softer fades."""
     subprocess.run([
         "ffmpeg", "-y", "-f", "lavfi",
         "-i", f"anoisesrc=color=pink:duration={duration}:sample_rate=44100",
         "-af", (
-            "highpass=f=800,lowpass=f=6000,"
-            "afade=t=in:st=0:d=0.04,"
+            "highpass=f=2500,lowpass=f=4500,"
+            "afade=t=in:st=0:d=0.1,"
             f"afade=t=out:st={duration - 0.12:.3f}:d=0.12,"
-            "volume=0.35"
+            "volume=0.12"
         ),
         str(path),
     ], check=True, capture_output=True)

@@ -7,6 +7,28 @@ the git log.
 
 ## 2026-08-02
 
+- **Added**: 7 new tweaks, verified live one by one against the real registry
+  (apply + rollback, not just compiled):
+  - *Gaming*: "Disattiva limitazione di rete multimediale" (MMCSS
+    NetworkThrottlingIndex, Free), "Massimizza reattività per app in primo
+    piano" (SystemResponsiveness, Free), "Priorità massima ai giochi" —
+    bundles GPU/CPU/scheduling priority for the Games task profile (Pro).
+  - *UI*: "Allinea la barra delle applicazioni a sinistra" (Free), "Nascondi
+    Chat/Teams dalla barra delle applicazioni" (Free).
+  - *Privacy*: "Disattiva suggerimenti e app consigliate nel menu Start"
+    (Free), "Disattiva cronologia attività (Windows Timeline)" — 3 bundled
+    policy values (Pro).
+  - Pro/Free calls were made per tweak: single simple values stayed Free
+    (consistent with the existing free tweaks), multi-value bundled presets
+    went Pro (consistent with Turbo Gaming).
+  - Caught a real, reproducible bug during verification: "Nascondi Widget
+    dalla barra delle applicazioni" (`TaskbarDa`) returns Access Denied even
+    from a fully elevated Administrator process — a genuine Windows 11
+    restriction on that specific value, not a bug in our code (confirmed by
+    testing a direct `Set-ItemProperty` from the same elevated shell, and a
+    Group-Policy-backed alternative path, both denied). Dropped that tweak
+    and shipped "Allinea la barra delle applicazioni a sinistra" instead,
+    which was verified to actually write and roll back correctly.
 - **Fixed**: Game Sessions could accept the same game twice (or fail to
   remove it) if picked via a differently-cased path — Windows paths are
   case-insensitive but the duplicate/remove checks weren't. Now compares

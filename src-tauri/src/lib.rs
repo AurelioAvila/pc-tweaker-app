@@ -1,9 +1,11 @@
 mod cleanup;
 mod dns;
 mod elevation;
+mod game_priority;
 mod game_sessions;
 mod gaming;
 mod power;
+mod privacy_extra;
 mod rollback;
 mod turbo;
 mod tweaks;
@@ -129,6 +131,30 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         requires_pro: turbo_boost.requires_pro,
     });
 
+    let games_priority = game_priority::info();
+    list.push(TweakInfo {
+        applied: store.is_applied(games_priority.id),
+        id: games_priority.id.to_string(),
+        name: games_priority.name.to_string(),
+        description: games_priority.description.to_string(),
+        category: category_str(&Category::Gaming).to_string(),
+        hive: "—".to_string(),
+        requires_admin: games_priority.requires_admin,
+        requires_pro: games_priority.requires_pro,
+    });
+
+    let activity_history = privacy_extra::activity_history_info();
+    list.push(TweakInfo {
+        applied: store.is_applied(activity_history.id),
+        id: activity_history.id.to_string(),
+        name: activity_history.name.to_string(),
+        description: activity_history.description.to_string(),
+        category: category_str(&Category::Privacy).to_string(),
+        hive: "—".to_string(),
+        requires_admin: activity_history.requires_admin,
+        requires_pro: activity_history.requires_pro,
+    });
+
     Ok(list)
 }
 
@@ -140,6 +166,8 @@ fn apply_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
         dns::TWEAK_ID => dns::apply(store),
         gaming::INPUT_LAG_ID => gaming::apply_input_lag(store),
         gaming::TURBO_BOOST_ID => gaming::apply_turbo_boost(store),
+        game_priority::TWEAK_ID => game_priority::apply(store),
+        privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::apply_activity_history(store),
         _ => {
             let tweak = find_tweak(id).ok_or_else(|| format!("tweak sconosciuto: {}", id))?;
             tweak.apply(store)
@@ -155,6 +183,8 @@ fn rollback_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
         dns::TWEAK_ID => dns::rollback(store),
         gaming::INPUT_LAG_ID => gaming::rollback_input_lag(store),
         gaming::TURBO_BOOST_ID => gaming::rollback_turbo_boost(store),
+        game_priority::TWEAK_ID => game_priority::rollback(store),
+        privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::rollback_activity_history(store),
         _ => {
             let tweak = find_tweak(id).ok_or_else(|| format!("tweak sconosciuto: {}", id))?;
             tweak.rollback(store)
@@ -170,6 +200,8 @@ fn requires_admin_for(id: &str) -> bool {
         dns::TWEAK_ID => true,
         gaming::INPUT_LAG_ID => false,
         gaming::TURBO_BOOST_ID => true,
+        game_priority::TWEAK_ID => true,
+        privacy_extra::ACTIVITY_HISTORY_ID => true,
         _ => find_tweak(id).map(|t| t.requires_admin).unwrap_or(false),
     }
 }

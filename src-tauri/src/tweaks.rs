@@ -202,6 +202,30 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
             requires_admin: false,
             requires_pro: false,
         },
+        RegistryTweak {
+            id: "hide_taskbar_search",
+            name: "Nascondi la casella di ricerca dalla barra delle applicazioni",
+            description: "Rimuove la casella/icona di ricerca dalla taskbar, per una barra più pulita (la ricerca resta comunque disponibile dal tasto Windows) (HKCU, nessuna elevazione richiesta).",
+            category: Category::Ui,
+            hive: Hive::Hkcu,
+            key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Search",
+            value_name: "SearchboxTaskbarMode",
+            on_value: RegValue::Dword(0),
+            requires_admin: false,
+            requires_pro: false,
+        },
+        RegistryTweak {
+            id: "disable_fullscreen_optimizations_global",
+            name: "Disattiva ottimizzazioni schermo intero globalmente",
+            description: "Forza DXGI a rispettare la vera modalità a schermo intero esclusiva invece della simulazione di Windows, riducendo micro-scatti e input lag in molti giochi più datati (HKCU, nessuna elevazione richiesta).",
+            category: Category::Gaming,
+            hive: Hive::Hkcu,
+            key_path: r"System\GameConfigStore",
+            value_name: "GameDVR_DXGIHonorFSEWindowsCompatible",
+            on_value: RegValue::Dword(1),
+            requires_admin: false,
+            requires_pro: false,
+        },
     ]
 }
 

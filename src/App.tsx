@@ -1067,6 +1067,20 @@ function MagnifierIcon({ className }: { className?: string }) {
   );
 }
 
+function TrashIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 type ScanIssue = {
   kind: "tweak" | "cleanup";
   id: string;
@@ -1086,6 +1100,7 @@ function ScanPanel({
   s,
   tweaks,
   cleanupTargets,
+  isPro,
   onRequirePro,
   onFixed,
   pushToast,
@@ -1093,6 +1108,7 @@ function ScanPanel({
   s: Strings;
   tweaks: TweakInfo[];
   cleanupTargets: CleanupInfo[];
+  isPro: boolean;
   onRequirePro: () => void;
   onFixed: () => Promise<void>;
   pushToast: (kind: Toast["kind"], message: string) => void;
@@ -1109,17 +1125,23 @@ function ScanPanel({
 
   const steps = [s.scan.stepPerformance, s.scan.stepPrivacy, s.scan.stepGaming, s.scan.stepJunk];
 
-  const freeIssues: ScanIssue[] = useMemo(() => {
+  // Fixable now = anything the user can actually apply today: every free
+  // tweak/cleanup, plus Pro ones too once they're unlocked. Locked = Pro
+  // items only shown as an upsell when the account isn't Pro yet.
+  const fixableIssues: ScanIssue[] = useMemo(() => {
     const fromTweaks = tweaks
-      .filter((t) => !t.applied && !t.requires_pro && t.id !== "turbo_boost")
+      .filter((t) => !t.applied && (isPro || !t.requires_pro) && t.id !== "turbo_boost")
       .map((t) => ({ kind: "tweak" as const, id: t.id, name: t.name, description: t.description }));
     const fromCleanup = cleanupTargets
-      .filter((c) => !c.requires_pro)
+      .filter((c) => isPro || !c.requires_pro)
       .map((c) => ({ kind: "cleanup" as const, id: c.id, name: c.name, description: c.description }));
     return [...fromTweaks, ...fromCleanup];
-  }, [tweaks, cleanupTargets]);
+  }, [tweaks, cleanupTargets, isPro]);
 
-  const proIssues = useMemo(() => tweaks.filter((t) => !t.applied && t.requires_pro), [tweaks]);
+  const lockedIssues = useMemo(
+    () => (isPro ? [] : tweaks.filter((t) => !t.applied && t.requires_pro)),
+    [tweaks, isPro],
+  );
 
   useEffect(() => {
     return () => {
@@ -1138,7 +1160,7 @@ function ScanPanel({
       if (pct >= 100) {
         if (scanTimer.current) window.clearInterval(scanTimer.current);
         const initialChecked: Record<string, boolean> = {};
-        freeIssues.forEach((issue) => {
+        fixableIssues.forEach((issue) => {
           initialChecked[issue.id] = true;
         });
         setChecked(initialChecked);
@@ -1148,7 +1170,7 @@ function ScanPanel({
   }
 
   async function fixAll() {
-    const toFix = freeIssues.filter((issue) => checked[issue.id]);
+    const toFix = fixableIssues.filter((issue) => checked[issue.id]);
     if (toFix.length === 0) return;
     setFixing(true);
     setFixProgress(0);
@@ -1170,8 +1192,8 @@ function ScanPanel({
     pushToast("success", format(s.scan.fixedToast, { count: toFix.length }));
   }
 
-  const totalIssues = freeIssues.length + proIssues.length;
-  const checkedCount = freeIssues.filter((i) => checked[i.id]).length;
+  const totalIssues = fixableIssues.length + lockedIssues.length;
+  const checkedCount = fixableIssues.filter((i) => checked[i.id]).length;
 
   return (
     <div className="mb-6 flex flex-col items-center rounded-2xl border border-white/10 bg-white/[0.04] p-8">
@@ -1222,16 +1244,39 @@ function ScanPanel({
 
       {phase === "done" && (
         <div className="mt-6 w-full">
-          <p className={`mb-4 text-center text-sm font-semibold ${totalIssues === 0 ? "text-emerald-400" : "text-amber-300"}`}>
-            {totalIssues === 0 ? s.scan.allGood : format(s.scan.issuesFound, { count: totalIssues })}
-          </p>
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <span
+              className={`grid h-8 w-8 place-items-center rounded-full text-sm font-black ${
+                totalIssues === 0 ? "bg-emerald-400/20 text-emerald-300" : "bg-amber-400/20 text-amber-300"
+              }`}
+            >
+              {totalIssues === 0 ? "✓" : totalIssues}
+            </span>
+            <p className={`text-sm font-semibold ${totalIssues === 0 ? "text-emerald-400" : "text-amber-300"}`}>
+              {totalIssues === 0 ? s.scan.allGood : format(s.scan.issuesFound, { count: totalIssues })}
+            </p>
+          </div>
 
-          {freeIssues.length > 0 && (
+          {fixableIssues.length > 0 && (
             <div className="flex flex-col gap-2">
-              {freeIssues.map((issue) => (
+              <button
+                onClick={() => {
+                  const allChecked = fixableIssues.every((i) => checked[i.id]);
+                  const next: Record<string, boolean> = {};
+                  fixableIssues.forEach((i) => {
+                    next[i.id] = !allChecked;
+                  });
+                  setChecked(next);
+                }}
+                className="self-end text-xs text-slate-500 hover:text-slate-300"
+              >
+                {fixableIssues.every((i) => checked[i.id]) ? s.scan.deselectAll : s.scan.selectAll}
+              </button>
+
+              {fixableIssues.map((issue) => (
                 <label
                   key={issue.id}
-                  className="flex items-start gap-3 rounded-xl bg-white/5 p-3 text-sm hover:bg-white/[0.07]"
+                  className="flex items-start gap-3 rounded-xl bg-white/5 p-3 text-sm transition-colors hover:bg-white/[0.07]"
                 >
                   <input
                     type="checkbox"
@@ -1239,6 +1284,13 @@ function ScanPanel({
                     onChange={(e) => setChecked((c) => ({ ...c, [issue.id]: e.target.checked }))}
                     className="mt-1 accent-fuchsia-500"
                   />
+                  <span
+                    className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg ${
+                      issue.kind === "cleanup" ? "bg-sky-400/15 text-sky-300" : "bg-fuchsia-400/15 text-fuchsia-300"
+                    }`}
+                  >
+                    {issue.kind === "cleanup" ? <TrashIcon className="h-3.5 w-3.5" /> : <BoltIcon className="h-3.5 w-3.5" />}
+                  </span>
                   <span>
                     <span className="font-medium text-slate-100">{issue.name}</span>
                     <p className="text-xs text-slate-400">{issue.description}</p>
@@ -1248,18 +1300,26 @@ function ScanPanel({
               <button
                 onClick={fixAll}
                 disabled={fixing || checkedCount === 0}
-                className="mt-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-indigo-500 py-2.5 text-sm font-bold text-white transition-transform hover:scale-[1.01] disabled:cursor-wait disabled:opacity-50"
+                className="relative mt-2 overflow-hidden rounded-xl bg-gradient-to-r from-fuchsia-500 to-indigo-500 py-2.5 text-sm font-bold text-white transition-transform hover:scale-[1.01] disabled:cursor-wait disabled:opacity-50"
               >
-                {fixing ? format(s.scan.fixing, { done: fixProgress, total: checkedCount }) : s.scan.fixAll}
+                {fixing && (
+                  <span
+                    className="absolute inset-y-0 left-0 bg-white/20 transition-[width] duration-200"
+                    style={{ width: `${(fixProgress / Math.max(1, checkedCount)) * 100}%` }}
+                  />
+                )}
+                <span className="relative">
+                  {fixing ? format(s.scan.fixing, { done: fixProgress, total: checkedCount }) : s.scan.fixAll}
+                </span>
               </button>
             </div>
           )}
 
-          {proIssues.length > 0 && (
+          {lockedIssues.length > 0 && (
             <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-400/5 p-3">
               <p className="mb-2 text-xs font-semibold text-amber-300">{s.scan.proIssuesTitle}</p>
               <ul className="mb-3 flex flex-col gap-1 text-xs text-slate-400">
-                {proIssues.map((issue) => (
+                {lockedIssues.map((issue) => (
                   <li key={issue.id}>• {issue.name}</li>
                 ))}
               </ul>
@@ -1689,11 +1749,14 @@ function App() {
             s={s}
             tweaks={tweaks}
             cleanupTargets={cleanupTargets}
+            isPro={isProUnlocked}
             onRequirePro={() => setPaywallFeature(s.menu.planPro)}
             onFixed={refresh}
             pushToast={pushToast}
           />
         )}
+
+        {showPrivacyExtras && <PasswordBreachCheck s={s} />}
 
         {showGamingExtras && (
           <>
@@ -1748,13 +1811,10 @@ function App() {
           })}
 
           {showPrivacyExtras && (
-            <>
-              <PasswordBreachCheck s={s} />
-              <IpMaskCard
-                s={s}
-                onExplain={() => pushToast("error", s.ipMask.explainerToast)}
-              />
-            </>
+            <IpMaskCard
+              s={s}
+              onExplain={() => pushToast("error", s.ipMask.explainerToast)}
+            />
           )}
 
           {showCleanup &&

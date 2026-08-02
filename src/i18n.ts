@@ -54,6 +54,8 @@ export interface Strings {
     stepJunk: string;
     allGood: string;
     issuesFound: string; // uses {count}
+    selectAll: string;
+    deselectAll: string;
     fixAll: string;
     fixing: string; // uses {done} {total}
     fixedToast: string; // uses {count}
@@ -196,6 +198,8 @@ const it: Strings = {
     stepJunk: "File temporanei",
     allGood: "Tutto ok — nessun problema trovato.",
     issuesFound: "{count} ottimizzazioni disponibili",
+    selectAll: "Seleziona tutto",
+    deselectAll: "Deseleziona tutto",
     fixAll: "Correggi tutto",
     fixing: "Correzione {done}/{total}...",
     fixedToast: "{count} problemi corretti.",
@@ -400,6 +404,21 @@ const it: Strings = {
       description:
         "Impedisce a Windows di registrare, salvare e inviare a Microsoft la cronologia delle app e dei documenti usati, tramite policy di sistema (HKLM, richiede privilegi di amministratore).",
     },
+    hide_taskbar_search: {
+      name: "Nascondi la casella di ricerca dalla barra delle applicazioni",
+      description:
+        "Rimuove la casella/icona di ricerca dalla taskbar, per una barra più pulita (la ricerca resta comunque disponibile dal tasto Windows) (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_fullscreen_optimizations_global: {
+      name: "Disattiva ottimizzazioni schermo intero globalmente",
+      description:
+        "Forza DXGI a rispettare la vera modalità a schermo intero esclusiva invece della simulazione di Windows, riducendo micro-scatti e input lag in molti giochi più datati (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_windows_search_service: {
+      name: "Disattiva servizio di indicizzazione (Windows Search)",
+      description:
+        "Ferma e disattiva il servizio di indicizzazione dei file di Windows, riducendo l'attività su disco in background — utile su SSD piccoli o mentre giochi. La ricerca file nel menu Start diventa più lenta finché non lo riattivi (richiede privilegi di amministratore).",
+    },
   },
   cleanup: {
     temp_cleanup: {
@@ -449,6 +468,8 @@ const en: Strings = {
     stepJunk: "Temp files",
     allGood: "All good — no issues found.",
     issuesFound: "{count} optimizations available",
+    selectAll: "Select all",
+    deselectAll: "Deselect all",
     fixAll: "Fix all",
     fixing: "Fixing {done}/{total}...",
     fixedToast: "{count} issues fixed.",
@@ -646,6 +667,21 @@ const en: Strings = {
       description:
         "Stops Windows from recording, saving, and sending Microsoft your app and document usage history, via system policy (HKLM, requires administrator rights).",
     },
+    hide_taskbar_search: {
+      name: "Hide the search box from the taskbar",
+      description:
+        "Removes the search box/icon from the taskbar for a cleaner bar (search is still available from the Windows key) (HKCU, no elevation required).",
+    },
+    disable_fullscreen_optimizations_global: {
+      name: "Disable fullscreen optimizations globally",
+      description:
+        "Forces DXGI to honor true exclusive fullscreen instead of Windows' simulated mode, reducing micro-stutter and input lag in many older games (HKCU, no elevation required).",
+    },
+    disable_windows_search_service: {
+      name: "Disable the indexing service (Windows Search)",
+      description:
+        "Stops and disables Windows' file indexing service, reducing background disk activity — useful on small SSDs or while gaming. Start menu file search becomes slower until you turn it back on (requires administrator rights).",
+    },
   },
   cleanup: {
     temp_cleanup: {
@@ -694,6 +730,8 @@ const fr: Strings = {
     stepJunk: "Fichiers temporaires",
     allGood: "Tout est en ordre — aucun problème trouvé.",
     issuesFound: "{count} optimisations disponibles",
+    selectAll: "Tout sélectionner",
+    deselectAll: "Tout désélectionner",
     fixAll: "Tout corriger",
     fixing: "Correction {done}/{total}...",
     fixedToast: "{count} problèmes corrigés.",
@@ -891,6 +929,21 @@ const fr: Strings = {
       description:
         "Empêche Windows d'enregistrer, de sauvegarder et d'envoyer à Microsoft l'historique de vos apps et documents utilisés, via une stratégie système (HKLM, droits administrateur requis).",
     },
+    hide_taskbar_search: {
+      name: "Masquer la barre de recherche de la barre des tâches",
+      description:
+        "Retire la case/icône de recherche de la barre des tâches pour une barre plus épurée (la recherche reste accessible via la touche Windows) (HKCU, aucune élévation requise).",
+    },
+    disable_fullscreen_optimizations_global: {
+      name: "Désactiver les optimisations plein écran globalement",
+      description:
+        "Force DXGI à respecter le vrai mode plein écran exclusif au lieu de la simulation de Windows, réduisant les micro-saccades et l'input lag dans de nombreux jeux plus anciens (HKCU, aucune élévation requise).",
+    },
+    disable_windows_search_service: {
+      name: "Désactiver le service d'indexation (Windows Search)",
+      description:
+        "Arrête et désactive le service d'indexation des fichiers de Windows, réduisant l'activité disque en arrière-plan — utile sur les petits SSD ou pendant le jeu. La recherche de fichiers dans le menu Démarrer devient plus lente jusqu'à sa réactivation (droits administrateur requis).",
+    },
   },
   cleanup: {
     temp_cleanup: {
@@ -939,6 +992,8 @@ const es: Strings = {
     stepJunk: "Archivos temporales",
     allGood: "Todo bien — no se encontraron problemas.",
     issuesFound: "{count} optimizaciones disponibles",
+    selectAll: "Seleccionar todo",
+    deselectAll: "Deseleccionar todo",
     fixAll: "Corregir todo",
     fixing: "Corrigiendo {done}/{total}...",
     fixedToast: "{count} problemas corregidos.",
@@ -1136,6 +1191,21 @@ const es: Strings = {
       description:
         "Evita que Windows registre, guarde y envíe a Microsoft el historial de tus apps y documentos usados, mediante una política del sistema (HKLM, requiere privilegios de administrador).",
     },
+    hide_taskbar_search: {
+      name: "Ocultar el cuadro de búsqueda de la barra de tareas",
+      description:
+        "Elimina el cuadro/icono de búsqueda de la barra de tareas, para una barra más limpia (la búsqueda sigue disponible desde la tecla Windows) (HKCU, no requiere elevación).",
+    },
+    disable_fullscreen_optimizations_global: {
+      name: "Desactivar las optimizaciones de pantalla completa globalmente",
+      description:
+        "Obliga a DXGI a respetar el verdadero modo de pantalla completa exclusiva en lugar de la simulación de Windows, reduciendo microcortes y latencia de entrada en muchos juegos más antiguos (HKCU, no requiere elevación).",
+    },
+    disable_windows_search_service: {
+      name: "Desactivar el servicio de indexación (Windows Search)",
+      description:
+        "Detiene y desactiva el servicio de indexación de archivos de Windows, reduciendo la actividad de disco en segundo plano — útil en SSD pequeños o mientras juegas. La búsqueda de archivos en el menú Inicio se vuelve más lenta hasta que lo reactives (requiere privilegios de administrador).",
+    },
   },
   cleanup: {
     temp_cleanup: {
@@ -1184,6 +1254,8 @@ const de: Strings = {
     stepJunk: "Temporäre Dateien",
     allGood: "Alles in Ordnung — keine Probleme gefunden.",
     issuesFound: "{count} Optimierungen verfügbar",
+    selectAll: "Alles auswählen",
+    deselectAll: "Alles abwählen",
     fixAll: "Alles beheben",
     fixing: "Behebe {done}/{total}...",
     fixedToast: "{count} Probleme behoben.",
@@ -1380,6 +1452,21 @@ const de: Strings = {
       name: "Aktivitätsverlauf deaktivieren (Windows Timeline)",
       description:
         "Verhindert, dass Windows deinen App- und Dokumentenverlauf per Systemrichtlinie aufzeichnet, speichert und an Microsoft sendet (HKLM, Administratorrechte erforderlich).",
+    },
+    hide_taskbar_search: {
+      name: "Suchfeld aus der Taskleiste ausblenden",
+      description:
+        "Entfernt das Suchfeld/-symbol aus der Taskleiste für eine aufgeräumtere Leiste (die Suche bleibt über die Windows-Taste verfügbar) (HKCU, keine Elevation erforderlich).",
+    },
+    disable_fullscreen_optimizations_global: {
+      name: "Vollbildoptimierungen global deaktivieren",
+      description:
+        "Zwingt DXGI dazu, den echten exklusiven Vollbildmodus statt der simulierten Windows-Variante zu verwenden, was Mikroruckler und Eingabeverzögerung in vielen älteren Spielen reduziert (HKCU, keine Elevation erforderlich).",
+    },
+    disable_windows_search_service: {
+      name: "Indizierungsdienst deaktivieren (Windows Search)",
+      description:
+        "Stoppt und deaktiviert den Datei-Indizierungsdienst von Windows und reduziert so die Festplattenaktivität im Hintergrund — nützlich bei kleinen SSDs oder beim Spielen. Die Dateisuche im Startmenü wird langsamer, bis du ihn wieder aktivierst (Administratorrechte erforderlich).",
     },
   },
   cleanup: {

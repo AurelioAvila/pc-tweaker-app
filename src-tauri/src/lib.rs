@@ -7,6 +7,7 @@ mod gaming;
 mod power;
 mod privacy_extra;
 mod rollback;
+mod services;
 mod turbo;
 mod tweaks;
 
@@ -167,6 +168,18 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         requires_pro: activity_history.requires_pro,
     });
 
+    let windows_search = services::windows_search_info();
+    list.push(TweakInfo {
+        applied: store.is_applied(windows_search.id),
+        id: windows_search.id.to_string(),
+        name: windows_search.name.to_string(),
+        description: windows_search.description.to_string(),
+        category: category_str(&Category::Manutenzione).to_string(),
+        hive: "—".to_string(),
+        requires_admin: windows_search.requires_admin,
+        requires_pro: windows_search.requires_pro,
+    });
+
     Ok(list)
 }
 
@@ -181,6 +194,7 @@ fn apply_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
         gaming::KEYBOARD_DELAY_ID => gaming::apply_keyboard_delay(store),
         game_priority::TWEAK_ID => game_priority::apply(store),
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::apply_activity_history(store),
+        services::WINDOWS_SEARCH_ID => services::apply(store),
         _ => {
             let tweak = find_tweak(id).ok_or_else(|| format!("tweak sconosciuto: {}", id))?;
             tweak.apply(store)
@@ -199,6 +213,7 @@ fn rollback_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
         gaming::KEYBOARD_DELAY_ID => gaming::rollback_keyboard_delay(store),
         game_priority::TWEAK_ID => game_priority::rollback(store),
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::rollback_activity_history(store),
+        services::WINDOWS_SEARCH_ID => services::rollback(store),
         _ => {
             let tweak = find_tweak(id).ok_or_else(|| format!("tweak sconosciuto: {}", id))?;
             tweak.rollback(store)
@@ -217,6 +232,7 @@ fn requires_admin_for(id: &str) -> bool {
         gaming::KEYBOARD_DELAY_ID => false,
         game_priority::TWEAK_ID => true,
         privacy_extra::ACTIVITY_HISTORY_ID => true,
+        services::WINDOWS_SEARCH_ID => true,
         _ => find_tweak(id).map(|t| t.requires_admin).unwrap_or(false),
     }
 }

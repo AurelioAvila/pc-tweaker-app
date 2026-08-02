@@ -93,7 +93,10 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
             SnapshotEntry::PowerScheme { previous_guid } => {
                 crate::power::run_powercfg(&["/setactive", &previous_guid])?;
             }
-            SnapshotEntry::Composite { .. } | SnapshotEntry::Dns { .. } | SnapshotEntry::PowerSetting { .. } => {}
+            SnapshotEntry::Composite { .. }
+            | SnapshotEntry::Dns { .. }
+            | SnapshotEntry::PowerSetting { .. }
+            | SnapshotEntry::Service { .. } => {}
         }
     }
 

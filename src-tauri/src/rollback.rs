@@ -32,6 +32,7 @@ pub enum SnapshotEntry {
     PowerScheme { previous_guid: String },
     Dns { interface: String, previous_servers: Vec<String> },
     PowerSetting { ac_index: String, dc_index: String },
+    Service { name: String, previous_start_type: String },
     Composite { entries: Vec<SnapshotEntry> },
 }
 

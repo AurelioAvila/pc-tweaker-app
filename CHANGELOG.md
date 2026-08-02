@@ -7,6 +7,31 @@ the git log.
 
 ## 2026-08-02
 
+- **Added**: 3 more tweaks, bringing the total from 22 to 25 — all verified
+  live against the real system:
+  - "Nascondi la casella di ricerca dalla barra delle applicazioni" (Free, UI).
+  - "Disattiva ottimizzazioni schermo intero globalmente" (Free, Gaming) —
+    DXGI honor-FSE registry fix for reduced stutter/input lag in older games.
+  - "Disattiva servizio di indicizzazione (Windows Search)" (Pro,
+    Manutenzione) — the app's first service-level tweak (stop + disable via
+    `sc.exe`, not just a registry value), with real rollback that restores
+    the exact previous start type including delayed-auto-start, not just a
+    generic "automatic".
+  - Caught and fixed a real bug while testing the new service tweak:
+    `sc qc`'s field label is localized ("TIPO_AVVIO" in Italian vs
+    "START_TYPE" in English) — same root cause as the earlier `powercfg`
+    locale bug. Now matches on the (always-English) enum value instead.
+- **Fixed**: Scan incorrectly showed Pro tweaks as locked-behind-Pro
+  suggestions even for accounts that already own Pro. It now checks the
+  account's actual plan and treats every not-yet-applied tweak/cleanup —
+  Pro included — as directly fixable when the account is Pro; the "also
+  available with Pro" box only shows for non-Pro accounts.
+- **Moved**: the password breach checker from the bottom of the Privacy tab
+  to the top — it's one of the most useful features here, it shouldn't be
+  buried under a dozen toggle rows.
+- **Polished**: Scan's results list now has a "select/deselect all" link,
+  a colored icon per issue (tweak vs. cleanup), and a fill-progress bar on
+  the "Fix all" button while it's working through the list.
 - **Tuned**: the Scan animation was too fast to read as "doing real work" —
   slowed it down (~4.2s) and added a live percentage counter tied to actual
   elapsed time, with a progress ring that fills in step.

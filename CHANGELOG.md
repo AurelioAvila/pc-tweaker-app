@@ -7,6 +7,15 @@ the git log.
 
 ## 2026-08-02
 
+- **Changed (marketing/reel-generator)**: pool di hook ampliati da 4-5 a
+  10 per categoria (13 -> 30 totali). Un audit su 300 generazioni ne aveva
+  contati solo 5 distinti per categoria: da quando l'hook e' anche il testo
+  della hook card nel primo fotogramma e' l'elemento piu' visibile del
+  video, quindi ripetersi ogni 5 video costa molto piu' di prima. Gli
+  archetipi sono volutamente diversi (prima persona / conseguenza / POV /
+  numero concreto / mito da smontare), non variazioni della stessa frase.
+  Ri-verificato a valle: 30 hook distinti, zero difetti su lunghezza,
+  spazi doppi e CTA duplicate.
 - **Fixed (marketing/reel-generator)**: i Reel mostravano un frammento
   senza senso nel primo fotogramma. Le didascalie sono sincronizzate a 2
   parole per volta, quindi al fotogramma 0 si leggeva letteralmente

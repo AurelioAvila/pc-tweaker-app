@@ -19,6 +19,14 @@ import random
 # hook generici "ecco un'impostazione" su Groomlyco/Magdock - stessa logica
 # applicata qui, non solo teoria. Vedi
 # feedback_reinforce_winning_hooks nella memoria per i dati.
+# Pool ampliati 2026-08-02 da 4-5 a 10 hook per categoria. Un audit su 300
+# generazioni ne ha contati solo 5 distinti: da quando l'hook e' anche il
+# testo della HOOK CARD nel primo fotogramma (vedi _hook_card_clip in
+# src/render.py) e' diventato l'elemento piu' visibile del video, quindi
+# ripetersi ogni 5 video costa molto piu' di prima. Archetipi volutamente
+# diversi (prima persona / conseguenza / POV / numero concreto / mito da
+# smontare) invece di variazioni della stessa formula: quella sarebbe
+# varieta' solo apparente.
 HOOKS = {
     "mistakewarning": [
         "I checked every default Windows setting for a week, this one shocked me.",
@@ -26,18 +34,35 @@ HOOKS = {
         "Windows turned this on without asking you.",
         "You didn't enable this, Windows did.",
         "This has probably been on the whole time.",
+        "Nobody checks this one, and it's been running since day one.",
+        "Your PC isn't slow, it's busy doing something you never approved.",
+        "I found this on every single machine I've cleaned up this year.",
+        "This is the default that quietly costs you performance every boot.",
+        "Fresh install, brand new laptop, and this was already switched on.",
     ],
     "contrarian": [
         "I stress-tested three PC optimizers so you don't have to.",
         "Don't install a PC optimizer before hearing this.",
         "Most optimizer tools can't do this one thing.",
         "Here's what separates a safe tool from a risky one.",
+        "The free tools aren't the problem, the irreversible ones are.",
+        "Every 'speed booster' I tested did the same three things.",
+        "If a tool can't undo a change, that's not optimization, that's a gamble.",
+        "I paid for one of these so you can skip it entirely.",
+        "The honest answer is most of these do almost nothing.",
+        "Registry cleaners are still being sold in 2026, and here's why that matters.",
     ],
     "beforeafter": [
         "POV: your PC finally runs like it should.",
         "Same PC, one setting flipped, here's the difference.",
         "Here's what one click actually changes.",
         "This is the difference one preset makes.",
+        "Same hardware, same games, completely different numbers.",
+        "I recorded the before and after so you don't have to trust me.",
+        "Nothing was upgraded here, only switched off.",
+        "This took eleven seconds and I wish I'd done it a year ago.",
+        "The boot time alone made this worth it.",
+        "No new parts, no reinstall, just the defaults corrected.",
     ],
 }
 

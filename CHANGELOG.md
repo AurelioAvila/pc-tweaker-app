@@ -7,6 +7,21 @@ the git log.
 
 ## 2026-08-02
 
+- **Redesigned**: Turbo Boost is now a standalone card with a big centered
+  circular button (START/STOP), pulsing glow rings while the apply/rollback
+  call is in flight — Advanced-SystemCare-style, instead of a title + toggle
+  switch row.
+- **Replaced**: the "Tutti" (All) tab with a new **Scan** tab — the app's
+  new landing screen. Big circular "SCAN" button leads into a staged check
+  (Performance/Privacy/Gaming/junk files) that surfaces this PC's real
+  not-yet-applied free tweaks and pending temp cleanup as a checklist, with
+  a "Correggi tutto" button that applies everything checked in one go and
+  a separate "also available with Pro" upsell list for the Pro-only ones.
+  Nothing here is fabricated — it reads the same `list_tweaks`/
+  `list_cleanup_targets` data already used elsewhere; the scan animation is
+  just paced reveal of real, already-loaded state, not a fake progress bar.
+  Verified live: scan correctly found 20 real unapplied free tweaks plus 4
+  Pro ones on this machine.
 - **Changed**: Game Sessions now only shows on the Gaming tab (it used to
   render on every tab regardless of the selected filter).
 - **Added**: dedicated Turbo Boost panel on the Gaming tab (replaces its

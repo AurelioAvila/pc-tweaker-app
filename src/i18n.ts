@@ -18,7 +18,7 @@ export interface Strings {
   appliedCount: string; // "{applied} of {total} tweaks active" — use {applied}/{total}
   headerNote: string;
   tabs: {
-    all: string;
+    scan: string;
     performance: string;
     privacy: string;
     ui: string;
@@ -37,10 +37,29 @@ export interface Strings {
   turboBoost: {
     title: string;
     subtitle: string;
+    startLabel: string;
+    stopLabel: string;
     activating: string;
     deactivating: string;
     active: string;
     inactive: string;
+  };
+  scan: {
+    title: string;
+    subtitle: string;
+    startLabel: string;
+    stepPerformance: string;
+    stepPrivacy: string;
+    stepGaming: string;
+    stepJunk: string;
+    allGood: string;
+    issuesFound: string; // uses {count}
+    fixAll: string;
+    fixing: string; // uses {done} {total}
+    fixedToast: string; // uses {count}
+    proIssuesTitle: string;
+    unlockPro: string;
+    scanAgain: string;
   };
   passwordCheck: {
     title: string;
@@ -147,7 +166,7 @@ const it: Strings = {
   appliedCount: "{applied} di {total} tweak attivi",
   headerNote:
     "Ogni tweak salva un backup del valore originale prima di essere applicato. I tweak con privilegi elevati chiedono un consenso UAC esplicito, solo per quell'azione.",
-  tabs: { all: "Tutti", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Manutenzione", gaming: "Gaming" },
+  tabs: { scan: "Scan", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Manutenzione", gaming: "Gaming" },
   badges: { admin: "Admin", pro: "PRO", soon: "IN ARRIVO" },
   emptyCategory: "Nessun tweak disponibile in questa categoria — presto in arrivo.",
   gameSessions: {
@@ -160,10 +179,29 @@ const it: Strings = {
   turboBoost: {
     title: "Turbo Boost",
     subtitle: "Spinge il processore al massimo delle prestazioni per il gaming, con un tocco.",
+    startLabel: "START",
+    stopLabel: "STOP",
     activating: "Attivazione turbo in corso...",
     deactivating: "Ripristino in corso...",
     active: "Turbo attivo",
     inactive: "Turbo non attivo",
+  },
+  scan: {
+    title: "Scansione rapida",
+    subtitle: "Controlla lo stato del PC e trova ottimizzazioni non ancora attive, in un click.",
+    startLabel: "SCAN",
+    stepPerformance: "Performance",
+    stepPrivacy: "Privacy",
+    stepGaming: "Gaming",
+    stepJunk: "File temporanei",
+    allGood: "Tutto ok — nessun problema trovato.",
+    issuesFound: "{count} ottimizzazioni disponibili",
+    fixAll: "Correggi tutto",
+    fixing: "Correzione {done}/{total}...",
+    fixedToast: "{count} problemi corretti.",
+    proIssuesTitle: "Disponibili anche con Pro",
+    unlockPro: "Sblocca Pro",
+    scanAgain: "Scansiona di nuovo",
   },
   passwordCheck: {
     title: "Controllo violazioni password",
@@ -381,7 +419,7 @@ const en: Strings = {
   appliedCount: "{applied} of {total} tweaks active",
   headerNote:
     "Every tweak backs up the original value before it's applied. Tweaks that need elevated rights ask for an explicit UAC prompt, only for that action.",
-  tabs: { all: "All", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Maintenance", gaming: "Gaming" },
+  tabs: { scan: "Scan", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Maintenance", gaming: "Gaming" },
   badges: { admin: "Admin", pro: "PRO", soon: "COMING SOON" },
   emptyCategory: "No tweaks available in this category yet — more coming soon.",
   gameSessions: {
@@ -394,10 +432,29 @@ const en: Strings = {
   turboBoost: {
     title: "Turbo Boost",
     subtitle: "Pushes your processor to peak gaming performance, with one tap.",
+    startLabel: "START",
+    stopLabel: "STOP",
     activating: "Activating turbo...",
     deactivating: "Restoring...",
     active: "Turbo active",
     inactive: "Turbo not active",
+  },
+  scan: {
+    title: "Quick scan",
+    subtitle: "Checks your PC's status and finds optimizations that aren't active yet, in one click.",
+    startLabel: "SCAN",
+    stepPerformance: "Performance",
+    stepPrivacy: "Privacy",
+    stepGaming: "Gaming",
+    stepJunk: "Temp files",
+    allGood: "All good — no issues found.",
+    issuesFound: "{count} optimizations available",
+    fixAll: "Fix all",
+    fixing: "Fixing {done}/{total}...",
+    fixedToast: "{count} issues fixed.",
+    proIssuesTitle: "Also available with Pro",
+    unlockPro: "Unlock Pro",
+    scanAgain: "Scan again",
   },
   passwordCheck: {
     title: "Password breach check",
@@ -607,7 +664,7 @@ const fr: Strings = {
   appliedCount: "{applied} sur {total} optimisations actives",
   headerNote:
     "Chaque optimisation sauvegarde la valeur d'origine avant d'être appliquée. Celles qui nécessitent des droits élevés demandent un consentement UAC explicite, uniquement pour cette action.",
-  tabs: { all: "Tous", performance: "Performance", privacy: "Confidentialité", ui: "Interface", manutenzione: "Entretien", gaming: "Gaming" },
+  tabs: { scan: "Scan", performance: "Performance", privacy: "Confidentialité", ui: "Interface", manutenzione: "Entretien", gaming: "Gaming" },
   badges: { admin: "Admin", pro: "PRO", soon: "BIENTÔT" },
   emptyCategory: "Aucune optimisation disponible dans cette catégorie pour l'instant — à venir.",
   gameSessions: {
@@ -620,10 +677,29 @@ const fr: Strings = {
   turboBoost: {
     title: "Turbo Boost",
     subtitle: "Pousse votre processeur au maximum de ses performances pour le jeu, en un clic.",
+    startLabel: "START",
+    stopLabel: "STOP",
     activating: "Activation du turbo...",
     deactivating: "Restauration...",
     active: "Turbo actif",
     inactive: "Turbo inactif",
+  },
+  scan: {
+    title: "Analyse rapide",
+    subtitle: "Vérifie l'état de votre PC et trouve les optimisations pas encore actives, en un clic.",
+    startLabel: "SCAN",
+    stepPerformance: "Performance",
+    stepPrivacy: "Confidentialité",
+    stepGaming: "Gaming",
+    stepJunk: "Fichiers temporaires",
+    allGood: "Tout est en ordre — aucun problème trouvé.",
+    issuesFound: "{count} optimisations disponibles",
+    fixAll: "Tout corriger",
+    fixing: "Correction {done}/{total}...",
+    fixedToast: "{count} problèmes corrigés.",
+    proIssuesTitle: "Aussi disponibles avec Pro",
+    unlockPro: "Débloquer Pro",
+    scanAgain: "Analyser à nouveau",
   },
   passwordCheck: {
     title: "Vérification des fuites de mot de passe",
@@ -833,7 +909,7 @@ const es: Strings = {
   appliedCount: "{applied} de {total} ajustes activos",
   headerNote:
     "Cada ajuste guarda una copia del valor original antes de aplicarse. Los ajustes que requieren privilegios elevados piden un consentimiento UAC explícito, solo para esa acción.",
-  tabs: { all: "Todos", performance: "Rendimiento", privacy: "Privacidad", ui: "Interfaz", manutenzione: "Mantenimiento", gaming: "Gaming" },
+  tabs: { scan: "Scan", performance: "Rendimiento", privacy: "Privacidad", ui: "Interfaz", manutenzione: "Mantenimiento", gaming: "Gaming" },
   badges: { admin: "Admin", pro: "PRO", soon: "PRÓXIMAMENTE" },
   emptyCategory: "Todavía no hay ajustes disponibles en esta categoría — próximamente.",
   gameSessions: {
@@ -846,10 +922,29 @@ const es: Strings = {
   turboBoost: {
     title: "Turbo Boost",
     subtitle: "Lleva tu procesador al máximo rendimiento para gaming, con un toque.",
+    startLabel: "START",
+    stopLabel: "STOP",
     activating: "Activando turbo...",
     deactivating: "Restaurando...",
     active: "Turbo activo",
     inactive: "Turbo no activo",
+  },
+  scan: {
+    title: "Análisis rápido",
+    subtitle: "Comprueba el estado de tu PC y encuentra optimizaciones que aún no están activas, en un clic.",
+    startLabel: "SCAN",
+    stepPerformance: "Rendimiento",
+    stepPrivacy: "Privacidad",
+    stepGaming: "Gaming",
+    stepJunk: "Archivos temporales",
+    allGood: "Todo bien — no se encontraron problemas.",
+    issuesFound: "{count} optimizaciones disponibles",
+    fixAll: "Corregir todo",
+    fixing: "Corrigiendo {done}/{total}...",
+    fixedToast: "{count} problemas corregidos.",
+    proIssuesTitle: "También disponibles con Pro",
+    unlockPro: "Desbloquear Pro",
+    scanAgain: "Analizar de nuevo",
   },
   passwordCheck: {
     title: "Comprobación de filtraciones de contraseña",
@@ -1059,7 +1154,7 @@ const de: Strings = {
   appliedCount: "{applied} von {total} Optimierungen aktiv",
   headerNote:
     "Jede Optimierung sichert den ursprünglichen Wert, bevor sie angewendet wird. Optimierungen mit erhöhten Rechten fragen gezielt per UAC nach, nur für diese Aktion.",
-  tabs: { all: "Alle", performance: "Leistung", privacy: "Datenschutz", ui: "Oberfläche", manutenzione: "Wartung", gaming: "Gaming" },
+  tabs: { scan: "Scan", performance: "Leistung", privacy: "Datenschutz", ui: "Oberfläche", manutenzione: "Wartung", gaming: "Gaming" },
   badges: { admin: "Admin", pro: "PRO", soon: "DEMNÄCHST" },
   emptyCategory: "In dieser Kategorie sind noch keine Optimierungen verfügbar — bald verfügbar.",
   gameSessions: {
@@ -1072,10 +1167,29 @@ const de: Strings = {
   turboBoost: {
     title: "Turbo Boost",
     subtitle: "Bringt deinen Prozessor mit einem Tipp auf Spitzenleistung fürs Gaming.",
+    startLabel: "START",
+    stopLabel: "STOP",
     activating: "Turbo wird aktiviert...",
     deactivating: "Wird wiederhergestellt...",
     active: "Turbo aktiv",
     inactive: "Turbo nicht aktiv",
+  },
+  scan: {
+    title: "Schnellscan",
+    subtitle: "Prüft den Zustand deines PCs und findet noch nicht aktive Optimierungen, mit einem Klick.",
+    startLabel: "SCAN",
+    stepPerformance: "Leistung",
+    stepPrivacy: "Datenschutz",
+    stepGaming: "Gaming",
+    stepJunk: "Temporäre Dateien",
+    allGood: "Alles in Ordnung — keine Probleme gefunden.",
+    issuesFound: "{count} Optimierungen verfügbar",
+    fixAll: "Alles beheben",
+    fixing: "Behebe {done}/{total}...",
+    fixedToast: "{count} Probleme behoben.",
+    proIssuesTitle: "Auch mit Pro verfügbar",
+    unlockPro: "Pro freischalten",
+    scanAgain: "Erneut scannen",
   },
   passwordCheck: {
     title: "Passwort-Datenleck-Prüfung",

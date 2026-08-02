@@ -1008,38 +1008,268 @@ function TurboBoostPanel({
     }
   }
 
+  const statusLabel = busy
+    ? applied
+      ? s.turboBoost.deactivating
+      : s.turboBoost.activating
+    : applied
+      ? s.turboBoost.active
+      : s.turboBoost.inactive;
+
   return (
-    <div className="relative mb-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-      <div
-        className={`pointer-events-none absolute inset-0 bg-[conic-gradient(from_0deg,transparent,rgba(251,146,60,0.35),transparent_60%)] transition-opacity duration-500 ${
-          busy ? "animate-spin opacity-100" : "opacity-0"
-        }`}
-      />
-      <div className="relative flex items-center gap-4">
-        <div
-          className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 text-white shadow-lg shadow-orange-500/30 transition-transform duration-300 ${
-            busy ? "animate-pulse" : applied ? "scale-105" : ""
+    <div className="mb-6 flex flex-col items-center rounded-2xl border border-white/10 bg-white/[0.04] p-8">
+      <h2 className="text-lg font-semibold text-slate-100">{s.turboBoost.title}</h2>
+      <p className="mt-1 max-w-xs text-center text-sm text-slate-400">{s.turboBoost.subtitle}</p>
+
+      <button
+        onClick={toggleTurbo}
+        disabled={busy}
+        className="group relative mt-6 grid h-40 w-40 shrink-0 place-items-center rounded-full outline-none disabled:cursor-wait"
+      >
+        {busy && (
+          <>
+            <span className="absolute inset-0 rounded-full bg-orange-400/25 [animation:ping_1.6s_ease-out_infinite]" />
+            <span className="absolute inset-0 rounded-full bg-orange-400/20 [animation:ping_1.6s_ease-out_infinite] [animation-delay:400ms]" />
+          </>
+        )}
+        <span
+          className={`absolute inset-0 rounded-full bg-gradient-to-br transition-all duration-500 ${
+            applied
+              ? "from-orange-400 to-red-500 shadow-[0_0_45px_rgba(251,146,60,0.55)]"
+              : "from-white/15 to-white/5 shadow-inner group-hover:from-white/20"
           }`}
+        />
+        <span className="relative flex flex-col items-center gap-1.5 text-white">
+          <BoltIcon className={`h-9 w-9 ${busy ? "animate-pulse" : ""}`} />
+          <span className="text-base font-black tracking-wider">
+            {busy ? "···" : applied ? s.turboBoost.stopLabel : s.turboBoost.startLabel}
+          </span>
+        </span>
+      </button>
+
+      <p
+        className={`mt-4 text-sm font-medium ${
+          busy ? "text-orange-300" : applied ? "text-orange-300" : "text-slate-500"
+        }`}
+      >
+        {statusLabel}
+      </p>
+    </div>
+  );
+}
+
+function MagnifierIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="m20 20-4.3-4.3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+type ScanIssue = {
+  kind: "tweak" | "cleanup";
+  id: string;
+  name: string;
+  description: string;
+};
+
+/**
+ * "Scan for problems, fix them with one click" landing screen — same idea as
+ * the scan/fix flow in tools like Advanced SystemCare, but grounded in this
+ * app's own real data: the "problems" it finds are simply this PC's
+ * not-yet-applied free tweaks and pending temp-file cleanup, nothing
+ * fabricated. The staged reveal during "scanning" is cosmetic pacing over
+ * data that's already loaded, not a fake progress bar over fake work.
+ */
+function ScanPanel({
+  s,
+  tweaks,
+  cleanupTargets,
+  onRequirePro,
+  onFixed,
+  pushToast,
+}: {
+  s: Strings;
+  tweaks: TweakInfo[];
+  cleanupTargets: CleanupInfo[];
+  onRequirePro: () => void;
+  onFixed: () => Promise<void>;
+  pushToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [phase, setPhase] = useState<"idle" | "scanning" | "done">("idle");
+  const [scanStep, setScanStep] = useState(0);
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [fixing, setFixing] = useState(false);
+  const [fixProgress, setFixProgress] = useState(0);
+  const scanTimer = useRef<number | null>(null);
+
+  const steps = [s.scan.stepPerformance, s.scan.stepPrivacy, s.scan.stepGaming, s.scan.stepJunk];
+
+  const freeIssues: ScanIssue[] = useMemo(() => {
+    const fromTweaks = tweaks
+      .filter((t) => !t.applied && !t.requires_pro && t.id !== "turbo_boost")
+      .map((t) => ({ kind: "tweak" as const, id: t.id, name: t.name, description: t.description }));
+    const fromCleanup = cleanupTargets
+      .filter((c) => !c.requires_pro)
+      .map((c) => ({ kind: "cleanup" as const, id: c.id, name: c.name, description: c.description }));
+    return [...fromTweaks, ...fromCleanup];
+  }, [tweaks, cleanupTargets]);
+
+  const proIssues = useMemo(() => tweaks.filter((t) => !t.applied && t.requires_pro), [tweaks]);
+
+  useEffect(() => {
+    return () => {
+      if (scanTimer.current) window.clearInterval(scanTimer.current);
+    };
+  }, []);
+
+  function startScan() {
+    setPhase("scanning");
+    setScanStep(0);
+    let i = 0;
+    scanTimer.current = window.setInterval(() => {
+      i += 1;
+      setScanStep(i);
+      if (i >= steps.length) {
+        if (scanTimer.current) window.clearInterval(scanTimer.current);
+        const initialChecked: Record<string, boolean> = {};
+        freeIssues.forEach((issue) => {
+          initialChecked[issue.id] = true;
+        });
+        setChecked(initialChecked);
+        setPhase("done");
+      }
+    }, 450);
+  }
+
+  async function fixAll() {
+    const toFix = freeIssues.filter((issue) => checked[issue.id]);
+    if (toFix.length === 0) return;
+    setFixing(true);
+    setFixProgress(0);
+    for (let i = 0; i < toFix.length; i++) {
+      const issue = toFix[i];
+      try {
+        if (issue.kind === "tweak") {
+          await invoke("apply_tweak", { id: issue.id });
+        } else {
+          await invoke("run_cleanup", { id: issue.id });
+        }
+      } catch (e) {
+        pushToast("error", String(e));
+      }
+      setFixProgress(i + 1);
+    }
+    await onFixed();
+    setFixing(false);
+    pushToast("success", format(s.scan.fixedToast, { count: toFix.length }));
+  }
+
+  const totalIssues = freeIssues.length + proIssues.length;
+  const checkedCount = freeIssues.filter((i) => checked[i.id]).length;
+
+  return (
+    <div className="mb-6 flex flex-col items-center rounded-2xl border border-white/10 bg-white/[0.04] p-8">
+      <h2 className="text-lg font-semibold text-slate-100">{s.scan.title}</h2>
+      <p className="mt-1 max-w-sm text-center text-sm text-slate-400">{s.scan.subtitle}</p>
+
+      {phase === "idle" && (
+        <button
+          onClick={startScan}
+          className="group relative mt-6 grid h-40 w-40 place-items-center rounded-full outline-none"
         >
-          <BoltIcon className="h-7 w-7" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-semibold text-slate-100">{s.turboBoost.title}</h2>
-            <span
-              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                applied ? "bg-orange-400/20 text-orange-300" : "bg-white/10 text-slate-400"
-              }`}
-            >
-              {applied ? s.turboBoost.active : s.turboBoost.inactive}
-            </span>
+          <span className="absolute inset-0 rounded-full bg-gradient-to-br from-fuchsia-500 to-indigo-500 shadow-[0_0_45px_rgba(217,70,239,0.45)] transition-transform duration-300 group-hover:scale-105" />
+          <span className="relative flex flex-col items-center gap-1.5 text-white">
+            <MagnifierIcon className="h-9 w-9" />
+            <span className="text-base font-black tracking-wider">{s.scan.startLabel}</span>
+          </span>
+        </button>
+      )}
+
+      {phase === "scanning" && (
+        <>
+          <div className="relative mt-6 grid h-40 w-40 place-items-center">
+            <span className="absolute inset-0 rounded-full border-4 border-white/10" />
+            <span className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-fuchsia-400 border-r-indigo-400" />
+            <MagnifierIcon className="h-9 w-9 animate-pulse text-fuchsia-300" />
           </div>
-          <p className="mt-0.5 text-sm text-slate-400">
-            {busy ? (applied ? s.turboBoost.deactivating : s.turboBoost.activating) : s.turboBoost.subtitle}
+          <ul className="mt-5 flex flex-col gap-1.5 text-sm">
+            {steps.map((label, i) => (
+              <li
+                key={label}
+                className={`flex items-center gap-2 transition-opacity duration-300 ${
+                  i < scanStep ? "text-emerald-300 opacity-100" : "text-slate-500 opacity-40"
+                }`}
+              >
+                <span className="w-4">{i < scanStep ? "✓" : "…"}</span>
+                {label}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {phase === "done" && (
+        <div className="mt-6 w-full">
+          <p className={`mb-4 text-center text-sm font-semibold ${totalIssues === 0 ? "text-emerald-400" : "text-amber-300"}`}>
+            {totalIssues === 0 ? s.scan.allGood : format(s.scan.issuesFound, { count: totalIssues })}
           </p>
+
+          {freeIssues.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {freeIssues.map((issue) => (
+                <label
+                  key={issue.id}
+                  className="flex items-start gap-3 rounded-xl bg-white/5 p-3 text-sm hover:bg-white/[0.07]"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked[issue.id] ?? true}
+                    onChange={(e) => setChecked((c) => ({ ...c, [issue.id]: e.target.checked }))}
+                    className="mt-1 accent-fuchsia-500"
+                  />
+                  <span>
+                    <span className="font-medium text-slate-100">{issue.name}</span>
+                    <p className="text-xs text-slate-400">{issue.description}</p>
+                  </span>
+                </label>
+              ))}
+              <button
+                onClick={fixAll}
+                disabled={fixing || checkedCount === 0}
+                className="mt-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-indigo-500 py-2.5 text-sm font-bold text-white transition-transform hover:scale-[1.01] disabled:cursor-wait disabled:opacity-50"
+              >
+                {fixing ? format(s.scan.fixing, { done: fixProgress, total: checkedCount }) : s.scan.fixAll}
+              </button>
+            </div>
+          )}
+
+          {proIssues.length > 0 && (
+            <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-400/5 p-3">
+              <p className="mb-2 text-xs font-semibold text-amber-300">{s.scan.proIssuesTitle}</p>
+              <ul className="mb-3 flex flex-col gap-1 text-xs text-slate-400">
+                {proIssues.map((issue) => (
+                  <li key={issue.id}>• {issue.name}</li>
+                ))}
+              </ul>
+              <button
+                onClick={onRequirePro}
+                className="rounded-lg bg-amber-400/20 px-3 py-1.5 text-xs font-semibold text-amber-300 hover:bg-amber-400/30"
+              >
+                {s.scan.unlockPro}
+              </button>
+            </div>
+          )}
+
+          <button
+            onClick={() => setPhase("idle")}
+            className="mt-4 w-full text-center text-xs text-slate-500 hover:text-slate-300"
+          >
+            {s.scan.scanAgain}
+          </button>
         </div>
-        <Toggle checked={applied} busy={busy} onClick={toggleTurbo} />
-      </div>
+      )}
     </div>
   );
 }
@@ -1291,8 +1521,8 @@ function App() {
     await openUrl(data.url);
   }
 
-  const CATEGORIES: { key: Category | "all"; label: string }[] = [
-    { key: "all", label: s.tabs.all },
+  const CATEGORIES: { key: Category | "scan"; label: string }[] = [
+    { key: "scan", label: s.tabs.scan },
     { key: "performance", label: s.tabs.performance },
     { key: "privacy", label: s.tabs.privacy },
     { key: "ui", label: s.tabs.ui },
@@ -1302,7 +1532,7 @@ function App() {
 
   const [tweaks, setTweaks] = useState<TweakInfo[]>([]);
   const [cleanupTargets, setCleanupTargets] = useState<CleanupInfo[]>([]);
-  const [filter, setFilter] = useState<Category | "all">("all");
+  const [filter, setFilter] = useState<Category | "scan">("scan");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [paywallFeature, setPaywallFeature] = useState<string | null>(null);
@@ -1374,16 +1604,14 @@ function App() {
   }
 
   const visibleTweaks = useMemo(
-    () =>
-      (filter === "all" ? tweaks : tweaks.filter((t) => t.category === filter)).filter(
-        (t) => t.id !== "turbo_boost",
-      ),
+    () => (filter === "scan" ? [] : tweaks.filter((t) => t.category === filter && t.id !== "turbo_boost")),
     [tweaks, filter],
   );
 
-  const showCleanup = filter === "all" || filter === "manutenzione";
-  const showPrivacyExtras = filter === "all" || filter === "privacy";
+  const showCleanup = filter === "manutenzione";
+  const showPrivacyExtras = filter === "privacy";
   const showGamingExtras = filter === "gaming";
+  const showScan = filter === "scan";
   const turboBoostApplied = tweaks.find((t) => t.id === "turbo_boost")?.applied ?? false;
   const appliedCount = tweaks.filter((t) => t.applied).length;
 
@@ -1445,6 +1673,17 @@ function App() {
             </button>
           ))}
         </nav>
+
+        {showScan && (
+          <ScanPanel
+            s={s}
+            tweaks={tweaks}
+            cleanupTargets={cleanupTargets}
+            onRequirePro={() => setPaywallFeature(s.menu.planPro)}
+            onFixed={refresh}
+            pushToast={pushToast}
+          />
+        )}
 
         {showGamingExtras && (
           <>
@@ -1531,7 +1770,7 @@ function App() {
             />
           )}
 
-          {visibleTweaks.length === 0 && !showCleanup && !showPrivacyExtras && (
+          {visibleTweaks.length === 0 && !showCleanup && !showPrivacyExtras && !showScan && (
             <li className="animate-card rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-slate-500">
               {s.emptyCategory}
             </li>

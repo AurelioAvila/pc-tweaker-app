@@ -37,16 +37,42 @@ function appendLog(entry) {
   fs.writeFileSync(LOG_PATH, JSON.stringify(log, null, 2));
 }
 
+// Questi video sono verticali e brevi, cioe' Shorts: senza "#shorts" nel
+// titolo o nella descrizione YouTube deve indovinare la classificazione dal
+// solo formato. Bug reale trovato 2026-08-02: i .json generati non
+// contenevano "#shorts" da nessuna parte (ne' titolo, ne' descrizione, ne'
+// tags), a differenza di tutti gli altri canali.
+//
+// Il tag si aggiunge QUI e non in lib.js perche' lib.js e' condiviso con
+// compile-longform.js, dove "#shorts" sarebbe sbagliato: quello e' un video
+// lungo e taggarlo cosi' confonde la classificazione e delude chi clicca.
+const YT_TITLE_MAX = 100;
+const SHORTS_TAG = "#shorts";
+
+function withShortsTag(title, description) {
+  const hasTag = (s) => (s || "").toLowerCase().includes(SHORTS_TAG);
+  if (hasTag(title) || hasTag(description)) return { title, description };
+
+  // Preferenza al titolo, ma solo se ci sta: YouTube tronca a 100 caratteri
+  // senza errore, quindi un suffisso che non entra sparirebbe in silenzio
+  // (e' esattamente cosi' che il tag si e' perso sui video Shopify).
+  const suffixed = `${title} ${SHORTS_TAG}`;
+  if (suffixed.length <= YT_TITLE_MAX) return { title: suffixed, description };
+  return { title, description: `${description}\n\n${SHORTS_TAG}` };
+}
+
 async function processOne(baseName) {
   const videoPath = path.join(QUEUE_DIR, `${baseName}.mp4`);
   const metaPath = path.join(QUEUE_DIR, `${baseName}.json`);
   const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
 
+  const { title, description } = withShortsTag(meta.title, meta.description);
+
   console.log(`[${new Date().toISOString()}] Uploading ${baseName}.mp4 as public...`);
   const result = await uploadVideo({
     videoPath,
-    title: meta.title,
-    description: meta.description,
+    title,
+    description,
     tags: meta.tags || [],
     privacyStatus: "public",
   });

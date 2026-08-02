@@ -7,6 +7,34 @@ the git log.
 
 ## 2026-08-02
 
+- **Changed**: Game Sessions now only shows on the Gaming tab (it used to
+  render on every tab regardless of the selected filter).
+- **Added**: dedicated Turbo Boost panel on the Gaming tab (replaces its
+  plain toggle row) with a custom spinning-glow/pulsing-icon animation while
+  the apply/rollback call is in flight — same underlying tweak, verified
+  live earlier, just a much more "gamer" presentation for a Free feature
+  that's meant to sell the app's polish.
+- **Added**: "Riduci ritardo di input (tastiera)" (Free, Gaming) — zeroes
+  the key-repeat delay and maximizes repeat rate (HKCU), verified live
+  against the real registry (apply: Delay 1→0; rollback: back to 1).
+  Complements the existing mouse input-lag tweak.
+- **Added**: password breach checker (Free, Privacy) — checks a password
+  against Have I Been Pwned's Pwned Passwords range API using k-anonymity
+  (only the first 5 hex chars of its SHA-1 hash ever leave the device, never
+  the password or full hash). Verified live against the real API: "password"
+  correctly reports 52,372,427 known breaches, a strong random password
+  correctly reports none.
+- **Fixed**: 7 tweaks added earlier today (network throttling, system
+  responsiveness, games task priority, taskbar align, hide chat, Start
+  suggestions, activity history) had no EN/FR/ES/DE translations — the
+  existing per-tweak i18n map (`s.tweaks`) just didn't have entries for
+  them yet, so non-Italian users saw Italian text. Added all 4 translations
+  for all 7, plus the new keyboard-delay tweak.
+- **Not shipped (needs a decision)**: "Maschera IP (VPN)" stays an honest
+  placeholder — real IP masking needs an actual VPN backend (paid server
+  infrastructure in multiple regions, WireGuard/OpenVPN), which can't be
+  spun up as a code change. Flagged to the user for a call on how to fund/
+  build it.
 - **Added**: 7 new tweaks, verified live one by one against the real registry
   (apply + rollback, not just compiled):
   - *Gaming*: "Disattiva limitazione di rete multimediale" (MMCSS

@@ -34,6 +34,24 @@ export interface Strings {
     gamesCount: string; // uses {count}
     addGame: string;
   };
+  turboBoost: {
+    title: string;
+    subtitle: string;
+    activating: string;
+    deactivating: string;
+    active: string;
+    inactive: string;
+  };
+  passwordCheck: {
+    title: string;
+    description: string;
+    placeholder: string;
+    button: string;
+    checking: string;
+    safe: string;
+    breached: string; // uses {count}
+    error: string;
+  };
   paywall: {
     title: string;
     body: string; // uses {feature}
@@ -138,6 +156,25 @@ const it: Strings = {
     active: "Sessione attiva: {name}",
     gamesCount: "{count} giochi registrati",
     addGame: "+ Aggiungi gioco (.exe)",
+  },
+  turboBoost: {
+    title: "Turbo Boost",
+    subtitle: "Spinge il processore al massimo delle prestazioni per il gaming, con un tocco.",
+    activating: "Attivazione turbo in corso...",
+    deactivating: "Ripristino in corso...",
+    active: "Turbo attivo",
+    inactive: "Turbo non attivo",
+  },
+  passwordCheck: {
+    title: "Controllo violazioni password",
+    description:
+      "Verifica se una password è comparsa in una violazione di dati nota, senza mai inviarla per intero: solo un frammento del suo hash viene inviato (k-anonymity, standard usato da Have I Been Pwned).",
+    placeholder: "Incolla una password da controllare",
+    button: "Controlla",
+    checking: "Controllo in corso...",
+    safe: "Non risulta in nessuna violazione nota. Ottimo segno.",
+    breached: "Trovata in {count} violazioni note. Cambiala subito, ovunque la usi.",
+    error: "Impossibile controllare ora: verifica la connessione e riprova.",
   },
   paywall: {
     title: "Funzione Pro",
@@ -286,6 +323,45 @@ const it: Strings = {
       description:
         'Imposta la modalità di aumento delle prestazioni del processore su "Aggressiva", per sfruttare al massimo il Turbo Boost/Turbo Core durante il gioco (richiede privilegi di amministratore).',
     },
+    network_throttling_index: {
+      name: "Disattiva limitazione di rete multimediale",
+      description:
+        "Rimuove il limite che Windows impone al traffico di rete durante l'uso di app multimediali/giochi, utile per ridurre micro-lag online (HKLM, richiede privilegi di amministratore).",
+    },
+    system_responsiveness: {
+      name: "Massimizza reattività per app in primo piano",
+      description:
+        "Azzera la quota di CPU riservata da Windows ai task in background, lasciando più risorse all'app/gioco in primo piano (HKLM, richiede privilegi di amministratore).",
+    },
+    games_task_priority: {
+      name: "Priorità massima ai giochi (multimedia scheduler)",
+      description:
+        "Dice allo scheduler multimediale di Windows di trattare i giochi come i processi a più alta priorità del sistema, davanti a qualunque task in background (HKLM, richiede privilegi di amministratore).",
+    },
+    reduce_keyboard_delay: {
+      name: "Riduci ritardo di input (tastiera)",
+      description:
+        "Azzera il ritardo prima che una pressione prolungata dei tasti inizi a ripetersi e ne massimizza la velocità di ripetizione, per una risposta più immediata in gioco (HKCU, nessuna elevazione richiesta).",
+    },
+    taskbar_align_left: {
+      name: "Allinea la barra delle applicazioni a sinistra",
+      description:
+        "Riporta le icone della taskbar allineate a sinistra (stile Windows 10) invece che al centro (HKCU, nessuna elevazione richiesta).",
+    },
+    hide_taskbar_chat: {
+      name: "Nascondi Chat/Teams dalla barra delle applicazioni",
+      description: "Rimuove l'icona Chat (Microsoft Teams) dalla taskbar (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_start_suggestions: {
+      name: "Disattiva suggerimenti e app consigliate nel menu Start",
+      description:
+        "Impedisce a Windows di mostrare app consigliate, annunci e suggerimenti nel menu Start (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_activity_history: {
+      name: "Disattiva cronologia attività (Windows Timeline)",
+      description:
+        "Impedisce a Windows di registrare, salvare e inviare a Microsoft la cronologia delle app e dei documenti usati, tramite policy di sistema (HKLM, richiede privilegi di amministratore).",
+    },
   },
   cleanup: {
     temp_cleanup: {
@@ -314,6 +390,25 @@ const en: Strings = {
     active: "Session active: {name}",
     gamesCount: "{count} games registered",
     addGame: "+ Add game (.exe)",
+  },
+  turboBoost: {
+    title: "Turbo Boost",
+    subtitle: "Pushes your processor to peak gaming performance, with one tap.",
+    activating: "Activating turbo...",
+    deactivating: "Restoring...",
+    active: "Turbo active",
+    inactive: "Turbo not active",
+  },
+  passwordCheck: {
+    title: "Password breach check",
+    description:
+      "Checks whether a password has shown up in a known data breach, without ever sending it in full: only a fragment of its hash is sent (k-anonymity, the same standard used by Have I Been Pwned).",
+    placeholder: "Paste a password to check",
+    button: "Check",
+    checking: "Checking...",
+    safe: "Not found in any known breach. Good sign.",
+    breached: "Found in {count} known breaches. Change it now, everywhere you use it.",
+    error: "Couldn't check right now: check your connection and try again.",
   },
   paywall: {
     title: "Pro feature",
@@ -457,6 +552,43 @@ const en: Strings = {
       description:
         'Sets the processor performance boost mode to "Aggressive", squeezing the most out of Turbo Boost/Turbo Core while gaming (requires administrator rights).',
     },
+    network_throttling_index: {
+      name: "Disable multimedia network throttling",
+      description:
+        "Removes the limit Windows places on network traffic while multimedia/gaming apps are active, useful for reducing online micro-lag (HKLM, requires administrator rights).",
+    },
+    system_responsiveness: {
+      name: "Maximize responsiveness for foreground apps",
+      description:
+        "Zeroes out the CPU share Windows reserves for background tasks, leaving more resources for the app/game in the foreground (HKLM, requires administrator rights).",
+    },
+    games_task_priority: {
+      name: "Maximum priority for games (multimedia scheduler)",
+      description:
+        "Tells Windows' multimedia scheduler to treat games as the highest-priority processes on the system, ahead of any background task (HKLM, requires administrator rights).",
+    },
+    reduce_keyboard_delay: {
+      name: "Reduce input delay (keyboard)",
+      description:
+        "Zeroes out the delay before a held key starts repeating and maximizes its repeat rate, for a snappier response in games (HKCU, no elevation required).",
+    },
+    taskbar_align_left: {
+      name: "Align the taskbar to the left",
+      description: "Moves taskbar icons back to the left (Windows 10 style) instead of centered (HKCU, no elevation required).",
+    },
+    hide_taskbar_chat: {
+      name: "Hide Chat/Teams from the taskbar",
+      description: "Removes the Chat (Microsoft Teams) icon from the taskbar (HKCU, no elevation required).",
+    },
+    disable_start_suggestions: {
+      name: "Disable Start menu suggestions and recommended apps",
+      description: "Stops Windows from showing recommended apps, ads, and suggestions in the Start menu (HKCU, no elevation required).",
+    },
+    disable_activity_history: {
+      name: "Disable activity history (Windows Timeline)",
+      description:
+        "Stops Windows from recording, saving, and sending Microsoft your app and document usage history, via system policy (HKLM, requires administrator rights).",
+    },
   },
   cleanup: {
     temp_cleanup: {
@@ -484,6 +616,25 @@ const fr: Strings = {
     active: "Session active : {name}",
     gamesCount: "{count} jeux enregistrés",
     addGame: "+ Ajouter un jeu (.exe)",
+  },
+  turboBoost: {
+    title: "Turbo Boost",
+    subtitle: "Pousse votre processeur au maximum de ses performances pour le jeu, en un clic.",
+    activating: "Activation du turbo...",
+    deactivating: "Restauration...",
+    active: "Turbo actif",
+    inactive: "Turbo inactif",
+  },
+  passwordCheck: {
+    title: "Vérification des fuites de mot de passe",
+    description:
+      "Vérifie si un mot de passe est apparu dans une fuite de données connue, sans jamais l'envoyer en entier : seul un fragment de son hash est envoyé (k-anonymat, la norme utilisée par Have I Been Pwned).",
+    placeholder: "Collez un mot de passe à vérifier",
+    button: "Vérifier",
+    checking: "Vérification...",
+    safe: "Introuvable dans une fuite connue. Bon signe.",
+    breached: "Trouvé dans {count} fuites connues. Changez-le immédiatement, partout où vous l'utilisez.",
+    error: "Impossible de vérifier pour le moment : vérifiez votre connexion et réessayez.",
   },
   paywall: {
     title: "Fonction Pro",
@@ -627,6 +778,43 @@ const fr: Strings = {
       description:
         "Règle le mode d'augmentation des performances du processeur sur « Agressif », pour tirer le maximum du Turbo Boost/Turbo Core pendant le jeu (droits administrateur requis).",
     },
+    network_throttling_index: {
+      name: "Désactiver la limitation réseau multimédia",
+      description:
+        "Supprime la limite imposée par Windows au trafic réseau pendant l'utilisation d'apps multimédias/jeux, utile pour réduire les micro-latences en ligne (HKLM, droits administrateur requis).",
+    },
+    system_responsiveness: {
+      name: "Maximiser la réactivité pour l'app au premier plan",
+      description:
+        "Ramène à zéro la part de CPU réservée par Windows aux tâches en arrière-plan, laissant plus de ressources à l'app/jeu au premier plan (HKLM, droits administrateur requis).",
+    },
+    games_task_priority: {
+      name: "Priorité maximale aux jeux (planificateur multimédia)",
+      description:
+        "Indique au planificateur multimédia de Windows de traiter les jeux comme les processus les plus prioritaires du système, devant toute tâche en arrière-plan (HKLM, droits administrateur requis).",
+    },
+    reduce_keyboard_delay: {
+      name: "Réduire le délai d'entrée (clavier)",
+      description:
+        "Ramène à zéro le délai avant qu'une touche maintenue commence à se répéter et maximise sa vitesse de répétition, pour une réponse plus immédiate en jeu (HKCU, aucune élévation requise).",
+    },
+    taskbar_align_left: {
+      name: "Aligner la barre des tâches à gauche",
+      description: "Replace les icônes de la barre des tâches à gauche (style Windows 10) au lieu du centre (HKCU, aucune élévation requise).",
+    },
+    hide_taskbar_chat: {
+      name: "Masquer Chat/Teams de la barre des tâches",
+      description: "Retire l'icône Chat (Microsoft Teams) de la barre des tâches (HKCU, aucune élévation requise).",
+    },
+    disable_start_suggestions: {
+      name: "Désactiver les suggestions et apps recommandées du menu Démarrer",
+      description: "Empêche Windows d'afficher des apps recommandées, publicités et suggestions dans le menu Démarrer (HKCU, aucune élévation requise).",
+    },
+    disable_activity_history: {
+      name: "Désactiver l'historique d'activité (Windows Timeline)",
+      description:
+        "Empêche Windows d'enregistrer, de sauvegarder et d'envoyer à Microsoft l'historique de vos apps et documents utilisés, via une stratégie système (HKLM, droits administrateur requis).",
+    },
   },
   cleanup: {
     temp_cleanup: {
@@ -654,6 +842,25 @@ const es: Strings = {
     active: "Sesión activa: {name}",
     gamesCount: "{count} juegos registrados",
     addGame: "+ Añadir juego (.exe)",
+  },
+  turboBoost: {
+    title: "Turbo Boost",
+    subtitle: "Lleva tu procesador al máximo rendimiento para gaming, con un toque.",
+    activating: "Activando turbo...",
+    deactivating: "Restaurando...",
+    active: "Turbo activo",
+    inactive: "Turbo no activo",
+  },
+  passwordCheck: {
+    title: "Comprobación de filtraciones de contraseña",
+    description:
+      "Comprueba si una contraseña ha aparecido en una filtración de datos conocida, sin enviarla nunca por completo: solo se envía un fragmento de su hash (k-anonimato, el mismo estándar que usa Have I Been Pwned).",
+    placeholder: "Pega una contraseña para comprobar",
+    button: "Comprobar",
+    checking: "Comprobando...",
+    safe: "No encontrada en ninguna filtración conocida. Buena señal.",
+    breached: "Encontrada en {count} filtraciones conocidas. Cámbiala ya, en todos los sitios donde la uses.",
+    error: "No se ha podido comprobar ahora: revisa tu conexión e inténtalo de nuevo.",
   },
   paywall: {
     title: "Función Pro",
@@ -797,6 +1004,43 @@ const es: Strings = {
       description:
         'Establece el modo de aumento de rendimiento del procesador en "Agresivo", para aprovechar al máximo el Turbo Boost/Turbo Core durante el juego (requiere privilegios de administrador).',
     },
+    network_throttling_index: {
+      name: "Desactivar la limitación de red multimedia",
+      description:
+        "Elimina el límite que Windows impone al tráfico de red mientras usas apps multimedia/juegos, útil para reducir microlags online (HKLM, requiere privilegios de administrador).",
+    },
+    system_responsiveness: {
+      name: "Maximizar la capacidad de respuesta para apps en primer plano",
+      description:
+        "Reduce a cero la cuota de CPU que Windows reserva para tareas en segundo plano, dejando más recursos a la app/juego en primer plano (HKLM, requiere privilegios de administrador).",
+    },
+    games_task_priority: {
+      name: "Prioridad máxima para juegos (planificador multimedia)",
+      description:
+        "Indica al planificador multimedia de Windows que trate los juegos como los procesos de mayor prioridad del sistema, por delante de cualquier tarea en segundo plano (HKLM, requiere privilegios de administrador).",
+    },
+    reduce_keyboard_delay: {
+      name: "Reducir el retardo de entrada (teclado)",
+      description:
+        "Reduce a cero el retardo antes de que una tecla mantenida empiece a repetirse y maximiza su velocidad de repetición, para una respuesta más inmediata en el juego (HKCU, no requiere elevación).",
+    },
+    taskbar_align_left: {
+      name: "Alinear la barra de tareas a la izquierda",
+      description: "Vuelve a alinear los iconos de la barra de tareas a la izquierda (estilo Windows 10) en vez de al centro (HKCU, no requiere elevación).",
+    },
+    hide_taskbar_chat: {
+      name: "Ocultar Chat/Teams de la barra de tareas",
+      description: "Elimina el icono de Chat (Microsoft Teams) de la barra de tareas (HKCU, no requiere elevación).",
+    },
+    disable_start_suggestions: {
+      name: "Desactivar sugerencias y apps recomendadas en el menú Inicio",
+      description: "Evita que Windows muestre apps recomendadas, anuncios y sugerencias en el menú Inicio (HKCU, no requiere elevación).",
+    },
+    disable_activity_history: {
+      name: "Desactivar el historial de actividad (Windows Timeline)",
+      description:
+        "Evita que Windows registre, guarde y envíe a Microsoft el historial de tus apps y documentos usados, mediante una política del sistema (HKLM, requiere privilegios de administrador).",
+    },
   },
   cleanup: {
     temp_cleanup: {
@@ -824,6 +1068,25 @@ const de: Strings = {
     active: "Sitzung aktiv: {name}",
     gamesCount: "{count} Spiele registriert",
     addGame: "+ Spiel hinzufügen (.exe)",
+  },
+  turboBoost: {
+    title: "Turbo Boost",
+    subtitle: "Bringt deinen Prozessor mit einem Tipp auf Spitzenleistung fürs Gaming.",
+    activating: "Turbo wird aktiviert...",
+    deactivating: "Wird wiederhergestellt...",
+    active: "Turbo aktiv",
+    inactive: "Turbo nicht aktiv",
+  },
+  passwordCheck: {
+    title: "Passwort-Datenleck-Prüfung",
+    description:
+      "Prüft, ob ein Passwort in einem bekannten Datenleck aufgetaucht ist, ohne es je vollständig zu senden: Es wird nur ein Fragment seines Hashes gesendet (k-Anonymität, derselbe Standard wie bei Have I Been Pwned).",
+    placeholder: "Ein zu prüfendes Passwort einfügen",
+    button: "Prüfen",
+    checking: "Wird geprüft...",
+    safe: "In keinem bekannten Datenleck gefunden. Gutes Zeichen.",
+    breached: "In {count} bekannten Datenlecks gefunden. Ändere es sofort, überall wo du es verwendest.",
+    error: "Konnte gerade nicht geprüft werden: Verbindung prüfen und erneut versuchen.",
   },
   paywall: {
     title: "Pro-Funktion",
@@ -966,6 +1229,43 @@ const de: Strings = {
       name: "Prozessor-Turbo-Boost",
       description:
         'Stellt den Leistungssteigerungsmodus des Prozessors auf „Aggressiv", um beim Spielen das Meiste aus Turbo Boost/Turbo Core herauszuholen (Administratorrechte erforderlich).',
+    },
+    network_throttling_index: {
+      name: "Netzwerk-Drosselung für Multimedia deaktivieren",
+      description:
+        "Entfernt die Begrenzung, die Windows dem Netzwerkverkehr bei Multimedia-/Spiele-Apps auferlegt — nützlich, um Online-Mikroruckler zu reduzieren (HKLM, Administratorrechte erforderlich).",
+    },
+    system_responsiveness: {
+      name: "Reaktionsfähigkeit für Vordergrund-Apps maximieren",
+      description:
+        "Setzt den von Windows für Hintergrundaufgaben reservierten CPU-Anteil auf null, sodass der App/dem Spiel im Vordergrund mehr Ressourcen bleiben (HKLM, Administratorrechte erforderlich).",
+    },
+    games_task_priority: {
+      name: "Maximale Priorität für Spiele (Multimedia-Scheduler)",
+      description:
+        "Weist den Multimedia-Scheduler von Windows an, Spiele als Prozesse mit der höchsten Systempriorität zu behandeln, noch vor jeder Hintergrundaufgabe (HKLM, Administratorrechte erforderlich).",
+    },
+    reduce_keyboard_delay: {
+      name: "Eingabeverzögerung reduzieren (Tastatur)",
+      description:
+        "Setzt die Verzögerung, bevor eine gehaltene Taste zu wiederholen beginnt, auf null und maximiert die Wiederholrate — für eine unmittelbarere Reaktion beim Spielen (HKCU, keine Elevation erforderlich).",
+    },
+    taskbar_align_left: {
+      name: "Taskleiste links ausrichten",
+      description: "Richtet die Taskleisten-Symbole wieder links aus (Windows-10-Stil) statt zentriert (HKCU, keine Elevation erforderlich).",
+    },
+    hide_taskbar_chat: {
+      name: "Chat/Teams aus der Taskleiste ausblenden",
+      description: "Entfernt das Chat-Symbol (Microsoft Teams) aus der Taskleiste (HKCU, keine Elevation erforderlich).",
+    },
+    disable_start_suggestions: {
+      name: "Startmenü-Vorschläge und empfohlene Apps deaktivieren",
+      description: "Verhindert, dass Windows empfohlene Apps, Werbung und Vorschläge im Startmenü anzeigt (HKCU, keine Elevation erforderlich).",
+    },
+    disable_activity_history: {
+      name: "Aktivitätsverlauf deaktivieren (Windows Timeline)",
+      description:
+        "Verhindert, dass Windows deinen App- und Dokumentenverlauf per Systemrichtlinie aufzeichnet, speichert und an Microsoft sendet (HKLM, Administratorrechte erforderlich).",
     },
   },
   cleanup: {

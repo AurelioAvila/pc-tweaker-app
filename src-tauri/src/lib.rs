@@ -143,6 +143,18 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         requires_pro: games_priority.requires_pro,
     });
 
+    let keyboard_delay = gaming::keyboard_delay_info();
+    list.push(TweakInfo {
+        applied: store.is_applied(keyboard_delay.id),
+        id: keyboard_delay.id.to_string(),
+        name: keyboard_delay.name.to_string(),
+        description: keyboard_delay.description.to_string(),
+        category: category_str(&Category::Gaming).to_string(),
+        hive: "—".to_string(),
+        requires_admin: keyboard_delay.requires_admin,
+        requires_pro: keyboard_delay.requires_pro,
+    });
+
     let activity_history = privacy_extra::activity_history_info();
     list.push(TweakInfo {
         applied: store.is_applied(activity_history.id),
@@ -166,6 +178,7 @@ fn apply_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
         dns::TWEAK_ID => dns::apply(store),
         gaming::INPUT_LAG_ID => gaming::apply_input_lag(store),
         gaming::TURBO_BOOST_ID => gaming::apply_turbo_boost(store),
+        gaming::KEYBOARD_DELAY_ID => gaming::apply_keyboard_delay(store),
         game_priority::TWEAK_ID => game_priority::apply(store),
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::apply_activity_history(store),
         _ => {
@@ -183,6 +196,7 @@ fn rollback_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
         dns::TWEAK_ID => dns::rollback(store),
         gaming::INPUT_LAG_ID => gaming::rollback_input_lag(store),
         gaming::TURBO_BOOST_ID => gaming::rollback_turbo_boost(store),
+        gaming::KEYBOARD_DELAY_ID => gaming::rollback_keyboard_delay(store),
         game_priority::TWEAK_ID => game_priority::rollback(store),
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::rollback_activity_history(store),
         _ => {
@@ -200,6 +214,7 @@ fn requires_admin_for(id: &str) -> bool {
         dns::TWEAK_ID => true,
         gaming::INPUT_LAG_ID => false,
         gaming::TURBO_BOOST_ID => true,
+        gaming::KEYBOARD_DELAY_ID => false,
         game_priority::TWEAK_ID => true,
         privacy_extra::ACTIVITY_HISTORY_ID => true,
         _ => find_tweak(id).map(|t| t.requires_admin).unwrap_or(false),

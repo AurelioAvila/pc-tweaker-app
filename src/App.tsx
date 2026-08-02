@@ -954,6 +954,191 @@ function GameSessionsPanel({
   );
 }
 
+/** Lightning-bolt icon shared by the Turbo Boost panel. */
+function BoltIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        fill="currentColor"
+        fillOpacity="0.15"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Dedicated Turbo Boost card (Gaming tab only) instead of a plain toggle row —
+ * this is the app's most visually "gamer" preset, so it gets its own eye
+ * candy: a spinning conic-gradient glow and a pulsing bolt icon while the
+ * apply/rollback call is in flight.
+ */
+function TurboBoostPanel({
+  s,
+  applied,
+  onChanged,
+  pushToast,
+}: {
+  s: Strings;
+  applied: boolean;
+  onChanged: () => Promise<void>;
+  pushToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+
+  async function toggleTurbo() {
+    setBusy(true);
+    try {
+      if (applied) {
+        await invoke("rollback_tweak", { id: "turbo_boost" });
+        pushToast("success", format(s.toasts.rolledBack, { name: s.turboBoost.title }));
+      } else {
+        await invoke("apply_tweak", { id: "turbo_boost" });
+        pushToast("success", format(s.toasts.applied, { name: s.turboBoost.title }));
+      }
+      await onChanged();
+    } catch (e) {
+      pushToast("error", String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="relative mb-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+      <div
+        className={`pointer-events-none absolute inset-0 bg-[conic-gradient(from_0deg,transparent,rgba(251,146,60,0.35),transparent_60%)] transition-opacity duration-500 ${
+          busy ? "animate-spin opacity-100" : "opacity-0"
+        }`}
+      />
+      <div className="relative flex items-center gap-4">
+        <div
+          className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 text-white shadow-lg shadow-orange-500/30 transition-transform duration-300 ${
+            busy ? "animate-pulse" : applied ? "scale-105" : ""
+          }`}
+        >
+          <BoltIcon className="h-7 w-7" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-semibold text-slate-100">{s.turboBoost.title}</h2>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                applied ? "bg-orange-400/20 text-orange-300" : "bg-white/10 text-slate-400"
+              }`}
+            >
+              {applied ? s.turboBoost.active : s.turboBoost.inactive}
+            </span>
+          </div>
+          <p className="mt-0.5 text-sm text-slate-400">
+            {busy ? (applied ? s.turboBoost.deactivating : s.turboBoost.activating) : s.turboBoost.subtitle}
+          </p>
+        </div>
+        <Toggle checked={applied} busy={busy} onClick={toggleTurbo} />
+      </div>
+    </div>
+  );
+}
+
+/** SHA-1 hex digest via the Web Crypto API already available in the webview. */
+async function sha1Hex(text: string): Promise<string> {
+  const data = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest("SHA-1", data);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase();
+}
+
+/**
+ * Checks a password against Have I Been Pwned's Pwned Passwords range API
+ * using k-anonymity: only the first 5 hex chars of the SHA-1 hash ever leave
+ * the device, never the password itself or its full hash.
+ */
+function PasswordBreachCheck({ s }: { s: Strings }) {
+  const [password, setPassword] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [result, setResult] = useState<{ kind: "safe" | "breached" | "error"; count?: number } | null>(null);
+
+  async function check() {
+    if (!password) return;
+    setChecking(true);
+    setResult(null);
+    try {
+      const hash = await sha1Hex(password);
+      const prefix = hash.slice(0, 5);
+      const suffix = hash.slice(5);
+      const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const body = await res.text();
+      const match = body.split("\n").find((line) => line.startsWith(suffix));
+      if (match) {
+        const count = parseInt(match.split(":")[1]?.trim() ?? "0", 10);
+        setResult({ kind: "breached", count });
+      } else {
+        setResult({ kind: "safe" });
+      }
+    } catch {
+      setResult({ kind: "error" });
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  return (
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+      <div className="flex items-center gap-4">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-rose-400/15 text-rose-300 ring-1 ring-rose-400/30">
+          <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+            <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.6" />
+            <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold text-slate-100">{s.passwordCheck.title}</h2>
+          <p className="mt-0.5 text-sm text-slate-400">{s.passwordCheck.description}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setResult(null);
+              }}
+              placeholder={s.passwordCheck.placeholder}
+              className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-white/25"
+            />
+            <button
+              onClick={check}
+              disabled={checking || !password}
+              className="shrink-0 rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-[1.03] disabled:opacity-60"
+            >
+              {checking ? s.passwordCheck.checking : s.passwordCheck.button}
+            </button>
+          </div>
+          {result && (
+            <p
+              className={`mt-2 text-sm font-medium ${
+                result.kind === "safe" ? "text-emerald-400" : result.kind === "breached" ? "text-rose-400" : "text-slate-400"
+              }`}
+            >
+              {result.kind === "safe"
+                ? s.passwordCheck.safe
+                : result.kind === "breached"
+                  ? format(s.passwordCheck.breached, { count: result.count ?? 0 })
+                  : s.passwordCheck.error}
+            </p>
+          )}
+        </div>
+      </div>
+    </li>
+  );
+}
+
 function App() {
   const [lang, setLangState] = useState<Lang>(() => detectInitialLang());
   const s = STRINGS[lang];
@@ -1189,12 +1374,17 @@ function App() {
   }
 
   const visibleTweaks = useMemo(
-    () => (filter === "all" ? tweaks : tweaks.filter((t) => t.category === filter)),
+    () =>
+      (filter === "all" ? tweaks : tweaks.filter((t) => t.category === filter)).filter(
+        (t) => t.id !== "turbo_boost",
+      ),
     [tweaks, filter],
   );
 
   const showCleanup = filter === "all" || filter === "manutenzione";
   const showPrivacyExtras = filter === "all" || filter === "privacy";
+  const showGamingExtras = filter === "gaming";
+  const turboBoostApplied = tweaks.find((t) => t.id === "turbo_boost")?.applied ?? false;
   const appliedCount = tweaks.filter((t) => t.applied).length;
 
   return (
@@ -1256,11 +1446,16 @@ function App() {
           ))}
         </nav>
 
-        <GameSessionsPanel
-          s={s}
-          isPro={isProUnlocked}
-          onRequirePro={() => setPaywallFeature(s.gameSessions.title)}
-        />
+        {showGamingExtras && (
+          <>
+            <GameSessionsPanel
+              s={s}
+              isPro={isProUnlocked}
+              onRequirePro={() => setPaywallFeature(s.gameSessions.title)}
+            />
+            <TurboBoostPanel s={s} applied={turboBoostApplied} onChanged={refresh} pushToast={pushToast} />
+          </>
+        )}
 
         <ul className="flex flex-col gap-3">
           {visibleTweaks.map((t, i) => {
@@ -1304,10 +1499,13 @@ function App() {
           })}
 
           {showPrivacyExtras && (
-            <IpMaskCard
-              s={s}
-              onExplain={() => pushToast("error", s.ipMask.explainerToast)}
-            />
+            <>
+              <PasswordBreachCheck s={s} />
+              <IpMaskCard
+                s={s}
+                onExplain={() => pushToast("error", s.ipMask.explainerToast)}
+              />
+            </>
           )}
 
           {showCleanup &&

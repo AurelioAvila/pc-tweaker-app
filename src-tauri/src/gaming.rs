@@ -2,6 +2,7 @@ use crate::rollback::{RegValue, RegistrySnapshot, RollbackStore, SnapshotEntry};
 
 pub const INPUT_LAG_ID: &str = "reduce_input_lag";
 pub const TURBO_BOOST_ID: &str = "turbo_boost";
+pub const KEYBOARD_DELAY_ID: &str = "reduce_keyboard_delay";
 
 pub struct GamingInfo {
     pub id: &'static str,
@@ -31,9 +32,23 @@ pub fn turbo_boost_info() -> GamingInfo {
     }
 }
 
+pub fn keyboard_delay_info() -> GamingInfo {
+    GamingInfo {
+        id: KEYBOARD_DELAY_ID,
+        name: "Riduci ritardo di input (tastiera)",
+        description: "Azzera il ritardo prima che una pressione prolungata dei tasti inizi a ripetersi e ne massimizza la velocità di ripetizione, per una risposta più immediata in gioco (HKCU, nessuna elevazione richiesta).",
+        requires_admin: false,
+        requires_pro: false,
+    }
+}
+
 const MOUSE_HIVE: &str = "HKCU";
 const MOUSE_PATH: &str = r"Control Panel\Mouse";
 const MOUSE_VALUES: [&str; 3] = ["MouseSpeed", "MouseThreshold1", "MouseThreshold2"];
+
+const KEYBOARD_HIVE: &str = "HKCU";
+const KEYBOARD_PATH: &str = r"Control Panel\Keyboard";
+const KEYBOARD_TARGET: [(&str, &str); 2] = [("KeyboardDelay", "0"), ("KeyboardSpeed", "31")];
 
 #[cfg(windows)]
 pub fn apply_input_lag(store: &RollbackStore) -> Result<(), String> {
@@ -84,6 +99,64 @@ pub fn rollback_input_lag(store: &RollbackStore) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+#[cfg(windows)]
+pub fn apply_keyboard_delay(store: &RollbackStore) -> Result<(), String> {
+    use crate::tweaks::windows_impl::{hive_from_str, read_value, write_value};
+
+    let hive = hive_from_str(KEYBOARD_HIVE);
+    let mut entries = Vec::new();
+
+    for (name, _) in KEYBOARD_TARGET {
+        let original = read_value(hive, KEYBOARD_PATH, name, &RegValue::Str(String::new()))
+            .map_err(|e| e.to_string())?;
+        entries.push(SnapshotEntry::Registry(RegistrySnapshot {
+            hive: KEYBOARD_HIVE.to_string(),
+            path: KEYBOARD_PATH.to_string(),
+            name: name.to_string(),
+            original_value: original,
+        }));
+    }
+
+    store
+        .save_entry(KEYBOARD_DELAY_ID, SnapshotEntry::Composite { entries })
+        .map_err(|e| e.to_string())?;
+
+    for (name, value) in KEYBOARD_TARGET {
+        write_value(hive, KEYBOARD_PATH, name, &RegValue::Str(value.to_string()))?;
+    }
+
+    Ok(())
+}
+
+#[cfg(windows)]
+pub fn rollback_keyboard_delay(store: &RollbackStore) -> Result<(), String> {
+    use crate::tweaks::windows_impl::restore_value;
+
+    let entry = store
+        .take_entry(KEYBOARD_DELAY_ID)
+        .ok_or_else(|| "nessuno snapshot salvato: il tweak non risulta applicato".to_string())?;
+
+    let SnapshotEntry::Composite { entries } = entry else {
+        return Err("tipo di snapshot inatteso per il ritardo della tastiera".to_string());
+    };
+
+    for e in entries {
+        if let SnapshotEntry::Registry(snapshot) = e {
+            restore_value(&snapshot)?;
+        }
+    }
+    Ok(())
+}
+
+#[cfg(not(windows))]
+pub fn apply_keyboard_delay(_store: &RollbackStore) -> Result<(), String> {
+    Err("non supportato su questa piattaforma".to_string())
+}
+#[cfg(not(windows))]
+pub fn rollback_keyboard_delay(_store: &RollbackStore) -> Result<(), String> {
+    Err("non supportato su questa piattaforma".to_string())
 }
 
 fn parse_ac_dc_index(output: &str) -> Result<(String, String), String> {

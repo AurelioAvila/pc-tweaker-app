@@ -7,6 +7,44 @@ the git log.
 
 ## 2026-08-02
 
+- **Added**: **Startup programs manager** (new "Avvio" section) — lists every
+  program Windows launches at boot from both HKCU and HKLM, and toggles them
+  through the same `StartupApproved` mechanism Task Manager itself uses, so
+  the app agrees with what Windows reports and nothing is uninstalled or
+  made hard to undo. HKLM (machine-wide) entries route through the existing
+  one-shot UAC helper. Verified live against this PC's real 6 startup
+  entries: enabling wrote `02 00…`, disabling wrote `03 00…` plus a correct
+  FILETIME that decodes to the exact second it happened.
+- **Added**: **live system monitor** on the Scan screen — real CPU load,
+  memory and system-drive usage as animated gauges (green/amber/red by
+  load), plus CPU model, OS build and uptime. All read from the real machine
+  via `sysinfo`; there is no invented "health score".
+- **Redesigned**: the whole shell moved from a row of pill tabs to a proper
+  sidebar app layout — icon nav with an active accent rail, section title
+  header, and a plan card pinned to the bottom of the sidebar.
+- **Fixed (real usability bug)**: Scan's "fix all" fired a **separate UAC
+  prompt for every admin-level tweak** — a dozen consecutive prompts for one
+  click. Added a batched `apply_tweaks` command that groups every admin tweak
+  into a single elevated run (one prompt), reports per-tweak failures instead
+  of aborting the batch, and only claims success for what actually applied.
+  Verified live, including the partial-failure path.
+- **Fixed (real data-integrity bug)**: the rollback store did an unsynchronized
+  load-modify-write, so two overlapping writers silently dropped one of the
+  snapshots — which would leave a tweak applied with no way to undo it. This
+  is reachable in normal use: the Game Sessions watcher thread applies and
+  reverts Turbo Gaming in the background while the user can be toggling
+  something else. Writes are now serialized through a process-wide lock and
+  committed via temp-file + atomic rename, so an interrupted write can't
+  leave an unparseable snapshot file either.
+- **Fixed**: the system monitor's memory/disk figures were truncated
+  mid-number ("16.27 GB / 31.10 …"); they now render as a single compact
+  "17.0 / 31.1 GB" pair.
+- **Fixed**: the sidebar plan card repeated the same tweak tally already
+  shown in the header, and the header showed a tweak tally on the Startup
+  screen, which isn't made of tweaks at all.
+- **Fixed**: the startup counter read "1 attivi su 6" — wrong Italian for a
+  count of one. Reworded to a form that stays grammatical at any number, in
+  all five languages.
 - **Added**: 3 more tweaks, bringing the total from 22 to 25 — all verified
   live against the real system:
   - "Nascondi la casella di ricerca dalla barra delle applicazioni" (Free, UI).

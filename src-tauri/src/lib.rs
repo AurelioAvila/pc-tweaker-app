@@ -8,6 +8,8 @@ mod power;
 mod privacy_extra;
 mod rollback;
 mod services;
+mod startup;
+mod sysmon;
 mod turbo;
 mod tweaks;
 
@@ -257,6 +259,49 @@ fn rollback_tweak(app: tauri::AppHandle, id: String) -> Result<(), String> {
     rollback_by_id(&store, &id)
 }
 
+/// Applies several tweaks at once (the Scan screen's "fix all").
+///
+/// Applying them one by one would fire a separate UAC prompt for every
+/// admin-level tweak — a dozen consecutive prompts for a single click. So the
+/// admin ones are collected and handed to a *single* elevated helper run,
+/// while the rest are applied in-process. Failures are collected per id
+/// instead of aborting, so one bad tweak can't silently swallow the rest.
+#[cfg(windows)]
+#[tauri::command]
+fn apply_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, String> {
+    let store = store_for(&app)?;
+    let mut failures = Vec::new();
+
+    let (needs_admin, direct): (Vec<String>, Vec<String>) =
+        ids.into_iter().partition(|id| requires_admin_for(id));
+
+    for id in &direct {
+        if let Err(e) = apply_by_id(&store, id) {
+            failures.push(format!("{}: {}", id, e));
+        }
+    }
+
+    if !needs_admin.is_empty() {
+        if elevation::is_elevated() {
+            for id in &needs_admin {
+                if let Err(e) = apply_by_id(&store, id) {
+                    failures.push(format!("{}: {}", id, e));
+                }
+            }
+        } else if let Err(e) = elevation::run_elevated_action("--elevated-apply-many", &needs_admin.join(",")) {
+            failures.push(e);
+        }
+    }
+
+    Ok(failures)
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+fn apply_tweaks(_app: tauri::AppHandle, _ids: Vec<String>) -> Result<Vec<String>, String> {
+    Err("i tweak sono al momento supportati solo su Windows".to_string())
+}
+
 #[cfg(not(windows))]
 #[tauri::command]
 fn apply_tweak(_app: tauri::AppHandle, _id: String) -> Result<(), String> {
@@ -329,7 +374,23 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
 
     let result: Result<(), String> = match action {
         "--elevated-apply" => apply_by_id(&store, id),
+        "--elevated-apply-many" => {
+            // One prompt, many tweaks: keep going past a failure so a single
+            // unsupported tweak doesn't cancel everything else the user asked for.
+            let mut failed = Vec::new();
+            for one in id.split(',').filter(|s| !s.is_empty()) {
+                if let Err(e) = apply_by_id(&store, one) {
+                    failed.push(format!("{}: {}", one, e));
+                }
+            }
+            if failed.is_empty() {
+                Ok(())
+            } else {
+                Err(failed.join("; "))
+            }
+        }
         "--elevated-rollback" => rollback_by_id(&store, id),
+        "--elevated-startup" => startup::apply_from_payload(id),
         "--elevated-cleanup" => cleanup::run_cleanup(id).and_then(|res| {
             let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
             std::fs::write(dir.join("last_cleanup_result.json"), json).map_err(|e| e.to_string())
@@ -359,6 +420,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .manage(sysmon::SysMonState::new())
         .setup(|app| {
             game_sessions::spawn_watcher(app.handle().clone());
             Ok(())
@@ -366,6 +428,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             list_tweaks,
             apply_tweak,
+            apply_tweaks,
             rollback_tweak,
             list_cleanup_targets,
             run_cleanup,
@@ -375,7 +438,10 @@ pub fn run() {
             game_sessions::game_sessions_enabled,
             game_sessions::set_game_sessions_enabled,
             game_sessions::add_game_session,
-            game_sessions::remove_game_session
+            game_sessions::remove_game_session,
+            startup::list_startup_items,
+            startup::set_startup_enabled,
+            sysmon::system_stats
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

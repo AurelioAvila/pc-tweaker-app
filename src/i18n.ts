@@ -24,6 +24,23 @@ export interface Strings {
     ui: string;
     manutenzione: string;
     gaming: string;
+    startup: string;
+  };
+  systemMonitor: {
+    cpu: string;
+    ram: string;
+    disk: string;
+    uptime: string;
+    uptimeValue: string; // uses {hours} {minutes}
+    cores: string; // uses {count}
+  };
+  startupManager: {
+    title: string;
+    description: string;
+    empty: string;
+    activeCount: string; // uses {enabled} {total}
+    machineWide: string;
+    impactNote: string;
   };
   badges: { admin: string; pro: string; soon: string };
   emptyCategory: string;
@@ -168,7 +185,24 @@ const it: Strings = {
   appliedCount: "{applied} di {total} tweak attivi",
   headerNote:
     "Ogni tweak salva un backup del valore originale prima di essere applicato. I tweak con privilegi elevati chiedono un consenso UAC esplicito, solo per quell'azione.",
-  tabs: { scan: "Scan", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Manutenzione", gaming: "Gaming" },
+  tabs: { scan: "Scan", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Manutenzione", gaming: "Gaming", startup: "Avvio" },
+  systemMonitor: {
+    cpu: "CPU",
+    ram: "Memoria",
+    disk: "Disco",
+    uptime: "Acceso da",
+    uptimeValue: "{hours}h {minutes}m",
+    cores: "{count} core",
+  },
+  startupManager: {
+    title: "Programmi all'avvio",
+    description:
+      "I programmi che si aprono da soli all'accensione del PC. Disattivarne qualcuno accorcia i tempi di avvio: il programma resta installato e lo puoi comunque aprire a mano.",
+    empty: "Nessun programma configurato per l'avvio automatico.",
+    activeCount: "Attivi: {enabled} / {total}",
+    machineWide: "Tutti gli utenti",
+    impactNote: "Disattivare non disinstalla nulla ed è reversibile in qualsiasi momento.",
+  },
   badges: { admin: "Admin", pro: "PRO", soon: "IN ARRIVO" },
   emptyCategory: "Nessun tweak disponibile in questa categoria — presto in arrivo.",
   gameSessions: {
@@ -438,7 +472,24 @@ const en: Strings = {
   appliedCount: "{applied} of {total} tweaks active",
   headerNote:
     "Every tweak backs up the original value before it's applied. Tweaks that need elevated rights ask for an explicit UAC prompt, only for that action.",
-  tabs: { scan: "Scan", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Maintenance", gaming: "Gaming" },
+  tabs: { scan: "Scan", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Maintenance", gaming: "Gaming", startup: "Startup" },
+  systemMonitor: {
+    cpu: "CPU",
+    ram: "Memory",
+    disk: "Disk",
+    uptime: "Up for",
+    uptimeValue: "{hours}h {minutes}m",
+    cores: "{count} cores",
+  },
+  startupManager: {
+    title: "Startup programs",
+    description:
+      "Programs that open by themselves when your PC boots. Turning some off shortens startup time: the program stays installed and you can still open it manually.",
+    empty: "No programs are set to start automatically.",
+    activeCount: "Active: {enabled} / {total}",
+    machineWide: "All users",
+    impactNote: "Turning one off uninstalls nothing and is reversible at any time.",
+  },
   badges: { admin: "Admin", pro: "PRO", soon: "COMING SOON" },
   emptyCategory: "No tweaks available in this category yet — more coming soon.",
   gameSessions: {
@@ -700,7 +751,24 @@ const fr: Strings = {
   appliedCount: "{applied} sur {total} optimisations actives",
   headerNote:
     "Chaque optimisation sauvegarde la valeur d'origine avant d'être appliquée. Celles qui nécessitent des droits élevés demandent un consentement UAC explicite, uniquement pour cette action.",
-  tabs: { scan: "Scan", performance: "Performance", privacy: "Confidentialité", ui: "Interface", manutenzione: "Entretien", gaming: "Gaming" },
+  tabs: { scan: "Scan", performance: "Performance", privacy: "Confidentialité", ui: "Interface", manutenzione: "Entretien", gaming: "Gaming", startup: "Démarrage" },
+  systemMonitor: {
+    cpu: "Processeur",
+    ram: "Mémoire",
+    disk: "Disque",
+    uptime: "Allumé depuis",
+    uptimeValue: "{hours} h {minutes} min",
+    cores: "{count} cœurs",
+  },
+  startupManager: {
+    title: "Programmes au démarrage",
+    description:
+      "Les programmes qui s'ouvrent tout seuls au démarrage du PC. En désactiver certains raccourcit le démarrage : le programme reste installé et vous pouvez toujours l'ouvrir manuellement.",
+    empty: "Aucun programme configuré pour le démarrage automatique.",
+    activeCount: "Actifs : {enabled} / {total}",
+    machineWide: "Tous les utilisateurs",
+    impactNote: "Désactiver ne désinstalle rien et reste réversible à tout moment.",
+  },
   badges: { admin: "Admin", pro: "PRO", soon: "BIENTÔT" },
   emptyCategory: "Aucune optimisation disponible dans cette catégorie pour l'instant — à venir.",
   gameSessions: {
@@ -962,7 +1030,24 @@ const es: Strings = {
   appliedCount: "{applied} de {total} ajustes activos",
   headerNote:
     "Cada ajuste guarda una copia del valor original antes de aplicarse. Los ajustes que requieren privilegios elevados piden un consentimiento UAC explícito, solo para esa acción.",
-  tabs: { scan: "Scan", performance: "Rendimiento", privacy: "Privacidad", ui: "Interfaz", manutenzione: "Mantenimiento", gaming: "Gaming" },
+  tabs: { scan: "Scan", performance: "Rendimiento", privacy: "Privacidad", ui: "Interfaz", manutenzione: "Mantenimiento", gaming: "Gaming", startup: "Inicio" },
+  systemMonitor: {
+    cpu: "CPU",
+    ram: "Memoria",
+    disk: "Disco",
+    uptime: "Encendido desde hace",
+    uptimeValue: "{hours} h {minutes} min",
+    cores: "{count} núcleos",
+  },
+  startupManager: {
+    title: "Programas de inicio",
+    description:
+      "Los programas que se abren solos al encender el PC. Desactivar algunos acorta el tiempo de arranque: el programa sigue instalado y puedes abrirlo a mano igualmente.",
+    empty: "Ningún programa configurado para iniciarse automáticamente.",
+    activeCount: "Activos: {enabled} / {total}",
+    machineWide: "Todos los usuarios",
+    impactNote: "Desactivar no desinstala nada y es reversible en cualquier momento.",
+  },
   badges: { admin: "Admin", pro: "PRO", soon: "PRÓXIMAMENTE" },
   emptyCategory: "Todavía no hay ajustes disponibles en esta categoría — próximamente.",
   gameSessions: {
@@ -1224,7 +1309,24 @@ const de: Strings = {
   appliedCount: "{applied} von {total} Optimierungen aktiv",
   headerNote:
     "Jede Optimierung sichert den ursprünglichen Wert, bevor sie angewendet wird. Optimierungen mit erhöhten Rechten fragen gezielt per UAC nach, nur für diese Aktion.",
-  tabs: { scan: "Scan", performance: "Leistung", privacy: "Datenschutz", ui: "Oberfläche", manutenzione: "Wartung", gaming: "Gaming" },
+  tabs: { scan: "Scan", performance: "Leistung", privacy: "Datenschutz", ui: "Oberfläche", manutenzione: "Wartung", gaming: "Gaming", startup: "Autostart" },
+  systemMonitor: {
+    cpu: "CPU",
+    ram: "Arbeitsspeicher",
+    disk: "Datenträger",
+    uptime: "Läuft seit",
+    uptimeValue: "{hours} Std. {minutes} Min.",
+    cores: "{count} Kerne",
+  },
+  startupManager: {
+    title: "Autostart-Programme",
+    description:
+      "Programme, die sich beim Hochfahren des PCs von selbst öffnen. Einige zu deaktivieren verkürzt den Systemstart: Das Programm bleibt installiert und lässt sich weiterhin manuell öffnen.",
+    empty: "Keine Programme für den automatischen Start eingerichtet.",
+    activeCount: "Aktiv: {enabled} / {total}",
+    machineWide: "Alle Benutzer",
+    impactNote: "Deaktivieren deinstalliert nichts und ist jederzeit umkehrbar.",
+  },
   badges: { admin: "Admin", pro: "PRO", soon: "DEMNÄCHST" },
   emptyCategory: "In dieser Kategorie sind noch keine Optimierungen verfügbar — bald verfügbar.",
   gameSessions: {

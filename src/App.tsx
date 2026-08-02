@@ -18,6 +18,9 @@ type AuthState =
 
 type Category = "performance" | "privacy" | "ui" | "manutenzione" | "gaming";
 
+/** Navigable sections: the tweak categories plus the two standalone screens. */
+type Section = Category | "scan" | "startup";
+
 type TweakInfo = {
   id: string;
   name: string;
@@ -1174,22 +1177,39 @@ function ScanPanel({
     if (toFix.length === 0) return;
     setFixing(true);
     setFixProgress(0);
-    for (let i = 0; i < toFix.length; i++) {
-      const issue = toFix[i];
+
+    const tweakIds = toFix.filter((i) => i.kind === "tweak").map((i) => i.id);
+    const cleanupIds = toFix.filter((i) => i.kind === "cleanup").map((i) => i.id);
+    let failed = 0;
+
+    try {
+      if (tweakIds.length > 0) {
+        // Single call: the backend groups every admin-level tweak behind one
+        // UAC prompt instead of one prompt per tweak.
+        const failures = await invoke<string[]>("apply_tweaks", { ids: tweakIds });
+        failed += failures.length;
+        failures.forEach((f) => pushToast("error", f));
+        setFixProgress(tweakIds.length);
+      }
+    } catch (e) {
+      failed += tweakIds.length;
+      pushToast("error", String(e));
+    }
+
+    for (let i = 0; i < cleanupIds.length; i++) {
       try {
-        if (issue.kind === "tweak") {
-          await invoke("apply_tweak", { id: issue.id });
-        } else {
-          await invoke("run_cleanup", { id: issue.id });
-        }
+        await invoke("run_cleanup", { id: cleanupIds[i] });
       } catch (e) {
+        failed += 1;
         pushToast("error", String(e));
       }
-      setFixProgress(i + 1);
+      setFixProgress(tweakIds.length + i + 1);
     }
+
     await onFixed();
     setFixing(false);
-    pushToast("success", format(s.scan.fixedToast, { count: toFix.length }));
+    const fixed = toFix.length - failed;
+    if (fixed > 0) pushToast("success", format(s.scan.fixedToast, { count: fixed }));
   }
 
   const totalIssues = fixableIssues.length + lockedIssues.length;
@@ -1439,6 +1459,259 @@ function PasswordBreachCheck({ s }: { s: Strings }) {
   );
 }
 
+type SystemStats = {
+  cpu_usage: number;
+  cpu_name: string;
+  cpu_cores: number;
+  ram_used: number;
+  ram_total: number;
+  disk_used: number;
+  disk_total: number;
+  os_name: string;
+  uptime_secs: number;
+};
+
+/** "12.4 / 31.1 GB" — one unit shown once, so it fits next to the gauge. */
+function gbPair(used: number, total: number): string {
+  const gb = (n: number) => (n / 1024 ** 3).toFixed(1);
+  return `${gb(used)} / ${gb(total)} GB`;
+}
+
+/** Green under light load, amber when it starts to matter, red when it hurts. */
+function loadColor(pct: number): string {
+  if (pct >= 85) return "#f87171";
+  if (pct >= 60) return "#fbbf24";
+  return "#34d399";
+}
+
+function StatRing({ label, sublabel, pct }: { label: string; sublabel: string; pct: number }) {
+  const radius = 26;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <div className="relative h-16 w-16 shrink-0">
+        <svg viewBox="0 0 64 64" className="h-16 w-16 -rotate-90">
+          <circle cx="32" cy="32" r={radius} fill="none" strokeWidth="6" className="stroke-white/10" />
+          <circle
+            cx="32"
+            cy="32"
+            r={radius}
+            fill="none"
+            strokeWidth="6"
+            strokeLinecap="round"
+            stroke={loadColor(clamped)}
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference - (circumference * clamped) / 100}
+            className="transition-[stroke-dashoffset] duration-700 ease-out"
+          />
+        </svg>
+        <span className="absolute inset-0 grid place-items-center text-sm font-bold tabular-nums text-slate-100">
+          {Math.round(clamped)}%
+        </span>
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-300">{label}</p>
+        <p className="truncate text-xs text-slate-500" title={sublabel}>
+          {sublabel}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Live snapshot of the machine, polled from the Rust side. Every number here
+ * is read from the real system (sysinfo) — no synthetic "health score".
+ */
+function SystemMonitor({ s }: { s: Strings }) {
+  const [stats, setStats] = useState<SystemStats | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    const tick = () => {
+      invoke<SystemStats>("system_stats")
+        .then((v) => {
+          // The backend call takes ~200ms (it needs two CPU samples), so the
+          // component can unmount mid-flight — don't set state after that.
+          if (alive) setStats(v);
+        })
+        .catch(() => {});
+    };
+    tick();
+    const id = window.setInterval(tick, 2500);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+    };
+  }, []);
+
+  if (!stats) {
+    return <div className="mb-6 h-[104px] animate-pulse rounded-2xl border border-white/10 bg-white/[0.03]" />;
+  }
+
+  const ramPct = stats.ram_total > 0 ? (stats.ram_used / stats.ram_total) * 100 : 0;
+  const diskPct = stats.disk_total > 0 ? (stats.disk_used / stats.disk_total) * 100 : 0;
+  const hours = Math.floor(stats.uptime_secs / 3600);
+  const minutes = Math.floor((stats.uptime_secs % 3600) / 60);
+
+  return (
+    <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur">
+      <div className="grid gap-5 sm:grid-cols-3">
+        <StatRing
+          label={s.systemMonitor.cpu}
+          sublabel={format(s.systemMonitor.cores, { count: stats.cpu_cores })}
+          pct={stats.cpu_usage}
+        />
+        <StatRing label={s.systemMonitor.ram} sublabel={gbPair(stats.ram_used, stats.ram_total)} pct={ramPct} />
+        <StatRing label={s.systemMonitor.disk} sublabel={gbPair(stats.disk_used, stats.disk_total)} pct={diskPct} />
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/5 pt-3 text-xs text-slate-500">
+        <span className="truncate" title={stats.cpu_name}>
+          {stats.cpu_name}
+        </span>
+        <span className="text-slate-700">•</span>
+        <span>{stats.os_name}</span>
+        <span className="text-slate-700">•</span>
+        <span>
+          {s.systemMonitor.uptime} {format(s.systemMonitor.uptimeValue, { hours, minutes })}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+type StartupEntry = {
+  name: string;
+  command: string;
+  scope: string;
+  enabled: boolean;
+  requires_admin: boolean;
+};
+
+/**
+ * Reads and toggles the same Run + StartupApproved registry entries Windows'
+ * own Task Manager uses, so what's shown here matches what Windows reports
+ * and disabling something is exactly as reversible as doing it there.
+ */
+function StartupManager({
+  s,
+  pushToast,
+}: {
+  s: Strings;
+  pushToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [items, setItems] = useState<StartupEntry[]>([]);
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  const keyOf = (item: StartupEntry) => `${item.scope}:${item.name}`;
+
+  async function refresh() {
+    const list = await invoke<StartupEntry[]>("list_startup_items");
+    setItems(list);
+    setLoaded(true);
+  }
+
+  useEffect(() => {
+    refresh().catch((e) => pushToast("error", String(e)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function toggleItem(item: StartupEntry) {
+    setBusyKey(keyOf(item));
+    try {
+      await invoke("set_startup_enabled", {
+        scope: item.scope,
+        name: item.name,
+        enabled: !item.enabled,
+      });
+      await refresh();
+    } catch (e) {
+      pushToast("error", String(e));
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  const enabledCount = items.filter((i) => i.enabled).length;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold text-slate-100">{s.startupManager.title}</h2>
+          {loaded && items.length > 0 && (
+            <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-slate-300">
+              {format(s.startupManager.activeCount, { enabled: enabledCount, total: items.length })}
+            </span>
+          )}
+        </div>
+        <p className="mt-1 text-sm text-slate-400">{s.startupManager.description}</p>
+        <p className="mt-2 text-xs text-slate-500">{s.startupManager.impactNote}</p>
+      </div>
+
+      {loaded && items.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-slate-500">
+          {s.startupManager.empty}
+        </div>
+      )}
+
+      {items.map((item, i) => (
+        <div
+          key={keyOf(item)}
+          style={{ animationDelay: `${i * 40}ms` }}
+          className="animate-card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition-colors hover:border-white/20 hover:bg-white/[0.06]"
+        >
+          <div className="flex items-center gap-4">
+            <div
+              className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-colors ${
+                item.enabled
+                  ? "bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/30"
+                  : "bg-white/5 text-slate-500 ring-1 ring-white/10"
+              }`}
+            >
+              <RocketIcon className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold text-slate-100">{item.name}</h3>
+                {item.requires_admin && (
+                  <>
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-slate-300">
+                      {s.startupManager.machineWide}
+                    </span>
+                    <ShieldBadge label={s.badges.admin} />
+                  </>
+                )}
+              </div>
+              <p className="mt-0.5 truncate text-xs text-slate-500" title={item.command}>
+                {item.command}
+              </p>
+            </div>
+            <Toggle checked={item.enabled} busy={busyKey === keyOf(item)} onClick={() => toggleItem(item)} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RocketIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M12 3c3.5 1.5 5.5 5 5.5 9l-2 3h-7l-2-3c0-4 2-7.5 5.5-9Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="10" r="1.8" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M9 18c0 1.5 1.3 3 3 3s3-1.5 3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function App() {
   const [lang, setLangState] = useState<Lang>(() => detectInitialLang());
   const s = STRINGS[lang];
@@ -1591,18 +1864,19 @@ function App() {
     await openUrl(data.url);
   }
 
-  const CATEGORIES: { key: Category | "scan"; label: string }[] = [
-    { key: "scan", label: s.tabs.scan },
-    { key: "performance", label: s.tabs.performance },
-    { key: "privacy", label: s.tabs.privacy },
-    { key: "ui", label: s.tabs.ui },
-    { key: "gaming", label: s.tabs.gaming },
-    { key: "manutenzione", label: s.tabs.manutenzione },
+  const CATEGORIES: { key: Section; label: string; icon: React.ReactElement }[] = [
+    { key: "scan", label: s.tabs.scan, icon: <MagnifierIcon className="h-[18px] w-[18px]" /> },
+    { key: "performance", label: s.tabs.performance, icon: CATEGORY_STYLE.performance.icon },
+    { key: "gaming", label: s.tabs.gaming, icon: CATEGORY_STYLE.gaming.icon },
+    { key: "privacy", label: s.tabs.privacy, icon: CATEGORY_STYLE.privacy.icon },
+    { key: "startup", label: s.tabs.startup, icon: <RocketIcon className="h-[18px] w-[18px]" /> },
+    { key: "ui", label: s.tabs.ui, icon: CATEGORY_STYLE.ui.icon },
+    { key: "manutenzione", label: s.tabs.manutenzione, icon: CATEGORY_STYLE.manutenzione.icon },
   ];
 
   const [tweaks, setTweaks] = useState<TweakInfo[]>([]);
   const [cleanupTargets, setCleanupTargets] = useState<CleanupInfo[]>([]);
-  const [filter, setFilter] = useState<Category | "scan">("scan");
+  const [filter, setFilter] = useState<Section>("scan");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [paywallFeature, setPaywallFeature] = useState<string | null>(null);
@@ -1674,7 +1948,10 @@ function App() {
   }
 
   const visibleTweaks = useMemo(
-    () => (filter === "scan" ? [] : tweaks.filter((t) => t.category === filter && t.id !== "turbo_boost")),
+    () =>
+      filter === "scan" || filter === "startup"
+        ? []
+        : tweaks.filter((t) => t.category === filter && t.id !== "turbo_boost"),
     [tweaks, filter],
   );
 
@@ -1682,38 +1959,95 @@ function App() {
   const showPrivacyExtras = filter === "privacy";
   const showGamingExtras = filter === "gaming";
   const showScan = filter === "scan";
+  const showStartup = filter === "startup";
   const turboBoostApplied = tweaks.find((t) => t.id === "turbo_boost")?.applied ?? false;
   const appliedCount = tweaks.filter((t) => t.applied).length;
 
-  return (
-    <main
-      className="min-h-screen bg-[radial-gradient(circle_at_top,var(--app-bg-a),var(--app-bg-b)_60%)] px-8 py-10 text-slate-100 [font-family:var(--app-font)]"
-    >
-      <div className="mx-auto max-w-3xl">
-        <header className="mb-8 flex items-center justify-between gap-4">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-[linear-gradient(to_bottom_right,var(--app-accent),var(--app-accent2))] text-slate-900 shadow-lg shadow-black/30">
-                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-                  <path
-                    d="M12 2 4 6v6c0 5 3.4 9 8 10 4.6-1 8-5 8-10V6l-8-4Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-              {s.appName}
-            </h1>
-            <p className="mt-1 text-sm text-slate-400">
-              {format(s.appliedCount, { applied: appliedCount, total: tweaks.length })}
-            </p>
-          </div>
+  const currentLabel = CATEGORIES.find((c) => c.key === filter)?.label ?? "";
 
-          <div className="flex items-center gap-4">
-            <p className="hidden max-w-[15rem] text-right text-xs leading-relaxed text-slate-500 sm:block">
-              {s.headerNote}
-            </p>
+  return (
+    <main className="flex min-h-screen bg-[radial-gradient(circle_at_top_left,var(--app-bg-a),var(--app-bg-b)_65%)] text-slate-100 [font-family:var(--app-font)]">
+      <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col border-r border-white/5 bg-black/25 p-4 backdrop-blur-xl">
+        <div className="mb-7 flex items-center gap-2.5 px-1">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[linear-gradient(to_bottom_right,var(--app-accent),var(--app-accent2))] text-slate-900 shadow-lg shadow-black/40">
+            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+              <path
+                d="M12 2 4 6v6c0 5 3.4 9 8 10 4.6-1 8-5 8-10V6l-8-4Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <span className="truncate text-[15px] font-bold tracking-tight">{s.appName}</span>
+        </div>
+
+        <nav className="flex flex-col gap-0.5">
+          {CATEGORIES.map((c) => {
+            const active = filter === c.key;
+            return (
+              <button
+                key={c.key}
+                onClick={() => setFilter(c.key)}
+                className={`group relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
+                  active ? "text-white" : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                }`}
+                style={active ? { backgroundColor: "color-mix(in srgb, var(--app-accent) 22%, transparent)" } : undefined}
+              >
+                {active && (
+                  <span
+                    className="absolute inset-y-2 left-0 w-[3px] rounded-full"
+                    style={{ backgroundColor: "var(--app-accent)" }}
+                  />
+                )}
+                <span
+                  className={`shrink-0 transition-colors ${active ? "" : "text-slate-500 group-hover:text-slate-300"}`}
+                  style={active ? { color: "var(--app-accent)" } : undefined}
+                >
+                  {c.icon}
+                </span>
+                <span className="truncate">{c.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="mt-auto pt-4">
+          {isProUnlocked ? (
+            <div className="rounded-xl border border-amber-400/25 bg-amber-400/10 p-3">
+              <p className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                <span className="text-sm">★</span> {s.menu.planPro}
+              </p>
+              {auth.status === "authenticated" && (
+                <p className="mt-1 truncate text-[11px] leading-snug text-slate-400" title={auth.email}>
+                  {auth.email}
+                </p>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => setPaywallFeature(s.menu.planPro)}
+              className="w-full rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 px-3 py-2.5 text-xs font-bold text-amber-950 transition-transform hover:scale-[1.02]"
+            >
+              {s.menu.upgradeButton}
+            </button>
+          )}
+        </div>
+      </aside>
+
+      <div className="min-w-0 flex-1 px-8 py-8">
+        <div className="mx-auto max-w-3xl">
+          <header className="mb-6 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold tracking-tight">{currentLabel}</h1>
+              {/* The tweak tally is meaningless on the startup screen, which
+                  isn't made of tweaks and shows its own count instead. */}
+              {!showStartup && (
+                <p className="mt-1 text-sm text-slate-400">
+                  {format(s.appliedCount, { applied: appliedCount, total: tweaks.length })}
+                </p>
+              )}
+            </div>
             <AccountMenu
               s={s}
               lang={lang}
@@ -1727,22 +2061,11 @@ function App() {
               onForgotPassword={forgotPassword}
               onUpgrade={() => setPaywallFeature(s.menu.planPro)}
             />
-          </div>
-        </header>
+          </header>
 
-        <nav className="mb-6 flex gap-1 rounded-full bg-white/5 p-1 backdrop-blur">
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.key}
-              onClick={() => setFilter(c.key)}
-              className={`flex-1 rounded-full px-3 py-2 text-sm font-medium transition-colors duration-200
-                ${filter === c.key ? "text-white shadow" : "text-slate-400 hover:text-slate-100"}`}
-              style={filter === c.key ? { backgroundColor: "var(--app-accent)" } : undefined}
-            >
-              {c.label}
-            </button>
-          ))}
-        </nav>
+          {showScan && <SystemMonitor s={s} />}
+
+          {showStartup && <StartupManager s={s} pushToast={pushToast} />}
 
         {showScan && (
           <ScanPanel
@@ -1840,12 +2163,17 @@ function App() {
             />
           )}
 
-          {visibleTweaks.length === 0 && !showCleanup && !showPrivacyExtras && !showScan && (
+          {visibleTweaks.length === 0 && !showCleanup && !showPrivacyExtras && !showScan && !showStartup && (
             <li className="animate-card rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-slate-500">
               {s.emptyCategory}
             </li>
           )}
         </ul>
+
+          <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-relaxed text-slate-600">
+            {s.headerNote}
+          </p>
+        </div>
       </div>
 
       {confirmCleanup && (

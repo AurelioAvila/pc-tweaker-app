@@ -7,6 +7,10 @@ the git log.
 
 ## 2026-08-02
 
+- **Fixed**: Game Sessions could accept the same game twice (or fail to
+  remove it) if picked via a differently-cased path — Windows paths are
+  case-insensitive but the duplicate/remove checks weren't. Now compares
+  paths case-insensitively.
 - **Fixed**: app showed the Free plan for a real Pro account (`is_pro` was
   still `true` in the database the whole time — verified directly). Root
   cause: `VITE_API_BASE_URL` was never persisted anywhere, so any

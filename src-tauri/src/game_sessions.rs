@@ -72,7 +72,7 @@ pub fn add_game_session(app: tauri::AppHandle, path: String) -> Result<GameEntry
         .map(|s| s.to_string_lossy().to_string())
         .unwrap_or_else(|| path.clone());
 
-    if config.games.iter().any(|g| g.path == path) {
+    if config.games.iter().any(|g| g.path.eq_ignore_ascii_case(&path)) {
         return Err("questo gioco è già nella lista".to_string());
     }
 
@@ -86,7 +86,7 @@ pub fn add_game_session(app: tauri::AppHandle, path: String) -> Result<GameEntry
 pub fn remove_game_session(app: tauri::AppHandle, path: String) -> Result<(), String> {
     let dir = crate::store_for_dir(&app)?;
     let mut config = load_config(&dir);
-    config.games.retain(|g| g.path != path);
+    config.games.retain(|g| !g.path.eq_ignore_ascii_case(&path));
     save_config(&dir, &config)
 }
 

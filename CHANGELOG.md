@@ -7,6 +7,9 @@ the git log.
 
 ## 2026-08-02
 
+- **Tuned**: the Scan animation was too fast to read as "doing real work" —
+  slowed it down (~4.2s) and added a live percentage counter tied to actual
+  elapsed time, with a progress ring that fills in step.
 - **Redesigned**: Turbo Boost is now a standalone card with a big centered
   circular button (START/STOP), pulsing glow rings while the apply/rollback
   call is in flight — Advanced-SystemCare-style, instead of a title + toggle

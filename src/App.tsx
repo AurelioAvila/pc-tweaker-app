@@ -1098,11 +1098,14 @@ function ScanPanel({
   pushToast: (kind: Toast["kind"], message: string) => void;
 }) {
   const [phase, setPhase] = useState<"idle" | "scanning" | "done">("idle");
-  const [scanStep, setScanStep] = useState(0);
+  const [scanPct, setScanPct] = useState(0);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [fixing, setFixing] = useState(false);
   const [fixProgress, setFixProgress] = useState(0);
   const scanTimer = useRef<number | null>(null);
+
+  const SCAN_DURATION_MS = 4200;
+  const scanStep = Math.min(4, Math.floor((scanPct / 100) * 4));
 
   const steps = [s.scan.stepPerformance, s.scan.stepPrivacy, s.scan.stepGaming, s.scan.stepJunk];
 
@@ -1126,12 +1129,13 @@ function ScanPanel({
 
   function startScan() {
     setPhase("scanning");
-    setScanStep(0);
-    let i = 0;
+    setScanPct(0);
+    const start = performance.now();
     scanTimer.current = window.setInterval(() => {
-      i += 1;
-      setScanStep(i);
-      if (i >= steps.length) {
+      const elapsed = performance.now() - start;
+      const pct = Math.min(100, Math.round((elapsed / SCAN_DURATION_MS) * 100));
+      setScanPct(pct);
+      if (pct >= 100) {
         if (scanTimer.current) window.clearInterval(scanTimer.current);
         const initialChecked: Record<string, boolean> = {};
         freeIssues.forEach((issue) => {
@@ -1140,7 +1144,7 @@ function ScanPanel({
         setChecked(initialChecked);
         setPhase("done");
       }
-    }, 450);
+    }, 60);
   }
 
   async function fixAll() {
@@ -1191,8 +1195,14 @@ function ScanPanel({
         <>
           <div className="relative mt-6 grid h-40 w-40 place-items-center">
             <span className="absolute inset-0 rounded-full border-4 border-white/10" />
-            <span className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-fuchsia-400 border-r-indigo-400" />
-            <MagnifierIcon className="h-9 w-9 animate-pulse text-fuchsia-300" />
+            <span
+              className="absolute inset-0 rounded-full border-4 border-transparent border-t-fuchsia-400 border-r-indigo-400 transition-[transform] duration-75 ease-linear"
+              style={{ transform: `rotate(${scanPct * 3.6}deg)` }}
+            />
+            <div className="relative flex flex-col items-center gap-1 text-fuchsia-300">
+              <MagnifierIcon className="h-7 w-7 animate-pulse" />
+              <span className="text-2xl font-black tabular-nums text-white">{scanPct}%</span>
+            </div>
           </div>
           <ul className="mt-5 flex flex-col gap-1.5 text-sm">
             {steps.map((label, i) => (

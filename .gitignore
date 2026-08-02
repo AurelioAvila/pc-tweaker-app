@@ -47,6 +47,9 @@ marketing/reel-generator/output/*
 marketing/reel-generator/generate.log
 marketing/reel-generator/__pycache__
 marketing/reel-generator/src/__pycache__
+marketing/reel-generator/used_backgrounds.json
+marketing/reel-generator/run.bat
+marketing/reel-generator/.venv
 
 # Editor directories and files
 .vscode/*

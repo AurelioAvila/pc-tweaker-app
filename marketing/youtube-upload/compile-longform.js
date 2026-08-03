@@ -200,6 +200,31 @@ function probeDimensions(videoPath) {
  * originale, invariato - un video senza il fix e' molto meglio di nessun
  * video.
  */
+function probeDuration(videoPath) {
+  const out = execFileSync("ffprobe", [
+    "-v", "error", "-show_entries", "format=duration",
+    "-of", "default=nw=1:nk=1", videoPath,
+  ]).toString().trim();
+  return parseFloat(out);
+}
+
+/**
+ * Sovrappone la card in TRE punti del video (inizio, meta', quasi-fine),
+ * non solo all'inizio.
+ *
+ * STORIA DEL FIX (2026-08-03, importante, non ripetere l'errore): la prima
+ * versione bruciava la card SOLO nei primi 4 secondi, sull'assunto che
+ * YouTube scegliesse un fotogramma iniziale come copertina automatica.
+ * Verificato FALSO sul video realmente pubblicato pyJE_gTUuO4: la copertina
+ * mostrava un fotogramma a caso da ~t=170s (quasi la fine di un video di
+ * 174s), non la card - trovato ispezionando fotogrammi campione lungo tutto
+ * il video e confrontandoli con la copertina reale. Bruciarla in tre
+ * finestre (inizio/meta'/quasi-fine) copre molte piu' posizioni possibili
+ * per lo stesso costo proporzionale (~12s su un video di alcuni minuti).
+ * Non e' una garanzia (l'algoritmo di selezione di YouTube non e'
+ * documentato pubblicamente), ma una copertura molto piu' ampia della
+ * singola finestra gia' dimostrata insufficiente.
+ */
 function bakeThumbnailCard(videoPath, title, cardSeconds = 4) {
   const cardPath = path.join(OUTPUT_DIR, "_card.jpg");
   const tmpOut = videoPath + ".card.mp4";
@@ -212,11 +237,22 @@ function bakeThumbnailCard(videoPath, title, cardSeconds = 4) {
       { stdio: "pipe" }
     );
 
+    const duration = probeDuration(videoPath);
+    let windows;
+    if (!duration || duration <= cardSeconds * 2) {
+      windows = [0];
+    } else {
+      windows = [0, duration * 0.5, Math.max(0, duration - cardSeconds - 2)];
+    }
+    const enableExpr = windows
+      .map((w) => `between(t,${w.toFixed(2)},${(w + cardSeconds).toFixed(2)})`)
+      .join("+");
+
     execFileSync(
       "ffmpeg",
       [
         "-y", "-i", videoPath, "-i", cardPath,
-        "-filter_complex", `[0:v][1:v]overlay=0:0:enable='between(t,0,${cardSeconds})'[v]`,
+        "-filter_complex", `[0:v][1:v]overlay=0:0:enable='${enableExpr}'[v]`,
         "-map", "[v]", "-map", "0:a",
         "-c:v", "libx264", "-preset", "medium", "-b:v", "10000k",
         "-c:a", "copy",

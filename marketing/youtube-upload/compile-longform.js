@@ -101,17 +101,30 @@ const THUMB_FONT = path
  * sulle zone chiare - ed e' esattamente cio' che rende inutili le miniature
  * automatiche di YouTube.
  */
-function buildThumbnail(videoPath, title) {
-  const out = path.join(OUTPUT_DIR, "thumbnail.jpg");
+// ':' e '\' hanno significato nella sintassi dei filtri ffmpeg.
+function escFfmpegText(s) {
+  return s.replace(/\\/g, "\\\\").replace(/:/g, "\\:").replace(/'/g, "");
+}
 
-  // drawtext non manda a capo da solo: spezziamo il titolo in righe da ~22
-  // caratteri su confine di parola, cosi' resta leggibile anche
-  // nell'anteprima piccola del feed mobile.
+/**
+ * Filtro ffmpeg drawtext per il titolo, a QUALUNQUE dimensione (width x
+ * height) - condiviso da buildThumbnail (sempre 1280x720, il formato
+ * richiesto dall'API) e bakeThumbnailCard (dimensioni REALI del video,
+ * 2026-08-03, per il bake-in - vedi sotto perche' esiste).
+ *
+ * charsPerLine/fontSize/lineH scalano con la larghezza: un font fisso a
+ * 76px letto bene a 1280px di larghezza sarebbe minuscolo su un frame molto
+ * piu' largo o sproporzionato su uno piu' stretto.
+ */
+function drawTextFilter(title, width, height, accentColor) {
+  const fontSize = Math.round(width * 0.059);
+  const charsPerLine = Math.max(10, Math.round(width / (fontSize * 0.6)));
+
   const words = title.toUpperCase().split(/\s+/);
   const lines = [];
   let current = "";
   for (const w of words) {
-    if ((current + " " + w).trim().length > 22 && current) {
+    if ((current + " " + w).trim().length > charsPerLine && current) {
       lines.push(current.trim());
       current = w;
     } else {
@@ -119,28 +132,109 @@ function buildThumbnail(videoPath, title) {
     }
   }
   if (current) lines.push(current);
+  lines.splice(4); // max 4 righe, come le controparti Python
 
-  // ':' e '\' hanno significato nella sintassi dei filtri ffmpeg.
-  const esc = (s) => s.replace(/\\/g, "\\\\").replace(/:/g, "\\:").replace(/'/g, "");
-  const lineH = 96;
-  const startY = Math.round((720 - lines.length * lineH) / 2);
+  const lineH = Math.round(fontSize * 1.26);
+  const startY = Math.round((height - lines.length * lineH) / 2);
   const drawtexts = lines
     .map((line, i) =>
-      `drawtext=fontfile='${THUMB_FONT}':text='${esc(line)}':fontcolor=white:fontsize=76:` +
-      `borderw=7:bordercolor=black:x=(w-text_w)/2:y=${startY + i * lineH}`
+      `drawtext=fontfile='${THUMB_FONT}':text='${escFfmpegText(line)}':fontcolor=white:fontsize=${fontSize}:` +
+      `borderw=${Math.max(4, Math.round(fontSize * 0.09))}:bordercolor=black:x=(w-text_w)/2:y=${startY + i * lineH}`
     )
     .join(",");
 
-  const filter =
-    `scale=1280:720,boxblur=12:1,eq=brightness=-0.22,${drawtexts},` +
-    `drawbox=x=0:y=704:w=1280:h=16:color=0x00B0FF@1:t=fill`;
+  const barH = Math.max(8, Math.round(height * 0.011));
+  return (
+    `scale=${width}:${height},boxblur=12:1,eq=brightness=-0.22,${drawtexts},` +
+    `drawbox=x=0:y=${height - barH}:w=${width}:h=${barH}:color=${accentColor}@1:t=fill`
+  );
+}
 
+function buildThumbnail(videoPath, title) {
+  const out = path.join(OUTPUT_DIR, "thumbnail.jpg");
+  const filter = drawTextFilter(title, 1280, 720, "0x00B0FF");
   execFileSync(
     "ffmpeg",
     ["-y", "-ss", "3", "-i", videoPath, "-frames:v", "1", "-vf", filter, "-q:v", "2", out],
     { stdio: "pipe" }
   );
   return out;
+}
+
+/**
+ * Legge la risoluzione REALE del video con ffprobe - non si assume, perche'
+ * questo compilato e' sempre verticale (concat di Reel 1080x1920) ma
+ * assumerlo a priori sarebbe fragile se il formato sorgente cambiasse.
+ */
+function probeDimensions(videoPath) {
+  const out = execFileSync("ffprobe", [
+    "-v", "error", "-select_streams", "v:0",
+    "-show_entries", "stream=width,height", "-of", "csv=p=0",
+    videoPath,
+  ]).toString().trim();
+  const [width, height] = out.split(",").map(Number);
+  return { width, height };
+}
+
+/**
+ * Sovrappone una card col titolo in grande nei primi CARD_SECONDS secondi
+ * del video, IN PLACE - aggira il blocco delle miniature personalizzate su
+ * un canale senza telefono verificato.
+ *
+ * Perche' esiste (2026-08-03): confermato live che questo canale non ha il
+ * telefono verificato (403 "insufficient permissions" su thumbnails.set,
+ * sempre), quindi il tentativo via API in uploadVideo (lib.js) fallisce
+ * sempre. YouTube sceglie allora un fotogramma a caso del video come
+ * copertina - senza alcun rapporto col titolo. Bruciando il design nei
+ * primi secondi del video stesso, qualunque fotogramma YouTube scelga in
+ * quella finestra E' il design voluto, senza bisogno di alcun permesso.
+ *
+ * Lo sfondo viene estratto dallo STESSO video che si sta modificando, quindi
+ * ha sempre la sua stessa risoluzione/aspect ratio: a differenza della
+ * miniatura API (sempre 1280x720 landscape, indipendentemente
+ * dall'orientamento del video) qui non serve alcun ritaglio, solo uno
+ * scale=W:H sicuro perche' sorgente e destinazione condividono l'aspect
+ * ratio.
+ *
+ * Non solleva mai: se qualunque passaggio fallisce il video resta quello
+ * originale, invariato - un video senza il fix e' molto meglio di nessun
+ * video.
+ */
+function bakeThumbnailCard(videoPath, title, cardSeconds = 4) {
+  const cardPath = path.join(OUTPUT_DIR, "_card.jpg");
+  const tmpOut = videoPath + ".card.mp4";
+  try {
+    const { width, height } = probeDimensions(videoPath);
+    const filter = drawTextFilter(title, width, height, "0x00B0FF");
+    execFileSync(
+      "ffmpeg",
+      ["-y", "-ss", "1", "-i", videoPath, "-frames:v", "1", "-vf", filter, "-q:v", "2", cardPath],
+      { stdio: "pipe" }
+    );
+
+    execFileSync(
+      "ffmpeg",
+      [
+        "-y", "-i", videoPath, "-i", cardPath,
+        "-filter_complex", `[0:v][1:v]overlay=0:0:enable='between(t,0,${cardSeconds})'[v]`,
+        "-map", "[v]", "-map", "0:a",
+        "-c:v", "libx264", "-preset", "medium", "-b:v", "10000k",
+        "-c:a", "copy",
+        "-movflags", "+faststart",
+        tmpOut,
+      ],
+      { stdio: "pipe" }
+    );
+    fs.renameSync(tmpOut, videoPath);
+    console.log(`[thumbnail] card iniziale bruciata nei primi ${cardSeconds}s`);
+    return true;
+  } catch (err) {
+    console.warn(`[thumbnail] card iniziale saltata (${err.message}) - video invariato`);
+    if (fs.existsSync(tmpOut)) fs.unlinkSync(tmpOut);
+    return false;
+  } finally {
+    if (fs.existsSync(cardPath)) fs.unlinkSync(cardPath);
+  }
 }
 
 async function main() {
@@ -202,6 +296,14 @@ async function main() {
   } catch (err) {
     console.warn(`Miniatura non generata (${err.message}) - si prosegue senza`);
   }
+
+  // Questo canale non ha il telefono verificato (confermato 2026-08-03,
+  // l'API rifiuta sempre thumbnails.set) - il tentativo via API sopra resta
+  // attivo (gratis, funziona da solo se il canale viene verificato in
+  // futuro), ma nel frattempo brucia lo stesso design nei primi secondi del
+  // video stesso. Va DOPO buildThumbnail: quella estrae il proprio
+  // fotogramma dal video ancora originale, prima che questa lo modifichi.
+  bakeThumbnailCard(outputPath, title);
 
   console.log("Upload in corso...");
   const result = await uploadVideo({ videoPath: outputPath, title, description, tags, privacyStatus: "public", thumbnailPath });

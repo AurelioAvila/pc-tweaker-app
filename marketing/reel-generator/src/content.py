@@ -23,6 +23,15 @@ ALL_CATEGORIES = CATEGORIES + [LISTTEASE_CATEGORY]
 # highest-performing hook formulas for this niche.
 CATEGORY_WEIGHTS = {c: 1 for c in CATEGORIES}
 CATEGORY_WEIGHTS[LISTTEASE_CATEGORY] = 2
+# beforeafter to 2x too (2026-08-03 research): AI/tech-tutorial content is
+# the fastest-growing Shorts niche in 2026, and within that niche the
+# format called out as a specific high performer is exactly this category -
+# "Shorts that demo a tool in 30 seconds or show a before-and-after
+# workflow comparison tend to get high engagement and shares" - not just
+# tutorials in general. Same reasoning as the List Tease boost above, this
+# time backed by 2026 data specific to our niche instead of the niche in
+# general. (https://virvid.ai/blog/most-profitable-ai-youtube-shorts-niches-2026-rpm-data)
+CATEGORY_WEIGHTS["beforeafter"] = 2
 
 
 def pick_category() -> str:
@@ -102,6 +111,15 @@ FALLBACK = {
         "Before: Windows fighting you with default settings tuned for battery life. After: a Turbo Gaming preset that flips every performance setting at once.",
         "Before: mouse aim feels inconsistent because of pointer acceleration. After: turning it off makes every flick land where you expect.",
         "Before: not knowing what a random optimizer tool actually changed. After: seeing the exact setting and reverting it in one click if you want to.",
+        # Aggiunti 2026-08-03 insieme al boost di peso della categoria (vedi
+        # CATEGORY_WEIGHTS sopra): la pool era ferma a 3 item, la stessa
+        # thinness gia' risolta per gli HOOKS il 2026-08-02 - raddoppiare la
+        # frequenza di questa categoria senza ampliarne anche il contenuto
+        # avrebbe solo spostato il problema della ripetizione da un pool
+        # all'altro. Anche questi due sono feature reali da README.md, non
+        # inventate.
+        "Before: Xbox Game Bar's Game DVR recording in the background every time you play. After: switched off in one toggle, nothing left running behind your game.",
+        "Before: your DNS still pointed at whatever your ISP set by default. After: switched to Cloudflare's private DNS in one toggle.",
     ],
 }
 

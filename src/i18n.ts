@@ -25,6 +25,7 @@ export interface Strings {
     manutenzione: string;
     gaming: string;
     startup: string;
+    pricing: string;
   };
   systemMonitor: {
     cpu: string;
@@ -41,6 +42,36 @@ export interface Strings {
     activeCount: string; // uses {enabled} {total}
     machineWide: string;
     impactNote: string;
+  };
+  search: {
+    placeholder: string;
+    noResults: string; // uses {query}
+    clear: string;
+  };
+  pricing: {
+    title: string;
+    subtitle: string;
+    monthly: string;
+    annual: string;
+    saveBadge: string; // uses {percent}
+    perMonth: string;
+    perYear: string;
+    annualDetail: string; // uses {monthly} {yearly}
+    annualNudge: string; // uses {price}
+    mostChosen: string;
+    freeName: string;
+    freeTagline: string;
+    freePriceNote: string;
+    freeCta: string;
+    freeCurrent: string;
+    proName: string;
+    proTagline: string;
+    proCta: string;
+    proCurrent: string;
+    everythingInFree: string;
+    reassurance: string;
+    freeFeatures: string[];
+    proFeatures: string[];
   };
   badges: { admin: string; pro: string; soon: string };
   emptyCategory: string;
@@ -185,7 +216,7 @@ const it: Strings = {
   appliedCount: "{applied} di {total} tweak attivi",
   headerNote:
     "Ogni tweak salva un backup del valore originale prima di essere applicato. I tweak con privilegi elevati chiedono un consenso UAC esplicito, solo per quell'azione.",
-  tabs: { scan: "Scan", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Manutenzione", gaming: "Gaming", startup: "Avvio" },
+  tabs: { scan: "Scan", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Manutenzione", gaming: "Gaming", startup: "Avvio", pricing: "Piani e prezzi" },
   systemMonitor: {
     cpu: "CPU",
     ram: "Memoria",
@@ -202,6 +233,51 @@ const it: Strings = {
     activeCount: "Attivi: {enabled} / {total}",
     machineWide: "Tutti gli utenti",
     impactNote: "Disattivare non disinstalla nulla ed è reversibile in qualsiasi momento.",
+  },
+  search: {
+    placeholder: "Cerca un tweak...",
+    noResults: "Nessun risultato per \"{query}\".",
+    clear: "Cancella",
+  },
+  pricing: {
+    title: "Scegli quanto vuoi spingere",
+    subtitle: "Inizia gratis. Passa a Pro quando vuoi ogni singolo frame in pi\u00f9.",
+    monthly: "Mensile",
+    annual: "Annuale",
+    saveBadge: "RISPARMI IL {percent}%",
+    perMonth: "/mese",
+    perYear: "/anno",
+    annualDetail: "Sono {monthly} al mese, addebitati {yearly} una volta l\u2019anno",
+    annualNudge: "Con il piano annuale sarebbero {price} al mese",
+    mostChosen: "IL PI\u00d9 SCELTO",
+    freeName: "Free",
+    freeTagline: "Tutto il necessario per un PC pi\u00f9 pulito e reattivo.",
+    freePriceNote: "Per sempre, senza scadenza",
+    freeCta: "Stai usando il piano Free",
+    freeCurrent: "Piano attuale",
+    proName: "Pro",
+    proTagline: "Per chi gioca sul serio e non vuole perdere un frame.",
+    proCta: "Passa a Pro",
+    proCurrent: "Il tuo piano",
+    everythingInFree: "Tutto quello che c\u2019\u00e8 nel Free, pi\u00f9:",
+    reassurance: "Disdici quando vuoi. Ogni modifica resta reversibile con un click, anche dopo la disdetta.",
+    freeFeatures: [
+      "20 tweak reali, con backup e ripristino di ogni modifica",
+      "Monitor di sistema in tempo reale (CPU, memoria, disco)",
+      "Gestione dei programmi all\u2019avvio",
+      "Controllo violazioni password",
+      "Scansione del PC e correzione in un click",
+      "Pulizia dei file temporanei",
+    ],
+    proFeatures: [
+      "Game Sessions: attiva il turbo da solo quando lanci un gioco",
+      "Preset Turbo Gaming e priorit\u00e0 massima ai giochi",
+      "Privacy avanzata: telemetria e cronologia attivit\u00e0",
+      "Trova e rimuove i file duplicati",
+      "Svuota la cache di Windows Update",
+      "Disattiva l\u2019indicizzazione che tiene il disco occupato",
+      "Ogni tweak e ogni funzione futura, inclusi",
+    ],
   },
   badges: { admin: "Admin", pro: "PRO", soon: "IN ARRIVO" },
   emptyCategory: "Nessun tweak disponibile in questa categoria — presto in arrivo.",
@@ -254,8 +330,8 @@ const it: Strings = {
   },
   paywall: {
     title: "Funzione Pro",
-    body: '"{feature}" fa parte della versione Pro di PC Tweaker. Sblocca con un pagamento unico, senza abbonamento: tweak avanzati, applicazione in batch e aggiornamenti futuri inclusi.',
-    unlock: "Sblocca Pro — pagamento unico",
+    body: '"{feature}" fa parte di PC Tweaker Pro, insieme a Game Sessions, ai preset gaming e a ogni funzione futura.',
+    unlock: "Vedi piani e prezzi",
     notNow: "Non ora",
     notConnectedToast: "Il pagamento Pro non è ancora collegato in questa versione di sviluppo.",
   },
@@ -472,7 +548,7 @@ const en: Strings = {
   appliedCount: "{applied} of {total} tweaks active",
   headerNote:
     "Every tweak backs up the original value before it's applied. Tweaks that need elevated rights ask for an explicit UAC prompt, only for that action.",
-  tabs: { scan: "Scan", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Maintenance", gaming: "Gaming", startup: "Startup" },
+  tabs: { scan: "Scan", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Maintenance", gaming: "Gaming", startup: "Startup", pricing: "Plans & pricing" },
   systemMonitor: {
     cpu: "CPU",
     ram: "Memory",
@@ -489,6 +565,51 @@ const en: Strings = {
     activeCount: "Active: {enabled} / {total}",
     machineWide: "All users",
     impactNote: "Turning one off uninstalls nothing and is reversible at any time.",
+  },
+  search: {
+    placeholder: "Search a tweak...",
+    noResults: "No results for \"{query}\".",
+    clear: "Clear",
+  },
+  pricing: {
+    title: "Choose how hard you push",
+    subtitle: "Start free. Go Pro when you want every last frame.",
+    monthly: "Monthly",
+    annual: "Yearly",
+    saveBadge: "SAVE {percent}%",
+    perMonth: "/month",
+    perYear: "/year",
+    annualDetail: "That\u2019s {monthly} a month, charged {yearly} once a year",
+    annualNudge: "On the yearly plan it would be {price} a month",
+    mostChosen: "MOST CHOSEN",
+    freeName: "Free",
+    freeTagline: "Everything you need for a cleaner, snappier PC.",
+    freePriceNote: "Free forever, no expiry",
+    freeCta: "You\u2019re on the Free plan",
+    freeCurrent: "Current plan",
+    proName: "Pro",
+    proTagline: "For people who game seriously and won\u2019t drop a frame.",
+    proCta: "Go Pro",
+    proCurrent: "Your plan",
+    everythingInFree: "Everything in Free, plus:",
+    reassurance: "Cancel anytime. Every change stays one click away from being undone, even after you cancel.",
+    freeFeatures: [
+      "20 real tweaks, each backed up and revertible",
+      "Live system monitor (CPU, memory, disk)",
+      "Startup programs manager",
+      "Password breach check",
+      "One-click PC scan and fix",
+      "Temporary file cleanup",
+    ],
+    proFeatures: [
+      "Game Sessions: turbo turns itself on when you launch a game",
+      "Turbo Gaming preset and maximum priority for games",
+      "Advanced privacy: telemetry and activity history",
+      "Finds and removes duplicate files",
+      "Clears the Windows Update cache",
+      "Disables the indexing that keeps your disk busy",
+      "Every tweak and every future feature, included",
+    ],
   },
   badges: { admin: "Admin", pro: "PRO", soon: "COMING SOON" },
   emptyCategory: "No tweaks available in this category yet — more coming soon.",
@@ -541,8 +662,8 @@ const en: Strings = {
   },
   paywall: {
     title: "Pro feature",
-    body: '"{feature}" is part of PC Tweaker Pro. Unlock it with a one-time payment, no subscription: advanced tweaks, batch presets, and future updates included.',
-    unlock: "Unlock Pro — one-time payment",
+    body: '"{feature}" is part of PC Tweaker Pro, along with Game Sessions, the gaming presets and every future feature.',
+    unlock: "See plans & pricing",
     notNow: "Not now",
     notConnectedToast: "Pro payment isn't wired up yet in this development build.",
   },
@@ -751,7 +872,7 @@ const fr: Strings = {
   appliedCount: "{applied} sur {total} optimisations actives",
   headerNote:
     "Chaque optimisation sauvegarde la valeur d'origine avant d'être appliquée. Celles qui nécessitent des droits élevés demandent un consentement UAC explicite, uniquement pour cette action.",
-  tabs: { scan: "Scan", performance: "Performance", privacy: "Confidentialité", ui: "Interface", manutenzione: "Entretien", gaming: "Gaming", startup: "Démarrage" },
+  tabs: { scan: "Scan", performance: "Performance", privacy: "Confidentialité", ui: "Interface", manutenzione: "Entretien", gaming: "Gaming", startup: "Démarrage", pricing: "Offres et tarifs" },
   systemMonitor: {
     cpu: "Processeur",
     ram: "Mémoire",
@@ -768,6 +889,51 @@ const fr: Strings = {
     activeCount: "Actifs : {enabled} / {total}",
     machineWide: "Tous les utilisateurs",
     impactNote: "Désactiver ne désinstalle rien et reste réversible à tout moment.",
+  },
+  search: {
+    placeholder: "Rechercher une optimisation...",
+    noResults: "Aucun r\u00e9sultat pour \"{query}\".",
+    clear: "Effacer",
+  },
+  pricing: {
+    title: "Choisissez jusqu\u2019o\u00f9 pousser",
+    subtitle: "Commencez gratuitement. Passez \u00e0 Pro quand chaque image compte.",
+    monthly: "Mensuel",
+    annual: "Annuel",
+    saveBadge: "\u00c9CONOMISEZ {percent}%",
+    perMonth: "/mois",
+    perYear: "/an",
+    annualDetail: "Soit {monthly} par mois, pr\u00e9lev\u00e9s {yearly} une fois par an",
+    annualNudge: "Avec l\u2019offre annuelle, ce serait {price} par mois",
+    mostChosen: "LE PLUS CHOISI",
+    freeName: "Free",
+    freeTagline: "Tout le n\u00e9cessaire pour un PC plus propre et plus r\u00e9actif.",
+    freePriceNote: "Gratuit pour toujours, sans expiration",
+    freeCta: "Vous \u00eates sur l\u2019offre Free",
+    freeCurrent: "Offre actuelle",
+    proName: "Pro",
+    proTagline: "Pour ceux qui jouent s\u00e9rieusement et ne l\u00e2chent aucune image.",
+    proCta: "Passer \u00e0 Pro",
+    proCurrent: "Votre offre",
+    everythingInFree: "Tout ce que contient Free, plus\u00a0:",
+    reassurance: "R\u00e9siliable \u00e0 tout moment. Chaque modification reste annulable en un clic, m\u00eame apr\u00e8s la r\u00e9siliation.",
+    freeFeatures: [
+      "20 optimisations r\u00e9elles, chacune sauvegard\u00e9e et r\u00e9versible",
+      "Moniteur syst\u00e8me en temps r\u00e9el (processeur, m\u00e9moire, disque)",
+      "Gestion des programmes au d\u00e9marrage",
+      "V\u00e9rification des fuites de mot de passe",
+      "Analyse et correction du PC en un clic",
+      "Nettoyage des fichiers temporaires",
+    ],
+    proFeatures: [
+      "Game Sessions\u00a0: le turbo s\u2019active seul au lancement d\u2019un jeu",
+      "Pr\u00e9r\u00e9glage Turbo Gaming et priorit\u00e9 maximale aux jeux",
+      "Confidentialit\u00e9 avanc\u00e9e\u00a0: t\u00e9l\u00e9m\u00e9trie et historique d\u2019activit\u00e9",
+      "Trouve et supprime les fichiers en double",
+      "Vide le cache de Windows Update",
+      "D\u00e9sactive l\u2019indexation qui occupe le disque",
+      "Toutes les optimisations et fonctionnalit\u00e9s \u00e0 venir, incluses",
+    ],
   },
   badges: { admin: "Admin", pro: "PRO", soon: "BIENTÔT" },
   emptyCategory: "Aucune optimisation disponible dans cette catégorie pour l'instant — à venir.",
@@ -820,8 +986,8 @@ const fr: Strings = {
   },
   paywall: {
     title: "Fonction Pro",
-    body: '« {feature} » fait partie de PC Tweaker Pro. Débloquez-la avec un paiement unique, sans abonnement : optimisations avancées, application par lot et mises à jour futures incluses.',
-    unlock: "Débloquer Pro — paiement unique",
+    body: '« {feature} » fait partie de PC Tweaker Pro, avec Game Sessions, les préréglages gaming et toutes les fonctionnalités à venir.',
+    unlock: "Voir les offres et tarifs",
     notNow: "Pas maintenant",
     notConnectedToast: "Le paiement Pro n'est pas encore connecté dans cette version de développement.",
   },
@@ -1030,7 +1196,7 @@ const es: Strings = {
   appliedCount: "{applied} de {total} ajustes activos",
   headerNote:
     "Cada ajuste guarda una copia del valor original antes de aplicarse. Los ajustes que requieren privilegios elevados piden un consentimiento UAC explícito, solo para esa acción.",
-  tabs: { scan: "Scan", performance: "Rendimiento", privacy: "Privacidad", ui: "Interfaz", manutenzione: "Mantenimiento", gaming: "Gaming", startup: "Inicio" },
+  tabs: { scan: "Scan", performance: "Rendimiento", privacy: "Privacidad", ui: "Interfaz", manutenzione: "Mantenimiento", gaming: "Gaming", startup: "Inicio", pricing: "Planes y precios" },
   systemMonitor: {
     cpu: "CPU",
     ram: "Memoria",
@@ -1047,6 +1213,51 @@ const es: Strings = {
     activeCount: "Activos: {enabled} / {total}",
     machineWide: "Todos los usuarios",
     impactNote: "Desactivar no desinstala nada y es reversible en cualquier momento.",
+  },
+  search: {
+    placeholder: "Buscar un ajuste...",
+    noResults: "Sin resultados para \"{query}\".",
+    clear: "Borrar",
+  },
+  pricing: {
+    title: "Elige cu\u00e1nto quieres exprimirlo",
+    subtitle: "Empieza gratis. Pasa a Pro cuando quieras hasta el \u00faltimo fotograma.",
+    monthly: "Mensual",
+    annual: "Anual",
+    saveBadge: "AHORRAS UN {percent}%",
+    perMonth: "/mes",
+    perYear: "/a\u00f1o",
+    annualDetail: "Son {monthly} al mes, con un cargo de {yearly} una vez al a\u00f1o",
+    annualNudge: "Con el plan anual ser\u00edan {price} al mes",
+    mostChosen: "EL M\u00c1S ELEGIDO",
+    freeName: "Free",
+    freeTagline: "Todo lo necesario para un PC m\u00e1s limpio y \u00e1gil.",
+    freePriceNote: "Gratis para siempre, sin caducidad",
+    freeCta: "Est\u00e1s en el plan Free",
+    freeCurrent: "Plan actual",
+    proName: "Pro",
+    proTagline: "Para quien juega en serio y no pierde ni un fotograma.",
+    proCta: "Pasar a Pro",
+    proCurrent: "Tu plan",
+    everythingInFree: "Todo lo que incluye Free, y adem\u00e1s:",
+    reassurance: "Cancela cuando quieras. Cada cambio sigue siendo reversible con un clic, incluso tras cancelar.",
+    freeFeatures: [
+      "20 ajustes reales, cada uno con copia de seguridad y reversible",
+      "Monitor del sistema en tiempo real (CPU, memoria, disco)",
+      "Gesti\u00f3n de los programas de inicio",
+      "Comprobaci\u00f3n de filtraciones de contrase\u00f1as",
+      "An\u00e1lisis del PC y correcci\u00f3n en un clic",
+      "Limpieza de archivos temporales",
+    ],
+    proFeatures: [
+      "Game Sessions: el turbo se activa solo al abrir un juego",
+      "Preset Turbo Gaming y prioridad m\u00e1xima para los juegos",
+      "Privacidad avanzada: telemetr\u00eda e historial de actividad",
+      "Encuentra y elimina archivos duplicados",
+      "Vac\u00eda la cach\u00e9 de Windows Update",
+      "Desactiva la indexaci\u00f3n que mantiene ocupado el disco",
+      "Todos los ajustes y funciones futuras, incluidos",
+    ],
   },
   badges: { admin: "Admin", pro: "PRO", soon: "PRÓXIMAMENTE" },
   emptyCategory: "Todavía no hay ajustes disponibles en esta categoría — próximamente.",
@@ -1099,8 +1310,8 @@ const es: Strings = {
   },
   paywall: {
     title: "Función Pro",
-    body: '"{feature}" forma parte de PC Tweaker Pro. Desbloquéala con un pago único, sin suscripción: ajustes avanzados, aplicación por lotes y futuras actualizaciones incluidas.',
-    unlock: "Desbloquear Pro — pago único",
+    body: '"{feature}" forma parte de PC Tweaker Pro, junto a Game Sessions, los presets de gaming y todas las funciones futuras.',
+    unlock: "Ver planes y precios",
     notNow: "Ahora no",
     notConnectedToast: "El pago Pro todavía no está conectado en esta versión de desarrollo.",
   },
@@ -1309,7 +1520,7 @@ const de: Strings = {
   appliedCount: "{applied} von {total} Optimierungen aktiv",
   headerNote:
     "Jede Optimierung sichert den ursprünglichen Wert, bevor sie angewendet wird. Optimierungen mit erhöhten Rechten fragen gezielt per UAC nach, nur für diese Aktion.",
-  tabs: { scan: "Scan", performance: "Leistung", privacy: "Datenschutz", ui: "Oberfläche", manutenzione: "Wartung", gaming: "Gaming", startup: "Autostart" },
+  tabs: { scan: "Scan", performance: "Leistung", privacy: "Datenschutz", ui: "Oberfläche", manutenzione: "Wartung", gaming: "Gaming", startup: "Autostart", pricing: "Tarife & Preise" },
   systemMonitor: {
     cpu: "CPU",
     ram: "Arbeitsspeicher",
@@ -1326,6 +1537,51 @@ const de: Strings = {
     activeCount: "Aktiv: {enabled} / {total}",
     machineWide: "Alle Benutzer",
     impactNote: "Deaktivieren deinstalliert nichts und ist jederzeit umkehrbar.",
+  },
+  search: {
+    placeholder: "Tweak suchen...",
+    noResults: "Keine Treffer f\u00fcr \"{query}\".",
+    clear: "L\u00f6schen",
+  },
+  pricing: {
+    title: "Entscheide, wie weit du gehst",
+    subtitle: "Starte kostenlos. Wechsle zu Pro, wenn jedes Frame z\u00e4hlt.",
+    monthly: "Monatlich",
+    annual: "J\u00e4hrlich",
+    saveBadge: "{percent}% SPAREN",
+    perMonth: "/Monat",
+    perYear: "/Jahr",
+    annualDetail: "Das sind {monthly} pro Monat, einmal j\u00e4hrlich mit {yearly} abgebucht",
+    annualNudge: "Im Jahrestarif w\u00e4ren es {price} pro Monat",
+    mostChosen: "AM H\u00c4UFIGSTEN GEW\u00c4HLT",
+    freeName: "Free",
+    freeTagline: "Alles f\u00fcr einen saubereren, flotteren PC.",
+    freePriceNote: "F\u00fcr immer kostenlos, ohne Ablauf",
+    freeCta: "Du nutzt den Free-Tarif",
+    freeCurrent: "Aktueller Tarif",
+    proName: "Pro",
+    proTagline: "F\u00fcr alle, die ernsthaft spielen und kein Frame verlieren wollen.",
+    proCta: "Zu Pro wechseln",
+    proCurrent: "Dein Tarif",
+    everythingInFree: "Alles aus Free, dazu:",
+    reassurance: "Jederzeit k\u00fcndbar. Jede \u00c4nderung bleibt mit einem Klick r\u00fcckg\u00e4ngig zu machen, auch nach der K\u00fcndigung.",
+    freeFeatures: [
+      "20 echte Tweaks, jeder gesichert und umkehrbar",
+      "Live-Systemmonitor (CPU, Arbeitsspeicher, Datentr\u00e4ger)",
+      "Verwaltung der Autostart-Programme",
+      "Passwort-Datenleck-Pr\u00fcfung",
+      "PC-Scan und Behebung mit einem Klick",
+      "Bereinigung tempor\u00e4rer Dateien",
+    ],
+    proFeatures: [
+      "Game Sessions: Turbo aktiviert sich beim Spielstart von selbst",
+      "Turbo-Gaming-Preset und h\u00f6chste Priorit\u00e4t f\u00fcr Spiele",
+      "Erweiterter Datenschutz: Telemetrie und Aktivit\u00e4tsverlauf",
+      "Findet und entfernt doppelte Dateien",
+      "Leert den Windows-Update-Cache",
+      "Deaktiviert die Indizierung, die den Datentr\u00e4ger belastet",
+      "Jeder Tweak und jede k\u00fcnftige Funktion inklusive",
+    ],
   },
   badges: { admin: "Admin", pro: "PRO", soon: "DEMNÄCHST" },
   emptyCategory: "In dieser Kategorie sind noch keine Optimierungen verfügbar — bald verfügbar.",
@@ -1378,8 +1634,8 @@ const de: Strings = {
   },
   paywall: {
     title: "Pro-Funktion",
-    body: '„{feature}" ist Teil von PC Tweaker Pro. Freischalten mit einer einmaligen Zahlung, kein Abo: erweiterte Optimierungen, Batch-Anwendung und zukünftige Updates inklusive.',
-    unlock: "Pro freischalten — einmalige Zahlung",
+    body: '„{feature}" ist Teil von PC Tweaker Pro — zusammen mit Game Sessions, den Gaming-Presets und jeder künftigen Funktion.',
+    unlock: "Tarife & Preise ansehen",
     notNow: "Nicht jetzt",
     notConnectedToast: "Die Pro-Zahlung ist in dieser Entwicklungsversion noch nicht angebunden.",
   },

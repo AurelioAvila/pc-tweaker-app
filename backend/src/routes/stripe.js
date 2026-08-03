@@ -15,20 +15,58 @@ function requireStripe(req, res, next) {
   next();
 }
 
-// Creates a one-time Checkout Session for the logged-in user. The desktop
-// app should open the returned URL in the system browser (Stripe Checkout
-// can't run inside the app's webview) via @tauri-apps/plugin-opener.
+// Pro is sold as a subscription: monthly, or yearly at a discount. Each plan
+// is a separate recurring Price in Stripe; `lifetime` stays supported so the
+// original one-time STRIPE_PRICE_ID keeps working for anyone who bought it.
+const PLANS = {
+  monthly: { env: "STRIPE_PRICE_MONTHLY", mode: "subscription" },
+  annual: { env: "STRIPE_PRICE_ANNUAL", mode: "subscription" },
+  lifetime: { env: "STRIPE_PRICE_ID", mode: "payment" },
+};
+
+// Creates a Checkout Session for the logged-in user. The desktop app opens
+// the returned URL in the system browser (Stripe Checkout can't run inside
+// the app's webview) via @tauri-apps/plugin-opener.
 router.post("/checkout", requireAuth, requireStripe, async (req, res) => {
-  if (!process.env.STRIPE_PRICE_ID) {
-    return res.status(503).json({ error: "STRIPE_PRICE_ID is not configured" });
+  const planKey = String(req.body?.plan || "annual");
+  const plan = PLANS[planKey];
+  if (!plan) {
+    return res.status(400).json({ error: `unknown plan: ${planKey}` });
   }
+
+  const priceId = process.env[plan.env];
+  if (!priceId) {
+    return res.status(503).json({ error: `${plan.env} is not configured` });
+  }
+
   try {
+    // Reuse the customer we already know about, so a user who resubscribes
+    // doesn't end up as two unrelated customers in Stripe (which would break
+    // the cancellation lookup below).
+    let customerId = null;
+    let customerEmail;
+    if (isConfigured) {
+      const { rows } = await pool.query(
+        "SELECT stripe_customer_id, email FROM users WHERE id = $1",
+        [req.userId],
+      );
+      customerId = rows[0]?.stripe_customer_id || null;
+      customerEmail = rows[0]?.email;
+    }
+
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
+      mode: plan.mode,
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: process.env.CHECKOUT_SUCCESS_URL || "https://example.com/checkout-success",
       cancel_url: process.env.CHECKOUT_CANCEL_URL || "https://example.com/checkout-cancel",
       client_reference_id: String(req.userId),
+      ...(customerId ? { customer: customerId } : customerEmail ? { customer_email: customerEmail } : {}),
+      // Echoed back on every future event for this subscription, so we can
+      // always map it to our own user even if the customer id changes.
+      ...(plan.mode === "subscription"
+        ? { subscription_data: { metadata: { userId: String(req.userId), plan: planKey } } }
+        : { payment_intent_data: { metadata: { userId: String(req.userId), plan: planKey } } }),
+      metadata: { userId: String(req.userId), plan: planKey },
     });
     res.json({ url: session.url });
   } catch (err) {
@@ -57,25 +95,95 @@ async function webhookHandler(req, res) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const userId = session.client_reference_id;
-    // "completed" fires as soon as checkout finishes, but for delayed payment
-    // methods (e.g. bank transfers) the money may not have arrived yet — only
-    // grant Pro once Stripe confirms payment_status is actually "paid".
-    // Delayed methods instead settle later via checkout.session.async_payment_succeeded,
-    // which isn't handled here yet (fine for now since card-only checkout always
-    // reports "paid" synchronously, but worth adding if other payment methods are enabled).
-    if (userId && isConfigured && session.payment_status === "paid") {
-      try {
-        await pool.query("UPDATE users SET is_pro = TRUE WHERE id = $1", [userId]);
-      } catch (err) {
-        console.error("failed to mark user as pro after payment:", err);
-      }
-    }
+  try {
+    await handleEvent(event);
+  } catch (err) {
+    // Returning 200 anyway: Stripe retries non-2xx, and a bug in our handler
+    // would otherwise have Stripe replay the same event indefinitely. The
+    // error is logged so it can be replayed deliberately from the dashboard.
+    console.error(`failed to handle Stripe event ${event.type}:`, err);
   }
 
   res.json({ received: true });
+}
+
+async function grantPro(userId, { customerId, plan }) {
+  await pool.query(
+    `UPDATE users
+        SET is_pro = TRUE,
+            plan = COALESCE($2, plan),
+            stripe_customer_id = COALESCE($3, stripe_customer_id)
+      WHERE id = $1`,
+    [userId, plan || null, customerId || null],
+  );
+}
+
+/// Subscription events don't carry our user id directly, so resolve it from
+/// whatever the event does give us: the metadata we attached at checkout
+/// first, then the Stripe customer id we stored.
+async function resolveUserId(subscription) {
+  const fromMetadata = subscription?.metadata?.userId;
+  if (fromMetadata) return fromMetadata;
+
+  const customerId = typeof subscription?.customer === "string" ? subscription.customer : null;
+  if (!customerId) return null;
+
+  const { rows } = await pool.query("SELECT id FROM users WHERE stripe_customer_id = $1", [customerId]);
+  return rows[0]?.id ?? null;
+}
+
+async function handleEvent(event) {
+  if (!isConfigured) return;
+
+  switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object;
+      const userId = session.client_reference_id || session.metadata?.userId;
+      if (!userId) break;
+
+      // For one-off payments "completed" can fire before the money actually
+      // arrives (bank transfers), so require payment_status = paid. For
+      // subscriptions Stripe reports "no_payment_required" on trials and the
+      // subscription's own lifecycle events are the source of truth.
+      const paid = session.payment_status === "paid" || session.mode === "subscription";
+      if (!paid) break;
+
+      const customerId = typeof session.customer === "string" ? session.customer : null;
+      await grantPro(userId, { customerId, plan: session.metadata?.plan });
+      break;
+    }
+
+    // Renewals: keep Pro alive, and recover the case where a customer was
+    // reinstated after a failed payment.
+    case "customer.subscription.created":
+    case "customer.subscription.updated": {
+      const subscription = event.data.object;
+      const userId = await resolveUserId(subscription);
+      if (!userId) break;
+
+      const active = ["active", "trialing", "past_due"].includes(subscription.status);
+      const customerId = typeof subscription.customer === "string" ? subscription.customer : null;
+      if (active) {
+        await grantPro(userId, { customerId, plan: subscription.metadata?.plan });
+      } else {
+        await pool.query("UPDATE users SET is_pro = FALSE WHERE id = $1", [userId]);
+      }
+      break;
+    }
+
+    // The one that actually matters for revenue integrity: without it, a user
+    // who cancels (or whose card ultimately fails) would keep Pro forever.
+    case "customer.subscription.deleted": {
+      const subscription = event.data.object;
+      const userId = await resolveUserId(subscription);
+      if (!userId) break;
+      await pool.query("UPDATE users SET is_pro = FALSE WHERE id = $1", [userId]);
+      break;
+    }
+
+    default:
+      break;
+  }
 }
 
 module.exports = { router, webhookHandler };

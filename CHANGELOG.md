@@ -5,6 +5,40 @@ update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just
 the git log.
 
+## 2026-08-03
+
+- **Added**: a **Plans & pricing** screen, and with it Pro moves from a
+  one-time purchase to a subscription: **€9.99/month** or **€59/year**. The
+  yearly plan is the promotion — it works out to €4.92/month, a real 51% off,
+  and the badge is computed from the two prices rather than hardcoded, so it
+  can't drift away from what's actually charged.
+- **Backend**: checkout now takes a `plan` and opens a Stripe *subscription*
+  (the legacy one-time price still works for anyone who already bought it).
+  Needs two new recurring prices: `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`.
+  - The webhook now also handles `customer.subscription.deleted` and
+    `.updated`. **Without this a user who cancels keeps Pro forever** — the
+    single most expensive bug a subscription can have. Users are matched back
+    from Stripe events via metadata stamped at checkout, with the stored
+    `stripe_customer_id` as a fallback (new column, uniquely indexed).
+  - Webhook handler failures are logged and acknowledged rather than
+    returning an error, so a bug on our side can't make Stripe replay the
+    same event forever.
+- **Fixed (false pricing claim)**: the paywall still promised "one-time
+  payment, no subscription" in all five languages — untrue the moment Pro
+  became a subscription. Rewritten, and its button now opens the pricing
+  screen so people choose a plan instead of being sent straight into a
+  checkout for one they never picked.
+- **Fixed**: picking **Monthly** displayed "one charge of €59 per year" under
+  the €9.99 price — not what that customer is charged. Each option now
+  carries its own truthful line: yearly shows the per-month equivalent plus
+  the real annual charge, monthly shows what the yearly plan would cost.
+- **Fixed**: the Free card told Pro subscribers "you're on the Free plan",
+  which reads like a failed payment.
+- **Added**: **search across every tweak** in the header. With 25 tweaks,
+  finding one meant knowing its category first; search ignores the selected
+  section and looks everywhere (Esc clears it).
+- **Fixed**: Italian typo in the pricing subtitle ("in piu'" → "in più").
+
 ## 2026-08-02
 
 - **Changed (marketing/reel-generator)**: pool di hook ampliati da 4-5 a

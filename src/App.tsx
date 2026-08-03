@@ -19,7 +19,7 @@ type AuthState =
 type Category = "performance" | "privacy" | "ui" | "manutenzione" | "gaming";
 
 /** Navigable sections: the tweak categories plus the two standalone screens. */
-type Section = Category | "scan" | "startup";
+type Section = Category | "scan" | "startup" | "pricing";
 
 type TweakInfo = {
   id: string;
@@ -1697,6 +1697,200 @@ function StartupManager({
   );
 }
 
+// Pro pricing, in EUR. Kept here so the displayed price, the "you save X%"
+// badge and the per-month equivalent are all derived from the same two
+// numbers — a hardcoded badge that drifts from the real price is the kind of
+// thing that turns into a refund request.
+const PRICE_MONTHLY = 9.99;
+const PRICE_ANNUAL = 59;
+
+const savingsPercent = Math.round((1 - PRICE_ANNUAL / (PRICE_MONTHLY * 12)) * 100);
+
+function money(amount: number, lang: Lang): string {
+  return new Intl.NumberFormat(lang, {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+function CheckIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} style={style}>
+      <path d="m5 12.5 4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PricingPanel({
+  s,
+  lang,
+  isPro,
+  onChoosePro,
+}: {
+  s: Strings;
+  lang: Lang;
+  isPro: boolean;
+  onChoosePro: (plan: "monthly" | "annual") => void;
+}) {
+  const [annual, setAnnual] = useState(true);
+
+  const price = annual ? PRICE_ANNUAL : PRICE_MONTHLY;
+  const perMonthEquivalent = PRICE_ANNUAL / 12;
+
+  return (
+    <div className="animate-card">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-50">{s.pricing.title}</h2>
+        <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">{s.pricing.subtitle}</p>
+      </div>
+
+      <div className="mt-6 flex justify-center">
+        <div className="relative inline-flex items-center gap-1 rounded-full bg-white/5 p-1 ring-1 ring-white/10">
+          <button
+            onClick={() => setAnnual(false)}
+            className={`relative z-10 rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
+              annual ? "text-slate-400 hover:text-slate-200" : "text-white"
+            }`}
+            style={!annual ? { backgroundColor: "var(--app-accent)" } : undefined}
+          >
+            {s.pricing.monthly}
+          </button>
+          <button
+            onClick={() => setAnnual(true)}
+            className={`relative z-10 flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
+              annual ? "text-white" : "text-slate-400 hover:text-slate-200"
+            }`}
+            style={annual ? { backgroundColor: "var(--app-accent)" } : undefined}
+          >
+            {s.pricing.annual}
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-bold transition-colors ${
+                annual ? "bg-white/25 text-white" : "bg-emerald-400/20 text-emerald-300"
+              }`}
+            >
+              {format(s.pricing.saveBadge, { percent: savingsPercent })}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-7 grid items-start gap-4 md:grid-cols-2">
+        {/* Free */}
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-bold text-slate-100">{s.pricing.freeName}</h3>
+            {!isPro && (
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-slate-300">
+                {s.pricing.freeCurrent}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-sm text-slate-400">{s.pricing.freeTagline}</p>
+
+          <p className="mt-5 text-4xl font-black tracking-tight text-slate-100">{money(0, lang)}</p>
+          <p className="mt-1 text-xs text-slate-500">{s.pricing.freePriceNote}</p>
+
+          <ul className="mt-6 flex flex-col gap-2.5">
+            {s.pricing.freeFeatures.map((feature) => (
+              <li key={feature} className="flex items-start gap-2.5 text-sm text-slate-300">
+                <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+
+          {/* Only claim they're on Free when they actually are — a Pro user
+              seeing "you're on the Free plan" would reasonably think their
+              payment didn't go through. */}
+          {!isPro && (
+            <p className="mt-6 rounded-xl bg-white/5 py-2.5 text-center text-sm font-medium text-slate-400">
+              {s.pricing.freeCta}
+            </p>
+          )}
+        </div>
+
+        {/* Pro */}
+        <div className="relative rounded-2xl p-[1.5px]">
+          <div className="absolute inset-0 rounded-2xl bg-[linear-gradient(135deg,var(--app-accent),var(--app-accent2),var(--app-accent))] opacity-80" />
+          <div className="relative rounded-[15px] bg-[var(--app-bg-b)] p-6">
+            <span
+              className="absolute -top-3 right-6 rounded-full px-3 py-1 text-[10px] font-black tracking-wide text-slate-900 shadow-lg shadow-black/40"
+              style={{ backgroundColor: "var(--app-accent2)" }}
+            >
+              {s.pricing.mostChosen}
+            </span>
+
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-100">{s.pricing.proName}</h3>
+              {isPro && (
+                <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                  {s.pricing.proCurrent}
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-sm text-slate-400">{s.pricing.proTagline}</p>
+
+            <div className="mt-5 flex items-end gap-1.5">
+              <span className="text-4xl font-black tracking-tight text-slate-50">{money(price, lang)}</span>
+              <span className="pb-1.5 text-sm font-medium text-slate-400">
+                {annual ? s.pricing.perYear : s.pricing.perMonth}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              {annual
+                ? format(s.pricing.annualDetail, {
+                    monthly: money(perMonthEquivalent, lang),
+                    yearly: money(PRICE_ANNUAL, lang),
+                  })
+                : format(s.pricing.annualNudge, { price: money(perMonthEquivalent, lang) })}
+            </p>
+
+            <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              {s.pricing.everythingInFree}
+            </p>
+            <ul className="mt-3 flex flex-col gap-2.5">
+              {s.pricing.proFeatures.map((feature) => (
+                <li key={feature} className="flex items-start gap-2.5 text-sm text-slate-200">
+                  <CheckIcon className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "var(--app-accent2)" }} />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            <button
+              onClick={() => onChoosePro(annual ? "annual" : "monthly")}
+              disabled={isPro}
+              className="mt-6 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-3 text-sm font-bold text-slate-900 transition-transform hover:scale-[1.02] disabled:cursor-default disabled:opacity-60 disabled:hover:scale-100"
+            >
+              {isPro ? s.pricing.proCurrent : s.pricing.proCta}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p className="mx-auto mt-6 max-w-lg text-center text-xs leading-relaxed text-slate-500">
+        {s.pricing.reassurance}
+      </p>
+    </div>
+  );
+}
+
+function SparkIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M12 3.5 13.8 9l5.7 1.9-5.7 1.9L12 18.3l-1.8-5.5L4.5 11l5.7-1.9L12 3.5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M18.5 4v3M20 5.5h-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function RocketIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
@@ -1844,7 +2038,7 @@ function App() {
   // inside the app's webview). Throws with a clear reason when the backend
   // isn't configured or the user isn't logged in yet, instead of pretending
   // to charge anything.
-  async function startCheckout() {
+  async function startCheckout(plan: "monthly" | "annual" = "annual") {
     if (!API_BASE_URL) {
       throw new Error(s.auth.backendNotConfigured);
     }
@@ -1854,7 +2048,8 @@ function App() {
     }
     const res = await fetch(`${API_BASE_URL}/api/checkout`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ plan }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}) as { error?: string });
@@ -1872,11 +2067,13 @@ function App() {
     { key: "startup", label: s.tabs.startup, icon: <RocketIcon className="h-[18px] w-[18px]" /> },
     { key: "ui", label: s.tabs.ui, icon: CATEGORY_STYLE.ui.icon },
     { key: "manutenzione", label: s.tabs.manutenzione, icon: CATEGORY_STYLE.manutenzione.icon },
+    { key: "pricing", label: s.tabs.pricing, icon: <SparkIcon className="h-[18px] w-[18px]" /> },
   ];
 
   const [tweaks, setTweaks] = useState<TweakInfo[]>([]);
   const [cleanupTargets, setCleanupTargets] = useState<CleanupInfo[]>([]);
   const [filter, setFilter] = useState<Section>("scan");
+  const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [paywallFeature, setPaywallFeature] = useState<string | null>(null);
@@ -1947,19 +2144,37 @@ function App() {
     }
   }
 
-  const visibleTweaks = useMemo(
-    () =>
-      filter === "scan" || filter === "startup"
-        ? []
-        : tweaks.filter((t) => t.category === filter && t.id !== "turbo_boost"),
-    [tweaks, filter],
-  );
+  const searching = query.trim().length > 0;
 
-  const showCleanup = filter === "manutenzione";
-  const showPrivacyExtras = filter === "privacy";
-  const showGamingExtras = filter === "gaming";
-  const showScan = filter === "scan";
-  const showStartup = filter === "startup";
+  const visibleTweaks = useMemo(() => {
+    // Turbo Boost is deliberately excluded: it has its own dedicated card on
+    // the Gaming screen, so listing it again would show two controls for it.
+    const base = tweaks.filter((t) => t.id !== "turbo_boost");
+
+    // While searching, ignore the selected section and look everywhere —
+    // otherwise the user has to already know which category a tweak lives in,
+    // which is exactly what the search is there to avoid.
+    if (searching) {
+      const needle = query.trim().toLowerCase();
+      return base.filter((t) => {
+        const text = textFor(s.tweaks, t.id, t.name, t.description);
+        return (
+          text.name.toLowerCase().includes(needle) || text.description.toLowerCase().includes(needle)
+        );
+      });
+    }
+
+    return filter === "scan" || filter === "startup" || filter === "pricing"
+      ? []
+      : base.filter((t) => t.category === filter);
+  }, [tweaks, filter, query, searching, s]);
+
+  const showCleanup = filter === "manutenzione" && !searching;
+  const showPrivacyExtras = filter === "privacy" && !searching;
+  const showGamingExtras = filter === "gaming" && !searching;
+  const showScan = filter === "scan" && !searching;
+  const showStartup = filter === "startup" && !searching;
+  const showPricing = filter === "pricing" && !searching;
   const turboBoostApplied = tweaks.find((t) => t.id === "turbo_boost")?.applied ?? false;
   const appliedCount = tweaks.filter((t) => t.applied).length;
 
@@ -2036,18 +2251,42 @@ function App() {
       </aside>
 
       <div className="min-w-0 flex-1 px-8 py-8">
-        <div className="mx-auto max-w-3xl">
+        {/* The pricing comparison needs the extra width to sit side by side;
+            every other screen reads better kept narrow. */}
+        <div className={`mx-auto ${showPricing ? "max-w-5xl" : "max-w-3xl"}`}>
           <header className="mb-6 flex items-start justify-between gap-4">
+            {/* The pricing screen leads with its own centred hero title, so
+                the section heading would just be a duplicate above it. */}
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold tracking-tight">{currentLabel}</h1>
+              {!showPricing && <h1 className="text-2xl font-bold tracking-tight">{currentLabel}</h1>}
               {/* The tweak tally is meaningless on the startup screen, which
                   isn't made of tweaks and shows its own count instead. */}
-              {!showStartup && (
+              {!showStartup && !showPricing && (
                 <p className="mt-1 text-sm text-slate-400">
                   {format(s.appliedCount, { applied: appliedCount, total: tweaks.length })}
                 </p>
               )}
             </div>
+            <div className="relative ml-auto w-56 shrink-0">
+              <MagnifierIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Escape" && setQuery("")}
+                placeholder={s.search.placeholder}
+                className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-8 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-white/25 focus:bg-white/[0.07]"
+              />
+              {searching && (
+                <button
+                  onClick={() => setQuery("")}
+                  aria-label={s.search.clear}
+                  className="absolute right-2 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full text-slate-500 hover:bg-white/10 hover:text-slate-200"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
             <AccountMenu
               s={s}
               lang={lang}
@@ -2066,6 +2305,21 @@ function App() {
           {showScan && <SystemMonitor s={s} />}
 
           {showStartup && <StartupManager s={s} pushToast={pushToast} />}
+
+          {showPricing && (
+            <PricingPanel
+              s={s}
+              lang={lang}
+              isPro={isProUnlocked}
+              onChoosePro={async (plan) => {
+                try {
+                  await startCheckout(plan);
+                } catch (e) {
+                  pushToast("error", String(e instanceof Error ? e.message : e));
+                }
+              }}
+            />
+          )}
 
         {showScan && (
           <ScanPanel
@@ -2163,11 +2417,16 @@ function App() {
             />
           )}
 
-          {visibleTweaks.length === 0 && !showCleanup && !showPrivacyExtras && !showScan && !showStartup && (
-            <li className="animate-card rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-slate-500">
-              {s.emptyCategory}
-            </li>
-          )}
+          {visibleTweaks.length === 0 &&
+            !showCleanup &&
+            !showPrivacyExtras &&
+            !showScan &&
+            !showStartup &&
+            !showPricing && (
+              <li className="animate-card rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-slate-500">
+                {searching ? format(s.search.noResults, { query: query.trim() }) : s.emptyCategory}
+              </li>
+            )}
         </ul>
 
           <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-relaxed text-slate-600">
@@ -2204,13 +2463,11 @@ function App() {
           s={s}
           featureName={paywallFeature}
           onClose={() => setPaywallFeature(null)}
-          onNotify={async () => {
+          // Send them to the plans instead of straight to a checkout for a
+          // plan they never picked — they should see monthly vs yearly first.
+          onNotify={() => {
             setPaywallFeature(null);
-            try {
-              await startCheckout();
-            } catch (e) {
-              pushToast("error", String(e instanceof Error ? e.message : e));
-            }
+            setFilter("pricing");
           }}
         />
       )}

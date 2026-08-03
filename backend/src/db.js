@@ -44,6 +44,14 @@ async function initSchema() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name TEXT;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name TEXT;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth DATE;`);
+  // Subscription bookkeeping. The customer id is what Stripe sends us on
+  // cancellation/payment-failure events — without it we could grant Pro but
+  // never take it back, since those events don't carry our own user id.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT;`);
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS users_stripe_customer_id_idx ON users (stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;`,
+  );
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS action_tokens (

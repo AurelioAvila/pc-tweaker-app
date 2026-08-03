@@ -7,6 +7,21 @@ the git log.
 
 ## 2026-08-03
 
+- **Fixed (marketing/youtube-upload)**: un titolo con apostrofo bruciato
+  nella card del long-form (via `bakeThumbnailCard`, aggiunta lo stesso
+  giorno per aggirare il blocco miniature senza telefono verificato)
+  usciva come "HERES WHAT HAPPENED" invece di "Here's What Happened" -
+  l'apostrofo veniva eliminato dal testo prima di passarlo al filtro
+  `drawtext`. Un primo tentativo di escaping (`'\''`, la sintassi standard
+  per un apice letterale dentro un valore tra apici singoli nei filtri
+  ffmpeg) e' stato scartato dopo averlo verificato su un render reale:
+  rompeva il parsing dell'intera filterchain, facendo comparire i
+  parametri del `drawtext` successivo come testo letterale sullo schermo -
+  peggio del difetto originale. Fix robusto: il testo va ora su un file
+  temporaneo e il filtro usa `textfile=` invece di `text=`, che legge il
+  contenuto cosi' com'e' senza fare parsing di escape - un apostrofo nel
+  file e' solo un carattere, non sintassi. Riverificato su un render
+  reale: "HERE'S WHAT HAPPENED" corretto, nessuna corruzione del filtro.
 - **Added**: a **Plans & pricing** screen, and with it Pro moves from a
   one-time purchase to a subscription: **€9.99/month** or **€59/year**. The
   yearly plan is the promotion — it works out to €4.92/month, a real 51% off,

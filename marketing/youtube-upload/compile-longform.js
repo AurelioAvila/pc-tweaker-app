@@ -101,9 +101,24 @@ const THUMB_FONT = path
  * sulle zone chiare - ed e' esattamente cio' che rende inutili le miniature
  * automatiche di YouTube.
  */
-// ':' e '\' hanno significato nella sintassi dei filtri ffmpeg.
-function escFfmpegText(s) {
-  return s.replace(/\\/g, "\\\\").replace(/:/g, "\\:").replace(/'/g, "");
+// ':' e '\' hanno significato nella sintassi dei filtri ffmpeg. L'apice
+// veniva prima eliminato del tutto (verificato bruciando davvero un
+// titolo con apostrofo: "Here's What Happened" usciva come "HERES WHAT
+// HAPPENED", un errore grammaticale permanente nel video, non correggibile
+// dopo la pubblicazione). All'interno di un valore tra apici singoli, la
+// I due punti hanno significato nella sintassi dei filtri ffmpeg, quindi un
+// PERCORSO va comunque escapato (vedi THUMB_FONT sopra). Il TESTO invece non
+// passa piu' per l'opzione inline text='...': un apostrofo dentro un valore
+// tra apici singoli non ha un escape affidabile nella sintassi dei filtri
+// ffmpeg. Il tentativo con 'It'\''s' verificato live (2026-08-03) ha rotto
+// il parsing dell'intera filterchain, facendo comparire i parametri del
+// drawtext successivo come testo letterale sullo schermo - peggio del difetto
+// originale (che comunque toglieva l'apostrofo, "HERES" invece di "Here's").
+// Fix robusto: si scrive il testo su un file e si usa l'opzione textfile=,
+// che legge il contenuto cosi' com'e' senza fare parsing di escape sul
+// contenuto - un apostrofo nel file e' solo un carattere, non sintassi.
+function escFfmpegPath(p) {
+  return p.replace(/\\/g, "/").replace(/:/g, "\\:");
 }
 
 /**
@@ -116,7 +131,7 @@ function escFfmpegText(s) {
  * 76px letto bene a 1280px di larghezza sarebbe minuscolo su un frame molto
  * piu' largo o sproporzionato su uno piu' stretto.
  */
-function drawTextFilter(title, width, height, accentColor) {
+function drawTextFilter(title, width, height, accentColor, tmpDir) {
   const fontSize = Math.round(width * 0.059);
   const charsPerLine = Math.max(10, Math.round(width / (fontSize * 0.6)));
 
@@ -137,10 +152,12 @@ function drawTextFilter(title, width, height, accentColor) {
   const lineH = Math.round(fontSize * 1.26);
   const startY = Math.round((height - lines.length * lineH) / 2);
   const drawtexts = lines
-    .map((line, i) =>
-      `drawtext=fontfile='${THUMB_FONT}':text='${escFfmpegText(line)}':fontcolor=white:fontsize=${fontSize}:` +
-      `borderw=${Math.max(4, Math.round(fontSize * 0.09))}:bordercolor=black:x=(w-text_w)/2:y=${startY + i * lineH}`
-    )
+    .map((line, i) => {
+      const txtPath = path.join(tmpDir, `_dt_line_${i}.txt`);
+      fs.writeFileSync(txtPath, line, "utf8");
+      return `drawtext=fontfile='${THUMB_FONT}':textfile='${escFfmpegPath(txtPath)}':fontcolor=white:fontsize=${fontSize}:` +
+        `borderw=${Math.max(4, Math.round(fontSize * 0.09))}:bordercolor=black:x=(w-text_w)/2:y=${startY + i * lineH}`;
+    })
     .join(",");
 
   const barH = Math.max(8, Math.round(height * 0.011));
@@ -150,14 +167,25 @@ function drawTextFilter(title, width, height, accentColor) {
   );
 }
 
+function cleanupDrawtextFiles(tmpDir) {
+  for (let i = 0; i < 4; i++) {
+    const p = path.join(tmpDir, `_dt_line_${i}.txt`);
+    if (fs.existsSync(p)) fs.unlinkSync(p);
+  }
+}
+
 function buildThumbnail(videoPath, title) {
   const out = path.join(OUTPUT_DIR, "thumbnail.jpg");
-  const filter = drawTextFilter(title, 1280, 720, "0x00B0FF");
-  execFileSync(
-    "ffmpeg",
-    ["-y", "-ss", "3", "-i", videoPath, "-frames:v", "1", "-vf", filter, "-q:v", "2", out],
-    { stdio: "pipe" }
-  );
+  const filter = drawTextFilter(title, 1280, 720, "0x00B0FF", OUTPUT_DIR);
+  try {
+    execFileSync(
+      "ffmpeg",
+      ["-y", "-ss", "3", "-i", videoPath, "-frames:v", "1", "-vf", filter, "-q:v", "2", out],
+      { stdio: "pipe" }
+    );
+  } finally {
+    cleanupDrawtextFiles(OUTPUT_DIR);
+  }
   return out;
 }
 
@@ -230,7 +258,7 @@ function bakeThumbnailCard(videoPath, title, cardSeconds = 4) {
   const tmpOut = videoPath + ".card.mp4";
   try {
     const { width, height } = probeDimensions(videoPath);
-    const filter = drawTextFilter(title, width, height, "0x00B0FF");
+    const filter = drawTextFilter(title, width, height, "0x00B0FF", OUTPUT_DIR);
     execFileSync(
       "ffmpeg",
       ["-y", "-ss", "1", "-i", videoPath, "-frames:v", "1", "-vf", filter, "-q:v", "2", cardPath],
@@ -266,10 +294,30 @@ function bakeThumbnailCard(videoPath, title, cardSeconds = 4) {
     return true;
   } catch (err) {
     console.warn(`[thumbnail] card iniziale saltata (${err.message}) - video invariato`);
-    if (fs.existsSync(tmpOut)) fs.unlinkSync(tmpOut);
+    try {
+      if (fs.existsSync(tmpOut)) fs.unlinkSync(tmpOut);
+    } catch (_) {
+      // pulizia del temporaneo, non deve mai mascherare l'errore vero sopra
+    }
     return false;
   } finally {
-    if (fs.existsSync(cardPath)) fs.unlinkSync(cardPath);
+    // Bug reale trovato 2026-08-03: su Windows il file appena scritto da
+    // ffmpeg puo' restare brevemente "in uso" (indicizzazione, antivirus),
+    // e unlinkSync lancia EBUSY - dentro un finally questo SOSTITUIVA il
+    // valore di ritorno del try con un'eccezione non gestita, facendo
+    // crashare l'intero script PRIMA di arrivare a uploadVideo(). Un file
+    // temporaneo da 50KB rimasto su disco non e' un problema; pubblicare
+    // il video lo e'.
+    try {
+      if (fs.existsSync(cardPath)) fs.unlinkSync(cardPath);
+    } catch (_) {
+      // vedi commento sopra
+    }
+    try {
+      cleanupDrawtextFiles(OUTPUT_DIR);
+    } catch (_) {
+      // vedi commento sopra
+    }
   }
 }
 
@@ -339,7 +387,14 @@ async function main() {
   // futuro), ma nel frattempo brucia lo stesso design nei primi secondi del
   // video stesso. Va DOPO buildThumbnail: quella estrae il proprio
   // fotogramma dal video ancora originale, prima che questa lo modifichi.
-  bakeThumbnailCard(outputPath, title);
+  try {
+    bakeThumbnailCard(outputPath, title);
+  } catch (err) {
+    // Difesa in profondita': bakeThumbnailCard non dovrebbe piu' lanciare
+    // (vedi i suoi try/catch interni), ma un problema sulla copertina non
+    // deve MAI bloccare la pubblicazione di un video gia' renderizzato.
+    console.warn(`[thumbnail] card iniziale saltata (${err.message}) - si prosegue senza`);
+  }
 
   console.log("Upload in corso...");
   const result = await uploadVideo({ videoPath: outputPath, title, description, tags, privacyStatus: "public", thumbnailPath });

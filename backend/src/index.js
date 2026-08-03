@@ -38,12 +38,51 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true, databaseConfigured: isConfigured });
 });
 
+// Resolves the latest GitHub release's Windows installer (.exe) so the
+// landing page can offer a single one-click download button instead of
+// sending people to the GitHub Releases page to pick between the .exe and
+// the .msi themselves. Cached in memory for a few minutes: GitHub's
+// unauthenticated API is rate-limited to 60 req/hour, which a few concurrent
+// visitors could otherwise burn through in minutes.
+const GITHUB_REPO = "AurelioAvila/pc-tweaker-app";
+const RELEASE_CACHE_TTL_MS = 10 * 60 * 1000;
+let releaseCache = { checkedAt: 0, downloadUrl: null, version: null };
+
+async function latestWindowsInstaller() {
+  if (Date.now() - releaseCache.checkedAt < RELEASE_CACHE_TTL_MS) {
+    return releaseCache;
+  }
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`, {
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "pc-tweaker-backend" },
+    });
+    if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+    const release = await res.json();
+    const asset = (release.assets || []).find((a) => a.name.endsWith("-setup.exe"));
+    releaseCache = {
+      checkedAt: Date.now(),
+      downloadUrl: asset?.browser_download_url || null,
+      version: release.tag_name || null,
+    };
+  } catch (err) {
+    console.error("failed to resolve latest release:", err.message);
+    // Keep serving the previous good value (if any) rather than clearing it,
+    // so a transient GitHub API hiccup doesn't take the download button down.
+    releaseCache = { ...releaseCache, checkedAt: Date.now() };
+  }
+  return releaseCache;
+}
+
 // Landing page for the TikTok app review's "Website URL" field - there was
 // no route at all here before, so hitting the root just 404'd ("Cannot GET
 // /"), which is what got the app flagged with "Website error". This backend
 // is API-only (Railway), there's no separate marketing site, so serve a
 // minimal real page describing the app instead of leaving the root empty.
-app.get("/", (_req, res) => {
+app.get("/", async (_req, res) => {
+  const { downloadUrl, version } = await latestWindowsInstaller();
+  const releasesUrl = `https://github.com/${GITHUB_REPO}/releases/latest`;
+  const primaryHref = downloadUrl || releasesUrl;
+
   res.type("html").send(`<!DOCTYPE html>
 <html>
 <head>
@@ -58,7 +97,12 @@ privacy, gaming, and maintenance — with automatic rollback: every change
 saves the original value before it's applied, so you can always revert it
 with one click.</p>
 <p>
-<a href="https://github.com/AurelioAvila/pc-tweaker-app#readme">Download &amp; documentation</a><br>
+<a href="${primaryHref}" style="display: inline-block; background: #4f46e5; color: #fff; text-decoration: none; font-weight: 600; padding: 14px 28px; border-radius: 8px;">&#8681; Download for Windows${version ? ` (${version})` : ""}</a>
+</p>
+<p style="color: #666; font-size: 14px;">Windows 10/11, 64-bit. Free, with an optional Pro upgrade inside the app.</p>
+<p>
+<a href="${releasesUrl}">All releases &amp; release notes</a><br>
+<a href="https://github.com/AurelioAvila/pc-tweaker-app#readme">Source &amp; documentation</a><br>
 <a href="/terms">Terms of Service</a><br>
 <a href="/privacy">Privacy Policy</a>
 </p>

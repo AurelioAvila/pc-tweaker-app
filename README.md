@@ -1,6 +1,6 @@
 # PC Tweaker
 
-[![WinGet](https://shields.io)](https://github.com) [![SourceForge](https://shields.io)](https://sourceforge.net)
+![WinGet](https://shields.io) ![SourceForge](https://shields.io)
 
 A desktop app for Windows (macOS planned) that applies system tweaks —
 performance, privacy, gaming, maintenance — with **automatic rollback**:

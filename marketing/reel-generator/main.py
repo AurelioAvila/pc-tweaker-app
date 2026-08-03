@@ -59,12 +59,19 @@ def make_one_reel(index: int, category: str = None):
     hashtags, footage_query = CATEGORY_META[category]
     hook = random.choice(CAPTION_HOOKS[category])
 
+    # Meno elementi per script (2026-08-03). I video uscivano a 26-30s reali,
+    # misurati: fuori dalla fascia che regge il 70% di completion rate che la
+    # ricerca 2026 indica come soglia oltre la quale TikTok apre davvero la
+    # distribuzione. Sotto i ~20s si sta nella fascia "buona/ottima" (60-89%),
+    # oltre i 30s si finisce in "media o sotto". Un fatto solo, raccontato
+    # bene, batte due fatti compressi: la stessa ricerca dice che il video
+    # vince sul completion, non sulla lunghezza assoluta.
     if category == LISTTEASE_CATEGORY:
-        n = random.choice([3, 4])
+        n = 3
         topic, items = get_listtease_content(n=n)
         script, item_word_starts, spoken_hook = build_listtease_script_template(topic, items)
     else:
-        topic, items = get_random_content_multi(category, n=2)
+        topic, items = get_random_content_multi(category, n=1)
         script, item_word_starts, spoken_hook = build_script_template(items, category)
 
     print(f"[{index}] ({category}) Script: {script}")

@@ -28,7 +28,16 @@ import random
 # smontare) invece di variazioni della stessa formula: quella sarebbe
 # varieta' solo apparente.
 HOOKS = {
+    # Nota sui pattern di hook (aggiornato 2026-08-03): i test 2026 su 30 hook
+    # virali danno solo 4 famiglie sopra quota 70 - Identity Call, Contrarian
+    # Strike, Open Loop, Confession - con Identity Call primo assoluto (85 di
+    # media) perche' nomina in faccia il pubblico a cui parla, mentre le
+    # aperture generiche scendono sotto 30. Qui c'erano gia' Confession,
+    # Contrarian e Open Loop; mancava del tutto Identity Call, aggiunto ora
+    # in ogni categoria.
     "mistakewarning": [
+        "If you game on a laptop, Windows is working against you right now.",
+        "Anyone with a prebuilt PC: check this before your next session.",
         "I checked every default Windows setting for a week, this one shocked me.",
         "The setting that only shows up as a problem when it's too late.",
         "Windows turned this on without asking you.",
@@ -41,6 +50,8 @@ HOOKS = {
         "Fresh install, brand new laptop, and this was already switched on.",
     ],
     "contrarian": [
+        "If you've ever downloaded a 'PC booster', this one's for you.",
+        "Windows 11 users: the tool you're about to install matters more than you think.",
         "I stress-tested three PC optimizers so you don't have to.",
         "Don't install a PC optimizer before hearing this.",
         "Most optimizer tools can't do this one thing.",
@@ -53,6 +64,8 @@ HOOKS = {
         "Registry cleaners are still being sold in 2026, and here's why that matters.",
     ],
     "beforeafter": [
+        "If your PC takes forever to boot, this is for you.",
+        "Anyone still gaming on a five-year-old machine: watch this part.",
         "POV: your PC finally runs like it should.",
         "Same PC, one setting flipped, here's the difference.",
         "Here's what one click actually changes.",

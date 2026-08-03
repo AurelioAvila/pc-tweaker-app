@@ -39,52 +39,78 @@ def pick_category() -> str:
 
 
 # category -> (hashtags, Pexels background search queries)
+# Each category's query pool is deliberately distinct (not just reshuffled
+# from the same 4 phrases) - reusing "gaming setup" / "computer screen close
+# up" etc. across every category was collapsing everything into the same
+# handful of Pexels results, so videos ended up with near-identical covers
+# (user feedback 2026-08-02: "gia' ne ho viste alcune simili").
 CATEGORY_META = {
     "mistakewarning": (
         ["pcgaming", "windowstips", "pctweaks", "gamingsetup", "fps"],
-        ["gaming setup", "computer screen close up", "keyboard typing gaming", "pc monitor night"],
+        ["gaming setup rgb", "esports player headset", "pc monitor night", "gaming keyboard closeup", "controller hands gaming"],
     ),
     "contrarian": (
         ["windowstools", "pcoptimization", "cybersecurity", "windows", "techtok"],
-        ["coding screen", "computer keyboard", "server room", "tech workspace"],
+        ["coding screen", "server room", "hacker typing", "data center lights", "software developer office"],
     ),
     "beforeafter": (
         ["pcoptimization", "windowstips", "gaming", "techtips", "pcbuild"],
-        ["gaming setup", "computer screen close up", "pc monitor night", "desk setup tech"],
+        ["pc build custom", "computer parts closeup", "gaming pc case lights", "hardware upgrade desk"],
     ),
     LISTTEASE_CATEGORY: (
         ["windows11", "pcoptimization", "techtips", "gaming", "windowstips"],
-        ["gaming setup", "computer screen close up", "keyboard typing gaming", "desk setup tech"],
+        ["laptop desk workspace", "typing laptop home", "tech desk setup", "windows laptop screen"],
     ),
 }
 
 # Caption "hook" line, first line of the IG/TikTok caption (research in
 # video-scripts.md: fear/mistake-warning hooks vastly outperform generic
 # benefit hooks in this niche).
+# Pool ampliato il 2026-08-03: erano 4 caption per categoria, 16 in tutto.
+# Un audit su 300 generazioni ha mostrato appena 16 caption distinte, cioe'
+# a 3 video/giorno il testo ricominciava a ripetersi identico ogni 5 giorni -
+# un segnale di contenuto duplicato che non conviene mai dare, tanto piu' su
+# un account nuovo. Raddoppiate a 8 per categoria (32 totali, ~11 giorni).
 CAPTION_HOOKS = {
     "mistakewarning": [
         "Windows turned this on without asking you \U0001F6A8",
         "This default setting is working against you",
         "You didn't enable this, Windows did",
         "Check if this is still on right now",
+        "Your PC isn't slow, it's busy doing this",
+        "This has been running since day one",
+        "Fresh install and this was already on",
+        "The setting nobody thinks to check",
     ],
     "contrarian": [
         "Don't install a PC optimizer before this",
         "Most optimizer tools can't do this",
         "The difference between a safe tool and a risky one",
         "Read this before you download anything",
+        "If it can't undo the change, it's a gamble",
+        "I tested these so you can skip them",
+        "Registry cleaners are still being sold in 2026",
+        "The honest answer about 'speed boosters'",
     ],
     "beforeafter": [
         "One click, real difference",
         "This is what one preset actually changes",
         "Before vs after, same PC",
         "Nobody expects this much of a difference",
+        "Same hardware, completely different numbers",
+        "Nothing upgraded here, only switched off",
+        "The boot time alone made this worth it",
+        "No new parts, just the defaults corrected",
     ],
     LISTTEASE_CATEGORY: [
         "3 things Windows does against you \U0001F440",
         "Save this before your next gaming session",
         "Windows never tells you this",
         "Check all 3 of these right now",
+        "3 defaults worth turning off tonight",
+        "Save this list, you'll want it later",
+        "3 settings that only bite you later",
+        "Number 3 is the one people miss",
     ],
 }
 

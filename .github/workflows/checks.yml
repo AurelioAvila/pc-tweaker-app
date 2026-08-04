@@ -35,5 +35,12 @@ jobs:
       - name: Translations (keys + placeholders across all languages)
         run: npm run check:i18n
 
+      - name: Translation quality (nothing silently left in English)
+        run: npm run check:i18n-quality
+
       - name: Rust unit tests
         run: npm run check:rust
+
+      - name: Backend unit tests
+        working-directory: backend
+        run: npm ci && npm test

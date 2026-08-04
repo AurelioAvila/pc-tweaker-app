@@ -24,6 +24,20 @@ const transporter = useSmtp
     })
   : null;
 
+/**
+ * Thrown when the email provider refuses to send. `rejectedAddress` is true
+ * when the provider blamed the recipient (a 4xx: typo'd domain, blocked
+ * address, unverified test domain) rather than itself — the caller needs that
+ * distinction to tell the user "check your address" instead of "try later".
+ */
+class MailError extends Error {
+  constructor(message, { rejectedAddress }) {
+    super(message);
+    this.name = "MailError";
+    this.rejectedAddress = rejectedAddress;
+  }
+}
+
 async function sendViaResend({ to, subject, html }) {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -35,7 +49,14 @@ async function sendViaResend({ to, subject, html }) {
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`Resend API ${res.status}: ${body}`);
+    // Only blame the recipient for 4xx codes that are actually about the
+    // request we sent. 401/403 mean our credentials are wrong and 429 means we
+    // hit our own sending quota — telling the user to "check your address"
+    // in either case would send them chasing a problem that isn't theirs.
+    const OUR_FAULT = new Set([401, 403, 429]);
+    throw new MailError(`Resend API ${res.status}: ${body}`, {
+      rejectedAddress: res.status >= 400 && res.status < 500 && !OUR_FAULT.has(res.status),
+    });
   }
 }
 
@@ -58,4 +79,4 @@ async function sendMail({ to, subject, html }) {
   return { delivered: false };
 }
 
-module.exports = { sendMail, isConfigured };
+module.exports = { sendMail, isConfigured, MailError };

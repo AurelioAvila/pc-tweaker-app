@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openFolderDialog } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -518,32 +518,51 @@ function AuthSection({
   const [working, setWorking] = useState(false);
 
   if (auth.status === "authenticated") {
+    // "Logged in as name@example.com" as a bare line of text reads like a
+    // status message. An avatar + the address + a verification badge reads
+    // like an account — same information, and it's the first thing anyone
+    // sees when they open this menu.
+    const initial = auth.email.trim().charAt(0).toUpperCase() || "?";
     return (
-      <div className="border-b border-white/10 p-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{s.menu.account}</p>
-        <p className="mb-2 truncate text-sm text-slate-300">{format(s.auth.loggedInAs, { email: auth.email })}</p>
-        {!auth.emailVerified && (
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-amber-400/10 px-2 py-1.5">
-            <span className="text-xs text-amber-300">{s.auth.emailNotVerified}</span>
-            <button
-              onClick={() => {
-                setError(null);
-                setInfo(null);
-                onResendVerification()
-                  .then(() => setInfo(s.auth.verificationSent))
-                  .catch((err) => setError(String(err instanceof Error ? err.message : err)));
-              }}
-              className="shrink-0 text-xs font-semibold text-amber-300 underline hover:text-amber-200"
-            >
-              {s.auth.resendVerification}
-            </button>
+      <div className="border-b border-white/10 p-3">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[linear-gradient(to_bottom_right,var(--app-accent),var(--app-accent2))] text-sm font-black text-slate-900">
+            {initial}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-100" title={auth.email}>
+              {auth.email}
+            </p>
+            {auth.emailVerified ? (
+              <p className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-emerald-400">
+                <CheckIcon className="h-3 w-3" />
+                {s.auth.emailVerified}
+              </p>
+            ) : (
+              <p className="mt-0.5 text-[11px] font-medium text-amber-400">{s.auth.emailNotVerified}</p>
+            )}
           </div>
+        </div>
+
+        {!auth.emailVerified && (
+          <button
+            onClick={() => {
+              setError(null);
+              setInfo(null);
+              onResendVerification()
+                .then(() => setInfo(s.auth.verificationSent))
+                .catch((err) => setError(String(err instanceof Error ? err.message : err)));
+            }}
+            className="mt-2 w-full rounded-lg bg-amber-400/10 px-2 py-1.5 text-xs font-semibold text-amber-300 transition-colors hover:bg-amber-400/20"
+          >
+            {s.auth.resendVerification}
+          </button>
         )}
-        {info && <p className="mb-2 text-xs text-emerald-400">{info}</p>}
-        {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
+        {info && <p className="mt-2 text-xs text-emerald-400">{info}</p>}
+        {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
         <button
           onClick={onLogout}
-          className="w-full rounded-lg bg-white/10 px-3 py-1.5 text-sm font-medium text-slate-200 hover:bg-white/15"
+          className="mt-2 w-full rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-white/10 hover:text-slate-200"
         >
           {s.auth.logout}
         </button>
@@ -768,7 +787,11 @@ function AccountMenu({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="animate-card absolute right-0 z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+          {/* Sized to the content rather than to the widest possible email:
+              at w-72 with p-4 sections this panel covered most of the window
+              on a small screen. `max-h` + scroll keeps the 10 themes reachable
+              without the panel ever running past the bottom edge. */}
+          <div className="animate-card absolute right-0 z-50 mt-2 max-h-[calc(100vh-5rem)] w-60 overflow-y-auto overflow-x-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
             <AuthSection
               s={s}
               auth={auth}
@@ -778,34 +801,50 @@ function AccountMenu({
               onForgotPassword={onForgotPassword}
             />
 
-            <div className="border-b border-white/10 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{s.menu.plan}</p>
-              <div className="mt-1 flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-100">
-                  {isPro ? s.menu.planPro : s.menu.planFree}
-                </span>
-                {!isPro && (
-                  <button
-                    onClick={() => {
-                      setOpen(false);
-                      onUpgrade();
-                    }}
-                    className="rounded-lg bg-gradient-to-r from-amber-300 to-yellow-500 px-3 py-1 text-xs font-bold text-amber-950"
-                  >
-                    {s.menu.upgradeButton}
-                  </button>
-                )}
-              </div>
+            <div className="border-b border-white/10 p-3">
+              {isPro ? (
+                /* Same reasoning as the sidebar card: a Pro subscriber should
+                   see that they bought something, not the same grey line a
+                   Free account gets. */
+                <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 p-[1.5px]">
+                  <div className="relative flex items-center gap-2 rounded-[10px] bg-slate-950/90 px-3 py-2.5">
+                    <span className="pointer-events-none absolute -right-4 -top-4 h-14 w-14 rounded-full bg-amber-400/20 blur-2xl" />
+                    <CrownIcon className="relative h-4 w-4 shrink-0 text-amber-300" />
+                    <span className="relative text-sm font-black uppercase tracking-wider text-amber-300">
+                      {s.menu.planPro}
+                    </span>
+                    <span className="relative ml-auto text-[10px] font-semibold uppercase tracking-wide text-amber-500/70">
+                      {s.menu.plan}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{s.menu.plan}</p>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-slate-100">{s.menu.planFree}</span>
+                    <button
+                      onClick={() => {
+                        setOpen(false);
+                        onUpgrade();
+                      }}
+                      className="rounded-lg bg-gradient-to-r from-amber-300 to-yellow-500 px-3 py-1 text-xs font-bold text-amber-950 transition-transform hover:scale-105"
+                    >
+                      {s.menu.upgradeButton}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
-            <div className="border-b border-white/10 p-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{s.menu.language}</p>
-              <div className="flex flex-col gap-1">
+            <div className="border-b border-white/10 p-3">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{s.menu.language}</p>
+              <div className="flex flex-col gap-0.5">
                 {LANGUAGES.map((l) => (
                   <button
                     key={l.code}
                     onClick={() => setLang(l.code)}
-                    className={`rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
+                    className={`rounded-lg px-2.5 py-1 text-left text-[13px] transition-colors ${
                       lang === l.code ? "bg-indigo-500/20 text-indigo-300" : "text-slate-300 hover:bg-white/5"
                     }`}
                   >
@@ -815,30 +854,29 @@ function AccountMenu({
               </div>
             </div>
 
-            <div className="border-b border-white/10 p-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{s.menu.theme}</p>
-              <div className="grid grid-cols-2 gap-1">
+            <div className="border-b border-white/10 p-3">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{s.menu.theme}</p>
+              {/* Swatches only: with 10 themes the labels forced a two-column
+                  grid that dominated the panel. The colour is the choice. */}
+              <div className="flex flex-wrap gap-1.5">
                 {THEMES.map((t) => (
                   <button
                     key={t.code}
                     onClick={() => setTheme(t.code)}
-                    className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors ${
-                      theme === t.code ? "bg-white/10 text-slate-100" : "text-slate-300 hover:bg-white/5"
+                    title={t.label}
+                    aria-label={t.label}
+                    className={`h-6 w-6 shrink-0 rounded-full transition-transform hover:scale-110 ${
+                      theme === t.code ? "ring-2 ring-white/80" : "ring-1 ring-white/20"
                     }`}
-                  >
-                    <span
-                      className="h-4 w-4 shrink-0 rounded-full ring-1 ring-white/20"
-                      style={{ background: `linear-gradient(135deg, ${t.swatch[0]} 50%, ${t.swatch[1]} 50%)` }}
-                    />
-                    <span className="truncate">{t.label}</span>
-                  </button>
+                    style={{ background: `linear-gradient(135deg, ${t.swatch[0]} 50%, ${t.swatch[1]} 50%)` }}
+                  />
                 ))}
               </div>
             </div>
 
-            <div className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{s.menu.about}</p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-400">{s.menu.aboutBody}</p>
+            <div className="p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{s.menu.about}</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-slate-400">{s.menu.aboutBody}</p>
             </div>
           </div>
         </>
@@ -1651,10 +1689,58 @@ type RamCleanResult = {
 /** Auto-cleanup choices, in minutes. `0` means "off". */
 const RAM_AUTO_INTERVALS = [0, 10, 30, 60, 180, 360] as const;
 
+const RAM_AUTO_STORAGE_KEY = "pc-tweaker-ram-auto";
+
+/** Only honor a stored value we actually offer: a hand-edited or stale entry
+ *  must not become a rogue interval (or a 0ms one, which would spin the CPU). */
+function storedRamAutoMinutes(): number {
+  const stored = Number(localStorage.getItem(RAM_AUTO_STORAGE_KEY));
+  return (RAM_AUTO_INTERVALS as readonly number[]).includes(stored) ? stored : 0;
+}
+
 function ramIntervalLabel(minutes: number, s: Strings): string {
   if (minutes === 0) return s.ram.autoOff;
   const text = minutes < 60 ? `${minutes} min` : `${minutes / 60} h`;
   return format(s.ram.autoEvery, { interval: text });
+}
+
+/**
+ * Module-level so the manual button and the background scheduler share one
+ * guard. Two `EmptyWorkingSet` passes racing over the same process list would
+ * make the "freed" figure meaningless and double the work for nothing.
+ */
+let ramCleanInFlight = false;
+
+async function runRamClean(): Promise<RamCleanResult | null> {
+  if (ramCleanInFlight) return null;
+  ramCleanInFlight = true;
+  try {
+    return await invoke<RamCleanResult>("clean_ram");
+  } finally {
+    ramCleanInFlight = false;
+  }
+}
+
+/**
+ * Runs the scheduled RAM cleanup for as long as the app is open.
+ *
+ * This deliberately lives in `App`, not in `RamCleaner`: the card only renders
+ * on the Scan screen, so hosting the timer there meant switching to any other
+ * tab unmounted it and silently stopped the automatic cleanup the user had
+ * just switched on.
+ */
+function useScheduledRamClean(autoMinutes: number) {
+  useEffect(() => {
+    if (autoMinutes === 0) return;
+    const id = window.setInterval(() => {
+      // A scheduled pass is best-effort: failing quietly beats a toast every
+      // ten minutes, and the next tick will try again.
+      void runRamClean().catch(() => {});
+    }, autoMinutes * 60_000);
+    // Clearing on change/unmount is what guarantees exactly one timer is ever
+    // alive, no matter how often the user changes the interval.
+    return () => window.clearInterval(id);
+  }, [autoMinutes]);
 }
 
 /**
@@ -1664,75 +1750,40 @@ function ramIntervalLabel(minutes: number, s: Strings): string {
  */
 function RamCleaner({
   s,
+  autoMinutes,
+  onChangeAuto,
   pushToast,
 }: {
   s: Strings;
+  autoMinutes: number;
+  onChangeAuto: (minutes: number) => void;
   pushToast: (kind: Toast["kind"], message: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<RamCleanResult | null>(null);
-  const [autoMinutes, setAutoMinutes] = useState<number>(() => {
-    const stored = Number(localStorage.getItem("pc-tweaker-ram-auto"));
-    // Only honor a value we actually offer: a hand-edited or stale entry must
-    // not turn into a rogue interval (or a 0ms one, which would spin the CPU).
-    return (RAM_AUTO_INTERVALS as readonly number[]).includes(stored) ? stored : 0;
-  });
 
-  // The interval callback is created once per `autoMinutes` change and closes
-  // over whatever `busy` was at that moment, so it can't read the live value.
-  // A ref can, which is what stops a slow cleanup from being re-entered by the
-  // next tick and firing two overlapping passes.
-  const busyRef = useRef(false);
-
-  const runClean = useCallback(
-    async (silent: boolean) => {
-      if (busyRef.current) return;
-      busyRef.current = true;
-      setBusy(true);
-      try {
-        const result = await invoke<RamCleanResult>("clean_ram");
-        setLast(result);
-        if (!silent) {
-          pushToast(
-            "success",
-            result.freed_bytes > 0
-              ? format(s.ram.freed, { amount: formatBytes(result.freed_bytes) })
-              : s.ram.freedNothing,
-          );
-        }
-      } catch (e) {
-        // A scheduled run failing shouldn't spam toasts every 10 minutes.
-        if (!silent) pushToast("error", String(e));
-      } finally {
-        busyRef.current = false;
-        setBusy(false);
-      }
-    },
-    [s, pushToast],
-  );
-
-  // `runClean` gets a new identity whenever the parent re-renders (pushToast is
-  // redefined each render). Depending on it directly would tear down and
-  // rebuild the interval on every render, so a 10-minute timer would keep
-  // restarting from zero and effectively never fire. Reading it through a ref
-  // keeps the effect keyed on the interval alone.
-  const runCleanRef = useRef(runClean);
-  useEffect(() => {
-    runCleanRef.current = runClean;
-  }, [runClean]);
-
-  useEffect(() => {
-    if (autoMinutes === 0) return;
-    const id = window.setInterval(() => void runCleanRef.current(true), autoMinutes * 60_000);
-    // Clearing on change/unmount is what guarantees exactly one timer is ever
-    // alive, no matter how often the user flips the interval.
-    return () => window.clearInterval(id);
-  }, [autoMinutes]);
-
-  function chooseInterval(minutes: number) {
-    setAutoMinutes(minutes);
-    localStorage.setItem("pc-tweaker-ram-auto", String(minutes));
+  async function cleanNow() {
+    setBusy(true);
+    try {
+      const result = await runRamClean();
+      // `null` means a scheduled pass was already running; the button simply
+      // does nothing rather than queueing a second, pointless sweep.
+      if (!result) return;
+      setLast(result);
+      pushToast(
+        "success",
+        result.freed_bytes > 0
+          ? format(s.ram.freed, { amount: formatBytes(result.freed_bytes) })
+          : s.ram.freedNothing,
+      );
+    } catch (e) {
+      pushToast("error", String(e));
+    } finally {
+      setBusy(false);
+    }
   }
+
+  const chooseInterval = onChangeAuto;
 
   return (
     <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
@@ -1745,7 +1796,7 @@ function RamCleaner({
           <p className="mt-0.5 text-sm text-slate-400">{s.ram.subtitle}</p>
         </div>
         <button
-          onClick={() => void runClean(false)}
+          onClick={() => void cleanNow()}
           disabled={busy}
           className="shrink-0 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 px-5 py-2.5 text-sm font-bold text-emerald-950 transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60"
         >
@@ -2338,7 +2389,17 @@ function App() {
   const [confirmCleanup, setConfirmCleanup] = useState<CleanupInfo | null>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  // Owned here rather than inside RamCleaner so the schedule keeps running
+  // when the user navigates away from the Scan screen.
+  const [ramAutoMinutes, setRamAutoMinutes] = useState<number>(storedRamAutoMinutes);
   const toastSeq = useRef(0);
+
+  useScheduledRamClean(ramAutoMinutes);
+
+  function chooseRamAuto(minutes: number) {
+    setRamAutoMinutes(minutes);
+    localStorage.setItem(RAM_AUTO_STORAGE_KEY, String(minutes));
+  }
 
   async function refresh() {
     const [list, cleanup] = await Promise.all([
@@ -2610,7 +2671,14 @@ function App() {
 
           {showScan && <SystemMonitor s={s} />}
 
-          {showScan && <RamCleaner s={s} pushToast={pushToast} />}
+          {showScan && (
+            <RamCleaner
+              s={s}
+              autoMinutes={ramAutoMinutes}
+              onChangeAuto={chooseRamAuto}
+              pushToast={pushToast}
+            />
+          )}
 
           {showStartup && <StartupManager s={s} pushToast={pushToast} />}
 

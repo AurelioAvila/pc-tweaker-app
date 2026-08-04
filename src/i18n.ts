@@ -221,6 +221,7 @@ export interface Strings {
     forgotPasswordSent: string;
     backToLogin: string;
     emailNotVerified: string;
+    emailVerified: string;
     resendVerification: string;
     verificationSent: string;
   };
@@ -328,7 +329,7 @@ const it: Strings = {
     title: "Scansione rapida",
     subtitle: "Controlla lo stato del PC e trova ottimizzazioni non ancora attive, in un click.",
     startLabel: "SCAN",
-    stepPerformance: "Performance",
+    stepPerformance: "Prestazioni",
     stepPrivacy: "Privacy",
     stepGaming: "Gaming",
     stepJunk: "File temporanei",
@@ -428,7 +429,7 @@ const it: Strings = {
     planPro: "Pro",
     upgradeButton: "Passa a Pro",
     language: "Lingua",
-    theme: "Themes",
+    theme: "Temi",
     about: "Informazioni",
     aboutBody: "PC Tweaker — tweak di sistema con backup e ripristino automatico.",
     close: "Chiudi",
@@ -458,6 +459,7 @@ const it: Strings = {
     forgotPasswordSent: "Se l'email è registrata, riceverai un link per reimpostare la password.",
     backToLogin: "Torna al login",
     emailNotVerified: "Email non verificata",
+    emailVerified: "Email verificata",
     resendVerification: "Invia di nuovo",
     verificationSent: "Email di verifica inviata.",
   },
@@ -869,6 +871,7 @@ const en: Strings = {
     forgotPasswordSent: "If that email is registered, you'll receive a password reset link.",
     backToLogin: "Back to login",
     emailNotVerified: "Email not verified",
+    emailVerified: "Email verified",
     resendVerification: "Resend",
     verificationSent: "Verification email sent.",
   },
@@ -1146,7 +1149,7 @@ const fr: Strings = {
     title: "Analyse rapide",
     subtitle: "Vérifie l'état de votre PC et trouve les optimisations pas encore actives, en un clic.",
     startLabel: "SCAN",
-    stepPerformance: "Performance",
+    stepPerformance: "Performances",
     stepPrivacy: "Confidentialité",
     stepGaming: "Gaming",
     stepJunk: "Fichiers temporaires",
@@ -1245,7 +1248,7 @@ const fr: Strings = {
     planPro: "Pro",
     upgradeButton: "Passer à Pro",
     language: "Langue",
-    theme: "Themes",
+    theme: "Thèmes",
     about: "À propos",
     aboutBody: "PC Tweaker — optimisations système avec sauvegarde et restauration automatiques.",
     close: "Fermer",
@@ -1274,6 +1277,7 @@ const fr: Strings = {
     forgotPasswordSent: "Si cet e-mail est enregistré, vous recevrez un lien de réinitialisation.",
     backToLogin: "Retour à la connexion",
     emailNotVerified: "E-mail non vérifié",
+    emailVerified: "E-mail vérifié",
     resendVerification: "Renvoyer",
     verificationSent: "E-mail de vérification envoyé.",
   },
@@ -1650,7 +1654,7 @@ const es: Strings = {
     planPro: "Pro",
     upgradeButton: "Pasar a Pro",
     language: "Idioma",
-    theme: "Themes",
+    theme: "Temas",
     about: "Acerca de",
     aboutBody: "PC Tweaker — ajustes del sistema con copia de seguridad y restauración automáticas.",
     close: "Cerrar",
@@ -1679,6 +1683,7 @@ const es: Strings = {
     forgotPasswordSent: "Si ese correo está registrado, recibirás un enlace para restablecer la contraseña.",
     backToLogin: "Volver al inicio de sesión",
     emailNotVerified: "Correo no verificado",
+    emailVerified: "Correo verificado",
     resendVerification: "Reenviar",
     verificationSent: "Correo de verificación enviado.",
   },
@@ -2050,12 +2055,12 @@ const de: Strings = {
   },
   menu: {
     account: "Konto",
-    plan: "Plan",
+    plan: "Tarif",
     planFree: "Kostenlos",
     planPro: "Pro",
     upgradeButton: "Auf Pro upgraden",
     language: "Sprache",
-    theme: "Themes",
+    theme: "Designs",
     about: "Info",
     aboutBody: "PC Tweaker — Systemoptimierungen mit automatischer Sicherung und Wiederherstellung.",
     close: "Schließen",
@@ -2084,6 +2089,7 @@ const de: Strings = {
     forgotPasswordSent: "Falls diese E-Mail registriert ist, erhältst du einen Link zum Zurücksetzen des Passworts.",
     backToLogin: "Zurück zur Anmeldung",
     emailNotVerified: "E-Mail nicht bestätigt",
+    emailVerified: "E-Mail bestätigt",
     resendVerification: "Erneut senden",
     verificationSent: "Bestätigungs-E-Mail gesendet.",
   },
@@ -2186,7 +2192,7 @@ const de: Strings = {
         "Preset: deaktiviert Game DVR, stellt den Energiesparplan auf Hohe Leistung und optimiert die CPU-Priorität (Administratorrechte erforderlich).",
     },
     privacy_dns: {
-      name: "Private DNS (Cloudflare)",
+      name: "Privates DNS (Cloudflare)",
       description:
         "Wechselt zu datenschutzfreundlichen DNS-Servern (1.1.1.1), damit dein Provider DNS-Anfragen nicht protokollieren kann. Verbirgt nicht deine IP-Adresse (dafür ist ein VPN nötig, siehe unten).",
     },

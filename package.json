@@ -10,8 +10,9 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "check:i18n": "node scripts/check-i18n.mjs",
+    "check:i18n-quality": "node scripts/audit-i18n.mjs",
     "check:rust": "cargo test --manifest-path src-tauri/Cargo.toml --lib",
-    "check": "tsc --noEmit && npm run check:i18n && npm run check:rust"
+    "check": "tsc --noEmit && npm run check:i18n && npm run check:i18n-quality && npm run check:rust"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

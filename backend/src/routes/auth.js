@@ -3,7 +3,7 @@ const rateLimit = require("express-rate-limit");
 const { pool, isConfigured } = require("../db");
 const { hashPassword, verifyPassword, signToken, requireAuth, isValidEmail, isValidPassword } = require("../auth");
 const { createActionToken, consumeActionToken } = require("../tokens");
-const { sendMail } = require("../mailer");
+const { sendMail, MailError } = require("../mailer");
 
 const router = express.Router();
 
@@ -55,15 +55,19 @@ router.post("/register", async (req, res) => {
     const { id, token_version } = result.rows[0];
     const token = signToken(id, token_version);
 
+    let verificationEmailSent = true;
     try {
       await sendVerificationEmail(id, email.toLowerCase());
     } catch (err) {
       // Registration itself succeeded; don't fail the whole request just
-      // because the verification email couldn't be sent.
+      // because the verification email couldn't be sent. But do report it:
+      // silently swallowing this left users waiting for a message that was
+      // never going to arrive, with nothing on screen to explain why.
       console.error("failed to send verification email:", err);
+      verificationEmailSent = false;
     }
 
-    res.status(201).json({ token });
+    res.status(201).json({ token, verificationEmailSent });
   } catch (err) {
     // Two concurrent registrations for the same email both pass the SELECT
     // check above before either INSERTs; the second hits the unique
@@ -125,7 +129,15 @@ router.post("/resend-verification", requireAuth, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error("resend-verification failed:", err);
-    res.status(500).json({ error: "could not resend verification email" });
+    // A 500 here told the user nothing actionable. The two causes need
+    // different answers: an address the provider won't deliver to is something
+    // only they can fix, while a provider outage is ours and worth retrying.
+    if (err instanceof MailError && err.rejectedAddress) {
+      return res
+        .status(400)
+        .json({ error: "we could not send to that email address — please check it is correct" });
+    }
+    res.status(502).json({ error: "the email service is unavailable right now, please try again shortly" });
   }
 });
 

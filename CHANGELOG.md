@@ -5,6 +5,45 @@ update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just
 the git log.
 
+## v0.2.0 — 2026-08-04
+
+Released. `v0.1.1` stays published and downloadable so existing download
+links keep working until they are pointed here.
+
+- **Fixed**: the account menu's **Themes** heading was English in all five
+  languages, and `Scan` / `Performance` / `UI` were untranslated in
+  it/fr/es/de. `check-i18n.mjs` could never catch this — it proves keys
+  *exist* with matching placeholders, and a string copy-pasted from English
+  passes that happily. New `scripts/audit-i18n.mjs` flags anything
+  byte-identical to English, ASCII stand-ins where a language needs an accent,
+  and Spanish text missing its opening `¿`/`¡`. Words that genuinely are the
+  same (Admin, PRO, START, Turbo Boost, Account, Plan, Email, Password) sit on
+  an explicit reviewed list, so adding one is a deliberate statement that a
+  human looked at it. Wired into `npm run check` and CI.
+- **Fixed**: automatic RAM cleanup silently stopped the moment the user left
+  the Scan tab, because the timer lived in a component that only renders
+  there. The scheduler now lives at app level, and the manual button and the
+  timer share one in-flight guard so two passes can never race.
+- **Fixed**: `POST /api/auth/resend-verification` answered a bare **500**
+  whenever the mail provider refused, telling the user nothing actionable. It
+  now separates a rejected recipient (**400** — "check the address is
+  correct") from a provider outage or our own quota/credential problem
+  (**502** — "try again shortly"). Registration reports
+  `verificationEmailSent` instead of swallowing the failure, so nobody is left
+  waiting for a message that was never going to arrive. Writing the tests for
+  this caught a second defect before it shipped: HTTP 429 — *our* sending
+  quota — was being blamed on the recipient's address.
+- **Added**: `backend/scripts/smoke-test.mjs`, a committed **36-check
+  end-to-end test** of the real customer path (register → verify → log in →
+  reset → revoke → checkout) plus the failure modes that matter, including
+  email enumeration and reset-form XSS. `npm run smoke`. Backend unit tests
+  (`npm test`) now run in CI too.
+- **UI**: the account dropdown covered most of a small window — it is now
+  narrower with tighter sections, and the ten themes are swatches instead of a
+  labelled two-column grid. The signed-in row is an avatar, the address and a
+  verification badge rather than a line of status text, and **Plan** gets the
+  same gold treatment as the sidebar when the account is Pro.
+
 ## 2026-08-04
 
 - **Fixed (translations, the real cause)**: the Scan screen listed every

@@ -5,6 +5,39 @@ update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just
 the git log.
 
+## v0.3.0 — 2026-08-04
+
+- **Changed**: toggle switches are now a compact 20×36px pill with an
+  "On"/"Off" caption — matching Windows 11's own Settings app — instead of
+  the oversized 32×56px iOS-style switch used before.
+- **Added — Optimize drive**: runs Windows' own built-in optimizer (TRIM on
+  an SSD, defragmentation on an HDD, never a full defrag pass on an SSD,
+  which would only wear it out for no benefit).
+- **Added — Flush DNS cache**: free, no elevation needed.
+- **Added — Find large files**: same scan/select/move-to-Recycle-Bin flow as
+  the existing duplicate finder, but by a 100 MB size threshold — a single
+  large forgotten file has no duplicate to find, but is easy to spot once
+  sorted by size.
+- **Added — Drive health**: reads Windows' own S.M.A.R.T./reliability
+  HealthStatus for the selected drive.
+- **Added**: a real drive picker for Drive health and Optimize drive, backed
+  by the actual disks on the machine — previously both were silently
+  hardcoded to the system drive with no way to check or optimize a second
+  HDD/SSD.
+- **Fixed**: a real bug caught during live testing — "Optimize drive"
+  initially called `defrag` directly without going through the app's
+  elevation flow, so it only ever worked when the whole app process happened
+  to already be running elevated. A normal user's click, from an unelevated
+  install, would have failed outright with no UAC prompt ever shown. Now
+  wired through the same proven single-UAC-prompt pattern used everywhere
+  else in the app (`is_elevated()` check → elevated relaunch → result handed
+  back through a temp file).
+- **Fixed**: roughly 30 leftover Italian error strings scattered across
+  `dns.rs`, `elevation.rs`, `gaming.rs`, `power.rs`, `services.rs`,
+  `tweaks.rs` and others — mostly on failure branches ("unexpected snapshot
+  type", "not supported on this platform") that earlier passes over the
+  Rust-side fallback text had missed.
+
 ## v0.2.0 — 2026-08-04
 
 Released. `v0.1.1` stays published and downloadable so existing download

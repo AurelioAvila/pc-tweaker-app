@@ -1,3 +1,10 @@
+# .env e' tracciato dalla storia del repo con solo un URL pubblico dentro
+# (verificato 2026-08-04, mai contenuto un segreto) - ma il repo e' PUBLIC e
+# .env non era protetto: bastava che una futura variabile finisse li' invece
+# che in un .env locale nuovo per pubblicarla per errore. Ignorato da qui in
+# avanti; resta tracciato con lo storico attuale, che e' pulito.
+.env
+
 # Logs
 logs
 *.log

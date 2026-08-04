@@ -19,7 +19,7 @@ fn run_ps(script: &str) -> Result<String, String> {
         .args(["-NoProfile", "-NonInteractive", "-Command", script])
         .creation_flags(CREATE_NO_WINDOW)
         .output()
-        .map_err(|e| format!("impossibile eseguire PowerShell: {}", e))?;
+        .map_err(|e| format!("could not run PowerShell: {}", e))?;
 
     if !output.status.success() {
         return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());

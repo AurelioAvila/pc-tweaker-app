@@ -12,11 +12,11 @@ pub fn run_powercfg(args: &[&str]) -> Result<String, String> {
         .args(args)
         .creation_flags(CREATE_NO_WINDOW)
         .output()
-        .map_err(|e| format!("impossibile eseguire powercfg: {}", e))?;
+        .map_err(|e| format!("could not run powercfg: {}", e))?;
 
     if !output.status.success() {
         return Err(format!(
-            "powercfg ha restituito un errore: {}",
+            "powercfg returned an error: {}",
             String::from_utf8_lossy(&output.stderr)
         ));
     }
@@ -44,7 +44,7 @@ pub fn active_scheme_guid() -> Result<String, String> {
         .split_whitespace()
         .find(|tok| looks_like_guid(tok))
         .map(|s| s.to_string())
-        .ok_or_else(|| "impossibile leggere il piano di alimentazione attivo".to_string())
+        .ok_or_else(|| "could not read the active power plan".to_string())
 }
 
 #[cfg(windows)]

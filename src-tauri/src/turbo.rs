@@ -14,7 +14,7 @@ pub fn info() -> TurboInfo {
     TurboInfo {
         id: TWEAK_ID,
         name: "Turbo Gaming",
-        description: "Preset: disattiva Game DVR, imposta il piano di alimentazione su Prestazioni elevate e ottimizza la priorità del processore (richiede privilegi di amministratore).",
+        description: "Preset: disables Game DVR, switches the power plan to High performance, and optimizes CPU priority (requires administrator rights).",
         requires_admin: true,
         requires_pro: true,
     }

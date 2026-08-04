@@ -30,17 +30,22 @@ const MAX_HASHED_FILE_BYTES: u64 = 500 * 1024 * 1024;
 
 pub fn cleanup_targets() -> Vec<CleanupInfo> {
     vec![
+        // These strings are only ever shown when the UI has no translation for
+        // the id (see `textFor` in App.tsx), so they must be in the app's
+        // primary language — English — like every other Rust-side fallback.
+        // They used to be Italian, which surfaced as a stray Italian row in an
+        // otherwise English list.
         CleanupInfo {
             id: "temp_cleanup",
-            name: "Pulisci file temporanei",
-            description: "Sposta nel Cestino il contenuto di %TEMP%: puoi recuperarlo in qualsiasi momento, non è una cancellazione definitiva.",
+            name: "Clean temporary files",
+            description: "Moves the contents of %TEMP% to the Recycle Bin: you can restore it at any time, nothing is deleted permanently.",
             requires_admin: false,
             requires_pro: false,
         },
         CleanupInfo {
             id: "winupdate_cache_cleanup",
-            name: "Svuota cache aggiornamenti Windows",
-            description: "Sposta nel Cestino i pacchetti di Windows Update già installati (richiede privilegi di amministratore).",
+            name: "Clear Windows Update cache",
+            description: "Moves already-installed Windows Update packages to the Recycle Bin (requires administrator rights).",
             requires_admin: true,
             requires_pro: true,
         },

@@ -110,6 +110,32 @@ export interface Strings {
     proIssuesTitle: string;
     unlockPro: string;
     scanAgain: string;
+    doneTitle: string;
+    doneBody: string; // uses {count}
+    fixHeading: string;
+  };
+  ram: {
+    title: string;
+    subtitle: string;
+    button: string;
+    cleaning: string;
+    freed: string; // uses {amount}
+    freedNothing: string;
+    inUse: string; // uses {used} {total}
+    autoLabel: string;
+    autoOff: string;
+    autoEvery: string; // uses {interval}
+    autoHint: string;
+  };
+  restore: {
+    button: string;
+    title: string;
+    body: string; // uses {count}
+    confirm: string;
+    cancel: string;
+    running: string;
+    doneToast: string; // uses {count}
+    nothingToast: string;
   };
   passwordCheck: {
     title: string;
@@ -216,7 +242,7 @@ const it: Strings = {
   appliedCount: "{applied} di {total} tweak attivi",
   headerNote:
     "Ogni tweak salva un backup del valore originale prima di essere applicato. I tweak con privilegi elevati chiedono un consenso UAC esplicito, solo per quell'azione.",
-  tabs: { scan: "Scan", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Manutenzione", gaming: "Gaming", startup: "Avvio", pricing: "Piani e prezzi" },
+  tabs: { scan: "Scansione", performance: "Prestazioni", privacy: "Privacy", ui: "Interfaccia", manutenzione: "Manutenzione", gaming: "Gaming", startup: "Avvio", pricing: "Piani e prezzi" },
   systemMonitor: {
     cpu: "CPU",
     ram: "Memoria",
@@ -262,7 +288,7 @@ const it: Strings = {
     everythingInFree: "Tutto quello che c\u2019\u00e8 nel Free, pi\u00f9:",
     reassurance: "Disdici quando vuoi. Ogni modifica resta reversibile con un click, anche dopo la disdetta.",
     freeFeatures: [
-      "20 tweak reali, con backup e ripristino di ogni modifica",
+      "{count} tweak reali, con backup e ripristino di ogni modifica",
       "Monitor di sistema in tempo reale (CPU, memoria, disco)",
       "Gestione dei programmi all\u2019avvio",
       "Controllo violazioni password",
@@ -316,6 +342,32 @@ const it: Strings = {
     proIssuesTitle: "Disponibili anche con Pro",
     unlockPro: "Sblocca Pro",
     scanAgain: "Scansiona di nuovo",
+    doneTitle: "Fatto!",
+    doneBody: "{count} ottimizzazioni applicate. Il tuo PC è a posto.",
+    fixHeading: "Pronte da applicare",
+  },
+  ram: {
+    title: "Libera RAM",
+    subtitle: "Chiede a Windows di rilasciare la memoria che i programmi tengono occupata senza usarla. Puoi farlo quante volte vuoi.",
+    button: "Libera ora",
+    cleaning: "Pulizia in corso...",
+    freed: "Liberati {amount}",
+    freedNothing: "La memoria era già ottimizzata",
+    inUse: "{used} di {total} in uso",
+    autoLabel: "Pulizia automatica",
+    autoOff: "Disattivata",
+    autoEvery: "Ogni {interval}",
+    autoHint: "Con la pulizia automatica attiva, PC Tweaker libera la RAM da solo a intervalli regolari finché l'app resta aperta.",
+  },
+  restore: {
+    button: "Ripristina tutto",
+    title: "Ripristinare tutte le modifiche?",
+    body: "Verranno disattivate le {count} ottimizzazioni attive e ogni valore tornerà esattamente com'era prima. Nessun dato viene perso.",
+    confirm: "Sì, ripristina tutto",
+    cancel: "Annulla",
+    running: "Ripristino...",
+    doneToast: "{count} ottimizzazioni ripristinate.",
+    nothingToast: "Non c'è nulla da ripristinare.",
   },
   passwordCheck: {
     title: "Controllo violazioni password",
@@ -410,6 +462,61 @@ const it: Strings = {
     verificationSent: "Email di verifica inviata.",
   },
   tweaks: {
+    disable_startup_delay: {
+      name: "Rimuovi il ritardo dei programmi all'avvio",
+      description:
+        "Windows aspetta di proposito circa 10 secondi dopo l'accesso prima di lanciare i programmi all'avvio. Questa opzione elimina quell'attesa (HKCU, nessuna elevazione richiesta).",
+    },
+    menu_show_delay: {
+      name: "Risposta immediata dei menu",
+      description:
+        "Elimina il ritardo con cui si aprono i menu: tutto il desktop risulta subito più reattivo (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_power_throttling: {
+      name: "Disattiva il risparmio energetico della CPU",
+      description:
+        "Impedisce a Windows di rallentare i processi in background per risparmiare energia: utile sui portatili, dove questo causa scatti durante le sessioni lunghe (HKLM, richiede privilegi di amministratore).",
+    },
+    games_gpu_priority: {
+      name: "Aumenta la priorità GPU per i giochi",
+      description:
+        "Indica allo scheduler multimediale di assegnare ai giochi la classe di priorità GPU più alta, così le app in background smettono di contendere la GPU nel mezzo di una partita (HKLM, richiede privilegi di amministratore).",
+    },
+    disable_tailored_experiences: {
+      name: "Disattiva le esperienze personalizzate",
+      description:
+        "Impedisce a Windows di usare i tuoi dati diagnostici per personalizzare pubblicità, suggerimenti e consigli (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_app_launch_tracking: {
+      name: "Non tracciare le app che apri",
+      description:
+        "Windows registra quanto spesso avvii ogni programma per ordinare i risultati del menu Start. Questa opzione disattiva quel tracciamento (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_feedback_requests: {
+      name: "Blocca le richieste di feedback di Windows",
+      description:
+        "Impedisce a Windows di interromperti con i sondaggi \"Quanto consiglieresti...\" (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_cortana: {
+      name: "Disattiva Cortana",
+      description:
+        "Disattiva Cortana tramite policy di sistema, liberando le risorse che riserva in background (HKLM, richiede privilegi di amministratore).",
+    },
+    show_file_extensions: {
+      name: "Mostra sempre le estensioni dei file",
+      description:
+        "Rivela la vera estensione di ogni file. Vale la pena attivarla anche solo per sicurezza: smaschera file come \"fattura.pdf.exe\" che Windows altrimenti nasconde (HKCU, nessuna elevazione richiesta).",
+    },
+    hide_taskbar_widgets: {
+      name: "Nascondi i Widget dalla barra delle applicazioni",
+      description:
+        "Rimuove il pulsante Widget (meteo/notizie), che carica contenuti in background anche se non lo apri mai (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_transparency: {
+      name: "Disattiva gli effetti di trasparenza",
+      description:
+        "Disattiva gli effetti sfocatura/acrilico di barra e menu. Un risparmio di GPU piccolo ma reale, che rende più fluidi i PC datati o con grafica integrata (HKCU, nessuna elevazione richiesta).",
+    },
     dark_mode: {
       name: "Modalità scura",
       description: "Attiva il tema scuro per app e sistema (HKCU, nessuna elevazione richiesta).",
@@ -594,7 +701,7 @@ const en: Strings = {
     everythingInFree: "Everything in Free, plus:",
     reassurance: "Cancel anytime. Every change stays one click away from being undone, even after you cancel.",
     freeFeatures: [
-      "20 real tweaks, each backed up and revertible",
+      "{count} real tweaks, each backed up and revertible",
       "Live system monitor (CPU, memory, disk)",
       "Startup programs manager",
       "Password breach check",
@@ -648,6 +755,32 @@ const en: Strings = {
     proIssuesTitle: "Also available with Pro",
     unlockPro: "Unlock Pro",
     scanAgain: "Scan again",
+    doneTitle: "Done!",
+    doneBody: "{count} optimizations applied. Your PC is all set.",
+    fixHeading: "Ready to apply",
+  },
+  ram: {
+    title: "Free up RAM",
+    subtitle: "Asks Windows to release memory that programs are holding but not using. Run it as often as you like.",
+    button: "Free now",
+    cleaning: "Cleaning up...",
+    freed: "Freed {amount}",
+    freedNothing: "Memory was already optimized",
+    inUse: "{used} of {total} in use",
+    autoLabel: "Automatic cleanup",
+    autoOff: "Off",
+    autoEvery: "Every {interval}",
+    autoHint: "With automatic cleanup on, PC Tweaker frees RAM by itself at a regular interval for as long as the app stays open.",
+  },
+  restore: {
+    button: "Restore all",
+    title: "Restore every change?",
+    body: "This will turn off the {count} active optimizations and put every value back exactly as it was. Nothing is lost.",
+    confirm: "Yes, restore everything",
+    cancel: "Cancel",
+    running: "Restoring...",
+    doneToast: "{count} optimizations restored.",
+    nothingToast: "There is nothing to restore.",
   },
   passwordCheck: {
     title: "Password breach check",
@@ -740,6 +873,61 @@ const en: Strings = {
     verificationSent: "Verification email sent.",
   },
   tweaks: {
+    disable_startup_delay: {
+      name: "Remove the startup app delay",
+      description:
+        "Windows deliberately waits about 10 seconds after sign-in before launching your startup programs. This removes that wait (HKCU, no elevation required).",
+    },
+    menu_show_delay: {
+      name: "Instant menu response",
+      description:
+        "Removes the built-in delay before menus open, which makes the whole desktop feel noticeably snappier (HKCU, no elevation required).",
+    },
+    disable_power_throttling: {
+      name: "Disable CPU power throttling",
+      description:
+        "Stops Windows from slowing down background processes to save power - useful on laptops where throttling causes stutter during long sessions (HKLM, requires administrator rights).",
+    },
+    games_gpu_priority: {
+      name: "Raise GPU priority for games",
+      description:
+        "Tells the multimedia scheduler to give games the highest GPU priority class, so background apps stop competing for the GPU mid-match (HKLM, requires administrator rights).",
+    },
+    disable_tailored_experiences: {
+      name: "Disable tailored experiences",
+      description:
+        "Stops Windows from using your diagnostic data to personalize ads, tips and recommendations (HKCU, no elevation required).",
+    },
+    disable_app_launch_tracking: {
+      name: "Stop tracking which apps you open",
+      description:
+        "Windows records how often you launch each program to rank Start menu results. This turns that logging off (HKCU, no elevation required).",
+    },
+    disable_feedback_requests: {
+      name: "Stop Windows feedback prompts",
+      description:
+        "Prevents Windows from interrupting you with 'How likely are you to recommend...' surveys (HKCU, no elevation required).",
+    },
+    disable_cortana: {
+      name: "Disable Cortana",
+      description:
+        "Turns Cortana off through system policy, freeing the background resources it reserves (HKLM, requires administrator rights).",
+    },
+    show_file_extensions: {
+      name: "Always show file extensions",
+      description:
+        "Reveals the real extension of every file. Worth turning on for safety alone: it exposes files like 'invoice.pdf.exe' that Windows otherwise hides (HKCU, no elevation required).",
+    },
+    hide_taskbar_widgets: {
+      name: "Hide Widgets from the taskbar",
+      description:
+        "Removes the weather/news Widgets button, which loads content in the background even when you never open it (HKCU, no elevation required).",
+    },
+    disable_transparency: {
+      name: "Disable transparency effects",
+      description:
+        "Turns off the blur/acrylic effects in the taskbar and menus. Small but real GPU saving, and it makes older or integrated-graphics machines feel smoother (HKCU, no elevation required).",
+    },
     dark_mode: {
       name: "Dark mode",
       description: "Turns on dark theme for apps and system (HKCU, no elevation required).",
@@ -872,7 +1060,7 @@ const fr: Strings = {
   appliedCount: "{applied} sur {total} optimisations actives",
   headerNote:
     "Chaque optimisation sauvegarde la valeur d'origine avant d'être appliquée. Celles qui nécessitent des droits élevés demandent un consentement UAC explicite, uniquement pour cette action.",
-  tabs: { scan: "Scan", performance: "Performance", privacy: "Confidentialité", ui: "Interface", manutenzione: "Entretien", gaming: "Gaming", startup: "Démarrage", pricing: "Offres et tarifs" },
+  tabs: { scan: "Analyse", performance: "Performances", privacy: "Confidentialité", ui: "Interface", manutenzione: "Entretien", gaming: "Gaming", startup: "Démarrage", pricing: "Offres et tarifs" },
   systemMonitor: {
     cpu: "Processeur",
     ram: "Mémoire",
@@ -918,7 +1106,7 @@ const fr: Strings = {
     everythingInFree: "Tout ce que contient Free, plus\u00a0:",
     reassurance: "R\u00e9siliable \u00e0 tout moment. Chaque modification reste annulable en un clic, m\u00eame apr\u00e8s la r\u00e9siliation.",
     freeFeatures: [
-      "20 optimisations r\u00e9elles, chacune sauvegard\u00e9e et r\u00e9versible",
+      "{count} optimisations r\u00e9elles, chacune sauvegard\u00e9e et r\u00e9versible",
       "Moniteur syst\u00e8me en temps r\u00e9el (processeur, m\u00e9moire, disque)",
       "Gestion des programmes au d\u00e9marrage",
       "V\u00e9rification des fuites de mot de passe",
@@ -972,6 +1160,32 @@ const fr: Strings = {
     proIssuesTitle: "Aussi disponibles avec Pro",
     unlockPro: "Débloquer Pro",
     scanAgain: "Analyser à nouveau",
+    doneTitle: "Terminé !",
+    doneBody: "{count} optimisations appliquées. Votre PC est prêt.",
+    fixHeading: "Prêtes à appliquer",
+  },
+  ram: {
+    title: "Libérer la RAM",
+    subtitle: "Demande à Windows de libérer la mémoire que les programmes occupent sans l'utiliser. À lancer aussi souvent que vous voulez.",
+    button: "Libérer maintenant",
+    cleaning: "Nettoyage en cours...",
+    freed: "{amount} libérés",
+    freedNothing: "La mémoire était déjà optimisée",
+    inUse: "{used} sur {total} utilises",
+    autoLabel: "Nettoyage automatique",
+    autoOff: "Désactivé",
+    autoEvery: "Toutes les {interval}",
+    autoHint: "Avec le nettoyage automatique, PC Tweaker libère la RAM tout seul à intervalle régulier tant que l'application reste ouverte.",
+  },
+  restore: {
+    button: "Tout restaurer",
+    title: "Restaurer toutes les modifications ?",
+    body: "Les {count} optimisations actives seront désactivées et chaque valeur reviendra exactement à son état initial. Aucune donnée n'est perdue.",
+    confirm: "Oui, tout restaurer",
+    cancel: "Annuler",
+    running: "Restauration...",
+    doneToast: "{count} optimisations restaurées.",
+    nothingToast: "Il n'y a rien à restaurer.",
   },
   passwordCheck: {
     title: "Vérification des fuites de mot de passe",
@@ -1064,6 +1278,61 @@ const fr: Strings = {
     verificationSent: "E-mail de vérification envoyé.",
   },
   tweaks: {
+    disable_startup_delay: {
+      name: "Supprimer le délai des programmes au démarrage",
+      description:
+        "Windows attend volontairement environ 10 secondes après la connexion avant de lancer vos programmes de démarrage. Cette option supprime cette attente (HKCU, aucune élévation requise).",
+    },
+    menu_show_delay: {
+      name: "Réponse instantanée des menus",
+      description:
+        "Supprime le délai d'ouverture des menus, ce qui rend tout le bureau nettement plus réactif (HKCU, aucune élévation requise).",
+    },
+    disable_power_throttling: {
+      name: "Désactiver la limitation d'énergie du processeur",
+      description:
+        "Empêche Windows de ralentir les processus en arrière-plan pour économiser l'énergie - utile sur les portables, où cela provoque des saccades lors des longues sessions (HKLM, nécessite des droits administrateur).",
+    },
+    games_gpu_priority: {
+      name: "Augmenter la priorité GPU des jeux",
+      description:
+        "Demande au planificateur multimédia d'accorder aux jeux la classe de priorité GPU la plus élevée, afin que les applications en arrière-plan cessent de disputer le GPU en pleine partie (HKLM, nécessite des droits administrateur).",
+    },
+    disable_tailored_experiences: {
+      name: "Désactiver les expériences personnalisées",
+      description:
+        "Empêche Windows d'utiliser vos données de diagnostic pour personnaliser publicités, conseils et recommandations (HKCU, aucune élévation requise).",
+    },
+    disable_app_launch_tracking: {
+      name: "Ne plus suivre les applications que vous ouvrez",
+      description:
+        "Windows enregistre la fréquence de lancement de chaque programme pour classer les résultats du menu Démarrer. Cette option désactive ce suivi (HKCU, aucune élévation requise).",
+    },
+    disable_feedback_requests: {
+      name: "Bloquer les demandes de commentaires de Windows",
+      description:
+        "Empêche Windows de vous interrompre avec les sondages « Quelle est la probabilité que vous recommandiez... » (HKCU, aucune élévation requise).",
+    },
+    disable_cortana: {
+      name: "Désactiver Cortana",
+      description:
+        "Désactive Cortana via une stratégie système, libérant les ressources qu'il réserve en arrière-plan (HKLM, nécessite des droits administrateur).",
+    },
+    show_file_extensions: {
+      name: "Toujours afficher les extensions de fichiers",
+      description:
+        "Révèle la véritable extension de chaque fichier. À activer ne serait-ce que pour la sécurité : cela démasque les fichiers du type « facture.pdf.exe » que Windows masque autrement (HKCU, aucune élévation requise).",
+    },
+    hide_taskbar_widgets: {
+      name: "Masquer les Widgets de la barre des tâches",
+      description:
+        "Supprime le bouton Widgets (météo/actualités), qui charge du contenu en arrière-plan même si vous ne l'ouvrez jamais (HKCU, aucune élévation requise).",
+    },
+    disable_transparency: {
+      name: "Désactiver les effets de transparence",
+      description:
+        "Désactive les effets de flou/acrylique de la barre des tâches et des menus. Une économie de GPU modeste mais réelle, qui rend plus fluides les PC anciens ou à carte graphique intégrée (HKCU, aucune élévation requise).",
+    },
     dark_mode: {
       name: "Mode sombre",
       description: "Active le thème sombre pour les applications et le système (HKCU, aucune élévation requise).",
@@ -1196,7 +1465,7 @@ const es: Strings = {
   appliedCount: "{applied} de {total} ajustes activos",
   headerNote:
     "Cada ajuste guarda una copia del valor original antes de aplicarse. Los ajustes que requieren privilegios elevados piden un consentimiento UAC explícito, solo para esa acción.",
-  tabs: { scan: "Scan", performance: "Rendimiento", privacy: "Privacidad", ui: "Interfaz", manutenzione: "Mantenimiento", gaming: "Gaming", startup: "Inicio", pricing: "Planes y precios" },
+  tabs: { scan: "Análisis", performance: "Rendimiento", privacy: "Privacidad", ui: "Interfaz", manutenzione: "Mantenimiento", gaming: "Gaming", startup: "Inicio", pricing: "Planes y precios" },
   systemMonitor: {
     cpu: "CPU",
     ram: "Memoria",
@@ -1242,7 +1511,7 @@ const es: Strings = {
     everythingInFree: "Todo lo que incluye Free, y adem\u00e1s:",
     reassurance: "Cancela cuando quieras. Cada cambio sigue siendo reversible con un clic, incluso tras cancelar.",
     freeFeatures: [
-      "20 ajustes reales, cada uno con copia de seguridad y reversible",
+      "{count} ajustes reales, cada uno con copia de seguridad y reversible",
       "Monitor del sistema en tiempo real (CPU, memoria, disco)",
       "Gesti\u00f3n de los programas de inicio",
       "Comprobaci\u00f3n de filtraciones de contrase\u00f1as",
@@ -1296,6 +1565,32 @@ const es: Strings = {
     proIssuesTitle: "También disponibles con Pro",
     unlockPro: "Desbloquear Pro",
     scanAgain: "Analizar de nuevo",
+    doneTitle: "\u00a1Listo!",
+    doneBody: "{count} optimizaciones aplicadas. Tu PC está a punto.",
+    fixHeading: "Listas para aplicar",
+  },
+  ram: {
+    title: "Liberar RAM",
+    subtitle: "Pide a Windows que libere la memoria que los programas ocupan sin usarla. Puedes hacerlo tantas veces como quieras.",
+    button: "Liberar ahora",
+    cleaning: "Limpiando...",
+    freed: "{amount} liberados",
+    freedNothing: "La memoria ya estaba optimizada",
+    inUse: "{used} de {total} en uso",
+    autoLabel: "Limpieza automática",
+    autoOff: "Desactivada",
+    autoEvery: "Cada {interval}",
+    autoHint: "Con la limpieza automática activada, PC Tweaker libera la RAM por sí solo a intervalos regulares mientras la app siga abierta.",
+  },
+  restore: {
+    button: "Restaurar todo",
+    title: "\u00bfRestaurar todos los cambios?",
+    body: "Se desactivarán las {count} optimizaciones activas y cada valor volverá exactamente a como estaba. No se pierde nada.",
+    confirm: "S\u00ed, restaurar todo",
+    cancel: "Cancelar",
+    running: "Restaurando...",
+    doneToast: "{count} optimizaciones restauradas.",
+    nothingToast: "No hay nada que restaurar.",
   },
   passwordCheck: {
     title: "Comprobación de filtraciones de contraseña",
@@ -1388,6 +1683,61 @@ const es: Strings = {
     verificationSent: "Correo de verificación enviado.",
   },
   tweaks: {
+    disable_startup_delay: {
+      name: "Eliminar el retraso de los programas al inicio",
+      description:
+        "Windows espera a propósito unos 10 segundos tras iniciar sesión antes de abrir tus programas de inicio. Esta opción elimina esa espera (HKCU, no requiere elevación).",
+    },
+    menu_show_delay: {
+      name: "Respuesta instantánea de los menús",
+      description:
+        "Elimina el retraso con el que se abren los menús, lo que hace que todo el escritorio se sienta más ágil (HKCU, no requiere elevación).",
+    },
+    disable_power_throttling: {
+      name: "Desactivar la limitación de energía de la CPU",
+      description:
+        "Impide que Windows ralentice los procesos en segundo plano para ahorrar energía: útil en portátiles, donde provoca tirones en sesiones largas (HKLM, requiere permisos de administrador).",
+    },
+    games_gpu_priority: {
+      name: "Aumentar la prioridad de GPU para juegos",
+      description:
+        "Indica al programador multimedia que dé a los juegos la clase de prioridad de GPU más alta, para que las apps en segundo plano dejen de competir por la GPU en plena partida (HKLM, requiere permisos de administrador).",
+    },
+    disable_tailored_experiences: {
+      name: "Desactivar las experiencias personalizadas",
+      description:
+        "Impide que Windows use tus datos de diagnóstico para personalizar anuncios, sugerencias y recomendaciones (HKCU, no requiere elevación).",
+    },
+    disable_app_launch_tracking: {
+      name: "Dejar de registrar qué aplicaciones abres",
+      description:
+        "Windows registra con qué frecuencia abres cada programa para ordenar los resultados del menú Inicio. Esta opción desactiva ese registro (HKCU, no requiere elevación).",
+    },
+    disable_feedback_requests: {
+      name: "Bloquear las peticiones de opinión de Windows",
+      description:
+        "Evita que Windows te interrumpa con encuestas del tipo «¿Qué probabilidad hay de que recomiendes...?» (HKCU, no requiere elevación).",
+    },
+    disable_cortana: {
+      name: "Desactivar Cortana",
+      description:
+        "Desactiva Cortana mediante directiva del sistema, liberando los recursos que reserva en segundo plano (HKLM, requiere permisos de administrador).",
+    },
+    show_file_extensions: {
+      name: "Mostrar siempre las extensiones de archivo",
+      description:
+        "Revela la extensión real de cada archivo. Merece la pena activarlo solo por seguridad: destapa archivos como «factura.pdf.exe» que Windows oculta (HKCU, no requiere elevación).",
+    },
+    hide_taskbar_widgets: {
+      name: "Ocultar los Widgets de la barra de tareas",
+      description:
+        "Quita el botón de Widgets (tiempo/noticias), que carga contenido en segundo plano aunque nunca lo abras (HKCU, no requiere elevación).",
+    },
+    disable_transparency: {
+      name: "Desactivar los efectos de transparencia",
+      description:
+        "Desactiva los efectos de desenfoque/acrílico de la barra de tareas y los menús. Un ahorro de GPU pequeño pero real, que hace más fluidos los equipos antiguos o con gráficos integrados (HKCU, no requiere elevación).",
+    },
     dark_mode: {
       name: "Modo oscuro",
       description: "Activa el tema oscuro para apps y sistema (HKCU, sin elevación requerida).",
@@ -1520,7 +1870,7 @@ const de: Strings = {
   appliedCount: "{applied} von {total} Optimierungen aktiv",
   headerNote:
     "Jede Optimierung sichert den ursprünglichen Wert, bevor sie angewendet wird. Optimierungen mit erhöhten Rechten fragen gezielt per UAC nach, nur für diese Aktion.",
-  tabs: { scan: "Scan", performance: "Leistung", privacy: "Datenschutz", ui: "Oberfläche", manutenzione: "Wartung", gaming: "Gaming", startup: "Autostart", pricing: "Tarife & Preise" },
+  tabs: { scan: "Systemscan", performance: "Leistung", privacy: "Datenschutz", ui: "Oberfläche", manutenzione: "Wartung", gaming: "Gaming", startup: "Autostart", pricing: "Tarife & Preise" },
   systemMonitor: {
     cpu: "CPU",
     ram: "Arbeitsspeicher",
@@ -1566,7 +1916,7 @@ const de: Strings = {
     everythingInFree: "Alles aus Free, dazu:",
     reassurance: "Jederzeit k\u00fcndbar. Jede \u00c4nderung bleibt mit einem Klick r\u00fcckg\u00e4ngig zu machen, auch nach der K\u00fcndigung.",
     freeFeatures: [
-      "20 echte Tweaks, jeder gesichert und umkehrbar",
+      "{count} echte Tweaks, jeder gesichert und umkehrbar",
       "Live-Systemmonitor (CPU, Arbeitsspeicher, Datentr\u00e4ger)",
       "Verwaltung der Autostart-Programme",
       "Passwort-Datenleck-Pr\u00fcfung",
@@ -1620,6 +1970,32 @@ const de: Strings = {
     proIssuesTitle: "Auch mit Pro verfügbar",
     unlockPro: "Pro freischalten",
     scanAgain: "Erneut scannen",
+    doneTitle: "Fertig!",
+    doneBody: "{count} Optimierungen angewendet. Dein PC ist bereit.",
+    fixHeading: "Bereit zum Anwenden",
+  },
+  ram: {
+    title: "RAM freigeben",
+    subtitle: "Fordert Windows auf, Speicher freizugeben, den Programme belegen, aber nicht nutzen. So oft ausführbar, wie du willst.",
+    button: "Jetzt freigeben",
+    cleaning: "Wird bereinigt...",
+    freed: "{amount} freigegeben",
+    freedNothing: "Der Speicher war bereits optimiert",
+    inUse: "{used} von {total} belegt",
+    autoLabel: "Automatische Bereinigung",
+    autoOff: "Aus",
+    autoEvery: "Alle {interval}",
+    autoHint: "Bei aktiver automatischer Bereinigung gibt PC Tweaker den RAM selbstständig in regelmäßigen Abständen frei, solange die App geöffnet bleibt.",
+  },
+  restore: {
+    button: "Alles zur\u00fccksetzen",
+    title: "Alle \u00c4nderungen zur\u00fccksetzen?",
+    body: "Die {count} aktiven Optimierungen werden deaktiviert und jeder Wert exakt so wiederhergestellt, wie er vorher war. Es gehen keine Daten verloren.",
+    confirm: "Ja, alles zur\u00fccksetzen",
+    cancel: "Abbrechen",
+    running: "Wird zur\u00fcckgesetzt...",
+    doneToast: "{count} Optimierungen zur\u00fcckgesetzt.",
+    nothingToast: "Es gibt nichts zur\u00fcckzusetzen.",
   },
   passwordCheck: {
     title: "Passwort-Datenleck-Prüfung",
@@ -1712,6 +2088,61 @@ const de: Strings = {
     verificationSent: "Bestätigungs-E-Mail gesendet.",
   },
   tweaks: {
+    disable_startup_delay: {
+      name: "Verzögerung der Autostart-Programme entfernen",
+      description:
+        "Windows wartet nach der Anmeldung absichtlich etwa 10 Sekunden, bevor Autostart-Programme gestartet werden. Diese Option entfernt die Wartezeit (HKCU, keine Erhöhung erforderlich).",
+    },
+    menu_show_delay: {
+      name: "Sofortige Menüreaktion",
+      description:
+        "Entfernt die Verzögerung beim Öffnen von Menüs, wodurch sich der gesamte Desktop spürbar flotter anfühlt (HKCU, keine Erhöhung erforderlich).",
+    },
+    disable_power_throttling: {
+      name: "CPU-Energiedrosselung deaktivieren",
+      description:
+        "Verhindert, dass Windows Hintergrundprozesse zum Energiesparen ausbremst - nützlich bei Notebooks, wo das bei langen Sitzungen zu Rucklern führt (HKLM, erfordert Administratorrechte).",
+    },
+    games_gpu_priority: {
+      name: "GPU-Priorität für Spiele erhöhen",
+      description:
+        "Weist den Multimedia-Scheduler an, Spielen die höchste GPU-Prioritätsklasse zu geben, damit Hintergrund-Apps mitten im Match nicht mehr um die GPU konkurrieren (HKLM, erfordert Administratorrechte).",
+    },
+    disable_tailored_experiences: {
+      name: "Personalisierte Erlebnisse deaktivieren",
+      description:
+        "Verhindert, dass Windows deine Diagnosedaten nutzt, um Werbung, Tipps und Empfehlungen zu personalisieren (HKCU, keine Erhöhung erforderlich).",
+    },
+    disable_app_launch_tracking: {
+      name: "Nicht mehr erfassen, welche Apps du öffnest",
+      description:
+        "Windows protokolliert, wie oft du jedes Programm startest, um Startmenü-Ergebnisse zu sortieren. Diese Option schaltet das ab (HKCU, keine Erhöhung erforderlich).",
+    },
+    disable_feedback_requests: {
+      name: "Windows-Feedback-Abfragen unterbinden",
+      description:
+        "Verhindert, dass Windows dich mit Umfragen wie „Wie wahrscheinlich ist es, dass du ... weiterempfiehlst\" unterbricht (HKCU, keine Erhöhung erforderlich).",
+    },
+    disable_cortana: {
+      name: "Cortana deaktivieren",
+      description:
+        "Schaltet Cortana per Systemrichtlinie ab und gibt die im Hintergrund reservierten Ressourcen frei (HKLM, erfordert Administratorrechte).",
+    },
+    show_file_extensions: {
+      name: "Dateiendungen immer anzeigen",
+      description:
+        "Zeigt die echte Endung jeder Datei. Allein aus Sicherheitsgründen sinnvoll: Dateien wie „rechnung.pdf.exe\" werden so sichtbar, die Windows sonst verbirgt (HKCU, keine Erhöhung erforderlich).",
+    },
+    hide_taskbar_widgets: {
+      name: "Widgets aus der Taskleiste ausblenden",
+      description:
+        "Entfernt die Widgets-Schaltfläche (Wetter/Nachrichten), die auch dann Inhalte im Hintergrund lädt, wenn du sie nie öffnest (HKCU, keine Erhöhung erforderlich).",
+    },
+    disable_transparency: {
+      name: "Transparenzeffekte deaktivieren",
+      description:
+        "Schaltet die Weichzeichner-/Acryleffekte in Taskleiste und Menüs ab. Eine kleine, aber echte GPU-Ersparnis, die ältere Rechner oder Systeme mit integrierter Grafik flüssiger macht (HKCU, keine Erhöhung erforderlich).",
+    },
     dark_mode: {
       name: "Dunkler Modus",
       description: "Aktiviert das dunkle Design für Apps und System (HKCU, keine Rechteerhöhung erforderlich).",
@@ -1841,10 +2272,16 @@ const de: Strings = {
 
 export const STRINGS: Record<Lang, Strings> = { it, en, fr, es, de };
 
+/**
+ * English is the product's primary language: a first-time user always sees
+ * English regardless of their Windows locale, and only an explicit choice in
+ * the language menu (persisted here) changes that. Auto-detecting from
+ * `navigator.language` used to mean an Italian Windows install silently got
+ * the Italian build on first launch, which made the app feel region-specific
+ * rather than international.
+ */
 export function detectInitialLang(): Lang {
   const stored = localStorage.getItem("pc-tweaker-lang");
   if (stored && stored in STRINGS) return stored as Lang;
-  const nav = navigator.language.slice(0, 2).toLowerCase();
-  if (nav in STRINGS) return nav as Lang;
   return "en";
 }

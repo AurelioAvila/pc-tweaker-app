@@ -38,7 +38,7 @@ pub fn system_stats(state: tauri::State<'_, SysMonState>) -> Result<SystemStats,
     let mut sys = state
         .0
         .lock()
-        .map_err(|_| "stato del monitor di sistema non disponibile".to_string())?;
+        .map_err(|_| "system monitor state is unavailable".to_string())?;
 
     sys.refresh_cpu_usage();
     sys.refresh_memory();

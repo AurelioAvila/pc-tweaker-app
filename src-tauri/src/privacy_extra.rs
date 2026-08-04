@@ -13,8 +13,8 @@ pub struct PrivacyInfo {
 pub fn activity_history_info() -> PrivacyInfo {
     PrivacyInfo {
         id: ACTIVITY_HISTORY_ID,
-        name: "Disattiva cronologia attività (Windows Timeline)",
-        description: "Impedisce a Windows di registrare, salvare e inviare a Microsoft la cronologia delle app e dei documenti usati, tramite policy di sistema (HKLM, richiede privilegi di amministratore).",
+        name: "Disable activity history (Windows Timeline)",
+        description: "Stops Windows from recording, storing and sending Microsoft the history of the apps and documents you use, through system policy (HKLM, requires administrator rights).",
         requires_admin: true,
         requires_pro: true,
     }

@@ -174,7 +174,7 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                 (None, Some(game)) => {
                     if !store.is_applied(turbo::TWEAK_ID) {
                         if let Err(e) = apply_turbo_elevated_if_needed(&store) {
-                            eprintln!("game session: impossibile applicare il preset: {}", e);
+                            eprintln!("game session: could not apply the preset: {}", e);
                             continue;
                         }
                     }
@@ -187,7 +187,7 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                 (Some(_), None) => {
                     if store.is_applied(turbo::TWEAK_ID) {
                         if let Err(e) = rollback_turbo_elevated_if_needed(&store) {
-                            eprintln!("game session: impossibile annullare il preset: {}", e);
+                            eprintln!("game session: could not revert the preset: {}", e);
                         }
                     }
                     *active = None;

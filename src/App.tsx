@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openFolderDialog } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -141,6 +141,22 @@ function formatBytes(bytes: number): string {
   const mb = bytes / (1024 * 1024);
   if (mb < 1024) return `${mb.toFixed(1)} MB`;
   return `${(mb / 1024).toFixed(2)} GB`;
+}
+
+/**
+ * Resolves a tweak/cleanup id to its translated name and description, falling
+ * back to the English text the Rust side ships with when a locale is missing
+ * the id. Module-level so every screen resolves text the same way — the Scan
+ * list used to read `tweak.name` directly and so showed English rows inside a
+ * translated UI.
+ */
+function textFor(
+  dict: Record<string, { name: string; description: string }>,
+  id: string,
+  fallbackName: string,
+  fallbackDescription: string,
+): { name: string; description: string } {
+  return dict[id] ?? { name: fallbackName, description: fallbackDescription };
 }
 
 function ShieldBadge({ label }: { label: string }) {
@@ -1116,11 +1132,12 @@ function ScanPanel({
   onFixed: () => Promise<void>;
   pushToast: (kind: Toast["kind"], message: string) => void;
 }) {
-  const [phase, setPhase] = useState<"idle" | "scanning" | "done">("idle");
+  const [phase, setPhase] = useState<"idle" | "scanning" | "results" | "done">("idle");
   const [scanPct, setScanPct] = useState(0);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [fixing, setFixing] = useState(false);
   const [fixProgress, setFixProgress] = useState(0);
+  const [fixedCount, setFixedCount] = useState(0);
   const scanTimer = useRef<number | null>(null);
 
   const SCAN_DURATION_MS = 4200;
@@ -1131,19 +1148,26 @@ function ScanPanel({
   // Fixable now = anything the user can actually apply today: every free
   // tweak/cleanup, plus Pro ones too once they're unlocked. Locked = Pro
   // items only shown as an upsell when the account isn't Pro yet.
+  // Names/descriptions go through `textFor` so this list is translated like
+  // the rest of the UI instead of showing the raw English text from Rust.
   const fixableIssues: ScanIssue[] = useMemo(() => {
     const fromTweaks = tweaks
       .filter((t) => !t.applied && (isPro || !t.requires_pro) && t.id !== "turbo_boost")
-      .map((t) => ({ kind: "tweak" as const, id: t.id, name: t.name, description: t.description }));
+      .map((t) => ({ kind: "tweak" as const, id: t.id, ...textFor(s.tweaks, t.id, t.name, t.description) }));
     const fromCleanup = cleanupTargets
       .filter((c) => isPro || !c.requires_pro)
-      .map((c) => ({ kind: "cleanup" as const, id: c.id, name: c.name, description: c.description }));
+      .map((c) => ({ kind: "cleanup" as const, id: c.id, ...textFor(s.cleanup, c.id, c.name, c.description) }));
     return [...fromTweaks, ...fromCleanup];
-  }, [tweaks, cleanupTargets, isPro]);
+  }, [tweaks, cleanupTargets, isPro, s]);
 
   const lockedIssues = useMemo(
-    () => (isPro ? [] : tweaks.filter((t) => !t.applied && t.requires_pro)),
-    [tweaks, isPro],
+    () =>
+      isPro
+        ? []
+        : tweaks
+            .filter((t) => !t.applied && t.requires_pro)
+            .map((t) => ({ id: t.id, ...textFor(s.tweaks, t.id, t.name, t.description) })),
+    [tweaks, isPro, s],
   );
 
   useEffect(() => {
@@ -1167,7 +1191,7 @@ function ScanPanel({
           initialChecked[issue.id] = true;
         });
         setChecked(initialChecked);
-        setPhase("done");
+        setPhase("results");
       }
     }, 60);
   }
@@ -1209,6 +1233,10 @@ function ScanPanel({
     await onFixed();
     setFixing(false);
     const fixed = toFix.length - failed;
+    setFixedCount(fixed);
+    // Land on an explicit "Done!" screen rather than dropping the user back
+    // into a half-empty checklist: the result of the click is then unmistakable.
+    setPhase("done");
     if (fixed > 0) pushToast("success", format(s.scan.fixedToast, { count: fixed }));
   }
 
@@ -1263,6 +1291,27 @@ function ScanPanel({
       )}
 
       {phase === "done" && (
+        <div className="animate-card mt-6 flex w-full flex-col items-center">
+          <span className="grid h-20 w-20 place-items-center rounded-full bg-emerald-400/15 text-4xl text-emerald-300 ring-4 ring-emerald-400/20">
+            ✓
+          </span>
+          <p className="mt-4 text-xl font-black tracking-tight text-emerald-300">{s.scan.doneTitle}</p>
+          <p className="mt-1 text-center text-sm text-slate-400">
+            {format(s.scan.doneBody, { count: fixedCount })}
+          </p>
+          <button
+            onClick={() => {
+              setFixedCount(0);
+              setPhase("idle");
+            }}
+            className="mt-5 rounded-xl bg-white/10 px-5 py-2 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/15"
+          >
+            {s.scan.scanAgain}
+          </button>
+        </div>
+      )}
+
+      {phase === "results" && (
         <div className="mt-6 w-full">
           <div className="mb-4 flex items-center justify-center gap-2">
             <span
@@ -1279,19 +1328,43 @@ function ScanPanel({
 
           {fixableIssues.length > 0 && (
             <div className="flex flex-col gap-2">
+              {/* The primary action sits above the list: after a scan the user
+                  wants to act, not to scroll a checklist to find the button. */}
               <button
-                onClick={() => {
-                  const allChecked = fixableIssues.every((i) => checked[i.id]);
-                  const next: Record<string, boolean> = {};
-                  fixableIssues.forEach((i) => {
-                    next[i.id] = !allChecked;
-                  });
-                  setChecked(next);
-                }}
-                className="self-end text-xs text-slate-500 hover:text-slate-300"
+                onClick={fixAll}
+                disabled={fixing || checkedCount === 0}
+                className="relative overflow-hidden rounded-xl bg-gradient-to-r from-fuchsia-500 to-indigo-500 py-3 text-sm font-bold text-white shadow-lg shadow-fuchsia-500/20 transition-transform hover:scale-[1.01] disabled:cursor-wait disabled:opacity-50"
               >
-                {fixableIssues.every((i) => checked[i.id]) ? s.scan.deselectAll : s.scan.selectAll}
+                {fixing && (
+                  <span
+                    className="absolute inset-y-0 left-0 bg-white/25 transition-[width] duration-300"
+                    style={{ width: `${(fixProgress / Math.max(1, checkedCount)) * 100}%` }}
+                  />
+                )}
+                <span className="relative flex items-center justify-center gap-2">
+                  {fixing && (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  )}
+                  {fixing ? format(s.scan.fixing, { done: fixProgress, total: checkedCount }) : s.scan.fixAll}
+                </span>
               </button>
+
+              <div className="mt-2 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{s.scan.fixHeading}</p>
+                <button
+                  onClick={() => {
+                    const allChecked = fixableIssues.every((i) => checked[i.id]);
+                    const next: Record<string, boolean> = {};
+                    fixableIssues.forEach((i) => {
+                      next[i.id] = !allChecked;
+                    });
+                    setChecked(next);
+                  }}
+                  className="text-xs text-slate-500 hover:text-slate-300"
+                >
+                  {fixableIssues.every((i) => checked[i.id]) ? s.scan.deselectAll : s.scan.selectAll}
+                </button>
+              </div>
 
               {fixableIssues.map((issue) => (
                 <label
@@ -1317,21 +1390,6 @@ function ScanPanel({
                   </span>
                 </label>
               ))}
-              <button
-                onClick={fixAll}
-                disabled={fixing || checkedCount === 0}
-                className="relative mt-2 overflow-hidden rounded-xl bg-gradient-to-r from-fuchsia-500 to-indigo-500 py-2.5 text-sm font-bold text-white transition-transform hover:scale-[1.01] disabled:cursor-wait disabled:opacity-50"
-              >
-                {fixing && (
-                  <span
-                    className="absolute inset-y-0 left-0 bg-white/20 transition-[width] duration-200"
-                    style={{ width: `${(fixProgress / Math.max(1, checkedCount)) * 100}%` }}
-                  />
-                )}
-                <span className="relative">
-                  {fixing ? format(s.scan.fixing, { done: fixProgress, total: checkedCount }) : s.scan.fixAll}
-                </span>
-              </button>
             </div>
           )}
 
@@ -1581,6 +1639,173 @@ function SystemMonitor({ s }: { s: Strings }) {
   );
 }
 
+type RamCleanResult = {
+  freed_bytes: number;
+  trimmed_processes: number;
+  skipped_processes: number;
+  ram_used_before: number;
+  ram_used_after: number;
+  ram_total: number;
+};
+
+/** Auto-cleanup choices, in minutes. `0` means "off". */
+const RAM_AUTO_INTERVALS = [0, 10, 30, 60, 180, 360] as const;
+
+function ramIntervalLabel(minutes: number, s: Strings): string {
+  if (minutes === 0) return s.ram.autoOff;
+  const text = minutes < 60 ? `${minutes} min` : `${minutes / 60} h`;
+  return format(s.ram.autoEvery, { interval: text });
+}
+
+/**
+ * Asks Windows to page out the unused part of every process's working set —
+ * the same thing Windows does on its own under memory pressure, just requested
+ * early. Safe to run repeatedly, which is why it can also be scheduled.
+ */
+function RamCleaner({
+  s,
+  pushToast,
+}: {
+  s: Strings;
+  pushToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [last, setLast] = useState<RamCleanResult | null>(null);
+  const [autoMinutes, setAutoMinutes] = useState<number>(() => {
+    const stored = Number(localStorage.getItem("pc-tweaker-ram-auto"));
+    // Only honor a value we actually offer: a hand-edited or stale entry must
+    // not turn into a rogue interval (or a 0ms one, which would spin the CPU).
+    return (RAM_AUTO_INTERVALS as readonly number[]).includes(stored) ? stored : 0;
+  });
+
+  // The interval callback is created once per `autoMinutes` change and closes
+  // over whatever `busy` was at that moment, so it can't read the live value.
+  // A ref can, which is what stops a slow cleanup from being re-entered by the
+  // next tick and firing two overlapping passes.
+  const busyRef = useRef(false);
+
+  const runClean = useCallback(
+    async (silent: boolean) => {
+      if (busyRef.current) return;
+      busyRef.current = true;
+      setBusy(true);
+      try {
+        const result = await invoke<RamCleanResult>("clean_ram");
+        setLast(result);
+        if (!silent) {
+          pushToast(
+            "success",
+            result.freed_bytes > 0
+              ? format(s.ram.freed, { amount: formatBytes(result.freed_bytes) })
+              : s.ram.freedNothing,
+          );
+        }
+      } catch (e) {
+        // A scheduled run failing shouldn't spam toasts every 10 minutes.
+        if (!silent) pushToast("error", String(e));
+      } finally {
+        busyRef.current = false;
+        setBusy(false);
+      }
+    },
+    [s, pushToast],
+  );
+
+  // `runClean` gets a new identity whenever the parent re-renders (pushToast is
+  // redefined each render). Depending on it directly would tear down and
+  // rebuild the interval on every render, so a 10-minute timer would keep
+  // restarting from zero and effectively never fire. Reading it through a ref
+  // keeps the effect keyed on the interval alone.
+  const runCleanRef = useRef(runClean);
+  useEffect(() => {
+    runCleanRef.current = runClean;
+  }, [runClean]);
+
+  useEffect(() => {
+    if (autoMinutes === 0) return;
+    const id = window.setInterval(() => void runCleanRef.current(true), autoMinutes * 60_000);
+    // Clearing on change/unmount is what guarantees exactly one timer is ever
+    // alive, no matter how often the user flips the interval.
+    return () => window.clearInterval(id);
+  }, [autoMinutes]);
+
+  function chooseInterval(minutes: number) {
+    setAutoMinutes(minutes);
+    localStorage.setItem("pc-tweaker-ram-auto", String(minutes));
+  }
+
+  return (
+    <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+      <div className="flex flex-wrap items-center gap-4">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-400/15 text-emerald-300">
+          <ChipIcon className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold text-slate-100">{s.ram.title}</h2>
+          <p className="mt-0.5 text-sm text-slate-400">{s.ram.subtitle}</p>
+        </div>
+        <button
+          onClick={() => void runClean(false)}
+          disabled={busy}
+          className="shrink-0 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 px-5 py-2.5 text-sm font-bold text-emerald-950 transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60"
+        >
+          {busy ? s.ram.cleaning : s.ram.button}
+        </button>
+      </div>
+
+      {last && (
+        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-emerald-400/10 px-3 py-2 text-sm">
+          <span className="font-semibold text-emerald-300">
+            {last.freed_bytes > 0
+              ? format(s.ram.freed, { amount: formatBytes(last.freed_bytes) })
+              : s.ram.freedNothing}
+          </span>
+          <span className="text-xs text-slate-400">
+            {format(s.ram.inUse, {
+              used: formatBytes(last.ram_used_after),
+              total: formatBytes(last.ram_total),
+            })}
+          </span>
+        </div>
+      )}
+
+      <div className="mt-4 border-t border-white/5 pt-3">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{s.ram.autoLabel}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {RAM_AUTO_INTERVALS.map((m) => (
+            <button
+              key={m}
+              onClick={() => chooseInterval(m)}
+              className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                autoMinutes === m
+                  ? "bg-emerald-400/20 text-emerald-300 ring-1 ring-emerald-400/40"
+                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"
+              }`}
+            >
+              {ramIntervalLabel(m, s)}
+            </button>
+          ))}
+        </div>
+        {autoMinutes > 0 && <p className="mt-2 text-xs leading-relaxed text-slate-500">{s.ram.autoHint}</p>}
+      </div>
+    </div>
+  );
+}
+
+function ChipIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="7" y="7" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 type StartupEntry = {
   name: string;
   command: string;
@@ -1727,11 +1952,13 @@ function PricingPanel({
   s,
   lang,
   isPro,
+  freeTweakCount,
   onChoosePro,
 }: {
   s: Strings;
   lang: Lang;
   isPro: boolean;
+  freeTweakCount: number;
   onChoosePro: (plan: "monthly" | "annual") => void;
 }) {
   const [annual, setAnnual] = useState(true);
@@ -1793,10 +2020,13 @@ function PricingPanel({
           <p className="mt-1 text-xs text-slate-500">{s.pricing.freePriceNote}</p>
 
           <ul className="mt-6 flex flex-col gap-2.5">
+            {/* The tweak count is filled in from the real list rather than
+                written into the copy: it was hardcoded as "20" and silently
+                became a lie the moment new tweaks shipped. */}
             {s.pricing.freeFeatures.map((feature) => (
               <li key={feature} className="flex items-start gap-2.5 text-sm text-slate-300">
                 <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
-                <span>{feature}</span>
+                <span>{format(feature, { count: freeTweakCount })}</span>
               </li>
             ))}
           </ul>
@@ -1874,6 +2104,34 @@ function PricingPanel({
         {s.pricing.reassurance}
       </p>
     </div>
+  );
+}
+
+function UndoIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M4 9h11a5 5 0 0 1 0 10h-6M4 9l4-4M4 9l4 4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CrownIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M3 8.5l3.6 2.7L12 4.5l5.4 6.7L21 8.5 19.2 19H4.8L3 8.5Z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -2078,6 +2336,8 @@ function App() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [paywallFeature, setPaywallFeature] = useState<string | null>(null);
   const [confirmCleanup, setConfirmCleanup] = useState<CleanupInfo | null>(null);
+  const [confirmRestore, setConfirmRestore] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const toastSeq = useRef(0);
 
   async function refresh() {
@@ -2102,10 +2362,6 @@ function App() {
     }, 4000);
   }
 
-  function textFor(dict: Record<string, { name: string; description: string }>, id: string, fallbackName: string, fallbackDescription: string) {
-    return dict[id] ?? { name: fallbackName, description: fallbackDescription };
-  }
-
   async function toggle(tweak: TweakInfo) {
     const text = textFor(s.tweaks, tweak.id, tweak.name, tweak.description);
     if (tweak.requires_pro && !isProUnlocked) {
@@ -2126,6 +2382,33 @@ function App() {
       pushToast("error", String(e));
     } finally {
       setBusyId(null);
+    }
+  }
+
+  /**
+   * Turns off every applied tweak in one action. Goes through the batched
+   * `rollback_tweaks` command so the whole restore costs a single UAC prompt
+   * instead of one per admin-level tweak, and reports per-tweak failures
+   * rather than stopping at the first one.
+   */
+  async function restoreAll() {
+    const appliedIds = tweaks.filter((t) => t.applied).map((t) => t.id);
+    setConfirmRestore(false);
+    if (appliedIds.length === 0) {
+      pushToast("error", s.restore.nothingToast);
+      return;
+    }
+    setRestoring(true);
+    try {
+      const failures = await invoke<string[]>("rollback_tweaks", { ids: appliedIds });
+      failures.forEach((f) => pushToast("error", f));
+      await refresh();
+      const restored = appliedIds.length - failures.length;
+      if (restored > 0) pushToast("success", format(s.restore.doneToast, { count: restored }));
+    } catch (e) {
+      pushToast("error", String(e));
+    } finally {
+      setRestoring(false);
     }
   }
 
@@ -2177,6 +2460,8 @@ function App() {
   const showPricing = filter === "pricing" && !searching;
   const turboBoostApplied = tweaks.find((t) => t.id === "turbo_boost")?.applied ?? false;
   const appliedCount = tweaks.filter((t) => t.applied).length;
+  // What the pricing page can honestly promise a Free user.
+  const freeTweakCount = tweaks.filter((t) => !t.requires_pro).length;
 
   const currentLabel = CATEGORIES.find((c) => c.key === filter)?.label ?? "";
 
@@ -2229,15 +2514,22 @@ function App() {
 
         <div className="mt-auto pt-4">
           {isProUnlocked ? (
-            <div className="rounded-xl border border-amber-400/25 bg-amber-400/10 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
-                <span className="text-sm">★</span> {s.menu.planPro}
-              </p>
-              {auth.status === "authenticated" && (
-                <p className="mt-1 truncate text-[11px] leading-snug text-slate-400" title={auth.email}>
-                  {auth.email}
+            /* Paying for Pro should feel like it bought something: a gold
+               gradient frame, a glow and a crown, not the same flat chip a
+               Free account sees. Free deliberately stays plain. */
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 p-[1.5px] shadow-[0_0_22px_rgba(251,191,36,0.28)]">
+              <div className="relative rounded-[10px] bg-slate-950/90 p-3">
+                <span className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-amber-400/20 blur-2xl" />
+                <p className="relative flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-300">
+                  <CrownIcon className="h-4 w-4" />
+                  {s.menu.planPro}
                 </p>
-              )}
+                {auth.status === "authenticated" && (
+                  <p className="relative mt-1.5 truncate text-[11px] leading-snug text-slate-400" title={auth.email}>
+                    {auth.email}
+                  </p>
+                )}
+              </div>
             </div>
           ) : (
             <button
@@ -2262,9 +2554,23 @@ function App() {
               {/* The tweak tally is meaningless on the startup screen, which
                   isn't made of tweaks and shows its own count instead. */}
               {!showStartup && !showPricing && (
-                <p className="mt-1 text-sm text-slate-400">
-                  {format(s.appliedCount, { applied: appliedCount, total: tweaks.length })}
-                </p>
+                <div className="mt-1 flex items-center gap-3">
+                  <p className="text-sm text-slate-400">
+                    {format(s.appliedCount, { applied: appliedCount, total: tweaks.length })}
+                  </p>
+                  {/* One-click way back to a stock Windows: only offered when
+                      there is actually something applied to undo. */}
+                  {appliedCount > 0 && (
+                    <button
+                      onClick={() => setConfirmRestore(true)}
+                      disabled={restoring}
+                      className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-300 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white disabled:cursor-wait disabled:opacity-60"
+                    >
+                      <UndoIcon className="h-3.5 w-3.5" />
+                      {restoring ? s.restore.running : s.restore.button}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
             <div className="relative ml-auto w-56 shrink-0">
@@ -2304,6 +2610,8 @@ function App() {
 
           {showScan && <SystemMonitor s={s} />}
 
+          {showScan && <RamCleaner s={s} pushToast={pushToast} />}
+
           {showStartup && <StartupManager s={s} pushToast={pushToast} />}
 
           {showPricing && (
@@ -2311,6 +2619,7 @@ function App() {
               s={s}
               lang={lang}
               isPro={isProUnlocked}
+              freeTweakCount={freeTweakCount}
               onChoosePro={async (plan) => {
                 try {
                   await startCheckout(plan);
@@ -2453,6 +2762,29 @@ function App() {
               className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-slate-400 hover:text-slate-200"
             >
               {s.cleanupConfirm.cancel}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {confirmRestore && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm">
+          <div className="animate-card w-full max-w-sm rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-100">{s.restore.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-400">
+              {format(s.restore.body, { count: appliedCount })}
+            </p>
+            <button
+              onClick={restoreAll}
+              className="mt-5 w-full rounded-xl bg-amber-500 py-2.5 text-sm font-semibold text-amber-950 transition-colors hover:bg-amber-400"
+            >
+              {s.restore.confirm}
+            </button>
+            <button
+              onClick={() => setConfirmRestore(false)}
+              className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-slate-400 hover:text-slate-200"
+            >
+              {s.restore.cancel}
             </button>
           </div>
         </div>

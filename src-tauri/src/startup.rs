@@ -116,11 +116,11 @@ mod imp {
         let root = root_for(scope);
         let (key, _) = root
             .create_subkey_with_flags(APPROVED_PATH, KEY_READ | KEY_WRITE)
-            .map_err(|e| format!("impossibile aprire la chiave di avvio: {}", e))?;
+            .map_err(|e| format!("could not open the startup registry key: {}", e))?;
 
         let bytes = approval_bytes(enabled, now_unix_secs());
         key.set_raw_value(name, &RegValue { vtype: REG_BINARY, bytes })
-            .map_err(|e| format!("impossibile aggiornare lo stato di avvio: {}", e))
+            .map_err(|e| format!("could not update the startup state: {}", e))
     }
 }
 

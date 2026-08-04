@@ -14,8 +14,8 @@ pub struct ServiceInfo {
 pub fn windows_search_info() -> ServiceInfo {
     ServiceInfo {
         id: WINDOWS_SEARCH_ID,
-        name: "Disattiva servizio di indicizzazione (Windows Search)",
-        description: "Ferma e disattiva il servizio di indicizzazione dei file di Windows, riducendo l'attività su disco in background — utile su SSD piccoli o mentre giochi. La ricerca file nel menu Start diventa più lenta finché non lo riattivi (richiede privilegi di amministratore).",
+        name: "Disable the indexing service (Windows Search)",
+        description: "Stops and disables the Windows file indexing service, cutting background disk activity - useful on small SSDs or while gaming. File search in the Start menu gets slower until you turn it back on (requires administrator rights).",
         requires_admin: true,
         requires_pro: true,
     }
@@ -30,7 +30,7 @@ fn run_sc(args: &[&str]) -> Result<String, String> {
         .args(args)
         .creation_flags(CREATE_NO_WINDOW)
         .output()
-        .map_err(|e| format!("impossibile eseguire sc: {}", e))?;
+        .map_err(|e| format!("could not run sc: {}", e))?;
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
 }
 
@@ -45,7 +45,7 @@ fn parse_start_type(output: &str) -> Result<String, String> {
             return Ok(line.trim().to_string());
         }
     }
-    Err("impossibile leggere il tipo di avvio del servizio".to_string())
+    Err("could not read the service start type".to_string())
 }
 
 #[cfg(windows)]

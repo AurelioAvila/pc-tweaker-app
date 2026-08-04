@@ -6,6 +6,7 @@ mod game_sessions;
 mod gaming;
 mod power;
 mod privacy_extra;
+mod ramclean;
 mod rollback;
 mod services;
 mod startup;
@@ -51,7 +52,7 @@ fn hive_str(h: &Hive) -> &'static str {
 pub fn store_for_dir(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
     app.path()
         .app_data_dir()
-        .map_err(|e| format!("impossibile risolvere la cartella dati app: {}", e))
+        .map_err(|e| format!("could not resolve the app data folder: {}", e))
 }
 
 fn store_for(app: &tauri::AppHandle) -> Result<RollbackStore, String> {
@@ -79,8 +80,8 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
     list.push(TweakInfo {
         applied: store.is_applied(power::TWEAK_ID),
         id: power::TWEAK_ID.to_string(),
-        name: "Prestazioni elevate (piano di alimentazione)".to_string(),
-        description: "Passa al piano di alimentazione Windows \"Prestazioni elevate\". Utile su desktop o quando sei collegato alla corrente; ripristina il piano precedente al rollback.".to_string(),
+        name: "High performance (power plan)".to_string(),
+        description: "Switches to the Windows \"High performance\" power plan. Useful on desktops or when plugged in; restores the previous plan on rollback.".to_string(),
         category: category_str(&Category::Performance).to_string(),
         hive: "—".to_string(),
         requires_admin: false,
@@ -102,8 +103,8 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
     list.push(TweakInfo {
         applied: store.is_applied(dns::TWEAK_ID),
         id: dns::TWEAK_ID.to_string(),
-        name: "DNS privati (Cloudflare)".to_string(),
-        description: "Passa a server DNS orientati alla privacy (1.1.1.1) sull'interfaccia di rete attiva, impedendo al tuo provider di registrare le richieste DNS. Non nasconde il tuo indirizzo IP (richiede una VPN, vedi sotto).".to_string(),
+        name: "Private DNS (Cloudflare)".to_string(),
+        description: "Switches the active network adapter to privacy-focused DNS servers (1.1.1.1), stopping your provider from logging your DNS queries. It does not hide your IP address (that needs a VPN, see below).".to_string(),
         category: category_str(&Category::Privacy).to_string(),
         hive: "—".to_string(),
         requires_admin: true,
@@ -198,7 +199,7 @@ fn apply_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::apply_activity_history(store),
         services::WINDOWS_SEARCH_ID => services::apply(store),
         _ => {
-            let tweak = find_tweak(id).ok_or_else(|| format!("tweak sconosciuto: {}", id))?;
+            let tweak = find_tweak(id).ok_or_else(|| format!("unknown tweak: {}", id))?;
             tweak.apply(store)
         }
     }
@@ -217,7 +218,7 @@ fn rollback_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::rollback_activity_history(store),
         services::WINDOWS_SEARCH_ID => services::rollback(store),
         _ => {
-            let tweak = find_tweak(id).ok_or_else(|| format!("tweak sconosciuto: {}", id))?;
+            let tweak = find_tweak(id).ok_or_else(|| format!("unknown tweak: {}", id))?;
             tweak.rollback(store)
         }
     }
@@ -303,22 +304,60 @@ fn apply_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, 
     Ok(failures)
 }
 
+/// Reverts several tweaks at once ("Restore all"). Same batching rationale as
+/// `apply_tweaks`: undoing a dozen admin tweaks must cost one UAC prompt, not
+/// one per tweak, or nobody would ever use the button.
+#[cfg(windows)]
+#[tauri::command]
+fn rollback_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, String> {
+    let store = store_for(&app)?;
+    let mut failures = Vec::new();
+
+    let (needs_admin, direct) = split_by_elevation(ids);
+
+    for id in &direct {
+        if let Err(e) = rollback_by_id(&store, id) {
+            failures.push(format!("{}: {}", id, e));
+        }
+    }
+
+    if !needs_admin.is_empty() {
+        if elevation::is_elevated() {
+            for id in &needs_admin {
+                if let Err(e) = rollback_by_id(&store, id) {
+                    failures.push(format!("{}: {}", id, e));
+                }
+            }
+        } else if let Err(e) = elevation::run_elevated_action("--elevated-rollback-many", &needs_admin.join(",")) {
+            failures.push(e);
+        }
+    }
+
+    Ok(failures)
+}
+
 #[cfg(not(windows))]
 #[tauri::command]
 fn apply_tweaks(_app: tauri::AppHandle, _ids: Vec<String>) -> Result<Vec<String>, String> {
-    Err("i tweak sono al momento supportati solo su Windows".to_string())
+    Err("tweaks are currently only supported on Windows".to_string())
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+fn rollback_tweaks(_app: tauri::AppHandle, _ids: Vec<String>) -> Result<Vec<String>, String> {
+    Err("tweaks are currently only supported on Windows".to_string())
 }
 
 #[cfg(not(windows))]
 #[tauri::command]
 fn apply_tweak(_app: tauri::AppHandle, _id: String) -> Result<(), String> {
-    Err("i tweak sono al momento supportati solo su Windows".to_string())
+    Err("tweaks are currently only supported on Windows".to_string())
 }
 
 #[cfg(not(windows))]
 #[tauri::command]
 fn rollback_tweak(_app: tauri::AppHandle, _id: String) -> Result<(), String> {
-    Err("i tweak sono al momento supportati solo su Windows".to_string())
+    Err("tweaks are currently only supported on Windows".to_string())
 }
 
 #[tauri::command]
@@ -330,7 +369,7 @@ fn last_cleanup_result_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf
     let dir = app
         .path()
         .app_data_dir()
-        .map_err(|e| format!("impossibile risolvere la cartella dati app: {}", e))?;
+        .map_err(|e| format!("could not resolve the app data folder: {}", e))?;
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir.join("last_cleanup_result.json"))
 }
@@ -397,6 +436,22 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             }
         }
         "--elevated-rollback" => rollback_by_id(&store, id),
+        "--elevated-rollback-many" => {
+            // Mirror of --elevated-apply-many for "Restore all": one prompt for
+            // the whole batch, and one failing tweak must not strand the rest
+            // in their applied state.
+            let mut failed = Vec::new();
+            for one in id.split(',').filter(|s| !s.is_empty()) {
+                if let Err(e) = rollback_by_id(&store, one) {
+                    failed.push(format!("{}: {}", one, e));
+                }
+            }
+            if failed.is_empty() {
+                Ok(())
+            } else {
+                Err(failed.join("; "))
+            }
+        }
         "--elevated-startup" => startup::apply_from_payload(id),
         "--elevated-cleanup" => cleanup::run_cleanup(id).and_then(|res| {
             let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
@@ -436,6 +491,7 @@ pub fn run() {
             list_tweaks,
             apply_tweak,
             apply_tweaks,
+            rollback_tweaks,
             rollback_tweak,
             list_cleanup_targets,
             run_cleanup,
@@ -448,7 +504,8 @@ pub fn run() {
             game_sessions::remove_game_session,
             startup::list_startup_items,
             startup::set_startup_enabled,
-            sysmon::system_stats
+            sysmon::system_stats,
+            ramclean::clean_ram
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -520,5 +577,60 @@ mod tests {
         for id in all_visible_ids() {
             assert!(!id.contains(','), "id `{}` would break the batch payload", id);
         }
+    }
+
+    /// Two registry tweaks pointing at the same hive+key+value would fight each
+    /// other: applying the second snapshots the *first one's* new value as if it
+    /// were the original, so rolling back would restore the wrong thing. The
+    /// ids would differ, so `every_tweak_id_is_unique` would not notice.
+    #[test]
+    fn no_two_tweaks_write_the_same_registry_value() {
+        let mut seen = std::collections::HashSet::new();
+        for t in tweaks::all_tweaks() {
+            let target = (hive_str(&t.hive), t.key_path, t.value_name);
+            assert!(
+                seen.insert(target),
+                "`{}` writes {}\\{}\\{}, which another tweak already writes",
+                t.id,
+                hive_str(&t.hive),
+                t.key_path,
+                t.value_name
+            );
+        }
+    }
+
+    /// The frontend falls back to the English name/description baked into
+    /// these Rust structs whenever a tweak id is missing from `s.tweaks`, so a
+    /// forgotten translation doesn't fail loudly — it just leaves one English
+    /// row sitting in an otherwise Italian (or French, …) list. That is
+    /// exactly the "some parts aren't translated" symptom users report, and
+    /// nothing else catches it, so assert here that every id the UI can show
+    /// has an entry in every locale.
+    #[test]
+    fn every_id_is_translated_in_every_language() {
+        let i18n = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../src/i18n.ts"))
+            .expect("could not read src/i18n.ts");
+
+        // One `STRINGS` entry per language; each locale object repeats the
+        // same id keys, so a fully translated id appears once per locale.
+        let locale_count = i18n.matches("  tweaks: {").count();
+        assert!(locale_count >= 5, "expected at least 5 locales, found {}", locale_count);
+
+        let mut ids = all_visible_ids();
+        ids.extend(cleanup::cleanup_targets().iter().map(|t| t.id.to_string()));
+
+        let mut missing = Vec::new();
+        for id in &ids {
+            let found = i18n.matches(&format!("\n    {}: {{", id)).count();
+            if found < locale_count {
+                missing.push(format!("{} (translated in {}/{} languages)", id, found, locale_count));
+            }
+        }
+
+        assert!(
+            missing.is_empty(),
+            "these ids are not translated in every language:\n  {}",
+            missing.join("\n  ")
+        );
     }
 }

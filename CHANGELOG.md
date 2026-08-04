@@ -5,6 +5,69 @@ update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just
 the git log.
 
+## 2026-08-04
+
+- **Fixed (translations, the real cause)**: the Scan screen listed every
+  optimization using the raw English name baked into the Rust structs
+  instead of the translated one, so an Italian user scanning their PC got an
+  English checklist. `textFor` — the helper the rest of the UI already used —
+  is now module-level and the Scan list goes through it. Three related leaks
+  fixed at the same time: the Rust-side fallback texts (tweak names, cleanup
+  names, and ~30 error messages) were written in Italian, which meant a
+  missing translation surfaced as an *Italian* row in an English UI; and the
+  `Scan` / `Performance` / `UI` sidebar labels were never translated in
+  it/fr/es/de. All of it is now English at the source, translated in the
+  five locales.
+- **Guarded**: a new Rust test, `every_id_is_translated_in_every_language`,
+  reads `src/i18n.ts` and fails the build if any tweak or cleanup id is
+  missing from any of the five locales. Proven to work before trusting it:
+  deleting one Italian entry made it fail with
+  `dark_mode (translated in 4/5 languages)`. It immediately caught all 11
+  new tweaks below, which is exactly the class of bug that shipped before.
+- **Changed**: the app now always **opens in English**, whatever the Windows
+  locale says; language is only ever changed by an explicit choice in the
+  menu (and remembered from then on). Auto-detecting meant an Italian
+  Windows silently got the Italian build, which made an international
+  product feel region-specific.
+- **Added — Free up RAM**, with an optional schedule (every 10 min / 30 min /
+  1 h / 3 h / 6 h). It asks Windows to page out the unused part of every
+  process's working set — the same thing Windows does under memory pressure,
+  requested early — so it is safe to run as often as you like. Verified on a
+  real machine: **2.80 GB freed**, memory use dropped 51% → 42%. Two bugs
+  were designed out rather than shipped: `freed_bytes` is a saturating
+  subtraction (memory use can legitimately *grow* between the two samples,
+  and an unchecked `u64` would have reported ~18 exabytes freed), and the
+  scheduler reads its callback through a ref — depending on it directly
+  would have rebuilt the interval on every parent render, so a 10-minute
+  timer would have restarted forever and never actually fired.
+- **Added — Restore all**: one button, next to the tweak tally, that reverts
+  every applied optimization at once. It goes through a new batched
+  `rollback_tweaks` command, so undoing a dozen admin-level tweaks costs
+  **one** UAC prompt rather than a dozen — the same batching `apply_tweaks`
+  already did for the Scan's "fix all".
+- **Added — 11 new tweaks (25 → 36 total)**: remove the ~10s startup-app
+  delay, instant menu response, disable CPU power throttling, raise GPU
+  priority for games, disable tailored experiences, stop app-launch
+  tracking, stop feedback prompts, disable Cortana, always show file
+  extensions (worth it for safety alone — it exposes `invoice.pdf.exe`),
+  hide taskbar Widgets, and disable transparency effects. A new test,
+  `no_two_tweaks_write_the_same_registry_value`, prevents the nastiest
+  version of getting this wrong: two tweaks pointing at one registry value
+  would snapshot each other's *new* value as the original, so rolling back
+  would restore the wrong thing — and the ids being different means the
+  existing uniqueness test would never notice. Also proven by deliberately
+  introducing a collision and watching it fail.
+- **Fixed**: the pricing page advertised "20 real tweaks" on the Free plan —
+  hardcoded copy that had quietly become false. The number is now derived
+  from the actual tweak list (currently 28 free), in all five languages, so
+  it cannot go stale again.
+- **UI**: "Fix all" moved to the *top* of the scan results (after a scan you
+  want to act, not scroll a checklist to find the button), followed by a
+  short progress fill and an explicit **Done!** screen. The Pro plan card in
+  the sidebar now gets a gold gradient frame, glow and crown instead of the
+  same flat chip a Free account sees — paying should look like it bought
+  something. Free deliberately stays plain.
+
 ## 2026-08-03
 
 - **Fixed (marketing/youtube-upload)**: un titolo con apostrofo bruciato

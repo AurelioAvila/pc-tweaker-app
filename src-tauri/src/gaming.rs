@@ -15,8 +15,8 @@ pub struct GamingInfo {
 pub fn input_lag_info() -> GamingInfo {
     GamingInfo {
         id: INPUT_LAG_ID,
-        name: "Riduci ritardo di input (mouse)",
-        description: "Disattiva l'accelerazione del puntatore (\"Migliora precisione puntatore\") per un movimento del mouse 1:1, senza ritardi introdotti dal sistema (HKCU, nessuna elevazione richiesta).",
+        name: "Reduce input lag (mouse)",
+        description: "Turns off pointer acceleration (\"Enhance pointer precision\") for true 1:1 mouse movement, with no delay added by the system (HKCU, no elevation required).",
         requires_admin: false,
         requires_pro: false,
     }
@@ -25,8 +25,8 @@ pub fn input_lag_info() -> GamingInfo {
 pub fn turbo_boost_info() -> GamingInfo {
     GamingInfo {
         id: TURBO_BOOST_ID,
-        name: "Turbo Boost processore",
-        description: "Imposta la modalità di aumento delle prestazioni del processore su \"Aggressiva\", per sfruttare al massimo il Turbo Boost/Turbo Core durante il gioco (richiede privilegi di amministratore).",
+        name: "CPU Turbo Boost",
+        description: "Sets the processor performance boost mode to \"Aggressive\", to get the most out of Turbo Boost/Turbo Core while gaming (requires administrator rights).",
         requires_admin: true,
         requires_pro: false,
     }
@@ -35,8 +35,8 @@ pub fn turbo_boost_info() -> GamingInfo {
 pub fn keyboard_delay_info() -> GamingInfo {
     GamingInfo {
         id: KEYBOARD_DELAY_ID,
-        name: "Riduci ritardo di input (tastiera)",
-        description: "Azzera il ritardo prima che una pressione prolungata dei tasti inizi a ripetersi e ne massimizza la velocità di ripetizione, per una risposta più immediata in gioco (HKCU, nessuna elevazione richiesta).",
+        name: "Reduce input lag (keyboard)",
+        description: "Zeroes the delay before a held key starts repeating and maximizes its repeat rate, for a more immediate response in game (HKCU, no elevation required).",
         requires_admin: false,
         requires_pro: false,
     }

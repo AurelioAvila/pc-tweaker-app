@@ -1,15 +1,15 @@
-require("dotenv").config();
+import "dotenv/config";
 
-const fs = require("fs");
-const path = require("path");
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
+import fs from "fs";
+import path from "path";
+import express, { Request, Response } from "express";
+import cors from "cors";
+import helmet from "helmet";
 
-const { initSchema, isConfigured } = require("./db");
-const authRoutes = require("./routes/auth");
-const accountRoutes = require("./routes/account");
-const { router: stripeRoutes, webhookHandler } = require("./routes/stripe");
+import { initSchema, isConfigured } from "./db";
+import authRoutes from "./routes/auth";
+import accountRoutes from "./routes/account";
+import { router as stripeRoutes, webhookHandler } from "./routes/stripe";
 
 const app = express();
 
@@ -34,7 +34,7 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), webho
 
 app.use(express.json());
 
-app.get("/health", (_req, res) => {
+app.get("/health", (_req: Request, res: Response) => {
   res.json({ ok: true, databaseConfigured: isConfigured });
 });
 
@@ -46,9 +46,11 @@ app.get("/health", (_req, res) => {
 // visitors could otherwise burn through in minutes.
 const GITHUB_REPO = "AurelioAvila/pc-tweaker-app";
 const RELEASE_CACHE_TTL_MS = 10 * 60 * 1000;
-let releaseCache = { checkedAt: 0, downloadUrl: null, version: null };
 
-async function latestWindowsInstaller() {
+type ReleaseCache = { checkedAt: number; downloadUrl: string | null; version: string | null };
+let releaseCache: ReleaseCache = { checkedAt: 0, downloadUrl: null, version: null };
+
+async function latestWindowsInstaller(): Promise<ReleaseCache> {
   if (Date.now() - releaseCache.checkedAt < RELEASE_CACHE_TTL_MS) {
     return releaseCache;
   }
@@ -57,14 +59,17 @@ async function latestWindowsInstaller() {
       headers: { Accept: "application/vnd.github+json", "User-Agent": "pc-tweaker-backend" },
     });
     if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-    const release = await res.json();
+    const release = (await res.json()) as {
+      assets?: { name: string; browser_download_url: string }[];
+      tag_name?: string;
+    };
     const asset = (release.assets || []).find((a) => a.name.endsWith("-setup.exe"));
     releaseCache = {
       checkedAt: Date.now(),
       downloadUrl: asset?.browser_download_url || null,
       version: release.tag_name || null,
     };
-  } catch (err) {
+  } catch (err: any) {
     console.error("failed to resolve latest release:", err.message);
     // Keep serving the previous good value (if any) rather than clearing it,
     // so a transient GitHub API hiccup doesn't take the download button down.
@@ -78,7 +83,7 @@ async function latestWindowsInstaller() {
 // /"), which is what got the app flagged with "Website error". This backend
 // is API-only (Railway), there's no separate marketing site, so serve a
 // minimal real page describing the app instead of leaving the root empty.
-app.get("/", async (_req, res) => {
+app.get("/", async (_req: Request, res: Response) => {
   const { downloadUrl, version } = await latestWindowsInstaller();
   const releasesUrl = `https://github.com/${GITHUB_REPO}/releases/latest`;
   const primaryHref = downloadUrl || releasesUrl;
@@ -115,7 +120,7 @@ with one click.</p>
 // token) - mostra il "code" a schermo cosi' l'utente puo' copiarlo a mano nel
 // terminale. TikTok non accetta redirect URI su localhost, serve un dominio
 // HTTPS reale - stesso schema gia' usato per getcertsprint.com.
-app.get("/tiktok-callback", (_req, res) => {
+app.get("/tiktok-callback", (_req: Request, res: Response) => {
   res.type("html").send(`<!DOCTYPE html>
 <html>
 <head><title>TikTok callback</title></head>
@@ -130,12 +135,12 @@ app.get("/tiktok-callback", (_req, res) => {
 </html>`);
 });
 
-function escapeHtml(s) {
+function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function serveMarkdownAsHtml(routePath, mdFilePath, title) {
-  app.get(routePath, (_req, res) => {
+function serveMarkdownAsHtml(routePath: string, mdFilePath: string, title: string): void {
+  app.get(routePath, (_req: Request, res: Response) => {
     const md = fs.readFileSync(mdFilePath, "utf8");
     res.type("html").send(`<!DOCTYPE html>
 <html>
@@ -159,13 +164,13 @@ serveMarkdownAsHtml("/privacy", path.join(__dirname, "..", "legal", "PRIVACY.md"
 // TikTok Developer Portal domain/URL-prefix verification file (one-off,
 // content dictated by TikTok when verifying app_basic_info URLs - safe to
 // leave in place afterward, it's just a static token file).
-app.get("/tiktokpEKDQseFFOg1tBMQ9QvfIZ64fDNQkDLt.txt", (_req, res) => {
+app.get("/tiktokpEKDQseFFOg1tBMQ9QvfIZ64fDNQkDLt.txt", (_req: Request, res: Response) => {
   res.type("text/plain").send("tiktok-developers-site-verification=pEKDQseFFOg1tBMQ9QvfIZ64fDNQkDLt");
 });
 // TikTok issues a fresh token each time verification is (re)requested - the
 // old one above becomes stale but is left in place (harmless) rather than
 // removed, in case of another retry cycle.
-app.get("/tiktokHeKend3CcpkNmGCjEs2zET0AjYqOWn71.txt", (_req, res) => {
+app.get("/tiktokHeKend3CcpkNmGCjEs2zET0AjYqOWn71.txt", (_req: Request, res: Response) => {
   res.type("text/plain").send("tiktok-developers-site-verification=HeKend3CcpkNmGCjEs2zET0AjYqOWn71");
 });
 
@@ -173,7 +178,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/account", accountRoutes);
 app.use("/api", stripeRoutes);
 
-app.use((err, _req, res, _next) => {
+app.use((err: Error, _req: Request, res: Response, _next: express.NextFunction) => {
   console.error("unhandled error:", err);
   res.status(500).json({ error: "internal server error" });
 });

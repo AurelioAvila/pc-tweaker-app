@@ -1,4 +1,4 @@
-const { Pool } = require("pg");
+import { Pool } from "pg";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -10,8 +10,10 @@ const connectionString = process.env.DATABASE_URL;
 // a real Postgres server — used by the local test scripts (see package.json
 // `test` script) so the SQL itself gets exercised without needing a real
 // database installed. Never use this value outside of tests.
-let pool = null;
+let pool: Pool | null = null;
 if (connectionString === "pgmem") {
+  // Lazily required: pg-mem is a devDependency, never bundled for a real
+  // Postgres deployment, so this branch is the only place that touches it.
   const { newDb } = require("pg-mem");
   const mem = newDb();
   mem.public.registerFunction({ name: "now", implementation: () => new Date() });
@@ -24,7 +26,7 @@ if (connectionString === "pgmem") {
   });
 }
 
-async function initSchema() {
+async function initSchema(): Promise<void> {
   if (!pool) return;
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -67,4 +69,21 @@ async function initSchema() {
   await pool.query(`CREATE INDEX IF NOT EXISTS action_tokens_hash_idx ON action_tokens (token_hash);`);
 }
 
-module.exports = { pool, initSchema, isConfigured: Boolean(pool) };
+const isConfigured = Boolean(pool);
+
+/**
+ * Every caller already checks `isConfigured` before touching the database
+ * (returning a 503 otherwise) — this just gives TypeScript the same
+ * guarantee, so route code can write `getPool().query(...)` instead of a
+ * non-null assertion at every call site. Throwing here would only ever mean a
+ * route forgot its own `isConfigured` check, which is a bug worth surfacing
+ * loudly rather than silently proceeding with a null pool.
+ */
+function getPool(): Pool {
+  if (!pool) {
+    throw new Error("database is not configured (DATABASE_URL missing) — check isConfigured before calling getPool()");
+  }
+  return pool;
+}
+
+export { pool, getPool, initSchema, isConfigured };

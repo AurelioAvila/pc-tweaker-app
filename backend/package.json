@@ -1,6 +1,6 @@
 {
   "name": "pc-tweaker-backend",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "license": "MIT",
   "type": "commonjs",
@@ -8,8 +8,10 @@
     "node": ">=18"
   },
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "pretest": "npm run build",
     "test": "node --test test/*.test.mjs",
     "smoke": "node scripts/smoke-test.mjs"
   },
@@ -26,6 +28,15 @@
     "stripe": "^16.9.0"
   },
   "devDependencies": {
-    "pg-mem": "^3.0.4"
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.25",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.1.2",
+    "@types/nodemailer": "^8.0.1",
+    "@types/pg": "^8.20.3",
+    "pg-mem": "^3.0.4",
+    "tsx": "^4.23.5",
+    "typescript": "^5.9.3"
   }
 }

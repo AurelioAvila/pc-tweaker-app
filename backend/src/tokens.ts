@@ -1,7 +1,7 @@
-const crypto = require("crypto");
-const { pool } = require("./db");
+import crypto from "crypto";
+import { getPool } from "./db";
 
-function hashToken(rawToken) {
+function hashToken(rawToken: string): string {
   return crypto.createHash("sha256").update(rawToken).digest("hex");
 }
 
@@ -14,10 +14,10 @@ function hashToken(rawToken) {
  * Returns the raw token (to embed in the email link); it is never
  * recoverable from the database afterwards.
  */
-async function createActionToken(userId, purpose, ttlMs) {
+async function createActionToken(userId: number, purpose: string, ttlMs: number): Promise<string> {
   const rawToken = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + ttlMs);
-  await pool.query(
+  await getPool().query(
     "INSERT INTO action_tokens (user_id, token_hash, purpose, expires_at) VALUES ($1, $2, $3, $4)",
     [userId, hashToken(rawToken), purpose, expiresAt],
   );
@@ -30,8 +30,8 @@ async function createActionToken(userId, purpose, ttlMs) {
  * null if the token is invalid for any reason (deliberately not distinguishing
  * why, to avoid leaking which case applies).
  */
-async function consumeActionToken(rawToken, purpose) {
-  const result = await pool.query(
+async function consumeActionToken(rawToken: string, purpose: string): Promise<number | null> {
+  const result = await getPool().query(
     `UPDATE action_tokens
        SET used_at = now()
      WHERE token_hash = $1
@@ -41,7 +41,7 @@ async function consumeActionToken(rawToken, purpose) {
      RETURNING user_id`,
     [hashToken(rawToken), purpose],
   );
-  return result.rowCount > 0 ? result.rows[0].user_id : null;
+  return result.rowCount && result.rowCount > 0 ? result.rows[0].user_id : null;
 }
 
-module.exports = { createActionToken, consumeActionToken };
+export { createActionToken, consumeActionToken };

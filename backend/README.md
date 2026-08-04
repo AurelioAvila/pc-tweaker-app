@@ -1,9 +1,9 @@
 # pc-tweaker-backend
 
-Minimal Node/Express API for PC Tweaker: email/password accounts (bcrypt + JWT)
-and one-time Stripe Checkout for the Pro upgrade. Boots cleanly even without a
-database or Stripe configured — routes that need them return a clear 503
-instead of crashing, so you can deploy incrementally.
+Node/Express API for PC Tweaker, written in TypeScript: email/password
+accounts (bcrypt + JWT) and Stripe Checkout for the Pro subscription. Boots
+cleanly even without a database or Stripe configured — routes that need them
+return a clear 503 instead of crashing, so you can deploy incrementally.
 
 ## Endpoints
 
@@ -33,8 +33,12 @@ they expire.
 cd backend
 npm install
 cp .env.example .env   # fill in at least JWT_SECRET to test auth locally
-npm run dev
+npm run dev             # runs src/index.ts directly via tsx, no build step needed
 ```
+
+Written in TypeScript (`src/*.ts`). `npm run build` compiles to `dist/`, which
+is what `npm start` runs — `npm run dev` skips that and runs the source
+directly for a faster local loop.
 
 Without `DATABASE_URL` set, auth/account endpoints correctly respond `503`
 instead of crashing — useful for checking the server boots and routes are
@@ -53,7 +57,7 @@ SQL (not just the "no database" error paths) without installing a real
 database:
 
 ```bash
-DATABASE_URL=pgmem JWT_SECRET=test-secret npm start
+DATABASE_URL=pgmem JWT_SECRET=test-secret npm run dev
 ```
 
 Never use `pgmem` outside of local testing — data doesn't persist across restarts.
@@ -74,9 +78,11 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    `STRIPE_SECRET_KEY`,
    `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`, `CHECKOUT_SUCCESS_URL`,
    `CHECKOUT_CANCEL_URL`. See `.env.example` for what each one is.
-4. Railway detects `npm start` automatically from `package.json`. On first
-   boot the server creates the `users` table itself (`initSchema()` in
-   `src/db.js`) — no separate migration step needed.
+4. Railway detects the `build`/`start` scripts automatically from
+   `package.json`: it runs `npm run build` (compiles TypeScript to `dist/`)
+   and then `npm start` (`node dist/index.js`). On first boot the server
+   creates the `users` table itself (`initSchema()` in `src/db.ts`) — no
+   separate migration step needed.
 5. Once deployed, rebuild the desktop app pointing at the new URL:
    ```bash
    VITE_API_BASE_URL=https://your-service.up.railway.app npm run build
@@ -107,7 +113,7 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
 
 - Registration doesn't require email verification before logging in (it's
   tracked and nudged via the account menu, not enforced) — flip that to
-  blocking in `routes/auth.js` if you want it mandatory.
+  blocking in `routes/auth.ts` if you want it mandatory.
 - Rate limiting is per-IP (`express-rate-limit` default `req.ip` keying) —
   fine behind Railway's single proxy (`trust proxy` is set for that), but
   reconsider if you ever put another proxy/CDN in front of this one.

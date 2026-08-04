@@ -1,9 +1,9 @@
-const express = require("express");
-const rateLimit = require("express-rate-limit");
-const { pool, isConfigured } = require("../db");
-const { hashPassword, verifyPassword, signToken, requireAuth, isValidEmail, isValidPassword } = require("../auth");
-const { createActionToken, consumeActionToken } = require("../tokens");
-const { sendMail, MailError } = require("../mailer");
+import express, { Request, Response } from "express";
+import rateLimit from "express-rate-limit";
+import { getPool, isConfigured } from "../db";
+import { hashPassword, verifyPassword, signToken, requireAuth, isValidEmail, isValidPassword } from "../auth";
+import { createActionToken, consumeActionToken } from "../tokens";
+import { sendMail, MailError } from "../mailer";
 
 const router = express.Router();
 
@@ -20,7 +20,7 @@ router.use(authLimiter);
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-async function sendVerificationEmail(userId, email) {
+async function sendVerificationEmail(userId: number, email: string): Promise<void> {
   const token = await createActionToken(userId, "email_verify", DAY_MS);
   const link = `${APP_URL.replace(/\/$/, "")}/api/auth/verify-email?token=${token}`;
   await sendMail({
@@ -30,27 +30,28 @@ async function sendVerificationEmail(userId, email) {
   });
 }
 
-router.post("/register", async (req, res) => {
+router.post("/register", async (req: Request, res: Response) => {
   const { email, password, firstName, lastName, dateOfBirth } = req.body || {};
   if (!isValidEmail(email)) return res.status(400).json({ error: "invalid email" });
   if (!isValidPassword(password)) return res.status(400).json({ error: "password must be at least 8 characters" });
-  if (!firstName || !firstName.trim()) return res.status(400).json({ error: "first name is required" });
-  if (!lastName || !lastName.trim()) return res.status(400).json({ error: "last name is required" });
+  if (!firstName || !String(firstName).trim()) return res.status(400).json({ error: "first name is required" });
+  if (!lastName || !String(lastName).trim()) return res.status(400).json({ error: "last name is required" });
   if (!dateOfBirth || !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
     return res.status(400).json({ error: "date of birth is required (YYYY-MM-DD)" });
   }
   if (!isConfigured) return res.status(503).json({ error: "database not configured (DATABASE_URL missing)" });
 
   try {
+    const pool = getPool();
     const existing = await pool.query("SELECT id FROM users WHERE email = $1", [email.toLowerCase()]);
-    if (existing.rowCount > 0) {
+    if (existing.rowCount && existing.rowCount > 0) {
       return res.status(409).json({ error: "an account with this email already exists" });
     }
 
     const passwordHash = await hashPassword(password);
     const result = await pool.query(
       "INSERT INTO users (email, password_hash, first_name, last_name, date_of_birth) VALUES ($1, $2, $3, $4, $5) RETURNING id, token_version",
-      [email.toLowerCase(), passwordHash, firstName.trim(), lastName.trim(), dateOfBirth],
+      [email.toLowerCase(), passwordHash, String(firstName).trim(), String(lastName).trim(), dateOfBirth],
     );
     const { id, token_version } = result.rows[0];
     const token = signToken(id, token_version);
@@ -68,11 +69,11 @@ router.post("/register", async (req, res) => {
     }
 
     res.status(201).json({ token, verificationEmailSent });
-  } catch (err) {
+  } catch (err: any) {
     // Two concurrent registrations for the same email both pass the SELECT
     // check above before either INSERTs; the second hits the unique
     // constraint here instead. Report it the same way as the normal case.
-    if (err.code === "23505") {
+    if (err?.code === "23505") {
       return res.status(409).json({ error: "an account with this email already exists" });
     }
     console.error("register failed:", err);
@@ -80,7 +81,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", async (req: Request, res: Response) => {
   const { email, password } = req.body || {};
   if (!isValidEmail(email) || typeof password !== "string") {
     return res.status(400).json({ error: "invalid email or password" });
@@ -88,7 +89,7 @@ router.post("/login", async (req, res) => {
   if (!isConfigured) return res.status(503).json({ error: "database not configured (DATABASE_URL missing)" });
 
   try {
-    const result = await pool.query(
+    const result = await getPool().query(
       "SELECT id, password_hash, token_version FROM users WHERE email = $1",
       [email.toLowerCase()],
     );
@@ -108,9 +109,9 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/logout-all", requireAuth, async (req, res) => {
+router.post("/logout-all", requireAuth, async (req: Request, res: Response) => {
   try {
-    await pool.query("UPDATE users SET token_version = token_version + 1 WHERE id = $1", [req.userId]);
+    await getPool().query("UPDATE users SET token_version = token_version + 1 WHERE id = $1", [req.userId]);
     res.json({ ok: true });
   } catch (err) {
     console.error("logout-all failed:", err);
@@ -118,14 +119,14 @@ router.post("/logout-all", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/resend-verification", requireAuth, async (req, res) => {
+router.post("/resend-verification", requireAuth, async (req: Request, res: Response) => {
   if (!isConfigured) return res.status(503).json({ error: "database not configured (DATABASE_URL missing)" });
   try {
-    const result = await pool.query("SELECT email, email_verified FROM users WHERE id = $1", [req.userId]);
+    const result = await getPool().query("SELECT email, email_verified FROM users WHERE id = $1", [req.userId]);
     if (result.rowCount === 0) return res.status(404).json({ error: "account not found" });
     if (result.rows[0].email_verified) return res.json({ ok: true, alreadyVerified: true });
 
-    await sendVerificationEmail(req.userId, result.rows[0].email);
+    await sendVerificationEmail(req.userId as number, result.rows[0].email);
     res.json({ ok: true });
   } catch (err) {
     console.error("resend-verification failed:", err);
@@ -141,7 +142,7 @@ router.post("/resend-verification", requireAuth, async (req, res) => {
   }
 });
 
-function escapeHtml(value) {
+function escapeHtml(value: unknown): string {
   return String(value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -150,7 +151,7 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-function htmlPage(title, bodyHtml) {
+function htmlPage(title: string, bodyHtml: string): string {
   return `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
 <style>body{font-family:system-ui,sans-serif;max-width:420px;margin:80px auto;padding:0 20px;color:#1e1b2e}
 input{width:100%;padding:10px;margin:8px 0;box-sizing:border-box;font-size:16px}
@@ -159,7 +160,7 @@ button{width:100%;padding:10px;font-size:16px;cursor:pointer}
 <body><h2>${title}</h2>${bodyHtml}</body></html>`;
 }
 
-router.get("/verify-email", async (req, res) => {
+router.get("/verify-email", async (req: Request, res: Response) => {
   const { token } = req.query;
   if (!isConfigured) return res.status(503).send(htmlPage("Error", "<p class=error>Database not configured.</p>"));
   if (typeof token !== "string") return res.status(400).send(htmlPage("Error", "<p class=error>Missing token.</p>"));
@@ -171,7 +172,7 @@ router.get("/verify-email", async (req, res) => {
         .status(400)
         .send(htmlPage("Link expired", "<p class=error>This verification link is invalid or has expired. Request a new one from the app.</p>"));
     }
-    await pool.query("UPDATE users SET email_verified = TRUE WHERE id = $1", [userId]);
+    await getPool().query("UPDATE users SET email_verified = TRUE WHERE id = $1", [userId]);
     res.send(htmlPage("Email verified", "<p class=success>Your email is verified. You can close this window and return to PC Tweaker.</p>"));
   } catch (err) {
     console.error("verify-email failed:", err);
@@ -179,7 +180,7 @@ router.get("/verify-email", async (req, res) => {
   }
 });
 
-router.post("/forgot-password", async (req, res) => {
+router.post("/forgot-password", async (req: Request, res: Response) => {
   const { email } = req.body || {};
   if (!isValidEmail(email)) return res.status(400).json({ error: "invalid email" });
 
@@ -189,8 +190,8 @@ router.post("/forgot-password", async (req, res) => {
   if (!isConfigured) return res.json(genericResponse);
 
   try {
-    const result = await pool.query("SELECT id FROM users WHERE email = $1", [email.toLowerCase()]);
-    if (result.rowCount > 0) {
+    const result = await getPool().query("SELECT id FROM users WHERE email = $1", [email.toLowerCase()]);
+    if (result.rowCount && result.rowCount > 0) {
       const userId = result.rows[0].id;
       const token = await createActionToken(userId, "password_reset", 60 * 60 * 1000);
       const link = `${APP_URL.replace(/\/$/, "")}/api/auth/reset-password?token=${token}`;
@@ -207,7 +208,7 @@ router.post("/forgot-password", async (req, res) => {
   res.json(genericResponse);
 });
 
-router.get("/reset-password", (req, res) => {
+router.get("/reset-password", (req: Request, res: Response) => {
   const { token } = req.query;
   if (typeof token !== "string") {
     return res.status(400).send(htmlPage("Error", "<p class=error>Missing token.</p>"));
@@ -243,7 +244,7 @@ router.get("/reset-password", (req, res) => {
   );
 });
 
-router.post("/reset-password", async (req, res) => {
+router.post("/reset-password", async (req: Request, res: Response) => {
   const { token, newPassword } = req.body || {};
   if (typeof token !== "string") return res.status(400).json({ error: "missing token" });
   if (!isValidPassword(newPassword)) return res.status(400).json({ error: "password must be at least 8 characters" });
@@ -258,7 +259,7 @@ router.post("/reset-password", async (req, res) => {
     // Bumping token_version signs out every session that used the old
     // password — important since a stolen old token shouldn't survive a
     // password reset that was presumably triggered because of a compromise.
-    await pool.query(
+    await getPool().query(
       "UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE id = $2",
       [passwordHash, userId],
     );
@@ -269,4 +270,4 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

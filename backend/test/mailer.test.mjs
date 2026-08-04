@@ -6,7 +6,8 @@
  * tells a paying customer to "check your email address" while their signup is
  * blocked by something only we can fix.
  *
- * Run with: npm test  (node --test, no dependencies)
+ * Run with: npm test — the `pretest` script compiles TypeScript first, so
+ * this always exercises the same dist/ output that ships to production.
  */
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -29,8 +30,8 @@ async function sendWithProviderStatus(status, body = "") {
   });
   try {
     // Fresh module each time: mailer reads RESEND_API_KEY at import.
-    delete require.cache[require.resolve("../src/mailer.js")];
-    const { sendMail } = require("../src/mailer.js");
+    delete require.cache[require.resolve("../dist/mailer.js")];
+    const { sendMail } = require("../dist/mailer.js");
     return await sendMail({ to: "someone@example.com", subject: "s", html: "<p>h</p>" });
   } finally {
     globalThis.fetch = originalFetch;

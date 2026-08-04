@@ -1,4 +1,5 @@
-const nodemailer = require("nodemailer");
+import nodemailer, { Transporter } from "nodemailer";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 const { RESEND_API_KEY, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM } = process.env;
 
@@ -11,7 +12,10 @@ const isConfigured = useResend || useSmtp;
 // timeout instead of failing fast. Resend's HTTP API sends mail over normal
 // HTTPS, so it isn't affected by that. Prefer Resend when configured; keep
 // SMTP as a fallback for local development against providers that do allow it.
-const transporter = useSmtp
+// `family` (force IPv4) is a real nodemailer/Node `net.connect` option that
+// @types/nodemailer doesn't declare — the intersection adds it back without
+// loosening the rest of the type checking on this object.
+const transporter: Transporter | null = useSmtp
   ? nodemailer.createTransport({
       host: SMTP_HOST,
       port: Number(SMTP_PORT) || 587,
@@ -21,7 +25,7 @@ const transporter = useSmtp
       connectionTimeout: 10_000,
       greetingTimeout: 10_000,
       socketTimeout: 10_000,
-    })
+    } as SMTPTransport.Options & { family: number })
   : null;
 
 /**
@@ -31,14 +35,18 @@ const transporter = useSmtp
  * distinction to tell the user "check your address" instead of "try later".
  */
 class MailError extends Error {
-  constructor(message, { rejectedAddress }) {
+  rejectedAddress: boolean;
+
+  constructor(message: string, { rejectedAddress }: { rejectedAddress: boolean }) {
     super(message);
     this.name = "MailError";
     this.rejectedAddress = rejectedAddress;
   }
 }
 
-async function sendViaResend({ to, subject, html }) {
+type MailInput = { to: string; subject: string; html: string };
+
+async function sendViaResend({ to, subject, html }: MailInput): Promise<void> {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -66,7 +74,7 @@ async function sendViaResend({ to, subject, html }) {
  * reset usable in local development without real credentials, without ever
  * pretending an email went out when it didn't.
  */
-async function sendMail({ to, subject, html }) {
+async function sendMail({ to, subject, html }: MailInput): Promise<{ delivered: boolean }> {
   if (useResend) {
     await sendViaResend({ to, subject, html });
     return { delivered: true };
@@ -79,4 +87,4 @@ async function sendMail({ to, subject, html }) {
   return { delivered: false };
 }
 
-module.exports = { sendMail, isConfigured, MailError };
+export { sendMail, isConfigured, MailError };

@@ -5,6 +5,8 @@ privacy, maintenance — with **automatic rollback**: every change saves the
 original value before it is applied, so any of it can be undone with one
 click, or all of it at once.
 
+[![winget](https://img.shields.io/winget/v/AurelioAvila.PCTweaker?label=winget&color=blue)](https://winstall.app/apps/AurelioAvila.PCTweaker)
+
 **[⬇ Download for Windows](../../releases/latest)** · [Changelog](CHANGELOG.md) ·
 [Privacy Policy](PRIVACY.md) · [Terms](TERMS.md)
 
@@ -73,9 +75,10 @@ An email/password account syncs Pro status across installs.
 winget install AurelioAvila.PCTweaker
 ```
 
-*(Submitted to the community [winget-pkgs](https://github.com/microsoft/winget-pkgs)
+*(Published in the community [winget-pkgs](https://github.com/microsoft/winget-pkgs)
 repo — [PR #407687](https://github.com/microsoft/winget-pkgs/pull/407687).
-Until it is merged, install from the release below.)*
+Package indexes refresh every few hours, so it may take a little while to
+show up after a fresh install of winget.)*
 
 **[⬇ Latest release](../../releases/latest)** — `.exe` or `.msi` installer for
 Windows 10/11 x64.

@@ -73,6 +73,7 @@ export interface Strings {
     freeFeatures: string[];
     proFeatures: string[];
   };
+  toggle: { on: string; off: string };
   badges: { admin: string; pro: string; soon: string };
   emptyCategory: string;
   gameSessions: {
@@ -164,6 +165,41 @@ export interface Strings {
   cleanupRunning: string;
   cleanupResultToast: string; // uses {deleted} {freed} {skipped}
   cleanupResultToastSkipped: string; // appended fragment, uses {skipped}
+  diskOptimize: {
+    title: string;
+    description: string;
+    button: string;
+    running: string;
+    resultToast: string; // uses {media}
+  };
+  dnsFlush: {
+    title: string;
+    description: string;
+    button: string;
+    running: string;
+    resultToast: string;
+  };
+  largeFiles: {
+    title: string;
+    description: string;
+    chooseFolder: string;
+    scanning: string;
+    noneFound: string; // uses {size}
+    foundCount: string; // uses {count}
+    moveSelected: string; // uses {count}
+    deleting: string;
+    deletedToast: string; // uses {count} {freed}
+  };
+  diskHealth: {
+    title: string;
+    freeSpace: string; // uses {size}
+    selectDrive: string;
+    healthy: string;
+    warning: string;
+    unhealthy: string;
+    unknown: string;
+    loading: string;
+  };
   duplicateFinder: {
     title: string;
     description: string;
@@ -306,6 +342,7 @@ const it: Strings = {
       "Ogni tweak e ogni funzione futura, inclusi",
     ],
   },
+  toggle: { on: "Attivato", off: "Disattivato" },
   badges: { admin: "Admin", pro: "PRO", soon: "IN ARRIVO" },
   emptyCategory: "Nessun tweak disponibile in questa categoria — presto in arrivo.",
   gameSessions: {
@@ -398,6 +435,41 @@ const it: Strings = {
   cleanupRunning: "...",
   cleanupResultToast: "{deleted} elementi spostati nel Cestino, {freed} liberati",
   cleanupResultToastSkipped: " ({skipped} in uso, saltati).",
+  diskOptimize: {
+    title: "Ottimizza disco",
+    description: "Esegue lo strumento di ottimizzazione integrato di Windows: deframmentazione su HDD, oppure TRIM sugli SSD (mai una deframmentazione completa, che li usurerebbe inutilmente).",
+    button: "Ottimizza ora",
+    running: "Ottimizzazione in corso... può richiedere qualche minuto",
+    resultToast: "Disco ({media}) ottimizzato con successo.",
+  },
+  dnsFlush: {
+    title: "Svuota cache DNS",
+    description: "Cancella gli indirizzi DNS salvati in memoria. Utile se un sito ha cambiato server e nel browser continui a vedere la versione vecchia.",
+    button: "Svuota ora",
+    running: "Svuotamento...",
+    resultToast: "Cache DNS svuotata.",
+  },
+  largeFiles: {
+    title: "Trova file di grandi dimensioni",
+    description: "Cerca in una cartella i file più pesanti (oltre 100 MB), così puoi liberare spazio velocemente eliminando quelli che non ti servono più.",
+    chooseFolder: "Scegli cartella",
+    scanning: "Ricerca in corso...",
+    noneFound: "Nessun file sopra {size} trovato.",
+    foundCount: "{count} file trovati",
+    moveSelected: "Cestina {count} selezionati",
+    deleting: "Cestinamento...",
+    deletedToast: "{count} file cestinati, {freed} liberati.",
+  },
+  diskHealth: {
+    title: "Salute disco",
+    freeSpace: "{size} liberi",
+    selectDrive: "Disco",
+    healthy: "Integro",
+    warning: "Attenzione",
+    unhealthy: "Compromesso",
+    unknown: "Sconosciuto",
+    loading: "Controllo...",
+  },
   duplicateFinder: {
     title: "Trova file duplicati",
     description:
@@ -720,6 +792,7 @@ const en: Strings = {
       "Every tweak and every future feature, included",
     ],
   },
+  toggle: { on: "On", off: "Off" },
   badges: { admin: "Admin", pro: "PRO", soon: "COMING SOON" },
   emptyCategory: "No tweaks available in this category yet — more coming soon.",
   gameSessions: {
@@ -812,6 +885,41 @@ const en: Strings = {
   cleanupRunning: "...",
   cleanupResultToast: "{deleted} items moved to Recycle Bin, {freed} freed",
   cleanupResultToastSkipped: " ({skipped} in use, skipped).",
+  diskOptimize: {
+    title: "Optimize drive",
+    description: "Runs Windows' own built-in optimizer: defragmentation on an HDD, or TRIM on an SSD (never a full defrag, which would only wear it out for no benefit).",
+    button: "Optimize now",
+    running: "Optimizing... this can take a few minutes",
+    resultToast: "Drive ({media}) optimized successfully.",
+  },
+  dnsFlush: {
+    title: "Flush DNS cache",
+    description: "Clears cached DNS lookups. Useful if a site changed servers and your browser keeps showing the old version.",
+    button: "Flush now",
+    running: "Flushing...",
+    resultToast: "DNS cache flushed.",
+  },
+  largeFiles: {
+    title: "Find large files",
+    description: "Scans a folder for its biggest files (over 100 MB), so you can quickly free up space by removing the ones you no longer need.",
+    chooseFolder: "Choose folder",
+    scanning: "Scanning...",
+    noneFound: "No files found over {size}.",
+    foundCount: "{count} files found",
+    moveSelected: "Move {count} selected to Recycle Bin",
+    deleting: "Moving to Recycle Bin...",
+    deletedToast: "{count} files moved, {freed} freed.",
+  },
+  diskHealth: {
+    title: "Drive health",
+    freeSpace: "{size} free",
+    selectDrive: "Drive",
+    healthy: "Healthy",
+    warning: "Warning",
+    unhealthy: "Unhealthy",
+    unknown: "Unknown",
+    loading: "Checking...",
+  },
   duplicateFinder: {
     title: "Find duplicate files",
     description: "Pick a folder: find identical files and choose which ones to move to the Recycle Bin.",
@@ -1126,6 +1234,7 @@ const fr: Strings = {
       "Toutes les optimisations et fonctionnalit\u00e9s \u00e0 venir, incluses",
     ],
   },
+  toggle: { on: "Activé", off: "Désactivé" },
   badges: { admin: "Admin", pro: "PRO", soon: "BIENTÔT" },
   emptyCategory: "Aucune optimisation disponible dans cette catégorie pour l'instant — à venir.",
   gameSessions: {
@@ -1218,6 +1327,41 @@ const fr: Strings = {
   cleanupRunning: "...",
   cleanupResultToast: "{deleted} éléments déplacés vers la Corbeille, {freed} libérés",
   cleanupResultToastSkipped: " ({skipped} en cours d'utilisation, ignorés).",
+  diskOptimize: {
+    title: "Optimiser le disque",
+    description: "Lance l'optimiseur integre de Windows : defragmentation sur un HDD, ou TRIM sur un SSD (jamais une defragmentation complete, qui ne ferait que l'user inutilement).",
+    button: "Optimiser maintenant",
+    running: "Optimisation en cours... cela peut prendre quelques minutes",
+    resultToast: "Disque ({media}) optimise avec succes.",
+  },
+  dnsFlush: {
+    title: "Vider le cache DNS",
+    description: "Efface les adresses DNS mises en cache. Utile si un site a change de serveur et que votre navigateur continue d'afficher l'ancienne version.",
+    button: "Vider maintenant",
+    running: "Vidage...",
+    resultToast: "Cache DNS vide.",
+  },
+  largeFiles: {
+    title: "Trouver les gros fichiers",
+    description: "Recherche dans un dossier les fichiers les plus volumineux (plus de 100 Mo), pour libérer rapidement de l'espace en supprimant ceux dont vous n'avez plus besoin.",
+    chooseFolder: "Choisir un dossier",
+    scanning: "Recherche en cours...",
+    noneFound: "Aucun fichier de plus de {size} trouve.",
+    foundCount: "{count} fichiers trouves",
+    moveSelected: "Mettre {count} elements a la corbeille",
+    deleting: "Mise a la corbeille...",
+    deletedToast: "{count} fichiers mis a la corbeille, {freed} liberes.",
+  },
+  diskHealth: {
+    title: "Sante du disque",
+    freeSpace: "{size} libres",
+    selectDrive: "Disque",
+    healthy: "Bon etat",
+    warning: "Avertissement",
+    unhealthy: "Mauvais etat",
+    unknown: "Inconnu",
+    loading: "Verification...",
+  },
   duplicateFinder: {
     title: "Trouver les fichiers en double",
     description: "Choisissez un dossier : repère les fichiers identiques et laisse choisir lesquels déplacer vers la Corbeille.",
@@ -1532,6 +1676,7 @@ const es: Strings = {
       "Todos los ajustes y funciones futuras, incluidos",
     ],
   },
+  toggle: { on: "Activado", off: "Desactivado" },
   badges: { admin: "Admin", pro: "PRO", soon: "PRÓXIMAMENTE" },
   emptyCategory: "Todavía no hay ajustes disponibles en esta categoría — próximamente.",
   gameSessions: {
@@ -1624,6 +1769,41 @@ const es: Strings = {
   cleanupRunning: "...",
   cleanupResultToast: "{deleted} elementos movidos a la Papelera, {freed} liberados",
   cleanupResultToastSkipped: " ({skipped} en uso, omitidos).",
+  diskOptimize: {
+    title: "Optimizar disco",
+    description: "Ejecuta el optimizador integrado de Windows: desfragmentacion en un HDD, o TRIM en un SSD (nunca una desfragmentacion completa, que solo lo desgastaria sin beneficio).",
+    button: "Optimizar ahora",
+    running: "Optimizando... puede tardar unos minutos",
+    resultToast: "Disco ({media}) optimizado correctamente.",
+  },
+  dnsFlush: {
+    title: "Vaciar cache DNS",
+    description: "Borra las direcciones DNS guardadas en memoria. Util si un sitio cambio de servidor y tu navegador sigue mostrando la version antigua.",
+    button: "Vaciar ahora",
+    running: "Vaciando...",
+    resultToast: "Cache DNS vaciada.",
+  },
+  largeFiles: {
+    title: "Buscar archivos grandes",
+    description: "Busca en una carpeta los archivos mas pesados (mas de 100 MB), para que puedas liberar espacio rapidamente eliminando los que ya no necesitas.",
+    chooseFolder: "Elegir carpeta",
+    scanning: "Buscando...",
+    noneFound: "No se encontraron archivos de mas de {size}.",
+    foundCount: "{count} archivos encontrados",
+    moveSelected: "Enviar {count} seleccionados a la papelera",
+    deleting: "Enviando a la papelera...",
+    deletedToast: "{count} archivos enviados, {freed} liberados.",
+  },
+  diskHealth: {
+    title: "Salud del disco",
+    freeSpace: "{size} libres",
+    selectDrive: "Disco",
+    healthy: "Correcto",
+    warning: "Advertencia",
+    unhealthy: "Danado",
+    unknown: "Desconocido",
+    loading: "Comprobando...",
+  },
   duplicateFinder: {
     title: "Buscar archivos duplicados",
     description: "Elige una carpeta: encuentra archivos idénticos y te deja elegir cuáles mover a la Papelera.",
@@ -1938,6 +2118,7 @@ const de: Strings = {
       "Jeder Tweak und jede k\u00fcnftige Funktion inklusive",
     ],
   },
+  toggle: { on: "Ein", off: "Aus" },
   badges: { admin: "Admin", pro: "PRO", soon: "DEMNÄCHST" },
   emptyCategory: "In dieser Kategorie sind noch keine Optimierungen verfügbar — bald verfügbar.",
   gameSessions: {
@@ -2030,6 +2211,41 @@ const de: Strings = {
   cleanupRunning: "...",
   cleanupResultToast: "{deleted} Elemente in den Papierkorb verschoben, {freed} freigegeben",
   cleanupResultToastSkipped: " ({skipped} in Verwendung, übersprungen).",
+  diskOptimize: {
+    title: "Laufwerk optimieren",
+    description: "Fuhrt das integrierte Windows-Optimierungstool aus: Defragmentierung bei einer HDD oder TRIM bei einer SSD (nie eine vollstandige Defragmentierung, die sie nur unnotig abnutzen wurde).",
+    button: "Jetzt optimieren",
+    running: "Optimierung lauft... kann einige Minuten dauern",
+    resultToast: "Laufwerk ({media}) erfolgreich optimiert.",
+  },
+  dnsFlush: {
+    title: "DNS-Cache leeren",
+    description: "Loscht zwischengespeicherte DNS-Eintrage. Nutzlich, wenn eine Website den Server gewechselt hat und dein Browser weiterhin die alte Version anzeigt.",
+    button: "Jetzt leeren",
+    running: "Wird geleert...",
+    resultToast: "DNS-Cache geleert.",
+  },
+  largeFiles: {
+    title: "Grosse Dateien finden",
+    description: "Durchsucht einen Ordner nach den grossten Dateien (uber 100 MB), damit du schnell Speicherplatz freigeben kannst, indem du nicht mehr benotigte loschst.",
+    chooseFolder: "Ordner wahlen",
+    scanning: "Wird durchsucht...",
+    noneFound: "Keine Dateien uber {size} gefunden.",
+    foundCount: "{count} Dateien gefunden",
+    moveSelected: "{count} ausgewahlte in den Papierkorb verschieben",
+    deleting: "Wird in den Papierkorb verschoben...",
+    deletedToast: "{count} Dateien verschoben, {freed} freigegeben.",
+  },
+  diskHealth: {
+    title: "Laufwerksgesundheit",
+    freeSpace: "{size} frei",
+    selectDrive: "Laufwerk",
+    healthy: "Intakt",
+    warning: "Warnung",
+    unhealthy: "Beeintrachtigt",
+    unknown: "Unbekannt",
+    loading: "Wird gepruft...",
+  },
   duplicateFinder: {
     title: "Doppelte Dateien finden",
     description: "Ordner wählen: findet identische Dateien und lässt dich auswählen, welche in den Papierkorb verschoben werden.",

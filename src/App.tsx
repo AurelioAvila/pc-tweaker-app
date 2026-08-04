@@ -51,6 +51,36 @@ type DuplicateGroup = {
   paths: string[];
 };
 
+type LargeFile = {
+  path: string;
+  size: number;
+};
+
+type DiskOptResult = {
+  drive: string;
+  media_type: string;
+  summary: string;
+};
+
+type DiskHealthInfo = {
+  drive: string;
+  media_type: string;
+  status: string;
+};
+
+type FlushDnsResult = {
+  success: boolean;
+  detail: string;
+};
+
+type DriveInfo = {
+  letter: string;
+  media_type: string;
+  total_bytes: number;
+  free_bytes: number;
+  is_system: boolean;
+};
+
 type Toast = {
   id: number;
   kind: "success" | "error";
@@ -194,14 +224,23 @@ function SoonBadge({ label }: { label: string }) {
   );
 }
 
+/**
+ * Sized and labeled like the switch in Windows 11's own Settings app (a
+ * pill roughly 36×20px with an "On"/"Off" caption to its right) rather than
+ * the oversized iOS-style control this used to be — the previous h-8 w-14
+ * (32×56px) knob was noticeably larger than any toggle in Windows itself or
+ * in the apps it's meant to sit alongside.
+ */
 function Toggle({
   checked,
   busy,
   onClick,
+  s,
 }: {
   checked: boolean;
   busy: boolean;
   onClick: () => void;
+  s: Strings;
 }) {
   return (
     <button
@@ -209,36 +248,30 @@ function Toggle({
       disabled={busy}
       onClick={onClick}
       aria-pressed={checked}
-      className={`relative inline-flex h-8 w-14 shrink-0 appearance-none items-center rounded-full border-0 p-0
-        outline-none transition-colors duration-300 ease-out disabled:cursor-wait
-        ${checked ? "bg-emerald-500" : "bg-white/15"} `}
+      className="group flex shrink-0 items-center gap-2 outline-none disabled:cursor-wait"
     >
       <span
-        className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ease-out
-          ${checked ? "translate-x-6" : "translate-x-0"}`}
+        className={`text-xs font-semibold tabular-nums transition-colors ${
+          checked ? "text-emerald-400" : "text-slate-500"
+        }`}
       >
-        {busy && (
-          <svg
-            className="absolute inset-0 m-auto h-4 w-4 animate-spin text-slate-400"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <circle
-              cx="12"
-              cy="12"
-              r="9"
-              stroke="currentColor"
-              strokeWidth="3"
-              className="opacity-25"
-            />
-            <path
-              d="M21 12a9 9 0 0 0-9-9"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-          </svg>
-        )}
+        {checked ? s.toggle.on : s.toggle.off}
+      </span>
+      <span
+        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ease-out
+          ${checked ? "bg-emerald-500" : "bg-white/15 group-hover:bg-white/25"}`}
+      >
+        <span
+          className={`absolute left-0.5 top-0.5 grid h-4 w-4 place-items-center rounded-full bg-white shadow transition-transform duration-200 ease-out
+            ${checked ? "translate-x-4" : "translate-x-0"}`}
+        >
+          {busy && (
+            <svg className="h-2.5 w-2.5 animate-spin text-slate-400" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+              <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          )}
+        </span>
       </span>
     </button>
   );
@@ -439,6 +472,418 @@ function DuplicateFinder({
         </div>
       )}
     </li>
+  );
+}
+
+function DriveIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M3 14h18" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="7" cy="10" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+function GlobeIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M3.5 12h17M12 3.5a13 13 0 0 1 0 17 13 13 0 0 1 0-17Z" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+}
+
+function HeartPulseIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M3 12h4l2-5 3 10 2-7 1.5 2H21"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Runs Windows' own Optimize Drives (defrag/TRIM). Pro-gated: unlike temp
+ * cleanup this is a heavier, higher-value action, in line with the other
+ * admin-requiring maintenance tools already behind Pro.
+ */
+function DiskOptimizeCard({
+  s,
+  drive,
+  isPro,
+  onRequirePro,
+  onToast,
+}: {
+  s: Strings;
+  drive: string;
+  isPro: boolean;
+  onRequirePro: () => void;
+  onToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [running, setRunning] = useState(false);
+
+  async function run() {
+    if (!isPro) {
+      onRequirePro();
+      return;
+    }
+    setRunning(true);
+    try {
+      const result = await invoke<DiskOptResult>("optimize_disk", { drive });
+      onToast("success", format(s.diskOptimize.resultToast, { media: result.media_type }));
+    } catch (e) {
+      onToast("error", String(e));
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  return (
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+      <div className="flex items-center gap-4">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-400/15 text-amber-300 ring-1 ring-amber-400/30">
+          <DriveIcon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-semibold text-slate-100">
+              {s.diskOptimize.title} <span className="font-normal text-slate-500">({drive})</span>
+            </h2>
+            <ShieldBadge label={s.badges.admin} />
+            <ProBadge label={s.badges.pro} />
+          </div>
+          <p className="mt-0.5 text-sm text-slate-400">
+            {running ? s.diskOptimize.running : s.diskOptimize.description}
+          </p>
+        </div>
+        <button
+          onClick={run}
+          disabled={running}
+          className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60"
+        >
+          {running ? (
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-amber-950/30 border-t-amber-950" />
+          ) : (
+            s.diskOptimize.button
+          )}
+        </button>
+      </div>
+    </li>
+  );
+}
+
+/** Clears the resolver's DNS cache. Free, no elevation, no rollback needed —
+ *  a one-shot action rather than a persistent setting. */
+function DnsFlushCard({ s, onToast }: { s: Strings; onToast: (kind: Toast["kind"], message: string) => void }) {
+  const [running, setRunning] = useState(false);
+
+  async function run() {
+    setRunning(true);
+    try {
+      await invoke<FlushDnsResult>("flush_dns_cache");
+      onToast("success", s.dnsFlush.resultToast);
+    } catch (e) {
+      onToast("error", String(e));
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  return (
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+      <div className="flex items-center gap-4">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-cyan-400/15 text-cyan-300 ring-1 ring-cyan-400/30">
+          <GlobeIcon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold text-slate-100">{s.dnsFlush.title}</h2>
+          <p className="mt-0.5 text-sm text-slate-400">{s.dnsFlush.description}</p>
+        </div>
+        <button
+          onClick={run}
+          disabled={running}
+          className="shrink-0 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-cyan-950 transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60"
+        >
+          {running ? s.dnsFlush.running : s.dnsFlush.button}
+        </button>
+      </div>
+    </li>
+  );
+}
+
+const LARGE_FILE_THRESHOLD_BYTES = 100 * 1024 * 1024;
+
+/** Same scan/select/delete shape as DuplicateFinder, but by size threshold
+ *  instead of content hash — a different, complementary way to find space to
+ *  reclaim (a single 4 GB video has no duplicate to find, but is easy to spot
+ *  once it's just sorted by size). */
+function LargeFileFinder({
+  s,
+  isPro,
+  onRequirePro,
+  onToast,
+}: {
+  s: Strings;
+  isPro: boolean;
+  onRequirePro: () => void;
+  onToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [scanning, setScanning] = useState(false);
+  const [files, setFiles] = useState<LargeFile[] | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+
+  async function scan() {
+    if (!isPro) {
+      onRequirePro();
+      return;
+    }
+    const folder = await openFolderDialog({ directory: true, multiple: false });
+    if (!folder || typeof folder !== "string") return;
+    setScanning(true);
+    setFiles(null);
+    setSelected(new Set());
+    try {
+      const result = await invoke<LargeFile[]>("scan_large_files", {
+        root: folder,
+        minBytes: LARGE_FILE_THRESHOLD_BYTES,
+      });
+      setFiles(result);
+      if (result.length === 0) {
+        onToast("success", format(s.largeFiles.noneFound, { size: formatBytes(LARGE_FILE_THRESHOLD_BYTES) }));
+      }
+    } catch (e) {
+      onToast("error", String(e));
+    } finally {
+      setScanning(false);
+    }
+  }
+
+  function toggleSelected(path: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  }
+
+  async function deleteSelected() {
+    setDeleting(true);
+    try {
+      const result = await invoke<CleanupResult>("delete_files", { paths: Array.from(selected) });
+      onToast(
+        "success",
+        format(s.largeFiles.deletedToast, { count: result.deleted_count, freed: formatBytes(result.freed_bytes) }),
+      );
+      setFiles((prev) => prev?.filter((f) => !selected.has(f.path)) ?? null);
+      setSelected(new Set());
+    } catch (e) {
+      onToast("error", String(e));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+      <div className="flex items-center gap-4">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-fuchsia-400/15 text-fuchsia-300 ring-1 ring-fuchsia-400/30">
+          <TrashIcon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-semibold text-slate-100">{s.largeFiles.title}</h2>
+            <ProBadge label={s.badges.pro} />
+          </div>
+          <p className="mt-0.5 text-sm text-slate-400">{s.largeFiles.description}</p>
+        </div>
+        <button
+          onClick={scan}
+          disabled={scanning}
+          className="shrink-0 rounded-xl bg-fuchsia-500 px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-[1.03] disabled:opacity-60"
+        >
+          {scanning ? s.largeFiles.scanning : s.largeFiles.chooseFolder}
+        </button>
+      </div>
+
+      {files && files.length > 0 && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <p className="mb-2 text-xs font-medium text-slate-400">
+            {format(s.largeFiles.foundCount, { count: files.length })}
+          </p>
+          <div className="max-h-72 space-y-0.5 overflow-y-auto rounded-xl bg-black/20 p-3">
+            {files.map((f) => (
+              <label
+                key={f.path}
+                className="flex cursor-pointer items-center gap-2 truncate py-0.5 text-xs text-slate-300"
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.has(f.path)}
+                  onChange={() => toggleSelected(f.path)}
+                  className="h-3.5 w-3.5 shrink-0 accent-fuchsia-500"
+                />
+                <span className="shrink-0 font-medium text-slate-200">{formatBytes(f.size)}</span>
+                <span className="truncate text-slate-500">{f.path}</span>
+              </label>
+            ))}
+          </div>
+          <button
+            onClick={deleteSelected}
+            disabled={selected.size === 0 || deleting}
+            className="mt-3 w-full rounded-xl bg-red-500/90 py-2 text-sm font-semibold text-white disabled:opacity-40"
+          >
+            {deleting ? s.largeFiles.deleting : format(s.largeFiles.moveSelected, { count: selected.size })}
+          </button>
+        </div>
+      )}
+    </li>
+  );
+}
+
+/** Reads Windows' own S.M.A.R.T./reliability HealthStatus for the system
+ *  drive. Free — this is a trust-building diagnostic, not a premium action,
+ *  and checked once on mount rather than on the fast system-monitor poll
+ *  since drive health changes on the order of days, not seconds. */
+function DiskHealthCard({ s, drive }: { s: Strings; drive: string }) {
+  const [health, setHealth] = useState<DiskHealthInfo | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    // Clear the previous drive's result immediately rather than leaving it on
+    // screen while the new one loads — otherwise switching drives briefly
+    // shows the wrong drive's health status attributed to the new selection.
+    setHealth(null);
+    setFailed(false);
+    invoke<DiskHealthInfo>("disk_health", { drive })
+      .then((v) => {
+        if (alive) setHealth(v);
+      })
+      .catch(() => {
+        if (alive) setFailed(true);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [drive]);
+
+  if (failed) return null;
+
+  const statusLabel = (status: string | undefined) => {
+    switch (status) {
+      case "Healthy":
+        return { text: s.diskHealth.healthy, color: "text-emerald-400", dot: "bg-emerald-400" };
+      case "Warning":
+        return { text: s.diskHealth.warning, color: "text-amber-400", dot: "bg-amber-400" };
+      case "Unhealthy":
+        return { text: s.diskHealth.unhealthy, color: "text-red-400", dot: "bg-red-400" };
+      default:
+        return { text: s.diskHealth.unknown, color: "text-slate-400", dot: "bg-slate-500" };
+    }
+  };
+
+  const info = health ? statusLabel(health.status) : null;
+
+  return (
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+      <div className="flex items-center gap-4">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-rose-400/15 text-rose-300 ring-1 ring-rose-400/30">
+          <HeartPulseIcon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold text-slate-100">{s.diskHealth.title}</h2>
+          <p className="mt-0.5 text-sm text-slate-400">
+            {health ? `${health.drive} · ${health.media_type}` : s.diskHealth.loading}
+          </p>
+        </div>
+        {info && (
+          <span className={`flex shrink-0 items-center gap-1.5 text-sm font-semibold ${info.color}`}>
+            <span className={`h-2 w-2 rounded-full ${info.dot}`} />
+            {info.text}
+          </span>
+        )}
+      </div>
+    </li>
+  );
+}
+
+/**
+ * Owns which fixed drive Drive Health / Optimize Drive act on. Fetches the
+ * real list once (via sysinfo on the Rust side, not hardcoded to C:), so a
+ * machine with a second HDD/SSD for games or media can check and optimize
+ * that one too — the earlier version silently only ever touched the system
+ * drive with no way to pick another.
+ */
+function DiskToolsSection({
+  s,
+  isPro,
+  onRequirePro,
+  onToast,
+}: {
+  s: Strings;
+  isPro: boolean;
+  onRequirePro: () => void;
+  onToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [drives, setDrives] = useState<DriveInfo[] | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    invoke<DriveInfo[]>("list_drives_cmd")
+      .then((list) => {
+        if (!alive) return;
+        setDrives(list);
+        setSelected(list.find((d) => d.is_system)?.letter ?? list[0]?.letter ?? null);
+      })
+      .catch(() => {
+        if (alive) setDrives([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Nothing to operate on yet (still loading) or the call failed outright —
+  // either way there is no drive to hand the two cards below.
+  if (!selected) return null;
+
+  return (
+    <>
+      {drives && drives.length > 0 && (
+        // Shown even with a single drive: it doubles as explicit confirmation
+        // of which drive Health/Optimize below are about to act on, not just
+        // a chooser for when there happens to be more than one.
+        <li className="animate-card flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+          <span className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {s.diskHealth.selectDrive}:
+          </span>
+          {drives.map((d) => (
+            <button
+              key={d.letter}
+              onClick={() => setSelected(d.letter)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                selected === d.letter
+                  ? "bg-rose-400/20 text-rose-300 ring-1 ring-rose-400/40"
+                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"
+              }`}
+            >
+              {d.letter} · {d.media_type} · {format(s.diskHealth.freeSpace, { size: formatBytes(d.free_bytes) })}
+            </button>
+          ))}
+        </li>
+      )}
+      <DiskHealthCard s={s} drive={selected} />
+      <DiskOptimizeCard s={s} drive={selected} isPro={isPro} onRequirePro={onRequirePro} onToast={onToast} />
+    </>
   );
 }
 
@@ -1965,7 +2410,7 @@ function StartupManager({
                 {item.command}
               </p>
             </div>
-            <Toggle checked={item.enabled} busy={busyKey === keyOf(item)} onClick={() => toggleItem(item)} />
+            <Toggle checked={item.enabled} busy={busyKey === keyOf(item)} onClick={() => toggleItem(item)} s={s} />
           </div>
         </div>
       ))}
@@ -2758,6 +3203,7 @@ function App() {
                     checked={t.applied}
                     busy={busyId === t.id}
                     onClick={() => toggle(t)}
+                    s={s}
                   />
                 </div>
               </li>
@@ -2768,6 +3214,15 @@ function App() {
             <IpMaskCard
               s={s}
               onExplain={() => pushToast("error", s.ipMask.explainerToast)}
+            />
+          )}
+
+          {showCleanup && (
+            <DiskToolsSection
+              s={s}
+              isPro={isProUnlocked}
+              onRequirePro={() => setPaywallFeature(s.diskOptimize.title)}
+              onToast={pushToast}
             />
           )}
 
@@ -2785,11 +3240,22 @@ function App() {
               />
             ))}
 
+          {showCleanup && <DnsFlushCard s={s} onToast={pushToast} />}
+
           {showCleanup && (
             <DuplicateFinder
               s={s}
               isPro={isProUnlocked}
               onRequirePro={() => setPaywallFeature(s.duplicateFinder.title)}
+              onToast={pushToast}
+            />
+          )}
+
+          {showCleanup && (
+            <LargeFileFinder
+              s={s}
+              isPro={isProUnlocked}
+              onRequirePro={() => setPaywallFeature(s.largeFiles.title)}
               onToast={pushToast}
             />
           )}

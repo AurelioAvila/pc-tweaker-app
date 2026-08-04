@@ -25,6 +25,12 @@ pub struct DuplicateGroup {
     pub paths: Vec<String>,
 }
 
+#[derive(Serialize, Clone, Debug)]
+pub struct LargeFile {
+    pub path: String,
+    pub size: u64,
+}
+
 const MAX_DUPLICATE_GROUPS: usize = 200;
 const MAX_HASHED_FILE_BYTES: u64 = 500 * 1024 * 1024;
 
@@ -86,7 +92,7 @@ fn dir_size(path: &Path) -> u64 {
 /// Moves every top-level item inside the target directory to the Recycle
 /// Bin (never a permanent delete), skipping anything currently locked/in use.
 pub fn run_cleanup(id: &str) -> Result<CleanupResult, String> {
-    let dir = target_dir(id).ok_or_else(|| format!("azione di pulizia sconosciuta: {}", id))?;
+    let dir = target_dir(id).ok_or_else(|| format!("unknown cleanup action: {}", id))?;
     let mut result = CleanupResult::default();
 
     let Ok(entries) = std::fs::read_dir(&dir) else {
@@ -145,7 +151,7 @@ fn hash_file(path: &Path) -> Option<u64> {
 pub fn scan_duplicates(root: &str) -> Result<Vec<DuplicateGroup>, String> {
     let root_path = Path::new(root);
     if !root_path.is_dir() {
-        return Err("il percorso selezionato non è una cartella valida".to_string());
+        return Err("the selected path is not a valid folder".to_string());
     }
 
     let mut files = Vec::new();
@@ -191,6 +197,38 @@ pub fn scan_duplicates(root: &str) -> Result<Vec<DuplicateGroup>, String> {
     Ok(groups)
 }
 
+const MAX_LARGE_FILES: usize = 200;
+
+/// Scans a folder recursively for its biggest files above `min_bytes`,
+/// largest first. Shares `walk_files` with the duplicate finder, but skips
+/// the content-hashing step entirely — size alone is what matters here, so
+/// this stays fast even on folders scan_duplicates would spend a while
+/// hashing through.
+pub fn scan_large_files(root: &str, min_bytes: u64) -> Result<Vec<LargeFile>, String> {
+    let root_path = Path::new(root);
+    if !root_path.is_dir() {
+        return Err("the selected path is not a valid folder".to_string());
+    }
+
+    let mut files = Vec::new();
+    walk_files(root_path, &mut files);
+
+    let mut large: Vec<LargeFile> = files
+        .into_iter()
+        .filter_map(|path| {
+            let size = std::fs::metadata(&path).ok()?.len();
+            if size < min_bytes {
+                return None;
+            }
+            Some(LargeFile { path: path.to_string_lossy().to_string(), size })
+        })
+        .collect();
+
+    large.sort_by(|a, b| b.size.cmp(&a.size));
+    large.truncate(MAX_LARGE_FILES);
+    Ok(large)
+}
+
 /// Moves the given files to the Recycle Bin (never a permanent delete).
 pub fn delete_files(paths: Vec<String>) -> CleanupResult {
     let mut result = CleanupResult::default();
@@ -206,4 +244,57 @@ pub fn delete_files(paths: Vec<String>) -> CleanupResult {
         }
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    fn temp_dir(tag: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "pc-tweaker-cleanup-test-{}-{}-{}",
+            tag,
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[test]
+    fn finds_files_at_or_above_the_threshold_largest_first() {
+        let dir = temp_dir("large-files");
+        fs::write(dir.join("tiny.txt"), vec![0u8; 10]).unwrap();
+        fs::write(dir.join("medium.bin"), vec![0u8; 5_000]).unwrap();
+        fs::write(dir.join("big.bin"), vec![0u8; 20_000]).unwrap();
+
+        let found = scan_large_files(dir.to_str().unwrap(), 1_000).unwrap();
+
+        assert_eq!(found.len(), 2, "the 10-byte file must be excluded by the threshold");
+        assert_eq!(found[0].size, 20_000, "results must be sorted largest first");
+        assert_eq!(found[1].size, 5_000);
+
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn an_invalid_path_is_a_clear_error_not_an_empty_result() {
+        let err = scan_large_files(r"Z:\this\path\does\not\exist\at\all", 0).unwrap_err();
+        assert!(err.contains("not a valid folder"));
+    }
+
+    #[test]
+    fn a_folder_with_nothing_over_the_threshold_returns_empty_not_an_error() {
+        let dir = temp_dir("no-large-files");
+        fs::write(dir.join("small.txt"), vec![0u8; 100]).unwrap();
+
+        let found = scan_large_files(dir.to_str().unwrap(), 1_000_000).unwrap();
+        assert!(found.is_empty());
+
+        fs::remove_dir_all(&dir).ok();
+    }
 }

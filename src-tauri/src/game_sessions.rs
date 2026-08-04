@@ -73,7 +73,7 @@ pub fn add_game_session(app: tauri::AppHandle, path: String) -> Result<GameEntry
         .unwrap_or_else(|| path.clone());
 
     if config.games.iter().any(|g| g.path.eq_ignore_ascii_case(&path)) {
-        return Err("questo gioco è già nella lista".to_string());
+        return Err("this game is already on the list".to_string());
     }
 
     let entry = GameEntry { path, name };
@@ -121,12 +121,12 @@ fn rollback_turbo_elevated_if_needed(store: &RollbackStore) -> Result<(), String
 
 #[cfg(not(windows))]
 fn apply_turbo_elevated_if_needed(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 
 #[cfg(not(windows))]
 fn rollback_turbo_elevated_if_needed(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 
 /// Runs for the whole lifetime of the app: every few seconds, checks whether

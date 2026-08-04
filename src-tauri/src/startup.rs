@@ -165,7 +165,7 @@ pub fn list_startup_items() -> Vec<StartupEntry> {
 #[cfg(not(windows))]
 #[tauri::command]
 pub fn set_startup_enabled(_scope: String, _name: String, _enabled: bool) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 
 #[cfg(test)]

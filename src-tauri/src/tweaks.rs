@@ -496,10 +496,10 @@ pub mod windows_impl {
         pub fn rollback(&self, store: &RollbackStore) -> Result<(), String> {
             let entry = store
                 .take_entry(self.id)
-                .ok_or_else(|| "nessuno snapshot salvato: il tweak non risulta applicato".to_string())?;
+                .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
 
             let SnapshotEntry::Registry(snapshot) = entry else {
-                return Err("tipo di snapshot inatteso per un tweak di registro".to_string());
+                return Err("unexpected snapshot type for a registry tweak".to_string());
             };
 
             restore_value(&snapshot)

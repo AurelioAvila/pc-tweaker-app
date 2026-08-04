@@ -1,9 +1,13 @@
 mod cleanup;
+mod diskhealth;
+mod diskinfo;
+mod diskopt;
 mod dns;
 mod elevation;
 mod game_priority;
 mod game_sessions;
 mod gaming;
+mod netmaintenance;
 mod power;
 mod privacy_extra;
 mod ramclean;
@@ -397,7 +401,7 @@ fn run_cleanup(app: tauri::AppHandle, id: String) -> Result<CleanupResult, Strin
 #[cfg(not(windows))]
 #[tauri::command]
 fn run_cleanup(_app: tauri::AppHandle, _id: String) -> Result<CleanupResult, String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 
 #[tauri::command]
@@ -408,6 +412,44 @@ fn scan_duplicates(root: String) -> Result<Vec<cleanup::DuplicateGroup>, String>
 #[tauri::command]
 fn delete_files(paths: Vec<String>) -> CleanupResult {
     cleanup::delete_files(paths)
+}
+
+#[tauri::command]
+fn scan_large_files(root: String, min_bytes: u64) -> Result<Vec<cleanup::LargeFile>, String> {
+    cleanup::scan_large_files(&root, min_bytes)
+}
+
+fn last_diskopt_result_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("could not resolve the app data folder: {}", e))?;
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir.join("last_diskopt_result.json"))
+}
+
+/// Same elevation dance as `run_cleanup`: optimizing a drive needs admin
+/// rights, so an unelevated app relaunches itself through a single UAC
+/// prompt and reads the result back from a file the elevated helper process
+/// writes before exiting. The chosen drive letter is the payload passed
+/// through the elevated relaunch, same as a tweak id is for `--elevated-apply`.
+#[cfg(windows)]
+#[tauri::command]
+fn optimize_disk(app: tauri::AppHandle, drive: String) -> Result<diskopt::DiskOptResult, String> {
+    if !elevation::is_elevated() {
+        elevation::run_elevated_action("--elevated-diskopt", &drive)?;
+        let path = last_diskopt_result_path(&app)?;
+        let json = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let _ = std::fs::remove_file(&path);
+        return serde_json::from_str(&json).map_err(|e| e.to_string());
+    }
+    diskopt::optimize(&drive)
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+fn optimize_disk(_app: tauri::AppHandle, _drive: String) -> Result<diskopt::DiskOptResult, String> {
+    Err("not supported on this platform".to_string())
 }
 
 /// Called from `main()` when the process was relaunched elevated (via the
@@ -457,7 +499,11 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
             std::fs::write(dir.join("last_cleanup_result.json"), json).map_err(|e| e.to_string())
         }),
-        other => Err(format!("azione sconosciuta: {}", other)),
+        "--elevated-diskopt" => diskopt::optimize(id).and_then(|res| {
+            let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
+            std::fs::write(dir.join("last_diskopt_result.json"), json).map_err(|e| e.to_string())
+        }),
+        other => Err(format!("unknown action: {}", other)),
     };
 
     match result {
@@ -505,7 +551,12 @@ pub fn run() {
             startup::list_startup_items,
             startup::set_startup_enabled,
             sysmon::system_stats,
-            ramclean::clean_ram
+            ramclean::clean_ram,
+            scan_large_files,
+            optimize_disk,
+            diskhealth::disk_health,
+            diskinfo::list_drives_cmd,
+            netmaintenance::flush_dns_cache
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

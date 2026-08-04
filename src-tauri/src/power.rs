@@ -76,7 +76,7 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
         .ok_or_else(|| "nessuno snapshot salvato: il piano non risulta modificato".to_string())?;
 
     let SnapshotEntry::PowerScheme { previous_guid } = entry else {
-        return Err("tipo di snapshot inatteso per il piano di alimentazione".to_string());
+        return Err("unexpected snapshot type for the power plan".to_string());
     };
 
     run_powercfg(&["/setactive", &previous_guid]).map(|_| ())
@@ -89,12 +89,12 @@ pub fn is_high_performance_active() -> bool {
 
 #[cfg(not(windows))]
 pub fn apply(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 
 #[cfg(not(windows))]
 pub fn rollback(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 
 #[cfg(test)]

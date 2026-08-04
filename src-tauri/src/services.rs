@@ -84,10 +84,10 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
 pub fn rollback(store: &RollbackStore) -> Result<(), String> {
     let entry = store
         .take_entry(WINDOWS_SEARCH_ID)
-        .ok_or_else(|| "nessuno snapshot salvato: il servizio non risulta modificato".to_string())?;
+        .ok_or_else(|| "no snapshot saved: the service does not appear to be changed".to_string())?;
 
     let SnapshotEntry::Service { previous_start_type, .. } = entry else {
-        return Err("tipo di snapshot inatteso per il servizio".to_string());
+        return Err("unexpected snapshot type for the service".to_string());
     };
 
     run_sc(&["config", SERVICE_NAME, "start=", start_type_flag(&previous_start_type)])?;
@@ -97,11 +97,11 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
 
 #[cfg(not(windows))]
 pub fn apply(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 #[cfg(not(windows))]
 pub fn rollback(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 
 #[cfg(test)]

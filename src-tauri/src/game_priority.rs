@@ -65,10 +65,10 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
 
     let entry = store
         .take_entry(TWEAK_ID)
-        .ok_or_else(|| "nessuno snapshot salvato: il tweak non risulta applicato".to_string())?;
+        .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
 
     let SnapshotEntry::Composite { entries } = entry else {
-        return Err("tipo di snapshot inatteso per la priorità dei giochi".to_string());
+        return Err("unexpected snapshot type for game priority".to_string());
     };
 
     for e in entries {
@@ -81,9 +81,9 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
 
 #[cfg(not(windows))]
 pub fn apply(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 #[cfg(not(windows))]
 pub fn rollback(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }

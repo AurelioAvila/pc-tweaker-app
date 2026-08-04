@@ -23,13 +23,13 @@ pub fn run_elevated_action(action_flag: &str, tweak_id: &str) -> Result<(), Stri
             .arg(tweak_id)
             .gui(true)
             .status()
-            .map_err(|e| format!("elevazione annullata o fallita: {}", e))?;
+            .map_err(|e| format!("elevation was cancelled or failed: {}", e))?;
 
         if status.success() {
             Ok(())
         } else {
             Err(format!(
-                "l'azione elevata è terminata con codice {:?}",
+                "the elevated action exited with code {:?}",
                 status.code()
             ))
         }
@@ -38,6 +38,6 @@ pub fn run_elevated_action(action_flag: &str, tweak_id: &str) -> Result<(), Stri
     #[cfg(not(windows))]
     {
         let _ = exe;
-        Err("elevazione non ancora implementata su questa piattaforma".to_string())
+        Err("elevation is not implemented on this platform yet".to_string())
     }
 }

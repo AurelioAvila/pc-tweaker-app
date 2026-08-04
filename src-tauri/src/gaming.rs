@@ -87,10 +87,10 @@ pub fn rollback_input_lag(store: &RollbackStore) -> Result<(), String> {
 
     let entry = store
         .take_entry(INPUT_LAG_ID)
-        .ok_or_else(|| "nessuno snapshot salvato: il tweak non risulta applicato".to_string())?;
+        .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
 
     let SnapshotEntry::Composite { entries } = entry else {
-        return Err("tipo di snapshot inatteso per la riduzione del ritardo di input".to_string());
+        return Err("unexpected snapshot type for input lag reduction".to_string());
     };
 
     for e in entries {
@@ -136,10 +136,10 @@ pub fn rollback_keyboard_delay(store: &RollbackStore) -> Result<(), String> {
 
     let entry = store
         .take_entry(KEYBOARD_DELAY_ID)
-        .ok_or_else(|| "nessuno snapshot salvato: il tweak non risulta applicato".to_string())?;
+        .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
 
     let SnapshotEntry::Composite { entries } = entry else {
-        return Err("tipo di snapshot inatteso per il ritardo della tastiera".to_string());
+        return Err("unexpected snapshot type for keyboard delay".to_string());
     };
 
     for e in entries {
@@ -152,11 +152,11 @@ pub fn rollback_keyboard_delay(store: &RollbackStore) -> Result<(), String> {
 
 #[cfg(not(windows))]
 pub fn apply_keyboard_delay(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 #[cfg(not(windows))]
 pub fn rollback_keyboard_delay(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 
 fn parse_ac_dc_index(output: &str) -> Result<(String, String), String> {
@@ -174,7 +174,7 @@ fn parse_ac_dc_index(output: &str) -> Result<(String, String), String> {
     match (ac, dc) {
         (Some(a), Some(d)) => Ok((a, d)),
         _ => Err(
-            "questo PC non espone l'impostazione di turbo boost del processore (comune su alcune VM o hardware senza supporto CPPC/boost dinamico)"
+            "this PC does not expose the CPU turbo boost setting (common on some VMs or hardware without CPPC/dynamic boost support)"
                 .to_string(),
         ),
     }
@@ -212,17 +212,17 @@ pub fn rollback_turbo_boost(store: &RollbackStore) -> Result<(), String> {
 
 #[cfg(not(windows))]
 pub fn apply_input_lag(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 #[cfg(not(windows))]
 pub fn rollback_input_lag(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 #[cfg(not(windows))]
 pub fn apply_turbo_boost(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 #[cfg(not(windows))]
 pub fn rollback_turbo_boost(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }

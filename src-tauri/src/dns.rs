@@ -33,7 +33,7 @@ fn active_interface_alias() -> Result<String, String> {
         "(Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object -First 1 -ExpandProperty Name)",
     )?;
     if alias.is_empty() {
-        return Err("nessuna interfaccia di rete attiva trovata".to_string());
+        return Err("no active network interface found".to_string());
     }
     Ok(alias)
 }
@@ -80,10 +80,10 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
 pub fn rollback(store: &RollbackStore) -> Result<(), String> {
     let entry = store
         .take_entry(TWEAK_ID)
-        .ok_or_else(|| "nessuno snapshot salvato: il DNS non risulta modificato".to_string())?;
+        .ok_or_else(|| "no snapshot saved: DNS does not appear to be changed".to_string())?;
 
     let SnapshotEntry::Dns { interface, previous_servers } = entry else {
-        return Err("tipo di snapshot inatteso per il DNS".to_string());
+        return Err("unexpected snapshot type for DNS".to_string());
     };
 
     if previous_servers.is_empty() {
@@ -109,10 +109,10 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
 
 #[cfg(not(windows))]
 pub fn apply(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 
 #[cfg(not(windows))]
 pub fn rollback(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }

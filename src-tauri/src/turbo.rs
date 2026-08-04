@@ -105,10 +105,10 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
 
 #[cfg(not(windows))]
 pub fn apply(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }
 
 #[cfg(not(windows))]
 pub fn rollback(_store: &RollbackStore) -> Result<(), String> {
-    Err("non supportato su questa piattaforma".to_string())
+    Err("not supported on this platform".to_string())
 }

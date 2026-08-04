@@ -8,7 +8,17 @@ const DIR = __dirname;
 const TOKEN_PATH = path.join(DIR, "token.json");
 const PORT = 51789;
 const REDIRECT_URI = `http://localhost:${PORT}`;
-const SCOPES = ["https://www.googleapis.com/auth/youtube"];
+// yt-analytics.readonly aggiunto 2026-08-04: la scope "youtube" sopra da'
+// upload/lettura Data API ma non la YouTube Analytics API (retention/watch-
+// time per video, la metrica che decide se un video viene spinto oltre il
+// pool di test iniziale - vedi project_growth_algorithm_research_2026_08_04
+// in memoria). Va abilitata anche "YouTube Analytics API" nello stesso
+// progetto Google Cloud, altrimenti le chiamate falliscono con "API not
+// enabled" anche con lo scope giusto sul token.
+const SCOPES = [
+  "https://www.googleapis.com/auth/youtube",
+  "https://www.googleapis.com/auth/yt-analytics.readonly",
+];
 
 function findClientSecretFile() {
   const file = fs.readdirSync(DIR).find((f) => f.startsWith("client_secret") && f.endsWith(".json"));

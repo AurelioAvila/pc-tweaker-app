@@ -49,6 +49,57 @@ from moviepy.editor import (
 
 TARGET_W, TARGET_H = 1080, 1920
 
+# Bitrate espliciti e normalizzazione loudness: aggiunti il 2026-08-04 per
+# omologare questo generatore a solofounded-bot e shopify-dropship-bot, che
+# li avevano gia'. Qui mancavano entrambi, quindi moviepy usava i suoi
+# default silenziosi.
+#
+# Misurato prima della correzione su video REALI gia' pubblicati
+# (reel-beforeafter-1785775480-5021, reel-beforeafter-1785692772-2458):
+# -19.6 / -19.7 LUFS integrati, contro i -14.1 LUFS di solofounded. Circa 6 dB
+# sotto ogni altro account: nel feed, dove i video si susseguono uno dopo
+# l'altro, un audio piu' basso di 6 dB suona "debole" e spinge allo scroll.
+# Lo standard di riferimento per streaming/social e' -14 LUFS.
+VIDEO_BITRATE = "12000k"
+AUDIO_BITRATE = "192k"
+LOUDNORM_FILTER = "loudnorm=I=-14:TP=-1.5:LRA=11"
+
+
+def _normalize_loudness(path: str) -> None:
+    """Porta l'audio del video gia' renderizzato a -14 LUFS.
+
+    Portata da solofounded-bot/src/render.py: NON si puo' fare passando
+    ffmpeg_params=["-af", ...] a write_videofile, perche' moviepy muxa
+    l'audio in "codec copy" e ffmpeg rifiuta filtro + streamcopy insieme
+    ("Filtering and streamcopy cannot be used together").
+
+    Il video e' copiato bit-per-bit (-c:v copy): nessuna ricompressione
+    video, si ricodifica solo l'audio. Se ffmpeg fallisce il file originale
+    resta intatto - un audio non normalizzato e' molto meglio di nessun
+    video, quindi l'eccezione non deve mai far fallire la generazione.
+    """
+    import subprocess
+
+    tmp_path = path + ".norm.mp4"
+    cmd = [
+        "ffmpeg", "-y", "-i", path,
+        "-c:v", "copy",
+        "-af", LOUDNORM_FILTER,
+        "-c:a", "aac", "-b:a", AUDIO_BITRATE,
+        # Questa passata rimuxa: senza ri-specificare +faststart il moov atom
+        # tornerebbe in fondo, riportando il bug del "primo tap non parte".
+        "-movflags", "+faststart",
+        tmp_path,
+    ]
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+        shutil.move(tmp_path, path)
+        print(f"[render] audio normalizzato a -14 LUFS: {os.path.basename(path)}", flush=True)
+    except Exception as exc:
+        print(f"[render] normalizzazione audio saltata ({exc}) - video invariato", flush=True)
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
 
 def _generate_bg_music(path: str, duration: float) -> None:
     """Synthesized ambient bed (no external sample - avoids any copyright
@@ -118,9 +169,13 @@ def _build_full_audio(voice_audio: AudioFileClip, duration: float, cut_times: li
 # (2026-07-30, this pipeline runs on Windows). Always use forward slashes.
 FONT_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "fonts", "Poppins-ExtraBold.ttf").replace(os.sep, "/")
 
-# 2 words/chunk instead of 3 - punchier, closer to the flash-caption pacing
-# real viral Shorts/Reels use, and pairs with the pop-in below.
-CAPTION_CHUNK_SIZE = 2
+# 4 parole per blocco (era 2, allineato 2026-08-04). Ultimo dei quattro
+# generatori a passare a 4: certsprint, solofounded e shopify erano gia'
+# stati corretti in giornata. I frammenti da 2 parole non compongono mai
+# una frase leggibile - verificato estraendo i fotogrammi di Reel reali
+# ("watchable Throw" / "room before"), lo spettatore deve ricostruire il
+# senso mentre lo sfondo cambia sotto.
+CAPTION_CHUNK_SIZE = 4
 CAPTION_FONTSIZE = 80
 CAPTION_Y = int(TARGET_H * 0.62)
 CAPTION_BAND_Y = int(TARGET_H * 0.56)
@@ -203,20 +258,44 @@ def _caption_clips_from_words(word_timings: list, duration: float, skip_before: 
                 return 1.0
             return 0.85 + 0.15 * (t / pop)
 
+        txt = TextClip(
+            text,
+            fontsize=CAPTION_FONTSIZE,
+            color="white",
+            stroke_color="black",
+            stroke_width=4,
+            method="caption",
+            size=(TARGET_W - 100, None),
+            font=FONT_PATH,
+        ).set_duration(chunk_duration)
+
+        # Sfondo ADERENTE al testo invece della vecchia fascia larga
+        # (2026-08-05). La banda copriva il 22% del fotogramma al 35% di
+        # opacita' per tutta la durata del video: non abbastanza da far
+        # risaltare il testo, abbastanza da annebbiare un quinto
+        # dell'immagine anche senza didascalie a schermo - la causa dei
+        # "video sbiaditi" segnalati dall'utente. 0.78 e' lo stesso valore
+        # della hook card, che si legge nitida.
+        text_w, text_h = txt.size
+        backdrop = (
+            ColorClip(size=(text_w + 40, text_h + 28), color=(0, 0, 0))
+            .set_opacity(0.78)
+            .set_duration(chunk_duration)
+        )
+
+        # Il pop d'ingresso va applicato SOLO al testo: un .resize() animato
+        # sul composito che contiene lo sfondo ne distrugge la maschera di
+        # trasparenza e il riquadro sparisce (verificato in isolamento il
+        # 2026-08-05 sul progetto gemello, rendendo la stessa didascalia con
+        # e senza resize). E' un difetto di moviepy nel propagare la mask
+        # attraverso un resize animato.
         txt_clip = (
-            TextClip(
-                text,
-                fontsize=CAPTION_FONTSIZE,
-                color="white",
-                stroke_color="black",
-                stroke_width=4,
-                method="caption",
-                size=(TARGET_W - 100, None),
-                font=FONT_PATH,
+            CompositeVideoClip(
+                [backdrop, txt.resize(_pop_scale).set_position(("center", "center"))],
+                size=(text_w + 40, text_h + 28),
             )
             .set_start(start)
             .set_duration(chunk_duration)
-            .resize(_pop_scale)
             .set_position(("center", CAPTION_Y))
         )
         clips.append(txt_clip)
@@ -359,11 +438,12 @@ def render_short(background_video_paths, audio_path: str, word_timings: list, ou
     background = background.set_audio(full_audio)
 
     hook_seconds = min(HOOK_CARD_SECONDS, audio.duration) if hook else 0.0
-    band = _caption_band(audio.duration, start=hook_seconds)
+    # Niente piu' _caption_band: ogni didascalia porta il proprio riquadro
+    # aderente al testo (vedi _caption_clips_from_words).
     captions = _caption_clips_from_words(word_timings, audio.duration, skip_before=hook_seconds)
     watermark = _watermark_clip(audio.duration)
     hook_card = _hook_card_clip(hook, hook_seconds) if hook else []
-    final = CompositeVideoClip([background, band, watermark] + captions + hook_card, size=(TARGET_W, TARGET_H))
+    final = CompositeVideoClip([background, watermark] + captions + hook_card, size=(TARGET_W, TARGET_H))
     final = final.set_duration(audio.duration)
 
     final.write_videofile(
@@ -373,12 +453,15 @@ def render_short(background_video_paths, audio_path: str, word_timings: list, ou
         audio_codec="aac",
         threads=4,
         preset="medium",
+        bitrate=VIDEO_BITRATE,
+        audio_bitrate=AUDIO_BITRATE,
         # moov atom in testa al file invece che in fondo - senza questo il
         # player deve scaricare l'intero file prima di poter leggere i
         # metadati, causando il classico 'primo tap non parte, secondo si'
         # (segnalato dall'utente 2026-08-02, moviepy non lo aggiunge di default).
         ffmpeg_params=["-movflags", "+faststart"],
     )
+    _normalize_loudness(output_path)
     return output_path
 
 
@@ -390,11 +473,12 @@ def render_slideshow(image_paths: list, image_starts: list, audio_path: str, wor
     background = background.set_audio(full_audio)
 
     hook_seconds = min(HOOK_CARD_SECONDS, audio.duration) if hook else 0.0
-    band = _caption_band(audio.duration, start=hook_seconds)
+    # Niente piu' _caption_band: ogni didascalia porta il proprio riquadro
+    # aderente al testo (vedi _caption_clips_from_words).
     captions = _caption_clips_from_words(word_timings, audio.duration, skip_before=hook_seconds)
     watermark = _watermark_clip(audio.duration)
     hook_card = _hook_card_clip(hook, hook_seconds) if hook else []
-    final = CompositeVideoClip([background, band, watermark] + captions + hook_card, size=(TARGET_W, TARGET_H))
+    final = CompositeVideoClip([background, watermark] + captions + hook_card, size=(TARGET_W, TARGET_H))
     final = final.set_duration(audio.duration)
 
     final.write_videofile(
@@ -404,10 +488,13 @@ def render_slideshow(image_paths: list, image_starts: list, audio_path: str, wor
         audio_codec="aac",
         threads=4,
         preset="medium",
+        bitrate=VIDEO_BITRATE,
+        audio_bitrate=AUDIO_BITRATE,
         # moov atom in testa al file invece che in fondo - senza questo il
         # player deve scaricare l'intero file prima di poter leggere i
         # metadati, causando il classico 'primo tap non parte, secondo si'
         # (segnalato dall'utente 2026-08-02, moviepy non lo aggiunge di default).
         ffmpeg_params=["-movflags", "+faststart"],
     )
+    _normalize_loudness(output_path)
     return output_path

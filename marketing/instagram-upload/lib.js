@@ -34,15 +34,48 @@ function loadCredentials() {
   throw new Error("No Instagram credentials found: set IG_ACCESS_TOKEN/IG_USER_ID env vars, or run get-token.js first.");
 }
 
+// AUTENTICAZIONE (corretta il 2026-08-04): il token va nell'header
+// "Authorization: Bearer", NON come campo access_token nel body.
+//
+// Il flusso "Instagram API with Instagram Login" (host graph.instagram.com,
+// token con prefisso IGAA - quello che usa questo account) vuole l'header
+// Bearer; passare access_token come parametro e' lo stile del vecchio flusso
+// Facebook-Page-linked su graph.facebook.com. Le chiamate di LETTURA
+// tollerano entrambi, ed e' per questo che il bug e' rimasto invisibile:
+// media, insights e perfino la creazione del container rispondevano
+// correttamente.
+//
+// media_publish invece NO: con l'auth in stile legacy rispondeva HTTP 200
+// con un media_id dall'aria valida, ma il post non veniva mai creato -
+// nessuna eccezione, log "[OK] Published", e nulla sull'account. Verificato
+// il 2026-08-04: 15+ pubblicazioni consecutive dal 2026-08-01 tutte
+// fantasma, media_count fermo a 11, content_publishing_limit con
+// quota_usage 0 (Instagram non contava nemmeno un tentativo), mentre una
+// pubblicazione manuale dall'app funzionava perfettamente. certsprint-bot e
+// i brand Shopify, che usano da sempre l'header Bearer, non hanno mai avuto
+// il problema.
+function authHeaders(igAccessToken) {
+  return { Authorization: `Bearer ${igAccessToken}` };
+}
+
 async function createContainer(igUserId, igAccessToken, videoUrl, caption) {
+  // is_ai_generated: "true" (2026-08-05): l'AI Act europeo (Articolo 50) e'
+  // legalmente vincolante dal 2026-08-02 (multe fino a 15M euro o 3% del
+  // fatturato) per contenuto generato/manipolato da IA non etichettato -
+  // ogni Reel qui usa voce sintetica e script generati. E' il parametro
+  // NATIVO documentato da Meta, non solo un hashtag: Instagram applica da
+  // solo l'etichetta "AI info" visibile sul post.
   const resp = await fetch(`${API_BASE}/${igUserId}/media`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      ...authHeaders(igAccessToken),
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
     body: new URLSearchParams({
       media_type: "REELS",
       video_url: videoUrl,
       caption,
-      access_token: igAccessToken,
+      is_ai_generated: "true",
     }),
   });
   const data = await resp.json();
@@ -56,7 +89,8 @@ async function pollContainerStatus(creationId, igAccessToken) {
   const deadline = Date.now() + POLL_TIMEOUT_MS;
   while (Date.now() < deadline) {
     const resp = await fetch(
-      `${API_BASE}/${creationId}?${new URLSearchParams({ fields: "status_code", access_token: igAccessToken })}`,
+      `${API_BASE}/${creationId}?${new URLSearchParams({ fields: "status_code" })}`,
+      { headers: authHeaders(igAccessToken) },
     );
     const data = await resp.json();
     if (data.status_code === "FINISHED" || data.status_code === "ERROR") return data.status_code;
@@ -68,8 +102,11 @@ async function pollContainerStatus(creationId, igAccessToken) {
 async function publish(igUserId, igAccessToken, creationId) {
   const resp = await fetch(`${API_BASE}/${igUserId}/media_publish`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ creation_id: creationId, access_token: igAccessToken }),
+    headers: {
+      ...authHeaders(igAccessToken),
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({ creation_id: creationId }),
   });
   const data = await resp.json();
   if (!resp.ok) {

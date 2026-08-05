@@ -164,6 +164,12 @@ async function uploadVideo({ videoPath, caption, privacyLevel = "SELF_ONLY" }) {
         disable_duet: false,
         disable_comment: false,
         disable_stitch: false,
+        // is_aigc: true (2026-08-05): l'AI Act europeo (Articolo 50) e'
+        // legalmente vincolante dal 2026-08-02 - ogni video qui usa voce
+        // sintetica e script generati. Campo NATIVO dell'API TikTok, non
+        // solo un hashtag: applica l'etichetta "Creator labeled as
+        // AI-generated" sul video.
+        is_aigc: true,
       },
       source_info: {
         source: "FILE_UPLOAD",

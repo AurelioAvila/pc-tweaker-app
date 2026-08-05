@@ -85,8 +85,19 @@ async function main() {
       if (USE_INBOX) {
         console.log(`[${new Date().toISOString()}] Sending ${baseName} to TikTok drafts inbox...`);
         result = await uploadVideoToInbox({ videoPath, caption });
+        // Promemoria sul toggle "AI-generated" incluso nel file (2026-08-05):
+        // l'endpoint bozze non accetta post_info, quindi is_aigc non e'
+        // impostabile via API per questo flusso (a differenza di
+        // uploadVideo/lib.js, usato solo dopo l'audit Direct Post). L'AI Act
+        // europeo (Articolo 50) e' legalmente vincolante dal 2026-08-02: la
+        // dichiarazione la puo' fare solo un umano in app al momento della
+        // pubblicazione dalla bozza.
         const captionPath = path.join(path.dirname(videoPath), `${baseName}_tiktok_caption.txt`);
-        fs.writeFileSync(captionPath, caption, "utf8");
+        fs.writeFileSync(
+          captionPath,
+          `${caption}\n\n[Ricorda: attiva "Etichetta come generato da IA" prima di pubblicare - obbligo di legge UE dal 2/8/2026]`,
+          "utf8",
+        );
         console.log(`  > caption ready to paste: ${captionPath}`);
       } else {
         console.log(`[${new Date().toISOString()}] Uploading ${baseName} to TikTok (${PRIVACY_LEVEL})...`);

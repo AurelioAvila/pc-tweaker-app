@@ -77,11 +77,18 @@ async function getAuthorizedClient() {
 async function uploadVideo({ videoPath, title, description, tags = [], privacyStatus = "unlisted", thumbnailPath = null }) {
   const auth = await getAuthorizedClient();
   const youtube = google.youtube({ version: "v3", auth });
+  // Trasparenza AI (2026-08-05): EU AI Act art. 50, applicabile dal 2 agosto
+  // 2026 - il contenuto generato da AI va reso identificabile con marcatura
+  // machine-readable. Questi video sono generati (script + voce TTS):
+  // containsSyntheticMedia e' il campo che l'API espone apposta, "#ai" la
+  // parte visibile a chi legge.
+  if (!tags.some((t) => t.toLowerCase() === "ai")) tags = [...tags, "ai"];
+  if (!description.toLowerCase().includes("#ai")) description = `${description.trimEnd()}\n\n#ai`;
   const res = await youtube.videos.insert({
     part: ["snippet", "status"],
     requestBody: {
       snippet: { title, description, tags, categoryId: "28" },
-      status: { privacyStatus, selfDeclaredMadeForKids: false },
+      status: { privacyStatus, selfDeclaredMadeForKids: false, containsSyntheticMedia: true },
     },
     media: { body: fs.createReadStream(videoPath) },
   });

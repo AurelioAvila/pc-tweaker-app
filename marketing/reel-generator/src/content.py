@@ -8,6 +8,49 @@ Tease, Contrarian Claim.
 """
 import random
 
+# Query per-VOCE invece che per-categoria (2026-08-05, richiesta utente:
+# "quando fai le classifiche dovresti raffigurare almeno la cosa di cui
+# parli, magari anche in modo approssimativo"). Prima ogni immagine dello
+# slideshow veniva pescata a caso dal pool GENERICO della categoria
+# ("windows laptop screen" ecc.), a prescindere da quale dei 3 punti della
+# classifica la voce stesse davvero dicendo in quel momento - una voce
+# poteva dire "Xbox Game Bar" e mostrare una scrivania qualsiasi. Stesso
+# schema gia' validato su solofounded-bot (_VISUAL_CONCEPTS/
+# fact_footage_query): prima il concetto mappato, poi - solo come ripiego -
+# la categoria generica, mai un buco.
+_VISUAL_CONCEPTS = [
+    (("xbox game bar", "game bar"), "xbox controller gaming"),
+    (("power plan", "cpu", "throttle"), "laptop cpu performance"),
+    (("gpu", "graphics", "input lag"), "gaming pc graphics card"),
+    (("mouse pointer", "mouse acceleration", "aim"), "computer mouse closeup"),
+    (("advertising id", "profile on you", "ads"), "smartphone notifications ads"),
+    (("location tracking", "location"), "phone gps map"),
+    (("bing", "search results", "start menu search"), "windows search bar typing"),
+    (("telemetry", "data collection"), "server data privacy"),
+    (("admin rights", "permission"), "windows security settings screen"),
+    (("optimize now", "vague button", "one time permission"), "software settings toggle"),
+    (("registry",), "computer code settings screen"),
+    (("winget", "package manager", "random exe"), "software download install"),
+    (("dns", "isp"), "network router internet"),
+    (("original value", "reversible", "revert"), "undo button interface"),
+]
+
+
+def item_footage_query(text: str) -> str:
+    """Query Pexels per lo sfondo/foto di UNA voce specifica (uno dei punti
+    di una classifica, o l'unico item di uno script mistakewarning/
+    contrarian/beforeafter), invece della categoria intera.
+
+    Ripiego a None (non stringa vuota) quando nessun concetto combacia,
+    cosi' il chiamante puo' distinguere "nessuna corrispondenza, usa il
+    pool di categoria" da "query vuota"."""
+    low = f" {text.lower()} "
+    for keywords, query in _VISUAL_CONCEPTS:
+        if any(k in low for k in keywords):
+            return query
+    return None
+
+
 CATEGORIES = ["mistakewarning", "contrarian", "beforeafter"]
 
 # Listicle category ("3 things Windows does against you"), handled

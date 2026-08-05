@@ -23,6 +23,7 @@ from content import (
     CAPTION_HOOKS,
     get_random_content_multi,
     get_listtease_content,
+    item_footage_query,
     pick_category,
 )
 from script_writer import build_script_template, build_listtease_script_template
@@ -86,7 +87,15 @@ def make_one_reel(index: int, category: str = None):
             word_timings[i][1] if i < len(word_timings) else 0.0
             for i in item_word_starts
         ]
-        queries = _resolve_item_queries(footage_query, len(item_word_starts))
+        # Query PER-VOCE (2026-08-05): "items" e "item_word_starts" hanno
+        # sempre la stessa lunghezza/ordine (uno per punto della classifica,
+        # o l'unico item per mistakewarning/contrarian/beforeafter), quindi
+        # ogni immagine puo' raffigurare cio' che quella specifica voce sta
+        # dicendo invece di pescare a caso dal pool generico della
+        # categoria. Ripiego SUL SINGOLO ITEM (non su tutta la lista) quando
+        # non c'e' un concetto mappato, cosi' un solo punto senza match non
+        # fa perdere la precisione degli altri.
+        queries = [item_footage_query(it) or _resolve_query(footage_query) for it in items]
         image_paths = []
         for i, query in enumerate(queries):
             p = os.path.join(OUTPUT_DIR, f"photo_{index}_{i}.jpg")
@@ -95,7 +104,19 @@ def make_one_reel(index: int, category: str = None):
         print(f"[{index}] (slideshow, {len(image_paths)} photos) queries: {queries}")
         render_slideshow(image_paths, image_starts, audio_path, word_timings, video_path, hook=spoken_hook)
     else:
-        queries = _resolve_item_queries(footage_query, NUM_BACKGROUND_CLIPS)
+        # Query PER-VOCE anche nel ramo multi-clip (2026-08-05): SLIDESHOW_PROBABILITY
+        # e' 0.5, quindi META' dei video finiva comunque sul pool generico di
+        # categoria anche con la correzione sopra, dato che qui sotto non veniva
+        # applicata. Niente sincronizzazione temporale precisa (i tagli restano
+        # ogni 4-7s, non ai bordi delle parole), ma i clip mostrati sono quelli
+        # degli argomenti realmente trattati, in sequenza - "raffigurare almeno
+        # in modo approssimativo" come richiesto.
+        item_queries = [item_footage_query(it) for it in items]
+        item_queries = [q for q in item_queries if q] or None
+        if item_queries:
+            queries = [item_queries[i % len(item_queries)] for i in range(NUM_BACKGROUND_CLIPS)]
+        else:
+            queries = _resolve_item_queries(footage_query, NUM_BACKGROUND_CLIPS)
         background_paths = []
         for i, query in enumerate(queries):
             p = os.path.join(OUTPUT_DIR, f"background_{index}_{i}.mp4")

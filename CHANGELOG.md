@@ -5,6 +5,23 @@ update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just
 the git log.
 
+## Marketing — 2026-08-06
+
+- **Added**: ogni Short pubblicato su YouTube riceve ora una copertina
+  propria, generata con ffmpeg dal suo PRIMO fotogramma (che porta gia' la
+  hook card, senza sottotitoli sovrapposti). Prima la sceglieva YouTube da
+  un fotogramma a caso: verificato scaricando le copertine reali, uscivano
+  fermi immagine di meta' video con addosso frammenti di sottotitolo
+  troncati a meta' parola. Nel feed Shorts la copertina non si vede, ma si
+  vede nella griglia del canale e nella ricerca, cioe' dove chi arriva
+  decide se iscriversi. Formato scelto dopo prova diretta su YouTube:
+  1280x720 col fotogramma nitido nella colonna centrale 9:16 (l'unica zona
+  che sopravvive sia alla vista 16:9 sia al ritaglio verticale della
+  griglia) e lo stesso fotogramma sfocato a riempire i lati — caricando
+  direttamente il verticale 1080x1920, YouTube lo incastra in un 16:9 con
+  due grosse bande nere. Stessa modifica applicata in parallelo agli altri
+  7 canali YouTube. `marketing/youtube-upload/lib.js`.
+
 ## v0.3.0 — 2026-08-04
 
 - **Changed**: toggle switches are now a compact 20×36px pill with an

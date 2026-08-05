@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const http = require("http");
-const { exec } = require("child_process");
+const { exec, execFileSync } = require("child_process");
 const { google } = require("googleapis");
 
 const DIR = __dirname;
@@ -74,6 +74,39 @@ async function getAuthorizedClient() {
   return getNewToken(oauth2Client);
 }
 
+/**
+ * Copertina 1280x720 costruita dal PRIMO fotogramma dello Short (i nostri
+ * aprono con la hook card a schermo intero, quindi il fotogramma zero porta
+ * gia' il gancio leggibile e non ha ancora sottotitoli sovrapposti).
+ *
+ * Composizione: il fotogramma nitido nella colonna centrale 9:16 - l'unica
+ * zona che sopravvive sia alla vista 16:9 sia al ritaglio verticale della
+ * griglia Short - e lo stesso fotogramma allargato e sfocato a riempire i
+ * lati. Provato davvero: caricando direttamente il verticale 1080x1920,
+ * YouTube lo incastra in un 16:9 con due grosse bande nere.
+ *
+ * Torna null (senza sollevare) se ffmpeg non c'e' o fallisce: meglio la
+ * copertina automatica che una pubblicazione mancata.
+ */
+function buildShortThumbnail(videoPath) {
+  const out = path.join(path.dirname(videoPath), "short_thumbnail.jpg");
+  const filter =
+    "[0:v]scale=1280:-2,crop=1280:720,boxblur=24:2,eq=brightness=-0.22[bg];" +
+    "[0:v]scale=-2:720,crop=405:720[fg];[bg][fg]overlay=(W-w)/2:0";
+  try {
+    execFileSync(
+      "ffmpeg",
+      ["-y", "-ss", "0", "-i", videoPath, "-frames:v", "1",
+       "-filter_complex", filter, "-q:v", "2", out],
+      { stdio: "pipe" }
+    );
+    return fs.existsSync(out) ? out : null;
+  } catch (err) {
+    console.warn(`[thumbnail] non generata (${err.message}) - resta quella automatica`);
+    return null;
+  }
+}
+
 async function uploadVideo({ videoPath, title, description, tags = [], privacyStatus = "unlisted", thumbnailPath = null }) {
   const auth = await getAuthorizedClient();
   const youtube = google.youtube({ version: "v3", auth });
@@ -93,10 +126,17 @@ async function uploadVideo({ videoPath, title, description, tags = [], privacySt
     media: { body: fs.createReadStream(videoPath) },
   });
 
-  // Miniatura personalizzata (in pratica solo i long-form: sugli Shorts il
-  // feed parte in autoplay e la miniatura conta pochissimo). Non deve MAI
-  // far fallire una pubblicazione gia' andata a buon fine: i canali senza
-  // numero di telefono verificato non possono impostarla e l'API rifiuta.
+  // Copertina anche per gli SHORT (2026-08-06): nel feed non si vede, ma si
+  // vede nella griglia del canale e nella ricerca, cioe' dove si decide se
+  // iscriversi. Senza, YouTube ne sceglieva una da un fotogramma a caso,
+  // spesso con addosso un sottotitolo troncato a meta' parola.
+  if (!thumbnailPath) {
+    thumbnailPath = buildShortThumbnail(videoPath);
+  }
+
+  // Non deve MAI far fallire una pubblicazione gia' andata a buon fine: i
+  // canali senza numero di telefono verificato non possono impostarla e
+  // l'API rifiuta.
   if (thumbnailPath) {
     try {
       await youtube.thumbnails.set({

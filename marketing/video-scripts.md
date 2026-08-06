@@ -121,6 +121,70 @@ al tema — è il video più rischioso ma anche a più alto potenziale reach per
 
 ---
 
+## Aggiornamento 6 agosto 2026 — nuovo angle di attualità: ESU Windows 10
+
+Ricerca aggiuntiva per questo giro di manutenzione. Prima di scrivere uno script
+sulla scadenza ESU (13 ottobre 2026) è stato verificato lo stato attuale della
+notizia — e non è più accurato:
+
+- **Microsoft ha esteso silenziosamente il programma ESU gratuito consumer**:
+  la scadenza non è più il 13 ottobre 2026 ma il **12 ottobre 2027** — un anno
+  extra di aggiornamenti di sicurezza gratuiti per chi resta su Windows 10.
+  L'annuncio non è stato un comunicato stampa ma una nota aggiunta il 25 giugno
+  2026 alla documentazione ufficiale e a un blog post esistente — molti utenti
+  ancora non lo sanno e credono (erroneamente) che la scadenza sia ottobre 2026.
+  ([bleepingcomputer.com](https://www.bleepingcomputer.com/news/microsoft/microsoft-quietly-extends-free-windows-10-esu-support-to-october-2027/), [windowscentral.com](https://www.windowscentral.com/microsoft/windows-10/microsoft-quietly-extends-windows-10s-extra-security-updates-program-for-free-users-can-now-stay-on-windows-10-until-october-2027-securely), [learn.microsoft.com — pagina ufficiale ESU](https://learn.microsoft.com/en-us/windows/whats-new/extended-security-updates))
+- **Perché l'ha estesa**: milioni di PC restano incompatibili con i requisiti
+  hardware di Windows 11 (TPM 2.0, CPU supportate) e molti utenti rifiutano
+  comunque l'upgrade per bug, invadenza dell'AI e percezione di performance
+  peggiori — Microsoft ha di fatto ammesso che una fetta enorme di utenti
+  resterà su Windows 10 ancora a lungo. ([windowslatest.com](https://www.windowslatest.com/2026/06/25/windows-10-support-quietly-extended-until-oct-2027-as-users-reject-windows-11/), [cybernews.com](https://cybernews.com/tech/microsoft-windows-10-update-program-extended/))
+- **Perché è un angle utile per PC Tweaker**: non è "compra un PC nuovo", è
+  l'opposto — un pubblico enorme (ancora su Windows 10, spesso su hardware
+  più vecchio non upgradabile a Windows 11) ha bisogno di più performance dal
+  proprio hardware attuale, non di sostituirlo. È il target perfetto per un
+  tool di ottimizzazione. Formato "news reactor" (notizia poco nota), distinto
+  dai formati Contrarian/Mistake/List Tease già usati nei Video 1-4 — alto
+  potenziale reach perché intercetta chi sta cercando "Windows 10 fine
+  supporto" proprio in questo periodo.
+- **Nota importante**: NON usare un hook con scadenza falsa tipo "hai solo
+  pochi giorni prima che il PC diventi vulnerabile" — sarebbe fattualmente
+  sbagliato (la vera scadenza è ottobre 2027) e rischierebbe correzioni
+  pubbliche nei commenti che danneggiano la credibilità del canale.
+
+---
+
+## Video 5 — "Windows 10 NON finisce a ottobre 2026 (e quasi nessuno lo sa)" (News Reactor + Mistake Warning)
+
+Angolo di attualità (notizia di giugno-luglio 2026, ancora poco conosciuta ad
+agosto): Microsoft ha silenziosamente esteso il programma ESU gratuito a
+ottobre 2027. Buon potenziale per intercettare chi sta cercando in questo
+periodo "Windows 10 fine supporto" / "devo aggiornare a Windows 11".
+
+**Hook (0-3s) — dev'essere presente TUTTO insieme: movimento + voce + testo:**
+> (movimento: mostra rapidamente una data "13 ottobre 2026" sbarrata e
+> sostituita da "12 ottobre 2027") + voce: *"Pensi che Windows 10 smetta di
+> funzionare a ottobre? Microsoft ha cambiato tutto e non te l'ha detto"* +
+> testo overlay identico
+
+**Shot list:**
+1. (0-3s) Hook come sopra
+2. (3-9s) Testo: "A giugno 2026 Microsoft ha esteso l'ESU gratuita di un anno —
+   nessun comunicato stampa, solo una riga aggiunta a un blog post già esistente"
+3. (9-15s) Testo: "Perché? Milioni di PC non riescono a fare l'upgrade a
+   Windows 11 (serve TPM 2.0) e tanti altri non vogliono farlo"
+4. (15-21s) Pivot al prodotto: "Se il tuo PC resta su Windows 10 ancora a
+   lungo, tienilo comunque veloce" → screen recording: apri PC Tweaker,
+   mostra un preset di performance (es. "Turbo Gaming" o categoria dedicata)
+5. (21-26s) Mostra il rollback one-click (coerenza col resto del canale —
+   messaggio "sicuro, reversibile")
+6. (26-28s) CTA verbale + testo: "Cerca 'PC Tweaker' — link in bio"
+
+**Caption:**
+"Windows 10 NON finisce a ottobre 2026 come pensi (Microsoft l'ha esteso in silenzio a ottobre 2027) — ma vale comunque la pena tenerlo veloce 💻 #windows10 #windowsupdate #pctips #pcoptimization #tech"
+
+---
+
 ## Note di pubblicazione
 
 - Posta Video 1 per primo (hook più forte secondo i dati, bassa barriera di ripresa).
@@ -134,6 +198,9 @@ al tema — è il video più rischioso ma anche a più alto potenziale reach per
   premia l'engagement rapido più di quello tardivo.
 - Video 4 è il più delicato: nomina la concorrenza solo se ti senti a tuo agio,
   non è obbligatorio — funziona anche saltandolo.
+- Video 5 è legato a una notizia (estensione ESU) — girarlo e pubblicarlo
+  entro poche settimane da quando leggi questo, prima che la notizia sia
+  troppo vecchia o troppo nota per fare da hook efficace.
 
 ## Fonti
 
@@ -142,3 +209,8 @@ al tema — è il video più rischioso ma anche a più alto potenziale reach per
 - [We Analyzed 4,000 TikTok & Instagram Videos — what goes viral in 2026](https://thecontentlabs.app/blog/what-goes-viral-in-2026-data-study)
 - [Instagram Reels vs TikTok vs YouTube Shorts 2026](https://www.techwyse.com/blog/infographic/best-short-video-platform-2026-instagram-reels-tiktok-youtube-shorts)
 - [Esempio di contenuto virale esistente nella stessa nicchia](https://www.tiktok.com/@thesoaptech/video/7390890131617549600)
+- [Microsoft quietly extends free Windows 10 ESU support to October 2027 — BleepingComputer](https://www.bleepingcomputer.com/news/microsoft/microsoft-quietly-extends-free-windows-10-esu-support-to-october-2027/)
+- [Microsoft quietly extends Windows 10's extra security updates program for free until Oct 2027 — Windows Central](https://www.windowscentral.com/microsoft/windows-10/microsoft-quietly-extends-windows-10s-extra-security-updates-program-for-free-users-can-now-stay-on-windows-10-until-october-2027-securely)
+- [Extended Security Updates (ESU) program for Windows 10 — pagina ufficiale Microsoft Learn](https://learn.microsoft.com/en-us/windows/whats-new/extended-security-updates)
+- [Windows 10 support quietly extended until Oct 2027, as users reject Windows 11 — Windows Latest](https://www.windowslatest.com/2026/06/25/windows-10-support-quietly-extended-until-oct-2027-as-users-reject-windows-11/)
+- [Microsoft extends Windows 10 update program as users refuse to upgrade — Cybernews](https://cybernews.com/tech/microsoft-windows-10-update-program-extended/)

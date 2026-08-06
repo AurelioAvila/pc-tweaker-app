@@ -114,11 +114,17 @@ async function createContainer(igUserId, igAccessToken, videoUrl, caption) {
       ...authHeaders(igAccessToken),
       "Content-Type": "application/x-www-form-urlencoded",
     },
+    // audio_name (2026-08-06): l'algoritmo tratta l'audio come un tag di
+    // metadati con una propria pagina che raccoglie tutti i reel che lo
+    // usano - un nome brandizzato coerente la trasforma in un hub del
+    // brand e aggiunge la keyword "Windows" alla ricerca. La musica di
+    // libreria via API non esiste: va incorporata nel file video.
     body: new URLSearchParams({
       media_type: "REELS",
       video_url: videoUrl,
       caption,
       is_ai_generated: "true",
+      audio_name: "PC Tweaker Windows Tips",
     }),
   });
   const data = await resp.json();

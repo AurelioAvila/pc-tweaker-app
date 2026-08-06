@@ -114,46 +114,52 @@ CATEGORY_META = {
 # a 3 video/giorno il testo ricominciava a ripetersi identico ogni 5 giorni -
 # un segnale di contenuto duplicato che non conviene mai dare, tanto piu' su
 # un account nuovo. Raddoppiate a 8 per categoria (32 totali, ~11 giorni).
+# KEYWORD SEMPRE NELLA PRIMA RIGA (2026-08-06): Instagram ranka le caption
+# come un motore di ricerca e pesa le keyword nei primi 60-80 caratteri
+# (ricerca Toptal/TrueFuture 2026). Diversi hook non contenevano ne'
+# "Windows" ne' "PC" ne' "gaming" ("One click, real difference", "The
+# setting nobody thinks to check"): curiosita' senza argomento = invisibile
+# in ricerca. Ogni hook ora contiene almeno una keyword del topic.
 CAPTION_HOOKS = {
     "mistakewarning": [
         "Windows turned this on without asking you \U0001F6A8",
-        "This default setting is working against you",
+        "This Windows default setting is working against you",
         "You didn't enable this, Windows did",
-        "Check if this is still on right now",
+        "Check if this Windows setting is still on right now",
         "Your PC isn't slow, it's busy doing this",
-        "This has been running since day one",
-        "Fresh install and this was already on",
-        "The setting nobody thinks to check",
+        "This has been running since day one on your PC",
+        "Fresh Windows install and this was already on",
+        "The Windows setting nobody thinks to check",
     ],
     "contrarian": [
         "Don't install a PC optimizer before this",
-        "Most optimizer tools can't do this",
-        "The difference between a safe tool and a risky one",
-        "Read this before you download anything",
-        "If it can't undo the change, it's a gamble",
-        "I tested these so you can skip them",
+        "Most PC optimizer tools can't do this",
+        "The difference between a safe PC tool and a risky one",
+        "Read this before you download any PC booster",
+        "If a Windows tweak can't be undone, it's a gamble",
+        "I tested these PC boosters so you can skip them",
         "Registry cleaners are still being sold in 2026",
-        "The honest answer about 'speed boosters'",
+        "The honest answer about PC 'speed boosters'",
     ],
     "beforeafter": [
-        "One click, real difference",
-        "This is what one preset actually changes",
+        "One click, real Windows difference",
+        "This is what one Windows preset actually changes",
         "Before vs after, same PC",
-        "Nobody expects this much of a difference",
-        "Same hardware, completely different numbers",
-        "Nothing upgraded here, only switched off",
-        "The boot time alone made this worth it",
-        "No new parts, just the defaults corrected",
+        "Nobody expects this much of a PC difference",
+        "Same PC hardware, completely different numbers",
+        "Nothing upgraded on this PC, only switched off",
+        "The Windows boot time alone made this worth it",
+        "No new PC parts, just the Windows defaults corrected",
     ],
     LISTTEASE_CATEGORY: [
         "3 things Windows does against you \U0001F440",
         "Save this before your next gaming session",
         "Windows never tells you this",
-        "Check all 3 of these right now",
-        "3 defaults worth turning off tonight",
-        "Save this list, you'll want it later",
-        "3 settings that only bite you later",
-        "Number 3 is the one people miss",
+        "Check all 3 of these Windows settings right now",
+        "3 Windows defaults worth turning off tonight",
+        "Save this Windows checklist, you'll want it later",
+        "3 Windows settings that only bite you later",
+        "Number 3 is the Windows setting people miss",
     ],
 }
 

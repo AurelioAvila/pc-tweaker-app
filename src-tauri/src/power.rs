@@ -73,7 +73,7 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
 pub fn rollback(store: &RollbackStore) -> Result<(), String> {
     let entry = store
         .take_entry(TWEAK_ID)
-        .ok_or_else(|| "nessuno snapshot salvato: il piano non risulta modificato".to_string())?;
+        .ok_or_else(|| "no saved snapshot: the power plan does not appear to be modified".to_string())?;
 
     let SnapshotEntry::PowerScheme { previous_guid } = entry else {
         return Err("unexpected snapshot type for the power plan".to_string());

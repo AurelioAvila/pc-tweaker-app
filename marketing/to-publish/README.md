@@ -1,11 +1,11 @@
-# Come pubblicare un nuovo video
+# How to publish a new video
 
-Metti in questa cartella due file con lo stesso nome:
+Put two files with the same name in this folder:
 
-- `nome-video.mp4`
-- `nome-video.json`
+- `video-name.mp4`
+- `video-name.json`
 
-Esempio di `nome-video.json`:
+Example `video-name.json`:
 
 ```json
 {
@@ -15,23 +15,23 @@ Esempio di `nome-video.json`:
 }
 ```
 
-Ogni 30 minuti un'attività pianificata di Windows ("PCTweakerYouTubeUpload")
-controlla questa cartella. Se trova una coppia `.mp4`+`.json`, carica il
-video su YouTube come **pubblico da subito** (nessuna revisione manuale,
-scelta esplicita per automazione completa), poi sposta entrambi i file in
-`marketing/published/` così non viene ricaricato.
+Every 30 minutes a Windows scheduled task ("PCTweakerYouTubeUpload") checks
+this folder. When it finds a matching `.mp4`+`.json` pair, it uploads the
+video to YouTube as **public immediately** (no manual review — an explicit
+choice for full automation), then moves both files to `marketing/published/`
+so it never gets re-uploaded.
 
-Lo stesso file viene letto anche da `marketing/tiktok-upload/` e (una volta
-completato il setup Instagram - vedi `marketing/instagram-upload/`) da
-`marketing/instagram-upload/`: ognuno tiene il proprio log e pubblica in
-autonomia, senza spostare/cancellare i file (solo lo script YouTube possiede
-quel ciclo di vita).
+The same file is also read by `marketing/tiktok-upload/` and (once the
+Instagram setup is complete — see `marketing/instagram-upload/`) by
+`marketing/instagram-upload/`: each keeps its own log and publishes
+independently, without moving/deleting the files (only the YouTube script
+owns that lifecycle).
 
-Per controllare manualmente in qualsiasi momento, senza aspettare:
+To trigger a check manually at any time, without waiting:
 
 ```bash
 cd marketing/youtube-upload
 node auto-upload.js
 ```
 
-Log di tutti gli upload (video ID, URL, data): `marketing/youtube-upload/uploaded-log.json`.
+Log of every upload (video ID, URL, date): `marketing/youtube-upload/uploaded-log.json`.

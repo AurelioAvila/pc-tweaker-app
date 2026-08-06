@@ -54,6 +54,10 @@ mod imp {
 #[cfg(windows)]
 #[tauri::command]
 pub fn disk_health(drive: String) -> Result<DiskHealth, String> {
+    // The letter is interpolated into a PowerShell command line below, so it
+    // is pinned to a bare "X:" here — anything else is rejected before it
+    // can reach the shell.
+    let drive = crate::diskinfo::validate_drive(&drive)?;
     imp::check(&drive)
 }
 

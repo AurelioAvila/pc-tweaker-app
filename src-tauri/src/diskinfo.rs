@@ -11,6 +11,21 @@ pub struct DriveInfo {
     pub is_system: bool,
 }
 
+/// Accepts only a bare drive designator ("C" or "C:") and returns it
+/// normalized to "C:". Everything that touches a drive string downstream
+/// interpolates it into a PowerShell command line or passes it to defrag as
+/// an argument — both entry points are reachable from the webview via
+/// `invoke`, so the string must be pinned to this exact shape *here* rather
+/// than trusting the UI to only send values from `list_drives`.
+pub fn validate_drive(drive: &str) -> Result<String, String> {
+    let letter = drive.strip_suffix(':').unwrap_or(drive);
+    let mut chars = letter.chars();
+    match (chars.next(), chars.next()) {
+        (Some(c), None) if c.is_ascii_alphabetic() => Ok(format!("{}:", c.to_ascii_uppercase())),
+        _ => Err(format!("invalid drive designator: {:?}", drive)),
+    }
+}
+
 fn disk_kind_str(kind: DiskKind) -> String {
     match kind {
         DiskKind::HDD => "HDD".to_string(),
@@ -79,6 +94,21 @@ mod tests {
             assert!(d.letter.ends_with(':'), "malformed drive letter: {}", d.letter);
             assert_eq!(d.letter.len(), 2, "expected e.g. \"C:\", got: {}", d.letter);
         }
+    }
+
+    #[test]
+    fn drive_validation_accepts_only_bare_designators() {
+        assert_eq!(validate_drive("C:"), Ok("C:".to_string()));
+        assert_eq!(validate_drive("c"), Ok("C:".to_string()));
+        assert_eq!(validate_drive("d:"), Ok("D:".to_string()));
+        // Everything below reaches either a PowerShell command line or the
+        // elevated defrag helper if it gets through, so it must not.
+        assert!(validate_drive("").is_err());
+        assert!(validate_drive("CC:").is_err());
+        assert!(validate_drive("C:\\").is_err());
+        assert!(validate_drive("/L").is_err());
+        assert!(validate_drive("C'; Remove-Item x; '").is_err());
+        assert!(validate_drive("è:").is_err());
     }
 
     #[test]

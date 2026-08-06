@@ -198,10 +198,10 @@ pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
 pub fn rollback_turbo_boost(store: &RollbackStore) -> Result<(), String> {
     let entry = store
         .take_entry(TURBO_BOOST_ID)
-        .ok_or_else(|| "nessuno snapshot salvato: il turbo boost non risulta modificato".to_string())?;
+        .ok_or_else(|| "no saved snapshot: turbo boost does not appear to be modified".to_string())?;
 
     let SnapshotEntry::PowerSetting { ac_index, dc_index } = entry else {
-        return Err("tipo di snapshot inatteso per il turbo boost".to_string());
+        return Err("unexpected snapshot type for turbo boost".to_string());
     };
 
     crate::power::run_powercfg(&["/setacvalueindex", "scheme_current", "sub_processor", "perfboostmode", &ac_index])?;

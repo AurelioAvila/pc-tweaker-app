@@ -81,10 +81,10 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
 
     let entry = store
         .take_entry(TWEAK_ID)
-        .ok_or_else(|| "nessuno snapshot salvato: il preset non risulta applicato".to_string())?;
+        .ok_or_else(|| "no saved snapshot: the preset does not appear to be applied".to_string())?;
 
     let SnapshotEntry::Composite { entries } = entry else {
-        return Err("tipo di snapshot inatteso per il preset Turbo Gaming".to_string());
+        return Err("unexpected snapshot type for the Turbo Gaming preset".to_string());
     };
 
     for e in entries {

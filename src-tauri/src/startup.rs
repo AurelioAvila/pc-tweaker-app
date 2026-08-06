@@ -49,7 +49,7 @@ fn parse_payload(payload: &str) -> Result<(String, bool, String), String> {
     let enabled = parts.next().unwrap_or("1") == "1";
     let name = parts.next().unwrap_or_default().to_string();
     if name.is_empty() || scope.is_empty() {
-        return Err("payload di avvio non valido".to_string());
+        return Err("invalid startup payload".to_string());
     }
     Ok((scope, enabled, name))
 }

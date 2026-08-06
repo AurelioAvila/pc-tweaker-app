@@ -436,6 +436,10 @@ fn last_diskopt_result_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf
 #[cfg(windows)]
 #[tauri::command]
 fn optimize_disk(app: tauri::AppHandle, drive: String) -> Result<diskopt::DiskOptResult, String> {
+    // Normalized before it crosses the elevation boundary as a CLI argument:
+    // this guarantees the elevated child only ever sees a bare "X:", never a
+    // defrag flag or anything shell-like.
+    let drive = diskinfo::validate_drive(&drive)?;
     if !elevation::is_elevated() {
         elevation::run_elevated_action("--elevated-diskopt", &drive)?;
         let path = last_diskopt_result_path(&app)?;
@@ -499,7 +503,11 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
             std::fs::write(dir.join("last_cleanup_result.json"), json).map_err(|e| e.to_string())
         }),
-        "--elevated-diskopt" => diskopt::optimize(id).and_then(|res| {
+        // Re-validated on this side too: the elevated entry point is a plain
+        // CLI flag, so it must not trust that its caller was our own app.
+        "--elevated-diskopt" => diskinfo::validate_drive(id)
+            .and_then(|drive| diskopt::optimize(&drive))
+            .and_then(|res| {
             let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
             std::fs::write(dir.join("last_diskopt_result.json"), json).map_err(|e| e.to_string())
         }),

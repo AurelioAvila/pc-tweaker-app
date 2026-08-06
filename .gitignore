@@ -19,9 +19,11 @@ dist
 dist-ssr
 *.local
 
-# YouTube upload credentials/tokens — never commit
-marketing/youtube-upload/client_secret*.json
-marketing/youtube-upload/token*.json
+# YouTube upload credentials/tokens — never commit.
+# No file extension anchor on purpose: a real OAuth refresh token was sitting
+# in "token.json.bak_pre_analytics", which "token*.json" did not match.
+marketing/youtube-upload/client_secret*
+marketing/youtube-upload/token*
 marketing/youtube-upload/uploaded-log.json
 marketing/youtube-upload/auto-upload.log
 marketing/youtube-upload/node_modules
@@ -34,13 +36,13 @@ marketing/published/*.json
 marketing/published/*.x-caption.txt
 
 # TikTok upload credentials/tokens — never commit
-marketing/tiktok-upload/credentials.json
+marketing/tiktok-upload/credentials*
 marketing/tiktok-upload/uploaded-log.json
 marketing/tiktok-upload/auto-upload.log
 marketing/tiktok-upload/node_modules
 
 # Instagram upload credentials/tokens — never commit
-marketing/instagram-upload/credentials.json
+marketing/instagram-upload/credentials*
 marketing/instagram-upload/uploaded-log.json
 marketing/instagram-upload/auto-upload.log
 marketing/instagram-upload/node_modules
@@ -71,3 +73,17 @@ marketing/reel-generator/.venv
 marketing/youtube-upload/longform_output/*
 !marketing/youtube-upload/longform_output/.gitkeep
 marketing/tiktok-upload/run.bat
+
+# Safety net: credential files anywhere in the repo, including renamed copies
+# and backups. Rules above are per-folder and easy to miss when a file is
+# copied or suffixed; these catch it regardless of location or extension.
+**/token.json*
+**/token*.json*
+**/client_secret*
+**/credentials.json*
+**/*.pem
+**/*.p12
+**/*.pfx
+**/service-account*.json
+.env.local
+.env.*.local

@@ -120,7 +120,10 @@ async function uploadVideo({ videoPath, title, description, tags = [], privacySt
   const res = await youtube.videos.insert({
     part: ["snippet", "status"],
     requestBody: {
-      snippet: { title, description, tags, categoryId: "28" },
+      // Lingua dichiarata esplicitamente (2026-08-06): senza, YouTube la
+      // rileva da solo (e puo' sbagliare), e la lingua rilevata e' la base
+      // dell'auto-doppiaggio. Il contenuto e' inglese per regola di progetto.
+      snippet: { title, description, tags, categoryId: "28", defaultLanguage: "en", defaultAudioLanguage: "en" },
       status: { privacyStatus, selfDeclaredMadeForKids: false, containsSyntheticMedia: true },
     },
     media: { body: fs.createReadStream(videoPath) },

@@ -98,20 +98,33 @@ REACTIONS = {
     ],
 }
 
+# CTA riscritte il 2026-08-06 con la logica di conversione del canale
+# YouTube: il fine del video e' portare chi guarda al prodotto, quindi
+# l'offerta dev'essere CONCRETA e agganciata a cio' che il video ha appena
+# mostrato ("fixes everything you just saw in one click" continua il
+# discorso; "link in bio" da solo non offre niente). Le varianti save/share
+# restano perche' sono le azioni piu' pesate dal ranking, ma anche loro ora
+# dicono COSA ottieni aprendo il link.
 CTA = [
-    "Search PC Tweaker, link in bio.",
-    "Free to try, link in bio.",
-    "One click, fully reversible, link in bio.",
-    "PC Tweaker, link in bio.",
-    # Aggiunte 2026-08-02: ricerca 2026 (Hootsuite, Eclincher, TrueFuture
-    # Media) conferma che share/save sono il segnale di ranking piu' pesato
-    # su Instagram/TikTok (le DM share valgono 3-10x un like) - prima ogni
-    # CTA era solo "link in bio", zero richiesta esplicita di salvare o
-    # condividere. Queste varianti chiedono l'azione ad alto peso E
-    # nominano comunque il prodotto.
-    "Save this before you forget, then search PC Tweaker.",
-    "Send this to whoever's PC is a mess right now. PC Tweaker, link in bio.",
-    "Tag someone who needs this fix. PC Tweaker, link in bio.",
+    "PC Tweaker fixes everything you just saw in one click, and it's free to try. Link in bio.",
+    "You could change all of this by hand, or let PC Tweaker do it in one click. Free, link in bio.",
+    "Every tweak you just saw is one click in PC Tweaker, and one click to undo. Link in bio.",
+    "PC Tweaker shows you exactly what it changes before it touches anything. Free to try, link in bio.",
+    "Save this before you forget, then let PC Tweaker do it for you in one click. Link in bio.",
+    "Send this to whoever's PC is a mess right now, the one-click fix is in the bio.",
+]
+
+# Chiusure da commento-gioco per il formato a lista (2026-08-06): lezione
+# presa da youtube-bot, dove il quiz e' l'unico formato in cui commentare
+# fa parte del gioco ("drop a 1, 2 or 3") e i commenti sono il segnale di
+# ranking che la narrazione pura non attiva mai. Una lista numerata offre
+# gratis la stessa meccanica: chiedere QUALE numero ti ha colpito e' una
+# domanda a risposta immediata, costa ~2s di video e produce il segnale
+# piu' raro dell'ecosistema (zero commenti su quasi tutti i profili).
+LIST_COMMENT_CLOSERS = [
+    "Comment the number that surprised you most.",
+    "Which one are you turning off first? Drop the number in the comments.",
+    "Comment the one you didn't know about.",
 ]
 
 TRANSITIONS = [
@@ -130,12 +143,26 @@ def build_script_template(items, category: str) -> tuple:
     if isinstance(items, str):
         items = [items]
     hook = random.choice(HOOKS.get(category, HOOKS["mistakewarning"]))
-    reaction_pool = REACTIONS.get(category, REACTIONS["mistakewarning"])
     cta = random.choice(CTA)
 
-    n = min(len(items), len(reaction_pool))
-    reactions = random.sample(reaction_pool, n) if n else []
-
+    # REACTIONS rimosse dallo script parlato il 2026-08-04, stessa correzione
+    # gia' applicata a solofounded-bot (omologazione fra i due generatori).
+    #
+    # Motivo misurato: @pctweaker10 aveva il watch time mediano piu' basso di
+    # tutti gli account (2.9s) sul video piu' lungo di tutti (22.7s), cioe'
+    # 13% di completamento - e il watch time e' il segnale di ranking #1.
+    # Le reaction sono commento generico che non aggiunge informazione
+    # ("And most people never notice.", "That's the real difference.") ma
+    # occupa secondi di un video gia' troppo lungo.
+    #
+    # ATTENZIONE per chi tocchera' questa funzione: item_word_starts contiene
+    # gli INDICI DI PAROLA in cui inizia ogni item, e main.py li usa per
+    # leggere word_timings[i] e decidere l'istante in cui compare ogni
+    # immagine della slideshow. Il contatore word_count deve quindi restare
+    # allineato parola per parola con la stringa finale: togliendo un pezzo
+    # dallo script va tolto ANCHE il suo word_count += _wc(...), altrimenti
+    # le immagini compaiono sfasate rispetto alla voce senza che nulla
+    # sollevi un errore.
     parts = [hook]
     item_word_starts = []
 
@@ -143,11 +170,8 @@ def build_script_template(items, category: str) -> tuple:
     item_word_starts.append(word_count)
     parts.append(items[0])
     word_count += _wc(items[0])
-    if reactions:
-        parts.append(reactions[0])
-        word_count += _wc(reactions[0])
 
-    for i, item in enumerate(items[1:], start=1):
+    for item in items[1:]:
         transition = random.choice(TRANSITIONS)
         parts.append(transition)
         word_count += _wc(transition)
@@ -155,10 +179,6 @@ def build_script_template(items, category: str) -> tuple:
         item_word_starts.append(word_count)
         parts.append(item)
         word_count += _wc(item)
-
-        if i < len(reactions):
-            parts.append(reactions[i])
-            word_count += _wc(reactions[i])
 
     parts.append(cta)
     # Il terzo elemento e' la frase-hook parlata: serve alla hook card del
@@ -188,6 +208,10 @@ def build_listtease_script_template(topic: str, items: list) -> tuple:
         parts.append(item_text)
         word_count += _wc(item_text)
 
+    # Chiusura da commento-gioco prima della CTA (vedi LIST_COMMENT_CLOSERS):
+    # arriva DOPO l'ultimo item, quindi non tocca item_word_starts - le
+    # immagini restano sincronizzate con le voci della lista.
+    parts.append(random.choice(LIST_COMMENT_CLOSERS))
     parts.append(cta)
     return " ".join(parts), item_word_starts, intro
 

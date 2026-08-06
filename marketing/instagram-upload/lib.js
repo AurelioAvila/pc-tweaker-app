@@ -1,7 +1,7 @@
 // Instagram Graph API client (mirrors the getcertsprint bot's
 // src/instagram_upload.py). Credentials come from (in order of priority):
-// 1. env vars IG_ACCESS_TOKEN / IG_USER_ID
-// 2. credentials.json in this folder (written by get-token.js)
+// 1. credentials.json in this folder (written by get-token.js)
+// 2. env vars PCTWEAKER_IG_ACCESS_TOKEN / PCTWEAKER_IG_USER_ID
 //
 // Flow: create media container (video_url + caption) -> poll status ->
 // publish. video_url must be a publicly reachable URL - see github-host.js
@@ -24,14 +24,57 @@ const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
 const POLL_INTERVAL_MS = 10000;
 const POLL_TIMEOUT_MS = 300000;
 
+// L'account a cui questo uploader DEVE pubblicare. Vedi assertAccount().
+const EXPECTED_USERNAME = "pctweaker10";
+
+// PRIORITA' INVERTITA + NOMI CON PREFISSO (2026-08-06). Il bug piu' costoso
+// di tutto l'ecosistema stava in queste righe: le variabili d'ambiente si
+// chiamavano IG_ACCESS_TOKEN/IG_USER_ID, nomi GENERICI condivisi con
+// certsprint-bot e solofounded-bot, e vincevano su credentials.json. Su
+// questa macchina esistono come variabili utente di Windows e contengono le
+// credenziali di @solo_founded (impostate per un test locale di quel bot):
+// dal 2026-08-01 OGNI Reel di PC Tweaker e' stato pubblicato su
+// @solo_founded, con HTTP 200, media_id valido e log "[OK] Published".
+// Verificato risolvendo i media_id "fantasma" col token d'ambiente: erano
+// Reel PC Tweaker (#windows11 #pcoptimization) sul profilo sbagliato.
+// Il file credentials.json, che e' per definizione specifico di QUESTA
+// cartella e di QUESTO account, ha ora la precedenza; le env var restano
+// come ripiego ma solo con un nome che non puo' collidere con altri bot.
 function loadCredentials() {
-  if (process.env.IG_ACCESS_TOKEN && process.env.IG_USER_ID) {
-    return { igAccessToken: process.env.IG_ACCESS_TOKEN, igUserId: process.env.IG_USER_ID };
-  }
   if (fs.existsSync(CREDENTIALS_PATH)) {
     return JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
   }
-  throw new Error("No Instagram credentials found: set IG_ACCESS_TOKEN/IG_USER_ID env vars, or run get-token.js first.");
+  if (process.env.PCTWEAKER_IG_ACCESS_TOKEN && process.env.PCTWEAKER_IG_USER_ID) {
+    return {
+      igAccessToken: process.env.PCTWEAKER_IG_ACCESS_TOKEN,
+      igUserId: process.env.PCTWEAKER_IG_USER_ID,
+    };
+  }
+  throw new Error(
+    "No Instagram credentials found: run get-token.js to write credentials.json, or set PCTWEAKER_IG_ACCESS_TOKEN/PCTWEAKER_IG_USER_ID.",
+  );
+}
+
+// Rete di sicurezza indipendente dal punto sopra: prima di pubblicare
+// chiediamo all'API a CHI appartiene davvero il token e ci fermiamo se non
+// e' l'account atteso. Una credenziale sbagliata e' altrimenti
+// indistinguibile da una giusta - l'API risponde 200 e pubblica felicemente
+// altrove, che e' esattamente come il bug e' rimasto invisibile per giorni.
+// Costa una GET per Reel: nulla, rispetto a pubblicare su un altro profilo.
+async function assertAccount(igUserId, igAccessToken) {
+  const resp = await fetch(`${API_BASE}/${igUserId}?fields=username`, {
+    headers: authHeaders(igAccessToken),
+  });
+  const data = await resp.json();
+  if (!resp.ok) {
+    throw new Error(`Impossibile verificare l'account Instagram: ${JSON.stringify(data)}`);
+  }
+  if (data.username !== EXPECTED_USERNAME) {
+    throw new Error(
+      `ACCOUNT SBAGLIATO: le credenziali puntano a @${data.username}, non a @${EXPECTED_USERNAME}. ` +
+        `Pubblicazione annullata. Controlla credentials.json in ${CREDENTIALS_PATH}.`,
+    );
+  }
 }
 
 // AUTENTICAZIONE (corretta il 2026-08-04): il token va nell'header
@@ -117,6 +160,7 @@ async function publish(igUserId, igAccessToken, creationId) {
 
 async function uploadReel({ videoUrl, caption }) {
   const { igAccessToken, igUserId } = loadCredentials();
+  await assertAccount(igUserId, igAccessToken);
 
   const creationId = await createContainer(igUserId, igAccessToken, videoUrl, caption);
   const status = await pollContainerStatus(creationId, igAccessToken);

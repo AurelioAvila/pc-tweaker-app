@@ -74,6 +74,15 @@ export interface Strings {
     proFeatures: string[];
   };
   toggle: { on: string; off: string };
+  updater: {
+    title: string; // uses {version}
+    body: string;
+    install: string;
+    later: string;
+    downloading: string; // uses {percent}
+    installing: string;
+    error: string; // uses {message}
+  };
   badges: { admin: string; pro: string; soon: string };
   emptyCategory: string;
   gameSessions: {
@@ -343,6 +352,15 @@ const it: Strings = {
     ],
   },
   toggle: { on: "Attivato", off: "Disattivato" },
+  updater: {
+    title: "Aggiornamento disponibile: v{version}",
+    body: "Si scarica e si installa in un passaggio; al termine l'app si riavvia da sola.",
+    install: "Installa e riavvia",
+    later: "Più tardi",
+    downloading: "Download... {percent}%",
+    installing: "Installazione...",
+    error: "Aggiornamento non riuscito: {message}",
+  },
   badges: { admin: "Admin", pro: "PRO", soon: "IN ARRIVO" },
   emptyCategory: "Nessun tweak disponibile in questa categoria — presto in arrivo.",
   gameSessions: {
@@ -793,6 +811,15 @@ const en: Strings = {
     ],
   },
   toggle: { on: "On", off: "Off" },
+  updater: {
+    title: "Update available: v{version}",
+    body: "Downloads and installs in one step; the app restarts itself when done.",
+    install: "Install and restart",
+    later: "Later",
+    downloading: "Downloading... {percent}%",
+    installing: "Installing...",
+    error: "Update failed: {message}",
+  },
   badges: { admin: "Admin", pro: "PRO", soon: "COMING SOON" },
   emptyCategory: "No tweaks available in this category yet — more coming soon.",
   gameSessions: {
@@ -1235,6 +1262,15 @@ const fr: Strings = {
     ],
   },
   toggle: { on: "Activé", off: "Désactivé" },
+  updater: {
+    title: "Mise à jour disponible : v{version}",
+    body: "Téléchargée et installée en une seule étape ; l'application redémarre toute seule à la fin.",
+    install: "Installer et redémarrer",
+    later: "Plus tard",
+    downloading: "Téléchargement... {percent}%",
+    installing: "Installation...",
+    error: "Échec de la mise à jour : {message}",
+  },
   badges: { admin: "Admin", pro: "PRO", soon: "BIENTÔT" },
   emptyCategory: "Aucune optimisation disponible dans cette catégorie pour l'instant — à venir.",
   gameSessions: {
@@ -1677,6 +1713,15 @@ const es: Strings = {
     ],
   },
   toggle: { on: "Activado", off: "Desactivado" },
+  updater: {
+    title: "Actualización disponible: v{version}",
+    body: "Se descarga e instala en un solo paso; la aplicación se reinicia sola al terminar.",
+    install: "Instalar y reiniciar",
+    later: "Más tarde",
+    downloading: "Descargando... {percent}%",
+    installing: "Instalando...",
+    error: "Error al actualizar: {message}",
+  },
   badges: { admin: "Admin", pro: "PRO", soon: "PRÓXIMAMENTE" },
   emptyCategory: "Todavía no hay ajustes disponibles en esta categoría — próximamente.",
   gameSessions: {
@@ -2119,6 +2164,15 @@ const de: Strings = {
     ],
   },
   toggle: { on: "Ein", off: "Aus" },
+  updater: {
+    title: "Update verfügbar: v{version}",
+    body: "Wird in einem Schritt heruntergeladen und installiert; die App startet danach von selbst neu.",
+    install: "Installieren und neu starten",
+    later: "Später",
+    downloading: "Wird heruntergeladen... {percent}%",
+    installing: "Wird installiert...",
+    error: "Update fehlgeschlagen: {message}",
+  },
   badges: { admin: "Admin", pro: "PRO", soon: "DEMNÄCHST" },
   emptyCategory: "In dieser Kategorie sind noch keine Optimierungen verfügbar — bald verfügbar.",
   gameSessions: {

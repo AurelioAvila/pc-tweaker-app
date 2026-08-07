@@ -87,3 +87,6 @@ marketing/tiktok-upload/run.bat
 **/service-account*.json
 .env.local
 .env.*.local
+
+# Per-release updater manifest, generated at release time — not source
+latest.json

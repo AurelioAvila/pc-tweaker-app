@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openFolderDialog } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { check as checkForUpdate, type Update } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { listen } from "@tauri-apps/api/event";
 import { STRINGS, LANGUAGES, Lang, Strings, detectInitialLang, format } from "./i18n";
 import { THEMES, ThemeName, detectInitialTheme } from "./theme";
@@ -2667,6 +2669,117 @@ function RocketIcon({ className }: { className?: string }) {
   );
 }
 
+/**
+ * Checks GitHub once at startup for a newer signed build and, when one
+ * exists, offers it in a small card next to the toasts. The check is silent
+ * on failure on purpose: dev builds have no update endpoint and an offline
+ * start is not something the user can act on, so neither is worth a toast.
+ * Installation goes through the updater plugin's signature verification —
+ * a manifest pointing at an unsigned or tampered binary is rejected before
+ * anything runs.
+ */
+function UpdateBanner({
+  s,
+  onToast,
+}: {
+  s: Strings;
+  onToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [update, setUpdate] = useState<Update | null>(null);
+  const [phase, setPhase] = useState<"offer" | "downloading" | "installing">("offer");
+  const [percent, setPercent] = useState(0);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    checkForUpdate()
+      .then((u) => {
+        if (alive && u) setUpdate(u);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (!update || dismissed) return null;
+
+  async function install() {
+    if (!update) return;
+    try {
+      setPhase("downloading");
+      let total = 0;
+      let received = 0;
+      await update.downloadAndInstall((event) => {
+        if (event.event === "Started") {
+          total = event.data.contentLength ?? 0;
+        } else if (event.event === "Progress") {
+          received += event.data.chunkLength;
+          if (total > 0) setPercent(Math.min(100, Math.round((received / total) * 100)));
+        } else if (event.event === "Finished") {
+          setPhase("installing");
+        }
+      });
+      await relaunch();
+    } catch (err) {
+      setPhase("offer");
+      onToast("error", format(s.updater.error, { message: String(err) }));
+    }
+  }
+
+  return (
+    <div className="animate-toast pointer-events-auto fixed bottom-6 left-6 z-40 w-80 rounded-2xl border border-white/10 bg-[#14121f]/95 p-4 shadow-2xl backdrop-blur">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-400/15 text-emerald-300">
+          <svg viewBox="0 0 24 24" fill="none" className="h-4.5 w-4.5">
+            <path
+              d="M12 4v10m0 0 4-4m-4 4-4-4M5 19h14"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-slate-100">
+            {format(s.updater.title, { version: update.version })}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-400">{s.updater.body}</p>
+        </div>
+      </div>
+      {phase === "offer" ? (
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={install}
+            className="flex-1 rounded-lg bg-emerald-400/90 px-3 py-1.5 text-xs font-bold text-emerald-950 transition-colors hover:bg-emerald-300"
+          >
+            {s.updater.install}
+          </button>
+          <button
+            onClick={() => setDismissed(true)}
+            className="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors hover:bg-white/10"
+          >
+            {s.updater.later}
+          </button>
+        </div>
+      ) : (
+        <div className="mt-3">
+          <p className="text-xs font-semibold text-emerald-300">
+            {phase === "downloading" ? format(s.updater.downloading, { percent }) : s.updater.installing}
+          </p>
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-emerald-400 transition-all"
+              style={{ width: phase === "installing" ? "100%" : `${percent}%` }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [lang, setLangState] = useState<Lang>(() => detectInitialLang());
   const s = STRINGS[lang];
@@ -3344,6 +3457,8 @@ function App() {
           }}
         />
       )}
+
+      <UpdateBanner s={s} onToast={pushToast} />
 
       <div className="pointer-events-none fixed bottom-6 right-6 flex flex-col gap-2">
         {toasts.map((t) => (

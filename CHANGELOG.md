@@ -5,6 +5,21 @@ update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just
 the git log.
 
+## v0.4.0 — 2026-08-07
+
+- **Added: in-app auto-update.** The app checks GitHub once at startup for
+  a newer build and, when one exists, offers it in a small card: download,
+  install, and restart in one click, with live progress. Updates are
+  cryptographically signed (minisign via Tauri's updater) and the app
+  verifies the signature before installing — a tampered or unsigned
+  binary is rejected. A failed background check stays silent on purpose:
+  offline starts and dev builds are not actionable. Fully localized in
+  all five languages. Requires this release's installer once; every
+  version after this one arrives by itself.
+- Ships everything in the 2026-08-06 entry below (honest scan, corrected
+  CPU-priority description, security hardening, English-only sweep,
+  window minimum size, real favicon).
+
 ## 2026-08-06
 
 - **Changed**: the Quick Scan no longer counts UI tweaks (dark mode,

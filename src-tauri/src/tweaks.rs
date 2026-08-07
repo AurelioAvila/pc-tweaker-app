@@ -66,7 +66,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "priority_separation",
             name: "Optimize CPU priority",
-            description: "Tunes Win32PrioritySeparation to favor background services (HKLM, requires administrator rights).",
+            description: "Tunes Win32PrioritySeparation (0x26) so the foreground app gets short, variable CPU time slices with a 3x priority boost - the classic desktop/gaming responsiveness value (HKLM, requires administrator rights).",
             category: Category::Performance,
             hive: Hive::Hklm,
             key_path: r"SYSTEM\CurrentControlSet\Control\PriorityControl",

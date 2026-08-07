@@ -602,7 +602,7 @@ const it: Strings = {
     priority_separation: {
       name: "Ottimizza priorità processore",
       description:
-        "Regola Win32PrioritySeparation per favorire i servizi in background (HKLM, richiede privilegi di amministratore).",
+        "Regola Win32PrioritySeparation (0x26) per dare all'app in primo piano quanti di CPU brevi e variabili con priorità 3x — il classico valore per reattività desktop/gaming (HKLM, richiede privilegi di amministratore).",
     },
     disable_game_dvr: {
       name: "Disattiva Xbox Game Bar / Game DVR",
@@ -1049,7 +1049,7 @@ const en: Strings = {
     },
     priority_separation: {
       name: "Optimize CPU priority",
-      description: "Tunes Win32PrioritySeparation to favor background services (HKLM, requires administrator rights).",
+      description: "Tunes Win32PrioritySeparation (0x26) so the foreground app gets short, variable CPU time slices with a 3x priority boost — the classic desktop/gaming responsiveness value (HKLM, requires administrator rights).",
     },
     disable_game_dvr: {
       name: "Disable Xbox Game Bar / Game DVR",
@@ -1491,7 +1491,7 @@ const fr: Strings = {
     },
     priority_separation: {
       name: "Optimiser la priorité du processeur",
-      description: "Ajuste Win32PrioritySeparation pour favoriser les services en arrière-plan (HKLM, droits administrateur requis).",
+      description: "Ajuste Win32PrioritySeparation (0x26) pour donner à l'application au premier plan des quanta CPU courts et variables avec une priorité 3x — la valeur classique de réactivité bureau/jeu (HKLM, droits administrateur requis).",
     },
     disable_game_dvr: {
       name: "Désactiver Xbox Game Bar / Game DVR",
@@ -1933,7 +1933,7 @@ const es: Strings = {
     },
     priority_separation: {
       name: "Optimizar prioridad del procesador",
-      description: "Ajusta Win32PrioritySeparation para favorecer los servicios en segundo plano (HKLM, requiere privilegios de administrador).",
+      description: "Ajusta Win32PrioritySeparation (0x26) para dar a la aplicación en primer plano cuantos de CPU cortos y variables con prioridad 3x — el valor clásico de capacidad de respuesta para escritorio/juegos (HKLM, requiere privilegios de administrador).",
     },
     disable_game_dvr: {
       name: "Desactivar Xbox Game Bar / Game DVR",
@@ -2375,7 +2375,7 @@ const de: Strings = {
     },
     priority_separation: {
       name: "CPU-Priorität optimieren",
-      description: "Passt Win32PrioritySeparation an, um Hintergrunddienste zu bevorzugen (HKLM, Administratorrechte erforderlich).",
+      description: "Stellt Win32PrioritySeparation (0x26) so ein, dass die Vordergrund-App kurze, variable CPU-Zeitscheiben mit 3x-Priorität erhält — der klassische Wert für Desktop-/Gaming-Reaktionsschnelligkeit (HKLM, Administratorrechte erforderlich).",
     },
     disable_game_dvr: {
       name: "Xbox Game Bar / Game DVR deaktivieren",

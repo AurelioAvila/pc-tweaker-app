@@ -1633,9 +1633,16 @@ function ScanPanel({
   // items only shown as an upsell when the account isn't Pro yet.
   // Names/descriptions go through `textFor` so this list is translated like
   // the rest of the UI instead of showing the raw English text from Rust.
+  //
+  // The UI category is excluded on purpose: dark mode or a left-aligned
+  // taskbar are personal preferences, not "problems" a PC health scan can
+  // honestly claim to have found — counting them would inflate the issue
+  // count exactly the way the snake-oil cleaners this app defines itself
+  // against do. They stay fully available under their own section.
+  const scanRelevant = (t: TweakInfo) => t.category !== "ui";
   const fixableIssues: ScanIssue[] = useMemo(() => {
     const fromTweaks = tweaks
-      .filter((t) => !t.applied && (isPro || !t.requires_pro) && t.id !== "turbo_boost")
+      .filter((t) => scanRelevant(t) && !t.applied && (isPro || !t.requires_pro) && t.id !== "turbo_boost")
       .map((t) => ({ kind: "tweak" as const, id: t.id, ...textFor(s.tweaks, t.id, t.name, t.description) }));
     const fromCleanup = cleanupTargets
       .filter((c) => isPro || !c.requires_pro)
@@ -1648,7 +1655,7 @@ function ScanPanel({
       isPro
         ? []
         : tweaks
-            .filter((t) => !t.applied && t.requires_pro)
+            .filter((t) => scanRelevant(t) && !t.applied && t.requires_pro)
             .map((t) => ({ id: t.id, ...textFor(s.tweaks, t.id, t.name, t.description) })),
     [tweaks, isPro, s],
   );

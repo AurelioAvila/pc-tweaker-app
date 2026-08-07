@@ -5,22 +5,52 @@ update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just
 the git log.
 
+## 2026-08-06
+
+- **Changed**: the Quick Scan no longer counts UI tweaks (dark mode,
+  taskbar alignment, hidden files...) as issues. Cosmetic preferences are
+  not "problems" a PC health scan can honestly claim to have found —
+  counting them inflates the issue count exactly the way the snake-oil
+  cleaners this app defines itself against do. They remain fully available
+  under their own UI section; the scan now only reports performance,
+  privacy, gaming, and maintenance items.
+- **Fixed (wrong description in all five languages)**: "Optimize CPU
+  priority" claimed it tunes Win32PrioritySeparation "to favor background
+  services" — the value it actually writes (0x26) does the opposite: short,
+  variable CPU time slices with a 3x boost for the foreground app, the
+  classic desktop/gaming responsiveness setting. The description now says
+  what the tweak does.
+- **Security**: drive letters are validated at every entry point (both the
+  `invoke` commands and the elevated `--elevated-diskopt` CLI flag) before
+  reaching a PowerShell command line or defrag's argv, with unit tests
+  covering the injection payloads; an explicit CSP replaces the null
+  default (self-only assets, network restricted to the backend and
+  api.pwnedpasswords.com); backend CORS now defaults to the Tauri webview
+  origins instead of any origin.
+- **Changed**: window gets a sensible minimum size (760x560) so the
+  sidebar layout can't collapse; the template favicon and page title
+  (vite.svg / "Tauri + React + Typescript") are replaced with the real
+  app icon and name.
+- **Changed**: the remaining Italian text anywhere user-visible was
+  translated: six Rust rollback error messages, one backend comment
+  block, the to-publish README, and the Italian entries in this changelog.
+
 ## Marketing — 2026-08-06
 
-- **Added**: ogni Short pubblicato su YouTube riceve ora una copertina
-  propria, generata con ffmpeg dal suo PRIMO fotogramma (che porta gia' la
-  hook card, senza sottotitoli sovrapposti). Prima la sceglieva YouTube da
-  un fotogramma a caso: verificato scaricando le copertine reali, uscivano
-  fermi immagine di meta' video con addosso frammenti di sottotitolo
-  troncati a meta' parola. Nel feed Shorts la copertina non si vede, ma si
-  vede nella griglia del canale e nella ricerca, cioe' dove chi arriva
-  decide se iscriversi. Formato scelto dopo prova diretta su YouTube:
-  1280x720 col fotogramma nitido nella colonna centrale 9:16 (l'unica zona
-  che sopravvive sia alla vista 16:9 sia al ritaglio verticale della
-  griglia) e lo stesso fotogramma sfocato a riempire i lati — caricando
-  direttamente il verticale 1080x1920, YouTube lo incastra in un 16:9 con
-  due grosse bande nere. Stessa modifica applicata in parallelo agli altri
-  7 canali YouTube. `marketing/youtube-upload/lib.js`.
+- **Added**: every Short published to YouTube now gets its own thumbnail,
+  generated with ffmpeg from its FIRST frame (which already carries the
+  hook card, with no subtitles overlaid). Previously YouTube picked one
+  from a random frame: verified by downloading the actual thumbnails, they
+  came out as mid-video freeze frames with subtitle fragments cut off
+  mid-word on top. The thumbnail is invisible in the Shorts feed, but it
+  shows in the channel grid and in search — exactly where a visitor
+  decides whether to subscribe. Format chosen after testing directly on
+  YouTube: 1280x720 with the sharp frame in the central 9:16 column (the
+  only zone that survives both the 16:9 view and the grid's vertical
+  crop) and the same frame blurred to fill the sides — uploading the
+  1080x1920 vertical directly, YouTube wedges it into a 16:9 with two
+  large black bars. The same change was applied in parallel to the other
+  7 YouTube channels. `marketing/youtube-upload/lib.js`.
 
 ## v0.3.0 — 2026-08-04
 
@@ -159,21 +189,21 @@ links keep working until they are pointed here.
 
 ## 2026-08-03
 
-- **Fixed (marketing/youtube-upload)**: un titolo con apostrofo bruciato
-  nella card del long-form (via `bakeThumbnailCard`, aggiunta lo stesso
-  giorno per aggirare il blocco miniature senza telefono verificato)
-  usciva come "HERES WHAT HAPPENED" invece di "Here's What Happened" -
-  l'apostrofo veniva eliminato dal testo prima di passarlo al filtro
-  `drawtext`. Un primo tentativo di escaping (`'\''`, la sintassi standard
-  per un apice letterale dentro un valore tra apici singoli nei filtri
-  ffmpeg) e' stato scartato dopo averlo verificato su un render reale:
-  rompeva il parsing dell'intera filterchain, facendo comparire i
-  parametri del `drawtext` successivo come testo letterale sullo schermo -
-  peggio del difetto originale. Fix robusto: il testo va ora su un file
-  temporaneo e il filtro usa `textfile=` invece di `text=`, che legge il
-  contenuto cosi' com'e' senza fare parsing di escape - un apostrofo nel
-  file e' solo un carattere, non sintassi. Riverificato su un render
-  reale: "HERE'S WHAT HAPPENED" corretto, nessuna corruzione del filtro.
+- **Fixed (marketing/youtube-upload)**: a title with an apostrophe baked
+  into the long-form card (via `bakeThumbnailCard`, added the same day to
+  work around the thumbnail block on accounts without a verified phone)
+  came out as "HERES WHAT HAPPENED" instead of "Here's What Happened" -
+  the apostrophe was being stripped from the text before it reached the
+  `drawtext` filter. A first escaping attempt (`'\''`, the standard syntax
+  for a literal quote inside a single-quoted value in ffmpeg filters) was
+  discarded after verifying it on a real render: it broke the parsing of
+  the entire filterchain, making the next `drawtext`'s parameters show up
+  as literal text on screen - worse than the original defect. Robust fix:
+  the text now goes into a temporary file and the filter uses `textfile=`
+  instead of `text=`, which reads the content as-is without any escape
+  parsing - an apostrophe in the file is just a character, not syntax.
+  Re-verified on a real render: "HERE'S WHAT HAPPENED" correct, no filter
+  corruption.
 - **Added**: a **Plans & pricing** screen, and with it Pro moves from a
   one-time purchase to a subscription: **€9.99/month** or **€59/year**. The
   yearly plan is the promotion — it works out to €4.92/month, a real 51% off,
@@ -208,54 +238,54 @@ links keep working until they are pointed here.
 
 ## 2026-08-02
 
-- **Changed (marketing/reel-generator)**: pool di hook ampliati da 4-5 a
-  10 per categoria (13 -> 30 totali). Un audit su 300 generazioni ne aveva
-  contati solo 5 distinti per categoria: da quando l'hook e' anche il testo
-  della hook card nel primo fotogramma e' l'elemento piu' visibile del
-  video, quindi ripetersi ogni 5 video costa molto piu' di prima. Gli
-  archetipi sono volutamente diversi (prima persona / conseguenza / POV /
-  numero concreto / mito da smontare), non variazioni della stessa frase.
-  Ri-verificato a valle: 30 hook distinti, zero difetti su lunghezza,
-  spazi doppi e CTA duplicate.
-- **Fixed (marketing/reel-generator)**: i Reel mostravano un frammento
-  senza senso nel primo fotogramma. Le didascalie sono sincronizzate a 2
-  parole per volta, quindi al fotogramma 0 si leggeva letteralmente
-  "This is" sopra uno sfondo quasi nero — proprio nei 3 secondi in cui lo
-  spettatore decide se restare. La ricerca 2026 e' netta: sotto l'80% di
-  retention nei primi 3 secondi il video muore nel cold start e non viene
-  mai distribuito, il che combacia coi numeri osservati (view 10-180,
-  reach ~= views). Aggiunta una **hook card** che mostra la frase-promessa
-  COMPLETA gia' leggibile nel primo fotogramma, senza animazioni
-  d'ingresso (un fade costa esattamente i millisecondi decisivi).
-  Didascalie e banda partono dopo la card, altrimenti due riquadri
-  sovrapposti dicono la stessa cosa e il video sembra amatoriale.
-  Verificato estraendo il fotogramma 0 di un Reel realmente prodotto.
-- **Fixed (marketing/reel-generator)**: `footage.py` chiedeva a Pexels
-  sempre e solo la pagina 1, quindi ogni video per una data query pescava
-  dagli stessi 20 clip piu' popolari — esattamente quelli usati da
-  migliaia di altri creator (declassati come "Low Value Content") e causa
-  delle ripetizioni tra un video e l'altro. Ora pagina casuale 1-5:
-  bacino da 20 a 100 clip. Verificato contro l'API reale che pagine
-  diverse restituiscono id completamente disgiunti.
-- **Added (marketing/youtube-upload)**: miniatura personalizzata per le
-  compilation long-form. Prima non ne veniva impostata nessuna, quindi
-  YouTube ne sceglieva una da un fotogramma a caso (tipicamente meta' di
-  una parola dei sottotitoli): su un video lungo la miniatura e' LA leva
-  del click. Generata con ffmpeg (nessuna dipendenza npm aggiunta):
-  fotogramma sfocato e scurito + titolo in grande + barra d'accento.
-  `uploadVideo` accetta ora `thumbnailPath` e non fallisce mai se l'API
-  la rifiuta (serve il canale con telefono verificato).
-  - Nota tecnica: il percorso del font va escapato (`C\:/...`) perche' nei
-    filtri ffmpeg i due punti separano le opzioni — senza, l'intera
-    filterchain va in "Error parsing filterchain" anche tra apici.
-- **Changed (marketing/youtube-upload)**: i titoli delle compilation
-  pescano da un pool di 5 varianti invece di essere una stringa fissa —
-  titoli quasi duplicati si cannibalizzano nella ricerca YouTube. I tag
-  API passano da 5 a 12: sono un canale diverso dagli hashtag visibili e
-  il campo regge ~500 caratteri, era largamente sottoutilizzato.
-- **Changed (marketing/reel-generator)**: aggiunte CTA orientate a
-  save/share al pool esistente (che era solo "link in bio") — nel ranking
-  2026 una condivisione in DM vale 3-10x un like e i save ~5x.
+- **Changed (marketing/reel-generator)**: hook pools widened from 4-5 to
+  10 per category (13 -> 30 total). An audit over 300 generations had
+  counted only 5 distinct hooks per category: now that the hook is also
+  the hook-card text in the first frame, it is the most visible element of
+  the video, so repeating every 5 videos costs far more than before. The
+  archetypes are deliberately different (first person / consequence / POV /
+  concrete number / myth to debunk), not variations of the same sentence.
+  Re-verified downstream: 30 distinct hooks, zero defects on length,
+  double spaces, or duplicated CTAs.
+- **Fixed (marketing/reel-generator)**: Reels showed a meaningless
+  fragment in the first frame. Captions are synced 2 words at a time, so
+  frame 0 literally read "This is" over a near-black background — in
+  precisely the 3 seconds where the viewer decides whether to stay. The
+  2026 research is clear-cut: below 80% retention in the first 3 seconds
+  the video dies in the cold start and never gets distributed, which
+  matches the numbers observed (10-180 views, reach ~= views). Added a
+  **hook card** that shows the COMPLETE promise line already readable in
+  the first frame, with no entrance animation (a fade costs exactly the
+  milliseconds that matter). Captions and the lower band start after the
+  card, otherwise two overlapping boxes say the same thing and the video
+  looks amateurish. Verified by extracting frame 0 of an actually
+  produced Reel.
+- **Fixed (marketing/reel-generator)**: `footage.py` always asked Pexels
+  for page 1 only, so every video for a given query drew from the same 20
+  most popular clips — exactly the ones used by thousands of other
+  creators (downranked as "Low Value Content") and the cause of the
+  repetition between one video and the next. Now a random page 1-5: the
+  pool grows from 20 to 100 clips. Verified against the real API that
+  different pages return completely disjoint ids.
+- **Added (marketing/youtube-upload)**: custom thumbnail for the
+  long-form compilations. Previously none was set, so YouTube picked one
+  from a random frame (typically half of a subtitle word): on a long
+  video the thumbnail is THE click lever. Generated with ffmpeg (no npm
+  dependency added): blurred and darkened frame + large title + accent
+  bar. `uploadVideo` now accepts a `thumbnailPath` and never fails if the
+  API rejects it (the channel needs a verified phone).
+  - Technical note: the font path must be escaped (`C\:/...`) because in
+    ffmpeg filters the colon separates options — without it, the whole
+    filterchain fails with "Error parsing filterchain" even inside quotes.
+- **Changed (marketing/youtube-upload)**: compilation titles now draw
+  from a pool of 5 variants instead of being a fixed string —
+  near-duplicate titles cannibalize each other in YouTube search. API
+  tags go from 5 to 12: they are a separate channel from the visible
+  hashtags and the field holds ~500 characters, it was largely
+  underused.
+- **Changed (marketing/reel-generator)**: added save/share-oriented CTAs
+  to the existing pool (which was only "link in bio") — in the 2026
+  ranking a DM share is worth 3-10x a like and saves ~5x.
 
 - **Added**: an automated check suite (`npm run check`), wired into CI so it
   runs on **every push**, not just on release tags — and as a gate before the
@@ -317,11 +347,11 @@ links keep working until they are pointed here.
   all five languages.
 - **Added**: 3 more tweaks, bringing the total from 22 to 25 — all verified
   live against the real system:
-  - "Nascondi la casella di ricerca dalla barra delle applicazioni" (Free, UI).
-  - "Disattiva ottimizzazioni schermo intero globalmente" (Free, Gaming) —
+  - "Hide the search box from the taskbar" (Free, UI).
+  - "Disable fullscreen optimizations globally" (Free, Gaming) —
     DXGI honor-FSE registry fix for reduced stutter/input lag in older games.
-  - "Disattiva servizio di indicizzazione (Windows Search)" (Pro,
-    Manutenzione) — the app's first service-level tweak (stop + disable via
+  - "Disable the indexing service (Windows Search)" (Pro,
+    Maintenance) — the app's first service-level tweak (stop + disable via
     `sc.exe`, not just a registry value), with real rollback that restores
     the exact previous start type including delayed-auto-start, not just a
     generic "automatic".
@@ -388,25 +418,25 @@ links keep working until they are pointed here.
   build it.
 - **Added**: 7 new tweaks, verified live one by one against the real registry
   (apply + rollback, not just compiled):
-  - *Gaming*: "Disattiva limitazione di rete multimediale" (MMCSS
-    NetworkThrottlingIndex, Free), "Massimizza reattività per app in primo
-    piano" (SystemResponsiveness, Free), "Priorità massima ai giochi" —
+  - *Gaming*: "Disable multimedia network throttling" (MMCSS
+    NetworkThrottlingIndex, Free), "Maximize responsiveness for foreground
+    apps" (SystemResponsiveness, Free), "Maximum priority for games" —
     bundles GPU/CPU/scheduling priority for the Games task profile (Pro).
-  - *UI*: "Allinea la barra delle applicazioni a sinistra" (Free), "Nascondi
-    Chat/Teams dalla barra delle applicazioni" (Free).
-  - *Privacy*: "Disattiva suggerimenti e app consigliate nel menu Start"
-    (Free), "Disattiva cronologia attività (Windows Timeline)" — 3 bundled
+  - *UI*: "Align the taskbar to the left" (Free), "Hide Chat/Teams from
+    the taskbar" (Free).
+  - *Privacy*: "Disable Start menu suggestions and recommended apps"
+    (Free), "Disable activity history (Windows Timeline)" — 3 bundled
     policy values (Pro).
   - Pro/Free calls were made per tweak: single simple values stayed Free
     (consistent with the existing free tweaks), multi-value bundled presets
     went Pro (consistent with Turbo Gaming).
-  - Caught a real, reproducible bug during verification: "Nascondi Widget
-    dalla barra delle applicazioni" (`TaskbarDa`) returns Access Denied even
+  - Caught a real, reproducible bug during verification: "Hide Widgets
+    from the taskbar" (`TaskbarDa`) returns Access Denied even
     from a fully elevated Administrator process — a genuine Windows 11
     restriction on that specific value, not a bug in our code (confirmed by
     testing a direct `Set-ItemProperty` from the same elevated shell, and a
     Group-Policy-backed alternative path, both denied). Dropped that tweak
-    and shipped "Allinea la barra delle applicazioni a sinistra" instead,
+    and shipped "Align the taskbar to the left" instead,
     which was verified to actually write and roll back correctly.
 - **Fixed**: Game Sessions could accept the same game twice (or fail to
   remove it) if picked via a differently-cased path — Windows paths are

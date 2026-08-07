@@ -1304,7 +1304,7 @@ function AccountMenu({
             <div className="border-b border-white/10 p-3">
               <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{s.menu.theme}</p>
               {/* Swatches only: with 10 themes the labels forced a two-column
-                  grid that dominated the panel. The colour is the choice. */}
+                  grid that dominated the panel. The color is the choice. */}
               <div className="flex flex-wrap gap-1.5">
                 {THEMES.map((t) => (
                   <button

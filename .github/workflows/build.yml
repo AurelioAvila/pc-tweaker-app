@@ -6,6 +6,13 @@ on:
       - "v*"
   workflow_dispatch: {}
 
+# Least privilege (2026-08-08 security audit): this workflow only builds and
+# uploads a build artifact, it never pushes to the repo or touches PRs/issues -
+# the default GITHUB_TOKEN scope can be wider than that depending on org
+# settings, so pin it down explicitly instead of relying on the default.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest

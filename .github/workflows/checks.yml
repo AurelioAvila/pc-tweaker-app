@@ -9,6 +9,13 @@ on:
   pull_request:
   workflow_dispatch: {}
 
+# Least privilege (2026-08-08 security audit): this workflow only runs
+# checks/tests, it never writes to the repo. Safe to run on pull_request
+# (not pull_request_target) from forks since it never touches secrets and
+# the token below has no write access even if it did.
+permissions:
+  contents: read
+
 jobs:
   checks:
     runs-on: windows-latest

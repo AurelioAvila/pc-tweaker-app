@@ -28,7 +28,7 @@
       "endpoints": [
         "https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/latest.json"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI4MEJEQkJBRUNCMjcxQjkKUldTNWNiTHN1dHNMdUp1SzJUU0o4ekVmaEFSZ1N6di9rRU5GQnZtdXVTUW94Tk4vemRnbG5nZzcK"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFBNDA3NzYyMzQ4NjMyRDIKUldUU01vWTBZbmRBR3Z1bEN3N2xYK0VIeUwzaEo4UU1lS2ZMR25xMlFHZ2FuUEZvZENzcXdldDYK"
     }
   },
   "bundle": {

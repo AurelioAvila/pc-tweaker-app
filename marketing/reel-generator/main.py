@@ -113,8 +113,19 @@ def make_one_reel(index: int, category: str = None):
         # in modo approssimativo" come richiesto.
         item_queries = [item_footage_query(it) for it in items]
         item_queries = [q for q in item_queries if q] or None
-        if item_queries:
+        if item_queries and len(item_queries) >= NUM_BACKGROUND_CLIPS:
             queries = [item_queries[i % len(item_queries)] for i in range(NUM_BACKGROUND_CLIPS)]
+        elif item_queries:
+            # Trovato in audit qualita' 2026-08-08 (stesso bug su certsprint):
+            # con un solo item (n=1 per default qui) il modulo su una lista
+            # di lunghezza 1 e' sempre 0 - le 4 clip di sfondo finivano
+            # identiche per l'intera durata del video. La query dell'item
+            # resta su ALMENO una clip, le altre pescano dal pool generico
+            # di categoria per varieta' visiva.
+            pool_base = footage_query if isinstance(footage_query, list) else [footage_query]
+            varied_pool = [q for q in pool_base if q not in item_queries] or pool_base
+            extra = _resolve_item_queries(varied_pool, NUM_BACKGROUND_CLIPS - len(item_queries))
+            queries = item_queries + extra
         else:
             queries = _resolve_item_queries(footage_query, NUM_BACKGROUND_CLIPS)
         background_paths = []

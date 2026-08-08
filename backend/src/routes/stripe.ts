@@ -2,8 +2,14 @@ import express, { Request, Response, NextFunction } from "express";
 import Stripe from "stripe";
 import { getPool, isConfigured } from "../db";
 import { requireAuth } from "../auth";
+import { periodEndFromSubscription } from "../entitlement";
 
 const router = express.Router();
+
+/** How long checkout alone buys, until the subscription event confirms the
+ * real billing period. Generous enough to absorb a slow or retried webhook,
+ * short enough that a permanently missing one costs days, not a lifetime. */
+const PROVISIONAL_ACCESS_MS = 3 * 24 * 60 * 60 * 1000;
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 // The installed `stripe` package's types only know about the API version it
@@ -116,24 +122,38 @@ async function webhookHandler(req: Request, res: Response): Promise<void> {
   try {
     await handleEvent(event);
   } catch (err) {
-    // Returning 200 anyway: Stripe retries non-2xx, and a bug in our handler
-    // would otherwise have Stripe replay the same event indefinitely. The
-    // error is logged so it can be replayed deliberately from the dashboard.
+    // Fail loudly so Stripe retries. This used to answer 200 regardless, to
+    // avoid a buggy handler being replayed forever — but Stripe gives up on
+    // its own after roughly three days, so the real effect was that a
+    // transient database error during a *cancellation* silently dropped the
+    // revocation and left that user on Pro for good. A retried event is
+    // cheap; a permanently unrevoked subscription is not.
     console.error(`failed to handle Stripe event ${event.type}:`, err);
+    res.status(500).send("handler failed, please retry");
+    return;
   }
 
   res.json({ received: true });
 }
 
-async function grantPro(userId: string, { customerId, plan }: { customerId: string | null; plan?: string | null }): Promise<void> {
+async function grantPro(
+  userId: string,
+  { customerId, plan, expiresAt }: { customerId: string | null; plan?: string | null; expiresAt?: Date | null },
+): Promise<void> {
   await getPool().query(
     `UPDATE users
         SET is_pro = TRUE,
             plan = COALESCE($2, plan),
-            stripe_customer_id = COALESCE($3, stripe_customer_id)
+            stripe_customer_id = COALESCE($3, stripe_customer_id),
+            pro_expires_at = $4
       WHERE id = $1`,
-    [userId, plan || null, customerId || null],
+    [userId, plan || null, customerId || null, expiresAt ?? null],
   );
+}
+
+/** Ends access immediately: cancelled, unpaid, or refunded. */
+async function revokePro(userId: string): Promise<void> {
+  await getPool().query("UPDATE users SET is_pro = FALSE, pro_expires_at = NULL WHERE id = $1", [userId]);
 }
 
 /// Subscription events don't carry our user id directly, so resolve it from
@@ -167,7 +187,16 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       if (!paid) break;
 
       const customerId = typeof session.customer === "string" ? session.customer : null;
-      await grantPro(userId, { customerId, plan: session.metadata?.plan });
+      // A one-off purchase is genuinely perpetual, so it gets no expiry. A
+      // subscription's real period end only arrives with the separate
+      // `customer.subscription.*` event, which may land before or after this
+      // one — so store a short provisional window rather than NULL, which
+      // entitlement.ts would read as "never expires". The subscription event
+      // overwrites it with the true date; if that event never arrives at all,
+      // access lapses in days instead of lasting forever.
+      const expiresAt =
+        session.mode === "subscription" ? new Date(Date.now() + PROVISIONAL_ACCESS_MS) : null;
+      await grantPro(userId, { customerId, plan: session.metadata?.plan, expiresAt });
       break;
     }
 
@@ -182,9 +211,13 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       const active = ["active", "trialing", "past_due"].includes(subscription.status);
       const customerId = typeof subscription.customer === "string" ? subscription.customer : null;
       if (active) {
-        await grantPro(userId, { customerId, plan: subscription.metadata?.plan });
+        await grantPro(userId, {
+          customerId,
+          plan: subscription.metadata?.plan,
+          expiresAt: periodEndFromSubscription(subscription),
+        });
       } else {
-        await getPool().query("UPDATE users SET is_pro = FALSE WHERE id = $1", [userId]);
+        await revokePro(userId);
       }
       break;
     }
@@ -195,7 +228,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       const subscription = event.data.object as Stripe.Subscription;
       const userId = await resolveUserId(subscription);
       if (!userId) break;
-      await getPool().query("UPDATE users SET is_pro = FALSE WHERE id = $1", [userId]);
+      await revokePro(userId);
       break;
     }
 

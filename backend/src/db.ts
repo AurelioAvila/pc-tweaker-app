@@ -51,6 +51,12 @@ async function initSchema(): Promise<void> {
   // never take it back, since those events don't carry our own user id.
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT;`);
+  // When the current billing period runs out. Subscription events refresh it
+  // on every renewal, so Pro lapses on its own if we ever stop hearing from
+  // Stripe — see entitlement.ts for why that matters. NULL means "no expiry":
+  // either a lifetime purchase or a subscriber from before this column
+  // existed, both of which entitlement.ts treats as still entitled.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pro_expires_at TIMESTAMPTZ;`);
   await pool.query(
     `CREATE UNIQUE INDEX IF NOT EXISTS users_stripe_customer_id_idx ON users (stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;`,
   );

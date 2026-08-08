@@ -25,7 +25,8 @@ tauri-build = { version = "2", features = [] }
 # access to the shipped installer could open a full JS console and call
 # `window.__TAURI__.core.invoke(...)` directly with arbitrary arguments,
 # bypassing every UI-side guard (which drive, which folder, which tweak id).
-# Gated behind debug_assertions so it only ever compiles into dev builds.
+# So it is left off here and enabled only via the optional feature declared at
+# the bottom of this file, which dev builds turn on and release builds do not.
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"

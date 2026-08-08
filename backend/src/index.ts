@@ -7,6 +7,7 @@ import cors from "cors";
 import helmet from "helmet";
 
 import { initSchema, isConfigured } from "./db";
+import { isConfigured as mailIsConfigured } from "./mailer";
 import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
 import { router as stripeRoutes, webhookHandler } from "./routes/stripe";
@@ -379,6 +380,17 @@ initSchema()
   })
   .finally(() => {
     app.listen(port, () => {
-      console.log(`pc-tweaker-backend listening on :${port} (database ${isConfigured ? "configured" : "NOT configured"})`);
+      console.log(
+        `pc-tweaker-backend listening on :${port} (database ${isConfigured ? "configured" : "NOT configured"}, email ${mailIsConfigured ? "configured" : "NOT configured"})`,
+      );
+      if (!mailIsConfigured) {
+        // Worth shouting about: without a provider, nobody can verify an
+        // address or recover a forgotten password, and the only symptom is
+        // silence. Better to find this in the deploy log than in a support
+        // email from a customer already locked out.
+        console.warn(
+          "WARNING: no email provider configured (set RESEND_API_KEY, or SMTP_HOST/SMTP_USER/SMTP_PASS). Email verification and password reset will not work.",
+        );
+      }
     });
   });

@@ -36,14 +36,20 @@ router.use(authLimiter);
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-async function sendVerificationEmail(userId: number, email: string): Promise<void> {
+/** Resolves to false when no email provider is configured, so callers can
+ * tell the user the truth instead of pointing them at an inbox that is never
+ * going to receive anything. `sendMail` only *throws* when a configured
+ * provider refuses; with no provider at all it logs and reports undelivered,
+ * and that distinction used to be dropped on the floor here. */
+async function sendVerificationEmail(userId: number, email: string): Promise<boolean> {
   const token = await createActionToken(userId, "email_verify", DAY_MS);
   const link = `${APP_URL.replace(/\/$/, "")}/api/auth/verify-email?token=${token}`;
-  await sendMail({
+  const { delivered } = await sendMail({
     to: email,
     subject: "Verify your PC Tweaker account",
     html: `<p>Click to verify your email:</p><p><a href="${link}">${link}</a></p><p>This link expires in 24 hours.</p>`,
   });
+  return delivered;
 }
 
 router.post("/register", async (req: Request, res: Response) => {
@@ -72,9 +78,9 @@ router.post("/register", async (req: Request, res: Response) => {
     const { id, token_version } = result.rows[0];
     const token = signToken(id, token_version);
 
-    let verificationEmailSent = true;
+    let verificationEmailSent = false;
     try {
-      await sendVerificationEmail(id, email.toLowerCase());
+      verificationEmailSent = await sendVerificationEmail(id, email.toLowerCase());
     } catch (err) {
       // Registration itself succeeded; don't fail the whole request just
       // because the verification email couldn't be sent. But do report it:
@@ -142,7 +148,13 @@ router.post("/resend-verification", requireAuth, async (req: Request, res: Respo
     if (result.rowCount === 0) return res.status(404).json({ error: "account not found" });
     if (result.rows[0].email_verified) return res.json({ ok: true, alreadyVerified: true });
 
-    await sendVerificationEmail(req.userId as number, result.rows[0].email);
+    const delivered = await sendVerificationEmail(req.userId as number, result.rows[0].email);
+    if (!delivered) {
+      // No provider configured at all — a server-side misconfiguration, not
+      // anything the user can act on. Saying "sent" would leave them
+      // refreshing an inbox forever.
+      return res.status(503).json({ error: "email delivery is not configured on the server" });
+    }
     res.json({ ok: true });
   } catch (err) {
     console.error("resend-verification failed:", err);

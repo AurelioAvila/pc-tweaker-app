@@ -5,6 +5,52 @@ update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just
 the git log.
 
+## v0.4.1 — 2026-08-08
+
+Findings from a self-directed penetration test, fixed same day.
+
+- **Security (High): DevTools were reachable in the shipped installer.**
+  `src-tauri/Cargo.toml` explicitly enabled the `devtools` Cargo feature,
+  which specifically exists to turn DevTools on in *release* builds —
+  debug builds already get them for free. Confirmed live: F12 and
+  right-click > Inspect both worked on the built exe. With no XSS sink in
+  the app (verified: no `dangerouslySetInnerHTML`, no `eval`, no
+  `document.write`), the practical risk was local: anyone with access to
+  the machine could open a full JS console and call
+  `window.__TAURI__.core.invoke(...)` directly with arbitrary arguments,
+  bypassing every UI-side guard - which drive, which folder, which tweak
+  id. Fixed by moving `devtools` behind a crate feature that `tauri dev`
+  enables automatically and `tauri build` never does (the standard Tauri
+  pattern - a `cfg(debug_assertions)` dependency target does not exist,
+  Cargo target selectors only understand platform/arch).
+- **Security (Medium): rate limiter bypass via X-Forwarded-For spoofing.**
+  Railway sits in front as a single proxy hop but does not strip an
+  inbound `X-Forwarded-For` before appending its own, so with
+  `trust proxy: 1` an attacker-supplied value survived as `req.ip`.
+  Confirmed live against production: a fixed spoofed IP correctly got
+  rate-limited around request 13; rotating the header on every request
+  produced zero blocks across 25 failed logins. The auth rate limiter
+  (`backend/src/routes/auth.ts`) now keys on the submitted email instead
+  of the request IP, so brute-forcing one account can't be sped up by
+  claiming a new IP for every attempt.
+- **Security (Low, documented, not changed): `/register` reveals whether
+  an email is already registered** (409 vs. other statuses), unlike
+  `/forgot-password`, which deliberately returns the same response either
+  way. This is standard, expected behavior for registration flows
+  industry-wide (GitHub, Google, etc. all do the same) - going silent
+  here would materially hurt legitimate users who mistype "sign up" for
+  "log in." Noting it for the record rather than changing it.
+- **Fixed**: `Cargo.toml`'s `description` was still the Tauri template's
+  "A Tauri App," visible in the installed exe's file Properties. Bundle
+  now also sets `publisher` and `copyright`, previously unset.
+- Also verified during this pass and found clean: every SQL query is
+  parameterized (tested directly with classic and UNION-based injection
+  payloads against `/login`), JWTs reject an `alg: none` forgery attempt,
+  the Stripe checkout price/plan is resolved server-side only (the client
+  cannot influence the amount charged), no webhook, deploy key, or branch
+  protection gap on the GitHub repo, and no debug/admin endpoint exposed
+  on the live backend.
+
 ## v0.4.0 — 2026-08-07
 
 - **Added: in-app auto-update.** The app checks GitHub once at startup for

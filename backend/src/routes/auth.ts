@@ -9,11 +9,27 @@ const router = express.Router();
 
 // Slows down credential-stuffing / brute-force attempts against these
 // endpoints specifically, without throttling the rest of the API.
+//
+// Keyed on the submitted email/target account rather than req.ip: Railway
+// sits in front as a single proxy hop but does not strip an inbound
+// X-Forwarded-For before appending its own, so with `trust proxy: 1` the
+// attacker-supplied value survives as req.ip — confirmed live, rotating the
+// header on every request bypassed a 20-req/15min IP-keyed limiter entirely
+// (0 blocks across 25 failed logins). The email is the actual asset being
+// protected here (one account's password), and it can't be rotated for
+// free the way a header can, so keying on it closes the bypass regardless
+// of how many IPs an attacker claims to have. Requests with no email in the
+// body (malformed JSON, wrong content-type) fall back to req.ip, which is
+// still meaningful for blanket abuse even if spoofable per-target.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    const email = req.body?.email;
+    return typeof email === "string" && email ? `email:${email.toLowerCase()}` : `ip:${req.ip}`;
+  },
 });
 router.use(authLimiter);
 

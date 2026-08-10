@@ -1,9 +1,19 @@
-# PC Tweaker
+<p align="center">
+  <img src="src-tauri/icons/icon.png" width="112" alt="PC Tweaker logo">
+</p>
 
-A Windows desktop app that applies real system tweaks — performance, gaming,
-privacy, maintenance — with **automatic rollback**: every change saves the
-original value before it is applied, so any of it can be undone with one
-click, or all of it at once.
+<h1 align="center">PC Tweaker</h1>
+
+<p align="center">
+  <strong>A safer way to tune your Windows PC.</strong><br>
+  Performance, gaming, privacy and maintenance — with automatic rollback for every change.
+</p>
+
+<p align="center">
+  <a href="../../releases/latest"><img src="https://img.shields.io/badge/Download-Windows%2010%2F11-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
+  <a href="https://github.com/AurelioAvila/pc-tweaker-app/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-MIT-3DA639?style=for-the-badge" alt="MIT License"></a>
+  <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/v/release/AurelioAvila/pc-tweaker-app?display_name=tag&style=for-the-badge&color=7C3AED" alt="Latest release"></a>
+</p>
 
 [![winget](https://img.shields.io/winget/v/AurelioAvila.PCTweaker?label=winget&color=blue)](https://winstall.app/apps/AurelioAvila.PCTweaker)
 
@@ -13,6 +23,12 @@ click, or all of it at once.
 ## Demo
 
 [Watch the PC Tweaker demo on YouTube](https://www.youtube.com/watch?v=d1_DD49HhAU)
+
+<p align="center">
+  <img src="marketing/producthunt-assets/01-scan.png" alt="PC Tweaker Scan screen" width="82%">
+</p>
+
+> **Built to be reversible.** Every setting is backed up before it changes, so you can experiment with confidence and restore it whenever you want.
 
 ---
 

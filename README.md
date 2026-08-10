@@ -10,6 +10,10 @@ click, or all of it at once.
 **[⬇ Download for Windows](../../releases/latest)** · [Changelog](CHANGELOG.md) ·
 [Privacy Policy](PRIVACY.md) · [Terms](TERMS.md)
 
+## Demo
+
+[Watch the PC Tweaker demo on YouTube](https://www.youtube.com/watch?v=d1_DD49HhAU)
+
 ---
 
 ## What it does

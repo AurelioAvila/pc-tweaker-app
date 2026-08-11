@@ -162,10 +162,17 @@ async function postComment({ videoId, text }) {
   // possiamo solo pubblicarlo, non fissarlo.
   const auth = await getAuthorizedClient();
   const youtube = google.youtube({ version: "v3", auth });
+  // commentThreads.insert richiede anche il canale proprietario del video.
+  // Senza questo campo l'API può rifiutare il commento pur avendo appena
+  // accettato l'upload dello stesso video.
+  const mine = await youtube.channels.list({ part: ["id"], mine: true });
+  const channelId = mine.data.items?.[0]?.id;
+  if (!channelId) throw new Error("Cannot determine the authenticated YouTube channel for the CTA comment.");
   const res = await youtube.commentThreads.insert({
     part: ["snippet"],
     requestBody: {
       snippet: {
+        channelId,
         videoId,
         topLevelComment: { snippet: { textOriginal: text } },
       },

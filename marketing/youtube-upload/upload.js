@@ -4,6 +4,7 @@
 
 const fs = require("fs");
 const { uploadVideo } = require("./lib");
+const { validateUpload } = require("./quality-gate");
 
 function parseArgs(argv) {
   const [videoPath, title, description] = argv;
@@ -26,6 +27,7 @@ function parseArgs(argv) {
 
 async function main() {
   const { videoPath, title, description, tags, privacyStatus } = parseArgs(process.argv.slice(2));
+  validateUpload({ videoPath, title, description });
   console.log(`Uploading "${title}" (${privacyStatus})...`);
   const result = await uploadVideo({ videoPath, title, description, tags, privacyStatus });
   console.log("Done. Video ID:", result.id);

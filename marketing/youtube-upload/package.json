@@ -4,9 +4,12 @@
   "version": "1.0.0",
   "type": "commonjs",
   "scripts": {
-    "upload": "node upload.js"
+    "upload": "node upload.js",
+    "auto-upload": "node auto-upload.js",
+    "security-check": "node security-check.js",
+    "test": "node quality-gate.test.js"
   },
   "dependencies": {
-    "googleapis": "^144.0.0"
+    "googleapis": "^174.0.1"
   }
 }

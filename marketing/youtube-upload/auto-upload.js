@@ -8,6 +8,7 @@
 const fs = require("fs");
 const path = require("path");
 const { uploadVideo, postComment } = require("./lib");
+const { validateUpload } = require("./quality-gate");
 
 // CTA di default se il .json non specifica "ctaComment" - richiesto
 // 2026-07-29: funnel diretto verso lo strumento/link in un commento (non
@@ -67,6 +68,7 @@ async function processOne(baseName) {
   const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
 
   const { title, description } = withShortsTag(meta.title, meta.description);
+  validateUpload({ videoPath, title, description });
 
   console.log(`[${new Date().toISOString()}] Uploading ${baseName}.mp4 as public...`);
   const result = await uploadVideo({

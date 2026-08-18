@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+/* Prevents the WebView's default white background from showing through
+   below the app content (e.g. short tab + open account menu). */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background-color: var(--app-bg-b);
+}
+
+/* The themes below match getcertsprint.com's own theme picker exactly
+   (same CSS variable values, read live off the site's computed styles), so
+   switching themes here mirrors the site. */
+:root,
+[data-theme="violet"] {
+  --app-bg-a: #1b1230;
+  --app-bg-b: #10091f;
+  --app-accent: #ff5c8a;
+  --app-accent2: #35e0c0;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="teal_depths"] {
+  --app-bg-a: #0f2a2a;
+  --app-bg-b: #071a1a;
+  --app-accent: #35e0c0;
+  --app-accent2: #ff5c8a;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="amber_dusk"] {
+  --app-bg-a: #2a1d0f;
+  --app-bg-b: #1a1006;
+  --app-accent: #ffb84d;
+  --app-accent2: #5bd1ff;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="crimson_steel"] {
+  --app-bg-a: #2a121a;
+  --app-bg-b: #1a0a0f;
+  --app-accent: #ff4d6d;
+  --app-accent2: #4ce0b3;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="ocean_blue"] {
+  --app-bg-a: #0d1d33;
+  --app-bg-b: #050e1a;
+  --app-accent: #3d8bff;
+  --app-accent2: #ffb74d;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="forest_emerald"] {
+  --app-bg-a: #0e2318;
+  --app-bg-b: #06140d;
+  --app-accent: #2ecc71;
+  --app-accent2: #ff6f91;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="royal_gold"] {
+  --app-bg-a: #251a05;
+  --app-bg-b: #170f02;
+  --app-accent: #e8b923;
+  --app-accent2: #6f5bff;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="slate_mono"] {
+  --app-bg-a: #15181c;
+  --app-bg-b: #0b0d10;
+  --app-accent: #9aa5b1;
+  --app-accent2: #6ee7b7;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="indigo_night"] {
+  --app-bg-a: #131335;
+  --app-bg-b: #0a0a1f;
+  --app-accent: #6c63ff;
+  --app-accent2: #ffc155;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="coral_sunset"] {
+  --app-bg-a: #2a1712;
+  --app-bg-b: #1a0d08;
+  --app-accent: #ff7a45;
+  --app-accent2: #4dd9e8;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="rose_quartz"] {
+  --app-bg-a: #2a1620;
+  --app-bg-b: #1a0e14;
+  --app-accent: #ffafcb;
+  --app-accent2: #e88aae;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="cyber_lime"] {
+  --app-bg-a: #122212;
+  --app-bg-b: #0a140a;
+  --app-accent: #b6ff3c;
+  --app-accent2: #7ed321;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* The two below bring the picker to 14, which is what fills its 7-per-row
+   grid exactly — at 12 the last row ended with two empty gaps. Both follow
+   the same recipe as the rest: a deep two-step background in the accent's own
+   hue, plus a complementary secondary. */
+[data-theme="copper_forge"] {
+  --app-bg-a: #2a1c10;
+  --app-bg-b: #1a1108;
+  --app-accent: #d98b4a;
+  --app-accent2: #4ad9c8;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="magenta_pulse"] {
+  --app-bg-a: #2a0f26;
+  --app-bg-b: #1a0817;
+  --app-accent: #ff2fd0;
+  --app-accent2: #3cf0ff;
+  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-card {
+  animation: fade-in-up 0.35s ease both;
+}
+
+.animate-toast {
+  animation: toast-in 0.25s ease both;
+}

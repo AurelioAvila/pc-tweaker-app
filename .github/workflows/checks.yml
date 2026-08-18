@@ -1,0 +1,53 @@
+name: Checks
+
+# Runs on every push and PR, not just releases: the point is to catch a
+# regression the moment it lands, while the change is still fresh, rather
+# than discovering it when tagging a release.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch: {}
+
+# Least privilege (2026-08-08 security audit): this workflow only runs
+# checks/tests, it never writes to the repo. Safe to run on pull_request
+# (not pull_request_target) from forks since it never touches secrets and
+# the token below has no write access even if it did.
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: Translations (keys + placeholders across all languages)
+        run: npm run check:i18n
+
+      - name: Translation quality (nothing silently left in English)
+        run: npm run check:i18n-quality
+
+      - name: Rust unit tests
+        run: npm run check:rust
+
+      - name: Backend unit tests
+        working-directory: backend
+        run: npm ci && npm test

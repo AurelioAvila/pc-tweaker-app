@@ -1,0 +1,11 @@
+{
+  "name": "pc-tweaker-tiktok-upload",
+  "private": true,
+  "version": "1.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "get-token": "node get-token.js",
+    "upload": "node upload.js",
+    "auto-upload": "node auto-upload.js"
+  }
+}

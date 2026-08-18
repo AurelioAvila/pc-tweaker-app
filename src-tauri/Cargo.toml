@@ -1,0 +1,53 @@
+[package]
+name = "tauri-app"
+version = "0.4.4"
+description = "Real Windows tweaks with automatic one-click rollback"
+authors = ["Aurelio Avila"]
+license-file = "../LICENSE"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "tauri_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# The "devtools" Cargo feature specifically enables DevTools (F12 /
+# right-click Inspect) in RELEASE builds — debug builds already get them for
+# free from `cargo tauri dev` without it. With it on, anyone with local
+# access to the shipped installer could open a full JS console and call
+# `window.__TAURI__.core.invoke(...)` directly with arbitrary arguments,
+# bypassing every UI-side guard (which drive, which folder, which tweak id).
+# So it is left off here and enabled only via the optional feature declared at
+# the bottom of this file, which dev builds turn on and release builds do not.
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+trash = "5"
+sysinfo = "0.32"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+is_elevated = "0.1"
+runas = "1"
+
+# `tauri dev` recognizes a feature literally named "devtools" on the
+# consuming crate and enables it automatically for dev builds; `tauri build`
+# never does. This is the sanctioned way to get DevTools back locally
+# without a Cargo target selector, which does not support debug_assertions
+# (only platform/arch cfgs are valid there — the wrong attempt at this
+# would silently fail to gate anything).
+[features]
+devtools = ["tauri/devtools"]
+

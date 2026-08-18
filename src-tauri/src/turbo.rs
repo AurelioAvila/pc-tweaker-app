@@ -97,6 +97,7 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
             | SnapshotEntry::Dns { .. }
             | SnapshotEntry::PowerSetting { .. }
             | SnapshotEntry::PowerSettingIndex { .. }
+            | SnapshotEntry::RegistryKeyCreated { .. }
             | SnapshotEntry::Service { .. } => {}
         }
     }

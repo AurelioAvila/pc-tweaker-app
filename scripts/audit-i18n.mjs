@@ -77,11 +77,20 @@ for (const key of Object.keys(flat.en)) {
 }
 
 // ASCII stand-ins for letters the language actually needs.
+//
+// The word lists below are matched with Unicode-aware boundaries rather than
+// `\b`. That distinction is not academic: JavaScript's `\b` is defined against
+// `\w`, i.e. [A-Za-z0-9_], so every accented letter counts as a *non*-word
+// character and manufactures a word boundary next to itself. `\btres\b` duly
+// matched the "tres" inside "fenêtres" and "Paramètres" — two of the most
+// common words in French — and reported perfectly correct translations as
+// missing their accents. Anchoring on "not a letter" instead, with \p{L}
+// covering accented letters, is what makes the check mean what it says.
 const ACCENT_TRAPS = {
-  it: /\b(piu|gia|perche|finche|cosi|puo|sara|verra|tornera|citta|liberta|e)'/i,
-  fr: /\b(deja|apres|tres|etre|meme|repondre|desactive|liberer|memoire|systeme|reglage)\b/i,
-  es: /\b(automatica|analisis|sesion|configuracion|informacion|esta a|volvera|desactivaran)\b/i,
-  de: /\b(ausfuhrbar|zurucksetzen|Anderungen|regelmassigen|geoffnet|Oberflache|fur)\b/i,
+  it: /(?<!\p{L})(piu|gia|perche|finche|cosi|puo|sara|verra|tornera|citta|liberta|e)'/iu,
+  fr: /(?<!\p{L})(deja|apres|tres|etre|meme|repondre|desactive|liberer|memoire|systeme|reglage)(?!\p{L})/iu,
+  es: /(?<!\p{L})(automatica|analisis|sesion|configuracion|informacion|esta a|volvera|desactivaran)(?!\p{L})/iu,
+  de: /(?<!\p{L})(ausfuhrbar|zurucksetzen|Anderungen|regelmassigen|geoffnet|Oberflache|fur)(?!\p{L})/iu,
 };
 
 const accentIssues = [];
@@ -90,6 +99,28 @@ for (const [locale, re] of Object.entries(ACCENT_TRAPS)) {
     if (typeof value === "string" && re.test(value)) {
       accentIssues.push({ locale, key, value });
     }
+  }
+}
+
+// The regexes above are load-bearing and easy to break silently — a bad edit
+// would simply stop reporting anything and look like a clean run. These assert
+// both directions on the exact case that was wrong before.
+const ACCENT_TRAP_SELF_TEST = [
+  { locale: "fr", text: "les fenêtres ouvertes", shouldMatch: false },
+  { locale: "fr", text: "dans les Paramètres", shouldMatch: false },
+  { locale: "fr", text: "tres bien", shouldMatch: true },
+  { locale: "fr", text: "deja fait", shouldMatch: true },
+  { locale: "it", text: "piu' veloce", shouldMatch: true },
+  { locale: "it", text: "più veloce", shouldMatch: false },
+];
+for (const c of ACCENT_TRAP_SELF_TEST) {
+  const got = ACCENT_TRAPS[c.locale].test(c.text);
+  if (got !== c.shouldMatch) {
+    console.error(
+      `accent-trap self-test failed: [${c.locale}] ${JSON.stringify(c.text)} ` +
+        `matched=${got}, expected=${c.shouldMatch}`,
+    );
+    process.exit(2);
   }
 }
 

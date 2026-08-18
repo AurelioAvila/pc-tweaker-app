@@ -52,6 +52,17 @@ pub enum SnapshotEntry {
         dc_index: Option<u32>,
     },
     Service { name: String, previous_start_type: String },
+    /// A registry key that did not exist until this app created it, recorded
+    /// so rollback can delete the whole subtree instead of only clearing a
+    /// value inside it.
+    ///
+    /// `Registry` cannot express this: its rollback path writes the previous
+    /// value back, or deletes that one value when there wasn't one — which
+    /// would leave behind an empty key. For a tweak whose entire effect comes
+    /// from a key merely *existing* (the classic context menu override being
+    /// the case in point), leaving the key behind would leave the tweak
+    /// half-applied and the rollback silently ineffective.
+    RegistryKeyCreated { hive: String, path: String },
     Composite { entries: Vec<SnapshotEntry> },
 }
 

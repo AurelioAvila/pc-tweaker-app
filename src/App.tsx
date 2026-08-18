@@ -2291,7 +2291,13 @@ function ScanPanel({
         // UAC prompt instead of one prompt per tweak.
         const failures = await invoke<string[]>("apply_tweaks", { ids: tweakIds });
         failed += failures.length;
-        failures.forEach((f) => pushToast("error", f));
+        // Each entry is "{id}: {error}" — a PRO_REQUIRED one gets the same
+        // reconnect-focused wording as the single-tweak toggle, rather than
+        // Rust's raw "requires an active subscription" reaching a real
+        // subscriber whose cached proof of that just went stale offline.
+        failures.forEach((f) =>
+          pushToast("error", f.includes("PRO_REQUIRED: ") ? s.toasts.licenseNeedsRefresh : f),
+        );
         setFixProgress(tweakIds.length);
       }
     } catch (e) {
@@ -3242,7 +3248,9 @@ function ProfilesPanel({
     setBusy(profile.name);
     try {
       const failures = await invoke<string[]>("apply_tweaks", { ids: profile.tweaks });
-      failures.forEach((f) => pushToast("error", f));
+      failures.forEach((f) =>
+        pushToast("error", f.includes("PRO_REQUIRED: ") ? s.toasts.licenseNeedsRefresh : f),
+      );
       await onChanged();
       pushToast(
         "success",
@@ -3780,9 +3788,42 @@ function App() {
       if (!res.ok) return;
       const data = (await res.json()) as { email: string; isPro: boolean; emailVerified: boolean };
       setAuth({ status: "authenticated", email: data.email, isPro: data.isPro, emailVerified: data.emailVerified });
+      // Fire-and-forget: refreshLicense() has its own error handling and
+      // must never block the UI's account status on a signing hiccup.
+      void refreshLicense();
     } catch {
       // Network hiccup: keep whatever Pro status we already had rather than
       // dropping the user back to Free on a transient failure.
+    }
+  }
+
+  /**
+   * Fetches a freshly signed Pro entitlement and hands it to the Rust side,
+   * which is what `apply_tweak` actually checks before running a Pro tweak —
+   * this UI's `isPro` flag on its own was never enough, since nothing
+   * stopped a Pro-gated tweak from being invoked directly, bypassing this
+   * screen entirely. See `src-tauri/src/license.rs`.
+   *
+   * Called every time `refreshAccount` succeeds, which already covers
+   * mount, focus, and right after login — so this never needs its own
+   * separate trigger wiring.
+   */
+  async function refreshLicense() {
+    if (!API_BASE_URL) return;
+    const token = readToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/license`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const response = (await res.json()) as { payloadJson: string; signature: string };
+      await invoke("save_license", { response });
+    } catch {
+      // Offline, or the backend's signer isn't configured: whatever was
+      // cached before keeps working until its grace period runs out. No
+      // toast — this runs silently in the background on every focus event
+      // and a real subscriber should never see noise from it.
     }
   }
 
@@ -3799,6 +3840,10 @@ function App() {
   function logout() {
     clearSession();
     setAuth({ status: "anonymous" });
+    // Without this, a still-fresh cached Pro license would keep unlocking
+    // Pro tweaks for whoever uses the app next on this machine, for up to
+    // its grace period — including an anonymous session.
+    void invoke("clear_license").catch(() => {});
   }
 
   async function authenticate(
@@ -3955,7 +4000,19 @@ function App() {
       }
       await refresh();
     } catch (e) {
-      pushToast("error", String(e));
+      // The Rust side re-verifies Pro independently of this screen's own
+      // gate above — see license.rs. In normal use that gate already stops
+      // a non-Pro user from getting here, so the only realistic way to hit
+      // this is a genuine subscriber whose cached proof of that went stale
+      // from being offline past the grace period. Rust's raw error message
+      // ("requires an active subscription") would be misleading for them —
+      // they have one — so this is worded around reconnecting instead.
+      const message = String(e);
+      if (message.startsWith("PRO_REQUIRED: ")) {
+        pushToast("error", s.toasts.licenseNeedsRefresh);
+      } else {
+        pushToast("error", message);
+      }
     } finally {
       setBusyId(null);
     }

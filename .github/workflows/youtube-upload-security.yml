@@ -1,0 +1,26 @@
+name: YouTube uploader checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    paths:
+      - "marketing/youtube-upload/**"
+      - ".github/workflows/youtube-upload-security.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install uploader dependencies
+        run: npm ci --prefix marketing/youtube-upload
+      - name: Test publication quality gate
+        run: npm test --prefix marketing/youtube-upload
+      - name: Prevent tracked credentials
+        run: npm run security-check --prefix marketing/youtube-upload
+      - name: Check production dependency advisories
+        run: npm audit --prefix marketing/youtube-upload --omit=dev --audit-level=high

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "pc-tweaker-app",
+  "version": "0.4.4",
+  "identifier": "com.aurel.pc-tweaker-app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "PC Tweaker",
+        "width": 900,
+        "height": 650,
+        "minWidth": 760,
+        "minHeight": 560
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src ipc: http://ipc.localhost https://pc-tweaker-app-production.up.railway.app https://api.pwnedpasswords.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFBNDA3NzYyMzQ4NjMyRDIKUldUU01vWTBZbmRBR3Z1bEN3N2xYK0VIeUwzaEo4UU1lS2ZMR25xMlFHZ2FuUEZvZENzcXdldDYK"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "createUpdaterArtifacts": true,
+    "shortDescription": "Real Windows tweaks with automatic one-click rollback",
+    "publisher": "Aurelio Avila",
+    "copyright": "Copyright © 2026 Aurelio Avila",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico"
+      }
+    }
+  }
+}

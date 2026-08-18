@@ -5,6 +5,71 @@ update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just
 the git log.
 
+## v0.5.0 — 2026-08-18
+
+Fifty tweaks, a server-verified Pro tier, and a licence change. The minor
+version bump is for the licensing work, not the tweak count.
+
+### Added
+
+- **Eight new tweaks, reaching 50** (33 free / 17 Pro). Every registry key
+  was verified against a real Windows 11 install before being shipped —
+  the same check that previously caught a recommendation rule pointing at
+  a key that never existed.
+  - **Disable Recall** (Pro) — Windows' AI screen-snapshot history, which
+    captures whatever is on screen every few seconds, passwords included.
+  - **Disable Memory Integrity / VBS** (Pro) — the largest real frame-rate
+    gain available on most gaming machines. Its description states the
+    trade-off outright: it removes a genuine protection against malicious
+    drivers, suits a dedicated gaming PC rather than a work machine, and
+    needs a restart.
+  - **Bring back the full right-click menu** (Pro) — the complete Windows 10
+    context menu, instead of "Show more options".
+  - **Stop Windows learning how you type** (Pro) — turns off both the text
+    and handwriting collection feeding Windows' personal dictionary.
+  - **Disable Windows Copilot** (free).
+  - **Stop Windows installing apps by itself** (free) — Windows silently
+    installs "suggested" apps into the Start menu; this was confirmed active
+    on a stock install.
+  - **Disable mouse acceleration** (free) — the same flick always covers the
+    same distance on screen.
+  - **Stop the Sticky Keys popup** (free) — no more Shift×5 dialog dropping
+    a game out of fullscreen mid-fight.
+- **Server-signed Pro entitlement.** `apply_tweak` previously trusted a flag
+  compiled into the app, with nothing checking it against the account
+  actually running it. The backend now signs a short-lived licence with a
+  dedicated Ed25519 key and the app verifies it before running any Pro
+  tweak, tolerating three days offline. The check sits at the one point
+  every apply path funnels through — including the elevated headless
+  re-entry, which is reachable from a terminal with no UI involved.
+
+### Changed
+
+- **Two tweaks moved from free to Pro**: hardware-accelerated GPU scheduling
+  and foreground responsiveness (MMCSS), the two most expert-facing of the
+  free set. Anything already applied stays applied — rollback is
+  deliberately never gated — but re-enabling it now needs Pro.
+- **The source licence is no longer MIT.** The repository stays publicly
+  viewable, but all rights are reserved: the `requires_pro` flags gating
+  every Pro tweak sit in plain text in a public repo, and MIT explicitly
+  permitted anyone to fork, flip them and redistribute an unlocked build.
+  This does not retroactively revoke the grant for copies already taken.
+
+### Fixed
+
+- **The i18n audit reported correct French as broken.** Its accent check
+  matched trap words with `\b`, and JavaScript's `\b` is defined against
+  `[A-Za-z0-9_]`, so every accented letter manufactures a word boundary
+  beside itself: `\btres\b` matched the "tres" inside "fenêtres" and
+  "Paramètres". Now anchored on `\p{L}`, with a self-test that fails if a
+  future edit silently disables the check.
+- **Published tweak counts had been wrong since 0.4.3.** The site, README
+  and both TERMS files still advertised "28 free / 36 total" while 42
+  shipped. Now 33/50 everywhere, and re-checking them is a fixed step in
+  `RELEASING.md` rather than something to remember. Two other stale numbers
+  were found alongside: the README claimed 24 Rust tests and 12 themes; it
+  is 78 and 14.
+
 ## v0.4.4 — 2026-08-17
 
 - **Fixed: Italian, French and Spanish were missing their accents.** Twenty

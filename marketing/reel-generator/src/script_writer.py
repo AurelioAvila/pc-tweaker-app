@@ -180,11 +180,14 @@ def build_script_template(items, category: str) -> tuple:
         parts.append(item)
         word_count += _wc(item)
 
+    cta_start_word = word_count
     parts.append(cta)
     # Il terzo elemento e' la frase-hook parlata: serve alla hook card del
     # render, che la mostra per intero nel primo fotogramma (vedi
-    # _hook_card_clip in src/render.py).
-    return " ".join(parts), item_word_starts, hook
+    # _hook_card_clip in src/render.py). Il quarto e' l'indice di parola in
+    # cui inizia la CTA, cosi' render.py puo' smettere di sottotitolare da li'
+    # (caption_end_word) senza mostrare il testo letterale "link in bio".
+    return " ".join(parts), item_word_starts, hook, cta_start_word
 
 
 LISTTEASE_INTROS = [
@@ -211,9 +214,12 @@ def build_listtease_script_template(topic: str, items: list) -> tuple:
     # Chiusura da commento-gioco prima della CTA (vedi LIST_COMMENT_CLOSERS):
     # arriva DOPO l'ultimo item, quindi non tocca item_word_starts - le
     # immagini restano sincronizzate con le voci della lista.
-    parts.append(random.choice(LIST_COMMENT_CLOSERS))
+    closer = random.choice(LIST_COMMENT_CLOSERS)
+    parts.append(closer)
+    word_count += _wc(closer)
+    cta_start_word = word_count
     parts.append(cta)
-    return " ".join(parts), item_word_starts, intro
+    return " ".join(parts), item_word_starts, intro, cta_start_word
 
 
 if __name__ == "__main__":

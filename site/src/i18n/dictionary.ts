@@ -185,7 +185,7 @@ export const engDictionary: Dictionary = {
     title1: "EVERY",
     title2: "MILLISECOND",
     title3: "IS EARNED.",
-    subBold: "36 real Windows tweaks",
+    subBold: "50 real Windows tweaks",
     sub: " — registry, power plan, services, scheduler priorities. Every single one snapshotted before it touches your system. One click to apply. One click to undo.",
     cta: "Download for Windows — Free",
     terminalTitle: "powershell — pctweaker",
@@ -206,7 +206,7 @@ export const engDictionary: Dictionary = {
     sub: "Numbers from our own recorded, published benchmark — same machine, same match type, before and after PC Tweaker's gaming preset. No synthetic scores. No cherry-picked peaks.",
     stats: [
       { value: 67, unit: "%", label: "AVG FPS GAIN — VALORANT" },
-      { value: 36, unit: "", label: "REAL SYSTEM TWEAKS" },
+      { value: 50, unit: "", label: "REAL SYSTEM TWEAKS" },
       { value: 100, unit: "%", label: "REVERSIBLE — SNAPSHOT FIRST" },
       { value: 1, unit: "CLICK", label: "FULL SYSTEM RESTORE" },
     ],
@@ -314,13 +314,13 @@ export const engDictionary: Dictionary = {
   },
   pricing: {
     tag: "05 / ACCESS",
-    title: "28 tweaks free, forever.",
+    title: "33 tweaks free, forever.",
     free: {
       plan: "FREE",
       price: "€0",
       per: "/ forever",
       features: [
-        "28 real tweaks across all five domains",
+        "33 real tweaks across all five domains",
         "One-click Scan & Fix All",
         "Full rollback engine included",
         "No account required",
@@ -333,7 +333,7 @@ export const engDictionary: Dictionary = {
       per: "/ year · or €9.99/mo",
       save: "SAVE 51%",
       features: [
-        "All 36 tweaks unlocked",
+        "All 50 tweaks unlocked",
         "Turbo Gaming preset + Game Sessions",
         "Duplicate & large file finder, drive optimization",
         "Pro syncs across your installs",
@@ -355,7 +355,7 @@ export const engDictionary: Dictionary = {
       },
       {
         q: "What's actually free?",
-        a: "28 of the 36 tweaks, the Scan, the rollback engine, the RAM cleaner, and the startup manager — free forever, no account needed. Pro (€9.99/month or €59/year) unlocks the advanced set: Turbo Gaming, Game Sessions, duplicate/large file finders, drive optimization, and a few power-user tweaks.",
+        a: "33 of the 50 tweaks, the Scan, the rollback engine, the RAM cleaner, and the startup manager — free forever, no account needed. Pro (€9.99/month or €59/year) unlocks the advanced set: Turbo Gaming, Game Sessions, duplicate/large file finders, drive optimization, disabling Recall and Memory Integrity, the classic right-click menu, and the rest of the power-user tweaks.",
       },
       {
         q: "Does it phone home?",

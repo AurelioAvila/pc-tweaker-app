@@ -1,4 +1,5 @@
 mod cleanup;
+mod contextmenu;
 mod diskhealth;
 mod diskinfo;
 mod diskopt;
@@ -194,6 +195,30 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         requires_pro: activity_history.requires_pro,
     });
 
+    let typing = privacy_extra::typing_personalization_info();
+    list.push(TweakInfo {
+        applied: store.is_applied(typing.id),
+        id: typing.id.to_string(),
+        name: typing.name.to_string(),
+        description: typing.description.to_string(),
+        category: category_str(&Category::Privacy).to_string(),
+        hive: "—".to_string(),
+        requires_admin: typing.requires_admin,
+        requires_pro: typing.requires_pro,
+    });
+
+    let context_menu = contextmenu::info();
+    list.push(TweakInfo {
+        applied: store.is_applied(context_menu.id),
+        id: context_menu.id.to_string(),
+        name: context_menu.name.to_string(),
+        description: context_menu.description.to_string(),
+        category: category_str(&Category::Ui).to_string(),
+        hive: "—".to_string(),
+        requires_admin: context_menu.requires_admin,
+        requires_pro: context_menu.requires_pro,
+    });
+
     let windows_search = services::windows_search_info();
     list.push(TweakInfo {
         applied: store.is_applied(windows_search.id),
@@ -226,6 +251,8 @@ fn requires_pro_for(id: &str) -> bool {
         netlatency::TWEAK_ID => netlatency::info().requires_pro,
         game_priority::TWEAK_ID => game_priority::info().requires_pro,
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::activity_history_info().requires_pro,
+        privacy_extra::TYPING_PERSONALIZATION_ID => privacy_extra::typing_personalization_info().requires_pro,
+        contextmenu::TWEAK_ID => contextmenu::info().requires_pro,
         services::WINDOWS_SEARCH_ID => services::windows_search_info().requires_pro,
         _ => find_tweak(id).map(|t| t.requires_pro).unwrap_or(false),
     }
@@ -261,6 +288,8 @@ fn apply_by_id(store: &RollbackStore, app_data_dir: &std::path::Path, id: &str) 
         netlatency::TWEAK_ID => netlatency::apply(store),
         game_priority::TWEAK_ID => game_priority::apply(store),
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::apply_activity_history(store),
+        privacy_extra::TYPING_PERSONALIZATION_ID => privacy_extra::apply_typing_personalization(store),
+        contextmenu::TWEAK_ID => contextmenu::apply(store),
         services::WINDOWS_SEARCH_ID => services::apply(store),
         _ => {
             let tweak = find_tweak(id).ok_or_else(|| format!("unknown tweak: {}", id))?;
@@ -281,6 +310,8 @@ fn rollback_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
         netlatency::TWEAK_ID => netlatency::rollback(store),
         game_priority::TWEAK_ID => game_priority::rollback(store),
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::rollback_activity_history(store),
+        privacy_extra::TYPING_PERSONALIZATION_ID => privacy_extra::rollback_typing_personalization(store),
+        contextmenu::TWEAK_ID => contextmenu::rollback(store),
         services::WINDOWS_SEARCH_ID => services::rollback(store),
         _ => {
             let tweak = find_tweak(id).ok_or_else(|| format!("unknown tweak: {}", id))?;
@@ -301,6 +332,8 @@ fn requires_admin_for(id: &str) -> bool {
         netlatency::TWEAK_ID => netlatency::info().requires_admin,
         game_priority::TWEAK_ID => true,
         privacy_extra::ACTIVITY_HISTORY_ID => true,
+        privacy_extra::TYPING_PERSONALIZATION_ID => privacy_extra::typing_personalization_info().requires_admin,
+        contextmenu::TWEAK_ID => contextmenu::info().requires_admin,
         services::WINDOWS_SEARCH_ID => true,
         _ => find_tweak(id).map(|t| t.requires_admin).unwrap_or(false),
     }
@@ -671,6 +704,8 @@ mod tests {
                 gaming::KEYBOARD_DELAY_ID,
                 game_priority::TWEAK_ID,
                 privacy_extra::ACTIVITY_HISTORY_ID,
+                privacy_extra::TYPING_PERSONALIZATION_ID,
+                contextmenu::TWEAK_ID,
                 services::WINDOWS_SEARCH_ID,
                 netlatency::TWEAK_ID,
             ]

@@ -298,6 +298,7 @@ export interface Strings {
   toasts: {
     applied: string; // uses {name}
     rolledBack: string; // uses {name}
+    licenseNeedsRefresh: string;
   };
   menu: {
     account: string;
@@ -641,6 +642,7 @@ const it: Strings = {
   toasts: {
     applied: '"{name}" applicato.',
     rolledBack: '"{name}" ripristinato al valore originale.',
+    licenseNeedsRefresh: "Non riusciamo a verificare il tuo abbonamento Pro offline da troppo tempo. Riconnettiti a internet e riprova.",
   },
   menu: {
     account: "Account",
@@ -1190,6 +1192,7 @@ const en: Strings = {
   toasts: {
     applied: '"{name}" applied.',
     rolledBack: '"{name}" restored to its original value.',
+    licenseNeedsRefresh: "We can't verify your Pro subscription after this long offline. Reconnect to the internet and try again.",
   },
   menu: {
     account: "Account",
@@ -1732,6 +1735,7 @@ const fr: Strings = {
   toasts: {
     applied: "« {name} » appliqué.",
     rolledBack: "« {name} » restauré à sa valeur d'origine.",
+    licenseNeedsRefresh: "Impossible de vérifier votre abonnement Pro après une si longue période hors ligne. Reconnectez-vous à internet et réessayez.",
   },
   menu: {
     account: "Compte",
@@ -2274,6 +2278,7 @@ const es: Strings = {
   toasts: {
     applied: '"{name}" aplicado.',
     rolledBack: '"{name}" restaurado a su valor original.',
+    licenseNeedsRefresh: "No podemos verificar tu suscripción Pro tras tanto tiempo sin conexión. Reconectate a internet e inténtalo de nuevo.",
   },
   menu: {
     account: "Cuenta",
@@ -2816,6 +2821,7 @@ const de: Strings = {
   toasts: {
     applied: '„{name}" angewendet.',
     rolledBack: '„{name}" auf den ursprünglichen Wert zurückgesetzt.',
+    licenseNeedsRefresh: "Wir können Ihr Pro-Abonnement nach so langer Offline-Zeit nicht bestätigen. Stellen Sie eine Internetverbindung her und versuchen Sie es erneut.",
   },
   menu: {
     account: "Konto",

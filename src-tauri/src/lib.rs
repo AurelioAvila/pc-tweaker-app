@@ -9,6 +9,7 @@ mod elevation;
 mod game_priority;
 mod game_sessions;
 mod gaming;
+mod license;
 mod netlatency;
 mod netmaintenance;
 mod power;
@@ -208,8 +209,48 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
     Ok(list)
 }
 
+/// Whether a friendly, stable prefix on a returned error means "this failed
+/// because the Pro license didn't verify" rather than some other failure —
+/// checked by the frontend to show the paywall instead of a generic toast.
+pub const PRO_REQUIRED_PREFIX: &str = "PRO_REQUIRED: ";
+
 #[cfg(windows)]
-fn apply_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
+fn requires_pro_for(id: &str) -> bool {
+    match id {
+        power::TWEAK_ID => false,
+        turbo::TWEAK_ID => turbo::info().requires_pro,
+        dns::TWEAK_ID => false,
+        gaming::INPUT_LAG_ID => gaming::input_lag_info().requires_pro,
+        gaming::TURBO_BOOST_ID => gaming::turbo_boost_info().requires_pro,
+        gaming::KEYBOARD_DELAY_ID => gaming::keyboard_delay_info().requires_pro,
+        netlatency::TWEAK_ID => netlatency::info().requires_pro,
+        game_priority::TWEAK_ID => game_priority::info().requires_pro,
+        privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::activity_history_info().requires_pro,
+        services::WINDOWS_SEARCH_ID => services::windows_search_info().requires_pro,
+        _ => find_tweak(id).map(|t| t.requires_pro).unwrap_or(false),
+    }
+}
+
+/// This is the single chokepoint every apply path funnels through — the
+/// direct GUI call, the batched "fix all", *and* the elevated headless
+/// re-entry (`--elevated-apply`), which calls this function directly and
+/// would otherwise skip any check placed only in the Tauri command handlers
+/// above it. That headless path is reachable by launching the shipped exe
+/// with that flag from a terminal, with no GUI involved at all, so gating
+/// only the commands would have left it wide open.
+///
+/// Deliberately not applied to `rollback_by_id`: cancelling a subscription
+/// must not strand a tweak the user already paid to have applied — TERMS.md
+/// is explicit that cancellation locks *further* Pro use, not what's already
+/// on the machine.
+#[cfg(windows)]
+fn apply_by_id(store: &RollbackStore, app_data_dir: &std::path::Path, id: &str) -> Result<(), String> {
+    if requires_pro_for(id) && !license::LicenseStore::new(app_data_dir.to_path_buf()).is_pro_and_fresh() {
+        return Err(format!(
+            "{}this tweak requires an active PC Tweaker Pro subscription",
+            PRO_REQUIRED_PREFIX
+        ));
+    }
     match id {
         power::TWEAK_ID => power::apply(store),
         turbo::TWEAK_ID => turbo::apply(store),
@@ -271,8 +312,9 @@ fn apply_tweak(app: tauri::AppHandle, id: String) -> Result<(), String> {
     if requires_admin_for(&id) && !elevation::is_elevated() {
         return elevation::run_elevated_action("--elevated-apply", &id);
     }
-    let store = store_for(&app)?;
-    apply_by_id(&store, &id)
+    let dir = store_for_dir(&app)?;
+    let store = RollbackStore::new(dir.clone());
+    apply_by_id(&store, &dir, &id)
 }
 
 #[cfg(windows)]
@@ -303,13 +345,14 @@ fn split_by_elevation(ids: Vec<String>) -> (Vec<String>, Vec<String>) {
 #[cfg(windows)]
 #[tauri::command]
 fn apply_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, String> {
-    let store = store_for(&app)?;
+    let dir = store_for_dir(&app)?;
+    let store = RollbackStore::new(dir.clone());
     let mut failures = Vec::new();
 
     let (needs_admin, direct) = split_by_elevation(ids);
 
     for id in &direct {
-        if let Err(e) = apply_by_id(&store, id) {
+        if let Err(e) = apply_by_id(&store, &dir, id) {
             failures.push(format!("{}: {}", id, e));
         }
     }
@@ -317,7 +360,7 @@ fn apply_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, 
     if !needs_admin.is_empty() {
         if elevation::is_elevated() {
             for id in &needs_admin {
-                if let Err(e) = apply_by_id(&store, id) {
+                if let Err(e) = apply_by_id(&store, &dir, id) {
                     failures.push(format!("{}: {}", id, e));
                 }
             }
@@ -486,13 +529,13 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     let store = RollbackStore::new(dir.clone());
 
     let result: Result<(), String> = match action {
-        "--elevated-apply" => apply_by_id(&store, id),
+        "--elevated-apply" => apply_by_id(&store, &dir, id),
         "--elevated-apply-many" => {
             // One prompt, many tweaks: keep going past a failure so a single
             // unsupported tweak doesn't cancel everything else the user asked for.
             let mut failed = Vec::new();
             for one in id.split(',').filter(|s| !s.is_empty()) {
-                if let Err(e) = apply_by_id(&store, one) {
+                if let Err(e) = apply_by_id(&store, &dir, one) {
                     failed.push(format!("{}: {}", one, e));
                 }
             }
@@ -579,6 +622,9 @@ pub fn run() {
             profiles::import_profile,
             profiles::write_profile_file,
             profiles::read_profile_file,
+            license::save_license,
+            license::license_status,
+            license::clear_license,
             list_tweaks,
             apply_tweak,
             apply_tweaks,
@@ -665,6 +711,75 @@ mod tests {
         let payload = needs_admin.join(",");
         let round_tripped: Vec<&str> = payload.split(',').filter(|s| !s.is_empty()).collect();
         assert_eq!(round_tripped, needs_admin, "payload must survive the join/split round trip");
+    }
+
+    /// The actual security property that matters: with no cached license at
+    /// all (a fresh install, or an install that has never signed in), every
+    /// Pro-gated id must be refused — not silently allowed because the check
+    /// couldn't find anything to compare against. Goes through `apply_by_id`
+    /// itself, the real chokepoint every apply path funnels through,
+    /// pointed at an empty temp directory so it is guaranteed to find no
+    /// cached license, rather than re-testing the license module in
+    /// isolation a second time.
+    #[test]
+    fn a_pro_tweak_is_refused_with_no_cached_license() {
+        let ids = all_visible_ids();
+        let pro_id = ids
+            .iter()
+            .find(|id| requires_pro_for(id))
+            .expect("test is meaningless without at least one Pro-gated tweak");
+
+        let dir = std::env::temp_dir().join(format!(
+            "pc-tweaker-license-wiring-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let store = RollbackStore::new(dir.clone());
+
+        let result = apply_by_id(&store, &dir, pro_id);
+        let err = result.expect_err("a Pro tweak must not silently succeed with no license cached");
+        assert!(
+            err.starts_with(PRO_REQUIRED_PREFIX),
+            "expected a PRO_REQUIRED error for `{}`, got: {}",
+            pro_id,
+            err
+        );
+    }
+
+    /// A free tweak must never be blocked by the license check regardless of
+    /// license state — the Pro gate is specifically about `requires_pro`
+    /// tweaks, not a blanket "no license, nothing works" failure mode.
+    #[test]
+    fn a_free_tweak_is_never_blocked_by_the_license_check() {
+        let ids = all_visible_ids();
+        let free_id = ids
+            .iter()
+            .find(|id| !requires_pro_for(id))
+            .expect("test is meaningless without at least one free tweak");
+
+        let dir = std::env::temp_dir().join(format!(
+            "pc-tweaker-license-wiring-test-free-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let store = RollbackStore::new(dir.clone());
+
+        // Whatever this particular tweak does on the test machine may
+        // succeed or fail on its own merits — that's not what's under test.
+        // What must never happen is failing *for licensing reasons*.
+        if let Err(e) = apply_by_id(&store, &dir, free_id) {
+            assert!(
+                !e.starts_with(PRO_REQUIRED_PREFIX),
+                "free tweak `{}` was blocked by the license check, which should never apply to it",
+                free_id
+            );
+        }
     }
 
     /// No id may contain the separator used to pass the batch to the elevated

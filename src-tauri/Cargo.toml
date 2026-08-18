@@ -36,6 +36,8 @@ trash = "5"
 sysinfo = "0.32"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+ed25519-dalek = "2"
+base64 = "0.22"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"

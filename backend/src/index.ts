@@ -10,6 +10,7 @@ import { initSchema, isConfigured } from "./db";
 import { isConfigured as mailIsConfigured } from "./mailer";
 import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
+import licenseRoutes from "./routes/license";
 import reviewRoutes from "./routes/reviews";
 import supportRoutes from "./routes/support";
 import { router as stripeRoutes, webhookHandler } from "./routes/stripe";
@@ -382,6 +383,7 @@ app.get("/tiktokHeKend3CcpkNmGCjEs2zET0AjYqOWn71.txt", (_req: Request, res: Resp
 
 app.use("/api/auth", authRoutes);
 app.use("/api/account", accountRoutes);
+app.use("/api/license", licenseRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api", stripeRoutes);

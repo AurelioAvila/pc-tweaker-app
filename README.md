@@ -44,10 +44,10 @@ per tweak.
 | Section | What's in it |
 | --- | --- |
 | **Performance** | CPU priority, High-performance power plan, disable Xbox Game Bar/Game DVR, remove the ~10s startup-app delay, instant menu response, disable CPU power throttling |
-| **Gaming** | Hardware-accelerated GPU Scheduling (HAGS), reduced mouse and keyboard input lag, CPU Turbo Boost, higher GPU priority for games, disable multimedia network throttling, "Turbo Gaming" preset, and Game Sessions — apply the preset automatically when a game launches, revert when it closes |
-| **Privacy** | Disable the advertising ID, location tracking, Bing search in Start, activity history, tailored experiences, app-launch tracking, feedback prompts, Cortana; reduced telemetry; private DNS (Cloudflare); password breach check via [Have I Been Pwned](https://haveibeenpwned.com) |
+| **Gaming** | Hardware-accelerated GPU Scheduling (HAGS), reduced mouse and keyboard input lag, disable mouse acceleration, silence the Sticky Keys popup, CPU Turbo Boost, higher GPU priority for games, disable multimedia network throttling, disable Memory Integrity/VBS for the biggest frame-rate gain (with the security trade-off spelled out), "Turbo Gaming" preset, and Game Sessions — apply the preset automatically when a game launches, revert when it closes |
+| **Privacy** | Disable Recall (the AI screen-snapshot history) and Windows Copilot, stop Windows silently installing "suggested" apps, stop it learning how you type; disable the advertising ID, location tracking, Bing search in Start, activity history, tailored experiences, app-launch tracking, feedback prompts, Cortana; reduced telemetry; private DNS (Cloudflare); password breach check via [Have I Been Pwned](https://haveibeenpwned.com) |
 | **Maintenance** | Clean temp files and the Windows Update cache (moved to the Recycle Bin, never permanently deleted), duplicate file finder by content hash with manual review before deletion, disable the search indexing service |
-| **Interface** | Dark mode, show hidden files, always show file extensions, left-aligned taskbar, hide Chat/Widgets/search box, disable transparency effects |
+| **Interface** | Bring back the full Windows 10 right-click menu, dark mode, show hidden files, always show file extensions, left-aligned taskbar, hide Chat/Widgets/search box, disable transparency effects |
 
 Plus, on the Scan screen:
 
@@ -56,7 +56,7 @@ Plus, on the Scan screen:
   not using; can be scheduled every 10 min / 30 min / 1 h / 3 h / 6 h
 - **Startup manager** — see and disable the programs that launch at boot
 
-**36 tweaks** in total. Anything needing administrator rights asks for an
+**50 tweaks** in total. Anything needing administrator rights asks for an
 explicit UAC prompt **only for that action** — the app itself always runs
 unprivileged.
 
@@ -70,13 +70,13 @@ unprivileged.
 
 ## Languages and themes
 
-English (default), Italian, French, Spanish and German, with 12 color themes.
+English (default), Italian, French, Spanish and German, with 14 color themes.
 The app always starts in English; the language is only ever changed by an
 explicit choice in the account menu, and remembered from then on.
 
 ## Free / Pro
 
-28 tweaks are **free, forever**. Pro unlocks the advanced tweaks and presets:
+33 tweaks are **free, forever**. Pro unlocks the advanced tweaks and presets:
 
 | Plan | Price |
 | --- | --- |
@@ -135,7 +135,7 @@ Runs, and CI runs on every push:
 | `tsc --noEmit` | The frontend type-checks |
 | `check:i18n` | Every string exists in all 5 languages with matching `{placeholders}` |
 | `check:i18n-quality` | Nothing was silently left in English, no missing accents, correct Spanish punctuation |
-| `check:rust` | 24 Rust unit tests — rollback-store concurrency, locale-independent parsing of Windows CLI output, elevation batching, registry-value collisions, translation coverage |
+| `check:rust` | 78 Rust unit tests — rollback-store concurrency, locale-independent parsing of Windows CLI output, elevation batching, registry-value collisions, translation coverage |
 
 The backend has its own suites:
 

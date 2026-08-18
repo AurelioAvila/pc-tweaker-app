@@ -767,6 +767,46 @@ const it: Strings = {
       description:
         "Per impostazione predefinita Windows carica i file di aggiornamento scaricati verso altri PC usando la tua connessione. Questo limita Delivery Optimization al tuo solo computer, così quell'upload non ti mangia banda mentre giochi (HKLM, richiede diritti di amministratore).",
     },
+    disable_copilot: {
+      name: "Disattiva Windows Copilot",
+      description:
+        "Rimuove l'assistente Copilot dalla barra e gli impedisce di girare in background. Windows lo attiva di default e nelle Impostazioni non esiste un interruttore definitivo: questo imposta il criterio di sistema che lo spegne per sempre (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_suggested_apps: {
+      name: "Impedisci a Windows di installare app da solo",
+      description:
+        "Windows installa in silenzio app e giochi “consigliati” nel menu Start senza chiedertelo, all'installazione e di nuovo dopo i grandi aggiornamenti. Questo lo disattiva: sul tuo PC non finisce più niente che non hai scelto tu (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_mouse_acceleration: {
+      name: "Disattiva l'accelerazione del mouse",
+      description:
+        "Disattiva “Aumenta la precisione del puntatore”, che fa percorrere al cursore più strada quando muovi il mouse velocemente. È esattamente la risposta variabile che non vuoi quando miri: lo stesso gesto deve coprire sempre la stessa distanza sullo schermo (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_sticky_keys_prompt: {
+      name: "Elimina il popup del Filtro tasti",
+      description:
+        "Premere Maiusc cinque volte apre la finestra del Filtro tasti, che in un gioco significa uscire dallo schermo intero nel momento peggiore, di solito durante uno scontro. Questo disattiva la scorciatoia e il suo avviso; il Filtro tasti resta disponibile nelle Impostazioni (HKCU, nessuna elevazione richiesta).",
+    },
+    disable_recall: {
+      name: "Disattiva Recall (istantanee AI dello schermo)",
+      description:
+        "Recall cattura lo schermo ogni pochi secondi e costruisce una cronologia indicizzata dall'AI di tutto ciò che hai guardato: password e messaggi privati inclusi, perché registra qualunque cosa sia a schermo. Questo imposta il criterio di sistema che gli impedisce di analizzare o conservare alcunché (HKLM, richiede diritti di amministratore).",
+    },
+    disable_memory_integrity: {
+      name: "Disattiva Integrità della memoria (VBS)",
+      description:
+        "L'Integrità della memoria esegue parti di Windows dentro un contenitore virtualizzato, e questo costa CPU a ogni transizione verso il kernel: è il motivo per cui disattivarla è il guadagno di frame più grande disponibile gratuitamente. Sia chiaro il compromesso: è una vera funzione di sicurezza, e spegnerla toglie la protezione dai driver malevoli. Ha senso su un PC dedicato al gioco, non su una macchina di lavoro. Ha effetto dopo il riavvio (HKLM, richiede diritti di amministratore).",
+    },
+    disable_typing_personalization: {
+      name: "Impedisci a Windows di studiare come scrivi",
+      description:
+        "Windows costruisce un dizionario personale da ciò che digiti e scrivi a mano — anche nei gestori di password, nelle chat e nelle caselle di ricerca — e lo sincronizza con il tuo account Microsoft per migliorare i suggerimenti. Questo disattiva sia la raccolta del testo sia quella della scrittura a mano (HKCU, nessuna elevazione richiesta).",
+    },
+    classic_context_menu: {
+      name: "Riporta il menu del tasto destro completo",
+      description:
+        "Windows 11 nasconde gran parte del menu contestuale dietro “Mostra altre opzioni”, trasformando un clic in due per cose che fai tutto il giorno. Questo ripristina il menu completo di Windows 10 ovunque, in Esplora file e sul desktop. Esplora risorse viene riavviato per applicarlo, quindi le finestre aperte lampeggeranno una volta (HKCU, nessuna elevazione richiesta).",
+    },
     disable_transparency: {
       name: "Disattiva gli effetti di trasparenza",
       description:
@@ -1316,6 +1356,46 @@ const en: Strings = {
       description:
         "Windows uploads downloaded update files to other PCs over your connection by default. This limits Delivery Optimization to your own machine, which stops that upload eating bandwidth mid-game (HKLM, requires administrator rights).",
     },
+    disable_copilot: {
+      name: "Disable Windows Copilot",
+      description:
+        "Removes the Copilot assistant from the taskbar and stops it running in the background. Windows ships it enabled and there is no permanent off switch in Settings — this sets the system policy that turns it off for good (HKCU, no elevation required).",
+    },
+    disable_suggested_apps: {
+      name: "Stop Windows installing apps by itself",
+      description:
+        "Windows quietly installs “suggested” apps and games into your Start menu without asking, on a fresh install and again after big updates. This turns that off, so nothing lands on your machine that you didn't choose (HKCU, no elevation required).",
+    },
+    disable_mouse_acceleration: {
+      name: "Disable mouse acceleration",
+      description:
+        "Turns off “Enhance pointer precision”, which makes the cursor travel further when you move the mouse faster. That variable response is exactly what you don't want when aiming: the same physical flick should always cover the same distance on screen (HKCU, no elevation required).",
+    },
+    disable_sticky_keys_prompt: {
+      name: "Stop the Sticky Keys popup",
+      description:
+        "Tapping Shift five times normally opens the Sticky Keys dialog — which in a game means an alt-tab out of fullscreen at the worst possible moment, usually mid-fight. This disables the shortcut and its prompt; Sticky Keys itself stays available in Settings (HKCU, no elevation required).",
+    },
+    disable_recall: {
+      name: "Disable Recall (AI screen snapshots)",
+      description:
+        "Recall takes a screenshot of your desktop every few seconds and builds a searchable, AI-indexed history of everything you have looked at — passwords and private messages included, since it captures whatever is on screen. This sets the system policy that stops it analysing or storing anything (HKLM, requires administrator rights).",
+    },
+    disable_memory_integrity: {
+      name: "Disable Memory Integrity (VBS)",
+      description:
+        "Memory Integrity runs parts of Windows inside a hardware-virtualised container, which costs CPU on every kernel transition — the reason it is the single biggest free frame-rate gain on most gaming machines. Be clear about the trade: it is a real security feature, and turning it off removes protection against malicious drivers. Worth it on a dedicated gaming PC, not on a work machine. Takes effect after a restart (HKLM, requires administrator rights).",
+    },
+    disable_typing_personalization: {
+      name: "Stop Windows learning how you type",
+      description:
+        "Windows builds a personal dictionary from what you type and handwrite — including in password managers, chat windows and search boxes — and syncs it to your Microsoft account to improve its suggestions. This turns off both the text and the handwriting collection (HKCU, no elevation required).",
+    },
+    classic_context_menu: {
+      name: "Bring back the full right-click menu",
+      description:
+        "Windows 11 hides most of the right-click menu behind “Show more options”, turning one click into two for things you do all day. This restores the complete Windows 10 menu everywhere in File Explorer and on the desktop. Explorer restarts to apply it, so open windows will flicker once (HKCU, no elevation required).",
+    },
     disable_transparency: {
       name: "Disable transparency effects",
       description:
@@ -1858,6 +1938,46 @@ const fr: Strings = {
       name: "Ne plus partager les mises a jour Windows",
       description:
         "Par defaut, Windows envoie les fichiers de mise a jour telecharges vers d'autres PC via votre connexion. Ceci limite Delivery Optimization a votre seule machine, pour que cet envoi ne consomme plus votre bande passante en pleine partie (HKLM, necessite des droits administrateur).",
+    },
+    disable_copilot: {
+      name: "Désactiver Windows Copilot",
+      description:
+        "Retire l'assistant Copilot de la barre des tâches et l'empêche de s'exécuter en arrière-plan. Windows l'active par défaut et aucun interrupteur définitif n'existe dans les Paramètres : ceci applique la stratégie système qui le désactive pour de bon (HKCU, aucune élévation requise).",
+    },
+    disable_suggested_apps: {
+      name: "Empêcher Windows d'installer des applications tout seul",
+      description:
+        "Windows installe discrètement des applications et des jeux « suggérés » dans votre menu Démarrer sans rien demander, à l'installation puis après chaque grosse mise à jour. Ceci désactive ce comportement : plus rien n'arrive sur votre machine sans votre accord (HKCU, aucune élévation requise).",
+    },
+    disable_mouse_acceleration: {
+      name: "Désactiver l'accélération de la souris",
+      description:
+        "Désactive « Améliorer la précision du pointeur », qui fait parcourir au curseur une distance plus grande quand vous bougez vite. C'est exactement la réponse variable dont vous ne voulez pas pour viser : un même geste doit toujours couvrir la même distance à l'écran (HKCU, aucune élévation requise).",
+    },
+    disable_sticky_keys_prompt: {
+      name: "Supprimer la fenêtre des touches rémanentes",
+      description:
+        "Appuyer cinq fois sur Maj ouvre la boîte de dialogue des touches rémanentes, ce qui en jeu signifie sortir du plein écran au pire moment, généralement en plein combat. Ceci désactive le raccourci et son avertissement ; les touches rémanentes restent disponibles dans les Paramètres (HKCU, aucune élévation requise).",
+    },
+    disable_recall: {
+      name: "Désactiver Recall (captures d'écran par IA)",
+      description:
+        "Recall capture votre écran toutes les quelques secondes et construit un historique indexé par IA de tout ce que vous avez consulté — mots de passe et messages privés compris, puisqu'il enregistre tout ce qui s'affiche. Ceci applique la stratégie système qui l'empêche d'analyser ou de conserver quoi que ce soit (HKLM, nécessite des droits administrateur).",
+    },
+    disable_memory_integrity: {
+      name: "Désactiver l'intégrité de la mémoire (VBS)",
+      description:
+        "L'intégrité de la mémoire exécute des parties de Windows dans un conteneur virtualisé, ce qui coûte du processeur à chaque transition vers le noyau — la raison pour laquelle la désactiver est le plus gros gain d'images par seconde disponible gratuitement. Le compromis doit être clair : c'est une vraie fonction de sécurité, et la couper retire la protection contre les pilotes malveillants. Justifié sur un PC dédié au jeu, pas sur une machine de travail. Effectif après redémarrage (HKLM, nécessite des droits administrateur).",
+    },
+    disable_typing_personalization: {
+      name: "Empêcher Windows d'apprendre votre façon d'écrire",
+      description:
+        "Windows constitue un dictionnaire personnel à partir de ce que vous tapez et écrivez à la main — y compris dans les gestionnaires de mots de passe, les fenêtres de discussion et les champs de recherche — et le synchronise avec votre compte Microsoft pour améliorer ses suggestions. Ceci désactive la collecte du texte et celle de l'écriture manuscrite (HKCU, aucune élévation requise).",
+    },
+    classic_context_menu: {
+      name: "Rétablir le menu clic droit complet",
+      description:
+        "Windows 11 cache la majeure partie du menu contextuel derrière « Afficher d'autres options », transformant un clic en deux pour des gestes quotidiens. Ceci rétablit le menu complet de Windows 10 partout, dans l'Explorateur et sur le bureau. L'Explorateur redémarre pour l'appliquer, les fenêtres ouvertes clignoteront donc une fois (HKCU, aucune élévation requise).",
     },
     disable_transparency: {
       name: "Désactiver les effets de transparence",
@@ -2402,6 +2522,46 @@ const es: Strings = {
       description:
         "De forma predeterminada Windows sube los archivos de actualizacion descargados a otros PC usando tu conexion. Esto limita Delivery Optimization a tu propio equipo, para que esa subida no consuma ancho de banda mientras juegas (HKLM, requiere derechos de administrador).",
     },
+    disable_copilot: {
+      name: "Desactivar Windows Copilot",
+      description:
+        "Quita el asistente Copilot de la barra de tareas e impide que se ejecute en segundo plano. Windows lo activa por defecto y en Configuración no hay un interruptor definitivo: esto aplica la directiva del sistema que lo apaga para siempre (HKCU, no requiere elevación).",
+    },
+    disable_suggested_apps: {
+      name: "Impedir que Windows instale aplicaciones por su cuenta",
+      description:
+        "Windows instala en silencio aplicaciones y juegos «sugeridos» en tu menú Inicio sin preguntarte, al instalar y de nuevo tras las actualizaciones grandes. Esto lo desactiva: en tu equipo ya no aparece nada que no hayas elegido tú (HKCU, no requiere elevación).",
+    },
+    disable_mouse_acceleration: {
+      name: "Desactivar la aceleración del ratón",
+      description:
+        "Desactiva «Mejorar la precisión del puntero», que hace que el cursor recorra más distancia cuando mueves el ratón deprisa. Esa respuesta variable es justo lo que no quieres al apuntar: el mismo gesto debe cubrir siempre la misma distancia en pantalla (HKCU, no requiere elevación).",
+    },
+    disable_sticky_keys_prompt: {
+      name: "Eliminar el aviso de Teclas especiales",
+      description:
+        "Pulsar Mayús cinco veces abre el cuadro de Teclas especiales, lo que en un juego significa salir de pantalla completa en el peor momento, normalmente en pleno combate. Esto desactiva el atajo y su aviso; las Teclas especiales siguen disponibles en Configuración (HKCU, no requiere elevación).",
+    },
+    disable_recall: {
+      name: "Desactivar Recall (capturas de pantalla con IA)",
+      description:
+        "Recall captura tu pantalla cada pocos segundos y construye un historial indexado por IA de todo lo que has mirado: contraseñas y mensajes privados incluidos, porque graba lo que haya en pantalla. Esto aplica la directiva del sistema que le impide analizar o guardar nada (HKLM, requiere derechos de administrador).",
+    },
+    disable_memory_integrity: {
+      name: "Desactivar Integridad de memoria (VBS)",
+      description:
+        "La Integridad de memoria ejecuta partes de Windows dentro de un contenedor virtualizado, y eso cuesta CPU en cada transición al kernel: por eso desactivarla es la mayor ganancia de fotogramas disponible sin pagar nada. El compromiso debe quedar claro: es una función de seguridad real, y apagarla elimina la protección frente a controladores maliciosos. Tiene sentido en un PC dedicado al juego, no en uno de trabajo. Surte efecto tras reiniciar (HKLM, requiere derechos de administrador).",
+    },
+    disable_typing_personalization: {
+      name: "Impedir que Windows aprenda cómo escribes",
+      description:
+        "Windows crea un diccionario personal a partir de lo que escribes con el teclado y a mano —también en gestores de contraseñas, chats y cuadros de búsqueda— y lo sincroniza con tu cuenta de Microsoft para mejorar sus sugerencias. Esto desactiva tanto la recopilación de texto como la de escritura a mano (HKCU, no requiere elevación).",
+    },
+    classic_context_menu: {
+      name: "Recuperar el menú contextual completo",
+      description:
+        "Windows 11 esconde la mayor parte del menú del botón derecho tras «Mostrar más opciones», convirtiendo un clic en dos para cosas que haces todo el día. Esto restaura el menú completo de Windows 10 en todas partes, en el Explorador y en el escritorio. El Explorador se reinicia para aplicarlo, así que las ventanas abiertas parpadearán una vez (HKCU, no requiere elevación).",
+    },
     disable_transparency: {
       name: "Desactivar los efectos de transparencia",
       description:
@@ -2944,6 +3104,46 @@ const de: Strings = {
       name: "Windows-Updates nicht mehr mit Fremden teilen",
       description:
         "Windows laedt heruntergeladene Updatedateien standardmaessig ueber Ihre Verbindung zu anderen PCs hoch. Dies beschraenkt die Uebermittlungsoptimierung auf Ihren eigenen Rechner, damit dieser Upload nicht mitten im Spiel Bandbreite frisst (HKLM, erfordert Administratorrechte).",
+    },
+    disable_copilot: {
+      name: "Windows Copilot deaktivieren",
+      description:
+        "Entfernt den Copilot-Assistenten aus der Taskleiste und verhindert, dass er im Hintergrund läuft. Windows aktiviert ihn standardmäßig, und in den Einstellungen gibt es keinen dauerhaften Schalter: Dies setzt die Systemrichtlinie, die ihn endgültig abschaltet (HKCU, keine Erhöhung erforderlich).",
+    },
+    disable_suggested_apps: {
+      name: "Verhindern, dass Windows selbst Apps installiert",
+      description:
+        "Windows installiert unaufgefordert „vorgeschlagene“ Apps und Spiele in Ihr Startmenü — bei der Installation und erneut nach großen Updates. Dies schaltet das ab, sodass nichts mehr auf Ihrem Rechner landet, was Sie nicht selbst ausgewählt haben (HKCU, keine Erhöhung erforderlich).",
+    },
+    disable_mouse_acceleration: {
+      name: "Mausbeschleunigung deaktivieren",
+      description:
+        "Schaltet „Zeigerbeschleunigung verbessern“ ab, wodurch der Zeiger bei schnellen Bewegungen weiter läuft. Genau diese variable Reaktion will man beim Zielen nicht: Dieselbe Handbewegung muss immer dieselbe Strecke auf dem Bildschirm zurücklegen (HKCU, keine Erhöhung erforderlich).",
+    },
+    disable_sticky_keys_prompt: {
+      name: "Die Einrastfunktion-Meldung abschalten",
+      description:
+        "Fünfmal Umschalt öffnet den Einrastfunktion-Dialog — im Spiel bedeutet das ein Verlassen des Vollbilds im ungünstigsten Moment, meist mitten im Kampf. Dies deaktiviert das Tastenkürzel und seine Meldung; die Einrastfunktion selbst bleibt in den Einstellungen verfügbar (HKCU, keine Erhöhung erforderlich).",
+    },
+    disable_recall: {
+      name: "Recall deaktivieren (KI-Bildschirmaufnahmen)",
+      description:
+        "Recall nimmt alle paar Sekunden ein Bild Ihres Bildschirms auf und baut daraus einen KI-durchsuchbaren Verlauf von allem, was Sie angesehen haben — Passwörter und private Nachrichten eingeschlossen, denn es erfasst alles, was auf dem Bildschirm steht. Dies setzt die Systemrichtlinie, die jede Analyse und Speicherung unterbindet (HKLM, erfordert Administratorrechte).",
+    },
+    disable_memory_integrity: {
+      name: "Speicherintegrität (VBS) deaktivieren",
+      description:
+        "Die Speicherintegrität führt Teile von Windows in einem virtualisierten Container aus, was bei jedem Kernel-Übergang CPU-Zeit kostet — der Grund, warum ihre Abschaltung der größte kostenlose Bildraten-Gewinn ist. Der Handel muss klar sein: Es ist eine echte Sicherheitsfunktion, und sie abzuschalten entfernt den Schutz vor bösartigen Treibern. Auf einem reinen Spiele-PC vertretbar, auf einem Arbeitsrechner nicht. Wirkt nach einem Neustart (HKLM, erfordert Administratorrechte).",
+    },
+    disable_typing_personalization: {
+      name: "Verhindern, dass Windows Ihren Schreibstil lernt",
+      description:
+        "Windows baut aus dem, was Sie tippen und handschriftlich eingeben, ein persönliches Wörterbuch auf — auch in Passwort-Managern, Chatfenstern und Suchfeldern — und synchronisiert es mit Ihrem Microsoft-Konto, um seine Vorschläge zu verbessern. Dies schaltet sowohl die Text- als auch die Handschrifterfassung ab (HKCU, keine Erhöhung erforderlich).",
+    },
+    classic_context_menu: {
+      name: "Das vollständige Rechtsklick-Menü zurückholen",
+      description:
+        "Windows 11 versteckt den größten Teil des Kontextmenüs hinter „Weitere Optionen anzeigen“ und macht aus einem Klick zwei — bei Dingen, die man den ganzen Tag tut. Dies stellt das vollständige Windows-10-Menü überall wieder her, im Explorer und auf dem Desktop. Der Explorer startet zum Anwenden neu, offene Fenster flackern daher einmal (HKCU, keine Erhöhung erforderlich).",
     },
     disable_transparency: {
       name: "Transparenzeffekte deaktivieren",

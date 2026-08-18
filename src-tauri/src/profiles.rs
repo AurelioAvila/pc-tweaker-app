@@ -83,6 +83,8 @@ fn known_tweak_ids() -> Vec<String> {
             crate::gaming::KEYBOARD_DELAY_ID,
             crate::game_priority::TWEAK_ID,
             crate::privacy_extra::ACTIVITY_HISTORY_ID,
+            crate::privacy_extra::TYPING_PERSONALIZATION_ID,
+            crate::contextmenu::TWEAK_ID,
             crate::services::WINDOWS_SEARCH_ID,
             crate::netlatency::TWEAK_ID,
             crate::dns::TWEAK_ID,

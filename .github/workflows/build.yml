@@ -1,0 +1,71 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+# Least privilege (2026-08-08 security audit): this workflow only builds and
+# uploads a build artifact, it never pushes to the repo or touches PRs/issues -
+# the default GITHUB_TOKEN scope can be wider than that depending on org
+# settings, so pin it down explicitly instead of relying on the default.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # A release must never ship something the checks would have caught.
+      - name: Run checks
+        run: npm run check
+
+      - name: Build Tauri app
+        run: npm run tauri build
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      # `tauri build` prints "A public key has been found, but no private key"
+      # and still exits 0, so a missing or expired signing secret produces a
+      # perfectly ordinary-looking build with no .sig files next to it. Every
+      # existing install checks that signature before applying an update, so
+      # shipping that release would strand every user on the previous version
+      # with no visible error. Caught by hand once; now it fails the build.
+      - name: Verify the installers were actually signed
+        shell: bash
+        run: |
+          missing=0
+          for f in src-tauri/target/release/bundle/nsis/*.exe \
+                   src-tauri/target/release/bundle/msi/*.msi; do
+            if [ ! -f "$f.sig" ]; then
+              echo "::error::$f has no .sig — auto-update would reject this build"
+              missing=1
+            fi
+          done
+          exit $missing
+
+      - name: Upload installer artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pc-tweaker-installers
+          # The .sig files are part of the release, not a build by-product:
+          # the updater fetches them alongside the installer. Omitting them
+          # here made every CI-built release unusable for auto-update.
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/nsis/*.exe.sig
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/msi/*.msi.sig

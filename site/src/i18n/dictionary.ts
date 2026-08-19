@@ -172,6 +172,9 @@ export interface Dictionary {
     readonly legal: string;
     readonly privacy: string;
     readonly terms: string;
+    readonly cookies: string;
+    readonly accessibility: string;
+    readonly contact: string;
     readonly license: string;
     readonly copyright: string;
     readonly motto: string;
@@ -475,6 +478,9 @@ export const engDictionary: Dictionary = {
     legal: "LEGAL",
     privacy: "Privacy Policy",
     terms: "Terms",
+    cookies: "Cookie Policy",
+    accessibility: "Accessibility",
+    contact: "Contact",
     license: "Proprietary License",
     copyright: "Built solo in Italy with Tauri (Rust) + React. © 2026 Aurelio Avila",
     motto: "// every millisecond is earned",

@@ -60,6 +60,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
                 { label: text.footer.changelog, href: `${GH}/blob/master/CHANGELOG.md` },
                 { label: text.footer.source, href: GH },
                 { label: text.support.navLabel, href: "/support" },
+                { label: text.footer.contact, href: "/support" },
               ]}
             />
             <Col
@@ -75,8 +76,10 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
               navigate={navigate}
               title={text.footer.legal}
               links={[
-                { label: text.footer.privacy, href: `${GH}/blob/master/PRIVACY.md` },
-                { label: text.footer.terms, href: `${GH}/blob/master/TERMS.md` },
+                { label: text.footer.privacy, href: "/privacy" },
+                { label: text.footer.terms, href: "/terms" },
+                { label: text.footer.cookies, href: "/cookies" },
+                { label: text.footer.accessibility, href: "/accessibility" },
                 { label: text.footer.license, href: `${GH}/blob/master/LICENSE` },
               ]}
             />

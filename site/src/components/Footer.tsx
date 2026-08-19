@@ -1,5 +1,6 @@
 import { text } from "../i18n/dictionary";
 import { Link } from "../router";
+import { NewsletterSignup } from "./NewsletterSignup";
 
 const GH = "https://github.com/AurelioAvila/pc-tweaker-app";
 
@@ -48,6 +49,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
           <div>
             <div className="font-display mb-2.5 text-[17px] font-bold text-[var(--fg)]">PC Tweaker</div>
             <p className="max-w-xs text-[13px] text-[var(--fg-dim)]">{text.footer.tagline}</p>
+            <NewsletterSignup />
           </div>
           <div className="flex flex-wrap gap-14">
             <Col

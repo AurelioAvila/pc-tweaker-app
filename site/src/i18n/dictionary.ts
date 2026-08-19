@@ -155,6 +155,13 @@ export interface Dictionary {
     readonly responseTime: string;
     readonly backHome: string;
   };
+  readonly newsletter: {
+    readonly pitch: string;
+    readonly placeholder: string;
+    readonly button: string;
+    readonly thanks: string;
+    readonly genericError: string;
+  };
   readonly footer: {
     readonly tagline: string;
     readonly product: string;
@@ -450,6 +457,13 @@ export const engDictionary: Dictionary = {
       "It's in our inbox and a copy is on its way to your email. We usually reply within one business day.",
     responseTime: "Typical first reply: under 24 hours, Monday to Friday.",
     backHome: "Back to home",
+  },
+  newsletter: {
+    pitch: "New tweaks, new releases, new tools — occasionally, by email.",
+    placeholder: "your@email.com",
+    button: "Subscribe",
+    thanks: "You're in — check your inbox for a welcome email.",
+    genericError: "Something went wrong. Please try again in a moment.",
   },
   footer: {
     tagline: "A safer way to tune your Windows PC.",

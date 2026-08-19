@@ -12,6 +12,7 @@ import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
 import licenseRoutes from "./routes/license";
 import reviewRoutes from "./routes/reviews";
+import newsletterRoutes from "./routes/newsletter";
 import supportRoutes from "./routes/support";
 import { router as stripeRoutes, webhookHandler } from "./routes/stripe";
 
@@ -386,6 +387,7 @@ app.use("/api/account", accountRoutes);
 app.use("/api/license", licenseRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/newsletter", newsletterRoutes);
 app.use("/api", stripeRoutes);
 
 app.use((err: Error, _req: Request, res: Response, _next: express.NextFunction) => {

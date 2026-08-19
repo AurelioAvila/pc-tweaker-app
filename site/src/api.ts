@@ -53,6 +53,15 @@ export function postReview(input: {
   return request("/api/reviews", { method: "POST", body: JSON.stringify(input) });
 }
 
+/** `company` is the honeypot field — always sent empty by real visitors. */
+export function postNewsletterSignup(input: {
+  email: string;
+  source: string;
+  company: string;
+}): Promise<{ ok: true }> {
+  return request("/api/newsletter", { method: "POST", body: JSON.stringify(input) });
+}
+
 export function postSupportRequest(input: {
   name: string;
   email: string;

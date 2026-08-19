@@ -366,17 +366,26 @@ async function main() {
   // secretly ruining/draining Y" al posto del conteggio, piu' le frasi di
   // ricerca reali con piu' domanda ("how to optimize pc for gaming", "what
   // to do when you get a new pc", "how to stress test your new pc").
+  // Enfasi maiuscola su UNA parola per meta' dei template (2026-08-19,
+  // ricerca CTR/title-formula 2026: humbleandbrag.com e ytzolo.com
+  // concordano entrambi che maiuscolare una singola parola chiave - non
+  // l'intero titolo, che legge come spam - e' una leva CTR indipendente
+  // dalla formula del titolo stessa). Applicata solo a 5 dei 10 template,
+  // non a tutti: la stessa logica di varieta' che ha motivato l'ampliamento
+  // del pool il 2026-08-13 (vedi commento sopra) vale anche qui, un pattern
+  // uniforme su ogni titolo sarebbe di nuovo "spuntano sempre con le stesse
+  // cose" solo con le maiuscole al posto delle parole.
   const TITLE_TEMPLATES = [
-    (n) => `${n} Windows Tweaks You Need To Know (2026)`,
+    (n) => `${n} Windows Tweaks You NEED To Know (2026)`,
     (n) => `${n} Windows Settings You Should Change Today (2026)`,
     (n) => `I Changed ${n} Windows Settings. Here's What Happened (2026)`,
     (n) => `${n} Things Windows Turns On Without Asking You (2026)`,
-    (n) => `${n} Windows Tweaks That Actually Made a Difference (2026)`,
-    () => `The Windows Setting That's Secretly Draining Your FPS (2026)`,
-    () => `Why Your New PC Still Feels Slow (2026)`,
+    (n) => `${n} Windows Tweaks That ACTUALLY Made a Difference (2026)`,
+    () => `The Windows Setting That's SECRETLY Draining Your FPS (2026)`,
+    () => `Why Your New PC STILL Feels Slow (2026)`,
     () => `How To Optimize Your PC For Gaming In Under 5 Minutes (2026)`,
     () => `What To Do The Day You Get A New PC (2026)`,
-    () => `I Stress-Tested My PC. Windows Was The Bottleneck (2026)`,
+    () => `I Stress-Tested My PC. Windows Was The BOTTLENECK (2026)`,
     (n) => `${n} Default Windows Settings That Are Secretly Ruining Your PC (2026)`,
   ];
   const title = TITLE_TEMPLATES[Math.floor(Math.random() * TITLE_TEMPLATES.length)](bases.length);

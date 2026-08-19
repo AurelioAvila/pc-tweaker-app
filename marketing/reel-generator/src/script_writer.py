@@ -27,6 +27,16 @@ import random
 # diversi (prima persona / conseguenza / POV / numero concreto / mito da
 # smontare) invece di variazioni della stessa formula: quella sarebbe
 # varieta' solo apparente.
+# Tolti 2026-08-19 tre hook in prima persona che affermavano test/acquisti
+# mai avvenuti ("I stress-tested three PC optimizers", "I paid for one of
+# these", "I recorded the before and after so you don't have to trust me") -
+# il render mostra sempre b-roll Pexels generico, mai una vera registrazione
+# dello schermo o un vero acquisto di un tool concorrente, quindi quelle
+# righe erano una prova fittizia messa in bocca a una voce AI. Esattamente il
+# tipo di dettaglio che un commento reale ("probably an unsafe vibe coded
+# tool") individua: non e' un problema di quanto sia tecnico il contenuto, e'
+# una falsa testimonianza in prima persona. Sostituite con affermazioni
+# equivalenti che non rivendicano un test/acquisto specifico dell'autore.
 HOOKS = {
     # Nota sui pattern di hook (aggiornato 2026-08-03): i test 2026 su 30 hook
     # virali danno solo 4 famiglie sopra quota 70 - Identity Call, Contrarian
@@ -52,16 +62,21 @@ HOOKS = {
     "contrarian": [
         "If you've ever downloaded a 'PC booster', this one's for you.",
         "Windows 11 users: the tool you're about to install matters more than you think.",
-        "I stress-tested three PC optimizers so you don't have to.",
+        "Three PC optimizers, one thing in common: no undo button.",
         "Don't install a PC optimizer before hearing this.",
         "Most optimizer tools can't do this one thing.",
         "Here's what separates a safe tool from a risky one.",
         "The free tools aren't the problem, the irreversible ones are.",
         "Every 'speed booster' I tested did the same three things.",
         "If a tool can't undo a change, that's not optimization, that's a gamble.",
-        "I paid for one of these so you can skip it entirely.",
+        "The paid ones aren't any more honest about what they change.",
         "The honest answer is most of these do almost nothing.",
         "Registry cleaners are still being sold in 2026, and here's why that matters.",
+        # Aggiunto 2026-08-19 insieme ai fatti di verificabilita' in
+        # content.py: hook che nomina direttamente il dubbio che un
+        # commentatore reale ha espresso ("unsafe vibe coded tool"), invece
+        # di continuare a parlare solo in astratto di "PC optimizer tools".
+        "You'd be right to be skeptical of a random Windows tweak tool, here's how to actually check one.",
     ],
     "beforeafter": [
         "If your PC takes forever to boot, this is for you.",
@@ -71,7 +86,7 @@ HOOKS = {
         "Here's what one click actually changes.",
         "This is the difference one preset makes.",
         "Same hardware, same games, completely different numbers.",
-        "I recorded the before and after so you don't have to trust me.",
+        "Same PC, same benchmark, one setting different.",
         "Nothing was upgraded here, only switched off.",
         "This took eleven seconds and I wish I'd done it a year ago.",
         "The boot time alone made this worth it.",
@@ -112,6 +127,12 @@ CTA = [
     "PC Tweaker shows you exactly what it changes before it touches anything. Free to try, link in bio.",
     "Save this before you forget, then let PC Tweaker do it for you in one click. Link in bio.",
     "Send this to whoever's PC is a mess right now, the one-click fix is in the bio.",
+    # Aggiunta 2026-08-19: unica CTA che rimanda esplicitamente alla
+    # verificabilita' (source-available + listato indipendentemente), invece
+    # di ripetere solo "free, link in bio" - risposta diretta al dubbio
+    # "e' sicuro?" senza ripeterla in ogni singolo video (sarebbe pesante
+    # quanto ripetuta quanto le altre CTA sono leggere).
+    "Don't just trust a random tweak tool, check it yourself, the code is source-available. Link in bio.",
 ]
 
 # Chiusure da commento-gioco per il formato a lista (2026-08-06): lezione

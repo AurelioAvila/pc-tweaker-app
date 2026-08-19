@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- GitHub Pages can't set response headers, so the security policies that
+       CAN live in <meta> do. frame-ancestors and HSTS can't be expressed here
+       (browsers ignore them in meta) — those would need a proxy/CDN in front. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://pc-tweaker-app-production.up.railway.app; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <title>PC Tweaker — Every Millisecond Is Earned</title>
-  <meta name="description" content="50 real Windows tweaks — registry, power plan, services — each one snapshotted before it touches your system. One click to apply. One click to undo. Free for Windows 10/11." />
+  <meta name="description" content="50 real Windows tweaks — registry, power plan, services — each snapshotted before applying. One click to apply, one to undo. Free for Windows 10/11." />
+  <link rel="canonical" href="https://pctweaker.app/" />
   <meta property="og:title" content="PC Tweaker — Every Millisecond Is Earned" />
   <meta property="og:description" content="Real Windows optimization with a full rollback engine. +67% average FPS, measured. Free download for Windows 10/11." />
   <meta property="og:url" content="https://pctweaker.app" />
@@ -24,9 +30,27 @@
        so its filename (and cache key) changes automatically whenever the
        source PNG changes — no more stale favicon caching in the browser. -->
   <link rel="icon" type="image/png" href="/src/assets/favicon.png" id="favicon-link" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Fonts are self-hosted via @fontsource (imported in main.tsx): no request
+       ever leaves for Google's servers, so no visitor IP reaches a third party
+       before consent — there is nothing to consent to. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "PC Tweaker",
+    "operatingSystem": "Windows 10, Windows 11",
+    "applicationCategory": "UtilitiesApplication",
+    "description": "Windows optimization app: 50 real performance, gaming, privacy and maintenance tweaks, each snapshotted before applying so every change is reversible with one click.",
+    "url": "https://pctweaker.app/",
+    "image": "https://pctweaker.app/og-image.jpg",
+    "author": { "@type": "Person", "name": "Aurelio Avila" },
+    "offers": [
+      { "@type": "Offer", "price": "0", "priceCurrency": "EUR", "description": "Free plan — 33 tweaks" },
+      { "@type": "Offer", "price": "9.99", "priceCurrency": "EUR", "description": "Pro monthly" },
+      { "@type": "Offer", "price": "59", "priceCurrency": "EUR", "description": "Pro annual" }
+    ]
+  }
+  </script>
 </head>
 <body>
   <div id="root"></div>

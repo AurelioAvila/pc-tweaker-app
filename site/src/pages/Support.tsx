@@ -179,7 +179,7 @@ function SupportForm() {
 
 export function SupportPage({ navigate }: { navigate: (to: string) => void }) {
   return (
-    <main className="px-5 pt-32 pb-24 md:px-12">
+    <main id="main-content" className="px-5 pt-32 pb-24 md:px-12">
       <motion.div
         className="mx-auto max-w-7xl"
         variants={staggerParent}

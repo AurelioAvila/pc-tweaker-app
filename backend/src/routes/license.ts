@@ -1,18 +1,21 @@
 import express, { Request, Response } from "express";
-import { getPool, isConfigured as dbConfigured } from "../db";
+import { isConfigured as dbConfigured } from "../db";
 import { requireAuth } from "../auth";
-import { isEntitled } from "../entitlement";
 import { signLicense, isConfigured as signingConfigured } from "../license";
+import { isKnownProduct, productEntitlement } from "../products";
 import { asyncRoute } from "../async-route";
 
 const router = express.Router();
 
 /**
- * Issues a freshly signed, short-lived Pro entitlement for the desktop app.
+ * Issues a freshly signed, short-lived entitlement for a desktop app.
  *
- * Reuses `isEntitled` rather than trusting the raw `is_pro` column directly —
- * same reasoning as `routes/account.ts`: a lapsed billing period has to
- * revoke access even if the cancellation webhook never arrived.
+ * `?product=` names which ecosystem product is asking; it defaults to
+ * "pctweaker" so every deployed PC Tweaker client keeps working unchanged.
+ * Resolution goes through `productEntitlement`, which for pctweaker applies
+ * the same lapsed-period logic as before (a missed cancellation webhook must
+ * not keep granting access) and for newer products reads the entitlements
+ * table with fail-closed semantics.
  */
 router.get(
   "/",
@@ -30,20 +33,18 @@ router.get(
       return;
     }
 
-    const { rows } = await getPool().query(
-      "SELECT is_pro, plan, pro_expires_at FROM users WHERE id = $1",
-      [req.userId],
-    );
-    if (rows.length === 0) {
-      res.status(404).json({ error: "account not found" });
+    const product = req.query.product ?? "pctweaker";
+    if (!isKnownProduct(product)) {
+      res.status(400).json({ error: "unknown product" });
       return;
     }
 
-    const row = rows[0];
+    const entitlement = await productEntitlement(req.userId as number, product);
     const license = signLicense({
       userId: String(req.userId),
-      isPro: isEntitled(row),
-      plan: row.plan ?? null,
+      isPro: entitlement.active,
+      plan: entitlement.plan,
+      product,
       issuedAt: Math.floor(Date.now() / 1000),
     });
 

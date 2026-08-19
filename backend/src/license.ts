@@ -40,6 +40,15 @@ export type LicensePayload = {
   userId: string;
   isPro: boolean;
   plan: string | null;
+  /** Which ecosystem product this license speaks for ("pctweaker",
+   *  "uninstaller", ...). Added for the multi-product ecosystem: deployed
+   *  PC Tweaker clients (<= 0.5.0) parse the payload with serde's default
+   *  behaviour of ignoring unknown fields, and they verify the signature
+   *  over the exact bytes before parsing — so adding this field is
+   *  backward compatible with every license check already in the wild.
+   *  Newer clients MUST verify this equals their own product id, or a
+   *  license fetched for one product could unlock another. */
+  product: string;
   /** Unix seconds. The client measures freshness from this, not from when
    *  it happened to fetch — a cached-and-replayed response can't be made to
    *  look newer than it is. */

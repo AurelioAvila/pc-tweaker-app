@@ -369,6 +369,62 @@ function serveMarkdownAsHtml(routePath: string, mdFilePath: string, title: strin
 serveMarkdownAsHtml("/terms", path.join(__dirname, "..", "legal", "TERMS.md"), "PC Tweaker - Terms of Service");
 serveMarkdownAsHtml("/privacy", path.join(__dirname, "..", "legal", "PRIVACY.md"), "PC Tweaker - Privacy Policy");
 
+/**
+ * Stripe Checkout's success_url/cancel_url — the desktop app opens Checkout
+ * in the system browser (Stripe Checkout can't run inside the app's webview,
+ * see routes/stripe.ts), so this is where that browser tab lands afterward.
+ *
+ * These used to both point at the GitHub repo — a redirect that "worked"
+ * (valid URL, no error) but left a paying customer looking at source code
+ * with no confirmation their payment went through, and no way to tell a
+ * completed purchase apart from a cancelled one. Pro status itself is
+ * granted by the Stripe webhook independently of this page, so a closed tab
+ * here never blocks entitlement — this is purely the human-facing receipt.
+ */
+function checkoutResultPage(kind: "success" | "cancel"): string {
+  const isSuccess = kind === "success";
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${isSuccess ? "You're Pro" : "Checkout cancelled"} — PC Tweaker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:grid; place-items:center; padding:24px;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background:#0a0912; color:#e7e4f0; line-height:1.6; }
+  .card { width:100%; max-width:440px; text-align:center; background:#12101d;
+    border:1px solid #232032; border-radius:16px; padding:40px 32px; }
+  .badge { width:56px; height:56px; margin:0 auto 20px; border-radius:16px; display:grid; place-items:center;
+    font-size:28px; background:${isSuccess ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "#232032"}; }
+  h1 { font-size:22px; margin:0 0 10px; }
+  p { color:#b7b3c9; font-size:14.5px; margin:0 0 24px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="badge">${isSuccess ? "&#10003;" : "&#10005;"}</div>
+  <h1>${isSuccess ? "Payment successful" : "Checkout cancelled"}</h1>
+  <p>${
+    isSuccess
+      ? "Your Pro tweaks and presets are unlocked. Switch back to PC Tweaker — the app picks up your new plan automatically the next time it checks your license."
+      : "No charge was made. You can restart checkout from the app whenever you're ready."
+  }</p>
+  <p style="color:#8b87a0; font-size:13px; margin:0;">You can close this tab.</p>
+</div>
+</body>
+</html>`;
+}
+
+app.get("/checkout-success", (_req: Request, res: Response) => {
+  res.type("html").send(checkoutResultPage("success"));
+});
+app.get("/checkout-cancel", (_req: Request, res: Response) => {
+  res.type("html").send(checkoutResultPage("cancel"));
+});
+
 // TikTok Developer Portal domain/URL-prefix verification file (one-off,
 // content dictated by TikTok when verifying app_basic_info URLs - safe to
 // leave in place afterward, it's just a static token file).

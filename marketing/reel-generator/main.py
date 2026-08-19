@@ -34,6 +34,39 @@ from render import render_short, render_slideshow
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
 TO_PUBLISH_DIR = os.path.join(os.path.dirname(__file__), "..", "to-publish")
 
+# Cronologia hook per-categoria (2026-08-19): hook = random.choice(CAPTION_HOOKS[category])
+# non teneva nessuna cronologia, con 8 hook per categoria "Save this before
+# your next gaming session" e' uscito 4 volte e "Read this before you
+# download anything" 3 volte negli ultimi video pubblicati - stesso pattern
+# di bug gia' trovato e corretto oggi su certsprint-youtube-bot e
+# kids-shorts-bot (pool piccolo + zero anti-repeat). Finestra = pool_size-1
+# cosi' un hook non si ripete finche' non sono usciti tutti gli altri.
+HOOK_HISTORY_PATH = os.path.join(OUTPUT_DIR, "hook_history.json")
+
+
+def _load_hook_history() -> dict:
+    if not os.path.exists(HOOK_HISTORY_PATH):
+        return {}
+    with open(HOOK_HISTORY_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _pick_hook(category: str) -> str:
+    pool = CAPTION_HOOKS[category]
+    history = _load_hook_history()
+    recent = history.get(category, [])
+    window = max(len(pool) - 1, 1)
+    candidates = [h for h in pool if h not in recent[-window:]]
+    if not candidates:
+        candidates = pool
+    hook = random.choice(candidates)
+    recent.append(hook)
+    history[category] = recent[-window:]
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    with open(HOOK_HISTORY_PATH, "w", encoding="utf-8") as f:
+        json.dump(history, f, indent=2)
+    return hook
+
 # Static stock photos were the first visual signal in half the Reels.  Until
 # we have genuine screen recordings for each claim, continuous moving footage
 # is the safer TikTok/Reels-native default.
@@ -79,7 +112,7 @@ def make_one_reel(index: int, category: str = None, preview: bool = False):
 
     category = category or pick_category()
     hashtags, footage_query = CATEGORY_META[category]
-    hook = random.choice(CAPTION_HOOKS[category])
+    hook = _pick_hook(category)
 
     # Meno elementi per script (2026-08-03). I video uscivano a 26-30s reali,
     # misurati: fuori dalla fascia che regge il 70% di completion rate che la

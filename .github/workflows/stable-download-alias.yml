@@ -23,21 +23,29 @@ jobs:
   alias:
     runs-on: ubuntu-latest
     steps:
+      # Event/input values are passed through `env:` rather than interpolated
+      # into the script text: a `${{ }}` inside `run:` is pasted verbatim
+      # before the shell parses it, so a crafted tag name would execute as
+      # shell. Only maintainers can create releases here, but the safe form
+      # costs nothing.
       - name: Resolve tag
         id: tag
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          TAG="${{ github.event.release.tag_name }}"
-          if [ -z "$TAG" ]; then TAG="${{ inputs.tag }}"; fi
+          TAG="$RELEASE_TAG"
+          if [ -z "$TAG" ]; then TAG="$INPUT_TAG"; fi
           if [ -z "$TAG" ]; then TAG=$(gh release view --json tagName --jq .tagName); fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Download versioned installers
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          gh release download "${{ steps.tag.outputs.tag }}" \
+          gh release download "$TAG" \
             --repo "${{ github.repository }}" \
             --pattern "*_x64-setup.exe" \
             --pattern "*_x64_en-US.msi" \
@@ -52,7 +60,8 @@ jobs:
       - name: Upload stable aliases to the release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          gh release upload "${{ steps.tag.outputs.tag }}" \
+          gh release upload "$TAG" \
             out/PCTweaker-Setup.exe out/PCTweaker-Setup.msi \
             --repo "${{ github.repository }}" --clobber

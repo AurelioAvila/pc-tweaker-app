@@ -1,8 +1,7 @@
-# .env e' tracciato dalla storia del repo con solo un URL pubblico dentro
-# (verificato 2026-08-04, mai contenuto un segreto) - ma il repo e' PUBLIC e
-# .env non era protetto: bastava che una futura variabile finisse li' invece
-# che in un .env locale nuovo per pubblicarla per errore. Ignorato da qui in
-# avanti; resta tracciato con lo storico attuale, che e' pulito.
+# .env only ever contained a public URL in this repo's history (verified
+# 2026-08-04, never a secret) — but the repo is PUBLIC and .env was not
+# protected: a future variable landing here instead of a new local .env would
+# have been published by mistake. Ignored from here on.
 .env
 
 # Logs
@@ -44,8 +43,10 @@ marketing/tiktok-upload/node_modules
 # Instagram upload credentials/tokens — never commit
 marketing/instagram-upload/credentials*
 marketing/instagram-upload/uploaded-log.json
+marketing/instagram-upload/story-log.json
 marketing/instagram-upload/auto-upload.log
 marketing/instagram-upload/node_modules
+marketing/tiktok-upload/telegram_notify_counter.json
 
 # X (Twitter) manual-posting caption generator — logs only, no secrets
 marketing/x-upload/generate-captions.log

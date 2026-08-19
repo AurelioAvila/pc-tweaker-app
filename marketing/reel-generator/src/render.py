@@ -45,6 +45,7 @@ from moviepy.editor import (
     CompositeAudioClip,
     CompositeVideoClip,
     concatenate_videoclips,
+    concatenate_audioclips,
 )
 
 def _ensure_rgb_jpeg(image_path: str) -> str:
@@ -133,11 +134,60 @@ def _normalize_loudness(path: str) -> None:
             os.remove(tmp_path)
 
 
+# Shared, org-wide pool of real royalty-free (no-attribution) tracks - not
+# specific to this repo, so it lives one level above every brand's own
+# marketing folder (Desktop/Youtube/shared-assets/music/<vibe>/). This
+# generator's vibe is upbeat. Picking from real tracks instead of the old
+# synthesized sine-wave bed (2026-08-19): the synth chord was serviceable as
+# a stopgap but reads as an obvious placeholder next to any Reel with a real
+# soundtrack, and a shared pool means one download batch serves every bot.
+MUSIC_DIR = os.path.join(
+    os.path.dirname(__file__), "..", "..", "..", "..", "Youtube", "shared-assets", "music", "upbeat"
+)
+
+
+def _pick_real_track() -> str | None:
+    """Returns a random real track path from MUSIC_DIR, or None if the
+    folder is missing/empty (keeps the synthesized bed as a documented
+    fallback so rendering never breaks if the shared pool moves/empties)."""
+    if not os.path.isdir(MUSIC_DIR):
+        return None
+    tracks = [
+        os.path.join(MUSIC_DIR, f)
+        for f in os.listdir(MUSIC_DIR)
+        if f.lower().endswith((".mp3", ".wav", ".m4a"))
+    ]
+    return random.choice(tracks) if tracks else None
+
+
+def _real_bg_music(duration: float) -> AudioFileClip | None:
+    """Loops/trims a real track from MUSIC_DIR to exactly `duration`,
+    quiet under the narration (0.12, same level as power-ledger-bot's
+    _mix_audio - the reference this pattern is modeled on). Returns None
+    if no real track is available, so the caller can fall back to the
+    synthesized bed."""
+    track_path = _pick_real_track()
+    if not track_path:
+        return None
+    print(f"[render] real bg music selected: {os.path.basename(track_path)}", flush=True)
+    clip = AudioFileClip(track_path)
+    if clip.duration < duration:
+        loops = int(duration // clip.duration) + 1
+        clip = concatenate_audioclips([clip] * loops)
+    clip = clip.subclip(0, duration).volumex(0.12)
+    print(f"[render] real bg music mixed, trimmed to {duration:.2f}s", flush=True)
+    return clip
+
+
 def _generate_bg_music(path: str, duration: float) -> None:
     """Synthesized ambient bed (no external sample - avoids any copyright
     risk), same pattern already used for CertSprint/Groomlyco/Magdock. Very
     low volume under the narration, slow crescendo. These Reels previously
-    had zero background music, only the voice."""
+    had zero background music, only the voice.
+
+    FALLBACK ONLY (2026-08-19): superseded by _real_bg_music, which pulls a
+    real royalty-free track from MUSIC_DIR. This stays as the safety net
+    for when that shared folder is missing or empty."""
     fade_in = min(duration * 0.4, 6.0)
     fade_out = min(duration * 0.15, 2.0)
     fade_out_start = max(duration - fade_out, 0.0)
@@ -180,9 +230,12 @@ def _generate_whoosh(path: str, duration: float = 0.3) -> None:
 def _build_full_audio(voice_audio: AudioFileClip, duration: float, cut_times: list, tmp_path: str) -> CompositeAudioClip:
     """Layers a quiet ambient bed plus a short whoosh on every scene cut
     under the narration - narration itself is never touched/attenuated."""
-    bg_music_path = tmp_path + "_bgmusic.mp3"
-    _generate_bg_music(bg_music_path, duration)
-    bg_music = AudioFileClip(bg_music_path)
+    bg_music = _real_bg_music(duration)
+    if bg_music is None:
+        print("[render] no real track in MUSIC_DIR - falling back to synthesized bed", flush=True)
+        bg_music_path = tmp_path + "_bgmusic.mp3"
+        _generate_bg_music(bg_music_path, duration)
+        bg_music = AudioFileClip(bg_music_path)
 
     whoosh_path = tmp_path + "_whoosh.wav"
     _generate_whoosh(whoosh_path)
@@ -386,6 +439,14 @@ def _caption_clips_from_words(word_timings: list, duration: float, skip_before: 
             .set_start(start)
             .set_duration(chunk_duration)
             .set_position(("center", caption_y))
+            # Cheap opacity fade-in on top of the existing scale pop-in
+            # (2026-08-19): the pop alone is a size "hit", but the chunk was
+            # still fully opaque on frame 1, a harder edge than most produced
+            # caption styles use. fadein() is a plain per-frame alpha ramp -
+            # no mask-through-resize issue like the pop scale above, since it
+            # is applied to the whole composite, not animated during the
+            # resize.
+            .fadein(min(0.15, chunk_duration / 3))
         )
         clips.append(txt_clip)
     return clips

@@ -47,6 +47,24 @@ from moviepy.editor import (
     concatenate_videoclips,
 )
 
+def _ensure_rgb_jpeg(image_path: str) -> str:
+    """Pexels photos (footage.download_photo) are usually plain RGB JPEGs,
+    but some source images are grayscale ("L" mode, black & white stock
+    photography) or CMYK - moviepy/numpy then hands ffmpeg a frame with
+    shape != (h, w, 3), breaking caption compositing on top (same class of
+    bug fixed live 2026-08-19 in power-ledger-bot/src/render.py for
+    Wikimedia/LoC archive scans). Normalize to RGB, caching the converted
+    copy next to the original so repeat runs skip the reconversion."""
+    converted_path = os.path.splitext(image_path)[0] + ".converted.jpg"
+    if os.path.exists(converted_path):
+        return converted_path
+    with Image.open(image_path) as img:
+        if img.mode == "RGB":
+            return image_path
+        img.convert("RGB").save(converted_path, "JPEG", quality=92)
+    return converted_path
+
+
 TARGET_W, TARGET_H = 1080, 1920
 
 # Bitrate espliciti e normalizzazione loudness: aggiunti il 2026-08-04 per
@@ -374,7 +392,7 @@ def _caption_clips_from_words(word_timings: list, duration: float, skip_before: 
 
 
 def _ken_burns_image_clip(image_path: str, duration: float):
-    img = ImageClip(image_path).set_duration(duration)
+    img = ImageClip(_ensure_rgb_jpeg(image_path)).set_duration(duration)
     img = _fit_vertical(img)
     zoomed = img.resize(lambda t: 1 + SLIDESHOW_ZOOM_PER_SECOND * t).set_position("center")
     return CompositeVideoClip([zoomed], size=(TARGET_W, TARGET_H)).set_duration(duration)

@@ -42,6 +42,85 @@ def _remember_used_id(asset_id) -> None:
         json.dump(ids, f)
 
 
+def search_pixabay_videos(query: str, per_page: int = 20) -> list:
+    """Free second source alongside Pexels, via Pixabay's free API. Returns
+    a list of dicts in the SAME shape as Pexels results ("id", "url",
+    "width", "height", "video_files": [{"link","height"}]) so it drops
+    into the existing selection/dedup logic below unchanged.
+
+    Returns [] with no network call if PIXABAY_API_KEY is unset - Pexels
+    stays the only source until a key is added, no behavior change.
+    """
+    api_key = os.getenv("PIXABAY_API_KEY")
+    if not api_key:
+        return []
+    try:
+        resp = requests.get(
+            "https://pixabay.com/api/videos/",
+            params={"key": api_key, "q": query, "per_page": per_page},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        hits = resp.json().get("hits", [])
+    except Exception as exc:
+        print(f"[pixabay] video search failed for '{query}': {exc}")
+        return []
+
+    results = []
+    for hit in hits:
+        variants = hit.get("videos", {})
+        video_files = [
+            {"link": v["url"], "height": v.get("height") or 0}
+            for v in variants.values() if v.get("url")
+        ]
+        if not video_files:
+            continue
+        large = variants.get("large") or next(iter(variants.values()), {})
+        results.append({
+            # Prefixed so a Pixabay id never collides with a Pexels id in
+            # the shared _USED_IDS_PATH dedup memory.
+            "id": f"pixabay_{hit.get('id')}",
+            "url": hit.get("pageURL", ""),
+            "width": large.get("width") or 0,
+            "height": large.get("height") or 0,
+            "video_files": video_files,
+        })
+    return results
+
+
+def search_pixabay_photos(query: str, per_page: int = 20) -> list:
+    """Same as search_pixabay_videos but for still photos, Pexels-shaped
+    ("id", "url", "width", "height", "src": {"large2x"})."""
+    api_key = os.getenv("PIXABAY_API_KEY")
+    if not api_key:
+        return []
+    try:
+        resp = requests.get(
+            "https://pixabay.com/api/",
+            params={"key": api_key, "q": query, "per_page": per_page},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        hits = resp.json().get("hits", [])
+    except Exception as exc:
+        print(f"[pixabay] photo search failed for '{query}': {exc}")
+        return []
+
+    results = []
+    for hit in hits:
+        url = hit.get("largeImageURL") or hit.get("webformatURL")
+        if not url:
+            continue
+        results.append({
+            "id": f"pixabay_{hit.get('id')}",
+            "url": hit.get("pageURL", ""),
+            "width": hit.get("imageWidth") or 0,
+            "height": hit.get("imageHeight") or 0,
+            "src": {"large2x": url},
+        })
+    return results
+
+
 def download_background_video(output_path: str, query: str = None) -> str:
     api_key = os.environ["PEXELS_API_KEY"]
     query = query or random.choice(DEFAULT_QUERIES)
@@ -60,8 +139,9 @@ def download_background_video(output_path: str, query: str = None) -> str:
     )
     resp.raise_for_status()
     results = resp.json().get("videos", [])
+    results = results + search_pixabay_videos(query)
     if not results:
-        raise RuntimeError(f"No Pexels videos found for query '{query}'")
+        raise RuntimeError(f"No Pexels/Pixabay videos found for query '{query}'")
 
     def _aspect_diff(v):
         w, h = v.get("width") or 1, v.get("height") or 1
@@ -113,8 +193,9 @@ def download_photo(output_path: str, query: str = None) -> str:
     )
     resp.raise_for_status()
     results = resp.json().get("photos", [])
+    results = results + search_pixabay_photos(query)
     if not results:
-        raise RuntimeError(f"No Pexels photos found for query '{query}'")
+        raise RuntimeError(f"No Pexels/Pixabay photos found for query '{query}'")
 
     def _aspect_diff(p):
         w, h = p.get("width") or 1, p.get("height") or 1

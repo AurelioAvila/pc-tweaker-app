@@ -136,6 +136,25 @@ async function initSchema(): Promise<void> {
   await pool.query(
     `CREATE UNIQUE INDEX IF NOT EXISTS newsletter_subscribers_email_idx ON newsletter_subscribers (lower(email));`,
   );
+
+  // Per-product entitlements for the ecosystem's newer products (Uninstaller,
+  // and whatever comes after). Deliberately NOT a migration of PC Tweaker Pro:
+  // the `users.is_pro`/`pro_expires_at` columns remain the single source of
+  // truth for product "pctweaker", so the live billing path is untouched by
+  // this table's existence. Rows here are written only by the Stripe webhook
+  // for checkouts whose metadata names a non-pctweaker product.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS entitlements (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      product TEXT NOT NULL,
+      plan TEXT,
+      expires_at TIMESTAMPTZ,
+      stripe_subscription_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (user_id, product)
+    );
+  `);
 }
 
 const isConfigured = Boolean(pool);

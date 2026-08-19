@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import { getPool, isConfigured } from "../db";
 import { requireAuth } from "../auth";
 import { periodEndFromSubscription } from "../entitlement";
+import { isKnownProduct, productEntitlement, upsertEntitlement, revokeEntitlement, type Product } from "../products";
 
 const router = express.Router();
 
@@ -55,27 +56,61 @@ const PLANS: Record<PlanKey, PlanDef> = {
   lifetime: { env: "STRIPE_PRICE_ID", mode: "payment" },
 };
 
+/**
+ * Resolves the Stripe Price and mode for a checkout request, server-side.
+ *
+ * The client names a product and a plan; it never names a price. For the
+ * Uninstaller the price depends on loyalty — an active PC Tweaker
+ * subscription earns the discounted yearly price — and that check runs HERE,
+ * against the database, because an entitlement claimed by the client is
+ * exactly the kind of input a paying-less attacker would forge.
+ */
+async function resolveCheckoutPrice(
+  userId: number,
+  product: Product,
+  planKey: PlanKey,
+): Promise<{ envName: string; mode: "subscription" | "payment" } | { error: string; status: number }> {
+  if (product === "pctweaker") {
+    const plan = Object.prototype.hasOwnProperty.call(PLANS, planKey) ? PLANS[planKey] : undefined;
+    if (!plan) return { error: `unknown plan: ${planKey}`, status: 400 };
+    return { envName: plan.env, mode: plan.mode };
+  }
+  // Uninstaller sells one plan: a yearly subscription. Loyalty pricing is a
+  // different Stripe Price, not a coupon, so the invoice states it plainly.
+  if (planKey !== "annual") return { error: "the Uninstaller is sold as an annual plan", status: 400 };
+  const pctweaker = await productEntitlement(userId, "pctweaker");
+  return {
+    envName: pctweaker.active ? "STRIPE_PRICE_UNINSTALLER_LOYALTY" : "STRIPE_PRICE_UNINSTALLER_ANNUAL",
+    mode: "subscription",
+  };
+}
+
 // Creates a Checkout Session for the logged-in user. The desktop app opens
 // the returned URL in the system browser (Stripe Checkout can't run inside
 // the app's webview) via @tauri-apps/plugin-opener.
 router.post("/checkout", requireAuth, checkoutLimiter, requireStripe, async (req: Request, res: Response) => {
   const planKey = String(req.body?.plan || "annual") as PlanKey;
+  const product = req.body?.product ?? "pctweaker";
   // `PLANS[planKey]` alone would resolve a key like "__proto__" or
   // "constructor" to Object.prototype instead of undefined, since PLANS is a
-  // plain object literal. Harmless here in practice (the resulting object
-  // has no `.env`, so the request still fails safely a few lines down with a
-  // 503), but it's the kind of accident that stops being harmless the moment
-  // similar code gets copied somewhere less forgiving — so it's rejected
-  // outright here instead.
-  const plan = Object.prototype.hasOwnProperty.call(PLANS, planKey) ? PLANS[planKey] : undefined;
-  if (!plan) {
-    return res.status(400).json({ error: `unknown plan: ${planKey}` });
+  // plain object literal — resolveCheckoutPrice guards it with hasOwnProperty
+  // for the same reason as before. The product goes through an allowlist.
+  if (!isKnownProduct(product)) {
+    return res.status(400).json({ error: "unknown product" });
+  }
+  if (!isConfigured) {
+    return res.status(503).json({ error: "database not configured" });
   }
 
-  const priceId = process.env[plan.env];
-  if (!priceId) {
-    return res.status(503).json({ error: `${plan.env} is not configured` });
+  const resolved = await resolveCheckoutPrice(req.userId as number, product, planKey);
+  if ("error" in resolved) {
+    return res.status(resolved.status).json({ error: resolved.error });
   }
+  const priceId = process.env[resolved.envName];
+  if (!priceId) {
+    return res.status(503).json({ error: `${resolved.envName} is not configured` });
+  }
+  const plan: PlanDef = { env: resolved.envName, mode: resolved.mode };
 
   try {
     // Reuse the customer we already know about, so a user who resubscribes
@@ -100,11 +135,13 @@ router.post("/checkout", requireAuth, checkoutLimiter, requireStripe, async (req
       client_reference_id: String(req.userId),
       ...(customerId ? { customer: customerId } : customerEmail ? { customer_email: customerEmail } : {}),
       // Echoed back on every future event for this subscription, so we can
-      // always map it to our own user even if the customer id changes.
+      // always map it to our own user AND our own product even if the
+      // customer id changes. Events with no product metadata are pctweaker
+      // by definition — every subscription older than this field is one.
       ...(plan.mode === "subscription"
-        ? { subscription_data: { metadata: { userId: String(req.userId), plan: planKey } } }
-        : { payment_intent_data: { metadata: { userId: String(req.userId), plan: planKey } } }),
-      metadata: { userId: String(req.userId), plan: planKey },
+        ? { subscription_data: { metadata: { userId: String(req.userId), plan: planKey, product } } }
+        : { payment_intent_data: { metadata: { userId: String(req.userId), plan: planKey, product } } }),
+      metadata: { userId: String(req.userId), plan: planKey, product },
     });
     res.json({ url: session.url });
   } catch (err) {
@@ -191,6 +228,13 @@ async function resolveUserId(subscription: Stripe.Subscription): Promise<string 
   return rows[0]?.id ?? null;
 }
 
+/** Which ecosystem product a Stripe object belongs to. Anything without the
+ *  metadata predates multi-product checkouts, which makes it pctweaker. */
+function productFromMetadata(metadata: Stripe.Metadata | null | undefined): Product {
+  const value = metadata?.product;
+  return isKnownProduct(value) ? value : "pctweaker";
+}
+
 async function handleEvent(event: Stripe.Event): Promise<void> {
   if (!isConfigured) return;
 
@@ -199,6 +243,20 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.client_reference_id || session.metadata?.userId;
       if (!userId) break;
+
+      const product = productFromMetadata(session.metadata);
+      if (product !== "pctweaker") {
+        // Non-pctweaker products live in the entitlements table. Same
+        // provisional-window reasoning as below: the subscription event
+        // carries the real period end and overwrites this.
+        const paid = session.payment_status === "paid" || session.mode === "subscription";
+        if (!paid) break;
+        await upsertEntitlement(userId, product, {
+          plan: session.metadata?.plan ?? null,
+          expiresAt: new Date(Date.now() + PROVISIONAL_ACCESS_MS),
+        });
+        break;
+      }
 
       // For one-off payments "completed" can fire before the money actually
       // arrives (bank transfers), so require payment_status = paid. For
@@ -229,7 +287,21 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       const userId = await resolveUserId(subscription);
       if (!userId) break;
 
+      const product = productFromMetadata(subscription.metadata);
       const active = ["active", "trialing", "past_due"].includes(subscription.status);
+      if (product !== "pctweaker") {
+        if (active) {
+          await upsertEntitlement(userId, product, {
+            plan: subscription.metadata?.plan ?? null,
+            expiresAt: periodEndFromSubscription(subscription),
+            stripeSubscriptionId: subscription.id,
+          });
+        } else {
+          await revokeEntitlement(userId, product);
+        }
+        break;
+      }
+
       const customerId = typeof subscription.customer === "string" ? subscription.customer : null;
       if (active) {
         await grantPro(userId, {
@@ -249,6 +321,11 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       const subscription = event.data.object as Stripe.Subscription;
       const userId = await resolveUserId(subscription);
       if (!userId) break;
+      const product = productFromMetadata(subscription.metadata);
+      if (product !== "pctweaker") {
+        await revokeEntitlement(userId, product);
+        break;
+      }
       await revokePro(userId);
       break;
     }

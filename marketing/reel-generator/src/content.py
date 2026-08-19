@@ -192,6 +192,19 @@ FALLBACK = {
         "Every tweak in PC Tweaker saves the original value first, so you can roll it back with one click.",
         "PC Tweaker installs through winget, the official Windows package manager, not a random exe from a website.",
         "The app itself never runs with admin rights, it only asks for a one time permission for the specific tweak you approve.",
+        # Aggiunti 2026-08-19 (Aurelio: "vengono molto criticati... bisogna
+        # renderli meno stupidi e piu' utili e intelligenti" + commento reale
+        # trovato su un video: "probably an unsafe vibe coded tool", con link
+        # a CTT util windows come "alternativa vera"). La categoria
+        # contrarian gia' parlava di reversibilita', ma mai del fatto che il
+        # tool e' stato controllato da terzi indipendenti - la vera risposta
+        # a "vibe coded" e' "non solo il mio codice, altri l'hanno guardato",
+        # non un'altra frase di auto-rassicurazione. Fatti verificabili da
+        # README.md, niente inventato: NON e' open source (licenza source-
+        # available, non MIT/GPL), quindi non va mai chiamato "open source".
+        "PC Tweaker isn't open source, but the code is source-available for anyone to review, and it's listed independently on MajorGeeks and Softpedia, not just self-hosted.",
+        "The Windows package manager only lists PC Tweaker because a Microsoft-reviewed pull request approved it into winget-pkgs, the same community repo every legit app goes through.",
+        "78 automated tests run on every single code change before it ships, covering the exact rollback logic that undoes a tweak.",
     ],
     "beforeafter": [
         "Before: Windows fighting you with default settings tuned for battery life. After: a Turbo Gaming preset that flips every performance setting at once.",

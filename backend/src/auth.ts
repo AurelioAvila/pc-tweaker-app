@@ -40,7 +40,10 @@ async function requireAuth(req: Request, res: Response, next: NextFunction): Pro
 
   let payload: jwt.JwtPayload;
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    // Algorithm pinned explicitly: with a symmetric secret only HMAC is
+    // valid anyway, but stating it removes any future algorithm-confusion
+    // surface if the secret is ever swapped for a key object.
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] });
     if (typeof decoded === "string") throw new Error("unexpected string payload");
     payload = decoded;
   } catch {

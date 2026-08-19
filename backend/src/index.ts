@@ -270,11 +270,11 @@ app.get("/", async (_req: Request, res: Response) => {
 <section class="wrap" style="padding-top:24px;">
   <div class="eyebrow">Free Windows optimization tool</div>
   <h1>Tune Windows for performance and privacy — undo any of it with one click.</h1>
-  <p class="sub">36 real tweaks across performance, gaming, privacy, maintenance and interface. Every change snapshots the original value first, so nothing is a one-way door.</p>
+  <p class="sub">50 real tweaks across performance, gaming, privacy, maintenance and interface. Every change snapshots the original value first, so nothing is a one-way door.</p>
   <p style="margin-top:28px;">
     <a class="btn-primary" href="${primaryHref}">&#8681; Download for Windows${versionLabel}</a>
   </p>
-  <p style="color:#8b87a0; font-size:14px;">Windows 10/11, 64-bit &middot; 28 tweaks free forever &middot; also on <a href="https://winstall.app/apps/AurelioAvila.PCTweaker">winget</a></p>
+  <p style="color:#8b87a0; font-size:14px;">Windows 10/11, 64-bit &middot; 33 tweaks free forever &middot; also on <a href="https://winstall.app/apps/AurelioAvila.PCTweaker">winget</a></p>
 </section>
 
 <section class="wrap" id="features">
@@ -303,11 +303,11 @@ app.get("/", async (_req: Request, res: Response) => {
 
 <section class="wrap" id="pricing">
   <div class="eyebrow">Free / Pro</div>
-  <h2>28 tweaks free, forever</h2>
+  <h2>33 tweaks free, forever</h2>
   <p class="sub">Pro unlocks the advanced tweaks and presets (Turbo Gaming, Game Sessions, diagnostic-data reduction, and more). Payments go through Stripe Checkout — this app never sees your card details.</p>
   <div class="grid2" style="margin-top:28px;grid-template-columns: repeat(auto-fit, minmax(240px,1fr));">
-    <div class="price-card"><span class="pill">Free</span><div class="price">&euro;0</div><p style="color:#b7b3c9;font-size:14px;">28 tweaks, forever. No account required.</p></div>
-    <div class="price-card pro"><span class="pill">Monthly</span><div class="price">&euro;9.99<span style="font-size:14px;font-weight:400;color:#8b87a0;">/mo</span></div><p style="color:#b7b3c9;font-size:14px;">All 36 tweaks and presets.</p></div>
+    <div class="price-card"><span class="pill">Free</span><div class="price">&euro;0</div><p style="color:#b7b3c9;font-size:14px;">33 tweaks, forever. No account required.</p></div>
+    <div class="price-card pro"><span class="pill">Monthly</span><div class="price">&euro;9.99<span style="font-size:14px;font-weight:400;color:#8b87a0;">/mo</span></div><p style="color:#b7b3c9;font-size:14px;">All 50 tweaks and presets.</p></div>
     <div class="price-card pro"><span class="pill">Annual — 51% off</span><div class="price">&euro;59<span style="font-size:14px;font-weight:400;color:#8b87a0;">/yr</span></div><p style="color:#b7b3c9;font-size:14px;">&euro;4.92/month, billed yearly.</p></div>
   </div>
 </section>

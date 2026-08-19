@@ -117,6 +117,25 @@ async function initSchema(): Promise<void> {
   await pool.query(
     `CREATE INDEX IF NOT EXISTS reviews_confirm_token_idx ON reviews (confirm_token_hash) WHERE confirm_token_hash IS NOT NULL;`,
   );
+
+  // Newsletter signups from the website footer. `unsubscribed_at` keeps the
+  // row (so a re-subscribe is an update, not a duplicate) while marking the
+  // address as one that must never be mailed again. `source` records which
+  // form/page captured the address — useful once more than one product feeds
+  // this list. Same lower(email) unique-index pattern as reviews, and for the
+  // same pg-mem reason: the upsert infers on `lower(email)`.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+      id SERIAL PRIMARY KEY,
+      email TEXT NOT NULL,
+      source TEXT,
+      unsubscribed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS newsletter_subscribers_email_idx ON newsletter_subscribers (lower(email));`,
+  );
 }
 
 const isConfigured = Boolean(pool);

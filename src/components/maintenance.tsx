@@ -22,7 +22,7 @@ import { ProBadge, ShieldBadge, SoonBadge } from "./ui";
 
 export function IpMaskCard({ s, onExplain }: { s: Strings; onExplain: () => void }) {
   return (
-    <li className="animate-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
       <div className="flex items-center gap-4">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/30">
           <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
@@ -43,14 +43,14 @@ export function IpMaskCard({ s, onExplain }: { s: Strings; onExplain: () => void
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-semibold text-slate-100">{s.ipMask.title}</h2>
+            <h2 className="font-semibold text-ink">{s.ipMask.title}</h2>
             <SoonBadge label={s.badges.soon} />
           </div>
-          <p className="mt-0.5 text-sm text-slate-400">{s.ipMask.description}</p>
+          <p className="mt-0.5 text-sm text-ink-3">{s.ipMask.description}</p>
         </div>
         <button
           onClick={onExplain}
-          className="shrink-0 rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-slate-200 transition-transform hover:scale-[1.03]"
+          className="shrink-0 rounded-xl bg-surface-2 px-4 py-2 text-sm font-semibold text-ink-2 transition-transform hover:scale-[1.03]"
         >
           {s.ipMask.button}
         </button>
@@ -133,7 +133,7 @@ export function DuplicateFinder({
   }
 
   return (
-    <li className="animate-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
       <div className="flex items-center gap-4">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-400/15 text-sky-300 ring-1 ring-sky-400/30">
           <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
@@ -147,10 +147,10 @@ export function DuplicateFinder({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-semibold text-slate-100">{s.duplicateFinder.title}</h2>
+            <h2 className="font-semibold text-ink">{s.duplicateFinder.title}</h2>
             <ProBadge label={s.badges.pro} />
           </div>
-          <p className="mt-0.5 text-sm text-slate-400">{s.duplicateFinder.description}</p>
+          <p className="mt-0.5 text-sm text-ink-3">{s.duplicateFinder.description}</p>
         </div>
         <button
           onClick={scan}
@@ -162,10 +162,10 @@ export function DuplicateFinder({
       </div>
 
       {groups && groups.length > 0 && (
-        <div className="mt-4 max-h-72 space-y-3 overflow-y-auto border-t border-white/10 pt-4">
+        <div className="mt-4 max-h-72 space-y-3 overflow-y-auto border-t border-line pt-4">
           {groups.map((g, gi) => (
             <div key={gi} className="rounded-xl bg-black/20 p-3">
-              <p className="mb-2 text-xs font-medium text-slate-400">
+              <p className="mb-2 text-xs font-medium text-ink-3">
                 {format(s.duplicateFinder.copies, {
                   count: g.paths.length,
                   size: formatBytes(g.size),
@@ -174,7 +174,7 @@ export function DuplicateFinder({
               {g.paths.map((p) => (
                 <label
                   key={p}
-                  className="flex cursor-pointer items-center gap-2 truncate py-0.5 text-xs text-slate-300"
+                  className="flex cursor-pointer items-center gap-2 truncate py-0.5 text-xs text-ink-2"
                 >
                   <input
                     type="checkbox"
@@ -239,20 +239,20 @@ export function DiskOptimizeCard({
   }
 
   return (
-    <li className="animate-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
       <div className="flex items-center gap-4">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-400/15 text-amber-300 ring-1 ring-amber-400/30">
           <DriveIcon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-semibold text-slate-100">
-              {s.diskOptimize.title} <span className="font-normal text-slate-500">({drive})</span>
+            <h2 className="font-semibold text-ink">
+              {s.diskOptimize.title} <span className="font-normal text-ink-3">({drive})</span>
             </h2>
             <ShieldBadge label={s.badges.admin} />
             <ProBadge label={s.badges.pro} />
           </div>
-          <p className="mt-0.5 text-sm text-slate-400">
+          <p className="mt-0.5 text-sm text-ink-3">
             {running ? s.diskOptimize.running : s.diskOptimize.description}
           </p>
         </div>
@@ -296,14 +296,14 @@ export function DnsFlushCard({
   }
 
   return (
-    <li className="animate-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
       <div className="flex items-center gap-4">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-cyan-400/15 text-cyan-300 ring-1 ring-cyan-400/30">
           <GlobeIcon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-slate-100">{s.dnsFlush.title}</h2>
-          <p className="mt-0.5 text-sm text-slate-400">{s.dnsFlush.description}</p>
+          <h2 className="font-semibold text-ink">{s.dnsFlush.title}</h2>
+          <p className="mt-0.5 text-sm text-ink-3">{s.dnsFlush.description}</p>
         </div>
         <button
           onClick={run}
@@ -333,8 +333,8 @@ export function UninstallerPromoCard({ s }: { s: Strings }) {
           PU
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-slate-100">{s.uninstallerPromo.title}</h2>
-          <p className="mt-0.5 text-sm text-slate-400">{s.uninstallerPromo.description}</p>
+          <h2 className="font-semibold text-ink">{s.uninstallerPromo.title}</h2>
+          <p className="mt-0.5 text-sm text-ink-3">{s.uninstallerPromo.description}</p>
         </div>
         <button
           onClick={openPage}
@@ -426,17 +426,17 @@ export function LargeFileFinder({
   }
 
   return (
-    <li className="animate-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
       <div className="flex items-center gap-4">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-fuchsia-400/15 text-fuchsia-300 ring-1 ring-fuchsia-400/30">
           <TrashIcon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-semibold text-slate-100">{s.largeFiles.title}</h2>
+            <h2 className="font-semibold text-ink">{s.largeFiles.title}</h2>
             <ProBadge label={s.badges.pro} />
           </div>
-          <p className="mt-0.5 text-sm text-slate-400">{s.largeFiles.description}</p>
+          <p className="mt-0.5 text-sm text-ink-3">{s.largeFiles.description}</p>
         </div>
         <button
           onClick={scan}
@@ -448,15 +448,15 @@ export function LargeFileFinder({
       </div>
 
       {files && files.length > 0 && (
-        <div className="mt-4 border-t border-white/10 pt-4">
-          <p className="mb-2 text-xs font-medium text-slate-400">
+        <div className="mt-4 border-t border-line pt-4">
+          <p className="mb-2 text-xs font-medium text-ink-3">
             {format(s.largeFiles.foundCount, { count: files.length })}
           </p>
           <div className="max-h-72 space-y-0.5 overflow-y-auto rounded-xl bg-black/20 p-3">
             {files.map((f) => (
               <label
                 key={f.path}
-                className="flex cursor-pointer items-center gap-2 truncate py-0.5 text-xs text-slate-300"
+                className="flex cursor-pointer items-center gap-2 truncate py-0.5 text-xs text-ink-2"
               >
                 <input
                   type="checkbox"
@@ -464,8 +464,8 @@ export function LargeFileFinder({
                   onChange={() => toggleSelected(f.path)}
                   className="h-3.5 w-3.5 shrink-0 accent-fuchsia-500"
                 />
-                <span className="shrink-0 font-medium text-slate-200">{formatBytes(f.size)}</span>
-                <span className="truncate text-slate-500">{f.path}</span>
+                <span className="shrink-0 font-medium text-ink-2">{formatBytes(f.size)}</span>
+                <span className="truncate text-ink-3">{f.path}</span>
               </label>
             ))}
           </div>
@@ -522,21 +522,21 @@ export function DiskHealthCard({ s, drive }: { s: Strings; drive: string }) {
       case "Unhealthy":
         return { text: s.diskHealth.unhealthy, color: "text-red-400", dot: "bg-red-400" };
       default:
-        return { text: s.diskHealth.unknown, color: "text-slate-400", dot: "bg-slate-500" };
+        return { text: s.diskHealth.unknown, color: "text-ink-3", dot: "bg-ink-3" };
     }
   };
 
   const info = health ? statusLabel(health.status) : null;
 
   return (
-    <li className="animate-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
       <div className="flex items-center gap-4">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-rose-400/15 text-rose-300 ring-1 ring-rose-400/30">
           <HeartPulseIcon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-slate-100">{s.diskHealth.title}</h2>
-          <p className="mt-0.5 text-sm text-slate-400">
+          <h2 className="font-semibold text-ink">{s.diskHealth.title}</h2>
+          <p className="mt-0.5 text-sm text-ink-3">
             {health ? `${health.drive} · ${health.media_type}` : s.diskHealth.loading}
           </p>
         </div>
@@ -600,8 +600,8 @@ export function DiskToolsSection({
         // Shown even with a single drive: it doubles as explicit confirmation
         // of which drive Health/Optimize below are about to act on, not just
         // a chooser for when there happens to be more than one.
-        <li className="animate-card flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-          <span className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <li className="animate-card flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface-1 p-3">
+          <span className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-3">
             {s.diskHealth.selectDrive}:
           </span>
           {drives.map((d) => (
@@ -611,7 +611,7 @@ export function DiskToolsSection({
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 selected === d.letter
                   ? "bg-rose-400/20 text-rose-300 ring-1 ring-rose-400/40"
-                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"
+                  : "bg-surface-2 text-ink-3 hover:bg-surface-hover hover:text-ink-2"
               }`}
             >
               {d.letter} · {d.media_type} ·{" "}
@@ -653,7 +653,7 @@ export function CleanupCard({
   const locked = info.requires_pro && !isPro;
 
   return (
-    <li className="animate-card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20 transition-all duration-200 hover:border-white/20 hover:bg-white/[0.06]">
+    <li className="animate-card group relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20 transition-all duration-200 hover:border-line-2 hover:bg-surface-2">
       <div
         className={`pointer-events-none absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${style.ring}`}
       />
@@ -663,11 +663,11 @@ export function CleanupCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-semibold text-slate-100">{text.name}</h2>
+            <h2 className="font-semibold text-ink">{text.name}</h2>
             {info.requires_admin && <ShieldBadge label={s.badges.admin} />}
             {info.requires_pro && <ProBadge label={s.badges.pro} />}
           </div>
-          <p className="mt-0.5 text-sm text-slate-400">{text.description}</p>
+          <p className="mt-0.5 text-sm text-ink-3">{text.description}</p>
         </div>
         <button
           disabled={busy}
@@ -720,7 +720,7 @@ export function PasswordBreachCheck({ s }: { s: Strings }) {
   }
 
   return (
-    <li className="animate-card relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
       <div className="flex items-center gap-4">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-rose-400/15 text-rose-300 ring-1 ring-rose-400/30">
           <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
@@ -742,8 +742,8 @@ export function PasswordBreachCheck({ s }: { s: Strings }) {
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-slate-100">{s.passwordCheck.title}</h2>
-          <p className="mt-0.5 text-sm text-slate-400">{s.passwordCheck.description}</p>
+          <h2 className="font-semibold text-ink">{s.passwordCheck.title}</h2>
+          <p className="mt-0.5 text-sm text-ink-3">{s.passwordCheck.description}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <input
               type="password"
@@ -753,7 +753,7 @@ export function PasswordBreachCheck({ s }: { s: Strings }) {
                 setResult(null);
               }}
               placeholder={s.passwordCheck.placeholder}
-              className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-white/25"
+              className="min-w-0 flex-1 rounded-lg border border-line bg-black/20 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-line-2"
             />
             <button
               onClick={check}
@@ -770,7 +770,7 @@ export function PasswordBreachCheck({ s }: { s: Strings }) {
                   ? "text-emerald-400"
                   : result.kind === "breached"
                     ? "text-rose-400"
-                    : "text-slate-400"
+                    : "text-ink-3"
               }`}
             >
               {result.kind === "safe"
@@ -852,17 +852,17 @@ export function CleanupConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm">
-      <div className="animate-card w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
-        <h3 className="text-lg font-bold text-slate-100">{s.cleanupConfirm.title}</h3>
-        <p className="mt-2 text-sm text-slate-400">
+      <div className="animate-card w-full max-w-md rounded-2xl border border-line bg-slate-900 p-6 shadow-2xl">
+        <h3 className="text-lg font-bold text-ink">{s.cleanupConfirm.title}</h3>
+        <p className="mt-2 text-sm text-ink-3">
           {format(s.cleanupConfirm.body, { name: displayName })}
         </p>
 
         {loading && (
-          <p className="mt-4 text-[12.5px] text-slate-500">{s.cleanupConfirm.previewLoading}</p>
+          <p className="mt-4 text-[12.5px] text-ink-3">{s.cleanupConfirm.previewLoading}</p>
         )}
         {nothingToClean && (
-          <p className="mt-4 text-[12.5px] text-slate-500">{s.cleanupConfirm.previewEmpty}</p>
+          <p className="mt-4 text-[12.5px] text-ink-3">{s.cleanupConfirm.previewEmpty}</p>
         )}
         {preview !== null && !preview.accessible && (
           <p className="mt-4 text-[12.5px] leading-relaxed text-amber-200/80">
@@ -872,29 +872,29 @@ export function CleanupConfirmModal({
 
         {listable && (
           <>
-            <ul className="mt-4 max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-white/[0.03]">
+            <ul className="mt-4 max-h-56 overflow-y-auto rounded-xl border border-line bg-surface-1">
               {items.map((item) => (
                 <li key={item.name}>
-                  <label className="flex cursor-pointer items-center gap-2.5 px-3 py-1.5 text-[12.5px] hover:bg-white/5">
+                  <label className="flex cursor-pointer items-center gap-2.5 px-3 py-1.5 text-[12.5px] hover:bg-surface-2">
                     <input
                       type="checkbox"
                       checked={!unchecked.has(item.name)}
                       onChange={() => toggle(item.name)}
                       className="h-3.5 w-3.5 accent-sky-500"
                     />
-                    <span className="min-w-0 flex-1 truncate text-slate-300">
+                    <span className="min-w-0 flex-1 truncate text-ink-2">
                       {item.name}
-                      {item.is_dir && <span className="text-slate-500">{"\\"}</span>}
+                      {item.is_dir && <span className="text-ink-3">{"\\"}</span>}
                     </span>
-                    <span className="shrink-0 text-slate-500">{formatBytes(item.bytes)}</span>
+                    <span className="shrink-0 text-ink-3">{formatBytes(item.bytes)}</span>
                   </label>
                 </li>
               ))}
             </ul>
             {preview.truncated && (
-              <p className="mt-2 text-[11px] text-slate-500">{s.cleanupConfirm.previewTruncated}</p>
+              <p className="mt-2 text-[11px] text-ink-3">{s.cleanupConfirm.previewTruncated}</p>
             )}
-            <p className="mt-2 text-[12px] font-medium text-slate-400">
+            <p className="mt-2 text-[12px] font-medium text-ink-3">
               {format(s.cleanupConfirm.selectedSummary, {
                 count: selected.length,
                 size: formatBytes(allSelected ? preview.total_bytes : selectedBytes),
@@ -912,7 +912,7 @@ export function CleanupConfirmModal({
         </button>
         <button
           onClick={onCancel}
-          className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-slate-400 hover:text-slate-200"
+          className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-ink-3 hover:text-ink-2"
         >
           {s.cleanupConfirm.cancel}
         </button>

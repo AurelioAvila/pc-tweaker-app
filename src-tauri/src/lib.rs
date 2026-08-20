@@ -73,7 +73,7 @@ fn store_for(app: &tauri::AppHandle) -> Result<RollbackStore, String> {
     Ok(RollbackStore::new(store_for_dir(app)?))
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
     let store = store_for(&app)?;
 
@@ -387,7 +387,7 @@ fn requires_admin_for(id: &str) -> bool {
 }
 
 #[cfg(windows)]
-#[tauri::command]
+#[tauri::command(async)]
 fn apply_tweak(app: tauri::AppHandle, id: String) -> Result<(), String> {
     if requires_admin_for(&id) && !elevation::is_elevated() {
         return elevation::run_elevated_action("--elevated-apply", &id);
@@ -398,7 +398,7 @@ fn apply_tweak(app: tauri::AppHandle, id: String) -> Result<(), String> {
 }
 
 #[cfg(windows)]
-#[tauri::command]
+#[tauri::command(async)]
 fn rollback_tweak(app: tauri::AppHandle, id: String) -> Result<(), String> {
     if requires_admin_for(&id) && !elevation::is_elevated() {
         return elevation::run_elevated_action("--elevated-rollback", &id);
@@ -423,7 +423,7 @@ fn split_by_elevation(ids: Vec<String>) -> (Vec<String>, Vec<String>) {
 /// while the rest are applied in-process. Failures are collected per id
 /// instead of aborting, so one bad tweak can't silently swallow the rest.
 #[cfg(windows)]
-#[tauri::command]
+#[tauri::command(async)]
 fn apply_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, String> {
     let dir = store_for_dir(&app)?;
     let store = RollbackStore::new(dir.clone());
@@ -458,7 +458,7 @@ fn apply_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, 
 /// `apply_tweaks`: undoing a dozen admin tweaks must cost one UAC prompt, not
 /// one per tweak, or nobody would ever use the button.
 #[cfg(windows)]
-#[tauri::command]
+#[tauri::command(async)]
 fn rollback_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, String> {
     let store = store_for(&app)?;
     let mut failures = Vec::new();
@@ -489,25 +489,25 @@ fn rollback_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String
 }
 
 #[cfg(not(windows))]
-#[tauri::command]
+#[tauri::command(async)]
 fn apply_tweaks(_app: tauri::AppHandle, _ids: Vec<String>) -> Result<Vec<String>, String> {
     Err("tweaks are currently only supported on Windows".to_string())
 }
 
 #[cfg(not(windows))]
-#[tauri::command]
+#[tauri::command(async)]
 fn rollback_tweaks(_app: tauri::AppHandle, _ids: Vec<String>) -> Result<Vec<String>, String> {
     Err("tweaks are currently only supported on Windows".to_string())
 }
 
 #[cfg(not(windows))]
-#[tauri::command]
+#[tauri::command(async)]
 fn apply_tweak(_app: tauri::AppHandle, _id: String) -> Result<(), String> {
     Err("tweaks are currently only supported on Windows".to_string())
 }
 
 #[cfg(not(windows))]
-#[tauri::command]
+#[tauri::command(async)]
 fn rollback_tweak(_app: tauri::AppHandle, _id: String) -> Result<(), String> {
     Err("tweaks are currently only supported on Windows".to_string())
 }
@@ -527,7 +527,7 @@ fn last_cleanup_result_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf
 }
 
 #[cfg(windows)]
-#[tauri::command]
+#[tauri::command(async)]
 fn run_cleanup(app: tauri::AppHandle, id: String) -> Result<CleanupResult, String> {
     let requires_admin = cleanup::cleanup_targets()
         .into_iter()
@@ -555,7 +555,7 @@ fn run_cleanup(app: tauri::AppHandle, id: String) -> Result<CleanupResult, Strin
 
 /// Read-only dry run for the cleanup confirmation dialog: exactly what
 /// `run_cleanup` would move, with sizes. Takes no action.
-#[tauri::command]
+#[tauri::command(async)]
 fn preview_cleanup(id: String) -> Result<cleanup::CleanupPreview, String> {
     cleanup::preview_cleanup(&id)
 }
@@ -565,7 +565,7 @@ fn preview_cleanup(id: String) -> Result<cleanup::CleanupPreview, String> {
 /// as a `|`-joined payload (Windows forbids `|` in file names, and the names
 /// are re-validated on the elevated side).
 #[cfg(windows)]
-#[tauri::command]
+#[tauri::command(async)]
 fn run_cleanup_selected(
     app: tauri::AppHandle,
     id: String,
@@ -605,7 +605,7 @@ fn run_cleanup_selected(
 }
 
 #[cfg(not(windows))]
-#[tauri::command]
+#[tauri::command(async)]
 fn run_cleanup_selected(
     _app: tauri::AppHandle,
     _id: String,
@@ -615,17 +615,17 @@ fn run_cleanup_selected(
 }
 
 #[cfg(not(windows))]
-#[tauri::command]
+#[tauri::command(async)]
 fn run_cleanup(_app: tauri::AppHandle, _id: String) -> Result<CleanupResult, String> {
     Err("not supported on this platform".to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn scan_duplicates(root: String) -> Result<Vec<cleanup::DuplicateGroup>, String> {
     cleanup::scan_duplicates(&root)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn delete_files(paths: Vec<String>) -> CleanupResult {
     let requested = paths.len();
     let result = cleanup::delete_files(paths);
@@ -643,7 +643,7 @@ fn delete_files(paths: Vec<String>) -> CleanupResult {
     result
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn scan_large_files(root: String, min_bytes: u64) -> Result<Vec<cleanup::LargeFile>, String> {
     cleanup::scan_large_files(&root, min_bytes)
 }
@@ -663,7 +663,7 @@ fn last_diskopt_result_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf
 /// writes before exiting. The chosen drive letter is the payload passed
 /// through the elevated relaunch, same as a tweak id is for `--elevated-apply`.
 #[cfg(windows)]
-#[tauri::command]
+#[tauri::command(async)]
 fn optimize_disk(app: tauri::AppHandle, drive: String) -> Result<diskopt::DiskOptResult, String> {
     // Normalized before it crosses the elevation boundary as a CLI argument:
     // this guarantees the elevated child only ever sees a bare "X:", never a
@@ -687,7 +687,7 @@ fn optimize_disk(app: tauri::AppHandle, drive: String) -> Result<diskopt::DiskOp
 }
 
 #[cfg(not(windows))]
-#[tauri::command]
+#[tauri::command(async)]
 fn optimize_disk(_app: tauri::AppHandle, _drive: String) -> Result<diskopt::DiskOptResult, String> {
     Err("not supported on this platform".to_string())
 }
@@ -830,7 +830,7 @@ pub(crate) fn dirs_app_data_dir() -> std::path::PathBuf {
 
 /// Last audit entries, newest first, for the dashboard's history card. The
 /// full file stays on disk for anyone who wants the complete record.
-#[tauri::command]
+#[tauri::command(async)]
 fn list_audit_log(app: tauri::AppHandle) -> Result<Vec<audit::AuditEntry>, String> {
     let dir = store_for_dir(&app)?;
     Ok(audit::list_in(&dir, 100))

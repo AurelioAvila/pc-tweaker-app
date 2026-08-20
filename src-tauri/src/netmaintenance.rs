@@ -46,13 +46,13 @@ mod imp {
 }
 
 #[cfg(windows)]
-#[tauri::command]
+#[tauri::command(async)]
 pub fn flush_dns_cache() -> Result<FlushDnsResult, String> {
     imp::flush()
 }
 
 #[cfg(not(windows))]
-#[tauri::command]
+#[tauri::command(async)]
 pub fn flush_dns_cache() -> Result<FlushDnsResult, String> {
     Err("not supported on this platform".to_string())
 }

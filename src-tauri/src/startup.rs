@@ -132,13 +132,13 @@ mod imp {
 }
 
 #[cfg(windows)]
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_startup_items() -> Vec<StartupEntry> {
     imp::list()
 }
 
 #[cfg(windows)]
-#[tauri::command]
+#[tauri::command(async)]
 pub fn set_startup_enabled(scope: String, name: String, enabled: bool) -> Result<(), String> {
     // Machine-wide entries live under HKLM and need elevation; route them
     // through the same one-shot UAC helper every admin tweak already uses
@@ -168,13 +168,13 @@ pub fn apply_from_payload(payload: &str) -> Result<(), String> {
 }
 
 #[cfg(not(windows))]
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_startup_items() -> Vec<StartupEntry> {
     Vec::new()
 }
 
 #[cfg(not(windows))]
-#[tauri::command]
+#[tauri::command(async)]
 pub fn set_startup_enabled(_scope: String, _name: String, _enabled: bool) -> Result<(), String> {
     Err("not supported on this platform".to_string())
 }

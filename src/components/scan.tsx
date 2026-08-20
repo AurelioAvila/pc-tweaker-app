@@ -50,14 +50,14 @@ export function MachineStrip({ s, profile }: { s: Strings; profile: SystemProfil
 
   return (
     <div className="mt-5 w-full">
-      <p className="mb-2 text-center text-[10.5px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+      <p className="mb-2 text-center text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-3">
         {s.scan.thisPc}
       </p>
       <div className="flex flex-wrap justify-center gap-1.5">
         {facts.map((fact) => (
           <span
             key={fact}
-            className="rounded-lg bg-white/[0.06] px-2.5 py-1 text-[11.5px] font-medium text-slate-300 ring-1 ring-white/10"
+            className="rounded-lg bg-surface-2 px-2.5 py-1 text-[11.5px] font-medium text-ink-2 ring-1 ring-line"
           >
             {fact}
           </span>
@@ -87,7 +87,7 @@ export function AdviceNote({ s, advice }: { s: Strings; advice?: TweakAdvice }) 
     advice.verdict === "recommended"
       ? "text-emerald-300"
       : advice.verdict === "unsupported"
-        ? "text-slate-500"
+        ? "text-ink-3"
         : "text-amber-300";
 
   const label =
@@ -395,7 +395,7 @@ export function ScanPanel({
 
           <MachineStrip s={s} profile={profile} />
           {profile && (
-            <p className="mt-3 max-w-sm text-center text-[11.5px] leading-relaxed text-slate-500">
+            <p className="mt-3 max-w-sm text-center text-[11.5px] leading-relaxed text-ink-3">
               {s.scan.tailoredNote}
             </p>
           )}
@@ -467,7 +467,7 @@ export function ScanPanel({
           <p className="mt-4 text-xl font-black tracking-tight text-emerald-300">
             {s.scan.doneTitle}
           </p>
-          <p className="mt-1 text-center text-sm text-slate-400">
+          <p className="mt-1 text-center text-sm text-ink-3">
             {format(s.scan.doneBody, { count: fixedCount })}
           </p>
           <button
@@ -475,7 +475,7 @@ export function ScanPanel({
               setFixedCount(0);
               setPhase("idle");
             }}
-            className="mt-5 rounded-xl bg-white/10 px-5 py-2 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/15"
+            className="mt-5 rounded-xl bg-surface-2 px-5 py-2 text-sm font-semibold text-ink-2 transition-colors hover:bg-surface-hover"
           >
             {s.scan.scanAgain}
           </button>
@@ -540,13 +540,13 @@ export function ScanPanel({
               <button
                 onClick={() => fixAll(fixableIssues.filter((i) => checked[i.id]).map((i) => i.id))}
                 disabled={fixing || checkedCount === 0}
-                className="rounded-xl border border-white/15 py-2.5 text-[13px] font-semibold text-slate-200 transition-colors hover:bg-white/5 disabled:opacity-40"
+                className="rounded-xl border border-line-2 py-2.5 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-surface-2 disabled:opacity-40"
               >
                 {format(s.scan.fixEverything, { count: checkedCount })}
               </button>
 
               <div className="mt-2 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">
                   {s.scan.fixHeading}
                 </p>
                 <button
@@ -558,7 +558,7 @@ export function ScanPanel({
                     });
                     setChecked(next);
                   }}
-                  className="text-xs text-slate-500 hover:text-slate-300"
+                  className="text-xs text-ink-3 hover:text-ink-2"
                 >
                   {fixableIssues.every((i) => checked[i.id])
                     ? s.scan.deselectAll
@@ -575,7 +575,7 @@ export function ScanPanel({
               {(
                 [
                   ["recommended", s.scan.groupRecommended, "text-emerald-300"],
-                  ["optional", s.scan.groupOptional, "text-slate-400"],
+                  ["optional", s.scan.groupOptional, "text-ink-3"],
                   ["notrecommended", s.scan.groupNotRecommended, "text-amber-300"],
                 ] as const
               ).map(([group, heading, tone]) => {
@@ -601,7 +601,7 @@ export function ScanPanel({
                     {items.map((issue) => (
                       <label
                         key={issue.id}
-                        className="flex items-start gap-3 rounded-xl bg-white/5 p-3 text-sm transition-colors hover:bg-white/[0.07]"
+                        className="flex items-start gap-3 rounded-xl bg-surface-2 p-3 text-sm transition-colors hover:bg-surface-hover"
                       >
                         <input
                           type="checkbox"
@@ -626,8 +626,8 @@ export function ScanPanel({
                           )}
                         </span>
                         <span>
-                          <span className="font-medium text-slate-100">{issue.name}</span>
-                          <p className="text-xs text-slate-400">{issue.description}</p>
+                          <span className="font-medium text-ink">{issue.name}</span>
+                          <p className="text-xs text-ink-3">{issue.description}</p>
                           <AdviceNote s={s} advice={advice[issue.id]} />
                         </span>
                       </label>
@@ -641,7 +641,7 @@ export function ScanPanel({
           {lockedIssues.length > 0 && (
             <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-400/5 p-3">
               <p className="mb-2 text-xs font-semibold text-amber-300">{s.scan.proIssuesTitle}</p>
-              <ul className="mb-3 flex flex-col gap-1 text-xs text-slate-400">
+              <ul className="mb-3 flex flex-col gap-1 text-xs text-ink-3">
                 {lockedIssues.map((issue) => (
                   <li key={issue.id}>• {issue.name}</li>
                 ))}
@@ -657,7 +657,7 @@ export function ScanPanel({
 
           <button
             onClick={() => setPhase("idle")}
-            className="mt-4 w-full text-center text-xs text-slate-500 hover:text-slate-300"
+            className="mt-4 w-full text-center text-xs text-ink-3 hover:text-ink-2"
           >
             {s.scan.scanAgain}
           </button>

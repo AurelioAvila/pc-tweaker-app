@@ -38,12 +38,12 @@ export function ProfileRow({
   return (
     <div
       className={`rounded-xl border p-3 ${
-        imported ? "border-amber-400/30 bg-amber-400/[0.06]" : "border-white/10 bg-white/[0.04]"
+        imported ? "border-amber-400/30 bg-amber-400/[0.06]" : "border-line bg-surface-1"
       }`}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="font-semibold text-slate-100">{profile.name || "—"}</span>
-        <span className="text-xs text-slate-500">
+        <span className="font-semibold text-ink">{profile.name || "—"}</span>
+        <span className="text-xs text-ink-3">
           {format(s.profiles.tweakCount, { count: profile.tweaks.length })}
           {!imported && profile.created_at ? ` · ${formatEpochDate(profile.created_at)}` : ""}
         </span>
@@ -60,13 +60,13 @@ export function ProfileRow({
           <>
             <button
               onClick={() => onExport?.(profile)}
-              className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/5"
+              className="rounded-lg border border-line-2 px-3 py-1.5 text-xs font-semibold text-ink-2 hover:bg-surface-2"
             >
               {s.profiles.exportButton}
             </button>
             <button
               onClick={() => onRemove?.(profile.name)}
-              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-300"
+              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-ink-3 hover:text-red-300"
             >
               {s.profiles.deleteButton}
             </button>
@@ -204,11 +204,11 @@ export function ProfilesPanel({
 
   return (
     <div className="mb-6 flex flex-col gap-5">
-      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-        <h2 className="text-lg font-semibold text-slate-100">{s.profiles.title}</h2>
-        <p className="mt-1 max-w-lg text-sm text-slate-400">{s.profiles.subtitle}</p>
+      <div className="rounded-2xl border border-line bg-surface-1 p-5">
+        <h2 className="text-lg font-semibold text-ink">{s.profiles.title}</h2>
+        <p className="mt-1 max-w-lg text-sm text-ink-3">{s.profiles.subtitle}</p>
 
-        <p className="mt-5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        <p className="mt-5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">
           {s.profiles.saveHeading}
         </p>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -218,7 +218,7 @@ export function ProfilesPanel({
             onKeyDown={(e) => e.key === "Enter" && saveCurrent()}
             placeholder={s.profiles.namePlaceholder}
             maxLength={40}
-            className="min-w-[180px] flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[var(--app-accent)]"
+            className="min-w-[180px] flex-1 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-[var(--app-accent)]"
           />
           <button
             onClick={saveCurrent}
@@ -228,15 +228,13 @@ export function ProfilesPanel({
           </button>
           <button
             onClick={importProfile}
-            className="flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-white/5"
+            className="flex items-center gap-1.5 rounded-lg border border-line-2 px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2"
           >
             <FolderIcon className="h-4 w-4" />
             {s.profiles.importButton}
           </button>
         </div>
-        <p className="mt-2.5 text-[11.5px] leading-relaxed text-slate-500">
-          {s.profiles.reviewNotice}
-        </p>
+        <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-3">{s.profiles.reviewNotice}</p>
       </div>
 
       {pending && (
@@ -249,11 +247,11 @@ export function ProfilesPanel({
       )}
 
       <div className="flex flex-col gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
           {s.profiles.savedHeading}
         </p>
         {saved.length === 0 ? (
-          <p className="text-sm text-slate-500">{s.profiles.empty}</p>
+          <p className="text-sm text-ink-3">{s.profiles.empty}</p>
         ) : (
           saved.map((p) => (
             <ProfileRow

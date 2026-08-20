@@ -38,14 +38,7 @@ export function StatRing({
     <div className="flex min-w-0 items-center gap-3">
       <div className="relative h-16 w-16 shrink-0">
         <svg viewBox="0 0 64 64" className="h-16 w-16 -rotate-90">
-          <circle
-            cx="32"
-            cy="32"
-            r={radius}
-            fill="none"
-            strokeWidth="6"
-            className="stroke-white/10"
-          />
+          <circle cx="32" cy="32" r={radius} fill="none" strokeWidth="6" className="stroke-line" />
           <circle
             cx="32"
             cy="32"
@@ -59,13 +52,13 @@ export function StatRing({
             className="transition-[stroke-dashoffset] duration-700 ease-out"
           />
         </svg>
-        <span className="absolute inset-0 grid place-items-center text-sm font-bold tabular-nums text-slate-100">
+        <span className="absolute inset-0 grid place-items-center text-sm font-bold tabular-nums text-ink">
           {Math.round(clamped)}%
         </span>
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-300">{label}</p>
-        <p className="truncate text-xs text-slate-500" title={sublabel}>
+        <p className="text-xs font-semibold uppercase tracking-wider text-ink-2">{label}</p>
+        <p className="truncate text-xs text-ink-3" title={sublabel}>
           {sublabel}
         </p>
       </div>
@@ -101,7 +94,7 @@ export function SystemMonitor({ s }: { s: Strings }) {
 
   if (!stats) {
     return (
-      <div className="mb-6 h-[104px] animate-pulse rounded-2xl border border-white/10 bg-white/[0.03]" />
+      <div className="mb-6 h-[104px] animate-pulse rounded-2xl border border-line bg-surface-1" />
     );
   }
 
@@ -111,7 +104,7 @@ export function SystemMonitor({ s }: { s: Strings }) {
   const minutes = Math.floor((stats.uptime_secs % 3600) / 60);
 
   return (
-    <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur">
+    <div className="mb-6 rounded-2xl border border-line bg-surface-1 p-5 backdrop-blur">
       <div className="grid gap-5 sm:grid-cols-3">
         <StatRing
           label={s.systemMonitor.cpu}
@@ -129,13 +122,13 @@ export function SystemMonitor({ s }: { s: Strings }) {
           pct={diskPct}
         />
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/5 pt-3 text-xs text-slate-500">
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-3 text-xs text-ink-3">
         <span className="truncate" title={stats.cpu_name}>
           {stats.cpu_name}
         </span>
-        <span className="text-slate-700">•</span>
+        <span className="text-ink-3">•</span>
         <span>{stats.os_name}</span>
-        <span className="text-slate-700">•</span>
+        <span className="text-ink-3">•</span>
         <span>
           {s.systemMonitor.uptime} {format(s.systemMonitor.uptimeValue, { hours, minutes })}
         </span>

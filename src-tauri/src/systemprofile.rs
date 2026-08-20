@@ -368,7 +368,7 @@ impl SystemProfileState {
 /// `async` because the first call spawns a PowerShell process for the CIM
 /// lookups; Tauri runs it off the UI thread so the window never stalls behind
 /// it. Subsequent calls are served from cache.
-#[tauri::command]
+#[tauri::command(async)]
 pub async fn system_profile(
     state: tauri::State<'_, SystemProfileState>,
 ) -> Result<SystemProfile, String> {

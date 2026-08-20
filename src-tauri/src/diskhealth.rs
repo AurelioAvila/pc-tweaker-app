@@ -56,7 +56,7 @@ mod imp {
 }
 
 #[cfg(windows)]
-#[tauri::command]
+#[tauri::command(async)]
 pub fn disk_health(drive: String) -> Result<DiskHealth, String> {
     // The letter is interpolated into a PowerShell command line below, so it
     // is pinned to a bare "X:" here — anything else is rejected before it
@@ -66,7 +66,7 @@ pub fn disk_health(drive: String) -> Result<DiskHealth, String> {
 }
 
 #[cfg(not(windows))]
-#[tauri::command]
+#[tauri::command(async)]
 pub fn disk_health(_drive: String) -> Result<DiskHealth, String> {
     Err("not supported on this platform".to_string())
 }

@@ -121,7 +121,7 @@ fn now_iso() -> String {
 }
 
 /// Builds a profile from whatever is applied right now.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn capture_profile(name: String, app: tauri::AppHandle) -> Result<TweakProfile, String> {
     let store = crate::rollback::RollbackStore::new(crate::store_for_dir(&app)?);
     let applied: Vec<String> = known_tweak_ids()
@@ -137,7 +137,7 @@ pub fn capture_profile(name: String, app: tauri::AppHandle) -> Result<TweakProfi
     })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn save_profile(profile: TweakProfile, app: tauri::AppHandle) -> Result<(), String> {
     let profiles = ProfileStore::new(crate::store_for_dir(&app)?);
     if profile.name.trim().is_empty() {
@@ -148,7 +148,7 @@ pub fn save_profile(profile: TweakProfile, app: tauri::AppHandle) -> Result<(), 
     fs::write(profiles.file_for(&profile.name), json).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_profiles(app: tauri::AppHandle) -> Result<Vec<TweakProfile>, String> {
     let profiles = ProfileStore::new(crate::store_for_dir(&app)?);
     let Ok(entries) = fs::read_dir(&profiles.dir) else {
@@ -168,7 +168,7 @@ pub fn list_profiles(app: tauri::AppHandle) -> Result<Vec<TweakProfile>, String>
     Ok(out)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn delete_profile(name: String, app: tauri::AppHandle) -> Result<(), String> {
     let profiles = ProfileStore::new(crate::store_for_dir(&app)?);
     let path = profiles.file_for(&name);
@@ -179,7 +179,7 @@ pub fn delete_profile(name: String, app: tauri::AppHandle) -> Result<(), String>
 }
 
 /// Serializes a profile for writing to a file the user picks.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn export_profile(profile: TweakProfile) -> Result<String, String> {
     serde_json::to_string_pretty(&profile).map_err(|e| e.to_string())
 }
@@ -188,7 +188,7 @@ pub fn export_profile(profile: TweakProfile) -> Result<String, String> {
 ///
 /// Deliberately returns the profile rather than applying it — see the module
 /// docs on why importing must never be the same action as running.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn import_profile(contents: String) -> Result<LoadedProfile, String> {
     let parsed: TweakProfile = serde_json::from_str(&contents)
         .map_err(|_| "this file isn't a PC Tweaker profile".to_string())?;
@@ -298,7 +298,7 @@ mod tests {
 /// always serializes a `TweakProfile`, so even if a renderer bug or a hostile
 /// page reached this, the worst it can produce is a profile JSON file — not an
 /// arbitrary payload at an arbitrary location.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn write_profile_file(path: String, profile: TweakProfile) -> Result<(), String> {
     let json = serde_json::to_string_pretty(&profile).map_err(|e| e.to_string())?;
     fs::write(&path, json).map_err(|e| format!("could not write the file: {}", e))
@@ -308,7 +308,7 @@ pub fn write_profile_file(path: String, profile: TweakProfile) -> Result<(), Str
 ///
 /// Size-capped before parsing: a profile is a few hundred bytes, so anything
 /// large is either not a profile or is trying to make the parser work hard.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_profile_file(path: String) -> Result<LoadedProfile, String> {
     const MAX_BYTES: u64 = 256 * 1024;
 

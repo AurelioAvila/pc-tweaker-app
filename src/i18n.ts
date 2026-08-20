@@ -257,6 +257,11 @@ export interface Strings {
     running: string;
     resultToast: string;
   };
+  uninstallerPromo: {
+    title: string;
+    description: string;
+    button: string;
+  };
   largeFiles: {
     title: string;
     description: string;
@@ -597,6 +602,12 @@ const it: Strings = {
     button: "Svuota ora",
     running: "Svuotamento...",
     resultToast: "Cache DNS svuotata.",
+  },
+  uninstallerPromo: {
+    title: "PC Tweaker Uninstaller",
+    description:
+      "Rimuovi interi programmi in sicurezza: punto di ripristino automatico, comando verificato e report onesto. Della stessa famiglia di PC Tweaker.",
+    button: "Scopri",
   },
   largeFiles: {
     title: "Trova file di grandi dimensioni",
@@ -1189,6 +1200,12 @@ const en: Strings = {
     running: "Flushing...",
     resultToast: "DNS cache flushed.",
   },
+  uninstallerPromo: {
+    title: "PC Tweaker Uninstaller",
+    description:
+      "Remove entire programs safely: automatic restore point, verified command, honest report. From the same family as PC Tweaker.",
+    button: "Learn more",
+  },
   largeFiles: {
     title: "Find large files",
     description: "Scans a folder for its biggest files (over 100 MB), so you can quickly free up space by removing the ones you no longer need.",
@@ -1771,6 +1788,12 @@ const fr: Strings = {
     button: "Vider maintenant",
     running: "Vidage...",
     resultToast: "Cache DNS vide.",
+  },
+  uninstallerPromo: {
+    title: "PC Tweaker Uninstaller",
+    description:
+      "Supprimez des programmes entiers en toute sécurité : point de restauration automatique, commande vérifiée, rapport honnête. De la même famille que PC Tweaker.",
+    button: "En savoir plus",
   },
   largeFiles: {
     title: "Trouver les gros fichiers",
@@ -2355,6 +2378,12 @@ const es: Strings = {
     running: "Vaciando...",
     resultToast: "Cache DNS vaciada.",
   },
+  uninstallerPromo: {
+    title: "PC Tweaker Uninstaller",
+    description:
+      "Elimina programas enteros de forma segura: punto de restauracion automatico, comando verificado, informe honesto. De la misma familia que PC Tweaker.",
+    button: "Saber mas",
+  },
   largeFiles: {
     title: "Buscar archivos grandes",
     description: "Busca en una carpeta los archivos mas pesados (mas de 100 MB), para que puedas liberar espacio rapidamente eliminando los que ya no necesitas.",
@@ -2937,6 +2966,12 @@ const de: Strings = {
     button: "Jetzt leeren",
     running: "Wird geleert...",
     resultToast: "DNS-Cache geleert.",
+  },
+  uninstallerPromo: {
+    title: "PC Tweaker Uninstaller",
+    description:
+      "Entferne ganze Programme sicher: automatischer Wiederherstellungspunkt, gepruefter Befehl, ehrlicher Bericht. Aus derselben Familie wie PC Tweaker.",
+    button: "Mehr erfahren",
   },
   largeFiles: {
     title: "Grosse Dateien finden",

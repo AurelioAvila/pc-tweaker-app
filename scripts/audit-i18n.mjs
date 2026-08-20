@@ -146,6 +146,8 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // "PC Tweaker Uninstaller" is the product's name in every language.
+  "it:uninstallerPromo.title", "fr:uninstallerPromo.title", "es:uninstallerPromo.title", "de:uninstallerPromo.title",
   "it:badges.admin", "fr:badges.admin", "es:badges.admin", "de:badges.admin",
   "it:badges.pro", "fr:badges.pro", "es:badges.pro", "de:badges.pro",
   "it:turboBoost.title", "fr:turboBoost.title", "es:turboBoost.title", "de:turboBoost.title",

@@ -51,7 +51,11 @@ mod imp {
             .unwrap_or("Optimization complete.")
             .to_string();
 
-        Ok(DiskOptResult { drive: drive.to_string(), media_type: media, summary })
+        Ok(DiskOptResult {
+            drive: drive.to_string(),
+            media_type: media,
+            summary,
+        })
     }
 }
 

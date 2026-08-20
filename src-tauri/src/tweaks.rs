@@ -554,7 +554,12 @@ pub mod windows_impl {
     }
 
     /// Reads a registry value, trying the same type as `kind_hint` (Dword or Str).
-    pub fn read_value(hive: Hive, path: &str, name: &str, kind_hint: &RegValue) -> std::io::Result<Option<RegValue>> {
+    pub fn read_value(
+        hive: Hive,
+        path: &str,
+        name: &str,
+        kind_hint: &RegValue,
+    ) -> std::io::Result<Option<RegValue>> {
         let root = root(&hive);
         let Ok(key) = root.open_subkey(path) else {
             return Ok(None);
@@ -628,9 +633,9 @@ pub mod windows_impl {
         /// Restores the value captured before `apply`, or removes it if it
         /// did not exist beforehand.
         pub fn rollback(&self, store: &RollbackStore) -> Result<(), String> {
-            let entry = store
-                .take_entry(self.id)
-                .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
+            let entry = store.take_entry(self.id).ok_or_else(|| {
+                "no snapshot saved: the tweak does not appear to be applied".to_string()
+            })?;
 
             let SnapshotEntry::Registry(snapshot) = entry else {
                 return Err("unexpected snapshot type for a registry tweak".to_string());

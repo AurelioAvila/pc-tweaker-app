@@ -64,7 +64,13 @@ impl ProfileStore {
     fn file_for(&self, name: &str) -> PathBuf {
         let safe: String = name
             .chars()
-            .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' || c == ' ' { c } else { '_' })
+            .map(|c| {
+                if c.is_alphanumeric() || c == '-' || c == '_' || c == ' ' {
+                    c
+                } else {
+                    '_'
+                }
+            })
             .collect();
         self.dir.join(format!("{}.json", safe.trim()))
     }
@@ -73,7 +79,10 @@ impl ProfileStore {
 /// Every tweak id this build knows about. The allowlist an import is checked
 /// against.
 fn known_tweak_ids() -> Vec<String> {
-    let mut ids: Vec<String> = crate::tweaks::all_tweaks().iter().map(|t| t.id.to_string()).collect();
+    let mut ids: Vec<String> = crate::tweaks::all_tweaks()
+        .iter()
+        .map(|t| t.id.to_string())
+        .collect();
     ids.extend(
         [
             crate::power::TWEAK_ID,
@@ -231,8 +240,15 @@ mod tests {
         .to_string();
 
         let loaded = import_profile(hostile).unwrap();
-        assert_eq!(loaded.profile.tweaks, vec!["priority_separation".to_string()]);
-        assert_eq!(loaded.unknown.len(), 3, "unknown ids must be reported, not silently kept");
+        assert_eq!(
+            loaded.profile.tweaks,
+            vec!["priority_separation".to_string()]
+        );
+        assert_eq!(
+            loaded.unknown.len(),
+            3,
+            "unknown ids must be reported, not silently kept"
+        );
     }
 
     #[test]
@@ -258,7 +274,12 @@ mod tests {
     #[test]
     fn profile_names_cannot_escape_the_profiles_directory() {
         let store = ProfileStore::new(PathBuf::from("C:\\app-data"));
-        for hostile in ["../../evil", "..\\..\\evil", "C:\\Windows\\System32\\evil", "a/b/c"] {
+        for hostile in [
+            "../../evil",
+            "..\\..\\evil",
+            "C:\\Windows\\System32\\evil",
+            "a/b/c",
+        ] {
             let path = store.file_for(hostile);
             assert_eq!(
                 path.parent(),
@@ -296,6 +317,7 @@ pub fn read_profile_file(path: String) -> Result<LoadedProfile, String> {
         return Err("that file is too large to be a PC Tweaker profile".to_string());
     }
 
-    let contents = fs::read_to_string(&path).map_err(|e| format!("could not read the file: {}", e))?;
+    let contents =
+        fs::read_to_string(&path).map_err(|e| format!("could not read the file: {}", e))?;
     import_profile(contents)
 }

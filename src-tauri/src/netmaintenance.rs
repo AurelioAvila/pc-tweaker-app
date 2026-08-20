@@ -38,7 +38,10 @@ mod imp {
             return Err(format!("ipconfig reported an error: {}", detail));
         }
 
-        Ok(FlushDnsResult { success: true, detail })
+        Ok(FlushDnsResult {
+            success: true,
+            detail,
+        })
     }
 }
 

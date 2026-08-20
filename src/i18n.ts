@@ -182,6 +182,15 @@ export interface Strings {
     dashUptimeDh: string; // uses {days} {hours}
     dashUptimeHm: string; // uses {hours} {minutes}
     dashUptimeLongHint: string;
+    dashHistoryTitle: string;
+    dashHistoryEmpty: string;
+    dashActTweakApplied: string;
+    dashActTweakReverted: string;
+    dashActCleanup: string;
+    dashActFilesDeleted: string;
+    dashActStartupChange: string;
+    dashActDiskOptimize: string;
+    dashActRestorePoint: string;
     profileUnknown: string;
     diskHdd: string;
     diskSsd: string;
@@ -557,6 +566,15 @@ const it: Strings = {
     dashUptimeHm: "{hours}h {minutes}min",
     dashUptimeLongHint:
       "Questo PC non viene riavviato da un po'. Un riavvio applica gli aggiornamenti in sospeso e libera la memoria trattenuta.",
+    dashHistoryTitle: "Azioni recenti",
+    dashHistoryEmpty: "Ancora nulla. Le azioni che esegui compariranno qui.",
+    dashActTweakApplied: "Tweak applicato",
+    dashActTweakReverted: "Tweak ripristinato",
+    dashActCleanup: "Pulizia",
+    dashActFilesDeleted: "File eliminati",
+    dashActStartupChange: "Avvio modificato",
+    dashActDiskOptimize: "Disco ottimizzato",
+    dashActRestorePoint: "Punto di ripristino",
     profileUnknown: "Non rilevato",
     diskHdd: "HDD",
     diskSsd: "SSD",
@@ -1192,6 +1210,15 @@ const en: Strings = {
     dashUptimeHm: "{hours}h {minutes}min",
     dashUptimeLongHint:
       "This PC hasn't restarted in a while. A restart applies pending updates and releases held memory.",
+    dashHistoryTitle: "Recent actions",
+    dashHistoryEmpty: "Nothing yet. Actions you take will show up here.",
+    dashActTweakApplied: "Tweak applied",
+    dashActTweakReverted: "Tweak reverted",
+    dashActCleanup: "Cleanup",
+    dashActFilesDeleted: "Files deleted",
+    dashActStartupChange: "Startup changed",
+    dashActDiskOptimize: "Disk optimized",
+    dashActRestorePoint: "Restore point",
     profileUnknown: "Not detected",
     diskHdd: "HDD",
     diskSsd: "SSD",
@@ -1829,6 +1856,15 @@ const fr: Strings = {
     dashUptimeHm: "{hours}h {minutes}min",
     dashUptimeLongHint:
       "Ce PC n'a pas redémarré depuis un moment. Un redémarrage applique les mises à jour en attente et libère la mémoire retenue.",
+    dashHistoryTitle: "Actions récentes",
+    dashHistoryEmpty: "Rien pour l'instant. Vos actions apparaîtront ici.",
+    dashActTweakApplied: "Tweak appliqué",
+    dashActTweakReverted: "Tweak annulé",
+    dashActCleanup: "Nettoyage",
+    dashActFilesDeleted: "Fichiers supprimés",
+    dashActStartupChange: "Démarrage modifié",
+    dashActDiskOptimize: "Disque optimisé",
+    dashActRestorePoint: "Point de restauration",
     profileUnknown: "Non detecte",
     diskHdd: "HDD",
     diskSsd: "SSD",
@@ -2471,6 +2507,15 @@ const es: Strings = {
     dashUptimeHm: "{hours}h {minutes}min",
     dashUptimeLongHint:
       "Este PC no se reinicia desde hace tiempo. Un reinicio aplica las actualizaciones pendientes y libera la memoria retenida.",
+    dashHistoryTitle: "Acciones recientes",
+    dashHistoryEmpty: "Nada todavía. Tus acciones aparecerán aquí.",
+    dashActTweakApplied: "Tweak aplicado",
+    dashActTweakReverted: "Tweak revertido",
+    dashActCleanup: "Limpieza",
+    dashActFilesDeleted: "Archivos eliminados",
+    dashActStartupChange: "Inicio modificado",
+    dashActDiskOptimize: "Disco optimizado",
+    dashActRestorePoint: "Punto de restauración",
     profileUnknown: "No detectado",
     diskHdd: "HDD",
     diskSsd: "SSD",
@@ -3113,6 +3158,15 @@ const de: Strings = {
     dashUptimeHm: "{hours}h {minutes}min",
     dashUptimeLongHint:
       "Dieser PC wurde länger nicht neu gestartet. Ein Neustart wendet ausstehende Updates an und gibt zurückgehaltenen Speicher frei.",
+    dashHistoryTitle: "Letzte Aktionen",
+    dashHistoryEmpty: "Noch nichts. Deine Aktionen erscheinen hier.",
+    dashActTweakApplied: "Tweak angewendet",
+    dashActTweakReverted: "Tweak zurückgesetzt",
+    dashActCleanup: "Bereinigung",
+    dashActFilesDeleted: "Dateien gelöscht",
+    dashActStartupChange: "Autostart geändert",
+    dashActDiskOptimize: "Laufwerk optimiert",
+    dashActRestorePoint: "Wiederherstellungspunkt",
     profileUnknown: "Nicht erkannt",
     diskHdd: "HDD",
     diskSsd: "SSD",

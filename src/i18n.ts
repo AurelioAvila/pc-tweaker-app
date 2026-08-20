@@ -172,6 +172,16 @@ export interface Strings {
     };
     /** The hardware strip shown above the scan button. */
     thisPc: string;
+    dashDrivesTitle: string;
+    dashFreeOf: string; // uses {free} {total}
+    dashAlmostFull: string;
+    dashStartupTitle: string;
+    dashStartupCount: string; // uses {on} {total}
+    dashManage: string;
+    dashUptimeTitle: string;
+    dashUptimeDh: string; // uses {days} {hours}
+    dashUptimeHm: string; // uses {hours} {minutes}
+    dashUptimeLongHint: string;
     profileUnknown: string;
     diskHdd: string;
     diskSsd: string;
@@ -536,6 +546,17 @@ const it: Strings = {
       weak_gpu: "grafica integrata: la trasparenza le costa prestazioni utili",
     },
     thisPc: "Questo PC",
+    dashDrivesTitle: "Spazio disco",
+    dashFreeOf: "{free} liberi di {total}",
+    dashAlmostFull: "Quasi pieno",
+    dashStartupTitle: "App all'avvio",
+    dashStartupCount: "{on} attive su {total}",
+    dashManage: "Gestisci",
+    dashUptimeTitle: "Acceso da",
+    dashUptimeDh: "{days}g {hours}h",
+    dashUptimeHm: "{hours}h {minutes}min",
+    dashUptimeLongHint:
+      "Questo PC non viene riavviato da un po'. Un riavvio applica gli aggiornamenti in sospeso e libera la memoria trattenuta.",
     profileUnknown: "Non rilevato",
     diskHdd: "HDD",
     diskSsd: "SSD",
@@ -1160,6 +1181,17 @@ const en: Strings = {
       weak_gpu: "integrated graphics: transparency costs performance they could use",
     },
     thisPc: "This PC",
+    dashDrivesTitle: "Storage",
+    dashFreeOf: "{free} free of {total}",
+    dashAlmostFull: "Almost full",
+    dashStartupTitle: "Startup apps",
+    dashStartupCount: "{on} of {total} enabled",
+    dashManage: "Manage",
+    dashUptimeTitle: "Up for",
+    dashUptimeDh: "{days}d {hours}h",
+    dashUptimeHm: "{hours}h {minutes}min",
+    dashUptimeLongHint:
+      "This PC hasn't restarted in a while. A restart applies pending updates and releases held memory.",
     profileUnknown: "Not detected",
     diskHdd: "HDD",
     diskSsd: "SSD",
@@ -1786,6 +1818,17 @@ const fr: Strings = {
       weak_gpu: "graphiques intégrés : la transparence leur coûte des performances utiles",
     },
     thisPc: "Ce PC",
+    dashDrivesTitle: "Stockage",
+    dashFreeOf: "{free} libres sur {total}",
+    dashAlmostFull: "Presque plein",
+    dashStartupTitle: "Applis au démarrage",
+    dashStartupCount: "{on} actives sur {total}",
+    dashManage: "Gérer",
+    dashUptimeTitle: "Allumé depuis",
+    dashUptimeDh: "{days}j {hours}h",
+    dashUptimeHm: "{hours}h {minutes}min",
+    dashUptimeLongHint:
+      "Ce PC n'a pas redémarré depuis un moment. Un redémarrage applique les mises à jour en attente et libère la mémoire retenue.",
     profileUnknown: "Non detecte",
     diskHdd: "HDD",
     diskSsd: "SSD",
@@ -2417,6 +2460,17 @@ const es: Strings = {
       weak_gpu: "gráficos integrados: la transparencia les cuesta rendimiento aprovechable",
     },
     thisPc: "Este PC",
+    dashDrivesTitle: "Almacenamiento",
+    dashFreeOf: "{free} libres de {total}",
+    dashAlmostFull: "Casi lleno",
+    dashStartupTitle: "Apps de inicio",
+    dashStartupCount: "{on} de {total} activas",
+    dashManage: "Gestionar",
+    dashUptimeTitle: "Encendido desde hace",
+    dashUptimeDh: "{days}d {hours}h",
+    dashUptimeHm: "{hours}h {minutes}min",
+    dashUptimeLongHint:
+      "Este PC no se reinicia desde hace tiempo. Un reinicio aplica las actualizaciones pendientes y libera la memoria retenida.",
     profileUnknown: "No detectado",
     diskHdd: "HDD",
     diskSsd: "SSD",
@@ -3048,6 +3102,17 @@ const de: Strings = {
       weak_gpu: "integrierte Grafik: Transparenz kostet sie nutzbare Leistung",
     },
     thisPc: "Dieser PC",
+    dashDrivesTitle: "Speicher",
+    dashFreeOf: "{free} frei von {total}",
+    dashAlmostFull: "Fast voll",
+    dashStartupTitle: "Autostart-Apps",
+    dashStartupCount: "{on} von {total} aktiv",
+    dashManage: "Verwalten",
+    dashUptimeTitle: "Eingeschaltet seit",
+    dashUptimeDh: "{days}T {hours}h",
+    dashUptimeHm: "{hours}h {minutes}min",
+    dashUptimeLongHint:
+      "Dieser PC wurde länger nicht neu gestartet. Ein Neustart wendet ausstehende Updates an und gibt zurückgehaltenen Speicher frei.",
     profileUnknown: "Nicht erkannt",
     diskHdd: "HDD",
     diskSsd: "SSD",

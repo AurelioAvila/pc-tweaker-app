@@ -314,6 +314,8 @@ export interface Strings {
     language: string;
     theme: string;
     about: string;
+    errorReports: string;
+    errorReportsBody: string;
     aboutBody: string;
     close: string;
   };
@@ -664,6 +666,8 @@ const it: Strings = {
     language: "Lingua",
     theme: "Temi",
     about: "Informazioni",
+    errorReports: "Report errori anonimi",
+    errorReportsBody: "Se qualcosa fallisce, invia solo il messaggio di errore (mai dati personali) per aiutarci a correggere i bug. Disattivato di default.",
     aboutBody: "PC Tweaker — tweak di sistema con backup e ripristino automatico.",
     close: "Chiudi",
   },
@@ -1260,6 +1264,8 @@ const en: Strings = {
     language: "Language",
     theme: "Themes",
     about: "About",
+    errorReports: "Anonymous error reports",
+    errorReportsBody: "When something fails, send only the error message (never personal data) to help us fix bugs. Off by default.",
     aboutBody: "PC Tweaker — system tweaks with automatic backup and rollback.",
     close: "Close",
   },
@@ -1849,6 +1855,8 @@ const fr: Strings = {
     language: "Langue",
     theme: "Thèmes",
     about: "À propos",
+    errorReports: "Rapports d'erreur anonymes",
+    errorReportsBody: "En cas d'échec, envoie uniquement le message d'erreur (jamais de données personnelles) pour nous aider à corriger les bugs. Désactivé par défaut.",
     aboutBody: "PC Tweaker — optimisations système avec sauvegarde et restauration automatiques.",
     close: "Fermer",
   },
@@ -2438,6 +2446,8 @@ const es: Strings = {
     language: "Idioma",
     theme: "Temas",
     about: "Acerca de",
+    errorReports: "Informes de error anónimos",
+    errorReportsBody: "Si algo falla, envía solo el mensaje de error (nunca datos personales) para ayudarnos a corregir errores. Desactivado por defecto.",
     aboutBody: "PC Tweaker — ajustes del sistema con copia de seguridad y restauración automáticas.",
     close: "Cerrar",
   },
@@ -3027,6 +3037,8 @@ const de: Strings = {
     language: "Sprache",
     theme: "Designs",
     about: "Info",
+    errorReports: "Anonyme Fehlerberichte",
+    errorReportsBody: "Wenn etwas fehlschlägt, wird nur die Fehlermeldung gesendet (niemals persönliche Daten), um Fehler schneller zu beheben. Standardmäßig deaktiviert.",
     aboutBody: "PC Tweaker — Systemoptimierungen mit automatischer Sicherung und Wiederherstellung.",
     close: "Schließen",
   },

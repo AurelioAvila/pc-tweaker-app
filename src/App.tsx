@@ -35,6 +35,7 @@ import {
   UninstallerPromoCard,
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
+import { DashboardCards } from "./components/dashboard";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
 import { ScanPanel } from "./components/scan";
 import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
@@ -590,6 +591,8 @@ function App() {
           </header>
 
           {showScan && <SystemMonitor s={s} />}
+
+          {showScan && <DashboardCards s={s} onNavigate={setFilter} />}
 
           {showScan && (
             <RamCleaner

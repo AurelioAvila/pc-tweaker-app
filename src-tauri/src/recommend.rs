@@ -203,7 +203,7 @@ pub fn is_scan_relevant(id: &str) -> bool {
 }
 
 /// Advice for every id the caller asks about, in the same order.
-#[tauri::command]
+#[tauri::command(async)]
 pub async fn advise_tweaks(
     ids: Vec<String>,
     state: tauri::State<'_, crate::systemprofile::SystemProfileState>,
@@ -214,7 +214,7 @@ pub async fn advise_tweaks(
 
 /// The ids a performance scan may report. The UI asks rather than keeping its
 /// own copy, so the curation lives in one place next to the reasoning.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn scan_relevant_ids() -> Vec<String> {
     let mut ids: Vec<String> = crate::tweaks::all_tweaks()
         .iter()

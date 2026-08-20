@@ -41,6 +41,9 @@ base64 = "0.22"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
+# LoadLibrary/GetProcAddress only, for SRSetRestorePointW via dynamic loading
+# (a link-time srclient.dll import would crash at startup on Windows Server).
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_LibraryLoader"] }
 is_elevated = "0.1"
 runas = "1"
 

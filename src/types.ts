@@ -146,3 +146,13 @@ export type TweakProfile = {
 };
 
 export type LoadedProfile = { profile: TweakProfile; unknown: string[] };
+
+/** One line of the local audit trail (src-tauri/src/audit.rs). */
+export type AuditEntry = {
+  ts: number;
+  action: string;
+  target: string;
+  elevated: boolean;
+  success: boolean;
+  detail?: string | null;
+};

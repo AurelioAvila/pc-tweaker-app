@@ -35,7 +35,12 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
 
     let game_dvr_original = read_dword(hive_from_str(GAME_DVR_HIVE), GAME_DVR_PATH, GAME_DVR_NAME)
         .map_err(|e| e.to_string())?;
-    write_dword(hive_from_str(GAME_DVR_HIVE), GAME_DVR_PATH, GAME_DVR_NAME, 0)?;
+    write_dword(
+        hive_from_str(GAME_DVR_HIVE),
+        GAME_DVR_PATH,
+        GAME_DVR_NAME,
+        0,
+    )?;
 
     let priority_original = read_dword(hive_from_str(PRIORITY_HIVE), PRIORITY_PATH, PRIORITY_NAME)
         .map_err(|e| e.to_string())?;

@@ -22,7 +22,11 @@ pub fn activity_history_info() -> PrivacyInfo {
 
 const HIVE: &str = "HKLM";
 const PATH: &str = r"SOFTWARE\Policies\Microsoft\Windows\System";
-const VALUES: [&str; 3] = ["EnableActivityFeed", "PublishUserActivities", "UploadUserActivities"];
+const VALUES: [&str; 3] = [
+    "EnableActivityFeed",
+    "PublishUserActivities",
+    "UploadUserActivities",
+];
 
 #[cfg(windows)]
 pub fn apply_activity_history(store: &RollbackStore) -> Result<(), String> {
@@ -32,7 +36,8 @@ pub fn apply_activity_history(store: &RollbackStore) -> Result<(), String> {
     let mut entries = Vec::new();
 
     for name in VALUES {
-        let original = read_value(hive, PATH, name, &RegValue::Dword(0)).map_err(|e| e.to_string())?;
+        let original =
+            read_value(hive, PATH, name, &RegValue::Dword(0)).map_err(|e| e.to_string())?;
         entries.push(SnapshotEntry::Registry(RegistrySnapshot {
             hive: HIVE.to_string(),
             path: PATH.to_string(),
@@ -99,7 +104,10 @@ pub fn typing_personalization_info() -> PrivacyInfo {
 /// as one composite snapshot so a rollback restores exactly the pair.
 const TYPING_HIVE: &str = "HKCU";
 const TYPING_PATH: &str = r"SOFTWARE\Microsoft\InputPersonalization";
-const TYPING_VALUES: [&str; 2] = ["RestrictImplicitTextCollection", "RestrictImplicitInkCollection"];
+const TYPING_VALUES: [&str; 2] = [
+    "RestrictImplicitTextCollection",
+    "RestrictImplicitInkCollection",
+];
 
 #[cfg(windows)]
 pub fn apply_typing_personalization(store: &RollbackStore) -> Result<(), String> {
@@ -109,7 +117,8 @@ pub fn apply_typing_personalization(store: &RollbackStore) -> Result<(), String>
     let mut entries = Vec::new();
 
     for name in TYPING_VALUES {
-        let original = read_value(hive, TYPING_PATH, name, &RegValue::Dword(0)).map_err(|e| e.to_string())?;
+        let original =
+            read_value(hive, TYPING_PATH, name, &RegValue::Dword(0)).map_err(|e| e.to_string())?;
         entries.push(SnapshotEntry::Registry(RegistrySnapshot {
             hive: TYPING_HIVE.to_string(),
             path: TYPING_PATH.to_string(),
@@ -119,7 +128,10 @@ pub fn apply_typing_personalization(store: &RollbackStore) -> Result<(), String>
     }
 
     store
-        .save_entry(TYPING_PERSONALIZATION_ID, SnapshotEntry::Composite { entries })
+        .save_entry(
+            TYPING_PERSONALIZATION_ID,
+            SnapshotEntry::Composite { entries },
+        )
         .map_err(|e| e.to_string())?;
 
     // 1 means "restrict", i.e. stop collecting — the flag reads the opposite

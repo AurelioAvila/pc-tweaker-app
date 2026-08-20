@@ -72,7 +72,11 @@ pub fn add_game_session(app: tauri::AppHandle, path: String) -> Result<GameEntry
         .map(|s| s.to_string_lossy().to_string())
         .unwrap_or_else(|| path.clone());
 
-    if config.games.iter().any(|g| g.path.eq_ignore_ascii_case(&path)) {
+    if config
+        .games
+        .iter()
+        .any(|g| g.path.eq_ignore_ascii_case(&path))
+    {
         return Err("this game is already on the list".to_string());
     }
 
@@ -181,7 +185,10 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                     *active = Some(game.name.clone());
                     let _ = app.emit(
                         "game-session-changed",
-                        SessionEvent { active: true, name: Some(game.name.clone()) },
+                        SessionEvent {
+                            active: true,
+                            name: Some(game.name.clone()),
+                        },
                     );
                 }
                 (Some(_), None) => {
@@ -191,7 +198,13 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                         }
                     }
                     *active = None;
-                    let _ = app.emit("game-session-changed", SessionEvent { active: false, name: None });
+                    let _ = app.emit(
+                        "game-session-changed",
+                        SessionEvent {
+                            active: false,
+                            name: None,
+                        },
+                    );
                 }
                 _ => {}
             }
@@ -210,14 +223,20 @@ mod tests {
     fn exe_basename_normalizes_case_and_separators() {
         assert_eq!(exe_basename(r"C:\Games\VALORANT.exe"), "valorant.exe");
         assert_eq!(exe_basename("C:/Games/Valorant.EXE"), "valorant.exe");
-        assert_eq!(exe_basename(r"D:\Steam\steamapps\common\CS2\cs2.exe"), "cs2.exe");
+        assert_eq!(
+            exe_basename(r"D:\Steam\steamapps\common\CS2\cs2.exe"),
+            "cs2.exe"
+        );
     }
 
     #[test]
     fn exe_basename_survives_odd_paths() {
         assert_eq!(exe_basename(""), "");
         assert_eq!(exe_basename("game.exe"), "game.exe");
-        assert_eq!(exe_basename(r"C:\Program Files\My Game\my game.exe"), "my game.exe");
+        assert_eq!(
+            exe_basename(r"C:\Program Files\My Game\my game.exe"),
+            "my game.exe"
+        );
     }
 
     /// Windows paths are case-insensitive, so the same game picked twice with

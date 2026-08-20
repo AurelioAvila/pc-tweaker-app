@@ -71,6 +71,7 @@ const SHARE_PROMPTS = [
   "Send this to a friend who needs it.",
   "Share this before you forget it exists.",
 ];
+const BIO_CTA = "PC Tweaker has the full one-click setup. Link in bio.";
 
 // Pescati SEMPRE nello stesso ordine finche' meta.tags aveva solo 5 elementi
 // fissi per categoria: normaliseTags dedupava e tagliava a 5, quindi lo
@@ -98,7 +99,7 @@ function buildCaption(meta) {
   const cta = Math.random() < 0.5
     ? COMMENT_PROMPTS[Math.floor(Math.random() * COMMENT_PROMPTS.length)]
     : SHARE_PROMPTS[Math.floor(Math.random() * SHARE_PROMPTS.length)];
-  return [hook, cta, hashtags].filter(Boolean).join("\n\n").trim();
+  return [hook, cta, BIO_CTA, hashtags].filter(Boolean).join("\n\n").trim();
 }
 
 function findCandidates(doneNames) {

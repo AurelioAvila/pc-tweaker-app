@@ -160,10 +160,13 @@ export function PaywallModal({
 export function Avatar({
   email,
   isPro,
+  photo = null,
   size = "md",
 }: {
   email: string;
   isPro: boolean;
+  /** Device-local photo (data URL). Replaces the glyph, keeps rim + badge. */
+  photo?: string | null;
   /** `sm` is the header trigger, `md` the one inside the menu. A real size
    *  rather than a CSS scale: `scale-*` is a transform, so a scaled 44px
    *  avatar still occupies 44px of layout and spilled out of the 36px button
@@ -196,15 +199,24 @@ export function Avatar({
       {/* Inner disc knocks a hole in the ring so the gradient reads as a rim
           rather than as a bright blob with a letter stamped on it. */}
       <span className="absolute inset-[2px] rounded-full bg-slate-900" />
-      <svg viewBox="0 0 24 24" fill="none" className={`relative ${glyph} text-ink-2`}>
-        <circle cx="12" cy="9" r="3.4" stroke="currentColor" strokeWidth="1.7" />
-        <path
-          d="M4.8 20c1.3-3.5 4.1-5.3 7.2-5.3s5.9 1.8 7.2 5.3"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
+      {photo ? (
+        <img
+          src={photo}
+          alt=""
+          className="absolute inset-[2px] rounded-full object-cover"
+          draggable={false}
         />
-      </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" className={`relative ${glyph} text-ink-2`}>
+          <circle cx="12" cy="9" r="3.4" stroke="currentColor" strokeWidth="1.7" />
+          <path
+            d="M4.8 20c1.3-3.5 4.1-5.3 7.2-5.3s5.9 1.8 7.2 5.3"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+        </svg>
+      )}
       {isPro && (
         <span
           className={`absolute -bottom-0.5 -right-0.5 grid ${badge} place-items-center rounded-full bg-slate-900 ring-1 ring-amber-400/50`}

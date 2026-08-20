@@ -192,17 +192,93 @@ export function RocketIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
       <path
-        d="M12 3c3.5 1.5 5.5 5 5.5 9l-2 3h-7l-2-3c0-4 2-7.5 5.5-9Z"
+        d="M12 2.8c3.2 1.6 5 5 5 8.7l-2.1 3.1H9.1L7 11.5c0-3.7 1.8-7.1 5-8.7Z"
         stroke="currentColor"
         strokeWidth="1.6"
         strokeLinejoin="round"
+        fill="currentColor"
+        fillOpacity="0.12"
       />
-      <circle cx="12" cy="10" r="1.8" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="12" cy="9.4" r="1.7" stroke="currentColor" strokeWidth="1.5" />
       <path
-        d="M9 18c0 1.5 1.3 3 3 3s3-1.5 3-3"
+        d="M9 14.6 6.4 17c-.4.4-.4 1.5.2 2 .6.6 1.6.6 2 .2M15 14.6l2.6 2.4c.4.4.4 1.5-.2 2-.6.6-1.6.6-2 .2"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 16.6c1 1 1 2.6 0 4.2-1-1.6-1-3.2 0-4.2Z"
+        fill="currentColor"
+        fillOpacity="0.85"
+      />
+    </svg>
+  );
+}
+
+/** Radar dish for the Scan tab: a sweep wedge frozen mid-turn plus a blip —
+ *  reads "actively looking", where a plain magnifier read "search box". */
+export function RadarIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M12 3.5A8.5 8.5 0 0 1 18 6L12 12V3.5Z" fill="currentColor" fillOpacity="0.18" />
+      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="12" cy="12" r="4.6" stroke="currentColor" strokeWidth="1.3" opacity="0.45" />
+      <path d="M12 12 18 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="14.8" cy="14.7" r="1.25" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Stacked sheets for Profiles: saved configurations layered on each other. */
+export function LayersIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="m12 3.6 8 4.2-8 4.2-8-4.2 8-4.2Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+        fill="currentColor"
+        fillOpacity="0.15"
+      />
+      <path
+        d="m4 12.3 8 4.2 8-4.2"
         stroke="currentColor"
         strokeWidth="1.6"
         strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m4 16.3 8 4.2 8-4.2"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.45"
+      />
+    </svg>
+  );
+}
+
+/** Faceted gem for the Plans tab: value, without borrowing the Pro crown. */
+export function GemIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M7.5 4h9L21 9l-9 11.2L3 9l4.5-5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+        fill="currentColor"
+        fillOpacity="0.12"
+      />
+      <path
+        d="M3 9h18M9.2 9l2.8 10.4L14.8 9M7.5 4l1.7 5M16.5 4l-1.7 5"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+        opacity="0.7"
       />
     </svg>
   );

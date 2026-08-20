@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
 import { formatBytes, gbPair, loadColor, RAM_AUTO_INTERVALS, ramIntervalLabel } from "../lib";
 import { RamCleanResult, SystemStats, Toast } from "../types";
+import { PulseSample, tracePoints } from "./command";
 import { ChipIcon } from "./icons";
 
 /**
@@ -172,17 +173,32 @@ export function useScheduledRamClean(autoMinutes: number) {
  */
 export function RamCleaner({
   s,
+  samples,
   autoMinutes,
   onChangeAuto,
   pushToast,
 }: {
   s: Strings;
+  samples: PulseSample[];
   autoMinutes: number;
   onChangeAuto: (minutes: number) => void;
   pushToast: (kind: Toast["kind"], message: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<RamCleanResult | null>(null);
+
+  // Live figures come from the shared sampling loop rather than a second
+  // poll of our own: one IPC feed, every home card in step.
+  const latest = samples.length > 0 ? samples[samples.length - 1] : null;
+  const usedPct = latest && latest.ramTotal > 0 ? (latest.ramUsed / latest.ramTotal) * 100 : 0;
+  const TRACE_W = 560;
+  const TRACE_H = 48;
+  const trace = tracePoints(
+    samples.map((x) => (x.ramTotal > 0 ? (x.ramUsed / x.ramTotal) * 100 : 0)),
+    TRACE_W,
+    TRACE_H,
+    100,
+  );
 
   async function cleanNow() {
     setBusy(true);
@@ -208,32 +224,74 @@ export function RamCleaner({
   const chooseInterval = onChangeAuto;
 
   return (
-    <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+    <div className="signal border-line bg-surface-1 relative mb-6 overflow-hidden rounded-2xl border p-5">
       <div className="flex flex-wrap items-center gap-4">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-400/15 text-emerald-300">
+        <span className="bg-accent-soft text-accent grid h-11 w-11 shrink-0 place-items-center rounded-xl">
           <ChipIcon className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-slate-100">{s.ram.title}</h2>
-          <p className="mt-0.5 text-sm text-slate-400">{s.ram.subtitle}</p>
+          <h2 className="text-ink font-semibold">{s.ram.title}</h2>
+          <p className="text-ink-3 mt-0.5 text-sm">{s.ram.subtitle}</p>
         </div>
         <button
           onClick={() => void cleanNow()}
           disabled={busy}
-          className="shrink-0 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 px-5 py-2.5 text-sm font-bold text-emerald-950 transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60"
+          className="bg-accent text-on-accent shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60"
         >
           {busy ? s.ram.cleaning : s.ram.button}
         </button>
       </div>
 
+      {/* Live memory line: the current figure in tabular digits plus the
+          session's usage trace, so a trim's effect is visible as a dip in
+          the very line the user just watched. */}
+      <div className="mt-4 flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="type-data text-ink text-[22px] font-bold leading-none">
+            {latest ? formatBytes(latest.ramUsed) : "—"}
+            <span className="text-ink-3 text-[13px] font-semibold">
+              {" "}
+              / {latest ? formatBytes(latest.ramTotal) : "—"}
+            </span>
+          </p>
+        </div>
+        <p className="type-data text-ink-3 shrink-0 text-[12.5px]">{Math.round(usedPct)}%</p>
+      </div>
+      <div className="mt-2">
+        <svg
+          viewBox={`0 0 ${TRACE_W} ${TRACE_H}`}
+          preserveAspectRatio="none"
+          className="h-12 w-full"
+          aria-hidden="true"
+        >
+          {trace && (
+            <>
+              <polygon
+                points={`${trace} ${TRACE_W},${TRACE_H} ${trace.split(" ")[0].split(",")[0]},${TRACE_H}`}
+                fill="var(--app-accent)"
+                opacity="0.08"
+              />
+              <polyline
+                points={trace}
+                fill="none"
+                stroke="var(--app-accent)"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+            </>
+          )}
+        </svg>
+      </div>
+
       {last && (
-        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-emerald-400/10 px-3 py-2 text-sm">
-          <span className="font-semibold text-emerald-300">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2 text-sm ring-1 ring-[color-mix(in_oklab,var(--color-ok)_35%,transparent)]">
+          <span className="text-ok font-semibold">
             {last.freed_bytes > 0
               ? format(s.ram.freed, { amount: formatBytes(last.freed_bytes) })
               : s.ram.freedNothing}
           </span>
-          <span className="text-xs text-slate-400">
+          <span className="text-ink-3 text-xs">
             {format(s.ram.inUse, {
               used: formatBytes(last.ram_used_after),
               total: formatBytes(last.ram_total),
@@ -242,8 +300,8 @@ export function RamCleaner({
         </div>
       )}
 
-      <div className="mt-4 border-t border-white/5 pt-3">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <div className="border-line mt-4 border-t pt-3">
+        <p className="text-ink-3 mb-2 text-xs font-semibold uppercase tracking-wide">
           {s.ram.autoLabel}
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -253,8 +311,8 @@ export function RamCleaner({
               onClick={() => chooseInterval(m)}
               className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                 autoMinutes === m
-                  ? "bg-emerald-400/20 text-emerald-300 ring-1 ring-emerald-400/40"
-                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"
+                  ? "bg-accent-soft text-accent ring-1 ring-[color-mix(in_oklab,var(--app-accent)_45%,transparent)]"
+                  : "bg-surface-2 text-ink-3 hover:bg-surface-hover hover:text-ink-2"
               }`}
             >
               {ramIntervalLabel(m, s)}
@@ -262,7 +320,7 @@ export function RamCleaner({
           ))}
         </div>
         {autoMinutes > 0 && (
-          <p className="mt-2 text-xs leading-relaxed text-slate-500">{s.ram.autoHint}</p>
+          <p className="text-ink-3 mt-2 text-xs leading-relaxed">{s.ram.autoHint}</p>
         )}
       </div>
     </div>

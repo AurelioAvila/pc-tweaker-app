@@ -17,10 +17,11 @@ import {
 import { AuthState, CleanupInfo, CleanupResult, Section, Toast, TweakInfo } from "./types";
 import {
   CrownIcon,
-  FolderIcon,
+  GemIcon,
+  LayersIcon,
   MagnifierIcon,
+  RadarIcon,
   RocketIcon,
-  SparkIcon,
   UndoIcon,
 } from "./components/icons";
 import { PaywallModal, ProBadge, ShieldBadge, Toggle, UpdateBanner } from "./components/ui";
@@ -39,13 +40,8 @@ import { AccountMenu } from "./components/account";
 import { DashboardCards } from "./components/dashboard";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
 import { ScanPanel } from "./components/scan";
-import { useScheduledRamClean } from "./components/monitor";
-import {
-  MemoryPressure,
-  SessionProfiles,
-  SystemPulse,
-  usePulseSamples,
-} from "./components/command";
+import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
+import { usePulseSamples } from "./components/command";
 import { StartupManager } from "./components/startup";
 import { ProfilesPanel } from "./components/profiles";
 import { PricingPanel } from "./components/pricing";
@@ -251,15 +247,15 @@ function App() {
   }
 
   const CATEGORIES: { key: Section; label: string; icon: React.ReactElement }[] = [
-    { key: "scan", label: s.tabs.scan, icon: <MagnifierIcon className="h-[18px] w-[18px]" /> },
+    { key: "scan", label: s.tabs.scan, icon: <RadarIcon className="h-[18px] w-[18px]" /> },
     { key: "performance", label: s.tabs.performance, icon: CATEGORY_STYLE.performance.icon },
     { key: "gaming", label: s.tabs.gaming, icon: CATEGORY_STYLE.gaming.icon },
     { key: "privacy", label: s.tabs.privacy, icon: CATEGORY_STYLE.privacy.icon },
     { key: "startup", label: s.tabs.startup, icon: <RocketIcon className="h-[18px] w-[18px]" /> },
     { key: "ui", label: s.tabs.ui, icon: CATEGORY_STYLE.ui.icon },
     { key: "manutenzione", label: s.tabs.manutenzione, icon: CATEGORY_STYLE.manutenzione.icon },
-    { key: "profiles", label: s.tabs.profiles, icon: <FolderIcon className="h-[18px] w-[18px]" /> },
-    { key: "pricing", label: s.tabs.pricing, icon: <SparkIcon className="h-[18px] w-[18px]" /> },
+    { key: "profiles", label: s.tabs.profiles, icon: <LayersIcon className="h-[18px] w-[18px]" /> },
+    { key: "pricing", label: s.tabs.pricing, icon: <GemIcon className="h-[18px] w-[18px]" /> },
   ];
 
   const [tweaks, setTweaks] = useState<TweakInfo[]>([]);
@@ -276,9 +272,6 @@ function App() {
   // when the user navigates away from the Scan screen.
   const [ramAutoMinutes, setRamAutoMinutes] = useState<number>(storedRamAutoMinutes);
   // Command Center bridge: the Pulse asks for scans and mirrors the panel.
-  const [scanSignal, setScanSignal] = useState(0);
-  const [scanPhase, setScanPhase] = useState<"idle" | "scanning" | "results" | "done">("idle");
-  const [scanFindings, setScanFindings] = useState(0);
   const pulseSamples = usePulseSamples();
   const toastSeq = useRef(0);
 
@@ -626,41 +619,20 @@ function App() {
             />
           </header>
 
+          {/* Free RAM leads the home screen: it is the card people use every
+              day (one click, schedulable), so it earns the top spot over the
+              passive monitor below it. */}
           {showScan && (
-            <div className="mb-6 flex flex-col gap-4">
-              <SystemPulse
+            <>
+              <RamCleaner
                 s={s}
                 samples={pulseSamples}
-                scanPhase={scanPhase}
-                findings={scanFindings}
-                onRunScan={() => setScanSignal((n) => n + 1)}
-                onReview={() =>
-                  document
-                    .getElementById("scan-results")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
+                autoMinutes={ramAutoMinutes}
+                onChangeAuto={chooseRamAuto}
+                pushToast={pushToast}
               />
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <MemoryPressure
-                  s={s}
-                  samples={pulseSamples}
-                  autoMinutes={ramAutoMinutes}
-                  onChangeAuto={chooseRamAuto}
-                  pushToast={pushToast}
-                />
-                <SessionProfiles
-                  s={s}
-                  tweaks={tweaks}
-                  isPro={isProUnlocked}
-                  onRequirePro={() => setPaywallFeature(s.command.profileGame)}
-                  onToggleGame={async () => {
-                    const game = tweaks.find((x) => x.id === "turbo_gaming");
-                    if (game) await toggle(game);
-                  }}
-                  gameBusy={busyId === "turbo_gaming"}
-                />
-              </div>
-            </div>
+              <SystemMonitor s={s} />
+            </>
           )}
 
           {showScan && <DashboardCards s={s} onNavigate={setFilter} />}
@@ -697,11 +669,6 @@ function App() {
           {showScan && (
             <div id="scan-results">
               <ScanPanel
-                externalScanSignal={scanSignal}
-                onPhaseChange={(phase, findings) => {
-                  setScanPhase(phase);
-                  setScanFindings(findings);
-                }}
                 s={s}
                 tweaks={tweaks}
                 cleanupTargets={cleanupTargets}

@@ -79,13 +79,13 @@ function Card({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+    <div className="flex flex-col rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{title}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">{title}</p>
         {onAction && actionLabel && (
           <button
             onClick={onAction}
-            className="rounded-lg px-2 py-0.5 text-[11px] font-semibold text-indigo-300 hover:bg-white/5"
+            className="rounded-lg px-2 py-0.5 text-[11px] font-semibold text-indigo-300 hover:bg-surface-2"
           >
             {actionLabel} →
           </button>
@@ -168,8 +168,8 @@ export function DashboardCards({
               return (
                 <div key={d.letter}>
                   <div className="mb-1 flex items-baseline justify-between gap-2">
-                    <span className="text-sm font-semibold text-slate-200">{d.letter}</span>
-                    <span className="text-[11.5px] text-slate-400">
+                    <span className="text-sm font-semibold text-ink-2">{d.letter}</span>
+                    <span className="text-[11.5px] text-ink-3">
                       {format(s.scan.dashFreeOf, {
                         free: formatBytes(d.free_bytes),
                         total: formatBytes(d.total_bytes),
@@ -181,7 +181,7 @@ export function DashboardCards({
                       )}
                     </span>
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
                     <div
                       className={`h-full rounded-full ${driveBarColor(fraction)}`}
                       style={{ width: `${String(Math.min(100, Math.round(fraction * 100)))}%` }}
@@ -200,11 +200,11 @@ export function DashboardCards({
           onAction={() => onNavigate("startup")}
           actionLabel={s.scan.dashManage}
         >
-          <p className="text-2xl font-bold text-slate-100">
+          <p className="text-2xl font-bold text-ink">
             {enabledStartup}
-            <span className="ml-1 text-sm font-medium text-slate-500">/ {startup.length}</span>
+            <span className="ml-1 text-sm font-medium text-ink-3">/ {startup.length}</span>
           </p>
-          <p className="mt-1 text-[12px] leading-relaxed text-slate-400">
+          <p className="mt-1 text-[12px] leading-relaxed text-ink-3">
             {format(s.scan.dashStartupCount, { on: enabledStartup, total: startup.length })}
           </p>
         </Card>
@@ -212,7 +212,7 @@ export function DashboardCards({
 
       {showUptime && (
         <Card title={s.scan.dashUptimeTitle}>
-          <p className="text-2xl font-bold text-slate-100">{uptimeLabel(s, uptimeSecs)}</p>
+          <p className="text-2xl font-bold text-ink">{uptimeLabel(s, uptimeSecs)}</p>
           {longUptime && (
             <p className="mt-1 text-[12px] leading-relaxed text-amber-200/80">
               {s.scan.dashUptimeLongHint}
@@ -224,7 +224,7 @@ export function DashboardCards({
       {history !== null && (
         <Card title={s.scan.dashHistoryTitle}>
           {history.length === 0 ? (
-            <p className="text-[12px] leading-relaxed text-slate-500">{s.scan.dashHistoryEmpty}</p>
+            <p className="text-[12px] leading-relaxed text-ink-3">{s.scan.dashHistoryEmpty}</p>
           ) : (
             <ul className="flex flex-col gap-1.5">
               {history.slice(0, 5).map((e, i) => (
@@ -239,9 +239,9 @@ export function DashboardCards({
                   >
                     {e.success ? "✓" : "✗"}
                   </span>
-                  <span className="text-slate-300">{actionLabel(s, e.action)}</span>
-                  <span className="min-w-0 flex-1 truncate text-slate-500">{e.target}</span>
-                  <span className="shrink-0 text-slate-600">{timeLabel(e.ts)}</span>
+                  <span className="text-ink-2">{actionLabel(s, e.action)}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-3">{e.target}</span>
+                  <span className="shrink-0 text-ink-3">{timeLabel(e.ts)}</span>
                 </li>
               ))}
             </ul>

@@ -34,7 +34,7 @@ export function ProBadge({ label }: { label: string }) {
 
 export function SoonBadge({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-bold text-slate-300 ring-1 ring-white/20">
+    <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-bold text-ink-2 ring-1 ring-line-2">
       {label}
     </span>
   );
@@ -68,25 +68,21 @@ export function Toggle({
     >
       <span
         className={`text-xs font-semibold tabular-nums transition-colors ${
-          checked ? "text-emerald-400" : "text-slate-500"
+          checked ? "text-emerald-400" : "text-ink-3"
         }`}
       >
         {checked ? s.toggle.on : s.toggle.off}
       </span>
       <span
         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ease-out
-          ${checked ? "bg-emerald-500" : "bg-white/15 group-hover:bg-white/25"}`}
+          ${checked ? "bg-emerald-500" : "bg-surface-hover group-hover:bg-line-2"}`}
       >
         <span
           className={`absolute left-0.5 top-0.5 grid h-4 w-4 place-items-center rounded-full bg-white shadow transition-transform duration-200 ease-out
             ${checked ? "translate-x-4" : "translate-x-0"}`}
         >
           {busy && (
-            <svg
-              className="h-2.5 w-2.5 animate-spin text-slate-400"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
+            <svg className="h-2.5 w-2.5 animate-spin text-ink-3" viewBox="0 0 24 24" fill="none">
               <circle
                 cx="12"
                 cy="12"
@@ -128,8 +124,8 @@ export function PaywallModal({
             <path d="m12 2 2.7 6.6L21 9l-5 4.5L17.3 21 12 17.3 6.7 21 8 13.5 3 9l6.3-.4Z" />
           </svg>
         </div>
-        <h3 className="text-center text-lg font-bold text-slate-100">{s.paywall.title}</h3>
-        <p className="mt-2 text-center text-sm text-slate-400">
+        <h3 className="text-center text-lg font-bold text-ink">{s.paywall.title}</h3>
+        <p className="mt-2 text-center text-sm text-ink-3">
           {format(s.paywall.body, { feature: featureName })}
         </p>
         <button
@@ -140,7 +136,7 @@ export function PaywallModal({
         </button>
         <button
           onClick={onClose}
-          className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-slate-400 hover:text-slate-200"
+          className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-ink-3 hover:text-ink-2"
         >
           {s.paywall.notNow}
         </button>
@@ -200,7 +196,7 @@ export function Avatar({
       {/* Inner disc knocks a hole in the ring so the gradient reads as a rim
           rather than as a bright blob with a letter stamped on it. */}
       <span className="absolute inset-[2px] rounded-full bg-slate-900" />
-      <svg viewBox="0 0 24 24" fill="none" className={`relative ${glyph} text-slate-300`}>
+      <svg viewBox="0 0 24 24" fill="none" className={`relative ${glyph} text-ink-2`}>
         <circle cx="12" cy="9" r="3.4" stroke="currentColor" strokeWidth="1.7" />
         <path
           d="M4.8 20c1.3-3.5 4.1-5.3 7.2-5.3s5.9 1.8 7.2 5.3"
@@ -279,7 +275,7 @@ export function UpdateBanner({
   }
 
   return (
-    <div className="animate-toast pointer-events-auto fixed bottom-6 left-6 z-40 w-80 rounded-2xl border border-white/10 bg-[#14121f]/95 p-4 shadow-2xl backdrop-blur">
+    <div className="animate-toast pointer-events-auto fixed bottom-6 left-6 z-40 w-80 rounded-2xl border border-line bg-raised p-4 shadow-2xl backdrop-blur">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-400/15 text-emerald-300">
           <svg viewBox="0 0 24 24" fill="none" className="h-4.5 w-4.5">
@@ -293,10 +289,10 @@ export function UpdateBanner({
           </svg>
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-slate-100">
+          <p className="text-sm font-semibold text-ink">
             {format(s.updater.title, { version: update.version })}
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-slate-400">{s.updater.body}</p>
+          <p className="mt-1 text-xs leading-relaxed text-ink-3">{s.updater.body}</p>
         </div>
       </div>
       {phase === "offer" ? (
@@ -309,7 +305,7 @@ export function UpdateBanner({
           </button>
           <button
             onClick={() => setDismissed(true)}
-            className="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors hover:bg-white/10"
+            className="rounded-lg bg-surface-2 px-3 py-1.5 text-xs font-semibold text-ink-2 transition-colors hover:bg-surface-hover"
           >
             {s.updater.later}
           </button>
@@ -321,7 +317,7 @@ export function UpdateBanner({
               ? format(s.updater.downloading, { percent })
               : s.updater.installing}
           </p>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2">
             <div
               className="h-full rounded-full bg-emerald-400 transition-all"
               style={{ width: phase === "installing" ? "100%" : `${percent}%` }}

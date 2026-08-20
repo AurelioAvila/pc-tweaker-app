@@ -36,6 +36,7 @@ import {
   IpMaskCard,
   LargeFileFinder,
   PasswordBreachCheck,
+  PromptShieldPromoCard,
   UninstallerPromoCard,
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
@@ -706,7 +707,12 @@ function App() {
             </div>
           )}
 
-          {showPrivacyExtras && <PasswordBreachCheck s={s} />}
+          {showPrivacyExtras && (
+            <>
+              <PasswordBreachCheck s={s} />
+              <PromptShieldPromoCard s={s} />
+            </>
+          )}
 
           {showGamingExtras && (
             <>

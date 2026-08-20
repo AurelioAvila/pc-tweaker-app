@@ -1,0 +1,270 @@
+import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { format, Strings } from "../i18n";
+import { formatBytes, gbPair, loadColor, RAM_AUTO_INTERVALS, ramIntervalLabel } from "../lib";
+import { RamCleanResult, SystemStats, Toast } from "../types";
+import { ChipIcon } from "./icons";
+
+/**
+ * Module-level so the manual button and the background scheduler share one
+ * guard. Two `EmptyWorkingSet` passes racing over the same process list would
+ * make the "freed" figure meaningless and double the work for nothing.
+ */
+let ramCleanInFlight = false;
+export async function runRamClean(): Promise<RamCleanResult | null> {
+  if (ramCleanInFlight) return null;
+  ramCleanInFlight = true;
+  try {
+    return await invoke<RamCleanResult>("clean_ram");
+  } finally {
+    ramCleanInFlight = false;
+  }
+}
+
+export function StatRing({
+  label,
+  sublabel,
+  pct,
+}: {
+  label: string;
+  sublabel: string;
+  pct: number;
+}) {
+  const radius = 26;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <div className="relative h-16 w-16 shrink-0">
+        <svg viewBox="0 0 64 64" className="h-16 w-16 -rotate-90">
+          <circle
+            cx="32"
+            cy="32"
+            r={radius}
+            fill="none"
+            strokeWidth="6"
+            className="stroke-white/10"
+          />
+          <circle
+            cx="32"
+            cy="32"
+            r={radius}
+            fill="none"
+            strokeWidth="6"
+            strokeLinecap="round"
+            stroke={loadColor(clamped)}
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference - (circumference * clamped) / 100}
+            className="transition-[stroke-dashoffset] duration-700 ease-out"
+          />
+        </svg>
+        <span className="absolute inset-0 grid place-items-center text-sm font-bold tabular-nums text-slate-100">
+          {Math.round(clamped)}%
+        </span>
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-300">{label}</p>
+        <p className="truncate text-xs text-slate-500" title={sublabel}>
+          {sublabel}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Live snapshot of the machine, polled from the Rust side. Every number here
+ * is read from the real system (sysinfo) — no synthetic "health score".
+ */
+export function SystemMonitor({ s }: { s: Strings }) {
+  const [stats, setStats] = useState<SystemStats | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    const tick = () => {
+      invoke<SystemStats>("system_stats")
+        .then((v) => {
+          // The backend call takes ~200ms (it needs two CPU samples), so the
+          // component can unmount mid-flight — don't set state after that.
+          if (alive) setStats(v);
+        })
+        .catch(() => {});
+    };
+    tick();
+    const id = window.setInterval(tick, 2500);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+    };
+  }, []);
+
+  if (!stats) {
+    return (
+      <div className="mb-6 h-[104px] animate-pulse rounded-2xl border border-white/10 bg-white/[0.03]" />
+    );
+  }
+
+  const ramPct = stats.ram_total > 0 ? (stats.ram_used / stats.ram_total) * 100 : 0;
+  const diskPct = stats.disk_total > 0 ? (stats.disk_used / stats.disk_total) * 100 : 0;
+  const hours = Math.floor(stats.uptime_secs / 3600);
+  const minutes = Math.floor((stats.uptime_secs % 3600) / 60);
+
+  return (
+    <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur">
+      <div className="grid gap-5 sm:grid-cols-3">
+        <StatRing
+          label={s.systemMonitor.cpu}
+          sublabel={format(s.systemMonitor.cores, { count: stats.cpu_cores })}
+          pct={stats.cpu_usage}
+        />
+        <StatRing
+          label={s.systemMonitor.ram}
+          sublabel={gbPair(stats.ram_used, stats.ram_total)}
+          pct={ramPct}
+        />
+        <StatRing
+          label={s.systemMonitor.disk}
+          sublabel={gbPair(stats.disk_used, stats.disk_total)}
+          pct={diskPct}
+        />
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/5 pt-3 text-xs text-slate-500">
+        <span className="truncate" title={stats.cpu_name}>
+          {stats.cpu_name}
+        </span>
+        <span className="text-slate-700">•</span>
+        <span>{stats.os_name}</span>
+        <span className="text-slate-700">•</span>
+        <span>
+          {s.systemMonitor.uptime} {format(s.systemMonitor.uptimeValue, { hours, minutes })}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Runs the scheduled RAM cleanup for as long as the app is open.
+ *
+ * This deliberately lives in `App`, not in `RamCleaner`: the card only renders
+ * on the Scan screen, so hosting the timer there meant switching to any other
+ * tab unmounted it and silently stopped the automatic cleanup the user had
+ * just switched on.
+ */
+export function useScheduledRamClean(autoMinutes: number) {
+  useEffect(() => {
+    if (autoMinutes === 0) return;
+    const id = window.setInterval(() => {
+      // A scheduled pass is best-effort: failing quietly beats a toast every
+      // ten minutes, and the next tick will try again.
+      void runRamClean().catch(() => {});
+    }, autoMinutes * 60_000);
+    // Clearing on change/unmount is what guarantees exactly one timer is ever
+    // alive, no matter how often the user changes the interval.
+    return () => window.clearInterval(id);
+  }, [autoMinutes]);
+}
+
+/**
+ * Asks Windows to page out the unused part of every process's working set —
+ * the same thing Windows does on its own under memory pressure, just requested
+ * early. Safe to run repeatedly, which is why it can also be scheduled.
+ */
+export function RamCleaner({
+  s,
+  autoMinutes,
+  onChangeAuto,
+  pushToast,
+}: {
+  s: Strings;
+  autoMinutes: number;
+  onChangeAuto: (minutes: number) => void;
+  pushToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [last, setLast] = useState<RamCleanResult | null>(null);
+
+  async function cleanNow() {
+    setBusy(true);
+    try {
+      const result = await runRamClean();
+      // `null` means a scheduled pass was already running; the button simply
+      // does nothing rather than queueing a second, pointless sweep.
+      if (!result) return;
+      setLast(result);
+      pushToast(
+        "success",
+        result.freed_bytes > 0
+          ? format(s.ram.freed, { amount: formatBytes(result.freed_bytes) })
+          : s.ram.freedNothing,
+      );
+    } catch (e) {
+      pushToast("error", String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const chooseInterval = onChangeAuto;
+
+  return (
+    <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+      <div className="flex flex-wrap items-center gap-4">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-400/15 text-emerald-300">
+          <ChipIcon className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold text-slate-100">{s.ram.title}</h2>
+          <p className="mt-0.5 text-sm text-slate-400">{s.ram.subtitle}</p>
+        </div>
+        <button
+          onClick={() => void cleanNow()}
+          disabled={busy}
+          className="shrink-0 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 px-5 py-2.5 text-sm font-bold text-emerald-950 transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60"
+        >
+          {busy ? s.ram.cleaning : s.ram.button}
+        </button>
+      </div>
+
+      {last && (
+        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-emerald-400/10 px-3 py-2 text-sm">
+          <span className="font-semibold text-emerald-300">
+            {last.freed_bytes > 0
+              ? format(s.ram.freed, { amount: formatBytes(last.freed_bytes) })
+              : s.ram.freedNothing}
+          </span>
+          <span className="text-xs text-slate-400">
+            {format(s.ram.inUse, {
+              used: formatBytes(last.ram_used_after),
+              total: formatBytes(last.ram_total),
+            })}
+          </span>
+        </div>
+      )}
+
+      <div className="mt-4 border-t border-white/5 pt-3">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {s.ram.autoLabel}
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {RAM_AUTO_INTERVALS.map((m) => (
+            <button
+              key={m}
+              onClick={() => chooseInterval(m)}
+              className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                autoMinutes === m
+                  ? "bg-emerald-400/20 text-emerald-300 ring-1 ring-emerald-400/40"
+                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"
+              }`}
+            >
+              {ramIntervalLabel(m, s)}
+            </button>
+          ))}
+        </div>
+        {autoMinutes > 0 && (
+          <p className="mt-2 text-xs leading-relaxed text-slate-500">{s.ram.autoHint}</p>
+        )}
+      </div>
+    </div>
+  );
+}

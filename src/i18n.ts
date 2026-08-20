@@ -366,7 +366,17 @@ const it: Strings = {
   appliedCount: "{applied} di {total} tweak attivi",
   headerNote:
     "Ogni tweak salva un backup del valore originale prima di essere applicato. I tweak con privilegi elevati chiedono un consenso UAC esplicito, solo per quell'azione.",
-  tabs: { scan: "Scansione", performance: "Prestazioni", privacy: "Privacy", ui: "Interfaccia", manutenzione: "Manutenzione", gaming: "Gaming", startup: "Avvio", profiles: "Configurazioni", pricing: "Piani e prezzi" },
+  tabs: {
+    scan: "Scansione",
+    performance: "Prestazioni",
+    privacy: "Privacy",
+    ui: "Interfaccia",
+    manutenzione: "Manutenzione",
+    gaming: "Gaming",
+    startup: "Avvio",
+    profiles: "Configurazioni",
+    pricing: "Piani e prezzi",
+  },
   systemMonitor: {
     cpu: "CPU",
     ram: "Memoria",
@@ -386,7 +396,7 @@ const it: Strings = {
   },
   search: {
     placeholder: "Cerca un tweak...",
-    noResults: "Nessun risultato per \"{query}\".",
+    noResults: 'Nessun risultato per "{query}".',
     clear: "Cancella",
   },
   pricing: {
@@ -410,7 +420,8 @@ const it: Strings = {
     proCta: "Passa a Pro",
     proCurrent: "Il tuo piano",
     everythingInFree: "Tutto quello che c\u2019\u00e8 nel Free, pi\u00f9:",
-    reassurance: "Disdici quando vuoi. Ogni modifica resta reversibile con un click, anche dopo la disdetta.",
+    reassurance:
+      "Disdici quando vuoi. Ogni modifica resta reversibile con un click, anche dopo la disdetta.",
     freeFeatures: [
       "{count} tweak reali, con backup e ripristino di ogni modifica",
       "Monitor di sistema in tempo reale (CPU, memoria, disco)",
@@ -443,7 +454,8 @@ const it: Strings = {
   emptyCategory: "Nessun tweak disponibile in questa categoria — presto in arrivo.",
   gameSessions: {
     title: "Game Sessions",
-    subtitle: "Rileva automaticamente i tuoi giochi e applica/annulla il preset Turbo Gaming da solo.",
+    subtitle:
+      "Rileva automaticamente i tuoi giochi e applica/annulla il preset Turbo Gaming da solo.",
     active: "Sessione attiva: {name}",
     gamesCount: "{count} giochi registrati",
     addGame: "+ Aggiungi gioco (.exe)",
@@ -457,18 +469,18 @@ const it: Strings = {
     deactivating: "Ripristino in corso...",
     active: "Turbo attivo",
     inactive: "Turbo non attivo",
-      stageReading: "Lettura del piano energetico",
-      stageRaising: "Aumento del limite di boost",
-      stageApplying: "Applicazione al sistema",
-      modeAggressive: "Modalita aggressiva",
-      modeDefault: "Modalita predefinita",
-      stageMeasuringBefore: "Misurazione prima",
-      stageMeasuringAfter: "Nuova misurazione",
-      gainMeasured: "{factor}x più veloce",
-      gainSlight: "{factor}x più veloce — guadagno contenuto",
-      gainAtCeiling: "Già al massimo: questa CPU non aveva altro margine da liberare",
-      ceilingLocked: "Limite boost bloccato",
-      ceilingUnlocked: "Limite boost sbloccato",
+    stageReading: "Lettura del piano energetico",
+    stageRaising: "Aumento del limite di boost",
+    stageApplying: "Applicazione al sistema",
+    modeAggressive: "Modalita aggressiva",
+    modeDefault: "Modalita predefinita",
+    stageMeasuringBefore: "Misurazione prima",
+    stageMeasuringAfter: "Nuova misurazione",
+    gainMeasured: "{factor}x più veloce",
+    gainSlight: "{factor}x più veloce — guadagno contenuto",
+    gainAtCeiling: "Già al massimo: questa CPU non aveva altro margine da liberare",
+    ceilingLocked: "Limite boost bloccato",
+    ceilingUnlocked: "Limite boost sbloccato",
   },
   profiles: {
     title: "Configurazioni",
@@ -484,13 +496,14 @@ const it: Strings = {
     exportButton: "Esporta",
     importButton: "Importa da file",
     deleteButton: "Elimina",
-    savedToast: "Configurazione \"{name}\" salvata",
+    savedToast: 'Configurazione "{name}" salvata',
     appliedToast: "{count} tweak applicati",
     exportedToast: "File esportato",
     importedToast: "Importata: {count} tweak pronti da rivedere",
     droppedWarning: "{count} voci non riconosciute da questa versione sono state scartate",
     nameRequired: "Dai un nome alla configurazione",
-    reviewNotice: "Le configurazioni importate non vengono mai applicate da sole: le rivedi tu prima.",
+    reviewNotice:
+      "Le configurazioni importate non vengono mai applicate da sole: le rivedi tu prima.",
   },
   scan: {
     title: "Scansione rapida",
@@ -515,8 +528,10 @@ const it: Strings = {
     verdictUnsupported: "Non supportato",
     reasons: {
       laptop_battery: "questo PC è un portatile: costa autonomia più di quanto renda",
-      hdd_index_cost: "il disco di sistema è meccanico, l'indicizzazione in background si sente davvero",
-      fast_disk_no_gain: "il disco di sistema è NVMe, già abbastanza veloce da rendere il guadagno trascurabile",
+      hdd_index_cost:
+        "il disco di sistema è meccanico, l'indicizzazione in background si sente davvero",
+      fast_disk_no_gain:
+        "il disco di sistema è NVMe, già abbastanza veloce da rendere il guadagno trascurabile",
       needs_win10_2004: "richiede Windows 10 versione 2004 o successiva",
       weak_gpu: "grafica integrata: la trasparenza le costa prestazioni utili",
     },
@@ -542,7 +557,8 @@ const it: Strings = {
   },
   ram: {
     title: "Libera RAM",
-    subtitle: "Chiede a Windows di rilasciare la memoria che i programmi tengono occupata senza usarla. Puoi farlo quante volte vuoi.",
+    subtitle:
+      "Chiede a Windows di rilasciare la memoria che i programmi tengono occupata senza usarla. Puoi farlo quante volte vuoi.",
     button: "Libera ora",
     cleaning: "Pulizia in corso...",
     freed: "Liberati {amount}",
@@ -551,7 +567,8 @@ const it: Strings = {
     autoLabel: "Pulizia automatica",
     autoOff: "Disattivata",
     autoEvery: "Ogni {interval}",
-    autoHint: "Con la pulizia automatica attiva, PC Tweaker libera la RAM da solo a intervalli regolari finché l'app resta aperta.",
+    autoHint:
+      "Con la pulizia automatica attiva, PC Tweaker libera la RAM da solo a intervalli regolari finché l'app resta aperta.",
   },
   restore: {
     button: "Ripristina tutto",
@@ -593,14 +610,16 @@ const it: Strings = {
   cleanupResultToastSkipped: " ({skipped} in uso, saltati).",
   diskOptimize: {
     title: "Ottimizza disco",
-    description: "Esegue lo strumento di ottimizzazione integrato di Windows: deframmentazione su HDD, oppure TRIM sugli SSD (mai una deframmentazione completa, che li usurerebbe inutilmente).",
+    description:
+      "Esegue lo strumento di ottimizzazione integrato di Windows: deframmentazione su HDD, oppure TRIM sugli SSD (mai una deframmentazione completa, che li usurerebbe inutilmente).",
     button: "Ottimizza ora",
     running: "Ottimizzazione in corso... può richiedere qualche minuto",
     resultToast: "Disco ({media}) ottimizzato con successo.",
   },
   dnsFlush: {
     title: "Svuota cache DNS",
-    description: "Cancella gli indirizzi DNS salvati in memoria. Utile se un sito ha cambiato server e nel browser continui a vedere la versione vecchia.",
+    description:
+      "Cancella gli indirizzi DNS salvati in memoria. Utile se un sito ha cambiato server e nel browser continui a vedere la versione vecchia.",
     button: "Svuota ora",
     running: "Svuotamento...",
     resultToast: "Cache DNS svuotata.",
@@ -613,7 +632,8 @@ const it: Strings = {
   },
   largeFiles: {
     title: "Trova file di grandi dimensioni",
-    description: "Cerca in una cartella i file più pesanti (oltre 100 MB), così puoi liberare spazio velocemente eliminando quelli che non ti servono più.",
+    description:
+      "Cerca in una cartella i file più pesanti (oltre 100 MB), così puoi liberare spazio velocemente eliminando quelli che non ti servono più.",
     chooseFolder: "Scegli cartella",
     scanning: "Ricerca in corso...",
     noneFound: "Nessun file sopra {size} trovato.",
@@ -655,7 +675,8 @@ const it: Strings = {
   toasts: {
     applied: '"{name}" applicato.',
     rolledBack: '"{name}" ripristinato al valore originale.',
-    licenseNeedsRefresh: "Non riusciamo a verificare il tuo abbonamento Pro offline da troppo tempo. Riconnettiti a internet e riprova.",
+    licenseNeedsRefresh:
+      "Non riusciamo a verificare il tuo abbonamento Pro offline da troppo tempo. Riconnettiti a internet e riprova.",
   },
   menu: {
     account: "Account",
@@ -667,7 +688,8 @@ const it: Strings = {
     theme: "Temi",
     about: "Informazioni",
     errorReports: "Report errori anonimi",
-    errorReportsBody: "Se qualcosa fallisce, invia solo il messaggio di errore (mai dati personali) per aiutarci a correggere i bug. Disattivato di default.",
+    errorReportsBody:
+      "Se qualcosa fallisce, invia solo il messaggio di errore (mai dati personali) per aiutarci a correggere i bug. Disattivato di default.",
     aboutBody: "PC Tweaker — tweak di sistema con backup e ripristino automatico.",
     close: "Chiudi",
   },
@@ -735,7 +757,7 @@ const it: Strings = {
     disable_feedback_requests: {
       name: "Blocca le richieste di feedback di Windows",
       description:
-        "Impedisce a Windows di interromperti con i sondaggi \"Quanto consiglieresti...\" (HKCU, nessuna elevazione richiesta).",
+        'Impedisce a Windows di interromperti con i sondaggi "Quanto consiglieresti..." (HKCU, nessuna elevazione richiesta).',
     },
     disable_cortana: {
       name: "Disattiva Cortana",
@@ -745,7 +767,7 @@ const it: Strings = {
     show_file_extensions: {
       name: "Mostra sempre le estensioni dei file",
       description:
-        "Rivela la vera estensione di ogni file. Vale la pena attivarla anche solo per sicurezza: smaschera file come \"fattura.pdf.exe\" che Windows altrimenti nasconde (HKCU, nessuna elevazione richiesta).",
+        'Rivela la vera estensione di ogni file. Vale la pena attivarla anche solo per sicurezza: smaschera file come "fattura.pdf.exe" che Windows altrimenti nasconde (HKCU, nessuna elevazione richiesta).',
     },
     hide_taskbar_widgets: {
       name: "Nascondi i Widget dalla barra delle applicazioni",
@@ -833,7 +855,8 @@ const it: Strings = {
     },
     show_hidden_files: {
       name: "Mostra file nascosti",
-      description: "Mostra i file e le cartelle nascosti in Esplora file (HKCU, nessuna elevazione richiesta).",
+      description:
+        "Mostra i file e le cartelle nascosti in Esplora file (HKCU, nessuna elevazione richiesta).",
     },
     priority_separation: {
       name: "Ottimizza priorità processore",
@@ -847,11 +870,13 @@ const it: Strings = {
     },
     disable_telemetry_tasks: {
       name: "Riduci raccolta dati diagnostici",
-      description: "Imposta il livello di diagnostica di Windows al minimo consentito (HKLM, richiede privilegi di amministratore).",
+      description:
+        "Imposta il livello di diagnostica di Windows al minimo consentito (HKLM, richiede privilegi di amministratore).",
     },
     reset_advertising_id: {
       name: "Disattiva ID pubblicità",
-      description: "Impedisce alle app di usare il tuo ID pubblicitario per la profilazione (HKCU, nessuna elevazione richiesta).",
+      description:
+        "Impedisce alle app di usare il tuo ID pubblicitario per la profilazione (HKCU, nessuna elevazione richiesta).",
     },
     disable_location_tracking: {
       name: "Disattiva tracciamento posizione",
@@ -860,7 +885,8 @@ const it: Strings = {
     },
     disable_bing_search: {
       name: "Disattiva ricerca Bing nel menu Start",
-      description: "Impedisce che le tue ricerche nel menu Start vengano inviate a Bing (HKCU, nessuna elevazione richiesta).",
+      description:
+        "Impedisce che le tue ricerche nel menu Start vengano inviate a Bing (HKCU, nessuna elevazione richiesta).",
     },
     power_plan_performance: {
       name: "Prestazioni elevate (piano di alimentazione)",
@@ -919,7 +945,8 @@ const it: Strings = {
     },
     hide_taskbar_chat: {
       name: "Nascondi Chat/Teams dalla barra delle applicazioni",
-      description: "Rimuove l'icona Chat (Microsoft Teams) dalla taskbar (HKCU, nessuna elevazione richiesta).",
+      description:
+        "Rimuove l'icona Chat (Microsoft Teams) dalla taskbar (HKCU, nessuna elevazione richiesta).",
     },
     disable_start_suggestions: {
       name: "Disattiva suggerimenti e app consigliate nel menu Start",
@@ -955,7 +982,8 @@ const it: Strings = {
     },
     winupdate_cache_cleanup: {
       name: "Svuota cache aggiornamenti Windows",
-      description: "Sposta nel Cestino i pacchetti di Windows Update già installati (richiede privilegi di amministratore).",
+      description:
+        "Sposta nel Cestino i pacchetti di Windows Update già installati (richiede privilegi di amministratore).",
     },
   },
 };
@@ -965,7 +993,17 @@ const en: Strings = {
   appliedCount: "{applied} of {total} tweaks active",
   headerNote:
     "Every tweak backs up the original value before it's applied. Tweaks that need elevated rights ask for an explicit UAC prompt, only for that action.",
-  tabs: { scan: "Scan", performance: "Performance", privacy: "Privacy", ui: "UI", manutenzione: "Maintenance", gaming: "Gaming", startup: "Startup", profiles: "Configurations", pricing: "Plans & pricing" },
+  tabs: {
+    scan: "Scan",
+    performance: "Performance",
+    privacy: "Privacy",
+    ui: "UI",
+    manutenzione: "Maintenance",
+    gaming: "Gaming",
+    startup: "Startup",
+    profiles: "Configurations",
+    pricing: "Plans & pricing",
+  },
   systemMonitor: {
     cpu: "CPU",
     ram: "Memory",
@@ -985,7 +1023,7 @@ const en: Strings = {
   },
   search: {
     placeholder: "Search a tweak...",
-    noResults: "No results for \"{query}\".",
+    noResults: 'No results for "{query}".',
     clear: "Clear",
   },
   pricing: {
@@ -1009,7 +1047,8 @@ const en: Strings = {
     proCta: "Go Pro",
     proCurrent: "Your plan",
     everythingInFree: "Everything in Free, plus:",
-    reassurance: "Cancel anytime. Every change stays one click away from being undone, even after you cancel.",
+    reassurance:
+      "Cancel anytime. Every change stays one click away from being undone, even after you cancel.",
     freeFeatures: [
       "{count} real tweaks, each backed up and revertible",
       "Live system monitor (CPU, memory, disk)",
@@ -1056,18 +1095,18 @@ const en: Strings = {
     deactivating: "Restoring...",
     active: "Turbo active",
     inactive: "Turbo not active",
-      stageReading: "Reading the power plan",
-      stageRaising: "Raising the boost ceiling",
-      stageApplying: "Applying to the system",
-      modeAggressive: "Aggressive mode",
-      modeDefault: "Default mode",
-      stageMeasuringBefore: "Measuring before",
-      stageMeasuringAfter: "Measuring again",
-      gainMeasured: "{factor}x faster",
-      gainSlight: "{factor}x faster - a modest gain",
-      gainAtCeiling: "Already at full speed: this CPU had no headroom left to unlock",
-      ceilingLocked: "Boost ceiling locked",
-      ceilingUnlocked: "Boost ceiling unlocked",
+    stageReading: "Reading the power plan",
+    stageRaising: "Raising the boost ceiling",
+    stageApplying: "Applying to the system",
+    modeAggressive: "Aggressive mode",
+    modeDefault: "Default mode",
+    stageMeasuringBefore: "Measuring before",
+    stageMeasuringAfter: "Measuring again",
+    gainMeasured: "{factor}x faster",
+    gainSlight: "{factor}x faster - a modest gain",
+    gainAtCeiling: "Already at full speed: this CPU had no headroom left to unlock",
+    ceilingLocked: "Boost ceiling locked",
+    ceilingUnlocked: "Boost ceiling unlocked",
   },
   profiles: {
     title: "Configurations",
@@ -1083,7 +1122,7 @@ const en: Strings = {
     exportButton: "Export",
     importButton: "Import from file",
     deleteButton: "Delete",
-    savedToast: "Configuration \"{name}\" saved",
+    savedToast: 'Configuration "{name}" saved',
     appliedToast: "{count} tweaks applied",
     exportedToast: "File exported",
     importedToast: "Imported: {count} tweaks ready to review",
@@ -1093,7 +1132,8 @@ const en: Strings = {
   },
   scan: {
     title: "Quick scan",
-    subtitle: "Checks your PC's status and finds optimizations that aren't active yet, in one click.",
+    subtitle:
+      "Checks your PC's status and finds optimizations that aren't active yet, in one click.",
     startLabel: "SCAN",
     stepPerformance: "Performance",
     stepPrivacy: "Privacy",
@@ -1141,7 +1181,8 @@ const en: Strings = {
   },
   ram: {
     title: "Free up RAM",
-    subtitle: "Asks Windows to release memory that programs are holding but not using. Run it as often as you like.",
+    subtitle:
+      "Asks Windows to release memory that programs are holding but not using. Run it as often as you like.",
     button: "Free now",
     cleaning: "Cleaning up...",
     freed: "Freed {amount}",
@@ -1150,7 +1191,8 @@ const en: Strings = {
     autoLabel: "Automatic cleanup",
     autoOff: "Off",
     autoEvery: "Every {interval}",
-    autoHint: "With automatic cleanup on, PC Tweaker frees RAM by itself at a regular interval for as long as the app stays open.",
+    autoHint:
+      "With automatic cleanup on, PC Tweaker frees RAM by itself at a regular interval for as long as the app stays open.",
   },
   restore: {
     button: "Restore all",
@@ -1192,14 +1234,16 @@ const en: Strings = {
   cleanupResultToastSkipped: " ({skipped} in use, skipped).",
   diskOptimize: {
     title: "Optimize drive",
-    description: "Runs Windows' own built-in optimizer: defragmentation on an HDD, or TRIM on an SSD (never a full defrag, which would only wear it out for no benefit).",
+    description:
+      "Runs Windows' own built-in optimizer: defragmentation on an HDD, or TRIM on an SSD (never a full defrag, which would only wear it out for no benefit).",
     button: "Optimize now",
     running: "Optimizing... this can take a few minutes",
     resultToast: "Drive ({media}) optimized successfully.",
   },
   dnsFlush: {
     title: "Flush DNS cache",
-    description: "Clears cached DNS lookups. Useful if a site changed servers and your browser keeps showing the old version.",
+    description:
+      "Clears cached DNS lookups. Useful if a site changed servers and your browser keeps showing the old version.",
     button: "Flush now",
     running: "Flushing...",
     resultToast: "DNS cache flushed.",
@@ -1212,7 +1256,8 @@ const en: Strings = {
   },
   largeFiles: {
     title: "Find large files",
-    description: "Scans a folder for its biggest files (over 100 MB), so you can quickly free up space by removing the ones you no longer need.",
+    description:
+      "Scans a folder for its biggest files (over 100 MB), so you can quickly free up space by removing the ones you no longer need.",
     chooseFolder: "Choose folder",
     scanning: "Scanning...",
     noneFound: "No files found over {size}.",
@@ -1233,7 +1278,8 @@ const en: Strings = {
   },
   duplicateFinder: {
     title: "Find duplicate files",
-    description: "Pick a folder: find identical files and choose which ones to move to the Recycle Bin.",
+    description:
+      "Pick a folder: find identical files and choose which ones to move to the Recycle Bin.",
     chooseFolder: "Choose folder",
     scanning: "Scanning...",
     noneFound: "No duplicate files found in this folder.",
@@ -1253,7 +1299,8 @@ const en: Strings = {
   toasts: {
     applied: '"{name}" applied.',
     rolledBack: '"{name}" restored to its original value.',
-    licenseNeedsRefresh: "We can't verify your Pro subscription after this long offline. Reconnect to the internet and try again.",
+    licenseNeedsRefresh:
+      "We can't verify your Pro subscription after this long offline. Reconnect to the internet and try again.",
   },
   menu: {
     account: "Account",
@@ -1265,7 +1312,8 @@ const en: Strings = {
     theme: "Themes",
     about: "About",
     errorReports: "Anonymous error reports",
-    errorReportsBody: "When something fails, send only the error message (never personal data) to help us fix bugs. Off by default.",
+    errorReportsBody:
+      "When something fails, send only the error message (never personal data) to help us fix bugs. Off by default.",
     aboutBody: "PC Tweaker — system tweaks with automatic backup and rollback.",
     close: "Close",
   },
@@ -1434,27 +1482,33 @@ const en: Strings = {
     },
     priority_separation: {
       name: "Optimize CPU priority",
-      description: "Tunes Win32PrioritySeparation (0x26) so the foreground app gets short, variable CPU time slices with a 3x priority boost — the classic desktop/gaming responsiveness value (HKLM, requires administrator rights).",
+      description:
+        "Tunes Win32PrioritySeparation (0x26) so the foreground app gets short, variable CPU time slices with a 3x priority boost — the classic desktop/gaming responsiveness value (HKLM, requires administrator rights).",
     },
     disable_game_dvr: {
       name: "Disable Xbox Game Bar / Game DVR",
-      description: "Turns off Xbox Game Bar's background recording, which eats CPU/GPU while gaming (HKCU, no elevation required).",
+      description:
+        "Turns off Xbox Game Bar's background recording, which eats CPU/GPU while gaming (HKCU, no elevation required).",
     },
     disable_telemetry_tasks: {
       name: "Reduce diagnostic data collection",
-      description: "Sets Windows' diagnostic data level to the minimum allowed (HKLM, requires administrator rights).",
+      description:
+        "Sets Windows' diagnostic data level to the minimum allowed (HKLM, requires administrator rights).",
     },
     reset_advertising_id: {
       name: "Disable advertising ID",
-      description: "Stops apps from using your advertising ID for profiling (HKCU, no elevation required).",
+      description:
+        "Stops apps from using your advertising ID for profiling (HKCU, no elevation required).",
     },
     disable_location_tracking: {
       name: "Disable location tracking",
-      description: "Blocks location access for all apps via system policy (HKLM, requires administrator rights).",
+      description:
+        "Blocks location access for all apps via system policy (HKLM, requires administrator rights).",
     },
     disable_bing_search: {
       name: "Disable Bing search in the Start menu",
-      description: "Stops your Start menu searches from being sent to Bing (HKCU, no elevation required).",
+      description:
+        "Stops your Start menu searches from being sent to Bing (HKCU, no elevation required).",
     },
     power_plan_performance: {
       name: "High performance (power plan)",
@@ -1508,15 +1562,18 @@ const en: Strings = {
     },
     taskbar_align_left: {
       name: "Align the taskbar to the left",
-      description: "Moves taskbar icons back to the left (Windows 10 style) instead of centered (HKCU, no elevation required).",
+      description:
+        "Moves taskbar icons back to the left (Windows 10 style) instead of centered (HKCU, no elevation required).",
     },
     hide_taskbar_chat: {
       name: "Hide Chat/Teams from the taskbar",
-      description: "Removes the Chat (Microsoft Teams) icon from the taskbar (HKCU, no elevation required).",
+      description:
+        "Removes the Chat (Microsoft Teams) icon from the taskbar (HKCU, no elevation required).",
     },
     disable_start_suggestions: {
       name: "Disable Start menu suggestions and recommended apps",
-      description: "Stops Windows from showing recommended apps, ads, and suggestions in the Start menu (HKCU, no elevation required).",
+      description:
+        "Stops Windows from showing recommended apps, ads, and suggestions in the Start menu (HKCU, no elevation required).",
     },
     disable_activity_history: {
       name: "Disable activity history (Windows Timeline)",
@@ -1542,11 +1599,13 @@ const en: Strings = {
   cleanup: {
     temp_cleanup: {
       name: "Clean temporary files",
-      description: "Moves the contents of %TEMP% to the Recycle Bin: you can recover it any time, it's not a permanent delete.",
+      description:
+        "Moves the contents of %TEMP% to the Recycle Bin: you can recover it any time, it's not a permanent delete.",
     },
     winupdate_cache_cleanup: {
       name: "Clear Windows Update cache",
-      description: "Moves already-installed Windows Update packages to the Recycle Bin (requires administrator rights).",
+      description:
+        "Moves already-installed Windows Update packages to the Recycle Bin (requires administrator rights).",
     },
   },
 };
@@ -1556,7 +1615,17 @@ const fr: Strings = {
   appliedCount: "{applied} sur {total} optimisations actives",
   headerNote:
     "Chaque optimisation sauvegarde la valeur d'origine avant d'être appliquée. Celles qui nécessitent des droits élevés demandent un consentement UAC explicite, uniquement pour cette action.",
-  tabs: { scan: "Analyse", performance: "Performances", privacy: "Confidentialité", ui: "Interface", manutenzione: "Entretien", gaming: "Gaming", startup: "Démarrage", profiles: "Configurations", pricing: "Offres et tarifs" },
+  tabs: {
+    scan: "Analyse",
+    performance: "Performances",
+    privacy: "Confidentialité",
+    ui: "Interface",
+    manutenzione: "Entretien",
+    gaming: "Gaming",
+    startup: "Démarrage",
+    profiles: "Configurations",
+    pricing: "Offres et tarifs",
+  },
   systemMonitor: {
     cpu: "Processeur",
     ram: "Mémoire",
@@ -1576,7 +1645,7 @@ const fr: Strings = {
   },
   search: {
     placeholder: "Rechercher une optimisation...",
-    noResults: "Aucun r\u00e9sultat pour \"{query}\".",
+    noResults: 'Aucun r\u00e9sultat pour "{query}".',
     clear: "Effacer",
   },
   pricing: {
@@ -1600,7 +1669,8 @@ const fr: Strings = {
     proCta: "Passer \u00e0 Pro",
     proCurrent: "Votre offre",
     everythingInFree: "Tout ce que contient Free, plus\u00a0:",
-    reassurance: "R\u00e9siliable \u00e0 tout moment. Chaque modification reste annulable en un clic, m\u00eame apr\u00e8s la r\u00e9siliation.",
+    reassurance:
+      "R\u00e9siliable \u00e0 tout moment. Chaque modification reste annulable en un clic, m\u00eame apr\u00e8s la r\u00e9siliation.",
     freeFeatures: [
       "{count} optimisations r\u00e9elles, chacune sauvegard\u00e9e et r\u00e9versible",
       "Moniteur syst\u00e8me en temps r\u00e9el (processeur, m\u00e9moire, disque)",
@@ -1633,7 +1703,8 @@ const fr: Strings = {
   emptyCategory: "Aucune optimisation disponible dans cette catégorie pour l'instant — à venir.",
   gameSessions: {
     title: "Game Sessions",
-    subtitle: "Détecte automatiquement vos jeux et applique/annule le préréglage Turbo Gaming tout seul.",
+    subtitle:
+      "Détecte automatiquement vos jeux et applique/annule le préréglage Turbo Gaming tout seul.",
     active: "Session active : {name}",
     gamesCount: "{count} jeux enregistrés",
     addGame: "+ Ajouter un jeu (.exe)",
@@ -1647,18 +1718,18 @@ const fr: Strings = {
     deactivating: "Restauration...",
     active: "Turbo actif",
     inactive: "Turbo inactif",
-      stageReading: "Lecture du mode d'alimentation",
-      stageRaising: "Augmentation de la limite de boost",
-      stageApplying: "Application au système",
-      modeAggressive: "Mode agressif",
-      modeDefault: "Mode par defaut",
-      stageMeasuringBefore: "Mesure avant",
-      stageMeasuringAfter: "Nouvelle mesure",
-      gainMeasured: "{factor}x plus rapide",
-      gainSlight: "{factor}x plus rapide - gain modeste",
-      gainAtCeiling: "Déjà au maximum : ce processeur n'avait plus de marge à libérer",
-      ceilingLocked: "Limite de boost verrouillee",
-      ceilingUnlocked: "Limite de boost debloquee",
+    stageReading: "Lecture du mode d'alimentation",
+    stageRaising: "Augmentation de la limite de boost",
+    stageApplying: "Application au système",
+    modeAggressive: "Mode agressif",
+    modeDefault: "Mode par defaut",
+    stageMeasuringBefore: "Mesure avant",
+    stageMeasuringAfter: "Nouvelle mesure",
+    gainMeasured: "{factor}x plus rapide",
+    gainSlight: "{factor}x plus rapide - gain modeste",
+    gainAtCeiling: "Déjà au maximum : ce processeur n'avait plus de marge à libérer",
+    ceilingLocked: "Limite de boost verrouillee",
+    ceilingUnlocked: "Limite de boost debloquee",
   },
   profiles: {
     title: "Configurations",
@@ -1674,17 +1745,19 @@ const fr: Strings = {
     exportButton: "Exporter",
     importButton: "Importer un fichier",
     deleteButton: "Supprimer",
-    savedToast: "Configuration \"{name}\" enregistree",
+    savedToast: 'Configuration "{name}" enregistree',
     appliedToast: "{count} reglages appliques",
     exportedToast: "Fichier exporte",
     importedToast: "Importee : {count} reglages a verifier",
     droppedWarning: "{count} entrees non reconnues par cette version ont ete ignorees",
     nameRequired: "Donnez un nom a la configuration",
-    reviewNotice: "Une configuration importee n'est jamais appliquee toute seule : vous la verifiez d'abord.",
+    reviewNotice:
+      "Une configuration importee n'est jamais appliquee toute seule : vous la verifiez d'abord.",
   },
   scan: {
     title: "Analyse rapide",
-    subtitle: "Vérifie l'état de votre PC et trouve les optimisations pas encore actives, en un clic.",
+    subtitle:
+      "Vérifie l'état de votre PC et trouve les optimisations pas encore actives, en un clic.",
     startLabel: "SCAN",
     stepPerformance: "Performances",
     stepPrivacy: "Confidentialité",
@@ -1705,8 +1778,10 @@ const fr: Strings = {
     verdictUnsupported: "Non pris en charge",
     reasons: {
       laptop_battery: "ce PC est un portable : cela coûte plus d'autonomie que cela n'apporte",
-      hdd_index_cost: "le disque système est mécanique, l'indexation en arrière-plan se ressent vraiment",
-      fast_disk_no_gain: "le disque système est en NVMe, assez rapide pour rendre le gain négligeable",
+      hdd_index_cost:
+        "le disque système est mécanique, l'indexation en arrière-plan se ressent vraiment",
+      fast_disk_no_gain:
+        "le disque système est en NVMe, assez rapide pour rendre le gain négligeable",
       needs_win10_2004: "nécessite Windows 10 version 2004 ou ultérieure",
       weak_gpu: "graphiques intégrés : la transparence leur coûte des performances utiles",
     },
@@ -1720,7 +1795,8 @@ const fr: Strings = {
     groupRecommended: "Recommande pour ce PC",
     groupOptional: "Facultatif",
     groupNotRecommended: "Deconseille ici",
-    tailoredNote: "Chaque element est evalue selon le materiel ci-dessus, pas selon une liste figee.",
+    tailoredNote:
+      "Chaque element est evalue selon le materiel ci-dessus, pas selon une liste figee.",
     fixRecommended: "Appliquer les {count} recommandees",
     fixEverything: "Appliquer la selection ({count})",
     nothingSelected: "Rien de selectionne",
@@ -1732,7 +1808,8 @@ const fr: Strings = {
   },
   ram: {
     title: "Libérer la RAM",
-    subtitle: "Demande à Windows de libérer la mémoire que les programmes occupent sans l'utiliser. À lancer aussi souvent que vous voulez.",
+    subtitle:
+      "Demande à Windows de libérer la mémoire que les programmes occupent sans l'utiliser. À lancer aussi souvent que vous voulez.",
     button: "Libérer maintenant",
     cleaning: "Nettoyage en cours...",
     freed: "{amount} libérés",
@@ -1741,7 +1818,8 @@ const fr: Strings = {
     autoLabel: "Nettoyage automatique",
     autoOff: "Désactivé",
     autoEvery: "Toutes les {interval}",
-    autoHint: "Avec le nettoyage automatique, PC Tweaker libère la RAM tout seul à intervalle régulier tant que l'application reste ouverte.",
+    autoHint:
+      "Avec le nettoyage automatique, PC Tweaker libère la RAM tout seul à intervalle régulier tant que l'application reste ouverte.",
   },
   restore: {
     button: "Tout restaurer",
@@ -1761,19 +1839,21 @@ const fr: Strings = {
     button: "Vérifier",
     checking: "Vérification...",
     safe: "Introuvable dans une fuite connue. Bon signe.",
-    breached: "Trouvé dans {count} fuites connues. Changez-le immédiatement, partout où vous l'utilisez.",
+    breached:
+      "Trouvé dans {count} fuites connues. Changez-le immédiatement, partout où vous l'utilisez.",
     error: "Impossible de vérifier pour le moment : vérifiez votre connexion et réessayez.",
   },
   paywall: {
     title: "Fonction Pro",
-    body: '« {feature} » fait partie de PC Tweaker Pro, avec Game Sessions, les préréglages gaming et toutes les fonctionnalités à venir.',
+    body: "« {feature} » fait partie de PC Tweaker Pro, avec Game Sessions, les préréglages gaming et toutes les fonctionnalités à venir.",
     unlock: "Voir les offres et tarifs",
     notNow: "Pas maintenant",
-    notConnectedToast: "Le paiement Pro n'est pas encore connecté dans cette version de développement.",
+    notConnectedToast:
+      "Le paiement Pro n'est pas encore connecté dans cette version de développement.",
   },
   cleanupConfirm: {
     title: "Confirmer le nettoyage ?",
-    body: '« {name} » déplacera les fichiers correspondants vers la Corbeille de Windows. Vous pourrez les récupérer tant qu\'elle n\'est pas vidée.',
+    body: "« {name} » déplacera les fichiers correspondants vers la Corbeille de Windows. Vous pourrez les récupérer tant qu'elle n'est pas vidée.",
     confirm: "Déplacer vers la Corbeille",
     cancel: "Annuler",
   },
@@ -1783,14 +1863,16 @@ const fr: Strings = {
   cleanupResultToastSkipped: " ({skipped} en cours d'utilisation, ignorés).",
   diskOptimize: {
     title: "Optimiser le disque",
-    description: "Lance l'optimiseur integre de Windows : defragmentation sur un HDD, ou TRIM sur un SSD (jamais une defragmentation complete, qui ne ferait que l'user inutilement).",
+    description:
+      "Lance l'optimiseur integre de Windows : defragmentation sur un HDD, ou TRIM sur un SSD (jamais une defragmentation complete, qui ne ferait que l'user inutilement).",
     button: "Optimiser maintenant",
     running: "Optimisation en cours... cela peut prendre quelques minutes",
     resultToast: "Disque ({media}) optimise avec succes.",
   },
   dnsFlush: {
     title: "Vider le cache DNS",
-    description: "Efface les adresses DNS mises en cache. Utile si un site a change de serveur et que votre navigateur continue d'afficher l'ancienne version.",
+    description:
+      "Efface les adresses DNS mises en cache. Utile si un site a change de serveur et que votre navigateur continue d'afficher l'ancienne version.",
     button: "Vider maintenant",
     running: "Vidage...",
     resultToast: "Cache DNS vide.",
@@ -1803,7 +1885,8 @@ const fr: Strings = {
   },
   largeFiles: {
     title: "Trouver les gros fichiers",
-    description: "Recherche dans un dossier les fichiers les plus volumineux (plus de 100 Mo), pour libérer rapidement de l'espace en supprimant ceux dont vous n'avez plus besoin.",
+    description:
+      "Recherche dans un dossier les fichiers les plus volumineux (plus de 100 Mo), pour libérer rapidement de l'espace en supprimant ceux dont vous n'avez plus besoin.",
     chooseFolder: "Choisir un dossier",
     scanning: "Recherche en cours...",
     noneFound: "Aucun fichier de plus de {size} trouve.",
@@ -1824,7 +1907,8 @@ const fr: Strings = {
   },
   duplicateFinder: {
     title: "Trouver les fichiers en double",
-    description: "Choisissez un dossier : repère les fichiers identiques et laisse choisir lesquels déplacer vers la Corbeille.",
+    description:
+      "Choisissez un dossier : repère les fichiers identiques et laisse choisir lesquels déplacer vers la Corbeille.",
     chooseFolder: "Choisir un dossier",
     scanning: "Analyse...",
     noneFound: "Aucun fichier en double trouvé dans ce dossier.",
@@ -1844,7 +1928,8 @@ const fr: Strings = {
   toasts: {
     applied: "« {name} » appliqué.",
     rolledBack: "« {name} » restauré à sa valeur d'origine.",
-    licenseNeedsRefresh: "Impossible de vérifier votre abonnement Pro après une si longue période hors ligne. Reconnectez-vous à internet et réessayez.",
+    licenseNeedsRefresh:
+      "Impossible de vérifier votre abonnement Pro après une si longue période hors ligne. Reconnectez-vous à internet et réessayez.",
   },
   menu: {
     account: "Compte",
@@ -1856,7 +1941,8 @@ const fr: Strings = {
     theme: "Thèmes",
     about: "À propos",
     errorReports: "Rapports d'erreur anonymes",
-    errorReportsBody: "En cas d'échec, envoie uniquement le message d'erreur (jamais de données personnelles) pour nous aider à corriger les bugs. Désactivé par défaut.",
+    errorReportsBody:
+      "En cas d'échec, envoie uniquement le message d'erreur (jamais de données personnelles) pour nous aider à corriger les bugs. Désactivé par défaut.",
     aboutBody: "PC Tweaker — optimisations système avec sauvegarde et restauration automatiques.",
     close: "Fermer",
   },
@@ -1871,7 +1957,8 @@ const fr: Strings = {
     working: "...",
     logout: "Se déconnecter",
     loggedInAs: "Connecté en tant que {email}",
-    backendNotConfigured: "Aucun serveur connecté pour l'instant : définissez API_BASE_URL une fois le backend déployé.",
+    backendNotConfigured:
+      "Aucun serveur connecté pour l'instant : définissez API_BASE_URL une fois le backend déployé.",
     switchToRegister: "Pas de compte ? Inscrivez-vous",
     switchToLogin: "Déjà un compte ? Connectez-vous",
     emailInvalid: "Saisissez une adresse e-mail valide.",
@@ -2017,35 +2104,43 @@ const fr: Strings = {
     },
     dark_mode: {
       name: "Mode sombre",
-      description: "Active le thème sombre pour les applications et le système (HKCU, aucune élévation requise).",
+      description:
+        "Active le thème sombre pour les applications et le système (HKCU, aucune élévation requise).",
     },
     show_hidden_files: {
       name: "Afficher les fichiers cachés",
-      description: "Affiche les fichiers et dossiers cachés dans l'Explorateur (HKCU, aucune élévation requise).",
+      description:
+        "Affiche les fichiers et dossiers cachés dans l'Explorateur (HKCU, aucune élévation requise).",
     },
     priority_separation: {
       name: "Optimiser la priorité du processeur",
-      description: "Ajuste Win32PrioritySeparation (0x26) pour donner à l'application au premier plan des quanta CPU courts et variables avec une priorité 3x — la valeur classique de réactivité bureau/jeu (HKLM, droits administrateur requis).",
+      description:
+        "Ajuste Win32PrioritySeparation (0x26) pour donner à l'application au premier plan des quanta CPU courts et variables avec une priorité 3x — la valeur classique de réactivité bureau/jeu (HKLM, droits administrateur requis).",
     },
     disable_game_dvr: {
       name: "Désactiver Xbox Game Bar / Game DVR",
-      description: "Désactive l'enregistrement en arrière-plan de Xbox Game Bar, gourmand en CPU/GPU pendant le jeu (HKCU, aucune élévation requise).",
+      description:
+        "Désactive l'enregistrement en arrière-plan de Xbox Game Bar, gourmand en CPU/GPU pendant le jeu (HKCU, aucune élévation requise).",
     },
     disable_telemetry_tasks: {
       name: "Réduire la collecte de données de diagnostic",
-      description: "Règle le niveau de diagnostic de Windows au minimum autorisé (HKLM, droits administrateur requis).",
+      description:
+        "Règle le niveau de diagnostic de Windows au minimum autorisé (HKLM, droits administrateur requis).",
     },
     reset_advertising_id: {
       name: "Désactiver l'ID publicitaire",
-      description: "Empêche les applications d'utiliser votre ID publicitaire à des fins de profilage (HKCU, aucune élévation requise).",
+      description:
+        "Empêche les applications d'utiliser votre ID publicitaire à des fins de profilage (HKCU, aucune élévation requise).",
     },
     disable_location_tracking: {
       name: "Désactiver le suivi de localisation",
-      description: "Bloque l'accès à la localisation pour toutes les applications via une stratégie système (HKLM, droits administrateur requis).",
+      description:
+        "Bloque l'accès à la localisation pour toutes les applications via une stratégie système (HKLM, droits administrateur requis).",
     },
     disable_bing_search: {
       name: "Désactiver la recherche Bing dans le menu Démarrer",
-      description: "Empêche l'envoi de vos recherches du menu Démarrer à Bing (HKCU, aucune élévation requise).",
+      description:
+        "Empêche l'envoi de vos recherches du menu Démarrer à Bing (HKCU, aucune élévation requise).",
     },
     power_plan_performance: {
       name: "Performances élevées (mode d'alimentation)",
@@ -2099,15 +2194,18 @@ const fr: Strings = {
     },
     taskbar_align_left: {
       name: "Aligner la barre des tâches à gauche",
-      description: "Replace les icônes de la barre des tâches à gauche (style Windows 10) au lieu du centre (HKCU, aucune élévation requise).",
+      description:
+        "Replace les icônes de la barre des tâches à gauche (style Windows 10) au lieu du centre (HKCU, aucune élévation requise).",
     },
     hide_taskbar_chat: {
       name: "Masquer Chat/Teams de la barre des tâches",
-      description: "Retire l'icône Chat (Microsoft Teams) de la barre des tâches (HKCU, aucune élévation requise).",
+      description:
+        "Retire l'icône Chat (Microsoft Teams) de la barre des tâches (HKCU, aucune élévation requise).",
     },
     disable_start_suggestions: {
       name: "Désactiver les suggestions et apps recommandées du menu Démarrer",
-      description: "Empêche Windows d'afficher des apps recommandées, publicités et suggestions dans le menu Démarrer (HKCU, aucune élévation requise).",
+      description:
+        "Empêche Windows d'afficher des apps recommandées, publicités et suggestions dans le menu Démarrer (HKCU, aucune élévation requise).",
     },
     disable_activity_history: {
       name: "Désactiver l'historique d'activité (Windows Timeline)",
@@ -2133,11 +2231,13 @@ const fr: Strings = {
   cleanup: {
     temp_cleanup: {
       name: "Nettoyer les fichiers temporaires",
-      description: "Déplace le contenu de %TEMP% vers la Corbeille : récupérable à tout moment, ce n'est pas une suppression définitive.",
+      description:
+        "Déplace le contenu de %TEMP% vers la Corbeille : récupérable à tout moment, ce n'est pas une suppression définitive.",
     },
     winupdate_cache_cleanup: {
       name: "Vider le cache de Windows Update",
-      description: "Déplace vers la Corbeille les paquets Windows Update déjà installés (droits administrateur requis).",
+      description:
+        "Déplace vers la Corbeille les paquets Windows Update déjà installés (droits administrateur requis).",
     },
   },
 };
@@ -2147,7 +2247,17 @@ const es: Strings = {
   appliedCount: "{applied} de {total} ajustes activos",
   headerNote:
     "Cada ajuste guarda una copia del valor original antes de aplicarse. Los ajustes que requieren privilegios elevados piden un consentimiento UAC explícito, solo para esa acción.",
-  tabs: { scan: "Análisis", performance: "Rendimiento", privacy: "Privacidad", ui: "Interfaz", manutenzione: "Mantenimiento", gaming: "Gaming", startup: "Inicio", profiles: "Configuraciones", pricing: "Planes y precios" },
+  tabs: {
+    scan: "Análisis",
+    performance: "Rendimiento",
+    privacy: "Privacidad",
+    ui: "Interfaz",
+    manutenzione: "Mantenimiento",
+    gaming: "Gaming",
+    startup: "Inicio",
+    profiles: "Configuraciones",
+    pricing: "Planes y precios",
+  },
   systemMonitor: {
     cpu: "CPU",
     ram: "Memoria",
@@ -2167,7 +2277,7 @@ const es: Strings = {
   },
   search: {
     placeholder: "Buscar un ajuste...",
-    noResults: "Sin resultados para \"{query}\".",
+    noResults: 'Sin resultados para "{query}".',
     clear: "Borrar",
   },
   pricing: {
@@ -2191,7 +2301,8 @@ const es: Strings = {
     proCta: "Pasar a Pro",
     proCurrent: "Tu plan",
     everythingInFree: "Todo lo que incluye Free, y adem\u00e1s:",
-    reassurance: "Cancela cuando quieras. Cada cambio sigue siendo reversible con un clic, incluso tras cancelar.",
+    reassurance:
+      "Cancela cuando quieras. Cada cambio sigue siendo reversible con un clic, incluso tras cancelar.",
     freeFeatures: [
       "{count} ajustes reales, cada uno con copia de seguridad y reversible",
       "Monitor del sistema en tiempo real (CPU, memoria, disco)",
@@ -2224,7 +2335,8 @@ const es: Strings = {
   emptyCategory: "Todavía no hay ajustes disponibles en esta categoría — próximamente.",
   gameSessions: {
     title: "Game Sessions",
-    subtitle: "Detecta automáticamente tus juegos y aplica/revierte el preset Turbo Gaming por sí solo.",
+    subtitle:
+      "Detecta automáticamente tus juegos y aplica/revierte el preset Turbo Gaming por sí solo.",
     active: "Sesión activa: {name}",
     gamesCount: "{count} juegos registrados",
     addGame: "+ Añadir juego (.exe)",
@@ -2238,18 +2350,18 @@ const es: Strings = {
     deactivating: "Restaurando...",
     active: "Turbo activo",
     inactive: "Turbo no activo",
-      stageReading: "Leyendo el plan de energia",
-      stageRaising: "Elevando el limite de boost",
-      stageApplying: "Aplicando al sistema",
-      modeAggressive: "Modo agresivo",
-      modeDefault: "Modo predeterminado",
-      stageMeasuringBefore: "Midiendo antes",
-      stageMeasuringAfter: "Midiendo de nuevo",
-      gainMeasured: "{factor}x mas rapido",
-      gainSlight: "{factor}x mas rapido - ganancia modesta",
-      gainAtCeiling: "Ya al maximo: esta CPU no tenia mas margen que liberar",
-      ceilingLocked: "Limite de boost bloqueado",
-      ceilingUnlocked: "Limite de boost desbloqueado",
+    stageReading: "Leyendo el plan de energia",
+    stageRaising: "Elevando el limite de boost",
+    stageApplying: "Aplicando al sistema",
+    modeAggressive: "Modo agresivo",
+    modeDefault: "Modo predeterminado",
+    stageMeasuringBefore: "Midiendo antes",
+    stageMeasuringAfter: "Midiendo de nuevo",
+    gainMeasured: "{factor}x mas rapido",
+    gainSlight: "{factor}x mas rapido - ganancia modesta",
+    gainAtCeiling: "Ya al maximo: esta CPU no tenia mas margen que liberar",
+    ceilingLocked: "Limite de boost bloqueado",
+    ceilingUnlocked: "Limite de boost desbloqueado",
   },
   profiles: {
     title: "Configuraciones",
@@ -2265,7 +2377,7 @@ const es: Strings = {
     exportButton: "Exportar",
     importButton: "Importar de archivo",
     deleteButton: "Eliminar",
-    savedToast: "Configuración \"{name}\" guardada",
+    savedToast: 'Configuración "{name}" guardada',
     appliedToast: "{count} ajustes aplicados",
     exportedToast: "Archivo exportado",
     importedToast: "Importada: {count} ajustes listos para revisar",
@@ -2275,7 +2387,8 @@ const es: Strings = {
   },
   scan: {
     title: "Análisis rápido",
-    subtitle: "Comprueba el estado de tu PC y encuentra optimizaciones que aún no están activas, en un clic.",
+    subtitle:
+      "Comprueba el estado de tu PC y encuentra optimizaciones que aún no están activas, en un clic.",
     startLabel: "SCAN",
     stepPerformance: "Rendimiento",
     stepPrivacy: "Privacidad",
@@ -2296,8 +2409,10 @@ const es: Strings = {
     verdictUnsupported: "No compatible",
     reasons: {
       laptop_battery: "este PC es un portátil: cuesta más batería de lo que aporta",
-      hdd_index_cost: "el disco del sistema es mecánico, así que la indexación en segundo plano se nota",
-      fast_disk_no_gain: "el disco del sistema es NVMe, lo bastante rápido para que la mejora sea insignificante",
+      hdd_index_cost:
+        "el disco del sistema es mecánico, así que la indexación en segundo plano se nota",
+      fast_disk_no_gain:
+        "el disco del sistema es NVMe, lo bastante rápido para que la mejora sea insignificante",
       needs_win10_2004: "requiere Windows 10 versión 2004 o posterior",
       weak_gpu: "gráficos integrados: la transparencia les cuesta rendimiento aprovechable",
     },
@@ -2323,7 +2438,8 @@ const es: Strings = {
   },
   ram: {
     title: "Liberar RAM",
-    subtitle: "Pide a Windows que libere la memoria que los programas ocupan sin usarla. Puedes hacerlo tantas veces como quieras.",
+    subtitle:
+      "Pide a Windows que libere la memoria que los programas ocupan sin usarla. Puedes hacerlo tantas veces como quieras.",
     button: "Liberar ahora",
     cleaning: "Limpiando...",
     freed: "{amount} liberados",
@@ -2332,7 +2448,8 @@ const es: Strings = {
     autoLabel: "Limpieza automática",
     autoOff: "Desactivada",
     autoEvery: "Cada {interval}",
-    autoHint: "Con la limpieza automática activada, PC Tweaker libera la RAM por sí solo a intervalos regulares mientras la app siga abierta.",
+    autoHint:
+      "Con la limpieza automática activada, PC Tweaker libera la RAM por sí solo a intervalos regulares mientras la app siga abierta.",
   },
   restore: {
     button: "Restaurar todo",
@@ -2352,7 +2469,8 @@ const es: Strings = {
     button: "Comprobar",
     checking: "Comprobando...",
     safe: "No encontrada en ninguna filtración conocida. Buena señal.",
-    breached: "Encontrada en {count} filtraciones conocidas. Cámbiala ya, en todos los sitios donde la uses.",
+    breached:
+      "Encontrada en {count} filtraciones conocidas. Cámbiala ya, en todos los sitios donde la uses.",
     error: "No se ha podido comprobar ahora: revisa tu conexión e inténtalo de nuevo.",
   },
   paywall: {
@@ -2374,14 +2492,16 @@ const es: Strings = {
   cleanupResultToastSkipped: " ({skipped} en uso, omitidos).",
   diskOptimize: {
     title: "Optimizar disco",
-    description: "Ejecuta el optimizador integrado de Windows: desfragmentacion en un HDD, o TRIM en un SSD (nunca una desfragmentacion completa, que solo lo desgastaria sin beneficio).",
+    description:
+      "Ejecuta el optimizador integrado de Windows: desfragmentacion en un HDD, o TRIM en un SSD (nunca una desfragmentacion completa, que solo lo desgastaria sin beneficio).",
     button: "Optimizar ahora",
     running: "Optimizando... puede tardar unos minutos",
     resultToast: "Disco ({media}) optimizado correctamente.",
   },
   dnsFlush: {
     title: "Vaciar cache DNS",
-    description: "Borra las direcciones DNS guardadas en memoria. Util si un sitio cambio de servidor y tu navegador sigue mostrando la version antigua.",
+    description:
+      "Borra las direcciones DNS guardadas en memoria. Util si un sitio cambio de servidor y tu navegador sigue mostrando la version antigua.",
     button: "Vaciar ahora",
     running: "Vaciando...",
     resultToast: "Cache DNS vaciada.",
@@ -2394,7 +2514,8 @@ const es: Strings = {
   },
   largeFiles: {
     title: "Buscar archivos grandes",
-    description: "Busca en una carpeta los archivos mas pesados (mas de 100 MB), para que puedas liberar espacio rapidamente eliminando los que ya no necesitas.",
+    description:
+      "Busca en una carpeta los archivos mas pesados (mas de 100 MB), para que puedas liberar espacio rapidamente eliminando los que ya no necesitas.",
     chooseFolder: "Elegir carpeta",
     scanning: "Buscando...",
     noneFound: "No se encontraron archivos de mas de {size}.",
@@ -2415,7 +2536,8 @@ const es: Strings = {
   },
   duplicateFinder: {
     title: "Buscar archivos duplicados",
-    description: "Elige una carpeta: encuentra archivos idénticos y te deja elegir cuáles mover a la Papelera.",
+    description:
+      "Elige una carpeta: encuentra archivos idénticos y te deja elegir cuáles mover a la Papelera.",
     chooseFolder: "Elegir carpeta",
     scanning: "Escaneando...",
     noneFound: "No se encontraron archivos duplicados en esta carpeta.",
@@ -2435,7 +2557,8 @@ const es: Strings = {
   toasts: {
     applied: '"{name}" aplicado.',
     rolledBack: '"{name}" restaurado a su valor original.',
-    licenseNeedsRefresh: "No podemos verificar tu suscripción Pro tras tanto tiempo sin conexión. Reconectate a internet e inténtalo de nuevo.",
+    licenseNeedsRefresh:
+      "No podemos verificar tu suscripción Pro tras tanto tiempo sin conexión. Reconectate a internet e inténtalo de nuevo.",
   },
   menu: {
     account: "Cuenta",
@@ -2447,8 +2570,10 @@ const es: Strings = {
     theme: "Temas",
     about: "Acerca de",
     errorReports: "Informes de error anónimos",
-    errorReportsBody: "Si algo falla, envía solo el mensaje de error (nunca datos personales) para ayudarnos a corregir errores. Desactivado por defecto.",
-    aboutBody: "PC Tweaker — ajustes del sistema con copia de seguridad y restauración automáticas.",
+    errorReportsBody:
+      "Si algo falla, envía solo el mensaje de error (nunca datos personales) para ayudarnos a corregir errores. Desactivado por defecto.",
+    aboutBody:
+      "PC Tweaker — ajustes del sistema con copia de seguridad y restauración automáticas.",
     close: "Cerrar",
   },
   auth: {
@@ -2462,7 +2587,8 @@ const es: Strings = {
     working: "...",
     logout: "Cerrar sesión",
     loggedInAs: "Sesión iniciada como {email}",
-    backendNotConfigured: "Todavía no hay servidor conectado: configura API_BASE_URL cuando despliegues el backend.",
+    backendNotConfigured:
+      "Todavía no hay servidor conectado: configura API_BASE_URL cuando despliegues el backend.",
     switchToRegister: "¿No tienes cuenta? Regístrate",
     switchToLogin: "¿Ya tienes cuenta? Inicia sesión",
     emailInvalid: "Introduce un correo electrónico válido.",
@@ -2473,7 +2599,8 @@ const es: Strings = {
     loginRequiredForCheckout: "Inicia sesión o regístrate antes de desbloquear Pro.",
     forgotPasswordLink: "¿Olvidaste la contraseña?",
     forgotPasswordButton: "Enviar enlace de restablecimiento",
-    forgotPasswordSent: "Si ese correo está registrado, recibirás un enlace para restablecer la contraseña.",
+    forgotPasswordSent:
+      "Si ese correo está registrado, recibirás un enlace para restablecer la contraseña.",
     backToLogin: "Volver al inicio de sesión",
     emailNotVerified: "Correo no verificado",
     emailVerified: "Correo verificado",
@@ -2612,31 +2739,38 @@ const es: Strings = {
     },
     show_hidden_files: {
       name: "Mostrar archivos ocultos",
-      description: "Muestra archivos y carpetas ocultos en el Explorador de archivos (HKCU, sin elevación requerida).",
+      description:
+        "Muestra archivos y carpetas ocultos en el Explorador de archivos (HKCU, sin elevación requerida).",
     },
     priority_separation: {
       name: "Optimizar prioridad del procesador",
-      description: "Ajusta Win32PrioritySeparation (0x26) para dar a la aplicación en primer plano cuantos de CPU cortos y variables con prioridad 3x — el valor clásico de capacidad de respuesta para escritorio/juegos (HKLM, requiere privilegios de administrador).",
+      description:
+        "Ajusta Win32PrioritySeparation (0x26) para dar a la aplicación en primer plano cuantos de CPU cortos y variables con prioridad 3x — el valor clásico de capacidad de respuesta para escritorio/juegos (HKLM, requiere privilegios de administrador).",
     },
     disable_game_dvr: {
       name: "Desactivar Xbox Game Bar / Game DVR",
-      description: "Desactiva la grabación en segundo plano de Xbox Game Bar, que consume CPU/GPU durante el juego (HKCU, sin elevación requerida).",
+      description:
+        "Desactiva la grabación en segundo plano de Xbox Game Bar, que consume CPU/GPU durante el juego (HKCU, sin elevación requerida).",
     },
     disable_telemetry_tasks: {
       name: "Reducir la recopilación de datos de diagnóstico",
-      description: "Establece el nivel de diagnóstico de Windows al mínimo permitido (HKLM, requiere privilegios de administrador).",
+      description:
+        "Establece el nivel de diagnóstico de Windows al mínimo permitido (HKLM, requiere privilegios de administrador).",
     },
     reset_advertising_id: {
       name: "Desactivar ID de publicidad",
-      description: "Impide que las apps usen tu ID de publicidad para elaborar perfiles (HKCU, sin elevación requerida).",
+      description:
+        "Impide que las apps usen tu ID de publicidad para elaborar perfiles (HKCU, sin elevación requerida).",
     },
     disable_location_tracking: {
       name: "Desactivar seguimiento de ubicación",
-      description: "Bloquea el acceso a la ubicación para todas las apps mediante directiva del sistema (HKLM, requiere privilegios de administrador).",
+      description:
+        "Bloquea el acceso a la ubicación para todas las apps mediante directiva del sistema (HKLM, requiere privilegios de administrador).",
     },
     disable_bing_search: {
       name: "Desactivar la búsqueda de Bing en el menú Inicio",
-      description: "Impide que tus búsquedas del menú Inicio se envíen a Bing (HKCU, sin elevación requerida).",
+      description:
+        "Impide que tus búsquedas del menú Inicio se envíen a Bing (HKCU, sin elevación requerida).",
     },
     power_plan_performance: {
       name: "Alto rendimiento (plan de energía)",
@@ -2690,15 +2824,18 @@ const es: Strings = {
     },
     taskbar_align_left: {
       name: "Alinear la barra de tareas a la izquierda",
-      description: "Vuelve a alinear los iconos de la barra de tareas a la izquierda (estilo Windows 10) en vez de al centro (HKCU, no requiere elevación).",
+      description:
+        "Vuelve a alinear los iconos de la barra de tareas a la izquierda (estilo Windows 10) en vez de al centro (HKCU, no requiere elevación).",
     },
     hide_taskbar_chat: {
       name: "Ocultar Chat/Teams de la barra de tareas",
-      description: "Elimina el icono de Chat (Microsoft Teams) de la barra de tareas (HKCU, no requiere elevación).",
+      description:
+        "Elimina el icono de Chat (Microsoft Teams) de la barra de tareas (HKCU, no requiere elevación).",
     },
     disable_start_suggestions: {
       name: "Desactivar sugerencias y apps recomendadas en el menú Inicio",
-      description: "Evita que Windows muestre apps recomendadas, anuncios y sugerencias en el menú Inicio (HKCU, no requiere elevación).",
+      description:
+        "Evita que Windows muestre apps recomendadas, anuncios y sugerencias en el menú Inicio (HKCU, no requiere elevación).",
     },
     disable_activity_history: {
       name: "Desactivar el historial de actividad (Windows Timeline)",
@@ -2724,11 +2861,13 @@ const es: Strings = {
   cleanup: {
     temp_cleanup: {
       name: "Limpiar archivos temporales",
-      description: "Mueve el contenido de %TEMP% a la Papelera: puedes recuperarlo en cualquier momento, no es un borrado definitivo.",
+      description:
+        "Mueve el contenido de %TEMP% a la Papelera: puedes recuperarlo en cualquier momento, no es un borrado definitivo.",
     },
     winupdate_cache_cleanup: {
       name: "Vaciar la caché de Windows Update",
-      description: "Mueve a la Papelera los paquetes de Windows Update ya instalados (requiere privilegios de administrador).",
+      description:
+        "Mueve a la Papelera los paquetes de Windows Update ya instalados (requiere privilegios de administrador).",
     },
   },
 };
@@ -2738,7 +2877,17 @@ const de: Strings = {
   appliedCount: "{applied} von {total} Optimierungen aktiv",
   headerNote:
     "Jede Optimierung sichert den ursprünglichen Wert, bevor sie angewendet wird. Optimierungen mit erhöhten Rechten fragen gezielt per UAC nach, nur für diese Aktion.",
-  tabs: { scan: "Systemscan", performance: "Leistung", privacy: "Datenschutz", ui: "Oberfläche", manutenzione: "Wartung", gaming: "Gaming", startup: "Autostart", profiles: "Konfigurationen", pricing: "Tarife & Preise" },
+  tabs: {
+    scan: "Systemscan",
+    performance: "Leistung",
+    privacy: "Datenschutz",
+    ui: "Oberfläche",
+    manutenzione: "Wartung",
+    gaming: "Gaming",
+    startup: "Autostart",
+    profiles: "Konfigurationen",
+    pricing: "Tarife & Preise",
+  },
   systemMonitor: {
     cpu: "CPU",
     ram: "Arbeitsspeicher",
@@ -2758,7 +2907,7 @@ const de: Strings = {
   },
   search: {
     placeholder: "Tweak suchen...",
-    noResults: "Keine Treffer f\u00fcr \"{query}\".",
+    noResults: 'Keine Treffer f\u00fcr "{query}".',
     clear: "L\u00f6schen",
   },
   pricing: {
@@ -2782,7 +2931,8 @@ const de: Strings = {
     proCta: "Zu Pro wechseln",
     proCurrent: "Dein Tarif",
     everythingInFree: "Alles aus Free, dazu:",
-    reassurance: "Jederzeit k\u00fcndbar. Jede \u00c4nderung bleibt mit einem Klick r\u00fcckg\u00e4ngig zu machen, auch nach der K\u00fcndigung.",
+    reassurance:
+      "Jederzeit k\u00fcndbar. Jede \u00c4nderung bleibt mit einem Klick r\u00fcckg\u00e4ngig zu machen, auch nach der K\u00fcndigung.",
     freeFeatures: [
       "{count} echte Tweaks, jeder gesichert und umkehrbar",
       "Live-Systemmonitor (CPU, Arbeitsspeicher, Datentr\u00e4ger)",
@@ -2815,7 +2965,8 @@ const de: Strings = {
   emptyCategory: "In dieser Kategorie sind noch keine Optimierungen verfügbar — bald verfügbar.",
   gameSessions: {
     title: "Game Sessions",
-    subtitle: "Erkennt deine Spiele automatisch und wendet das Turbo-Gaming-Preset selbstständig an/rückgängig.",
+    subtitle:
+      "Erkennt deine Spiele automatisch und wendet das Turbo-Gaming-Preset selbstständig an/rückgängig.",
     active: "Sitzung aktiv: {name}",
     gamesCount: "{count} Spiele registriert",
     addGame: "+ Spiel hinzufügen (.exe)",
@@ -2829,22 +2980,23 @@ const de: Strings = {
     deactivating: "Wird wiederhergestellt...",
     active: "Turbo aktiv",
     inactive: "Turbo nicht aktiv",
-      stageReading: "Energieplan wird gelesen",
-      stageRaising: "Boost-Grenze wird angehoben",
-      stageApplying: "Wird auf das System angewendet",
-      modeAggressive: "Aggressiver Modus",
-      modeDefault: "Standardmodus",
-      stageMeasuringBefore: "Messung vorher",
-      stageMeasuringAfter: "Erneute Messung",
-      gainMeasured: "{factor}x schneller",
-      gainSlight: "{factor}x schneller - moderater Gewinn",
-      gainAtCeiling: "Bereits am Maximum: Diese CPU hatte keinen Spielraum mehr",
-      ceilingLocked: "Boost-Grenze gesperrt",
-      ceilingUnlocked: "Boost-Grenze freigegeben",
+    stageReading: "Energieplan wird gelesen",
+    stageRaising: "Boost-Grenze wird angehoben",
+    stageApplying: "Wird auf das System angewendet",
+    modeAggressive: "Aggressiver Modus",
+    modeDefault: "Standardmodus",
+    stageMeasuringBefore: "Messung vorher",
+    stageMeasuringAfter: "Erneute Messung",
+    gainMeasured: "{factor}x schneller",
+    gainSlight: "{factor}x schneller - moderater Gewinn",
+    gainAtCeiling: "Bereits am Maximum: Diese CPU hatte keinen Spielraum mehr",
+    ceilingLocked: "Boost-Grenze gesperrt",
+    ceilingUnlocked: "Boost-Grenze freigegeben",
   },
   profiles: {
     title: "Konfigurationen",
-    subtitle: "Sichern Sie Ihre Einstellungen, stellen Sie sie mit einem Klick wieder her, oder geben Sie sie weiter.",
+    subtitle:
+      "Sichern Sie Ihre Einstellungen, stellen Sie sie mit einem Klick wieder her, oder geben Sie sie weiter.",
     saveHeading: "Aktuelle sichern",
     namePlaceholder: "Name (z. B. Gaming)",
     saveButton: "Sichern",
@@ -2856,17 +3008,19 @@ const de: Strings = {
     exportButton: "Exportieren",
     importButton: "Aus Datei importieren",
     deleteButton: "Loeschen",
-    savedToast: "Konfiguration \"{name}\" gesichert",
+    savedToast: 'Konfiguration "{name}" gesichert',
     appliedToast: "{count} Optimierungen angewendet",
     exportedToast: "Datei exportiert",
     importedToast: "Importiert: {count} Optimierungen zur Pruefung",
     droppedWarning: "{count} von dieser Version nicht erkannte Eintraege wurden verworfen",
     nameRequired: "Geben Sie der Konfiguration einen Namen",
-    reviewNotice: "Eine importierte Konfiguration wird nie von selbst angewendet - Sie pruefen sie zuerst.",
+    reviewNotice:
+      "Eine importierte Konfiguration wird nie von selbst angewendet - Sie pruefen sie zuerst.",
   },
   scan: {
     title: "Schnellscan",
-    subtitle: "Prüft den Zustand deines PCs und findet noch nicht aktive Optimierungen, mit einem Klick.",
+    subtitle:
+      "Prüft den Zustand deines PCs und findet noch nicht aktive Optimierungen, mit einem Klick.",
     startLabel: "SCAN",
     stepPerformance: "Leistung",
     stepPrivacy: "Datenschutz",
@@ -2888,7 +3042,8 @@ const de: Strings = {
     reasons: {
       laptop_battery: "dieser PC ist ein Notebook: Es kostet mehr Akkulaufzeit, als es bringt",
       hdd_index_cost: "die Systemfestplatte ist mechanisch, die Hintergrundindizierung ist spürbar",
-      fast_disk_no_gain: "die Systemplatte ist NVMe und schnell genug, dass der Gewinn vernachlässigbar ist",
+      fast_disk_no_gain:
+        "die Systemplatte ist NVMe und schnell genug, dass der Gewinn vernachlässigbar ist",
       needs_win10_2004: "erfordert Windows 10 Version 2004 oder neuer",
       weak_gpu: "integrierte Grafik: Transparenz kostet sie nutzbare Leistung",
     },
@@ -2914,7 +3069,8 @@ const de: Strings = {
   },
   ram: {
     title: "RAM freigeben",
-    subtitle: "Fordert Windows auf, Speicher freizugeben, den Programme belegen, aber nicht nutzen. So oft ausführbar, wie du willst.",
+    subtitle:
+      "Fordert Windows auf, Speicher freizugeben, den Programme belegen, aber nicht nutzen. So oft ausführbar, wie du willst.",
     button: "Jetzt freigeben",
     cleaning: "Wird bereinigt...",
     freed: "{amount} freigegeben",
@@ -2923,7 +3079,8 @@ const de: Strings = {
     autoLabel: "Automatische Bereinigung",
     autoOff: "Aus",
     autoEvery: "Alle {interval}",
-    autoHint: "Bei aktiver automatischer Bereinigung gibt PC Tweaker den RAM selbstständig in regelmäßigen Abständen frei, solange die App geöffnet bleibt.",
+    autoHint:
+      "Bei aktiver automatischer Bereinigung gibt PC Tweaker den RAM selbstständig in regelmäßigen Abständen frei, solange die App geöffnet bleibt.",
   },
   restore: {
     button: "Alles zur\u00fccksetzen",
@@ -2943,7 +3100,8 @@ const de: Strings = {
     button: "Prüfen",
     checking: "Wird geprüft...",
     safe: "In keinem bekannten Datenleck gefunden. Gutes Zeichen.",
-    breached: "In {count} bekannten Datenlecks gefunden. Ändere es sofort, überall wo du es verwendest.",
+    breached:
+      "In {count} bekannten Datenlecks gefunden. Ändere es sofort, überall wo du es verwendest.",
     error: "Konnte gerade nicht geprüft werden: Verbindung prüfen und erneut versuchen.",
   },
   paywall: {
@@ -2965,14 +3123,16 @@ const de: Strings = {
   cleanupResultToastSkipped: " ({skipped} in Verwendung, übersprungen).",
   diskOptimize: {
     title: "Laufwerk optimieren",
-    description: "Fuhrt das integrierte Windows-Optimierungstool aus: Defragmentierung bei einer HDD oder TRIM bei einer SSD (nie eine vollstandige Defragmentierung, die sie nur unnotig abnutzen wurde).",
+    description:
+      "Fuhrt das integrierte Windows-Optimierungstool aus: Defragmentierung bei einer HDD oder TRIM bei einer SSD (nie eine vollstandige Defragmentierung, die sie nur unnotig abnutzen wurde).",
     button: "Jetzt optimieren",
     running: "Optimierung lauft... kann einige Minuten dauern",
     resultToast: "Laufwerk ({media}) erfolgreich optimiert.",
   },
   dnsFlush: {
     title: "DNS-Cache leeren",
-    description: "Loscht zwischengespeicherte DNS-Eintrage. Nutzlich, wenn eine Website den Server gewechselt hat und dein Browser weiterhin die alte Version anzeigt.",
+    description:
+      "Loscht zwischengespeicherte DNS-Eintrage. Nutzlich, wenn eine Website den Server gewechselt hat und dein Browser weiterhin die alte Version anzeigt.",
     button: "Jetzt leeren",
     running: "Wird geleert...",
     resultToast: "DNS-Cache geleert.",
@@ -2985,7 +3145,8 @@ const de: Strings = {
   },
   largeFiles: {
     title: "Grosse Dateien finden",
-    description: "Durchsucht einen Ordner nach den grossten Dateien (uber 100 MB), damit du schnell Speicherplatz freigeben kannst, indem du nicht mehr benotigte loschst.",
+    description:
+      "Durchsucht einen Ordner nach den grossten Dateien (uber 100 MB), damit du schnell Speicherplatz freigeben kannst, indem du nicht mehr benotigte loschst.",
     chooseFolder: "Ordner wahlen",
     scanning: "Wird durchsucht...",
     noneFound: "Keine Dateien uber {size} gefunden.",
@@ -3006,7 +3167,8 @@ const de: Strings = {
   },
   duplicateFinder: {
     title: "Doppelte Dateien finden",
-    description: "Ordner wählen: findet identische Dateien und lässt dich auswählen, welche in den Papierkorb verschoben werden.",
+    description:
+      "Ordner wählen: findet identische Dateien und lässt dich auswählen, welche in den Papierkorb verschoben werden.",
     chooseFolder: "Ordner wählen",
     scanning: "Wird gescannt...",
     noneFound: "Keine doppelten Dateien in diesem Ordner gefunden.",
@@ -3026,7 +3188,8 @@ const de: Strings = {
   toasts: {
     applied: '„{name}" angewendet.',
     rolledBack: '„{name}" auf den ursprünglichen Wert zurückgesetzt.',
-    licenseNeedsRefresh: "Wir können Ihr Pro-Abonnement nach so langer Offline-Zeit nicht bestätigen. Stellen Sie eine Internetverbindung her und versuchen Sie es erneut.",
+    licenseNeedsRefresh:
+      "Wir können Ihr Pro-Abonnement nach so langer Offline-Zeit nicht bestätigen. Stellen Sie eine Internetverbindung her und versuchen Sie es erneut.",
   },
   menu: {
     account: "Konto",
@@ -3038,8 +3201,10 @@ const de: Strings = {
     theme: "Designs",
     about: "Info",
     errorReports: "Anonyme Fehlerberichte",
-    errorReportsBody: "Wenn etwas fehlschlägt, wird nur die Fehlermeldung gesendet (niemals persönliche Daten), um Fehler schneller zu beheben. Standardmäßig deaktiviert.",
-    aboutBody: "PC Tweaker — Systemoptimierungen mit automatischer Sicherung und Wiederherstellung.",
+    errorReportsBody:
+      "Wenn etwas fehlschlägt, wird nur die Fehlermeldung gesendet (niemals persönliche Daten), um Fehler schneller zu beheben. Standardmäßig deaktiviert.",
+    aboutBody:
+      "PC Tweaker — Systemoptimierungen mit automatischer Sicherung und Wiederherstellung.",
     close: "Schließen",
   },
   auth: {
@@ -3053,7 +3218,8 @@ const de: Strings = {
     working: "...",
     logout: "Abmelden",
     loggedInAs: "Angemeldet als {email}",
-    backendNotConfigured: "Noch kein Server verbunden: API_BASE_URL setzen, sobald das Backend bereitgestellt ist.",
+    backendNotConfigured:
+      "Noch kein Server verbunden: API_BASE_URL setzen, sobald das Backend bereitgestellt ist.",
     switchToRegister: "Noch kein Konto? Registrieren",
     switchToLogin: "Schon ein Konto? Anmelden",
     emailInvalid: "Bitte eine gültige E-Mail-Adresse eingeben.",
@@ -3064,7 +3230,8 @@ const de: Strings = {
     loginRequiredForCheckout: "Vor dem Freischalten von Pro anmelden oder registrieren.",
     forgotPasswordLink: "Passwort vergessen?",
     forgotPasswordButton: "Link zum Zurücksetzen senden",
-    forgotPasswordSent: "Falls diese E-Mail registriert ist, erhältst du einen Link zum Zurücksetzen des Passworts.",
+    forgotPasswordSent:
+      "Falls diese E-Mail registriert ist, erhältst du einen Link zum Zurücksetzen des Passworts.",
     backToLogin: "Zurück zur Anmeldung",
     emailNotVerified: "E-Mail nicht bestätigt",
     emailVerified: "E-Mail bestätigt",
@@ -3105,7 +3272,7 @@ const de: Strings = {
     disable_feedback_requests: {
       name: "Windows-Feedback-Abfragen unterbinden",
       description:
-        "Verhindert, dass Windows dich mit Umfragen wie „Wie wahrscheinlich ist es, dass du ... weiterempfiehlst\" unterbricht (HKCU, keine Erhöhung erforderlich).",
+        'Verhindert, dass Windows dich mit Umfragen wie „Wie wahrscheinlich ist es, dass du ... weiterempfiehlst" unterbricht (HKCU, keine Erhöhung erforderlich).',
     },
     disable_cortana: {
       name: "Cortana deaktivieren",
@@ -3115,7 +3282,7 @@ const de: Strings = {
     show_file_extensions: {
       name: "Dateiendungen immer anzeigen",
       description:
-        "Zeigt die echte Endung jeder Datei. Allein aus Sicherheitsgründen sinnvoll: Dateien wie „rechnung.pdf.exe\" werden so sichtbar, die Windows sonst verbirgt (HKCU, keine Erhöhung erforderlich).",
+        'Zeigt die echte Endung jeder Datei. Allein aus Sicherheitsgründen sinnvoll: Dateien wie „rechnung.pdf.exe" werden so sichtbar, die Windows sonst verbirgt (HKCU, keine Erhöhung erforderlich).',
     },
     hide_taskbar_widgets: {
       name: "Widgets aus der Taskleiste ausblenden",
@@ -3199,35 +3366,43 @@ const de: Strings = {
     },
     dark_mode: {
       name: "Dunkler Modus",
-      description: "Aktiviert das dunkle Design für Apps und System (HKCU, keine Rechteerhöhung erforderlich).",
+      description:
+        "Aktiviert das dunkle Design für Apps und System (HKCU, keine Rechteerhöhung erforderlich).",
     },
     show_hidden_files: {
       name: "Versteckte Dateien anzeigen",
-      description: "Zeigt versteckte Dateien und Ordner im Explorer an (HKCU, keine Rechteerhöhung erforderlich).",
+      description:
+        "Zeigt versteckte Dateien und Ordner im Explorer an (HKCU, keine Rechteerhöhung erforderlich).",
     },
     priority_separation: {
       name: "CPU-Priorität optimieren",
-      description: "Stellt Win32PrioritySeparation (0x26) so ein, dass die Vordergrund-App kurze, variable CPU-Zeitscheiben mit 3x-Priorität erhält — der klassische Wert für Desktop-/Gaming-Reaktionsschnelligkeit (HKLM, Administratorrechte erforderlich).",
+      description:
+        "Stellt Win32PrioritySeparation (0x26) so ein, dass die Vordergrund-App kurze, variable CPU-Zeitscheiben mit 3x-Priorität erhält — der klassische Wert für Desktop-/Gaming-Reaktionsschnelligkeit (HKLM, Administratorrechte erforderlich).",
     },
     disable_game_dvr: {
       name: "Xbox Game Bar / Game DVR deaktivieren",
-      description: "Deaktiviert die Hintergrundaufnahme der Xbox Game Bar, die beim Spielen CPU/GPU beansprucht (HKCU, keine Rechteerhöhung erforderlich).",
+      description:
+        "Deaktiviert die Hintergrundaufnahme der Xbox Game Bar, die beim Spielen CPU/GPU beansprucht (HKCU, keine Rechteerhöhung erforderlich).",
     },
     disable_telemetry_tasks: {
       name: "Diagnosedatenerfassung reduzieren",
-      description: "Setzt die Windows-Diagnosestufe auf das minimal zulässige Niveau (HKLM, Administratorrechte erforderlich).",
+      description:
+        "Setzt die Windows-Diagnosestufe auf das minimal zulässige Niveau (HKLM, Administratorrechte erforderlich).",
     },
     reset_advertising_id: {
       name: "Werbe-ID deaktivieren",
-      description: "Verhindert, dass Apps deine Werbe-ID zur Profilbildung nutzen (HKCU, keine Rechteerhöhung erforderlich).",
+      description:
+        "Verhindert, dass Apps deine Werbe-ID zur Profilbildung nutzen (HKCU, keine Rechteerhöhung erforderlich).",
     },
     disable_location_tracking: {
       name: "Standortverfolgung deaktivieren",
-      description: "Blockiert den Standortzugriff für alle Apps per Systemrichtlinie (HKLM, Administratorrechte erforderlich).",
+      description:
+        "Blockiert den Standortzugriff für alle Apps per Systemrichtlinie (HKLM, Administratorrechte erforderlich).",
     },
     disable_bing_search: {
       name: "Bing-Suche im Startmenü deaktivieren",
-      description: "Verhindert, dass deine Suchanfragen im Startmenü an Bing gesendet werden (HKCU, keine Rechteerhöhung erforderlich).",
+      description:
+        "Verhindert, dass deine Suchanfragen im Startmenü an Bing gesendet werden (HKCU, keine Rechteerhöhung erforderlich).",
     },
     power_plan_performance: {
       name: "Hohe Leistung (Energiesparplan)",
@@ -3281,15 +3456,18 @@ const de: Strings = {
     },
     taskbar_align_left: {
       name: "Taskleiste links ausrichten",
-      description: "Richtet die Taskleisten-Symbole wieder links aus (Windows-10-Stil) statt zentriert (HKCU, keine Elevation erforderlich).",
+      description:
+        "Richtet die Taskleisten-Symbole wieder links aus (Windows-10-Stil) statt zentriert (HKCU, keine Elevation erforderlich).",
     },
     hide_taskbar_chat: {
       name: "Chat/Teams aus der Taskleiste ausblenden",
-      description: "Entfernt das Chat-Symbol (Microsoft Teams) aus der Taskleiste (HKCU, keine Elevation erforderlich).",
+      description:
+        "Entfernt das Chat-Symbol (Microsoft Teams) aus der Taskleiste (HKCU, keine Elevation erforderlich).",
     },
     disable_start_suggestions: {
       name: "Startmenü-Vorschläge und empfohlene Apps deaktivieren",
-      description: "Verhindert, dass Windows empfohlene Apps, Werbung und Vorschläge im Startmenü anzeigt (HKCU, keine Elevation erforderlich).",
+      description:
+        "Verhindert, dass Windows empfohlene Apps, Werbung und Vorschläge im Startmenü anzeigt (HKCU, keine Elevation erforderlich).",
     },
     disable_activity_history: {
       name: "Aktivitätsverlauf deaktivieren (Windows Timeline)",
@@ -3315,11 +3493,13 @@ const de: Strings = {
   cleanup: {
     temp_cleanup: {
       name: "Temporäre Dateien bereinigen",
-      description: "Verschiebt den Inhalt von %TEMP% in den Papierkorb: jederzeit wiederherstellbar, kein endgültiges Löschen.",
+      description:
+        "Verschiebt den Inhalt von %TEMP% in den Papierkorb: jederzeit wiederherstellbar, kein endgültiges Löschen.",
     },
     winupdate_cache_cleanup: {
       name: "Windows Update-Cache leeren",
-      description: "Verschiebt bereits installierte Windows Update-Pakete in den Papierkorb (Administratorrechte erforderlich).",
+      description:
+        "Verschiebt bereits installierte Windows Update-Pakete in den Papierkorb (Administratorrechte erforderlich).",
     },
   },
 };

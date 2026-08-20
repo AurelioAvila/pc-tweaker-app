@@ -33,6 +33,12 @@ _VISUAL_CONCEPTS = [
     (("winget", "package manager", "random exe"), "software download install"),
     (("dns", "isp"), "network router internet"),
     (("original value", "reversible", "revert"), "windows laptop settings screen"),
+    # Aggiunti 2026-08-20 insieme ai due nuovi item Copilot/Recall qui sotto -
+    # stessa nicchia "AI & Technology" gia' documentata in video-scripts.md
+    # (Video 8, Copilot Actions) ma finora mai rappresentata nel pool
+    # AUTOMATICO (content.py), solo nello script per la ripresa manuale.
+    (("copilot", "ai assistant"), "artificial intelligence computer screen"),
+    (("recall", "ai screen snapshot", "ai-indexed"), "computer screen artificial intelligence"),
 ]
 
 
@@ -185,6 +191,18 @@ FALLBACK = {
         "Hardware accelerated GPU Scheduling is often left disabled by default, even though enabling it can reduce input lag.",
         "Windows ships with an advertising ID turned on by default, letting apps build a profile on you for targeted ads.",
         "Bing search results get mixed into your Start menu search by default, even when you are just looking for a local file.",
+        # Aggiunti 2026-08-20 (ricerca trend: "AI & Technology" e' la nicchia
+        # Shorts a crescita piu' rapida a meta' 2026, ~18x YoY, CPM $15-22 -
+        # virvid.ai/blog/most-profitable-ai-youtube-shorts-niches-2026-rpm-data,
+        # confermato da mediacube.io/en-US/blog/best-youtube-niches. Il canale
+        # aveva gia' individuato l'angolo (video-scripts.md, Video 8) ma solo
+        # per una ripresa manuale una tantum: content.py, il pool che genera i
+        # video automatici veri, non conteneva NESSUN item su Copilot o
+        # Recall pur essendo entrambi tweak reali e gia' shippati (tweaks.rs,
+        # id "disable_copilot" e "disable_recall") - un gap concreto tra cio'
+        # che l'app fa davvero e cio' che il canale racconta di lei.
+        "Windows Copilot runs in the background by default with no permanent off switch in Settings, only a policy toggle most people never find.",
+        "Recall can build a searchable AI history of everything that has ever been on your screen, passwords and private messages included, unless you turn it off yourself.",
     ],
     "contrarian": [
         "Most PC optimizer tools change registry values with no real way to undo them if something breaks.",
@@ -234,6 +252,10 @@ LISTTEASE_ITEMS = {
         "Location tracking is on by default for apps that request it.",
         "Bing search results get mixed into local Start menu search by default.",
         "Telemetry data collection is on by default at a higher level than most people realize.",
+        # Aggiunti 2026-08-20, stesso gap e stesse fonti citate sopra in
+        # FALLBACK["mistakewarning"].
+        "Windows Copilot has no permanent off switch in Settings, only a policy toggle most people never find.",
+        "Recall can quietly build a searchable AI history of everything shown on your screen.",
     ],
 }
 

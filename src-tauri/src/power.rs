@@ -71,9 +71,9 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
 
 #[cfg(windows)]
 pub fn rollback(store: &RollbackStore) -> Result<(), String> {
-    let entry = store
-        .take_entry(TWEAK_ID)
-        .ok_or_else(|| "no saved snapshot: the power plan does not appear to be modified".to_string())?;
+    let entry = store.take_entry(TWEAK_ID).ok_or_else(|| {
+        "no saved snapshot: the power plan does not appear to be modified".to_string()
+    })?;
 
     let SnapshotEntry::PowerScheme { previous_guid } = entry else {
         return Err("unexpected snapshot type for the power plan".to_string());
@@ -127,7 +127,9 @@ mod tests {
     fn rejects_things_that_only_look_like_guids() {
         assert!(!looks_like_guid("GUID:"));
         assert!(!looks_like_guid("8c5e7fda-e8bf-4a96-9a85"));
-        assert!(!looks_like_guid("8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c-extra"));
+        assert!(!looks_like_guid(
+            "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c-extra"
+        ));
         assert!(!looks_like_guid("zzzzzzzz-e8bf-4a96-9a85-a6e23a8c635c"));
         assert!(!looks_like_guid(""));
     }

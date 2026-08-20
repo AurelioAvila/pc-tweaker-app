@@ -1,10 +1,11 @@
+mod audit;
 mod cleanup;
 mod contextmenu;
+mod cpubench;
+mod cpuclock;
 mod diskhealth;
 mod diskinfo;
 mod diskopt;
-mod cpubench;
-mod cpuclock;
 mod dns;
 mod elevation;
 mod game_priority;
@@ -14,10 +15,11 @@ mod license;
 mod netlatency;
 mod netmaintenance;
 mod power;
-mod profiles;
-mod recommend;
 mod privacy_extra;
+mod profiles;
 mod ramclean;
+mod recommend;
+mod restore_point;
 mod rollback;
 mod services;
 mod startup;
@@ -251,7 +253,9 @@ fn requires_pro_for(id: &str) -> bool {
         netlatency::TWEAK_ID => netlatency::info().requires_pro,
         game_priority::TWEAK_ID => game_priority::info().requires_pro,
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::activity_history_info().requires_pro,
-        privacy_extra::TYPING_PERSONALIZATION_ID => privacy_extra::typing_personalization_info().requires_pro,
+        privacy_extra::TYPING_PERSONALIZATION_ID => {
+            privacy_extra::typing_personalization_info().requires_pro
+        }
         contextmenu::TWEAK_ID => contextmenu::info().requires_pro,
         services::WINDOWS_SEARCH_ID => services::windows_search_info().requires_pro,
         _ => find_tweak(id).map(|t| t.requires_pro).unwrap_or(false),
@@ -271,8 +275,32 @@ fn requires_pro_for(id: &str) -> bool {
 /// is explicit that cancellation locks *further* Pro use, not what's already
 /// on the machine.
 #[cfg(windows)]
-fn apply_by_id(store: &RollbackStore, app_data_dir: &std::path::Path, id: &str) -> Result<(), String> {
-    if requires_pro_for(id) && !license::LicenseStore::new(app_data_dir.to_path_buf()).is_pro_and_fresh() {
+fn apply_by_id(
+    store: &RollbackStore,
+    app_data_dir: &std::path::Path,
+    id: &str,
+) -> Result<(), String> {
+    // Single funnel for every apply (direct, batched, and the elevated
+    // helper), so this one audit call covers them all exactly once.
+    let result = apply_by_id_inner(store, app_data_dir, id);
+    audit::record(
+        "tweak-applied",
+        id,
+        result.is_ok(),
+        result.as_ref().err().cloned(),
+    );
+    result
+}
+
+#[cfg(windows)]
+fn apply_by_id_inner(
+    store: &RollbackStore,
+    app_data_dir: &std::path::Path,
+    id: &str,
+) -> Result<(), String> {
+    if requires_pro_for(id)
+        && !license::LicenseStore::new(app_data_dir.to_path_buf()).is_pro_and_fresh()
+    {
         return Err(format!(
             "{}this tweak requires an active PC Tweaker Pro subscription",
             PRO_REQUIRED_PREFIX
@@ -288,7 +316,9 @@ fn apply_by_id(store: &RollbackStore, app_data_dir: &std::path::Path, id: &str) 
         netlatency::TWEAK_ID => netlatency::apply(store),
         game_priority::TWEAK_ID => game_priority::apply(store),
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::apply_activity_history(store),
-        privacy_extra::TYPING_PERSONALIZATION_ID => privacy_extra::apply_typing_personalization(store),
+        privacy_extra::TYPING_PERSONALIZATION_ID => {
+            privacy_extra::apply_typing_personalization(store)
+        }
         contextmenu::TWEAK_ID => contextmenu::apply(store),
         services::WINDOWS_SEARCH_ID => services::apply(store),
         _ => {
@@ -300,6 +330,19 @@ fn apply_by_id(store: &RollbackStore, app_data_dir: &std::path::Path, id: &str) 
 
 #[cfg(windows)]
 fn rollback_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
+    // Same single-funnel audit as apply_by_id.
+    let result = rollback_by_id_inner(store, id);
+    audit::record(
+        "tweak-reverted",
+        id,
+        result.is_ok(),
+        result.as_ref().err().cloned(),
+    );
+    result
+}
+
+#[cfg(windows)]
+fn rollback_by_id_inner(store: &RollbackStore, id: &str) -> Result<(), String> {
     match id {
         power::TWEAK_ID => power::rollback(store),
         turbo::TWEAK_ID => turbo::rollback(store),
@@ -310,7 +353,9 @@ fn rollback_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
         netlatency::TWEAK_ID => netlatency::rollback(store),
         game_priority::TWEAK_ID => game_priority::rollback(store),
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::rollback_activity_history(store),
-        privacy_extra::TYPING_PERSONALIZATION_ID => privacy_extra::rollback_typing_personalization(store),
+        privacy_extra::TYPING_PERSONALIZATION_ID => {
+            privacy_extra::rollback_typing_personalization(store)
+        }
         contextmenu::TWEAK_ID => contextmenu::rollback(store),
         services::WINDOWS_SEARCH_ID => services::rollback(store),
         _ => {
@@ -332,7 +377,9 @@ fn requires_admin_for(id: &str) -> bool {
         netlatency::TWEAK_ID => netlatency::info().requires_admin,
         game_priority::TWEAK_ID => true,
         privacy_extra::ACTIVITY_HISTORY_ID => true,
-        privacy_extra::TYPING_PERSONALIZATION_ID => privacy_extra::typing_personalization_info().requires_admin,
+        privacy_extra::TYPING_PERSONALIZATION_ID => {
+            privacy_extra::typing_personalization_info().requires_admin
+        }
         contextmenu::TWEAK_ID => contextmenu::info().requires_admin,
         services::WINDOWS_SEARCH_ID => true,
         _ => find_tweak(id).map(|t| t.requires_admin).unwrap_or(false),
@@ -397,7 +444,9 @@ fn apply_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, 
                     failures.push(format!("{}: {}", id, e));
                 }
             }
-        } else if let Err(e) = elevation::run_elevated_action("--elevated-apply-many", &needs_admin.join(",")) {
+        } else if let Err(e) =
+            elevation::run_elevated_action("--elevated-apply-many", &needs_admin.join(","))
+        {
             failures.push(e);
         }
     }
@@ -429,7 +478,9 @@ fn rollback_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String
                     failures.push(format!("{}: {}", id, e));
                 }
             }
-        } else if let Err(e) = elevation::run_elevated_action("--elevated-rollback-many", &needs_admin.join(",")) {
+        } else if let Err(e) =
+            elevation::run_elevated_action("--elevated-rollback-many", &needs_admin.join(","))
+        {
             failures.push(e);
         }
     }
@@ -492,7 +543,14 @@ fn run_cleanup(app: tauri::AppHandle, id: String) -> Result<CleanupResult, Strin
         return serde_json::from_str(&json).map_err(|e| e.to_string());
     }
 
-    cleanup::run_cleanup(&id)
+    let result = cleanup::run_cleanup(&id);
+    audit::record(
+        "cleanup",
+        &id,
+        result.is_ok(),
+        result.as_ref().err().cloned(),
+    );
+    result
 }
 
 #[cfg(not(windows))]
@@ -508,7 +566,20 @@ fn scan_duplicates(root: String) -> Result<Vec<cleanup::DuplicateGroup>, String>
 
 #[tauri::command]
 fn delete_files(paths: Vec<String>) -> CleanupResult {
-    cleanup::delete_files(paths)
+    let requested = paths.len();
+    let result = cleanup::delete_files(paths);
+    // Counts only — never file paths — so the local log stays free of
+    // anything resembling personal data.
+    audit::record(
+        "files-deleted",
+        &format!("{} files", requested),
+        result.skipped_count == 0,
+        Some(format!(
+            "{} deleted, {} skipped",
+            result.deleted_count, result.skipped_count
+        )),
+    );
+    result
 }
 
 #[tauri::command]
@@ -544,7 +615,14 @@ fn optimize_disk(app: tauri::AppHandle, drive: String) -> Result<diskopt::DiskOp
         let _ = std::fs::remove_file(&path);
         return serde_json::from_str(&json).map_err(|e| e.to_string());
     }
-    diskopt::optimize(&drive)
+    let result = diskopt::optimize(&drive);
+    audit::record(
+        "disk-optimize",
+        &drive,
+        result.is_ok(),
+        result.as_ref().err().cloned(),
+    );
+    result
 }
 
 #[cfg(not(windows))]
@@ -560,6 +638,21 @@ fn optimize_disk(_app: tauri::AppHandle, _drive: String) -> Result<diskopt::Disk
 pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     let dir = dirs_app_data_dir();
     let store = RollbackStore::new(dir.clone());
+
+    // Safety net first: a System Restore point before any elevated change.
+    // Best-effort by design — Windows throttles restore points (one per 24h
+    // by default) and System Restore can be disabled entirely, and neither
+    // condition may block an action the user asked for. The outcome lands in
+    // the audit log either way, so "was I protected?" always has an answer.
+    match restore_point::create_restore_point() {
+        restore_point::RestorePointOutcome::Created => {
+            audit::record("restore-point", "system", true, None);
+        }
+        restore_point::RestorePointOutcome::Failed { reason } => {
+            audit::record("restore-point", "system", false, Some(reason));
+        }
+        restore_point::RestorePointOutcome::Skipped { .. } => {}
+    }
 
     let result: Result<(), String> = match action {
         "--elevated-apply" => apply_by_id(&store, &dir, id),
@@ -595,19 +688,46 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
                 Err(failed.join("; "))
             }
         }
-        "--elevated-startup" => startup::apply_from_payload(id),
-        "--elevated-cleanup" => cleanup::run_cleanup(id).and_then(|res| {
-            let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
-            std::fs::write(dir.join("last_cleanup_result.json"), json).map_err(|e| e.to_string())
-        }),
+        "--elevated-startup" => {
+            let result = startup::apply_from_payload(id);
+            audit::record(
+                "startup-change",
+                id,
+                result.is_ok(),
+                result.as_ref().err().cloned(),
+            );
+            result
+        }
+        "--elevated-cleanup" => {
+            let result = cleanup::run_cleanup(id);
+            audit::record(
+                "cleanup",
+                id,
+                result.is_ok(),
+                result.as_ref().err().cloned(),
+            );
+            result.and_then(|res| {
+                let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
+                std::fs::write(dir.join("last_cleanup_result.json"), json)
+                    .map_err(|e| e.to_string())
+            })
+        }
         // Re-validated on this side too: the elevated entry point is a plain
         // CLI flag, so it must not trust that its caller was our own app.
-        "--elevated-diskopt" => diskinfo::validate_drive(id)
-            .and_then(|drive| diskopt::optimize(&drive))
-            .and_then(|res| {
-            let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
-            std::fs::write(dir.join("last_diskopt_result.json"), json).map_err(|e| e.to_string())
-        }),
+        "--elevated-diskopt" => {
+            let result = diskinfo::validate_drive(id).and_then(|drive| diskopt::optimize(&drive));
+            audit::record(
+                "disk-optimize",
+                id,
+                result.is_ok(),
+                result.as_ref().err().cloned(),
+            );
+            result.and_then(|res| {
+                let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
+                std::fs::write(dir.join("last_diskopt_result.json"), json)
+                    .map_err(|e| e.to_string())
+            })
+        }
         other => Err(format!("unknown action: {}", other)),
     };
 
@@ -621,11 +741,19 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
 }
 
 #[cfg(windows)]
-fn dirs_app_data_dir() -> std::path::PathBuf {
+pub(crate) fn dirs_app_data_dir() -> std::path::PathBuf {
     // Mirrors Tauri's own resolution (%APPDATA%/<identifier>) without needing
     // a running AppHandle, since the elevated helper process never builds a UI.
     let base = std::env::var("APPDATA").unwrap_or_else(|_| ".".to_string());
     std::path::PathBuf::from(base).join("com.aurel.pc-tweaker-app")
+}
+
+/// Last audit entries, newest first, for the dashboard's history card. The
+/// full file stays on disk for anyone who wants the complete record.
+#[tauri::command]
+fn list_audit_log(app: tauri::AppHandle) -> Result<Vec<audit::AuditEntry>, String> {
+    let dir = store_for_dir(&app)?;
+    Ok(audit::list_in(&dir, 100))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -674,6 +802,7 @@ pub fn run() {
             game_sessions::remove_game_session,
             startup::list_startup_items,
             startup::set_startup_enabled,
+            list_audit_log,
             sysmon::system_stats,
             ramclean::clean_ram,
             scan_large_files,
@@ -693,7 +822,10 @@ mod tests {
     /// Every id the UI can show, gathered from the same places `list_tweaks`
     /// gathers them.
     fn all_visible_ids() -> Vec<String> {
-        let mut ids: Vec<String> = tweaks::all_tweaks().iter().map(|t| t.id.to_string()).collect();
+        let mut ids: Vec<String> = tweaks::all_tweaks()
+            .iter()
+            .map(|t| t.id.to_string())
+            .collect();
         ids.extend(
             [
                 power::TWEAK_ID,
@@ -734,18 +866,28 @@ mod tests {
     fn admin_tweaks_collapse_into_one_elevated_batch() {
         let ids = all_visible_ids();
         let expected_admin = ids.iter().filter(|id| requires_admin_for(id)).count();
-        assert!(expected_admin > 1, "test is meaningless without several admin tweaks");
+        assert!(
+            expected_admin > 1,
+            "test is meaningless without several admin tweaks"
+        );
 
         let (needs_admin, direct) = split_by_elevation(ids.clone());
 
         assert_eq!(needs_admin.len(), expected_admin);
-        assert_eq!(needs_admin.len() + direct.len(), ids.len(), "no tweak may be dropped");
+        assert_eq!(
+            needs_admin.len() + direct.len(),
+            ids.len(),
+            "no tweak may be dropped"
+        );
         assert!(direct.iter().all(|id| !requires_admin_for(id)));
 
         // One payload -> one `run_elevated_action` call -> one UAC prompt.
         let payload = needs_admin.join(",");
         let round_tripped: Vec<&str> = payload.split(',').filter(|s| !s.is_empty()).collect();
-        assert_eq!(round_tripped, needs_admin, "payload must survive the join/split round trip");
+        assert_eq!(
+            round_tripped, needs_admin,
+            "payload must survive the join/split round trip"
+        );
     }
 
     /// The actual security property that matters: with no cached license at
@@ -822,7 +964,11 @@ mod tests {
     #[test]
     fn no_tweak_id_contains_the_batch_separator() {
         for id in all_visible_ids() {
-            assert!(!id.contains(','), "id `{}` would break the batch payload", id);
+            assert!(
+                !id.contains(','),
+                "id `{}` would break the batch payload",
+                id
+            );
         }
     }
 
@@ -861,7 +1007,11 @@ mod tests {
         // One `STRINGS` entry per language; each locale object repeats the
         // same id keys, so a fully translated id appears once per locale.
         let locale_count = i18n.matches("  tweaks: {").count();
-        assert!(locale_count >= 5, "expected at least 5 locales, found {}", locale_count);
+        assert!(
+            locale_count >= 5,
+            "expected at least 5 locales, found {}",
+            locale_count
+        );
 
         let mut ids = all_visible_ids();
         ids.extend(cleanup::cleanup_targets().iter().map(|t| t.id.to_string()));
@@ -870,7 +1020,10 @@ mod tests {
         for id in &ids {
             let found = i18n.matches(&format!("\n    {}: {{", id)).count();
             if found < locale_count {
-                missing.push(format!("{} (translated in {}/{} languages)", id, found, locale_count));
+                missing.push(format!(
+                    "{} (translated in {}/{} languages)",
+                    id, found, locale_count
+                ));
             }
         }
 

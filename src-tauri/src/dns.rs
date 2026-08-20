@@ -82,7 +82,11 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
         .take_entry(TWEAK_ID)
         .ok_or_else(|| "no snapshot saved: DNS does not appear to be changed".to_string())?;
 
-    let SnapshotEntry::Dns { interface, previous_servers } = entry else {
+    let SnapshotEntry::Dns {
+        interface,
+        previous_servers,
+    } = entry
+    else {
         return Err("unexpected snapshot type for DNS".to_string());
     };
 

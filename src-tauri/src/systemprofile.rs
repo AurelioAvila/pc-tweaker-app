@@ -125,7 +125,13 @@ fn read_windows_version(profile: &mut SystemProfile) {
     let major = build
         .as_deref()
         .and_then(|b| b.parse::<u32>().ok())
-        .map(|b| if b >= 22000 { "Windows 11" } else { "Windows 10" });
+        .map(|b| {
+            if b >= 22000 {
+                "Windows 11"
+            } else {
+                "Windows 10"
+            }
+        });
 
     let display: Option<String> = key
         .get_value("DisplayVersion")
@@ -436,7 +442,15 @@ mod tests {
     fn the_profile_carries_no_identifying_fields() {
         let json = serde_json::to_string(&SystemProfile::empty()).unwrap();
         for forbidden in [
-            "serial", "user", "computer_name", "hostname", "mac", "ip", "email", "license", "uuid",
+            "serial",
+            "user",
+            "computer_name",
+            "hostname",
+            "mac",
+            "ip",
+            "email",
+            "license",
+            "uuid",
         ] {
             assert!(
                 !json.contains(forbidden),
@@ -462,13 +476,25 @@ mod live_tests {
         let p = collect();
         println!("{:#?}", p);
 
-        assert!(p.windows_version.is_some(), "Windows version probe returned nothing");
-        assert!(p.windows_build.is_some(), "Windows build probe returned nothing");
+        assert!(
+            p.windows_version.is_some(),
+            "Windows version probe returned nothing"
+        );
+        assert!(
+            p.windows_build.is_some(),
+            "Windows build probe returned nothing"
+        );
         assert!(p.cpu.is_some(), "CPU probe returned nothing");
-        assert!(p.cpu_logical_cores.unwrap_or(0) > 0, "logical core count is zero");
+        assert!(
+            p.cpu_logical_cores.unwrap_or(0) > 0,
+            "logical core count is zero"
+        );
         assert!(p.gpu.is_some(), "GPU probe returned nothing");
         assert!(p.ram_total_bytes.unwrap_or(0) > 0, "RAM total is zero");
-        assert!(p.power_plan_guid.is_some(), "power plan probe returned nothing");
+        assert!(
+            p.power_plan_guid.is_some(),
+            "power plan probe returned nothing"
+        );
 
         // Disk class and form factor are deliberately *not* asserted to be
         // known. Both come from hardware that a virtual machine does not
@@ -482,7 +508,10 @@ mod live_tests {
         // return one of the defined variants rather than panicking or hanging
         // on hardware they don't recognise, which is the failure mode that
         // actually matters.
-        println!("disk: {:?}, form factor: {:?}", p.system_disk, p.form_factor);
+        println!(
+            "disk: {:?}, form factor: {:?}",
+            p.system_disk, p.form_factor
+        );
         assert!(
             matches!(
                 p.system_disk,

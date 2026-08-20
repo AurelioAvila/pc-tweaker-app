@@ -167,6 +167,11 @@ const REVIEWED_AS_CORRECT = new Set([
   "fr:command.statusActive",
   // "Support" is the ordinary German word for this menu section.
   "de:menu.support",
+  // Product names are the same in every language.
+  "it:promptshieldPromo.title",
+  "fr:promptshieldPromo.title",
+  "es:promptshieldPromo.title",
+  "de:promptshieldPromo.title",
   // "PC Tweaker Uninstaller" is the product's name in every language.
   "it:uninstallerPromo.title",
   "fr:uninstallerPromo.title",

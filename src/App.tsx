@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { getVersion } from "@tauri-apps/api/app";
 import { open as openFolderDialog, save as saveFileDialog } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { check as checkForUpdate, type Update } from "@tauri-apps/plugin-updater";
@@ -13,6 +14,41 @@ import "./App.css";
 // project brief) is live: `VITE_API_BASE_URL=https://your-app.up.railway.app npm run build`.
 // Until then, auth/checkout calls fail honestly instead of faking success.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
+// ---- Anonymous, opt-in error reporting --------------------------------------
+// Off by default; the AccountMenu toggle flips a localStorage flag that is
+// read at send time (no state plumbing). What leaves the machine: app name,
+// version, and the error message the user already saw — nothing else.
+const ERROR_REPORTS_KEY = "pc-tweaker-error-reports";
+
+let cachedAppVersion = "";
+void getVersion()
+  .then((v) => {
+    cachedAppVersion = v;
+  })
+  .catch(() => {
+    // Without a version the backend rejects the report; reporting simply
+    // stays silent, which is the correct failure mode for telemetry.
+  });
+
+function errorReportsEnabled(): boolean {
+  return localStorage.getItem(ERROR_REPORTS_KEY) === "on";
+}
+
+function reportError(message: string) {
+  if (!API_BASE_URL || !cachedAppVersion || !errorReportsEnabled()) return;
+  fetch(`${API_BASE_URL}/api/error-reports`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      app: "pctweaker",
+      appVersion: cachedAppVersion,
+      message: message.slice(0, 500),
+    }),
+  }).catch(() => {
+    // Fire-and-forget by design: a failed report must never surface an error.
+  });
+}
 
 type AuthState =
   | { status: "anonymous" }
@@ -1339,7 +1375,14 @@ function AccountMenu({
   onUpgrade: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [errReports, setErrReports] = useState(() => errorReportsEnabled());
   const isPro = auth.status === "authenticated" && auth.isPro;
+
+  function toggleErrorReports() {
+    const next = !errReports;
+    setErrReports(next);
+    localStorage.setItem(ERROR_REPORTS_KEY, next ? "on" : "off");
+  }
 
   return (
     <div className="relative">
@@ -1470,6 +1513,30 @@ function AccountMenu({
                     style={{ background: t.swatch }}
                   />
                 ))}
+              </div>
+            </div>
+
+            <div className="border-b border-white/10 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{s.menu.errorReports}</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-slate-400">{s.menu.errorReportsBody}</p>
+                </div>
+                <button
+                  role="switch"
+                  aria-checked={errReports}
+                  aria-label={s.menu.errorReports}
+                  onClick={toggleErrorReports}
+                  className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors ${
+                    errReports ? "bg-indigo-500" : "bg-white/15"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${
+                      errReports ? "left-[18px]" : "left-0.5"
+                    }`}
+                  />
+                </button>
               </div>
             </div>
 
@@ -4006,6 +4073,10 @@ function App() {
   }, []);
 
   function pushToast(kind: Toast["kind"], message: string) {
+    // Every user-visible error funnels through here, which makes it the one
+    // honest hook for opt-in error reporting: what gets reported is exactly
+    // what the user saw, never more.
+    if (kind === "error") reportError(message);
     const id = ++toastSeq.current;
     setToasts((t) => [...t, { id, kind, message }]);
     setTimeout(() => {

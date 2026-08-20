@@ -31,7 +31,7 @@ pub struct SystemStats {
     pub uptime_secs: u64,
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn system_stats(state: tauri::State<'_, SysMonState>) -> Result<SystemStats, String> {
     use sysinfo::Disks;
 

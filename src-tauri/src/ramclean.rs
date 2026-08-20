@@ -98,7 +98,7 @@ mod imp {
 }
 
 #[cfg(windows)]
-#[tauri::command]
+#[tauri::command(async)]
 pub fn clean_ram(
     state: tauri::State<'_, crate::sysmon::SysMonState>,
 ) -> Result<RamCleanResult, String> {
@@ -110,7 +110,7 @@ pub fn clean_ram(
 }
 
 #[cfg(not(windows))]
-#[tauri::command]
+#[tauri::command(async)]
 pub fn clean_ram(
     _state: tauri::State<'_, crate::sysmon::SysMonState>,
 ) -> Result<RamCleanResult, String> {
@@ -147,7 +147,7 @@ pub fn top_by_memory(rows: Vec<(String, u64)>, limit: usize) -> Vec<ProcessMemor
 /// The heaviest memory consumers right now, grouped by process name.
 /// Strictly read-only: the Memory Pressure panel shows WHO is using memory
 /// before offering any action at all.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn top_memory_processes(
     state: tauri::State<'_, crate::sysmon::SysMonState>,
 ) -> Result<Vec<ProcessMemory>, String> {

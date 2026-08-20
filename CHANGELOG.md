@@ -5,6 +5,63 @@ update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just
 the git log.
 
+## v1.0.0 "Control Room" — 2026-08-21
+
+One-point-zero. The release where PC Tweaker stops being a tweak list and
+becomes a control room: a live instrument panel, an advisor that argues
+from your hardware, and a ledger that remembers every change it ever made
+— all wrapped in a design language built for this app alone.
+
+### Added
+
+- **PC Tweaker Intelligence.** Two new surfaces built on the audit and
+  advice engines:
+  - **Recommended for your PC** — one concrete, hardware-motivated
+    recommendation on the home screen, with the reason it applies to this
+    machine, a confidence level, and the guarantee that made this app:
+    the original value is saved before any change. Never automatic, and
+    structurally unable to suggest anything security-related — the
+    allowlist that feeds it excludes those by construction (unit-tested).
+  - **Change Ledger (History)** — every change this app made to this PC,
+    newest first, stored locally and never uploaded, with one-click
+    revert for anything still applied.
+- **Control Room design language.** A three-layer token system drives the
+  entire interface: 14 themes from three raw values each, live signal
+  hairlines, Inter Variable, a consistent type scale, and motion that
+  respects reduced-motion settings. Over 320 hardcoded colors retired.
+- **Free RAM, front and center.** The home screen leads with the card
+  people use daily: live tabular memory figures, a session usage trace
+  where a trim shows up as a visible dip, and the auto-clean scheduler.
+- **An instrument-grade Turbo Boost gauge** — bezel, dial numerals,
+  tapered needle with counterweight, and a glow channel — replacing the
+  flat arc.
+- **A theme-aware diagnostic Scan** — the scan orb, progress arc, and
+  results now take each theme's accent instead of a fixed gradient.
+- **Device-local profile photo.** Pick a picture from your device; it is
+  cover-cropped to 128 px and stored only on this machine. There is no
+  avatar upload endpoint, on purpose.
+- **Report an issue** in the account menu, opening pctweaker.app/support.
+- **Suite cross-promotion done honestly.** The Maintenance screen links
+  to PC Tweaker Uninstaller (with its real icon), and the Privacy screen
+  closes with PromptShield — because the biggest modern privacy leak is
+  what gets pasted into AI chats.
+
+### Fixed
+
+- **UI micro-freezes are gone.** Every command was synchronous, and Tauri
+  runs synchronous commands on the main thread — so the stats poll, the
+  startup listing, disk health, cleanup previews, and elevated waits all
+  stalled the window for their full duration. Forty-four commands now run
+  on the async runtime; the interface never blocks.
+- Opt-in anonymous error reporting (off by default, one switch in the
+  account menu) so crashes can be fixed without collecting anything else.
+
+### Changed
+
+- Version 1.0.0: the public contract this app has been building toward —
+  honest descriptions, a backup before every change, one-click rollback,
+  and now a written record you can audit.
+
 ## v0.5.0 — 2026-08-18
 
 Fifty tweaks, a server-verified Pro tier, and a licence change. The minor

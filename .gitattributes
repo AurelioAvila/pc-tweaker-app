@@ -1,0 +1,12 @@
+# Normalize to LF in the repo and on checkout, so Prettier's endOfLine=lf
+# passes identically on dev machines and on Windows CI runners (whose default
+# autocrlf=true would otherwise check out CRLF and fail the format gate).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.icns binary
+*.mp4 binary
+*.zip binary
+*.woff binary
+*.woff2 binary

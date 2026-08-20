@@ -52,8 +52,24 @@ const flat = Object.fromEntries(LOCALES.map((l) => [l, flatten(STRINGS[l])]));
 // Terms that are genuinely the same word in these languages, or are not words
 // at all. Matching English here is correct, not a missing translation.
 const SAME_ON_PURPOSE = new Set([
-  "CPU", "RAM", "Pro", "Free", "PC Tweaker", "UI", "Gaming", "Privacy", "GB", "MB",
-  "Windows", "Stripe", "DNS", "VPN", "Turbo Gaming", "Game Sessions", "SCAN", "OK",
+  "CPU",
+  "RAM",
+  "Pro",
+  "Free",
+  "PC Tweaker",
+  "UI",
+  "Gaming",
+  "Privacy",
+  "GB",
+  "MB",
+  "Windows",
+  "Stripe",
+  "DNS",
+  "VPN",
+  "Turbo Gaming",
+  "Game Sessions",
+  "SCAN",
+  "OK",
 ]);
 
 function looksIntentional(value) {
@@ -147,14 +163,35 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  */
 const REVIEWED_AS_CORRECT = new Set([
   // "Focus" is standard Italian product language; "Active" is valid French.
-  "it:command.profileFocus", "fr:command.statusActive",
+  "it:command.profileFocus",
+  "fr:command.statusActive",
+  // "Support" is the ordinary German word for this menu section.
+  "de:menu.support",
   // "PC Tweaker Uninstaller" is the product's name in every language.
-  "it:uninstallerPromo.title", "fr:uninstallerPromo.title", "es:uninstallerPromo.title", "de:uninstallerPromo.title",
-  "it:badges.admin", "fr:badges.admin", "es:badges.admin", "de:badges.admin",
-  "it:badges.pro", "fr:badges.pro", "es:badges.pro", "de:badges.pro",
-  "it:turboBoost.title", "fr:turboBoost.title", "es:turboBoost.title", "de:turboBoost.title",
-  "it:turboBoost.startLabel", "fr:turboBoost.startLabel", "es:turboBoost.startLabel", "de:turboBoost.startLabel",
-  "it:turboBoost.stopLabel", "fr:turboBoost.stopLabel", "es:turboBoost.stopLabel", "de:turboBoost.stopLabel",
+  "it:uninstallerPromo.title",
+  "fr:uninstallerPromo.title",
+  "es:uninstallerPromo.title",
+  "de:uninstallerPromo.title",
+  "it:badges.admin",
+  "fr:badges.admin",
+  "es:badges.admin",
+  "de:badges.admin",
+  "it:badges.pro",
+  "fr:badges.pro",
+  "es:badges.pro",
+  "de:badges.pro",
+  "it:turboBoost.title",
+  "fr:turboBoost.title",
+  "es:turboBoost.title",
+  "de:turboBoost.title",
+  "it:turboBoost.startLabel",
+  "fr:turboBoost.startLabel",
+  "es:turboBoost.startLabel",
+  "de:turboBoost.startLabel",
+  "it:turboBoost.stopLabel",
+  "fr:turboBoost.stopLabel",
+  "es:turboBoost.stopLabel",
+  "de:turboBoost.stopLabel",
   "it:menu.account",
   "es:menu.plan",
   "it:auth.email",
@@ -163,17 +200,28 @@ const REVIEWED_AS_CORRECT = new Set([
   // Storage acronyms. HDD, SSD and NVMe are the same in every locale we
   // ship — they are product names, not words, and "translating" them would
   // invent terminology no user would recognise on their own spec sheet.
-  "it:scan.diskHdd", "fr:scan.diskHdd", "es:scan.diskHdd", "de:scan.diskHdd",
-  "it:scan.diskSsd", "fr:scan.diskSsd", "es:scan.diskSsd", "de:scan.diskSsd",
-  "it:scan.diskNvme", "fr:scan.diskNvme", "es:scan.diskNvme", "de:scan.diskNvme",
+  "it:scan.diskHdd",
+  "fr:scan.diskHdd",
+  "es:scan.diskHdd",
+  "de:scan.diskHdd",
+  "it:scan.diskSsd",
+  "fr:scan.diskSsd",
+  "es:scan.diskSsd",
+  "de:scan.diskSsd",
+  "it:scan.diskNvme",
+  "fr:scan.diskNvme",
+  "es:scan.diskNvme",
+  "de:scan.diskNvme",
 
   // Borrowed into these languages unchanged: "desktop" is the ordinary
   // Italian and German word for the machine type, and "Optional" and
   // "Configurations" are correct German and French spellings respectively —
   // identical to English by coincidence, not by omission.
-  "it:scan.formDesktop", "de:scan.formDesktop",
+  "it:scan.formDesktop",
+  "de:scan.formDesktop",
   "de:scan.groupOptional",
-  "fr:tabs.profiles", "fr:profiles.title",
+  "fr:tabs.profiles",
+  "fr:profiles.title",
 ]);
 
 const unexplained = untranslated.filter((r) => !REVIEWED_AS_CORRECT.has(`${r.locale}:${r.key}`));

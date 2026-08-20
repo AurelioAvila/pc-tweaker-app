@@ -1,25 +1,54 @@
 @import "tailwindcss";
 
-/* Prevents the WebView's default white background from showing through
-   below the app content (e.g. short tab + open account menu). */
-html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
-  background-color: var(--app-bg-b);
+/* ==========================================================================
+   PC Tweaker — "The Control Room" / Signal Architecture
+   ==========================================================================
+   Three token layers, per the design system:
+
+   1. FOUNDATION — raw, theme-independent physics: spacing rhythm, radii,
+      type scale, motion durations/easings.
+   2. THEME RAW DATA — each of the 14 themes contributes exactly three raw
+      values (two background steps + one accent). Nothing else is allowed to
+      vary per theme: identity lives in the system, not in the palette.
+   3. SEMANTIC — every color a component may reference, derived from the raw
+      data with color-mix so all 14 themes (and any future one) get the same
+      contrast relationships for free. Components never touch raw values.
+
+   Depth is expressed through luminance steps and hairline borders, never
+   through large shadows (Fluent-style layering). One accent; success /
+   warning / danger / info are fixed semantic colors reserved for meaning.
+   ========================================================================== */
+
+/* ---- 1. Foundation ------------------------------------------------------ */
+
+:root {
+  /* Radius grammar: controls (s), cards/surfaces (m), overlays (l). */
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 14px;
+
+  /* Motion: quality, not entertainment. */
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 240ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  --font-app:
+    "Inter Variable", Inter, "Segoe UI Variable", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-data: "Cascadia Code", Consolas, ui-monospace, monospace;
 }
 
-/* The themes below match getcertsprint.com's own theme picker exactly
-   (same CSS variable values, read live off the site's computed styles), so
-   switching themes here mirrors the site. */
+/* ---- 2. Theme raw data --------------------------------------------------- */
+/* The values match pctweaker.app's theme picker. `--app-accent2` is legacy
+   (old dual-accent gradients); it is being retired screen by screen and no
+   new usage is permitted. */
+
 :root,
 [data-theme="violet"] {
   --app-bg-a: #1b1230;
   --app-bg-b: #10091f;
   --app-accent: #ff5c8a;
   --app-accent2: #35e0c0;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme="teal_depths"] {
@@ -27,7 +56,6 @@ body,
   --app-bg-b: #071a1a;
   --app-accent: #35e0c0;
   --app-accent2: #ff5c8a;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme="amber_dusk"] {
@@ -35,7 +63,6 @@ body,
   --app-bg-b: #1a1006;
   --app-accent: #ffb84d;
   --app-accent2: #5bd1ff;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme="crimson_steel"] {
@@ -43,7 +70,6 @@ body,
   --app-bg-b: #1a0a0f;
   --app-accent: #ff4d6d;
   --app-accent2: #4ce0b3;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme="ocean_blue"] {
@@ -51,7 +77,6 @@ body,
   --app-bg-b: #050e1a;
   --app-accent: #3d8bff;
   --app-accent2: #ffb74d;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme="forest_emerald"] {
@@ -59,7 +84,6 @@ body,
   --app-bg-b: #06140d;
   --app-accent: #2ecc71;
   --app-accent2: #ff6f91;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme="royal_gold"] {
@@ -67,7 +91,6 @@ body,
   --app-bg-b: #170f02;
   --app-accent: #e8b923;
   --app-accent2: #6f5bff;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme="slate_mono"] {
@@ -75,7 +98,6 @@ body,
   --app-bg-b: #0b0d10;
   --app-accent: #9aa5b1;
   --app-accent2: #6ee7b7;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme="indigo_night"] {
@@ -83,7 +105,6 @@ body,
   --app-bg-b: #0a0a1f;
   --app-accent: #6c63ff;
   --app-accent2: #ffc155;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme="coral_sunset"] {
@@ -91,7 +112,6 @@ body,
   --app-bg-b: #1a0d08;
   --app-accent: #ff7a45;
   --app-accent2: #4dd9e8;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme="rose_quartz"] {
@@ -99,7 +119,6 @@ body,
   --app-bg-b: #1a0e14;
   --app-accent: #ffafcb;
   --app-accent2: #e88aae;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme="cyber_lime"] {
@@ -107,19 +126,13 @@ body,
   --app-bg-b: #0a140a;
   --app-accent: #b6ff3c;
   --app-accent2: #7ed321;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
-/* The two below bring the picker to 14, which is what fills its 7-per-row
-   grid exactly — at 12 the last row ended with two empty gaps. Both follow
-   the same recipe as the rest: a deep two-step background in the accent's own
-   hue, plus a complementary secondary. */
 [data-theme="copper_forge"] {
   --app-bg-a: #2a1c10;
   --app-bg-b: #1a1108;
   --app-accent: #d98b4a;
   --app-accent2: #4ad9c8;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-theme="magenta_pulse"] {
@@ -127,13 +140,205 @@ body,
   --app-bg-b: #1a0817;
   --app-accent: #ff2fd0;
   --app-accent2: #3cf0ff;
-  --app-font: Sora, ui-sans-serif, system-ui, sans-serif;
 }
+
+/* ---- 3. Semantic tokens --------------------------------------------------- */
+
+:root {
+  /* Backgrounds: the app floor and the raised band (sidebar / chrome). */
+  --bg-app: var(--app-bg-b);
+  --bg-raised: var(--app-bg-a);
+
+  /* Surfaces: two opaque luminance steps above the floor. Opaque on purpose —
+     translucent stacks are where custom themes go to die. */
+  --surface-1: color-mix(in oklab, var(--app-bg-a) 96%, white);
+  --surface-2: color-mix(in oklab, var(--app-bg-a) 90%, white);
+  --surface-hover: color-mix(in oklab, var(--app-bg-a) 93%, white);
+
+  /* Hairline borders carry the depth that shadows used to fake. */
+  --border-subtle: color-mix(in oklab, white 9%, transparent);
+  --border-strong: color-mix(in oklab, white 16%, transparent);
+
+  /* Ink: three deliberate steps, all AA on every theme background because
+     they are mixed from white, not picked per theme. */
+  --text-primary: color-mix(in oklab, white 92%, var(--app-bg-a));
+  --text-secondary: color-mix(in oklab, white 72%, var(--app-bg-a));
+  --text-muted: color-mix(in oklab, white 56%, var(--app-bg-a));
+
+  /* One accent. Soft variant for fills behind accent-colored text/icons.
+     on-accent is a deep shade of the theme's own hue: every shipped accent
+     is mid-to-bright, so dark ink on it clears AA on all 14 themes. */
+  --accent: var(--app-accent);
+  --accent-soft: color-mix(in oklab, var(--app-accent) 14%, transparent);
+  --on-accent: color-mix(in oklab, var(--app-bg-b) 70%, black);
+  --focus: var(--app-accent);
+
+  /* Fixed status colors, reserved for meaning — never decoration. Tuned for
+     AA as text on the darkest shipped background. */
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #7dd3fc;
+  --overlay: rgb(0 0 0 / 0.6);
+}
+
+/* ---- Tailwind bridge ------------------------------------------------------ */
+/* Semantic utilities (bg-surface-1, text-ink-2, border-line, text-warn, ...).
+   Components use ONLY these color utilities; raw palette classes are being
+   removed screen by screen. */
+
+@theme inline {
+  --color-app: var(--bg-app);
+  --color-raised: var(--bg-raised);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-hover: var(--surface-hover);
+  --color-ink: var(--text-primary);
+  --color-ink-2: var(--text-secondary);
+  --color-ink-3: var(--text-muted);
+  --color-line: var(--border-subtle);
+  --color-line-2: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-ok: var(--success);
+  --color-warn: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  --font-sans: var(--font-app);
+  --font-mono: var(--font-data);
+
+  --radius-s: var(--radius-s);
+  --radius-m: var(--radius-m);
+  --radius-l: var(--radius-l);
+}
+
+/* ---- Base ----------------------------------------------------------------- */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background-color: var(--bg-app);
+}
+
+body {
+  font-family: var(--font-app);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Type scale ------------------------------------------------------------ */
+/* One family; hierarchy from size/weight/tracking only. `type-data` is for
+   numbers and technical values: tabular figures so columns never wobble. */
+
+.type-display {
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.type-page {
+  font-size: 20px;
+  line-height: 1.3;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.type-section {
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.type-card {
+  font-size: 13.5px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.type-body {
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.type-caption {
+  font-size: 11.5px;
+  line-height: 1.45;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.type-label {
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.type-data {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.type-mono {
+  font-family: var(--font-data);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Signal: the active-state hairline ------------------------------------ */
+/* The system's signature: a 2px indicator that "lights up" beside whatever is
+   active or applied — an instrument LED, not a filled block. */
+
+.signal {
+  position: relative;
+}
+
+.signal::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  width: 2px;
+  height: 0;
+  border-radius: 1px;
+  background: var(--accent);
+  transition:
+    height var(--dur-base) var(--ease-standard),
+    opacity var(--dur-base) var(--ease-standard);
+  opacity: 0;
+}
+
+.signal[data-active="true"]::before {
+  height: 60%;
+  opacity: 1;
+}
+
+/* ---- Focus ----------------------------------------------------------------- */
+/* Keyboard navigation is a first-class input: one visible, handsome ring,
+   everywhere, only on :focus-visible so mouse users never see noise. */
+
+:where(button, a, input, select, textarea, [role="switch"], [tabindex]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- Motion ----------------------------------------------------------------- */
 
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -144,7 +349,7 @@ body,
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.98);
+    transform: translateY(10px) scale(0.985);
   }
   to {
     opacity: 1;
@@ -152,10 +357,43 @@ body,
   }
 }
 
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
 .animate-card {
-  animation: fade-in-up 0.35s ease both;
+  animation: fade-in-up var(--dur-slow) var(--ease-standard) both;
 }
 
 .animate-toast {
-  animation: toast-in 0.25s ease both;
+  animation: toast-in var(--dur-base) var(--ease-standard) both;
+}
+
+.skeleton {
+  border-radius: var(--radius-s);
+  background: linear-gradient(
+    90deg,
+    var(--surface-1) 25%,
+    var(--surface-2) 50%,
+    var(--surface-1) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s linear infinite;
+}
+
+/* Reduce Motion is a contract, not a suggestion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

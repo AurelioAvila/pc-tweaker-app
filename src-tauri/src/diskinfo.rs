@@ -69,7 +69,7 @@ pub fn list_drives() -> Vec<DriveInfo> {
     drives
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_drives_cmd() -> Vec<DriveInfo> {
     list_drives()
 }

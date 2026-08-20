@@ -94,7 +94,8 @@ pub fn verify(payload_json: &str, signature_b64: &str) -> Result<LicensePayload,
         .ok()
         .and_then(|v| v.try_into().ok())
         .ok_or(VerifyError::BadPublicKey)?;
-    let verifying_key = VerifyingKey::from_bytes(&key_bytes).map_err(|_| VerifyError::BadPublicKey)?;
+    let verifying_key =
+        VerifyingKey::from_bytes(&key_bytes).map_err(|_| VerifyError::BadPublicKey)?;
 
     let sig_bytes: [u8; 64] = STANDARD
         .decode(signature_b64)
@@ -180,7 +181,9 @@ impl LicenseStore {
     /// that was validly signed but says `is_pro: false` — collapses to the
     /// same `false`, on purpose. There is no partial-credit path here.
     pub fn is_pro_and_fresh(&self) -> bool {
-        let Some(cached) = self.load() else { return false };
+        let Some(cached) = self.load() else {
+            return false;
+        };
         let Ok(payload) = verify(&cached.payload_json, &cached.signature) else {
             return false;
         };
@@ -195,7 +198,8 @@ impl LicenseStore {
 /// "not Pro" until the next successful fetch.
 #[tauri::command]
 pub fn save_license(app: tauri::AppHandle, response: SignedLicenseResponse) -> Result<(), String> {
-    verify(&response.payload_json, &response.signature).map_err(|e| format!("license did not verify: {:?}", e))?;
+    verify(&response.payload_json, &response.signature)
+        .map_err(|e| format!("license did not verify: {:?}", e))?;
     let store = LicenseStore::new(crate::store_for_dir(&app)?);
     store.save(&response).map_err(|e| e.to_string())
 }
@@ -216,7 +220,9 @@ pub fn license_status(app: tauri::AppHandle) -> Result<bool, String> {
 /// account that never paid for anything.
 #[tauri::command]
 pub fn clear_license(app: tauri::AppHandle) -> Result<(), String> {
-    LicenseStore::new(crate::store_for_dir(&app)?).delete().map_err(|e| e.to_string())
+    LicenseStore::new(crate::store_for_dir(&app)?)
+        .delete()
+        .map_err(|e| e.to_string())
 }
 
 #[cfg(test)]
@@ -257,9 +263,17 @@ mod tests {
     #[test]
     fn a_single_flipped_byte_in_the_payload_is_rejected() {
         let resp: SignedLicenseResponse = serde_json::from_str(REAL_NODE_SIGNED_RESPONSE).unwrap();
-        let tampered = resp.payload_json.replace("\"isPro\":true", "\"isPro\":false");
-        assert_ne!(tampered, resp.payload_json, "the replace must actually have changed something");
-        assert_eq!(verify(&tampered, &resp.signature), Err(VerifyError::SignatureInvalid));
+        let tampered = resp
+            .payload_json
+            .replace("\"isPro\":true", "\"isPro\":false");
+        assert_ne!(
+            tampered, resp.payload_json,
+            "the replace must actually have changed something"
+        );
+        assert_eq!(
+            verify(&tampered, &resp.signature),
+            Err(VerifyError::SignatureInvalid)
+        );
     }
 
     #[test]
@@ -269,7 +283,10 @@ mod tests {
         let mut bogus = STANDARD.decode(&resp.signature).unwrap();
         bogus[0] ^= 0xFF;
         let bogus_b64 = STANDARD.encode(bogus);
-        assert_eq!(verify(&resp.payload_json, &bogus_b64), Err(VerifyError::SignatureInvalid));
+        assert_eq!(
+            verify(&resp.payload_json, &bogus_b64),
+            Err(VerifyError::SignatureInvalid)
+        );
     }
 
     #[test]
@@ -337,7 +354,10 @@ mod tests {
             signature: "irrelevant-for-this-test".into(),
         };
         store.save(&resp).unwrap();
-        assert!(store.load().is_some(), "precondition: something must be cached");
+        assert!(
+            store.load().is_some(),
+            "precondition: something must be cached"
+        );
 
         store.delete().unwrap();
         assert!(store.load().is_none());

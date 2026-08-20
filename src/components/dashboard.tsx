@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
 import { formatBytes } from "../lib";
-import { DriveInfo, Section, StartupEntry, SystemStats } from "../types";
+import { AuditEntry, DriveInfo, Section, StartupEntry, SystemStats } from "../types";
 
 /**
  * The honest half of the health dashboard: real numbers the machine already
@@ -33,6 +33,38 @@ function uptimeLabel(s: Strings, uptimeSecs: number): string {
   return days > 0
     ? format(s.scan.dashUptimeDh, { days, hours })
     : format(s.scan.dashUptimeHm, { hours, minutes });
+}
+
+/** Maps audit action keys to their translated labels; unknown keys render
+ *  as-is so a newer log never shows blank rows in an older UI. */
+function actionLabel(s: Strings, action: string): string {
+  switch (action) {
+    case "tweak-applied":
+      return s.scan.dashActTweakApplied;
+    case "tweak-reverted":
+      return s.scan.dashActTweakReverted;
+    case "cleanup":
+      return s.scan.dashActCleanup;
+    case "files-deleted":
+      return s.scan.dashActFilesDeleted;
+    case "startup-change":
+      return s.scan.dashActStartupChange;
+    case "disk-optimize":
+      return s.scan.dashActDiskOptimize;
+    case "restore-point":
+      return s.scan.dashActRestorePoint;
+    default:
+      return action;
+  }
+}
+
+function timeLabel(ts: number): string {
+  const d = new Date(ts * 1000);
+  const today = new Date();
+  const sameDay = d.toDateString() === today.toDateString();
+  return sameDay
+    ? d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    : d.toLocaleDateString();
 }
 
 function Card({
@@ -74,6 +106,7 @@ export function DashboardCards({
   const [drives, setDrives] = useState<DriveInfo[] | null>(null);
   const [startup, setStartup] = useState<StartupEntry[] | null>(null);
   const [uptimeSecs, setUptimeSecs] = useState<number | null>(null);
+  const [history, setHistory] = useState<AuditEntry[] | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -99,6 +132,13 @@ export function DashboardCards({
       })
       .catch(() => {
         // Card stays hidden.
+      });
+    invoke<AuditEntry[]>("list_audit_log")
+      .then((v) => {
+        if (alive) setHistory(v);
+      })
+      .catch(() => {
+        if (alive) setHistory([]);
       });
     return () => {
       alive = false;
@@ -177,6 +217,34 @@ export function DashboardCards({
             <p className="mt-1 text-[12px] leading-relaxed text-amber-200/80">
               {s.scan.dashUptimeLongHint}
             </p>
+          )}
+        </Card>
+      )}
+
+      {history !== null && (
+        <Card title={s.scan.dashHistoryTitle}>
+          {history.length === 0 ? (
+            <p className="text-[12px] leading-relaxed text-slate-500">{s.scan.dashHistoryEmpty}</p>
+          ) : (
+            <ul className="flex flex-col gap-1.5">
+              {history.slice(0, 5).map((e, i) => (
+                <li
+                  key={`${String(e.ts)}-${String(i)}`}
+                  className="flex items-baseline gap-2 text-[12px]"
+                  title={e.detail ?? undefined}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={e.success ? "text-emerald-400" : "text-red-400"}
+                  >
+                    {e.success ? "✓" : "✗"}
+                  </span>
+                  <span className="text-slate-300">{actionLabel(s, e.action)}</span>
+                  <span className="min-w-0 flex-1 truncate text-slate-500">{e.target}</span>
+                  <span className="shrink-0 text-slate-600">{timeLabel(e.ts)}</span>
+                </li>
+              ))}
+            </ul>
           )}
         </Card>
       )}

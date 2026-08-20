@@ -26,6 +26,7 @@ import {
 import { PaywallModal, ProBadge, ShieldBadge, Toggle, UpdateBanner } from "./components/ui";
 import {
   CleanupCard,
+  CleanupConfirmModal,
   DiskToolsSection,
   DnsFlushCard,
   DuplicateFinder,
@@ -369,6 +370,33 @@ function App() {
     setConfirmCleanup(null);
     try {
       const result = await invoke<CleanupResult>("run_cleanup", { id: info.id });
+      const base = format(s.cleanupResultToast, {
+        deleted: result.deleted_count,
+        freed: formatBytes(result.freed_bytes),
+      });
+      const suffix =
+        result.skipped_count > 0
+          ? format(s.cleanupResultToastSkipped, { skipped: result.skipped_count })
+          : ".";
+      pushToast("success", base + suffix);
+    } catch (e) {
+      pushToast("error", String(e));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  /** Cleans only the preview items the user left ticked. Same result/toast
+   *  shape as the full cleanup — from the user's side it's the same action,
+   *  just scoped. */
+  async function runCleanupSelected(info: CleanupInfo, names: string[]) {
+    setBusyId(info.id);
+    setConfirmCleanup(null);
+    try {
+      const result = await invoke<CleanupResult>("run_cleanup_selected", {
+        id: info.id,
+        names,
+      });
       const base = format(s.cleanupResultToast, {
         deleted: result.deleted_count,
         freed: formatBytes(result.freed_bytes),
@@ -778,33 +806,17 @@ function App() {
       </div>
 
       {confirmCleanup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm">
-          <div className="animate-card w-full max-w-sm rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-100">{s.cleanupConfirm.title}</h3>
-            <p className="mt-2 text-sm text-slate-400">
-              {format(s.cleanupConfirm.body, {
-                name: textFor(
-                  s.cleanup,
-                  confirmCleanup.id,
-                  confirmCleanup.name,
-                  confirmCleanup.description,
-                ).name,
-              })}
-            </p>
-            <button
-              onClick={() => runCleanup(confirmCleanup)}
-              className="mt-5 w-full rounded-xl bg-sky-500 py-2.5 text-sm font-semibold text-white"
-            >
-              {s.cleanupConfirm.confirm}
-            </button>
-            <button
-              onClick={() => setConfirmCleanup(null)}
-              className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-slate-400 hover:text-slate-200"
-            >
-              {s.cleanupConfirm.cancel}
-            </button>
-          </div>
-        </div>
+        <CleanupConfirmModal
+          s={s}
+          info={confirmCleanup}
+          displayName={
+            textFor(s.cleanup, confirmCleanup.id, confirmCleanup.name, confirmCleanup.description)
+              .name
+          }
+          onCancel={() => setConfirmCleanup(null)}
+          onConfirmAll={() => runCleanup(confirmCleanup)}
+          onConfirmSelected={(names) => runCleanupSelected(confirmCleanup, names)}
+        />
       )}
 
       {confirmRestore && (

@@ -1,7 +1,14 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { LANGUAGES, Lang, Strings } from "../i18n";
 import { THEMES, ThemeName } from "../theme";
-import { ERROR_REPORTS_KEY, errorReportsEnabled } from "../lib";
+import {
+  AVATAR_KEY,
+  ERROR_REPORTS_KEY,
+  errorReportsEnabled,
+  fileToAvatarDataUrl,
+  readAvatar,
+} from "../lib";
 import { AuthState } from "../types";
 import { CheckIcon, CrownIcon } from "./icons";
 import { Avatar } from "./ui";
@@ -9,6 +16,9 @@ import { Avatar } from "./ui";
 export function AuthSection({
   s,
   auth,
+  avatar = null,
+  onChangePhoto,
+  onRemovePhoto,
   onAuthenticate,
   onLogout,
   onResendVerification,
@@ -16,6 +26,10 @@ export function AuthSection({
 }: {
   s: Strings;
   auth: AuthState;
+  /** Device-local profile photo and its controls, owned by AccountMenu. */
+  avatar?: string | null;
+  onChangePhoto?: () => void;
+  onRemovePhoto?: () => void;
   onAuthenticate: (
     mode: "login" | "register",
     email: string,
@@ -56,7 +70,29 @@ export function AuthSection({
           style={{ background: auth.isPro ? "#fbbf24" : "var(--app-accent)" }}
         />
         <div className="relative flex items-center gap-3">
-          <Avatar email={auth.email} isPro={auth.isPro} />
+          {/* Clicking the avatar itself opens the photo picker — the picture
+              is the control, no extra row of buttons needed for the happy
+              path. The photo stays on this device only. */}
+          <button
+            type="button"
+            onClick={onChangePhoto}
+            title={s.menu.changePhoto}
+            aria-label={s.menu.changePhoto}
+            className="group relative shrink-0 rounded-full transition-transform hover:scale-105"
+          >
+            <Avatar email={auth.email} isPro={auth.isPro} photo={avatar} />
+            <span className="pointer-events-none absolute inset-[2px] grid place-items-center rounded-full bg-black/55 opacity-0 transition-opacity group-hover:opacity-100">
+              <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-white">
+                <path
+                  d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6L16.5 7h2A1.5 1.5 0 0 1 20 8.5v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5v-8Z"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinejoin="round"
+                />
+                <circle cx="12" cy="12.5" r="3" stroke="currentColor" strokeWidth="1.6" />
+              </svg>
+            </span>
+          </button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-semibold text-ink" title={auth.email}>
               {auth.email}
@@ -90,6 +126,14 @@ export function AuthSection({
         )}
         {info && <p className="mt-2 text-xs text-emerald-400">{info}</p>}
         {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+        {avatar && (
+          <button
+            onClick={onRemovePhoto}
+            className="mt-2 w-full text-left text-[11px] font-medium text-ink-3 transition-colors hover:text-ink-2"
+          >
+            {s.menu.removePhoto}
+          </button>
+        )}
         <button
           onClick={onLogout}
           className="mt-2 w-full rounded-lg bg-surface-2 px-3 py-1.5 text-xs font-medium text-ink-3 transition-colors hover:bg-surface-hover hover:text-ink-2"
@@ -321,6 +365,27 @@ export function AccountMenu({
   const [errReports, setErrReports] = useState(() => errorReportsEnabled());
   const isPro = auth.status === "authenticated" && auth.isPro;
 
+  // Device-local profile photo. Lives in localStorage as a small data URL;
+  // there is no upload — see fileToAvatarDataUrl in lib.ts.
+  const [avatar, setAvatar] = useState<string | null>(() => readAvatar());
+  const photoInput = useRef<HTMLInputElement | null>(null);
+
+  async function onPhotoPicked(file: File | undefined) {
+    if (!file) return;
+    try {
+      const dataUrl = await fileToAvatarDataUrl(file);
+      localStorage.setItem(AVATAR_KEY, dataUrl);
+      setAvatar(dataUrl);
+    } catch {
+      // Not an image or canvas failed: keep whatever was there before.
+    }
+  }
+
+  function removePhoto() {
+    localStorage.removeItem(AVATAR_KEY);
+    setAvatar(null);
+  }
+
   function toggleErrorReports() {
     const next = !errReports;
     setErrReports(next);
@@ -348,7 +413,7 @@ export function AccountMenu({
         aria-expanded={open}
       >
         {auth.status === "authenticated" ? (
-          <Avatar email={auth.email} isPro={isPro} size="sm" />
+          <Avatar email={auth.email} isPro={isPro} photo={avatar} size="sm" />
         ) : (
           <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
             <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.6" />
@@ -373,10 +438,25 @@ export function AccountMenu({
             <AuthSection
               s={s}
               auth={auth}
+              avatar={avatar}
+              onChangePhoto={() => photoInput.current?.click()}
+              onRemovePhoto={removePhoto}
               onAuthenticate={onAuthenticate}
               onLogout={onLogout}
               onResendVerification={onResendVerification}
               onForgotPassword={onForgotPassword}
+            />
+            {/* The webview's own file input: no plugin, no permissions — the
+                browser dialog hands us the bytes and they stay local. */}
+            <input
+              ref={photoInput}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                void onPhotoPicked(e.target.files?.[0]);
+                e.target.value = "";
+              }}
             />
 
             <div className="border-b border-line p-3">
@@ -498,6 +578,27 @@ export function AccountMenu({
                   />
                 </button>
               </div>
+            </div>
+
+            <div className="border-b border-line p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
+                {s.menu.support}
+              </p>
+              <button
+                onClick={() => void openUrl("https://pctweaker.app/support")}
+                className="mt-1.5 flex w-full items-center justify-between rounded-lg bg-surface-2 px-2.5 py-1.5 text-left text-[13px] font-medium text-ink-2 transition-colors hover:bg-surface-hover hover:text-ink"
+              >
+                {s.menu.reportIssue}
+                <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5 shrink-0 text-ink-3">
+                  <path
+                    d="M9 5h10v10M19 5 5 19"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
             </div>
 
             <div className="p-3">

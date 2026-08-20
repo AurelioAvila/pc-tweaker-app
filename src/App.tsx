@@ -5,6 +5,7 @@ import { STRINGS, Lang, detectInitialLang, format } from "./i18n";
 import { ThemeName, detectInitialTheme } from "./theme";
 import {
   API_BASE_URL,
+  FEATURE_INTELLIGENCE,
   RAM_AUTO_STORAGE_KEY,
   clearSession,
   formatBytes,
@@ -18,6 +19,7 @@ import { AuthState, CleanupInfo, CleanupResult, Section, Toast, TweakInfo } from
 import {
   CrownIcon,
   GemIcon,
+  HistoryIcon,
   LayersIcon,
   MagnifierIcon,
   RadarIcon,
@@ -34,6 +36,7 @@ import {
   IpMaskCard,
   LargeFileFinder,
   PasswordBreachCheck,
+  PromptShieldPromoCard,
   UninstallerPromoCard,
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
@@ -41,6 +44,7 @@ import { DashboardCards } from "./components/dashboard";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
 import { ScanPanel } from "./components/scan";
 import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
+import { AdvisorCard, LedgerPanel } from "./components/intelligence";
 import { usePulseSamples } from "./components/command";
 import { StartupManager } from "./components/startup";
 import { ProfilesPanel } from "./components/profiles";
@@ -255,6 +259,7 @@ function App() {
     { key: "ui", label: s.tabs.ui, icon: CATEGORY_STYLE.ui.icon },
     { key: "manutenzione", label: s.tabs.manutenzione, icon: CATEGORY_STYLE.manutenzione.icon },
     { key: "profiles", label: s.tabs.profiles, icon: <LayersIcon className="h-[18px] w-[18px]" /> },
+    { key: "ledger", label: s.tabs.ledger, icon: <HistoryIcon className="h-[18px] w-[18px]" /> },
     { key: "pricing", label: s.tabs.pricing, icon: <GemIcon className="h-[18px] w-[18px]" /> },
   ];
 
@@ -468,6 +473,7 @@ function App() {
   const showStartup = filter === "startup" && !searching;
   const showPricing = filter === "pricing" && !searching;
   const showProfiles = filter === "profiles" && !searching;
+  const showLedger = FEATURE_INTELLIGENCE && filter === "ledger" && !searching;
   const turboBoostApplied = tweaks.find((t) => t.id === "turbo_boost")?.applied ?? false;
   const appliedCount = tweaks.filter((t) => t.applied).length;
   // What the pricing page can honestly promise a Free user.
@@ -494,7 +500,12 @@ function App() {
             [
               [s.tabs.groupMonitor, ["scan"]],
               [s.tabs.groupOptimize, ["performance", "gaming", "privacy", "ui"]],
-              [s.tabs.groupManage, ["startup", "manutenzione", "profiles"]],
+              [
+                s.tabs.groupManage,
+                FEATURE_INTELLIGENCE
+                  ? ["startup", "manutenzione", "profiles", "ledger"]
+                  : ["startup", "manutenzione", "profiles"],
+              ],
             ] as [string, Section[]][]
           ).map(([groupLabel, keys]) => (
             <div key={groupLabel} className="mb-2.5">
@@ -632,10 +643,26 @@ function App() {
                 pushToast={pushToast}
               />
               <SystemMonitor s={s} />
+              {/* One concrete, hardware-motivated recommendation — never a
+                  pile. Hidden entirely when the flag is off. */}
+              {FEATURE_INTELLIGENCE && (
+                <AdvisorCard
+                  s={s}
+                  tweaks={tweaks}
+                  busyId={busyId}
+                  isPro={isProUnlocked}
+                  onRequirePro={() => setPaywallFeature(s.menu.planPro)}
+                  onApply={toggle}
+                />
+              )}
             </>
           )}
 
           {showScan && <DashboardCards s={s} onNavigate={setFilter} />}
+
+          {showLedger && (
+            <LedgerPanel s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />
+          )}
 
           {showStartup && <StartupManager s={s} pushToast={pushToast} />}
 
@@ -680,7 +707,12 @@ function App() {
             </div>
           )}
 
-          {showPrivacyExtras && <PasswordBreachCheck s={s} />}
+          {showPrivacyExtras && (
+            <>
+              <PasswordBreachCheck s={s} />
+              <PromptShieldPromoCard s={s} />
+            </>
+          )}
 
           {showGamingExtras && (
             <>

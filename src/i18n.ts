@@ -17,6 +17,31 @@ export interface Strings {
   appName: string;
   appliedCount: string; // "{applied} of {total} tweaks active" — use {applied}/{total}
   headerNote: string;
+  advisor: {
+    eyebrow: string;
+    applyButton: string;
+    confidenceHigh: string;
+    confidenceStandard: string;
+    reversible: string;
+    empty: string;
+  };
+  ledger: {
+    title: string;
+    subtitle: string;
+    empty: string;
+    revert: string;
+    elevated: string;
+    failed: string;
+    actions: {
+      applied: string;
+      reverted: string;
+      cleanup: string;
+      filesDeleted: string;
+      diskOptimize: string;
+      startupChange: string;
+      restorePoint: string;
+    };
+  };
   tabs: {
     groupMonitor: string;
     groupOptimize: string;
@@ -30,6 +55,7 @@ export interface Strings {
     startup: string;
     profiles: string;
     pricing: string;
+    ledger: string;
   };
   command: {
     statusQuiet: string;
@@ -325,6 +351,11 @@ export interface Strings {
     running: string;
     resultToast: string;
   };
+  promptshieldPromo: {
+    title: string;
+    description: string;
+    button: string;
+  };
   uninstallerPromo: {
     title: string;
     description: string;
@@ -384,6 +415,10 @@ export interface Strings {
     about: string;
     errorReports: string;
     errorReportsBody: string;
+    changePhoto: string;
+    removePhoto: string;
+    support: string;
+    reportIssue: string;
     aboutBody: string;
     close: string;
   };
@@ -434,6 +469,33 @@ const it: Strings = {
   appliedCount: "{applied} di {total} tweak attivi",
   headerNote:
     "Ogni tweak salva un backup del valore originale prima di essere applicato. I tweak con privilegi elevati chiedono un consenso UAC esplicito, solo per quell'azione.",
+  advisor: {
+    eyebrow: "Consigliato per il tuo PC",
+    applyButton: "Applica",
+    confidenceHigh: "Alta affidabilità — basato sull'hardware di questo PC",
+    confidenceStandard: "Consigliato per questo tipo di macchina",
+    reversible: "Reversibile — il valore originale viene salvato prima di ogni modifica.",
+    empty:
+      "Niente da consigliare al momento — la tua configurazione rispecchia già i nostri consigli.",
+  },
+  ledger: {
+    title: "Registro modifiche",
+    subtitle:
+      "Tutto ciò che questa app ha modificato su questo PC, dal più recente. Salvato in locale, mai caricato online.",
+    empty: "Nessuna modifica registrata. Applica il tuo primo tweak e comparirà qui.",
+    revert: "Ripristina",
+    elevated: "con diritti admin",
+    failed: "non riuscita",
+    actions: {
+      applied: "Tweak applicato",
+      reverted: "Tweak ripristinato",
+      cleanup: "Pulizia",
+      filesDeleted: "File eliminati",
+      diskOptimize: "Ottimizzazione disco",
+      startupChange: "Modifica avvio",
+      restorePoint: "Punto di ripristino",
+    },
+  },
   tabs: {
     groupMonitor: "Monitoraggio",
     groupOptimize: "Ottimizza",
@@ -447,6 +509,7 @@ const it: Strings = {
     startup: "Avvio",
     profiles: "Configurazioni",
     pricing: "Piani e prezzi",
+    ledger: "Cronologia",
   },
   command: {
     statusQuiet: "Tutto tranquillo",
@@ -763,6 +826,12 @@ const it: Strings = {
     running: "Svuotamento...",
     resultToast: "Cache DNS svuotata.",
   },
+  promptshieldPromo: {
+    title: "PromptShield",
+    description:
+      "Hai bloccato telemetria e tracciamento — ma cosa incolli nelle chat AI? PromptShield intercetta dati personali e credenziali prima che un prompt raggiunga qualsiasi modello. Stessa famiglia, stessa regola: niente viene salvato.",
+    button: "Prova sul web",
+  },
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
     description:
@@ -829,6 +898,10 @@ const it: Strings = {
     errorReports: "Report errori anonimi",
     errorReportsBody:
       "Se qualcosa fallisce, invia solo il messaggio di errore (mai dati personali) per aiutarci a correggere i bug. Disattivato di default.",
+    changePhoto: "Cambia foto profilo",
+    removePhoto: "Rimuovi foto",
+    support: "Supporto",
+    reportIssue: "Segnala un problema",
     aboutBody: "PC Tweaker — tweak di sistema con backup e ripristino automatico.",
     close: "Chiudi",
   },
@@ -1132,6 +1205,32 @@ const en: Strings = {
   appliedCount: "{applied} of {total} tweaks active",
   headerNote:
     "Every tweak backs up the original value before it's applied. Tweaks that need elevated rights ask for an explicit UAC prompt, only for that action.",
+  advisor: {
+    eyebrow: "Recommended for your PC",
+    applyButton: "Apply",
+    confidenceHigh: "High confidence — based on this PC's hardware",
+    confidenceStandard: "Recommended for this machine type",
+    reversible: "Reversible — the original value is saved before any change.",
+    empty: "Nothing to recommend right now — your setup already matches our advice.",
+  },
+  ledger: {
+    title: "Change Ledger",
+    subtitle:
+      "Everything this app changed on this PC, newest first. Stored locally, never uploaded.",
+    empty: "No changes recorded yet. Apply your first tweak and it will appear here.",
+    revert: "Revert",
+    elevated: "with admin rights",
+    failed: "failed",
+    actions: {
+      applied: "Tweak applied",
+      reverted: "Tweak reverted",
+      cleanup: "Cleanup",
+      filesDeleted: "Files deleted",
+      diskOptimize: "Disk optimization",
+      startupChange: "Startup change",
+      restorePoint: "Restore point",
+    },
+  },
   tabs: {
     groupMonitor: "Monitor",
     groupOptimize: "Optimize",
@@ -1145,6 +1244,7 @@ const en: Strings = {
     startup: "Startup",
     profiles: "Configurations",
     pricing: "Plans & pricing",
+    ledger: "History",
   },
   command: {
     statusQuiet: "All systems quiet",
@@ -1458,6 +1558,12 @@ const en: Strings = {
     running: "Flushing...",
     resultToast: "DNS cache flushed.",
   },
+  promptshieldPromo: {
+    title: "PromptShield",
+    description:
+      "You've cut telemetry and tracking — but what do you paste into AI chats? PromptShield catches personal data and credentials before a prompt reaches any model. Same family, same rule: nothing gets stored.",
+    button: "Try it on the web",
+  },
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
     description:
@@ -1524,6 +1630,10 @@ const en: Strings = {
     errorReports: "Anonymous error reports",
     errorReportsBody:
       "When something fails, send only the error message (never personal data) to help us fix bugs. Off by default.",
+    changePhoto: "Change profile photo",
+    removePhoto: "Remove photo",
+    support: "Support",
+    reportIssue: "Report an issue",
     aboutBody: "PC Tweaker — system tweaks with automatic backup and rollback.",
     close: "Close",
   },
@@ -1825,6 +1935,32 @@ const fr: Strings = {
   appliedCount: "{applied} sur {total} optimisations actives",
   headerNote:
     "Chaque optimisation sauvegarde la valeur d'origine avant d'être appliquée. Celles qui nécessitent des droits élevés demandent un consentement UAC explicite, uniquement pour cette action.",
+  advisor: {
+    eyebrow: "Recommandé pour votre PC",
+    applyButton: "Appliquer",
+    confidenceHigh: "Confiance élevée — basé sur le matériel de ce PC",
+    confidenceStandard: "Recommandé pour ce type de machine",
+    reversible: "Réversible — la valeur d'origine est enregistrée avant toute modification.",
+    empty: "Rien à recommander pour l'instant — votre configuration suit déjà nos conseils.",
+  },
+  ledger: {
+    title: "Registre des modifications",
+    subtitle:
+      "Tout ce que cette application a modifié sur ce PC, du plus récent au plus ancien. Conservé en local, jamais envoyé en ligne.",
+    empty: "Aucune modification enregistrée. Appliquez votre premier réglage et il apparaîtra ici.",
+    revert: "Rétablir",
+    elevated: "avec droits admin",
+    failed: "échec",
+    actions: {
+      applied: "Réglage appliqué",
+      reverted: "Réglage rétabli",
+      cleanup: "Nettoyage",
+      filesDeleted: "Fichiers supprimés",
+      diskOptimize: "Optimisation du disque",
+      startupChange: "Modification du démarrage",
+      restorePoint: "Point de restauration",
+    },
+  },
   tabs: {
     groupMonitor: "Surveiller",
     groupOptimize: "Optimiser",
@@ -1838,6 +1974,7 @@ const fr: Strings = {
     startup: "Démarrage",
     profiles: "Configurations",
     pricing: "Offres et tarifs",
+    ledger: "Historique",
   },
   command: {
     statusQuiet: "Tout est calme",
@@ -2158,6 +2295,12 @@ const fr: Strings = {
     running: "Vidage...",
     resultToast: "Cache DNS vide.",
   },
+  promptshieldPromo: {
+    title: "PromptShield",
+    description:
+      "Vous avez coupé télémétrie et pistage — mais que collez-vous dans les chats IA ? PromptShield intercepte données personnelles et identifiants avant qu'un prompt n'atteigne un modèle. Même famille, même règle : rien n'est conservé.",
+    button: "Essayer sur le web",
+  },
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
     description:
@@ -2224,6 +2367,10 @@ const fr: Strings = {
     errorReports: "Rapports d'erreur anonymes",
     errorReportsBody:
       "En cas d'échec, envoie uniquement le message d'erreur (jamais de données personnelles) pour nous aider à corriger les bugs. Désactivé par défaut.",
+    changePhoto: "Changer la photo de profil",
+    removePhoto: "Retirer la photo",
+    support: "Assistance",
+    reportIssue: "Signaler un problème",
     aboutBody: "PC Tweaker — optimisations système avec sauvegarde et restauration automatiques.",
     close: "Fermer",
   },
@@ -2528,6 +2675,32 @@ const es: Strings = {
   appliedCount: "{applied} de {total} ajustes activos",
   headerNote:
     "Cada ajuste guarda una copia del valor original antes de aplicarse. Los ajustes que requieren privilegios elevados piden un consentimiento UAC explícito, solo para esa acción.",
+  advisor: {
+    eyebrow: "Recomendado para tu PC",
+    applyButton: "Aplicar",
+    confidenceHigh: "Confianza alta — basado en el hardware de este PC",
+    confidenceStandard: "Recomendado para este tipo de equipo",
+    reversible: "Reversible: el valor original se guarda antes de cada cambio.",
+    empty: "Nada que recomendar ahora mismo: tu configuración ya sigue nuestros consejos.",
+  },
+  ledger: {
+    title: "Registro de cambios",
+    subtitle:
+      "Todo lo que esta aplicación cambió en este PC, de más reciente a más antiguo. Guardado en local, nunca se sube.",
+    empty: "Aún no hay cambios registrados. Aplica tu primer ajuste y aparecerá aquí.",
+    revert: "Revertir",
+    elevated: "con permisos de admin",
+    failed: "falló",
+    actions: {
+      applied: "Ajuste aplicado",
+      reverted: "Ajuste revertido",
+      cleanup: "Limpieza",
+      filesDeleted: "Archivos eliminados",
+      diskOptimize: "Optimización del disco",
+      startupChange: "Cambio de inicio",
+      restorePoint: "Punto de restauración",
+    },
+  },
   tabs: {
     groupMonitor: "Supervisar",
     groupOptimize: "Optimizar",
@@ -2541,6 +2714,7 @@ const es: Strings = {
     startup: "Inicio",
     profiles: "Configuraciones",
     pricing: "Planes y precios",
+    ledger: "Historial",
   },
   command: {
     statusQuiet: "Todo en calma",
@@ -2858,6 +3032,12 @@ const es: Strings = {
     running: "Vaciando...",
     resultToast: "Cache DNS vaciada.",
   },
+  promptshieldPromo: {
+    title: "PromptShield",
+    description:
+      "Has cortado telemetría y rastreo — pero ¿qué pegas en los chats de IA? PromptShield intercepta datos personales y credenciales antes de que un prompt llegue a cualquier modelo. Misma familia, misma regla: nada se guarda.",
+    button: "Pruébalo en la web",
+  },
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
     description:
@@ -2924,6 +3104,10 @@ const es: Strings = {
     errorReports: "Informes de error anónimos",
     errorReportsBody:
       "Si algo falla, envía solo el mensaje de error (nunca datos personales) para ayudarnos a corregir errores. Desactivado por defecto.",
+    changePhoto: "Cambiar foto de perfil",
+    removePhoto: "Quitar foto",
+    support: "Soporte",
+    reportIssue: "Notificar un problema",
     aboutBody:
       "PC Tweaker — ajustes del sistema con copia de seguridad y restauración automáticas.",
     close: "Cerrar",
@@ -3229,6 +3413,34 @@ const de: Strings = {
   appliedCount: "{applied} von {total} Optimierungen aktiv",
   headerNote:
     "Jede Optimierung sichert den ursprünglichen Wert, bevor sie angewendet wird. Optimierungen mit erhöhten Rechten fragen gezielt per UAC nach, nur für diese Aktion.",
+  advisor: {
+    eyebrow: "Für deinen PC empfohlen",
+    applyButton: "Anwenden",
+    confidenceHigh: "Hohe Zuverlässigkeit — basierend auf der Hardware dieses PCs",
+    confidenceStandard: "Empfohlen für diesen Gerätetyp",
+    reversible: "Umkehrbar — der ursprüngliche Wert wird vor jeder Änderung gespeichert.",
+    empty:
+      "Derzeit nichts zu empfehlen — deine Konfiguration entspricht bereits unseren Empfehlungen.",
+  },
+  ledger: {
+    title: "Änderungsprotokoll",
+    subtitle:
+      "Alles, was diese App auf diesem PC geändert hat, neueste zuerst. Lokal gespeichert, nie hochgeladen.",
+    empty:
+      "Noch keine Änderungen aufgezeichnet. Wende deinen ersten Tweak an und er erscheint hier.",
+    revert: "Zurücksetzen",
+    elevated: "mit Adminrechten",
+    failed: "fehlgeschlagen",
+    actions: {
+      applied: "Tweak angewendet",
+      reverted: "Tweak zurückgesetzt",
+      cleanup: "Bereinigung",
+      filesDeleted: "Dateien gelöscht",
+      diskOptimize: "Datenträgeroptimierung",
+      startupChange: "Autostart-Änderung",
+      restorePoint: "Wiederherstellungspunkt",
+    },
+  },
   tabs: {
     groupMonitor: "Überwachen",
     groupOptimize: "Optimieren",
@@ -3242,6 +3454,7 @@ const de: Strings = {
     startup: "Autostart",
     profiles: "Konfigurationen",
     pricing: "Tarife & Preise",
+    ledger: "Verlauf",
   },
   command: {
     statusQuiet: "Alles ruhig",
@@ -3560,6 +3773,12 @@ const de: Strings = {
     running: "Wird geleert...",
     resultToast: "DNS-Cache geleert.",
   },
+  promptshieldPromo: {
+    title: "PromptShield",
+    description:
+      "Telemetrie und Tracking sind aus — aber was fügst du in KI-Chats ein? PromptShield fängt persönliche Daten und Zugangsdaten ab, bevor ein Prompt irgendein Modell erreicht. Gleiche Familie, gleiche Regel: nichts wird gespeichert.",
+    button: "Im Web ausprobieren",
+  },
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
     description:
@@ -3626,6 +3845,10 @@ const de: Strings = {
     errorReports: "Anonyme Fehlerberichte",
     errorReportsBody:
       "Wenn etwas fehlschlägt, wird nur die Fehlermeldung gesendet (niemals persönliche Daten), um Fehler schneller zu beheben. Standardmäßig deaktiviert.",
+    changePhoto: "Profilfoto ändern",
+    removePhoto: "Foto entfernen",
+    support: "Support",
+    reportIssue: "Ein Problem melden",
     aboutBody:
       "PC Tweaker — Systemoptimierungen mit automatischer Sicherung und Wiederherstellung.",
     close: "Schließen",

@@ -25,15 +25,15 @@ export function PricingPanel({
     <div className="animate-card">
       <div className="text-center">
         <h2 className="text-3xl font-bold tracking-tight text-slate-50">{s.pricing.title}</h2>
-        <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">{s.pricing.subtitle}</p>
+        <p className="mx-auto mt-2 max-w-md text-sm text-ink-3">{s.pricing.subtitle}</p>
       </div>
 
       <div className="mt-6 flex justify-center">
-        <div className="relative inline-flex items-center gap-1 rounded-full bg-white/5 p-1 ring-1 ring-white/10">
+        <div className="relative inline-flex items-center gap-1 rounded-full bg-surface-2 p-1 ring-1 ring-line">
           <button
             onClick={() => setAnnual(false)}
             className={`relative z-10 rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-              annual ? "text-slate-400 hover:text-slate-200" : "text-white"
+              annual ? "text-ink-3 hover:text-ink-2" : "text-white"
             }`}
             style={!annual ? { backgroundColor: "var(--app-accent)" } : undefined}
           >
@@ -42,7 +42,7 @@ export function PricingPanel({
           <button
             onClick={() => setAnnual(true)}
             className={`relative z-10 flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-              annual ? "text-white" : "text-slate-400 hover:text-slate-200"
+              annual ? "text-white" : "text-ink-3 hover:text-ink-2"
             }`}
             style={annual ? { backgroundColor: "var(--app-accent)" } : undefined}
           >
@@ -60,26 +60,26 @@ export function PricingPanel({
 
       <div className="mt-7 grid items-start gap-4 md:grid-cols-2">
         {/* Free */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+        <div className="rounded-2xl border border-line bg-surface-1 p-6">
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-bold text-slate-100">{s.pricing.freeName}</h3>
+            <h3 className="text-lg font-bold text-ink">{s.pricing.freeName}</h3>
             {!isPro && (
-              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-slate-300">
+              <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-bold text-ink-2">
                 {s.pricing.freeCurrent}
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-slate-400">{s.pricing.freeTagline}</p>
+          <p className="mt-1 text-sm text-ink-3">{s.pricing.freeTagline}</p>
 
-          <p className="mt-5 text-4xl font-black tracking-tight text-slate-100">{money(0, lang)}</p>
-          <p className="mt-1 text-xs text-slate-500">{s.pricing.freePriceNote}</p>
+          <p className="mt-5 text-4xl font-black tracking-tight text-ink">{money(0, lang)}</p>
+          <p className="mt-1 text-xs text-ink-3">{s.pricing.freePriceNote}</p>
 
           <ul className="mt-6 flex flex-col gap-2.5">
             {/* The tweak count is filled in from the real list rather than
                 written into the copy: it was hardcoded as "20" and silently
                 became a lie the moment new tweaks shipped. */}
             {s.pricing.freeFeatures.map((feature) => (
-              <li key={feature} className="flex items-start gap-2.5 text-sm text-slate-300">
+              <li key={feature} className="flex items-start gap-2.5 text-sm text-ink-2">
                 <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
                 <span>{format(feature, { count: freeTweakCount })}</span>
               </li>
@@ -90,7 +90,7 @@ export function PricingPanel({
               seeing "you're on the Free plan" would reasonably think their
               payment didn't go through. */}
           {!isPro && (
-            <p className="mt-6 rounded-xl bg-white/5 py-2.5 text-center text-sm font-medium text-slate-400">
+            <p className="mt-6 rounded-xl bg-surface-2 py-2.5 text-center text-sm font-medium text-ink-3">
               {s.pricing.freeCta}
             </p>
           )}
@@ -108,24 +108,24 @@ export function PricingPanel({
             </span>
 
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-bold text-slate-100">{s.pricing.proName}</h3>
+              <h3 className="text-lg font-bold text-ink">{s.pricing.proName}</h3>
               {isPro && (
                 <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">
                   {s.pricing.proCurrent}
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-slate-400">{s.pricing.proTagline}</p>
+            <p className="mt-1 text-sm text-ink-3">{s.pricing.proTagline}</p>
 
             <div className="mt-5 flex items-end gap-1.5">
               <span className="text-4xl font-black tracking-tight text-slate-50">
                 {money(price, lang)}
               </span>
-              <span className="pb-1.5 text-sm font-medium text-slate-400">
+              <span className="pb-1.5 text-sm font-medium text-ink-3">
                 {annual ? s.pricing.perYear : s.pricing.perMonth}
               </span>
             </div>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-ink-3">
               {annual
                 ? format(s.pricing.annualDetail, {
                     monthly: money(perMonthEquivalent, lang),
@@ -134,12 +134,12 @@ export function PricingPanel({
                 : format(s.pricing.annualNudge, { price: money(perMonthEquivalent, lang) })}
             </p>
 
-            <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-ink-3">
               {s.pricing.everythingInFree}
             </p>
             <ul className="mt-3 flex flex-col gap-2.5">
               {s.pricing.proFeatures.map((feature) => (
-                <li key={feature} className="flex items-start gap-2.5 text-sm text-slate-200">
+                <li key={feature} className="flex items-start gap-2.5 text-sm text-ink-2">
                   <CheckIcon
                     className="mt-0.5 h-4 w-4 shrink-0"
                     style={{ color: "var(--app-accent2)" }}
@@ -160,7 +160,7 @@ export function PricingPanel({
         </div>
       </div>
 
-      <p className="mx-auto mt-6 max-w-lg text-center text-xs leading-relaxed text-slate-500">
+      <p className="mx-auto mt-6 max-w-lg text-center text-xs leading-relaxed text-ink-3">
         {s.pricing.reassurance}
       </p>
     </div>

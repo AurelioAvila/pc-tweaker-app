@@ -46,7 +46,7 @@ export function AuthSection({
     // like an account — same information, and it's the first thing anyone
     // sees when they open this menu.
     return (
-      <div className="relative overflow-hidden border-b border-white/10 p-3.5">
+      <div className="relative overflow-hidden border-b border-line p-3.5">
         {/* A wash of the active theme behind the account block, so the top of
             the menu reads as a header rather than as the first grey row of a
             list. */}
@@ -58,7 +58,7 @@ export function AuthSection({
         <div className="relative flex items-center gap-3">
           <Avatar email={auth.email} isPro={auth.isPro} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-semibold text-slate-100" title={auth.email}>
+            <p className="truncate text-[13px] font-semibold text-ink" title={auth.email}>
               {auth.email}
             </p>
             {auth.emailVerified ? (
@@ -92,7 +92,7 @@ export function AuthSection({
         {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
         <button
           onClick={onLogout}
-          className="mt-2 w-full rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-white/10 hover:text-slate-200"
+          className="mt-2 w-full rounded-lg bg-surface-2 px-3 py-1.5 text-xs font-medium text-ink-3 transition-colors hover:bg-surface-hover hover:text-ink-2"
         >
           {s.auth.logout}
         </button>
@@ -102,8 +102,8 @@ export function AuthSection({
 
   if (mode === "forgot") {
     return (
-      <div className="border-b border-white/10 p-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <div className="border-b border-line p-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">
           {s.menu.account}
         </p>
         <form
@@ -132,7 +132,7 @@ export function AuthSection({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={s.auth.email}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[var(--app-accent)]"
+            className="rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-[var(--app-accent)]"
           />
           {info && <p className="text-xs text-emerald-400">{info}</p>}
           {error && <p className="text-xs text-red-400">{error}</p>}
@@ -150,7 +150,7 @@ export function AuthSection({
               setError(null);
               setInfo(null);
             }}
-            className="text-xs text-slate-400 hover:text-slate-200"
+            className="text-xs text-ink-3 hover:text-ink-2"
           >
             {s.auth.backToLogin}
           </button>
@@ -197,8 +197,8 @@ export function AuthSection({
   }
 
   return (
-    <div className="border-b border-white/10 p-4">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <div className="border-b border-line p-4">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">
         {s.menu.account}
       </p>
       <form onSubmit={submit} className="flex flex-col gap-2">
@@ -209,20 +209,20 @@ export function AuthSection({
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder={s.auth.firstName}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[var(--app-accent)]"
+              className="rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-[var(--app-accent)]"
             />
             <input
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder={s.auth.lastName}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[var(--app-accent)]"
+              className="rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-[var(--app-accent)]"
             />
             <input
               type="date"
               value={dateOfBirth}
               onChange={(e) => setDateOfBirth(e.target.value)}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[var(--app-accent)]"
+              className="rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-[var(--app-accent)]"
             />
           </>
         )}
@@ -231,17 +231,17 @@ export function AuthSection({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder={s.auth.email}
-          className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[var(--app-accent)]"
+          className="rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-[var(--app-accent)]"
         />
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder={s.auth.password}
-          className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[var(--app-accent)]"
+          className="rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-[var(--app-accent)]"
         />
         {mode === "login" && (
-          <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-400 select-none">
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-ink-3 select-none">
             <input
               type="checkbox"
               checked={remember}
@@ -266,7 +266,7 @@ export function AuthSection({
               setMode("forgot");
               setError(null);
             }}
-            className="text-xs text-slate-400 hover:text-slate-200"
+            className="text-xs text-ink-3 hover:text-ink-2"
           >
             {s.auth.forgotPasswordLink}
           </button>
@@ -277,7 +277,7 @@ export function AuthSection({
             setMode((m) => (m === "login" ? "register" : "login"));
             setError(null);
           }}
-          className="text-xs text-slate-400 hover:text-slate-200"
+          className="text-xs text-ink-3 hover:text-ink-2"
         >
           {mode === "login" ? s.auth.switchToRegister : s.auth.switchToLogin}
         </button>
@@ -340,7 +340,7 @@ export function AccountMenu({
             ? // The avatar draws its own rim; a second ring here just stacked
               // another circle on a slightly different radius.
               ""
-            : `bg-white/10 text-slate-200 ring-1 ring-white/15 hover:bg-white/20 ${
+            : `bg-surface-2 text-ink-2 ring-1 ring-line-2 hover:bg-surface-hover ${
                 open ? "ring-2 ring-white/40" : ""
               }`
         }`}
@@ -369,7 +369,7 @@ export function AccountMenu({
               at w-72 with p-4 sections this panel covered most of the window
               on a small screen. `max-h` + scroll keeps the themes reachable
               without the panel ever running past the bottom edge. */}
-          <div className="animate-card absolute right-0 z-50 mt-2 max-h-[calc(100vh-5rem)] w-60 overflow-y-auto overflow-x-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+          <div className="animate-card absolute right-0 z-50 mt-2 max-h-[calc(100vh-5rem)] w-60 overflow-y-auto overflow-x-hidden rounded-2xl border border-line bg-slate-900 shadow-2xl">
             <AuthSection
               s={s}
               auth={auth}
@@ -379,7 +379,7 @@ export function AccountMenu({
               onForgotPassword={onForgotPassword}
             />
 
-            <div className="border-b border-white/10 p-3">
+            <div className="border-b border-line p-3">
               {isPro ? (
                 /* Same reasoning as the sidebar card: a Pro subscriber should
                    see that they bought something, not the same grey line a
@@ -398,11 +398,11 @@ export function AccountMenu({
                 </div>
               ) : (
                 <>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
                     {s.menu.plan}
                   </p>
                   <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-slate-100">{s.menu.planFree}</span>
+                    <span className="text-sm font-semibold text-ink">{s.menu.planFree}</span>
                     <button
                       onClick={() => {
                         setOpen(false);
@@ -417,8 +417,8 @@ export function AccountMenu({
               )}
             </div>
 
-            <div className="border-b border-white/10 p-3">
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <div className="border-b border-line p-3">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">
                 {s.menu.language}
               </p>
               <div className="flex flex-col gap-0.5">
@@ -429,7 +429,7 @@ export function AccountMenu({
                     className={`rounded-lg px-2.5 py-1 text-left text-[13px] transition-colors ${
                       lang === l.code
                         ? "bg-indigo-500/20 text-indigo-300"
-                        : "text-slate-300 hover:bg-white/5"
+                        : "text-ink-2 hover:bg-surface-2"
                     }`}
                   >
                     {l.native}
@@ -438,8 +438,8 @@ export function AccountMenu({
               </div>
             </div>
 
-            <div className="border-b border-white/10 p-3">
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <div className="border-b border-line p-3">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">
                 {s.menu.theme}
               </p>
               {/* Swatches only: with a dozen themes the labels forced a
@@ -472,13 +472,13 @@ export function AccountMenu({
               </div>
             </div>
 
-            <div className="border-b border-white/10 p-3">
+            <div className="border-b border-line p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
                     {s.menu.errorReports}
                   </p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
+                  <p className="mt-1 text-[11px] leading-relaxed text-ink-3">
                     {s.menu.errorReportsBody}
                   </p>
                 </div>
@@ -488,7 +488,7 @@ export function AccountMenu({
                   aria-label={s.menu.errorReports}
                   onClick={toggleErrorReports}
                   className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors ${
-                    errReports ? "bg-indigo-500" : "bg-white/15"
+                    errReports ? "bg-indigo-500" : "bg-surface-hover"
                   }`}
                 >
                   <span
@@ -501,10 +501,10 @@ export function AccountMenu({
             </div>
 
             <div className="p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
                 {s.menu.about}
               </p>
-              <p className="mt-1 text-[11px] leading-relaxed text-slate-400">{s.menu.aboutBody}</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-ink-3">{s.menu.aboutBody}</p>
             </div>
           </div>
         </>

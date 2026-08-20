@@ -18,6 +18,9 @@ export interface Strings {
   appliedCount: string; // "{applied} of {total} tweaks active" — use {applied}/{total}
   headerNote: string;
   tabs: {
+    groupMonitor: string;
+    groupOptimize: string;
+    groupManage: string;
     scan: string;
     performance: string;
     privacy: string;
@@ -392,6 +395,9 @@ const it: Strings = {
   headerNote:
     "Ogni tweak salva un backup del valore originale prima di essere applicato. I tweak con privilegi elevati chiedono un consenso UAC esplicito, solo per quell'azione.",
   tabs: {
+    groupMonitor: "Monitoraggio",
+    groupOptimize: "Ottimizza",
+    groupManage: "Gestisci",
     scan: "Scansione",
     performance: "Prestazioni",
     privacy: "Privacy",
@@ -1046,6 +1052,9 @@ const en: Strings = {
   headerNote:
     "Every tweak backs up the original value before it's applied. Tweaks that need elevated rights ask for an explicit UAC prompt, only for that action.",
   tabs: {
+    groupMonitor: "Monitor",
+    groupOptimize: "Optimize",
+    groupManage: "Manage",
     scan: "Scan",
     performance: "Performance",
     privacy: "Privacy",
@@ -1695,6 +1704,9 @@ const fr: Strings = {
   headerNote:
     "Chaque optimisation sauvegarde la valeur d'origine avant d'être appliquée. Celles qui nécessitent des droits élevés demandent un consentement UAC explicite, uniquement pour cette action.",
   tabs: {
+    groupMonitor: "Surveiller",
+    groupOptimize: "Optimiser",
+    groupManage: "Gérer",
     scan: "Analyse",
     performance: "Performances",
     privacy: "Confidentialité",
@@ -2354,6 +2366,9 @@ const es: Strings = {
   headerNote:
     "Cada ajuste guarda una copia del valor original antes de aplicarse. Los ajustes que requieren privilegios elevados piden un consentimiento UAC explícito, solo para esa acción.",
   tabs: {
+    groupMonitor: "Supervisar",
+    groupOptimize: "Optimizar",
+    groupManage: "Gestionar",
     scan: "Análisis",
     performance: "Rendimiento",
     privacy: "Privacidad",
@@ -3011,6 +3026,9 @@ const de: Strings = {
   headerNote:
     "Jede Optimierung sichert den ursprünglichen Wert, bevor sie angewendet wird. Optimierungen mit erhöhten Rechten fragen gezielt per UAC nach, nur für diese Aktion.",
   tabs: {
+    groupMonitor: "Überwachen",
+    groupOptimize: "Optimieren",
+    groupManage: "Verwalten",
     scan: "Systemscan",
     performance: "Leistung",
     privacy: "Datenschutz",

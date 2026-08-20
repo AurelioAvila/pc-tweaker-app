@@ -553,6 +553,67 @@ fn run_cleanup(app: tauri::AppHandle, id: String) -> Result<CleanupResult, Strin
     result
 }
 
+/// Read-only dry run for the cleanup confirmation dialog: exactly what
+/// `run_cleanup` would move, with sizes. Takes no action.
+#[tauri::command]
+fn preview_cleanup(id: String) -> Result<cleanup::CleanupPreview, String> {
+    cleanup::preview_cleanup(&id)
+}
+
+/// Cleans only the top-level items the user ticked in the preview. Same
+/// elevation dance as `run_cleanup`; the selection crosses the UAC boundary
+/// as a `|`-joined payload (Windows forbids `|` in file names, and the names
+/// are re-validated on the elevated side).
+#[cfg(windows)]
+#[tauri::command]
+fn run_cleanup_selected(
+    app: tauri::AppHandle,
+    id: String,
+    names: Vec<String>,
+) -> Result<CleanupResult, String> {
+    let requires_admin = cleanup::cleanup_targets()
+        .iter()
+        .find(|c| c.id == id)
+        .map(|c| c.requires_admin)
+        .unwrap_or(false);
+
+    if requires_admin && !elevation::is_elevated() {
+        // Validate before the payload is built, so a bad name fails here
+        // with a clear error instead of inside the headless helper.
+        for name in &names {
+            cleanup::validate_item_name(name)?;
+        }
+        elevation::run_elevated_action(
+            "--elevated-cleanup-sel",
+            &cleanup::encode_selected_payload(&id, &names),
+        )?;
+        let path = last_cleanup_result_path(&app)?;
+        let json = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let _ = std::fs::remove_file(&path);
+        return serde_json::from_str(&json).map_err(|e| e.to_string());
+    }
+
+    let count = names.len();
+    let result = cleanup::run_cleanup_selected(&id, &names);
+    audit::record(
+        "cleanup",
+        &id,
+        result.is_ok(),
+        Some(format!("{} selected items", count)),
+    );
+    result
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+fn run_cleanup_selected(
+    _app: tauri::AppHandle,
+    _id: String,
+    _names: Vec<String>,
+) -> Result<CleanupResult, String> {
+    Err("not supported on this platform".to_string())
+}
+
 #[cfg(not(windows))]
 #[tauri::command]
 fn run_cleanup(_app: tauri::AppHandle, _id: String) -> Result<CleanupResult, String> {
@@ -712,6 +773,25 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
                     .map_err(|e| e.to_string())
             })
         }
+        "--elevated-cleanup-sel" => {
+            // Re-decoded and re-validated on this side: the elevated entry
+            // point must not trust that its caller was our own app.
+            let result = cleanup::decode_selected_payload(id).and_then(|(cleanup_id, names)| {
+                let outcome = cleanup::run_cleanup_selected(&cleanup_id, &names);
+                audit::record(
+                    "cleanup",
+                    &cleanup_id,
+                    outcome.is_ok(),
+                    Some(format!("{} selected items", names.len())),
+                );
+                outcome
+            });
+            result.and_then(|res| {
+                let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
+                std::fs::write(dir.join("last_cleanup_result.json"), json)
+                    .map_err(|e| e.to_string())
+            })
+        }
         // Re-validated on this side too: the elevated entry point is a plain
         // CLI flag, so it must not trust that its caller was our own app.
         "--elevated-diskopt" => {
@@ -793,6 +873,8 @@ pub fn run() {
             rollback_tweak,
             list_cleanup_targets,
             run_cleanup,
+            preview_cleanup,
+            run_cleanup_selected,
             scan_duplicates,
             delete_files,
             game_sessions::list_game_sessions,

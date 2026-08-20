@@ -10,6 +10,7 @@ fn main() {
                 || args[1] == "--elevated-apply-many"
                 || args[1] == "--elevated-rollback"
                 || args[1] == "--elevated-cleanup"
+                || args[1] == "--elevated-cleanup-sel"
                 || args[1] == "--elevated-startup")
         {
             // Relaunched via UAC to perform exactly one privileged action headlessly.

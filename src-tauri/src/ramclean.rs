@@ -117,6 +117,53 @@ pub fn clean_ram(
     Err("RAM cleanup is only available on Windows".to_string())
 }
 
+/// One row of the Memory Pressure "review" list: a process name and how much
+/// physical memory its instances hold, summed. Read-only display data.
+#[derive(Serialize, Clone)]
+pub struct ProcessMemory {
+    pub name: String,
+    pub mem_bytes: u64,
+}
+
+/// Groups per-process memory by executable name and returns the heaviest
+/// `limit` entries. Pure so it is testable without a live process table.
+pub fn top_by_memory(rows: Vec<(String, u64)>, limit: usize) -> Vec<ProcessMemory> {
+    let mut by_name: std::collections::HashMap<String, u64> = std::collections::HashMap::new();
+    for (name, bytes) in rows {
+        if name.is_empty() {
+            continue;
+        }
+        *by_name.entry(name).or_insert(0) += bytes;
+    }
+    let mut out: Vec<ProcessMemory> = by_name
+        .into_iter()
+        .map(|(name, mem_bytes)| ProcessMemory { name, mem_bytes })
+        .collect();
+    out.sort_by(|a, b| b.mem_bytes.cmp(&a.mem_bytes));
+    out.truncate(limit);
+    out
+}
+
+/// The heaviest memory consumers right now, grouped by process name.
+/// Strictly read-only: the Memory Pressure panel shows WHO is using memory
+/// before offering any action at all.
+#[tauri::command]
+pub fn top_memory_processes(
+    state: tauri::State<'_, crate::sysmon::SysMonState>,
+) -> Result<Vec<ProcessMemory>, String> {
+    let mut sys = state
+        .0
+        .lock()
+        .map_err(|_| "system monitor state is unavailable".to_string())?;
+    sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+    let rows: Vec<(String, u64)> = sys
+        .processes()
+        .values()
+        .map(|p| (p.name().to_string_lossy().to_string(), p.memory()))
+        .collect();
+    Ok(top_by_memory(rows, 8))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -146,5 +193,21 @@ mod tests {
         let r = RamCleanResult::default();
         assert_eq!(r.freed_bytes, 0);
         assert_eq!(r.trimmed_processes, 0);
+    }
+
+    #[test]
+    fn top_by_memory_groups_by_name_and_orders_by_total() {
+        let rows = vec![
+            ("chrome.exe".to_string(), 300),
+            ("steam.exe".to_string(), 500),
+            ("chrome.exe".to_string(), 400),
+            ("".to_string(), 999),
+            ("tiny.exe".to_string(), 10),
+        ];
+        let top = top_by_memory(rows, 2);
+        assert_eq!(top.len(), 2);
+        assert_eq!(top[0].name, "chrome.exe");
+        assert_eq!(top[0].mem_bytes, 700);
+        assert_eq!(top[1].name, "steam.exe");
     }
 }

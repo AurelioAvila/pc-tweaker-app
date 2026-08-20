@@ -142,9 +142,15 @@ export function GameSessionsPanel({
 }
 
 export function TurboGauge({ value, engaged }: { value: number; engaged: boolean }) {
-  const needle = polar(GAUGE_START + GAUGE_SWEEP * value, GAUGE_R - 12);
   // The last fifth is the "redline" — the part boost mode actually unlocks.
   const REDLINE = 0.8;
+  const angle = GAUGE_START + GAUGE_SWEEP * value;
+  // A tapered needle with a counterweight tail, like a real rev counter's,
+  // instead of a uniform line from the hub.
+  const tip = polar(angle, GAUGE_R - 14);
+  const baseA = polar(angle + 90, 3);
+  const baseB = polar(angle - 90, 3);
+  const tail = polar(angle + 180, 13);
 
   return (
     <svg viewBox="0 0 160 160" className="h-40 w-40">
@@ -154,31 +160,47 @@ export function TurboGauge({ value, engaged }: { value: number; engaged: boolean
           <stop offset="55%" stopColor="#fb7185" />
           <stop offset="100%" stopColor="#ef4444" />
         </linearGradient>
+        <radialGradient id="turbo-hub">
+          <stop offset="0%" stopColor="#475569" />
+          <stop offset="100%" stopColor="#0f172a" />
+        </radialGradient>
       </defs>
+
+      {/* Bezel: a full hairline circle behind the dial gives it the depth of
+          an instrument face rather than a floating arc. */}
+      <circle
+        cx={GAUGE_C}
+        cy={GAUGE_C}
+        r={GAUGE_R + 8}
+        stroke="rgba(255,255,255,0.06)"
+        strokeWidth="1"
+        fill="rgba(255,255,255,0.02)"
+      />
 
       {/* Track */}
       <path
         d={arcPath(0, 1, GAUGE_R)}
-        stroke="rgba(255,255,255,0.10)"
-        strokeWidth="9"
+        stroke="rgba(255,255,255,0.08)"
+        strokeWidth="7"
         fill="none"
         strokeLinecap="round"
       />
       {/* Redline zone, always visible so the goal of the sweep is legible */}
       <path
         d={arcPath(REDLINE, 1, GAUGE_R)}
-        stroke="rgba(239,68,68,0.30)"
-        strokeWidth="9"
+        stroke="rgba(239,68,68,0.35)"
+        strokeWidth="7"
         fill="none"
         strokeLinecap="round"
       />
 
       {/* Tick marks */}
-      {Array.from({ length: 11 }, (_, i) => {
-        const f = i / 10;
+      {Array.from({ length: 21 }, (_, i) => {
+        const f = i / 20;
         const a = GAUGE_START + GAUGE_SWEEP * f;
-        const outer = polar(a, GAUGE_R - 8);
-        const inner = polar(a, GAUGE_R - (i % 5 === 0 ? 17 : 13));
+        const major = i % 5 === 0;
+        const outer = polar(a, GAUGE_R - 7);
+        const inner = polar(a, GAUGE_R - (major ? 16 : 11));
         return (
           <line
             key={i}
@@ -186,43 +208,70 @@ export function TurboGauge({ value, engaged }: { value: number; engaged: boolean
             y1={outer.y}
             x2={inner.x}
             y2={inner.y}
-            stroke={f >= REDLINE ? "rgba(248,113,113,0.75)" : "rgba(255,255,255,0.35)"}
-            strokeWidth={i % 5 === 0 ? 2.2 : 1.2}
+            stroke={f >= REDLINE ? "rgba(248,113,113,0.8)" : "rgba(255,255,255,0.32)"}
+            strokeWidth={major ? 2 : 1}
             strokeLinecap="round"
           />
         );
       })}
 
-      {/* Filled portion */}
+      {/* Dial numerals at the quarter marks, so the sweep reads as a scale */}
+      {[0, 0.25, 0.5, 0.75, 1].map((f) => {
+        const p = polar(GAUGE_START + GAUGE_SWEEP * f, GAUGE_R - 25);
+        return (
+          <text
+            key={f}
+            x={p.x}
+            y={p.y + 3}
+            textAnchor="middle"
+            fontSize="8"
+            fontWeight="700"
+            fill={f >= REDLINE ? "rgba(248,113,113,0.8)" : "rgba(148,163,184,0.75)"}
+            style={{ fontVariantNumeric: "tabular-nums" }}
+          >
+            {Math.round(f * 100)}
+          </text>
+        );
+      })}
+
+      {/* Filled portion: a soft wide pass underneath for glow, a crisp pass on
+          top — reads as light in the channel instead of a flat stroke. */}
       {value > 0.002 && (
-        <path
-          d={arcPath(0, value, GAUGE_R)}
-          stroke="url(#turbo-fill)"
-          strokeWidth="9"
-          fill="none"
-          strokeLinecap="round"
-          style={{ filter: engaged ? "drop-shadow(0 0 8px rgba(251,146,60,0.65))" : "none" }}
-        />
+        <>
+          <path
+            d={arcPath(0, value, GAUGE_R)}
+            stroke="url(#turbo-fill)"
+            strokeWidth="11"
+            fill="none"
+            strokeLinecap="round"
+            opacity={engaged ? 0.4 : 0.18}
+            style={{ filter: "blur(4px)" }}
+          />
+          <path
+            d={arcPath(0, value, GAUGE_R)}
+            stroke="url(#turbo-fill)"
+            strokeWidth="6"
+            fill="none"
+            strokeLinecap="round"
+          />
+        </>
       )}
 
       {/* Needle */}
-      <line
-        x1={GAUGE_C}
-        y1={GAUGE_C}
-        x2={needle.x}
-        y2={needle.y}
-        stroke={engaged ? "#fb923c" : "#cbd5e1"}
-        strokeWidth="3"
-        strokeLinecap="round"
+      <polygon
+        points={`${tip.x},${tip.y} ${baseA.x},${baseA.y} ${tail.x},${tail.y} ${baseB.x},${baseB.y}`}
+        fill={engaged ? "#fb923c" : "#cbd5e1"}
+        style={{ filter: engaged ? "drop-shadow(0 0 4px rgba(251,146,60,0.7))" : "none" }}
       />
       <circle
         cx={GAUGE_C}
         cy={GAUGE_C}
-        r="7"
-        fill="#0f172a"
+        r="7.5"
+        fill="url(#turbo-hub)"
         stroke={engaged ? "#fb923c" : "#64748b"}
-        strokeWidth="2.5"
+        strokeWidth="2"
       />
+      <circle cx={GAUGE_C} cy={GAUGE_C} r="2" fill={engaged ? "#fbbf24" : "#94a3b8"} />
     </svg>
   );
 }
@@ -438,9 +487,9 @@ export function TurboBoostPanel({
   const readout = busy ? stage : (gainText ?? ceiling);
 
   return (
-    <div className="mb-6 flex flex-col items-center rounded-2xl border border-white/10 bg-white/[0.04] p-8">
-      <h2 className="text-lg font-semibold text-slate-100">{s.turboBoost.title}</h2>
-      <p className="mt-1 max-w-xs text-center text-sm text-slate-400">{s.turboBoost.subtitle}</p>
+    <div className="signal border-line bg-surface-1 relative mb-6 flex flex-col items-center overflow-hidden rounded-2xl border p-8">
+      <h2 className="text-ink text-lg font-semibold">{s.turboBoost.title}</h2>
+      <p className="text-ink-3 mt-1 max-w-xs text-center text-sm">{s.turboBoost.subtitle}</p>
 
       <div className="relative mt-6 grid place-items-center">
         {applied && !busy && (

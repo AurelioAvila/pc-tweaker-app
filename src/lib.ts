@@ -187,3 +187,56 @@ export async function sha1Hex(text: string): Promise<string> {
     .join("")
     .toUpperCase();
 }
+
+/**
+ * Device-local profile photo, stored as a small data URL. It never leaves
+ * this machine: the backend has no avatar endpoint on purpose — a picture of
+ * the user is not data a PC tweaker needs to hold.
+ */
+export const AVATAR_KEY = "pc-tweaker-avatar";
+
+export function readAvatar(): string | null {
+  const v = localStorage.getItem(AVATAR_KEY);
+  return v && v.startsWith("data:image/") ? v : null;
+}
+
+/**
+ * Downscales a picked image to a 128px cover-cropped square JPEG so the
+ * stored data URL stays a few KB instead of megabytes of phone photo.
+ */
+export function fileToAvatarDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const SIZE = 128;
+      const canvas = document.createElement("canvas");
+      canvas.width = SIZE;
+      canvas.height = SIZE;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("canvas unavailable"));
+        return;
+      }
+      // Cover crop: scale the short side to SIZE and center the long one.
+      const scale = SIZE / Math.min(img.width, img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      ctx.drawImage(img, (SIZE - w) / 2, (SIZE - h) / 2, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("not an image"));
+    };
+    img.src = url;
+  });
+}
+
+/**
+ * Feature flag for the PC Tweaker Intelligence slice (Advisor + Change
+ * Ledger). Compile-time on purpose: flipping it to false removes the nav
+ * entry and both surfaces in one place, with no dead UI left behind.
+ */
+export const FEATURE_INTELLIGENCE = true;

@@ -575,7 +575,7 @@ function App() {
                     <button
                       onClick={() => setConfirmRestore(true)}
                       disabled={restoring}
-                      className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-300 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white disabled:cursor-wait disabled:opacity-60"
+                      className="flex items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-2.5 py-1 text-xs font-semibold text-ink-2 transition-colors hover:border-line-2 hover:bg-surface-hover hover:text-white disabled:cursor-wait disabled:opacity-60"
                     >
                       <UndoIcon className="h-3.5 w-3.5" />
                       {restoring ? s.restore.running : s.restore.button}
@@ -585,19 +585,19 @@ function App() {
               )}
             </div>
             <div className="relative ml-auto w-56 shrink-0">
-              <MagnifierIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <MagnifierIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Escape" && setQuery("")}
                 placeholder={s.search.placeholder}
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-8 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-white/25 focus:bg-white/[0.07]"
+                className="w-full rounded-xl border border-line bg-surface-2 py-2 pl-9 pr-8 text-sm text-ink outline-none transition-colors placeholder:text-ink-3 focus:border-line-2 focus:bg-surface-hover"
               />
               {searching && (
                 <button
                   onClick={() => setQuery("")}
                   aria-label={s.search.clear}
-                  className="absolute right-2 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full text-slate-500 hover:bg-white/10 hover:text-slate-200"
+                  className="absolute right-2 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full text-ink-3 hover:bg-surface-hover hover:text-ink-2"
                 >
                   ✕
                 </button>
@@ -706,8 +706,8 @@ function App() {
                 <li
                   key={t.id}
                   style={{ animationDelay: `${i * 40}ms` }}
-                  className={`animate-card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4
-                  shadow-lg shadow-black/20 transition-all duration-200 hover:border-white/20 hover:bg-white/[0.06]`}
+                  className={`animate-card group relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4
+                  shadow-lg shadow-black/20 transition-all duration-200 hover:border-line-2 hover:bg-surface-2`}
                 >
                   <div
                     className={`pointer-events-none absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${style.ring}`}
@@ -720,16 +720,16 @@ function App() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-semibold text-slate-100">{text.name}</h2>
+                        <h2 className="font-semibold text-ink">{text.name}</h2>
                         {t.hive !== "—" && (
-                          <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-slate-300">
+                          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-2">
                             {t.hive}
                           </span>
                         )}
                         {t.requires_admin && <ShieldBadge label={s.badges.admin} />}
                         {t.requires_pro && <ProBadge label={s.badges.pro} />}
                       </div>
-                      <p className="mt-0.5 text-sm text-slate-400">{text.description}</p>
+                      <p className="mt-0.5 text-sm text-ink-3">{text.description}</p>
                     </div>
                     <Toggle
                       checked={t.applied}
@@ -799,7 +799,7 @@ function App() {
               !showScan &&
               !showStartup &&
               !showPricing && (
-                <li className="animate-card rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-slate-500">
+                <li className="animate-card rounded-2xl border border-dashed border-line p-10 text-center text-sm text-ink-3">
                   {searching
                     ? format(s.search.noResults, { query: query.trim() })
                     : s.emptyCategory}
@@ -807,7 +807,7 @@ function App() {
               )}
           </ul>
 
-          <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-relaxed text-slate-600">
+          <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-relaxed text-ink-3">
             {s.headerNote}
           </p>
         </div>
@@ -829,9 +829,9 @@ function App() {
 
       {confirmRestore && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm">
-          <div className="animate-card w-full max-w-sm rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-100">{s.restore.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-400">
+          <div className="animate-card w-full max-w-sm rounded-2xl border border-line bg-slate-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-ink">{s.restore.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink-3">
               {format(s.restore.body, { count: appliedCount })}
             </p>
             <button
@@ -842,7 +842,7 @@ function App() {
             </button>
             <button
               onClick={() => setConfirmRestore(false)}
-              className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-slate-400 hover:text-slate-200"
+              className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-ink-3 hover:text-ink-2"
             >
               {s.restore.cancel}
             </button>

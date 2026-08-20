@@ -73,16 +73,16 @@ export function GameSessionsPanel({
   }
 
   return (
-    <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+    <div className="mb-6 rounded-2xl border border-line bg-surface-1 p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+          <p className="flex items-center gap-2 text-sm font-semibold text-ink">
             {s.gameSessions.title}
             <span className="rounded-full bg-gradient-to-r from-amber-300 to-yellow-500 px-2 py-0.5 text-[10px] font-bold text-amber-950">
               PRO
             </span>
           </p>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <p className="mt-0.5 text-xs text-ink-3">
             {activeGame
               ? format(s.gameSessions.active, { name: activeGame })
               : s.gameSessions.subtitle}
@@ -94,7 +94,7 @@ export function GameSessionsPanel({
           aria-checked={enabled}
           onClick={toggleEnabled}
           className={`relative inline-flex h-8 w-14 shrink-0 appearance-none items-center rounded-full border-0 p-0
-            outline-none transition-colors duration-300 ease-out ${enabled ? "" : "bg-white/15"}`}
+            outline-none transition-colors duration-300 ease-out ${enabled ? "" : "bg-surface-hover"}`}
           style={enabled ? { backgroundColor: "var(--app-accent)" } : undefined}
         >
           <span
@@ -104,10 +104,10 @@ export function GameSessionsPanel({
       </div>
 
       {enabled && (
-        <div className="mt-3 border-t border-white/10 pt-3">
+        <div className="mt-3 border-t border-line pt-3">
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="text-xs font-medium text-slate-400 hover:text-slate-200"
+            className="text-xs font-medium text-ink-3 hover:text-ink-2"
           >
             {format(s.gameSessions.gamesCount, { count: games.length })} {expanded ? "▲" : "▼"}
           </button>
@@ -116,12 +116,12 @@ export function GameSessionsPanel({
               {games.map((g) => (
                 <div
                   key={g.path}
-                  className="flex items-center justify-between gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-xs"
+                  className="flex items-center justify-between gap-2 rounded-lg bg-surface-2 px-3 py-1.5 text-xs"
                 >
-                  <span className="truncate text-slate-300">{g.name}</span>
+                  <span className="truncate text-ink-2">{g.name}</span>
                   <button
                     onClick={() => removeGame(g.path)}
-                    className="shrink-0 text-slate-500 hover:text-red-400"
+                    className="shrink-0 text-ink-3 hover:text-red-400"
                   >
                     ✕
                   </button>
@@ -129,7 +129,7 @@ export function GameSessionsPanel({
               ))}
               <button
                 onClick={addGame}
-                className="mt-1 rounded-lg border border-dashed border-white/15 px-3 py-1.5 text-xs font-medium text-slate-400 hover:border-white/30 hover:text-slate-200"
+                className="mt-1 rounded-lg border border-dashed border-line-2 px-3 py-1.5 text-xs font-medium text-ink-3 hover:border-line-2 hover:text-ink-2"
               >
                 {s.gameSessions.addGame}
               </button>
@@ -501,7 +501,7 @@ export function TurboBoostPanel({
         <span className="pointer-events-none absolute bottom-7 flex flex-col items-center">
           <span
             className={`font-black tabular-nums leading-none transition-colors ${
-              applied || busy ? "text-orange-300" : "text-slate-500"
+              applied || busy ? "text-orange-300" : "text-ink-3"
             }`}
             style={{ fontSize: 26 }}
           >
@@ -519,13 +519,13 @@ export function TurboBoostPanel({
               ? "text-emerald-300"
               : applied
                 ? "text-orange-300/80"
-                : "text-slate-500"
+                : "text-ink-3"
         }`}
       >
         {readout}
       </p>
       {!busy && ratedMhz !== null && (
-        <p className="text-center text-[11px] text-slate-500">
+        <p className="text-center text-[11px] text-ink-3">
           {(ratedMhz / 1000).toFixed(2)} GHz ·{" "}
           {applied ? s.turboBoost.modeAggressive : s.turboBoost.modeDefault}
         </p>
@@ -536,7 +536,7 @@ export function TurboBoostPanel({
         disabled={busy}
         className={`mt-4 flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-bold transition-all disabled:cursor-wait ${
           applied
-            ? "bg-white/10 text-slate-200 hover:bg-white/15"
+            ? "bg-surface-2 text-ink-2 hover:bg-surface-hover"
             : "bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 shadow-lg shadow-orange-500/25 hover:scale-[1.03]"
         }`}
       >

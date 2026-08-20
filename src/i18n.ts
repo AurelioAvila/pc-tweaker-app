@@ -351,6 +351,11 @@ export interface Strings {
     running: string;
     resultToast: string;
   };
+  promptshieldPromo: {
+    title: string;
+    description: string;
+    button: string;
+  };
   uninstallerPromo: {
     title: string;
     description: string;
@@ -820,6 +825,12 @@ const it: Strings = {
     button: "Svuota ora",
     running: "Svuotamento...",
     resultToast: "Cache DNS svuotata.",
+  },
+  promptshieldPromo: {
+    title: "PromptShield",
+    description:
+      "Hai bloccato telemetria e tracciamento — ma cosa incolli nelle chat AI? PromptShield intercetta dati personali e credenziali prima che un prompt raggiunga qualsiasi modello. Stessa famiglia, stessa regola: niente viene salvato.",
+    button: "Prova sul web",
   },
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
@@ -1546,6 +1557,12 @@ const en: Strings = {
     button: "Flush now",
     running: "Flushing...",
     resultToast: "DNS cache flushed.",
+  },
+  promptshieldPromo: {
+    title: "PromptShield",
+    description:
+      "You've cut telemetry and tracking — but what do you paste into AI chats? PromptShield catches personal data and credentials before a prompt reaches any model. Same family, same rule: nothing gets stored.",
+    button: "Try it on the web",
   },
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
@@ -2278,6 +2295,12 @@ const fr: Strings = {
     running: "Vidage...",
     resultToast: "Cache DNS vide.",
   },
+  promptshieldPromo: {
+    title: "PromptShield",
+    description:
+      "Vous avez coupé télémétrie et pistage — mais que collez-vous dans les chats IA ? PromptShield intercepte données personnelles et identifiants avant qu'un prompt n'atteigne un modèle. Même famille, même règle : rien n'est conservé.",
+    button: "Essayer sur le web",
+  },
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
     description:
@@ -3008,6 +3031,12 @@ const es: Strings = {
     button: "Vaciar ahora",
     running: "Vaciando...",
     resultToast: "Cache DNS vaciada.",
+  },
+  promptshieldPromo: {
+    title: "PromptShield",
+    description:
+      "Has cortado telemetría y rastreo — pero ¿qué pegas en los chats de IA? PromptShield intercepta datos personales y credenciales antes de que un prompt llegue a cualquier modelo. Misma familia, misma regla: nada se guarda.",
+    button: "Pruébalo en la web",
   },
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
@@ -3743,6 +3772,12 @@ const de: Strings = {
     button: "Jetzt leeren",
     running: "Wird geleert...",
     resultToast: "DNS-Cache geleert.",
+  },
+  promptshieldPromo: {
+    title: "PromptShield",
+    description:
+      "Telemetrie und Tracking sind aus — aber was fügst du in KI-Chats ein? PromptShield fängt persönliche Daten und Zugangsdaten ab, bevor ein Prompt irgendein Modell erreicht. Gleiche Familie, gleiche Regel: nichts wird gespeichert.",
+    button: "Im Web ausprobieren",
   },
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",

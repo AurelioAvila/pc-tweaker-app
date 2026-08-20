@@ -619,6 +619,36 @@ function DnsFlushCard({ s, onToast }: { s: Strings; onToast: (kind: Toast["kind"
   );
 }
 
+/** Cross-promo for the sibling product. It lives at the end of the cleanup
+ *  section deliberately: someone deleting temp files and duplicates is one
+ *  step away from wanting whole programs gone — that is the uninstaller's
+ *  job. Static card, no IPC, links out to the product page. */
+function UninstallerPromoCard({ s }: { s: Strings }) {
+  function openPage() {
+    void openUrl("https://github.com/AurelioAvila/pc-tweaker-uninstaller");
+  }
+
+  return (
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-fuchsia-400/20 bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 p-4 shadow-lg shadow-black/20">
+      <div className="flex items-center gap-4">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-fuchsia-400/15 text-sm font-bold text-fuchsia-300 ring-1 ring-fuchsia-400/30">
+          PU
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold text-slate-100">{s.uninstallerPromo.title}</h2>
+          <p className="mt-0.5 text-sm text-slate-400">{s.uninstallerPromo.description}</p>
+        </div>
+        <button
+          onClick={openPage}
+          className="shrink-0 rounded-xl bg-fuchsia-500 px-4 py-2 text-sm font-semibold text-fuchsia-950 transition-transform hover:scale-[1.03]"
+        >
+          {s.uninstallerPromo.button}
+        </button>
+      </div>
+    </li>
+  );
+}
+
 const LARGE_FILE_THRESHOLD_BYTES = 100 * 1024 * 1024;
 
 /** Same scan/select/delete shape as DuplicateFinder, but by size threshold
@@ -4406,6 +4436,8 @@ function App() {
               onToast={pushToast}
             />
           )}
+
+          {showCleanup && <UninstallerPromoCard s={s} />}
 
           {visibleTweaks.length === 0 &&
             !showCleanup &&

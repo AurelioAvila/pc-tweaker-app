@@ -472,77 +472,76 @@ function App() {
   const currentLabel = CATEGORIES.find((c) => c.key === filter)?.label ?? "";
 
   return (
-    <main className="flex min-h-screen bg-[radial-gradient(circle_at_top_left,var(--app-bg-a),var(--app-bg-b)_65%)] text-slate-100 [font-family:var(--app-font)]">
-      <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col border-r border-white/5 bg-black/25 p-4 backdrop-blur-xl">
-        <div className="mb-7 flex items-center gap-2.5 px-1">
-          <img
-            src="/logo-mark.png"
-            alt=""
-            className="h-9 w-9 shrink-0 rounded-xl shadow-lg shadow-black/40"
-          />
-          <span className="truncate text-[15px] font-bold tracking-tight">{s.appName}</span>
+    <main className="bg-app text-ink flex min-h-screen [font-family:var(--font-app)]">
+      {/* Control Room shell: an opaque raised band for navigation, separated
+          from the content floor by a hairline — depth from luminance and
+          borders, never blur or shadows. */}
+      <aside className="bg-raised border-line sticky top-0 flex h-screen w-52 shrink-0 flex-col border-r p-4">
+        <div className="mb-6 flex items-center gap-2.5 px-1">
+          <img src="/logo-mark.png" alt="" className="h-8 w-8 shrink-0 rounded-[8px]" />
+          <span className="truncate text-[14px] font-semibold tracking-tight">{s.appName}</span>
         </div>
 
-        <nav className="flex flex-col gap-0.5">
-          {CATEGORIES.map((c) => {
-            const active = filter === c.key;
-            return (
-              <button
-                key={c.key}
-                onClick={() => setFilter(c.key)}
-                className={`group relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
-                  active ? "text-white" : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
-                }`}
-                style={
-                  active
-                    ? { backgroundColor: "color-mix(in srgb, var(--app-accent) 22%, transparent)" }
-                    : undefined
-                }
-              >
-                {active && (
-                  <span
-                    className="absolute inset-y-2 left-0 w-[3px] rounded-full"
-                    style={{ backgroundColor: "var(--app-accent)" }}
-                  />
-                )}
-                <span
-                  className={`shrink-0 transition-colors ${active ? "" : "text-slate-500 group-hover:text-slate-300"}`}
-                  style={active ? { color: "var(--app-accent)" } : undefined}
-                >
-                  {c.icon}
-                </span>
-                <span className="truncate">{c.label}</span>
-              </button>
-            );
-          })}
+        {/* Navigation grouped by intention (monitor / optimize / manage),
+            not by internal feature list. The active item is marked by the
+            system's signal hairline and primary ink — never a filled block. */}
+        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
+          {(
+            [
+              [s.tabs.groupMonitor, ["scan"]],
+              [s.tabs.groupOptimize, ["performance", "gaming", "privacy", "ui"]],
+              [s.tabs.groupManage, ["startup", "manutenzione", "profiles"]],
+            ] as [string, Section[]][]
+          ).map(([groupLabel, keys]) => (
+            <div key={groupLabel} className="mb-2.5">
+              <p className="type-label mb-1 px-3">{groupLabel}</p>
+              {keys.map((key) => {
+                const c = CATEGORIES.find((x) => x.key === key);
+                if (!c) return null;
+                const active = filter === c.key;
+                return (
+                  <button
+                    key={c.key}
+                    onClick={() => setFilter(c.key)}
+                    className={`signal group relative flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-left text-[13px] font-medium transition-colors duration-150 ${
+                      active
+                        ? "bg-surface-1 text-ink"
+                        : "text-ink-3 hover:bg-surface-1/60 hover:text-ink-2"
+                    }`}
+                    data-active={active}
+                  >
+                    <span
+                      className={`shrink-0 transition-colors ${active ? "text-accent" : "text-ink-3 group-hover:text-ink-2"}`}
+                    >
+                      {c.icon}
+                    </span>
+                    <span className="truncate">{c.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
-        <div className="mt-auto pt-4">
+        {/* Plan area: quiet by design. Pro is a state, not a billboard; the
+            upgrade entry is discreet and never shows personal data. */}
+        <div className="border-line mt-auto border-t pt-3">
           {isProUnlocked ? (
-            /* Paying for Pro should feel like it bought something: a gold
-               gradient frame, a glow and a crown, not the same flat chip a
-               Free account sees. Free deliberately stays plain. */
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 p-[1.5px] shadow-[0_0_22px_rgba(251,191,36,0.28)]">
-              <div className="relative rounded-[10px] bg-slate-950/90 p-3">
-                <span className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-amber-400/20 blur-2xl" />
-                <p className="relative flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-300">
-                  <CrownIcon className="h-4 w-4" />
-                  {s.menu.planPro}
-                </p>
-                {auth.status === "authenticated" && (
-                  <p
-                    className="relative mt-1.5 truncate text-[11px] leading-snug text-slate-400"
-                    title={auth.email}
-                  >
-                    {auth.email}
-                  </p>
-                )}
-              </div>
-            </div>
+            <button
+              onClick={() => setFilter("pricing")}
+              className={`text-ink-2 hover:text-ink flex w-full items-center gap-2 rounded-[8px] px-3 py-2 text-[12px] font-semibold transition-colors duration-150 ${
+                filter === "pricing" ? "bg-surface-1 text-ink" : ""
+              }`}
+            >
+              <CrownIcon className="text-accent h-4 w-4" />
+              {s.menu.planPro}
+            </button>
           ) : (
             <button
-              onClick={() => setPaywallFeature(s.menu.planPro)}
-              className="w-full rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 px-3 py-2.5 text-xs font-bold text-amber-950 transition-transform hover:scale-[1.02]"
+              onClick={() => setFilter("pricing")}
+              className={`border-line-2 text-ink-2 hover:border-accent/40 hover:text-ink w-full rounded-[8px] border px-3 py-2 text-[12px] font-semibold transition-colors duration-150 ${
+                filter === "pricing" ? "border-accent/50 text-ink" : ""
+              }`}
             >
               {s.menu.upgradeButton}
             </button>
@@ -558,14 +557,12 @@ function App() {
             {/* The pricing screen leads with its own centred hero title, so
                 the section heading would just be a duplicate above it. */}
             <div className="min-w-0">
-              {!showPricing && (
-                <h1 className="text-2xl font-bold tracking-tight">{currentLabel}</h1>
-              )}
+              {!showPricing && <h1 className="type-page">{currentLabel}</h1>}
               {/* The tweak tally is meaningless on the startup screen, which
                   isn't made of tweaks and shows its own count instead. */}
               {!showStartup && !showPricing && (
                 <div className="mt-1 flex items-center gap-3">
-                  <p className="text-sm text-slate-400">
+                  <p className="text-ink-3 type-data text-[12.5px]">
                     {format(s.appliedCount, { applied: appliedCount, total: tweaks.length })}
                   </p>
                   {/* One-click way back to a stock Windows: only offered when
@@ -860,14 +857,14 @@ function App() {
 
       <div className="pointer-events-none fixed bottom-6 right-6 flex flex-col gap-2">
         {toasts.map((t) => (
+          // Calm feedback: an opaque surface with a status-colored icon and
+          // hairline. Status is carried by icon shape AND color, never color
+          // alone.
           <div
             key={t.id}
-            className={`animate-toast pointer-events-auto flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-xl backdrop-blur
-              ${
-                t.kind === "success"
-                  ? "bg-emerald-500/90 text-emerald-950"
-                  : "bg-red-500/90 text-red-950"
-              }`}
+            className={`animate-toast bg-surface-2 border-line-2 text-ink pointer-events-auto flex items-center gap-2.5 rounded-[10px] border px-4 py-3 text-[13px] font-medium ${
+              t.kind === "success" ? "[&>svg]:text-ok" : "[&>svg]:text-danger"
+            }`}
           >
             {t.kind === "success" ? (
               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0">

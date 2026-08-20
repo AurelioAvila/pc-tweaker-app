@@ -8,6 +8,13 @@ import json
 import os
 import random
 import requests
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "Youtube", "shared-assets"))
+try:
+    from api_cascade.image_cascade import fetch_image as _cascade_fetch_image
+except ImportError:
+    _cascade_fetch_image = None
 
 DEFAULT_QUERIES = [
     "gaming setup",
@@ -176,8 +183,20 @@ def download_background_video(output_path: str, query: str = None) -> str:
 def download_photo(output_path: str, query: str = None) -> str:
     """Downloads a free vertical photo from Pexels - used by the photo
     slideshow render style (render.render_slideshow)."""
-    api_key = os.environ["PEXELS_API_KEY"]
     query = query or random.choice(DEFAULT_QUERIES)
+
+    # First attempt: shared free API cascade (Unsplash -> Hugging Face). If it
+    # fails or the keys are missing, falls through to the existing Pexels
+    # logic below, unchanged.
+    if _cascade_fetch_image is not None:
+        try:
+            if _cascade_fetch_image(query, output_path):
+                print(f"[footage] image obtained from api_cascade for '{query}'")
+                return output_path
+        except Exception as exc:
+            print(f"[footage] api_cascade failed ({exc}), falling back to Pexels")
+
+    api_key = os.environ["PEXELS_API_KEY"]
 
     resp = requests.get(
         "https://api.pexels.com/v1/search",

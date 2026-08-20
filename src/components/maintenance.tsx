@@ -19,6 +19,7 @@ import {
 } from "../types";
 import { DriveIcon, GlobeIcon, HeartPulseIcon, TrashIcon } from "./icons";
 import { ProBadge, ShieldBadge, SoonBadge } from "./ui";
+import uninstallerIcon from "../assets/uninstaller-icon.png";
 
 export function IpMaskCard({ s, onExplain }: { s: Strings; onExplain: () => void }) {
   return (
@@ -329,9 +330,11 @@ export function UninstallerPromoCard({ s }: { s: Strings }) {
   return (
     <li className="animate-card relative overflow-hidden rounded-2xl border border-fuchsia-400/20 bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 p-4 shadow-lg shadow-black/20">
       <div className="flex items-center gap-4">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-fuchsia-400/15 text-sm font-bold text-fuchsia-300 ring-1 ring-fuchsia-400/30">
-          PU
-        </div>
+        <img
+          src={uninstallerIcon}
+          alt=""
+          className="h-11 w-11 shrink-0 rounded-xl ring-1 ring-fuchsia-400/30"
+        />
         <div className="min-w-0 flex-1">
           <h2 className="font-semibold text-ink">{s.uninstallerPromo.title}</h2>
           <p className="mt-0.5 text-sm text-ink-3">{s.uninstallerPromo.description}</p>

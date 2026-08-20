@@ -253,6 +253,12 @@ export interface Strings {
     notConnectedToast: string;
   };
   cleanupConfirm: {
+    previewLoading: string;
+    previewEmpty: string;
+    previewNotAccessible: string;
+    previewTruncated: string;
+    selectedSummary: string; // uses {count} {size}
+    confirmSelected: string;
     title: string;
     body: string; // uses {name}
     confirm: string;
@@ -638,6 +644,13 @@ const it: Strings = {
     notConnectedToast: "Il pagamento Pro non è ancora collegato in questa versione di sviluppo.",
   },
   cleanupConfirm: {
+    previewLoading: "Calcolo di cosa verrà spostato nel Cestino...",
+    previewEmpty: "Non c'è nulla da pulire: la cartella è già vuota.",
+    previewNotAccessible:
+      "Il contenuto non è leggibile senza permessi di amministratore; verrà elencato ed eliminato dal processo autorizzato.",
+    previewTruncated: "Mostrati i 500 elementi più grandi; i totali includono tutto.",
+    selectedSummary: "{count} elementi selezionati · {size}",
+    confirmSelected: "Pulisci selezionati",
     title: "Confermi la pulizia?",
     body: '"{name}" sposterà i file corrispondenti nel Cestino di Windows. Potrai recuperarli da lì finché non lo svuoti.',
     confirm: "Sposta nel Cestino",
@@ -1282,6 +1295,13 @@ const en: Strings = {
     notConnectedToast: "Pro payment isn't wired up yet in this development build.",
   },
   cleanupConfirm: {
+    previewLoading: "Working out what will move to the Recycle Bin...",
+    previewEmpty: "Nothing to clean - the folder is already empty.",
+    previewNotAccessible:
+      "The contents can't be read without administrator rights; the authorized process will list and remove them.",
+    previewTruncated: "Showing the 500 largest items; totals include everything.",
+    selectedSummary: "{count} items selected · {size}",
+    confirmSelected: "Clean selected",
     title: "Confirm cleanup?",
     body: '"{name}" will move the matching files to the Windows Recycle Bin. You can restore them from there until it\'s emptied.',
     confirm: "Move to Recycle Bin",
@@ -1931,6 +1951,13 @@ const fr: Strings = {
       "Le paiement Pro n'est pas encore connecté dans cette version de développement.",
   },
   cleanupConfirm: {
+    previewLoading: "Calcul de ce qui sera déplacé vers la Corbeille...",
+    previewEmpty: "Rien à nettoyer : le dossier est déjà vide.",
+    previewNotAccessible:
+      "Le contenu ne peut pas être lu sans droits d'administrateur ; le processus autorisé le listera et le supprimera.",
+    previewTruncated: "Affichage des 500 éléments les plus volumineux ; les totaux incluent tout.",
+    selectedSummary: "{count} éléments sélectionnés · {size}",
+    confirmSelected: "Nettoyer la sélection",
     title: "Confirmer le nettoyage ?",
     body: "« {name} » déplacera les fichiers correspondants vers la Corbeille de Windows. Vous pourrez les récupérer tant qu'elle n'est pas vidée.",
     confirm: "Déplacer vers la Corbeille",
@@ -2580,6 +2607,13 @@ const es: Strings = {
     notConnectedToast: "El pago Pro todavía no está conectado en esta versión de desarrollo.",
   },
   cleanupConfirm: {
+    previewLoading: "Calculando qué se moverá a la Papelera...",
+    previewEmpty: "No hay nada que limpiar: la carpeta ya está vacía.",
+    previewNotAccessible:
+      "El contenido no se puede leer sin permisos de administrador; el proceso autorizado lo listará y eliminará.",
+    previewTruncated: "Se muestran los 500 elementos más grandes; los totales lo incluyen todo.",
+    selectedSummary: "{count} elementos seleccionados · {size}",
+    confirmSelected: "Limpiar seleccionados",
     title: "¿Confirmas la limpieza?",
     body: '"{name}" moverá los archivos correspondientes a la Papelera de reciclaje de Windows. Podrás recuperarlos desde ahí hasta que la vacíes.',
     confirm: "Mover a la Papelera",
@@ -3231,6 +3265,13 @@ const de: Strings = {
     notConnectedToast: "Die Pro-Zahlung ist in dieser Entwicklungsversion noch nicht angebunden.",
   },
   cleanupConfirm: {
+    previewLoading: "Es wird berechnet, was in den Papierkorb verschoben wird...",
+    previewEmpty: "Nichts zu bereinigen - der Ordner ist bereits leer.",
+    previewNotAccessible:
+      "Der Inhalt kann ohne Administratorrechte nicht gelesen werden; der autorisierte Prozess listet und entfernt ihn.",
+    previewTruncated: "Die 500 größten Elemente werden angezeigt; die Summen umfassen alles.",
+    selectedSummary: "{count} Elemente ausgewählt · {size}",
+    confirmSelected: "Auswahl bereinigen",
     title: "Bereinigung bestätigen?",
     body: '„{name}" verschiebt die betreffenden Dateien in den Windows-Papierkorb. Du kannst sie von dort wiederherstellen, solange er nicht geleert wird.',
     confirm: "In den Papierkorb verschieben",

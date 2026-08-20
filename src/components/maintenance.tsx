@@ -7,6 +7,7 @@ import { formatBytes, LARGE_FILE_THRESHOLD_BYTES, sha1Hex } from "../lib";
 import { CATEGORY_STYLE } from "../categories";
 import {
   CleanupInfo,
+  CleanupPreview,
   CleanupResult,
   DiskHealthInfo,
   DiskOptResult,
@@ -782,5 +783,140 @@ export function PasswordBreachCheck({ s }: { s: Strings }) {
         </div>
       </div>
     </li>
+  );
+}
+
+/**
+ * The cleanup confirmation dialog, upgraded from "are you sure?" to a real
+ * preview: exactly which top-level items will move to the Recycle Bin, with
+ * sizes, and per-item checkboxes. The preview is a read-only dry run; if it
+ * cannot be loaded at all, the dialog degrades to the plain confirmation
+ * rather than blocking the cleanup.
+ */
+export function CleanupConfirmModal({
+  s,
+  info,
+  displayName,
+  onCancel,
+  onConfirmAll,
+  onConfirmSelected,
+}: {
+  s: Strings;
+  info: CleanupInfo;
+  displayName: string;
+  onCancel: () => void;
+  onConfirmAll: () => void;
+  onConfirmSelected: (names: string[]) => void;
+}) {
+  const [preview, setPreview] = useState<CleanupPreview | null>(null);
+  const [previewFailed, setPreviewFailed] = useState(false);
+  const [unchecked, setUnchecked] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let alive = true;
+    invoke<CleanupPreview>("preview_cleanup", { id: info.id })
+      .then((v) => {
+        if (alive) setPreview(v);
+      })
+      .catch(() => {
+        if (alive) setPreviewFailed(true);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [info.id]);
+
+  const items = preview?.items ?? [];
+  const selected = items.filter((i) => !unchecked.has(i.name));
+  const allSelected = unchecked.size === 0;
+  const selectedBytes = selected.reduce((sum, i) => sum + i.bytes, 0);
+  const loading = preview === null && !previewFailed;
+  const listable = preview !== null && preview.accessible && items.length > 0;
+  const nothingToClean = preview !== null && preview.accessible && preview.item_count === 0;
+
+  function toggle(name: string) {
+    setUnchecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
+  function confirm() {
+    // "Everything selected" (or no usable preview) takes the plain full path:
+    // it also covers items beyond the preview cap and anything created since.
+    if (!listable || allSelected) onConfirmAll();
+    else onConfirmSelected(selected.map((i) => i.name));
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm">
+      <div className="animate-card w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
+        <h3 className="text-lg font-bold text-slate-100">{s.cleanupConfirm.title}</h3>
+        <p className="mt-2 text-sm text-slate-400">
+          {format(s.cleanupConfirm.body, { name: displayName })}
+        </p>
+
+        {loading && (
+          <p className="mt-4 text-[12.5px] text-slate-500">{s.cleanupConfirm.previewLoading}</p>
+        )}
+        {nothingToClean && (
+          <p className="mt-4 text-[12.5px] text-slate-500">{s.cleanupConfirm.previewEmpty}</p>
+        )}
+        {preview !== null && !preview.accessible && (
+          <p className="mt-4 text-[12.5px] leading-relaxed text-amber-200/80">
+            {s.cleanupConfirm.previewNotAccessible}
+          </p>
+        )}
+
+        {listable && (
+          <>
+            <ul className="mt-4 max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-white/[0.03]">
+              {items.map((item) => (
+                <li key={item.name}>
+                  <label className="flex cursor-pointer items-center gap-2.5 px-3 py-1.5 text-[12.5px] hover:bg-white/5">
+                    <input
+                      type="checkbox"
+                      checked={!unchecked.has(item.name)}
+                      onChange={() => toggle(item.name)}
+                      className="h-3.5 w-3.5 accent-sky-500"
+                    />
+                    <span className="min-w-0 flex-1 truncate text-slate-300">
+                      {item.name}
+                      {item.is_dir && <span className="text-slate-500">{"\\"}</span>}
+                    </span>
+                    <span className="shrink-0 text-slate-500">{formatBytes(item.bytes)}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            {preview.truncated && (
+              <p className="mt-2 text-[11px] text-slate-500">{s.cleanupConfirm.previewTruncated}</p>
+            )}
+            <p className="mt-2 text-[12px] font-medium text-slate-400">
+              {format(s.cleanupConfirm.selectedSummary, {
+                count: selected.length,
+                size: formatBytes(allSelected ? preview.total_bytes : selectedBytes),
+              })}
+            </p>
+          </>
+        )}
+
+        <button
+          onClick={confirm}
+          disabled={nothingToClean || (listable && selected.length === 0)}
+          className="mt-5 w-full rounded-xl bg-sky-500 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {listable && !allSelected ? s.cleanupConfirm.confirmSelected : s.cleanupConfirm.confirm}
+        </button>
+        <button
+          onClick={onCancel}
+          className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-slate-400 hover:text-slate-200"
+        >
+          {s.cleanupConfirm.cancel}
+        </button>
+      </div>
+    </div>
   );
 }

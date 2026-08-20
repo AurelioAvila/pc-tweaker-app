@@ -156,3 +156,18 @@ export type AuditEntry = {
   success: boolean;
   detail?: string | null;
 };
+
+/** Dry-run preview of a cleanup action (src-tauri/src/cleanup.rs). */
+export type CleanupPreviewItem = {
+  name: string;
+  is_dir: boolean;
+  bytes: number;
+};
+
+export type CleanupPreview = {
+  items: CleanupPreviewItem[];
+  total_bytes: number;
+  item_count: number;
+  truncated: boolean;
+  accessible: boolean;
+};

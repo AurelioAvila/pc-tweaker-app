@@ -93,6 +93,137 @@ fn dir_size(path: &Path) -> u64 {
         .sum()
 }
 
+/// One row of a cleanup preview: what would be moved to the Recycle Bin.
+/// Names only, never full paths — the target directory is fixed per id and
+/// shown once by the UI, so rows stay readable and log-safe.
+#[derive(Serialize, Clone, Debug)]
+pub struct CleanupPreviewItem {
+    pub name: String,
+    pub is_dir: bool,
+    pub bytes: u64,
+}
+
+#[derive(Serialize, Clone, Debug, Default)]
+pub struct CleanupPreview {
+    pub items: Vec<CleanupPreviewItem>,
+    pub total_bytes: u64,
+    pub item_count: u32,
+    /// True when the list was cut at the cap; the totals still cover everything.
+    pub truncated: bool,
+    /// False when the directory could not be read at all (permissions): the
+    /// UI says so instead of showing an empty list as if nothing were there.
+    pub accessible: bool,
+}
+
+/// Preview rows are capped so a temp dir with tens of thousands of entries
+/// cannot balloon the IPC payload; totals are still computed over everything.
+const PREVIEW_MAX_ITEMS: usize = 500;
+
+/// Read-only dry run of `run_cleanup`: exactly the top-level items it would
+/// move, sorted largest first.
+pub fn preview_cleanup(id: &str) -> Result<CleanupPreview, String> {
+    let dir = target_dir(id).ok_or_else(|| format!("unknown cleanup action: {}", id))?;
+    let mut preview = CleanupPreview {
+        accessible: true,
+        ..CleanupPreview::default()
+    };
+
+    let Ok(entries) = std::fs::read_dir(&dir) else {
+        preview.accessible = false;
+        return Ok(preview);
+    };
+
+    let mut items: Vec<CleanupPreviewItem> = Vec::new();
+    for entry in entries.filter_map(|e| e.ok()) {
+        let path = entry.path();
+        let Ok(meta) = entry.metadata() else { continue };
+        let is_dir = meta.is_dir();
+        let bytes = if is_dir { dir_size(&path) } else { meta.len() };
+        preview.total_bytes += bytes;
+        preview.item_count += 1;
+        items.push(CleanupPreviewItem {
+            name: entry.file_name().to_string_lossy().to_string(),
+            is_dir,
+            bytes,
+        });
+    }
+    items.sort_by(|a, b| b.bytes.cmp(&a.bytes));
+    if items.len() > PREVIEW_MAX_ITEMS {
+        items.truncate(PREVIEW_MAX_ITEMS);
+        preview.truncated = true;
+    }
+    preview.items = items;
+    Ok(preview)
+}
+
+/// A selected name must be exactly one path component inside the fixed
+/// target directory. Anything that could navigate elsewhere is rejected, not
+/// sanitized — these names cross the elevation boundary as CLI text.
+pub fn validate_item_name(name: &str) -> Result<(), String> {
+    if name.is_empty()
+        || name == "."
+        || name == ".."
+        || name.contains(['\\', '/', '|'])
+        || name.chars().any(char::is_control)
+    {
+        return Err("invalid item name".to_string());
+    }
+    Ok(())
+}
+
+/// Like `run_cleanup`, but only for the top-level items the user ticked in
+/// the preview. Unknown/vanished names count as skipped, never as errors —
+/// temp directories churn constantly between preview and confirm.
+pub fn run_cleanup_selected(id: &str, names: &[String]) -> Result<CleanupResult, String> {
+    let dir = target_dir(id).ok_or_else(|| format!("unknown cleanup action: {}", id))?;
+    for name in names {
+        validate_item_name(name)?;
+    }
+    let mut result = CleanupResult::default();
+    for name in names {
+        let path = dir.join(name);
+        if !path.exists() {
+            result.skipped_count += 1;
+            continue;
+        }
+        let size = std::fs::metadata(&path)
+            .map(|m| if m.is_dir() { dir_size(&path) } else { m.len() })
+            .unwrap_or(0);
+        match trash::delete(&path) {
+            Ok(()) => {
+                result.freed_bytes += size;
+                result.deleted_count += 1;
+            }
+            Err(_) => {
+                result.skipped_count += 1;
+            }
+        }
+    }
+    Ok(result)
+}
+
+/// Encodes a selected-cleanup request for the elevated helper's CLI. `|` is
+/// safe as a separator because Windows forbids it in file names — and
+/// `validate_item_name` enforces that again on both sides of the boundary.
+pub fn encode_selected_payload(id: &str, names: &[String]) -> String {
+    let mut parts = vec![id.to_string()];
+    parts.extend(names.iter().cloned());
+    parts.join("|")
+}
+
+pub fn decode_selected_payload(payload: &str) -> Result<(String, Vec<String>), String> {
+    let mut parts = payload.split('|');
+    let id = parts.next().unwrap_or_default().to_string();
+    if id.is_empty() {
+        return Err("invalid cleanup payload".to_string());
+    }
+    let names: Vec<String> = parts.map(str::to_string).collect();
+    for name in &names {
+        validate_item_name(name)?;
+    }
+    Ok((id, names))
+}
+
 /// Moves every top-level item inside the target directory to the Recycle
 /// Bin (never a permanent delete), skipping anything currently locked/in use.
 pub fn run_cleanup(id: &str) -> Result<CleanupResult, String> {
@@ -389,6 +520,60 @@ mod tests {
         assert_eq!(result.freed_bytes, 42);
         assert!(!file.exists());
 
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn item_names_that_could_escape_the_target_dir_are_rejected() {
+        assert!(validate_item_name("cache.tmp").is_ok());
+        assert!(validate_item_name("Folder Name (2)").is_ok());
+        assert!(validate_item_name("").is_err());
+        assert!(validate_item_name("..").is_err());
+        assert!(validate_item_name(r"..\evil").is_err());
+        assert!(validate_item_name("a/b").is_err());
+        assert!(validate_item_name("a|b").is_err());
+        assert!(validate_item_name("nul byte").is_err());
+    }
+
+    #[test]
+    fn selected_payload_round_trips_and_rejects_smuggled_separators() {
+        let names = vec!["a.tmp".to_string(), "dir name".to_string()];
+        let payload = encode_selected_payload("temp_cleanup", &names);
+        let (id, back) = decode_selected_payload(&payload).unwrap();
+        assert_eq!(id, "temp_cleanup");
+        assert_eq!(back, names);
+        assert!(decode_selected_payload("").is_err());
+        assert!(decode_selected_payload("temp_cleanup|..").is_err());
+        assert!(decode_selected_payload(r"temp_cleanup|a\b").is_err());
+    }
+
+    #[test]
+    fn preview_lists_what_run_cleanup_would_move() {
+        let dir = std::env::temp_dir().join(format!("pct-preview-test-{}", std::process::id()));
+        fs::remove_dir_all(&dir).ok();
+        fs::create_dir_all(dir.join("sub")).unwrap();
+        fs::write(dir.join("big.tmp"), vec![0u8; 100]).unwrap();
+        fs::write(dir.join("sub").join("inner.tmp"), vec![0u8; 40]).unwrap();
+        // Exercise the walker directly on the fixture dir (target_dir ids
+        // point at real system paths, which tests must never touch).
+        let mut items: Vec<CleanupPreviewItem> = Vec::new();
+        let mut total = 0u64;
+        for entry in fs::read_dir(&dir).unwrap().filter_map(|e| e.ok()) {
+            let meta = entry.metadata().unwrap();
+            let bytes = if meta.is_dir() {
+                dir_size(&entry.path())
+            } else {
+                meta.len()
+            };
+            total += bytes;
+            items.push(CleanupPreviewItem {
+                name: entry.file_name().to_string_lossy().to_string(),
+                is_dir: meta.is_dir(),
+                bytes,
+            });
+        }
+        assert_eq!(total, 140);
+        assert_eq!(items.len(), 2);
         fs::remove_dir_all(&dir).ok();
     }
 }

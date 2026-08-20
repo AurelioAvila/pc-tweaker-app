@@ -137,6 +137,21 @@ async function initSchema(): Promise<void> {
     `CREATE UNIQUE INDEX IF NOT EXISTS newsletter_subscribers_email_idx ON newsletter_subscribers (lower(email));`,
   );
 
+  // Anonymous, opt-in error reports from the desktop apps (see
+  // routes/error-reports.ts). No user reference on purpose: the report pipe
+  // is anonymous by design, and a foreign key would tempt someone to join it
+  // back to a person later.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS error_reports (
+      id SERIAL PRIMARY KEY,
+      app TEXT NOT NULL,
+      app_version TEXT NOT NULL,
+      context TEXT,
+      message TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+
   // Per-product entitlements for the ecosystem's newer products (Uninstaller,
   // and whatever comes after). Deliberately NOT a migration of PC Tweaker Pro:
   // the `users.is_pro`/`pro_expires_at` columns remain the single source of

@@ -121,6 +121,8 @@ export function ScanPanel({
   onRequirePro,
   onFixed,
   pushToast,
+  externalScanSignal = 0,
+  onPhaseChange,
 }: {
   s: Strings;
   tweaks: TweakInfo[];
@@ -129,6 +131,10 @@ export function ScanPanel({
   onRequirePro: () => void;
   onFixed: () => Promise<void>;
   pushToast: (kind: Toast["kind"], message: string) => void;
+  /** Bumped by the Command Center's System Pulse to start a scan remotely. */
+  externalScanSignal?: number;
+  /** Lets the System Pulse mirror this panel's state and findings count. */
+  onPhaseChange?: (phase: "idle" | "scanning" | "results" | "done", findings: number) => void;
 }) {
   const [phase, setPhase] = useState<"idle" | "scanning" | "results" | "done">("idle");
   const [scanPct, setScanPct] = useState(0);
@@ -218,6 +224,19 @@ export function ScanPanel({
       if (scanTimer.current) window.clearInterval(scanTimer.current);
     };
   }, []);
+
+  // The Command Center hero drives this panel without owning its logic: a
+  // bumped signal starts a scan, and every phase/result change is mirrored
+  // back so the Pulse can tell the same story.
+  useEffect(() => {
+    onPhaseChange?.(phase, fixableIssues.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, fixableIssues.length]);
+
+  useEffect(() => {
+    if (externalScanSignal > 0 && phase !== "scanning") startScan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalScanSignal]);
 
   function startScan() {
     setPhase("scanning");

@@ -31,6 +31,46 @@ export interface Strings {
     profiles: string;
     pricing: string;
   };
+  command: {
+    statusQuiet: string;
+    statusScanning: string;
+    statusFindings: string; // uses {count}
+    domainsLine: string;
+    consent: string;
+    runScan: string;
+    reviewFindings: string; // uses {count}
+    memTitle: string;
+    pressureLow: string;
+    pressureElevated: string;
+    pressureHigh: string;
+    memReview: string;
+    memTopTitle: string;
+    trimTitle: string;
+    trimExplainer: string;
+    trimButton: string;
+    autoTitle: string;
+    profilesTitle: string;
+    profileGame: string;
+    profileGameDesc: string;
+    profileFocus: string;
+    profileFocusDesc: string;
+    profileQuiet: string;
+    profileQuietDesc: string;
+    profileDownload: string;
+    profileDownloadDesc: string;
+    previewBtn: string;
+    gameChange1: string;
+    gameChange2: string;
+    gameChange3: string;
+    previewReq: string;
+    previewCost: string;
+    previewRevert: string;
+    applySession: string;
+    restoreSession: string;
+    statusActive: string;
+    statusOff: string;
+    soon: string;
+  };
   systemMonitor: {
     cpu: string;
     ram: string;
@@ -407,6 +447,47 @@ const it: Strings = {
     startup: "Avvio",
     profiles: "Configurazioni",
     pricing: "Piani e prezzi",
+  },
+  command: {
+    statusQuiet: "Tutto tranquillo",
+    statusScanning: "Analisi in corso...",
+    statusFindings: "{count} raccomandazioni pronte",
+    domainsLine: "Avvio · Spazio · Memoria · Privacy · Prestazioni · Aggiornamenti",
+    consent: "Nulla cambia senza la tua approvazione.",
+    runScan: "Avvia scansione di sistema",
+    reviewFindings: "Rivedi {count} raccomandazioni",
+    memTitle: "Pressione memoria",
+    pressureLow: "Bassa",
+    pressureElevated: "Elevata",
+    pressureHigh: "Alta",
+    memReview: "Analizza l'uso della memoria",
+    memTopTitle: "Processi principali",
+    trimTitle: "Riduci i working set",
+    trimExplainer:
+      "Chiede a Windows di spostare le pagine inattive fuori dai working set delle app (EmptyWorkingSet). Utile quando la pressione è alta; le app potrebbero ricaricare brevemente le pagine al prossimo uso. Nessun dato viene perso.",
+    trimButton: "Riduci ora",
+    autoTitle: "Riduzione automatica",
+    profilesTitle: "Profili sessione",
+    profileGame: "Sessione di gioco",
+    profileGameDesc: "Prepara il PC per giocare: energia, priorità e registrazione DVR.",
+    profileFocus: "Focus",
+    profileFocusDesc: "Meno distrazioni e attività non essenziali sotto controllo.",
+    profileQuiet: "Sessione silenziosa",
+    profileQuietDesc: "Efficienza, batteria e rumore contenuto.",
+    profileDownload: "Sessione download",
+    profileDownloadDesc: "Controlla banda e attività in background.",
+    previewBtn: "Anteprima modifiche",
+    gameChange1: "Disattiva Game DVR (registrazione in background)",
+    gameChange2: "Passa al piano energetico Prestazioni elevate",
+    gameChange3: "Ottimizza la priorità CPU per i giochi (Win32PrioritySeparation)",
+    previewReq: "Richiede diritti di amministratore · Funzione Pro",
+    previewCost: "Costo potenziale: maggiore consumo e calore finché attiva.",
+    previewRevert: "Reversibile con un click: ogni valore originale viene salvato prima.",
+    applySession: "Avvia sessione",
+    restoreSession: "Ripristina",
+    statusActive: "Attiva",
+    statusOff: "Non attiva",
+    soon: "In arrivo",
   },
   systemMonitor: {
     cpu: "CPU",
@@ -1065,6 +1146,47 @@ const en: Strings = {
     profiles: "Configurations",
     pricing: "Plans & pricing",
   },
+  command: {
+    statusQuiet: "All systems quiet",
+    statusScanning: "Scanning...",
+    statusFindings: "{count} recommendations ready",
+    domainsLine: "Startup · Storage · Memory · Privacy · Performance · Updates",
+    consent: "Nothing changes without your approval.",
+    runScan: "Run system scan",
+    reviewFindings: "Review {count} recommendations",
+    memTitle: "Memory pressure",
+    pressureLow: "Low",
+    pressureElevated: "Elevated",
+    pressureHigh: "High",
+    memReview: "Review memory use",
+    memTopTitle: "Top processes",
+    trimTitle: "Trim working sets",
+    trimExplainer:
+      "Asks Windows to move idle pages out of app working sets (EmptyWorkingSet). Useful under high pressure; apps may briefly reload pages on next use. No data is lost.",
+    trimButton: "Trim now",
+    autoTitle: "Automatic trim",
+    profilesTitle: "Session profiles",
+    profileGame: "Game Session",
+    profileGameDesc: "Prepares the PC for play: power, priority and DVR capture.",
+    profileFocus: "Focus",
+    profileFocusDesc: "Fewer distractions, non-essential activity under control.",
+    profileQuiet: "Quiet Session",
+    profileQuietDesc: "Efficiency, battery and low noise first.",
+    profileDownload: "Download Session",
+    profileDownloadDesc: "Controls bandwidth and background activity.",
+    previewBtn: "Preview changes",
+    gameChange1: "Turns off Game DVR (background capture)",
+    gameChange2: "Switches to the High performance power plan",
+    gameChange3: "Optimizes CPU priority for games (Win32PrioritySeparation)",
+    previewReq: "Requires administrator rights · Pro feature",
+    previewCost: "Potential cost: higher power draw and heat while active.",
+    previewRevert: "One-click reversible: every original value is saved first.",
+    applySession: "Start session",
+    restoreSession: "Restore",
+    statusActive: "Active",
+    statusOff: "Not active",
+    soon: "Coming soon",
+  },
   systemMonitor: {
     cpu: "CPU",
     ram: "Memory",
@@ -1716,6 +1838,47 @@ const fr: Strings = {
     startup: "Démarrage",
     profiles: "Configurations",
     pricing: "Offres et tarifs",
+  },
+  command: {
+    statusQuiet: "Tout est calme",
+    statusScanning: "Analyse en cours...",
+    statusFindings: "{count} recommandations prêtes",
+    domainsLine: "Démarrage · Stockage · Mémoire · Confidentialité · Performances · Mises à jour",
+    consent: "Rien ne change sans votre approbation.",
+    runScan: "Lancer l'analyse du système",
+    reviewFindings: "Voir {count} recommandations",
+    memTitle: "Pression mémoire",
+    pressureLow: "Faible",
+    pressureElevated: "Élevée",
+    pressureHigh: "Forte",
+    memReview: "Examiner l'utilisation mémoire",
+    memTopTitle: "Processus principaux",
+    trimTitle: "Réduire les working sets",
+    trimExplainer:
+      "Demande à Windows de déplacer les pages inactives hors des working sets des applications (EmptyWorkingSet). Utile en cas de forte pression ; les applications peuvent recharger brièvement des pages. Aucune donnée n'est perdue.",
+    trimButton: "Réduire maintenant",
+    autoTitle: "Réduction automatique",
+    profilesTitle: "Profils de session",
+    profileGame: "Session de jeu",
+    profileGameDesc: "Prépare le PC pour jouer : énergie, priorité et capture DVR.",
+    profileFocus: "Concentration",
+    profileFocusDesc: "Moins de distractions, activité non essentielle maîtrisée.",
+    profileQuiet: "Session silencieuse",
+    profileQuietDesc: "Efficacité, batterie et bruit réduit d'abord.",
+    profileDownload: "Session téléchargement",
+    profileDownloadDesc: "Contrôle la bande passante et l'activité en arrière-plan.",
+    previewBtn: "Aperçu des modifications",
+    gameChange1: "Désactive Game DVR (capture en arrière-plan)",
+    gameChange2: "Bascule sur le mode d'alimentation Performances élevées",
+    gameChange3: "Optimise la priorité CPU pour les jeux (Win32PrioritySeparation)",
+    previewReq: "Droits administrateur requis · Fonction Pro",
+    previewCost: "Coût potentiel : consommation et chaleur accrues pendant l'activation.",
+    previewRevert: "Réversible en un clic : chaque valeur d'origine est sauvegardée avant.",
+    applySession: "Démarrer la session",
+    restoreSession: "Restaurer",
+    statusActive: "Active",
+    statusOff: "Inactive",
+    soon: "Bientôt",
   },
   systemMonitor: {
     cpu: "Processeur",
@@ -2379,6 +2542,47 @@ const es: Strings = {
     profiles: "Configuraciones",
     pricing: "Planes y precios",
   },
+  command: {
+    statusQuiet: "Todo en calma",
+    statusScanning: "Analizando...",
+    statusFindings: "{count} recomendaciones listas",
+    domainsLine: "Inicio · Almacenamiento · Memoria · Privacidad · Rendimiento · Actualizaciones",
+    consent: "Nada cambia sin tu aprobación.",
+    runScan: "Iniciar análisis del sistema",
+    reviewFindings: "Revisar {count} recomendaciones",
+    memTitle: "Presión de memoria",
+    pressureLow: "Baja",
+    pressureElevated: "Elevada",
+    pressureHigh: "Alta",
+    memReview: "Revisar uso de memoria",
+    memTopTitle: "Procesos principales",
+    trimTitle: "Recortar working sets",
+    trimExplainer:
+      "Pide a Windows mover las páginas inactivas fuera de los working sets de las apps (EmptyWorkingSet). Útil con presión alta; las apps pueden recargar páginas brevemente. No se pierde ningún dato.",
+    trimButton: "Recortar ahora",
+    autoTitle: "Recorte automático",
+    profilesTitle: "Perfiles de sesión",
+    profileGame: "Sesión de juego",
+    profileGameDesc: "Prepara el PC para jugar: energía, prioridad y captura DVR.",
+    profileFocus: "Concentración",
+    profileFocusDesc: "Menos distracciones y actividad no esencial bajo control.",
+    profileQuiet: "Sesión silenciosa",
+    profileQuietDesc: "Eficiencia, batería y bajo ruido primero.",
+    profileDownload: "Sesión de descarga",
+    profileDownloadDesc: "Controla el ancho de banda y la actividad en segundo plano.",
+    previewBtn: "Vista previa de cambios",
+    gameChange1: "Desactiva Game DVR (captura en segundo plano)",
+    gameChange2: "Cambia al plan de energía Alto rendimiento",
+    gameChange3: "Optimiza la prioridad de CPU para juegos (Win32PrioritySeparation)",
+    previewReq: "Requiere derechos de administrador · Función Pro",
+    previewCost: "Coste potencial: mayor consumo y calor mientras está activa.",
+    previewRevert: "Reversible con un clic: cada valor original se guarda antes.",
+    applySession: "Iniciar sesión",
+    restoreSession: "Restaurar",
+    statusActive: "Activa",
+    statusOff: "No activa",
+    soon: "Próximamente",
+  },
   systemMonitor: {
     cpu: "CPU",
     ram: "Memoria",
@@ -3038,6 +3242,47 @@ const de: Strings = {
     startup: "Autostart",
     profiles: "Konfigurationen",
     pricing: "Tarife & Preise",
+  },
+  command: {
+    statusQuiet: "Alles ruhig",
+    statusScanning: "Analyse läuft...",
+    statusFindings: "{count} Empfehlungen bereit",
+    domainsLine: "Autostart · Speicherplatz · Arbeitsspeicher · Datenschutz · Leistung · Updates",
+    consent: "Nichts ändert sich ohne deine Zustimmung.",
+    runScan: "Systemanalyse starten",
+    reviewFindings: "{count} Empfehlungen ansehen",
+    memTitle: "Speicherdruck",
+    pressureLow: "Niedrig",
+    pressureElevated: "Erhöht",
+    pressureHigh: "Hoch",
+    memReview: "Speichernutzung prüfen",
+    memTopTitle: "Top-Prozesse",
+    trimTitle: "Working Sets trimmen",
+    trimExplainer:
+      "Bittet Windows, inaktive Seiten aus den Working Sets der Apps zu verschieben (EmptyWorkingSet). Nützlich bei hohem Druck; Apps laden Seiten beim nächsten Zugriff kurz nach. Es gehen keine Daten verloren.",
+    trimButton: "Jetzt trimmen",
+    autoTitle: "Automatisches Trimmen",
+    profilesTitle: "Sitzungsprofile",
+    profileGame: "Spielsitzung",
+    profileGameDesc: "Bereitet den PC aufs Spielen vor: Energie, Priorität und DVR-Aufnahme.",
+    profileFocus: "Fokus",
+    profileFocusDesc: "Weniger Ablenkung, unwichtige Aktivität unter Kontrolle.",
+    profileQuiet: "Leise Sitzung",
+    profileQuietDesc: "Effizienz, Akku und wenig Lärm zuerst.",
+    profileDownload: "Download-Sitzung",
+    profileDownloadDesc: "Steuert Bandbreite und Hintergrundaktivität.",
+    previewBtn: "Änderungen ansehen",
+    gameChange1: "Deaktiviert Game DVR (Hintergrundaufnahme)",
+    gameChange2: "Wechselt zum Energiesparplan Höchstleistung",
+    gameChange3: "Optimiert die CPU-Priorität für Spiele (Win32PrioritySeparation)",
+    previewReq: "Erfordert Administratorrechte · Pro-Funktion",
+    previewCost: "Möglicher Preis: mehr Verbrauch und Wärme, solange aktiv.",
+    previewRevert: "Mit einem Klick umkehrbar: jeder Originalwert wird vorher gesichert.",
+    applySession: "Sitzung starten",
+    restoreSession: "Wiederherstellen",
+    statusActive: "Aktiv",
+    statusOff: "Nicht aktiv",
+    soon: "Bald verfügbar",
   },
   systemMonitor: {
     cpu: "CPU",

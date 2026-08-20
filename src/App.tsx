@@ -39,7 +39,13 @@ import { AccountMenu } from "./components/account";
 import { DashboardCards } from "./components/dashboard";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
 import { ScanPanel } from "./components/scan";
-import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
+import { useScheduledRamClean } from "./components/monitor";
+import {
+  MemoryPressure,
+  SessionProfiles,
+  SystemPulse,
+  usePulseSamples,
+} from "./components/command";
 import { StartupManager } from "./components/startup";
 import { ProfilesPanel } from "./components/profiles";
 import { PricingPanel } from "./components/pricing";
@@ -269,6 +275,11 @@ function App() {
   // Owned here rather than inside RamCleaner so the schedule keeps running
   // when the user navigates away from the Scan screen.
   const [ramAutoMinutes, setRamAutoMinutes] = useState<number>(storedRamAutoMinutes);
+  // Command Center bridge: the Pulse asks for scans and mirrors the panel.
+  const [scanSignal, setScanSignal] = useState(0);
+  const [scanPhase, setScanPhase] = useState<"idle" | "scanning" | "results" | "done">("idle");
+  const [scanFindings, setScanFindings] = useState(0);
+  const pulseSamples = usePulseSamples();
   const toastSeq = useRef(0);
 
   useScheduledRamClean(ramAutoMinutes);
@@ -615,18 +626,44 @@ function App() {
             />
           </header>
 
-          {showScan && <SystemMonitor s={s} />}
+          {showScan && (
+            <div className="mb-6 flex flex-col gap-4">
+              <SystemPulse
+                s={s}
+                samples={pulseSamples}
+                scanPhase={scanPhase}
+                findings={scanFindings}
+                onRunScan={() => setScanSignal((n) => n + 1)}
+                onReview={() =>
+                  document
+                    .getElementById("scan-results")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+              />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <MemoryPressure
+                  s={s}
+                  samples={pulseSamples}
+                  autoMinutes={ramAutoMinutes}
+                  onChangeAuto={chooseRamAuto}
+                  pushToast={pushToast}
+                />
+                <SessionProfiles
+                  s={s}
+                  tweaks={tweaks}
+                  isPro={isProUnlocked}
+                  onRequirePro={() => setPaywallFeature(s.command.profileGame)}
+                  onToggleGame={async () => {
+                    const game = tweaks.find((x) => x.id === "turbo_gaming");
+                    if (game) await toggle(game);
+                  }}
+                  gameBusy={busyId === "turbo_gaming"}
+                />
+              </div>
+            </div>
+          )}
 
           {showScan && <DashboardCards s={s} onNavigate={setFilter} />}
-
-          {showScan && (
-            <RamCleaner
-              s={s}
-              autoMinutes={ramAutoMinutes}
-              onChangeAuto={chooseRamAuto}
-              pushToast={pushToast}
-            />
-          )}
 
           {showStartup && <StartupManager s={s} pushToast={pushToast} />}
 
@@ -658,15 +695,22 @@ function App() {
           )}
 
           {showScan && (
-            <ScanPanel
-              s={s}
-              tweaks={tweaks}
-              cleanupTargets={cleanupTargets}
-              isPro={isProUnlocked}
-              onRequirePro={() => setPaywallFeature(s.menu.planPro)}
-              onFixed={refresh}
-              pushToast={pushToast}
-            />
+            <div id="scan-results">
+              <ScanPanel
+                externalScanSignal={scanSignal}
+                onPhaseChange={(phase, findings) => {
+                  setScanPhase(phase);
+                  setScanFindings(findings);
+                }}
+                s={s}
+                tweaks={tweaks}
+                cleanupTargets={cleanupTargets}
+                isPro={isProUnlocked}
+                onRequirePro={() => setPaywallFeature(s.menu.planPro)}
+                onFixed={refresh}
+                pushToast={pushToast}
+              />
+            </div>
           )}
 
           {showPrivacyExtras && <PasswordBreachCheck s={s} />}

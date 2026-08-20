@@ -348,9 +348,9 @@ export function ScanPanel({
   const checkedCount = fixableIssues.filter((i) => checked[i.id]).length;
 
   return (
-    <div className="mb-6 flex flex-col items-center rounded-2xl border border-white/10 bg-white/[0.04] p-8">
-      <h2 className="text-lg font-semibold text-slate-100">{s.scan.title}</h2>
-      <p className="mt-1 max-w-sm text-center text-sm text-slate-400">{s.scan.subtitle}</p>
+    <div className="signal border-line bg-surface-1 relative mb-6 flex flex-col items-center overflow-hidden rounded-2xl border p-8">
+      <h2 className="text-ink text-lg font-semibold">{s.scan.title}</h2>
+      <p className="text-ink-3 mt-1 max-w-sm text-center text-sm">{s.scan.subtitle}</p>
 
       {phase === "idle" && (
         <>
@@ -358,8 +358,36 @@ export function ScanPanel({
             onClick={startScan}
             className="group relative mt-6 grid h-40 w-40 place-items-center rounded-full outline-none"
           >
-            <span className="absolute inset-0 rounded-full bg-gradient-to-br from-fuchsia-500 to-indigo-500 shadow-[0_0_45px_rgba(217,70,239,0.45)] transition-transform duration-300 group-hover:scale-105" />
-            <span className="relative flex flex-col items-center gap-1.5 text-white">
+            {/* Slow-turning tick ring: the instrument is armed, not asleep.
+                The global reduced-motion kill-switch stops the rotation. */}
+            <svg
+              viewBox="0 0 160 160"
+              className="absolute inset-0 h-full w-full animate-[spin_28s_linear_infinite]"
+              aria-hidden="true"
+            >
+              <circle
+                cx="80"
+                cy="80"
+                r="76"
+                fill="none"
+                stroke="var(--app-accent)"
+                strokeOpacity="0.4"
+                strokeWidth="2"
+                strokeDasharray="2 9"
+                strokeLinecap="round"
+              />
+            </svg>
+            {/* The disc takes the theme's accent instead of a fixed gradient,
+                so the scan is recognisably THIS theme's instrument. */}
+            <span
+              className="absolute inset-3 rounded-full transition-transform duration-300 group-hover:scale-105"
+              style={{
+                background:
+                  "radial-gradient(circle at 32% 26%, color-mix(in oklab, var(--app-accent) 62%, white), var(--app-accent) 45%, color-mix(in oklab, var(--app-accent) 55%, black) 100%)",
+                boxShadow: "0 0 45px color-mix(in oklab, var(--app-accent) 40%, transparent)",
+              }}
+            />
+            <span className="text-on-accent relative flex flex-col items-center gap-1.5">
               <MagnifierIcon className="h-9 w-9" />
               <span className="text-base font-black tracking-wider">{s.scan.startLabel}</span>
             </span>
@@ -377,14 +405,42 @@ export function ScanPanel({
       {phase === "scanning" && (
         <>
           <div className="relative mt-6 grid h-40 w-40 place-items-center">
-            <span className="absolute inset-0 rounded-full border-4 border-white/10" />
+            {/* Radar sweep behind the ring: activity you can see at a glance,
+                without pretending to be data. */}
             <span
-              className="absolute inset-0 rounded-full border-4 border-transparent border-t-fuchsia-400 border-r-indigo-400 transition-[transform] duration-75 ease-linear"
-              style={{ transform: `rotate(${scanPct * 3.6}deg)` }}
+              className="absolute inset-4 rounded-full animate-[spin_1.8s_linear_infinite]"
+              style={{
+                background:
+                  "conic-gradient(from 0deg, transparent 0deg 290deg, color-mix(in oklab, var(--app-accent) 22%, transparent) 360deg)",
+              }}
             />
-            <div className="relative flex flex-col items-center gap-1 text-fuchsia-300">
+            {/* A real progress arc — stroke follows scanPct exactly, instead of
+                a border trick that could only rotate. */}
+            <svg viewBox="0 0 160 160" className="absolute inset-0 -rotate-90" aria-hidden="true">
+              <circle
+                cx="80"
+                cy="80"
+                r="72"
+                fill="none"
+                strokeWidth="5"
+                stroke="var(--color-line)"
+              />
+              <circle
+                cx="80"
+                cy="80"
+                r="72"
+                fill="none"
+                strokeWidth="5"
+                strokeLinecap="round"
+                stroke="var(--app-accent)"
+                strokeDasharray={2 * Math.PI * 72}
+                strokeDashoffset={2 * Math.PI * 72 * (1 - scanPct / 100)}
+                className="transition-[stroke-dashoffset] duration-100"
+              />
+            </svg>
+            <div className="text-accent relative flex flex-col items-center gap-1">
               <MagnifierIcon className="h-7 w-7 animate-pulse" />
-              <span className="text-2xl font-black tabular-nums text-white">{scanPct}%</span>
+              <span className="type-data text-ink text-2xl font-black">{scanPct}%</span>
             </div>
           </div>
           <ul className="mt-5 flex flex-col gap-1.5 text-sm">
@@ -392,7 +448,7 @@ export function ScanPanel({
               <li
                 key={label}
                 className={`flex items-center gap-2 transition-opacity duration-300 ${
-                  i < scanStep ? "text-emerald-300 opacity-100" : "text-slate-500 opacity-40"
+                  i < scanStep ? "text-ok opacity-100" : "text-ink-3 opacity-40"
                 }`}
               >
                 <span className="w-4">{i < scanStep ? "✓" : "…"}</span>
@@ -553,13 +609,14 @@ export function ScanPanel({
                           onChange={(e) =>
                             setChecked((c) => ({ ...c, [issue.id]: e.target.checked }))
                           }
-                          className="mt-1 accent-fuchsia-500"
+                          className="mt-1"
+                          style={{ accentColor: "var(--app-accent)" }}
                         />
                         <span
                           className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg ${
                             issue.kind === "cleanup"
                               ? "bg-sky-400/15 text-sky-300"
-                              : "bg-fuchsia-400/15 text-fuchsia-300"
+                              : "bg-accent-soft text-accent"
                           }`}
                         >
                           {issue.kind === "cleanup" ? (

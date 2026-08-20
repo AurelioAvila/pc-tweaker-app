@@ -887,6 +887,7 @@ pub fn run() {
             list_audit_log,
             sysmon::system_stats,
             ramclean::clean_ram,
+            ramclean::top_memory_processes,
             scan_large_files,
             optimize_disk,
             diskhealth::disk_health,

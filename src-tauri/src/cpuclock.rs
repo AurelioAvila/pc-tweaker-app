@@ -65,7 +65,9 @@ const PROCESSOR_INFORMATION: i32 = 11;
 /// usable. Callers show nothing rather than a zero.
 #[cfg(windows)]
 pub fn read() -> Option<CpuClock> {
-    let count = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1);
+    let count = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(1);
     let mut buffer = vec![ProcessorPowerInformation::default(); count];
     let bytes = std::mem::size_of::<ProcessorPowerInformation>() * count;
 
@@ -88,7 +90,8 @@ pub fn read() -> Option<CpuClock> {
     // Averaged across cores: individual cores park and boost independently, so
     // a single core's reading jitters in a way that looks like noise rather
     // than like the machine's state.
-    let live: Vec<&ProcessorPowerInformation> = buffer.iter().filter(|p| p.current_mhz > 0).collect();
+    let live: Vec<&ProcessorPowerInformation> =
+        buffer.iter().filter(|p| p.current_mhz > 0).collect();
     if live.is_empty() {
         return None;
     }

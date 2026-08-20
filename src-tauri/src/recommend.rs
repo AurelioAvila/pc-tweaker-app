@@ -140,7 +140,13 @@ fn has_weak_gpu(profile: &SystemProfile) -> bool {
         return false;
     };
     let gpu = gpu.to_ascii_lowercase();
-    const INTEGRATED_MARKERS: [&str; 5] = ["uhd graphics", "hd graphics", "iris", "vega", "radeon(tm) graphics"];
+    const INTEGRATED_MARKERS: [&str; 5] = [
+        "uhd graphics",
+        "hd graphics",
+        "iris",
+        "vega",
+        "radeon(tm) graphics",
+    ];
     INTEGRATED_MARKERS.iter().any(|m| gpu.contains(m))
 }
 
@@ -259,7 +265,10 @@ mod tests {
         assert_eq!(a.reason_key.as_deref(), Some("laptop_battery"));
 
         p.form_factor = FormFactor::Desktop;
-        assert_eq!(advise("power_plan_performance", &p).verdict, Verdict::Recommended);
+        assert_eq!(
+            advise("power_plan_performance", &p).verdict,
+            Verdict::Recommended
+        );
     }
 
     /// The whole point of the feature: the same tweak gets opposite verdicts
@@ -268,10 +277,16 @@ mod tests {
     fn disabling_the_index_depends_on_the_disk() {
         let mut p = profile();
         p.system_disk = DiskKind::Hdd;
-        assert_eq!(advise("disable_windows_search_service", &p).verdict, Verdict::Recommended);
+        assert_eq!(
+            advise("disable_windows_search_service", &p).verdict,
+            Verdict::Recommended
+        );
 
         p.system_disk = DiskKind::Nvme;
-        assert_eq!(advise("disable_windows_search_service", &p).verdict, Verdict::NotRecommended);
+        assert_eq!(
+            advise("disable_windows_search_service", &p).verdict,
+            Verdict::NotRecommended
+        );
     }
 
     #[test]
@@ -313,7 +328,10 @@ mod tests {
     fn integrated_graphics_make_transparency_worth_turning_off() {
         let mut p = profile();
         p.gpu = Some("Intel(R) UHD Graphics 630".into());
-        assert_eq!(advise("disable_transparency", &p).verdict, Verdict::Recommended);
+        assert_eq!(
+            advise("disable_transparency", &p).verdict,
+            Verdict::Recommended
+        );
 
         p.gpu = Some("NVIDIA GeForce RTX 4070".into());
         assert_eq!(advise("disable_transparency", &p).verdict, Verdict::Neutral);
@@ -335,7 +353,10 @@ mod tests {
         assert!(ram_is_tight(&p));
 
         p.ram_total_bytes = None;
-        assert!(!ram_is_tight(&p), "an unknown RAM size must not be treated as low");
+        assert!(
+            !ram_is_tight(&p),
+            "an unknown RAM size must not be treated as low"
+        );
     }
 }
 

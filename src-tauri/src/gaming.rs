@@ -209,7 +209,8 @@ fn read_boost_indexes(scheme_guid: &str) -> (Option<u32>, Option<u32>) {
     use winreg::enums::HKEY_LOCAL_MACHINE;
     use winreg::RegKey;
 
-    let Ok(key) = RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey(boost_override_path(scheme_guid)) else {
+    let Ok(key) = RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey(boost_override_path(scheme_guid))
+    else {
         return (None, None);
     };
     (
@@ -269,9 +270,9 @@ pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
 
 #[cfg(windows)]
 pub fn rollback_turbo_boost(store: &RollbackStore) -> Result<(), String> {
-    let entry = store
-        .take_entry(TURBO_BOOST_ID)
-        .ok_or_else(|| "no saved snapshot: turbo boost does not appear to be modified".to_string())?;
+    let entry = store.take_entry(TURBO_BOOST_ID).ok_or_else(|| {
+        "no saved snapshot: turbo boost does not appear to be modified".to_string()
+    })?;
 
     match entry {
         SnapshotEntry::PowerSettingIndex {
@@ -280,7 +281,13 @@ pub fn rollback_turbo_boost(store: &RollbackStore) -> Result<(), String> {
             setting_guid,
             ac_index,
             dc_index,
-        } => restore_power_index(&scheme_guid, &subgroup_guid, &setting_guid, ac_index, dc_index),
+        } => restore_power_index(
+            &scheme_guid,
+            &subgroup_guid,
+            &setting_guid,
+            ac_index,
+            dc_index,
+        ),
 
         // Snapshots written before this tweak stored GUIDs and optional
         // indexes. They hold raw "0x0000000X" strings for the same setting, so
@@ -343,7 +350,9 @@ fn restore_power_index(
                     r"SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\{}\{}\{}",
                     scheme_guid, subgroup_guid, setting_guid
                 );
-                if let Ok(key) = RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey_with_flags(&path, KEY_SET_VALUE) {
+                if let Ok(key) =
+                    RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey_with_flags(&path, KEY_SET_VALUE)
+                {
                     // Already absent is the desired end state, so a "not found"
                     // here is success, not a failure worth surfacing.
                     let _ = key.delete_value(value_name);
@@ -411,7 +420,15 @@ mod tests {
         let scheme = crate::power::active_scheme_guid().expect("active scheme");
         let (ac, dc) = read_boost_indexes(&scheme);
         // Either state is legitimate; what matters is that it returned.
-        assert!(ac.is_none() || ac.unwrap() <= 4, "implausible AC boost index: {:?}", ac);
-        assert!(dc.is_none() || dc.unwrap() <= 4, "implausible DC boost index: {:?}", dc);
+        assert!(
+            ac.is_none() || ac.unwrap() <= 4,
+            "implausible AC boost index: {:?}",
+            ac
+        );
+        assert!(
+            dc.is_none() || dc.unwrap() <= 4,
+            "implausible DC boost index: {:?}",
+            dc
+        );
     }
 }

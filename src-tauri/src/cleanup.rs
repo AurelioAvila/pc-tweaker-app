@@ -63,7 +63,11 @@ fn target_dir(id: &str) -> Option<PathBuf> {
         "temp_cleanup" => Some(std::env::temp_dir()),
         "winupdate_cache_cleanup" => {
             let windir = std::env::var("WINDIR").unwrap_or_else(|_| r"C:\Windows".to_string());
-            Some(PathBuf::from(windir).join("SoftwareDistribution").join("Download"))
+            Some(
+                PathBuf::from(windir)
+                    .join("SoftwareDistribution")
+                    .join("Download"),
+            )
         }
         _ => None,
     }
@@ -220,7 +224,10 @@ pub fn scan_large_files(root: &str, min_bytes: u64) -> Result<Vec<LargeFile>, St
             if size < min_bytes {
                 return None;
             }
-            Some(LargeFile { path: path.to_string_lossy().to_string(), size })
+            Some(LargeFile {
+                path: path.to_string_lossy().to_string(),
+                size,
+            })
         })
         .collect();
 
@@ -306,8 +313,15 @@ mod tests {
 
         let found = scan_large_files(dir.to_str().unwrap(), 1_000).unwrap();
 
-        assert_eq!(found.len(), 2, "the 10-byte file must be excluded by the threshold");
-        assert_eq!(found[0].size, 20_000, "results must be sorted largest first");
+        assert_eq!(
+            found.len(),
+            2,
+            "the 10-byte file must be excluded by the threshold"
+        );
+        assert_eq!(
+            found[0].size, 20_000,
+            "results must be sorted largest first"
+        );
         assert_eq!(found[1].size, 5_000);
 
         fs::remove_dir_all(&dir).ok();
@@ -353,7 +367,10 @@ mod tests {
 
         let result = delete_files(vec![dir.to_str().unwrap().to_string()]);
 
-        assert_eq!(result.deleted_count, 0, "a directory must never be recycled as if it were a single file");
+        assert_eq!(
+            result.deleted_count, 0,
+            "a directory must never be recycled as if it were a single file"
+        );
         assert_eq!(result.skipped_count, 1);
         assert!(dir.exists(), "the directory itself must be untouched");
 

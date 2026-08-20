@@ -33,9 +33,17 @@ pub struct RegistrySnapshot {
 #[serde(tag = "kind")]
 pub enum SnapshotEntry {
     Registry(RegistrySnapshot),
-    PowerScheme { previous_guid: String },
-    Dns { interface: String, previous_servers: Vec<String> },
-    PowerSetting { ac_index: String, dc_index: String },
+    PowerScheme {
+        previous_guid: String,
+    },
+    Dns {
+        interface: String,
+        previous_servers: Vec<String>,
+    },
+    PowerSetting {
+        ac_index: String,
+        dc_index: String,
+    },
     /// A power setting identified by GUID, with the plan's previous AC/DC
     /// indexes. `None` records "this plan had no override and was using the
     /// setting's default", which rollback restores by deleting the value
@@ -51,7 +59,10 @@ pub enum SnapshotEntry {
         ac_index: Option<u32>,
         dc_index: Option<u32>,
     },
-    Service { name: String, previous_start_type: String },
+    Service {
+        name: String,
+        previous_start_type: String,
+    },
     /// A registry key that did not exist until this app created it, recorded
     /// so rollback can delete the whole subtree instead of only clearing a
     /// value inside it.
@@ -62,8 +73,13 @@ pub enum SnapshotEntry {
     /// from a key merely *existing* (the classic context menu override being
     /// the case in point), leaving the key behind would leave the tweak
     /// half-applied and the rollback silently ineffective.
-    RegistryKeyCreated { hive: String, path: String },
-    Composite { entries: Vec<SnapshotEntry> },
+    RegistryKeyCreated {
+        hive: String,
+        path: String,
+    },
+    Composite {
+        entries: Vec<SnapshotEntry>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -184,7 +200,9 @@ mod tests {
         assert!(store.is_applied("a"));
 
         match store.take_entry("a") {
-            Some(SnapshotEntry::PowerScheme { previous_guid }) => assert_eq!(previous_guid, "guid-a"),
+            Some(SnapshotEntry::PowerScheme { previous_guid }) => {
+                assert_eq!(previous_guid, "guid-a")
+            }
             other => panic!("unexpected entry: {:?}", other.is_some()),
         }
         assert!(!store.is_applied("a"));
@@ -238,14 +256,18 @@ mod tests {
         let dir = temp_dir("mixed");
         let seeded = RollbackStore::new(dir.clone());
         for i in 0..40 {
-            seeded.save_entry(&format!("victim-{}", i), dummy("v")).unwrap();
+            seeded
+                .save_entry(&format!("victim-{}", i), dummy("v"))
+                .unwrap();
         }
 
         let writer_dir = dir.clone();
         let writer = std::thread::spawn(move || {
             let store = RollbackStore::new(writer_dir);
             for i in 0..40 {
-                store.save_entry(&format!("keeper-{}", i), dummy("k")).unwrap();
+                store
+                    .save_entry(&format!("keeper-{}", i), dummy("k"))
+                    .unwrap();
             }
         });
 
@@ -262,8 +284,16 @@ mod tests {
 
         let store = RollbackStore::new(dir.clone());
         for i in 0..40 {
-            assert!(store.is_applied(&format!("keeper-{}", i)), "lost keeper-{}", i);
-            assert!(!store.is_applied(&format!("victim-{}", i)), "victim-{} survived", i);
+            assert!(
+                store.is_applied(&format!("keeper-{}", i)),
+                "lost keeper-{}",
+                i
+            );
+            assert!(
+                !store.is_applied(&format!("victim-{}", i)),
+                "victim-{} survived",
+                i
+            );
         }
 
         let _ = fs::remove_dir_all(dir);
@@ -283,7 +313,11 @@ mod tests {
             .map(|e| e.file_name().to_string_lossy().to_string())
             .filter(|n| n.ends_with(".tmp"))
             .collect();
-        assert!(leftovers.is_empty(), "temp files left behind: {:?}", leftovers);
+        assert!(
+            leftovers.is_empty(),
+            "temp files left behind: {:?}",
+            leftovers
+        );
 
         let raw = fs::read_to_string(dir.join("rollback_store.json")).unwrap();
         serde_json::from_str::<Store>(&raw).expect("snapshot file must always parse");

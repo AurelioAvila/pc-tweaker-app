@@ -46,7 +46,11 @@ mod imp {
         Ok(DiskHealth {
             drive: drive.to_string(),
             media_type: crate::diskinfo::media_type_of(drive),
-            status: if status.is_empty() { "Unknown".to_string() } else { status },
+            status: if status.is_empty() {
+                "Unknown".to_string()
+            } else {
+                status
+            },
         })
     }
 }

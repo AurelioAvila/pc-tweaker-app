@@ -41,7 +41,8 @@ fn run_sc(args: &[&str]) -> Result<String, String> {
 /// tweak's `powercfg` parsing for the same underlying reason.
 fn parse_start_type(output: &str) -> Result<String, String> {
     for line in output.lines() {
-        if line.contains("AUTO_START") || line.contains("DEMAND_START") || line.contains("DISABLED") {
+        if line.contains("AUTO_START") || line.contains("DEMAND_START") || line.contains("DISABLED")
+        {
             return Ok(line.trim().to_string());
         }
     }
@@ -75,22 +76,34 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
     store
         .save_entry(
             WINDOWS_SEARCH_ID,
-            SnapshotEntry::Service { name: SERVICE_NAME.to_string(), previous_start_type: previous },
+            SnapshotEntry::Service {
+                name: SERVICE_NAME.to_string(),
+                previous_start_type: previous,
+            },
         )
         .map_err(|e| e.to_string())
 }
 
 #[cfg(windows)]
 pub fn rollback(store: &RollbackStore) -> Result<(), String> {
-    let entry = store
-        .take_entry(WINDOWS_SEARCH_ID)
-        .ok_or_else(|| "no snapshot saved: the service does not appear to be changed".to_string())?;
+    let entry = store.take_entry(WINDOWS_SEARCH_ID).ok_or_else(|| {
+        "no snapshot saved: the service does not appear to be changed".to_string()
+    })?;
 
-    let SnapshotEntry::Service { previous_start_type, .. } = entry else {
+    let SnapshotEntry::Service {
+        previous_start_type,
+        ..
+    } = entry
+    else {
         return Err("unexpected snapshot type for the service".to_string());
     };
 
-    run_sc(&["config", SERVICE_NAME, "start=", start_type_flag(&previous_start_type)])?;
+    run_sc(&[
+        "config",
+        SERVICE_NAME,
+        "start=",
+        start_type_flag(&previous_start_type),
+    ])?;
     run_sc(&["start", SERVICE_NAME])?;
     Ok(())
 }
@@ -127,7 +140,10 @@ mod tests {
     /// delayed-auto into plain auto would silently change boot behaviour.
     #[test]
     fn maps_every_start_type_back_to_its_own_sc_flag() {
-        assert_eq!(start_type_flag("TIPO_AVVIO : 2   AUTO_START  (DELAYED)"), "delayed-auto");
+        assert_eq!(
+            start_type_flag("TIPO_AVVIO : 2   AUTO_START  (DELAYED)"),
+            "delayed-auto"
+        );
         assert_eq!(start_type_flag("START_TYPE : 2   AUTO_START"), "auto");
         assert_eq!(start_type_flag("START_TYPE : 3   DEMAND_START"), "demand");
         assert_eq!(start_type_flag("START_TYPE : 4   DISABLED"), "disabled");

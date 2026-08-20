@@ -11,7 +11,8 @@ pub struct StartupEntry {
 }
 
 const RUN_PATH: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
-const APPROVED_PATH: &str = r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
+const APPROVED_PATH: &str =
+    r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
 
 /// Windows records "the user disabled this" in a separate StartupApproved
 /// value rather than deleting the Run entry: byte 0 is even when enabled and
@@ -119,8 +120,14 @@ mod imp {
             .map_err(|e| format!("could not open the startup registry key: {}", e))?;
 
         let bytes = approval_bytes(enabled, now_unix_secs());
-        key.set_raw_value(name, &RegValue { vtype: REG_BINARY, bytes })
-            .map_err(|e| format!("could not update the startup state: {}", e))
+        key.set_raw_value(
+            name,
+            &RegValue {
+                vtype: REG_BINARY,
+                bytes,
+            },
+        )
+        .map_err(|e| format!("could not update the startup state: {}", e))
     }
 }
 
@@ -132,21 +139,25 @@ pub fn list_startup_items() -> Vec<StartupEntry> {
 
 #[cfg(windows)]
 #[tauri::command]
-pub fn set_startup_enabled(
-    scope: String,
-    name: String,
-    enabled: bool,
-) -> Result<(), String> {
+pub fn set_startup_enabled(scope: String, name: String, enabled: bool) -> Result<(), String> {
     // Machine-wide entries live under HKLM and need elevation; route them
     // through the same one-shot UAC helper every admin tweak already uses
     // instead of failing with a bare access-denied.
     if scope == "HKLM" && !crate::elevation::is_elevated() {
+        // The elevated helper records its own audit entry for this action.
         return crate::elevation::run_elevated_action(
             "--elevated-startup",
             &build_payload(&scope, enabled, &name),
         );
     }
-    imp::set_enabled(&scope, &name, enabled)
+    let result = imp::set_enabled(&scope, &name, enabled);
+    crate::audit::record(
+        "startup-change",
+        &name,
+        result.is_ok(),
+        result.as_ref().err().cloned(),
+    );
+    result
 }
 
 /// Entry point used by the elevated helper process (see `run_elevated_headless`).
@@ -178,7 +189,9 @@ mod tests {
     #[test]
     fn reads_the_same_enabled_state_windows_does() {
         assert!(enabled_from_bytes(&[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
-        assert!(!enabled_from_bytes(&[3, 0, 0, 0, 83, 142, 102, 231, 162, 245, 220, 1]));
+        assert!(!enabled_from_bytes(&[
+            3, 0, 0, 0, 83, 142, 102, 231, 162, 245, 220, 1
+        ]));
         // Some entries use 6/7 instead of 2/3; parity is what decides.
         assert!(enabled_from_bytes(&[6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
         assert!(!enabled_from_bytes(&[7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));

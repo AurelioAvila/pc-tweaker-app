@@ -86,7 +86,10 @@ mod tests {
         let r = run_for(300);
         println!("score {} iterations/ms over {} ms", r.score, r.duration_ms);
         assert!(r.score > 0, "score must be positive");
-        assert!(r.duration_ms >= 300, "should have run for at least its budget");
+        assert!(
+            r.duration_ms >= 300,
+            "should have run for at least its budget"
+        );
     }
 
     /// Two runs back to back on an unchanged machine must land close together.
@@ -110,7 +113,10 @@ mod tests {
             let a = run_for(400).score as f64;
             let b = run_for(400).score as f64;
             let ratio = a.max(b) / a.min(b);
-            println!("attempt {attempt}/{ATTEMPTS}: run-to-run ratio {:.3}", ratio);
+            println!(
+                "attempt {attempt}/{ATTEMPTS}: run-to-run ratio {:.3}",
+                ratio
+            );
             if ratio < 1.25 {
                 return;
             }

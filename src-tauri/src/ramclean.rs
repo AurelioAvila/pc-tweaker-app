@@ -46,7 +46,11 @@ mod imp {
             return false;
         }
         unsafe {
-            let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_SET_QUOTA, 0, pid);
+            let handle = OpenProcess(
+                PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_SET_QUOTA,
+                0,
+                pid,
+            );
             if handle == 0 {
                 // Access denied on protected/elevated processes is the normal
                 // case for a non-elevated run, not an error worth surfacing.
@@ -95,7 +99,9 @@ mod imp {
 
 #[cfg(windows)]
 #[tauri::command]
-pub fn clean_ram(state: tauri::State<'_, crate::sysmon::SysMonState>) -> Result<RamCleanResult, String> {
+pub fn clean_ram(
+    state: tauri::State<'_, crate::sysmon::SysMonState>,
+) -> Result<RamCleanResult, String> {
     let mut sys = state
         .0
         .lock()
@@ -105,7 +111,9 @@ pub fn clean_ram(state: tauri::State<'_, crate::sysmon::SysMonState>) -> Result<
 
 #[cfg(not(windows))]
 #[tauri::command]
-pub fn clean_ram(_state: tauri::State<'_, crate::sysmon::SysMonState>) -> Result<RamCleanResult, String> {
+pub fn clean_ram(
+    _state: tauri::State<'_, crate::sysmon::SysMonState>,
+) -> Result<RamCleanResult, String> {
     Err("RAM cleanup is only available on Windows".to_string())
 }
 

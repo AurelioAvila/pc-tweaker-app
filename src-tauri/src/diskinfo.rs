@@ -1,5 +1,5 @@
 use serde::Serialize;
-use sysinfo::{Disks, DiskKind};
+use sysinfo::{DiskKind, Disks};
 
 #[derive(Serialize, Clone)]
 pub struct DriveInfo {
@@ -91,7 +91,11 @@ mod tests {
     #[test]
     fn every_letter_is_well_formed() {
         for d in list_drives() {
-            assert!(d.letter.ends_with(':'), "malformed drive letter: {}", d.letter);
+            assert!(
+                d.letter.ends_with(':'),
+                "malformed drive letter: {}",
+                d.letter
+            );
             assert_eq!(d.letter.len(), 2, "expected e.g. \"C:\", got: {}", d.letter);
         }
     }
@@ -116,6 +120,9 @@ mod tests {
         let drives = list_drives();
         assert!(!drives.is_empty(), "expected at least the system drive");
         assert!(drives[0].is_system, "the system drive must sort first");
-        assert!(drives.iter().any(|d| d.is_system), "the system drive must be in the list");
+        assert!(
+            drives.iter().any(|d| d.is_system),
+            "the system drive must be in the list"
+        );
     }
 }

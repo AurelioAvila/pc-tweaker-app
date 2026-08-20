@@ -86,7 +86,8 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
         // behaviour until something writes them. `None` here records exactly
         // that, so rollback deletes the value instead of writing a made-up
         // "previous" number that was never there.
-        let original = read_value(hive, &path, name, &RegValue::Dword(0)).map_err(|e| e.to_string())?;
+        let original =
+            read_value(hive, &path, name, &RegValue::Dword(0)).map_err(|e| e.to_string())?;
         entries.push(SnapshotEntry::Registry(RegistrySnapshot {
             hive: HIVE.to_string(),
             path: path.clone(),
@@ -148,7 +149,11 @@ mod tests {
     #[test]
     fn the_active_adapter_guid_is_readable_and_well_formed() {
         let guid = active_interface_guid().expect("no active adapter");
-        assert!(guid.starts_with('{') && guid.ends_with('}'), "not a GUID: {}", guid);
+        assert!(
+            guid.starts_with('{') && guid.ends_with('}'),
+            "not a GUID: {}",
+            guid
+        );
         assert_eq!(guid.len(), 38, "unexpected GUID length: {}", guid);
     }
 

@@ -386,14 +386,29 @@ fn security_probes(inputs: &mut HealthInputs) {
     inputs.restore_points_enabled = read_dword(HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore", "RPSessionInterval").map(|v| v >= 1);
 }
 
+/// A measurement plus its place in this machine's history: the report itself,
+/// when it was taken, and — when there is anything to compare against — what
+/// moved since the previous one and why.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct HealthResult {
+    pub report: HealthReport,
+    /// Unix seconds.
+    pub ts: u64,
+    /// `None` on the very first measurement, when there is honestly nothing
+    /// to compare against.
+    pub comparison: Option<crate::healthhistory::HealthComparison>,
+}
+
 /// Collects every input and scores it. `async` command: the first call may
 /// trigger the (cached) PowerShell-backed system profile.
 #[cfg(windows)]
 #[tauri::command(async)]
 pub async fn health_report(
+    app: tauri::AppHandle,
     profile_state: tauri::State<'_, crate::systemprofile::SystemProfileState>,
     sysmon_state: tauri::State<'_, crate::sysmon::SysMonState>,
-) -> Result<HealthReport, String> {
+) -> Result<HealthResult, String> {
     let mut inputs = HealthInputs::default();
 
     if let Ok(profile) = crate::systemprofile::system_profile(profile_state).await {
@@ -428,5 +443,24 @@ pub async fn health_report(
     inputs.applied = applied_tweak_ids();
     security_probes(&mut inputs);
 
-    Ok(score(&inputs))
+    let report = score(&inputs);
+    let ts = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+
+    // Compare against the previous measurement BEFORE storing this one,
+    // otherwise the newest row would be compared against itself.
+    let history = crate::healthhistory::read_history(&app);
+    let snapshot = crate::healthhistory::HealthSnapshot::from_report(&report, ts);
+    let comparison = history.last().map(|prev| crate::healthhistory::compare(prev, &snapshot));
+
+    // A history that can't be written costs the user the "why did it change?"
+    // answer next time, but the measurement they asked for is still valid —
+    // so this is reported to the log, never as a failed scan.
+    if let Err(e) = crate::healthhistory::append(&app, &snapshot) {
+        eprintln!("health history: could not record this measurement: {e}");
+    }
+
+    Ok(HealthResult { report, ts, comparison })
 }

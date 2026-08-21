@@ -274,6 +274,8 @@ function App() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [paywallFeature, setPaywallFeature] = useState<string | null>(null);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  /** Id of the tweak whose exact registry write is currently disclosed. */
+  const [inspecting, setInspecting] = useState<string | null>(null);
   const [confirmCleanup, setConfirmCleanup] = useState<CleanupInfo | null>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -702,6 +704,15 @@ function App() {
                 running: s.healthPanel.baselineRunning,
                 empty: s.healthPanel.baselineEmpty,
               }}
+              change={{
+                sinceLast: s.healthPanel.changeSinceLast,
+                noChange: s.healthPanel.changeNone,
+                firstRun: s.healthPanel.changeFirstRun,
+                whyTitle: s.healthPanel.changeWhyTitle,
+                contributes: s.healthPanel.changeContributes,
+                structural: s.healthPanel.changeStructural,
+                trend: s.healthPanel.changeTrend,
+              }}
             />
           )}
 
@@ -803,15 +814,70 @@ function App() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="font-semibold text-ink">{text.name}</h2>
-                        {t.hive !== "—" && (
-                          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-2">
-                            {t.hive}
-                          </span>
-                        )}
+                        {/* The hive chip is the door to the exact write. A
+                            description can be argued with; a registry path
+                            can be checked in regedit, so it is one click
+                            away rather than buried in a FAQ. */}
+                        {t.hive !== "—" &&
+                          (t.writes ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInspecting(inspecting === t.id ? null : t.id);
+                              }}
+                              aria-expanded={inspecting === t.id}
+                              title={s.transparency.title}
+                              className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                                inspecting === t.id
+                                  ? "bg-[var(--app-accent)]/20 text-ink"
+                                  : "bg-surface-2 text-ink-2 hover:bg-surface-hover hover:text-ink"
+                              }`}
+                            >
+                              {t.hive}
+                              <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3 opacity-70">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
+                                <path
+                                  d="M12 11v5"
+                                  stroke="currentColor"
+                                  strokeWidth="1.8"
+                                  strokeLinecap="round"
+                                />
+                                <circle cx="12" cy="7.9" r="1" fill="currentColor" />
+                              </svg>
+                            </button>
+                          ) : (
+                            <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-2">
+                              {t.hive}
+                            </span>
+                          ))}
                         {t.requires_admin && <ShieldBadge label={s.badges.admin} />}
                         {t.requires_pro && <ProBadge label={s.badges.pro} />}
                       </div>
                       <p className="mt-0.5 text-sm text-ink-3">{text.description}</p>
+                      {inspecting === t.id && t.writes && (
+                        <div className="mt-2 rounded-xl border border-line-2 bg-black/25 p-2.5">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
+                            {s.transparency.title}
+                          </p>
+                          <dl className="mt-1.5 grid gap-1 text-[11.5px]">
+                            {(
+                              [
+                                [s.transparency.key, t.writes.path],
+                                [s.transparency.value, t.writes.valueName],
+                                [s.transparency.setsTo, t.writes.onValue],
+                              ] as [string, string][]
+                            ).map(([k, v]) => (
+                              <div key={k} className="flex flex-wrap gap-x-2">
+                                <dt className="shrink-0 text-ink-3">{k}</dt>
+                                <dd className="min-w-0 break-all font-mono text-ink-2">{v}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                          <p className="mt-1.5 text-[10.5px] leading-relaxed text-ink-3">
+                            {s.transparency.note}
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <Toggle
                       checked={t.applied}

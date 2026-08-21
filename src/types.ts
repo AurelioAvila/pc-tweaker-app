@@ -17,6 +17,10 @@ export type TweakInfo = {
   requires_admin: boolean;
   requires_pro: boolean;
   applied: boolean;
+  /** The literal registry write behind this tweak, for the "what exactly does
+   *  this change?" disclosure. Absent for the tweaks that are not a single
+   *  registry value (power plan, turbo, DNS). */
+  writes?: { path: string; valueName: string; onValue: string } | null;
 };
 
 export type CleanupInfo = {

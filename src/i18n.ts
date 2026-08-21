@@ -47,6 +47,7 @@ export interface Strings {
     groupOptimize: string;
     groupManage: string;
     scan: string;
+    health: string;
     performance: string;
     privacy: string;
     ui: string;
@@ -56,6 +57,30 @@ export interface Strings {
     profiles: string;
     pricing: string;
     ledger: string;
+  };
+  healthPanel: {
+    title: string;
+    subtitle: string;
+    why: string;
+    refresh: string;
+    compute: string;
+    computing: string;
+    idleHint: string;
+    showMore: string;
+    showLess: string;
+    stageProfile: string;
+    stageTweaks: string;
+    stageSecurity: string;
+    stageScoring: string;
+    verdictExcellent: string;
+    verdictGood: string;
+    verdictFair: string;
+    verdictNeedsWork: string;
+    baselineTitle: string;
+    baselineHint: string;
+    baselineRun: string;
+    baselineRunning: string;
+    baselineEmpty: string;
   };
   command: {
     statusQuiet: string;
@@ -501,6 +526,7 @@ const it: Strings = {
     groupOptimize: "Ottimizza",
     groupManage: "Gestisci",
     scan: "Scansione",
+    health: "Salute PC",
     performance: "Prestazioni",
     privacy: "Privacy",
     ui: "Interfaccia",
@@ -510,6 +536,33 @@ const it: Strings = {
     profiles: "Configurazioni",
     pricing: "Piani e prezzi",
     ledger: "Cronologia",
+  },
+  healthPanel: {
+    title: "Salute del PC",
+    subtitle: "Un punteggio spiegabile: ogni numero mostra i fatti da cui è calcolato.",
+    why: "Perché {score}?",
+    refresh: "Ricalcola",
+    compute: "Calcola il punteggio",
+    showMore: "Mostra dettagli",
+    showLess: "Nascondi dettagli",
+    stageProfile: "Lettura profilo di sistema",
+    stageTweaks: "Verifica tweak applicati",
+    stageSecurity: "Controllo stato sicurezza",
+    stageScoring: "Calcolo del punteggio",
+    verdictExcellent: "ECCELLENTE",
+    verdictGood: "BUONO",
+    verdictFair: "DISCRETO",
+    verdictNeedsWork: "DA MIGLIORARE",
+    computing: "Analisi in corso...",
+    idleHint:
+      "Nessuna analisi in background: il punteggio viene calcolato solo quando lo chiedi tu, interamente su questo PC.",
+    baselineTitle: "Baseline",
+    baselineHint:
+      "Misure rapide e ripetibili — confrontabili solo con esecuzioni precedenti su questo PC.",
+    baselineRun: "Esegui baseline",
+    baselineRunning: "Misurazione in corso (~5 s)...",
+    baselineEmpty:
+      "Nessuna baseline ancora. Eseguine una prima di applicare modifiche, e una dopo.",
   },
   command: {
     statusQuiet: "Tutto tranquillo",
@@ -1236,6 +1289,7 @@ const en: Strings = {
     groupOptimize: "Optimize",
     groupManage: "Manage",
     scan: "Scan",
+    health: "PC Health",
     performance: "Performance",
     privacy: "Privacy",
     ui: "UI",
@@ -1245,6 +1299,31 @@ const en: Strings = {
     profiles: "Configurations",
     pricing: "Plans & pricing",
     ledger: "History",
+  },
+  healthPanel: {
+    title: "PC Health",
+    subtitle: "An explainable score: every number shows the facts it was computed from.",
+    why: "Why {score}?",
+    refresh: "Recompute",
+    compute: "Compute health score",
+    showMore: "Show more",
+    showLess: "Show less",
+    stageProfile: "Reading system profile",
+    stageTweaks: "Checking applied tweaks",
+    stageSecurity: "Reading security state",
+    stageScoring: "Scoring",
+    verdictExcellent: "EXCELLENT",
+    verdictGood: "GOOD",
+    verdictFair: "FAIR",
+    verdictNeedsWork: "NEEDS WORK",
+    computing: "Analyzing...",
+    idleHint:
+      "Nothing runs in the background: the score is computed only when you ask, entirely on this PC.",
+    baselineTitle: "Baseline",
+    baselineHint: "Quick, repeatable measurements — only comparable to previous runs on this PC.",
+    baselineRun: "Run baseline",
+    baselineRunning: "Measuring (~5 s)...",
+    baselineEmpty: "No baselines yet. Run one before applying changes, and one after.",
   },
   command: {
     statusQuiet: "All systems quiet",
@@ -1966,6 +2045,7 @@ const fr: Strings = {
     groupOptimize: "Optimiser",
     groupManage: "Gérer",
     scan: "Analyse",
+    health: "Santé du PC",
     performance: "Performances",
     privacy: "Confidentialité",
     ui: "Interface",
@@ -1975,6 +2055,32 @@ const fr: Strings = {
     profiles: "Configurations",
     pricing: "Offres et tarifs",
     ledger: "Historique",
+  },
+  healthPanel: {
+    title: "Santé du PC",
+    subtitle: "Un score explicable : chaque nombre montre les faits dont il est calculé.",
+    why: "Pourquoi {score} ?",
+    refresh: "Recalculer",
+    compute: "Calculer le score",
+    showMore: "Voir les détails",
+    showLess: "Masquer les détails",
+    stageProfile: "Lecture du profil système",
+    stageTweaks: "Vérification des tweaks appliqués",
+    stageSecurity: "Lecture de l'état de sécurité",
+    stageScoring: "Calcul du score",
+    verdictExcellent: "EXCELLENT",
+    verdictGood: "BON",
+    verdictFair: "CORRECT",
+    verdictNeedsWork: "À AMÉLIORER",
+    computing: "Analyse en cours...",
+    idleHint:
+      "Rien ne tourne en arrière-plan : le score n'est calculé que lorsque vous le demandez, entièrement sur ce PC.",
+    baselineTitle: "Référence",
+    baselineHint:
+      "Mesures rapides et répétables — comparables uniquement aux exécutions précédentes sur ce PC.",
+    baselineRun: "Lancer la référence",
+    baselineRunning: "Mesure en cours (~5 s)...",
+    baselineEmpty: "Aucune référence. Lancez-en une avant vos modifications, puis une après.",
   },
   command: {
     statusQuiet: "Tout est calme",
@@ -2706,6 +2812,7 @@ const es: Strings = {
     groupOptimize: "Optimizar",
     groupManage: "Gestionar",
     scan: "Análisis",
+    health: "Salud del PC",
     performance: "Rendimiento",
     privacy: "Privacidad",
     ui: "Interfaz",
@@ -2715,6 +2822,32 @@ const es: Strings = {
     profiles: "Configuraciones",
     pricing: "Planes y precios",
     ledger: "Historial",
+  },
+  healthPanel: {
+    title: "Salud del PC",
+    subtitle: "Una puntuación explicable: cada número muestra los hechos de los que se calcula.",
+    why: "¿Por qué {score}?",
+    refresh: "Recalcular",
+    compute: "Calcular la puntuación",
+    showMore: "Ver detalles",
+    showLess: "Ocultar detalles",
+    stageProfile: "Leyendo el perfil del sistema",
+    stageTweaks: "Comprobando tweaks aplicados",
+    stageSecurity: "Leyendo el estado de seguridad",
+    stageScoring: "Calculando la puntuación",
+    verdictExcellent: "EXCELENTE",
+    verdictGood: "BUENO",
+    verdictFair: "ACEPTABLE",
+    verdictNeedsWork: "MEJORABLE",
+    computing: "Analizando...",
+    idleHint:
+      "Nada se ejecuta en segundo plano: la puntuación se calcula solo cuando lo pides, íntegramente en este PC.",
+    baselineTitle: "Línea base",
+    baselineHint:
+      "Mediciones rápidas y repetibles — solo comparables con ejecuciones previas en este PC.",
+    baselineRun: "Ejecutar línea base",
+    baselineRunning: "Midiendo (~5 s)...",
+    baselineEmpty: "Aún no hay líneas base. Ejecuta una antes de aplicar cambios, y otra después.",
   },
   command: {
     statusQuiet: "Todo en calma",
@@ -3446,6 +3579,7 @@ const de: Strings = {
     groupOptimize: "Optimieren",
     groupManage: "Verwalten",
     scan: "Systemscan",
+    health: "PC-Zustand",
     performance: "Leistung",
     privacy: "Datenschutz",
     ui: "Oberfläche",
@@ -3455,6 +3589,32 @@ const de: Strings = {
     profiles: "Konfigurationen",
     pricing: "Tarife & Preise",
     ledger: "Verlauf",
+  },
+  healthPanel: {
+    title: "PC-Zustand",
+    subtitle: "Ein erklärbarer Wert: jede Zahl zeigt die Fakten, aus denen sie berechnet wurde.",
+    why: "Warum {score}?",
+    refresh: "Neu berechnen",
+    compute: "Wert berechnen",
+    showMore: "Details anzeigen",
+    showLess: "Details ausblenden",
+    stageProfile: "Systemprofil wird gelesen",
+    stageTweaks: "Angewendete Tweaks werden geprüft",
+    stageSecurity: "Sicherheitsstatus wird gelesen",
+    stageScoring: "Bewertung läuft",
+    verdictExcellent: "AUSGEZEICHNET",
+    verdictGood: "GUT",
+    verdictFair: "ORDENTLICH",
+    verdictNeedsWork: "VERBESSERUNGSWÜRDIG",
+    computing: "Analyse läuft...",
+    idleHint:
+      "Nichts läuft im Hintergrund: Der Wert wird nur auf Ihre Anfrage berechnet, vollständig auf diesem PC.",
+    baselineTitle: "Basiswert",
+    baselineHint:
+      "Schnelle, wiederholbare Messungen — nur mit früheren Läufen auf diesem PC vergleichbar.",
+    baselineRun: "Basiswert messen",
+    baselineRunning: "Messung läuft (~5 s)...",
+    baselineEmpty: "Noch keine Basiswerte. Einen vor den Änderungen messen, einen danach.",
   },
   command: {
     statusQuiet: "Alles ruhig",

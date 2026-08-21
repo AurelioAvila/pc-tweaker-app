@@ -81,6 +81,20 @@ export interface Strings {
     baselineRun: string;
     baselineRunning: string;
     baselineEmpty: string;
+    changeSinceLast: string;
+    changeNone: string;
+    changeFirstRun: string;
+    changeWhyTitle: string;
+    changeContributes: string;
+    changeStructural: string;
+    changeTrend: string;
+  };
+  transparency: {
+    title: string;
+    key: string;
+    value: string;
+    setsTo: string;
+    note: string;
   };
   command: {
     statusQuiet: string;
@@ -564,6 +578,20 @@ const it: Strings = {
     baselineRunning: "Misurazione in corso (~5 s)...",
     baselineEmpty:
       "Nessuna baseline ancora. Eseguine una prima di applicare modifiche, e una dopo.",
+    changeSinceLast: "dall'ultimo controllo",
+    changeNone: "Nessun cambiamento dall'ultimo controllo.",
+    changeFirstRun: "Prima misurazione registrata. Eseguila di nuovo dopo una modifica per vedere cosa si è mosso.",
+    changeWhyTitle: "Perché il punteggio è cambiato",
+    changeContributes: "Contributo al punteggio complessivo:",
+    changeStructural: "Un aggiornamento dell'app ha cambiato quali categorie vengono valutate: parte di questa differenza non dipende dal tuo PC.",
+    changeTrend: "Andamento",
+  },
+  transparency: {
+    title: "Cosa modifica esattamente",
+    key: "Chiave",
+    value: "Valore",
+    setsTo: "Imposta a",
+    note: "Il valore precedente viene salvato prima della scrittura, così il rollback lo ripristina esattamente com'era.",
   },
   command: {
     statusQuiet: "Tutto tranquillo",
@@ -1326,6 +1354,20 @@ const en: Strings = {
     baselineRun: "Run baseline",
     baselineRunning: "Measuring (~5 s)...",
     baselineEmpty: "No baselines yet. Run one before applying changes, and one after.",
+    changeSinceLast: "since your last check",
+    changeNone: "No change since your last check.",
+    changeFirstRun: "First measurement recorded. Run it again after a change to see what moved.",
+    changeWhyTitle: "Why the score changed",
+    changeContributes: "Contribution to the overall score:",
+    changeStructural: "An app update changed which categories are scored — part of this difference did not come from your PC.",
+    changeTrend: "Trend",
+  },
+  transparency: {
+    title: "What this changes, exactly",
+    key: "Key",
+    value: "Value",
+    setsTo: "Sets to",
+    note: "The previous value is saved before writing, so rollback restores it exactly as it was.",
   },
   command: {
     statusQuiet: "All systems quiet",
@@ -2084,6 +2126,20 @@ const fr: Strings = {
     baselineRun: "Lancer la référence",
     baselineRunning: "Mesure en cours (~5 s)...",
     baselineEmpty: "Aucune référence. Lancez-en une avant vos modifications, puis une après.",
+    changeSinceLast: "depuis votre dernier contrôle",
+    changeNone: "Aucun changement depuis votre dernier contrôle.",
+    changeFirstRun: "Première mesure enregistrée. Relancez-la après une modification pour voir ce qui a bougé.",
+    changeWhyTitle: "Pourquoi le score a changé",
+    changeContributes: "Contribution au score global :",
+    changeStructural: "Une mise à jour de l'application a changé les catégories évaluées : une partie de cet écart ne vient pas de votre PC.",
+    changeTrend: "Tendance",
+  },
+  transparency: {
+    title: "Ce que cela modifie, exactement",
+    key: "Clé",
+    value: "Valeur",
+    setsTo: "Définit sur",
+    note: "L'ancienne valeur est sauvegardée avant l'écriture : la restauration la remet exactement telle qu'elle était.",
   },
   command: {
     statusQuiet: "Tout est calme",
@@ -2852,6 +2908,20 @@ const es: Strings = {
     baselineRun: "Ejecutar línea base",
     baselineRunning: "Midiendo (~5 s)...",
     baselineEmpty: "Aún no hay líneas base. Ejecuta una antes de aplicar cambios, y otra después.",
+    changeSinceLast: "desde tu última comprobación",
+    changeNone: "Sin cambios desde tu última comprobación.",
+    changeFirstRun: "Primera medición registrada. Vuelve a ejecutarla tras un cambio para ver qué se movió.",
+    changeWhyTitle: "Por qué cambió la puntuación",
+    changeContributes: "Contribución a la puntuación global:",
+    changeStructural: "Una actualización de la aplicación cambió qué categorías se evalúan: parte de esta diferencia no viene de tu PC.",
+    changeTrend: "Evolución",
+  },
+  transparency: {
+    title: "Qué modifica exactamente",
+    key: "Clave",
+    value: "Valor",
+    setsTo: "Lo establece en",
+    note: "El valor anterior se guarda antes de escribir, así que la reversión lo restaura exactamente como estaba.",
   },
   command: {
     statusQuiet: "Todo en calma",
@@ -3620,6 +3690,20 @@ const de: Strings = {
     baselineRun: "Basiswert messen",
     baselineRunning: "Messung läuft (~5 s)...",
     baselineEmpty: "Noch keine Basiswerte. Einen vor den Änderungen messen, einen danach.",
+    changeSinceLast: "seit Ihrer letzten Prüfung",
+    changeNone: "Keine Änderung seit Ihrer letzten Prüfung.",
+    changeFirstRun: "Erste Messung gespeichert. Führen Sie sie nach einer Änderung erneut aus, um zu sehen, was sich bewegt hat.",
+    changeWhyTitle: "Warum sich der Wert geändert hat",
+    changeContributes: "Beitrag zum Gesamtwert:",
+    changeStructural: "Ein App-Update hat geändert, welche Kategorien bewertet werden - ein Teil dieser Differenz stammt nicht von Ihrem PC.",
+    changeTrend: "Verlauf",
+  },
+  transparency: {
+    title: "Was genau geändert wird",
+    key: "Schlüssel",
+    value: "Wert",
+    setsTo: "Setzt auf",
+    note: "Der vorherige Wert wird vor dem Schreiben gesichert - die Wiederherstellung setzt ihn exakt zurück.",
   },
   command: {
     statusQuiet: "Alles ruhig",

@@ -1,6 +1,7 @@
 mod audit;
 pub mod baseline;
 pub mod health;
+pub mod healthhistory;
 mod cleanup;
 mod contextmenu;
 mod cpubench;
@@ -31,11 +32,14 @@ mod turbo;
 mod tweaks;
 
 use cleanup::CleanupResult;
-use rollback::RollbackStore;
+use rollback::{RegValue, RollbackStore};
 use serde::Serialize;
 use tauri::Manager;
 use tweaks::{find_tweak, Category, Hive};
 
+// NOT `rename_all = "camelCase"`: the frontend `TweakInfo` type has read
+// `requires_admin`/`requires_pro` since the first release, and renaming them
+// here would silently blank every badge in the list.
 #[derive(Serialize)]
 pub struct TweakInfo {
     id: String,
@@ -46,6 +50,34 @@ pub struct TweakInfo {
     requires_admin: bool,
     requires_pro: bool,
     applied: bool,
+    /// Exactly what this tweak writes, verbatim — the full registry path,
+    /// the value name and the value it sets. Shown behind a disclosure in the
+    /// UI so anyone can verify the claim against regedit instead of trusting
+    /// the description. `None` for the handful of tweaks that are not a
+    /// single registry write (power plan, turbo), where inventing a fake
+    /// path would be worse than admitting there isn't one.
+    writes: Option<TweakWrite>,
+}
+
+/// The literal registry write behind a tweak. Serialized as plain strings:
+/// this is display material for a "what exactly does this change?" panel, not
+/// something the frontend is ever allowed to write back.
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TweakWrite {
+    /// e.g. `HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl`
+    pub path: String,
+    /// e.g. `Win32PrioritySeparation`
+    pub value_name: String,
+    /// e.g. `DWORD 38 (0x26)` or `String "Off"`
+    pub on_value: String,
+}
+
+fn reg_value_display(v: &RegValue) -> String {
+    match v {
+        RegValue::Dword(n) => format!("DWORD {n} (0x{n:X})"),
+        RegValue::Str(s) => format!("String \"{s}\""),
+    }
 }
 
 fn category_str(c: &Category) -> &'static str {
@@ -90,6 +122,11 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
             hive: hive_str(&t.hive).to_string(),
             requires_admin: t.requires_admin,
             requires_pro: t.requires_pro,
+            writes: Some(TweakWrite {
+                path: format!("{}\\{}", hive_str(&t.hive), t.key_path),
+                value_name: t.value_name.to_string(),
+                on_value: reg_value_display(&t.on_value),
+            }),
         })
         .collect();
 
@@ -100,6 +137,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description: "Switches to the Windows \"High performance\" power plan. Useful on desktops or when plugged in; restores the previous plan on rollback.".to_string(),
         category: category_str(&Category::Performance).to_string(),
         hive: "—".to_string(),
+        writes: None,
         requires_admin: false,
         requires_pro: false,
     });
@@ -111,6 +149,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description: turbo.description.to_string(),
         category: category_str(&Category::Performance).to_string(),
         hive: "—".to_string(),
+        writes: None,
         requires_admin: turbo.requires_admin,
         requires_pro: turbo.requires_pro,
         applied: store.is_applied(turbo.id),
@@ -123,6 +162,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description: "Switches the active network adapter to privacy-focused DNS servers (1.1.1.1), stopping your provider from logging your DNS queries. It does not hide your IP address (that needs a VPN, see below).".to_string(),
         category: category_str(&Category::Privacy).to_string(),
         hive: "—".to_string(),
+        writes: None,
         requires_admin: true,
         requires_pro: false,
     });
@@ -135,6 +175,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description: input_lag.description.to_string(),
         category: category_str(&Category::Gaming).to_string(),
         hive: "—".to_string(),
+        writes: None,
         requires_admin: input_lag.requires_admin,
         requires_pro: input_lag.requires_pro,
     });
@@ -147,6 +188,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description: turbo_boost.description.to_string(),
         category: category_str(&Category::Gaming).to_string(),
         hive: "—".to_string(),
+        writes: None,
         requires_admin: turbo_boost.requires_admin,
         requires_pro: turbo_boost.requires_pro,
     });
@@ -159,6 +201,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description: games_priority.description.to_string(),
         category: category_str(&Category::Gaming).to_string(),
         hive: "—".to_string(),
+        writes: None,
         requires_admin: games_priority.requires_admin,
         requires_pro: games_priority.requires_pro,
     });
@@ -171,6 +214,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description: keyboard_delay.description.to_string(),
         category: category_str(&Category::Gaming).to_string(),
         hive: "—".to_string(),
+        writes: None,
         requires_admin: keyboard_delay.requires_admin,
         requires_pro: keyboard_delay.requires_pro,
     });
@@ -183,6 +227,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description: net_latency.description.to_string(),
         category: category_str(&Category::Gaming).to_string(),
         hive: "—".to_string(),
+        writes: None,
         requires_admin: net_latency.requires_admin,
         requires_pro: net_latency.requires_pro,
     });
@@ -195,6 +240,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description: activity_history.description.to_string(),
         category: category_str(&Category::Privacy).to_string(),
         hive: "—".to_string(),
+        writes: None,
         requires_admin: activity_history.requires_admin,
         requires_pro: activity_history.requires_pro,
     });
@@ -207,6 +253,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description: typing.description.to_string(),
         category: category_str(&Category::Privacy).to_string(),
         hive: "—".to_string(),
+        writes: None,
         requires_admin: typing.requires_admin,
         requires_pro: typing.requires_pro,
     });
@@ -219,6 +266,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description: context_menu.description.to_string(),
         category: category_str(&Category::Ui).to_string(),
         hive: "—".to_string(),
+        writes: None,
         requires_admin: context_menu.requires_admin,
         requires_pro: context_menu.requires_pro,
     });
@@ -231,6 +279,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description: windows_search.description.to_string(),
         category: category_str(&Category::Manutenzione).to_string(),
         hive: "—".to_string(),
+        writes: None,
         requires_admin: windows_search.requires_admin,
         requires_pro: windows_search.requires_pro,
     });
@@ -854,6 +903,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             systemprofile::system_profile,
             health::health_report,
+            healthhistory::list_health_history,
             baseline::run_baseline,
             baseline::list_baselines,
             recommend::advise_tweaks,

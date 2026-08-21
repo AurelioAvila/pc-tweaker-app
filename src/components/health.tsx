@@ -20,6 +20,31 @@ import { invoke } from "@tauri-apps/api/core";
 type HealthFactor = { id: string; label: string; earned: number; max: number; evidence: string };
 type HealthCategory = { id: string; score: number; factors: HealthFactor[] };
 type HealthReport = { overall: number; categories: HealthCategory[] };
+/** One factor that actually moved points. Evidence is quoted on both sides so
+ *  a cause can always be checked, never just asserted. */
+type FactorChange = {
+  id: string;
+  delta: number;
+  evidenceBefore: string;
+  evidenceAfter: string;
+};
+type CategoryChange = {
+  id: string;
+  before: number;
+  after: number;
+  delta: number;
+  overallContribution: number;
+  reasons: FactorChange[];
+};
+type HealthComparison = {
+  previousTs: number;
+  previousOverall: number;
+  delta: number;
+  categories: CategoryChange[];
+  structuralChange: boolean;
+};
+type HealthResult = { report: HealthReport; ts: number; comparison: HealthComparison | null };
+type HealthSnapshot = { ts: number; overall: number };
 type BaselineRun = {
   ts: number;
   cpuScore: number;
@@ -323,6 +348,35 @@ function MiniRing({ score }: { score: number }) {
   );
 }
 
+/** The score's own history, drawn small. Deliberately unlabelled and
+ *  unscaled-to-zero: it answers "which way is this going", and the exact
+ *  numbers live in the report above it. Fewer than two points draws nothing —
+ *  a single dot pretending to be a trend would be a lie. */
+function Trend({ points }: { points: number[] }) {
+  if (points.length < 2) return null;
+  const W = 168;
+  const H = 34;
+  const shown = points.slice(-30);
+  const min = Math.min(...shown);
+  const max = Math.max(...shown);
+  const span = Math.max(1, max - min);
+  const xy = shown.map((v, i) => {
+    const x = (i / (shown.length - 1)) * (W - 4) + 2;
+    // Padded 4px top and bottom so a flat line still sits inside the box.
+    const y = H - 4 - ((v - min) / span) * (H - 8);
+    return [x, y] as const;
+  });
+  const path = xy.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+  const last = xy[xy.length - 1];
+  const t = tone(shown[shown.length - 1]);
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${String(W)} ${String(H)}`} aria-hidden="true">
+      <path d={path} fill="none" stroke={t.stroke} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" opacity="0.75" />
+      <circle cx={last[0]} cy={last[1]} r="2.4" fill={t.stroke} />
+    </svg>
+  );
+}
+
 export function HealthPanel({
   title,
   subtitle,
@@ -335,6 +389,7 @@ export function HealthPanel({
   stages,
   verdicts,
   baseline,
+  change,
 }: {
   title: string;
   subtitle: string;
@@ -347,14 +402,40 @@ export function HealthPanel({
   stages: [string, string, string, string];
   verdicts: { excellent: string; good: string; fair: string; needsWork: string };
   baseline: { title: string; hint: string; run: string; running: string; empty: string };
+  change: {
+    sinceLast: string;
+    noChange: string;
+    firstRun: string;
+    whyTitle: string;
+    contributes: string;
+    structural: string;
+    trend: string;
+  };
 }) {
   const [report, setReport] = useState<HealthReport | null>(null);
+  const [comparison, setComparison] = useState<HealthComparison | null>(null);
+  const [history, setHistory] = useState<HealthSnapshot[]>([]);
+  const [whyOpen, setWhyOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<"idle" | "loading" | "done">("idle");
   const [stageIndex, setStageIndex] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
   const [runs, setRuns] = useState<BaselineRun[] | null>(null);
   const [benchBusy, setBenchBusy] = useState(false);
+
+  /** The live report is the only place a factor's English label exists — the
+   *  stored history keeps ids so an old snapshot never carries a label that
+   *  drifted from today's scoring logic. */
+  const labelFor = useCallback(
+    (factorId: string): string => {
+      for (const cat of report?.categories ?? []) {
+        const hit = cat.factors.find((f) => f.id === factorId);
+        if (hit) return hit.label;
+      }
+      return factorId;
+    },
+    [report],
+  );
 
   const verdictFor = useCallback(
     (score: number): string => {
@@ -370,6 +451,7 @@ export function HealthPanel({
     setPhase("loading");
     setError(null);
     setOpen(null);
+    setWhyOpen(false);
     setStageIndex(0);
     // The stages mirror what health_report actually does, in order. The
     // ticker paces their reveal; the last one completes only when the real
@@ -380,14 +462,20 @@ export function HealthPanel({
     }, 420);
     const begun = performance.now();
     const MIN_DWELL_MS = 1900;
-    invoke<HealthReport>("health_report")
+    invoke<HealthResult>("health_report")
       .then((r) => {
         const wait = Math.max(0, MIN_DWELL_MS - (performance.now() - begun));
         window.setTimeout(() => {
           window.clearInterval(ticker);
           setStageIndex(4);
-          setReport(r);
+          setReport(r.report);
+          setComparison(r.comparison);
           setPhase("done");
+          // Read the trend AFTER the measurement was recorded, so the line
+          // ends on the score the user is looking at.
+          invoke<HealthSnapshot[]>("list_health_history")
+            .then(setHistory)
+            .catch(() => undefined);
         }, wait);
       })
       .catch((e: unknown) => {
@@ -512,6 +600,42 @@ export function HealthPanel({
         <div className="relative mt-4 flex flex-col gap-4 lg:flex-row lg:items-start">
           <div className="flex shrink-0 flex-col items-center lg:w-48">
             <Speedometer score={report.overall} verdict={verdictFor(report.overall)} />
+
+            {/* The number's context: what it was last time, and when. This is
+                the difference between a score and a measurement. */}
+            {comparison === null ? (
+              <p className="mt-1 max-w-[11rem] text-center text-[10.5px] leading-relaxed text-white/35">
+                {change.firstRun}
+              </p>
+            ) : comparison.delta === 0 ? (
+              <p className="mt-1 text-center text-[10.5px] text-white/35">{change.noChange}</p>
+            ) : (
+              <span
+                className={`mt-1 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ring-1 ${
+                  comparison.delta > 0
+                    ? "bg-emerald-400/10 text-emerald-300 ring-emerald-400/25"
+                    : "bg-rose-400/10 text-rose-300 ring-rose-400/25"
+                }`}
+              >
+                {comparison.delta > 0 ? "+" : ""}
+                {comparison.delta} {change.sinceLast}
+              </span>
+            )}
+            {comparison !== null && (
+              <p className="mt-1 text-center text-[10px] text-white/25">
+                {new Date(comparison.previousTs * 1000).toLocaleString()} ·{" "}
+                {comparison.previousOverall}
+              </p>
+            )}
+
+            {history.length > 1 && (
+              <div className="mt-3 w-full">
+                <p className="mb-0.5 text-center text-[9px] font-bold uppercase tracking-[0.18em] text-white/25">
+                  {change.trend}
+                </p>
+                <Trend points={history.map((h) => h.overall)} />
+              </div>
+            )}
           </div>
 
           <div className="grid min-w-0 flex-1 gap-1.5">
@@ -580,6 +704,100 @@ export function HealthPanel({
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Why did it change? Only rendered when something actually moved —
+          there is no empty state to pad, and no cause is ever invented to
+          fill the panel. */}
+      {phase === "done" && comparison !== null && comparison.categories.length > 0 && (
+        <div className="relative mt-4 overflow-hidden rounded-xl border border-white/10 bg-black/25">
+          <button
+            type="button"
+            onClick={() => {
+              setWhyOpen((v) => !v);
+            }}
+            aria-expanded={whyOpen}
+            className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition hover:bg-white/[0.03]"
+          >
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/55">
+              <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
+                <path d="M4 17.5 9.5 11l3.5 3.5L20 7" stroke="currentColor" {...stroke} />
+                <path d="M15 7h5v5" stroke="currentColor" {...stroke} />
+              </svg>
+            </span>
+            <span className="min-w-0 flex-1 text-xs font-semibold text-white/80">
+              {change.whyTitle}
+            </span>
+            {/* A preview of the causes, so the headline is useful collapsed. */}
+            <span className="hidden shrink-0 gap-1.5 text-[10px] font-bold tabular-nums sm:flex">
+              {comparison.categories.slice(0, 3).map((c) => (
+                <span
+                  key={c.id}
+                  className={`rounded px-1.5 py-0.5 ring-1 ${c.delta > 0 ? "bg-emerald-400/10 text-emerald-300/90 ring-emerald-400/20" : "bg-rose-400/10 text-rose-300/90 ring-rose-400/20"}`}
+                >
+                  {c.delta > 0 ? "+" : ""}
+                  {c.delta} {CATEGORY_LABELS[c.id] ?? c.id}
+                </span>
+              ))}
+            </span>
+            <span className="shrink-0 text-[10px] font-semibold text-white/40">
+              {whyOpen ? showLess : showMore}
+            </span>
+          </button>
+
+          {whyOpen && (
+            <div className="border-t border-white/10 px-3.5 py-3">
+              {comparison.structuralChange && (
+                <p className="mb-2.5 rounded-lg bg-amber-400/[0.07] px-2.5 py-1.5 text-[10.5px] leading-relaxed text-amber-200/80 ring-1 ring-amber-400/20">
+                  {change.structural}
+                </p>
+              )}
+              <ul className="grid gap-2.5">
+                {comparison.categories.map((c) => (
+                  <li key={c.id} className="rounded-lg bg-white/[0.03] px-3 py-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-white/45">{CATEGORY_ICONS[c.id]}</span>
+                      <span className="min-w-0 flex-1 truncate text-[11.5px] font-semibold text-white/75">
+                        {CATEGORY_LABELS[c.id] ?? c.id}
+                      </span>
+                      <span className="shrink-0 text-[10.5px] tabular-nums text-white/35">
+                        {c.before} → {c.after}
+                      </span>
+                      <span
+                        className={`shrink-0 text-[11px] font-bold tabular-nums ${c.delta > 0 ? "text-emerald-300" : "text-rose-300"}`}
+                      >
+                        {c.delta > 0 ? "+" : ""}
+                        {c.delta}
+                      </span>
+                    </div>
+                    {/* The facts behind the move, quoted from both
+                        measurements — never a paraphrase. */}
+                    {c.reasons.length > 0 && (
+                      <ul className="mt-1.5 grid gap-1 border-t border-white/5 pt-1.5">
+                        {c.reasons.map((r) => (
+                          <li key={r.id} className="text-[10.5px] leading-relaxed text-white/45">
+                            <span className="text-white/60">{labelFor(r.id)}</span>
+                            <span className="mx-1.5 text-white/20">·</span>
+                            <span className="text-white/40">{r.evidenceBefore}</span>
+                            <span className="mx-1 text-white/25">→</span>
+                            <span className="text-white/70">{r.evidenceAfter}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {/* The overall score is the mean of the categories, so a
+                        big category move is a small headline move. Stated,
+                        not hidden, or the arithmetic looks broken. */}
+                    <p className="mt-1.5 text-[10px] text-white/25">
+                      {change.contributes} {c.overallContribution > 0 ? "+" : ""}
+                      {c.overallContribution.toFixed(1)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 

@@ -273,6 +273,7 @@ function App() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [paywallFeature, setPaywallFeature] = useState<string | null>(null);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [confirmCleanup, setConfirmCleanup] = useState<CleanupInfo | null>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -632,6 +633,8 @@ function App() {
               theme={theme}
               setTheme={setTheme}
               auth={auth}
+              open={accountMenuOpen}
+              onOpenChange={setAccountMenuOpen}
               onAuthenticate={authenticate}
               onLogout={logout}
               onResendVerification={resendVerification}
@@ -713,6 +716,11 @@ function App() {
               s={s}
               tweaks={tweaks}
               isPro={isProUnlocked}
+              authed={auth.status === "authenticated"}
+              onRequireAuth={() => {
+                pushToast("error", s.profiles.signInRequired);
+                setAccountMenuOpen(true);
+              }}
               onRequirePro={() => setPaywallFeature(s.profiles.title)}
               onChanged={refresh}
               pushToast={pushToast}

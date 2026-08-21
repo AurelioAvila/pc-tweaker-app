@@ -489,7 +489,7 @@ export const engDictionary: Dictionary = {
     accessibility: "Accessibility",
     contact: "Contact",
     license: "Proprietary License",
-    copyright: "Built solo in Italy with Tauri (Rust) + React. © 2026 Aurelio Avila",
+    copyright: "Built solo in Amsterdam with Tauri (Rust) + React. © 2026 Aurelio Avila",
     motto: "// every millisecond is earned",
   },
 };

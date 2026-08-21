@@ -5,6 +5,19 @@ update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just
 the git log.
 
+## Unreleased
+
+### Added
+
+- **Instagram pinned-CTA comment.** `marketing/instagram-upload/lib.js` now
+  posts a "Try PC Tweaker for free" comment with the GitHub Releases link
+  right after every Reel publish (mirrors the same pattern already used by
+  the YouTube Ghostcut bot). The Graph API still has no way to actually pin
+  a comment via the API, so it stays a manual step from the Instagram app.
+  Non-blocking — a comment failure never affects the publish itself.
+  Verified live against a real published Reel (media_id
+  18086675720213950): comments_count went 0 → 1.
+
 ## v1.0.0 "Control Room" — 2026-08-21
 
 One-point-zero. The release where PC Tweaker stops being a tweak list and

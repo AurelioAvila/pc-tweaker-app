@@ -164,6 +164,45 @@ async function publish(igUserId, igAccessToken, creationId) {
   return data.id;
 }
 
+// Stesso link gia' usato dall'uploader YouTube gemello
+// (marketing/youtube-upload/auto-upload.js) come CTA di chiusura descrizione
+// - riusato qui invece di inventarne uno nuovo.
+const PINNED_COMMENT_TEXT =
+  "Try PC Tweaker for free \u{1F447}\nhttps://github.com/AurelioAvila/pc-tweaker-app/releases";
+
+// Posta un commento CTA subito dopo la pubblicazione (mirror del pattern
+// _pinned_comment/_post_pinned_comment del bot YouTube Ghostcut). Non
+// bloccante: un fallimento qui non deve mai far fallire una pubblicazione
+// gia' riuscita.
+//
+// La Graph API di Instagram non espone un modo per FISSARE davvero un
+// commento in cima (nessun campo is_pinned su POST .../comments, nessun
+// endpoint dedicato al 2026-08) - stesso limite gia' documentato per la
+// YouTube Data API v3 in publish_ghostcut.py. Il commento viene postato
+// normalmente; fissarlo resta un passo manuale dall'app Instagram.
+async function postPinnedComment(mediaId, igAccessToken, text = PINNED_COMMENT_TEXT) {
+  try {
+    const resp = await fetch(`https://graph.instagram.com/v21.0/${mediaId}/comments`, {
+      method: "POST",
+      headers: {
+        ...authHeaders(igAccessToken),
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ message: text }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      console.log(`  [commento] non postato (${resp.status}): ${JSON.stringify(data)} - aggiungilo a mano`);
+      return false;
+    }
+    console.log(`  [commento] postato (id=${data.id}) - va fissato a mano dall'app Instagram (l'API non lo permette)`);
+    return true;
+  } catch (exc) {
+    console.log(`  [commento] non postato (${exc}) - aggiungilo a mano`);
+    return false;
+  }
+}
+
 async function uploadReel({ videoUrl, caption }) {
   const { igAccessToken, igUserId } = loadCredentials();
   await assertAccount(igUserId, igAccessToken);
@@ -176,7 +215,8 @@ async function uploadReel({ videoUrl, caption }) {
 
   const mediaId = await publish(igUserId, igAccessToken, creationId);
   console.log(`[OK] Published to Instagram: media_id=${mediaId}`);
+  await postPinnedComment(mediaId, igAccessToken);
   return { mediaId };
 }
 
-module.exports = { uploadReel };
+module.exports = { uploadReel, postPinnedComment };

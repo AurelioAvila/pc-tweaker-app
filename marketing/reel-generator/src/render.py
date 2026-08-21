@@ -174,7 +174,12 @@ def _real_bg_music(duration: float) -> AudioFileClip | None:
     if clip.duration < duration:
         loops = int(duration // clip.duration) + 1
         clip = concatenate_audioclips([clip] * loops)
-    clip = clip.subclip(0, duration).volumex(0.12)
+    # FIX (2026-08-21, measured): 0.12 on real tracks from the shared
+    # "upbeat" pool gave only 14.1-19.7 dB under a real voice clip
+    # (output/audio_0.mp3, -20.2 dB mean) depending on which track was
+    # picked - one case landed just under the 15-25 dB standard. 0.07
+    # keeps both pool tracks comfortably inside the range.
+    clip = clip.subclip(0, duration).volumex(0.07)
     print(f"[render] real bg music mixed, trimmed to {duration:.2f}s", flush=True)
     return clip
 

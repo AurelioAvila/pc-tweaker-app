@@ -6,7 +6,7 @@ export type AuthState =
 export type Category = "performance" | "privacy" | "ui" | "manutenzione" | "gaming";
 
 /** Navigable sections: the tweak categories plus the two standalone screens. */
-export type Section = Category | "scan" | "startup" | "profiles" | "pricing" | "ledger";
+export type Section = Category | "scan" | "health" | "startup" | "profiles" | "pricing" | "ledger";
 
 export type TweakInfo = {
   id: string;

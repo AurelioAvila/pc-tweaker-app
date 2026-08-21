@@ -229,8 +229,15 @@ export const engDictionary: Dictionary = {
   },
   arsenal: {
     tag: "02 / THE ARSENAL",
-    title: "Five domains. Zero placebo.",
+    title: "Six domains. Zero placebo.",
     cards: [
+      {
+        tag: "PC HEALTH SCORE",
+        title: "A score that can prove itself",
+        body: "Nine categories, one speedometer — and every point traces to a shown fact: your startup apps, your power plan, your Defender state. Press Show more and the factor list IS the calculation. Computed only when you ask, entirely on your PC.",
+        pro: false,
+        span: "wide",
+      },
       {
         tag: "ROLLBACK ENGINE",
         title: "Snapshot first. Always.",

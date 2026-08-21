@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.1.0 — 2026-08-21
+
+The Health Update.
+
+- **PC Health Score**: nine explainable categories on a segmented
+  speedometer; every point traces to a shown fact, computed only on
+  demand, fully local. "Show more" reveals the factor-level calculation.
+- **Baseline Engine**: repeatable CPU/memory/system-disk measurements
+  with local history and last-vs-previous deltas.
+- Precision fixes: exact canonical power-plan matching (Ultimate
+  performance was mis-cased), laptop-aware Balanced rating, no raw GUIDs
+  as evidence.
+
 All notable changes to PC Tweaker are logged here, newest first. Every
 update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just

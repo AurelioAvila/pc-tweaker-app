@@ -233,6 +233,7 @@ export interface Strings {
     droppedWarning: string; // uses {count}
     nameRequired: string;
     reviewNotice: string;
+    signInRequired: string;
   };
   scan: {
     title: string;
@@ -732,6 +733,7 @@ const it: Strings = {
     nameRequired: "Dai un nome alla configurazione",
     reviewNotice:
       "Le configurazioni importate non vengono mai applicate da sole: le rivedi tu prima.",
+    signInRequired: "Accedi o crea un account per salvare le configurazioni.",
   },
   scan: {
     title: "Scansione rapida",
@@ -1491,6 +1493,7 @@ const en: Strings = {
     droppedWarning: "{count} entries this version doesn't recognise were dropped",
     nameRequired: "Give the configuration a name",
     reviewNotice: "An imported configuration is never applied on its own — you review it first.",
+    signInRequired: "Sign in or create an account to save configurations.",
   },
   scan: {
     title: "Quick scan",
@@ -2250,6 +2253,7 @@ const fr: Strings = {
     nameRequired: "Donnez un nom a la configuration",
     reviewNotice:
       "Une configuration importee n'est jamais appliquee toute seule : vous la verifiez d'abord.",
+    signInRequired: "Connectez-vous ou creez un compte pour enregistrer des configurations.",
   },
   scan: {
     title: "Analyse rapide",
@@ -3016,6 +3020,7 @@ const es: Strings = {
     droppedWarning: "Se descartaron {count} entradas que esta version no reconoce",
     nameRequired: "Ponle un nombre a la configuración",
     reviewNotice: "Una configuración importada nunca se aplica sola: la revisas tú antes.",
+    signInRequired: "Inicia sesión o crea una cuenta para guardar configuraciones.",
   },
   scan: {
     title: "Análisis rápido",
@@ -3785,6 +3790,7 @@ const de: Strings = {
     nameRequired: "Geben Sie der Konfiguration einen Namen",
     reviewNotice:
       "Eine importierte Konfiguration wird nie von selbst angewendet - Sie pruefen sie zuerst.",
+    signInRequired: "Melden Sie sich an oder erstellen Sie ein Konto, um Konfigurationen zu speichern.",
   },
   scan: {
     title: "Schnellscan",

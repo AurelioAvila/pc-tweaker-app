@@ -337,6 +337,8 @@ export function AccountMenu({
   theme,
   setTheme,
   auth,
+  open: openProp,
+  onOpenChange,
   onAuthenticate,
   onLogout,
   onResendVerification,
@@ -349,6 +351,11 @@ export function AccountMenu({
   theme: ThemeName;
   setTheme: (t: ThemeName) => void;
   auth: AuthState;
+  /** Lets a caller elsewhere in the tree (e.g. "sign in to save this")
+   *  force the menu open. Falls back to purely internal state when omitted,
+   *  so every other existing call site keeps working unchanged. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onAuthenticate: (
     mode: "login" | "register",
     email: string,
@@ -361,7 +368,13 @@ export function AccountMenu({
   onForgotPassword: (email: string) => Promise<void>;
   onUpgrade: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = (v: boolean | ((prev: boolean) => boolean)) => {
+    const next = typeof v === "function" ? v(open) : v;
+    onOpenChange?.(next);
+    setInternalOpen(next);
+  };
   const [errReports, setErrReports] = useState(() => errorReportsEnabled());
   const isPro = auth.status === "authenticated" && auth.isPro;
 

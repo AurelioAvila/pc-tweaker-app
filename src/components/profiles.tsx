@@ -81,6 +81,8 @@ export function ProfilesPanel({
   s,
   tweaks,
   isPro,
+  authed,
+  onRequireAuth,
   onRequirePro,
   onChanged,
   pushToast,
@@ -88,6 +90,10 @@ export function ProfilesPanel({
   s: Strings;
   tweaks: TweakInfo[];
   isPro: boolean;
+  /** Saving/loading a configuration is an account feature — free or Pro,
+   *  but never anonymous, so a profile can always be tied back to a customer. */
+  authed: boolean;
+  onRequireAuth: () => void;
   onRequirePro: () => void;
   onChanged: () => Promise<void>;
   pushToast: (kind: Toast["kind"], message: string) => void;
@@ -106,6 +112,10 @@ export function ProfilesPanel({
   useEffect(refresh, [refresh]);
 
   async function saveCurrent() {
+    if (!authed) {
+      onRequireAuth();
+      return;
+    }
     if (!name.trim()) {
       pushToast("error", s.profiles.nameRequired);
       return;
@@ -234,7 +244,9 @@ export function ProfilesPanel({
             {s.profiles.importButton}
           </button>
         </div>
-        <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-3">{s.profiles.reviewNotice}</p>
+        <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-3">
+          {authed ? s.profiles.reviewNotice : s.profiles.signInRequired}
+        </p>
       </div>
 
       {pending && (

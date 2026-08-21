@@ -91,3 +91,6 @@ marketing/tiktok-upload/run.bat
 
 # Per-release updater manifest, generated at release time — not source
 latest.json
+
+# Social/video assets live outside version control (some exceed GitHub's 100MB limit)
+marketing/

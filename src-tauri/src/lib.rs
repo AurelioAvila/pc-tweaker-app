@@ -1,4 +1,6 @@
 mod audit;
+pub mod baseline;
+pub mod health;
 mod cleanup;
 mod contextmenu;
 mod cpubench;
@@ -851,6 +853,9 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             systemprofile::system_profile,
+            health::health_report,
+            baseline::run_baseline,
+            baseline::list_baselines,
             recommend::advise_tweaks,
             recommend::scan_relevant_ids,
             cpuclock::cpu_clock,

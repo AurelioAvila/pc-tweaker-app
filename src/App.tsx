@@ -25,6 +25,7 @@ import {
   RadarIcon,
   RocketIcon,
   UndoIcon,
+  HeartPulseIcon,
 } from "./components/icons";
 import { PaywallModal, ProBadge, ShieldBadge, Toggle, UpdateBanner } from "./components/ui";
 import {
@@ -43,6 +44,7 @@ import { AccountMenu } from "./components/account";
 import { DashboardCards } from "./components/dashboard";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
 import { ScanPanel } from "./components/scan";
+import { HealthPanel } from "./components/health";
 import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
 import { AdvisorCard, LedgerPanel } from "./components/intelligence";
 import { usePulseSamples } from "./components/command";
@@ -252,6 +254,7 @@ function App() {
 
   const CATEGORIES: { key: Section; label: string; icon: React.ReactElement }[] = [
     { key: "scan", label: s.tabs.scan, icon: <RadarIcon className="h-[18px] w-[18px]" /> },
+    { key: "health", label: s.tabs.health, icon: <HeartPulseIcon className="h-[18px] w-[18px]" /> },
     { key: "performance", label: s.tabs.performance, icon: CATEGORY_STYLE.performance.icon },
     { key: "gaming", label: s.tabs.gaming, icon: CATEGORY_STYLE.gaming.icon },
     { key: "privacy", label: s.tabs.privacy, icon: CATEGORY_STYLE.privacy.icon },
@@ -443,7 +446,13 @@ function App() {
       });
     }
 
-    if (filter === "scan" || filter === "startup" || filter === "pricing" || filter === "profiles")
+    if (
+      filter === "scan" ||
+      filter === "health" ||
+      filter === "startup" ||
+      filter === "pricing" ||
+      filter === "profiles"
+    )
       return [];
 
     const inCategory = base.filter((t) => t.category === filter);
@@ -470,6 +479,7 @@ function App() {
   const showPrivacyExtras = filter === "privacy" && !searching;
   const showGamingExtras = filter === "gaming" && !searching;
   const showScan = filter === "scan" && !searching;
+  const showHealth = filter === "health" && !searching;
   const showStartup = filter === "startup" && !searching;
   const showPricing = filter === "pricing" && !searching;
   const showProfiles = filter === "profiles" && !searching;
@@ -498,7 +508,7 @@ function App() {
         <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
           {(
             [
-              [s.tabs.groupMonitor, ["scan"]],
+              [s.tabs.groupMonitor, ["scan", "health"]],
               [s.tabs.groupOptimize, ["performance", "gaming", "privacy", "ui"]],
               [
                 s.tabs.groupManage,
@@ -659,6 +669,38 @@ function App() {
           )}
 
           {showScan && <DashboardCards s={s} onNavigate={setFilter} />}
+
+          {showHealth && (
+            <HealthPanel
+              title={s.healthPanel.title}
+              subtitle={s.healthPanel.subtitle}
+              refreshLabel={s.healthPanel.refresh}
+              computeLabel={s.healthPanel.compute}
+              computingLabel={s.healthPanel.computing}
+              idleHint={s.healthPanel.idleHint}
+              showMore={s.healthPanel.showMore}
+              showLess={s.healthPanel.showLess}
+              stages={[
+                s.healthPanel.stageProfile,
+                s.healthPanel.stageTweaks,
+                s.healthPanel.stageSecurity,
+                s.healthPanel.stageScoring,
+              ]}
+              verdicts={{
+                excellent: s.healthPanel.verdictExcellent,
+                good: s.healthPanel.verdictGood,
+                fair: s.healthPanel.verdictFair,
+                needsWork: s.healthPanel.verdictNeedsWork,
+              }}
+              baseline={{
+                title: s.healthPanel.baselineTitle,
+                hint: s.healthPanel.baselineHint,
+                run: s.healthPanel.baselineRun,
+                running: s.healthPanel.baselineRunning,
+                empty: s.healthPanel.baselineEmpty,
+              }}
+            />
+          )}
 
           {showLedger && (
             <LedgerPanel s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />

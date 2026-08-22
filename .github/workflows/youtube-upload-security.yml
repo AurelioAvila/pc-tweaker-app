@@ -1,8 +1,17 @@
 name: YouTube uploader checks
 
+# `marketing/` is deliberately untracked (it holds multi-hundred-MB video
+# assets that must never enter git history), so on `master` this workflow has
+# nothing to check out and `npm ci` fails on a directory that isn't there.
+# It now runs only when the uploader is actually part of the change, and the
+# job no-ops when the directory is absent - a permanently red check trains
+# everyone to ignore CI, which is worse than no check at all.
 on:
   push:
     branches: [master]
+    paths:
+      - "marketing/youtube-upload/**"
+      - ".github/workflows/youtube-upload-security.yml"
   pull_request:
     paths:
       - "marketing/youtube-upload/**"
@@ -16,11 +25,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Check whether the uploader is present in this checkout
+        id: present
+        run: |
+          if [ -f marketing/youtube-upload/package.json ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "marketing/youtube-upload is not tracked in this repository - nothing to verify."
+          fi
       - name: Install uploader dependencies
+        if: steps.present.outputs.found == 'true'
         run: npm ci --prefix marketing/youtube-upload
       - name: Test publication quality gate
+        if: steps.present.outputs.found == 'true'
         run: npm test --prefix marketing/youtube-upload
       - name: Prevent tracked credentials
+        if: steps.present.outputs.found == 'true'
         run: npm run security-check --prefix marketing/youtube-upload
       - name: Check production dependency advisories
+        if: steps.present.outputs.found == 'true'
         run: npm audit --prefix marketing/youtube-upload --omit=dev --audit-level=high

@@ -20,14 +20,14 @@ pub fn info() -> TurboInfo {
     }
 }
 
-const GAME_DVR_HIVE: &str = "HKCU";
-const GAME_DVR_PATH: &str = r"System\GameConfigStore";
-const GAME_DVR_NAME: &str = "GameDVR_Enabled";
+pub(crate) const GAME_DVR_HIVE: &str = "HKCU";
+pub(crate) const GAME_DVR_PATH: &str = r"System\GameConfigStore";
+pub(crate) const GAME_DVR_NAME: &str = "GameDVR_Enabled";
 
-const PRIORITY_HIVE: &str = "HKLM";
-const PRIORITY_PATH: &str = r"SYSTEM\CurrentControlSet\Control\PriorityControl";
-const PRIORITY_NAME: &str = "Win32PrioritySeparation";
-const PRIORITY_GAMING_VALUE: u32 = 38;
+pub(crate) const PRIORITY_HIVE: &str = "HKLM";
+pub(crate) const PRIORITY_PATH: &str = r"SYSTEM\CurrentControlSet\Control\PriorityControl";
+pub(crate) const PRIORITY_NAME: &str = "Win32PrioritySeparation";
+pub(crate) const PRIORITY_GAMING_VALUE: u32 = 38;
 
 #[cfg(windows)]
 pub fn apply(store: &RollbackStore) -> Result<(), String> {

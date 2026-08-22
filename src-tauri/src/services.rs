@@ -1,7 +1,7 @@
 use crate::rollback::{RollbackStore, SnapshotEntry};
 
 pub const WINDOWS_SEARCH_ID: &str = "disable_windows_search_service";
-const SERVICE_NAME: &str = "WSearch";
+pub(crate) const SERVICE_NAME: &str = "WSearch";
 
 pub struct ServiceInfo {
     pub id: &'static str,

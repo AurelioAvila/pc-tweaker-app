@@ -17,11 +17,26 @@ export type TweakInfo = {
   requires_admin: boolean;
   requires_pro: boolean;
   applied: boolean;
-  /** The literal registry write behind this tweak, for the "what exactly does
-   *  this change?" disclosure. Absent for the tweaks that are not a single
-   *  registry value (power plan, turbo, DNS). */
-  writes?: { path: string; valueName: string; onValue: string } | null;
+  /** Everything this tweak actually does, for the "Technical details"
+   *  disclosure. Empty when the mechanism cannot be stated precisely - the
+   *  app shows no panel rather than a plausible-looking guess. */
+  changes: TechnicalChange[];
 };
+
+/** Mirrors the Rust `TechnicalChange` tagged union (serde `tag = "kind"`).
+ *  Discriminated on `kind` so a new backend variant surfaces as a TypeScript
+ *  error here instead of rendering as the wrong sort of row. */
+export type TechnicalChange =
+  | {
+      kind: "registry";
+      path: string;
+      valueName: string;
+      /** `REG_DWORD` / `REG_SZ`, named as regedit names them. */
+      valueType: string;
+      setsTo: string;
+    }
+  | { kind: "command"; program: string; arguments: string }
+  | { kind: "service"; name: string; action: string };
 
 export type CleanupInfo = {
   id: string;

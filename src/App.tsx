@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { STRINGS, Lang, detectInitialLang, format } from "./i18n";
@@ -41,6 +41,7 @@ import {
   UninstallerPromoCard,
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
+import { TechnicalDetails, TechnicalToggle } from "./components/technical";
 import { DashboardCards } from "./components/dashboard";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
 import { ScanPanel } from "./components/scan";
@@ -268,8 +269,23 @@ function App() {
 
   const [tweaks, setTweaks] = useState<TweakInfo[]>([]);
   const [cleanupTargets, setCleanupTargets] = useState<CleanupInfo[]>([]);
-  const [filter, setFilter] = useState<Section>("scan");
+  const [filter, setFilterState] = useState<Section>("scan");
   const [query, setQuery] = useState("");
+
+  /**
+   * Picking a section always clears an active search.
+   *
+   * While `searching` is true every section panel is suppressed (see the
+   * `&& !searching` guards below) and the list shows matches from every
+   * section instead. That meant clicking a sidebar entry with text still in
+   * the search box changed nothing on screen — the app looked frozen rather
+   * than filtered. Navigating is an explicit "show me this section", so it
+   * wins over a leftover query.
+   */
+  const setFilter = useCallback((section: Section) => {
+    setFilterState(section);
+    setQuery("");
+  }, []);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [paywallFeature, setPaywallFeature] = useState<string | null>(null);
@@ -814,70 +830,31 @@ function App() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="font-semibold text-ink">{text.name}</h2>
-                        {/* The hive chip is the door to the exact write. A
-                            description can be argued with; a registry path
-                            can be checked in regedit, so it is one click
-                            away rather than buried in a FAQ. */}
-                        {t.hive !== "—" &&
-                          (t.writes ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setInspecting(inspecting === t.id ? null : t.id);
-                              }}
-                              aria-expanded={inspecting === t.id}
-                              title={s.transparency.title}
-                              className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                                inspecting === t.id
-                                  ? "bg-[var(--app-accent)]/20 text-ink"
-                                  : "bg-surface-2 text-ink-2 hover:bg-surface-hover hover:text-ink"
-                              }`}
-                            >
-                              {t.hive}
-                              <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3 opacity-70">
-                                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
-                                <path
-                                  d="M12 11v5"
-                                  stroke="currentColor"
-                                  strokeWidth="1.8"
-                                  strokeLinecap="round"
-                                />
-                                <circle cx="12" cy="7.9" r="1" fill="currentColor" />
-                              </svg>
-                            </button>
-                          ) : (
+                        {/* The (i) is the door to the exact system change.
+                            A description can be argued with; a registry path
+                            can be checked in regedit, so it is one click away
+                            rather than buried in a FAQ. */}
+                        {t.changes.length > 0 ? (
+                          <TechnicalToggle
+                            open={inspecting === t.id}
+                            label={s.transparency.title}
+                            hive={t.hive}
+                            onClick={() => {
+                              setInspecting(inspecting === t.id ? null : t.id);
+                            }}
+                          />
+                        ) : (
+                          t.hive !== "—" && (
                             <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-2">
                               {t.hive}
                             </span>
-                          ))}
+                          )
+                        )}
                         {t.requires_admin && <ShieldBadge label={s.badges.admin} />}
                         {t.requires_pro && <ProBadge label={s.badges.pro} />}
                       </div>
                       <p className="mt-0.5 text-sm text-ink-3">{text.description}</p>
-                      {inspecting === t.id && t.writes && (
-                        <div className="mt-2 rounded-xl border border-line-2 bg-black/25 p-2.5">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
-                            {s.transparency.title}
-                          </p>
-                          <dl className="mt-1.5 grid gap-1 text-[11.5px]">
-                            {(
-                              [
-                                [s.transparency.key, t.writes.path],
-                                [s.transparency.value, t.writes.valueName],
-                                [s.transparency.setsTo, t.writes.onValue],
-                              ] as [string, string][]
-                            ).map(([k, v]) => (
-                              <div key={k} className="flex flex-wrap gap-x-2">
-                                <dt className="shrink-0 text-ink-3">{k}</dt>
-                                <dd className="min-w-0 break-all font-mono text-ink-2">{v}</dd>
-                              </div>
-                            ))}
-                          </dl>
-                          <p className="mt-1.5 text-[10.5px] leading-relaxed text-ink-3">
-                            {s.transparency.note}
-                          </p>
-                        </div>
-                      )}
+                      {inspecting === t.id && <TechnicalDetails changes={t.changes} s={s} />}
                     </div>
                     <Toggle
                       checked={t.applied}

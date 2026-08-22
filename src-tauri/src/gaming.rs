@@ -43,12 +43,12 @@ pub fn keyboard_delay_info() -> GamingInfo {
 }
 
 const MOUSE_HIVE: &str = "HKCU";
-const MOUSE_PATH: &str = r"Control Panel\Mouse";
-const MOUSE_VALUES: [&str; 3] = ["MouseSpeed", "MouseThreshold1", "MouseThreshold2"];
+pub(crate) const MOUSE_PATH: &str = r"Control Panel\Mouse";
+pub(crate) const MOUSE_VALUES: [&str; 3] = ["MouseSpeed", "MouseThreshold1", "MouseThreshold2"];
 
 const KEYBOARD_HIVE: &str = "HKCU";
-const KEYBOARD_PATH: &str = r"Control Panel\Keyboard";
-const KEYBOARD_TARGET: [(&str, &str); 2] = [("KeyboardDelay", "0"), ("KeyboardSpeed", "31")];
+pub(crate) const KEYBOARD_PATH: &str = r"Control Panel\Keyboard";
+pub(crate) const KEYBOARD_TARGET: [(&str, &str); 2] = [("KeyboardDelay", "0"), ("KeyboardSpeed", "31")];
 
 #[cfg(windows)]
 pub fn apply_input_lag(store: &RollbackStore) -> Result<(), String> {
@@ -221,7 +221,7 @@ fn read_boost_indexes(scheme_guid: &str) -> (Option<u32>, Option<u32>) {
 
 /// Boost mode 2 = "Aggressive": let the CPU boost above its rated frequency
 /// whenever thermals and power allow.
-const BOOST_AGGRESSIVE: &str = "2";
+pub(crate) const BOOST_AGGRESSIVE: &str = "2";
 
 #[cfg(windows)]
 pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {

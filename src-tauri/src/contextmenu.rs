@@ -41,8 +41,8 @@ pub fn info() -> ContextMenuInfo {
 const HIVE: &str = "HKCU";
 /// The CLSID of the Windows 11 context menu implementation. Registering it
 /// with an empty InprocServer32 is what makes Explorer fall back.
-const CLSID_PATH: &str = r"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}";
-const INPROC_PATH: &str =
+pub(crate) const CLSID_PATH: &str = r"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}";
+pub(crate) const INPROC_PATH: &str =
     r"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32";
 
 #[cfg(windows)]

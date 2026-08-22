@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.2.0 - 2026-08-22
+
+The Understanding Update.
+
+- **Health Score history**: every measurement is recorded locally, with
+  the previous score, its date, the delta and a trend line under the dial.
+  Still on demand only, still never uploaded.
+- **"Why did my score change?"**: names the categories that moved, largest
+  first, quoting the evidence from both measurements. A category is only
+  blamed when its score actually moved, evidence that drifts without moving
+  points is never listed as a cause, and each category's contribution to the
+  mean is printed so the arithmetic is disclosed rather than guessed at.
+- **Technical details on every tweak**: an `(i)` disclosure showing the exact
+  registry key, value name, type and written value - plus the commands and
+  service changes behind the tweaks that are not a single registry write.
+  Derived from the apply path, so it cannot drift from what the code does.
+- Fixed: with text in the search box, selecting a section did nothing
+  (every section panel was suppressed while searching), which made the app
+  look frozen. Navigating now clears the search.
+- Saving a configuration profile now requires an account.
+
 ## v1.1.0 — 2026-08-21
 
 The Health Update.

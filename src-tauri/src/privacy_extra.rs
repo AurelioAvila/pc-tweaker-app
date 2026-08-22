@@ -21,8 +21,8 @@ pub fn activity_history_info() -> PrivacyInfo {
 }
 
 const HIVE: &str = "HKLM";
-const PATH: &str = r"SOFTWARE\Policies\Microsoft\Windows\System";
-const VALUES: [&str; 3] = [
+pub(crate) const PATH: &str = r"SOFTWARE\Policies\Microsoft\Windows\System";
+pub(crate) const VALUES: [&str; 3] = [
     "EnableActivityFeed",
     "PublishUserActivities",
     "UploadUserActivities",
@@ -103,8 +103,8 @@ pub fn typing_personalization_info() -> PrivacyInfo {
 /// profiling simply continues through the other. They are applied together
 /// as one composite snapshot so a rollback restores exactly the pair.
 const TYPING_HIVE: &str = "HKCU";
-const TYPING_PATH: &str = r"SOFTWARE\Microsoft\InputPersonalization";
-const TYPING_VALUES: [&str; 2] = [
+pub(crate) const TYPING_PATH: &str = r"SOFTWARE\Microsoft\InputPersonalization";
+pub(crate) const TYPING_VALUES: [&str; 2] = [
     "RestrictImplicitTextCollection",
     "RestrictImplicitInkCollection",
 ];

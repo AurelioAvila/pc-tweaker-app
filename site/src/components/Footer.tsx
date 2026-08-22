@@ -69,7 +69,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
               links={[
                 { label: "MajorGeeks", href: "https://www.majorgeeks.com/files/details/pc_tweaker.html" },
                 { label: "Softpedia", href: "https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml" },
-                { label: "AlternativeTo", href: "https://alternativeto.net/software/pc-tweaker/about/" },
+                { label: "Freeware.de", href: "https://freeware.de/tipps-and-tricks/pc-tweaker-041-systemoptimierung-und-leistungssteigerung-fuer-windows-1011" },
               ]}
             />
             <Col

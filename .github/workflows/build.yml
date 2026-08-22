@@ -32,38 +32,50 @@ jobs:
       - name: Run checks
         run: npm run check
 
-      - name: Build Tauri app
-        run: npm run tauri build
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-
-      # `tauri build` prints "A public key has been found, but no private key"
-      # and still exits 0, so a missing or expired signing secret produces a
-      # perfectly ordinary-looking build with no .sig files next to it. Every
-      # existing install checks that signature before applying an update, so
-      # shipping that release would strand every user on the previous version
-      # with no visible error. Caught by hand once; now it fails the build.
-      - name: Verify the installers were actually signed
+      # Signing deliberately does NOT happen here.
+      #
+      # The updater private key signs auto-updates for every existing
+      # install, so storing it in this public repo's secrets would mean any
+      # compromise of the repo, a workflow, or a third-party action could
+      # push a signed malicious update to every user. It stays on the
+      # release machine; CI's job is to prove the tag compiles and bundles.
+      #
+      # The "never ship an unsigned release" guard that used to live here now
+      # lives where releases are actually produced: scripts/make-latest-json.mjs
+      # refuses to write latest.json when the .sig is missing, so an unsigned
+      # build cannot reach the updater endpoint.
+      #
+      # The env vars are conditionally exported rather than always set: an
+      # EMPTY TAURI_SIGNING_PRIVATE_KEY is not the same as an unset one -
+      # tauri tries to decode the empty string and dies with "Missing comment
+      # in secret key", which is exactly how this workflow failed on every
+      # tag from v0.4.3 to v1.2.0.
+      - name: Build Tauri app (verification build, unsigned)
         shell: bash
+        env:
+          SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          missing=0
-          for f in src-tauri/target/release/bundle/nsis/*.exe \
-                   src-tauri/target/release/bundle/msi/*.msi; do
-            if [ ! -f "$f.sig" ]; then
-              echo "::error::$f has no .sig — auto-update would reject this build"
-              missing=1
-            fi
-          done
-          exit $missing
+          if [ -n "$SIGNING_KEY" ]; then
+            echo "Signing key present - producing signed bundles."
+            export TAURI_SIGNING_PRIVATE_KEY="$SIGNING_KEY"
+            export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$SIGNING_KEY_PASSWORD"
+            npm run tauri build
+          else
+            echo "No signing key in CI (by design) - verification build only."
+            npm run tauri build
+          fi
 
       - name: Upload installer artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: pc-tweaker-installers
-          # The .sig files are part of the release, not a build by-product:
-          # the updater fetches them alongside the installer. Omitting them
-          # here made every CI-built release unusable for auto-update.
+          name: pc-tweaker-installers-unsigned
+          # .sig files are globbed too so that a run WITH a key (a future
+          # self-hosted or manually dispatched signed build) uploads a
+          # complete, updater-usable set. Without a key they simply do not
+          # exist, and these artifacts are for inspection only - the shipped
+          # installers are the locally signed ones attached to the release.
+          if-no-files-found: warn
           path: |
             src-tauri/target/release/bundle/nsis/*.exe
             src-tauri/target/release/bundle/nsis/*.exe.sig

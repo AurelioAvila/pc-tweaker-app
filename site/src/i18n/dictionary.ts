@@ -239,6 +239,20 @@ export const engDictionary: Dictionary = {
         span: "wide",
       },
       {
+        tag: "WHY IT CHANGED",
+        title: "The number is a door, not a verdict",
+        body: "Your score drops four points and PC Tweaker tells you which categories moved and quotes the facts on both sides — \"4 apps start with Windows\" became \"7 apps start with Windows\". Evidence that drifts without moving points is never listed as a cause, and when nothing changed, it says nothing changed.",
+        pro: false,
+        span: "wide",
+      },
+      {
+        tag: "TECHNICAL DETAILS",
+        title: "Read the exact key before you flip the switch",
+        body: "Every tweak discloses what it actually does: the full registry path, the value name, the type and the value written — plus the commands behind the ones that are not a single registry write. Read from the code that performs the change, so it can never describe a key the app does not touch.",
+        pro: false,
+        span: "wide",
+      },
+      {
         tag: "ROLLBACK ENGINE",
         title: "Snapshot first. Always.",
         body: "Before any tweak writes a single registry value, its previous state is captured. Revert one tweak, or all 36 at once with Restore All. Optimization you can walk back from — that is the entire premise.",

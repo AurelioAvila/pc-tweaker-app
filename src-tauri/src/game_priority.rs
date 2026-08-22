@@ -21,7 +21,7 @@ pub fn info() -> GamingInfo {
 }
 
 const HIVE: &str = "HKLM";
-const PATH: &str =
+pub(crate) const PATH: &str =
     r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games";
 
 #[cfg(windows)]

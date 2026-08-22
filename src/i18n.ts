@@ -95,6 +95,11 @@ export interface Strings {
     value: string;
     setsTo: string;
     note: string;
+    kindRegistry: string;
+    kindCommand: string;
+    kindService: string;
+    copy: string;
+    copied: string;
   };
   command: {
     statusQuiet: string;
@@ -592,6 +597,11 @@ const it: Strings = {
     value: "Valore",
     setsTo: "Imposta a",
     note: "Il valore precedente viene salvato prima della scrittura, così il rollback lo ripristina esattamente com'era.",
+    kindRegistry: "Registro",
+    kindCommand: "Comando",
+    kindService: "Servizio",
+    copy: "Copia",
+    copied: "Copiato",
   },
   command: {
     statusQuiet: "Tutto tranquillo",
@@ -1368,6 +1378,11 @@ const en: Strings = {
     value: "Value",
     setsTo: "Sets to",
     note: "The previous value is saved before writing, so rollback restores it exactly as it was.",
+    kindRegistry: "Registry",
+    kindCommand: "Command",
+    kindService: "Service",
+    copy: "Copy",
+    copied: "Copied",
   },
   command: {
     statusQuiet: "All systems quiet",
@@ -2140,6 +2155,11 @@ const fr: Strings = {
     value: "Valeur",
     setsTo: "Définit sur",
     note: "L'ancienne valeur est sauvegardée avant l'écriture : la restauration la remet exactement telle qu'elle était.",
+    kindRegistry: "Registre",
+    kindCommand: "Commande",
+    kindService: "Service",
+    copy: "Copier",
+    copied: "Copié",
   },
   command: {
     statusQuiet: "Tout est calme",
@@ -2922,6 +2942,11 @@ const es: Strings = {
     value: "Valor",
     setsTo: "Lo establece en",
     note: "El valor anterior se guarda antes de escribir, así que la reversión lo restaura exactamente como estaba.",
+    kindRegistry: "Registro",
+    kindCommand: "Comando",
+    kindService: "Servicio",
+    copy: "Copiar",
+    copied: "Copiado",
   },
   command: {
     statusQuiet: "Todo en calma",
@@ -3704,6 +3729,11 @@ const de: Strings = {
     value: "Wert",
     setsTo: "Setzt auf",
     note: "Der vorherige Wert wird vor dem Schreiben gesichert - die Wiederherstellung setzt ihn exakt zurück.",
+    kindRegistry: "Registrierung",
+    kindCommand: "Befehl",
+    kindService: "Dienst",
+    copy: "Kopieren",
+    copied: "Kopiert",
   },
   command: {
     statusQuiet: "Alles ruhig",

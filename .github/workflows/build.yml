@@ -62,8 +62,14 @@ jobs:
             export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$SIGNING_KEY_PASSWORD"
             npm run tauri build
           else
-            echo "No signing key in CI (by design) - verification build only."
-            npm run tauri build
+            # `createUpdaterArtifacts` is true in tauri.conf.json, and with a
+            # public key configured but no private key this version of the
+            # Tauri CLI exits 1 *after* writing both bundles. Turning the
+            # updater artifact off for this run is what makes an unsigned
+            # verification build possible at all - it changes nothing about
+            # the released installers, which are built and signed locally.
+            echo "No signing key in CI (by design) - unsigned verification build."
+            npm run tauri build -- --config '{"bundle":{"createUpdaterArtifacts":false}}'
           fi
 
       - name: Upload installer artifacts

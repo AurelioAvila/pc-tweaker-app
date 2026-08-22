@@ -30,6 +30,7 @@ export interface Dictionary {
     readonly subBold: string;
     readonly sub: string;
     readonly cta: string;
+    readonly safetyNote: string;
     readonly terminalTitle: string;
     readonly terminalCmd: string;
     readonly terminalHint: string;
@@ -198,6 +199,8 @@ export const engDictionary: Dictionary = {
     subBold: "50 real Windows tweaks",
     sub: " — registry, power plan, services, scheduler priorities. Every single one snapshotted before it touches your system. One click to apply. One click to undo.",
     cta: "Download for Windows — Free",
+    safetyNote:
+      "The installer isn't code-signed yet (it's on the roadmap), so Windows may show a SmartScreen warning on first run. Click \"More info\" → \"Run anyway\". The download is safe: the full source is public on GitHub, and every auto-update is cryptographically signed and verified before it installs.",
     terminalTitle: "powershell — pctweaker",
     terminalCmd: "winget install AurelioAvila.PCTweaker",
     terminalHint: "# zero SmartScreen prompts via winget",

@@ -143,6 +143,15 @@ export function HeroSection() {
               </motion.a>
             </div>
 
+            {/* Honest friction disclosure, not hidden in an FAQ: the
+                installer isn't code-signed yet, so SmartScreen can interrupt
+                the very first click someone makes on this page. Saying so
+                up front, right where the click happens, costs us nothing and
+                is worth more than a surprise warning would. */}
+            <p className="mt-3 max-w-md text-[12.5px] leading-relaxed text-[var(--fg-dim)]">
+              {text.hero.safetyNote}
+            </p>
+
             <div className="mt-6 max-w-md">
               <WingetTerminal />
             </div>

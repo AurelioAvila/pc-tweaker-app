@@ -366,12 +366,22 @@ function Trend({ points }: { points: number[] }) {
     const y = H - 4 - ((v - min) / span) * (H - 8);
     return [x, y] as const;
   });
-  const path = xy.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+  const path = xy
+    .map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`)
+    .join(" ");
   const last = xy[xy.length - 1];
   const t = tone(shown[shown.length - 1]);
   return (
     <svg width={W} height={H} viewBox={`0 0 ${String(W)} ${String(H)}`} aria-hidden="true">
-      <path d={path} fill="none" stroke={t.stroke} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" opacity="0.75" />
+      <path
+        d={path}
+        fill="none"
+        stroke={t.stroke}
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        opacity="0.75"
+      />
       <circle cx={last[0]} cy={last[1]} r="2.4" fill={t.stroke} />
     </svg>
   );

@@ -585,10 +585,12 @@ const it: Strings = {
       "Nessuna baseline ancora. Eseguine una prima di applicare modifiche, e una dopo.",
     changeSinceLast: "dall'ultimo controllo",
     changeNone: "Nessun cambiamento dall'ultimo controllo.",
-    changeFirstRun: "Prima misurazione registrata. Eseguila di nuovo dopo una modifica per vedere cosa si è mosso.",
+    changeFirstRun:
+      "Prima misurazione registrata. Eseguila di nuovo dopo una modifica per vedere cosa si è mosso.",
     changeWhyTitle: "Perché il punteggio è cambiato",
     changeContributes: "Contributo al punteggio complessivo:",
-    changeStructural: "Un aggiornamento dell'app ha cambiato quali categorie vengono valutate: parte di questa differenza non dipende dal tuo PC.",
+    changeStructural:
+      "Un aggiornamento dell'app ha cambiato quali categorie vengono valutate: parte di questa differenza non dipende dal tuo PC.",
     changeTrend: "Andamento",
   },
   transparency: {
@@ -1369,7 +1371,8 @@ const en: Strings = {
     changeFirstRun: "First measurement recorded. Run it again after a change to see what moved.",
     changeWhyTitle: "Why the score changed",
     changeContributes: "Contribution to the overall score:",
-    changeStructural: "An app update changed which categories are scored — part of this difference did not come from your PC.",
+    changeStructural:
+      "An app update changed which categories are scored — part of this difference did not come from your PC.",
     changeTrend: "Trend",
   },
   transparency: {
@@ -2143,10 +2146,12 @@ const fr: Strings = {
     baselineEmpty: "Aucune référence. Lancez-en une avant vos modifications, puis une après.",
     changeSinceLast: "depuis votre dernier contrôle",
     changeNone: "Aucun changement depuis votre dernier contrôle.",
-    changeFirstRun: "Première mesure enregistrée. Relancez-la après une modification pour voir ce qui a bougé.",
+    changeFirstRun:
+      "Première mesure enregistrée. Relancez-la après une modification pour voir ce qui a bougé.",
     changeWhyTitle: "Pourquoi le score a changé",
     changeContributes: "Contribution au score global :",
-    changeStructural: "Une mise à jour de l'application a changé les catégories évaluées : une partie de cet écart ne vient pas de votre PC.",
+    changeStructural:
+      "Une mise à jour de l'application a changé les catégories évaluées : une partie de cet écart ne vient pas de votre PC.",
     changeTrend: "Tendance",
   },
   transparency: {
@@ -2930,10 +2935,12 @@ const es: Strings = {
     baselineEmpty: "Aún no hay líneas base. Ejecuta una antes de aplicar cambios, y otra después.",
     changeSinceLast: "desde tu última comprobación",
     changeNone: "Sin cambios desde tu última comprobación.",
-    changeFirstRun: "Primera medición registrada. Vuelve a ejecutarla tras un cambio para ver qué se movió.",
+    changeFirstRun:
+      "Primera medición registrada. Vuelve a ejecutarla tras un cambio para ver qué se movió.",
     changeWhyTitle: "Por qué cambió la puntuación",
     changeContributes: "Contribución a la puntuación global:",
-    changeStructural: "Una actualización de la aplicación cambió qué categorías se evalúan: parte de esta diferencia no viene de tu PC.",
+    changeStructural:
+      "Una actualización de la aplicación cambió qué categorías se evalúan: parte de esta diferencia no viene de tu PC.",
     changeTrend: "Evolución",
   },
   transparency: {
@@ -3717,10 +3724,12 @@ const de: Strings = {
     baselineEmpty: "Noch keine Basiswerte. Einen vor den Änderungen messen, einen danach.",
     changeSinceLast: "seit Ihrer letzten Prüfung",
     changeNone: "Keine Änderung seit Ihrer letzten Prüfung.",
-    changeFirstRun: "Erste Messung gespeichert. Führen Sie sie nach einer Änderung erneut aus, um zu sehen, was sich bewegt hat.",
+    changeFirstRun:
+      "Erste Messung gespeichert. Führen Sie sie nach einer Änderung erneut aus, um zu sehen, was sich bewegt hat.",
     changeWhyTitle: "Warum sich der Wert geändert hat",
     changeContributes: "Beitrag zum Gesamtwert:",
-    changeStructural: "Ein App-Update hat geändert, welche Kategorien bewertet werden - ein Teil dieser Differenz stammt nicht von Ihrem PC.",
+    changeStructural:
+      "Ein App-Update hat geändert, welche Kategorien bewertet werden - ein Teil dieser Differenz stammt nicht von Ihrem PC.",
     changeTrend: "Verlauf",
   },
   transparency: {
@@ -3904,7 +3913,8 @@ const de: Strings = {
     nameRequired: "Geben Sie der Konfiguration einen Namen",
     reviewNotice:
       "Eine importierte Konfiguration wird nie von selbst angewendet - Sie pruefen sie zuerst.",
-    signInRequired: "Melden Sie sich an oder erstellen Sie ein Konto, um Konfigurationen zu speichern.",
+    signInRequired:
+      "Melden Sie sich an oder erstellen Sie ein Konto, um Konfigurationen zu speichern.",
   },
   scan: {
     title: "Schnellscan",

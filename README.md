@@ -24,7 +24,7 @@
 ## Demo
 
 <p align="center">
-  <img src="marketing/producthunt-assets/01-scan_clean.png" alt="PC Tweaker Scan screen" width="82%">
+  <img src="Screenshot/scan_screenshot.png" alt="PC Tweaker Scan screen" width="82%">
 </p>
 
 > **Built to be reversible.** Every setting is backed up before it changes, so you can experiment with confidence and restore it whenever you want.

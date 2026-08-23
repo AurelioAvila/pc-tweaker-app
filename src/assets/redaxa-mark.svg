@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#33208A"/>
+      <stop offset="100%" stop-color="#5B3DE0"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bg)"/>
+
+  <!-- Bold, wide "R" filling most of the canvas so it survives to 16px. -->
+  <g fill="#FFFFFF">
+    <path d="M146 108
+             h130
+             c74 0 118 40 118 104
+             c0 46 -24 78 -66 94
+             l78 118
+             h-92
+             l-66 -106
+             h-42
+             v106
+             h-60
+             z
+             M206 156
+             v112
+             h64
+             c36 0 58 -21 58 -56
+             c0 -35 -22 -56 -58 -56
+             z"/>
+  </g>
+
+  <!-- The redaction bar: solid, dark, unmistakable even tiny — this IS the
+       mark, not a decoration. It sits over the R's own leg, so the icon
+       reads as "a letter, redacted" rather than a letter next to a shape. -->
+  <rect x="146" y="352" width="220" height="54" rx="6" fill="#14092E"/>
+</svg>

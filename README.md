@@ -10,6 +10,30 @@
 </p>
 
 <p align="center">
+  <a href="#safe-download-recommended"><img src="https://img.shields.io/badge/SAFE_DOWNLOAD-No_SmartScreen_warning-1793D1?style=for-the-badge&logo=windowsterminal&logoColor=white" alt="Safe download via winget, no SmartScreen warning"></a>
+</p>
+
+<a id="safe-download-recommended"></a>
+
+## 🛡️ Safe download (recommended)
+
+One command, installs straight from the official [winget-pkgs](https://github.com/microsoft/winget-pkgs)
+repository — Microsoft's own package index, so **no SmartScreen popup**:
+
+```powershell
+winget install AurelioAvila.PCTweaker
+```
+
+Click the copy icon on the block above, paste into a terminal (PowerShell,
+Windows Terminal, or `Win+R` → `cmd`), hit enter. That's it — this is the
+same command GitHub's copy button hands you, no separate download page
+needed.
+
+*(New installs of winget or a brand-new release can take a few hours for
+Microsoft's package index to refresh — if the command says the package
+isn't found yet, try again shortly or use the [.exe/.msi installer](../../releases/latest) below in the meantime.)*
+
+<p align="center">
   <a href="../../releases/latest"><img src="https://img.shields.io/badge/Download-Windows%2010%2F11-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
   <a href="https://github.com/AurelioAvila/pc-tweaker-app/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-Proprietary-6B7280?style=for-the-badge" alt="Proprietary License"></a>
   <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/v/release/AurelioAvila/pc-tweaker-app?display_name=tag&style=for-the-badge&color=7C3AED" alt="Latest release"></a>

@@ -162,6 +162,11 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // "Redaxa" is a product name (the sibling promo card), not a translatable word.
+  "it:redaxaPromo.title",
+  "fr:redaxaPromo.title",
+  "es:redaxaPromo.title",
+  "de:redaxaPromo.title",
   "fr:transparency.kindService",
   "it:healthPanel.baselineTitle", // "baseline" is standard Italian tech usage
   "fr:healthPanel.verdictExcellent", // EXCELLENT is the same word in French

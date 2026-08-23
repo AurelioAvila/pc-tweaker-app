@@ -20,7 +20,7 @@ import {
 import { DriveIcon, GlobeIcon, HeartPulseIcon, TrashIcon } from "./icons";
 import { ProBadge, ShieldBadge, SoonBadge } from "./ui";
 import uninstallerIcon from "../assets/uninstaller-icon.png";
-import promptshieldMark from "../assets/promptshield-mark.svg";
+import redaxaMark from "../assets/redaxa-mark.svg";
 
 export function IpMaskCard({ s, onExplain }: { s: Strings; onExplain: () => void }) {
   return (
@@ -351,32 +351,32 @@ export function UninstallerPromoCard({ s }: { s: Strings }) {
   );
 }
 
-/** Cross-promo for PromptShield, shown on the Privacy screen: someone who
+/** Cross-promo for Redaxa, shown on the Privacy screen: someone who
  *  just turned off telemetry and ad tracking cares about what leaves their
  *  machine — and the biggest modern leak is what gets pasted into AI chats.
  *  Static card, no IPC; the web app works instantly, no install needed. */
-export function PromptShieldPromoCard({ s }: { s: Strings }) {
+export function RedaxaPromoCard({ s }: { s: Strings }) {
   function openPage() {
     void openUrl("https://promptshield-beta.vercel.app");
   }
 
   return (
-    <div className="animate-card relative mb-6 overflow-hidden rounded-2xl border border-lime-400/20 bg-gradient-to-r from-lime-500/10 to-emerald-500/5 p-4 shadow-lg shadow-black/20">
+    <div className="animate-card relative mb-6 overflow-hidden rounded-2xl border border-violet-400/20 bg-gradient-to-r from-violet-500/10 to-indigo-500/5 p-4 shadow-lg shadow-black/20">
       <div className="flex items-center gap-4">
         <img
-          src={promptshieldMark}
+          src={redaxaMark}
           alt=""
-          className="h-11 w-11 shrink-0 rounded-xl ring-1 ring-lime-400/30"
+          className="h-11 w-11 shrink-0 rounded-xl ring-1 ring-violet-400/30"
         />
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-ink">{s.promptshieldPromo.title}</h2>
-          <p className="mt-0.5 text-sm text-ink-3">{s.promptshieldPromo.description}</p>
+          <h2 className="font-semibold text-ink">{s.redaxaPromo.title}</h2>
+          <p className="mt-0.5 text-sm text-ink-3">{s.redaxaPromo.description}</p>
         </div>
         <button
           onClick={openPage}
-          className="shrink-0 rounded-xl bg-lime-400 px-4 py-2 text-sm font-semibold text-lime-950 transition-transform hover:scale-[1.03]"
+          className="shrink-0 rounded-xl bg-violet-400 px-4 py-2 text-sm font-semibold text-violet-950 transition-transform hover:scale-[1.03]"
         >
-          {s.promptshieldPromo.button}
+          {s.redaxaPromo.button}
         </button>
       </div>
     </div>

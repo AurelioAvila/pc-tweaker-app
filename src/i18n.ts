@@ -396,7 +396,7 @@ export interface Strings {
     running: string;
     resultToast: string;
   };
-  promptshieldPromo: {
+  redaxaPromo: {
     title: string;
     description: string;
     button: string;
@@ -921,10 +921,10 @@ const it: Strings = {
     running: "Svuotamento...",
     resultToast: "Cache DNS svuotata.",
   },
-  promptshieldPromo: {
-    title: "PromptShield",
+  redaxaPromo: {
+    title: "Redaxa",
     description:
-      "Hai bloccato telemetria e tracciamento — ma cosa incolli nelle chat AI? PromptShield intercetta dati personali e credenziali prima che un prompt raggiunga qualsiasi modello. Stessa famiglia, stessa regola: niente viene salvato.",
+      "Hai bloccato telemetria e tracciamento — ma cosa incolli nelle chat AI? Redaxa intercetta dati personali e credenziali prima che un prompt raggiunga qualsiasi modello. Stessa famiglia, stessa regola: niente viene salvato.",
     button: "Prova sul web",
   },
   uninstallerPromo: {
@@ -1700,10 +1700,10 @@ const en: Strings = {
     running: "Flushing...",
     resultToast: "DNS cache flushed.",
   },
-  promptshieldPromo: {
-    title: "PromptShield",
+  redaxaPromo: {
+    title: "Redaxa",
     description:
-      "You've cut telemetry and tracking — but what do you paste into AI chats? PromptShield catches personal data and credentials before a prompt reaches any model. Same family, same rule: nothing gets stored.",
+      "You've cut telemetry and tracking — but what do you paste into AI chats? Redaxa catches personal data and credentials before a prompt reaches any model. Same family, same rule: nothing gets stored.",
     button: "Try it on the web",
   },
   uninstallerPromo: {
@@ -2486,10 +2486,10 @@ const fr: Strings = {
     running: "Vidage...",
     resultToast: "Cache DNS vide.",
   },
-  promptshieldPromo: {
-    title: "PromptShield",
+  redaxaPromo: {
+    title: "Redaxa",
     description:
-      "Vous avez coupé télémétrie et pistage — mais que collez-vous dans les chats IA ? PromptShield intercepte données personnelles et identifiants avant qu'un prompt n'atteigne un modèle. Même famille, même règle : rien n'est conservé.",
+      "Vous avez coupé télémétrie et pistage — mais que collez-vous dans les chats IA ? Redaxa intercepte données personnelles et identifiants avant qu'un prompt n'atteigne un modèle. Même famille, même règle : rien n'est conservé.",
     button: "Essayer sur le web",
   },
   uninstallerPromo: {
@@ -3272,10 +3272,10 @@ const es: Strings = {
     running: "Vaciando...",
     resultToast: "Cache DNS vaciada.",
   },
-  promptshieldPromo: {
-    title: "PromptShield",
+  redaxaPromo: {
+    title: "Redaxa",
     description:
-      "Has cortado telemetría y rastreo — pero ¿qué pegas en los chats de IA? PromptShield intercepta datos personales y credenciales antes de que un prompt llegue a cualquier modelo. Misma familia, misma regla: nada se guarda.",
+      "Has cortado telemetría y rastreo — pero ¿qué pegas en los chats de IA? Redaxa intercepta datos personales y credenciales antes de que un prompt llegue a cualquier modelo. Misma familia, misma regla: nada se guarda.",
     button: "Pruébalo en la web",
   },
   uninstallerPromo: {
@@ -4063,10 +4063,10 @@ const de: Strings = {
     running: "Wird geleert...",
     resultToast: "DNS-Cache geleert.",
   },
-  promptshieldPromo: {
-    title: "PromptShield",
+  redaxaPromo: {
+    title: "Redaxa",
     description:
-      "Telemetrie und Tracking sind aus — aber was fügst du in KI-Chats ein? PromptShield fängt persönliche Daten und Zugangsdaten ab, bevor ein Prompt irgendein Modell erreicht. Gleiche Familie, gleiche Regel: nichts wird gespeichert.",
+      "Telemetrie und Tracking sind aus — aber was fügst du in KI-Chats ein? Redaxa fängt persönliche Daten und Zugangsdaten ab, bevor ein Prompt irgendein Modell erreicht. Gleiche Familie, gleiche Regel: nichts wird gespeichert.",
     button: "Im Web ausprobieren",
   },
   uninstallerPromo: {

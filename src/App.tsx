@@ -37,7 +37,7 @@ import {
   IpMaskCard,
   LargeFileFinder,
   PasswordBreachCheck,
-  PromptShieldPromoCard,
+  RedaxaPromoCard,
   UninstallerPromoCard,
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
@@ -787,7 +787,7 @@ function App() {
           {showPrivacyExtras && (
             <>
               <PasswordBreachCheck s={s} />
-              <PromptShieldPromoCard s={s} />
+              <RedaxaPromoCard s={s} />
             </>
           )}
 

@@ -201,7 +201,9 @@ function section(name) {
     const r = await call("POST", "/api/checkout", { plan }, freshToken);
     check(
       `${plan} plan creates a Stripe Checkout session`,
-      r.status === 200 && typeof r.json?.url === "string" && r.json.url.startsWith("https://checkout.stripe.com"),
+      r.status === 200 &&
+        typeof r.json?.url === "string" &&
+        new URL(r.json.url).origin === "https://checkout.stripe.com",
       r,
     );
   }

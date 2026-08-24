@@ -39,6 +39,6 @@ function spaFallback(): Plugin {
   };
 }
 
-export default defineConfig({
-  plugins: [react(), tailwindcss(), spaFallback()],
-});
+export default defineConfig(({ isSsrBuild }) => ({
+  plugins: [react(), tailwindcss(), ...(isSsrBuild ? [] : [spaFallback()])],
+}));

@@ -15,7 +15,7 @@
  * gate a release.
  */
 
-const BASE = process.env.BASE_URL || "https://pc-tweaker-app-production.up.railway.app";
+const BASE = process.env.BASE_URL || "https://api.pctweaker.app";
 const stamp = Date.now();
 const EMAIL = `smoke-${stamp}@example.com`;
 const PASSWORD = "SuperSecret123";

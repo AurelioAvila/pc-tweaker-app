@@ -253,6 +253,26 @@ function App() {
     await openUrl(data.url);
   }
 
+  async function openBillingPortal() {
+    if (!API_BASE_URL) {
+      throw new Error(s.auth.backendNotConfigured);
+    }
+    const token = readToken();
+    if (!token) {
+      throw new Error(s.auth.loginRequiredForCheckout);
+    }
+    const res = await fetch(`${API_BASE_URL}/api/portal`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}) as { error?: string });
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
+    const data = (await res.json()) as { url: string };
+    await openUrl(data.url);
+  }
+
   const CATEGORIES: { key: Section; label: string; icon: React.ReactElement }[] = [
     { key: "scan", label: s.tabs.scan, icon: <RadarIcon className="h-[18px] w-[18px]" /> },
     { key: "health", label: s.tabs.health, icon: <HeartPulseIcon className="h-[18px] w-[18px]" /> },
@@ -763,6 +783,13 @@ function App() {
               onChoosePro={async (plan) => {
                 try {
                   await startCheckout(plan);
+                } catch (e) {
+                  pushToast("error", String(e instanceof Error ? e.message : e));
+                }
+              }}
+              onManageBilling={async () => {
+                try {
+                  await openBillingPortal();
                 } catch (e) {
                   pushToast("error", String(e instanceof Error ? e.message : e));
                 }

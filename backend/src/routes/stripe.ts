@@ -153,6 +153,37 @@ router.post("/checkout", requireAuth, checkoutLimiter, requireStripe, async (req
   }
 });
 
+// Opens Stripe's own hosted billing portal for the logged-in user: cancel,
+// swap plan, update the card, download invoices. We don't reimplement any
+// of that ourselves — Stripe's UI is the customer's actual system of
+// record for their subscription, and duplicating "cancel" logic here would
+// just be a second place for it to drift from what Stripe itself will do.
+router.post("/portal", requireAuth, requireStripe, async (req: Request, res: Response) => {
+  if (!isConfigured) {
+    return res.status(503).json({ error: "database not configured" });
+  }
+
+  const { rows } = await getPool().query(
+    "SELECT stripe_customer_id FROM users WHERE id = $1",
+    [req.userId],
+  );
+  const customerId = rows[0]?.stripe_customer_id;
+  if (!customerId) {
+    return res.status(404).json({ error: "no subscription on this account" });
+  }
+
+  try {
+    const session = await stripe!.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: process.env.APP_URL || "https://pctweaker.app",
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error("billing portal session creation failed:", err);
+    res.status(500).json({ error: "could not open billing portal" });
+  }
+});
+
 // Mounted with express.raw() in index.ts — Stripe's signature check needs
 // the exact raw request body, not the JSON-parsed one.
 async function webhookHandler(req: Request, res: Response): Promise<void> {

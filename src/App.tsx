@@ -106,7 +106,10 @@ function App() {
         logout();
         return;
       }
-      if (!res.ok) return;
+      if (!res.ok) {
+        pushToast("error", s.toasts.accountRefreshFailed);
+        return;
+      }
       const data = (await res.json()) as { email: string; isPro: boolean; emailVerified: boolean };
       setAuth({
         status: "authenticated",
@@ -119,7 +122,11 @@ function App() {
       void refreshLicense();
     } catch {
       // Network hiccup: keep whatever Pro status we already had rather than
-      // dropping the user back to Free on a transient failure.
+      // dropping the user back to Free on a transient failure — but say so,
+      // since a silent failure here is indistinguishable from actually
+      // having lost Pro access (see: the account that looked like it had
+      // reverted to Free while the server still reported it as Pro).
+      pushToast("error", s.toasts.accountRefreshFailed);
     }
   }
 

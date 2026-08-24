@@ -174,7 +174,7 @@ async function webhookHandler(req: Request, res: Response): Promise<void> {
     event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
   } catch (err: any) {
     console.error("webhook signature verification failed:", err.message);
-    res.status(400).send(`Webhook Error: ${err.message}`);
+    res.status(400).send("Webhook signature verification failed");
     return;
   }
 

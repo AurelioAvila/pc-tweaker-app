@@ -10,4 +10,4 @@ export const RELEASES_PAGE = "https://github.com/AurelioAvila/pc-tweaker-app/rel
 /** Backend that relays the support form and stores reviews. The support
  *  inbox address itself lives only on that server and is never shipped in
  *  this bundle — see backend/src/support-inbox.ts. */
-export const API_BASE = "https://pc-tweaker-app-production.up.railway.app";
+export const API_BASE = "https://api.pctweaker.app";

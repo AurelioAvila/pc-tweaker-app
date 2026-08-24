@@ -6,7 +6,7 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
 
-import { initSchema, isConfigured } from "./db";
+import { getPool, initSchema, isConfigured } from "./db";
 import { isConfigured as mailIsConfigured } from "./mailer";
 import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
@@ -70,6 +70,23 @@ app.use(express.urlencoded({ extended: false }));
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ ok: true, databaseConfigured: isConfigured });
+});
+
+// Railway uses this endpoint as a deploy readiness gate. Liveness stays
+// intentionally cheap at /health; readiness proves the service can actually
+// reach PostgreSQL before a new deployment receives production traffic.
+app.get("/ready", async (_req: Request, res: Response) => {
+  if (!isConfigured) {
+    res.status(503).json({ ok: false, database: "not configured" });
+    return;
+  }
+  try {
+    await getPool().query("SELECT 1");
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("readiness database check failed:", err);
+    res.status(503).json({ ok: false, database: "unavailable" });
+  }
 });
 
 // Screenshots/icon for the landing page below (2026-08-05). CSP (helmet

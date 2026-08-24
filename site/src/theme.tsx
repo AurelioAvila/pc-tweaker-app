@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -235,6 +236,7 @@ export const THEME_ORDER: readonly AccentTheme[] = [
 const STORAGE_KEY = "pct-theme";
 
 function storedTheme(): AccentTheme {
+  if (typeof window === "undefined") return "amber";
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved && saved in ACCENTS) return saved as AccentTheme;
@@ -253,7 +255,16 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<AccentTheme>(storedTheme);
+  // Server and browser must start from the same value for deterministic
+  // hydration. The saved preference is restored in a layout effect before
+  // the browser paints, so returning visitors keep their theme without a
+  // hydration mismatch or a visible flash.
+  const [theme, setThemeState] = useState<AccentTheme>("amber");
+
+  const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+  useIsomorphicLayoutEffect(() => {
+    setThemeState(storedTheme());
+  }, []);
 
   const setTheme = useCallback((t: AccentTheme) => setThemeState(t), []);
 

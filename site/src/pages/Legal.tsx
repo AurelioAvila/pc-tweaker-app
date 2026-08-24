@@ -69,7 +69,10 @@ function Markdown({ source }: { source: string }) {
 
   for (const raw of source.split("\n")) {
     const line = raw.trimEnd();
-    if (line.startsWith("# ")) {
+    const trimmed = line.trimStart();
+    if (line.startsWith("  ") && bullets.length > 0 && trimmed !== "") {
+      bullets[bullets.length - 1] += ` ${trimmed}`;
+    } else if (line.startsWith("# ")) {
       flushBullets();
       flushParagraph();
       blocks.push(

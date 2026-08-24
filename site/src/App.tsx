@@ -12,6 +12,7 @@ import { Footer } from "./components/Footer";
 import { SupportPage } from "./pages/Support";
 import { PrivacyPage, TermsPage, CookiesPage, AccessibilityPage, NotFoundPage } from "./pages/Legal";
 import { useRoute } from "./router";
+import { NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
 
 function HomePage() {
   return (
@@ -28,28 +29,17 @@ function HomePage() {
   );
 }
 
-const HOME_TITLE = "PC Tweaker — Every Millisecond Is Earned";
-
-/** Known routes and their tab titles. Anything else renders the 404 page —
+/** Known routes and their tab metadata. Anything else renders the 404 page —
  *  previously unknown paths silently showed the homepage, which meant a
  *  mistyped link looked like a working page instead of an error. */
-const ROUTES: Record<string, { title: string }> = {
-  "/": { title: HOME_TITLE },
-  "/support": { title: "Support — PC Tweaker" },
-  "/privacy": { title: "Privacy Policy — PC Tweaker" },
-  "/terms": { title: "Terms of Service — PC Tweaker" },
-  "/cookies": { title: "Cookie Policy — PC Tweaker" },
-  "/accessibility": { title: "Accessibility — PC Tweaker" },
-};
-
-export default function App() {
-  const { path, navigate } = useRoute();
-  const route = ROUTES[path];
+export default function App({ initialPath = "/" }: { initialPath?: string }) {
+  const { path, navigate } = useRoute(initialPath);
+  const route = ROUTE_SEO[path];
 
   // Client-side routing doesn't reload the document, so the tab title would
   // otherwise stay on whatever index.html shipped with.
   useEffect(() => {
-    document.title = route ? route.title : "Page not found — PC Tweaker";
+    document.title = route ? route.title : NOT_FOUND_SEO.title;
   }, [route]);
 
   let page: React.ReactNode;

@@ -2,10 +2,9 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { format, Lang, Strings } from "./i18n";
 
-// Set at build time once the backend (backend/, deployed to Railway per the
-// project brief) is live: `VITE_API_BASE_URL=https://your-app.up.railway.app npm run build`.
-// Until then, auth/checkout calls fail honestly instead of faking success.
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+// The first-party Cloudflare hostname is the stable production endpoint.
+// VITE_API_BASE_URL remains available for an explicit local/staging build.
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.pctweaker.app";
 
 // ---- Anonymous, opt-in error reporting --------------------------------------
 // Off by default; the AccountMenu toggle flips a localStorage flag that is

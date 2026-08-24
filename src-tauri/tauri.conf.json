@@ -20,7 +20,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src ipc: http://ipc.localhost https://pc-tweaker-app-production.up.railway.app https://api.pwnedpasswords.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src ipc: http://ipc.localhost https://api.pctweaker.app https://api.pwnedpasswords.com; object-src 'none'; base-uri 'self'; form-action 'self'"
     }
   },
   "plugins": {

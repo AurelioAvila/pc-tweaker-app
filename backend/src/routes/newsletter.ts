@@ -93,7 +93,7 @@ router.post("/", newsletterLimiter, asyncRoute(async (req: Request, res: Respons
   // to nag any inbox with our sending domain's reputation behind it.
   const sig = unsubscribeSignature(email);
   if (isNew && mailIsConfigured && sig) {
-    const unsubscribeUrl = `${process.env.PUBLIC_API_URL || "https://pc-tweaker-app-production.up.railway.app"}/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}&sig=${sig}`;
+    const unsubscribeUrl = `${process.env.PUBLIC_API_URL || "https://api.pctweaker.app"}/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}&sig=${sig}`;
     void sendMail({
       to: email,
       subject: "You're on the PC Tweaker list",

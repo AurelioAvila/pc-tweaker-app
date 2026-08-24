@@ -33,7 +33,9 @@ const authLimiter = rateLimit({
 });
 router.use(authLimiter);
 
-const APP_URL = process.env.APP_URL || "http://localhost:3000";
+const APP_URL =
+  process.env.APP_URL ||
+  (process.env.NODE_ENV === "production" ? "https://api.pctweaker.app" : "http://localhost:3000");
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Resolves to false when no email provider is configured, so callers can

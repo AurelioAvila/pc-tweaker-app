@@ -80,10 +80,10 @@ async function sendViaResend({ to, subject, html, replyTo }: MailInput): Promise
 }
 
 /**
- * Sends an email, or — when neither Resend nor SMTP is configured — logs it
- * to the console instead. This is what makes email verification / password
- * reset usable in local development without real credentials, without ever
- * pretending an email went out when it didn't.
+ * Sends an email. Local development records only recipient and subject when
+ * no provider is configured; production never writes action links or message
+ * bodies to logs because they can contain password-reset tokens or personal
+ * support content.
  */
 async function sendMail({ to, subject, html, replyTo }: MailInput): Promise<{ delivered: boolean }> {
   if (useResend) {
@@ -100,7 +100,12 @@ async function sendMail({ to, subject, html, replyTo }: MailInput): Promise<{ de
     });
     return { delivered: true };
   }
-  console.log(`\n[mailer] No email provider configured — would have sent to ${to}:\nSubject: ${subject}\n${html}\n`);
+  const productionRuntime =
+    process.env.NODE_ENV === "production" || Boolean(process.env.RAILWAY_ENVIRONMENT_ID);
+  if (productionRuntime) {
+    throw new MailError("No email provider is configured", { rejectedAddress: false });
+  }
+  console.log(`[mailer] No provider configured — skipped email to ${to}; subject: ${subject}`);
   return { delivered: false };
 }
 

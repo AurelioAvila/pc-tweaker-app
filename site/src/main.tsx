@@ -1,5 +1,5 @@
 import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, hydrateRoot } from "react-dom/client";
 import App from "./App";
 import { ThemeProvider } from "./theme";
 // Self-hosted fonts (previously Google Fonts <link>s): keeps every visitor
@@ -26,10 +26,16 @@ if (!rootEl) throw new Error("#root not found");
 const faviconLink = document.getElementById("favicon-link") as HTMLLinkElement | null;
 if (faviconLink) faviconLink.href = faviconUrl;
 
-createRoot(rootEl).render(
+const app = (
   <StrictMode>
     <ThemeProvider>
       <App />
     </ThemeProvider>
-  </StrictMode>,
+  </StrictMode>
 );
+
+if (rootEl.hasChildNodes()) {
+  hydrateRoot(rootEl, app);
+} else {
+  createRoot(rootEl).render(app);
+}

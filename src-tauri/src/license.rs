@@ -13,7 +13,7 @@
 //!
 //! ## How it works
 //!
-//! The backend signs `{ userId, isPro, plan, issuedAt }` with an Ed25519 key
+//! The backend signs `{ userId, isPro, plan, product, issuedAt }` with an Ed25519 key
 //! it alone holds (`backend/src/license.ts`) and returns the exact JSON
 //! string it signed alongside the signature — never a re-serialized copy.
 //! This module verifies that signature against the embedded public key,
@@ -42,6 +42,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// never for producing them.
 const PUBLIC_KEY_B64: &str = "QisYr46g3mqEeiz1BDyEcPbRO1xO4z0lR3d5/ODppIU=";
 
+/// A signed entitlement is valid only for the product that requested it.
+/// Keeping this check in the Rust enforcement path prevents an entitlement
+/// for another ecosystem app from unlocking PC Tweaker.
+const PRODUCT_ID: &str = "pctweaker";
+
 /// How long a signed license is trusted without a fresh fetch. Long enough
 /// to cover a weekend or a short trip without connectivity; short enough
 /// that a cancelled subscription doesn't keep working offline indefinitely.
@@ -56,6 +61,12 @@ pub struct LicensePayload {
     pub user_id: String,
     pub is_pro: bool,
     pub plan: Option<String>,
+    /// Older PC Tweaker builds were issued signed payloads before the
+    /// multi-product backend added this field. A missing product is therefore
+    /// accepted only as the legacy PC Tweaker format. New payloads always
+    /// carry a product, and a signed value for any other product is rejected.
+    #[serde(default)]
+    pub product: Option<String>,
     /// Unix seconds, set by the server at signing time. Freshness is
     /// measured from this, not from local receipt — a cached-and-replayed
     /// response can't be made to look newer than it actually is.
@@ -82,6 +93,7 @@ pub enum VerifyError {
     BadSignatureEncoding,
     SignatureInvalid,
     UnparsablePayload,
+    WrongProduct,
 }
 
 /// Verifies `signature` (base64) against `payload_json`'s raw UTF-8 bytes and
@@ -89,8 +101,16 @@ pub enum VerifyError {
 /// by which a `LicensePayload` should ever come into existence in this
 /// process — there is no constructor that skips verification.
 pub fn verify(payload_json: &str, signature_b64: &str) -> Result<LicensePayload, VerifyError> {
+    verify_with_public_key(payload_json, signature_b64, PUBLIC_KEY_B64)
+}
+
+fn verify_with_public_key(
+    payload_json: &str,
+    signature_b64: &str,
+    public_key_b64: &str,
+) -> Result<LicensePayload, VerifyError> {
     let key_bytes: [u8; 32] = STANDARD
-        .decode(PUBLIC_KEY_B64)
+        .decode(public_key_b64)
         .ok()
         .and_then(|v| v.try_into().ok())
         .ok_or(VerifyError::BadPublicKey)?;
@@ -109,6 +129,24 @@ pub fn verify(payload_json: &str, signature_b64: &str) -> Result<LicensePayload,
         .map_err(|_| VerifyError::SignatureInvalid)?;
 
     serde_json::from_str(payload_json).map_err(|_| VerifyError::UnparsablePayload)
+}
+
+fn verify_for_pc_tweaker(
+    payload_json: &str,
+    signature_b64: &str,
+) -> Result<LicensePayload, VerifyError> {
+    require_pc_tweaker_product(verify(payload_json, signature_b64)?)
+}
+
+fn require_pc_tweaker_product(payload: LicensePayload) -> Result<LicensePayload, VerifyError> {
+    if !is_for_pc_tweaker(&payload) {
+        return Err(VerifyError::WrongProduct);
+    }
+    Ok(payload)
+}
+
+fn is_for_pc_tweaker(payload: &LicensePayload) -> bool {
+    payload.product.as_deref().unwrap_or(PRODUCT_ID) == PRODUCT_ID
 }
 
 fn now_secs() -> u64 {
@@ -184,7 +222,7 @@ impl LicenseStore {
         let Some(cached) = self.load() else {
             return false;
         };
-        let Ok(payload) = verify(&cached.payload_json, &cached.signature) else {
+        let Ok(payload) = verify_for_pc_tweaker(&cached.payload_json, &cached.signature) else {
             return false;
         };
         payload.is_pro && is_fresh(&payload)
@@ -198,7 +236,7 @@ impl LicenseStore {
 /// "not Pro" until the next successful fetch.
 #[tauri::command]
 pub fn save_license(app: tauri::AppHandle, response: SignedLicenseResponse) -> Result<(), String> {
-    verify(&response.payload_json, &response.signature)
+    verify_for_pc_tweaker(&response.payload_json, &response.signature)
         .map_err(|e| format!("license did not verify: {:?}", e))?;
     let store = LicenseStore::new(crate::store_for_dir(&app)?);
     store.save(&response).map_err(|e| e.to_string())
@@ -228,6 +266,7 @@ pub fn clear_license(app: tauri::AppHandle) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ed25519_dalek::{Signer, SigningKey};
     use std::path::PathBuf;
 
     fn temp_dir(tag: &str) -> PathBuf {
@@ -251,13 +290,54 @@ mod tests {
     const REAL_NODE_SIGNED_RESPONSE: &str = r#"{"payloadJson":"{\"userId\":\"42\",\"isPro\":true,\"plan\":\"monthly\",\"issuedAt\":1787042906}","signature":"czs+MUbA9IByR9UJ4DKFOqafgAKrI40xo+enb7YjzsDrZqMyLwcjmC6DS2DnEpb0itunOk8ZvreUarvFIk+pCg=="}"#;
 
     #[test]
-    fn a_real_signature_from_the_node_backend_verifies() {
+    fn a_legacy_pc_tweaker_payload_without_product_remains_compatible() {
         let resp: SignedLicenseResponse = serde_json::from_str(REAL_NODE_SIGNED_RESPONSE).unwrap();
-        let payload = verify(&resp.payload_json, &resp.signature).expect("must verify");
-        assert_eq!(payload.user_id, "42");
-        assert!(payload.is_pro);
-        assert_eq!(payload.plan.as_deref(), Some("monthly"));
-        assert_eq!(payload.issued_at, 1787042906);
+        let payload = verify_for_pc_tweaker(&resp.payload_json, &resp.signature).unwrap();
+        assert_eq!(payload.product, None);
+    }
+
+    fn sign_test_payload(payload: &LicensePayload) -> (String, String, String) {
+        let signing_key = SigningKey::from_bytes(&[7_u8; 32]);
+        let payload_json = serde_json::to_string(payload).unwrap();
+        let signature = signing_key.sign(payload_json.as_bytes());
+        (
+            payload_json,
+            STANDARD.encode(signature.to_bytes()),
+            STANDARD.encode(signing_key.verifying_key().to_bytes()),
+        )
+    }
+
+    #[test]
+    fn a_current_product_bound_payload_verifies() {
+        let payload = LicensePayload {
+            user_id: "42".into(),
+            is_pro: true,
+            plan: Some("monthly".into()),
+            product: Some(PRODUCT_ID.into()),
+            issued_at: now_secs(),
+        };
+        let (json, signature, public_key) = sign_test_payload(&payload);
+        assert_eq!(
+            verify_with_public_key(&json, &signature, &public_key),
+            Ok(payload)
+        );
+    }
+
+    #[test]
+    fn another_products_valid_payload_cannot_unlock_pc_tweaker() {
+        let payload = LicensePayload {
+            user_id: "42".into(),
+            is_pro: true,
+            plan: Some("lifetime".into()),
+            product: Some("uninstaller".into()),
+            issued_at: now_secs(),
+        };
+        let (json, signature, public_key) = sign_test_payload(&payload);
+        let verified = verify_with_public_key(&json, &signature, &public_key).unwrap();
+        assert_eq!(
+            require_pc_tweaker_product(verified),
+            Err(VerifyError::WrongProduct)
+        );
     }
 
     #[test]
@@ -297,6 +377,7 @@ mod tests {
             user_id: "1".into(),
             is_pro: true,
             plan: Some("monthly".into()),
+            product: Some(PRODUCT_ID.into()),
             issued_at: now_secs(),
         };
         // Sign it the same way the real verify() expects: payload_json must
@@ -324,6 +405,7 @@ mod tests {
             user_id: "1".into(),
             is_pro: true,
             plan: None,
+            product: Some(PRODUCT_ID.into()),
             issued_at: now_secs().saturating_sub(GRACE_PERIOD_SECS + 3600),
         };
         assert!(!is_fresh(&stale));
@@ -348,6 +430,7 @@ mod tests {
                 user_id: "1".into(),
                 is_pro: true,
                 plan: Some("monthly".into()),
+                product: Some(PRODUCT_ID.into()),
                 issued_at: now_secs(),
             })
             .unwrap(),

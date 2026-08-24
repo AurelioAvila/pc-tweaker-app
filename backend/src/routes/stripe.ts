@@ -6,6 +6,8 @@ import { requireAuth } from "../auth";
 import { periodEndFromSubscription } from "../entitlement";
 import { isKnownProduct, productEntitlement, upsertEntitlement, revokeEntitlement, type Product } from "../products";
 import { isSettledCheckout, productFromMetadata } from "../stripe-policy";
+import { sendMail } from "../mailer";
+import { proWelcomeHtml, proWelcomeSubject } from "../emails/pro-welcome";
 
 const router = express.Router();
 
@@ -215,6 +217,47 @@ async function revokePro(userId: string): Promise<void> {
   await getPool().query("UPDATE users SET is_pro = FALSE, pro_expires_at = NULL WHERE id = $1", [userId]);
 }
 
+const PLAN_PRICE_LABELS: Record<string, string> = {
+  monthly: "€9.99 / month",
+  annual: "€59 / year",
+};
+
+/**
+ * Best-effort welcome email on subscription creation. Deliberately never
+ * throws: a failed send shouldn't turn into a Stripe retry that re-runs
+ * grantPro (harmless but pointless) or, worse, make the webhook report
+ * failure for something the customer's access doesn't depend on.
+ */
+async function sendProWelcomeEmail(userId: string, plan: string | null | undefined, expiresAt: Date | null): Promise<void> {
+  try {
+    const { rows } = await getPool().query(
+      "SELECT email, first_name FROM users WHERE id = $1",
+      [userId],
+    );
+    const user = rows[0];
+    if (!user?.email) return;
+    const renewsOn = (expiresAt ?? new Date()).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+    await sendMail({
+      to: user.email,
+      subject: proWelcomeSubject(),
+      html: proWelcomeHtml({
+        firstName: user.first_name || "there",
+        email: user.email,
+        plan: plan || "monthly",
+        priceLabel: PLAN_PRICE_LABELS[plan || "monthly"] || PLAN_PRICE_LABELS.monthly,
+        renewsOn,
+      }),
+    });
+  } catch (err) {
+    console.error("failed to send Pro welcome email:", err);
+  }
+}
+
 /// Subscription events don't carry our user id directly, so resolve it from
 /// whatever the event does give us: the metadata we attached at checkout
 /// first, then the Stripe customer id we stored.
@@ -295,11 +338,17 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
 
       const customerId = typeof subscription.customer === "string" ? subscription.customer : null;
       if (active) {
+        const expiresAt = periodEndFromSubscription(subscription);
         await grantPro(userId, {
           customerId,
           plan: subscription.metadata?.plan,
-          expiresAt: periodEndFromSubscription(subscription),
+          expiresAt,
         });
+        // Only on creation, not every renewal/update — this event fires once
+        // per subscription's lifecycle start.
+        if (event.type === "customer.subscription.created") {
+          await sendProWelcomeEmail(userId, subscription.metadata?.plan, expiresAt);
+        }
       } else {
         await revokePro(userId);
       }

@@ -5,6 +5,7 @@ import path from "path";
 import express, { Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 import { getPool, initSchema, isConfigured } from "./db";
 import { isConfigured as mailIsConfigured } from "./mailer";
@@ -27,6 +28,17 @@ const app = express();
 app.set("trust proxy", 1);
 
 app.use(helmet());
+
+// A generous service-wide ceiling protects every route, including cheap
+// reads and static legal pages that do not warrant a dedicated limiter.
+// Sensitive write endpoints keep their stricter route-specific limits.
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 1_200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please try again later." },
+}));
 
 // Allow-list the origins our own clients run from instead of falling back to
 // "any origin". No cookies are involved — auth is a bearer header — so a

@@ -9,12 +9,14 @@ export function PricingPanel({
   isPro,
   freeTweakCount,
   onChoosePro,
+  onManageBilling,
 }: {
   s: Strings;
   lang: Lang;
   isPro: boolean;
   freeTweakCount: number;
   onChoosePro: (plan: "monthly" | "annual") => void;
+  onManageBilling: () => void;
 }) {
   const [annual, setAnnual] = useState(true);
 
@@ -149,13 +151,21 @@ export function PricingPanel({
               ))}
             </ul>
 
-            <button
-              onClick={() => onChoosePro(annual ? "annual" : "monthly")}
-              disabled={isPro}
-              className="mt-6 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-3 text-sm font-bold text-slate-900 transition-transform hover:scale-[1.02] disabled:cursor-default disabled:opacity-60 disabled:hover:scale-100"
-            >
-              {isPro ? s.pricing.proCurrent : s.pricing.proCta}
-            </button>
+            {isPro ? (
+              <button
+                onClick={onManageBilling}
+                className="mt-6 w-full rounded-xl border border-line-2 bg-surface-2 py-3 text-sm font-bold text-ink transition-colors hover:border-line-2 hover:bg-surface-1"
+              >
+                {s.pricing.manageBilling}
+              </button>
+            ) : (
+              <button
+                onClick={() => onChoosePro(annual ? "annual" : "monthly")}
+                className="mt-6 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-3 text-sm font-bold text-slate-900 transition-transform hover:scale-[1.02]"
+              >
+                {s.pricing.proCta}
+              </button>
+            )}
           </div>
         </div>
       </div>

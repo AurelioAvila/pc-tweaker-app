@@ -182,6 +182,7 @@ export interface Strings {
     proTagline: string;
     proCta: string;
     proCurrent: string;
+    manageBilling: string;
     everythingInFree: string;
     reassurance: string;
     freeFeatures: string[];
@@ -688,6 +689,7 @@ const it: Strings = {
     proTagline: "Per chi conta ogni frame e non lascia niente al caso.",
     proCta: "Passa a Pro",
     proCurrent: "Il tuo piano",
+    manageBilling: "Gestisci abbonamento",
     everythingInFree: "Tutto quello che c\u2019\u00e8 nel Free, pi\u00f9:",
     reassurance:
       "Disdici quando vuoi. Ogni modifica resta reversibile con un click, anche dopo la disdetta.",
@@ -1470,6 +1472,7 @@ const en: Strings = {
     proTagline: "For players who count every frame and leave nothing on the table.",
     proCta: "Go Pro",
     proCurrent: "Your plan",
+    manageBilling: "Manage subscription",
     everythingInFree: "Everything in Free, plus:",
     reassurance:
       "Cancel anytime. Every change stays one click away from being undone, even after you cancel.",
@@ -2249,6 +2252,7 @@ const fr: Strings = {
     proTagline: "Pour ceux qui comptent chaque image et ne laissent rien au hasard.",
     proCta: "Passer \u00e0 Pro",
     proCurrent: "Votre offre",
+    manageBilling: "Gérer l'abonnement",
     everythingInFree: "Tout ce que contient Free, plus\u00a0:",
     reassurance:
       "R\u00e9siliable \u00e0 tout moment. Chaque modification reste annulable en un clic, m\u00eame apr\u00e8s la r\u00e9siliation.",
@@ -3038,6 +3042,7 @@ const es: Strings = {
     proTagline: "Para quien cuenta cada fotograma y no deja nada al azar.",
     proCta: "Pasar a Pro",
     proCurrent: "Tu plan",
+    manageBilling: "Gestionar suscripción",
     everythingInFree: "Todo lo que incluye Free, y adem\u00e1s:",
     reassurance:
       "Cancela cuando quieras. Cada cambio sigue siendo reversible con un clic, incluso tras cancelar.",
@@ -3827,6 +3832,7 @@ const de: Strings = {
     proTagline: "F\u00fcr alle, die jedes Frame z\u00e4hlen und nichts dem Zufall \u00fcberlassen.",
     proCta: "Zu Pro wechseln",
     proCurrent: "Dein Tarif",
+    manageBilling: "Abo verwalten",
     everythingInFree: "Alles aus Free, dazu:",
     reassurance:
       "Jederzeit k\u00fcndbar. Jede \u00c4nderung bleibt mit einem Klick r\u00fcckg\u00e4ngig zu machen, auch nach der K\u00fcndigung.",

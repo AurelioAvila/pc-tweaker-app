@@ -449,6 +449,7 @@ export interface Strings {
     applied: string; // uses {name}
     rolledBack: string; // uses {name}
     licenseNeedsRefresh: string;
+    accountRefreshFailed: string;
   };
   menu: {
     account: string;
@@ -982,6 +983,8 @@ const it: Strings = {
     rolledBack: '"{name}" ripristinato al valore originale.',
     licenseNeedsRefresh:
       "Non riusciamo a verificare il tuo abbonamento Pro offline da troppo tempo. Riconnettiti a internet e riprova.",
+    accountRefreshFailed:
+      "Non riusciamo a verificare lo stato del tuo account. Lo stato mostrato qui potrebbe non essere aggiornato — controlla la connessione o riprova più tardi.",
   },
   menu: {
     account: "Account",
@@ -1762,6 +1765,8 @@ const en: Strings = {
     rolledBack: '"{name}" restored to its original value.',
     licenseNeedsRefresh:
       "We can't verify your Pro subscription after this long offline. Reconnect to the internet and try again.",
+    accountRefreshFailed:
+      "We couldn't verify your account status. What's shown here may be out of date — check your connection or try again later.",
   },
   menu: {
     account: "Account",
@@ -2549,6 +2554,8 @@ const fr: Strings = {
     rolledBack: "« {name} » restauré à sa valeur d'origine.",
     licenseNeedsRefresh:
       "Impossible de vérifier votre abonnement Pro après une si longue période hors ligne. Reconnectez-vous à internet et réessayez.",
+    accountRefreshFailed:
+      "Impossible de vérifier l'état de votre compte. Les informations affichées ici peuvent être obsolètes — vérifiez votre connexion ou réessayez plus tard.",
   },
   menu: {
     account: "Compte",
@@ -3336,6 +3343,8 @@ const es: Strings = {
     rolledBack: '"{name}" restaurado a su valor original.',
     licenseNeedsRefresh:
       "No podemos verificar tu suscripción Pro tras tanto tiempo sin conexión. Reconectate a internet e inténtalo de nuevo.",
+    accountRefreshFailed:
+      "No pudimos verificar el estado de tu cuenta. Lo que se muestra aquí puede estar desactualizado: revisa tu conexión o inténtalo más tarde.",
   },
   menu: {
     account: "Cuenta",
@@ -4128,6 +4137,8 @@ const de: Strings = {
     rolledBack: '„{name}" auf den ursprünglichen Wert zurückgesetzt.',
     licenseNeedsRefresh:
       "Wir können Ihr Pro-Abonnement nach so langer Offline-Zeit nicht bestätigen. Stellen Sie eine Internetverbindung her und versuchen Sie es erneut.",
+    accountRefreshFailed:
+      "Wir konnten den Status Ihres Kontos nicht überprüfen. Die hier angezeigten Informationen sind möglicherweise veraltet — prüfen Sie Ihre Verbindung oder versuchen Sie es später erneut.",
   },
   menu: {
     account: "Konto",

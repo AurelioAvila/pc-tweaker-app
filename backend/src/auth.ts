@@ -79,7 +79,11 @@ async function requireAuth(req: Request, res: Response, next: NextFunction): Pro
 }
 
 function isValidEmail(email: unknown): email is string {
-  return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (typeof email !== "string" || email.length > 254 || /\s/.test(email)) return false;
+  const at = email.indexOf("@");
+  if (at <= 0 || at !== email.lastIndexOf("@")) return false;
+  const dot = email.indexOf(".", at + 2);
+  return dot > at + 1 && dot < email.length - 1;
 }
 
 function isValidPassword(password: unknown): password is string {

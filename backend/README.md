@@ -76,7 +76,7 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    set it by hand.
 3. **Set the remaining environment variables** on the service (Railway →
    Variables): `JWT_SECRET` (generate with `openssl rand -hex 32`),
-   `APP_URL` (your Railway URL, needed for email links), `CORS_ORIGINS`,
+   `APP_URL=https://api.pctweaker.app` (needed for email links), `CORS_ORIGINS`,
    `RESEND_API_KEY`/`MAIL_FROM` (for real verification/reset emails — without
    this, the server logs the email content instead of sending it; use Resend
    rather than `SMTP_*` on Railway, since it blocks outbound SMTP ports),
@@ -105,7 +105,7 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    separate migration step needed.
 5. Once deployed, rebuild the desktop app pointing at the new URL:
    ```bash
-   VITE_API_BASE_URL=https://your-service.up.railway.app npm run build
+   VITE_API_BASE_URL=https://api.pctweaker.app npm run build
    ```
    (set in `pc-tweaker-app/` root, not here in `backend/`).
 
@@ -118,7 +118,7 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    into `STRIPE_SECRET_KEY`. Never put this in the desktop app — it only
    belongs on this server.
 3. Dashboard → Developers → Webhooks → add endpoint
-   `https://your-service.up.railway.app/api/stripe-webhook`, subscribe to
+   `https://api.pctweaker.app/api/stripe-webhook`, subscribe to
    `checkout.session.completed`, copy the signing secret (`whsec_...`) into
    `STRIPE_WEBHOOK_SECRET`.
 4. Test with card `4242 4242 4242 4242`, any future date, any CVC, while

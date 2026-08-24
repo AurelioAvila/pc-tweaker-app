@@ -5,6 +5,7 @@ import { getPool, isConfigured } from "../db";
 import { requireAuth } from "../auth";
 import { periodEndFromSubscription } from "../entitlement";
 import { isKnownProduct, productEntitlement, upsertEntitlement, revokeEntitlement, type Product } from "../products";
+import { isSettledCheckout, productFromMetadata } from "../stripe-policy";
 
 const router = express.Router();
 
@@ -228,42 +229,22 @@ async function resolveUserId(subscription: Stripe.Subscription): Promise<string 
   return rows[0]?.id ?? null;
 }
 
-/** Which ecosystem product a Stripe object belongs to. Anything without the
- *  metadata predates multi-product checkouts, which makes it pctweaker. */
-function productFromMetadata(metadata: Stripe.Metadata | null | undefined): Product {
-  const value = metadata?.product;
-  return isKnownProduct(value) ? value : "pctweaker";
-}
-
-async function handleEvent(event: Stripe.Event): Promise<void> {
-  if (!isConfigured) return;
-
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session;
+async function handleCheckoutSession(session: Stripe.Checkout.Session): Promise<void> {
       const userId = session.client_reference_id || session.metadata?.userId;
-      if (!userId) break;
+      if (!userId || !isSettledCheckout(session.payment_status)) return;
 
       const product = productFromMetadata(session.metadata);
+      if (!product) return;
       if (product !== "pctweaker") {
         // Non-pctweaker products live in the entitlements table. Same
         // provisional-window reasoning as below: the subscription event
         // carries the real period end and overwrites this.
-        const paid = session.payment_status === "paid" || session.mode === "subscription";
-        if (!paid) break;
         await upsertEntitlement(userId, product, {
           plan: session.metadata?.plan ?? null,
           expiresAt: new Date(Date.now() + PROVISIONAL_ACCESS_MS),
         });
-        break;
+        return;
       }
-
-      // For one-off payments "completed" can fire before the money actually
-      // arrives (bank transfers), so require payment_status = paid. For
-      // subscriptions Stripe reports "no_payment_required" on trials and the
-      // subscription's own lifecycle events are the source of truth.
-      const paid = session.payment_status === "paid" || session.mode === "subscription";
-      if (!paid) break;
 
       const customerId = typeof session.customer === "string" ? session.customer : null;
       // A one-off purchase is genuinely perpetual, so it gets no expiry. A
@@ -276,6 +257,15 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       const expiresAt =
         session.mode === "subscription" ? new Date(Date.now() + PROVISIONAL_ACCESS_MS) : null;
       await grantPro(userId, { customerId, plan: session.metadata?.plan, expiresAt });
+}
+
+async function handleEvent(event: Stripe.Event): Promise<void> {
+  if (!isConfigured) return;
+
+  switch (event.type) {
+    case "checkout.session.completed":
+    case "checkout.session.async_payment_succeeded": {
+      await handleCheckoutSession(event.data.object as Stripe.Checkout.Session);
       break;
     }
 
@@ -288,6 +278,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       if (!userId) break;
 
       const product = productFromMetadata(subscription.metadata);
+      if (!product) break;
       const active = ["active", "trialing", "past_due"].includes(subscription.status);
       if (product !== "pctweaker") {
         if (active) {
@@ -322,6 +313,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       const userId = await resolveUserId(subscription);
       if (!userId) break;
       const product = productFromMetadata(subscription.metadata);
+      if (!product) break;
       if (product !== "pctweaker") {
         await revokeEntitlement(userId, product);
         break;

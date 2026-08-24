@@ -13,17 +13,19 @@ import { useCallback, useEffect, useState } from "react";
    route on the client.
    ============================================================ */
 
-function currentPath(): string {
+function currentPath(initialPath = "/"): string {
+  if (typeof window === "undefined") return initialPath;
   // Trailing slashes are normalized away so "/support/" and "/support"
   // resolve to the same route instead of falling through to the 404 page.
   const p = window.location.pathname.replace(/\/+$/, "");
   return p === "" ? "/" : p;
 }
 
-export function useRoute(): { path: string; navigate: (to: string) => void } {
-  const [path, setPath] = useState(currentPath);
+export function useRoute(initialPath = "/"): { path: string; navigate: (to: string) => void } {
+  const [path, setPath] = useState(() => currentPath(initialPath));
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const onPop = () => setPath(currentPath());
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);

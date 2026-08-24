@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.2 - 2026-08-24
+
+- Fixed an authentication issue affecting account sign-in.
+- Pro subscribers can now manage their subscription (cancel, change plan,
+  update payment method, view invoices) directly from the Pricing screen.
+
 ## v1.2.1 - 2026-08-23
 
 - Sibling-product promo card on the Privacy screen now shows Redaxa

@@ -715,6 +715,7 @@ function App() {
                 onForgotPassword={forgotPassword}
                 onUpgrade={() => setPaywallFeature(s.menu.planPro)}
                 onViewPlan={() => setFilter("pricing")}
+                pushToast={pushToast}
               />
             </header>
 

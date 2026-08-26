@@ -13,10 +13,11 @@
     "windows": [
       {
         "title": "PC Tweaker",
-        "width": 900,
-        "height": 650,
-        "minWidth": 760,
-        "minHeight": 560
+        "width": 1000,
+        "height": 700,
+        "minWidth": 820,
+        "minHeight": 600,
+        "decorations": false
       }
     ],
     "security": {

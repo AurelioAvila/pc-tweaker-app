@@ -55,6 +55,7 @@ import { usePulseSamples } from "./components/command";
 import { StartupManager } from "./components/startup";
 import { ProfilesPanel } from "./components/profiles";
 import { PricingPanel } from "./components/pricing";
+import { TitleBar } from "./components/titlebar";
 import { CATEGORY_STYLE } from "./categories";
 import "./App.css";
 
@@ -547,16 +548,32 @@ function App() {
 
   const currentLabel = CATEGORIES.find((c) => c.key === filter)?.label ?? "";
 
+  // The title bar shows the machine as it is right now, from the same samples
+  // the monitor draws. Before the first sample lands both are null, and the
+  // bar leaves the meters out rather than drawing a 0% that would read as an
+  // idle machine.
+  const latestPulse = pulseSamples.length > 0 ? pulseSamples[pulseSamples.length - 1] : null;
+  const ramPct =
+    latestPulse && latestPulse.ramTotal > 0
+      ? (latestPulse.ramUsed / latestPulse.ramTotal) * 100
+      : null;
+
   return (
-    <main className="bg-app text-ink flex min-h-screen [font-family:var(--font-app)]">
+    <div className="bg-app text-ink flex h-screen flex-col overflow-hidden [font-family:var(--font-app)]">
+      {/* The window is frameless, so the app draws its own chrome. */}
+      <TitleBar
+        s={s}
+        appliedCount={appliedCount}
+        totalCount={tweaks.length}
+        cpuPct={latestPulse ? latestPulse.cpu : null}
+        ramPct={ramPct}
+      />
+
+      <main className="flex min-h-0 flex-1">
       {/* Control Room shell: an opaque raised band for navigation, separated
           from the content floor by a hairline — depth from luminance and
           borders, never blur or shadows. */}
-      <aside className="bg-raised border-line sticky top-0 flex h-screen w-52 shrink-0 flex-col border-r p-4">
-        <div className="mb-6 flex items-center gap-2.5 px-1">
-          <img src="/logo-mark.png" alt="" className="h-8 w-8 shrink-0 rounded-[8px]" />
-          <span className="truncate text-[14px] font-semibold tracking-tight">{s.appName}</span>
-        </div>
+      <aside className="bg-raised border-line flex h-full w-52 shrink-0 flex-col overflow-y-auto border-r px-4 py-5">
 
         {/* Navigation grouped by intention (monitor / optimize / manage),
             not by internal feature list. The active item is marked by the
@@ -584,13 +601,16 @@ function App() {
                   <button
                     key={c.key}
                     onClick={() => setFilter(c.key)}
-                    className={`signal group relative flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-left text-[13px] font-medium transition-colors duration-150 ${
+                    className={`nav-item group flex w-full items-center gap-2.5 rounded-[8px] px-3 py-[7px] text-left text-[13px] transition-colors duration-150 ${
                       active
-                        ? "bg-surface-1 text-ink"
-                        : "text-ink-3 hover:bg-surface-1/60 hover:text-ink-2"
+                        ? "font-semibold"
+                        : "text-ink-3 hover:bg-surface-1/50 hover:text-ink-2"
                     }`}
                     data-active={active}
                   >
+                    {/* Bare glyph, no plate behind it: the icon is a mark, and
+                        a filled tile per row would turn the column into a grid
+                        of buttons competing with the content. */}
                     <span
                       className={`shrink-0 transition-colors ${active ? "text-accent" : "text-ink-3 group-hover:text-ink-2"}`}
                     >
@@ -630,15 +650,15 @@ function App() {
         </div>
       </aside>
 
-      <div className="min-w-0 flex-1 px-8 py-8">
+      <div className="app-field min-w-0 flex-1 overflow-y-auto px-8 py-7">
         {/* The pricing comparison needs the extra width to sit side by side;
             every other screen reads better kept narrow. */}
         <div className={`mx-auto ${showPricing ? "max-w-5xl" : "max-w-3xl"}`}>
-          <header className="mb-6 flex items-start justify-between gap-4">
+          <header className="border-line mb-6 flex items-start justify-between gap-4 border-b pb-4">
             {/* The pricing screen leads with its own centred hero title, so
                 the section heading would just be a duplicate above it. */}
             <div className="min-w-0">
-              {!showPricing && <h1 className="type-page">{currentLabel}</h1>}
+              {!showPricing && <h1 className="type-page page-title">{currentLabel}</h1>}
               {/* The tweak tally is meaningless on the startup screen, which
                   isn't made of tweaks and shows its own count instead. */}
               {!showStartup && !showPricing && (
@@ -862,21 +882,28 @@ function App() {
                 <li
                   key={t.id}
                   style={{ animationDelay: `${i * 40}ms` }}
-                  className={`animate-card group relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4
-                  shadow-lg shadow-black/20 transition-all duration-200 hover:border-line-2 hover:bg-surface-2`}
+                  className="animate-card panel panel-hover group relative overflow-hidden p-4"
                 >
+                  {/* The category tint only shows on hover, and only at the
+                      corner the light comes from — enough to tell two sections
+                      apart, not enough to colour the card. */}
                   <div
                     className={`pointer-events-none absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${style.ring}`}
                   />
                   <div className="relative flex items-center gap-4">
+                    {/* The glyph sits in a recess rather than on a coloured
+                        tile: the category keeps its hue in the icon itself,
+                        and the card keeps one material. */}
                     <div
-                      className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${style.chip}`}
+                      className={`well grid h-11 w-11 shrink-0 place-items-center ${style.glyph}`}
                     >
                       {style.icon}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-semibold text-ink">{text.name}</h2>
+                        <h2 className="text-[13.5px] font-semibold tracking-[-0.01em] text-white">
+                          {text.name}
+                        </h2>
                         {/* The (i) is the door to the exact system change.
                             A description can be argued with; a registry path
                             can be checked in regedit, so it is one click away
@@ -900,7 +927,9 @@ function App() {
                         {t.requires_admin && <ShieldBadge label={s.badges.admin} />}
                         {t.requires_pro && <ProBadge label={s.badges.pro} />}
                       </div>
-                      <p className="mt-0.5 text-sm text-ink-3">{text.description}</p>
+                      <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.55] text-ink-3">
+                        {text.description}
+                      </p>
                       {inspecting === t.id && <TechnicalDetails changes={t.changes} s={s} />}
                     </div>
                     <Toggle
@@ -991,6 +1020,7 @@ function App() {
           </p>
         </div>
       </div>
+      </main>
 
       {confirmCleanup && (
         <CleanupConfirmModal
@@ -1081,7 +1111,7 @@ function App() {
           </div>
         ))}
       </div>
-    </main>
+    </div>
   );
 }
 

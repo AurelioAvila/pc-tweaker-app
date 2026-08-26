@@ -23,7 +23,7 @@ export function ShieldBadge({ label }: { label: string }) {
 
 export function ProBadge({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-300 to-yellow-500 px-2 py-0.5 text-[11px] font-bold text-amber-950">
+    <span className="pro-chip inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-bold tracking-[0.02em]">
       <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3">
         <path d="m12 2 2.7 6.6L21 9l-5 4.5L17.3 21 12 17.3 6.7 21 8 13.5 3 9l6.3-.4Z" />
       </svg>
@@ -67,15 +67,15 @@ export function Toggle({
       className="group flex shrink-0 items-center gap-2 outline-none disabled:cursor-wait"
     >
       <span
-        className={`text-xs font-semibold tabular-nums transition-colors ${
-          checked ? "text-emerald-400" : "text-ink-3"
+        className={`text-[11px] font-semibold uppercase tracking-[0.08em] tabular-nums transition-colors ${
+          checked ? "text-accent" : "text-ink-3"
         }`}
       >
         {checked ? s.toggle.on : s.toggle.off}
       </span>
       <span
-        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ease-out
-          ${checked ? "bg-emerald-500" : "bg-surface-hover group-hover:bg-line-2"}`}
+        className={`switch relative inline-flex h-5 w-9 items-center rounded-full
+          ${checked ? "switch-on" : "bg-surface-hover group-hover:bg-line-2"}`}
       >
         <span
           className={`absolute left-0.5 top-0.5 grid h-4 w-4 place-items-center rounded-full bg-white shadow transition-transform duration-200 ease-out

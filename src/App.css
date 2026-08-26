@@ -704,6 +704,9 @@ body {
     border-color var(--dur-base) var(--ease-standard);
 }
 
+/* Used by the avatar only. The tweak modules carried one of these too and it
+   read as a defect rather than as status — one indicator per row is enough,
+   and the module's own backlight already separates Pro from free. */
 .icon-led {
   position: absolute;
   top: 4px;
@@ -734,12 +737,6 @@ body {
     inset 0 1px 0 rgb(255 255 255 / 0.22),
     inset 0 -1px 0 rgb(0 0 0 / 0.3),
     0 6px 20px -4px var(--module-glow);
-}
-
-.group:hover .icon-led {
-  box-shadow:
-    0 0 0 1px rgb(0 0 0 / 0.4),
-    0 0 9px 1px var(--led-color);
 }
 
 /* ---- Account ring ---------------------------------------------------------- */
@@ -784,7 +781,12 @@ button:hover .avatar-halo {
 
 .switch-off {
   background: color-mix(in oklab, black 52%, var(--surface-1));
-  border: 1px solid rgb(255 255 255 / 0.06);
+  /* The rim is an inset shadow, not a border. A real 1px border shrinks the
+     padding box the knob is positioned against, which pushed the knob a pixel
+     off centre — visible as a lopsided dot in the off state. */
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.06),
+    var(--elev-recessed);
 }
 
 .group:hover .switch-off {

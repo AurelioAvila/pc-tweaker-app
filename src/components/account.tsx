@@ -344,6 +344,7 @@ export function AccountMenu({
   onResendVerification,
   onForgotPassword,
   onUpgrade,
+  onViewPlan,
 }: {
   s: Strings;
   lang: Lang;
@@ -367,6 +368,9 @@ export function AccountMenu({
   onResendVerification: () => Promise<void>;
   onForgotPassword: (email: string) => Promise<void>;
   onUpgrade: () => void;
+  /** Opens the plans screen. Same destination for both tiers: a Free
+   *  account is comparing, a Pro account is checking what it pays for. */
+  onViewPlan: () => void;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
@@ -477,18 +481,28 @@ export function AccountMenu({
                 /* Same reasoning as the sidebar card: a Pro subscriber should
                    see that they bought something, not the same grey line a
                    Free account gets. */
-                <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 p-[1.5px]">
-                  <div className="relative flex items-center gap-2 rounded-[10px] bg-slate-950/90 px-3 py-2.5">
-                    <span className="pointer-events-none absolute -right-4 -top-4 h-14 w-14 rounded-full bg-amber-400/20 blur-2xl" />
-                    <CrownIcon className="relative h-4 w-4 shrink-0 text-amber-300" />
-                    <span className="relative text-sm font-black uppercase tracking-wider text-amber-300">
-                      {s.menu.planPro}
+                <>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
+                    {s.menu.plan}
+                  </p>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5">
+                      <CrownIcon className="h-3.5 w-3.5 shrink-0 text-amber-300" />
+                      <span className="text-sm font-bold uppercase tracking-wide text-amber-300">
+                        {s.menu.planPro}
+                      </span>
                     </span>
-                    <span className="relative ml-auto text-[10px] font-semibold uppercase tracking-wide text-amber-500/70">
-                      {s.menu.plan}
-                    </span>
+                    <button
+                      onClick={() => {
+                        setOpen(false);
+                        onViewPlan();
+                      }}
+                      className="rounded-lg border border-line-2 px-2.5 py-1 text-xs font-semibold text-ink-2 transition-colors hover:border-amber-400/50 hover:text-ink"
+                    >
+                      {s.menu.viewPlan}
+                    </button>
                   </div>
-                </div>
+                </>
               ) : (
                 <>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
@@ -496,15 +510,26 @@ export function AccountMenu({
                   </p>
                   <div className="mt-1 flex items-center justify-between gap-2">
                     <span className="text-sm font-semibold text-ink">{s.menu.planFree}</span>
-                    <button
-                      onClick={() => {
-                        setOpen(false);
-                        onUpgrade();
-                      }}
-                      className="rounded-lg bg-gradient-to-r from-amber-300 to-yellow-500 px-3 py-1 text-xs font-bold text-amber-950 transition-transform hover:scale-105"
-                    >
-                      {s.menu.upgradeButton}
-                    </button>
+                    <span className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          setOpen(false);
+                          onViewPlan();
+                        }}
+                        className="rounded-lg border border-line-2 px-2.5 py-1 text-xs font-semibold text-ink-2 transition-colors hover:border-amber-400/50 hover:text-ink"
+                      >
+                        {s.menu.viewPlan}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setOpen(false);
+                          onUpgrade();
+                        }}
+                        className="rounded-lg bg-gradient-to-r from-amber-300 to-yellow-500 px-3 py-1 text-xs font-bold text-amber-950 transition-transform hover:scale-105"
+                      >
+                        {s.menu.upgradeButton}
+                      </button>
+                    </span>
                   </div>
                 </>
               )}

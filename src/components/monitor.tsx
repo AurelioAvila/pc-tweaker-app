@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
 import { formatBytes, gbPair, loadColor, RAM_AUTO_INTERVALS, ramIntervalLabel } from "../lib";
@@ -20,6 +20,29 @@ export async function runRamClean(): Promise<RamCleanResult | null> {
   } finally {
     ramCleanInFlight = false;
   }
+}
+
+/**
+ * The current time, as a value that changes on its own.
+ *
+ * Reading `Date.now()` while rendering is not allowed — the result is not
+ * stable across re-renders — and it would not have worked anyway: nothing
+ * re-renders this card on the minute, so a comparison made once at mount
+ * would go stale. Holding it in state gives a value that is pure to read and
+ * actually moves.
+ */
+function useNow(everyMs: number): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), everyMs);
+    return () => window.clearInterval(id);
+  }, [everyMs]);
+  return now;
+}
+
+/** Hour and minute, the way the user's own system writes them. */
+function clockTime(d: Date): string {
+  return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 }
 
 export function StatRing({
@@ -137,6 +160,18 @@ export function SystemMonitor({ s }: { s: Strings }) {
   );
 }
 
+/** What the last automatic pass did, so the card can show that the schedule
+ *  is real work and not just a setting that was clicked once. */
+export type AutoCleanState = {
+  next: Date;
+  last: { at: Date; freedBytes: number } | null;
+  /** The last failure, kept so a schedule that cannot run stops being silent. */
+  lastError: string | null;
+};
+
+/** How often the scheduler wakes to check whether a pass is due. */
+const HEARTBEAT_MS = 15_000;
+
 /**
  * Runs the scheduled RAM cleanup for as long as the app is open.
  *
@@ -144,19 +179,73 @@ export function SystemMonitor({ s }: { s: Strings }) {
  * on the Scan screen, so hosting the timer there meant switching to any other
  * tab unmounted it and silently stopped the automatic cleanup the user had
  * just switched on.
+ *
+ * It is a short heartbeat against a deadline rather than one long interval.
+ * A `setInterval(…, 3_600_000)` in a webview is not a promise: the window
+ * being minimised, the machine sleeping, or the browser engine throttling
+ * background timers all stretch it, and when the app wakes the old timer
+ * simply starts its full hour again — so "every hour" quietly became "maybe,
+ * eventually". Checking a deadline every fifteen seconds means a pass that
+ * came due while the app was idle runs as soon as it is awake, and the drift
+ * never accumulates.
  */
-export function useScheduledRamClean(autoMinutes: number) {
+export function useScheduledRamClean(autoMinutes: number): AutoCleanState | null {
+  // The deadline lives in state because it is rendered, and is mirrored into a
+  // ref because the heartbeat has to read the current value without being
+  // re-created every time it changes.
+  const [schedule, setSchedule] = useState(() => armFor(autoMinutes));
+  const [last, setLast] = useState<{ at: Date; freedBytes: number } | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
+
+  // Adjusting state during render, not in an effect: React's own answer for
+  // "a prop changed and some state derived from it is now stale". Doing it in
+  // an effect would commit the stale schedule first and then immediately
+  // re-render with the right one.
+  if (schedule.minutes !== autoMinutes) {
+    setSchedule(armFor(autoMinutes));
+    setLast(null);
+    setLastError(null);
+  }
+
+  const dueRef = useRef<number | null>(schedule.dueAt);
+  useEffect(() => {
+    dueRef.current = schedule.dueAt;
+  }, [schedule.dueAt]);
+
   useEffect(() => {
     if (autoMinutes === 0) return;
+    const periodMs = autoMinutes * 60_000;
     const id = window.setInterval(() => {
-      // A scheduled pass is best-effort: failing quietly beats a toast every
-      // ten minutes, and the next tick will try again.
-      void runRamClean().catch(() => {});
-    }, autoMinutes * 60_000);
+      const due = dueRef.current;
+      if (due === null || Date.now() < due) return;
+      // Re-arm before the run, not after: a slow pass must not push the next
+      // one out by however long it took.
+      const nextDue = Date.now() + periodMs;
+      dueRef.current = nextDue;
+      setSchedule({ minutes: autoMinutes, dueAt: nextDue });
+      runRamClean()
+        .then((result) => {
+          // `null` means a pass was already in flight; nothing happened, so
+          // the previous result stays on screen rather than being blanked.
+          if (result) setLast({ at: new Date(), freedBytes: result.freed_bytes });
+          setLastError(null);
+        })
+        .catch((e: unknown) => setLastError(String(e)));
+    }, HEARTBEAT_MS);
     // Clearing on change/unmount is what guarantees exactly one timer is ever
     // alive, no matter how often the user changes the interval.
     return () => window.clearInterval(id);
   }, [autoMinutes]);
+
+  if (schedule.dueAt === null) return null;
+  return { next: new Date(schedule.dueAt), last, lastError };
+}
+
+/** The first pass is one full interval away: switching the schedule on should
+ *  not sweep memory that instant, which would look like the button did
+ *  something it was not asked to do. */
+function armFor(minutes: number): { minutes: number; dueAt: number | null } {
+  return { minutes, dueAt: minutes === 0 ? null : Date.now() + minutes * 60_000 };
 }
 
 /**
@@ -169,16 +258,22 @@ export function RamCleaner({
   samples,
   autoMinutes,
   onChangeAuto,
+  auto,
   pushToast,
 }: {
   s: Strings;
   samples: PulseSample[];
   autoMinutes: number;
   onChangeAuto: (minutes: number) => void;
+  /** Live state of the background schedule, from `useScheduledRamClean`. */
+  auto: AutoCleanState | null;
   pushToast: (kind: Toast["kind"], message: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<RamCleanResult | null>(null);
+  // Matches the scheduler's own heartbeat: the readout can never be more than
+  // one heartbeat behind what the scheduler is doing.
+  const now = useNow(15_000);
 
   // Live figures come from the shared sampling loop rather than a second
   // poll of our own: one IPC feed, every home card in step.
@@ -314,6 +409,39 @@ export function RamCleaner({
         </div>
         {autoMinutes > 0 && (
           <p className="text-ink-3 mt-2 text-xs leading-relaxed">{s.ram.autoHint}</p>
+        )}
+
+        {/* A schedule you cannot see is a schedule you cannot trust. This is
+            the timer's actual state: when the next pass is due, and what the
+            last one did. */}
+        {auto !== null && (
+          <div className="well mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2">
+            <span className="type-data text-[11.5px] text-ink-2">
+              {/* A pass that came due while the machine was asleep is run by
+                  the next heartbeat, which can be up to fifteen seconds away.
+                  Printing its clock time in that window would show a "next"
+                  that has already been and gone. */}
+              {auto.next.getTime() <= now
+                ? s.ram.autoDue
+                : format(s.ram.autoNext, { time: clockTime(auto.next) })}
+            </span>
+            {auto.last !== null && (
+              <span className="type-data text-[11.5px] text-ink-3">
+                {format(s.ram.autoLast, {
+                  time: clockTime(auto.last.at),
+                  amount: formatBytes(auto.last.freedBytes),
+                })}
+              </span>
+            )}
+            {auto.last === null && auto.lastError === null && (
+              <span className="text-[11.5px] text-ink-3">{s.ram.autoNoneYet}</span>
+            )}
+            {auto.lastError !== null && (
+              <span className="text-warn text-[11.5px]">
+                {format(s.ram.autoFailed, { detail: auto.lastError })}
+              </span>
+            )}
+          </div>
         )}
       </div>
     </div>

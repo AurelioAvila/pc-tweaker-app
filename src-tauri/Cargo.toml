@@ -43,7 +43,13 @@ base64 = "0.22"
 winreg = "0.52"
 # LoadLibrary/GetProcAddress only, for SRSetRestorePointW via dynamic loading
 # (a link-time srclient.dll import would crash at startup on Windows Server).
-windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_LibraryLoader"] }
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_System_LibraryLoader",
+    # GetLogicalProcessorInformationEx / affinity, for the X3D die aligner.
+    "Win32_System_SystemInformation",
+    "Win32_System_Threading",
+] }
 is_elevated = "0.1"
 runas = "1"
 

@@ -407,3 +407,262 @@ body {
     transform: translateX(400%);
   }
 }
+
+/* ==========================================================================
+   4. Material — depth, edges, and the instrument field
+   ==========================================================================
+   Everything below is derived from the same three raw values each theme
+   contributes, so it lands identically on all 14 palettes. Depth comes from
+   luminance steps, a one-pixel lit edge and a tight contact shadow — the way
+   a physical panel sits in a chassis — rather than from the large soft
+   shadows a web page would use.
+   ========================================================================== */
+
+:root {
+  /* The lit top edge and the shadow directly under a raised element. Two
+     values, used everywhere, so nothing invents its own depth. */
+  --edge-lit: color-mix(in oklab, white 7%, transparent);
+  --elev-raised:
+    inset 0 1px 0 var(--edge-lit), 0 1px 2px rgb(0 0 0 / 0.4),
+    0 10px 26px -14px rgb(0 0 0 / 0.6);
+  --elev-recessed: inset 0 1px 3px rgb(0 0 0 / 0.45), inset 0 -1px 0 var(--edge-lit);
+
+  /* Technical grid. Deliberately at the edge of visibility: it should read as
+     texture on a machined surface, never as a pattern anyone notices. */
+  --grid-line: color-mix(in oklab, white 3.4%, transparent);
+  --grid-step: 28px;
+}
+
+/* The floor the whole app sits on: grid, plus one very faint accent bloom
+   from the top edge so the window has a light source. */
+.app-field {
+  background-color: var(--bg-app);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    radial-gradient(
+      110% 62% at 50% -10%,
+      color-mix(in oklab, var(--app-accent) 11%, transparent),
+      transparent 60%
+    );
+  background-size:
+    var(--grid-step) var(--grid-step),
+    var(--grid-step) var(--grid-step),
+    100% 100%;
+  background-attachment: local, local, fixed;
+}
+
+/* A raised panel. The gradient is a two-stop luminance fall, not decoration:
+   it is what makes the top edge read as catching light. */
+.panel {
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-1) 48%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-l);
+  box-shadow: var(--elev-raised);
+}
+
+.panel-hover {
+  transition:
+    border-color var(--dur-base) var(--ease-standard),
+    background var(--dur-base) var(--ease-standard),
+    box-shadow var(--dur-base) var(--ease-standard);
+}
+
+.panel-hover:hover {
+  border-color: var(--border-strong);
+  box-shadow:
+    inset 0 1px 0 var(--edge-lit), 0 1px 2px rgb(0 0 0 / 0.45),
+    0 14px 30px -14px rgb(0 0 0 / 0.7);
+}
+
+/* Sunk into the chassis: readouts, wells, anything that is being displayed
+   *to* the user rather than pressed *by* them. */
+.well {
+  background: color-mix(in oklab, var(--app-bg-b) 60%, var(--surface-1));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-m);
+  box-shadow: var(--elev-recessed);
+}
+
+/* ---- Window chrome -------------------------------------------------------- */
+/* The window is frameless, so this bar *is* the title bar: it carries the
+   drag region, the live status and the three system buttons. */
+
+.titlebar {
+  height: 42px;
+  background: linear-gradient(180deg, var(--surface-2), var(--bg-raised));
+  border-bottom: 1px solid var(--border-subtle);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.winbtn {
+  width: 44px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.winbtn:hover {
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+/* The one place a fixed red is correct: every Windows user reads this exact
+   affordance, and a themed close button would be a puzzle. */
+.winbtn-close:hover {
+  background-color: #e0364f;
+  color: #fff;
+}
+
+/* ---- Status LED ----------------------------------------------------------- */
+
+.led {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 2px color-mix(in oklab, currentColor 18%, transparent),
+    0 0 9px 0 color-mix(in oklab, currentColor 70%, transparent);
+}
+
+/* ---- Navigation ----------------------------------------------------------- */
+/* No filled block behind the icon. The active row is marked by a lit hairline
+   at the chassis edge and by ink stepping up to pure white — the contrast
+   does the work a background colour would have done more loudly. */
+
+.nav-item {
+  position: relative;
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+
+.nav-item::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 50%;
+  translate: 0 -50%;
+  width: 2px;
+  height: 0;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+  box-shadow: 0 0 10px 0 color-mix(in oklab, var(--accent) 75%, transparent);
+  transition:
+    height var(--dur-base) var(--ease-standard),
+    opacity var(--dur-base) var(--ease-standard);
+  opacity: 0;
+}
+
+.nav-item[data-active="true"] {
+  color: #fff;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--accent) 10%, transparent),
+    transparent 62%
+  );
+}
+
+.nav-item[data-active="true"]::before {
+  height: 68%;
+  opacity: 1;
+}
+
+/* ---- Switch --------------------------------------------------------------- */
+/* Off, the switch is part of the chassis. On, it lights up in the theme's own
+   accent with a short glow, the way a real panel LED does. */
+
+.switch {
+  box-shadow: var(--elev-recessed);
+  transition:
+    background-color var(--dur-base) var(--ease-standard),
+    box-shadow var(--dur-base) var(--ease-standard);
+}
+
+.switch-on {
+  background: var(--accent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    0 0 0 1px color-mix(in oklab, var(--accent) 55%, transparent),
+    0 0 14px -1px color-mix(in oklab, var(--accent) 75%, transparent);
+}
+
+/* ---- Pro chip -------------------------------------------------------------- */
+/* Gold is fixed across all 14 themes on purpose: it marks a commercial tier,
+   not a state of the machine, so it must not restyle itself per palette. The
+   stops are a metal reflection — light edge, body, a dark band where the
+   surface turns, then a highlight — not a two-colour gradient. */
+
+.pro-chip {
+  background: linear-gradient(
+    135deg,
+    #fbeeb4 0%,
+    #e6bb4a 34%,
+    #a97c1c 52%,
+    #f2d883 70%,
+    #c99a2e 100%
+  );
+  color: #2b1d03;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    inset 0 -1px 0 rgb(0 0 0 / 0.28),
+    0 1px 3px rgb(0 0 0 / 0.45);
+}
+
+/* ---- Scrollbars ------------------------------------------------------------ */
+/* The default Windows scrollbar is a light-grey slab that punches a hole in a
+   dark panel. This is the same hairline material as everything else, and it
+   picks up the accent on hover so the thing you are dragging is the thing
+   that lights up. */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, white 14%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 99px;
+  /* The transparent border plus background-clip is what makes the visible
+     thumb narrower than its hit area: easy to grab, quiet to look at. */
+  border: 3px solid transparent;
+  background-clip: content-box;
+  background-color: color-mix(in oklab, white 13%, transparent);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklab, var(--accent) 60%, transparent);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---- Page header ----------------------------------------------------------- */
+/* A lit tick at the start of the title, so each screen opens the way a chapter
+   does. The rule underneath separates chrome from content without a box. */
+
+.page-title::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 0.78em;
+  margin-right: 10px;
+  vertical-align: -0.02em;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 12px 0 color-mix(in oklab, var(--accent) 70%, transparent);
+}

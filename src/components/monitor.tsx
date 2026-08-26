@@ -22,6 +22,24 @@ export async function runRamClean(): Promise<RamCleanResult | null> {
   }
 }
 
+/**
+ * The current time, as a value that changes on its own.
+ *
+ * Reading `Date.now()` while rendering is not allowed — the result is not
+ * stable across re-renders — and it would not have worked anyway: nothing
+ * re-renders this card on the minute, so a comparison made once at mount
+ * would go stale. Holding it in state gives a value that is pure to read and
+ * actually moves.
+ */
+function useNow(everyMs: number): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), everyMs);
+    return () => window.clearInterval(id);
+  }, [everyMs]);
+  return now;
+}
+
 /** Hour and minute, the way the user's own system writes them. */
 function clockTime(d: Date): string {
   return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
@@ -253,6 +271,9 @@ export function RamCleaner({
 }) {
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<RamCleanResult | null>(null);
+  // Matches the scheduler's own heartbeat: the readout can never be more than
+  // one heartbeat behind what the scheduler is doing.
+  const now = useNow(15_000);
 
   // Live figures come from the shared sampling loop rather than a second
   // poll of our own: one IPC feed, every home card in step.
@@ -396,7 +417,13 @@ export function RamCleaner({
         {auto !== null && (
           <div className="well mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2">
             <span className="type-data text-[11.5px] text-ink-2">
-              {format(s.ram.autoNext, { time: clockTime(auto.next) })}
+              {/* A pass that came due while the machine was asleep is run by
+                  the next heartbeat, which can be up to fifteen seconds away.
+                  Printing its clock time in that window would show a "next"
+                  that has already been and gone. */}
+              {auto.next.getTime() <= now
+                ? s.ram.autoDue
+                : format(s.ram.autoNext, { time: clockTime(auto.next) })}
             </span>
             {auto.last !== null && (
               <span className="type-data text-[11.5px] text-ink-3">

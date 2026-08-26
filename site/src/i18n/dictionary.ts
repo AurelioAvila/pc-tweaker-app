@@ -196,7 +196,7 @@ export const engDictionary: Dictionary = {
     title1: "EVERY",
     title2: "MILLISECOND",
     title3: "IS EARNED.",
-    subBold: "50 real Windows tweaks",
+    subBold: "54 real Windows tweaks",
     sub: " — registry, power plan, services, scheduler priorities. Every single one snapshotted before it touches your system. One click to apply. One click to undo.",
     cta: "Download for Windows — Free",
     safetyNote:
@@ -219,7 +219,7 @@ export const engDictionary: Dictionary = {
     sub: "Numbers from our own recorded, published benchmark — same machine, same match type, before and after PC Tweaker's gaming preset. No synthetic scores. No cherry-picked peaks.",
     stats: [
       { value: 67, unit: "%", label: "AVG FPS GAIN — VALORANT" },
-      { value: 50, unit: "", label: "REAL SYSTEM TWEAKS" },
+      { value: 54, unit: "", label: "REAL SYSTEM TWEAKS" },
       { value: 100, unit: "%", label: "REVERSIBLE — SNAPSHOT FIRST" },
       { value: 1, unit: "CLICK", label: "FULL SYSTEM RESTORE" },
     ],
@@ -232,7 +232,7 @@ export const engDictionary: Dictionary = {
   },
   arsenal: {
     tag: "02 / THE ARSENAL",
-    title: "Six domains. Zero placebo.",
+    title: "Seven domains. Zero placebo.",
     cards: [
       {
         tag: "PC HEALTH SCORE",
@@ -258,9 +258,30 @@ export const engDictionary: Dictionary = {
       {
         tag: "ROLLBACK ENGINE",
         title: "Snapshot first. Always.",
-        body: "Before any tweak writes a single registry value, its previous state is captured. Revert one tweak, or all 36 at once with Restore All. Optimization you can walk back from — that is the entire premise.",
+        body: "Before any tweak writes a single registry value, its previous state is captured. Revert one tweak, or all 54 at once with Restore All. Optimization you can walk back from — that is the entire premise.",
         pro: false,
         span: "wide",
+      },
+      {
+        tag: "HARDWARE",
+        title: "Your sensors, not our estimates",
+        body: "GPU and CPU temperature, load, VRAM, fan and power draw, read straight from the hardware's own sensors — and where a sensor does not exist, the app says so instead of showing a number nobody can verify. A session watch waits until the card has actually worked before calling a result, because an idle card runs cool regardless and that proves nothing.",
+        pro: false,
+        span: "wide",
+      },
+      {
+        tag: "DRIVERS",
+        title: "Every device class, then Windows Update",
+        body: "A full inventory of your drivers — every device class, real progress while it runs, the age of each one. Updates install through Windows Update, the only channel that ships signed vendor drivers matched to your exact hardware id.",
+        pro: false,
+        span: "std",
+      },
+      {
+        tag: "THERMAL PROFILES",
+        title: "Quiet, stock, or all of it",
+        body: "Three profiles built from the watt limits the card itself reports — Silent for long sessions, Standard for the balance the manufacturer chose, Gaming for watts at maximum and a raised clock ceiling. One click back to stock, always.",
+        pro: false,
+        span: "std",
       },
       {
         tag: "SCAN",
@@ -291,6 +312,20 @@ export const engDictionary: Dictionary = {
         span: "std",
       },
       {
+        tag: "NETWORK",
+        title: "Your ping stops moving when the house does",
+        body: "Windows uses CUBIC, which speeds up until a buffer somewhere overflows — which is why your ping climbs the moment someone else starts a download. BBR2 measures the line's real bandwidth and round trip and paces traffic to fit. Free, and it switches back to exactly what was there before.",
+        pro: false,
+        span: "std",
+      },
+      {
+        tag: "RYZEN X3D",
+        title: "The right die, not both of them",
+        body: "On a two-die Ryzen X3D only one die carries the stacked cache, and Windows spreads a game across both. PC Tweaker finds the right die from the processor's own cache map and pins your game to it. On a single-die chip it tells you there is nothing to align — no placebo switch.",
+        pro: false,
+        span: "std",
+      },
+      {
         tag: "MAINTENANCE",
         title: "Disk intelligence",
         body: "Duplicate finder by content hash, large-file hunter, S.M.A.R.T. drive health, SSD-safe TRIM. Deletions go to the Recycle Bin — never permanent.",
@@ -300,9 +335,9 @@ export const engDictionary: Dictionary = {
       {
         tag: "INTERFACE",
         title: "Your desktop, your rules",
-        body: "Dark mode, file extensions, taskbar cleanup, transparency off. 5 languages, 12 themes.",
+        body: "Dark mode, file extensions, taskbar cleanup, transparency off — and a window that carries its own chrome, with the count of applied optimizations and live CPU and RAM in the title bar. 5 languages, 14 themes.",
         pro: false,
-        span: "std",
+        span: "wide",
       },
     ],
   },
@@ -348,13 +383,13 @@ export const engDictionary: Dictionary = {
   },
   pricing: {
     tag: "05 / ACCESS",
-    title: "33 tweaks free, forever.",
+    title: "35 tweaks free, forever.",
     free: {
       plan: "FREE",
       price: "€0",
       per: "/ forever",
       features: [
-        "33 real tweaks across all five domains",
+        "35 real tweaks across every domain",
         "One-click Scan & Fix All",
         "Full rollback engine included",
         "No account required",
@@ -367,7 +402,7 @@ export const engDictionary: Dictionary = {
       per: "/ year · or €9.99/mo",
       save: "SAVE 51%",
       features: [
-        "All 50 tweaks unlocked",
+        "All 54 tweaks unlocked",
         "Turbo Gaming preset + Game Sessions",
         "Duplicate & large file finder, drive optimization",
         "Pro syncs across your installs",
@@ -379,6 +414,14 @@ export const engDictionary: Dictionary = {
     tag: "06 / STRAIGHT ANSWERS",
     title: "Asked, answered.",
     items: [
+      {
+        q: "Where do the driver updates come from?",
+        a: "From Windows Update, not from vendor sites. That is the only channel where the package is WHQL-signed and matched by Microsoft to your exact hardware id, so there is no chance of installing a driver meant for a different card. PC Tweaker shows you what is pending and its size, installs it, and only asks you to restart when Windows itself reports that a restart is required.",
+      },
+      {
+        q: "Are the temperatures real, or estimated?",
+        a: "Real. They come from the hardware's own sensors. Where a sensor does not exist on your machine — many desktop CPUs expose no temperature to Windows at all — the app says the sensor is missing rather than showing a plausible-looking number. The same applies to fan speed: a card that reports 0% because the fan is genuinely stopped is labelled as stopped, not as broken.",
+      },
       {
         q: "Is this safe? Can it break Windows?",
         a: "Every tweak snapshots the original value before changing it, and everything can be reverted — individually or all at once with Restore All. Cleanup operations move files to the Recycle Bin, never delete permanently. That reversibility is the core design constraint of the entire app.",

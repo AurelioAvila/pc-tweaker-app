@@ -103,7 +103,8 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
             | SnapshotEntry::PowerSetting { .. }
             | SnapshotEntry::PowerSettingIndex { .. }
             | SnapshotEntry::RegistryKeyCreated { .. }
-            | SnapshotEntry::Service { .. } => {}
+            | SnapshotEntry::Service { .. }
+            | SnapshotEntry::TcpCongestionProvider { .. } => {}
         }
     }
 

@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.3.0 - 2026-08-26
+
+- New Hardware screen: live GPU/CPU temperatures, load, VRAM, fan and power
+  read from the hardware's own sensors, with a session watch that only calls
+  a result once the card has actually worked.
+- Three thermal profiles (Silent / Standard / Gaming) using the watt limits
+  the card itself reports, and a one-click return to stock.
+- Full driver inventory across every device class, with real progress, and
+  driver updates installed through Windows Update.
+- New free tweak: BBR2 congestion control, so your ping stops climbing when
+  something else on the line starts a download.
+- New free tool: 3D V-Cache die aligner for two-die Ryzen X3D processors.
+- Three new Pro tweaks, one each in Performance, Maintenance and UI.
+- Redesigned window: its own title bar with applied count and live CPU/RAM,
+  and real depth on cards, switches and icons across all fourteen themes.
+- Fixed: automatic RAM cleanup could drift off its schedule when the window
+  was minimised or the machine slept. It now measures against a deadline and
+  shows the next pass and what the last one freed.
+- Fixed: the Hardware screen opened a beat late.
+- The history of applied changes can now be cleared.
+- "Bring back the full right-click menu" is no longer a Pro feature.
+
 ## v1.2.4 - 2026-08-24
 
 - Fixed: sign-in, account status, and subscription management could fail

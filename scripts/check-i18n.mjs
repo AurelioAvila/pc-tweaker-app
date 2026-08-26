@@ -9,7 +9,7 @@
 // Run with: npm run check:i18n
 import { build } from "esbuild";
 
-const LANGS = ["it", "en", "fr", "es", "de"];
+const LANGS = ["it", "en", "fr", "es", "de", "pt"];
 const REFERENCE = "it";
 
 const bundled = await build({

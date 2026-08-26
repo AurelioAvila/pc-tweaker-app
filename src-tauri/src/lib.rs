@@ -11,10 +11,13 @@ mod diskhealth;
 mod diskinfo;
 mod diskopt;
 mod dns;
+mod driverupdate;
+mod drivers;
 mod elevation;
 mod game_priority;
 mod game_sessions;
 mod gaming;
+mod gpupower;
 mod license;
 mod netlatency;
 mod netmaintenance;
@@ -29,6 +32,7 @@ mod services;
 mod startup;
 mod sysmon;
 mod systemprofile;
+mod thermals;
 mod turbo;
 mod tweaks;
 
@@ -809,6 +813,26 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
                 Err(failed.join("; "))
             }
         }
+        "--elevated-driverupdate" => {
+            let result = driverupdate::install_elevated(&dir);
+            audit::record(
+                "driver-update",
+                "windows-update",
+                result.is_ok(),
+                result.as_ref().err().cloned(),
+            );
+            result
+        }
+        "--elevated-gpupower" => {
+            let result = gpupower::apply_elevated(id);
+            audit::record(
+                "gpu-power-limit",
+                id,
+                result.is_ok(),
+                result.as_ref().err().cloned(),
+            );
+            result
+        }
         "--elevated-startup" => {
             let result = startup::apply_from_payload(id);
             audit::record(
@@ -896,6 +920,12 @@ fn list_audit_log(app: tauri::AppHandle) -> Result<Vec<audit::AuditEntry>, Strin
     Ok(audit::list_in(&dir, 100))
 }
 
+#[tauri::command(async)]
+fn clear_audit_log(app: tauri::AppHandle) -> Result<(), String> {
+    let dir = store_for_dir(&app)?;
+    audit::clear_in(&dir)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -956,6 +986,16 @@ pub fn run() {
             optimize_disk,
             diskhealth::disk_health,
             diskinfo::list_drives_cmd,
+            thermals::thermal_report,
+            drivers::driver_audit,
+            gpupower::gpu_power_info,
+            gpupower::set_gpu_profile,
+            drivers::open_windows_update,
+            drivers::reboot_pending,
+            drivers::reboot_now,
+            driverupdate::search_driver_updates,
+            driverupdate::install_driver_updates,
+            clear_audit_log,
             netmaintenance::flush_dns_cache
         ])
         .run(tauri::generate_context!())

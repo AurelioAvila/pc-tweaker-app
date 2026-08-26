@@ -343,6 +343,10 @@ export interface Strings {
     autoOff: string;
     autoEvery: string; // uses {interval}
     autoHint: string;
+    autoNext: string; // uses {time}
+    autoLast: string; // uses {time} and {amount}
+    autoNoneYet: string;
+    autoFailed: string; // uses {detail}
   };
   restore: {
     button: string;
@@ -993,6 +997,10 @@ const it: Strings = {
     autoEvery: "Ogni {interval}",
     autoHint:
       "Con la pulizia automatica attiva, PC Tweaker libera la RAM da solo a intervalli regolari finché l'app resta aperta.",
+    autoNext: "Prossima pulizia alle {time}",
+    autoLast: "Ultima alle {time}: {amount} liberati",
+    autoNoneYet: "Nessuna pulizia automatica ancora eseguita.",
+    autoFailed: "Ultimo tentativo non riuscito: {detail}",
   },
   restore: {
     button: "Ripristina tutto",
@@ -1945,6 +1953,10 @@ const en: Strings = {
     autoEvery: "Every {interval}",
     autoHint:
       "With automatic cleanup on, PC Tweaker frees RAM by itself at a regular interval for as long as the app stays open.",
+    autoNext: "Next cleanup at {time}",
+    autoLast: "Last at {time}: {amount} freed",
+    autoNoneYet: "No automatic cleanup has run yet.",
+    autoFailed: "The last attempt failed: {detail}",
   },
   restore: {
     button: "Restore all",
@@ -2899,6 +2911,10 @@ const fr: Strings = {
     autoEvery: "Toutes les {interval}",
     autoHint:
       "Avec le nettoyage automatique, PC Tweaker libère la RAM tout seul à intervalle régulier tant que l'application reste ouverte.",
+    autoNext: "Prochain nettoyage à {time}",
+    autoLast: "Dernier à {time} : {amount} libérés",
+    autoNoneYet: "Aucun nettoyage automatique n'a encore eu lieu.",
+    autoFailed: "La dernière tentative a échoué : {detail}",
   },
   restore: {
     button: "Tout restaurer",
@@ -3858,6 +3874,10 @@ const es: Strings = {
     autoEvery: "Cada {interval}",
     autoHint:
       "Con la limpieza automática activada, PC Tweaker libera la RAM por sí solo a intervalos regulares mientras la app siga abierta.",
+    autoNext: "Próxima limpieza a las {time}",
+    autoLast: "Última a las {time}: {amount} liberados",
+    autoNoneYet: "Aún no se ha ejecutado ninguna limpieza automática.",
+    autoFailed: "El último intento falló: {detail}",
   },
   restore: {
     button: "Restaurar todo",
@@ -4820,6 +4840,10 @@ const de: Strings = {
     autoEvery: "Alle {interval}",
     autoHint:
       "Bei aktiver automatischer Bereinigung gibt PC Tweaker den RAM selbstständig in regelmäßigen Abständen frei, solange die App geöffnet bleibt.",
+    autoNext: "Nächste Bereinigung um {time}",
+    autoLast: "Zuletzt um {time}: {amount} freigegeben",
+    autoNoneYet: "Es wurde noch keine automatische Bereinigung ausgeführt.",
+    autoFailed: "Der letzte Versuch ist fehlgeschlagen: {detail}",
   },
   restore: {
     button: "Alles zurücksetzen",

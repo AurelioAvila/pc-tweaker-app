@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="https://apps.microsoft.com/detail/9nh3c6dt1g87"><img src="https://img.shields.io/badge/Microsoft_Store-Get_the_app-0078D4?style=for-the-badge&logo=microsoftstore&logoColor=white" alt="Get it on the Microsoft Store"></a>
   <a href="#safe-download-recommended"><img src="https://img.shields.io/badge/SAFE_DOWNLOAD-No_SmartScreen_warning-1793D1?style=for-the-badge&logo=windowsterminal&logoColor=white" alt="Safe download via winget, no SmartScreen warning"></a>
 </p>
 
@@ -17,21 +18,30 @@
 
 ## 🛡️ Safe download (recommended)
 
-One command, installs straight from the official [winget-pkgs](https://github.com/microsoft/winget-pkgs)
-repository — Microsoft's own package index, so **no SmartScreen popup**:
+**[Get it on the Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87)**
+— one click, install and updates handled by Windows itself, no SmartScreen
+warning at all.
+
+Prefer the command line? Same result, straight from the official
+[winget-pkgs](https://github.com/microsoft/winget-pkgs) repository:
 
 ```powershell
 winget install AurelioAvila.PCTweaker
 ```
 
 Click the copy icon on the block above, paste into a terminal (PowerShell,
-Windows Terminal, or `Win+R` → `cmd`), hit enter. That's it — this is the
-same command GitHub's copy button hands you, no separate download page
-needed.
+Windows Terminal, or `Win+R` → `cmd`), hit enter.
 
-*(New installs of winget or a brand-new release can take a few hours for
-Microsoft's package index to refresh — if the command says the package
-isn't found yet, try again shortly or use the [.exe/.msi installer](../../releases/latest) below in the meantime.)*
+*(Published via [PR #407687](https://github.com/microsoft/winget-pkgs/pull/407687).
+A brand-new release can take a few hours for Microsoft's package index to
+refresh — if winget says the package isn't found yet, use the Store link
+above or the [.exe/.msi installer](../../releases/latest) below in the
+meantime.)*
+
+Prefer a direct installer? **[⬇ Latest release](../../releases/latest)**
+(`.exe`/`.msi`, Windows 10/11 x64) is not code-signed yet, so Windows
+SmartScreen shows a warning on first run: click **More info** → **Run
+anyway**.
 
 <p align="center">
   <a href="../../releases/latest"><img src="https://img.shields.io/badge/Download-Windows%2010%2F11-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
@@ -109,30 +119,6 @@ explicit choice in the account menu, and remembered from then on.
 
 Payments are handled by Stripe Checkout; the app never sees card details.
 An email/password account syncs Pro status across installs.
-
-## Download
-
-Also independently reviewed and listed on [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html)
-(4/5, "a usable, easy-to-use tool") and [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml).
-
-**via winget** (recommended — no SmartScreen prompt to click through):
-
-```bash
-winget install AurelioAvila.PCTweaker
-```
-
-*(Published in the community [winget-pkgs](https://github.com/microsoft/winget-pkgs)
-repo — [PR #407687](https://github.com/microsoft/winget-pkgs/pull/407687).
-Package indexes refresh every few hours, so it may take a little while to
-show up after a fresh install of winget.)*
-
-**[⬇ Latest release](../../releases/latest)** — `.exe` or `.msi` installer for
-Windows 10/11 x64.
-
-The installer is not code-signed yet (Authenticode), so Windows SmartScreen
-shows a "Windows protected your PC" warning on first run: click **More
-info** → **Run anyway**. Signing the package is the next step for wider
-distribution.
 
 ## Development
 

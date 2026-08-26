@@ -26,6 +26,7 @@ import {
   RocketIcon,
   UndoIcon,
   HeartPulseIcon,
+  ThermometerIcon,
 } from "./components/icons";
 import { PaywallModal, ProBadge, ShieldBadge, Toggle, UpdateBanner } from "./components/ui";
 import {
@@ -46,6 +47,7 @@ import { DashboardCards } from "./components/dashboard";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
 import { ScanPanel } from "./components/scan";
 import { HealthPanel } from "./components/health";
+import { HardwarePanel } from "./components/hardware";
 import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
 import { AdvisorCard, LedgerPanel } from "./components/intelligence";
 import { usePulseSamples } from "./components/command";
@@ -283,6 +285,11 @@ function App() {
   const CATEGORIES: { key: Section; label: string; icon: React.ReactElement }[] = [
     { key: "scan", label: s.tabs.scan, icon: <RadarIcon className="h-[18px] w-[18px]" /> },
     { key: "health", label: s.tabs.health, icon: <HeartPulseIcon className="h-[18px] w-[18px]" /> },
+    {
+      key: "hardware",
+      label: s.tabs.hardware,
+      icon: <ThermometerIcon className="h-[18px] w-[18px]" />,
+    },
     { key: "performance", label: s.tabs.performance, icon: CATEGORY_STYLE.performance.icon },
     { key: "gaming", label: s.tabs.gaming, icon: CATEGORY_STYLE.gaming.icon },
     { key: "privacy", label: s.tabs.privacy, icon: CATEGORY_STYLE.privacy.icon },
@@ -495,6 +502,7 @@ function App() {
     if (
       filter === "scan" ||
       filter === "health" ||
+      filter === "hardware" ||
       filter === "startup" ||
       filter === "pricing" ||
       filter === "profiles"
@@ -526,6 +534,7 @@ function App() {
   const showGamingExtras = filter === "gaming" && !searching;
   const showScan = filter === "scan" && !searching;
   const showHealth = filter === "health" && !searching;
+  const showHardware = filter === "hardware" && !searching;
   const showStartup = filter === "startup" && !searching;
   const showPricing = filter === "pricing" && !searching;
   const showProfiles = filter === "profiles" && !searching;
@@ -554,7 +563,7 @@ function App() {
         <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
           {(
             [
-              [s.tabs.groupMonitor, ["scan", "health"]],
+              [s.tabs.groupMonitor, ["scan", "health", "hardware"]],
               [s.tabs.groupOptimize, ["performance", "gaming", "privacy", "ui"]],
               [
                 s.tabs.groupManage,
@@ -717,6 +726,8 @@ function App() {
           )}
 
           {showScan && <DashboardCards s={s} onNavigate={setFilter} />}
+
+          {showHardware && <HardwarePanel s={s} pushToast={pushToast} />}
 
           {showHealth && (
             <HealthPanel
@@ -952,7 +963,14 @@ function App() {
 
             {showCleanup && <UninstallerPromoCard s={s} />}
 
+            {/* "No tweaks in this category" only makes sense on a screen that
+                IS a tweak category. It was an opt-out list of every other
+                section, which meant each new screen had to remember to add
+                itself — PC Health never did, and has been telling people it
+                had no tweaks coming soon ever since. Asking whether the
+                current filter is a real category cannot drift that way. */}
             {visibleTweaks.length === 0 &&
+              (searching || Object.prototype.hasOwnProperty.call(CATEGORY_STYLE, filter)) &&
               !showCleanup &&
               !showPrivacyExtras &&
               !showScan &&

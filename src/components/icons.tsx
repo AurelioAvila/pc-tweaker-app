@@ -37,6 +37,22 @@ export function HeartPulseIcon({ className }: { className?: string }) {
   );
 }
 
+/** Thermometer, for the Hardware section (thermals and driver age). */
+export function ThermometerIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M14 14.76V4.5a2.5 2.5 0 0 0-5 0v10.26a4.5 4.5 0 1 0 5 0Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M11.5 8.5h2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 /** Lightning-bolt icon shared by the Turbo Boost panel. */
 export function BoltIcon({ className }: { className?: string }) {
   return (

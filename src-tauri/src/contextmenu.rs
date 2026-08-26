@@ -34,7 +34,7 @@ pub fn info() -> ContextMenuInfo {
         name: "Bring back the full right-click menu",
         description: "Windows 11 hides most of the right-click menu behind \"Show more options\", turning one click into two for things you do all day. This restores the complete Windows 10 menu everywhere in File Explorer and on the desktop. Explorer restarts to apply it, so open windows will flicker once (HKCU, no elevation required).",
         requires_admin: false,
-        requires_pro: true,
+        requires_pro: false,
     }
 }
 

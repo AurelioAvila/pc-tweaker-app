@@ -451,7 +451,7 @@ export function AccountMenu({
               at w-72 with p-4 sections this panel covered most of the window
               on a small screen. `max-h` + scroll keeps the themes reachable
               without the panel ever running past the bottom edge. */}
-          <div className="animate-card absolute right-0 z-50 mt-2 max-h-[calc(100vh-5rem)] w-60 overflow-y-auto overflow-x-hidden rounded-2xl border border-line bg-slate-900 shadow-2xl">
+          <div className="animate-card absolute right-0 z-50 mt-2 max-h-[calc(100vh-9rem)] w-60 overflow-y-auto overflow-x-hidden rounded-2xl border border-line bg-slate-900 shadow-2xl">
             <AuthSection
               s={s}
               auth={auth}

@@ -44,6 +44,7 @@ pub struct InstallOutcome {
 #[cfg(windows)]
 mod imp {
     use super::{InstallOutcome, UpdateSearchResult};
+    use base64::Engine as _;
     use std::os::windows::process::CommandExt;
     use std::process::Command;
 
@@ -130,33 +131,65 @@ mod imp {
         }
     }
 
-    /// Downloads and installs every pending driver update, then reports what
-    /// Windows Update itself said about needing a restart.
-    pub fn install() -> Result<InstallOutcome, String> {
+    /// Downloads and installs the pending driver updates whose title is in
+    /// `titles`, then reports what Windows Update itself said about needing a
+    /// restart. The search is re-run rather than trusting a list of updates
+    /// handed across the elevation boundary: an `IUpdate` COM object can't be
+    /// serialized, so all that survives the trip is which titles were picked,
+    /// and this re-resolves them against Windows Update's own current
+    /// results.
+    ///
+    /// Matching by title has one real failure mode: two distinct pending
+    /// updates that happen to share an identical title. `search()` already
+    /// hands the frontend that exact title string as the only identifier, so
+    /// this is the same identifier both sides agree on - and Windows Update
+    /// titles are generated from the driver's own metadata (vendor,
+    /// class, model), which makes an exact collision rare enough not to
+    /// justify a synthetic id neither side can otherwise verify.
+    pub fn install(titles: &[String]) -> Result<InstallOutcome, String> {
+        if titles.is_empty() {
+            return Ok(InstallOutcome {
+                installed: 0,
+                failed: 0,
+                reboot_required: false,
+            });
+        }
+
+        // Passed through as base64 so PowerShell never has to parse arbitrary
+        // driver titles (quotes, apostrophes, whatever a vendor put in the
+        // metadata) as script text.
+        let titles_json = serde_json::to_string(titles).map_err(|e| e.to_string())?;
+        let titles_b64 = base64::engine::general_purpose::STANDARD.encode(titles_json);
+
         let script = format!(
             "$ErrorActionPreference='Stop'; \
+             $wanted = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{titles_b64}')) | ConvertFrom-Json; \
+             $wantedSet = New-Object System.Collections.Generic.HashSet[string]; \
+             foreach ($t in $wanted) {{ $null = $wantedSet.Add($t) }} \
              $s = New-Object -ComObject Microsoft.Update.Session; \
              $sr = $s.CreateUpdateSearcher(); \
              $sr.ServerSelection = 3; $sr.ServiceID = '{svc}'; \
              $r = $sr.Search(\"IsInstalled=0 and Type='Driver'\"); \
-             if ($r.Updates.Count -eq 0) {{ \
-               [pscustomobject]@{{ installed = 0; failed = 0; reboot = $false }} | ConvertTo-Json -Compress; exit 0 \
+             $picked = New-Object -ComObject Microsoft.Update.UpdateColl; \
+             foreach ($u in $r.Updates) {{ if ($wantedSet.Contains($u.Title)) {{ $null = $picked.Add($u) }} }} \
+             if ($picked.Count -eq 0) {{ \
+               [pscustomobject]@{{ installed = 0; failed = $wantedSet.Count; reboot = $false }} | ConvertTo-Json -Compress; exit 0 \
              }} \
-             $toGet = New-Object -ComObject Microsoft.Update.UpdateColl; \
-             foreach ($u in $r.Updates) {{ $null = $toGet.Add($u) }} \
-             $d = $s.CreateUpdateDownloader(); $d.Updates = $toGet; $null = $d.Download(); \
+             $d = $s.CreateUpdateDownloader(); $d.Updates = $picked; $null = $d.Download(); \
              $ready = New-Object -ComObject Microsoft.Update.UpdateColl; \
-             foreach ($u in $r.Updates) {{ if ($u.IsDownloaded) {{ $null = $ready.Add($u) }} }} \
+             foreach ($u in $picked) {{ if ($u.IsDownloaded) {{ $null = $ready.Add($u) }} }} \
              if ($ready.Count -eq 0) {{ \
-               [pscustomobject]@{{ installed = 0; failed = $r.Updates.Count; reboot = $false }} | ConvertTo-Json -Compress; exit 0 \
+               [pscustomobject]@{{ installed = 0; failed = $picked.Count; reboot = $false }} | ConvertTo-Json -Compress; exit 0 \
              }} \
              $i = $s.CreateUpdateInstaller(); $i.Updates = $ready; $res = $i.Install(); \
              $ok = 0; $bad = 0; \
              for ($n = 0; $n -lt $ready.Count; $n++) {{ \
                if ($res.GetUpdateResult($n).ResultCode -eq 2) {{ $ok++ }} else {{ $bad++ }} \
              }} \
-             [pscustomobject]@{{ installed = $ok; failed = $bad; reboot = $res.RebootRequired }} | ConvertTo-Json -Compress",
-            svc = MICROSOFT_UPDATE_SERVICE
+             $notFound = $picked.Count -lt $wantedSet.Count; \
+             [pscustomobject]@{{ installed = $ok; failed = ($bad + [int]$notFound * ($wantedSet.Count - $picked.Count)); reboot = $res.RebootRequired }} | ConvertTo-Json -Compress",
+            svc = MICROSOFT_UPDATE_SERVICE,
+            titles_b64 = titles_b64
         );
 
         let raw = run_ps(&script)?;
@@ -179,13 +212,33 @@ pub fn search_driver_updates() -> Result<UpdateSearchResult, String> {
 /// Installing needs administrator rights, so it runs through the elevated
 /// relaunch. The outcome is written to a small file the unprivileged app
 /// reads back, since the elevated process is a separate short-lived run.
+///
+/// `titles` is whichever pending updates the user actually selected - never
+/// assumed to be "all of them". An `IUpdate` COM object can't cross the
+/// elevation boundary, so the title is what both processes agree an update
+/// *is*; `imp::install` re-resolves it against a fresh search rather than
+/// trusting anything else about it.
 #[cfg(windows)]
 #[tauri::command(async)]
-pub fn install_driver_updates(app: tauri::AppHandle) -> Result<InstallOutcome, String> {
+pub fn install_driver_updates(
+    app: tauri::AppHandle,
+    titles: Vec<String>,
+) -> Result<InstallOutcome, String> {
     if crate::elevation::is_elevated() {
-        return imp::install();
+        return imp::install(&titles);
     }
-    crate::elevation::run_elevated_action("--elevated-driverupdate", "all")?;
+    if titles.is_empty() {
+        return Ok(InstallOutcome {
+            installed: 0,
+            failed: 0,
+            reboot_required: false,
+        });
+    }
+    use base64::Engine as _;
+    let payload = base64::engine::general_purpose::STANDARD.encode(
+        serde_json::to_string(&titles).map_err(|e| e.to_string())?,
+    );
+    crate::elevation::run_elevated_action("--elevated-driverupdate", &payload)?;
     read_outcome(&app)
 }
 
@@ -206,10 +259,23 @@ fn read_outcome(app: &tauri::AppHandle) -> Result<InstallOutcome, String> {
     serde_json::from_str(&text).map_err(|e| format!("unreadable install result: {}", e))
 }
 
-/// Entry point for the elevated relaunch.
+/// Entry point for the elevated relaunch. `payload` is the base64-encoded
+/// JSON array of titles built by `install_driver_updates` above - the same
+/// encoding `imp::install` itself uses internally, so this only has to
+/// decode it once to get plain titles back.
 #[cfg(windows)]
-pub fn install_elevated(dir: &std::path::Path) -> Result<(), String> {
-    let outcome = imp::install()?;
+pub fn install_elevated(dir: &std::path::Path, payload: &str) -> Result<(), String> {
+    use base64::Engine as _;
+    let titles: Vec<String> = base64::engine::general_purpose::STANDARD
+        .decode(payload)
+        .map_err(|e| format!("unreadable driver update payload: {}", e))
+        .and_then(|bytes| {
+            String::from_utf8(bytes).map_err(|e| format!("driver update payload not utf-8: {}", e))
+        })
+        .and_then(|json| {
+            serde_json::from_str(&json).map_err(|e| format!("driver update payload not json: {}", e))
+        })?;
+    let outcome = imp::install(&titles)?;
     let json = serde_json::to_string(&outcome).map_err(|e| e.to_string())?;
     std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     std::fs::write(outcome_path(dir), json).map_err(|e| e.to_string())
@@ -223,6 +289,9 @@ pub fn search_driver_updates() -> Result<UpdateSearchResult, String> {
 
 #[cfg(not(windows))]
 #[tauri::command(async)]
-pub fn install_driver_updates(_app: tauri::AppHandle) -> Result<InstallOutcome, String> {
+pub fn install_driver_updates(
+    _app: tauri::AppHandle,
+    _titles: Vec<String>,
+) -> Result<InstallOutcome, String> {
     Err("not supported on this platform".to_string())
 }

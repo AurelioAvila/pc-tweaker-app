@@ -10,7 +10,6 @@
 </p>
 
 <p align="center">
-  <a href="https://apps.microsoft.com/detail/9nh3c6dt1g87"><img src="https://upload.wikimedia.org/wikipedia/commons/f/f7/Get_it_from_Microsoft_Badge.svg" alt="Get it from Microsoft" height="52"></a>
   <a href="#safe-download-recommended"><img src="https://img.shields.io/badge/SAFE_DOWNLOAD-No_SmartScreen_warning-1793D1?style=for-the-badge&logo=windowsterminal&logoColor=white" alt="Safe download via winget, no SmartScreen warning"></a>
 </p>
 
@@ -44,6 +43,7 @@ SmartScreen shows a warning on first run: click **More info** → **Run
 anyway**.
 
 <p align="center">
+  <a href="https://apps.microsoft.com/detail/9nh3c6dt1g87"><img src="https://upload.wikimedia.org/wikipedia/commons/f/f7/Get_it_from_Microsoft_Badge.svg" alt="Get it from Microsoft" height="28"></a>
   <a href="../../releases/latest"><img src="https://img.shields.io/badge/Download-Windows%2010%2F11-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
   <a href="https://github.com/AurelioAvila/pc-tweaker-app/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-Proprietary-6B7280?style=for-the-badge" alt="Proprietary License"></a>
   <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/v/release/AurelioAvila/pc-tweaker-app?display_name=tag&style=for-the-badge&color=7C3AED" alt="Latest release"></a>

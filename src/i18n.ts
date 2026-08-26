@@ -455,6 +455,31 @@ export interface Strings {
     licenseNeedsRefresh: string;
     accountRefreshFailed: string;
   };
+  x3d: {
+    title: string;
+    subtitle: string;
+    cpuLabel: string;
+    readyHeadline: string; // uses {cores}
+    readyBody: string;
+    singleDie: string;
+    uniformCache: string;
+    unavailable: string;
+    dieLabel: string; // uses {index}
+    dieCache: string; // uses {mb}
+    dieThreads: string; // uses {count}
+    vcacheBadge: string;
+    processesTitle: string;
+    processesHint: string;
+    refresh: string;
+    refreshing: string;
+    align: string;
+    reset: string;
+    alignedBadge: string;
+    noProcesses: string;
+    persistenceNote: string;
+    alignedToast: string; // uses {name}
+    resetToast: string; // uses {name}
+  };
   hardware: {
     intro: string;
     gpuLabel: string;
@@ -1083,6 +1108,36 @@ const it: Strings = {
     accountRefreshFailed:
       "Non riusciamo a verificare lo stato del tuo account. Lo stato mostrato qui potrebbe non essere aggiornato — controlla la connessione o riprova più tardi.",
   },
+  x3d: {
+    title: "Allineatore die 3D V-Cache",
+    subtitle:
+      "Sui Ryzen X3D a due die uno solo porta la cache impilata. Windows non sa quale sia e distribuisce il gioco su entrambi: ogni accesso che attraversa i die paga un giro sull'Infinity Fabric.",
+    cpuLabel: "Processore",
+    readyHeadline: "Die con V-Cache individuato: {cores} thread",
+    readyBody:
+      "Blocca un gioco su questo die e ogni suo thread resta dove la cache è più grande.",
+    singleDie:
+      "Questo processore ha un solo die: tutti i core vedono già la stessa cache, quindi non c'è nulla da allineare. La funzione compare da sola su una CPU a due die con cache asimmetrica.",
+    uniformCache:
+      "Questo processore ha più die ma con la stessa quantità di cache. Spostare un gioco da uno all'altro non cambierebbe nulla, quindi la funzione resta disattivata.",
+    unavailable: "Windows non ha restituito la mappa delle cache di questo processore.",
+    dieLabel: "Die {index}",
+    dieCache: "{mb} MB L3",
+    dieThreads: "{count} thread",
+    vcacheBadge: "V-Cache",
+    processesTitle: "Processi in esecuzione",
+    processesHint: "I più attivi in cima. Scegli il gioco e bloccalo sul die con la cache.",
+    refresh: "Aggiorna",
+    refreshing: "Lettura...",
+    align: "Allinea",
+    reset: "Ripristina",
+    alignedBadge: "Allineato",
+    noProcesses: "Nessun processo abbastanza grande da mostrare.",
+    persistenceNote:
+      "L'affinità appartiene al processo in esecuzione: alla chiusura del gioco sparisce e va rifatta al lancio successivo. Nessuna impostazione di sistema viene modificata.",
+    alignedToast: "{name} bloccato sul die con la V-Cache.",
+    resetToast: "{name} riportato su tutti i core.",
+  },
   hardware: {
     intro:
       "Letture dirette dai sensori del tuo hardware. Dove un sensore non esiste te lo diciamo, invece di mostrare un numero che nessuno può verificare.",
@@ -1468,6 +1523,11 @@ const it: Strings = {
       name: "Apri ogni cartella all'istante",
       description:
         "Esplora file analizza il contenuto di una cartella per indovinare se è Immagini, Musica o Documenti, e una cartella con migliaia di file multimediali può restare bloccata per secondi mentre decide. Questo fissa tutte le cartelle sul layout generale, così si aprono subito (HKCU, nessuna elevazione richiesta).",
+    },
+    tcp_congestion_bbr: {
+      name: "Ping stabile anche con la linea occupata (BBR2)",
+      description:
+        "Windows usa CUBIC, che accelera finché un buffer da qualche parte non trabocca: è il motivo per cui il ping sale appena qualcun altro in casa scarica qualcosa. BBR2 misura la banda reale e il tempo di andata e ritorno della linea e regola il ritmo di conseguenza, così il tubo si riempie senza riempire la coda. Microsoft include BBR2 in Windows 11; questo passa il profilo Internet a BBR2 e sa tornare esattamente a com'era (richiede diritti di amministratore).",
     },
     taskbar_align_left: {
       name: "Allinea la barra delle applicazioni a sinistra",
@@ -1991,6 +2051,35 @@ const en: Strings = {
     accountRefreshFailed:
       "We couldn't verify your account status. What's shown here may be out of date — check your connection or try again later.",
   },
+  x3d: {
+    title: "3D V-Cache die aligner",
+    subtitle:
+      "On a two-die Ryzen X3D only one die carries the stacked cache. Windows does not know which, and spreads a game across both - every access that crosses the dies pays an Infinity Fabric round trip.",
+    cpuLabel: "Processor",
+    readyHeadline: "V-Cache die found: {cores} threads",
+    readyBody: "Pin a game to this die and every one of its threads stays where the cache is.",
+    singleDie:
+      "This processor has a single die: every core already sees the same cache, so there is nothing to align. The feature appears on its own on a two-die CPU with an asymmetric cache.",
+    uniformCache:
+      "This processor has several dies, all with the same amount of cache. Moving a game between them would change nothing, so the feature stays off.",
+    unavailable: "Windows did not return a cache map for this processor.",
+    dieLabel: "Die {index}",
+    dieCache: "{mb} MB L3",
+    dieThreads: "{count} threads",
+    vcacheBadge: "V-Cache",
+    processesTitle: "Running processes",
+    processesHint: "Busiest first. Pick the game and pin it to the cache die.",
+    refresh: "Refresh",
+    refreshing: "Reading...",
+    align: "Align",
+    reset: "Reset",
+    alignedBadge: "Aligned",
+    noProcesses: "No process large enough to be worth listing.",
+    persistenceNote:
+      "Affinity belongs to the running process: it is gone when the game closes and has to be set again on the next launch. No system setting is changed.",
+    alignedToast: "{name} pinned to the V-Cache die.",
+    resetToast: "{name} returned to every core.",
+  },
   hardware: {
     intro:
       "Read straight from your hardware's own sensors. Where a sensor doesn't exist we say so, instead of showing a number nobody can verify.",
@@ -2372,6 +2461,11 @@ const en: Strings = {
       name: "Open every folder instantly",
       description:
         "Explorer inspects a folder's contents to guess whether it is Pictures, Music or Documents, and a folder holding thousands of media files can hang for seconds while it decides. This pins every folder to the general layout so it opens at once (HKCU, no elevation required).",
+    },
+    tcp_congestion_bbr: {
+      name: "Keep latency low when the line is busy (BBR2)",
+      description:
+        "Windows uses CUBIC, which speeds up until a buffer somewhere overflows - which is why your ping climbs the moment someone else in the house starts a download. BBR2 measures the line's real bandwidth and round trip instead and paces traffic to fit, so the pipe fills without the queue filling. Microsoft ships BBR2 in Windows 11; this switches the Internet template over to it, and switches back to exactly what was there before (requires administrator rights).",
     },
     taskbar_align_left: {
       name: "Align the taskbar to the left",
@@ -2904,6 +2998,36 @@ const fr: Strings = {
     accountRefreshFailed:
       "Impossible de vérifier l'état de votre compte. Les informations affichées ici peuvent être obsolètes — vérifiez votre connexion ou réessayez plus tard.",
   },
+  x3d: {
+    title: "Aligneur de die 3D V-Cache",
+    subtitle:
+      "Sur un Ryzen X3D à deux dies, un seul porte le cache empilé. Windows ignore lequel et répartit le jeu sur les deux : chaque accès qui traverse les dies paie un aller-retour sur l'Infinity Fabric.",
+    cpuLabel: "Processeur",
+    readyHeadline: "Die V-Cache trouvé : {cores} threads",
+    readyBody:
+      "Épinglez un jeu sur ce die et tous ses threads restent là où le cache est le plus grand.",
+    singleDie:
+      "Ce processeur n'a qu'un seul die : tous les cœurs voient déjà le même cache, il n'y a donc rien à aligner. La fonction apparaît d'elle-même sur un processeur à deux dies au cache asymétrique.",
+    uniformCache:
+      "Ce processeur a plusieurs dies, tous avec la même quantité de cache. Déplacer un jeu de l'un à l'autre ne changerait rien, la fonction reste donc désactivée.",
+    unavailable: "Windows n'a pas renvoyé de carte des caches pour ce processeur.",
+    dieLabel: "Die {index}",
+    dieCache: "{mb} Mo L3",
+    dieThreads: "{count} threads",
+    vcacheBadge: "V-Cache",
+    processesTitle: "Processus en cours",
+    processesHint: "Les plus actifs en tête. Choisissez le jeu et épinglez-le sur le die du cache.",
+    refresh: "Actualiser",
+    refreshing: "Lecture...",
+    align: "Aligner",
+    reset: "Réinitialiser",
+    alignedBadge: "Aligné",
+    noProcesses: "Aucun processus assez important à lister.",
+    persistenceNote:
+      "L'affinité appartient au processus en cours : elle disparaît à la fermeture du jeu et doit être refaite au lancement suivant. Aucun réglage système n'est modifié.",
+    alignedToast: "{name} épinglé sur le die V-Cache.",
+    resetToast: "{name} rendu à tous les cœurs.",
+  },
   hardware: {
     intro:
       "Lu directement sur les capteurs de votre matériel. Là où un capteur n'existe pas, nous le disons, au lieu d'afficher un chiffre que personne ne peut vérifier.",
@@ -3289,6 +3413,11 @@ const fr: Strings = {
       name: "Ouvrir chaque dossier instantanément",
       description:
         "L'Explorateur inspecte le contenu d'un dossier pour deviner s'il s'agit d'Images, Musique ou Documents, et un dossier contenant des milliers de fichiers multimédias peut se figer plusieurs secondes pendant qu'il décide. Ceci fixe tous les dossiers sur la disposition générale, pour qu'ils s'ouvrent aussitôt (HKCU, aucune élévation requise).",
+    },
+    tcp_congestion_bbr: {
+      name: "Un ping stable même quand la ligne est chargée (BBR2)",
+      description:
+        "Windows utilise CUBIC, qui accélère jusqu'à ce qu'un tampon déborde quelque part : c'est pourquoi votre ping grimpe dès que quelqu'un d'autre lance un téléchargement. BBR2 mesure la bande passante réelle et le temps d'aller-retour de la ligne, et cadence le trafic en conséquence : le tuyau se remplit sans remplir la file. Microsoft fournit BBR2 dans Windows 11 ; ceci bascule le profil Internet dessus et sait revenir exactement à l'état précédent (droits administrateur requis).",
     },
     taskbar_align_left: {
       name: "Aligner la barre des tâches à gauche",
@@ -3818,6 +3947,35 @@ const es: Strings = {
     accountRefreshFailed:
       "No pudimos verificar el estado de tu cuenta. Lo que se muestra aquí puede estar desactualizado: revisa tu conexión o inténtalo más tarde.",
   },
+  x3d: {
+    title: "Alineador de die 3D V-Cache",
+    subtitle:
+      "En un Ryzen X3D de dos dies solo uno lleva la caché apilada. Windows no sabe cuál es y reparte el juego entre ambos: cada acceso que cruza los dies paga un viaje por el Infinity Fabric.",
+    cpuLabel: "Procesador",
+    readyHeadline: "Die con V-Cache encontrado: {cores} hilos",
+    readyBody: "Fija un juego a este die y todos sus hilos se quedan donde está la caché grande.",
+    singleDie:
+      "Este procesador tiene un solo die: todos los núcleos ya ven la misma caché, así que no hay nada que alinear. La función aparece sola en una CPU de dos dies con caché asimétrica.",
+    uniformCache:
+      "Este procesador tiene varios dies, todos con la misma cantidad de caché. Mover un juego de uno a otro no cambiaría nada, así que la función sigue desactivada.",
+    unavailable: "Windows no devolvió un mapa de cachés para este procesador.",
+    dieLabel: "Die {index}",
+    dieCache: "{mb} MB L3",
+    dieThreads: "{count} hilos",
+    vcacheBadge: "V-Cache",
+    processesTitle: "Procesos en ejecución",
+    processesHint: "Los más activos arriba. Elige el juego y fíjalo al die de la caché.",
+    refresh: "Actualizar",
+    refreshing: "Leyendo...",
+    align: "Alinear",
+    reset: "Restablecer",
+    alignedBadge: "Alineado",
+    noProcesses: "Ningún proceso lo bastante grande como para listarlo.",
+    persistenceNote:
+      "La afinidad pertenece al proceso en ejecución: desaparece al cerrar el juego y hay que volver a fijarla en el siguiente arranque. No se cambia ningún ajuste del sistema.",
+    alignedToast: "{name} fijado al die con V-Cache.",
+    resetToast: "{name} devuelto a todos los núcleos.",
+  },
   hardware: {
     intro:
       "Leído directamente de los sensores de tu hardware. Donde no existe un sensor te lo decimos, en lugar de mostrar un número que nadie puede verificar.",
@@ -4204,6 +4362,11 @@ const es: Strings = {
       name: "Abrir cada carpeta al instante",
       description:
         "El Explorador inspecciona el contenido de una carpeta para adivinar si es Imágenes, Música o Documentos, y una carpeta con miles de archivos multimedia puede quedarse bloqueada varios segundos mientras decide. Esto fija todas las carpetas al diseño general, para que se abran de inmediato (HKCU, sin elevación).",
+    },
+    tcp_congestion_bbr: {
+      name: "Ping estable aunque la línea esté ocupada (BBR2)",
+      description:
+        "Windows usa CUBIC, que acelera hasta que algún búfer se desborda: por eso el ping sube en cuanto otra persona de la casa empieza una descarga. BBR2 mide el ancho de banda real y el tiempo de ida y vuelta de la línea y marca el ritmo en consecuencia, de modo que la tubería se llena sin llenar la cola. Microsoft incluye BBR2 en Windows 11; esto pasa la plantilla de Internet a BBR2 y sabe volver exactamente a como estaba (requiere permisos de administrador).",
     },
     taskbar_align_left: {
       name: "Alinear la barra de tareas a la izquierda",
@@ -4737,6 +4900,36 @@ const de: Strings = {
     accountRefreshFailed:
       "Wir konnten den Status Ihres Kontos nicht überprüfen. Die hier angezeigten Informationen sind möglicherweise veraltet — prüfen Sie Ihre Verbindung oder versuchen Sie es später erneut.",
   },
+  x3d: {
+    title: "3D-V-Cache-Die-Ausrichtung",
+    subtitle:
+      "Bei einem Ryzen X3D mit zwei Dies trägt nur eines den gestapelten Cache. Windows weiß nicht welches und verteilt ein Spiel auf beide — jeder Zugriff über die Die-Grenze kostet einen Umweg über die Infinity Fabric.",
+    cpuLabel: "Prozessor",
+    readyHeadline: "V-Cache-Die gefunden: {cores} Threads",
+    readyBody:
+      "Heften Sie ein Spiel an dieses Die, dann bleibt jeder seiner Threads dort, wo der Cache ist.",
+    singleDie:
+      "Dieser Prozessor hat nur ein Die: Alle Kerne sehen bereits denselben Cache, es gibt also nichts auszurichten. Die Funktion erscheint von selbst auf einer CPU mit zwei Dies und asymmetrischem Cache.",
+    uniformCache:
+      "Dieser Prozessor hat mehrere Dies, alle mit gleich viel Cache. Ein Spiel zwischen ihnen zu verschieben würde nichts ändern, die Funktion bleibt daher aus.",
+    unavailable: "Windows hat keine Cache-Karte für diesen Prozessor zurückgegeben.",
+    dieLabel: "Die {index}",
+    dieCache: "{mb} MB L3",
+    dieThreads: "{count} Threads",
+    vcacheBadge: "V-Cache",
+    processesTitle: "Laufende Prozesse",
+    processesHint: "Die aktivsten zuerst. Spiel auswählen und an das Cache-Die heften.",
+    refresh: "Aktualisieren",
+    refreshing: "Wird gelesen...",
+    align: "Ausrichten",
+    reset: "Zurücksetzen",
+    alignedBadge: "Ausgerichtet",
+    noProcesses: "Kein Prozess groß genug, um ihn aufzuführen.",
+    persistenceNote:
+      "Die Affinität gehört zum laufenden Prozess: Sie ist weg, sobald das Spiel schließt, und muss beim nächsten Start erneut gesetzt werden. Keine Systemeinstellung wird geändert.",
+    alignedToast: "{name} an das V-Cache-Die geheftet.",
+    resetToast: "{name} wieder auf allen Kernen.",
+  },
   hardware: {
     intro:
       "Direkt von den Sensoren Ihrer Hardware gelesen. Wo es keinen Sensor gibt, sagen wir es Ihnen, statt eine Zahl anzuzeigen, die niemand überprüfen kann.",
@@ -5125,6 +5318,11 @@ const de: Strings = {
       name: "Jeden Ordner sofort öffnen",
       description:
         "Der Explorer durchsucht den Inhalt eines Ordners, um zu raten, ob es Bilder, Musik oder Dokumente sind, und ein Ordner mit Tausenden Mediendateien kann dabei sekundenlang hängen. Dies legt alle Ordner auf das allgemeine Layout fest, sodass sie sofort öffnen (HKCU, keine Erhöhung nötig).",
+    },
+    tcp_congestion_bbr: {
+      name: "Niedrige Latenz auch bei ausgelasteter Leitung (BBR2)",
+      description:
+        "Windows verwendet CUBIC, das so lange beschleunigt, bis irgendwo ein Puffer überläuft — deshalb steigt der Ping, sobald jemand anders im Haus einen Download startet. BBR2 misst stattdessen die tatsächliche Bandbreite und die Umlaufzeit der Leitung und taktet den Verkehr passend dazu, sodass die Leitung voll wird, ohne dass die Warteschlange voll wird. Microsoft liefert BBR2 mit Windows 11 aus; dies stellt die Internet-Vorlage darauf um und stellt exakt den vorherigen Zustand wieder her (erfordert Administratorrechte).",
     },
     taskbar_align_left: {
       name: "Taskleiste links ausrichten",

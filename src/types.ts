@@ -282,3 +282,33 @@ export type CleanupPreview = {
   truncated: boolean;
   accessible: boolean;
 };
+
+/** One cache-coherent CPU die, from Rust `x3d::Ccd`. */
+export type Ccd = {
+  index: number;
+  /** Affinity mask. Arrives as a JSON number: safe up to 53 logical
+   *  processors, which is far past where this feature applies. */
+  mask: number;
+  logical_count: number;
+  l3_bytes: number;
+};
+
+export type X3dStatus = "ready" | "single_die" | "uniform_cache" | "unavailable";
+
+export type X3dReport = {
+  cpu: string;
+  ccds: Ccd[];
+  /** Index into `ccds`, and `null` unless `status` is "ready". */
+  vcache_ccd: number | null;
+  status: X3dStatus;
+};
+
+export type ProcessEntry = {
+  pid: number;
+  name: string;
+  cpu_pct: number;
+  memory_bytes: number;
+  /** `null` when the process could not be opened — usually because it runs
+   *  with higher privileges than this app. */
+  affinity: number | null;
+};

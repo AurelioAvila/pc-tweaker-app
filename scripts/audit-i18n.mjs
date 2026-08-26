@@ -162,6 +162,27 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // "Hardware", "Live", "warm", "Driver", "Normal" and "Standard" are the
+  // words these languages actually use here — translating them would produce
+  // something no native speaker would write.
+  "it:tabs.hardware",
+  "es:tabs.hardware",
+  "de:tabs.hardware",
+  "de:hardware.liveBadge",
+  "it:hardware.gpuDriver",
+  "de:hardware.tempWarm",
+  "fr:hardware.verdictNormal",
+  "es:hardware.verdictNormal",
+  "de:hardware.verdictNormal",
+  "it:hardware.modeStandard",
+  "fr:hardware.modeStandard",
+  "de:hardware.modeStandard",
+  // "min {min}° · max {max}°" is abbreviations and symbols only: there is no
+  // language in it to translate.
+  "it:hardware.traceRange",
+  "fr:hardware.traceRange",
+  "de:hardware.traceRange",
+
   // "Redaxa" is a product name (the sibling promo card), not a translatable word.
   "it:redaxaPromo.title",
   "fr:redaxaPromo.title",

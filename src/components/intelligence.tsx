@@ -182,6 +182,7 @@ export function LedgerPanel({
 }) {
   const [entries, setEntries] = useState<AuditEntry[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
 
   function load() {
     invoke<AuditEntry[]>("list_audit_log")
@@ -219,8 +220,32 @@ export function LedgerPanel({
 
   return (
     <div className="signal relative mb-6 overflow-hidden rounded-2xl border border-line bg-surface-1 p-5">
-      <h2 className="font-semibold text-ink">{s.ledger.title}</h2>
-      <p className="mt-0.5 text-sm text-ink-3">{s.ledger.subtitle}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="font-semibold text-ink">{s.ledger.title}</h2>
+          <p className="mt-0.5 text-sm text-ink-3">{s.ledger.subtitle}</p>
+        </div>
+        {/* Only offered when there is something to clear, so the control
+            never implies history exists where none does. */}
+        {entries.length > 0 && (
+          <button
+            onClick={() => {
+              setClearing(true);
+              invoke("clear_audit_log")
+                .then(() => {
+                  setEntries([]);
+                  pushToast("success", s.ledger.cleared);
+                })
+                .catch((e: unknown) => pushToast("error", String(e)))
+                .finally(() => setClearing(false));
+            }}
+            disabled={clearing}
+            className="shrink-0 rounded-xl border border-line-2 px-4 py-2 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-accent/40 hover:text-ink disabled:cursor-wait disabled:opacity-60"
+          >
+            {clearing ? s.ledger.clearing : s.ledger.clear}
+          </button>
+        )}
+      </div>
 
       {entries.length === 0 ? (
         <p className="mt-4 text-sm text-ink-3">{s.ledger.empty}</p>

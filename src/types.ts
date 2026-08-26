@@ -6,7 +6,8 @@ export type AuthState =
 export type Category = "performance" | "privacy" | "ui" | "manutenzione" | "gaming";
 
 /** Navigable sections: the tweak categories plus the two standalone screens. */
-export type Section = Category | "scan" | "health" | "startup" | "profiles" | "pricing" | "ledger";
+export type Section =
+  Category | "scan" | "health" | "hardware" | "startup" | "profiles" | "pricing" | "ledger";
 
 export type TweakInfo = {
   id: string;
@@ -138,6 +139,97 @@ export type SystemStats = {
   disk_total: number;
   os_name: string;
   uptime_secs: number;
+};
+
+/** Mirrors Rust `thermals::GpuReading`. Every optional field is `null` when
+ *  the card exposes no such sensor — which is not the same as a zero reading,
+ *  and the UI must keep the two apart. */
+export type GpuReading = {
+  name: string;
+  temp_c: number | null;
+  utilization_pct: number | null;
+  vram_used_mb: number | null;
+  vram_total_mb: number | null;
+  fan_pct: number | null;
+  power_w: number | null;
+  power_limit_w: number | null;
+  driver_version: string | null;
+};
+
+export type ThermalReport = {
+  cpu_temp_c: number | null;
+  /** "acpi" | "unavailable" — the provenance shown to the user. */
+  cpu_source: string;
+  gpus: GpuReading[];
+  /** "nvidia-smi" | "none". */
+  gpu_source: string;
+};
+
+/** Mirrors Rust `drivers::DriverEntry`. `tier` is an age band only: this app
+ *  never claims a newer driver exists, because Windows cannot tell it that. */
+export type DriverEntry = {
+  device: string;
+  version: string;
+  date: string;
+  age_days: number;
+  class: string;
+  provider: string;
+  tier: "current" | "aging" | "stale";
+  vendor_url: string | null;
+  /** Classes where a stale driver has a felt effect; these lead the list. */
+  important: boolean;
+};
+
+/** Mirrors Rust `gpupower::GpuPowerInfo`. Watts are whole numbers because
+ *  nvidia-smi only accepts whole watts. */
+export type GpuPowerInfo = {
+  supported: boolean;
+  current_w: number | null;
+  default_w: number | null;
+  min_w: number | null;
+  max_w: number | null;
+  default_is_max: boolean;
+  max_clock_mhz: number | null;
+  current_clock_mhz: number | null;
+};
+
+export type DriverAudit = {
+  entries: DriverEntry[];
+  excluded_inbox: number;
+  /** Every driver looked at, whoever signed it. */
+  total_scanned: number;
+  /** Device classes walked, so the UI can say what "all of them" meant. */
+  classes_scanned: number;
+};
+
+/** One step of the driver scan: which class is being read, and where that
+ *  sits in the total. Emitted by Rust as `driver-scan-progress`. */
+export type ScanProgress = {
+  done: number;
+  total: number;
+  class: string;
+};
+
+/** One pending driver update from the Windows Update catalogue. */
+export type DriverUpdate = {
+  title: string;
+  /** `null` when the catalogue states no size, rather than a 0 that would
+   *  read as "free". */
+  size_mb: number | null;
+};
+
+export type UpdateSearchResult = {
+  updates: DriverUpdate[];
+  /** Set when the search itself could not run, which is a different thing
+   *  from finding nothing. */
+  error: string | null;
+};
+
+export type InstallOutcome = {
+  installed: number;
+  failed: number;
+  /** Straight from Windows Update's own result, not inferred. */
+  reboot_required: boolean;
 };
 
 export type RamCleanResult = {

@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { format, Strings } from "../i18n";
+import { readCachedDriverAudit, writeCachedDriverAudit } from "../lib";
 import {
   DriverAudit,
   DriverEntry,
@@ -840,8 +841,12 @@ function DriverRow({ entry, s }: { entry: DriverEntry; s: Strings }) {
  * whole scan again — which is what made it look like the app was rescanning
  * on its own. The cache is only replaced by an explicit Rescan.
  */
-let cachedAudit: DriverAudit | null = null;
-let cachedAuditAt: Date | null = null;
+// Seeded from localStorage so a relaunch shows the last scan instead of
+// paying sixteen seconds again for nothing that changed. Module-level state
+// then carries it for the rest of the session, the same as before.
+const storedAudit = readCachedDriverAudit();
+let cachedAudit: DriverAudit | null = storedAudit?.audit ?? null;
+let cachedAuditAt: Date | null = storedAudit?.at ?? null;
 
 export function DriversPanel({
   s,
@@ -854,6 +859,10 @@ export function DriversPanel({
   const [checkedAt, setCheckedAt] = useState<Date | null>(cachedAuditAt);
   const [progress, setProgress] = useState<ScanProgress | null>(null);
   const [updates, setUpdates] = useState<UpdateSearchResult | null>(null);
+  // Every result starts checked: "download all" is the default action, and
+  // unchecking one is how you get the custom subset instead of it being a
+  // second, separate flow.
+  const [selectedTitles, setSelectedTitles] = useState<Set<string>>(new Set());
   const [searching, setSearching] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [outcome, setOutcome] = useState<InstallOutcome | null>(null);
@@ -894,6 +903,7 @@ export function DriversPanel({
         const at = new Date();
         cachedAudit = a;
         cachedAuditAt = at;
+        writeCachedDriverAudit(a, at);
         setAudit(a);
         setCheckedAt(at);
       })
@@ -927,6 +937,7 @@ export function DriversPanel({
         const at = new Date();
         cachedAudit = a;
         cachedAuditAt = at;
+        writeCachedDriverAudit(a, at);
         setAudit(a);
         setCheckedAt(at);
         setProgress(null);
@@ -1095,17 +1106,27 @@ export function DriversPanel({
             <p className="mt-4 text-[12.5px] text-ink-3">{s.hardware.driversNone}</p>
           )}
 
-          {/* Updating happens through Windows Update, which is the channel
-              that actually ships signed vendor drivers matched to the exact
-              hardware id. */}
+          {/* This is a labeled sub-section on purpose, not a plain button:
+              it is a genuinely different, narrower thing than the driver
+              list above. That list reads installed-driver age from this PC;
+              this queries Microsoft's own catalogue, which many vendors -
+              onboard audio and chipset drivers especially - never publish
+              to at all. The label exists so nobody reads this as "checked
+              your Realtek/AMD/NVIDIA drivers specifically and they're fine". */}
           <div className="mt-4 border-t border-line pt-4">
-            <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[10.5px] font-bold uppercase tracking-wider text-ink-3">
+              {s.hardware.winUpdateLabel}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
                 onClick={() => {
                   setSearching(true);
                   setOutcome(null);
                   invoke<UpdateSearchResult>("search_driver_updates")
-                    .then((r) => setUpdates(r))
+                    .then((r) => {
+                      setUpdates(r);
+                      setSelectedTitles(new Set(r.updates.map((u) => u.title)));
+                    })
                     .catch((e: unknown) => pushToast("error", String(e)))
                     .finally(() => setSearching(false));
                 }}
@@ -1121,23 +1142,46 @@ export function DriversPanel({
                 <button
                   onClick={() => {
                     setInstalling(true);
-                    invoke<InstallOutcome>("install_driver_updates")
+                    invoke<InstallOutcome>("install_driver_updates", {
+                      titles: Array.from(selectedTitles),
+                    })
                       .then((r) => {
                         setOutcome(r);
                         setUpdates(null);
+                        setSelectedTitles(new Set());
                         if (r.reboot_required) setRebootNeeded(true);
                       })
                       .catch((e: unknown) => pushToast("error", String(e)))
                       .finally(() => setInstalling(false));
                   }}
-                  disabled={installing}
+                  disabled={installing || selectedTitles.size === 0}
                   className="rounded-xl bg-accent px-4 py-2 text-[12.5px] font-bold text-on-accent transition-transform hover:scale-[1.02] disabled:cursor-wait disabled:opacity-60"
                 >
                   {installing
                     ? s.hardware.winUpdateInstalling
                     : format(s.hardware.winUpdateInstall, {
-                        count: String(updates.updates.length),
+                        count: String(selectedTitles.size),
                       })}
+                </button>
+              )}
+
+              {/* Only worth offering a bulk toggle once there is more than
+                  one row to toggle - with a single update, the row's own
+                  checkbox already is the bulk control. */}
+              {updates !== null && updates.updates.length > 1 && (
+                <button
+                  onClick={() => {
+                    setSelectedTitles((prev) =>
+                      prev.size === updates.updates.length
+                        ? new Set()
+                        : new Set(updates.updates.map((u) => u.title)),
+                    );
+                  }}
+                  className="text-[12px] font-semibold text-accent transition-opacity hover:opacity-80"
+                >
+                  {selectedTitles.size === updates.updates.length
+                    ? s.scan.deselectAll
+                    : s.scan.selectAll}
                 </button>
               )}
             </div>
@@ -1148,20 +1192,45 @@ export function DriversPanel({
               </p>
             )}
 
+            {/* Not emerald: "nothing pending" isn't good news the way a
+                clean scan is - it's just what Windows Update happened to
+                have, which can be nothing even for a driver years old. */}
             {updates !== null && updates.error === null && updates.updates.length === 0 && (
-              <p className="mt-2 text-[12px] text-emerald-300">{s.hardware.winUpdateNone}</p>
+              <p className="mt-2 text-[12px] leading-relaxed text-ink-3">
+                {s.hardware.winUpdateNone}
+              </p>
             )}
 
             {updates !== null && updates.updates.length > 0 && (
               <ul className="mt-2 space-y-1">
-                {updates.updates.map((u: DriverUpdate) => (
-                  <li key={u.title} className="text-[12px] text-ink-2">
-                    · {u.title}
-                    {u.size_mb !== null && (
-                      <span className="type-data text-ink-3"> ({String(u.size_mb)} MB)</span>
-                    )}
-                  </li>
-                ))}
+                {updates.updates.map((u: DriverUpdate) => {
+                  const checked = selectedTitles.has(u.title);
+                  return (
+                    <li key={u.title}>
+                      <label className="flex cursor-pointer items-start gap-2 rounded-lg px-1 py-0.5 text-[12px] text-ink-2 hover:bg-surface-2">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => {
+                            setSelectedTitles((prev) => {
+                              const next = new Set(prev);
+                              if (checked) next.delete(u.title);
+                              else next.add(u.title);
+                              return next;
+                            });
+                          }}
+                          className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-[var(--accent)]"
+                        />
+                        <span>
+                          {u.title}
+                          {u.size_mb !== null && (
+                            <span className="type-data text-ink-3"> ({String(u.size_mb)} MB)</span>
+                          )}
+                        </span>
+                      </label>
+                    </li>
+                  );
+                })}
               </ul>
             )}
 

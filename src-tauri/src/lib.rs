@@ -833,7 +833,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             }
         }
         "--elevated-driverupdate" => {
-            let result = driverupdate::install_elevated(&dir);
+            let result = driverupdate::install_elevated(&dir, id);
             audit::record(
                 "driver-update",
                 "windows-update",

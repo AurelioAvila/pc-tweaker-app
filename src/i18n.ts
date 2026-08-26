@@ -570,6 +570,7 @@ export interface Strings {
     scanReading: string; // uses {class}
     scanCount: string; // uses {done}, {total} and {pct}
     driversScannedAll: string; // uses {total} and {classes}
+    winUpdateLabel: string;
     winUpdateButton: string;
     winUpdateNote: string;
     winUpdateOpened: string;
@@ -1259,14 +1260,16 @@ const it: Strings = {
     scanReading: "Lettura classe {class}",
     scanCount: "{done}/{total} · {pct}%",
     driversScannedAll: "{total} driver esaminati in {classes} categorie",
-    winUpdateButton: "Cerca aggiornamenti driver",
+    winUpdateLabel: "Windows Update",
+    winUpdateButton: "Cerca su Windows Update",
     winUpdateNote:
-      "Apre Windows Update, il canale che installa davvero i driver firmati dai produttori. PC Tweaker non scarica pacchetti driver per conto suo: non esiste un'API dei produttori per sapere qual è la versione giusta per il tuo esatto dispositivo, e installare il driver video sbagliato è uno dei pochi errori che può lasciarti senza schermo.",
+      "Questo controlla solo il catalogo di Windows Update, non i driver specifici elencati sopra: molti produttori (soprattutto per audio e chipset integrati) non pubblicano mai i loro aggiornamenti lì, solo sul proprio sito. PC Tweaker non scarica pacchetti driver per conto suo: non esiste un'API dei produttori per sapere qual è la versione giusta per il tuo esatto dispositivo, e installare il driver video sbagliato è uno dei pochi errori che può lasciarti senza schermo.",
     winUpdateOpened: "Windows Update aperto.",
     winUpdateSearching: "Ricerca in corso...",
     winUpdateInstall: "Scarica e installa ({count})",
     winUpdateInstalling: "Download e installazione...",
-    winUpdateNone: "Nessun aggiornamento driver in attesa: sei già allineato.",
+    winUpdateNone:
+      "Windows Update non ha nulla di più recente da offrire, anche per i driver segnati come vecchi qui sopra: molti produttori pubblicano gli aggiornamenti a modo loro, non tramite Windows Update.",
     winUpdateFailed: "Ricerca non riuscita: {detail}",
     winUpdateDone: "Installati {installed}, non riusciti {failed}.",
     rebootTitle: "Windows chiede un riavvio",
@@ -2215,14 +2218,16 @@ const en: Strings = {
     scanReading: "Reading class {class}",
     scanCount: "{done}/{total} · {pct}%",
     driversScannedAll: "{total} drivers examined across {classes} categories",
-    winUpdateButton: "Check for driver updates",
+    winUpdateLabel: "Windows Update",
+    winUpdateButton: "Check Windows Update",
     winUpdateNote:
-      "Opens Windows Update, the channel that actually installs vendor-signed drivers. PC Tweaker does not download driver packages itself: there is no vendor API for what is current for your exact device, and installing the wrong display driver is one of the few mistakes that can leave you without a screen.",
+      "This only checks Windows Update's own catalogue, not the specific drivers listed above: many vendors - onboard audio and chipset ones especially - never publish updates there, only on their own site. PC Tweaker does not download driver packages itself: there is no vendor API for what is current for your exact device, and installing the wrong display driver is one of the few mistakes that can leave you without a screen.",
     winUpdateOpened: "Windows Update opened.",
     winUpdateSearching: "Searching...",
     winUpdateInstall: "Download and install ({count})",
     winUpdateInstalling: "Downloading and installing...",
-    winUpdateNone: "No driver updates pending: you're already up to date.",
+    winUpdateNone:
+      "Windows Update has nothing newer to offer, even for drivers shown as old above: many vendors publish updates their own way, not through Windows Update.",
     winUpdateFailed: "Search failed: {detail}",
     winUpdateDone: "Installed {installed}, failed {failed}.",
     rebootTitle: "Windows is asking for a restart",
@@ -3180,14 +3185,16 @@ const fr: Strings = {
     scanReading: "Lecture de la classe {class}",
     scanCount: "{done}/{total} · {pct}%",
     driversScannedAll: "{total} pilotes examinés dans {classes} catégories",
-    winUpdateButton: "Rechercher des pilotes",
+    winUpdateLabel: "Windows Update",
+    winUpdateButton: "Rechercher sur Windows Update",
     winUpdateNote:
-      "Ouvre Windows Update, le canal qui installe réellement les pilotes signés par les fabricants. PC Tweaker ne télécharge pas de paquets de pilotes lui-même : il n'existe aucune API constructeur indiquant la version correcte pour votre appareil précis, et installer le mauvais pilote graphique est l'une des rares erreurs qui peut vous laisser sans écran.",
+      "Ceci vérifie uniquement le catalogue de Windows Update, pas les pilotes précis listés ci-dessus : de nombreux fabricants - surtout pour l'audio et le chipset intégrés - ne publient jamais leurs mises à jour là, seulement sur leur propre site. PC Tweaker ne télécharge pas de paquets de pilotes lui-même : il n'existe aucune API constructeur indiquant la version correcte pour votre appareil précis, et installer le mauvais pilote graphique est l'une des rares erreurs qui peut vous laisser sans écran.",
     winUpdateOpened: "Windows Update ouvert.",
     winUpdateSearching: "Recherche...",
     winUpdateInstall: "Télécharger et installer ({count})",
     winUpdateInstalling: "Téléchargement et installation...",
-    winUpdateNone: "Aucune mise à jour de pilote en attente : vous êtes à jour.",
+    winUpdateNone:
+      "Windows Update n'a rien de plus récent à proposer, même pour les pilotes signalés comme anciens ci-dessus : de nombreux fabricants publient leurs mises à jour à leur façon, pas via Windows Update.",
     winUpdateFailed: "Échec de la recherche : {detail}",
     winUpdateDone: "Installés {installed}, échoués {failed}.",
     rebootTitle: "Windows demande un redémarrage",
@@ -4144,14 +4151,16 @@ const es: Strings = {
     scanReading: "Leyendo la clase {class}",
     scanCount: "{done}/{total} · {pct}%",
     driversScannedAll: "{total} controladores examinados en {classes} categorías",
-    winUpdateButton: "Buscar actualizaciones de controladores",
+    winUpdateLabel: "Windows Update",
+    winUpdateButton: "Buscar en Windows Update",
     winUpdateNote:
-      "Abre Windows Update, el canal que realmente instala controladores firmados por los fabricantes. PC Tweaker no descarga paquetes de controladores por su cuenta: no existe una API del fabricante que diga cuál es la versión correcta para tu dispositivo exacto, e instalar el controlador de vídeo equivocado es uno de los pocos errores que puede dejarte sin pantalla.",
+      "Esto solo revisa el catálogo propio de Windows Update, no los controladores concretos listados arriba: muchos fabricantes -sobre todo de audio y chipset integrados- nunca publican sus actualizaciones ahí, solo en su propio sitio. PC Tweaker no descarga paquetes de controladores por su cuenta: no existe una API del fabricante que diga cuál es la versión correcta para tu dispositivo exacto, e instalar el controlador de vídeo equivocado es uno de los pocos errores que puede dejarte sin pantalla.",
     winUpdateOpened: "Windows Update abierto.",
     winUpdateSearching: "Buscando...",
     winUpdateInstall: "Descargar e instalar ({count})",
     winUpdateInstalling: "Descargando e instalando...",
-    winUpdateNone: "No hay actualizaciones de controladores pendientes: ya estás al día.",
+    winUpdateNone:
+      "Windows Update no tiene nada más reciente que ofrecer, incluso para los controladores marcados como antiguos arriba: muchos fabricantes publican sus actualizaciones a su manera, no a través de Windows Update.",
     winUpdateFailed: "La búsqueda falló: {detail}",
     winUpdateDone: "Instalados {installed}, fallidos {failed}.",
     rebootTitle: "Windows pide reiniciar",
@@ -5115,14 +5124,16 @@ const de: Strings = {
     scanReading: "Klasse {class} wird gelesen",
     scanCount: "{done}/{total} · {pct}%",
     driversScannedAll: "{total} Treiber in {classes} Kategorien geprüft",
-    winUpdateButton: "Nach Treiber-Updates suchen",
+    winUpdateLabel: "Windows Update",
+    winUpdateButton: "In Windows Update suchen",
     winUpdateNote:
-      "Öffnet Windows Update — den Kanal, der herstellersignierte Treiber tatsächlich installiert. PC Tweaker lädt keine Treiberpakete selbst herunter: Es gibt keine Hersteller-API dafür, was für genau Ihr Gerät aktuell ist, und den falschen Grafiktreiber zu installieren ist einer der wenigen Fehler, die Sie ohne Bild zurücklassen können.",
+      "Dies prüft nur den eigenen Katalog von Windows Update, nicht die oben aufgeführten einzelnen Treiber: Viele Hersteller - besonders bei Onboard-Audio und Chipsatz - veröffentlichen ihre Updates dort nie, nur auf der eigenen Website. PC Tweaker lädt keine Treiberpakete selbst herunter: Es gibt keine Hersteller-API dafür, was für genau Ihr Gerät aktuell ist, und den falschen Grafiktreiber zu installieren ist einer der wenigen Fehler, die Sie ohne Bild zurücklassen können.",
     winUpdateOpened: "Windows Update geöffnet.",
     winUpdateSearching: "Wird gesucht...",
     winUpdateInstall: "Herunterladen und installieren ({count})",
     winUpdateInstalling: "Wird heruntergeladen und installiert...",
-    winUpdateNone: "Keine Treiber-Updates ausstehend: Sie sind aktuell.",
+    winUpdateNone:
+      "Windows Update hat nichts Neueres zu bieten, selbst für die oben als alt markierten Treiber: Viele Hersteller veröffentlichen Updates auf eigenem Weg, nicht über Windows Update.",
     winUpdateFailed: "Suche fehlgeschlagen: {detail}",
     winUpdateDone: "Installiert {installed}, fehlgeschlagen {failed}.",
     rebootTitle: "Windows verlangt einen Neustart",
@@ -6074,14 +6085,16 @@ const pt: Strings = {
     scanReading: "Lendo a classe {class}",
     scanCount: "{done}/{total} · {pct}%",
     driversScannedAll: "{total} drivers examinados em {classes} categorias",
-    winUpdateButton: "Verificar atualizações de driver",
+    winUpdateLabel: "Windows Update",
+    winUpdateButton: "Verificar no Windows Update",
     winUpdateNote:
-      "Abre o Windows Update, o canal que de fato instala drivers assinados pelo fabricante. O PC Tweaker não baixa pacotes de driver por conta própria: não existe uma API de fabricante para o que é atual para o seu dispositivo exato, e instalar o driver de vídeo errado é um dos poucos erros capazes de deixar você sem tela.",
+      "Isto verifica apenas o próprio catálogo do Windows Update, não os drivers específicos listados acima: muitos fabricantes - de áudio e chipset integrados especialmente - nunca publicam suas atualizações ali, só no próprio site. O PC Tweaker não baixa pacotes de driver por conta própria: não existe uma API de fabricante para o que é atual para o seu dispositivo exato, e instalar o driver de vídeo errado é um dos poucos erros capazes de deixar você sem tela.",
     winUpdateOpened: "Windows Update aberto.",
     winUpdateSearching: "Buscando...",
     winUpdateInstall: "Baixar e instalar ({count})",
     winUpdateInstalling: "Baixando e instalando...",
-    winUpdateNone: "Nenhuma atualização de driver pendente: você já está em dia.",
+    winUpdateNone:
+      "O Windows Update não tem nada mais recente a oferecer, mesmo para os drivers marcados como antigos acima: muitos fabricantes publicam suas atualizações à própria maneira, não pelo Windows Update.",
     winUpdateFailed: "A busca falhou: {detail}",
     winUpdateDone: "Instalados {installed}, falharam {failed}.",
     rebootTitle: "O Windows está pedindo um reinício",

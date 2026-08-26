@@ -345,6 +345,7 @@ export function AccountMenu({
   onForgotPassword,
   onUpgrade,
   onViewPlan,
+  pushToast,
 }: {
   s: Strings;
   lang: Lang;
@@ -371,6 +372,7 @@ export function AccountMenu({
   /** Opens the plans screen. Same destination for both tiers: a Free
    *  account is comparing, a Pro account is checking what it pays for. */
   onViewPlan: () => void;
+  pushToast: (kind: "success" | "error", message: string) => void;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
@@ -394,7 +396,12 @@ export function AccountMenu({
       localStorage.setItem(AVATAR_KEY, dataUrl);
       setAvatar(dataUrl);
     } catch {
-      // Not an image or canvas failed: keep whatever was there before.
+      // Not an image, or the browser refused to decode it: keep whatever was
+      // there before, but say so - a picker that silently does nothing on
+      // failure is indistinguishable from a picker that is simply broken.
+      // The thrown error's own message is internal/English and not meant for
+      // display, so the toast always uses the translated string instead.
+      pushToast("error", s.menu.photoFailed);
     }
   }
 

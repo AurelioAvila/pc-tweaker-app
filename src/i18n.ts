@@ -597,6 +597,7 @@ export interface Strings {
     errorReportsBody: string;
     changePhoto: string;
     removePhoto: string;
+    photoFailed: string;
     support: string;
     reportIssue: string;
     aboutBody: string;
@@ -1288,6 +1289,7 @@ const it: Strings = {
       "Se qualcosa fallisce, invia solo il messaggio di errore (mai dati personali) per aiutarci a correggere i bug. Disattivato di default.",
     changePhoto: "Cambia foto profilo",
     removePhoto: "Rimuovi foto",
+    photoFailed: "Impossibile usare questa immagine come foto profilo.",
     support: "Supporto",
     reportIssue: "Segnala un problema",
     aboutBody: "PC Tweaker — tweak di sistema con backup e ripristino automatico.",
@@ -2243,6 +2245,7 @@ const en: Strings = {
       "When something fails, send only the error message (never personal data) to help us fix bugs. Off by default.",
     changePhoto: "Change profile photo",
     removePhoto: "Remove photo",
+    photoFailed: "Could not use that image as a profile photo.",
     support: "Support",
     reportIssue: "Report an issue",
     aboutBody: "PC Tweaker — system tweaks with automatic backup and rollback.",
@@ -3207,6 +3210,7 @@ const fr: Strings = {
       "En cas d'échec, envoie uniquement le message d'erreur (jamais de données personnelles) pour nous aider à corriger les bugs. Désactivé par défaut.",
     changePhoto: "Changer la photo de profil",
     removePhoto: "Retirer la photo",
+    photoFailed: "Impossible d'utiliser cette image comme photo de profil.",
     support: "Assistance",
     reportIssue: "Signaler un problème",
     aboutBody: "PC Tweaker — optimisations système avec sauvegarde et restauration automatiques.",
@@ -4170,6 +4174,7 @@ const es: Strings = {
       "Si algo falla, envía solo el mensaje de error (nunca datos personales) para ayudarnos a corregir errores. Desactivado por defecto.",
     changePhoto: "Cambiar foto de perfil",
     removePhoto: "Quitar foto",
+    photoFailed: "No se pudo usar esa imagen como foto de perfil.",
     support: "Soporte",
     reportIssue: "Notificar un problema",
     aboutBody:
@@ -5140,6 +5145,7 @@ const de: Strings = {
       "Wenn etwas fehlschlägt, wird nur die Fehlermeldung gesendet (niemals persönliche Daten), um Fehler schneller zu beheben. Standardmäßig deaktiviert.",
     changePhoto: "Profilfoto ändern",
     removePhoto: "Foto entfernen",
+    photoFailed: "Dieses Bild konnte nicht als Profilfoto verwendet werden.",
     support: "Support",
     reportIssue: "Ein Problem melden",
     aboutBody:

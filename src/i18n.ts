@@ -343,6 +343,11 @@ export interface Strings {
     autoOff: string;
     autoEvery: string; // uses {interval}
     autoHint: string;
+    autoNext: string; // uses {time}
+    autoDue: string;
+    autoLast: string; // uses {time} and {amount}
+    autoNoneYet: string;
+    autoFailed: string; // uses {detail}
   };
   restore: {
     button: string;
@@ -454,6 +459,15 @@ export interface Strings {
     rolledBack: string; // uses {name}
     licenseNeedsRefresh: string;
     accountRefreshFailed: string;
+  };
+  titlebar: {
+    applied: string; // uses {applied} and {total}
+    cpu: string;
+    ram: string;
+    minimize: string;
+    maximize: string;
+    restore: string;
+    close: string;
   };
   x3d: {
     title: string;
@@ -574,6 +588,7 @@ export interface Strings {
     plan: string;
     planFree: string;
     planPro: string;
+    viewPlan: string;
     upgradeButton: string;
     language: string;
     theme: string;
@@ -984,6 +999,11 @@ const it: Strings = {
     autoEvery: "Ogni {interval}",
     autoHint:
       "Con la pulizia automatica attiva, PC Tweaker libera la RAM da solo a intervalli regolari finché l'app resta aperta.",
+    autoNext: "Prossima pulizia alle {time}",
+    autoDue: "Pulizia in corso...",
+    autoLast: "Ultima alle {time}: {amount} liberati",
+    autoNoneYet: "Nessuna pulizia automatica ancora eseguita.",
+    autoFailed: "Ultimo tentativo non riuscito: {detail}",
   },
   restore: {
     button: "Ripristina tutto",
@@ -1107,6 +1127,15 @@ const it: Strings = {
       "Non riusciamo a verificare il tuo abbonamento Pro offline da troppo tempo. Riconnettiti a internet e riprova.",
     accountRefreshFailed:
       "Non riusciamo a verificare lo stato del tuo account. Lo stato mostrato qui potrebbe non essere aggiornato — controlla la connessione o riprova più tardi.",
+  },
+  titlebar: {
+    applied: "{applied}/{total} attive",
+    cpu: "CPU",
+    ram: "RAM",
+    minimize: "Riduci a icona",
+    maximize: "Ingrandisci",
+    restore: "Ripristina",
+    close: "Chiudi",
   },
   x3d: {
     title: "Allineatore die 3D V-Cache",
@@ -1250,6 +1279,7 @@ const it: Strings = {
     plan: "Piano",
     planFree: "Gratuito",
     planPro: "Pro",
+    viewPlan: "Vedi il piano",
     upgradeButton: "Passa a Pro",
     language: "Lingua",
     theme: "Temi",
@@ -1927,6 +1957,11 @@ const en: Strings = {
     autoEvery: "Every {interval}",
     autoHint:
       "With automatic cleanup on, PC Tweaker frees RAM by itself at a regular interval for as long as the app stays open.",
+    autoNext: "Next cleanup at {time}",
+    autoDue: "Cleanup due now...",
+    autoLast: "Last at {time}: {amount} freed",
+    autoNoneYet: "No automatic cleanup has run yet.",
+    autoFailed: "The last attempt failed: {detail}",
   },
   restore: {
     button: "Restore all",
@@ -2050,6 +2085,15 @@ const en: Strings = {
       "We can't verify your Pro subscription after this long offline. Reconnect to the internet and try again.",
     accountRefreshFailed:
       "We couldn't verify your account status. What's shown here may be out of date — check your connection or try again later.",
+  },
+  titlebar: {
+    applied: "{applied}/{total} active",
+    cpu: "CPU",
+    ram: "RAM",
+    minimize: "Minimise",
+    maximize: "Maximise",
+    restore: "Restore",
+    close: "Close",
   },
   x3d: {
     title: "3D V-Cache die aligner",
@@ -2190,6 +2234,7 @@ const en: Strings = {
     plan: "Plan",
     planFree: "Free",
     planPro: "Pro",
+    viewPlan: "View your plan",
     upgradeButton: "Upgrade to Pro",
     language: "Language",
     theme: "Themes",
@@ -2872,6 +2917,11 @@ const fr: Strings = {
     autoEvery: "Toutes les {interval}",
     autoHint:
       "Avec le nettoyage automatique, PC Tweaker libère la RAM tout seul à intervalle régulier tant que l'application reste ouverte.",
+    autoNext: "Prochain nettoyage à {time}",
+    autoDue: "Nettoyage imminent...",
+    autoLast: "Dernier à {time} : {amount} libérés",
+    autoNoneYet: "Aucun nettoyage automatique n'a encore eu lieu.",
+    autoFailed: "La dernière tentative a échoué : {detail}",
   },
   restore: {
     button: "Tout restaurer",
@@ -2997,6 +3047,15 @@ const fr: Strings = {
       "Impossible de vérifier votre abonnement Pro après une si longue période hors ligne. Reconnectez-vous à internet et réessayez.",
     accountRefreshFailed:
       "Impossible de vérifier l'état de votre compte. Les informations affichées ici peuvent être obsolètes — vérifiez votre connexion ou réessayez plus tard.",
+  },
+  titlebar: {
+    applied: "{applied}/{total} actifs",
+    cpu: "Processeur",
+    ram: "Mémoire",
+    minimize: "Réduire",
+    maximize: "Agrandir",
+    restore: "Restaurer",
+    close: "Fermer",
   },
   x3d: {
     title: "Aligneur de die 3D V-Cache",
@@ -3139,6 +3198,7 @@ const fr: Strings = {
     plan: "Forfait",
     planFree: "Gratuit",
     planPro: "Pro",
+    viewPlan: "Voir votre forfait",
     upgradeButton: "Passer à Pro",
     language: "Langue",
     theme: "Thèmes",
@@ -3822,6 +3882,11 @@ const es: Strings = {
     autoEvery: "Cada {interval}",
     autoHint:
       "Con la limpieza automática activada, PC Tweaker libera la RAM por sí solo a intervalos regulares mientras la app siga abierta.",
+    autoNext: "Próxima limpieza a las {time}",
+    autoDue: "Limpieza inminente...",
+    autoLast: "Última a las {time}: {amount} liberados",
+    autoNoneYet: "Aún no se ha ejecutado ninguna limpieza automática.",
+    autoFailed: "El último intento falló: {detail}",
   },
   restore: {
     button: "Restaurar todo",
@@ -3946,6 +4011,15 @@ const es: Strings = {
       "No podemos verificar tu suscripción Pro tras tanto tiempo sin conexión. Reconectate a internet e inténtalo de nuevo.",
     accountRefreshFailed:
       "No pudimos verificar el estado de tu cuenta. Lo que se muestra aquí puede estar desactualizado: revisa tu conexión o inténtalo más tarde.",
+  },
+  titlebar: {
+    applied: "{applied}/{total} activos",
+    cpu: "CPU",
+    ram: "RAM",
+    minimize: "Minimizar",
+    maximize: "Maximizar",
+    restore: "Restaurar",
+    close: "Cerrar",
   },
   x3d: {
     title: "Alineador de die 3D V-Cache",
@@ -4087,6 +4161,7 @@ const es: Strings = {
     plan: "Plan",
     planFree: "Gratis",
     planPro: "Pro",
+    viewPlan: "Ver tu plan",
     upgradeButton: "Pasar a Pro",
     language: "Idioma",
     theme: "Temas",
@@ -4775,6 +4850,11 @@ const de: Strings = {
     autoEvery: "Alle {interval}",
     autoHint:
       "Bei aktiver automatischer Bereinigung gibt PC Tweaker den RAM selbstständig in regelmäßigen Abständen frei, solange die App geöffnet bleibt.",
+    autoNext: "Nächste Bereinigung um {time}",
+    autoDue: "Bereinigung steht an...",
+    autoLast: "Zuletzt um {time}: {amount} freigegeben",
+    autoNoneYet: "Es wurde noch keine automatische Bereinigung ausgeführt.",
+    autoFailed: "Der letzte Versuch ist fehlgeschlagen: {detail}",
   },
   restore: {
     button: "Alles zurücksetzen",
@@ -4899,6 +4979,15 @@ const de: Strings = {
       "Wir können Ihr Pro-Abonnement nach so langer Offline-Zeit nicht bestätigen. Stellen Sie eine Internetverbindung her und versuchen Sie es erneut.",
     accountRefreshFailed:
       "Wir konnten den Status Ihres Kontos nicht überprüfen. Die hier angezeigten Informationen sind möglicherweise veraltet — prüfen Sie Ihre Verbindung oder versuchen Sie es später erneut.",
+  },
+  titlebar: {
+    applied: "{applied}/{total} aktiv",
+    cpu: "CPU",
+    ram: "RAM",
+    minimize: "Minimieren",
+    maximize: "Maximieren",
+    restore: "Wiederherstellen",
+    close: "Schließen",
   },
   x3d: {
     title: "3D-V-Cache-Die-Ausrichtung",
@@ -5042,6 +5131,7 @@ const de: Strings = {
     plan: "Tarif",
     planFree: "Kostenlos",
     planPro: "Pro",
+    viewPlan: "Plan ansehen",
     upgradeButton: "Auf Pro upgraden",
     language: "Sprache",
     theme: "Designs",

@@ -6,10 +6,11 @@ import { Category } from "./types";
 
 export const CATEGORY_STYLE: Record<
   Category,
-  { icon: React.ReactElement; ring: string; chip: string }
+  { icon: React.ReactElement; ring: string; chip: string; glyph: string }
 > = {
   performance: {
     ring: "from-amber-400/30 to-orange-500/10",
+    glyph: "text-amber-300",
     chip: "bg-amber-400/15 text-amber-300 ring-1 ring-amber-400/30",
     // Speedometer mid-sweep: performance is measured, not just "zapped".
     icon: (
@@ -41,6 +42,7 @@ export const CATEGORY_STYLE: Record<
   },
   privacy: {
     ring: "from-emerald-400/30 to-teal-500/10",
+    glyph: "text-emerald-300",
     chip: "bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/30",
     // Shield with a keyhole: protection of what is yours, not just defense.
     icon: (
@@ -60,6 +62,7 @@ export const CATEGORY_STYLE: Record<
   },
   ui: {
     ring: "from-fuchsia-400/30 to-purple-500/10",
+    glyph: "text-fuchsia-300",
     chip: "bg-fuchsia-400/15 text-fuchsia-300 ring-1 ring-fuchsia-400/30",
     // An app window with its chrome: these tweaks reshape Windows' interface.
     icon: (
@@ -100,6 +103,7 @@ export const CATEGORY_STYLE: Record<
   },
   manutenzione: {
     ring: "from-sky-400/30 to-cyan-500/10",
+    glyph: "text-sky-300",
     chip: "bg-sky-400/15 text-sky-300 ring-1 ring-sky-400/30",
     // Wrench plus a sparkle: upkeep that leaves the machine cleaner.
     icon: (
@@ -123,6 +127,7 @@ export const CATEGORY_STYLE: Record<
   },
   gaming: {
     ring: "from-rose-400/30 to-red-500/10",
+    glyph: "text-rose-300",
     chip: "bg-rose-400/15 text-rose-300 ring-1 ring-rose-400/30",
     // A modern pad with real grips, d-pad and face buttons two-toned.
     icon: (

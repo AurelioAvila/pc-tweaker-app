@@ -344,6 +344,7 @@ export interface Strings {
     autoEvery: string; // uses {interval}
     autoHint: string;
     autoNext: string; // uses {time}
+    autoDue: string;
     autoLast: string; // uses {time} and {amount}
     autoNoneYet: string;
     autoFailed: string; // uses {detail}
@@ -587,6 +588,7 @@ export interface Strings {
     plan: string;
     planFree: string;
     planPro: string;
+    viewPlan: string;
     upgradeButton: string;
     language: string;
     theme: string;
@@ -998,6 +1000,7 @@ const it: Strings = {
     autoHint:
       "Con la pulizia automatica attiva, PC Tweaker libera la RAM da solo a intervalli regolari finché l'app resta aperta.",
     autoNext: "Prossima pulizia alle {time}",
+    autoDue: "Pulizia in corso...",
     autoLast: "Ultima alle {time}: {amount} liberati",
     autoNoneYet: "Nessuna pulizia automatica ancora eseguita.",
     autoFailed: "Ultimo tentativo non riuscito: {detail}",
@@ -1276,6 +1279,7 @@ const it: Strings = {
     plan: "Piano",
     planFree: "Gratuito",
     planPro: "Pro",
+    viewPlan: "Vedi il piano",
     upgradeButton: "Passa a Pro",
     language: "Lingua",
     theme: "Temi",
@@ -1954,6 +1958,7 @@ const en: Strings = {
     autoHint:
       "With automatic cleanup on, PC Tweaker frees RAM by itself at a regular interval for as long as the app stays open.",
     autoNext: "Next cleanup at {time}",
+    autoDue: "Cleanup due now...",
     autoLast: "Last at {time}: {amount} freed",
     autoNoneYet: "No automatic cleanup has run yet.",
     autoFailed: "The last attempt failed: {detail}",
@@ -2229,6 +2234,7 @@ const en: Strings = {
     plan: "Plan",
     planFree: "Free",
     planPro: "Pro",
+    viewPlan: "View your plan",
     upgradeButton: "Upgrade to Pro",
     language: "Language",
     theme: "Themes",
@@ -2912,6 +2918,7 @@ const fr: Strings = {
     autoHint:
       "Avec le nettoyage automatique, PC Tweaker libère la RAM tout seul à intervalle régulier tant que l'application reste ouverte.",
     autoNext: "Prochain nettoyage à {time}",
+    autoDue: "Nettoyage imminent...",
     autoLast: "Dernier à {time} : {amount} libérés",
     autoNoneYet: "Aucun nettoyage automatique n'a encore eu lieu.",
     autoFailed: "La dernière tentative a échoué : {detail}",
@@ -3191,6 +3198,7 @@ const fr: Strings = {
     plan: "Forfait",
     planFree: "Gratuit",
     planPro: "Pro",
+    viewPlan: "Voir votre forfait",
     upgradeButton: "Passer à Pro",
     language: "Langue",
     theme: "Thèmes",
@@ -3875,6 +3883,7 @@ const es: Strings = {
     autoHint:
       "Con la limpieza automática activada, PC Tweaker libera la RAM por sí solo a intervalos regulares mientras la app siga abierta.",
     autoNext: "Próxima limpieza a las {time}",
+    autoDue: "Limpieza inminente...",
     autoLast: "Última a las {time}: {amount} liberados",
     autoNoneYet: "Aún no se ha ejecutado ninguna limpieza automática.",
     autoFailed: "El último intento falló: {detail}",
@@ -4152,6 +4161,7 @@ const es: Strings = {
     plan: "Plan",
     planFree: "Gratis",
     planPro: "Pro",
+    viewPlan: "Ver tu plan",
     upgradeButton: "Pasar a Pro",
     language: "Idioma",
     theme: "Temas",
@@ -4841,6 +4851,7 @@ const de: Strings = {
     autoHint:
       "Bei aktiver automatischer Bereinigung gibt PC Tweaker den RAM selbstständig in regelmäßigen Abständen frei, solange die App geöffnet bleibt.",
     autoNext: "Nächste Bereinigung um {time}",
+    autoDue: "Bereinigung steht an...",
     autoLast: "Zuletzt um {time}: {amount} freigegeben",
     autoNoneYet: "Es wurde noch keine automatische Bereinigung ausgeführt.",
     autoFailed: "Der letzte Versuch ist fehlgeschlagen: {detail}",
@@ -5120,6 +5131,7 @@ const de: Strings = {
     plan: "Tarif",
     planFree: "Kostenlos",
     planPro: "Pro",
+    viewPlan: "Plan ansehen",
     upgradeButton: "Auf Pro upgraden",
     language: "Sprache",
     theme: "Designs",

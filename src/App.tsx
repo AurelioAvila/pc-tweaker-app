@@ -715,6 +715,7 @@ function App() {
               onResendVerification={resendVerification}
               onForgotPassword={forgotPassword}
               onUpgrade={() => setPaywallFeature(s.menu.planPro)}
+              onViewPlan={() => setFilter("pricing")}
             />
           </header>
 
@@ -860,7 +861,6 @@ function App() {
 
           {showGamingExtras && (
             <>
-              <X3dPanel s={s} pushToast={pushToast} />
               <GameSessionsPanel
                 s={s}
                 isPro={isProUnlocked}
@@ -872,6 +872,10 @@ function App() {
                 onChanged={refresh}
                 pushToast={pushToast}
               />
+              {/* Below the two headline cards: Game Sessions and Turbo Boost
+                  are what this screen is known for, and the aligner applies to
+                  a minority of processors. */}
+              <X3dPanel s={s} pushToast={pushToast} />
             </>
           )}
 
@@ -892,10 +896,9 @@ function App() {
                     className={`pointer-events-none absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${style.ring}`}
                   />
                   <div className="relative flex items-center gap-4">
-                    {/* A backlit module, not a tile. The status dot is gold on
+                    {/* A backlit module, not a tile. The backlight is gold on
                         a Pro tweak and the theme accent otherwise, so the tier
-                        is legible from the shape of the row before any badge
-                        is read. */}
+                        registers before any badge is read. */}
                     <div
                       className={`icon-module grid h-11 w-11 shrink-0 place-items-center ${style.glyph}`}
                       style={
@@ -903,12 +906,10 @@ function App() {
                           "--module-glow": t.requires_pro
                             ? "rgb(230 187 74 / 0.42)"
                             : "color-mix(in oklab, var(--accent) 45%, transparent)",
-                          "--led-color": t.requires_pro ? "#f6c852" : "var(--accent)",
                         } as React.CSSProperties
                       }
                     >
                       {style.icon}
-                      <span className="icon-led" aria-hidden="true" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">

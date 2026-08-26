@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://apps.microsoft.com/detail/9nh3c6dt1g87"><img src="https://img.shields.io/badge/Microsoft_Store-Get_the_app-0078D4?style=for-the-badge&logo=microsoftstore&logoColor=white" alt="Get it on the Microsoft Store"></a>
+  <a href="https://apps.microsoft.com/detail/9nh3c6dt1g87"><img src="https://upload.wikimedia.org/wikipedia/commons/f/f7/Get_it_from_Microsoft_Badge.svg" alt="Get it from Microsoft" height="52"></a>
   <a href="#safe-download-recommended"><img src="https://img.shields.io/badge/SAFE_DOWNLOAD-No_SmartScreen_warning-1793D1?style=for-the-badge&logo=windowsterminal&logoColor=white" alt="Safe download via winget, no SmartScreen warning"></a>
 </p>
 

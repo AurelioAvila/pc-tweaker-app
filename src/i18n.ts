@@ -455,6 +455,15 @@ export interface Strings {
     licenseNeedsRefresh: string;
     accountRefreshFailed: string;
   };
+  titlebar: {
+    applied: string; // uses {applied} and {total}
+    cpu: string;
+    ram: string;
+    minimize: string;
+    maximize: string;
+    restore: string;
+    close: string;
+  };
   x3d: {
     title: string;
     subtitle: string;
@@ -1107,6 +1116,15 @@ const it: Strings = {
       "Non riusciamo a verificare il tuo abbonamento Pro offline da troppo tempo. Riconnettiti a internet e riprova.",
     accountRefreshFailed:
       "Non riusciamo a verificare lo stato del tuo account. Lo stato mostrato qui potrebbe non essere aggiornato — controlla la connessione o riprova più tardi.",
+  },
+  titlebar: {
+    applied: "{applied}/{total} attive",
+    cpu: "CPU",
+    ram: "RAM",
+    minimize: "Riduci a icona",
+    maximize: "Ingrandisci",
+    restore: "Ripristina",
+    close: "Chiudi",
   },
   x3d: {
     title: "Allineatore die 3D V-Cache",
@@ -2050,6 +2068,15 @@ const en: Strings = {
       "We can't verify your Pro subscription after this long offline. Reconnect to the internet and try again.",
     accountRefreshFailed:
       "We couldn't verify your account status. What's shown here may be out of date — check your connection or try again later.",
+  },
+  titlebar: {
+    applied: "{applied}/{total} active",
+    cpu: "CPU",
+    ram: "RAM",
+    minimize: "Minimise",
+    maximize: "Maximise",
+    restore: "Restore",
+    close: "Close",
   },
   x3d: {
     title: "3D V-Cache die aligner",
@@ -2997,6 +3024,15 @@ const fr: Strings = {
       "Impossible de vérifier votre abonnement Pro après une si longue période hors ligne. Reconnectez-vous à internet et réessayez.",
     accountRefreshFailed:
       "Impossible de vérifier l'état de votre compte. Les informations affichées ici peuvent être obsolètes — vérifiez votre connexion ou réessayez plus tard.",
+  },
+  titlebar: {
+    applied: "{applied}/{total} actifs",
+    cpu: "Processeur",
+    ram: "Mémoire",
+    minimize: "Réduire",
+    maximize: "Agrandir",
+    restore: "Restaurer",
+    close: "Fermer",
   },
   x3d: {
     title: "Aligneur de die 3D V-Cache",
@@ -3946,6 +3982,15 @@ const es: Strings = {
       "No podemos verificar tu suscripción Pro tras tanto tiempo sin conexión. Reconectate a internet e inténtalo de nuevo.",
     accountRefreshFailed:
       "No pudimos verificar el estado de tu cuenta. Lo que se muestra aquí puede estar desactualizado: revisa tu conexión o inténtalo más tarde.",
+  },
+  titlebar: {
+    applied: "{applied}/{total} activos",
+    cpu: "CPU",
+    ram: "RAM",
+    minimize: "Minimizar",
+    maximize: "Maximizar",
+    restore: "Restaurar",
+    close: "Cerrar",
   },
   x3d: {
     title: "Alineador de die 3D V-Cache",
@@ -4899,6 +4944,15 @@ const de: Strings = {
       "Wir können Ihr Pro-Abonnement nach so langer Offline-Zeit nicht bestätigen. Stellen Sie eine Internetverbindung her und versuchen Sie es erneut.",
     accountRefreshFailed:
       "Wir konnten den Status Ihres Kontos nicht überprüfen. Die hier angezeigten Informationen sind möglicherweise veraltet — prüfen Sie Ihre Verbindung oder versuchen Sie es später erneut.",
+  },
+  titlebar: {
+    applied: "{applied}/{total} aktiv",
+    cpu: "CPU",
+    ram: "RAM",
+    minimize: "Minimieren",
+    maximize: "Maximieren",
+    restore: "Wiederherstellen",
+    close: "Schließen",
   },
   x3d: {
     title: "3D-V-Cache-Die-Ausrichtung",

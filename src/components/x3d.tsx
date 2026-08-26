@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
 import { formatBytes } from "../lib";
@@ -70,13 +70,23 @@ export function X3dPanel({
   const [loadingProcesses, setLoadingProcesses] = useState(false);
   const [busyPid, setBusyPid] = useState<number | null>(null);
 
+  // `pushToast` is a fresh function on every App render. Depending on it
+  // directly made the mount effect re-run on every render, and each re-run's
+  // cleanup flipped `alive` to false before the previous read resolved — so
+  // the report was never committed and the panel silently rendered nothing.
+  // The ref keeps the callback current without making it a dependency.
+  const toastRef = useRef(pushToast);
+  useEffect(() => {
+    toastRef.current = pushToast;
+  }, [pushToast]);
+
   const loadProcesses = useCallback(() => {
     setLoadingProcesses(true);
     invoke<ProcessEntry[]>("x3d_processes")
       .then(setProcesses)
-      .catch((e: unknown) => pushToast("error", String(e)))
+      .catch((e: unknown) => toastRef.current("error", String(e)))
       .finally(() => setLoadingProcesses(false));
-  }, [pushToast]);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -88,7 +98,12 @@ export function X3dPanel({
         // paid for on a machine where the alignment can actually be used.
         if (r.status === "ready") loadProcesses();
       })
-      .catch(() => {});
+      .catch((e: unknown) => {
+        // A topology read that fails is worth saying out loud: the panel
+        // disappearing without a word is indistinguishable from a machine
+        // where the feature simply does not apply.
+        if (alive) toastRef.current("error", String(e));
+      });
     return () => {
       alive = false;
     };
@@ -198,7 +213,7 @@ export function X3dPanel({
                         : invoke("x3d_align", { pid: p.pid, mask: vcache.mask });
                       call
                         .then(() => {
-                          pushToast(
+                          toastRef.current(
                             "success",
                             format(aligned ? s.x3d.resetToast : s.x3d.alignedToast, {
                               name: p.name,
@@ -206,7 +221,7 @@ export function X3dPanel({
                           );
                           loadProcesses();
                         })
-                        .catch((e: unknown) => pushToast("error", String(e)))
+                        .catch((e: unknown) => toastRef.current("error", String(e)))
                         .finally(() => setBusyPid(null));
                     }}
                     disabled={busyPid === p.pid}

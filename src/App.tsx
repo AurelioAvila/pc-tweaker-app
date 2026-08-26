@@ -45,6 +45,7 @@ import { AccountMenu } from "./components/account";
 import { TechnicalDetails, TechnicalToggle } from "./components/technical";
 import { DashboardCards } from "./components/dashboard";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
+import { X3dPanel } from "./components/x3d";
 import { ScanPanel } from "./components/scan";
 import { HealthPanel } from "./components/health";
 import { HardwarePanel } from "./components/hardware";
@@ -838,6 +839,7 @@ function App() {
 
           {showGamingExtras && (
             <>
+              <X3dPanel s={s} pushToast={pushToast} />
               <GameSessionsPanel
                 s={s}
                 isPro={isProUnlocked}

@@ -338,7 +338,7 @@ function App() {
   const pulseSamples = usePulseSamples();
   const toastSeq = useRef(0);
 
-  useScheduledRamClean(ramAutoMinutes);
+  const autoClean = useScheduledRamClean(ramAutoMinutes);
 
   function chooseRamAuto(minutes: number) {
     setRamAutoMinutes(minutes);
@@ -728,6 +728,7 @@ function App() {
                 samples={pulseSamples}
                 autoMinutes={ramAutoMinutes}
                 onChangeAuto={chooseRamAuto}
+                auto={autoClean}
                 pushToast={pushToast}
               />
               <SystemMonitor s={s} />
@@ -891,13 +892,23 @@ function App() {
                     className={`pointer-events-none absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${style.ring}`}
                   />
                   <div className="relative flex items-center gap-4">
-                    {/* The glyph sits in a recess rather than on a coloured
-                        tile: the category keeps its hue in the icon itself,
-                        and the card keeps one material. */}
+                    {/* A backlit module, not a tile. The status dot is gold on
+                        a Pro tweak and the theme accent otherwise, so the tier
+                        is legible from the shape of the row before any badge
+                        is read. */}
                     <div
-                      className={`well grid h-11 w-11 shrink-0 place-items-center ${style.glyph}`}
+                      className={`icon-module grid h-11 w-11 shrink-0 place-items-center ${style.glyph}`}
+                      style={
+                        {
+                          "--module-glow": t.requires_pro
+                            ? "rgb(230 187 74 / 0.42)"
+                            : "color-mix(in oklab, var(--accent) 45%, transparent)",
+                          "--led-color": t.requires_pro ? "#f6c852" : "var(--accent)",
+                        } as React.CSSProperties
+                      }
                     >
                       {style.icon}
+                      <span className="icon-led" aria-hidden="true" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">

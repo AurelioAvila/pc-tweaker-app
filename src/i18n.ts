@@ -29,6 +29,9 @@ export interface Strings {
     title: string;
     subtitle: string;
     empty: string;
+    clear: string;
+    clearing: string;
+    cleared: string;
     revert: string;
     elevated: string;
     failed: string;
@@ -48,6 +51,7 @@ export interface Strings {
     groupManage: string;
     scan: string;
     health: string;
+    hardware: string;
     performance: string;
     privacy: string;
     ui: string;
@@ -451,6 +455,95 @@ export interface Strings {
     licenseNeedsRefresh: string;
     accountRefreshFailed: string;
   };
+  hardware: {
+    intro: string;
+    gpuLabel: string;
+    cpuLabel: string;
+    liveBadge: string;
+    gpuDriver: string; // uses {version}
+    load: string;
+    vram: string;
+    fan: string;
+    power: string;
+    fanIdle: string;
+    powerLimit: string; // uses {limit}
+    tempCool: string;
+    tempGood: string;
+    tempWarm: string;
+    tempHot: string;
+    traceLabel: string;
+    traceRange: string; // uses {min} and {max}
+    noTempSensor: string;
+    cpuAcpiSource: string;
+    cpuNoSensor: string;
+    noGpuTool: string;
+    thermalsUnavailable: string;
+    driversTitle: string;
+    driversSubtitle: string;
+    driversRescan: string;
+    driversScanning: string;
+    driversCounted: string; // uses {count}
+    driversAging: string; // uses {count}
+    driversStale: string; // uses {count}
+    driversAllCurrent: string;
+    driversNone: string;
+    driversShowAll: string; // uses {count}
+    driversShowLess: string;
+    driversInboxNote: string; // uses {count}
+    ageYears: string; // uses {years}
+    ageYear: string; // uses {years}, singular form
+    ageMonths: string; // uses {months}
+    ageMonth: string; // uses {months}, singular form
+    vendorSite: string;
+    watchLabel: string;
+    peakLabel: string;
+    verdictRisky: string;
+    verdictNormal: string;
+    verdictBetter: string;
+    verdictIdle: string;
+    verdictRiskyHint: string;
+    verdictNormalHint: string;
+    verdictBetterHint: string;
+    verdictIdleHint: string;
+    profilesTitle: string;
+    profilesSubtitle: string;
+    currentLimit: string; // uses {watts}
+    modeSilent: string;
+    modeSilentHint: string;
+    modeStandard: string;
+    modeStandardHint: string;
+    modeGaming: string;
+    modeGamingHint: string;
+    modeApplying: string;
+    profileApplied: string; // uses {watts}
+    profileNote: string;
+    profileDefaultIsMax: string;
+    driverInstalled: string; // uses {version} and {date}
+    driversNoUpdateCheck: string;
+    driversCheckedAt: string; // uses {time}
+    modeClockLocked: string; // uses {mhz}
+    modeClockAuto: string;
+    profileApply: string;
+    profileActive: string;
+    profileWillSet: string; // uses {watts} and {clock}
+    scanStarting: string;
+    scanReading: string; // uses {class}
+    scanCount: string; // uses {done}, {total} and {pct}
+    driversScannedAll: string; // uses {total} and {classes}
+    winUpdateButton: string;
+    winUpdateNote: string;
+    winUpdateOpened: string;
+    winUpdateSearching: string;
+    winUpdateInstall: string; // uses {count}
+    winUpdateInstalling: string;
+    winUpdateNone: string;
+    winUpdateFailed: string; // uses {detail}
+    winUpdateDone: string; // uses {installed} and {failed}
+    rebootTitle: string;
+    rebootBody: string;
+    rebootNow: string;
+    rebootLater: string;
+  };
   menu: {
     account: string;
     plan: string;
@@ -530,6 +623,9 @@ const it: Strings = {
     subtitle:
       "Tutto ciò che questa app ha modificato su questo PC, dal più recente. Salvato in locale, mai caricato online.",
     empty: "Nessuna modifica registrata. Applica il tuo primo tweak e comparirà qui.",
+    clear: "Cancella cronologia",
+    clearing: "Cancellazione...",
+    cleared: "Cronologia cancellata.",
     revert: "Ripristina",
     elevated: "con diritti admin",
     failed: "non riuscita",
@@ -549,6 +645,7 @@ const it: Strings = {
     groupManage: "Gestisci",
     scan: "Scansione",
     health: "Salute PC",
+    hardware: "Hardware",
     performance: "Prestazioni",
     privacy: "Privacy",
     ui: "Interfaccia",
@@ -672,17 +769,17 @@ const it: Strings = {
   },
   pricing: {
     title: "Scegli quanto vuoi spingere",
-    subtitle: "Inizia gratis. Passa a Pro quando vuoi ogni singolo frame in pi\u00f9.",
+    subtitle: "Inizia gratis. Passa a Pro quando vuoi ogni singolo frame in più.",
     monthly: "Mensile",
     annual: "Annuale",
     saveBadge: "RISPARMI IL {percent}%",
     perMonth: "/mese",
     perYear: "/anno",
-    annualDetail: "Sono {monthly} al mese, addebitati {yearly} una volta l\u2019anno",
+    annualDetail: "Sono {monthly} al mese, addebitati {yearly} una volta l’anno",
     annualNudge: "Con il piano annuale sarebbero {price} al mese",
-    mostChosen: "IL PI\u00d9 SCELTO",
+    mostChosen: "IL PIÙ SCELTO",
     freeName: "Free",
-    freeTagline: "Tutto il necessario per un PC pi\u00f9 pulito e reattivo.",
+    freeTagline: "Tutto il necessario per un PC più pulito e reattivo.",
     freePriceNote: "Per sempre, senza scadenza",
     freeCta: "Stai usando il piano Free",
     freeCurrent: "Piano attuale",
@@ -691,24 +788,24 @@ const it: Strings = {
     proCta: "Passa a Pro",
     proCurrent: "Il tuo piano",
     manageBilling: "Gestisci abbonamento",
-    everythingInFree: "Tutto quello che c\u2019\u00e8 nel Free, pi\u00f9:",
+    everythingInFree: "Tutto quello che c’è nel Free, più:",
     reassurance:
       "Disdici quando vuoi. Ogni modifica resta reversibile con un click, anche dopo la disdetta.",
     freeFeatures: [
       "{count} tweak reali, con backup e ripristino di ogni modifica",
       "Monitor di sistema in tempo reale (CPU, memoria, disco)",
-      "Gestione dei programmi all\u2019avvio",
+      "Gestione dei programmi all’avvio",
       "Controllo violazioni password",
       "Scansione del PC e correzione in un click",
       "Pulizia dei file temporanei",
     ],
     proFeatures: [
       "Game Sessions: attiva il turbo da solo quando lanci un gioco",
-      "Preset Turbo Gaming e priorit\u00e0 massima ai giochi",
-      "Privacy avanzata: telemetria e cronologia attivit\u00e0",
+      "Preset Turbo Gaming e priorità massima ai giochi",
+      "Privacy avanzata: telemetria e cronologia attività",
       "Trova e rimuove i file duplicati",
       "Svuota la cache di Windows Update",
-      "Disattiva l\u2019indicizzazione che tiene il disco occupato",
+      "Disattiva l’indicizzazione che tiene il disco occupato",
       "Ogni tweak e ogni funzione futura, inclusi",
     ],
   },
@@ -986,6 +1083,113 @@ const it: Strings = {
     accountRefreshFailed:
       "Non riusciamo a verificare lo stato del tuo account. Lo stato mostrato qui potrebbe non essere aggiornato — controlla la connessione o riprova più tardi.",
   },
+  hardware: {
+    intro:
+      "Letture dirette dai sensori del tuo hardware. Dove un sensore non esiste te lo diciamo, invece di mostrare un numero che nessuno può verificare.",
+    gpuLabel: "Scheda video",
+    cpuLabel: "Processore",
+    liveBadge: "In tempo reale",
+    gpuDriver: "Driver {version}",
+    load: "Utilizzo GPU",
+    vram: "Memoria video",
+    fan: "Ventola",
+    power: "Consumo",
+    fanIdle: "ferma: sotto i 50° non serve",
+    powerLimit: "limite {limit} W",
+    tempCool: "fresca",
+    tempGood: "ottimale",
+    tempWarm: "calda",
+    tempHot: "molto calda",
+    traceLabel: "Andamento sessione",
+    traceRange: "min {min}° · max {max}°",
+    noTempSensor: "Questa scheda non espone un sensore di temperatura.",
+    cpuAcpiSource: "letta dalla zona termica ACPI",
+    cpuNoSensor:
+      "Il firmware di questo PC non espone una zona termica ACPI, quindi Windows non ha una temperatura della CPU da leggere. I programmi che la mostrano sempre installano un driver a livello kernel per leggere i registri del processore: PC Tweaker non lo fa, e preferisce dirtelo piuttosto che mostrarti un valore inventato.",
+    noGpuTool:
+      "Nessuna scheda NVIDIA rilevata. AMD e Intel non forniscono uno strumento di interrogazione equivalente, quindi le loro temperature non sono leggibili senza software del produttore.",
+    thermalsUnavailable: "Non riusciamo a leggere i sensori su questo sistema.",
+    driversTitle: "Età dei driver",
+    driversSubtitle:
+      "Quanti anni hanno i driver installati dai produttori. Windows sa cosa è installato, non cosa è disponibile: qui trovi l'età reale, mai un falso avviso di aggiornamento.",
+    driversRescan: "Rianalizza",
+    driversScanning: "Analisi...",
+    driversCounted: "{count} driver dei produttori",
+    driversAging: "{count} oltre 2 anni",
+    driversStale: "{count} oltre 4 anni",
+    driversAllCurrent: "Tutti recenti",
+    driversNone: "Nessun driver di produttori terzi in queste categorie.",
+    driversShowAll: "Mostra gli altri {count}",
+    driversShowLess: "Mostra meno",
+    driversInboxNote:
+      "Esclusi {count} driver Microsoft integrati: li aggiorna Windows Update e la loro data è un segnaposto fisso, quindi contarli come vecchi sarebbe un falso allarme.",
+    ageYears: "{years} anni",
+    ageYear: "{years} anno",
+    ageMonths: "{months} mesi",
+    ageMonth: "{months} mese",
+    vendorSite: "Sito del produttore",
+    watchLabel: "Sotto osservazione da",
+    peakLabel: "Picco",
+    verdictRisky: "Rischioso",
+    verdictNormal: "Normale",
+    verdictBetter: "Meglio delle aspettative",
+    verdictIdle: "A riposo",
+    verdictRiskyHint:
+      "La scheda ha superato gli 84°, la soglia oltre la quale riduce da sola le prestazioni per proteggersi. Controlla il flusso d'aria o passa al profilo Silenzioso.",
+    verdictNormalHint:
+      "Temperature nella norma per una scheda sotto carico: nessun segnale di allarme.",
+    verdictBetterHint:
+      "È rimasta sotto i 65° pur lavorando davvero: raffreddamento migliore della media.",
+    verdictIdleHint:
+      "Non ha ancora lavorato abbastanza per dare un giudizio. Una scheda ferma resta fresca comunque, quindi non dimostrerebbe nulla.",
+    profilesTitle: "Profili termici",
+    profilesSubtitle:
+      "Regolano il limite di potenza della scheda, cioè la leva che governa davvero calore e rumore della ventola. Ogni valore viene dai limiti dichiarati dalla scheda stessa.",
+    currentLimit: "Ora: {watts} W",
+    modeSilent: "Silenzioso",
+    modeSilentHint:
+      "Per lavoro, streaming e sessioni lunghe: la ventola resta quasi muta e la scheda scalda molto meno, al prezzo di qualche frame.",
+    modeStandard: "Standard",
+    modeStandardHint:
+      "L'equilibrio scelto dal produttore. È il profilo giusto per l'uso quotidiano e quello a cui tornare se qualcosa non convince.",
+    modeGaming: "Gaming",
+    modeGamingHint:
+      "Per le sessioni competitive: watt al massimo e tetto del clock alzato, per tenere più stabili gli FPS minimi nei momenti concitati.",
+    modeApplying: "Applico...",
+    profileApplied: "Limite impostato a {watts} W.",
+    profileNote:
+      "Richiede i permessi di amministratore e si azzera al riavvio. Non è una curva della ventola: NVIDIA non espone il controllo diretto della ventola in nvidia-smi, e i programmi che lo offrono usano API private non documentate che questa app non tocca.",
+    profileDefaultIsMax:
+      "Su questa scheda il limite di potenza di fabbrica coincide già con il massimo, quindi Silenzioso è l'unico profilo che cambia i watt: Gaming si distingue alzando il tetto del clock.",
+    driverInstalled: "installato v{version} il {date}",
+    driversNoUpdateCheck:
+      "Questa schermata non contatta i produttori e non può sapere se esiste una versione più recente: mostra la versione installata e la sua età, e ti porta alla pagina ufficiale per verificarlo tu.",
+    driversCheckedAt: "Letto il {time}",
+    modeClockLocked: "clock fino a {mhz} MHz",
+    modeClockAuto: "clock automatico",
+    profileApply: "Applica profilo",
+    profileActive: "Profilo attivo",
+    profileWillSet: "Imposterà {watts} W, {clock}",
+    scanStarting: "Avvio scansione...",
+    scanReading: "Lettura classe {class}",
+    scanCount: "{done}/{total} · {pct}%",
+    driversScannedAll: "{total} driver esaminati in {classes} categorie",
+    winUpdateButton: "Cerca aggiornamenti driver",
+    winUpdateNote:
+      "Apre Windows Update, il canale che installa davvero i driver firmati dai produttori. PC Tweaker non scarica pacchetti driver per conto suo: non esiste un'API dei produttori per sapere qual è la versione giusta per il tuo esatto dispositivo, e installare il driver video sbagliato è uno dei pochi errori che può lasciarti senza schermo.",
+    winUpdateOpened: "Windows Update aperto.",
+    winUpdateSearching: "Ricerca in corso...",
+    winUpdateInstall: "Scarica e installa ({count})",
+    winUpdateInstalling: "Download e installazione...",
+    winUpdateNone: "Nessun aggiornamento driver in attesa: sei già allineato.",
+    winUpdateFailed: "Ricerca non riuscita: {detail}",
+    winUpdateDone: "Installati {installed}, non riusciti {failed}.",
+    rebootTitle: "Windows chiede un riavvio",
+    rebootBody:
+      "Windows segnala che un'installazione si completa solo al riavvio. Puoi farlo adesso o quando preferisci.",
+    rebootNow: "Riavvia ora",
+    rebootLater: "Più tardi",
+  },
   menu: {
     account: "Account",
     plan: "Piano",
@@ -1250,6 +1454,21 @@ const it: Strings = {
       description:
         "Azzera il ritardo prima che una pressione prolungata dei tasti inizi a ripetersi e ne massimizza la velocità di ripetizione, per una risposta più immediata in gioco (HKCU, nessuna elevazione richiesta).",
     },
+    keep_kernel_in_ram: {
+      name: "Tieni kernel e driver nella RAM",
+      description:
+        "Windows può spostare su disco parti del kernel e del codice dei driver anche quando la memoria abbonda, e rileggerle è una pausa che senti come uno scatto. Questo li tiene in memoria. Conviene se hai RAM in abbondanza; su un PC con poca memoria lascialo disattivato (HKLM, richiede diritti di amministratore).",
+    },
+    auto_end_frozen_tasks: {
+      name: "Non far bloccare lo spegnimento da un'app freezata",
+      description:
+        'Quando un programma smette di rispondere durante lo spegnimento, Windows aspetta e mostra la schermata "Questa app impedisce l\'arresto" finché qualcuno non clicca. Questo chiude da solo le app bloccate, così un programma piantato non può lasciare il PC acceso (HKCU, nessuna elevazione richiesta).',
+    },
+    instant_folder_loading: {
+      name: "Apri ogni cartella all'istante",
+      description:
+        "Esplora file analizza il contenuto di una cartella per indovinare se è Immagini, Musica o Documenti, e una cartella con migliaia di file multimediali può restare bloccata per secondi mentre decide. Questo fissa tutte le cartelle sul layout generale, così si aprono subito (HKCU, nessuna elevazione richiesta).",
+    },
     taskbar_align_left: {
       name: "Allinea la barra delle applicazioni a sinistra",
       description:
@@ -1318,6 +1537,9 @@ const en: Strings = {
     subtitle:
       "Everything this app changed on this PC, newest first. Stored locally, never uploaded.",
     empty: "No changes recorded yet. Apply your first tweak and it will appear here.",
+    clear: "Clear history",
+    clearing: "Clearing...",
+    cleared: "History cleared.",
     revert: "Revert",
     elevated: "with admin rights",
     failed: "failed",
@@ -1337,6 +1559,7 @@ const en: Strings = {
     groupManage: "Manage",
     scan: "Scan",
     health: "PC Health",
+    hardware: "Hardware",
     performance: "Performance",
     privacy: "Privacy",
     ui: "UI",
@@ -1463,13 +1686,13 @@ const en: Strings = {
     saveBadge: "SAVE {percent}%",
     perMonth: "/month",
     perYear: "/year",
-    annualDetail: "That\u2019s {monthly} a month, charged {yearly} once a year",
+    annualDetail: "That’s {monthly} a month, charged {yearly} once a year",
     annualNudge: "On the yearly plan it would be {price} a month",
     mostChosen: "MOST CHOSEN",
     freeName: "Free",
     freeTagline: "Everything you need for a cleaner, snappier PC.",
     freePriceNote: "Free forever, no expiry",
-    freeCta: "You\u2019re on the Free plan",
+    freeCta: "You’re on the Free plan",
     freeCurrent: "Current plan",
     proName: "Pro",
     proTagline: "For players who count every frame and leave nothing on the table.",
@@ -1768,6 +1991,111 @@ const en: Strings = {
     accountRefreshFailed:
       "We couldn't verify your account status. What's shown here may be out of date — check your connection or try again later.",
   },
+  hardware: {
+    intro:
+      "Read straight from your hardware's own sensors. Where a sensor doesn't exist we say so, instead of showing a number nobody can verify.",
+    gpuLabel: "Graphics card",
+    cpuLabel: "Processor",
+    liveBadge: "Live",
+    gpuDriver: "Driver {version}",
+    load: "GPU usage",
+    vram: "Video memory",
+    fan: "Fan",
+    power: "Power draw",
+    fanIdle: "stopped: not needed below 50°",
+    powerLimit: "{limit} W limit",
+    tempCool: "cool",
+    tempGood: "healthy",
+    tempWarm: "warm",
+    tempHot: "running hot",
+    traceLabel: "This session",
+    traceRange: "min {min}° · max {max}°",
+    noTempSensor: "This card exposes no temperature sensor.",
+    cpuAcpiSource: "read from the ACPI thermal zone",
+    cpuNoSensor:
+      "This PC's firmware exposes no ACPI thermal zone, so Windows has no CPU temperature to read. Tools that always show one install a kernel-level driver to read the processor's registers directly: PC Tweaker doesn't, and would rather tell you that than show you a number it made up.",
+    noGpuTool:
+      "No NVIDIA card detected. AMD and Intel ship no equivalent query tool, so their temperatures can't be read without the vendor's own software.",
+    thermalsUnavailable: "We can't read the sensors on this system.",
+    driversTitle: "Driver age",
+    driversSubtitle:
+      "How old your vendor-supplied drivers are. Windows knows what's installed, not what's available: this reports the age it can prove, never a fake update notice.",
+    driversRescan: "Rescan",
+    driversScanning: "Scanning...",
+    driversCounted: "{count} vendor drivers",
+    driversAging: "{count} over 2 years",
+    driversStale: "{count} over 4 years",
+    driversAllCurrent: "All recent",
+    driversNone: "No third-party vendor drivers in these categories.",
+    driversShowAll: "Show {count} more",
+    driversShowLess: "Show less",
+    driversInboxNote:
+      "{count} Microsoft inbox drivers excluded: Windows Update services them and their date is a fixed placeholder, so counting them as old would be a false alarm.",
+    ageYears: "{years} years",
+    ageYear: "{years} year",
+    ageMonths: "{months} months",
+    ageMonth: "{months} month",
+    vendorSite: "Vendor site",
+    watchLabel: "Watching for",
+    peakLabel: "Peak",
+    verdictRisky: "Risky",
+    verdictNormal: "Normal",
+    verdictBetter: "Better than expected",
+    verdictIdle: "Idle",
+    verdictRiskyHint:
+      "The card passed 84°, the point where it starts cutting its own performance to protect itself. Check airflow, or switch to the Silent profile.",
+    verdictNormalHint: "Temperatures in the usual range for a card under load: nothing alarming.",
+    verdictBetterHint: "It stayed under 65° while genuinely working: better cooling than most.",
+    verdictIdleHint:
+      "It hasn't worked hard enough yet to judge. An idle card runs cool regardless, so that would prove nothing.",
+    profilesTitle: "Thermal profiles",
+    profilesSubtitle:
+      "These set the card's power limit, the lever that actually governs heat and fan noise. Every value comes from the limits the card itself reports.",
+    currentLimit: "Now: {watts} W",
+    modeSilent: "Silent",
+    modeSilentHint:
+      "For work, streaming and long sessions: the fan stays close to silent and the card runs far cooler, at the cost of a few frames.",
+    modeStandard: "Standard",
+    modeStandardHint:
+      "The balance the manufacturer chose. The right profile for everyday use, and the one to come back to if anything feels off.",
+    modeGaming: "Gaming",
+    modeGamingHint:
+      "For competitive sessions: watts at maximum and a raised clock ceiling, to hold your 1% lows steadier when it matters.",
+    modeApplying: "Applying...",
+    profileApplied: "Limit set to {watts} W.",
+    profileNote:
+      "Needs administrator rights and resets on reboot. This is not a fan curve: NVIDIA exposes no direct fan control in nvidia-smi, and the tools that offer one use private, undocumented APIs this app does not touch.",
+    profileDefaultIsMax:
+      "On this card the factory power limit already equals the maximum, so Silent is the only profile that changes the wattage: Gaming differs by raising the clock ceiling instead.",
+    driverInstalled: "installed v{version} on {date}",
+    driversNoUpdateCheck:
+      "This screen contacts no vendor and cannot know whether a newer version exists: it shows the installed version and its age, and takes you to the official page to check for yourself.",
+    driversCheckedAt: "Read at {time}",
+    modeClockLocked: "clock up to {mhz} MHz",
+    modeClockAuto: "automatic clock",
+    profileApply: "Apply profile",
+    profileActive: "Profile active",
+    profileWillSet: "Will set {watts} W, {clock}",
+    scanStarting: "Starting scan...",
+    scanReading: "Reading class {class}",
+    scanCount: "{done}/{total} · {pct}%",
+    driversScannedAll: "{total} drivers examined across {classes} categories",
+    winUpdateButton: "Check for driver updates",
+    winUpdateNote:
+      "Opens Windows Update, the channel that actually installs vendor-signed drivers. PC Tweaker does not download driver packages itself: there is no vendor API for what is current for your exact device, and installing the wrong display driver is one of the few mistakes that can leave you without a screen.",
+    winUpdateOpened: "Windows Update opened.",
+    winUpdateSearching: "Searching...",
+    winUpdateInstall: "Download and install ({count})",
+    winUpdateInstalling: "Downloading and installing...",
+    winUpdateNone: "No driver updates pending: you're already up to date.",
+    winUpdateFailed: "Search failed: {detail}",
+    winUpdateDone: "Installed {installed}, failed {failed}.",
+    rebootTitle: "Windows is asking for a restart",
+    rebootBody:
+      "Windows reports that an installation only finishes after a restart. You can do it now or whenever suits you.",
+    rebootNow: "Restart now",
+    rebootLater: "Later",
+  },
   menu: {
     account: "Account",
     plan: "Plan",
@@ -2030,6 +2358,21 @@ const en: Strings = {
       description:
         "Zeroes out the delay before a held key starts repeating and maximizes its repeat rate, for a snappier response in games (HKCU, no elevation required).",
     },
+    keep_kernel_in_ram: {
+      name: "Keep the kernel and drivers in RAM",
+      description:
+        "Windows may page parts of the kernel and driver code out to disk even when memory is plentiful, and paging them back in is a stall you feel as a stutter. This keeps them resident. Worth it on machines with RAM to spare; on a low-memory PC leave it off (HKLM, requires administrator rights).",
+    },
+    auto_end_frozen_tasks: {
+      name: "Don't let a frozen app block shutdown",
+      description:
+        'When an application stops responding during shutdown, Windows waits and shows the "This app is preventing shutdown" screen until someone clicks it. This closes unresponsive apps automatically instead, so a hung program cannot leave the machine sitting powered on (HKCU, no elevation required).',
+    },
+    instant_folder_loading: {
+      name: "Open every folder instantly",
+      description:
+        "Explorer inspects a folder's contents to guess whether it is Pictures, Music or Documents, and a folder holding thousands of media files can hang for seconds while it decides. This pins every folder to the general layout so it opens at once (HKCU, no elevation required).",
+    },
     taskbar_align_left: {
       name: "Align the taskbar to the left",
       description:
@@ -2098,6 +2441,9 @@ const fr: Strings = {
     subtitle:
       "Tout ce que cette application a modifié sur ce PC, du plus récent au plus ancien. Conservé en local, jamais envoyé en ligne.",
     empty: "Aucune modification enregistrée. Appliquez votre premier réglage et il apparaîtra ici.",
+    clear: "Effacer l'historique",
+    clearing: "Effacement...",
+    cleared: "Historique effacé.",
     revert: "Rétablir",
     elevated: "avec droits admin",
     failed: "échec",
@@ -2117,6 +2463,7 @@ const fr: Strings = {
     groupManage: "Gérer",
     scan: "Analyse",
     health: "Santé du PC",
+    hardware: "Matériel",
     performance: "Performances",
     privacy: "Confidentialité",
     ui: "Interface",
@@ -2234,49 +2581,49 @@ const fr: Strings = {
   },
   search: {
     placeholder: "Rechercher une optimisation...",
-    noResults: 'Aucun r\u00e9sultat pour "{query}".',
+    noResults: 'Aucun résultat pour "{query}".',
     clear: "Effacer",
   },
   pricing: {
-    title: "Choisissez jusqu\u2019o\u00f9 pousser",
-    subtitle: "Commencez gratuitement. Passez \u00e0 Pro quand chaque image compte.",
+    title: "Choisissez jusqu’où pousser",
+    subtitle: "Commencez gratuitement. Passez à Pro quand chaque image compte.",
     monthly: "Mensuel",
     annual: "Annuel",
-    saveBadge: "\u00c9CONOMISEZ {percent}%",
+    saveBadge: "ÉCONOMISEZ {percent}%",
     perMonth: "/mois",
     perYear: "/an",
-    annualDetail: "Soit {monthly} par mois, pr\u00e9lev\u00e9s {yearly} une fois par an",
-    annualNudge: "Avec l\u2019offre annuelle, ce serait {price} par mois",
+    annualDetail: "Soit {monthly} par mois, prélevés {yearly} une fois par an",
+    annualNudge: "Avec l’offre annuelle, ce serait {price} par mois",
     mostChosen: "LE PLUS CHOISI",
     freeName: "Free",
-    freeTagline: "Tout le n\u00e9cessaire pour un PC plus propre et plus r\u00e9actif.",
+    freeTagline: "Tout le nécessaire pour un PC plus propre et plus réactif.",
     freePriceNote: "Gratuit pour toujours, sans expiration",
-    freeCta: "Vous \u00eates sur l\u2019offre Free",
+    freeCta: "Vous êtes sur l’offre Free",
     freeCurrent: "Offre actuelle",
     proName: "Pro",
     proTagline: "Pour ceux qui comptent chaque image et ne laissent rien au hasard.",
-    proCta: "Passer \u00e0 Pro",
+    proCta: "Passer à Pro",
     proCurrent: "Votre offre",
     manageBilling: "Gérer l'abonnement",
-    everythingInFree: "Tout ce que contient Free, plus\u00a0:",
+    everythingInFree: "Tout ce que contient Free, plus :",
     reassurance:
-      "R\u00e9siliable \u00e0 tout moment. Chaque modification reste annulable en un clic, m\u00eame apr\u00e8s la r\u00e9siliation.",
+      "Résiliable à tout moment. Chaque modification reste annulable en un clic, même après la résiliation.",
     freeFeatures: [
-      "{count} optimisations r\u00e9elles, chacune sauvegard\u00e9e et r\u00e9versible",
-      "Moniteur syst\u00e8me en temps r\u00e9el (processeur, m\u00e9moire, disque)",
-      "Gestion des programmes au d\u00e9marrage",
-      "V\u00e9rification des fuites de mot de passe",
+      "{count} optimisations réelles, chacune sauvegardée et réversible",
+      "Moniteur système en temps réel (processeur, mémoire, disque)",
+      "Gestion des programmes au démarrage",
+      "Vérification des fuites de mot de passe",
       "Analyse et correction du PC en un clic",
       "Nettoyage des fichiers temporaires",
     ],
     proFeatures: [
-      "Game Sessions\u00a0: le turbo s\u2019active seul au lancement d\u2019un jeu",
-      "Pr\u00e9r\u00e9glage Turbo Gaming et priorit\u00e9 maximale aux jeux",
-      "Confidentialit\u00e9 avanc\u00e9e\u00a0: t\u00e9l\u00e9m\u00e9trie et historique d\u2019activit\u00e9",
+      "Game Sessions : le turbo s’active seul au lancement d’un jeu",
+      "Préréglage Turbo Gaming et priorité maximale aux jeux",
+      "Confidentialité avancée : télémétrie et historique d’activité",
       "Trouve et supprime les fichiers en double",
       "Vide le cache de Windows Update",
-      "D\u00e9sactive l\u2019indexation qui occupe le disque",
-      "Toutes les optimisations et fonctionnalit\u00e9s \u00e0 venir, incluses",
+      "Désactive l’indexation qui occupe le disque",
+      "Toutes les optimisations et fonctionnalités à venir, incluses",
     ],
   },
   toggle: { on: "Activé", off: "Désactivé" },
@@ -2557,6 +2904,112 @@ const fr: Strings = {
     accountRefreshFailed:
       "Impossible de vérifier l'état de votre compte. Les informations affichées ici peuvent être obsolètes — vérifiez votre connexion ou réessayez plus tard.",
   },
+  hardware: {
+    intro:
+      "Lu directement sur les capteurs de votre matériel. Là où un capteur n'existe pas, nous le disons, au lieu d'afficher un chiffre que personne ne peut vérifier.",
+    gpuLabel: "Carte graphique",
+    cpuLabel: "Processeur",
+    liveBadge: "En direct",
+    gpuDriver: "Pilote {version}",
+    load: "Utilisation GPU",
+    vram: "Mémoire vidéo",
+    fan: "Ventilateur",
+    power: "Consommation",
+    fanIdle: "à l'arrêt : inutile sous 50°",
+    powerLimit: "limite {limit} W",
+    tempCool: "fraîche",
+    tempGood: "optimale",
+    tempWarm: "chaude",
+    tempHot: "très chaude",
+    traceLabel: "Cette session",
+    traceRange: "min {min}° · max {max}°",
+    noTempSensor: "Cette carte n'expose aucun capteur de température.",
+    cpuAcpiSource: "lue depuis la zone thermique ACPI",
+    cpuNoSensor:
+      "Le micrologiciel de ce PC n'expose aucune zone thermique ACPI : Windows n'a donc aucune température de processeur à lire. Les outils qui en affichent toujours une installent un pilote noyau pour lire directement les registres du processeur. PC Tweaker ne le fait pas, et préfère vous le dire plutôt que d'inventer une valeur.",
+    noGpuTool:
+      "Aucune carte NVIDIA détectée. AMD et Intel ne fournissent pas d'outil équivalent, leurs températures sont donc illisibles sans le logiciel du fabricant.",
+    thermalsUnavailable: "Impossible de lire les capteurs de ce système.",
+    driversTitle: "Ancienneté des pilotes",
+    driversSubtitle:
+      "L'âge des pilotes fournis par les fabricants. Windows sait ce qui est installé, pas ce qui est disponible : voici l'âge réel, jamais une fausse alerte de mise à jour.",
+    driversRescan: "Réanalyser",
+    driversScanning: "Analyse...",
+    driversCounted: "{count} pilotes de fabricants",
+    driversAging: "{count} de plus de 2 ans",
+    driversStale: "{count} de plus de 4 ans",
+    driversAllCurrent: "Tous récents",
+    driversNone: "Aucun pilote tiers dans ces catégories.",
+    driversShowAll: "Afficher les {count} autres",
+    driversShowLess: "Afficher moins",
+    driversInboxNote:
+      "{count} pilotes Microsoft intégrés exclus : Windows Update s'en charge et leur date est un marqueur fixe, les compter comme anciens serait une fausse alerte.",
+    ageYears: "{years} ans",
+    ageYear: "{years} an",
+    ageMonths: "{months} mois",
+    ageMonth: "{months} mois",
+    vendorSite: "Site du fabricant",
+    watchLabel: "Sous surveillance depuis",
+    peakLabel: "Pic",
+    verdictRisky: "Risqué",
+    verdictNormal: "Normal",
+    verdictBetter: "Mieux que prévu",
+    verdictIdle: "Au repos",
+    verdictRiskyHint:
+      "La carte a dépassé 84°, le seuil à partir duquel elle réduit elle-même ses performances pour se protéger. Vérifiez la circulation d'air ou passez au profil Silencieux.",
+    verdictNormalHint: "Températures habituelles pour une carte en charge : rien d'inquiétant.",
+    verdictBetterHint:
+      "Elle est restée sous 65° tout en travaillant vraiment : refroidissement meilleur que la moyenne.",
+    verdictIdleHint:
+      "Elle n'a pas encore assez travaillé pour juger. Une carte au repos reste fraîche de toute façon, cela ne prouverait rien.",
+    profilesTitle: "Profils thermiques",
+    profilesSubtitle:
+      "Ils ajustent la limite de puissance de la carte, le levier qui gouverne réellement la chaleur et le bruit du ventilateur. Chaque valeur provient des limites déclarées par la carte elle-même.",
+    currentLimit: "Actuel : {watts} W",
+    modeSilent: "Silencieux",
+    modeSilentHint:
+      "Pour le travail, le streaming et les longues sessions : le ventilateur reste presque muet et la carte chauffe bien moins, au prix de quelques images.",
+    modeStandard: "Standard",
+    modeStandardHint:
+      "L'équilibre choisi par le fabricant. Le bon profil au quotidien, et celui vers lequel revenir en cas de doute.",
+    modeGaming: "Gaming",
+    modeGamingHint:
+      "Pour les sessions compétitives : watts au maximum et plafond d'horloge relevé, pour tenir vos 1% low plus stables quand ça compte.",
+    modeApplying: "Application...",
+    profileApplied: "Limite réglée sur {watts} W.",
+    profileNote:
+      "Nécessite les droits administrateur et se réinitialise au redémarrage. Ce n'est pas une courbe de ventilateur : NVIDIA n'expose aucun contrôle direct du ventilateur dans nvidia-smi, et les outils qui en proposent un utilisent des API privées non documentées auxquelles cette application ne touche pas.",
+    profileDefaultIsMax:
+      "Sur cette carte, la limite de puissance d'usine égale déjà le maximum : Silencieux est donc le seul profil qui change les watts, Gaming se distingue en relevant le plafond d'horloge.",
+    driverInstalled: "installé v{version} le {date}",
+    driversNoUpdateCheck:
+      "Cet écran ne contacte aucun fabricant et ne peut pas savoir s'il existe une version plus récente : il affiche la version installée et son âge, et vous conduit à la page officielle pour vérifier vous-même.",
+    driversCheckedAt: "Lu le {time}",
+    modeClockLocked: "horloge jusqu'à {mhz} MHz",
+    modeClockAuto: "horloge automatique",
+    profileApply: "Appliquer le profil",
+    profileActive: "Profil actif",
+    profileWillSet: "Réglera {watts} W, {clock}",
+    scanStarting: "Démarrage de l'analyse...",
+    scanReading: "Lecture de la classe {class}",
+    scanCount: "{done}/{total} · {pct}%",
+    driversScannedAll: "{total} pilotes examinés dans {classes} catégories",
+    winUpdateButton: "Rechercher des pilotes",
+    winUpdateNote:
+      "Ouvre Windows Update, le canal qui installe réellement les pilotes signés par les fabricants. PC Tweaker ne télécharge pas de paquets de pilotes lui-même : il n'existe aucune API constructeur indiquant la version correcte pour votre appareil précis, et installer le mauvais pilote graphique est l'une des rares erreurs qui peut vous laisser sans écran.",
+    winUpdateOpened: "Windows Update ouvert.",
+    winUpdateSearching: "Recherche...",
+    winUpdateInstall: "Télécharger et installer ({count})",
+    winUpdateInstalling: "Téléchargement et installation...",
+    winUpdateNone: "Aucune mise à jour de pilote en attente : vous êtes à jour.",
+    winUpdateFailed: "Échec de la recherche : {detail}",
+    winUpdateDone: "Installés {installed}, échoués {failed}.",
+    rebootTitle: "Windows demande un redémarrage",
+    rebootBody:
+      "Windows signale qu'une installation ne se termine qu'après un redémarrage. Vous pouvez le faire maintenant ou quand vous voulez.",
+    rebootNow: "Redémarrer",
+    rebootLater: "Plus tard",
+  },
   menu: {
     account: "Compte",
     plan: "Forfait",
@@ -2822,6 +3275,21 @@ const fr: Strings = {
       description:
         "Ramène à zéro le délai avant qu'une touche maintenue commence à se répéter et maximise sa vitesse de répétition, pour une réponse plus immédiate en jeu (HKCU, aucune élévation requise).",
     },
+    keep_kernel_in_ram: {
+      name: "Garder le noyau et les pilotes en RAM",
+      description:
+        "Windows peut déplacer sur le disque des parties du noyau et du code des pilotes même quand la mémoire est abondante, et les relire est une pause que vous ressentez comme un à-coup. Ceci les garde en mémoire. Utile si vous avez de la RAM à revendre ; sur un PC peu doté, laissez désactivé (HKLM, droits administrateur requis).",
+    },
+    auto_end_frozen_tasks: {
+      name: "Empêcher une application figée de bloquer l'arrêt",
+      description:
+        "Quand une application cesse de répondre pendant l'arrêt, Windows attend et affiche l'écran \"Cette application empêche l'arrêt\" jusqu'à ce que quelqu'un clique. Ceci ferme automatiquement les applications qui ne répondent plus, pour qu'un programme figé ne laisse pas la machine allumée (HKCU, aucune élévation requise).",
+    },
+    instant_folder_loading: {
+      name: "Ouvrir chaque dossier instantanément",
+      description:
+        "L'Explorateur inspecte le contenu d'un dossier pour deviner s'il s'agit d'Images, Musique ou Documents, et un dossier contenant des milliers de fichiers multimédias peut se figer plusieurs secondes pendant qu'il décide. Ceci fixe tous les dossiers sur la disposition générale, pour qu'ils s'ouvrent aussitôt (HKCU, aucune élévation requise).",
+    },
     taskbar_align_left: {
       name: "Aligner la barre des tâches à gauche",
       description:
@@ -2890,6 +3358,9 @@ const es: Strings = {
     subtitle:
       "Todo lo que esta aplicación cambió en este PC, de más reciente a más antiguo. Guardado en local, nunca se sube.",
     empty: "Aún no hay cambios registrados. Aplica tu primer ajuste y aparecerá aquí.",
+    clear: "Borrar historial",
+    clearing: "Borrando...",
+    cleared: "Historial borrado.",
     revert: "Revertir",
     elevated: "con permisos de admin",
     failed: "falló",
@@ -2909,6 +3380,7 @@ const es: Strings = {
     groupManage: "Gestionar",
     scan: "Análisis",
     health: "Salud del PC",
+    hardware: "Hardware",
     performance: "Rendimiento",
     privacy: "Privacidad",
     ui: "Interfaz",
@@ -3030,44 +3502,44 @@ const es: Strings = {
     clear: "Borrar",
   },
   pricing: {
-    title: "Elige cu\u00e1nto quieres exprimirlo",
-    subtitle: "Empieza gratis. Pasa a Pro cuando quieras hasta el \u00faltimo fotograma.",
+    title: "Elige cuánto quieres exprimirlo",
+    subtitle: "Empieza gratis. Pasa a Pro cuando quieras hasta el último fotograma.",
     monthly: "Mensual",
     annual: "Anual",
     saveBadge: "AHORRAS UN {percent}%",
     perMonth: "/mes",
-    perYear: "/a\u00f1o",
-    annualDetail: "Son {monthly} al mes, con un cargo de {yearly} una vez al a\u00f1o",
-    annualNudge: "Con el plan anual ser\u00edan {price} al mes",
-    mostChosen: "EL M\u00c1S ELEGIDO",
+    perYear: "/año",
+    annualDetail: "Son {monthly} al mes, con un cargo de {yearly} una vez al año",
+    annualNudge: "Con el plan anual serían {price} al mes",
+    mostChosen: "EL MÁS ELEGIDO",
     freeName: "Free",
-    freeTagline: "Todo lo necesario para un PC m\u00e1s limpio y \u00e1gil.",
+    freeTagline: "Todo lo necesario para un PC más limpio y ágil.",
     freePriceNote: "Gratis para siempre, sin caducidad",
-    freeCta: "Est\u00e1s en el plan Free",
+    freeCta: "Estás en el plan Free",
     freeCurrent: "Plan actual",
     proName: "Pro",
     proTagline: "Para quien cuenta cada fotograma y no deja nada al azar.",
     proCta: "Pasar a Pro",
     proCurrent: "Tu plan",
     manageBilling: "Gestionar suscripción",
-    everythingInFree: "Todo lo que incluye Free, y adem\u00e1s:",
+    everythingInFree: "Todo lo que incluye Free, y además:",
     reassurance:
       "Cancela cuando quieras. Cada cambio sigue siendo reversible con un clic, incluso tras cancelar.",
     freeFeatures: [
       "{count} ajustes reales, cada uno con copia de seguridad y reversible",
       "Monitor del sistema en tiempo real (CPU, memoria, disco)",
-      "Gesti\u00f3n de los programas de inicio",
-      "Comprobaci\u00f3n de filtraciones de contrase\u00f1as",
-      "An\u00e1lisis del PC y correcci\u00f3n en un clic",
+      "Gestión de los programas de inicio",
+      "Comprobación de filtraciones de contraseñas",
+      "Análisis del PC y corrección en un clic",
       "Limpieza de archivos temporales",
     ],
     proFeatures: [
       "Game Sessions: el turbo se activa solo al abrir un juego",
-      "Preset Turbo Gaming y prioridad m\u00e1xima para los juegos",
-      "Privacidad avanzada: telemetr\u00eda e historial de actividad",
+      "Preset Turbo Gaming y prioridad máxima para los juegos",
+      "Privacidad avanzada: telemetría e historial de actividad",
       "Encuentra y elimina archivos duplicados",
-      "Vac\u00eda la cach\u00e9 de Windows Update",
-      "Desactiva la indexaci\u00f3n que mantiene ocupado el disco",
+      "Vacía la caché de Windows Update",
+      "Desactiva la indexación que mantiene ocupado el disco",
       "Todos los ajustes y funciones futuras, incluidos",
     ],
   },
@@ -3203,7 +3675,7 @@ const es: Strings = {
     nothingSelected: "Nada seleccionado",
     foundHeadline: "{count} por corregir en este PC",
     foundNone: "Nada que corregir",
-    doneTitle: "\u00a1Listo!",
+    doneTitle: "¡Listo!",
     doneBody: "{count} optimizaciones aplicadas. Tu PC está a punto.",
     fixHeading: "Listas para aplicar",
   },
@@ -3224,9 +3696,9 @@ const es: Strings = {
   },
   restore: {
     button: "Restaurar todo",
-    title: "\u00bfRestaurar todos los cambios?",
+    title: "¿Restaurar todos los cambios?",
     body: "Se desactivarán las {count} optimizaciones activas y cada valor volverá exactamente a como estaba. No se pierde nada.",
-    confirm: "S\u00ed, restaurar todo",
+    confirm: "Sí, restaurar todo",
     cancel: "Cancelar",
     running: "Restaurando...",
     doneToast: "{count} optimizaciones restauradas.",
@@ -3345,6 +3817,112 @@ const es: Strings = {
       "No podemos verificar tu suscripción Pro tras tanto tiempo sin conexión. Reconectate a internet e inténtalo de nuevo.",
     accountRefreshFailed:
       "No pudimos verificar el estado de tu cuenta. Lo que se muestra aquí puede estar desactualizado: revisa tu conexión o inténtalo más tarde.",
+  },
+  hardware: {
+    intro:
+      "Leído directamente de los sensores de tu hardware. Donde no existe un sensor te lo decimos, en lugar de mostrar un número que nadie puede verificar.",
+    gpuLabel: "Tarjeta gráfica",
+    cpuLabel: "Procesador",
+    liveBadge: "En directo",
+    gpuDriver: "Controlador {version}",
+    load: "Uso de GPU",
+    vram: "Memoria de vídeo",
+    fan: "Ventilador",
+    power: "Consumo",
+    fanIdle: "parado: no hace falta bajo 50°",
+    powerLimit: "límite {limit} W",
+    tempCool: "fría",
+    tempGood: "óptima",
+    tempWarm: "caliente",
+    tempHot: "muy caliente",
+    traceLabel: "Esta sesión",
+    traceRange: "mín {min}° · máx {max}°",
+    noTempSensor: "Esta tarjeta no expone ningún sensor de temperatura.",
+    cpuAcpiSource: "leída de la zona térmica ACPI",
+    cpuNoSensor:
+      "El firmware de este PC no expone una zona térmica ACPI, así que Windows no tiene ninguna temperatura de CPU que leer. Las herramientas que siempre muestran una instalan un controlador a nivel de kernel para leer los registros del procesador: PC Tweaker no lo hace, y prefiere decírtelo antes que mostrarte un valor inventado.",
+    noGpuTool:
+      "No se detectó ninguna tarjeta NVIDIA. AMD e Intel no ofrecen una herramienta equivalente, por lo que sus temperaturas no se pueden leer sin el software del fabricante.",
+    thermalsUnavailable: "No podemos leer los sensores de este sistema.",
+    driversTitle: "Antigüedad de los controladores",
+    driversSubtitle:
+      "Cuántos años tienen los controladores del fabricante. Windows sabe qué está instalado, no qué está disponible: aquí ves la antigüedad real, nunca un aviso falso de actualización.",
+    driversRescan: "Volver a analizar",
+    driversScanning: "Analizando...",
+    driversCounted: "{count} controladores de fabricantes",
+    driversAging: "{count} de más de 2 años",
+    driversStale: "{count} de más de 4 años",
+    driversAllCurrent: "Todos recientes",
+    driversNone: "No hay controladores de terceros en estas categorías.",
+    driversShowAll: "Mostrar {count} más",
+    driversShowLess: "Mostrar menos",
+    driversInboxNote:
+      "{count} controladores integrados de Microsoft excluidos: los mantiene Windows Update y su fecha es un marcador fijo, contarlos como antiguos sería una falsa alarma.",
+    ageYears: "{years} años",
+    ageYear: "{years} año",
+    ageMonths: "{months} meses",
+    ageMonth: "{months} mes",
+    vendorSite: "Sitio del fabricante",
+    watchLabel: "En observación desde hace",
+    peakLabel: "Pico",
+    verdictRisky: "Arriesgado",
+    verdictNormal: "Normal",
+    verdictBetter: "Mejor de lo esperado",
+    verdictIdle: "En reposo",
+    verdictRiskyHint:
+      "La tarjeta superó los 84°, el punto en el que empieza a recortar su propio rendimiento para protegerse. Revisa el flujo de aire o cambia al perfil Silencioso.",
+    verdictNormalHint: "Temperaturas habituales para una tarjeta bajo carga: nada preocupante.",
+    verdictBetterHint:
+      "Se mantuvo por debajo de 65° mientras trabajaba de verdad: mejor refrigeración que la media.",
+    verdictIdleHint:
+      "Todavía no ha trabajado lo suficiente para juzgar. Una tarjeta en reposo se mantiene fresca igualmente, así que no probaría nada.",
+    profilesTitle: "Perfiles térmicos",
+    profilesSubtitle:
+      "Ajustan el límite de potencia de la tarjeta, la palanca que realmente gobierna el calor y el ruido del ventilador. Cada valor procede de los límites que declara la propia tarjeta.",
+    currentLimit: "Ahora: {watts} W",
+    modeSilent: "Silencioso",
+    modeSilentHint:
+      "Para trabajar, transmitir y sesiones largas: el ventilador queda casi mudo y la tarjeta calienta mucho menos, a cambio de unos fotogramas.",
+    modeStandard: "Estándar",
+    modeStandardHint:
+      "El equilibrio que eligió el fabricante. El perfil adecuado para el uso diario, y al que volver si algo no convence.",
+    modeGaming: "Gaming",
+    modeGamingHint:
+      "Para sesiones competitivas: vatios al máximo y techo de reloj elevado, para mantener más estables los FPS mínimos cuando importa.",
+    modeApplying: "Aplicando...",
+    profileApplied: "Límite fijado en {watts} W.",
+    profileNote:
+      "Requiere permisos de administrador y se restablece al reiniciar. No es una curva de ventilador: NVIDIA no expone control directo del ventilador en nvidia-smi, y las herramientas que lo ofrecen usan API privadas no documentadas que esta aplicación no toca.",
+    profileDefaultIsMax:
+      "En esta tarjeta el límite de potencia de fábrica ya coincide con el máximo, así que Silencioso es el único perfil que cambia los vatios: Gaming se distingue subiendo el techo del reloj.",
+    driverInstalled: "instalado v{version} el {date}",
+    driversNoUpdateCheck:
+      "Esta pantalla no contacta con ningún fabricante y no puede saber si existe una versión más reciente: muestra la versión instalada y su antigüedad, y te lleva a la página oficial para que lo compruebes tú.",
+    driversCheckedAt: "Leído el {time}",
+    modeClockLocked: "reloj hasta {mhz} MHz",
+    modeClockAuto: "reloj automático",
+    profileApply: "Aplicar perfil",
+    profileActive: "Perfil activo",
+    profileWillSet: "Fijará {watts} W, {clock}",
+    scanStarting: "Iniciando análisis...",
+    scanReading: "Leyendo la clase {class}",
+    scanCount: "{done}/{total} · {pct}%",
+    driversScannedAll: "{total} controladores examinados en {classes} categorías",
+    winUpdateButton: "Buscar actualizaciones de controladores",
+    winUpdateNote:
+      "Abre Windows Update, el canal que realmente instala controladores firmados por los fabricantes. PC Tweaker no descarga paquetes de controladores por su cuenta: no existe una API del fabricante que diga cuál es la versión correcta para tu dispositivo exacto, e instalar el controlador de vídeo equivocado es uno de los pocos errores que puede dejarte sin pantalla.",
+    winUpdateOpened: "Windows Update abierto.",
+    winUpdateSearching: "Buscando...",
+    winUpdateInstall: "Descargar e instalar ({count})",
+    winUpdateInstalling: "Descargando e instalando...",
+    winUpdateNone: "No hay actualizaciones de controladores pendientes: ya estás al día.",
+    winUpdateFailed: "La búsqueda falló: {detail}",
+    winUpdateDone: "Instalados {installed}, fallidos {failed}.",
+    rebootTitle: "Windows pide reiniciar",
+    rebootBody:
+      "Windows indica que una instalación solo se completa tras reiniciar. Puedes hacerlo ahora o cuando prefieras.",
+    rebootNow: "Reiniciar ahora",
+    rebootLater: "Más tarde",
   },
   menu: {
     account: "Cuenta",
@@ -3612,6 +4190,21 @@ const es: Strings = {
       description:
         "Reduce a cero el retardo antes de que una tecla mantenida empiece a repetirse y maximiza su velocidad de repetición, para una respuesta más inmediata en el juego (HKCU, no requiere elevación).",
     },
+    keep_kernel_in_ram: {
+      name: "Mantener el kernel y los controladores en la RAM",
+      description:
+        "Windows puede pasar al disco partes del kernel y del código de los controladores incluso cuando sobra memoria, y volver a leerlas es una pausa que notas como un tirón. Esto los mantiene en memoria. Merece la pena si te sobra RAM; en un PC con poca memoria déjalo desactivado (HKLM, requiere permisos de administrador).",
+    },
+    auto_end_frozen_tasks: {
+      name: "Que una app colgada no bloquee el apagado",
+      description:
+        'Cuando una aplicación deja de responder durante el apagado, Windows espera y muestra la pantalla "Esta aplicación impide el apagado" hasta que alguien hace clic. Esto cierra solo las aplicaciones que no responden, para que un programa colgado no deje el equipo encendido (HKCU, sin elevación).',
+    },
+    instant_folder_loading: {
+      name: "Abrir cada carpeta al instante",
+      description:
+        "El Explorador inspecciona el contenido de una carpeta para adivinar si es Imágenes, Música o Documentos, y una carpeta con miles de archivos multimedia puede quedarse bloqueada varios segundos mientras decide. Esto fija todas las carpetas al diseño general, para que se abran de inmediato (HKCU, sin elevación).",
+    },
     taskbar_align_left: {
       name: "Alinear la barra de tareas a la izquierda",
       description:
@@ -3682,6 +4275,9 @@ const de: Strings = {
       "Alles, was diese App auf diesem PC geändert hat, neueste zuerst. Lokal gespeichert, nie hochgeladen.",
     empty:
       "Noch keine Änderungen aufgezeichnet. Wende deinen ersten Tweak an und er erscheint hier.",
+    clear: "Verlauf löschen",
+    clearing: "Wird gelöscht...",
+    cleared: "Verlauf gelöscht.",
     revert: "Zurücksetzen",
     elevated: "mit Adminrechten",
     failed: "fehlgeschlagen",
@@ -3701,6 +4297,7 @@ const de: Strings = {
     groupManage: "Verwalten",
     scan: "Systemscan",
     health: "PC-Zustand",
+    hardware: "Hardware",
     performance: "Leistung",
     privacy: "Datenschutz",
     ui: "Oberfläche",
@@ -3818,49 +4415,49 @@ const de: Strings = {
   },
   search: {
     placeholder: "Tweak suchen...",
-    noResults: 'Keine Treffer f\u00fcr "{query}".',
-    clear: "L\u00f6schen",
+    noResults: 'Keine Treffer für "{query}".',
+    clear: "Löschen",
   },
   pricing: {
     title: "Entscheide, wie weit du gehst",
-    subtitle: "Starte kostenlos. Wechsle zu Pro, wenn jedes Frame z\u00e4hlt.",
+    subtitle: "Starte kostenlos. Wechsle zu Pro, wenn jedes Frame zählt.",
     monthly: "Monatlich",
-    annual: "J\u00e4hrlich",
+    annual: "Jährlich",
     saveBadge: "{percent}% SPAREN",
     perMonth: "/Monat",
     perYear: "/Jahr",
-    annualDetail: "Das sind {monthly} pro Monat, einmal j\u00e4hrlich mit {yearly} abgebucht",
-    annualNudge: "Im Jahrestarif w\u00e4ren es {price} pro Monat",
-    mostChosen: "AM H\u00c4UFIGSTEN GEW\u00c4HLT",
+    annualDetail: "Das sind {monthly} pro Monat, einmal jährlich mit {yearly} abgebucht",
+    annualNudge: "Im Jahrestarif wären es {price} pro Monat",
+    mostChosen: "AM HÄUFIGSTEN GEWÄHLT",
     freeName: "Free",
-    freeTagline: "Alles f\u00fcr einen saubereren, flotteren PC.",
-    freePriceNote: "F\u00fcr immer kostenlos, ohne Ablauf",
+    freeTagline: "Alles für einen saubereren, flotteren PC.",
+    freePriceNote: "Für immer kostenlos, ohne Ablauf",
     freeCta: "Du nutzt den Free-Tarif",
     freeCurrent: "Aktueller Tarif",
     proName: "Pro",
-    proTagline: "F\u00fcr alle, die jedes Frame z\u00e4hlen und nichts dem Zufall \u00fcberlassen.",
+    proTagline: "Für alle, die jedes Frame zählen und nichts dem Zufall überlassen.",
     proCta: "Zu Pro wechseln",
     proCurrent: "Dein Tarif",
     manageBilling: "Abo verwalten",
     everythingInFree: "Alles aus Free, dazu:",
     reassurance:
-      "Jederzeit k\u00fcndbar. Jede \u00c4nderung bleibt mit einem Klick r\u00fcckg\u00e4ngig zu machen, auch nach der K\u00fcndigung.",
+      "Jederzeit kündbar. Jede Änderung bleibt mit einem Klick rückgängig zu machen, auch nach der Kündigung.",
     freeFeatures: [
       "{count} echte Tweaks, jeder gesichert und umkehrbar",
-      "Live-Systemmonitor (CPU, Arbeitsspeicher, Datentr\u00e4ger)",
+      "Live-Systemmonitor (CPU, Arbeitsspeicher, Datenträger)",
       "Verwaltung der Autostart-Programme",
-      "Passwort-Datenleck-Pr\u00fcfung",
+      "Passwort-Datenleck-Prüfung",
       "PC-Scan und Behebung mit einem Klick",
-      "Bereinigung tempor\u00e4rer Dateien",
+      "Bereinigung temporärer Dateien",
     ],
     proFeatures: [
       "Game Sessions: Turbo aktiviert sich beim Spielstart von selbst",
-      "Turbo-Gaming-Preset und h\u00f6chste Priorit\u00e4t f\u00fcr Spiele",
-      "Erweiterter Datenschutz: Telemetrie und Aktivit\u00e4tsverlauf",
+      "Turbo-Gaming-Preset und höchste Priorität für Spiele",
+      "Erweiterter Datenschutz: Telemetrie und Aktivitätsverlauf",
       "Findet und entfernt doppelte Dateien",
       "Leert den Windows-Update-Cache",
-      "Deaktiviert die Indizierung, die den Datentr\u00e4ger belastet",
-      "Jeder Tweak und jede k\u00fcnftige Funktion inklusive",
+      "Deaktiviert die Indizierung, die den Datenträger belastet",
+      "Jeder Tweak und jede künftige Funktion inklusive",
     ],
   },
   toggle: { on: "Ein", off: "Aus" },
@@ -4017,14 +4614,14 @@ const de: Strings = {
       "Bei aktiver automatischer Bereinigung gibt PC Tweaker den RAM selbstständig in regelmäßigen Abständen frei, solange die App geöffnet bleibt.",
   },
   restore: {
-    button: "Alles zur\u00fccksetzen",
-    title: "Alle \u00c4nderungen zur\u00fccksetzen?",
+    button: "Alles zurücksetzen",
+    title: "Alle Änderungen zurücksetzen?",
     body: "Die {count} aktiven Optimierungen werden deaktiviert und jeder Wert exakt so wiederhergestellt, wie er vorher war. Es gehen keine Daten verloren.",
-    confirm: "Ja, alles zur\u00fccksetzen",
+    confirm: "Ja, alles zurücksetzen",
     cancel: "Abbrechen",
-    running: "Wird zur\u00fcckgesetzt...",
-    doneToast: "{count} Optimierungen zur\u00fcckgesetzt.",
-    nothingToast: "Es gibt nichts zur\u00fcckzusetzen.",
+    running: "Wird zurückgesetzt...",
+    doneToast: "{count} Optimierungen zurückgesetzt.",
+    nothingToast: "Es gibt nichts zurückzusetzen.",
   },
   passwordCheck: {
     title: "Passwort-Datenleck-Prüfung",
@@ -4139,6 +4736,113 @@ const de: Strings = {
       "Wir können Ihr Pro-Abonnement nach so langer Offline-Zeit nicht bestätigen. Stellen Sie eine Internetverbindung her und versuchen Sie es erneut.",
     accountRefreshFailed:
       "Wir konnten den Status Ihres Kontos nicht überprüfen. Die hier angezeigten Informationen sind möglicherweise veraltet — prüfen Sie Ihre Verbindung oder versuchen Sie es später erneut.",
+  },
+  hardware: {
+    intro:
+      "Direkt von den Sensoren Ihrer Hardware gelesen. Wo es keinen Sensor gibt, sagen wir es Ihnen, statt eine Zahl anzuzeigen, die niemand überprüfen kann.",
+    gpuLabel: "Grafikkarte",
+    cpuLabel: "Prozessor",
+    liveBadge: "Live",
+    gpuDriver: "Treiber {version}",
+    load: "GPU-Auslastung",
+    vram: "Grafikspeicher",
+    fan: "Lüfter",
+    power: "Leistungsaufnahme",
+    fanIdle: "steht: unter 50° nicht nötig",
+    powerLimit: "Grenze {limit} W",
+    tempCool: "kühl",
+    tempGood: "optimal",
+    tempWarm: "warm",
+    tempHot: "sehr warm",
+    traceLabel: "Diese Sitzung",
+    traceRange: "min {min}° · max {max}°",
+    noTempSensor: "Diese Karte stellt keinen Temperatursensor bereit.",
+    cpuAcpiSource: "aus der ACPI-Thermalzone gelesen",
+    cpuNoSensor:
+      "Die Firmware dieses PCs stellt keine ACPI-Thermalzone bereit, daher hat Windows keine CPU-Temperatur zum Auslesen. Programme, die immer eine anzeigen, installieren einen Kernel-Treiber, um die Prozessorregister direkt zu lesen: PC Tweaker tut das nicht und sagt es Ihnen lieber, als einen erfundenen Wert zu zeigen.",
+    noGpuTool:
+      "Keine NVIDIA-Karte erkannt. AMD und Intel liefern kein vergleichbares Abfragewerkzeug, ihre Temperaturen sind daher ohne Herstellersoftware nicht auslesbar.",
+    thermalsUnavailable: "Wir können die Sensoren dieses Systems nicht auslesen.",
+    driversTitle: "Treiberalter",
+    driversSubtitle:
+      "Wie alt Ihre Herstellertreiber sind. Windows weiß, was installiert ist, nicht was verfügbar ist: Hier steht das belegbare Alter, nie eine erfundene Update-Meldung.",
+    driversRescan: "Neu prüfen",
+    driversScanning: "Wird geprüft...",
+    driversCounted: "{count} Herstellertreiber",
+    driversAging: "{count} älter als 2 Jahre",
+    driversStale: "{count} älter als 4 Jahre",
+    driversAllCurrent: "Alle aktuell",
+    driversNone: "Keine Treiber von Drittherstellern in diesen Kategorien.",
+    driversShowAll: "{count} weitere anzeigen",
+    driversShowLess: "Weniger anzeigen",
+    driversInboxNote:
+      "{count} mitgelieferte Microsoft-Treiber ausgeschlossen: Windows Update pflegt sie und ihr Datum ist ein fester Platzhalter — sie als alt zu zählen wäre ein Fehlalarm.",
+    ageYears: "{years} Jahre",
+    ageYear: "{years} Jahr",
+    ageMonths: "{months} Monate",
+    ageMonth: "{months} Monat",
+    vendorSite: "Herstellerseite",
+    watchLabel: "Beobachtet seit",
+    peakLabel: "Spitze",
+    verdictRisky: "Riskant",
+    verdictNormal: "Normal",
+    verdictBetter: "Besser als erwartet",
+    verdictIdle: "Im Leerlauf",
+    verdictRiskyHint:
+      "Die Karte hat 84° überschritten — ab da drosselt sie sich selbst, um sich zu schützen. Prüfen Sie den Luftstrom oder wechseln Sie zum Profil Leise.",
+    verdictNormalHint:
+      "Übliche Temperaturen für eine Karte unter Last: nichts Besorgniserregendes.",
+    verdictBetterHint:
+      "Sie blieb unter 65°, während sie wirklich gearbeitet hat: bessere Kühlung als üblich.",
+    verdictIdleHint:
+      "Sie hat noch nicht genug gearbeitet, um das zu beurteilen. Eine Karte im Leerlauf bleibt ohnehin kühl — das würde nichts beweisen.",
+    profilesTitle: "Thermische Profile",
+    profilesSubtitle:
+      "Sie setzen das Leistungslimit der Karte — den Hebel, der Hitze und Lüftergeräusch tatsächlich bestimmt. Jeder Wert stammt aus den Grenzen, die die Karte selbst meldet.",
+    currentLimit: "Jetzt: {watts} W",
+    modeSilent: "Leise",
+    modeSilentHint:
+      "Für Arbeit, Streaming und lange Sitzungen: Der Lüfter bleibt fast lautlos und die Karte wird deutlich kühler — auf Kosten einiger Bilder.",
+    modeStandard: "Standard",
+    modeStandardHint:
+      "Die Balance, die der Hersteller gewählt hat. Das richtige Profil für den Alltag — und das, zu dem man zurückkehrt, wenn etwas nicht passt.",
+    modeGaming: "Gaming",
+    modeGamingHint:
+      "Für kompetitive Sitzungen: Watt am Maximum und angehobene Taktobergrenze, damit die 1%-Lows stabiler bleiben, wenn es darauf ankommt.",
+    modeApplying: "Wird angewendet...",
+    profileApplied: "Limit auf {watts} W gesetzt.",
+    profileNote:
+      "Erfordert Administratorrechte und wird beim Neustart zurückgesetzt. Das ist keine Lüfterkurve: NVIDIA bietet in nvidia-smi keine direkte Lüftersteuerung, und die Programme, die eine anbieten, nutzen private, undokumentierte APIs, die diese App nicht anfasst.",
+    profileDefaultIsMax:
+      "Bei dieser Karte entspricht das Werks-Leistungslimit bereits dem Maximum, daher ändert nur Leise die Wattzahl: Gaming unterscheidet sich, indem es die Taktobergrenze anhebt.",
+    driverInstalled: "installiert v{version} am {date}",
+    driversNoUpdateCheck:
+      "Dieser Bildschirm kontaktiert keinen Hersteller und kann nicht wissen, ob eine neuere Version existiert: Er zeigt die installierte Version und ihr Alter und führt Sie zur offiziellen Seite, damit Sie es selbst prüfen.",
+    driversCheckedAt: "Gelesen am {time}",
+    modeClockLocked: "Takt bis {mhz} MHz",
+    modeClockAuto: "automatischer Takt",
+    profileApply: "Profil anwenden",
+    profileActive: "Profil aktiv",
+    profileWillSet: "Setzt {watts} W, {clock}",
+    scanStarting: "Analyse startet...",
+    scanReading: "Klasse {class} wird gelesen",
+    scanCount: "{done}/{total} · {pct}%",
+    driversScannedAll: "{total} Treiber in {classes} Kategorien geprüft",
+    winUpdateButton: "Nach Treiber-Updates suchen",
+    winUpdateNote:
+      "Öffnet Windows Update — den Kanal, der herstellersignierte Treiber tatsächlich installiert. PC Tweaker lädt keine Treiberpakete selbst herunter: Es gibt keine Hersteller-API dafür, was für genau Ihr Gerät aktuell ist, und den falschen Grafiktreiber zu installieren ist einer der wenigen Fehler, die Sie ohne Bild zurücklassen können.",
+    winUpdateOpened: "Windows Update geöffnet.",
+    winUpdateSearching: "Wird gesucht...",
+    winUpdateInstall: "Herunterladen und installieren ({count})",
+    winUpdateInstalling: "Wird heruntergeladen und installiert...",
+    winUpdateNone: "Keine Treiber-Updates ausstehend: Sie sind aktuell.",
+    winUpdateFailed: "Suche fehlgeschlagen: {detail}",
+    winUpdateDone: "Installiert {installed}, fehlgeschlagen {failed}.",
+    rebootTitle: "Windows verlangt einen Neustart",
+    rebootBody:
+      "Windows meldet, dass eine Installation erst nach einem Neustart abgeschlossen ist. Sie können das jetzt oder später tun.",
+    rebootNow: "Jetzt neu starten",
+    rebootLater: "Später",
   },
   menu: {
     account: "Konto",
@@ -4406,6 +5110,21 @@ const de: Strings = {
       name: "Eingabeverzögerung reduzieren (Tastatur)",
       description:
         "Setzt die Verzögerung, bevor eine gehaltene Taste zu wiederholen beginnt, auf null und maximiert die Wiederholrate — für eine unmittelbarere Reaktion beim Spielen (HKCU, keine Elevation erforderlich).",
+    },
+    keep_kernel_in_ram: {
+      name: "Kernel und Treiber im RAM halten",
+      description:
+        "Windows kann Teile des Kernels und des Treibercodes selbst bei reichlich Speicher auf die Festplatte auslagern, und sie zurückzulesen ist eine Pause, die sich als Ruckler anfühlt. Dies hält sie resident. Lohnt sich, wenn RAM übrig ist; auf einem PC mit wenig Speicher besser aus lassen (HKLM, erfordert Administratorrechte).",
+    },
+    auto_end_frozen_tasks: {
+      name: "Eine eingefrorene App soll das Herunterfahren nicht blockieren",
+      description:
+        'Wenn eine Anwendung beim Herunterfahren nicht mehr reagiert, wartet Windows und zeigt den Bildschirm "Diese App verhindert das Herunterfahren", bis jemand klickt. Dies schließt nicht reagierende Anwendungen automatisch, damit ein hängendes Programm den Rechner nicht eingeschaltet stehen lässt (HKCU, keine Erhöhung nötig).',
+    },
+    instant_folder_loading: {
+      name: "Jeden Ordner sofort öffnen",
+      description:
+        "Der Explorer durchsucht den Inhalt eines Ordners, um zu raten, ob es Bilder, Musik oder Dokumente sind, und ein Ordner mit Tausenden Mediendateien kann dabei sekundenlang hängen. Dies legt alle Ordner auf das allgemeine Layout fest, sodass sie sofort öffnen (HKCU, keine Erhöhung nötig).",
     },
     taskbar_align_left: {
       name: "Taskleiste links ausrichten",

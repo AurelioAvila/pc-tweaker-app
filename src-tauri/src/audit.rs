@@ -196,3 +196,23 @@ mod tests {
         assert!(serde_json::to_string(&with).unwrap().contains("3 files"));
     }
 }
+
+/// Empties the local trail.
+///
+/// Deleting the file rather than truncating it keeps this honest about what
+/// it did: a zero-byte file and a missing file both read as "no history", but
+/// only one of them leaves no trace of the entries that were there.
+///
+/// The clearing itself is deliberately NOT recorded afterwards. A "history
+/// cleared" line written into the history the user just asked to be empty
+/// would be a small betrayal of the request.
+pub fn clear_in(dir: &Path) -> Result<(), String> {
+    let path = dir.join(AUDIT_FILE);
+    match std::fs::remove_file(&path) {
+        Ok(()) => Ok(()),
+        // Nothing to clear is success, not failure: the caller asked for an
+        // empty history and an empty history is what they have.
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}

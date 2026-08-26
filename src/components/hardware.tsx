@@ -1211,11 +1211,40 @@ export function HardwarePanel({
   s: Strings;
   pushToast: (kind: "success" | "error", message: string) => void;
 }) {
+  // This is the heaviest screen in the app: two panels that each fire their
+  // own IPC reads and lay out a gauge, a trace and a driver table the moment
+  // they mount. Doing all of that in the same commit as the tab switch is
+  // what made Hardware feel a beat slower to open than every other section —
+  // the click had to wait for the whole subtree before anything appeared.
+  //
+  // Mounting the children on the next frame lets the click paint first: the
+  // sidebar highlight, the heading and the intro land immediately, and the
+  // instruments arrive one frame later, which reads as instant.
+  const [instrumentsReady, setInstrumentsReady] = useState(false);
+
+  useEffect(() => {
+    let frame = 0;
+    // Two frames, not one: the first is the commit that paints the heading,
+    // the second is when the browser is genuinely free again.
+    frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => setInstrumentsReady(true));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   return (
     <div className="animate-card">
       <p className="mb-5 max-w-2xl text-[13px] leading-relaxed text-ink-3">{s.hardware.intro}</p>
-      <ThermalsPanel s={s} pushToast={pushToast} />
-      <DriversPanel s={s} pushToast={pushToast} />
+      {instrumentsReady ? (
+        <>
+          <ThermalsPanel s={s} pushToast={pushToast} />
+          <DriversPanel s={s} pushToast={pushToast} />
+        </>
+      ) : (
+        // A placeholder of roughly the right height, so the panels do not
+        // arrive by shoving the page down.
+        <div className="skeleton h-64 w-full" aria-hidden="true" />
+      )}
     </div>
   );
 }

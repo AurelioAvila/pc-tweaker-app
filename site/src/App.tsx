@@ -10,7 +10,13 @@ import { ReviewsSection } from "./components/ReviewsSection";
 import { FaqAccordion } from "./components/FaqAccordion";
 import { Footer } from "./components/Footer";
 import { SupportPage } from "./pages/Support";
-import { PrivacyPage, TermsPage, CookiesPage, AccessibilityPage, NotFoundPage } from "./pages/Legal";
+import {
+  PrivacyPage,
+  TermsPage,
+  CookiesPage,
+  AccessibilityPage,
+  NotFoundPage,
+} from "./pages/Legal";
 import { useRoute } from "./router";
 import { NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
 

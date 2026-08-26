@@ -111,8 +111,7 @@ export function X3dPanel({
 
   if (report === null) return null;
 
-  const vcache =
-    report.vcache_ccd !== null ? (report.ccds[report.vcache_ccd] ?? null) : null;
+  const vcache = report.vcache_ccd !== null ? (report.ccds[report.vcache_ccd] ?? null) : null;
 
   const explanation =
     report.status === "single_die"
@@ -226,9 +225,7 @@ export function X3dPanel({
                     }}
                     disabled={busyPid === p.pid}
                     className={`shrink-0 rounded-lg px-3 py-1.5 text-[11.5px] font-bold transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60 ${
-                      aligned
-                        ? "border-line-2 text-ink-2 border"
-                        : "bg-accent text-on-accent"
+                      aligned ? "border-line-2 text-ink-2 border" : "bg-accent text-on-accent"
                     }`}
                   >
                     {aligned ? s.x3d.reset : s.x3d.align}

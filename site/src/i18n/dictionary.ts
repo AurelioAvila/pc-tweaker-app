@@ -200,15 +200,21 @@ export const engDictionary: Dictionary = {
     sub: " — registry, power plan, services, scheduler priorities. Every single one snapshotted before it touches your system. One click to apply. One click to undo.",
     cta: "Download for Windows — Free",
     safetyNote:
-      "The installer isn't code-signed yet (it's on the roadmap), so Windows may show a SmartScreen warning on first run. Click \"More info\" → \"Run anyway\". The download is safe: the full source is public on GitHub, and every auto-update is cryptographically signed and verified before it installs.",
+      'The installer isn\'t code-signed yet (it\'s on the roadmap), so Windows may show a SmartScreen warning on first run. Click "More info" → "Run anyway". The download is safe: the full source is public on GitHub, and every auto-update is cryptographically signed and verified before it installs.',
     terminalTitle: "powershell — pctweaker",
     terminalCmd: "winget install AurelioAvila.PCTweaker",
     terminalHint: "# zero SmartScreen prompts via winget",
     copy: "COPY",
     copied: "COPIED ✓",
     badges: [
-      { label: "MajorGeeks 4.0/5.0", href: "https://www.majorgeeks.com/files/details/pc_tweaker.html" },
-      { label: "Softpedia Listed", href: "https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml" },
+      {
+        label: "MajorGeeks 4.0/5.0",
+        href: "https://www.majorgeeks.com/files/details/pc_tweaker.html",
+      },
+      {
+        label: "Softpedia Listed",
+        href: "https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml",
+      },
       { label: "Source Available", href: "https://github.com/AurelioAvila/pc-tweaker-app" },
     ],
     themeLabel: "THEMES",
@@ -244,7 +250,7 @@ export const engDictionary: Dictionary = {
       {
         tag: "WHY IT CHANGED",
         title: "The number is a door, not a verdict",
-        body: "Your score drops four points and PC Tweaker tells you which categories moved and quotes the facts on both sides — \"4 apps start with Windows\" became \"7 apps start with Windows\". Evidence that drifts without moving points is never listed as a cause, and when nothing changed, it says nothing changed.",
+        body: 'Your score drops four points and PC Tweaker tells you which categories moved and quotes the facts on both sides — "4 apps start with Windows" became "7 apps start with Windows". Evidence that drifts without moving points is never listed as a cause, and when nothing changed, it says nothing changed.',
         pro: false,
         span: "wide",
       },
@@ -432,7 +438,7 @@ export const engDictionary: Dictionary = {
       },
       {
         q: "What's actually free?",
-        a: "33 of the 50 tweaks, the Scan, the rollback engine, the RAM cleaner, and the startup manager — free forever, no account needed. Pro (€9.99/month or €59/year) unlocks the advanced set: Turbo Gaming, Game Sessions, duplicate/large file finders, drive optimization, disabling Recall and Memory Integrity, the classic right-click menu, and the rest of the power-user tweaks.",
+        a: "35 of the 54 tweaks, the Scan, the whole Hardware screen — live sensors, thermal profiles, the driver inventory and driver updates — the rollback engine, the RAM cleaner, the startup manager, BBR2 congestion control and the X3D die aligner: free forever, no account needed. Pro (€9.99/month or €59/year) unlocks the advanced set: Turbo Gaming, Game Sessions, duplicate/large file finders, drive optimization, disabling Recall and Memory Integrity, and the rest of the power-user tweaks.",
       },
       {
         q: "Does it phone home?",

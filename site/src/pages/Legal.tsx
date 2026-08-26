@@ -45,7 +45,10 @@ function Markdown({ source }: { source: string }) {
   const flushBullets = () => {
     if (bullets.length === 0) return;
     blocks.push(
-      <ul key={key++} className="mb-5 list-disc space-y-2 pl-6 text-[15px] leading-relaxed text-[var(--fg-dim)]">
+      <ul
+        key={key++}
+        className="mb-5 list-disc space-y-2 pl-6 text-[15px] leading-relaxed text-[var(--fg-dim)]"
+      >
         {bullets.map((b, i) => (
           <li key={i}>{inline(b)}</li>
         ))}
@@ -136,20 +139,22 @@ export function CookiesPage() {
     <PageShell>
       <h1 className="font-display mb-3 text-[32px] font-bold text-[var(--fg)]">Cookie Policy</h1>
       <p className="mb-5 text-[15px] leading-relaxed text-[var(--fg-dim)]">
-        This website sets <strong className="font-semibold text-[var(--fg)]">no cookies</strong> — not
-        for analytics, not for advertising, not for anything else. There is no tracking script on any
-        page, and fonts and images are served from this domain, so visiting the site sends no data to
-        third parties.
+        This website sets <strong className="font-semibold text-[var(--fg)]">no cookies</strong> —
+        not for analytics, not for advertising, not for anything else. There is no tracking script
+        on any page, and fonts and images are served from this domain, so visiting the site sends no
+        data to third parties.
       </p>
       <p className="mb-5 text-[15px] leading-relaxed text-[var(--fg-dim)]">
         The only thing stored in your browser is your color-theme preference, kept in{" "}
-        <code className="font-mono-t rounded bg-white/5 px-1.5 py-0.5 text-[13px]">localStorage</code>{" "}
+        <code className="font-mono-t rounded bg-white/5 px-1.5 py-0.5 text-[13px]">
+          localStorage
+        </code>{" "}
         on your own device if you pick a theme. It never leaves your browser and you can clear it at
         any time from your browser settings.
       </p>
       <p className="text-[15px] leading-relaxed text-[var(--fg-dim)]">
-        Because nothing here requires consent under the ePrivacy directive or the GDPR, the site shows
-        no cookie banner — there is nothing to accept or refuse.
+        Because nothing here requires consent under the ePrivacy directive or the GDPR, the site
+        shows no cookie banner — there is nothing to accept or refuse.
       </p>
     </PageShell>
   );
@@ -166,8 +171,8 @@ export function AccessibilityPage() {
       </p>
       <p className="text-[15px] leading-relaxed text-[var(--fg-dim)]">
         If anything here is hard to use with a keyboard, a screen reader, or any other assistive
-        technology, please report it through the support form — accessibility problems are treated as
-        bugs, not suggestions.
+        technology, please report it through the support form — accessibility problems are treated
+        as bugs, not suggestions.
       </p>
     </PageShell>
   );

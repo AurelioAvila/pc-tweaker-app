@@ -15,12 +15,12 @@
   /* Dominant surface + type ramp. Every component reads these instead of a
      literal hex, so a theme can repaint the whole page background without a
      single layout or spacing value changing. theme.tsx overwrites them. */
-  --bg: #050506;      /* page */
-  --bg-2: #0a0a0c;    /* raised card / panel */
-  --fg: #f3f4f6;      /* primary text */
-  --fg-dim: #9ca3af;  /* supporting text */
-  --line: #2a2d33;    /* hairline */
-  --line-2: #3f434b;  /* emphasized hairline */
+  --bg: #050506; /* page */
+  --bg-2: #0a0a0c; /* raised card / panel */
+  --fg: #f3f4f6; /* primary text */
+  --fg-dim: #9ca3af; /* supporting text */
+  --line: #2a2d33; /* hairline */
+  --line-2: #3f434b; /* emphasized hairline */
 }
 
 html {
@@ -30,7 +30,10 @@ html {
 body {
   background: var(--bg);
   color: var(--fg);
-  font-family: "Inter", -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    -apple-system,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -41,17 +44,35 @@ body {
 }
 
 /* type utilities */
-.font-display { font-family: "Space Grotesk", sans-serif; }
-.font-mono-t { font-family: "JetBrains Mono", monospace; }
+.font-display {
+  font-family: "Space Grotesk", sans-serif;
+}
+.font-mono-t {
+  font-family: "JetBrains Mono", monospace;
+}
 
 /* accent utilities — every themed surface reads these vars */
-.text-accent { color: var(--accent); }
-.bg-accent { background-color: var(--accent); }
-.border-accent { border-color: var(--accent); }
-.ring-accent-soft { box-shadow: 0 0 0 1px var(--accent-glow); }
-.glow-accent { box-shadow: 0 0 40px var(--accent-glow); }
-.glow-accent-sm { box-shadow: 0 0 18px var(--accent-glow); }
-.bg-accent-soft { background-color: var(--accent-soft); }
+.text-accent {
+  color: var(--accent);
+}
+.bg-accent {
+  background-color: var(--accent);
+}
+.border-accent {
+  border-color: var(--accent);
+}
+.ring-accent-soft {
+  box-shadow: 0 0 0 1px var(--accent-glow);
+}
+.glow-accent {
+  box-shadow: 0 0 40px var(--accent-glow);
+}
+.glow-accent-sm {
+  box-shadow: 0 0 18px var(--accent-glow);
+}
+.bg-accent-soft {
+  background-color: var(--accent-soft);
+}
 
 /* card cursor-follow backlight */
 .card-glow {
@@ -78,8 +99,14 @@ body {
 
 /* terminal caret */
 @keyframes caret-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
 }
 .caret {
   display: inline-block;

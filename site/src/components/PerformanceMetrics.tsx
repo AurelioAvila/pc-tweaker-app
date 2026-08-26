@@ -63,14 +63,24 @@ export function PerformanceMetrics() {
       >
         <div className="mb-16 grid items-end gap-10 md:grid-cols-2">
           <div>
-            <motion.div variants={riseChild} className="font-mono-t mb-4 text-[11.5px] tracking-[0.18em] text-[var(--fg-dim)]">
-              <span className="text-accent">{text.metrics.tag.split(" / ")[0]}</span> / {text.metrics.tag.split(" / ")[1]}
+            <motion.div
+              variants={riseChild}
+              className="font-mono-t mb-4 text-[11.5px] tracking-[0.18em] text-[var(--fg-dim)]"
+            >
+              <span className="text-accent">{text.metrics.tag.split(" / ")[0]}</span> /{" "}
+              {text.metrics.tag.split(" / ")[1]}
             </motion.div>
-            <motion.h2 variants={riseChild} className="font-display text-[clamp(1.8rem,3.6vw,2.8rem)] leading-tight font-bold tracking-tight text-[var(--fg)]">
+            <motion.h2
+              variants={riseChild}
+              className="font-display text-[clamp(1.8rem,3.6vw,2.8rem)] leading-tight font-bold tracking-tight text-[var(--fg)]"
+            >
               {text.metrics.title}
             </motion.h2>
           </div>
-          <motion.p variants={riseChild} className="text-[15px] leading-relaxed text-[var(--fg-dim)]">
+          <motion.p
+            variants={riseChild}
+            className="text-[15px] leading-relaxed text-[var(--fg-dim)]"
+          >
             {text.metrics.sub}
           </motion.p>
         </div>
@@ -87,28 +97,50 @@ export function PerformanceMetrics() {
                 <CountUp target={s.value} active={inView} />
                 <span className="text-accent ml-0.5 text-[0.45em]">{s.unit}</span>
               </div>
-              <div className="font-mono-t mt-3 text-[12px] tracking-wide text-[var(--fg-dim)]">{s.label}</div>
+              <div className="font-mono-t mt-3 text-[12px] tracking-wide text-[var(--fg-dim)]">
+                {s.label}
+              </div>
             </div>
           ))}
         </motion.div>
 
         {/* frame-time telemetry graph */}
-        <motion.div variants={riseChild} className="mt-14 overflow-hidden rounded-2xl border border-white/5 bg-[var(--bg-2)] p-7 md:p-9">
+        <motion.div
+          variants={riseChild}
+          className="mt-14 overflow-hidden rounded-2xl border border-white/5 bg-[var(--bg-2)] p-7 md:p-9"
+        >
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <span className="font-mono-t text-[11px] tracking-[0.16em] text-[var(--fg-dim)]">{text.metrics.graphTitle}</span>
+            <span className="font-mono-t text-[11px] tracking-[0.16em] text-[var(--fg-dim)]">
+              {text.metrics.graphTitle}
+            </span>
             <div className="font-mono-t flex gap-6 text-[11px] tracking-wider">
               <span className="flex items-center gap-2 text-[var(--fg-dim)]">
-                <span className="inline-block h-0.5 w-6 bg-[var(--line)]" /> {text.metrics.graphStock} · {text.metrics.fpsStock} FPS
+                <span className="inline-block h-0.5 w-6 bg-[var(--line)]" />{" "}
+                {text.metrics.graphStock} · {text.metrics.fpsStock} FPS
               </span>
               <span className="text-accent flex items-center gap-2">
-                <span className="bg-accent inline-block h-0.5 w-6" /> {text.metrics.graphTweaked} · {text.metrics.fpsTweaked} FPS
+                <span className="bg-accent inline-block h-0.5 w-6" /> {text.metrics.graphTweaked} ·{" "}
+                {text.metrics.fpsTweaked} FPS
               </span>
             </div>
           </div>
 
-          <svg viewBox="0 0 560 160" className="w-full" role="img" aria-label="Frame-time comparison: stock vs tweaked">
+          <svg
+            viewBox="0 0 560 160"
+            className="w-full"
+            role="img"
+            aria-label="Frame-time comparison: stock vs tweaked"
+          >
             {[0, 40, 80, 120, 160].map((y) => (
-              <line key={y} x1="0" y1={y} x2="560" y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+              <line
+                key={y}
+                x1="0"
+                y1={y}
+                x2="560"
+                y2={y}
+                stroke="rgba(255,255,255,0.04)"
+                strokeWidth="1"
+              />
             ))}
             <motion.polyline
               points={STOCK_TRACE}
@@ -132,7 +164,9 @@ export function PerformanceMetrics() {
             />
           </svg>
 
-          <div className="font-mono-t mt-5 text-[11.5px] text-[var(--line-2)]">{text.metrics.graphNote}</div>
+          <div className="font-mono-t mt-5 text-[11.5px] text-[var(--line-2)]">
+            {text.metrics.graphNote}
+          </div>
         </motion.div>
       </motion.div>
     </section>

@@ -194,9 +194,7 @@ export function Avatar({
         className="avatar-halo"
         style={
           {
-            "--halo-color": isPro
-              ? "rgb(245 158 11 / 0.75)"
-              : `hsl(${hue} 85% 60% / 0.7)`,
+            "--halo-color": isPro ? "rgb(245 158 11 / 0.75)" : `hsl(${hue} 85% 60% / 0.7)`,
           } as React.CSSProperties
         }
       />

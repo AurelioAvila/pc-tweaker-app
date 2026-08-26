@@ -570,468 +570,467 @@ function App() {
       />
 
       <main className="flex min-h-0 flex-1">
-      {/* Control Room shell: an opaque raised band for navigation, separated
+        {/* Control Room shell: an opaque raised band for navigation, separated
           from the content floor by a hairline — depth from luminance and
           borders, never blur or shadows. */}
-      <aside className="bg-raised border-line flex h-full w-52 shrink-0 flex-col overflow-y-auto border-r px-4 py-5">
-
-        {/* Navigation grouped by intention (monitor / optimize / manage),
+        <aside className="bg-raised border-line flex h-full w-52 shrink-0 flex-col overflow-y-auto border-r px-4 py-5">
+          {/* Navigation grouped by intention (monitor / optimize / manage),
             not by internal feature list. The active item is marked by the
             system's signal hairline and primary ink — never a filled block. */}
-        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
-          {(
-            [
-              [s.tabs.groupMonitor, ["scan", "health", "hardware"]],
-              [s.tabs.groupOptimize, ["performance", "gaming", "privacy", "ui"]],
+          <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
+            {(
               [
-                s.tabs.groupManage,
-                FEATURE_INTELLIGENCE
-                  ? ["startup", "manutenzione", "profiles", "ledger"]
-                  : ["startup", "manutenzione", "profiles"],
-              ],
-            ] as [string, Section[]][]
-          ).map(([groupLabel, keys]) => (
-            <div key={groupLabel} className="mb-2.5">
-              <p className="type-label mb-1 px-3">{groupLabel}</p>
-              {keys.map((key) => {
-                const c = CATEGORIES.find((x) => x.key === key);
-                if (!c) return null;
-                const active = filter === c.key;
-                return (
-                  <button
-                    key={c.key}
-                    onClick={() => setFilter(c.key)}
-                    className={`nav-item group flex w-full items-center gap-2.5 rounded-[8px] px-3 py-[7px] text-left text-[13px] transition-colors duration-150 ${
-                      active
-                        ? "font-semibold"
-                        : "text-ink-3 hover:bg-surface-1/50 hover:text-ink-2"
-                    }`}
-                    data-active={active}
-                  >
-                    {/* Bare glyph, no plate behind it: the icon is a mark, and
+                [s.tabs.groupMonitor, ["scan", "health", "hardware"]],
+                [s.tabs.groupOptimize, ["performance", "gaming", "privacy", "ui"]],
+                [
+                  s.tabs.groupManage,
+                  FEATURE_INTELLIGENCE
+                    ? ["startup", "manutenzione", "profiles", "ledger"]
+                    : ["startup", "manutenzione", "profiles"],
+                ],
+              ] as [string, Section[]][]
+            ).map(([groupLabel, keys]) => (
+              <div key={groupLabel} className="mb-2.5">
+                <p className="type-label mb-1 px-3">{groupLabel}</p>
+                {keys.map((key) => {
+                  const c = CATEGORIES.find((x) => x.key === key);
+                  if (!c) return null;
+                  const active = filter === c.key;
+                  return (
+                    <button
+                      key={c.key}
+                      onClick={() => setFilter(c.key)}
+                      className={`nav-item group flex w-full items-center gap-2.5 rounded-[8px] px-3 py-[7px] text-left text-[13px] transition-colors duration-150 ${
+                        active
+                          ? "font-semibold"
+                          : "text-ink-3 hover:bg-surface-1/50 hover:text-ink-2"
+                      }`}
+                      data-active={active}
+                    >
+                      {/* Bare glyph, no plate behind it: the icon is a mark, and
                         a filled tile per row would turn the column into a grid
                         of buttons competing with the content. */}
-                    <span
-                      className={`shrink-0 transition-colors ${active ? "text-accent" : "text-ink-3 group-hover:text-ink-2"}`}
-                    >
-                      {c.icon}
-                    </span>
-                    <span className="truncate">{c.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
-
-        {/* Plan area: quiet by design. Pro is a state, not a billboard; the
-            upgrade entry is discreet and never shows personal data. */}
-        <div className="border-line mt-auto border-t pt-3">
-          {isProUnlocked ? (
-            <button
-              onClick={() => setFilter("pricing")}
-              className={`text-ink-2 hover:text-ink flex w-full items-center gap-2 rounded-[8px] px-3 py-2 text-[12px] font-semibold transition-colors duration-150 ${
-                filter === "pricing" ? "bg-surface-1 text-ink" : ""
-              }`}
-            >
-              <CrownIcon className="text-accent h-4 w-4" />
-              {s.menu.planPro}
-            </button>
-          ) : (
-            <button
-              onClick={() => setFilter("pricing")}
-              className={`border-line-2 text-ink-2 hover:border-accent/40 hover:text-ink w-full rounded-[8px] border px-3 py-2 text-[12px] font-semibold transition-colors duration-150 ${
-                filter === "pricing" ? "border-accent/50 text-ink" : ""
-              }`}
-            >
-              {s.menu.upgradeButton}
-            </button>
-          )}
-        </div>
-      </aside>
-
-      <div className="app-field min-w-0 flex-1 overflow-y-auto px-8 py-7">
-        {/* The pricing comparison needs the extra width to sit side by side;
-            every other screen reads better kept narrow. */}
-        <div className={`mx-auto ${showPricing ? "max-w-5xl" : "max-w-3xl"}`}>
-          <header className="border-line mb-6 flex items-start justify-between gap-4 border-b pb-4">
-            {/* The pricing screen leads with its own centred hero title, so
-                the section heading would just be a duplicate above it. */}
-            <div className="min-w-0">
-              {!showPricing && <h1 className="type-page page-title">{currentLabel}</h1>}
-              {/* The tweak tally is meaningless on the startup screen, which
-                  isn't made of tweaks and shows its own count instead. */}
-              {!showStartup && !showPricing && (
-                <div className="mt-1 flex items-center gap-3">
-                  <p className="text-ink-3 type-data text-[12.5px]">
-                    {format(s.appliedCount, { applied: appliedCount, total: tweaks.length })}
-                  </p>
-                  {/* One-click way back to a stock Windows: only offered when
-                      there is actually something applied to undo. */}
-                  {appliedCount > 0 && (
-                    <button
-                      onClick={() => setConfirmRestore(true)}
-                      disabled={restoring}
-                      className="flex items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-2.5 py-1 text-xs font-semibold text-ink-2 transition-colors hover:border-line-2 hover:bg-surface-hover hover:text-white disabled:cursor-wait disabled:opacity-60"
-                    >
-                      <UndoIcon className="h-3.5 w-3.5" />
-                      {restoring ? s.restore.running : s.restore.button}
+                      <span
+                        className={`shrink-0 transition-colors ${active ? "text-accent" : "text-ink-3 group-hover:text-ink-2"}`}
+                      >
+                        {c.icon}
+                      </span>
+                      <span className="truncate">{c.label}</span>
                     </button>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="relative ml-auto w-56 shrink-0">
-              <MagnifierIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Escape" && setQuery("")}
-                placeholder={s.search.placeholder}
-                className="w-full rounded-xl border border-line bg-surface-2 py-2 pl-9 pr-8 text-sm text-ink outline-none transition-colors placeholder:text-ink-3 focus:border-line-2 focus:bg-surface-hover"
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+
+          {/* Plan area: quiet by design. Pro is a state, not a billboard; the
+            upgrade entry is discreet and never shows personal data. */}
+          <div className="border-line mt-auto border-t pt-3">
+            {isProUnlocked ? (
+              <button
+                onClick={() => setFilter("pricing")}
+                className={`text-ink-2 hover:text-ink flex w-full items-center gap-2 rounded-[8px] px-3 py-2 text-[12px] font-semibold transition-colors duration-150 ${
+                  filter === "pricing" ? "bg-surface-1 text-ink" : ""
+                }`}
+              >
+                <CrownIcon className="text-accent h-4 w-4" />
+                {s.menu.planPro}
+              </button>
+            ) : (
+              <button
+                onClick={() => setFilter("pricing")}
+                className={`border-line-2 text-ink-2 hover:border-accent/40 hover:text-ink w-full rounded-[8px] border px-3 py-2 text-[12px] font-semibold transition-colors duration-150 ${
+                  filter === "pricing" ? "border-accent/50 text-ink" : ""
+                }`}
+              >
+                {s.menu.upgradeButton}
+              </button>
+            )}
+          </div>
+        </aside>
+
+        <div className="app-field min-w-0 flex-1 overflow-y-auto px-8 py-7">
+          {/* The pricing comparison needs the extra width to sit side by side;
+            every other screen reads better kept narrow. */}
+          <div className={`mx-auto ${showPricing ? "max-w-5xl" : "max-w-3xl"}`}>
+            <header className="border-line mb-6 flex items-start justify-between gap-4 border-b pb-4">
+              {/* The pricing screen leads with its own centred hero title, so
+                the section heading would just be a duplicate above it. */}
+              <div className="min-w-0">
+                {!showPricing && <h1 className="type-page page-title">{currentLabel}</h1>}
+                {/* The tweak tally is meaningless on the startup screen, which
+                  isn't made of tweaks and shows its own count instead. */}
+                {!showStartup && !showPricing && (
+                  <div className="mt-1 flex items-center gap-3">
+                    <p className="text-ink-3 type-data text-[12.5px]">
+                      {format(s.appliedCount, { applied: appliedCount, total: tweaks.length })}
+                    </p>
+                    {/* One-click way back to a stock Windows: only offered when
+                      there is actually something applied to undo. */}
+                    {appliedCount > 0 && (
+                      <button
+                        onClick={() => setConfirmRestore(true)}
+                        disabled={restoring}
+                        className="flex items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-2.5 py-1 text-xs font-semibold text-ink-2 transition-colors hover:border-line-2 hover:bg-surface-hover hover:text-white disabled:cursor-wait disabled:opacity-60"
+                      >
+                        <UndoIcon className="h-3.5 w-3.5" />
+                        {restoring ? s.restore.running : s.restore.button}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="relative ml-auto w-56 shrink-0">
+                <MagnifierIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Escape" && setQuery("")}
+                  placeholder={s.search.placeholder}
+                  className="w-full rounded-xl border border-line bg-surface-2 py-2 pl-9 pr-8 text-sm text-ink outline-none transition-colors placeholder:text-ink-3 focus:border-line-2 focus:bg-surface-hover"
+                />
+                {searching && (
+                  <button
+                    onClick={() => setQuery("")}
+                    aria-label={s.search.clear}
+                    className="absolute right-2 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full text-ink-3 hover:bg-surface-hover hover:text-ink-2"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              <AccountMenu
+                s={s}
+                lang={lang}
+                setLang={setLang}
+                theme={theme}
+                setTheme={setTheme}
+                auth={auth}
+                open={accountMenuOpen}
+                onOpenChange={setAccountMenuOpen}
+                onAuthenticate={authenticate}
+                onLogout={logout}
+                onResendVerification={resendVerification}
+                onForgotPassword={forgotPassword}
+                onUpgrade={() => setPaywallFeature(s.menu.planPro)}
+                onViewPlan={() => setFilter("pricing")}
               />
-              {searching && (
-                <button
-                  onClick={() => setQuery("")}
-                  aria-label={s.search.clear}
-                  className="absolute right-2 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full text-ink-3 hover:bg-surface-hover hover:text-ink-2"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+            </header>
 
-            <AccountMenu
-              s={s}
-              lang={lang}
-              setLang={setLang}
-              theme={theme}
-              setTheme={setTheme}
-              auth={auth}
-              open={accountMenuOpen}
-              onOpenChange={setAccountMenuOpen}
-              onAuthenticate={authenticate}
-              onLogout={logout}
-              onResendVerification={resendVerification}
-              onForgotPassword={forgotPassword}
-              onUpgrade={() => setPaywallFeature(s.menu.planPro)}
-              onViewPlan={() => setFilter("pricing")}
-            />
-          </header>
-
-          {/* Free RAM leads the home screen: it is the card people use every
+            {/* Free RAM leads the home screen: it is the card people use every
               day (one click, schedulable), so it earns the top spot over the
               passive monitor below it. */}
-          {showScan && (
-            <>
-              <RamCleaner
-                s={s}
-                samples={pulseSamples}
-                autoMinutes={ramAutoMinutes}
-                onChangeAuto={chooseRamAuto}
-                auto={autoClean}
-                pushToast={pushToast}
-              />
-              <SystemMonitor s={s} />
-              {/* One concrete, hardware-motivated recommendation — never a
-                  pile. Hidden entirely when the flag is off. */}
-              {FEATURE_INTELLIGENCE && (
-                <AdvisorCard
+            {showScan && (
+              <>
+                <RamCleaner
                   s={s}
-                  tweaks={tweaks}
-                  busyId={busyId}
-                  isPro={isProUnlocked}
-                  onRequirePro={() => setPaywallFeature(s.menu.planPro)}
-                  onApply={toggle}
+                  samples={pulseSamples}
+                  autoMinutes={ramAutoMinutes}
+                  onChangeAuto={chooseRamAuto}
+                  auto={autoClean}
+                  pushToast={pushToast}
                 />
-              )}
-            </>
-          )}
+                <SystemMonitor s={s} />
+                {/* One concrete, hardware-motivated recommendation — never a
+                  pile. Hidden entirely when the flag is off. */}
+                {FEATURE_INTELLIGENCE && (
+                  <AdvisorCard
+                    s={s}
+                    tweaks={tweaks}
+                    busyId={busyId}
+                    isPro={isProUnlocked}
+                    onRequirePro={() => setPaywallFeature(s.menu.planPro)}
+                    onApply={toggle}
+                  />
+                )}
+              </>
+            )}
 
-          {showScan && <DashboardCards s={s} onNavigate={setFilter} />}
+            {showScan && <DashboardCards s={s} onNavigate={setFilter} />}
 
-          {showHardware && <HardwarePanel s={s} pushToast={pushToast} />}
+            {showHardware && <HardwarePanel s={s} pushToast={pushToast} />}
 
-          {showHealth && (
-            <HealthPanel
-              title={s.healthPanel.title}
-              subtitle={s.healthPanel.subtitle}
-              refreshLabel={s.healthPanel.refresh}
-              computeLabel={s.healthPanel.compute}
-              computingLabel={s.healthPanel.computing}
-              idleHint={s.healthPanel.idleHint}
-              showMore={s.healthPanel.showMore}
-              showLess={s.healthPanel.showLess}
-              stages={[
-                s.healthPanel.stageProfile,
-                s.healthPanel.stageTweaks,
-                s.healthPanel.stageSecurity,
-                s.healthPanel.stageScoring,
-              ]}
-              verdicts={{
-                excellent: s.healthPanel.verdictExcellent,
-                good: s.healthPanel.verdictGood,
-                fair: s.healthPanel.verdictFair,
-                needsWork: s.healthPanel.verdictNeedsWork,
-              }}
-              baseline={{
-                title: s.healthPanel.baselineTitle,
-                hint: s.healthPanel.baselineHint,
-                run: s.healthPanel.baselineRun,
-                running: s.healthPanel.baselineRunning,
-                empty: s.healthPanel.baselineEmpty,
-              }}
-              change={{
-                sinceLast: s.healthPanel.changeSinceLast,
-                noChange: s.healthPanel.changeNone,
-                firstRun: s.healthPanel.changeFirstRun,
-                whyTitle: s.healthPanel.changeWhyTitle,
-                contributes: s.healthPanel.changeContributes,
-                structural: s.healthPanel.changeStructural,
-                trend: s.healthPanel.changeTrend,
-              }}
-            />
-          )}
+            {showHealth && (
+              <HealthPanel
+                title={s.healthPanel.title}
+                subtitle={s.healthPanel.subtitle}
+                refreshLabel={s.healthPanel.refresh}
+                computeLabel={s.healthPanel.compute}
+                computingLabel={s.healthPanel.computing}
+                idleHint={s.healthPanel.idleHint}
+                showMore={s.healthPanel.showMore}
+                showLess={s.healthPanel.showLess}
+                stages={[
+                  s.healthPanel.stageProfile,
+                  s.healthPanel.stageTweaks,
+                  s.healthPanel.stageSecurity,
+                  s.healthPanel.stageScoring,
+                ]}
+                verdicts={{
+                  excellent: s.healthPanel.verdictExcellent,
+                  good: s.healthPanel.verdictGood,
+                  fair: s.healthPanel.verdictFair,
+                  needsWork: s.healthPanel.verdictNeedsWork,
+                }}
+                baseline={{
+                  title: s.healthPanel.baselineTitle,
+                  hint: s.healthPanel.baselineHint,
+                  run: s.healthPanel.baselineRun,
+                  running: s.healthPanel.baselineRunning,
+                  empty: s.healthPanel.baselineEmpty,
+                }}
+                change={{
+                  sinceLast: s.healthPanel.changeSinceLast,
+                  noChange: s.healthPanel.changeNone,
+                  firstRun: s.healthPanel.changeFirstRun,
+                  whyTitle: s.healthPanel.changeWhyTitle,
+                  contributes: s.healthPanel.changeContributes,
+                  structural: s.healthPanel.changeStructural,
+                  trend: s.healthPanel.changeTrend,
+                }}
+              />
+            )}
 
-          {showLedger && (
-            <LedgerPanel s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />
-          )}
+            {showLedger && (
+              <LedgerPanel s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />
+            )}
 
-          {showStartup && <StartupManager s={s} pushToast={pushToast} />}
+            {showStartup && <StartupManager s={s} pushToast={pushToast} />}
 
-          {showProfiles && (
-            <ProfilesPanel
-              s={s}
-              tweaks={tweaks}
-              isPro={isProUnlocked}
-              authed={auth.status === "authenticated"}
-              onRequireAuth={() => {
-                pushToast("error", s.profiles.signInRequired);
-                setAccountMenuOpen(true);
-              }}
-              onRequirePro={() => setPaywallFeature(s.profiles.title)}
-              onChanged={refresh}
-              pushToast={pushToast}
-            />
-          )}
-
-          {showPricing && (
-            <PricingPanel
-              s={s}
-              lang={lang}
-              isPro={isProUnlocked}
-              freeTweakCount={freeTweakCount}
-              onChoosePro={async (plan) => {
-                try {
-                  await startCheckout(plan);
-                } catch (e) {
-                  pushToast("error", String(e instanceof Error ? e.message : e));
-                }
-              }}
-              onManageBilling={async () => {
-                try {
-                  await openBillingPortal();
-                } catch (e) {
-                  pushToast("error", String(e instanceof Error ? e.message : e));
-                }
-              }}
-            />
-          )}
-
-          {showScan && (
-            <div id="scan-results">
-              <ScanPanel
+            {showProfiles && (
+              <ProfilesPanel
                 s={s}
                 tweaks={tweaks}
-                cleanupTargets={cleanupTargets}
                 isPro={isProUnlocked}
-                onRequirePro={() => setPaywallFeature(s.menu.planPro)}
-                onFixed={refresh}
-                pushToast={pushToast}
-              />
-            </div>
-          )}
-
-          {showPrivacyExtras && (
-            <>
-              <PasswordBreachCheck s={s} />
-              <RedaxaPromoCard s={s} />
-            </>
-          )}
-
-          {showGamingExtras && (
-            <>
-              <GameSessionsPanel
-                s={s}
-                isPro={isProUnlocked}
-                onRequirePro={() => setPaywallFeature(s.gameSessions.title)}
-              />
-              <TurboBoostPanel
-                s={s}
-                applied={turboBoostApplied}
+                authed={auth.status === "authenticated"}
+                onRequireAuth={() => {
+                  pushToast("error", s.profiles.signInRequired);
+                  setAccountMenuOpen(true);
+                }}
+                onRequirePro={() => setPaywallFeature(s.profiles.title)}
                 onChanged={refresh}
                 pushToast={pushToast}
               />
-              {/* Below the two headline cards: Game Sessions and Turbo Boost
+            )}
+
+            {showPricing && (
+              <PricingPanel
+                s={s}
+                lang={lang}
+                isPro={isProUnlocked}
+                freeTweakCount={freeTweakCount}
+                onChoosePro={async (plan) => {
+                  try {
+                    await startCheckout(plan);
+                  } catch (e) {
+                    pushToast("error", String(e instanceof Error ? e.message : e));
+                  }
+                }}
+                onManageBilling={async () => {
+                  try {
+                    await openBillingPortal();
+                  } catch (e) {
+                    pushToast("error", String(e instanceof Error ? e.message : e));
+                  }
+                }}
+              />
+            )}
+
+            {showScan && (
+              <div id="scan-results">
+                <ScanPanel
+                  s={s}
+                  tweaks={tweaks}
+                  cleanupTargets={cleanupTargets}
+                  isPro={isProUnlocked}
+                  onRequirePro={() => setPaywallFeature(s.menu.planPro)}
+                  onFixed={refresh}
+                  pushToast={pushToast}
+                />
+              </div>
+            )}
+
+            {showPrivacyExtras && (
+              <>
+                <PasswordBreachCheck s={s} />
+                <RedaxaPromoCard s={s} />
+              </>
+            )}
+
+            {showGamingExtras && (
+              <>
+                <GameSessionsPanel
+                  s={s}
+                  isPro={isProUnlocked}
+                  onRequirePro={() => setPaywallFeature(s.gameSessions.title)}
+                />
+                <TurboBoostPanel
+                  s={s}
+                  applied={turboBoostApplied}
+                  onChanged={refresh}
+                  pushToast={pushToast}
+                />
+                {/* Below the two headline cards: Game Sessions and Turbo Boost
                   are what this screen is known for, and the aligner applies to
                   a minority of processors. */}
-              <X3dPanel s={s} pushToast={pushToast} />
-            </>
-          )}
+                <X3dPanel s={s} pushToast={pushToast} />
+              </>
+            )}
 
-          <ul className="flex flex-col gap-3">
-            {visibleTweaks.map((t, i) => {
-              const style = CATEGORY_STYLE[t.category];
-              const text = textFor(s.tweaks, t.id, t.name, t.description);
-              return (
-                <li
-                  key={t.id}
-                  style={{ animationDelay: `${i * 40}ms` }}
-                  className="animate-card panel panel-hover group relative overflow-hidden p-4"
-                >
-                  {/* The category tint only shows on hover, and only at the
+            <ul className="flex flex-col gap-3">
+              {visibleTweaks.map((t, i) => {
+                const style = CATEGORY_STYLE[t.category];
+                const text = textFor(s.tweaks, t.id, t.name, t.description);
+                return (
+                  <li
+                    key={t.id}
+                    style={{ animationDelay: `${i * 40}ms` }}
+                    className="animate-card panel panel-hover group relative overflow-hidden p-4"
+                  >
+                    {/* The category tint only shows on hover, and only at the
                       corner the light comes from — enough to tell two sections
                       apart, not enough to colour the card. */}
-                  <div
-                    className={`pointer-events-none absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${style.ring}`}
-                  />
-                  <div className="relative flex items-center gap-4">
-                    {/* A backlit module, not a tile. The backlight is gold on
+                    <div
+                      className={`pointer-events-none absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${style.ring}`}
+                    />
+                    <div className="relative flex items-center gap-4">
+                      {/* A backlit module, not a tile. The backlight is gold on
                         a Pro tweak and the theme accent otherwise, so the tier
                         registers before any badge is read. */}
-                    <div
-                      className={`icon-module grid h-11 w-11 shrink-0 place-items-center ${style.glyph}`}
-                      style={
-                        {
-                          "--module-glow": t.requires_pro
-                            ? "rgb(230 187 74 / 0.42)"
-                            : "color-mix(in oklab, var(--accent) 45%, transparent)",
-                        } as React.CSSProperties
-                      }
-                    >
-                      {style.icon}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-[13.5px] font-semibold tracking-[-0.01em] text-white">
-                          {text.name}
-                        </h2>
-                        {/* The (i) is the door to the exact system change.
+                      <div
+                        className={`icon-module grid h-11 w-11 shrink-0 place-items-center ${style.glyph}`}
+                        style={
+                          {
+                            "--module-glow": t.requires_pro
+                              ? "rgb(230 187 74 / 0.42)"
+                              : "color-mix(in oklab, var(--accent) 45%, transparent)",
+                          } as React.CSSProperties
+                        }
+                      >
+                        {style.icon}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-[13.5px] font-semibold tracking-[-0.01em] text-white">
+                            {text.name}
+                          </h2>
+                          {/* The (i) is the door to the exact system change.
                             A description can be argued with; a registry path
                             can be checked in regedit, so it is one click away
                             rather than buried in a FAQ. */}
-                        {t.changes.length > 0 ? (
-                          <TechnicalToggle
-                            open={inspecting === t.id}
-                            label={s.transparency.title}
-                            hive={t.hive}
-                            onClick={() => {
-                              setInspecting(inspecting === t.id ? null : t.id);
-                            }}
-                          />
-                        ) : (
-                          t.hive !== "—" && (
-                            <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-2">
-                              {t.hive}
-                            </span>
-                          )
-                        )}
-                        {t.requires_admin && <ShieldBadge label={s.badges.admin} />}
-                        {t.requires_pro && <ProBadge label={s.badges.pro} />}
+                          {t.changes.length > 0 ? (
+                            <TechnicalToggle
+                              open={inspecting === t.id}
+                              label={s.transparency.title}
+                              hive={t.hive}
+                              onClick={() => {
+                                setInspecting(inspecting === t.id ? null : t.id);
+                              }}
+                            />
+                          ) : (
+                            t.hive !== "—" && (
+                              <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-2">
+                                {t.hive}
+                              </span>
+                            )
+                          )}
+                          {t.requires_admin && <ShieldBadge label={s.badges.admin} />}
+                          {t.requires_pro && <ProBadge label={s.badges.pro} />}
+                        </div>
+                        <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.55] text-ink-3">
+                          {text.description}
+                        </p>
+                        {inspecting === t.id && <TechnicalDetails changes={t.changes} s={s} />}
                       </div>
-                      <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.55] text-ink-3">
-                        {text.description}
-                      </p>
-                      {inspecting === t.id && <TechnicalDetails changes={t.changes} s={s} />}
+                      <Toggle
+                        checked={t.applied}
+                        busy={busyId === t.id}
+                        onClick={() => toggle(t)}
+                        s={s}
+                      />
                     </div>
-                    <Toggle
-                      checked={t.applied}
-                      busy={busyId === t.id}
-                      onClick={() => toggle(t)}
-                      s={s}
-                    />
-                  </div>
-                </li>
-              );
-            })}
+                  </li>
+                );
+              })}
 
-            {showPrivacyExtras && (
-              <IpMaskCard s={s} onExplain={() => pushToast("error", s.ipMask.explainerToast)} />
-            )}
+              {showPrivacyExtras && (
+                <IpMaskCard s={s} onExplain={() => pushToast("error", s.ipMask.explainerToast)} />
+              )}
 
-            {showCleanup && (
-              <DiskToolsSection
-                s={s}
-                isPro={isProUnlocked}
-                onRequirePro={() => setPaywallFeature(s.diskOptimize.title)}
-                onToast={pushToast}
-              />
-            )}
-
-            {showCleanup &&
-              cleanupTargets.map((c) => (
-                <CleanupCard
-                  key={c.id}
+              {showCleanup && (
+                <DiskToolsSection
                   s={s}
-                  info={c}
-                  text={textFor(s.cleanup, c.id, c.name, c.description)}
-                  busy={busyId === c.id}
                   isPro={isProUnlocked}
-                  onRequirePro={() =>
-                    setPaywallFeature(textFor(s.cleanup, c.id, c.name, c.description).name)
-                  }
-                  onRun={(info) => setConfirmCleanup(info)}
+                  onRequirePro={() => setPaywallFeature(s.diskOptimize.title)}
+                  onToast={pushToast}
                 />
-              ))}
+              )}
 
-            {showCleanup && <DnsFlushCard s={s} onToast={pushToast} />}
+              {showCleanup &&
+                cleanupTargets.map((c) => (
+                  <CleanupCard
+                    key={c.id}
+                    s={s}
+                    info={c}
+                    text={textFor(s.cleanup, c.id, c.name, c.description)}
+                    busy={busyId === c.id}
+                    isPro={isProUnlocked}
+                    onRequirePro={() =>
+                      setPaywallFeature(textFor(s.cleanup, c.id, c.name, c.description).name)
+                    }
+                    onRun={(info) => setConfirmCleanup(info)}
+                  />
+                ))}
 
-            {showCleanup && (
-              <DuplicateFinder
-                s={s}
-                isPro={isProUnlocked}
-                onRequirePro={() => setPaywallFeature(s.duplicateFinder.title)}
-                onToast={pushToast}
-              />
-            )}
+              {showCleanup && <DnsFlushCard s={s} onToast={pushToast} />}
 
-            {showCleanup && (
-              <LargeFileFinder
-                s={s}
-                isPro={isProUnlocked}
-                onRequirePro={() => setPaywallFeature(s.largeFiles.title)}
-                onToast={pushToast}
-              />
-            )}
+              {showCleanup && (
+                <DuplicateFinder
+                  s={s}
+                  isPro={isProUnlocked}
+                  onRequirePro={() => setPaywallFeature(s.duplicateFinder.title)}
+                  onToast={pushToast}
+                />
+              )}
 
-            {showCleanup && <UninstallerPromoCard s={s} />}
+              {showCleanup && (
+                <LargeFileFinder
+                  s={s}
+                  isPro={isProUnlocked}
+                  onRequirePro={() => setPaywallFeature(s.largeFiles.title)}
+                  onToast={pushToast}
+                />
+              )}
 
-            {/* "No tweaks in this category" only makes sense on a screen that
+              {showCleanup && <UninstallerPromoCard s={s} />}
+
+              {/* "No tweaks in this category" only makes sense on a screen that
                 IS a tweak category. It was an opt-out list of every other
                 section, which meant each new screen had to remember to add
                 itself — PC Health never did, and has been telling people it
                 had no tweaks coming soon ever since. Asking whether the
                 current filter is a real category cannot drift that way. */}
-            {visibleTweaks.length === 0 &&
-              (searching || Object.prototype.hasOwnProperty.call(CATEGORY_STYLE, filter)) &&
-              !showCleanup &&
-              !showPrivacyExtras &&
-              !showScan &&
-              !showStartup &&
-              !showPricing && (
-                <li className="animate-card rounded-2xl border border-dashed border-line p-10 text-center text-sm text-ink-3">
-                  {searching
-                    ? format(s.search.noResults, { query: query.trim() })
-                    : s.emptyCategory}
-                </li>
-              )}
-          </ul>
+              {visibleTweaks.length === 0 &&
+                (searching || Object.prototype.hasOwnProperty.call(CATEGORY_STYLE, filter)) &&
+                !showCleanup &&
+                !showPrivacyExtras &&
+                !showScan &&
+                !showStartup &&
+                !showPricing && (
+                  <li className="animate-card rounded-2xl border border-dashed border-line p-10 text-center text-sm text-ink-3">
+                    {searching
+                      ? format(s.search.noResults, { query: query.trim() })
+                      : s.emptyCategory}
+                  </li>
+                )}
+            </ul>
 
-          <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-relaxed text-ink-3">
-            {s.headerNote}
-          </p>
+            <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-relaxed text-ink-3">
+              {s.headerNote}
+            </p>
+          </div>
         </div>
-      </div>
       </main>
 
       {confirmCleanup && (

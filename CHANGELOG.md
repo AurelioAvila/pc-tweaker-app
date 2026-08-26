@@ -239,6 +239,7 @@ version bump is for the licensing work, not the tweak count.
   failure and being read as success. Releases are cut from CI, which reads
   the exit code correctly and blocked the tagged build; the 0.4.3 installer
   had been built locally beforehand.
+
 - The audit's reviewed-as-correct list now covers the storage acronyms
   (HDD/SSD/NVMe) and the handful of words that are genuinely identical to
   English in their target language, so the check is at zero and a real
@@ -274,7 +275,7 @@ pre-release audit.
   feature a random number generator with a confident label on it.
 - **Configurations** (`src-tauri/src/profiles.rs`): save what you have
   applied, restore it in one click, export it to a file and hand it to
-  someone else. An exported profile is a list of tweak *ids*, never a script
+  someone else. An exported profile is a list of tweak _ids_, never a script
   or a registry path; every id from an imported file is checked against the
   tweaks this build ships, unrecognised entries are dropped and counted for
   the user, and an import is **never** applied on its own — you review it
@@ -333,7 +334,7 @@ pre-release audit.
 - **Theme dots collided**; the picker now shows 14 solid swatches matching
   the site.
 - **Release builds could ship unsigned without anything failing.** `tauri
-  build` reports a missing signing key and still exits 0, and the build
+build` reports a missing signing key and still exits 0, and the build
   workflow uploaded only the `.exe`/`.msi` — never the `.sig` files the
   updater needs. Either alone was enough to publish a release that every
   existing install would refuse to update to, silently. Hit for real while
@@ -373,7 +374,7 @@ Findings from a self-directed penetration test, fixed same day.
 
 - **Security (High): DevTools were reachable in the shipped installer.**
   `src-tauri/Cargo.toml` explicitly enabled the `devtools` Cargo feature,
-  which specifically exists to turn DevTools on in *release* builds —
+  which specifically exists to turn DevTools on in _release_ builds —
   debug builds already get them for free. Confirmed live: F12 and
   right-click > Inspect both worked on the built exe. With no XSS sink in
   the app (verified: no `dangerouslySetInnerHTML`, no `eval`, no
@@ -516,7 +517,7 @@ links keep working until they are pointed here.
 - **Fixed**: the account menu's **Themes** heading was English in all five
   languages, and `Scan` / `Performance` / `UI` were untranslated in
   it/fr/es/de. `check-i18n.mjs` could never catch this — it proves keys
-  *exist* with matching placeholders, and a string copy-pasted from English
+  _exist_ with matching placeholders, and a string copy-pasted from English
   passes that happily. New `scripts/audit-i18n.mjs` flags anything
   byte-identical to English, ASCII stand-ins where a language needs an accent,
   and Spanish text missing its opening `¿`/`¡`. Words that genuinely are the
@@ -534,7 +535,7 @@ links keep working until they are pointed here.
   (**502** — "try again shortly"). Registration reports
   `verificationEmailSent` instead of swallowing the failure, so nobody is left
   waiting for a message that was never going to arrive. Writing the tests for
-  this caught a second defect before it shipped: HTTP 429 — *our* sending
+  this caught a second defect before it shipped: HTTP 429 — _our_ sending
   quota — was being blamed on the recipient's address.
 - **Added**: `backend/scripts/smoke-test.mjs`, a committed **36-check
   end-to-end test** of the real customer path (register → verify → log in →
@@ -556,7 +557,7 @@ links keep working until they are pointed here.
   is now module-level and the Scan list goes through it. Three related leaks
   fixed at the same time: the Rust-side fallback texts (tweak names, cleanup
   names, and ~30 error messages) were written in Italian, which meant a
-  missing translation surfaced as an *Italian* row in an English UI; and the
+  missing translation surfaced as an _Italian_ row in an English UI; and the
   `Scan` / `Performance` / `UI` sidebar labels were never translated in
   it/fr/es/de. All of it is now English at the source, translated in the
   five locales.
@@ -577,7 +578,7 @@ links keep working until they are pointed here.
   requested early — so it is safe to run as often as you like. Verified on a
   real machine: **2.80 GB freed**, memory use dropped 51% → 42%. Two bugs
   were designed out rather than shipped: `freed_bytes` is a saturating
-  subtraction (memory use can legitimately *grow* between the two samples,
+  subtraction (memory use can legitimately _grow_ between the two samples,
   and an unchecked `u64` would have reported ~18 exabytes freed), and the
   scheduler reads its callback through a ref — depending on it directly
   would have rebuilt the interval on every parent render, so a 10-minute
@@ -595,7 +596,7 @@ links keep working until they are pointed here.
   hide taskbar Widgets, and disable transparency effects. A new test,
   `no_two_tweaks_write_the_same_registry_value`, prevents the nastiest
   version of getting this wrong: two tweaks pointing at one registry value
-  would snapshot each other's *new* value as the original, so rolling back
+  would snapshot each other's _new_ value as the original, so rolling back
   would restore the wrong thing — and the ids being different means the
   existing uniqueness test would never notice. Also proven by deliberately
   introducing a collision and watching it fail.
@@ -603,7 +604,7 @@ links keep working until they are pointed here.
   hardcoded copy that had quietly become false. The number is now derived
   from the actual tweak list (currently 28 free), in all five languages, so
   it cannot go stale again.
-- **UI**: "Fix all" moved to the *top* of the scan results (after a scan you
+- **UI**: "Fix all" moved to the _top_ of the scan results (after a scan you
   want to act, not scroll a checklist to find the button), followed by a
   short progress fill and an explicit **Done!** screen. The Pro plan card in
   the sidebar now gets a gold gradient frame, glow and crown instead of the
@@ -632,7 +633,7 @@ links keep working until they are pointed here.
   yearly plan is the promotion — it works out to €4.92/month, a real 51% off,
   and the badge is computed from the two prices rather than hardcoded, so it
   can't drift away from what's actually charged.
-- **Backend**: checkout now takes a `plan` and opens a Stripe *subscription*
+- **Backend**: checkout now takes a `plan` and opens a Stripe _subscription_
   (the legacy one-time price still works for anyone who already bought it).
   Needs two new recurring prices: `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`.
   - The webhook now also handles `customer.subscription.deleted` and
@@ -841,13 +842,13 @@ links keep working until they are pointed here.
   build it.
 - **Added**: 7 new tweaks, verified live one by one against the real registry
   (apply + rollback, not just compiled):
-  - *Gaming*: "Disable multimedia network throttling" (MMCSS
+  - _Gaming_: "Disable multimedia network throttling" (MMCSS
     NetworkThrottlingIndex, Free), "Maximize responsiveness for foreground
     apps" (SystemResponsiveness, Free), "Maximum priority for games" —
     bundles GPU/CPU/scheduling priority for the Games task profile (Pro).
-  - *UI*: "Align the taskbar to the left" (Free), "Hide Chat/Teams from
+  - _UI_: "Align the taskbar to the left" (Free), "Hide Chat/Teams from
     the taskbar" (Free).
-  - *Privacy*: "Disable Start menu suggestions and recommended apps"
+  - _Privacy_: "Disable Start menu suggestions and recommended apps"
     (Free), "Disable activity history (Windows Timeline)" — 3 bundled
     policy values (Pro).
   - Pro/Free calls were made per tweak: single simple values stayed Free

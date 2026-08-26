@@ -1143,8 +1143,7 @@ const it: Strings = {
       "Sui Ryzen X3D a due die uno solo porta la cache impilata. Windows non sa quale sia e distribuisce il gioco su entrambi: ogni accesso che attraversa i die paga un giro sull'Infinity Fabric.",
     cpuLabel: "Processore",
     readyHeadline: "Die con V-Cache individuato: {cores} thread",
-    readyBody:
-      "Blocca un gioco su questo die e ogni suo thread resta dove la cache è più grande.",
+    readyBody: "Blocca un gioco su questo die e ogni suo thread resta dove la cache è più grande.",
     singleDie:
       "Questo processore ha un solo die: tutti i core vedono già la stessa cache, quindi non c'è nulla da allineare. La funzione compare da sola su una CPU a due die con cache asimmetrica.",
     uniformCache:

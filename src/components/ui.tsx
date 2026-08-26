@@ -214,7 +214,13 @@ export function Avatar({
         <img
           src={photo}
           alt=""
-          className="absolute inset-[2px] rounded-full object-cover"
+          // `inset-[2px]` alone leaves width/height at their default (auto),
+          // and a replaced element with auto sizing falls back to its own
+          // intrinsic dimensions rather than stretching to the inset box —
+          // which is what made the 128px source photo render off-center
+          // inside a 36-44px frame instead of filling it. `h-full w-full`
+          // forces the box the insets were meant to describe.
+          className="absolute inset-[2px] h-[calc(100%-4px)] w-[calc(100%-4px)] rounded-full object-cover"
           draggable={false}
         />
       ) : (

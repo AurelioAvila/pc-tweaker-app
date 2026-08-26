@@ -19,8 +19,12 @@ export function EngineeringPhilosophy() {
         whileInView="show"
         viewport={viewportOnce}
       >
-        <motion.div variants={riseChild} className="font-mono-t mb-10 text-[11.5px] tracking-[0.18em] text-[var(--fg-dim)]">
-          <span className="text-accent">{text.philosophy.tag.split(" / ")[0]}</span> / {text.philosophy.tag.split(" / ")[1]}
+        <motion.div
+          variants={riseChild}
+          className="font-mono-t mb-10 text-[11.5px] tracking-[0.18em] text-[var(--fg-dim)]"
+        >
+          <span className="text-accent">{text.philosophy.tag.split(" / ")[0]}</span> /{" "}
+          {text.philosophy.tag.split(" / ")[1]}
         </motion.div>
 
         <div className="font-mono-t text-[clamp(1.05rem,2.4vw,1.7rem)] leading-[1.55] font-medium tracking-tight">

@@ -68,7 +68,9 @@ function SupportForm() {
         style={{ borderColor: "var(--accent-glow)", background: "var(--accent-soft)" }}
       >
         <div className="text-accent mb-3 text-[34px] leading-none">✓</div>
-        <h3 className="font-display mb-2 text-[22px] font-bold text-[var(--fg)]">{t.successTitle}</h3>
+        <h3 className="font-display mb-2 text-[22px] font-bold text-[var(--fg)]">
+          {t.successTitle}
+        </h3>
         <p className="mx-auto max-w-md text-[14.5px] leading-relaxed text-[var(--fg-dim)]">
           {t.successBody}
         </p>
@@ -77,7 +79,10 @@ function SupportForm() {
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-6 rounded-2xl border border-white/5 bg-[var(--bg-2)] p-8">
+    <form
+      onSubmit={submit}
+      className="grid gap-6 rounded-2xl border border-white/5 bg-[var(--bg-2)] p-8"
+    >
       <div>
         <div className="font-display text-[20px] font-bold text-[var(--fg)]">{t.formTitle}</div>
         <p className="mt-1.5 text-[13.5px] text-[var(--fg-dim)]">{t.formIntro}</p>
@@ -225,7 +230,10 @@ export function SupportPage({ navigate }: { navigate: (to: string) => void }) {
             </h2>
             <ul className="mt-6 grid gap-3">
               {t.beforeItems.map((item) => (
-                <li key={item} className="relative pl-5 text-[14px] leading-relaxed text-[var(--fg-dim)]">
+                <li
+                  key={item}
+                  className="relative pl-5 text-[14px] leading-relaxed text-[var(--fg-dim)]"
+                >
                   <span className="text-accent absolute left-0">—</span>
                   {item}
                 </li>

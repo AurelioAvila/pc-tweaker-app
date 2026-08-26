@@ -10,7 +10,7 @@ PC Tweaker is a Windows desktop app that applies system tweaks (registry, power 
 
 ## 2. Free and Pro tiers
 
-- 33 tweaks are free to use, forever, with no account required.
+- 35 tweaks are free to use, forever, with no account required.
 - Pro unlocks the advanced tweaks and presets via a recurring subscription (monthly or annual, billed through Stripe Checkout) that renews automatically until cancelled.
 - You can cancel anytime; Pro access continues until the end of the current billing period, then reverts to the Free tier — cancelling does not undo tweaks already applied, it only locks further use of Pro-only tweaks and presets.
 - A small number of early customers purchased a one-time lifetime unlock before the subscription model existed; that access does not expire and is unaffected by this section.

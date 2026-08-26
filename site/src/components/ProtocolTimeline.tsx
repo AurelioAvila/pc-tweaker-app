@@ -12,10 +12,17 @@ export function ProtocolTimeline() {
         whileInView="show"
         viewport={viewportOnce}
       >
-        <motion.div variants={riseChild} className="font-mono-t mb-4 text-[11.5px] tracking-[0.18em] text-[var(--fg-dim)]">
-          <span className="text-accent">{text.protocol.tag.split(" / ")[0]}</span> / {text.protocol.tag.split(" / ")[1]}
+        <motion.div
+          variants={riseChild}
+          className="font-mono-t mb-4 text-[11.5px] tracking-[0.18em] text-[var(--fg-dim)]"
+        >
+          <span className="text-accent">{text.protocol.tag.split(" / ")[0]}</span> /{" "}
+          {text.protocol.tag.split(" / ")[1]}
         </motion.div>
-        <motion.h2 variants={riseChild} className="font-display text-[clamp(1.8rem,3.6vw,2.8rem)] font-bold tracking-tight text-[var(--fg)]">
+        <motion.h2
+          variants={riseChild}
+          className="font-display text-[clamp(1.8rem,3.6vw,2.8rem)] font-bold tracking-tight text-[var(--fg)]"
+        >
           {text.protocol.title}
         </motion.h2>
 
@@ -32,7 +39,11 @@ export function ProtocolTimeline() {
             >
               <motion.div
                 className="font-mono-t z-10 grid h-14 w-14 place-items-center rounded-xl border bg-[var(--bg-2)] text-[14px] font-bold"
-                initial={{ borderColor: "rgba(255,255,255,0.05)", color: "var(--fg-dim)", boxShadow: "none" }}
+                initial={{
+                  borderColor: "rgba(255,255,255,0.05)",
+                  color: "var(--fg-dim)",
+                  boxShadow: "none",
+                }}
                 whileInView={{
                   borderColor: "var(--accent)",
                   color: "var(--accent)",
@@ -44,9 +55,15 @@ export function ProtocolTimeline() {
                 {String(i + 1).padStart(2, "0")}
               </motion.div>
               <div>
-                <div className="font-mono-t mb-2 text-[11px] tracking-[0.14em] text-[var(--fg-dim)]">{s.mono}</div>
-                <h3 className="font-display mb-2 text-[20px] font-bold tracking-tight text-[var(--fg)]">{s.title}</h3>
-                <p className="max-w-2xl text-[14.5px] leading-relaxed text-[var(--fg-dim)]">{s.body}</p>
+                <div className="font-mono-t mb-2 text-[11px] tracking-[0.14em] text-[var(--fg-dim)]">
+                  {s.mono}
+                </div>
+                <h3 className="font-display mb-2 text-[20px] font-bold tracking-tight text-[var(--fg)]">
+                  {s.title}
+                </h3>
+                <p className="max-w-2xl text-[14.5px] leading-relaxed text-[var(--fg-dim)]">
+                  {s.body}
+                </p>
               </div>
             </motion.div>
           ))}

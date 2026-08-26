@@ -100,7 +100,10 @@ export function HeroSection() {
         initial="hidden"
         animate="show"
       >
-        <motion.div variants={riseChild} className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <motion.div
+          variants={riseChild}
+          className="mb-8 flex flex-wrap items-center justify-between gap-4"
+        >
           <div className="font-mono-t text-accent flex items-center gap-3 text-[12px] tracking-[0.18em]">
             <span className="bg-accent inline-block h-px w-9" />
             {text.hero.eyebrow}

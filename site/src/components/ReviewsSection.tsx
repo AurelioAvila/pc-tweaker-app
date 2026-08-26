@@ -55,7 +55,10 @@ function RatingForm({ onCounted }: { onCounted: (rating: number) => void }) {
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-5 rounded-2xl border border-white/5 bg-[var(--bg-2)] p-7">
+    <form
+      onSubmit={submit}
+      className="grid gap-5 rounded-2xl border border-white/5 bg-[var(--bg-2)] p-7"
+    >
       <div className="font-display text-[18px] font-bold text-[var(--fg)]">{t.formTitle}</div>
 
       <FieldGroup label={t.formRating}>
@@ -177,7 +180,8 @@ export function ReviewsSection() {
             <div className="pb-2">
               <Stars value={average} size={20} />
               <div className="font-mono-t mt-2 text-[11.5px] tracking-[0.14em] text-[var(--fg-dim)]">
-                {t.outOf.toUpperCase()} · {t.basedOn.replace("{count}", String(count)).toUpperCase()}
+                {t.outOf.toUpperCase()} ·{" "}
+                {t.basedOn.replace("{count}", String(count)).toUpperCase()}
               </div>
             </div>
           </div>
@@ -195,7 +199,10 @@ export function ReviewsSection() {
           )}
         </motion.div>
 
-        <motion.p variants={riseChild} className="mt-6 max-w-xl text-[13.5px] leading-relaxed text-[var(--fg-dim)]">
+        <motion.p
+          variants={riseChild}
+          className="mt-6 max-w-xl text-[13.5px] leading-relaxed text-[var(--fg-dim)]"
+        >
           {t.note}
         </motion.p>
 

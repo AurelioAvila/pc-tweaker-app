@@ -1,6 +1,7 @@
 // Shared non-visual helpers: config, session, error reporting, formatting.
 import { getVersion } from "@tauri-apps/api/app";
 import { format, Lang, Strings } from "./i18n";
+import { DriverAudit } from "./types";
 
 // The first-party Cloudflare hostname is the stable production endpoint.
 // VITE_API_BASE_URL remains available for an explicit local/staging build.
@@ -239,3 +240,38 @@ export function fileToAvatarDataUrl(file: File): Promise<string> {
  * entry and both surfaces in one place, with no dead UI left behind.
  */
 export const FEATURE_INTELLIGENCE = true;
+
+// ---- Driver scan cache -------------------------------------------------------
+// Walking every device class takes about sixteen seconds. A module-level
+// variable alone survives switching screens but not relaunching the app -
+// which is what made "open Hardware" look like it was scanning on its own
+// again every time the app started, even though nothing had changed since
+// the last read. Persisting the last result means a relaunch shows it
+// immediately; only the explicit Rescan button ever pays the sixteen
+// seconds again.
+const DRIVER_AUDIT_KEY = "pc-tweaker-driver-audit";
+
+export function readCachedDriverAudit(): { audit: DriverAudit; at: Date } | null {
+  const raw = localStorage.getItem(DRIVER_AUDIT_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as { audit: DriverAudit; at: string };
+    const at = new Date(parsed.at);
+    if (Number.isNaN(at.getTime())) return null;
+    return { audit: parsed.audit, at };
+  } catch {
+    // A corrupted or pre-format entry is worth exactly one re-scan, not a
+    // permanently broken cache.
+    localStorage.removeItem(DRIVER_AUDIT_KEY);
+    return null;
+  }
+}
+
+export function writeCachedDriverAudit(audit: DriverAudit, at: Date) {
+  try {
+    localStorage.setItem(DRIVER_AUDIT_KEY, JSON.stringify({ audit, at: at.toISOString() }));
+  } catch {
+    // Over quota or blocked storage: the in-memory cache for this session
+    // still works, only the next relaunch loses it. Not worth surfacing.
+  }
+}

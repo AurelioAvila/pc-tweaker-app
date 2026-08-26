@@ -68,18 +68,18 @@ export function Toggle({
     >
       <span
         className={`text-[11px] font-semibold uppercase tracking-[0.08em] tabular-nums transition-colors ${
-          checked ? "text-accent" : "text-ink-3"
+          checked ? "text-accent" : "text-[#6f7383]"
         }`}
       >
         {checked ? s.toggle.on : s.toggle.off}
       </span>
       <span
         className={`switch relative inline-flex h-5 w-9 items-center rounded-full
-          ${checked ? "switch-on" : "bg-surface-hover group-hover:bg-line-2"}`}
+          ${checked ? "switch-on" : "switch-off"}`}
       >
         <span
-          className={`absolute left-0.5 top-0.5 grid h-4 w-4 place-items-center rounded-full bg-white shadow transition-transform duration-200 ease-out
-            ${checked ? "translate-x-4" : "translate-x-0"}`}
+          className={`absolute left-0.5 top-0.5 grid h-4 w-4 place-items-center rounded-full shadow transition-all duration-200 ease-out
+            ${checked ? "translate-x-4 bg-white" : "translate-x-0 bg-[#9aa1b0]"}`}
         >
           {busy && (
             <svg className="h-2.5 w-2.5 animate-spin text-ink-3" viewBox="0 0 24 24" fill="none">
@@ -187,9 +187,22 @@ export function Avatar({
 
   return (
     <span className={`relative grid ${box} shrink-0 place-items-center`}>
+      {/* Halo under the rim. It sits outside the avatar's box, so it grows on
+          hover without moving anything in the layout. */}
       <span
         aria-hidden
-        className="absolute inset-0 rounded-full"
+        className="avatar-halo"
+        style={
+          {
+            "--halo-color": isPro
+              ? "rgb(245 158 11 / 0.75)"
+              : `hsl(${hue} 85% 60% / 0.7)`,
+          } as React.CSSProperties
+        }
+      />
+      <span
+        aria-hidden
+        className="avatar-ring absolute inset-0 rounded-full"
         style={{
           background: isPro
             ? "conic-gradient(from 200deg, #fde68a, #f59e0b, #fbbf24, #fde68a)"
@@ -217,12 +230,21 @@ export function Avatar({
           />
         </svg>
       )}
-      {isPro && (
+      {/* Pro already has a crown; stacking a second mark on the same corner
+          would say the same thing twice. A signed-in Free account gets the
+          micro-LED instead, so every state carries one status mark. */}
+      {isPro ? (
         <span
           className={`absolute -bottom-0.5 -right-0.5 grid ${badge} place-items-center rounded-full bg-slate-900 ring-1 ring-amber-400/50`}
         >
           <CrownIcon className={`${crown} text-amber-300`} />
         </span>
+      ) : (
+        <span
+          aria-hidden
+          className="icon-led !right-0 !top-0"
+          style={{ "--led-color": "var(--accent)" } as React.CSSProperties}
+        />
       )}
     </span>
   );

@@ -162,6 +162,17 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // "Die" is the term the hardware press uses in every one of these
+  // languages, and "V-Cache" is AMD's own product name — a translated
+  // version of either would name something the reader cannot look up.
+  "it:x3d.dieLabel",
+  "fr:x3d.dieLabel",
+  "es:x3d.dieLabel",
+  "de:x3d.dieLabel",
+  "it:x3d.vcacheBadge",
+  "fr:x3d.vcacheBadge",
+  "es:x3d.vcacheBadge",
+  "de:x3d.vcacheBadge",
   // "Hardware", "Live", "warm", "Driver", "Normal" and "Standard" are the
   // words these languages actually use here — translating them would produce
   // something no native speaker would write.

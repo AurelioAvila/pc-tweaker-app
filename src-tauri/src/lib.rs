@@ -21,6 +21,7 @@ mod gpupower;
 mod license;
 mod netlatency;
 mod netmaintenance;
+mod netshaper;
 mod power;
 mod privacy_extra;
 mod profiles;
@@ -35,6 +36,7 @@ mod systemprofile;
 mod thermals;
 mod turbo;
 mod tweaks;
+mod x3d;
 
 use cleanup::CleanupResult;
 use rollback::{RegValue, RollbackStore};
@@ -235,6 +237,19 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         requires_pro: net_latency.requires_pro,
     });
 
+    let net_shaper = netshaper::info();
+    list.push(TweakInfo {
+        applied: store.is_applied(net_shaper.id),
+        id: net_shaper.id.to_string(),
+        name: net_shaper.name.to_string(),
+        description: net_shaper.description.to_string(),
+        category: category_str(&Category::Gaming).to_string(),
+        hive: "—".to_string(),
+        changes: Vec::new(), // composite: filled by the pass below
+        requires_admin: net_shaper.requires_admin,
+        requires_pro: net_shaper.requires_pro,
+    });
+
     let activity_history = privacy_extra::activity_history_info();
     list.push(TweakInfo {
         applied: store.is_applied(activity_history.id),
@@ -315,6 +330,7 @@ fn requires_pro_for(id: &str) -> bool {
         gaming::TURBO_BOOST_ID => gaming::turbo_boost_info().requires_pro,
         gaming::KEYBOARD_DELAY_ID => gaming::keyboard_delay_info().requires_pro,
         netlatency::TWEAK_ID => netlatency::info().requires_pro,
+        netshaper::TWEAK_ID => netshaper::info().requires_pro,
         game_priority::TWEAK_ID => game_priority::info().requires_pro,
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::activity_history_info().requires_pro,
         privacy_extra::TYPING_PERSONALIZATION_ID => {
@@ -378,6 +394,7 @@ fn apply_by_id_inner(
         gaming::TURBO_BOOST_ID => gaming::apply_turbo_boost(store),
         gaming::KEYBOARD_DELAY_ID => gaming::apply_keyboard_delay(store),
         netlatency::TWEAK_ID => netlatency::apply(store),
+        netshaper::TWEAK_ID => netshaper::apply(store),
         game_priority::TWEAK_ID => game_priority::apply(store),
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::apply_activity_history(store),
         privacy_extra::TYPING_PERSONALIZATION_ID => {
@@ -415,6 +432,7 @@ fn rollback_by_id_inner(store: &RollbackStore, id: &str) -> Result<(), String> {
         gaming::TURBO_BOOST_ID => gaming::rollback_turbo_boost(store),
         gaming::KEYBOARD_DELAY_ID => gaming::rollback_keyboard_delay(store),
         netlatency::TWEAK_ID => netlatency::rollback(store),
+        netshaper::TWEAK_ID => netshaper::rollback(store),
         game_priority::TWEAK_ID => game_priority::rollback(store),
         privacy_extra::ACTIVITY_HISTORY_ID => privacy_extra::rollback_activity_history(store),
         privacy_extra::TYPING_PERSONALIZATION_ID => {
@@ -439,6 +457,7 @@ fn requires_admin_for(id: &str) -> bool {
         gaming::TURBO_BOOST_ID => true,
         gaming::KEYBOARD_DELAY_ID => false,
         netlatency::TWEAK_ID => netlatency::info().requires_admin,
+        netshaper::TWEAK_ID => netshaper::info().requires_admin,
         game_priority::TWEAK_ID => true,
         privacy_extra::ACTIVITY_HISTORY_ID => true,
         privacy_extra::TYPING_PERSONALIZATION_ID => {
@@ -995,6 +1014,10 @@ pub fn run() {
             drivers::reboot_now,
             driverupdate::search_driver_updates,
             driverupdate::install_driver_updates,
+            x3d::x3d_report,
+            x3d::x3d_processes,
+            x3d::x3d_align,
+            x3d::x3d_reset,
             clear_audit_log,
             netmaintenance::flush_dns_cache
         ])
@@ -1027,6 +1050,7 @@ mod tests {
                 contextmenu::TWEAK_ID,
                 services::WINDOWS_SEARCH_ID,
                 netlatency::TWEAK_ID,
+                netshaper::TWEAK_ID,
             ]
             .iter()
             .map(|s| s.to_string()),

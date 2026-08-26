@@ -26,10 +26,17 @@ export function BespokeArsenal() {
         whileInView="show"
         viewport={viewportOnce}
       >
-        <motion.div variants={riseChild} className="font-mono-t mb-4 text-[11.5px] tracking-[0.18em] text-[var(--fg-dim)]">
-          <span className="text-accent">{text.arsenal.tag.split(" / ")[0]}</span> / {text.arsenal.tag.split(" / ")[1]}
+        <motion.div
+          variants={riseChild}
+          className="font-mono-t mb-4 text-[11.5px] tracking-[0.18em] text-[var(--fg-dim)]"
+        >
+          <span className="text-accent">{text.arsenal.tag.split(" / ")[0]}</span> /{" "}
+          {text.arsenal.tag.split(" / ")[1]}
         </motion.div>
-        <motion.h2 variants={riseChild} className="font-display text-[clamp(1.8rem,3.6vw,2.8rem)] font-bold tracking-tight text-[var(--fg)]">
+        <motion.h2
+          variants={riseChild}
+          className="font-display text-[clamp(1.8rem,3.6vw,2.8rem)] font-bold tracking-tight text-[var(--fg)]"
+        >
           {text.arsenal.title}
         </motion.h2>
 
@@ -46,8 +53,12 @@ export function BespokeArsenal() {
                   PRO
                 </span>
               )}
-              <div className="font-mono-t text-accent mb-4 text-[10.5px] tracking-[0.16em]">{c.tag}</div>
-              <h3 className="font-display mb-2.5 text-[19px] font-bold tracking-tight text-[var(--fg)]">{c.title}</h3>
+              <div className="font-mono-t text-accent mb-4 text-[10.5px] tracking-[0.16em]">
+                {c.tag}
+              </div>
+              <h3 className="font-display mb-2.5 text-[19px] font-bold tracking-tight text-[var(--fg)]">
+                {c.title}
+              </h3>
               <p className="text-[13.8px] leading-relaxed text-[var(--fg-dim)]">{c.body}</p>
             </motion.div>
           ))}

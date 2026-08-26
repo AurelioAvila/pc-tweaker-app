@@ -23,7 +23,9 @@ function Col({
 }) {
   return (
     <div>
-      <h4 className="font-mono-t mb-4 text-[11px] tracking-[0.14em] text-[var(--fg-dim)]">{title}</h4>
+      <h4 className="font-mono-t mb-4 text-[11px] tracking-[0.14em] text-[var(--fg-dim)]">
+        {title}
+      </h4>
       {links.map((l) =>
         // A leading "/" marks an in-site route, which routes on the client
         // instead of triggering a full reload.
@@ -47,7 +49,9 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-wrap justify-between gap-10">
           <div>
-            <div className="font-display mb-2.5 text-[17px] font-bold text-[var(--fg)]">PC Tweaker</div>
+            <div className="font-display mb-2.5 text-[17px] font-bold text-[var(--fg)]">
+              PC Tweaker
+            </div>
             <p className="max-w-xs text-[13px] text-[var(--fg-dim)]">{text.footer.tagline}</p>
             <NewsletterSignup />
           </div>
@@ -67,9 +71,18 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
               navigate={navigate}
               title={text.footer.reviews}
               links={[
-                { label: "MajorGeeks", href: "https://www.majorgeeks.com/files/details/pc_tweaker.html" },
-                { label: "Softpedia", href: "https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml" },
-                { label: "Freeware.de", href: "https://freeware.de/tipps-and-tricks/pc-tweaker-041-systemoptimierung-und-leistungssteigerung-fuer-windows-1011" },
+                {
+                  label: "MajorGeeks",
+                  href: "https://www.majorgeeks.com/files/details/pc_tweaker.html",
+                },
+                {
+                  label: "Softpedia",
+                  href: "https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml",
+                },
+                {
+                  label: "Freeware.de",
+                  href: "https://freeware.de/tipps-and-tricks/pc-tweaker-041-systemoptimierung-und-leistungssteigerung-fuer-windows-1011",
+                },
               ]}
             />
             <Col

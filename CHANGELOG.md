@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.3.1 - 2026-08-27
+
+- Fixed: the profile-photo picker could silently fail to load an image due
+  to the app's Content-Security-Policy blocking blob: URLs.
+- Fixed: the avatar photo could render off-center.
+- Full Portuguese localization (6th language).
+- Driver panel: the last scan now persists across app restarts instead of
+  re-scanning every launch.
+- Driver panel: install drivers selectively with per-driver checkboxes,
+  instead of all-or-nothing.
+- Driver panel: the Windows Update check is now labeled and described
+  separately from the vendor-specific driver list above it.
+
 ## v1.3.0 - 2026-08-26
 
 - New Hardware screen: live GPU/CPU temperatures, load, VRAM, fan and power

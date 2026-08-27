@@ -202,6 +202,7 @@ export interface Strings {
     downloading: string; // uses {percent}
     installing: string;
     error: string; // uses {message}
+    checkFailed: string; // uses {message}
   };
   badges: { admin: string; pro: string; soon: string };
   emptyCategory: string;
@@ -861,6 +862,7 @@ const it: Strings = {
     downloading: "Download... {percent}%",
     installing: "Installazione...",
     error: "Aggiornamento non riuscito: {message}",
+    checkFailed: "Controllo aggiornamenti non riuscito: {message}",
   },
   badges: { admin: "Admin", pro: "PRO", soon: "IN ARRIVO" },
   emptyCategory: "Nessun tweak disponibile in questa categoria — presto in arrivo.",
@@ -1824,6 +1826,7 @@ const en: Strings = {
     downloading: "Downloading... {percent}%",
     installing: "Installing...",
     error: "Update failed: {message}",
+    checkFailed: "Update check failed: {message}",
   },
   badges: { admin: "Admin", pro: "PRO", soon: "COMING SOON" },
   emptyCategory: "No tweaks available in this category yet — more coming soon.",
@@ -2782,6 +2785,7 @@ const fr: Strings = {
     downloading: "Téléchargement... {percent}%",
     installing: "Installation...",
     error: "Échec de la mise à jour : {message}",
+    checkFailed: "Échec de la vérification des mises à jour : {message}",
   },
   badges: { admin: "Admin", pro: "PRO", soon: "BIENTÔT" },
   emptyCategory: "Aucune optimisation disponible dans cette catégorie pour l'instant — à venir.",
@@ -3752,6 +3756,7 @@ const es: Strings = {
     downloading: "Descargando... {percent}%",
     installing: "Instalando...",
     error: "Error al actualizar: {message}",
+    checkFailed: "Error al comprobar actualizaciones: {message}",
   },
   badges: { admin: "Admin", pro: "PRO", soon: "PRÓXIMAMENTE" },
   emptyCategory: "Todavía no hay ajustes disponibles en esta categoría — próximamente.",
@@ -4721,6 +4726,7 @@ const de: Strings = {
     downloading: "Wird heruntergeladen... {percent}%",
     installing: "Wird installiert...",
     error: "Update fehlgeschlagen: {message}",
+    checkFailed: "Update-Prüfung fehlgeschlagen: {message}",
   },
   badges: { admin: "Admin", pro: "PRO", soon: "DEMNÄCHST" },
   emptyCategory: "In dieser Kategorie sind noch keine Optimierungen verfügbar — bald verfügbar.",
@@ -5696,6 +5702,7 @@ const pt: Strings = {
     downloading: "Baixando... {percent}%",
     installing: "Instalando...",
     error: "Falha na atualização: {message}",
+    checkFailed: "Falha ao verificar atualizações: {message}",
   },
   badges: { admin: "Admin", pro: "PRO", soon: "EM BREVE" },
   emptyCategory: "Nenhum ajuste disponível nesta categoria ainda — mais em breve.",

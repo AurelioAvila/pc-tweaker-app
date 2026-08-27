@@ -5534,7 +5534,8 @@ const pt: Strings = {
   },
   healthPanel: {
     title: "Saúde do PC",
-    subtitle: "Uma pontuação explicável: todo número mostra os fatos a partir dos quais foi calculado.",
+    subtitle:
+      "Uma pontuação explicável: todo número mostra os fatos a partir dos quais foi calculado.",
     why: "Por que {score}?",
     refresh: "Recalcular",
     compute: "Calcular pontuação de saúde",
@@ -5552,13 +5553,16 @@ const pt: Strings = {
     idleHint:
       "Nada roda em segundo plano: a pontuação só é calculada quando você pede, inteiramente neste PC.",
     baselineTitle: "Referência",
-    baselineHint: "Medições rápidas e repetíveis — só comparáveis com execuções anteriores neste PC.",
+    baselineHint:
+      "Medições rápidas e repetíveis — só comparáveis com execuções anteriores neste PC.",
     baselineRun: "Executar referência",
     baselineRunning: "Medindo (~5 s)...",
-    baselineEmpty: "Nenhuma referência ainda. Execute uma antes de aplicar alterações, e outra depois.",
+    baselineEmpty:
+      "Nenhuma referência ainda. Execute uma antes de aplicar alterações, e outra depois.",
     changeSinceLast: "desde sua última verificação",
     changeNone: "Nenhuma alteração desde sua última verificação.",
-    changeFirstRun: "Primeira medição registrada. Execute novamente após uma alteração para ver o que mudou.",
+    changeFirstRun:
+      "Primeira medição registrada. Execute novamente após uma alteração para ver o que mudou.",
     changeWhyTitle: "Por que a pontuação mudou",
     changeContributes: "Contribuição para a pontuação geral:",
     changeStructural:
@@ -5581,7 +5585,8 @@ const pt: Strings = {
     statusQuiet: "Tudo tranquilo",
     statusScanning: "Verificando...",
     statusFindings: "{count} recomendações prontas",
-    domainsLine: "Inicialização · Armazenamento · Memória · Privacidade · Desempenho · Atualizações",
+    domainsLine:
+      "Inicialização · Armazenamento · Memória · Privacidade · Desempenho · Atualizações",
     consent: "Nada muda sem sua aprovação.",
     runScan: "Executar verificação do sistema",
     reviewFindings: "Revisar {count} recomendações",
@@ -5725,7 +5730,8 @@ const pt: Strings = {
   },
   profiles: {
     title: "Configurações",
-    subtitle: "Salve como você configurou este PC, reaplique com um clique, ou passe para outra pessoa.",
+    subtitle:
+      "Salve como você configurou este PC, reaplique com um clique, ou passe para outra pessoa.",
     saveHeading: "Salvar a atual",
     namePlaceholder: "Nome (ex.: Jogos)",
     saveButton: "Salvar",
@@ -5770,8 +5776,10 @@ const pt: Strings = {
     verdictUnsupported: "Não suportado",
     reasons: {
       laptop_battery: "este PC é um notebook: custa mais bateria do que devolve",
-      hdd_index_cost: "o disco do sistema é mecânico, então a indexação em segundo plano é realmente sentida",
-      fast_disk_no_gain: "o disco do sistema é NVMe, rápido o bastante para tornar a economia insignificante",
+      hdd_index_cost:
+        "o disco do sistema é mecânico, então a indexação em segundo plano é realmente sentida",
+      fast_disk_no_gain:
+        "o disco do sistema é NVMe, rápido o bastante para tornar a economia insignificante",
       needs_win10_2004: "requer Windows 10 versão 2004 ou mais recente",
       weak_gpu: "gráficos integrados: a transparência custa desempenho que poderia ser aproveitado",
     },
@@ -5853,7 +5861,8 @@ const pt: Strings = {
     button: "Verificar",
     checking: "Verificando...",
     safe: "Não encontrada em nenhum vazamento conhecido. Bom sinal.",
-    breached: "Encontrada em {count} vazamentos conhecidos. Troque-a agora, em todos os lugares onde a usa.",
+    breached:
+      "Encontrada em {count} vazamentos conhecidos. Troque-a agora, em todos os lugares onde a usa.",
     error: "Não foi possível verificar agora: confira sua conexão e tente novamente.",
   },
   paywall: {
@@ -5861,7 +5870,8 @@ const pt: Strings = {
     body: '"{feature}" faz parte do PC Tweaker Pro, junto com Sessões de jogo, os presets de jogos e todo recurso futuro.',
     unlock: "Ver planos e preços",
     notNow: "Agora não",
-    notConnectedToast: "O pagamento do Pro ainda não está configurado nesta build de desenvolvimento.",
+    notConnectedToast:
+      "O pagamento do Pro ainda não está configurado nesta build de desenvolvimento.",
   },
   cleanupConfirm: {
     previewLoading: "Calculando o que irá para a Lixeira...",
@@ -6050,7 +6060,8 @@ const pt: Strings = {
     verdictRiskyHint:
       "A placa passou de 84°, o ponto em que começa a reduzir o próprio desempenho para se proteger. Verifique a ventilação, ou mude para o perfil Silencioso.",
     verdictNormalHint: "Temperaturas na faixa normal para uma placa sob carga: nada alarmante.",
-    verdictBetterHint: "Ficou abaixo de 65° enquanto trabalhava de verdade: resfriamento melhor que a média.",
+    verdictBetterHint:
+      "Ficou abaixo de 65° enquanto trabalhava de verdade: resfriamento melhor que a média.",
     verdictIdleHint:
       "Ainda não trabalhou o suficiente para avaliar. Uma placa ociosa roda fria de qualquer forma, então isso não provaria nada.",
     profilesTitle: "Perfis térmicos",
@@ -6135,7 +6146,8 @@ const pt: Strings = {
     working: "...",
     logout: "Sair",
     loggedInAs: "Conectado como {email}",
-    backendNotConfigured: "Nenhum servidor conectado ainda: defina API_BASE_URL assim que o backend for implantado.",
+    backendNotConfigured:
+      "Nenhum servidor conectado ainda: defina API_BASE_URL assim que o backend for implantado.",
     switchToRegister: "Não tem conta? Cadastre-se",
     switchToLogin: "Já tem uma conta? Entre",
     emailInvalid: "Digite um endereço de e-mail válido.",
@@ -6146,7 +6158,8 @@ const pt: Strings = {
     loginRequiredForCheckout: "Entre ou cadastre-se antes de desbloquear o Pro.",
     forgotPasswordLink: "Esqueceu a senha?",
     forgotPasswordButton: "Enviar link de redefinição",
-    forgotPasswordSent: "Se esse e-mail estiver cadastrado, você receberá um link para redefinir a senha.",
+    forgotPasswordSent:
+      "Se esse e-mail estiver cadastrado, você receberá um link para redefinir a senha.",
     backToLogin: "Voltar ao login",
     emailNotVerified: "E-mail não verificado",
     emailVerified: "E-mail verificado",
@@ -6285,7 +6298,8 @@ const pt: Strings = {
     },
     show_hidden_files: {
       name: "Mostrar arquivos ocultos",
-      description: "Mostra arquivos e pastas ocultos no Explorador de Arquivos (HKCU, sem elevação necessária).",
+      description:
+        "Mostra arquivos e pastas ocultos no Explorador de Arquivos (HKCU, sem elevação necessária).",
     },
     priority_separation: {
       name: "Otimizar prioridade da CPU",
@@ -6436,7 +6450,6 @@ const pt: Strings = {
     },
   },
 };
-
 
 export const STRINGS: Record<Lang, Strings> = { it, en, fr, es, de, pt };
 

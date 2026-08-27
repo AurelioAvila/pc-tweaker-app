@@ -50,6 +50,7 @@ anyway**.
   <a href="https://winstall.app/apps/AurelioAvila.PCTweaker"><img src="https://img.shields.io/winget/v/AurelioAvila.PCTweaker?style=for-the-badge&label=winget&color=1793D1" alt="winget"></a>
   <a href="https://www.majorgeeks.com/files/details/pc_tweaker.html"><img src="https://img.shields.io/badge/MajorGeeks-4.0%2F5.0-2E7D32?style=for-the-badge" alt="4 out of 5 stars on MajorGeeks"></a>
   <a href="https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"><img src="https://img.shields.io/badge/Softpedia-Listed-00A99D?style=for-the-badge" alt="Listed on Softpedia"></a>
+  <a href="https://gitlab.com/aurelio-avila-group/pc-tweaker-app"><img src="https://img.shields.io/badge/Also_on-GitLab-FC6D26?style=for-the-badge&logo=gitlab&logoColor=white" alt="Also on GitLab"></a>
 </p>
 
 **[⬇ Download for Windows](../../releases/latest)** · [Changelog](CHANGELOG.md) ·

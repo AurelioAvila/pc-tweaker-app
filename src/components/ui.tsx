@@ -256,12 +256,14 @@ export function Avatar({
 
 /**
  * Checks GitHub once at startup for a newer signed build and, when one
- * exists, offers it in a small card next to the toasts. The check is silent
- * on failure on purpose: dev builds have no update endpoint and an offline
- * start is not something the user can act on, so neither is worth a toast.
- * Installation goes through the updater plugin's signature verification —
- * a manifest pointing at an unsigned or tampered binary is rejected before
- * anything runs.
+ * exists, offers it in a small card next to the toasts. A failed check
+ * surfaces as the same brief, auto-dismissing toast used for every other
+ * background error — never a blocking popup — so a broken updater is
+ * visible instead of vanishing, and the failure has a chance to reach the
+ * opt-in error reports (which only ever send what the user has already
+ * seen). Installation goes through the updater plugin's signature
+ * verification — a manifest pointing at an unsigned or tampered binary is
+ * rejected before anything runs.
  */
 export function UpdateBanner({
   s,
@@ -281,10 +283,13 @@ export function UpdateBanner({
       .then((u) => {
         if (alive && u) setUpdate(u);
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (alive) onToast("error", format(s.updater.checkFailed, { message: String(err) }));
+      });
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!update || dismissed) return null;

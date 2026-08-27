@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.3.2 - 2026-08-27
+
+- Fixed: a failed update check was silently ignored, giving no signal that
+  the app couldn't tell whether a newer version existed. Now shows a brief
+  notice, same as any other background error.
+
 ## v1.3.1 - 2026-08-27
 
 - Fixed: the profile-photo picker could silently fail to load an image due

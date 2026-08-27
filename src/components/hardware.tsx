@@ -843,10 +843,20 @@ function DriverRow({ entry, s }: { entry: DriverEntry; s: Strings }) {
  */
 // Seeded from localStorage so a relaunch shows the last scan instead of
 // paying sixteen seconds again for nothing that changed. Module-level state
-// then carries it for the rest of the session, the same as before.
-const storedAudit = readCachedDriverAudit();
-let cachedAudit: DriverAudit | null = storedAudit?.audit ?? null;
-let cachedAuditAt: Date | null = storedAudit?.at ?? null;
+// then carries it for the rest of the session, the same as before. Read
+// lazily (on first component mount) rather than at module load, since
+// localStorage does not exist outside a browser (e.g. this file is also
+// bundled and imported by the thermals unit tests under Node).
+let cachedAudit: DriverAudit | null = null;
+let cachedAuditAt: Date | null = null;
+let cachedAuditLoaded = false;
+function loadCachedAudit(): void {
+  if (cachedAuditLoaded) return;
+  cachedAuditLoaded = true;
+  const storedAudit = readCachedDriverAudit();
+  cachedAudit = storedAudit?.audit ?? null;
+  cachedAuditAt = storedAudit?.at ?? null;
+}
 
 export function DriversPanel({
   s,
@@ -855,8 +865,11 @@ export function DriversPanel({
   s: Strings;
   pushToast: (kind: "success" | "error", message: string) => void;
 }) {
-  const [audit, setAudit] = useState<DriverAudit | null>(cachedAudit);
-  const [checkedAt, setCheckedAt] = useState<Date | null>(cachedAuditAt);
+  const [audit, setAudit] = useState<DriverAudit | null>(() => {
+    loadCachedAudit();
+    return cachedAudit;
+  });
+  const [checkedAt, setCheckedAt] = useState<Date | null>(() => cachedAuditAt);
   const [progress, setProgress] = useState<ScanProgress | null>(null);
   const [updates, setUpdates] = useState<UpdateSearchResult | null>(null);
   // Every result starts checked: "download all" is the default action, and
@@ -869,7 +882,7 @@ export function DriversPanel({
   // Busy only when there is nothing cached to show: a return visit renders
   // the previous result immediately instead of a progress bar for work it is
   // not going to do.
-  const [busy, setBusy] = useState(cachedAudit === null);
+  const [busy, setBusy] = useState(() => cachedAudit === null);
   const [error, setError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [rebootNeeded, setRebootNeeded] = useState(false);

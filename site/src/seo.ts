@@ -11,7 +11,7 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/": {
     title: "PC Tweaker — Every Millisecond Is Earned",
     description:
-      "54 real Windows tweaks — registry, power plan, services — each snapshotted before applying, plus live hardware temperatures and driver updates. Free for Windows 10/11.",
+      "Optimize Windows 10/11 with 54 reversible performance tweaks, live hardware monitoring and driver updates. Free, safe and fully transparent.",
     canonical: `${ORIGIN}/`,
     ogType: "website",
   },

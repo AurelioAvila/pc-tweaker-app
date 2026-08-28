@@ -29,6 +29,16 @@ app.set("trust proxy", 1);
 
 app.use(helmet());
 
+// helmet() does not set Cache-Control (its noCache() option was dropped in
+// v4+), so every /api response was leaving that decision to whatever sits
+// in front — including endpoints returning account, entitlement, and signed
+// license data. Scoped to /api so the static marketing/legal pages served
+// below keep their own caching behavior.
+app.use("/api", (_req: Request, res: Response, next: express.NextFunction) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
+
 // A generous service-wide ceiling protects every route, including cheap
 // reads and static legal pages that do not warrant a dedicated limiter.
 // Sensitive write endpoints keep their stricter route-specific limits.

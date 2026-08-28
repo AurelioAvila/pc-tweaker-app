@@ -13,6 +13,8 @@
   <a href="#safe-download-recommended"><img src="https://img.shields.io/badge/SAFE_DOWNLOAD-No_SmartScreen_warning-1793D1?style=for-the-badge&logo=windowsterminal&logoColor=white" alt="Safe download via winget, no SmartScreen warning"></a>
 </p>
 
+<p align="center"><sub>If PC Tweaker makes Windows easier to manage, ⭐ star the repository to follow new releases and help others discover it.</sub></p>
+
 <a id="safe-download-recommended"></a>
 
 ## 🛡️ Safe download (recommended)

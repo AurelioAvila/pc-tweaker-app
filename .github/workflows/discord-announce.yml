@@ -24,14 +24,15 @@ jobs:
         id: release
         env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
           INPUT_TAG: ${{ inputs.tag }}
         run: |
           TAG="$RELEASE_TAG"
           if [ -z "$TAG" ]; then TAG="$INPUT_TAG"; fi
-          if [ -z "$TAG" ]; then TAG=$(gh release view --json tagName --jq .tagName); fi
-          NAME=$(gh release view "$TAG" --json name --jq .name)
-          URL=$(gh release view "$TAG" --json url --jq .url)
+          if [ -z "$TAG" ]; then TAG=$(gh release view --repo "$REPO" --json tagName --jq .tagName); fi
+          NAME=$(gh release view "$TAG" --repo "$REPO" --json name --jq .name)
+          URL=$(gh release view "$TAG" --repo "$REPO" --json url --jq .url)
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
           echo "url=$URL" >> "$GITHUB_OUTPUT"

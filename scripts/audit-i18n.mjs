@@ -189,6 +189,19 @@ const REVIEWED_AS_CORRECT = new Set([
   "de:x3d.vcacheBadge",
   "pt:x3d.dieLabel",
   "pt:x3d.vcacheBadge",
+  // "Cache" and "Cookies" are the words Windows, browsers and the tech press
+  // already use unchanged in each of these languages — a translated version
+  // would be understood but would not match anything the reader has seen.
+  // French spells this word identically to English.
+  "fr:healthPanel.categories.maintenance",
+  "it:browserCleanup.cache",
+  "fr:browserCleanup.cache",
+  "de:browserCleanup.cache",
+  "pt:browserCleanup.cache",
+  "fr:browserCleanup.cookies",
+  "es:browserCleanup.cookies",
+  "de:browserCleanup.cookies",
+  "pt:browserCleanup.cookies",
   // "Hardware", "Live", "warm", "Driver", "Normal" and "Standard" are the
   // words these languages actually use here — translating them would produce
   // something no native speaker would write.

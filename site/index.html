@@ -33,6 +33,26 @@
   <!-- Fonts are self-hosted via @fontsource (imported in main.tsx): no request
        ever leaves for Google's servers, so no visitor IP reaches a third party
        before consent — there is nothing to consent to. -->
+  <!-- Framer Motion's entry animations start from opacity:0, and the
+       prerenderer faithfully writes that initial state into the HTML. With
+       JavaScript running that is invisible: the bundle hydrates and animates
+       the content in. Without it, roughly fifty blocks stay at opacity:0 and
+       the page renders as a bare navbar over black — which is what a crawler
+       that does not execute scripts, or a reader whose bundle failed, sees.
+
+       This restores them, and only for that case: a <noscript> block is inert
+       the moment scripts run, so it cannot alter a single frame of the normal
+       experience. An inline <script> toggling a class would cover more cases
+       but the page's own CSP is script-src 'self' with no 'unsafe-inline',
+       and weakening that to fix a rendering fallback would be a bad trade. -->
+  <noscript>
+    <style>
+      #root [style*="opacity:0"] {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    </style>
+  </noscript>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",

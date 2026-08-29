@@ -161,6 +161,9 @@ export interface Strings {
     activeCount: string; // uses {enabled} {total}
     machineWide: string;
     impactNote: string;
+    refresh: string;
+    refreshing: string;
+    hiddenOrphans: string;
   };
   search: {
     placeholder: string;
@@ -168,6 +171,7 @@ export interface Strings {
     clear: string;
   };
   pricing: {
+    eyebrow: string;
     title: string;
     subtitle: string;
     monthly: string;
@@ -194,6 +198,61 @@ export interface Strings {
     proFeatures: string[];
   };
   toggle: { on: string; off: string };
+  driverBooster: {
+    title: string;
+    subtitle: string;
+    scan: string;
+    scanning: string;
+    selectAll: string;
+    selectNone: string;
+    selectedCount: string;
+    pagesForSelection: string;
+    openSelected: string;
+    opened: string;
+    openedCapped: string;
+    allCurrent: string;
+    nothingActionable: string;
+    note: string;
+  };
+  secureDefrag: {
+    title: string;
+    willDefrag: string;
+    willRetrim: string;
+    start: string;
+    running: string;
+    working: string;
+    phaseAnalyze: string;
+    phaseOptimize: string;
+    analysisTitle: string;
+    doneDefrag: string;
+    doneRetrim: string;
+    note: string;
+  };
+  zeroTrace: {
+    title: string;
+    subtitle: string;
+    purgeTitle: string;
+    purgeBody: string;
+    purgeButton: string;
+    purging: string;
+    purgeResult: string;
+    purgeLimit: string;
+    shredTitle: string;
+    shredBody: string;
+    shredButton: string;
+    shredding: string;
+    shredDone: string;
+    shredSummary: string;
+    shredWarning: string;
+    ssdCaveat: string;
+  };
+  hud: {
+    title: string;
+    subtitle: string;
+    noFrametime: string;
+    show: string;
+    hide: string;
+  };
   updater: {
     title: string; // uses {version}
     body: string;
@@ -223,6 +282,7 @@ export interface Strings {
     active: string;
     inactive: string;
     /** The real steps the Rust side performs, shown as it works through them. */
+    loadLabel: string;
     stageReading: string;
     stageRaising: string;
     stageApplying: string;
@@ -556,6 +616,9 @@ export interface Strings {
     modeGaming: string;
     modeGamingHint: string;
     modeApplying: string;
+    profileStageReading: string;
+    profileStageApplying: string;
+    profileStageSettling: string;
     profileApplied: string; // uses {watts}
     profileNote: string;
     profileDefaultIsMax: string;
@@ -576,6 +639,7 @@ export interface Strings {
     winUpdateNote: string;
     winUpdateOpened: string;
     winUpdateSearching: string;
+    winUpdateTakesAWhile: string;
     winUpdateInstall: string; // uses {count}
     winUpdateInstalling: string;
     winUpdateNone: string;
@@ -805,6 +869,9 @@ const it: Strings = {
     activeCount: "Attivi: {enabled} / {total}",
     machineWide: "Tutti gli utenti",
     impactNote: "Disattivare non disinstalla nulla ed è reversibile in qualsiasi momento.",
+    refresh: "Aggiorna",
+    refreshing: "Rilettura...",
+    hiddenOrphans: "{count} voci nascoste: il programma non è più installato.",
   },
   search: {
     placeholder: "Cerca un tweak...",
@@ -812,8 +879,10 @@ const it: Strings = {
     clear: "Cancella",
   },
   pricing: {
+    eyebrow: "Sblocca tutto",
     title: "Scegli quanto vuoi spingere",
-    subtitle: "Inizia gratis. Passa a Pro quando vuoi ogni singolo frame in più.",
+    subtitle:
+      "Ogni modifica salva prima com'era: qualsiasi cosa provi qui, la annulli in un click. Il gratuito copre l'essenziale, Pro apre il resto.",
     monthly: "Mensile",
     annual: "Annuale",
     saveBadge: "RISPARMI IL {percent}%",
@@ -828,7 +897,8 @@ const it: Strings = {
     freeCta: "Stai usando il piano Free",
     freeCurrent: "Piano attuale",
     proName: "Pro",
-    proTagline: "Per chi conta ogni frame e non lascia niente al caso.",
+    proTagline:
+      "Ogni tweak, inclusi quelli che richiedono privilegi di amministratore e quelli che altrimenti faresti a mano nel registro.",
     proCta: "Passa a Pro",
     proCurrent: "Il tuo piano",
     manageBilling: "Gestisci abbonamento",
@@ -854,6 +924,71 @@ const it: Strings = {
     ],
   },
   toggle: { on: "Attivato", off: "Disattivato" },
+  driverBooster: {
+    title: "Driver Booster",
+    subtitle:
+      "Seleziona i driver più vecchi e apri tutte le loro pagine di download in un colpo solo.",
+    scan: "Analizza driver",
+    scanning: "Analisi...",
+    selectAll: "Seleziona tutti",
+    selectNone: "Deseleziona tutti",
+    selectedCount: "{selected} di {total} selezionati",
+    pagesForSelection: "{pages} pagine da aprire",
+    openSelected: "Apri le pagine di download ({count})",
+    opened: "{count} pagine aperte",
+    openedCapped:
+      "Aperte {opened} pagine su {total}: le altre restano selezionate, riprova per aprirle.",
+    allCurrent: "Nessun driver risulta datato.",
+    nothingActionable: "Nessun driver datato con una pagina del produttore disponibile.",
+    note: "PC Tweaker non scarica pacchetti driver da solo: non esiste un’API dei produttori che dica qual è la versione giusta per il tuo esatto dispositivo, e installare il driver video sbagliato è uno dei pochi errori che può lasciarti senza schermo. Qui si automatizza la parte noiosa — trovare le pagine — non la scelta. Per i driver che Windows Update conosce davvero, usa il pulsante qui sopra.",
+  },
+  secureDefrag: {
+    title: "Deframmentazione sicura",
+    willDefrag: "Questo disco è meccanico: verrà eseguita una vera deframmentazione.",
+    willRetrim:
+      "Questo disco non risulta meccanico: viene analizzato per intero, poi viene eseguito un retrim invece di una deframmentazione. Il retrim dura pochi secondi e riguarda solo lo spazio libero — è così che funziona: comunica al controller quali blocchi non servono più, così può riutilizzarli senza rallentare. Deframmentare un SSD non lo velocizza, lo consuma soltanto.",
+    start: "Avvia",
+    running: "In corso...",
+    working: "Elaborazione...",
+    phaseAnalyze: "Analisi",
+    phaseOptimize: "Ottimizzazione",
+    analysisTitle: "Rapporto di analisi",
+    doneDefrag: "Deframmentazione completata.",
+    doneRetrim: "Retrim completato.",
+    note: "Prima dell’operazione viene creato un punto di ripristino. La percentuale arriva da Windows stesso, non da un timer.",
+  },
+  zeroTrace: {
+    title: "Zero-Trace Cleaner",
+    subtitle:
+      "Rimuove ciò che resta in memoria dopo la chiusura dei programmi e distrugge i file in modo irreversibile.",
+    purgeTitle: "Pulizia memoria",
+    purgeBody:
+      "Windows tiene in RAM le pagine dei programmi chiusi come cache. Questo le rilascia: i frammenti lasciati da un processo terminato spariscono davvero dalla memoria fisica.",
+    purgeButton: "Pulisci memoria",
+    purging: "Pulizia...",
+    purgeResult: "Liberati {freed} MB — ora liberi {after} MB",
+    purgeLimit:
+      "Non tocca il file di paging né quello di ibernazione: sono su disco e Windows non offre un’API per ripulirli a caldo.",
+    shredTitle: "Distruzione sicura file",
+    shredBody:
+      "Sovrascrive il contenuto del file in tre passaggi prima di eliminarlo, rendendolo irrecuperabile dai normali strumenti di undelete.",
+    shredButton: "Scegli file...",
+    shredding: "Distruzione...",
+    shredDone: "{count} file distrutti ({size})",
+    shredSummary: "{shredded} distrutti, {skipped} saltati",
+    shredWarning: "Definitivo: nessun passaggio dal Cestino, nessun recupero possibile.",
+    ssdCaveat:
+      "Su SSD il wear levelling scrive quasi sempre su celle diverse dall’originale: le celle vecchie vengono liberate, non riscritte. Solo il secure-erase del disco può garantire di più.",
+  },
+  hud: {
+    title: "Overlay di gioco",
+    subtitle:
+      "Pannello trasparente sopra il gioco: carico CPU/GPU, temperature, VRAM, processo attivo con la sua priorità e indicatore di collo di bottiglia.",
+    noFrametime:
+      "Non mostra frametime né FPS: leggerli dall’esterno del gioco richiede una sessione di tracciamento ETW che questa app non esegue, e un numero plausibile ma inventato sarebbe peggio che non averlo.",
+    show: "Mostra",
+    hide: "Nascondi",
+  },
   updater: {
     title: "Aggiornamento disponibile: v{version}",
     body: "Si scarica e si installa in un passaggio; al termine l'app si riavvia da sola.",
@@ -883,6 +1018,7 @@ const it: Strings = {
     deactivating: "Ripristino in corso...",
     active: "Turbo attivo",
     inactive: "Turbo non attivo",
+    loadLabel: "CARICO CPU",
     stageReading: "Lettura del piano energetico",
     stageRaising: "Aumento del limite di boost",
     stageApplying: "Applicazione al sistema",
@@ -1239,11 +1375,14 @@ const it: Strings = {
       "Per lavoro, streaming e sessioni lunghe: la ventola resta quasi muta e la scheda scalda molto meno, al prezzo di qualche frame.",
     modeStandard: "Standard",
     modeStandardHint:
-      "L'equilibrio scelto dal produttore. È il profilo giusto per l'uso quotidiano e quello a cui tornare se qualcosa non convince.",
+      "Un limite equilibrato poco sotto il tetto della scheda: ventola più quieta e temperature più basse, con un costo in frame nell'ordine di pochi punti percentuali.",
     modeGaming: "Gaming",
     modeGamingHint:
       "Per le sessioni competitive: watt al massimo e tetto del clock alzato, per tenere più stabili gli FPS minimi nei momenti concitati.",
     modeApplying: "Applico...",
+    profileStageReading: "Lettura dei limiti della scheda",
+    profileStageApplying: "Applicazione del limite",
+    profileStageSettling: "Attesa della risposta delle ventole",
     profileApplied: "Limite impostato a {watts} W.",
     profileNote:
       "Richiede i permessi di amministratore e si azzera al riavvio. Non è una curva della ventola: NVIDIA non espone il controllo diretto della ventola in nvidia-smi, e i programmi che lo offrono usano API private non documentate che questa app non tocca.",
@@ -1268,6 +1407,7 @@ const it: Strings = {
       "Questo controlla solo il catalogo di Windows Update, non i driver specifici elencati sopra: molti produttori (soprattutto per audio e chipset integrati) non pubblicano mai i loro aggiornamenti lì, solo sul proprio sito. PC Tweaker non scarica pacchetti driver per conto suo: non esiste un'API dei produttori per sapere qual è la versione giusta per il tuo esatto dispositivo, e installare il driver video sbagliato è uno dei pochi errori che può lasciarti senza schermo.",
     winUpdateOpened: "Windows Update aperto.",
     winUpdateSearching: "Ricerca in corso...",
+    winUpdateTakesAWhile: "Può richiedere un minuto: interroga il catalogo Microsoft.",
     winUpdateInstall: "Scarica e installa ({count})",
     winUpdateInstalling: "Download e installazione...",
     winUpdateNone:
@@ -1769,6 +1909,9 @@ const en: Strings = {
     activeCount: "Active: {enabled} / {total}",
     machineWide: "All users",
     impactNote: "Turning one off uninstalls nothing and is reversible at any time.",
+    refresh: "Refresh",
+    refreshing: "Rescanning...",
+    hiddenOrphans: "{count} entries hidden: the program is no longer installed.",
   },
   search: {
     placeholder: "Search a tweak...",
@@ -1776,8 +1919,10 @@ const en: Strings = {
     clear: "Clear",
   },
   pricing: {
+    eyebrow: "Unlock everything",
     title: "Choose how hard you push",
-    subtitle: "Start free. Go Pro when you want every last frame.",
+    subtitle:
+      "Every change snapshots what was there first, so anything you try here is one click from undone. Free covers the essentials; Pro opens the rest.",
     monthly: "Monthly",
     annual: "Yearly",
     saveBadge: "SAVE {percent}%",
@@ -1792,7 +1937,8 @@ const en: Strings = {
     freeCta: "You’re on the Free plan",
     freeCurrent: "Current plan",
     proName: "Pro",
-    proTagline: "For players who count every frame and leave nothing on the table.",
+    proTagline:
+      "Every tweak, including the ones that need admin rights and the ones you'd otherwise apply by hand in the registry.",
     proCta: "Go Pro",
     proCurrent: "Your plan",
     manageBilling: "Manage subscription",
@@ -1818,6 +1964,70 @@ const en: Strings = {
     ],
   },
   toggle: { on: "On", off: "Off" },
+  driverBooster: {
+    title: "Driver Booster",
+    subtitle: "Pick the drivers that are falling behind and open all their download pages at once.",
+    scan: "Scan drivers",
+    scanning: "Scanning...",
+    selectAll: "Select all",
+    selectNone: "Clear selection",
+    selectedCount: "{selected} of {total} selected",
+    pagesForSelection: "{pages} pages to open",
+    openSelected: "Open download pages ({count})",
+    opened: "{count} pages opened",
+    openedCapped:
+      "Opened {opened} of {total} pages: the rest stay selected, run it again to open them.",
+    allCurrent: "No driver is showing its age.",
+    nothingActionable: "No ageing driver has a vendor page to open.",
+    note: "PC Tweaker does not download driver packages on its own: there is no vendor API that says which version is right for your exact device, and installing the wrong display driver is one of the few mistakes that can leave you with no screen. This automates the tedious part — finding the pages — not the choice. For drivers Windows Update genuinely knows about, use the button above.",
+  },
+  secureDefrag: {
+    title: "Secure Defragmentation",
+    willDefrag: "This drive is mechanical: a real defragmentation pass will run.",
+    willRetrim:
+      "This drive is not confirmed mechanical: the whole volume is analysed, then a retrim runs instead of a defragmentation. The retrim takes seconds and only concerns free space — that is what it is: it tells the controller which blocks are no longer in use so it can reuse them without slowing down. Defragmenting an SSD does not speed it up, it only wears it out.",
+    start: "Start",
+    running: "Running...",
+    working: "Working...",
+    phaseAnalyze: "Analysing",
+    phaseOptimize: "Optimising",
+    analysisTitle: "Analysis report",
+    doneDefrag: "Defragmentation complete.",
+    doneRetrim: "Retrim complete.",
+    note: "A System Restore point is taken first. The percentage comes from Windows itself, not from a timer.",
+  },
+  zeroTrace: {
+    title: "Zero-Trace Cleaner",
+    subtitle:
+      "Clears what closed programs leave behind in memory, and destroys files beyond recovery.",
+    purgeTitle: "Memory purge",
+    purgeBody:
+      "Windows keeps the pages of closed programs in RAM as cache. This releases them, so fragments left by a process that exited are genuinely gone from physical memory.",
+    purgeButton: "Purge memory",
+    purging: "Purging...",
+    purgeResult: "Freed {freed} MB — {after} MB now free",
+    purgeLimit:
+      "It does not touch the pagefile or hibernation file: those are on disk, and Windows offers no runtime API to scrub them.",
+    shredTitle: "Secure file shredder",
+    shredBody:
+      "Overwrites the file’s contents in three passes before deleting it, putting it beyond ordinary undelete tools.",
+    shredButton: "Choose files...",
+    shredding: "Shredding...",
+    shredDone: "{count} files destroyed ({size})",
+    shredSummary: "{shredded} destroyed, {skipped} skipped",
+    shredWarning: "Permanent: no Recycle Bin, no recovery.",
+    ssdCaveat:
+      "On an SSD, wear levelling almost always writes to different cells than the original. The old cells are freed, not rewritten — only the drive’s own secure-erase can guarantee more.",
+  },
+  hud: {
+    title: "Gaming overlay",
+    subtitle:
+      "A transparent panel over your game: CPU/GPU load, temperatures, VRAM, the active process with its scheduling priority, and a bottleneck indicator.",
+    noFrametime:
+      "It shows no frametime or FPS: reading those from outside the game needs an ETW tracing session this app does not run, and a plausible invented number would be worse than none.",
+    show: "Show",
+    hide: "Hide",
+  },
   updater: {
     title: "Update available: v{version}",
     body: "Downloads and installs in one step; the app restarts itself when done.",
@@ -1846,6 +2056,7 @@ const en: Strings = {
     deactivating: "Restoring...",
     active: "Turbo active",
     inactive: "Turbo not active",
+    loadLabel: "CPU LOAD",
     stageReading: "Reading the power plan",
     stageRaising: "Raising the boost ceiling",
     stageApplying: "Applying to the system",
@@ -2198,11 +2409,14 @@ const en: Strings = {
       "For work, streaming and long sessions: the fan stays close to silent and the card runs far cooler, at the cost of a few frames.",
     modeStandard: "Standard",
     modeStandardHint:
-      "The balance the manufacturer chose. The right profile for everyday use, and the one to come back to if anything feels off.",
+      "A balanced cap a little under the card's ceiling: quieter fan and lower temperatures, for a frame cost in the low single digits.",
     modeGaming: "Gaming",
     modeGamingHint:
       "For competitive sessions: watts at maximum and a raised clock ceiling, to hold your 1% lows steadier when it matters.",
     modeApplying: "Applying...",
+    profileStageReading: "Reading the card's limits",
+    profileStageApplying: "Applying the limit",
+    profileStageSettling: "Waiting for the fans to respond",
     profileApplied: "Limit set to {watts} W.",
     profileNote:
       "Needs administrator rights and resets on reboot. This is not a fan curve: NVIDIA exposes no direct fan control in nvidia-smi, and the tools that offer one use private, undocumented APIs this app does not touch.",
@@ -2227,6 +2441,7 @@ const en: Strings = {
       "This only checks Windows Update's own catalogue, not the specific drivers listed above: many vendors - onboard audio and chipset ones especially - never publish updates there, only on their own site. PC Tweaker does not download driver packages itself: there is no vendor API for what is current for your exact device, and installing the wrong display driver is one of the few mistakes that can leave you without a screen.",
     winUpdateOpened: "Windows Update opened.",
     winUpdateSearching: "Searching...",
+    winUpdateTakesAWhile: "This can take a minute - it queries Microsoft's catalogue.",
     winUpdateInstall: "Download and install ({count})",
     winUpdateInstalling: "Downloading and installing...",
     winUpdateNone:
@@ -2728,6 +2943,9 @@ const fr: Strings = {
     activeCount: "Actifs : {enabled} / {total}",
     machineWide: "Tous les utilisateurs",
     impactNote: "Désactiver ne désinstalle rien et reste réversible à tout moment.",
+    refresh: "Actualiser",
+    refreshing: "Nouvelle analyse...",
+    hiddenOrphans: "{count} entrées masquées : le programme n'est plus installé.",
   },
   search: {
     placeholder: "Rechercher une optimisation...",
@@ -2735,8 +2953,10 @@ const fr: Strings = {
     clear: "Effacer",
   },
   pricing: {
+    eyebrow: "Tout débloquer",
     title: "Choisissez jusqu’où pousser",
-    subtitle: "Commencez gratuitement. Passez à Pro quand chaque image compte.",
+    subtitle:
+      "Chaque modification enregistre l'état précédent : tout ce que vous essayez ici s'annule en un clic. Le gratuit couvre l'essentiel, Pro ouvre le reste.",
     monthly: "Mensuel",
     annual: "Annuel",
     saveBadge: "ÉCONOMISEZ {percent}%",
@@ -2751,7 +2971,8 @@ const fr: Strings = {
     freeCta: "Vous êtes sur l’offre Free",
     freeCurrent: "Offre actuelle",
     proName: "Pro",
-    proTagline: "Pour ceux qui comptent chaque image et ne laissent rien au hasard.",
+    proTagline:
+      "Tous les réglages, y compris ceux qui exigent des droits administrateur et ceux que vous feriez sinon à la main dans le registre.",
     proCta: "Passer à Pro",
     proCurrent: "Votre offre",
     manageBilling: "Gérer l'abonnement",
@@ -2777,6 +2998,71 @@ const fr: Strings = {
     ],
   },
   toggle: { on: "Activé", off: "Désactivé" },
+  driverBooster: {
+    title: "Driver Booster",
+    subtitle:
+      "Sélectionnez les pilotes qui prennent de l’âge et ouvrez toutes leurs pages de téléchargement d’un coup.",
+    scan: "Analyser les pilotes",
+    scanning: "Analyse...",
+    selectAll: "Tout sélectionner",
+    selectNone: "Tout désélectionner",
+    selectedCount: "{selected} sur {total} sélectionnés",
+    pagesForSelection: "{pages} pages à ouvrir",
+    openSelected: "Ouvrir les pages de téléchargement ({count})",
+    opened: "{count} pages ouvertes",
+    openedCapped:
+      "{opened} pages ouvertes sur {total} : les autres restent sélectionnées, relancez pour les ouvrir.",
+    allCurrent: "Aucun pilote ne montre son âge.",
+    nothingActionable: "Aucun pilote vieillissant n’a de page constructeur à ouvrir.",
+    note: "PC Tweaker ne télécharge pas les pilotes lui-même : aucune API constructeur ne dit quelle version convient à votre appareil exact, et installer le mauvais pilote graphique est l’une des rares erreurs qui peut vous laisser sans écran. Ceci automatise la partie fastidieuse — trouver les pages — pas le choix. Pour les pilotes que Windows Update connaît vraiment, utilisez le bouton ci-dessus.",
+  },
+  secureDefrag: {
+    title: "Défragmentation sécurisée",
+    willDefrag: "Ce disque est mécanique : une véritable défragmentation sera lancée.",
+    willRetrim:
+      "Ce disque n’est pas confirmé mécanique : le volume entier est analysé, puis un retrim est lancé au lieu d’une défragmentation. Le retrim dure quelques secondes et ne concerne que l’espace libre — c’est son rôle : indiquer au contrôleur quels blocs ne servent plus. Défragmenter un SSD ne l’accélère pas, cela l’use.",
+    start: "Démarrer",
+    running: "En cours...",
+    working: "Traitement...",
+    phaseAnalyze: "Analyse",
+    phaseOptimize: "Optimisation",
+    analysisTitle: "Rapport d’analyse",
+    doneDefrag: "Défragmentation terminée.",
+    doneRetrim: "Retrim terminé.",
+    note: "Un point de restauration est créé avant. Le pourcentage vient de Windows lui-même, pas d’un minuteur.",
+  },
+  zeroTrace: {
+    title: "Zero-Trace Cleaner",
+    subtitle:
+      "Efface ce que les programmes fermés laissent en mémoire et détruit les fichiers sans retour possible.",
+    purgeTitle: "Purge mémoire",
+    purgeBody:
+      "Windows conserve en RAM les pages des programmes fermés, en cache. Ceci les libère : les fragments laissés par un processus terminé disparaissent réellement de la mémoire physique.",
+    purgeButton: "Purger la mémoire",
+    purging: "Purge...",
+    purgeResult: "{freed} Mo libérés — {after} Mo libres maintenant",
+    purgeLimit:
+      "Cela ne touche ni le fichier d’échange ni celui d’hibernation : ils sont sur le disque et Windows n’offre aucune API pour les nettoyer à chaud.",
+    shredTitle: "Destruction sécurisée de fichiers",
+    shredBody:
+      "Écrase le contenu du fichier en trois passes avant de le supprimer, le mettant hors de portée des outils de récupération courants.",
+    shredButton: "Choisir des fichiers...",
+    shredding: "Destruction...",
+    shredDone: "{count} fichiers détruits ({size})",
+    shredSummary: "{shredded} détruits, {skipped} ignorés",
+    shredWarning: "Définitif : pas de Corbeille, aucune récupération.",
+    ssdCaveat:
+      "Sur un SSD, le nivellement d’usure écrit presque toujours sur d’autres cellules que l’original. Les anciennes sont libérées, pas réécrites — seul l’effacement sécurisé du disque peut garantir davantage.",
+  },
+  hud: {
+    title: "Overlay de jeu",
+    subtitle:
+      "Un panneau transparent au-dessus du jeu : charge CPU/GPU, températures, VRAM, processus actif avec sa priorité, et indicateur de goulot d’étranglement.",
+    noFrametime:
+      "Il n’affiche ni frametime ni FPS : les lire depuis l’extérieur du jeu exige une session de traçage ETW que cette app n’exécute pas, et un chiffre plausible mais inventé serait pire que rien.",
+    show: "Afficher",
+    hide: "Masquer",
+  },
   updater: {
     title: "Mise à jour disponible : v{version}",
     body: "Téléchargée et installée en une seule étape ; l'application redémarre toute seule à la fin.",
@@ -2806,6 +3092,7 @@ const fr: Strings = {
     deactivating: "Restauration...",
     active: "Turbo actif",
     inactive: "Turbo inactif",
+    loadLabel: "CHARGE CPU",
     stageReading: "Lecture du mode d'alimentation",
     stageRaising: "Augmentation de la limite de boost",
     stageApplying: "Application au système",
@@ -3166,11 +3453,14 @@ const fr: Strings = {
       "Pour le travail, le streaming et les longues sessions : le ventilateur reste presque muet et la carte chauffe bien moins, au prix de quelques images.",
     modeStandard: "Standard",
     modeStandardHint:
-      "L'équilibre choisi par le fabricant. Le bon profil au quotidien, et celui vers lequel revenir en cas de doute.",
+      "Une limite équilibrée un peu sous le plafond de la carte : ventilateur plus discret et températures plus basses, pour un coût en images de quelques pour cent.",
     modeGaming: "Gaming",
     modeGamingHint:
       "Pour les sessions compétitives : watts au maximum et plafond d'horloge relevé, pour tenir vos 1% low plus stables quand ça compte.",
     modeApplying: "Application...",
+    profileStageReading: "Lecture des limites de la carte",
+    profileStageApplying: "Application de la limite",
+    profileStageSettling: "Attente de la réponse des ventilateurs",
     profileApplied: "Limite réglée sur {watts} W.",
     profileNote:
       "Nécessite les droits administrateur et se réinitialise au redémarrage. Ce n'est pas une courbe de ventilateur : NVIDIA n'expose aucun contrôle direct du ventilateur dans nvidia-smi, et les outils qui en proposent un utilisent des API privées non documentées auxquelles cette application ne touche pas.",
@@ -3195,6 +3485,7 @@ const fr: Strings = {
       "Ceci vérifie uniquement le catalogue de Windows Update, pas les pilotes précis listés ci-dessus : de nombreux fabricants - surtout pour l'audio et le chipset intégrés - ne publient jamais leurs mises à jour là, seulement sur leur propre site. PC Tweaker ne télécharge pas de paquets de pilotes lui-même : il n'existe aucune API constructeur indiquant la version correcte pour votre appareil précis, et installer le mauvais pilote graphique est l'une des rares erreurs qui peut vous laisser sans écran.",
     winUpdateOpened: "Windows Update ouvert.",
     winUpdateSearching: "Recherche...",
+    winUpdateTakesAWhile: "Cela peut prendre une minute : interrogation du catalogue Microsoft.",
     winUpdateInstall: "Télécharger et installer ({count})",
     winUpdateInstalling: "Téléchargement et installation...",
     winUpdateNone:
@@ -3699,6 +3990,9 @@ const es: Strings = {
     activeCount: "Activos: {enabled} / {total}",
     machineWide: "Todos los usuarios",
     impactNote: "Desactivar no desinstala nada y es reversible en cualquier momento.",
+    refresh: "Actualizar",
+    refreshing: "Reanalizando...",
+    hiddenOrphans: "{count} entradas ocultas: el programa ya no está instalado.",
   },
   search: {
     placeholder: "Buscar un ajuste...",
@@ -3706,8 +4000,10 @@ const es: Strings = {
     clear: "Borrar",
   },
   pricing: {
+    eyebrow: "Desbloquea todo",
     title: "Elige cuánto quieres exprimirlo",
-    subtitle: "Empieza gratis. Pasa a Pro cuando quieras hasta el último fotograma.",
+    subtitle:
+      "Cada cambio guarda antes cómo estaba: lo que pruebes aquí se deshace en un clic. El gratuito cubre lo esencial; Pro abre el resto.",
     monthly: "Mensual",
     annual: "Anual",
     saveBadge: "AHORRAS UN {percent}%",
@@ -3722,7 +4018,8 @@ const es: Strings = {
     freeCta: "Estás en el plan Free",
     freeCurrent: "Plan actual",
     proName: "Pro",
-    proTagline: "Para quien cuenta cada fotograma y no deja nada al azar.",
+    proTagline:
+      "Todos los ajustes, incluidos los que piden permisos de administrador y los que si no harías a mano en el registro.",
     proCta: "Pasar a Pro",
     proCurrent: "Tu plan",
     manageBilling: "Gestionar suscripción",
@@ -3748,6 +4045,71 @@ const es: Strings = {
     ],
   },
   toggle: { on: "Activado", off: "Desactivado" },
+  driverBooster: {
+    title: "Driver Booster",
+    subtitle:
+      "Elige los controladores que se están quedando atrás y abre todas sus páginas de descarga de una vez.",
+    scan: "Analizar controladores",
+    scanning: "Analizando...",
+    selectAll: "Seleccionar todo",
+    selectNone: "Quitar selección",
+    selectedCount: "{selected} de {total} seleccionados",
+    pagesForSelection: "{pages} páginas por abrir",
+    openSelected: "Abrir páginas de descarga ({count})",
+    opened: "{count} páginas abiertas",
+    openedCapped:
+      "Abiertas {opened} de {total} páginas: las demás siguen seleccionadas, vuelve a ejecutarlo.",
+    allCurrent: "Ningún controlador aparenta su edad.",
+    nothingActionable: "Ningún controlador antiguo tiene una página del fabricante que abrir.",
+    note: "PC Tweaker no descarga paquetes de controladores por su cuenta: no existe una API del fabricante que diga cuál es la versión correcta para tu dispositivo exacto, e instalar el controlador de vídeo equivocado es uno de los pocos errores que puede dejarte sin pantalla. Esto automatiza la parte tediosa — encontrar las páginas — no la elección. Para los controladores que Windows Update sí conoce, usa el botón de arriba.",
+  },
+  secureDefrag: {
+    title: "Desfragmentación segura",
+    willDefrag: "Este disco es mecánico: se ejecutará una desfragmentación real.",
+    willRetrim:
+      "Este disco no está confirmado como mecánico: se analiza el volumen completo y luego se ejecuta un retrim en vez de una desfragmentación. El retrim dura segundos y solo afecta al espacio libre — eso es lo que hace: indica al controlador qué bloques ya no se usan. Desfragmentar un SSD no lo acelera, solo lo desgasta.",
+    start: "Iniciar",
+    running: "En curso...",
+    working: "Procesando...",
+    phaseAnalyze: "Analizando",
+    phaseOptimize: "Optimizando",
+    analysisTitle: "Informe de análisis",
+    doneDefrag: "Desfragmentación completada.",
+    doneRetrim: "Retrim completado.",
+    note: "Antes se crea un punto de restauración. El porcentaje viene de Windows, no de un temporizador.",
+  },
+  zeroTrace: {
+    title: "Zero-Trace Cleaner",
+    subtitle:
+      "Borra lo que los programas cerrados dejan en memoria y destruye archivos sin posible recuperación.",
+    purgeTitle: "Purga de memoria",
+    purgeBody:
+      "Windows mantiene en RAM las páginas de los programas cerrados como caché. Esto las libera: los fragmentos que deja un proceso terminado desaparecen de verdad de la memoria física.",
+    purgeButton: "Purgar memoria",
+    purging: "Purgando...",
+    purgeResult: "Liberados {freed} MB — ahora {after} MB libres",
+    purgeLimit:
+      "No toca el archivo de paginación ni el de hibernación: están en disco y Windows no ofrece ninguna API para limpiarlos en caliente.",
+    shredTitle: "Destrucción segura de archivos",
+    shredBody:
+      "Sobrescribe el contenido del archivo en tres pasadas antes de eliminarlo, dejándolo fuera del alcance de las herramientas de recuperación habituales.",
+    shredButton: "Elegir archivos...",
+    shredding: "Destruyendo...",
+    shredDone: "{count} archivos destruidos ({size})",
+    shredSummary: "{shredded} destruidos, {skipped} omitidos",
+    shredWarning: "Definitivo: sin Papelera, sin recuperación.",
+    ssdCaveat:
+      "En un SSD, el nivelado de desgaste casi siempre escribe en celdas distintas del original. Las antiguas se liberan, no se reescriben: solo el borrado seguro del disco puede garantizar más.",
+  },
+  hud: {
+    title: "Overlay de juego",
+    subtitle:
+      "Un panel transparente sobre el juego: carga de CPU/GPU, temperaturas, VRAM, proceso activo con su prioridad e indicador de cuello de botella.",
+    noFrametime:
+      "No muestra frametime ni FPS: leerlos desde fuera del juego exige una sesión de trazado ETW que esta app no ejecuta, y un número plausible pero inventado sería peor que ninguno.",
+    show: "Mostrar",
+    hide: "Ocultar",
+  },
   updater: {
     title: "Actualización disponible: v{version}",
     body: "Se descarga e instala en un solo paso; la aplicación se reinicia sola al terminar.",
@@ -3777,6 +4139,7 @@ const es: Strings = {
     deactivating: "Restaurando...",
     active: "Turbo activo",
     inactive: "Turbo no activo",
+    loadLabel: "CARGA CPU",
     stageReading: "Leyendo el plan de energia",
     stageRaising: "Elevando el limite de boost",
     stageApplying: "Aplicando al sistema",
@@ -4133,11 +4496,14 @@ const es: Strings = {
       "Para trabajar, transmitir y sesiones largas: el ventilador queda casi mudo y la tarjeta calienta mucho menos, a cambio de unos fotogramas.",
     modeStandard: "Estándar",
     modeStandardHint:
-      "El equilibrio que eligió el fabricante. El perfil adecuado para el uso diario, y al que volver si algo no convence.",
+      "Un límite equilibrado algo por debajo del techo de la tarjeta: ventilador más silencioso y temperaturas más bajas, con un coste en fotogramas de pocos puntos.",
     modeGaming: "Gaming",
     modeGamingHint:
       "Para sesiones competitivas: vatios al máximo y techo de reloj elevado, para mantener más estables los FPS mínimos cuando importa.",
     modeApplying: "Aplicando...",
+    profileStageReading: "Leyendo los límites de la tarjeta",
+    profileStageApplying: "Aplicando el límite",
+    profileStageSettling: "Esperando la respuesta de los ventiladores",
     profileApplied: "Límite fijado en {watts} W.",
     profileNote:
       "Requiere permisos de administrador y se restablece al reiniciar. No es una curva de ventilador: NVIDIA no expone control directo del ventilador en nvidia-smi, y las herramientas que lo ofrecen usan API privadas no documentadas que esta aplicación no toca.",
@@ -4162,6 +4528,7 @@ const es: Strings = {
       "Esto solo revisa el catálogo propio de Windows Update, no los controladores concretos listados arriba: muchos fabricantes -sobre todo de audio y chipset integrados- nunca publican sus actualizaciones ahí, solo en su propio sitio. PC Tweaker no descarga paquetes de controladores por su cuenta: no existe una API del fabricante que diga cuál es la versión correcta para tu dispositivo exacto, e instalar el controlador de vídeo equivocado es uno de los pocos errores que puede dejarte sin pantalla.",
     winUpdateOpened: "Windows Update abierto.",
     winUpdateSearching: "Buscando...",
+    winUpdateTakesAWhile: "Puede tardar un minuto: consulta el catálogo de Microsoft.",
     winUpdateInstall: "Descargar e instalar ({count})",
     winUpdateInstalling: "Descargando e instalando...",
     winUpdateNone:
@@ -4669,6 +5036,9 @@ const de: Strings = {
     activeCount: "Aktiv: {enabled} / {total}",
     machineWide: "Alle Benutzer",
     impactNote: "Deaktivieren deinstalliert nichts und ist jederzeit umkehrbar.",
+    refresh: "Aktualisieren",
+    refreshing: "Neu einlesen...",
+    hiddenOrphans: "{count} Einträge ausgeblendet: das Programm ist nicht mehr installiert.",
   },
   search: {
     placeholder: "Tweak suchen...",
@@ -4676,8 +5046,10 @@ const de: Strings = {
     clear: "Löschen",
   },
   pricing: {
+    eyebrow: "Alles freischalten",
     title: "Entscheide, wie weit du gehst",
-    subtitle: "Starte kostenlos. Wechsle zu Pro, wenn jedes Frame zählt.",
+    subtitle:
+      "Jede Änderung sichert zuerst den vorherigen Stand - alles hier ist einen Klick vom Rückgängig entfernt. Kostenlos deckt das Wesentliche ab, Pro öffnet den Rest.",
     monthly: "Monatlich",
     annual: "Jährlich",
     saveBadge: "{percent}% SPAREN",
@@ -4692,7 +5064,8 @@ const de: Strings = {
     freeCta: "Du nutzt den Free-Tarif",
     freeCurrent: "Aktueller Tarif",
     proName: "Pro",
-    proTagline: "Für alle, die jedes Frame zählen und nichts dem Zufall überlassen.",
+    proTagline:
+      "Alle Tweaks, auch die mit Administratorrechten und die, die du sonst von Hand in der Registry setzen würdest.",
     proCta: "Zu Pro wechseln",
     proCurrent: "Dein Tarif",
     manageBilling: "Abo verwalten",
@@ -4718,6 +5091,71 @@ const de: Strings = {
     ],
   },
   toggle: { on: "Ein", off: "Aus" },
+  driverBooster: {
+    title: "Driver Booster",
+    subtitle:
+      "Wähle die Treiber, die in die Jahre kommen, und öffne alle ihre Download-Seiten auf einmal.",
+    scan: "Treiber prüfen",
+    scanning: "Wird geprüft...",
+    selectAll: "Alle auswählen",
+    selectNone: "Auswahl aufheben",
+    selectedCount: "{selected} von {total} ausgewählt",
+    pagesForSelection: "{pages} Seiten zu öffnen",
+    openSelected: "Download-Seiten öffnen ({count})",
+    opened: "{count} Seiten geöffnet",
+    openedCapped:
+      "{opened} von {total} Seiten geöffnet: der Rest bleibt ausgewählt, einfach erneut ausführen.",
+    allCurrent: "Kein Treiber zeigt sein Alter.",
+    nothingActionable: "Kein alternder Treiber hat eine Herstellerseite zum Öffnen.",
+    note: "PC Tweaker lädt Treiberpakete nicht selbst herunter: es gibt keine Hersteller-API, die sagt, welche Version für genau dein Gerät richtig ist, und den falschen Grafiktreiber zu installieren ist einer der wenigen Fehler, der dich ohne Bildschirm zurücklassen kann. Das hier automatisiert den mühsamen Teil — die Seiten zu finden — nicht die Entscheidung. Für Treiber, die Windows Update wirklich kennt, nimm die Schaltfläche oben.",
+  },
+  secureDefrag: {
+    title: "Sichere Defragmentierung",
+    willDefrag: "Dieses Laufwerk ist mechanisch: eine echte Defragmentierung wird ausgeführt.",
+    willRetrim:
+      "Dieses Laufwerk ist nicht bestätigt mechanisch: das gesamte Volume wird analysiert, dann läuft ein Retrim statt einer Defragmentierung. Das Retrim dauert Sekunden und betrifft nur den freien Speicher — genau das ist seine Aufgabe: dem Controller mitzuteilen, welche Blöcke nicht mehr belegt sind. Eine SSD zu defragmentieren macht sie nicht schneller, nur älter.",
+    start: "Starten",
+    running: "Läuft...",
+    working: "Wird bearbeitet...",
+    phaseAnalyze: "Analyse",
+    phaseOptimize: "Optimierung",
+    analysisTitle: "Analysebericht",
+    doneDefrag: "Defragmentierung abgeschlossen.",
+    doneRetrim: "Retrim abgeschlossen.",
+    note: "Zuvor wird ein Wiederherstellungspunkt erstellt. Der Prozentwert kommt von Windows selbst, nicht von einem Timer.",
+  },
+  zeroTrace: {
+    title: "Zero-Trace Cleaner",
+    subtitle:
+      "Entfernt, was geschlossene Programme im Speicher hinterlassen, und vernichtet Dateien unwiederbringlich.",
+    purgeTitle: "Speicherbereinigung",
+    purgeBody:
+      "Windows behält die Seiten geschlossener Programme als Cache im RAM. Dies gibt sie frei: Fragmente eines beendeten Prozesses verschwinden wirklich aus dem physischen Speicher.",
+    purgeButton: "Speicher leeren",
+    purging: "Wird geleert...",
+    purgeResult: "{freed} MB freigegeben — jetzt {after} MB frei",
+    purgeLimit:
+      "Auslagerungs- und Ruhezustandsdatei bleiben unberührt: sie liegen auf der Platte, und Windows bietet keine Laufzeit-API, um sie zu bereinigen.",
+    shredTitle: "Sicheres Dateischreddern",
+    shredBody:
+      "Überschreibt den Dateiinhalt in drei Durchläufen vor dem Löschen — außer Reichweite üblicher Wiederherstellungswerkzeuge.",
+    shredButton: "Dateien wählen...",
+    shredding: "Wird vernichtet...",
+    shredDone: "{count} Dateien vernichtet ({size})",
+    shredSummary: "{shredded} vernichtet, {skipped} übersprungen",
+    shredWarning: "Endgültig: kein Papierkorb, keine Wiederherstellung.",
+    ssdCaveat:
+      "Auf einer SSD schreibt Wear-Levelling fast immer in andere Zellen als das Original. Die alten werden freigegeben, nicht überschrieben — mehr garantiert nur das Secure-Erase des Laufwerks.",
+  },
+  hud: {
+    title: "Spiel-Overlay",
+    subtitle:
+      "Ein transparentes Panel über dem Spiel: CPU-/GPU-Last, Temperaturen, VRAM, aktiver Prozess samt Priorität und ein Engpass-Indikator.",
+    noFrametime:
+      "Zeigt weder Frametime noch FPS: sie von außerhalb des Spiels zu lesen erfordert eine ETW-Trace-Sitzung, die diese App nicht betreibt — eine plausible erfundene Zahl wäre schlimmer als keine.",
+    show: "Anzeigen",
+    hide: "Ausblenden",
+  },
   updater: {
     title: "Update verfügbar: v{version}",
     body: "Wird in einem Schritt heruntergeladen und installiert; die App startet danach von selbst neu.",
@@ -4747,6 +5185,7 @@ const de: Strings = {
     deactivating: "Wird wiederhergestellt...",
     active: "Turbo aktiv",
     inactive: "Turbo nicht aktiv",
+    loadLabel: "CPU-LAST",
     stageReading: "Energieplan wird gelesen",
     stageRaising: "Boost-Grenze wird angehoben",
     stageApplying: "Wird auf das System angewendet",
@@ -5107,11 +5546,14 @@ const de: Strings = {
       "Für Arbeit, Streaming und lange Sitzungen: Der Lüfter bleibt fast lautlos und die Karte wird deutlich kühler — auf Kosten einiger Bilder.",
     modeStandard: "Standard",
     modeStandardHint:
-      "Die Balance, die der Hersteller gewählt hat. Das richtige Profil für den Alltag — und das, zu dem man zurückkehrt, wenn etwas nicht passt.",
+      "Ein ausgewogenes Limit knapp unter der Obergrenze der Karte: leiserer Lüfter und niedrigere Temperaturen, bei wenigen Prozent weniger Bildrate.",
     modeGaming: "Gaming",
     modeGamingHint:
       "Für kompetitive Sitzungen: Watt am Maximum und angehobene Taktobergrenze, damit die 1%-Lows stabiler bleiben, wenn es darauf ankommt.",
     modeApplying: "Wird angewendet...",
+    profileStageReading: "Grenzwerte der Karte werden gelesen",
+    profileStageApplying: "Grenzwert wird angewendet",
+    profileStageSettling: "Warten auf die Lüfter",
     profileApplied: "Limit auf {watts} W gesetzt.",
     profileNote:
       "Erfordert Administratorrechte und wird beim Neustart zurückgesetzt. Das ist keine Lüfterkurve: NVIDIA bietet in nvidia-smi keine direkte Lüftersteuerung, und die Programme, die eine anbieten, nutzen private, undokumentierte APIs, die diese App nicht anfasst.",
@@ -5136,6 +5578,7 @@ const de: Strings = {
       "Dies prüft nur den eigenen Katalog von Windows Update, nicht die oben aufgeführten einzelnen Treiber: Viele Hersteller - besonders bei Onboard-Audio und Chipsatz - veröffentlichen ihre Updates dort nie, nur auf der eigenen Website. PC Tweaker lädt keine Treiberpakete selbst herunter: Es gibt keine Hersteller-API dafür, was für genau Ihr Gerät aktuell ist, und den falschen Grafiktreiber zu installieren ist einer der wenigen Fehler, die Sie ohne Bild zurücklassen können.",
     winUpdateOpened: "Windows Update geöffnet.",
     winUpdateSearching: "Wird gesucht...",
+    winUpdateTakesAWhile: "Das kann eine Minute dauern - der Microsoft-Katalog wird abgefragt.",
     winUpdateInstall: "Herunterladen und installieren ({count})",
     winUpdateInstalling: "Wird heruntergeladen und installiert...",
     winUpdateNone:
@@ -5645,6 +6088,9 @@ const pt: Strings = {
     activeCount: "Ativos: {enabled} / {total}",
     machineWide: "Todos os usuários",
     impactNote: "Desativar um não desinstala nada e é reversível a qualquer momento.",
+    refresh: "Atualizar",
+    refreshing: "A reanalisar...",
+    hiddenOrphans: "{count} entradas ocultas: o programa já não está instalado.",
   },
   search: {
     placeholder: "Buscar um ajuste...",
@@ -5652,8 +6098,10 @@ const pt: Strings = {
     clear: "Limpar",
   },
   pricing: {
+    eyebrow: "Desbloqueia tudo",
     title: "Escolha o quanto quer avançar",
-    subtitle: "Comece grátis. Vá para o Pro quando quiser cada último frame.",
+    subtitle:
+      "Cada alteração guarda antes como estava: o que experimentares aqui desfaz-se num clique. O gratuito cobre o essencial; o Pro abre o resto.",
     monthly: "Mensal",
     annual: "Anual",
     saveBadge: "ECONOMIZE {percent}%",
@@ -5668,7 +6116,8 @@ const pt: Strings = {
     freeCta: "Você está no plano Grátis",
     freeCurrent: "Plano atual",
     proName: "Pro",
-    proTagline: "Para quem conta cada frame e não deixa nada na mesa.",
+    proTagline:
+      "Todos os ajustes, incluindo os que exigem privilégios de administrador e os que farías à mão no registo.",
     proCta: "Assinar o Pro",
     proCurrent: "Seu plano",
     manageBilling: "Gerenciar assinatura",
@@ -5694,6 +6143,71 @@ const pt: Strings = {
     ],
   },
   toggle: { on: "Ativado", off: "Desativado" },
+  driverBooster: {
+    title: "Driver Booster",
+    subtitle:
+      "Escolhe os drivers que estão a ficar para trás e abre todas as suas páginas de transferência de uma vez.",
+    scan: "Analisar drivers",
+    scanning: "A analisar...",
+    selectAll: "Selecionar tudo",
+    selectNone: "Limpar seleção",
+    selectedCount: "{selected} de {total} selecionados",
+    pagesForSelection: "{pages} páginas a abrir",
+    openSelected: "Abrir páginas de transferência ({count})",
+    opened: "{count} páginas abertas",
+    openedCapped:
+      "Abertas {opened} de {total} páginas: as restantes ficam selecionadas, executa de novo.",
+    allCurrent: "Nenhum driver aparenta a idade.",
+    nothingActionable: "Nenhum driver antigo tem uma página do fabricante para abrir.",
+    note: "O PC Tweaker não transfere pacotes de drivers sozinho: não existe uma API do fabricante que diga qual a versão certa para o teu dispositivo exato, e instalar o driver de vídeo errado é um dos poucos erros capazes de te deixar sem ecrã. Isto automatiza a parte aborrecida — encontrar as páginas — não a escolha. Para os drivers que o Windows Update conhece mesmo, usa o botão acima.",
+  },
+  secureDefrag: {
+    title: "Desfragmentação segura",
+    willDefrag: "Este disco é mecânico: será executada uma desfragmentação real.",
+    willRetrim:
+      "Este disco não está confirmado como mecânico: o volume inteiro é analisado e depois é executado um retrim em vez de uma desfragmentação. O retrim demora segundos e só diz respeito ao espaço livre — é esse o seu papel: indicar ao controlador que blocos já não são usados. Desfragmentar um SSD não o acelera, apenas o desgasta.",
+    start: "Iniciar",
+    running: "A executar...",
+    working: "A processar...",
+    phaseAnalyze: "Análise",
+    phaseOptimize: "Otimização",
+    analysisTitle: "Relatório de análise",
+    doneDefrag: "Desfragmentação concluída.",
+    doneRetrim: "Retrim concluído.",
+    note: "É criado antes um ponto de restauro. A percentagem vem do próprio Windows, não de um temporizador.",
+  },
+  zeroTrace: {
+    title: "Zero-Trace Cleaner",
+    subtitle:
+      "Remove o que os programas fechados deixam na memória e destrói ficheiros sem recuperação possível.",
+    purgeTitle: "Limpeza de memória",
+    purgeBody:
+      "O Windows mantém na RAM as páginas dos programas fechados como cache. Isto liberta-as: os fragmentos deixados por um processo terminado desaparecem mesmo da memória física.",
+    purgeButton: "Limpar memória",
+    purging: "A limpar...",
+    purgeResult: "Libertados {freed} MB — agora {after} MB livres",
+    purgeLimit:
+      "Não toca no ficheiro de paginação nem no de hibernação: estão em disco e o Windows não oferece uma API para os limpar em execução.",
+    shredTitle: "Destruição segura de ficheiros",
+    shredBody:
+      "Sobrescreve o conteúdo do ficheiro em três passagens antes de o eliminar, colocando-o fora do alcance das ferramentas de recuperação comuns.",
+    shredButton: "Escolher ficheiros...",
+    shredding: "A destruir...",
+    shredDone: "{count} ficheiros destruídos ({size})",
+    shredSummary: "{shredded} destruídos, {skipped} ignorados",
+    shredWarning: "Definitivo: sem Reciclagem, sem recuperação.",
+    ssdCaveat:
+      "Num SSD, o nivelamento de desgaste escreve quase sempre em células diferentes do original. As antigas são libertadas, não reescritas — só o secure-erase do disco pode garantir mais.",
+  },
+  hud: {
+    title: "Overlay de jogo",
+    subtitle:
+      "Um painel transparente sobre o jogo: carga de CPU/GPU, temperaturas, VRAM, processo ativo com a sua prioridade e indicador de estrangulamento.",
+    noFrametime:
+      "Não mostra frametime nem FPS: lê-los a partir de fora do jogo exige uma sessão de rastreio ETW que esta app não executa, e um número plausível mas inventado seria pior do que nenhum.",
+    show: "Mostrar",
+    hide: "Ocultar",
+  },
   updater: {
     title: "Atualização disponível: v{version}",
     body: "Baixa e instala em uma etapa; o app reinicia sozinho ao terminar.",
@@ -5722,6 +6236,7 @@ const pt: Strings = {
     deactivating: "Restaurando...",
     active: "Turbo ativo",
     inactive: "Turbo inativo",
+    loadLabel: "CARGA CPU",
     stageReading: "Lendo o plano de energia",
     stageRaising: "Elevando o teto de boost",
     stageApplying: "Aplicando ao sistema",
@@ -6080,11 +6595,14 @@ const pt: Strings = {
       "Para trabalho, streaming e sessões longas: a ventoinha fica quase silenciosa e a placa roda bem mais fria, ao custo de alguns quadros.",
     modeStandard: "Padrão",
     modeStandardHint:
-      "O equilíbrio que o fabricante escolheu. O perfil certo para o uso diário, e aquele para o qual voltar se algo parecer estranho.",
+      "Um limite equilibrado um pouco abaixo do teto da placa: ventoinha mais silenciosa e temperaturas mais baixas, com um custo em frames de poucos pontos.",
     modeGaming: "Jogos",
     modeGamingHint:
       "Para sessões competitivas: watts no máximo e um teto de clock elevado, para manter os 1% mais baixos mais estáveis quando importa.",
     modeApplying: "Aplicando...",
+    profileStageReading: "A ler os limites da placa",
+    profileStageApplying: "A aplicar o limite",
+    profileStageSettling: "A aguardar a resposta das ventoinhas",
     profileApplied: "Limite definido para {watts} W.",
     profileNote:
       "Requer privilégios de administrador e é redefinido ao reiniciar. Isto não é uma curva de ventoinha: a NVIDIA não expõe controle direto de ventoinha no nvidia-smi, e as ferramentas que oferecem isso usam APIs privadas e não documentadas que este app não utiliza.",
@@ -6109,6 +6627,7 @@ const pt: Strings = {
       "Isto verifica apenas o próprio catálogo do Windows Update, não os drivers específicos listados acima: muitos fabricantes - de áudio e chipset integrados especialmente - nunca publicam suas atualizações ali, só no próprio site. O PC Tweaker não baixa pacotes de driver por conta própria: não existe uma API de fabricante para o que é atual para o seu dispositivo exato, e instalar o driver de vídeo errado é um dos poucos erros capazes de deixar você sem tela.",
     winUpdateOpened: "Windows Update aberto.",
     winUpdateSearching: "Buscando...",
+    winUpdateTakesAWhile: "Pode demorar um minuto: consulta o catálogo da Microsoft.",
     winUpdateInstall: "Baixar e instalar ({count})",
     winUpdateInstalling: "Baixando e instalando...",
     winUpdateNone:

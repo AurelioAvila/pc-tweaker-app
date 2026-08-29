@@ -5,14 +5,26 @@ fn main() {
     #[cfg(windows)]
     {
         let args: Vec<String> = std::env::args().collect();
-        if args.len() == 3
-            && (args[1] == "--elevated-apply"
-                || args[1] == "--elevated-apply-many"
-                || args[1] == "--elevated-rollback"
-                || args[1] == "--elevated-cleanup"
-                || args[1] == "--elevated-cleanup-sel"
-                || args[1] == "--elevated-startup")
-        {
+        // Must list every flag `run_elevated_headless` handles. Four of them
+        // (rollback-many, driverupdate, gpupower, diskopt) were missing: those
+        // relaunches fell straight through to `run()` and started a second,
+        // full GUI running as administrator instead of performing the action
+        // headlessly and exiting. Anything added there has to be added here.
+        const ELEVATED_ACTIONS: [&str; 12] = [
+            "--elevated-apply",
+            "--elevated-apply-many",
+            "--elevated-rollback",
+            "--elevated-rollback-many",
+            "--elevated-cleanup",
+            "--elevated-cleanup-sel",
+            "--elevated-startup",
+            "--elevated-driverupdate",
+            "--elevated-gpupower",
+            "--elevated-diskopt",
+            "--elevated-securedefrag",
+            "--elevated-memorypurge",
+        ];
+        if args.len() == 3 && ELEVATED_ACTIONS.contains(&args[1].as_str()) {
             // Relaunched via UAC to perform exactly one privileged action headlessly.
             tauri_app_lib::run_elevated_headless(&args[1], &args[2]);
         }

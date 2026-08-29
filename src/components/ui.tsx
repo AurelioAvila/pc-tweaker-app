@@ -66,8 +66,12 @@ export function Toggle({
       aria-pressed={checked}
       className="group flex shrink-0 items-center gap-2 outline-none disabled:cursor-wait"
     >
+      {/* 10px, matching the smallest label tier used by the badges and pills
+          elsewhere. At 11px the ON/OFF word sat a step above every other
+          micro-label on the row and pulled attention away from the tweak's
+          own name, which is the thing being read. */}
       <span
-        className={`text-[11px] font-semibold uppercase tracking-[0.08em] tabular-nums transition-colors ${
+        className={`text-[10px] font-semibold uppercase tracking-[0.08em] tabular-nums transition-colors ${
           checked ? "text-accent" : "text-[#6f7383]"
         }`}
       >

@@ -49,10 +49,16 @@ pub enum TechnicalChange {
     },
     /// An external program invocation.
     #[serde(rename_all = "camelCase")]
-    Command { program: &'static str, arguments: String },
+    Command {
+        program: &'static str,
+        arguments: String,
+    },
     /// A Windows service state change.
     #[serde(rename_all = "camelCase")]
-    Service { name: &'static str, action: &'static str },
+    Service {
+        name: &'static str,
+        action: &'static str,
+    },
 }
 
 fn reg(
@@ -78,7 +84,10 @@ fn sz(path: String, name: impl Into<String>, v: &str) -> TechnicalChange {
 }
 
 fn cmd(program: &'static str, arguments: impl Into<String>) -> TechnicalChange {
-    TechnicalChange::Command { program, arguments: arguments.into() }
+    TechnicalChange::Command {
+        program,
+        arguments: arguments.into(),
+    }
 }
 
 /// The disclosure for tweaks that are NOT a single registry value.
@@ -88,20 +97,32 @@ fn cmd(program: &'static str, arguments: impl Into<String>) -> TechnicalChange {
 /// disclose nothing rather than guessing.
 #[cfg(windows)]
 pub fn composite_changes(id: &str) -> Vec<TechnicalChange> {
-    use crate::{contextmenu, dns, game_priority, gaming, netlatency, power, privacy_extra, services, turbo};
+    use crate::{
+        contextmenu, dns, game_priority, gaming, netlatency, power, privacy_extra, services, turbo,
+    };
 
     if id == power::TWEAK_ID {
-        return vec![cmd("powercfg", format!("/setactive {}", power::HIGH_PERFORMANCE_GUID))];
+        return vec![cmd(
+            "powercfg",
+            format!("/setactive {}", power::HIGH_PERFORMANCE_GUID),
+        )];
     }
     if id == turbo::info().id {
         return vec![
-            dword(format!("{}\\{}", turbo::GAME_DVR_HIVE, turbo::GAME_DVR_PATH), turbo::GAME_DVR_NAME, 0),
+            dword(
+                format!("{}\\{}", turbo::GAME_DVR_HIVE, turbo::GAME_DVR_PATH),
+                turbo::GAME_DVR_NAME,
+                0,
+            ),
             dword(
                 format!("{}\\{}", turbo::PRIORITY_HIVE, turbo::PRIORITY_PATH),
                 turbo::PRIORITY_NAME,
                 turbo::PRIORITY_GAMING_VALUE,
             ),
-            cmd("powercfg", format!("/setactive {}", power::HIGH_PERFORMANCE_GUID)),
+            cmd(
+                "powercfg",
+                format!("/setactive {}", power::HIGH_PERFORMANCE_GUID),
+            ),
         ];
     }
     if id == dns::TWEAK_ID {
@@ -150,7 +171,10 @@ pub fn composite_changes(id: &str) -> Vec<TechnicalChange> {
             .iter()
             .map(|name| {
                 dword(
-                    format!("HKLM\\{}\\<active adapter GUID>", netlatency::INTERFACES_PATH),
+                    format!(
+                        "HKLM\\{}\\<active adapter GUID>",
+                        netlatency::INTERFACES_PATH
+                    ),
                     *name,
                     1,
                 )
@@ -171,8 +195,15 @@ pub fn composite_changes(id: &str) -> Vec<TechnicalChange> {
     }
     if id == contextmenu::info().id {
         return vec![
-            sz(format!("HKCU\\{}", contextmenu::INPROC_PATH), "(Default)", ""),
-            cmd("taskkill", "/f /im explorer.exe   (Explorer is restarted right after)"),
+            sz(
+                format!("HKCU\\{}", contextmenu::INPROC_PATH),
+                "(Default)",
+                "",
+            ),
+            cmd(
+                "taskkill",
+                "/f /im explorer.exe   (Explorer is restarted right after)",
+            ),
         ];
     }
     if id == services::WINDOWS_SEARCH_ID {
@@ -195,7 +226,11 @@ mod tests {
 
     #[test]
     fn dwords_render_the_way_regedit_shows_them() {
-        let TechnicalChange::Registry { sets_to, value_type, .. } = dword("HKLM\\X".into(), "Y", 38)
+        let TechnicalChange::Registry {
+            sets_to,
+            value_type,
+            ..
+        } = dword("HKLM\\X".into(), "Y", 38)
         else {
             panic!("expected a registry change");
         };
@@ -205,7 +240,11 @@ mod tests {
 
     #[test]
     fn strings_are_quoted_so_an_empty_value_is_visible() {
-        let TechnicalChange::Registry { sets_to, value_type, .. } = sz("HKCU\\X".into(), "Y", "")
+        let TechnicalChange::Registry {
+            sets_to,
+            value_type,
+            ..
+        } = sz("HKCU\\X".into(), "Y", "")
         else {
             panic!("expected a registry change");
         };

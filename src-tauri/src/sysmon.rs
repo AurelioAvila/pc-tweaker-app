@@ -31,6 +31,28 @@ pub struct SystemStats {
     pub uptime_secs: u64,
 }
 
+/// CPU load and memory, without the disk work `system_stats` does.
+///
+/// The overlay samples several times a second while a game is running, and
+/// enumerating every mounted volume on each of those ticks is exactly the kind
+/// of cost a HUD that advertises itself as low-overhead has no business
+/// paying. Returns `(cpu_pct, ram_used_mb, ram_total_mb)`; a poisoned lock
+/// reports zeroes rather than failing, because a dropped HUD frame is not
+/// worth an error path.
+pub fn cpu_and_memory(state: &tauri::State<'_, SysMonState>) -> (f32, u64, u64) {
+    let Ok(mut sys) = state.0.lock() else {
+        return (0.0, 0, 0);
+    };
+    sys.refresh_cpu_usage();
+    sys.refresh_memory();
+    const MB: u64 = 1024 * 1024;
+    (
+        sys.global_cpu_usage(),
+        sys.used_memory() / MB,
+        sys.total_memory() / MB,
+    )
+}
+
 #[tauri::command(async)]
 pub fn system_stats(state: tauri::State<'_, SysMonState>) -> Result<SystemStats, String> {
     use sysinfo::Disks;

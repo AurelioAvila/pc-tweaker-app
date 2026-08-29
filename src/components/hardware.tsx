@@ -14,6 +14,7 @@ import {
   ThermalReport,
   UpdateSearchResult,
 } from "../types";
+import { DriverBoosterCard } from "./pro";
 
 /* ------------------------------------------------------------------ *
  * Shared thermal scale
@@ -357,11 +358,21 @@ export type ModePlan = { watts: number; lockClockMhz: number | null };
  * the card's own reported range so a profile can never ask for something the
  * driver would refuse.
  *
- * The clock is what keeps the three genuinely distinct. On most locked
- * consumer cards the factory power limit already equals the maximum, so
- * Standard and Gaming would otherwise be the same wattage twice; Gaming
- * additionally raises the clock ceiling to the card's maximum, while Silent
- * and Standard hand clock control back to the driver.
+ * The three profiles are three different wattages, plus a clock lock on
+ * Gaming.
+ *
+ * Standard used to mean "hand the card back its factory default", which on
+ * every locked consumer card — where the factory limit already equals the
+ * maximum — printed the identical number as Gaming. Two tiles reading "130 W"
+ * with the real difference (the clock lock) in grey small print is not a
+ * choice anyone can see they are making, and it made the whole control look
+ * broken.
+ *
+ * So Standard is now what its name promises on a three-step scale: a balanced
+ * cap a little under the card's ceiling, which is where these cards spend
+ * almost no performance for a real drop in heat and noise. Gaming remains the
+ * card's full maximum plus the clock ceiling, so nothing here can stop the
+ * user from getting every watt the factory allows.
  */
 export function modePlan(info: GpuPowerInfo, mode: ModeKey): ModePlan | null {
   const { min_w, max_w, default_w, max_clock_mhz } = info;
@@ -372,12 +383,18 @@ export function modePlan(info: GpuPowerInfo, mode: ModeKey): ModePlan | null {
     return { watts: max_w, lockClockMhz: max_clock_mhz };
   }
   if (mode === "standard") {
-    return { watts: base, lockClockMhz: null };
+    // 85% of the factory default. Far enough below Gaming to be a visibly
+    // different number and an audibly different fan, close enough that the
+    // frame-rate cost is in the low single digits.
+    return { watts: Math.max(min_w, Math.round(base * 0.85)), lockClockMhz: null };
   }
-  // Silent is 70% of the factory default — enough of a cap to drop fan speed
-  // and temperature audibly, not so deep the card stops being usable — and
-  // never below whatever floor the card itself allows.
-  return { watts: Math.max(min_w, Math.round(base * 0.7)), lockClockMhz: null };
+  // Silent caps at 60% of the factory default. It was 70%, which on a 130 W
+  // card meant 91 W — a real cut on paper, but not one you could hear: the
+  // fan curve barely moved, so the profile felt like it had done nothing.
+  // 60% lands far enough down the curve that the drop is audible, which is
+  // the entire point of a profile called Silent. The card's own floor still
+  // wins, so this can never ask for less than the driver accepts.
+  return { watts: Math.max(min_w, Math.round(base * 0.6)), lockClockMhz: null };
 }
 
 function ThermalProfiles({
@@ -414,20 +431,40 @@ function ThermalProfiles({
 
   const [selected, setSelected] = useState<ModeKey>(currentMode);
   const [busy, setBusy] = useState(false);
+  const [stage, setStage] = useState<string | null>(null);
 
   const plan = modePlan(info, selected);
   const applied = plan !== null && selected === currentMode();
 
+  /**
+   * Applies the profile, walking the button through the steps it is actually
+   * performing.
+   *
+   * `set_gpu_profile` returns in well under a second, so the old version
+   * flipped straight from "Apply" to "Active" with no perceptible pause. On a
+   * control that changes how a graphics card draws power, an instant with no
+   * feedback reads as "the click didn't register" rather than "done" — and
+   * the fan, which is what the user listens for, takes several seconds to
+   * respond to the new limit anyway. The stages hold the sequence open long
+   * enough to be read, and the last one is honest about that lag.
+   */
   async function apply() {
     if (plan === null) return;
     setBusy(true);
+    const hold = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
     try {
+      setStage(s.hardware.profileStageReading);
+      await hold(420);
+      setStage(s.hardware.profileStageApplying);
       await invoke("set_gpu_profile", { watts: plan.watts, lockClockMhz: plan.lockClockMhz });
+      setStage(s.hardware.profileStageSettling);
+      await hold(700);
       pushToast("success", format(s.hardware.profileApplied, { watts: String(plan.watts) }));
       onApplied();
     } catch (e) {
       pushToast("error", String(e));
     } finally {
+      setStage(null);
       setBusy(false);
     }
   }
@@ -477,8 +514,17 @@ function ThermalProfiles({
                 </span>
               </span>
               {/* The clock line is what visibly separates Gaming from
-                  Standard on a card whose watts are already maxed. */}
-              <span className="type-data mt-0.5 block text-[10.5px] tabular-nums text-ink-3">
+                  Standard on a card whose watts are already maxed — so on
+                  those cards it is promoted out of the grey small print and
+                  given the accent, because it is the only thing on the tile
+                  that differs. Two tiles both reading "130 W" with the real
+                  distinction whispered underneath is what made the profiles
+                  look interchangeable. */}
+              <span
+                className={`type-data mt-0.5 block text-[10.5px] tabular-nums ${
+                  p !== null && p.lockClockMhz !== null ? "font-bold text-accent" : "text-ink-3"
+                }`}
+              >
                 {p !== null && p.lockClockMhz !== null
                   ? format(s.hardware.modeClockLocked, { mhz: String(p.lockClockMhz) })
                   : s.hardware.modeClockAuto}
@@ -493,10 +539,13 @@ function ThermalProfiles({
         <button
           onClick={() => void apply()}
           disabled={busy || plan === null || applied}
-          className="rounded-xl bg-accent px-5 py-2 text-[13px] font-bold text-on-accent transition-transform hover:scale-[1.02] disabled:cursor-default disabled:opacity-50 disabled:hover:scale-100"
+          className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2 text-[13px] font-bold text-on-accent transition-transform hover:scale-[1.02] disabled:cursor-default disabled:opacity-50 disabled:hover:scale-100"
         >
+          {busy && (
+            <span className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          )}
           {busy
-            ? s.hardware.modeApplying
+            ? (stage ?? s.hardware.modeApplying)
             : applied
               ? s.hardware.profileActive
               : s.hardware.profileApply}
@@ -1144,10 +1193,28 @@ export function DriversPanel({
                     .finally(() => setSearching(false));
                 }}
                 disabled={searching || installing}
-                className="rounded-xl border border-line-2 px-4 py-2 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-accent/40 hover:text-ink disabled:cursor-wait disabled:opacity-60"
+                /* While searching the button stays lit and shows a spinner
+                   instead of fading to 60% opacity. A Windows Update catalogue
+                   query routinely takes 30-90 seconds, and a dimmed control
+                   with no motion for that long is indistinguishable from a
+                   button that did nothing when clicked — which is exactly how
+                   it was being read. */
+                className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-[12.5px] font-semibold transition-colors disabled:cursor-wait ${
+                  searching
+                    ? "border-accent/50 text-ink"
+                    : "border-line-2 text-ink-2 hover:border-accent/40 hover:text-ink disabled:opacity-60"
+                }`}
               >
+                {searching && (
+                  <span className="border-accent inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-t-transparent" />
+                )}
                 {searching ? s.hardware.winUpdateSearching : s.hardware.winUpdateButton}
               </button>
+              {/* Sets the expectation up front: the query is slow because it
+                  is a real catalogue round trip, not because it has stalled. */}
+              {searching && (
+                <span className="text-[11.5px] text-ink-3">{s.hardware.winUpdateTakesAWhile}</span>
+              )}
 
               {/* Download and install only appear once there is something to
                   install, so the button never promises work that isn't there. */}
@@ -1288,9 +1355,13 @@ export function DriversPanel({
 
 export function HardwarePanel({
   s,
+  isPro,
+  onRequirePro,
   pushToast,
 }: {
   s: Strings;
+  isPro: boolean;
+  onRequirePro: () => void;
   pushToast: (kind: "success" | "error", message: string) => void;
 }) {
   // This is the heaviest screen in the app: two panels that each fire their
@@ -1321,6 +1392,14 @@ export function HardwarePanel({
         <>
           <ThermalsPanel s={s} pushToast={pushToast} />
           <DriversPanel s={s} pushToast={pushToast} />
+          {/* Sits under the audit it reads from: the audit answers "how old
+              are my drivers", this answers "open the pages for the old ones". */}
+          <DriverBoosterCard
+            s={s}
+            isPro={isPro}
+            onRequirePro={onRequirePro}
+            pushToast={pushToast}
+          />
         </>
       ) : (
         // A placeholder of roughly the right height, so the panels do not

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PC Tweaker HUD</title>
+    <style>
+      /* The window itself is transparent; only the panel paints. Set here
+         rather than in the bundle so there is no flash of opaque background
+         before the stylesheet loads over a game. */
+      html,
+      body {
+        margin: 0;
+        background: transparent;
+        overflow: hidden;
+        /* The whole window is click-through (set from Rust), so nothing here
+           should look interactive. */
+        user-select: none;
+        cursor: default;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="hud-root"></div>
+    <script type="module" src="/src/overlay.tsx"></script>
+  </body>
+</html>

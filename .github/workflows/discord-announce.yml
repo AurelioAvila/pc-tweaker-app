@@ -54,8 +54,26 @@ jobs:
             exit 0
           fi
           NOTES=$(gh release view "$TAG" --json body --jq .body --repo "${{ github.repository }}")
+
+          # Discord rejects a `content` over 2000 characters outright, so the
+          # notes are trimmed to a budget that leaves room for the heading, the
+          # link and the "read the rest" line. Cut at a line boundary: stopping
+          # mid-sentence reads as a message that failed to send rather than one
+          # that was deliberately shortened.
+          BUDGET=1500
+          if [ "${#NOTES}" -gt "$BUDGET" ]; then
+            NOTES="$(printf '%s' "$NOTES" | head -c "$BUDGET" | sed '$d')"
+            NOTES="$NOTES
+
+          ...full release notes on the page below."
+          fi
+
           CONTENT=$(jq -n --arg name "$NAME" --arg notes "$NOTES" --arg url "$URL" \
             '"@everyone **" + $name + "** is out!\n\n" + $notes + "\n\n" + $url')
           PAYLOAD=$(jq -n --argjson content "$CONTENT" \
             '{content: $content, allowed_mentions: {parse: ["everyone"]}}')
-          curl -sf -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK"
+
+          # -f turns Discord's rejection into a non-zero exit; without --show-error
+          # the reason never reaches the log, which is how the 2000-character
+          # limit went unnoticed until the first long release.
+          curl -sf --show-error -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK"

@@ -95,8 +95,8 @@ const silent = modePlan(info, "silent");
 const standard = modePlan(info, "standard");
 const gaming = modePlan(info, "gaming");
 
-check("silent caps at 70% of default", silent.watts, 91);
-check("standard restores the factory default", standard.watts, 130);
+check("silent caps at 60% of default", silent.watts, 78);
+check("standard caps just under the ceiling", standard.watts, 111);
 check("gaming asks for the card's own maximum", gaming.watts, 130);
 
 check("silent leaves the clock to the driver", silent.lockClockMhz, null);
@@ -109,7 +109,7 @@ check(
   false,
 );
 
-// A card whose floor is above 70% of default must not be sent below its floor.
+// A card whose floor is above 60% of default must not be sent below its floor.
 const narrow = { ...info, min_w: 120 };
 check("silent never dips under the card's floor", modePlan(narrow, "silent").watts, 120);
 

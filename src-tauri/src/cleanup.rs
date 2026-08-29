@@ -381,9 +381,19 @@ const PROTECTED_DIR_NAMES: &[&str] = &[
     "program files",
     "program files (x86)",
     "programdata",
+    // The app's own WebView2 profile. Everything the app remembers between
+    // launches — the signed-in session, the saved profile photo, the driver
+    // audit — lives in a LevelDB under here, as a pile of `.log` and `.ldb`
+    // files. Those are exactly the shape the duplicate scanner is built to
+    // find, so a user who pointed a duplicate or large-file scan at their
+    // profile folder could recycle this app's own storage engine and wipe
+    // their settings with the cleaner they were using to tidy up. Nothing in
+    // here is ever junk worth reclaiming.
+    "ebwebview",
+    "com.aurel.pc-tweaker-app",
 ];
 
-fn touches_protected_dir(path: &Path) -> bool {
+pub(crate) fn touches_protected_dir(path: &Path) -> bool {
     path.components().any(|c| {
         c.as_os_str()
             .to_str()

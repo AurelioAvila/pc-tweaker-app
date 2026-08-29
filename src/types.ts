@@ -247,6 +247,9 @@ export type StartupEntry = {
   scope: string;
   enabled: boolean;
   requires_admin: boolean;
+  /** The target executable is gone from disk — an entry an uninstaller left
+   *  behind. See the field's doc comment in src-tauri/src/startup.rs. */
+  orphaned: boolean;
 };
 
 export type TweakProfile = {
@@ -311,4 +314,57 @@ export type ProcessEntry = {
   /** `null` when the process could not be opened — usually because it runs
    *  with higher privileges than this app. */
   affinity: number | null;
+};
+
+/* ---------------------------------------------------------------- *
+ * Pro: Secure Defrag, Zero-Trace, gaming HUD
+ * ---------------------------------------------------------------- */
+
+export type DefragPhase = "analyze" | "optimize";
+
+export type DefragProgress = {
+  phase: DefragPhase;
+  drive: string;
+  /** null while defrag is in a stage it reports no percentage for. */
+  percent: number | null;
+  /** Windows' own wording, in the system language — see securedefrag.rs. */
+  line: string;
+  done: boolean;
+};
+
+export type DefragOutcome = {
+  drive: string;
+  media_type: string;
+  /** "defrag" on a confirmed hard disk, "retrim" otherwise. */
+  operation: string;
+  summary: string;
+  /** What `defrag /A` reported before anything changed — see securedefrag.rs
+   *  for why this exists: on an SSD it is the substance of the run. */
+  analysis: string[];
+};
+
+export type PurgeResult = {
+  free_before_mb: number;
+  free_after_mb: number;
+};
+
+export type ShredResult = {
+  shredded_count: number;
+  skipped_count: number;
+  bytes_overwritten: number;
+  touched_ssd: boolean;
+};
+
+export type Bottleneck = "cpu" | "gpu" | "balanced" | "idle";
+
+export type HudSnapshot = {
+  cpu_pct: number;
+  ram_used_mb: number;
+  ram_total_mb: number;
+  gpu_pct: number | null;
+  gpu_temp_c: number | null;
+  vram_used_mb: number | null;
+  vram_total_mb: number | null;
+  bottleneck: Bottleneck;
+  foreground: { name: string; priority: string } | null;
 };

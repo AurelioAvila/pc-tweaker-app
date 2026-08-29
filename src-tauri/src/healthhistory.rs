@@ -167,7 +167,11 @@ pub fn compare(previous: &HealthSnapshot, current: &HealthSnapshot) -> HealthCom
         });
     }
 
-    if previous.categories.iter().any(|p| !current.categories.iter().any(|c| c.id == p.id)) {
+    if previous
+        .categories
+        .iter()
+        .any(|p| !current.categories.iter().any(|c| c.id == p.id))
+    {
         structural_change = true;
     }
 
@@ -237,20 +241,41 @@ mod tests {
     use super::*;
 
     fn factor(id: &str, earned: u32, evidence: &str) -> SnapshotFactor {
-        SnapshotFactor { id: id.into(), earned, max: 100, evidence: evidence.into() }
+        SnapshotFactor {
+            id: id.into(),
+            earned,
+            max: 100,
+            evidence: evidence.into(),
+        }
     }
 
     fn snap(ts: u64, overall: u32, cats: Vec<SnapshotCategory>) -> HealthSnapshot {
-        HealthSnapshot { ts, overall, categories: cats }
+        HealthSnapshot {
+            ts,
+            overall,
+            categories: cats,
+        }
     }
 
     fn cat(id: &str, score: u32, factors: Vec<SnapshotFactor>) -> SnapshotCategory {
-        SnapshotCategory { id: id.into(), score, factors }
+        SnapshotCategory {
+            id: id.into(),
+            score,
+            factors,
+        }
     }
 
     #[test]
     fn identical_snapshots_produce_no_causes() {
-        let a = snap(100, 80, vec![cat("startup", 70, vec![factor("start_count", 70, "7 apps")])]);
+        let a = snap(
+            100,
+            80,
+            vec![cat(
+                "startup",
+                70,
+                vec![factor("start_count", 70, "7 apps")],
+            )],
+        );
         let b = snap(200, 80, a.categories.clone());
         let c = compare(&a, &b);
         assert_eq!(c.delta, 0);
@@ -260,8 +285,24 @@ mod tests {
 
     #[test]
     fn a_moved_category_names_the_factor_and_quotes_both_sides() {
-        let before = snap(100, 80, vec![cat("startup", 100, vec![factor("start_count", 100, "4 apps start with Windows")])]);
-        let after = snap(200, 76, vec![cat("startup", 70, vec![factor("start_count", 70, "7 apps start with Windows")])]);
+        let before = snap(
+            100,
+            80,
+            vec![cat(
+                "startup",
+                100,
+                vec![factor("start_count", 100, "4 apps start with Windows")],
+            )],
+        );
+        let after = snap(
+            200,
+            76,
+            vec![cat(
+                "startup",
+                70,
+                vec![factor("start_count", 70, "7 apps start with Windows")],
+            )],
+        );
         let c = compare(&before, &after);
         assert_eq!(c.delta, -4);
         assert_eq!(c.categories.len(), 1);
@@ -277,8 +318,24 @@ mod tests {
     fn evidence_drift_without_a_point_move_is_not_a_cause() {
         // Memory usage reading differently is not an explanation unless it
         // crossed a scoring threshold.
-        let before = snap(100, 80, vec![cat("memory", 65, vec![factor("mem_pressure", 25, "58% in use right now")])]);
-        let after = snap(200, 80, vec![cat("memory", 65, vec![factor("mem_pressure", 25, "61% in use right now")])]);
+        let before = snap(
+            100,
+            80,
+            vec![cat(
+                "memory",
+                65,
+                vec![factor("mem_pressure", 25, "58% in use right now")],
+            )],
+        );
+        let after = snap(
+            200,
+            80,
+            vec![cat(
+                "memory",
+                65,
+                vec![factor("mem_pressure", 25, "61% in use right now")],
+            )],
+        );
         let c = compare(&before, &after);
         assert!(c.categories.is_empty(), "same score must yield no causes");
     }
@@ -290,7 +347,11 @@ mod tests {
             50,
             vec![
                 cat("startup", 100, vec![factor("start_count", 100, "4 apps")]),
-                cat("privacy", 50, vec![factor("priv_telemetry", 50, "not applied")]),
+                cat(
+                    "privacy",
+                    50,
+                    vec![factor("priv_telemetry", 50, "not applied")],
+                ),
             ],
         );
         let after = snap(
@@ -298,7 +359,11 @@ mod tests {
             60,
             vec![
                 cat("startup", 90, vec![factor("start_count", 90, "5 apps")]),
-                cat("privacy", 100, vec![factor("priv_telemetry", 100, "applied")]),
+                cat(
+                    "privacy",
+                    100,
+                    vec![factor("priv_telemetry", 100, "applied")],
+                ),
             ],
         );
         let c = compare(&before, &after);
@@ -311,7 +376,15 @@ mod tests {
 
     #[test]
     fn a_category_added_by_an_update_is_flagged_not_blamed() {
-        let before = snap(100, 80, vec![cat("startup", 80, vec![factor("start_count", 80, "5 apps")])]);
+        let before = snap(
+            100,
+            80,
+            vec![cat(
+                "startup",
+                80,
+                vec![factor("start_count", 80, "5 apps")],
+            )],
+        );
         let after = snap(
             200,
             85,
@@ -322,12 +395,23 @@ mod tests {
         );
         let c = compare(&before, &after);
         assert!(c.structural_change, "a new category must be disclosed");
-        assert!(c.categories.is_empty(), "a category with no history is not a cause");
+        assert!(
+            c.categories.is_empty(),
+            "a category with no history is not a cause"
+        );
     }
 
     #[test]
     fn snapshots_round_trip_through_json() {
-        let a = snap(100, 80, vec![cat("startup", 70, vec![factor("start_count", 70, "7 apps")])]);
+        let a = snap(
+            100,
+            80,
+            vec![cat(
+                "startup",
+                70,
+                vec![factor("start_count", 70, "7 apps")],
+            )],
+        );
         let text = serde_json::to_string(&a).unwrap();
         let back: HealthSnapshot = serde_json::from_str(&text).unwrap();
         assert_eq!(a, back);

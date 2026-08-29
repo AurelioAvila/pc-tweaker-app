@@ -74,7 +74,8 @@ fn disk_bench() -> Result<(u64, u64), String> {
         state ^= state >> 7;
         state ^= state << 17;
         let offset = (state % (SIZE as u64 - 4096)) & !4095;
-        file.seek(SeekFrom::Start(offset)).map_err(|e| e.to_string())?;
+        file.seek(SeekFrom::Start(offset))
+            .map_err(|e| e.to_string())?;
         file.read_exact(&mut page).map_err(|e| e.to_string())?;
         std::hint::black_box(&page);
     }

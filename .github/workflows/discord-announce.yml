@@ -16,6 +16,12 @@ on:
         description: "Release tag to announce (defaults to latest)"
         required: false
 
+# Without this, the job inherits whatever the repository default happens to
+# be, which on many repos is write access to everything. It only ever reads
+# release metadata, so that is all it gets.
+permissions:
+  contents: read
+
 jobs:
   announce:
     runs-on: ubuntu-latest

@@ -94,3 +94,14 @@ latest.json
 
 # Social/video assets live outside version control (some exceed GitHub's 100MB limit)
 marketing/
+
+# Store packaging and its output: the MSIX is rebuilt from the release binary
+# every time, and each one is several megabytes of build product.
+msix-build/
+*.msix
+
+# Store listing screenshots, recaptured whenever the UI changes.
+store-screenshots/
+
+# winget manifests: the copy that matters is the one in microsoft/winget-pkgs.
+manifests/

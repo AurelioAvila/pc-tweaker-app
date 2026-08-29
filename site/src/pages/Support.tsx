@@ -138,7 +138,7 @@ function SupportForm() {
           id="sp-system"
           value={systemInfo}
           onChange={(e) => setSystemInfo(e.target.value)}
-          placeholder="Windows 11 23H2 · RTX 4060 · PC Tweaker 1.3.2"
+          placeholder="Windows 11 23H2 · RTX 4060 · PC Tweaker 1.4.0"
           maxLength={500}
         />
       </Field>

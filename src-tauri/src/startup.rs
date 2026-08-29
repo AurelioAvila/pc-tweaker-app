@@ -8,6 +8,99 @@ pub struct StartupEntry {
     pub scope: String,
     pub enabled: bool,
     pub requires_admin: bool,
+    /// True when the command points at an executable that is no longer on
+    /// disk. Uninstallers routinely leave their Run value behind, so the list
+    /// fills up with entries for software the user removed months ago and
+    /// cannot understand why they are still listed.
+    ///
+    /// The UI drops these rows. That is only safe because the detection fails
+    /// open: a command shape the parser cannot read confidently is reported as
+    /// present, so the worst case is a dead entry still being listed rather
+    /// than a real, running startup item silently vanishing from a screen
+    /// whose whole job is to tell you what runs at boot.
+    pub orphaned: bool,
+}
+
+/// Pulls the executable out of a Run command line, or `None` when the shape
+/// isn't one we can read confidently.
+///
+/// Run values come in several forms: a quoted path with arguments
+/// (`"C:\...\app.exe" --silent`), an unquoted path with spaces, a bare
+/// `rundll32.exe ...`, and paths built from environment variables. Anything
+/// this cannot resolve to a concrete path returns `None`, which callers treat
+/// as "present" — the parser is only ever allowed to make a row *more*
+/// visible, never to hide one.
+pub(crate) fn extract_exe_path(command: &str) -> Option<std::path::PathBuf> {
+    let command = command.trim();
+    if command.is_empty() {
+        return None;
+    }
+
+    let candidate = if let Some(rest) = command.strip_prefix('"') {
+        // Quoted: everything up to the closing quote is the path, verbatim.
+        rest.split('"').next()?.to_string()
+    } else if let Some(idx) = command.to_lowercase().find(".exe") {
+        // Unquoted: take through the first ".exe", which handles both
+        // `C:\Program Files\x\app.exe -flag` and a bare `app.exe`.
+        command[..idx + 4].to_string()
+    } else {
+        return None;
+    };
+
+    let expanded = expand_env_vars(&candidate);
+    if expanded.trim().is_empty() {
+        return None;
+    }
+    let path = std::path::PathBuf::from(expanded.trim());
+
+    // A bare name like `rundll32.exe` resolves against PATH at boot, not
+    // against the current directory. Checking it as a relative path would
+    // wrongly call it missing, so leave it alone.
+    if path
+        .parent()
+        .map(|p| p.as_os_str().is_empty())
+        .unwrap_or(true)
+    {
+        return None;
+    }
+    Some(path)
+}
+
+/// Expands `%VAR%` references. An unset variable makes the whole expansion
+/// unusable, which surfaces as `None` from the caller rather than as a
+/// half-substituted path that would never exist.
+fn expand_env_vars(input: &str) -> String {
+    let mut out = String::with_capacity(input.len());
+    let mut rest = input;
+    while let Some(start) = rest.find('%') {
+        let after = &rest[start + 1..];
+        let Some(end) = after.find('%') else {
+            out.push_str(rest);
+            return out;
+        };
+        let name = &after[..end];
+        let Ok(value) = std::env::var(name) else {
+            // Unknown variable: emit something that cannot exist so the
+            // caller's `exists()` check fails closed into "unparseable".
+            return String::new();
+        };
+        out.push_str(&rest[..start]);
+        out.push_str(&value);
+        rest = &after[end + 1..];
+    }
+    out.push_str(rest);
+    out
+}
+
+/// Whether the entry points at software that is no longer installed.
+///
+/// Fails open on purpose: a command we cannot parse, or one naming an
+/// executable resolved through PATH, is reported as present.
+pub(crate) fn command_is_orphaned(command: &str) -> bool {
+    match extract_exe_path(command) {
+        Some(path) => !path.exists(),
+        None => false,
+    }
 }
 
 const RUN_PATH: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
@@ -97,6 +190,7 @@ mod imp {
             }
             out.push(StartupEntry {
                 enabled: is_enabled(scope, &name),
+                orphaned: super::command_is_orphaned(&command),
                 name,
                 command,
                 scope: scope.to_string(),
@@ -182,6 +276,70 @@ pub fn set_startup_enabled(_scope: String, _name: String, _enabled: bool) -> Res
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The shapes actually found in a real `Run` key. Getting any of these
+    /// wrong means either hiding software that genuinely starts at boot, or
+    /// leaving dead entries on screen — the two failure modes this parser
+    /// exists to sit between.
+    #[test]
+    fn the_executable_is_extracted_from_every_command_shape() {
+        let quoted = extract_exe_path(r#""C:\Program Files\App\app.exe" --silent"#);
+        assert_eq!(
+            quoted,
+            Some(std::path::PathBuf::from(r"C:\Program Files\App\app.exe"))
+        );
+
+        let unquoted_with_args = extract_exe_path(r"C:\Tools\thing.exe /background");
+        assert_eq!(
+            unquoted_with_args,
+            Some(std::path::PathBuf::from(r"C:\Tools\thing.exe"))
+        );
+
+        // Spaces without quotes: taking through ".exe" is what makes this work.
+        let unquoted_spaces = extract_exe_path(r"C:\Program Files\My App\run.exe -q");
+        assert_eq!(
+            unquoted_spaces,
+            Some(std::path::PathBuf::from(r"C:\Program Files\My App\run.exe"))
+        );
+    }
+
+    /// Everything here must return `None` so `command_is_orphaned` reports the
+    /// entry as present. A false "no longer installed" on a running program is
+    /// far worse than leaving a dead row visible.
+    #[test]
+    fn unreadable_or_path_resolved_commands_are_never_called_orphaned() {
+        for command in [
+            "rundll32.exe shell32.dll,Control_RunDLL", // resolved via PATH
+            "",                                        // empty value
+            "   ",                                     // whitespace only
+            "some nonsense with no executable at all", // no .exe anywhere
+            "%NONEXISTENT_VAR_XYZ%\\app.exe",          // unset variable
+        ] {
+            assert!(
+                !command_is_orphaned(command),
+                "command was wrongly reported as orphaned: {:?}",
+                command
+            );
+        }
+    }
+
+    #[test]
+    fn a_path_that_does_not_exist_is_reported_as_orphaned() {
+        assert!(command_is_orphaned(
+            r#""C:\Program Files\Definitely Not Installed\ghost.exe" --start"#
+        ));
+    }
+
+    /// The running test binary is a real file, so it stands in for "installed
+    /// software" without depending on anything being present on the machine.
+    #[test]
+    fn a_path_that_exists_is_not_reported_as_orphaned() {
+        let me = std::env::current_exe().expect("current_exe failed");
+        assert!(!command_is_orphaned(&format!(
+            "\"{}\" --flag",
+            me.display()
+        )));
+    }
 
     /// These exact byte patterns were read back from this machine's real
     /// registry: Discord enabled as `02 00 ..`, FACEIT/Steam/RiotClient

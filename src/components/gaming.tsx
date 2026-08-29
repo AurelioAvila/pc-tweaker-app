@@ -93,12 +93,17 @@ export function GameSessionsPanel({
           role="switch"
           aria-checked={enabled}
           onClick={toggleEnabled}
-          className={`relative inline-flex h-8 w-14 shrink-0 appearance-none items-center rounded-full border-0 p-0
+          /* Sized to match the Toggle every other row in the app uses
+             (h-5 w-9). At h-8 w-14 this one switch was nearly twice the area
+             of every other control on screen, which made the Game Sessions
+             card read as a different, louder component than the panels around
+             it rather than as one more setting. */
+          className={`relative inline-flex h-5 w-9 shrink-0 appearance-none items-center rounded-full border-0 p-0
             outline-none transition-colors duration-300 ease-out ${enabled ? "" : "bg-surface-hover"}`}
           style={enabled ? { backgroundColor: "var(--app-accent)" } : undefined}
         >
           <span
-            className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ease-out ${enabled ? "translate-x-6" : "translate-x-0"}`}
+            className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-md transition-transform duration-300 ease-out ${enabled ? "translate-x-4" : "translate-x-0"}`}
           />
         </button>
       </div>
@@ -172,9 +177,13 @@ export function TurboGauge({ value, engaged }: { value: number; engaged: boolean
         cx={GAUGE_C}
         cy={GAUGE_C}
         r={GAUGE_R + 8}
-        stroke="rgba(255,255,255,0.06)"
-        strokeWidth="1"
-        fill="rgba(255,255,255,0.02)"
+        stroke={engaged ? "rgba(251,146,60,0.55)" : "rgba(255,255,255,0.06)"}
+        strokeWidth={engaged ? 1.5 : 1}
+        fill={engaged ? "rgba(251,146,60,0.05)" : "rgba(255,255,255,0.02)"}
+        style={{
+          filter: engaged ? "drop-shadow(0 0 10px rgba(251,146,60,0.35))" : "none",
+          transition: "all 500ms ease-out",
+        }}
       />
 
       {/* Track */}
@@ -185,14 +194,34 @@ export function TurboGauge({ value, engaged }: { value: number; engaged: boolean
         fill="none"
         strokeLinecap="round"
       />
-      {/* Redline zone, always visible so the goal of the sweep is legible */}
+      {/* Redline zone. Dim while the ceiling is capped, lit once boost mode is
+          Aggressive and the processor floor is pinned — this band is precisely
+          what the tweak unlocks, so lighting it is a statement about the
+          setting, not about the current load. The needle is left alone: it
+          goes on reporting real utilisation. */}
       <path
         d={arcPath(REDLINE, 1, GAUGE_R)}
-        stroke="rgba(239,68,68,0.35)"
-        strokeWidth="7"
+        stroke={engaged ? "rgba(251,146,60,0.95)" : "rgba(239,68,68,0.35)"}
+        strokeWidth={engaged ? 8.5 : 7}
         fill="none"
         strokeLinecap="round"
+        style={{
+          filter: engaged ? "drop-shadow(0 0 7px rgba(251,146,60,0.8))" : "none",
+          transition: "all 500ms ease-out",
+        }}
       />
+      {/* Outer headroom ring, drawn only when engaged: the span of the dial
+          the processor is now permitted to reach and hold. */}
+      {engaged && (
+        <path
+          d={arcPath(0, 1, GAUGE_R + 8)}
+          stroke="url(#turbo-fill)"
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
+          opacity="0.5"
+        />
+      )}
 
       {/* Tick marks */}
       {Array.from({ length: 21 }, (_, i) => {
@@ -498,7 +527,7 @@ export function TurboBoostPanel({
         <TurboGauge value={needle} engaged={applied || busy} />
         {/* Percentage sits inside the gauge's open bottom, where a rev counter
             puts its gear readout. */}
-        <span className="pointer-events-none absolute bottom-7 flex flex-col items-center">
+        <span className="pointer-events-none absolute bottom-6 flex flex-col items-center">
           <span
             className={`font-black tabular-nums leading-none transition-colors ${
               applied || busy ? "text-orange-300" : "text-ink-3"
@@ -507,6 +536,13 @@ export function TurboBoostPanel({
           >
             {Math.round(needle * 100)}
             <span className="text-[13px]">%</span>
+          </span>
+          {/* Labelled, because an unlabelled figure in the middle of a dial
+              called Turbo Boost reads as the feature's own output — and this
+              one is live CPU load, which the tweak does not change and should
+              not. Naming it is what stops an idle 2% looking like a failure. */}
+          <span className="type-label mt-0.5 text-[8.5px] tracking-[0.16em] text-ink-3">
+            {s.turboBoost.loadLabel}
           </span>
         </span>
       </div>
@@ -534,11 +570,13 @@ export function TurboBoostPanel({
       <button
         onClick={toggleTurbo}
         disabled={busy}
-        className={`mt-4 flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-bold transition-all disabled:cursor-wait ${
-          applied
-            ? "bg-surface-2 text-ink-2 hover:bg-surface-hover"
-            : "bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 shadow-lg shadow-orange-500/25 hover:scale-[1.03]"
-        }`}
+        /* Both states carry the same gold treatment. STOP used to fall back to
+           a flat grey surface, which read as a disabled control rather than
+           the live "this is running, press to end it" action it actually is —
+           the one moment the panel most needs to look engaged was the one
+           moment it looked switched off. The label and the gauge already
+           carry the state, so the button does not need to dim to say it. */
+        className="mt-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-2.5 text-sm font-bold text-slate-900 shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.03] disabled:cursor-wait disabled:hover:scale-100"
       >
         <BoltIcon className={`h-4 w-4 ${busy ? "animate-pulse" : ""}`} />
         {busy ? "···" : applied ? s.turboBoost.stopLabel : s.turboBoost.startLabel}

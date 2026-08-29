@@ -26,7 +26,7 @@ pub fn turbo_boost_info() -> GamingInfo {
     GamingInfo {
         id: TURBO_BOOST_ID,
         name: "CPU Turbo Boost",
-        description: "Sets the processor performance boost mode to \"Aggressive\", to get the most out of Turbo Boost/Turbo Core while gaming (requires administrator rights).",
+        description: "Sets the processor performance boost mode to \"Aggressive\" and raises the minimum processor state to 100% while plugged in, so the cores stop dropping to their lowest state between bursts of work. Both are restored exactly as found on rollback (requires administrator rights).",
         requires_admin: true,
         requires_pro: false,
     }
@@ -48,7 +48,8 @@ pub(crate) const MOUSE_VALUES: [&str; 3] = ["MouseSpeed", "MouseThreshold1", "Mo
 
 const KEYBOARD_HIVE: &str = "HKCU";
 pub(crate) const KEYBOARD_PATH: &str = r"Control Panel\Keyboard";
-pub(crate) const KEYBOARD_TARGET: [(&str, &str); 2] = [("KeyboardDelay", "0"), ("KeyboardSpeed", "31")];
+pub(crate) const KEYBOARD_TARGET: [(&str, &str); 2] =
+    [("KeyboardDelay", "0"), ("KeyboardSpeed", "31")];
 
 #[cfg(windows)]
 pub fn apply_input_lag(store: &RollbackStore) -> Result<(), String> {
@@ -164,6 +165,18 @@ pub fn rollback_keyboard_delay(_store: &RollbackStore) -> Result<(), String> {
 /// display language, unlike the aliases and labels `powercfg` prints.
 pub const SUB_PROCESSOR_GUID: &str = "54533251-82be-4824-96c1-47b60b740d00";
 pub const PERF_BOOST_MODE_GUID: &str = "be337238-0d82-4146-a960-4f3749d470c7";
+/// "Minimum processor state" (PROCTHROTTLEMIN).
+///
+/// Boost mode alone turned out to be close to unobservable on modern CPUs:
+/// on anything with CPPC the processor picks its own P-states, so telling
+/// Windows to allow aggressive boost changes a ceiling the CPU was already
+/// free to reach, and a before/after benchmark came back inside its own
+/// noise. Raising the *floor* is the half that actually moves: it stops the
+/// cores dropping to their lowest state between bursts of work, which is
+/// where the stutter and the slow first frame after a pause come from.
+pub const PROC_THROTTLE_MIN_GUID: &str = "893dee8e-2bef-41e0-89c6-b55d0929964c";
+/// Percent. 100 pins the floor to the ceiling for as long as the tweak is on.
+pub(crate) const THROTTLE_MIN_MAX: &str = "100";
 
 /// Where Windows *defines* a power setting, independent of any power plan.
 /// Presence here is the honest test for "does this machine support it".
@@ -206,11 +219,21 @@ fn boost_is_supported() -> bool {
 /// no override and is therefore running on the setting's default.
 #[cfg(windows)]
 fn read_boost_indexes(scheme_guid: &str) -> (Option<u32>, Option<u32>) {
+    read_setting_indexes(scheme_guid, PERF_BOOST_MODE_GUID)
+}
+
+/// The same read for any setting in the processor subgroup, so a second
+/// setting doesn't need a second copy of this logic.
+#[cfg(windows)]
+fn read_setting_indexes(scheme_guid: &str, setting_guid: &str) -> (Option<u32>, Option<u32>) {
     use winreg::enums::HKEY_LOCAL_MACHINE;
     use winreg::RegKey;
 
-    let Ok(key) = RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey(boost_override_path(scheme_guid))
-    else {
+    let path = format!(
+        r"SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\{}\{}\{}",
+        scheme_guid, SUB_PROCESSOR_GUID, setting_guid
+    );
+    let Ok(key) = RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey(path) else {
         return (None, None);
     };
     (
@@ -234,6 +257,7 @@ pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
 
     let scheme = crate::power::active_scheme_guid()?;
     let (ac_index, dc_index) = read_boost_indexes(&scheme);
+    let (min_ac, min_dc) = read_setting_indexes(&scheme, PROC_THROTTLE_MIN_GUID);
 
     // Writing works even while the setting is hidden, so there is no need to
     // unhide it (which would leave a visible change in Windows' own power UI
@@ -252,17 +276,40 @@ pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
         PERF_BOOST_MODE_GUID,
         BOOST_AGGRESSIVE,
     ])?;
+    // The floor. This is the half the user can actually feel — see the
+    // PROC_THROTTLE_MIN_GUID doc comment.
+    crate::power::run_powercfg(&[
+        "/setacvalueindex",
+        "scheme_current",
+        SUB_PROCESSOR_GUID,
+        PROC_THROTTLE_MIN_GUID,
+        THROTTLE_MIN_MAX,
+    ])?;
+    // AC only. On a laptop this setting on battery would hold every core at
+    // its maximum while unplugged, which is a battery-life decision the user
+    // did not make by pressing a button labelled Turbo Boost.
     crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
 
     store
         .save_entry(
             TURBO_BOOST_ID,
-            SnapshotEntry::PowerSettingIndex {
-                scheme_guid: scheme,
-                subgroup_guid: SUB_PROCESSOR_GUID.to_string(),
-                setting_guid: PERF_BOOST_MODE_GUID.to_string(),
-                ac_index,
-                dc_index,
+            SnapshotEntry::Composite {
+                entries: vec![
+                    SnapshotEntry::PowerSettingIndex {
+                        scheme_guid: scheme.clone(),
+                        subgroup_guid: SUB_PROCESSOR_GUID.to_string(),
+                        setting_guid: PERF_BOOST_MODE_GUID.to_string(),
+                        ac_index,
+                        dc_index,
+                    },
+                    SnapshotEntry::PowerSettingIndex {
+                        scheme_guid: scheme,
+                        subgroup_guid: SUB_PROCESSOR_GUID.to_string(),
+                        setting_guid: PROC_THROTTLE_MIN_GUID.to_string(),
+                        ac_index: min_ac,
+                        dc_index: min_dc,
+                    },
+                ],
             },
         )
         .map_err(|e| e.to_string())
@@ -275,6 +322,43 @@ pub fn rollback_turbo_boost(store: &RollbackStore) -> Result<(), String> {
     })?;
 
     match entry {
+        // Current shape: boost mode and the processor floor, restored
+        // together. Every entry is attempted even if an earlier one fails, so
+        // one setting refusing to restore cannot strand the other in its
+        // tweaked state; the first error is reported once both have been
+        // tried.
+        SnapshotEntry::Composite { entries } => {
+            let mut first_error: Option<String> = None;
+            for entry in entries {
+                let result = match entry {
+                    SnapshotEntry::PowerSettingIndex {
+                        scheme_guid,
+                        subgroup_guid,
+                        setting_guid,
+                        ac_index,
+                        dc_index,
+                    } => restore_power_index(
+                        &scheme_guid,
+                        &subgroup_guid,
+                        &setting_guid,
+                        ac_index,
+                        dc_index,
+                    ),
+                    _ => Err("unexpected snapshot type inside turbo boost".to_string()),
+                };
+                if let Err(e) = result {
+                    first_error.get_or_insert(e);
+                }
+            }
+            crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
+            match first_error {
+                Some(e) => Err(e),
+                None => Ok(()),
+            }
+        }
+
+        // Written by builds that only changed boost mode. Still restorable
+        // exactly as it was recorded.
         SnapshotEntry::PowerSettingIndex {
             scheme_guid,
             subgroup_guid,

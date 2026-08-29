@@ -1,5 +1,57 @@
 # Changelog
 
+## v1.4.0 - 2026-08-29
+
+### New (Pro)
+
+- Secure Defragmentation: analyses the whole volume, then runs the operation
+  that suits the media — a real defragmentation pass only on a confirmed
+  mechanical disk, a retrim on anything else, including drives Windows reports
+  as "unknown". Live progress read from Windows' own output rather than a
+  timer, and the analysis report is kept so there is something to read after a
+  retrim, which by nature finishes in seconds and only concerns free space.
+- Zero-Trace Cleaner: releases the standby memory holding pages of programs
+  you have already closed, and shreds files by overwriting their contents in
+  three flushed passes before deleting them.
+- Gaming overlay: a transparent, click-through panel over your game showing
+  CPU/GPU load, temperatures, VRAM, RAM, the foreground process with its real
+  scheduling priority, and a CPU/GPU bottleneck reading.
+- Driver Booster: select the drivers falling behind and open all their vendor
+  download pages at once.
+
+### Fixed
+
+- The profile photo could disappear. It now lives in a file beside the app's
+  other data instead of in browser storage, which was losing it to storage
+  eviction, to a different install channel having a different store, and to
+  this app's own duplicate scanner being able to delete its own database.
+  Existing photos are migrated automatically.
+- The cleaner could delete PC Tweaker's own settings storage. That folder is
+  now protected the same way Windows and Program Files are.
+- Disk optimisation could be started without an active Pro subscription by
+  calling it directly; every Pro feature now verifies the licence in the
+  backend rather than relying on the interface alone.
+- Four elevated actions (disk optimisation, driver updates, GPU power profiles
+  and batched rollback) opened a second copy of the app as administrator
+  instead of performing the action and closing.
+- Startup entries left behind by uninstallers no longer appear in the list,
+  and the list gained a refresh button.
+- Update checks that failed said nothing at all.
+- "Check Windows Update" looked like a dead button for the minute it takes.
+
+### Changed
+
+- Thermal profiles are three genuinely different power limits now. Standard is
+  a balanced cap rather than the factory default, which on most cards is
+  identical to Gaming and printed the same wattage twice.
+- Silent drops further, far enough down the fan curve to be audible.
+- Turbo Boost also raises the minimum processor state while plugged in, which
+  is the half of the setting you can actually feel; the dial now shows the
+  ceiling it unlocks, and its centre figure is labelled as CPU load.
+- Plans & pricing redesigned.
+- Sidebar and tweak icons carry their section's own colour.
+
+
 ## v1.3.2 - 2026-08-27
 
 - Fixed: a failed update check was silently ignored, giving no signal that

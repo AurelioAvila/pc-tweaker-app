@@ -19,6 +19,7 @@ import {
 } from "../types";
 import { DriveIcon, GlobeIcon, HeartPulseIcon, TrashIcon } from "./icons";
 import { ProBadge, ShieldBadge, SoonBadge } from "./ui";
+import { SecureDefragCard } from "./pro";
 import uninstallerIcon from "../assets/uninstaller-icon.png";
 import redaxaMark from "../assets/redaxa-mark.svg";
 
@@ -340,9 +341,13 @@ export function UninstallerPromoCard({ s }: { s: Strings }) {
           <h2 className="font-semibold text-ink">{s.uninstallerPromo.title}</h2>
           <p className="mt-0.5 text-sm text-ink-3">{s.uninstallerPromo.description}</p>
         </div>
+        {/* Bright fill, near-black label, and a glow. The previous pairing put
+            fuchsia-950 text on a fuchsia-500 fill — dark ink on a mid tone,
+            which muddied into grey against this card's own violet gradient
+            and read as a disabled control rather than the primary action. */}
         <button
           onClick={openPage}
-          className="shrink-0 rounded-xl bg-fuchsia-500 px-4 py-2 text-sm font-semibold text-fuchsia-950 transition-transform hover:scale-[1.03]"
+          className="shrink-0 rounded-xl bg-fuchsia-400 px-4 py-2 text-sm font-bold text-slate-900 shadow-lg shadow-fuchsia-500/30 transition-transform hover:scale-[1.03]"
         >
           {s.uninstallerPromo.button}
         </button>
@@ -374,7 +379,7 @@ export function RedaxaPromoCard({ s }: { s: Strings }) {
         </div>
         <button
           onClick={openPage}
-          className="shrink-0 rounded-xl bg-violet-400 px-4 py-2 text-sm font-semibold text-violet-950 transition-transform hover:scale-[1.03]"
+          className="shrink-0 rounded-xl bg-violet-400 px-4 py-2 text-sm font-bold text-slate-900 shadow-lg shadow-violet-500/30 transition-transform hover:scale-[1.03]"
         >
           {s.redaxaPromo.button}
         </button>
@@ -663,6 +668,23 @@ export function DiskToolsSection({
         isPro={isPro}
         onRequirePro={onRequirePro}
         onToast={onToast}
+      />
+      {/* Secure Defrag sits beside the plain optimizer rather than replacing
+          it: this one reports live progress and refuses to defragment
+          anything not confirmed to be a spinning disk, which is a different
+          promise from "run Windows' optimizer and wait". */}
+      {/* Keyed by drive so switching disks remounts the card. The alternative
+          was an effect resetting its state on every change, which is the same
+          thing with more moving parts — and a stale summary shown under a
+          different drive letter would attribute one disk's result to another. */}
+      <SecureDefragCard
+        key={selected}
+        s={s}
+        drive={selected}
+        mediaType={drives?.find((d) => d.letter === selected)?.media_type ?? "Unknown"}
+        isPro={isPro}
+        onRequirePro={onRequirePro}
+        pushToast={onToast}
       />
     </>
   );

@@ -1,5 +1,6 @@
 // Shared non-visual helpers: config, session, error reporting, formatting.
 import { getVersion } from "@tauri-apps/api/app";
+import { invoke } from "@tauri-apps/api/core";
 import { format, Lang, Strings } from "./i18n";
 import { DriverAudit } from "./types";
 
@@ -189,15 +190,66 @@ export async function sha1Hex(text: string): Promise<string> {
 }
 
 /**
- * Device-local profile photo, stored as a small data URL. It never leaves
- * this machine: the backend has no avatar endpoint on purpose — a picture of
- * the user is not data a PC tweaker needs to hold.
+ * Device-local profile photo. It never leaves this machine: the backend has
+ * no avatar endpoint on purpose — a picture of the user is not data a PC
+ * tweaker needs to hold.
+ *
+ * Stored as a file by the Rust side rather than in localStorage, which was
+ * losing photos to quota eviction, to this app's own duplicate scanner, and
+ * to the MSIX build getting a different storage origin than the .exe build.
+ * See src-tauri/src/avatar.rs.
  */
 export const AVATAR_KEY = "pc-tweaker-avatar";
 
-export function readAvatar(): string | null {
-  const v = localStorage.getItem(AVATAR_KEY);
-  return v && v.startsWith("data:image/") ? v : null;
+/**
+ * Reads the photo, migrating a localStorage one from an older version on
+ * first run.
+ *
+ * The migration is one-directional and only ever *adds*: the old key is left
+ * in place rather than deleted, so downgrading to a previous build still
+ * finds the photo where it expects it. It is a few KB, and silently
+ * destroying the only copy to save that would be the same class of mistake
+ * this whole change exists to fix.
+ */
+export async function readAvatar(): Promise<string | null> {
+  try {
+    const stored = await invoke<string | null>("read_avatar");
+    if (stored && stored.startsWith("data:image/")) return stored;
+  } catch {
+    // Fall through to the legacy key: an unreadable file should degrade to
+    // "check the old location", not to "you have no photo".
+  }
+
+  let legacy: string | null = null;
+  try {
+    legacy = localStorage.getItem(AVATAR_KEY);
+  } catch {
+    // Storage blocked entirely. Nothing to migrate.
+  }
+  if (!legacy || !legacy.startsWith("data:image/")) return null;
+
+  try {
+    await invoke("save_avatar", { dataUrl: legacy });
+  } catch {
+    // Migration failed, but the photo is still readable from the old key, so
+    // show it anyway and try again next launch.
+  }
+  return legacy;
+}
+
+export async function writeAvatar(dataUrl: string): Promise<void> {
+  await invoke("save_avatar", { dataUrl });
+}
+
+export async function removeAvatar(): Promise<void> {
+  await invoke("clear_avatar");
+  try {
+    // Remove the legacy copy too: the user asked for the photo to be gone,
+    // and leaving one behind would resurrect it on the next migration.
+    localStorage.removeItem(AVATAR_KEY);
+  } catch {
+    // Storage blocked; the file is what matters and it is already gone.
+  }
 }
 
 /**

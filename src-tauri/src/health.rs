@@ -65,13 +65,41 @@ pub struct HealthInputs {
     pub uptime_days: Option<f64>,
 }
 
-fn factor(id: &'static str, label: &'static str, earned: u32, max: u32, evidence: String) -> HealthFactor {
-    HealthFactor { id, label, earned: earned.min(max), max, evidence }
+fn factor(
+    id: &'static str,
+    label: &'static str,
+    earned: u32,
+    max: u32,
+    evidence: String,
+) -> HealthFactor {
+    HealthFactor {
+        id,
+        label,
+        earned: earned.min(max),
+        max,
+        evidence,
+    }
 }
 
-fn applied_factor(inputs: &HealthInputs, id: &'static str, label: &'static str, tweak: &str, points: u32) -> HealthFactor {
+fn applied_factor(
+    inputs: &HealthInputs,
+    id: &'static str,
+    label: &'static str,
+    tweak: &str,
+    points: u32,
+) -> HealthFactor {
     let on = inputs.applied.contains(tweak);
-    factor(id, label, if on { points } else { 0 }, points, if on { "applied".into() } else { "not applied".into() })
+    factor(
+        id,
+        label,
+        if on { points } else { 0 },
+        points,
+        if on {
+            "applied".into()
+        } else {
+            "not applied".into()
+        },
+    )
 }
 
 fn category(id: &'static str, factors: Vec<HealthFactor>) -> HealthCategory {
@@ -91,47 +119,149 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
         let plan_name = inputs.power_plan.as_deref();
         let (plan_pts, plan_ev) = match (plan_name, inputs.is_laptop) {
             (Some(p @ ("High performance" | "Ultimate performance")), _) => (30, p.to_string()),
-            (Some(p @ "Balanced"), Some(true)) => (24, format!("{p} — a fair choice on battery-powered hardware")),
-            (Some(p @ "Balanced"), _) => (18, format!("{p} — High performance unlocks more on a desktop")),
+            (Some(p @ "Balanced"), Some(true)) => (
+                24,
+                format!("{p} — a fair choice on battery-powered hardware"),
+            ),
+            (Some(p @ "Balanced"), _) => (
+                18,
+                format!("{p} — High performance unlocks more on a desktop"),
+            ),
             (Some(p @ "Power saver"), _) => (5, format!("{p} — actively limits performance")),
             (Some(p), _) => (15, format!("{p} (custom plan — unrated)")),
             (None, _) => (15, "custom or unknown power plan — unrated".into()),
         };
-        categories.push(category("performance", vec![
-            factor("perf_power_plan", "Power plan favors performance", plan_pts, 30, plan_ev),
-            applied_factor(inputs, "perf_responsiveness", "Multimedia scheduler tuned", "system_responsiveness", 20),
-            applied_factor(inputs, "perf_throttling", "Power throttling disabled", "disable_power_throttling", 20),
-            applied_factor(inputs, "perf_priority", "Foreground priority tuned", "priority_separation", 15),
-            applied_factor(inputs, "perf_bg_apps", "Background apps limited", "disable_background_apps", 15),
-        ]));
+        categories.push(category(
+            "performance",
+            vec![
+                factor(
+                    "perf_power_plan",
+                    "Power plan favors performance",
+                    plan_pts,
+                    30,
+                    plan_ev,
+                ),
+                applied_factor(
+                    inputs,
+                    "perf_responsiveness",
+                    "Multimedia scheduler tuned",
+                    "system_responsiveness",
+                    20,
+                ),
+                applied_factor(
+                    inputs,
+                    "perf_throttling",
+                    "Power throttling disabled",
+                    "disable_power_throttling",
+                    20,
+                ),
+                applied_factor(
+                    inputs,
+                    "perf_priority",
+                    "Foreground priority tuned",
+                    "priority_separation",
+                    15,
+                ),
+                applied_factor(
+                    inputs,
+                    "perf_bg_apps",
+                    "Background apps limited",
+                    "disable_background_apps",
+                    15,
+                ),
+            ],
+        ));
     }
 
     // ---- Gaming ------------------------------------------------------------
     {
-        categories.push(category("gaming", vec![
-            applied_factor(inputs, "gaming_gpu_sched", "Hardware GPU scheduling on", "hardware_gpu_scheduling", 30),
-            applied_factor(inputs, "gaming_dvr", "Game DVR overhead removed", "disable_game_dvr", 25),
-            applied_factor(inputs, "gaming_gpu_prio", "Games get GPU priority", "games_gpu_priority", 20),
-            applied_factor(inputs, "gaming_net", "Network throttling relaxed", "network_throttling_index", 15),
-            applied_factor(inputs, "gaming_fso", "Fullscreen optimizations tamed", "disable_fullscreen_optimizations_global", 10),
-        ]));
+        categories.push(category(
+            "gaming",
+            vec![
+                applied_factor(
+                    inputs,
+                    "gaming_gpu_sched",
+                    "Hardware GPU scheduling on",
+                    "hardware_gpu_scheduling",
+                    30,
+                ),
+                applied_factor(
+                    inputs,
+                    "gaming_dvr",
+                    "Game DVR overhead removed",
+                    "disable_game_dvr",
+                    25,
+                ),
+                applied_factor(
+                    inputs,
+                    "gaming_gpu_prio",
+                    "Games get GPU priority",
+                    "games_gpu_priority",
+                    20,
+                ),
+                applied_factor(
+                    inputs,
+                    "gaming_net",
+                    "Network throttling relaxed",
+                    "network_throttling_index",
+                    15,
+                ),
+                applied_factor(
+                    inputs,
+                    "gaming_fso",
+                    "Fullscreen optimizations tamed",
+                    "disable_fullscreen_optimizations_global",
+                    10,
+                ),
+            ],
+        ));
     }
 
     // ---- Responsiveness ----------------------------------------------------
     {
         let (up_pts, up_ev) = match inputs.uptime_days {
             Some(d) if d <= 7.0 => (20, format!("uptime {d:.1} days")),
-            Some(d) if d <= 21.0 => (10, format!("uptime {d:.1} days — a restart refreshes memory and updates")),
+            Some(d) if d <= 21.0 => (
+                10,
+                format!("uptime {d:.1} days — a restart refreshes memory and updates"),
+            ),
             Some(d) => (0, format!("uptime {d:.1} days — restart recommended")),
             None => (10, "uptime unknown".into()),
         };
-        categories.push(category("responsiveness", vec![
-            applied_factor(inputs, "resp_menu_delay", "Menu delay minimized", "menu_show_delay", 25),
-            applied_factor(inputs, "resp_hover", "Hover delay minimized", "mouse_hover_delay", 15),
-            applied_factor(inputs, "resp_startup_delay", "Startup app delay removed", "disable_startup_delay", 20),
-            applied_factor(inputs, "resp_animations", "Window animations trimmed", "disable_window_animations", 20),
-            factor("resp_uptime", "Recently restarted", up_pts, 20, up_ev),
-        ]));
+        categories.push(category(
+            "responsiveness",
+            vec![
+                applied_factor(
+                    inputs,
+                    "resp_menu_delay",
+                    "Menu delay minimized",
+                    "menu_show_delay",
+                    25,
+                ),
+                applied_factor(
+                    inputs,
+                    "resp_hover",
+                    "Hover delay minimized",
+                    "mouse_hover_delay",
+                    15,
+                ),
+                applied_factor(
+                    inputs,
+                    "resp_startup_delay",
+                    "Startup app delay removed",
+                    "disable_startup_delay",
+                    20,
+                ),
+                applied_factor(
+                    inputs,
+                    "resp_animations",
+                    "Window animations trimmed",
+                    "disable_window_animations",
+                    20,
+                ),
+                factor("resp_uptime", "Recently restarted", up_pts, 20, up_ev),
+            ],
+        ));
     }
 
     // ---- Memory ------------------------------------------------------------
@@ -139,21 +269,45 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
         let (ram_pts, ram_ev) = match inputs.ram_total_gb {
             Some(gb) if gb >= 31.0 => (40, format!("{gb:.0} GB installed")),
             Some(gb) if gb >= 15.0 => (32, format!("{gb:.0} GB installed")),
-            Some(gb) if gb >= 7.0 => (20, format!("{gb:.0} GB installed — 16 GB is today's comfortable floor")),
-            Some(gb) => (8, format!("{gb:.0} GB installed — upgrading RAM would help more than any tweak")),
+            Some(gb) if gb >= 7.0 => (
+                20,
+                format!("{gb:.0} GB installed — 16 GB is today's comfortable floor"),
+            ),
+            Some(gb) => (
+                8,
+                format!("{gb:.0} GB installed — upgrading RAM would help more than any tweak"),
+            ),
             None => (20, "RAM size unknown".into()),
         };
         let (use_pts, use_ev) = match inputs.memory_used_pct {
             Some(p) if p < 60.0 => (40, format!("{p:.0}% in use right now")),
             Some(p) if p < 80.0 => (25, format!("{p:.0}% in use right now")),
-            Some(p) => (10, format!("{p:.0}% in use right now — close heavy apps or add RAM")),
+            Some(p) => (
+                10,
+                format!("{p:.0}% in use right now — close heavy apps or add RAM"),
+            ),
             None => (20, "current usage unknown".into()),
         };
-        categories.push(category("memory", vec![
-            factor("mem_installed", "Installed RAM", ram_pts, 40, ram_ev),
-            factor("mem_pressure", "Current memory pressure", use_pts, 40, use_ev),
-            applied_factor(inputs, "mem_bg_apps", "Background apps limited", "disable_background_apps", 20),
-        ]));
+        categories.push(category(
+            "memory",
+            vec![
+                factor("mem_installed", "Installed RAM", ram_pts, 40, ram_ev),
+                factor(
+                    "mem_pressure",
+                    "Current memory pressure",
+                    use_pts,
+                    40,
+                    use_ev,
+                ),
+                applied_factor(
+                    inputs,
+                    "mem_bg_apps",
+                    "Background apps limited",
+                    "disable_background_apps",
+                    20,
+                ),
+            ],
+        ));
     }
 
     // ---- Storage -----------------------------------------------------------
@@ -161,19 +315,34 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
         let (kind_pts, kind_ev) = match inputs.disk_kind {
             Some("nvme") => (40, "system disk: NVMe".into()),
             Some("ssd") => (35, "system disk: SSD".into()),
-            Some("hdd") => (10, "system disk: spinning HDD — an SSD is the single biggest upgrade".into()),
+            Some("hdd") => (
+                10,
+                "system disk: spinning HDD — an SSD is the single biggest upgrade".into(),
+            ),
             _ => (20, "system disk type unknown".into()),
         };
         let (free_pts, free_ev) = match inputs.free_disk_pct {
             Some(p) if p >= 25.0 => (60, format!("{p:.0}% free on the system disk")),
             Some(p) if p >= 10.0 => (35, format!("{p:.0}% free on the system disk")),
-            Some(p) => (10, format!("{p:.0}% free — Windows slows down below 10% free")),
+            Some(p) => (
+                10,
+                format!("{p:.0}% free — Windows slows down below 10% free"),
+            ),
             None => (30, "free space unknown".into()),
         };
-        categories.push(category("storage", vec![
-            factor("sto_kind", "System disk technology", kind_pts, 40, kind_ev),
-            factor("sto_free", "Free space on system disk", free_pts, 60, free_ev),
-        ]));
+        categories.push(category(
+            "storage",
+            vec![
+                factor("sto_kind", "System disk technology", kind_pts, 40, kind_ev),
+                factor(
+                    "sto_free",
+                    "Free space on system disk",
+                    free_pts,
+                    60,
+                    free_ev,
+                ),
+            ],
+        ));
     }
 
     // ---- Startup -----------------------------------------------------------
@@ -181,13 +350,17 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
         let (pts, ev) = match inputs.startup_enabled {
             Some(n) if n <= 5 => (100, format!("{n} apps start with Windows")),
             Some(n) if n <= 10 => (70, format!("{n} apps start with Windows")),
-            Some(n) if n <= 15 => (40, format!("{n} apps start with Windows — each one delays login")),
+            Some(n) if n <= 15 => (
+                40,
+                format!("{n} apps start with Windows — each one delays login"),
+            ),
             Some(n) => (15, format!("{n} apps start with Windows — trim this list")),
             None => (50, "startup list unavailable".into()),
         };
-        categories.push(category("startup", vec![
-            factor("start_count", "Startup app load", pts, 100, ev),
-        ]));
+        categories.push(category(
+            "startup",
+            vec![factor("start_count", "Startup app load", pts, 100, ev)],
+        ));
     }
 
     // ---- Maintenance -------------------------------------------------------
@@ -199,25 +372,76 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
         };
         let (up_pts, up_ev) = match inputs.uptime_days {
             Some(d) if d <= 14.0 => (50, format!("last restart {d:.1} days ago")),
-            Some(d) => (20, format!("last restart {d:.1} days ago — updates may be waiting")),
+            Some(d) => (
+                20,
+                format!("last restart {d:.1} days ago — updates may be waiting"),
+            ),
             None => (25, "uptime unknown".into()),
         };
-        categories.push(category("maintenance", vec![
-            factor("maint_restore", "System Restore available", rp_pts, 50, rp_ev),
-            factor("maint_restart", "Restarted recently", up_pts, 50, up_ev),
-        ]));
+        categories.push(category(
+            "maintenance",
+            vec![
+                factor(
+                    "maint_restore",
+                    "System Restore available",
+                    rp_pts,
+                    50,
+                    rp_ev,
+                ),
+                factor("maint_restart", "Restarted recently", up_pts, 50, up_ev),
+            ],
+        ));
     }
 
     // ---- Privacy -----------------------------------------------------------
     {
-        categories.push(category("privacy", vec![
-            applied_factor(inputs, "priv_telemetry", "Telemetry tasks disabled", "disable_telemetry_tasks", 25),
-            applied_factor(inputs, "priv_adid", "Advertising ID reset", "reset_advertising_id", 15),
-            applied_factor(inputs, "priv_location", "Location tracking off", "disable_location_tracking", 15),
-            applied_factor(inputs, "priv_tailored", "Tailored experiences off", "disable_tailored_experiences", 15),
-            applied_factor(inputs, "priv_launch_track", "App-launch tracking off", "disable_app_launch_tracking", 15),
-            applied_factor(inputs, "priv_recall", "Windows Recall disabled", "disable_recall", 15),
-        ]));
+        categories.push(category(
+            "privacy",
+            vec![
+                applied_factor(
+                    inputs,
+                    "priv_telemetry",
+                    "Telemetry tasks disabled",
+                    "disable_telemetry_tasks",
+                    25,
+                ),
+                applied_factor(
+                    inputs,
+                    "priv_adid",
+                    "Advertising ID reset",
+                    "reset_advertising_id",
+                    15,
+                ),
+                applied_factor(
+                    inputs,
+                    "priv_location",
+                    "Location tracking off",
+                    "disable_location_tracking",
+                    15,
+                ),
+                applied_factor(
+                    inputs,
+                    "priv_tailored",
+                    "Tailored experiences off",
+                    "disable_tailored_experiences",
+                    15,
+                ),
+                applied_factor(
+                    inputs,
+                    "priv_launch_track",
+                    "App-launch tracking off",
+                    "disable_app_launch_tracking",
+                    15,
+                ),
+                applied_factor(
+                    inputs,
+                    "priv_recall",
+                    "Windows Recall disabled",
+                    "disable_recall",
+                    15,
+                ),
+            ],
+        ));
     }
 
     // ---- Security ----------------------------------------------------------
@@ -225,7 +449,10 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
         let (def_pts, def_ev) = match inputs.defender_realtime {
             Some(true) => (40, "Defender real-time protection is on".into()),
             Some(false) => (0, "Defender real-time protection is OFF".into()),
-            None => (20, "Defender state unreadable (third-party AV may be active)".into()),
+            None => (
+                20,
+                "Defender state unreadable (third-party AV may be active)".into(),
+            ),
         };
         let (uac_pts, uac_ev) = match inputs.uac_enabled {
             Some(true) => (30, "UAC is on".into()),
@@ -237,17 +464,26 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
             Some(false) => (5, "SmartScreen is off".into()),
             None => (15, "SmartScreen state unknown".into()),
         };
-        categories.push(category("security", vec![
-            factor("sec_defender", "Real-time antivirus", def_pts, 40, def_ev),
-            factor("sec_uac", "User Account Control", uac_pts, 30, uac_ev),
-            factor("sec_smartscreen", "SmartScreen", ss_pts, 30, ss_ev),
-        ]));
+        categories.push(category(
+            "security",
+            vec![
+                factor("sec_defender", "Real-time antivirus", def_pts, 40, def_ev),
+                factor("sec_uac", "User Account Control", uac_pts, 30, uac_ev),
+                factor("sec_smartscreen", "SmartScreen", ss_pts, 30, ss_ev),
+            ],
+        ));
     }
 
-    let overall = if categories.is_empty() { 0 } else {
-        (categories.iter().map(|c| c.score).sum::<u32>() + categories.len() as u32 / 2) / categories.len() as u32
+    let overall = if categories.is_empty() {
+        0
+    } else {
+        (categories.iter().map(|c| c.score).sum::<u32>() + categories.len() as u32 / 2)
+            / categories.len() as u32
     };
-    HealthReport { overall, categories }
+    HealthReport {
+        overall,
+        categories,
+    }
 }
 
 #[cfg(test)]
@@ -263,7 +499,10 @@ mod tests {
         let inputs = base();
         let a = score(&inputs);
         let b = score(&inputs);
-        assert_eq!(serde_json::to_string(&a).unwrap(), serde_json::to_string(&b).unwrap());
+        assert_eq!(
+            serde_json::to_string(&a).unwrap(),
+            serde_json::to_string(&b).unwrap()
+        );
     }
 
     #[test]
@@ -290,8 +529,18 @@ mod tests {
         let mut better = worse.clone();
         better.free_disk_pct = Some(40.0);
         better.disk_kind = Some("nvme");
-        let s_worse = score(&worse).categories.iter().find(|c| c.id == "storage").unwrap().score;
-        let s_better = score(&better).categories.iter().find(|c| c.id == "storage").unwrap().score;
+        let s_worse = score(&worse)
+            .categories
+            .iter()
+            .find(|c| c.id == "storage")
+            .unwrap()
+            .score;
+        let s_better = score(&better)
+            .categories
+            .iter()
+            .find(|c| c.id == "storage")
+            .unwrap()
+            .score;
         assert!(s_better > s_worse);
     }
 
@@ -302,7 +551,8 @@ mod tests {
         let mut with = base();
         with.applied.insert("disable_telemetry_tasks".into());
         let after = score(&with);
-        let cat = |r: &HealthReport, id: &str| r.categories.iter().find(|c| c.id == id).unwrap().score;
+        let cat =
+            |r: &HealthReport, id: &str| r.categories.iter().find(|c| c.id == id).unwrap().score;
         assert!(cat(&after, "privacy") > cat(&before, "privacy"));
         assert_eq!(cat(&after, "gaming"), cat(&before, "gaming"));
         assert_eq!(cat(&after, "storage"), cat(&before, "storage"));
@@ -313,12 +563,22 @@ mod tests {
         let mut inputs = base();
         inputs.defender_realtime = Some(false);
         inputs.uac_enabled = Some(false);
-        let bad = score(&inputs).categories.iter().find(|c| c.id == "security").unwrap().score;
+        let bad = score(&inputs)
+            .categories
+            .iter()
+            .find(|c| c.id == "security")
+            .unwrap()
+            .score;
         let mut good = base();
         good.defender_realtime = Some(true);
         good.uac_enabled = Some(true);
         good.smartscreen_enabled = Some(true);
-        let ok = score(&good).categories.iter().find(|c| c.id == "security").unwrap().score;
+        let ok = score(&good)
+            .categories
+            .iter()
+            .find(|c| c.id == "security")
+            .unwrap()
+            .score;
         assert!(ok >= 90 && bad <= 20, "ok={ok} bad={bad}");
     }
 
@@ -361,29 +621,52 @@ fn applied_tweak_ids() -> HashSet<String> {
 #[cfg(windows)]
 fn read_dword(hive: winreg::HKEY, path: &str, name: &str) -> Option<u32> {
     use winreg::RegKey;
-    RegKey::predef(hive).open_subkey(path).ok()?.get_value::<u32, _>(name).ok()
+    RegKey::predef(hive)
+        .open_subkey(path)
+        .ok()?
+        .get_value::<u32, _>(name)
+        .ok()
 }
 
 #[cfg(windows)]
 fn security_probes(inputs: &mut HealthInputs) {
-    use winreg::enums::{HKEY_LOCAL_MACHINE};
+    use winreg::enums::HKEY_LOCAL_MACHINE;
     // Defender real-time: DisableRealtimeMonitoring=1 means OFF; the value
     // being absent is the healthy default. If Defender's key itself is
     // missing (third-party AV replaced it) we honestly report None.
     let defender_key = r"SOFTWARE\Microsoft\Windows Defender\Real-Time Protection";
-    inputs.defender_realtime = match winreg::RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey(defender_key) {
-        Ok(key) => Some(key.get_value::<u32, _>("DisableRealtimeMonitoring").map(|v| v == 0).unwrap_or(true)),
-        Err(_) => None,
-    };
-    inputs.uac_enabled = read_dword(HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA").map(|v| v == 1);
+    inputs.defender_realtime =
+        match winreg::RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey(defender_key) {
+            Ok(key) => Some(
+                key.get_value::<u32, _>("DisableRealtimeMonitoring")
+                    .map(|v| v == 0)
+                    .unwrap_or(true),
+            ),
+            Err(_) => None,
+        };
+    inputs.uac_enabled = read_dword(
+        HKEY_LOCAL_MACHINE,
+        r"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
+        "EnableLUA",
+    )
+    .map(|v| v == 1);
     // SmartScreen for apps/files: "Off" disables it; missing means default-on.
     inputs.smartscreen_enabled = winreg::RegKey::predef(HKEY_LOCAL_MACHINE)
         .open_subkey(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer")
         .ok()
-        .map(|k| k.get_value::<String, _>("SmartScreenEnabled").map(|v| v != "Off").unwrap_or(true));
+        .map(|k| {
+            k.get_value::<String, _>("SmartScreenEnabled")
+                .map(|v| v != "Off")
+                .unwrap_or(true)
+        });
     // System Restore: RPSessionInterval >= 1 when protection is on for the
     // system drive; the config key missing reads as unknown, not off.
-    inputs.restore_points_enabled = read_dword(HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore", "RPSessionInterval").map(|v| v >= 1);
+    inputs.restore_points_enabled = read_dword(
+        HKEY_LOCAL_MACHINE,
+        r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore",
+        "RPSessionInterval",
+    )
+    .map(|v| v >= 1);
 }
 
 /// A measurement plus its place in this machine's history: the report itself,
@@ -423,7 +706,9 @@ pub async fn health_report(
             crate::systemprofile::FormFactor::Desktop => Some(false),
             _ => None,
         };
-        inputs.ram_total_gb = profile.ram_total_bytes.map(|b| b as f64 / (1024.0 * 1024.0 * 1024.0));
+        inputs.ram_total_gb = profile
+            .ram_total_bytes
+            .map(|b| b as f64 / (1024.0 * 1024.0 * 1024.0));
         // Canonical name only: a raw GUID as "evidence" would read as noise,
         // so custom/OEM plans surface through the explicit unrated branch.
         inputs.power_plan = profile.power_plan.clone();
@@ -434,12 +719,18 @@ pub async fn health_report(
             inputs.memory_used_pct = Some(stats.ram_used as f64 * 100.0 / stats.ram_total as f64);
         }
         if stats.disk_total > 0 {
-            inputs.free_disk_pct = Some((stats.disk_total - stats.disk_used) as f64 * 100.0 / stats.disk_total as f64);
+            inputs.free_disk_pct =
+                Some((stats.disk_total - stats.disk_used) as f64 * 100.0 / stats.disk_total as f64);
         }
         inputs.uptime_days = Some(stats.uptime_secs as f64 / 86_400.0);
     }
 
-    inputs.startup_enabled = Some(crate::startup::list_startup_items().iter().filter(|s| s.enabled).count());
+    inputs.startup_enabled = Some(
+        crate::startup::list_startup_items()
+            .iter()
+            .filter(|s| s.enabled)
+            .count(),
+    );
     inputs.applied = applied_tweak_ids();
     security_probes(&mut inputs);
 
@@ -453,7 +744,9 @@ pub async fn health_report(
     // otherwise the newest row would be compared against itself.
     let history = crate::healthhistory::read_history(&app);
     let snapshot = crate::healthhistory::HealthSnapshot::from_report(&report, ts);
-    let comparison = history.last().map(|prev| crate::healthhistory::compare(prev, &snapshot));
+    let comparison = history
+        .last()
+        .map(|prev| crate::healthhistory::compare(prev, &snapshot));
 
     // A history that can't be written costs the user the "why did it change?"
     // answer next time, but the measurement they asked for is still valid —
@@ -462,5 +755,9 @@ pub async fn health_report(
         eprintln!("health history: could not record this measurement: {e}");
     }
 
-    Ok(HealthResult { report, ts, comparison })
+    Ok(HealthResult {
+        report,
+        ts,
+        comparison,
+    })
 }

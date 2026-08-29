@@ -1,13 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { LANGUAGES, Lang, Strings } from "../i18n";
 import { THEMES, ThemeName } from "../theme";
 import {
-  AVATAR_KEY,
   ERROR_REPORTS_KEY,
   errorReportsEnabled,
   fileToAvatarDataUrl,
   readAvatar,
+  removeAvatar,
+  writeAvatar,
 } from "../lib";
 import { AuthState } from "../types";
 import { CheckIcon, CrownIcon } from "./icons";
@@ -29,7 +30,7 @@ export function AuthSection({
   /** Device-local profile photo and its controls, owned by AccountMenu. */
   avatar?: string | null;
   onChangePhoto?: () => void;
-  onRemovePhoto?: () => void;
+  onRemovePhoto?: () => void | Promise<void>;
   onAuthenticate: (
     mode: "login" | "register",
     email: string,
@@ -384,16 +385,31 @@ export function AccountMenu({
   const [errReports, setErrReports] = useState(() => errorReportsEnabled());
   const isPro = auth.status === "authenticated" && auth.isPro;
 
-  // Device-local profile photo. Lives in localStorage as a small data URL;
-  // there is no upload — see fileToAvatarDataUrl in lib.ts.
-  const [avatar, setAvatar] = useState<string | null>(() => readAvatar());
+  // Device-local profile photo, kept as a file by the Rust side; there is no
+  // upload — see fileToAvatarDataUrl in lib.ts and src-tauri/src/avatar.rs.
+  // Loaded in an effect rather than a useState initializer because reading it
+  // is now async (and migrates an older localStorage photo on first run).
+  const [avatar, setAvatar] = useState<string | null>(null);
   const photoInput = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void readAvatar().then((a) => {
+      if (alive) setAvatar(a);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   async function onPhotoPicked(file: File | undefined) {
     if (!file) return;
     try {
       const dataUrl = await fileToAvatarDataUrl(file);
-      localStorage.setItem(AVATAR_KEY, dataUrl);
+      // Persist before showing it. The old order set state first and swallowed
+      // a failed write, so a photo that never made it to disk still appeared
+      // to have been saved until the next launch proved otherwise.
+      await writeAvatar(dataUrl);
       setAvatar(dataUrl);
     } catch {
       // Not an image, or the browser refused to decode it: keep whatever was
@@ -405,9 +421,13 @@ export function AccountMenu({
     }
   }
 
-  function removePhoto() {
-    localStorage.removeItem(AVATAR_KEY);
-    setAvatar(null);
+  async function removePhoto() {
+    try {
+      await removeAvatar();
+      setAvatar(null);
+    } catch {
+      pushToast("error", s.menu.photoFailed);
+    }
   }
 
   function toggleErrorReports() {

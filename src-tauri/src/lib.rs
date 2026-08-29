@@ -1,8 +1,6 @@
 mod audit;
+mod avatar;
 pub mod baseline;
-pub mod health;
-pub mod healthhistory;
-mod technical;
 mod cleanup;
 mod contextmenu;
 mod cpubench;
@@ -11,13 +9,16 @@ mod diskhealth;
 mod diskinfo;
 mod diskopt;
 mod dns;
-mod driverupdate;
 mod drivers;
+mod driverupdate;
 mod elevation;
 mod game_priority;
 mod game_sessions;
 mod gaming;
 mod gpupower;
+pub mod health;
+pub mod healthhistory;
+mod hud;
 mod license;
 mod netlatency;
 mod netmaintenance;
@@ -29,14 +30,17 @@ mod ramclean;
 mod recommend;
 mod restore_point;
 mod rollback;
+mod securedefrag;
 mod services;
 mod startup;
 mod sysmon;
 mod systemprofile;
+mod technical;
 mod thermals;
 mod turbo;
 mod tweaks;
 mod x3d;
+mod zerotrace;
 
 use cleanup::CleanupResult;
 use rollback::{RegValue, RollbackStore};
@@ -107,6 +111,30 @@ pub fn store_for_dir(app: &tauri::AppHandle) -> Result<std::path::PathBuf, Strin
 
 fn store_for(app: &tauri::AppHandle) -> Result<RollbackStore, String> {
     Ok(RollbackStore::new(store_for_dir(app)?))
+}
+
+/* ---------------------------------------------------------------- *
+ * Profile photo. See avatar.rs for why this is a file and not
+ * localStorage — in short, people were losing their photos.
+ * ---------------------------------------------------------------- */
+
+#[tauri::command(async)]
+fn save_avatar(app: tauri::AppHandle, data_url: String) -> Result<(), String> {
+    avatar::save(&store_for_dir(&app)?, &data_url)
+}
+
+#[tauri::command(async)]
+fn read_avatar(app: tauri::AppHandle) -> Option<String> {
+    // A failure to even resolve the data folder is reported the same as "no
+    // photo": the caller's only sensible response to either is to show the
+    // fallback initial, and an error here would surface as a scary toast on
+    // an ordinary first launch.
+    avatar::read(&store_for_dir(&app).ok()?)
+}
+
+#[tauri::command(async)]
+fn clear_avatar(app: tauri::AppHandle) -> Result<(), String> {
+    avatar::clear(&store_for_dir(&app)?)
 }
 
 #[tauri::command(async)]
@@ -752,6 +780,10 @@ fn optimize_disk(app: tauri::AppHandle, drive: String) -> Result<diskopt::DiskOp
     // this guarantees the elevated child only ever sees a bare "X:", never a
     // defrag flag or anything shell-like.
     let drive = diskinfo::validate_drive(&drive)?;
+    // The UI gates this behind Pro, but that gate lives in the frontend and
+    // `invoke` is reachable without it. This is the boundary that actually
+    // holds.
+    require_pro(&store_for_dir(&app)?)?;
     if !elevation::is_elevated() {
         elevation::run_elevated_action("--elevated-diskopt", &drive)?;
         let path = last_diskopt_result_path(&app)?;
@@ -911,6 +943,44 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
                     .map_err(|e| e.to_string())
             })
         }
+        // Progress is written to a file the unelevated parent polls: this
+        // process has no AppHandle, so it cannot emit events itself.
+        "--elevated-securedefrag" => {
+            let progress_path = defrag_progress_path(&dir);
+            let result = diskinfo::validate_drive(id).and_then(|drive| {
+                securedefrag::run(&drive, |p| {
+                    if let Ok(json) = serde_json::to_string(&p) {
+                        let _ = std::fs::write(&progress_path, json);
+                    }
+                })
+            });
+            audit::record(
+                "secure-defrag",
+                id,
+                result.is_ok(),
+                result.as_ref().err().cloned(),
+            );
+            result.and_then(|res| {
+                let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
+                std::fs::write(dir.join("last_diskopt_result.json"), json)
+                    .map_err(|e| e.to_string())
+            })
+        }
+
+        "--elevated-memorypurge" => {
+            let result = zerotrace::purge_standby_memory();
+            audit::record(
+                "memory-purge",
+                id,
+                result.is_ok(),
+                result.as_ref().err().cloned(),
+            );
+            result.and_then(|res| {
+                let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
+                std::fs::write(dir.join("last_purge_result.json"), json).map_err(|e| e.to_string())
+            })
+        }
+
         other => Err(format!("unknown action: {}", other)),
     };
 
@@ -959,6 +1029,15 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            save_avatar,
+            hud::hud_snapshot,
+            secure_defrag,
+            purge_standby_memory,
+            shred_files,
+            open_hud_overlay,
+            close_hud_overlay,
+            read_avatar,
+            clear_avatar,
             systemprofile::system_profile,
             health::health_report,
             healthhistory::list_health_history,
@@ -1244,4 +1323,220 @@ mod tests {
             missing.join("\n  ")
         );
     }
+}
+
+/* ================================================================== *
+ * Pro features added in the Zero-Trace / Secure Defrag / HUD set.
+ *
+ * Every command here gates on the signed licence in Rust, not only in
+ * the UI. The frontend gate is a courtesy that keeps the paywall
+ * pleasant; this one is the actual boundary, because `invoke` is
+ * reachable from anything that can talk to the IPC channel.
+ * ================================================================== */
+
+/// Shared Pro gate. Returns the `PRO_REQUIRED_PREFIX` error the frontend
+/// already knows how to turn into a paywall rather than a red toast.
+fn require_pro(app_data_dir: &std::path::Path) -> Result<(), String> {
+    if license::LicenseStore::new(app_data_dir.to_path_buf()).is_pro_and_fresh() {
+        return Ok(());
+    }
+    Err(format!(
+        "{}this feature requires an active PC Tweaker Pro subscription",
+        PRO_REQUIRED_PREFIX
+    ))
+}
+
+/// Where the elevated helper leaves defrag progress for the GUI to pick up.
+///
+/// The elevated child has no `AppHandle` and therefore cannot emit events, so
+/// live progress crosses the UAC boundary as a file the parent polls. Same
+/// handoff the cleanup and diskopt results already use, just written
+/// repeatedly during the run instead of once at the end.
+pub(crate) fn defrag_progress_path(dir: &std::path::Path) -> std::path::PathBuf {
+    dir.join("defrag_progress.json")
+}
+
+#[cfg(windows)]
+#[tauri::command(async)]
+fn secure_defrag(
+    app: tauri::AppHandle,
+    drive: String,
+) -> Result<securedefrag::DefragOutcome, String> {
+    use tauri::Emitter;
+
+    let dir = store_for_dir(&app)?;
+    require_pro(&dir)?;
+    let drive = diskinfo::validate_drive(&drive)?;
+
+    if !elevation::is_elevated() {
+        // Poll the progress file the elevated child writes, re-emitting each
+        // update as the event the UI is already listening for. The thread
+        // stops when the child exits, which `run_elevated_action` waits for.
+        let progress_path = defrag_progress_path(&dir);
+        let _ = std::fs::remove_file(&progress_path);
+        let watcher_app = app.clone();
+        let watch_path = progress_path.clone();
+        let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let watcher_stop = stop.clone();
+        let watcher = std::thread::spawn(move || {
+            let mut last = String::new();
+            while !watcher_stop.load(std::sync::atomic::Ordering::Relaxed) {
+                if let Ok(json) = std::fs::read_to_string(&watch_path) {
+                    if json != last && !json.trim().is_empty() {
+                        if let Ok(p) = serde_json::from_str::<securedefrag::DefragProgress>(&json) {
+                            let _ = watcher_app.emit("secure-defrag-progress", p);
+                        }
+                        last = json;
+                    }
+                }
+                std::thread::sleep(std::time::Duration::from_millis(300));
+            }
+        });
+
+        let elevated = elevation::run_elevated_action("--elevated-securedefrag", &drive);
+        stop.store(true, std::sync::atomic::Ordering::Relaxed);
+        let _ = watcher.join();
+        elevated?;
+
+        let path = last_diskopt_result_path(&app)?;
+        let json = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_file(&progress_path);
+        return serde_json::from_str(&json).map_err(|e| e.to_string());
+    }
+
+    let emitter = app.clone();
+    let result = securedefrag::run(&drive, |p| {
+        let _ = emitter.emit("secure-defrag-progress", p);
+    });
+    audit::record(
+        "secure-defrag",
+        &drive,
+        result.is_ok(),
+        result.as_ref().err().cloned(),
+    );
+    result
+}
+
+#[cfg(not(windows))]
+#[tauri::command(async)]
+fn secure_defrag(
+    _app: tauri::AppHandle,
+    _drive: String,
+) -> Result<securedefrag::DefragOutcome, String> {
+    Err("not supported on this platform".to_string())
+}
+
+#[tauri::command(async)]
+fn purge_standby_memory(app: tauri::AppHandle) -> Result<zerotrace::PurgeResult, String> {
+    let dir = store_for_dir(&app)?;
+    require_pro(&dir)?;
+
+    if !elevation::is_elevated() {
+        elevation::run_elevated_action("--elevated-memorypurge", "standby")?;
+        let path = dir.join("last_purge_result.json");
+        let json = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let _ = std::fs::remove_file(&path);
+        return serde_json::from_str(&json).map_err(|e| e.to_string());
+    }
+
+    let result = zerotrace::purge_standby_memory();
+    audit::record(
+        "memory-purge",
+        "standby",
+        result.is_ok(),
+        result.as_ref().err().cloned(),
+    );
+    result
+}
+
+/// Permanently destroys the given files.
+///
+/// Unelevated on purpose: a shredder that prompts for administrator rights
+/// would invite people to point it at system files, and the guardrails inside
+/// `shred_files` refuse those anyway. Anything the signed-in user cannot
+/// already delete, this will not delete either.
+#[tauri::command(async)]
+fn shred_files(
+    app: tauri::AppHandle,
+    paths: Vec<String>,
+) -> Result<zerotrace::ShredResult, String> {
+    let dir = store_for_dir(&app)?;
+    require_pro(&dir)?;
+
+    if paths.is_empty() {
+        return Err("no files were selected".to_string());
+    }
+    // A single mistaken call should not be able to walk an entire drive.
+    const MAX_FILES: usize = 500;
+    if paths.len() > MAX_FILES {
+        return Err(format!(
+            "too many files at once: {} selected, {} is the limit",
+            paths.len(),
+            MAX_FILES
+        ));
+    }
+
+    let result = zerotrace::shred_files(paths);
+    audit::record(
+        "secure-shred",
+        &format!("{} files", result.shredded_count),
+        true,
+        None,
+    );
+    Ok(result)
+}
+
+/* ---------------------------------------------------------------- *
+ * The in-game HUD window.
+ * ---------------------------------------------------------------- */
+
+/// Opens the overlay: a transparent, always-on-top, click-through window.
+///
+/// Click-through (`set_ignore_cursor_events`) is what makes it usable over a
+/// game at all — without it the panel would swallow every click that landed on
+/// it, which in a shooter is the difference between a HUD and a liability. It
+/// also means the window needs no close button of its own: it is dismissed
+/// from the same switch that opened it.
+#[tauri::command(async)]
+fn open_hud_overlay(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+
+    require_pro(&store_for_dir(&app)?)?;
+
+    // Already open: make it visible again rather than building a second one.
+    if let Some(existing) = app.get_webview_window("hud") {
+        existing.show().map_err(|e| e.to_string())?;
+        return Ok(());
+    }
+
+    let window = WebviewWindowBuilder::new(&app, "hud", WebviewUrl::App("overlay.html".into()))
+        .title("PC Tweaker HUD")
+        .inner_size(430.0, 96.0)
+        .position(24.0, 24.0)
+        .decorations(false)
+        .transparent(true)
+        .always_on_top(true)
+        // Kept out of the taskbar and the alt-tab list: it is an overlay, not
+        // a window the user should have to manage.
+        .skip_taskbar(true)
+        .resizable(false)
+        .shadow(false)
+        .focused(false)
+        .build()
+        .map_err(|e| format!("could not open the overlay: {}", e))?;
+
+    window
+        .set_ignore_cursor_events(true)
+        .map_err(|e| format!("could not make the overlay click-through: {}", e))?;
+    Ok(())
+}
+
+#[tauri::command(async)]
+fn close_hud_overlay(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri::Manager;
+    if let Some(window) = app.get_webview_window("hud") {
+        window.close().map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }

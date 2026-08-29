@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "hud",
+  "description": "Capability for the in-game HUD overlay window. Deliberately minimal: the overlay only reads telemetry, so it gets the core IPC surface and nothing else — no dialog, no opener, no window controls. It cannot start a cleanup, apply a tweak, or open a URL even if its page were somehow replaced.",
+  "windows": ["hud"],
+  "permissions": ["core:default"]
+}

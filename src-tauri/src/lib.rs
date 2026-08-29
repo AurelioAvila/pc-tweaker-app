@@ -1,6 +1,7 @@
 mod audit;
 mod avatar;
 pub mod baseline;
+mod browsercleanup;
 mod cleanup;
 mod contextmenu;
 mod cpubench;
@@ -628,6 +629,26 @@ fn list_cleanup_targets() -> Vec<cleanup::CleanupInfo> {
     cleanup::cleanup_targets()
 }
 
+/// Detects Chrome/Edge/Firefox profiles on this machine and reports cache
+/// and cookie sizes. No elevation involved: browser profile data lives
+/// under the current user's own AppData, same as the app's own settings.
+#[tauri::command(async)]
+fn list_browser_cleanup() -> Vec<browsercleanup::BrowserCleanupInfo> {
+    browsercleanup::detect()
+}
+
+#[tauri::command(async)]
+fn run_browser_cleanup(id: String) -> Result<browsercleanup::BrowserCleanupResult, String> {
+    let result = browsercleanup::clear(&id);
+    audit::record(
+        "browser_cleanup",
+        &id,
+        result.is_ok(),
+        result.as_ref().err().cloned(),
+    );
+    result
+}
+
 fn last_cleanup_result_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
     let dir = app
         .path()
@@ -1067,6 +1088,8 @@ pub fn run() {
             run_cleanup,
             preview_cleanup,
             run_cleanup_selected,
+            list_browser_cleanup,
+            run_browser_cleanup,
             scan_duplicates,
             delete_files,
             game_sessions::list_game_sessions,

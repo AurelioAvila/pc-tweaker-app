@@ -53,6 +53,18 @@ export type CleanupResult = {
   skipped_count: number;
 };
 
+export type BrowserCleanupInfo = {
+  id: string;
+  name: string;
+  running: boolean;
+  cache_bytes: number;
+  cookies_bytes: number;
+};
+
+export type BrowserCleanupResult = {
+  freed_bytes: number;
+};
+
 export type DuplicateGroup = {
   size: number;
   paths: string[];

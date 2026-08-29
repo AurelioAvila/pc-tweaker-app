@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.4.1 - 2026-08-30
+
+### New
+
+- Browser cleanup: clears cache and cookies for Chrome, Edge and Firefox,
+  moved to the Recycle Bin like every other cleanup action. Refuses to run
+  while the browser is open, since deleting files a running browser still
+  has open corrupts its next write rather than just losing history.
+
+### Fixed
+
+- The PC Health Score's nine category names (Performance, Gaming, and so on)
+  were shown in English regardless of the app's language. They now follow
+  the selected language like the rest of the score.
+- A handful of missing accents in the Spanish and German interface.
+
 ## v1.4.0 - 2026-08-29
 
 ### New (Pro)

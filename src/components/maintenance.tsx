@@ -6,6 +6,8 @@ import { format, Strings } from "../i18n";
 import { formatBytes, LARGE_FILE_THRESHOLD_BYTES, sha1Hex } from "../lib";
 import { CATEGORY_STYLE } from "../categories";
 import {
+  BrowserCleanupInfo,
+  BrowserCleanupResult,
   CleanupInfo,
   CleanupPreview,
   CleanupResult,
@@ -316,6 +318,95 @@ export function DnsFlushCard({
           {running ? s.dnsFlush.running : s.dnsFlush.button}
         </button>
       </div>
+    </li>
+  );
+}
+
+/** Cache and cookies for Chrome/Edge/Firefox. Deliberately no per-site
+ *  picking and no extension list — this only ever deletes files the browser
+ *  already knows how to rebuild from nothing, which is what keeps it safe
+ *  to run without a confirmation dialog. */
+export function BrowserCleanupCard({
+  s,
+  onToast,
+}: {
+  s: Strings;
+  onToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [browsers, setBrowsers] = useState<BrowserCleanupInfo[] | null>(null);
+  const [clearingId, setClearingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    invoke<BrowserCleanupInfo[]>("list_browser_cleanup")
+      .then(setBrowsers)
+      .catch(() => setBrowsers([]));
+  }, []);
+
+  async function clear(browser: BrowserCleanupInfo) {
+    setClearingId(browser.id);
+    try {
+      const result = await invoke<BrowserCleanupResult>("run_browser_cleanup", {
+        id: browser.id,
+      });
+      onToast(
+        "success",
+        format(s.browserCleanup.clearedToast, {
+          browser: browser.name,
+          freed: formatBytes(result.freed_bytes),
+        }),
+      );
+      setBrowsers((prev) =>
+        prev
+          ? prev.map((b) => (b.id === browser.id ? { ...b, cache_bytes: 0, cookies_bytes: 0 } : b))
+          : prev,
+      );
+    } catch (e) {
+      onToast("error", String(e));
+    } finally {
+      setClearingId(null);
+    }
+  }
+
+  return (
+    <li className="animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
+      <div className="flex items-center gap-4">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-400/15 text-sky-300 ring-1 ring-sky-400/30">
+          <GlobeIcon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold text-ink">{s.browserCleanup.title}</h2>
+          <p className="mt-0.5 text-sm text-ink-3">{s.browserCleanup.description}</p>
+        </div>
+      </div>
+      {browsers && browsers.length === 0 && (
+        <p className="mt-4 text-sm text-ink-3">{s.browserCleanup.noneFound}</p>
+      )}
+      {browsers && browsers.length > 0 && (
+        <ul className="mt-4 flex flex-col gap-2">
+          {browsers.map((b) => (
+            <li
+              key={b.id}
+              className="flex items-center justify-between gap-3 rounded-xl bg-surface-2 px-3 py-2.5"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-ink">{b.name}</p>
+                <p className="mt-0.5 truncate text-xs text-ink-3">
+                  {b.running
+                    ? format(s.browserCleanup.runningWarning, { browser: b.name })
+                    : `${s.browserCleanup.cache} ${formatBytes(b.cache_bytes)} · ${s.browserCleanup.cookies} ${formatBytes(b.cookies_bytes)}`}
+                </p>
+              </div>
+              <button
+                onClick={() => clear(b)}
+                disabled={b.running || clearingId === b.id}
+                className="shrink-0 rounded-xl bg-sky-500 px-3.5 py-1.5 text-sm font-semibold text-sky-950 transition-transform hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {clearingId === b.id ? s.browserCleanup.clearing : s.browserCleanup.clearButton}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </li>
   );
 }

@@ -90,8 +90,13 @@ app.use(express.json());
 // into JSON would never run. Without this the form body arrives empty.
 app.use(express.urlencoded({ extended: false }));
 
+// Liveness only: "this process is up and answering". Whether the database
+// is wired is real operational detail, and /ready below already proves it by
+// running a query — reporting it here as well told any anonymous visitor
+// something about the infrastructure while telling an operator nothing they
+// could not get from the endpoint built for the purpose.
 app.get("/health", (_req: Request, res: Response) => {
-  res.json({ ok: true, databaseConfigured: isConfigured });
+  res.json({ ok: true });
 });
 
 // Railway uses this endpoint as a deploy readiness gate. Liveness stays
@@ -514,12 +519,53 @@ process.on("unhandledRejection", (reason) => {
 
 const port = process.env.PORT || 3000;
 
+/**
+ * Railway restarts a container by sending SIGTERM and waiting a short grace
+ * period before SIGKILL. Without a handler, Node's default is to exit the
+ * moment the signal arrives: every request still in flight is cut mid-write,
+ * which on a deploy means the unlucky few get a connection reset instead of
+ * an answer — including a Stripe webhook, which would then be retried.
+ *
+ * So: stop accepting new connections, let the ones already running finish,
+ * release the database pool, exit cleanly. The timeout exists because a
+ * wedged connection must not hold the deploy open forever — at that point a
+ * hard exit is the better outcome, and it is logged as such rather than
+ * looking like a clean shutdown.
+ */
+const SHUTDOWN_GRACE_MS = 10_000;
+let shuttingDown = false;
+
+function shutdown(signal: string, server: import("http").Server): void {
+  if (shuttingDown) return; // a second SIGTERM must not restart the sequence
+  shuttingDown = true;
+  console.log(`${signal} received: refusing new connections, draining in-flight requests`);
+
+  const forceExit = setTimeout(() => {
+    console.error(`shutdown timed out after ${SHUTDOWN_GRACE_MS}ms: exiting anyway`);
+    process.exit(1);
+  }, SHUTDOWN_GRACE_MS);
+  // Do not let the timer itself keep the process alive once draining is done.
+  forceExit.unref();
+
+  server.close(async (err) => {
+    if (err) console.error("error while closing the HTTP server:", err);
+    try {
+      if (isConfigured) await getPool().end();
+    } catch (poolErr) {
+      console.error("error while closing the database pool:", poolErr);
+    }
+    clearTimeout(forceExit);
+    console.log("shutdown complete");
+    process.exit(0);
+  });
+}
+
 initSchema()
   .catch((err) => {
     console.error("failed to initialize database schema:", err);
   })
   .finally(() => {
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
       console.log(
         `pc-tweaker-backend listening on :${port} (database ${isConfigured ? "configured" : "NOT configured"}, email ${mailIsConfigured ? "configured" : "NOT configured"})`,
       );
@@ -533,4 +579,8 @@ initSchema()
         );
       }
     });
+
+    for (const signal of ["SIGTERM", "SIGINT"] as const) {
+      process.on(signal, () => shutdown(signal, server));
+    }
   });

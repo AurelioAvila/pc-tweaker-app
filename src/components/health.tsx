@@ -53,18 +53,6 @@ type BaselineRun = {
   diskRandomReadMs: number;
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  performance: "Performance",
-  gaming: "Gaming",
-  responsiveness: "Responsiveness",
-  memory: "Memory",
-  storage: "Storage",
-  startup: "Startup",
-  maintenance: "Maintenance",
-  privacy: "Privacy",
-  security: "Security",
-};
-
 const stroke = { strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round" } as const;
 const CATEGORY_ICONS: Record<string, ReactElement> = {
   performance: (
@@ -400,6 +388,7 @@ export function HealthPanel({
   verdicts,
   baseline,
   change,
+  categoryLabels,
 }: {
   title: string;
   subtitle: string;
@@ -421,6 +410,7 @@ export function HealthPanel({
     structural: string;
     trend: string;
   };
+  categoryLabels: Record<string, string>;
 }) {
   const [report, setReport] = useState<HealthReport | null>(null);
   const [comparison, setComparison] = useState<HealthComparison | null>(null);
@@ -662,7 +652,7 @@ export function HealthPanel({
                       {CATEGORY_ICONS[cat.id]}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-xs font-semibold text-white/80">
-                      {CATEGORY_LABELS[cat.id] ?? cat.id}
+                      {categoryLabels[cat.id] ?? cat.id}
                     </span>
                     <span
                       className={`hidden shrink-0 rounded-full px-2 py-0.5 text-[9px] font-extrabold tracking-wider ring-1 sm:inline ${t.badge}`}
@@ -747,7 +737,7 @@ export function HealthPanel({
                   className={`rounded px-1.5 py-0.5 ring-1 ${c.delta > 0 ? "bg-emerald-400/10 text-emerald-300/90 ring-emerald-400/20" : "bg-rose-400/10 text-rose-300/90 ring-rose-400/20"}`}
                 >
                   {c.delta > 0 ? "+" : ""}
-                  {c.delta} {CATEGORY_LABELS[c.id] ?? c.id}
+                  {c.delta} {categoryLabels[c.id] ?? c.id}
                 </span>
               ))}
             </span>
@@ -769,7 +759,7 @@ export function HealthPanel({
                     <div className="flex items-center gap-2.5">
                       <span className="text-white/45">{CATEGORY_ICONS[c.id]}</span>
                       <span className="min-w-0 flex-1 truncate text-[11.5px] font-semibold text-white/75">
-                        {CATEGORY_LABELS[c.id] ?? c.id}
+                        {categoryLabels[c.id] ?? c.id}
                       </span>
                       <span className="shrink-0 text-[10.5px] tabular-nums text-white/35">
                         {c.before} → {c.after}

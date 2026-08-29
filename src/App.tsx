@@ -30,6 +30,7 @@ import {
 } from "./components/icons";
 import { PaywallModal, ProBadge, ShieldBadge, Toggle, UpdateBanner } from "./components/ui";
 import {
+  BrowserCleanupCard,
   CleanupCard,
   CleanupConfirmModal,
   DiskToolsSection,
@@ -814,6 +815,7 @@ function App() {
                   structural: s.healthPanel.changeStructural,
                   trend: s.healthPanel.changeTrend,
                 }}
+                categoryLabels={s.healthPanel.categories}
               />
             )}
 
@@ -1025,6 +1027,8 @@ function App() {
                 ))}
 
               {showCleanup && <DnsFlushCard s={s} onToast={pushToast} />}
+
+              {showCleanup && <BrowserCleanupCard s={s} onToast={pushToast} />}
 
               {showCleanup && (
                 <DuplicateFinder

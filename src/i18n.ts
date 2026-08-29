@@ -93,6 +93,17 @@ export interface Strings {
     changeContributes: string;
     changeStructural: string;
     changeTrend: string;
+    categories: {
+      performance: string;
+      gaming: string;
+      responsiveness: string;
+      memory: string;
+      storage: string;
+      startup: string;
+      maintenance: string;
+      privacy: string;
+      security: string;
+    };
   };
   transparency: {
     title: string;
@@ -468,6 +479,17 @@ export interface Strings {
     running: string;
     resultToast: string;
   };
+  browserCleanup: {
+    title: string;
+    description: string;
+    noneFound: string;
+    cache: string;
+    cookies: string;
+    clearButton: string;
+    clearing: string;
+    runningWarning: string; // uses {browser}
+    clearedToast: string; // uses {browser} {freed}
+  };
   redaxaPromo: {
     title: string;
     description: string;
@@ -799,6 +821,17 @@ const it: Strings = {
     changeStructural:
       "Un aggiornamento dell'app ha cambiato quali categorie vengono valutate: parte di questa differenza non dipende dal tuo PC.",
     changeTrend: "Andamento",
+    categories: {
+      performance: "Prestazioni",
+      gaming: "Gaming",
+      responsiveness: "Reattività",
+      memory: "Memoria",
+      storage: "Archiviazione",
+      startup: "Avvio",
+      maintenance: "Manutenzione",
+      privacy: "Privacy",
+      security: "Sicurezza",
+    },
   },
   transparency: {
     title: "Cosa modifica esattamente",
@@ -1206,6 +1239,18 @@ const it: Strings = {
     button: "Svuota ora",
     running: "Svuotamento...",
     resultToast: "Cache DNS svuotata.",
+  },
+  browserCleanup: {
+    title: "Pulizia browser",
+    description:
+      "Svuota cache e cookie di Chrome, Edge e Firefox. Il browser li ricrea da solo al prossimo avvio, quindi non perdi nulla di permanente.",
+    noneFound: "Nessun browser supportato trovato su questo PC.",
+    cache: "Cache",
+    cookies: "Cookie",
+    clearButton: "Svuota",
+    clearing: "Svuotamento...",
+    runningWarning: "Chiudi {browser} per poterlo svuotare.",
+    clearedToast: "{browser}: {freed} liberati.",
   },
   redaxaPromo: {
     title: "Redaxa",
@@ -1839,6 +1884,17 @@ const en: Strings = {
     changeStructural:
       "An app update changed which categories are scored — part of this difference did not come from your PC.",
     changeTrend: "Trend",
+    categories: {
+      performance: "Performance",
+      gaming: "Gaming",
+      responsiveness: "Responsiveness",
+      memory: "Memory",
+      storage: "Storage",
+      startup: "Startup",
+      maintenance: "Maintenance",
+      privacy: "Privacy",
+      security: "Security",
+    },
   },
   transparency: {
     title: "What this changes, exactly",
@@ -2242,6 +2298,18 @@ const en: Strings = {
     button: "Flush now",
     running: "Flushing...",
     resultToast: "DNS cache flushed.",
+  },
+  browserCleanup: {
+    title: "Browser cleanup",
+    description:
+      "Clears cache and cookies for Chrome, Edge and Firefox. The browser rebuilds them on its own next launch, so nothing is lost for good.",
+    noneFound: "No supported browser found on this PC.",
+    cache: "Cache",
+    cookies: "Cookies",
+    clearButton: "Clear",
+    clearing: "Clearing...",
+    runningWarning: "Close {browser} to clear it.",
+    clearedToast: "{browser}: {freed} freed.",
   },
   redaxaPromo: {
     title: "Redaxa",
@@ -2873,6 +2941,17 @@ const fr: Strings = {
     changeStructural:
       "Une mise à jour de l'application a changé les catégories évaluées : une partie de cet écart ne vient pas de votre PC.",
     changeTrend: "Tendance",
+    categories: {
+      performance: "Performances",
+      gaming: "Gaming",
+      responsiveness: "Réactivité",
+      memory: "Mémoire",
+      storage: "Stockage",
+      startup: "Démarrage",
+      maintenance: "Maintenance",
+      privacy: "Confidentialité",
+      security: "Sécurité",
+    },
   },
   transparency: {
     title: "Ce que cela modifie, exactement",
@@ -3280,10 +3359,22 @@ const fr: Strings = {
   dnsFlush: {
     title: "Vider le cache DNS",
     description:
-      "Efface les adresses DNS mises en cache. Utile si un site a change de serveur et que votre navigateur continue d'afficher l'ancienne version.",
+      "Efface les adresses DNS mises en cache. Utile si un site a changé de serveur et que votre navigateur continue d'afficher l'ancienne version.",
     button: "Vider maintenant",
     running: "Vidage...",
-    resultToast: "Cache DNS vide.",
+    resultToast: "Cache DNS vidé.",
+  },
+  browserCleanup: {
+    title: "Nettoyage du navigateur",
+    description:
+      "Vide le cache et les cookies de Chrome, Edge et Firefox. Le navigateur les reconstruit tout seul au prochain démarrage, rien n'est perdu pour de bon.",
+    noneFound: "Aucun navigateur pris en charge trouvé sur ce PC.",
+    cache: "Cache",
+    cookies: "Cookies",
+    clearButton: "Vider",
+    clearing: "Vidage...",
+    runningWarning: "Fermez {browser} pour le vider.",
+    clearedToast: "{browser} : {freed} libérés.",
   },
   redaxaPromo: {
     title: "Redaxa",
@@ -3920,6 +4011,17 @@ const es: Strings = {
     changeStructural:
       "Una actualización de la aplicación cambió qué categorías se evalúan: parte de esta diferencia no viene de tu PC.",
     changeTrend: "Evolución",
+    categories: {
+      performance: "Rendimiento",
+      gaming: "Gaming",
+      responsiveness: "Capacidad de respuesta",
+      memory: "Memoria",
+      storage: "Almacenamiento",
+      startup: "Inicio",
+      maintenance: "Mantenimiento",
+      privacy: "Privacidad",
+      security: "Seguridad",
+    },
   },
   transparency: {
     title: "Qué modifica exactamente",
@@ -4322,12 +4424,24 @@ const es: Strings = {
     resultToast: "Disco ({media}) optimizado correctamente.",
   },
   dnsFlush: {
-    title: "Vaciar cache DNS",
+    title: "Vaciar caché DNS",
     description:
-      "Borra las direcciones DNS guardadas en memoria. Util si un sitio cambio de servidor y tu navegador sigue mostrando la version antigua.",
+      "Borra las direcciones DNS guardadas en memoria. Útil si un sitio cambió de servidor y tu navegador sigue mostrando la versión antigua.",
     button: "Vaciar ahora",
     running: "Vaciando...",
-    resultToast: "Cache DNS vaciada.",
+    resultToast: "Caché DNS vaciada.",
+  },
+  browserCleanup: {
+    title: "Limpieza del navegador",
+    description:
+      "Vacía la caché y las cookies de Chrome, Edge y Firefox. El navegador los reconstruye solo en el próximo inicio, así que no se pierde nada para siempre.",
+    noneFound: "No se encontró ningún navegador compatible en este PC.",
+    cache: "Caché",
+    cookies: "Cookies",
+    clearButton: "Vaciar",
+    clearing: "Vaciando...",
+    runningWarning: "Cierra {browser} para poder vaciarlo.",
+    clearedToast: "{browser}: {freed} liberados.",
   },
   redaxaPromo: {
     title: "Redaxa",
@@ -4966,6 +5080,17 @@ const de: Strings = {
     changeStructural:
       "Ein App-Update hat geändert, welche Kategorien bewertet werden - ein Teil dieser Differenz stammt nicht von Ihrem PC.",
     changeTrend: "Verlauf",
+    categories: {
+      performance: "Leistung",
+      gaming: "Gaming",
+      responsiveness: "Reaktionsschnelligkeit",
+      memory: "Arbeitsspeicher",
+      storage: "Speicherplatz",
+      startup: "Autostart",
+      maintenance: "Wartung",
+      privacy: "Datenschutz",
+      security: "Sicherheit",
+    },
   },
   transparency: {
     title: "Was genau geändert wird",
@@ -5372,10 +5497,22 @@ const de: Strings = {
   dnsFlush: {
     title: "DNS-Cache leeren",
     description:
-      "Loscht zwischengespeicherte DNS-Eintrage. Nutzlich, wenn eine Website den Server gewechselt hat und dein Browser weiterhin die alte Version anzeigt.",
+      "Löscht zwischengespeicherte DNS-Einträge. Nützlich, wenn eine Website den Server gewechselt hat und dein Browser weiterhin die alte Version anzeigt.",
     button: "Jetzt leeren",
     running: "Wird geleert...",
     resultToast: "DNS-Cache geleert.",
+  },
+  browserCleanup: {
+    title: "Browser-Bereinigung",
+    description:
+      "Leert Cache und Cookies von Chrome, Edge und Firefox. Der Browser baut sie beim nächsten Start von selbst wieder auf, es geht also nichts endgültig verloren.",
+    noneFound: "Kein unterstützter Browser auf diesem PC gefunden.",
+    cache: "Cache",
+    cookies: "Cookies",
+    clearButton: "Leeren",
+    clearing: "Wird geleert...",
+    runningWarning: "Schließe {browser}, um ihn zu leeren.",
+    clearedToast: "{browser}: {freed} freigegeben.",
   },
   redaxaPromo: {
     title: "Redaxa",
@@ -6017,6 +6154,17 @@ const pt: Strings = {
     changeStructural:
       "Uma atualização do app mudou quais categorias são pontuadas — parte desta diferença não veio do seu PC.",
     changeTrend: "Tendência",
+    categories: {
+      performance: "Desempenho",
+      gaming: "Jogos",
+      responsiveness: "Responsividade",
+      memory: "Memória",
+      storage: "Armazenamento",
+      startup: "Inicialização",
+      maintenance: "Manutenção",
+      privacy: "Privacidade",
+      security: "Segurança",
+    },
   },
   transparency: {
     title: "O que isto altera, exatamente",
@@ -6427,6 +6575,18 @@ const pt: Strings = {
     button: "Limpar agora",
     running: "Limpando...",
     resultToast: "Cache de DNS limpo.",
+  },
+  browserCleanup: {
+    title: "Limpeza do navegador",
+    description:
+      "Limpa cache e cookies do Chrome, Edge e Firefox. O navegador os recria sozinho na próxima abertura, então nada se perde de verdade.",
+    noneFound: "Nenhum navegador compatível encontrado neste PC.",
+    cache: "Cache",
+    cookies: "Cookies",
+    clearButton: "Limpar",
+    clearing: "Limpando...",
+    runningWarning: "Feche o {browser} para limpar.",
+    clearedToast: "{browser}: {freed} liberados.",
   },
   redaxaPromo: {
     title: "Redaxa",

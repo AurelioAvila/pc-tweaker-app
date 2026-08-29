@@ -235,9 +235,8 @@ pub fn install_driver_updates(
         });
     }
     use base64::Engine as _;
-    let payload = base64::engine::general_purpose::STANDARD.encode(
-        serde_json::to_string(&titles).map_err(|e| e.to_string())?,
-    );
+    let payload = base64::engine::general_purpose::STANDARD
+        .encode(serde_json::to_string(&titles).map_err(|e| e.to_string())?);
     crate::elevation::run_elevated_action("--elevated-driverupdate", &payload)?;
     read_outcome(&app)
 }
@@ -273,7 +272,8 @@ pub fn install_elevated(dir: &std::path::Path, payload: &str) -> Result<(), Stri
             String::from_utf8(bytes).map_err(|e| format!("driver update payload not utf-8: {}", e))
         })
         .and_then(|json| {
-            serde_json::from_str(&json).map_err(|e| format!("driver update payload not json: {}", e))
+            serde_json::from_str(&json)
+                .map_err(|e| format!("driver update payload not json: {}", e))
         })?;
     let outcome = imp::install(&titles)?;
     let json = serde_json::to_string(&outcome).map_err(|e| e.to_string())?;

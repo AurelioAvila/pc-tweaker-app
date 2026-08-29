@@ -34,7 +34,8 @@ pub fn info() -> NetLatencyInfo {
 }
 
 const HIVE: &str = "HKLM";
-pub(crate) const INTERFACES_PATH: &str = r"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces";
+pub(crate) const INTERFACES_PATH: &str =
+    r"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces";
 
 /// The two values that together disable packet coalescing and delayed ACKs.
 pub(crate) const VALUES: [&str; 2] = ["TcpAckFrequency", "TCPNoDelay"];

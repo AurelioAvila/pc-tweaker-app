@@ -83,7 +83,9 @@ pub fn current_provider() -> Result<String, String> {
         TEMPLATE
     ))?;
     if out.is_empty() {
-        return Err("Windows reported no congestion provider for the Internet template".to_string());
+        return Err(
+            "Windows reported no congestion provider for the Internet template".to_string(),
+        );
     }
     Ok(out)
 }

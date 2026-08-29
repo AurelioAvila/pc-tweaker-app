@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "1.3.2"
+version = "1.4.0"
 description = "Real Windows tweaks with automatic one-click rollback"
 authors = ["Aurelio Avila"]
 license-file = "../LICENSE"
@@ -49,6 +49,13 @@ windows-sys = { version = "0.59", features = [
     # GetLogicalProcessorInformationEx / affinity, for the X3D die aligner.
     "Win32_System_SystemInformation",
     "Win32_System_Threading",
+    # GetForegroundWindow / GetWindowThreadProcessId, so the gaming HUD can
+    # name the process it is reporting on instead of guessing.
+    "Win32_UI_WindowsAndMessaging",
+    # NtSetSystemInformation, for the standby-list purge in the Zero-Trace
+    # cleaner. Declared via LoadLibrary rather than linked, same as srclient.
+    "Win32_Security",
+    "Win32_System_Memory",
 ] }
 is_elevated = "0.1"
 runas = "1"

@@ -136,16 +136,28 @@ mod imp {
             // Bounding to a plausible operating range keeps such a value from
             // being presented as a measurement.
             .filter(|c| *c > 0.0 && *c < 125.0)
-            .fold(None, |acc: Option<f32>, c| Some(acc.map_or(c, |a| a.max(c))))
+            .fold(None, |acc: Option<f32>, c| {
+                Some(acc.map_or(c, |a| a.max(c)))
+            })
     }
 
     pub fn read() -> ThermalReport {
         let cpu_temp_c = read_cpu_temp();
         let gpus = read_nvidia();
         ThermalReport {
-            cpu_source: if cpu_temp_c.is_some() { "acpi" } else { "unavailable" }.to_string(),
+            cpu_source: if cpu_temp_c.is_some() {
+                "acpi"
+            } else {
+                "unavailable"
+            }
+            .to_string(),
             cpu_temp_c,
-            gpu_source: if gpus.is_empty() { "none" } else { "nvidia-smi" }.to_string(),
+            gpu_source: if gpus.is_empty() {
+                "none"
+            } else {
+                "nvidia-smi"
+            }
+            .to_string(),
             gpus,
         }
     }

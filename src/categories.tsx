@@ -4,13 +4,46 @@
 import React from "react";
 import { Category } from "./types";
 
+/**
+ * Per-section colour for the sidebar glyph.
+ *
+ * The nav used to tint every active icon with the single app accent, which
+ * made the twelve sections indistinguishable at a glance — the column read as
+ * one grey list with one highlighted row, so the icon carried no information.
+ * Giving each section its own hue turns the glyph into a landmark you learn
+ * once and then navigate by, instead of re-reading labels every time.
+ *
+ * Deliberately keyed by section string rather than by `Category`: half of
+ * these sections (scan, health, hardware, startup, profiles, ledger, pricing)
+ * are screens, not tweak categories, so they have no entry in CATEGORY_STYLE.
+ * The five that ARE categories reuse the same hue as their category chip, so
+ * a section and its tweaks stay visually connected.
+ */
+export const NAV_ACCENT: Record<string, string> = {
+  scan: "text-cyan-300",
+  health: "text-emerald-300",
+  hardware: "text-orange-300",
+  performance: "text-amber-300",
+  gaming: "text-rose-300",
+  privacy: "text-teal-300",
+  ui: "text-fuchsia-300",
+  startup: "text-violet-300",
+  manutenzione: "text-sky-300",
+  profiles: "text-indigo-300",
+  ledger: "text-blue-300",
+  pricing: "text-yellow-300",
+};
+
 export const CATEGORY_STYLE: Record<
   Category,
-  { icon: React.ReactElement; ring: string; chip: string; glyph: string }
+  { icon: React.ReactElement; ring: string; chip: string; glyph: string; tint: string }
 > = {
   performance: {
+    // Plate hue. Kept separate from `glyph` because the module paints
+    // itself with this and the icon has to stay legible on top of it.
+    tint: "#f59e0b",
     ring: "from-amber-400/30 to-orange-500/10",
-    glyph: "text-amber-300",
+    glyph: "text-[#1a1205]",
     chip: "bg-amber-400/15 text-amber-300 ring-1 ring-amber-400/30",
     // Speedometer mid-sweep: performance is measured, not just "zapped".
     icon: (
@@ -41,8 +74,11 @@ export const CATEGORY_STYLE: Record<
     ),
   },
   privacy: {
+    // Plate hue. Kept separate from `glyph` because the module paints
+    // itself with this and the icon has to stay legible on top of it.
+    tint: "#10b981",
     ring: "from-emerald-400/30 to-teal-500/10",
-    glyph: "text-emerald-300",
+    glyph: "text-[#04140d]",
     chip: "bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/30",
     // Shield with a keyhole: protection of what is yours, not just defense.
     icon: (
@@ -61,8 +97,11 @@ export const CATEGORY_STYLE: Record<
     ),
   },
   ui: {
+    // Plate hue. Kept separate from `glyph` because the module paints
+    // itself with this and the icon has to stay legible on top of it.
+    tint: "#d946ef",
     ring: "from-fuchsia-400/30 to-purple-500/10",
-    glyph: "text-fuchsia-300",
+    glyph: "text-[#180420]",
     chip: "bg-fuchsia-400/15 text-fuchsia-300 ring-1 ring-fuchsia-400/30",
     // An app window with its chrome: these tweaks reshape Windows' interface.
     icon: (
@@ -102,8 +141,11 @@ export const CATEGORY_STYLE: Record<
     ),
   },
   manutenzione: {
+    // Plate hue. Kept separate from `glyph` because the module paints
+    // itself with this and the icon has to stay legible on top of it.
+    tint: "#0ea5e9",
     ring: "from-sky-400/30 to-cyan-500/10",
-    glyph: "text-sky-300",
+    glyph: "text-[#04121c]",
     chip: "bg-sky-400/15 text-sky-300 ring-1 ring-sky-400/30",
     // Wrench plus a sparkle: upkeep that leaves the machine cleaner.
     icon: (
@@ -126,8 +168,11 @@ export const CATEGORY_STYLE: Record<
     ),
   },
   gaming: {
+    // Plate hue. Kept separate from `glyph` because the module paints
+    // itself with this and the icon has to stay legible on top of it.
+    tint: "#f43f5e",
     ring: "from-rose-400/30 to-red-500/10",
-    glyph: "text-rose-300",
+    glyph: "text-[#1c0409]",
     chip: "bg-rose-400/15 text-rose-300 ring-1 ring-rose-400/30",
     // A modern pad with real grips, d-pad and face buttons two-toned.
     icon: (

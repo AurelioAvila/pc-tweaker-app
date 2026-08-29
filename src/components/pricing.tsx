@@ -25,9 +25,25 @@ export function PricingPanel({
 
   return (
     <div className="animate-card">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-50">{s.pricing.title}</h2>
-        <p className="mx-auto mt-2 max-w-md text-sm text-ink-3">{s.pricing.subtitle}</p>
+      {/* An ambient wash behind the header rather than a flat heading on the
+          page background. It is decorative, so it is aria-hidden and sits
+          behind everything at pointer-events: none. */}
+      <div className="relative isolate text-center">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-[-90px] -z-10 h-[280px] w-[560px] -translate-x-1/2 rounded-full opacity-45 blur-[70px]"
+          style={{
+            background:
+              "radial-gradient(closest-side, var(--app-accent2), var(--app-accent) 45%, transparent 75%)",
+          }}
+        />
+        <p className="type-label mb-2 tracking-[0.22em] text-ink-3">{s.pricing.eyebrow}</p>
+        <h2 className="text-[34px] font-black leading-[1.1] tracking-[-0.03em] text-slate-50">
+          {s.pricing.title}
+        </h2>
+        <p className="mx-auto mt-2.5 max-w-md text-[13.5px] leading-relaxed text-ink-3">
+          {s.pricing.subtitle}
+        </p>
       </div>
 
       <div className="mt-6 flex justify-center">
@@ -73,8 +89,10 @@ export function PricingPanel({
           </div>
           <p className="mt-1 text-sm text-ink-3">{s.pricing.freeTagline}</p>
 
-          <p className="mt-5 text-4xl font-black tracking-tight text-ink">{money(0, lang)}</p>
-          <p className="mt-1 text-xs text-ink-3">{s.pricing.freePriceNote}</p>
+          <p className="type-data mt-5 text-[42px] font-black leading-none tracking-[-0.04em] text-ink">
+            {money(0, lang)}
+          </p>
+          <p className="mt-1.5 text-xs text-ink-3">{s.pricing.freePriceNote}</p>
 
           <ul className="mt-6 flex flex-col gap-2.5">
             {/* The tweak count is filled in from the real list rather than
@@ -82,7 +100,9 @@ export function PricingPanel({
                 became a lie the moment new tweaks shipped. */}
             {s.pricing.freeFeatures.map((feature) => (
               <li key={feature} className="flex items-start gap-2.5 text-sm text-ink-2">
-                <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                {/* Quiet, in the ink colour rather than a signal green: this
+                    column is the baseline, not the offer. */}
+                <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" />
                 <span>{format(feature, { count: freeTweakCount })}</span>
               </li>
             ))}
@@ -100,15 +120,41 @@ export function PricingPanel({
 
         {/* Pro */}
         <div className="relative rounded-2xl p-[1.5px]">
-          <div className="absolute inset-0 rounded-2xl bg-[linear-gradient(135deg,var(--app-accent),var(--app-accent2),var(--app-accent))] opacity-80" />
-          <div className="relative rounded-[15px] bg-[var(--app-bg-b)] p-6">
+          {/* Two layers behind the card: a soft coloured bloom on the page,
+              then the gradient hairline itself. The bloom is what stops the
+              Pro column reading as "the same card with a nicer border". */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-5 -z-10 rounded-[28px] opacity-35 blur-2xl"
+            style={{
+              background: "linear-gradient(135deg, var(--app-accent), var(--app-accent2))",
+            }}
+          />
+          <div className="absolute inset-0 rounded-2xl bg-[linear-gradient(135deg,var(--app-accent),var(--app-accent2),var(--app-accent))] opacity-90" />
+
+          {/* Only on the annual plan: a badge that labels every option labels
+              none of them, and a reader who toggles once sees straight through
+              it. Rendered on this wrapper rather than inside the card body,
+              which clips its contents — at -top-3 the badge sits outside the
+              card edge on purpose and would otherwise be cut in half. */}
+          {annual && (
             <span
-              className="absolute -top-3 right-6 rounded-full px-3 py-1 text-[10px] font-black tracking-wide text-slate-900 shadow-lg shadow-black/40"
+              className="absolute -top-3 right-6 z-10 rounded-full px-3 py-1 text-[10px] font-black tracking-wide text-slate-900 shadow-lg shadow-black/40"
               style={{ backgroundColor: "var(--app-accent2)" }}
             >
               {s.pricing.mostChosen}
             </span>
-
+          )}
+          <div className="relative overflow-hidden rounded-[15px] bg-[var(--app-bg-b)] p-6">
+            {/* A faint sheen across the top of the Pro card only. */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 top-0 h-32 opacity-[0.14]"
+              style={{
+                background:
+                  "radial-gradient(120% 100% at 50% 0%, var(--app-accent2), transparent 70%)",
+              }}
+            />
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-bold text-ink">{s.pricing.proName}</h3>
               {isPro && (
@@ -119,11 +165,19 @@ export function PricingPanel({
             </div>
             <p className="mt-1 text-sm text-ink-3">{s.pricing.proTagline}</p>
 
-            <div className="mt-5 flex items-end gap-1.5">
-              <span className="text-4xl font-black tracking-tight text-slate-50">
+            <div className="mt-5 flex items-end gap-2">
+              <span
+                className="type-data text-[52px] font-black leading-[0.9] tracking-[-0.045em]"
+                style={{
+                  backgroundImage: "linear-gradient(135deg, var(--app-accent2), var(--app-accent))",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
                 {money(price, lang)}
               </span>
-              <span className="pb-1.5 text-sm font-medium text-ink-3">
+              <span className="pb-2 text-sm font-semibold text-ink-3">
                 {annual ? s.pricing.perYear : s.pricing.perMonth}
               </span>
             </div>
@@ -141,11 +195,19 @@ export function PricingPanel({
             </p>
             <ul className="mt-3 flex flex-col gap-2.5">
               {s.pricing.proFeatures.map((feature) => (
-                <li key={feature} className="flex items-start gap-2.5 text-sm text-ink-2">
-                  <CheckIcon
-                    className="mt-0.5 h-4 w-4 shrink-0"
-                    style={{ color: "var(--app-accent2)" }}
-                  />
+                <li key={feature} className="flex items-start gap-2.5 text-sm text-ink">
+                  {/* Filled chip, not the same glyph the Free column uses:
+                      matching marks on both sides made the two lists read as
+                      interchangeable, which is the actual problem a tick on
+                      every row creates. */}
+                  <span
+                    className="mt-0.5 grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full"
+                    style={{
+                      background: "linear-gradient(135deg, var(--app-accent2), var(--app-accent))",
+                    }}
+                  >
+                    <CheckIcon className="h-3 w-3 text-slate-900" />
+                  </span>
                   <span>{feature}</span>
                 </li>
               ))}
@@ -161,7 +223,7 @@ export function PricingPanel({
             ) : (
               <button
                 onClick={() => onChoosePro(annual ? "annual" : "monthly")}
-                className="mt-6 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-3 text-sm font-bold text-slate-900 transition-transform hover:scale-[1.02]"
+                className="mt-6 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-3.5 text-[15px] font-black tracking-tight text-slate-900 shadow-[0_10px_30px_-10px_var(--app-accent)] transition-transform hover:scale-[1.02]"
               >
                 {s.pricing.proCta}
               </button>

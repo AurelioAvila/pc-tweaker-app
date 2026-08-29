@@ -55,8 +55,9 @@ import { usePulseSamples } from "./components/command";
 import { StartupManager } from "./components/startup";
 import { ProfilesPanel } from "./components/profiles";
 import { PricingPanel } from "./components/pricing";
+import { GamingHudCard, ZeroTraceCard } from "./components/pro";
 import { TitleBar } from "./components/titlebar";
-import { CATEGORY_STYLE } from "./categories";
+import { CATEGORY_STYLE, NAV_ACCENT } from "./categories";
 import "./App.css";
 
 function App() {
@@ -583,10 +584,15 @@ function App() {
                 [s.tabs.groupMonitor, ["scan", "health", "hardware"]],
                 [s.tabs.groupOptimize, ["performance", "gaming", "privacy", "ui"]],
                 [
+                  // "pricing" belongs in the nav, not only behind the Pro
+                  // button in the footer: it was reachable exclusively from
+                  // that button, so anyone looking for plans scanned the
+                  // twelve-entry sidebar, found nothing named for it, and
+                  // concluded the app had no pricing screen at all.
                   s.tabs.groupManage,
                   FEATURE_INTELLIGENCE
-                    ? ["startup", "manutenzione", "profiles", "ledger"]
-                    : ["startup", "manutenzione", "profiles"],
+                    ? ["startup", "manutenzione", "profiles", "ledger", "pricing"]
+                    : ["startup", "manutenzione", "profiles", "pricing"],
                 ],
               ] as [string, Section[]][]
             ).map(([groupLabel, keys]) => (
@@ -609,9 +615,20 @@ function App() {
                     >
                       {/* Bare glyph, no plate behind it: the icon is a mark, and
                         a filled tile per row would turn the column into a grid
-                        of buttons competing with the content. */}
+                        of buttons competing with the content.
+
+                        The active glyph takes the section's own hue (see
+                        NAV_ACCENT) rather than the one app accent: with twelve
+                        entries a single highlight colour made every section
+                        look the same, so the icon told you nothing about where
+                        you were. Falls back to the accent for any section that
+                        has no hue assigned. */}
                       <span
-                        className={`shrink-0 transition-colors ${active ? "text-accent" : "text-ink-3 group-hover:text-ink-2"}`}
+                        className={`shrink-0 transition-colors ${
+                          active
+                            ? (NAV_ACCENT[c.key] ?? "text-accent")
+                            : "text-ink-3 group-hover:text-ink-2"
+                        }`}
                       >
                         {c.icon}
                       </span>
@@ -750,7 +767,14 @@ function App() {
 
             {showScan && <DashboardCards s={s} onNavigate={setFilter} />}
 
-            {showHardware && <HardwarePanel s={s} pushToast={pushToast} />}
+            {showHardware && (
+              <HardwarePanel
+                s={s}
+                isPro={isProUnlocked}
+                onRequirePro={() => setPaywallFeature(s.driverBooster.title)}
+                pushToast={pushToast}
+              />
+            )}
 
             {showHealth && (
               <HealthPanel
@@ -854,6 +878,12 @@ function App() {
 
             {showPrivacyExtras && (
               <>
+                <ZeroTraceCard
+                  s={s}
+                  isPro={isProUnlocked}
+                  onRequirePro={() => setPaywallFeature(s.zeroTrace.title)}
+                  pushToast={pushToast}
+                />
                 <PasswordBreachCheck s={s} />
                 <RedaxaPromoCard s={s} />
               </>
@@ -903,6 +933,7 @@ function App() {
                         className={`icon-module grid h-11 w-11 shrink-0 place-items-center ${style.glyph}`}
                         style={
                           {
+                            "--module-tint": style.tint,
                             "--module-glow": t.requires_pro
                               ? "rgb(230 187 74 / 0.42)"
                               : "color-mix(in oklab, var(--accent) 45%, transparent)",
@@ -957,6 +988,15 @@ function App() {
 
               {showPrivacyExtras && (
                 <IpMaskCard s={s} onExplain={() => pushToast("error", s.ipMask.explainerToast)} />
+              )}
+
+              {filter === "ui" && !searching && (
+                <GamingHudCard
+                  s={s}
+                  isPro={isProUnlocked}
+                  onRequirePro={() => setPaywallFeature(s.hud.title)}
+                  pushToast={pushToast}
+                />
               )}
 
               {showCleanup && (

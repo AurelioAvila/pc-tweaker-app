@@ -162,6 +162,20 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // The feature's own name, the same way "Turbo Boost" and "Game Sessions"
+  // stay put. Translating a product name gives the reader a term they cannot
+  // search for and that matches nothing else in the app.
+  // Same reasoning as zeroTrace.title: a feature name, not a phrase.
+  "it:driverBooster.title",
+  "fr:driverBooster.title",
+  "es:driverBooster.title",
+  "de:driverBooster.title",
+  "pt:driverBooster.title",
+  "it:zeroTrace.title",
+  "fr:zeroTrace.title",
+  "es:zeroTrace.title",
+  "de:zeroTrace.title",
+  "pt:zeroTrace.title",
   // "Die" is the term the hardware press uses in every one of these
   // languages, and "V-Cache" is AMD's own product name — a translated
   // version of either would name something the reader cannot look up.

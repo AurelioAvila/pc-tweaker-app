@@ -103,7 +103,8 @@ mod win {
             let mut buf = vec![0u8; len as usize];
             let ok = GetLogicalProcessorInformationEx(
                 RelationCache,
-                buf.as_mut_ptr().cast::<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX>(),
+                buf.as_mut_ptr()
+                    .cast::<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX>(),
                 &mut len,
             );
             if ok == 0 {
@@ -268,12 +269,17 @@ mod win {
 
     pub fn set_affinity(pid: u32, mask: u64) -> Result<(), String> {
         if mask == 0 {
-            return Err("an empty affinity mask would leave the process no core to run on".to_string());
+            return Err(
+                "an empty affinity mask would leave the process no core to run on".to_string(),
+            );
         }
         let h = open(pid, PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION)?;
         let ok = unsafe { SetProcessAffinityMask(h.0, mask as usize) };
         if ok == 0 {
-            return Err(format!("Windows refused the affinity change for process {}", pid));
+            return Err(format!(
+                "Windows refused the affinity change for process {}",
+                pid
+            ));
         }
         Ok(())
     }
@@ -369,7 +375,9 @@ mod tests {
         );
         assert!(!r.ccds.is_empty());
         let covered: u32 = r.ccds.iter().map(|c| c.logical_count).sum();
-        let seen = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1) as u32;
+        let seen = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(1) as u32;
         assert!(
             covered >= seen,
             "dies cover {} logical processors but the machine has {}",

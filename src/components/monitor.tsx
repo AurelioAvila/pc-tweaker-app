@@ -324,7 +324,7 @@ export function RamCleaner({
         <button
           onClick={() => void cleanNow()}
           disabled={busy}
-          className="bg-accent text-on-accent shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60"
+          className="bg-accent text-on-accent shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
         >
           {busy ? s.ram.cleaning : s.ram.button}
         </button>

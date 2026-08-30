@@ -539,7 +539,7 @@ function ThermalProfiles({
         <button
           onClick={() => void apply()}
           disabled={busy || plan === null || applied}
-          className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2 text-[13px] font-bold text-on-accent transition-transform hover:scale-[1.02] disabled:cursor-default disabled:opacity-50 disabled:hover:scale-100"
+          className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2 text-[13px] font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-default disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:brightness-100"
         >
           {busy && (
             <span className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -1235,7 +1235,7 @@ export function DriversPanel({
                       .finally(() => setInstalling(false));
                   }}
                   disabled={installing || selectedTitles.size === 0}
-                  className="rounded-xl bg-accent px-4 py-2 text-[12.5px] font-bold text-on-accent transition-transform hover:scale-[1.02] disabled:cursor-wait disabled:opacity-60"
+                  className="rounded-xl bg-accent px-4 py-2 text-[12.5px] font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
                 >
                   {installing
                     ? s.hardware.winUpdateInstalling

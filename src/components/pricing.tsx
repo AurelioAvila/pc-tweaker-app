@@ -223,7 +223,7 @@ export function PricingPanel({
             ) : (
               <button
                 onClick={() => onChoosePro(annual ? "annual" : "monthly")}
-                className="mt-6 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-3.5 text-[15px] font-black tracking-tight text-slate-900 shadow-[0_10px_30px_-10px_var(--app-accent)] transition-transform hover:scale-[1.02]"
+                className="mt-6 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-3.5 text-[15px] font-black tracking-tight text-slate-900 shadow-[0_10px_30px_-10px_var(--app-accent)] transition hover:-translate-y-px hover:brightness-110"
               >
                 {s.pricing.proCta}
               </button>

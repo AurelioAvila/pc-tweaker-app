@@ -55,7 +55,7 @@ export function IpMaskCard({ s, onExplain }: { s: Strings; onExplain: () => void
         </div>
         <button
           onClick={onExplain}
-          className="shrink-0 rounded-xl bg-surface-2 px-4 py-2 text-sm font-semibold text-ink-2 transition-transform hover:scale-[1.03]"
+          className="shrink-0 rounded-xl bg-surface-2 px-4 py-2 text-sm font-semibold text-ink-2 transition hover:-translate-y-px hover:brightness-110"
         >
           {s.ipMask.button}
         </button>
@@ -160,7 +160,7 @@ export function DuplicateFinder({
         <button
           onClick={scan}
           disabled={scanning}
-          className="shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-[1.03] disabled:opacity-60"
+          className="shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-px hover:brightness-110 disabled:opacity-60"
         >
           {scanning ? s.duplicateFinder.scanning : s.duplicateFinder.chooseFolder}
         </button>
@@ -264,7 +264,7 @@ export function DiskOptimizeCard({
         <button
           onClick={run}
           disabled={running}
-          className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60"
+          className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
         >
           {running ? (
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-amber-950/30 border-t-amber-950" />
@@ -313,7 +313,7 @@ export function DnsFlushCard({
         <button
           onClick={run}
           disabled={running}
-          className="shrink-0 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-cyan-950 transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60"
+          className="shrink-0 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-cyan-950 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
         >
           {running ? s.dnsFlush.running : s.dnsFlush.button}
         </button>
@@ -399,7 +399,7 @@ export function BrowserCleanupCard({
               <button
                 onClick={() => clear(b)}
                 disabled={b.running || clearingId === b.id}
-                className="shrink-0 rounded-xl bg-sky-500 px-3.5 py-1.5 text-sm font-semibold text-sky-950 transition-transform hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-50"
+                className="shrink-0 rounded-xl bg-sky-500 px-3.5 py-1.5 text-sm font-semibold text-sky-950 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {clearingId === b.id ? s.browserCleanup.clearing : s.browserCleanup.clearButton}
               </button>
@@ -438,7 +438,7 @@ export function UninstallerPromoCard({ s }: { s: Strings }) {
             and read as a disabled control rather than the primary action. */}
         <button
           onClick={openPage}
-          className="shrink-0 rounded-xl bg-fuchsia-400 px-4 py-2 text-sm font-bold text-slate-900 shadow-lg shadow-fuchsia-500/30 transition-transform hover:scale-[1.03]"
+          className="shrink-0 rounded-xl bg-fuchsia-400 px-4 py-2 text-sm font-bold text-slate-900 shadow-lg shadow-fuchsia-500/30 transition hover:-translate-y-px hover:brightness-110"
         >
           {s.uninstallerPromo.button}
         </button>
@@ -470,7 +470,7 @@ export function RedaxaPromoCard({ s }: { s: Strings }) {
         </div>
         <button
           onClick={openPage}
-          className="shrink-0 rounded-xl bg-violet-400 px-4 py-2 text-sm font-bold text-slate-900 shadow-lg shadow-violet-500/30 transition-transform hover:scale-[1.03]"
+          className="shrink-0 rounded-xl bg-violet-400 px-4 py-2 text-sm font-bold text-slate-900 shadow-lg shadow-violet-500/30 transition hover:-translate-y-px hover:brightness-110"
         >
           {s.redaxaPromo.button}
         </button>
@@ -573,7 +573,7 @@ export function LargeFileFinder({
         <button
           onClick={scan}
           disabled={scanning}
-          className="shrink-0 rounded-xl bg-fuchsia-500 px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-[1.03] disabled:opacity-60"
+          className="shrink-0 rounded-xl bg-fuchsia-500 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-px hover:brightness-110 disabled:opacity-60"
         >
           {scanning ? s.largeFiles.scanning : s.largeFiles.chooseFolder}
         </button>
@@ -821,7 +821,7 @@ export function CleanupCard({
         <button
           disabled={busy}
           onClick={() => (locked ? onRequirePro() : onRun(info))}
-          className="shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-[1.03] disabled:opacity-60"
+          className="shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-px hover:brightness-110 disabled:opacity-60"
         >
           {busy ? s.cleanupRunning : s.cleanupButton}
         </button>
@@ -907,7 +907,7 @@ export function PasswordBreachCheck({ s }: { s: Strings }) {
             <button
               onClick={check}
               disabled={checking || !password}
-              className="shrink-0 rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-[1.03] disabled:opacity-60"
+              className="shrink-0 rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-px hover:brightness-110 disabled:opacity-60"
             >
               {checking ? s.passwordCheck.checking : s.passwordCheck.button}
             </button>

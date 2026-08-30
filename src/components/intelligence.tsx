@@ -128,7 +128,7 @@ export function AdvisorCard({
                 void onApply(top);
               }}
               disabled={busyId === top.id}
-              className="shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-on-accent transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60"
+              className="shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
             >
               {busyId === top.id ? "···" : s.advisor.applyButton}
             </button>

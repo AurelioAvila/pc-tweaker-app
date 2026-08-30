@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "1.4.1"
+version = "1.5.0"
 description = "Real Windows tweaks with automatic one-click rollback"
 authors = ["Aurelio Avila"]
 license-file = "../LICENSE"
@@ -56,6 +56,19 @@ windows-sys = { version = "0.59", features = [
     # cleaner. Declared via LoadLibrary rather than linked, same as srclient.
     "Win32_Security",
     "Win32_System_Memory",
+    # A real-time ETW consumer, for the frame counter. See src/fps.rs — the
+    # DXGI provider's Present events are the only way to observe a game's
+    # frame pacing from outside the game.
+    "Win32_System_Diagnostics_Etw",
+    # QueryPerformanceFrequency, to turn the QPC timestamps those events
+    # carry into milliseconds.
+    "Win32_System_Performance",
+    # EVENT_TRACE_LOGFILEW carries a TIME_ZONE_INFORMATION, so the consumer
+    # side of Etw is gated behind this too.
+    "Win32_System_Time",
+    # DwmSetWindowAttribute, to stop Windows 11 rounding the overlay window
+    # underneath the panel's own rounded corners.
+    "Win32_Graphics_Dwm",
 ] }
 is_elevated = "0.1"
 runas = "1"

@@ -519,7 +519,7 @@ export function ScanPanel({
               <button
                 onClick={() => fixAll(recommendedIds)}
                 disabled={fixing || recommendedIds.length === 0}
-                className="relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-40"
+                className="relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {fixing && (
                   <span

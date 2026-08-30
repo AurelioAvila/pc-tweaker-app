@@ -552,7 +552,7 @@ export function AccountMenu({
                           setOpen(false);
                           onUpgrade();
                         }}
-                        className="rounded-lg bg-gradient-to-r from-amber-300 to-yellow-500 px-3 py-1 text-xs font-bold text-amber-950 transition-transform hover:scale-105"
+                        className="rounded-lg bg-gradient-to-r from-amber-300 to-yellow-500 px-3 py-1 text-xs font-bold text-amber-950 transition hover:-translate-y-px hover:brightness-110"
                       >
                         {s.menu.upgradeButton}
                       </button>

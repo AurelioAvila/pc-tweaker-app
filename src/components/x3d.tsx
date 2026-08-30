@@ -224,7 +224,7 @@ export function X3dPanel({
                         .finally(() => setBusyPid(null));
                     }}
                     disabled={busyPid === p.pid}
-                    className={`shrink-0 rounded-lg px-3 py-1.5 text-[11.5px] font-bold transition-transform hover:scale-[1.03] disabled:cursor-wait disabled:opacity-60 ${
+                    className={`shrink-0 rounded-lg px-3 py-1.5 text-[11.5px] font-bold transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60 ${
                       aligned ? "border-line-2 text-ink-2 border" : "bg-accent text-on-accent"
                     }`}
                   >

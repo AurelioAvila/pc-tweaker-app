@@ -4,7 +4,17 @@ import tailwindcss from "@tailwindcss/vite";
 
 /** Client-side routes that must also exist as real files. Keep in sync with
  *  the routes handled in src/router.tsx. */
-const ROUTES = ["support", "privacy", "terms", "cookies", "accessibility"];
+const ROUTES = [
+  "support",
+  "privacy",
+  "terms",
+  "cookies",
+  "accessibility",
+  "windows-11-optimizer",
+  "gaming-performance",
+  "reversible-windows-tweaks",
+  "windows-privacy-tool",
+];
 
 /**
  * GitHub Pages serves static files only — it has no SPA rewrite rule, so a

@@ -5,15 +5,15 @@ import logoUrl from "../assets/favicon.png";
 
 export function Nav({
   navigate,
-  onSupportPage,
+  onSubpage,
 }: {
   navigate: (to: string) => void;
-  onSupportPage: boolean;
+  onSubpage: boolean;
 }) {
   // Section anchors only resolve on the home page. From /support they need
   // the leading "/" so the browser goes home first instead of hunting for an
   // element that isn't on this page.
-  const prefix = onSupportPage ? "/" : "";
+  const prefix = onSubpage ? "/" : "";
   const links: readonly { label: string; href: string }[] = [
     { label: text.nav.results, href: `${prefix}#results` },
     { label: text.nav.arsenal, href: `${prefix}#arsenal` },

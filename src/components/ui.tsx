@@ -134,7 +134,7 @@ export function PaywallModal({
         </p>
         <button
           onClick={onNotify}
-          className="mt-5 w-full rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 py-2.5 text-sm font-bold text-amber-950 transition-transform hover:scale-[1.02]"
+          className="mt-5 w-full rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 py-2.5 text-sm font-bold text-amber-950 transition hover:-translate-y-px hover:brightness-110"
         >
           {s.paywall.unlock}
         </button>

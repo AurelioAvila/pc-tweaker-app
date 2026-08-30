@@ -525,25 +525,34 @@ export function TurboBoostPanel({
           <span className="absolute h-32 w-32 rounded-full bg-orange-500/15 blur-2xl" />
         )}
         <TurboGauge value={needle} engaged={applied || busy} />
-        {/* Percentage sits inside the gauge's open bottom, where a rev counter
-            puts its gear readout. */}
-        <span className="pointer-events-none absolute bottom-6 flex flex-col items-center">
-          <span
-            className={`font-black tabular-nums leading-none transition-colors ${
-              applied || busy ? "text-orange-300" : "text-ink-3"
-            }`}
-            style={{ fontSize: 26 }}
-          >
-            {Math.round(needle * 100)}
-            <span className="text-[13px]">%</span>
-          </span>
-          {/* Labelled, because an unlabelled figure in the middle of a dial
-              called Turbo Boost reads as the feature's own output — and this
-              one is live CPU load, which the tweak does not change and should
-              not. Naming it is what stops an idle 2% looking like a failure. */}
-          <span className="type-label mt-0.5 text-[8.5px] tracking-[0.16em] text-ink-3">
-            {s.turboBoost.loadLabel}
-          </span>
+      </div>
+
+      {/* The readout used to sit inside the dial's open bottom, the way a rev
+          counter carries its gear number. On this dial it could not: the arc
+          closes at roughly the same height the text needed, so the label was
+          drawn over the coloured band and became unreadable, and the needle —
+          which sweeps down to the lower left at low load — crossed straight
+          through the digits. Below the dial there is nothing to collide with,
+          at any label length in any of the six languages. */}
+      <div className="pointer-events-none mt-2 flex items-baseline justify-center gap-2">
+        <span
+          className={`font-black tabular-nums leading-none transition-colors ${
+            applied || busy ? "text-orange-300" : "text-ink-3"
+          }`}
+          style={{ fontSize: 26 }}
+        >
+          {Math.round(needle * 100)}
+          <span className="text-[13px]">%</span>
+        </span>
+        {/* Labelled, because an unlabelled figure under a dial called Turbo
+            Boost reads as the feature's own output — and this one is live CPU
+            load, which the tweak does not change and should not. Naming it is
+            what stops an idle 2% looking like a failure. Set beside the number
+            rather than under it: the card already stacks the gain readout and
+            the clock line below this, and a fourth centred row made the whole
+            lower half read as a list of unrelated captions. */}
+        <span className="type-label text-ink-3 text-[9px] tracking-[0.18em]">
+          {s.turboBoost.loadLabel}
         </span>
       </div>
 
@@ -576,7 +585,7 @@ export function TurboBoostPanel({
            the one moment the panel most needs to look engaged was the one
            moment it looked switched off. The label and the gauge already
            carry the state, so the button does not need to dim to say it. */
-        className="mt-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-2.5 text-sm font-bold text-slate-900 shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.03] disabled:cursor-wait disabled:hover:scale-100"
+        className="mt-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-2.5 text-sm font-bold text-slate-900 shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:hover:translate-y-0 disabled:hover:brightness-100"
       >
         <BoltIcon className={`h-4 w-4 ${busy ? "animate-pulse" : ""}`} />
         {busy ? "···" : applied ? s.turboBoost.stopLabel : s.turboBoost.startLabel}

@@ -192,6 +192,13 @@ const REVIEWED_AS_CORRECT = new Set([
   // "Cache" and "Cookies" are the words Windows, browsers and the tech press
   // already use unchanged in each of these languages — a translated version
   // would be understood but would not match anything the reader has seen.
+  // "Normal" and "Compact" are spelled identically in these languages; the
+  // French for compact really is "compact", not a shortened English word.
+  "fr:hud.sizeCompact",
+  "fr:hud.sizeNormal",
+  "es:hud.sizeNormal",
+  "de:hud.sizeNormal",
+  "pt:hud.sizeNormal",
   // French spells this word identically to English.
   "fr:healthPanel.categories.maintenance",
   "it:browserCleanup.cache",

@@ -378,5 +378,14 @@ export type HudSnapshot = {
   vram_used_mb: number | null;
   vram_total_mb: number | null;
   bottleneck: Bottleneck;
-  foreground: { name: string; priority: string } | null;
+  foreground: { name: string; pid: number; priority: string } | null;
+  /** Present-event frame rate for the foreground process. Null when the
+   *  counter is off, the foreground window is not presenting, or it has not
+   *  drawn yet — all three mean "no reading", never zero. */
+  fps: {
+    fps: number;
+    frametime_ms: number;
+    low1_fps: number | null;
+    sample_frames: number;
+  } | null;
 };

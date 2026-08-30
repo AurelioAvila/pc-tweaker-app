@@ -13,8 +13,8 @@
         margin: 0;
         background: transparent;
         overflow: hidden;
-        /* The whole window is click-through (set from Rust), so nothing here
-           should look interactive. */
+        /* Nothing in the panel is a control — it is read, and dragged by its
+           whole surface — so no part of it should look clickable. */
         user-select: none;
         cursor: default;
       }

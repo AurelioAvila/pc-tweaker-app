@@ -77,6 +77,10 @@ pub fn bottleneck(cpu_pct: f32, gpu_pct: Option<f32>) -> Bottleneck {
 #[derive(Serialize, Clone)]
 pub struct ForegroundApp {
     pub name: String,
+    /// Needed to attribute frames to this process: the frame counter records
+    /// presents per process id, and the id is the only thing that ties the
+    /// two together — two copies of the same executable are two rates.
+    pub pid: u32,
     /// Windows' own scheduling class for the process — "High", "Above normal",
     /// "Normal", and so on. This is the real value read back from the running
     /// process, not the value some tweak asked for, so it stays honest when a
@@ -98,6 +102,12 @@ pub struct HudSnapshot {
     /// desktop, a secure prompt, or a window that closed between the two
     /// calls). The HUD shows a dash rather than a stale name.
     pub foreground: Option<ForegroundApp>,
+    /// The foreground process's frame rate, when the counter is running and
+    /// that process is actually presenting. `None` covers three different
+    /// situations on purpose — the counter is off, the foreground window is
+    /// not a game, or the game is loading and has drawn nothing — because in
+    /// all three the honest overlay shows no number rather than a zero.
+    pub fps: Option<crate::fps::FpsStats>,
 }
 
 #[cfg(windows)]
@@ -127,9 +137,18 @@ mod imp {
         }
     }
 
-    pub fn foreground_app() -> Option<ForegroundApp> {
-        // SAFETY: every call below is a plain Win32 read. The handle is closed
-        // on every path out, including the early returns.
+    /// Which process owns the foreground window.
+    ///
+    /// Deliberately separate from [`describe`], and deliberately handle-free.
+    /// `GetWindowThreadProcessId` answers this from the window alone, whereas
+    /// naming the process needs `OpenProcess` — and that is exactly what an
+    /// anti-cheat driver refuses for the process it is protecting. While the
+    /// two were one function, a protected game failed the handle step and took
+    /// the process id down with it, so the frame counter had nothing to
+    /// attribute frames to and reported no rate at all inside precisely the
+    /// games it was built for.
+    pub fn foreground_pid() -> Option<u32> {
+        // SAFETY: two plain Win32 reads, neither of which opens anything.
         unsafe {
             let hwnd = GetForegroundWindow();
             if hwnd.is_null() {
@@ -140,12 +159,27 @@ mod imp {
             if pid == 0 {
                 return None;
             }
+            Some(pid)
+        }
+    }
 
-            // LIMITED_INFORMATION is the least privilege that still answers
-            // both questions, and unlike PROCESS_QUERY_INFORMATION it is
-            // granted for processes at a higher integrity level — which most
-            // anti-cheat-protected games run at. Asking for more would fail
-            // on exactly the processes this HUD exists to report on.
+    /// The process's name and scheduling class, when Windows will say.
+    ///
+    /// Returns `None` for a process whose handles an anti-cheat driver
+    /// withholds. That is a normal outcome, not an error: the overlay shows a
+    /// dash where the name would be and goes on reporting everything that did
+    /// not need the handle — the frame rate above all.
+    pub fn describe(pid: u32) -> Option<ForegroundApp> {
+        // SAFETY: the handle is closed on every path out, including the early
+        // returns.
+        unsafe {
+            // LIMITED_INFORMATION is the least privilege that answers both
+            // questions, and unlike PROCESS_QUERY_INFORMATION it is granted
+            // across integrity levels. It is still not always granted: an
+            // anti-cheat driver can refuse every handle to the process it
+            // protects, however modest the access asked for. Hence the split
+            // above — this failing must cost the overlay a name, and nothing
+            // else.
             let handle: HANDLE = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
             if handle.is_null() {
                 return None;
@@ -174,6 +208,7 @@ mod imp {
             }
             Some(ForegroundApp {
                 name,
+                pid,
                 priority: priority_name(class).to_string(),
             })
         }
@@ -183,9 +218,22 @@ mod imp {
 #[cfg(not(windows))]
 mod imp {
     use super::ForegroundApp;
-    pub fn foreground_app() -> Option<ForegroundApp> {
+    pub fn foreground_pid() -> Option<u32> {
         None
     }
+    pub fn describe(_pid: u32) -> Option<ForegroundApp> {
+        None
+    }
+}
+
+#[cfg(windows)]
+fn fps_for(pid: u32) -> Option<crate::fps::FpsStats> {
+    crate::fps::imp::reading(pid)
+}
+
+#[cfg(not(windows))]
+fn fps_for(_pid: u32) -> Option<crate::fps::FpsStats> {
+    None
 }
 
 /// One HUD frame. Called on a timer by the overlay window.
@@ -209,6 +257,11 @@ pub fn hud_snapshot(state: tauri::State<'_, crate::sysmon::SysMonState>) -> HudS
     let gpu = thermals.gpus.first();
 
     let gpu_pct = gpu.and_then(|g| g.utilization_pct);
+    // The id first, then the description — never the other way round. A game
+    // that will not be described is still a game whose frames were counted.
+    let pid = imp::foreground_pid();
+    let foreground = pid.and_then(imp::describe);
+    let fps = pid.and_then(fps_for);
     HudSnapshot {
         cpu_pct,
         ram_used_mb,
@@ -218,7 +271,8 @@ pub fn hud_snapshot(state: tauri::State<'_, crate::sysmon::SysMonState>) -> HudS
         vram_used_mb: gpu.and_then(|g| g.vram_used_mb),
         vram_total_mb: gpu.and_then(|g| g.vram_total_mb),
         bottleneck: bottleneck(cpu_pct, gpu_pct),
-        foreground: imp::foreground_app(),
+        foreground,
+        fps,
     }
 }
 

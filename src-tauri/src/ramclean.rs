@@ -102,11 +102,11 @@ mod imp {
 pub fn clean_ram(
     state: tauri::State<'_, crate::sysmon::SysMonState>,
 ) -> Result<RamCleanResult, String> {
-    let mut sys = state
+    let mut guard = state
         .0
         .lock()
         .map_err(|_| "system monitor state is unavailable".to_string())?;
-    Ok(imp::clean(&mut sys))
+    Ok(imp::clean(&mut guard.sys))
 }
 
 #[cfg(not(windows))]
@@ -151,10 +151,11 @@ pub fn top_by_memory(rows: Vec<(String, u64)>, limit: usize) -> Vec<ProcessMemor
 pub fn top_memory_processes(
     state: tauri::State<'_, crate::sysmon::SysMonState>,
 ) -> Result<Vec<ProcessMemory>, String> {
-    let mut sys = state
+    let mut guard = state
         .0
         .lock()
         .map_err(|_| "system monitor state is unavailable".to_string())?;
+    let sys = &mut guard.sys;
     sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
     let rows: Vec<(String, u64)> = sys
         .processes()

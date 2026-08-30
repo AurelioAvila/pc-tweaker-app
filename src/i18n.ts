@@ -260,9 +260,20 @@ export interface Strings {
   hud: {
     title: string;
     subtitle: string;
-    noFrametime: string;
+    fpsAbout: string;
+    fpsLowExplained: string;
+    fpsStart: string;
+    fpsStop: string;
+    fpsNeedsAdmin: string;
+    fpsRunning: string;
     show: string;
     hide: string;
+    lock: string;
+    unlock: string;
+    dragHint: string;
+    lockedHint: string;
+    sizeCompact: string;
+    sizeNormal: string;
   };
   updater: {
     title: string; // uses {version}
@@ -1017,10 +1028,23 @@ const it: Strings = {
     title: "Overlay di gioco",
     subtitle:
       "Pannello trasparente sopra il gioco: carico CPU/GPU, temperature, VRAM, processo attivo con la sua priorità e indicatore di collo di bottiglia.",
-    noFrametime:
-      "Non mostra frametime né FPS: leggerli dall’esterno del gioco richiede una sessione di tracciamento ETW che questa app non esegue, e un numero plausibile ma inventato sarebbe peggio che non averlo.",
+    fpsAbout:
+      "Gli FPS si contano dagli eventi di present che Windows emette per ogni fotogramma — la stessa fonte di PresentMon, senza alcun aggancio al gioco. Richiede l’avvio come amministratore, perché aprire una sessione di tracciamento è un’operazione privilegiata.",
+    fpsLowExplained:
+      "Accanto agli FPS medi c’è DROP: la velocità dell’1% di fotogrammi peggiori, quello che altrove trovi chiamato «1% low». È il numero che si muove quando il gioco scatta, mentre la media resta alta e non te lo dice. Più DROP è vicino alla media, più il gioco è fluido.",
+    fpsStart: "Misura FPS",
+    fpsStop: "Ferma misura",
+    fpsNeedsAdmin: "Per misurare gli FPS serve avviare PC Tweaker come amministratore.",
+    fpsRunning:
+      "Misurazione attiva: gli FPS compaiono nell’overlay appena un gioco inizia a disegnare.",
     show: "Mostra",
     hide: "Nascondi",
+    lock: "Blocca",
+    unlock: "Sblocca",
+    dragHint: "Trascina l’overlay dove vuoi, poi bloccalo prima di avviare il gioco.",
+    lockedHint: "Bloccato: i clic lo attraversano e raggiungono il gioco. Sbloccalo per spostarlo.",
+    sizeCompact: "Compatto",
+    sizeNormal: "Normale",
   },
   updater: {
     title: "Aggiornamento disponibile: v{version}",
@@ -1055,8 +1079,8 @@ const it: Strings = {
     stageReading: "Lettura del piano energetico",
     stageRaising: "Aumento del limite di boost",
     stageApplying: "Applicazione al sistema",
-    modeAggressive: "Modalita aggressiva",
-    modeDefault: "Modalita predefinita",
+    modeAggressive: "Modalità aggressiva",
+    modeDefault: "Modalità predefinita",
     stageMeasuringBefore: "Misurazione prima",
     stageMeasuringAfter: "Nuova misurazione",
     gainMeasured: "{factor}x più veloce",
@@ -2079,10 +2103,23 @@ const en: Strings = {
     title: "Gaming overlay",
     subtitle:
       "A transparent panel over your game: CPU/GPU load, temperatures, VRAM, the active process with its scheduling priority, and a bottleneck indicator.",
-    noFrametime:
-      "It shows no frametime or FPS: reading those from outside the game needs an ETW tracing session this app does not run, and a plausible invented number would be worse than none.",
+    fpsAbout:
+      "Frame rate is counted from the present events Windows emits for every frame — the same source PresentMon reads, with nothing hooked into the game. It needs administrator, because opening a trace session is a privileged operation.",
+    fpsLowExplained:
+      "Beside the average there is DROP: the rate of the worst one percent of frames, the figure elsewhere called the 1% low. It is the number that moves when a game stutters, while the average stays high and says nothing. The closer DROP sits to the average, the smoother the game.",
+    fpsStart: "Measure FPS",
+    fpsStop: "Stop measuring",
+    fpsNeedsAdmin: "Measuring frame rate needs PC Tweaker started as administrator.",
+    fpsRunning:
+      "Measuring: the frame rate appears in the overlay as soon as a game starts drawing.",
     show: "Show",
     hide: "Hide",
+    lock: "Lock",
+    unlock: "Unlock",
+    dragHint: "Drag the overlay where you want it, then lock it before starting the game.",
+    lockedHint: "Locked: clicks pass through it to the game. Unlock it to move it again.",
+    sizeCompact: "Compact",
+    sizeNormal: "Normal",
   },
   updater: {
     title: "Update available: v{version}",
@@ -3137,10 +3174,25 @@ const fr: Strings = {
     title: "Overlay de jeu",
     subtitle:
       "Un panneau transparent au-dessus du jeu : charge CPU/GPU, températures, VRAM, processus actif avec sa priorité, et indicateur de goulot d’étranglement.",
-    noFrametime:
-      "Il n’affiche ni frametime ni FPS : les lire depuis l’extérieur du jeu exige une session de traçage ETW que cette app n’exécute pas, et un chiffre plausible mais inventé serait pire que rien.",
+    fpsAbout:
+      "Les FPS sont comptés à partir des événements de présentation que Windows émet à chaque image — la source que lit PresentMon, sans rien accrocher au jeu. Nécessite un lancement en administrateur, car ouvrir une session de traçage est une opération privilégiée.",
+    fpsLowExplained:
+      "À côté de la moyenne s’affiche DROP : la vitesse du pire pour cent des images, ce qu’ailleurs on appelle le « 1% low ». C’est le chiffre qui bouge quand le jeu saccade, alors que la moyenne reste haute et n’en dit rien. Plus DROP est proche de la moyenne, plus le jeu est fluide.",
+    fpsStart: "Mesurer les FPS",
+    fpsStop: "Arrêter la mesure",
+    fpsNeedsAdmin: "Mesurer les FPS demande de lancer PC Tweaker en tant qu’administrateur.",
+    fpsRunning:
+      "Mesure en cours : les FPS apparaissent dans l’overlay dès qu’un jeu commence à dessiner.",
     show: "Afficher",
     hide: "Masquer",
+    lock: "Verrouiller",
+    unlock: "Déverrouiller",
+    dragHint:
+      "Faites glisser l’overlay où vous voulez, puis verrouillez-le avant de lancer le jeu.",
+    lockedHint:
+      "Verrouillé : les clics le traversent et atteignent le jeu. Déverrouillez-le pour le déplacer.",
+    sizeCompact: "Compact",
+    sizeNormal: "Normal",
   },
   updater: {
     title: "Mise à jour disponible : v{version}",
@@ -4207,10 +4259,22 @@ const es: Strings = {
     title: "Overlay de juego",
     subtitle:
       "Un panel transparente sobre el juego: carga de CPU/GPU, temperaturas, VRAM, proceso activo con su prioridad e indicador de cuello de botella.",
-    noFrametime:
-      "No muestra frametime ni FPS: leerlos desde fuera del juego exige una sesión de trazado ETW que esta app no ejecuta, y un número plausible pero inventado sería peor que ninguno.",
+    fpsAbout:
+      "Los FPS se cuentan a partir de los eventos de presentación que Windows emite en cada fotograma: la misma fuente que lee PresentMon, sin enganchar nada al juego. Requiere iniciar como administrador, porque abrir una sesión de rastreo es una operación privilegiada.",
+    fpsLowExplained:
+      "Junto al promedio aparece DROP: la velocidad del uno por ciento peor de fotogramas, lo que en otros sitios llaman «1% low». Es la cifra que se mueve cuando el juego tironea, mientras el promedio sigue alto y no lo cuenta. Cuanto más cerca esté DROP del promedio, más fluido va el juego.",
+    fpsStart: "Medir FPS",
+    fpsStop: "Detener medición",
+    fpsNeedsAdmin: "Para medir los FPS hay que iniciar PC Tweaker como administrador.",
+    fpsRunning: "Midiendo: los FPS aparecen en el overlay en cuanto un juego empieza a dibujar.",
     show: "Mostrar",
     hide: "Ocultar",
+    lock: "Bloquear",
+    unlock: "Desbloquear",
+    dragHint: "Arrastra la superposición donde quieras y bloquéala antes de iniciar el juego.",
+    lockedHint: "Bloqueada: los clics la atraviesan y llegan al juego. Desbloquéala para moverla.",
+    sizeCompact: "Compacto",
+    sizeNormal: "Normal",
   },
   updater: {
     title: "Actualización disponible: v{version}",
@@ -5276,10 +5340,24 @@ const de: Strings = {
     title: "Spiel-Overlay",
     subtitle:
       "Ein transparentes Panel über dem Spiel: CPU-/GPU-Last, Temperaturen, VRAM, aktiver Prozess samt Priorität und ein Engpass-Indikator.",
-    noFrametime:
-      "Zeigt weder Frametime noch FPS: sie von außerhalb des Spiels zu lesen erfordert eine ETW-Trace-Sitzung, die diese App nicht betreibt — eine plausible erfundene Zahl wäre schlimmer als keine.",
+    fpsAbout:
+      "Die Bildrate wird aus den Present-Ereignissen gezählt, die Windows für jedes Bild ausgibt — dieselbe Quelle, die PresentMon liest, ohne etwas im Spiel einzuklinken. Erfordert den Start als Administrator, denn eine Ablaufverfolgungssitzung zu öffnen ist ein privilegierter Vorgang.",
+    fpsLowExplained:
+      "Neben dem Durchschnitt steht DROP: die Rate des schlechtesten Prozents der Bilder, andernorts 1% Low genannt. Das ist die Zahl, die sich bewegt, wenn ein Spiel stockt, während der Durchschnitt hoch bleibt und nichts davon verrät. Je näher DROP am Durchschnitt liegt, desto flüssiger läuft es.",
+    fpsStart: "FPS messen",
+    fpsStop: "Messung beenden",
+    fpsNeedsAdmin: "Zum Messen der Bildrate muss PC Tweaker als Administrator gestartet werden.",
+    fpsRunning:
+      "Messung läuft: Die Bildrate erscheint im Overlay, sobald ein Spiel zu zeichnen beginnt.",
     show: "Anzeigen",
     hide: "Ausblenden",
+    lock: "Sperren",
+    unlock: "Entsperren",
+    dragHint:
+      "Ziehen Sie das Overlay an die gewünschte Stelle und sperren Sie es vor dem Spielstart.",
+    lockedHint: "Gesperrt: Klicks gehen hindurch zum Spiel. Zum Verschieben entsperren.",
+    sizeCompact: "Kompakt",
+    sizeNormal: "Normal",
   },
   updater: {
     title: "Update verfügbar: v{version}",
@@ -6351,10 +6429,22 @@ const pt: Strings = {
     title: "Overlay de jogo",
     subtitle:
       "Um painel transparente sobre o jogo: carga de CPU/GPU, temperaturas, VRAM, processo ativo com a sua prioridade e indicador de estrangulamento.",
-    noFrametime:
-      "Não mostra frametime nem FPS: lê-los a partir de fora do jogo exige uma sessão de rastreio ETW que esta app não executa, e um número plausível mas inventado seria pior do que nenhum.",
+    fpsAbout:
+      "Os FPS são contados a partir dos eventos de apresentação que o Windows emite a cada fotograma — a mesma fonte que o PresentMon lê, sem prender nada ao jogo. Exige iniciar como administrador, porque abrir uma sessão de rastreio é uma operação privilegiada.",
+    fpsLowExplained:
+      "Ao lado da média aparece DROP: a velocidade do um por cento de fotogramas piores, aquilo a que noutros sítios chamam «1% low». É o número que se mexe quando o jogo engasga, enquanto a média fica alta e não o diz. Quanto mais perto DROP estiver da média, mais fluido está o jogo.",
+    fpsStart: "Medir FPS",
+    fpsStop: "Parar medição",
+    fpsNeedsAdmin: "Para medir os FPS é preciso iniciar o PC Tweaker como administrador.",
+    fpsRunning: "A medir: os FPS aparecem no overlay assim que um jogo começar a desenhar.",
     show: "Mostrar",
     hide: "Ocultar",
+    lock: "Bloquear",
+    unlock: "Desbloquear",
+    dragHint: "Arraste a sobreposição para onde quiser e bloqueie antes de iniciar o jogo.",
+    lockedHint: "Bloqueada: os cliques a atravessam e chegam ao jogo. Desbloqueie para movê-la.",
+    sizeCompact: "Compacto",
+    sizeNormal: "Normal",
   },
   updater: {
     title: "Atualização disponível: v{version}",

@@ -911,6 +911,19 @@ function App() {
               </>
             )}
 
+            {/* On the UI screen: it is a panel the user places, sizes and
+              locks, which is the kind of thing that screen is for. Above the
+              tweak list, like every other screen's headline card — below
+              forty-odd rows nobody scrolled far enough to find it. */}
+            {filter === "ui" && !searching && (
+              <GamingHudCard
+                s={s}
+                isPro={isProUnlocked}
+                onRequirePro={() => setPaywallFeature(s.hud.title)}
+                pushToast={pushToast}
+              />
+            )}
+
             <ul className="flex flex-col gap-3">
               {visibleTweaks.map((t, i) => {
                 const style = CATEGORY_STYLE[t.category];
@@ -990,15 +1003,6 @@ function App() {
 
               {showPrivacyExtras && (
                 <IpMaskCard s={s} onExplain={() => pushToast("error", s.ipMask.explainerToast)} />
-              )}
-
-              {filter === "ui" && !searching && (
-                <GamingHudCard
-                  s={s}
-                  isPro={isProUnlocked}
-                  onRequirePro={() => setPaywallFeature(s.hud.title)}
-                  pushToast={pushToast}
-                />
               )}
 
               {showCleanup && (

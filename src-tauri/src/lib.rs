@@ -20,6 +20,11 @@ mod gpupower;
 pub mod health;
 pub mod healthhistory;
 mod hud;
+// Public so examples/fpsprobe.rs can drive a real trace session: the one
+// part of the frame counter that unit tests cannot reach is whether the
+// provider yields events on a given machine.
+pub mod fps;
+mod hud_window;
 mod license;
 mod netlatency;
 mod netmaintenance;
@@ -1044,6 +1049,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(sysmon::SysMonState::new())
+        .manage(fps::FpsState::default())
         .manage(systemprofile::SystemProfileState::new())
         .setup(|app| {
             game_sessions::spawn_watcher(app.handle().clone());
@@ -1056,6 +1062,9 @@ pub fn run() {
             purge_standby_memory,
             shred_files,
             open_hud_overlay,
+            set_hud_click_through,
+            set_hud_compact,
+            hud_is_compact,
             close_hud_overlay,
             read_avatar,
             clear_avatar,
@@ -1101,6 +1110,10 @@ pub fn run() {
             startup::set_startup_enabled,
             list_audit_log,
             sysmon::system_stats,
+            fps::imp::start_fps_capture,
+            fps::imp::stop_fps_capture,
+            fps::imp::fps_status,
+            fps::imp::fps_snapshot,
             ramclean::clean_ram,
             ramclean::top_memory_processes,
             scan_large_files,
@@ -1243,6 +1256,55 @@ mod tests {
     /// license state — the Pro gate is specifically about `requires_pro`
     /// tweaks, not a blanket "no license, nothing works" failure mode.
     #[test]
+    /// The catalogue's size and its free/Pro split, pinned.
+    ///
+    /// These two numbers are quoted on the website, in the Store listing and
+    /// in the pricing card, and they have gone stale before: the site claimed
+    /// "50 tweaks" for three releases after the count had moved. A test is the
+    /// only place that notices, because nothing else reads all three sources
+    /// at once. If this fails, the catalogue changed — update the numbers
+    /// here, then update every surface listed above to match.
+    #[test]
+    fn the_catalogue_is_fifty_four_tweaks_nineteen_of_them_pro() {
+        let registry = tweaks::all_tweaks();
+        let registry_pro = registry.iter().filter(|t| t.requires_pro).count();
+
+        // The composite tweaks, each owning its own Pro flag. Listed by hand
+        // because they are built by hand in `list_tweaks`; keeping the two
+        // lists side by side is what makes a forgotten entry visible.
+        let composite_pro = [
+            false,                                                  // power plan
+            turbo::info().requires_pro,
+            false,                                                  // private DNS
+            gaming::input_lag_info().requires_pro,
+            gaming::turbo_boost_info().requires_pro,
+            game_priority::info().requires_pro,
+            gaming::keyboard_delay_info().requires_pro,
+            netlatency::info().requires_pro,
+            netshaper::info().requires_pro,
+            privacy_extra::activity_history_info().requires_pro,
+            privacy_extra::typing_personalization_info().requires_pro,
+            contextmenu::info().requires_pro,
+            services::windows_search_info().requires_pro,
+        ];
+
+        let total = registry.len() + composite_pro.len();
+        let pro = registry_pro + composite_pro.iter().filter(|p| **p).count();
+
+        assert_eq!(total, 54, "the catalogue no longer has 54 tweaks");
+        assert_eq!(pro, 19, "the Pro count moved");
+        assert_eq!(total - pro, 35, "the free count moved");
+
+        // The composite list must stay in step with what list_tweaks builds,
+        // otherwise the totals above would quietly stop covering everything.
+        assert_eq!(
+            composite_pro.len(),
+            all_visible_ids().len() - registry.len(),
+            "a composite tweak was added or removed without updating this test",
+        );
+    }
+
+    #[test]
     fn a_free_tweak_is_never_blocked_by_the_license_check() {
         let ids = all_visible_ids();
         let free_id = ids
@@ -1359,7 +1421,7 @@ mod tests {
 
 /// Shared Pro gate. Returns the `PRO_REQUIRED_PREFIX` error the frontend
 /// already knows how to turn into a paywall rather than a red toast.
-fn require_pro(app_data_dir: &std::path::Path) -> Result<(), String> {
+pub(crate) fn require_pro(app_data_dir: &std::path::Path) -> Result<(), String> {
     if license::LicenseStore::new(app_data_dir.to_path_buf()).is_pro_and_fresh() {
         return Ok(());
     }
@@ -1521,6 +1583,41 @@ fn shred_files(
 /// it, which in a shooter is the difference between a HUD and a liability. It
 /// also means the window needs no close button of its own: it is dismissed
 /// from the same switch that opened it.
+/// Stops Windows rounding the overlay window.
+///
+/// Windows 11 rounds the corners of every top-level window, including a
+/// borderless transparent one. The panel already draws its own rounded
+/// corners, and the two radii do not agree, so each corner was left with a
+/// sliver between the system's curve and the panel's — small hard-edged
+/// triangles against whatever was behind the overlay. Telling DWM to leave
+/// this window square hands the corners back to the panel, which is the only
+/// thing that should be shaping them.
+#[cfg(windows)]
+fn square_off_corners(window: &tauri::WebviewWindow) {
+    use windows_sys::Win32::Graphics::Dwm::{
+        DwmSetWindowAttribute, DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_DONOTROUND,
+    };
+    let Ok(hwnd) = window.hwnd() else {
+        return;
+    };
+    let preference = DWMWCP_DONOTROUND;
+    // SAFETY: a live window handle and a pointer to a local of the size the
+    // attribute expects. Purely cosmetic, so a failure — on a Windows build
+    // predating the attribute, for instance — is ignored rather than
+    // surfaced: the overlay is entirely usable with rounded corners.
+    unsafe {
+        DwmSetWindowAttribute(
+            hwnd.0 as _,
+            DWMWA_WINDOW_CORNER_PREFERENCE as u32,
+            std::ptr::addr_of!(preference).cast(),
+            std::mem::size_of_val(&preference) as u32,
+        );
+    }
+}
+
+#[cfg(not(windows))]
+fn square_off_corners(_window: &tauri::WebviewWindow) {}
+
 #[tauri::command(async)]
 fn open_hud_overlay(app: tauri::AppHandle) -> Result<(), String> {
     use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
@@ -1533,10 +1630,16 @@ fn open_hud_overlay(app: tauri::AppHandle) -> Result<(), String> {
         return Ok(());
     }
 
+    let dir = store_for_dir(&app)?;
+    let placement = hud_window::read_placement(&dir);
+
     let window = WebviewWindowBuilder::new(&app, "hud", WebviewUrl::App("overlay.html".into()))
         .title("PC Tweaker HUD")
-        .inner_size(430.0, 96.0)
-        .position(24.0, 24.0)
+        .inner_size(
+            hud_window::size_for(placement.compact).0,
+            hud_window::size_for(placement.compact).1,
+        )
+        .position(placement.x, placement.y)
         .decorations(false)
         .transparent(true)
         .always_on_top(true)
@@ -1549,10 +1652,99 @@ fn open_hud_overlay(app: tauri::AppHandle) -> Result<(), String> {
         .build()
         .map_err(|e| format!("could not open the overlay: {}", e))?;
 
-    window
-        .set_ignore_cursor_events(true)
-        .map_err(|e| format!("could not make the overlay click-through: {}", e))?;
+    // Opened interactive on purpose. Click-through is what this window wants
+    // while a game is running, but applying it here left the overlay
+    // impossible to place: it could not be grabbed, and a click aimed at it
+    // landed on whatever was behind — on the desktop, that dragged the icons
+    // underneath. It is now a mode the user turns on once the overlay sits
+    // where they want it, from the same card that opened it.
+    square_off_corners(&window);
+    remember_position(app.clone(), &window);
     Ok(())
+}
+
+/// Persists the overlay's position as the user drags it.
+///
+/// Saved on move rather than on close because the overlay is usually still
+/// open when a game exits or the machine shuts down, and a position that only
+/// survived a clean close would be lost exactly when it mattered.
+#[cfg(windows)]
+fn remember_position(app: tauri::AppHandle, window: &tauri::WebviewWindow) {
+    use tauri::{LogicalPosition, WindowEvent};
+
+    let scale = window.scale_factor().unwrap_or(1.0);
+    window.on_window_event(move |event| {
+        if let WindowEvent::Moved(position) = event {
+            let logical: LogicalPosition<f64> = position.to_logical(scale);
+            let Ok(dir) = store_for_dir(&app) else { return };
+            // A failed write costs the remembered position, nothing else, so
+            // it must not interrupt a drag the user is in the middle of.
+            // Re-read rather than assume: this closure only knows where the
+            // window moved to, and writing a whole placement from that alone
+            // would quietly reset the size the user picked.
+            let current = hud_window::read_placement(&dir);
+            let _ = hud_window::write_placement(
+                &dir,
+                hud_window::HudPlacement {
+                    x: logical.x,
+                    y: logical.y,
+                    ..current
+                },
+            );
+        }
+    });
+}
+
+#[cfg(not(windows))]
+fn remember_position(_app: tauri::AppHandle, _window: &tauri::WebviewWindow) {}
+
+/// Turns the overlay's click-through mode on or off.
+///
+/// On: the window stops receiving the mouse entirely, so a click over it
+/// reaches the game underneath — what an in-game overlay has to do. Off: it
+/// can be grabbed and moved again.
+/// Switches the overlay between its normal and compact sizes.
+///
+/// Resizes the window and tells the page, which drops the bars and the
+/// process row so the smaller window is not just the same layout clipped.
+#[tauri::command(async)]
+fn set_hud_compact(app: tauri::AppHandle, compact: bool) -> Result<(), String> {
+    use tauri::{Emitter, LogicalSize, Manager};
+
+    let window = app
+        .get_webview_window("hud")
+        .ok_or_else(|| "the overlay is not open".to_string())?;
+    let (w, h) = hud_window::size_for(compact);
+    window
+        .set_size(LogicalSize::new(w, h))
+        .map_err(|e| format!("could not resize the overlay: {}", e))?;
+    window
+        .emit("hud-compact", compact)
+        .map_err(|e| format!("could not tell the overlay its new size: {}", e))?;
+
+    let dir = store_for_dir(&app)?;
+    let current = hud_window::read_placement(&dir);
+    hud_window::write_placement(&dir, hud_window::HudPlacement { compact, ..current })
+}
+
+/// What size the overlay should draw itself at, asked once on load.
+///
+/// The window is created at the right size already; the page needs the same
+/// answer to lay itself out to match.
+#[tauri::command(async)]
+fn hud_is_compact(app: tauri::AppHandle) -> Result<bool, String> {
+    Ok(hud_window::read_placement(&store_for_dir(&app)?).compact)
+}
+
+#[tauri::command(async)]
+fn set_hud_click_through(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    use tauri::Manager;
+    let window = app
+        .get_webview_window("hud")
+        .ok_or_else(|| "the overlay is not open".to_string())?;
+    window
+        .set_ignore_cursor_events(enabled)
+        .map_err(|e| format!("could not change the overlay's click-through mode: {}", e))
 }
 
 #[tauri::command(async)]

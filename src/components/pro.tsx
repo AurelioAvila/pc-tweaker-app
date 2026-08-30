@@ -167,7 +167,7 @@ export function SecureDefragCard({
       <button
         onClick={() => void run()}
         disabled={running}
-        className="mt-4 flex items-center gap-2 rounded-xl bg-accent px-5 py-2 text-[13px] font-bold text-on-accent transition-transform hover:scale-[1.02] disabled:cursor-wait disabled:hover:scale-100"
+        className="mt-4 flex items-center gap-2 rounded-xl bg-accent px-5 py-2 text-[13px] font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:hover:translate-y-0 disabled:hover:brightness-100"
       >
         {running && (
           <span className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -360,7 +360,88 @@ export function GamingHudCard({
   pushToast: (kind: Toast["kind"], message: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  // Locked means click-through: the overlay stops taking the mouse so a click
+  // over it reaches the game. It starts unlocked because an overlay that
+  // cannot be grabbed cannot be placed, and the click that tries to move it
+  // lands on whatever is behind — on the desktop, that rearranges the icons.
+  const [locked, setLocked] = useState(false);
+  const [compact, setCompact] = useState(false);
+  // The frame counter is a separate concern from the overlay: it can be
+  // running with the panel hidden, and the panel is useful without it.
+  const [measuring, setMeasuring] = useState(false);
+  const [elevated, setElevated] = useState(false);
   const busy = useRef(false);
+
+  // The capture survives a navigation away from this screen, so the card asks
+  // what the state is rather than assuming it starts off.
+  useEffect(() => {
+    let alive = true;
+    void invoke<{ running: boolean; elevated: boolean }>("fps_status")
+      .then((st) => {
+        if (!alive) return;
+        setMeasuring(st.running);
+        setElevated(st.elevated);
+      })
+      .catch(() => {
+        // Leaving both false hides the control and shows the requirement,
+        // which is the safe reading of "we could not find out".
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  async function toggleSize() {
+    if (busy.current) return;
+    busy.current = true;
+    try {
+      const next = !compact;
+      await invoke("set_hud_compact", { compact: next });
+      setCompact(next);
+    } catch (e) {
+      pushToast("error", String(e));
+    } finally {
+      busy.current = false;
+    }
+  }
+
+  async function toggleFps() {
+    if (!isPro) {
+      onRequirePro();
+      return;
+    }
+    if (busy.current) return;
+    busy.current = true;
+    try {
+      if (measuring) {
+        await invoke("stop_fps_capture");
+        setMeasuring(false);
+      } else {
+        await invoke("start_fps_capture");
+        setMeasuring(true);
+      }
+    } catch (e) {
+      // The message the backend sends for the unelevated case is the whole
+      // explanation, not an error code, so it is shown as it arrives.
+      pushToast("error", String(e));
+    } finally {
+      busy.current = false;
+    }
+  }
+
+  async function toggleLock() {
+    if (busy.current) return;
+    busy.current = true;
+    try {
+      const next = !locked;
+      await invoke("set_hud_click_through", { enabled: next });
+      setLocked(next);
+    } catch (e) {
+      pushToast("error", String(e));
+    } finally {
+      busy.current = false;
+    }
+  }
 
   async function toggle() {
     if (!isPro) {
@@ -373,9 +454,15 @@ export function GamingHudCard({
       if (open) {
         await invoke("close_hud_overlay");
         setOpen(false);
+        // The next overlay is created unlocked, so the button must not still
+        // claim otherwise.
+        setLocked(false);
       } else {
         await invoke("open_hud_overlay");
         setOpen(true);
+        // The overlay reopens at the size it was last left at, so the button
+        // has to agree with it rather than assume the normal one.
+        setCompact(await invoke<boolean>("hud_is_compact"));
       }
     } catch (e) {
       pushToast("error", String(e));
@@ -393,16 +480,71 @@ export function GamingHudCard({
             <ProBadge label={s.badges.pro} />
           </div>
           <p className="mt-0.5 text-[12px] leading-relaxed text-ink-3">{s.hud.subtitle}</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-ink-3">{s.hud.noFrametime}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-ink-3">{s.hud.fpsAbout}</p>
+          {/* The overlay labels this "DROP", which says what the number is
+              for. This is where its usual name is given — 1% low, as
+              Afterburner, FrameView, Adrenalin and PresentMon all print it —
+              so that anyone who wants to read more knows the term to search
+              for. The overlay has room for a word; this has room for a
+              sentence. */}
+          <p className="mt-1 text-[11px] leading-relaxed text-ink-3">{s.hud.fpsLowExplained}</p>
+          {/* The requirement is stated before the click rather than after it:
+              a button that only ever fails is worse than one that explains
+              itself. */}
+          {!elevated && (
+            <p className="mt-1 text-[11px] leading-relaxed text-amber-300/80">
+              {s.hud.fpsNeedsAdmin}
+            </p>
+          )}
+          {measuring && (
+            <p className="mt-1 text-[11px] leading-relaxed text-emerald-300/80">
+              {s.hud.fpsRunning}
+            </p>
+          )}
+          {open && (
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-3">
+              {locked ? s.hud.lockedHint : s.hud.dragHint}
+            </p>
+          )}
         </div>
-        <button
-          onClick={() => void toggle()}
-          className={`shrink-0 rounded-xl px-4 py-2 text-[12.5px] font-bold transition-transform hover:scale-[1.03] ${
-            open ? "border border-line-2 text-ink-2" : "bg-accent text-on-accent"
-          }`}
-        >
-          {open ? s.hud.hide : s.hud.show}
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          {open && (
+            <button
+              onClick={() => void toggleSize()}
+              className="rounded-xl border border-line-2 px-3 py-2 text-[12.5px] font-bold text-ink-2 transition hover:-translate-y-px hover:brightness-110"
+            >
+              {compact ? s.hud.sizeNormal : s.hud.sizeCompact}
+            </button>
+          )}
+          {open && (
+            <button
+              onClick={() => void toggleLock()}
+              className="rounded-xl border border-line-2 px-3 py-2 text-[12.5px] font-bold text-ink-2 transition hover:-translate-y-px hover:brightness-110"
+            >
+              {locked ? s.hud.unlock : s.hud.lock}
+            </button>
+          )}
+          {elevated && (
+            <button
+              onClick={() => void toggleFps()}
+              className={`rounded-xl px-3 py-2 text-[12.5px] font-bold transition hover:-translate-y-px hover:brightness-110 ${
+                measuring
+                  ? "border border-emerald-400/40 text-emerald-300"
+                  : "border border-line-2 text-ink-2"
+              }`}
+            >
+              {measuring ? s.hud.fpsStop : s.hud.fpsStart}
+            </button>
+          )}
+          <button
+            onClick={() => void toggle()}
+            className={`rounded-xl px-4 py-2 text-[12.5px] font-bold transition hover:-translate-y-px hover:brightness-110 ${
+              open ? "border border-line-2 text-ink-2" : "bg-accent text-on-accent"
+            }`}
+          >
+            {open ? s.hud.hide : s.hud.show}
+          </button>
+        </div>
       </div>
     </li>
   );
@@ -543,7 +685,7 @@ export function DriverBoosterCard({
         <button
           onClick={() => void scan()}
           disabled={scanning}
-          className="flex shrink-0 items-center gap-2 rounded-xl bg-accent px-4 py-2 text-[12.5px] font-bold text-on-accent transition-transform hover:scale-[1.02] disabled:cursor-wait disabled:hover:scale-100"
+          className="flex shrink-0 items-center gap-2 rounded-xl bg-accent px-4 py-2 text-[12.5px] font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:hover:translate-y-0 disabled:hover:brightness-100"
         >
           {scanning && (
             <span className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -622,7 +764,7 @@ export function DriverBoosterCard({
           <button
             onClick={() => void openSelected()}
             disabled={selectedPages.length === 0}
-            className="mt-3 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-2.5 text-[13px] font-bold text-slate-900 transition-transform hover:scale-[1.01] disabled:opacity-40 disabled:hover:scale-100"
+            className="mt-3 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-2.5 text-[13px] font-bold text-slate-900 transition hover:-translate-y-px hover:brightness-110 disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:brightness-100"
           >
             {format(s.driverBooster.openSelected, { count: selectedPages.length })}
           </button>

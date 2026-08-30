@@ -1065,6 +1065,7 @@ pub fn run() {
             set_hud_click_through,
             set_hud_compact,
             hud_is_compact,
+            hud_is_open,
             close_hud_overlay,
             read_avatar,
             clear_avatar,
@@ -1731,6 +1732,12 @@ fn set_hud_compact(app: tauri::AppHandle, compact: bool) -> Result<(), String> {
 ///
 /// The window is created at the right size already; the page needs the same
 /// answer to lay itself out to match.
+#[tauri::command(async)]
+fn hud_is_open(app: tauri::AppHandle) -> bool {
+    use tauri::Manager;
+    app.get_webview_window("hud").is_some()
+}
+
 #[tauri::command(async)]
 fn hud_is_compact(app: tauri::AppHandle) -> Result<bool, String> {
     Ok(hud_window::read_placement(&store_for_dir(&app)?).compact)

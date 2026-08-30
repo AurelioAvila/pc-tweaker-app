@@ -10,6 +10,7 @@ import { ReviewsSection } from "./components/ReviewsSection";
 import { FaqAccordion } from "./components/FaqAccordion";
 import { Footer } from "./components/Footer";
 import { SupportPage } from "./pages/Support";
+import { GuidePage, GUIDES } from "./pages/Guides";
 import {
   PrivacyPage,
   TermsPage,
@@ -69,7 +70,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       page = <AccessibilityPage />;
       break;
     default:
-      page = <NotFoundPage navigate={navigate} />;
+      page = GUIDES[path] ? <GuidePage path={path} navigate={navigate} /> : <NotFoundPage navigate={navigate} />;
   }
 
   return (
@@ -82,7 +83,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       >
         Skip to content
       </a>
-      <Nav navigate={navigate} onSupportPage={path === "/support"} />
+      <Nav navigate={navigate} onSubpage={path !== "/"} />
       {page}
       <Footer navigate={navigate} />
     </>

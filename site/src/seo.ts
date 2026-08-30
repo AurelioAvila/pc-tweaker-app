@@ -55,6 +55,34 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     canonical: `${ORIGIN}/accessibility/`,
     ogType: "website",
   },
+  "/windows-11-optimizer": {
+    title: "Windows 11 Optimizer with Reversible Tweaks | PC Tweaker",
+    description:
+      "Optimize Windows 11 with transparent performance, privacy and maintenance tweaks designed around individual control and automatic rollback.",
+    canonical: `${ORIGIN}/windows-11-optimizer/`,
+    ogType: "website",
+  },
+  "/gaming-performance": {
+    title: "Windows Gaming Performance Tweaks | PC Tweaker",
+    description:
+      "Tune Windows for more consistent gaming performance with explicit system adjustments, hardware monitoring and reversible changes.",
+    canonical: `${ORIGIN}/gaming-performance/`,
+    ogType: "website",
+  },
+  "/reversible-windows-tweaks": {
+    title: "Reversible Windows Tweaks with Automatic Rollback | PC Tweaker",
+    description:
+      "Apply transparent Windows tweaks with a recovery path. PC Tweaker keeps supported changes understandable, auditable and reversible.",
+    canonical: `${ORIGIN}/reversible-windows-tweaks/`,
+    ogType: "website",
+  },
+  "/windows-privacy-tool": {
+    title: "Reversible Windows Privacy Tool | PC Tweaker",
+    description:
+      "Review and adjust supported Windows privacy settings without destructive debloating, bundled scripts or irreversible presets.",
+    canonical: `${ORIGIN}/windows-privacy-tool/`,
+    ogType: "website",
+  },
 };
 
 export const NOT_FOUND_SEO: RouteSeo = {

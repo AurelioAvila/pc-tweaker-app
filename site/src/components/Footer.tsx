@@ -87,6 +87,16 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
             />
             <Col
               navigate={navigate}
+              title="GUIDES"
+              links={[
+                { label: "Windows 11 optimizer", href: "/windows-11-optimizer" },
+                { label: "Gaming performance", href: "/gaming-performance" },
+                { label: "Reversible tweaks", href: "/reversible-windows-tweaks" },
+                { label: "Windows privacy", href: "/windows-privacy-tool" },
+              ]}
+            />
+            <Col
+              navigate={navigate}
               title={text.footer.legal}
               links={[
                 { label: text.footer.privacy, href: "/privacy" },

@@ -1,5 +1,51 @@
 # Changelog
 
+## v1.5.0 - 2026-08-30
+
+### New (Pro)
+
+- Frame rate in the gaming overlay. Counted from the present events Windows
+  emits for every frame — the same source PresentMon reads — rather than
+  estimated from GPU load or from the overlay's own repaints, either of which
+  moves convincingly and means nothing. Both Direct3D 9 and Direct3D 10 and
+  later are covered, so titles two decades apart are measured the same way.
+  Requires running as administrator, because opening a trace session is a
+  privileged operation; when it cannot measure it says so rather than showing
+  a number.
+- DROP beside the average: the rate of the worst one percent of frames. The
+  average hides a stutter that the eye does not, and this is the figure that
+  moves when a game hitches. Shown only once there are enough frames for the
+  worst one percent to mean more than a single frame.
+
+### Fixed
+
+- CPU load could read 100% while the title bar, sampled a moment earlier,
+  read 13%. Every panel shares one system handle, and CPU usage is derived
+  from the interval between two readings of it — so when two panels polled a
+  few milliseconds apart, the second measured a few milliseconds of wall
+  clock, over which a busy core reads as fully busy. Readings are now taken
+  over a fixed minimum interval and shared, so every panel agrees.
+- The gaming overlay could not be moved: it took no clicks, and a click aimed
+  at it went through to whatever was behind — on the desktop, that rearranged
+  the icons. It now opens draggable, and click-through became a mode you turn
+  on from its card once it sits where you want it. Its position is remembered.
+- The overlay had a violet background instead of being transparent over the
+  game, and could not be made smaller. It is now genuinely transparent, has a
+  compact size, and sizes itself to its contents — previously a fixed width
+  cut the last reading in half.
+- Memory in the overlay showed only the amount in use. "1G" of video memory
+  says nothing without knowing the card holds six; both now read as used of
+  total.
+- Turbo Boost's gauge drew the CPU load label over the coloured arc and the
+  needle straight through the figure. The reading moved below the dial, where
+  nothing collides with it in any of the six languages.
+- Buttons blurred along their bottom edge while hovered, in every panel: the
+  hover enlarged an already-drawn button by three percent, which stretches
+  the pixels rather than redrawing them.
+- Faint triangles at the overlay's corners — a drop shadow with no room to
+  fall, clipped by the window's square edge.
+- "Modalita aggressiva" was missing its accent in Italian.
+
 ## v1.4.1 - 2026-08-30
 
 ### New

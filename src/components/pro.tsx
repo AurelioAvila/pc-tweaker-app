@@ -376,6 +376,26 @@ export function GamingHudCard({
   // what the state is rather than assuming it starts off.
   useEffect(() => {
     let alive = true;
+
+    // Check if the HUD window is already open (e.g. from a previous session
+    // when we navigate back to this screen)
+    void invoke<boolean>("hud_is_open")
+      .then(async (isOpen) => {
+        if (!alive) return;
+        setOpen(isOpen);
+        if (isOpen) {
+          try {
+            const isCompact = await invoke<boolean>("hud_is_compact");
+            if (alive) setCompact(isCompact);
+          } catch {
+            // The overlay is still known to be open even if its size could
+            // not be read; falling back to the normal layout is the safe
+            // guess, and the size button lets the user correct it.
+          }
+        }
+      })
+      .catch(() => {});
+
     void invoke<{ running: boolean; elevated: boolean }>("fps_status")
       .then((st) => {
         if (!alive) return;

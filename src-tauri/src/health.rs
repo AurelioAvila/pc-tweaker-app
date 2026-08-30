@@ -30,6 +30,7 @@ pub struct HealthFactor {
     pub evidence: String,
 }
 
+
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct HealthCategory {

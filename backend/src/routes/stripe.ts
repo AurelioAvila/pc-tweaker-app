@@ -50,13 +50,20 @@ function requireStripe(req: Request, res: Response, next: NextFunction) {
 type PlanKey = "monthly" | "annual" | "lifetime";
 type PlanDef = { env: string; mode: "subscription" | "payment" };
 
-// Pro is sold as a subscription: monthly, or yearly at a discount. Each plan
-// is a separate recurring Price in Stripe; `lifetime` stays supported so the
-// original one-time STRIPE_PRICE_ID keeps working for anyone who bought it.
+// Pro is sold monthly, yearly at a discount, or once and for good. Each is a
+// separate Price in Stripe, and the client never names one — it names a plan,
+// and this map is the only thing that turns a plan into a price.
+//
+// Lifetime deliberately does NOT reuse STRIPE_PRICE_ID. That variable holds
+// the original one-time price from before subscriptions existed, at whatever
+// amount was charged then; pointing the new lifetime tier at it would show
+// one price in the app and charge another at checkout. A dedicated variable
+// means the worst case is a clean "not configured" error instead of a
+// customer billed an amount nobody quoted them.
 const PLANS: Record<PlanKey, PlanDef> = {
   monthly: { env: "STRIPE_PRICE_MONTHLY", mode: "subscription" },
   annual: { env: "STRIPE_PRICE_ANNUAL", mode: "subscription" },
-  lifetime: { env: "STRIPE_PRICE_ID", mode: "payment" },
+  lifetime: { env: "STRIPE_PRICE_LIFETIME", mode: "payment" },
 };
 
 /**

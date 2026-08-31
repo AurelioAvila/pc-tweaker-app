@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { format, Lang, Strings } from "../i18n";
-import { money, PRICE_ANNUAL, PRICE_MONTHLY, savingsPercent } from "../lib";
+import {
+  LIFETIME_BREAK_EVEN_MONTHS,
+  money,
+  PRICE_ANNUAL,
+  PRICE_LIFETIME,
+  PRICE_MONTHLY,
+  ProPlan,
+  savingsPercent,
+} from "../lib";
 import { CheckIcon } from "./icons";
 
 export function PricingPanel({
@@ -15,13 +23,27 @@ export function PricingPanel({
   lang: Lang;
   isPro: boolean;
   freeTweakCount: number;
-  onChoosePro: (plan: "monthly" | "annual") => void;
+  onChoosePro: (plan: ProPlan) => void;
   onManageBilling: () => void;
 }) {
-  const [annual, setAnnual] = useState(true);
+  // Three plans rather than a monthly/annual boolean. Lifetime is not another
+  // billing period — it is a different kind of purchase — but putting it in
+  // the same control is what makes it comparable, which is the whole reason
+  // to offer it.
+  const [plan, setPlan] = useState<ProPlan>("annual");
+  const annual = plan === "annual";
 
-  const price = annual ? PRICE_ANNUAL : PRICE_MONTHLY;
+  const price =
+    plan === "lifetime" ? PRICE_LIFETIME : plan === "annual" ? PRICE_ANNUAL : PRICE_MONTHLY;
   const perMonthEquivalent = PRICE_ANNUAL / 12;
+
+  // One shape for all three, so a fourth would not mean a fourth copy of it.
+  const tabClass = (selected: boolean) =>
+    `relative z-10 flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
+      selected ? "text-white" : "text-ink-3 hover:text-ink-2"
+    }`;
+  const tabStyle = (selected: boolean) =>
+    selected ? { backgroundColor: "var(--app-accent)" } : undefined;
 
   return (
     <div className="animate-card">
@@ -49,22 +71,21 @@ export function PricingPanel({
       <div className="mt-6 flex justify-center">
         <div className="relative inline-flex items-center gap-1 rounded-full bg-surface-2 p-1 ring-1 ring-line">
           <button
-            onClick={() => setAnnual(false)}
-            className={`relative z-10 rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-              annual ? "text-ink-3 hover:text-ink-2" : "text-white"
-            }`}
-            style={!annual ? { backgroundColor: "var(--app-accent)" } : undefined}
+            onClick={() => setPlan("monthly")}
+            className={tabClass(plan === "monthly")}
+            style={tabStyle(plan === "monthly")}
           >
             {s.pricing.monthly}
           </button>
           <button
-            onClick={() => setAnnual(true)}
-            className={`relative z-10 flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-              annual ? "text-white" : "text-ink-3 hover:text-ink-2"
-            }`}
-            style={annual ? { backgroundColor: "var(--app-accent)" } : undefined}
+            onClick={() => setPlan("annual")}
+            className={tabClass(annual)}
+            style={tabStyle(annual)}
           >
             {s.pricing.annual}
+            {/* Only the annual tab carries a badge. Putting one on lifetime
+                too would leave every option shouting, which is the same as
+                none of them shouting. */}
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold transition-colors ${
                 annual ? "bg-white/25 text-white" : "bg-emerald-400/20 text-emerald-300"
@@ -72,6 +93,13 @@ export function PricingPanel({
             >
               {format(s.pricing.saveBadge, { percent: savingsPercent })}
             </span>
+          </button>
+          <button
+            onClick={() => setPlan("lifetime")}
+            className={tabClass(plan === "lifetime")}
+            style={tabStyle(plan === "lifetime")}
+          >
+            {s.pricing.lifetime}
           </button>
         </div>
       </div>
@@ -178,16 +206,22 @@ export function PricingPanel({
                 {money(price, lang)}
               </span>
               <span className="pb-2 text-sm font-semibold text-ink-3">
-                {annual ? s.pricing.perYear : s.pricing.perMonth}
+                {plan === "lifetime"
+                  ? s.pricing.once
+                  : annual
+                    ? s.pricing.perYear
+                    : s.pricing.perMonth}
               </span>
             </div>
             <p className="mt-1 text-xs text-ink-3">
-              {annual
-                ? format(s.pricing.annualDetail, {
-                    monthly: money(perMonthEquivalent, lang),
-                    yearly: money(PRICE_ANNUAL, lang),
-                  })
-                : format(s.pricing.annualNudge, { price: money(perMonthEquivalent, lang) })}
+              {plan === "lifetime"
+                ? format(s.pricing.lifetimeDetail, { months: LIFETIME_BREAK_EVEN_MONTHS })
+                : annual
+                  ? format(s.pricing.annualDetail, {
+                      monthly: money(perMonthEquivalent, lang),
+                      yearly: money(PRICE_ANNUAL, lang),
+                    })
+                  : format(s.pricing.annualNudge, { price: money(perMonthEquivalent, lang) })}
             </p>
 
             <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-ink-3">
@@ -222,7 +256,7 @@ export function PricingPanel({
               </button>
             ) : (
               <button
-                onClick={() => onChoosePro(annual ? "annual" : "monthly")}
+                onClick={() => onChoosePro(plan)}
                 className="mt-6 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-3.5 text-[15px] font-black tracking-tight text-slate-900 shadow-[0_10px_30px_-10px_var(--app-accent)] transition hover:-translate-y-px hover:brightness-110"
               >
                 {s.pricing.proCta}

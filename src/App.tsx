@@ -6,6 +6,7 @@ import { ThemeName, detectInitialTheme } from "./theme";
 import {
   API_BASE_URL,
   FEATURE_INTELLIGENCE,
+  ProPlan,
   RAM_AUTO_STORAGE_KEY,
   clearSession,
   formatBytes,
@@ -245,7 +246,7 @@ function App() {
   // inside the app's webview). Throws with a clear reason when the backend
   // isn't configured or the user isn't logged in yet, instead of pretending
   // to charge anything.
-  async function startCheckout(plan: "monthly" | "annual" = "annual") {
+  async function startCheckout(plan: ProPlan = "annual") {
     if (!API_BASE_URL) {
       throw new Error(s.auth.backendNotConfigured);
     }

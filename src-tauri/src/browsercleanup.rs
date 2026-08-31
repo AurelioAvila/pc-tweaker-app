@@ -1,4 +1,5 @@
-//! Cache and cookie cleanup for Chrome, Edge and Firefox.
+//! Cache and cookie cleanup for Chrome, Edge, Brave, Vivaldi, Opera and
+//! Firefox.
 //!
 //! Deliberately narrow: no extension auditing, no per-site cookie picking.
 //! Both would need to read the browser's own SQLite databases, which is a
@@ -40,6 +41,26 @@ const BROWSERS: &[BrowserSpec] = &[
         process_name: "msedge.exe",
     },
     BrowserSpec {
+        id: "brave",
+        name: "Brave",
+        process_name: "brave.exe",
+    },
+    BrowserSpec {
+        id: "vivaldi",
+        name: "Vivaldi",
+        process_name: "vivaldi.exe",
+    },
+    BrowserSpec {
+        id: "opera",
+        name: "Opera",
+        process_name: "opera.exe",
+    },
+    BrowserSpec {
+        id: "opera_gx",
+        name: "Opera GX",
+        process_name: "opera.exe",
+    },
+    BrowserSpec {
         id: "firefox",
         name: "Mozilla Firefox",
         process_name: "firefox.exe",
@@ -70,15 +91,20 @@ fn file_size(path: &Path) -> u64 {
     std::fs::metadata(path).map(|m| m.len()).unwrap_or(0)
 }
 
-/// Chrome and Edge share a profile layout because Edge is Chromium. Cookies
-/// moved into a `Network` subfolder around Chrome 96; both locations are
-/// checked since a machine's profile may predate the move.
-fn chromium_paths(user_data_dir: PathBuf) -> (Vec<PathBuf>, Vec<PathBuf>) {
-    let profile = user_data_dir.join("Default");
+/// The Chromium profile layout, given where the profile lives and where its
+/// caches live.
+///
+/// Those are usually the same folder, but not always: Opera keeps its
+/// profile under Roaming and its caches under Local, so the two roots are
+/// separate parameters rather than one assumed to serve both.
+///
+/// Cookies moved into a `Network` subfolder around Chrome 96; both locations
+/// are checked since a machine's profile may predate the move.
+fn chromium_profile_paths(profile: &Path, cache_root: &Path) -> (Vec<PathBuf>, Vec<PathBuf>) {
     let cache_dirs = vec![
-        profile.join("Cache"),
-        profile.join("Cache2").join("entries"),
-        profile.join("Code Cache"),
+        cache_root.join("Cache"),
+        cache_root.join("Cache2").join("entries"),
+        cache_root.join("Code Cache"),
     ];
     let cookie_files = vec![
         profile.join("Network").join("Cookies"),
@@ -87,9 +113,46 @@ fn chromium_paths(user_data_dir: PathBuf) -> (Vec<PathBuf>, Vec<PathBuf>) {
     (cache_dirs, cookie_files)
 }
 
+/// Chrome, Edge, Brave and Vivaldi share a layout: a `User Data` folder with
+/// the profile in `Default`, caches included.
+fn chromium_paths(user_data_dir: PathBuf) -> (Vec<PathBuf>, Vec<PathBuf>) {
+    let profile = user_data_dir.join("Default");
+    chromium_profile_paths(&profile, &profile)
+}
+
+fn vivaldi_user_data_dir() -> Option<PathBuf> {
+    let local = std::env::var("LOCALAPPDATA").ok()?;
+    Some(PathBuf::from(local).join("Vivaldi").join("User Data"))
+}
+
+/// Opera is Chromium but files itself differently in two ways that matter:
+/// the profile is the edition folder itself rather than a `Default` inside a
+/// `User Data`, and it sits under Roaming while the caches sit under Local.
+///
+/// `edition` is the folder name — "Opera Stable" or "Opera GX Stable".
+fn opera_paths(edition: &str) -> Option<(Vec<PathBuf>, Vec<PathBuf>)> {
+    let roaming = std::env::var("APPDATA").ok()?;
+    let local = std::env::var("LOCALAPPDATA").ok()?;
+    let profile = PathBuf::from(roaming).join("Opera Software").join(edition);
+    let cache_root = PathBuf::from(local).join("Opera Software").join(edition);
+    Some(chromium_profile_paths(&profile, &cache_root))
+}
+
 fn chrome_user_data_dir() -> Option<PathBuf> {
     let local = std::env::var("LOCALAPPDATA").ok()?;
     Some(PathBuf::from(local).join("Google").join("Chrome").join("User Data"))
+}
+
+/// Brave nests its user data one level deeper than the other two:
+/// `BraveSoftware\\Brave-Browser\\User Data`, not `Brave\\User Data`.
+fn brave_user_data_dir() -> Option<PathBuf> {
+    let local = std::env::var("LOCALAPPDATA").ok()?;
+    Some(
+        PathBuf::from(local)
+            .join("BraveSoftware")
+            .join("Brave-Browser")
+            .join("User Data"),
+    )
 }
 
 fn edge_user_data_dir() -> Option<PathBuf> {
@@ -193,6 +256,10 @@ fn paths_for(id: &str) -> Option<(Vec<PathBuf>, Vec<PathBuf>)> {
     match id {
         "chrome" => Some(chromium_paths(chrome_user_data_dir()?)),
         "edge" => Some(chromium_paths(edge_user_data_dir()?)),
+        "brave" => Some(chromium_paths(brave_user_data_dir()?)),
+        "vivaldi" => Some(chromium_paths(vivaldi_user_data_dir()?)),
+        "opera" => opera_paths("Opera Stable"),
+        "opera_gx" => opera_paths("Opera GX Stable"),
         "firefox" => {
             let profile = firefox_profile_dir()?;
             Some((
@@ -325,5 +392,116 @@ mod tests {
     #[test]
     fn is_running_is_false_for_a_name_nothing_uses() {
         assert!(!is_running("pctweaker-browsercleanup-test-sentinel.exe"));
+    }
+
+
+    #[test]
+    fn brave_is_offered_and_uses_its_own_folder() {
+        // Requested by a user who browses only with Brave, so the cleanup
+        // screen was empty for him. Brave is Chromium, so the profile layout
+        // is Chrome's — but its user data sits one level deeper, under
+        // BraveSoftware\\Brave-Browser, which is the part that is easy to get
+        // wrong by pattern-matching on the other two.
+        assert!(BROWSERS.iter().any(|b| b.id == "brave" && b.process_name == "brave.exe"));
+
+        let Some(dir) = brave_user_data_dir() else {
+            return; // No LOCALAPPDATA: nothing to assert about the path.
+        };
+        let text = dir.to_string_lossy().replace('\\', "/");
+        assert!(text.ends_with("BraveSoftware/Brave-Browser/User Data"), "unexpected path: {text}");
+    }
+
+    #[test]
+    fn the_chromium_browsers_resolve_without_a_profile_on_disk() {
+        // paths_for returns None for two different reasons — an id it does
+        // not handle, and a browser whose profile cannot be located — so it
+        // cannot prove on its own that a new entry was wired up. What it can
+        // prove is that the Chromium three, which need only LOCALAPPDATA,
+        // resolve on any machine including this one. Firefox is deliberately
+        // not in this list: without an installed profile it returns None,
+        // which is correct behaviour and not a missing match arm.
+        for id in ["chrome", "edge", "brave"] {
+            assert!(
+                std::env::var("LOCALAPPDATA").is_err() || paths_for(id).is_some(),
+                "{id} is listed but paths_for does not resolve it"
+            );
+        }
+    }
+
+    #[test]
+    fn opera_reads_its_profile_and_its_caches_from_different_roots() {
+        // The one layout here that is not Chrome's. Opera keeps the profile
+        // under Roaming and the caches under Local, and there is no `Default`
+        // folder — the edition folder is the profile. Collapsing the two
+        // roots, which is what copying the Chrome case would do, would point
+        // the cleanup at folders that do not exist and quietly find nothing.
+        let (Ok(roaming), Ok(local)) = (std::env::var("APPDATA"), std::env::var("LOCALAPPDATA"))
+        else {
+            return;
+        };
+        let (cache_dirs, cookie_files) = opera_paths("Opera Stable").expect("paths");
+        assert!(cache_dirs.iter().all(|p| p.starts_with(&local)), "caches belong under Local");
+        assert!(cookie_files.iter().all(|p| p.starts_with(&roaming)), "cookies belong under Roaming");
+        assert!(
+            cookie_files.iter().all(|p| !p.to_string_lossy().contains("Default")),
+            "Opera has no Default subfolder"
+        );
+    }
+
+    #[test]
+    fn the_two_opera_editions_never_touch_each_other() {
+        // Opera and Opera GX are separate installs with separate profiles,
+        // and they share a process name — so the only thing keeping them
+        // apart is the folder.
+        let (Some((gx_cache, gx_cookies)), Some((op_cache, op_cookies))) =
+            (opera_paths("Opera GX Stable"), opera_paths("Opera Stable"))
+        else {
+            return;
+        };
+        for gx in gx_cache.iter().chain(gx_cookies.iter()) {
+            for op in op_cache.iter().chain(op_cookies.iter()) {
+                assert_ne!(gx, op);
+            }
+        }
+    }
+
+    #[test]
+    fn every_chromium_browser_lands_in_its_own_vendor_folder() {
+        if std::env::var("LOCALAPPDATA").is_err() {
+            return;
+        }
+        let expected = [
+            ("chrome", "Google"),
+            ("edge", "Microsoft"),
+            ("brave", "BraveSoftware"),
+            ("vivaldi", "Vivaldi"),
+            ("opera", "Opera Software"),
+            ("opera_gx", "Opera Software"),
+        ];
+        for (id, vendor) in expected {
+            let (cache_dirs, _) = paths_for(id).expect("paths");
+            assert!(
+                cache_dirs
+                    .iter()
+                    .all(|p| p.to_string_lossy().contains(vendor)),
+                "{id} should clean inside {vendor}"
+            );
+        }
+    }
+
+    #[test]
+    fn an_id_outside_the_table_is_refused() {
+        assert!(paths_for("netscape").is_none());
+        assert!(paths_for("").is_none());
+    }
+
+    #[test]
+    fn brave_and_chrome_do_not_share_a_directory() {
+        // Cleaning one must never reach into the other's profile.
+        if let (Some(brave), Some(chrome)) = (brave_user_data_dir(), chrome_user_data_dir()) {
+            assert_ne!(brave, chrome);
+            assert!(!brave.starts_with(&chrome));
+            assert!(!chrome.starts_with(&brave));
+        }
     }
 }

@@ -4,6 +4,19 @@ import { getPool, isConfigured } from "../db";
 import { hashPassword, verifyPassword, signToken, requireAuth, isValidEmail, isValidPassword } from "../auth";
 import { createActionToken, consumeActionToken } from "../tokens";
 import { sendMail, MailError } from "../mailer";
+import {
+  accountWelcomeHtml,
+  accountWelcomeSubject,
+  passwordResetHtml,
+  passwordResetSubject,
+  verificationHtml,
+  verificationSubject,
+} from "../emails/account";
+
+/** What the free tier includes, quoted in the welcome email. Kept beside the
+ *  one place that sends it rather than hidden in the template, so a change to
+ *  what is free is a change here. */
+const FREE_TWEAK_COUNT = 35;
 
 const router = express.Router();
 
@@ -46,12 +59,33 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 async function sendVerificationEmail(userId: number, email: string): Promise<boolean> {
   const token = await createActionToken(userId, "email_verify", DAY_MS);
   const link = `${APP_URL.replace(/\/$/, "")}/api/auth/verify-email?token=${token}`;
+  const { rows } = await getPool().query("SELECT first_name FROM users WHERE id = $1", [userId]);
   const { delivered } = await sendMail({
     to: email,
-    subject: "Verify your PC Tweaker account",
-    html: `<p>Click to verify your email:</p><p><a href="${link}">${link}</a></p><p>This link expires in 24 hours.</p>`,
+    subject: verificationSubject(),
+    html: verificationHtml(rows[0]?.first_name ?? "", link),
   });
   return delivered;
+}
+
+/**
+ * Welcomes someone whose address is now confirmed.
+ *
+ * The free tweak count is read from the same place the app reads it, so the
+ * email cannot quietly promise a number that stopped being true.
+ */
+async function sendAccountWelcome(userId: number): Promise<void> {
+  const { rows } = await getPool().query(
+    "SELECT email, first_name FROM users WHERE id = $1",
+    [userId],
+  );
+  const user = rows[0];
+  if (!user?.email) return;
+  await sendMail({
+    to: user.email,
+    subject: accountWelcomeSubject(),
+    html: accountWelcomeHtml(user.first_name ?? "", FREE_TWEAK_COUNT),
+  });
 }
 
 router.post("/register", async (req: Request, res: Response) => {
@@ -244,6 +278,14 @@ router.get("/verify-email", async (req: Request, res: Response) => {
         .send(htmlPage("Link expired", "<p class=error>This verification link is invalid or has expired. Request a new one from the app.</p>"));
     }
     await getPool().query("UPDATE users SET email_verified = TRUE WHERE id = $1", [userId]);
+    // The welcome waits until here rather than going out at registration,
+    // where it would have arrived alongside the message asking the person to
+    // confirm — two at once makes the one that needs acting on easier to
+    // miss. Best-effort: a failed send must not make a confirmed address look
+    // unconfirmed.
+    void sendAccountWelcome(userId).catch((err) =>
+      console.error("failed to send the account welcome:", err),
+    );
     res.send(htmlPage("Email verified", "<p class=success>Your email is verified. You can close this window and return to PC Tweaker.</p>"));
   } catch (err) {
     console.error("verify-email failed:", err);
@@ -268,8 +310,8 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
       const link = `${APP_URL.replace(/\/$/, "")}/api/auth/reset-password?token=${token}`;
       await sendMail({
         to: email.toLowerCase(),
-        subject: "Reset your PC Tweaker password",
-        html: `<p>Click to choose a new password:</p><p><a href="${link}">${link}</a></p><p>This link expires in 1 hour. If you didn't request this, ignore this email.</p>`,
+        subject: passwordResetSubject(),
+        html: passwordResetHtml(link),
       }).catch((err) => console.error("failed to send reset email:", err));
     }
   } catch (err) {

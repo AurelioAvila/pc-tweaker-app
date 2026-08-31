@@ -38,7 +38,7 @@ export const PRODUCT_BRANDS: Record<string, ProductBrand> = {
     name: "PC Tweaker Pro",
     accent: "#ff5500",
     siteUrl: "https://pctweaker.app",
-    logoUrl: "https://pctweaker.app/assets/favicon-CFvd5GJj.png",
+    logoUrl: "https://pctweaker.app/logo.png",
     eyebrow: "Pro Activated",
     headline: "You're Pro now",
     intro:
@@ -57,7 +57,7 @@ export const PRODUCT_BRANDS: Record<string, ProductBrand> = {
     name: "PC Tweaker Uninstaller Pro",
     accent: "#ff5500",
     siteUrl: "https://pctweaker.app/uninstaller",
-    logoUrl: "https://pctweaker.app/assets/favicon-CFvd5GJj.png",
+    logoUrl: "https://pctweaker.app/logo.png",
     eyebrow: "Pro Activated",
     headline: "Uninstaller Pro is yours",
     intro:

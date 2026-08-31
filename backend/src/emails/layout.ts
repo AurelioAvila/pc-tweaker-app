@@ -50,7 +50,7 @@ export function escapeHtml(value: string): string {
 const DEFAULT_ACCENT = "#ff5500";
 const DEFAULT_PRODUCT = "PC Tweaker";
 const DEFAULT_SITE = "https://pctweaker.app";
-const DEFAULT_LOGO = "https://pctweaker.app/assets/favicon-CFvd5GJj.png";
+const DEFAULT_LOGO = "https://pctweaker.app/logo.png";
 
 /** A row of text with the accent arrow, for lists inside `bodyHtml`. */
 export function bulletRow(accent: string, text: string): string {

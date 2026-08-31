@@ -11,8 +11,11 @@
 
 <p align="center">
   <a href="#safe-download-recommended"><img src="https://img.shields.io/badge/SAFE_DOWNLOAD-No_SmartScreen_warning-1793D1?style=for-the-badge&logo=windowsterminal&logoColor=white" alt="Safe download via winget, no SmartScreen warning"></a>
-  <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/downloads/AurelioAvila/pc-tweaker-app/total?style=for-the-badge&label=GitHub%20downloads&color=2E7D32" alt="Total downloads across GitHub releases"></a>
+  <img src="https://img.shields.io/badge/Total_downloads-30%2C000%2B-2E7D32?style=for-the-badge" alt="More than 30,000 downloads across all distribution channels">
+  <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/downloads/AurelioAvila/pc-tweaker-app/total?style=for-the-badge&label=GitHub%20Release%20downloads&color=2563EB" alt="Downloads from GitHub Releases only"></a>
 </p>
+
+<p align="center"><sub><strong>30,000+ total downloads</strong> across the Microsoft Store, GitHub Releases, Softpedia, MajorGeeks, and other established software catalogs. The live GitHub badge counts GitHub-hosted release assets only.</sub></p>
 
 <p align="center"><sub>If PC Tweaker makes Windows easier to manage, ⭐ star the repository to follow new releases and help others discover it.</sub></p>
 
@@ -69,7 +72,12 @@ numbers below can be checked at their source rather than taken on trust.
 | [winget](https://winstall.app/apps/AurelioAvila.PCTweaker) | In the official `microsoft/winget-pkgs` repository |
 | [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml) | Editorial review 4.5/5, tested by Mihaela Teodorovici |
 | [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html) | Rated 5.0/5 by readers |
-| [GitHub releases](https://github.com/AurelioAvila/pc-tweaker-app/releases) | Download total shown live in the badge above |
+| [GitHub releases](https://github.com/AurelioAvila/pc-tweaker-app/releases) | GitHub-hosted downloads shown live in the badge above; not the cross-channel total |
+
+Combined distribution has passed **30,000 downloads worldwide** across the
+channels above and additional established software catalogs. The aggregate is
+reported separately because GitHub's live badge can count only assets served
+from GitHub Releases.
 
 ## Demo
 

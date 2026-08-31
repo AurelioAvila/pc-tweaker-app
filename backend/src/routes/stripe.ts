@@ -5,9 +5,14 @@ import { getPool, isConfigured } from "../db";
 import { requireAuth } from "../auth";
 import { periodEndFromSubscription } from "../entitlement";
 import { isKnownProduct, productEntitlement, upsertEntitlement, revokeEntitlement, type Product } from "../products";
-import { isSettledCheckout, planFromPrice, productFromMetadata } from "../stripe-policy";
+import {
+  formatChargedAmount,
+  isSettledCheckout,
+  planFromPrice,
+  productFromMetadata,
+} from "../stripe-policy";
 import { sendMail } from "../mailer";
-import { proWelcomeHtml, proWelcomeSubject } from "../emails/pro-welcome";
+import { brandFor, proWelcomeHtml, proWelcomeSubject } from "../emails/pro-welcome";
 import { SUPPORT_INBOX } from "../support-inbox";
 
 const router = express.Router();
@@ -373,6 +378,21 @@ function alertOwnerOfUncancelledSubscription(userId: string, customerId: string)
   );
 }
 
+/** The amount on a completed Checkout Session, ready for the receipt line. */
+function sessionCharge(session: Stripe.Checkout.Session): string | null {
+  return formatChargedAmount(session.amount_total, session.currency, null);
+}
+
+/** The same for a subscription, which carries its interval as well. */
+function subscriptionCharge(subscription: Stripe.Subscription): string | null {
+  const price = subscription.items?.data?.[0]?.price;
+  return formatChargedAmount(
+    price?.unit_amount,
+    price?.currency,
+    price?.recurring?.interval ?? null,
+  );
+}
+
 const PLAN_PRICE_LABELS: Record<string, string> = {
   monthly: "€9.99 / month",
   annual: "€59 / year",
@@ -385,7 +405,15 @@ const PLAN_PRICE_LABELS: Record<string, string> = {
  * grantPro (harmless but pointless) or, worse, make the webhook report
  * failure for something the customer's access doesn't depend on.
  */
-async function sendProWelcomeEmail(userId: string, plan: string | null | undefined, expiresAt: Date | null): Promise<void> {
+async function sendProWelcomeEmail(
+  userId: string,
+  plan: string | null | undefined,
+  expiresAt: Date | null,
+  product: string = "pctweaker",
+  /** What Stripe actually charged. Falls back to the per-plan table, which
+   *  only describes PC Tweaker's own prices. */
+  chargedLabel: string | null = null,
+): Promise<void> {
   try {
     const { rows } = await getPool().query(
       "SELECT email, first_name FROM users WHERE id = $1",
@@ -407,12 +435,14 @@ async function sendProWelcomeEmail(userId: string, plan: string | null | undefin
       : null;
     await sendMail({
       to: user.email,
-      subject: proWelcomeSubject(),
+      subject: proWelcomeSubject(product),
       html: proWelcomeHtml({
+        product,
         firstName: user.first_name || "there",
         email: user.email,
         plan: plan || "monthly",
-        priceLabel: PLAN_PRICE_LABELS[plan || "monthly"] ?? PLAN_PRICE_LABELS.monthly,
+        priceLabel:
+          chargedLabel ?? PLAN_PRICE_LABELS[plan || "monthly"] ?? PLAN_PRICE_LABELS.monthly,
         renewsOn,
       }),
     });
@@ -449,6 +479,7 @@ function notifyOwnerOfSale(
   userId: string,
   plan: string | null | undefined,
   mode: string | null,
+  product: string = "pctweaker",
 ): void {
   void (async () => {
     const { rows } = await getPool().query("SELECT email FROM users WHERE id = $1", [userId]);
@@ -457,8 +488,8 @@ function notifyOwnerOfSale(
     const kind = mode === "subscription" ? "subscription" : "one-off purchase";
     await sendMail({
       to: SUPPORT_INBOX,
-      subject: `New PC Tweaker sale — ${planName}`,
-      html: `<p>Someone just bought PC Tweaker Pro.</p>
+      subject: `New ${brandFor(product).name} sale — ${planName}`,
+      html: `<p>Someone just bought ${escapeHtml(brandFor(product).name)}.</p>
              <p><strong>Plan:</strong> ${escapeHtml(planName)} (${escapeHtml(kind)})<br>
                 <strong>Account:</strong> ${escapeHtml(email)}</p>
              <p>Stripe has the payment; this is only the heads-up.</p>`,
@@ -496,6 +527,14 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session): Promise<
           plan: session.metadata?.plan ?? null,
           expiresAt: new Date(Date.now() + PROVISIONAL_ACCESS_MS),
         });
+        // This branch used to return here, which is why a customer who bought
+        // any product other than PC Tweaker paid and then heard nothing at
+        // all — and why no sale on those products was ever reported to the
+        // owner either. Both belong to every product, not to one of them.
+        if (session.mode !== "subscription") {
+          await sendProWelcomeEmail(userId, session.metadata?.plan, null, product, sessionCharge(session));
+        }
+        notifyOwnerOfSale(userId, session.metadata?.plan, session.mode ?? null, product);
         return;
       }
 
@@ -517,12 +556,12 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session): Promise<
       // getting theirs from that event, so sending here too would send twice;
       // this branch covers exactly the mode that event never fires for.
       if (session.mode !== "subscription") {
-        await sendProWelcomeEmail(userId, session.metadata?.plan, null);
+        await sendProWelcomeEmail(userId, session.metadata?.plan, null, product, sessionCharge(session));
         // An existing subscriber upgrading to lifetime: the perpetual grant
         // is in place, so the recurring charge has to stop.
         await stopSubscriptionsAfterLifetime(userId, customerId);
       }
-      notifyOwnerOfSale(userId, session.metadata?.plan, session.mode ?? null);
+      notifyOwnerOfSale(userId, session.metadata?.plan, session.mode ?? null, product);
 }
 
 async function handleEvent(event: Stripe.Event): Promise<void> {
@@ -548,11 +587,21 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       const active = ["active", "trialing", "past_due"].includes(subscription.status);
       if (product !== "pctweaker") {
         if (active) {
+          const expiresAt = periodEndFromSubscription(subscription);
           await upsertEntitlement(userId, product, {
-            plan: subscription.metadata?.plan ?? null,
-            expiresAt: periodEndFromSubscription(subscription),
+            plan: subscriptionPlan(subscription),
+            expiresAt,
             stripeSubscriptionId: subscription.id,
           });
+          if (event.type === "customer.subscription.created") {
+            await sendProWelcomeEmail(
+              userId,
+              subscriptionPlan(subscription),
+              expiresAt,
+              product,
+              subscriptionCharge(subscription),
+            );
+          }
         } else {
           await revokeEntitlement(userId, product);
         }
@@ -572,7 +621,13 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
         // Only on creation, not every renewal/update — this event fires once
         // per subscription's lifecycle start.
         if (event.type === "customer.subscription.created") {
-          await sendProWelcomeEmail(userId, subscriptionPlan(subscription), expiresAt);
+          await sendProWelcomeEmail(
+            userId,
+            subscriptionPlan(subscription),
+            expiresAt,
+            "pctweaker",
+            subscriptionCharge(subscription),
+          );
         }
       } else {
         await revokePro(userId);

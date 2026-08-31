@@ -388,19 +388,30 @@ export function AccountMenu({
   // Device-local profile photo, kept as a file by the Rust side; there is no
   // upload — see fileToAvatarDataUrl in lib.ts and src-tauri/src/avatar.rs.
   // Loaded in an effect rather than a useState initializer because reading it
-  // is now async (and migrates an older localStorage photo on first run).
-  const [avatar, setAvatar] = useState<string | null>(null);
+  // is async, and reloaded whenever the signed-in account changes.
+  // Stored together with the address it was loaded for, and only rendered
+  // when the two still agree. Holding the photo alone was half of the bug
+  // where a new account wore the previous one's face: even once the files
+  // were separated, the picture already in memory stayed on screen across a
+  // sign-out and the next sign-in.
+  const [loadedAvatar, setLoadedAvatar] = useState<{
+    email: string;
+    photo: string | null;
+  } | null>(null);
+  const signedInAs = auth.status === "authenticated" ? auth.email : null;
+  const avatar = loadedAvatar && loadedAvatar.email === signedInAs ? loadedAvatar.photo : null;
   const photoInput = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    if (!signedInAs) return;
     let alive = true;
-    void readAvatar().then((a) => {
-      if (alive) setAvatar(a);
+    void readAvatar(signedInAs).then((photo) => {
+      if (alive) setLoadedAvatar({ email: signedInAs, photo });
     });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [signedInAs]);
 
   async function onPhotoPicked(file: File | undefined) {
     if (!file) return;
@@ -409,8 +420,9 @@ export function AccountMenu({
       // Persist before showing it. The old order set state first and swallowed
       // a failed write, so a photo that never made it to disk still appeared
       // to have been saved until the next launch proved otherwise.
-      await writeAvatar(dataUrl);
-      setAvatar(dataUrl);
+      if (!signedInAs) return;
+      await writeAvatar(signedInAs, dataUrl);
+      setLoadedAvatar({ email: signedInAs, photo: dataUrl });
     } catch {
       // Not an image, or the browser refused to decode it: keep whatever was
       // there before, but say so - a picker that silently does nothing on
@@ -423,8 +435,9 @@ export function AccountMenu({
 
   async function removePhoto() {
     try {
-      await removeAvatar();
-      setAvatar(null);
+      if (!signedInAs) return;
+      await removeAvatar(signedInAs);
+      setLoadedAvatar({ email: signedInAs, photo: null });
     } catch {
       pushToast("error", s.menu.photoFailed);
     }

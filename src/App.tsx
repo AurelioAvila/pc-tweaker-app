@@ -8,7 +8,9 @@ import {
   FEATURE_INTELLIGENCE,
   ProPlan,
   RAM_AUTO_STORAGE_KEY,
+  adoptLegacyAvatar,
   clearSession,
+  discardLegacyAvatar,
   formatBytes,
   readStoredEmail,
   readToken,
@@ -192,6 +194,12 @@ function App() {
 
   useEffect(() => {
     refreshAccount();
+    // Before this version the profile photo belonged to the computer rather
+    // than to an account. Whoever is signed in as the app starts is the one
+    // who was using it when the update landed, so the old photo is theirs.
+    // Doing this at sign-in instead would hand it to the next account.
+    const signedInAs = readStoredEmail();
+    if (signedInAs) void adoptLegacyAvatar(signedInAs);
     function onFocus() {
       refreshAccount();
     }
@@ -207,6 +215,10 @@ function App() {
     // Pro tweaks for whoever uses the app next on this machine, for up to
     // its grace period — including an anonymous session.
     void invoke("clear_license").catch(() => {});
+    // Same reasoning for the photo: a machine-wide leftover from before
+    // per-account storage must not survive to be inherited by whoever signs
+    // in next. Each account's own photo is untouched and waiting for them.
+    void discardLegacyAvatar();
   }
 
   async function authenticate(

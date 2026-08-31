@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.6.1
+
+- The plans screen used to show a Manage subscription button to every Pro
+  account. Two kinds of account have nothing there to manage — Pro granted
+  directly, which has no Stripe customer, and a lifetime purchase, which has
+  no subscription — and both were answered with an error. Each now sees what
+  is actually true of their account.
+- Subscribers can move to the lifetime plan from the plans screen. The
+  monthly or annual charge is set to stop at the end of the period already
+  paid for, so the upgrade never bills twice.
+
 ## v1.6.0 - 2026-08-31
 
 ### New

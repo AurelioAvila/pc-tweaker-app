@@ -1,7 +1,18 @@
 // Shared data shapes crossing module boundaries. Pure types only.
 export type AuthState =
   | { status: "anonymous" }
-  | { status: "authenticated"; email: string; isPro: boolean; emailVerified: boolean };
+  | {
+      status: "authenticated";
+      email: string;
+      isPro: boolean;
+      emailVerified: boolean;
+      /** The plan the entitlement came from, or null when Pro was granted
+       *  directly rather than bought. */
+      plan: string | null;
+      /** Whether a Stripe customer exists for this account. Pro without one
+       *  has nothing a billing portal could show. */
+      hasBilling: boolean;
+    };
 
 export type Category = "performance" | "privacy" | "ui" | "manutenzione" | "gaming";
 

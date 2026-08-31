@@ -47,5 +47,16 @@ jobs:
         uses: vedantmgoyal9/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e # v2
         with:
           identifier: AurelioAvila.PCTweaker
-          release-tag: ${{ inputs.tag }}
+          # The release also carries an MSI and two stable-named copies of
+          # the same binaries for the download link on the site. The default
+          # pattern would match all four and produce a manifest listing the
+          # same x64 installer twice; every merged manifest so far has listed
+          # exactly the versioned NSIS setup, which is what this matches.
+          installers-regex: '_x64-setup\.exe$'
+          # On a release event `inputs.tag` is empty, and the action then
+          # asks GitHub for the release at `/releases/tags/` — a 404 that
+          # fails the job before Komac ever runs. The event carries the tag
+          # already, so fall back to it and keep the manual input as an
+          # override for re-submitting an older release.
+          release-tag: ${{ inputs.tag || github.event.release.tag_name }}
           token: ${{ secrets.WINGET_TOKEN }}

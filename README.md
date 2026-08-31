@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src-tauri/icons/icon.png" width="112" alt="PC Tweaker logo">
+  <img src="src-tauri/icons/128x128@2x.png" width="112" alt="PC Tweaker logo">
 </p>
 
 <h1 align="center">PC Tweaker</h1>

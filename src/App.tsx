@@ -51,7 +51,7 @@ import { ScanPanel } from "./components/scan";
 import { HealthPanel } from "./components/health";
 import { HardwarePanel } from "./components/hardware";
 import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
-import { AdvisorCard, LedgerPanel } from "./components/intelligence";
+import { AdvisorCard, CrashReportsCard, LedgerPanel } from "./components/intelligence";
 import { usePulseSamples } from "./components/command";
 import { StartupManager } from "./components/startup";
 import { ProfilesPanel } from "./components/profiles";
@@ -820,7 +820,13 @@ function App() {
             )}
 
             {showLedger && (
-              <LedgerPanel s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />
+              <>
+                {/* Above the ledger: a crash is the one thing on this screen
+                  that needs acting on, and it renders nothing at all when
+                  there are no reports. */}
+                <CrashReportsCard s={s} pushToast={pushToast} />
+                <LedgerPanel s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />
+              </>
             )}
 
             {showStartup && <StartupManager s={s} pushToast={pushToast} />}

@@ -158,9 +158,24 @@ export function ramIntervalLabel(minutes: number, s: Strings): string {
 // badge and the per-month equivalent are all derived from the same two
 // numbers — a hardcoded badge that drifts from the real price is the kind of
 // thing that turns into a refund request.
+/** The plans checkout accepts. Mirrors the backend's own map in
+ *  `backend/src/routes/stripe.ts`, which routes lifetime to a one-time
+ *  payment rather than a subscription. */
+export type ProPlan = "monthly" | "annual" | "lifetime";
+
 export const PRICE_MONTHLY = 9.99;
 
 export const PRICE_ANNUAL = 59;
+
+/** Paid once, never again. Priced above a year and below two: the point is to
+ *  be obviously cheaper than subscribing indefinitely without being cheaper
+ *  than a single year, which would cannibalise the annual plan outright. */
+export const PRICE_LIFETIME = 74.99;
+
+/** How many months of the annual plan the lifetime price is worth — the one
+ *  number that makes the offer legible. Derived rather than written down, so
+ *  it cannot drift out of step with the prices above. */
+export const LIFETIME_BREAK_EVEN_MONTHS = Math.round(PRICE_LIFETIME / (PRICE_ANNUAL / 12));
 
 export const savingsPercent = Math.round((1 - PRICE_ANNUAL / (PRICE_MONTHLY * 12)) * 100);
 

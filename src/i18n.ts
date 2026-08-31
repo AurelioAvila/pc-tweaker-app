@@ -197,9 +197,12 @@ export interface Strings {
     subtitle: string;
     monthly: string;
     annual: string;
+    lifetime: string;
     saveBadge: string; // uses {percent}
     perMonth: string;
     perYear: string;
+    once: string;
+    lifetimeDetail: string; // uses {months}
     annualDetail: string; // uses {monthly} {yearly}
     annualNudge: string; // uses {price}
     mostChosen: string;
@@ -950,9 +953,13 @@ const it: Strings = {
       "Ogni modifica salva prima com'era: qualsiasi cosa provi qui, la annulli in un click. Il gratuito copre l'essenziale, Pro apre il resto.",
     monthly: "Mensile",
     annual: "Annuale",
+    lifetime: "A vita",
     saveBadge: "RISPARMI IL {percent}%",
     perMonth: "/mese",
     perYear: "/anno",
+    once: "una tantum",
+    lifetimeDetail:
+      "Paghi una volta e resta tuo. Si ripaga in {months} mesi rispetto all’abbonamento annuale, e da lì in poi non paghi più",
     annualDetail: "Sono {monthly} al mese, addebitati {yearly} una volta l’anno",
     annualNudge: "Con il piano annuale sarebbero {price} al mese",
     mostChosen: "IL PIÙ SCELTO",
@@ -2037,9 +2044,13 @@ const en: Strings = {
       "Every change snapshots what was there first, so anything you try here is one click from undone. Free covers the essentials; Pro opens the rest.",
     monthly: "Monthly",
     annual: "Yearly",
+    lifetime: "Lifetime",
     saveBadge: "SAVE {percent}%",
     perMonth: "/month",
     perYear: "/year",
+    once: "one-time",
+    lifetimeDetail:
+      "Paid once, yours for good. It pays for itself in {months} months against the annual plan, and costs nothing after that",
     annualDetail: "That’s {monthly} a month, charged {yearly} once a year",
     annualNudge: "On the yearly plan it would be {price} a month",
     mostChosen: "MOST CHOSEN",
@@ -3118,9 +3129,13 @@ const fr: Strings = {
       "Chaque modification enregistre l'état précédent : tout ce que vous essayez ici s'annule en un clic. Le gratuit couvre l'essentiel, Pro ouvre le reste.",
     monthly: "Mensuel",
     annual: "Annuel",
+    lifetime: "À vie",
     saveBadge: "ÉCONOMISEZ {percent}%",
     perMonth: "/mois",
     perYear: "/an",
+    once: "paiement unique",
+    lifetimeDetail:
+      "Payé une fois, à vous pour toujours. Rentabilisé en {months} mois par rapport à l’abonnement annuel, et plus rien ensuite",
     annualDetail: "Soit {monthly} par mois, prélevés {yearly} une fois par an",
     annualNudge: "Avec l’offre annuelle, ce serait {price} par mois",
     mostChosen: "LE PLUS CHOISI",
@@ -4214,9 +4229,13 @@ const es: Strings = {
       "Cada cambio guarda antes cómo estaba: lo que pruebes aquí se deshace en un clic. El gratuito cubre lo esencial; Pro abre el resto.",
     monthly: "Mensual",
     annual: "Anual",
+    lifetime: "De por vida",
     saveBadge: "AHORRAS UN {percent}%",
     perMonth: "/mes",
     perYear: "/año",
+    once: "pago único",
+    lifetimeDetail:
+      "Pagas una vez y es tuyo. Se amortiza en {months} meses frente al plan anual, y a partir de ahí no pagas nada más",
     annualDetail: "Son {monthly} al mes, con un cargo de {yearly} una vez al año",
     annualNudge: "Con el plan anual serían {price} al mes",
     mostChosen: "EL MÁS ELEGIDO",
@@ -5306,9 +5325,13 @@ const de: Strings = {
       "Jede Änderung sichert zuerst den vorherigen Stand - alles hier ist einen Klick vom Rückgängig entfernt. Kostenlos deckt das Wesentliche ab, Pro öffnet den Rest.",
     monthly: "Monatlich",
     annual: "Jährlich",
+    lifetime: "Lebenslang",
     saveBadge: "{percent}% SPAREN",
     perMonth: "/Monat",
     perYear: "/Jahr",
+    once: "einmalig",
+    lifetimeDetail:
+      "Einmal bezahlt, für immer Ihres. Nach {months} Monaten ist es gegenüber dem Jahresplan bezahlt, danach kostet es nichts mehr",
     annualDetail: "Das sind {monthly} pro Monat, einmal jährlich mit {yearly} abgebucht",
     annualNudge: "Im Jahrestarif wären es {price} pro Monat",
     mostChosen: "AM HÄUFIGSTEN GEWÄHLT",
@@ -6406,9 +6429,13 @@ const pt: Strings = {
       "Cada alteração guarda antes como estava: o que experimentares aqui desfaz-se num clique. O gratuito cobre o essencial; o Pro abre o resto.",
     monthly: "Mensal",
     annual: "Anual",
+    lifetime: "Vitalício",
     saveBadge: "ECONOMIZE {percent}%",
     perMonth: "/mês",
     perYear: "/ano",
+    once: "pagamento único",
+    lifetimeDetail:
+      "Paga uma vez e fica seu. Compensa em {months} meses face ao plano anual, e a partir daí não paga mais nada",
     annualDetail: "Isso equivale a {monthly} por mês, cobrados {yearly} de uma vez por ano",
     annualNudge: "No plano anual seria {price} por mês",
     mostChosen: "MAIS ESCOLHIDO",

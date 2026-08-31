@@ -26,6 +26,16 @@ export interface Strings {
     reversible: string;
     empty: string;
   };
+  crashes: {
+    title: string;
+    subtitle: string;
+    copy: string;
+    copied: string;
+    clear: string;
+    cleared: string;
+    processApp: string;
+    processElevated: string;
+  };
   ledger: {
     title: string;
     subtitle: string;
@@ -758,6 +768,17 @@ const it: Strings = {
     reversible: "Reversibile — il valore originale viene salvato prima di ogni modifica.",
     empty:
       "Niente da consigliare al momento — la tua configurazione rispecchia già i nostri consigli.",
+  },
+  crashes: {
+    title: "Chiusure impreviste",
+    subtitle:
+      "L'app si è chiusa da sola. Il rapporto resta su questo PC: copialo e inviamelo su Discord o su GitHub se vuoi che lo sistemi.",
+    copy: "Copia rapporto",
+    copied: "Rapporto copiato negli appunti.",
+    clear: "Cancella",
+    cleared: "Rapporti cancellati.",
+    processApp: "finestra principale",
+    processElevated: "operazione con diritti admin",
   },
   ledger: {
     title: "Registro modifiche",
@@ -1838,6 +1859,17 @@ const en: Strings = {
     reversible: "Reversible — the original value is saved before any change.",
     empty: "Nothing to recommend right now — your setup already matches our advice.",
   },
+  crashes: {
+    title: "Unexpected shutdowns",
+    subtitle:
+      "The app closed on its own. The report stays on this PC: copy it and send it over on Discord or GitHub if you want it fixed.",
+    copy: "Copy report",
+    copied: "Report copied to the clipboard.",
+    clear: "Clear",
+    cleared: "Reports cleared.",
+    processApp: "main window",
+    processElevated: "admin-rights operation",
+  },
   ledger: {
     title: "Change Ledger",
     subtitle:
@@ -2905,6 +2937,17 @@ const fr: Strings = {
     confidenceStandard: "Recommandé pour ce type de machine",
     reversible: "Réversible — la valeur d'origine est enregistrée avant toute modification.",
     empty: "Rien à recommander pour l'instant — votre configuration suit déjà nos conseils.",
+  },
+  crashes: {
+    title: "Fermetures inattendues",
+    subtitle:
+      "L'application s'est fermée toute seule. Le rapport reste sur ce PC : copiez-le et envoyez-le sur Discord ou GitHub si vous voulez que ce soit corrigé.",
+    copy: "Copier le rapport",
+    copied: "Rapport copié dans le presse-papiers.",
+    clear: "Effacer",
+    cleared: "Rapports effacés.",
+    processApp: "fenêtre principale",
+    processElevated: "opération avec droits admin",
   },
   ledger: {
     title: "Registre des modifications",
@@ -3991,6 +4034,17 @@ const es: Strings = {
     reversible: "Reversible: el valor original se guarda antes de cada cambio.",
     empty: "Nada que recomendar ahora mismo: tu configuración ya sigue nuestros consejos.",
   },
+  crashes: {
+    title: "Cierres inesperados",
+    subtitle:
+      "La aplicación se cerró sola. El informe se queda en este PC: cópialo y envíalo por Discord o GitHub si quieres que lo arregle.",
+    copy: "Copiar informe",
+    copied: "Informe copiado al portapapeles.",
+    clear: "Borrar",
+    cleared: "Informes borrados.",
+    processApp: "ventana principal",
+    processElevated: "operación con permisos de administrador",
+  },
   ledger: {
     title: "Registro de cambios",
     subtitle:
@@ -5070,6 +5124,17 @@ const de: Strings = {
     reversible: "Umkehrbar — der ursprüngliche Wert wird vor jeder Änderung gespeichert.",
     empty:
       "Derzeit nichts zu empfehlen — deine Konfiguration entspricht bereits unseren Empfehlungen.",
+  },
+  crashes: {
+    title: "Unerwartete Abstürze",
+    subtitle:
+      "Die App hat sich von selbst beendet. Der Bericht bleibt auf diesem PC: Kopieren Sie ihn und schicken Sie ihn über Discord oder GitHub, wenn er behoben werden soll.",
+    copy: "Bericht kopieren",
+    copied: "Bericht in die Zwischenablage kopiert.",
+    clear: "Löschen",
+    cleared: "Berichte gelöscht.",
+    processApp: "Hauptfenster",
+    processElevated: "Vorgang mit Administratorrechten",
   },
   ledger: {
     title: "Änderungsprotokoll",
@@ -6157,6 +6222,17 @@ const pt: Strings = {
     confidenceStandard: "Recomendado para este tipo de máquina",
     reversible: "Reversível — o valor original é salvo antes de qualquer alteração.",
     empty: "Nada a recomendar por agora — sua configuração já está de acordo com nossos critérios.",
+  },
+  crashes: {
+    title: "Encerramentos inesperados",
+    subtitle:
+      "A aplicação fechou sozinha. O relatório fica neste PC: copie-o e envie-o pelo Discord ou GitHub se quiser que seja corrigido.",
+    copy: "Copiar relatório",
+    copied: "Relatório copiado para a área de transferência.",
+    clear: "Limpar",
+    cleared: "Relatórios limpos.",
+    processApp: "janela principal",
+    processElevated: "operação com direitos de administrador",
   },
   ledger: {
     title: "Registro de alterações",

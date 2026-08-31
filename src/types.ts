@@ -283,6 +283,18 @@ export type AuditEntry = {
   detail?: string | null;
 };
 
+/** A recorded panic (src-tauri/src/crash.rs). Written by both the app and
+ *  the elevated helper; `process` says which one died. Never leaves the
+ *  machine unless the user copies it out deliberately. */
+export type CrashReport = {
+  ts: number;
+  version: string;
+  process: string;
+  message: string;
+  location: string;
+  thread: string;
+};
+
 /** Dry-run preview of a cleanup action (src-tauri/src/cleanup.rs). */
 export type CleanupPreviewItem = {
   name: string;

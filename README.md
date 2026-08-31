@@ -11,6 +11,7 @@
 
 <p align="center">
   <a href="#safe-download-recommended"><img src="https://img.shields.io/badge/SAFE_DOWNLOAD-No_SmartScreen_warning-1793D1?style=for-the-badge&logo=windowsterminal&logoColor=white" alt="Safe download via winget, no SmartScreen warning"></a>
+  <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/downloads/AurelioAvila/pc-tweaker-app/total?style=for-the-badge&label=GitHub%20downloads&color=2E7D32" alt="Total downloads across GitHub releases"></a>
 </p>
 
 <p align="center"><sub>If PC Tweaker makes Windows easier to manage, ⭐ star the repository to follow new releases and help others discover it.</sub></p>
@@ -50,13 +51,25 @@ anyway**.
   <a href="https://github.com/AurelioAvila/pc-tweaker-app/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-Proprietary-6B7280?style=for-the-badge" alt="Proprietary License"></a>
   <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/v/release/AurelioAvila/pc-tweaker-app?display_name=tag&style=for-the-badge&color=7C3AED" alt="Latest release"></a>
   <a href="https://winstall.app/apps/AurelioAvila.PCTweaker"><img src="https://img.shields.io/winget/v/AurelioAvila.PCTweaker?style=for-the-badge&label=winget&color=1793D1" alt="winget"></a>
-  <a href="https://www.majorgeeks.com/files/details/pc_tweaker.html"><img src="https://img.shields.io/badge/MajorGeeks-4.0%2F5.0-2E7D32?style=for-the-badge" alt="4 out of 5 stars on MajorGeeks"></a>
-  <a href="https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"><img src="https://img.shields.io/badge/Softpedia-Listed-00A99D?style=for-the-badge" alt="Listed on Softpedia"></a>
-  <a href="https://gitlab.com/aurelio-avila-group/pc-tweaker-app"><img src="https://img.shields.io/badge/Also_on-GitLab-FC6D26?style=for-the-badge&logo=gitlab&logoColor=white" alt="Also on GitLab"></a>
+  <a href="https://www.majorgeeks.com/files/details/pc_tweaker.html"><img src="https://img.shields.io/badge/MajorGeeks-5.0%2F5.0-2E7D32?style=for-the-badge" alt="Rated 5.0 out of 5 by MajorGeeks users"></a>
+  <a href="https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"><img src="https://img.shields.io/badge/Softpedia_review-4.5%2F5-00A99D?style=for-the-badge" alt="Softpedia editorial review, 4.5 out of 5"></a>
 </p>
 
 **[⬇ Download for Windows](../../releases/latest)** · [Changelog](CHANGELOG.md) ·
 [Privacy Policy](PRIVACY.md) · [Terms](TERMS.md)
+
+## Where it is published
+
+PC Tweaker is distributed through channels that vet what they list, and the
+numbers below can be checked at their source rather than taken on trust.
+
+| Channel | Status |
+| --- | --- |
+| [Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87) | Published and certified for Windows 10/11 |
+| [winget](https://winstall.app/apps/AurelioAvila.PCTweaker) | In the official `microsoft/winget-pkgs` repository |
+| [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml) | Editorial review 4.5/5, tested by Mihaela Teodorovici |
+| [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html) | Rated 5.0/5 by readers |
+| [GitHub releases](https://github.com/AurelioAvila/pc-tweaker-app/releases) | Download total shown live in the badge above |
 
 ## Demo
 

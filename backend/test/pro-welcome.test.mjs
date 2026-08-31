@@ -45,5 +45,14 @@ test("the recipient address is escaped, not injected", () => {
     renewsOn: "September 24, 2027",
   });
 
-  assert.doesNotMatch(html, /<script>/, "a script tag must never survive into the message");
+  assert.doesNotMatch(
+    html,
+    /<\s*script\b[^>]*>/i,
+    "no executable script element may survive into the message",
+  );
+  assert.match(
+    html,
+    /a&quot;&gt;&lt;script&gt;alert\(1\)&lt;\/script&gt;@example\.com/,
+    "the complete recipient address must be rendered as escaped text",
+  );
 });

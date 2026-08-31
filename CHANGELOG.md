@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.6.2
+
+- Fixed: an account with Pro but no payment history could not buy the lifetime
+  plan. The plans screen showed it a statement that Pro was active, on every
+  tab, with no way to act on it — including the one tab where there was still
+  something to buy.
+
 ## v1.6.1
 
 - The plans screen used to show a Manage subscription button to every Pro

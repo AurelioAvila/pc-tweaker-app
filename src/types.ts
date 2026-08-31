@@ -283,6 +283,17 @@ export type AuditEntry = {
   detail?: string | null;
 };
 
+/** What the update watchdog saw (src-tauri/src/updatewatch.rs). The two
+ *  readings are independent: `windowsUpdated` says the patch level moved,
+ *  `reverted` says which applied tweaks no longer match the system. The app
+ *  never claims the first caused the second. */
+export type DriftReport = {
+  windowsUpdated: boolean;
+  previousPatch: string | null;
+  currentPatch: string;
+  reverted: string[];
+};
+
 /** A recorded panic (src-tauri/src/crash.rs). Written by both the app and
  *  the elevated helper; `process` says which one died. Never leaves the
  *  machine unless the user copies it out deliberately. */

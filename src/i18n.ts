@@ -26,6 +26,25 @@ export interface Strings {
     reversible: string;
     empty: string;
   };
+  drift: {
+    // Two titles, because the card describes two different situations and a
+    // title blaming Windows above a body saying Windows was not involved
+    // contradicts itself.
+    titleAfterUpdate: string;
+    titleNoUpdate: string;
+    // Singular and plural spelled out: there is no plural helper in this
+    // file, and "1 tweak non risultano" is the kind of sentence that makes a
+    // product feel machine-made.
+    afterUpdateOne: string; // uses {patch}
+    afterUpdateMany: string; // uses {count} {patch}
+    noUpdateOne: string;
+    noUpdateMany: string; // uses {count}
+    reapplyOne: string;
+    reapplyMany: string; // uses {count}
+    reapplying: string;
+    reappliedOne: string;
+    reappliedMany: string; // uses {count}
+  };
   crashes: {
     title: string;
     subtitle: string;
@@ -771,6 +790,23 @@ const it: Strings = {
     reversible: "Reversibile — il valore originale viene salvato prima di ogni modifica.",
     empty:
       "Niente da consigliare al momento — la tua configurazione rispecchia già i nostri consigli.",
+  },
+  drift: {
+    titleAfterUpdate: "Windows ha rimesso mano alle tue impostazioni",
+    titleNoUpdate: "Alcune impostazioni non sono più attive",
+    afterUpdateOne:
+      "Dopo l’aggiornamento a {patch}, un tweak che avevi applicato non risulta più attivo sul sistema.",
+    afterUpdateMany:
+      "Dopo l’aggiornamento a {patch}, {count} tweak che avevi applicato non risultano più attivi sul sistema.",
+    noUpdateOne:
+      "Un tweak che avevi applicato non risulta più attivo sul sistema. Nessun aggiornamento di Windows nel frattempo, quindi l’ha cambiato qualcos’altro.",
+    noUpdateMany:
+      "{count} tweak che avevi applicato non risultano più attivi sul sistema. Nessun aggiornamento di Windows nel frattempo, quindi li ha cambiati qualcos’altro.",
+    reapplyOne: "Riapplica il tweak",
+    reapplyMany: "Riapplica {count} tweak",
+    reapplying: "Riapplicazione...",
+    reappliedOne: "Tweak riapplicato.",
+    reappliedMany: "{count} tweak riapplicati.",
   },
   crashes: {
     title: "Chiusure impreviste",
@@ -1866,6 +1902,23 @@ const en: Strings = {
     reversible: "Reversible — the original value is saved before any change.",
     empty: "Nothing to recommend right now — your setup already matches our advice.",
   },
+  drift: {
+    titleAfterUpdate: "Windows changed your settings back",
+    titleNoUpdate: "Some settings are no longer in effect",
+    afterUpdateOne:
+      "After updating to {patch}, one tweak you had applied is no longer in effect on the system.",
+    afterUpdateMany:
+      "After updating to {patch}, {count} tweaks you had applied are no longer in effect on the system.",
+    noUpdateOne:
+      "One tweak you had applied is no longer in effect on the system. No Windows update happened in between, so something else changed it.",
+    noUpdateMany:
+      "{count} tweaks you had applied are no longer in effect on the system. No Windows update happened in between, so something else changed them.",
+    reapplyOne: "Re-apply the tweak",
+    reapplyMany: "Re-apply {count} tweaks",
+    reapplying: "Re-applying...",
+    reappliedOne: "Tweak re-applied.",
+    reappliedMany: "{count} tweaks re-applied.",
+  },
   crashes: {
     title: "Unexpected shutdowns",
     subtitle:
@@ -2948,6 +3001,23 @@ const fr: Strings = {
     confidenceStandard: "Recommandé pour ce type de machine",
     reversible: "Réversible — la valeur d'origine est enregistrée avant toute modification.",
     empty: "Rien à recommander pour l'instant — votre configuration suit déjà nos conseils.",
+  },
+  drift: {
+    titleAfterUpdate: "Windows a modifié vos réglages",
+    titleNoUpdate: "Certains réglages ne sont plus actifs",
+    afterUpdateOne:
+      "Après la mise à jour vers {patch}, un réglage que vous aviez appliqué n’est plus actif sur le système.",
+    afterUpdateMany:
+      "Après la mise à jour vers {patch}, {count} réglages que vous aviez appliqués ne sont plus actifs sur le système.",
+    noUpdateOne:
+      "Un réglage que vous aviez appliqué n’est plus actif sur le système. Aucune mise à jour de Windows entre-temps : autre chose l’a modifié.",
+    noUpdateMany:
+      "{count} réglages que vous aviez appliqués ne sont plus actifs sur le système. Aucune mise à jour de Windows entre-temps : autre chose les a modifiés.",
+    reapplyOne: "Réappliquer le réglage",
+    reapplyMany: "Réappliquer {count} réglages",
+    reapplying: "Réapplication...",
+    reappliedOne: "Réglage réappliqué.",
+    reappliedMany: "{count} réglages réappliqués.",
   },
   crashes: {
     title: "Fermetures inattendues",
@@ -4049,6 +4119,23 @@ const es: Strings = {
     reversible: "Reversible: el valor original se guarda antes de cada cambio.",
     empty: "Nada que recomendar ahora mismo: tu configuración ya sigue nuestros consejos.",
   },
+  drift: {
+    titleAfterUpdate: "Windows volvió a cambiar tus ajustes",
+    titleNoUpdate: "Algunos ajustes ya no están activos",
+    afterUpdateOne:
+      "Tras actualizar a {patch}, un ajuste que habías aplicado ya no está activo en el sistema.",
+    afterUpdateMany:
+      "Tras actualizar a {patch}, {count} ajustes que habías aplicado ya no están activos en el sistema.",
+    noUpdateOne:
+      "Un ajuste que habías aplicado ya no está activo en el sistema. No hubo ninguna actualización de Windows entretanto, así que lo cambió otra cosa.",
+    noUpdateMany:
+      "{count} ajustes que habías aplicado ya no están activos en el sistema. No hubo ninguna actualización de Windows entretanto, así que los cambió otra cosa.",
+    reapplyOne: "Volver a aplicar el ajuste",
+    reapplyMany: "Volver a aplicar {count} ajustes",
+    reapplying: "Aplicando...",
+    reappliedOne: "Ajuste aplicado de nuevo.",
+    reappliedMany: "{count} ajustes aplicados de nuevo.",
+  },
   crashes: {
     title: "Cierres inesperados",
     subtitle:
@@ -5143,6 +5230,23 @@ const de: Strings = {
     reversible: "Umkehrbar — der ursprüngliche Wert wird vor jeder Änderung gespeichert.",
     empty:
       "Derzeit nichts zu empfehlen — deine Konfiguration entspricht bereits unseren Empfehlungen.",
+  },
+  drift: {
+    titleAfterUpdate: "Windows hat Ihre Einstellungen zurückgesetzt",
+    titleNoUpdate: "Einige Einstellungen sind nicht mehr aktiv",
+    afterUpdateOne:
+      "Nach dem Update auf {patch} ist eine von Ihnen angewendete Optimierung im System nicht mehr aktiv.",
+    afterUpdateMany:
+      "Nach dem Update auf {patch} sind {count} von Ihnen angewendete Optimierungen im System nicht mehr aktiv.",
+    noUpdateOne:
+      "Eine von Ihnen angewendete Optimierung ist im System nicht mehr aktiv. Zwischenzeitlich gab es kein Windows-Update, also hat etwas anderes sie geändert.",
+    noUpdateMany:
+      "{count} von Ihnen angewendete Optimierungen sind im System nicht mehr aktiv. Zwischenzeitlich gab es kein Windows-Update, also hat etwas anderes sie geändert.",
+    reapplyOne: "Optimierung erneut anwenden",
+    reapplyMany: "{count} Optimierungen erneut anwenden",
+    reapplying: "Wird angewendet...",
+    reappliedOne: "Optimierung erneut angewendet.",
+    reappliedMany: "{count} Optimierungen erneut angewendet.",
   },
   crashes: {
     title: "Unerwartete Abstürze",
@@ -6245,6 +6349,23 @@ const pt: Strings = {
     confidenceStandard: "Recomendado para este tipo de máquina",
     reversible: "Reversível — o valor original é salvo antes de qualquer alteração.",
     empty: "Nada a recomendar por agora — sua configuração já está de acordo com nossos critérios.",
+  },
+  drift: {
+    titleAfterUpdate: "O Windows voltou a mexer nas suas definições",
+    titleNoUpdate: "Algumas definições já não estão ativas",
+    afterUpdateOne:
+      "Após a atualização para {patch}, um ajuste que tinha aplicado já não está ativo no sistema.",
+    afterUpdateMany:
+      "Após a atualização para {patch}, {count} ajustes que tinha aplicado já não estão ativos no sistema.",
+    noUpdateOne:
+      "Um ajuste que tinha aplicado já não está ativo no sistema. Não houve nenhuma atualização do Windows entretanto, por isso foi outra coisa a alterá-lo.",
+    noUpdateMany:
+      "{count} ajustes que tinha aplicado já não estão ativos no sistema. Não houve nenhuma atualização do Windows entretanto, por isso foi outra coisa a alterá-los.",
+    reapplyOne: "Reaplicar o ajuste",
+    reapplyMany: "Reaplicar {count} ajustes",
+    reapplying: "A reaplicar...",
+    reappliedOne: "Ajuste reaplicado.",
+    reappliedMany: "{count} ajustes reaplicados.",
   },
   crashes: {
     title: "Encerramentos inesperados",

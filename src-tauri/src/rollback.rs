@@ -10,7 +10,9 @@ static TMP_SEQ: AtomicU64 = AtomicU64::new(0);
 /// A registry value of a supported type. Some Windows settings (mouse
 /// acceleration, menu delays, ...) are stored as REG_SZ strings rather than
 /// DWORDs, so tweaks need to preserve whichever type they found.
-#[derive(Serialize, Deserialize, Clone, Debug)]
+// PartialEq so a live value can be compared with what a tweak writes, which
+// is how updatewatch.rs tells "still applied" from "something reverted it".
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum RegValue {
     Dword(u32),
     Str(String),

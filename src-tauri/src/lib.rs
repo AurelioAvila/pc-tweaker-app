@@ -45,6 +45,7 @@ mod services;
 mod startup;
 mod sysmon;
 mod systemprofile;
+mod updatewatch;
 mod technical;
 mod thermals;
 mod turbo;
@@ -1047,6 +1048,71 @@ fn list_audit_log(app: tauri::AppHandle) -> Result<Vec<audit::AuditEntry>, Strin
 ///
 /// Read from the same folder both processes write to, so a crash in the
 /// elevated helper shows up here even though that process never had a window.
+/// Whether Windows has undone any applied tweak since the last look.
+///
+/// Reads two independent things — the patch level, and the live value of
+/// every registry tweak the rollback store says is applied — and records the
+/// patch level for next time. Never changes anything: re-applying is a
+/// button, because a watchdog that silently re-applied would make system
+/// changes at the moment the user least expects them.
+#[cfg(windows)]
+#[tauri::command(async)]
+fn check_update_drift(app: tauri::AppHandle) -> Result<updatewatch::DriftReport, String> {
+    let dir = store_for_dir(&app)?;
+    let store = RollbackStore::new(dir.clone());
+
+    let current = updatewatch::current_patch_level()
+        .ok_or_else(|| "could not read the Windows patch level".to_string())?;
+    let previous = updatewatch::read_state(&dir).last_seen;
+
+    // Only the registry tweaks: those are the ones whose live state can be
+    // read back and compared without touching anything. The composite tweaks
+    // (power plans, services, network) each answer "am I on" their own way,
+    // and guessing a shared shape for them would report drift that is not
+    // there.
+    let states: Vec<updatewatch::TweakState> = tweaks::all_tweaks()
+        .into_iter()
+        .map(|t| {
+            let recorded_applied = store.is_applied(t.id);
+            let live_matches = if recorded_applied {
+                match t.read_current() {
+                    Ok(Some(value)) => Some(value == t.on_value),
+                    // The value is gone entirely, which for a tweak that
+                    // writes one is as reverted as a wrong value.
+                    Ok(None) => Some(false),
+                    Err(_) => None,
+                }
+            } else {
+                None
+            };
+            updatewatch::TweakState {
+                id: t.id.to_string(),
+                recorded_applied,
+                live_matches,
+            }
+        })
+        .collect();
+
+    let report = updatewatch::build_report(previous, current, &states);
+
+    // Recorded after the comparison, so a failure above leaves the previous
+    // baseline intact rather than swallowing an update nobody was told about.
+    let _ = updatewatch::write_state(
+        &dir,
+        &updatewatch::WatchState {
+            last_seen: Some(current),
+        },
+    );
+
+    Ok(report)
+}
+
+#[cfg(not(windows))]
+#[tauri::command(async)]
+fn check_update_drift(_app: tauri::AppHandle) -> Result<updatewatch::DriftReport, String> {
+    Err("the update watchdog is Windows-only".to_string())
+}
+
 #[tauri::command(async)]
 fn list_crash_reports(app: tauri::AppHandle) -> Result<Vec<crash::CrashReport>, String> {
     let dir = store_for_dir(&app)?;
@@ -1138,6 +1204,7 @@ pub fn run() {
             startup::list_startup_items,
             startup::set_startup_enabled,
             list_audit_log,
+            check_update_drift,
             list_crash_reports,
             clear_crash_reports,
             sysmon::system_stats,

@@ -4,6 +4,10 @@ pub mod baseline;
 mod browsercleanup;
 mod cleanup;
 mod contextmenu;
+// Public so examples/crashprobe.rs can install the real hook and panic for
+// real: whether a panic actually produces a scrubbed report is the one thing
+// a unit test cannot check, because a test that panics is a test that failed.
+pub mod crash;
 mod cpubench;
 mod cpuclock;
 mod diskhealth;
@@ -839,6 +843,10 @@ fn optimize_disk(_app: tauri::AppHandle, _drive: String) -> Result<diskopt::Disk
 #[cfg(windows)]
 pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     let dir = dirs_app_data_dir();
+    // This process has no window, so a panic here is silent: the user clicks
+    // "apply", the UAC prompt closes, and nothing happens with no explanation
+    // anywhere. Recording it is the only way that failure is ever seen.
+    crash::install(dir.clone(), crash::PROCESS_ELEVATED);
     let store = RollbackStore::new(dir.clone());
 
     // Safety net first: a System Restore point before any elevated change.
@@ -1035,6 +1043,22 @@ fn list_audit_log(app: tauri::AppHandle) -> Result<Vec<audit::AuditEntry>, Strin
     Ok(audit::list_in(&dir, 100))
 }
 
+/// Crash reports recorded on this machine, newest first.
+///
+/// Read from the same folder both processes write to, so a crash in the
+/// elevated helper shows up here even though that process never had a window.
+#[tauri::command(async)]
+fn list_crash_reports(app: tauri::AppHandle) -> Result<Vec<crash::CrashReport>, String> {
+    let dir = store_for_dir(&app)?;
+    Ok(crash::list_in(&dir))
+}
+
+#[tauri::command(async)]
+fn clear_crash_reports(app: tauri::AppHandle) -> Result<(), String> {
+    let dir = store_for_dir(&app)?;
+    crash::clear_in(&dir)
+}
+
 #[tauri::command(async)]
 fn clear_audit_log(app: tauri::AppHandle) -> Result<(), String> {
     let dir = store_for_dir(&app)?;
@@ -1043,6 +1067,10 @@ fn clear_audit_log(app: tauri::AppHandle) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Before anything else: a panic during startup is exactly the one a user
+    // cannot describe, because there is no window yet to describe it from.
+    crash::install(dirs_app_data_dir(), crash::PROCESS_APP);
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
@@ -1110,6 +1138,8 @@ pub fn run() {
             startup::list_startup_items,
             startup::set_startup_enabled,
             list_audit_log,
+            list_crash_reports,
+            clear_crash_reports,
             sysmon::system_stats,
             fps::imp::start_fps_capture,
             fps::imp::stop_fps_capture,

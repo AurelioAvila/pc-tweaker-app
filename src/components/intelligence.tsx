@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
 import { textFor } from "../lib";
-import { AuditEntry, Toast, TweakAdvice, TweakInfo } from "../types";
+import { AuditEntry, CrashReport, Toast, TweakAdvice, TweakInfo } from "../types";
 import { ProBadge, ShieldBadge } from "./ui";
 
 /**
@@ -169,6 +169,115 @@ const ACTION_KEYS: Record<string, keyof Strings["ledger"]["actions"]> = {
  * anything still applied. Read-only over `audit-log.jsonl`; the file never
  * leaves the machine.
  */
+/**
+ * Crash reports, shown only when there are any.
+ *
+ * Lives beside the Change Ledger because it answers the same question — what
+ * happened on this machine — and because the crash worth surfacing most is
+ * the one nobody can see: the elevated helper has no window, so a panic there
+ * looks to the user like the button simply did nothing.
+ *
+ * There is no "send" button, deliberately. The app does not phone home, and
+ * an opt-in upload would still be an upload; copying the report to the
+ * clipboard puts the decision to share it, and the choice of where, entirely
+ * with the person whose machine it describes.
+ */
+export function CrashReportsCard({
+  s,
+  pushToast,
+}: {
+  s: Strings;
+  pushToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [reports, setReports] = useState<CrashReport[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    void invoke<CrashReport[]>("list_crash_reports")
+      .then((v) => {
+        if (alive) setReports(v);
+      })
+      .catch(() => {
+        // No reports is the normal case and the same outcome as a failed
+        // read: either way there is nothing to show.
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (reports.length === 0) return null;
+
+  // Plain text rather than JSON: this gets pasted into a chat message or an
+  // issue, where a wall of braces is worse than lines a human can skim.
+  const asText = reports
+    .map((r) =>
+      [
+        `[${new Date(r.ts * 1000).toISOString()}] v${r.version} (${r.process})`,
+        r.message,
+        `at ${r.location} on thread ${r.thread}`,
+      ].join("\n"),
+    )
+    .join("\n\n");
+
+  return (
+    <div className="signal relative mb-6 overflow-hidden rounded-2xl border border-amber-500/30 bg-surface-1 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-ink font-semibold">{s.crashes.title}</h2>
+          <p className="text-ink-3 mt-0.5 text-sm">{s.crashes.subtitle}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            onClick={() => {
+              void navigator.clipboard
+                .writeText(asText)
+                .then(() => pushToast("success", s.crashes.copied))
+                .catch((e: unknown) => pushToast("error", String(e)));
+            }}
+            className="border-line-2 text-ink-2 rounded-xl border px-3 py-2 text-[12.5px] font-bold transition hover:-translate-y-px hover:brightness-110"
+          >
+            {s.crashes.copy}
+          </button>
+          <button
+            onClick={() => {
+              void invoke("clear_crash_reports")
+                .then(() => {
+                  setReports([]);
+                  pushToast("success", s.crashes.cleared);
+                })
+                .catch((e: unknown) => pushToast("error", String(e)));
+            }}
+            className="border-line-2 text-ink-2 rounded-xl border px-3 py-2 text-[12.5px] font-bold transition hover:-translate-y-px hover:brightness-110"
+          >
+            {s.crashes.clear}
+          </button>
+        </div>
+      </div>
+
+      <ul className="mt-4 flex flex-col gap-2">
+        {reports.map((r, i) => (
+          <li key={i} className="border-line rounded-xl border p-3">
+            <div className="text-ink-3 flex flex-wrap items-center gap-2 text-[11px]">
+              <span>{new Date(r.ts * 1000).toLocaleString()}</span>
+              <span>·</span>
+              <span>v{r.version}</span>
+              <span>·</span>
+              {/* Which process died is the single most useful field here, so
+                  it is a chip rather than another item in the grey run-on. */}
+              <span className="border-line-2 text-ink-2 rounded-full border px-2 py-0.5 font-semibold">
+                {r.process === "elevated" ? s.crashes.processElevated : s.crashes.processApp}
+              </span>
+            </div>
+            <p className="text-ink mt-1 font-mono text-[12px] break-words">{r.message}</p>
+            <p className="text-ink-3 mt-0.5 font-mono text-[11px]">{r.location}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function LedgerPanel({
   s,
   tweaks,

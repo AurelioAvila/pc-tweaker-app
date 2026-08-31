@@ -8,6 +8,7 @@ import { isKnownProduct, productEntitlement, upsertEntitlement, revokeEntitlemen
 import { isSettledCheckout, productFromMetadata } from "../stripe-policy";
 import { sendMail } from "../mailer";
 import { proWelcomeHtml, proWelcomeSubject } from "../emails/pro-welcome";
+import { SUPPORT_INBOX } from "../support-inbox";
 
 const router = express.Router();
 
@@ -176,7 +177,14 @@ router.post("/portal", requireAuth, requireStripe, async (req: Request, res: Res
   );
   const customerId = rows[0]?.stripe_customer_id;
   if (!customerId) {
-    return res.status(404).json({ error: "no subscription on this account" });
+    // Not the same as "you are not Pro". An account reaches this branch when
+    // it has no Stripe customer at all — which is exactly the case for Pro
+    // granted by hand in the database, where there is no payment history for
+    // Stripe to show. Saying "no subscription" to someone looking at their
+    // own working Pro badge reads as the app having lost their purchase.
+    return res.status(404).json({
+      error: "this account has no Stripe billing history, so there is nothing to manage",
+    });
   }
 
   try {
@@ -258,6 +266,7 @@ async function revokePro(userId: string): Promise<void> {
 const PLAN_PRICE_LABELS: Record<string, string> = {
   monthly: "€9.99 / month",
   annual: "€59 / year",
+  lifetime: "€74.99 once",
 };
 
 /**
@@ -274,12 +283,18 @@ async function sendProWelcomeEmail(userId: string, plan: string | null | undefin
     );
     const user = rows[0];
     if (!user?.email) return;
-    const renewsOn = (expiresAt ?? new Date()).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      timeZone: "UTC",
-    });
+    // No expiry means the purchase never renews, and the template says so.
+    // The previous `expiresAt ?? new Date()` quietly turned that case into
+    // "renews on <today>", which for a lifetime buyer is both wrong and
+    // alarming.
+    const renewsOn = expiresAt
+      ? expiresAt.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          timeZone: "UTC",
+        })
+      : null;
     await sendMail({
       to: user.email,
       subject: proWelcomeSubject(),
@@ -287,13 +302,60 @@ async function sendProWelcomeEmail(userId: string, plan: string | null | undefin
         firstName: user.first_name || "there",
         email: user.email,
         plan: plan || "monthly",
-        priceLabel: PLAN_PRICE_LABELS[plan || "monthly"] || PLAN_PRICE_LABELS.monthly,
+        priceLabel: PLAN_PRICE_LABELS[plan || "monthly"] ?? PLAN_PRICE_LABELS.monthly,
         renewsOn,
       }),
     });
   } catch (err) {
     console.error("failed to send Pro welcome email:", err);
   }
+}
+
+// Local, like every other route file's copy: the address and the plan name
+// are interpolated into an HTML mail, and one of them is a user-chosen
+// account email.
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/**
+ * Tells the shop owner a sale happened.
+ *
+ * Nothing did this before: the customer got a welcome email and the owner got
+ * nothing, so the only sale notification was whatever Stripe's dashboard was
+ * configured to send. Reuses SUPPORT_INBOX, the address reviews and support
+ * messages already go to.
+ *
+ * Best-effort and never awaited into the webhook's own result: a mail server
+ * having a bad minute must not make Stripe retry a payment that was already
+ * recorded correctly. It is logged loudly instead, because a sale nobody was
+ * told about is the kind of thing worth finding in a log later.
+ */
+function notifyOwnerOfSale(
+  userId: string,
+  plan: string | null | undefined,
+  mode: string | null,
+): void {
+  void (async () => {
+    const { rows } = await getPool().query("SELECT email FROM users WHERE id = $1", [userId]);
+    const email = rows[0]?.email ?? "(unknown address)";
+    const planName = plan ?? "unknown plan";
+    const kind = mode === "subscription" ? "subscription" : "one-off purchase";
+    await sendMail({
+      to: SUPPORT_INBOX,
+      subject: `New PC Tweaker sale — ${planName}`,
+      html: `<p>Someone just bought PC Tweaker Pro.</p>
+             <p><strong>Plan:</strong> ${escapeHtml(planName)} (${escapeHtml(kind)})<br>
+                <strong>Account:</strong> ${escapeHtml(email)}</p>
+             <p>Stripe has the payment; this is only the heads-up.</p>`,
+    });
+  })().catch((err: Error) =>
+    console.error("SALE NOTIFICATION LOST — could not tell the owner:", err.message),
+  );
 }
 
 /// Subscription events don't carry our user id directly, so resolve it from
@@ -338,6 +400,16 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session): Promise<
       const expiresAt =
         session.mode === "subscription" ? new Date(Date.now() + PROVISIONAL_ACCESS_MS) : null;
       await grantPro(userId, { customerId, plan: session.metadata?.plan, expiresAt });
+
+      // The welcome email used to be sent only from customer.subscription
+      // .created — an event a one-off purchase never produces. A lifetime
+      // buyer therefore paid and heard nothing at all. Subscriptions keep
+      // getting theirs from that event, so sending here too would send twice;
+      // this branch covers exactly the mode that event never fires for.
+      if (session.mode !== "subscription") {
+        await sendProWelcomeEmail(userId, session.metadata?.plan, null);
+      }
+      notifyOwnerOfSale(userId, session.metadata?.plan, session.mode ?? null);
 }
 
 async function handleEvent(event: Stripe.Event): Promise<void> {

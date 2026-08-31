@@ -259,16 +259,25 @@ export function PricingPanel({
               all — both used to be shown a button whose only possible
               outcome was an error message. */}
             {isPro ? (
-              /* A subscriber looking at the lifetime tab is the one Pro
-                 account with something left to buy. The webhook stops their
-                 recurring charge at the end of the period they have already
-                 paid for, so this is an upgrade rather than a second bill. */
-              heldPlan !== "lifetime" && hasBilling && plan === "lifetime" ? (
+              /* Any Pro account that does not already own it has something
+                 left to buy on the lifetime tab, and that includes accounts
+                 with no Stripe customer behind them — Pro granted directly,
+                 which is exactly the state that has never paid for anything.
+                 Requiring billing history here was wrong: it left those
+                 accounts looking at a statement of fact with no way to act
+                 on it. A subscriber upgrading has their recurring charge
+                 stopped at the end of the period already paid for, so this
+                 is an upgrade rather than a second bill; an account with no
+                 subscription simply has nothing to stop. */
+              heldPlan !== "lifetime" && plan === "lifetime" ? (
                 <button
                   onClick={() => onChoosePro(plan)}
                   className="mt-6 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-3.5 text-[15px] font-black tracking-tight text-slate-900 shadow-[0_10px_30px_-10px_var(--app-accent)] transition hover:-translate-y-px hover:brightness-110"
                 >
-                  {s.pricing.switchToLifetime}
+                  {/* "Switch" only makes sense to someone who has something
+                      to switch away from. An account with no subscription is
+                      simply buying. */}
+                  {hasBilling ? s.pricing.switchToLifetime : s.pricing.proCta}
                 </button>
               ) : heldPlan === "lifetime" || !hasBilling ? (
                 <p className="mt-6 w-full rounded-xl border border-line-2 bg-surface-2 py-3 text-center text-sm font-bold text-ink">

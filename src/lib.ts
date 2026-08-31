@@ -217,53 +217,91 @@ export async function sha1Hex(text: string): Promise<string> {
 export const AVATAR_KEY = "pc-tweaker-avatar";
 
 /**
- * Reads the photo, migrating a localStorage one from an older version on
- * first run.
+ * Reads the signed-in account's photo.
  *
- * The migration is one-directional and only ever *adds*: the old key is left
- * in place rather than deleted, so downgrading to a previous build still
- * finds the photo where it expects it. It is a few KB, and silently
- * destroying the only copy to save that would be the same class of mistake
- * this whole change exists to fix.
+ * Every one of these takes the address because the photo belongs to an
+ * account, not to the computer. It used to belong to the computer, which
+ * meant signing out and registering a second account showed the new account
+ * the previous person's face.
  */
-export async function readAvatar(): Promise<string | null> {
+export async function readAvatar(email: string): Promise<string | null> {
+  if (!email) return null;
   try {
-    const stored = await invoke<string | null>("read_avatar");
+    const stored = await invoke<string | null>("read_avatar", { email });
     if (stored && stored.startsWith("data:image/")) return stored;
   } catch {
-    // Fall through to the legacy key: an unreadable file should degrade to
-    // "check the old location", not to "you have no photo".
+    // An unreadable file degrades to "no photo", which shows the initial.
+  }
+  return null;
+}
+
+export async function writeAvatar(email: string, dataUrl: string): Promise<void> {
+  await invoke("save_avatar", { email, dataUrl });
+}
+
+export async function removeAvatar(email: string): Promise<void> {
+  await invoke("clear_avatar", { email });
+}
+
+/**
+ * Hands both older machine-wide photos — the file, and the localStorage key
+ * before it — to the account signed in at this moment.
+ *
+ * Called once at startup and never at sign-in. The app is running as whoever
+ * was using it when the update landed, so that account is the owner. Doing it
+ * at sign-in would hand the photo to whoever signs in next, which is the leak
+ * being closed.
+ *
+ * The old localStorage key is deleted rather than left for a downgrade to
+ * find. Keeping it was deliberate once, to survive rolling back to an older
+ * build; but a key that survives is a key the next account inherits, and
+ * showing someone a stranger's photograph is worse than making them pick
+ * theirs again after a downgrade.
+ */
+export async function adoptLegacyAvatar(email: string): Promise<void> {
+  if (!email) return;
+  try {
+    await invoke("adopt_legacy_avatar", { email });
+  } catch {
+    // Nothing to adopt, or the folder is unreadable. Not worth a toast.
   }
 
-  let legacy: string | null = null;
+  let legacy: string | null;
   try {
     legacy = localStorage.getItem(AVATAR_KEY);
   } catch {
-    // Storage blocked entirely. Nothing to migrate.
+    return; // Storage blocked entirely; there is nothing there to inherit.
   }
-  if (!legacy || !legacy.startsWith("data:image/")) return null;
+  if (!legacy || !legacy.startsWith("data:image/")) return;
 
   try {
-    await invoke("save_avatar", { dataUrl: legacy });
+    // Only if this account has no photo of its own, so adoption can never
+    // overwrite a newer picture with an older one.
+    const existing = await invoke<string | null>("read_avatar", { email });
+    if (!existing) await invoke("save_avatar", { email, dataUrl: legacy });
   } catch {
-    // Migration failed, but the photo is still readable from the old key, so
-    // show it anyway and try again next launch.
+    // Leave the key in place and try again next launch.
+    return;
   }
-  return legacy;
-}
-
-export async function writeAvatar(dataUrl: string): Promise<void> {
-  await invoke("save_avatar", { dataUrl });
-}
-
-export async function removeAvatar(): Promise<void> {
-  await invoke("clear_avatar");
   try {
-    // Remove the legacy copy too: the user asked for the photo to be gone,
-    // and leaving one behind would resurrect it on the next migration.
     localStorage.removeItem(AVATAR_KEY);
   } catch {
-    // Storage blocked; the file is what matters and it is already gone.
+    // Blocked; discardLegacyAvatar gets another chance at sign-out.
+  }
+}
+
+/** Destroys the machine-wide leftovers without giving them to anyone. Called
+ *  on sign-out, when the next person may not be the last one. */
+export async function discardLegacyAvatar(): Promise<void> {
+  try {
+    await invoke("discard_legacy_avatar");
+  } catch {
+    // Already gone, or unreachable; the localStorage half still matters.
+  }
+  try {
+    localStorage.removeItem(AVATAR_KEY);
+  } catch {
+    // Storage blocked; nothing readable there either.
   }
 }
 

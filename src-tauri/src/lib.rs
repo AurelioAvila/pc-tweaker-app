@@ -129,23 +129,53 @@ fn store_for(app: &tauri::AppHandle) -> Result<RollbackStore, String> {
  * localStorage — in short, people were losing their photos.
  * ---------------------------------------------------------------- */
 
-#[tauri::command(async)]
-fn save_avatar(app: tauri::AppHandle, data_url: String) -> Result<(), String> {
-    avatar::save(&store_for_dir(&app)?, &data_url)
+/// Every one of these takes the signed-in address, because the photo belongs
+/// to an account and not to the computer. Passing an empty one would give
+/// every anonymous session a single shared photo, so it is refused outright.
+fn require_account(email: &str) -> Result<(), String> {
+    if email.trim().is_empty() {
+        return Err("a profile photo needs an account to belong to".into());
+    }
+    Ok(())
 }
 
 #[tauri::command(async)]
-fn read_avatar(app: tauri::AppHandle) -> Option<String> {
+fn save_avatar(app: tauri::AppHandle, email: String, data_url: String) -> Result<(), String> {
+    require_account(&email)?;
+    avatar::save(&store_for_dir(&app)?, &email, &data_url)
+}
+
+#[tauri::command(async)]
+fn read_avatar(app: tauri::AppHandle, email: String) -> Option<String> {
     // A failure to even resolve the data folder is reported the same as "no
     // photo": the caller's only sensible response to either is to show the
     // fallback initial, and an error here would surface as a scary toast on
     // an ordinary first launch.
-    avatar::read(&store_for_dir(&app).ok()?)
+    if email.trim().is_empty() {
+        return None;
+    }
+    avatar::read(&store_for_dir(&app).ok()?, &email)
 }
 
 #[tauri::command(async)]
-fn clear_avatar(app: tauri::AppHandle) -> Result<(), String> {
-    avatar::clear(&store_for_dir(&app)?)
+fn clear_avatar(app: tauri::AppHandle, email: String) -> Result<(), String> {
+    require_account(&email)?;
+    avatar::clear(&store_for_dir(&app)?, &email)
+}
+
+/// Gives the pre-1.6.1 machine-wide photo to the account signed in right now.
+#[tauri::command(async)]
+fn adopt_legacy_avatar(app: tauri::AppHandle, email: String) -> Result<(), String> {
+    require_account(&email)?;
+    avatar::adopt_legacy(&store_for_dir(&app)?, &email);
+    Ok(())
+}
+
+/// Drops that photo on sign-out, so the next account cannot inherit it.
+#[tauri::command(async)]
+fn discard_legacy_avatar(app: tauri::AppHandle) -> Result<(), String> {
+    avatar::discard_legacy(&store_for_dir(&app)?);
+    Ok(())
 }
 
 #[tauri::command(async)]
@@ -1163,6 +1193,8 @@ pub fn run() {
             close_hud_overlay,
             read_avatar,
             clear_avatar,
+            adopt_legacy_avatar,
+            discard_legacy_avatar,
             systemprofile::system_profile,
             health::health_report,
             healthhistory::list_health_history,

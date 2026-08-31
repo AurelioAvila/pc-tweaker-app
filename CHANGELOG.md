@@ -10,6 +10,10 @@
 - Subscribers can move to the lifetime plan from the plans screen. The
   monthly or annual charge is set to stop at the end of the period already
   paid for, so the upgrade never bills twice.
+- Fixed: the profile photo belonged to the computer rather than to the
+  account, so signing out and into a different account showed the previous
+  person's picture. Each account now keeps its own, and the photo already on
+  this machine stays with whoever is signed in.
 
 ## v1.6.0 - 2026-08-31
 

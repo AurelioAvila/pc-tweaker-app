@@ -40,3 +40,48 @@ export function planFromPrice(
   }
   return null;
 }
+
+/**
+ * What the customer was actually charged, written out for the receipt line
+ * of the confirmation email.
+ *
+ * Read from the Stripe object rather than a table of prices in this file.
+ * A table has to be kept in step with the dashboard by hand, and it silently
+ * lies the moment it is not: the Uninstaller's loyalty price and its standard
+ * price are different Prices under the same plan name, so no per-plan label
+ * could have described both. An amount taken from the charge is right by
+ * construction.
+ *
+ * Returns null when the amount is missing, and the caller then omits the
+ * line rather than printing a confident "0.00".
+ */
+export function formatChargedAmount(
+  amountInMinorUnits: number | null | undefined,
+  currency: string | null | undefined,
+  interval?: string | null,
+): string | null {
+  if (amountInMinorUnits == null || !currency) return null;
+  // Zero-decimal currencies (JPY and friends) are not divided by 100. Doing
+  // it anyway would quote a hundredth of the real price.
+  const zeroDecimal = new Set(["bif", "clp", "djf", "gnf", "jpy", "kmf", "krw", "mga", "pyg", "rwf", "ugx", "vnd", "vuv", "xaf", "xof", "xpf"]);
+  const code = currency.toLowerCase();
+  const amount = zeroDecimal.has(code) ? amountInMinorUnits : amountInMinorUnits / 100;
+  let formatted: string;
+  try {
+    formatted = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency.toUpperCase(),
+      minimumFractionDigits: zeroDecimal.has(code) ? 0 : 2,
+    })
+      .format(amount)
+      // Intl separates an unrecognised code from the number with a
+      // non-breaking space. It looks identical and compares unequal, which
+      // is a poor thing to leave in a string other code may match on.
+      .replace(/ /g, " ");
+  } catch {
+    // An unrecognised currency code must not cost the customer their receipt.
+    formatted = `${amount} ${currency.toUpperCase()}`;
+  }
+  if (!interval) return `${formatted} once`;
+  return `${formatted} / ${interval}`;
+}

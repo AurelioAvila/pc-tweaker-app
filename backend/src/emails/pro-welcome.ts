@@ -7,9 +7,12 @@
 export type ProWelcomeEmailInput = {
   firstName: string;
   email: string;
-  plan: "monthly" | "annual" | string;
+  plan: "monthly" | "annual" | "lifetime" | string;
   priceLabel: string; // e.g. "€9.99 / month"
-  renewsOn: string; // pre-formatted, e.g. "September 24, 2026"
+  /** Pre-formatted, e.g. "September 24, 2026". Null for a one-off purchase,
+   *  which never renews — the row then reads "Access / Never expires" instead
+   *  of quoting a date that would simply be untrue. */
+  renewsOn: string | null;
 };
 
 function escapeHtml(value: string): string {
@@ -26,7 +29,12 @@ export function proWelcomeSubject(): string {
 
 export function proWelcomeHtml({ firstName, email, plan, priceLabel, renewsOn }: ProWelcomeEmailInput): string {
   const name = escapeHtml(firstName || "there");
-  const planLabel = plan === "annual" ? "Pro — Annual" : "Pro — Monthly";
+  const planLabel =
+    plan === "lifetime"
+      ? "Pro — Lifetime"
+      : plan === "annual"
+        ? "Pro — Annual"
+        : "Pro — Monthly";
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -109,8 +117,8 @@ export function proWelcomeHtml({ firstName, email, plan, priceLabel, renewsOn }:
                 <td style="font-size:13px; color:#e5e7eb; padding:4px 0; text-align:right;">${escapeHtml(priceLabel)}</td>
               </tr>
               <tr>
-                <td style="font-size:13px; color:#5b5f66; padding:4px 0;">Renews on</td>
-                <td style="font-size:13px; color:#e5e7eb; padding:4px 0; text-align:right;">${escapeHtml(renewsOn)}</td>
+                <td style="font-size:13px; color:#5b5f66; padding:4px 0;">${renewsOn ? "Renews on" : "Access"}</td>
+                <td style="font-size:13px; color:#e5e7eb; padding:4px 0; text-align:right;">${escapeHtml(renewsOn ?? "Never expires")}</td>
               </tr>
             </table>
           </td>

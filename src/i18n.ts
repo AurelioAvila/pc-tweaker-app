@@ -235,6 +235,9 @@ export interface Strings {
     proCta: string;
     proCurrent: string;
     manageBilling: string;
+    lifetimeOwned: string;
+    switchToLifetime: string;
+    proActiveNoBilling: string;
     everythingInFree: string;
     reassurance: string;
     freeFeatures: string[];
@@ -1010,6 +1013,9 @@ const it: Strings = {
     proCta: "Passa a Pro",
     proCurrent: "Il tuo piano",
     manageBilling: "Gestisci abbonamento",
+    lifetimeOwned: "Pro è tuo per sempre",
+    switchToLifetime: "Passa al lifetime",
+    proActiveNoBilling: "Pro è attivo su questo account",
     everythingInFree: "Tutto quello che c’è nel Free, più:",
     reassurance:
       "Disdici quando vuoi. Ogni modifica resta reversibile con un click, anche dopo la disdetta.",
@@ -2118,6 +2124,9 @@ const en: Strings = {
     proCta: "Go Pro",
     proCurrent: "Your plan",
     manageBilling: "Manage subscription",
+    lifetimeOwned: "Pro is yours for good",
+    switchToLifetime: "Switch to lifetime",
+    proActiveNoBilling: "Pro is active on this account",
     everythingInFree: "Everything in Free, plus:",
     reassurance:
       "Cancel anytime. Every change stays one click away from being undone, even after you cancel.",
@@ -3220,6 +3229,9 @@ const fr: Strings = {
     proCta: "Passer à Pro",
     proCurrent: "Votre offre",
     manageBilling: "Gérer l'abonnement",
+    lifetimeOwned: "Pro est à vous pour toujours",
+    switchToLifetime: "Passer au lifetime",
+    proActiveNoBilling: "Pro est actif sur ce compte",
     everythingInFree: "Tout ce que contient Free, plus :",
     reassurance:
       "Résiliable à tout moment. Chaque modification reste annulable en un clic, même après la résiliation.",
@@ -4337,6 +4349,9 @@ const es: Strings = {
     proCta: "Pasar a Pro",
     proCurrent: "Tu plan",
     manageBilling: "Gestionar suscripción",
+    lifetimeOwned: "Pro es tuyo para siempre",
+    switchToLifetime: "Cambiar a lifetime",
+    proActiveNoBilling: "Pro está activo en esta cuenta",
     everythingInFree: "Todo lo que incluye Free, y además:",
     reassurance:
       "Cancela cuando quieras. Cada cambio sigue siendo reversible con un clic, incluso tras cancelar.",
@@ -5450,6 +5465,9 @@ const de: Strings = {
     proCta: "Zu Pro wechseln",
     proCurrent: "Dein Tarif",
     manageBilling: "Abo verwalten",
+    lifetimeOwned: "Pro gehört dir dauerhaft",
+    switchToLifetime: "Auf Lifetime wechseln",
+    proActiveNoBilling: "Pro ist in diesem Konto aktiv",
     everythingInFree: "Alles aus Free, dazu:",
     reassurance:
       "Jederzeit kündbar. Jede Änderung bleibt mit einem Klick rückgängig zu machen, auch nach der Kündigung.",
@@ -6571,6 +6589,9 @@ const pt: Strings = {
     proCta: "Assinar o Pro",
     proCurrent: "Seu plano",
     manageBilling: "Gerenciar assinatura",
+    lifetimeOwned: "Pro é seu para sempre",
+    switchToLifetime: "Mudar para o lifetime",
+    proActiveNoBilling: "Pro está ativo nesta conta",
     everythingInFree: "Tudo do Grátis, mais:",
     reassurance:
       "Cancele quando quiser. Toda alteração continua a um clique de ser desfeita, mesmo depois de cancelar.",

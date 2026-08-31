@@ -94,7 +94,14 @@ function App() {
     // below as soon as it resolves — avoids briefly trusting a stale/forged
     // local value.
     return email && token
-      ? { status: "authenticated", email, isPro: false, emailVerified: false }
+      ? {
+          status: "authenticated",
+          email,
+          isPro: false,
+          emailVerified: false,
+          plan: null,
+          hasBilling: false,
+        }
       : { status: "anonymous" };
   });
 
@@ -122,12 +129,23 @@ function App() {
         pushToast("error", s.toasts.accountRefreshFailed);
         return;
       }
-      const data = (await res.json()) as { email: string; isPro: boolean; emailVerified: boolean };
+      const data = (await res.json()) as {
+        email: string;
+        isPro: boolean;
+        emailVerified: boolean;
+        plan?: string | null;
+        hasBilling?: boolean;
+      };
       setAuth({
         status: "authenticated",
         email: data.email,
         isPro: data.isPro,
         emailVerified: data.emailVerified,
+        // Optional so a client that is newer than the deployed backend
+        // degrades to hiding the billing button rather than showing one
+        // that cannot work.
+        plan: data.plan ?? null,
+        hasBilling: data.hasBilling ?? false,
       });
       // Fire-and-forget: refreshLicense() has its own error handling and
       // must never block the UI's account status on a signing hiccup.
@@ -216,7 +234,14 @@ function App() {
     // unticking it genuinely means "don't keep me signed in on this machine"
     // rather than being a cosmetic checkbox.
     storeSession(data.token, email, remember);
-    setAuth({ status: "authenticated", email, isPro: false, emailVerified: false });
+    setAuth({
+      status: "authenticated",
+      email,
+      isPro: false,
+      emailVerified: false,
+      plan: null,
+      hasBilling: false,
+    });
     await refreshAccount();
   }
 
@@ -862,6 +887,8 @@ function App() {
                 s={s}
                 lang={lang}
                 isPro={isProUnlocked}
+                heldPlan={auth.status === "authenticated" ? auth.plan : null}
+                hasBilling={auth.status === "authenticated" && auth.hasBilling}
                 freeTweakCount={freeTweakCount}
                 onChoosePro={async (plan) => {
                   try {

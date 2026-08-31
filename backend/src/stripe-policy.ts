@@ -17,3 +17,26 @@ export function productFromMetadata(
 export function isSettledCheckout(paymentStatus: string | null | undefined): boolean {
   return paymentStatus === "paid" || paymentStatus === "no_payment_required";
 }
+
+/**
+ * Which plan a price id belongs to.
+ *
+ * The alternative — reading `metadata.plan` off the subscription — is written
+ * once when the checkout session is created and never updated again, so a
+ * customer who switches monthly to annual in Stripe's billing portal would
+ * stay labelled "monthly" while being billed annually. The price is the thing
+ * Stripe actually changes, so it is the thing to read.
+ *
+ * The id-to-plan map is passed in rather than read from the environment here,
+ * which is what lets this be tested without a configured account.
+ */
+export function planFromPrice(
+  priceId: string | null | undefined,
+  prices: Record<string, string | undefined>,
+): string | null {
+  if (!priceId) return null;
+  for (const [plan, configured] of Object.entries(prices)) {
+    if (configured && configured === priceId) return plan;
+  }
+  return null;
+}

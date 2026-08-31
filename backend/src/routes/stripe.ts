@@ -5,7 +5,7 @@ import { getPool, isConfigured } from "../db";
 import { requireAuth } from "../auth";
 import { periodEndFromSubscription } from "../entitlement";
 import { isKnownProduct, productEntitlement, upsertEntitlement, revokeEntitlement, type Product } from "../products";
-import { isSettledCheckout, productFromMetadata } from "../stripe-policy";
+import { isSettledCheckout, planFromPrice, productFromMetadata } from "../stripe-policy";
 import { sendMail } from "../mailer";
 import { proWelcomeHtml, proWelcomeSubject } from "../emails/pro-welcome";
 import { SUPPORT_INBOX } from "../support-inbox";
@@ -280,6 +280,99 @@ async function revokePro(userId: string): Promise<void> {
   await getPool().query("UPDATE users SET is_pro = FALSE, pro_expires_at = NULL WHERE id = $1", [userId]);
 }
 
+/** The plan for a subscription: its price first, its metadata as a fallback
+ *  for anything created before the price map existed. */
+function subscriptionPlan(subscription: Stripe.Subscription): string | null {
+  const priceId = subscription.items?.data?.[0]?.price?.id ?? null;
+  const fromPrice = planFromPrice(priceId, {
+    monthly: process.env.STRIPE_PRICE_MONTHLY,
+    annual: process.env.STRIPE_PRICE_ANNUAL,
+    lifetime: process.env.STRIPE_PRICE_LIFETIME,
+  });
+  return fromPrice ?? subscription.metadata?.plan ?? null;
+}
+
+/**
+ * Whether this account already owns Pro outright.
+ *
+ * A lifetime buyer who still had a subscription running keeps receiving
+ * subscription events for it — an update when it is set to stop renewing,
+ * then a deletion when the paid period runs out. Both would otherwise be
+ * applied on top of the perpetual grant: the first replacing "never expires"
+ * with a date, the second revoking Pro from someone who has paid for it
+ * permanently. Every subscription event is therefore ignored for an account
+ * in this state.
+ */
+async function holdsLifetime(userId: string): Promise<boolean> {
+  const { rows } = await getPool().query(
+    "SELECT plan, pro_expires_at FROM users WHERE id = $1",
+    [userId],
+  );
+  const row = rows[0];
+  return Boolean(row && row.plan === "lifetime" && row.pro_expires_at === null);
+}
+
+/**
+ * Stops any subscription still billing an account that has just bought Pro
+ * outright. Without this the customer pays 9.99 a month, forever, on top of
+ * the one-off price they paid to stop doing exactly that.
+ *
+ * Cancellation is at the end of the period they have already paid for, not
+ * immediately: that money is spent either way, and ending it early would take
+ * away days they are owed while giving nothing back. Nothing renews after.
+ *
+ * Best-effort by design. The perpetual grant is already committed by the time
+ * this runs, so throwing here would make Stripe retry the whole webhook and
+ * re-grant what is already granted. A failure is loud in the logs instead.
+ */
+async function stopSubscriptionsAfterLifetime(
+  userId: string,
+  customerId: string | null,
+): Promise<void> {
+  if (!stripe || !customerId) return;
+  try {
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "active",
+      limit: 10,
+    });
+    for (const subscription of subscriptions.data) {
+      if (subscription.cancel_at_period_end) continue;
+      await stripe.subscriptions.update(subscription.id, { cancel_at_period_end: true });
+      console.log(`lifetime purchase: ${subscription.id} will not renew`);
+    }
+  } catch (err) {
+    // The one failure that costs the customer money rather than just an
+    // error page. Whatever went wrong — an API key without permission to
+    // touch subscriptions, an outage — someone has now paid for permanent
+    // access and is still on a recurring charge, so this asks a human to
+    // finish the job by hand instead of leaving it in a log nobody reads.
+    console.error("could not stop a subscription after a lifetime purchase:", err);
+    alertOwnerOfUncancelledSubscription(userId, customerId);
+  }
+}
+
+/** Asks the owner to cancel a subscription the webhook could not stop. */
+function alertOwnerOfUncancelledSubscription(userId: string, customerId: string): void {
+  void (async () => {
+    const { rows } = await getPool().query("SELECT email FROM users WHERE id = $1", [userId]);
+    const email = rows[0]?.email ?? "(unknown address)";
+    await sendMail({
+      to: SUPPORT_INBOX,
+      subject: "Action needed: lifetime buyer is still being billed monthly",
+      html: `<p>This account bought Pro outright, but the subscription it already had
+                could not be stopped automatically.</p>
+             <p><strong>Account:</strong> ${escapeHtml(email)}<br>
+                <strong>Stripe customer:</strong> ${escapeHtml(customerId)}</p>
+             <p>Their Pro access is safe and permanent. What is not resolved is the
+                recurring charge: set it to cancel in the Stripe dashboard, or they
+                will be billed again.</p>`,
+    });
+  })().catch((err: Error) =>
+    console.error("BILLING ALERT LOST — a lifetime buyer may still be charged:", err.message),
+  );
+}
+
 const PLAN_PRICE_LABELS: Record<string, string> = {
   monthly: "€9.99 / month",
   annual: "€59 / year",
@@ -425,6 +518,9 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session): Promise<
       // this branch covers exactly the mode that event never fires for.
       if (session.mode !== "subscription") {
         await sendProWelcomeEmail(userId, session.metadata?.plan, null);
+        // An existing subscriber upgrading to lifetime: the perpetual grant
+        // is in place, so the recurring charge has to stop.
+        await stopSubscriptionsAfterLifetime(userId, customerId);
       }
       notifyOwnerOfSale(userId, session.metadata?.plan, session.mode ?? null);
 }
@@ -463,18 +559,20 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
         break;
       }
 
+      if (await holdsLifetime(userId)) break;
+
       const customerId = typeof subscription.customer === "string" ? subscription.customer : null;
       if (active) {
         const expiresAt = periodEndFromSubscription(subscription);
         await grantPro(userId, {
           customerId,
-          plan: subscription.metadata?.plan,
+          plan: subscriptionPlan(subscription),
           expiresAt,
         });
         // Only on creation, not every renewal/update — this event fires once
         // per subscription's lifecycle start.
         if (event.type === "customer.subscription.created") {
-          await sendProWelcomeEmail(userId, subscription.metadata?.plan, expiresAt);
+          await sendProWelcomeEmail(userId, subscriptionPlan(subscription), expiresAt);
         }
       } else {
         await revokePro(userId);
@@ -494,6 +592,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
         await revokeEntitlement(userId, product);
         break;
       }
+      if (await holdsLifetime(userId)) break;
       await revokePro(userId);
       break;
     }

@@ -15,6 +15,8 @@ export function PricingPanel({
   s,
   lang,
   isPro,
+  heldPlan,
+  hasBilling,
   freeTweakCount,
   onChoosePro,
   onManageBilling,
@@ -22,6 +24,10 @@ export function PricingPanel({
   s: Strings;
   lang: Lang;
   isPro: boolean;
+  /** The plan this account's Pro came from, or null when it was granted. */
+  heldPlan: string | null;
+  /** Whether Stripe has a customer for this account. */
+  hasBilling: boolean;
   freeTweakCount: number;
   onChoosePro: (plan: ProPlan) => void;
   onManageBilling: () => void;
@@ -247,13 +253,35 @@ export function PricingPanel({
               ))}
             </ul>
 
+            {/* Three different Pro accounts end up here and only one of them
+              has anything to manage. A lifetime purchase has no subscription
+              to change, and Pro granted by hand has no Stripe customer at
+              all — both used to be shown a button whose only possible
+              outcome was an error message. */}
             {isPro ? (
-              <button
-                onClick={onManageBilling}
-                className="mt-6 w-full rounded-xl border border-line-2 bg-surface-2 py-3 text-sm font-bold text-ink transition-colors hover:border-line-2 hover:bg-surface-1"
-              >
-                {s.pricing.manageBilling}
-              </button>
+              /* A subscriber looking at the lifetime tab is the one Pro
+                 account with something left to buy. The webhook stops their
+                 recurring charge at the end of the period they have already
+                 paid for, so this is an upgrade rather than a second bill. */
+              heldPlan !== "lifetime" && hasBilling && plan === "lifetime" ? (
+                <button
+                  onClick={() => onChoosePro(plan)}
+                  className="mt-6 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-3.5 text-[15px] font-black tracking-tight text-slate-900 shadow-[0_10px_30px_-10px_var(--app-accent)] transition hover:-translate-y-px hover:brightness-110"
+                >
+                  {s.pricing.switchToLifetime}
+                </button>
+              ) : heldPlan === "lifetime" || !hasBilling ? (
+                <p className="mt-6 w-full rounded-xl border border-line-2 bg-surface-2 py-3 text-center text-sm font-bold text-ink">
+                  {heldPlan === "lifetime" ? s.pricing.lifetimeOwned : s.pricing.proActiveNoBilling}
+                </p>
+              ) : (
+                <button
+                  onClick={onManageBilling}
+                  className="mt-6 w-full rounded-xl border border-line-2 bg-surface-2 py-3 text-sm font-bold text-ink transition-colors hover:border-line-2 hover:bg-surface-1"
+                >
+                  {s.pricing.manageBilling}
+                </button>
+              )
             ) : (
               <button
                 onClick={() => onChoosePro(plan)}

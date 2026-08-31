@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
 import { textFor } from "../lib";
-import { AuditEntry, CrashReport, Toast, TweakAdvice, TweakInfo } from "../types";
+import { AuditEntry, CrashReport, DriftReport, Toast, TweakAdvice, TweakInfo } from "../types";
 import { ProBadge, ShieldBadge } from "./ui";
 
 /**
@@ -164,11 +164,121 @@ const ACTION_KEYS: Record<string, keyof Strings["ledger"]["actions"]> = {
 };
 
 /**
- * The local history of what this app changed on this machine: every entry of
- * the append-only audit trail, newest first, with per-tweak rollback for
- * anything still applied. Read-only over `audit-log.jsonl`; the file never
- * leaves the machine.
+ * The update watchdog's finding, shown only when something actually drifted.
+ *
+ * Two readings, kept apart on purpose. That the patch level moved is one
+ * fact; that applied tweaks no longer match the system is another. The app
+ * can prove both and cannot prove the first caused the second — the user may
+ * have changed a setting themselves — so the wording reports the correlation
+ * and stops there. Re-applying is a button, never automatic: a tool that
+ * silently rewrote system settings after an update would be doing the one
+ * thing the rollback engine exists to make impossible.
  */
+export function UpdateDriftCard({
+  s,
+  tweaks,
+  onChanged,
+  pushToast,
+}: {
+  s: Strings;
+  tweaks: TweakInfo[];
+  onChanged: () => Promise<void>;
+  pushToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [report, setReport] = useState<DriftReport | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    void invoke<DriftReport>("check_update_drift")
+      .then((v) => {
+        if (alive) setReport(v);
+      })
+      .catch(() => {
+        // Not being able to read the patch level is not something to put in
+        // front of the user: the watchdog simply has nothing to say.
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (!report || report.reverted.length === 0) return null;
+
+  const one = report.reverted.length === 1;
+
+  const nameOf = (id: string) => {
+    const t = tweaks.find((x) => x.id === id);
+    return t ? textFor(s.tweaks, t.id, t.name, t.description).name : id;
+  };
+
+  async function reapply() {
+    if (!report) return;
+    setBusy(true);
+    try {
+      await invoke("apply_tweaks", { ids: report.reverted });
+      await onChanged();
+      pushToast(
+        "success",
+        one
+          ? s.drift.reappliedOne
+          : format(s.drift.reappliedMany, { count: report.reverted.length }),
+      );
+      setReport({ ...report, reverted: [] });
+    } catch (e) {
+      pushToast("error", String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="signal relative mb-6 overflow-hidden rounded-2xl border border-amber-500/30 bg-surface-1 p-5">
+      {/* Title and body both follow the same fork. Only one of the two
+          situations involves Windows at all, and a headline blaming it above
+          a sentence saying it was not involved reads as a bug. */}
+      <h2 className="text-ink font-semibold">
+        {report.windowsUpdated ? s.drift.titleAfterUpdate : s.drift.titleNoUpdate}
+      </h2>
+      <p className="text-ink-3 mt-0.5 text-sm">
+        {report.windowsUpdated
+          ? one
+            ? format(s.drift.afterUpdateOne, { patch: report.currentPatch })
+            : format(s.drift.afterUpdateMany, {
+                count: report.reverted.length,
+                patch: report.currentPatch,
+              })
+          : one
+            ? s.drift.noUpdateOne
+            : format(s.drift.noUpdateMany, { count: report.reverted.length })}
+      </p>
+
+      <ul className="mt-3 flex flex-wrap gap-2">
+        {report.reverted.map((id) => (
+          <li
+            key={id}
+            className="border-line-2 text-ink-2 rounded-full border px-3 py-1 text-[12px]"
+          >
+            {nameOf(id)}
+          </li>
+        ))}
+      </ul>
+
+      <button
+        onClick={() => void reapply()}
+        disabled={busy}
+        className="bg-accent text-on-accent mt-4 rounded-xl px-4 py-2.5 text-[13px] font-bold transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:hover:translate-y-0 disabled:hover:brightness-100"
+      >
+        {busy
+          ? s.drift.reapplying
+          : one
+            ? s.drift.reapplyOne
+            : format(s.drift.reapplyMany, { count: report.reverted.length })}
+      </button>
+    </div>
+  );
+}
+
 /**
  * Crash reports, shown only when there are any.
  *
@@ -278,6 +388,12 @@ export function CrashReportsCard({
   );
 }
 
+/**
+ * The local history of what this app changed on this machine: every entry of
+ * the append-only audit trail, newest first, with per-tweak rollback for
+ * anything still applied. Read-only over `audit-log.jsonl`; the file never
+ * leaves the machine.
+ */
 export function LedgerPanel({
   s,
   tweaks,

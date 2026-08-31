@@ -52,7 +52,12 @@ import { ScanPanel } from "./components/scan";
 import { HealthPanel } from "./components/health";
 import { HardwarePanel } from "./components/hardware";
 import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
-import { AdvisorCard, CrashReportsCard, LedgerPanel } from "./components/intelligence";
+import {
+  AdvisorCard,
+  CrashReportsCard,
+  LedgerPanel,
+  UpdateDriftCard,
+} from "./components/intelligence";
 import { usePulseSamples } from "./components/command";
 import { StartupManager } from "./components/startup";
 import { ProfilesPanel } from "./components/profiles";
@@ -825,6 +830,10 @@ function App() {
                 {/* Above the ledger: a crash is the one thing on this screen
                   that needs acting on, and it renders nothing at all when
                   there are no reports. */}
+                {/* Above the crash card: a reverted tweak is something the
+                  user can act on right now, and it renders nothing when
+                  nothing drifted. */}
+                <UpdateDriftCard s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />
                 <CrashReportsCard s={s} pushToast={pushToast} />
                 <LedgerPanel s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />
               </>

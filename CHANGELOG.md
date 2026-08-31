@@ -1,5 +1,42 @@
 # Changelog
 
+## v1.6.0 - 2026-08-31
+
+### New
+
+- **Update Watchdog.** A cumulative update does not just patch binaries: it
+  reinstalls apps you removed, re-enables services you turned off, and
+  rewrites registry values you deliberately changed. You used to find out
+  weeks later, if at all, because the tweak screen still said "applied" —
+  that is what you asked for, and nothing ever went back to check whether it
+  was still true. History now reports which applied tweaks are no longer in
+  effect, and re-applies them in one click.
+
+  It reports what it can prove and stops there. When Windows has not patched
+  the machine in between, it says so rather than blaming an update that did
+  not happen — and a value it cannot read is never reported as reverted,
+  because "Windows undid your tweak" is not a claim to make about a
+  permissions error.
+
+- **Crash reports, kept on this machine.** A crash used to leave no trace you
+  could act on. In the main window that at least looks like something. In the
+  elevated helper it looked like nothing at all: no window, so a failure there
+  meant you clicked apply, the prompt closed, and you were told nothing. Both
+  now record what happened, and History shows it with a button that copies the
+  report so you can send it if you want to. Nothing is uploaded, and there is
+  no opt-in upload either — the profile path and account name are stripped
+  before anything is written, because the file exists to be pasted in public.
+
+- **Pro, paid once.** A lifetime plan at EUR 74.99 alongside monthly and
+  annual. The card states when it pays for itself against the annual plan,
+  derived from the prices rather than written down.
+
+### Fixed
+
+- Reopening the app with the gaming overlay already on screen showed the
+  "Show" button instead of its controls: the card assumed the overlay was
+  closed rather than asking.
+
 ## v1.5.0 - 2026-08-30
 
 ### New (Pro)

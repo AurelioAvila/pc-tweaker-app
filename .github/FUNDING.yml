@@ -1,8 +1,13 @@
 # Renders GitHub's own "Sponsor" button in the repo header and in every
-# issue/PR sidebar — the presence GitHub gives for free, alongside the
-# "Support development" section in the README.
+# issue/PR sidebar — the presence GitHub gives for free, alongside the small
+# badge under the download counts in the README.
 #
-# The URL is the site's tip section (id="tip"), not a Stripe link pasted
-# here: the Checkout session is created server-side, so the price and the
-# coffee count can change without editing this file or a shipped binary.
-custom: ["https://pctweaker.app/#tip"]
+# No fragment on the URL: the tip control now sits beside the hero download
+# button, above the fold, so there is nothing to scroll to — and GitHub is
+# picky about what it accepts as a funding link, so the plain origin is one
+# less thing for it to reject.
+#
+# Not a Stripe link pasted here either: the Checkout session is created
+# server-side, so the price and the coffee count can change without editing
+# this file or a shipped binary.
+custom: ["https://pctweaker.app"]

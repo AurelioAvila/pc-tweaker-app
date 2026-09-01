@@ -4,6 +4,7 @@ import { text } from "../i18n/dictionary";
 import { ACCENTS, THEME_ORDER, useTheme } from "../theme";
 import { EASE, riseChild, staggerParent } from "../motion";
 import { DOWNLOAD_EXE } from "../constants";
+import { CoffeeTip } from "./CoffeeTip";
 
 /* ---------- theme selector: one geometric dot per palette ---------- */
 function ThemeSelector() {
@@ -131,19 +132,23 @@ export function HeroSection() {
               {text.hero.sub}
             </p>
 
-            <div className="mt-9 flex flex-wrap items-center gap-4">
-              <motion.a
-                ref={btnRef}
-                href={DOWNLOAD_EXE}
-                onMouseMove={onMove}
-                onMouseLeave={onLeave}
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.6, ease: EASE }}
-                className="bg-accent glow-accent inline-flex items-center gap-2.5 rounded-xl px-8 py-4 text-[15px] font-bold text-[var(--bg)] transition-transform duration-300 will-change-transform"
-              >
-                {text.hero.cta}
-                <span className="font-mono-t text-[12px]">↓</span>
-              </motion.a>
+            {/* CoffeeTip owns this row so the tip pill can sit beside the
+                download button while its stepper unfolds under both. */}
+            <div className="mt-9">
+              <CoffeeTip>
+                <motion.a
+                  ref={btnRef}
+                  href={DOWNLOAD_EXE}
+                  onMouseMove={onMove}
+                  onMouseLeave={onLeave}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ duration: 0.6, ease: EASE }}
+                  className="bg-accent glow-accent inline-flex items-center gap-2.5 rounded-xl px-8 py-4 text-[15px] font-bold text-[var(--bg)] transition-transform duration-300 will-change-transform"
+                >
+                  {text.hero.cta}
+                  <span className="font-mono-t text-[12px]">↓</span>
+                </motion.a>
+              </CoffeeTip>
             </div>
 
             {/* Honest friction disclosure, not hidden in an FAQ: the

@@ -43,14 +43,22 @@ export function CoffeeCard({ s, onTip }: { s: Strings; onTip: (quantity: number)
         />
       </button>
 
-      {/* Kept mounted so it animates shut as well as open; `inert` is what
-          stops the collapsed stepper from staying tabbable and clickable. */}
-      <div className="coffee-reveal" data-open={open} inert={!open}>
+      {/* Kept mounted so it animates shut as well as open, which is why every
+          control inside is `disabled` while closed.
+
+          `inert` and the stylesheet's visibility handling are belt to that
+          brace, not the guard itself. The site hit exactly this: its CSS-only
+          version leaked a real click through to Stripe Checkout under
+          prefers-reduced-motion, because the guard depended on a transition
+          finishing. Here the risk is WebView2's version varying across Windows
+          installs, so interactivity is gated on component state, where neither
+          a stylesheet nor an older webview can reach it. */}
+      <div className="coffee-reveal" data-open={open} inert={!open} aria-hidden={!open}>
         <div>
           <div className="flex items-center justify-between gap-1 px-1 pt-1.5">
             <StepperButton
               label={s.coffee.fewer}
-              disabled={count <= 1}
+              disabled={!open || count <= 1}
               onClick={() => setCount((n) => Math.max(1, n - 1))}
             >
               −
@@ -67,7 +75,7 @@ export function CoffeeCard({ s, onTip }: { s: Strings; onTip: (quantity: number)
             </span>
             <StepperButton
               label={s.coffee.more}
-              disabled={count >= MAX_COFFEES}
+              disabled={!open || count >= MAX_COFFEES}
               onClick={() => setCount((n) => Math.min(MAX_COFFEES, n + 1))}
             >
               +
@@ -75,6 +83,7 @@ export function CoffeeCard({ s, onTip }: { s: Strings; onTip: (quantity: number)
           </div>
           <button
             type="button"
+            disabled={!open}
             onClick={() => onTip(count)}
             className="border-accent/40 text-ink-2 hover:border-accent hover:bg-accent-soft hover:text-ink mx-1 mt-1.5 mb-1 block w-[calc(100%-0.5rem)] cursor-pointer rounded-[7px] border px-2 py-[5px] text-[11px] font-semibold transition-colors duration-150"
           >

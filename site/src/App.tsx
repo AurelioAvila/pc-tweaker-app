@@ -8,7 +8,9 @@ import { ProtocolTimeline } from "./components/ProtocolTimeline";
 import { AccessPricing } from "./components/AccessPricing";
 import { ReviewsSection } from "./components/ReviewsSection";
 import { FaqAccordion } from "./components/FaqAccordion";
+import { CoffeeSection } from "./components/CoffeeSection";
 import { Footer } from "./components/Footer";
+import { TipThanks } from "./components/TipThanks";
 import { SupportPage } from "./pages/Support";
 import { GuidePage, GUIDES } from "./pages/Guides";
 import {
@@ -32,6 +34,7 @@ function HomePage() {
       <AccessPricing />
       <ReviewsSection />
       <FaqAccordion />
+      <CoffeeSection />
     </main>
   );
 }
@@ -83,6 +86,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       >
         Skip to content
       </a>
+      <TipThanks />
       <Nav navigate={navigate} onSubpage={path !== "/"} />
       {page}
       <Footer navigate={navigate} />

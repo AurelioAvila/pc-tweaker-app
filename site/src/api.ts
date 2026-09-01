@@ -43,6 +43,12 @@ export function fetchReviews(): Promise<ReviewSummary> {
   return request<ReviewSummary>("/api/reviews");
 }
 
+/** Opens a Stripe Checkout for a one-off tip. No login, nothing unlocked.
+ *  The count is clamped server-side, so this argument is convenience only. */
+export function buyCoffee(quantity: number): Promise<{ url: string }> {
+  return request("/api/tip", { method: "POST", body: JSON.stringify({ quantity }) });
+}
+
 /** Only `rating` is required; the rest are optional and stay private. */
 export function postReview(input: {
   name: string;

@@ -10,6 +10,7 @@ import {
   isSettledCheckout,
   planFromPrice,
   productFromMetadata,
+  tipSessionParams,
 } from "../stripe-policy";
 import { sendMail } from "../mailer";
 import { brandFor, proWelcomeHtml, proWelcomeSubject } from "../emails/pro-welcome";
@@ -27,7 +28,9 @@ const checkoutLimiter = rateLimit({
   limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req: Request) => `user:${req.userId}`,
+  // /tip is unauthenticated, so req.userId is undefined there — without
+  // the fallback every anonymous tipper would share a single bucket.
+  keyGenerator: (req: Request) => (req.userId ? `user:${req.userId}` : `ip:${req.ip}`),
 });
 
 /** How long checkout alone buys, until the subscription event confirms the
@@ -180,6 +183,26 @@ router.post("/checkout", requireAuth, checkoutLimiter, requireStripe, async (req
   } catch (err) {
     console.error("checkout session creation failed:", err);
     res.status(500).json({ error: "could not start checkout" });
+  }
+});
+
+// A one-off tip. Deliberately outside the account system: no login, no
+// entitlement, nothing granted on the webhook side — someone paying €1 to
+// say thanks shouldn't need an account first, and there is nothing for that
+// payment to unlock.
+router.post("/tip", checkoutLimiter, requireStripe, async (req: Request, res: Response) => {
+  const priceId = process.env.STRIPE_PRICE_COFFEE;
+  if (!priceId) {
+    return res.status(503).json({ error: "STRIPE_PRICE_COFFEE is not configured" });
+  }
+  try {
+    const session = await stripe!.checkout.sessions.create(
+      tipSessionParams(priceId, process.env.APP_URL || "https://pctweaker.app", req.body?.quantity),
+    );
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error("tip checkout session creation failed:", err);
+    res.status(500).json({ error: "could not open checkout" });
   }
 });
 

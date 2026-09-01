@@ -46,6 +46,7 @@ import {
   UninstallerPromoCard,
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
+import { CoffeeCard } from "./components/coffee";
 import { TechnicalDetails, TechnicalToggle } from "./components/technical";
 import { DashboardCards } from "./components/dashboard";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
@@ -300,6 +301,26 @@ function App() {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ plan }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}) as { error?: string });
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
+    const data = (await res.json()) as { url: string };
+    await openUrl(data.url);
+  }
+
+  // A one-off tip. No login required — it isn't tied to an account and
+  // unlocks nothing, so there's nothing to gate behind sign-in. The count is
+  // sent, but the backend clamps it; this side is convenience, not the limit.
+  async function buyCoffee(quantity: number) {
+    if (!API_BASE_URL) {
+      throw new Error(s.auth.backendNotConfigured);
+    }
+    const res = await fetch(`${API_BASE_URL}/api/tip`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quantity }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}) as { error?: string });
@@ -687,6 +708,16 @@ function App() {
           {/* Plan area: quiet by design. Pro is a state, not a billboard; the
             upgrade entry is discreet and never shows personal data. */}
           <div className="border-line mt-auto border-t pt-3">
+            <CoffeeCard
+              s={s}
+              onTip={async (quantity) => {
+                try {
+                  await buyCoffee(quantity);
+                } catch (e) {
+                  pushToast("error", String(e instanceof Error ? e.message : e));
+                }
+              }}
+            />
             {isProUnlocked ? (
               <button
                 onClick={() => setFilter("pricing")}

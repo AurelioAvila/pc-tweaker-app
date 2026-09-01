@@ -1,0 +1,8 @@
+# Renders GitHub's own "Sponsor" button in the repo header and in every
+# issue/PR sidebar — the presence GitHub gives for free, alongside the
+# "Support development" section in the README.
+#
+# The URL is the site's tip section (id="tip"), not a Stripe link pasted
+# here: the Checkout session is created server-side, so the price and the
+# coffee count can change without editing this file or a shipped binary.
+custom: ["https://pctweaker.app/#tip"]

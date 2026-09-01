@@ -769,6 +769,12 @@ export interface Strings {
   };
   tweaks: Record<string, TweakText>;
   cleanup: Record<string, TweakText>;
+  coffee: {
+    nav: string;
+    cta: string;
+    fewer: string;
+    more: string;
+  };
 }
 
 function format(template: string, vars: Record<string, string | number>): string {
@@ -781,6 +787,12 @@ function format(template: string, vars: Record<string, string | number>): string
 export { format };
 
 const it: Strings = {
+  coffee: {
+    nav: "Offrimi un caffè",
+    cta: "Finanzia la prossima release",
+    fewer: "Un caffè in meno",
+    more: "Un caffè in più",
+  },
   appName: "PC Tweaker",
   appliedCount: "{applied} di {total} tweak attivi",
   headerNote:
@@ -1896,6 +1908,12 @@ const it: Strings = {
 };
 
 const en: Strings = {
+  coffee: {
+    nav: "Buy me a coffee",
+    cta: "Fuel the next release",
+    fewer: "One coffee fewer",
+    more: "One coffee more",
+  },
   appName: "PC Tweaker",
   appliedCount: "{applied} of {total} tweaks active",
   headerNote:
@@ -2999,6 +3017,12 @@ const en: Strings = {
 };
 
 const fr: Strings = {
+  coffee: {
+    nav: "Offrez-moi un café",
+    cta: "Financer la prochaine version",
+    fewer: "Un café en moins",
+    more: "Un café en plus",
+  },
   appName: "PC Tweaker",
   appliedCount: "{applied} sur {total} optimisations actives",
   headerNote:
@@ -4119,6 +4143,12 @@ const fr: Strings = {
 };
 
 const es: Strings = {
+  coffee: {
+    nav: "Invítame a un café",
+    cta: "Financia la próxima versión",
+    fewer: "Un café menos",
+    more: "Un café más",
+  },
   appName: "PC Tweaker",
   appliedCount: "{applied} de {total} ajustes activos",
   headerNote:
@@ -5233,6 +5263,12 @@ const es: Strings = {
 };
 
 const de: Strings = {
+  coffee: {
+    nav: "Spendier mir einen Kaffee",
+    cta: "Nächstes Release finanzieren",
+    fewer: "Ein Kaffee weniger",
+    more: "Ein Kaffee mehr",
+  },
   appName: "PC Tweaker",
   appliedCount: "{applied} von {total} Optimierungen aktiv",
   headerNote:
@@ -6356,6 +6392,12 @@ const de: Strings = {
 };
 
 const pt: Strings = {
+  coffee: {
+    nav: "Pague-me um café",
+    cta: "Financiar a próxima versão",
+    fewer: "Um café menos",
+    more: "Um café mais",
+  },
   appName: "PC Tweaker",
   appliedCount: "{applied} de {total} ajustes ativos",
   headerNote:

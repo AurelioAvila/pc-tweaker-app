@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.5
+
+- You can now buy me a coffee from the sidebar: a one-off tip, with the
+  number of coffees chosen before checkout opens. It needs no account and
+  unlocks nothing — Pro is unchanged and this is not part of it.
+
 ## v1.6.4
 
 - Fixed: opening Hardware ran the sixteen-second driver scan on its own

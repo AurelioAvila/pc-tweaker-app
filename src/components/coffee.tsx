@@ -32,7 +32,10 @@ export function CoffeeCard({ s, onTip }: { s: Strings; onTip: (quantity: number)
         {/* The emoji rather than a drawn glyph: the hand-rolled SVG that was
             here read as crooked next to the icon set's own marks, and this is
             the same cup already shown in the count below. */}
-        <span aria-hidden="true" className="coffee-mark w-4 shrink-0 text-center text-[13px] leading-none">
+        <span
+          aria-hidden="true"
+          className="coffee-mark w-4 shrink-0 text-center text-[13px] leading-none"
+        >
           ☕
         </span>
         <span className="truncate">{s.coffee.nav}</span>

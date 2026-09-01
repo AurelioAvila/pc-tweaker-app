@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "1.6.4"
+version = "1.6.5"
 description = "Real Windows tweaks with automatic one-click rollback"
 authors = ["Aurelio Avila"]
 license-file = "../LICENSE"

@@ -1,1 +1,14 @@
-custom: https://pctweaker.app
+custom: ['https://pctweaker.app']
+
+# Renders GitHub's own "Sponsor" button in the repo header and in every
+# issue/PR sidebar — the presence GitHub gives for free, alongside the small
+# badge under the download counts in the README.
+#
+# The comments sit after the key, and the value uses the exact shape from
+# GitHub's own FUNDING.yml template, because the button would not appear and
+# the file's shape was the only variable left to rule out.
+#
+# Not a Stripe link: the Checkout session is created server-side, so the
+# price and the coffee count can change without editing this file or a
+# shipped binary. No fragment either — the tip control sits beside the hero
+# download button, above the fold, so there is nothing to scroll to.

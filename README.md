@@ -70,7 +70,7 @@ numbers below can be checked at their source rather than taken on trust.
 | --- | --- |
 | [Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87) | Published and certified for Windows 10/11 |
 | [winget](https://winstall.app/apps/AurelioAvila.PCTweaker) | In the official `microsoft/winget-pkgs` repository |
-| [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml) | User rating 5.0/5 (39 votes); editorial review 4.5/5 by Mihaela Teodorovici |
+| [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml) | User rating 5.0/5 (64 votes as of September 1, 2026); editorial review 4.5/5 by Mihaela Teodorovici |
 | [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html) | Rated 5.0/5 by readers |
 | [GitHub releases](https://github.com/AurelioAvila/pc-tweaker-app/releases) | GitHub-hosted downloads shown live in the badge above; not the cross-channel total |
 

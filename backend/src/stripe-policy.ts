@@ -85,3 +85,44 @@ export function formatChargedAmount(
   if (!interval) return `${formatted} once`;
   return `${formatted} / ${interval}`;
 }
+
+/** How many coffees one tip may cover. The ceiling exists because the field
+ * is unauthenticated: without it a client could post quantity: 1e9 and Stripe
+ * would happily render a five-figure total in our name. */
+export const TIP_MAX_QUANTITY = 10;
+
+/** Clamps a client-supplied coffee count to a whole number in range.
+ * Anything unusable — absent, NaN, "3", 2.7, -1, Infinity — becomes 1 rather
+ * than an error: the tip is a gesture, and refusing it over a bad number
+ * would lose the payment to protect nothing. */
+export function tipQuantity(raw: unknown): number {
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n)) return 1;
+  return Math.min(TIP_MAX_QUANTITY, Math.max(1, Math.floor(n)));
+}
+
+/** The Checkout params for a one-off tip.
+ *
+ * Extracted here for one reason: the webhook grants access by reading
+ * `client_reference_id` / `metadata.userId` off the session, so a tip stays
+ * harmless only as long as it carries neither. That is an invariant worth a
+ * test, not a comment — see stripe-policy.test.mjs. */
+export function tipSessionParams(priceId: string, appUrl: string, quantity: unknown = 1) {
+  const qty = tipQuantity(quantity);
+  return {
+    mode: "payment" as const,
+    // The caller picks the count, and Checkout still shows its own stepper so
+    // it can be changed on Stripe's page without coming back here.
+    line_items: [
+      {
+        price: priceId,
+        quantity: qty,
+        adjustable_quantity: { enabled: true, minimum: 1, maximum: TIP_MAX_QUANTITY },
+      },
+    ],
+    success_url: `${appUrl}?tip=thanks`,
+    cancel_url: appUrl,
+    automatic_tax: { enabled: true },
+    customer_creation: "always" as const,
+  };
+}

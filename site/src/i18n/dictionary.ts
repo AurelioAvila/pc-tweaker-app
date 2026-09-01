@@ -179,10 +179,31 @@ export interface Dictionary {
     readonly license: string;
     readonly copyright: string;
     readonly motto: string;
+    readonly tipThanks: string;
+  };
+  readonly coffee: {
+    readonly eyebrow: string;
+    readonly headline: string;
+    readonly body: string;
+    readonly cta: string;
+    readonly caption: string;
+    readonly fewer: string;
+    readonly more: string;
+    readonly unavailable: string;
   };
 }
 
 export const engDictionary: Dictionary = {
+  coffee: {
+    eyebrow: "Performance fuel",
+    headline: "Help power the next improvement.",
+    body: "PC Tweaker is built independently, tested carefully, and designed to keep every change reversible. If it has made your PC better, you can help keep the next release moving.",
+    cta: "Fuel the next release",
+    caption: "One coffee. Zero subscriptions. Nothing to cancel.",
+    fewer: "One coffee fewer",
+    more: "One coffee more",
+    unavailable: "Checkout isn't available right now — try again in a moment.",
+  },
   nav: {
     results: "Results",
     arsenal: "Arsenal",
@@ -557,6 +578,7 @@ export const engDictionary: Dictionary = {
     license: "Proprietary License",
     copyright: "Built solo in Amsterdam with Tauri (Rust) + React. © 2026 Aurelio Avila",
     motto: "// every millisecond is earned",
+    tipThanks: "Thank you — that genuinely helps.",
   },
 };
 

@@ -386,6 +386,62 @@ body {
   animation: skeleton-shimmer 1.6s linear infinite;
 }
 
+/* The sidebar tip row opens onto its stepper. grid-template-rows 0fr -> 1fr is
+   what makes this animate to the content's own height without measuring it in
+   JS, and unlike a conditional mount it animates closed as well. The content
+   stays in the DOM for that, so the collapsed state is marked `inert` in the
+   component — the animation must never leave a reachable hidden control. */
+.coffee-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-slow) var(--ease-standard);
+}
+
+.coffee-reveal > * {
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity var(--dur-base) var(--ease-standard),
+    transform var(--dur-base) var(--ease-standard);
+}
+
+.coffee-reveal[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.coffee-reveal[data-open="true"] > * {
+  opacity: 1;
+  transform: translateY(0);
+  /* Delayed so the fade lands after the height has opened, not through it. */
+  transition-delay: 60ms;
+}
+
+@keyframes coffee-count-pop {
+  from {
+    transform: scale(0.82);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Replayed by remounting the span on every change (key={count}). */
+.coffee-count {
+  animation: coffee-count-pop var(--dur-base) var(--ease-standard) both;
+}
+
+/* The cup tilts toward the pointer on the row it belongs to. */
+.coffee-row:hover .coffee-mark {
+  transform: rotate(-8deg) scale(1.08);
+}
+
+.coffee-mark {
+  transition: transform var(--dur-base) var(--ease-standard);
+}
+
 /* Reduce Motion is a contract, not a suggestion. */
 @media (prefers-reduced-motion: reduce) {
   *,

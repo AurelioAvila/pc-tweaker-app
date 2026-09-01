@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.6.3
+
+- Browser cleanup now also covers Brave, Vivaldi, Opera and Opera GX, on top
+  of Chrome, Edge and Firefox. Requested by a user who browses only with
+  Brave and found the cleanup screen empty. Opera keeps its profile under a
+  different path than the other Chromium browsers, which is handled
+  correctly rather than assumed to match Chrome's layout.
+
 ## v1.6.2
 
 - Fixed: an account with Pro but no payment history could not buy the lifetime

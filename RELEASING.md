@@ -65,24 +65,29 @@ bottom. This is the full routine, in order. Skipping a step here is how
    curl -sIL https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/PCTweaker-Setup.exe
    ```
 
-7. **Submit to winget.** This is a separate catalog (a manifest in
-   `microsoft/winget-pkgs`, not anything GitHub Releases touches
-   automatically) and it does not follow your releases on its own — it sat
-   at 0.4.1 for three shipped versions before anyone noticed. Do this every
-   release, right after step 6:
+7. **Winget submits itself — do not also do it by hand.** The
+   `Publish to winget` workflow (`.github/workflows/winget-publish.yml`)
+   fires on `release: published` and opens the PR against
+   `microsoft/winget-pkgs` for you, within a minute or two of the release
+   going up.
+
+   This step used to be manual, and the instruction to run `wingetcreate`
+   here outlived the workflow that replaced it. Following both is how 1.6.5
+   ended up with two open PRs for the same version (#427308 from the
+   workflow, #427310 by hand) and one of them had to be closed as noise in
+   someone else's repository.
+
+   Confirm rather than assume — the workflow succeeding is not the same as
+   the PR being merged:
 
    ```bash
-   SHA256=$(curl -sL "https://github.com/AurelioAvila/pc-tweaker-app/releases/download/vX.Y.Z/pc-tweaker-app_X.Y.Z_x64-setup.exe" | sha256sum | cut -d' ' -f1)
-
-   wingetcreate update AurelioAvila.PCTweaker --version X.Y.Z \
-     --urls "https://github.com/AurelioAvila/pc-tweaker-app/releases/download/vX.Y.Z/pc-tweaker-app_X.Y.Z_x64-setup.exe" \
-     --submit --token "$(gh auth token)"
+   gh run list --limit 5 --json name,conclusion,headBranch
+   gh pr list --repo microsoft/winget-pkgs      --search "AurelioAvila.PCTweaker X.Y.Z in:title" --state all      --json number,title,state
    ```
 
-   This opens a PR against `microsoft/winget-pkgs` under Aurelio's GitHub
-   account. It's usually auto-validated and merged within a few hours; check
-   `gh pr view <number> --repo microsoft/winget-pkgs --json state,mergedAt`
-   if you want confirmation rather than assuming.
+   Only fall back to `wingetcreate update AurelioAvila.PCTweaker --version
+   X.Y.Z --urls <setup.exe url> --submit --token "$(gh auth token)"` if the
+   workflow did not run or opened nothing.
 
    Softpedia and MajorGeeks have **no equivalent automation** — they're
    editorial listings on someone else's schedule, not a repo you can open a

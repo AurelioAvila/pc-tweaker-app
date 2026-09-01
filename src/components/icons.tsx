@@ -321,29 +321,3 @@ export function HistoryIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-
-export function CoffeeIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path
-        d="M4 8h12v5.5a4.5 4.5 0 0 1-4.5 4.5h-3A4.5 4.5 0 0 1 4 13.5V8Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M16 9.5h1.75a2.25 2.25 0 0 1 0 4.5H16"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <path d="M6 21h11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path
-        d="M8.5 5.5c0-1 1-1.4 1-2.5M12 5.5c0-1 1-1.4 1-2.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}

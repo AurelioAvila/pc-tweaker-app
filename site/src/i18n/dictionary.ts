@@ -183,7 +183,6 @@ export interface Dictionary {
   };
   readonly coffee: {
     readonly pill: string;
-    readonly cta: string;
     readonly caption: string;
     readonly fewer: string;
     readonly more: string;
@@ -194,7 +193,6 @@ export interface Dictionary {
 export const engDictionary: Dictionary = {
   coffee: {
     pill: "Buy me a coffee",
-    cta: "Fuel the next release",
     caption: "One coffee. Zero subscriptions. Nothing to cancel.",
     fewer: "One coffee fewer",
     more: "One coffee more",

@@ -182,9 +182,7 @@ export interface Dictionary {
     readonly tipThanks: string;
   };
   readonly coffee: {
-    readonly eyebrow: string;
-    readonly headline: string;
-    readonly body: string;
+    readonly pill: string;
     readonly cta: string;
     readonly caption: string;
     readonly fewer: string;
@@ -195,9 +193,7 @@ export interface Dictionary {
 
 export const engDictionary: Dictionary = {
   coffee: {
-    eyebrow: "Performance fuel",
-    headline: "Help power the next improvement.",
-    body: "PC Tweaker is built independently, tested carefully, and designed to keep every change reversible. If it has made your PC better, you can help keep the next release moving.",
+    pill: "Buy me a coffee",
     cta: "Fuel the next release",
     caption: "One coffee. Zero subscriptions. Nothing to cancel.",
     fewer: "One coffee fewer",

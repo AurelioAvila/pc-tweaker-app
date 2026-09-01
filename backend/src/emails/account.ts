@@ -1,14 +1,19 @@
 /**
- * The three messages an account produces before anyone has paid anything.
+ * The messages an account produces before anyone has paid anything.
  *
  * Two of them — confirm your address, reset your password — used to be a
  * single line of HTML with a bare link. They are the first things a new
  * customer sees, and they looked like a script had sent them.
  *
- * All three deliberately show the destination as text as well as behind the
+ * Both deliberately show the destination as text as well as behind the
  * button. A link the reader can see before clicking is the difference between
  * a mail that looks legitimate and one that looks like phishing, and these
  * are exactly the two messages phishing imitates.
+ *
+ * The fourth, the password-changed notice, follows the same reasoning to the
+ * opposite conclusion: it carries no token and no link that could change
+ * anything, because it is the one message whose reader may not be the person
+ * who acted.
  */
 
 import { bulletRow, emailShell } from "./layout";
@@ -60,6 +65,54 @@ export function passwordResetHtml(link: string): string {
     note: "The link works for one hour, and only once.",
     footerNote:
       "If you did not ask for this, ignore the message — your password stays exactly as it is.",
+    accent: ACCENT,
+  });
+}
+
+export function passwordChangedSubject(): string {
+  return "Your PC Tweaker password was changed";
+}
+
+/**
+ * Sent after a password has actually changed, never before.
+ *
+ * This is the only way an account takeover becomes visible to the person who
+ * owns the account, so it is the one message here whose reader may not be the
+ * person who acted. That is why it carries no reset token and no "this wasn't
+ * me" button: by the time it arrives the new password is already set, and a
+ * one-click link on the message a worried reader is most likely to click is
+ * exactly the shape an attacker would forge. The button goes to the support
+ * page, which is a place, not an action.
+ *
+ * `when` is passed in rather than read here, so the email quotes the moment
+ * the password actually changed rather than the moment it was rendered.
+ */
+export function passwordChangedHtml(firstName: string, when: string): string {
+  const name = (firstName || "").trim().split(/\s+/)[0];
+  const body = `
+        <tr>
+          <td style="padding:28px 40px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f12; border:1px solid #2a2d33; border-radius:12px;">
+              <tr>
+                <td style="padding:18px; color:#9ca3af; font-size:15px; line-height:1.6;">
+                  If this was you, there is nothing else to do.<br>
+                  If it was not, someone else set that password. Ask for a new
+                  reset link from the app right away, choose a password you use
+                  nowhere else, and get in touch with us.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>`;
+  return emailShell({
+    eyebrow: "Security notice",
+    headline: name ? `Your password was changed, ${name}.` : "Your password was changed.",
+    intro: `The password on your PC Tweaker account was changed on ${when}. Every device that was signed in has been signed out.`,
+    bodyHtml: body,
+    action: { label: "Contact support", url: "https://pctweaker.app/support" },
+    note: "We will never ask you for your password by email.",
+    footerNote:
+      "This notice is sent every time the password changes and cannot be turned off.",
     accent: ACCENT,
   });
 }

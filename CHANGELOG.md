@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.4
+
+- Fixed: opening Hardware ran the sixteen-second driver scan on its own
+  whenever nothing was cached yet. It now waits for Rescan, as the rest of
+  the app already expected it to.
+
 ## v1.6.3
 
 - Browser cleanup now also covers Brave, Vivaldi, Opera and Opera GX, on top

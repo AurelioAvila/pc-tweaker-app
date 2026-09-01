@@ -931,7 +931,7 @@ export function DriversPanel({
   // Busy only when there is nothing cached to show: a return visit renders
   // the previous result immediately instead of a progress bar for work it is
   // not going to do.
-  const [busy, setBusy] = useState(() => cachedAudit === null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [rebootNeeded, setRebootNeeded] = useState(false);
@@ -976,40 +976,13 @@ export function DriversPanel({
       });
   }, []);
 
-  // The first load deliberately does not go through `run`: every state change
-  // here happens in a promise callback rather than synchronously in the
-  // effect body, and an unmount guard keeps a slow scan from setting state on
-  // a screen the user already left.
+  // Never scans on its own, cached or not: this reads the pending-reboot
+  // flag and leaves the audit itself to the explicit Rescan click. Opening
+  // the page used to start a sixteen-second scan on its own whenever no
+  // cache existed yet, which is a surprise cost for a screen someone may
+  // have opened just to look around.
   useEffect(() => {
     let alive = true;
-    // Already scanned this session: show it and skip the sixteen seconds.
-    if (cachedAudit !== null) {
-      invoke<boolean>("reboot_pending")
-        .then((v) => {
-          if (alive) setRebootNeeded(v);
-        })
-        .catch(() => {});
-      return () => {
-        alive = false;
-      };
-    }
-    invoke<DriverAudit>("driver_audit")
-      .then((a) => {
-        if (!alive) return;
-        const at = new Date();
-        cachedAudit = a;
-        cachedAuditAt = at;
-        writeCachedDriverAudit(a, at);
-        setAudit(a);
-        setCheckedAt(at);
-        setProgress(null);
-      })
-      .catch((e: unknown) => {
-        if (alive) setError(String(e));
-      })
-      .finally(() => {
-        if (alive) setBusy(false);
-      });
     invoke<boolean>("reboot_pending")
       .then((v) => {
         if (alive) setRebootNeeded(v);

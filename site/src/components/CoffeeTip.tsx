@@ -8,30 +8,22 @@ import { text } from "../i18n/dictionary";
 const MAX_COFFEES = 10;
 
 /**
- * The tip control, sitting beside the hero download button.
+ * The tip control, sitting beside the hero download button: outlined rather
+ * than filled and a size down, because there is exactly one thing this page is
+ * for and it is the download — but next to it rather than at the foot of the
+ * page, because a tip nobody scrolls to is a tip nobody gives.
  *
- * It is deliberately secondary to that button — outlined, not filled, and a
- * size down — because there is exactly one thing this page is for and it is
- * the download. But it is beside it rather than at the foot of the page,
- * because a tip nobody scrolls to is a tip nobody gives.
- *
- * It owns the CTA row and takes the download button as `children` rather than
- * being dropped in next to it. The stepper is wider than the pill, so a
- * self-contained wrapper would have to be either full-width — pushing the pill
- * onto its own line — or auto-width, making the pill jump lines as it opens.
- * Owning the row keeps the pill beside the button while the stepper unfolds
- * under the whole row.
- *
- * At rest it is one small pill. The stepper unfolds on press: "how many
- * coffees" is the whole gesture, and asking after the browser has already
- * opened puts the question on the wrong side of the decision. Motion lives in
- * .coffee-* in index.css.
+ * The count sits inline with the label, in one control, and pressing the label
+ * opens Checkout. There is no fold-away panel and no separate confirm button:
+ * that arrangement had a hidden CTA in it, and a hidden CTA is a thing that
+ * can be clicked by accident — it was, under prefers-reduced-motion, and it
+ * opened a real Stripe Checkout. Nothing here is hidden, so nothing here can
+ * leak. Losing the "fuel the next release" line is a fair price.
  *
  * `id="tip"` is the landing target for GitHub's Sponsor button, wired in
  * .github/FUNDING.yml.
  */
 export function CoffeeTip({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
   const [count, setCount] = useState(1);
   const [state, setState] = useState<"idle" | "pending" | "error">("idle");
 
@@ -40,108 +32,69 @@ export function CoffeeTip({ children }: { children: React.ReactNode }) {
     <div id="tip" className="scroll-mt-28">
       <div className="flex flex-wrap items-center gap-4">
         {children}
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          className="coffee-pill inline-flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/15 px-5 py-3 text-[13.5px] font-semibold text-[var(--fg-dim)] transition-colors hover:border-[var(--accent)]/50 hover:text-[var(--fg)]"
-        >
-          <img
-            src={cupMark}
-            alt=""
-            // Decorative: the label beside it already says what this is.
-            aria-hidden="true"
-            width={96}
-            height={112}
-            className="coffee-mark h-[26px] w-auto shrink-0"
-          />
-          {text.coffee.pill}
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-            className={`h-3 w-3 shrink-0 opacity-60 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+
+        <div className="flex items-center rounded-xl border border-white/15 transition-colors focus-within:border-[var(--accent)]/50 hover:border-[var(--accent)]/40">
+          <StepperButton
+            label={text.coffee.fewer}
+            disabled={count <= 1}
+            onClick={() => setCount((n) => Math.max(1, n - 1))}
           >
-            <path
-              d="M6 9.5 12 15.5 18 9.5"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            −
+          </StepperButton>
+          {/* aria-live so the new count is announced, not only the button that
+              changed it. The key remounts the span, replaying the pop
+              animation on every press. */}
+          <span
+            key={count}
+            aria-live="polite"
+            className="coffee-count font-mono-t min-w-[42px] text-center text-[14px] font-bold"
+          >
+            {count} ☕
+          </span>
+          <StepperButton
+            label={text.coffee.more}
+            disabled={count >= MAX_COFFEES}
+            onClick={() => setCount((n) => Math.min(MAX_COFFEES, n + 1))}
+          >
+            +
+          </StepperButton>
+
+          <span aria-hidden="true" className="h-7 w-px bg-white/12" />
+
+          <button
+            type="button"
+            disabled={state === "pending"}
+            onClick={() => {
+              setState("pending");
+              buyCoffee(count)
+                .then(({ url }) => {
+                  window.location.href = url;
+                })
+                .catch(() => setState("error"));
+            }}
+            className="coffee-pill inline-flex cursor-pointer items-center gap-2 rounded-r-xl px-4 py-3 text-[13.5px] font-semibold text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] disabled:opacity-60"
+          >
+            <img
+              src={cupMark}
+              alt=""
+              // Decorative: the label beside it already says what this is.
+              aria-hidden="true"
+              width={96}
+              height={112}
+              className="coffee-mark h-[24px] w-auto shrink-0"
             />
-          </svg>
-        </button>
-      </div>
-
-      {/* Kept mounted so it animates shut too, which is why every control
-          inside is `disabled` while closed.
-
-          visibility:hidden in .coffee-reveal is the visual half only — it is
-          NOT the guard. Under prefers-reduced-motion the transition timing it
-          depends on collapsed and a click on the hidden CTA really did open
-          Stripe Checkout. A guard that depends on a transition finishing is
-          not a guard, so interactivity is gated on component state instead,
-          where no stylesheet can reach it.
-
-          `inert` is not an option here: this site is on React 18, where
-          inert={false} renders inert="false", and HTML treats the attribute's
-          mere presence as inert — the stepper would never become usable. */}
-      <div className="coffee-reveal" data-open={open} aria-hidden={!open}>
-        <div>
-          <div className="flex flex-wrap items-center gap-2.5 pt-4">
-            <div className="flex items-center gap-1 rounded-xl border border-white/10 p-1">
-              <StepperButton
-                label={text.coffee.fewer}
-                disabled={!open || count <= 1}
-                onClick={() => setCount((n) => Math.max(1, n - 1))}
-              >
-                −
-              </StepperButton>
-              {/* aria-live so the new count is announced, not only the button
-                  that changed it. The key remounts the span, replaying the pop
-                  animation on every press. */}
-              <span
-                key={count}
-                aria-live="polite"
-                className="coffee-count font-mono-t min-w-[58px] text-center text-[13.5px] font-bold"
-              >
-                {count} ☕
-              </span>
-              <StepperButton
-                label={text.coffee.more}
-                disabled={!open || count >= MAX_COFFEES}
-                onClick={() => setCount((n) => Math.min(MAX_COFFEES, n + 1))}
-              >
-                +
-              </StepperButton>
-            </div>
-
-            <button
-              type="button"
-              disabled={!open || state === "pending"}
-              onClick={() => {
-                setState("pending");
-                buyCoffee(count)
-                  .then(({ url }) => {
-                    window.location.href = url;
-                  })
-                  .catch(() => setState("error"));
-              }}
-              className="border-accent/50 text-accent hover:bg-accent cursor-pointer rounded-xl border px-5 py-2.5 text-[13.5px] font-bold transition-colors hover:text-[var(--bg)] disabled:opacity-60"
-            >
-              {state === "pending" ? "…" : text.coffee.cta}
-            </button>
-          </div>
-
-          <p
-            role={state === "error" ? "alert" : undefined}
-            className="mt-2.5 text-[12px] text-[var(--fg-dim)]"
-            style={state === "error" ? { color: "#ff9b9b" } : undefined}
-          >
-            {state === "error" ? text.coffee.unavailable : text.coffee.caption}
-          </p>
+            {state === "pending" ? "…" : text.coffee.pill}
+          </button>
         </div>
       </div>
+
+      <p
+        role={state === "error" ? "alert" : undefined}
+        className="mt-3 text-[12px] text-[var(--fg-dim)]"
+        style={state === "error" ? { color: "#ff9b9b" } : undefined}
+      >
+        {state === "error" ? text.coffee.unavailable : text.coffee.caption}
+      </p>
     </div>
   );
 }
@@ -163,7 +116,7 @@ function StepperButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="h-8 w-8 shrink-0 cursor-pointer rounded-lg text-[15px] leading-none text-[var(--fg-dim)] transition-colors hover:bg-white/5 hover:text-[var(--fg)] disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+      className="h-11 w-8 shrink-0 cursor-pointer text-[15px] leading-none text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] disabled:cursor-default disabled:opacity-30"
     >
       {children}
     </button>

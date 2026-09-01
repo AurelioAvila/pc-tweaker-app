@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Strings } from "../i18n";
-import { CoffeeIcon } from "./icons";
 
 /** Matches TIP_MAX_QUANTITY on the backend, which clamps to it anyway — this
  *  copy only stops the stepper from offering a number that would be clamped. */
@@ -30,11 +29,12 @@ export function CoffeeCard({ s, onTip }: { s: Strings; onTip: (quantity: number)
           open ? "text-ink-2" : "text-ink-3 hover:text-ink-2"
         }`}
       >
-        <CoffeeIcon
-          className={`coffee-mark h-4 w-4 shrink-0 transition-colors ${
-            open ? "text-accent" : "group-hover:text-ink-2"
-          }`}
-        />
+        {/* The emoji rather than a drawn glyph: the hand-rolled SVG that was
+            here read as crooked next to the icon set's own marks, and this is
+            the same cup already shown in the count below. */}
+        <span aria-hidden="true" className="coffee-mark w-4 shrink-0 text-center text-[13px] leading-none">
+          ☕
+        </span>
         <span className="truncate">{s.coffee.nav}</span>
         <ChevronDown
           className={`ml-auto h-3 w-3 shrink-0 opacity-50 transition-transform duration-200 ${

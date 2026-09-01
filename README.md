@@ -19,6 +19,10 @@
 
 <p align="center"><sub>If PC Tweaker makes Windows easier to manage, ⭐ star the repository to follow new releases and help others discover it.</sub></p>
 
+<p align="center">
+  <a href="https://pctweaker.app/#tip"><img src="https://img.shields.io/badge/%E2%98%95%20Buy%20me%20a%20coffee-one--off%2C%20no%20account-FF5500?style=flat-square&labelColor=1c1c1c" alt="Buy me a coffee — a one-off tip, no account and nothing to cancel" height="20"></a>
+</p>
+
 <a id="safe-download-recommended"></a>
 
 ## 🛡️ Safe download (recommended)
@@ -144,25 +148,6 @@ explicit choice in the account menu, and remembered from then on.
 
 Payments are handled by Stripe Checkout; the app never sees card details.
 An email/password account syncs Pro status across installs.
-
-## ☕ Support development
-
-<table>
-<tr>
-<td width="120" align="center"><img src="docs/coffee-cup.webp" width="88" alt=""></td>
-<td>
-
-**Help power the next improvement.** PC Tweaker is built independently, tested
-carefully, and designed to keep every change reversible.
-
-A coffee is a one-off thank-you — no account, no subscription, nothing to
-cancel, and it unlocks nothing. Pick how many on the way through.
-
-<a href="https://pctweaker.app/#tip"><img src="https://img.shields.io/badge/Buy_me_a_coffee-Fuel_the_next_release-FF5500?style=for-the-badge&logo=buymeacoffee&logoColor=white" alt="Buy me a coffee — fuel the next release"></a>
-
-</td>
-</tr>
-</table>
 
 ## Development
 

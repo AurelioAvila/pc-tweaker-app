@@ -73,18 +73,26 @@ export function CoffeeTip({ children }: { children: React.ReactNode }) {
         </button>
       </div>
 
-      {/* Kept mounted so it animates shut too. What stops the collapsed
-          stepper from staying tabbable and clickable is visibility:hidden in
-          .coffee-reveal, not `inert`: this site is on React 18, where
-          inert={false} renders inert="false" and HTML treats the attribute's
-          presence alone as inert — the stepper would never become usable. */}
-      <div className="coffee-reveal" data-open={open}>
+      {/* Kept mounted so it animates shut too, which is why every control
+          inside is `disabled` while closed.
+
+          visibility:hidden in .coffee-reveal is the visual half only — it is
+          NOT the guard. Under prefers-reduced-motion the transition timing it
+          depends on collapsed and a click on the hidden CTA really did open
+          Stripe Checkout. A guard that depends on a transition finishing is
+          not a guard, so interactivity is gated on component state instead,
+          where no stylesheet can reach it.
+
+          `inert` is not an option here: this site is on React 18, where
+          inert={false} renders inert="false", and HTML treats the attribute's
+          mere presence as inert — the stepper would never become usable. */}
+      <div className="coffee-reveal" data-open={open} aria-hidden={!open}>
         <div>
           <div className="flex flex-wrap items-center gap-2.5 pt-4">
             <div className="flex items-center gap-1 rounded-xl border border-white/10 p-1">
               <StepperButton
                 label={text.coffee.fewer}
-                disabled={count <= 1}
+                disabled={!open || count <= 1}
                 onClick={() => setCount((n) => Math.max(1, n - 1))}
               >
                 −
@@ -101,7 +109,7 @@ export function CoffeeTip({ children }: { children: React.ReactNode }) {
               </span>
               <StepperButton
                 label={text.coffee.more}
-                disabled={count >= MAX_COFFEES}
+                disabled={!open || count >= MAX_COFFEES}
                 onClick={() => setCount((n) => Math.min(MAX_COFFEES, n + 1))}
               >
                 +
@@ -110,7 +118,7 @@ export function CoffeeTip({ children }: { children: React.ReactNode }) {
 
             <button
               type="button"
-              disabled={state === "pending"}
+              disabled={!open || state === "pending"}
               onClick={() => {
                 setState("pending");
                 buyCoffee(count)

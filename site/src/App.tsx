@@ -8,7 +8,6 @@ import { ProtocolTimeline } from "./components/ProtocolTimeline";
 import { AccessPricing } from "./components/AccessPricing";
 import { ReviewsSection } from "./components/ReviewsSection";
 import { FaqAccordion } from "./components/FaqAccordion";
-import { CoffeeSection } from "./components/CoffeeSection";
 import { Footer } from "./components/Footer";
 import { TipThanks } from "./components/TipThanks";
 import { SupportPage } from "./pages/Support";
@@ -34,7 +33,6 @@ function HomePage() {
       <AccessPricing />
       <ReviewsSection />
       <FaqAccordion />
-      <CoffeeSection />
     </main>
   );
 }

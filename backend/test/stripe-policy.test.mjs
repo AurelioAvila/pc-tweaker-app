@@ -1,7 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { formatChargedAmount, isSettledCheckout, planFromPrice, productFromMetadata } = await import("../dist/stripe-policy.js");
+const {
+  formatChargedAmount,
+  isSettledCheckout,
+  planFromPrice,
+  productFromMetadata,
+  tipQuantity,
+  tipSessionParams,
+  TIP_MAX_QUANTITY,
+} = await import("../dist/stripe-policy.js");
 
 test("checkout access requires a settled payment state", () => {
   assert.equal(isSettledCheckout("paid"), true);
@@ -67,4 +75,54 @@ test("a malformed currency code falls back instead of throwing", () => {
   // Intl does throw on a code that is not three letters, and a receipt is
   // not worth losing over it.
   assert.equal(formatChargedAmount(5900, "euro!", "year"), "59 EURO! / year");
+});
+
+test("a tip carries no identity, so the webhook can never grant it access", () => {
+  // handleCheckoutSession grants Pro off client_reference_id / metadata.userId.
+  // Adding either to a tip session would turn a €1 thank-you into a licence.
+  const params = tipSessionParams("price_coffee", "https://pctweaker.app");
+  assert.equal(params.client_reference_id, undefined);
+  assert.equal(params.metadata, undefined);
+  assert.equal(params.mode, "payment");
+});
+
+test("the tipper is sent back to a page that says thank you", () => {
+  const params = tipSessionParams("price_coffee", "http://localhost:5173");
+  assert.equal(params.success_url, "http://localhost:5173?tip=thanks");
+  assert.equal(params.cancel_url, "http://localhost:5173");
+});
+
+test("Checkout keeps its own stepper, within bounds", () => {
+  const [item] = tipSessionParams("price_coffee", "https://pctweaker.app").line_items;
+  assert.equal(item.price, "price_coffee");
+  assert.equal(item.quantity, 1);
+  assert.deepEqual(item.adjustable_quantity, {
+    enabled: true,
+    minimum: 1,
+    maximum: TIP_MAX_QUANTITY,
+  });
+});
+
+test("the caller's coffee count is carried through", () => {
+  assert.equal(tipSessionParams("p", "https://x", 4).line_items[0].quantity, 4);
+});
+
+test("an unauthenticated quantity cannot be talked out of range", () => {
+  // /tip takes no auth, so this number arrives from anyone. Out of range it
+  // must clamp, never reach Stripe as a five-figure total in our name.
+  assert.equal(tipQuantity(1e9), TIP_MAX_QUANTITY);
+  assert.equal(tipQuantity(11), TIP_MAX_QUANTITY);
+  assert.equal(tipQuantity(0), 1);
+  assert.equal(tipQuantity(-5), 1);
+  assert.equal(tipQuantity(Infinity), 1);
+});
+
+test("a quantity that is not a usable number falls back to one coffee", () => {
+  // Losing the payment over a malformed field would protect nothing.
+  assert.equal(tipQuantity(undefined), 1);
+  assert.equal(tipQuantity(null), 1);
+  assert.equal(tipQuantity("banana"), 1);
+  assert.equal(tipQuantity({}), 1);
+  assert.equal(tipQuantity(2.7), 2);
+  assert.equal(tipQuantity("3"), 3);
 });

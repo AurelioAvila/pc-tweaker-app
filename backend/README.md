@@ -82,7 +82,12 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    rather than `SMTP_*` on Railway, since it blocks outbound SMTP ports),
    `STRIPE_SECRET_KEY`,
    `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`, `CHECKOUT_SUCCESS_URL`,
-   `CHECKOUT_CANCEL_URL`. See `.env.example` for what each one is.
+   `CHECKOUT_CANCEL_URL`, `STRIPE_PRICE_COFFEE`. See `.env.example` for what
+   each one is.
+
+   `STRIPE_PRICE_COFFEE` is the one-off tip price. Leaving it unset is safe
+   rather than broken: `/api/tip` answers 503 and both the site and the
+   app hide or report the control instead of offering a dead button.
 
    For the website's support form and reviews section, also set:
    `SUPPORT_EMAIL` (where support requests are delivered — defaults to the

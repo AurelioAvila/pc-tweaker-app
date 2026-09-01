@@ -55,7 +55,7 @@ anyway**.
   <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/v/release/AurelioAvila/pc-tweaker-app?display_name=tag&style=for-the-badge&color=7C3AED" alt="Latest release"></a>
   <a href="https://winstall.app/apps/AurelioAvila.PCTweaker"><img src="https://img.shields.io/winget/v/AurelioAvila.PCTweaker?style=for-the-badge&label=winget&color=1793D1" alt="winget"></a>
   <a href="https://www.majorgeeks.com/files/details/pc_tweaker.html"><img src="https://img.shields.io/badge/MajorGeeks-5.0%2F5.0-2E7D32?style=for-the-badge" alt="Rated 5.0 out of 5 by MajorGeeks users"></a>
-  <a href="https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"><img src="https://img.shields.io/badge/Softpedia_review-4.5%2F5-00A99D?style=for-the-badge" alt="Softpedia editorial review, 4.5 out of 5"></a>
+  <a href="https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"><img src="https://img.shields.io/badge/Softpedia_users-5.0%2F5-00A99D?style=for-the-badge" alt="Rated 5.0 out of 5 by Softpedia users"></a>
 </p>
 
 **[⬇ Download for Windows](../../releases/latest)** · [Changelog](CHANGELOG.md) ·
@@ -70,7 +70,7 @@ numbers below can be checked at their source rather than taken on trust.
 | --- | --- |
 | [Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87) | Published and certified for Windows 10/11 |
 | [winget](https://winstall.app/apps/AurelioAvila.PCTweaker) | In the official `microsoft/winget-pkgs` repository |
-| [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml) | Editorial review 4.5/5, tested by Mihaela Teodorovici |
+| [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml) | User rating 5.0/5 (39 votes); editorial review 4.5/5 by Mihaela Teodorovici |
 | [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html) | Rated 5.0/5 by readers |
 | [GitHub releases](https://github.com/AurelioAvila/pc-tweaker-app/releases) | GitHub-hosted downloads shown live in the badge above; not the cross-channel total |
 

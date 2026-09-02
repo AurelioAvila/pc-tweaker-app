@@ -1,6 +1,7 @@
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import tauriConf from "../src-tauri/tauri.conf.json";
 
 /** Client-side routes that must also exist as real files. Keep in sync with
  *  the routes handled in src/router.tsx. */
@@ -49,6 +50,30 @@ function spaFallback(): Plugin {
   };
 }
 
+/**
+ * La versione nei dati strutturati, presa da dove vive davvero.
+ *
+ * Era scritta a mano nel JSON-LD di index.html, e diceva 1.6.1 mentre la
+ * release pubblicata era la 1.6.5: quattro versioni indietro, su un campo che
+ * Google legge per i risultati ricchi. Nessuno se ne accorge perche' il sito
+ * si costruisce e si pubblica correttamente comunque - il valore e' sbagliato,
+ * non rotto.
+ *
+ * Letta da src-tauri/tauri.conf.json, che e' la versione che l'app dichiara di
+ * essere, cosi' un bump di versione la aggiorna qui senza che nessuno debba
+ * ricordarselo. Importata come JSON invece che letta con `fs` per non tirare
+ * dentro @types/node, che questo progetto evita di proposito (vedi il commento
+ * su spaFallback).
+ */
+function appVersion(): Plugin {
+  return {
+    name: "app-version",
+    transformIndexHtml(html) {
+      return html.replace(/__APP_VERSION__/g, tauriConf.version);
+    },
+  };
+}
+
 export default defineConfig(({ isSsrBuild }) => ({
-  plugins: [react(), tailwindcss(), ...(isSsrBuild ? [] : [spaFallback()])],
+  plugins: [react(), tailwindcss(), appVersion(), ...(isSsrBuild ? [] : [spaFallback()])],
 }));

@@ -93,7 +93,40 @@ marketing/tiktok-upload/run.bat
 latest.json
 
 # Social/video assets live outside version control (some exceed GitHub's 100MB limit)
-marketing/
+# Le otto attivita' pianificate che pubblicano i social girano da qui, e fino
+# a oggi questo codice non era versionato: un `marketing/` secco aggiunto il
+# 2026-08-21 aveva annullato in silenzio le trenta regole per singolo file
+# scritte tre giorni prima. Otto pipeline su codice che esisteva in un posto solo.
+#
+# La cartella pesa 4,8 GB, ma il codice sono 312 KB: il resto e' media, e resta
+# fuori. Qui si nega tutto e si riammette solo il sorgente, perche' questo
+# repository e' pubblico e sotto marketing/ ci sono token OAuth vivi di Google,
+# TikTok e Instagram. Sbagliare verso e' pubblicarli.
+marketing/**
+!marketing/*/
+!marketing/*/*/
+!marketing/**/*.js
+!marketing/**/*.mjs
+!marketing/**/*.py
+!marketing/**/*.md
+
+# E mai questi, comunque si chiamino e ovunque stiano.
+marketing/**/node_modules/**
+marketing/**/.venv/**
+marketing/**/__pycache__/**
+marketing/**/credentials*
+marketing/**/client_secret*
+marketing/**/token*
+marketing/**/*.env*
+marketing/**/*-log.json
+marketing/**/*.log
+
+# I lanciatori restano fuori. Due dei cinque hanno un token Telegram scritto
+# dentro (per una ragione documentata: uno Scheduled Task non vede le
+# variabili utente appena impostate senza un logoff), e su un repository
+# pubblico la differenza fra un .bat pulito e uno no e' una modifica futura
+# che nessuno rilegge. Il default sicuro e' nessuno.
+marketing/**/*.bat
 
 # Store packaging and its output: the MSIX is rebuilt from the release binary
 # every time, and each one is several megabytes of build product.

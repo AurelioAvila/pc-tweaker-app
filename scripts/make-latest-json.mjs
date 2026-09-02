@@ -46,6 +46,20 @@ const notes = fs
   .map((p) => p.replace(/^#.*$/gm, "").replace(/\s+/g, " ").trim())
   .filter(Boolean)[0];
 
+// GitHub does not serve a release asset under the name it was uploaded
+// with: every character outside [A-Za-z0-9.-_] becomes a dot, so
+// "PC Tweaker Uninstaller_0.8.2_x64-setup.exe" is downloadable only as
+// "PC.Tweaker.Uninstaller_0.8.2_x64-setup.exe". Percent-encoding the
+// spaces instead produces a URL that 404s, which is how 0.8.0's winget
+// manifest shipped pointing at an asset that was never there — and an
+// updater manifest with a dead URL strands every install on the old
+// version silently, since the check succeeds and the download does not.
+const assetName = setup.replace(/[^A-Za-z0-9.\-_]/g, ".");
+if (/[^A-Za-z0-9.\-_]/.test(assetName)) {
+  console.error(`Asset name still holds characters GitHub will rewrite: ${assetName}`);
+  process.exit(1);
+}
+
 const manifest = {
   version,
   notes,
@@ -53,7 +67,7 @@ const manifest = {
   platforms: {
     "windows-x86_64": {
       signature: fs.readFileSync(sigPath, "utf8").trim(),
-      url: `${repoUrl}/releases/download/v${version}/${encodeURIComponent(setup)}`,
+      url: `${repoUrl}/releases/download/v${version}/${assetName}`,
     },
   },
 };

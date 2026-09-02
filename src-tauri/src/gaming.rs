@@ -3,6 +3,7 @@ use crate::rollback::{RegValue, RegistrySnapshot, RollbackStore, SnapshotEntry};
 pub const INPUT_LAG_ID: &str = "reduce_input_lag";
 pub const TURBO_BOOST_ID: &str = "turbo_boost";
 pub const KEYBOARD_DELAY_ID: &str = "reduce_keyboard_delay";
+pub const CORE_PARKING_ID: &str = "disable_core_parking";
 
 pub struct GamingInfo {
     pub id: &'static str,
@@ -29,6 +30,28 @@ pub fn turbo_boost_info() -> GamingInfo {
         description: "Sets the processor performance boost mode to \"Aggressive\" and raises the minimum processor state to 100% while plugged in, so the cores stop dropping to their lowest state between bursts of work. Both are restored exactly as found on rollback (requires administrator rights).",
         requires_admin: true,
         requires_pro: false,
+    }
+}
+
+/// Minimum percentage of cores the scheduler must leave unparked.
+///
+/// Core parking drops idle cores into a low-power state and wakes them on
+/// demand. That is the right trade on a laptop and the wrong one under a
+/// game: waking a core is not free, and the core servicing the mouse
+/// interrupt is one of the ones Windows is willing to park. Holding the floor
+/// at 100% means nothing is ever parked, so nothing ever has to be woken.
+pub const CORE_PARKING_MIN_GUID: &str = "0cc5b647-c1df-4637-891a-dec35c318583";
+
+/// Percent of cores kept unparked. 100 is "all of them".
+const CORE_PARKING_ALL_UNPARKED: &str = "100";
+
+pub fn core_parking_info() -> GamingInfo {
+    GamingInfo {
+        id: CORE_PARKING_ID,
+        name: "Disable core parking",
+        description: "Stops Windows parking idle CPU cores while plugged in, so a core does not have to be woken before it can service input or a sudden burst of work. Applied to the mains profile only — on battery, parking is what it is there for. The plan's previous value is recorded and restored exactly on rollback (requires administrator rights).",
+        requires_admin: true,
+        requires_pro: true,
     }
 }
 
@@ -149,6 +172,69 @@ pub fn rollback_keyboard_delay(store: &RollbackStore) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+#[cfg(windows)]
+pub fn apply_core_parking(store: &RollbackStore) -> Result<(), String> {
+    let scheme = crate::power::active_scheme_guid()?;
+    let (ac_index, dc_index) = read_setting_indexes(&scheme, CORE_PARKING_MIN_GUID);
+
+    // AC only, deliberately. Holding every core awake on battery is a
+    // battery-life decision the user did not make by pressing a button
+    // labelled "disable core parking".
+    crate::power::run_powercfg(&[
+        "/setacvalueindex",
+        "scheme_current",
+        SUB_PROCESSOR_GUID,
+        CORE_PARKING_MIN_GUID,
+        CORE_PARKING_ALL_UNPARKED,
+    ])?;
+    crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
+
+    store
+        .save_entry(
+            CORE_PARKING_ID,
+            SnapshotEntry::PowerSettingIndex {
+                scheme_guid: scheme,
+                subgroup_guid: SUB_PROCESSOR_GUID.to_string(),
+                setting_guid: CORE_PARKING_MIN_GUID.to_string(),
+                ac_index,
+                dc_index,
+            },
+        )
+        .map_err(|e| e.to_string())
+}
+
+#[cfg(windows)]
+pub fn rollback_core_parking(store: &RollbackStore) -> Result<(), String> {
+    let entry = store.take_entry(CORE_PARKING_ID).ok_or_else(|| {
+        "no saved snapshot: core parking does not appear to be modified".to_string()
+    })?;
+
+    match entry {
+        SnapshotEntry::PowerSettingIndex {
+            scheme_guid,
+            subgroup_guid,
+            setting_guid,
+            ac_index,
+            dc_index,
+        } => {
+            restore_power_index(&scheme_guid, &subgroup_guid, &setting_guid, ac_index, dc_index)?;
+            crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
+            Ok(())
+        }
+        _ => Err("unexpected snapshot type for core parking".to_string()),
+    }
+}
+
+#[cfg(not(windows))]
+pub fn apply_core_parking(_store: &RollbackStore) -> Result<(), String> {
+    Err("not supported on this platform".to_string())
+}
+
+#[cfg(not(windows))]
+pub fn rollback_core_parking(_store: &RollbackStore) -> Result<(), String> {
+    Err("not supported on this platform".to_string())
 }
 
 #[cfg(not(windows))]

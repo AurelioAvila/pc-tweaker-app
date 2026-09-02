@@ -41,7 +41,7 @@ winget install AurelioAvila.PCTweaker
 Click the copy icon on the block above, paste into a terminal (PowerShell,
 Windows Terminal, or `Win+R` → `cmd`), hit enter.
 
-_(Published via [PR #407687](https://github.com/microsoft/winget-pkgs/pull/407687).
+_(Published via [PR #428415](https://github.com/microsoft/winget-pkgs/pull/428415).
 A brand-new release can take a few hours for Microsoft's package index to
 refresh — if winget says the package isn't found yet, use the Store link
 above or the [.exe/.msi installer](../../releases/latest) below in the

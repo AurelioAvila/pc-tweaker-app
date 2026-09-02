@@ -215,7 +215,7 @@ export const engDictionary: Dictionary = {
     sub: " — registry, power plan, services, scheduler priorities. Every single one snapshotted before it touches your system. One click to apply. One click to undo.",
     cta: "Download for Windows — Free",
     safetyNote:
-      'The installer isn\'t code-signed yet (it\'s on the roadmap), so Windows may show a SmartScreen warning on first run. Click "More info" → "Run anyway". The download is safe: the full source is public on GitHub, and every auto-update is cryptographically signed and verified before it installs.',
+      'The installer isn\'t code-signed yet (it\'s on the roadmap), so Windows may show a SmartScreen warning on first run. Click "More info" → "Run anyway". The download is safe: the full source is public on GitHub, and every auto-update is cryptographically signed and verified before it installs. To skip the warning entirely, install from the Microsoft Store or with winget — both are signed, neither prompts.',
     terminalTitle: "powershell — pctweaker",
     terminalCmd: "winget install AurelioAvila.PCTweaker",
     terminalHint: "# zero SmartScreen prompts via winget",
@@ -229,6 +229,10 @@ export const engDictionary: Dictionary = {
       {
         label: "Softpedia Listed",
         href: "https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml",
+      },
+      {
+        label: "Microsoft Store",
+        href: "https://apps.microsoft.com/detail/9nh3c6dt1g87",
       },
       { label: "Source Available", href: "https://github.com/AurelioAvila/pc-tweaker-app" },
     ],

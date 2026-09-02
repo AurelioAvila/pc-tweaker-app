@@ -4,11 +4,15 @@ import assert from "node:assert/strict";
 const {
   accountWelcomeHtml,
   accountWelcomeSubject,
+  passwordChangedHtml,
+  passwordChangedSubject,
   passwordResetHtml,
   passwordResetSubject,
   verificationHtml,
   verificationSubject,
 } = await import("../dist/emails/account.js");
+
+const WHEN = "Mon, 01 Sep 2026 09:14:00 GMT";
 
 const LINK = "https://api.pctweaker.app/api/auth/verify-email?token=abc&x=1";
 
@@ -50,15 +54,51 @@ test("the welcome quotes the free tweak count it was given", () => {
 });
 
 test("every subject names the product", () => {
-  for (const subject of [verificationSubject(), passwordResetSubject(), accountWelcomeSubject()]) {
+  for (const subject of [
+    verificationSubject(),
+    passwordResetSubject(),
+    accountWelcomeSubject(),
+    passwordChangedSubject(),
+  ]) {
     assert.match(subject, /PC Tweaker/);
   }
 });
 
-test("all three are complete documents in the same shell", () => {
-  for (const html of [verificationHtml("A", LINK), passwordResetHtml(LINK), accountWelcomeHtml("A", 35)]) {
+test("all four are complete documents in the same shell", () => {
+  for (const html of [
+    verificationHtml("A", LINK),
+    passwordResetHtml(LINK),
+    accountWelcomeHtml("A", 35),
+    passwordChangedHtml("A", WHEN),
+  ]) {
     assert.ok(html.startsWith("<!doctype html>"));
     assert.ok(html.includes("pctweaker.app"));
     assert.ok(html.includes("#ff5500"), "the shared accent, not a second visual language");
   }
+});
+
+test("the notice carries no link that could change anything", () => {
+  // The one message whose reader may not be the person who acted. A reset
+  // link here would be the exact shape an attacker forges, arriving on the
+  // message a worried reader is most likely to click.
+  const html = passwordChangedHtml("Marco", WHEN);
+  assert.ok(!html.includes("reset-password"), "no reset route in a message about a reset");
+  assert.ok(!html.includes("token="), "no token, so nothing here is worth stealing");
+  assert.ok(html.includes("https://pctweaker.app/support"), "the button goes to a place, not an action");
+});
+
+test("the notice states when it happened and what it already did", () => {
+  // Both are load-bearing: the moment is how a reader decides it was not
+  // them, and the sign-out is true because the reset bumps token_version.
+  const html = passwordChangedHtml("Marco", WHEN);
+  assert.ok(html.includes(WHEN), "quotes the moment the password changed, not the render time");
+  assert.match(html, /signed in has been signed out/);
+  assert.match(html, /never ask you for your password by email/);
+});
+
+test("the notice greets by first name and survives having none", () => {
+  assert.match(passwordChangedHtml("Marco Rossi", WHEN), /Your password was changed, Marco\./);
+  assert.match(passwordChangedHtml("", WHEN), /Your password was changed\./);
+  const html = passwordChangedHtml("<script>alert(1)</script>", WHEN);
+  assert.ok(!html.includes("<script>"));
 });

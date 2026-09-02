@@ -7,6 +7,8 @@ import { sendMail, MailError } from "../mailer";
 import {
   accountWelcomeHtml,
   accountWelcomeSubject,
+  passwordChangedHtml,
+  passwordChangedSubject,
   passwordResetHtml,
   passwordResetSubject,
   verificationHtml,
@@ -85,6 +87,29 @@ async function sendAccountWelcome(userId: number): Promise<void> {
     to: user.email,
     subject: accountWelcomeSubject(),
     html: accountWelcomeHtml(user.first_name ?? "", FREE_TWEAK_COUNT),
+  });
+}
+
+/**
+ * Tells the account owner that the password changed.
+ *
+ * The reset flow proves control of the inbox before it will change anything,
+ * so this is not a second authorization step — it is the only way the person
+ * who owns the account finds out, if the reset was not theirs. Sent from the
+ * one place that writes a new password_hash, so a second way to change one
+ * cannot quietly ship without it.
+ */
+async function sendPasswordChangedNotice(userId: number, changedAt: Date): Promise<void> {
+  const { rows } = await getPool().query(
+    "SELECT email, first_name FROM users WHERE id = $1",
+    [userId],
+  );
+  const user = rows[0];
+  if (!user?.email) return;
+  await sendMail({
+    to: user.email,
+    subject: passwordChangedSubject(),
+    html: passwordChangedHtml(user.first_name ?? "", changedAt.toUTCString()),
   });
 }
 
@@ -405,6 +430,13 @@ router.post("/reset-password", async (req: Request, res: Response) => {
     await getPool().query(
       "UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE id = $2",
       [passwordHash, userId],
+    );
+
+    // Best-effort, like the welcome: the password has already changed by now,
+    // and failing the request would tell the user their reset did not work
+    // when it did. A missing notice is worth a log line, not a dead end.
+    void sendPasswordChangedNotice(userId, new Date()).catch((err) =>
+      console.error("failed to send the password changed notice:", err),
     );
 
     if (wantsHtml) {

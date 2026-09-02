@@ -767,6 +767,12 @@ export interface Strings {
     resendVerification: string;
     verificationSent: string;
   };
+  driftWatch: {
+    title: string;
+    body: string;
+    on: string;
+    off: string;
+  };
   tweaks: Record<string, TweakText>;
   cleanup: Record<string, TweakText>;
   coffee: {
@@ -1621,6 +1627,12 @@ const it: Strings = {
     emailVerified: "Email verificata",
     resendVerification: "Invia di nuovo",
     verificationSent: "Email di verifica inviata.",
+  },
+  driftWatch: {
+    title: "Sorveglia gli aggiornamenti di Windows",
+    body: "Un aggiornamento cumulativo rimette a posto ciò che non riconosce: le tue modifiche spariscono e lo scopri settimane dopo, se mai. Con questa attiva il controllo gira all'accesso e ti avvisa solo se qualcosa ha smesso davvero di essere in vigore.",
+    on: "Attiva",
+    off: "Disattivata",
   },
   tweaks: {
     disable_startup_delay: {
@@ -2741,6 +2753,12 @@ const en: Strings = {
     emailVerified: "Email verified",
     resendVerification: "Resend",
     verificationSent: "Verification email sent.",
+  },
+  driftWatch: {
+    title: "Watch for Windows updates",
+    body: "A cumulative update puts back what it does not recognise: your changes disappear and you find out weeks later, if at all. With this on, the check runs at logon and tells you only when something has actually stopped being in effect.",
+    on: "On",
+    off: "Off",
   },
   tweaks: {
     disable_startup_delay: {
@@ -3876,6 +3894,12 @@ const fr: Strings = {
     resendVerification: "Renvoyer",
     verificationSent: "E-mail de vérification envoyé.",
   },
+  driftWatch: {
+    title: "Surveiller les mises à jour Windows",
+    body: "Une mise à jour cumulative rétablit ce qu'elle ne reconnaît pas : vos modifications disparaissent et vous l'apprenez des semaines plus tard, si jamais. Activée, la vérification s'exécute à l'ouverture de session et ne vous prévient que si quelque chose a réellement cessé de s'appliquer.",
+    on: "Activée",
+    off: "Désactivée",
+  },
   tweaks: {
     disable_startup_delay: {
       name: "Supprimer le délai des programmes au démarrage",
@@ -5006,6 +5030,12 @@ const es: Strings = {
     emailVerified: "Correo verificado",
     resendVerification: "Reenviar",
     verificationSent: "Correo de verificación enviado.",
+  },
+  driftWatch: {
+    title: "Vigilar las actualizaciones de Windows",
+    body: "Una actualización acumulativa repone lo que no reconoce: tus cambios desaparecen y te enteras semanas después, si acaso. Con esto activado, la comprobación se ejecuta al iniciar sesión y solo te avisa si algo ha dejado de estar en vigor.",
+    on: "Activada",
+    off: "Desactivada",
   },
   tweaks: {
     disable_startup_delay: {
@@ -6145,6 +6175,12 @@ const de: Strings = {
     resendVerification: "Erneut senden",
     verificationSent: "Bestätigungs-E-Mail gesendet.",
   },
+  driftWatch: {
+    title: "Windows-Updates überwachen",
+    body: "Ein kumulatives Update stellt wieder her, was es nicht kennt: Ihre Änderungen verschwinden und Sie erfahren es Wochen später, wenn überhaupt. Ist dies aktiviert, läuft die Prüfung bei der Anmeldung und meldet sich nur, wenn etwas tatsächlich nicht mehr wirksam ist.",
+    on: "Aktiv",
+    off: "Inaktiv",
+  },
   tweaks: {
     disable_startup_delay: {
       name: "Verzögerung der Autostart-Programme entfernen",
@@ -7278,6 +7314,12 @@ const pt: Strings = {
     emailVerified: "E-mail verificado",
     resendVerification: "Reenviar",
     verificationSent: "E-mail de verificação enviado.",
+  },
+  driftWatch: {
+    title: "Vigiar as atualizações do Windows",
+    body: "Uma atualização cumulativa repõe aquilo que não reconhece: as suas alterações desaparecem e só dá por isso semanas depois, se der. Com isto ligado, a verificação corre no início de sessão e só o avisa quando algo deixou mesmo de estar em vigor.",
+    on: "Ligada",
+    off: "Desligada",
   },
   tweaks: {
     disable_startup_delay: {

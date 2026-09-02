@@ -888,6 +888,149 @@ fn optimize_disk(_app: tauri::AppHandle, _drive: String) -> Result<diskopt::Disk
 /// `runas` UAC prompt) to perform exactly one action headlessly, then exit.
 /// This keeps the main app running unprivileged at all times.
 #[cfg(windows)]
+/// Whether the scheduled watchdog is registered right now.
+#[cfg(windows)]
+#[tauri::command(async)]
+fn drift_watch_enabled() -> bool {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+    std::process::Command::new("schtasks")
+        .args(["/query", "/tn", updatewatch::TASK_NAME])
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
+/// Registers or removes the daily check.
+///
+/// Daily at logon rather than hourly: the thing being watched for is a
+/// Windows cumulative update, which happens on the order of once a month.
+/// Polling faster would spend the user's battery to find out the same
+/// nothing.
+///
+/// No elevation. The task runs as the user who set it up and only reads the
+/// registry and shows a toast, so asking for administrator rights to schedule
+/// it would be asking for more than the job needs.
+#[cfg(windows)]
+#[tauri::command(async)]
+fn set_drift_watch(enabled: bool) -> Result<bool, String> {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+    let exe = std::env::current_exe()
+        .map_err(|e| format!("could not locate the application: {e}"))?
+        .to_string_lossy()
+        .to_string();
+
+    let args: Vec<String> = if enabled {
+        vec![
+            "/create".into(),
+            "/f".into(),
+            "/tn".into(),
+            updatewatch::TASK_NAME.into(),
+            "/tr".into(),
+            format!("\"{exe}\" --check-drift"),
+            "/sc".into(),
+            "onlogon".into(),
+            "/delay".into(),
+            "0002:00".into(),
+        ]
+    } else {
+        vec!["/delete".into(), "/f".into(), "/tn".into(), updatewatch::TASK_NAME.into()]
+    };
+
+    let refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+    let output = std::process::Command::new("schtasks")
+        .args(&refs)
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()
+        .map_err(|e| format!("could not run schtasks: {e}"))?;
+
+    if output.status.success() {
+        audit::record("update-drift-watch", if enabled { "enabled" } else { "disabled" }, true, None);
+        Ok(enabled)
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).trim().to_string())
+    }
+}
+
+#[cfg(not(windows))]
+#[tauri::command(async)]
+fn drift_watch_enabled() -> bool {
+    false
+}
+
+#[cfg(not(windows))]
+#[tauri::command(async)]
+fn set_drift_watch(_enabled: bool) -> Result<bool, String> {
+    Err("the update watchdog is Windows-only".to_string())
+}
+
+/// The scheduled half of the update watchdog.
+///
+/// Runs the same comparison `check_update_drift` does, with no window and no
+/// Tauri app, and exits. If anything the user applied is no longer in effect
+/// it says so with a toast; if nothing moved it says nothing at all, which is
+/// the behaviour that keeps the notification worth reading.
+///
+/// Exit code 0 either way. This is a watchdog, not a test: a Windows update
+/// undoing tweaks is the expected case it exists to report, not a failure of
+/// this process.
+#[cfg(windows)]
+pub fn run_drift_check_headless() -> ! {
+    let dir = dirs_app_data_dir();
+    crash::install(dir.clone(), crash::PROCESS_ELEVATED);
+
+    let store = RollbackStore::new(dir.clone());
+    let Some(current) = updatewatch::current_patch_level() else {
+        std::process::exit(0);
+    };
+    let previous = updatewatch::read_state(&dir).last_seen;
+
+    let states: Vec<updatewatch::TweakState> = tweaks::all_tweaks()
+        .iter()
+        .map(|t| {
+            let recorded_applied = store.is_applied(t.id);
+            let live_matches = if recorded_applied {
+                match t.read_current() {
+                    Ok(Some(value)) => Some(value == t.on_value),
+                    Ok(None) => Some(false),
+                    Err(_) => None,
+                }
+            } else {
+                None
+            };
+            updatewatch::TweakState {
+                id: t.id.to_string(),
+                recorded_applied,
+                live_matches,
+            }
+        })
+        .collect();
+
+    let report = updatewatch::build_report(previous, current.clone(), &states);
+    let _ = updatewatch::write_state(
+        &dir,
+        &updatewatch::WatchState {
+            last_seen: Some(current),
+        },
+    );
+
+    if !report.reverted.is_empty() {
+        audit::record(
+            "update-drift",
+            "scheduled",
+            true,
+            Some(format!("{} tweak(s) reverted", report.reverted.len())),
+        );
+        let _ = updatewatch::notify(report.reverted.len());
+    }
+
+    std::process::exit(0)
+}
+
 pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     let dir = dirs_app_data_dir();
     // This process has no window, so a panic here is silent: the user clicks
@@ -1214,6 +1357,8 @@ pub fn run() {
             systemprofile::system_profile,
             health::health_report,
             healthhistory::list_health_history,
+            drift_watch_enabled,
+            set_drift_watch,
             baseline::run_baseline,
             baseline::list_baselines,
             recommend::advise_tweaks,

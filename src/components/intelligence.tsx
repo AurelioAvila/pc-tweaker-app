@@ -522,3 +522,65 @@ export function LedgerPanel({
     </div>
   );
 }
+
+/** Turns the scheduled half of the watchdog on and off.
+ *
+ * Its own component, and deliberately not inside UpdateDriftCard: that card
+ * renders only once drift has already happened, so a switch living there
+ * could never be found before it was needed. Detection has always worked and
+ * only ever ran when somebody opened the app and reached this tab — which is
+ * the moment they are least likely to need telling.
+ *
+ * The task runs at logon, two minutes in, and says nothing unless a tweak the
+ * user applied has actually stopped being in effect. Windows documents that a
+ * feature update keeps the registry entries it recognises and discards the
+ * rest, so this is expected behaviour that nobody is otherwise notified of.
+ */
+export function DriftWatchToggle({
+  s,
+  pushToast,
+}: {
+  s: Strings;
+  pushToast: (kind: Toast["kind"], message: string) => void;
+}) {
+  const [on, setOn] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    invoke<boolean>("drift_watch_enabled")
+      .then(setOn)
+      .catch(() => setOn(false));
+  }, []);
+
+  async function toggle() {
+    if (on === null || busy) return;
+    setBusy(true);
+    try {
+      const next = await invoke<boolean>("set_drift_watch", { enabled: !on });
+      setOn(next);
+    } catch (e) {
+      pushToast("error", String(e));
+    }
+    setBusy(false);
+  }
+
+  return (
+    <div className="border-line bg-surface-1 mb-6 flex items-center gap-4 rounded-2xl border p-4">
+      <div className="min-w-0 flex-1">
+        <h3 className="text-ink text-sm font-semibold">{s.driftWatch.title}</h3>
+        <p className="text-ink-3 mt-0.5 text-[12.5px] leading-relaxed">{s.driftWatch.body}</p>
+      </div>
+      <button
+        onClick={toggle}
+        disabled={on === null || busy}
+        className={`shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition disabled:opacity-40 ${
+          on
+            ? "bg-emerald-400/15 text-emerald-300"
+            : "bg-surface-2 text-ink-2 hover:bg-surface-hover"
+        }`}
+      >
+        {on === null ? "…" : on ? s.driftWatch.on : s.driftWatch.off}
+      </button>
+    </div>
+  );
+}

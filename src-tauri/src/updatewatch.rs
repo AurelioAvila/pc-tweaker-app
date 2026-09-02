@@ -315,3 +315,76 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 }
+
+/// The name the scheduled task carries in Task Scheduler.
+///
+/// Visible on purpose. A background task a user cannot find and cannot read
+/// is the thing this product exists not to be, so it is named plainly and
+/// lives under the app's own folder.
+pub const TASK_NAME: &str = r"PC Tweaker\Update drift watch";
+
+/// Tells the user their work was undone, without the app being open.
+///
+/// This is the whole point of the watchdog. The detection below has always
+/// worked; it only ever ran when somebody happened to open the app and
+/// navigate to the Ledger tab, which is the one moment they are least likely
+/// to need telling. Windows itself documents that a feature update keeps
+/// "recognized" registry entries and discards the rest, so the loss is
+/// expected behaviour that nobody is notified about.
+///
+/// A PowerShell toast rather than a Tauri plugin because this runs from the
+/// headless `--check-drift` process, which never builds a Tauri app and so
+/// has no plugin to call. Failure is deliberately silent: a watchdog that
+/// pops an error because it could not pop a notification is worse than one
+/// that stays quiet until next launch, when the drift card says the same
+/// thing.
+#[cfg(windows)]
+pub fn notify(reverted_count: usize) -> Result<(), String> {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+    let body = if reverted_count == 1 {
+        "A Windows update reverted 1 tweak. Open PC Tweaker to re-apply it.".to_string()
+    } else {
+        format!(
+            "A Windows update reverted {reverted_count} tweaks. Open PC Tweaker to re-apply them."
+        )
+    };
+
+    // The AppID has to be one Windows already knows, or the toast is dropped
+    // without an error. The Start Menu shortcut the installer creates is the
+    // app's own registration; PowerShell's is the fallback so a portable copy
+    // still notifies rather than failing silently.
+    let script = format!(
+        r#"
+$ErrorActionPreference = 'Stop'
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] > $null
+[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom, ContentType=WindowsRuntime] > $null
+$appId = '{{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}}\WindowsPowerShell\v1.0\powershell.exe'
+$shortcut = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\PC Tweaker.lnk'
+if (Test-Path $shortcut) {{ $appId = 'PC Tweaker' }}
+$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+$xml.LoadXml(@'
+<toast><visual><binding template="ToastGeneric"><text>PC Tweaker</text><text>{body}</text></binding></visual></toast>
+'@)
+[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($appId).Show([Windows.UI.Notifications.ToastNotification]::new($xml))
+"#
+    );
+
+    let output = std::process::Command::new("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()
+        .map_err(|e| format!("could not run PowerShell: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).trim().to_string())
+    }
+}
+
+#[cfg(not(windows))]
+pub fn notify(_reverted_count: usize) -> Result<(), String> {
+    Err("notifications are Windows-only".to_string())
+}

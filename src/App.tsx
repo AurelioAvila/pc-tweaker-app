@@ -59,6 +59,7 @@ import {
   AdvisorCard,
   CrashReportsCard,
   LedgerPanel,
+  DriftWatchToggle,
   UpdateDriftCard,
 } from "./components/intelligence";
 import { usePulseSamples } from "./components/command";
@@ -901,6 +902,7 @@ function App() {
                 {/* Above the crash card: a reverted tweak is something the
                   user can act on right now, and it renders nothing when
                   nothing drifted. */}
+                <DriftWatchToggle s={s} pushToast={pushToast} />
                 <UpdateDriftCard s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />
                 <CrashReportsCard s={s} pushToast={pushToast} />
                 <LedgerPanel s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />

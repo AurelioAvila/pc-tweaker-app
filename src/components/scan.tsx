@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
 import { textFor } from "../lib";
 import { CleanupInfo, ScanIssue, SystemProfile, Toast, TweakAdvice, TweakInfo } from "../types";
+import { BaselineRun, delta } from "./health";
 import { BoltIcon, MagnifierIcon, TrashIcon } from "./icons";
 
 /**
@@ -158,6 +159,20 @@ export function ScanPanel({
   const [fixProgress, setFixProgress] = useState(0);
   const [fixTotal, setFixTotal] = useState(0);
   const [fixedCount, setFixedCount] = useState(0);
+  /* Before/after of the Baseline Engine around a Fix all.
+   *
+   * The engine was built for exactly this comparison and nothing ever asked
+   * it for one: a user had to find the PC Health tab, compute a score, run a
+   * baseline, apply something, come back and repeat. Four clicks away on a
+   * tab with no reason to open it, which is why nobody ever saw the app
+   * prove itself.
+   *
+   * Both runs are kept even when nothing moved. A tweak that changes the
+   * taskbar has no business moving a CPU score, and saying so is the point:
+   * this is the app that refuses to inflate a number. */
+  const [beforeRun, setBeforeRun] = useState<BaselineRun | null>(null);
+  const [afterRun, setAfterRun] = useState<BaselineRun | null>(null);
+  const [measuring, setMeasuring] = useState(false);
   const scanTimer = useRef<number | null>(null);
 
   const SCAN_DURATION_MS = 4200;
@@ -299,6 +314,25 @@ export function ScanPanel({
     setFixing(true);
     setFixTotal(toFix.length);
     setFixProgress(0);
+    setBeforeRun(null);
+    setAfterRun(null);
+
+    // Only around tweaks. Cleanup frees disk space and reports how much on
+    // its own; running a two-run benchmark to say the same thing again would
+    // spend the user's time to add nothing.
+    const measure = toFix.some((i) => i.kind === "tweak");
+    let before: BaselineRun | null = null;
+    if (measure) {
+      setMeasuring(true);
+      try {
+        before = await invoke<BaselineRun>("run_baseline");
+      } catch {
+        // A failed measurement must not block the thing the user actually
+        // pressed the button for.
+        before = null;
+      }
+      setMeasuring(false);
+    }
 
     const tweakIds = toFix.filter((i) => i.kind === "tweak").map((i) => i.id);
     const cleanupIds = toFix.filter((i) => i.kind === "cleanup").map((i) => i.id);
@@ -335,6 +369,19 @@ export function ScanPanel({
     }
 
     await onFixed();
+
+    if (before) {
+      setMeasuring(true);
+      try {
+        const after = await invoke<BaselineRun>("run_baseline");
+        setBeforeRun(before);
+        setAfterRun(after);
+      } catch {
+        /* same reasoning as above */
+      }
+      setMeasuring(false);
+    }
+
     setFixing(false);
     const fixed = toFix.length - failed;
     setFixedCount(fixed);
@@ -470,6 +517,42 @@ export function ScanPanel({
           <p className="mt-1 text-center text-sm text-ink-3">
             {format(s.scan.doneBody, { count: fixedCount })}
           </p>
+
+          {/* Measured, not claimed. Two real runs of the Baseline Engine on
+              this machine, one either side of the change — and when nothing
+              moved it says "=" rather than dressing noise up as a gain. */}
+          {beforeRun && afterRun && (
+            <table className="mt-5 w-full max-w-xs text-[11px]">
+              <tbody>
+                {(
+                  [
+                    ["CPU", (r: BaselineRun) => r.cpuScore, true, ""],
+                    ["Memory touch", (r: BaselineRun) => r.memoryTouchMs, false, " ms"],
+                    ["Disk write", (r: BaselineRun) => r.diskWriteMs, false, " ms"],
+                    ["Disk random read", (r: BaselineRun) => r.diskRandomReadMs, false, " ms"],
+                  ] as [string, (r: BaselineRun) => number, boolean, string][]
+                ).map(([label, get, higher, unit]) => {
+                  const d = delta(get(beforeRun), get(afterRun), higher);
+                  return (
+                    <tr key={label} className="border-line border-t">
+                      <td className="text-ink-3 py-1">{label}</td>
+                      <td className="text-ink-2 py-1 text-right tabular-nums">
+                        {get(afterRun)}
+                        {unit}
+                      </td>
+                      <td className="w-14 py-1 text-right tabular-nums">
+                        {d && (
+                          <span className={d.good ? "text-emerald-300/90" : "text-rose-300/90"}>
+                            {d.text}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
           <button
             onClick={() => {
               setFixedCount(0);
@@ -521,6 +604,11 @@ export function ScanPanel({
                 disabled={fixing || recommendedIds.length === 0}
                 className="relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
               >
+                {measuring && (
+                  <span className="absolute inset-0 grid place-items-center bg-black/20 text-[11px] font-semibold">
+                    measuring…
+                  </span>
+                )}
                 {fixing && (
                   <span
                     className="absolute inset-y-0 left-0 bg-white/25 transition-[width] duration-300"

@@ -24,6 +24,10 @@ fn main() {
             "--elevated-securedefrag",
             "--elevated-memorypurge",
         ];
+        // The scheduled watchdog: one argument, no id, no window, no GUI.
+        if args.len() == 2 && args[1] == "--check-drift" {
+            tauri_app_lib::run_drift_check_headless();
+        }
         if args.len() == 3 && ELEVATED_ACTIONS.contains(&args[1].as_str()) {
             // Relaunched via UAC to perform exactly one privileged action headlessly.
             tauri_app_lib::run_elevated_headless(&args[1], &args[2]);

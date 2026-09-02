@@ -51,19 +51,17 @@ function spaFallback(): Plugin {
 }
 
 /**
- * La versione nei dati strutturati, presa da dove vive davvero.
+ * The version in the structured data, taken from where it actually lives.
  *
- * Era scritta a mano nel JSON-LD di index.html, e diceva 1.6.1 mentre la
- * release pubblicata era la 1.6.5: quattro versioni indietro, su un campo che
- * Google legge per i risultati ricchi. Nessuno se ne accorge perche' il sito
- * si costruisce e si pubblica correttamente comunque - il valore e' sbagliato,
- * non rotto.
+ * It was hand-written into index.html's JSON-LD and said 1.6.1 while the
+ * published release was 1.6.5: four versions behind, on a field Google reads
+ * for rich results. Nobody notices, because the site builds and deploys
+ * correctly regardless — the value is wrong, not broken.
  *
- * Letta da src-tauri/tauri.conf.json, che e' la versione che l'app dichiara di
- * essere, cosi' un bump di versione la aggiorna qui senza che nessuno debba
- * ricordarselo. Importata come JSON invece che letta con `fs` per non tirare
- * dentro @types/node, che questo progetto evita di proposito (vedi il commento
- * su spaFallback).
+ * Read from src-tauri/tauri.conf.json, which is the version the app claims to
+ * be, so a version bump updates this without anyone having to remember.
+ * Imported as JSON rather than read with `fs` so this project does not pull in
+ * @types/node, which it avoids on purpose (see the note on spaFallback).
  */
 function appVersion(): Plugin {
   return {

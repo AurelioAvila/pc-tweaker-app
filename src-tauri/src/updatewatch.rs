@@ -352,17 +352,28 @@ pub fn notify(reverted_count: usize) -> Result<(), String> {
     };
 
     // The AppID has to be one Windows already knows, or the toast is dropped
-    // without an error. The Start Menu shortcut the installer creates is the
-    // app's own registration; PowerShell's is the fallback so a portable copy
-    // still notifies rather than failing silently.
+    // with no error at all - which is how this nearly shipped broken. It
+    // looked for a Start Menu shortcut named "PC Tweaker.lnk" while the
+    // installer writes "pc-tweaker-app.lnk", so every notification would have
+    // borrowed Windows PowerShell's identity and arrived as PowerShell
+    // talking about tweaks.
+    //
+    // Both real identities are asked for by name, Store package first, then
+    // the desktop bundle. If neither is registered - a portable copy, or a
+    // dev build - nothing is sent, and the drift card says the same thing
+    // next time the app opens. A notification wearing somebody else's name is
+    // worse than one that never arrived.
     let script = format!(
         r#"
 $ErrorActionPreference = 'Stop'
 [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] > $null
 [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom, ContentType=WindowsRuntime] > $null
-$appId = '{{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}}\WindowsPowerShell\v1.0\powershell.exe'
-$shortcut = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\PC Tweaker.lnk'
-if (Test-Path $shortcut) {{ $appId = 'PC Tweaker' }}
+$known = @(Get-StartApps | Select-Object -ExpandProperty AppID)
+$appId = $null
+foreach ($c in @('AurelioAvila.PCTweaker_27nraqq9g21x0!App', 'com.aurel.pc-tweaker-app')) {{
+  if ($known -contains $c) {{ $appId = $c; break }}
+}}
+if (-not $appId) {{ exit 3 }}
 $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
 $xml.LoadXml(@'
 <toast><visual><binding template="ToastGeneric"><text>PC Tweaker</text><text>{body}</text></binding></visual></toast>

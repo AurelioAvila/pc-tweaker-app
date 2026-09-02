@@ -6,8 +6,8 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "strict": true,
-    // Serve a vite.config.ts per leggere la versione da
-    // src-tauri/tauri.conf.json invece di riscriverla a mano qui.
+    // Needed by vite.config.ts to read the version from
+    // src-tauri/tauri.conf.json instead of restating it by hand.
     "resolveJsonModule": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

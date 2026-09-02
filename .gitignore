@@ -93,15 +93,15 @@ marketing/tiktok-upload/run.bat
 latest.json
 
 # Social/video assets live outside version control (some exceed GitHub's 100MB limit)
-# Le otto attivita' pianificate che pubblicano i social girano da qui, e fino
-# a oggi questo codice non era versionato: un `marketing/` secco aggiunto il
-# 2026-08-21 aveva annullato in silenzio le trenta regole per singolo file
-# scritte tre giorni prima. Otto pipeline su codice che esisteva in un posto solo.
+# The eight scheduled tasks that publish to social run from here, and until
+# today this code was not under version control: a bare `marketing/` added on
+# 2026-08-21 had silently overridden the thirty per-file rules written three
+# days earlier. Eight pipelines on code that existed in one place only.
 #
-# La cartella pesa 4,8 GB, ma il codice sono 312 KB: il resto e' media, e resta
-# fuori. Qui si nega tutto e si riammette solo il sorgente, perche' questo
-# repository e' pubblico e sotto marketing/ ci sono token OAuth vivi di Google,
-# TikTok e Instagram. Sbagliare verso e' pubblicarli.
+# The folder is 4.8 GB but the code is 312 KB: the rest is media, and stays
+# out. So this denies everything and re-admits only source, because this
+# repository is public and there are live Google, TikTok and Instagram OAuth
+# tokens under marketing/. Getting the direction wrong publishes them.
 marketing/**
 !marketing/*/
 !marketing/*/*/
@@ -110,7 +110,7 @@ marketing/**
 !marketing/**/*.py
 !marketing/**/*.md
 
-# E mai questi, comunque si chiamino e ovunque stiano.
+# And never these, whatever they are called and wherever they sit.
 marketing/**/node_modules/**
 marketing/**/.venv/**
 marketing/**/__pycache__/**
@@ -121,11 +121,11 @@ marketing/**/*.env*
 marketing/**/*-log.json
 marketing/**/*.log
 
-# I lanciatori restano fuori. Due dei cinque hanno un token Telegram scritto
-# dentro (per una ragione documentata: uno Scheduled Task non vede le
-# variabili utente appena impostate senza un logoff), e su un repository
-# pubblico la differenza fra un .bat pulito e uno no e' una modifica futura
-# che nessuno rilegge. Il default sicuro e' nessuno.
+# The launchers stay out, all five. Two of them carry a Telegram token
+# inline for a reason documented in the file itself — a Scheduled Task does
+# not see newly set user env vars without a logoff — and on a public
+# repository the difference between a clean .bat and one that is not is a
+# future edit nobody re-reads. The safe default is none of them.
 marketing/**/*.bat
 
 # Store packaging and its output: the MSIX is rebuilt from the release binary

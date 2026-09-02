@@ -934,6 +934,17 @@ function App() {
                 hasBilling={auth.status === "authenticated" && auth.hasBilling}
                 freeTweakCount={freeTweakCount}
                 onChoosePro={async (plan) => {
+                  // A visitor without an account is exactly who this button is
+                  // for, and it used to answer them with a red toast and
+                  // nowhere to go: startCheckout throws without a token and
+                  // the catch below only reported it. ProfilesPanel already
+                  // had the right shape — say what is missing and open the
+                  // place where it is fixed.
+                  if (auth.status !== "authenticated") {
+                    pushToast("error", s.auth.loginRequiredForCheckout);
+                    setAccountMenuOpen(true);
+                    return;
+                  }
                   try {
                     await startCheckout(plan);
                   } catch (e) {

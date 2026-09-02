@@ -58,8 +58,11 @@ bottom. This is the full routine, in order. Skipping a step here is how
 6. **Verify live**, not just "the command didn't error":
 
    ```bash
-   # what installed apps actually poll
-   curl -sL https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/latest.json
+   # what installed apps actually poll.
+   # The ?t= is not decoration: GitHub's CDN serves the previous release's
+   # latest.json for a few minutes after publishing, so without it this
+   # reads the old version and you go hunting a bug that isn't there.
+   curl -sL "https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/latest.json?t=$(date +%s)"
 
    # what the site's download button actually serves
    curl -sIL https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/PCTweaker-Setup.exe
@@ -107,6 +110,11 @@ bottom. This is the full routine, in order. Skipping a step here is how
      — they drift otherwise) — the free-tier tweak count in section 2.
    - `README.md` — the total tweak count and the free/Pro split.
    - `CHANGELOG.md` — the entry for this version.
+   - The **Microsoft Store** listing description, which also states the tweak
+     count. This is the one surface with no CLI: it lives in Partner Center
+     and only Aurelio can edit it, so it is the one that drifts furthest.
+     Everything above can be scripted; this has to be done by hand or left
+     knowingly stale.
 
    Verify by counting from the source, not from memory:
 

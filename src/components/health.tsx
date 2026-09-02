@@ -45,7 +45,7 @@ type HealthComparison = {
 };
 type HealthResult = { report: HealthReport; ts: number; comparison: HealthComparison | null };
 type HealthSnapshot = { ts: number; overall: number };
-type BaselineRun = {
+export type BaselineRun = {
   ts: number;
   cpuScore: number;
   memoryTouchMs: number;
@@ -173,7 +173,7 @@ function tone(score: number): { text: string; stroke: string; badge: string } {
 }
 
 /** Signed percentage delta; `higherIsBetter` decides which direction is green. */
-function delta(
+export function delta(
   prev: number,
   now: number,
   higherIsBetter: boolean,

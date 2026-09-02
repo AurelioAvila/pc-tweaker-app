@@ -78,21 +78,33 @@ export async function hasAnyActiveEntitlement(userId: number | string): Promise<
   return all.some((entitlement) => entitlement.active);
 }
 
-/** Grants or refreshes a non-pctweaker product entitlement (webhook path). */
+/** Grants or refreshes a non-pctweaker product entitlement (webhook path).
+ *
+ *  `provisional` marks the holding window written by
+ *  `checkout.session.completed` before the real period end is known. Stripe
+ *  does not order that event against `customer.subscription.*`, so an
+ *  unguarded write can replace a real expiry with the guess and cut a paid
+ *  period short — see the same guard in grantPro. A provisional value may
+ *  only extend, never shorten. */
 export async function upsertEntitlement(
   userId: number | string,
   product: Product,
-  { plan, expiresAt, stripeSubscriptionId }: { plan: string | null; expiresAt: Date | null; stripeSubscriptionId?: string | null },
+  { plan, expiresAt, stripeSubscriptionId, provisional }: { plan: string | null; expiresAt: Date | null; stripeSubscriptionId?: string | null; provisional?: boolean },
 ): Promise<void> {
   await getPool().query(
     `INSERT INTO entitlements (user_id, product, plan, expires_at, stripe_subscription_id, updated_at)
      VALUES ($1, $2, $3, $4, $5, now())
      ON CONFLICT (user_id, product) DO UPDATE
         SET plan = EXCLUDED.plan,
-            expires_at = EXCLUDED.expires_at,
+            expires_at = CASE
+              WHEN $6::boolean AND entitlements.expires_at IS NOT NULL
+                   AND entitlements.expires_at > EXCLUDED.expires_at
+                THEN entitlements.expires_at
+              ELSE EXCLUDED.expires_at
+            END,
             stripe_subscription_id = COALESCE(EXCLUDED.stripe_subscription_id, entitlements.stripe_subscription_id),
             updated_at = now()`,
-    [userId, product, plan, expiresAt, stripeSubscriptionId ?? null],
+    [userId, product, plan, expiresAt, stripeSubscriptionId ?? null, provisional === true],
   );
 }
 

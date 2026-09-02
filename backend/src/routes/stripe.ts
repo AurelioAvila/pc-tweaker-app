@@ -288,18 +288,32 @@ async function webhookHandler(req: Request, res: Response): Promise<void> {
   res.json({ received: true });
 }
 
+/**
+ * `provisional` marks the short holding window written by
+ * `checkout.session.completed`, which is a guess — the real period end only
+ * comes with the `customer.subscription.*` event. Stripe does not order the
+ * two, and when the subscription event lands first, an unguarded write pushed
+ * the expiry back down to the guess: a customer billed until October lost Pro
+ * three days after paying. A provisional value may therefore only ever extend
+ * an expiry, never shorten one. Real subscription events stay authoritative,
+ * and cancellation goes through revokePro, not through here.
+ */
 async function grantPro(
   userId: string,
-  { customerId, plan, expiresAt }: { customerId: string | null; plan?: string | null; expiresAt?: Date | null },
+  { customerId, plan, expiresAt, provisional }: { customerId: string | null; plan?: string | null; expiresAt?: Date | null; provisional?: boolean },
 ): Promise<void> {
   await getPool().query(
     `UPDATE users
         SET is_pro = TRUE,
             plan = COALESCE($2, plan),
             stripe_customer_id = COALESCE($3, stripe_customer_id),
-            pro_expires_at = $4
+            pro_expires_at = CASE
+              WHEN $5::boolean AND pro_expires_at IS NOT NULL AND pro_expires_at > $4::timestamptz
+                THEN pro_expires_at
+              ELSE $4::timestamptz
+            END
       WHERE id = $1`,
-    [userId, plan || null, customerId || null, expiresAt ?? null],
+    [userId, plan || null, customerId || null, expiresAt ?? null, provisional === true],
   );
 }
 
@@ -549,6 +563,7 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session): Promise<
         await upsertEntitlement(userId, product, {
           plan: session.metadata?.plan ?? null,
           expiresAt: new Date(Date.now() + PROVISIONAL_ACCESS_MS),
+          provisional: session.mode === "subscription",
         });
         // This branch used to return here, which is why a customer who bought
         // any product other than PC Tweaker paid and then heard nothing at
@@ -571,7 +586,12 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session): Promise<
       // access lapses in days instead of lasting forever.
       const expiresAt =
         session.mode === "subscription" ? new Date(Date.now() + PROVISIONAL_ACCESS_MS) : null;
-      await grantPro(userId, { customerId, plan: session.metadata?.plan, expiresAt });
+      await grantPro(userId, {
+        customerId,
+        plan: session.metadata?.plan,
+        expiresAt,
+        provisional: session.mode === "subscription",
+      });
 
       // The welcome email used to be sent only from customer.subscription
       // .created — an event a one-off purchase never produces. A lifetime
@@ -680,4 +700,4 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
   }
 }
 
-export { router, webhookHandler };
+export { router, webhookHandler, grantPro };

@@ -119,7 +119,7 @@ Plus, on the Scan screen:
   not using; can be scheduled every 10 min / 30 min / 1 h / 3 h / 6 h
 - **Startup manager** — see and disable the programs that launch at boot
 
-**54 tweaks** in total. Anything needing administrator rights asks for an
+**56 tweaks** in total. Anything needing administrator rights asks for an
 explicit UAC prompt **only for that action** — the app itself always runs
 unprivileged.
 

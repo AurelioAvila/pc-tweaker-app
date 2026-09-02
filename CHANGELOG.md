@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.7.0
+
+Windows quietly undoes your tweaks after an update. Now you find out.
+
+- **The update watchdog runs on its own.** PC Tweaker has always been able to
+  tell when a cumulative update reverted something you applied — Windows keeps
+  the registry entries it recognises and discards the rest, and documents that
+  as expected behaviour. Until now it only noticed if you happened to open the
+  app and reach the Ledger tab. There is a switch there to have it check at
+  logon instead, and tell you only when something has actually stopped being
+  in effect. It stays quiet otherwise. No administrator rights: it reads the
+  registry and shows a notification.
+- **Fix all now measures.** The Baseline Engine was built to compare the same
+  machine before and after, and nothing ever asked it to. Applying a batch
+  that contains something it can actually reflect — the power plan, power
+  throttling, background apps — now runs it either side and puts the numbers
+  on the finished screen. When nothing moved it says so: a taskbar tweak has
+  no business shifting a CPU score.
+- **Two new tweaks, both Pro.** *Global timer resolution* restores the
+  system-wide high-resolution timer, which Windows has made per-process since
+  10 2004, so everything that never asked stops running against the ~15.6 ms
+  default. *Disable core parking* stops idle cores being parked while you are
+  plugged in, so one does not have to be woken before it can service your
+  mouse. On battery, parking stays: that is what it is for.
+- Fixed: choosing a plan from the pricing screen without an account showed an
+  error and no way to fix it. It now opens the sign-in menu, which is what the
+  rest of the app already did.
+
+56 tweaks, 21 Pro, 35 free forever.
+
 ## v1.6.5
 
 - You can now buy me a coffee from the sidebar: a one-off tip, with the

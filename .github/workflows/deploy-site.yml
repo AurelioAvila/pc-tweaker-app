@@ -6,6 +6,11 @@ on:
     paths:
       - "site/**"
       - ".github/workflows/deploy-site.yml"
+      # The site's structured-data version is read from here at build time
+      # (see vite.config.ts's __APP_VERSION__ substitution). Without this, a
+      # release that bumps the version but never touches site/ leaves the
+      # deployed site announcing a stale one, as happened for 1.7.0 and 1.7.1.
+      - "src-tauri/tauri.conf.json"
   workflow_dispatch:
 
 permissions:

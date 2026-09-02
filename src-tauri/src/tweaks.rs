@@ -522,6 +522,18 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
             requires_pro: true,
         },
         RegistryTweak {
+            id: "global_timer_resolution",
+            name: "Global timer resolution",
+            description: "Restores the system-wide high-resolution timer. Since Windows 10 2004 a program asking for a finer timer only gets it for itself, so anything that did not ask keeps running against the ~15.6 ms default — including the parts of the input and present path a game does not control. This puts the whole system back on the fine timer while it is on (requires administrator rights, and a restart to take effect).",
+            category: Category::Gaming,
+            hive: Hive::Hklm,
+            key_path: r"SYSTEM\CurrentControlSet\Control\Session Manager\kernel",
+            value_name: "GlobalTimerResolutionRequests",
+            on_value: RegValue::Dword(1),
+            requires_admin: true,
+            requires_pro: true,
+        },
+        RegistryTweak {
             id: "disable_memory_integrity",
             name: "Disable Memory Integrity (VBS)",
             description: "Memory Integrity runs parts of Windows inside a hardware-virtualised container, which costs CPU on every kernel transition — the reason it is the single biggest free frame-rate gain on most gaming machines. Be clear about the trade: it is a real security feature, and turning it off removes protection against malicious drivers. Worth it on a dedicated gaming PC, not on a work machine. Takes effect after a restart (HKLM, requires administrator rights).",

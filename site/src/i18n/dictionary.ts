@@ -211,7 +211,7 @@ export const engDictionary: Dictionary = {
     title1: "EVERY",
     title2: "MILLISECOND",
     title3: "IS EARNED.",
-    subBold: "54 real Windows tweaks",
+    subBold: "56 real Windows tweaks",
     sub: " — registry, power plan, services, scheduler priorities. Every single one snapshotted before it touches your system. One click to apply. One click to undo.",
     cta: "Download for Windows — Free",
     safetyNote:
@@ -244,7 +244,7 @@ export const engDictionary: Dictionary = {
     sub: "Numbers from our own recorded, published benchmark — same machine, same match type, before and after PC Tweaker's gaming preset. No synthetic scores. No cherry-picked peaks.",
     stats: [
       { value: 67, unit: "%", label: "AVG FPS GAIN — VALORANT" },
-      { value: 54, unit: "", label: "REAL SYSTEM TWEAKS" },
+      { value: 56, unit: "", label: "REAL SYSTEM TWEAKS" },
       { value: 100, unit: "%", label: "REVERSIBLE — SNAPSHOT FIRST" },
       { value: 1, unit: "CLICK", label: "FULL SYSTEM RESTORE" },
     ],
@@ -283,7 +283,7 @@ export const engDictionary: Dictionary = {
       {
         tag: "ROLLBACK ENGINE",
         title: "Snapshot first. Always.",
-        body: "Before any tweak writes a single registry value, its previous state is captured. Revert one tweak, or all 54 at once with Restore All. Optimization you can walk back from — that is the entire premise.",
+        body: "Before any tweak writes a single registry value, its previous state is captured. Revert one tweak, or all 56 at once with Restore All. Optimization you can walk back from — that is the entire premise.",
         pro: false,
         span: "wide",
       },
@@ -427,7 +427,7 @@ export const engDictionary: Dictionary = {
       per: "/ year · or €9.99/mo",
       save: "SAVE 51%",
       features: [
-        "All 54 tweaks unlocked",
+        "All 56 tweaks unlocked",
         "Turbo Gaming preset + Game Sessions",
         "Duplicate & large file finder, drive optimization",
         "Pro syncs across your installs",
@@ -457,7 +457,7 @@ export const engDictionary: Dictionary = {
       },
       {
         q: "What's actually free?",
-        a: "35 of the 54 tweaks, the Scan, the whole Hardware screen — live sensors, thermal profiles, the driver inventory and driver updates — the rollback engine, the RAM cleaner, the startup manager, BBR2 congestion control and the X3D die aligner: free forever, no account needed. Pro (€9.99/month or €59/year) unlocks the advanced set: Turbo Gaming, Game Sessions, duplicate/large file finders, drive optimization, disabling Recall and Memory Integrity, and the rest of the power-user tweaks.",
+        a: "35 of the 56 tweaks, the Scan, the whole Hardware screen — live sensors, thermal profiles, the driver inventory and driver updates — the rollback engine, the RAM cleaner, the startup manager, BBR2 congestion control and the X3D die aligner: free forever, no account needed. Pro (€9.99/month or €59/year) unlocks the advanced set: Turbo Gaming, Game Sessions, duplicate/large file finders, drive optimization, disabling Recall and Memory Integrity, and the rest of the power-user tweaks.",
       },
       {
         q: "Does it phone home?",

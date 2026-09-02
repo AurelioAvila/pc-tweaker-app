@@ -107,6 +107,79 @@ export function tipQuantity(raw: unknown): number {
  * `client_reference_id` / `metadata.userId` off the session, so a tip stays
  * harmless only as long as it carries neither. That is an invariant worth a
  * test, not a comment — see stripe-policy.test.mjs. */
+/**
+ * The parameters for a plan's Checkout Session.
+ *
+ * Built here rather than inline in the route because the combination is what
+ * goes wrong, and a combination can be tested. It already did go wrong: a
+ * payment-mode session carried both `customer` and `customer_creation`, and
+ * Stripe refuses that outright — "You may only specify one of these
+ * parameters: customer, customer_creation." Lifetime is the only plan sold in
+ * payment mode, so the effect was that every buyer who already had a Stripe
+ * customer id got a 500 and could not pay. Which is to say: existing
+ * subscribers, the people most likely to want it. Only a brand-new account
+ * with no customer id yet could get through, and that is why it looked fine.
+ *
+ * `customer_creation` exists so a lifetime buyer ends up with a customer id
+ * at all — without one there is no billing portal and no way to reach their
+ * own invoice. Someone who already has one needs nothing.
+ */
+export function checkoutSessionParams({
+  priceId,
+  mode,
+  userId,
+  planKey,
+  product,
+  customerId,
+  customerEmail,
+  successUrl,
+  cancelUrl,
+}: {
+  priceId: string;
+  mode: "subscription" | "payment";
+  userId: string;
+  planKey: string;
+  product: string;
+  customerId: string | null;
+  customerEmail: string | undefined;
+  successUrl: string;
+  cancelUrl: string;
+}) {
+  const metadata = { userId, plan: planKey, product };
+  return {
+    mode,
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    client_reference_id: userId,
+    // Asked for explicitly rather than inherited from a dashboard default,
+    // because that default is not the same in both modes: live subscription
+    // sessions come back with automatic tax on, while a payment-mode session
+    // defaults to off. A lifetime sale silently skipping it would
+    // under-collect tax on exactly the purchases hardest to correct later.
+    automatic_tax: { enabled: true },
+    ...(customerId
+      ? {
+          customer: customerId,
+          // Stripe refuses automatic tax with an existing customer unless it
+          // may save the address Checkout collects.
+          customer_update: { address: "auto" as const },
+        }
+      : {
+          ...(customerEmail ? { customer_email: customerEmail } : {}),
+          // Only when there is no customer to attach to, and only in payment
+          // mode — subscription mode always creates one anyway.
+          ...(mode === "payment" ? { customer_creation: "always" as const } : {}),
+        }),
+    // Echoed back on every future event, so an event can always be mapped to
+    // our own user and our own product even if the customer id changes.
+    ...(mode === "subscription"
+      ? { subscription_data: { metadata } }
+      : { payment_intent_data: { metadata } }),
+    metadata,
+  };
+}
+
 export function tipSessionParams(priceId: string, appUrl: string, quantity: unknown = 1) {
   const qty = tipQuantity(quantity);
   return {

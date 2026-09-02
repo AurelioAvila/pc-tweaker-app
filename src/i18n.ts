@@ -1728,6 +1728,16 @@ const it: Strings = {
       description:
         "Recall cattura lo schermo ogni pochi secondi e costruisce una cronologia indicizzata dall'AI di tutto ciò che hai guardato: password e messaggi privati inclusi, perché registra qualunque cosa sia a schermo. Questo imposta il criterio di sistema che gli impedisce di analizzare o conservare alcunché (HKLM, richiede diritti di amministratore).",
     },
+    global_timer_resolution: {
+      name: "Risoluzione timer globale",
+      description:
+        "Ripristina il timer ad alta risoluzione per tutto il sistema. Da Windows 10 2004 un programma che chiede un timer più fine lo ottiene solo per sé, quindi tutto ciò che non lo chiede continua a girare sui ~15,6 ms di default — comprese le parti della catena di input e presentazione che il gioco non controlla. Richiede il riavvio (HKLM, diritti di amministratore).",
+    },
+    disable_core_parking: {
+      name: "Disattiva il parcheggio dei core",
+      description:
+        "Impedisce a Windows di parcheggiare i core inattivi quando sei collegato alla rete elettrica, così un core non deve essere risvegliato prima di servire l'input o un picco di lavoro improvviso. Applicato al solo profilo con alimentazione: a batteria il parcheggio serve proprio a quello. Il valore precedente del piano viene registrato e ripristinato esattamente (richiede diritti di amministratore).",
+    },
     disable_memory_integrity: {
       name: "Disattiva Integrità della memoria (VBS)",
       description:
@@ -2837,6 +2847,16 @@ const en: Strings = {
       name: "Disable Recall (AI screen snapshots)",
       description:
         "Recall takes a screenshot of your desktop every few seconds and builds a searchable, AI-indexed history of everything you have looked at — passwords and private messages included, since it captures whatever is on screen. This sets the system policy that stops it analysing or storing anything (HKLM, requires administrator rights).",
+    },
+    global_timer_resolution: {
+      name: "Global timer resolution",
+      description:
+        "Restores the system-wide high-resolution timer. Since Windows 10 2004 a program asking for a finer timer only gets it for itself, so anything that did not ask keeps running against the ~15.6 ms default — including the parts of the input and present path a game does not control. Needs a restart (HKLM, administrator rights).",
+    },
+    disable_core_parking: {
+      name: "Disable core parking",
+      description:
+        "Stops Windows parking idle CPU cores while plugged in, so a core does not have to be woken before it can service input or a sudden burst of work. Applied to the mains profile only — on battery, parking is what it is there for. The plan's previous value is recorded and restored exactly on rollback (requires administrator rights).",
     },
     disable_memory_integrity: {
       name: "Disable Memory Integrity (VBS)",
@@ -3962,6 +3982,16 @@ const fr: Strings = {
       description:
         "Recall capture votre écran toutes les quelques secondes et construit un historique indexé par IA de tout ce que vous avez consulté — mots de passe et messages privés compris, puisqu'il enregistre tout ce qui s'affiche. Ceci applique la stratégie système qui l'empêche d'analyser ou de conserver quoi que ce soit (HKLM, nécessite des droits administrateur).",
     },
+    global_timer_resolution: {
+      name: "Résolution du minuteur globale",
+      description:
+        "Rétablit le minuteur haute résolution pour tout le système. Depuis Windows 10 2004, un programme qui demande un minuteur plus fin ne l'obtient que pour lui-même : tout ce qui ne le demande pas continue de tourner sur les ~15,6 ms par défaut, y compris les parties de la chaîne d'entrée et d'affichage que le jeu ne contrôle pas. Nécessite un redémarrage (HKLM, droits administrateur).",
+    },
+    disable_core_parking: {
+      name: "Désactiver le parcage des cœurs",
+      description:
+        "Empêche Windows de parquer les cœurs inactifs lorsque le PC est branché, afin qu'un cœur n'ait pas à être réveillé avant de traiter une entrée ou une charge soudaine. Appliqué au seul profil secteur : sur batterie, le parcage sert précisément à cela. La valeur précédente du plan est enregistrée et restaurée à l'identique (droits administrateur requis).",
+    },
     disable_memory_integrity: {
       name: "Désactiver l'intégrité de la mémoire (VBS)",
       description:
@@ -5082,6 +5112,16 @@ const es: Strings = {
       name: "Desactivar Recall (capturas de pantalla con IA)",
       description:
         "Recall captura tu pantalla cada pocos segundos y construye un historial indexado por IA de todo lo que has mirado: contraseñas y mensajes privados incluidos, porque graba lo que haya en pantalla. Esto aplica la directiva del sistema que le impide analizar o guardar nada (HKLM, requiere derechos de administrador).",
+    },
+    global_timer_resolution: {
+      name: "Resolución del temporizador global",
+      description:
+        "Restaura el temporizador de alta resolución para todo el sistema. Desde Windows 10 2004, un programa que pide un temporizador más fino solo lo obtiene para sí mismo, así que todo lo que no lo pide sigue funcionando con los ~15,6 ms por defecto, incluidas las partes de la cadena de entrada y presentación que el juego no controla. Requiere reiniciar (HKLM, permisos de administrador).",
+    },
+    disable_core_parking: {
+      name: "Desactivar el aparcamiento de núcleos",
+      description:
+        "Impide que Windows aparque los núcleos inactivos con el equipo enchufado, para que un núcleo no tenga que despertarse antes de atender la entrada o un pico de trabajo repentino. Se aplica solo al perfil de red eléctrica: con batería, aparcar es justamente para lo que sirve. El valor anterior del plan se registra y se restaura exactamente (requiere permisos de administrador).",
     },
     disable_memory_integrity: {
       name: "Desactivar Integridad de memoria (VBS)",
@@ -6211,6 +6251,16 @@ const de: Strings = {
       description:
         "Recall nimmt alle paar Sekunden ein Bild Ihres Bildschirms auf und baut daraus einen KI-durchsuchbaren Verlauf von allem, was Sie angesehen haben — Passwörter und private Nachrichten eingeschlossen, denn es erfasst alles, was auf dem Bildschirm steht. Dies setzt die Systemrichtlinie, die jede Analyse und Speicherung unterbindet (HKLM, erfordert Administratorrechte).",
     },
+    global_timer_resolution: {
+      name: "Globale Timer-Auflösung",
+      description:
+        "Stellt den systemweiten hochauflösenden Timer wieder her. Seit Windows 10 2004 erhält ein Programm, das einen feineren Timer anfordert, ihn nur für sich selbst — alles andere läuft weiter mit den standardmäßigen ~15,6 ms, einschließlich der Teile der Eingabe- und Darstellungskette, die das Spiel nicht steuert. Erfordert einen Neustart (HKLM, Administratorrechte).",
+    },
+    disable_core_parking: {
+      name: "Core-Parking deaktivieren",
+      description:
+        "Verhindert, dass Windows im Netzbetrieb ungenutzte CPU-Kerne parkt, damit ein Kern nicht erst geweckt werden muss, bevor er Eingaben oder eine plötzliche Lastspitze bedienen kann. Gilt nur für das Netzprofil — im Akkubetrieb ist Parken genau dafür da. Der vorherige Wert des Plans wird gesichert und exakt wiederhergestellt (erfordert Administratorrechte).",
+    },
     disable_memory_integrity: {
       name: "Speicherintegrität (VBS) deaktivieren",
       description:
@@ -7334,6 +7384,16 @@ const pt: Strings = {
       name: "Desativar o Recall (capturas de tela por IA)",
       description:
         "O Recall tira uma captura de tela da sua área de trabalho a cada poucos segundos e monta um histórico pesquisável, indexado por IA, de tudo que você já viu — senhas e mensagens privadas incluídas, já que captura o que estiver na tela. Isto define a política de sistema que impede que ele analise ou armazene qualquer coisa (HKLM, requer privilégios de administrador).",
+    },
+    global_timer_resolution: {
+      name: "Resolução do temporizador global",
+      description:
+        "Restaura o temporizador de alta resolução para todo o sistema. Desde o Windows 10 2004, um programa que pede um temporizador mais fino só o obtém para si próprio, por isso tudo o que não pede continua a correr nos ~15,6 ms predefinidos — incluindo as partes da cadeia de entrada e apresentação que o jogo não controla. Requer reinício (HKLM, direitos de administrador).",
+    },
+    disable_core_parking: {
+      name: "Desativar o estacionamento de núcleos",
+      description:
+        "Impede o Windows de estacionar núcleos inativos com o computador ligado à corrente, para que um núcleo não tenha de ser acordado antes de servir a entrada ou um pico de trabalho repentino. Aplicado apenas ao perfil ligado à corrente: com bateria, estacionar é exatamente para isso que serve. O valor anterior do plano é registado e restaurado tal e qual (requer direitos de administrador).",
     },
     disable_memory_integrity: {
       name: "Desativar Integridade de Memória (VBS)",

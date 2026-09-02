@@ -280,6 +280,19 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         requires_pro: games_priority.requires_pro,
     });
 
+    let core_parking = gaming::core_parking_info();
+    list.push(TweakInfo {
+        applied: store.is_applied(core_parking.id),
+        id: core_parking.id.to_string(),
+        name: core_parking.name.to_string(),
+        description: core_parking.description.to_string(),
+        category: category_str(&Category::Gaming).to_string(),
+        hive: "—".to_string(),
+        changes: Vec::new(), // composite: filled by the pass below
+        requires_admin: core_parking.requires_admin,
+        requires_pro: core_parking.requires_pro,
+    });
+
     let keyboard_delay = gaming::keyboard_delay_info();
     list.push(TweakInfo {
         applied: store.is_applied(keyboard_delay.id),
@@ -398,6 +411,7 @@ fn requires_pro_for(id: &str) -> bool {
         gaming::INPUT_LAG_ID => gaming::input_lag_info().requires_pro,
         gaming::TURBO_BOOST_ID => gaming::turbo_boost_info().requires_pro,
         gaming::KEYBOARD_DELAY_ID => gaming::keyboard_delay_info().requires_pro,
+        gaming::CORE_PARKING_ID => gaming::core_parking_info().requires_pro,
         netlatency::TWEAK_ID => netlatency::info().requires_pro,
         netshaper::TWEAK_ID => netshaper::info().requires_pro,
         game_priority::TWEAK_ID => game_priority::info().requires_pro,
@@ -462,6 +476,7 @@ fn apply_by_id_inner(
         gaming::INPUT_LAG_ID => gaming::apply_input_lag(store),
         gaming::TURBO_BOOST_ID => gaming::apply_turbo_boost(store),
         gaming::KEYBOARD_DELAY_ID => gaming::apply_keyboard_delay(store),
+        gaming::CORE_PARKING_ID => gaming::apply_core_parking(store),
         netlatency::TWEAK_ID => netlatency::apply(store),
         netshaper::TWEAK_ID => netshaper::apply(store),
         game_priority::TWEAK_ID => game_priority::apply(store),
@@ -500,6 +515,7 @@ fn rollback_by_id_inner(store: &RollbackStore, id: &str) -> Result<(), String> {
         gaming::INPUT_LAG_ID => gaming::rollback_input_lag(store),
         gaming::TURBO_BOOST_ID => gaming::rollback_turbo_boost(store),
         gaming::KEYBOARD_DELAY_ID => gaming::rollback_keyboard_delay(store),
+        gaming::CORE_PARKING_ID => gaming::rollback_core_parking(store),
         netlatency::TWEAK_ID => netlatency::rollback(store),
         netshaper::TWEAK_ID => netshaper::rollback(store),
         game_priority::TWEAK_ID => game_priority::rollback(store),
@@ -1289,6 +1305,7 @@ mod tests {
                 gaming::INPUT_LAG_ID,
                 gaming::TURBO_BOOST_ID,
                 gaming::KEYBOARD_DELAY_ID,
+        gaming::CORE_PARKING_ID,
                 game_priority::TWEAK_ID,
                 privacy_extra::ACTIVITY_HISTORY_ID,
                 privacy_extra::TYPING_PERSONALIZATION_ID,
@@ -1395,7 +1412,7 @@ mod tests {
     /// at once. If this fails, the catalogue changed — update the numbers
     /// here, then update every surface listed above to match.
     #[test]
-    fn the_catalogue_is_fifty_four_tweaks_nineteen_of_them_pro() {
+    fn the_catalogue_is_fifty_six_tweaks_twenty_one_of_them_pro() {
         let registry = tweaks::all_tweaks();
         let registry_pro = registry.iter().filter(|t| t.requires_pro).count();
 
@@ -1410,6 +1427,7 @@ mod tests {
             gaming::turbo_boost_info().requires_pro,
             game_priority::info().requires_pro,
             gaming::keyboard_delay_info().requires_pro,
+            gaming::core_parking_info().requires_pro,
             netlatency::info().requires_pro,
             netshaper::info().requires_pro,
             privacy_extra::activity_history_info().requires_pro,
@@ -1421,8 +1439,8 @@ mod tests {
         let total = registry.len() + composite_pro.len();
         let pro = registry_pro + composite_pro.iter().filter(|p| **p).count();
 
-        assert_eq!(total, 54, "the catalogue no longer has 54 tweaks");
-        assert_eq!(pro, 19, "the Pro count moved");
+        assert_eq!(total, 56, "the catalogue no longer has 56 tweaks");
+        assert_eq!(pro, 21, "the Pro count moved");
         assert_eq!(total - pro, 35, "the free count moved");
 
         // The composite list must stay in step with what list_tweaks builds,

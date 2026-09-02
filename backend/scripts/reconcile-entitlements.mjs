@@ -39,7 +39,15 @@ if (!url) throw new Error("Set DATABASE_URL or DATABASE_PUBLIC_URL.");
 if (!process.env.STRIPE_SECRET_KEY) throw new Error("Set STRIPE_SECRET_KEY.");
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const db = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+// Railway's private hostname expects TLS, while its public TCP proxy does
+// not. `railway run` on a developer machine injects both URLs, so forcing
+// TLS made the documented laptop command fail before it could audit anyone.
+const db = new Client({
+  connectionString: url,
+  ssl: /(?:localhost|\.proxy\.rlwy\.net)(?::|\/|$)/i.test(url)
+    ? false
+    : { rejectUnauthorized: false },
+});
 
 const day = (value) => (value ? new Date(value).toISOString().slice(0, 10) : "—");
 // A renewal in flight is not drift. Only a shortfall past this is a problem.

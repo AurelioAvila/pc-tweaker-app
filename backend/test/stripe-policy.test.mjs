@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 const {
+  checkoutSessionParams,
   formatChargedAmount,
   isSettledCheckout,
   planFromPrice,
@@ -10,6 +11,70 @@ const {
   tipSessionParams,
   TIP_MAX_QUANTITY,
 } = await import("../dist/stripe-policy.js");
+
+test("lifetime Checkout reuses an existing customer without asking Stripe to create another", () => {
+  const params = checkoutSessionParams({
+    priceId: "price_lifetime",
+    mode: "payment",
+    userId: "42",
+    planKey: "lifetime",
+    product: "pctweaker",
+    customerId: "cus_existing",
+    customerEmail: "buyer@example.com",
+    successUrl: "https://pctweaker.app/success",
+    cancelUrl: "https://pctweaker.app/cancel",
+  });
+
+  assert.equal(params.customer, "cus_existing");
+  assert.equal(params.customer_creation, undefined);
+  assert.equal(params.customer_email, undefined);
+  assert.deepEqual(params.customer_update, { address: "auto" });
+  assert.deepEqual(params.payment_intent_data.metadata, {
+    userId: "42",
+    plan: "lifetime",
+    product: "pctweaker",
+  });
+});
+
+test("lifetime Checkout creates a customer only when the account has none", () => {
+  const params = checkoutSessionParams({
+    priceId: "price_lifetime",
+    mode: "payment",
+    userId: "42",
+    planKey: "lifetime",
+    product: "pctweaker",
+    customerId: null,
+    customerEmail: "buyer@example.com",
+    successUrl: "https://pctweaker.app/success",
+    cancelUrl: "https://pctweaker.app/cancel",
+  });
+
+  assert.equal(params.customer, undefined);
+  assert.equal(params.customer_creation, "always");
+  assert.equal(params.customer_email, "buyer@example.com");
+  assert.equal(params.customer_update, undefined);
+});
+
+test("subscription Checkout never sends the payment-only customer_creation option", () => {
+  const params = checkoutSessionParams({
+    priceId: "price_annual",
+    mode: "subscription",
+    userId: "42",
+    planKey: "annual",
+    product: "pctweaker",
+    customerId: null,
+    customerEmail: "buyer@example.com",
+    successUrl: "https://pctweaker.app/success",
+    cancelUrl: "https://pctweaker.app/cancel",
+  });
+
+  assert.equal(params.customer_creation, undefined);
+  assert.deepEqual(params.subscription_data.metadata, {
+    userId: "42",
+    plan: "annual",
+    product: "pctweaker",
+  });
+});
 
 test("checkout access requires a settled payment state", () => {
   assert.equal(isSettledCheckout("paid"), true);

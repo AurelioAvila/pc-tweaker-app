@@ -6,6 +6,7 @@ import { requireAuth } from "../auth";
 import { periodEndFromSubscription } from "../entitlement";
 import { isKnownProduct, productEntitlement, upsertEntitlement, revokeEntitlement, type Product } from "../products";
 import {
+  checkoutSessionParams,
   formatChargedAmount,
   isSettledCheckout,
   planFromPrice,
@@ -146,39 +147,19 @@ router.post("/checkout", requireAuth, checkoutLimiter, requireStripe, async (req
       customerEmail = rows[0]?.email;
     }
 
-    const session = await stripe!.checkout.sessions.create({
-      mode: plan.mode,
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: process.env.CHECKOUT_SUCCESS_URL || "https://example.com/checkout-success",
-      cancel_url: process.env.CHECKOUT_CANCEL_URL || "https://example.com/checkout-cancel",
-      client_reference_id: String(req.userId),
-      // Tax is asked for explicitly rather than inherited from a dashboard
-      // default, because that default is not the same in both modes: live
-      // subscription sessions come back with automatic tax on, while a
-      // payment-mode session defaults to off. Customers here are in the US,
-      // where this is not academic — one of the two paying subscribers is in
-      // Nebraska and is correctly charged 7.5% sales tax on top. A lifetime
-      // sale silently skipping that would under-collect tax on exactly the
-      // purchases that are hardest to correct after the fact.
-      automatic_tax: { enabled: true },
-      ...(customerId ? { customer: customerId } : customerEmail ? { customer_email: customerEmail } : {}),
-      // Stripe refuses a session that combines automatic tax with an existing
-      // customer unless it is allowed to save the address Checkout collects.
-      ...(customerId ? { customer_update: { address: "auto" as const } } : {}),
-      // Subscription mode always creates a customer; payment mode defaults to
-      // "if_required" and may leave none behind. Without one, a lifetime
-      // buyer gets no stripe_customer_id, which means no billing portal and
-      // no way to reach their own invoice. Only valid in payment mode.
-      ...(plan.mode === "payment" ? { customer_creation: "always" as const } : {}),
-      // Echoed back on every future event for this subscription, so we can
-      // always map it to our own user AND our own product even if the
-      // customer id changes. Events with no product metadata are pctweaker
-      // by definition — every subscription older than this field is one.
-      ...(plan.mode === "subscription"
-        ? { subscription_data: { metadata: { userId: String(req.userId), plan: planKey, product } } }
-        : { payment_intent_data: { metadata: { userId: String(req.userId), plan: planKey, product } } }),
-      metadata: { userId: String(req.userId), plan: planKey, product },
-    });
+    const session = await stripe!.checkout.sessions.create(
+      checkoutSessionParams({
+        priceId,
+        mode: plan.mode,
+        userId: String(req.userId),
+        planKey,
+        product,
+        customerId,
+        customerEmail,
+        successUrl: process.env.CHECKOUT_SUCCESS_URL || "https://example.com/checkout-success",
+        cancelUrl: process.env.CHECKOUT_CANCEL_URL || "https://example.com/checkout-cancel",
+      }),
+    );
     res.json({ url: session.url });
   } catch (err) {
     console.error("checkout session creation failed:", err);

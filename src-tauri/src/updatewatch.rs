@@ -319,9 +319,22 @@ mod tests {
 /// The name the scheduled task carries in Task Scheduler.
 ///
 /// Visible on purpose. A background task a user cannot find and cannot read
-/// is the thing this product exists not to be, so it is named plainly and
-/// lives under the app's own folder.
-pub const TASK_NAME: &str = r"PC Tweaker\Update drift watch";
+/// is the thing this product exists not to be, so it is named plainly at the
+/// scheduler root.
+// Keep the task at the scheduler root. `schtasks` cannot create a missing
+// folder from a task path, and managed Windows installations may report that
+// failure as the misleading "Access is denied".
+pub const TASK_NAME: &str = "PC Tweaker Update drift watch";
+
+#[cfg(test)]
+mod task_name_tests {
+    use super::TASK_NAME;
+
+    #[test]
+    fn scheduled_task_does_not_depend_on_a_preexisting_folder() {
+        assert!(!TASK_NAME.contains(['\\', '/']));
+    }
+}
 
 /// Tells the user their work was undone, without the app being open.
 ///

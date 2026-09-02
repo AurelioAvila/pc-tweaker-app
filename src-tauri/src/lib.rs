@@ -910,12 +910,44 @@ fn drift_watch_enabled() -> bool {
 /// Polling faster would spend the user's battery to find out the same
 /// nothing.
 ///
-/// No elevation. The task runs as the user who set it up and only reads the
-/// registry and shows a toast, so asking for administrator rights to schedule
-/// it would be asking for more than the job needs.
 #[cfg(windows)]
 #[tauri::command(async)]
 fn set_drift_watch(enabled: bool) -> Result<bool, String> {
+    match configure_drift_watch(enabled) {
+        Ok(()) => {}
+        Err(direct_error) if !elevation::is_elevated() => {
+            // Most PCs allow a per-user logon task without elevation. Some
+            // corporate policies do not, so retry only that small operation
+            // through UAC while the main application remains unprivileged.
+            elevation::run_elevated_action(
+                "--elevated-drift-watch",
+                if enabled { "enable" } else { "disable" },
+            )
+            .map_err(|e| format!("{direct_error}; administrator retry failed: {e}"))?;
+        }
+        Err(e) => return Err(e),
+    }
+
+    let actual = drift_watch_enabled();
+    if actual != enabled {
+        return Err(if enabled {
+            "Windows did not retain the update watch task after creating it".to_string()
+        } else {
+            "Windows did not remove the update watch task".to_string()
+        });
+    }
+
+    audit::record(
+        "update-drift-watch",
+        if enabled { "enabled" } else { "disabled" },
+        true,
+        None,
+    );
+    Ok(actual)
+}
+
+#[cfg(windows)]
+fn configure_drift_watch(enabled: bool) -> Result<(), String> {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
@@ -936,9 +968,16 @@ fn set_drift_watch(enabled: bool) -> Result<bool, String> {
             "onlogon".into(),
             "/delay".into(),
             "0002:00".into(),
+            "/rl".into(),
+            "LIMITED".into(),
         ]
     } else {
-        vec!["/delete".into(), "/f".into(), "/tn".into(), updatewatch::TASK_NAME.into()]
+        vec![
+            "/delete".into(),
+            "/f".into(),
+            "/tn".into(),
+            updatewatch::TASK_NAME.into(),
+        ]
     };
 
     let refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
@@ -949,10 +988,17 @@ fn set_drift_watch(enabled: bool) -> Result<bool, String> {
         .map_err(|e| format!("could not run schtasks: {e}"))?;
 
     if output.status.success() {
-        audit::record("update-drift-watch", if enabled { "enabled" } else { "disabled" }, true, None);
-        Ok(enabled)
+        Ok(())
     } else {
-        Err(String::from_utf8_lossy(&output.stderr).trim().to_string())
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        Err(if !stderr.is_empty() {
+            stderr
+        } else if !stdout.is_empty() {
+            stdout
+        } else {
+            format!("Task Scheduler exited with code {:?}", output.status.code())
+        })
     }
 }
 
@@ -1204,6 +1250,12 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
                 std::fs::write(dir.join("last_purge_result.json"), json).map_err(|e| e.to_string())
             })
         }
+
+        "--elevated-drift-watch" => match id {
+            "enable" => configure_drift_watch(true),
+            "disable" => configure_drift_watch(false),
+            _ => Err("invalid update watch action".to_string()),
+        },
 
         other => Err(format!("unknown action: {}", other)),
     };

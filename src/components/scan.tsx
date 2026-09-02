@@ -114,6 +114,22 @@ export function AdviceNote({ s, advice }: { s: Strings; advice?: TweakAdvice }) 
  * fabricated. The staged reveal during "scanning" is cosmetic pacing over
  * data that's already loaded, not a fake progress bar over fake work.
  */
+/** Tweaks whose effect the Baseline Engine can actually see.
+ *
+ * Taken from what `baseline.rs` documents about each measurement rather than
+ * from optimism: anything not in here would produce two benchmark runs and
+ * four "=" rows, which is a worse answer than not measuring at all.
+ */
+const BASELINE_REFLECTS = new Set([
+  "power_plan_performance",
+  "turbo_boost",
+  "disable_power_throttling",
+  "disable_background_apps",
+  "keep_kernel_in_ram",
+  "disable_delivery_optimization",
+  "disable_core_parking",
+]);
+
 export function ScanPanel({
   s,
   tweaks,
@@ -317,10 +333,15 @@ export function ScanPanel({
     setBeforeRun(null);
     setAfterRun(null);
 
-    // Only around tweaks. Cleanup frees disk space and reports how much on
-    // its own; running a two-run benchmark to say the same thing again would
-    // spend the user's time to add nothing.
-    const measure = toFix.some((i) => i.kind === "tweak");
+    // Only when the batch contains something the engine can actually
+    // reflect. baseline.rs is explicit about what moves each number: the
+    // power plan, boost mode and power throttling for CPU; RAM cleaning and
+    // background apps for memory; background disk activity for disk. A
+    // taskbar alignment moves none of them, and running two full benchmarks
+    // to print "=" four times spends seconds of the user's time to tell them
+    // nothing. Cleanup is excluded for the same reason: it already reports
+    // the space it freed.
+    const measure = toFix.some((i) => i.kind === "tweak" && BASELINE_REFLECTS.has(i.id));
     let before: BaselineRun | null = null;
     if (measure) {
       setMeasuring(true);
@@ -628,8 +649,13 @@ export function ScanPanel({
               <button
                 onClick={() => fixAll(fixableIssues.filter((i) => checked[i.id]).map((i) => i.id))}
                 disabled={fixing || checkedCount === 0}
-                className="rounded-xl border border-line-2 py-2.5 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-surface-2 disabled:opacity-40"
+                className="relative overflow-hidden rounded-xl border border-line-2 py-2.5 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-surface-2 disabled:opacity-40"
               >
+                {measuring && (
+                  <span className="absolute inset-0 grid place-items-center bg-black/20 text-[11px] font-semibold">
+                    measuring…
+                  </span>
+                )}
                 {format(s.scan.fixEverything, { count: checkedCount })}
               </button>
 

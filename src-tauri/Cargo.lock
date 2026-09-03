@@ -3849,7 +3849,7 @@ dependencies = [
 
 [[package]]
 name = "tauri-app"
-version = "1.7.1"
+version = "1.7.2"
 dependencies = [
  "base64 0.22.1",
  "ed25519-dalek",

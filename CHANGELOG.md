@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.7.2
+
+The Uninstaller card offers the download itself instead of a repository page.
+
+- **The Uninstaller card downloads the Uninstaller.** Its button opened the
+  project page on GitHub and stopped there, leaving you on a releases page with
+  six assets and no indication of which one you wanted. It now asks first: a
+  dialog states what is about to be downloaded — the installer, about 4 MB,
+  64-bit Windows 10 and 11, the same account as this app — and offers Download,
+  Open the page instead, or Cancel. Nothing downloads without that click.
+- **The SmartScreen warning is stated before it appears**, with what to click.
+  The Uninstaller is not code-signed yet, so Windows shows a blue box on first
+  run; an unexplained blue box is how a download gets abandoned by somebody who
+  assumes they have caught something.
+- The download URL carries no version number, so it keeps working when the
+  Uninstaller ships its next release. That product's release script now
+  publishes a stable-named copy of the installer for exactly this.
+
+## v1.7.1
+
+Maintenance. Written down after the fact: this release shipped without an
+entry here.
+
+- Registering the Windows update watch no longer fails.
+- Lifetime checkout works for customers who already have an account.
+- Entitlements are reconciled against Stripe, and a provisional expiry no
+  longer cuts a paid period short.
+
 ## v1.7.0
 
 Windows quietly undoes your tweaks after an update. Now you find out.

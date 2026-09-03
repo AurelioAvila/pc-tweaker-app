@@ -1,7 +1,7 @@
-// Legge le view/like reali degli ultimi video pubblicati sul canale
-// (usa lo stesso token.json con scope pieno "youtube" gia' usato da upload.js)
-// e stampa una diagnosi views/ora, stessa logica di check_performance.py
-// nel repo youtube-shorts-bot.
+// Reads the real views/likes of the most recently published videos on the
+// channel (using the same token.json with the full "youtube" scope upload.js
+// already uses) and prints a views/hour diagnosis, the same logic as
+// check_performance.py in the youtube-shorts-bot repo.
 //
 // Usage: node check-performance.js [maxResults]
 
@@ -11,13 +11,13 @@ const { google } = require("googleapis");
 const { getAuthorizedClient } = require("./lib");
 
 const YPP_SUBSCRIBER_TARGET = 1000;
-const YPP_SHORTS_VIEWS_TARGET = 10_000_000; // views su Shorts pubblici, ultimi 90gg
-const YPP_WATCH_HOURS_TARGET = 4000; // alternativa long-form, ultimi 12 mesi - non tracciabile qui (serve YouTube Analytics API)
+const YPP_SHORTS_VIEWS_TARGET = 10_000_000; // views on public Shorts, last 90 days
+const YPP_WATCH_HOURS_TARGET = 4000; // long-form alternative, last 12 months - not trackable here (needs the YouTube Analytics API)
 
-// Aggiunto 2026-08-15: prima non c'era nessuna persistenza, ogni run
-// stampava solo lo snapshot attuale senza modo di vedere il trend nel
-// tempo. Stesso schema chiave-per-video di marketing/instagram-upload/
-// check-performance.js (ig_performance_log.json), qui per YouTube.
+// Added 2026-08-15: there was no persistence before, every run printed only
+// the current snapshot with no way to see the trend over time. Same
+// key-per-video shape as marketing/instagram-upload/check-performance.js
+// (ig_performance_log.json), here for YouTube.
 const LOG_PATH = path.join(__dirname, "yt_performance_log.json");
 
 function loadLog() {
@@ -72,12 +72,12 @@ async function main() {
     })
     .sort((a, b) => b.published - a.published);
 
-  // Corretto DUE VOLTE il 2026-07-29: 1) sommare solo i video restituiti in
-  // una finestra limitata sottostimava, 2) channelStats.viewCount sembrava
-  // il fix giusto ma si aggiorna con un ritardo reale rispetto al viewCount
-  // per-singolo-video (verificato: 290 vs 754 reali sommando i 5 video).
-  // Corretto sommando le views per-video (maxResults di default e' 20,
-  // gia' piu' del videoCount reale di questo canale).
+  // Fixed TWICE on 2026-07-29: 1) summing only the videos returned in a
+  // limited window undercounted, 2) channelStats.viewCount looked like the
+  // right fix but updates with a real lag behind the per-video viewCount
+  // (measured: 290 against a real 754 when summing the 5 videos). Fixed by
+  // summing per-video views (the default maxResults is 20, already more than
+  // this channel's real videoCount).
   const subs = parseInt(channelStats.subscriberCount || "0", 10);
   const totalViews = videos.reduce((sum, v) => sum + v.views, 0);
   const subsPct = Math.min(100, Math.round((100 * subs) / YPP_SUBSCRIBER_TARGET));
@@ -85,7 +85,7 @@ async function main() {
   console.log(`\n=== Progresso monetizzazione (YPP) - ${channelTitle} ===`);
   console.log(`Iscritti: ${subs}/${YPP_SUBSCRIBER_TARGET} (${subsPct}%)`);
   console.log(`Views totali canale (somma di tutti i ${videos.length} video, accurato finche' il canale ha meno di 90gg di vita): ${totalViews.toLocaleString()}/${YPP_SHORTS_VIEWS_TARGET.toLocaleString()} (${viewsPct}%)`);
-  console.log("Nota: serve raggiungere ENTRAMBE le soglie (o l'alternativa 4000 ore long-form, non tracciata qui - richiede l'Analytics API separata). Su questo canale i video non sono tutti Short puri, quindi il percorso 4000 ore potrebbe essere piu' realistico di quello Shorts.\n");
+  console.log("Note: BOTH thresholds have to be reached (or the 4000-hour long-form alternative, not tracked here - it needs the separate Analytics API). Not every video on this channel is a pure Short, so the 4000-hour route may be more realistic than the Shorts one.\n");
 
   console.log("Video pubblici (piu' recente prima):");
   const now_iso = new Date().toISOString();

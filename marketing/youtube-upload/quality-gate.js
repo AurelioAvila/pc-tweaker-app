@@ -1,7 +1,7 @@
 "use strict";
 
-// Ultima barriera prima della chiamata a YouTube: evita pubblicazioni mute o
-// con metadati che l'API troncherebbe senza renderlo evidente.
+// Last barrier before the call to YouTube: prevents publishing silent videos,
+// or ones whose metadata the API would truncate without making it obvious.
 const fs = require("fs");
 const { execFileSync } = require("child_process");
 

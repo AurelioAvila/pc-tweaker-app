@@ -545,6 +545,12 @@ export interface Strings {
     title: string;
     description: string;
     button: string;
+    confirmTitle: string;
+    confirmBody: string;
+    confirmUnsigned: string;
+    confirmDownload: string;
+    confirmOpenPage: string;
+    cancel: string;
   };
   largeFiles: {
     title: string;
@@ -1374,7 +1380,15 @@ const it: Strings = {
     title: "PC Tweaker Uninstaller",
     description:
       "Rimuovi interi programmi in sicurezza: punto di ripristino automatico, comando verificato e report onesto. Della stessa famiglia di PC Tweaker.",
-    button: "Scopri",
+    button: "Scarica",
+    confirmTitle: "Scaricare il disinstallatore?",
+    confirmBody:
+      "PC Tweaker Uninstaller è un'app separata della stessa suite e accede con lo stesso account di questa. Il download prende l'installer (circa 4 MB) direttamente dalla sua release su GitHub, per Windows 10 e 11 a 64 bit.",
+    confirmUnsigned:
+      "Non è ancora firmato digitalmente, quindi al primo avvio Windows SmartScreen ti avvisa. Premi Ulteriori informazioni e poi Esegui comunque.",
+    confirmDownload: "Scarica",
+    confirmOpenPage: "Apri invece la pagina",
+    cancel: "Annulla",
   },
   largeFiles: {
     title: "Trova file di grandi dimensioni",
@@ -2503,7 +2517,15 @@ const en: Strings = {
     title: "PC Tweaker Uninstaller",
     description:
       "Remove entire programs safely: automatic restore point, verified command, honest report. From the same family as PC Tweaker.",
-    button: "Learn more",
+    button: "Download",
+    confirmTitle: "Download the Uninstaller?",
+    confirmBody:
+      "PC Tweaker Uninstaller is a separate app in the same suite, and it signs in with the same account as this one. This downloads the installer (about 4 MB) straight from its GitHub release, for 64-bit Windows 10 and 11.",
+    confirmUnsigned:
+      "It is not code-signed yet, so Windows SmartScreen warns you the first time you run it. Click More info, then Run anyway.",
+    confirmDownload: "Download",
+    confirmOpenPage: "Open the page instead",
+    cancel: "Cancel",
   },
   largeFiles: {
     title: "Find large files",
@@ -3640,7 +3662,15 @@ const fr: Strings = {
     title: "PC Tweaker Uninstaller",
     description:
       "Supprimez des programmes entiers en toute sécurité : point de restauration automatique, commande vérifiée, rapport honnête. De la même famille que PC Tweaker.",
-    button: "En savoir plus",
+    button: "Télécharger",
+    confirmTitle: "Télécharger le désinstalleur ?",
+    confirmBody:
+      "PC Tweaker Uninstaller est une application distincte de la même suite, et elle se connecte avec le même compte que celle-ci. Le téléchargement récupère l'installeur (environ 4 Mo) directement depuis sa version GitHub, pour Windows 10 et 11 en 64 bits.",
+    confirmUnsigned:
+      "Il n'est pas encore signé numériquement : au premier lancement, Windows SmartScreen affiche un avertissement. Cliquez sur Informations complémentaires, puis sur Exécuter quand même.",
+    confirmDownload: "Télécharger",
+    confirmOpenPage: "Ouvrir plutôt la page",
+    cancel: "Annuler",
   },
   largeFiles: {
     title: "Trouver les gros fichiers",
@@ -4776,7 +4806,15 @@ const es: Strings = {
     title: "PC Tweaker Uninstaller",
     description:
       "Elimina programas enteros de forma segura: punto de restauracion automatico, comando verificado, informe honesto. De la misma familia que PC Tweaker.",
-    button: "Saber mas",
+    button: "Descargar",
+    confirmTitle: "¿Descargar el desinstalador?",
+    confirmBody:
+      "PC Tweaker Uninstaller es una aplicación aparte de la misma suite y entra con la misma cuenta que esta. La descarga toma el instalador (unos 4 MB) directamente de su versión en GitHub, para Windows 10 y 11 de 64 bits.",
+    confirmUnsigned:
+      "Todavía no está firmado digitalmente, así que la primera vez que lo ejecutes Windows SmartScreen te avisará. Pulsa Más información y luego Ejecutar de todas formas.",
+    confirmDownload: "Descargar",
+    confirmOpenPage: "Abrir la página en su lugar",
+    cancel: "Cancelar",
   },
   largeFiles: {
     title: "Buscar archivos grandes",
@@ -5918,7 +5956,15 @@ const de: Strings = {
     title: "PC Tweaker Uninstaller",
     description:
       "Entferne ganze Programme sicher: automatischer Wiederherstellungspunkt, gepruefter Befehl, ehrlicher Bericht. Aus derselben Familie wie PC Tweaker.",
-    button: "Mehr erfahren",
+    button: "Herunterladen",
+    confirmTitle: "Uninstaller herunterladen?",
+    confirmBody:
+      "PC Tweaker Uninstaller ist eine eigene App derselben Suite und meldet sich mit demselben Konto an wie diese. Der Download holt das Installationsprogramm (rund 4 MB) direkt aus seinem GitHub-Release, für Windows 10 und 11 in 64 Bit.",
+    confirmUnsigned:
+      "Es ist noch nicht digital signiert, deshalb warnt Windows SmartScreen beim ersten Start. Auf Weitere Informationen klicken und dann auf Trotzdem ausführen.",
+    confirmDownload: "Herunterladen",
+    confirmOpenPage: "Stattdessen die Seite öffnen",
+    cancel: "Abbrechen",
   },
   largeFiles: {
     title: "Grosse Dateien finden",
@@ -7061,7 +7107,15 @@ const pt: Strings = {
     title: "PC Tweaker Uninstaller",
     description:
       "Remova programas inteiros com segurança: ponto de restauração automático, comando verificado, relatório honesto. Da mesma família do PC Tweaker.",
-    button: "Saiba mais",
+    button: "Baixar",
+    confirmTitle: "Baixar o desinstalador?",
+    confirmBody:
+      "O PC Tweaker Uninstaller é um aplicativo separado da mesma suíte e entra com a mesma conta que este. O download pega o instalador (cerca de 4 MB) direto da versão no GitHub, para Windows 10 e 11 de 64 bits.",
+    confirmUnsigned:
+      "Ainda não tem assinatura digital, então na primeira execução o Windows SmartScreen vai avisar. Clique em Mais informações e depois em Executar assim mesmo.",
+    confirmDownload: "Baixar",
+    confirmOpenPage: "Abrir a página",
+    cancel: "Cancelar",
   },
   largeFiles: {
     title: "Encontrar arquivos grandes",

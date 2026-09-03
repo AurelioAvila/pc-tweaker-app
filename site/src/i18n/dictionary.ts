@@ -223,7 +223,7 @@ export const engDictionary: Dictionary = {
     copied: "COPIED ✓",
     badges: [
       {
-        label: "MajorGeeks 4.0/5.0",
+        label: "MajorGeeks 5.0/5.0",
         href: "https://www.majorgeeks.com/files/details/pc_tweaker.html",
       },
       {

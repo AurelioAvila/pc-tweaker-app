@@ -414,36 +414,90 @@ export function BrowserCleanupCard({
 /** Cross-promo for the sibling product. It lives at the end of the cleanup
  *  section deliberately: someone deleting temp files and duplicates is one
  *  step away from wanting whole programs gone — that is the uninstaller's
- *  job. Static card, no IPC, links out to the product page. */
+ *  job.
+ *
+ *  The button used to open the repository and stop there, which left the
+ *  person to find the right asset among six on a releases page. It now offers
+ *  the installer itself, behind a confirmation that says what is about to be
+ *  downloaded and warns about SmartScreen before it appears rather than
+ *  after — the uninstaller is not code-signed yet, and an unexplained blue
+ *  warning box is how a download gets abandoned. Opening the page is still
+ *  there for anyone who wants to look first. */
+const UNINSTALLER_PAGE_URL = "https://github.com/AurelioAvila/pc-tweaker-uninstaller";
+/** Version-less on purpose: GitHub resolves `releases/latest/download/<name>`
+ *  only for an exact filename, so this points at the stable-named copy the
+ *  uninstaller's release script publishes alongside the versioned one. A
+ *  versioned URL here would break on that product's next release. */
+const UNINSTALLER_DOWNLOAD_URL =
+  "https://github.com/AurelioAvila/pc-tweaker-uninstaller/releases/latest/download/PCTweakerUninstaller-Setup.exe";
+
 export function UninstallerPromoCard({ s }: { s: Strings }) {
-  function openPage() {
-    void openUrl("https://github.com/AurelioAvila/pc-tweaker-uninstaller");
+  const [asking, setAsking] = useState(false);
+
+  function choose(url: string) {
+    setAsking(false);
+    void openUrl(url);
   }
 
   return (
-    <li className="animate-card relative overflow-hidden rounded-2xl border border-fuchsia-400/20 bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 p-4 shadow-lg shadow-black/20">
-      <div className="flex items-center gap-4">
-        <img
-          src={uninstallerIcon}
-          alt=""
-          className="h-11 w-11 shrink-0 rounded-xl ring-1 ring-fuchsia-400/30"
-        />
-        <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-ink">{s.uninstallerPromo.title}</h2>
-          <p className="mt-0.5 text-sm text-ink-3">{s.uninstallerPromo.description}</p>
+    <>
+      <li className="animate-card relative overflow-hidden rounded-2xl border border-fuchsia-400/20 bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 p-4 shadow-lg shadow-black/20">
+        <div className="flex items-center gap-4">
+          <img
+            src={uninstallerIcon}
+            alt=""
+            className="h-11 w-11 shrink-0 rounded-xl ring-1 ring-fuchsia-400/30"
+          />
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold text-ink">{s.uninstallerPromo.title}</h2>
+            <p className="mt-0.5 text-sm text-ink-3">{s.uninstallerPromo.description}</p>
+          </div>
+          {/* Bright fill, near-black label, and a glow. The previous pairing put
+              fuchsia-950 text on a fuchsia-500 fill — dark ink on a mid tone,
+              which muddied into grey against this card's own violet gradient
+              and read as a disabled control rather than the primary action. */}
+          <button
+            onClick={() => setAsking(true)}
+            className="shrink-0 rounded-xl bg-fuchsia-400 px-4 py-2 text-sm font-bold text-slate-900 shadow-lg shadow-fuchsia-500/30 transition hover:-translate-y-px hover:brightness-110"
+          >
+            {s.uninstallerPromo.button}
+          </button>
         </div>
-        {/* Bright fill, near-black label, and a glow. The previous pairing put
-            fuchsia-950 text on a fuchsia-500 fill — dark ink on a mid tone,
-            which muddied into grey against this card's own violet gradient
-            and read as a disabled control rather than the primary action. */}
-        <button
-          onClick={openPage}
-          className="shrink-0 rounded-xl bg-fuchsia-400 px-4 py-2 text-sm font-bold text-slate-900 shadow-lg shadow-fuchsia-500/30 transition hover:-translate-y-px hover:brightness-110"
-        >
-          {s.uninstallerPromo.button}
-        </button>
-      </div>
-    </li>
+      </li>
+
+      {asking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm">
+          <div className="animate-card w-full max-w-md rounded-2xl border border-line bg-slate-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-ink">{s.uninstallerPromo.confirmTitle}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink-3">
+              {s.uninstallerPromo.confirmBody}
+            </p>
+            <p className="mt-3 text-[12.5px] leading-relaxed text-amber-200/80">
+              {s.uninstallerPromo.confirmUnsigned}
+            </p>
+
+            <button
+              onClick={() => choose(UNINSTALLER_DOWNLOAD_URL)}
+              className="mt-5 w-full rounded-xl bg-sky-500 py-2.5 text-sm font-semibold text-white"
+            >
+              {s.uninstallerPromo.confirmDownload}
+            </button>
+            <button
+              onClick={() => choose(UNINSTALLER_PAGE_URL)}
+              className="mt-2 w-full rounded-xl border border-line py-2 text-sm font-medium text-ink-2 hover:bg-surface-2"
+            >
+              {s.uninstallerPromo.confirmOpenPage}
+            </button>
+            <button
+              onClick={() => setAsking(false)}
+              className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-ink-3 hover:text-ink-2"
+            >
+              {s.uninstallerPromo.cancel}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

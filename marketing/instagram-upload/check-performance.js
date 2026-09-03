@@ -1,14 +1,14 @@
-// Controlla le insight (views/likes/comments/shares/saved/watch time) degli
-// ultimi Reel Instagram pubblicati e segnala ogni REGRESSIONE rispetto
-// all'ultimo check salvato.
+// Checks the insights (views/likes/comments/shares/saved/watch time) of the
+// most recently published Instagram Reels and reports every REGRESSION
+// against the last saved check.
 //
-// Aggiunto 2026-08-15: prima di questo script PC Tweaker non aveva NESSUNA
-// visibilita' sulle performance Instagram. Stesso schema gia' in uso su
-// solofounded-bot/check_ig_performance.py (Python), qui in JS per restare
-// coerente col resto di questa cartella. Stessa priorita' credenziali di
-// lib.js: credentials.json prima, poi PCTWEAKER_IG_ACCESS_TOKEN/IG_USER_ID.
+// Added 2026-08-15: before this script PC Tweaker had NO visibility at all
+// into Instagram performance. Same shape as
+// solofounded-bot/check_ig_performance.py (Python), written in JS here to stay
+// consistent with the rest of this folder. Same credential priority as lib.js:
+// credentials.json first, then PCTWEAKER_IG_ACCESS_TOKEN/IG_USER_ID.
 //
-// Uso: node check-performance.js
+// Usage: node check-performance.js
 
 const fs = require("fs");
 const path = require("path");
@@ -17,10 +17,10 @@ const API_BASE = "https://graph.instagram.com/v21.0";
 const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
 const LOG_PATH = path.join(__dirname, "ig_performance_log.json");
 const METRICS = "views,reach,likes,comments,shares,saved,total_interactions";
-// Watch time: segnale di ranking #1, esiste SOLO per i Reel - chiederlo su
-// un media di altro tipo fa fallire l'intera chiamata insights, quindi si
-// tenta con le metriche reels e si ricade sulle base invece di perdere il
-// post (stesso fix gia' in solofounded-bot).
+// Watch time: the #1 ranking signal, and it exists ONLY for Reels - asking for
+// it on any other media type fails the whole insights call, so we try the
+// reels metrics and fall back to the basic ones rather than losing the post
+// (the same fix already in solofounded-bot).
 const REELS_METRICS = "ig_reels_avg_watch_time,ig_reels_video_view_total_time";
 
 function loadCredentials() {

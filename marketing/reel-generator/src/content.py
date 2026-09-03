@@ -8,16 +8,15 @@ as working here: Mistake Warning, List Tease, Contrarian Claim.
 """
 import random
 
-# Query per-VOCE invece che per-categoria (2026-08-05, richiesta utente:
-# "quando fai le classifiche dovresti raffigurare almeno la cosa di cui
-# parli, magari anche in modo approssimativo"). Prima ogni immagine dello
-# slideshow veniva pescata a caso dal pool GENERICO della categoria
-# ("windows laptop screen" ecc.), a prescindere da quale dei 3 punti della
-# classifica la voce stesse davvero dicendo in quel momento - una voce
-# poteva dire "Xbox Game Bar" e mostrare una scrivania qualsiasi. Stesso
-# schema gia' validato su solofounded-bot (_VISUAL_CONCEPTS/
-# fact_footage_query): prima il concetto mappato, poi - solo come ripiego -
-# la categoria generica, mai un buco.
+# PER-ITEM queries instead of per-category (2026-08-05, requested: "when you
+# do the rankings you should at least depict the thing you're talking about,
+# even approximately"). Before this, every slideshow image was drawn at random
+# from the category's GENERIC pool ("windows laptop screen" and so on),
+# regardless of which of the 3 ranking entries the voice was actually on at
+# that moment - the narration could say "Xbox Game Bar" while showing some
+# unrelated desk. Same shape already proven on solofounded-bot
+# (_VISUAL_CONCEPTS/fact_footage_query): the mapped concept first, then - only
+# as a fallback - the generic category, never a gap.
 _VISUAL_CONCEPTS = [
     (("xbox game bar", "game bar"), "xbox controller gaming"),
     (("power plan", "cpu", "throttle"), "laptop cpu performance"),
@@ -33,16 +32,16 @@ _VISUAL_CONCEPTS = [
     (("winget", "package manager", "random exe"), "software download install"),
     (("dns", "isp"), "network router internet"),
     (("original value", "reversible", "revert"), "windows laptop settings screen"),
-    # Aggiunti 2026-08-20 insieme ai due nuovi item Copilot/Recall qui sotto -
-    # stessa nicchia "AI & Technology" gia' documentata in video-scripts.md
-    # (Video 8, Copilot Actions) ma finora mai rappresentata nel pool
-    # AUTOMATICO (content.py), solo nello script per la ripresa manuale.
+    # Added 2026-08-20 alongside the two new Copilot/Recall items below - the
+    # same "AI & Technology" niche already documented in video-scripts.md
+    # (Video 8, Copilot Actions) but until now never represented in the
+    # AUTOMATIC pool (content.py), only in the script for a manual shoot.
     (("copilot", "ai assistant"), "artificial intelligence computer screen"),
     (("recall", "ai screen snapshot", "ai-indexed"), "computer screen artificial intelligence"),
-    # Aggiunti 2026-08-23 insieme ai quattro nuovi item KB5121003 qui sotto -
-    # stesso gap del blocco Copilot/Recall sopra: fatti reali gia' verificati
-    # (vedi marketing/video-scripts.md, Aggiornamento 23 agosto 2026) ma mai
-    # entrati nel pool AUTOMATICO prima d'ora.
+    # Added 2026-08-23 alongside the four new KB5121003 items below - the same
+    # gap as the Copilot/Recall block above: real, already-verified facts (see
+    # marketing/video-scripts.md, "Update 23 August 2026") that had never made
+    # it into the AUTOMATIC pool before now.
     (("fingerprint", "enhanced sign-in security", "ess"), "fingerprint scanner biometric security"),
     (("image generation", "on-device ai", "ai component"), "artificial intelligence computer screen"),
     (("file explorer", "file size", "kilobytes"), "windows file explorer screen"),
@@ -52,13 +51,13 @@ _VISUAL_CONCEPTS = [
 
 
 def item_footage_query(text: str) -> str:
-    """Query Pexels per lo sfondo/foto di UNA voce specifica (uno dei punti
-    di una classifica, o l'unico item di uno script mistakewarning/
-    contrarian/beforeafter), invece della categoria intera.
+    """Pexels query for the background/photo of ONE specific entry (one of the
+    points in a ranking, or the single item of a mistakewarning/contrarian/
+    beforeafter script), rather than for the whole category.
 
-    Ripiego a None (non stringa vuota) quando nessun concetto combacia,
-    cosi' il chiamante puo' distinguere "nessuna corrispondenza, usa il
-    pool di categoria" da "query vuota"."""
+    Falls back to None (not an empty string) when no concept matches, so the
+    caller can tell "no match, use the category pool" apart from "empty
+    query"."""
     low = f" {text.lower()} "
     for keywords, query in _VISUAL_CONCEPTS:
         if any(k in low for k in keywords):
@@ -101,7 +100,7 @@ def pick_category() -> str:
 # from the same 4 phrases) - reusing "gaming setup" / "computer screen close
 # up" etc. across every category was collapsing everything into the same
 # handful of Pexels results, so videos ended up with near-identical covers
-# (user feedback 2026-08-02: "gia' ne ho viste alcune simili").
+# (user feedback 2026-08-02: "I've already seen some that look alike").
 # Hashtag pools widened 2026-08-17 (user feedback: "tags poco efficaci" -
 # every listtease video, for example, carried the exact same 5 tags in the
 # exact same order every single time, since the old pool WAS the per-video
@@ -135,17 +134,17 @@ CATEGORY_META = {
 # Caption "hook" line, first line of the IG/TikTok caption (research in
 # video-scripts.md: fear/mistake-warning hooks vastly outperform generic
 # benefit hooks in this niche).
-# Pool ampliato il 2026-08-03: erano 4 caption per categoria, 16 in tutto.
-# Un audit su 300 generazioni ha mostrato appena 16 caption distinte, cioe'
-# a 3 video/giorno il testo ricominciava a ripetersi identico ogni 5 giorni -
-# un segnale di contenuto duplicato che non conviene mai dare, tanto piu' su
-# un account nuovo. Raddoppiate a 8 per categoria (32 totali, ~11 giorni).
-# KEYWORD SEMPRE NELLA PRIMA RIGA (2026-08-06): Instagram ranka le caption
-# come un motore di ricerca e pesa le keyword nei primi 60-80 caratteri
-# (ricerca Toptal/TrueFuture 2026). Diversi hook non contenevano ne'
-# "Windows" ne' "PC" ne' "gaming" ("One click, real difference", "The
-# setting nobody thinks to check"): curiosita' senza argomento = invisibile
-# in ricerca. Ogni hook ora contiene almeno una keyword del topic.
+# Pool widened 2026-08-03: it was 4 captions per category, 16 in total. An
+# audit over 300 generations counted just 16 distinct captions, meaning at 3
+# videos a day the text started repeating verbatim every 5 days - a
+# duplicate-content signal never worth giving, least of all on a new account.
+# Doubled to 8 per category (32 in total, ~11 days).
+# KEYWORD ALWAYS IN THE FIRST LINE (2026-08-06): Instagram ranks captions like
+# a search engine and weighs keywords in the first 60-80 characters
+# (Toptal/TrueFuture research, 2026). Several hooks contained neither
+# "Windows" nor "PC" nor "gaming" ("One click, real difference", "The setting
+# nobody thinks to check"): curiosity with no subject = invisible in search.
+# Every hook now carries at least one keyword from the topic.
 CAPTION_HOOKS = {
     "mistakewarning": [
         "Windows turned this on without asking you \U0001F6A8",
@@ -200,24 +199,25 @@ FALLBACK = {
         "Hardware accelerated GPU Scheduling is often left disabled by default, even though enabling it can reduce input lag.",
         "Windows ships with an advertising ID turned on by default, letting apps build a profile on you for targeted ads.",
         "Bing search results get mixed into your Start menu search by default, even when you are just looking for a local file.",
-        # Aggiunti 2026-08-20 (ricerca trend: "AI & Technology" e' la nicchia
-        # Shorts a crescita piu' rapida a meta' 2026, ~18x YoY, CPM $15-22 -
+        # Added 2026-08-20 (trend research: "AI & Technology" is the
+        # fastest-growing Shorts niche in mid-2026, ~18x YoY, CPM $15-22 -
         # virvid.ai/blog/most-profitable-ai-youtube-shorts-niches-2026-rpm-data,
-        # confermato da mediacube.io/en-US/blog/best-youtube-niches. Il canale
-        # aveva gia' individuato l'angolo (video-scripts.md, Video 8) ma solo
-        # per una ripresa manuale una tantum: content.py, il pool che genera i
-        # video automatici veri, non conteneva NESSUN item su Copilot o
-        # Recall pur essendo entrambi tweak reali e gia' shippati (tweaks.rs,
-        # id "disable_copilot" e "disable_recall") - un gap concreto tra cio'
-        # che l'app fa davvero e cio' che il canale racconta di lei.
+        # confirmed by mediacube.io/en-US/blog/best-youtube-niches. The channel
+        # had already identified the angle (video-scripts.md, Video 8) but only
+        # for a one-off manual shoot: content.py, the pool that generates the
+        # actual automatic videos, contained NO item on Copilot or Recall even
+        # though both are real, already-shipped tweaks (tweaks.rs, ids
+        # "disable_copilot" and "disable_recall") - a concrete gap between what
+        # the app really does and what the channel says about it.
         "Windows Copilot runs in the background by default with no permanent off switch in Settings, only a policy toggle most people never find.",
         "Recall can build a searchable AI history of everything that has ever been on your screen, passwords and private messages included, unless you turn it off yourself.",
-        # Aggiunto 2026-08-23 (KB5121003, Windows 11 update di agosto 2026,
-        # build 26100.9168/26200.9168 - stesso gap del blocco Copilot/Recall
-        # sopra, stavolta sulla notizia piu' recente. Fonti: windowsforum.com
-        # "KB5121003 Lets Copilot+ PCs Remove Image Generation AI",
-        # notebookcheck.net "Windows 11 ships nine AI components, you can
-        # delete one" - vedi marketing/video-scripts.md per il dettaglio).
+        # Added 2026-08-23 (KB5121003, the August 2026 Windows 11 update,
+        # build 26100.9168/26200.9168 - the same gap as the Copilot/Recall
+        # block above, this time on the most recent news. Sources:
+        # windowsforum.com "KB5121003 Lets Copilot+ PCs Remove Image
+        # Generation AI", notebookcheck.net "Windows 11 ships nine AI
+        # components, you can delete one" - see marketing/video-scripts.md for
+        # the detail).
         "Copilot+ PCs ship with on-device AI components like Image Generation pre-installed and running, and only since the August 2026 Windows update can you actually uninstall the ones you never asked for.",
     ],
     "contrarian": [
@@ -226,16 +226,16 @@ FALLBACK = {
         "Every tweak in PC Tweaker saves the original value first, so you can roll it back with one click.",
         "PC Tweaker installs through winget, the official Windows package manager, not a random exe from a website.",
         "The app itself never runs with admin rights, it only asks for a one time permission for the specific tweak you approve.",
-        # Aggiunti 2026-08-19 (Aurelio: "vengono molto criticati... bisogna
-        # renderli meno stupidi e piu' utili e intelligenti" + commento reale
-        # trovato su un video: "probably an unsafe vibe coded tool", con link
-        # a CTT util windows come "alternativa vera"). La categoria
-        # contrarian gia' parlava di reversibilita', ma mai del fatto che il
-        # tool e' stato controllato da terzi indipendenti - la vera risposta
-        # a "vibe coded" e' "non solo il mio codice, altri l'hanno guardato",
-        # non un'altra frase di auto-rassicurazione. Fatti verificabili da
-        # README.md, niente inventato: NON e' open source (licenza source-
-        # available, non MIT/GPL), quindi non va mai chiamato "open source".
+        # Added 2026-08-19 (feedback: these tools "get criticised a lot...
+        # they need to be less stupid and more genuinely useful", plus a real
+        # comment found on a video: "probably an unsafe vibe coded tool", with
+        # a link to CTT util windows as the "real alternative"). The contrarian
+        # category already talked about reversibility, but never about the tool
+        # having been checked by independent third parties - the real answer to
+        # "vibe coded" is "not just my code, other people have looked at it",
+        # not one more line of self-reassurance. Facts verifiable from
+        # README.md, nothing invented: it is NOT open source (source-available
+        # licence, not MIT/GPL), so it must never be called "open source".
         "PC Tweaker isn't open source, but the code is source-available for anyone to review, and it's listed independently on MajorGeeks and Softpedia, not just self-hosted.",
         "The Windows package manager only lists PC Tweaker because a Microsoft-reviewed pull request approved it into winget-pkgs, the same community repo every legit app goes through.",
         "78 automated tests run on every single code change before it ships, covering the exact rollback logic that undoes a tweak.",
@@ -244,19 +244,19 @@ FALLBACK = {
         "Before: Windows fighting you with default settings tuned for battery life. After: a Turbo Gaming preset that flips every performance setting at once.",
         "Before: mouse aim feels inconsistent because of pointer acceleration. After: turning it off makes every flick land where you expect.",
         "Before: not knowing what a random optimizer tool actually changed. After: seeing the exact setting and reverting it in one click if you want to.",
-        # Aggiunti 2026-08-03 insieme al boost di peso della categoria (vedi
-        # CATEGORY_WEIGHTS sopra): la pool era ferma a 3 item, la stessa
-        # thinness gia' risolta per gli HOOKS il 2026-08-02 - raddoppiare la
-        # frequenza di questa categoria senza ampliarne anche il contenuto
-        # avrebbe solo spostato il problema della ripetizione da un pool
-        # all'altro. Anche questi due sono feature reali da README.md, non
-        # inventate.
+        # Added 2026-08-03 along with the category's weight boost (see
+        # CATEGORY_WEIGHTS above): the pool was stuck at 3 items, the same
+        # thinness already solved for the HOOKS on 2026-08-02 - doubling this
+        # category's frequency without also widening its content would only
+        # have moved the repetition problem from one pool to another. These two
+        # are real features from README.md as well, not invented.
         "Before: Xbox Game Bar's Game DVR recording in the background every time you play. After: switched off in one toggle, nothing left running behind your game.",
         "Before: your DNS still pointed at whatever your ISP set by default. After: switched to Cloudflare's private DNS in one toggle.",
-        # Aggiunto 2026-08-23: stesso fatto reale gia' documentato per il
-        # Video 7 in marketing/video-scripts.md (KB5121003, agosto 2026),
-        # mai entrato nel pool automatico. Numero "40%" e "1-3 secondi" da
-        # Microsoft/Windows Latest, non stimati - vedi fonti nel video-script.
+        # Added 2026-08-23: the same real fact already documented for Video 7
+        # in marketing/video-scripts.md (KB5121003, August 2026), which never
+        # made it into the automatic pool. The "40%" and "1-3 seconds" figures
+        # come from Microsoft/Windows Latest, they are not estimates - see the
+        # sources in the video script.
         "Before: apps took a beat to open even on decent hardware. After: Windows 11's August 2026 update spikes your CPU for 1 to 3 seconds the moment you launch an app, up to 40% faster for in-box apps like Edge.",
     ],
 }
@@ -278,13 +278,12 @@ LISTTEASE_ITEMS = {
         "Windows Copilot has no permanent off switch in Settings, only a policy toggle most people never find.",
         "Recall can quietly build a searchable AI history of everything shown on your screen.",
     ],
-    # Nuovo topic 2026-08-23: KB5121003, l'update Windows 11 di agosto 2026
-    # (build 26100.9168/26200.9168) - notizia troppo fresca e con troppi
-    # punti distinti per stare in un solo item delle liste esistenti sopra,
-    # esattamente come "beforeafter" ha gia' un topic dedicato per notizie
-    # puntuali. Ogni voce e' un comportamento reale del rilascio, non
-    # inventato - fonti/dettaglio in marketing/video-scripts.md,
-    # "Aggiornamento 23 agosto 2026".
+    # New topic 2026-08-23: KB5121003, the August 2026 Windows 11 update
+    # (build 26100.9168/26200.9168) - too fresh, and with too many distinct
+    # points, to fit in a single item of the lists above, exactly as
+    # "beforeafter" already has a dedicated topic for specific news. Every
+    # entry is a real behaviour of that release, not invented - sources and
+    # detail in marketing/video-scripts.md, "Update 23 August 2026".
     "windows_2026_update": [
         "Windows Hello Enhanced Sign-in Security now works with compatible external USB fingerprint readers, not only sensors built into the laptop.",
         "Copilot+ PCs can finally uninstall the on-device Image Generation AI component instead of it sitting there unused.",

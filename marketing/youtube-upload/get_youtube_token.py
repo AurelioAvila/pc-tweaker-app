@@ -1,19 +1,18 @@
 """
-Rigenera token.json per il canale PC Tweaker dopo che il refresh token e'
-scaduto/revocato. Riusa lo stesso client_secret gia' presente in questa
-cartella. DA LANCIARE UNA SOLA VOLTA IN LOCALE.
+Regenerates token.json for the PC Tweaker channel after the refresh token has
+expired or been revoked. Reuses the same client_secret already present in this
+folder. TO BE RUN ONCE, LOCALLY.
 
-NOTA (2026-08-04): questo script NON e' il percorso normale per rigenerare
-token.json - lib.js ha un proprio flusso OAuth integrato (getNewToken) che
-si attiva da solo quando token.json manca e scrive il file nel formato
-esatto che il resto della pipeline Node si aspetta. Per aggiungere lo scope
-Analytics, il modo piu' semplice e' cancellare token.json e rilanciare
-qualunque script Node che chiama getAuthorizedClient() (es. node auto-
-upload.js): si apre il browser da solo e il file viene riscritto corretto.
-Questo script Python resta come alternativa manuale, ma il suo output va
-poi convertito a mano nel formato di token.json (access_token/refresh_token/
-scope/token_type/expiry_date) - piu' complicato, non serve se lib.js
-funziona.
+NOTE (2026-08-04): this script is NOT the normal path for regenerating
+token.json - lib.js has its own built-in OAuth flow (getNewToken) that starts
+by itself when token.json is missing and writes the file in exactly the format
+the rest of the Node pipeline expects. To add the Analytics scope, the simplest
+route is to delete token.json and re-run any Node script that calls
+getAuthorizedClient() (e.g. node auto-upload.js): the browser opens on its own
+and the file is rewritten correctly. This Python script remains as a manual
+alternative, but its output then has to be converted by hand into token.json's
+format (access_token/refresh_token/scope/token_type/expiry_date) - more
+complicated, and unnecessary while lib.js works.
 """
 from google_auth_oauthlib.flow import InstalledAppFlow
 

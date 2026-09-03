@@ -24,22 +24,22 @@ const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
 const POLL_INTERVAL_MS = 10000;
 const POLL_TIMEOUT_MS = 300000;
 
-// L'account a cui questo uploader DEVE pubblicare. Vedi assertAccount().
+// The account this uploader MUST publish to. See assertAccount().
 const EXPECTED_USERNAME = "pctweaker10";
 
-// PRIORITA' INVERTITA + NOMI CON PREFISSO (2026-08-06). Il bug piu' costoso
-// di tutto l'ecosistema stava in queste righe: le variabili d'ambiente si
-// chiamavano IG_ACCESS_TOKEN/IG_USER_ID, nomi GENERICI condivisi con
-// certsprint-bot e solofounded-bot, e vincevano su credentials.json. Su
-// questa macchina esistono come variabili utente di Windows e contengono le
-// credenziali di @solo_founded (impostate per un test locale di quel bot):
-// dal 2026-08-01 OGNI Reel di PC Tweaker e' stato pubblicato su
-// @solo_founded, con HTTP 200, media_id valido e log "[OK] Published".
-// Verificato risolvendo i media_id "fantasma" col token d'ambiente: erano
-// Reel PC Tweaker (#windows11 #pcoptimization) sul profilo sbagliato.
-// Il file credentials.json, che e' per definizione specifico di QUESTA
-// cartella e di QUESTO account, ha ora la precedenza; le env var restano
-// come ripiego ma solo con un nome che non puo' collidere con altri bot.
+// PRIORITY INVERTED + PREFIXED NAMES (2026-08-06). The most expensive bug in
+// the whole ecosystem lived in these lines: the environment variables were
+// called IG_ACCESS_TOKEN/IG_USER_ID, GENERIC names shared with certsprint-bot
+// and solofounded-bot, and they won over credentials.json. On this machine
+// they exist as Windows user variables and hold @solo_founded's credentials
+// (set for a local test of that bot): from 2026-08-01 onward EVERY PC Tweaker
+// Reel was published to @solo_founded, with HTTP 200, a valid media_id and an
+// "[OK] Published" log line. Confirmed by resolving the "ghost" media_ids with
+// the environment token: they were PC Tweaker Reels (#windows11
+// #pcoptimization) on the wrong profile.
+// credentials.json, which is by definition specific to THIS folder and THIS
+// account, now takes precedence; the env vars remain as a fallback but only
+// under a name that cannot collide with another bot.
 function loadCredentials() {
   if (fs.existsSync(CREDENTIALS_PATH)) {
     return JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
@@ -55,12 +55,12 @@ function loadCredentials() {
   );
 }
 
-// Rete di sicurezza indipendente dal punto sopra: prima di pubblicare
-// chiediamo all'API a CHI appartiene davvero il token e ci fermiamo se non
-// e' l'account atteso. Una credenziale sbagliata e' altrimenti
-// indistinguibile da una giusta - l'API risponde 200 e pubblica felicemente
-// altrove, che e' esattamente come il bug e' rimasto invisibile per giorni.
-// Costa una GET per Reel: nulla, rispetto a pubblicare su un altro profilo.
+// A safety net independent of the point above: before publishing, ask the API
+// WHO the token actually belongs to and stop if it is not the expected
+// account. A wrong credential is otherwise indistinguishable from a right one
+// - the API answers 200 and happily publishes elsewhere, which is exactly how
+// the bug stayed invisible for days. Costs one GET per Reel: nothing, next to
+// publishing on somebody else's profile.
 async function assertAccount(igUserId, igAccessToken) {
   const resp = await fetch(`${API_BASE}/${igUserId}?fields=username`, {
     headers: authHeaders(igAccessToken),
@@ -77,48 +77,46 @@ async function assertAccount(igUserId, igAccessToken) {
   }
 }
 
-// AUTENTICAZIONE (corretta il 2026-08-04): il token va nell'header
-// "Authorization: Bearer", NON come campo access_token nel body.
+// AUTHENTICATION (fixed 2026-08-04): the token goes in the
+// "Authorization: Bearer" header, NOT as an access_token field in the body.
 //
-// Il flusso "Instagram API with Instagram Login" (host graph.instagram.com,
-// token con prefisso IGAA - quello che usa questo account) vuole l'header
-// Bearer; passare access_token come parametro e' lo stile del vecchio flusso
-// Facebook-Page-linked su graph.facebook.com. Le chiamate di LETTURA
-// tollerano entrambi, ed e' per questo che il bug e' rimasto invisibile:
-// media, insights e perfino la creazione del container rispondevano
-// correttamente.
+// The "Instagram API with Instagram Login" flow (host graph.instagram.com,
+// IGAA-prefixed token - the one this account uses) wants the Bearer header;
+// passing access_token as a parameter is the style of the older
+// Facebook-Page-linked flow on graph.facebook.com. READ calls tolerate both,
+// which is why the bug stayed invisible: media, insights and even container
+// creation all responded correctly.
 //
-// media_publish invece NO: con l'auth in stile legacy rispondeva HTTP 200
-// con un media_id dall'aria valida, ma il post non veniva mai creato -
-// nessuna eccezione, log "[OK] Published", e nulla sull'account. Verificato
-// il 2026-08-04: 15+ pubblicazioni consecutive dal 2026-08-01 tutte
-// fantasma, media_count fermo a 11, content_publishing_limit con
-// quota_usage 0 (Instagram non contava nemmeno un tentativo), mentre una
-// pubblicazione manuale dall'app funzionava perfettamente. certsprint-bot e
-// i brand Shopify, che usano da sempre l'header Bearer, non hanno mai avuto
-// il problema.
+// media_publish does NOT: with legacy-style auth it answered HTTP 200 with a
+// valid-looking media_id, but the post was never created - no exception, an
+// "[OK] Published" log line, and nothing on the account. Confirmed 2026-08-04:
+// 15+ consecutive publishes from 2026-08-01 all ghosts, media_count stuck at
+// 11, content_publishing_limit reporting quota_usage 0 (Instagram was not
+// even counting an attempt), while publishing by hand from the app worked
+// perfectly. certsprint-bot and the Shopify brands, which have always used the
+// Bearer header, never had the problem.
 function authHeaders(igAccessToken) {
   return { Authorization: `Bearer ${igAccessToken}` };
 }
 
 async function createContainer(igUserId, igAccessToken, videoUrl, caption) {
-  // is_ai_generated: "true" (2026-08-05): l'AI Act europeo (Articolo 50) e'
-  // legalmente vincolante dal 2026-08-02 (multe fino a 15M euro o 3% del
-  // fatturato) per contenuto generato/manipolato da IA non etichettato -
-  // ogni Reel qui usa voce sintetica e script generati. E' il parametro
-  // NATIVO documentato da Meta, non solo un hashtag: Instagram applica da
-  // solo l'etichetta "AI info" visibile sul post.
+  // is_ai_generated: "true" (2026-08-05): the European AI Act (Article 50) is
+  // legally binding from 2026-08-02 (fines up to EUR 15M or 3% of turnover)
+  // for unlabelled AI-generated or AI-manipulated content - every Reel here
+  // uses a synthetic voice and a generated script. This is Meta's documented
+  // NATIVE parameter, not just a hashtag: Instagram applies the visible "AI
+  // info" label on the post itself.
   const resp = await fetch(`${API_BASE}/${igUserId}/media`, {
     method: "POST",
     headers: {
       ...authHeaders(igAccessToken),
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    // audio_name (2026-08-06): l'algoritmo tratta l'audio come un tag di
-    // metadati con una propria pagina che raccoglie tutti i reel che lo
-    // usano - un nome brandizzato coerente la trasforma in un hub del
-    // brand e aggiunge la keyword "Windows" alla ricerca. La musica di
-    // libreria via API non esiste: va incorporata nel file video.
+    // audio_name (2026-08-06): the algorithm treats audio as a metadata tag
+    // with its own page collecting every reel that uses it - a consistent
+    // branded name turns that page into a hub for the brand and adds the
+    // "Windows" keyword to search. Library music via the API does not exist:
+    // it has to be embedded in the video file.
     body: new URLSearchParams({
       media_type: "REELS",
       video_url: videoUrl,
@@ -164,22 +162,22 @@ async function publish(igUserId, igAccessToken, creationId) {
   return data.id;
 }
 
-// Link ufficiale pctweaker.app (2026-08-22, richiesta esplicita utente):
-// prima puntava al repo GitHub, non al sito ufficiale del prodotto - stesso
-// fix applicato in parallelo su YouTube (auto-upload.js) e X (post-to-x.js).
+// Official pctweaker.app link (2026-08-22, explicitly requested): it used to
+// point at the GitHub repo rather than the product's own site - the same fix
+// was applied in parallel on YouTube (auto-upload.js) and X (post-to-x.js).
 const PINNED_COMMENT_TEXT =
   "Try PC Tweaker for free \u{1F447}\nhttps://pctweaker.app";
 
-// Posta un commento CTA subito dopo la pubblicazione (mirror del pattern
-// _pinned_comment/_post_pinned_comment del bot YouTube Ghostcut). Non
-// bloccante: un fallimento qui non deve mai far fallire una pubblicazione
-// gia' riuscita.
+// Posts a CTA comment right after publishing (mirrors the
+// _pinned_comment/_post_pinned_comment pattern in the Ghostcut YouTube bot).
+// Non-blocking: a failure here must never fail a publish that already
+// succeeded.
 //
-// La Graph API di Instagram non espone un modo per FISSARE davvero un
-// commento in cima (nessun campo is_pinned su POST .../comments, nessun
-// endpoint dedicato al 2026-08) - stesso limite gia' documentato per la
-// YouTube Data API v3 in publish_ghostcut.py. Il commento viene postato
-// normalmente; fissarlo resta un passo manuale dall'app Instagram.
+// Instagram's Graph API exposes no way to actually PIN a comment to the top
+// (no is_pinned field on POST .../comments, no dedicated endpoint as of
+// 2026-08) - the same limitation already documented for YouTube Data API v3 in
+// publish_ghostcut.py. The comment is posted normally; pinning it stays a
+// manual step in the Instagram app.
 async function postPinnedComment(mediaId, igAccessToken, text = PINNED_COMMENT_TEXT) {
   try {
     const resp = await fetch(`https://graph.instagram.com/v21.0/${mediaId}/comments`, {
@@ -232,9 +230,9 @@ async function createStoryContainer(igUserId, igAccessToken, videoUrl) {
   return data.id;
 }
 
-// Story dallo stesso video_url gia' usato per il Reel (2026-08-22: trovato
-// che questo account non pubblicava mai Storie, a differenza di
-// SoloFounded/CertSprint/Ghostcut che lo fanno gia' da tempo).
+// Story from the same video_url already used for the Reel (2026-08-22: found
+// that this account never posted Stories, unlike
+// SoloFounded/CertSprint/Ghostcut, which have been doing it for a while).
 async function uploadStory(videoUrl) {
   const { igAccessToken, igUserId } = loadCredentials();
   await assertAccount(igUserId, igAccessToken);

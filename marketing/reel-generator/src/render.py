@@ -68,17 +68,17 @@ def _ensure_rgb_jpeg(image_path: str) -> str:
 
 TARGET_W, TARGET_H = 1080, 1920
 
-# Bitrate espliciti e normalizzazione loudness: aggiunti il 2026-08-04 per
-# omologare questo generatore a solofounded-bot e shopify-dropship-bot, che
-# li avevano gia'. Qui mancavano entrambi, quindi moviepy usava i suoi
-# default silenziosi.
+# Explicit bitrates and loudness normalisation: added 2026-08-04 to bring this
+# generator in line with solofounded-bot and shopify-dropship-bot, which
+# already had them. Both were missing here, so moviepy fell back on its own
+# silent defaults.
 #
-# Misurato prima della correzione su video REALI gia' pubblicati
+# Measured before the fix on REAL published videos
 # (reel-beforeafter-1785775480-5021, reel-beforeafter-1785692772-2458):
-# -19.6 / -19.7 LUFS integrati, contro i -14.1 LUFS di solofounded. Circa 6 dB
-# sotto ogni altro account: nel feed, dove i video si susseguono uno dopo
-# l'altro, un audio piu' basso di 6 dB suona "debole" e spinge allo scroll.
-# Lo standard di riferimento per streaming/social e' -14 LUFS.
+# -19.6 / -19.7 LUFS integrated, against solofounded's -14.1 LUFS. Roughly 6 dB
+# below every other account: in a feed, where videos follow one another, audio
+# 6 dB quieter sounds "weak" and pushes people to scroll. The reference
+# standard for streaming/social is -14 LUFS.
 VIDEO_BITRATE = "12000k"
 AUDIO_BITRATE = "192k"
 LOUDNORM_FILTER = "loudnorm=I=-14:TP=-1.5:LRA=11"
@@ -93,17 +93,17 @@ _COLOR_TAGS = ["-pix_fmt", "yuv420p", "-color_range", "tv",
 
 
 def _normalize_loudness(path: str) -> None:
-    """Porta l'audio del video gia' renderizzato a -14 LUFS.
+    """Brings the already-rendered video's audio to -14 LUFS.
 
-    Portata da solofounded-bot/src/render.py: NON si puo' fare passando
-    ffmpeg_params=["-af", ...] a write_videofile, perche' moviepy muxa
-    l'audio in "codec copy" e ffmpeg rifiuta filtro + streamcopy insieme
-    ("Filtering and streamcopy cannot be used together").
+    Ported from solofounded-bot/src/render.py: this CANNOT be done by passing
+    ffmpeg_params=["-af", ...] to write_videofile, because moviepy muxes the
+    audio in "codec copy" and ffmpeg refuses a filter and a streamcopy
+    together ("Filtering and streamcopy cannot be used together").
 
-    Il video e' copiato bit-per-bit (-c:v copy): nessuna ricompressione
-    video, si ricodifica solo l'audio. Se ffmpeg fallisce il file originale
-    resta intatto - un audio non normalizzato e' molto meglio di nessun
-    video, quindi l'eccezione non deve mai far fallire la generazione.
+    The video is copied bit for bit (-c:v copy): no video recompression, only
+    the audio is re-encoded. If ffmpeg fails, the original file is left
+    intact - audio that is not normalised is far better than no video at all,
+    so the exception must never fail the generation.
     """
     import subprocess
 
@@ -112,12 +112,13 @@ def _normalize_loudness(path: str) -> None:
         "ffmpeg", "-y", "-i", path,
         "-c:v", "copy",
         "-af", LOUDNORM_FILTER,
-        # -ar 48000 esplicito (2026-08-06): loudnorm lavora internamente a
-        # 192 kHz e senza sample rate imposto trascinava l'encoder a 96 kHz
-        # (misurato sui video reali). 48 kHz e' lo standard per il video.
+        # Explicit -ar 48000 (2026-08-06): loudnorm works internally at
+        # 192 kHz and, with no sample rate imposed, dragged the encoder to
+        # 96 kHz (measured on the real videos). 48 kHz is the video standard.
         "-c:a", "aac", "-b:a", AUDIO_BITRATE, "-ar", "48000",
-        # Questa passata rimuxa: senza ri-specificare +faststart il moov atom
-        # tornerebbe in fondo, riportando il bug del "primo tap non parte".
+        # This pass remuxes: without re-specifying +faststart the moov atom
+        # would move back to the end, bringing back the "first tap does not
+        # play" bug.
         "-movflags", "+faststart",
         tmp_path,
     ]
@@ -259,12 +260,12 @@ def _build_full_audio(voice_audio: AudioFileClip, duration: float, cut_times: li
 # (2026-07-30, this pipeline runs on Windows). Always use forward slashes.
 FONT_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "fonts", "Poppins-ExtraBold.ttf").replace(os.sep, "/")
 
-# 4 parole per blocco (era 2, allineato 2026-08-04). Ultimo dei quattro
-# generatori a passare a 4: certsprint, solofounded e shopify erano gia'
-# stati corretti in giornata. I frammenti da 2 parole non compongono mai
-# una frase leggibile - verificato estraendo i fotogrammi di Reel reali
-# ("watchable Throw" / "room before"), lo spettatore deve ricostruire il
-# senso mentre lo sfondo cambia sotto.
+# 4 words per block (was 2, aligned 2026-08-04). The last of the four
+# generators to move to 4: certsprint, solofounded and shopify had all been
+# fixed the same day. Two-word fragments never form a readable phrase -
+# verified by pulling frames from real Reels ("watchable Throw" / "room
+# before"): the viewer has to reconstruct the meaning while the background
+# changes underneath.
 CAPTION_CHUNK_SIZE = 4
 CAPTION_FONTSIZE = 80
 CAPTION_Y = int(TARGET_H * 0.62)
@@ -272,22 +273,21 @@ CAPTION_BAND_Y = int(TARGET_H * 0.56)
 CAPTION_BAND_HEIGHT = int(TARGET_H * 0.22)
 CAPTION_POP_SECONDS = 0.12  # quick scale-up on each chunk's entrance, not a static cut
 
-# Quando preserve_landscape=True lo sfondo e' il ritaglio della UI reale
-# (vedi _fit_product_demo): un canvas 1080x1920 con la card dell'app
-# ridimensionata a larghezza piena e centrata VERTICALMENTE, quindi occupa
-# solo la fascia centrale (circa il 34%-66% dell'altezza), non l'intero
-# fotogramma. CAPTION_Y standard (62%) cade dentro quella fascia e
-# coprirebbe la UI appena mostrata - per questo main.py aveva
-# show_captions=False in questo ramo, spegnendo le didascalie invece di
-# spostarle. Ma i dati 2026 sono netti: le didascalie alzano il watch time
-# medio del 20-40% ANCHE con audio attivo (Opus, "Instagram Reels Caption
-# & Subtitle Best Practices in 2026",
+# When preserve_landscape=True the background is the crop of the real UI (see
+# _fit_product_demo): a 1080x1920 canvas with the app card scaled to full width
+# and centred VERTICALLY, so it occupies only the middle band (roughly 34%-66%
+# of the height), not the whole frame. The standard CAPTION_Y (62%) falls
+# inside that band and would cover the UI just shown - which is why main.py had
+# show_captions=False on this branch, switching the captions off rather than
+# moving them. But the 2026 data is unambiguous: captions raise average watch
+# time by 20-40% EVEN with audio on (Opus, "Instagram Reels Caption & Subtitle
+# Best Practices in 2026",
 # https://www.opus.pro/blog/instagram-reels-caption-subtitle-best-practices;
 # Zebracat, "100+ Instagram Reels Statistics for 2026",
-# https://www.zebracat.ai/post/instagram-reels-statistics) - spegnerle del
-# tutto scarta quel guadagno invece di risolvere la sovrapposizione.
-# Le si sposta piu' in basso, nello spazio di canvas libero sotto la card,
-# cosi' restano leggibili senza coprire la demo.
+# https://www.zebracat.ai/post/instagram-reels-statistics) - switching them off
+# entirely throws that gain away instead of solving the overlap.
+# They are moved lower instead, into the free canvas space below the card, so
+# they stay readable without covering the demo.
 CAPTION_Y_PRODUCT_DEMO = int(TARGET_H * 0.74)
 
 WATERMARK_TEXT = "PC Tweaker"
@@ -350,9 +350,9 @@ def _caption_clips_from_words(word_timings: list, duration: float, skip_before: 
     (from edge-tts's WordBoundary events) instead of guessing an equal
     split over the audio duration.
 
-    skip_before: quando c'e' l'hook card, le didascalie dei primi secondi
-    ripetono il testo gia' mostrato per intero dalla card - due riquadri
-    sovrapposti che dicono la stessa cosa. Si saltano."""
+    skip_before: when the hook card is present, the captions of the first
+    seconds repeat text the card is already showing in full - two overlapping
+    boxes saying the same thing. They are skipped."""
     if not word_timings:
         return []
 
@@ -416,13 +416,12 @@ def _caption_clips_from_words(word_timings: list, duration: float, skip_before: 
             font=FONT_PATH,
         ).set_duration(chunk_duration)
 
-        # Sfondo ADERENTE al testo invece della vecchia fascia larga
-        # (2026-08-05). La banda copriva il 22% del fotogramma al 35% di
-        # opacita' per tutta la durata del video: non abbastanza da far
-        # risaltare il testo, abbastanza da annebbiare un quinto
-        # dell'immagine anche senza didascalie a schermo - la causa dei
-        # "video sbiaditi" segnalati dall'utente. 0.78 e' lo stesso valore
-        # della hook card, che si legge nitida.
+        # A background that HUGS the text, instead of the old wide band
+        # (2026-08-05). The band covered 22% of the frame at 35% opacity for
+        # the whole video: not enough to make the text stand out, enough to
+        # fog a fifth of the image even with no caption on screen - the cause
+        # of the "washed-out videos" that were reported. 0.78 is the same
+        # value as the hook card, which reads sharp.
         text_w, text_h = txt.size
         backdrop = (
             ColorClip(size=(text_w + 40, text_h + 28), color=(0, 0, 0))
@@ -430,12 +429,12 @@ def _caption_clips_from_words(word_timings: list, duration: float, skip_before: 
             .set_duration(chunk_duration)
         )
 
-        # Il pop d'ingresso va applicato SOLO al testo: un .resize() animato
-        # sul composito che contiene lo sfondo ne distrugge la maschera di
-        # trasparenza e il riquadro sparisce (verificato in isolamento il
-        # 2026-08-05 sul progetto gemello, rendendo la stessa didascalia con
-        # e senza resize). E' un difetto di moviepy nel propagare la mask
-        # attraverso un resize animato.
+        # The entry pop must be applied to the TEXT ONLY: an animated
+        # .resize() on the composite that contains the background destroys its
+        # transparency mask and the box disappears (verified in isolation on
+        # 2026-08-05 on the twin project, rendering the same caption with and
+        # without the resize). It is a moviepy defect in propagating the mask
+        # through an animated resize.
         txt_clip = (
             CompositeVideoClip(
                 [backdrop, txt.resize(_pop_scale).set_position(("center", "center"))],
@@ -505,9 +504,9 @@ def _multi_clip_background(video_paths: list, total_duration: float, preserve_la
 
 
 def _caption_band(duration: float, start: float = 0.0):
-    # start > 0 quando c'e' l'hook card: durante l'apertura l'unico elemento
-    # grafico deve essere la card, altrimenti si vedono due riquadri scuri
-    # sovrapposti.
+    # start > 0 when the hook card is present: during the opening the only
+    # graphical element must be the card, otherwise two dark boxes are visible
+    # on top of each other.
     return (
         ColorClip(size=(TARGET_W, CAPTION_BAND_HEIGHT), color=(0, 0, 0))
         .set_opacity(0.35)
@@ -517,13 +516,13 @@ def _caption_band(duration: float, start: float = 0.0):
     )
 
 
-# HOOK CARD (aggiunto 2026-08-02) - la leva piu' importante emersa
-# dall'audit sulle view basse. Le didascalie sono sincronizzate a 2 parole
-# per volta, quindi al fotogramma 0 si leggeva solo un frammento senza
-# significato ("This is") proprio nei 3 secondi in cui lo spettatore decide
-# se restare. La ricerca 2026 (Hansen Insights, Aibrify, HypeNest) e' netta:
-# sotto l'80% di retention nei primi 3 secondi il video muore nel cold start
-# e non viene mai distribuito. Ora la promessa COMPLETA e' leggibile subito.
+# HOOK CARD (added 2026-08-02) - the single most important lever to come out
+# of the low-views audit. Captions are synced 2 words at a time, so at frame 0
+# all that could be read was a meaningless fragment ("This is") during exactly
+# the 3 seconds in which the viewer decides whether to stay. The 2026 research
+# (Hansen Insights, Aibrify, HypeNest) is unambiguous: below 80% retention in
+# the first 3 seconds a video dies in cold start and is never distributed. The
+# COMPLETE promise is now readable immediately.
 HOOK_CARD_SECONDS = 2.8
 HOOK_CARD_FONTSIZE = 66
 HOOK_CARD_Y = int(TARGET_H * 0.16)
@@ -588,16 +587,16 @@ def _load_voice_clip(audio_path: str):
     schema TTS/render): l'mp3 vocale generato da Kokoro/VibeVoice (WAV
     riconvertito via 'ffmpeg -codec:a libmp3lame' in tts.py) porta un
     encoder delay LAME di ~46ms (ffprobe: "start_time=0.046042" a 24kHz =
-    1105 campioni, il delay di default di LAME) che moviepy non scarta
-    correttamente: AudioFileClip.duration risulta piu' lungo dei campioni
-    davvero decodificabili. Effetto misurato altrove: un warning "indices
-    wanted: X-Y, but len(buffer)=Z" durante write_videofile, con moviepy
-    che ripete l'ultimo campione valido per il blocco mancante (~45ms)
-    invece di lasciare silenzio - un valore costante ripetuto per decine
-    di ms e' udibile come click/crepitio in coda al video. Tagliare un
-    margine (150ms) subito dopo il caricamento elimina la lettura fuori
-    buffer prima che la durata sbagliata si propaghi a musica/composito/
-    video finale."""
+    1105 samples, LAME's default delay) that moviepy does not discard
+    correctly: AudioFileClip.duration comes out longer than the samples that
+    can actually be decoded. Effect measured elsewhere: an "indices wanted:
+    X-Y, but len(buffer)=Z" warning during write_videofile, with moviepy
+    repeating the last valid sample for the missing block (~45ms) instead of
+    leaving silence - a constant value repeated for tens of milliseconds is
+    audible as a click or crackle at the end of the video. Trimming a margin
+    (150ms) right after loading removes the out-of-buffer read before the
+    wrong duration propagates to the music, the composite and the final
+    video."""
     audio = AudioFileClip(audio_path)
     safety_margin = 0.15
     if audio.duration > safety_margin * 2:
@@ -615,12 +614,11 @@ def render_short(background_video_paths, audio_path: str, word_timings: list, ou
     background = background.set_audio(full_audio)
 
     hook_seconds = min(HOOK_CARD_SECONDS, audio.duration) if hook else 0.0
-    # Niente piu' _caption_band: ogni didascalia porta il proprio riquadro
-    # aderente al testo (vedi _caption_clips_from_words). Quando
-    # preserve_landscape=True la card dell'app occupa solo la fascia
-    # centrale del canvas (vedi _fit_product_demo/CAPTION_Y_PRODUCT_DEMO
-    # sopra): le didascalie vanno piu' in basso, nello spazio libero, invece
-    # di essere spente.
+    # No more _caption_band: every caption carries its own box hugging the
+    # text (see _caption_clips_from_words). When preserve_landscape=True the
+    # app card occupies only the middle band of the canvas (see
+    # _fit_product_demo/CAPTION_Y_PRODUCT_DEMO above): the captions move lower,
+    # into the free space, instead of being switched off.
     caption_y = CAPTION_Y_PRODUCT_DEMO if preserve_landscape else CAPTION_Y
     captions = _caption_clips_from_words(word_timings, audio.duration, skip_before=hook_seconds, caption_end_word=caption_end_word, caption_text=caption_text, caption_y=caption_y) if show_captions else []
     watermark = [] if preserve_landscape else [_watermark_clip(audio.duration)]
@@ -637,10 +635,10 @@ def render_short(background_video_paths, audio_path: str, word_timings: list, ou
         preset="medium",
         bitrate=VIDEO_BITRATE,
         audio_bitrate=AUDIO_BITRATE,
-        # moov atom in testa al file invece che in fondo - senza questo il
-        # player deve scaricare l'intero file prima di poter leggere i
-        # metadati, causando il classico 'primo tap non parte, secondo si'
-        # (segnalato dall'utente 2026-08-02, moviepy non lo aggiunge di default).
+        # moov atom at the head of the file rather than at the end - without
+        # this the player has to download the whole file before it can read
+        # the metadata, causing the classic 'first tap does not play, second
+        # one does' (reported 2026-08-02; moviepy does not add it by default).
         ffmpeg_params=["-movflags", "+faststart"] + _COLOR_TAGS,
     )
     _normalize_loudness(output_path)
@@ -655,8 +653,8 @@ def render_slideshow(image_paths: list, image_starts: list, audio_path: str, wor
     background = background.set_audio(full_audio)
 
     hook_seconds = min(HOOK_CARD_SECONDS, audio.duration) if hook else 0.0
-    # Niente piu' _caption_band: ogni didascalia porta il proprio riquadro
-    # aderente al testo (vedi _caption_clips_from_words).
+    # No more _caption_band: every caption carries its own box hugging the
+    # text (see _caption_clips_from_words).
     captions = _caption_clips_from_words(word_timings, audio.duration, skip_before=hook_seconds, caption_end_word=caption_end_word)
     watermark = _watermark_clip(audio.duration)
     hook_card = _hook_card_clip(hook, hook_seconds) if hook else []
@@ -672,10 +670,10 @@ def render_slideshow(image_paths: list, image_starts: list, audio_path: str, wor
         preset="medium",
         bitrate=VIDEO_BITRATE,
         audio_bitrate=AUDIO_BITRATE,
-        # moov atom in testa al file invece che in fondo - senza questo il
-        # player deve scaricare l'intero file prima di poter leggere i
-        # metadati, causando il classico 'primo tap non parte, secondo si'
-        # (segnalato dall'utente 2026-08-02, moviepy non lo aggiunge di default).
+        # moov atom at the head of the file rather than at the end - without
+        # this the player has to download the whole file before it can read
+        # the metadata, causing the classic 'first tap does not play, second
+        # one does' (reported 2026-08-02; moviepy does not add it by default).
         ffmpeg_params=["-movflags", "+faststart"] + _COLOR_TAGS,
     )
     _normalize_loudness(output_path)

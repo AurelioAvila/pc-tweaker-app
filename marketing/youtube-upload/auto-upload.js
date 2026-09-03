@@ -10,12 +10,12 @@ const path = require("path");
 const { uploadVideo, postComment } = require("./lib");
 const { validateUpload } = require("./quality-gate");
 
-// CTA di default se il .json non specifica "ctaComment" - richiesto
-// 2026-07-29: funnel diretto verso lo strumento/link in un commento (non
-// "fissato", la API non lo permette - vedi nota in lib.js::postComment).
-// Link ufficiale pctweaker.app (2026-08-22, richiesta esplicita utente):
-// prima puntava al repo GitHub, non al sito ufficiale del prodotto - stesso
-// fix applicato in parallelo su Instagram (instagram-upload/lib.js) e X.
+// Default CTA when the .json does not specify "ctaComment" - requested
+// 2026-07-29: a direct funnel to the tool/link in a comment (not "pinned",
+// the API does not allow that - see the note in lib.js::postComment).
+// Official pctweaker.app link (2026-08-22, explicitly requested): it used to
+// point at the GitHub repo rather than the product's own site - the same fix
+// was applied in parallel on Instagram (instagram-upload/lib.js) and X.
 const DEFAULT_CTA_COMMENT =
   "Try PC Tweaker for free \u{1F447}\nhttps://pctweaker.app";
 
@@ -41,15 +41,16 @@ function appendLog(entry) {
   fs.writeFileSync(LOG_PATH, JSON.stringify(log, null, 2));
 }
 
-// Questi video sono verticali e brevi, cioe' Shorts: senza "#shorts" nel
-// titolo o nella descrizione YouTube deve indovinare la classificazione dal
-// solo formato. Bug reale trovato 2026-08-02: i .json generati non
-// contenevano "#shorts" da nessuna parte (ne' titolo, ne' descrizione, ne'
-// tags), a differenza di tutti gli altri canali.
+// These videos are vertical and short, which makes them Shorts: without
+// "#shorts" in the title or the description, YouTube has to guess the
+// classification from the format alone. Real bug found 2026-08-02: the
+// generated .json files contained "#shorts" nowhere at all (not in the title,
+// not in the description, not in the tags), unlike every other channel.
 //
-// Il tag si aggiunge QUI e non in lib.js perche' lib.js e' condiviso con
-// compile-longform.js, dove "#shorts" sarebbe sbagliato: quello e' un video
-// lungo e taggarlo cosi' confonde la classificazione e delude chi clicca.
+// The tag is added HERE and not in lib.js because lib.js is shared with
+// compile-longform.js, where "#shorts" would be wrong: that is a long video,
+// and tagging it this way confuses the classification and disappoints whoever
+// clicks.
 const YT_TITLE_MAX = 100;
 const SHORTS_TAG = "#shorts";
 
@@ -57,9 +58,9 @@ function withShortsTag(title, description) {
   const hasTag = (s) => (s || "").toLowerCase().includes(SHORTS_TAG);
   if (hasTag(title) || hasTag(description)) return { title, description };
 
-  // Preferenza al titolo, ma solo se ci sta: YouTube tronca a 100 caratteri
-  // senza errore, quindi un suffisso che non entra sparirebbe in silenzio
-  // (e' esattamente cosi' che il tag si e' perso sui video Shopify).
+  // Prefer the title, but only if it fits: YouTube truncates at 100
+  // characters without an error, so a suffix that does not fit would vanish
+  // silently (which is exactly how the tag got lost on the Shopify videos).
   const suffixed = `${title} ${SHORTS_TAG}`;
   if (suffixed.length <= YT_TITLE_MAX) return { title: suffixed, description };
   return { title, description: `${description}\n\n${SHORTS_TAG}` };
@@ -90,8 +91,8 @@ async function processOne(baseName) {
     await postComment({ videoId: result.id, text: meta.ctaComment || DEFAULT_CTA_COMMENT });
     commentPosted = true;
   } catch (err) {
-    // Un commento fallito non deve far sembrare fallito l'intero upload -
-    // il video e' comunque live, il commento e' solo un bonus per il funnel.
+    // A failed comment must not make the whole upload look failed - the video
+    // is live either way, the comment is only a bonus for the funnel.
     console.error(`Comment failed for ${baseName} (video still live):`, err.message);
   }
 

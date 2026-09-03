@@ -1,24 +1,24 @@
-// Costruisce un video "normale" (non-Shorts) per PC Tweaker concatenando
-// piu' Reel gia' pubblicati singolarmente da marketing/published/ - a
-// differenza degli altri canali (xn0time, SoloFounded, ecc), qui non c'e'
-// un pool di fatti da cui generare contenuto nuovo: il materiale e' gia'
-// tutto quello che esiste (i Reel prodotti da marketing/reel-generator).
-// Nessuna reinvenzione di contenuto, solo un remix in formato piu' lungo -
-// stesso principio della countdown "buying guide" di Groomlyco/Magdock.
+// Builds a "normal" (non-Shorts) video for PC Tweaker by concatenating
+// several Reels already published individually from marketing/published/ -
+// unlike the other channels (xn0time, SoloFounded, etc), there is no pool of
+// facts here to generate new content from: the material is already
+// everything that exists (the Reels produced by marketing/reel-generator).
+// No reinventing content, just a remix in a longer format - the same
+// principle as Groomlyco/Magdock's "buying guide" countdown.
 //
-// Uso: node compile-longform.js [--count 6]
+// Usage: node compile-longform.js [--count 6]
 
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 const { uploadVideo } = require("./lib");
 
-// Il concat demuxer di ffmpeg mappa i flussi in automatico in base al PRIMO
-// file della lista: se quello non ha una traccia audio, l'intero output
-// concatenato perde l'audio di TUTTE le clip, anche quelle che ce l'hanno
-// (bug reale trovato 2026-08-01: myth-bust-rollback.mp4 e' video-only,
-// pubblicato per errore un video muto - eliminato e corretto qui, ora si
-// scartano le clip senza audio a monte).
+// ffmpeg's concat demuxer maps streams automatically from the FIRST file in
+// the list: if that one has no audio track, the whole concatenated output
+// loses the audio of EVERY clip, including the ones that have it (real bug
+// found 2026-08-01: myth-bust-rollback.mp4 is video-only, and a silent video
+// went out by mistake - deleted, and fixed here: clips without audio are now
+// discarded up front).
 function hasAudioStream(videoPath) {
   const out = execFileSync("ffprobe", [
     "-v", "error",
@@ -66,9 +66,9 @@ function pickClips(count) {
     for (const base of c.clips) usedCounts[base] = (usedCounts[base] || 0) + 1;
   }
   const all = listAvailableClips();
-  // Preferisci le clip usate meno volte nelle compilation precedenti, cosi'
-  // col tempo si alternano invece di ripetere sempre le stesse (il pool e'
-  // piccolo oggi - 9 clip - ma crescera' con nuovi Reel pubblicati).
+  // Prefer the clips used least often in previous compilations, so that over
+  // time they rotate instead of repeating the same ones (the pool is small
+  // today - 9 clips - but grows as new Reels are published).
   const sorted = [...all].sort((a, b) => (usedCounts[a] || 0) - (usedCounts[b] || 0));
   return sorted.slice(0, Math.min(count, sorted.length));
 }
@@ -84,53 +84,53 @@ function buildDescription(clipMetas) {
   );
 }
 
-// I due punti della lettera di unita' ("C:/...") vanno protetti: nella
-// sintassi dei filtri ffmpeg ':' separa le opzioni, quindi un percorso
-// Windows non escapato rompe l'intera filterchain anche se e' tra apici
-// (verificato: "Error parsing filterchain" subito dopo il primo drawtext).
+// The drive letter's colon ("C:/...") has to be protected: in ffmpeg filter
+// syntax ':' separates options, so an unescaped Windows path breaks the whole
+// filterchain even inside quotes (observed: "Error parsing filterchain"
+// immediately after the first drawtext).
 const THUMB_FONT = path
   .join(ROOT, "reel-generator", "assets", "fonts", "Poppins-ExtraBold.ttf")
   .replace(/\\/g, "/")
   .replace(/:/g, "\\:");
 
 /**
- * Miniatura 1280x720: fotogramma del video sfocato e scurito + TITOLO in
- * grande. Fatta con ffmpeg (drawtext) invece che con una libreria immagini
- * per non aggiungere dipendenze npm a questo pacchetto.
+ * A 1280x720 thumbnail: a frame of the video, blurred and darkened, plus the
+ * TITLE set large. Done with ffmpeg (drawtext) rather than an image library so
+ * as not to add npm dependencies to this package.
  *
- * Lo sfondo va sfocato e scurito, altrimenti il bianco diventa illeggibile
- * sulle zone chiare - ed e' esattamente cio' che rende inutili le miniature
- * automatiche di YouTube.
+ * The background is blurred and darkened, otherwise white becomes illegible
+ * over the light areas - which is exactly what makes YouTube's automatic
+ * thumbnails useless.
  */
-// ':' e '\' hanno significato nella sintassi dei filtri ffmpeg. L'apice
-// veniva prima eliminato del tutto (verificato bruciando davvero un
-// titolo con apostrofo: "Here's What Happened" usciva come "HERES WHAT
-// HAPPENED", un errore grammaticale permanente nel video, non correggibile
-// dopo la pubblicazione). All'interno di un valore tra apici singoli, la
-// I due punti hanno significato nella sintassi dei filtri ffmpeg, quindi un
-// PERCORSO va comunque escapato (vedi THUMB_FONT sopra). Il TESTO invece non
-// passa piu' per l'opzione inline text='...': un apostrofo dentro un valore
-// tra apici singoli non ha un escape affidabile nella sintassi dei filtri
-// ffmpeg. Il tentativo con 'It'\''s' verificato live (2026-08-03) ha rotto
-// il parsing dell'intera filterchain, facendo comparire i parametri del
-// drawtext successivo come testo letterale sullo schermo - peggio del difetto
-// originale (che comunque toglieva l'apostrofo, "HERES" invece di "Here's").
-// Fix robusto: si scrive il testo su un file e si usa l'opzione textfile=,
-// che legge il contenuto cosi' com'e' senza fare parsing di escape sul
-// contenuto - un apostrofo nel file e' solo un carattere, non sintassi.
+// Colons carry meaning in ffmpeg filter syntax, so a PATH still has to be
+// escaped (see THUMB_FONT above). TEXT no longer goes through the inline
+// text='...' option at all: an apostrophe inside a single-quoted value has no
+// reliable escape in that syntax.
+//
+// The apostrophe used to be stripped outright, which was verified by actually
+// burning a title containing one into a video: "Here's What Happened" came
+// out as "HERES WHAT HAPPENED", a permanent grammatical error that cannot be
+// corrected after publishing. The 'It'\''s' form was then tried live
+// (2026-08-03) and broke parsing of the entire filterchain, printing the next
+// drawtext's parameters on screen as literal text - worse than the original
+// defect.
+//
+// The robust fix: write the text to a file and use the textfile= option,
+// which reads the content as-is without parsing escapes inside it - an
+// apostrophe in the file is just a character, not syntax.
 function escFfmpegPath(p) {
   return p.replace(/\\/g, "/").replace(/:/g, "\\:");
 }
 
 /**
- * Filtro ffmpeg drawtext per il titolo, a QUALUNQUE dimensione (width x
- * height) - condiviso da buildThumbnail (sempre 1280x720, il formato
- * richiesto dall'API) e bakeThumbnailCard (dimensioni REALI del video,
- * 2026-08-03, per il bake-in - vedi sotto perche' esiste).
+ * The ffmpeg drawtext filter for the title, at ANY size (width x height) -
+ * shared by buildThumbnail (always 1280x720, the format the API requires) and
+ * bakeThumbnailCard (the video's REAL dimensions, 2026-08-03, for the bake-in
+ * - see below for why that exists).
  *
- * charsPerLine/fontSize/lineH scalano con la larghezza: un font fisso a
- * 76px letto bene a 1280px di larghezza sarebbe minuscolo su un frame molto
- * piu' largo o sproporzionato su uno piu' stretto.
+ * charsPerLine/fontSize/lineH scale with the width: a font fixed at 76px, which
+ * reads well at 1280px wide, would be tiny on a much wider frame and out of
+ * proportion on a narrower one.
  */
 function drawTextFilter(title, width, height, accentColor, tmpDir) {
   const fontSize = Math.round(width * 0.059);
@@ -175,11 +175,11 @@ function cleanupDrawtextFiles(tmpDir) {
   }
 }
 
-// Colore della barra d'accento a rotazione (2026-08-13): prima sempre lo
-// stesso blu su ogni copertina, uno dei motivi per cui i video sembravano
-// tutti uguali in griglia. Alto contrasto su sfondo scurito/sfocato, stessa
-// logica gia' validata dalla ricerca Studio (thumbnail vincenti nella
-// nicchia: colori ad alto contrasto, non un unico accento fisso).
+// Rotating accent-bar colour (2026-08-13): before this it was the same blue
+// on every cover, one of the reasons the videos all looked alike in a grid.
+// High contrast against the darkened/blurred background, the same reasoning
+// already supported by the Studio research (winning thumbnails in this niche
+// use high-contrast colours, not one fixed accent).
 const THUMBNAIL_ACCENT_COLORS = ["0x00B0FF", "0xFF3B30", "0xFFD60A", "0x34C759"];
 
 function buildThumbnail(videoPath, title, accent = THUMBNAIL_ACCENT_COLORS[0]) {
@@ -198,9 +198,9 @@ function buildThumbnail(videoPath, title, accent = THUMBNAIL_ACCENT_COLORS[0]) {
 }
 
 /**
- * Legge la risoluzione REALE del video con ffprobe - non si assume, perche'
- * questo compilato e' sempre verticale (concat di Reel 1080x1920) ma
- * assumerlo a priori sarebbe fragile se il formato sorgente cambiasse.
+ * Reads the video's REAL resolution with ffprobe - it is not assumed, because
+ * although this compilation is always vertical (a concat of 1080x1920 Reels),
+ * assuming that up front would be fragile if the source format ever changed.
  */
 function probeDimensions(videoPath) {
   const out = execFileSync("ffprobe", [
@@ -213,28 +213,26 @@ function probeDimensions(videoPath) {
 }
 
 /**
- * Sovrappone una card col titolo in grande nei primi CARD_SECONDS secondi
- * del video, IN PLACE - aggira il blocco delle miniature personalizzate su
- * un canale senza telefono verificato.
+ * Overlays a card carrying the title, set large, over the first CARD_SECONDS
+ * of the video, IN PLACE - working around the block on custom thumbnails for a
+ * channel with no verified phone number.
  *
- * Perche' esiste (2026-08-03): confermato live che questo canale non ha il
- * telefono verificato (403 "insufficient permissions" su thumbnails.set,
- * sempre), quindi il tentativo via API in uploadVideo (lib.js) fallisce
- * sempre. YouTube sceglie allora un fotogramma a caso del video come
- * copertina - senza alcun rapporto col titolo. Bruciando il design nei
- * primi secondi del video stesso, qualunque fotogramma YouTube scelga in
- * quella finestra E' il design voluto, senza bisogno di alcun permesso.
+ * Why it exists (2026-08-03): confirmed live that this channel has no verified
+ * phone number (403 "insufficient permissions" on thumbnails.set, every time),
+ * so the API attempt in uploadVideo (lib.js) always fails. YouTube then picks a
+ * random frame of the video as the cover - with no relation to the title. By
+ * burning the design into the first seconds of the video itself, whatever frame
+ * YouTube picks inside that window IS the intended design, with no permission
+ * needed.
  *
- * Lo sfondo viene estratto dallo STESSO video che si sta modificando, quindi
- * ha sempre la sua stessa risoluzione/aspect ratio: a differenza della
- * miniatura API (sempre 1280x720 landscape, indipendentemente
- * dall'orientamento del video) qui non serve alcun ritaglio, solo uno
- * scale=W:H sicuro perche' sorgente e destinazione condividono l'aspect
+ * The background is extracted from the SAME video being modified, so it always
+ * shares its resolution and aspect ratio: unlike the API thumbnail (always
+ * 1280x720 landscape, whatever the video's orientation) no crop is needed here,
+ * only a scale=W:H that is safe because source and destination share the aspect
  * ratio.
  *
- * Non solleva mai: se qualunque passaggio fallisce il video resta quello
- * originale, invariato - un video senza il fix e' molto meglio di nessun
- * video.
+ * Never throws: if any step fails the video is left as the original, unchanged -
+ * a video without the fix is far better than no video.
  */
 function probeDuration(videoPath) {
   const out = execFileSync("ffprobe", [
@@ -305,26 +303,25 @@ function bakeThumbnailCard(videoPath, title, cardSeconds = 4, accent = THUMBNAIL
     try {
       if (fs.existsSync(tmpOut)) fs.unlinkSync(tmpOut);
     } catch (_) {
-      // pulizia del temporaneo, non deve mai mascherare l'errore vero sopra
+      // cleaning up the temp file must never mask the real error above
     }
     return false;
   } finally {
-    // Bug reale trovato 2026-08-03: su Windows il file appena scritto da
-    // ffmpeg puo' restare brevemente "in uso" (indicizzazione, antivirus),
-    // e unlinkSync lancia EBUSY - dentro un finally questo SOSTITUIVA il
-    // valore di ritorno del try con un'eccezione non gestita, facendo
-    // crashare l'intero script PRIMA di arrivare a uploadVideo(). Un file
-    // temporaneo da 50KB rimasto su disco non e' un problema; pubblicare
-    // il video lo e'.
+    // Real bug found 2026-08-03: on Windows a file ffmpeg has just written
+    // can stay briefly "in use" (indexing, antivirus), and unlinkSync throws
+    // EBUSY - inside a finally that REPLACED the try's return value with an
+    // unhandled exception, crashing the whole script BEFORE it ever reached
+    // uploadVideo(). A 50KB temp file left on disk is not a problem; failing
+    // to publish the video is.
     try {
       if (fs.existsSync(cardPath)) fs.unlinkSync(cardPath);
     } catch (_) {
-      // vedi commento sopra
+      // see the comment above
     }
     try {
       cleanupDrawtextFiles(OUTPUT_DIR);
     } catch (_) {
-      // vedi commento sopra
+      // see the comment above
     }
   }
 }
@@ -349,33 +346,33 @@ async function main() {
 
   const outputPath = path.join(OUTPUT_DIR, `longform_${Date.now()}.mp4`);
   console.log(`Concateno ${bases.length} clip in ${outputPath}...`);
-  // -map esplicito (invece di lasciare la selezione automatica al primo
-  // file) cosi' fallisce rumorosamente se manca l'audio invece di produrre
-  // in silenzio un video muto come successo la prima volta.
+  // Explicit -map (rather than leaving stream selection to the first file)
+  // so it fails loudly when audio is missing, instead of silently producing a
+  // silent video the way it did the first time.
   execFileSync(
     "ffmpeg",
     ["-y", "-f", "concat", "-safe", "0", "-i", concatListPath, "-map", "0:v:0", "-map", "0:a:0", "-c", "copy", outputPath],
     { stdio: "inherit" }
   );
 
-  // Pool di titoli ampliato 2026-08-13 (richiesta esplicita: i video del
-  // canale "spuntano sempre con le stesse cose") - i 5 template originali
-  // erano TUTTI la stessa formula listicle "N Windows Tweaks...", solo
-  // riformulata: variavano le parole, non l'angolo. Aggiunte varianti che
-  // seguono i pattern vincenti trovati dalla ricerca AI di YouTube Studio
-  // per questo canale (2026-08-12, vedi TEAM_LOG/memoria): "why X is
-  // secretly ruining/draining Y" al posto del conteggio, piu' le frasi di
-  // ricerca reali con piu' domanda ("how to optimize pc for gaming", "what
-  // to do when you get a new pc", "how to stress test your new pc").
-  // Enfasi maiuscola su UNA parola per meta' dei template (2026-08-19,
-  // ricerca CTR/title-formula 2026: humbleandbrag.com e ytzolo.com
-  // concordano entrambi che maiuscolare una singola parola chiave - non
-  // l'intero titolo, che legge come spam - e' una leva CTR indipendente
-  // dalla formula del titolo stessa). Applicata solo a 5 dei 10 template,
-  // non a tutti: la stessa logica di varieta' che ha motivato l'ampliamento
-  // del pool il 2026-08-13 (vedi commento sopra) vale anche qui, un pattern
-  // uniforme su ogni titolo sarebbe di nuovo "spuntano sempre con le stesse
-  // cose" solo con le maiuscole al posto delle parole.
+  // Title pool widened 2026-08-13 (explicit complaint: the channel's videos
+  // "always turn up with the same stuff") - all 5 original templates were the
+  // same listicle formula, "N Windows Tweaks...", merely reworded: the words
+  // varied, the angle did not. Added variants following the winning patterns
+  // YouTube Studio's AI research found for this channel (2026-08-12, see
+  // TEAM_LOG/memory): "why X is secretly ruining/draining Y" instead of a
+  // count, plus the real search phrases with the most demand ("how to
+  // optimize pc for gaming", "what to do when you get a new pc", "how to
+  // stress test your new pc").
+  //
+  // Capitalised emphasis on ONE word in half the templates (2026-08-19,
+  // CTR/title-formula research 2026: humbleandbrag.com and ytzolo.com both
+  // agree that capitalising a single keyword - not the whole title, which
+  // reads as spam - is a CTR lever independent of the title formula itself).
+  // Applied to 5 of the 10 templates, not all: the same variety argument that
+  // motivated widening the pool on 2026-08-13 (see above) applies here too, a
+  // uniform pattern on every title would again be "always the same stuff",
+  // just with capitals instead of words.
   const TITLE_TEMPLATES = [
     (n) => `${n} Windows Tweaks You NEED To Know (2026)`,
     (n) => `${n} Windows Settings You Should Change Today (2026)`,
@@ -391,42 +388,43 @@ async function main() {
   ];
   const title = TITLE_TEMPLATES[Math.floor(Math.random() * TITLE_TEMPLATES.length)](bases.length);
   const description = buildDescription(clipMetas);
-  // Tag API piu' ampi: il campo regge ~500 caratteri e i tag sono un canale
-  // diverso dagli hashtag visibili, conviene sfruttarlo invece di fermarsi a 5.
+  // Wider API tags: the field holds ~500 characters and tags are a different
+  // channel from the visible hashtags, so it is worth using rather than
+  // stopping at 5.
   const tags = [
     "windows tweak", "pc optimizer", "windows 11 tips", "free software", "open source",
     "speed up pc", "windows 11 performance", "debloat windows", "pc maintenance",
     "windows settings", "gaming pc optimization", "pc tweaker",
   ];
 
-  // Colore d'accento sorteggiato UNA VOLTA per video (2026-08-13) e passato
-  // a entrambe le funzioni sotto, cosi' la miniatura API (se mai attiva) e
-  // la card bruciata nel video restano coerenti tra loro.
+  // Accent colour drawn ONCE per video (2026-08-13) and passed to both
+  // functions below, so the API thumbnail (if it is ever enabled) and the
+  // card burned into the video stay consistent with each other.
   const thumbnailAccent = THUMBNAIL_ACCENT_COLORS[Math.floor(Math.random() * THUMBNAIL_ACCENT_COLORS.length)];
 
-  // Miniatura col titolo in grande: su un long-form e' LA leva del click, e
-  // senza YouTube ne sceglie una da un fotogramma a caso (tipicamente meta'
-  // di una parola dei sottotitoli). Se fallisce si pubblica lo stesso.
+  // Thumbnail with the title set large: on a long-form video this is THE
+  // click lever, and without one YouTube picks a random frame (typically half
+  // a word of the subtitles). If it fails, publish anyway.
   let thumbnailPath = null;
   try {
     thumbnailPath = buildThumbnail(outputPath, title, thumbnailAccent);
   } catch (err) {
-    console.warn(`Miniatura non generata (${err.message}) - si prosegue senza`);
+    console.warn(`Thumbnail not generated (${err.message}) - continuing without it`);
   }
 
-  // Questo canale non ha il telefono verificato (confermato 2026-08-03,
-  // l'API rifiuta sempre thumbnails.set) - il tentativo via API sopra resta
-  // attivo (gratis, funziona da solo se il canale viene verificato in
-  // futuro), ma nel frattempo brucia lo stesso design nei primi secondi del
-  // video stesso. Va DOPO buildThumbnail: quella estrae il proprio
-  // fotogramma dal video ancora originale, prima che questa lo modifichi.
+  // This channel has no verified phone number (confirmed 2026-08-03, the API
+  // always rejects thumbnails.set) - the API attempt above stays in place
+  // (free, and starts working on its own if the channel is ever verified),
+  // but meanwhile the same design is burned into the first seconds of the
+  // video itself. This must run AFTER buildThumbnail: that one extracts its
+  // frame from the still-original video, before this modifies it.
   try {
     bakeThumbnailCard(outputPath, title, 4, thumbnailAccent);
   } catch (err) {
-    // Difesa in profondita': bakeThumbnailCard non dovrebbe piu' lanciare
-    // (vedi i suoi try/catch interni), ma un problema sulla copertina non
-    // deve MAI bloccare la pubblicazione di un video gia' renderizzato.
-    console.warn(`[thumbnail] card iniziale saltata (${err.message}) - si prosegue senza`);
+    // Defence in depth: bakeThumbnailCard should no longer throw (see its
+    // own internal try/catch), but a problem with the cover must NEVER block
+    // publishing a video that has already been rendered.
+    console.warn(`[thumbnail] opening card skipped (${err.message}) - continuing without it`);
   }
 
   console.log("Upload in corso...");

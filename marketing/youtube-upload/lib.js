@@ -8,13 +8,13 @@ const DIR = __dirname;
 const TOKEN_PATH = path.join(DIR, "token.json");
 const PORT = 51789;
 const REDIRECT_URI = `http://localhost:${PORT}`;
-// yt-analytics.readonly aggiunto 2026-08-04: la scope "youtube" sopra da'
-// upload/lettura Data API ma non la YouTube Analytics API (retention/watch-
-// time per video, la metrica che decide se un video viene spinto oltre il
-// pool di test iniziale - vedi project_growth_algorithm_research_2026_08_04
-// in memoria). Va abilitata anche "YouTube Analytics API" nello stesso
-// progetto Google Cloud, altrimenti le chiamate falliscono con "API not
-// enabled" anche con lo scope giusto sul token.
+// yt-analytics.readonly added 2026-08-04: the "youtube" scope above grants
+// Data API upload/read but not the YouTube Analytics API (per-video
+// retention/watch time, the metric that decides whether a video is pushed
+// beyond its initial test pool - see project_growth_algorithm_research_2026_08_04
+// in memory). "YouTube Analytics API" must also be enabled in the same Google
+// Cloud project, otherwise the calls fail with "API not enabled" even with the
+// right scope on the token.
 const SCOPES = [
   "https://www.googleapis.com/auth/youtube",
   "https://www.googleapis.com/auth/yt-analytics.readonly",
@@ -75,18 +75,18 @@ async function getAuthorizedClient() {
 }
 
 /**
- * Copertina 1280x720 costruita dal PRIMO fotogramma dello Short (i nostri
- * aprono con la hook card a schermo intero, quindi il fotogramma zero porta
- * gia' il gancio leggibile e non ha ancora sottotitoli sovrapposti).
+ * A 1280x720 cover built from the Short's FIRST frame (ours open with the hook
+ * card full screen, so frame zero already carries the readable hook and has no
+ * subtitles over it yet).
  *
- * Composizione: il fotogramma nitido nella colonna centrale 9:16 - l'unica
- * zona che sopravvive sia alla vista 16:9 sia al ritaglio verticale della
- * griglia Short - e lo stesso fotogramma allargato e sfocato a riempire i
- * lati. Provato davvero: caricando direttamente il verticale 1080x1920,
- * YouTube lo incastra in un 16:9 con due grosse bande nere.
+ * Composition: the sharp frame in the central 9:16 column - the only area that
+ * survives both the 16:9 view and the vertical crop of the Shorts grid - with
+ * the same frame enlarged and blurred to fill the sides. Actually tried:
+ * uploading the 1080x1920 vertical directly makes YouTube wedge it into a 16:9
+ * with two large black bars.
  *
- * Torna null (senza sollevare) se ffmpeg non c'e' o fallisce: meglio la
- * copertina automatica che una pubblicazione mancata.
+ * Returns null (without throwing) if ffmpeg is missing or fails: the automatic
+ * cover is better than a missed publish.
  */
 function buildShortThumbnail(videoPath) {
   const out = path.join(path.dirname(videoPath), "short_thumbnail.jpg");
@@ -102,7 +102,7 @@ function buildShortThumbnail(videoPath) {
     );
     return fs.existsSync(out) ? out : null;
   } catch (err) {
-    console.warn(`[thumbnail] non generata (${err.message}) - resta quella automatica`);
+    console.warn(`[thumbnail] not generated (${err.message}) - keeping the automatic one`);
     return null;
   }
 }
@@ -110,36 +110,36 @@ function buildShortThumbnail(videoPath) {
 async function uploadVideo({ videoPath, title, description, tags = [], privacyStatus = "unlisted", thumbnailPath = null }) {
   const auth = await getAuthorizedClient();
   const youtube = google.youtube({ version: "v3", auth });
-  // Trasparenza AI (2026-08-05): EU AI Act art. 50, applicabile dal 2 agosto
-  // 2026 - il contenuto generato da AI va reso identificabile con marcatura
-  // machine-readable. Questi video sono generati (script + voce TTS):
-  // containsSyntheticMedia e' il campo che l'API espone apposta, "#ai" la
-  // parte visibile a chi legge.
+  // AI transparency (2026-08-05): EU AI Act art. 50, applicable from 2 August
+  // 2026 - AI-generated content must be made identifiable with machine-readable
+  // marking. These videos are generated (script + TTS voice):
+  // containsSyntheticMedia is the field the API exposes for exactly this, and
+  // "#ai" is the part a reader can see.
   if (!tags.some((t) => t.toLowerCase() === "ai")) tags = [...tags, "ai"];
   if (!description.toLowerCase().includes("#ai")) description = `${description.trimEnd()}\n\n#ai`;
   const res = await youtube.videos.insert({
     part: ["snippet", "status"],
     requestBody: {
-      // Lingua dichiarata esplicitamente (2026-08-06): senza, YouTube la
-      // rileva da solo (e puo' sbagliare), e la lingua rilevata e' la base
-      // dell'auto-doppiaggio. Il contenuto e' inglese per regola di progetto.
+      // Language declared explicitly (2026-08-06): without it YouTube detects
+      // the language itself (and can get it wrong), and the detected language
+      // is what auto-dubbing works from. The content is English by project
+      // rule.
       snippet: { title, description, tags, categoryId: "28", defaultLanguage: "en", defaultAudioLanguage: "en" },
       status: { privacyStatus, selfDeclaredMadeForKids: false, containsSyntheticMedia: true },
     },
     media: { body: fs.createReadStream(videoPath) },
   });
 
-  // Copertina anche per gli SHORT (2026-08-06): nel feed non si vede, ma si
-  // vede nella griglia del canale e nella ricerca, cioe' dove si decide se
-  // iscriversi. Senza, YouTube ne sceglieva una da un fotogramma a caso,
-  // spesso con addosso un sottotitolo troncato a meta' parola.
+  // A cover for SHORTS too (2026-08-06): it is not visible in the feed, but it
+  // is visible in the channel grid and in search, which is where people decide
+  // whether to subscribe. Without one, YouTube picked a random frame, often
+  // with a subtitle cut off mid-word across it.
   if (!thumbnailPath) {
     thumbnailPath = buildShortThumbnail(videoPath);
   }
 
-  // Non deve MAI far fallire una pubblicazione gia' andata a buon fine: i
-  // canali senza numero di telefono verificato non possono impostarla e
-  // l'API rifiuta.
+  // This must NEVER fail a publish that already succeeded: channels without a
+  // verified phone number cannot set one and the API refuses.
   if (thumbnailPath) {
     try {
       await youtube.thumbnails.set({
@@ -148,7 +148,7 @@ async function uploadVideo({ videoPath, title, description, tags = [], privacySt
       });
       console.log(`[thumbnail] miniatura personalizzata impostata su ${res.data.id}`);
     } catch (err) {
-      console.warn(`[thumbnail] non impostata (${err.message}) - resta quella automatica`);
+      console.warn(`[thumbnail] not set (${err.message}) - keeping the automatic one`);
     }
   }
 
@@ -156,15 +156,14 @@ async function uploadVideo({ videoPath, title, description, tags = [], privacySt
 }
 
 async function postComment({ videoId, text }) {
-  // NOTA: la YouTube Data API v3 non espone un modo per FISSARE (pin) un
-  // commento in cima - quello resta un passo manuale da YouTube Studio
-  // (apri il video -> Commenti -> Fissa sul commento appena postato). Qui
-  // possiamo solo pubblicarlo, non fissarlo.
+  // NOTE: YouTube Data API v3 exposes no way to PIN a comment to the top -
+  // that stays a manual step in YouTube Studio (open the video -> Comments ->
+  // Pin on the comment just posted). Here we can only publish it, not pin it.
   const auth = await getAuthorizedClient();
   const youtube = google.youtube({ version: "v3", auth });
-  // commentThreads.insert richiede anche il canale proprietario del video.
-  // Senza questo campo l'API può rifiutare il commento pur avendo appena
-  // accettato l'upload dello stesso video.
+  // commentThreads.insert also requires the channel that owns the video.
+  // Without this field the API can refuse the comment even though it has just
+  // accepted the upload of that same video.
   const mine = await youtube.channels.list({ part: ["id"], mine: true });
   const channelId = mine.data.items?.[0]?.id;
   if (!channelId) throw new Error("Cannot determine the authenticated YouTube channel for the CTA comment.");

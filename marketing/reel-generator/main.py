@@ -34,13 +34,13 @@ from render import render_short, render_slideshow
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
 TO_PUBLISH_DIR = os.path.join(os.path.dirname(__file__), "..", "to-publish")
 
-# Cronologia hook per-categoria (2026-08-19): hook = random.choice(CAPTION_HOOKS[category])
-# non teneva nessuna cronologia, con 8 hook per categoria "Save this before
-# your next gaming session" e' uscito 4 volte e "Read this before you
-# download anything" 3 volte negli ultimi video pubblicati - stesso pattern
-# di bug gia' trovato e corretto oggi su certsprint-youtube-bot e
-# kids-shorts-bot (pool piccolo + zero anti-repeat). Finestra = pool_size-1
-# cosi' un hook non si ripete finche' non sono usciti tutti gli altri.
+# Per-category hook history (2026-08-19): hook = random.choice(CAPTION_HOOKS[category])
+# kept no history at all, and with 8 hooks per category "Save this before your
+# next gaming session" went out 4 times and "Read this before you download
+# anything" 3 times across the most recent published videos - the same bug
+# pattern found and fixed the same day on certsprint-youtube-bot and
+# kids-shorts-bot (small pool + zero anti-repeat). Window = pool_size-1, so a
+# hook cannot repeat until every other one has been used.
 HOOK_HISTORY_PATH = os.path.join(OUTPUT_DIR, "hook_history.json")
 
 
@@ -72,15 +72,15 @@ def _pick_hook(category: str) -> str:
 # is the safer TikTok/Reels-native default.
 SLIDESHOW_PROBABILITY = 0.0
 NUM_BACKGROUND_CLIPS = 4
-# TRUSTED_DEMO_VIDEOS RIMOSSO (2026-08-23, richiesta esplicita utente: "basta
-# video con le versioni vecchie di pc tweaker... usa altri format senza
-# usare l'applicazione"). Le 3 registrazioni in producthunt-assets/ erano
-# del lancio Product Hunt e mostravano una UI dell'app ormai superata
-# (confermato: frame estratto da un video pubblicato oggi mostrava
-# ancora quella vecchia schermata Scan). Il commento originale scartava lo
-# stock generico perche' "irrilevante" per query larghe come la categoria
-# intera - qui invece si usa la query PER-ARGOMENTO (item_footage_query),
-# la stessa precisione gia' in uso nel ramo slideshow sotto.
+# TRUSTED_DEMO_VIDEOS REMOVED (2026-08-23, explicit request: "no more videos
+# with the old versions of pc tweaker... use other formats without using the
+# application"). The 3 recordings in producthunt-assets/ were from the Product
+# Hunt launch and showed an app UI that is long superseded (confirmed: a frame
+# pulled from a video published that day still showed the old Scan screen).
+# The original comment rejected generic stock as "irrelevant" for queries as
+# broad as a whole category - here the PER-ITEM query is used instead
+# (item_footage_query), the same precision already in use in the slideshow
+# branch below.
 
 
 def _resolve_query(footage_query):
@@ -106,13 +106,13 @@ def make_one_reel(index: int, category: str = None, preview: bool = False):
     hashtags, footage_query = CATEGORY_META[category]
     hook = _pick_hook(category)
 
-    # Meno elementi per script (2026-08-03). I video uscivano a 26-30s reali,
-    # misurati: fuori dalla fascia che regge il 70% di completion rate che la
-    # ricerca 2026 indica come soglia oltre la quale TikTok apre davvero la
-    # distribuzione. Sotto i ~20s si sta nella fascia "buona/ottima" (60-89%),
-    # oltre i 30s si finisce in "media o sotto". Un fatto solo, raccontato
-    # bene, batte due fatti compressi: la stessa ricerca dice che il video
-    # vince sul completion, non sulla lunghezza assoluta.
+    # Fewer items per script (2026-08-03). Videos were coming out at a
+    # measured 26-30s: outside the band that sustains the 70% completion rate
+    # 2026 research names as the threshold past which TikTok really opens up
+    # distribution. Under ~20s sits in the "good/excellent" band (60-89%);
+    # past 30s lands in "average or below". One fact told well beats two facts
+    # compressed: the same research says a video wins on completion, not on
+    # absolute length.
     if category == LISTTEASE_CATEGORY:
         n = 3
         topic, items = get_listtease_content(n=n)
@@ -133,14 +133,13 @@ def make_one_reel(index: int, category: str = None, preview: bool = False):
             word_timings[i][1] if i < len(word_timings) else 0.0
             for i in item_word_starts
         ]
-        # Query PER-VOCE (2026-08-05): "items" e "item_word_starts" hanno
-        # sempre la stessa lunghezza/ordine (uno per punto della classifica,
-        # o l'unico item per mistakewarning/contrarian/beforeafter), quindi
-        # ogni immagine puo' raffigurare cio' che quella specifica voce sta
-        # dicendo invece di pescare a caso dal pool generico della
-        # categoria. Ripiego SUL SINGOLO ITEM (non su tutta la lista) quando
-        # non c'e' un concetto mappato, cosi' un solo punto senza match non
-        # fa perdere la precisione degli altri.
+        # PER-ITEM query (2026-08-05): "items" and "item_word_starts" always
+        # have the same length and order (one per ranking entry, or the single
+        # item for mistakewarning/contrarian/beforeafter), so every image can
+        # depict what that specific line is actually saying instead of being
+        # drawn at random from the category's generic pool. The fallback is
+        # PER SINGLE ITEM (not the whole list) when no concept is mapped, so
+        # one unmatched entry does not cost the others their precision.
         queries = [item_footage_query(it) or _resolve_query(footage_query) for it in items]
         image_paths = []
         for i, query in enumerate(queries):
@@ -150,18 +149,18 @@ def make_one_reel(index: int, category: str = None, preview: bool = False):
         print(f"[{index}] (slideshow, {len(image_paths)} photos) queries: {queries}")
         render_slideshow(image_paths, image_starts, audio_path, word_timings, video_path, hook=spoken_hook, caption_end_word=cta_start_word)
     else:
-        # Query PER-VOCE anche nel ramo multi-clip (2026-08-05): SLIDESHOW_PROBABILITY
-        # e' 0.5, quindi META' dei video finiva comunque sul pool generico di
-        # categoria anche con la correzione sopra, dato che qui sotto non veniva
-        # applicata. Niente sincronizzazione temporale precisa (i tagli restano
-        # ogni 4-7s, non ai bordi delle parole), ma i clip mostrati sono quelli
-        # degli argomenti realmente trattati, in sequenza - "raffigurare almeno
-        # in modo approssimativo" come richiesto.
-        # Stock reale (Pexels/Pixabay) invece delle registrazioni app (rimosse
-        # 2026-08-23): query per-argomento via item_footage_query, non piu' il
-        # pool largo di categoria da solo - la stessa precisione gia' provata
-        # nel ramo slideshow, per evitare le scene "irrilevanti" gia' viste
-        # con query troppo generiche.
+        # PER-ITEM query in the multi-clip branch too (2026-08-05):
+        # SLIDESHOW_PROBABILITY is 0.5, so HALF the videos still landed on the
+        # generic category pool even with the fix above, because it was not
+        # applied down here. No precise temporal sync (cuts stay every 4-7s,
+        # not on word boundaries), but the clips shown are the ones for the
+        # topics actually being discussed, in order - "depict it at least
+        # approximately", as requested.
+        # Real stock (Pexels/Pixabay) instead of app recordings (removed
+        # 2026-08-23): per-topic queries via item_footage_query rather than
+        # the broad category pool alone - the same precision already proven in
+        # the slideshow branch, to avoid the "irrelevant" scenes seen with
+        # over-generic queries.
         item_query = item_footage_query(items[0]) if items else None
         queries = _resolve_item_queries(item_query or footage_query, NUM_BACKGROUND_CLIPS)
         background_paths = []
@@ -170,13 +169,13 @@ def make_one_reel(index: int, category: str = None, preview: bool = False):
             download_background_video(p, query=query)
             background_paths.append(p)
         print(f"[{index}] (stock background, {NUM_BACKGROUND_CLIPS} cuts) queries: {queries}")
-        # show_captions era False qui (le didascalie a CAPTION_Y standard
-        # coprivano la card della UI, centrata in verticale su un canvas piu'
-        # alto - vedi _fit_product_demo/CAPTION_Y_PRODUCT_DEMO in render.py):
-        # riattivate il 2026-08-15 dopo che render.py ha imparato a spostarle
-        # sotto la card invece di spegnerle. I dati 2026 (Opus, Zebracat)
-        # danno alle didascalie +20-40% di watch time medio anche con audio
-        # attivo - senza, ogni Reel del prodotto rinunciava a quel guadagno.
+        # show_captions was False here (captions at the standard CAPTION_Y
+        # covered the UI card, which is centred vertically on a taller canvas
+        # - see _fit_product_demo/CAPTION_Y_PRODUCT_DEMO in render.py): turned
+        # back on 2026-08-15, after render.py learned to move them below the
+        # card instead of switching them off. The 2026 data (Opus, Zebracat)
+        # credits captions with +20-40% average watch time even with audio on
+        # - without them, every product Reel gave that gain up.
         render_short(
             background_paths, audio_path, word_timings, video_path,
             hook=spoken_hook, caption_end_word=cta_start_word,

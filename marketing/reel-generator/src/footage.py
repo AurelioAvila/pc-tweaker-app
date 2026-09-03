@@ -135,12 +135,13 @@ def download_background_video(output_path: str, query: str = None) -> str:
     resp = requests.get(
         "https://api.pexels.com/videos/search",
         headers={"Authorization": api_key},
-        # Pagina casuale invece della sola pagina 1 (fix 2026-08-02): prima
-        # si pescava sempre dai 20 risultati piu' popolari per quella query,
-        # cioe' esattamente i clip che usano migliaia di altri creator. La
-        # ricerca 2026 e' esplicita: riusare lo stesso stock footage diffuso
-        # fa declassare il video come "Low Value Content", e a noi causava
-        # anche clip ripetuti tra un video e l'altro. Bacino da 20 a 100.
+        # A random page rather than page 1 only (fix 2026-08-02): before
+        # this, clips were always drawn from the 20 most popular results for
+        # that query - precisely the clips thousands of other creators use.
+        # The 2026 research is explicit: reusing the same widespread stock
+        # footage gets a video downranked as "Low Value Content", and here it
+        # also caused clips to repeat from one video to the next. Pool widened
+        # from 20 to 100.
         params={"query": query, "orientation": "portrait", "per_page": 20, "page": random.randint(1, 5)},
         timeout=30,
     )
@@ -201,12 +202,13 @@ def download_photo(output_path: str, query: str = None) -> str:
     resp = requests.get(
         "https://api.pexels.com/v1/search",
         headers={"Authorization": api_key},
-        # Pagina casuale invece della sola pagina 1 (fix 2026-08-02): prima
-        # si pescava sempre dai 20 risultati piu' popolari per quella query,
-        # cioe' esattamente i clip che usano migliaia di altri creator. La
-        # ricerca 2026 e' esplicita: riusare lo stesso stock footage diffuso
-        # fa declassare il video come "Low Value Content", e a noi causava
-        # anche clip ripetuti tra un video e l'altro. Bacino da 20 a 100.
+        # A random page rather than page 1 only (fix 2026-08-02): before
+        # this, clips were always drawn from the 20 most popular results for
+        # that query - precisely the clips thousands of other creators use.
+        # The 2026 research is explicit: reusing the same widespread stock
+        # footage gets a video downranked as "Low Value Content", and here it
+        # also caused clips to repeat from one video to the next. Pool widened
+        # from 20 to 100.
         params={"query": query, "orientation": "portrait", "per_page": 20, "page": random.randint(1, 5)},
         timeout=30,
     )

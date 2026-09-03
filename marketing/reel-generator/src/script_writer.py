@@ -13,38 +13,36 @@ TTS word timing, same mechanism as the getcertsprint bot.
 """
 import random
 
-# Rinforzati 2026-08-01 dopo la prima analisi cross-account reale: gli hook
-# in prima persona/conseguenza diretta (stress-test, POV, "la differenza si
-# vede solo quando e' troppo tardi") hanno performato 5-40x meglio degli
-# hook generici "ecco un'impostazione" su Groomlyco/Magdock - stessa logica
-# applicata qui, non solo teoria. Vedi
-# feedback_reinforce_winning_hooks nella memoria per i dati.
-# Pool ampliati 2026-08-02 da 4-5 a 10 hook per categoria. Un audit su 300
-# generazioni ne ha contati solo 5 distinti: da quando l'hook e' anche il
-# testo della HOOK CARD nel primo fotogramma (vedi _hook_card_clip in
-# src/render.py) e' diventato l'elemento piu' visibile del video, quindi
-# ripetersi ogni 5 video costa molto piu' di prima. Archetipi volutamente
-# diversi (prima persona / conseguenza / POV / numero concreto / mito da
-# smontare) invece di variazioni della stessa formula: quella sarebbe
-# varieta' solo apparente.
-# Tolti 2026-08-19 tre hook in prima persona che affermavano test/acquisti
-# mai avvenuti ("I stress-tested three PC optimizers", "I paid for one of
-# these", "I recorded the before and after so you don't have to trust me") -
-# il render mostra sempre b-roll Pexels generico, mai una vera registrazione
-# dello schermo o un vero acquisto di un tool concorrente, quindi quelle
-# righe erano una prova fittizia messa in bocca a una voce AI. Esattamente il
-# tipo di dettaglio che un commento reale ("probably an unsafe vibe coded
-# tool") individua: non e' un problema di quanto sia tecnico il contenuto, e'
-# una falsa testimonianza in prima persona. Sostituite con affermazioni
-# equivalenti che non rivendicano un test/acquisto specifico dell'autore.
+# Reinforced 2026-08-01 after the first real cross-account analysis:
+# first-person/direct-consequence hooks (stress test, POV, "you only see the
+# difference when it is too late") performed 5-40x better than generic "here is
+# a setting" hooks on Groomlyco/Magdock - the same logic applied here, not just
+# theory. See feedback_reinforce_winning_hooks in memory for the data.
+# Pools widened 2026-08-02 from 4-5 to 10 hooks per category. An audit over 300
+# generations counted only 5 distinct ones: ever since the hook became the text
+# of the HOOK CARD in the first frame too (see _hook_card_clip in
+# src/render.py) it has been the most visible element of the video, so
+# repeating every 5 videos costs far more than it used to. The archetypes are
+# deliberately different (first person / consequence / POV / concrete number /
+# myth to break) rather than variations on one formula: that would be variety
+# in appearance only.
+# Removed 2026-08-19: three first-person hooks that asserted tests or purchases
+# that never happened ("I stress-tested three PC optimizers", "I paid for one
+# of these", "I recorded the before and after so you don't have to trust me") -
+# the render always shows generic Pexels b-roll, never a real screen recording
+# or a real purchase of a competing tool, so those lines were fabricated
+# evidence put in the mouth of an AI voice. Exactly the kind of detail a real
+# comment ("probably an unsafe vibe coded tool") picks up on: the problem is
+# not how technical the content is, it is false first-person testimony.
+# Replaced with equivalent claims that do not assert a specific test or
+# purchase by the author.
 HOOKS = {
-    # Nota sui pattern di hook (aggiornato 2026-08-03): i test 2026 su 30 hook
-    # virali danno solo 4 famiglie sopra quota 70 - Identity Call, Contrarian
-    # Strike, Open Loop, Confession - con Identity Call primo assoluto (85 di
-    # media) perche' nomina in faccia il pubblico a cui parla, mentre le
-    # aperture generiche scendono sotto 30. Qui c'erano gia' Confession,
-    # Contrarian e Open Loop; mancava del tutto Identity Call, aggiunto ora
-    # in ogni categoria.
+    # Note on hook patterns (updated 2026-08-03): 2026 tests across 30 viral
+    # hooks put only 4 families above 70 - Identity Call, Contrarian Strike,
+    # Open Loop, Confession - with Identity Call first outright (85 average)
+    # because it names the audience it is talking to, while generic openings
+    # fall below 30. Confession, Contrarian and Open Loop were already here;
+    # Identity Call was missing entirely, and is now added to every category.
     "mistakewarning": [
         "If you game on a laptop, Windows is working against you right now.",
         "Anyone with a prebuilt PC: check this before your next session.",
@@ -78,10 +76,10 @@ HOOKS = {
         "The paid ones aren't any more honest about what they change.",
         "The honest answer is most of these do almost nothing.",
         "Registry cleaners are still being sold in 2026, and here's why that matters.",
-        # Aggiunto 2026-08-19 insieme ai fatti di verificabilita' in
-        # content.py: hook che nomina direttamente il dubbio che un
-        # commentatore reale ha espresso ("unsafe vibe coded tool"), invece
-        # di continuare a parlare solo in astratto di "PC optimizer tools".
+        # Added 2026-08-19 alongside the verifiability facts in content.py: a
+        # hook that names directly the doubt a real commenter raised ("unsafe
+        # vibe coded tool"), instead of continuing to speak only in the
+        # abstract about "PC optimizer tools".
         "You'd be right to be skeptical of a random Windows tweak tool, here's how to actually check one.",
     ],
     "beforeafter": [
@@ -97,8 +95,8 @@ HOOKS = {
         "This took eleven seconds and I wish I'd done it a year ago.",
         "The boot time alone made this worth it.",
         "No new parts, no reinstall, just the defaults corrected.",
-        # Aggiunto 2026-08-23, stessa ricerca/motivazione della voce
-        # equivalente in "mistakewarning" sopra.
+        # Added 2026-08-23, same research and reasoning as the equivalent
+        # entry under "mistakewarning" above.
         "Windows 11's August 2026 update, one setting, real difference.",
     ],
 }
@@ -122,13 +120,12 @@ REACTIONS = {
     ],
 }
 
-# CTA riscritte il 2026-08-06 con la logica di conversione del canale
-# YouTube: il fine del video e' portare chi guarda al prodotto, quindi
-# l'offerta dev'essere CONCRETA e agganciata a cio' che il video ha appena
-# mostrato ("fixes everything you just saw in one click" continua il
-# discorso; "link in bio" da solo non offre niente). Le varianti save/share
-# restano perche' sono le azioni piu' pesate dal ranking, ma anche loro ora
-# dicono COSA ottieni aprendo il link.
+# CTAs rewritten 2026-08-06 with the YouTube channel's conversion logic: the
+# point of the video is to bring the viewer to the product, so the offer has to
+# be CONCRETE and hooked to what the video has just shown ("fixes everything
+# you just saw in one click" continues the sentence; "link in bio" on its own
+# offers nothing). The save/share variants stay because those are the actions
+# ranking weighs most, but they too now say WHAT you get by opening the link.
 CTA = [
     "PC Tweaker fixes everything you just saw in one click, and it's free to try. Link in bio.",
     "You could change all of this by hand, or let PC Tweaker do it in one click. Free, link in bio.",
@@ -136,21 +133,21 @@ CTA = [
     "PC Tweaker shows you exactly what it changes before it touches anything. Free to try, link in bio.",
     "Save this before you forget, then let PC Tweaker do it for you in one click. Link in bio.",
     "Send this to whoever's PC is a mess right now, the one-click fix is in the bio.",
-    # Aggiunta 2026-08-19: unica CTA che rimanda esplicitamente alla
-    # verificabilita' (source-available + listato indipendentemente), invece
-    # di ripetere solo "free, link in bio" - risposta diretta al dubbio
-    # "e' sicuro?" senza ripeterla in ogni singolo video (sarebbe pesante
-    # quanto ripetuta quanto le altre CTA sono leggere).
+    # Added 2026-08-19: the one CTA that points explicitly at verifiability
+    # (source-available and independently listed) rather than repeating "free,
+    # link in bio" - a direct answer to the "is it safe?" doubt without
+    # repeating it in every single video, where it would weigh as heavily as
+    # the other CTAs are light.
     "Don't just trust a random tweak tool, check it yourself, the code is source-available. Link in bio.",
 ]
 
-# Chiusure da commento-gioco per il formato a lista (2026-08-06): lezione
-# presa da youtube-bot, dove il quiz e' l'unico formato in cui commentare
-# fa parte del gioco ("drop a 1, 2 or 3") e i commenti sono il segnale di
-# ranking che la narrazione pura non attiva mai. Una lista numerata offre
-# gratis la stessa meccanica: chiedere QUALE numero ti ha colpito e' una
-# domanda a risposta immediata, costa ~2s di video e produce il segnale
-# piu' raro dell'ecosistema (zero commenti su quasi tutti i profili).
+# Comment-game closers for the list format (2026-08-06): a lesson taken from
+# youtube-bot, where the quiz is the one format in which commenting is part of
+# the game ("drop a 1, 2 or 3") and comments are the ranking signal pure
+# narration never triggers. A numbered list offers the same mechanic for free:
+# asking WHICH number struck you is a question with an immediate answer, costs
+# ~2s of video, and produces the rarest signal in the ecosystem (zero comments
+# on almost every profile).
 LIST_COMMENT_CLOSERS = [
     "Comment the number that surprised you most.",
     "Which one are you turning off first? Drop the number in the comments.",
@@ -175,24 +172,23 @@ def build_script_template(items, category: str) -> tuple:
     hook = random.choice(HOOKS.get(category, HOOKS["mistakewarning"]))
     cta = random.choice(CTA)
 
-    # REACTIONS rimosse dallo script parlato il 2026-08-04, stessa correzione
-    # gia' applicata a solofounded-bot (omologazione fra i due generatori).
+    # REACTIONS removed from the spoken script on 2026-08-04, the same fix
+    # already applied to solofounded-bot (bringing the two generators in line).
     #
-    # Motivo misurato: @pctweaker10 aveva il watch time mediano piu' basso di
-    # tutti gli account (2.9s) sul video piu' lungo di tutti (22.7s), cioe'
-    # 13% di completamento - e il watch time e' il segnale di ranking #1.
-    # Le reaction sono commento generico che non aggiunge informazione
-    # ("And most people never notice.", "That's the real difference.") ma
-    # occupa secondi di un video gia' troppo lungo.
+    # Measured reason: @pctweaker10 had the lowest median watch time of every
+    # account (2.9s) on the longest video of all (22.7s), which is 13%
+    # completion - and watch time is the #1 ranking signal. Reactions are
+    # generic commentary that adds no information ("And most people never
+    # notice.", "That's the real difference.") while eating seconds of a video
+    # that is already too long.
     #
-    # ATTENZIONE per chi tocchera' questa funzione: item_word_starts contiene
-    # gli INDICI DI PAROLA in cui inizia ogni item, e main.py li usa per
-    # leggere word_timings[i] e decidere l'istante in cui compare ogni
-    # immagine della slideshow. Il contatore word_count deve quindi restare
-    # allineato parola per parola con la stringa finale: togliendo un pezzo
-    # dallo script va tolto ANCHE il suo word_count += _wc(...), altrimenti
-    # le immagini compaiono sfasate rispetto alla voce senza che nulla
-    # sollevi un errore.
+    # CAREFUL, for anyone touching this function: item_word_starts holds the
+    # WORD INDICES at which each item begins, and main.py uses them to read
+    # word_timings[i] and decide the instant each slideshow image appears. The
+    # word_count counter therefore has to stay aligned word by word with the
+    # final string: removing a piece of the script means removing its
+    # word_count += _wc(...) TOO, otherwise the images appear out of sync with
+    # the voice and nothing raises an error.
     parts = [hook]
     item_word_starts = []
 
@@ -212,11 +208,11 @@ def build_script_template(items, category: str) -> tuple:
 
     cta_start_word = word_count
     parts.append(cta)
-    # Il terzo elemento e' la frase-hook parlata: serve alla hook card del
-    # render, che la mostra per intero nel primo fotogramma (vedi
-    # _hook_card_clip in src/render.py). Il quarto e' l'indice di parola in
-    # cui inizia la CTA, cosi' render.py puo' smettere di sottotitolare da li'
-    # (caption_end_word) senza mostrare il testo letterale "link in bio".
+    # The third element is the spoken hook sentence: the render's hook card
+    # needs it, and shows it in full in the first frame (see _hook_card_clip in
+    # src/render.py). The fourth is the word index at which the CTA begins, so
+    # render.py can stop subtitling from there (caption_end_word) without
+    # showing the literal text "link in bio".
     return " ".join(parts), item_word_starts, hook, cta_start_word
 
 
@@ -241,9 +237,9 @@ def build_listtease_script_template(topic: str, items: list) -> tuple:
         parts.append(item_text)
         word_count += _wc(item_text)
 
-    # Chiusura da commento-gioco prima della CTA (vedi LIST_COMMENT_CLOSERS):
-    # arriva DOPO l'ultimo item, quindi non tocca item_word_starts - le
-    # immagini restano sincronizzate con le voci della lista.
+    # Comment-game closer before the CTA (see LIST_COMMENT_CLOSERS): it comes
+    # AFTER the last item, so it does not touch item_word_starts - the images
+    # stay in sync with the entries of the list.
     closer = random.choice(LIST_COMMENT_CLOSERS)
     parts.append(closer)
     word_count += _wc(closer)

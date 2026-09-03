@@ -20,8 +20,8 @@ const { uploadVideo: hostVideo, deleteRelease } = require("./github-host");
 const ROOT = path.join(__dirname, "..");
 const QUEUE_DIRS = [path.join(ROOT, "to-publish"), path.join(ROOT, "published")];
 const LOG_PATH = path.join(__dirname, "uploaded-log.json");
-// Storie (2026-08-22): questo account non le pubblicava mai, a differenza
-// degli altri bot dell'org - stesso tetto di 2/giorno gia' usato li'.
+// Stories (2026-08-22): this account never posted any, unlike the org's other
+// bots - same cap of 2/day already used there.
 const STORY_LOG_PATH = path.join(__dirname, "story-log.json");
 const MAX_STORIES_PER_DAY = 2;
 
@@ -57,19 +57,19 @@ function appendLog(entry) {
   fs.writeFileSync(LOG_PATH, JSON.stringify(log, null, 2));
 }
 
-// Riga di offerta a fine caption (2026-08-06). Ricerca 2026: una CTA con
-// un NUMERO specifico misura +27% di click sul link rispetto alla frase
-// vaga (FastLinkIt/Korli). I numeri sono quelli VERI del README dell'app:
-// 36 tweak totali, 28 gratis per sempre.
+// Offer line at the end of the caption (2026-08-06). 2026 research: a CTA
+// carrying a specific NUMBER measures +27% link clicks against the vague
+// phrasing (FastLinkIt/Korli). The numbers are the REAL ones from the app's
+// README: 36 tweaks total, 28 free forever.
 const CAPTION_OFFER = "PC Tweaker: 36 one-click Windows tweaks, 28 free forever. Link in bio.";
 
 function buildCaption(meta) {
   const rawTags = (meta.instagramTags || meta.tags || []).slice(0, MAX_HASHTAGS);
   const hashtags = rawTags.map((t) => "#" + t.replace(/\s+/g, "")).join(" ");
-  // title (l'hook con la keyword, vedi CAPTION_HOOKS del generatore) come
-  // PRIMA riga: Instagram pesa le keyword nei primi 60-80 caratteri della
-  // caption (SEO 2026), e prima la caption apriva direttamente col corpo
-  // dello script. La description resta per intero: e' testo ricercabile.
+  // title (the keyword hook, see the generator's CAPTION_HOOKS) as the FIRST
+  // line: Instagram weighs keywords in the caption's first 60-80 characters
+  // (2026 SEO), and the caption used to open straight into the body of the
+  // script. The description stays in full: it is searchable text.
   const body = meta.description || meta.title;
   const first = meta.title && meta.description ? `${meta.title}\n\n` : "";
   return `${first}${body}\n\n${CAPTION_OFFER}\n\n${hashtags}`.trim();
@@ -123,28 +123,28 @@ async function main() {
           const storyId = await uploadStory(hosted.url);
           appendStoryLog({ baseName, mediaId: result.mediaId, storyId, publishedAt: new Date().toISOString() });
         } catch (storyErr) {
-          // Il Reel e' gia' riuscito: una Story fallita e' solo distribuzione
-          // extra opzionale, non deve far fallire la pubblicazione principale.
+          // The Reel already succeeded: a failed Story is optional extra
+          // distribution and must not fail the main publish.
           console.error(`  ! Story fallita per ${baseName}:`, storyErr.message);
         }
       }
     } catch (err) {
       console.error(`Failed to upload ${baseName} to Instagram:`, err.message);
     } finally {
-      // 2026-08-04: NON si cancella piu' la release subito dopo un publish
-      // riuscito. Ogni singolo Reel pubblicato dal 2026-08-01 in poi (15 di
-      // fila) e' sparito nel giro di ore/giorni pur risultando "pubblicato"
-      // dall'API - stesso schema visto su certsprint-reels-bot PRIMA che
-      // quel progetto smettesse di cancellare le sue release
-      // (src/github_asset_host.py::keep_for_x, che non le cancella mai) e
-      // su groomlyco/magdock, che non usano affatto GitHub come host (CDN
-      // Shopify) e non hanno mai avuto questo problema. Ipotesi piu'
-      // probabile: Instagram ri-accede al video_url per un processo dopo il
-      // publish (scansione copyright/audio o ranking di distribuzione), lo
-      // trova morto quasi subito, e rimuove il post come contenuto
-      // sospetto. Si cancella la release SOLO se il publish e' fallito
-      // (release orfana, nessun post reale a cui serve) - se e' riuscito
-      // resta su per sempre, come gia' fa certsprint.
+      // 2026-08-04: the release is NO LONGER deleted right after a successful
+      // publish. Every single Reel published from 2026-08-01 onward (15 in a
+      // row) disappeared within hours or days despite the API reporting it as
+      // published - the same pattern seen on certsprint-reels-bot BEFORE that
+      // project stopped deleting its releases
+      // (src/github_asset_host.py::keep_for_x, which never deletes them), and
+      // on groomlyco/magdock, which do not use GitHub as a host at all
+      // (Shopify CDN) and never had the problem. Most likely explanation:
+      // Instagram re-fetches video_url for some post-publish process
+      // (copyright/audio scanning, or distribution ranking), finds it dead
+      // almost immediately, and removes the post as suspicious content. The
+      // release is deleted ONLY when the publish failed (an orphan release,
+      // with no real post that needs it) - when it succeeded it stays up
+      // forever, as certsprint already does.
       if (releaseId && !published) await deleteRelease(releaseId);
     }
   }

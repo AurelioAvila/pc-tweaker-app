@@ -360,7 +360,7 @@ export const engDictionary: Dictionary = {
       {
         tag: "INTERFACE",
         title: "Your desktop, your rules",
-        body: "Dark mode, file extensions, taskbar cleanup, transparency off — and a window that carries its own chrome, with the count of applied optimizations and live CPU and RAM in the title bar. 5 languages, 14 themes.",
+        body: "Dark mode, file extensions, taskbar cleanup, transparency off — and a window that carries its own chrome, with the count of applied optimizations and live CPU and RAM in the title bar. 6 languages, 14 themes.",
         pro: false,
         span: "wide",
       },
@@ -416,6 +416,7 @@ export const engDictionary: Dictionary = {
       features: [
         "35 real tweaks across every domain",
         "One-click Scan & Fix All",
+        "Windows integrity check, and the full startup list",
         "Full rollback engine included",
         "No account required",
       ],
@@ -429,6 +430,9 @@ export const engDictionary: Dictionary = {
       features: [
         "All 56 tweaks unlocked",
         "Turbo Gaming preset + Game Sessions",
+        "Windows integrity repair (DISM + SFC), no command prompt",
+        "Selective cookie cleaning that keeps you signed in",
+        "Third-party app caches: shader, launcher and package-manager",
         "Duplicate & large file finder, drive optimization",
         "Pro syncs across your installs",
       ],
@@ -457,7 +461,7 @@ export const engDictionary: Dictionary = {
       },
       {
         q: "What's actually free?",
-        a: "35 of the 56 tweaks, the Scan, the whole Hardware screen — live sensors, thermal profiles, the driver inventory and driver updates — the rollback engine, the RAM cleaner, the startup manager, BBR2 congestion control and the X3D die aligner: free forever, no account needed. Pro (€9.99/month or €59/year) unlocks the advanced set: Turbo Gaming, Game Sessions, duplicate/large file finders, drive optimization, disabling Recall and Memory Integrity, and the rest of the power-user tweaks.",
+        a: "35 of the 56 tweaks, the Scan, the whole Hardware screen — live sensors, thermal profiles, the driver inventory and driver updates — the rollback engine, the RAM cleaner, the startup and scheduled-task manager, the Windows integrity check, BBR2 congestion control and the X3D die aligner: free forever, no account needed. Pro (€9.99/month or €59/year) unlocks the advanced set: Turbo Gaming, Game Sessions, the Windows repair sequence, selective cookie cleaning, third-party app caches, duplicate/large file finders, drive optimization, disabling Recall and Memory Integrity, and the rest of the power-user tweaks.",
       },
       {
         q: "Does it phone home?",

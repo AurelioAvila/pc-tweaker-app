@@ -6,6 +6,11 @@ pub struct StartupEntry {
     pub command: String,
     /// "HKCU" or "HKLM" — HKLM entries are machine-wide and need admin to change.
     pub scope: String,
+    /// Which of the three places Windows starts things from this entry lives
+    /// in: `run`, `run32` or `folder`. Needed as well as `scope` because each
+    /// has its own registry key *and* its own approval key, so the pair is
+    /// what identifies an entry, not the name alone.
+    pub location: String,
     pub enabled: bool,
     pub requires_admin: bool,
     /// True when the command points at an executable that is no longer on
@@ -107,6 +112,61 @@ const RUN_PATH: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
 const APPROVED_PATH: &str =
     r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
 
+/// The 32-bit view of the same `Run` key.
+///
+/// This app is a 64-bit process, so reading `HKLM\...\CurrentVersion\Run`
+/// gets it the 64-bit registry view and it never sees a single entry belonging
+/// to 32-bit software. That is most consumer installers, which is why a
+/// startup list built only from the key above quietly omits half of what
+/// actually runs at logon. Windows tracks these separately too, under
+/// `StartupApproved\Run32`.
+const RUN32_PATH: &str = r"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run";
+const APPROVED_RUN32_PATH: &str =
+    r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32";
+
+/// The Startup *folder* — the one `shell:startup` opens. Explorer, not the
+/// registry, runs these, but it checks the same style of approval value first,
+/// keyed by the shortcut's file name.
+const APPROVED_FOLDER_PATH: &str =
+    r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder";
+
+/// Where a scope's `Run` values live, per location. `None` for the Startup
+/// folder, which is not a registry key at all.
+fn run_path_for(location: &str) -> Option<&'static str> {
+    match location {
+        "run" => Some(RUN_PATH),
+        // 32-bit entries only exist machine-wide in practice; HKCU is not
+        // redirected for this key, so there is no per-user counterpart to read.
+        "run32" => Some(RUN32_PATH),
+        _ => None,
+    }
+}
+
+fn approved_path_for(location: &str) -> &'static str {
+    match location {
+        "run32" => APPROVED_RUN32_PATH,
+        "folder" => APPROVED_FOLDER_PATH,
+        _ => APPROVED_PATH,
+    }
+}
+
+/// The Startup folder for a scope, if the environment names it.
+fn startup_folder(scope: &str) -> Option<std::path::PathBuf> {
+    let base = if scope == "HKLM" {
+        std::env::var("ProgramData").ok()?
+    } else {
+        std::env::var("APPDATA").ok()?
+    };
+    Some(
+        std::path::PathBuf::from(base)
+            .join("Microsoft")
+            .join("Windows")
+            .join("Start Menu")
+            .join("Programs")
+            .join("Startup"),
+    )
+}
+
 /// Windows records "the user disabled this" in a separate StartupApproved
 /// value rather than deleting the Run entry: byte 0 is even when enabled and
 /// odd when disabled (bytes 4..12 hold the FILETIME it was disabled at). An
@@ -135,21 +195,35 @@ fn now_unix_secs() -> u64 {
         .unwrap_or(0)
 }
 
-/// `<scope>|<0|1>|<name>` — the name is taken as the rest of the string so
-/// program names containing `|` still round-trip intact.
-fn parse_payload(payload: &str) -> Result<(String, bool, String), String> {
-    let mut parts = payload.splitn(3, '|');
+/// `<scope>|<location>|<0|1>|<name>` — the name is taken as the rest of the
+/// string so program names containing `|` still round-trip intact.
+fn parse_payload(payload: &str) -> Result<(String, String, bool, String), String> {
+    let mut parts = payload.splitn(4, '|');
     let scope = parts.next().unwrap_or_default().to_string();
+    let location = parts.next().unwrap_or_default().to_string();
     let enabled = parts.next().unwrap_or("1") == "1";
     let name = parts.next().unwrap_or_default().to_string();
     if name.is_empty() || scope.is_empty() {
         return Err("invalid startup payload".to_string());
     }
-    Ok((scope, enabled, name))
+    // Re-validated here rather than only at the call site: this string reaches
+    // the elevated process as a bare command-line argument, so an unknown
+    // location must not fall through to a default key and disable the wrong
+    // entry with administrator rights.
+    if !matches!(location.as_str(), "run" | "run32" | "folder") {
+        return Err("invalid startup location".to_string());
+    }
+    Ok((scope, location, enabled, name))
 }
 
-fn build_payload(scope: &str, enabled: bool, name: &str) -> String {
-    format!("{}|{}|{}", scope, if enabled { 1 } else { 0 }, name)
+fn build_payload(scope: &str, location: &str, enabled: bool, name: &str) -> String {
+    format!(
+        "{}|{}|{}|{}",
+        scope,
+        location,
+        if enabled { 1 } else { 0 },
+        name
+    )
 }
 
 #[cfg(windows)]
@@ -166,9 +240,9 @@ mod imp {
         }
     }
 
-    fn is_enabled(scope: &str, name: &str) -> bool {
+    fn is_enabled(scope: &str, location: &str, name: &str) -> bool {
         let root = root_for(scope);
-        let Ok(key) = root.open_subkey(APPROVED_PATH) else {
+        let Ok(key) = root.open_subkey(approved_path_for(location)) else {
             return true;
         };
         match key.get_raw_value(name) {
@@ -177,9 +251,13 @@ mod imp {
         }
     }
 
-    fn collect(scope: &str, out: &mut Vec<StartupEntry>) {
+    /// One `Run`-style registry key, in one scope.
+    fn collect_run(scope: &str, location: &str, out: &mut Vec<StartupEntry>) {
+        let Some(path) = run_path_for(location) else {
+            return;
+        };
         let root = root_for(scope);
-        let Ok(key) = root.open_subkey(RUN_PATH) else {
+        let Ok(key) = root.open_subkey(path) else {
             return;
         };
         for item in key.enum_values() {
@@ -189,11 +267,54 @@ mod imp {
                 continue;
             }
             out.push(StartupEntry {
-                enabled: is_enabled(scope, &name),
+                enabled: is_enabled(scope, location, &name),
                 orphaned: super::command_is_orphaned(&command),
                 name,
                 command,
                 scope: scope.to_string(),
+                location: location.to_string(),
+                requires_admin: scope == "HKLM",
+            });
+        }
+    }
+
+    /// The Startup folder for one scope.
+    ///
+    /// The shortcut is reported by its own path rather than by the program it
+    /// points at: reading a `.lnk` target needs COM, and the file path is
+    /// enough both to identify the entry and to show the user where it lives.
+    /// Nothing here can be orphaned the way a `Run` value can — the file was
+    /// just enumerated, so it exists by definition.
+    fn collect_folder(scope: &str, out: &mut Vec<StartupEntry>) {
+        let Some(dir) = startup_folder(scope) else {
+            return;
+        };
+        let Ok(entries) = std::fs::read_dir(&dir) else {
+            return;
+        };
+        for entry in entries.filter_map(|e| e.ok()) {
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+            let Some(file_name) = path.file_name().and_then(|n| n.to_str()) else {
+                continue;
+            };
+            // Explorer's own folder metadata, not a startup item.
+            if file_name.eq_ignore_ascii_case("desktop.ini") {
+                continue;
+            }
+            out.push(StartupEntry {
+                enabled: is_enabled(scope, "folder", file_name),
+                orphaned: false,
+                // The file name verbatim, extension included: that is the key
+                // Explorer stores the approval value under, so it is the name
+                // that has to travel back with a toggle. The UI trims the
+                // extension for display.
+                name: file_name.to_string(),
+                command: path.to_string_lossy().to_string(),
+                scope: scope.to_string(),
+                location: "folder".to_string(),
                 requires_admin: scope == "HKLM",
             });
         }
@@ -201,16 +322,24 @@ mod imp {
 
     pub fn list() -> Vec<StartupEntry> {
         let mut out = Vec::new();
-        collect("HKCU", &mut out);
-        collect("HKLM", &mut out);
+        collect_run("HKCU", "run", &mut out);
+        collect_run("HKLM", "run", &mut out);
+        collect_run("HKLM", "run32", &mut out);
+        collect_folder("HKCU", &mut out);
+        collect_folder("HKLM", &mut out);
         out.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
         out
     }
 
-    pub fn set_enabled(scope: &str, name: &str, enabled: bool) -> Result<(), String> {
+    pub fn set_enabled(
+        scope: &str,
+        location: &str,
+        name: &str,
+        enabled: bool,
+    ) -> Result<(), String> {
         let root = root_for(scope);
         let (key, _) = root
-            .create_subkey_with_flags(APPROVED_PATH, KEY_READ | KEY_WRITE)
+            .create_subkey_with_flags(approved_path_for(location), KEY_READ | KEY_WRITE)
             .map_err(|e| format!("could not open the startup registry key: {}", e))?;
 
         let bytes = approval_bytes(enabled, now_unix_secs());
@@ -233,7 +362,15 @@ pub fn list_startup_items() -> Vec<StartupEntry> {
 
 #[cfg(windows)]
 #[tauri::command(async)]
-pub fn set_startup_enabled(scope: String, name: String, enabled: bool) -> Result<(), String> {
+pub fn set_startup_enabled(
+    scope: String,
+    location: String,
+    name: String,
+    enabled: bool,
+) -> Result<(), String> {
+    if !matches!(location.as_str(), "run" | "run32" | "folder") {
+        return Err(format!("unknown startup location: {}", location));
+    }
     // Machine-wide entries live under HKLM and need elevation; route them
     // through the same one-shot UAC helper every admin tweak already uses
     // instead of failing with a bare access-denied.
@@ -241,10 +378,10 @@ pub fn set_startup_enabled(scope: String, name: String, enabled: bool) -> Result
         // The elevated helper records its own audit entry for this action.
         return crate::elevation::run_elevated_action(
             "--elevated-startup",
-            &build_payload(&scope, enabled, &name),
+            &build_payload(&scope, &location, enabled, &name),
         );
     }
-    let result = imp::set_enabled(&scope, &name, enabled);
+    let result = imp::set_enabled(&scope, &location, &name, enabled);
     crate::audit::record(
         "startup-change",
         &name,
@@ -257,8 +394,8 @@ pub fn set_startup_enabled(scope: String, name: String, enabled: bool) -> Result
 /// Entry point used by the elevated helper process (see `run_elevated_headless`).
 #[cfg(windows)]
 pub fn apply_from_payload(payload: &str) -> Result<(), String> {
-    let (scope, enabled, name) = parse_payload(payload)?;
-    imp::set_enabled(&scope, &name, enabled)
+    let (scope, location, enabled, name) = parse_payload(payload)?;
+    imp::set_enabled(&scope, &location, &name, enabled)
 }
 
 #[cfg(not(windows))]
@@ -269,7 +406,12 @@ pub fn list_startup_items() -> Vec<StartupEntry> {
 
 #[cfg(not(windows))]
 #[tauri::command(async)]
-pub fn set_startup_enabled(_scope: String, _name: String, _enabled: bool) -> Result<(), String> {
+pub fn set_startup_enabled(
+    _scope: String,
+    _location: String,
+    _name: String,
+    _enabled: bool,
+) -> Result<(), String> {
     Err("not supported on this platform".to_string())
 }
 
@@ -376,21 +518,59 @@ mod tests {
 
     #[test]
     fn payload_round_trips_through_the_elevated_helper() {
-        for (scope, enabled, name) in [
-            ("HKLM", false, "Riot Vanguard"),
-            ("HKCU", true, "Discord"),
+        for (scope, location, enabled, name) in [
+            ("HKLM", "run", false, "Riot Vanguard"),
+            ("HKCU", "run", true, "Discord"),
+            ("HKLM", "run32", false, "Old 32-bit Updater"),
+            ("HKCU", "folder", true, "Backup Tool.lnk"),
             // Names are arbitrary user data: spaces and separators must survive.
-            ("HKLM", false, "Weird | Name | With Pipes"),
+            ("HKLM", "run", false, "Weird | Name | With Pipes"),
         ] {
-            let parsed = parse_payload(&build_payload(scope, enabled, name)).expect("should parse");
-            assert_eq!(parsed, (scope.to_string(), enabled, name.to_string()));
+            let parsed = parse_payload(&build_payload(scope, location, enabled, name))
+                .expect("should parse");
+            assert_eq!(
+                parsed,
+                (
+                    scope.to_string(),
+                    location.to_string(),
+                    enabled,
+                    name.to_string()
+                )
+            );
         }
     }
 
     #[test]
     fn rejects_malformed_payloads_instead_of_touching_the_wrong_key() {
         assert!(parse_payload("").is_err());
-        assert!(parse_payload("HKLM|0|").is_err());
-        assert!(parse_payload("|0|Discord").is_err());
+        assert!(parse_payload("HKLM|run|0|").is_err());
+        assert!(parse_payload("|run|0|Discord").is_err());
+        // An unknown location must not silently fall back to the plain `Run`
+        // approval key while running as administrator.
+        assert!(parse_payload("HKLM|services|0|Discord").is_err());
+        assert!(parse_payload("HKLM||0|Discord").is_err());
+    }
+
+    /// Each location has its own approval key. Writing all three into the
+    /// `Run` one would report success and change nothing, which is the worst
+    /// outcome a toggle can have.
+    #[test]
+    fn every_location_has_its_own_approval_key() {
+        assert_eq!(approved_path_for("run"), APPROVED_PATH);
+        assert_eq!(approved_path_for("run32"), APPROVED_RUN32_PATH);
+        assert_eq!(approved_path_for("folder"), APPROVED_FOLDER_PATH);
+        assert_eq!(run_path_for("run"), Some(RUN_PATH));
+        assert_eq!(run_path_for("run32"), Some(RUN32_PATH));
+        // The Startup folder is not a registry key and must not resolve to one.
+        assert_eq!(run_path_for("folder"), None);
+    }
+
+    /// The 32-bit view is a different key, not a different scope. Reading the
+    /// 64-bit path for it would list the same entries twice and toggle the
+    /// wrong ones.
+    #[test]
+    fn the_32_bit_run_key_is_under_wow6432node() {
+        assert!(RUN32_PATH.contains("WOW6432Node"));
+        assert_ne!(RUN32_PATH, RUN_PATH);
     }
 }

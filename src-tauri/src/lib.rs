@@ -1,9 +1,11 @@
+mod appcache;
 mod audit;
 mod avatar;
 pub mod baseline;
 mod browsercleanup;
 mod cleanup;
 mod contextmenu;
+mod cookies;
 // Public so examples/crashprobe.rs can install the real hook and panic for
 // real: whether a panic actually produces a scrubbed report is the one thing
 // a unit test cannot check, because a test that panics is a test that failed.
@@ -40,10 +42,12 @@ mod ramclean;
 mod recommend;
 mod restore_point;
 mod rollback;
+mod scheduledtasks;
 mod securedefrag;
 mod services;
 mod startup;
 mod sysmon;
+mod sysrepair;
 mod systemprofile;
 mod updatewatch;
 mod technical;
@@ -1251,6 +1255,43 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             })
         }
 
+        // Progress goes to a file the unelevated parent polls, exactly as the
+        // secure defrag does — this process has no AppHandle to emit from.
+        "--elevated-repair" => {
+            let progress_path = repair_progress_path(&dir);
+            let result = sysrepair::RepairJob::from_id(id).and_then(|job| {
+                sysrepair::run(job, |p| {
+                    if let Ok(json) = serde_json::to_string(&p) {
+                        let _ = std::fs::write(&progress_path, json);
+                    }
+                })
+            });
+            audit::record(
+                "system-repair",
+                id,
+                result.is_ok(),
+                result.as_ref().err().cloned(),
+            );
+            result.and_then(|res| {
+                let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
+                std::fs::write(dir.join("last_repair_result.json"), json)
+                    .map_err(|e| e.to_string())
+            })
+        }
+
+        // Re-validated on this side: the payload arrives as a bare command-line
+        // argument, so the privileged path must not assume our own UI sent it.
+        "--elevated-task" => {
+            let result = scheduledtasks::apply_from_payload(id);
+            audit::record(
+                "scheduled-task-change",
+                id,
+                result.is_ok(),
+                result.as_ref().err().cloned(),
+            );
+            result
+        }
+
         "--elevated-drift-watch" => match id {
             "enable" => configure_drift_watch(true),
             "disable" => configure_drift_watch(false),
@@ -1477,6 +1518,16 @@ pub fn run() {
             x3d::x3d_align,
             x3d::x3d_reset,
             clear_audit_log,
+            run_system_repair,
+            appcache::scan_app_caches,
+            appcache::clean_app_caches,
+            cookies::scan_cookies,
+            cookies::clean_cookies,
+            cookies::restore_cookies,
+            cookies::cookie_whitelist,
+            cookies::set_cookie_whitelist,
+            scheduledtasks::list_scheduled_tasks,
+            scheduledtasks::set_scheduled_task_enabled,
             netmaintenance::flush_dns_cache
         ])
         .run(tauri::generate_context!())
@@ -1854,6 +1905,92 @@ fn secure_defrag(
     _app: tauri::AppHandle,
     _drive: String,
 ) -> Result<securedefrag::DefragOutcome, String> {
+    Err("not supported on this platform".to_string())
+}
+
+/// Where the elevated helper leaves repair progress for the GUI to pick up.
+/// Same handoff as `defrag_progress_path`, and for the same reason: the
+/// elevated child has no `AppHandle`, and a DISM RestoreHealth that shows
+/// nothing for twenty minutes reads as a hung application.
+pub(crate) fn repair_progress_path(dir: &std::path::Path) -> std::path::PathBuf {
+    dir.join("repair_progress.json")
+}
+
+/// Runs a DISM/SFC job, streaming progress to the UI.
+///
+/// The read-only check is free — it is the honest way to find out whether
+/// there is anything to repair — while the repairs themselves are Pro.
+#[cfg(windows)]
+#[tauri::command(async)]
+fn run_system_repair(
+    app: tauri::AppHandle,
+    job: String,
+) -> Result<sysrepair::RepairOutcome, String> {
+    use tauri::Emitter;
+
+    let dir = store_for_dir(&app)?;
+    let parsed = sysrepair::RepairJob::from_id(&job)?;
+    if parsed != sysrepair::RepairJob::Check {
+        require_pro(&dir)?;
+    }
+    let _guard = sysrepair::RunGuard::acquire()?;
+
+    if !elevation::is_elevated() {
+        // Poll the progress file the elevated child writes, re-emitting each
+        // update as the event the UI is already listening for. The thread
+        // stops when the child exits, which `run_elevated_action` waits for.
+        let progress_path = repair_progress_path(&dir);
+        let _ = std::fs::remove_file(&progress_path);
+        let watcher_app = app.clone();
+        let watch_path = progress_path.clone();
+        let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let watcher_stop = stop.clone();
+        let watcher = std::thread::spawn(move || {
+            let mut last = String::new();
+            while !watcher_stop.load(std::sync::atomic::Ordering::Relaxed) {
+                if let Ok(json) = std::fs::read_to_string(&watch_path) {
+                    if json != last && !json.trim().is_empty() {
+                        if let Ok(p) = serde_json::from_str::<sysrepair::RepairProgress>(&json) {
+                            let _ = watcher_app.emit("system-repair-progress", p);
+                        }
+                        last = json;
+                    }
+                }
+                std::thread::sleep(std::time::Duration::from_millis(300));
+            }
+        });
+
+        let elevated = elevation::run_elevated_action("--elevated-repair", parsed.id());
+        stop.store(true, std::sync::atomic::Ordering::Relaxed);
+        let _ = watcher.join();
+        elevated?;
+
+        let path = dir.join("last_repair_result.json");
+        let json = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_file(&progress_path);
+        return serde_json::from_str(&json).map_err(|e| e.to_string());
+    }
+
+    let emitter = app.clone();
+    let result = sysrepair::run(parsed, |p| {
+        let _ = emitter.emit("system-repair-progress", p);
+    });
+    audit::record(
+        "system-repair",
+        parsed.id(),
+        result.is_ok(),
+        result.as_ref().err().cloned(),
+    );
+    result
+}
+
+#[cfg(not(windows))]
+#[tauri::command(async)]
+fn run_system_repair(
+    _app: tauri::AppHandle,
+    _job: String,
+) -> Result<sysrepair::RepairOutcome, String> {
     Err("not supported on this platform".to_string())
 }
 

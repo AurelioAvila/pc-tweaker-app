@@ -98,6 +98,10 @@ pub fn remove_game_session(app: tauri::AppHandle, path: String) -> Result<(), St
 struct SessionEvent {
     active: bool,
     name: Option<String>,
+    /// Physical RAM handed back by the working-set trim that runs alongside
+    /// the preset. Zero on a machine that was already tidy, which is a real
+    /// outcome and not a failure.
+    freed_bytes: u64,
 }
 
 /// Turbo Gaming touches an HKLM value and the active power scheme, both of
@@ -121,6 +125,16 @@ fn rollback_turbo_elevated_if_needed(store: &RollbackStore) -> Result<(), String
     } else {
         crate::elevation::run_elevated_action("--elevated-rollback", turbo::TWEAK_ID)
     }
+}
+
+#[cfg(windows)]
+fn trim_working_sets() -> u64 {
+    crate::ramclean::trim_for_session()
+}
+
+#[cfg(not(windows))]
+fn trim_working_sets() -> u64 {
+    0
 }
 
 #[cfg(not(windows))]
@@ -182,12 +196,21 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                             continue;
                         }
                     }
+                    // Ask Windows to page out everything else's working set
+                    // while the game is still loading. Nothing is lost — a
+                    // page a background app still needs is faulted straight
+                    // back in — but the pages the game is about to allocate
+                    // come from RAM instead of from the pagefile. Deliberately
+                    // not reverted on exit: there is nothing to revert, the
+                    // memory simply gets used again as the machine needs it.
+                    let freed_bytes = trim_working_sets();
                     *active = Some(game.name.clone());
                     let _ = app.emit(
                         "game-session-changed",
                         SessionEvent {
                             active: true,
                             name: Some(game.name.clone()),
+                            freed_bytes,
                         },
                     );
                 }
@@ -203,6 +226,7 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                         SessionEvent {
                             active: false,
                             name: None,
+                            freed_bytes: 0,
                         },
                     );
                 }

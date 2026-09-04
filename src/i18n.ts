@@ -204,6 +204,97 @@ export interface Strings {
     refresh: string;
     refreshing: string;
     hiddenOrphans: string;
+    /** Which of Windows' three startup mechanisms a row came from. */
+    locationRun: string;
+    locationRun32: string;
+    locationFolder: string;
+  };
+  systemRepair: {
+    title: string;
+    description: string;
+    adminNote: string;
+    timeNote: string;
+    checkButton: string;
+    checking: string;
+    cleanupButton: string;
+    cleaningUp: string;
+    cleanupNote: string;
+    runningNote: string;
+    stepScan: string;
+    stepRestore: string;
+    stepSfc: string;
+    stepCleanup: string;
+    stepOf: string; // uses {index} {total}
+    statusHealthy: string;
+    statusRepairable: string;
+    statusRepaired: string;
+    statusUnrepairable: string;
+    statusCompleted: string;
+    hintUnrepairable: string;
+    hintCompleted: string;
+    logTitle: string;
+    askRepair: string;
+    askRepairYes: string;
+    askRepairNo: string;
+    repairAnyway: string;
+    elapsed: string; // uses {time}
+    holdingAt: string; // uses {percent} {time}
+  };
+  cookieCleaner: {
+    title: string;
+    description: string;
+    scanButton: string;
+    scanning: string;
+    cleanButton: string;
+    cleaning: string;
+    noneFound: string;
+    totals: string; // uses {removable} {protected}
+    runningWarning: string; // uses {browser}
+    backupNote: string;
+    restoreButton: string;
+    restoring: string;
+    restoredToast: string; // uses {browser}
+    cleanedToast: string; // uses {removed} {kept}
+    nothingToClean: string;
+    topDomains: string;
+    whitelistTitle: string;
+    whitelistNote: string;
+    whitelistPlaceholder: string;
+    whitelistAdd: string;
+    whitelistRemove: string;
+    whitelistReset: string;
+  };
+  appCache: {
+    title: string;
+    description: string;
+    scanButton: string;
+    scanning: string;
+    cleanButton: string;
+    cleaning: string;
+    noneFound: string;
+    permanentNote: string;
+    blockedBy: string; // uses {process}
+    selectedTotal: string; // uses {size}
+    cleanedToast: string; // uses {freed}
+    skippedNote: string; // uses {count}
+    catShaders: string;
+    catLaunchers: string;
+    catApps: string;
+    catDev: string;
+    catWindows: string;
+    /** Display name per cache id; falls back to the Rust-side English name. */
+    names: Record<string, string>;
+  };
+  scheduledTasks: {
+    title: string;
+    description: string;
+    empty: string;
+    activeCount: string; // uses {enabled} {total}
+    triggerLogon: string;
+    triggerBoot: string;
+    refresh: string;
+    refreshing: string;
+    note: string;
   };
   search: {
     placeholder: string;
@@ -239,9 +330,17 @@ export interface Strings {
     switchToLifetime: string;
     proActiveNoBilling: string;
     everythingInFree: string;
+    included: string;
     reassurance: string;
     freeFeatures: string[];
     proFeatures: string[];
+    lifetimeName: string;
+    lifetimeTagline: string;
+    lifetimeCta: string;
+    oneTimeBadge: string;
+    everythingInPro: string;
+    lifetimeExclusive: string;
+    lifetimeFeatures: string[];
   };
   toggle: { on: string; off: string };
   driverBooster: {
@@ -326,6 +425,7 @@ export interface Strings {
     title: string;
     subtitle: string;
     active: string; // uses {name}
+    activeFreed: string; // uses {name} {freed}
     gamesCount: string; // uses {count}
     addGame: string;
   };
@@ -1003,6 +1103,122 @@ const it: Strings = {
     refresh: "Aggiorna",
     refreshing: "Rilettura...",
     hiddenOrphans: "{count} voci nascoste: il programma non è più installato.",
+    locationRun: "Registro",
+    locationRun32: "Registro (32 bit)",
+    locationFolder: "Cartella Esecuzione automatica",
+  },
+  systemRepair: {
+    title: "Verifica e riparazione di Windows",
+    description:
+      "Controlla se i file di sistema e l'archivio componenti di Windows sono integri e, se non lo sono, li ripara dai server Microsoft. Sono gli stessi strumenti DISM e SFC che il supporto Microsoft fa eseguire, senza riga di comando.",
+    adminNote:
+      "Serve l'autorizzazione da amministratore: Windows la chiede una volta sola e viene creato un punto di ripristino prima di ogni modifica.",
+    timeNote:
+      "Una riparazione completa può richiedere 20 minuti o più. Puoi continuare a usare il PC: basta non spegnerlo.",
+    checkButton: "Verifica integrità",
+    checking: "Verifica in corso...",
+    cleanupButton: "Riduci archivio componenti",
+    cleaningUp: "Riduzione in corso...",
+    cleanupNote:
+      "Rimuove dalla cartella WinSxS le versioni dei componenti ormai sostituite. Gli aggiornamenti installati di recente restano disinstallabili.",
+    runningNote: "Non spegnere né riavviare il PC mentre è in corso.",
+    stepScan: "Controllo dell'archivio componenti",
+    stepRestore: "Riparazione dell'archivio componenti",
+    stepSfc: "Controllo dei file di sistema",
+    stepCleanup: "Riduzione dell'archivio componenti",
+    stepOf: "Passaggio {index} di {total}",
+    statusHealthy: "Windows è integro",
+    statusRepairable: "Trovati danni, ma sono riparabili",
+    statusRepaired: "Danni trovati e riparati",
+    statusUnrepairable: "Trovati danni che non è stato possibile riparare",
+    statusCompleted: "Operazione conclusa",
+    hintUnrepairable:
+      "Di solito il passo successivo è un aggiornamento sul posto di Windows. Nel registro qui sotto trovi il codice di errore.",
+    hintCompleted:
+      "Gli strumenti sono stati eseguiti. Con la lingua di Windows in uso il risultato non è leggibile automaticamente: i dettagli sono nel registro qui sotto.",
+    logTitle: "Dettagli",
+    askRepair: "Vuoi ripararlo adesso?",
+    askRepairYes: "Sì, ripara ora",
+    askRepairNo: "Non ora",
+    repairAnyway: "Esegui comunque una riparazione completa",
+    elapsed: "{time} trascorsi",
+    holdingAt:
+      "Fermo al {percent}% da {time}. DISM resta sulla stessa percentuale anche per diversi minuti mentre Windows ricostruisce i componenti in background: non si è bloccato.",
+  },
+  cookieCleaner: {
+    title: "Pulizia selettiva dei cookie",
+    description:
+      "Elimina i cookie di tracciamento e pubblicità e conserva quelli che tengono attivi i tuoi accessi. Sui siti nella tua lista resti connesso.",
+    scanButton: "Analizza i cookie",
+    scanning: "Analisi in corso...",
+    cleanButton: "Pulisci",
+    cleaning: "Pulizia in corso...",
+    noneFound: "Nessun cookie del browser trovato su questo PC.",
+    totals: "{removable} da rimuovere, {protected} cookie di accesso conservati",
+    runningWarning: "Chiudi {browser} per pulirlo. I numeri qui sopra sono comunque corretti.",
+    backupNote:
+      "Prima della pulizia il database dei cookie viene copiato, così l'operazione è annullabile.",
+    restoreButton: "Annulla l'ultima pulizia",
+    restoring: "Ripristino in corso...",
+    restoredToast: "{browser}: cookie ripristinati dall'ultima copia.",
+    cleanedToast: "{removed} cookie rimossi, {kept} accessi conservati.",
+    nothingToClean: "Non c'è nulla da rimuovere: tutti i cookie sono nella tua lista.",
+    topDomains: "La maggior parte dei cookie arriva da",
+    whitelistTitle: "Siti su cui restare connesso",
+    whitelistNote:
+      "Valgono anche i sottodomini: aggiungendo google.com resta attivo anche accounts.google.com.",
+    whitelistPlaceholder: "esempio.com",
+    whitelistAdd: "Aggiungi",
+    whitelistRemove: "Rimuovi",
+    whitelistReset: "Ripristina i predefiniti",
+  },
+  appCache: {
+    title: "Cache dei programmi di terze parti",
+    description:
+      "Cache degli shader, launcher di giochi, app di messaggistica e gestori di pacchetti trattengono gigabyte di file che ricostruiscono da soli. Qui li trovi nei programmi che hai davvero installato.",
+    scanButton: "Analizza le cache",
+    scanning: "Analisi in corso...",
+    cleanButton: "Pulisci le voci scelte",
+    cleaning: "Pulizia in corso...",
+    noneFound: "Nessuna cache di terze parti trovata su questo PC.",
+    permanentNote:
+      "Questi file vengono eliminati definitivamente e non spostati nel Cestino: riciclare gigabyte non libera nulla finché il Cestino non viene svuotato. Tutto ciò che vedi qui viene ricostruito da solo dal programma che l'ha creato.",
+    blockedBy: "{process} è in esecuzione, quindi i suoi file verranno saltati.",
+    selectedTotal: "{size} selezionati",
+    cleanedToast: "Liberati {freed}.",
+    skippedNote: "{count} file erano in uso e sono stati lasciati intatti.",
+    catShaders: "Cache degli shader",
+    catLaunchers: "Launcher di giochi",
+    catApps: "App",
+    catDev: "Strumenti di sviluppo",
+    catWindows: "Windows",
+    names: {
+      shader_dx: "Cache shader DirectX",
+      shader_nvidia: "Cache shader NVIDIA",
+      shader_amd: "Cache shader AMD",
+      shader_intel: "Cache shader Intel",
+      steam: "Cache web di Steam",
+      epic: "Cache di Epic Games Launcher",
+      battlenet: "Cache di Battle.net",
+      discord: "Cache di Discord",
+      vscode: "Cache di Visual Studio Code",
+      npm: "Cache dei pacchetti npm",
+      pip: "Cache dei pacchetti pip",
+      crash_dumps: "Dump dei crash delle applicazioni",
+      error_reports: "Segnalazioni errori di Windows",
+    },
+  },
+  scheduledTasks: {
+    title: "Attività pianificate all'avvio",
+    description:
+      "Programmi di aggiornamento e servizi in background che partono all'accesso o all'accensione tramite l'Utilità di pianificazione, dove l'elenco Avvio di Windows non li mostra. Le attività di Windows non compaiono qui.",
+    empty: "Nessuna attività di terze parti all'avvio su questo PC.",
+    activeCount: "Attive: {enabled} / {total}",
+    triggerLogon: "All'accesso",
+    triggerBoot: "All'accensione",
+    refresh: "Aggiorna",
+    refreshing: "Rilettura...",
+    note: "Disattivare un'attività non disinstalla nulla e puoi riattivarla in qualsiasi momento.",
   },
   search: {
     placeholder: "Cerca un tweak...",
@@ -1041,6 +1257,7 @@ const it: Strings = {
     switchToLifetime: "Passa al lifetime",
     proActiveNoBilling: "Pro è attivo su questo account",
     everythingInFree: "Tutto quello che c’è nel Free, più:",
+    included: "Cosa include",
     reassurance:
       "Disdici quando vuoi. Ogni modifica resta reversibile con un click, anche dopo la disdetta.",
     freeFeatures: [
@@ -1059,6 +1276,18 @@ const it: Strings = {
       "Svuota la cache di Windows Update",
       "Disattiva l’indicizzazione che tiene il disco occupato",
       "Ogni tweak e ogni funzione futura, inclusi",
+    ],
+    lifetimeName: "A vita",
+    lifetimeTagline:
+      "Paghi una volta sola. Tutto il Pro per sempre, e ogni novità prima di chiunque altro.",
+    lifetimeCta: "Passa a vita",
+    oneTimeBadge: "PAGAMENTO UNICO",
+    everythingInPro: "Tutto il Pro",
+    lifetimeExclusive: "Solo con il piano a vita",
+    lifetimeFeatures: [
+      "Le nuove funzioni per primo, prima che arrivino ai piani mensile e annuale",
+      "Ogni versione futura inclusa, senza mai rinnovare",
+      "Assistenza prioritaria, risposta dallo sviluppatore",
     ],
   },
   toggle: { on: "Attivato", off: "Disattivato" },
@@ -1157,6 +1386,7 @@ const it: Strings = {
     subtitle:
       "Rileva automaticamente i tuoi giochi e applica/annulla il preset Turbo Gaming da solo.",
     active: "Sessione attiva: {name}",
+    activeFreed: "Boost attivo per {name} — {freed} di RAM liberati.",
     gamesCount: "{count} giochi registrati",
     addGame: "+ Aggiungi gioco (.exe)",
   },
@@ -2144,6 +2374,120 @@ const en: Strings = {
     refresh: "Refresh",
     refreshing: "Rescanning...",
     hiddenOrphans: "{count} entries hidden: the program is no longer installed.",
+    locationRun: "Registry",
+    locationRun32: "Registry (32-bit)",
+    locationFolder: "Startup folder",
+  },
+  systemRepair: {
+    title: "Windows integrity check and repair",
+    description:
+      "Checks whether Windows' own system files and component store are intact, and repairs them from Microsoft's servers when they are not. The same DISM and SFC tools Microsoft support asks people to run, without the command line.",
+    adminNote:
+      "Runs as administrator: Windows asks once, and a restore point is taken before anything changes.",
+    timeNote:
+      "A full repair can take 20 minutes or more. You can keep using the PC — just don't shut it down.",
+    checkButton: "Check integrity",
+    checking: "Checking...",
+    cleanupButton: "Shrink component store",
+    cleaningUp: "Shrinking...",
+    cleanupNote:
+      "Removes superseded component versions from WinSxS. Recently installed updates stay uninstallable.",
+    runningNote: "Don't shut down or restart while this is running.",
+    stepScan: "Checking the component store",
+    stepRestore: "Repairing the component store",
+    stepSfc: "Checking system files",
+    stepCleanup: "Shrinking the component store",
+    stepOf: "Step {index} of {total}",
+    statusHealthy: "Windows is intact",
+    statusRepairable: "Damage found, and it can be repaired",
+    statusRepaired: "Damage found and repaired",
+    statusUnrepairable: "Damage found that could not be repaired",
+    statusCompleted: "Finished",
+    hintUnrepairable:
+      "An in-place upgrade of Windows is usually the next step. The output below has the error code.",
+    hintCompleted:
+      "The tools ran. Your Windows language means the result could not be read automatically — the output below has the details.",
+    logTitle: "Output",
+    askRepair: "Do you want to repair it now?",
+    askRepairYes: "Yes, repair now",
+    askRepairNo: "Not now",
+    repairAnyway: "Run a full repair anyway",
+    elapsed: "{time} elapsed",
+    holdingAt:
+      "Still at {percent}% after {time}. DISM parks on one number for minutes at a time while Windows rebuilds components in the background — it hasn't frozen.",
+  },
+  cookieCleaner: {
+    title: "Selective cookie cleaner",
+    description:
+      "Removes tracking and advertising cookies while keeping the ones holding your sign-ins. Sites on your keep-list stay logged in.",
+    scanButton: "Scan cookies",
+    scanning: "Scanning...",
+    cleanButton: "Clean",
+    cleaning: "Cleaning...",
+    noneFound: "No browser cookies found on this PC.",
+    totals: "{removable} to remove, {protected} sign-in cookies kept",
+    runningWarning: "Close {browser} to clean it. The counts above are already accurate.",
+    backupNote: "The cookie database is copied first, so a clean can be undone.",
+    restoreButton: "Undo last clean",
+    restoring: "Restoring...",
+    restoredToast: "{browser}: cookies restored from the last backup.",
+    cleanedToast: "{removed} cookies removed, {kept} sign-ins kept.",
+    nothingToClean: "Nothing to remove: every cookie here is on your keep-list.",
+    topDomains: "Most cookies come from",
+    whitelistTitle: "Sites to stay signed in to",
+    whitelistNote: "Subdomains are covered too: adding google.com also keeps accounts.google.com.",
+    whitelistPlaceholder: "example.com",
+    whitelistAdd: "Add",
+    whitelistRemove: "Remove",
+    whitelistReset: "Restore defaults",
+  },
+  appCache: {
+    title: "Third-party app caches",
+    description:
+      "Shader caches, game launchers, chat apps and package managers hold on to gigabytes of files they rebuild by themselves. This finds them across the programs you actually have installed.",
+    scanButton: "Scan caches",
+    scanning: "Scanning...",
+    cleanButton: "Clean selected",
+    cleaning: "Cleaning...",
+    noneFound: "No third-party caches found on this PC.",
+    permanentNote:
+      "These are deleted for good rather than moved to the Recycle Bin, because recycling gigabytes frees nothing until the bin is emptied. Everything listed here is rebuilt automatically by the program that created it.",
+    blockedBy: "{process} is running, so its files will be skipped.",
+    selectedTotal: "{size} selected",
+    cleanedToast: "{freed} freed.",
+    skippedNote: "{count} files were in use and were left alone.",
+    catShaders: "Shader caches",
+    catLaunchers: "Game launchers",
+    catApps: "Anwendungen",
+    catDev: "Developer tools",
+    catWindows: "Windows",
+    names: {
+      shader_dx: "DirectX shader cache",
+      shader_nvidia: "NVIDIA shader cache",
+      shader_amd: "AMD shader cache",
+      shader_intel: "Intel shader cache",
+      steam: "Steam web cache",
+      epic: "Epic Games Launcher cache",
+      battlenet: "Battle.net cache",
+      discord: "Discord cache",
+      vscode: "Visual Studio Code cache",
+      npm: "npm package cache",
+      pip: "pip package cache",
+      crash_dumps: "Application crash dumps",
+      error_reports: "Windows error reports",
+    },
+  },
+  scheduledTasks: {
+    title: "Scheduled startup tasks",
+    description:
+      "Updaters and background helpers that run at sign-in or boot from the Task Scheduler, where the Windows Startup list never shows them. Windows' own tasks are not listed here.",
+    empty: "No third-party startup tasks on this PC.",
+    activeCount: "Enabled: {enabled} / {total}",
+    triggerLogon: "At sign-in",
+    triggerBoot: "At boot",
+    refresh: "Refresh",
+    refreshing: "Re-reading...",
+    note: "Turning a task off uninstalls nothing, and you can turn it back on at any time.",
   },
   search: {
     placeholder: "Search a tweak...",
@@ -2182,6 +2526,7 @@ const en: Strings = {
     switchToLifetime: "Switch to lifetime",
     proActiveNoBilling: "Pro is active on this account",
     everythingInFree: "Everything in Free, plus:",
+    included: "Included",
     reassurance:
       "Cancel anytime. Every change stays one click away from being undone, even after you cancel.",
     freeFeatures: [
@@ -2200,6 +2545,18 @@ const en: Strings = {
       "Clears the Windows Update cache",
       "Disables the indexing that keeps your disk busy",
       "Every tweak and every future feature, included",
+    ],
+    lifetimeName: "Lifetime",
+    lifetimeTagline:
+      "Pay once. Every Pro feature for good, and whatever comes next before anyone else gets it.",
+    lifetimeCta: "Get Lifetime",
+    oneTimeBadge: "ONE-TIME PAYMENT",
+    everythingInPro: "Everything in Pro",
+    lifetimeExclusive: "Lifetime only",
+    lifetimeFeatures: [
+      "New features first, before they reach the monthly and yearly plans",
+      "Every future release included — no renewal, ever",
+      "Priority support, answered by the developer",
     ],
   },
   toggle: { on: "On", off: "Off" },
@@ -2296,6 +2653,7 @@ const en: Strings = {
     title: "Game Sessions",
     subtitle: "Auto-detects your games and applies/reverts the Turbo Gaming preset on its own.",
     active: "Session active: {name}",
+    activeFreed: "Boost active for {name} — {freed} of RAM handed back.",
     gamesCount: "{count} games registered",
     addGame: "+ Add game (.exe)",
   },
@@ -3279,6 +3637,122 @@ const fr: Strings = {
     refresh: "Actualiser",
     refreshing: "Nouvelle analyse...",
     hiddenOrphans: "{count} entrées masquées : le programme n'est plus installé.",
+    locationRun: "Registre",
+    locationRun32: "Registre (32 bits)",
+    locationFolder: "Dossier Démarrage",
+  },
+  systemRepair: {
+    title: "Vérification et réparation de Windows",
+    description:
+      "Vérifie que les fichiers système et le magasin de composants de Windows sont intacts et, si ce n'est pas le cas, les répare depuis les serveurs de Microsoft. Ce sont les outils DISM et SFC que le support Microsoft fait exécuter, sans ligne de commande.",
+    adminNote:
+      "Nécessite les droits administrateur : Windows les demande une seule fois, et un point de restauration est créé avant toute modification.",
+    timeNote:
+      "Une réparation complète peut prendre 20 minutes ou plus. Vous pouvez continuer à utiliser le PC : il suffit de ne pas l'éteindre.",
+    checkButton: "Vérifier l'intégrité",
+    checking: "Vérification...",
+    cleanupButton: "Réduire le magasin de composants",
+    cleaningUp: "Réduction...",
+    cleanupNote:
+      "Supprime du dossier WinSxS les versions de composants remplacées. Les mises à jour récentes restent désinstallables.",
+    runningNote: "N'éteignez pas et ne redémarrez pas le PC pendant l'opération.",
+    stepScan: "Analyse du magasin de composants",
+    stepRestore: "Réparation du magasin de composants",
+    stepSfc: "Vérification des fichiers système",
+    stepCleanup: "Réduction du magasin de composants",
+    stepOf: "Étape {index} sur {total}",
+    statusHealthy: "Windows est intact",
+    statusRepairable: "Dommages détectés, mais réparables",
+    statusRepaired: "Dommages détectés et réparés",
+    statusUnrepairable: "Dommages détectés qui n'ont pas pu être réparés",
+    statusCompleted: "Terminé",
+    hintUnrepairable:
+      "L'étape suivante est en général une mise à niveau sur place de Windows. Le code d'erreur figure dans la sortie ci-dessous.",
+    hintCompleted:
+      "Les outils se sont exécutés. Avec la langue de votre Windows, le résultat n'a pas pu être lu automatiquement : les détails sont dans la sortie ci-dessous.",
+    logTitle: "Sortie",
+    askRepair: "Voulez-vous le réparer maintenant ?",
+    askRepairYes: "Oui, réparer maintenant",
+    askRepairNo: "Pas maintenant",
+    repairAnyway: "Lancer quand même une réparation complète",
+    elapsed: "{time} écoulées",
+    holdingAt:
+      "Toujours à {percent}% après {time}. DISM reste sur le même pourcentage plusieurs minutes pendant que Windows reconstruit les composants en arrière-plan : il n'est pas bloqué.",
+  },
+  cookieCleaner: {
+    title: "Nettoyage sélectif des cookies",
+    description:
+      "Supprime les cookies de suivi et de publicité tout en conservant ceux qui maintiennent vos connexions. Vous restez connecté aux sites de votre liste.",
+    scanButton: "Analyser les cookies",
+    scanning: "Analyse...",
+    cleanButton: "Nettoyer",
+    cleaning: "Nettoyage...",
+    noneFound: "Aucun cookie de navigateur trouvé sur ce PC.",
+    totals: "{removable} à supprimer, {protected} cookies de connexion conservés",
+    runningWarning: "Fermez {browser} pour le nettoyer. Les chiffres ci-dessus sont déjà exacts.",
+    backupNote:
+      "La base de cookies est copiée avant le nettoyage : l'opération est donc annulable.",
+    restoreButton: "Annuler le dernier nettoyage",
+    restoring: "Restauration...",
+    restoredToast: "{browser} : cookies restaurés depuis la dernière sauvegarde.",
+    cleanedToast: "{removed} cookies supprimés, {kept} connexions conservées.",
+    nothingToClean: "Rien à supprimer : tous les cookies figurent dans votre liste.",
+    topDomains: "La plupart des cookies viennent de",
+    whitelistTitle: "Sites où rester connecté",
+    whitelistNote:
+      "Les sous-domaines sont couverts : ajouter google.com conserve aussi accounts.google.com.",
+    whitelistPlaceholder: "exemple.com",
+    whitelistAdd: "Ajouter",
+    whitelistRemove: "Retirer",
+    whitelistReset: "Rétablir les valeurs par défaut",
+  },
+  appCache: {
+    title: "Caches des applications tierces",
+    description:
+      "Caches de shaders, lanceurs de jeux, messageries et gestionnaires de paquets conservent des gigaoctets de fichiers qu'ils reconstruisent seuls. Cette analyse les trouve dans les programmes réellement installés.",
+    scanButton: "Analyser les caches",
+    scanning: "Analyse...",
+    cleanButton: "Nettoyer la sélection",
+    cleaning: "Nettoyage...",
+    noneFound: "Aucun cache tiers trouvé sur ce PC.",
+    permanentNote:
+      "Ces fichiers sont supprimés définitivement et non placés dans la Corbeille : y envoyer des gigaoctets ne libère rien tant qu'elle n'est pas vidée. Tout ce qui figure ici est reconstruit automatiquement par le programme qui l'a créé.",
+    blockedBy: "{process} est en cours d'exécution : ses fichiers seront ignorés.",
+    selectedTotal: "{size} sélectionnés",
+    cleanedToast: "{freed} libérés.",
+    skippedNote: "{count} fichiers étaient utilisés et ont été laissés intacts.",
+    catShaders: "Caches de shaders",
+    catLaunchers: "Lanceurs de jeux",
+    catApps: "Applications",
+    catDev: "Outils de développement",
+    catWindows: "Windows",
+    names: {
+      shader_dx: "Cache de shaders DirectX",
+      shader_nvidia: "Cache de shaders NVIDIA",
+      shader_amd: "Cache de shaders AMD",
+      shader_intel: "Cache de shaders Intel",
+      steam: "Cache web de Steam",
+      epic: "Cache d'Epic Games Launcher",
+      battlenet: "Cache de Battle.net",
+      discord: "Cache de Discord",
+      vscode: "Cache de Visual Studio Code",
+      npm: "Cache des paquets npm",
+      pip: "Cache des paquets pip",
+      crash_dumps: "Vidages de plantage des applications",
+      error_reports: "Rapports d'erreurs Windows",
+    },
+  },
+  scheduledTasks: {
+    title: "Tâches planifiées au démarrage",
+    description:
+      "Programmes de mise à jour et services d'arrière-plan lancés à l'ouverture de session ou au démarrage par le Planificateur de tâches, où la liste Démarrage de Windows ne les montre pas. Les tâches de Windows ne figurent pas ici.",
+    empty: "Aucune tâche tierce au démarrage sur ce PC.",
+    activeCount: "Activées : {enabled} / {total}",
+    triggerLogon: "À l'ouverture de session",
+    triggerBoot: "Au démarrage",
+    refresh: "Actualiser",
+    refreshing: "Relecture...",
+    note: "Désactiver une tâche ne désinstalle rien, et vous pouvez la réactiver à tout moment.",
   },
   search: {
     placeholder: "Rechercher une optimisation...",
@@ -3317,6 +3791,7 @@ const fr: Strings = {
     switchToLifetime: "Passer au lifetime",
     proActiveNoBilling: "Pro est actif sur ce compte",
     everythingInFree: "Tout ce que contient Free, plus :",
+    included: "Inclus",
     reassurance:
       "Résiliable à tout moment. Chaque modification reste annulable en un clic, même après la résiliation.",
     freeFeatures: [
@@ -3335,6 +3810,18 @@ const fr: Strings = {
       "Vide le cache de Windows Update",
       "Désactive l’indexation qui occupe le disque",
       "Toutes les optimisations et fonctionnalités à venir, incluses",
+    ],
+    lifetimeName: "À vie",
+    lifetimeTagline:
+      "Un seul paiement. Tout Pro pour toujours, et chaque nouveauté avant tout le monde.",
+    lifetimeCta: "Passer à l'offre à vie",
+    oneTimeBadge: "PAIEMENT UNIQUE",
+    everythingInPro: "Tout ce que contient Pro",
+    lifetimeExclusive: "Exclusif à l'offre à vie",
+    lifetimeFeatures: [
+      "Les nouveautés en premier, avant les offres mensuelle et annuelle",
+      "Toutes les versions à venir incluses, sans jamais renouveler",
+      "Assistance prioritaire, assurée par le développeur",
     ],
   },
   toggle: { on: "Activé", off: "Désactivé" },
@@ -3435,6 +3922,7 @@ const fr: Strings = {
     subtitle:
       "Détecte automatiquement vos jeux et applique/annule le préréglage Turbo Gaming tout seul.",
     active: "Session active : {name}",
+    activeFreed: "Boost actif pour {name} — {freed} de RAM libérés.",
     gamesCount: "{count} jeux enregistrés",
     addGame: "+ Ajouter un jeu (.exe)",
   },
@@ -4429,6 +4917,122 @@ const es: Strings = {
     refresh: "Actualizar",
     refreshing: "Reanalizando...",
     hiddenOrphans: "{count} entradas ocultas: el programa ya no está instalado.",
+    locationRun: "Registro",
+    locationRun32: "Registro (32 bits)",
+    locationFolder: "Carpeta de Inicio",
+  },
+  systemRepair: {
+    title: "Comprobación y reparación de Windows",
+    description:
+      "Comprueba si los archivos de sistema y el almacén de componentes de Windows están intactos y, si no lo están, los repara desde los servidores de Microsoft. Son las mismas herramientas DISM y SFC que pide ejecutar el soporte de Microsoft, sin línea de comandos.",
+    adminNote:
+      "Requiere permisos de administrador: Windows los pide una sola vez y se crea un punto de restauración antes de cualquier cambio.",
+    timeNote:
+      "Una reparación completa puede tardar 20 minutos o más. Puedes seguir usando el PC: solo no lo apagues.",
+    checkButton: "Comprobar integridad",
+    checking: "Comprobando...",
+    cleanupButton: "Reducir el almacén de componentes",
+    cleaningUp: "Reduciendo...",
+    cleanupNote:
+      "Elimina de WinSxS las versiones de componentes ya sustituidas. Las actualizaciones instaladas hace poco se pueden seguir desinstalando.",
+    runningNote: "No apagues ni reinicies el PC mientras se ejecuta.",
+    stepScan: "Comprobando el almacén de componentes",
+    stepRestore: "Reparando el almacén de componentes",
+    stepSfc: "Comprobando los archivos de sistema",
+    stepCleanup: "Reduciendo el almacén de componentes",
+    stepOf: "Paso {index} de {total}",
+    statusHealthy: "Windows está intacto",
+    statusRepairable: "Se han encontrado daños, pero son reparables",
+    statusRepaired: "Daños encontrados y reparados",
+    statusUnrepairable: "Se han encontrado daños que no se han podido reparar",
+    statusCompleted: "Finalizado",
+    hintUnrepairable:
+      "El siguiente paso suele ser una actualización in situ de Windows. El código de error está en la salida de abajo.",
+    hintCompleted:
+      "Las herramientas se han ejecutado. Con el idioma de tu Windows el resultado no se ha podido leer automáticamente: los detalles están en la salida de abajo.",
+    logTitle: "Salida",
+    askRepair: "¿Quieres repararlo ahora?",
+    askRepairYes: "Sí, reparar ahora",
+    askRepairNo: "Ahora no",
+    repairAnyway: "Ejecutar una reparación completa de todos modos",
+    elapsed: "{time} transcurridos",
+    holdingAt:
+      "Sigue al {percent}% tras {time}. DISM se queda en el mismo porcentaje durante varios minutos mientras Windows reconstruye los componentes en segundo plano: no se ha bloqueado.",
+  },
+  cookieCleaner: {
+    title: "Limpieza selectiva de cookies",
+    description:
+      "Elimina las cookies de rastreo y publicidad y conserva las que mantienen tus sesiones abiertas. En los sitios de tu lista sigues con la sesión iniciada.",
+    scanButton: "Analizar cookies",
+    scanning: "Analizando...",
+    cleanButton: "Limpiar",
+    cleaning: "Limpiando...",
+    noneFound: "No se han encontrado cookies de navegador en este PC.",
+    totals: "{removable} para eliminar, {protected} cookies de sesión conservadas",
+    runningWarning: "Cierra {browser} para limpiarlo. Las cifras de arriba ya son exactas.",
+    backupNote:
+      "La base de datos de cookies se copia antes de limpiar, así que la operación se puede deshacer.",
+    restoreButton: "Deshacer la última limpieza",
+    restoring: "Restaurando...",
+    restoredToast: "{browser}: cookies restauradas desde la última copia.",
+    cleanedToast: "{removed} cookies eliminadas, {kept} sesiones conservadas.",
+    nothingToClean: "No hay nada que eliminar: todas las cookies están en tu lista.",
+    topDomains: "La mayoría de las cookies vienen de",
+    whitelistTitle: "Sitios en los que seguir con la sesión iniciada",
+    whitelistNote:
+      "También valen los subdominios: al añadir google.com se conserva igualmente accounts.google.com.",
+    whitelistPlaceholder: "ejemplo.com",
+    whitelistAdd: "Añadir",
+    whitelistRemove: "Quitar",
+    whitelistReset: "Restaurar los valores predeterminados",
+  },
+  appCache: {
+    title: "Cachés de programas de terceros",
+    description:
+      "Las cachés de sombreadores, los lanzadores de juegos, las apps de mensajería y los gestores de paquetes acumulan gigabytes de archivos que ellos mismos reconstruyen. Esto los busca en los programas que realmente tienes instalados.",
+    scanButton: "Analizar cachés",
+    scanning: "Analizando...",
+    cleanButton: "Limpiar lo seleccionado",
+    cleaning: "Limpiando...",
+    noneFound: "No se han encontrado cachés de terceros en este PC.",
+    permanentNote:
+      "Estos archivos se eliminan de forma definitiva y no van a la Papelera: enviar gigabytes allí no libera nada hasta vaciarla. Todo lo que aparece aquí lo reconstruye por su cuenta el programa que lo creó.",
+    blockedBy: "{process} está en ejecución, así que sus archivos se omitirán.",
+    selectedTotal: "{size} seleccionados",
+    cleanedToast: "{freed} liberados.",
+    skippedNote: "{count} archivos estaban en uso y se han dejado intactos.",
+    catShaders: "Cachés de sombreadores",
+    catLaunchers: "Lanzadores de juegos",
+    catApps: "Aplicaciones",
+    catDev: "Herramientas de desarrollo",
+    catWindows: "Windows",
+    names: {
+      shader_dx: "Caché de sombreadores DirectX",
+      shader_nvidia: "Caché de sombreadores NVIDIA",
+      shader_amd: "Caché de sombreadores AMD",
+      shader_intel: "Caché de sombreadores Intel",
+      steam: "Caché web de Steam",
+      epic: "Caché de Epic Games Launcher",
+      battlenet: "Caché de Battle.net",
+      discord: "Caché de Discord",
+      vscode: "Caché de Visual Studio Code",
+      npm: "Caché de paquetes npm",
+      pip: "Caché de paquetes pip",
+      crash_dumps: "Volcados de bloqueo de aplicaciones",
+      error_reports: "Informes de errores de Windows",
+    },
+  },
+  scheduledTasks: {
+    title: "Tareas programadas al inicio",
+    description:
+      "Actualizadores y servicios en segundo plano que arrancan al iniciar sesión o al encender el PC desde el Programador de tareas, donde la lista de Inicio de Windows no los muestra. Las tareas propias de Windows no aparecen aquí.",
+    empty: "No hay tareas de terceros al inicio en este PC.",
+    activeCount: "Activas: {enabled} / {total}",
+    triggerLogon: "Al iniciar sesión",
+    triggerBoot: "Al encender",
+    refresh: "Actualizar",
+    refreshing: "Releyendo...",
+    note: "Desactivar una tarea no desinstala nada y puedes volver a activarla cuando quieras.",
   },
   search: {
     placeholder: "Buscar un ajuste...",
@@ -4467,6 +5071,7 @@ const es: Strings = {
     switchToLifetime: "Cambiar a lifetime",
     proActiveNoBilling: "Pro está activo en esta cuenta",
     everythingInFree: "Todo lo que incluye Free, y además:",
+    included: "Incluido",
     reassurance:
       "Cancela cuando quieras. Cada cambio sigue siendo reversible con un clic, incluso tras cancelar.",
     freeFeatures: [
@@ -4485,6 +5090,17 @@ const es: Strings = {
       "Vacía la caché de Windows Update",
       "Desactiva la indexación que mantiene ocupado el disco",
       "Todos los ajustes y funciones futuras, incluidos",
+    ],
+    lifetimeName: "De por vida",
+    lifetimeTagline: "Un solo pago. Todo Pro para siempre, y cada novedad antes que nadie.",
+    lifetimeCta: "Comprar de por vida",
+    oneTimeBadge: "PAGO ÚNICO",
+    everythingInPro: "Todo lo que incluye Pro",
+    lifetimeExclusive: "Solo de por vida",
+    lifetimeFeatures: [
+      "Las funciones nuevas primero, antes de llegar a los planes mensual y anual",
+      "Todas las versiones futuras incluidas, sin renovar nunca",
+      "Soporte prioritario, respondido por el desarrollador",
     ],
   },
   toggle: { on: "Activado", off: "Desactivado" },
@@ -4582,6 +5198,7 @@ const es: Strings = {
     subtitle:
       "Detecta automáticamente tus juegos y aplica/revierte el preset Turbo Gaming por sí solo.",
     active: "Sesión activa: {name}",
+    activeFreed: "Boost activo para {name}: {freed} de RAM liberados.",
     gamesCount: "{count} juegos registrados",
     addGame: "+ Añadir juego (.exe)",
   },
@@ -5575,6 +6192,123 @@ const de: Strings = {
     refresh: "Aktualisieren",
     refreshing: "Neu einlesen...",
     hiddenOrphans: "{count} Einträge ausgeblendet: das Programm ist nicht mehr installiert.",
+    locationRun: "Registrierung",
+    locationRun32: "Registrierung (32 Bit)",
+    locationFolder: "Autostart-Ordner",
+  },
+  systemRepair: {
+    title: "Windows prüfen und reparieren",
+    description:
+      "Prüft, ob die Systemdateien und der Komponentenspeicher von Windows unbeschädigt sind, und repariert sie andernfalls über die Server von Microsoft. Es sind dieselben Werkzeuge DISM und SFC, die der Microsoft-Support ausführen lässt — nur ohne Eingabeaufforderung.",
+    adminNote:
+      "Läuft mit Administratorrechten: Windows fragt einmal nach, und vor jeder Änderung wird ein Wiederherstellungspunkt angelegt.",
+    timeNote:
+      "Eine vollständige Reparatur kann 20 Minuten oder länger dauern. Sie können den PC weiter benutzen — nur nicht ausschalten.",
+    checkButton: "Integrität prüfen",
+    checking: "Prüfung läuft...",
+    cleanupButton: "Komponentenspeicher verkleinern",
+    cleaningUp: "Wird verkleinert...",
+    cleanupNote:
+      "Entfernt überholte Komponentenversionen aus WinSxS. Kürzlich installierte Updates lassen sich weiterhin deinstallieren.",
+    runningNote: "Den PC währenddessen nicht herunterfahren oder neu starten.",
+    stepScan: "Komponentenspeicher wird geprüft",
+    stepRestore: "Komponentenspeicher wird repariert",
+    stepSfc: "Systemdateien werden geprüft",
+    stepCleanup: "Komponentenspeicher wird verkleinert",
+    stepOf: "Schritt {index} von {total}",
+    statusHealthy: "Windows ist unbeschädigt",
+    statusRepairable: "Schäden gefunden, sie lassen sich aber reparieren",
+    statusRepaired: "Schäden gefunden und repariert",
+    statusUnrepairable: "Schäden gefunden, die sich nicht reparieren ließen",
+    statusCompleted: "Abgeschlossen",
+    hintUnrepairable:
+      "Der nächste Schritt ist meist ein Inplace-Upgrade von Windows. Der Fehlercode steht in der Ausgabe unten.",
+    hintCompleted:
+      "Die Werkzeuge sind durchgelaufen. In Ihrer Windows-Sprache ließ sich das Ergebnis nicht automatisch auswerten — die Einzelheiten stehen in der Ausgabe unten.",
+    logTitle: "Ausgabe",
+    askRepair: "Möchten Sie das jetzt reparieren?",
+    askRepairYes: "Ja, jetzt reparieren",
+    askRepairNo: "Jetzt nicht",
+    repairAnyway: "Trotzdem eine vollständige Reparatur ausführen",
+    elapsed: "{time} vergangen",
+    holdingAt:
+      "Seit {time} bei {percent}%. DISM bleibt minutenlang auf derselben Zahl stehen, während Windows im Hintergrund Komponenten neu aufbaut — es hängt nicht.",
+  },
+  cookieCleaner: {
+    title: "Selektive Cookie-Bereinigung",
+    description:
+      "Entfernt Tracking- und Werbe-Cookies und behält die, in denen Ihre Anmeldungen stecken. Bei Seiten auf Ihrer Liste bleiben Sie angemeldet.",
+    scanButton: "Cookies prüfen",
+    scanning: "Prüfung läuft...",
+    cleanButton: "Bereinigen",
+    cleaning: "Bereinigung läuft...",
+    noneFound: "Auf diesem PC wurden keine Browser-Cookies gefunden.",
+    totals: "{removable} zu entfernen, {protected} Anmelde-Cookies bleiben",
+    runningWarning:
+      "Schließen Sie {browser}, um ihn zu bereinigen. Die Zahlen oben stimmen bereits.",
+    backupNote:
+      "Die Cookie-Datenbank wird vorher kopiert, eine Bereinigung lässt sich also rückgängig machen.",
+    restoreButton: "Letzte Bereinigung rückgängig machen",
+    restoring: "Wird wiederhergestellt...",
+    restoredToast: "{browser}: Cookies aus der letzten Sicherung wiederhergestellt.",
+    cleanedToast: "{removed} Cookies entfernt, {kept} Anmeldungen behalten.",
+    nothingToClean: "Nichts zu entfernen: Alle Cookies stehen auf Ihrer Liste.",
+    topDomains: "Die meisten Cookies stammen von",
+    whitelistTitle: "Seiten, bei denen Sie angemeldet bleiben",
+    whitelistNote:
+      "Subdomains sind eingeschlossen: Mit google.com bleibt auch accounts.google.com erhalten.",
+    whitelistPlaceholder: "beispiel.de",
+    whitelistAdd: "Hinzufügen",
+    whitelistRemove: "Entfernen",
+    whitelistReset: "Standard wiederherstellen",
+  },
+  appCache: {
+    title: "Caches von Fremdprogrammen",
+    description:
+      "Shader-Caches, Spiele-Launcher, Chat-Apps und Paketmanager halten Gigabytes an Dateien vor, die sie selbst wieder aufbauen. Diese Suche findet sie in den Programmen, die Sie tatsächlich installiert haben.",
+    scanButton: "Caches prüfen",
+    scanning: "Prüfung läuft...",
+    cleanButton: "Auswahl bereinigen",
+    cleaning: "Bereinigung läuft...",
+    noneFound: "Auf diesem PC wurden keine Caches von Fremdprogrammen gefunden.",
+    permanentNote:
+      "Diese Dateien werden endgültig gelöscht und nicht in den Papierkorb verschoben: Gigabytes dorthin zu schieben gibt nichts frei, solange er nicht geleert wird. Alles hier Aufgeführte wird vom jeweiligen Programm selbst wieder angelegt.",
+    blockedBy: "{process} läuft gerade, seine Dateien werden daher übersprungen.",
+    selectedTotal: "{size} ausgewählt",
+    cleanedToast: "{freed} freigegeben.",
+    skippedNote: "{count} Dateien waren in Benutzung und wurden nicht angetastet.",
+    catShaders: "Shader-Caches",
+    catLaunchers: "Spiele-Launcher",
+    catApps: "Apps",
+    catDev: "Entwicklerwerkzeuge",
+    catWindows: "Windows",
+    names: {
+      shader_dx: "DirectX-Shader-Cache",
+      shader_nvidia: "NVIDIA-Shader-Cache",
+      shader_amd: "AMD-Shader-Cache",
+      shader_intel: "Intel-Shader-Cache",
+      steam: "Steam-Web-Cache",
+      epic: "Cache des Epic Games Launchers",
+      battlenet: "Battle.net-Cache",
+      discord: "Discord-Cache",
+      vscode: "Visual-Studio-Code-Cache",
+      npm: "npm-Paket-Cache",
+      pip: "pip-Paket-Cache",
+      crash_dumps: "Absturzabbilder von Anwendungen",
+      error_reports: "Windows-Fehlerberichte",
+    },
+  },
+  scheduledTasks: {
+    title: "Geplante Aufgaben beim Start",
+    description:
+      "Updater und Hintergrunddienste, die bei der Anmeldung oder beim Hochfahren über die Aufgabenplanung starten — dort, wo die Windows-Autostartliste sie nie zeigt. Aufgaben von Windows selbst erscheinen hier nicht.",
+    empty: "Auf diesem PC gibt es keine Startaufgaben von Fremdprogrammen.",
+    activeCount: "Aktiv: {enabled} / {total}",
+    triggerLogon: "Bei der Anmeldung",
+    triggerBoot: "Beim Hochfahren",
+    refresh: "Aktualisieren",
+    refreshing: "Wird neu gelesen...",
+    note: "Eine Aufgabe abzuschalten deinstalliert nichts, und Sie können sie jederzeit wieder einschalten.",
   },
   search: {
     placeholder: "Tweak suchen...",
@@ -5613,6 +6347,7 @@ const de: Strings = {
     switchToLifetime: "Auf Lifetime wechseln",
     proActiveNoBilling: "Pro ist in diesem Konto aktiv",
     everythingInFree: "Alles aus Free, dazu:",
+    included: "Enthalten",
     reassurance:
       "Jederzeit kündbar. Jede Änderung bleibt mit einem Klick rückgängig zu machen, auch nach der Kündigung.",
     freeFeatures: [
@@ -5631,6 +6366,17 @@ const de: Strings = {
       "Leert den Windows-Update-Cache",
       "Deaktiviert die Indizierung, die den Datenträger belastet",
       "Jeder Tweak und jede künftige Funktion inklusive",
+    ],
+    lifetimeName: "Lebenslang",
+    lifetimeTagline: "Einmal zahlen. Alles aus Pro für immer, und jede Neuerung vor allen anderen.",
+    lifetimeCta: "Lebenslang kaufen",
+    oneTimeBadge: "EINMALZAHLUNG",
+    everythingInPro: "Alles aus Pro",
+    lifetimeExclusive: "Nur lebenslang",
+    lifetimeFeatures: [
+      "Neue Funktionen zuerst, bevor sie den Monats- und Jahrestarif erreichen",
+      "Jede künftige Version inklusive, ohne jede Verlängerung",
+      "Bevorzugter Support, beantwortet vom Entwickler",
     ],
   },
   toggle: { on: "Ein", off: "Aus" },
@@ -5730,6 +6476,7 @@ const de: Strings = {
     subtitle:
       "Erkennt deine Spiele automatisch und wendet das Turbo-Gaming-Preset selbstständig an/rückgängig.",
     active: "Sitzung aktiv: {name}",
+    activeFreed: "Boost aktiv für {name} — {freed} RAM freigegeben.",
     gamesCount: "{count} Spiele registriert",
     addGame: "+ Spiel hinzufügen (.exe)",
   },
@@ -6729,6 +7476,122 @@ const pt: Strings = {
     refresh: "Atualizar",
     refreshing: "A reanalisar...",
     hiddenOrphans: "{count} entradas ocultas: o programa já não está instalado.",
+    locationRun: "Registo",
+    locationRun32: "Registo (32 bits)",
+    locationFolder: "Pasta Arranque",
+  },
+  systemRepair: {
+    title: "Verificação e reparação do Windows",
+    description:
+      "Verifica se os ficheiros de sistema e o arquivo de componentes do Windows estão intactos e, quando não estão, repara-os a partir dos servidores da Microsoft. São as mesmas ferramentas DISM e SFC que o suporte da Microsoft manda executar, sem linha de comandos.",
+    adminNote:
+      "Precisa de permissões de administrador: o Windows pede-as uma única vez e é criado um ponto de restauro antes de qualquer alteração.",
+    timeNote:
+      "Uma reparação completa pode demorar 20 minutos ou mais. Pode continuar a usar o PC — basta não o desligar.",
+    checkButton: "Verificar integridade",
+    checking: "A verificar...",
+    cleanupButton: "Reduzir o arquivo de componentes",
+    cleaningUp: "A reduzir...",
+    cleanupNote:
+      "Remove do WinSxS as versões de componentes já substituídas. As atualizações instaladas há pouco continuam a poder ser desinstaladas.",
+    runningNote: "Não desligue nem reinicie o PC enquanto isto decorre.",
+    stepScan: "A verificar o arquivo de componentes",
+    stepRestore: "A reparar o arquivo de componentes",
+    stepSfc: "A verificar os ficheiros de sistema",
+    stepCleanup: "A reduzir o arquivo de componentes",
+    stepOf: "Passo {index} de {total}",
+    statusHealthy: "O Windows está intacto",
+    statusRepairable: "Foram encontrados danos, mas são reparáveis",
+    statusRepaired: "Danos encontrados e reparados",
+    statusUnrepairable: "Foram encontrados danos que não foi possível reparar",
+    statusCompleted: "Concluído",
+    hintUnrepairable:
+      "O passo seguinte costuma ser uma atualização no local do Windows. O código de erro está no resultado abaixo.",
+    hintCompleted:
+      "As ferramentas foram executadas. Com o idioma do seu Windows o resultado não pôde ser lido automaticamente — os detalhes estão no resultado abaixo.",
+    logTitle: "Resultado",
+    askRepair: "Quer repará-lo agora?",
+    askRepairYes: "Sim, reparar agora",
+    askRepairNo: "Agora não",
+    repairAnyway: "Executar mesmo assim uma reparação completa",
+    elapsed: "{time} decorridos",
+    holdingAt:
+      "Ainda nos {percent}% ao fim de {time}. O DISM fica na mesma percentagem durante vários minutos enquanto o Windows reconstrói os componentes em segundo plano: não bloqueou.",
+  },
+  cookieCleaner: {
+    title: "Limpeza seletiva de cookies",
+    description:
+      "Remove os cookies de rastreio e publicidade e mantém os que guardam as suas sessões. Nos sites da sua lista continua com sessão iniciada.",
+    scanButton: "Analisar cookies",
+    scanning: "A analisar...",
+    cleanButton: "Limpar",
+    cleaning: "A limpar...",
+    noneFound: "Não foram encontrados cookies de navegador neste PC.",
+    totals: "{removable} a remover, {protected} cookies de sessão mantidos",
+    runningWarning: "Feche o {browser} para o limpar. Os números acima já estão corretos.",
+    backupNote:
+      "A base de dados de cookies é copiada antes da limpeza, por isso a operação pode ser anulada.",
+    restoreButton: "Anular a última limpeza",
+    restoring: "A restaurar...",
+    restoredToast: "{browser}: cookies restaurados a partir da última cópia.",
+    cleanedToast: "{removed} cookies removidos, {kept} sessões mantidas.",
+    nothingToClean: "Não há nada a remover: todos os cookies estão na sua lista.",
+    topDomains: "A maioria dos cookies vem de",
+    whitelistTitle: "Sites onde manter a sessão iniciada",
+    whitelistNote:
+      "Os subdomínios também contam: ao adicionar google.com mantém-se igualmente accounts.google.com.",
+    whitelistPlaceholder: "exemplo.com",
+    whitelistAdd: "Adicionar",
+    whitelistRemove: "Remover",
+    whitelistReset: "Repor as predefinições",
+  },
+  appCache: {
+    title: "Caches de programas de terceiros",
+    description:
+      "Caches de shaders, lançadores de jogos, aplicações de mensagens e gestores de pacotes guardam gigabytes de ficheiros que reconstroem sozinhos. Isto encontra-os nos programas que tem mesmo instalados.",
+    scanButton: "Analisar caches",
+    scanning: "A analisar...",
+    cleanButton: "Limpar a seleção",
+    cleaning: "A limpar...",
+    noneFound: "Não foram encontradas caches de terceiros neste PC.",
+    permanentNote:
+      "Estes ficheiros são eliminados definitivamente e não vão para a Reciclagem: enviar gigabytes para lá não liberta nada enquanto não for esvaziada. Tudo o que aparece aqui é reconstruído sozinho pelo programa que o criou.",
+    blockedBy: "O {process} está em execução, por isso os ficheiros dele serão ignorados.",
+    selectedTotal: "{size} selecionados",
+    cleanedToast: "{freed} libertados.",
+    skippedNote: "{count} ficheiros estavam em uso e foram deixados intactos.",
+    catShaders: "Caches de shaders",
+    catLaunchers: "Lançadores de jogos",
+    catApps: "Aplicações",
+    catDev: "Ferramentas de programação",
+    catWindows: "Windows",
+    names: {
+      shader_dx: "Cache de shaders DirectX",
+      shader_nvidia: "Cache de shaders NVIDIA",
+      shader_amd: "Cache de shaders AMD",
+      shader_intel: "Cache de shaders Intel",
+      steam: "Cache web do Steam",
+      epic: "Cache do Epic Games Launcher",
+      battlenet: "Cache do Battle.net",
+      discord: "Cache do Discord",
+      vscode: "Cache do Visual Studio Code",
+      npm: "Cache de pacotes npm",
+      pip: "Cache de pacotes pip",
+      crash_dumps: "Despejos de falhas de aplicações",
+      error_reports: "Relatórios de erros do Windows",
+    },
+  },
+  scheduledTasks: {
+    title: "Tarefas agendadas no arranque",
+    description:
+      "Atualizadores e serviços em segundo plano que arrancam ao iniciar sessão ou ao ligar o PC a partir do Agendador de Tarefas, onde a lista de Arranque do Windows nunca os mostra. As tarefas do próprio Windows não aparecem aqui.",
+    empty: "Não há tarefas de terceiros no arranque deste PC.",
+    activeCount: "Ativas: {enabled} / {total}",
+    triggerLogon: "Ao iniciar sessão",
+    triggerBoot: "Ao ligar",
+    refresh: "Atualizar",
+    refreshing: "A reler...",
+    note: "Desativar uma tarefa não desinstala nada e pode voltar a ativá-la quando quiser.",
   },
   search: {
     placeholder: "Buscar um ajuste...",
@@ -6767,6 +7630,7 @@ const pt: Strings = {
     switchToLifetime: "Mudar para o lifetime",
     proActiveNoBilling: "Pro está ativo nesta conta",
     everythingInFree: "Tudo do Grátis, mais:",
+    included: "Incluído",
     reassurance:
       "Cancele quando quiser. Toda alteração continua a um clique de ser desfeita, mesmo depois de cancelar.",
     freeFeatures: [
@@ -6785,6 +7649,18 @@ const pt: Strings = {
       "Limpa o cache do Windows Update",
       "Desativa a indexação que mantém o disco ocupado",
       "Todo ajuste e todo recurso futuro, incluídos",
+    ],
+    lifetimeName: "Vitalício",
+    lifetimeTagline:
+      "Paga uma só vez. Todo o Pro para sempre, e cada novidade antes de toda a gente.",
+    lifetimeCta: "Comprar vitalício",
+    oneTimeBadge: "PAGAMENTO ÚNICO",
+    everythingInPro: "Tudo o que inclui o Pro",
+    lifetimeExclusive: "Só no vitalício",
+    lifetimeFeatures: [
+      "As novidades primeiro, antes de chegarem aos planos mensal e anual",
+      "Todas as versões futuras incluídas, sem nunca renovar",
+      "Apoio prioritário, respondido pelo programador",
     ],
   },
   toggle: { on: "Ativado", off: "Desativado" },
@@ -6881,6 +7757,7 @@ const pt: Strings = {
     title: "Sessões de jogo",
     subtitle: "Detecta seus jogos automaticamente e aplica/reverte o preset Turbo Gaming sozinho.",
     active: "Sessão ativa: {name}",
+    activeFreed: "Boost ativo para {name} — {freed} de RAM libertados.",
     gamesCount: "{count} jogos registrados",
     addGame: "+ Adicionar jogo (.exe)",
   },

@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open as openFolderDialog } from "@tauri-apps/plugin-dialog";
 import { format, Strings } from "../i18n";
-import { arcPath, GAUGE_C, GAUGE_R, GAUGE_START, GAUGE_SWEEP, polar } from "../lib";
+import { formatBytes, arcPath, GAUGE_C, GAUGE_R, GAUGE_START, GAUGE_SWEEP, polar } from "../lib";
 import { GameEntry, Toast } from "../types";
 import { BoltIcon } from "./icons";
 
@@ -19,6 +19,10 @@ export function GameSessionsPanel({
   const [enabled, setEnabled] = useState(false);
   const [games, setGames] = useState<GameEntry[]>([]);
   const [activeGame, setActiveGame] = useState<string | null>(null);
+  /** RAM the working-set trim handed back when the session started. Zero is a
+   *  real answer on a machine that was already tidy, so it reads as "boost
+   *  active" without a number rather than as "0 B freed". */
+  const [freedBytes, setFreedBytes] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
   async function refresh() {
@@ -32,10 +36,11 @@ export function GameSessionsPanel({
 
   useEffect(() => {
     refresh().catch(() => {});
-    const unlisten = listen<{ active: boolean; name: string | null }>(
+    const unlisten = listen<{ active: boolean; name: string | null; freed_bytes: number }>(
       "game-session-changed",
       (event) => {
         setActiveGame(event.payload.active ? event.payload.name : null);
+        setFreedBytes(event.payload.active ? event.payload.freed_bytes : 0);
       },
     );
     return () => {
@@ -84,7 +89,12 @@ export function GameSessionsPanel({
           </p>
           <p className="mt-0.5 text-xs text-ink-3">
             {activeGame
-              ? format(s.gameSessions.active, { name: activeGame })
+              ? freedBytes > 0
+                ? format(s.gameSessions.activeFreed, {
+                    name: activeGame,
+                    freed: formatBytes(freedBytes),
+                  })
+                : format(s.gameSessions.active, { name: activeGame })
               : s.gameSessions.subtitle}
           </p>
         </div>

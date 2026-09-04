@@ -108,7 +108,7 @@ per tweak.
 | **Performance** | CPU priority, High-performance power plan, disable Xbox Game Bar/Game DVR, remove the ~10s startup-app delay, instant menu response, disable CPU power throttling                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | **Gaming**      | Hardware-accelerated GPU Scheduling (HAGS), reduced mouse and keyboard input lag, disable mouse acceleration, silence the Sticky Keys popup, CPU Turbo Boost, higher GPU priority for games, disable multimedia network throttling, disable Memory Integrity/VBS for the biggest frame-rate gain (with the security trade-off spelled out), "Turbo Gaming" preset, Game Sessions — apply the preset automatically when a game launches, revert when it closes — BBR2 congestion control so your ping stops climbing when the line gets busy, and a 3D V-Cache die aligner that pins a game to the right die on two-die Ryzen X3D processors |
 | **Privacy**     | Disable Recall (the AI screen-snapshot history) and Windows Copilot, stop Windows silently installing "suggested" apps, stop it learning how you type; disable the advertising ID, location tracking, Bing search in Start, activity history, tailored experiences, app-launch tracking, feedback prompts, Cortana; reduced telemetry; private DNS (Cloudflare); password breach check via [Have I Been Pwned](https://haveibeenpwned.com)                                                                                                                                                                                                  |
-| **Maintenance** | Clean temp files and the Windows Update cache (moved to the Recycle Bin, never permanently deleted), duplicate file finder by content hash with manual review before deletion, disable the search indexing service                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **Maintenance** | Clean temp files and the Windows Update cache (moved to the Recycle Bin, never permanently deleted), a selective cookie cleaner that drops trackers while keeping the cookies holding your sign-ins, third-party app caches (shader caches, game launchers, package managers) across thirteen hand-verified targets, duplicate file finder by content hash with manual review before deletion, disable the search indexing service                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | **Interface**   | Bring back the full Windows 10 right-click menu, dark mode, show hidden files, always show file extensions, left-aligned taskbar, hide Chat/Widgets/search box, disable transparency effects, open every folder instantly                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | **Hardware**    | Live GPU/CPU temperature, load, VRAM, fan and power draw read from the hardware's own sensors — and a plain statement when a sensor does not exist rather than a number nobody can verify; a session watch that only calls a result once the card has actually worked; three thermal profiles built from the limits the card itself reports; a full driver inventory across every device class, with updates installed through Windows Update                                                                                                                                                                                               |
 
@@ -117,7 +117,14 @@ Plus, on the Scan screen:
 - **Live system monitor** — CPU, memory and disk usage, updated continuously
 - **Free up RAM** — asks Windows to release memory programs are holding but
   not using; can be scheduled every 10 min / 30 min / 1 h / 3 h / 6 h
-- **Startup manager** — see and disable the programs that launch at boot
+- **Startup manager** — see and disable the programs that launch at boot,
+  across all three places Windows starts things from: the 64-bit and 32-bit
+  `Run` keys and the Startup folder
+- **Scheduled startup tasks** — the third-party updaters that run at sign-in
+  from the Task Scheduler, where Windows' own Startup tab never shows them.
+  Windows' own tasks are not listed
+- **Windows integrity check and repair** — DISM and SFC, with a progress bar
+  and a plain verdict instead of a command prompt
 
 **56 tweaks** in total. Anything needing administrator rights asks for an
 explicit UAC prompt **only for that action** — the app itself always runs
@@ -127,13 +134,19 @@ unprivileged.
 
 - Every change is snapshotted before it is applied, and revertible
   individually or all at once via **Restore all**
-- Cleanup moves files to the Recycle Bin — nothing is permanently deleted
+- Cleanup moves files to the Recycle Bin — nothing is permanently deleted.
+  The one exception is the third-party app cache cleaner, which deletes for
+  good and says so: recycling gigabytes frees nothing until the bin is
+  emptied, and every target in that list is rebuilt automatically by the
+  program that made it
+- Cookie cleaning copies the database first, so it can be undone
 - The tweaks themselves never send data anywhere; the optional account exists
   only to sync Pro status across installs
 
 ## Languages and themes
 
-English (default), Italian, French, Spanish and German, with 14 color themes.
+English (default), Italian, French, Spanish, German and Portuguese, with 14
+color themes.
 The app always starts in English; the language is only ever changed by an
 explicit choice in the account menu, and remembered from then on.
 
@@ -172,7 +185,7 @@ Runs, and CI runs on every push:
 | Check                | What it guarantees                                                                                                                                                     |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `tsc --noEmit`       | The frontend type-checks                                                                                                                                               |
-| `check:i18n`         | Every string exists in all 5 languages with matching `{placeholders}`                                                                                                  |
+| `check:i18n`         | Every string exists in all 6 languages with matching `{placeholders}`                                                                                                  |
 | `check:i18n-quality` | Nothing was silently left in English, no missing accents, correct Spanish punctuation                                                                                  |
 | `check:rust`         | 78 Rust unit tests — rollback-store concurrency, locale-independent parsing of Windows CLI output, elevation batching, registry-value collisions, translation coverage |
 

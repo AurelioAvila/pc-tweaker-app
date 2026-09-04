@@ -1,10 +1,15 @@
 //! Cache and cookie cleanup for Chrome, Edge, Brave, Vivaldi, Opera and
 //! Firefox.
 //!
-//! Deliberately narrow: no extension auditing, no per-site cookie picking.
-//! Both would need to read the browser's own SQLite databases, which is a
-//! much larger safety surface than deleting files the browser already
+//! Deliberately narrow: this module deletes whole cache folders and whole
+//! cookie files, and never opens the browser's own SQLite databases — that
+//! is a much larger safety surface than deleting files the browser already
 //! knows how to recreate from scratch on next launch.
+//!
+//! Per-site cookie picking is the one place that trade came out the other
+//! way, because wiping the cookie file signs the user out of everything.
+//! It lives in `cookies.rs`, which borrows this module's browser table and
+//! path detection and takes on the database handling itself.
 
 use serde::Serialize;
 use std::path::{Path, PathBuf};
@@ -66,6 +71,13 @@ const BROWSERS: &[BrowserSpec] = &[
         process_name: "firefox.exe",
     },
 ];
+
+/// Every browser this app knows about, as `(id, display name, process
+/// name)`. Exposed so `cookies.rs` can iterate the same table rather than
+/// keeping a second copy that would drift the first time a browser is added.
+pub(crate) fn browser_list() -> impl Iterator<Item = (&'static str, &'static str, &'static str)> {
+    BROWSERS.iter().map(|b| (b.id, b.name, b.process_name))
+}
 
 fn dir_size(path: &Path) -> u64 {
     let Ok(entries) = std::fs::read_dir(path) else {
@@ -243,7 +255,7 @@ fn parse_firefox_default_profile(ini: &str) -> Option<String> {
     install_default.or(profile_default)
 }
 
-fn is_running(process_name: &str) -> bool {
+pub(crate) fn is_running(process_name: &str) -> bool {
     use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System};
     let mut sys = System::new_with_specifics(RefreshKind::new());
     sys.refresh_processes_specifics(ProcessesToUpdate::All, true, ProcessRefreshKind::new());
@@ -252,7 +264,7 @@ fn is_running(process_name: &str) -> bool {
         .any(|p| p.name().to_string_lossy().eq_ignore_ascii_case(process_name))
 }
 
-fn paths_for(id: &str) -> Option<(Vec<PathBuf>, Vec<PathBuf>)> {
+pub(crate) fn paths_for(id: &str) -> Option<(Vec<PathBuf>, Vec<PathBuf>)> {
     match id {
         "chrome" => Some(chromium_paths(chrome_user_data_dir()?)),
         "edge" => Some(chromium_paths(edge_user_data_dir()?)),

@@ -268,12 +268,98 @@ export type StartupEntry = {
   name: string;
   command: string;
   scope: string;
+  /** Which of Windows' three startup mechanisms this entry belongs to. Each
+   *  has its own registry key and its own approval key, so this has to travel
+   *  back with every toggle — `scope` plus `name` does not identify a row. */
+  location: "run" | "run32" | "folder";
   enabled: boolean;
   requires_admin: boolean;
   /** The target executable is gone from disk — an entry an uninstaller left
    *  behind. See the field's doc comment in src-tauri/src/startup.rs. */
   orphaned: boolean;
 };
+
+/** A third-party task that runs at logon or boot. Windows' own tasks are
+ *  never returned; see src-tauri/src/scheduledtasks.rs. */
+export type ScheduledTaskEntry = {
+  /** Full scheduler path, and the id used to toggle it. */
+  path: string;
+  name: string;
+  /** Empty when the task's action is not a plain executable. */
+  command: string;
+  author: string;
+  enabled: boolean;
+  trigger: "logon" | "boot";
+  requires_admin: boolean;
+};
+
+/* ---------------- Third-party cache cleaner (src-tauri/src/appcache.rs) --- */
+
+export type CacheCategory = "shaders" | "launchers" | "apps" | "dev" | "windows";
+
+export type CacheGroup = {
+  id: string;
+  category: CacheCategory;
+  name: string;
+  bytes: number;
+  files: number;
+  /** Process holding these files open, or "" when nothing is in the way. */
+  blocked_by: string;
+};
+
+export type CacheScanProgress = { id: string; index: number; total: number };
+
+export type CacheCleanResult = {
+  freed_bytes: number;
+  deleted: number;
+  /** Files a running program still had open. Expected, not a failure. */
+  skipped: number;
+};
+
+/* ---------------- Selective cookie cleaner (src-tauri/src/cookies.rs) ----- */
+
+export type CookieDomainCount = { host: string; count: number };
+
+export type CookieScan = {
+  id: string;
+  name: string;
+  /** Scanning works while the browser is open; cleaning does not. */
+  running: boolean;
+  total: number;
+  protected: number;
+  removable: number;
+  top_removable: CookieDomainCount[];
+};
+
+export type CookieCleanResult = {
+  removed: number;
+  kept: number;
+  cleaned: string[];
+  skipped_running: string[];
+};
+
+/* ---------------- DISM / SFC repair (src-tauri/src/sysrepair.rs) ---------- */
+
+export type RepairJob = "check" | "repair" | "component_cleanup";
+
+export type RepairStep = "scan" | "restore" | "sfc" | "cleanup";
+
+export type RepairProgress = {
+  step: RepairStep;
+  step_index: number;
+  step_total: number;
+  /** Progress within the current step, 0-100. */
+  percent: number;
+  line: string;
+};
+
+export type RepairStepOutcome = { step: RepairStep; exit_code: number; tail: string };
+
+/** `completed` is the honest fallback when the tools ran but their output
+ *  could not be read confidently — a localised `sfc` summary, most often. */
+export type RepairStatus = "healthy" | "repairable" | "repaired" | "unrepairable" | "completed";
+
+export type RepairOutcome = { status: RepairStatus; steps: RepairStepOutcome[] };
 
 export type TweakProfile = {
   format: number;

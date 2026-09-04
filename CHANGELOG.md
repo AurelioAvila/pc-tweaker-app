@@ -1,5 +1,46 @@
 # Changelog
 
+## v1.8.0
+
+Windows can now repair itself from here, cookies survive a cleanup, and the
+startup list finally shows everything that actually starts.
+
+- **Windows integrity check and repair.** DISM and SFC — the tools Microsoft
+  support asks people to run from a command prompt — with a progress bar and a
+  plain verdict. The check is free; the repair sequence and the WinSxS shrink
+  are Pro. DISM is forced to `/English` so the result is read from a sentence
+  that does not change with your display language, and when it cannot be read
+  confidently the app says "finished, here is the log" rather than inventing a
+  clean bill of health. `/ResetBase` is deliberately not offered: it
+  permanently discards the ability to uninstall updates already installed.
+- **Selective cookie cleaning.** The browser cleaner deletes the whole cookie
+  file, which signs you out of everything — which is why most people click it
+  once and never again. This removes tracking and advertising cookies while
+  keeping the ones holding a sign-in, against an editable keep-list that covers
+  subdomains. Scanning works while the browser is open; cleaning needs it
+  closed, and the database is copied first so a clean can be undone.
+- **Third-party app caches.** Shader caches, game launchers, chat apps and
+  package managers sit on gigabytes they rebuild on their own. Thirteen
+  hand-verified targets, every one checked against a single rule: deleting it
+  costs time, never data. Scanning is free.
+- **The startup list was missing half of what starts.** As a 64-bit process the
+  app only ever read the 64-bit registry view, so every entry belonging to
+  32-bit software — most consumer installers — was invisible. It now covers the
+  32-bit `Run` key and the Startup folder as well, each with the approval key
+  Windows itself writes.
+- **Scheduled startup tasks.** Software updaters moved out of the `Run` key and
+  into the Task Scheduler years ago, where Windows' own Startup tab never shows
+  them. Third-party logon and boot tasks are now listed and switchable.
+  Windows' own tasks are not listed at all.
+- **Game Sessions frees memory on launch.** Starting a registered game now also
+  asks Windows to page out everything else's working set, and says how much came
+  back.
+- The pricing screen has a Lifetime card of its own, instead of showing a plan
+  labelled "Pro" beside a Free column on the Lifetime tab.
+- Every button in the app shows a hand cursor again. Tailwind v4 ships
+  `cursor: default` on buttons where v3 left the browser's pointer alone, and
+  the whole interface had quietly inherited it.
+
 ## v1.7.2
 
 The Uninstaller card offers the download itself instead of a repository page.

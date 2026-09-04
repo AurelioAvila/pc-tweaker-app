@@ -232,6 +232,25 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Tailwind v4 ships `cursor: default` on buttons in its preflight, where v3
+   left the browser's pointer alone. Every button in this app inherited that,
+   so nothing in the entire interface showed a hand cursor. Set once here
+   rather than as a `cursor-pointer` class on each of the ~150 buttons.
+
+   In `@layer base` on purpose: a utility class on the element still wins, so
+   the places that deliberately ask for `cursor-wait` while an action runs
+   keep working. Disabled buttons are excluded — a pointer over a control
+   that cannot be pressed is a lie. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  label:has(input[type="checkbox"]:not(:disabled)),
+  summary {
+    cursor: pointer;
+  }
+}
+
 /* ---- Type scale ------------------------------------------------------------ */
 /* One family; hierarchy from size/weight/tracking only. `type-data` is for
    numbers and technical values: tabular figures so columns never wobble. */

@@ -53,6 +53,8 @@ import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
 import { X3dPanel } from "./components/x3d";
 import { ScanPanel } from "./components/scan";
 import { HealthPanel } from "./components/health";
+import { SystemRepairCard } from "./components/repair";
+import { AppCacheCard, CookieCleanerCard } from "./components/cleaners";
 import { HardwarePanel } from "./components/hardware";
 import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
 import {
@@ -63,7 +65,7 @@ import {
   UpdateDriftCard,
 } from "./components/intelligence";
 import { usePulseSamples } from "./components/command";
-import { StartupManager } from "./components/startup";
+import { ScheduledTaskManager, StartupManager } from "./components/startup";
 import { ProfilesPanel } from "./components/profiles";
 import { PricingPanel } from "./components/pricing";
 import { GamingHudCard, ZeroTraceCard } from "./components/pro";
@@ -853,6 +855,15 @@ function App() {
             )}
 
             {showHealth && (
+              <SystemRepairCard
+                s={s}
+                isPro={isProUnlocked}
+                onRequirePro={() => setPaywallFeature(s.systemRepair.title)}
+                pushToast={pushToast}
+              />
+            )}
+
+            {showHealth && (
               <HealthPanel
                 title={s.healthPanel.title}
                 subtitle={s.healthPanel.subtitle}
@@ -910,6 +921,8 @@ function App() {
             )}
 
             {showStartup && <StartupManager s={s} pushToast={pushToast} />}
+
+            {showStartup && <ScheduledTaskManager s={s} pushToast={pushToast} />}
 
             {showProfiles && (
               <ProfilesPanel
@@ -1132,6 +1145,28 @@ function App() {
               {showCleanup && <DnsFlushCard s={s} onToast={pushToast} />}
 
               {showCleanup && <BrowserCleanupCard s={s} onToast={pushToast} />}
+
+              {/* Directly under the browser cleaner it supersedes for cookies:
+                that card wipes the whole cookie file and signs the user out of
+                everything, which is why most people click it once. This one is
+                the version they can use every week. */}
+              {showCleanup && (
+                <CookieCleanerCard
+                  s={s}
+                  isPro={isProUnlocked}
+                  onRequirePro={() => setPaywallFeature(s.cookieCleaner.title)}
+                  onToast={pushToast}
+                />
+              )}
+
+              {showCleanup && (
+                <AppCacheCard
+                  s={s}
+                  isPro={isProUnlocked}
+                  onRequirePro={() => setPaywallFeature(s.appCache.title)}
+                  onToast={pushToast}
+                />
+              )}
 
               {showCleanup && (
                 <DuplicateFinder

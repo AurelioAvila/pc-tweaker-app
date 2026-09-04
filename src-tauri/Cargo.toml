@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "1.7.2"
+version = "1.8.0"
 description = "Real Windows tweaks with automatic one-click rollback"
 authors = ["Aurelio Avila"]
 license-file = "../LICENSE"
@@ -41,6 +41,12 @@ base64 = "0.22"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
+# Reading and editing the browsers' cookie databases, for the selective cookie
+# cleaner (src/cookies.rs). `bundled` compiles SQLite into the binary rather
+# than linking whatever version happens to be on the machine: these are the
+# user's live browser profiles, and "whatever SQLite the system has" is not a
+# thing to be relaxed about when writing to one.
+rusqlite = { version = "0.32", features = ["bundled"] }
 # LoadLibrary/GetProcAddress only, for SRSetRestorePointW via dynamic loading
 # (a link-time srclient.dll import would crash at startup on Windows Server).
 windows-sys = { version = "0.59", features = [

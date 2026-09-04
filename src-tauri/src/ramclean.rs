@@ -97,6 +97,18 @@ mod imp {
     }
 }
 
+/// The same trim, without the shared monitor state.
+///
+/// The game-session watcher runs on its own thread and has no `State` handle
+/// to borrow, and it must not block on the monitor's mutex either — the HUD
+/// holds that every second, and a watcher waiting on it would delay the boost
+/// past the point the game has already finished loading.
+#[cfg(windows)]
+pub fn trim_for_session() -> u64 {
+    let mut sys = sysinfo::System::new();
+    imp::clean(&mut sys).freed_bytes
+}
+
 #[cfg(windows)]
 #[tauri::command(async)]
 pub fn clean_ram(

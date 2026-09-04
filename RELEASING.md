@@ -137,11 +137,18 @@ bottom. This is the full routine, in order. Skipping a step here is how
 
 The repo's GitHub Actions signing secrets are deliberately unset — Aurelio
 does releases in a session with Claude, so local signing is the chosen
-workflow, not a gap to fill. The tag-triggered Build workflow going red at
-the signing step is expected here, not a regression. See the "releases are
-cut locally" note in project memory for the full reasoning.
+workflow, not a gap to fill. See the "releases are cut locally" note in
+project memory for the full reasoning.
 
-The Build workflow *does* still gate on `npm run check` and on the `.sig`
-files actually existing (added after 0.4.3) — so a real regression in tests,
-i18n, or a broken signing key still shows up as red, even though nothing
-downstream of that runs in CI.
+**The Build workflow is expected to go green, and a red one is a real
+problem.** This paragraph used to say the opposite — that Build going red at
+the signing step was normal here — and that was true only between v0.4.3 and
+v1.2.0. `build.yml` now detects the absent key and runs an unsigned
+verification build with `createUpdaterArtifacts` off, which passes. The
+"never ship unsigned" guard moved to `scripts/make-latest-json.mjs`, which
+refuses to write a manifest when the `.sig` is missing, so an unsigned build
+still cannot reach the updater endpoint.
+
+Leaving the old wording in place would have been worse than saying nothing:
+it told whoever reads this next to shrug at a red Build, which is now the
+only signal a genuine regression in tests or i18n produces.

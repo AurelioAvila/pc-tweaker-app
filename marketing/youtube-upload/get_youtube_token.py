@@ -14,6 +14,7 @@ alternative, but its output then has to be converted by hand into token.json's
 format (access_token/refresh_token/scope/token_type/expiry_date) - more
 complicated, and unnecessary while lib.js works.
 """
+import json
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 CLIENT_SECRET_FILE = "client_secret_303258065266-dut5kks1ak6hlcp40drarp07vh4fhhdq.apps.googleusercontent.com.json"
@@ -21,11 +22,18 @@ SCOPES = [
     "https://www.googleapis.com/auth/youtube",
     "https://www.googleapis.com/auth/yt-analytics.readonly",
 ]
+# Matches the "token*" glob in .gitignore. Written to a file instead of
+# printed: the terminal is the one place these values are guaranteed to
+# outlive this process (scrollback, screen recordings, shared history).
+OUTPUT_FILE = "token_manual_output.json"
 
 flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
 creds = flow.run_local_server(port=0)
 
-print("\n=== NUOVO REFRESH TOKEN ===")
-print("CLIENT_ID:", creds.client_id)
-print("CLIENT_SECRET:", creds.client_secret)
-print("REFRESH_TOKEN:", creds.refresh_token)
+with open(OUTPUT_FILE, "w") as f:
+    json.dump(
+        {"client_id": creds.client_id, "client_secret": creds.client_secret, "refresh_token": creds.refresh_token},
+        f,
+        indent=2,
+    )
+print(f"\nCredentials written to {OUTPUT_FILE} - convert by hand into token.json's format, then delete this file.")

@@ -82,10 +82,14 @@ async function main() {
     JSON.stringify({ clientKey: CLIENT_KEY, clientSecret: CLIENT_SECRET, refreshToken: data.refresh_token }, null, 2),
   );
 
+  // The real values are in credentials.json already (written above) - only a
+  // masked echo goes to the console, which can end up in shell history,
+  // screen recordings or CI logs far more easily than a file on disk.
+  const mask = (s) => (s.length > 8 ? `${s.slice(0, 4)}...${s.slice(-4)}` : "****");
   console.log("\n=== Saved to credentials.json (used automatically by upload.js / auto-upload.js) ===");
-  console.log("TIKTOK_CLIENT_KEY:", CLIENT_KEY);
-  console.log("TIKTOK_CLIENT_SECRET:", CLIENT_SECRET);
-  console.log("TIKTOK_REFRESH_TOKEN:", data.refresh_token);
+  console.log("TIKTOK_CLIENT_KEY:", mask(CLIENT_KEY));
+  console.log("TIKTOK_CLIENT_SECRET:", mask(CLIENT_SECRET));
+  console.log("TIKTOK_REFRESH_TOKEN:", mask(data.refresh_token));
 }
 
 main();

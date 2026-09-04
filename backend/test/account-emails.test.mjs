@@ -84,7 +84,7 @@ test("the notice carries no link that could change anything", () => {
   const html = passwordChangedHtml("Marco", WHEN);
   assert.ok(!html.includes("reset-password"), "no reset route in a message about a reset");
   assert.ok(!html.includes("token="), "no token, so nothing here is worth stealing");
-  assert.ok(html.includes("https://pctweaker.app/support"), "the button goes to a place, not an action");
+  assert.ok(html.includes('href="https://pctweaker.app/support"'), "the button goes to a place, not an action");
 });
 
 test("the notice states when it happened and what it already did", () => {

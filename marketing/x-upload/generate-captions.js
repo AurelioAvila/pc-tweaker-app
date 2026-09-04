@@ -26,6 +26,13 @@ const QUEUE_DIRS = [path.join(ROOT, "to-publish"), path.join(ROOT, "published")]
 const MAX_HASHTAGS = 2;
 const MAX_CAPTION_LENGTH = 280;
 
+// Plain token check instead of a nested-quantifier regex (`(#\S+\s*)+`),
+// which is vulnerable to catastrophic backtracking on adversarial input.
+function isHashtagOnlyLine(line) {
+  const tokens = line.trim().split(/\s+/).filter(Boolean);
+  return tokens.length > 0 && tokens.every((t) => t.startsWith("#"));
+}
+
 function buildCaption(meta) {
   // meta.description carries the actually persuasive content (what the
   // tweak does, the install command, the repo link) - meta.title alone is
@@ -34,7 +41,7 @@ function buildCaption(meta) {
   // before reusing the description, then add X-appropriate hashtags fresh.
   const rawDescription = (meta.description || meta.title || "").trim();
   const lines = rawDescription.split("\n");
-  while (lines.length && /^(#\S+\s*)+$/.test(lines[lines.length - 1].trim())) {
+  while (lines.length && isHashtagOnlyLine(lines[lines.length - 1])) {
     lines.pop();
   }
   const body = lines.join("\n").trim() || meta.title || "";

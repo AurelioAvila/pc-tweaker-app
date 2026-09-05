@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test quality-gate.test.js ffmpeg-path.test.js",
+    "security-check": "node security-check.js"
+  },
+  "dependencies": {
+    "googleapis": "178.0.0"
+  }
+}

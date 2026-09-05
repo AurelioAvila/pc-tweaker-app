@@ -65,6 +65,11 @@ jobs:
 
   installers:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag }}
+    # GitHub exposes draft releases only to callers with repository write
+    # access. Scope this permission to the manually dispatched installer job;
+    # ordinary push and pull-request checks remain read-only.
+    permissions:
+      contents: write
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5

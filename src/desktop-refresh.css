@@ -1,0 +1,456 @@
+/* Desktop shell only. Load after App.css; the existing theme owns every color.
+   The sidebar keeps its commercial controls outside the scrolling navigation. */
+.desktop-refresh {
+  --workspace-sidebar-width: 220px;
+  --workspace-gutter: 28px;
+  --workspace-row-radius: 9px;
+
+  min-width: 0;
+  min-height: 0;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+}
+
+.desktop-refresh > main {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* An opaque, quiet work area leaves the original accent to the controls. */
+.desktop-refresh .app-field {
+  background-color: var(--bg-app);
+  background-image: none;
+  background-attachment: scroll;
+}
+
+.desktop-refresh .workspace-sidebar {
+  display: flex;
+  flex: 0 0 var(--workspace-sidebar-width);
+  flex-direction: column;
+  width: var(--workspace-sidebar-width);
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 18px 12px 12px;
+  overflow: hidden;
+  background: var(--bg-raised);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.desktop-refresh .workspace-navigation {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  gap: 0;
+  padding: 3px 4px 8px 3px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 8px;
+}
+
+.desktop-refresh .workspace-primary {
+  flex-shrink: 0;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.desktop-refresh .workspace-nav-group {
+  flex-shrink: 0;
+  min-width: 0;
+  margin-bottom: 13px;
+}
+
+.desktop-refresh .workspace-nav-group:last-child {
+  margin-bottom: 0;
+}
+
+.desktop-refresh .workspace-nav-group > .type-label {
+  margin-bottom: 5px;
+  padding-inline: 11px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.085em;
+  overflow-wrap: anywhere;
+}
+
+.desktop-refresh .workspace-sidebar .nav-item {
+  display: flex;
+  position: relative;
+  align-items: center;
+  width: 100%;
+  min-height: 35px;
+  gap: 10px;
+  margin-block: 2px;
+  padding: 7px 11px;
+  border: 1px solid transparent;
+  border-radius: var(--workspace-row-radius);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 450;
+  line-height: 1.4;
+  text-align: start;
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+
+/* Keep the selection mark inside the row so neither scroll clipping nor a
+   translated label can conceal the active destination. */
+.desktop-refresh .workspace-sidebar .nav-item::before {
+  inset-inline-start: 0;
+  left: 0;
+  width: 2px;
+  height: 16px;
+  border-radius: 2px;
+  box-shadow: none;
+}
+
+.desktop-refresh .workspace-sidebar .nav-item > .truncate {
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
+.desktop-refresh .workspace-sidebar .nav-item > :first-child {
+  flex-shrink: 0;
+}
+
+.desktop-refresh .workspace-sidebar .nav-item:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.desktop-refresh .workspace-sidebar .nav-item:is([data-active="true"], [aria-current="page"]) {
+  border-color: color-mix(in oklab, var(--accent) 22%, var(--bg-raised));
+  background: color-mix(in oklab, var(--accent) 10%, var(--bg-raised));
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.desktop-refresh
+  .workspace-sidebar
+  .nav-item:is([data-active="true"], [aria-current="page"])::before {
+  height: 16px;
+  opacity: 1;
+}
+
+.desktop-refresh
+  .workspace-navigation
+  .nav-item:is([data-active="true"], [aria-current="page"])
+  > :first-child {
+  color: var(--accent);
+}
+
+.desktop-refresh .workspace-primary .nav-item {
+  min-height: 40px;
+  padding-block: 9px;
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.desktop-refresh .workspace-primary .nav-item:is([data-active="true"], [aria-current="page"]) {
+  font-weight: 650;
+}
+
+/* No fixed height or nested scrolling: opening the coffee controls reduces
+   navigation space while pricing, tipping and the plan state remain visible. */
+.desktop-refresh .workspace-commercial {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 11px 3px 0;
+  overflow: visible;
+  background: var(--bg-raised);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.desktop-refresh .workspace-commercial > * {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.desktop-refresh .workspace-commercial > button {
+  min-height: 35px;
+  padding: 8px 11px;
+  border-radius: var(--workspace-row-radius);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.desktop-refresh .workspace-commercial > .nav-item,
+.desktop-refresh .workspace-commercial .workspace-plan-link {
+  margin: 0;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.desktop-refresh .workspace-commercial .workspace-plan-link:hover {
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--bg-raised));
+  background: var(--surface-hover);
+}
+
+.desktop-refresh .workspace-commercial .coffee-row {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.desktop-refresh .workspace-commercial .coffee-reveal > div > button {
+  min-height: 30px;
+  padding-block: 6px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.desktop-refresh .workspace-commercial .coffee-reveal > div > div > button {
+  width: 26px;
+  height: 26px;
+}
+
+.desktop-refresh .workspace-commercial .workspace-pro-state {
+  color: var(--text-secondary);
+  font-size: 11.5px;
+}
+
+/* Workspace sizing preserves wide pricing comparisons and lets feature-owned
+   layouts choose their own columns. No selectors reach into dialog panels. */
+.desktop-refresh .workspace-content {
+  min-width: 0;
+  min-height: 0;
+  padding: 25px var(--workspace-gutter) 32px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 24px;
+}
+
+.desktop-refresh .workspace-page {
+  width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.desktop-refresh .workspace-header {
+  align-items: flex-start;
+  min-width: 0;
+  gap: 14px;
+  margin-bottom: 23px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.desktop-refresh .workspace-header > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.desktop-refresh .workspace-header > .ml-auto {
+  flex: 0 1 216px;
+  width: 216px;
+  min-width: 164px;
+}
+
+.desktop-refresh .workspace-header > .relative:last-child {
+  flex-shrink: 0;
+}
+
+.desktop-refresh .workspace-header .page-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 25px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+
+.desktop-refresh .workspace-header .page-title::before {
+  content: none;
+}
+
+.desktop-refresh .workspace-header > :first-child > .flex {
+  flex-wrap: wrap;
+  row-gap: 7px;
+  margin-top: 9px;
+}
+
+.desktop-refresh .workspace-header > .ml-auto > input {
+  min-height: 37px;
+  border-color: var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-1);
+  font-size: 12px;
+}
+
+.desktop-refresh .workspace-header > .ml-auto > input:hover {
+  border-color: var(--border-strong);
+}
+
+.desktop-refresh .workspace-header > .ml-auto > input:focus-visible {
+  border-color: var(--focus);
+  background: var(--surface-1);
+}
+
+/* Only the existing main-page cards: overlay/dialog styling stays independent. */
+.desktop-refresh .workspace-page > .panel,
+.desktop-refresh .workspace-page > ul > .panel {
+  border-color: var(--border-subtle);
+  border-radius: 12px;
+  background: var(--surface-1);
+  box-shadow: 0 2px 3px rgb(0 0 0 / 0.12);
+}
+
+.desktop-refresh .workspace-page > ul > .panel-hover:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+  box-shadow: 0 2px 3px rgb(0 0 0 / 0.12);
+}
+
+.desktop-refresh .workspace-page > .backdrop-blur {
+  backdrop-filter: none;
+}
+
+/* Keep the window controls native in size and behavior; do not style the logo. */
+.desktop-refresh > .titlebar {
+  height: 44px;
+  min-height: 44px;
+  padding-left: 17px;
+  background: var(--bg-raised);
+  border-color: var(--border-subtle);
+}
+
+.desktop-refresh > .titlebar .winbtn {
+  width: 46px;
+  height: 44px;
+  color: var(--text-secondary);
+}
+
+.desktop-refresh > .titlebar .winbtn:not(.winbtn-close):hover {
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.desktop-refresh > .titlebar .winbtn-close:hover {
+  color: white;
+}
+
+.desktop-refresh > .titlebar .led {
+  width: 5px;
+  height: 5px;
+  box-shadow: 0 0 0 2px color-mix(in oklab, currentColor 12%, transparent);
+}
+
+.desktop-refresh
+  :where(button, a, input, select, textarea, [role="switch"], [tabindex]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.desktop-refresh > .titlebar .winbtn:focus-visible {
+  outline-offset: -4px;
+}
+
+@media (max-width: 1100px) {
+  .desktop-refresh {
+    --workspace-gutter: 24px;
+  }
+}
+
+@media (max-width: 900px) {
+  .desktop-refresh {
+    --workspace-sidebar-width: 212px;
+    --workspace-gutter: 20px;
+  }
+}
+
+@media (max-width: 880px) {
+  .desktop-refresh .workspace-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .desktop-refresh .workspace-header > :first-child {
+    flex-basis: 100%;
+  }
+
+  .desktop-refresh .workspace-header > .ml-auto {
+    flex: 1 1 0%;
+    width: auto;
+    min-width: 0;
+    margin-left: 0;
+  }
+
+  .desktop-refresh .workspace-header .page-title {
+    font-size: 23px;
+  }
+}
+
+/* At the minimum window height, density changes only in the rail. Labels keep
+   their readable type size; the navigation absorbs overflow, not the footer. */
+@media (max-height: 650px) {
+  .desktop-refresh .workspace-sidebar {
+    padding-top: 11px;
+    padding-bottom: 9px;
+  }
+
+  .desktop-refresh .workspace-primary {
+    margin-bottom: 9px;
+    padding-bottom: 8px;
+  }
+
+  .desktop-refresh .workspace-nav-group {
+    margin-bottom: 9px;
+  }
+
+  .desktop-refresh .workspace-sidebar .nav-item {
+    min-height: 32px;
+    padding-block: 5px;
+  }
+
+  .desktop-refresh .workspace-primary .nav-item {
+    min-height: 36px;
+    padding-block: 7px;
+  }
+
+  .desktop-refresh .workspace-commercial {
+    gap: 3px;
+    margin-top: 5px;
+    padding-top: 8px;
+  }
+
+  .desktop-refresh .workspace-content {
+    padding-top: 20px;
+  }
+}
+
+@media (forced-colors: active) {
+  .desktop-refresh .workspace-sidebar .nav-item:is([data-active="true"], [aria-current="page"]) {
+    border-color: Highlight;
+    color: Highlight;
+  }
+
+  .desktop-refresh .workspace-commercial > button,
+  .desktop-refresh .workspace-header > .ml-auto > input {
+    border: 1px solid ButtonText;
+  }
+}

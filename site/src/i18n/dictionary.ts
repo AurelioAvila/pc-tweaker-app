@@ -191,397 +191,459 @@ export interface Dictionary {
 }
 
 export const engDictionary: Dictionary = {
-  coffee: {
-    pill: "Buy me a coffee",
-    caption: "One coffee. Zero subscriptions. Nothing to cancel.",
-    fewer: "One coffee fewer",
-    more: "One coffee more",
-    unavailable: "Checkout isn't available right now — try again in a moment.",
+  "coffee": {
+    "pill": "Support PC Tweaker",
+    "caption": "Optional one-time tip. Your download is free.",
+    "fewer": "One fewer coffee",
+    "more": "One more coffee",
+    "unavailable": "Tipping is temporarily unavailable. You can still download PC Tweaker."
   },
-  nav: {
-    results: "Results",
-    arsenal: "Arsenal",
-    protocol: "Protocol",
-    access: "Access",
-    faq: "FAQ",
-    download: "Download",
+  "nav": {
+    "results": "Evidence",
+    "arsenal": "Features",
+    "protocol": "How it works",
+    "access": "Free & Pro",
+    "faq": "FAQ",
+    "download": "Download Free"
   },
-  hero: {
-    eyebrow: "WINDOWS OPTIMIZATION — ENGINEERED, NOT GUESSED",
-    title1: "EVERY",
-    title2: "MILLISECOND",
-    title3: "IS EARNED.",
-    subBold: "56 real Windows tweaks",
-    sub: " — registry, power plan, services, scheduler priorities. Every single one snapshotted before it touches your system. One click to apply. One click to undo.",
-    cta: "Download for Windows — Free",
-    safetyNote:
-      'The installer isn\'t code-signed yet (it\'s on the roadmap), so Windows may show a SmartScreen warning on first run. Click "More info" → "Run anyway". The download is safe: the full source is public on GitHub, and every auto-update is cryptographically signed and verified before it installs. To skip the warning entirely, install from the Microsoft Store or with winget — both are signed, neither prompts.',
-    terminalTitle: "powershell — pctweaker",
-    terminalCmd: "winget install AurelioAvila.PCTweaker",
-    terminalHint: "# zero SmartScreen prompts via winget",
-    copy: "COPY",
-    copied: "COPIED ✓",
-    badges: [
+  "hero": {
+    "eyebrow": "WINDOWS TUNING YOU CAN INSPECT",
+    "title1": "TUNE FOR",
+    "title2": "STEADIER",
+    "title3": "FRAME TIMES.",
+    "subBold": "Make deliberate changes. Keep what works.",
+    "sub": " Review Windows settings for gaming, privacy and everyday use. See what each tweak changes, save its previous state and restore supported settings when you need to. Start free. No account required.",
+    "cta": "Download Free for Windows",
+    "safetyNote": "PC Tweaker 1.9.0 is code-signed. Our signed Windows installers identify Aurelio Avila as the publisher. Older downloads may be unsigned; check the file's Digital Signatures tab. SmartScreen may still show a warning for a new release.",
+    "terminalTitle": "Install with Windows Package Manager",
+    "terminalCmd": "winget install --id AurelioAvila.PCTweaker --exact",
+    "terminalHint": "# install the official PC Tweaker package",
+    "copy": "COPY",
+    "copied": "COPIED",
+    "badges": [
       {
-        label: "MajorGeeks 5.0/5.0",
-        href: "https://www.majorgeeks.com/files/details/pc_tweaker.html",
+        "label": "MajorGeeks reviews",
+        "href": "https://www.majorgeeks.com/files/details/pc_tweaker.html"
       },
       {
-        label: "Softpedia Listed",
-        href: "https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml",
+        "label": "Softpedia review: 4.5/5",
+        "href": "https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"
       },
       {
-        label: "Microsoft Store",
-        href: "https://apps.microsoft.com/detail/9nh3c6dt1g87",
+        "label": "Microsoft Store",
+        "href": "https://apps.microsoft.com/detail/9nh3c6dt1g87"
       },
-      { label: "Source Available", href: "https://github.com/AurelioAvila/pc-tweaker-app" },
+      {
+        "label": "Inspect the source",
+        "href": "https://github.com/AurelioAvila/pc-tweaker-app"
+      }
     ],
-    themeLabel: "THEMES",
+    "themeLabel": "THEMES"
   },
-  metrics: {
-    tag: "01 / MEASURED, NOT PROMISED",
-    title: "Stock Windows leaves frames on the table.",
-    sub: "Numbers from our own recorded, published benchmark — same machine, same match type, before and after PC Tweaker's gaming preset. No synthetic scores. No cherry-picked peaks.",
-    stats: [
-      { value: 67, unit: "%", label: "AVG FPS GAIN — VALORANT" },
-      { value: 56, unit: "", label: "REAL SYSTEM TWEAKS" },
-      { value: 100, unit: "%", label: "REVERSIBLE — SNAPSHOT FIRST" },
-      { value: 1, unit: "CLICK", label: "FULL SYSTEM RESTORE" },
+  "metrics": {
+    "tag": "01 / WHAT TO MEASURE",
+    "title": "Average FPS is only part of the story.",
+    "sub": "Judge a change by repeated runs: frame-time spikes, 1% lows and consistency. Results depend on your hardware, drivers and game. The chart below is an illustration, not a captured benchmark or a promised improvement.",
+    "stats": [
+      {
+        "value": 37,
+        "unit": "",
+        "label": "TWEAKS INCLUDED FREE"
+      },
+      {
+        "value": 61,
+        "unit": "",
+        "label": "TWEAKS IN THIS RELEASE"
+      },
+      {
+        "value": 0,
+        "unit": "",
+        "label": "ACCOUNTS NEEDED FOR FREE"
+      },
+      {
+        "value": 1,
+        "unit": "",
+        "label": "PLACE TO REVIEW & RESTORE"
+      }
     ],
-    graphTitle: "FRAME-TIME STABILITY — 60s SAMPLE",
-    graphStock: "STOCK",
-    graphTweaked: "TWEAKED",
-    graphNote: "// avg match FPS · Valorant · same hardware · full session recorded & published",
-    fpsStock: 330,
-    fpsTweaked: 551,
+    "graphTitle": "ILLUSTRATIVE COMPARISON — NOT MEASURED DATA",
+    "graphStock": "EXAMPLE A",
+    "graphTweaked": "EXAMPLE B",
+    "graphNote": "Illustrative traces and FPS values. No measured frame-time, micro-stutter or DPC-latency improvement is claimed by this chart.",
+    "fpsStock": 330,
+    "fpsTweaked": 551
   },
-  arsenal: {
-    tag: "02 / THE ARSENAL",
-    title: "Seven domains. Zero placebo.",
-    cards: [
+  "arsenal": {
+    "tag": "02 / YOUR CONTROLS",
+    "title": "Know what changes. Know why.",
+    "cards": [
       {
-        tag: "PC HEALTH SCORE",
-        title: "A score that can prove itself",
-        body: "Nine categories, one speedometer — and every point traces to a shown fact: your startup apps, your power plan, your Defender state. Press Show more and the factor list IS the calculation. Computed only when you ask, entirely on your PC.",
-        pro: false,
-        span: "wide",
+        "tag": "PC HEALTH",
+        "title": "Understand the score",
+        "body": "See the settings and observations behind your health score, including startup apps, power configuration and security status. It is a configuration summary, not an FPS benchmark.",
+        "pro": false,
+        "span": "wide"
       },
       {
-        tag: "WHY IT CHANGED",
-        title: "The number is a door, not a verdict",
-        body: 'Your score drops four points and PC Tweaker tells you which categories moved and quotes the facts on both sides — "4 apps start with Windows" became "7 apps start with Windows". Evidence that drifts without moving points is never listed as a cause, and when nothing changed, it says nothing changed.',
-        pro: false,
-        span: "wide",
+        "tag": "CHANGE TRACKING",
+        "title": "See what moved",
+        "body": "Compare the facts behind your previous and current scores. When startup apps or settings change, see the difference. When the evidence is unchanged, there is no reason to invent a problem.",
+        "pro": false,
+        "span": "wide"
       },
       {
-        tag: "TECHNICAL DETAILS",
-        title: "Read the exact key before you flip the switch",
-        body: "Every tweak discloses what it actually does: the full registry path, the value name, the type and the value written — plus the commands behind the ones that are not a single registry write. Read from the code that performs the change, so it can never describe a key the app does not touch.",
-        pro: false,
-        span: "wide",
+        "tag": "TECHNICAL DETAILS",
+        "title": "Inspect before you apply",
+        "body": "Read the registry path, value type and setting written by a tweak. For other operations, inspect the commands involved. Decide with the details in front of you.",
+        "pro": false,
+        "span": "wide"
       },
       {
-        tag: "ROLLBACK ENGINE",
-        title: "Snapshot first. Always.",
-        body: "Before any tweak writes a single registry value, its previous state is captured. Revert one tweak, or all 56 at once with Restore All. Optimization you can walk back from — that is the entire premise.",
-        pro: false,
-        span: "wide",
+        "tag": "RESTORE",
+        "title": "Keep a way back",
+        "body": "Supported settings save their previous state before a change. Restore an individual tweak or review Restore All. Restoring settings does not recover permanently deleted caches or replace a full system backup.",
+        "pro": false,
+        "span": "wide"
       },
       {
-        tag: "HARDWARE",
-        title: "Your sensors, not our estimates",
-        body: "GPU and CPU temperature, load, VRAM, fan and power draw, read straight from the hardware's own sensors — and where a sensor does not exist, the app says so instead of showing a number nobody can verify. A session watch waits until the card has actually worked before calling a result, because an idle card runs cool regardless and that proves nothing.",
-        pro: false,
-        span: "wide",
+        "tag": "HARDWARE",
+        "title": "Read the sensors you have",
+        "body": "Monitor available temperatures, utilization, VRAM, fan speed and power readings. Unsupported sensors are identified. Use readings during a real workload to understand heat and load together.",
+        "pro": false,
+        "span": "wide"
       },
       {
-        tag: "DRIVERS",
-        title: "Every device class, then Windows Update",
-        body: "A full inventory of your drivers — every device class, real progress while it runs, the age of each one. Updates install through Windows Update, the only channel that ships signed vendor drivers matched to your exact hardware id.",
-        pro: false,
-        span: "std",
+        "tag": "DRIVERS",
+        "title": "Review updates in one place",
+        "body": "Inspect your driver inventory and install available updates through Windows Update. Check the device and update details before proceeding; a newer driver is not automatically a faster one.",
+        "pro": false,
+        "span": "std"
       },
       {
-        tag: "THERMAL PROFILES",
-        title: "Quiet, stock, or all of it",
-        body: "Three profiles built from the watt limits the card itself reports — Silent for long sessions, Standard for the balance the manufacturer chose, Gaming for watts at maximum and a raised clock ceiling. One click back to stock, always.",
-        pro: false,
-        span: "std",
+        "tag": "THERMAL PROFILES",
+        "title": "Choose your power trade-off",
+        "body": "Use supported hardware controls to balance noise, temperature and power. Review the limits your device exposes and return to its stock profile. Higher limits can mean more heat and noise.",
+        "pro": false,
+        "span": "std"
       },
       {
-        tag: "SCAN",
-        title: "One-click diagnosis",
-        body: "Live CPU / RAM / disk telemetry, plus a list of everything not yet optimized. Fix all of it behind a single UAC prompt.",
-        pro: false,
-        span: "std",
+        "tag": "SCAN",
+        "title": "Start with a clear inventory",
+        "body": "Check CPU, memory, storage and available tweaks. Review your selection before applying changes. An inactive tweak is an option to consider, not proof that your PC is broken.",
+        "pro": false,
+        "span": "std"
       },
       {
-        tag: "PERFORMANCE",
-        title: "CPU & power tuning",
-        body: "Scheduler priority, High Performance plan, startup-app delay removal, CPU power throttling off.",
-        pro: false,
-        span: "std",
+        "tag": "PERFORMANCE",
+        "title": "Tune Windows to your workload",
+        "body": "Review power plans, startup delay and foreground scheduling settings. Compare under the same workload, then retain only the changes that help your machine.",
+        "pro": false,
+        "span": "std"
       },
       {
-        tag: "GAMING",
-        title: "Game Sessions",
-        body: "HAGS, GPU priority, input-lag reduction — and a Turbo preset that auto-applies when your game launches, auto-reverts when it closes.",
-        pro: true,
-        span: "std",
+        "tag": "GAMING",
+        "title": "Make sessions easier to manage",
+        "body": "Use Game Sessions to apply a gaming preset when a supported game starts and restore its supported settings afterward. Review hardware scheduling and input options individually.",
+        "pro": true,
+        "span": "std"
       },
       {
-        tag: "PRIVACY",
-        title: "Telemetry, silenced",
-        body: "Advertising ID, tracking, Cortana, diagnostic data — off. Plus a k-anonymity password breach check.",
-        pro: true,
-        span: "std",
+        "tag": "PRIVACY",
+        "title": "Choose what Windows shares",
+        "body": "Review supported advertising, tracking and diagnostic settings. Availability varies by Windows edition. Check password exposure using a hash-prefix lookup; your full password is not sent.",
+        "pro": true,
+        "span": "std"
       },
       {
-        tag: "NETWORK",
-        title: "Your ping stops moving when the house does",
-        body: "Windows uses CUBIC, which speeds up until a buffer somewhere overflows — which is why your ping climbs the moment someone else starts a download. BBR2 measures the line's real bandwidth and round trip and paces traffic to fit. Free, and it switches back to exactly what was there before.",
-        pro: false,
-        span: "std",
+        "tag": "NETWORK",
+        "title": "Test your connection settings",
+        "body": "Compare supported TCP congestion settings and restore the previous configuration. TCP tuning does not control every download on your network or guarantee lower latency in UDP-based games.",
+        "pro": false,
+        "span": "std"
       },
       {
-        tag: "RYZEN X3D",
-        title: "The right die, not both of them",
-        body: "On a two-die Ryzen X3D only one die carries the stacked cache, and Windows spreads a game across both. PC Tweaker finds the right die from the processor's own cache map and pins your game to it. On a single-die chip it tells you there is nothing to align — no placebo switch.",
-        pro: false,
-        span: "std",
+        "tag": "RYZEN X3D",
+        "title": "Test cache-aware placement",
+        "body": "On supported dual-die Ryzen X3D processors, inspect the cache topology and test game placement on the cache-equipped die. Single-die chips do not need this adjustment. Compare before keeping it.",
+        "pro": false,
+        "span": "std"
       },
       {
-        tag: "MAINTENANCE",
-        title: "Disk intelligence",
-        body: "Duplicate finder by content hash, large-file hunter, S.M.A.R.T. drive health, SSD-safe TRIM. Deletions go to the Recycle Bin — never permanent.",
-        pro: false,
-        span: "wide",
+        "tag": "MAINTENANCE",
+        "title": "Find what is taking up space",
+        "body": "Review large files, duplicates and supported drive tools. Cleanup explains what can be restored and what is deleted permanently. Removing shader caches can cause rebuilding and temporary stutter.",
+        "pro": false,
+        "span": "wide"
       },
       {
-        tag: "INTERFACE",
-        title: "Your desktop, your rules",
-        body: "Dark mode, file extensions, taskbar cleanup, transparency off — and a window that carries its own chrome, with the count of applied optimizations and live CPU and RAM in the title bar. 6 languages, 14 themes.",
-        pro: false,
-        span: "wide",
-      },
-    ],
+        "tag": "INTERFACE",
+        "title": "Make Windows feel familiar",
+        "body": "Adjust file extensions, taskbar options, appearance and other supported interface settings. Choose your app language and theme while keeping the controls close at hand.",
+        "pro": false,
+        "span": "wide"
+      }
+    ]
   },
-  philosophy: {
-    tag: "03 / ENGINEERING PHILOSOPHY",
-    lines: [
-      { text: '// most "PC optimizers" are theater.', kind: "comment" },
-      { text: "// fake progress bars over fake work.", kind: "comment" },
-      { text: "", kind: "plain" },
-      { text: "We don't sell placebo.", kind: "strong" },
-      { text: "Every tweak reads and writes the real registry,", kind: "plain" },
-      { text: "the real power plan, the real services —", kind: "accent" },
-      { text: "and snapshots the previous value first. Full stop.", kind: "plain" },
-      { text: "", kind: "plain" },
-      { text: "// if it can't be undone, it doesn't ship.", kind: "comment" },
-    ],
+  "philosophy": {
+    "tag": "03 / THE STANDARD",
+    "lines": [
+      {
+        "text": "// a setting is not a result.",
+        "kind": "comment"
+      },
+      {
+        "text": "// your workload decides what helps.",
+        "kind": "comment"
+      },
+      {
+        "text": "",
+        "kind": "plain"
+      },
+      {
+        "text": "Inspect. Change. Compare.",
+        "kind": "strong"
+      },
+      {
+        "text": "See the setting before you apply it.",
+        "kind": "plain"
+      },
+      {
+        "text": "Keep the changes that earn their place.",
+        "kind": "accent"
+      },
+      {
+        "text": "Restore supported settings when you need to.",
+        "kind": "plain"
+      },
+      {
+        "text": "",
+        "kind": "plain"
+      },
+      {
+        "text": "// clear limits are part of the product.",
+        "kind": "comment"
+      }
+    ]
   },
-  protocol: {
-    tag: "04 / PROTOCOL",
-    title: "From stock to tuned in four moves.",
-    steps: [
+  "protocol": {
+    "tag": "04 / HOW IT WORKS",
+    "title": "Four steps. You stay in control.",
+    "steps": [
       {
-        mono: "INITIAL TELEMETRY",
-        title: "Scan the machine",
-        body: "Live system readout — CPU, memory, disk — and a precise list of every optimization not yet active. You see exactly what will change before anything does.",
+        "mono": "REVIEW",
+        "title": "See your starting point",
+        "body": "Run a scan and inspect available settings. Note your hardware, game settings and current performance before changing anything."
       },
       {
-        mono: "BOTTLENECK REMOVAL",
-        title: "Apply, once",
-        body: "Every selected tweak batches behind a single UAC prompt — not one popup per toggle. Each previous value is snapshotted before it's written.",
+        "mono": "APPLY",
+        "title": "Choose the changes",
+        "body": "Read each tweak's effect and trade-offs. Apply your selection; operations that need administrator access request Windows approval."
       },
       {
-        mono: "SESSION MODE",
-        title: "Play",
-        body: "Game Sessions detects your game launching, applies the Turbo preset automatically, and reverts it the moment you close. Peak state only when it matters.",
+        "mono": "COMPARE",
+        "title": "Run the same workload",
+        "body": "Repeat the same scene or task under comparable conditions. Look at consistency and frame-time spikes alongside average FPS. Pro adds Game Sessions for repeatable session setup."
       },
       {
-        mono: "STABILITY GUARANTEE",
-        title: "Rollback, anytime",
-        body: "Changed your mind? Restore one tweak or the entire system to its original state in one click. Cleanup deletions live in the Recycle Bin, not the void.",
-      },
-    ],
+        "mono": "RESTORE",
+        "title": "Keep what helps",
+        "body": "Restore supported settings that do not improve your experience. Check the outcome of each restore. Cleanup and repair operations have their own recovery limits."
+      }
+    ]
   },
-  pricing: {
-    tag: "05 / ACCESS",
-    title: "35 tweaks free, forever.",
-    free: {
-      plan: "FREE",
-      price: "€0",
-      per: "/ forever",
-      features: [
-        "35 real tweaks across every domain",
-        "One-click Scan & Fix All",
-        "Windows integrity check, and the full startup list",
-        "Full rollback engine included",
-        "No account required",
+  "pricing": {
+    "tag": "05 / FREE & PRO",
+    "title": "Start with control. Upgrade for convenience.",
+    "free": {
+      "plan": "FREE",
+      "price": "€0",
+      "per": "/ no subscription",
+      "features": [
+        "37 Windows tweaks",
+        "Scan and review your settings",
+        "Startup tools and Windows integrity checks",
+        "Restore supported changes",
+        "No account or card required"
       ],
-      cta: "Download Free",
+      "cta": "Download Free"
     },
-    pro: {
-      plan: "PRO — ANNUAL",
-      price: "€59",
-      per: "/ year · or €9.99/mo",
-      save: "SAVE 51%",
-      features: [
-        "All 56 tweaks unlocked",
-        "Turbo Gaming preset + Game Sessions",
-        "Windows integrity repair (DISM + SFC), no command prompt",
-        "Selective cookie cleaning that keeps you signed in",
-        "Third-party app caches: shader, launcher and package-manager",
-        "Duplicate & large file finder, drive optimization",
-        "Pro syncs across your installs",
+    "pro": {
+      "plan": "PRO — ANNUAL",
+      "price": "€59",
+      "per": "/ year · monthly option €9.99",
+      "save": "SAVE 51% VS MONTHLY",
+      "features": [
+        "All 61 tweaks in this release",
+        "Turbo Gaming and Game Sessions",
+        "Guided Windows repair with DISM and SFC",
+        "Selective cookie cleanup",
+        "Supported app cache cleanup",
+        "Advanced file and drive tools",
+        "Account-based Pro activation"
       ],
-      cta: "Get the App → Upgrade Inside",
-    },
+      "cta": "Download & Explore Pro"
+    }
   },
-  faq: {
-    tag: "06 / STRAIGHT ANSWERS",
-    title: "Asked, answered.",
-    items: [
+  "faq": {
+    "tag": "07 / BEFORE YOU START",
+    "title": "Clear answers before your first change.",
+    "items": [
       {
-        q: "Where do the driver updates come from?",
-        a: "From Windows Update, not from vendor sites. That is the only channel where the package is WHQL-signed and matched by Microsoft to your exact hardware id, so there is no chance of installing a driver meant for a different card. PC Tweaker shows you what is pending and its size, installs it, and only asks you to restart when Windows itself reports that a restart is required.",
+        "q": "Will PC Tweaker improve FPS or remove micro-stutter?",
+        "a": "There is no universal FPS gain. Results depend on the game, hardware, drivers and starting configuration. Compare repeated runs and check frame-time consistency. Shader compilation, thermal limits and driver problems may need a different fix. PC Tweaker does not promise to eliminate micro-stutter or reduce DPC latency on every system."
       },
       {
-        q: "Are the temperatures real, or estimated?",
-        a: "Real. They come from the hardware's own sensors. Where a sensor does not exist on your machine — many desktop CPUs expose no temperature to Windows at all — the app says the sensor is missing rather than showing a plausible-looking number. The same applies to fan speed: a card that reports 0% because the fan is genuinely stopped is labelled as stopped, not as broken.",
+        "q": "Are the sensor readings real, and where do drivers come from?",
+        "a": "Hardware monitoring uses available sensor readings and identifies unsupported values. Driver updates are delivered through Windows Update. Review the target device, keep a recovery path and compare behavior after updating."
       },
       {
-        q: "Is this safe? Can it break Windows?",
-        a: "Every tweak snapshots the original value before changing it, and everything can be reverted — individually or all at once with Restore All. Cleanup operations move files to the Recycle Bin, never delete permanently. That reversibility is the core design constraint of the entire app.",
+        "q": "What can I undo?",
+        "a": "Supported settings store their previous state and can be restored individually or through Restore All. This is not a complete system image. Permanently deleted caches cannot be recovered through setting rollback, and Windows repair and driver changes have separate recovery limits. Review each operation before applying it."
       },
       {
-        q: "Will it get me banned in competitive games?",
-        a: "PC Tweaker changes Windows settings only — registry values, power plans, service states. It never touches game files, injects into processes, or modifies memory. It's system configuration, the same category as changing settings in Control Panel.",
+        "q": "Can I use it with competitive games?",
+        "a": "PC Tweaker configures Windows and uses supported monitoring paths; it is not an aim or gameplay modification tool. Game and anti-cheat policies can change. Check the rules for your game, league or tournament. Compatibility and freedom from bans cannot be guaranteed."
       },
       {
-        q: "What's actually free?",
-        a: "35 of the 56 tweaks, the Scan, the whole Hardware screen — live sensors, thermal profiles, the driver inventory and driver updates — the rollback engine, the RAM cleaner, the startup and scheduled-task manager, the Windows integrity check, BBR2 congestion control and the X3D die aligner: free forever, no account needed. Pro (€9.99/month or €59/year) unlocks the advanced set: Turbo Gaming, Game Sessions, the Windows repair sequence, selective cookie cleaning, third-party app caches, duplicate/large file finders, drive optimization, disabling Recall and Memory Integrity, and the rest of the power-user tweaks.",
+        "q": "What is free, and how does Pro work?",
+        "a": "Free includes 37 tweaks, scan, supported restore tools, hardware monitoring and selected maintenance tools, with no account required. Pro adds advanced features and Game Sessions. Current subscriptions are €9.99 per month or €59 per year; lifetime is €74.99 once while offered in the app. Review the final price and renewal terms at checkout. Existing lifetime purchases retain the access promised when purchased."
       },
       {
-        q: "Does it phone home?",
-        a: "The tweaks themselves never send data anywhere. The optional account exists solely to sync your Pro status between installs. The password breach check uses k-anonymity — your password never leaves your machine in full. The source is publicly viewable on GitHub, so you can verify all of this yourself.",
+        "q": "What leaves my PC?",
+        "a": "Applying local settings is separate from online services. Account, license, update, payment, support and optional breach-check requests contact their respective services. The breach check sends a hash prefix, not your complete password. Read the Privacy Policy for details. Private feedback is not reused as a public testimonial without permission."
       },
       {
-        q: 'Windows says "unrecognized app" on install. Why?',
-        a: 'The installer isn\'t Authenticode-signed yet, so SmartScreen shows a warning on first run: click "More info" → "Run anyway". Prefer zero prompts? Install via winget: winget install AurelioAvila.PCTweaker',
+        "q": "Is PC Tweaker code-signed?",
+        "a": "PC Tweaker 1.9.0 ships with Windows application and installer signatures from Aurelio Avila and a trusted timestamp. Older releases may be unsigned. A valid signature identifies the publisher and helps detect changed files. The separate update signature verifies update packages. Neither guarantees performance gains or prevents every SmartScreen prompt."
+      }
+    ]
+  },
+  "reviews": {
+    "tag": "06 / USER FEEDBACK",
+    "title": "See what other users found.",
+    "outOf": "out of 5",
+    "basedOn": "based on {count} site ratings",
+    "note": "Existing site ratings are kept. Written feedback is private and is not published here. On SourceForge, fulxor wrote: “Helpful and well done, good job!” (August 6, 2026). External reviews retain their original context and do not verify performance claims.",
+    "writeCta": "Share Your Experience",
+    "formTitle": "How did PC Tweaker work for you?",
+    "formName": "Name",
+    "formNameHint": "Optional; not displayed publicly.",
+    "formEmail": "Email",
+    "formEmailHint": "Optional; used to identify an updated rating and contact you if needed.",
+    "formRating": "Your rating",
+    "formBody": "Your experience",
+    "formBodyHint": "Optional. Sent privately to support; not posted on this page.",
+    "formBodyPlaceholder": "Tell me your hardware, what you changed and what happened. Improvements, no change and problems are all useful.",
+    "submit": "Submit Rating",
+    "submitting": "Submitting…",
+    "thanks": "Thank you. Your rating has been recorded.",
+    "cancel": "Close"
+  },
+  "support": {
+    "navLabel": "Support",
+    "tag": "SUPPORT / DIRECT LINE",
+    "title": "Something not working? Tell us.",
+    "intro": "Send the details below so Aurelio can investigate the issue. Include your app version, the setting or tool involved, and the exact error message.",
+    "selfServeTitle": "Start with these checks",
+    "selfServe": [
+      {
+        "q": "A tweak made something worse",
+        "a": "Restore that supported setting from its card, or review Restore All. Check the result of the restore. Setting rollback does not recover permanently deleted files or replace the separate recovery procedures for repair, drivers and hardware controls."
       },
+      {
+        "q": "Windows blocked the installer (\"unrecognized app\")",
+        "a": "Check that the download came from an official channel and compare the release notes and publisher details. Version 1.9.0 introduces signed Windows installers from Aurelio Avila. Older versions, including v1.8.0, may be unsigned. A valid signature or winget installation does not guarantee that SmartScreen will show no warning."
+      },
+      {
+        "q": "Pro features are still locked after paying",
+        "a": "Return to PC Tweaker while connected to the internet so it can refresh your account and license. If access is still locked, contact support with the email used for the purchase and the payment time. Do not post your license file or payment details publicly."
+      },
+      {
+        "q": "The app won't start at all",
+        "a": "Confirm that you are using the official Windows x64 build and note any Windows or WebView2 error. If an operation requires administrator access, Windows asks for approval. Send the exact error and app version if the app still will not start."
+      }
     ],
-  },
-  reviews: {
-    tag: "05 / VERDICT",
-    title: "What people who run it say",
-    outOf: "out of 5",
-    basedOn: "based on {count} ratings",
-    note: "Ratings are published as an average. Anything you write goes straight to the team — it isn't posted on this page.",
-    writeCta: "Rate PC Tweaker",
-    formTitle: "Leave your rating",
-    formName: "Your name",
-    formNameHint: "Optional.",
-    formEmail: "Email",
-    formEmailHint: "Optional. Only used if we need to follow up.",
-    formRating: "Your rating",
-    formBody: "Anything you want to tell us",
-    formBodyHint: "Optional, and private — this reaches the team by email only.",
-    formBodyPlaceholder:
-      "What did you run it on, and what changed? Concrete numbers help more than adjectives.",
-    submit: "Submit rating",
-    submitting: "Sending…",
-    thanks: "Thanks — your rating has been counted.",
-    cancel: "Cancel",
-  },
-  support: {
-    navLabel: "Support",
-    tag: "SUPPORT / DIRECT LINE",
-    title: "Something not working? Tell us.",
-    intro:
-      "PC Tweaker is built and maintained by one engineer, so your message is read by the person who writes the code — not a ticket queue. Most issues are solved on the first reply.",
-    selfServeTitle: "Fix it yourself in 30 seconds",
-    selfServe: [
-      {
-        q: "A tweak made something worse",
-        a: "Open the app and press Restore All, or restore that single tweak from its card. Every tweak snapshots the previous value before it writes, so undo is exact — not a guess at defaults.",
-      },
-      {
-        q: 'Windows blocked the installer ("unrecognized app")',
-        a: 'The installer isn\'t Authenticode-signed yet, so SmartScreen warns on first run. Click "More info" → "Run anyway". To skip the prompt entirely, install with: winget install AurelioAvila.PCTweaker',
-      },
-      {
-        q: "Pro features are still locked after paying",
-        a: "Sign out and back in from the account menu — entitlement is fetched at sign-in. If it's still locked, send us the email address you paid with and we'll fix it manually.",
-      },
-      {
-        q: "The app won't start at all",
-        a: "Right-click the shortcut and choose Run as administrator. PC Tweaker needs elevation to read and write the registry keys it manages. If it still fails, include the exact error code below.",
-      },
-    ],
-    beforeTitle: "Include these and we'll likely solve it in one reply",
-    beforeItems: [
+    "beforeTitle": "Include these details",
+    "beforeItems": [
       "Your Windows version (Win + R → type winver)",
       "Which tweak or screen the problem happens on",
       "The exact error text or code, if any appeared",
-      "What you already tried (including Restore All)",
+      "What you already tried (including Restore All)"
     ],
-    formTitle: "Send a support request",
-    formIntro: "We reply to the address you enter here.",
-    name: "Full name",
-    email: "Email address",
-    emailHint: "This is where our reply goes. Double-check it.",
-    category: "What's this about?",
-    categories: [
-      { value: "installation", label: "Installation / update" },
-      { value: "activation", label: "Pro activation" },
-      { value: "tweak-issue", label: "A tweak isn't working" },
-      { value: "rollback", label: "Rollback / restore" },
-      { value: "billing", label: "Billing / refund" },
-      { value: "bug", label: "Bug report" },
-      { value: "other", label: "Something else" },
+    "formTitle": "Send a support request",
+    "formIntro": "We reply to the address you enter here.",
+    "name": "Full name",
+    "email": "Email address",
+    "emailHint": "This is where our reply goes. Double-check it.",
+    "category": "What's this about?",
+    "categories": [
+      {
+        "value": "installation",
+        "label": "Installation / update"
+      },
+      {
+        "value": "activation",
+        "label": "Pro activation"
+      },
+      {
+        "value": "tweak-issue",
+        "label": "A tweak isn't working"
+      },
+      {
+        "value": "rollback",
+        "label": "Rollback / restore"
+      },
+      {
+        "value": "billing",
+        "label": "Billing / refund"
+      },
+      {
+        "value": "bug",
+        "label": "Bug report"
+      },
+      {
+        "value": "other",
+        "label": "Something else"
+      }
     ],
-    subject: "Subject",
-    subjectPlaceholder: "One line: what's wrong",
-    systemInfo: "System details",
-    systemInfoHint: "Optional — Windows version, GPU, app version.",
-    message: "Describe the problem",
-    messagePlaceholder:
-      "What did you do, what did you expect, and what happened instead? Include any error text exactly as it appeared.",
-    submit: "Send message",
-    submitting: "Sending…",
-    successTitle: "Message sent",
-    successBody:
-      "It's in our inbox and a copy is on its way to your email. We usually reply within one business day.",
-    responseTime: "Typical first reply: under 24 hours, Monday to Friday.",
-    backHome: "Back to home",
+    "subject": "Subject",
+    "subjectPlaceholder": "One line: what's wrong",
+    "systemInfo": "System details",
+    "systemInfoHint": "Optional — Windows version, GPU, app version.",
+    "message": "Describe the problem",
+    "messagePlaceholder": "What did you do, what did you expect, and what happened instead? Include any error text exactly as it appeared.",
+    "submit": "Send message",
+    "submitting": "Sending…",
+    "successTitle": "Message sent",
+    "successBody": "Your request has been accepted. Check your inbox for a confirmation; delivery may take a little time.",
+    "responseTime": "Replies are sent to the email address you provide.",
+    "backHome": "Back to home"
   },
-  newsletter: {
-    pitch: "New tweaks, new releases, new tools — occasionally, by email.",
-    placeholder: "your@email.com",
-    button: "Subscribe",
-    thanks: "You're in — check your inbox for a welcome email.",
-    genericError: "Something went wrong. Please try again in a moment.",
+  "newsletter": {
+    "pitch": "Release notes, test results and practical Windows tuning guides.",
+    "placeholder": "Your email address",
+    "button": "Get Updates",
+    "thanks": "Thank you. Check your inbox for your welcome email.",
+    "genericError": "We could not save your subscription. Please try again."
   },
-  footer: {
-    tagline: "A safer way to tune your Windows PC.",
-    product: "PRODUCT",
-    download: "Download",
-    changelog: "Changelog",
-    source: "Source Code",
-    reviews: "REVIEWS",
-    legal: "LEGAL",
-    privacy: "Privacy Policy",
-    terms: "Terms",
-    cookies: "Cookie Policy",
-    accessibility: "Accessibility",
-    contact: "Contact",
-    license: "Proprietary License",
-    copyright: "Built solo in Amsterdam with Tauri (Rust) + React. © 2026 Aurelio Avila",
-    motto: "// every millisecond is earned",
-    tipThanks: "Thank you — that genuinely helps.",
-  },
+  "footer": {
+    "tagline": "Windows tuning. Visible changes. Informed decisions.",
+    "product": "PC TWEAKER",
+    "download": "Download for Windows",
+    "changelog": "Release Notes",
+    "source": "Inspect the Source",
+    "reviews": "INDEPENDENT REVIEWS",
+    "legal": "POLICIES",
+    "privacy": "Privacy",
+    "terms": "Terms & Billing",
+    "cookies": "Cookies",
+    "accessibility": "Accessibility",
+    "contact": "Contact Aurelio",
+    "license": "Source-Available License",
+    "copyright": "Created and maintained by Aurelio Avila. © 2026 Aurelio Avila",
+    "motto": "// every millisecond is earned",
+    "tipThanks": "Thank you for supporting PC Tweaker."
+  }
 };
 
 export const dictionaries = { en: engDictionary } as const;

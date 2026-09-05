@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-preview-lifetime-report"
+description = "Enables the preview_lifetime_report command without any pre-configured scope."
+commands.allow = ["preview_lifetime_report"]
+
+[[permission]]
+identifier = "deny-preview-lifetime-report"
+description = "Denies the preview_lifetime_report command without any pre-configured scope."
+commands.deny = ["preview_lifetime_report"]

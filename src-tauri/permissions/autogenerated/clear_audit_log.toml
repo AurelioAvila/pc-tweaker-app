@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-clear-audit-log"
+description = "Enables the clear_audit_log command without any pre-configured scope."
+commands.allow = ["clear_audit_log"]
+
+[[permission]]
+identifier = "deny-clear-audit-log"
+description = "Denies the clear_audit_log command without any pre-configured scope."
+commands.deny = ["clear_audit_log"]

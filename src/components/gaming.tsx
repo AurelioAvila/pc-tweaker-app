@@ -1,3 +1,4 @@
+import { ToolHeader, ToolStatus } from "./tool-section";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -24,6 +25,8 @@ export function GameSessionsPanel({
    *  active" without a number rather than as "0 B freed". */
   const [freedBytes, setFreedBytes] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
     const [e, list] = await Promise.all([
@@ -35,7 +38,7 @@ export function GameSessionsPanel({
   }
 
   useEffect(() => {
-    refresh().catch(() => {});
+    refresh().catch((reason: unknown) => setError(String(reason)));
     const unlisten = listen<{ active: boolean; name: string | null; freed_bytes: number }>(
       "game-session-changed",
       (event) => {
@@ -49,7 +52,7 @@ export function GameSessionsPanel({
   }, []);
 
   async function toggleEnabled() {
-    if (!isPro) {
+    if (!isPro && !enabled) {
       onRequirePro();
       return;
     }
@@ -65,7 +68,7 @@ export function GameSessionsPanel({
     }
     const path = await openFolderDialog({
       multiple: false,
-      filters: [{ name: "Eseguibile", extensions: ["exe"] }],
+      filters: [{ name: "Windows executable", extensions: ["exe"] }],
     });
     if (!path || Array.isArray(path)) return;
     await invoke("add_game_session", { path });
@@ -77,82 +80,97 @@ export function GameSessionsPanel({
     await refresh();
   }
 
+  async function perform(operation: () => Promise<void>) {
+    if (pending) return;
+    setPending(true);
+    setError(null);
+    try {
+      await operation();
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
-    <div className="mb-6 rounded-2xl border border-line bg-surface-1 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+    <section className="tool-panel tool-session-panel" aria-busy={pending}>
+      <ToolHeader
+        title={
+          <>
             {s.gameSessions.title}
-            <span className="rounded-full bg-gradient-to-r from-amber-300 to-yellow-500 px-2 py-0.5 text-[10px] font-bold text-amber-950">
-              PRO
-            </span>
-          </p>
-          <p className="mt-0.5 text-xs text-ink-3">
-            {activeGame
-              ? freedBytes > 0
-                ? format(s.gameSessions.activeFreed, {
-                    name: activeGame,
-                    freed: formatBytes(freedBytes),
-                  })
-                : format(s.gameSessions.active, { name: activeGame })
-              : s.gameSessions.subtitle}
-          </p>
-        </div>
+            <span className="tool-pro-tag">PRO</span>
+          </>
+        }
+        description={s.gameSessions.subtitle}
+        actions={
+          <button
+            type="button"
+            role="switch"
+            aria-label={s.gameSessions.title}
+            aria-checked={enabled}
+            disabled={pending}
+            onClick={() => void perform(toggleEnabled)}
+            className="tool-session-switch"
+            data-enabled={enabled}
+          >
+            <span />
+          </button>
+        }
+      />
+      {activeGame && (
+        <ToolStatus tone="active">
+          {freedBytes > 0
+            ? format(s.gameSessions.activeFreed, {
+                name: activeGame,
+                freed: formatBytes(freedBytes),
+              })
+            : format(s.gameSessions.active, { name: activeGame })}
+        </ToolStatus>
+      )}
+      <div className="tool-session-toolbar">
         <button
           type="button"
-          role="switch"
-          aria-checked={enabled}
-          onClick={toggleEnabled}
-          /* Sized to match the Toggle every other row in the app uses
-             (h-5 w-9). At h-8 w-14 this one switch was nearly twice the area
-             of every other control on screen, which made the Game Sessions
-             card read as a different, louder component than the panels around
-             it rather than as one more setting. */
-          className={`relative inline-flex h-5 w-9 shrink-0 appearance-none items-center rounded-full border-0 p-0
-            outline-none transition-colors duration-300 ease-out ${enabled ? "" : "bg-surface-hover"}`}
-          style={enabled ? { backgroundColor: "var(--app-accent)" } : undefined}
+          className="tool-disclosure-button"
+          aria-expanded={expanded && games.length > 0}
+          disabled={games.length === 0}
+          onClick={() => setExpanded((value) => !value)}
         >
-          <span
-            className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-md transition-transform duration-300 ease-out ${enabled ? "translate-x-4" : "translate-x-0"}`}
-          />
+          {format(s.gameSessions.gamesCount, { count: games.length })}
+          {games.length > 0 && <span aria-hidden="true">{expanded ? "−" : "+"}</span>}
+        </button>
+        <button
+          type="button"
+          className="tool-secondary-action"
+          disabled={pending}
+          onClick={() => void perform(addGame)}
+        >
+          {s.gameSessions.addGame}
         </button>
       </div>
-
-      {enabled && (
-        <div className="mt-3 border-t border-line pt-3">
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="text-xs font-medium text-ink-3 hover:text-ink-2"
-          >
-            {format(s.gameSessions.gamesCount, { count: games.length })} {expanded ? "▲" : "▼"}
-          </button>
-          {expanded && (
-            <div className="mt-2 flex flex-col gap-1.5">
-              {games.map((g) => (
-                <div
-                  key={g.path}
-                  className="flex items-center justify-between gap-2 rounded-lg bg-surface-2 px-3 py-1.5 text-xs"
-                >
-                  <span className="truncate text-ink-2">{g.name}</span>
-                  <button
-                    onClick={() => removeGame(g.path)}
-                    className="shrink-0 text-ink-3 hover:text-red-400"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
+      {expanded && games.length > 0 && (
+        <ul className="tool-session-list">
+          {games.map((game) => (
+            <li key={game.path}>
+              <div>
+                <strong>{game.name}</strong>
+                <span title={game.path}>{game.path}</span>
+              </div>
               <button
-                onClick={addGame}
-                className="mt-1 rounded-lg border border-dashed border-line-2 px-3 py-1.5 text-xs font-medium text-ink-3 hover:border-line-2 hover:text-ink-2"
+                type="button"
+                className="tool-icon-action"
+                disabled={pending}
+                aria-label={s.search.clear + ": " + game.name}
+                onClick={() => void perform(() => removeGame(game.path))}
               >
-                {s.gameSessions.addGame}
+                ×
               </button>
-            </div>
-          )}
-        </div>
+            </li>
+          ))}
+        </ul>
       )}
-    </div>
+      {error && <ToolStatus tone="error">{error}</ToolStatus>}
+    </section>
   );
 }
 
@@ -526,80 +544,89 @@ export function TurboBoostPanel({
   const readout = busy ? stage : (gainText ?? ceiling);
 
   return (
-    <div className="signal border-line bg-surface-1 relative mb-6 flex flex-col items-center overflow-hidden rounded-2xl border p-8">
-      <h2 className="text-ink text-lg font-semibold">{s.turboBoost.title}</h2>
-      <p className="text-ink-3 mt-1 max-w-xs text-center text-sm">{s.turboBoost.subtitle}</p>
+    <div className="tool-panel tool-boost-panel" aria-busy={busy}>
+      <ToolHeader
+        title={s.turboBoost.title}
+        description={s.turboBoost.subtitle}
+        icon={<BoltIcon className="h-5 w-5" />}
+      />
+      <div className="tool-boost-layout">
+        <div className="tool-boost-instrument">
+          <div className="relative grid place-items-center">
+            {applied && !busy && (
+              <span className="absolute h-32 w-32 rounded-full bg-orange-500/15 blur-2xl" />
+            )}
+            <TurboGauge value={needle} engaged={applied || busy} />
+          </div>
 
-      <div className="relative mt-6 grid place-items-center">
-        {applied && !busy && (
-          <span className="absolute h-32 w-32 rounded-full bg-orange-500/15 blur-2xl" />
-        )}
-        <TurboGauge value={needle} engaged={applied || busy} />
-      </div>
-
-      {/* The readout used to sit inside the dial's open bottom, the way a rev
+          {/* The readout used to sit inside the dial's open bottom, the way a rev
           counter carries its gear number. On this dial it could not: the arc
           closes at roughly the same height the text needed, so the label was
           drawn over the coloured band and became unreadable, and the needle —
           which sweeps down to the lower left at low load — crossed straight
           through the digits. Below the dial there is nothing to collide with,
           at any label length in any of the six languages. */}
-      <div className="pointer-events-none mt-2 flex items-baseline justify-center gap-2">
-        <span
-          className={`font-black tabular-nums leading-none transition-colors ${
-            applied || busy ? "text-orange-300" : "text-ink-3"
-          }`}
-          style={{ fontSize: 26 }}
-        >
-          {Math.round(needle * 100)}
-          <span className="text-[13px]">%</span>
-        </span>
-        {/* Labelled, because an unlabelled figure under a dial called Turbo
+          <div className="pointer-events-none mt-2 flex items-baseline justify-center gap-2">
+            <span
+              className={`font-black tabular-nums leading-none transition-colors ${
+                applied || busy ? "text-orange-300" : "text-ink-3"
+              }`}
+              style={{ fontSize: 26 }}
+            >
+              {Math.round(needle * 100)}
+              <span className="text-[13px]">%</span>
+            </span>
+            {/* Labelled, because an unlabelled figure under a dial called Turbo
             Boost reads as the feature's own output — and this one is live CPU
             load, which the tweak does not change and should not. Naming it is
             what stops an idle 2% looking like a failure. Set beside the number
             rather than under it: the card already stacks the gain readout and
             the clock line below this, and a fourth centred row made the whole
             lower half read as a list of unrelated captions. */}
-        <span className="type-label text-ink-3 text-[9px] tracking-[0.18em]">
-          {s.turboBoost.loadLabel}
-        </span>
-      </div>
+            <span className="type-label text-ink-3 text-[9px] tracking-[0.18em]">
+              {s.turboBoost.loadLabel}
+            </span>
+          </div>
+        </div>
+        <div className="tool-boost-summary">
+          <p
+            role="status"
+            aria-live="polite"
+            className={`tool-boost-readout mt-1 text-left text-[12.5px] font-semibold transition-colors ${
+              busy
+                ? "text-orange-300"
+                : gain !== null
+                  ? "text-emerald-300"
+                  : applied
+                    ? "text-orange-300/80"
+                    : "text-ink-3"
+            }`}
+          >
+            {readout}
+          </p>
+          {!busy && ratedMhz !== null && (
+            <p className="tool-boost-clock text-[12px] text-ink-3">
+              {(ratedMhz / 1000).toFixed(2)} GHz ·{" "}
+              {applied ? s.turboBoost.modeAggressive : s.turboBoost.modeDefault}
+            </p>
+          )}
 
-      <p
-        className={`mt-1 h-5 text-center text-[12.5px] font-semibold transition-colors ${
-          busy
-            ? "text-orange-300"
-            : gain !== null
-              ? "text-emerald-300"
-              : applied
-                ? "text-orange-300/80"
-                : "text-ink-3"
-        }`}
-      >
-        {readout}
-      </p>
-      {!busy && ratedMhz !== null && (
-        <p className="text-center text-[11px] text-ink-3">
-          {(ratedMhz / 1000).toFixed(2)} GHz ·{" "}
-          {applied ? s.turboBoost.modeAggressive : s.turboBoost.modeDefault}
-        </p>
-      )}
-
-      <button
-        onClick={toggleTurbo}
-        disabled={busy}
-        /* Both states carry the same gold treatment. STOP used to fall back to
+          <button
+            onClick={toggleTurbo}
+            disabled={busy}
+            /* Both states carry the same gold treatment. STOP used to fall back to
            a flat grey surface, which read as a disabled control rather than
            the live "this is running, press to end it" action it actually is —
            the one moment the panel most needs to look engaged was the one
            moment it looked switched off. The label and the gauge already
            carry the state, so the button does not need to dim to say it. */
-        className="mt-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-2.5 text-sm font-bold text-slate-900 shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:hover:translate-y-0 disabled:hover:brightness-100"
-      >
-        <BoltIcon className={`h-4 w-4 ${busy ? "animate-pulse" : ""}`} />
-        {busy ? "···" : applied ? s.turboBoost.stopLabel : s.turboBoost.startLabel}
-      </button>
+            className="tool-primary-action mt-4 flex items-center gap-2"
+          >
+            <BoltIcon className={`h-4 w-4 ${busy ? "animate-pulse" : ""}`} />
+            {busy ? "···" : applied ? s.turboBoost.stopLabel : s.turboBoost.startLabel}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

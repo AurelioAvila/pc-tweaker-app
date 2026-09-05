@@ -54,6 +54,7 @@ type MailInput = { to: string; subject: string; html: string; replyTo?: string }
 async function sendViaResend({ to, subject, html, replyTo }: MailInput): Promise<void> {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
+    signal: AbortSignal.timeout(30_000),
     headers: {
       Authorization: `Bearer ${RESEND_API_KEY}`,
       "Content-Type": "application/json",

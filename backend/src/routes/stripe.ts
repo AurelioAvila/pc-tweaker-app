@@ -7,15 +7,17 @@ import { periodEndFromSubscription } from "../entitlement";
 import { isKnownProduct, productEntitlement, upsertEntitlement, revokeEntitlement, type Product } from "../products";
 import {
   checkoutSessionParams,
+  billingProductFromEvidence,
   formatChargedAmount,
   isSettledCheckout,
   planFromPrice,
-  productFromMetadata,
   tipSessionParams,
 } from "../stripe-policy";
 import { sendMail } from "../mailer";
 import { brandFor, proWelcomeHtml, proWelcomeSubject } from "../emails/pro-welcome";
 import { SUPPORT_INBOX } from "../support-inbox";
+import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
+import { queueReceipt, type Receipt } from "../receipt-outbox";
 
 const router = express.Router();
 
@@ -108,47 +110,59 @@ async function resolveCheckoutPrice(
 // Creates a Checkout Session for the logged-in user. The desktop app opens
 // the returned URL in the system browser (Stripe Checkout can't run inside
 // the app's webview) via @tauri-apps/plugin-opener.
-router.post("/checkout", requireAuth, checkoutLimiter, requireStripe, async (req: Request, res: Response) => {
-  const planKey = String(req.body?.plan || "annual") as PlanKey;
-  const product = req.body?.product ?? "pctweaker";
-  // `PLANS[planKey]` alone would resolve a key like "__proto__" or
-  // "constructor" to Object.prototype instead of undefined, since PLANS is a
-  // plain object literal — resolveCheckoutPrice guards it with hasOwnProperty
-  // for the same reason as before. The product goes through an allowlist.
-  if (!isKnownProduct(product)) {
-    return res.status(400).json({ error: "unknown product" });
-  }
-  if (!isConfigured) {
-    return res.status(503).json({ error: "database not configured" });
-  }
+type CheckoutCreationEffects = {
+  environment: NodeJS.ProcessEnv;
+  now: () => number;
+  createSession: (params: Stripe.Checkout.SessionCreateParams) => Promise<{ url: string | null }>;
+};
 
-  const resolved = await resolveCheckoutPrice(req.userId as number, product, planKey);
-  if ("error" in resolved) {
-    return res.status(resolved.status).json({ error: resolved.error });
-  }
-  const priceId = process.env[resolved.envName];
-  if (!priceId) {
-    return res.status(503).json({ error: `${resolved.envName} is not configured` });
-  }
-  const plan: PlanDef = { env: resolved.envName, mode: resolved.mode };
-
-  try {
-    // Reuse the customer we already know about, so a user who resubscribes
-    // doesn't end up as two unrelated customers in Stripe (which would break
-    // the cancellation lookup below).
-    let customerId: string | null = null;
-    let customerEmail: string | undefined;
-    if (isConfigured) {
-      const { rows } = await getPool().query(
-        "SELECT stripe_customer_id, email FROM users WHERE id = $1",
-        [req.userId],
-      );
-      customerId = rows[0]?.stripe_customer_id || null;
-      customerEmail = rows[0]?.email;
+export function createCheckoutHandler(effects: CheckoutCreationEffects = {
+  environment: process.env,
+  now: Date.now,
+  createSession: (params) => stripe!.checkout.sessions.create(params),
+}) {
+  return async (req: Request, res: Response) => {
+    const planKey = String(req.body?.plan || "annual") as PlanKey;
+    const product = req.body?.product ?? "pctweaker";
+    // `PLANS[planKey]` alone would resolve a key like "__proto__" or
+    // "constructor" to Object.prototype instead of undefined, since PLANS is a
+    // plain object literal — resolveCheckoutPrice guards it with hasOwnProperty
+    // for the same reason as before. The product goes through an allowlist.
+    if (!isKnownProduct(product)) {
+      return res.status(400).json({ error: "unknown product" });
+    }
+    if (!isConfigured) {
+      return res.status(503).json({ error: "database not configured" });
     }
 
-    const session = await stripe!.checkout.sessions.create(
-      checkoutSessionParams({
+    const resolved = await resolveCheckoutPrice(req.userId as number, product, planKey);
+    if ("error" in resolved) {
+      return res.status(resolved.status).json({ error: resolved.error });
+    }
+    const priceId = effects.environment[resolved.envName];
+    if (!priceId) {
+      return res.status(503).json({ error: `${resolved.envName} is not configured` });
+    }
+    const plan: PlanDef = { env: resolved.envName, mode: resolved.mode };
+
+    try {
+      // Reuse the customer we already know about, so a user who resubscribes
+      // doesn't end up as two unrelated customers in Stripe (which would break
+      // the cancellation lookup below).
+      let customerId: string | null = null;
+      let customerEmail: string | undefined;
+      let alreadyOwnsLifetime = false;
+      if (isConfigured) {
+        const { rows } = await getPool().query(
+          "SELECT stripe_customer_id, email, is_pro, plan FROM users WHERE id = $1",
+          [req.userId],
+        );
+        customerId = rows[0]?.stripe_customer_id || null;
+        customerEmail = rows[0]?.email;
+        alreadyOwnsLifetime = rows[0]?.is_pro === true && rows[0]?.plan === "lifetime";
+      }
+
+      const params: Stripe.Checkout.SessionCreateParams = checkoutSessionParams({
         priceId,
         mode: plan.mode,
         userId: String(req.userId),
@@ -156,16 +170,37 @@ router.post("/checkout", requireAuth, checkoutLimiter, requireStripe, async (req
         product,
         customerId,
         customerEmail,
-        successUrl: process.env.CHECKOUT_SUCCESS_URL || "https://example.com/checkout-success",
-        cancelUrl: process.env.CHECKOUT_CANCEL_URL || "https://example.com/checkout-cancel",
-      }),
-    );
-    res.json({ url: session.url });
-  } catch (err) {
-    console.error("checkout session creation failed:", err);
-    res.status(500).json({ error: "could not start checkout" });
-  }
-});
+        successUrl: effects.environment.CHECKOUT_SUCCESS_URL || "https://example.com/checkout-success",
+        cancelUrl: effects.environment.CHECKOUT_CANCEL_URL || "https://example.com/checkout-cancel",
+      });
+      if (product === "pctweaker" && (planKey === "lifetime" || alreadyOwnsLifetime)) {
+        // Read server time after database work, immediately before the Stripe
+        // request. A stale browser countdown or submitted deadline is irrelevant.
+        const decision = lifetimeCheckoutDecision(lifetimeOffer(effects.environment, effects.now()), alreadyOwnsLifetime);
+        if (!decision.allowed) {
+          return res.status(decision.status).json({ error: decision.error, code: decision.code });
+        }
+        if (decision.expiresAt !== undefined) {
+          params.expires_at = decision.expiresAt;
+          params.metadata = { ...params.metadata, ...decision.metadata };
+          params.payment_intent_data = {
+            ...params.payment_intent_data,
+            metadata: { ...params.payment_intent_data?.metadata, ...decision.metadata },
+          };
+          // An expired checkout must not generate a recovery URL that reopens
+          // this campaign after the server has stopped selling it.
+          params.after_expiration = { recovery: { enabled: false } };
+        }
+      }
+      const session = await effects.createSession(params);
+      res.json({ url: session.url });
+    } catch (err) {
+      console.error("checkout session creation failed:", err);
+      res.status(500).json({ error: "could not start checkout" });
+    }
+  };
+}
+router.post("/checkout", requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler());
 
 // A one-off tip. Deliberately outside the account system: no login, no
 // entitlement, nothing granted on the webhook side — someone paying €1 to
@@ -228,6 +263,10 @@ router.post("/portal", requireAuth, requireStripe, async (req: Request, res: Res
 // Mounted with express.raw() in index.ts — Stripe's signature check needs
 // the exact raw request body, not the JSON-parsed one.
 async function webhookHandler(req: Request, res: Response): Promise<void> {
+  if (!isConfigured) {
+    res.status(503).send("Database is not configured; event was not accepted");
+    return;
+  }
   if (!stripe) {
     res.status(503).send("Stripe is not configured");
     return;
@@ -270,49 +309,101 @@ async function webhookHandler(req: Request, res: Response): Promise<void> {
 }
 
 /**
- * `provisional` marks the short holding window written by
- * `checkout.session.completed`, which is a guess — the real period end only
- * comes with the `customer.subscription.*` event. Stripe does not order the
- * two, and when the subscription event lands first, an unguarded write pushed
- * the expiry back down to the guess: a customer billed until October lost Pro
- * three days after paying. A provisional value may therefore only ever extend
- * an expiry, never shorten one. Real subscription events stay authoritative,
- * and cancellation goes through revokePro, not through here.
+ * Current PC Tweaker webhooks load the real subscription before granting.
+ * The older provisional-call contract remains monotonic: a holding window
+ * may extend an expiry but cannot shorten it. Source identity and generation
+ * are checked in the same UPDATE as the grant, alongside lifetime protection.
  */
 async function grantPro(
   userId: string,
-  { customerId, plan, expiresAt, provisional }: { customerId: string | null; plan?: string | null; expiresAt?: Date | null; provisional?: boolean },
-): Promise<void> {
-  await getPool().query(
+  { customerId, plan, expiresAt, provisional, subscriptionId, subscriptionCreatedAt }: {
+    customerId: string | null; plan?: string | null; expiresAt?: Date | null; provisional?: boolean;
+    subscriptionId?: string; subscriptionCreatedAt?: Date;
+  },
+): Promise<boolean> {
+  if (plan !== "lifetime" && (!expiresAt || !Number.isFinite(expiresAt.getTime()))) {
+    throw new Error("A recurring Pro grant requires a valid expiry");
+  }
+  if (subscriptionId && (!subscriptionCreatedAt || !Number.isFinite(subscriptionCreatedAt.getTime()))) {
+    throw new Error("A subscription binding requires a valid creation time");
+  }
+  const result = await getPool().query(
     `UPDATE users
         SET is_pro = TRUE,
             plan = COALESCE($2, plan),
             stripe_customer_id = COALESCE($3, stripe_customer_id),
+            legacy_pro_grant = FALSE,
+            stripe_subscription_id = CASE WHEN $2 = 'lifetime' THEN NULL ELSE COALESCE($6, stripe_subscription_id) END,
+            stripe_subscription_created_at = CASE WHEN $2 = 'lifetime' THEN NULL ELSE COALESCE($7::timestamptz, stripe_subscription_created_at) END,
             pro_expires_at = CASE
               WHEN $5::boolean AND pro_expires_at IS NOT NULL AND pro_expires_at > $4::timestamptz
                 THEN pro_expires_at
               ELSE $4::timestamptz
             END
-      WHERE id = $1`,
-    [userId, plan || null, customerId || null, expiresAt ?? null, provisional === true],
+      WHERE id = $1
+        AND ($2 = 'lifetime' OR NOT (is_pro = TRUE AND COALESCE(plan, '') = 'lifetime'))
+        AND ($2 = 'lifetime' OR stripe_subscription_id IS NULL
+             OR stripe_subscription_id = $6
+             OR ($6::text IS NOT NULL AND stripe_subscription_created_at < $7::timestamptz))
+      RETURNING id`,
+    [userId, plan || null, customerId || null, expiresAt ?? null, provisional === true, subscriptionId ?? null, subscriptionCreatedAt ?? null],
+  );
+  return result.rows.length > 0;
+}
+
+/** Subscription revocation must never revoke a separately purchased lifetime grant.
+ * The guard belongs in the UPDATE too, so a concurrent checkout cannot race it. */
+async function revokePro(userId: string, subscriptionId?: string): Promise<void> {
+  await getPool().query(
+    `UPDATE users SET is_pro = FALSE, pro_expires_at = NULL, legacy_pro_grant = FALSE
+      WHERE id = $1 AND NOT (is_pro = TRUE AND COALESCE(plan, '') = 'lifetime')
+        AND (stripe_subscription_id IS NULL OR stripe_subscription_id = $2)`,
+    [userId, subscriptionId ?? null],
   );
 }
 
-/** Ends access immediately: cancelled, unpaid, or refunded. */
-async function revokePro(userId: string): Promise<void> {
-  await getPool().query("UPDATE users SET is_pro = FALSE, pro_expires_at = NULL WHERE id = $1", [userId]);
+function subscriptionSource(subscription: Stripe.Subscription): { subscriptionId: string; subscriptionCreatedAt: Date } {
+  const date = new Date(subscription.created * 1000);
+  if (!subscription.id || !Number.isFinite(date.getTime()) || subscription.created <= 0) {
+    throw new Error("A subscription binding requires a valid ID and creation time");
+  }
+  return { subscriptionId: subscription.id, subscriptionCreatedAt: date };
+}
+
+function priceProducts(): Record<string, Product> {
+  const pairs: [string | undefined, Product][] = [
+    [process.env.STRIPE_PRICE_MONTHLY, "pctweaker"],
+    [process.env.STRIPE_PRICE_ANNUAL, "pctweaker"],
+    [process.env.STRIPE_PRICE_LIFETIME, "pctweaker"],
+    [process.env.STRIPE_PRICE_ID, "pctweaker"],
+    [process.env.STRIPE_PRICE_UNINSTALLER_ANNUAL, "uninstaller"],
+    [process.env.STRIPE_PRICE_UNINSTALLER_LOYALTY, "uninstaller"],
+  ];
+  return Object.fromEntries(pairs.filter((pair): pair is [string, Product] => Boolean(pair[0])));
+}
+
+function subscriptionProduct(subscription: Stripe.Subscription): Product | null {
+  return billingProductFromEvidence(
+    subscription.metadata,
+    subscription.items?.data?.map((item) => item.price.id) ?? [],
+    priceProducts(),
+  );
 }
 
 /** The plan for a subscription: its price first, its metadata as a fallback
  *  for anything created before the price map existed. */
-function subscriptionPlan(subscription: Stripe.Subscription): string | null {
+function subscriptionPlan(subscription: Stripe.Subscription): string {
   const priceId = subscription.items?.data?.[0]?.price?.id ?? null;
   const fromPrice = planFromPrice(priceId, {
     monthly: process.env.STRIPE_PRICE_MONTHLY,
     annual: process.env.STRIPE_PRICE_ANNUAL,
-    lifetime: process.env.STRIPE_PRICE_LIFETIME,
   });
-  return fromPrice ?? subscription.metadata?.plan ?? null;
+  const plan = fromPrice ?? subscription.metadata?.plan;
+  if (plan === "monthly" || plan === "annual") return plan;
+  const interval = subscription.items?.data?.[0]?.price?.recurring?.interval;
+  if (interval === "month") return "monthly";
+  if (interval === "year") return "annual";
+  throw new Error(`Subscription ${subscription.id} has no recognized recurring plan`);
 }
 
 /**
@@ -323,56 +414,66 @@ function subscriptionPlan(subscription: Stripe.Subscription): string | null {
  * then a deletion when the paid period runs out. Both would otherwise be
  * applied on top of the perpetual grant: the first replacing "never expires"
  * with a date, the second revoking Pro from someone who has paid for it
- * permanently. Every subscription event is therefore ignored for an account
- * in this state.
+ * permanently. These events cannot change lifetime access; active billing
+ * events also retry scoped cancellation when needed.
  */
 async function holdsLifetime(userId: string): Promise<boolean> {
   const { rows } = await getPool().query(
-    "SELECT plan, pro_expires_at FROM users WHERE id = $1",
+    "SELECT is_pro, plan FROM users WHERE id = $1",
     [userId],
   );
   const row = rows[0];
-  return Boolean(row && row.plan === "lifetime" && row.pro_expires_at === null);
+  return Boolean(row && row.is_pro && row.plan === "lifetime");
 }
 
 /**
- * Stops any subscription still billing an account that has just bought Pro
- * outright. Without this the customer pays 9.99 a month, forever, on top of
- * the one-off price they paid to stop doing exactly that.
+ * Stops this user's identified PC Tweaker subscriptions from renewing after
+ * a lifetime purchase. Other products sharing the customer stay untouched.
  *
  * Cancellation is at the end of the period they have already paid for, not
  * immediately: that money is spent either way, and ending it early would take
- * away days they are owed while giving nothing back. Nothing renews after.
+ * away days they are owed while giving nothing back.
  *
- * Best-effort by design. The perpetual grant is already committed by the time
- * this runs, so throwing here would make Stripe retry the whole webhook and
- * re-grant what is already granted. A failure is loud in the logs instead.
+ * The grant is idempotent and committed first. A cancellation failure must
+ * still retry the webhook, or the buyer could continue to be charged.
  */
+type SubscriptionCancellationClient = {
+  list(params: Stripe.SubscriptionListParams): Promise<{ data: Stripe.Subscription[]; has_more: boolean }>;
+  update(id: string, params: Stripe.SubscriptionUpdateParams): Promise<unknown>;
+};
+
 async function stopSubscriptionsAfterLifetime(
   userId: string,
   customerId: string | null,
+  client: SubscriptionCancellationClient | null = stripe?.subscriptions ?? null,
 ): Promise<void> {
-  if (!stripe || !customerId) return;
-  try {
-    const subscriptions = await stripe.subscriptions.list({
+  if (!customerId) {
+    const { rows } = await getPool().query("SELECT stripe_customer_id FROM users WHERE id = $1", [userId]);
+    customerId = rows[0]?.stripe_customer_id ?? null;
+  }
+  if (!customerId) return;
+  if (!client) throw new Error("Stripe is unavailable for subscription cancellation");
+  let startingAfter: string | undefined;
+  do {
+    const subscriptions = await client.list({
       customer: customerId,
-      status: "active",
-      limit: 10,
+      status: "all",
+      limit: 100,
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
     });
     for (const subscription of subscriptions.data) {
+      if (subscriptionProduct(subscription) !== "pctweaker") continue;
+      if (subscription.metadata?.userId && subscription.metadata.userId !== String(userId)) continue;
+      if (!["active", "trialing", "past_due", "unpaid"].includes(subscription.status)) continue;
       if (subscription.cancel_at_period_end) continue;
-      await stripe.subscriptions.update(subscription.id, { cancel_at_period_end: true });
+      await client.update(subscription.id, { cancel_at_period_end: true });
       console.log(`lifetime purchase: ${subscription.id} will not renew`);
     }
-  } catch (err) {
-    // The one failure that costs the customer money rather than just an
-    // error page. Whatever went wrong — an API key without permission to
-    // touch subscriptions, an outage — someone has now paid for permanent
-    // access and is still on a recurring charge, so this asks a human to
-    // finish the job by hand instead of leaving it in a log nobody reads.
-    console.error("could not stop a subscription after a lifetime purchase:", err);
-    alertOwnerOfUncancelledSubscription(userId, customerId);
-  }
+    if (!subscriptions.has_more) break;
+    const lastId = subscriptions.data[subscriptions.data.length - 1]?.id;
+    if (!lastId || lastId === startingAfter) throw new Error("Stripe returned an invalid pagination cursor");
+    startingAfter = lastId;
+  } while (true);
 }
 
 /** Asks the owner to cancel a subscription the webhook could not stop. */
@@ -417,12 +518,7 @@ const PLAN_PRICE_LABELS: Record<string, string> = {
   lifetime: "€74.99 once",
 };
 
-/**
- * Best-effort welcome email on subscription creation. Deliberately never
- * throws: a failed send shouldn't turn into a Stripe retry that re-runs
- * grantPro (harmless but pointless) or, worse, make the webhook report
- * failure for something the customer's access doesn't depend on.
- */
+/** Durable receipt scheduling; the provider is called by the retry worker. */
 async function sendProWelcomeEmail(
   userId: string,
   plan: string | null | undefined,
@@ -431,8 +527,16 @@ async function sendProWelcomeEmail(
   /** What Stripe actually charged. Falls back to the per-plan table, which
    *  only describes PC Tweaker's own prices. */
   chargedLabel: string | null = null,
+  receiptKey?: string,
 ): Promise<void> {
-  try {
+  if (!receiptKey) throw new Error("A billing receipt requires a purchase identity");
+  await queueReceipt(receiptKey, { userId, plan: plan ?? null,
+    expiresAt: expiresAt?.toISOString() ?? null, product, chargedLabel });
+}
+
+export async function deliverProReceipt(receipt: Receipt): Promise<void> {
+    const { userId, plan, product, chargedLabel } = receipt;
+    const expiresAt = receipt.expiresAt ? new Date(receipt.expiresAt) : null;
     const { rows } = await getPool().query(
       "SELECT email, first_name FROM users WHERE id = $1",
       [userId],
@@ -451,7 +555,7 @@ async function sendProWelcomeEmail(
           timeZone: "UTC",
         })
       : null;
-    await sendMail({
+    const result = await sendMail({
       to: user.email,
       subject: proWelcomeSubject(product),
       html: proWelcomeHtml({
@@ -464,9 +568,7 @@ async function sendProWelcomeEmail(
         renewsOn,
       }),
     });
-  } catch (err) {
-    console.error("failed to send Pro welcome email:", err);
-  }
+    if (!result.delivered) throw new Error("Receipt provider did not accept the message");
 }
 
 // Local, like every other route file's copy: the address and the plan name
@@ -531,70 +633,123 @@ async function resolveUserId(subscription: Stripe.Subscription): Promise<string 
   return rows[0]?.id ?? null;
 }
 
-async function handleCheckoutSession(session: Stripe.Checkout.Session): Promise<void> {
-      const userId = session.client_reference_id || session.metadata?.userId;
-      if (!userId || !isSettledCheckout(session.payment_status)) return;
+/** External effects are explicit so regression tests can run the real event
+ * handler and SQL without contacting Stripe or an email provider. */
+type BillingEffects = {
+  loadCheckout: (id: string) => Promise<Stripe.Checkout.Session>;
+  loadSubscription: (id: string) => Promise<Stripe.Subscription>;
+  stopSubscriptions: (userId: string, customerId: string | null) => Promise<void>;
+  welcome: typeof sendProWelcomeEmail;
+  notifySale: typeof notifyOwnerOfSale;
+};
 
-      const product = productFromMetadata(session.metadata);
-      if (!product) return;
-      if (product !== "pctweaker") {
-        // Non-pctweaker products live in the entitlements table. Same
-        // provisional-window reasoning as below: the subscription event
-        // carries the real period end and overwrites this.
-        await upsertEntitlement(userId, product, {
-          plan: session.metadata?.plan ?? null,
-          expiresAt: new Date(Date.now() + PROVISIONAL_ACCESS_MS),
-          provisional: session.mode === "subscription",
-        });
-        // This branch used to return here, which is why a customer who bought
-        // any product other than PC Tweaker paid and then heard nothing at
-        // all — and why no sale on those products was ever reported to the
-        // owner either. Both belong to every product, not to one of them.
-        if (session.mode !== "subscription") {
-          await sendProWelcomeEmail(userId, session.metadata?.plan, null, product, sessionCharge(session));
-        }
-        notifyOwnerOfSale(userId, session.metadata?.plan, session.mode ?? null, product);
-        return;
-      }
+const billingEffects: BillingEffects = {
+  async loadCheckout(id) {
+    if (!stripe) throw new Error("Stripe is unavailable for checkout verification");
+    return stripe.checkout.sessions.retrieve(id, { expand: ["line_items"] });
+  },
+  async loadSubscription(id) {
+    if (!stripe) throw new Error("Stripe is unavailable for subscription verification");
+    return stripe.subscriptions.retrieve(id);
+  },
+  async stopSubscriptions(userId, customerId) {
+    try {
+      await stopSubscriptionsAfterLifetime(userId, customerId);
+    } catch (err) {
+      console.error("could not stop a subscription after a lifetime purchase:", err);
+      if (customerId) alertOwnerOfUncancelledSubscription(userId, customerId);
+      throw err;
+    }
+  },
+  welcome: sendProWelcomeEmail,
+  notifySale: notifyOwnerOfSale,
+};
 
-      const customerId = typeof session.customer === "string" ? session.customer : null;
-      // A one-off purchase is genuinely perpetual, so it gets no expiry. A
-      // subscription's real period end only arrives with the separate
-      // `customer.subscription.*` event, which may land before or after this
-      // one — so store a short provisional window rather than NULL, which
-      // entitlement.ts would read as "never expires". The subscription event
-      // overwrites it with the true date; if that event never arrives at all,
-      // access lapses in days instead of lasting forever.
-      const expiresAt =
-        session.mode === "subscription" ? new Date(Date.now() + PROVISIONAL_ACCESS_MS) : null;
-      await grantPro(userId, {
-        customerId,
-        plan: session.metadata?.plan,
-        expiresAt,
-        provisional: session.mode === "subscription",
-      });
+async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: BillingEffects): Promise<void> {
+  const userId = session.client_reference_id || session.metadata?.userId;
+  if (!userId || !isSettledCheckout(session.payment_status)) return;
+  if (session.metadata?.product && !isKnownProduct(session.metadata.product)) return;
+  if (session.mode !== "subscription" && session.mode !== "payment") return;
 
-      // The welcome email used to be sent only from customer.subscription
-      // .created — an event a one-off purchase never produces. A lifetime
-      // buyer therefore paid and heard nothing at all. Subscriptions keep
-      // getting theirs from that event, so sending here too would send twice;
-      // this branch covers exactly the mode that event never fires for.
-      if (session.mode !== "subscription") {
-        await sendProWelcomeEmail(userId, session.metadata?.plan, null, product, sessionCharge(session));
-        // An existing subscriber upgrading to lifetime: the perpetual grant
-        // is in place, so the recurring charge has to stop.
-        await stopSubscriptionsAfterLifetime(userId, customerId);
-      }
-      notifyOwnerOfSale(userId, session.metadata?.plan, session.mode ?? null, product);
+  // Legacy checkouts carry no product metadata. Identify their configured
+  // price instead of treating every payment on a shared Stripe account as Pro.
+  let priceIds = session.line_items?.data?.flatMap((item) => item.price ? [item.price.id] : []) ?? [];
+  if ((!session.metadata?.product || !session.metadata?.plan) && priceIds.length === 0) {
+    const verified = await effects.loadCheckout(session.id);
+    priceIds = verified.line_items?.data?.flatMap((item) => item.price ? [item.price.id] : []) ?? [];
+  }
+  const product = billingProductFromEvidence(session.metadata, priceIds, priceProducts());
+  if (!product) return;
+
+  const customerId = typeof session.customer === "string" ? session.customer : null;
+  if (session.mode === "subscription" && product === "pctweaker" && await holdsLifetime(userId)) {
+    await effects.stopSubscriptions(userId, customerId);
+    return;
+  }
+  const pricePlan = priceIds.map((id) => planFromPrice(id, {
+    monthly: process.env.STRIPE_PRICE_MONTHLY,
+    annual: process.env.STRIPE_PRICE_ANNUAL,
+    lifetime: process.env.STRIPE_PRICE_LIFETIME,
+  })).find(Boolean);
+  const legacyLifetime = session.mode === "payment" && product === "pctweaker" &&
+    priceIds.some((id) => Boolean(process.env.STRIPE_PRICE_ID) && id === process.env.STRIPE_PRICE_ID);
+  let plan = pricePlan ?? (legacyLifetime ? "lifetime" : session.metadata?.plan);
+  if (session.mode === "payment" && (product !== "pctweaker" || plan !== "lifetime")) {
+    throw new Error(`Checkout ${session.id} has no recognized one-time entitlement`);
+  }
+  if (session.mode === "subscription" && plan !== "monthly" && plan !== "annual") {
+    throw new Error(`Checkout ${session.id} has no recognized recurring plan`);
+  }
+  // Replaying a checkout must not create a fresh three-day window each time.
+  let expiresAt = session.mode === "subscription"
+    ? new Date(session.created * 1000 + PROVISIONAL_ACCESS_MS)
+    : null;
+  if (expiresAt && !Number.isFinite(expiresAt.getTime())) {
+    throw new Error(`Checkout ${session.id} has an invalid creation time`);
+  }
+  if (product !== "pctweaker") {
+    await upsertEntitlement(userId, product, { plan: plan!, expiresAt, provisional: true });
+    effects.notifySale(userId, plan, session.mode, product);
+    return;
+  }
+
+  let source: ReturnType<typeof subscriptionSource> | undefined;
+  if (session.mode === "subscription") {
+    const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
+    if (!subscriptionId) throw new Error(`Checkout ${session.id} has no subscription ID`);
+    const current = await effects.loadSubscription(subscriptionId);
+    if (current.id !== subscriptionId || subscriptionProduct(current) !== "pctweaker" ||
+        (current.metadata?.userId && current.metadata.userId !== String(userId)) ||
+        (customerId && typeof current.customer === "string" && current.customer !== customerId)) {
+      throw new Error(`Checkout ${session.id} does not match its subscription`);
+    }
+    if (!["active", "trialing", "past_due"].includes(current.status)) {
+      await revokePro(userId, current.id);
+      return;
+    }
+    expiresAt = periodEndFromSubscription(current);
+    if (!expiresAt) throw new Error(`Subscription ${current.id} has an invalid period end`);
+    source = subscriptionSource(current);
+    plan = subscriptionPlan(current);
+  }
+  const granted = await grantPro(userId, { customerId, plan, expiresAt, ...source });
+  if (!granted) return;
+  if (session.mode === "payment") {
+    // Retryable cancellation precedes receipt delivery. The SQL grant is
+    // already safe to replay if Stripe is temporarily unavailable here.
+    await effects.stopSubscriptions(userId, customerId);
+    await effects.welcome(userId, plan, null, product, sessionCharge(session), `checkout:${session.id}`);
+  }
+  effects.notifySale(userId, plan, session.mode, product);
 }
 
-async function handleEvent(event: Stripe.Event): Promise<void> {
-  if (!isConfigured) return;
+async function handleEvent(event: Stripe.Event, effects: BillingEffects = billingEffects): Promise<void> {
+  if (!isConfigured) throw new Error("Database is not configured; event was not accepted");
 
   switch (event.type) {
     case "checkout.session.completed":
     case "checkout.session.async_payment_succeeded": {
-      await handleCheckoutSession(event.data.object as Stripe.Checkout.Session);
+      await handleCheckoutSession(event.data.object as Stripe.Checkout.Session, effects);
       break;
     }
 
@@ -602,28 +757,36 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
     // reinstated after a failed payment.
     case "customer.subscription.created":
     case "customer.subscription.updated": {
-      const subscription = event.data.object as Stripe.Subscription;
+      let subscription = event.data.object as Stripe.Subscription;
+      const product = subscriptionProduct(subscription);
+      if (!product) break;
+      if (product === "pctweaker") {
+        const current = await effects.loadSubscription(subscription.id);
+        if (current.id !== subscription.id || subscriptionProduct(current) !== product) {
+          throw new Error(`Subscription ${subscription.id} no longer matches its product`);
+        }
+        subscription = current;
+      }
       const userId = await resolveUserId(subscription);
       if (!userId) break;
-
-      const product = productFromMetadata(subscription.metadata);
-      if (!product) break;
       const active = ["active", "trialing", "past_due"].includes(subscription.status);
       if (product !== "pctweaker") {
         if (active) {
           const expiresAt = periodEndFromSubscription(subscription);
+          if (!expiresAt) throw new Error(`Subscription ${subscription.id} has an invalid period end`);
           await upsertEntitlement(userId, product, {
             plan: subscriptionPlan(subscription),
             expiresAt,
             stripeSubscriptionId: subscription.id,
           });
           if (event.type === "customer.subscription.created") {
-            await sendProWelcomeEmail(
+            await effects.welcome(
               userId,
               subscriptionPlan(subscription),
               expiresAt,
               product,
               subscriptionCharge(subscription),
+              `subscription:${subscription.id}`,
             );
           }
         } else {
@@ -632,29 +795,34 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
         break;
       }
 
-      if (await holdsLifetime(userId)) break;
-
       const customerId = typeof subscription.customer === "string" ? subscription.customer : null;
+      if (await holdsLifetime(userId)) {
+        await effects.stopSubscriptions(userId, customerId);
+        break;
+      }
       if (active) {
         const expiresAt = periodEndFromSubscription(subscription);
-        await grantPro(userId, {
+        if (!expiresAt) throw new Error(`Subscription ${subscription.id} has an invalid period end`);
+        const granted = await grantPro(userId, {
           customerId,
           plan: subscriptionPlan(subscription),
           expiresAt,
+          ...subscriptionSource(subscription),
         });
         // Only on creation, not every renewal/update — this event fires once
         // per subscription's lifecycle start.
-        if (event.type === "customer.subscription.created") {
-          await sendProWelcomeEmail(
+        if (granted && event.type === "customer.subscription.created") {
+          await effects.welcome(
             userId,
             subscriptionPlan(subscription),
             expiresAt,
             "pctweaker",
             subscriptionCharge(subscription),
+            `subscription:${subscription.id}`,
           );
         }
       } else {
-        await revokePro(userId);
+        await revokePro(userId, subscription.id);
       }
       break;
     }
@@ -663,16 +831,16 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
     // who cancels (or whose card ultimately fails) would keep Pro forever.
     case "customer.subscription.deleted": {
       const subscription = event.data.object as Stripe.Subscription;
+      const product = subscriptionProduct(subscription);
+      if (!product) break;
       const userId = await resolveUserId(subscription);
       if (!userId) break;
-      const product = productFromMetadata(subscription.metadata);
-      if (!product) break;
       if (product !== "pctweaker") {
         await revokeEntitlement(userId, product);
         break;
       }
       if (await holdsLifetime(userId)) break;
-      await revokePro(userId);
+      await revokePro(userId, subscription.id);
       break;
     }
 
@@ -681,4 +849,4 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
   }
 }
 
-export { router, webhookHandler, grantPro };
+export { router, webhookHandler, grantPro, revokePro, handleEvent, stopSubscriptionsAfterLifetime };

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-add-game-session"
+description = "Enables the add_game_session command without any pre-configured scope."
+commands.allow = ["add_game_session"]
+
+[[permission]]
+identifier = "deny-add-game-session"
+description = "Denies the add_game_session command without any pre-configured scope."
+commands.deny = ["add_game_session"]

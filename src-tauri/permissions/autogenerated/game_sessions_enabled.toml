@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-game-sessions-enabled"
+description = "Enables the game_sessions_enabled command without any pre-configured scope."
+commands.allow = ["game_sessions_enabled"]
+
+[[permission]]
+identifier = "deny-game-sessions-enabled"
+description = "Denies the game_sessions_enabled command without any pre-configured scope."
+commands.deny = ["game_sessions_enabled"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-write-profile-file"
+description = "Enables the write_profile_file command without any pre-configured scope."
+commands.allow = ["write_profile_file"]
+
+[[permission]]
+identifier = "deny-write-profile-file"
+description = "Denies the write_profile_file command without any pre-configured scope."
+commands.deny = ["write_profile_file"]

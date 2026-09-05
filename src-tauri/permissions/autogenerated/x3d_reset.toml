@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-x3d-reset"
+description = "Enables the x3d_reset command without any pre-configured scope."
+commands.allow = ["x3d_reset"]
+
+[[permission]]
+identifier = "deny-x3d-reset"
+description = "Denies the x3d_reset command without any pre-configured scope."
+commands.deny = ["x3d_reset"]

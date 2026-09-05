@@ -1,7 +1,7 @@
 {
   "name": "pc-tweaker-app",
   "private": true,
-  "version": "1.8.0",
+  "version": "1.9.0",
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
@@ -12,11 +12,13 @@
     "check:i18n": "node scripts/check-i18n.mjs",
     "check:i18n-quality": "node scripts/audit-i18n.mjs",
     "check:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "check:native-policy": "node scripts/check-native-policy.mjs",
     "check": "tsc --noEmit && eslint src && prettier --check \"src/**/*.{ts,tsx,css}\" && npm run check:i18n && npm run check:i18n-quality && npm run check:rust && npm run test:advisor && npm run test:thermals",
     "lint": "eslint src",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
     "test:advisor": "node scripts/test-advisor.mjs",
+    "test:lifetime-offer": "node scripts/test-lifetime-offer.mjs",
     "test:thermals": "node scripts/test-thermals.mjs"
   },
   "dependencies": {

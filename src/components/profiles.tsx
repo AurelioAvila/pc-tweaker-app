@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openFolderDialog, save as saveFileDialog } from "@tauri-apps/plugin-dialog";
-import { format, Strings } from "../i18n";
+import { format, Lang, Strings } from "../i18n";
 import { formatEpochDate } from "../lib";
-import { FolderIcon } from "./icons";
+import { FolderIcon, LayersIcon } from "./icons";
 import { LoadedProfile, Toast, TweakInfo, TweakProfile } from "../types";
+import "./workspace-panels.css";
+import { LifetimeTools } from "./lifetime-tools";
 
 /**
  * Saved configurations: capture what's applied, put it back later, or hand it
@@ -36,23 +38,24 @@ export function ProfileRow({
   onRemove?: (name: string) => void;
 }) {
   return (
-    <div
-      className={`rounded-xl border p-3 ${
-        imported ? "border-amber-400/30 bg-amber-400/[0.06]" : "border-line bg-surface-1"
-      }`}
-    >
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="font-semibold text-ink">{profile.name || "—"}</span>
-        <span className="text-xs text-ink-3">
+    <article className={`workspace-profile-row ${imported ? "is-imported" : ""}`}>
+      <span className="workspace-profile-symbol" aria-hidden="true">
+        {imported ? <FolderIcon className="h-5 w-5" /> : <LayersIcon className="h-5 w-5" />}
+      </span>
+      <div className="workspace-profile-identity">
+        <h3>{profile.name || "—"}</h3>
+        <p>
           {format(s.profiles.tweakCount, { count: profile.tweaks.length })}
           {!imported && profile.created_at ? ` · ${formatEpochDate(profile.created_at)}` : ""}
-        </span>
+        </p>
       </div>
-      <div className="mt-2.5 flex flex-wrap gap-2">
+      <div className="workspace-profile-actions">
         <button
           onClick={() => onApply(profile)}
-          disabled={busy === profile.name || profile.tweaks.length === 0}
-          className="rounded-lg bg-[var(--app-accent)] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+          disabled={busy !== null || profile.tweaks.length === 0}
+          aria-label={`${s.profiles.apply} · ${profile.name}`}
+          aria-busy={busy === profile.name}
+          className="workspace-button workspace-button-primary"
         >
           {busy === profile.name ? s.profiles.applying : s.profiles.apply}
         </button>
@@ -60,25 +63,30 @@ export function ProfileRow({
           <>
             <button
               onClick={() => onExport?.(profile)}
-              className="rounded-lg border border-line-2 px-3 py-1.5 text-xs font-semibold text-ink-2 hover:bg-surface-2"
+              aria-label={`${s.profiles.exportButton} · ${profile.name}`}
+              className="workspace-button workspace-button-secondary"
             >
               {s.profiles.exportButton}
             </button>
             <button
               onClick={() => onRemove?.(profile.name)}
-              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-ink-3 hover:text-red-300"
+              aria-label={`${s.profiles.deleteButton} · ${profile.name}`}
+              className="workspace-button workspace-button-delete"
             >
               {s.profiles.deleteButton}
             </button>
           </>
         )}
       </div>
-    </div>
+    </article>
   );
 }
 
 export function ProfilesPanel({
   s,
+  lang,
+  lifetimeOwned,
+  onViewPlans,
   tweaks,
   isPro,
   authed,
@@ -88,6 +96,9 @@ export function ProfilesPanel({
   pushToast,
 }: {
   s: Strings;
+  lang: Lang;
+  lifetimeOwned: boolean;
+  onViewPlans: () => void;
   tweaks: TweakInfo[];
   isPro: boolean;
   /** Saving/loading a configuration is an account feature — free or Pro,
@@ -102,16 +113,41 @@ export function ProfilesPanel({
   const [name, setName] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [pending, setPending] = useState<LoadedProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const nameId = useId();
+  const readRequest = useRef(0);
 
-  const refresh = useCallback(() => {
+  const readProfiles = useCallback(() => {
+    const request = ++readRequest.current;
     invoke<TweakProfile[]>("list_profiles")
-      .then(setSaved)
-      .catch(() => setSaved([]));
+      .then((profiles) => {
+        if (request === readRequest.current) setSaved(profiles);
+      })
+      .catch((e: unknown) => {
+        if (request === readRequest.current) setLoadError(String(e));
+      })
+      .finally(() => {
+        if (request === readRequest.current) setLoading(false);
+      });
   }, []);
 
-  useEffect(refresh, [refresh]);
+  useEffect(() => {
+    readProfiles();
+    return () => {
+      readRequest.current += 1;
+    };
+  }, [readProfiles]);
+
+  function refresh() {
+    setLoading(true);
+    setLoadError(null);
+    readProfiles();
+  }
 
   async function saveCurrent() {
+    if (saving) return;
     if (!authed) {
       onRequireAuth();
       return;
@@ -120,6 +156,7 @@ export function ProfilesPanel({
       pushToast("error", s.profiles.nameRequired);
       return;
     }
+    setSaving(true);
     try {
       const profile = await invoke<TweakProfile>("capture_profile", { name: name.trim() });
       await invoke("save_profile", { profile });
@@ -128,6 +165,8 @@ export function ProfilesPanel({
       refresh();
     } catch (e) {
       pushToast("error", String(e));
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -213,71 +252,116 @@ export function ProfilesPanel({
   }
 
   return (
-    <div className="mb-6 flex flex-col gap-5">
-      <div className="rounded-2xl border border-line bg-surface-1 p-5">
-        <h2 className="text-lg font-semibold text-ink">{s.profiles.title}</h2>
-        <p className="mt-1 max-w-lg text-sm text-ink-3">{s.profiles.subtitle}</p>
+    <div className="workspace-profiles">
+      <header className="workspace-panel-header">
+        <div>
+          <h2>{s.profiles.title}</h2>
+          <p>{s.profiles.subtitle}</p>
+        </div>
+        {!loading && !loadError && (
+          <span className="workspace-count">
+            {s.profiles.savedHeading}
+            <strong>{saved.length}</strong>
+          </span>
+        )}
+      </header>
 
-        <p className="mt-5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">
-          {s.profiles.saveHeading}
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
+      <section className="workspace-profile-compose">
+        <div className="workspace-compose-heading">
+          <label htmlFor={nameId}>{s.profiles.saveHeading}</label>
+          <button onClick={importProfile} className="workspace-button workspace-button-secondary">
+            <span aria-hidden="true">
+              <FolderIcon className="h-4 w-4" />
+            </span>
+            {s.profiles.importButton}
+          </button>
+        </div>
+        <form
+          className="workspace-profile-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void saveCurrent();
+          }}
+        >
           <input
+            id={nameId}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && saveCurrent()}
             placeholder={s.profiles.namePlaceholder}
             maxLength={40}
-            className="min-w-[180px] flex-1 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-[var(--app-accent)]"
+            autoComplete="off"
           />
           <button
-            onClick={saveCurrent}
-            className="rounded-lg bg-[var(--app-accent)] px-4 py-2 text-sm font-bold text-white"
+            type="submit"
+            disabled={saving}
+            aria-busy={saving}
+            className="workspace-button workspace-button-primary"
           >
-            {s.profiles.saveButton}
+            {saving ? "···" : s.profiles.saveButton}
           </button>
-          <button
-            onClick={importProfile}
-            className="flex items-center gap-1.5 rounded-lg border border-line-2 px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2"
-          >
-            <FolderIcon className="h-4 w-4" />
-            {s.profiles.importButton}
-          </button>
-        </div>
-        <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-3">
+        </form>
+        <p className="workspace-profile-notice">
           {authed ? s.profiles.reviewNotice : s.profiles.signInRequired}
         </p>
-      </div>
+      </section>
 
       {pending && (
-        <div className="flex flex-col gap-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-300">
-            {s.profiles.importButton}
-          </p>
+        <section className="workspace-profile-section">
+          <h3 className="workspace-section-label">{s.profiles.importButton}</h3>
           <ProfileRow s={s} profile={pending.profile} imported busy={busy} onApply={applyProfile} />
-        </div>
+          {pending.unknown.length > 0 && (
+            <p className="workspace-import-warning" role="status">
+              {format(s.profiles.droppedWarning, { count: pending.unknown.length })}
+            </p>
+          )}
+        </section>
       )}
 
-      <div className="flex flex-col gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
-          {s.profiles.savedHeading}
-        </p>
-        {saved.length === 0 ? (
-          <p className="text-sm text-ink-3">{s.profiles.empty}</p>
-        ) : (
-          saved.map((p) => (
-            <ProfileRow
-              key={p.name}
-              s={s}
-              profile={p}
-              busy={busy}
-              onApply={applyProfile}
-              onExport={exportProfile}
-              onRemove={removeProfile}
-            />
-          ))
+      <section className="workspace-profile-section" aria-busy={loading}>
+        <h3 className="workspace-section-label">{s.profiles.savedHeading}</h3>
+        {loadError && (
+          <div className="workspace-panel-error" role="alert">
+            <p>{loadError}</p>
+            <button onClick={refresh} className="workspace-button workspace-button-secondary">
+              {s.scheduledTasks.refresh}
+            </button>
+          </div>
         )}
-      </div>
+        {loading && saved.length === 0 ? (
+          <div className="workspace-panel-empty" role="status">
+            {s.scheduledTasks.refreshing}
+          </div>
+        ) : saved.length === 0 && !loadError ? (
+          <div className="workspace-panel-empty">
+            <span className="workspace-empty-symbol" aria-hidden="true">
+              <LayersIcon className="h-8 w-8" />
+            </span>
+            <p>{s.profiles.empty}</p>
+          </div>
+        ) : saved.length > 0 ? (
+          <div className="workspace-profile-list">
+            {saved.map((p) => (
+              <ProfileRow
+                key={p.name}
+                s={s}
+                profile={p}
+                busy={busy}
+                onApply={applyProfile}
+                onExport={exportProfile}
+                onRemove={removeProfile}
+              />
+            ))}
+          </div>
+        ) : null}
+      </section>
+      <LifetimeTools
+        s={s}
+        lang={lang}
+        profiles={saved}
+        tweaks={tweaks}
+        owned={lifetimeOwned}
+        onViewPlans={onViewPlans}
+      />
     </div>
   );
 }

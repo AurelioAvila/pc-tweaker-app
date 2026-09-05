@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-list-startup-items"
+description = "Enables the list_startup_items command without any pre-configured scope."
+commands.allow = ["list_startup_items"]
+
+[[permission]]
+identifier = "deny-list-startup-items"
+description = "Denies the list_startup_items command without any pre-configured scope."
+commands.deny = ["list_startup_items"]

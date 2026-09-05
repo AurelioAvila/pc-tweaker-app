@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-gpu-profile"
+description = "Enables the set_gpu_profile command without any pre-configured scope."
+commands.allow = ["set_gpu_profile"]
+
+[[permission]]
+identifier = "deny-set-gpu-profile"
+description = "Denies the set_gpu_profile command without any pre-configured scope."
+commands.deny = ["set_gpu_profile"]

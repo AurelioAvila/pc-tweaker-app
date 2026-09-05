@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-check-update-drift"
+description = "Enables the check_update_drift command without any pre-configured scope."
+commands.allow = ["check_update_drift"]
+
+[[permission]]
+identifier = "deny-check-update-drift"
+description = "Denies the check_update_drift command without any pre-configured scope."
+commands.deny = ["check_update_drift"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-list-browser-cleanup"
+description = "Enables the list_browser_cleanup command without any pre-configured scope."
+commands.allow = ["list_browser_cleanup"]
+
+[[permission]]
+identifier = "deny-list-browser-cleanup"
+description = "Denies the list_browser_cleanup command without any pre-configured scope."
+commands.deny = ["list_browser_cleanup"]

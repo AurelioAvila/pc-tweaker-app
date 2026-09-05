@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.9.0
+
+Five new native Windows power controls, a redesigned desktop workspace, and digitally signed Windows installers from Aurelio Avila.
+
+- **Five actual tweaks.** CPU energy-performance preference and USB wake troubleshooting are Free. PCIe link power management and short/long-thread scheduling preferences are Pro. The catalog now contains 61 tweaks, including 37 Free. The new controls change mains-power policy only, record the original plan and override, and verify writes and restoration. Hybrid scheduling requires different CPU efficiency classes. These are explicit tuning or diagnostic options, with no promised FPS gain.
+- **A clearer desktop workspace.** Overview, saved Profiles and Change history join the existing sections. Tool pages explain their actions and recovery limits. Plans & pricing and Buy me a coffee remain visible; existing themes and the original logo are retained.
+- **Lifetime checkout and extras.** Plans use server-verified availability. An active campaign has one fixed 48-hour deadline shared by all visitors, with a notice that prices and availability may change. Existing Lifetime access is preserved. Lifetime also includes saved-profile comparison and portable Markdown tuning reports, protected by native entitlement checks.
+- **More reliable billing.** Subscription updates cannot overwrite Lifetime access. Paid checkout delivery is retryable, and purchase emails use a durable queue with duplicate protection and retries. Licenses activate on the signed-in account; email delivery does not gate access.
+- **Safer restoration.** Original settings are committed before changes. Overlapping legacy records are retained for review. New DNS records distinguish automatic from static configuration; old ambiguous DNS or power-plan records stop with an explanation rather than guessing a recovery target.
+- **Code signing.** Windows executables and installers are signed by Aurelio Avila with a trusted timestamp. Tauri updater signatures remain separate. Signing verifies publisher identity and file integrity; SmartScreen can still display reputation warnings.
+
+### Compatibility note
+
+Some old recovery records do not identify their original power plan or whether DNS was automatic. These records are preserved and may require manual recovery. Battery settings are unchanged by the five new controls. USB selective-suspend disabling is for diagnosis; Windows recommends keeping it enabled normally.
+
 ## v1.8.0
 
 Windows can now repair itself from here, cookies survive a cleanup, and the

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-run-system-repair"
+description = "Enables the run_system_repair command without any pre-configured scope."
+commands.allow = ["run_system_repair"]
+
+[[permission]]
+identifier = "deny-run-system-repair"
+description = "Denies the run_system_repair command without any pre-configured scope."
+commands.deny = ["run_system_repair"]

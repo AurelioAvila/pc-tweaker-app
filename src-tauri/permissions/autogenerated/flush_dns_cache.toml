@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-flush-dns-cache"
+description = "Enables the flush_dns_cache command without any pre-configured scope."
+commands.allow = ["flush_dns_cache"]
+
+[[permission]]
+identifier = "deny-flush-dns-cache"
+description = "Denies the flush_dns_cache command without any pre-configured scope."
+commands.deny = ["flush_dns_cache"]

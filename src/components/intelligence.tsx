@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { format, Strings } from "../i18n";
+import { format, Lang, Strings } from "../i18n";
 import { textFor } from "../lib";
 import { AuditEntry, CrashReport, DriftReport, Toast, TweakAdvice, TweakInfo } from "../types";
 import { ProBadge, ShieldBadge } from "./ui";
+import "./workspace-panels.css";
 
 /**
  * PC Tweaker Intelligence — vertical slice 1: Personal Advisor + Change
@@ -396,11 +397,13 @@ export function CrashReportsCard({
  */
 export function LedgerPanel({
   s,
+  lang,
   tweaks,
   onChanged,
   pushToast,
 }: {
   s: Strings;
+  lang: Lang;
   tweaks: TweakInfo[];
   onChanged: () => Promise<void>;
   pushToast: (kind: Toast["kind"], message: string) => void;
@@ -408,13 +411,36 @@ export function LedgerPanel({
   const [entries, setEntries] = useState<AuditEntry[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [failedOnly, setFailedOnly] = useState(false);
+  const readRequest = useRef(0);
+
+  const readEntries = useCallback(() => {
+    const request = ++readRequest.current;
+    invoke<AuditEntry[]>("list_audit_log")
+      .then((v) => {
+        // The native audit reader already returns newest-first entries.
+        if (request === readRequest.current) setEntries(v);
+      })
+      .catch((e: unknown) => {
+        if (request === readRequest.current) {
+          setLoadError(String(e));
+          setEntries((current) => current ?? []);
+        }
+      });
+  }, []);
+
+  useEffect(() => {
+    readEntries();
+    return () => {
+      readRequest.current += 1;
+    };
+  }, [readEntries]);
 
   function load() {
-    invoke<AuditEntry[]>("list_audit_log")
-      .then((v) => setEntries([...v].reverse()))
-      .catch(() => setEntries([]));
+    setLoadError(null);
+    readEntries();
   }
-  useEffect(load, []);
 
   const appliedIds = useMemo(
     () => new Set(tweaks.filter((t) => t.applied).map((t) => t.id)),
@@ -440,15 +466,35 @@ export function LedgerPanel({
   }
 
   if (entries === null) {
-    return <div className="mb-6 h-40 animate-pulse rounded-2xl border border-line bg-surface-1" />;
+    return (
+      <section className="workspace-ledger" aria-busy="true">
+        <header className="workspace-panel-header">
+          <div>
+            <h2>{s.ledger.title}</h2>
+            <p>{s.ledger.subtitle}</p>
+          </div>
+        </header>
+        <div className="workspace-panel-empty" role="status">
+          {s.scheduledTasks.refreshing}
+        </div>
+      </section>
+    );
   }
 
+  const failedCount = entries.filter((entry) => !entry.success).length;
+  const visibleEntries = failedOnly ? entries.filter((entry) => !entry.success) : entries;
+  const dateOf = (entry: AuditEntry) => {
+    const date = new Date(entry.ts * 1000);
+    return Number.isFinite(date.getTime()) ? date : null;
+  };
+  const dayOf = (entry: AuditEntry) => dateOf(entry)?.toLocaleDateString(lang) ?? "—";
+
   return (
-    <div className="signal relative mb-6 overflow-hidden rounded-2xl border border-line bg-surface-1 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="font-semibold text-ink">{s.ledger.title}</h2>
-          <p className="mt-0.5 text-sm text-ink-3">{s.ledger.subtitle}</p>
+    <section className="workspace-ledger">
+      <header className="workspace-panel-header">
+        <div>
+          <h2>{s.ledger.title}</h2>
+          <p>{s.ledger.subtitle}</p>
         </div>
         {/* Only offered when there is something to clear, so the control
             never implies history exists where none does. */}
@@ -458,6 +504,7 @@ export function LedgerPanel({
               setClearing(true);
               invoke("clear_audit_log")
                 .then(() => {
+                  readRequest.current += 1;
                   setEntries([]);
                   pushToast("success", s.ledger.cleared);
                 })
@@ -465,61 +512,127 @@ export function LedgerPanel({
                 .finally(() => setClearing(false));
             }}
             disabled={clearing}
-            className="shrink-0 rounded-xl border border-line-2 px-4 py-2 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-accent/40 hover:text-ink disabled:cursor-wait disabled:opacity-60"
+            className="workspace-button workspace-button-secondary"
           >
             {clearing ? s.ledger.clearing : s.ledger.clear}
           </button>
         )}
-      </div>
+      </header>
 
-      {entries.length === 0 ? (
-        <p className="mt-4 text-sm text-ink-3">{s.ledger.empty}</p>
-      ) : (
-        <ul className="mt-4 flex flex-col divide-y divide-line">
-          {entries.map((e, i) => {
+      {loadError && (
+        <div className="workspace-panel-error" role="alert">
+          <p>{loadError}</p>
+          <button onClick={load} className="workspace-button workspace-button-secondary">
+            {s.scheduledTasks.refresh}
+          </button>
+        </div>
+      )}
+
+      {entries.length > 0 && (
+        <div className="workspace-ledger-toolbar">
+          <span className="workspace-count">
+            <strong>{entries.length}</strong>
+            {s.ledger.title}
+          </span>
+          <button
+            onClick={() => setFailedOnly((value) => !value)}
+            aria-pressed={failedOnly}
+            className={`workspace-ledger-filter ${failedOnly ? "is-active" : ""}`}
+          >
+            <span aria-hidden="true">×</span>
+            {s.ledger.failed}
+            <strong>{failedCount}</strong>
+          </button>
+        </div>
+      )}
+
+      {entries.length === 0 && !loadError ? (
+        <div className="workspace-panel-empty">
+          <span className="workspace-empty-symbol" aria-hidden="true">
+            <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M4 7v5h5M4.7 12a8 8 0 1 1 2.5 6M12 8v4l3 2"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <p>{s.ledger.empty}</p>
+        </div>
+      ) : entries.length > 0 && visibleEntries.length === 0 ? (
+        <p className="workspace-panel-empty" role="status">
+          {format(s.search.noResults, { query: s.ledger.failed })}
+        </p>
+      ) : entries.length > 0 ? (
+        <ol className="workspace-ledger-list">
+          {visibleEntries.map((e, i) => {
             const key = ACTION_KEYS[e.action];
             const label = key ? s.ledger.actions[key] : e.action;
             const isTweak = e.action === "tweak-applied";
-            const canRevert = isTweak && appliedIds.has(e.target);
+            const canRevert = e.success && isTweak && appliedIds.has(e.target);
+            const timestamp = dateOf(e);
+            const startsDay = i === 0 || dayOf(e) !== dayOf(visibleEntries[i - 1]);
             return (
-              <li key={`${e.ts}-${i}`} className="flex items-start gap-3 py-2.5">
-                {/* Status is shape + color, never color alone. */}
-                <span
-                  className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${e.success ? "bg-ok" : "bg-danger"}`}
-                  aria-hidden
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-medium text-ink">
-                    {label}
-                    <span className="text-ink-2">
-                      {" "}
-                      · {e.action.startsWith("tweak-") ? tweakName(e.target) : e.target}
-                    </span>
+              <li key={`${e.ts}-${i}`}>
+                {startsDay && (
+                  <p className="workspace-ledger-date">
+                    {timestamp?.toLocaleDateString(lang, {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    }) ?? "—"}
                   </p>
-                  <p className="type-data mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-ink-3">
-                    {new Date(e.ts * 1000).toLocaleString()}
-                    {e.elevated && <span className="text-ink-3">· {s.ledger.elevated}</span>}
-                    {!e.success && (
-                      <span className="font-semibold text-danger">· {s.ledger.failed}</span>
-                    )}
-                    {e.detail && <span className="truncate">· {e.detail}</span>}
-                  </p>
-                </div>
-                {canRevert && (
-                  <button
-                    onClick={() => void rollback(e.target)}
-                    disabled={busy !== null}
-                    className="shrink-0 rounded-lg border border-line-2 px-2.5 py-1 text-xs font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-50"
-                  >
-                    {busy === e.target ? "···" : s.ledger.revert}
-                  </button>
                 )}
+                <div className={`workspace-ledger-event ${e.success ? "" : "has-failed"}`}>
+                  {/* Status is shape + color, never color alone. */}
+                  <span
+                    className={`workspace-ledger-status ${e.success ? "is-success" : "is-failed"}`}
+                    aria-hidden="true"
+                  >
+                    {e.success ? "✓" : "×"}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="workspace-ledger-target">
+                      {e.action.startsWith("tweak-") ? tweakName(e.target) : e.target}
+                    </p>
+                    <div className="workspace-ledger-meta">
+                      <span>{label}</span>
+                      <time dateTime={timestamp?.toISOString()}>
+                        {timestamp?.toLocaleTimeString(lang, {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        }) ?? "—"}
+                      </time>
+                      {e.elevated && (
+                        <span className="workspace-ledger-admin">{s.ledger.elevated}</span>
+                      )}
+                      {!e.success && (
+                        <span className="workspace-ledger-failure">{s.ledger.failed}</span>
+                      )}
+                    </div>
+                    {e.detail && <p className="workspace-ledger-detail">{e.detail}</p>}
+                  </div>
+                  {canRevert && (
+                    <button
+                      onClick={() => void rollback(e.target)}
+                      disabled={busy !== null}
+                      aria-label={`${s.ledger.revert} · ${tweakName(e.target)}`}
+                      className="workspace-button workspace-button-secondary"
+                    >
+                      {busy === e.target ? "···" : s.ledger.revert}
+                    </button>
+                  )}
+                </div>
               </li>
             );
           })}
-        </ul>
-      )}
-    </div>
+        </ol>
+      ) : null}
+    </section>
   );
 }
 

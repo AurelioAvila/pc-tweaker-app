@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-list-health-history"
+description = "Enables the list_health_history command without any pre-configured scope."
+commands.allow = ["list_health_history"]
+
+[[permission]]
+identifier = "deny-list-health-history"
+description = "Denies the list_health_history command without any pre-configured scope."
+commands.deny = ["list_health_history"]

@@ -1,3 +1,4 @@
+import "./tool-surfaces.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
@@ -123,12 +124,12 @@ export function X3dPanel({
           : null;
 
   return (
-    <section className="animate-card border-line bg-surface-1 mb-4 rounded-2xl border p-5">
-      <div className="flex items-start gap-3">
-        <div className="bg-surface-2 border-line grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
+    <section className="tool-panel tool-card tool-x3d-panel animate-card border-line bg-surface-1 mb-4 rounded-2xl border p-5">
+      <div className="tool-card-head flex items-start gap-3">
+        <div className="tool-card-icon bg-surface-2 border-line grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
           <ChipIcon className="text-accent h-5 w-5" />
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="tool-card-copy min-w-0 flex-1">
           <h2 className="type-section text-ink">{s.x3d.title}</h2>
           <p className="mt-1 max-w-2xl text-[12.5px] leading-relaxed text-ink-3">
             {s.x3d.subtitle}
@@ -142,7 +143,7 @@ export function X3dPanel({
       </p>
 
       {report.ccds.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="tool-control-group mt-3 flex flex-wrap gap-2">
           {report.ccds.map((c) => (
             <DieCard
               key={c.index}

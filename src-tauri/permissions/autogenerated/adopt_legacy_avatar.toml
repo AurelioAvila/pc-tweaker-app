@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adopt-legacy-avatar"
+description = "Enables the adopt_legacy_avatar command without any pre-configured scope."
+commands.allow = ["adopt_legacy_avatar"]
+
+[[permission]]
+identifier = "deny-adopt-legacy-avatar"
+description = "Denies the adopt_legacy_avatar command without any pre-configured scope."
+commands.deny = ["adopt_legacy_avatar"]

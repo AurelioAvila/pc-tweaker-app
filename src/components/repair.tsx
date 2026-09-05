@@ -1,3 +1,4 @@
+import "./tool-surfaces.css";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -183,12 +184,12 @@ export function SystemRepairCard({
   const determinate = progress !== null && progress.percent >= 1;
 
   return (
-    <div className="rounded-2xl border border-line bg-surface-1 p-5">
-      <div className="flex items-start gap-4">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/30">
+    <div className="tool-panel tool-card tool-system-repair-card rounded-2xl border border-line bg-surface-1 p-5">
+      <div className="tool-card-head flex items-start gap-4">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/30">
           <HeartPulseIcon className="h-5 w-5" />
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="tool-card-copy min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="font-semibold text-ink">{s.systemRepair.title}</h2>
             <ShieldBadge label={s.badges.admin} />
@@ -203,11 +204,11 @@ export function SystemRepairCard({
           running a twenty-minute repair before checking is the one order
           that reliably wastes the user's afternoon. Both are painted: an
           outline that only colours on hover reads as disabled until touched. */}
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="tool-control-group mt-4 flex flex-wrap gap-2">
         <button
           onClick={() => run("check")}
           disabled={running !== null}
-          className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 shadow-[0_8px_24px_-12px_theme(colors.emerald.400)] transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60 disabled:hover:translate-y-0"
+          className="tool-primary-action rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 shadow-[0_8px_24px_-12px_theme(colors.emerald.400)] transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60 disabled:hover:translate-y-0"
         >
           {running === "check" ? s.systemRepair.checking : s.systemRepair.checkButton}
         </button>
@@ -323,10 +324,10 @@ export function SystemRepairCard({
                   ? s.systemRepair.hintUnrepairable
                   : s.systemRepair.timeNote}
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="tool-control-group mt-3 flex flex-wrap gap-2">
                 <button
                   onClick={() => run("repair")}
-                  className="flex items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 shadow-[0_8px_24px_-12px_theme(colors.emerald.400)] transition hover:-translate-y-px hover:brightness-110"
+                  className="tool-primary-action flex items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 shadow-[0_8px_24px_-12px_theme(colors.emerald.400)] transition hover:-translate-y-px hover:brightness-110"
                 >
                   {s.systemRepair.askRepairYes}
                   {!isPro && <ProBadge label={s.badges.pro} />}

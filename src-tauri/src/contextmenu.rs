@@ -48,20 +48,39 @@ pub(crate) const INPROC_PATH: &str =
 
 #[cfg(windows)]
 pub fn apply(store: &RollbackStore) -> Result<(), String> {
+    let mut transaction = store.transaction()?;
+
     use winreg::enums::HKEY_CURRENT_USER;
     use winreg::RegKey;
 
+    if transaction.entry(TWEAK_ID).is_some() {
+        return Ok(());
+    }
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 
     // Recorded before creating anything: if the user already had this key for
     // their own reasons, rollback must not delete work that wasn't ours.
-    if hkcu.open_subkey(CLSID_PATH).is_ok() {
-        return Err(
-            "this key already exists on your system — PC Tweaker won't overwrite a shell \
+    match hkcu.open_subkey(CLSID_PATH) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => return Err(format!("could not inspect the shell override: {e}")),
+        Ok(_) => {
+            return Err(
+                "this key already exists on your system — PC Tweaker won't overwrite a shell \
              override it didn't create"
-                .to_string(),
-        );
+                    .to_string(),
+            );
+        }
     }
+
+    transaction
+        .save_entry(
+            TWEAK_ID,
+            SnapshotEntry::RegistryKeyCreated {
+                hive: HIVE.to_string(),
+                path: CLSID_PATH.to_string(),
+            },
+        )
+        .map_err(|e| e.to_string())?;
 
     let (key, _) = hkcu
         .create_subkey(INPROC_PATH)
@@ -71,16 +90,9 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
     // a DLL from here, finds nothing, and falls back to the classic menu.
     key.set_value("", &"")
         .map_err(|e| format!("could not write the override: {}", e))?;
-
-    store
-        .save_entry(
-            TWEAK_ID,
-            SnapshotEntry::RegistryKeyCreated {
-                hive: HIVE.to_string(),
-                path: CLSID_PATH.to_string(),
-            },
-        )
-        .map_err(|e| e.to_string())?;
+    if key.get_value::<String, _>("").map_err(|e| e.to_string())? != "" {
+        return Err("shell override could not be verified; the snapshot was retained".into());
+    }
 
     restart_explorer();
     Ok(())
@@ -91,26 +103,35 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
     use winreg::enums::HKEY_CURRENT_USER;
     use winreg::RegKey;
 
-    let entry = store
-        .take_entry(TWEAK_ID)
-        .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
+    store.restore_entry(TWEAK_ID, |entry| {
+        let SnapshotEntry::RegistryKeyCreated { path, .. } = entry else {
+            return Err("unexpected snapshot type for the context menu tweak".to_string());
+        };
 
-    let SnapshotEntry::RegistryKeyCreated { path, .. } = entry else {
-        return Err("unexpected snapshot type for the context menu tweak".to_string());
-    };
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        // Deletes the CLSID key and the InprocServer32 subkey under it. Missing
+        // is fine — the user may have removed it by hand, and the end state is
+        // what we wanted either way.
+        match hkcu.delete_subkey_all(&path) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(format!("could not remove the shell override: {}", e)),
+        }
+        match hkcu.open_subkey(&path) {
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => {
+                return Err(format!(
+                    "could not verify removal of the shell override: {e}"
+                ))
+            }
+            Ok(_) => {
+                return Err("the shell override still exists; the snapshot was retained".into())
+            }
+        }
 
-    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    // Deletes the CLSID key and the InprocServer32 subkey under it. Missing
-    // is fine — the user may have removed it by hand, and the end state is
-    // what we wanted either way.
-    match hkcu.delete_subkey_all(&path) {
-        Ok(()) => {}
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-        Err(e) => return Err(format!("could not remove the shell override: {}", e)),
-    }
-
-    restart_explorer();
-    Ok(())
+        restart_explorer();
+        Ok(())
+    })
 }
 
 /// Explorer reads this override once at startup, so the change is invisible

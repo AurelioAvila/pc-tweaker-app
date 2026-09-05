@@ -403,7 +403,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
             applied: applied_ids.contains(tweak.id),
             changes: vec![technical::TechnicalChange::Command {
                 program: "PowerWriteACValueIndex",
-                arguments: format!("Current plan; subgroup {}; setting {}; AC index {}. Battery policy unchanged. Refresh with PowerSetActiveScheme only if this plan remains active.", tweak.subgroup,tweak.setting,tweak.value),
+                arguments: format!("Current plan; subgroup {}; setting {}; AC index {}. Battery policy unchanged. Restore writes the prior effective AC value as an explicit plan value, including when it was inherited. Refresh with PowerSetActiveScheme only if this plan remains active.", tweak.subgroup,tweak.setting,tweak.value),
             }],
         });
     }

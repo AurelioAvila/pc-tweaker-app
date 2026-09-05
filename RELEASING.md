@@ -16,7 +16,7 @@ Official releases are built locally and published by Aurelio Avila. CI verificat
 
 - Failed setting writes retain recovery records. Unsupported targets and overlapping or ambiguous legacy records must fail before mutation.
 - New DNS snapshots preserve automatic versus static configuration. Old records without that information require manual review.
-- New power controls preserve the original plan and AC override. They leave battery policy unchanged and must not recreate a deleted plan.
+- New power controls preserve the original plan and effective AC value. They leave battery policy unchanged and must not recreate a deleted plan.
 - Duplicate and out-of-order subscription events must not overwrite Lifetime. License delivery depends on a verified paid event and the account's signed entitlement.
 - Purchase emails enter a durable queue before webhook acknowledgment. Provider outages are retried. Delivery is at-least-once: a crash after provider acceptance can duplicate a receipt, but cannot duplicate a charge.
 - Retain prior source and signed artifacts for rollback. Do not restore an old database dump over new purchases.

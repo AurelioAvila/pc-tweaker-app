@@ -1,5 +1,9 @@
 //! Explicit AC-only power policy experiments. No automatic recommendations.
 //! Values and GUIDs come from Windows power policy definitions, not timing hacks.
+//! Restoration writes the prior effective AC value through the same API. It
+//! leaves an explicit plan value if the original value was inherited. Clearing
+//! one inherited override is not exposed by the documented power API; do not
+//! alter protected registry ACLs or reset an entire plan to simulate it.
 use crate::rollback::{RollbackStore, SnapshotEntry};
 
 pub struct PowerTweak {
@@ -27,21 +31,16 @@ pub fn find(id: &str) -> Option<&'static PowerTweak> {
 }
 
 pub fn valid_snapshot(t: &PowerTweak, entry: &SnapshotEntry) -> bool {
-    matches!(entry, SnapshotEntry::PowerAcSetting { scheme_guid, subgroup_guid, setting_guid, original_override }
+    matches!(entry, SnapshotEntry::PowerAcSetting { scheme_guid, subgroup_guid, setting_guid, original_value }
         if crate::rollback::valid_guid(scheme_guid) && subgroup_guid.eq_ignore_ascii_case(t.subgroup)
-            && setting_guid.eq_ignore_ascii_case(t.setting) && original_override.is_none_or(|v| v <= t.maximum))
+            && setting_guid.eq_ignore_ascii_case(t.setting) && *original_value <= t.maximum)
 }
 
 trait PowerBackend {
     fn active(&self) -> Result<String, String>;
     fn supported(&self, scheme: &str, t: &PowerTweak) -> Result<(), String>;
-    fn read_override(&self, scheme: &str, t: &PowerTweak) -> Result<Option<u32>, String>;
-    fn write_override(
-        &self,
-        scheme: &str,
-        t: &PowerTweak,
-        value: Option<u32>,
-    ) -> Result<(), String>;
+    fn read_value(&self, scheme: &str, t: &PowerTweak) -> Result<u32, String>;
+    fn write_value(&self, scheme: &str, t: &PowerTweak, value: u32) -> Result<(), String>;
     fn refresh_if_active(&self, scheme: &str) -> Result<(), String>;
 }
 
@@ -53,18 +52,18 @@ fn apply_with(
     let mut transaction = store.transaction()?;
     let scheme = api.active()?;
     api.supported(&scheme, t)?;
-    let original_override = api.read_override(&scheme, t)?;
+    let original_value = api.read_value(&scheme, t)?;
     transaction.save_entry(
         t.id,
         SnapshotEntry::PowerAcSetting {
             scheme_guid: scheme.clone(),
             subgroup_guid: t.subgroup.into(),
             setting_guid: t.setting.into(),
-            original_override,
+            original_value,
         },
     )?;
-    api.write_override(&scheme, t, Some(t.value))?;
-    if api.read_override(&scheme, t)? != Some(t.value) {
+    api.write_value(&scheme, t, t.value)?;
+    if api.read_value(&scheme, t)? != t.value {
         return Err("Power setting verification failed; recovery data was retained".into());
     }
     api.refresh_if_active(&scheme)
@@ -78,14 +77,14 @@ fn restore_with(
     store.restore_entry(t.id, |entry| {
         let SnapshotEntry::PowerAcSetting {
             scheme_guid,
-            original_override,
+            original_value,
             ..
         } = entry
         else {
             return Err("Unexpected power snapshot".into());
         };
-        api.write_override(&scheme_guid, t, original_override)?;
-        if api.read_override(&scheme_guid, t)? != original_override {
+        api.write_value(&scheme_guid, t, original_value)?;
+        if api.read_value(&scheme_guid, t)? != original_value {
             return Err(
                 "Power restoration could not be verified; recovery data was retained".into(),
             );
@@ -101,10 +100,7 @@ mod native {
         core::GUID,
         Win32::{Foundation::LocalFree, System::Power::*},
     };
-    use winreg::{
-        enums::{HKEY_LOCAL_MACHINE, KEY_SET_VALUE},
-        RegKey,
-    };
+    use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
     pub(super) fn guid(value: &str) -> Result<GUID, String> {
         if !crate::rollback::valid_guid(value) {
@@ -120,12 +116,6 @@ mod native {
         } else {
             Err(format!("Windows power policy error {code}; the setting may be unavailable or managed by an administrator"))
         }
-    }
-    fn path(scheme: &str, t: &PowerTweak) -> String {
-        format!(
-            r"SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\{}\{}\{}",
-            scheme, t.subgroup, t.setting
-        )
     }
     pub(super) struct WindowsPower;
     impl PowerBackend for WindowsPower {
@@ -174,22 +164,27 @@ mod native {
             }
             Ok(())
         }
-        fn read_override(&self, scheme: &str, t: &PowerTweak) -> Result<Option<u32>, String> {
-            crate::tweaks::windows_impl::read_dword(
-                crate::tweaks::Hive::Hklm,
-                &path(scheme, t),
-                "ACSettingIndex",
-            )
-            .map_err(|e| e.to_string())
-        }
-        fn write_override(
-            &self,
-            scheme: &str,
-            t: &PowerTweak,
-            value: Option<u32>,
-        ) -> Result<(), String> {
+        fn read_value(&self, scheme: &str, t: &PowerTweak) -> Result<u32, String> {
             let (s, group, setting) = (guid(scheme)?, guid(t.subgroup)?, guid(t.setting)?);
-            // Never recreate a deleted plan from an old snapshot.
+            let mut value = 0;
+            unsafe {
+                checked(PowerReadACValueIndex(
+                    std::ptr::null_mut(),
+                    &s,
+                    &group,
+                    &setting,
+                    &mut value,
+                ))?;
+            }
+            if value > t.maximum {
+                return Err("Windows returned an unsupported policy value".into());
+            }
+            Ok(value)
+        }
+        fn write_value(&self, scheme: &str, t: &PowerTweak, value: u32) -> Result<(), String> {
+            let (s, group, setting) = (guid(scheme)?, guid(t.subgroup)?, guid(t.setting)?);
+            // Never recreate a deleted plan. Read-only inspection requires no
+            // registry ACL changes; all policy writes go through Windows APIs.
             RegKey::predef(HKEY_LOCAL_MACHINE)
                 .open_subkey(format!(
                     r"SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\{scheme}"
@@ -197,43 +192,20 @@ mod native {
                 .map_err(|_| {
                     "The original power plan no longer exists; recovery data was retained"
                 })?;
-            match value {
-                Some(value) => {
-                    if value > t.maximum {
-                        return Err("Power policy is outside its allowed range".into());
-                    }
-                    unsafe {
-                        checked(PowerWriteACValueIndex(
-                            std::ptr::null_mut(),
-                            &s,
-                            &group,
-                            &setting,
-                            value,
-                        ))?;
-                        let mut readback = 0;
-                        checked(PowerReadACValueIndex(
-                            std::ptr::null_mut(),
-                            &s,
-                            &group,
-                            &setting,
-                            &mut readback,
-                        ))?;
-                        if readback != value {
-                            return Err("Windows did not retain the requested power policy".into());
-                        }
-                    }
-                }
-                None => match RegKey::predef(HKEY_LOCAL_MACHINE)
-                    .open_subkey_with_flags(path(scheme, t), KEY_SET_VALUE)
-                {
-                    Ok(key) => match key.delete_value("ACSettingIndex") {
-                        Ok(()) => (),
-                        Err(e) if e.kind() == std::io::ErrorKind::NotFound => (),
-                        Err(e) => return Err(e.to_string()),
-                    },
-                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => (),
-                    Err(e) => return Err(e.to_string()),
-                },
+            if value > t.maximum {
+                return Err("Power policy is outside its allowed range".into());
+            }
+            unsafe {
+                checked(PowerWriteACValueIndex(
+                    std::ptr::null_mut(),
+                    &s,
+                    &group,
+                    &setting,
+                    value,
+                ))?;
+            }
+            if self.read_value(scheme, t)? != value {
+                return Err("Windows did not retain the requested power policy".into());
             }
             Ok(())
         }
@@ -325,7 +297,7 @@ mod tests {
     use super::*;
     use std::cell::Cell;
     struct Fake {
-        value: Cell<Option<u32>>,
+        value: Cell<u32>,
         fail_write: Cell<bool>,
         unsupported: bool,
     }
@@ -341,15 +313,10 @@ mod tests {
                 Ok(())
             }
         }
-        fn read_override(&self, _: &str, _: &PowerTweak) -> Result<Option<u32>, String> {
+        fn read_value(&self, _: &str, _: &PowerTweak) -> Result<u32, String> {
             Ok(self.value.get())
         }
-        fn write_override(
-            &self,
-            scheme: &str,
-            _: &PowerTweak,
-            v: Option<u32>,
-        ) -> Result<(), String> {
+        fn write_value(&self, scheme: &str, _: &PowerTweak, v: u32) -> Result<(), String> {
             assert_eq!(scheme, PLAN);
             if self.fail_write.get() {
                 return Err("write failed".into());
@@ -372,7 +339,7 @@ mod tests {
             dir.clone(),
             RollbackStore::new(dir),
             Fake {
-                value: Cell::new(Some(50)),
+                value: Cell::new(50),
                 fail_write: Cell::new(false),
                 unsupported: false,
             },
@@ -385,17 +352,17 @@ mod tests {
         apply_with(&s, t, &a).unwrap();
         apply_with(&s, t, &a).unwrap();
         restore_with(&s, t, &a).unwrap();
-        assert_eq!(a.value.get(), Some(50));
+        assert_eq!(a.value.get(), 50);
         assert!(!s.is_applied(t.id));
         std::fs::remove_dir_all(d).unwrap();
     }
     #[test]
-    fn absent_override_is_restored_as_absent() {
+    fn zero_is_restored_as_a_real_policy_value() {
         let (d, s, a) = fixture();
-        a.value.set(None);
+        a.value.set(0);
         apply_with(&s, &TWEAKS[0], &a).unwrap();
         restore_with(&s, &TWEAKS[0], &a).unwrap();
-        assert_eq!(a.value.get(), None);
+        assert_eq!(a.value.get(), 0);
         std::fs::remove_dir_all(d).unwrap();
     }
     #[test]
@@ -408,7 +375,7 @@ mod tests {
         assert!(s.is_applied(TWEAKS[0].id));
         a.fail_write.set(false);
         restore_with(&s, &TWEAKS[0], &a).unwrap();
-        assert_eq!(a.value.get(), Some(50));
+        assert_eq!(a.value.get(), 50);
         std::fs::remove_dir_all(d).unwrap();
     }
     #[test]
@@ -417,7 +384,7 @@ mod tests {
         a.unsupported = true;
         assert!(apply_with(&s, &TWEAKS[3], &a).is_err());
         assert!(s.applied_ids().unwrap().is_empty());
-        assert_eq!(a.value.get(), Some(50));
+        assert_eq!(a.value.get(), 50);
         std::fs::remove_dir_all(d).unwrap();
     }
     #[test]
@@ -427,17 +394,17 @@ mod tests {
             scheme_guid: PLAN.into(),
             subgroup_guid: t.subgroup.into(),
             setting_guid: TWEAKS[0].setting.into(),
-            original_override: Some(0),
+            original_value: 0,
         };
         assert!(crate::rollback::validate_snapshot(t.id, &e).is_err());
         if let SnapshotEntry::PowerAcSetting {
             setting_guid,
-            original_override,
+            original_value,
             ..
         } = &mut e
         {
             *setting_guid = t.setting.into();
-            *original_override = Some(100);
+            *original_value = 100;
         }
         assert!(crate::rollback::validate_snapshot(t.id, &e).is_err());
     }
@@ -514,18 +481,13 @@ mod tests {
                     ))
                 }
             }
-            fn read_override(&self, s: &str, t: &PowerTweak) -> Result<Option<u32>, String> {
-                native::WindowsPower.read_override(s, t)
+            fn read_value(&self, s: &str, t: &PowerTweak) -> Result<u32, String> {
+                native::WindowsPower.read_value(s, t)
             }
-            fn write_override(
-                &self,
-                s: &str,
-                t: &PowerTweak,
-                v: Option<u32>,
-            ) -> Result<(), String> {
+            fn write_value(&self, s: &str, t: &PowerTweak, v: u32) -> Result<(), String> {
                 assert_eq!(s, self.0);
                 assert_ne!(s, native::WindowsPower.active()?);
-                native::WindowsPower.write_override(s, t, v)
+                native::WindowsPower.write_value(s, t, v)
             }
             fn refresh_if_active(&self, s: &str) -> Result<(), String> {
                 assert_ne!(s, native::WindowsPower.active()?);
@@ -535,7 +497,7 @@ mod tests {
         let (directory, store, _) = fixture();
         let api = Inactive(clone.clone());
         for t in &TWEAKS {
-            let before = api.read_override(&clone, t).unwrap();
+            let before = api.read_value(&clone, t).unwrap();
             let mut dc_before = 0;
             let mut dc_after = 0;
             unsafe {
@@ -549,9 +511,9 @@ mod tests {
                 .unwrap();
             }
             apply_with(&store, t, &api).unwrap();
-            assert_eq!(api.read_override(&clone, t).unwrap(), Some(t.value));
+            assert_eq!(api.read_value(&clone, t).unwrap(), t.value);
             restore_with(&store, t, &api).unwrap();
-            assert_eq!(api.read_override(&clone, t).unwrap(), before);
+            assert_eq!(api.read_value(&clone, t).unwrap(), before);
             unsafe {
                 native::checked(PowerReadDCValueIndex(
                     std::ptr::null_mut(),

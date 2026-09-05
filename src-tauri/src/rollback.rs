@@ -39,7 +39,7 @@ pub enum SnapshotEntry {
         scheme_guid: String,
         subgroup_guid: String,
         setting_guid: String,
-        original_override: Option<u32>,
+        original_value: u32,
     },
     Registry(RegistrySnapshot),
     PowerScheme {

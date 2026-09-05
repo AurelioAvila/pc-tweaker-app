@@ -71,6 +71,10 @@ jobs:
     permissions:
       contents: write
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        format: [nsis, msi]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -79,4 +83,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.release_tag }}
+          INSTALLER_FORMAT: ${{ matrix.format }}
         run: ./scripts/verify-installers.ps1

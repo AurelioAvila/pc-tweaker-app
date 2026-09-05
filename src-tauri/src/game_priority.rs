@@ -26,6 +26,8 @@ pub(crate) const PATH: &str =
 
 #[cfg(windows)]
 pub fn apply(store: &RollbackStore) -> Result<(), String> {
+    let mut transaction = store.transaction()?;
+
     use crate::tweaks::windows_impl::{hive_from_str, read_value, write_value};
 
     let hive = hive_from_str(HIVE);
@@ -49,7 +51,7 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
 
     // Snapshot everything before mutating anything, so a failure partway
     // through never leaves some values changed without a way back.
-    store
+    transaction
         .save_entry(TWEAK_ID, SnapshotEntry::Composite { entries })
         .map_err(|e| e.to_string())?;
 
@@ -64,20 +66,18 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
 pub fn rollback(store: &RollbackStore) -> Result<(), String> {
     use crate::tweaks::windows_impl::restore_value;
 
-    let entry = store
-        .take_entry(TWEAK_ID)
-        .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
+    store.restore_entry(TWEAK_ID, |entry| {
+        let SnapshotEntry::Composite { entries } = entry else {
+            return Err("unexpected snapshot type for game priority".to_string());
+        };
 
-    let SnapshotEntry::Composite { entries } = entry else {
-        return Err("unexpected snapshot type for game priority".to_string());
-    };
-
-    for e in entries {
-        if let SnapshotEntry::Registry(snapshot) = e {
-            restore_value(&snapshot)?;
+        for e in entries {
+            if let SnapshotEntry::Registry(snapshot) = e {
+                restore_value(&snapshot)?;
+            }
         }
-    }
-    Ok(())
+        Ok(())
+    })
 }
 
 #[cfg(not(windows))]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-list-baselines"
+description = "Enables the list_baselines command without any pre-configured scope."
+commands.allow = ["list_baselines"]
+
+[[permission]]
+identifier = "deny-list-baselines"
+description = "Denies the list_baselines command without any pre-configured scope."
+commands.deny = ["list_baselines"]

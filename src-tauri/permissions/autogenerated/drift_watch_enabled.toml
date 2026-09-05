@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-drift-watch-enabled"
+description = "Enables the drift_watch_enabled command without any pre-configured scope."
+commands.allow = ["drift_watch_enabled"]
+
+[[permission]]
+identifier = "deny-drift-watch-enabled"
+description = "Denies the drift_watch_enabled command without any pre-configured scope."
+commands.deny = ["drift_watch_enabled"]

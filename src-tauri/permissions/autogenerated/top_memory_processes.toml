@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-top-memory-processes"
+description = "Enables the top_memory_processes command without any pre-configured scope."
+commands.allow = ["top_memory_processes"]
+
+[[permission]]
+identifier = "deny-top-memory-processes"
+description = "Denies the top_memory_processes command without any pre-configured scope."
+commands.deny = ["top_memory_processes"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-close-hud-overlay"
+description = "Enables the close_hud_overlay command without any pre-configured scope."
+commands.allow = ["close_hud_overlay"]
+
+[[permission]]
+identifier = "deny-close-hud-overlay"
+description = "Denies the close_hud_overlay command without any pre-configured scope."
+commands.deny = ["close_hud_overlay"]

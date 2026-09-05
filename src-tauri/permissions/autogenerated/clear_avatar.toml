@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-clear-avatar"
+description = "Enables the clear_avatar command without any pre-configured scope."
+commands.allow = ["clear_avatar"]
+
+[[permission]]
+identifier = "deny-clear-avatar"
+description = "Denies the clear_avatar command without any pre-configured scope."
+commands.deny = ["clear_avatar"]

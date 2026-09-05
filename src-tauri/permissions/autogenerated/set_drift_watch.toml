@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-drift-watch"
+description = "Enables the set_drift_watch command without any pre-configured scope."
+commands.allow = ["set_drift_watch"]
+
+[[permission]]
+identifier = "deny-set-drift-watch"
+description = "Denies the set_drift_watch command without any pre-configured scope."
+commands.deny = ["set_drift_watch"]

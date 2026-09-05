@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-fps-status"
+description = "Enables the fps_status command without any pre-configured scope."
+commands.allow = ["fps_status"]
+
+[[permission]]
+identifier = "deny-fps-status"
+description = "Denies the fps_status command without any pre-configured scope."
+commands.deny = ["fps_status"]

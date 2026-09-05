@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-save-profile"
+description = "Enables the save_profile command without any pre-configured scope."
+commands.allow = ["save_profile"]
+
+[[permission]]
+identifier = "deny-save-profile"
+description = "Denies the save_profile command without any pre-configured scope."
+commands.deny = ["save_profile"]

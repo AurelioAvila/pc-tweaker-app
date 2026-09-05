@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-list-profiles"
+description = "Enables the list_profiles command without any pre-configured scope."
+commands.allow = ["list_profiles"]
+
+[[permission]]
+identifier = "deny-list-profiles"
+description = "Denies the list_profiles command without any pre-configured scope."
+commands.deny = ["list_profiles"]

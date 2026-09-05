@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-stop-fps-capture"
+description = "Enables the stop_fps_capture command without any pre-configured scope."
+commands.allow = ["stop_fps_capture"]
+
+[[permission]]
+identifier = "deny-stop-fps-capture"
+description = "Denies the stop_fps_capture command without any pre-configured scope."
+commands.deny = ["stop_fps_capture"]

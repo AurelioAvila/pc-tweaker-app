@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-clear-license"
+description = "Enables the clear_license command without any pre-configured scope."
+commands.allow = ["clear_license"]
+
+[[permission]]
+identifier = "deny-clear-license"
+description = "Denies the clear_license command without any pre-configured scope."
+commands.deny = ["clear_license"]

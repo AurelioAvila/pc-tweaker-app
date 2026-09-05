@@ -10,7 +10,9 @@ fn main() {
         // relaunches fell straight through to `run()` and started a second,
         // full GUI running as administrator instead of performing the action
         // headlessly and exiting. Anything added there has to be added here.
-        const ELEVATED_ACTIONS: [&str; 15] = [
+        const ELEVATED_ACTIONS: [&str; 17] = [
+            "--elevated-session-apply",
+            "--elevated-session-rollback",
             "--elevated-apply",
             "--elevated-apply-many",
             "--elevated-rollback",

@@ -1,3 +1,4 @@
+import "./tool-surfaces.css";
 import { useEffect, useState, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
@@ -79,8 +80,8 @@ function Card({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
-      <div className="mb-2 flex items-center justify-between gap-2">
+    <div className="tool-panel tool-card tool-card flex flex-col rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
+      <div className="tool-card-head mb-2 flex items-center justify-between gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">{title}</p>
         {onAction && actionLabel && (
           <button
@@ -154,7 +155,7 @@ export function DashboardCards({
   const longUptime = (uptimeSecs ?? 0) >= LONG_UPTIME_DAYS * 86400;
 
   return (
-    <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="tool-dashboard-grid">
       {showDrives && (
         <Card
           title={s.scan.dashDrivesTitle}

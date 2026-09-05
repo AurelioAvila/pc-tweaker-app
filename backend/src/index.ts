@@ -17,7 +17,9 @@ import entitlementsRoutes from "./routes/entitlements";
 import errorReportRoutes from "./routes/error-reports";
 import newsletterRoutes from "./routes/newsletter";
 import supportRoutes from "./routes/support";
-import { router as stripeRoutes, webhookHandler } from "./routes/stripe";
+import offerRoutes from "./routes/offers";
+import { router as stripeRoutes, webhookHandler, deliverProReceipt } from "./routes/stripe";
+import { startReceiptWorker } from "./receipt-outbox";
 
 const app = express();
 
@@ -492,6 +494,7 @@ app.use("/api/support", supportRoutes);
 app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/entitlements", entitlementsRoutes);
 app.use("/api/error-reports", errorReportRoutes);
+app.use("/api/offers", offerRoutes);
 app.use("/api", stripeRoutes);
 
 app.use((err: Error, _req: Request, res: Response, _next: express.NextFunction) => {
@@ -534,10 +537,12 @@ const port = process.env.PORT || 3000;
  */
 const SHUTDOWN_GRACE_MS = 10_000;
 let shuttingDown = false;
+let stopReceiptWorker = () => {};
 
 function shutdown(signal: string, server: import("http").Server): void {
   if (shuttingDown) return; // a second SIGTERM must not restart the sequence
   shuttingDown = true;
+  stopReceiptWorker();
   console.log(`${signal} received: refusing new connections, draining in-flight requests`);
 
   const forceExit = setTimeout(() => {
@@ -565,6 +570,7 @@ initSchema()
     console.error("failed to initialize database schema:", err);
   })
   .finally(() => {
+    if (isConfigured) stopReceiptWorker = startReceiptWorker(deliverProReceipt);
     const server = app.listen(port, () => {
       console.log(
         `pc-tweaker-backend listening on :${port} (database ${isConfigured ? "configured" : "NOT configured"}, email ${mailIsConfigured ? "configured" : "NOT configured"})`,

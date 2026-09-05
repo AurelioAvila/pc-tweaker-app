@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-hud-compact"
+description = "Enables the set_hud_compact command without any pre-configured scope."
+commands.allow = ["set_hud_compact"]
+
+[[permission]]
+identifier = "deny-set-hud-compact"
+description = "Denies the set_hud_compact command without any pre-configured scope."
+commands.deny = ["set_hud_compact"]

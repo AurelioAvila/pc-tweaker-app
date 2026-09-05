@@ -1,3 +1,4 @@
+import { ToolHeader, ToolSearch, ToolDetails } from "./tool-section";
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -678,10 +679,7 @@ export function ThermalsPanel({
         const session = past.session;
 
         return (
-          <div
-            key={gpu.name}
-            className="signal relative mb-4 overflow-hidden rounded-2xl border border-line bg-surface-1 p-5"
-          >
+          <div key={gpu.name} className="tool-panel tool-thermal-card">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-accent">
@@ -701,7 +699,7 @@ export function ThermalsPanel({
               </span>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="tool-thermal-readings">
               {gpu.temp_c !== null ? (
                 <ThermalArc tempC={gpu.temp_c} s={s} />
               ) : (
@@ -712,7 +710,7 @@ export function ThermalsPanel({
                 </div>
               )}
 
-              <div className="grid min-w-[230px] flex-1 grid-cols-2 gap-x-5 gap-y-4">
+              <div className="tool-thermal-metrics">
                 <MetricBar
                   label={s.hardware.load}
                   value={
@@ -787,7 +785,7 @@ export function ThermalsPanel({
 
       {/* CPU: a reading when the firmware publishes one, an explanation when
           it doesn't. Never a number this app cannot stand behind. */}
-      <div className="rounded-2xl border border-line bg-surface-1 p-5">
+      <div className="tool-panel tool-cpu-thermal-card">
         <p className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-accent">
           {s.hardware.cpuLabel}
         </p>
@@ -846,12 +844,12 @@ function ageLabel(days: number, s: Strings): string {
 function DriverRow({ entry, s }: { entry: DriverEntry; s: Strings }) {
   const style = tierStyle(entry.tier);
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line py-3 last:border-b-0">
+    <div className="tool-driver-row">
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13.5px] font-semibold text-ink" title={entry.device}>
           {entry.device}
         </p>
-        <p className="mt-0.5 truncate text-[11.5px] text-ink-3">
+        <p className="mt-0.5 break-words text-[11.5px] text-ink-3">
           {entry.class} · {entry.provider} ·{" "}
           {format(s.hardware.driverInstalled, { version: entry.version, date: entry.date })}
         </p>
@@ -914,6 +912,7 @@ export function DriversPanel({
   s: Strings;
   pushToast: (kind: "success" | "error", message: string) => void;
 }) {
+  const [query, setQuery] = useState("");
   const [audit, setAudit] = useState<DriverAudit | null>(() => {
     loadCachedAudit();
     return cachedAudit;
@@ -1008,27 +1007,30 @@ export function DriversPanel({
   // The list leads with the classes people act on; everything else is still
   // scanned and counted, and reachable behind "show all".
   const NOTEWORTHY = 6;
-  const visible = showAll ? (audit?.entries ?? []) : (audit?.entries ?? []).slice(0, NOTEWORTHY);
+  const matchingEntries = (audit?.entries ?? []).filter((entry) =>
+    `${entry.device} ${entry.provider} ${entry.class}`
+      .toLocaleLowerCase()
+      .includes(query.trim().toLocaleLowerCase()),
+  );
+  const visible = showAll || query ? matchingEntries : matchingEntries.slice(0, NOTEWORTHY);
   const pct =
     progress && progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
 
   return (
-    <div className="rounded-2xl border border-line bg-surface-1 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-[15px] font-semibold text-ink">{s.hardware.driversTitle}</h3>
-          <p className="mt-0.5 max-w-xl text-[12.5px] leading-relaxed text-ink-3">
-            {s.hardware.driversSubtitle}
-          </p>
-        </div>
-        <button
-          onClick={run}
-          disabled={busy}
-          className="shrink-0 rounded-xl border border-line-2 px-4 py-2 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-accent/40 hover:text-ink disabled:cursor-wait disabled:opacity-60"
-        >
-          {busy ? s.hardware.driversScanning : s.hardware.driversRescan}
-        </button>
-      </div>
+    <div className="tool-panel tool-drivers-panel" aria-busy={busy}>
+      <ToolHeader
+        title={s.hardware.driversTitle}
+        description={s.hardware.driversSubtitle}
+        actions={
+          <button
+            onClick={run}
+            disabled={busy}
+            className="shrink-0 rounded-xl border border-line-2 px-4 py-2 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-accent/40 hover:text-ink disabled:cursor-wait disabled:opacity-60"
+          >
+            {busy ? s.hardware.driversScanning : s.hardware.driversRescan}
+          </button>
+        }
+      />
 
       {/* Progress is shown as position-in-work: which class, how many of how
           many, and the percentage that follows from those two. */}
@@ -1117,6 +1119,16 @@ export function DriversPanel({
 
           {audit.entries.length > 0 ? (
             <div className="mt-3">
+              <ToolSearch
+                s={s}
+                value={query}
+                onChange={setQuery}
+                count={matchingEntries.length}
+                total={audit.entries.length}
+              />
+              {matchingEntries.length === 0 && (
+                <p className="tool-empty">{format(s.search.noResults, { query })}</p>
+              )}
               {visible.map((entry) => (
                 <DriverRow
                   key={`${entry.device}-${entry.version}-${entry.date}`}
@@ -1124,7 +1136,7 @@ export function DriversPanel({
                   s={s}
                 />
               ))}
-              {audit.entries.length > NOTEWORTHY && (
+              {!query && audit.entries.length > NOTEWORTHY && (
                 <button
                   onClick={() => setShowAll((v) => !v)}
                   className="mt-3 text-[12.5px] font-semibold text-accent transition-opacity hover:opacity-80"
@@ -1303,7 +1315,7 @@ export function DriversPanel({
 
           {/* What was left out, what this cannot know, and when it was read:
               all three are part of the reading, not footnotes to it. */}
-          <div className="mt-4 space-y-1.5 border-t border-line pt-3">
+          <ToolDetails label={s.healthPanel.showMore} className="mt-4">
             <p className="text-[11.5px] leading-relaxed text-ink-3">
               {format(s.hardware.driversInboxNote, { count: String(audit.excluded_inbox) })}
             </p>
@@ -1315,7 +1327,7 @@ export function DriversPanel({
                 {format(s.hardware.driversCheckedAt, { time: checkedAt.toLocaleString() })}
               </p>
             )}
-          </div>
+          </ToolDetails>
         </>
       )}
     </div>
@@ -1359,7 +1371,7 @@ export function HardwarePanel({
   }, []);
 
   return (
-    <div className="animate-card">
+    <div className="tool-hardware-section animate-card">
       <p className="mb-5 max-w-2xl text-[13px] leading-relaxed text-ink-3">{s.hardware.intro}</p>
       {instrumentsReady ? (
         <>

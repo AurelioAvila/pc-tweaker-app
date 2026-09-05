@@ -30,6 +30,8 @@ pub(crate) const VALUES: [&str; 3] = [
 
 #[cfg(windows)]
 pub fn apply_activity_history(store: &RollbackStore) -> Result<(), String> {
+    let mut transaction = store.transaction()?;
+
     use crate::tweaks::windows_impl::{hive_from_str, read_value, write_value};
 
     let hive = hive_from_str(HIVE);
@@ -46,7 +48,7 @@ pub fn apply_activity_history(store: &RollbackStore) -> Result<(), String> {
         }));
     }
 
-    store
+    transaction
         .save_entry(ACTIVITY_HISTORY_ID, SnapshotEntry::Composite { entries })
         .map_err(|e| e.to_string())?;
 
@@ -61,20 +63,18 @@ pub fn apply_activity_history(store: &RollbackStore) -> Result<(), String> {
 pub fn rollback_activity_history(store: &RollbackStore) -> Result<(), String> {
     use crate::tweaks::windows_impl::restore_value;
 
-    let entry = store
-        .take_entry(ACTIVITY_HISTORY_ID)
-        .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
+    store.restore_entry(ACTIVITY_HISTORY_ID, |entry| {
+        let SnapshotEntry::Composite { entries } = entry else {
+            return Err("unexpected snapshot type for activity history".to_string());
+        };
 
-    let SnapshotEntry::Composite { entries } = entry else {
-        return Err("unexpected snapshot type for activity history".to_string());
-    };
-
-    for e in entries {
-        if let SnapshotEntry::Registry(snapshot) = e {
-            restore_value(&snapshot)?;
+        for e in entries {
+            if let SnapshotEntry::Registry(snapshot) = e {
+                restore_value(&snapshot)?;
+            }
         }
-    }
-    Ok(())
+        Ok(())
+    })
 }
 
 #[cfg(not(windows))]
@@ -111,6 +111,8 @@ pub(crate) const TYPING_VALUES: [&str; 2] = [
 
 #[cfg(windows)]
 pub fn apply_typing_personalization(store: &RollbackStore) -> Result<(), String> {
+    let mut transaction = store.transaction()?;
+
     use crate::tweaks::windows_impl::{hive_from_str, read_value, write_value};
 
     let hive = hive_from_str(TYPING_HIVE);
@@ -127,7 +129,7 @@ pub fn apply_typing_personalization(store: &RollbackStore) -> Result<(), String>
         }));
     }
 
-    store
+    transaction
         .save_entry(
             TYPING_PERSONALIZATION_ID,
             SnapshotEntry::Composite { entries },
@@ -148,20 +150,18 @@ pub fn apply_typing_personalization(store: &RollbackStore) -> Result<(), String>
 pub fn rollback_typing_personalization(store: &RollbackStore) -> Result<(), String> {
     use crate::tweaks::windows_impl::restore_value;
 
-    let entry = store
-        .take_entry(TYPING_PERSONALIZATION_ID)
-        .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
+    store.restore_entry(TYPING_PERSONALIZATION_ID, |entry| {
+        let SnapshotEntry::Composite { entries } = entry else {
+            return Err("unexpected snapshot type for typing personalization".to_string());
+        };
 
-    let SnapshotEntry::Composite { entries } = entry else {
-        return Err("unexpected snapshot type for typing personalization".to_string());
-    };
-
-    for e in entries {
-        if let SnapshotEntry::Registry(snapshot) = e {
-            restore_value(&snapshot)?;
+        for e in entries {
+            if let SnapshotEntry::Registry(snapshot) = e {
+                restore_value(&snapshot)?;
+            }
         }
-    }
-    Ok(())
+        Ok(())
+    })
 }
 
 #[cfg(not(windows))]

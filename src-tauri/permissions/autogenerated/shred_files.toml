@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-shred-files"
+description = "Enables the shred_files command without any pre-configured scope."
+commands.allow = ["shred_files"]
+
+[[permission]]
+identifier = "deny-shred-files"
+description = "Denies the shred_files command without any pre-configured scope."
+commands.deny = ["shred_files"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-thermal-report"
+description = "Enables the thermal_report command without any pre-configured scope."
+commands.allow = ["thermal_report"]
+
+[[permission]]
+identifier = "deny-thermal-report"
+description = "Denies the thermal_report command without any pre-configured scope."
+commands.deny = ["thermal_report"]

@@ -1,3 +1,4 @@
+import "./tool-surfaces.css";
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
@@ -127,8 +128,8 @@ export function SystemMonitor({ s }: { s: Strings }) {
   const minutes = Math.floor((stats.uptime_secs % 3600) / 60);
 
   return (
-    <div className="mb-6 rounded-2xl border border-line bg-surface-1 p-5 backdrop-blur">
-      <div className="grid gap-5 sm:grid-cols-3">
+    <div className="tool-panel tool-card tool-system-monitor mb-6 rounded-2xl border border-line bg-surface-1 p-5 backdrop-blur">
+      <div className="tool-monitor-grid">
         <StatRing
           label={s.systemMonitor.cpu}
           sublabel={format(s.systemMonitor.cores, { count: stats.cpu_cores })}
@@ -145,7 +146,7 @@ export function SystemMonitor({ s }: { s: Strings }) {
           pct={diskPct}
         />
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-3 text-xs text-ink-3">
+      <div className="tool-control-group mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-3 text-xs text-ink-3">
         <span className="truncate" title={stats.cpu_name}>
           {stats.cpu_name}
         </span>
@@ -312,19 +313,19 @@ export function RamCleaner({
   const chooseInterval = onChangeAuto;
 
   return (
-    <div className="signal border-line bg-surface-1 relative mb-6 overflow-hidden rounded-2xl border p-5">
-      <div className="flex flex-wrap items-center gap-4">
-        <span className="bg-accent-soft text-accent grid h-11 w-11 shrink-0 place-items-center rounded-xl">
+    <div className="tool-panel tool-card tool-ram-cleaner signal border-line bg-surface-1 relative mb-6 overflow-hidden rounded-2xl border p-5">
+      <div className="tool-card-head flex flex-wrap items-center gap-4">
+        <span className="tool-card-icon bg-accent-soft text-accent grid h-11 w-11 shrink-0 place-items-center rounded-xl">
           <ChipIcon className="h-5 w-5" />
         </span>
-        <div className="min-w-0 flex-1">
+        <div className="tool-card-copy min-w-0 flex-1">
           <h2 className="text-ink font-semibold">{s.ram.title}</h2>
           <p className="text-ink-3 mt-0.5 text-sm">{s.ram.subtitle}</p>
         </div>
         <button
           onClick={() => void cleanNow()}
           disabled={busy}
-          className="bg-accent text-on-accent shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
+          className="tool-card-action bg-accent text-on-accent shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
         >
           {busy ? s.ram.cleaning : s.ram.button}
         </button>
@@ -373,7 +374,7 @@ export function RamCleaner({
       </div>
 
       {last && (
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2 text-sm ring-1 ring-[color-mix(in_oklab,var(--color-ok)_35%,transparent)]">
+        <div className="tool-control-group mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2 text-sm ring-1 ring-[color-mix(in_oklab,var(--color-ok)_35%,transparent)]">
           <span className="text-ok font-semibold">
             {last.freed_bytes > 0
               ? format(s.ram.freed, { amount: formatBytes(last.freed_bytes) })
@@ -392,10 +393,11 @@ export function RamCleaner({
         <p className="text-ink-3 mb-2 text-xs font-semibold uppercase tracking-wide">
           {s.ram.autoLabel}
         </p>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="tool-segmented-options">
           {RAM_AUTO_INTERVALS.map((m) => (
             <button
               key={m}
+              aria-pressed={autoMinutes === m}
               onClick={() => chooseInterval(m)}
               className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                 autoMinutes === m
@@ -415,7 +417,7 @@ export function RamCleaner({
             the timer's actual state: when the next pass is due, and what the
             last one did. */}
         {auto !== null && (
-          <div className="well mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2">
+          <div className="tool-control-group well mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2">
             <span className="type-data text-[11.5px] text-ink-2">
               {/* A pass that came due while the machine was asleep is run by
                   the next heartbeat, which can be up to fifteen seconds away.

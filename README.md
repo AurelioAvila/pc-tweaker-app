@@ -4,210 +4,194 @@
 
 <h1 align="center">PC Tweaker</h1>
 
-<p align="center">
-  <strong>A safer way to tune your Windows PC.</strong><br>
-  Performance, gaming, privacy and maintenance — with automatic rollback for every change.
-</p>
+<p align="center"><strong>Tune Windows with the changes in plain sight.</strong><br>Gaming, privacy and maintenance controls, with restore tools for supported settings.</p>
 
 <p align="center">
-  <a href="#safe-download-recommended"><img src="https://img.shields.io/badge/SAFE_DOWNLOAD-No_SmartScreen_warning-1793D1?style=for-the-badge&logo=windowsterminal&logoColor=white" alt="Safe download via winget, no SmartScreen warning"></a>
-  <img src="https://img.shields.io/badge/Total_downloads-30%2C000%2B-2E7D32?style=for-the-badge" alt="More than 30,000 downloads across all distribution channels">
-  <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/downloads/AurelioAvila/pc-tweaker-app/total?style=for-the-badge&label=GitHub%20Release%20downloads&color=2563EB" alt="Downloads from GitHub Releases only"></a>
+  <a href="https://github.com/AurelioAvila/pc-tweaker-app/actions/workflows/checks.yml"><img src="https://github.com/AurelioAvila/pc-tweaker-app/actions/workflows/checks.yml/badge.svg?branch=master" alt="Checks workflow status"></a>
+  <a href="https://github.com/AurelioAvila/pc-tweaker-app/actions/workflows/build.yml"><img src="https://github.com/AurelioAvila/pc-tweaker-app/actions/workflows/build.yml/badge.svg?branch=master" alt="Build workflow status"></a>
+  <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/v/release/AurelioAvila/pc-tweaker-app" alt="Latest release"></a>
+  <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/downloads/AurelioAvila/pc-tweaker-app/total?label=GitHub%20asset%20downloads" alt="GitHub release asset download events"></a>
+  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D4" alt="Windows 10 and 11 x64">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-proprietary-6B7280" alt="Source available under a proprietary license"></a>
 </p>
 
-<p align="center"><sub><strong>30,000+ total downloads</strong> across the Microsoft Store, GitHub Releases, Softpedia, MajorGeeks, and other established software catalogs. The live GitHub badge counts GitHub-hosted release assets only.</sub></p>
+**[Download Free for Windows](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest)** · **[Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87)** · [Website](https://pctweaker.app/) · [Support](https://pctweaker.app/support/) · [Release notes](CHANGELOG.md)
 
-<p align="center"><sub>If PC Tweaker makes Windows easier to manage, ⭐ star the repository to follow new releases and help others discover it.</sub></p>
+## Install
 
-<p align="center">
-  <a href="https://pctweaker.app/#tip"><img src="https://img.shields.io/badge/%E2%98%95%20Buy%20me%20a%20coffee-one--off%2C%20no%20account-FF5500?style=flat-square&labelColor=1c1c1c" alt="Buy me a coffee — a one-off tip, no account and nothing to cancel" height="20"></a>
-</p>
-
-<a id="safe-download-recommended"></a>
-
-## 🛡️ Safe download (recommended)
-
-**[Get it on the Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87)**
-— one click, install and updates handled by Windows itself, no SmartScreen
-warning at all.
-
-Prefer the command line? Same result, straight from the official
-[winget-pkgs](https://github.com/microsoft/winget-pkgs) repository:
+Download an installer from an official channel above, or use Windows Package Manager:
 
 ```powershell
-winget install AurelioAvila.PCTweaker
+winget install --id AurelioAvila.PCTweaker --exact
 ```
 
-Click the copy icon on the block above, paste into a terminal (PowerShell,
-Windows Terminal, or `Win+R` → `cmd`), hit enter.
+To check for a package update:
 
-_(Published via [PR #428415](https://github.com/microsoft/winget-pkgs/pull/428415).
-A brand-new release can take a few hours for Microsoft's package index to
-refresh — if winget says the package isn't found yet, use the Store link
-above or the [.exe/.msi installer](../../releases/latest) below in the
-meantime.)_
+```powershell
+winget upgrade --id AurelioAvila.PCTweaker --exact
+```
 
-Prefer a direct installer? **[⬇ Latest release](../../releases/latest)**
-(`.exe`/`.msi`, Windows 10/11 x64) is not code-signed yet, so Windows
-SmartScreen shows a warning on first run: click **More info** → **Run
-anyway**.
+Package catalogs can lag behind a release. Check the release version before installing. Windows 10/11 x64 is the current binary target; individual features depend on the Windows build, edition, drivers and available hardware. App compatibility does not extend Microsoft's support lifecycle for your operating system.
 
-<p align="center">
-  <a href="https://apps.microsoft.com/detail/9nh3c6dt1g87"><img src="https://upload.wikimedia.org/wikipedia/commons/f/f7/Get_it_from_Microsoft_Badge.svg" alt="Get it from Microsoft" height="28"></a>
-  <a href="../../releases/latest"><img src="https://img.shields.io/badge/Download-Windows%2010%2F11-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
-  <a href="https://github.com/AurelioAvila/pc-tweaker-app/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-Proprietary-6B7280?style=for-the-badge" alt="Proprietary License"></a>
-  <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/v/release/AurelioAvila/pc-tweaker-app?display_name=tag&style=for-the-badge&color=7C3AED" alt="Latest release"></a>
-  <a href="https://winstall.app/apps/AurelioAvila.PCTweaker"><img src="https://img.shields.io/winget/v/AurelioAvila.PCTweaker?style=for-the-badge&label=winget&color=1793D1" alt="winget"></a>
-  <a href="https://www.majorgeeks.com/files/details/pc_tweaker.html"><img src="https://img.shields.io/badge/MajorGeeks-5.0%2F5.0-2E7D32?style=for-the-badge" alt="Rated 5.0 out of 5 by MajorGeeks users"></a>
-  <a href="https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"><img src="https://img.shields.io/badge/Softpedia_users-5.0%2F5-00A99D?style=for-the-badge" alt="Rated 5.0 out of 5 by Softpedia users"></a>
-</p>
+## What you can do
 
-**[⬇ Download for Windows](../../releases/latest)** · [Changelog](CHANGELOG.md) ·
-[Privacy Policy](PRIVACY.md) · [Terms](TERMS.md)
-
-## Where it is published
-
-PC Tweaker is distributed through channels that vet what they list, and the
-numbers below can be checked at their source rather than taken on trust.
-
-| Channel | Status |
+| Area | Controls and tools |
 | --- | --- |
-| [Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87) | Published and certified for Windows 10/11 |
-| [winget](https://winstall.app/apps/AurelioAvila.PCTweaker) | In the official `microsoft/winget-pkgs` repository |
-| [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml) | User rating 5.0/5 (64 votes as of September 1, 2026); editorial review 4.5/5 by Mihaela Teodorovici |
-| [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html) | Rated 5.0/5 by readers |
-| [GitHub releases](https://github.com/AurelioAvila/pc-tweaker-app/releases) | GitHub-hosted downloads shown live in the badge above; not the cross-channel total |
+| Gaming | Game Sessions, supported gaming settings, hardware scheduling options and X3D placement controls |
+| Performance | Power configuration, startup controls and foreground scheduling settings |
+| Hardware | Available sensor readings, supported thermal profiles and driver updates through Windows Update |
+| Privacy | Supported Windows advertising, tracking and diagnostic settings; optional password breach lookup |
+| Maintenance | Integrity checks, guided repair, storage analysis and cleanup with operation-specific recovery limits |
+| Interface | File extensions, taskbar options, appearance and supported Windows preferences |
 
-Combined distribution has passed **30,000 downloads worldwide** across the
-channels above and additional established software catalogs. The aggregate is
-reported separately because GitHub's live badge can count only assets served
-from GitHub Releases.
+Read the effect and trade-offs before applying a setting. A disabled tweak is not evidence of a fault, and a higher configuration score is not a measured performance gain.
 
-## Demo
+### Five new native power controls in 1.9.0
 
-<p align="center">
-  <img src="Screenshot/scan_screenshot.png" alt="PC Tweaker Scan screen" width="82%">
-</p>
+The catalog now contains **61 tweaks: 37 Free and 24 Pro**. These five additions change only mains-power policy in the selected Windows plan. They record the original plan and value before writing, verify the result, and leave battery policy unchanged.
 
-> **Built to be reversible.** Every setting is backed up before it changes, so you can experiment with confidence and restore it whenever you want.
+| Control | Access | Purpose and limits |
+| --- | --- | --- |
+| CPU energy-performance preference | Free | Favors performance on systems with autonomous CPPC support; power use and heat can increase. |
+| USB selective-suspend diagnosis | Free | Investigates wake or disconnect problems. Windows recommends leaving selective suspend enabled normally; restore after testing. |
+| PCIe link power management | Pro | Disables ASPM for troubleshooting devices affected by link transitions; idle power use can increase. |
+| Short-thread scheduling preference | Pro | Prefers performant cores on CPUs with multiple efficiency classes; does not impose fixed affinity. |
+| Long-thread scheduling preference | Pro | Prefers performant cores for longer work on compatible hybrid CPUs; other cores remain available. |
 
----
+These controls use Windows power APIs. Unsupported hybrid settings are refused before a system write. No FPS, DPC-latency or micro-stutter improvement is claimed without a workload-specific measurement.
 
-## What it does
+<p align="center"><img src="Screenshot/scan_screenshot.png" alt="PC Tweaker Scan interface; appearance and counts may differ by release" width="85%"></p>
 
-Nothing here is a placeholder. Every tweak reads and writes the real Windows
-registry, power plan, network DNS, services or files — and always snapshots
-the previous state first.
+## What changes on your system
 
-**One-click Scan** checks the machine and lists what is not optimized yet.
-"Fix all" applies everything selected behind a **single UAC prompt**, not one
-per tweak.
+PC Tweaker can change registry values, power settings, services, startup entries and selected network settings. Other tools interact with files, Windows repair utilities, drivers or supported hardware controls. Administrator access is requested for operations that require it.
 
-| Section         | What's in it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Performance** | CPU priority, High-performance power plan, disable Xbox Game Bar/Game DVR, remove the ~10s startup-app delay, instant menu response, disable CPU power throttling                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| **Gaming**      | Hardware-accelerated GPU Scheduling (HAGS), reduced mouse and keyboard input lag, disable mouse acceleration, silence the Sticky Keys popup, CPU Turbo Boost, higher GPU priority for games, disable multimedia network throttling, disable Memory Integrity/VBS for the biggest frame-rate gain (with the security trade-off spelled out), "Turbo Gaming" preset, Game Sessions — apply the preset automatically when a game launches, revert when it closes — BBR2 congestion control so your ping stops climbing when the line gets busy, and a 3D V-Cache die aligner that pins a game to the right die on two-die Ryzen X3D processors |
-| **Privacy**     | Disable Recall (the AI screen-snapshot history) and Windows Copilot, stop Windows silently installing "suggested" apps, stop it learning how you type; disable the advertising ID, location tracking, Bing search in Start, activity history, tailored experiences, app-launch tracking, feedback prompts, Cortana; reduced telemetry; private DNS (Cloudflare); password breach check via [Have I Been Pwned](https://haveibeenpwned.com)                                                                                                                                                                                                  |
-| **Maintenance** | Clean temp files and the Windows Update cache (moved to the Recycle Bin, never permanently deleted), a selective cookie cleaner that drops trackers while keeping the cookies holding your sign-ins, third-party app caches (shader caches, game launchers, package managers) across thirteen hand-verified targets, duplicate file finder by content hash with manual review before deletion, disable the search indexing service                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| **Interface**   | Bring back the full Windows 10 right-click menu, dark mode, show hidden files, always show file extensions, left-aligned taskbar, hide Chat/Widgets/search box, disable transparency effects, open every folder instantly                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| **Hardware**    | Live GPU/CPU temperature, load, VRAM, fan and power draw read from the hardware's own sensors — and a plain statement when a sensor does not exist rather than a number nobody can verify; a session watch that only calls a result once the card has actually worked; three thermal profiles built from the limits the card itself reports; a full driver inventory across every device class, with updates installed through Windows Update                                                                                                                                                                                               |
+| Operation | Recovery scope |
+| --- | --- |
+| Supported setting tweaks | Previous values are stored for individual restore and Restore All. Check each operation's result. |
+| Cleanup sent to the Recycle Bin | Recoverable while the files remain in the bin. This does not free their occupied space until emptied. |
+| Third-party cache cleanup | Deletes selected caches permanently. Applications may need to rebuild them; shader rebuilding can cause temporary stutter. |
+| Selective cookie cleanup | Copies the database before changing it; restore follows the cleaner's instructions. |
+| DISM/SFC, driver updates and hardware controls | Separate recovery procedures and limits; these are not covered by a universal registry rollback guarantee. |
 
-Plus, on the Scan screen:
+**Restore All is not a Windows system image or a recovery guarantee.** Keep normal backups for data you cannot replace. Settings that reduce security, including disabling Memory Integrity/VBS, have material trade-offs; inspect the disclosure before considering them.
 
-- **Live system monitor** — CPU, memory and disk usage, updated continuously
-- **Free up RAM** — asks Windows to release memory programs are holding but
-  not using; can be scheduled every 10 min / 30 min / 1 h / 3 h / 6 h
-- **Startup manager** — see and disable the programs that launch at boot,
-  across all three places Windows starts things from: the 64-bit and 32-bit
-  `Run` keys and the Startup folder
-- **Scheduled startup tasks** — the third-party updaters that run at sign-in
-  from the Task Scheduler, where Windows' own Startup tab never shows them.
-  Windows' own tasks are not listed
-- **Windows integrity check and repair** — DISM and SFC, with a progress bar
-  and a plain verdict instead of a command prompt
+## Performance evidence
 
-**56 tweaks** in total. Anything needing administrator rights asks for an
-explicit UAC prompt **only for that action** — the app itself always runs
-unprivileged.
+There is no universal FPS, micro-stutter or DPC-latency improvement. Results depend on the workload and starting configuration. A settings count or health score is not a benchmark.
 
-## Safety
+The following compact benchmark register distinguishes measured results from missing evidence:
 
-- Every change is snapshotted before it is applied, and revertible
-  individually or all at once via **Restore all**
-- Cleanup moves files to the Recycle Bin — nothing is permanently deleted.
-  The one exception is the third-party app cache cleaner, which deletes for
-  good and says so: recycling gigabytes frees nothing until the bin is
-  emptied, and every target in that list is rebuilt automatically by the
-  program that made it
-- Cookie cleaning copies the database first, so it can be undone
-- The tweaks themselves never send data anywhere; the optional account exists
-  only to sync Pro status across installs
+| Test | Metric | Verified comparative result |
+| --- | --- | --- |
+| Repeatable game replay | Mean FPS, 1% low, p99 frame time, stutter-event count | Not yet established by a reproducible result package linked here |
+| CPU benchmark | Repeated single- and multi-thread scores | Not established |
+| DirectX graphics benchmark | Graphics score, frame-time distribution | Not established |
+| Driver latency trace | DPC/ISR durations and module attribution | Not established |
+| App overhead | CPU time, working set, wakeups, baseline versus monitoring | Not established |
 
-## Languages and themes
+The website has previously displayed a 330-to-551 FPS comparison. Its drawn frame-time traces are illustrative; they are not raw capture data. Treat any individual demonstration as specific to its setup until the full test conditions and repeat runs are available.
 
-English (default), Italian, French, Spanish, German and Portuguese, with 14
-color themes.
-The app always starts in English; the language is only ever changed by an
-explicit choice in the account menu, and remembered from then on.
+For useful comparisons, keep the game build, scene, settings, drivers, power source and capture method fixed. Warm caches, alternate baseline/tuned runs, retain all valid runs and publish raw data. Separate security-reducing configurations from normal recommendations. Report regressions and unchanged results alongside gains.
 
-## Free / Pro
+## Free and Pro
 
-35 tweaks are **free, forever**. Pro unlocks the advanced tweaks and presets:
+Free does not require an account. It includes core tweaks, scans, supported restore tools, hardware monitoring and selected maintenance tools. Pro adds advanced tools, guided repair, additional cleanup options and Game Sessions.
 
-| Plan       | Price                                 |
-| ---------- | ------------------------------------- |
-| Monthly    | €9.99 / month                         |
-| **Annual** | **€59 / year** — €4.92/month, 51% off |
+| Current plan | Price |
+| --- | --- |
+| Monthly | €9.99 per month |
+| Annual | €59 per year |
+| Lifetime | €74.99 once, while offered |
 
-Payments are handled by Stripe Checkout; the app never sees card details.
-An email/password account syncs Pro status across installs.
+Annual billing is approximately 51% below twelve monthly payments. Check the app and checkout for current offers, taxes and renewal terms. Existing lifetime purchases retain the access promised when purchased. Payments use Stripe Checkout; the app does not handle card details. Pro is linked to the purchasing account; the app refreshes its license when you return from checkout while online.
 
-## Development
+## Download integrity and code signing
 
-```bash
-npm install
-npm run tauri dev     # run the app in development mode
-npm run tauri build   # build the .msi/.exe installers into src-tauri/target/release/bundle/
+**PC Tweaker 1.9.0 is code-signed.** Its Windows application and release installers identify **Aurelio Avila** as publisher, using Certum and a trusted timestamp.
+
+Windows Authenticode and Tauri update signatures have different roles. Authenticode identifies the Windows publisher and detects changes after signing. Tauri's update signature verifies update packages.
+
+Older releases, including v1.8.0, may be unsigned. Their `.sig` update files do not establish Windows Authenticode signing. Check the exact version and the file's Digital Signatures tab.
+
+To inspect a downloaded installer in PowerShell:
+
+```powershell
+Get-AuthenticodeSignature -LiteralPath .\PCTweaker-Setup.exe |
+    Select-Object Status, StatusMessage, SignerCertificate, TimeStamperCertificate
+Get-FileHash -LiteralPath .\PCTweaker-Setup.exe -Algorithm SHA256
 ```
 
-Requires Rust (via [rustup](https://rustup.rs)) and, on Windows, the
-[Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
-with the "Desktop development with C++" workload.
+A valid signature does not guarantee the absence of SmartScreen prompts. Microsoft evaluates file and publisher reputation separately. See [Microsoft's SmartScreen guidance](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation). Use an official distribution channel and verify the publisher when prompted.
 
-### Checks
+## Reviews and distribution
 
-```bash
+Existing feedback remains available at its original source:
+
+- [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml): editorial review 4.5/5; user rating 5.0/5 from 64 votes, checked September 5, 2026.
+- [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html): listing and reader reviews.
+- [SourceForge](https://sourceforge.net/projects/pc-tweaker/#reviews): fulxor wrote, “Helpful and well done, good job!” on August 6, 2026.
+
+The GitHub download badge counts release-asset requests, including assets used for updates. It does not count unique people, unique installations or every distribution channel. Third-party listings may describe older releases; this repository's [LICENSE](LICENSE) is the authoritative source for licensing terms.
+
+## Build from source
+
+Prerequisites: Node.js 22 as used by CI, npm, stable Rust installed with [rustup](https://rustup.rs/), Windows Visual Studio Build Tools with **Desktop development with C++**, a Windows SDK, and Microsoft Edge WebView2. See [Tauri's platform prerequisites](https://v2.tauri.app/start/prerequisites/).
+
+```powershell
+git clone https://github.com/AurelioAvila/pc-tweaker-app.git
+cd pc-tweaker-app
+npm ci
+npm run tauri dev
+```
+
+Run the frontend and translation checks:
+
+```powershell
+npm run build
+npm run lint
+npm run format:check
+npm run check:i18n
+npm run check:i18n-quality
+npm run check:native-policy
+```
+
+**Run the complete Rust suite and full check in a disposable Windows VM with a snapshot.** The Free/Pro policy tests now avoid the Windows tweak adapters. Other existing tests still exercise real file operations and protected-path guards; these are not a replacement for an isolated integration environment. A temporary journal directory alone does not isolate Windows. The focused license, IPC, rollback-store and game-session tests use signed fixtures, a mock runtime, temporary stores or fake operations.
+
+Inside the disposable VM:
+
+```powershell
 npm run check
 ```
 
-Runs, and CI runs on every push:
+Build installers:
 
-| Check                | What it guarantees                                                                                                                                                     |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tsc --noEmit`       | The frontend type-checks                                                                                                                                               |
-| `check:i18n`         | Every string exists in all 6 languages with matching `{placeholders}`                                                                                                  |
-| `check:i18n-quality` | Nothing was silently left in English, no missing accents, correct Spanish punctuation                                                                                  |
-| `check:rust`         | 78 Rust unit tests — rollback-store concurrency, locale-independent parsing of Windows CLI output, elevation batching, registry-value collisions, translation coverage |
-
-The backend has its own suites:
-
-```bash
-cd backend
-npm test    # unit tests
-npm run smoke   # 36-check end-to-end test against the live API
+```powershell
+npm run tauri build
 ```
 
-## Backend
+Artifacts are written under `src-tauri/target/release/bundle/`. A development build does not acquire an official publisher identity or update-signing key. Release signing is configured separately; follow [RELEASING.md](RELEASING.md), treating Authenticode and update signing as separate verification steps. Never distribute a verification build as an official signed release.
 
-The Node.js/Express backend for accounts and Stripe subscriptions lives in
-[`backend/`](backend/) — see [`backend/README.md`](backend/README.md) for
-Railway deployment and Stripe setup.
+The account and payment backend is in [`backend/`](backend/):
 
-## Tech stack
+```powershell
+cd backend
+npm ci
+npm test
+```
 
-[Tauri 2](https://tauri.app) (Rust) · React + TypeScript · Tailwind CSS 4 ·
-Express + PostgreSQL + Stripe
+Backend integration tests need a separate configured test environment. Production smoke scripts can create external state and are not part of an ordinary local source check.
 
-## License
+The website is in [`site/`](site/): run `npm ci` and `npm run build` from that directory to produce its prerendered pages.
 
-Source-available for review. All rights reserved — see [LICENSE](LICENSE).
+## Report a problem
+
+Use [support](https://pctweaker.app/support/) for billing or private diagnostics. For a reproducible software bug, open a [GitHub issue](https://github.com/AurelioAvila/pc-tweaker-app/issues) with the app version, Windows build, hardware, selected tweak, steps, expected behavior and actual outcome. Remove tokens, email addresses, license files and private paths from public attachments.
+
+## Source availability and license
+
+Tauri 2 and Rust · React and TypeScript · Express, PostgreSQL and Stripe.
+
+PC Tweaker is source-available under a **proprietary license**. Public source access does not make it an OSI-approved open-source project or grant unrestricted redistribution rights. See [LICENSE](LICENSE), [PRIVACY.md](PRIVACY.md) and [TERMS.md](TERMS.md).
+
+Created and maintained by **Aurelio Avila**.

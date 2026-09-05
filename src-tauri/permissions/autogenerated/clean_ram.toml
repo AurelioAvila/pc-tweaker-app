@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-clean-ram"
+description = "Enables the clean_ram command without any pre-configured scope."
+commands.allow = ["clean_ram"]
+
+[[permission]]
+identifier = "deny-clean-ram"
+description = "Denies the clean_ram command without any pre-configured scope."
+commands.deny = ["clean_ram"]

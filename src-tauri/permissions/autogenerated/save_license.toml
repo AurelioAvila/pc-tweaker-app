@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-save-license"
+description = "Enables the save_license command without any pre-configured scope."
+commands.allow = ["save_license"]
+
+[[permission]]
+identifier = "deny-save-license"
+description = "Denies the save_license command without any pre-configured scope."
+commands.deny = ["save_license"]

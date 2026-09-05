@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-compare-lifetime-profiles"
+description = "Enables the compare_lifetime_profiles command without any pre-configured scope."
+commands.allow = ["compare_lifetime_profiles"]
+
+[[permission]]
+identifier = "deny-compare-lifetime-profiles"
+description = "Denies the compare_lifetime_profiles command without any pre-configured scope."
+commands.deny = ["compare_lifetime_profiles"]

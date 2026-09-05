@@ -26,8 +26,8 @@ pub struct NetLatencyInfo {
 pub fn info() -> NetLatencyInfo {
     NetLatencyInfo {
         id: TWEAK_ID,
-        name: "Cut network delay (Nagle's algorithm)",
-        description: "Windows holds small packets back for a few milliseconds to bundle them together, and delays acknowledgements on top. That is a good trade for downloads and a bad one for games, where every packet is small and late is the same as lost. This turns both off on your active adapter (HKLM, requires administrator rights).",
+        name: "TCP acknowledgments and packet buffering",
+        description: "Sets TcpAckFrequency and TCPNoDelay to 1 on the first adapter Windows reports as Up. This targets TCP behavior; UDP traffic is unaffected. Windows and application support vary, so lower game latency is not guaranteed (HKLM, administrator rights required).",
         requires_admin: true,
         requires_pro: true,
     }
@@ -75,6 +75,8 @@ fn interface_path(guid: &str) -> String {
 
 #[cfg(windows)]
 pub fn apply(store: &RollbackStore) -> Result<(), String> {
+    let mut transaction = store.transaction()?;
+
     use crate::tweaks::windows_impl::{hive_from_str, read_value, write_value};
 
     let guid = active_interface_guid()?;
@@ -99,7 +101,7 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
 
     // Snapshot before mutating, so a failure part-way cannot leave the adapter
     // changed with no way back.
-    store
+    transaction
         .save_entry(TWEAK_ID, SnapshotEntry::Composite { entries })
         .map_err(|e| e.to_string())?;
 
@@ -114,20 +116,18 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
 pub fn rollback(store: &RollbackStore) -> Result<(), String> {
     use crate::tweaks::windows_impl::restore_value;
 
-    let entry = store
-        .take_entry(TWEAK_ID)
-        .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
+    store.restore_entry(TWEAK_ID, |entry| {
+        let SnapshotEntry::Composite { entries } = entry else {
+            return Err("unexpected snapshot type for the network latency tweak".to_string());
+        };
 
-    let SnapshotEntry::Composite { entries } = entry else {
-        return Err("unexpected snapshot type for the network latency tweak".to_string());
-    };
-
-    for e in entries {
-        if let SnapshotEntry::Registry(snapshot) = e {
-            restore_value(&snapshot)?;
+        for e in entries {
+            if let SnapshotEntry::Registry(snapshot) = e {
+                restore_value(&snapshot)?;
+            }
         }
-    }
-    Ok(())
+        Ok(())
+    })
 }
 
 #[cfg(not(windows))]

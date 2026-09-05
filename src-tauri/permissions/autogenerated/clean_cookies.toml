@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-clean-cookies"
+description = "Enables the clean_cookies command without any pre-configured scope."
+commands.allow = ["clean_cookies"]
+
+[[permission]]
+identifier = "deny-clean-cookies"
+description = "Denies the clean_cookies command without any pre-configured scope."
+commands.deny = ["clean_cookies"]

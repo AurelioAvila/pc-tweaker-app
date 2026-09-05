@@ -1,0 +1,200 @@
+.lifetime-tools {
+  margin-top: 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 13px;
+  background: var(--surface-1);
+  padding: 24px;
+  color: var(--text-primary);
+}
+.lifetime-tools > header {
+  margin-bottom: 20px;
+}
+.lifetime-tools-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  color: var(--app-accent);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.075em;
+}
+.lifetime-tools h2 {
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.lifetime-tools p {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.65;
+  margin-top: 7px;
+}
+.lifetime-tools-access {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 13px 15px;
+  background: var(--surface-2);
+  border-radius: 8px;
+}
+.lifetime-tools-access p {
+  flex: 1;
+  margin: 0;
+}
+.lifetime-tools-access button {
+  flex-shrink: 0;
+}
+.lifetime-tool-block {
+  padding-block: 22px;
+  border-top: 1px solid var(--border-subtle);
+}
+.lifetime-tool-block:last-of-type {
+  padding-bottom: 0;
+}
+.lifetime-tool-block h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.lifetime-tool-block h3 svg {
+  color: var(--app-accent);
+}
+.lifetime-tool-selectors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+  margin: 17px 0 13px;
+}
+.lifetime-tool-selectors label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.lifetime-tool-selectors select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-raised);
+  color: var(--text-primary);
+  border-radius: 7px;
+  padding: 10px;
+  margin-top: 6px;
+  font-size: 12px;
+}
+.lifetime-tools :is(button, select, input):disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.lifetime-tools :is(button, select, input, pre):focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 3px;
+}
+.lifetime-tools .lifetime-tool-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.lifetime-comparison {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 19px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.lifetime-comparison section {
+  padding: 14px;
+  min-width: 0;
+}
+.lifetime-comparison section + section {
+  border-left: 1px solid var(--border-subtle);
+}
+.lifetime-comparison h4 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.lifetime-comparison strong {
+  color: var(--app-accent);
+  font-variant-numeric: tabular-nums;
+}
+.lifetime-comparison :is(ul, p) {
+  font-size: 11px;
+  line-height: 1.65;
+  margin-top: 13px;
+}
+.lifetime-comparison li {
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}
+.lifetime-unknown {
+  grid-column: 1 / -1;
+  padding: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+.lifetime-report-include {
+  display: flex;
+  gap: 9px;
+  align-items: start;
+  font-size: 11px;
+  margin-top: 16px;
+  color: var(--text-secondary);
+}
+.lifetime-report-include input {
+  accent-color: var(--app-accent);
+  margin-top: 2px;
+}
+.lifetime-tool-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 16px 0 10px;
+}
+.lifetime-report-preview {
+  margin-top: 18px;
+}
+.lifetime-report-preview button {
+  color: var(--text-secondary);
+  font-size: 11px;
+  margin-bottom: 9px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.lifetime-report-preview pre {
+  max-height: 400px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  padding: 17px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.65;
+}
+.lifetime-tools .lifetime-tool-success {
+  color: var(--app-accent);
+}
+@media (max-width: 900px) {
+  .lifetime-tools {
+    padding: 18px;
+  }
+  .lifetime-tools-access {
+    flex-direction: column;
+    align-items: start;
+  }
+  .lifetime-comparison {
+    grid-template-columns: 1fr;
+  }
+  .lifetime-comparison section + section {
+    border-left: 0;
+    border-top: 1px solid var(--border-subtle);
+  }
+}

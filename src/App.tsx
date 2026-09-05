@@ -20,7 +20,6 @@ import {
 } from "./lib";
 import { AuthState, CleanupInfo, CleanupResult, Section, Toast, TweakInfo } from "./types";
 import {
-  CrownIcon,
   GemIcon,
   HistoryIcon,
   LayersIcon,
@@ -46,7 +45,6 @@ import {
   UninstallerPromoCard,
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
-import { CoffeeCard } from "./components/coffee";
 import { TechnicalDetails, TechnicalToggle } from "./components/technical";
 import { DashboardCards } from "./components/dashboard";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
@@ -68,10 +66,14 @@ import { usePulseSamples } from "./components/command";
 import { ScheduledTaskManager, StartupManager } from "./components/startup";
 import { ProfilesPanel } from "./components/profiles";
 import { PricingPanel } from "./components/pricing";
+import { PRICING_COPY } from "./components/pricing-copy";
 import { GamingHudCard, ZeroTraceCard } from "./components/pro";
 import { TitleBar } from "./components/titlebar";
-import { CATEGORY_STYLE, NAV_ACCENT } from "./categories";
+import { CATEGORY_STYLE } from "./categories";
+import { OverviewPanel } from "./components/overview";
+import { WorkspaceSidebar } from "./components/workspace-sidebar";
 import "./App.css";
+import "./desktop-refresh.css";
 
 function App() {
   const [lang, setLangState] = useState<Lang>(() => detectInitialLang());
@@ -293,6 +295,9 @@ function App() {
   // isn't configured or the user isn't logged in yet, instead of pretending
   // to charge anything.
   async function startCheckout(plan: ProPlan = "annual") {
+    if (import.meta.env.DEV && import.meta.env.VITE_LIFETIME_PREVIEW_ENDS_AT) {
+      throw new Error(PRICING_COPY[lang].previewCheckout);
+    }
     if (!API_BASE_URL) {
       throw new Error(s.auth.backendNotConfigured);
     }
@@ -354,6 +359,11 @@ function App() {
   }
 
   const CATEGORIES: { key: Section; label: string; icon: React.ReactElement }[] = [
+    {
+      key: "overview",
+      label: s.tabs.overview,
+      icon: <HeartPulseIcon className="h-[18px] w-[18px]" />,
+    },
     { key: "scan", label: s.tabs.scan, icon: <RadarIcon className="h-[18px] w-[18px]" /> },
     { key: "health", label: s.tabs.health, icon: <HeartPulseIcon className="h-[18px] w-[18px]" /> },
     {
@@ -374,8 +384,9 @@ function App() {
 
   const [tweaks, setTweaks] = useState<TweakInfo[]>([]);
   const [cleanupTargets, setCleanupTargets] = useState<CleanupInfo[]>([]);
-  const [filter, setFilterState] = useState<Section>("scan");
+  const [filter, setFilterState] = useState<Section>("overview");
   const [query, setQuery] = useState("");
+  const contentRef = useRef<HTMLDivElement>(null);
 
   /**
    * Picking a section always clears an active search.
@@ -390,6 +401,7 @@ function App() {
   const setFilter = useCallback((section: Section) => {
     setFilterState(section);
     setQuery("");
+    contentRef.current?.scrollTo({ top: 0 });
   }, []);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -571,6 +583,7 @@ function App() {
     }
 
     if (
+      filter === "overview" ||
       filter === "scan" ||
       filter === "health" ||
       filter === "hardware" ||
@@ -603,6 +616,7 @@ function App() {
   const showCleanup = filter === "manutenzione" && !searching;
   const showPrivacyExtras = filter === "privacy" && !searching;
   const showGamingExtras = filter === "gaming" && !searching;
+  const showOverview = filter === "overview" && !searching;
   const showScan = filter === "scan" && !searching;
   const showHealth = filter === "health" && !searching;
   const showHardware = filter === "hardware" && !searching;
@@ -628,7 +642,7 @@ function App() {
       : null;
 
   return (
-    <div className="bg-app text-ink flex h-screen flex-col overflow-hidden [font-family:var(--font-app)]">
+    <div className="desktop-refresh bg-app text-ink flex h-screen flex-col overflow-hidden [font-family:var(--font-app)]">
       {/* The window is frameless, so the app draws its own chrome. */}
       <TitleBar
         s={s}
@@ -642,126 +656,43 @@ function App() {
         {/* Control Room shell: an opaque raised band for navigation, separated
           from the content floor by a hairline — depth from luminance and
           borders, never blur or shadows. */}
-        <aside className="bg-raised border-line flex h-full w-52 shrink-0 flex-col overflow-y-auto border-r px-4 py-5">
-          {/* Navigation grouped by intention (monitor / optimize / manage),
-            not by internal feature list. The active item is marked by the
-            system's signal hairline and primary ink — never a filled block. */}
-          <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
-            {(
-              [
-                [s.tabs.groupMonitor, ["scan", "health", "hardware"]],
-                [s.tabs.groupOptimize, ["performance", "gaming", "privacy", "ui"]],
-                [
-                  // "pricing" belongs in the nav, not only behind the Pro
-                  // button in the footer: it was reachable exclusively from
-                  // that button, so anyone looking for plans scanned the
-                  // twelve-entry sidebar, found nothing named for it, and
-                  // concluded the app had no pricing screen at all.
-                  s.tabs.groupManage,
-                  FEATURE_INTELLIGENCE
-                    ? ["startup", "manutenzione", "profiles", "ledger", "pricing"]
-                    : ["startup", "manutenzione", "profiles", "pricing"],
-                ],
-              ] as [string, Section[]][]
-            ).map(([groupLabel, keys]) => (
-              <div key={groupLabel} className="mb-2.5">
-                <p className="type-label mb-1 px-3">{groupLabel}</p>
-                {keys.map((key) => {
-                  const c = CATEGORIES.find((x) => x.key === key);
-                  if (!c) return null;
-                  const active = filter === c.key;
-                  return (
-                    <button
-                      key={c.key}
-                      onClick={() => setFilter(c.key)}
-                      className={`nav-item group flex w-full items-center gap-2.5 rounded-[8px] px-3 py-[7px] text-left text-[13px] transition-colors duration-150 ${
-                        active
-                          ? "font-semibold"
-                          : "text-ink-3 hover:bg-surface-1/50 hover:text-ink-2"
-                      }`}
-                      data-active={active}
-                    >
-                      {/* Bare glyph, no plate behind it: the icon is a mark, and
-                        a filled tile per row would turn the column into a grid
-                        of buttons competing with the content.
+        <WorkspaceSidebar
+          s={s}
+          items={CATEGORIES}
+          active={filter}
+          isPro={isProUnlocked}
+          showHistory={FEATURE_INTELLIGENCE}
+          onNavigate={setFilter}
+          onTip={async (quantity) => {
+            try {
+              await buyCoffee(quantity);
+            } catch (e) {
+              pushToast("error", String(e instanceof Error ? e.message : e));
+            }
+          }}
+        />
 
-                        The active glyph takes the section's own hue (see
-                        NAV_ACCENT) rather than the one app accent: with twelve
-                        entries a single highlight colour made every section
-                        look the same, so the icon told you nothing about where
-                        you were. Falls back to the accent for any section that
-                        has no hue assigned. */}
-                      <span
-                        className={`shrink-0 transition-colors ${
-                          active
-                            ? (NAV_ACCENT[c.key] ?? "text-accent")
-                            : "text-ink-3 group-hover:text-ink-2"
-                        }`}
-                      >
-                        {c.icon}
-                      </span>
-                      <span className="truncate">{c.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </nav>
-
-          {/* Plan area: quiet by design. Pro is a state, not a billboard; the
-            upgrade entry is discreet and never shows personal data. */}
-          <div className="border-line mt-auto border-t pt-3">
-            <CoffeeCard
-              s={s}
-              onTip={async (quantity) => {
-                try {
-                  await buyCoffee(quantity);
-                } catch (e) {
-                  pushToast("error", String(e instanceof Error ? e.message : e));
-                }
-              }}
-            />
-            {isProUnlocked ? (
-              <button
-                onClick={() => setFilter("pricing")}
-                className={`text-ink-2 hover:text-ink flex w-full items-center gap-2 rounded-[8px] px-3 py-2 text-[12px] font-semibold transition-colors duration-150 ${
-                  filter === "pricing" ? "bg-surface-1 text-ink" : ""
-                }`}
-              >
-                <CrownIcon className="text-accent h-4 w-4" />
-                {s.menu.planPro}
-              </button>
-            ) : (
-              <button
-                onClick={() => setFilter("pricing")}
-                className={`border-line-2 text-ink-2 hover:border-accent/40 hover:text-ink w-full rounded-[8px] border px-3 py-2 text-[12px] font-semibold transition-colors duration-150 ${
-                  filter === "pricing" ? "border-accent/50 text-ink" : ""
-                }`}
-              >
-                {s.menu.upgradeButton}
-              </button>
-            )}
-          </div>
-        </aside>
-
-        <div className="app-field min-w-0 flex-1 overflow-y-auto px-8 py-7">
+        <div
+          ref={contentRef}
+          className="workspace-content app-field min-w-0 flex-1 overflow-y-auto px-8 py-7"
+        >
           {/* The pricing comparison needs the extra width to sit side by side;
             every other screen reads better kept narrow. */}
-          <div className={`mx-auto ${showPricing ? "max-w-5xl" : "max-w-3xl"}`}>
-            <header className="border-line mb-6 flex items-start justify-between gap-4 border-b pb-4">
-              {/* The pricing screen leads with its own centred hero title, so
+          <div
+            className={`workspace-page mx-auto ${showPricing ? "workspace-pricing-page" : ""} ${showPricing || showOverview ? "max-w-5xl" : "max-w-3xl"}`}
+          >
+            <header className="workspace-header border-line mb-6 flex items-start justify-between gap-4 border-b pb-4">
+              {/* The pricing screen leads with its own hero title, so
                 the section heading would just be a duplicate above it. */}
               <div className="min-w-0">
                 {!showPricing && <h1 className="type-page page-title">{currentLabel}</h1>}
-                {/* The tweak tally is meaningless on the startup screen, which
-                  isn't made of tweaks and shows its own count instead. */}
-                {!showStartup && !showPricing && (
+                {/* Overview and Startup provide their own counts. */}
+                {!showOverview && !showStartup && !showPricing && (
                   <div className="mt-1 flex items-center gap-3">
                     <p className="text-ink-3 type-data text-[12.5px]">
                       {format(s.appliedCount, { applied: appliedCount, total: tweaks.length })}
                     </p>
-                    {/* One-click way back to a stock Windows: only offered when
-                      there is actually something applied to undo. */}
+                    {/* Restore supported settings from their saved values. */}
                     {appliedCount > 0 && (
                       <button
                         onClick={() => setConfirmRestore(true)}
@@ -775,25 +706,28 @@ function App() {
                   </div>
                 )}
               </div>
-              <div className="relative ml-auto w-56 shrink-0">
-                <MagnifierIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Escape" && setQuery("")}
-                  placeholder={s.search.placeholder}
-                  className="w-full rounded-xl border border-line bg-surface-2 py-2 pl-9 pr-8 text-sm text-ink outline-none transition-colors placeholder:text-ink-3 focus:border-line-2 focus:bg-surface-hover"
-                />
-                {searching && (
-                  <button
-                    onClick={() => setQuery("")}
-                    aria-label={s.search.clear}
-                    className="absolute right-2 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full text-ink-3 hover:bg-surface-hover hover:text-ink-2"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
+              {!showPricing && (
+                <div className="relative ml-auto w-56 shrink-0">
+                  <MagnifierIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Escape" && setQuery("")}
+                    aria-label={s.search.placeholder}
+                    placeholder={s.search.placeholder}
+                    className="w-full rounded-xl border border-line bg-surface-2 py-2 pl-9 pr-8 text-sm text-ink outline-none transition-colors placeholder:text-ink-3 focus:border-line-2 focus:bg-surface-hover"
+                  />
+                  {searching && (
+                    <button
+                      onClick={() => setQuery("")}
+                      aria-label={s.search.clear}
+                      className="absolute right-2 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full text-ink-3 hover:bg-surface-hover hover:text-ink-2"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              )}
 
               <AccountMenu
                 s={s}
@@ -813,6 +747,16 @@ function App() {
                 pushToast={pushToast}
               />
             </header>
+
+            {showOverview && (
+              <OverviewPanel
+                s={s}
+                lang={lang}
+                tweaks={tweaks}
+                samples={pulseSamples}
+                onNavigate={setFilter}
+              />
+            )}
 
             {/* Free RAM leads the home screen: it is the card people use every
               day (one click, schedulable), so it earns the top spot over the
@@ -916,7 +860,13 @@ function App() {
                 <DriftWatchToggle s={s} pushToast={pushToast} />
                 <UpdateDriftCard s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />
                 <CrashReportsCard s={s} pushToast={pushToast} />
-                <LedgerPanel s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />
+                <LedgerPanel
+                  s={s}
+                  lang={lang}
+                  tweaks={tweaks}
+                  onChanged={refresh}
+                  pushToast={pushToast}
+                />
               </>
             )}
 
@@ -927,6 +877,11 @@ function App() {
             {showProfiles && (
               <ProfilesPanel
                 s={s}
+                lang={lang}
+                lifetimeOwned={
+                  isProUnlocked && auth.status === "authenticated" && auth.plan === "lifetime"
+                }
+                onViewPlans={() => setFilter("pricing")}
                 tweaks={tweaks}
                 isPro={isProUnlocked}
                 authed={auth.status === "authenticated"}
@@ -948,6 +903,7 @@ function App() {
                 heldPlan={auth.status === "authenticated" ? auth.plan : null}
                 hasBilling={auth.status === "authenticated" && auth.hasBilling}
                 freeTweakCount={freeTweakCount}
+                onOpenLifetimeTools={() => setFilter("profiles")}
                 onChoosePro={async (plan) => {
                   // A visitor without an account is exactly who this button is
                   // for, and it used to answer them with a red toast and

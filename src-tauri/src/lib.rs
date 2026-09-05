@@ -9,9 +9,9 @@ mod cookies;
 // Public so examples/crashprobe.rs can install the real hook and panic for
 // real: whether a panic actually produces a scrubbed report is the one thing
 // a unit test cannot check, because a test that panics is a test that failed.
-pub mod crash;
 mod cpubench;
 mod cpuclock;
+pub mod crash;
 mod diskhealth;
 mod diskinfo;
 mod diskopt;
@@ -31,11 +31,17 @@ mod hud;
 // provider yields events on a given machine.
 pub mod fps;
 mod hud_window;
+#[cfg(test)]
+mod ipc_commands;
+#[cfg(test)]
+mod ipc_tests;
 mod license;
+mod lifetime_tools;
 mod netlatency;
 mod netmaintenance;
 mod netshaper;
 mod power;
+mod power_tuning;
 mod privacy_extra;
 mod profiles;
 mod ramclean;
@@ -49,11 +55,11 @@ mod startup;
 mod sysmon;
 mod sysrepair;
 mod systemprofile;
-mod updatewatch;
 mod technical;
 mod thermals;
 mod turbo;
 mod tweaks;
+mod updatewatch;
 mod x3d;
 mod zerotrace;
 
@@ -185,11 +191,12 @@ fn discard_legacy_avatar(app: tauri::AppHandle) -> Result<(), String> {
 #[tauri::command(async)]
 fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
     let store = store_for(&app)?;
+    let applied_ids = store.applied_ids()?;
 
     let mut list: Vec<TweakInfo> = tweaks::all_tweaks()
         .into_iter()
         .map(|t| TweakInfo {
-            applied: store.is_applied(t.id),
+            applied: applied_ids.contains(t.id),
             id: t.id.to_string(),
             name: t.name.to_string(),
             description: t.description.to_string(),
@@ -209,7 +216,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         .collect();
 
     list.push(TweakInfo {
-        applied: store.is_applied(power::TWEAK_ID),
+        applied: applied_ids.contains(power::TWEAK_ID),
         id: power::TWEAK_ID.to_string(),
         name: "High performance (power plan)".to_string(),
         description: "Switches to the Windows \"High performance\" power plan. Useful on desktops or when plugged in; restores the previous plan on rollback.".to_string(),
@@ -230,11 +237,11 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: turbo.requires_admin,
         requires_pro: turbo.requires_pro,
-        applied: store.is_applied(turbo.id),
+        applied: applied_ids.contains(turbo.id),
     });
 
     list.push(TweakInfo {
-        applied: store.is_applied(dns::TWEAK_ID),
+        applied: applied_ids.contains(dns::TWEAK_ID),
         id: dns::TWEAK_ID.to_string(),
         name: "Private DNS (Cloudflare)".to_string(),
         description: "Switches the active network adapter to privacy-focused DNS servers (1.1.1.1), stopping your provider from logging your DNS queries. It does not hide your IP address (that needs a VPN, see below).".to_string(),
@@ -247,7 +254,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 
     let input_lag = gaming::input_lag_info();
     list.push(TweakInfo {
-        applied: store.is_applied(input_lag.id),
+        applied: applied_ids.contains(input_lag.id),
         id: input_lag.id.to_string(),
         name: input_lag.name.to_string(),
         description: input_lag.description.to_string(),
@@ -260,7 +267,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 
     let turbo_boost = gaming::turbo_boost_info();
     list.push(TweakInfo {
-        applied: store.is_applied(turbo_boost.id),
+        applied: applied_ids.contains(turbo_boost.id),
         id: turbo_boost.id.to_string(),
         name: turbo_boost.name.to_string(),
         description: turbo_boost.description.to_string(),
@@ -273,7 +280,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 
     let games_priority = game_priority::info();
     list.push(TweakInfo {
-        applied: store.is_applied(games_priority.id),
+        applied: applied_ids.contains(games_priority.id),
         id: games_priority.id.to_string(),
         name: games_priority.name.to_string(),
         description: games_priority.description.to_string(),
@@ -286,7 +293,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 
     let core_parking = gaming::core_parking_info();
     list.push(TweakInfo {
-        applied: store.is_applied(core_parking.id),
+        applied: applied_ids.contains(core_parking.id),
         id: core_parking.id.to_string(),
         name: core_parking.name.to_string(),
         description: core_parking.description.to_string(),
@@ -299,7 +306,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 
     let keyboard_delay = gaming::keyboard_delay_info();
     list.push(TweakInfo {
-        applied: store.is_applied(keyboard_delay.id),
+        applied: applied_ids.contains(keyboard_delay.id),
         id: keyboard_delay.id.to_string(),
         name: keyboard_delay.name.to_string(),
         description: keyboard_delay.description.to_string(),
@@ -312,7 +319,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 
     let net_latency = netlatency::info();
     list.push(TweakInfo {
-        applied: store.is_applied(net_latency.id),
+        applied: applied_ids.contains(net_latency.id),
         id: net_latency.id.to_string(),
         name: net_latency.name.to_string(),
         description: net_latency.description.to_string(),
@@ -325,7 +332,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 
     let net_shaper = netshaper::info();
     list.push(TweakInfo {
-        applied: store.is_applied(net_shaper.id),
+        applied: applied_ids.contains(net_shaper.id),
         id: net_shaper.id.to_string(),
         name: net_shaper.name.to_string(),
         description: net_shaper.description.to_string(),
@@ -338,7 +345,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 
     let activity_history = privacy_extra::activity_history_info();
     list.push(TweakInfo {
-        applied: store.is_applied(activity_history.id),
+        applied: applied_ids.contains(activity_history.id),
         id: activity_history.id.to_string(),
         name: activity_history.name.to_string(),
         description: activity_history.description.to_string(),
@@ -351,7 +358,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 
     let typing = privacy_extra::typing_personalization_info();
     list.push(TweakInfo {
-        applied: store.is_applied(typing.id),
+        applied: applied_ids.contains(typing.id),
         id: typing.id.to_string(),
         name: typing.name.to_string(),
         description: typing.description.to_string(),
@@ -364,7 +371,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 
     let context_menu = contextmenu::info();
     list.push(TweakInfo {
-        applied: store.is_applied(context_menu.id),
+        applied: applied_ids.contains(context_menu.id),
         id: context_menu.id.to_string(),
         name: context_menu.name.to_string(),
         description: context_menu.description.to_string(),
@@ -377,7 +384,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 
     let windows_search = services::windows_search_info();
     list.push(TweakInfo {
-        applied: store.is_applied(windows_search.id),
+        applied: applied_ids.contains(windows_search.id),
         id: windows_search.id.to_string(),
         name: windows_search.name.to_string(),
         description: windows_search.description.to_string(),
@@ -387,6 +394,19 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         requires_admin: windows_search.requires_admin,
         requires_pro: windows_search.requires_pro,
     });
+
+    for tweak in &power_tuning::TWEAKS {
+        list.push(TweakInfo {
+            id: tweak.id.into(), name: tweak.name.into(), description: tweak.description.into(),
+            category: if tweak.hybrid { "gaming".into() } else { "performance".into() },
+            hive: "Windows API".into(), requires_admin: true, requires_pro: tweak.pro,
+            applied: applied_ids.contains(tweak.id),
+            changes: vec![technical::TechnicalChange::Command {
+                program: "PowerWriteACValueIndex",
+                arguments: format!("Current plan; subgroup {}; setting {}; AC index {}. Battery policy unchanged. Refresh with PowerSetActiveScheme only if this plan remains active.", tweak.subgroup,tweak.setting,tweak.value),
+            }],
+        });
+    }
 
     // One pass, not twelve call sites: anything that arrived with no
     // disclosure asks `technical` for its composite one. A tweak whose
@@ -408,6 +428,9 @@ pub const PRO_REQUIRED_PREFIX: &str = "PRO_REQUIRED: ";
 
 #[cfg(windows)]
 fn requires_pro_for(id: &str) -> bool {
+    if let Some(tweak) = power_tuning::find(id) {
+        return tweak.pro;
+    }
     match id {
         power::TWEAK_ID => false,
         turbo::TWEAK_ID => turbo::info().requires_pro,
@@ -427,6 +450,18 @@ fn requires_pro_for(id: &str) -> bool {
         services::WINDOWS_SEARCH_ID => services::windows_search_info().requires_pro,
         _ => find_tweak(id).map(|t| t.requires_pro).unwrap_or(false),
     }
+}
+
+/// Side-effect-free entitlement decision shared by execution and policy tests.
+#[cfg(windows)]
+pub(crate) fn require_tweak_entitlement(
+    app_data_dir: &std::path::Path,
+    id: &str,
+) -> Result<(), String> {
+    if requires_pro_for(id) {
+        require_pro(app_data_dir)?;
+    }
+    Ok(())
 }
 
 /// This is the single chokepoint every apply path funnels through — the
@@ -465,13 +500,9 @@ fn apply_by_id_inner(
     app_data_dir: &std::path::Path,
     id: &str,
 ) -> Result<(), String> {
-    if requires_pro_for(id)
-        && !license::LicenseStore::new(app_data_dir.to_path_buf()).is_pro_and_fresh()
-    {
-        return Err(format!(
-            "{}this tweak requires an active PC Tweaker Pro subscription",
-            PRO_REQUIRED_PREFIX
-        ));
+    require_tweak_entitlement(app_data_dir, id)?;
+    if power_tuning::find(id).is_some() {
+        return power_tuning::apply(store, id);
     }
     match id {
         power::TWEAK_ID => power::apply(store),
@@ -512,6 +543,9 @@ fn rollback_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
 
 #[cfg(windows)]
 fn rollback_by_id_inner(store: &RollbackStore, id: &str) -> Result<(), String> {
+    if power_tuning::find(id).is_some() {
+        return power_tuning::rollback(store, id);
+    }
     match id {
         power::TWEAK_ID => power::rollback(store),
         turbo::TWEAK_ID => turbo::rollback(store),
@@ -538,12 +572,16 @@ fn rollback_by_id_inner(store: &RollbackStore, id: &str) -> Result<(), String> {
 
 #[cfg(windows)]
 fn requires_admin_for(id: &str) -> bool {
+    if power_tuning::find(id).is_some() {
+        return true;
+    }
     match id {
         power::TWEAK_ID => false,
         turbo::TWEAK_ID => turbo::info().requires_admin,
         dns::TWEAK_ID => true,
         gaming::INPUT_LAG_ID => false,
         gaming::TURBO_BOOST_ID => true,
+        gaming::CORE_PARKING_ID => true,
         gaming::KEYBOARD_DELAY_ID => false,
         netlatency::TWEAK_ID => netlatency::info().requires_admin,
         netshaper::TWEAK_ID => netshaper::info().requires_admin,
@@ -584,7 +622,10 @@ fn rollback_tweak(app: tauri::AppHandle, id: String) -> Result<(), String> {
 /// guarantee is testable without actually elevating anything.
 #[cfg(windows)]
 fn split_by_elevation(ids: Vec<String>) -> (Vec<String>, Vec<String>) {
-    ids.into_iter().partition(|id| requires_admin_for(id))
+    let mut seen = std::collections::HashSet::new();
+    ids.into_iter()
+        .filter(|id| seen.insert(id.clone()))
+        .partition(|id| requires_admin_for(id))
 }
 
 /// Applies several tweaks at once (the Scan screen's "fix all").
@@ -1034,6 +1075,13 @@ pub fn run_drift_check_headless() -> ! {
     crash::install(dir.clone(), crash::PROCESS_ELEVATED);
 
     let store = RollbackStore::new(dir.clone());
+    let applied_ids = match store.applied_ids() {
+        Ok(ids) => ids,
+        Err(error) => {
+            eprintln!("could not read restore state: {}", error);
+            std::process::exit(1);
+        }
+    };
     let Some(current) = updatewatch::current_patch_level() else {
         std::process::exit(0);
     };
@@ -1042,7 +1090,7 @@ pub fn run_drift_check_headless() -> ! {
     let states: Vec<updatewatch::TweakState> = tweaks::all_tweaks()
         .iter()
         .map(|t| {
-            let recorded_applied = store.is_applied(t.id);
+            let recorded_applied = applied_ids.contains(t.id);
             let live_matches = if recorded_applied {
                 match t.read_current() {
                     Ok(Some(value)) => Some(value == t.on_value),
@@ -1105,6 +1153,11 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     }
 
     let result: Result<(), String> = match action {
+        "--elevated-session-apply" => game_sessions::validate_owner_token(id)
+            .and_then(|_| require_pro(&dir))
+            .and_then(|_| turbo::apply_for_session(&store, id).map(|_| ())),
+        "--elevated-session-rollback" => game_sessions::validate_owner_token(id)
+            .and_then(|_| turbo::rollback_for_session(&store, id).map(|_| ())),
         "--elevated-apply" => apply_by_id(&store, &dir, id),
         "--elevated-apply-many" => {
             // One prompt, many tweaks: keep going past a failure so a single
@@ -1274,8 +1327,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             );
             result.and_then(|res| {
                 let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
-                std::fs::write(dir.join("last_repair_result.json"), json)
-                    .map_err(|e| e.to_string())
+                std::fs::write(dir.join("last_repair_result.json"), json).map_err(|e| e.to_string())
             })
         }
 
@@ -1342,6 +1394,7 @@ fn list_audit_log(app: tauri::AppHandle) -> Result<Vec<audit::AuditEntry>, Strin
 fn check_update_drift(app: tauri::AppHandle) -> Result<updatewatch::DriftReport, String> {
     let dir = store_for_dir(&app)?;
     let store = RollbackStore::new(dir.clone());
+    let applied_ids = store.applied_ids()?;
 
     let current = updatewatch::current_patch_level()
         .ok_or_else(|| "could not read the Windows patch level".to_string())?;
@@ -1355,7 +1408,7 @@ fn check_update_drift(app: tauri::AppHandle) -> Result<updatewatch::DriftReport,
     let states: Vec<updatewatch::TweakState> = tweaks::all_tweaks()
         .into_iter()
         .map(|t| {
-            let recorded_applied = store.is_applied(t.id);
+            let recorded_applied = applied_ids.contains(t.id);
             let live_matches = if recorded_applied {
                 match t.read_current() {
                     Ok(Some(value)) => Some(value == t.on_value),
@@ -1466,6 +1519,9 @@ pub fn run() {
             profiles::import_profile,
             profiles::write_profile_file,
             profiles::read_profile_file,
+            lifetime_tools::compare_lifetime_profiles,
+            lifetime_tools::preview_lifetime_report,
+            lifetime_tools::save_lifetime_report,
             license::save_license,
             license::license_status,
             license::clear_license,
@@ -1553,7 +1609,7 @@ mod tests {
                 gaming::INPUT_LAG_ID,
                 gaming::TURBO_BOOST_ID,
                 gaming::KEYBOARD_DELAY_ID,
-        gaming::CORE_PARKING_ID,
+                gaming::CORE_PARKING_ID,
                 game_priority::TWEAK_ID,
                 privacy_extra::ACTIVITY_HISTORY_ID,
                 privacy_extra::TYPING_PERSONALIZATION_ID,
@@ -1565,6 +1621,7 @@ mod tests {
             .iter()
             .map(|s| s.to_string()),
         );
+        ids.extend(power_tuning::TWEAKS.iter().map(|t| t.id.to_string()));
         ids
     }
 
@@ -1611,14 +1668,8 @@ mod tests {
         );
     }
 
-    /// The actual security property that matters: with no cached license at
-    /// all (a fresh install, or an install that has never signed in), every
-    /// Pro-gated id must be refused — not silently allowed because the check
-    /// couldn't find anything to compare against. Goes through `apply_by_id`
-    /// itself, the real chokepoint every apply path funnels through,
-    /// pointed at an empty temp directory so it is guaranteed to find no
-    /// cached license, rather than re-testing the license module in
-    /// isolation a second time.
+    /// Exercise the production entitlement policy without invoking a Windows
+    /// adapter. A temporary journal does not isolate actual registry writes.
     #[test]
     fn a_pro_tweak_is_refused_with_no_cached_license() {
         let ids = all_visible_ids();
@@ -1635,9 +1686,7 @@ mod tests {
                 .unwrap()
                 .as_nanos()
         ));
-        let store = RollbackStore::new(dir.clone());
-
-        let result = apply_by_id(&store, &dir, pro_id);
+        let result = require_tweak_entitlement(&dir, pro_id);
         let err = result.expect_err("a Pro tweak must not silently succeed with no license cached");
         assert!(
             err.starts_with(PRO_REQUIRED_PREFIX),
@@ -1647,10 +1696,6 @@ mod tests {
         );
     }
 
-    /// A free tweak must never be blocked by the license check regardless of
-    /// license state — the Pro gate is specifically about `requires_pro`
-    /// tweaks, not a blanket "no license, nothing works" failure mode.
-    #[test]
     /// The catalogue's size and its free/Pro split, pinned.
     ///
     /// These two numbers are quoted on the website, in the Store listing and
@@ -1660,7 +1705,7 @@ mod tests {
     /// at once. If this fails, the catalogue changed — update the numbers
     /// here, then update every surface listed above to match.
     #[test]
-    fn the_catalogue_is_fifty_six_tweaks_twenty_one_of_them_pro() {
+    fn the_catalogue_is_sixty_one_tweaks_twenty_four_of_them_pro() {
         let registry = tweaks::all_tweaks();
         let registry_pro = registry.iter().filter(|t| t.requires_pro).count();
 
@@ -1668,9 +1713,9 @@ mod tests {
         // because they are built by hand in `list_tweaks`; keeping the two
         // lists side by side is what makes a forgotten entry visible.
         let composite_pro = [
-            false,                                                  // power plan
+            false, // power plan
             turbo::info().requires_pro,
-            false,                                                  // private DNS
+            false, // private DNS
             gaming::input_lag_info().requires_pro,
             gaming::turbo_boost_info().requires_pro,
             game_priority::info().requires_pro,
@@ -1684,17 +1729,18 @@ mod tests {
             services::windows_search_info().requires_pro,
         ];
 
-        let total = registry.len() + composite_pro.len();
-        let pro = registry_pro + composite_pro.iter().filter(|p| **p).count();
+        let total = registry.len() + composite_pro.len() + power_tuning::TWEAKS.len();
+        let pro = registry_pro + composite_pro.iter().filter(|p| **p).count()
+            + power_tuning::TWEAKS.iter().filter(|t| t.pro).count();
 
-        assert_eq!(total, 56, "the catalogue no longer has 56 tweaks");
-        assert_eq!(pro, 21, "the Pro count moved");
-        assert_eq!(total - pro, 35, "the free count moved");
+        assert_eq!(total, 61, "the catalogue no longer has 61 tweaks");
+        assert_eq!(pro, 24, "the Pro count moved");
+        assert_eq!(total - pro, 37, "the free count moved");
 
         // The composite list must stay in step with what list_tweaks builds,
         // otherwise the totals above would quietly stop covering everything.
         assert_eq!(
-            composite_pro.len(),
+            composite_pro.len() + power_tuning::TWEAKS.len(),
             all_visible_ids().len() - registry.len(),
             "a composite tweak was added or removed without updating this test",
         );
@@ -1716,18 +1762,29 @@ mod tests {
                 .unwrap()
                 .as_nanos()
         ));
-        let store = RollbackStore::new(dir.clone());
-
-        // Whatever this particular tweak does on the test machine may
-        // succeed or fail on its own merits — that's not what's under test.
-        // What must never happen is failing *for licensing reasons*.
-        if let Err(e) = apply_by_id(&store, &dir, free_id) {
-            assert!(
-                !e.starts_with(PRO_REQUIRED_PREFIX),
-                "free tweak `{}` was blocked by the license check, which should never apply to it",
-                free_id
-            );
+        assert!(require_tweak_entitlement(&dir, free_id).is_ok());
+        for id in ids.iter().filter(|id| !requires_pro_for(id)) {
+            assert!(require_tweak_entitlement(&dir, id).is_ok());
         }
+        assert!(
+            !dir.exists(),
+            "policy checks must not create a system journal"
+        );
+    }
+
+    #[test]
+    fn duplicate_batch_ids_execute_only_once_and_keep_input_order() {
+        let ids = all_visible_ids();
+        let free = ids.iter().find(|id| !requires_admin_for(id)).unwrap();
+        let admin = ids.iter().find(|id| requires_admin_for(id)).unwrap();
+        let (elevated, direct) = split_by_elevation(vec![
+            free.clone(),
+            admin.clone(),
+            free.clone(),
+            admin.clone(),
+        ]);
+        assert_eq!(elevated, vec![admin.clone()]);
+        assert_eq!(direct, vec![free.clone()]);
     }
 
     /// No id may contain the separator used to pass the batch to the elevated
@@ -1822,7 +1879,7 @@ pub(crate) fn require_pro(app_data_dir: &std::path::Path) -> Result<(), String> 
         return Ok(());
     }
     Err(format!(
-        "{}this feature requires an active PC Tweaker Pro subscription",
+        "{}this feature requires an active PC Tweaker Pro license",
         PRO_REQUIRED_PREFIX
     ))
 }

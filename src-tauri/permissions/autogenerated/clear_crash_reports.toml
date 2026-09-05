@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-clear-crash-reports"
+description = "Enables the clear_crash_reports command without any pre-configured scope."
+commands.allow = ["clear_crash_reports"]
+
+[[permission]]
+identifier = "deny-clear-crash-reports"
+description = "Denies the clear_crash_reports command without any pre-configured scope."
+commands.deny = ["clear_crash_reports"]

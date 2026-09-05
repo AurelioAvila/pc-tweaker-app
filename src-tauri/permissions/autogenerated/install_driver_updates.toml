@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-install-driver-updates"
+description = "Enables the install_driver_updates command without any pre-configured scope."
+commands.allow = ["install_driver_updates"]
+
+[[permission]]
+identifier = "deny-install-driver-updates"
+description = "Denies the install_driver_updates command without any pre-configured scope."
+commands.deny = ["install_driver_updates"]

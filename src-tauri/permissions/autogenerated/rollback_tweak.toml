@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-rollback-tweak"
+description = "Enables the rollback_tweak command without any pre-configured scope."
+commands.allow = ["rollback_tweak"]
+
+[[permission]]
+identifier = "deny-rollback-tweak"
+description = "Denies the rollback_tweak command without any pre-configured scope."
+commands.deny = ["rollback_tweak"]

@@ -1,3 +1,4 @@
+import { ToolHeader } from "./tool-section";
 // PC Health Score — the explainable scorecard, staged like an instrument.
 //
 // Design intent (product-owner brief, round three):
@@ -504,33 +505,24 @@ export function HealthPanel({
   }, []);
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent p-5">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl"
+    <section className="tool-panel tool-health-panel" aria-busy={phase === "loading"}>
+      <ToolHeader
+        title={title}
+        description={subtitle}
+        actions={
+          phase === "done" && (
+            <button type="button" onClick={compute} className="tool-secondary-action">
+              {refreshLabel}
+            </button>
+          )
+        }
       />
-
-      <div className="relative flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-bold tracking-tight">{title}</h2>
-          <p className="mt-0.5 max-w-md text-xs leading-relaxed text-white/45">{subtitle}</p>
-        </div>
-        {phase === "done" && (
-          <button
-            type="button"
-            onClick={compute}
-            className="rounded-lg border border-white/15 px-3 py-1.5 text-[11px] font-semibold text-white/60 transition hover:bg-white/5 hover:text-white"
-          >
-            {refreshLabel}
-          </button>
-        )}
-      </div>
 
       {error !== null && <p className="relative mt-4 text-xs text-rose-300">{error}</p>}
 
       {phase === "idle" && (
-        <div className="relative mb-4 mt-8 flex flex-col items-center gap-4 text-center">
-          <div className="grid h-24 w-24 place-items-center rounded-full border border-dashed border-white/15 text-white/25">
+        <div className="tool-health-start relative mb-2 mt-5 flex flex-col items-center gap-3 text-center">
+          <div className="grid h-24 w-24 place-items-center rounded-full border border-dashed border-line text-ink-3">
             <svg viewBox="0 0 24 24" fill="none" className="h-9 w-9">
               <path
                 d="M3.5 12h3l2.5-6 4 12 2.5-6h5"
@@ -541,7 +533,7 @@ export function HealthPanel({
               />
             </svg>
           </div>
-          <p className="max-w-xs text-xs leading-relaxed text-white/40">{idleHint}</p>
+          <p className="max-w-xs text-xs leading-relaxed text-ink-3">{idleHint}</p>
           <button
             type="button"
             onClick={compute}
@@ -555,11 +547,11 @@ export function HealthPanel({
       {phase === "loading" && (
         /* The ceremony: pulsing dial skeleton + the real pipeline as a
            checklist that completes stage by stage. */
-        <div className="relative mb-4 mt-8 flex flex-col items-center gap-6">
+        <div className="tool-health-loading relative mb-2 mt-5 flex flex-col items-center gap-4">
           <div className="relative grid h-32 w-32 place-items-center">
             <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-emerald-400/70 [animation-duration:1.1s]" />
             <div className="absolute inset-2 animate-spin rounded-full border-2 border-transparent border-b-amber-400/50 [animation-duration:1.7s]" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/35">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
               {computingLabel}
             </span>
           </div>
@@ -569,7 +561,7 @@ export function HealthPanel({
               return (
                 <li
                   key={label}
-                  className={`flex items-center gap-2 transition-colors ${state === "pending" ? "text-white/25" : state === "active" ? "text-white/80" : "text-emerald-300/80"}`}
+                  className={`flex items-center gap-2 transition-colors ${state === "pending" ? "text-ink-3" : state === "active" ? "text-ink-2" : "text-emerald-300/80"}`}
                 >
                   <span className="grid h-4 w-4 place-items-center">
                     {state === "done" ? (
@@ -597,18 +589,18 @@ export function HealthPanel({
       )}
 
       {phase === "done" && report !== null && (
-        <div className="relative mt-4 flex flex-col gap-4 lg:flex-row lg:items-start">
-          <div className="flex shrink-0 flex-col items-center lg:w-48">
+        <div className="tool-health-overview">
+          <div className="tool-health-score flex shrink-0 flex-col items-center">
             <Speedometer score={report.overall} verdict={verdictFor(report.overall)} />
 
             {/* The number's context: what it was last time, and when. This is
                 the difference between a score and a measurement. */}
             {comparison === null ? (
-              <p className="mt-1 max-w-[11rem] text-center text-[10.5px] leading-relaxed text-white/35">
+              <p className="mt-1 max-w-[11rem] text-center text-[10.5px] leading-relaxed text-ink-3">
                 {change.firstRun}
               </p>
             ) : comparison.delta === 0 ? (
-              <p className="mt-1 text-center text-[10.5px] text-white/35">{change.noChange}</p>
+              <p className="mt-1 text-center text-[10.5px] text-ink-3">{change.noChange}</p>
             ) : (
               <span
                 className={`mt-1 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ring-1 ${
@@ -622,7 +614,7 @@ export function HealthPanel({
               </span>
             )}
             {comparison !== null && (
-              <p className="mt-1 text-center text-[10px] text-white/25">
+              <p className="mt-1 text-center text-[10px] text-ink-3">
                 {new Date(comparison.previousTs * 1000).toLocaleString()} ·{" "}
                 {comparison.previousOverall}
               </p>
@@ -630,7 +622,7 @@ export function HealthPanel({
 
             {history.length > 1 && (
               <div className="mt-3 w-full">
-                <p className="mb-0.5 text-center text-[9px] font-bold uppercase tracking-[0.18em] text-white/25">
+                <p className="mb-0.5 text-center text-[9px] font-bold uppercase tracking-[0.18em] text-ink-3">
                   {change.trend}
                 </p>
                 <Trend points={history.map((h) => h.overall)} />
@@ -638,20 +630,20 @@ export function HealthPanel({
             )}
           </div>
 
-          <div className="grid min-w-0 flex-1 gap-1.5">
+          <div className="tool-health-categories grid min-w-0 flex-1 gap-2">
             {report.categories.map((cat) => {
               const expanded = open === cat.id;
               const t = tone(cat.score);
               return (
                 <div
                   key={cat.id}
-                  className={`rounded-xl border bg-black/25 transition-colors ${expanded ? "border-white/20" : "border-white/10 hover:border-white/15"}`}
+                  className={`rounded-xl border bg-surface-2 transition-colors ${expanded ? "border-line" : "border-line hover:border-line"}`}
                 >
                   <div className="flex w-full items-center gap-3 px-3 py-2">
-                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/55">
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-surface-hover text-ink-2">
                       {CATEGORY_ICONS[cat.id]}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-xs font-semibold text-white/80">
+                    <span className="tool-health-category-name min-w-0 flex-1 text-xs font-semibold text-ink">
                       {categoryLabels[cat.id] ?? cat.id}
                     </span>
                     <span
@@ -662,7 +654,7 @@ export function HealthPanel({
                     <MiniRing score={cat.score} />
                     <button
                       type="button"
-                      className="shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold text-white/40 transition hover:bg-white/5 hover:text-white"
+                      className="shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold text-ink-3 transition hover:bg-white/5 hover:text-white"
                       onClick={() => {
                         setOpen(expanded ? null : cat.id);
                       }}
@@ -672,7 +664,7 @@ export function HealthPanel({
                     </button>
                   </div>
                   {expanded && (
-                    <ul className="border-t border-white/10 px-3 py-2.5">
+                    <ul className="border-t border-line px-3 py-2.5">
                       {cat.factors.map((f) => {
                         const ratio = f.max === 0 ? 0 : f.earned / f.max;
                         return (
@@ -680,9 +672,9 @@ export function HealthPanel({
                             key={f.id}
                             className="grid grid-cols-[minmax(0,1fr)_72px_44px] items-center gap-3 py-1.5 text-[11px]"
                           >
-                            <span className="min-w-0 text-white/70">
+                            <span className="min-w-0 text-ink-2">
                               {f.label}
-                              <span className="ml-1.5 text-white/35">· {f.evidence}</span>
+                              <span className="ml-1.5 text-ink-3">· {f.evidence}</span>
                             </span>
                             <span className="h-1 overflow-hidden rounded-full bg-white/10">
                               <span
@@ -691,7 +683,7 @@ export function HealthPanel({
                               />
                             </span>
                             <span
-                              className={`text-right tabular-nums ${ratio >= 1 ? "text-emerald-300/80" : ratio <= 0 ? "text-rose-300/70" : "text-white/50"}`}
+                              className={`text-right tabular-nums ${ratio >= 1 ? "text-emerald-300/80" : ratio <= 0 ? "text-rose-300/70" : "text-ink-3"}`}
                             >
                               {f.earned}/{f.max}
                             </span>
@@ -711,7 +703,7 @@ export function HealthPanel({
           there is no empty state to pad, and no cause is ever invented to
           fill the panel. */}
       {phase === "done" && comparison !== null && comparison.categories.length > 0 && (
-        <div className="relative mt-4 overflow-hidden rounded-xl border border-white/10 bg-black/25">
+        <div className="relative mt-4 overflow-hidden rounded-xl border border-line bg-surface-2">
           <button
             type="button"
             onClick={() => {
@@ -720,13 +712,13 @@ export function HealthPanel({
             aria-expanded={whyOpen}
             className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition hover:bg-white/[0.03]"
           >
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/55">
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-surface-hover text-ink-2">
               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
                 <path d="M4 17.5 9.5 11l3.5 3.5L20 7" stroke="currentColor" {...stroke} />
                 <path d="M15 7h5v5" stroke="currentColor" {...stroke} />
               </svg>
             </span>
-            <span className="min-w-0 flex-1 text-xs font-semibold text-white/80">
+            <span className="min-w-0 flex-1 text-xs font-semibold text-ink-2">
               {change.whyTitle}
             </span>
             {/* A preview of the causes, so the headline is useful collapsed. */}
@@ -741,13 +733,13 @@ export function HealthPanel({
                 </span>
               ))}
             </span>
-            <span className="shrink-0 text-[10px] font-semibold text-white/40">
+            <span className="shrink-0 text-[10px] font-semibold text-ink-3">
               {whyOpen ? showLess : showMore}
             </span>
           </button>
 
           {whyOpen && (
-            <div className="border-t border-white/10 px-3.5 py-3">
+            <div className="border-t border-line px-3.5 py-3">
               {comparison.structuralChange && (
                 <p className="mb-2.5 rounded-lg bg-amber-400/[0.07] px-2.5 py-1.5 text-[10.5px] leading-relaxed text-amber-200/80 ring-1 ring-amber-400/20">
                   {change.structural}
@@ -757,11 +749,11 @@ export function HealthPanel({
                 {comparison.categories.map((c) => (
                   <li key={c.id} className="rounded-lg bg-white/[0.03] px-3 py-2">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-white/45">{CATEGORY_ICONS[c.id]}</span>
+                      <span className="text-ink-3">{CATEGORY_ICONS[c.id]}</span>
                       <span className="min-w-0 flex-1 truncate text-[11.5px] font-semibold text-white/75">
                         {categoryLabels[c.id] ?? c.id}
                       </span>
-                      <span className="shrink-0 text-[10.5px] tabular-nums text-white/35">
+                      <span className="shrink-0 text-[10.5px] tabular-nums text-ink-3">
                         {c.before} → {c.after}
                       </span>
                       <span
@@ -776,12 +768,12 @@ export function HealthPanel({
                     {c.reasons.length > 0 && (
                       <ul className="mt-1.5 grid gap-1 border-t border-white/5 pt-1.5">
                         {c.reasons.map((r) => (
-                          <li key={r.id} className="text-[10.5px] leading-relaxed text-white/45">
-                            <span className="text-white/60">{labelFor(r.id)}</span>
+                          <li key={r.id} className="text-[10.5px] leading-relaxed text-ink-3">
+                            <span className="text-ink-2">{labelFor(r.id)}</span>
                             <span className="mx-1.5 text-white/20">·</span>
-                            <span className="text-white/40">{r.evidenceBefore}</span>
-                            <span className="mx-1 text-white/25">→</span>
-                            <span className="text-white/70">{r.evidenceAfter}</span>
+                            <span className="text-ink-3">{r.evidenceBefore}</span>
+                            <span className="mx-1 text-ink-3">→</span>
+                            <span className="text-ink-2">{r.evidenceAfter}</span>
                           </li>
                         ))}
                       </ul>
@@ -789,7 +781,7 @@ export function HealthPanel({
                     {/* The overall score is the mean of the categories, so a
                         big category move is a small headline move. Stated,
                         not hidden, or the arithmetic looks broken. */}
-                    <p className="mt-1.5 text-[10px] text-white/25">
+                    <p className="mt-1.5 text-[10px] text-ink-3">
                       {change.contributes} {c.overallContribution > 0 ? "+" : ""}
                       {c.overallContribution.toFixed(1)}
                     </p>
@@ -802,23 +794,23 @@ export function HealthPanel({
       )}
 
       {phase === "done" && report !== null && (
-        <div className="relative mt-4 rounded-xl border border-white/10 bg-black/25 p-3.5">
+        <div className="relative mt-4 rounded-xl border border-line bg-surface-2 p-3.5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-xs font-bold text-white/80">{baseline.title}</h3>
-              <p className="mt-0.5 text-[11px] text-white/40">{baseline.hint}</p>
+              <h3 className="text-xs font-bold text-ink-2">{baseline.title}</h3>
+              <p className="mt-0.5 text-[11px] text-ink-3">{baseline.hint}</p>
             </div>
             <button
               type="button"
               onClick={runBaseline}
               disabled={benchBusy}
-              className="rounded-lg border border-white/15 px-3 py-1.5 text-[11px] font-semibold text-white/60 transition hover:bg-white/5 hover:text-white disabled:opacity-40"
+              className="rounded-lg border border-line px-3 py-1.5 text-[11px] font-semibold text-ink-2 transition hover:bg-white/5 hover:text-white disabled:opacity-40"
             >
               {benchBusy ? baseline.running : baseline.run}
             </button>
           </div>
           {runs !== null && runs.length === 0 && !benchBusy && (
-            <p className="mt-2.5 text-[11px] text-white/35">{baseline.empty}</p>
+            <p className="mt-2.5 text-[11px] text-ink-3">{baseline.empty}</p>
           )}
           {runs !== null && runs.length > 0 && (
             <table className="mt-2.5 w-full text-[11px]">
@@ -836,7 +828,7 @@ export function HealthPanel({
                   const d = prev ? delta(get(prev), get(last), higher) : null;
                   return (
                     <tr key={label} className="border-t border-white/5">
-                      <td className="py-1 text-white/55">{label}</td>
+                      <td className="py-1 text-ink-2">{label}</td>
                       <td className="py-1 text-right tabular-nums text-white/75">
                         {get(last)}
                         {unit}

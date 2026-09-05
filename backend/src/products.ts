@@ -52,7 +52,7 @@ export function isProductRowEntitled(row: EntitlementTableRow | null | undefined
 export async function productEntitlement(userId: number | string, product: Product): Promise<ProductEntitlement> {
   if (product === "pctweaker") {
     const { rows } = await getPool().query(
-      "SELECT is_pro, plan, pro_expires_at FROM users WHERE id = $1",
+      "SELECT is_pro, plan, pro_expires_at, legacy_pro_grant FROM users WHERE id = $1",
       [userId],
     );
     const row = rows[0];

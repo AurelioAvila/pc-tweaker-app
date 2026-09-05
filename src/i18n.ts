@@ -1,3 +1,4 @@
+import { POWER_TUNING_COPY } from "./power-tuning-copy";
 export type Lang = "it" | "en" | "fr" | "es" | "de" | "pt";
 
 export const LANGUAGES: { code: Lang; native: string }[] = [
@@ -76,6 +77,8 @@ export interface Strings {
     };
   };
   tabs: {
+    groupWorkspace: string;
+    overview: string;
     groupMonitor: string;
     groupOptimize: string;
     groupManage: string;
@@ -908,7 +911,7 @@ const it: Strings = {
   appName: "PC Tweaker",
   appliedCount: "{applied} di {total} tweak attivi",
   headerNote:
-    "Ogni tweak salva un backup del valore originale prima di essere applicato. I tweak con privilegi elevati chiedono un consenso UAC esplicito, solo per quell'azione.",
+    "Esamina ogni modifica prima di applicarla. Gli strumenti di ripristino coprono le impostazioni supportate; pulizia e riparazione hanno limiti di recupero diversi.",
   advisor: {
     eyebrow: "Consigliato per il tuo PC",
     applyButton: "Applica",
@@ -968,6 +971,8 @@ const it: Strings = {
     },
   },
   tabs: {
+    groupWorkspace: "Area di lavoro",
+    overview: "Panoramica",
     groupMonitor: "Monitoraggio",
     groupOptimize: "Ottimizza",
     groupManage: "Gestisci",
@@ -980,9 +985,9 @@ const it: Strings = {
     manutenzione: "Manutenzione",
     gaming: "Gaming",
     startup: "Avvio",
-    profiles: "Configurazioni",
+    profiles: "Profili",
     pricing: "Piani e prezzi",
-    ledger: "Cronologia",
+    ledger: "Cronologia modifiche",
   },
   healthPanel: {
     title: "Salute del PC",
@@ -1261,7 +1266,7 @@ const it: Strings = {
     reassurance:
       "Disdici quando vuoi. Ogni modifica resta reversibile con un click, anche dopo la disdetta.",
     freeFeatures: [
-      "{count} tweak reali, con backup e ripristino di ogni modifica",
+      "{count} tweak Windows da esaminare e applicare",
       "Monitor di sistema in tempo reale (CPU, memoria, disco)",
       "Gestione dei programmi all’avvio",
       "Controllo violazioni password",
@@ -1285,7 +1290,7 @@ const it: Strings = {
     everythingInPro: "Tutto il Pro",
     lifetimeExclusive: "Solo con il piano a vita",
     lifetimeFeatures: [
-      "Le nuove funzioni per primo, prima che arrivino ai piani mensile e annuale",
+      "Accesso anticipato ad anteprime selezionate, quando disponibili",
       "Ogni versione futura inclusa, senza mai rinnovare",
       "Assistenza prioritaria, risposta dallo sviluppatore",
     ],
@@ -1392,7 +1397,8 @@ const it: Strings = {
   },
   turboBoost: {
     title: "Turbo Boost",
-    subtitle: "Spinge il processore al massimo delle prestazioni per il gaming, con un tocco.",
+    subtitle:
+      "Modifica la modalità boost della CPU e lo stato minimo del processore. Consumi e calore possono aumentare; i risultati dipendono dal carico di lavoro.",
     startLabel: "START",
     stopLabel: "STOP",
     activating: "Attivazione turbo in corso...",
@@ -1414,13 +1420,14 @@ const it: Strings = {
     ceilingUnlocked: "Limite boost sbloccato",
   },
   profiles: {
-    title: "Configurazioni",
-    subtitle: "Salva come hai impostato il PC, riapplicalo in un click, o passalo a qualcun altro.",
-    saveHeading: "Salva quella attuale",
+    title: "I tuoi profili",
+    subtitle:
+      "Salva i tweak attivi in un profilo. Riutilizza una configurazione o esportala su un altro PC.",
+    saveHeading: "Salva i tweak attivi",
     namePlaceholder: "Nome (es. Gaming)",
     saveButton: "Salva",
-    savedHeading: "Salvate",
-    empty: "Nessuna configurazione salvata.",
+    savedHeading: "Profili salvati",
+    empty: "Nessun profilo salvato.",
     tweakCount: "{count} tweak",
     apply: "Applica",
     applying: "Applico...",
@@ -1615,7 +1622,7 @@ const it: Strings = {
     confirmBody:
       "PC Tweaker Uninstaller è un'app separata della stessa suite e accede con lo stesso account di questa. Il download prende l'installer (circa 4 MB) direttamente dalla sua release su GitHub, per Windows 10 e 11 a 64 bit.",
     confirmUnsigned:
-      "Non è ancora firmato digitalmente, quindi al primo avvio Windows SmartScreen ti avvisa. Premi Ulteriori informazioni e poi Esegui comunque.",
+      "PC Tweaker 1.9.0 è firmato digitalmente da Aurelio Avila. Verifica autore e firma nelle proprietà del file. SmartScreen può ancora mostrare avvisi; le versioni precedenti potrebbero non essere firmate.",
     confirmDownload: "Scarica",
     confirmOpenPage: "Apri invece la pagina",
     cancel: "Annulla",
@@ -1682,7 +1689,7 @@ const it: Strings = {
   x3d: {
     title: "Allineatore die 3D V-Cache",
     subtitle:
-      "Sui Ryzen X3D a due die uno solo porta la cache impilata. Windows non sa quale sia e distribuisce il gioco su entrambi: ogni accesso che attraversa i die paga un giro sull'Infinity Fabric.",
+      "Sulle CPU supportate con cache L3 diversa tra i die, limita un processo in esecuzione al die con più cache. Questa scelta prevale sulla pianificazione automatica per quel processo e può migliorare o peggiorare le prestazioni.",
     cpuLabel: "Processore",
     readyHeadline: "Die con V-Cache individuato: {cores} thread",
     readyBody: "Blocca un gioco su questo die e ogni suo thread resta dove la cache è più grande.",
@@ -1879,6 +1886,7 @@ const it: Strings = {
     off: "Disattivata",
   },
   tweaks: {
+    ...POWER_TUNING_COPY.it,
     disable_startup_delay: {
       name: "Rimuovi il ritardo dei programmi all'avvio",
       description:
@@ -1930,9 +1938,9 @@ const it: Strings = {
         "Rimuove il pulsante Widget (meteo/notizie), che carica contenuti in background anche se non lo apri mai (HKCU, nessuna elevazione richiesta).",
     },
     network_latency: {
-      name: "Taglia il ritardo di rete (algoritmo di Nagle)",
+      name: "Conferme TCP e raggruppamento dei pacchetti",
       description:
-        "Windows trattiene i pacchetti piccoli per qualche millisecondo per raggrupparli, e per giunta ritarda le conferme di ricezione. È un buon compromesso per i download e pessimo per i giochi, dove ogni pacchetto è piccolo e arrivare tardi equivale a non arrivare. Questo disattiva entrambi sulla scheda di rete attiva (HKLM, richiede diritti di amministratore).",
+        "Imposta TcpAckFrequency e TCPNoDelay a 1 sul primo adattatore che Windows indica come attivo. Riguarda il comportamento TCP; il traffico UDP resta invariato. Il supporto dipende da Windows e dalle applicazioni, quindi una minore latenza nei giochi non è garantita (HKLM, richiede privilegi di amministratore).",
     },
     disable_window_animations: {
       name: "Animazioni finestre istantanee",
@@ -1987,7 +1995,7 @@ const it: Strings = {
     global_timer_resolution: {
       name: "Risoluzione timer globale",
       description:
-        "Ripristina il timer ad alta risoluzione per tutto il sistema. Da Windows 10 2004 un programma che chiede un timer più fine lo ottiene solo per sé, quindi tutto ciò che non lo chiede continua a girare sui ~15,6 ms di default — comprese le parti della catena di input e presentazione che il gioco non controlla. Richiede il riavvio (HKLM, diritti di amministratore).",
+        "Imposta il valore di registro GlobalTimerResolutionRequests a 1. Questa operazione non richiede né verifica una risoluzione specifica del timer. Il comportamento dipende dalla versione di Windows; latenza inferiore o FPS superiori non sono garantiti. Richiede un riavvio (HKLM, richiede privilegi di amministratore).",
     },
     disable_core_parking: {
       name: "Disattiva il parcheggio dei core",
@@ -1997,7 +2005,7 @@ const it: Strings = {
     disable_memory_integrity: {
       name: "Disattiva Integrità della memoria (VBS)",
       description:
-        "L'Integrità della memoria esegue parti di Windows dentro un contenitore virtualizzato, e questo costa CPU a ogni transizione verso il kernel: è il motivo per cui disattivarla è il guadagno di frame più grande disponibile gratuitamente. Sia chiaro il compromesso: è una vera funzione di sicurezza, e spegnerla toglie la protezione dai driver malevoli. Ha senso su un PC dedicato al gioco, non su una macchina di lavoro. Ha effetto dopo il riavvio (HKLM, richiede diritti di amministratore).",
+        "Richiede la disattivazione di Integrità della memoria (HVCI). Se applicata, rimuove un livello di protezione del kernel; altre funzioni VBS possono restare attive. L'impatto sulle prestazioni dipende da hardware e carico di lavoro. Criteri di sistema o blocco UEFI possono impedire la modifica. Riavvia e verifica lo stato in Sicurezza di Windows (HKLM, richiede privilegi di amministratore).",
     },
     disable_typing_personalization: {
       name: "Impedisci a Windows di studiare come scrivi",
@@ -2071,7 +2079,7 @@ const it: Strings = {
     hardware_gpu_scheduling: {
       name: "Pianificazione GPU con accelerazione hardware",
       description:
-        "Attiva la Pianificazione GPU con accelerazione hardware (HAGS) di Windows, che può ridurre la latenza di input in molti giochi (HKLM, richiede privilegi di amministratore).",
+        "Richiede la pianificazione GPU con accelerazione hardware (HAGS). Servono GPU, driver e versione di Windows compatibili. Prestazioni e latenza possono migliorare, peggiorare o restare invariate secondo il gioco. Riavvia e verifica la disponibilità nelle impostazioni Grafica di Windows (HKLM, richiede privilegi di amministratore).",
     },
     reduce_input_lag: {
       name: "Riduci ritardo di input (mouse)",
@@ -2081,7 +2089,7 @@ const it: Strings = {
     turbo_boost: {
       name: "Turbo Boost processore",
       description:
-        'Imposta la modalità di aumento delle prestazioni del processore su "Aggressiva", per sfruttare al massimo il Turbo Boost/Turbo Core durante il gioco (richiede privilegi di amministratore).',
+        "Imposta la modalità boost su Aggressiva con alimentazione da rete e a batteria, e lo stato minimo del processore al 100% con alimentazione da rete nel piano energetico corrente. Consumi e calore possono aumentare. Restano validi i limiti di CPU, firmware e temperatura; più FPS non sono garantiti (richiede privilegi di amministratore).",
     },
     network_throttling_index: {
       name: "Disattiva limitazione di rete multimediale",
@@ -2183,7 +2191,7 @@ const en: Strings = {
   appName: "PC Tweaker",
   appliedCount: "{applied} of {total} tweaks active",
   headerNote:
-    "Every tweak backs up the original value before it's applied. Tweaks that need elevated rights ask for an explicit UAC prompt, only for that action.",
+    "Review each change before applying it. Restore tools cover supported settings; cleanup and repair operations have different recovery limits.",
   advisor: {
     eyebrow: "Recommended for your PC",
     applyButton: "Apply",
@@ -2242,6 +2250,8 @@ const en: Strings = {
     },
   },
   tabs: {
+    groupWorkspace: "Workspace",
+    overview: "Overview",
     groupMonitor: "Monitor",
     groupOptimize: "Optimize",
     groupManage: "Manage",
@@ -2254,9 +2264,9 @@ const en: Strings = {
     manutenzione: "Maintenance",
     gaming: "Gaming",
     startup: "Startup",
-    profiles: "Configurations",
+    profiles: "Profiles",
     pricing: "Plans & pricing",
-    ledger: "History",
+    ledger: "Change history",
   },
   healthPanel: {
     title: "PC Health",
@@ -2530,7 +2540,7 @@ const en: Strings = {
     reassurance:
       "Cancel anytime. Every change stays one click away from being undone, even after you cancel.",
     freeFeatures: [
-      "{count} real tweaks, each backed up and revertible",
+      "{count} Windows tweaks to review and apply",
       "Live system monitor (CPU, memory, disk)",
       "Startup programs manager",
       "Password breach check",
@@ -2554,7 +2564,7 @@ const en: Strings = {
     everythingInPro: "Everything in Pro",
     lifetimeExclusive: "Lifetime only",
     lifetimeFeatures: [
-      "New features first, before they reach the monthly and yearly plans",
+      "Early access to selected previews, when available",
       "Every future release included — no renewal, ever",
       "Priority support, answered by the developer",
     ],
@@ -2659,7 +2669,8 @@ const en: Strings = {
   },
   turboBoost: {
     title: "Turbo Boost",
-    subtitle: "Pushes your processor to peak gaming performance, with one tap.",
+    subtitle:
+      "Adjust CPU boost behavior and minimum processor state. Power use and heat may increase; results depend on the workload.",
     startLabel: "START",
     stopLabel: "STOP",
     activating: "Activating turbo...",
@@ -2681,13 +2692,14 @@ const en: Strings = {
     ceilingUnlocked: "Boost ceiling unlocked",
   },
   profiles: {
-    title: "Configurations",
-    subtitle: "Save how you set this PC up, reapply it in one click, or hand it to someone else.",
-    saveHeading: "Save the current one",
+    title: "Your profiles",
+    subtitle:
+      "Save your active tweaks as a profile. Reuse a configuration or export it to another PC.",
+    saveHeading: "Save active tweaks",
     namePlaceholder: "Name (e.g. Gaming)",
     saveButton: "Save",
-    savedHeading: "Saved",
-    empty: "No saved configurations yet.",
+    savedHeading: "Saved profiles",
+    empty: "No saved profiles yet.",
     tweakCount: "{count} tweaks",
     apply: "Apply",
     applying: "Applying...",
@@ -2880,7 +2892,7 @@ const en: Strings = {
     confirmBody:
       "PC Tweaker Uninstaller is a separate app in the same suite, and it signs in with the same account as this one. This downloads the installer (about 4 MB) straight from its GitHub release, for 64-bit Windows 10 and 11.",
     confirmUnsigned:
-      "It is not code-signed yet, so Windows SmartScreen warns you the first time you run it. Click More info, then Run anyway.",
+      "PC Tweaker 1.9.0 is digitally signed by Aurelio Avila. Check the publisher and signature in the file properties. SmartScreen warnings can still appear; older releases may be unsigned.",
     confirmDownload: "Download",
     confirmOpenPage: "Open the page instead",
     cancel: "Cancel",
@@ -2947,7 +2959,7 @@ const en: Strings = {
   x3d: {
     title: "3D V-Cache die aligner",
     subtitle:
-      "On a two-die Ryzen X3D only one die carries the stacked cache. Windows does not know which, and spreads a game across both - every access that crosses the dies pays an Infinity Fabric round trip.",
+      "On supported CPUs with unequal L3 cache across dies, restrict a running process to the die with the largest cache. This overrides automatic scheduling for that process and may help or hurt a workload.",
     cpuLabel: "Processor",
     readyHeadline: "V-Cache die found: {cores} threads",
     readyBody: "Pin a game to this die and every one of its threads stays where the cache is.",
@@ -3141,6 +3153,7 @@ const en: Strings = {
     off: "Off",
   },
   tweaks: {
+    ...POWER_TUNING_COPY.en,
     disable_startup_delay: {
       name: "Remove the startup app delay",
       description:
@@ -3192,9 +3205,9 @@ const en: Strings = {
         "Removes the weather/news Widgets button, which loads content in the background even when you never open it (HKCU, no elevation required).",
     },
     network_latency: {
-      name: "Cut network delay (Nagle's algorithm)",
+      name: "TCP acknowledgments and packet buffering",
       description:
-        "Windows holds small packets back for a few milliseconds to bundle them together, and delays acknowledgements on top. That is a good trade for downloads and a bad one for games, where every packet is small and late is the same as lost. This turns both off on your active adapter (HKLM, requires administrator rights).",
+        "Sets TcpAckFrequency and TCPNoDelay to 1 on the first adapter Windows reports as Up. This targets TCP behavior; UDP traffic is unaffected. Windows and application support vary, so lower game latency is not guaranteed (HKLM, administrator rights required).",
     },
     disable_window_animations: {
       name: "Instant window animations",
@@ -3249,7 +3262,7 @@ const en: Strings = {
     global_timer_resolution: {
       name: "Global timer resolution",
       description:
-        "Restores the system-wide high-resolution timer. Since Windows 10 2004 a program asking for a finer timer only gets it for itself, so anything that did not ask keeps running against the ~15.6 ms default — including the parts of the input and present path a game does not control. Needs a restart (HKLM, administrator rights).",
+        "Sets the GlobalTimerResolutionRequests registry flag to 1. This does not itself request or verify a specific timer resolution. Behavior depends on the Windows version; lower latency or higher FPS is not guaranteed. Restart required (HKLM, administrator rights required).",
     },
     disable_core_parking: {
       name: "Disable core parking",
@@ -3259,7 +3272,7 @@ const en: Strings = {
     disable_memory_integrity: {
       name: "Disable Memory Integrity (VBS)",
       description:
-        "Memory Integrity runs parts of Windows inside a hardware-virtualised container, which costs CPU on every kernel transition — the reason it is the single biggest free frame-rate gain on most gaming machines. Be clear about the trade: it is a real security feature, and turning it off removes protection against malicious drivers. Worth it on a dedicated gaming PC, not on a work machine. Takes effect after a restart (HKLM, requires administrator rights).",
+        "Requests that Memory Integrity (HVCI) be disabled. If applied, this removes a layer of kernel protection; other VBS features may remain active. Performance impact varies by hardware and workload. Policy or UEFI lock may prevent the change. Restart and verify the status in Windows Security (HKLM, administrator rights required).",
     },
     disable_typing_personalization: {
       name: "Stop Windows learning how you type",
@@ -3332,7 +3345,7 @@ const en: Strings = {
     hardware_gpu_scheduling: {
       name: "Hardware-accelerated GPU scheduling",
       description:
-        "Turns on Windows' Hardware-accelerated GPU scheduling (HAGS), which can reduce input latency in many games (HKLM, requires administrator rights).",
+        "Requests hardware-accelerated GPU scheduling (HAGS). Requires a compatible GPU, driver and Windows version. Performance and latency can improve, worsen or remain unchanged depending on the game. Restart and verify availability in Windows Graphics settings (HKLM, administrator rights required).",
     },
     reduce_input_lag: {
       name: "Reduce input lag (mouse)",
@@ -3342,7 +3355,7 @@ const en: Strings = {
     turbo_boost: {
       name: "CPU Turbo Boost",
       description:
-        'Sets the processor performance boost mode to "Aggressive", squeezing the most out of Turbo Boost/Turbo Core while gaming (requires administrator rights).',
+        "Sets boost mode to Aggressive on mains power and battery, and minimum processor state to 100% on mains power in the current power plan. Power use and heat may increase. CPU, firmware and thermal limits still apply; higher FPS is not guaranteed (administrator rights required).",
     },
     network_throttling_index: {
       name: "Disable multimedia network throttling",
@@ -3444,7 +3457,7 @@ const fr: Strings = {
   appName: "PC Tweaker",
   appliedCount: "{applied} sur {total} optimisations actives",
   headerNote:
-    "Chaque optimisation sauvegarde la valeur d'origine avant d'être appliquée. Celles qui nécessitent des droits élevés demandent un consentement UAC explicite, uniquement pour cette action.",
+    "Examinez chaque modification avant de l'appliquer. Les outils de restauration couvrent les paramètres pris en charge ; les opérations de nettoyage et de réparation ont des limites de récupération différentes.",
   advisor: {
     eyebrow: "Recommandé pour votre PC",
     applyButton: "Appliquer",
@@ -3503,6 +3516,8 @@ const fr: Strings = {
     },
   },
   tabs: {
+    groupWorkspace: "Espace de travail",
+    overview: "Vue d’ensemble",
     groupMonitor: "Surveiller",
     groupOptimize: "Optimiser",
     groupManage: "Gérer",
@@ -3515,9 +3530,9 @@ const fr: Strings = {
     manutenzione: "Entretien",
     gaming: "Gaming",
     startup: "Démarrage",
-    profiles: "Configurations",
+    profiles: "Profils",
     pricing: "Offres et tarifs",
-    ledger: "Historique",
+    ledger: "Historique des modifications",
   },
   healthPanel: {
     title: "Santé du PC",
@@ -3795,7 +3810,7 @@ const fr: Strings = {
     reassurance:
       "Résiliable à tout moment. Chaque modification reste annulable en un clic, même après la résiliation.",
     freeFeatures: [
-      "{count} optimisations réelles, chacune sauvegardée et réversible",
+      "{count} réglages Windows à examiner et à appliquer",
       "Moniteur système en temps réel (processeur, mémoire, disque)",
       "Gestion des programmes au démarrage",
       "Vérification des fuites de mot de passe",
@@ -3819,7 +3834,7 @@ const fr: Strings = {
     everythingInPro: "Tout ce que contient Pro",
     lifetimeExclusive: "Exclusif à l'offre à vie",
     lifetimeFeatures: [
-      "Les nouveautés en premier, avant les offres mensuelle et annuelle",
+      "Accès anticipé à certaines versions préliminaires, selon leur disponibilité",
       "Toutes les versions à venir incluses, sans jamais renouveler",
       "Assistance prioritaire, assurée par le développeur",
     ],
@@ -3928,7 +3943,8 @@ const fr: Strings = {
   },
   turboBoost: {
     title: "Turbo Boost",
-    subtitle: "Pousse votre processeur au maximum de ses performances pour le jeu, en un clic.",
+    subtitle:
+      "Modifie le mode boost et l'état minimal du processeur. La consommation et la chaleur peuvent augmenter ; les résultats dépendent de la charge de travail.",
     startLabel: "START",
     stopLabel: "STOP",
     activating: "Activation du turbo...",
@@ -3950,14 +3966,15 @@ const fr: Strings = {
     ceilingUnlocked: "Limite de boost debloquee",
   },
   profiles: {
-    title: "Configurations",
-    subtitle: "Enregistrez votre réglage, réappliquez-le en un clic, ou transmettez-le.",
-    saveHeading: "Enregistrer l'actuelle",
+    title: "Vos profils",
+    subtitle:
+      "Enregistrez vos réglages actifs dans un profil. Réutilisez une configuration ou exportez-la vers un autre PC.",
+    saveHeading: "Enregistrer les réglages actifs",
     namePlaceholder: "Nom (ex. Gaming)",
     saveButton: "Enregistrer",
-    savedHeading: "Enregistrees",
-    empty: "Aucune configuration enregistree.",
-    tweakCount: "{count} reglages",
+    savedHeading: "Profils enregistrés",
+    empty: "Aucun profil enregistré.",
+    tweakCount: "{count} réglages",
     apply: "Appliquer",
     applying: "Application...",
     exportButton: "Exporter",
@@ -4155,7 +4172,7 @@ const fr: Strings = {
     confirmBody:
       "PC Tweaker Uninstaller est une application distincte de la même suite, et elle se connecte avec le même compte que celle-ci. Le téléchargement récupère l'installeur (environ 4 Mo) directement depuis sa version GitHub, pour Windows 10 et 11 en 64 bits.",
     confirmUnsigned:
-      "Il n'est pas encore signé numériquement : au premier lancement, Windows SmartScreen affiche un avertissement. Cliquez sur Informations complémentaires, puis sur Exécuter quand même.",
+      "PC Tweaker 1.9.0 est signé numériquement par Aurelio Avila. Vérifiez l'éditeur et la signature dans les propriétés du fichier. SmartScreen peut encore afficher un avertissement ; les anciennes versions peuvent ne pas être signées.",
     confirmDownload: "Télécharger",
     confirmOpenPage: "Ouvrir plutôt la page",
     cancel: "Annuler",
@@ -4222,7 +4239,7 @@ const fr: Strings = {
   x3d: {
     title: "Aligneur de die 3D V-Cache",
     subtitle:
-      "Sur un Ryzen X3D à deux dies, un seul porte le cache empilé. Windows ignore lequel et répartit le jeu sur les deux : chaque accès qui traverse les dies paie un aller-retour sur l'Infinity Fabric.",
+      "Sur les processeurs compatibles dont les puces ont des caches L3 de tailles différentes, limite un processus en cours à la puce dotée du plus grand cache. Ce choix remplace la planification automatique pour ce processus et peut améliorer ou dégrader les performances.",
     cpuLabel: "Processeur",
     readyHeadline: "Die V-Cache trouvé : {cores} threads",
     readyBody:
@@ -4419,6 +4436,7 @@ const fr: Strings = {
     off: "Désactivée",
   },
   tweaks: {
+    ...POWER_TUNING_COPY.fr,
     disable_startup_delay: {
       name: "Supprimer le délai des programmes au démarrage",
       description:
@@ -4470,9 +4488,9 @@ const fr: Strings = {
         "Supprime le bouton Widgets (météo/actualités), qui charge du contenu en arrière-plan même si vous ne l'ouvrez jamais (HKCU, aucune élévation requise).",
     },
     network_latency: {
-      name: "Reduire le delai reseau (algorithme de Nagle)",
+      name: "Accusés de réception TCP et regroupement des paquets",
       description:
-        "Windows retient les petits paquets quelques millisecondes pour les regrouper, et retarde en plus les accusés de réception. Bon compromis pour les téléchargements, mauvais pour les jeux, où chaque paquet est petit et arriver en retard équivaut à ne pas arriver. Ceci désactive les deux sur votre carte réseau active (HKLM, nécessite des droits administrateur).",
+        "Définit TcpAckFrequency et TCPNoDelay sur 1 pour le premier adaptateur que Windows indique comme actif. Cela concerne TCP ; le trafic UDP reste inchangé. La prise en charge dépend de Windows et des applications : une latence plus faible dans les jeux n'est pas garantie (HKLM, droits administrateur requis).",
     },
     disable_window_animations: {
       name: "Animations de fenetres instantanees",
@@ -4527,7 +4545,7 @@ const fr: Strings = {
     global_timer_resolution: {
       name: "Résolution du minuteur globale",
       description:
-        "Rétablit le minuteur haute résolution pour tout le système. Depuis Windows 10 2004, un programme qui demande un minuteur plus fin ne l'obtient que pour lui-même : tout ce qui ne le demande pas continue de tourner sur les ~15,6 ms par défaut, y compris les parties de la chaîne d'entrée et d'affichage que le jeu ne contrôle pas. Nécessite un redémarrage (HKLM, droits administrateur).",
+        "Définit la valeur de registre GlobalTimerResolutionRequests sur 1. Cette opération ne demande ni ne vérifie une résolution précise du minuteur. Le comportement dépend de la version de Windows ; une latence plus faible ou davantage de FPS ne sont pas garantis. Redémarrage requis (HKLM, droits administrateur requis).",
     },
     disable_core_parking: {
       name: "Désactiver le parcage des cœurs",
@@ -4537,7 +4555,7 @@ const fr: Strings = {
     disable_memory_integrity: {
       name: "Désactiver l'intégrité de la mémoire (VBS)",
       description:
-        "L'intégrité de la mémoire exécute des parties de Windows dans un conteneur virtualisé, ce qui coûte du processeur à chaque transition vers le noyau — la raison pour laquelle la désactiver est le plus gros gain d'images par seconde disponible gratuitement. Le compromis doit être clair : c'est une vraie fonction de sécurité, et la couper retire la protection contre les pilotes malveillants. Justifié sur un PC dédié au jeu, pas sur une machine de travail. Effectif après redémarrage (HKLM, nécessite des droits administrateur).",
+        "Demande la désactivation de l'intégrité de la mémoire (HVCI). Si elle est appliquée, une couche de protection du noyau est supprimée ; d'autres fonctions VBS peuvent rester actives. L'effet sur les performances dépend du matériel et de la charge de travail. Une stratégie système ou un verrouillage UEFI peut empêcher la modification. Redémarrez et vérifiez l'état dans Sécurité Windows (HKLM, droits administrateur requis).",
     },
     disable_typing_personalization: {
       name: "Empêcher Windows d'apprendre votre façon d'écrire",
@@ -4612,7 +4630,7 @@ const fr: Strings = {
     hardware_gpu_scheduling: {
       name: "Planification GPU accélérée par le matériel",
       description:
-        "Active la planification GPU accélérée par le matériel (HAGS) de Windows, qui peut réduire la latence d'entrée dans de nombreux jeux (HKLM, droits administrateur requis).",
+        "Demande la planification GPU accélérée par le matériel (HAGS). Une carte graphique, un pilote et une version de Windows compatibles sont nécessaires. Les performances et la latence peuvent s'améliorer, se dégrader ou rester inchangées selon le jeu. Redémarrez et vérifiez la disponibilité dans les paramètres graphiques de Windows (HKLM, droits administrateur requis).",
     },
     reduce_input_lag: {
       name: "Réduire le délai d'entrée (souris)",
@@ -4622,7 +4640,7 @@ const fr: Strings = {
     turbo_boost: {
       name: "Turbo Boost du processeur",
       description:
-        "Règle le mode d'augmentation des performances du processeur sur « Agressif », pour tirer le maximum du Turbo Boost/Turbo Core pendant le jeu (droits administrateur requis).",
+        "Règle le mode boost sur Agressif sur secteur et sur batterie, et l'état minimal du processeur à 100 % sur secteur dans le mode de gestion de l'alimentation actuel. La consommation et la chaleur peuvent augmenter. Les limites du processeur, du micrologiciel et de température restent applicables ; une hausse des FPS n'est pas garantie (droits administrateur requis).",
     },
     network_throttling_index: {
       name: "Désactiver la limitation réseau multimédia",
@@ -4724,7 +4742,7 @@ const es: Strings = {
   appName: "PC Tweaker",
   appliedCount: "{applied} de {total} ajustes activos",
   headerNote:
-    "Cada ajuste guarda una copia del valor original antes de aplicarse. Los ajustes que requieren privilegios elevados piden un consentimiento UAC explícito, solo para esa acción.",
+    "Revisa cada cambio antes de aplicarlo. Las herramientas de restauración cubren los ajustes compatibles; las operaciones de limpieza y reparación tienen distintos límites de recuperación.",
   advisor: {
     eyebrow: "Recomendado para tu PC",
     applyButton: "Aplicar",
@@ -4783,6 +4801,8 @@ const es: Strings = {
     },
   },
   tabs: {
+    groupWorkspace: "Espacio de trabajo",
+    overview: "Resumen",
     groupMonitor: "Supervisar",
     groupOptimize: "Optimizar",
     groupManage: "Gestionar",
@@ -4795,9 +4815,9 @@ const es: Strings = {
     manutenzione: "Mantenimiento",
     gaming: "Gaming",
     startup: "Inicio",
-    profiles: "Configuraciones",
+    profiles: "Perfiles",
     pricing: "Planes y precios",
-    ledger: "Historial",
+    ledger: "Historial de cambios",
   },
   healthPanel: {
     title: "Salud del PC",
@@ -5075,7 +5095,7 @@ const es: Strings = {
     reassurance:
       "Cancela cuando quieras. Cada cambio sigue siendo reversible con un clic, incluso tras cancelar.",
     freeFeatures: [
-      "{count} ajustes reales, cada uno con copia de seguridad y reversible",
+      "{count} ajustes de Windows para revisar y aplicar",
       "Monitor del sistema en tiempo real (CPU, memoria, disco)",
       "Gestión de los programas de inicio",
       "Comprobación de filtraciones de contraseñas",
@@ -5098,7 +5118,7 @@ const es: Strings = {
     everythingInPro: "Todo lo que incluye Pro",
     lifetimeExclusive: "Solo de por vida",
     lifetimeFeatures: [
-      "Las funciones nuevas primero, antes de llegar a los planes mensual y anual",
+      "Acceso anticipado a versiones preliminares seleccionadas, cuando estén disponibles",
       "Todas las versiones futuras incluidas, sin renovar nunca",
       "Soporte prioritario, respondido por el desarrollador",
     ],
@@ -5204,7 +5224,8 @@ const es: Strings = {
   },
   turboBoost: {
     title: "Turbo Boost",
-    subtitle: "Lleva tu procesador al máximo rendimiento para gaming, con un toque.",
+    subtitle:
+      "Ajusta el modo turbo y el estado mínimo del procesador. El consumo y el calor pueden aumentar; los resultados dependen de la carga de trabajo.",
     startLabel: "START",
     stopLabel: "STOP",
     activating: "Activando turbo...",
@@ -5226,13 +5247,14 @@ const es: Strings = {
     ceilingUnlocked: "Limite de boost desbloqueado",
   },
   profiles: {
-    title: "Configuraciones",
-    subtitle: "Guarda como has dejado el PC, vuelve a aplicarlo en un clic o pasaselo a alguien.",
-    saveHeading: "Guardar la actual",
+    title: "Tus perfiles",
+    subtitle:
+      "Guarda tus ajustes activos en un perfil. Reutiliza una configuración o expórtala a otro PC.",
+    saveHeading: "Guardar los ajustes activos",
     namePlaceholder: "Nombre (p. ej. Gaming)",
     saveButton: "Guardar",
-    savedHeading: "Guardadas",
-    empty: "Todavia no hay configuraciones guardadas.",
+    savedHeading: "Perfiles guardados",
+    empty: "Todavía no hay perfiles guardados.",
     tweakCount: "{count} ajustes",
     apply: "Aplicar",
     applying: "Aplicando...",
@@ -5428,7 +5450,7 @@ const es: Strings = {
     confirmBody:
       "PC Tweaker Uninstaller es una aplicación aparte de la misma suite y entra con la misma cuenta que esta. La descarga toma el instalador (unos 4 MB) directamente de su versión en GitHub, para Windows 10 y 11 de 64 bits.",
     confirmUnsigned:
-      "Todavía no está firmado digitalmente, así que la primera vez que lo ejecutes Windows SmartScreen te avisará. Pulsa Más información y luego Ejecutar de todas formas.",
+      "PC Tweaker 1.9.0 está firmado digitalmente por Aurelio Avila. Comprueba el editor y la firma en las propiedades del archivo. SmartScreen aún puede mostrar avisos; las versiones anteriores pueden no estar firmadas.",
     confirmDownload: "Descargar",
     confirmOpenPage: "Abrir la página en su lugar",
     cancel: "Cancelar",
@@ -5495,7 +5517,7 @@ const es: Strings = {
   x3d: {
     title: "Alineador de die 3D V-Cache",
     subtitle:
-      "En un Ryzen X3D de dos dies solo uno lleva la caché apilada. Windows no sabe cuál es y reparte el juego entre ambos: cada acceso que cruza los dies paga un viaje por el Infinity Fabric.",
+      "En CPU compatibles con caché L3 de distinto tamaño entre chips, limita un proceso en ejecución al chip con más caché. Esta elección sustituye la planificación automática de ese proceso y puede mejorar o empeorar el rendimiento.",
     cpuLabel: "Procesador",
     readyHeadline: "Die con V-Cache encontrado: {cores} hilos",
     readyBody: "Fija un juego a este die y todos sus hilos se quedan donde está la caché grande.",
@@ -5693,6 +5715,7 @@ const es: Strings = {
     off: "Desactivada",
   },
   tweaks: {
+    ...POWER_TUNING_COPY.es,
     disable_startup_delay: {
       name: "Eliminar el retraso de los programas al inicio",
       description:
@@ -5744,9 +5767,9 @@ const es: Strings = {
         "Quita el botón de Widgets (tiempo/noticias), que carga contenido en segundo plano aunque nunca lo abras (HKCU, no requiere elevación).",
     },
     network_latency: {
-      name: "Reducir el retardo de red (algoritmo de Nagle)",
+      name: "Confirmaciones TCP y agrupación de paquetes",
       description:
-        "Windows retiene los paquetes pequenos unos milisegundos para agruparlos, y ademas retrasa los acuses de recibo. Es un buen compromiso para las descargas y malo para los juegos, donde cada paquete es pequeno y llegar tarde equivale a no llegar. Esto desactiva ambos en tu adaptador de red activo (HKLM, requiere derechos de administrador).",
+        "Establece TcpAckFrequency y TCPNoDelay en 1 en el primer adaptador que Windows indica como activo. Afecta al comportamiento TCP; el tráfico UDP no cambia. La compatibilidad depende de Windows y las aplicaciones, por lo que no se garantiza una menor latencia en juegos (HKLM, requiere permisos de administrador).",
     },
     disable_window_animations: {
       name: "Animaciones de ventana instantaneas",
@@ -5801,7 +5824,7 @@ const es: Strings = {
     global_timer_resolution: {
       name: "Resolución del temporizador global",
       description:
-        "Restaura el temporizador de alta resolución para todo el sistema. Desde Windows 10 2004, un programa que pide un temporizador más fino solo lo obtiene para sí mismo, así que todo lo que no lo pide sigue funcionando con los ~15,6 ms por defecto, incluidas las partes de la cadena de entrada y presentación que el juego no controla. Requiere reiniciar (HKLM, permisos de administrador).",
+        "Establece el valor del registro GlobalTimerResolutionRequests en 1. Esta operación no solicita ni verifica una resolución concreta del temporizador. El comportamiento depende de la versión de Windows; no se garantiza menor latencia ni más FPS. Requiere reiniciar (HKLM, requiere permisos de administrador).",
     },
     disable_core_parking: {
       name: "Desactivar el aparcamiento de núcleos",
@@ -5811,7 +5834,7 @@ const es: Strings = {
     disable_memory_integrity: {
       name: "Desactivar Integridad de memoria (VBS)",
       description:
-        "La Integridad de memoria ejecuta partes de Windows dentro de un contenedor virtualizado, y eso cuesta CPU en cada transición al kernel: por eso desactivarla es la mayor ganancia de fotogramas disponible sin pagar nada. El compromiso debe quedar claro: es una función de seguridad real, y apagarla elimina la protección frente a controladores maliciosos. Tiene sentido en un PC dedicado al juego, no en uno de trabajo. Surte efecto tras reiniciar (HKLM, requiere derechos de administrador).",
+        "Solicita desactivar Integridad de memoria (HVCI). Si se aplica, elimina una capa de protección del kernel; otras funciones VBS pueden seguir activas. El efecto en el rendimiento depende del hardware y la carga de trabajo. Las directivas del sistema o el bloqueo UEFI pueden impedir el cambio. Reinicia y comprueba el estado en Seguridad de Windows (HKLM, requiere permisos de administrador).",
     },
     disable_typing_personalization: {
       name: "Impedir que Windows aprenda cómo escribes",
@@ -5885,7 +5908,7 @@ const es: Strings = {
     hardware_gpu_scheduling: {
       name: "Programación de GPU acelerada por hardware",
       description:
-        "Activa la Programación de GPU acelerada por hardware (HAGS) de Windows, que puede reducir la latencia de entrada en muchos juegos (HKLM, requiere privilegios de administrador).",
+        "Solicita la programación de GPU acelerada por hardware (HAGS). Requiere GPU, controlador y versión de Windows compatibles. El rendimiento y la latencia pueden mejorar, empeorar o no cambiar según el juego. Reinicia y comprueba la disponibilidad en la configuración de gráficos de Windows (HKLM, requiere permisos de administrador).",
     },
     reduce_input_lag: {
       name: "Reducir el retardo de entrada (ratón)",
@@ -5895,7 +5918,7 @@ const es: Strings = {
     turbo_boost: {
       name: "Turbo Boost del procesador",
       description:
-        'Establece el modo de aumento de rendimiento del procesador en "Agresivo", para aprovechar al máximo el Turbo Boost/Turbo Core durante el juego (requiere privilegios de administrador).',
+        "Establece el modo turbo en Agresivo con corriente y batería, y el estado mínimo del procesador al 100 % con corriente en el plan de energía actual. El consumo y el calor pueden aumentar. Siguen vigentes los límites de CPU, firmware y temperatura; no se garantizan más FPS (requiere permisos de administrador).",
     },
     network_throttling_index: {
       name: "Desactivar la limitación de red multimedia",
@@ -5997,7 +6020,7 @@ const de: Strings = {
   appName: "PC Tweaker",
   appliedCount: "{applied} von {total} Optimierungen aktiv",
   headerNote:
-    "Jede Optimierung sichert den ursprünglichen Wert, bevor sie angewendet wird. Optimierungen mit erhöhten Rechten fragen gezielt per UAC nach, nur für diese Aktion.",
+    "Prüfe jede Änderung vor dem Anwenden. Die Wiederherstellung unterstützt bestimmte Einstellungen; für Bereinigungs- und Reparaturvorgänge gelten andere Grenzen.",
   advisor: {
     eyebrow: "Für deinen PC empfohlen",
     applyButton: "Anwenden",
@@ -6058,6 +6081,8 @@ const de: Strings = {
     },
   },
   tabs: {
+    groupWorkspace: "Arbeitsbereich",
+    overview: "Übersicht",
     groupMonitor: "Überwachen",
     groupOptimize: "Optimieren",
     groupManage: "Verwalten",
@@ -6070,9 +6095,9 @@ const de: Strings = {
     manutenzione: "Wartung",
     gaming: "Gaming",
     startup: "Autostart",
-    profiles: "Konfigurationen",
+    profiles: "Profile",
     pricing: "Tarife & Preise",
-    ledger: "Verlauf",
+    ledger: "Änderungsverlauf",
   },
   healthPanel: {
     title: "PC-Zustand",
@@ -6351,7 +6376,7 @@ const de: Strings = {
     reassurance:
       "Jederzeit kündbar. Jede Änderung bleibt mit einem Klick rückgängig zu machen, auch nach der Kündigung.",
     freeFeatures: [
-      "{count} echte Tweaks, jeder gesichert und umkehrbar",
+      "{count} Windows-Tweaks zum Prüfen und Anwenden",
       "Live-Systemmonitor (CPU, Arbeitsspeicher, Datenträger)",
       "Verwaltung der Autostart-Programme",
       "Passwort-Datenleck-Prüfung",
@@ -6374,7 +6399,7 @@ const de: Strings = {
     everythingInPro: "Alles aus Pro",
     lifetimeExclusive: "Nur lebenslang",
     lifetimeFeatures: [
-      "Neue Funktionen zuerst, bevor sie den Monats- und Jahrestarif erreichen",
+      "Früher Zugang zu ausgewählten Vorschauversionen, sofern verfügbar",
       "Jede künftige Version inklusive, ohne jede Verlängerung",
       "Bevorzugter Support, beantwortet vom Entwickler",
     ],
@@ -6482,7 +6507,8 @@ const de: Strings = {
   },
   turboBoost: {
     title: "Turbo Boost",
-    subtitle: "Bringt deinen Prozessor mit einem Tipp auf Spitzenleistung fürs Gaming.",
+    subtitle:
+      "Passt den CPU-Boost-Modus und den minimalen Prozessorzustand an. Stromverbrauch und Wärme können steigen; die Ergebnisse hängen von der Arbeitslast ab.",
     startLabel: "START",
     stopLabel: "STOP",
     activating: "Turbo wird aktiviert...",
@@ -6504,14 +6530,14 @@ const de: Strings = {
     ceilingUnlocked: "Boost-Grenze freigegeben",
   },
   profiles: {
-    title: "Konfigurationen",
+    title: "Deine Profile",
     subtitle:
-      "Sichern Sie Ihre Einstellungen, stellen Sie sie mit einem Klick wieder her, oder geben Sie sie weiter.",
-    saveHeading: "Aktuelle sichern",
+      "Speichere deine aktiven Einstellungen als Profil. Nutze eine Konfiguration erneut oder exportiere sie auf einen anderen PC.",
+    saveHeading: "Aktive Einstellungen speichern",
     namePlaceholder: "Name (z. B. Gaming)",
     saveButton: "Sichern",
-    savedHeading: "Gesichert",
-    empty: "Noch keine gesicherten Konfigurationen.",
+    savedHeading: "Gespeicherte Profile",
+    empty: "Noch keine gespeicherten Profile.",
     tweakCount: "{count} Optimierungen",
     apply: "Anwenden",
     applying: "Wird angewendet...",
@@ -6708,7 +6734,7 @@ const de: Strings = {
     confirmBody:
       "PC Tweaker Uninstaller ist eine eigene App derselben Suite und meldet sich mit demselben Konto an wie diese. Der Download holt das Installationsprogramm (rund 4 MB) direkt aus seinem GitHub-Release, für Windows 10 und 11 in 64 Bit.",
     confirmUnsigned:
-      "Es ist noch nicht digital signiert, deshalb warnt Windows SmartScreen beim ersten Start. Auf Weitere Informationen klicken und dann auf Trotzdem ausführen.",
+      "PC Tweaker 1.9.0 ist von Aurelio Avila digital signiert. Prüfe Herausgeber und Signatur in den Dateieigenschaften. SmartScreen kann weiterhin warnen; ältere Versionen können unsigniert sein.",
     confirmDownload: "Herunterladen",
     confirmOpenPage: "Stattdessen die Seite öffnen",
     cancel: "Abbrechen",
@@ -6775,7 +6801,7 @@ const de: Strings = {
   x3d: {
     title: "3D-V-Cache-Die-Ausrichtung",
     subtitle:
-      "Bei einem Ryzen X3D mit zwei Dies trägt nur eines den gestapelten Cache. Windows weiß nicht welches und verteilt ein Spiel auf beide — jeder Zugriff über die Die-Grenze kostet einen Umweg über die Infinity Fabric.",
+      "Beschränkt auf unterstützten CPUs mit unterschiedlich großen L3-Caches einen laufenden Prozess auf den Chip mit dem größten Cache. Diese Wahl ersetzt die automatische Planung für diesen Prozess und kann die Leistung verbessern oder verschlechtern.",
     cpuLabel: "Prozessor",
     readyHeadline: "V-Cache-Die gefunden: {cores} Threads",
     readyBody:
@@ -6975,6 +7001,7 @@ const de: Strings = {
     off: "Inaktiv",
   },
   tweaks: {
+    ...POWER_TUNING_COPY.de,
     disable_startup_delay: {
       name: "Verzögerung der Autostart-Programme entfernen",
       description:
@@ -7026,9 +7053,9 @@ const de: Strings = {
         "Entfernt die Widgets-Schaltfläche (Wetter/Nachrichten), die auch dann Inhalte im Hintergrund lädt, wenn du sie nie öffnest (HKCU, keine Erhöhung erforderlich).",
     },
     network_latency: {
-      name: "Netzwerkverzoegerung senken (Nagle-Algorithmus)",
+      name: "TCP-Bestätigungen und Paketbündelung",
       description:
-        "Windows haelt kleine Pakete einige Millisekunden zurueck, um sie zu buendeln, und verzoegert zusaetzlich die Empfangsbestaetigungen. Fuer Downloads ist das ein guter Kompromiss, fuer Spiele ein schlechter: Dort ist jedes Paket klein, und zu spaet ist dasselbe wie gar nicht. Dies schaltet beides auf Ihrem aktiven Adapter ab (HKLM, erfordert Administratorrechte).",
+        "Setzt TcpAckFrequency und TCPNoDelay für den ersten von Windows als aktiv gemeldeten Adapter auf 1. Dies betrifft TCP; UDP-Verkehr bleibt unverändert. Die Unterstützung hängt von Windows und den Anwendungen ab. Eine niedrigere Latenz in Spielen ist nicht garantiert (HKLM, Administratorrechte erforderlich).",
     },
     disable_window_animations: {
       name: "Sofortige Fensteranimationen",
@@ -7083,7 +7110,7 @@ const de: Strings = {
     global_timer_resolution: {
       name: "Globale Timer-Auflösung",
       description:
-        "Stellt den systemweiten hochauflösenden Timer wieder her. Seit Windows 10 2004 erhält ein Programm, das einen feineren Timer anfordert, ihn nur für sich selbst — alles andere läuft weiter mit den standardmäßigen ~15,6 ms, einschließlich der Teile der Eingabe- und Darstellungskette, die das Spiel nicht steuert. Erfordert einen Neustart (HKLM, Administratorrechte).",
+        "Setzt den Registrierungswert GlobalTimerResolutionRequests auf 1. Dies fordert keine bestimmte Timerauflösung an und prüft sie auch nicht. Das Verhalten hängt von der Windows-Version ab; niedrigere Latenz oder höhere FPS sind nicht garantiert. Neustart erforderlich (HKLM, Administratorrechte erforderlich).",
     },
     disable_core_parking: {
       name: "Core-Parking deaktivieren",
@@ -7093,7 +7120,7 @@ const de: Strings = {
     disable_memory_integrity: {
       name: "Speicherintegrität (VBS) deaktivieren",
       description:
-        "Die Speicherintegrität führt Teile von Windows in einem virtualisierten Container aus, was bei jedem Kernel-Übergang CPU-Zeit kostet — der Grund, warum ihre Abschaltung der größte kostenlose Bildraten-Gewinn ist. Der Handel muss klar sein: Es ist eine echte Sicherheitsfunktion, und sie abzuschalten entfernt den Schutz vor bösartigen Treibern. Auf einem reinen Spiele-PC vertretbar, auf einem Arbeitsrechner nicht. Wirkt nach einem Neustart (HKLM, erfordert Administratorrechte).",
+        "Fordert die Deaktivierung der Speicherintegrität (HVCI) an. Wird sie umgesetzt, entfällt eine Schutzschicht des Kernels; andere VBS-Funktionen können aktiv bleiben. Die Auswirkungen auf die Leistung hängen von Hardware und Arbeitslast ab. Systemrichtlinien oder eine UEFI-Sperre können die Änderung verhindern. Starte neu und prüfe den Status in Windows-Sicherheit (HKLM, Administratorrechte erforderlich).",
     },
     disable_typing_personalization: {
       name: "Verhindern, dass Windows Ihren Schreibstil lernt",
@@ -7168,7 +7195,7 @@ const de: Strings = {
     hardware_gpu_scheduling: {
       name: "Hardwarebeschleunigte GPU-Planung",
       description:
-        "Aktiviert die hardwarebeschleunigte GPU-Planung (HAGS) von Windows, die in vielen Spielen die Eingabelatenz verringern kann (HKLM, Administratorrechte erforderlich).",
+        "Fordert hardwarebeschleunigte GPU-Planung (HAGS) an. Erfordert eine kompatible GPU, einen passenden Treiber und eine unterstützte Windows-Version. Leistung und Latenz können sich je nach Spiel verbessern, verschlechtern oder unverändert bleiben. Starte neu und prüfe die Verfügbarkeit in den Windows-Grafikeinstellungen (HKLM, Administratorrechte erforderlich).",
     },
     reduce_input_lag: {
       name: "Eingabeverzögerung reduzieren (Maus)",
@@ -7178,7 +7205,7 @@ const de: Strings = {
     turbo_boost: {
       name: "Prozessor-Turbo-Boost",
       description:
-        'Stellt den Leistungssteigerungsmodus des Prozessors auf „Aggressiv", um beim Spielen das Meiste aus Turbo Boost/Turbo Core herauszuholen (Administratorrechte erforderlich).',
+        "Setzt im aktuellen Energiesparplan den Boost-Modus im Netz- und Akkubetrieb auf Aggressiv und den minimalen Prozessorzustand im Netzbetrieb auf 100 %. Stromverbrauch und Wärme können steigen. CPU-, Firmware- und Temperaturgrenzen gelten weiterhin; höhere FPS sind nicht garantiert (Administratorrechte erforderlich).",
     },
     network_throttling_index: {
       name: "Netzwerk-Drosselung für Multimedia deaktivieren",
@@ -7280,7 +7307,7 @@ const pt: Strings = {
   appName: "PC Tweaker",
   appliedCount: "{applied} de {total} ajustes ativos",
   headerNote:
-    "Cada ajuste faz backup do valor original antes de ser aplicado. Ajustes que precisam de privilégios elevados pedem uma janela de UAC explícita, só para essa ação.",
+    "Revise cada alteração antes de aplicá-la. As ferramentas de restauração cobrem as configurações compatíveis; as operações de limpeza e reparo têm limites de recuperação diferentes.",
   advisor: {
     eyebrow: "Recomendado para o seu PC",
     applyButton: "Aplicar",
@@ -7339,6 +7366,8 @@ const pt: Strings = {
     },
   },
   tabs: {
+    groupWorkspace: "Área de trabalho",
+    overview: "Visão geral",
     groupMonitor: "Monitorar",
     groupOptimize: "Otimizar",
     groupManage: "Gerenciar",
@@ -7351,9 +7380,9 @@ const pt: Strings = {
     manutenzione: "Manutenção",
     gaming: "Jogos",
     startup: "Inicialização",
-    profiles: "Configurações",
+    profiles: "Perfis",
     pricing: "Planos e preços",
-    ledger: "Histórico",
+    ledger: "Histórico de alterações",
   },
   healthPanel: {
     title: "Saúde do PC",
@@ -7634,7 +7663,7 @@ const pt: Strings = {
     reassurance:
       "Cancele quando quiser. Toda alteração continua a um clique de ser desfeita, mesmo depois de cancelar.",
     freeFeatures: [
-      "{count} ajustes reais, cada um com backup e reversível",
+      "{count} ajustes do Windows para rever e aplicar",
       "Monitor do sistema em tempo real (CPU, memória, disco)",
       "Gerenciador de programas de inicialização",
       "Verificação de vazamento de senha",
@@ -7658,7 +7687,7 @@ const pt: Strings = {
     everythingInPro: "Tudo o que inclui o Pro",
     lifetimeExclusive: "Só no vitalício",
     lifetimeFeatures: [
-      "As novidades primeiro, antes de chegarem aos planos mensal e anual",
+      "Acesso antecipado a versões de pré-visualização selecionadas, quando disponíveis",
       "Todas as versões futuras incluídas, sem nunca renovar",
       "Apoio prioritário, respondido pelo programador",
     ],
@@ -7763,7 +7792,8 @@ const pt: Strings = {
   },
   turboBoost: {
     title: "Turbo Boost",
-    subtitle: "Leva seu processador ao desempenho máximo em jogos, com um toque.",
+    subtitle:
+      "Ajusta o modo boost e o estado mínimo do processador. O consumo e o calor podem aumentar; os resultados dependem da carga de trabalho.",
     startLabel: "INICIAR",
     stopLabel: "PARAR",
     activating: "Ativando o turbo...",
@@ -7785,14 +7815,14 @@ const pt: Strings = {
     ceilingUnlocked: "Teto de boost liberado",
   },
   profiles: {
-    title: "Configurações",
+    title: "Seus perfis",
     subtitle:
-      "Salve como você configurou este PC, reaplique com um clique, ou passe para outra pessoa.",
-    saveHeading: "Salvar a atual",
+      "Salve seus ajustes ativos em um perfil. Reutilize uma configuração ou exporte-a para outro PC.",
+    saveHeading: "Salvar os ajustes ativos",
     namePlaceholder: "Nome (ex.: Jogos)",
     saveButton: "Salvar",
-    savedHeading: "Salvas",
-    empty: "Nenhuma configuração salva ainda.",
+    savedHeading: "Perfis salvos",
+    empty: "Nenhum perfil salvo ainda.",
     tweakCount: "{count} ajustes",
     apply: "Aplicar",
     applying: "Aplicando...",
@@ -7989,7 +8019,7 @@ const pt: Strings = {
     confirmBody:
       "O PC Tweaker Uninstaller é um aplicativo separado da mesma suíte e entra com a mesma conta que este. O download pega o instalador (cerca de 4 MB) direto da versão no GitHub, para Windows 10 e 11 de 64 bits.",
     confirmUnsigned:
-      "Ainda não tem assinatura digital, então na primeira execução o Windows SmartScreen vai avisar. Clique em Mais informações e depois em Executar assim mesmo.",
+      "O PC Tweaker 1.9.0 é assinado digitalmente por Aurelio Avila. Verifique o editor e a assinatura nas propriedades do ficheiro. O SmartScreen ainda pode apresentar avisos; as versões anteriores podem não estar assinadas.",
     confirmDownload: "Baixar",
     confirmOpenPage: "Abrir a página",
     cancel: "Cancelar",
@@ -8056,7 +8086,7 @@ const pt: Strings = {
   x3d: {
     title: "Alinhador de die 3D V-Cache",
     subtitle:
-      "Em um Ryzen X3D de dois dies, só um carrega o cache empilhado. O Windows não sabe qual é e espalha um jogo pelos dois - todo acesso que cruza os dies paga uma viagem pelo Infinity Fabric.",
+      "Em processadores compatíveis com caches L3 de tamanhos diferentes entre chips, limita um processo em execução ao chip com mais cache. Esta escolha substitui o agendamento automático desse processo e pode melhorar ou piorar o desempenho.",
     cpuLabel: "Processador",
     readyHeadline: "Die com V-Cache encontrado: {cores} threads",
     readyBody: "Fixe um jogo neste die e cada uma de suas threads permanece onde o cache está.",
@@ -8253,6 +8283,7 @@ const pt: Strings = {
     off: "Desligada",
   },
   tweaks: {
+    ...POWER_TUNING_COPY.pt,
     disable_startup_delay: {
       name: "Remover o atraso de apps na inicialização",
       description:
@@ -8304,9 +8335,9 @@ const pt: Strings = {
         "Remove o botão de Widgets de clima/notícias, que carrega conteúdo em segundo plano mesmo quando você nunca o abre (HKCU, sem elevação necessária).",
     },
     network_latency: {
-      name: "Reduzir atraso de rede (algoritmo de Nagle)",
+      name: "Confirmações TCP e agrupamento de pacotes",
       description:
-        "O Windows retém pacotes pequenos por alguns milissegundos para agrupá-los, e ainda atrasa as confirmações por cima. Essa é uma boa troca para downloads e uma péssima para jogos, onde todo pacote é pequeno e atrasado equivale a perdido. Isto desativa ambos no seu adaptador ativo (HKLM, requer privilégios de administrador).",
+        "Define TcpAckFrequency e TCPNoDelay como 1 no primeiro adaptador que o Windows indica como ativo. Isto afeta o comportamento TCP; o tráfego UDP não muda. O suporte depende do Windows e das aplicações, pelo que não há garantia de menor latência nos jogos (HKLM, requer privilégios de administrador).",
     },
     disable_window_animations: {
       name: "Animações de janela instantâneas",
@@ -8361,7 +8392,7 @@ const pt: Strings = {
     global_timer_resolution: {
       name: "Resolução do temporizador global",
       description:
-        "Restaura o temporizador de alta resolução para todo o sistema. Desde o Windows 10 2004, um programa que pede um temporizador mais fino só o obtém para si próprio, por isso tudo o que não pede continua a correr nos ~15,6 ms predefinidos — incluindo as partes da cadeia de entrada e apresentação que o jogo não controla. Requer reinício (HKLM, direitos de administrador).",
+        "Define o valor de registo GlobalTimerResolutionRequests como 1. Esta operação não solicita nem verifica uma resolução específica do temporizador. O comportamento depende da versão do Windows; não há garantia de menor latência ou mais FPS. Requer reinício (HKLM, requer privilégios de administrador).",
     },
     disable_core_parking: {
       name: "Desativar o estacionamento de núcleos",
@@ -8371,7 +8402,7 @@ const pt: Strings = {
     disable_memory_integrity: {
       name: "Desativar Integridade de Memória (VBS)",
       description:
-        "A Integridade de Memória executa partes do Windows dentro de um contêiner virtualizado por hardware, o que custa CPU a cada transição de kernel — motivo pelo qual é o maior ganho gratuito de taxa de quadros na maioria das máquinas de jogo. Deixando claro o trade-off: é um recurso de segurança real, e desativá-lo remove proteção contra drivers maliciosos. Vale a pena em um PC dedicado a jogos, não em uma máquina de trabalho. Tem efeito após reiniciar (HKLM, requer privilégios de administrador).",
+        "Solicita a desativação da Integridade de Memória (HVCI). Se aplicada, remove uma camada de proteção do kernel; outras funções VBS podem continuar ativas. O efeito no desempenho depende do hardware e da carga de trabalho. Políticas do sistema ou um bloqueio UEFI podem impedir a alteração. Reinicie e verifique o estado na Segurança do Windows (HKLM, requer privilégios de administrador).",
     },
     disable_typing_personalization: {
       name: "Impedir o Windows de aprender como você digita",
@@ -8445,7 +8476,7 @@ const pt: Strings = {
     hardware_gpu_scheduling: {
       name: "Agendamento de GPU acelerado por hardware",
       description:
-        "Ativa o Agendamento de GPU acelerado por hardware (HAGS) do Windows, que pode reduzir a latência de entrada em muitos jogos (HKLM, requer privilégios de administrador).",
+        "Solicita o agendamento de GPU acelerado por hardware (HAGS). Requer GPU, controlador e versão do Windows compatíveis. O desempenho e a latência podem melhorar, piorar ou manter-se iguais conforme o jogo. Reinicie e verifique a disponibilidade nas definições de gráficos do Windows (HKLM, requer privilégios de administrador).",
     },
     reduce_input_lag: {
       name: "Reduzir latência de entrada (mouse)",
@@ -8455,7 +8486,7 @@ const pt: Strings = {
     turbo_boost: {
       name: "CPU Turbo Boost",
       description:
-        'Define o modo de boost de desempenho do processador como "Agressivo", extraindo o máximo do Turbo Boost/Turbo Core durante os jogos (requer privilégios de administrador).',
+        "Define o modo boost como Agressivo com alimentação elétrica e bateria, e o estado mínimo do processador para 100% com alimentação elétrica no plano de energia atual. O consumo e o calor podem aumentar. Mantêm-se os limites do processador, firmware e temperatura; não há garantia de mais FPS (requer privilégios de administrador).",
     },
     network_throttling_index: {
       name: "Desativar limitação de rede multimídia",

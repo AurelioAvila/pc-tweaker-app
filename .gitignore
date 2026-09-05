@@ -138,3 +138,6 @@ store-screenshots/
 
 # winget manifests: the copy that matters is the one in microsoft/winget-pkgs.
 manifests/
+
+scripts/.advisor-test-bundle.css
+scripts/.thermals-test-bundle.css

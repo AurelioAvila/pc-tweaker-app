@@ -1,3 +1,4 @@
+import { ToolHeader } from "./tool-section";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
@@ -50,7 +51,7 @@ export function MachineStrip({ s, profile }: { s: Strings; profile: SystemProfil
   if (facts.length === 0) return null;
 
   return (
-    <div className="mt-5 w-full">
+    <div className="tool-machine-strip mt-5 w-full">
       <p className="mb-2 text-center text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-3">
         {s.scan.thisPc}
       </p>
@@ -416,15 +417,23 @@ export function ScanPanel({
   const checkedCount = fixableIssues.filter((i) => checked[i.id]).length;
 
   return (
-    <div className="signal border-line bg-surface-1 relative mb-6 flex flex-col items-center overflow-hidden rounded-2xl border p-8">
-      <h2 className="text-ink text-lg font-semibold">{s.scan.title}</h2>
-      <p className="text-ink-3 mt-1 max-w-sm text-center text-sm">{s.scan.subtitle}</p>
+    <div
+      className="tool-panel tool-scan-panel"
+      data-phase={phase}
+      aria-busy={phase === "scanning" || fixing}
+    >
+      <ToolHeader
+        title={s.scan.title}
+        description={s.scan.subtitle}
+        icon={<MagnifierIcon className="h-5 w-5" />}
+      />
 
       {phase === "idle" && (
         <>
           <button
             onClick={startScan}
-            className="group relative mt-6 grid h-40 w-40 place-items-center rounded-full outline-none"
+            className="tool-scan-launch group relative grid h-32 w-32 place-items-center rounded-full outline-none"
+            aria-label={s.scan.startLabel}
           >
             {/* Slow-turning tick ring: the instrument is armed, not asleep.
                 The global reduced-motion kill-switch stops the rotation. */}
@@ -463,7 +472,7 @@ export function ScanPanel({
 
           <MachineStrip s={s} profile={profile} />
           {profile && (
-            <p className="mt-3 max-w-sm text-center text-[11.5px] leading-relaxed text-ink-3">
+            <p className="tool-scan-context text-[12px] leading-relaxed text-ink-3">
               {s.scan.tailoredNote}
             </p>
           )}
@@ -472,7 +481,7 @@ export function ScanPanel({
 
       {phase === "scanning" && (
         <>
-          <div className="relative mt-6 grid h-40 w-40 place-items-center">
+          <div className="tool-scan-progress relative grid h-32 w-32 place-items-center">
             {/* Radar sweep behind the ring: activity you can see at a glance,
                 without pretending to be data. */}
             <span
@@ -511,7 +520,7 @@ export function ScanPanel({
               <span className="type-data text-ink text-2xl font-black">{scanPct}%</span>
             </div>
           </div>
-          <ul className="mt-5 flex flex-col gap-1.5 text-sm">
+          <ul className="tool-scan-steps flex flex-col gap-2 text-sm" aria-live="polite">
             {steps.map((label, i) => (
               <li
                 key={label}
@@ -528,7 +537,7 @@ export function ScanPanel({
       )}
 
       {phase === "done" && (
-        <div className="animate-card mt-6 flex w-full flex-col items-center">
+        <div className="tool-scan-complete animate-card mt-4 flex w-full flex-col items-center">
           <span className="grid h-20 w-20 place-items-center rounded-full bg-emerald-400/15 text-4xl text-emerald-300 ring-4 ring-emerald-400/20">
             ✓
           </span>
@@ -715,7 +724,7 @@ export function ScanPanel({
                     {items.map((issue) => (
                       <label
                         key={issue.id}
-                        className="flex items-start gap-3 rounded-xl bg-surface-2 p-3 text-sm transition-colors hover:bg-surface-hover"
+                        className="tool-choice-row flex items-start gap-3 rounded-xl bg-surface-2 p-3 text-sm transition-colors hover:bg-surface-hover"
                       >
                         <input
                           type="checkbox"

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-secure-defrag"
+description = "Enables the secure_defrag command without any pre-configured scope."
+commands.allow = ["secure_defrag"]
+
+[[permission]]
+identifier = "deny-secure-defrag"
+description = "Denies the secure_defrag command without any pre-configured scope."
+commands.deny = ["secure_defrag"]

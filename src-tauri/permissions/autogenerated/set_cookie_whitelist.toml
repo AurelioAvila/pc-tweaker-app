@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-cookie-whitelist"
+description = "Enables the set_cookie_whitelist command without any pre-configured scope."
+commands.allow = ["set_cookie_whitelist"]
+
+[[permission]]
+identifier = "deny-set-cookie-whitelist"
+description = "Denies the set_cookie_whitelist command without any pre-configured scope."
+commands.deny = ["set_cookie_whitelist"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gpu-power-info"
+description = "Enables the gpu_power_info command without any pre-configured scope."
+commands.allow = ["gpu_power_info"]
+
+[[permission]]
+identifier = "deny-gpu-power-info"
+description = "Denies the gpu_power_info command without any pre-configured scope."
+commands.deny = ["gpu_power_info"]

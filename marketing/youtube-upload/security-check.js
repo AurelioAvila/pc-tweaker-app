@@ -12,6 +12,11 @@ const forbiddenName = /(^|\/)(client_secret[^/]*|token[^/]*\.json[^/]*|credentia
 const secretValue = /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|AIza[0-9A-Za-z_-]{30,}/;
 const violations = [];
 
+if (files.length === 0) {
+  console.error("Security check failed: no tracked files were found.");
+  process.exit(1);
+}
+
 for (const file of files) {
   if (forbiddenName.test(file)) violations.push(`${file}: credential-like file tracked`);
   const fullPath = path.join(root, ...file.split("/"));

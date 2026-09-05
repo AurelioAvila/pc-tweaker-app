@@ -3,6 +3,7 @@ if ($env:GITHUB_ACTIONS -ne 'true' -or -not $env:RUNNER_TEMP) {
   throw 'Installer execution is restricted to the disposable CI runner.'
 }
 if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+$') { throw 'Invalid release tag' }
+if ($env:INSTALLER_FORMAT -notin @('nsis','msi')) { throw 'Select one installer format per disposable runner' }
 $version = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
 if ($env:RELEASE_TAG -ne "v$version") { throw 'Candidate tag must match checked-out source' }
 $root = Join-Path $env:RUNNER_TEMP 'pct-installer-check'
@@ -50,6 +51,7 @@ $oldMsi = @(Get-ChildItem -LiteralPath $old -Filter '*.msi')
 $newMsi = @(Get-ChildItem -LiteralPath $candidate -Filter '*.msi')
 if (@($oldExe.Count,$newExe.Count,$oldMsi.Count,$newMsi.Count | Where-Object { $_ -ne 1 }).Count) { throw 'Expected one installer of each type' }
 
+if ($env:INSTALLER_FORMAT -eq 'nsis') {
 $nsisDirectory = Join-Path $root 'nsis-app'
 Run-Installer $oldExe[0].FullName @('/S',"/D=$nsisDirectory")
 Run-Installer $newExe[0].FullName @('/S',"/D=$nsisDirectory")
@@ -59,11 +61,18 @@ if ($uninstaller.Count -ne 1) { throw 'NSIS uninstaller missing' }
 Assert-Signed $uninstaller[0].FullName
 Run-Installer $uninstaller[0].FullName @('/S',"_?=$nsisDirectory")
 if (Test-Path -LiteralPath (Join-Path $nsisDirectory 'tauri-app.exe')) { throw 'NSIS uninstall left the application behind' }
+}
 
+if ($env:INSTALLER_FORMAT -eq 'msi') {
 $msiDirectory = Join-Path $root 'msi-app'
-Run-Installer 'msiexec.exe' @('/i',$oldMsi[0].FullName,'/qn','/norestart',"INSTALLDIR=$msiDirectory")
-Run-Installer 'msiexec.exe' @('/i',$newMsi[0].FullName,'/qn','/norestart',"INSTALLDIR=$msiDirectory")
+Run-Installer 'msiexec.exe' @('/i',$oldMsi[0].FullName,'/qn','/norestart',"INSTALLDIR=$msiDirectory",'/l*v',(Join-Path $root 'msi-baseline.log'))
+Run-Installer 'msiexec.exe' @('/i',$newMsi[0].FullName,'/qn','/norestart',"INSTALLDIR=$msiDirectory",'/l*v',(Join-Path $root 'msi-upgrade.log'))
+if (-not (Test-Path -LiteralPath (Join-Path $msiDirectory 'tauri-app.exe'))) {
+  Get-Content (Join-Path $root 'msi-upgrade.log') | Select-String 'INSTALLDIR|Return value 3'
+  throw 'MSI did not install to its requested directory'
+}
 Assert-Payload $msiDirectory $true
 Run-Installer 'msiexec.exe' @('/x',$newMsi[0].FullName,'/qn','/norestart')
 if (Test-Path -LiteralPath (Join-Path $msiDirectory 'tauri-app.exe')) { throw 'MSI uninstall left the application behind' }
-Write-Output 'PASS: signed EXE/MSI, installed application and shipped DLL, startup, signed NSIS uninstaller, upgrade from 1.8.0 and uninstall for both formats.'
+}
+Write-Output "PASS ($env:INSTALLER_FORMAT): signed installer and payload, startup, upgrade from 1.8.0 and uninstall."

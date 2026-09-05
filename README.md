@@ -121,6 +121,8 @@ Annual billing is approximately 51% below twelve monthly payments. Check the app
 
 ## Download integrity and code signing
 
+[Version-specific signing inventory and verification guide](https://github.com/AurelioAvila/.github/blob/master/CODE_SIGNING.md)
+
 **PC Tweaker 1.9.0 is code-signed.** Its Windows application and release installers identify **Aurelio Avila** as publisher, using Certum and a trusted timestamp.
 
 Windows Authenticode and Tauri update signatures have different roles. Authenticode identifies the Windows publisher and detects changes after signing. Tauri's update signature verifies update packages.

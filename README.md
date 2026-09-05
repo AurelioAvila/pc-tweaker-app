@@ -17,7 +17,14 @@
 
 **[Download Free for Windows](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest)** · **[Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87)** · [Website](https://pctweaker.app/) · [Support](https://pctweaker.app/support/) · [Release notes](CHANGELOG.md)
 
-## Install
+<p align="center">
+  <a href="#safe-download-via-winget"><img src="https://img.shields.io/badge/Safe_download-via_Winget-1793D1?style=for-the-badge" alt="Safe download via Winget"></a>
+  <a href="https://pctweaker.app/#tip"><img src="https://img.shields.io/badge/%E2%98%95_Buy_me_a_coffee-Support_development-FF5500?style=for-the-badge&labelColor=1c1c1c" alt="Buy me a coffee — support PC Tweaker development"></a>
+</p>
+
+<p align="center">Help fund the next release with a <a href="https://pctweaker.app/#tip"><strong>one-off coffee tip</strong></a>. No account required, no subscription.</p>
+
+## Safe download via Winget
 
 Download an installer from an official channel above, or use Windows Package Manager:
 
@@ -132,7 +139,6 @@ Existing feedback remains available at its original source:
 
 - [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml): editorial review 4.5/5; user rating 5.0/5 from 64 votes, checked September 5, 2026.
 - [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html): listing and reader reviews.
-- [SourceForge](https://sourceforge.net/projects/pc-tweaker/#reviews): fulxor wrote, “Helpful and well done, good job!” on August 6, 2026.
 
 The GitHub download badge counts release-asset requests, including assets used for updates. It does not count unique people, unique installations or every distribution channel. Third-party listings may describe older releases; this repository's [LICENSE](LICENSE) is the authoritative source for licensing terms.
 

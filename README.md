@@ -60,6 +60,8 @@ The catalog now contains **61 tweaks: 37 Free and 24 Pro**. These five additions
 
 These controls use Windows power APIs. Unsupported hybrid settings are refused before a system write. No FPS, DPC-latency or micro-stutter improvement is claimed without a workload-specific measurement.
 
+Restoration writes the previous effective AC value back to the original plan. If that value was inherited, it becomes an explicit plan value after restoration; later changes to Windows defaults will not automatically replace it. PC Tweaker does not change protected registry permissions or reset unrelated plan settings to remove that override.
+
 <p align="center"><img src="Screenshot/scan_screenshot.png" alt="PC Tweaker Scan interface; appearance and counts may differ by release" width="85%"></p>
 
 ## What changes on your system

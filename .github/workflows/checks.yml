@@ -7,7 +7,12 @@ on:
   push:
     branches: ["**"]
   pull_request:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Optional draft release tag for installer verification"
+        required: false
+        type: string
 
 # Least privilege (2026-08-08 security audit): this workflow only runs
 # checks/tests, it never writes to the repo. Safe to run on pull_request
@@ -18,6 +23,7 @@ permissions:
 
 jobs:
   checks:
+    if: ${{ !inputs.release_tag }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -56,3 +62,16 @@ jobs:
       - name: Backend unit tests
         working-directory: backend
         run: npm ci && npm test
+
+  installers:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Verify signed installers and upgrade from 1.8.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: ./scripts/verify-installers.ps1

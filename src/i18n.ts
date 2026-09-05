@@ -1,4 +1,3 @@
-import { POWER_TUNING_COPY } from "./power-tuning-copy";
 export type Lang = "it" | "en" | "fr" | "es" | "de" | "pt";
 
 export const LANGUAGES: { code: Lang; native: string }[] = [
@@ -1886,7 +1885,31 @@ const it: Strings = {
     off: "Disattivata",
   },
   tweaks: {
-    ...POWER_TUNING_COPY.it,
+    cpu_energy_performance: {
+      name: "Privilegia le prestazioni CPU con alimentazione di rete",
+      description:
+        "Imposta a 0 la preferenza energetica della CPU nel piano corrente quando il PC è collegato alla rete elettrica. Richiede CPPC autonomo; restano i limiti termici e del firmware. Può aumentare calore e consumi. Non modifica la batteria. Valuta il tuo carico prima di mantenerlo.",
+    },
+    pcie_link_power: {
+      name: "Mantieni attivi i collegamenti PCIe con alimentazione di rete",
+      description:
+        "Disattiva il risparmio energetico dei collegamenti PCIe nel piano corrente con alimentazione di rete. Serve a diagnosticare problemi durante le transizioni energetiche; non garantisce una latenza inferiore. Può aumentare i consumi a riposo. Non modifica la batteria.",
+    },
+    usb_suspend_diagnostics: {
+      name: "Diagnostica il risveglio USB con alimentazione di rete",
+      description:
+        "Disattiva la sospensione selettiva USB con alimentazione di rete per indagare problemi di risveglio o disconnessione. Windows consiglia di lasciarla normalmente attiva. Ripristina dopo la prova: i consumi a riposo possono aumentare. Non modifica la batteria.",
+    },
+    hybrid_short_threads: {
+      name: "Preferisci i core prestanti per i thread brevi",
+      description:
+        "Su CPU con classi di efficienza differenti, chiede a Windows di preferire i core prestanti per i thread brevi con alimentazione di rete. È una preferenza, non un'affinità fissa. Lo scheduling automatico può funzionare meglio. Non modifica la batteria.",
+    },
+    hybrid_long_threads: {
+      name: "Preferisci i core prestanti per i thread lunghi",
+      description:
+        "Su CPU con classi di efficienza differenti, chiede a Windows di preferire i core prestanti per i thread lunghi con alimentazione di rete. Gli altri core restano disponibili: non disattiva gli E-core. Confronta produttività e reattività. Non modifica la batteria.",
+    },
     disable_startup_delay: {
       name: "Rimuovi il ritardo dei programmi all'avvio",
       description:
@@ -3153,7 +3176,31 @@ const en: Strings = {
     off: "Off",
   },
   tweaks: {
-    ...POWER_TUNING_COPY.en,
+    cpu_energy_performance: {
+      name: "Favor CPU performance on mains power",
+      description:
+        "Sets CPU energy-performance preference to 0 in the current plan while plugged in. Requires autonomous CPPC support; firmware and thermal limits still apply. May increase heat and power use. Battery settings stay unchanged. Test your workload before keeping it.",
+    },
+    pcie_link_power: {
+      name: "Keep PCIe links active on mains power",
+      description:
+        "Disables PCIe link-state power saving in the current plan while plugged in. A troubleshooting option for devices affected by power transitions; latency improvements are not guaranteed. May increase idle power use. Battery settings stay unchanged.",
+    },
+    usb_suspend_diagnostics: {
+      name: "USB wake troubleshooting on mains power",
+      description:
+        "Disables USB selective suspend while plugged in to investigate device wake or disconnect problems. Windows recommends leaving it enabled normally. Restore after testing; idle power use may increase. Battery settings stay unchanged.",
+    },
+    hybrid_short_threads: {
+      name: "Prefer performance cores for short threads",
+      description:
+        "On a CPU with different efficiency classes, asks Windows to prefer performant cores for short-running threads while plugged in. This is a preference, not a fixed affinity mask. Automatic scheduling may work better. Battery settings stay unchanged.",
+    },
+    hybrid_long_threads: {
+      name: "Prefer performance cores for long threads",
+      description:
+        "On a CPU with different efficiency classes, asks Windows to prefer performant cores for long-running threads while plugged in. Other cores remain available; E-cores are not disabled. Compare throughput and responsiveness. Battery settings stay unchanged.",
+    },
     disable_startup_delay: {
       name: "Remove the startup app delay",
       description:
@@ -4436,7 +4483,31 @@ const fr: Strings = {
     off: "Désactivée",
   },
   tweaks: {
-    ...POWER_TUNING_COPY.fr,
+    cpu_energy_performance: {
+      name: "Privilégier les performances du processeur sur secteur",
+      description:
+        "Règle la préférence énergétique du processeur sur 0 dans le mode actif, sur secteur. Nécessite CPPC autonome ; les limites thermiques et du micrologiciel restent applicables. Peut augmenter la chaleur et la consommation. La batterie reste inchangée. Testez votre charge de travail.",
+    },
+    pcie_link_power: {
+      name: "Maintenir les liaisons PCIe actives sur secteur",
+      description:
+        "Désactive l'économie d'énergie des liaisons PCIe dans le mode actif, sur secteur. Option de diagnostic pour les transitions énergétiques ; aucune réduction de latence garantie. Peut augmenter la consommation au repos. La batterie reste inchangée.",
+    },
+    usb_suspend_diagnostics: {
+      name: "Diagnostiquer le réveil USB sur secteur",
+      description:
+        "Désactive la suspension sélective USB sur secteur pour rechercher des problèmes de réveil ou de déconnexion. Windows recommande de la laisser normalement activée. Restaurez après le test ; la consommation au repos peut augmenter. La batterie reste inchangée.",
+    },
+    hybrid_short_threads: {
+      name: "Préférer les cœurs performants pour les threads courts",
+      description:
+        "Sur un processeur avec plusieurs classes d'efficacité, demande à Windows de préférer les cœurs performants pour les threads courts sur secteur. C'est une préférence, pas une affinité fixe. La planification automatique peut être meilleure. La batterie reste inchangée.",
+    },
+    hybrid_long_threads: {
+      name: "Préférer les cœurs performants pour les threads longs",
+      description:
+        "Sur un processeur avec plusieurs classes d'efficacité, demande à Windows de préférer les cœurs performants pour les threads longs sur secteur. Les autres cœurs restent disponibles ; les E-cores ne sont pas désactivés. Comparez le débit et la réactivité. La batterie reste inchangée.",
+    },
     disable_startup_delay: {
       name: "Supprimer le délai des programmes au démarrage",
       description:
@@ -5715,7 +5786,31 @@ const es: Strings = {
     off: "Desactivada",
   },
   tweaks: {
-    ...POWER_TUNING_COPY.es,
+    cpu_energy_performance: {
+      name: "Priorizar el rendimiento de la CPU conectada a la corriente",
+      description:
+        "Establece en 0 la preferencia energética de la CPU en el plan actual al conectar el equipo. Requiere CPPC autónomo; siguen vigentes los límites térmicos y del firmware. Puede aumentar el calor y el consumo. No cambia la batería. Prueba tu carga de trabajo.",
+    },
+    pcie_link_power: {
+      name: "Mantener activos los enlaces PCIe con alimentación externa",
+      description:
+        "Desactiva el ahorro de energía de los enlaces PCIe en el plan actual al conectar el equipo. Opción de diagnóstico para transiciones energéticas; no garantiza menor latencia. Puede aumentar el consumo en reposo. No cambia la batería.",
+    },
+    usb_suspend_diagnostics: {
+      name: "Diagnosticar la reactivación USB con alimentación externa",
+      description:
+        "Desactiva la suspensión selectiva USB al conectar el equipo para investigar problemas de reactivación o desconexión. Windows recomienda mantenerla activada normalmente. Restaura después de la prueba; puede aumentar el consumo en reposo. No cambia la batería.",
+    },
+    hybrid_short_threads: {
+      name: "Preferir núcleos de rendimiento para hilos cortos",
+      description:
+        "En CPU con distintas clases de eficiencia, pide a Windows que prefiera núcleos de rendimiento para hilos cortos con alimentación externa. Es una preferencia, no una afinidad fija. La planificación automática puede funcionar mejor. No cambia la batería.",
+    },
+    hybrid_long_threads: {
+      name: "Preferir núcleos de rendimiento para hilos largos",
+      description:
+        "En CPU con distintas clases de eficiencia, pide a Windows que prefiera núcleos de rendimiento para hilos largos con alimentación externa. Los demás núcleos siguen disponibles; no desactiva los E-cores. Compara rendimiento y respuesta. No cambia la batería.",
+    },
     disable_startup_delay: {
       name: "Eliminar el retraso de los programas al inicio",
       description:
@@ -7001,7 +7096,31 @@ const de: Strings = {
     off: "Inaktiv",
   },
   tweaks: {
-    ...POWER_TUNING_COPY.de,
+    cpu_energy_performance: {
+      name: "CPU-Leistung im Netzbetrieb bevorzugen",
+      description:
+        "Setzt die Energie-Leistungspräferenz der CPU im aktuellen Energiesparplan bei Netzbetrieb auf 0. Autonomes CPPC ist erforderlich; Temperatur- und Firmwaregrenzen gelten weiterhin. Wärme und Stromverbrauch können steigen. Der Akkubetrieb bleibt unverändert. Mit eigener Arbeitslast testen.",
+    },
+    pcie_link_power: {
+      name: "PCIe-Verbindungen im Netzbetrieb aktiv halten",
+      description:
+        "Deaktiviert das Energiesparen der PCIe-Verbindungen im aktuellen Plan bei Netzbetrieb. Zur Diagnose von Problemen bei Energiezustandswechseln; geringere Latenz ist nicht garantiert. Kann den Leerlaufverbrauch erhöhen. Der Akkubetrieb bleibt unverändert.",
+    },
+    usb_suspend_diagnostics: {
+      name: "USB-Aufwachprobleme im Netzbetrieb untersuchen",
+      description:
+        "Deaktiviert selektives USB-Energiesparen bei Netzbetrieb zur Untersuchung von Aufwachproblemen oder Verbindungsabbrüchen. Windows empfiehlt, es normalerweise aktiviert zu lassen. Nach dem Test wiederherstellen; der Leerlaufverbrauch kann steigen. Der Akkubetrieb bleibt unverändert.",
+    },
+    hybrid_short_threads: {
+      name: "Leistungskerne für kurze Threads bevorzugen",
+      description:
+        "Bittet Windows auf CPUs mit unterschiedlichen Effizienzklassen, im Netzbetrieb Leistungskerne für kurze Threads zu bevorzugen. Eine Präferenz, keine feste Affinität. Automatische Planung kann besser funktionieren. Der Akkubetrieb bleibt unverändert.",
+    },
+    hybrid_long_threads: {
+      name: "Leistungskerne für lange Threads bevorzugen",
+      description:
+        "Bittet Windows auf CPUs mit unterschiedlichen Effizienzklassen, im Netzbetrieb Leistungskerne für lange Threads zu bevorzugen. Andere Kerne bleiben verfügbar; E-Kerne werden nicht deaktiviert. Durchsatz und Reaktionsfähigkeit vergleichen. Der Akkubetrieb bleibt unverändert.",
+    },
     disable_startup_delay: {
       name: "Verzögerung der Autostart-Programme entfernen",
       description:
@@ -8283,7 +8402,31 @@ const pt: Strings = {
     off: "Desligada",
   },
   tweaks: {
-    ...POWER_TUNING_COPY.pt,
+    cpu_energy_performance: {
+      name: "Priorizar o desempenho da CPU ligada à tomada",
+      description:
+        "Define como 0 a preferência energética da CPU no plano atual quando ligada à tomada. Requer CPPC autônomo; os limites térmicos e do firmware continuam válidos. Pode aumentar o calor e o consumo. Não altera a bateria. Teste sua carga de trabalho.",
+    },
+    pcie_link_power: {
+      name: "Manter as conexões PCIe ativas na tomada",
+      description:
+        "Desativa a economia de energia das conexões PCIe no plano atual quando ligado à tomada. Opção de diagnóstico para transições de energia; não garante menor latência. Pode aumentar o consumo em repouso. Não altera a bateria.",
+    },
+    usb_suspend_diagnostics: {
+      name: "Diagnosticar a reativação USB na tomada",
+      description:
+        "Desativa a suspensão seletiva USB na tomada para investigar problemas de reativação ou desconexão. O Windows recomenda mantê-la ativada normalmente. Restaure após o teste; o consumo em repouso pode aumentar. Não altera a bateria.",
+    },
+    hybrid_short_threads: {
+      name: "Preferir núcleos de desempenho para threads curtas",
+      description:
+        "Em CPUs com diferentes classes de eficiência, solicita ao Windows que prefira núcleos de desempenho para threads curtas na tomada. É uma preferência, não uma afinidade fixa. O agendamento automático pode funcionar melhor. Não altera a bateria.",
+    },
+    hybrid_long_threads: {
+      name: "Preferir núcleos de desempenho para threads longas",
+      description:
+        "Em CPUs com diferentes classes de eficiência, solicita ao Windows que prefira núcleos de desempenho para threads longas na tomada. Os outros núcleos continuam disponíveis; não desativa os E-cores. Compare rendimento e resposta. Não altera a bateria.",
+    },
     disable_startup_delay: {
       name: "Remover o atraso de apps na inicialização",
       description:

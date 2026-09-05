@@ -25,13 +25,22 @@ function Run-Installer([string]$Path, [string[]]$Arguments) {
   $process = Start-Process -FilePath $Path -ArgumentList $Arguments -WindowStyle Hidden -Wait -PassThru
   if ($process.ExitCode -notin @(0,3010)) { throw "Installer returned $($process.ExitCode): $Path" }
 }
-function Assert-Payload([string]$Directory) {
+function Assert-Payload([string]$Directory, [bool]$RequireLibrary = $false) {
   $exe = Join-Path $Directory 'tauri-app.exe'
   Assert-Signed $exe
   $actual = (Get-Item -LiteralPath $exe).VersionInfo.ProductVersion
   if ($actual -notlike "$version*") { throw "Wrong installed version: $actual" }
   $dll = Join-Path $Directory 'tauri_app_lib.dll'
-  Assert-Signed $dll
+  # Rust links the application library into the executable. WiX also ships
+  # the cdylib build output; NSIS deliberately includes only the executable.
+  if ($RequireLibrary -or (Test-Path -LiteralPath $dll)) { Assert-Signed $dll }
+  $app = Start-Process -FilePath $exe -WindowStyle Hidden -PassThru
+  try {
+    if ($app.WaitForExit(5000)) { throw "Installed application exited during startup: $($app.ExitCode)" }
+    Write-Output 'Installed application remained running through startup.'
+  } finally {
+    if (-not $app.HasExited) { Stop-Process -Id $app.Id -Force }
+  }
 }
 
 foreach ($file in Get-ChildItem -LiteralPath $candidate -File) { Assert-Signed $file.FullName }
@@ -54,7 +63,7 @@ if (Test-Path -LiteralPath (Join-Path $nsisDirectory 'tauri-app.exe')) { throw '
 $msiDirectory = Join-Path $root 'msi-app'
 Run-Installer 'msiexec.exe' @('/i',$oldMsi[0].FullName,'/qn','/norestart',"INSTALLDIR=$msiDirectory")
 Run-Installer 'msiexec.exe' @('/i',$newMsi[0].FullName,'/qn','/norestart',"INSTALLDIR=$msiDirectory")
-Assert-Payload $msiDirectory
+Assert-Payload $msiDirectory $true
 Run-Installer 'msiexec.exe' @('/x',$newMsi[0].FullName,'/qn','/norestart')
 if (Test-Path -LiteralPath (Join-Path $msiDirectory 'tauri-app.exe')) { throw 'MSI uninstall left the application behind' }
-Write-Output 'PASS: signed EXE/MSI, installed application and DLL, signed NSIS uninstaller, upgrade from 1.8.0 and uninstall for both formats.'
+Write-Output 'PASS: signed EXE/MSI, installed application and shipped DLL, startup, signed NSIS uninstaller, upgrade from 1.8.0 and uninstall for both formats.'

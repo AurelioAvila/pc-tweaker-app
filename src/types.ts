@@ -18,7 +18,15 @@ export type Category = "performance" | "privacy" | "ui" | "manutenzione" | "gami
 
 /** Navigable sections: the tweak categories plus the two standalone screens. */
 export type Section =
-  Category | "scan" | "health" | "hardware" | "startup" | "profiles" | "pricing" | "ledger";
+  | Category
+  | "overview"
+  | "scan"
+  | "health"
+  | "hardware"
+  | "startup"
+  | "profiles"
+  | "pricing"
+  | "ledger";
 
 export type TweakInfo = {
   id: string;

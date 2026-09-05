@@ -34,7 +34,8 @@ use base64::{engine::general_purpose::STANDARD, Engine as _};
 use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::OnceLock;
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 /// Public half of a key pair dedicated to license signing — separate from
 /// the Tauri updater's signing key, so a compromise of one never implicates
@@ -51,6 +52,7 @@ const PRODUCT_ID: &str = "pctweaker";
 /// to cover a weekend or a short trip without connectivity; short enough
 /// that a cancelled subscription doesn't keep working offline indefinitely.
 const GRACE_PERIOD_SECS: u64 = 3 * 24 * 60 * 60;
+const MAX_CLOCK_SKEW_SECS: u64 = 5 * 60;
 
 /// Field names must match `backend/src/license.ts`'s `LicensePayload` type
 /// exactly, camelCase included — this is parsed directly from the JSON
@@ -138,6 +140,16 @@ fn verify_for_pc_tweaker(
     require_pc_tweaker_product(verify(payload_json, signature_b64)?)
 }
 
+fn verified_fresh_response(
+    response: &SignedLicenseResponse,
+    public_key_b64: &str,
+) -> Option<LicensePayload> {
+    let verified =
+        verify_with_public_key(&response.payload_json, &response.signature, public_key_b64).ok()?;
+    let payload = require_pc_tweaker_product(verified).ok()?;
+    is_fresh(&payload).then_some(payload)
+}
+
 fn require_pc_tweaker_product(payload: LicensePayload) -> Result<LicensePayload, VerifyError> {
     if !is_for_pc_tweaker(&payload) {
         return Err(VerifyError::WrongProduct);
@@ -161,7 +173,21 @@ fn now_secs() -> u64 {
 /// three weeks ago proves the server said something true three weeks ago,
 /// not that it is still true now.
 fn is_fresh(payload: &LicensePayload) -> bool {
-    now_secs().saturating_sub(payload.issued_at) <= GRACE_PERIOD_SECS
+    // Once the process is running, moving the wall clock backwards must not
+    // extend the offline window. A persisted, device-bound clock anchor is a
+    // separate license-format migration; this does not claim to prevent an
+    // administrator from tampering with time across restarts.
+    static ANCHOR: OnceLock<(u64, Instant)> = OnceLock::new();
+    let wall_now = now_secs();
+    let (anchor_time, anchor_tick) = ANCHOR.get_or_init(|| (wall_now, Instant::now()));
+    let effective_now = wall_now.max(anchor_time.saturating_add(anchor_tick.elapsed().as_secs()));
+    is_fresh_at(payload, effective_now)
+}
+
+fn is_fresh_at(payload: &LicensePayload, now: u64) -> bool {
+    payload.issued_at > 0
+        && payload.issued_at <= now.saturating_add(MAX_CLOCK_SKEW_SECS)
+        && now.saturating_sub(payload.issued_at) <= GRACE_PERIOD_SECS
 }
 
 /// Persists the raw, still-signed response to the app data directory so it
@@ -219,13 +245,15 @@ impl LicenseStore {
     /// that was validly signed but says `is_pro: false` — collapses to the
     /// same `false`, on purpose. There is no partial-credit path here.
     pub fn is_pro_and_fresh(&self) -> bool {
-        let Some(cached) = self.load() else {
-            return false;
-        };
-        let Ok(payload) = verify_for_pc_tweaker(&cached.payload_json, &cached.signature) else {
-            return false;
-        };
-        payload.is_pro && is_fresh(&payload)
+        self.verified_fresh_payload()
+            .is_some_and(|payload| payload.is_pro)
+    }
+
+    /// Native feature gates may inspect the plan only after this accessor
+    /// verifies the signature, product binding, and existing offline window.
+    /// A plan supplied by the renderer never participates in entitlement.
+    pub fn verified_fresh_payload(&self) -> Option<LicensePayload> {
+        verified_fresh_response(&self.load()?, PUBLIC_KEY_B64)
     }
 }
 
@@ -236,8 +264,11 @@ impl LicenseStore {
 /// "not Pro" until the next successful fetch.
 #[tauri::command]
 pub fn save_license(app: tauri::AppHandle, response: SignedLicenseResponse) -> Result<(), String> {
-    verify_for_pc_tweaker(&response.payload_json, &response.signature)
+    let payload = verify_for_pc_tweaker(&response.payload_json, &response.signature)
         .map_err(|e| format!("license did not verify: {:?}", e))?;
+    if !is_fresh(&payload) {
+        return Err("license is expired or its issue time is ahead of this PC's clock".into());
+    }
     let store = LicenseStore::new(crate::store_for_dir(&app)?);
     store.save(&response).map_err(|e| e.to_string())
 }
@@ -321,6 +352,70 @@ mod tests {
             verify_with_public_key(&json, &signature, &public_key),
             Ok(payload)
         );
+    }
+
+    #[test]
+    fn a_fresh_signed_lifetime_payload_exposes_its_plan_only_after_verification() {
+        let payload = LicensePayload {
+            user_id: "fixture-only".into(),
+            is_pro: true,
+            plan: Some("lifetime".into()),
+            product: Some(PRODUCT_ID.into()),
+            issued_at: now_secs(),
+        };
+        let (payload_json, signature, public_key) = sign_test_payload(&payload);
+        let response = SignedLicenseResponse {
+            payload_json,
+            signature,
+        };
+        assert_eq!(
+            verified_fresh_response(&response, &public_key),
+            Some(payload)
+        );
+        // The same fixture cannot pass the production key used by the store.
+        let directory = temp_dir("lifetime-accessor");
+        let store = LicenseStore::new(directory);
+        store.save(&response).unwrap();
+        assert_eq!(store.verified_fresh_payload(), None);
+        let mut tampered = response;
+        tampered.payload_json.push(' ');
+        assert_eq!(verified_fresh_response(&tampered, &public_key), None);
+    }
+
+    #[test]
+    fn the_verified_payload_accessor_rejects_wrong_product_expired_and_future_signatures() {
+        let mut payload = LicensePayload {
+            user_id: "fixture-only".into(),
+            is_pro: true,
+            plan: Some("lifetime".into()),
+            product: Some("another-product".into()),
+            issued_at: now_secs(),
+        };
+        for (product, issued_at) in [
+            ("another-product", now_secs()),
+            (
+                PRODUCT_ID,
+                now_secs().saturating_sub(GRACE_PERIOD_SECS + 3600),
+            ),
+            (
+                PRODUCT_ID,
+                now_secs().saturating_add(MAX_CLOCK_SKEW_SECS + 3600),
+            ),
+        ] {
+            payload.product = Some(product.into());
+            payload.issued_at = issued_at;
+            let (payload_json, signature, public_key) = sign_test_payload(&payload);
+            assert_eq!(
+                verified_fresh_response(
+                    &SignedLicenseResponse {
+                        payload_json,
+                        signature
+                    },
+                    &public_key
+                ),
+                None
+            );
+        }
     }
 
     #[test]
@@ -409,6 +504,29 @@ mod tests {
             issued_at: now_secs().saturating_sub(GRACE_PERIOD_SECS + 3600),
         };
         assert!(!is_fresh(&stale));
+    }
+
+    #[test]
+    fn signed_issue_times_respect_clock_skew_and_expiry_boundaries() {
+        let now = 1_800_000_000;
+        let mut payload = LicensePayload {
+            user_id: "clock-test".into(),
+            is_pro: true,
+            plan: Some("monthly".into()),
+            product: Some(PRODUCT_ID.into()),
+            issued_at: now,
+        };
+        assert!(is_fresh_at(&payload, now));
+        assert!(is_fresh_at(&payload, now + GRACE_PERIOD_SECS));
+        assert!(!is_fresh_at(&payload, now + GRACE_PERIOD_SECS + 1));
+        payload.issued_at = now + MAX_CLOCK_SKEW_SECS;
+        assert!(is_fresh_at(&payload, now));
+        payload.issued_at += 1;
+        assert!(!is_fresh_at(&payload, now));
+        payload.issued_at = u64::MAX;
+        assert!(!is_fresh_at(&payload, now));
+        payload.issued_at = 0;
+        assert!(!is_fresh_at(&payload, now));
     }
 
     #[test]

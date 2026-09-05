@@ -53,10 +53,27 @@ async function initSchema(): Promise<void> {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT;`);
   // When the current billing period runs out. Subscription events refresh it
   // on every renewal, so Pro lapses on its own if we ever stop hearing from
-  // Stripe — see entitlement.ts for why that matters. NULL means "no expiry":
-  // either a lifetime purchase or a subscriber from before this column
-  // existed, both of which entitlement.ts treats as still entitled.
+  // Stripe. A NULL expiry grants access only for lifetime or an existing
+  // account explicitly marked by the compatibility migration below.
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pro_expires_at TIMESTAMPTZ;`);
+  // Bind recurring access to its source. A late event for an older purchase
+  // must not replace or revoke the subscription currently granting access.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_created_at TIMESTAMPTZ;`);
+  await migrateLegacyProGrants(pool);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS billing_receipts (
+      receipt_key TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      payload JSONB NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      locked_until TIMESTAMPTZ,
+      lock_token TEXT,
+      delivered_at TIMESTAMPTZ
+    );
+  `);
+
   await pool.query(
     `CREATE UNIQUE INDEX IF NOT EXISTS users_stripe_customer_id_idx ON users (stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;`,
   );
@@ -174,6 +191,19 @@ async function initSchema(): Promise<void> {
 
 const isConfigured = Boolean(pool);
 
+/** Preserve only grants that existed before this migration. This is also
+ * independently executable so its legacy-data behavior can be verified
+ * without replaying every unrelated CREATE TABLE statement. */
+async function migrateLegacyProGrants(database: Pick<Pool, "query">): Promise<void> {
+  await database.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS legacy_pro_grant BOOLEAN;`);
+  await database.query(`
+    UPDATE users SET legacy_pro_grant = (is_pro = TRUE AND pro_expires_at IS NULL)
+    WHERE legacy_pro_grant IS NULL;
+  `);
+  await database.query(`ALTER TABLE users ALTER COLUMN legacy_pro_grant SET DEFAULT FALSE;`);
+  await database.query(`ALTER TABLE users ALTER COLUMN legacy_pro_grant SET NOT NULL;`);
+}
+
 /**
  * Every caller already checks `isConfigured` before touching the database
  * (returning a 503 otherwise) — this just gives TypeScript the same
@@ -189,4 +219,4 @@ function getPool(): Pool {
   return pool;
 }
 
-export { pool, getPool, initSchema, isConfigured };
+export { pool, getPool, initSchema, isConfigured, migrateLegacyProGrants };

@@ -1,13 +1,13 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "hud",
-  "description": "Capability for the in-game HUD overlay window. Deliberately minimal: the overlay reads telemetry and can move and size itself, so it gets the core IPC surface plus start-dragging and set-size and nothing else — no dialog, no opener, no other window controls. It cannot start a cleanup, apply a tweak, or open a URL even if its page were somehow replaced.",
-  "windows": [
-    "hud"
-  ],
+  "description": "The HUD can read its telemetry and compact state, receive events, and move or resize its own window. System changes, account writes, cleanup and updater commands belong to the main window.",
+  "windows": ["hud"],
   "permissions": [
     "core:default",
     "core:window:allow-start-dragging",
-    "core:window:allow-set-size"
+    "core:window:allow-set-size",
+    "allow-hud-snapshot",
+    "allow-hud-is-compact"
   ]
 }

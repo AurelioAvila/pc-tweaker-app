@@ -138,7 +138,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "hardware_gpu_scheduling",
             name: "Hardware-accelerated GPU scheduling",
-            description: "Enables Windows Hardware-accelerated GPU Scheduling (HAGS), which can lower input latency in many games (HKLM, requires administrator rights).",
+            description: "Requests hardware-accelerated GPU scheduling (HAGS). Requires a compatible GPU, driver and Windows version. Performance and latency can improve, worsen or remain unchanged depending on the game. Restart and verify availability in Windows Graphics settings (HKLM, administrator rights required).",
             category: Category::Gaming,
             hive: Hive::Hklm,
             key_path: r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers",
@@ -524,7 +524,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "global_timer_resolution",
             name: "Global timer resolution",
-            description: "Restores the system-wide high-resolution timer. Since Windows 10 2004 a program asking for a finer timer only gets it for itself, so anything that did not ask keeps running against the ~15.6 ms default — including the parts of the input and present path a game does not control. This puts the whole system back on the fine timer while it is on (requires administrator rights, and a restart to take effect).",
+            description: "Sets the GlobalTimerResolutionRequests registry flag to 1. This does not itself request or verify a specific timer resolution. Behavior depends on the Windows version; lower latency or higher FPS is not guaranteed. Restart required (HKLM, administrator rights required).",
             category: Category::Gaming,
             hive: Hive::Hklm,
             key_path: r"SYSTEM\CurrentControlSet\Control\Session Manager\kernel",
@@ -536,7 +536,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_memory_integrity",
             name: "Disable Memory Integrity (VBS)",
-            description: "Memory Integrity runs parts of Windows inside a hardware-virtualised container, which costs CPU on every kernel transition — the reason it is the single biggest free frame-rate gain on most gaming machines. Be clear about the trade: it is a real security feature, and turning it off removes protection against malicious drivers. Worth it on a dedicated gaming PC, not on a work machine. Takes effect after a restart (HKLM, requires administrator rights).",
+            description: "Requests that Memory Integrity (HVCI) be disabled. If applied, this removes a layer of kernel protection; other VBS features may remain active. Performance impact varies by hardware and workload. Policy or UEFI lock may prevent the change. Restart and verify the status in Windows Security (HKLM, administrator rights required).",
             category: Category::Gaming,
             hive: Hive::Hklm,
             key_path: r"SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity",
@@ -581,24 +581,19 @@ pub mod windows_impl {
 
     /// Reads a DWORD value without changing anything. `None` means it is unset.
     pub fn read_dword(hive: Hive, path: &str, name: &str) -> std::io::Result<Option<u32>> {
-        let root = root(&hive);
-        match root.open_subkey(path) {
-            Ok(key) => match key.get_value::<u32, _>(name) {
-                Ok(v) => Ok(Some(v)),
-                Err(_) => Ok(None),
-            },
-            Err(_) => Ok(None),
+        match read_value(hive, path, name, &RegValue::Dword(0))? {
+            Some(RegValue::Dword(value)) => Ok(Some(value)),
+            None => Ok(None),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "expected a DWORD registry value",
+            )),
         }
     }
 
     /// Writes a DWORD value, creating the key if needed.
     pub fn write_dword(hive: Hive, path: &str, name: &str, value: u32) -> Result<(), String> {
-        let root = root(&hive);
-        let (key, _) = root
-            .create_subkey(path)
-            .map_err(|e| format!("could not open {}: {}", path, e))?;
-        key.set_value(name, &value)
-            .map_err(|e| format!("could not write {}: {}", name, e))
+        write_value(hive, path, name, &RegValue::Dword(value))
     }
 
     /// Reads a registry value, trying the same type as `kind_hint` (Dword or Str).
@@ -606,15 +601,30 @@ pub mod windows_impl {
         hive: Hive,
         path: &str,
         name: &str,
-        kind_hint: &RegValue,
+        _kind_hint: &RegValue,
     ) -> std::io::Result<Option<RegValue>> {
         let root = root(&hive);
-        let Ok(key) = root.open_subkey(path) else {
-            return Ok(None);
+        let key = match root.open_subkey(path) {
+            Ok(key) => key,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(e) => return Err(e),
         };
-        match kind_hint {
-            RegValue::Dword(_) => Ok(key.get_value::<u32, _>(name).ok().map(RegValue::Dword)),
-            RegValue::Str(_) => Ok(key.get_value::<String, _>(name).ok().map(RegValue::Str)),
+        let value = match key.get_raw_value(name) {
+            Ok(value) => value,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(e) => return Err(e),
+        };
+        match value.vtype {
+            winreg::enums::REG_DWORD => key
+                .get_value::<u32, _>(name)
+                .map(|v| Some(RegValue::Dword(v))),
+            winreg::enums::REG_SZ => key
+                .get_value::<String, _>(name)
+                .map(|v| Some(RegValue::Str(v))),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "unsupported original registry type; the value was not changed",
+            )),
         }
     }
 
@@ -628,25 +638,43 @@ pub mod windows_impl {
             RegValue::Dword(v) => key.set_value(name, v),
             RegValue::Str(s) => key.set_value(name, s),
         }
-        .map_err(|e| format!("could not write {}: {}", name, e))
+        .map_err(|e| format!("could not write {}: {}", name, e))?;
+        if read_value(hive, path, name, value).map_err(|e| e.to_string())? != Some(value.clone()) {
+            return Err(format!(
+                "registry verification failed for {name}; the rollback snapshot was retained"
+            ));
+        }
+        Ok(())
     }
 
     /// Restores (or removes) a value from a previously taken snapshot.
     pub fn restore_value(snapshot: &RegistrySnapshot) -> Result<(), String> {
-        let hive = hive_from_str(&snapshot.hive);
-        let root = root(&hive);
-        let (key, _) = root
-            .create_subkey(&snapshot.path)
-            .map_err(|e| format!("could not open {}: {}", snapshot.path, e))?;
+        let hive = match snapshot.hive.as_str() {
+            value if value.eq_ignore_ascii_case("HKCU") => Hive::Hkcu,
+            value if value.eq_ignore_ascii_case("HKLM") => Hive::Hklm,
+            _ => return Err("invalid registry hive in snapshot".into()),
+        };
         match &snapshot.original_value {
-            Some(RegValue::Dword(v)) => key
-                .set_value(&snapshot.name, v)
-                .map_err(|e| format!("could not restore {}: {}", snapshot.name, e))?,
-            Some(RegValue::Str(s)) => key
-                .set_value(&snapshot.name, s)
-                .map_err(|e| format!("could not restore {}: {}", snapshot.name, e))?,
+            Some(value) => write_value(hive, &snapshot.path, &snapshot.name, value)?,
             None => {
-                let _ = key.delete_value(&snapshot.name);
+                use winreg::enums::{KEY_QUERY_VALUE, KEY_SET_VALUE};
+                let key = match root(&hive)
+                    .open_subkey_with_flags(&snapshot.path, KEY_QUERY_VALUE | KEY_SET_VALUE)
+                {
+                    Ok(key) => key,
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+                    Err(e) => return Err(format!("could not open rollback target: {e}")),
+                };
+                match key.delete_value(&snapshot.name) {
+                    Ok(()) => {}
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(e) => return Err(format!("could not remove rollback target: {e}")),
+                }
+                match key.get_raw_value(&snapshot.name) {
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(e) => return Err(format!("could not verify rollback target: {e}")),
+                    Ok(_) => return Err("registry value still exists after rollback".into()),
+                }
             }
         }
         Ok(())
@@ -660,10 +688,9 @@ pub mod windows_impl {
 
         /// Snapshots the current value, then writes `on_value`.
         pub fn apply(&self, store: &RollbackStore) -> Result<(), String> {
+            let mut transaction = store.transaction()?;
             let original = self.read_current().map_err(|e| e.to_string())?;
-            write_value(self.hive, self.key_path, self.value_name, &self.on_value)?;
-
-            store
+            transaction
                 .save_entry(
                     self.id,
                     SnapshotEntry::Registry(RegistrySnapshot {
@@ -674,22 +701,19 @@ pub mod windows_impl {
                     }),
                 )
                 .map_err(|e| e.to_string())?;
-
-            Ok(())
+            write_value(self.hive, self.key_path, self.value_name, &self.on_value)
         }
 
         /// Restores the value captured before `apply`, or removes it if it
         /// did not exist beforehand.
         pub fn rollback(&self, store: &RollbackStore) -> Result<(), String> {
-            let entry = store.take_entry(self.id).ok_or_else(|| {
-                "no snapshot saved: the tweak does not appear to be applied".to_string()
-            })?;
+            store.restore_entry(self.id, |entry| {
+                let SnapshotEntry::Registry(snapshot) = entry else {
+                    return Err("unexpected snapshot type for a registry tweak".to_string());
+                };
 
-            let SnapshotEntry::Registry(snapshot) = entry else {
-                return Err("unexpected snapshot type for a registry tweak".to_string());
-            };
-
-            restore_value(&snapshot)
+                restore_value(&snapshot)
+            })
         }
     }
 }

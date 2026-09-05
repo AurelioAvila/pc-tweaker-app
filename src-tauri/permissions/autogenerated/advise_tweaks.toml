@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-advise-tweaks"
+description = "Enables the advise_tweaks command without any pre-configured scope."
+commands.allow = ["advise_tweaks"]
+
+[[permission]]
+identifier = "deny-advise-tweaks"
+description = "Denies the advise_tweaks command without any pre-configured scope."
+commands.deny = ["advise_tweaks"]

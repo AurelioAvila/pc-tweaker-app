@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-list-audit-log"
+description = "Enables the list_audit_log command without any pre-configured scope."
+commands.allow = ["list_audit_log"]
+
+[[permission]]
+identifier = "deny-list-audit-log"
+description = "Denies the list_audit_log command without any pre-configured scope."
+commands.deny = ["list_audit_log"]

@@ -1,154 +1,26 @@
-# Cutting a release
+# Releasing PC Tweaker
 
-Releases are built and signed **locally**, not in CI — see the note at the
-bottom. This is the full routine, in order. Skipping a step here is how
-0.4.3 nearly shipped unsigned and how winget sat three versions behind.
+Official releases are built locally and published by Aurelio Avila. CI verification artifacts are unsigned and must not be distributed as official releases.
 
-1. **Bump the version** in three places, all of which must agree:
-   - `package.json`
-   - `src-tauri/tauri.conf.json`
-   - `src-tauri/Cargo.toml`
+1. Save a source checkpoint. Update package.json, its lockfile, src-tauri/Cargo.toml, its lockfile and src-tauri/tauri.conf.json to the same new version. Update catalog counts, translated copy and release notes when behavior changes.
+2. Run TypeScript, translation coverage and quality, lint, formatting, frontend tests, backend tests and the site build. Run the complete Rust suite on the disposable Windows CI runner. Run the explicitly ignored native power test there as well: it creates and deletes an inactive plan and verifies AC restoration, unchanged DC policy and unchanged active plan.
+3. Test paid-event handling against an isolated PostgreSQL schema, with synthetic events and a fake email provider. Verify live Stripe prices and endpoint configuration separately. Never send synthetic paid events to the production webhook or create a real charge for an automated test.
+4. Build the exact tested commit locally. Supply the Tauri updater private key through the process environment, never through source or logs. Load the Windows code-signing certificate through its configured provider. Apply the signing configuration during Tauri bundling so executable metadata changes happen before the final Authenticode signature.
+5. Verify Authenticode signatures and trusted timestamps on the application, shipped DLLs and both installers. Inspect the bundled application and uninstaller, not just the outer setup file. Confirm the publisher is Aurelio Avila. Verify updater signatures against the public key compiled into the app; the .sig file's presence alone is insufficient.
+6. Produce latest.json using scripts/make-latest-json.mjs with the release notes file. Check its exact versioned URL and signature. Record SHA-256 hashes of every public artifact. Never replace an already published version with different installer bytes.
+7. Deploy the tested backend and website. For a Lifetime campaign, set LIFETIME_CAMPAIGN_ID, LIFETIME_CAMPAIGN_STARTS_AT and LIFETIME_CAMPAIGN_ENDS_AT together. Use a single absolute UTC interval of exactly 48 hours. Keep expired campaign values in place; removing all three restores ordinary Lifetime availability. Confirm the offer endpoint and real checkout before announcing the campaign.
+8. Publish the new Git tag and GitHub release with signed EXE, MSI, updater signatures, latest.json and checksums. Existing release workflows publish stable download aliases and submit the Winget update. Do not open a duplicate Winget PR.
+9. Download the public artifacts and compare hashes with the verified local files. Verify stable aliases, updater manifest, website and backend. Check the Winget workflow and upstream PR; submission is not the same as catalog availability. State the actual PR status.
 
-   (`site/src/pages/Support.tsx` has a placeholder example string with the
-   version baked in too — cosmetic, but keep it current.)
+## Recovery and commerce checks
 
-2. **Run the full check suite and read the real exit code**:
+- Failed setting writes retain recovery records. Unsupported targets and overlapping or ambiguous legacy records must fail before mutation.
+- New DNS snapshots preserve automatic versus static configuration. Old records without that information require manual review.
+- New power controls preserve the original plan and AC override. They leave battery policy unchanged and must not recreate a deleted plan.
+- Duplicate and out-of-order subscription events must not overwrite Lifetime. License delivery depends on a verified paid event and the account's signed entitlement.
+- Purchase emails enter a durable queue before webhook acknowledgment. Provider outages are retried. Delivery is at-least-once: a crash after provider acceptance can duplicate a receipt, but cannot duplicate a charge.
+- Retain prior source and signed artifacts for rollback. Do not restore an old database dump over new purchases.
 
-   ```bash
-   npm run check
-   echo "EXIT=$?"
-   ```
+## Trust wording
 
-   Never pipe this through `grep`/`head`/etc. and read *that* command's exit
-   code — that was the exact mistake that let 0.4.3 ship with unaccented
-   Italian/French/Spanish strings. If you must filter the output, redirect
-   to a file first and check `$?` on the un-piped command, then read the
-   file separately.
-
-3. **Build, signed**:
-
-   ```bash
-   export TAURI_SIGNING_PRIVATE_KEY="$(cat ~/.tauri/pctweaker.key)"
-   export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=""
-   npm run tauri build
-   ```
-
-   `tauri build` prints "A public key has been found, but no private key"
-   and still **exits 0** if the key didn't load — the exit code alone does
-   not prove signing worked. Always confirm the `.sig` files exist next to
-   the installers:
-
-   ```bash
-   ls src-tauri/target/release/bundle/nsis/*.sig
-   ls src-tauri/target/release/bundle/msi/*.sig
-   ```
-
-4. **Commit, tag, push**:
-
-   ```bash
-   git tag -a vX.Y.Z -m "PC Tweaker X.Y.Z"
-   git push origin master
-   git push origin vX.Y.Z
-   ```
-
-5. **Publish the GitHub Release**, including the `.sig` files and a
-   `latest.json` for the updater (see `git log` on past releases for the
-   exact `gh release create` invocation and the `latest.json` shape).
-
-6. **Verify live**, not just "the command didn't error":
-
-   ```bash
-   # what installed apps actually poll.
-   # The ?t= is not decoration: GitHub's CDN serves the previous release's
-   # latest.json for a few minutes after publishing, so without it this
-   # reads the old version and you go hunting a bug that isn't there.
-   curl -sL "https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/latest.json?t=$(date +%s)"
-
-   # what the site's download button actually serves
-   curl -sIL https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/PCTweaker-Setup.exe
-   ```
-
-7. **Winget submits itself — do not also do it by hand.** The
-   `Publish to winget` workflow (`.github/workflows/winget-publish.yml`)
-   fires on `release: published` and opens the PR against
-   `microsoft/winget-pkgs` for you, within a minute or two of the release
-   going up.
-
-   This step used to be manual, and the instruction to run `wingetcreate`
-   here outlived the workflow that replaced it. Following both is how 1.6.5
-   ended up with two open PRs for the same version (#427308 from the
-   workflow, #427310 by hand) and one of them had to be closed as noise in
-   someone else's repository.
-
-   Confirm rather than assume — the workflow succeeding is not the same as
-   the PR being merged:
-
-   ```bash
-   gh run list --limit 5 --json name,conclusion,headBranch
-   gh pr list --repo microsoft/winget-pkgs      --search "AurelioAvila.PCTweaker X.Y.Z in:title" --state all      --json number,title,state
-   ```
-
-   Only fall back to `wingetcreate update AurelioAvila.PCTweaker --version
-   X.Y.Z --urls <setup.exe url> --submit --token "$(gh auth token)"` if the
-   workflow did not run or opened nothing.
-
-   Softpedia and MajorGeeks have **no equivalent automation** — they're
-   editorial listings on someone else's schedule, not a repo you can open a
-   PR against. Don't try to script those; they update (or don't) on their
-   own timeline.
-
-8. **Update the site and the docs to match what actually shipped.** The
-   download link itself is version-independent and needs no edit, which is
-   exactly why this step gets forgotten — the *claims* around it go stale
-   silently. Anything that states a number or a feature list has to be
-   re-checked every release:
-
-   - `site/src/i18n/dictionary.ts` — the pricing card ("N tweaks free,
-     forever", "All N tweaks unlocked"), the FAQ answer listing what's free
-     vs Pro, and the Support page's version placeholder.
-   - `TERMS.md` **and** `backend/legal/TERMS.md` (keep the two byte-identical
-     — they drift otherwise) — the free-tier tweak count in section 2.
-   - `README.md` — the total tweak count and the free/Pro split.
-   - `CHANGELOG.md` — the entry for this version.
-   - The **Microsoft Store** listing description, which also states the tweak
-     count. This is the one surface with no CLI: it lives in Partner Center
-     and only Aurelio can edit it, so it is the one that drifts furthest.
-     Everything above can be scripted; this has to be done by hand or left
-     knowingly stale.
-
-   Verify by counting from the source, not from memory:
-
-   ```bash
-   python -c "
-   import re,io
-   s=io.open('src-tauri/src/tweaks.rs',encoding='utf-8').read()
-   b=re.split(r'RegistryTweak\s*\{', s)[1:]
-   pro=sum(1 for x in b if re.search(r'requires_pro:\s*true', x))
-   print('tweaks.rs:', len(b)-pro, 'free /', pro, 'Pro')
-   print('...plus the module-level tweaks pushed in lib.rs list_tweaks()')
-   "
-   ```
-
-   This was missed for 0.4.3 and 0.4.4: both shipped 42 tweaks while the
-   site, README and both TERMS files still advertised "28 free / 36 total"
-   from an earlier release.
-
-## Why CI doesn't do any of this
-
-The repo's GitHub Actions signing secrets are deliberately unset — Aurelio
-does releases in a session with Claude, so local signing is the chosen
-workflow, not a gap to fill. See the "releases are cut locally" note in
-project memory for the full reasoning.
-
-**The Build workflow is expected to go green, and a red one is a real
-problem.** This paragraph used to say the opposite — that Build going red at
-the signing step was normal here — and that was true only between v0.4.3 and
-v1.2.0. `build.yml` now detects the absent key and runs an unsigned
-verification build with `createUpdaterArtifacts` off, which passes. The
-"never ship unsigned" guard moved to `scripts/make-latest-json.mjs`, which
-refuses to write a manifest when the `.sig` is missing, so an unsigned build
-still cannot reach the updater endpoint.
-
-Leaving the old wording in place would have been worse than saying nothing:
-it told whoever reads this next to shrug at a red Build, which is now the
-only signal a genuine regression in tests or i18n produces.
+Authenticode establishes publisher identity and file integrity. Tauri signatures protect updater packages. Neither is Microsoft endorsement, a performance guarantee or a promise that SmartScreen will never warn. Older releases may be unsigned; identify the version whenever making a signing claim.

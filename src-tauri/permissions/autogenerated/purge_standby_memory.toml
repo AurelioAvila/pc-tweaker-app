@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-purge-standby-memory"
+description = "Enables the purge_standby_memory command without any pre-configured scope."
+commands.allow = ["purge_standby_memory"]
+
+[[permission]]
+identifier = "deny-purge-standby-memory"
+description = "Denies the purge_standby_memory command without any pre-configured scope."
+commands.deny = ["purge_standby_memory"]

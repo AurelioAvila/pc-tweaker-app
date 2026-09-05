@@ -50,6 +50,9 @@ jobs:
       - name: Rust unit tests
         run: npm run check:rust
 
+      - name: Native power policies on a disposable inactive plan
+        run: cargo test --manifest-path src-tauri/Cargo.toml --lib power_tuning::tests::inactive_windows_plan_roundtrip -- --ignored --nocapture
+
       - name: Backend unit tests
         working-directory: backend
         run: npm ci && npm test

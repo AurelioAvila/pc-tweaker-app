@@ -1,3 +1,4 @@
+import "./tool-surfaces.css";
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -103,22 +104,22 @@ export function AppCacheCard({
     .reduce((sum, g) => sum + g.bytes, 0);
 
   return (
-    <li className="animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
-      <div className="flex items-start gap-4">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-400/15 text-sky-300 ring-1 ring-sky-400/30">
+    <li className="tool-panel tool-card tool-app-cache-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
+      <div className="tool-card-head flex items-start gap-4">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-400/15 text-sky-300 ring-1 ring-sky-400/30">
           <TrashIcon className="h-5 w-5" />
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="tool-card-copy min-w-0 flex-1">
           <h2 className="font-semibold text-ink">{s.appCache.title}</h2>
           <p className="mt-0.5 text-sm text-ink-3">{s.appCache.description}</p>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="tool-control-group mt-4 flex flex-wrap items-center gap-2">
         <button
           onClick={() => void scan()}
           disabled={scanning || cleaning}
-          className="rounded-xl bg-sky-500 px-3.5 py-1.5 text-sm font-semibold text-sky-950 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-50"
+          className="tool-primary-action rounded-xl bg-sky-500 px-3.5 py-1.5 text-sm font-semibold text-sky-950 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-50"
         >
           {scanning ? s.appCache.scanning : s.appCache.scanButton}
         </button>
@@ -288,18 +289,18 @@ export function CookieCleanerCard({
   }
 
   return (
-    <li className="animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
-      <div className="flex items-start gap-4">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-teal-400/15 text-teal-300 ring-1 ring-teal-400/30">
+    <li className="tool-panel tool-card tool-cookie-cleaner-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
+      <div className="tool-card-head flex items-start gap-4">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-teal-400/15 text-teal-300 ring-1 ring-teal-400/30">
           <GlobeIcon className="h-5 w-5" />
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="tool-card-copy min-w-0 flex-1">
           <h2 className="font-semibold text-ink">{s.cookieCleaner.title}</h2>
           <p className="mt-0.5 text-sm text-ink-3">{s.cookieCleaner.description}</p>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="tool-control-group mt-4 flex flex-wrap items-center gap-2">
         <button
           onClick={() => void scan()}
           disabled={scanning}

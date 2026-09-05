@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-scan-relevant-ids"
+description = "Enables the scan_relevant_ids command without any pre-configured scope."
+commands.allow = ["scan_relevant_ids"]
+
+[[permission]]
+identifier = "deny-scan-relevant-ids"
+description = "Denies the scan_relevant_ids command without any pre-configured scope."
+commands.deny = ["scan_relevant_ids"]

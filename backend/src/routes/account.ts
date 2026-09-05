@@ -11,7 +11,7 @@ router.get("/", requireAuth, async (req, res) => {
   }
   try {
     const result = await getPool().query(
-      "SELECT email, is_pro, plan, pro_expires_at, email_verified, stripe_customer_id FROM users WHERE id = $1",
+      "SELECT email, is_pro, plan, pro_expires_at, legacy_pro_grant, email_verified, stripe_customer_id FROM users WHERE id = $1",
       [req.userId],
     );
     if (result.rowCount === 0) {

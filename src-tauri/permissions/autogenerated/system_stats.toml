@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-system-stats"
+description = "Enables the system_stats command without any pre-configured scope."
+commands.allow = ["system_stats"]
+
+[[permission]]
+identifier = "deny-system-stats"
+description = "Denies the system_stats command without any pre-configured scope."
+commands.deny = ["system_stats"]

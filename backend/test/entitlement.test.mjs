@@ -30,7 +30,15 @@ test("a lifetime purchase never expires", () => {
 });
 
 test("subscribers predating the column keep access until an event backfills it", () => {
-  assert.equal(isEntitled({ is_pro: true, plan: "monthly", pro_expires_at: null }, NOW), true);
+  assert.equal(isEntitled({ is_pro: true, plan: "monthly", pro_expires_at: null, legacy_pro_grant: true }, NOW), true);
+  assert.equal(isEntitled({ is_pro: true, plan: "monthly", pro_expires_at: null }, NOW), false);
+  assert.equal(isEntitled({ is_pro: true, plan: "monthly", pro_expires_at: null, legacy_pro_grant: false }, NOW), false);
+});
+
+test("invalid recurring expiry never creates perpetual access", () => {
+  for (const expiry of ["not-a-date", new Date(NaN), new Date(Infinity)]) {
+    assert.equal(isEntitled({ is_pro: true, plan: "annual", pro_expires_at: expiry, legacy_pro_grant: true }, NOW), false);
+  }
 });
 
 test("timestamps are accepted as strings, the way pg may return them", () => {
@@ -51,4 +59,7 @@ test("a subscription carrying no period end resolves to null, not a bogus date",
   assert.equal(periodEndFromSubscription({}), null);
   assert.equal(periodEndFromSubscription({ items: { data: [] } }), null);
   assert.equal(periodEndFromSubscription(null), null);
+  for (const seconds of [0, -1, NaN, Infinity, Number.MAX_VALUE]) {
+    assert.equal(periodEndFromSubscription({ items: { data: [{ current_period_end: seconds }] } }), null);
+  }
 });

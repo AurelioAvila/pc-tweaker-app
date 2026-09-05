@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-apply-tweaks"
+description = "Enables the apply_tweaks command without any pre-configured scope."
+commands.allow = ["apply_tweaks"]
+
+[[permission]]
+identifier = "deny-apply-tweaks"
+description = "Denies the apply_tweaks command without any pre-configured scope."
+commands.deny = ["apply_tweaks"]

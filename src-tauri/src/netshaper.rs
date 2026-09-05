@@ -105,6 +105,8 @@ pub fn supported() -> bool {
 
 #[cfg(windows)]
 pub fn apply(store: &RollbackStore) -> Result<(), String> {
+    let mut transaction = store.transaction()?;
+
     if !supported() {
         return Err(
             "this Windows build does not offer BBR2 - it arrived with Windows 11".to_string(),
@@ -118,7 +120,7 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
     // already on BBR2, recording that as the previous value is what makes a
     // later rollback a no-op rather than a silent downgrade to CUBIC the user
     // never chose.
-    store
+    transaction
         .save_entry(
             TWEAK_ID,
             SnapshotEntry::TcpCongestionProvider {
@@ -132,12 +134,7 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
         return Ok(());
     }
 
-    if let Err(e) = set_provider(TEMPLATE, TARGET_PROVIDER) {
-        // Undo the bookkeeping, so the toggle does not read as applied when
-        // nothing was applied.
-        let _ = store.take_entry(TWEAK_ID);
-        return Err(e);
-    }
+    set_provider(TEMPLATE, TARGET_PROVIDER)?;
     Ok(())
 }
 
@@ -147,24 +144,28 @@ fn set_provider(template: &str, provider: &str) -> Result<(), String> {
         "Set-NetTCPSetting -SettingName {} -CongestionProvider {} -ErrorAction Stop",
         template, provider
     ))
-    .map(|_| ())
+    .map(|_| ())?;
+    if !current_provider()?.eq_ignore_ascii_case(provider) {
+        return Err(
+            "TCP congestion provider could not be verified; the snapshot was retained".into(),
+        );
+    }
+    Ok(())
 }
 
 #[cfg(windows)]
 pub fn rollback(store: &RollbackStore) -> Result<(), String> {
-    let entry = store
-        .take_entry(TWEAK_ID)
-        .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
+    store.restore_entry(TWEAK_ID, |entry| {
+        let SnapshotEntry::TcpCongestionProvider {
+            setting_name,
+            previous,
+        } = entry
+        else {
+            return Err("unexpected snapshot type for the congestion provider tweak".to_string());
+        };
 
-    let SnapshotEntry::TcpCongestionProvider {
-        setting_name,
-        previous,
-    } = entry
-    else {
-        return Err("unexpected snapshot type for the congestion provider tweak".to_string());
-    };
-
-    set_provider(&setting_name, &previous)
+        set_provider(&setting_name, &previous)
+    })
 }
 
 #[cfg(not(windows))]

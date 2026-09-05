@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cpu-benchmark"
+description = "Enables the cpu_benchmark command without any pre-configured scope."
+commands.allow = ["cpu_benchmark"]
+
+[[permission]]
+identifier = "deny-cpu-benchmark"
+description = "Denies the cpu_benchmark command without any pre-configured scope."
+commands.deny = ["cpu_benchmark"]

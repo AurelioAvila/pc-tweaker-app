@@ -1,3 +1,4 @@
+import "./tool-surfaces.css";
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -84,8 +85,8 @@ export function SecureDefragCard({
   const percent = progress?.percent ?? null;
 
   return (
-    <div className="rounded-2xl border border-line bg-surface-1 p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="tool-panel tool-card tool-secure-defrag-card rounded-2xl border border-line bg-surface-1 p-5">
+      <div className="tool-card-head flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="font-semibold text-ink">{s.secureDefrag.title}</h3>
           <ShieldBadge label={s.badges.admin} />
@@ -148,7 +149,7 @@ export function SecureDefragCard({
               only concerns free blocks, which is correct and is also why it
               finishes almost immediately. */}
           {outcome.analysis.length > 0 && (
-            <details className="mt-2">
+            <details className="tool-details mt-2">
               <summary className="cursor-pointer text-[11.5px] font-semibold text-ink-2">
                 {s.secureDefrag.analysisTitle}
               </summary>
@@ -256,8 +257,8 @@ export function ZeroTraceCard({
   const freed = purge ? Math.max(0, purge.free_after_mb - purge.free_before_mb) : 0;
 
   return (
-    <div className="mb-6 rounded-2xl border border-line bg-surface-1 p-5">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="tool-panel tool-card tool-zero-trace-card mb-6 rounded-2xl border border-line bg-surface-1 p-5">
+      <div className="tool-card-head flex flex-wrap items-center gap-2">
         <h2 className="font-semibold text-ink">{s.zeroTrace.title}</h2>
         <ProBadge label={s.badges.pro} />
       </div>
@@ -492,9 +493,9 @@ export function GamingHudCard({
   }
 
   return (
-    <li className="animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4">
-      <div className="flex items-center gap-4">
-        <div className="min-w-0 flex-1">
+    <li className="tool-panel tool-card tool-gaming-hud-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4">
+      <div className="tool-card-head flex items-center gap-4">
+        <div className="tool-card-copy min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-[13.5px] font-semibold text-ink">{s.hud.title}</h2>
             <ProBadge label={s.badges.pro} />
@@ -691,9 +692,9 @@ export function DriverBoosterCard({
   }
 
   return (
-    <div className="mt-4 rounded-2xl border border-line bg-surface-1 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
+    <div className="tool-panel tool-card tool-driver-booster-card mt-4 rounded-2xl border border-line bg-surface-1 p-5">
+      <div className="tool-card-head flex flex-wrap items-start justify-between gap-3">
+        <div className="tool-card-copy min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold text-ink">{s.driverBooster.title}</h3>
             <ProBadge label={s.badges.pro} />
@@ -705,7 +706,7 @@ export function DriverBoosterCard({
         <button
           onClick={() => void scan()}
           disabled={scanning}
-          className="flex shrink-0 items-center gap-2 rounded-xl bg-accent px-4 py-2 text-[12.5px] font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:hover:translate-y-0 disabled:hover:brightness-100"
+          className="tool-card-action flex shrink-0 items-center gap-2 rounded-xl bg-accent px-4 py-2 text-[12.5px] font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:hover:translate-y-0 disabled:hover:brightness-100"
         >
           {scanning && (
             <span className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -722,7 +723,7 @@ export function DriverBoosterCard({
 
       {actionable.length > 0 && (
         <>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
+          <div className="tool-control-group mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
             <button
               onClick={toggleAll}
               className="text-[12px] font-semibold text-ink-2 transition-colors hover:text-ink"

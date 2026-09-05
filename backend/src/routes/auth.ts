@@ -18,7 +18,7 @@ import {
 /** What the free tier includes, quoted in the welcome email. Kept beside the
  *  one place that sends it rather than hidden in the template, so a change to
  *  what is free is a change here. */
-const FREE_TWEAK_COUNT = 35;
+const FREE_TWEAK_COUNT = 37;
 
 const router = express.Router();
 

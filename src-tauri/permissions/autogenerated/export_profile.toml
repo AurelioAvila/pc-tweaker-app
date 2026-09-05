@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-export-profile"
+description = "Enables the export_profile command without any pre-configured scope."
+commands.allow = ["export_profile"]
+
+[[permission]]
+identifier = "deny-export-profile"
+description = "Denies the export_profile command without any pre-configured scope."
+commands.deny = ["export_profile"]

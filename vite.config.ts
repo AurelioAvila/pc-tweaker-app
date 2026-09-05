@@ -1,4 +1,5 @@
-import { defineConfig } from "vite";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
+import { realpathSync } from "node:fs";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
@@ -28,6 +29,8 @@ export default defineConfig(async () => ({
   clearScreen: false,
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
+    // Linked dependencies must serve their bundled fonts during local review.
+    fs: { allow: [searchForWorkspaceRoot(process.cwd()), realpathSync("node_modules")] },
     port: 1420,
     strictPort: true,
     host: host || false,

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-disk-health"
+description = "Enables the disk_health command without any pre-configured scope."
+commands.allow = ["disk_health"]
+
+[[permission]]
+identifier = "deny-disk-health"
+description = "Denies the disk_health command without any pre-configured scope."
+commands.deny = ["disk_health"]

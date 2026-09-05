@@ -14,9 +14,9 @@ const ORIGIN = "https://pctweaker.app";
 
 export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/": {
-    title: "PC Tweaker — Every Millisecond Is Earned",
+    title: "PC Tweaker | Windows Tuning for Steadier Frame Times",
     description:
-      "Optimize Windows 10/11 with 56 reversible performance tweaks, live hardware monitoring and driver updates. Free, safe and fully transparent.",
+      "Review Windows gaming, privacy and performance settings. Inspect each change and restore supported tweaks. Download PC Tweaker Free for Windows 10/11.",
     canonical: `${ORIGIN}/`,
     ogType: "website",
   },

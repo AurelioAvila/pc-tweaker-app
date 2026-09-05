@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cpu-clock"
+description = "Enables the cpu_clock command without any pre-configured scope."
+commands.allow = ["cpu_clock"]
+
+[[permission]]
+identifier = "deny-cpu-clock"
+description = "Denies the cpu_clock command without any pre-configured scope."
+commands.deny = ["cpu_clock"]

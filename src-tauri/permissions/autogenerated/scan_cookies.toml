@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-scan-cookies"
+description = "Enables the scan_cookies command without any pre-configured scope."
+commands.allow = ["scan_cookies"]
+
+[[permission]]
+identifier = "deny-scan-cookies"
+description = "Denies the scan_cookies command without any pre-configured scope."
+commands.deny = ["scan_cookies"]

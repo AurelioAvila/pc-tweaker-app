@@ -21,6 +21,7 @@ type EntitlementRow = {
   is_pro?: boolean | null;
   plan?: string | null;
   pro_expires_at?: Date | string | null;
+  legacy_pro_grant?: boolean | null;
 };
 
 /** Plans that are bought once and never renew, so they carry no expiry. */
@@ -30,14 +31,13 @@ function isEntitled(row: EntitlementRow | null | undefined, now: Date = new Date
   if (!row || !row.is_pro) return false;
   if (row.plan && PERPETUAL_PLANS.has(row.plan)) return true;
 
-  // A subscriber with no recorded expiry predates this column. Grandfathering
-  // them in is deliberate: they paid, and the next subscription event Stripe
-  // sends for them backfills a real date. Denying access on a missing value
-  // would lock out every existing customer the moment this deploys.
-  if (row.pro_expires_at == null) return true;
+  // Only the migration's explicit compatibility marker preserves undated
+  // existing access. A newly malformed subscription is not a legacy grant.
+  // The next valid billing event clears this marker and backfills its period.
+  if (row.pro_expires_at == null) return row.legacy_pro_grant === true;
 
   const expiresAt = row.pro_expires_at instanceof Date ? row.pro_expires_at : new Date(row.pro_expires_at);
-  if (Number.isNaN(expiresAt.getTime())) return true;
+  if (!Number.isFinite(expiresAt.getTime())) return false;
 
   return expiresAt.getTime() > now.getTime();
 }
@@ -54,8 +54,9 @@ function periodEndFromSubscription(subscription: any): Date | null {
   const fromItem = subscription?.items?.data?.[0]?.current_period_end;
   const fromSubscription = subscription?.current_period_end;
   const seconds = typeof fromItem === "number" ? fromItem : fromSubscription;
-  if (typeof seconds !== "number" || !Number.isFinite(seconds)) return null;
-  return new Date(seconds * 1000);
+  if (typeof seconds !== "number" || !Number.isFinite(seconds) || seconds <= 0) return null;
+  const date = new Date(seconds * 1000);
+  return Number.isFinite(date.getTime()) ? date : null;
 }
 
 export { isEntitled, periodEndFromSubscription, PERPETUAL_PLANS };

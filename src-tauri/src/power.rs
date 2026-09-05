@@ -57,29 +57,38 @@ pub fn is_high_performance_active() -> bool {
 
 #[cfg(windows)]
 pub fn apply(store: &RollbackStore) -> Result<(), String> {
+    let mut transaction = store.transaction()?;
+
     let previous = active_scheme_guid()?;
-    run_powercfg(&["/setactive", HIGH_PERFORMANCE_GUID])?;
-    store
+
+    transaction
         .save_entry(
             TWEAK_ID,
             SnapshotEntry::PowerScheme {
                 previous_guid: previous,
             },
         )
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    run_powercfg(&["/setactive", HIGH_PERFORMANCE_GUID])?;
+    if !active_scheme_guid()?.eq_ignore_ascii_case(HIGH_PERFORMANCE_GUID) {
+        return Err("the selected power plan could not be verified".into());
+    }
+    Ok(())
 }
 
 #[cfg(windows)]
 pub fn rollback(store: &RollbackStore) -> Result<(), String> {
-    let entry = store.take_entry(TWEAK_ID).ok_or_else(|| {
-        "no saved snapshot: the power plan does not appear to be modified".to_string()
-    })?;
+    store.restore_entry(TWEAK_ID, |entry| {
+        let SnapshotEntry::PowerScheme { previous_guid } = entry else {
+            return Err("unexpected snapshot type for the power plan".to_string());
+        };
 
-    let SnapshotEntry::PowerScheme { previous_guid } = entry else {
-        return Err("unexpected snapshot type for the power plan".to_string());
-    };
-
-    run_powercfg(&["/setactive", &previous_guid]).map(|_| ())
+        run_powercfg(&["/setactive", &previous_guid])?;
+        if !active_scheme_guid()?.eq_ignore_ascii_case(&previous_guid) {
+            return Err("the previous power plan could not be verified".into());
+        }
+        Ok(())
+    })
 }
 
 #[cfg(not(windows))]

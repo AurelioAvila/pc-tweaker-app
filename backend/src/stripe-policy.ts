@@ -11,6 +11,25 @@ export function productFromMetadata(
   return isKnownProduct(value) ? value : null;
 }
 
+/** A shared Stripe customer does not identify which product was purchased.
+ * Legacy events need a configured Price as evidence; explicit metadata must
+ * agree with every recognized price. Mixed-product subscriptions are not
+ * safe to grant or cancel as if they belonged to a single product. */
+export function billingProductFromEvidence(
+  metadata: Record<string, string> | null | undefined,
+  priceIds: string[],
+  priceProducts: Record<string, Product | undefined>,
+): Product | null {
+  const declared = metadata?.product;
+  if (declared && !isKnownProduct(declared)) return null;
+  const products = new Set(priceIds.map((id) => priceProducts[id]).filter(isKnownProduct));
+  if (products.size > 1) return null;
+  if (priceIds.length > 1 && priceIds.some((id) => !priceProducts[id])) return null;
+  const inferred = [...products][0];
+  if (declared && inferred && declared !== inferred) return null;
+  return inferred ?? (isKnownProduct(declared) ? declared : null);
+}
+
 /** Checkout completion alone is not proof of payment. Async payment methods
  * emit completed while still unpaid and later send async_payment_succeeded.
  * Trials and fully discounted checkouts legitimately use no_payment_required. */

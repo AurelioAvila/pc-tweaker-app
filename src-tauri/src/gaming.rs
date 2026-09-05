@@ -27,7 +27,7 @@ pub fn turbo_boost_info() -> GamingInfo {
     GamingInfo {
         id: TURBO_BOOST_ID,
         name: "CPU Turbo Boost",
-        description: "Sets the processor performance boost mode to \"Aggressive\" and raises the minimum processor state to 100% while plugged in, so the cores stop dropping to their lowest state between bursts of work. Both are restored exactly as found on rollback (requires administrator rights).",
+        description: "Sets boost mode to Aggressive on mains power and battery, and minimum processor state to 100% on mains power in the current power plan. Power use and heat may increase. CPU, firmware and thermal limits still apply; higher FPS is not guaranteed (administrator rights required).",
         requires_admin: true,
         requires_pro: false,
     }
@@ -76,6 +76,8 @@ pub(crate) const KEYBOARD_TARGET: [(&str, &str); 2] =
 
 #[cfg(windows)]
 pub fn apply_input_lag(store: &RollbackStore) -> Result<(), String> {
+    let mut transaction = store.transaction()?;
+
     use crate::tweaks::windows_impl::{hive_from_str, read_value, write_value};
 
     let hive = hive_from_str(MOUSE_HIVE);
@@ -94,7 +96,7 @@ pub fn apply_input_lag(store: &RollbackStore) -> Result<(), String> {
 
     // Snapshot everything before mutating anything, so a failure here never
     // leaves the registry changed without a way back.
-    store
+    transaction
         .save_entry(INPUT_LAG_ID, SnapshotEntry::Composite { entries })
         .map_err(|e| e.to_string())?;
 
@@ -109,24 +111,24 @@ pub fn apply_input_lag(store: &RollbackStore) -> Result<(), String> {
 pub fn rollback_input_lag(store: &RollbackStore) -> Result<(), String> {
     use crate::tweaks::windows_impl::restore_value;
 
-    let entry = store
-        .take_entry(INPUT_LAG_ID)
-        .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
+    store.restore_entry(INPUT_LAG_ID, |entry| {
+        let SnapshotEntry::Composite { entries } = entry else {
+            return Err("unexpected snapshot type for input lag reduction".to_string());
+        };
 
-    let SnapshotEntry::Composite { entries } = entry else {
-        return Err("unexpected snapshot type for input lag reduction".to_string());
-    };
-
-    for e in entries {
-        if let SnapshotEntry::Registry(snapshot) = e {
-            restore_value(&snapshot)?;
+        for e in entries {
+            if let SnapshotEntry::Registry(snapshot) = e {
+                restore_value(&snapshot)?;
+            }
         }
-    }
-    Ok(())
+        Ok(())
+    })
 }
 
 #[cfg(windows)]
 pub fn apply_keyboard_delay(store: &RollbackStore) -> Result<(), String> {
+    let mut transaction = store.transaction()?;
+
     use crate::tweaks::windows_impl::{hive_from_str, read_value, write_value};
 
     let hive = hive_from_str(KEYBOARD_HIVE);
@@ -143,7 +145,7 @@ pub fn apply_keyboard_delay(store: &RollbackStore) -> Result<(), String> {
         }));
     }
 
-    store
+    transaction
         .save_entry(KEYBOARD_DELAY_ID, SnapshotEntry::Composite { entries })
         .map_err(|e| e.to_string())?;
 
@@ -158,60 +160,62 @@ pub fn apply_keyboard_delay(store: &RollbackStore) -> Result<(), String> {
 pub fn rollback_keyboard_delay(store: &RollbackStore) -> Result<(), String> {
     use crate::tweaks::windows_impl::restore_value;
 
-    let entry = store
-        .take_entry(KEYBOARD_DELAY_ID)
-        .ok_or_else(|| "no snapshot saved: the tweak does not appear to be applied".to_string())?;
+    store.restore_entry(KEYBOARD_DELAY_ID, |entry| {
+        let SnapshotEntry::Composite { entries } = entry else {
+            return Err("unexpected snapshot type for keyboard delay".to_string());
+        };
 
-    let SnapshotEntry::Composite { entries } = entry else {
-        return Err("unexpected snapshot type for keyboard delay".to_string());
-    };
-
-    for e in entries {
-        if let SnapshotEntry::Registry(snapshot) = e {
-            restore_value(&snapshot)?;
+        for e in entries {
+            if let SnapshotEntry::Registry(snapshot) = e {
+                restore_value(&snapshot)?;
+            }
         }
-    }
-    Ok(())
+        Ok(())
+    })
 }
 
 #[cfg(windows)]
 pub fn apply_core_parking(store: &RollbackStore) -> Result<(), String> {
+    let mut transaction = store.transaction()?;
+
     let scheme = crate::power::active_scheme_guid()?;
-    let (ac_index, dc_index) = read_setting_indexes(&scheme, CORE_PARKING_MIN_GUID);
+    let (ac_index, dc_index) = read_setting_indexes(&scheme, CORE_PARKING_MIN_GUID)?;
 
     // AC only, deliberately. Holding every core awake on battery is a
     // battery-life decision the user did not make by pressing a button
     // labelled "disable core parking".
-    crate::power::run_powercfg(&[
-        "/setacvalueindex",
-        "scheme_current",
-        SUB_PROCESSOR_GUID,
-        CORE_PARKING_MIN_GUID,
-        CORE_PARKING_ALL_UNPARKED,
-    ])?;
-    crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
-
-    store
+    transaction
         .save_entry(
             CORE_PARKING_ID,
             SnapshotEntry::PowerSettingIndex {
-                scheme_guid: scheme,
+                scheme_guid: scheme.clone(),
                 subgroup_guid: SUB_PROCESSOR_GUID.to_string(),
                 setting_guid: CORE_PARKING_MIN_GUID.to_string(),
                 ac_index,
                 dc_index,
             },
         )
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+
+    crate::power::run_powercfg(&[
+        "/setacvalueindex",
+        &scheme,
+        SUB_PROCESSOR_GUID,
+        CORE_PARKING_MIN_GUID,
+        CORE_PARKING_ALL_UNPARKED,
+    ])?;
+    if read_setting_indexes(&scheme, CORE_PARKING_MIN_GUID)? != (Some(100), dc_index) {
+        return Err(
+            "core parking configuration could not be verified; the snapshot was retained".into(),
+        );
+    }
+    crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
+    Ok(())
 }
 
 #[cfg(windows)]
 pub fn rollback_core_parking(store: &RollbackStore) -> Result<(), String> {
-    let entry = store.take_entry(CORE_PARKING_ID).ok_or_else(|| {
-        "no saved snapshot: core parking does not appear to be modified".to_string()
-    })?;
-
-    match entry {
+    store.restore_entry(CORE_PARKING_ID, |entry| match entry {
         SnapshotEntry::PowerSettingIndex {
             scheme_guid,
             subgroup_guid,
@@ -219,12 +223,18 @@ pub fn rollback_core_parking(store: &RollbackStore) -> Result<(), String> {
             ac_index,
             dc_index,
         } => {
-            restore_power_index(&scheme_guid, &subgroup_guid, &setting_guid, ac_index, dc_index)?;
+            restore_power_index(
+                &scheme_guid,
+                &subgroup_guid,
+                &setting_guid,
+                ac_index,
+                dc_index,
+            )?;
             crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
             Ok(())
         }
         _ => Err("unexpected snapshot type for core parking".to_string()),
-    }
+    })
 }
 
 #[cfg(not(windows))]
@@ -274,17 +284,6 @@ fn boost_setting_definition_path() -> String {
     )
 }
 
-/// Where a *specific plan* overrides that setting. The key is absent while the
-/// plan is still on the setting's default value — absence is meaningful, not
-/// an error.
-#[cfg(windows)]
-fn boost_override_path(scheme_guid: &str) -> String {
-    format!(
-        r"SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\{}\{}\{}",
-        scheme_guid, SUB_PROCESSOR_GUID, PERF_BOOST_MODE_GUID
-    )
-}
-
 /// True when this machine defines the boost setting at all.
 ///
 /// Note this deliberately does not use `powercfg /query`: Windows marks
@@ -304,28 +303,26 @@ fn boost_is_supported() -> bool {
 /// The plan's current AC/DC boost indexes, or `None` for either one that has
 /// no override and is therefore running on the setting's default.
 #[cfg(windows)]
-fn read_boost_indexes(scheme_guid: &str) -> (Option<u32>, Option<u32>) {
+fn read_boost_indexes(scheme_guid: &str) -> Result<(Option<u32>, Option<u32>), String> {
     read_setting_indexes(scheme_guid, PERF_BOOST_MODE_GUID)
 }
 
 /// The same read for any setting in the processor subgroup, so a second
 /// setting doesn't need a second copy of this logic.
 #[cfg(windows)]
-fn read_setting_indexes(scheme_guid: &str, setting_guid: &str) -> (Option<u32>, Option<u32>) {
-    use winreg::enums::HKEY_LOCAL_MACHINE;
-    use winreg::RegKey;
-
+fn read_setting_indexes(
+    scheme_guid: &str,
+    setting_guid: &str,
+) -> Result<(Option<u32>, Option<u32>), String> {
     let path = format!(
         r"SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\{}\{}\{}",
         scheme_guid, SUB_PROCESSOR_GUID, setting_guid
     );
-    let Ok(key) = RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey(path) else {
-        return (None, None);
-    };
-    (
-        key.get_value::<u32, _>("ACSettingIndex").ok(),
-        key.get_value::<u32, _>("DCSettingIndex").ok(),
-    )
+    use crate::tweaks::{windows_impl::read_dword, Hive};
+    Ok((
+        read_dword(Hive::Hklm, &path, "ACSettingIndex").map_err(|e| e.to_string())?,
+        read_dword(Hive::Hklm, &path, "DCSettingIndex").map_err(|e| e.to_string())?,
+    ))
 }
 
 /// Boost mode 2 = "Aggressive": let the CPU boost above its rated frequency
@@ -334,6 +331,8 @@ pub(crate) const BOOST_AGGRESSIVE: &str = "2";
 
 #[cfg(windows)]
 pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
+    let mut transaction = store.transaction()?;
+
     if !boost_is_supported() {
         return Err(
             "this PC does not expose the CPU turbo boost setting (common on some VMs, or on hardware without CPPC/dynamic boost support)"
@@ -342,41 +341,13 @@ pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
     }
 
     let scheme = crate::power::active_scheme_guid()?;
-    let (ac_index, dc_index) = read_boost_indexes(&scheme);
-    let (min_ac, min_dc) = read_setting_indexes(&scheme, PROC_THROTTLE_MIN_GUID);
+    let (ac_index, dc_index) = read_boost_indexes(&scheme)?;
+    let (min_ac, min_dc) = read_setting_indexes(&scheme, PROC_THROTTLE_MIN_GUID)?;
 
     // Writing works even while the setting is hidden, so there is no need to
     // unhide it (which would leave a visible change in Windows' own power UI
     // that the user never asked for and rollback couldn't reasonably undo).
-    crate::power::run_powercfg(&[
-        "/setacvalueindex",
-        "scheme_current",
-        SUB_PROCESSOR_GUID,
-        PERF_BOOST_MODE_GUID,
-        BOOST_AGGRESSIVE,
-    ])?;
-    crate::power::run_powercfg(&[
-        "/setdcvalueindex",
-        "scheme_current",
-        SUB_PROCESSOR_GUID,
-        PERF_BOOST_MODE_GUID,
-        BOOST_AGGRESSIVE,
-    ])?;
-    // The floor. This is the half the user can actually feel — see the
-    // PROC_THROTTLE_MIN_GUID doc comment.
-    crate::power::run_powercfg(&[
-        "/setacvalueindex",
-        "scheme_current",
-        SUB_PROCESSOR_GUID,
-        PROC_THROTTLE_MIN_GUID,
-        THROTTLE_MIN_MAX,
-    ])?;
-    // AC only. On a laptop this setting on battery would hold every core at
-    // its maximum while unplugged, which is a battery-life decision the user
-    // did not make by pressing a button labelled Turbo Boost.
-    crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
-
-    store
+    transaction
         .save_entry(
             TURBO_BOOST_ID,
             SnapshotEntry::Composite {
@@ -389,7 +360,7 @@ pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
                         dc_index,
                     },
                     SnapshotEntry::PowerSettingIndex {
-                        scheme_guid: scheme,
+                        scheme_guid: scheme.clone(),
                         subgroup_guid: SUB_PROCESSOR_GUID.to_string(),
                         setting_guid: PROC_THROTTLE_MIN_GUID.to_string(),
                         ac_index: min_ac,
@@ -398,91 +369,108 @@ pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
                 ],
             },
         )
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+
+    crate::power::run_powercfg(&[
+        "/setacvalueindex",
+        &scheme,
+        SUB_PROCESSOR_GUID,
+        PERF_BOOST_MODE_GUID,
+        BOOST_AGGRESSIVE,
+    ])?;
+    crate::power::run_powercfg(&[
+        "/setdcvalueindex",
+        &scheme,
+        SUB_PROCESSOR_GUID,
+        PERF_BOOST_MODE_GUID,
+        BOOST_AGGRESSIVE,
+    ])?;
+    // The floor. This is the half the user can actually feel — see the
+    // PROC_THROTTLE_MIN_GUID doc comment.
+    crate::power::run_powercfg(&[
+        "/setacvalueindex",
+        &scheme,
+        SUB_PROCESSOR_GUID,
+        PROC_THROTTLE_MIN_GUID,
+        THROTTLE_MIN_MAX,
+    ])?;
+    if read_boost_indexes(&scheme)? != (Some(2), Some(2))
+        || read_setting_indexes(&scheme, PROC_THROTTLE_MIN_GUID)? != (Some(100), min_dc)
+    {
+        return Err(
+            "CPU boost configuration could not be verified; the snapshot was retained".into(),
+        );
+    }
+    // AC only. On a laptop this setting on battery would hold every core at
+    // its maximum while unplugged, which is a battery-life decision the user
+    // did not make by pressing a button labelled Turbo Boost.
+    crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
+    Ok(())
 }
 
 #[cfg(windows)]
 pub fn rollback_turbo_boost(store: &RollbackStore) -> Result<(), String> {
-    let entry = store.take_entry(TURBO_BOOST_ID).ok_or_else(|| {
-        "no saved snapshot: turbo boost does not appear to be modified".to_string()
-    })?;
-
-    match entry {
-        // Current shape: boost mode and the processor floor, restored
-        // together. Every entry is attempted even if an earlier one fails, so
-        // one setting refusing to restore cannot strand the other in its
-        // tweaked state; the first error is reported once both have been
-        // tried.
-        SnapshotEntry::Composite { entries } => {
-            let mut first_error: Option<String> = None;
-            for entry in entries {
-                let result = match entry {
-                    SnapshotEntry::PowerSettingIndex {
-                        scheme_guid,
-                        subgroup_guid,
-                        setting_guid,
-                        ac_index,
-                        dc_index,
-                    } => restore_power_index(
-                        &scheme_guid,
-                        &subgroup_guid,
-                        &setting_guid,
-                        ac_index,
-                        dc_index,
-                    ),
-                    _ => Err("unexpected snapshot type inside turbo boost".to_string()),
-                };
-                if let Err(e) = result {
-                    first_error.get_or_insert(e);
+    store.restore_entry(TURBO_BOOST_ID, |entry| {
+        match entry {
+            // Current shape: boost mode and the processor floor, restored
+            // together. Every entry is attempted even if an earlier one fails, so
+            // one setting refusing to restore cannot strand the other in its
+            // tweaked state; the first error is reported once both have been
+            // tried.
+            SnapshotEntry::Composite { entries } => {
+                let mut first_error: Option<String> = None;
+                for entry in entries {
+                    let result = match entry {
+                        SnapshotEntry::PowerSettingIndex {
+                            scheme_guid,
+                            subgroup_guid,
+                            setting_guid,
+                            ac_index,
+                            dc_index,
+                        } => restore_power_index(
+                            &scheme_guid,
+                            &subgroup_guid,
+                            &setting_guid,
+                            ac_index,
+                            dc_index,
+                        ),
+                        _ => Err("unexpected snapshot type inside turbo boost".to_string()),
+                    };
+                    if let Err(e) = result {
+                        first_error.get_or_insert(e);
+                    }
+                }
+                crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
+                match first_error {
+                    Some(e) => Err(e),
+                    None => Ok(()),
                 }
             }
-            crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
-            match first_error {
-                Some(e) => Err(e),
-                None => Ok(()),
-            }
+
+            // Written by builds that only changed boost mode. Still restorable
+            // exactly as it was recorded.
+            SnapshotEntry::PowerSettingIndex {
+                scheme_guid,
+                subgroup_guid,
+                setting_guid,
+                ac_index,
+                dc_index,
+            } => restore_power_index(
+                &scheme_guid,
+                &subgroup_guid,
+                &setting_guid,
+                ac_index,
+                dc_index,
+            ),
+
+            // Legacy data does not identify the original plan. Never guess
+            // that the currently active plan is the right recovery target.
+            SnapshotEntry::PowerSetting { .. } => Err(
+                "This legacy snapshot does not identify its original power plan. Recovery data was retained for manual review; no settings were changed.".into(),
+            ),
+            _ => Err("unexpected snapshot type for turbo boost".to_string()),
         }
-
-        // Written by builds that only changed boost mode. Still restorable
-        // exactly as it was recorded.
-        SnapshotEntry::PowerSettingIndex {
-            scheme_guid,
-            subgroup_guid,
-            setting_guid,
-            ac_index,
-            dc_index,
-        } => restore_power_index(
-            &scheme_guid,
-            &subgroup_guid,
-            &setting_guid,
-            ac_index,
-            dc_index,
-        ),
-
-        // Snapshots written before this tweak stored GUIDs and optional
-        // indexes. They hold raw "0x0000000X" strings for the same setting, so
-        // they can still be restored — just through the older code path.
-        SnapshotEntry::PowerSetting { ac_index, dc_index } => {
-            crate::power::run_powercfg(&[
-                "/setacvalueindex",
-                "scheme_current",
-                SUB_PROCESSOR_GUID,
-                PERF_BOOST_MODE_GUID,
-                &ac_index,
-            ])?;
-            crate::power::run_powercfg(&[
-                "/setdcvalueindex",
-                "scheme_current",
-                SUB_PROCESSOR_GUID,
-                PERF_BOOST_MODE_GUID,
-                &dc_index,
-            ])?;
-            crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
-            Ok(())
-        }
-
-        _ => Err("unexpected snapshot type for turbo boost".to_string()),
-    }
+    })
 }
 
 /// Puts a power setting back exactly as it was found.
@@ -509,7 +497,7 @@ fn restore_power_index(
             Some(v) => {
                 crate::power::run_powercfg(&[
                     flag,
-                    "scheme_current",
+                    scheme_guid,
                     subgroup_guid,
                     setting_guid,
                     &v.to_string(),
@@ -520,17 +508,26 @@ fn restore_power_index(
                     r"SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\{}\{}\{}",
                     scheme_guid, subgroup_guid, setting_guid
                 );
-                if let Ok(key) =
-                    RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey_with_flags(&path, KEY_SET_VALUE)
+                match RegKey::predef(HKEY_LOCAL_MACHINE)
+                    .open_subkey_with_flags(&path, KEY_SET_VALUE)
                 {
-                    // Already absent is the desired end state, so a "not found"
-                    // here is success, not a failure worth surfacing.
-                    let _ = key.delete_value(value_name);
+                    Ok(key) => match key.delete_value(value_name) {
+                        Ok(()) => {}
+                        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                        Err(e) => return Err(format!("could not remove power override: {e}")),
+                    },
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(e) => return Err(format!("could not open power override: {e}")),
                 }
             }
         }
     }
 
+    if read_setting_indexes(scheme_guid, setting_guid)? != (ac_index, dc_index) {
+        return Err(
+            "power setting restoration could not be verified; the snapshot was retained".into(),
+        );
+    }
     crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
     Ok(())
 }
@@ -588,7 +585,7 @@ mod tests {
     #[test]
     fn a_plan_with_no_override_reads_as_default_not_as_failure() {
         let scheme = crate::power::active_scheme_guid().expect("active scheme");
-        let (ac, dc) = read_boost_indexes(&scheme);
+        let (ac, dc) = read_boost_indexes(&scheme).expect("read power indexes");
         // Either state is legitimate; what matters is that it returned.
         assert!(
             ac.is_none() || ac.unwrap() <= 4,

@@ -7,8 +7,12 @@
 <p align="center"><strong>Tune Windows with the changes in plain sight.</strong><br>Gaming, privacy and maintenance controls, with restore tools for supported settings.</p>
 
 <p align="center">
-  <a href="https://github.com/AurelioAvila/pc-tweaker-app/actions/workflows/checks.yml"><img src="https://github.com/AurelioAvila/pc-tweaker-app/actions/workflows/checks.yml/badge.svg?branch=master" alt="Checks workflow status"></a>
-  <a href="https://github.com/AurelioAvila/pc-tweaker-app/actions/workflows/build.yml"><img src="https://github.com/AurelioAvila/pc-tweaker-app/actions/workflows/build.yml/badge.svg?branch=master" alt="Build workflow status"></a>
+  <a href="#reviews-and-distribution"><img src="https://img.shields.io/badge/Total_downloads-45k%2B-2E7D32?style=for-the-badge" alt="45,000+ total downloads across distribution channels"></a>
+  <a href="https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"><img src="https://img.shields.io/badge/Softpedia-5%2F5%20%7C%2074%20votes-0078D4?style=for-the-badge" alt="Softpedia user rating: 5 out of 5 from 74 votes"></a>
+  <a href="https://www.majorgeeks.com/files/details/pc_tweaker.html"><img src="https://img.shields.io/badge/MajorGeeks-5%2F5%20%7C%20101%20votes-C48B28?style=for-the-badge" alt="MajorGeeks user rating: 5 out of 5 from 101 votes"></a>
+</p>
+
+<p align="center">
   <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/v/release/AurelioAvila/pc-tweaker-app" alt="Latest release"></a>
   <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/downloads/AurelioAvila/pc-tweaker-app/total?label=GitHub%20asset%20downloads" alt="GitHub release asset download events"></a>
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D4" alt="Windows 10 and 11 x64">
@@ -135,10 +139,12 @@ A valid signature does not guarantee the absence of SmartScreen prompts. Microso
 
 ## Reviews and distribution
 
-Existing feedback remains available at its original source:
+**45,000+ total downloads** across distribution channels. The total-download milestone is maintained by the project; the live GitHub badge covers GitHub release assets only.
 
-- [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml): editorial review 4.5/5; user rating 5.0/5 from 64 votes, checked September 5, 2026.
-- [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html): listing and reader reviews.
+User ratings checked September 6, 2026. Existing feedback remains available at its original source:
+
+- [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml): user rating **5.0/5 from 74 votes**; editorial review **4.5/5**.
+- [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html): user rating **5/5 from 101 votes**; listing and reader reviews.
 
 The GitHub download badge counts release-asset requests, including assets used for updates. It does not count unique people, unique installations or every distribution channel. Third-party listings may describe older releases; this repository's [LICENSE](LICENSE) is the authoritative source for licensing terms.
 

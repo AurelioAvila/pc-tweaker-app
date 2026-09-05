@@ -844,18 +844,15 @@ mod tests {
         }
     }
     #[test]
+    #[cfg(windows)]
     fn separate_processes_share_the_same_lock_and_preserve_every_snapshot() {
+        use std::os::windows::process::CommandExt;
         let temp = TempDir::new();
         let executable = std::env::current_exe().unwrap();
         let mut children: Vec<_> = (0..4)
             .map(|i| {
-                let mut command = std::process::Command::new(&executable);
-                #[cfg(windows)]
-                {
-                    use std::os::windows::process::CommandExt;
-                    command.creation_flags(0x0800_0000);
-                }
-                command
+                std::process::Command::new(&executable)
+                    .creation_flags(0x0800_0000)
                     .args([
                         "--exact",
                         "rollback::tests::child_process_writer",

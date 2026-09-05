@@ -11,7 +11,7 @@
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
-const { uploadVideo } = require("./lib");
+const { escFfmpegPath } = require("./ffmpeg-path");
 
 // ffmpeg's concat demuxer maps streams automatically from the FIRST file in
 // the list: if that one has no audio track, the whole concatenated output
@@ -79,7 +79,7 @@ function buildDescription(clipMetas) {
     `${clipMetas.length} quick Windows tweaks you can apply right now, back to back:\n\n${bullets}\n\n` +
     "Try it: https://pctweaker.app\n" +
     "Install: winget install AurelioAvila.PCTweaker\n" +
-    "Source (MIT): github.com/AurelioAvila/pc-tweaker-app\n\n" +
+    "Project: https://github.com/AurelioAvila/pc-tweaker-app\n\n" +
     "#Windows #PCOptimization #WindowsTips"
   );
 }
@@ -88,10 +88,9 @@ function buildDescription(clipMetas) {
 // syntax ':' separates options, so an unescaped Windows path breaks the whole
 // filterchain even inside quotes (observed: "Error parsing filterchain"
 // immediately after the first drawtext).
-const THUMB_FONT = path
-  .join(ROOT, "reel-generator", "assets", "fonts", "Poppins-ExtraBold.ttf")
-  .replace(/\\/g, "/")
-  .replace(/:/g, "\\:");
+const THUMB_FONT = escFfmpegPath(
+  path.join(ROOT, "reel-generator", "assets", "fonts", "Poppins-ExtraBold.ttf")
+);
 
 /**
  * A 1280x720 thumbnail: a frame of the video, blurred and darkened, plus the
@@ -118,9 +117,6 @@ const THUMB_FONT = path
 // The robust fix: write the text to a file and use the textfile= option,
 // which reads the content as-is without parsing escapes inside it - an
 // apostrophe in the file is just a character, not syntax.
-function escFfmpegPath(p) {
-  return p.replace(/\\/g, "/").replace(/:/g, "\\:");
-}
 
 /**
  * The ffmpeg drawtext filter for the title, at ANY size (width x height) -
@@ -392,7 +388,7 @@ async function main() {
   // channel from the visible hashtags, so it is worth using rather than
   // stopping at 5.
   const tags = [
-    "windows tweak", "pc optimizer", "windows 11 tips", "free software", "open source",
+    "windows tweak", "pc optimizer", "windows 11 tips", "free software", "source available",
     "speed up pc", "windows 11 performance", "debloat windows", "pc maintenance",
     "windows settings", "gaming pc optimization", "pc tweaker",
   ];
@@ -428,6 +424,7 @@ async function main() {
   }
 
   console.log("Upload in corso...");
+  const { uploadVideo } = require("./lib");
   const result = await uploadVideo({ videoPath: outputPath, title, description, tags, privacyStatus: "public", thumbnailPath });
   console.log(`[OK] Compilation pubblicata: video id=${result.id}`);
 

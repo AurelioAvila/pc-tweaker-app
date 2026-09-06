@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 const {
+  verificationText, passwordResetText, passwordChangedText, accountWelcomeText,
   accountWelcomeHtml,
   accountWelcomeSubject,
   passwordChangedHtml,
@@ -15,6 +16,15 @@ const {
 const WHEN = "Mon, 01 Sep 2026 09:14:00 GMT";
 
 const LINK = "https://api.pctweaker.app/api/auth/verify-email?token=abc&x=1";
+
+test("plain-text messages preserve action URLs, expiry and account details", () => {
+  assert.ok(verificationText(LINK).includes(LINK));
+  assert.match(verificationText(LINK), /24 hours/);
+  assert.ok(passwordResetText(LINK).includes(LINK));
+  assert.match(passwordResetText(LINK), /once.*one hour/);
+  assert.ok(passwordChangedText(WHEN).includes(WHEN));
+  assert.match(accountWelcomeText(27), /27 tweaks/);
+});
 
 test("the confirmation shows the destination as text, after the button", () => {
   // These two messages are the ones phishing imitates, so a reader has to be

@@ -49,9 +49,9 @@ class MailError extends Error {
  * hitting reply, without the sender ever becoming the From address — which
  * would fail SPF/DKIM for a domain we don't own and land the mail in spam.
  */
-type MailInput = { to: string; subject: string; html: string; replyTo?: string };
+type MailInput = { to: string; subject: string; html: string; text?: string; replyTo?: string };
 
-async function sendViaResend({ to, subject, html, replyTo }: MailInput): Promise<void> {
+async function sendViaResend({ to, subject, html, text, replyTo }: MailInput): Promise<void> {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     signal: AbortSignal.timeout(30_000),
@@ -64,6 +64,7 @@ async function sendViaResend({ to, subject, html, replyTo }: MailInput): Promise
       to,
       subject,
       html,
+      ...(text ? { text } : {}),
       ...(replyTo ? { reply_to: replyTo } : {}),
     }),
   });
@@ -86,9 +87,9 @@ async function sendViaResend({ to, subject, html, replyTo }: MailInput): Promise
  * bodies to logs because they can contain password-reset tokens or personal
  * support content.
  */
-async function sendMail({ to, subject, html, replyTo }: MailInput): Promise<{ delivered: boolean }> {
+async function sendMail({ to, subject, html, text, replyTo }: MailInput): Promise<{ delivered: boolean }> {
   if (useResend) {
-    await sendViaResend({ to, subject, html, replyTo });
+    await sendViaResend({ to, subject, html, text, replyTo });
     return { delivered: true };
   }
   if (transporter) {
@@ -97,6 +98,7 @@ async function sendMail({ to, subject, html, replyTo }: MailInput): Promise<{ de
       to,
       subject,
       html,
+      ...(text ? { text } : {}),
       ...(replyTo ? { replyTo } : {}),
     });
     return { delivered: true };

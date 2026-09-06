@@ -5,6 +5,10 @@ import { hashPassword, verifyPassword, signToken, requireAuth, isValidEmail, isV
 import { createActionToken, consumeActionToken } from "../tokens";
 import { sendMail, MailError } from "../mailer";
 import {
+  accountWelcomeText,
+  passwordChangedText,
+  passwordResetText,
+  verificationText,
   accountWelcomeHtml,
   accountWelcomeSubject,
   passwordChangedHtml,
@@ -66,6 +70,7 @@ async function sendVerificationEmail(userId: number, email: string): Promise<boo
     to: email,
     subject: verificationSubject(),
     html: verificationHtml(rows[0]?.first_name ?? "", link),
+    text: verificationText(link),
   });
   return delivered;
 }
@@ -87,6 +92,7 @@ async function sendAccountWelcome(userId: number): Promise<void> {
     to: user.email,
     subject: accountWelcomeSubject(),
     html: accountWelcomeHtml(user.first_name ?? "", FREE_TWEAK_COUNT),
+    text: accountWelcomeText(FREE_TWEAK_COUNT),
   });
 }
 
@@ -110,6 +116,7 @@ async function sendPasswordChangedNotice(userId: number, changedAt: Date): Promi
     to: user.email,
     subject: passwordChangedSubject(),
     html: passwordChangedHtml(user.first_name ?? "", changedAt.toUTCString()),
+    text: passwordChangedText(changedAt.toUTCString()),
   });
 }
 
@@ -337,6 +344,7 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
         to: email.toLowerCase(),
         subject: passwordResetSubject(),
         html: passwordResetHtml(link),
+        text: passwordResetText(link),
       }).catch((err) => console.error("failed to send reset email:", err));
     }
   } catch (err) {

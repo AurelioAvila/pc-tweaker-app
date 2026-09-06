@@ -20,6 +20,22 @@ import { bulletRow, emailShell } from "./layout";
 
 const ACCENT = "#ff5500";
 
+export function verificationText(link: string): string {
+  return `Confirm your email for PC Tweaker\n\nConfirm this address to activate your account:\n${link}\n\nThis link expires in 24 hours. If you did not create this account, ignore this message.`;
+}
+
+export function passwordResetText(link: string): string {
+  return `Reset your PC Tweaker password\n\nChoose a new password:\n${link}\n\nThis link works once and expires in one hour. If you did not request this, ignore this message. Your password stays unchanged.`;
+}
+
+export function passwordChangedText(when: string): string {
+  return `Your PC Tweaker password was changed on ${when}. Every device that was signed in has been signed out.\n\nIf this was not you, request a new reset link from the app immediately and contact support: https://pctweaker.app/support\n\nWe will never ask you for your password by email.`;
+}
+
+export function accountWelcomeText(freeTweakCount: number): string {
+  return `Your PC Tweaker account is ready\n\nYour email is confirmed. Sign in from the app to get started.\n\nYour free account includes ${freeTweakCount} tweaks, live processor, memory and disk monitoring, a startup manager, temporary file cleanup and a password breach check.\n\nOpen PC Tweaker: https://pctweaker.app\nSupport: https://pctweaker.app/support`;
+}
+
 /** The URL under the button, shown so it can be read rather than trusted. */
 function linkFallback(link: string): string {
   return `

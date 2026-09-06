@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.10.1
+
+Security and reliability update for Windows system tools, startup entries and driver update reporting.
+
+- Native tools now use explicit Windows-owned paths instead of executable search paths. Child tool search paths and PowerShell module paths are restricted, and Command Processor AutoRun is disabled for the Windows Update launcher.
+- System Restore loads its library from the Windows system directory only.
+- Fixed startup-entry parsing for Unicode paths that could previously panic or be classified incorrectly.
+- Driver update results now count every requested update that did not install, including download failures, and reject malformed results rather than reporting zero failures.
+
+The original interface, editable profiles, pricing and existing subscription/Lifetime entitlements are unchanged. Official Windows installers are digitally signed by Aurelio Avila. Code signing does not guarantee that every SmartScreen warning disappears.
+
 ## v1.10.0
 
 Ready-to-use Gaming, Study and Work profiles, function-specific tweak icons, and a more compact account menu. Windows installers remain digitally signed by Aurelio Avila.

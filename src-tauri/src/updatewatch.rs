@@ -185,8 +185,11 @@ mod tests {
     use super::*;
 
     fn temp_dir(tag: &str) -> PathBuf {
-        let dir =
-            std::env::temp_dir().join(format!("pctweaker-updatewatch-{}-{}", tag, std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "pctweaker-updatewatch-{}-{}",
+            tag,
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         let _ = std::fs::remove_file(state_path(&dir));
         dir
@@ -204,21 +207,33 @@ mod tests {
     fn the_first_run_reports_no_update() {
         // Nothing to compare against yet. Reporting an update here would
         // greet every new install with "Windows changed your settings".
-        let now = PatchLevel { build: 26200, ubr: 9168 };
+        let now = PatchLevel {
+            build: 26200,
+            ubr: 9168,
+        };
         assert!(!patch_level_changed(None, now));
     }
 
     #[test]
     fn a_new_revision_of_the_same_build_counts() {
         // The common case: a monthly cumulative update moves UBR only.
-        let before = PatchLevel { build: 26200, ubr: 9100 };
-        let after = PatchLevel { build: 26200, ubr: 9168 };
+        let before = PatchLevel {
+            build: 26200,
+            ubr: 9100,
+        };
+        let after = PatchLevel {
+            build: 26200,
+            ubr: 9168,
+        };
         assert!(patch_level_changed(Some(before), after));
     }
 
     #[test]
     fn an_unchanged_patch_level_is_not_an_update() {
-        let same = PatchLevel { build: 26200, ubr: 9168 };
+        let same = PatchLevel {
+            build: 26200,
+            ubr: 9168,
+        };
         assert!(!patch_level_changed(Some(same), same));
     }
 
@@ -227,8 +242,14 @@ mod tests {
         // Windows uninstalling a bad update is precisely when tweaks get
         // reverted, so treating a decrease as "nothing happened" would miss
         // the case that matters most.
-        let before = PatchLevel { build: 26200, ubr: 9168 };
-        let after = PatchLevel { build: 26200, ubr: 9100 };
+        let before = PatchLevel {
+            build: 26200,
+            ubr: 9168,
+        };
+        let after = PatchLevel {
+            build: 26200,
+            ubr: 9100,
+        };
         assert!(patch_level_changed(Some(before), after));
     }
 
@@ -269,8 +290,14 @@ mod tests {
         // something else entirely.
         let states = vec![state("a", true, Some(false)), state("b", true, Some(true))];
         let report = build_report(
-            Some(PatchLevel { build: 26200, ubr: 9100 }),
-            PatchLevel { build: 26200, ubr: 9168 },
+            Some(PatchLevel {
+                build: 26200,
+                ubr: 9100,
+            }),
+            PatchLevel {
+                build: 26200,
+                ubr: 9168,
+            },
             &states,
         );
         assert!(report.windows_updated);
@@ -282,17 +309,33 @@ mod tests {
     #[test]
     fn drift_without_an_update_is_still_drift() {
         let states = vec![state("a", true, Some(false))];
-        let same = PatchLevel { build: 26200, ubr: 9168 };
+        let same = PatchLevel {
+            build: 26200,
+            ubr: 9168,
+        };
         let report = build_report(Some(same), same, &states);
         assert!(!report.windows_updated, "nothing patched the machine");
-        assert_eq!(report.reverted, vec!["a".to_string()], "but the tweak is still off");
+        assert_eq!(
+            report.reverted,
+            vec!["a".to_string()],
+            "but the tweak is still off"
+        );
     }
 
     #[test]
     fn the_state_survives_a_round_trip() {
         let dir = temp_dir("roundtrip");
-        let level = PatchLevel { build: 26200, ubr: 9168 };
-        write_state(&dir, &WatchState { last_seen: Some(level) }).unwrap();
+        let level = PatchLevel {
+            build: 26200,
+            ubr: 9168,
+        };
+        write_state(
+            &dir,
+            &WatchState {
+                last_seen: Some(level),
+            },
+        )
+        .unwrap();
         assert_eq!(read_state(&dir).last_seen, Some(level));
         std::fs::remove_dir_all(&dir).ok();
     }
@@ -395,11 +438,12 @@ $xml.LoadXml(@'
 "#
     );
 
-    let output = std::process::Command::new("powershell")
-        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
-        .creation_flags(CREATE_NO_WINDOW)
-        .output()
-        .map_err(|e| format!("could not run PowerShell: {e}"))?;
+    let output = crate::system_tools::run("powershell", |tool| {
+        tool.args(["-NoProfile", "-NonInteractive", "-Command", &script])
+            .creation_flags(CREATE_NO_WINDOW)
+            .output()
+    })
+    .map_err(|e| format!("could not run PowerShell: {e}"))?;
 
     if output.status.success() {
         Ok(())

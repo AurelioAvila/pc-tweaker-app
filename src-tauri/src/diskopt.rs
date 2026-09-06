@@ -14,7 +14,6 @@ pub struct DiskOptResult {
 mod imp {
     use super::DiskOptResult;
     use std::os::windows::process::CommandExt;
-    use std::process::Command;
 
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -26,11 +25,12 @@ mod imp {
     pub fn optimize(drive: &str) -> Result<DiskOptResult, String> {
         let media = crate::diskinfo::media_type_of(drive);
 
-        let output = Command::new("defrag")
-            .args([drive, "/O", "/H"])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
-            .map_err(|e| format!("could not run defrag: {}", e))?;
+        let output = crate::system_tools::run("defrag", |tool| {
+            tool.args([drive, "/O", "/H"])
+                .creation_flags(CREATE_NO_WINDOW)
+                .output()
+        })
+        .map_err(|e| format!("could not run defrag: {}", e))?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();

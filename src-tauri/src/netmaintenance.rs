@@ -10,7 +10,6 @@ pub struct FlushDnsResult {
 mod imp {
     use super::FlushDnsResult;
     use std::os::windows::process::CommandExt;
-    use std::process::Command;
 
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -19,11 +18,12 @@ mod imp {
     /// nothing to roll back — it is a one-shot action, not a persistent
     /// setting, so it has no place in the rollback store.
     pub fn flush() -> Result<FlushDnsResult, String> {
-        let output = Command::new("ipconfig")
-            .arg("/flushdns")
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
-            .map_err(|e| format!("could not run ipconfig: {}", e))?;
+        let output = crate::system_tools::run("ipconfig", |tool| {
+            tool.arg("/flushdns")
+                .creation_flags(CREATE_NO_WINDOW)
+                .output()
+        })
+        .map_err(|e| format!("could not run ipconfig: {}", e))?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let detail = stdout

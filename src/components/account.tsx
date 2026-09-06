@@ -13,6 +13,7 @@ import {
 import { AuthState } from "../types";
 import { CheckIcon, CrownIcon } from "./icons";
 import { Avatar } from "./ui";
+import "./account-menu.css";
 
 export function AuthSection({
   s,
@@ -450,7 +451,16 @@ export function AccountMenu({
   }
 
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && open) {
+          event.stopPropagation();
+          setOpen(false);
+          event.currentTarget.querySelector<HTMLButtonElement>("button")?.focus();
+        }
+      }}
+    >
       {/* Signed in, the trigger *is* the avatar — the same face shown inside
           the menu, so the button says whose account this is before it's
           opened. Signed out there is no account to represent, so it stays a
@@ -487,11 +497,8 @@ export function AccountMenu({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          {/* Sized to the content rather than to the widest possible email:
-              at w-72 with p-4 sections this panel covered most of the window
-              on a small screen. `max-h` + scroll keeps the themes reachable
-              without the panel ever running past the bottom edge. */}
-          <div className="animate-card absolute right-0 z-50 mt-2 max-h-[calc(100vh-9rem)] w-60 overflow-y-auto overflow-x-hidden rounded-2xl border border-line bg-slate-900 shadow-2xl">
+          {/* A compact panel with scrolling for shorter windows. */}
+          <div className="account-panel animate-card absolute right-0 z-50 mt-2 max-h-[calc(100vh-9rem)] overflow-y-auto overflow-x-hidden">
             <AuthSection
               s={s}
               auth={auth}
@@ -579,18 +586,16 @@ export function AccountMenu({
               <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">
                 {s.menu.language}
               </p>
-              <div className="flex flex-col gap-0.5">
+              <div className="account-languages">
                 {LANGUAGES.map((l) => (
                   <button
                     key={l.code}
                     onClick={() => setLang(l.code)}
-                    className={`rounded-lg px-2.5 py-1 text-left text-[13px] transition-colors ${
-                      lang === l.code
-                        ? "bg-indigo-500/20 text-indigo-300"
-                        : "text-ink-2 hover:bg-surface-2"
-                    }`}
+                    aria-pressed={lang === l.code}
+                    className="account-language"
                   >
                     {l.native}
+                    {lang === l.code && <CheckIcon className="h-3.5 w-3.5" />}
                   </button>
                 ))}
               </div>
@@ -611,7 +616,7 @@ export function AccountMenu({
                   and the hover scale both spilled onto their neighbours. 20px
                   dots with a wider gap leave room for both. `ring-offset` keeps
                   the ring off the swatch itself rather than growing outwards. */}
-              <div className="grid grid-cols-7 justify-items-center gap-2">
+              <div className="account-themes">
                 {THEMES.map((t) => (
                   <button
                     key={t.code}
@@ -619,13 +624,12 @@ export function AccountMenu({
                     title={t.label}
                     aria-label={t.label}
                     aria-pressed={theme === t.code}
-                    className={`h-5 w-5 shrink-0 rounded-full transition-transform hover:scale-110 ${
-                      theme === t.code
-                        ? "ring-2 ring-white ring-offset-2 ring-offset-slate-900"
-                        : "ring-1 ring-white/20"
-                    }`}
-                    style={{ background: t.swatch }}
-                  />
+                    className="account-theme"
+                    style={{ "--swatch": t.swatch } as React.CSSProperties}
+                  >
+                    <span className="account-theme-color" />
+                    {theme === t.code && <CheckIcon className="h-3 w-3" />}
+                  </button>
                 ))}
               </div>
             </div>

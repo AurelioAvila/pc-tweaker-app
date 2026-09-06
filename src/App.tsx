@@ -45,6 +45,7 @@ import {
   UninstallerPromoCard,
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
+import { TweakIcon } from "./components/tweak-icon";
 import { TechnicalDetails, TechnicalToggle } from "./components/technical";
 import { DashboardCards } from "./components/dashboard";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
@@ -1013,7 +1014,7 @@ function App() {
                         a Pro tweak and the theme accent otherwise, so the tier
                         registers before any badge is read. */}
                       <div
-                        className={`icon-module grid h-11 w-11 shrink-0 place-items-center ${style.glyph}`}
+                        className="icon-module grid h-11 w-11 shrink-0 place-items-center"
                         style={
                           {
                             "--module-tint": style.tint,
@@ -1023,7 +1024,7 @@ function App() {
                           } as React.CSSProperties
                         }
                       >
-                        {style.icon}
+                        <TweakIcon id={t.id} fallback={style.icon} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">

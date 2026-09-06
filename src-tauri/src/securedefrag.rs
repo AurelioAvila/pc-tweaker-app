@@ -191,17 +191,18 @@ where
 {
     use std::io::BufReader;
     use std::os::windows::process::CommandExt;
-    use std::process::{Command, Stdio};
+    use std::process::Stdio;
 
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-    let mut child = Command::new("defrag")
-        .args(args)
-        .creation_flags(CREATE_NO_WINDOW)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("could not start defrag: {}", e))?;
+    let mut child = crate::system_tools::run("defrag", |tool| {
+        tool.args(args)
+            .creation_flags(CREATE_NO_WINDOW)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+    })
+    .map_err(|e| format!("could not start defrag: {}", e))?;
 
     let stdout = child
         .stdout

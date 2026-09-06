@@ -8,11 +8,10 @@ pub fn run_powercfg(args: &[&str]) -> Result<String, String> {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-    let output = std::process::Command::new("powercfg")
-        .args(args)
-        .creation_flags(CREATE_NO_WINDOW)
-        .output()
-        .map_err(|e| format!("could not run powercfg: {}", e))?;
+    let output = crate::system_tools::run("powercfg", |tool| {
+        tool.args(args).creation_flags(CREATE_NO_WINDOW).output()
+    })
+    .map_err(|e| format!("could not run powercfg: {}", e))?;
 
     if !output.status.success() {
         return Err(format!(

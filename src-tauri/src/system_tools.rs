@@ -71,8 +71,8 @@ fn tool_path(name: &str) -> io::Result<PathBuf> {
 
 pub fn run<T>(name: &str, action: impl FnOnce(&mut Command) -> io::Result<T>) -> io::Result<T> {
     let path = tool_path(name)?;
-    let mut command = Command::new(path);
     use std::os::windows::process::CommandExt;
+    let mut command = Command::new(path);
     command.creation_flags(0x08000000);
     let system = windows_directory(true)?;
     let windows = windows_directory(false)?;

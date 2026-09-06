@@ -205,7 +205,7 @@ mod imp {
     use super::*;
     use std::io::Read;
     use std::os::windows::process::CommandExt;
-    use std::process::{Command, Stdio};
+    use std::process::Stdio;
 
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
     /// How many trailing output lines each step keeps for the log view.
@@ -223,18 +223,23 @@ mod imp {
     /// Reads raw bytes rather than `BufRead::lines()` on purpose: DISM draws
     /// its progress bar by rewriting one line with `\r` and `\x08`, so a
     /// line-oriented reader shows nothing at all until the step finishes.
-    fn run_tool<F>(program: &str, args: &[&str], mut on_progress: F) -> Result<(i32, String), String>
+    fn run_tool<F>(
+        program: &str,
+        args: &[&str],
+        mut on_progress: F,
+    ) -> Result<(i32, String), String>
     where
         F: FnMut(f32),
     {
-        let mut child = Command::new(program)
-            .args(args)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .stdin(Stdio::null())
-            .creation_flags(CREATE_NO_WINDOW)
-            .spawn()
-            .map_err(|e| format!("could not start {}: {}", program, e))?;
+        let mut child = crate::system_tools::run(program, |tool| {
+            tool.args(args)
+                .stdout(Stdio::piped())
+                .stderr(Stdio::null())
+                .stdin(Stdio::null())
+                .creation_flags(CREATE_NO_WINDOW)
+                .spawn()
+        })
+        .map_err(|e| format!("could not start {}: {}", program, e))?;
 
         let mut stdout = child
             .stdout
@@ -324,7 +329,11 @@ mod imp {
 
         for (index, (step, program, arg)) in steps.into_iter().enumerate() {
             let full: Vec<&str> = if program == "dism.exe" {
-                DISM_BASE.iter().copied().chain(std::iter::once(arg)).collect()
+                DISM_BASE
+                    .iter()
+                    .copied()
+                    .chain(std::iter::once(arg))
+                    .collect()
             } else {
                 vec![arg]
             };
@@ -440,11 +449,15 @@ mod tests {
     #[test]
     fn reads_dism_verdicts() {
         assert_eq!(
-            dism_verdict("No component store corruption detected.\nThe operation completed successfully."),
+            dism_verdict(
+                "No component store corruption detected.\nThe operation completed successfully."
+            ),
             Some(RepairStatus::Healthy)
         );
         assert_eq!(
-            dism_verdict("The component store is repairable.\nThe operation completed successfully."),
+            dism_verdict(
+                "The component store is repairable.\nThe operation completed successfully."
+            ),
             Some(RepairStatus::Repairable)
         );
         assert_eq!(
@@ -468,11 +481,17 @@ mod tests {
     #[test]
     fn sfc_only_ever_worsens_or_confirms() {
         assert_eq!(
-            sfc_downgrade("found corrupt files but was unable to fix some", RepairStatus::Healthy),
+            sfc_downgrade(
+                "found corrupt files but was unable to fix some",
+                RepairStatus::Healthy
+            ),
             RepairStatus::Unrepairable
         );
         assert_eq!(
-            sfc_downgrade("found corrupt files and successfully repaired them", RepairStatus::Healthy),
+            sfc_downgrade(
+                "found corrupt files and successfully repaired them",
+                RepairStatus::Healthy
+            ),
             RepairStatus::Repaired
         );
         // A localised summary leaves the DISM verdict exactly as it was.

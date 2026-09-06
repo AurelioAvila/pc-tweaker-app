@@ -26,11 +26,10 @@ fn run_sc(args: &[&str]) -> Result<String, String> {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-    let output = std::process::Command::new("sc")
-        .args(args)
-        .creation_flags(CREATE_NO_WINDOW)
-        .output()
-        .map_err(|e| format!("could not run sc: {}", e))?;
+    let output = crate::system_tools::run("sc", |tool| {
+        tool.args(args).creation_flags(CREATE_NO_WINDOW).output()
+    })
+    .map_err(|e| format!("could not run sc: {}", e))?;
     let code = output.status.code();
     // Stopping an already stopped service and starting one already running
     // are idempotent successes. Other SCM failures must retain the snapshot.

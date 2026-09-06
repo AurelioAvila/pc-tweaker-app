@@ -263,11 +263,11 @@ if ($enc -ne $null -and $enc.ChassisTypes.Count -gt 0) { $chassis = [int]$enc.Ch
 [pscustomobject]@{ media = $media; bus = $bus; chassis = $chassis } | ConvertTo-Json -Compress
 "#;
 
-    let Ok(output) = std::process::Command::new("powershell")
-        .args(["-NoProfile", "-NonInteractive", "-Command", SCRIPT])
-        .creation_flags(CREATE_NO_WINDOW)
-        .output()
-    else {
+    let Ok(output) = crate::system_tools::run("powershell", |tool| {
+        tool.args(["-NoProfile", "-NonInteractive", "-Command", SCRIPT])
+            .creation_flags(CREATE_NO_WINDOW)
+            .output()
+    }) else {
         return;
     };
 

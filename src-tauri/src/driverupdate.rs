@@ -41,12 +41,58 @@ pub struct InstallOutcome {
     pub reboot_required: bool,
 }
 
+#[cfg(any(windows, test))]
+fn parse_install_outcome(raw: &str, requested: usize) -> Result<InstallOutcome, String> {
+    #[derive(Deserialize)]
+    struct ResultFields {
+        installed: usize,
+        reboot: bool,
+    }
+    let result: ResultFields = serde_json::from_str(raw.trim())
+        .map_err(|e| format!("unexpected driver install result: {e}"))?;
+    let failed = requested
+        .checked_sub(result.installed)
+        .ok_or_else(|| "driver install result exceeds the requested update count".to_string())?;
+    Ok(InstallOutcome {
+        installed: result.installed,
+        failed,
+        reboot_required: result.reboot,
+    })
+}
+
+#[cfg(test)]
+mod outcome_tests {
+    use super::*;
+    #[test]
+    fn missing_or_undownloaded_updates_are_not_reported_as_success() {
+        let result =
+            parse_install_outcome(r#"{"installed":1,"failed":0,"reboot":false}"#, 3).unwrap();
+        assert_eq!(result.installed, 1);
+        assert_eq!(result.failed, 2);
+    }
+    #[test]
+    fn malformed_results_do_not_silently_become_zero_failures() {
+        for raw in [
+            "{}",
+            r#"{"installed":1}"#,
+            r#"{"installed":4,"reboot":false}"#,
+            r#"{"installed":-1,"reboot":false}"#,
+        ] {
+            assert!(parse_install_outcome(raw, 3).is_err());
+        }
+        assert!(
+            parse_install_outcome(r#"{"installed":3,"reboot":true}"#, 3)
+                .unwrap()
+                .reboot_required
+        );
+    }
+}
+
 #[cfg(windows)]
 mod imp {
     use super::{InstallOutcome, UpdateSearchResult};
     use base64::Engine as _;
     use std::os::windows::process::CommandExt;
-    use std::process::Command;
 
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -56,11 +102,12 @@ mod imp {
     const MICROSOFT_UPDATE_SERVICE: &str = "7971f918-a847-4430-9279-4a52d1efe18d";
 
     fn run_ps(script: &str) -> Result<String, String> {
-        let output = Command::new("powershell")
-            .args(["-NoProfile", "-NonInteractive", "-Command", script])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
-            .map_err(|e| format!("could not run PowerShell: {}", e))?;
+        let output = crate::system_tools::run("powershell", |tool| {
+            tool.args(["-NoProfile", "-NonInteractive", "-Command", script])
+                .creation_flags(CREATE_NO_WINDOW)
+                .output()
+        })
+        .map_err(|e| format!("could not run PowerShell: {}", e))?;
         let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
         if !output.status.success() && stdout.is_empty() {
             return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
@@ -193,13 +240,11 @@ mod imp {
         );
 
         let raw = run_ps(&script)?;
-        let v: serde_json::Value = serde_json::from_str(raw.trim())
-            .map_err(|e| format!("unexpected install result: {} ({})", e, raw))?;
-        Ok(InstallOutcome {
-            installed: v.get("installed").and_then(|x| x.as_u64()).unwrap_or(0) as usize,
-            failed: v.get("failed").and_then(|x| x.as_u64()).unwrap_or(0) as usize,
-            reboot_required: v.get("reboot").and_then(|x| x.as_bool()).unwrap_or(false),
-        })
+        let requested = titles
+            .iter()
+            .collect::<std::collections::HashSet<_>>()
+            .len();
+        super::parse_install_outcome(&raw, requested)
     }
 }
 

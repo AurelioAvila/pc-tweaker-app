@@ -31,7 +31,9 @@ pub enum RestorePointOutcome {
 mod imp {
     use windows_sys::core::PCWSTR;
     use windows_sys::Win32::Foundation::{FreeLibrary, BOOL};
-    use windows_sys::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryW};
+    use windows_sys::Win32::System::LibraryLoader::{
+        GetProcAddress, LoadLibraryExW, LOAD_LIBRARY_SEARCH_SYSTEM32,
+    };
 
     const BEGIN_SYSTEM_CHANGE: u32 = 100;
     const APPLICATION_UNINSTALL: u32 = 1;
@@ -66,7 +68,13 @@ mod imp {
         let dll_name: Vec<u16> = "srclient.dll\0".encode_utf16().collect();
         // SAFETY: `dll_name` is a valid NUL-terminated UTF-16 string that
         // outlives the call.
-        let module = unsafe { LoadLibraryW(dll_name.as_ptr() as PCWSTR) };
+        let module = unsafe {
+            LoadLibraryExW(
+                dll_name.as_ptr() as PCWSTR,
+                std::ptr::null_mut(),
+                LOAD_LIBRARY_SEARCH_SYSTEM32,
+            )
+        };
         if module.is_null() {
             return Err("System Restore is not available on this Windows edition.".to_string());
         }
@@ -75,7 +83,7 @@ mod imp {
         // NUL-terminated ANSI string.
         let proc = unsafe { GetProcAddress(module, c"SRSetRestorePointW".as_ptr() as *const u8) };
         let Some(proc) = proc else {
-            // SAFETY: `module` came from LoadLibraryW above.
+            // SAFETY: `module` came from LoadLibraryExW above.
             unsafe { FreeLibrary(module) };
             return Err("SRSetRestorePointW was not found in srclient.dll.".to_string());
         };
@@ -106,7 +114,7 @@ mod imp {
         // SAFETY: both pointers reference live, correctly-shaped structs for
         // the duration of the call.
         let ok = unsafe { set_restore_point(&info, &mut status) };
-        // SAFETY: `module` came from LoadLibraryW above.
+        // SAFETY: `module` came from LoadLibraryExW above.
         unsafe { FreeLibrary(module) };
 
         if ok != 0 {

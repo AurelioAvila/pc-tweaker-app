@@ -6,6 +6,8 @@ mod browsercleanup;
 mod cleanup;
 mod contextmenu;
 mod cookies;
+#[cfg(windows)]
+mod system_tools;
 // Public so examples/crashprobe.rs can install the real hook and panic for
 // real: whether a panic actually produces a scrubbed report is the one thing
 // a unit test cannot check, because a test that panics is a test that failed.
@@ -940,12 +942,13 @@ fn drift_watch_enabled() -> bool {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
-    std::process::Command::new("schtasks")
-        .args(["/query", "/tn", updatewatch::TASK_NAME])
-        .creation_flags(CREATE_NO_WINDOW)
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
+    crate::system_tools::run("schtasks", |tool| {
+        tool.args(["/query", "/tn", updatewatch::TASK_NAME])
+            .creation_flags(CREATE_NO_WINDOW)
+            .output()
+    })
+    .map(|o| o.status.success())
+    .unwrap_or(false)
 }
 
 /// Registers or removes the daily check.
@@ -1026,11 +1029,10 @@ fn configure_drift_watch(enabled: bool) -> Result<(), String> {
     };
 
     let refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
-    let output = std::process::Command::new("schtasks")
-        .args(&refs)
-        .creation_flags(CREATE_NO_WINDOW)
-        .output()
-        .map_err(|e| format!("could not run schtasks: {e}"))?;
+    let output = crate::system_tools::run("schtasks", |tool| {
+        tool.args(&refs).creation_flags(CREATE_NO_WINDOW).output()
+    })
+    .map_err(|e| format!("could not run schtasks: {e}"))?;
 
     if output.status.success() {
         Ok(())
@@ -1730,7 +1732,8 @@ mod tests {
         ];
 
         let total = registry.len() + composite_pro.len() + power_tuning::TWEAKS.len();
-        let pro = registry_pro + composite_pro.iter().filter(|p| **p).count()
+        let pro = registry_pro
+            + composite_pro.iter().filter(|p| **p).count()
             + power_tuning::TWEAKS.iter().filter(|t| t.pro).count();
 
         assert_eq!(total, 61, "the catalogue no longer has 61 tweaks");

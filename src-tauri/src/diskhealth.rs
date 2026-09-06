@@ -15,16 +15,16 @@ pub struct DiskHealth {
 mod imp {
     use super::DiskHealth;
     use std::os::windows::process::CommandExt;
-    use std::process::Command;
 
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
     fn run_ps(script: &str) -> Result<String, String> {
-        let output = Command::new("powershell")
-            .args(["-NoProfile", "-NonInteractive", "-Command", script])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
-            .map_err(|e| format!("could not run PowerShell: {}", e))?;
+        let output = crate::system_tools::run("powershell", |tool| {
+            tool.args(["-NoProfile", "-NonInteractive", "-Command", script])
+                .creation_flags(CREATE_NO_WINDOW)
+                .output()
+        })
+        .map_err(|e| format!("could not run PowerShell: {}", e))?;
         if !output.status.success() {
             return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
         }

@@ -147,18 +147,19 @@ fn restart_explorer() {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
-    let killed = std::process::Command::new("taskkill")
-        .args(["/f", "/im", "explorer.exe"])
-        .creation_flags(CREATE_NO_WINDOW)
-        .status();
+    let killed = crate::system_tools::run("taskkill", |tool| {
+        tool.args(["/f", "/im", "explorer.exe"])
+            .creation_flags(CREATE_NO_WINDOW)
+            .status()
+    });
 
     if killed.is_ok() {
         // Windows normally relaunches Explorer on its own; starting it
         // explicitly covers the configurations where it doesn't, and a second
         // instance is not spawned if one is already back up.
-        let _ = std::process::Command::new("explorer.exe")
-            .creation_flags(CREATE_NO_WINDOW)
-            .spawn();
+        let _ = crate::system_tools::run("explorer.exe", |tool| {
+            tool.creation_flags(CREATE_NO_WINDOW).spawn()
+        });
     }
 }
 

@@ -48,7 +48,6 @@ pub struct GpuPowerInfo {
 mod imp {
     use super::GpuPowerInfo;
     use std::os::windows::process::CommandExt;
-    use std::process::Command;
 
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -61,11 +60,10 @@ mod imp {
     }
 
     fn smi(args: &[&str]) -> Option<String> {
-        let out = Command::new("nvidia-smi")
-            .args(args)
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
-            .ok()?;
+        let out = crate::system_tools::run("nvidia-smi", |tool| {
+            tool.args(args).creation_flags(CREATE_NO_WINDOW).output()
+        })
+        .ok()?;
         if !out.status.success() {
             return None;
         }
@@ -140,11 +138,10 @@ mod imp {
         let clamped_w = watts.clamp(min, max);
 
         let run = |args: &[&str]| -> Result<(), String> {
-            let out = Command::new("nvidia-smi")
-                .args(args)
-                .creation_flags(CREATE_NO_WINDOW)
-                .output()
-                .map_err(|e| format!("could not run nvidia-smi: {}", e))?;
+            let out = crate::system_tools::run("nvidia-smi", |tool| {
+                tool.args(args).creation_flags(CREATE_NO_WINDOW).output()
+            })
+            .map_err(|e| format!("could not run nvidia-smi: {}", e))?;
             if out.status.success() {
                 return Ok(());
             }

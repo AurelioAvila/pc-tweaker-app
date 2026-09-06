@@ -70,7 +70,9 @@ fn every_spawned_process_is_told_not_to_open_a_console() {
         let lines: Vec<&str> = source.lines().collect();
 
         for (index, line) in lines.iter().enumerate() {
-            if !line.contains("Command::new") || line.contains(EXEMPT) {
+            if (!line.contains("Command::new") && !line.contains("crate::system_tools::run("))
+                || line.contains(EXEMPT)
+            {
                 continue;
             }
             sites += 1;
@@ -92,11 +94,7 @@ fn every_spawned_process_is_told_not_to_open_a_console() {
                     .unwrap_or(file)
                     .to_string_lossy()
                     .replace('\\', "/");
-                unguarded.push(format!(
-                    "src/{name}:{}  {}",
-                    index + 1,
-                    line.trim()
-                ));
+                unguarded.push(format!("src/{name}:{}  {}", index + 1, line.trim()));
             }
         }
     }

@@ -44,7 +44,7 @@ pub(crate) fn extract_exe_path(command: &str) -> Option<std::path::PathBuf> {
     let candidate = if let Some(rest) = command.strip_prefix('"') {
         // Quoted: everything up to the closing quote is the path, verbatim.
         rest.split('"').next()?.to_string()
-    } else if let Some(idx) = command.to_lowercase().find(".exe") {
+    } else if let Some(idx) = command.to_ascii_lowercase().find(".exe") {
         // Unquoted: take through the first ".exe", which handles both
         // `C:\Program Files\x\app.exe -flag` and a bare `app.exe`.
         command[..idx + 4].to_string()
@@ -572,5 +572,18 @@ mod tests {
     fn the_32_bit_run_key_is_under_wow6432node() {
         assert!(RUN32_PATH.contains("WOW6432Node"));
         assert_ne!(RUN32_PATH, RUN_PATH);
+    }
+}
+
+#[cfg(test)]
+mod unicode_path_tests {
+    #[test]
+    fn unicode_case_expansion_does_not_change_path_offsets() {
+        for path in [r"C:\İ\tool.exe", r"C:\İİ\工具.EXE"] {
+            assert_eq!(
+                super::extract_exe_path(path),
+                Some(std::path::PathBuf::from(path))
+            );
+        }
     }
 }

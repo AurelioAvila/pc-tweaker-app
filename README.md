@@ -58,6 +58,10 @@ Package catalogs can lag behind a release. Check the release version before inst
 
 Read the effect and trade-offs before applying a setting. A disabled tweak is not evidence of a fault, and a higher configuration score is not a measured performance gain.
 
+### Ready-to-use profiles in 1.10.0
+
+**Gaming, Study and Work are included in Free.** Open Profiles, review or customize the selection, then apply the pending tweaks with one click. Each template explains its tradeoffs; optional settings start unchecked. Profiles add the selected settings without undoing other tweaks. Restore individual changes from their category. Results depend on your hardware and workload; no FPS gain is promised.
+
 ### Five new native power controls in 1.9.0
 
 The catalog now contains **61 tweaks: 37 Free and 24 Pro**. These five additions change only mains-power policy in the selected Windows plan. They record the original plan and value before writing, verify the result, and leave battery policy unchanged.
@@ -124,7 +128,7 @@ Annual billing is approximately 51% below twelve monthly payments. Check the app
 
 [Version-specific signing inventory and verification guide](https://github.com/AurelioAvila/.github/blob/master/CODE_SIGNING.md)
 
-**PC Tweaker 1.9.0 is code-signed.** Its Windows application and release installers identify **Aurelio Avila** as publisher, using Certum and a trusted timestamp.
+**PC Tweaker 1.10.0 is code-signed.** Its Windows application and release installers identify **Aurelio Avila** as publisher, using Certum and a trusted timestamp.
 
 Windows Authenticode and Tauri update signatures have different roles. Authenticode identifies the Windows publisher and detects changes after signing. Tauri's update signature verifies update packages.
 

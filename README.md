@@ -14,7 +14,7 @@
 
 <p align="center">
   <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/v/release/AurelioAvila/pc-tweaker-app" alt="Latest release"></a>
-  <a href="https://github.com/microsoft/winget-pkgs/tree/master/manifests/a/AurelioAvila/PCTweaker/1.9.0"><img src="https://img.shields.io/badge/WinGet-v1.9.0-0078D4" alt="WinGet approved package: PC Tweaker 1.9.0"></a>
+  <a href="https://github.com/microsoft/winget-pkgs/tree/master/manifests/a/AurelioAvila/PCTweaker/1.10.0"><img src="https://img.shields.io/badge/WinGet-v1.10.0-0078D4" alt="WinGet approved package: PC Tweaker 1.10.0"></a>
   <a href="https://github.com/AurelioAvila/pc-tweaker-app/releases"><img src="https://img.shields.io/github/downloads/AurelioAvila/pc-tweaker-app/total?label=GitHub%20asset%20downloads" alt="GitHub release asset download events"></a>
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D4" alt="Windows 10 and 11 x64">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-proprietary-6B7280" alt="Source available under a proprietary license"></a>

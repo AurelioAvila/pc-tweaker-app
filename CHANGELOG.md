@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.10.0
+
+Ready-to-use Gaming, Study and Work profiles, function-specific tweak icons, and a more compact account menu. Windows installers remain digitally signed by Aurelio Avila.
+
+- **Three editable starter profiles, included in Free.** Review the selected tweaks and apply pending changes with one click. Gaming covers Windows mouse acceleration and Game DVR capture; Study reduces Windows suggestions and taskbar distractions; Work exposes file extensions and adjusts menu and startup delays. Optional changes start unchecked. Profiles add selected tweaks and preserve other settings; switching the selected template does not undo a previously applied profile.
+- **Clearer controls.** Tweak icons distinguish CPU, memory, graphics, recording and other functions. The account menu is narrower, with compact language and theme selectors. The original logo, current theme, sidebar, Plans & pricing and Buy me a coffee are retained.
+- **Honest application status.** Already-applied starter settings are skipped, repeated apply clicks are guarded, and failed batches do not show a success toast. Existing native entitlement checks and rollback remain in use.
+- **Update with consent.** The existing startup update prompt offers Install or Later. Dismissing it lasts for the current session only; installation starts after the user chooses it.
+
+These profiles do not promise an FPS increase. Review mouse, recording and accessibility tradeoffs before applying. Restore individual tweaks from their category. No pricing, subscription expiry or Lifetime entitlement changes are included.
+
 ## v1.9.0
 
 Five new native Windows power controls, a redesigned desktop workspace, and digitally signed Windows installers from Aurelio Avila.

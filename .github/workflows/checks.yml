@@ -53,6 +53,9 @@ jobs:
       - name: Translation quality (nothing silently left in English)
         run: npm run check:i18n-quality
 
+      - name: Starter profiles selection and catalog validation
+        run: node scripts/test-starter-presets.mjs
+
       - name: Rust unit tests
         run: npm run check:rust
 

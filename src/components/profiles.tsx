@@ -7,6 +7,7 @@ import { FolderIcon, LayersIcon } from "./icons";
 import { LoadedProfile, Toast, TweakInfo, TweakProfile } from "../types";
 import "./workspace-panels.css";
 import { LifetimeTools } from "./lifetime-tools";
+import { StarterProfiles } from "./starter-profiles";
 
 /**
  * Saved configurations: capture what's applied, put it back later, or hand it
@@ -118,6 +119,7 @@ export function ProfilesPanel({
   const [saving, setSaving] = useState(false);
   const nameId = useId();
   const readRequest = useRef(0);
+  const applyingProfile = useRef(false);
 
   const readProfiles = useCallback(() => {
     const request = ++readRequest.current;
@@ -147,7 +149,7 @@ export function ProfilesPanel({
   }
 
   async function saveCurrent() {
-    if (saving) return;
+    if (saving || applyingProfile.current) return;
     if (!authed) {
       onRequireAuth();
       return;
@@ -178,6 +180,7 @@ export function ProfilesPanel({
    * someone the paid tweaks for free.
    */
   async function applyProfile(profile: TweakProfile) {
+    if (applyingProfile.current || saving) return;
     const locked = profile.tweaks.filter((id) => {
       const t = tweaks.find((x) => x.id === id);
       return t?.requires_pro && !isPro;
@@ -187,6 +190,7 @@ export function ProfilesPanel({
       return;
     }
 
+    applyingProfile.current = true;
     setBusy(profile.name);
     try {
       const failures = await invoke<string[]>("apply_tweaks", { ids: profile.tweaks });
@@ -194,13 +198,15 @@ export function ProfilesPanel({
         pushToast("error", f.includes("PRO_REQUIRED: ") ? s.toasts.licenseNeedsRefresh : f),
       );
       await onChanged();
-      pushToast(
-        "success",
-        format(s.profiles.appliedToast, { count: profile.tweaks.length - failures.length }),
-      );
+      if (failures.length === 0)
+        pushToast(
+          "success",
+          format(s.profiles.appliedToast, { count: profile.tweaks.length - failures.length }),
+        );
     } catch (e) {
       pushToast("error", String(e));
     } finally {
+      applyingProfile.current = false;
       setBusy(null);
     }
   }
@@ -266,6 +272,15 @@ export function ProfilesPanel({
         )}
       </header>
 
+      <StarterProfiles
+        s={s}
+        lang={lang}
+        tweaks={tweaks}
+        isPro={isPro}
+        busy={busy !== null || saving}
+        onApply={applyProfile}
+      />
+
       <section className="workspace-profile-compose">
         <div className="workspace-compose-heading">
           <label htmlFor={nameId}>{s.profiles.saveHeading}</label>
@@ -293,7 +308,7 @@ export function ProfilesPanel({
           />
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || busy !== null}
             aria-busy={saving}
             className="workspace-button workspace-button-primary"
           >

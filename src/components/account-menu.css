@@ -1,0 +1,83 @@
+.account-panel {
+  width: min(288px, calc(100vw - 32px));
+  border-radius: 12px;
+  background: var(--surface-1);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.4);
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+.account-panel > div {
+  padding: 11px 13px;
+}
+.account-panel > div > p:first-child {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.account-panel button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.account-languages {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.account-language {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+}
+.account-language:hover {
+  background: var(--surface-2);
+}
+.account-language[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+.account-language svg {
+  color: var(--accent);
+}
+.account-themes {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.account-theme {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+.account-theme-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: var(--swatch);
+}
+.account-theme[aria-pressed="true"] {
+  border-color: var(--text-primary);
+}
+.account-theme:hover {
+  background: var(--surface-2);
+}
+.account-theme svg {
+  position: absolute;
+  color: #111;
+}
+.account-panel button[role="switch"][aria-checked="true"] {
+  background: var(--accent);
+}

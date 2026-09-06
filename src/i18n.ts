@@ -1621,7 +1621,7 @@ const it: Strings = {
     confirmBody:
       "PC Tweaker Uninstaller è un'app separata della stessa suite e accede con lo stesso account di questa. Il download prende l'installer (circa 4 MB) direttamente dalla sua release su GitHub, per Windows 10 e 11 a 64 bit.",
     confirmUnsigned:
-      "PC Tweaker 1.9.0 è firmato digitalmente da Aurelio Avila. Verifica autore e firma nelle proprietà del file. SmartScreen può ancora mostrare avvisi; le versioni precedenti potrebbero non essere firmate.",
+      "PC Tweaker 1.10.0 è firmato digitalmente da Aurelio Avila. Verifica autore e firma nelle proprietà del file. SmartScreen può ancora mostrare avvisi; le versioni precedenti potrebbero non essere firmate.",
     confirmDownload: "Scarica",
     confirmOpenPage: "Apri invece la pagina",
     cancel: "Annulla",
@@ -2915,7 +2915,7 @@ const en: Strings = {
     confirmBody:
       "PC Tweaker Uninstaller is a separate app in the same suite, and it signs in with the same account as this one. This downloads the installer (about 4 MB) straight from its GitHub release, for 64-bit Windows 10 and 11.",
     confirmUnsigned:
-      "PC Tweaker 1.9.0 is digitally signed by Aurelio Avila. Check the publisher and signature in the file properties. SmartScreen warnings can still appear; older releases may be unsigned.",
+      "PC Tweaker 1.10.0 is digitally signed by Aurelio Avila. Check the publisher and signature in the file properties. SmartScreen warnings can still appear; older releases may be unsigned.",
     confirmDownload: "Download",
     confirmOpenPage: "Open the page instead",
     cancel: "Cancel",
@@ -4219,7 +4219,7 @@ const fr: Strings = {
     confirmBody:
       "PC Tweaker Uninstaller est une application distincte de la même suite, et elle se connecte avec le même compte que celle-ci. Le téléchargement récupère l'installeur (environ 4 Mo) directement depuis sa version GitHub, pour Windows 10 et 11 en 64 bits.",
     confirmUnsigned:
-      "PC Tweaker 1.9.0 est signé numériquement par Aurelio Avila. Vérifiez l'éditeur et la signature dans les propriétés du fichier. SmartScreen peut encore afficher un avertissement ; les anciennes versions peuvent ne pas être signées.",
+      "PC Tweaker 1.10.0 est signé numériquement par Aurelio Avila. Vérifiez l'éditeur et la signature dans les propriétés du fichier. SmartScreen peut encore afficher un avertissement ; les anciennes versions peuvent ne pas être signées.",
     confirmDownload: "Télécharger",
     confirmOpenPage: "Ouvrir plutôt la page",
     cancel: "Annuler",
@@ -5521,7 +5521,7 @@ const es: Strings = {
     confirmBody:
       "PC Tweaker Uninstaller es una aplicación aparte de la misma suite y entra con la misma cuenta que esta. La descarga toma el instalador (unos 4 MB) directamente de su versión en GitHub, para Windows 10 y 11 de 64 bits.",
     confirmUnsigned:
-      "PC Tweaker 1.9.0 está firmado digitalmente por Aurelio Avila. Comprueba el editor y la firma en las propiedades del archivo. SmartScreen aún puede mostrar avisos; las versiones anteriores pueden no estar firmadas.",
+      "PC Tweaker 1.10.0 está firmado digitalmente por Aurelio Avila. Comprueba el editor y la firma en las propiedades del archivo. SmartScreen aún puede mostrar avisos; las versiones anteriores pueden no estar firmadas.",
     confirmDownload: "Descargar",
     confirmOpenPage: "Abrir la página en su lugar",
     cancel: "Cancelar",
@@ -6829,7 +6829,7 @@ const de: Strings = {
     confirmBody:
       "PC Tweaker Uninstaller ist eine eigene App derselben Suite und meldet sich mit demselben Konto an wie diese. Der Download holt das Installationsprogramm (rund 4 MB) direkt aus seinem GitHub-Release, für Windows 10 und 11 in 64 Bit.",
     confirmUnsigned:
-      "PC Tweaker 1.9.0 ist von Aurelio Avila digital signiert. Prüfe Herausgeber und Signatur in den Dateieigenschaften. SmartScreen kann weiterhin warnen; ältere Versionen können unsigniert sein.",
+      "PC Tweaker 1.10.0 ist von Aurelio Avila digital signiert. Prüfe Herausgeber und Signatur in den Dateieigenschaften. SmartScreen kann weiterhin warnen; ältere Versionen können unsigniert sein.",
     confirmDownload: "Herunterladen",
     confirmOpenPage: "Stattdessen die Seite öffnen",
     cancel: "Abbrechen",
@@ -8138,7 +8138,7 @@ const pt: Strings = {
     confirmBody:
       "O PC Tweaker Uninstaller é um aplicativo separado da mesma suíte e entra com a mesma conta que este. O download pega o instalador (cerca de 4 MB) direto da versão no GitHub, para Windows 10 e 11 de 64 bits.",
     confirmUnsigned:
-      "O PC Tweaker 1.9.0 é assinado digitalmente por Aurelio Avila. Verifique o editor e a assinatura nas propriedades do ficheiro. O SmartScreen ainda pode apresentar avisos; as versões anteriores podem não estar assinadas.",
+      "O PC Tweaker 1.10.0 é assinado digitalmente por Aurelio Avila. Verifique o editor e a assinatura nas propriedades do ficheiro. O SmartScreen ainda pode apresentar avisos; as versões anteriores podem não estar assinadas.",
     confirmDownload: "Baixar",
     confirmOpenPage: "Abrir a página",
     cancel: "Cancelar",

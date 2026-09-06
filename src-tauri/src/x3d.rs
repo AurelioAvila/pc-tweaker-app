@@ -145,8 +145,8 @@ mod win {
     }
 
     fn cpu_name() -> String {
-        std::process::Command::new("powershell")
-            .args([
+        crate::system_tools::run("powershell", |tool| {
+            tool.args([
                 "-NoProfile",
                 "-NonInteractive",
                 "-Command",
@@ -154,10 +154,11 @@ mod win {
             ])
             .creation_flags(CREATE_NO_WINDOW)
             .output()
-            .ok()
-            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-            .filter(|s| !s.is_empty())
-            .unwrap_or_else(|| "Unknown processor".to_string())
+        })
+        .ok()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "Unknown processor".to_string())
     }
 
     pub fn report() -> X3dReport {

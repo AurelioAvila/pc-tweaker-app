@@ -49,7 +49,6 @@ pub struct ThermalReport {
 mod imp {
     use super::{GpuReading, ThermalReport};
     use std::os::windows::process::CommandExt;
-    use std::process::Command;
 
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -66,13 +65,15 @@ mod imp {
     }
 
     fn read_nvidia() -> Vec<GpuReading> {
-        let output = Command::new("nvidia-smi")
+        let output = crate::system_tools::run("nvidia-smi", |tool| {
+            tool
             .args([
                 "--query-gpu=name,temperature.gpu,utilization.gpu,memory.used,memory.total,fan.speed,power.draw,power.limit,driver_version",
                 "--format=csv,noheader,nounits",
             ])
             .creation_flags(CREATE_NO_WINDOW)
-            .output();
+            .output()
+        });
 
         // No NVIDIA GPU means no nvidia-smi on PATH, which surfaces here as a
         // spawn error. That is an ordinary outcome, not a failure to report.
@@ -119,11 +120,12 @@ mod imp {
     fn read_cpu_temp() -> Option<f32> {
         let script = "(Get-CimInstance -Namespace root/WMI -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction Stop | \
                       Select-Object -ExpandProperty CurrentTemperature) -join ','";
-        let output = Command::new("powershell")
-            .args(["-NoProfile", "-NonInteractive", "-Command", script])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
-            .ok()?;
+        let output = crate::system_tools::run("powershell", |tool| {
+            tool.args(["-NoProfile", "-NonInteractive", "-Command", script])
+                .creation_flags(CREATE_NO_WINDOW)
+                .output()
+        })
+        .ok()?;
         if !output.status.success() {
             return None;
         }

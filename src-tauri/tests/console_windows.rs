@@ -70,7 +70,9 @@ fn every_spawned_process_is_told_not_to_open_a_console() {
         let lines: Vec<&str> = source.lines().collect();
 
         for (index, line) in lines.iter().enumerate() {
-            if !line.contains("Command::new") || line.contains(EXEMPT) {
+            if (!line.contains("Command::new") && !line.contains("crate::system_tools::run("))
+                || line.contains(EXEMPT)
+            {
                 continue;
             }
             sites += 1;
@@ -78,10 +80,12 @@ fn every_spawned_process_is_told_not_to_open_a_console() {
             // The whole builder chain, which is where the flag goes — not
             // just the line that names the program.
             let mut statement = String::new();
-            for next in lines.iter().skip(index).take(MAX_STATEMENT_LINES) {
+            for (offset, next) in lines.iter().skip(index).take(MAX_STATEMENT_LINES).enumerate() {
                 statement.push_str(next);
                 statement.push('\n');
-                if next.trim_end().ends_with(';') {
+                // The shared helper sets creation_flags in the next statement
+                // after binding its Command. Chained builders end normally.
+                if next.trim_end().ends_with(';') && !(offset == 0 && next.contains("let mut command = Command::new")) {
                     break;
                 }
             }
@@ -92,11 +96,7 @@ fn every_spawned_process_is_told_not_to_open_a_console() {
                     .unwrap_or(file)
                     .to_string_lossy()
                     .replace('\\', "/");
-                unguarded.push(format!(
-                    "src/{name}:{}  {}",
-                    index + 1,
-                    line.trim()
-                ));
+                unguarded.push(format!("src/{name}:{}  {}", index + 1, line.trim()));
             }
         }
     }

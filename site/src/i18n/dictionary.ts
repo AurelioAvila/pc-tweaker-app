@@ -214,7 +214,7 @@ export const engDictionary: Dictionary = {
     "subBold": "Make deliberate changes. Keep what works.",
     "sub": " Review Windows settings for gaming, privacy and everyday use. See what each tweak changes, save its previous state and restore supported settings when you need to. Start free. No account required.",
     "cta": "Download Free for Windows",
-    "safetyNote": "PC Tweaker 1.10.0 is code-signed. Our signed Windows installers identify Aurelio Avila as the publisher. Older downloads may be unsigned; check the file's Digital Signatures tab. SmartScreen may still show a warning for a new release.",
+    "safetyNote": "PC Tweaker 1.10.1 is code-signed. Our signed Windows installers identify Aurelio Avila as the publisher. Older downloads may be unsigned; check the file's Digital Signatures tab. SmartScreen may still show a warning for a new release.",
     "terminalTitle": "Install with Windows Package Manager",
     "terminalCmd": "winget install --id AurelioAvila.PCTweaker --exact",
     "terminalHint": "# install the official PC Tweaker package",
@@ -514,7 +514,7 @@ export const engDictionary: Dictionary = {
       },
       {
         "q": "Is PC Tweaker code-signed?",
-        "a": "PC Tweaker 1.10.0 ships with Windows application and installer signatures from Aurelio Avila and a trusted timestamp. Older releases may be unsigned. A valid signature identifies the publisher and helps detect changed files. The separate update signature verifies update packages. Neither guarantees performance gains or prevents every SmartScreen prompt."
+        "a": "PC Tweaker 1.10.1 ships with Windows application and installer signatures from Aurelio Avila and a trusted timestamp. Older releases may be unsigned. A valid signature identifies the publisher and helps detect changed files. The separate update signature verifies update packages. Neither guarantees performance gains or prevents every SmartScreen prompt."
       }
     ]
   },

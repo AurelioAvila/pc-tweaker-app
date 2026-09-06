@@ -70,7 +70,7 @@ pub struct ScanProgress {
 mod imp {
     use super::{DriverAudit, DriverEntry, ScanProgress};
     use std::os::windows::process::CommandExt;
-    use std::process::Command;
+
     use tauri::Emitter;
 
     const CREATE_NO_WINDOW: u32 = 0x08000000;
@@ -88,11 +88,12 @@ mod imp {
     ];
 
     fn run_ps(script: &str) -> Result<String, String> {
-        let output = Command::new("powershell")
-            .args(["-NoProfile", "-NonInteractive", "-Command", script])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
-            .map_err(|e| format!("could not run PowerShell: {}", e))?;
+        let output = crate::system_tools::run("powershell", |tool| {
+            tool.args(["-NoProfile", "-NonInteractive", "-Command", script])
+                .creation_flags(CREATE_NO_WINDOW)
+                .output()
+        })
+        .map_err(|e| format!("could not run PowerShell: {}", e))?;
         if !output.status.success() {
             return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
         }
@@ -311,13 +312,14 @@ pub fn driver_audit(app: tauri::AppHandle) -> Result<DriverAudit, String> {
 #[tauri::command(async)]
 pub fn open_windows_update() -> Result<(), String> {
     use std::os::windows::process::CommandExt;
-    use std::process::Command;
-    Command::new("cmd")
-        .args(["/C", "start", "", "ms-settings:windowsupdate"])
-        .creation_flags(0x08000000)
-        .spawn()
-        .map(|_| ())
-        .map_err(|e| format!("could not open Windows Update: {}", e))
+
+    crate::system_tools::run("cmd", |tool| {
+        tool.args(["/C", "start", "", "ms-settings:windowsupdate"])
+            .creation_flags(0x08000000)
+            .spawn()
+    })
+    .map(|_| ())
+    .map_err(|e| format!("could not open Windows Update: {}", e))
 }
 
 /// Whether Windows itself says a restart is pending. Read from the same
@@ -348,15 +350,16 @@ pub fn reboot_pending() -> Result<bool, String> {
 #[tauri::command(async)]
 pub fn reboot_now() -> Result<(), String> {
     use std::os::windows::process::CommandExt;
-    use std::process::Command;
+
     // A short delay lets this command return so the UI can close cleanly
     // instead of being killed mid-frame.
-    Command::new("shutdown")
-        .args(["/r", "/t", "5", "/c", "Restart requested from PC Tweaker"])
-        .creation_flags(0x08000000)
-        .spawn()
-        .map(|_| ())
-        .map_err(|e| format!("could not restart: {}", e))
+    crate::system_tools::run("shutdown", |tool| {
+        tool.args(["/r", "/t", "5", "/c", "Restart requested from PC Tweaker"])
+            .creation_flags(0x08000000)
+            .spawn()
+    })
+    .map(|_| ())
+    .map_err(|e| format!("could not restart: {}", e))
 }
 
 #[cfg(not(windows))]

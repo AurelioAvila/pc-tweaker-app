@@ -53,11 +53,12 @@ fn powershell(command: &str) -> Result<String, String> {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-    let output = std::process::Command::new("powershell")
-        .args(["-NoProfile", "-NonInteractive", "-Command", command])
-        .creation_flags(CREATE_NO_WINDOW)
-        .output()
-        .map_err(|e| format!("could not run PowerShell: {}", e))?;
+    let output = crate::system_tools::run("powershell", |tool| {
+        tool.args(["-NoProfile", "-NonInteractive", "-Command", command])
+            .creation_flags(CREATE_NO_WINDOW)
+            .output()
+    })
+    .map_err(|e| format!("could not run PowerShell: {}", e))?;
 
     if !output.status.success() {
         let err = String::from_utf8_lossy(&output.stderr).trim().to_string();

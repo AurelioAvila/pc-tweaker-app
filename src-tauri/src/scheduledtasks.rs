@@ -173,7 +173,6 @@ pub(crate) fn parse_task(path: &str, xml: &str) -> Option<TaskEntry> {
 mod imp {
     use super::*;
     use std::os::windows::process::CommandExt;
-    use std::process::Command;
 
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
@@ -194,11 +193,10 @@ mod imp {
     /// gets the strict reading — reporting "disabled" for a call that was
     /// denied is the one failure this screen must never have.
     fn schtasks(args: &[&str], tolerate_partial: bool) -> Result<Vec<u8>, String> {
-        let output = Command::new("schtasks")
-            .args(args)
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
-            .map_err(|e| format!("could not run schtasks: {}", e))?;
+        let output = crate::system_tools::run("schtasks", |tool| {
+            tool.args(args).creation_flags(CREATE_NO_WINDOW).output()
+        })
+        .map_err(|e| format!("could not run schtasks: {}", e))?;
 
         let ok = output.status.success() || (tolerate_partial && !output.stdout.is_empty());
         if !ok {
@@ -359,7 +357,11 @@ mod tests {
     fn splits_quoted_csv_fields() {
         assert_eq!(
             split_csv_line(r#""\Adobe Acrobat Update Task","04/09/2026 10:00:00","Ready""#),
-            vec!["\\Adobe Acrobat Update Task", "04/09/2026 10:00:00", "Ready"]
+            vec![
+                "\\Adobe Acrobat Update Task",
+                "04/09/2026 10:00:00",
+                "Ready"
+            ]
         );
         // A comma inside the name must not become a field separator.
         assert_eq!(
@@ -367,7 +369,10 @@ mod tests {
             "\\Vendor, Inc. Updater"
         );
         // A doubled quote is one literal quote.
-        assert_eq!(split_csv_line(r#""He said ""hi""","x""#)[0], r#"He said "hi""#);
+        assert_eq!(
+            split_csv_line(r#""He said ""hi""","x""#)[0],
+            r#"He said "hi""#
+        );
         assert_eq!(split_csv_line("")[0], "");
     }
 
@@ -375,7 +380,9 @@ mod tests {
     /// appear on it.
     #[test]
     fn windows_own_tasks_are_never_listed() {
-        assert!(!is_third_party(r"\Microsoft\Windows\UpdateOrchestrator\Reboot"));
+        assert!(!is_third_party(
+            r"\Microsoft\Windows\UpdateOrchestrator\Reboot"
+        ));
         assert!(!is_third_party(r"Microsoft\Windows\Defrag\ScheduledDefrag"));
         // Case is not a way around it.
         assert!(!is_third_party(r"\microsoft\Windows\Foo"));
@@ -454,7 +461,10 @@ mod tests {
     fn payload_round_trips_names_containing_a_pipe() {
         let path = r"\Vendor|Updater";
         let payload = build_task_payload(path, false);
-        assert_eq!(parse_task_payload(&payload).unwrap(), (path.to_string(), false));
+        assert_eq!(
+            parse_task_payload(&payload).unwrap(),
+            (path.to_string(), false)
+        );
         assert_eq!(
             parse_task_payload(&build_task_payload(path, true)).unwrap(),
             (path.to_string(), true)

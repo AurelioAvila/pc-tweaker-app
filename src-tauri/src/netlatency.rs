@@ -50,7 +50,7 @@ fn active_interface_guid() -> Result<String, String> {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-    let output = std::process::Command::new("powershell")
+    let output = crate::system_tools::run("powershell", |command| command
         .args([
             "-NoProfile",
             "-NonInteractive",
@@ -58,7 +58,7 @@ fn active_interface_guid() -> Result<String, String> {
             "(Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object -First 1 -ExpandProperty InterfaceGuid)",
         ])
         .creation_flags(CREATE_NO_WINDOW)
-        .output()
+        .output())
         .map_err(|e| format!("could not enumerate network adapters: {}", e))?;
 
     let guid = String::from_utf8_lossy(&output.stdout).trim().to_string();

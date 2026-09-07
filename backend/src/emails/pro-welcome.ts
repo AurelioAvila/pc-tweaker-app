@@ -107,6 +107,21 @@ export function proWelcomeSubject(product?: string | null): string {
     : "You're Pro now — welcome to PC Tweaker Pro";
 }
 
+export function proWelcomeText({ product, firstName, email, plan, priceLabel, renewsOn }: ProWelcomeEmailInput): string {
+  const brand = brandFor(product);
+  const planLabel = plan === "lifetime" ? "Pro — Lifetime" : plan === "annual" ? "Pro — Annual" : "Pro — Monthly";
+  return [
+    `${brand.headline}, ${firstName || "there"}.`, "",
+    renewsOn ? brand.intro : brand.introOneOff, "",
+    "What you've unlocked:", ...brand.highlights.map(line => `- ${line.replace(/&amp;/g, "&")}`), "",
+    `Plan: ${planLabel}`, `Price: ${priceLabel}`,
+    renewsOn ? `Renews on: ${renewsOn}` : "Access: Never expires", "",
+    `${brand.ctaLabel}: ${brand.siteUrl}`, brand.signInHint.replace("{email}", email), "",
+    renewsOn ? "Cancel anytime from your account settings." : "This purchase does not renew.",
+    "Questions? Just reply to this email.",
+  ].join("\n");
+}
+
 export function proWelcomeHtml({ product, firstName, email, plan, priceLabel, renewsOn }: ProWelcomeEmailInput): string {
   const brand = brandFor(product);
   const name = escapeHtml(firstName || "there");

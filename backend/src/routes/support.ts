@@ -4,6 +4,7 @@ import { isValidEmail } from "../auth";
 import { sendMail, isConfigured as mailIsConfigured, MailError } from "../mailer";
 import { SUPPORT_INBOX } from "../support-inbox";
 import { consumeGlobalBudget, singleLine } from "../public-form-guard";
+import { emailShell } from "../emails/layout";
 
 const router = express.Router();
 
@@ -154,6 +155,7 @@ router.post("/", supportLimiter, async (req: Request, res: Response) => {
       to: SUPPORT_INBOX,
       subject: singleLine(`[PC Tweaker support] ${subject}`),
       html,
+      text: `New PC Tweaker support request\n\nName: ${name}\nEmail: ${email}\nCategory: ${CATEGORY_LABELS[category]}\nSubject: ${subject}\nSystem: ${systemInfo || "Not provided"}\n\n${message}`,
       replyTo: email,
     });
   } catch (err) {
@@ -177,10 +179,15 @@ router.post("/", supportLimiter, async (req: Request, res: Response) => {
   void sendMail({
     to: email,
     subject: "We received your PC Tweaker support request",
-    html: `<p>Hi ${escapeHtml(name)},</p>
-           <p>Thanks for getting in touch. Your message about "<strong>${escapeHtml(subject)}</strong>" has reached our support team and we'll reply to this address, usually within one business day.</p>
-           <p>If you didn't send this, you can ignore this email — nothing else will follow.</p>
-           <p>— The PC Tweaker team</p>`,
+    replyTo: SUPPORT_INBOX,
+    html: emailShell({
+      eyebrow: "Support request received",
+      headline: "We're on it.",
+      intro: `Hi ${name}, your message has reached the PC Tweaker support team. We'll reply to this email address.`,
+      note: "If you did not contact us, you can ignore this message.",
+      footerNote: "Need to add a detail? Reply to this email. Never send your password or payment card details.",
+    }),
+    text: `Hi ${name},\n\nYour message has reached the PC Tweaker support team. We'll reply to this email address.\n\nNeed to add a detail? Reply to this email. Never send your password or payment card details.\n\nIf you did not contact us, you can ignore this message.\n\nPC Tweaker`,
   }).catch((err: Error) => console.error("support acknowledgement failed:", err.message));
 
   res.status(200).json({ ok: true });

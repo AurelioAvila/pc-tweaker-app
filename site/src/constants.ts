@@ -9,7 +9,7 @@ export const DOWNLOAD_EXE =
  *  reading the page. It matters more than a mirror: it is Microsoft-signed,
  *  so it is the one route with no SmartScreen prompt for somebody who does
  *  not use a terminal, which is exactly the visitor the warning turns away. */
-export const MICROSOFT_STORE = "https://apps.microsoft.com/detail/9nh3c6dt1g87";
+export const MICROSOFT_STORE = "https://apps.microsoft.com/detail/9nh3c6dt1g87?cid=pct-website";
 
 /** For people who want the .msi, release notes, checksums, or older versions. */
 export const RELEASES_PAGE = "https://github.com/AurelioAvila/pc-tweaker-app/releases/latest";

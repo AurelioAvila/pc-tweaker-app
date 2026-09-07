@@ -235,6 +235,8 @@ export function PricingPanel({
           <p className="pricing-price-note">{copy.perpetual}</p>
           <ul className="pricing-highlights">
             <li>{s.pricing.everythingInPro}</li>
+            <li>{copy.futureTweaks}</li>
+            <li>{copy.prioritySupport}</li>
             <li>{copy.profiles}</li>
             <li>{copy.reports}</li>
           </ul>

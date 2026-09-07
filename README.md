@@ -120,7 +120,7 @@ Free does not require an account. It includes core tweaks, scans, supported rest
 | --- | --- |
 | Monthly | €9.99 per month |
 | Annual | €59 per year |
-| Lifetime | €74.99 once, while offered |
+| Lifetime | €89.99 once |
 
 Annual billing is approximately 51% below twelve monthly payments. Check the app and checkout for current offers, taxes and renewal terms. Existing lifetime purchases retain the access promised when purchased. Payments use Stripe Checkout; the app does not handle card details. Pro is linked to the purchasing account; the app refreshes its license when you return from checkout while online.
 
@@ -216,3 +216,5 @@ Tauri 2 and Rust · React and TypeScript · Express, PostgreSQL and Stripe.
 PC Tweaker is source-available under a **proprietary license**. Public source access does not make it an OSI-approved open-source project or grant unrestricted redistribution rights. See [LICENSE](LICENSE), [PRIVACY.md](PRIVACY.md) and [TERMS.md](TERMS.md).
 
 Created and maintained by **Aurelio Avila**.
+
+Lifetime includes everything in Pro, plus exclusive access to selected future tweaks, priority support, saved-profile comparison and portable tuning reports. Future exclusive tweaks will arrive in upcoming releases.

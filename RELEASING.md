@@ -24,3 +24,7 @@ Official releases are built locally and published by Aurelio Avila. CI verificat
 ## Trust wording
 
 Authenticode establishes publisher identity and file integrity. Tauri signatures protect updater packages. Neither is Microsoft endorsement, a performance guarantee or a promise that SmartScreen will never warn. Older releases may be unsigned; identify the version whenever making a signing claim.
+
+## Live WinGet badges
+
+Use `https://img.shields.io/winget/v/AurelioAvila.PCTweaker?label=WinGet&color=0078D4` wherever a current WinGet version badge is displayed. Link to the package directory without a version suffix. The repository README and GitHub profile use this live endpoint; do not replace it with a static version badge during releases. It follows catalog availability, independently of GitHub release publication or PR submission, and may lag while provider and image caches refresh. Historical release notes retain their original versions.

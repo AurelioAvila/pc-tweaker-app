@@ -1,10 +1,14 @@
 import { DOWNLOAD_EXE } from "../constants";
+import { useCampaignStoreLink } from "../campaign-store";
+import { PRACTICAL_GUIDES } from "./practical-guides";
 import { Link } from "../router";
 
 interface Guide {
   readonly eyebrow: string;
   readonly title: string;
   readonly intro: string;
+  readonly image?: string;
+  readonly caption?: string;
   readonly sections: readonly {
     readonly heading: string;
     readonly body: string;
@@ -13,6 +17,7 @@ interface Guide {
 }
 
 export const GUIDES: Record<string, Guide> = {
+  ...PRACTICAL_GUIDES,
   "/windows-11-optimizer": {
     eyebrow: "WINDOWS 11 OPTIMIZATION",
     title: "Optimize Windows 11 without losing control",
@@ -113,6 +118,7 @@ export const GUIDES: Record<string, Guide> = {
 
 export function GuidePage({ path, navigate }: { path: string; navigate: (to: string) => void }) {
   const guide = GUIDES[path];
+  const storeLink = useCampaignStoreLink("pct-guide-" + path.slice(1));
   if (!guide) return null;
 
   return (
@@ -126,6 +132,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
         </h1>
         <p className="mt-7 max-w-3xl text-lg leading-8 text-[var(--fg-dim)]">{guide.intro}</p>
 
+        {guide.image && <figure className="mt-10"><img src={guide.image} alt={guide.caption} loading="lazy" width="732" height="430" className="h-auto w-full rounded-xl" /><figcaption className="mt-3 text-sm text-[var(--fg-dim)]">{guide.caption}</figcaption></figure>}
         <div className="mt-14 space-y-8">
           {guide.sections.map((section) => (
             <section key={section.heading} className="rounded-2xl bg-[var(--surface)] p-7 md:p-9">
@@ -145,6 +152,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
           ))}
         </div>
 
+        {path in PRACTICAL_GUIDES && <nav aria-label="Related guides" className="mt-10 flex flex-wrap gap-5 text-sm text-accent">{Object.entries(PRACTICAL_GUIDES).filter(([url]) => url !== path).map(([url, item]) => <Link key={url} to={url} onNavigate={navigate}>{item.title}</Link>)}<a href="https://support.microsoft.com/en-us/windows/experience/storage-filemanagement/common-file-name-extensions-in-windows">Microsoft: file extensions</a><a href="https://github.com/AurelioAvila/pc-tweaker-app/tree/v1.10.1/src-tauri/src">Inspect version 1.10.1 source</a></nav>}
         <section className="mt-12 flex flex-wrap items-center justify-between gap-6 border-t border-white/10 pt-9">
           <div>
             <h2 className="font-display text-xl font-bold text-[var(--fg)]">Try PC Tweaker</h2>
@@ -156,6 +164,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
             <Link to="/" onNavigate={navigate} className="rounded-lg border border-white/10 px-5 py-3 text-sm font-semibold text-[var(--fg)]">
               Explore all features
             </Link>
+            <a href={storeLink} className="rounded-lg border border-white/10 px-5 py-3 text-sm font-semibold text-[var(--fg)]">Get it from Microsoft Store</a>
             <a href={DOWNLOAD_EXE} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--bg)]">
               Download PC Tweaker
             </a>

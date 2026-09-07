@@ -1,3 +1,4 @@
+import { PRACTICAL_GUIDES } from "./pages/practical-guides";
 export interface RouteSeo {
   readonly title: string;
   readonly description: string;
@@ -13,6 +14,10 @@ const ORIGIN = "https://pctweaker.app";
 // pointed search engines at a redirect instead of at the page itself.
 
 export const ROUTE_SEO: Record<string, RouteSeo> = {
+  ...Object.fromEntries(Object.entries(PRACTICAL_GUIDES).map(([path, guide]) => [path, {
+    title: `${guide.title} | PC Tweaker`, description: guide.intro,
+    canonical: `${ORIGIN}${path}/`, ogType: "website" as const,
+  }])),
   "/": {
     title: "PC Tweaker | Windows Tuning for Steadier Frame Times",
     description:

@@ -89,7 +89,10 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
               navigate={navigate}
               title="GUIDES"
               links={[
-                { label: "Windows 11 optimizer", href: "/windows-11-optimizer" },
+                { label: "Undo Windows tweaks", href: "/how-to-undo-windows-tweaks" },
+{ label: "Gaming, Work and Study", href: "/windows-gaming-work-study-profiles" },
+{ label: "System change disclosure", href: "/what-pc-tweaker-changes" },
+{ label: "Windows 11 optimizer", href: "/windows-11-optimizer" },
                 { label: "Gaming performance", href: "/gaming-performance" },
                 { label: "Reversible tweaks", href: "/reversible-windows-tweaks" },
                 { label: "Windows privacy", href: "/windows-privacy-tool" },

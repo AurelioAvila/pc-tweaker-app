@@ -10,7 +10,7 @@ test('purchase text includes actual price, renewal and product destination', () 
 
 test('lifetime purchase text does not promise a renewal', () => {
   const text = proWelcomeText({product:'uninstaller',firstName:'',email:'test@example.com',plan:'lifetime',priceLabel:'EUR 30.00',renewsOn:null});
-  assert.ok(text.includes('https://pctweaker.app/uninstaller'));
+  assert.equal(text.split('\n').find(line => line.startsWith('Open Uninstaller:')), 'Open Uninstaller: https://pctweaker.app/uninstaller');
   assert.ok(text.includes('This purchase does not renew.'));
   assert.ok(!text.includes('Renews on:'));
 });

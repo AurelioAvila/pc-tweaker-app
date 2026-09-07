@@ -15,7 +15,10 @@ export function useCampaignStoreLink(fallback: string) {
     if (entryCampaign === undefined) {
       const params = new URLSearchParams(window.location.search);
       const requested = params.get("cid") || "";
-      entryCampaign = CAMPAIGNS.has(requested) ? requested : "";
+      const source = params.get("utm_source");
+      entryCampaign = CAMPAIGNS.has(requested) ? requested
+        : source === "ig" || source === "instagram" ? "pct-instagram-profile"
+        : source === "youtube" ? "pct-youtube-profile" : "";
     }
     setCampaign(entryCampaign || fallback);
   }, [fallback]);

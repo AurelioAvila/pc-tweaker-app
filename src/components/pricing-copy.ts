@@ -20,6 +20,8 @@ type PricingCopy = {
   updates: string;
   profiles: string;
   reports: string;
+  futureTweaks: string;
+  prioritySupport: string;
   profileDetail: string;
   reportDetail: string;
   newExtras: string;
@@ -67,6 +69,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     updates: "Pro updates",
     profiles: "Compare saved profiles",
     reports: "Portable tuning reports",
+    futureTweaks: "Exclusive access to selected future tweaks",
+    prioritySupport: "Priority support",
     profileDetail:
       "Put two saved profiles side by side. See shared settings and the differences before choosing one.",
     reportDetail:
@@ -118,6 +122,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     updates: "Aggiornamenti Pro",
     profiles: "Confronto dei profili salvati",
     reports: "Report delle impostazioni esportabili",
+    futureTweaks: "Accesso esclusivo a futuri tweak selezionati",
+    prioritySupport: "Assistenza prioritaria",
     profileDetail:
       "Affianca due profili salvati. Controlla impostazioni comuni e differenze prima di sceglierne uno.",
     reportDetail:
@@ -173,6 +179,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     updates: "Mises à jour Pro",
     profiles: "Comparaison de profils enregistrés",
     reports: "Rapports de réglages exportables",
+    futureTweaks: "Accès exclusif à de futurs réglages sélectionnés",
+    prioritySupport: "Assistance prioritaire",
     profileDetail:
       "Comparez deux profils enregistrés. Consultez les réglages communs et les différences avant de choisir.",
     reportDetail:
@@ -224,6 +232,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     updates: "Actualizaciones Pro",
     profiles: "Comparación de perfiles guardados",
     reports: "Informes de ajustes exportables",
+    futureTweaks: "Acceso exclusivo a futuros ajustes seleccionados",
+    prioritySupport: "Asistencia prioritaria",
     profileDetail:
       "Compara dos perfiles guardados. Revisa los ajustes comunes y las diferencias antes de elegir.",
     reportDetail:
@@ -276,6 +286,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     updates: "Pro-Updates",
     profiles: "Gespeicherte Profile vergleichen",
     reports: "Exportierbare Einstellungsberichte",
+    futureTweaks: "Exklusiver Zugang zu ausgewählten zukünftigen Tweaks",
+    prioritySupport: "Bevorzugter Support",
     profileDetail:
       "Vergleiche zwei gespeicherte Profile. Prüfe gemeinsame Einstellungen und Unterschiede vor deiner Auswahl.",
     reportDetail:
@@ -328,6 +340,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     updates: "Atualizações Pro",
     profiles: "Comparação de perfis guardados",
     reports: "Relatórios de definições exportáveis",
+    futureTweaks: "Acesso exclusivo a futuros ajustes selecionados",
+    prioritySupport: "Suporte prioritário",
     profileDetail:
       "Compare dois perfis guardados. Consulte as definições comuns e as diferenças antes de escolher.",
     reportDetail:

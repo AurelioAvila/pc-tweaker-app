@@ -170,7 +170,7 @@ export const PRICE_ANNUAL = 59;
 /** Paid once, never again. Priced above a year and below two: the point is to
  *  be obviously cheaper than subscribing indefinitely without being cheaper
  *  than a single year, which would cannibalise the annual plan outright. */
-export const PRICE_LIFETIME = 74.99;
+export const PRICE_LIFETIME = 89.99;
 
 /** How many months of the annual plan the lifetime price is worth — the one
  *  number that makes the offer legible. Derived rather than written down, so

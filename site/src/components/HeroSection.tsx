@@ -5,6 +5,7 @@ import { ACCENTS, THEME_ORDER, useTheme } from "../theme";
 import { EASE, riseChild, staggerParent } from "../motion";
 import { DOWNLOAD_EXE } from "../constants";
 import { CoffeeTip } from "./CoffeeTip";
+import { useCampaignStoreLink } from "../campaign-store";
 
 /* ---------- theme selector: one geometric dot per palette ---------- */
 function ThemeSelector() {
@@ -77,6 +78,7 @@ function WingetTerminal() {
 }
 
 export function HeroSection() {
+  const storeLink = useCampaignStoreLink("pct-website");
   const btnRef = useRef<HTMLAnchorElement>(null);
 
   /* magnetic CTA — follows the cursor inside its hit-area */
@@ -168,7 +170,7 @@ export function HeroSection() {
               {text.hero.badges.map((b) => (
                 <a
                   key={b.label}
-                  href={b.href}
+                  href={b.href.startsWith("https://apps.microsoft.com/detail/9nh3c6dt1g87") ? storeLink : b.href}
                   target="_blank"
                   rel="noopener"
                   className="font-mono-t flex items-center gap-2 text-[12.5px] text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)]"

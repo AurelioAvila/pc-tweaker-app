@@ -1286,7 +1286,7 @@ const it: Strings = {
       "Paghi una volta sola. Tutto il Pro per sempre, e ogni novità prima di chiunque altro.",
     lifetimeCta: "Passa a vita",
     oneTimeBadge: "PAGAMENTO UNICO",
-    everythingInPro: "Tutto il Pro",
+    everythingInPro: "Tutto il Pro, in più:",
     lifetimeExclusive: "Solo con il piano a vita",
     lifetimeFeatures: [
       "Accesso anticipato ad anteprime selezionate, quando disponibili",
@@ -2584,7 +2584,7 @@ const en: Strings = {
       "Pay once. Every Pro feature for good, and whatever comes next before anyone else gets it.",
     lifetimeCta: "Get Lifetime",
     oneTimeBadge: "ONE-TIME PAYMENT",
-    everythingInPro: "Everything in Pro",
+    everythingInPro: "Everything in Pro, plus:",
     lifetimeExclusive: "Lifetime only",
     lifetimeFeatures: [
       "Early access to selected previews, when available",
@@ -3878,7 +3878,7 @@ const fr: Strings = {
       "Un seul paiement. Tout Pro pour toujours, et chaque nouveauté avant tout le monde.",
     lifetimeCta: "Passer à l'offre à vie",
     oneTimeBadge: "PAIEMENT UNIQUE",
-    everythingInPro: "Tout ce que contient Pro",
+    everythingInPro: "Tout ce que contient Pro, plus :",
     lifetimeExclusive: "Exclusif à l'offre à vie",
     lifetimeFeatures: [
       "Accès anticipé à certaines versions préliminaires, selon leur disponibilité",
@@ -5186,7 +5186,7 @@ const es: Strings = {
     lifetimeTagline: "Un solo pago. Todo Pro para siempre, y cada novedad antes que nadie.",
     lifetimeCta: "Comprar de por vida",
     oneTimeBadge: "PAGO ÚNICO",
-    everythingInPro: "Todo lo que incluye Pro",
+    everythingInPro: "Todo lo que incluye Pro, más:",
     lifetimeExclusive: "Solo de por vida",
     lifetimeFeatures: [
       "Acceso anticipado a versiones preliminares seleccionadas, cuando estén disponibles",
@@ -6491,7 +6491,7 @@ const de: Strings = {
     lifetimeTagline: "Einmal zahlen. Alles aus Pro für immer, und jede Neuerung vor allen anderen.",
     lifetimeCta: "Lebenslang kaufen",
     oneTimeBadge: "EINMALZAHLUNG",
-    everythingInPro: "Alles aus Pro",
+    everythingInPro: "Alles aus Pro, plus:",
     lifetimeExclusive: "Nur lebenslang",
     lifetimeFeatures: [
       "Früher Zugang zu ausgewählten Vorschauversionen, sofern verfügbar",
@@ -7803,7 +7803,7 @@ const pt: Strings = {
       "Paga uma só vez. Todo o Pro para sempre, e cada novidade antes de toda a gente.",
     lifetimeCta: "Comprar vitalício",
     oneTimeBadge: "PAGAMENTO ÚNICO",
-    everythingInPro: "Tudo o que inclui o Pro",
+    everythingInPro: "Tudo o que inclui o Pro, mais:",
     lifetimeExclusive: "Só no vitalício",
     lifetimeFeatures: [
       "Acesso antecipado a versões de pré-visualização selecionadas, quando disponíveis",

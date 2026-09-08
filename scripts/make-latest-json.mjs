@@ -6,12 +6,15 @@
  *
  * Reads the version from src-tauri/tauri.conf.json, the signature from the
  * .exe.sig next to the setup bundle, and the release notes from the given
- * file (first paragraph). Refuses to run if the .sig is missing — an
- * unsigned manifest would strand every existing install on the old version.
+ * file (first paragraph). Requires valid publisher signatures, timestamps
+ * and cryptographically verified updater signatures before writing output.
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { verifyUpdater } from "./verify-updater.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const conf = JSON.parse(fs.readFileSync(path.join(root, "src-tauri", "tauri.conf.json"), "utf8"));
@@ -23,7 +26,9 @@ if (!repoUrl) {
 }
 
 const nsisDir = path.join(root, "src-tauri", "target", "release", "bundle", "nsis");
-const setup = fs.readdirSync(nsisDir).find((f) => f.includes(`_${version}_`) && f.endsWith("-setup.exe"));
+const setups = fs.readdirSync(nsisDir).filter((f) => f.includes(`_${version}_`) && f.endsWith("_x64-setup.exe"));
+if (setups.length !== 1) throw new Error("Expected exactly one current x64 setup.");
+const setup = setups[0];
 if (!setup) {
   console.error(`No v${version} -setup.exe found in ${nsisDir}. Run the signed build first.`);
   process.exit(1);
@@ -60,13 +65,34 @@ if (/[^A-Za-z0-9.\-_]/.test(assetName)) {
   process.exit(1);
 }
 
+const msiDir = path.join(root, "src-tauri", "target", "release", "bundle", "msi");
+const msis = fs.readdirSync(msiDir).filter((file) => file.includes(`_${version}_`) && file.endsWith(".msi"));
+if (msis.length !== 1) throw new Error("Expected exactly one current MSI installer.");
+const releaseDir = path.join(root, "src-tauri", "target", "release");
+const binaries = [
+  path.join(releaseDir, "pc-tweaker-app.exe"),
+  path.join(nsisDir, setup),
+  path.join(msiDir, msis[0]),
+];
+const sha256 = (file) => createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+const hashes = new Map(binaries.map((file) => [file, sha256(file)]));
+for (const binary of binaries) {
+  execFileSync("pwsh", ["-NoProfile", "-NonInteractive", "-File",
+    path.join(root, "scripts", "verify-authenticode.ps1"), "-Path", binary], { stdio: "inherit" });
+}
+const updaterSignature = verifyUpdater(path.join(nsisDir, setup), conf.plugins.updater.pubkey);
+verifyUpdater(path.join(msiDir, msis[0]), conf.plugins.updater.pubkey);
+for (const [file, hash] of hashes) {
+  if (sha256(file) !== hash) throw new Error(`File changed during verification: ${file}`);
+}
+
 const manifest = {
   version,
   notes,
   pub_date: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
   platforms: {
     "windows-x86_64": {
-      signature: fs.readFileSync(sigPath, "utf8").trim(),
+      signature: updaterSignature,
       url: `${repoUrl}/releases/download/v${version}/${assetName}`,
     },
   },

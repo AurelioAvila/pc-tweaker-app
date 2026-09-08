@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "1.10.2"
+version = "1.10.3"
 description = "Real Windows tweaks with automatic one-click rollback"
 authors = ["Aurelio Avila"]
 license-file = "../LICENSE"
@@ -27,7 +27,7 @@ tauri-build = { version = "2", features = [] }
 # bypassing every UI-side guard (which drive, which folder, which tweak id).
 # So it is left off here and enabled only via the optional feature declared at
 # the bottom of this file, which dev builds turn on and release builds do not.
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }

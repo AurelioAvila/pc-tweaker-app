@@ -8,6 +8,7 @@ mod contextmenu;
 mod cookies;
 #[cfg(windows)]
 mod system_tools;
+mod tray;
 // Public so examples/crashprobe.rs can install the real hook and panic for
 // real: whether a panic actually produces a scrubbed report is the one thing
 // a unit test cannot check, because a test that panics is a test that failed.
@@ -1482,7 +1483,9 @@ pub fn run() {
         .manage(sysmon::SysMonState::new())
         .manage(fps::FpsState::default())
         .manage(systemprofile::SystemProfileState::new())
+        .on_window_event(tray::window_event)
         .setup(|app| {
+            tray::setup(app)?;
             game_sessions::spawn_watcher(app.handle().clone());
             Ok(())
         })

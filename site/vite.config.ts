@@ -6,6 +6,7 @@ import tauriConf from "../src-tauri/tauri.conf.json";
 /** Client-side routes that must also exist as real files. Keep in sync with
  *  the routes handled in src/router.tsx. */
 const ROUTES = [
+  "uninstaller",
   "how-to-undo-windows-tweaks",
   "windows-gaming-work-study-profiles",
   "what-pc-tweaker-changes",

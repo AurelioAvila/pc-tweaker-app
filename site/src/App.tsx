@@ -11,6 +11,7 @@ import { FaqAccordion } from "./components/FaqAccordion";
 import { Footer } from "./components/Footer";
 import { TipThanks } from "./components/TipThanks";
 import { SupportPage } from "./pages/Support";
+import { UninstallerPage } from "./pages/Uninstaller";
 import { GuidePage, GUIDES } from "./pages/Guides";
 import {
   PrivacyPage,
@@ -47,11 +48,34 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
   // Client-side routing doesn't reload the document, so the tab title would
   // otherwise stay on whatever index.html shipped with.
   useEffect(() => {
-    document.title = route ? route.title : NOT_FOUND_SEO.title;
+    const seo = route ?? NOT_FOUND_SEO;
+    document.title = seo.title;
+    document.querySelector('link[rel="canonical"]')?.setAttribute("href", seo.canonical);
+    for (const [selector, content] of [
+      ['meta[name="description"]', seo.description],
+      ['meta[property="og:title"]', seo.title],
+      ['meta[property="og:description"]', seo.description],
+      ['meta[property="og:url"]', seo.canonical],
+      ['meta[name="twitter:title"]', seo.title],
+      ['meta[name="twitter:description"]', seo.description],
+    ]) {
+      document.querySelector(selector)?.setAttribute("content", content);
+    }
+    const robots = document.querySelector('meta[name="robots"]');
+    if (route) robots?.remove();
+    else if (!robots) {
+      const tag = document.createElement("meta");
+      tag.name = "robots";
+      tag.content = "noindex,follow";
+      document.head.appendChild(tag);
+    }
   }, [route]);
 
   let page: React.ReactNode;
   switch (path) {
+    case "/uninstaller":
+      page = <UninstallerPage />;
+      break;
     case "/":
       page = <HomePage />;
       break;

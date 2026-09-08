@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { STRINGS, type Lang, type Strings } from "../i18n";
 import "./tool-surfaces.css";
 
@@ -93,26 +93,45 @@ export function ToolSearch({
 }) {
   const language = (Object.keys(STRINGS) as Lang[]).find((key) => STRINGS[key] === s) ?? "en";
   const label = LIST_SEARCH[language];
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="tool-list-filter">
-      <label className="tool-search-field">
+      <div className="tool-search-field">
         <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
           <circle cx="8.5" cy="8.5" r="5.25" stroke="currentColor" strokeWidth="1.5" />
           <path d="m12.5 12.5 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
         <input
+          ref={inputRef}
           type="search"
+          spellCheck={false}
           value={value}
           aria-label={label}
           placeholder={label}
           onChange={(event) => onChange(event.target.value)}
         />
-      </label>
-      {value && (
-        <button type="button" className="tool-filter-clear" onClick={() => onChange("")}>
-          {s.search.clear}
-        </button>
-      )}
+        {value && (
+          <button
+            type="button"
+            className="tool-filter-clear"
+            aria-label={s.search.clear}
+            title={s.search.clear}
+            onClick={() => {
+              onChange("");
+              inputRef.current?.focus();
+            }}
+          >
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+              <path
+                d="m6 6 8 8M14 6l-8 8"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        )}
+      </div>
       <span className="tool-list-count" aria-live="polite">
         {count} / {total}
       </span>

@@ -53,6 +53,7 @@ export type LicensePayload = {
    *  it happened to fetch — a cached-and-replayed response can't be made to
    *  look newer than it is. */
   issuedAt: number;
+  expiresAt?: number | null;
 };
 
 export type SignedLicense = {

@@ -333,6 +333,17 @@
 .tool-search-field input::placeholder {
   color: var(--text-muted);
 }
+/* The rounded field owns focus; avoid a second rectangular input outline. */
+.tool-search-field input:focus,
+.tool-search-field input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+.tool-search-field input::-webkit-search-cancel-button,
+.tool-search-field input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
 .tool-list-count {
   color: var(--text-muted);
   font-size: 11px;
@@ -340,11 +351,25 @@
   white-space: nowrap;
 }
 .tool-filter-clear {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
   border: 0;
-  color: var(--app-accent);
+  border-radius: 6px;
+  color: var(--text-muted);
   background: transparent;
-  font-size: 11px;
-  padding: 6px 3px;
+  padding: 0;
+  cursor: pointer;
+}
+.tool-filter-clear:hover {
+  color: var(--text-primary);
+  background: var(--surface-1);
+}
+.tool-filter-clear:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: -2px;
 }
 .tool-startup-row {
   padding: 12px 14px;

@@ -22,6 +22,7 @@ type PricingCopy = {
   reports: string;
   futureTweaks: string;
   prioritySupport: string;
+  uninstallerBonus: string;
   profileDetail: string;
   reportDetail: string;
   newExtras: string;
@@ -71,6 +72,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     reports: "Portable tuning reports",
     futureTweaks: "Exclusive access to selected future tweaks",
     prioritySupport: "Priority support",
+    uninstallerBonus:
+      "Uninstaller Pro for 12 months from your first Uninstaller sign-in. Included with Lifetime, including existing owners. No automatic renewal.",
     profileDetail:
       "Put two saved profiles side by side. See shared settings and the differences before choosing one.",
     reportDetail:
@@ -124,6 +127,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     reports: "Report delle impostazioni esportabili",
     futureTweaks: "Accesso esclusivo a futuri tweak selezionati",
     prioritySupport: "Assistenza prioritaria",
+    uninstallerBonus:
+      "Uninstaller Pro per 12 mesi dal primo accesso a Uninstaller. Incluso con Lifetime, anche per chi lo possiede già. Nessun rinnovo automatico.",
     profileDetail:
       "Affianca due profili salvati. Controlla impostazioni comuni e differenze prima di sceglierne uno.",
     reportDetail:
@@ -181,6 +186,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     reports: "Rapports de réglages exportables",
     futureTweaks: "Accès exclusif à de futurs réglages sélectionnés",
     prioritySupport: "Assistance prioritaire",
+    uninstallerBonus:
+      "Uninstaller Pro pendant 12 mois dès votre première connexion à Uninstaller. Inclus avec Lifetime, même pour les clients existants. Aucun renouvellement automatique.",
     profileDetail:
       "Comparez deux profils enregistrés. Consultez les réglages communs et les différences avant de choisir.",
     reportDetail:
@@ -234,6 +241,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     reports: "Informes de ajustes exportables",
     futureTweaks: "Acceso exclusivo a futuros ajustes seleccionados",
     prioritySupport: "Asistencia prioritaria",
+    uninstallerBonus:
+      "Uninstaller Pro durante 12 meses desde el primer inicio de sesión en Uninstaller. Incluido con Lifetime, también para clientes actuales. Sin renovación automática.",
     profileDetail:
       "Compara dos perfiles guardados. Revisa los ajustes comunes y las diferencias antes de elegir.",
     reportDetail:
@@ -288,6 +297,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     reports: "Exportierbare Einstellungsberichte",
     futureTweaks: "Exklusiver Zugang zu ausgewählten zukünftigen Tweaks",
     prioritySupport: "Bevorzugter Support",
+    uninstallerBonus:
+      "Uninstaller Pro für 12 Monate ab der ersten Anmeldung in Uninstaller. In Lifetime enthalten, auch für bestehende Kunden. Keine automatische Verlängerung.",
     profileDetail:
       "Vergleiche zwei gespeicherte Profile. Prüfe gemeinsame Einstellungen und Unterschiede vor deiner Auswahl.",
     reportDetail:
@@ -342,6 +353,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     reports: "Relatórios de definições exportáveis",
     futureTweaks: "Acesso exclusivo a futuros ajustes selecionados",
     prioritySupport: "Suporte prioritário",
+    uninstallerBonus:
+      "Uninstaller Pro por 12 meses a partir do primeiro acesso ao Uninstaller. Incluído no Lifetime, também para clientes atuais. Sem renovação automática.",
     profileDetail:
       "Compare dois perfis guardados. Consulte as definições comuns e as diferenças antes de escolher.",
     reportDetail:

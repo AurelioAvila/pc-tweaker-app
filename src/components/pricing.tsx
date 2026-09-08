@@ -237,6 +237,7 @@ export function PricingPanel({
             <li>{s.pricing.everythingInPro}</li>
             <li>{copy.futureTweaks}</li>
             <li>{copy.prioritySupport}</li>
+            <li>{copy.uninstallerBonus}</li>
             <li>{copy.profiles}</li>
             <li>{copy.reports}</li>
           </ul>

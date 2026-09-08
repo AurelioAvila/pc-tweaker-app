@@ -26,6 +26,7 @@ export type ProductEntitlement = {
   product: Product;
   active: boolean;
   plan: string | null;
+  expiresAt?: string | null;
 };
 
 type EntitlementTableRow = {
@@ -49,7 +50,7 @@ export function isProductRowEntitled(row: EntitlementTableRow | null | undefined
 }
 
 /** Resolves one product's entitlement for a user, whichever store backs it. */
-export async function productEntitlement(userId: number | string, product: Product): Promise<ProductEntitlement> {
+export async function productEntitlement(userId: number | string, product: Product, activateBonus = false): Promise<ProductEntitlement> {
   if (product === "pctweaker") {
     const { rows } = await getPool().query(
       "SELECT is_pro, plan, pro_expires_at, legacy_pro_grant FROM users WHERE id = $1",
@@ -63,7 +64,25 @@ export async function productEntitlement(userId: number | string, product: Produ
     [userId, product],
   );
   const row = rows[0];
-  return { product, active: isProductRowEntitled(row), plan: row?.plan ?? null };
+  const paidActive = isProductRowEntitled(row);
+  const { rows: owners } = await getPool().query("SELECT is_pro, plan FROM users WHERE id = $1", [userId]);
+  const lifetime = owners[0]?.is_pro === true && owners[0]?.plan === "lifetime";
+  if (lifetime && activateBonus) {
+    const start = new Date();
+    const end = new Date(start);
+    end.setUTCFullYear(end.getUTCFullYear() + 1);
+    await getPool().query(`INSERT INTO lifetime_uninstaller_bonus (user_id, activated_at, expires_at)
+      VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING`, [userId, start, end]);
+  }
+  const { rows: bonuses } = await getPool().query("SELECT expires_at FROM lifetime_uninstaller_bonus WHERE user_id = $1", [userId]);
+  const bonusExpiry = bonuses[0]?.expires_at ? new Date(bonuses[0].expires_at) : null;
+  const bonusActive = lifetime && bonusExpiry !== null && bonusExpiry.getTime() > Date.now();
+  const paidExpiry = row?.expires_at ? new Date(row.expires_at) : null;
+  if (paidActive && (row.plan === "lifetime" || !bonusActive || (paidExpiry && paidExpiry >= bonusExpiry!))) {
+    return { product, active: true, plan: row.plan, expiresAt: row.plan === "lifetime" ? null : paidExpiry?.toISOString() };
+  }
+  if (bonusActive) return { product, active: true, plan: "lifetime_bonus", expiresAt: bonusExpiry!.toISOString() };
+  return { product, active: false, plan: row?.plan ?? null, expiresAt: null };
 }
 
 /** All products' entitlements for a user, for account UIs and loyalty pricing. */

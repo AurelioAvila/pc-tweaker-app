@@ -10,12 +10,12 @@ export function UninstallerPage() {
       <p className="mb-10 text-lg leading-relaxed text-[var(--fg-dim)]">
         A separate Windows application for reviewing installed software and managing removals.
         Inspect the proposed removal method and permissions before proceeding, then keep a
-        local record of the result.
+        local record of the result. Sort by name, reported size, date, publisher or source, and combine filters to focus your inventory.
       </p>
       <section className="mb-10 rounded-2xl border border-white/10 p-6">
         <h2 className="mb-3 text-2xl font-semibold text-[var(--fg)]">Release verification comes first</h2>
         <p className="leading-relaxed text-[var(--fg-dim)]">
-          Version 0.8.3 has verified publisher signatures and trusted timestamps on the
+          Version 0.9.0 has verified publisher signatures and trusted timestamps on the
           Windows installers and application. The publisher is Aurelio Avila. Download the
           signed release below; historical version 0.8.2 remains unsigned.
           Code signing identifies the publisher; it does not guarantee that Windows will
@@ -31,8 +31,8 @@ export function UninstallerPage() {
           account does not mean that a PC Tweaker license unlocks Uninstaller.
         </p>
       </section>
-      <a href={`${REPOSITORY}/releases/tag/v0.8.3`} className="inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-[var(--bg)]">
-        Download signed version 0.8.3
+      <a href={`${REPOSITORY}/releases/latest`} className="inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-[var(--bg)]">
+        Download the latest signed version
       </a>
     </main>
   );

@@ -47,6 +47,9 @@ jobs:
       - name: TypeScript
         run: npx tsc --noEmit
 
+      - name: Release verification regression tests
+        run: node --test scripts/release-verification.test.mjs
+
       - name: Translations (keys + placeholders across all languages)
         run: npm run check:i18n
 

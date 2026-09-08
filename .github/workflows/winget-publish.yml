@@ -26,7 +26,24 @@ permissions:
   contents: read
 
 jobs:
+  verify:
+    runs-on: windows-latest
+    outputs:
+      tag: ${{ steps.verify.outputs.tag }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Verify release installers before catalog submission
+        id: verify
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: ./scripts/verify-published-release.ps1 -Tag $env:RELEASE_TAG
+
   publish:
+    needs: verify
     runs-on: ubuntu-latest
     steps:
       # Same shape as the Discord announcement workflow: a missing secret
@@ -35,8 +52,10 @@ jobs:
       # something that can be generated from inside a workflow.
       - name: Check for the winget PAT
         id: gate
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
         run: |
-          if [ -z "${{ secrets.WINGET_TOKEN }}" ]; then
+          if [ -z "$WINGET_TOKEN" ]; then
             echo "::warning::WINGET_TOKEN secret is not set; skipping the winget submission"
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
@@ -58,5 +77,5 @@ jobs:
           # fails the job before Komac ever runs. The event carries the tag
           # already, so fall back to it and keep the manual input as an
           # override for re-submitting an older release.
-          release-tag: ${{ inputs.tag || github.event.release.tag_name }}
+          release-tag: ${{ needs.verify.outputs.tag }}
           token: ${{ secrets.WINGET_TOKEN }}

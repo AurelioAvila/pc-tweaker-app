@@ -48,7 +48,7 @@ test(
       fs.mkdirSync(msi, { recursive: true });
       fs.writeFileSync(path.join(dir, "src-tauri/tauri.conf.json"), JSON.stringify(conf));
       fs.writeFileSync(path.join(dir, "notes.md"), "Verification fixture.");
-      fs.writeFileSync(path.join(release, "pc-tweaker-app.exe"), "unsigned");
+      fs.writeFileSync(path.join(release, "tauri-app.exe"), "unsigned");
       fs.writeFileSync(path.join(nsis, `Test_${conf.version}_x64-setup.exe`), "unsigned");
       fs.writeFileSync(
         path.join(nsis, `Test_${conf.version}_x64-setup.exe.sig`),

@@ -21,8 +21,14 @@ permissions:
 
 jobs:
   alias:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
     steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
       # Event/input values are passed through `env:` rather than interpolated
       # into the script text: a `${{ }}` inside `run:` is pasted verbatim
       # before the shell parses it, so a crafted tag name would execute as
@@ -38,6 +44,7 @@ jobs:
           TAG="$RELEASE_TAG"
           if [ -z "$TAG" ]; then TAG="$INPUT_TAG"; fi
           if [ -z "$TAG" ]; then TAG=$(gh release view --json tagName --jq .tagName); fi
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Download versioned installers
@@ -51,11 +58,22 @@ jobs:
             --pattern "*_x64_en-US.msi" \
             --clobber -D dl
 
+      - name: Verify publisher and timestamps before creating aliases
+        shell: pwsh
+        run: |
+          $files = @(Get-ChildItem -LiteralPath dl -File)
+          if ($files.Count -ne 2) { throw 'Expected exactly one EXE and one MSI.' }
+          ./scripts/verify-authenticode.ps1 -Path $files.FullName
+
       - name: Rename to stable filenames
         run: |
           mkdir -p out
           cp "$(ls dl/*_x64-setup.exe)" out/PCTweaker-Setup.exe
           cp "$(ls dl/*_x64_en-US.msi)" out/PCTweaker-Setup.msi
+
+      - name: Verify final aliases before upload
+        shell: pwsh
+        run: ./scripts/verify-authenticode.ps1 -Path @('out/PCTweaker-Setup.exe', 'out/PCTweaker-Setup.msi')
 
       - name: Upload stable aliases to the release
         env:

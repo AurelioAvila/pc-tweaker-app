@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.10.3
+
+PC Tweaker now stays in the Windows notification area when you close its window, keeping ongoing app features available until you choose to exit.
+
+- Click the tray icon to reopen PC Tweaker, or right-click it for Open PC Tweaker and Exit PC Tweaker.
+- Turn off Keep running in the background from the tray menu if you prefer closing the window to quit. Your choice is saved.
+- A one-time notice explains where to find the app after closing its window.
+- Local Windows preview builds no longer open an accompanying console window.
+
+Windows application binaries and installers are digitally signed by Aurelio Avila with a trusted timestamp. Update packages also carry the separate updater signature. Windows controls whether the tray icon appears directly beside the clock or in the hidden-icons panel.
+
 ## v1.10.1
 
 Security and reliability update for Windows system tools, startup entries and driver update reporting.

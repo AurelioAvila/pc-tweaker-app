@@ -222,3 +222,5 @@ PC Tweaker is source-available under a **proprietary license**. Public source ac
 Created and maintained by **Aurelio Avila**.
 
 Lifetime includes everything in Pro, plus exclusive access to selected future tweaks, priority support, saved-profile comparison and portable tuning reports. Future exclusive tweaks will arrive in upcoming releases.
+
+PC Tweaker Lifetime includes Uninstaller Pro for 12 months from the first sign-in to Uninstaller with the same account, including existing Lifetime owners. No automatic renewal. Standalone Uninstaller licenses remain separate.

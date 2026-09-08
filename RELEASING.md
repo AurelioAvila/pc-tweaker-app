@@ -1,6 +1,6 @@
 # Releasing PC Tweaker
 
-Official releases are built locally and published by Aurelio Avila. CI verification artifacts are unsigned and must not be distributed as official releases.
+Official releases are built locally and published by Aurelio Avila. CI verification builds are unsigned and their installers are not uploaded. See the [automated release verification gates](RELEASE-VERIFICATION.md) for required local tools and checks.
 
 1. Save a source checkpoint. Update package.json, its lockfile, src-tauri/Cargo.toml, its lockfile and src-tauri/tauri.conf.json to the same new version. Update catalog counts, translated copy and release notes when behavior changes.
 2. Run TypeScript, translation coverage and quality, lint, formatting, frontend tests, backend tests and the site build. Run the complete Rust suite on the disposable Windows CI runner. Run the explicitly ignored native power test there as well: it creates and deletes an inactive plan and verifies AC restoration, unchanged DC policy and unchanged active plan.

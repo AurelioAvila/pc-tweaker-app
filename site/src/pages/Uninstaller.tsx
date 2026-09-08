@@ -15,9 +15,9 @@ export function UninstallerPage() {
       <section className="mb-10 rounded-2xl border border-white/10 p-6">
         <h2 className="mb-3 text-2xl font-semibold text-[var(--fg)]">Release verification comes first</h2>
         <p className="leading-relaxed text-[var(--fg-dim)]">
-          Legacy version 0.8.2 is documented as unsigned. This page does not recommend that
-          installer. A replacement must pass publisher-signature and timestamp verification
-          before it is promoted here. Check the repository for the current release status.
+          Version 0.8.3 has verified publisher signatures and trusted timestamps on the
+          Windows installers and application. The publisher is Aurelio Avila. Download the
+          signed release below; historical version 0.8.2 remains unsigned.
           Code signing identifies the publisher; it does not guarantee that Windows will
           never display a security warning.
         </p>
@@ -31,8 +31,8 @@ export function UninstallerPage() {
           account does not mean that a PC Tweaker license unlocks Uninstaller.
         </p>
       </section>
-      <a href={REPOSITORY} className="inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-[var(--bg)]">
-        Read the documentation and release status
+      <a href={`${REPOSITORY}/releases/tag/v0.8.3`} className="inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-[var(--bg)]">
+        Download signed version 0.8.3
       </a>
     </main>
   );

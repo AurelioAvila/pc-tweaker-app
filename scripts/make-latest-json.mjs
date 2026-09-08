@@ -71,6 +71,7 @@ if (msis.length !== 1) throw new Error("Expected exactly one current MSI install
 const releaseDir = path.join(root, "src-tauri", "target", "release");
 const binaries = [
   path.join(releaseDir, "pc-tweaker-app.exe"),
+  ...fs.readdirSync(releaseDir).filter((file) => file.endsWith(".dll")).map((file) => path.join(releaseDir, file)),
   path.join(nsisDir, setup),
   path.join(msiDir, msis[0]),
 ];

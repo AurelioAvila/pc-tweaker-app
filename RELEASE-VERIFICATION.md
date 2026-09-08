@@ -5,7 +5,7 @@ artifacts are not uploaded. Build and sign releases on the authorized release
 workstation using the existing publisher certificate and updater key.
 
 Before preparing `latest.json`, `scripts/make-latest-json.mjs` requires the
-application, EXE installer and MSI installer to pass Windows Authenticode,
+application, DLLs in its release directory, EXE installer and MSI installer to pass Windows Authenticode,
 publisher identity (**Aurelio Avila**) and trusted timestamp verification.
 Both installers must also have valid Tauri updater signatures for the public
 key installed in the application. The helper rejects changed bytes.

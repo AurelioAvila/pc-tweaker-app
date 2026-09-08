@@ -15,7 +15,7 @@ export function UninstallerPage() {
       <section className="mb-10 rounded-2xl border border-white/10 p-6">
         <h2 className="mb-3 text-2xl font-semibold text-[var(--fg)]">Release verification comes first</h2>
         <p className="leading-relaxed text-[var(--fg-dim)]">
-          Version 0.9.0 has verified publisher signatures and trusted timestamps on the
+          Version 0.10.0 has verified publisher signatures and trusted timestamps on the
           Windows installers and application. The publisher is Aurelio Avila. Download the
           signed release below; historical version 0.8.2 remains unsigned.
           Code signing identifies the publisher; it does not guarantee that Windows will

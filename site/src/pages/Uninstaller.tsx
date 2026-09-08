@@ -28,7 +28,7 @@ export function UninstallerPage() {
           Review the removal brief and maintain an independent backup. Recovery applies only
           to supported operations and is not a guarantee that a removed application, its
           settings or its data can be restored. This is a separate product: sharing a suite
-          account does not mean that a PC Tweaker license unlocks Uninstaller.
+          account does not unlock Pro by itself. PC Tweaker Lifetime includes 12 months of Uninstaller Pro from your first sign-in to Uninstaller, including existing Lifetime owners. Sign in with the same account. The bonus does not renew automatically; a refunded or revoked Lifetime purchase is no longer eligible. Existing standalone Uninstaller licenses remain separate.
         </p>
       </section>
       <a href={`${REPOSITORY}/releases/latest`} className="inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-[var(--bg)]">

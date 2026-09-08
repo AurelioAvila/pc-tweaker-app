@@ -61,6 +61,11 @@ async function initSchema(): Promise<void> {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_created_at TIMESTAMPTZ;`);
   await migrateLegacyProGrants(pool);
+  await pool.query(`CREATE TABLE IF NOT EXISTS lifetime_uninstaller_bonus (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    activated_at TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL
+  )`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS billing_receipts (
       receipt_key TEXT PRIMARY KEY,

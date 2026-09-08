@@ -63,6 +63,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
                 { label: text.footer.download, href: `${GH}/releases/latest` },
                 { label: text.footer.changelog, href: `${GH}/blob/master/CHANGELOG.md` },
                 { label: text.footer.source, href: GH },
+                { label: "PC Tweaker Uninstaller", href: "/uninstaller/" },
                 { label: text.support.navLabel, href: "/support" },
                 { label: text.footer.contact, href: "/support" },
               ]}

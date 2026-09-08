@@ -1,4 +1,5 @@
 import { PRACTICAL_GUIDES } from "./pages/practical-guides";
+
 export interface RouteSeo {
   readonly title: string;
   readonly description: string;
@@ -14,6 +15,13 @@ const ORIGIN = "https://pctweaker.app";
 // pointed search engines at a redirect instead of at the page itself.
 
 export const ROUTE_SEO: Record<string, RouteSeo> = {
+  "/uninstaller": {
+    title: "PC Tweaker Uninstaller | Windows Software Removal",
+    description:
+      "Explore PC Tweaker Uninstaller, a separate Windows software removal tool. Read its safety model, licensing information and release verification status.",
+    canonical: `${ORIGIN}/uninstaller/`,
+    ogType: "website",
+  },
   ...Object.fromEntries(Object.entries(PRACTICAL_GUIDES).map(([path, guide]) => [path, {
     title: `${guide.title} | PC Tweaker`, description: guide.intro,
     canonical: `${ORIGIN}${path}/`, ogType: "website" as const,

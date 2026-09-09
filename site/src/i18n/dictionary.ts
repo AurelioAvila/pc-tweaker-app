@@ -523,7 +523,7 @@ export const engDictionary: Dictionary = {
     "title": "See what other users found.",
     "outOf": "out of 5",
     "basedOn": "based on {count} site ratings",
-    "note": "Existing site ratings are kept. Written feedback is private and is not published here. On SourceForge, fulxor wrote: “Helpful and well done, good job!” (August 6, 2026). External reviews retain their original context and do not verify performance claims.",
+    "note": "Rated 5/5 by users on Softpedia (79 votes) and MajorGeeks (110 votes). Softpedia also awarded PC Tweaker 4.5/5 in its editorial review. Checked September 9, 2026. These external scores are separate from the site ratings above. Written feedback submitted here goes privately to support.",
     "writeCta": "Share Your Experience",
     "formTitle": "How did PC Tweaker work for you?",
     "formName": "Name",

@@ -48,6 +48,8 @@ export function escapeHtml(value: string): string {
 }
 
 const DEFAULT_ACCENT = "#ff5500";
+// Secondary text remains readable on the dark email surface (WCAG AA).
+export const EMAIL_MUTED_TEXT = "#9ca3af";
 const DEFAULT_PRODUCT = "PC Tweaker";
 const DEFAULT_SITE = "https://pctweaker.app";
 const DEFAULT_LOGO = "https://pctweaker.app/logo.png";
@@ -64,7 +66,7 @@ export function bulletRow(accent: string, text: string): string {
 /** A two-column key/value row, for the receipt block. */
 export function detailRow(label: string, value: string): string {
   return `              <tr>
-                <td style="font-size:13px; color:#5b5f66; padding:4px 0;">${escapeHtml(label)}</td>
+                <td style="font-size:13px; color:${EMAIL_MUTED_TEXT}; padding:4px 0;">${escapeHtml(label)}</td>
                 <td style="font-size:13px; color:#e5e7eb; padding:4px 0; text-align:right;">${escapeHtml(value)}</td>
               </tr>`;
 }
@@ -97,7 +99,7 @@ export function emailShell({
     ? `
         <tr>
           <td style="padding:8px 40px 0; text-align:center;">
-            <p style="margin:0; font-size:13px; color:#5b5f66;">${escapeHtml(note)}</p>
+            <p style="margin:0; font-size:13px; color:${EMAIL_MUTED_TEXT}; line-height:1.6;">${escapeHtml(note)}</p>
           </td>
         </tr>`
     : "";
@@ -135,9 +137,9 @@ export function emailShell({
 ${bodyHtml}${button}${noteRow}${afterActionHtml}
         <tr>
           <td style="padding:32px 40px 40px; text-align:center;">
-            <p style="margin:0; font-size:13px; color:#5b5f66; line-height:1.6;">
+            <p style="margin:0; font-size:13px; color:${EMAIL_MUTED_TEXT}; line-height:1.6;">
               ${footerNote ? `${escapeHtml(footerNote)}<br>` : ""}
-              ${escapeHtml(productName)} &middot; <a href="${escapeHtml(siteUrl)}" style="color:#5b5f66;">pctweaker.app</a>
+              ${escapeHtml(productName)} &middot; <a href="${escapeHtml(siteUrl)}" style="color:${EMAIL_MUTED_TEXT};">pctweaker.app</a>
             </p>
           </td>
         </tr>

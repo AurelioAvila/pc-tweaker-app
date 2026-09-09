@@ -481,6 +481,15 @@ export interface Strings {
     signInRequired: string;
   };
   scan: {
+    lastScan: string;
+    neverScanned: string;
+    extraChecks: string;
+    checksHint: string;
+    unavailable: string;
+    startupSummary: string;
+    tasksSummary: string;
+    partialScan: string;
+    scanFailed: string;
     title: string;
     subtitle: string;
     startLabel: string;
@@ -1444,6 +1453,16 @@ const it: Strings = {
     signInRequired: "Accedi o crea un account per salvare le configurazioni.",
   },
   scan: {
+    lastScan: "Ultima scansione: {time}",
+    neverScanned: "Nessuna scansione completata",
+    extraChecks: "Controlli aggiuntivi",
+    checksHint:
+      "Letture del sistema: nessuna modifica automatica. Apri una categoria per vedere i dettagli.",
+    unavailable: "Controllo non disponibile",
+    startupSummary: "{enabled} attivi · {orphaned} collegamenti mancanti",
+    tasksSummary: "{enabled} attività di avvio attive",
+    partialScan: "Risultati parziali: alcuni controlli non sono disponibili.",
+    scanFailed: "Scansione non riuscita. Riprova.",
     title: "Scansione rapida",
     subtitle: "Controlla lo stato del PC e trova ottimizzazioni non ancora attive, in un click.",
     startLabel: "SCAN",
@@ -2739,6 +2758,16 @@ const en: Strings = {
     signInRequired: "Sign in or create an account to save configurations.",
   },
   scan: {
+    lastScan: "Last scan: {time}",
+    neverScanned: "No completed scan yet",
+    extraChecks: "Additional checks",
+    checksHint:
+      "System readings only: nothing is changed automatically. Expand a category to inspect the evidence.",
+    unavailable: "Check unavailable",
+    startupSummary: "{enabled} enabled · {orphaned} missing targets",
+    tasksSummary: "{enabled} enabled startup tasks",
+    partialScan: "Partial results: some checks are unavailable.",
+    scanFailed: "Scan failed. Please try again.",
     title: "Quick scan",
     subtitle:
       "Checks your PC's status and finds optimizations that aren't active yet, in one click.",
@@ -4038,6 +4067,16 @@ const fr: Strings = {
     signInRequired: "Connectez-vous ou creez un compte pour enregistrer des configurations.",
   },
   scan: {
+    lastScan: "Dernière analyse : {time}",
+    neverScanned: "Aucune analyse terminée",
+    extraChecks: "Vérifications supplémentaires",
+    checksHint:
+      "Lectures du système uniquement : aucune modification automatique. Développez une catégorie pour voir les détails.",
+    unavailable: "Vérification indisponible",
+    startupSummary: "{enabled} actifs · {orphaned} cibles manquantes",
+    tasksSummary: "{enabled} tâches de démarrage actives",
+    partialScan: "Résultats partiels : certaines vérifications sont indisponibles.",
+    scanFailed: "Échec de l’analyse. Réessayez.",
     title: "Analyse rapide",
     subtitle:
       "Vérifie l'état de votre PC et trouve les optimisations pas encore actives, en un clic.",
@@ -5342,6 +5381,16 @@ const es: Strings = {
     signInRequired: "Inicia sesión o crea una cuenta para guardar configuraciones.",
   },
   scan: {
+    lastScan: "Último análisis: {time}",
+    neverScanned: "Aún no hay análisis completados",
+    extraChecks: "Comprobaciones adicionales",
+    checksHint:
+      "Solo lecturas del sistema: no se cambia nada automáticamente. Abre una categoría para ver los detalles.",
+    unavailable: "Comprobación no disponible",
+    startupSummary: "{enabled} activos · {orphaned} destinos ausentes",
+    tasksSummary: "{enabled} tareas de inicio activas",
+    partialScan: "Resultados parciales: algunas comprobaciones no están disponibles.",
+    scanFailed: "El análisis falló. Inténtalo de nuevo.",
     title: "Análisis rápido",
     subtitle:
       "Comprueba el estado de tu PC y encuentra optimizaciones que aún no están activas, en un clic.",
@@ -6651,6 +6700,16 @@ const de: Strings = {
       "Melden Sie sich an oder erstellen Sie ein Konto, um Konfigurationen zu speichern.",
   },
   scan: {
+    lastScan: "Letzter Scan: {time}",
+    neverScanned: "Noch kein abgeschlossener Scan",
+    extraChecks: "Zusätzliche Prüfungen",
+    checksHint:
+      "Nur Systemabfragen: Es wird nichts automatisch geändert. Öffne eine Kategorie für Details.",
+    unavailable: "Prüfung nicht verfügbar",
+    startupSummary: "{enabled} aktiviert · {orphaned} fehlende Ziele",
+    tasksSummary: "{enabled} aktivierte Autostart-Aufgaben",
+    partialScan: "Teilergebnisse: Einige Prüfungen sind nicht verfügbar.",
+    scanFailed: "Scan fehlgeschlagen. Bitte erneut versuchen.",
     title: "Schnellscan",
     subtitle:
       "Prüft den Zustand deines PCs und findet noch nicht aktive Optimierungen, mit einem Klick.",
@@ -7958,6 +8017,16 @@ const pt: Strings = {
     signInRequired: "Entre ou crie uma conta para salvar configurações.",
   },
   scan: {
+    lastScan: "Última análise: {time}",
+    neverScanned: "Nenhuma análise concluída",
+    extraChecks: "Verificações adicionais",
+    checksHint:
+      "Apenas leituras do sistema: nada é alterado automaticamente. Abra uma categoria para ver os detalhes.",
+    unavailable: "Verificação indisponível",
+    startupSummary: "{enabled} ativos · {orphaned} destinos ausentes",
+    tasksSummary: "{enabled} tarefas de arranque ativas",
+    partialScan: "Resultados parciais: algumas verificações estão indisponíveis.",
+    scanFailed: "A análise falhou. Tente novamente.",
     title: "Verificação rápida",
     subtitle:
       "Verifica o estado do seu PC e encontra otimizações que ainda não estão ativas, com um clique.",

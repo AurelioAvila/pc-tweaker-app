@@ -10,7 +10,7 @@
  */
 
 /** The per-product words and colours the shared layout is filled with. */
-import { bulletRow, detailRow, emailShell } from "./layout";
+import { bulletRow, detailRow, emailShell, EMAIL_MUTED_TEXT } from "./layout";
 
 export type ProductBrand = {
   /** Shown in the subject line and the footer, e.g. "PC Tweaker Pro". */
@@ -137,7 +137,7 @@ export function proWelcomeHtml({ product, firstName, email, plan, priceLabel, re
 
         <tr>
           <td style="padding:28px 40px 0;">
-            <div style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#5b5f66; margin-bottom:16px;">What you've unlocked</div>
+            <div style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:${EMAIL_MUTED_TEXT}; margin-bottom:16px;">What you've unlocked</div>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
 ${brand.highlights.map((h) => bulletRow(brand.accent, h)).join("\n")}
             </table>

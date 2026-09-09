@@ -57,7 +57,11 @@ export async function productEntitlement(userId: number | string, product: Produ
       [userId],
     );
     const row = rows[0];
-    return { product, active: isEntitled(row), plan: row?.plan ?? null };
+    return {
+      product, active: isEntitled(row), plan: row?.plan ?? null,
+      expiresAt: row?.plan && PERPETUAL_PLANS.has(row.plan) ? null
+        : row?.pro_expires_at ? new Date(row.pro_expires_at).toISOString() : null,
+    };
   }
   const { rows } = await getPool().query(
     "SELECT plan, expires_at FROM entitlements WHERE user_id = $1 AND product = $2",

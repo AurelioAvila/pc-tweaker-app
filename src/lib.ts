@@ -102,7 +102,7 @@ export function loadColor(pct: number): string {
 }
 
 /** Auto-cleanup choices, in minutes. `0` means "off". */
-export const RAM_AUTO_INTERVALS = [0, 10, 30, 60, 180, 360] as const;
+export const RAM_AUTO_INTERVALS = [0, 10, 30, 60, 180, 360, 720, 1440] as const;
 
 export const RAM_AUTO_STORAGE_KEY = "pc-tweaker-ram-auto";
 

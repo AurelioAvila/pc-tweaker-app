@@ -1,3 +1,4 @@
+import { collectScan, LAST_SCAN_KEY, readLastScan, type LastScan } from "../scan-runner";
 import { ToolHeader } from "./tool-section";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
@@ -190,12 +191,20 @@ export function ScanPanel({
   const [beforeRun, setBeforeRun] = useState<BaselineRun | null>(null);
   const [afterRun, setAfterRun] = useState<BaselineRun | null>(null);
   const [measuring, setMeasuring] = useState(false);
-  const scanTimer = useRef<number | null>(null);
-
-  const SCAN_DURATION_MS = 4200;
-  const scanStep = Math.min(4, Math.floor((scanPct / 100) * 4));
-
+  const scanRun = useRef(0);
+  const scanAnimation = useRef<number | null>(null);
+  const [snapshot, setSnapshot] = useState<{ tweaks: TweakInfo[]; cleanup: CleanupInfo[] } | null>(
+    null,
+  );
+  const [lastScan, setLastScan] = useState<LastScan | null>(() => {
+    try {
+      return readLastScan(localStorage.getItem(LAST_SCAN_KEY));
+    } catch {
+      return null;
+    }
+  });
   const steps = [s.scan.stepPerformance, s.scan.stepPrivacy, s.scan.stepGaming, s.scan.stepJunk];
+  const scanStep = Math.min(4, Math.floor(scanPct / 25));
 
   // Fixable now = anything the user can actually apply today: every free
   // tweak/cleanup, plus Pro ones too once they're unlocked. Locked = Pro
@@ -219,19 +228,22 @@ export function ScanPanel({
       .then((ids) => setScanIds(new Set(ids)))
       .catch(() => setScanIds(new Set()));
   }, []);
-  const scanRelevant = (t: TweakInfo) => scanIds?.has(t.id) ?? false;
+
   const fixableIssues: ScanIssue[] = useMemo(() => {
-    const fromTweaks = tweaks
+    const fromTweaks = (snapshot?.tweaks ?? tweaks)
       .filter(
         (t) =>
-          scanRelevant(t) && !t.applied && (isPro || !t.requires_pro) && t.id !== "turbo_boost",
+          (scanIds?.has(t.id) ?? false) &&
+          !t.applied &&
+          (isPro || !t.requires_pro) &&
+          t.id !== "turbo_boost",
       )
       .map((t) => ({
         kind: "tweak" as const,
         id: t.id,
         ...textFor(s.tweaks, t.id, t.name, t.description),
       }));
-    const fromCleanup = cleanupTargets
+    const fromCleanup = (snapshot?.cleanup ?? cleanupTargets)
       .filter((c) => isPro || !c.requires_pro)
       .map((c) => ({
         kind: "cleanup" as const,
@@ -239,21 +251,22 @@ export function ScanPanel({
         ...textFor(s.cleanup, c.id, c.name, c.description),
       }));
     return [...fromTweaks, ...fromCleanup];
-  }, [tweaks, cleanupTargets, isPro, s, scanIds]);
+  }, [tweaks, cleanupTargets, isPro, s, scanIds, snapshot]);
 
   const lockedIssues = useMemo(
     () =>
       isPro
         ? []
-        : tweaks
-            .filter((t) => scanRelevant(t) && !t.applied && t.requires_pro)
+        : (snapshot?.tweaks ?? tweaks)
+            .filter((t) => (scanIds?.has(t.id) ?? false) && !t.applied && t.requires_pro)
             .map((t) => ({ id: t.id, ...textFor(s.tweaks, t.id, t.name, t.description) })),
-    [tweaks, isPro, s],
+    [tweaks, isPro, s, scanIds, snapshot],
   );
 
   useEffect(() => {
     return () => {
-      if (scanTimer.current) window.clearInterval(scanTimer.current);
+      scanRun.current += 1;
+      if (scanAnimation.current !== null) window.clearInterval(scanAnimation.current);
     };
   }, []);
 
@@ -270,42 +283,58 @@ export function ScanPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalScanSignal]);
 
-  function startScan() {
+  async function startScan() {
+    if (phase === "scanning" || fixing) return;
+    const run = ++scanRun.current;
     setPhase("scanning");
     setScanPct(0);
-
-    // Profile the machine while the progress ring runs, so the verdicts are
-    // ready by the time the results appear. A failure here is not fatal: the
-    // advice map stays empty and every issue is offered exactly as before.
-    const adviceReady = invoke<TweakAdvice[]>("advise_tweaks", {
-      ids: fixableIssues.map((i) => i.id),
-    })
-      .then((list) => Object.fromEntries(list.map((a) => [a.id, a])) as Record<string, TweakAdvice>)
-      .catch(() => ({}) as Record<string, TweakAdvice>);
-
-    const start = performance.now();
-    scanTimer.current = window.setInterval(() => {
-      const elapsed = performance.now() - start;
-      const pct = Math.min(100, Math.round((elapsed / SCAN_DURATION_MS) * 100));
-      setScanPct(pct);
-      if (pct >= 100) {
-        if (scanTimer.current) window.clearInterval(scanTimer.current);
-        void adviceReady.then((map) => {
-          setAdvice(map);
-          // Pre-tick only what this PC actually benefits from. Anything the
-          // hardware argues against stays listed but unticked, so "Fix all"
-          // can never quietly apply something that costs the user battery
-          // life or Start-menu search on their particular machine.
-          const initialChecked: Record<string, boolean> = {};
-          fixableIssues.forEach((issue) => {
-            const verdict = map[issue.id]?.verdict;
-            initialChecked[issue.id] = verdict !== "notrecommended" && verdict !== "unsupported";
-          });
-          setChecked(initialChecked);
-          setPhase("results");
+    // Restore the staged visual presentation, but never finish before the reads settle.
+    const started = performance.now();
+    scanAnimation.current = window.setInterval(() => {
+      if (scanRun.current !== run) return;
+      setScanPct(Math.min(95, Math.round(((performance.now() - started) / 4200) * 100)));
+    }, 40);
+    try {
+      const [result] = await Promise.all([
+        collectScan(invoke, () => {}),
+        new Promise<void>((resolve) => window.setTimeout(resolve, 4200)),
+      ]);
+      if (scanRun.current !== run) return;
+      const ids = new Set(result.ids);
+      setScanIds(ids);
+      setSnapshot({ tweaks: result.tweaks, cleanup: result.cleanup });
+      const map = Object.fromEntries((result.advice ?? []).map((a) => [a.id, a]));
+      setAdvice(map);
+      const initialChecked: Record<string, boolean> = {};
+      result.tweaks
+        .filter((t) => ids.has(t.id) && !t.applied && (isPro || !t.requires_pro))
+        .forEach((t) => {
+          initialChecked[t.id] = map[t.id]?.verdict === "recommended";
         });
+      // Cleanup availability is not evidence of junk; destructive cleanup is opt-in.
+      result.cleanup.forEach((c) => {
+        initialChecked[c.id] = false;
+      });
+      setChecked(initialChecked);
+      setScanPct(100);
+      const completed = { at: Date.now(), partial: result.partial };
+      setLastScan(completed);
+      try {
+        localStorage.setItem(LAST_SCAN_KEY, JSON.stringify(completed));
+      } catch {
+        /* Session display still works. */
       }
-    }, 60);
+      setPhase("results");
+    } catch {
+      if (scanRun.current !== run) return;
+      setPhase("idle");
+      pushToast("error", s.scan.scanFailed);
+    } finally {
+      if (scanAnimation.current !== null && scanRun.current === run) {
+        window.clearInterval(scanAnimation.current);
+        scanAnimation.current = null;
+      }
+    }
   }
 
   /** Ids the hardware actually argues for, in list order. */
@@ -391,6 +420,7 @@ export function ScanPanel({
     }
 
     await onFixed();
+    setSnapshot(null);
 
     if (before) {
       setMeasuring(true);
@@ -428,6 +458,12 @@ export function ScanPanel({
         icon={<MagnifierIcon className="h-5 w-5" />}
       />
 
+      <p className="tool-scan-last text-xs text-ink-3" aria-live="polite">
+        {lastScan
+          ? format(s.scan.lastScan, { time: new Date(lastScan.at).toLocaleString() })
+          : s.scan.neverScanned}
+        {lastScan?.partial && <span className="block mt-1">{s.scan.partialScan}</span>}
+      </p>
       {phase === "idle" && (
         <>
           <button
@@ -524,9 +560,7 @@ export function ScanPanel({
             {steps.map((label, i) => (
               <li
                 key={label}
-                className={`flex items-center gap-2 transition-opacity duration-300 ${
-                  i < scanStep ? "text-ok opacity-100" : "text-ink-3 opacity-40"
-                }`}
+                className={`flex items-center gap-2 transition-opacity duration-300 ${i < scanStep ? "text-ok opacity-100" : "text-ink-3 opacity-40"}`}
               >
                 <span className="w-4">{i < scanStep ? "✓" : "…"}</span>
                 {label}

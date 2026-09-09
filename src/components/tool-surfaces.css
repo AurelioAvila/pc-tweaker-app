@@ -545,15 +545,20 @@
 .tool-scan-panel .tool-header {
   margin-bottom: 17px;
 }
+.tool-scan-panel > .tool-scan-last {
+  grid-row: 2;
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+}
 .tool-scan-panel[data-phase="idle"] > .tool-scan-launch {
   grid-column: 1;
-  grid-row: 2 / 4;
+  grid-row: 3 / 5;
   margin: 0;
   justify-self: center;
 }
 .tool-scan-panel[data-phase="idle"] > .tool-machine-strip {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 3;
   margin: 0;
   align-self: end;
 }
@@ -567,19 +572,19 @@
 }
 .tool-scan-panel[data-phase="idle"] > .tool-scan-context {
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 4;
   margin: 9px 0 0;
   align-self: start;
   text-align: left;
 }
 .tool-scan-panel[data-phase="scanning"] > .tool-scan-progress {
   grid-column: 1;
-  grid-row: 2;
+  grid-row: 3;
   justify-self: center;
 }
 .tool-scan-panel[data-phase="scanning"] > .tool-scan-steps {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 3;
   margin: 0;
   font-size: 12px;
 }

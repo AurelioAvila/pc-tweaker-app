@@ -44,7 +44,11 @@ type HealthComparison = {
   categories: CategoryChange[];
   structuralChange: boolean;
 };
-type HealthResult = { report: HealthReport; ts: number; comparison: HealthComparison | null };
+export type HealthResult = {
+  report: HealthReport;
+  ts: number;
+  comparison: HealthComparison | null;
+};
 type HealthSnapshot = { ts: number; overall: number };
 export type BaselineRun = {
   ts: number;

@@ -73,6 +73,9 @@ pub struct LicensePayload {
     /// measured from this, not from local receipt — a cached-and-replayed
     /// response can't be made to look newer than it actually is.
     pub issued_at: u64,
+    /// Signed paid-period cutoff. Legacy payloads retain the existing freshness limit.
+    #[serde(default)]
+    pub expires_at: Option<u64>,
 }
 
 /// What the server sends: the exact bytes it signed, plus the signature over
@@ -188,6 +191,7 @@ fn is_fresh_at(payload: &LicensePayload, now: u64) -> bool {
     payload.issued_at > 0
         && payload.issued_at <= now.saturating_add(MAX_CLOCK_SKEW_SECS)
         && now.saturating_sub(payload.issued_at) <= GRACE_PERIOD_SECS
+        && payload.expires_at.is_none_or(|expiry| now < expiry)
 }
 
 /// Persists the raw, still-signed response to the app data directory so it
@@ -346,6 +350,7 @@ mod tests {
             plan: Some("monthly".into()),
             product: Some(PRODUCT_ID.into()),
             issued_at: now_secs(),
+            expires_at: None,
         };
         let (json, signature, public_key) = sign_test_payload(&payload);
         assert_eq!(
@@ -362,6 +367,7 @@ mod tests {
             plan: Some("lifetime".into()),
             product: Some(PRODUCT_ID.into()),
             issued_at: now_secs(),
+            expires_at: None,
         };
         let (payload_json, signature, public_key) = sign_test_payload(&payload);
         let response = SignedLicenseResponse {
@@ -390,6 +396,7 @@ mod tests {
             plan: Some("lifetime".into()),
             product: Some("another-product".into()),
             issued_at: now_secs(),
+            expires_at: None,
         };
         for (product, issued_at) in [
             ("another-product", now_secs()),
@@ -426,6 +433,7 @@ mod tests {
             plan: Some("lifetime".into()),
             product: Some("uninstaller".into()),
             issued_at: now_secs(),
+            expires_at: None,
         };
         let (json, signature, public_key) = sign_test_payload(&payload);
         let verified = verify_with_public_key(&json, &signature, &public_key).unwrap();
@@ -474,6 +482,7 @@ mod tests {
             plan: Some("monthly".into()),
             product: Some(PRODUCT_ID.into()),
             issued_at: now_secs(),
+            expires_at: None,
         };
         // Sign it the same way the real verify() expects: payload_json must
         // be exactly what a signature was computed over. Since this test has
@@ -502,6 +511,7 @@ mod tests {
             plan: None,
             product: Some(PRODUCT_ID.into()),
             issued_at: now_secs().saturating_sub(GRACE_PERIOD_SECS + 3600),
+            expires_at: None,
         };
         assert!(!is_fresh(&stale));
     }
@@ -515,6 +525,7 @@ mod tests {
             plan: Some("monthly".into()),
             product: Some(PRODUCT_ID.into()),
             issued_at: now,
+            expires_at: None,
         };
         assert!(is_fresh_at(&payload, now));
         assert!(is_fresh_at(&payload, now + GRACE_PERIOD_SECS));
@@ -536,6 +547,63 @@ mod tests {
         assert!(!store.is_pro_and_fresh());
     }
 
+    #[test]
+    fn paid_period_cuts_off_offline_access_and_renewal_requires_a_new_payload() {
+        let now = 1_800_000_000;
+        for plan in ["monthly", "annual"] {
+            let mut payload = LicensePayload {
+                user_id: "expiry-test".into(),
+                is_pro: true,
+                plan: Some(plan.into()),
+                product: Some(PRODUCT_ID.into()),
+                issued_at: now,
+                expires_at: Some(now + 60),
+            };
+            assert!(is_fresh_at(&payload, now + 59));
+            // Cancellation and unsuccessful renewal do not extend the paid period.
+            assert!(!is_fresh_at(&payload, now + 60));
+            assert!(!is_fresh_at(&payload, now + 61));
+            payload.issued_at = now + 60;
+            payload.expires_at = Some(now + 86400);
+            assert!(is_fresh_at(&payload, now + 61));
+            payload.expires_at = Some(now + GRACE_PERIOD_SECS * 2);
+            assert!(!is_fresh_at(&payload, now + 61 + GRACE_PERIOD_SECS));
+        }
+    }
+
+    #[test]
+    fn signed_expiry_is_verified_and_legacy_caches_remain_bounded() {
+        let now = now_secs();
+        let mut payload = LicensePayload {
+            user_id: "signed-expiry".into(),
+            is_pro: true,
+            plan: Some("annual".into()),
+            product: Some(PRODUCT_ID.into()),
+            issued_at: now,
+            expires_at: Some(now - 1),
+        };
+        let (payload_json, signature, public_key) = sign_test_payload(&payload);
+        let response = SignedLicenseResponse {
+            payload_json,
+            signature,
+        };
+        assert_eq!(verified_fresh_response(&response, &public_key), None);
+        let tampered = response
+            .payload_json
+            .replace(&(now - 1).to_string(), &(now + 86400).to_string());
+        assert_eq!(
+            verify_with_public_key(&tampered, &response.signature, &public_key),
+            Err(VerifyError::SignatureInvalid)
+        );
+        // Lifetime and older signed caches without a cutoff still need periodic refresh.
+        payload.expires_at = None;
+        for plan in ["lifetime", "monthly"] {
+            payload.plan = Some(plan.into());
+            assert!(is_fresh_at(&payload, now));
+            assert!(!is_fresh_at(&payload, now + GRACE_PERIOD_SECS + 1));
+        }
+    }
+
     /// After `delete`, a previously fresh cache must no longer read as Pro —
     /// this is what stops a still-valid cache from one account granting Pro
     /// to whoever logs in next on the same machine.
@@ -550,6 +618,7 @@ mod tests {
                 plan: Some("monthly".into()),
                 product: Some(PRODUCT_ID.into()),
                 issued_at: now_secs(),
+                expires_at: None,
             })
             .unwrap(),
             signature: "irrelevant-for-this-test".into(),

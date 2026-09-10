@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.12.2
+
+- Recheck for updates when reopening the hidden app from the notification area. An update dismissed with Later can be offered again on reopening; concurrent checks and installation attempts are guarded.
+
+## v1.12.1
+
+- Signed PC Tweaker licenses now carry the paid subscription expiry. Native Pro checks enforce that cutoff offline alongside the existing three-day cache freshness limit.
+- Fresh signed licenses reflect renewed periods. Cancellation at period end preserves access through the paid period; Lifetime access is preserved.
+- Older signed caches without an expiry retain their existing freshness limit until refreshed.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
+## v1.12.0
+
+- Quick Scan reads current tweak and cleanup availability on every run and records when the last scan completed, including across app restarts. Unavailable advice is marked incomplete.
+- Preserves the animated scan display. Only recommended tweaks are preselected; cleanup stays opt-in.
+- Adds automatic RAM cleanup intervals of 12 and 24 hours. The app must remain running for scheduled cleanup.
+- Improves readability in account emails.
+
+## v1.11.0
+
+- Lifetime includes 12 months of Uninstaller Pro, starting at the first sign-in to Uninstaller with the same account. Existing Lifetime owners are included. The bonus has no automatic renewal and remains separate from standalone Uninstaller licenses.
+- The desktop pricing card and website explain the benefit and activation period.
+- List search fields use one rounded focus indicator and one accessible clear button, without spelling marks on program names.
+
+These releases distribute digitally signed, timestamped Windows application files and installers. Code signing does not guarantee that every SmartScreen warning disappears.
+
 ## v1.10.3
 
 PC Tweaker now stays in the Windows notification area when you close its window, keeping ongoing app features available until you choose to exit.
@@ -447,7 +474,7 @@ update from here on (features, fixes, infra changes) gets an entry —
 this is the single source of truth for "what changed and why," not just
 the git log.
 
-## Unreleased
+## v1.12.2
 
 ### Added
 

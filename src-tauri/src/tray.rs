@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager,
+    Emitter, Manager,
 };
 use tauri_plugin_dialog::DialogExt;
 
@@ -13,9 +13,13 @@ pub struct BackgroundState {
 
 fn show(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
+        let was_hidden = !window.is_visible().unwrap_or(true);
         let _ = window.show();
         let _ = window.unminimize();
         let _ = window.set_focus();
+        if was_hidden && window.is_visible().unwrap_or(false) {
+            let _ = window.emit("app-reopened", ());
+        }
     }
 }
 

@@ -444,6 +444,7 @@ mod tests {
             plan: Some("lifetime".into()),
             product: Some("pctweaker".into()),
             issued_at: 1,
+            expires_at: None,
         };
         assert!(is_lifetime(&payload));
         for plan in [

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { check as checkForUpdate, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { format, Strings } from "../i18n";
@@ -259,7 +260,7 @@ export function Avatar({
 }
 
 /**
- * Checks GitHub once at startup for a newer signed build and, when one
+ * Checks GitHub at startup and after reopening from the tray for a newer signed build and, when one
  * exists, offers it in a small card next to the toasts. A failed check
  * surfaces as the same brief, auto-dismissing toast used for every other
  * background error — never a blocking popup — so a broken updater is
@@ -280,18 +281,38 @@ export function UpdateBanner({
   const [phase, setPhase] = useState<"offer" | "downloading" | "installing">("offer");
   const [percent, setPercent] = useState(0);
   const [dismissed, setDismissed] = useState(false);
+  const installing = useRef(false);
 
   useEffect(() => {
     let alive = true;
-    checkForUpdate()
-      .then((u) => {
-        if (alive && u) setUpdate(u);
-      })
-      .catch((err) => {
-        if (alive) onToast("error", format(s.updater.checkFailed, { message: String(err) }));
-      });
+    let checking = false;
+    let reopenOffer = false;
+    const check = (reopened = false) => {
+      if (!alive || installing.current) return;
+      reopenOffer ||= reopened;
+      if (checking) return;
+      checking = true;
+      void checkForUpdate()
+        .then((u) => {
+          if (alive && u) {
+            setUpdate(u);
+            if (reopenOffer) setDismissed(false);
+          }
+        })
+        .catch((err) => {
+          if (alive) onToast("error", format(s.updater.checkFailed, { message: String(err) }));
+        })
+        .finally(() => {
+          checking = false;
+          reopenOffer = false;
+        });
+    };
+    check();
+    const unlisten = listen("app-reopened", () => check(true));
+    void unlisten.catch(() => {});
     return () => {
       alive = false;
+      void unlisten.then((stop) => stop()).catch(() => {});
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -299,8 +320,10 @@ export function UpdateBanner({
   if (!update || dismissed) return null;
 
   async function install() {
-    if (!update) return;
+    if (!update || installing.current) return;
+    installing.current = true;
     try {
+      setPercent(0);
       setPhase("downloading");
       let total = 0;
       let received = 0;
@@ -316,6 +339,7 @@ export function UpdateBanner({
       });
       await relaunch();
     } catch (err) {
+      installing.current = false;
       setPhase("offer");
       onToast("error", format(s.updater.error, { message: String(err) }));
     }

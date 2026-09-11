@@ -4,8 +4,10 @@ import {
   money,
   PRICE_ANNUAL,
   PRICE_LIFETIME,
+  PRICE_LIFETIME_BEFORE,
   PRICE_MONTHLY,
   ProPlan,
+  lifetimeDiscountPercent,
   savingsPercent,
 } from "../lib";
 import { offerClock } from "../lifetime-offer";
@@ -116,7 +118,7 @@ export function PricingPanel({
           <div className="pricing-campaign-copy">
             {campaign.preview && <span className="pricing-preview">{copy.preview}</span>}
             <h2>{copy.campaign}</h2>
-            <p>{copy.mayChange}</p>
+            <p>{copy.rare}</p>
             <span className="pricing-deadline">
               {copy.ends}: <time dateTime={deadline ?? undefined}>{deadlineText}</time>
             </span>
@@ -229,12 +231,19 @@ export function PricingPanel({
           <p className="pricing-plan-description">{copy.lifetime}</p>
           <span className="pricing-payment-label">{s.pricing.oneTimeBadge}</span>
           <div className="pricing-price">
+            {activeCampaign && PRICE_LIFETIME_BEFORE > PRICE_LIFETIME && (
+              <s className="pricing-price-before">{money(PRICE_LIFETIME_BEFORE, lang)}</s>
+            )}
             <strong>{money(PRICE_LIFETIME, lang)}</strong>
             <span>{s.pricing.once}</span>
+            {activeCampaign && PRICE_LIFETIME_BEFORE > PRICE_LIFETIME && (
+              <span className="pricing-discount">-{lifetimeDiscountPercent}%</span>
+            )}
           </div>
           <p className="pricing-price-note">{copy.perpetual}</p>
           <ul className="pricing-highlights">
             <li>{s.pricing.everythingInPro}</li>
+            <li>{copy.earlyAccess}</li>
             <li>{copy.futureTweaks}</li>
             <li>{copy.prioritySupport}</li>
             <li>{copy.uninstallerBonus}</li>

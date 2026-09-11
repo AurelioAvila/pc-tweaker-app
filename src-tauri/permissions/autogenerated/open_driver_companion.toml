@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-open-driver-companion"
+description = "Enables the open_driver_companion command without any pre-configured scope."
+commands.allow = ["open_driver_companion"]
+
+[[permission]]
+identifier = "deny-open-driver-companion"
+description = "Denies the open_driver_companion command without any pre-configured scope."
+commands.deny = ["open_driver_companion"]

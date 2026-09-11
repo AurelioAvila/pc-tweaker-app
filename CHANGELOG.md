@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.13.0
+
+- Adds a Lifetime campaign price of €79.99, shown against the €119 list price while a campaign window is open. The reduction is drawn only when the list price is genuinely higher than the amount charged.
+- Makes the campaign banner and its countdown considerably smaller, so the three plans stay the first thing on screen. The long availability notice is no longer repeated in the banner; it remains in the pricing terms.
+- States that Lifetime campaigns are rare rather than recurring.
+- Lists early preview access to new features among the Lifetime benefits.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
 ## v1.12.2
 
 - Recheck for updates when reopening the hidden app from the notification area. An update dismissed with Later can be offered again on reopening; concurrent checks and installation attempts are guarded.

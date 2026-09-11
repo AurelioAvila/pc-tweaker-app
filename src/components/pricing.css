@@ -87,9 +87,9 @@
 .pricing-campaign {
   display: flex;
   align-items: center;
-  gap: 22px;
-  padding: 20px;
-  margin-bottom: 23px;
+  gap: 16px;
+  padding: 12px 15px;
+  margin-bottom: 15px;
   border: 1px solid color-mix(in srgb, var(--app-accent) 38%, var(--border-subtle));
   border-radius: 12px;
   background: color-mix(in srgb, var(--app-accent) 6%, var(--surface-1));
@@ -100,14 +100,14 @@
 }
 .pricing-campaign h2 {
   margin: 0;
-  font-size: 14px;
+  font-size: 12.5px;
   font-weight: 650;
 }
 .pricing-campaign p {
-  margin: 7px 0;
+  margin: 4px 0 3px;
   color: var(--text-secondary);
-  font-size: 11px;
-  line-height: 1.6;
+  font-size: 10.5px;
+  line-height: 1.5;
   max-width: 50ch;
 }
 .pricing-deadline {
@@ -133,11 +133,11 @@
 }
 .pricing-clock > div {
   text-align: center;
-  min-width: 43px;
+  min-width: 33px;
 }
 .pricing-clock strong {
   display: block;
-  font-size: 29px;
+  font-size: 19px;
   font-weight: 600;
   letter-spacing: -0.035em;
   font-variant-numeric: tabular-nums;
@@ -145,8 +145,8 @@
 }
 .pricing-clock span {
   display: block;
-  margin-top: 5px;
-  font-size: 9px;
+  margin-top: 2px;
+  font-size: 8.5px;
   color: var(--text-muted);
 }
 .pricing-plans {
@@ -257,6 +257,26 @@
 .pricing-price > span {
   font-size: 10px;
   color: var(--text-muted);
+}
+
+/* Campaign pricing: the struck list price shares the baseline with the live
+   one, small enough that the payable number stays the one being read. */
+.pricing-price-before {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration-line: line-through;
+  text-decoration-thickness: 1.5px;
+}
+.pricing-discount {
+  align-self: center;
+  font-size: 10px;
+  font-weight: 650;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-accent) 30%, transparent);
 }
 .pricing-price-note {
   font-size: 10px;
@@ -524,14 +544,14 @@
     grid-column: 1 / -1;
   }
   .pricing-campaign {
-    padding: 16px;
-    gap: 14px;
+    padding: 11px 13px;
+    gap: 11px;
   }
   .pricing-clock strong {
-    font-size: 25px;
+    font-size: 17px;
   }
   .pricing-clock > div {
-    min-width: 35px;
+    min-width: 29px;
   }
 }
 @container (max-width: 410px) {

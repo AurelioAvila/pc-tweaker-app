@@ -170,12 +170,24 @@ export const PRICE_ANNUAL = 59;
 /** Paid once, never again. Priced above a year and below two: the point is to
  *  be obviously cheaper than subscribing indefinitely without being cheaper
  *  than a single year, which would cannibalise the annual plan outright. */
-export const PRICE_LIFETIME = 89.99;
+export const PRICE_LIFETIME = 79.99;
+
+/** The list price struck through while a Lifetime campaign runs. Shown only
+ *  for the duration of an active campaign, and only when it is genuinely
+ *  higher than what is being charged: a "was" price that is not above the
+ *  live one is not a discount, and the UI refuses to draw one. */
+export const PRICE_LIFETIME_BEFORE = 119;
 
 /** How many months of the annual plan the lifetime price is worth — the one
  *  number that makes the offer legible. Derived rather than written down, so
  *  it cannot drift out of step with the prices above. */
 export const LIFETIME_BREAK_EVEN_MONTHS = Math.round(PRICE_LIFETIME / (PRICE_ANNUAL / 12));
+
+/** What a campaign actually takes off the list price. Derived, so the badge
+ *  can never disagree with the two numbers printed beside it. */
+export const lifetimeDiscountPercent = Math.round(
+  (1 - PRICE_LIFETIME / PRICE_LIFETIME_BEFORE) * 100,
+);
 
 export const savingsPercent = Math.round((1 - PRICE_ANNUAL / (PRICE_MONTHLY * 12)) * 100);
 

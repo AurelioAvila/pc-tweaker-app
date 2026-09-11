@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-get-driver-companion-status"
+description = "Enables the get_driver_companion_status command without any pre-configured scope."
+commands.allow = ["get_driver_companion_status"]
+
+[[permission]]
+identifier = "deny-get-driver-companion-status"
+description = "Denies the get_driver_companion_status command without any pre-configured scope."
+commands.deny = ["get_driver_companion_status"]

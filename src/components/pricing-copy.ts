@@ -29,6 +29,8 @@ type PricingCopy = {
   openTools: string;
   notBenchmark: string;
   campaign: string;
+  rare: string;
+  earlyAccess: string;
   mayChange: string;
   ends: string;
   hours: string;
@@ -82,6 +84,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     openTools: "Open Lifetime tools",
     notBenchmark: "These tools document settings. They do not measure or claim performance gains.",
     campaign: "The current Lifetime offer ends in",
+    rare: "Rarely offered. This is not a recurring discount.",
+    earlyAccess: "New features in early preview",
     mayChange:
       "Prices and availability may change after this deadline. Existing Lifetime access stays yours.",
     ends: "Offer ends",
@@ -138,6 +142,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     notBenchmark:
       "Questi strumenti documentano le impostazioni. Non misurano né promettono aumenti di prestazioni.",
     campaign: "L'offerta Lifetime attuale termina tra",
+    rare: "Offerta rara. Non è uno sconto ricorrente.",
+    earlyAccess: "Nuove funzioni in anteprima",
     mayChange:
       "Prezzi e disponibilità potrebbero cambiare dopo questa scadenza. Il Lifetime già acquistato rimane tuo.",
     ends: "Fine dell'offerta",
@@ -197,6 +203,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     notBenchmark:
       "Ces outils documentent les réglages. Ils ne mesurent ni ne promettent de gains de performances.",
     campaign: "L'offre à vie actuelle se termine dans",
+    rare: "Offre rare. Ce n'est pas une remise récurrente.",
+    earlyAccess: "Nouvelles fonctions en avant-première",
     mayChange:
       "Les prix et la disponibilité peuvent changer après cette échéance. Vos droits à vie déjà acquis sont conservés.",
     ends: "Fin de l'offre",
@@ -252,6 +260,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     notBenchmark:
       "Estas herramientas documentan ajustes. No miden ni prometen mejoras de rendimiento.",
     campaign: "La oferta Lifetime actual termina en",
+    rare: "Oferta poco frecuente. No es un descuento recurrente.",
+    earlyAccess: "Nuevas funciones en vista previa",
     mayChange:
       "Los precios y la disponibilidad podrían cambiar después de esta fecha. Conservas tu acceso Lifetime adquirido.",
     ends: "Fin de la oferta",
@@ -308,6 +318,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     notBenchmark:
       "Diese Werkzeuge dokumentieren Einstellungen. Sie messen oder versprechen keine Leistungsgewinne.",
     campaign: "Das aktuelle Lifetime-Angebot endet in",
+    rare: "Selten angeboten. Kein wiederkehrender Rabatt.",
+    earlyAccess: "Neue Funktionen als Vorschau",
     mayChange:
       "Preise und Verfügbarkeit können sich danach ändern. Bereits erworbener Lifetime-Zugang bleibt bestehen.",
     ends: "Angebotsende",
@@ -364,6 +376,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     notBenchmark:
       "Estas ferramentas documentam definições. Não medem nem prometem ganhos de desempenho.",
     campaign: "A oferta Lifetime atual termina em",
+    rare: "Oferta rara. Não é um desconto recorrente.",
+    earlyAccess: "Novas funções em pré-visualização",
     mayChange:
       "Os preços e a disponibilidade podem mudar após este prazo. O acesso Lifetime adquirido mantém-se.",
     ends: "Fim da oferta",

@@ -337,6 +337,25 @@ export function ScanPanel({
     }
   }
 
+  /**
+   * The issues "Select all" is allowed to tick: everything except the ones
+   * the hardware argues against or cannot do at all.
+   *
+   * A bulk control that ticks the "not recommended" group turns a screen full
+   * of reasoning into a single sweep, which is the habit this app is supposed
+   * to break — and the verdicts are not decoration: they are what stops High
+   * performance going on a laptop or the search index off an NVMe drive. Both
+   * remain one click away in their own group, individually, on purpose.
+   */
+  const selectableIssues = useMemo(
+    () =>
+      fixableIssues.filter((i) => {
+        const verdict = advice[i.id]?.verdict;
+        return verdict !== "notrecommended" && verdict !== "unsupported";
+      }),
+    [fixableIssues, advice],
+  );
+
   /** Ids the hardware actually argues for, in list order. */
   const recommendedIds = useMemo(
     () => fixableIssues.filter((i) => advice[i.id]?.verdict === "recommended").map((i) => i.id),
@@ -708,16 +727,19 @@ export function ScanPanel({
                 </p>
                 <button
                   onClick={() => {
-                    const allChecked = fixableIssues.every((i) => checked[i.id]);
-                    const next: Record<string, boolean> = {};
-                    fixableIssues.forEach((i) => {
-                      next[i.id] = !allChecked;
-                    });
+                    const allChecked = selectableIssues.every((i) => checked[i.id]);
+                    // Clearing covers every row, selecting only the ones that
+                    // survive the verdicts: "deselect all" that left a box
+                    // ticked would be a lie about what is about to be applied.
+                    const next: Record<string, boolean> = Object.fromEntries(
+                      fixableIssues.map((i) => [i.id, false]),
+                    );
+                    if (!allChecked) selectableIssues.forEach((i) => (next[i.id] = true));
                     setChecked(next);
                   }}
                   className="text-xs text-ink-3 hover:text-ink-2"
                 >
-                  {fixableIssues.every((i) => checked[i.id])
+                  {selectableIssues.every((i) => checked[i.id])
                     ? s.scan.deselectAll
                     : s.scan.selectAll}
                 </button>

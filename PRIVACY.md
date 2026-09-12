@@ -1,10 +1,20 @@
 # Privacy Policy
 
-Last updated: 2026-08-24
+Last updated: 2026-09-12
 
 PC Tweaker is a desktop application. Windows tweaks, snapshots, rollback data,
 hardware readings and file scans are processed locally on your device. They are
 not uploaded to PC Tweaker.
+
+## Connection check
+
+The two tweaks that change how Windows handles TCP connections
+(acknowledgment timing and the congestion provider) can affect an unusual
+line in ways the setting alone does not predict. When you apply one, the app
+opens a TCP connection to 1.1.1.1 and, if that is unreachable, to github.com,
+before and after the change, purely to confirm the line still works. If it
+stopped working, the app puts the setting back. No data about you or your
+device is sent in that check.
 
 ## Account data
 

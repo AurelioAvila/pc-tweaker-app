@@ -64,8 +64,8 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
                 { label: text.footer.changelog, href: `${GH}/blob/master/CHANGELOG.md` },
                 { label: text.footer.source, href: GH },
                 { label: "PC Tweaker Uninstaller", href: "/uninstaller/" },
-                { label: text.support.navLabel, href: "/support" },
-                { label: text.footer.contact, href: "/support" },
+                { label: text.support.navLabel, href: "/support/" },
+                { label: text.footer.contact, href: "/support/" },
               ]}
             />
             <Col
@@ -90,23 +90,23 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
               navigate={navigate}
               title="GUIDES"
               links={[
-                { label: "Undo Windows tweaks", href: "/how-to-undo-windows-tweaks" },
-{ label: "Gaming, Work and Study", href: "/windows-gaming-work-study-profiles" },
-{ label: "System change disclosure", href: "/what-pc-tweaker-changes" },
-{ label: "Windows 11 optimizer", href: "/windows-11-optimizer" },
-                { label: "Gaming performance", href: "/gaming-performance" },
-                { label: "Reversible tweaks", href: "/reversible-windows-tweaks" },
-                { label: "Windows privacy", href: "/windows-privacy-tool" },
+                { label: "Undo Windows tweaks", href: "/how-to-undo-windows-tweaks/" },
+                { label: "Gaming, Work and Study", href: "/windows-gaming-work-study-profiles/" },
+                { label: "System change disclosure", href: "/what-pc-tweaker-changes/" },
+                { label: "Windows 11 optimizer", href: "/windows-11-optimizer/" },
+                { label: "Gaming performance", href: "/gaming-performance/" },
+                { label: "Reversible tweaks", href: "/reversible-windows-tweaks/" },
+                { label: "Windows privacy", href: "/windows-privacy-tool/" },
               ]}
             />
             <Col
               navigate={navigate}
               title={text.footer.legal}
               links={[
-                { label: text.footer.privacy, href: "/privacy" },
-                { label: text.footer.terms, href: "/terms" },
-                { label: text.footer.cookies, href: "/cookies" },
-                { label: text.footer.accessibility, href: "/accessibility" },
+                { label: text.footer.privacy, href: "/privacy/" },
+                { label: text.footer.terms, href: "/terms/" },
+                { label: text.footer.cookies, href: "/cookies/" },
+                { label: text.footer.accessibility, href: "/accessibility/" },
                 { label: text.footer.license, href: `${GH}/blob/master/LICENSE` },
               ]}
             />

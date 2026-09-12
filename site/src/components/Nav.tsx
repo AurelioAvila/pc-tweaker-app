@@ -44,7 +44,7 @@ export function Nav({
             </a>
           ))}
           <Link
-            to="/support"
+            to="/support/"
             onNavigate={navigate}
             className="hidden text-[13.5px] font-medium text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] md:block"
           >

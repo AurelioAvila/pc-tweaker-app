@@ -40,6 +40,7 @@ mod ipc_commands;
 mod ipc_tests;
 mod license;
 mod lifetime_tools;
+mod netcheck;
 mod netlatency;
 mod netmaintenance;
 mod netshaper;
@@ -485,9 +486,24 @@ fn apply_by_id(
     app_data_dir: &std::path::Path,
     id: &str,
 ) -> Result<(), String> {
+    // Read the line before touching it. Without the earlier reading, a
+    // failed probe afterwards cannot be told apart from a machine that was
+    // offline the whole time, and the guard would revert a good tweak on a
+    // PC that never had internet.
+    let was_online = netcheck::relevant(id) && netcheck::online();
+
     // Single funnel for every apply (direct, batched, and the elevated
     // helper), so this one audit call covers them all exactly once.
-    let result = apply_by_id_inner(store, app_data_dir, id);
+    let mut result = apply_by_id_inner(store, app_data_dir, id);
+
+    if result.is_ok() && netcheck::regressed(was_online) {
+        // Reverted through the public funnel so the audit log carries the
+        // revert as its own event, rather than an apply that quietly undid
+        // itself with nothing to show for it.
+        let restored = rollback_by_id(store, id).is_ok();
+        result = Err(netcheck::reverted_message(restored));
+    }
+
     audit::record(
         "tweak-applied",
         id,

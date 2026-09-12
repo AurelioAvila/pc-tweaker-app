@@ -9,7 +9,8 @@ return a clear 503 instead of crashing, so you can deploy incrementally.
 
 | Method | Path                            | Auth   | Notes                                              |
 |--------|----------------------------------|--------|-----------------------------------------------------|
-| GET    | `/health`                        | —      | `{ ok, databaseConfigured }`                        |
+| GET/HEAD | `/`                           | —      | Permanent redirect to `https://pctweaker.app/`; query parameters are not forwarded |
+| GET    | `/health`                        | —      | `{ ok: true }` — process liveness only              |
 | POST   | `/api/auth/register`             | —      | `{ email, password }` → `{ token }`, sends verification email |
 | POST   | `/api/auth/login`                | —      | `{ email, password }` → `{ token }`                 |
 | POST   | `/api/auth/logout-all`           | Bearer | Invalidates every token issued before now           |

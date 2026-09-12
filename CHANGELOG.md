@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.13.1
+
+- The two tweaks that change TCP behavior, acknowledgment timing and the congestion provider, now verify the connection before and after applying. If the line stops responding, the setting is restored exactly as it was and the attempt is reported as failed.
+- The check opens a TCP connection to 1.1.1.1, or github.com when that is unreachable, and sends no data about you or your device. It is described in the privacy policy.
+- Select all in Quick Scan no longer selects the changes advised against on your hardware. They stay available individually under their own heading; Deselect all still clears everything.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
 ## v1.13.0
 
 - Adds a Lifetime campaign price of €79.99, shown against the €119 list price while a campaign window is open.

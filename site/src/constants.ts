@@ -4,6 +4,16 @@
 export const DOWNLOAD_EXE =
   "https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/PCTweaker-Setup.exe";
 
+/** The Uninstaller is a separate product with its own release stream and its
+ *  own stable alias. The nav's Download button used to serve PC Tweaker's
+ *  installer on every page, including /uninstaller/ — the loudest control on
+ *  that page downloaded the wrong application. */
+export const UNINSTALLER_DOWNLOAD_EXE =
+  "https://github.com/AurelioAvila/pc-tweaker-uninstaller/releases/latest/download/PCTweakerUninstaller-Setup.exe";
+
+export const UNINSTALLER_RELEASES =
+  "https://github.com/AurelioAvila/pc-tweaker-uninstaller/releases/latest";
+
 /** The Microsoft Store listing. It has existed and been live all along, and
  *  appeared only inside the JSON-LD `sameAs` array — invisible to a human
  *  reading the page. It matters more than a mirror: it is Microsoft-signed,

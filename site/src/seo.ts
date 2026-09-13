@@ -16,9 +16,9 @@ const ORIGIN = "https://pctweaker.app";
 
 export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/uninstaller": {
-    title: "PC Tweaker Uninstaller | Windows Software Removal",
+    title: "Windows Uninstaller That Shows You the Risk First | PC Tweaker",
     description:
-      "Explore PC Tweaker Uninstaller, a separate Windows software removal tool. Read its safety model, licensing information and release verification status.",
+      "See what an uninstall will remove before it runs: a safety score with its reasons, the exact command and permissions, a restore point taken first, and a receipt of the space actually freed. Free for single uninstalls.",
     canonical: `${ORIGIN}/uninstaller/`,
     ogType: "website",
   },

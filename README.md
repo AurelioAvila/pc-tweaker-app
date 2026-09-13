@@ -2,7 +2,7 @@
   <img src="src-tauri/icons/128x128@2x.png" width="112" alt="PC Tweaker logo">
 </p>
 
-<h1 align="center">PC Tweaker</h1>
+<h1 align="center">PC Tweaker — Windows Tuning, Privacy and Maintenance</h1>
 
 <p align="center"><strong>Tune Windows with the changes in plain sight.</strong><br>Gaming, privacy and maintenance controls, with restore tools for supported settings.</p>
 
@@ -21,6 +21,12 @@
 </p>
 
 **[Download Free for Windows](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest)** · **[Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87)** · [Website](https://pctweaker.app/) · [Support](https://pctweaker.app/support/) · [Release notes](CHANGELOG.md)
+
+<p align="center"><img src="Screenshot/scan_screenshot.png" alt="PC Tweaker Scan interface; appearance and counts may differ by release" width="85%"></p>
+
+**Start with one task:** review a setting, read its trade-offs, apply it if appropriate,
+and use its restore control when supported. Free includes core tools without an account.
+See [what changes on your system](#what-changes-on-your-system) before tuning.
 
 <p align="center">
   <a href="#safe-download-via-winget"><img src="https://img.shields.io/badge/Safe_download-via_Winget-1793D1?style=for-the-badge" alt="Safe download via Winget"></a>
@@ -82,8 +88,6 @@ These controls use Windows power APIs. Unsupported hybrid settings are refused b
 
 Restoration writes the previous effective AC value back to the original plan. If that value was inherited, it becomes an explicit plan value after restoration; later changes to Windows defaults will not automatically replace it. PC Tweaker does not change protected registry permissions or reset unrelated plan settings to remove that override.
 
-<p align="center"><img src="Screenshot/scan_screenshot.png" alt="PC Tweaker Scan interface; appearance and counts may differ by release" width="85%"></p>
-
 ## What changes on your system
 
 PC Tweaker can change registry values, power settings, services, startup entries and selected network settings. Other tools interact with files, Windows repair utilities, drivers or supported hardware controls. Administrator access is requested for operations that require it.
@@ -132,7 +136,7 @@ Annual billing is approximately 51% below twelve monthly payments. Check the app
 
 [Version-specific signing inventory and verification guide](https://github.com/AurelioAvila/.github/blob/master/CODE_SIGNING.md)
 
-**PC Tweaker 1.10.3 is code-signed.** Its Windows application and release installers identify **Aurelio Avila** as publisher, using Certum and a trusted timestamp.
+**Verify the release you download.** The [latest release](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest) is the download entry point; the version-specific inventory above records signing evidence. For an official Windows build, verify a valid Authenticode signature identifying **Aurelio Avila** and a trusted timestamp on the exact application and installer. A verification recorded for an older release does not establish the status of a newer file.
 
 Windows Authenticode and Tauri update signatures have different roles. Authenticode identifies the Windows publisher and detects changes after signing. Tauri's update signature verifies update packages.
 

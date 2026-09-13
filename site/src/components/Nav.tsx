@@ -6,9 +6,14 @@ import logoUrl from "../assets/favicon.png";
 export function Nav({
   navigate,
   onSubpage,
+  downloadHref = DOWNLOAD_EXE,
+  downloadLabel,
 }: {
   navigate: (to: string) => void;
   onSubpage: boolean;
+  /** Overridden on product pages that are not PC Tweaker itself. */
+  downloadHref?: string;
+  downloadLabel?: string;
 }) {
   // Section anchors only resolve on the home page. From /support they need
   // the leading "/" so the browser goes home first instead of hunting for an
@@ -51,10 +56,10 @@ export function Nav({
             {text.support.navLabel}
           </Link>
           <a
-            href={DOWNLOAD_EXE}
+            href={downloadHref}
             className="bg-accent glow-accent-sm rounded-lg px-4.5 py-2 text-[13.5px] font-semibold text-[var(--bg)] transition-transform hover:-translate-y-px"
           >
-            {text.nav.download}
+            {downloadLabel ?? text.nav.download}
           </a>
         </div>
       </div>

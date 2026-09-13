@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Nav } from "./components/Nav";
+import { UNINSTALLER_DOWNLOAD_EXE } from "./constants";
 import { HeroSection } from "./components/HeroSection";
 import { PerformanceMetrics } from "./components/PerformanceMetrics";
 import { BespokeArsenal } from "./components/BespokeArsenal";
@@ -109,7 +110,13 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
         Skip to content
       </a>
       <TipThanks />
-      <Nav navigate={navigate} onSubpage={path !== "/"} />
+      <Nav
+        navigate={navigate}
+        onSubpage={path !== "/"}
+        {...(path === "/uninstaller"
+          ? { downloadHref: UNINSTALLER_DOWNLOAD_EXE, downloadLabel: "Download Uninstaller" }
+          : {})}
+      />
       {page}
       <Footer navigate={navigate} />
     </>

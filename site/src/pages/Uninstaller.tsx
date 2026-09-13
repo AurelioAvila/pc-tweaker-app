@@ -1,4 +1,4 @@
-import { UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "../constants";
+import { DOWNLOAD_EXE, UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "../constants";
 
 /* The page a buyer actually lands on.
  *
@@ -84,11 +84,22 @@ export function UninstallerPage() {
             </li>
           ))}
         </ul>
-        <p className="leading-relaxed text-[var(--fg-dim)]">
+        <p className="mb-4 leading-relaxed text-[var(--fg-dim)]">
           Already on a PC Tweaker plan? Uninstaller Pro is <strong>€4.99 per year</strong> on the
           same account. PC Tweaker Lifetime includes 12 months of Uninstaller Pro from your first
           sign-in, existing Lifetime owners included; that bonus does not renew automatically.
-          Upgrade from inside the application, under the account menu.
+        </p>
+        <p className="leading-relaxed text-[var(--fg-dim)]">
+          Pro is bought inside the application, under the account menu, using a PC Tweaker suite
+          account. If you do not have one yet, install{" "}
+          <a
+            href={DOWNLOAD_EXE}
+            className="text-accent underline-offset-4 hover:underline"
+          >
+            PC Tweaker
+          </a>{" "}
+          — it is free and it is where the account is created. One account covers both
+          applications.
         </p>
       </section>
 
@@ -120,9 +131,9 @@ export function UninstallerPage() {
         <p className="leading-relaxed text-[var(--fg-dim)]">
           Review the removal brief and maintain an independent backup. Recovery applies only
           to supported operations and is not a guarantee that a removed application, its
-          settings or its data can be restored. This is a separate product: sharing a suite
-          account does not unlock Pro by itself. Existing standalone Uninstaller licenses
-          remain separate.
+          settings or its data can be restored. This is a separate application with its own
+          Pro entitlement: a PC Tweaker subscription does not unlock it by itself, it only
+          sets the price.
         </p>
       </section>
     </main>

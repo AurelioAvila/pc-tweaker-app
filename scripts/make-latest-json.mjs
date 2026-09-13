@@ -14,6 +14,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import os from "node:os";
 import { verifyUpdater } from "./verify-updater.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -69,8 +70,55 @@ const msiDir = path.join(root, "src-tauri", "target", "release", "bundle", "msi"
 const msis = fs.readdirSync(msiDir).filter((file) => file.includes(`_${version}_`) && file.endsWith(".msi"));
 if (msis.length !== 1) throw new Error("Expected exactly one current MSI installer.");
 const releaseDir = path.join(root, "src-tauri", "target", "release");
+
+/**
+ * The application binary that actually ships, taken out of the MSI.
+ *
+ * Verifying `target/release/tauri-app.exe` looks right and is wrong. Tauri
+ * patches that file with bundle-type information, signs it, packages it, and
+ * then restores the pre-patch bytes when it is finished - so after a correct
+ * signed build the leftover in `target/release` is unsigned while the copy
+ * inside both installers is signed. This helper refused to write a manifest
+ * for a perfectly good release, and the workaround was to copy the payload
+ * back by hand before running it again. That is a manual step in the middle
+ * of a signing procedure, which is exactly where manual steps get skipped.
+ *
+ * `msiexec /a` is an administrative install: it unpacks the MSI without
+ * installing anything, needs no elevation, and yields the bytes that reach
+ * the user. If it cannot run, fall back to the build output rather than
+ * blocking a release - the installers themselves are still verified below,
+ * and they are what is published.
+ */
+function shippedApplication(msiPath) {
+  const staging = fs.mkdtempSync(path.join(os.tmpdir(), "pct-payload-"));
+  try {
+    execFileSync("msiexec", ["/a", msiPath, "/qn", `TARGETDIR=${staging}`], { stdio: "ignore" });
+    const found = [];
+    const walk = (dir) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (entry.name.toLowerCase() === "tauri-app.exe") found.push(full);
+      }
+    };
+    walk(staging);
+    if (found.length !== 1) throw new Error(`expected one payload executable, found ${found.length}`);
+    // Copied out before the staging directory goes away, and left in place:
+    // the verification below reads it, and a human comparing hashes after the
+    // fact needs it to still be there.
+    const destination = path.join(releaseDir, "tauri-app.shipped.exe");
+    fs.copyFileSync(found[0], destination);
+    return destination;
+  } catch (error) {
+    console.warn(`Could not unpack the MSI payload (${error.message}); verifying the build output instead.`);
+    return path.join(releaseDir, "tauri-app.exe");
+  } finally {
+    fs.rmSync(staging, { recursive: true, force: true });
+  }
+}
+
 const binaries = [
-  path.join(releaseDir, "tauri-app.exe"),
+  shippedApplication(path.join(msiDir, msis[0])),
   ...fs.readdirSync(releaseDir).filter((file) => file.endsWith(".dll")).map((file) => path.join(releaseDir, file)),
   path.join(nsisDir, setup),
   path.join(msiDir, msis[0]),

@@ -513,9 +513,9 @@ function subscriptionCharge(subscription: Stripe.Subscription): string | null {
 }
 
 const PLAN_PRICE_LABELS: Record<string, string> = {
-  monthly: "€9.99 / month",
-  annual: "€59 / year",
-  lifetime: "€79.99 once",
+  monthly: "€7.99 / month",
+  annual: "€49.99 / year",
+  lifetime: "€99 once",
 };
 
 /** Durable receipt scheduling; the provider is called by the retry worker. */

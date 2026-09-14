@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.13.2
+
+- Updates prices for new purchases: €7.99 monthly, €59.99 annually and €99 for Lifetime. Applicable taxes and payment terms are shown at checkout.
+- Ends the previous Lifetime promotion and aligns the app, website and billing descriptions. Existing subscriptions retain their current prices and renewal settings.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
 ## v1.13.1
 
 - The two tweaks that change TCP behavior, acknowledgment timing and the congestion provider, now verify the connection before and after applying. If the line stops responding, the setting is restored exactly as it was and the attempt is reported as failed.

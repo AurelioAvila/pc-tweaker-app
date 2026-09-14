@@ -469,9 +469,9 @@ export const engDictionary: Dictionary = {
     },
     "pro": {
       "plan": "PRO — ANNUAL",
-      "price": "€49.99",
+      "price": "€59.99",
       "per": "/ year · monthly option €7.99",
-      "save": "SAVE 48% VS MONTHLY",
+      "save": "SAVE 37% VS MONTHLY",
       "features": [
         "All 61 tweaks in this release",
         "Turbo Gaming and Game Sessions",
@@ -506,7 +506,7 @@ export const engDictionary: Dictionary = {
       },
       {
         "q": "What is free, and how does Pro work?",
-        "a": "Free includes 37 tweaks, scan, supported restore tools, hardware monitoring and selected maintenance tools, with no account required. Pro adds advanced features and Game Sessions. Current subscriptions are €7.99 per month or €49.99 per year; Lifetime is €99 once. Everything in Pro, plus: exclusive access to selected future tweaks, priority support, saved-profile comparison and portable tuning reports. Lifetime also includes Uninstaller Pro for 12 months from your first sign-in to Uninstaller with the same account, including existing Lifetime owners. This bonus does not renew automatically. Upcoming exclusive tweaks are not included in the current catalog. Review the final price and renewal terms at checkout. Existing lifetime purchases retain the access promised when purchased."
+        "a": "Free includes 37 tweaks, scan, supported restore tools, hardware monitoring and selected maintenance tools, with no account required. Pro adds advanced features and Game Sessions. Current subscriptions are €7.99 per month or €59.99 per year; Lifetime is €99 once. Everything in Pro, plus: exclusive access to selected future tweaks, priority support, saved-profile comparison and portable tuning reports. Lifetime also includes Uninstaller Pro for 12 months from your first sign-in to Uninstaller with the same account, including existing Lifetime owners. This bonus does not renew automatically. Upcoming exclusive tweaks are not included in the current catalog. Review the final price and renewal terms at checkout. Existing lifetime purchases retain the access promised when purchased."
       },
       {
         "q": "What leaves my PC?",

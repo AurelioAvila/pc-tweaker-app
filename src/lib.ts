@@ -165,7 +165,7 @@ export type ProPlan = "monthly" | "annual" | "lifetime";
 
 export const PRICE_MONTHLY = 7.99;
 
-export const PRICE_ANNUAL = 49.99;
+export const PRICE_ANNUAL = 59.99;
 
 /** Paid once, never again. Priced above a year and below two: the point is to
  *  be obviously cheaper than subscribing indefinitely without being cheaper

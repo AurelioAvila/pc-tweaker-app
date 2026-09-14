@@ -163,14 +163,14 @@ export function ramIntervalLabel(minutes: number, s: Strings): string {
  *  payment rather than a subscription. */
 export type ProPlan = "monthly" | "annual" | "lifetime";
 
-export const PRICE_MONTHLY = 9.99;
+export const PRICE_MONTHLY = 7.99;
 
-export const PRICE_ANNUAL = 59;
+export const PRICE_ANNUAL = 49.99;
 
 /** Paid once, never again. Priced above a year and below two: the point is to
  *  be obviously cheaper than subscribing indefinitely without being cheaper
  *  than a single year, which would cannibalise the annual plan outright. */
-export const PRICE_LIFETIME = 79.99;
+export const PRICE_LIFETIME = 99;
 
 /** The list price struck through while a Lifetime campaign runs. Shown only
  *  for the duration of an active campaign, and only when it is genuinely

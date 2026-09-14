@@ -127,10 +127,10 @@ Free does not require an account. It includes core tweaks, scans, supported rest
 | Current plan | Price |
 | --- | --- |
 | Monthly | €7.99 per month |
-| Annual | €49.99 per year |
+| Annual | €59.99 per year |
 | Lifetime | €99 once |
 
-Annual billing is approximately 48% below twelve monthly payments. Check the app and checkout for current offers, taxes and renewal terms. Existing lifetime purchases retain the access promised when purchased. Payments use Stripe Checkout; the app does not handle card details. Pro is linked to the purchasing account; the app refreshes its license when you return from checkout while online.
+Annual billing is approximately 37% below twelve monthly payments. Check the app and checkout for current offers, taxes and renewal terms. Existing lifetime purchases retain the access promised when purchased. Payments use Stripe Checkout; the app does not handle card details. Pro is linked to the purchasing account; the app refreshes its license when you return from checkout while online.
 
 ## Download integrity and code signing
 

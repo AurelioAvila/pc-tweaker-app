@@ -222,6 +222,7 @@ export interface Strings {
     cleaningUp: string;
     cleanupNote: string;
     runningNote: string;
+    stepQuick: string;
     stepScan: string;
     stepRestore: string;
     stepSfc: string;
@@ -241,6 +242,13 @@ export interface Strings {
     repairAnyway: string;
     elapsed: string; // uses {time}
     holdingAt: string; // uses {percent} {time}
+    remaining: string; // uses {minutes}
+    underMinute: string;
+    estimating: string;
+    statElapsed: string;
+    statRemaining: string;
+    statFinish: string;
+    waiting: string;
   };
   cookieCleaner: {
     title: string;
@@ -1135,6 +1143,7 @@ const it: Strings = {
     cleanupNote:
       "Rimuove dalla cartella WinSxS le versioni dei componenti ormai sostituite. Gli aggiornamenti installati di recente restano disinstallabili.",
     runningNote: "Non spegnere né riavviare il PC mentre è in corso.",
+    stepQuick: "Lettura rapida dello stato",
     stepScan: "Controllo dell'archivio componenti",
     stepRestore: "Riparazione dell'archivio componenti",
     stepSfc: "Controllo dei file di sistema",
@@ -1157,6 +1166,13 @@ const it: Strings = {
     elapsed: "{time} trascorsi",
     holdingAt:
       "Fermo al {percent}% da {time}. DISM resta sulla stessa percentuale anche per diversi minuti mentre Windows ricostruisce i componenti in background: non si è bloccato.",
+    remaining: "~{minutes} min",
+    underMinute: "< 1 min",
+    estimating: "Stima in corso...",
+    statElapsed: "Trascorso",
+    statRemaining: "Rimanente",
+    statFinish: "Fine prevista",
+    waiting: "In attesa",
   },
   cookieCleaner: {
     title: "Pulizia selettiva dei cookie",
@@ -2445,6 +2461,7 @@ const en: Strings = {
     cleanupNote:
       "Removes superseded component versions from WinSxS. Recently installed updates stay uninstallable.",
     runningNote: "Don't shut down or restart while this is running.",
+    stepQuick: "Quick status read",
     stepScan: "Checking the component store",
     stepRestore: "Repairing the component store",
     stepSfc: "Checking system files",
@@ -2467,6 +2484,13 @@ const en: Strings = {
     elapsed: "{time} elapsed",
     holdingAt:
       "Still at {percent}% after {time}. DISM parks on one number for minutes at a time while Windows rebuilds components in the background — it hasn't frozen.",
+    remaining: "~{minutes} min",
+    underMinute: "< 1 min",
+    estimating: "Estimating...",
+    statElapsed: "Elapsed",
+    statRemaining: "Left",
+    statFinish: "Expected finish",
+    waiting: "Waiting",
   },
   cookieCleaner: {
     title: "Selective cookie cleaner",
@@ -3747,6 +3771,7 @@ const fr: Strings = {
     cleanupNote:
       "Supprime du dossier WinSxS les versions de composants remplacées. Les mises à jour récentes restent désinstallables.",
     runningNote: "N'éteignez pas et ne redémarrez pas le PC pendant l'opération.",
+    stepQuick: "Lecture rapide de l'état",
     stepScan: "Analyse du magasin de composants",
     stepRestore: "Réparation du magasin de composants",
     stepSfc: "Vérification des fichiers système",
@@ -3769,6 +3794,13 @@ const fr: Strings = {
     elapsed: "{time} écoulées",
     holdingAt:
       "Toujours à {percent}% après {time}. DISM reste sur le même pourcentage plusieurs minutes pendant que Windows reconstruit les composants en arrière-plan : il n'est pas bloqué.",
+    remaining: "~{minutes} min",
+    underMinute: "< 1 min",
+    estimating: "Estimation...",
+    statElapsed: "Écoulé",
+    statRemaining: "Restant",
+    statFinish: "Fin prévue",
+    waiting: "En attente",
   },
   cookieCleaner: {
     title: "Nettoyage sélectif des cookies",
@@ -5066,6 +5098,7 @@ const es: Strings = {
     cleanupNote:
       "Elimina de WinSxS las versiones de componentes ya sustituidas. Las actualizaciones instaladas hace poco se pueden seguir desinstalando.",
     runningNote: "No apagues ni reinicies el PC mientras se ejecuta.",
+    stepQuick: "Lectura rápida del estado",
     stepScan: "Comprobando el almacén de componentes",
     stepRestore: "Reparando el almacén de componentes",
     stepSfc: "Comprobando los archivos de sistema",
@@ -5088,6 +5121,13 @@ const es: Strings = {
     elapsed: "{time} transcurridos",
     holdingAt:
       "Sigue al {percent}% tras {time}. DISM se queda en el mismo porcentaje durante varios minutos mientras Windows reconstruye los componentes en segundo plano: no se ha bloqueado.",
+    remaining: "~{minutes} min",
+    underMinute: "< 1 min",
+    estimating: "Calculando...",
+    statElapsed: "Transcurrido",
+    statRemaining: "Restante",
+    statFinish: "Fin prevista",
+    waiting: "En espera",
   },
   cookieCleaner: {
     title: "Limpieza selectiva de cookies",
@@ -6380,6 +6420,7 @@ const de: Strings = {
     cleanupNote:
       "Entfernt überholte Komponentenversionen aus WinSxS. Kürzlich installierte Updates lassen sich weiterhin deinstallieren.",
     runningNote: "Den PC währenddessen nicht herunterfahren oder neu starten.",
+    stepQuick: "Schnelle Statusabfrage",
     stepScan: "Komponentenspeicher wird geprüft",
     stepRestore: "Komponentenspeicher wird repariert",
     stepSfc: "Systemdateien werden geprüft",
@@ -6402,6 +6443,13 @@ const de: Strings = {
     elapsed: "{time} vergangen",
     holdingAt:
       "Seit {time} bei {percent}%. DISM bleibt minutenlang auf derselben Zahl stehen, während Windows im Hintergrund Komponenten neu aufbaut — es hängt nicht.",
+    remaining: "~{minutes} Min.",
+    underMinute: "< 1 Min.",
+    estimating: "Wird geschätzt...",
+    statElapsed: "Vergangen",
+    statRemaining: "Verbleibend",
+    statFinish: "Voraussichtlich fertig",
+    waiting: "Wartet",
   },
   cookieCleaner: {
     title: "Selektive Cookie-Bereinigung",
@@ -7702,6 +7750,7 @@ const pt: Strings = {
     cleanupNote:
       "Remove do WinSxS as versões de componentes já substituídas. As atualizações instaladas há pouco continuam a poder ser desinstaladas.",
     runningNote: "Não desligue nem reinicie o PC enquanto isto decorre.",
+    stepQuick: "Leitura rápida do estado",
     stepScan: "A verificar o arquivo de componentes",
     stepRestore: "A reparar o arquivo de componentes",
     stepSfc: "A verificar os ficheiros de sistema",
@@ -7724,6 +7773,13 @@ const pt: Strings = {
     elapsed: "{time} decorridos",
     holdingAt:
       "Ainda nos {percent}% ao fim de {time}. O DISM fica na mesma percentagem durante vários minutos enquanto o Windows reconstrói os componentes em segundo plano: não bloqueou.",
+    remaining: "~{minutes} min",
+    underMinute: "< 1 min",
+    estimating: "A estimar...",
+    statElapsed: "Decorrido",
+    statRemaining: "Restante",
+    statFinish: "Fim previsto",
+    waiting: "Em espera",
   },
   cookieCleaner: {
     title: "Limpeza seletiva de cookies",

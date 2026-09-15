@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.14.0
+
+- Rebuilds Windows integrity check and repair as one panel: ready, running, then a result that asks whether to repair. Shrinking the component store moves apart as maintenance.
+- The check reads the damage Windows already has on record first, which takes seconds, and skips the full scan when some is found.
+- Repair anyway after a clean check runs only the system file check, without restoring the component store the check has just verified.
+- Progress shows the percentage over time, each step with its duration, the time left and the expected finish. Estimates learn how long each step takes on your PC, and a long pause at one percentage is explained rather than looking frozen.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
 ## v1.13.2
 
 - Updates prices for new purchases: €7.99 monthly, €59.99 annually and €99 for Lifetime. Applicable taxes and payment terms are shown at checkout.

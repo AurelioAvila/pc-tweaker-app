@@ -24,6 +24,11 @@ pub enum RepairJob {
     /// SFC repairs system files *from* the component store, so running it
     /// first against a corrupt store just fails slowly.
     Repair,
+    /// sfc /scannow alone. Offered only right after a check found the
+    /// component store intact: SFC repairs *from* that store, so running
+    /// RestoreHealth first would spend twenty minutes proving what the check
+    /// just proved.
+    SystemFiles,
     /// Shrinks WinSxS by removing superseded component versions.
     ComponentCleanup,
 }
@@ -33,6 +38,7 @@ impl RepairJob {
         match id {
             "check" => Ok(Self::Check),
             "repair" => Ok(Self::Repair),
+            "system_files" => Ok(Self::SystemFiles),
             "component_cleanup" => Ok(Self::ComponentCleanup),
             other => Err(format!("unknown repair job: {}", other)),
         }
@@ -42,6 +48,7 @@ impl RepairJob {
         match self {
             Self::Check => "check",
             Self::Repair => "repair",
+            Self::SystemFiles => "system_files",
             Self::ComponentCleanup => "component_cleanup",
         }
     }
@@ -166,7 +173,10 @@ pub(crate) fn dism_verdict(tail: &str) -> Option<RepairStatus> {
     // Ordered most-specific first: DISM prints per-stage lines as well as a
     // summary, and the repairable sentence also contains the word
     // "corruption", so a loose match on that word would win over the truth.
-    if t.contains("could not be repaired") || t.contains("could not repair") {
+    if t.contains("could not be repaired")
+        || t.contains("could not repair")
+        || t.contains("cannot be repaired")
+    {
         return Some(RepairStatus::Unrepairable);
     }
     if t.contains("the restore operation completed successfully")
@@ -311,11 +321,18 @@ mod imp {
         F: FnMut(RepairProgress),
     {
         let steps: Vec<(&'static str, &'static str, &'static str)> = match job {
-            RepairJob::Check => vec![("scan", "dism.exe", "/ScanHealth")],
+            // CheckHealth answers in seconds from the flag an earlier scan or
+            // Windows Update left behind. It can prove damage, never health,
+            // so a clean answer still goes on to the full ScanHealth.
+            RepairJob::Check => vec![
+                ("quick", "dism.exe", "/CheckHealth"),
+                ("scan", "dism.exe", "/ScanHealth"),
+            ],
             RepairJob::Repair => vec![
                 ("restore", "dism.exe", "/RestoreHealth"),
                 ("sfc", "sfc.exe", "/scannow"),
             ],
+            RepairJob::SystemFiles => vec![("sfc", "sfc.exe", "/scannow")],
             // Deliberately without /ResetBase: that variant permanently
             // discards the ability to uninstall every update already on the
             // machine, which is not a call a cleanup button gets to make on
@@ -357,9 +374,21 @@ mod imp {
                 });
             })?;
 
+            let verdict = if program == "dism.exe" {
+                dism_verdict(&tail)
+            } else {
+                None
+            };
+            let flagged = matches!(
+                verdict,
+                Some(RepairStatus::Repairable | RepairStatus::Unrepairable)
+            );
             if program == "dism.exe" {
-                if let Some(v) = dism_verdict(&tail) {
-                    status = v;
+                // A clean quick check is not a verdict; only damage is.
+                if step != "quick" || flagged {
+                    if let Some(v) = verdict {
+                        status = v;
+                    }
                 }
             } else {
                 status = sfc_downgrade(&tail, status);
@@ -370,6 +399,11 @@ mod imp {
                 exit_code: code,
                 tail,
             });
+
+            // Damage already on record: the ten-minute scan would only say it again.
+            if step == "quick" && flagged {
+                break;
+            }
 
             // A failed RestoreHealth leaves the component store wherever it
             // got to; running SFC against it next would spend another twenty
@@ -468,6 +502,11 @@ mod tests {
             dism_verdict("Error: 0x800f081f\nThe source files could not be repaired."),
             Some(RepairStatus::Unrepairable)
         );
+        // CheckHealth's wording for the same state.
+        assert_eq!(
+            dism_verdict("The component store cannot be repaired."),
+            Some(RepairStatus::Unrepairable)
+        );
     }
 
     /// A localised run matches none of the sentences, and that has to surface
@@ -508,7 +547,7 @@ mod tests {
 
     #[test]
     fn job_ids_round_trip() {
-        for id in ["check", "repair", "component_cleanup"] {
+        for id in ["check", "repair", "system_files", "component_cleanup"] {
             assert_eq!(RepairJob::from_id(id).unwrap().id(), id);
         }
         assert!(RepairJob::from_id("reset_base").is_err());

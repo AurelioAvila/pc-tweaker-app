@@ -322,6 +322,15 @@ const REVIEWED_AS_CORRECT = new Set([
   "de:scan.groupOptional",
   "fr:tabs.profiles",
   "fr:profiles.title",
+  // Numeric readouts: "min" is the unit abbreviation in all four languages.
+  "it:systemRepair.remaining",
+  "fr:systemRepair.remaining",
+  "es:systemRepair.remaining",
+  "pt:systemRepair.remaining",
+  "it:systemRepair.underMinute",
+  "fr:systemRepair.underMinute",
+  "es:systemRepair.underMinute",
+  "pt:systemRepair.underMinute",
 ]);
 
 const unexplained = untranslated.filter((r) => !REVIEWED_AS_CORRECT.has(`${r.locale}:${r.key}`));

@@ -348,9 +348,9 @@ export type CookieCleanResult = {
 
 /* ---------------- DISM / SFC repair (src-tauri/src/sysrepair.rs) ---------- */
 
-export type RepairJob = "check" | "repair" | "component_cleanup";
+export type RepairJob = "check" | "repair" | "system_files" | "component_cleanup";
 
-export type RepairStep = "scan" | "restore" | "sfc" | "cleanup";
+export type RepairStep = "quick" | "scan" | "restore" | "sfc" | "cleanup";
 
 export type RepairProgress = {
   step: RepairStep;

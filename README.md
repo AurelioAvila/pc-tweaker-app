@@ -7,7 +7,7 @@
 <p align="center"><strong>Tune Windows with the changes in plain sight.</strong><br>Gaming, privacy and maintenance controls, with restore tools for supported settings.</p>
 
 <p align="center">
-  <a href="#reviews-and-distribution"><img src="https://img.shields.io/badge/Total_downloads-45k%2B-2E7D32?style=for-the-badge" alt="45,000+ total downloads across distribution channels"></a>
+  <a href="#reviews-and-distribution"><img src="https://img.shields.io/badge/Total_downloads-100k%2B-2E7D32?style=for-the-badge" alt="100,000+ total downloads across distribution channels"></a>
   <a href="https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"><img src="https://img.shields.io/badge/Softpedia-5%2F5%20%7C%2074%20votes-0078D4?style=for-the-badge" alt="Softpedia user rating: 5 out of 5 from 74 votes"></a>
   <a href="https://www.majorgeeks.com/files/details/pc_tweaker.html"><img src="https://img.shields.io/badge/MajorGeeks-5%2F5%20%7C%20101%20votes-C48B28?style=for-the-badge" alt="MajorGeeks user rating: 5 out of 5 from 101 votes"></a>
 </p>
@@ -154,7 +154,7 @@ A valid signature does not guarantee the absence of SmartScreen prompts. Microso
 
 ## Reviews and distribution
 
-**45,000+ total downloads** across distribution channels. The total-download milestone is maintained by the project; the live GitHub badge covers GitHub release assets only.
+**100,000+ total downloads** across distribution channels as of September 2026, counted in Microsoft Partner Center. Most of that total is the Microsoft Store, which publishes no public figure; the live GitHub badge covers GitHub release assets only, a small share of it.
 
 User ratings checked September 6, 2026. Existing feedback remains available at its original source:
 

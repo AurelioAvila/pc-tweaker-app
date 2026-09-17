@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
 const serverBundle = path.join(root, "dist-ssr", "entry-server.js");
-const { render, ROUTE_SEO, NOT_FOUND_SEO } = await import(pathToFileURL(serverBundle));
+const { render, ROUTE_SEO, ROUTE_JSONLD, NOT_FOUND_SEO } = await import(pathToFileURL(serverBundle));
 const template = await readFile(path.join(dist, "index.html"), "utf8");
 
 function escapeAttribute(value) {
@@ -21,11 +21,32 @@ function replaceTag(html, pattern, replacement, label) {
   return html.replace(pattern, replacement);
 }
 
+// A JSON-LD payload is data, not markup, so the only character that can break
+// out of a <script> block is the "<" that starts a closing tag. Escaping it as
+// a unicode escape keeps the JSON byte-for-byte valid to a parser while making
+// the sequence "</script>" impossible to form.
+function jsonLdScript(payload) {
+  const json = JSON.stringify(payload, null, 2).replaceAll("<", "\\u003c");
+  return `<script type="application/ld+json">\n${json}\n  </script>`;
+}
+
 function buildPage(route, seo, noindex = false) {
   let html = template;
+  // The SoftwareApplication block describes the product and belongs on the
+  // page that is about the product. The sitewide Organization/WebSite graph
+  // above it stays on every page so the whole property resolves to one entity.
   if (route !== "/") {
-    html = html.replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/i, "");
+    html = html.replace(/\s*<script type="application\/ld\+json" data-ld="app">[\s\S]*?<\/script>/i, "");
   }
+  const routeLd = (!noindex && ROUTE_JSONLD[route]) || [];
+  html = replaceTag(
+    html,
+    /<!--ROUTE_LD-->/,
+    // A function replacement, so a "$" anywhere in the JSON is never read as a
+    // String.replace substitution pattern.
+    () => routeLd.map(jsonLdScript).join("\n  "),
+    "route JSON-LD marker",
+  );
   html = replaceTag(html, /<title>[^<]*<\/title>/i, `<title>${seo.title}</title>`, "title");
   html = replaceTag(
     html,

@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.14.2
+
+- Routine maintenance.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
+## v1.14.1
+
+- Routine maintenance.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
 ## v1.14.0
 
 - Rebuilds Windows integrity check and repair as one panel: ready, running, then a result that asks whether to repair. Shrinking the component store moves apart as maintenance.

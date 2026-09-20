@@ -655,6 +655,12 @@ export interface Strings {
     runningWarning: string; // uses {browser}
     clearedToast: string; // uses {browser} {freed}
   };
+  tweakyDriverPromo: {
+    title: string;
+    description: string;
+    button: string;
+    error: string;
+  };
   redaxaPromo: {
     title: string;
     description: string;
@@ -1640,6 +1646,13 @@ const it: Strings = {
     clearing: "Svuotamento...",
     runningWarning: "Chiudi {browser} per poterlo svuotare.",
     clearedToast: "{browser}: {freed} liberati.",
+  },
+  tweakyDriverPromo: {
+    title: "Tweaky Driver",
+    description:
+      "Cerca pacchetti driver dalle fonti supportate nella nostra app dedicata. Controlla la compatibilità prima di installare. App separata; copertura variabile.",
+    button: "Esplora Tweaky Driver",
+    error: "Impossibile aprire la pagina. Riprova.",
   },
   redaxaPromo: {
     title: "Redaxa",
@@ -2952,6 +2965,13 @@ const en: Strings = {
     clearing: "Clearing...",
     runningWarning: "Close {browser} to clear it.",
     clearedToast: "{browser}: {freed} freed.",
+  },
+  tweakyDriverPromo: {
+    title: "Tweaky Driver",
+    description:
+      "Find driver packages from supported sources in our dedicated app. Review compatibility before installing. Separate app; coverage varies.",
+    button: "Explore Tweaky Driver",
+    error: "Could not open the page. Please try again.",
   },
   redaxaPromo: {
     title: "Redaxa",
@@ -4275,6 +4295,13 @@ const fr: Strings = {
     runningWarning: "Fermez {browser} pour le vider.",
     clearedToast: "{browser} : {freed} libérés.",
   },
+  tweakyDriverPromo: {
+    title: "Tweaky Driver",
+    description:
+      "Recherchez des pilotes auprès des sources prises en charge dans notre application dédiée. Vérifiez la compatibilité avant installation. Application distincte ; couverture variable.",
+    button: "Découvrir Tweaky Driver",
+    error: "Impossible d’ouvrir la page. Réessayez.",
+  },
   redaxaPromo: {
     title: "Redaxa",
     description:
@@ -5594,6 +5621,13 @@ const es: Strings = {
     clearing: "Vaciando...",
     runningWarning: "Cierra {browser} para poder vaciarlo.",
     clearedToast: "{browser}: {freed} liberados.",
+  },
+  tweakyDriverPromo: {
+    title: "Tweaky Driver",
+    description:
+      "Busca paquetes de controladores de fuentes compatibles en nuestra aplicación dedicada. Revisa la compatibilidad antes de instalar. Aplicación independiente; cobertura variable.",
+    button: "Explorar Tweaky Driver",
+    error: "No se pudo abrir la página. Inténtalo de nuevo.",
   },
   redaxaPromo: {
     title: "Redaxa",
@@ -6921,6 +6955,13 @@ const de: Strings = {
     runningWarning: "Schließe {browser}, um ihn zu leeren.",
     clearedToast: "{browser}: {freed} freigegeben.",
   },
+  tweakyDriverPromo: {
+    title: "Tweaky Driver",
+    description:
+      "Finde Treiberpakete aus unterstützten Quellen in unserer separaten App. Prüfe vor der Installation die Kompatibilität. Die Abdeckung variiert.",
+    button: "Tweaky Driver entdecken",
+    error: "Die Seite konnte nicht geöffnet werden. Bitte erneut versuchen.",
+  },
   redaxaPromo: {
     title: "Redaxa",
     description:
@@ -8247,6 +8288,13 @@ const pt: Strings = {
     clearing: "Limpando...",
     runningWarning: "Feche o {browser} para limpar.",
     clearedToast: "{browser}: {freed} liberados.",
+  },
+  tweakyDriverPromo: {
+    title: "Tweaky Driver",
+    description:
+      "Encontre pacotes de drivers de fontes compatíveis na nossa aplicação dedicada. Verifique a compatibilidade antes de instalar. Aplicação separada; cobertura variável.",
+    button: "Explorar Tweaky Driver",
+    error: "Não foi possível abrir a página. Tente novamente.",
   },
   redaxaPromo: {
     title: "Redaxa",

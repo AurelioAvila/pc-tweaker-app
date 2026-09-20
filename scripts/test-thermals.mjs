@@ -23,6 +23,7 @@ await build({
   outfile: bundlePath,
   format: "esm",
   platform: "neutral",
+  loader: { ".png": "dataurl" },
   external: ["react", "react/jsx-runtime", "@tauri-apps/api/core", "@tauri-apps/plugin-opener"],
   define: { "import.meta.env.VITE_API_BASE_URL": '""' },
 });

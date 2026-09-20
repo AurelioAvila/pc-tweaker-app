@@ -162,6 +162,12 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // Product names remain unchanged in each locale.
+  "it:tweakyDriverPromo.title",
+  "fr:tweakyDriverPromo.title",
+  "es:tweakyDriverPromo.title",
+  "de:tweakyDriverPromo.title",
+  "pt:tweakyDriverPromo.title",
   // The feature's own name, the same way "Turbo Boost" and "Game Sessions"
   // stay put. Translating a product name gives the reader a term they cannot
   // search for and that matches nothing else in the app.

@@ -1,3 +1,4 @@
+import { TweakyDriverPromoCard } from "./components/tweaky-driver-promo";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -944,6 +945,7 @@ function App() {
                   onFixed={refresh}
                   pushToast={pushToast}
                 />
+                <TweakyDriverPromoCard s={s} />
               </div>
             )}
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.14.5
+
+PC Tweaker 1.14.5 is a routine daily maintenance update.
+
 ## v1.14.4
 
 PC Tweaker 1.14.4 is a routine daily maintenance update.

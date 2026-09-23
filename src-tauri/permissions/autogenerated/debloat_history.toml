@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-debloat-history"
+description = "Enables the debloat_history command without any pre-configured scope."
+commands.allow = ["debloat_history"]
+
+[[permission]]
+identifier = "deny-debloat-history"
+description = "Denies the debloat_history command without any pre-configured scope."
+commands.deny = ["debloat_history"]

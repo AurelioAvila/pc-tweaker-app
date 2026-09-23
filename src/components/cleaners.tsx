@@ -119,7 +119,7 @@ export function AppCacheCard({
         <button
           onClick={() => void scan()}
           disabled={scanning || cleaning}
-          className="tool-primary-action rounded-xl bg-sky-500 px-3.5 py-1.5 text-sm font-semibold text-sky-950 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-50"
+          className="tool-primary-action"
         >
           {scanning ? s.appCache.scanning : s.appCache.scanButton}
         </button>
@@ -128,7 +128,7 @@ export function AppCacheCard({
             <button
               onClick={() => void clean()}
               disabled={cleaning || scanning || selected.size === 0}
-              className="border-line-2 text-ink-2 hover:border-accent/40 hover:text-ink flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              className="tool-secondary-action"
             >
               {cleaning ? s.appCache.cleaning : s.appCache.cleanButton}
               {!isPro && <ProBadge label={s.badges.pro} />}
@@ -301,11 +301,7 @@ export function CookieCleanerCard({
       </div>
 
       <div className="tool-control-group mt-4 flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => void scan()}
-          disabled={scanning}
-          className="flex items-center gap-1.5 rounded-xl bg-teal-500 px-3.5 py-1.5 text-sm font-semibold text-teal-950 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-50"
-        >
+        <button onClick={() => void scan()} disabled={scanning} className="tool-primary-action">
           {scanning ? s.cookieCleaner.scanning : s.cookieCleaner.scanButton}
           {!isPro && <ProBadge label={s.badges.pro} />}
         </button>
@@ -336,10 +332,7 @@ export function CookieCleanerCard({
               placeholder={s.cookieCleaner.whitelistPlaceholder}
               className="min-w-0 flex-1 rounded-lg border border-line bg-surface-1 px-2.5 py-1.5 text-sm text-ink outline-none focus:border-teal-400/50"
             />
-            <button
-              type="submit"
-              className="shrink-0 rounded-lg bg-surface-1 px-3 py-1.5 text-sm font-semibold text-ink-2 ring-1 ring-line hover:text-ink"
-            >
+            <button type="submit" className="tool-secondary-action shrink-0">
               {s.cookieCleaner.whitelistAdd}
             </button>
           </form>
@@ -389,14 +382,14 @@ export function CookieCleanerCard({
                       onClick={() => void restore(b)}
                       disabled={b.running || busyId === b.id}
                       title={s.cookieCleaner.restoreButton}
-                      className="rounded-xl px-2.5 py-1.5 text-xs font-semibold text-ink-3 ring-1 ring-line transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                      className="tool-secondary-action"
                     >
                       {busyId === b.id ? s.cookieCleaner.restoring : s.cookieCleaner.restoreButton}
                     </button>
                     <button
                       onClick={() => void clean(b)}
                       disabled={b.running || busyId === b.id || b.removable === 0}
-                      className="rounded-xl bg-teal-500 px-3.5 py-1.5 text-sm font-semibold text-teal-950 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="tool-primary-action"
                     >
                       {busyId === b.id ? s.cookieCleaner.cleaning : s.cookieCleaner.cleanButton}
                     </button>

@@ -81,6 +81,7 @@ impl ProfileStore {
 fn known_tweak_ids() -> Vec<String> {
     let mut ids: Vec<String> = crate::tweaks::all_tweaks()
         .iter()
+        .filter(|t| t.id != "disable_copilot")
         .map(|t| t.id.to_string())
         .collect();
     ids.extend(
@@ -97,6 +98,7 @@ fn known_tweak_ids() -> Vec<String> {
             crate::services::WINDOWS_SEARCH_ID,
             crate::netlatency::TWEAK_ID,
             crate::dns::TWEAK_ID,
+            "disable_filter_keys_shortcut",
         ]
         .iter()
         .map(|s| s.to_string()),

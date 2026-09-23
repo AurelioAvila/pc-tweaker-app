@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ecoqos-remove-rule"
+description = "Enables the ecoqos_remove_rule command without any pre-configured scope."
+commands.allow = ["ecoqos_remove_rule"]
+
+[[permission]]
+identifier = "deny-ecoqos-remove-rule"
+description = "Denies the ecoqos_remove_rule command without any pre-configured scope."
+commands.deny = ["ecoqos_remove_rule"]

@@ -46,7 +46,7 @@ export const PRODUCT_BRANDS: Record<string, ProductBrand> = {
     introOneOff:
       "Thanks for buying PC Tweaker Pro. Your account is upgraded for good and every Pro tweak is unlocked — no extra setup needed.",
     highlights: [
-      "All 50 tweaks, including Turbo Gaming &amp; Game Sessions",
+      "All 66 controls (39 Free, 27 Pro), including Turbo Gaming &amp; Game Sessions",
       "Duplicate &amp; large file finders, drive optimization",
       "Disable Recall &amp; Memory Integrity, classic right-click menu",
     ],

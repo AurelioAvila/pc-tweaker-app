@@ -1575,10 +1575,10 @@ const it: Strings = {
     autoFailed: "Ultimo tentativo non riuscito: {detail}",
   },
   restore: {
-    button: "Ripristina tutto",
-    title: "Ripristinare tutte le modifiche?",
-    body: "Verranno disattivate le {count} ottimizzazioni attive e ogni valore tornerà esattamente com'era prima. Nessun dato viene perso.",
-    confirm: "Sì, ripristina tutto",
+    button: "Ripristina i tweak attivi",
+    title: "Ripristinare i tweak attivi?",
+    body: "Ripristina {count} tweak dai valori salvati. Gli strumenti configurabili hanno controlli di ripristino propri.",
+    confirm: "Ripristina i tweak",
     cancel: "Annulla",
     running: "Ripristino...",
     doneToast: "{count} ottimizzazioni ripristinate.",
@@ -1933,6 +1933,36 @@ const it: Strings = {
     off: "Disattivata",
   },
   tweaks: {
+    disable_restart_apps: {
+      name: "Non riaprire automaticamente le app dopo l'accesso",
+      description:
+        "Impedisce a Windows di riaprire le app riavviabili della sessione precedente dopo l'accesso. La sessione non sarà ripristinata automaticamente; non chiude app ora e non modifica l'accesso automatico.",
+    },
+    enable_long_paths: {
+      name: "Abilita i percorsi lunghi nelle app compatibili",
+      description:
+        "Consente alle app che dichiarano supporto ai percorsi lunghi di superare il limite tradizionale. Le app vecchie e alcune operazioni di Esplora file possono restare limitate. Riavvia le app; il ripristino può rendere inaccessibili i percorsi lunghi già creati.",
+    },
+    disable_filter_keys_shortcut: {
+      name: "Evita l'attivazione accidentale di Filtro tasti",
+      description:
+        "Disattiva solo la scorciatoia di Shift destro per Filtro tasti. La funzione di accessibilità e i suoi tempi restano invariati; non riduce la latenza della tastiera.",
+    },
+    ecoqos_rules: {
+      name: "Regole di efficienza per le app in background",
+      description:
+        "Assegna una priorità energetica ridotta a eseguibili scelti mentre PC Tweaker è aperto. Le regole si sospendono quando l'app è interattiva; non sono un limite percentuale della CPU.",
+    },
+    limit_do_background_download: {
+      name: "Limite ai download Windows in background",
+      description:
+        "Configura un limite in KB/s per i download Microsoft gestiti da Delivery Optimization. Non limita Steam o altri dispositivi e non garantisce ping inferiore.",
+    },
+    monitor_refresh_profile: {
+      name: "Profilo frequenza monitor per gioco",
+      description:
+        "Scegli una frequenza supportata per un monitor durante una sessione di gioco, con anteprima temporanea e ripristino. Non aumenta i frame prodotti dalla GPU.",
+    },
     cpu_energy_performance: {
       name: "Privilegia le prestazioni CPU con alimentazione di rete",
       description:
@@ -1974,9 +2004,9 @@ const it: Strings = {
         "Impedisce a Windows di rallentare i processi in background per risparmiare energia: utile sui portatili, dove questo causa scatti durante le sessioni lunghe (HKLM, richiede privilegi di amministratore).",
     },
     games_gpu_priority: {
-      name: "Aumenta la priorità GPU per i giochi",
+      name: "Imposta il valore GPU Priority legacy dei giochi",
       description:
-        "Indica allo scheduler multimediale di assegnare ai giochi la classe di priorità GPU più alta, così le app in background smettono di contendere la GPU nel mezzo di una partita (HKLM, richiede privilegi di amministratore).",
+        "Scrive il valore GPU Priority dei giochi, che Microsoft documenta come non utilizzato. Non sono previsti aumenti della priorità GPU o dei fotogrammi al secondo (HKLM, richiede privilegi di amministratore).",
     },
     disable_tailored_experiences: {
       name: "Disattiva le esperienze personalizzate",
@@ -2039,9 +2069,9 @@ const it: Strings = {
         "Per impostazione predefinita Windows carica i file di aggiornamento scaricati verso altri PC usando la tua connessione. Questo limita Delivery Optimization al tuo solo computer, così quell'upload non ti mangia banda mentre giochi (HKLM, richiede diritti di amministratore).",
     },
     disable_copilot: {
-      name: "Disattiva Windows Copilot",
+      name: "Criterio Copilot legacy (solo ripristino)",
       description:
-        "Rimuove l'assistente Copilot dalla barra e gli impedisce di girare in background. Windows lo attiva di default e nelle Impostazioni non esiste un interruttore definitivo: questo imposta il criterio di sistema che lo spegne per sempre (HKCU, nessuna elevazione richiesta).",
+        "Questo criterio ritirato non controlla l’app Copilot attuale. Qui puoi ripristinare il valore del registro salvato. Gestisci l’app Copilot separata in Debloat; la rimozione non impedisce installazioni future.",
     },
     disable_suggested_apps: {
       name: "Impedisci a Windows di installare app da solo",
@@ -2168,14 +2198,14 @@ const it: Strings = {
         "Rimuove il limite che Windows impone al traffico di rete durante l'uso di app multimediali/giochi, utile per ridurre micro-lag online (HKLM, richiede privilegi di amministratore).",
     },
     system_responsiveness: {
-      name: "Massimizza reattività per app in primo piano",
+      name: "Imposta la quota CPU in background di MMCSS",
       description:
-        "Azzera la quota di CPU riservata da Windows ai task in background, lasciando più risorse all'app/gioco in primo piano (HKLM, richiede privilegi di amministratore).",
+        "Scrive SystemResponsiveness=0, che Windows tratta come 20%. Non elimina la quota CPU per i task a priorità inferiore né dà priorità a tutte le app in primo piano (HKLM, richiede privilegi di amministratore).",
     },
     games_task_priority: {
-      name: "Priorità massima ai giochi (multimedia scheduler)",
+      name: "Imposta la categoria MMCSS Games",
       description:
-        "Dice allo scheduler multimediale di Windows di trattare i giochi come i processi a più alta priorità del sistema, davanti a qualunque task in background (HKLM, richiede privilegi di amministratore).",
+        "Imposta su High la categoria Games per i thread registrati con MMCSS; High tratta Priority come 2. I valori GPU Priority e SFIO Priority scritti sono inutilizzati. Non dà priorità a tutti i processi di gioco (HKLM, richiede privilegi di amministratore).",
     },
     reduce_keyboard_delay: {
       name: "Riduci ritardo di input (tastiera)",
@@ -2894,10 +2924,10 @@ const en: Strings = {
     autoFailed: "The last attempt failed: {detail}",
   },
   restore: {
-    button: "Restore all",
-    title: "Restore every change?",
-    body: "This will turn off the {count} active optimizations and put every value back exactly as it was. Nothing is lost.",
-    confirm: "Yes, restore everything",
+    button: "Restore active tweaks",
+    title: "Restore active tweaks?",
+    body: "Restore {count} tweaks from their saved values. Configurable tools have their own restore controls.",
+    confirm: "Restore tweaks",
     cancel: "Cancel",
     running: "Restoring...",
     doneToast: "{count} optimizations restored.",
@@ -3249,6 +3279,36 @@ const en: Strings = {
     off: "Off",
   },
   tweaks: {
+    disable_restart_apps: {
+      name: "Stop apps reopening after sign-in",
+      description:
+        "Stops Windows from reopening restartable apps from the previous session after sign-in. Automatic session restore is lost; this does not close apps now or change automatic sign-in.",
+    },
+    enable_long_paths: {
+      name: "Enable long paths in compatible apps",
+      description:
+        "Lets apps that declare long-path support exceed the traditional limit. Older apps and some File Explorer operations may remain limited. Restart apps; restoring this setting may make existing long paths inaccessible.",
+    },
+    disable_filter_keys_shortcut: {
+      name: "Prevent accidental Filter Keys activation",
+      description:
+        "Disables only the right Shift shortcut for Filter Keys. The accessibility feature and its timing settings remain unchanged; this does not reduce keyboard latency.",
+    },
+    ecoqos_rules: {
+      name: "Background app efficiency rules",
+      description:
+        "Assign lower energy priority to chosen executables while PC Tweaker is open. Rules pause when the app is interactive; this is not a CPU percentage cap.",
+    },
+    limit_do_background_download: {
+      name: "Windows background download limit",
+      description:
+        "Configure a KB/s limit for Microsoft downloads handled by Delivery Optimization. It does not limit Steam or other devices and does not guarantee lower ping.",
+    },
+    monitor_refresh_profile: {
+      name: "Game monitor refresh profile",
+      description:
+        "Choose a supported refresh rate for one display during a game session, with a temporary preview and restore. It does not increase GPU frame output.",
+    },
     cpu_energy_performance: {
       name: "Favor CPU performance on mains power",
       description:
@@ -3290,9 +3350,9 @@ const en: Strings = {
         "Stops Windows from slowing down background processes to save power - useful on laptops where throttling causes stutter during long sessions (HKLM, requires administrator rights).",
     },
     games_gpu_priority: {
-      name: "Raise GPU priority for games",
+      name: "Set legacy Games GPU Priority value",
       description:
-        "Tells the multimedia scheduler to give games the highest GPU priority class, so background apps stop competing for the GPU mid-match (HKLM, requires administrator rights).",
+        "Writes the Games GPU Priority value, which Microsoft documents as unused. No GPU priority or frame-rate gain is expected (HKLM, requires administrator rights).",
     },
     disable_tailored_experiences: {
       name: "Disable tailored experiences",
@@ -3355,9 +3415,9 @@ const en: Strings = {
         "Windows uploads downloaded update files to other PCs over your connection by default. This limits Delivery Optimization to your own machine, which stops that upload eating bandwidth mid-game (HKLM, requires administrator rights).",
     },
     disable_copilot: {
-      name: "Disable Windows Copilot",
+      name: "Legacy Copilot policy (restore only)",
       description:
-        "Removes the Copilot assistant from the taskbar and stops it running in the background. Windows ships it enabled and there is no permanent off switch in Settings — this sets the system policy that turns it off for good (HKCU, no elevation required).",
+        "This retired policy does not control the current Copilot app. You can restore its saved registry value here. Manage the separate Copilot app in Debloat; removing it does not prevent future reinstallation.",
     },
     disable_suggested_apps: {
       name: "Stop Windows installing apps by itself",
@@ -3483,14 +3543,14 @@ const en: Strings = {
         "Removes the limit Windows places on network traffic while multimedia/gaming apps are active, useful for reducing online micro-lag (HKLM, requires administrator rights).",
     },
     system_responsiveness: {
-      name: "Maximize responsiveness for foreground apps",
+      name: "Set MMCSS background CPU reserve",
       description:
-        "Zeroes out the CPU share Windows reserves for background tasks, leaving more resources for the app/game in the foreground (HKLM, requires administrator rights).",
+        "Writes SystemResponsiveness=0, which Windows treats as 20%. This does not eliminate the CPU share for lower-priority tasks or prioritize every foreground app (HKLM, requires administrator rights).",
     },
     games_task_priority: {
-      name: "Maximum priority for games (multimedia scheduler)",
+      name: "Set MMCSS Games task category",
       description:
-        "Tells Windows' multimedia scheduler to treat games as the highest-priority processes on the system, ahead of any background task (HKLM, requires administrator rights).",
+        "Sets the Games task category to High for threads registered with MMCSS; High treats Priority as 2. The GPU and SFIO Priority values also written here are unused. This does not prioritize every game process (HKLM, requires administrator rights).",
     },
     reduce_keyboard_delay: {
       name: "Reduce input delay (keyboard)",
@@ -4221,10 +4281,10 @@ const fr: Strings = {
     autoFailed: "La dernière tentative a échoué : {detail}",
   },
   restore: {
-    button: "Tout restaurer",
-    title: "Restaurer toutes les modifications ?",
-    body: "Les {count} optimisations actives seront désactivées et chaque valeur reviendra exactement à son état initial. Aucune donnée n'est perdue.",
-    confirm: "Oui, tout restaurer",
+    button: "Restaurer les réglages actifs",
+    title: "Restaurer les réglages actifs ?",
+    body: "Restaure {count} réglages à partir des valeurs enregistrées. Les outils configurables ont leurs propres commandes de restauration.",
+    confirm: "Restaurer les réglages",
     cancel: "Annuler",
     running: "Restauration...",
     doneToast: "{count} optimisations restaurées.",
@@ -4581,6 +4641,36 @@ const fr: Strings = {
     off: "Désactivée",
   },
   tweaks: {
+    disable_restart_apps: {
+      name: "Empêcher la réouverture des apps après connexion",
+      description:
+        "Empêche Windows de rouvrir les applications redémarrables de la session précédente après connexion. La session n'est plus restaurée automatiquement ; les apps ouvertes et la connexion automatique ne changent pas.",
+    },
+    enable_long_paths: {
+      name: "Activer les chemins longs dans les apps compatibles",
+      description:
+        "Permet aux apps déclarant la prise en charge des chemins longs de dépasser la limite traditionnelle. Les anciennes apps et certaines opérations de l'Explorateur peuvent rester limitées. Redémarrez les apps ; une restauration peut rendre des chemins longs existants inaccessibles.",
+    },
+    disable_filter_keys_shortcut: {
+      name: "Éviter l'activation accidentelle des touches filtres",
+      description:
+        "Désactive seulement le raccourci Maj droite des touches filtres. La fonction d'accessibilité et ses délais restent inchangés ; la latence du clavier ne diminue pas.",
+    },
+    ecoqos_rules: {
+      name: "Règles d'efficacité des apps en arrière-plan",
+      description:
+        "Réduit la priorité énergétique des exécutables choisis tant que PC Tweaker est ouvert. Les règles se suspendent lorsque l'app devient interactive ; ce n'est pas un plafond CPU.",
+    },
+    limit_do_background_download: {
+      name: "Limite des téléchargements Windows en arrière-plan",
+      description:
+        "Configure une limite en Ko/s pour les téléchargements Microsoft via Delivery Optimization. Steam et les autres appareils ne sont pas limités ; un ping inférieur n'est pas garanti.",
+    },
+    monitor_refresh_profile: {
+      name: "Profil de fréquence du moniteur pour les jeux",
+      description:
+        "Choisissez une fréquence prise en charge pour un écran pendant une session de jeu, avec aperçu temporaire et restauration. Cela n'augmente pas les images produites par le GPU.",
+    },
     cpu_energy_performance: {
       name: "Privilégier les performances du processeur sur secteur",
       description:
@@ -4622,9 +4712,9 @@ const fr: Strings = {
         "Empêche Windows de ralentir les processus en arrière-plan pour économiser l'énergie - utile sur les portables, où cela provoque des saccades lors des longues sessions (HKLM, nécessite des droits administrateur).",
     },
     games_gpu_priority: {
-      name: "Augmenter la priorité GPU des jeux",
+      name: "Définir l'ancienne valeur GPU Priority des jeux",
       description:
-        "Demande au planificateur multimédia d'accorder aux jeux la classe de priorité GPU la plus élevée, afin que les applications en arrière-plan cessent de disputer le GPU en pleine partie (HKLM, nécessite des droits administrateur).",
+        "Écrit la valeur GPU Priority des jeux, que Microsoft indique comme inutilisée. Aucun gain de priorité GPU ni de fréquence d'images n'est attendu (HKLM, nécessite des droits administrateur).",
     },
     disable_tailored_experiences: {
       name: "Désactiver les expériences personnalisées",
@@ -4687,9 +4777,9 @@ const fr: Strings = {
         "Par defaut, Windows envoie les fichiers de mise a jour telecharges vers d'autres PC via votre connexion. Ceci limite Delivery Optimization a votre seule machine, pour que cet envoi ne consomme plus votre bande passante en pleine partie (HKLM, necessite des droits administrateur).",
     },
     disable_copilot: {
-      name: "Désactiver Windows Copilot",
+      name: "Ancienne stratégie Copilot (restauration uniquement)",
       description:
-        "Retire l'assistant Copilot de la barre des tâches et l'empêche de s'exécuter en arrière-plan. Windows l'active par défaut et aucun interrupteur définitif n'existe dans les Paramètres : ceci applique la stratégie système qui le désactive pour de bon (HKCU, aucune élévation requise).",
+        "Cette stratégie abandonnée ne contrôle pas l’application Copilot actuelle. Vous pouvez restaurer ici la valeur du registre sauvegardée. Gérez l’application Copilot distincte dans Debloat ; sa suppression n’empêche pas une réinstallation future.",
     },
     disable_suggested_apps: {
       name: "Empêcher Windows d'installer des applications tout seul",
@@ -4817,14 +4907,14 @@ const fr: Strings = {
         "Supprime la limite imposée par Windows au trafic réseau pendant l'utilisation d'apps multimédias/jeux, utile pour réduire les micro-latences en ligne (HKLM, droits administrateur requis).",
     },
     system_responsiveness: {
-      name: "Maximiser la réactivité pour l'app au premier plan",
+      name: "Définir la réserve CPU MMCSS en arrière-plan",
       description:
-        "Ramène à zéro la part de CPU réservée par Windows aux tâches en arrière-plan, laissant plus de ressources à l'app/jeu au premier plan (HKLM, droits administrateur requis).",
+        "Écrit SystemResponsiveness=0, que Windows traite comme 20 %. Cela ne supprime pas la part CPU des tâches moins prioritaires et ne privilégie pas toutes les apps au premier plan (HKLM, droits administrateur requis).",
     },
     games_task_priority: {
-      name: "Priorité maximale aux jeux (planificateur multimédia)",
+      name: "Définir la catégorie MMCSS Games",
       description:
-        "Indique au planificateur multimédia de Windows de traiter les jeux comme les processus les plus prioritaires du système, devant toute tâche en arrière-plan (HKLM, droits administrateur requis).",
+        "Définit la catégorie Games sur High pour les threads inscrits auprès de MMCSS ; High traite Priority comme 2. Les valeurs GPU Priority et SFIO Priority écrites sont inutilisées. Cela ne privilégie pas tous les processus de jeu (HKLM, droits administrateur requis).",
     },
     reduce_keyboard_delay: {
       name: "Réduire le délai d'entrée (clavier)",
@@ -5549,10 +5639,10 @@ const es: Strings = {
     autoFailed: "El último intento falló: {detail}",
   },
   restore: {
-    button: "Restaurar todo",
-    title: "¿Restaurar todos los cambios?",
-    body: "Se desactivarán las {count} optimizaciones activas y cada valor volverá exactamente a como estaba. No se pierde nada.",
-    confirm: "Sí, restaurar todo",
+    button: "Restaurar ajustes activos",
+    title: "¿Restaurar los ajustes activos?",
+    body: "Restaura {count} ajustes desde los valores guardados. Las herramientas configurables tienen sus propios controles de restauración.",
+    confirm: "Restaurar ajustes",
     cancel: "Cancelar",
     running: "Restaurando...",
     doneToast: "{count} optimizaciones restauradas.",
@@ -5909,6 +5999,36 @@ const es: Strings = {
     off: "Desactivada",
   },
   tweaks: {
+    disable_restart_apps: {
+      name: "Evitar que las apps se reabran al iniciar sesión",
+      description:
+        "Impide que Windows reabra las apps reiniciables de la sesión anterior tras iniciar sesión. Se pierde la restauración automática; no cierra apps ahora ni cambia el inicio de sesión automático.",
+    },
+    enable_long_paths: {
+      name: "Activar rutas largas en apps compatibles",
+      description:
+        "Permite superar el límite tradicional en apps que declaran soporte de rutas largas. Las apps antiguas y algunas operaciones del Explorador pueden seguir limitadas. Reinicia las apps; restaurar el ajuste puede dejar inaccesibles rutas largas ya creadas.",
+    },
+    disable_filter_keys_shortcut: {
+      name: "Evitar la activación accidental de Teclas filtro",
+      description:
+        "Desactiva solo el atajo de Mayús derecha para Teclas filtro. La función de accesibilidad y sus tiempos no cambian; no reduce la latencia del teclado.",
+    },
+    ecoqos_rules: {
+      name: "Reglas de eficiencia para apps en segundo plano",
+      description:
+        "Asigna menor prioridad energética a ejecutables elegidos mientras PC Tweaker está abierto. Las reglas se pausan cuando la app es interactiva; no es un límite porcentual de CPU.",
+    },
+    limit_do_background_download: {
+      name: "Límite de descargas de Windows en segundo plano",
+      description:
+        "Configura un límite en KB/s para descargas Microsoft mediante Delivery Optimization. No limita Steam ni otros dispositivos y no garantiza menos ping.",
+    },
+    monitor_refresh_profile: {
+      name: "Perfil de frecuencia del monitor para juegos",
+      description:
+        "Elige una frecuencia compatible para una pantalla durante una sesión de juego, con vista previa temporal y restauración. No aumenta los fotogramas generados por la GPU.",
+    },
     cpu_energy_performance: {
       name: "Priorizar el rendimiento de la CPU conectada a la corriente",
       description:
@@ -5950,9 +6070,9 @@ const es: Strings = {
         "Impide que Windows ralentice los procesos en segundo plano para ahorrar energía: útil en portátiles, donde provoca tirones en sesiones largas (HKLM, requiere permisos de administrador).",
     },
     games_gpu_priority: {
-      name: "Aumentar la prioridad de GPU para juegos",
+      name: "Establecer el valor heredado GPU Priority de juegos",
       description:
-        "Indica al programador multimedia que dé a los juegos la clase de prioridad de GPU más alta, para que las apps en segundo plano dejen de competir por la GPU en plena partida (HKLM, requiere permisos de administrador).",
+        "Escribe el valor GPU Priority de juegos, que Microsoft documenta como no utilizado. No se espera una mejora de prioridad de GPU ni de FPS (HKLM, requiere permisos de administrador).",
     },
     disable_tailored_experiences: {
       name: "Desactivar las experiencias personalizadas",
@@ -6015,9 +6135,9 @@ const es: Strings = {
         "De forma predeterminada Windows sube los archivos de actualizacion descargados a otros PC usando tu conexion. Esto limita Delivery Optimization a tu propio equipo, para que esa subida no consuma ancho de banda mientras juegas (HKLM, requiere derechos de administrador).",
     },
     disable_copilot: {
-      name: "Desactivar Windows Copilot",
+      name: "Directiva antigua de Copilot (solo restauración)",
       description:
-        "Quita el asistente Copilot de la barra de tareas e impide que se ejecute en segundo plano. Windows lo activa por defecto y en Configuración no hay un interruptor definitivo: esto aplica la directiva del sistema que lo apaga para siempre (HKCU, no requiere elevación).",
+        "Esta directiva retirada no controla la aplicación Copilot actual. Aquí puedes restaurar el valor del registro guardado. Gestiona la aplicación Copilot independiente en Debloat; eliminarla no impide futuras reinstalaciones.",
     },
     disable_suggested_apps: {
       name: "Impedir que Windows instale aplicaciones por su cuenta",
@@ -6144,14 +6264,14 @@ const es: Strings = {
         "Elimina el límite que Windows impone al tráfico de red mientras usas apps multimedia/juegos, útil para reducir microlags online (HKLM, requiere privilegios de administrador).",
     },
     system_responsiveness: {
-      name: "Maximizar la capacidad de respuesta para apps en primer plano",
+      name: "Establecer la reserva de CPU en segundo plano de MMCSS",
       description:
-        "Reduce a cero la cuota de CPU que Windows reserva para tareas en segundo plano, dejando más recursos a la app/juego en primer plano (HKLM, requiere privilegios de administrador).",
+        "Escribe SystemResponsiveness=0, que Windows trata como 20 %. No elimina la cuota de CPU para tareas de menor prioridad ni prioriza todas las apps en primer plano (HKLM, requiere privilegios de administrador).",
     },
     games_task_priority: {
-      name: "Prioridad máxima para juegos (planificador multimedia)",
+      name: "Establecer la categoría MMCSS Games",
       description:
-        "Indica al planificador multimedia de Windows que trate los juegos como los procesos de mayor prioridad del sistema, por delante de cualquier tarea en segundo plano (HKLM, requiere privilegios de administrador).",
+        "Establece la categoría Games en High para los hilos registrados con MMCSS; High trata Priority como 2. Los valores GPU Priority y SFIO Priority también escritos no se utilizan. No prioriza todos los procesos de juego (HKLM, requiere privilegios de administrador).",
     },
     reduce_keyboard_delay: {
       name: "Reducir el retardo de entrada (teclado)",
@@ -6882,10 +7002,10 @@ const de: Strings = {
     autoFailed: "Der letzte Versuch ist fehlgeschlagen: {detail}",
   },
   restore: {
-    button: "Alles zurücksetzen",
-    title: "Alle Änderungen zurücksetzen?",
-    body: "Die {count} aktiven Optimierungen werden deaktiviert und jeder Wert exakt so wiederhergestellt, wie er vorher war. Es gehen keine Daten verloren.",
-    confirm: "Ja, alles zurücksetzen",
+    button: "Aktive Einstellungen zurücksetzen",
+    title: "Aktive Einstellungen zurücksetzen?",
+    body: "Setzt {count} Einstellungen auf ihre gespeicherten Werte zurück. Konfigurierbare Werkzeuge haben eigene Wiederherstellungsfunktionen.",
+    confirm: "Einstellungen zurücksetzen",
     cancel: "Abbrechen",
     running: "Wird zurückgesetzt...",
     doneToast: "{count} Optimierungen zurückgesetzt.",
@@ -7244,6 +7364,36 @@ const de: Strings = {
     off: "Inaktiv",
   },
   tweaks: {
+    disable_restart_apps: {
+      name: "Apps nach der Anmeldung nicht erneut öffnen",
+      description:
+        "Verhindert, dass Windows neu startbare Apps der vorigen Sitzung nach der Anmeldung erneut öffnet. Die automatische Sitzungswiederherstellung entfällt; laufende Apps und automatische Anmeldung bleiben unverändert.",
+    },
+    enable_long_paths: {
+      name: "Lange Pfade in kompatiblen Apps aktivieren",
+      description:
+        "Apps mit erklärter Unterstützung für lange Pfade können die traditionelle Grenze überschreiten. Ältere Apps und manche Explorer-Vorgänge bleiben eventuell begrenzt. Apps neu starten; nach Rücknahme können vorhandene lange Pfade unzugänglich sein.",
+    },
+    disable_filter_keys_shortcut: {
+      name: "Versehentliche Aktivierung der Filtertasten verhindern",
+      description:
+        "Deaktiviert nur die Tastenkombination mit der rechten Umschalttaste. Die Barrierefreiheitsfunktion und ihre Zeitwerte bleiben unverändert; die Tastaturlatenz sinkt nicht.",
+    },
+    ecoqos_rules: {
+      name: "Effizienzregeln für Hintergrund-Apps",
+      description:
+        "Gibt ausgewählten Programmen eine niedrigere Energiepriorität, solange PC Tweaker geöffnet ist. Bei interaktiver Nutzung pausieren die Regeln; sie sind keine CPU-Prozentgrenze.",
+    },
+    limit_do_background_download: {
+      name: "Limit für Windows-Hintergrunddownloads",
+      description:
+        "Konfiguriert ein KB/s-Limit für Microsoft-Downloads über Delivery Optimization. Steam und andere Geräte bleiben unbegrenzt; ein niedrigerer Ping ist nicht garantiert.",
+    },
+    monitor_refresh_profile: {
+      name: "Monitorfrequenzprofil für Spiele",
+      description:
+        "Wählt eine unterstützte Frequenz für einen Monitor während einer Spielesitzung mit zeitlich begrenzter Vorschau und Wiederherstellung. Die GPU erzeugt dadurch nicht mehr Bilder.",
+    },
     cpu_energy_performance: {
       name: "CPU-Leistung im Netzbetrieb bevorzugen",
       description:
@@ -7285,9 +7435,9 @@ const de: Strings = {
         "Verhindert, dass Windows Hintergrundprozesse zum Energiesparen ausbremst - nützlich bei Notebooks, wo das bei langen Sitzungen zu Rucklern führt (HKLM, erfordert Administratorrechte).",
     },
     games_gpu_priority: {
-      name: "GPU-Priorität für Spiele erhöhen",
+      name: "Veralteten GPU-Priority-Wert für Spiele setzen",
       description:
-        "Weist den Multimedia-Scheduler an, Spielen die höchste GPU-Prioritätsklasse zu geben, damit Hintergrund-Apps mitten im Match nicht mehr um die GPU konkurrieren (HKLM, erfordert Administratorrechte).",
+        "Schreibt den GPU-Priority-Wert für Spiele, den Microsoft als ungenutzt dokumentiert. Eine höhere GPU-Priorität oder Bildrate ist nicht zu erwarten (HKLM, erfordert Administratorrechte).",
     },
     disable_tailored_experiences: {
       name: "Personalisierte Erlebnisse deaktivieren",
@@ -7350,9 +7500,9 @@ const de: Strings = {
         "Windows laedt heruntergeladene Updatedateien standardmaessig ueber Ihre Verbindung zu anderen PCs hoch. Dies beschraenkt die Uebermittlungsoptimierung auf Ihren eigenen Rechner, damit dieser Upload nicht mitten im Spiel Bandbreite frisst (HKLM, erfordert Administratorrechte).",
     },
     disable_copilot: {
-      name: "Windows Copilot deaktivieren",
+      name: "Alte Copilot-Richtlinie (nur Wiederherstellung)",
       description:
-        "Entfernt den Copilot-Assistenten aus der Taskleiste und verhindert, dass er im Hintergrund läuft. Windows aktiviert ihn standardmäßig, und in den Einstellungen gibt es keinen dauerhaften Schalter: Dies setzt die Systemrichtlinie, die ihn endgültig abschaltet (HKCU, keine Erhöhung erforderlich).",
+        "Diese eingestellte Richtlinie steuert die aktuelle Copilot-App nicht. Hier kannst du den gespeicherten Registrierungswert wiederherstellen. Verwalte die separate Copilot-App in Debloat; das Entfernen verhindert keine spätere Neuinstallation.",
     },
     disable_suggested_apps: {
       name: "Verhindern, dass Windows selbst Apps installiert",
@@ -7480,14 +7630,14 @@ const de: Strings = {
         "Entfernt die Begrenzung, die Windows dem Netzwerkverkehr bei Multimedia-/Spiele-Apps auferlegt — nützlich, um Online-Mikroruckler zu reduzieren (HKLM, Administratorrechte erforderlich).",
     },
     system_responsiveness: {
-      name: "Reaktionsfähigkeit für Vordergrund-Apps maximieren",
+      name: "MMCSS-CPU-Reserve für Hintergrundaufgaben setzen",
       description:
-        "Setzt den von Windows für Hintergrundaufgaben reservierten CPU-Anteil auf null, sodass der App/dem Spiel im Vordergrund mehr Ressourcen bleiben (HKLM, Administratorrechte erforderlich).",
+        "Schreibt SystemResponsiveness=0, was Windows als 20 % behandelt. Das beseitigt den CPU-Anteil für Aufgaben mit niedrigerer Priorität nicht und priorisiert nicht jede Vordergrund-App (HKLM, Administratorrechte erforderlich).",
     },
     games_task_priority: {
-      name: "Maximale Priorität für Spiele (Multimedia-Scheduler)",
+      name: "MMCSS-Kategorie Games setzen",
       description:
-        "Weist den Multimedia-Scheduler von Windows an, Spiele als Prozesse mit der höchsten Systempriorität zu behandeln, noch vor jeder Hintergrundaufgabe (HKLM, Administratorrechte erforderlich).",
+        "Setzt die Kategorie Games für bei MMCSS registrierte Threads auf High; bei High gilt Priority als 2. Die ebenfalls geschriebenen GPU- und SFIO-Priority-Werte werden nicht verwendet. Das priorisiert nicht jeden Spielprozess (HKLM, Administratorrechte erforderlich).",
     },
     reduce_keyboard_delay: {
       name: "Eingabeverzögerung reduzieren (Tastatur)",
@@ -8215,10 +8365,10 @@ const pt: Strings = {
     autoFailed: "A última tentativa falhou: {detail}",
   },
   restore: {
-    button: "Restaurar tudo",
-    title: "Restaurar todas as alterações?",
-    body: "Isso desativará as {count} otimizações ativas e devolverá cada valor exatamente como estava. Nada é perdido.",
-    confirm: "Sim, restaurar tudo",
+    button: "Restaurar ajustes ativos",
+    title: "Restaurar os ajustes ativos?",
+    body: "Restaura {count} ajustes a partir dos valores guardados. As ferramentas configuráveis têm os seus próprios controlos de restauro.",
+    confirm: "Restaurar ajustes",
     cancel: "Cancelar",
     running: "Restaurando...",
     doneToast: "{count} otimizações restauradas.",
@@ -8575,6 +8725,36 @@ const pt: Strings = {
     off: "Desligada",
   },
   tweaks: {
+    disable_restart_apps: {
+      name: "Impedir a reabertura de apps após iniciar sessão",
+      description:
+        "Impede o Windows de reabrir apps reiniciáveis da sessão anterior. A sessão deixa de ser restaurada automaticamente; não fecha apps agora nem altera o início de sessão automático.",
+    },
+    enable_long_paths: {
+      name: "Ativar caminhos longos em apps compatíveis",
+      description:
+        "Permite a apps que declaram suporte de caminhos longos ultrapassar o limite tradicional. Apps antigas e algumas operações do Explorador podem continuar limitadas. Reinicie as apps; restaurar pode tornar caminhos longos existentes inacessíveis.",
+    },
+    disable_filter_keys_shortcut: {
+      name: "Evitar a ativação acidental das Teclas de Filtro",
+      description:
+        "Desativa apenas o atalho Shift direito para as Teclas de Filtro. A função de acessibilidade e os tempos configurados não mudam; a latência do teclado não diminui.",
+    },
+    ecoqos_rules: {
+      name: "Regras de eficiência para apps em segundo plano",
+      description:
+        "Atribui menor prioridade energética aos executáveis escolhidos enquanto o PC Tweaker está aberto. As regras pausam quando a app fica interativa; não são um limite percentual da CPU.",
+    },
+    limit_do_background_download: {
+      name: "Limite de transferências Windows em segundo plano",
+      description:
+        "Configura um limite em KB/s para transferências Microsoft via Delivery Optimization. Não limita Steam nem outros dispositivos e não garante menor latência.",
+    },
+    monitor_refresh_profile: {
+      name: "Perfil de frequência do monitor para jogos",
+      description:
+        "Escolhe uma frequência suportada para um monitor durante uma sessão de jogo, com pré-visualização temporária e restauro. Não aumenta os fotogramas produzidos pela GPU.",
+    },
     cpu_energy_performance: {
       name: "Priorizar o desempenho da CPU ligada à tomada",
       description:
@@ -8616,9 +8796,9 @@ const pt: Strings = {
         "Impede o Windows de reduzir a velocidade de processos em segundo plano para economizar energia - útil em notebooks onde a limitação causa engasgos em sessões longas (HKLM, requer privilégios de administrador).",
     },
     games_gpu_priority: {
-      name: "Aumentar a prioridade de GPU para jogos",
+      name: "Definir o valor legado GPU Priority dos jogos",
       description:
-        "Diz ao agendador multimídia para dar aos jogos a classe de prioridade de GPU mais alta, para que apps em segundo plano parem de disputar a GPU no meio de uma partida (HKLM, requer privilégios de administrador).",
+        "Grava o valor GPU Priority dos jogos, que a Microsoft documenta como não utilizado. Não se espera ganho de prioridade de GPU nem de quadros por segundo (HKLM, requer privilégios de administrador).",
     },
     disable_tailored_experiences: {
       name: "Desativar experiências personalizadas",
@@ -8681,9 +8861,9 @@ const pt: Strings = {
         "Por padrão, o Windows envia arquivos de atualização já baixados para outros PCs pela sua conexão. Isto limita o Delivery Optimization à sua própria máquina, o que impede esse envio de consumir banda no meio de um jogo (HKLM, requer privilégios de administrador).",
     },
     disable_copilot: {
-      name: "Desativar o Windows Copilot",
+      name: "Política antiga do Copilot (apenas restauro)",
       description:
-        "Remove o assistente Copilot da barra de tarefas e impede que ele rode em segundo plano. O Windows vem com ele ativado e não há um botão permanente de desligar nas Configurações — isto define a política de sistema que o desliga de vez (HKCU, sem elevação necessária).",
+        "Esta política descontinuada não controla a aplicação Copilot atual. Aqui podes restaurar o valor do registo guardado. Gere a aplicação Copilot separada no Debloat; a remoção não impede reinstalações futuras.",
     },
     disable_suggested_apps: {
       name: "Impedir o Windows de instalar apps sozinho",
@@ -8810,14 +8990,14 @@ const pt: Strings = {
         "Remove o limite que o Windows impõe ao tráfego de rede enquanto apps de multimídia/jogos estão ativos, útil para reduzir microtravamentos online (HKLM, requer privilégios de administrador).",
     },
     system_responsiveness: {
-      name: "Maximizar a responsividade dos apps em primeiro plano",
+      name: "Definir a reserva de CPU em segundo plano do MMCSS",
       description:
-        "Zera a parcela de CPU que o Windows reserva para tarefas em segundo plano, deixando mais recursos para o app/jogo em primeiro plano (HKLM, requer privilégios de administrador).",
+        "Grava SystemResponsiveness=0, que o Windows trata como 20%. Isso não elimina a parcela de CPU para tarefas de prioridade menor nem prioriza todos os apps em primeiro plano (HKLM, requer privilégios de administrador).",
     },
     games_task_priority: {
-      name: "Prioridade máxima para jogos (agendador multimídia)",
+      name: "Definir a categoria MMCSS Games",
       description:
-        "Diz ao agendador multimídia do Windows para tratar jogos como os processos de maior prioridade no sistema, à frente de qualquer tarefa em segundo plano (HKLM, requer privilégios de administrador).",
+        "Define a categoria Games como High para threads registrados no MMCSS; High trata Priority como 2. Os valores GPU Priority e SFIO Priority também gravados não são usados. Isso não prioriza todos os processos de jogo (HKLM, requer privilégios de administrador).",
     },
     reduce_keyboard_delay: {
       name: "Reduzir atraso de entrada (teclado)",

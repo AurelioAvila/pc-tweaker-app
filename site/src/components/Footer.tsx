@@ -23,9 +23,9 @@ function Col({
 }) {
   return (
     <div>
-      <h4 className="font-mono-t mb-4 text-[11px] tracking-[0.14em] text-[var(--fg-dim)]">
+      <h2 className="font-mono-t mb-4 text-[11px] tracking-[0.14em] text-[var(--fg-dim)]">
         {title}
-      </h4>
+      </h2>
       {links.map((l) =>
         // A leading "/" marks an in-site route, which routes on the client
         // instead of triggering a full reload.

@@ -77,5 +77,7 @@ function appVersion(): Plugin {
 }
 
 export default defineConfig(({ isSsrBuild }) => ({
+  // Keep fonts as same-origin files, as required by font-src 'self'.
+  build: { assetsInlineLimit: 0 },
   plugins: [react(), tailwindcss(), appVersion(), ...(isSsrBuild ? [] : [spaFallback()])],
 }));

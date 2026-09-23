@@ -164,7 +164,7 @@ export function PerformanceMetrics() {
             />
           </svg>
 
-          <div className="font-mono-t mt-5 text-[11.5px] text-[var(--line-2)]">
+          <div className="font-mono-t mt-5 text-[11.5px] text-[var(--fg-dim)]">
             {text.metrics.graphNote}
           </div>
         </motion.div>

@@ -66,7 +66,7 @@ function WingetTerminal() {
         </button>
       </div>
       <div className="font-mono-t px-4 py-4 text-[13px] leading-relaxed">
-        <div className="text-[var(--line-2)]">{text.hero.terminalHint}</div>
+        <div className="text-[var(--fg-dim)]">{text.hero.terminalHint}</div>
         <div className="mt-1 text-[var(--fg)]">
           <span className="text-accent">$ </span>
           {text.hero.terminalCmd}

@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { Lang, Strings } from "../i18n";
 import type { AuditEntry, Section, TweakInfo } from "../types";
 import { textFor } from "../lib";
+import { CONFIGURABLE_TWEAK_IDS, isCurrentCatalogTweak } from "../catalog";
 import { type PulseSample, tracePoints } from "./command";
 import { ChipIcon, HeartPulseIcon, HistoryIcon, LayersIcon, RadarIcon } from "./icons";
 import "./overview.css";
@@ -303,7 +304,10 @@ export function OverviewPanel({
     hour: "2-digit",
     minute: "2-digit",
   });
-  const active = tweaks.filter((tweak) => tweak.applied).length;
+  const active = tweaks.filter(
+    (tweak) =>
+      tweak.applied && isCurrentCatalogTweak(tweak.id) && !CONFIGURABLE_TWEAK_IDS.has(tweak.id),
+  ).length;
   const cpuValues = samples.map((sample) => percentage(sample.cpu)).filter((v) => v !== null);
   const ramValues = samples
     .map((sample) =>

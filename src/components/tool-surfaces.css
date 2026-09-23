@@ -78,45 +78,64 @@
 }
 
 .tool-primary-action,
-.tool-secondary-action {
+.tool-secondary-action,
+.tool-danger-action {
   display: inline-flex;
   justify-content: center;
   align-items: center;
   gap: 7px;
-  min-height: 35px;
-  padding: 8px 14px;
-  border-radius: 9px;
+  min-height: 36px;
+  padding: 7px 13px;
+  border: 1px solid transparent;
+  border-radius: 4px;
   font-size: 12px;
-  line-height: 1.4;
-  font-weight: 650;
+  line-height: 1.35;
+  font-weight: 600;
   text-align: center;
   white-space: normal;
   transition:
     border-color 150ms,
     background-color 150ms,
+    color 150ms,
     opacity 150ms;
 }
 .tool-primary-action {
-  border: 1px solid transparent;
   color: var(--color-on-accent);
   background: var(--app-accent);
-  background-image: none;
-  box-shadow: none;
 }
 .tool-secondary-action {
-  border: 1px solid var(--border-strong);
-  color: var(--text-secondary);
+  border: 1px solid color-mix(in oklab, var(--text-primary) 28%, var(--surface-2));
+  color: var(--text-primary);
   background: var(--surface-2);
 }
-.tool-primary-action:hover:not(:disabled),
+.tool-danger-action {
+  border-color: color-mix(in oklab, var(--danger) 60%, var(--surface-2));
+  color: var(--danger);
+  background: color-mix(in oklab, var(--danger) 8%, var(--surface-2));
+}
+.tool-primary-action:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--app-accent) 87%, white);
+}
 .tool-secondary-action:hover:not(:disabled) {
-  filter: brightness(1.06);
-  transform: none;
+  border-color: color-mix(in oklab, var(--app-accent) 45%, var(--border-strong));
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+.tool-danger-action:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: color-mix(in oklab, var(--danger) 14%, var(--surface-2));
 }
 .tool-primary-action:disabled,
-.tool-secondary-action:disabled {
-  cursor: wait;
+.tool-secondary-action:disabled,
+.tool-danger-action:disabled {
+  cursor: not-allowed;
   opacity: 0.55;
+}
+.tool-primary-action:focus-visible,
+.tool-secondary-action:focus-visible,
+.tool-danger-action:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 3px;
 }
 .tool-panel :is(button, input, select, summary):focus-visible,
 .tool-list-section :is(button, input, summary):focus-visible {

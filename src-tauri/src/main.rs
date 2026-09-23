@@ -5,12 +5,18 @@ fn main() {
     #[cfg(windows)]
     {
         let args: Vec<String> = std::env::args().collect();
+        if args.len() == 3 && args[1] == "--monitor-watchdog" {
+            tauri_app_lib::monitor_watchdog(&args[2]);
+            return;
+        }
         // Must list every flag `run_elevated_headless` handles. Four of them
         // (rollback-many, driverupdate, gpupower, diskopt) were missing: those
         // relaunches fell straight through to `run()` and started a second,
         // full GUI running as administrator instead of performing the action
         // headlessly and exiting. Anything added there has to be added here.
-        const ELEVATED_ACTIONS: [&str; 17] = [
+        const ELEVATED_ACTIONS: [&str; 19] = [
+            "--elevated-download-limit",
+            "--elevated-download-restore",
             "--elevated-session-apply",
             "--elevated-session-rollback",
             "--elevated-apply",

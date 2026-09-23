@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-monitor-preview"
+description = "Enables the monitor_preview command without any pre-configured scope."
+commands.allow = ["monitor_preview"]
+
+[[permission]]
+identifier = "deny-monitor-preview"
+description = "Denies the monitor_preview command without any pre-configured scope."
+commands.deny = ["monitor_preview"]

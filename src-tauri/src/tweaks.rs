@@ -40,6 +40,20 @@ pub struct RegistryTweak {
 pub fn all_tweaks() -> Vec<RegistryTweak> {
     vec![
         RegistryTweak {
+            id: "disable_restart_apps", name: "Stop reopening apps after sign-in",
+            description: "Turns off Windows' restartable-app reopening preference for this account. Does not disable Startup entries or close running apps. Restore to recover your previous preference.",
+            category: Category::Performance, hive: Hive::Hkcu,
+            key_path: r"Software\Microsoft\Windows NT\CurrentVersion\Winlogon", value_name: "RestartApps",
+            on_value: RegValue::Dword(0), requires_admin: false, requires_pro: false,
+        },
+        RegistryTweak {
+            id: "enable_long_paths", name: "Enable long paths for compatible apps",
+            description: "Allows long Win32 paths for applications that declare longPathAware support. Does not remove every application's path limit. Restart applications or Windows. Restoring the old limit may make existing long paths inaccessible to those apps.",
+            category: Category::Manutenzione, hive: Hive::Hklm,
+            key_path: r"SYSTEM\CurrentControlSet\Control\FileSystem", value_name: "LongPathsEnabled",
+            on_value: RegValue::Dword(1), requires_admin: true, requires_pro: false,
+        },
+        RegistryTweak {
             id: "dark_mode",
             name: "Dark mode",
             description: "Turns on the dark theme for apps and the system (HKCU, no elevation required).",
@@ -161,8 +175,8 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         },
         RegistryTweak {
             id: "system_responsiveness",
-            name: "Maximize responsiveness for foreground apps",
-            description: "Zeroes the CPU share Windows reserves for background tasks, leaving more for the foreground app or game (HKLM, requires administrator rights).",
+            name: "Set MMCSS background CPU reserve",
+            description: "Writes SystemResponsiveness=0, which Windows treats as 20%; this does not eliminate the CPU share for lower-priority tasks or prioritize every foreground app (HKLM, requires administrator rights).",
             category: Category::Gaming,
             hive: Hive::Hklm,
             key_path: r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile",
@@ -305,8 +319,8 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         },
         RegistryTweak {
             id: "games_gpu_priority",
-            name: "Raise GPU priority for games",
-            description: "Tells the multimedia scheduler to give games the highest GPU priority class, so background apps stop competing for the GPU mid-match (HKLM, requires administrator rights).",
+            name: "Set legacy Games GPU Priority value",
+            description: "Writes the Games GPU Priority value, which Microsoft documents as unused. No GPU priority or frame-rate gain is expected (HKLM, requires administrator rights).",
             category: Category::Gaming,
             hive: Hive::Hklm,
             key_path: r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games",
@@ -463,8 +477,8 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         },
         RegistryTweak {
             id: "disable_copilot",
-            name: "Disable Windows Copilot",
-            description: "Removes the Copilot assistant from the taskbar and stops it running in the background. Windows ships it enabled and there is no permanent off switch in Settings — this sets the system policy that turns it off for good (HKCU, no elevation required).",
+            name: "Legacy Copilot policy (restore only)",
+            description: "This retired policy does not control the current Copilot app. You can restore its saved registry value here. Manage the separate Copilot app in Debloat; removing it does not prevent future reinstallation.",
             category: Category::Privacy,
             hive: Hive::Hkcu,
             key_path: r"Software\Policies\Microsoft\Windows\WindowsCopilot",
@@ -550,6 +564,22 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
 
 pub fn find_tweak(id: &str) -> Option<RegistryTweak> {
     all_tweaks().into_iter().find(|t| t.id == id)
+}
+
+// Retain the ID for old snapshots and profile imports, but never report a
+// successful application of a policy that cannot control the current app.
+fn require_active_policy(id: &str) -> Result<(), String> {
+    if id == "disable_copilot" {
+        return Err("The legacy Copilot policy is retired. Manage the current Copilot app in Debloat; existing policy snapshots can still be restored.".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn legacy_copilot_is_restore_only() {
+    assert!(require_active_policy("disable_copilot").is_err());
+    assert!(find_tweak("disable_copilot").is_some());
+    assert!(require_active_policy("disable_suggested_apps").is_ok());
 }
 
 #[cfg(windows)]
@@ -688,6 +718,7 @@ pub mod windows_impl {
 
         /// Snapshots the current value, then writes `on_value`.
         pub fn apply(&self, store: &RollbackStore) -> Result<(), String> {
+            require_active_policy(self.id)?;
             let mut transaction = store.transaction()?;
             let original = self.read_current().map_err(|e| e.to_string())?;
             transaction

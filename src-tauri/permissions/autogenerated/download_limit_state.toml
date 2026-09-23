@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-download-limit-state"
+description = "Enables the download_limit_state command without any pre-configured scope."
+commands.allow = ["download_limit_state"]
+
+[[permission]]
+identifier = "deny-download-limit-state"
+description = "Denies the download_limit_state command without any pre-configured scope."
+commands.deny = ["download_limit_state"]

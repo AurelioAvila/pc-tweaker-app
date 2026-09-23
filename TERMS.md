@@ -1,16 +1,16 @@
 # Terms of Service
 
-Last updated: 2026-08-06
+Last updated: 2026-09-23
 
 Welcome to PC Tweaker ("we", "us", "our"). By downloading, installing, or using PC Tweaker, you agree to these Terms of Service.
 
 ## 1. What PC Tweaker does
 
-PC Tweaker is a Windows desktop app that applies system tweaks (registry, power plan, network DNS, file cleanup) with automatic rollback — every change saves the original value before it's applied, so it can be reverted at any time. Source code is publicly viewable at [github.com/AurelioAvila/pc-tweaker-app](https://github.com/AurelioAvila/pc-tweaker-app) for transparency; see the repository's [LICENSE](https://github.com/AurelioAvila/pc-tweaker-app/blob/master/LICENSE) for the terms governing that source.
+PC Tweaker is a Windows desktop app for system settings, maintenance and current-user app removal. Supported setting changes save their original values for restoration. File cleanup and app removal may delete data permanently; reinstalling an app does not restore its data or guarantee the same version. Source code is publicly viewable at [github.com/AurelioAvila/pc-tweaker-app](https://github.com/AurelioAvila/pc-tweaker-app) for transparency; see the repository's [LICENSE](https://github.com/AurelioAvila/pc-tweaker-app/blob/master/LICENSE) for the terms governing that source.
 
 ## 2. Free and Pro tiers
 
-- 35 tweaks are free to use, forever, with no account required.
+- 39 controls are free to use, forever, with no account required.
 - Pro unlocks the advanced tweaks and presets via a recurring subscription (monthly or annual, billed through Stripe Checkout) that renews automatically until cancelled.
 - You can cancel anytime; Pro access continues until the end of the current billing period, then reverts to the Free tier — cancelling does not undo tweaks already applied, it only locks further use of Pro-only tweaks and presets.
 - A small number of early customers purchased a one-time lifetime unlock before the subscription model existed; that access does not expire and is unaffected by this section.

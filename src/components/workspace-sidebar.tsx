@@ -31,7 +31,7 @@ export function WorkspaceSidebar({
       primary: true,
     },
     { label: s.tabs.groupMonitor, keys: ["scan", "health", "hardware"] },
-    { label: s.tabs.groupOptimize, keys: ["performance", "gaming", "privacy", "ui"] },
+    { label: s.tabs.groupOptimize, keys: ["debloat", "performance", "gaming", "privacy", "ui"] },
     { label: s.tabs.groupManage, keys: ["startup", "manutenzione"] },
   ];
 

@@ -74,6 +74,9 @@ import { TitleBar } from "./components/titlebar";
 import { CATEGORY_STYLE } from "./categories";
 import { OverviewPanel } from "./components/overview";
 import { WorkspaceSidebar } from "./components/workspace-sidebar";
+import { DebloatPanel } from "./components/debloat";
+import { AdvancedControlCard } from "./components/advanced-controls";
+import { CONFIGURABLE_TWEAK_IDS, isCurrentCatalogTweak } from "./catalog";
 import "./App.css";
 import "./desktop-refresh.css";
 
@@ -377,6 +380,7 @@ function App() {
     { key: "gaming", label: s.tabs.gaming, icon: CATEGORY_STYLE.gaming.icon },
     { key: "privacy", label: s.tabs.privacy, icon: CATEGORY_STYLE.privacy.icon },
     { key: "startup", label: s.tabs.startup, icon: <RocketIcon className="h-[18px] w-[18px]" /> },
+    { key: "debloat", label: "Debloat", icon: <LayersIcon className="h-[18px] w-[18px]" /> },
     { key: "ui", label: s.tabs.ui, icon: CATEGORY_STYLE.ui.icon },
     { key: "manutenzione", label: s.tabs.manutenzione, icon: CATEGORY_STYLE.manutenzione.icon },
     { key: "profiles", label: s.tabs.profiles, icon: <LayersIcon className="h-[18px] w-[18px]" /> },
@@ -495,7 +499,9 @@ function App() {
    * rather than stopping at the first one.
    */
   async function restoreAll() {
-    const appliedIds = tweaks.filter((t) => t.applied).map((t) => t.id);
+    const appliedIds = tweaks
+      .filter((t) => t.applied && !CONFIGURABLE_TWEAK_IDS.has(t.id))
+      .map((t) => t.id);
     setConfirmRestore(false);
     if (appliedIds.length === 0) {
       pushToast("error", s.restore.nothingToast);
@@ -627,9 +633,15 @@ function App() {
   const showProfiles = filter === "profiles" && !searching;
   const showLedger = FEATURE_INTELLIGENCE && filter === "ledger" && !searching;
   const turboBoostApplied = tweaks.find((t) => t.id === "turbo_boost")?.applied ?? false;
-  const appliedCount = tweaks.filter((t) => t.applied).length;
+  const catalogTweaks = tweaks.filter((t) => isCurrentCatalogTweak(t.id));
+  const appliedCount = catalogTweaks.filter(
+    (t) => t.applied && !CONFIGURABLE_TWEAK_IDS.has(t.id),
+  ).length;
+  const restorableCount = tweaks.filter(
+    (t) => t.applied && !CONFIGURABLE_TWEAK_IDS.has(t.id),
+  ).length;
   // What the pricing page can honestly promise a Free user.
-  const freeTweakCount = tweaks.filter((t) => !t.requires_pro).length;
+  const freeTweakCount = catalogTweaks.filter((t) => !t.requires_pro).length;
 
   const currentLabel = CATEGORIES.find((c) => c.key === filter)?.label ?? "";
 
@@ -649,7 +661,7 @@ function App() {
       <TitleBar
         s={s}
         appliedCount={appliedCount}
-        totalCount={tweaks.length}
+        totalCount={catalogTweaks.length}
         cpuPct={latestPulse ? latestPulse.cpu : null}
         ramPct={ramPct}
       />
@@ -683,19 +695,26 @@ function App() {
           <div
             className={`workspace-page mx-auto ${showPricing ? "workspace-pricing-page" : ""} ${showPricing || showOverview ? "max-w-5xl" : "max-w-3xl"}`}
           >
-            <header className="workspace-header border-line mb-6 flex items-start justify-between gap-4 border-b pb-4">
+            <header
+              className={`workspace-header border-line flex items-start justify-between gap-4 ${filter === "debloat" ? "mb-2" : "mb-6 border-b pb-4"}`}
+            >
               {/* The pricing screen leads with its own hero title, so
                 the section heading would just be a duplicate above it. */}
               <div className="min-w-0">
-                {!showPricing && <h1 className="type-page page-title">{currentLabel}</h1>}
+                {!showPricing && filter !== "debloat" && (
+                  <h1 className="type-page page-title">{currentLabel}</h1>
+                )}
                 {/* Overview and Startup provide their own counts. */}
-                {!showOverview && !showStartup && !showPricing && (
+                {!showOverview && !showStartup && !showPricing && filter !== "debloat" && (
                   <div className="mt-1 flex items-center gap-3">
                     <p className="text-ink-3 type-data text-[12.5px]">
-                      {format(s.appliedCount, { applied: appliedCount, total: tweaks.length })}
+                      {format(s.appliedCount, {
+                        applied: appliedCount,
+                        total: catalogTweaks.length,
+                      })}
                     </p>
                     {/* Restore supported settings from their saved values. */}
-                    {appliedCount > 0 && (
+                    {restorableCount > 0 && (
                       <button
                         onClick={() => setConfirmRestore(true)}
                         disabled={restoring}
@@ -708,7 +727,7 @@ function App() {
                   </div>
                 )}
               </div>
-              {!showPricing && (
+              {!showPricing && filter !== "debloat" && (
                 <div className="relative ml-auto w-56 shrink-0">
                   <MagnifierIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
                   <input
@@ -874,6 +893,15 @@ function App() {
 
             {showStartup && <StartupManager s={s} pushToast={pushToast} />}
 
+            {/* Keep operation state alive when navigating during a removal. */}
+            <div hidden={filter !== "debloat" || searching}>
+              <DebloatPanel
+                lang={lang}
+                active={filter === "debloat" && !searching}
+                onNavigate={setFilter}
+              />
+            </div>
+
             {showStartup && <ScheduledTaskManager s={s} pushToast={pushToast} />}
 
             {showProfiles && (
@@ -997,6 +1025,22 @@ function App() {
 
             <ul className="flex flex-col gap-3">
               {visibleTweaks.map((t, i) => {
+                if (
+                  t.id === "ecoqos_rules" ||
+                  t.id === "limit_do_background_download" ||
+                  t.id === "monitor_refresh_profile"
+                ) {
+                  return (
+                    <li key={t.id} className="animate-card">
+                      <AdvancedControlCard
+                        id={t.id}
+                        lang={lang}
+                        isPro={isProUnlocked}
+                        onRequirePro={setPaywallFeature}
+                      />
+                    </li>
+                  );
+                }
                 const style = CATEGORY_STYLE[t.category];
                 const text = textFor(s.tweaks, t.id, t.name, t.description);
                 return (
@@ -1194,7 +1238,7 @@ function App() {
           <div className="animate-card w-full max-w-sm rounded-2xl border border-line bg-slate-900 p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-ink">{s.restore.title}</h3>
             <p className="mt-2 text-sm leading-relaxed text-ink-3">
-              {format(s.restore.body, { count: appliedCount })}
+              {format(s.restore.body, { count: restorableCount })}
             </p>
             <button
               onClick={restoreAll}

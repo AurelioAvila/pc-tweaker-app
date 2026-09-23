@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ecoqos-status"
+description = "Enables the ecoqos_status command without any pre-configured scope."
+commands.allow = ["ecoqos_status"]
+
+[[permission]]
+identifier = "deny-ecoqos-status"
+description = "Denies the ecoqos_status command without any pre-configured scope."
+commands.deny = ["ecoqos_status"]

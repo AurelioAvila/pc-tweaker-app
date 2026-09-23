@@ -90,7 +90,11 @@ fn every_spawned_process_is_told_not_to_open_a_console() {
                 }
             }
 
-            if !statement.contains("creation_flags") {
+            // system_tools::run sets this on its Command centrally; that
+            // Command::new site is checked by this same traversal.
+            if !statement.contains("creation_flags")
+                && !line.contains("crate::system_tools::run(")
+            {
                 let name = file
                     .strip_prefix(&root)
                     .unwrap_or(file)

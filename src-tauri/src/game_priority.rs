@@ -13,8 +13,8 @@ pub struct GamingInfo {
 pub fn info() -> GamingInfo {
     GamingInfo {
         id: TWEAK_ID,
-        name: "Top priority for games (multimedia scheduler)",
-        description: "Tells the Windows multimedia scheduler (MMCSS) to treat games as the highest-priority processes on the system, ahead of any background task (HKLM, requires administrator rights).",
+        name: "Set MMCSS Games task category",
+        description: "Sets the Games task category to High for threads registered with MMCSS; High treats Priority as 2. The GPU and SFIO Priority values also written here are unused. This does not prioritize every game process (HKLM, requires administrator rights).",
         requires_admin: true,
         requires_pro: true,
     }

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ecoqos-add-rule"
+description = "Enables the ecoqos_add_rule command without any pre-configured scope."
+commands.allow = ["ecoqos_add_rule"]
+
+[[permission]]
+identifier = "deny-ecoqos-add-rule"
+description = "Denies the ecoqos_add_rule command without any pre-configured scope."
+commands.deny = ["ecoqos_add_rule"]

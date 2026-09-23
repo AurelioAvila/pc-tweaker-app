@@ -29,6 +29,15 @@ pub struct RegistrySnapshot {
     pub original_value: Option<RegValue>,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct FilterKeysSnapshot {
+    pub flags: u32,
+    pub wait_ms: u32,
+    pub delay_ms: u32,
+    pub repeat_ms: u32,
+    pub bounce_ms: u32,
+}
+
 /// Any of the reversible actions a tweak can take. Cleanup-style actions
 /// (deleting/trashing files) are intentionally not represented here: they are
 /// one-shot and irreversible by nature, and are surfaced to the user as such.
@@ -42,6 +51,16 @@ pub enum SnapshotEntry {
         original_value: u32,
     },
     Registry(RegistrySnapshot),
+    FilterKeys {
+        original: FilterKeysSnapshot,
+    },
+    DeliveryOptimization {
+        original_value: Option<u32>,
+        original_provider: String,
+        original_percent_provider: String,
+        original_schedule_provider: String,
+        written_kbps: u32,
+    },
     PowerScheme {
         previous_guid: String,
     },
@@ -350,7 +369,7 @@ impl RollbackTransaction<'_> {
 }
 
 #[cfg(windows)]
-fn replace_file(from: &std::path::Path, to: &std::path::Path) -> io::Result<()> {
+pub(crate) fn replace_file(from: &std::path::Path, to: &std::path::Path) -> io::Result<()> {
     use std::os::windows::ffi::OsStrExt;
     #[link(name = "kernel32")]
     extern "system" {
@@ -368,7 +387,7 @@ fn replace_file(from: &std::path::Path, to: &std::path::Path) -> io::Result<()> 
 }
 
 #[cfg(not(windows))]
-fn replace_file(from: &std::path::Path, to: &std::path::Path) -> io::Result<()> {
+pub(crate) fn replace_file(from: &std::path::Path, to: &std::path::Path) -> io::Result<()> {
     fs::rename(from, to)?;
     if let Some(parent) = to.parent() {
         File::open(parent)?.sync_all()?;
@@ -539,6 +558,18 @@ pub(crate) fn validate_snapshot(id: &str, entry: &SnapshotEntry) -> Result<(), S
                 matches!(entry, SnapshotEntry::TcpCongestionProvider { setting_name, previous }
                 if setting_name == "Internet" && ["Default", "NewReno", "CTCP", "DCTCP", "LEDBAT", "CUBIC", "BBR2"].iter().any(|p| previous.eq_ignore_ascii_case(p)))
             }
+            "disable_restart_apps" => matches!(entry,
+                SnapshotEntry::Registry(s) if registry_matches(s, "HKCU", r"Software\Microsoft\Windows NT\CurrentVersion\Winlogon", "RestartApps")),
+            "enable_long_paths" => matches!(entry,
+                SnapshotEntry::Registry(s) if registry_matches(s, "HKLM", r"SYSTEM\CurrentControlSet\Control\FileSystem", "LongPathsEnabled")),
+            "disable_filter_keys_shortcut" => matches!(entry,
+                SnapshotEntry::FilterKeys { original } if [original.wait_ms, original.delay_ms, original.repeat_ms, original.bounce_ms].iter().all(|v| *v <= 20_000)),
+            "limit_do_background_download" => matches!(entry,
+                SnapshotEntry::DeliveryOptimization { original_value: None, original_provider, original_percent_provider, original_schedule_provider, written_kbps }
+                    if original_provider == "DefaultProvider"
+                        && original_percent_provider == "DefaultProvider"
+                        && original_schedule_provider == "DefaultProvider"
+                        && (1..=1_000_000).contains(written_kbps)),
             _ => false,
         }
     };
@@ -564,6 +595,8 @@ fn snapshot_targets(entry: &SnapshotEntry) -> Vec<String> {
         SnapshotEntry::Registry(s) => {
             vec![format!("reg:{}:{}:{}", s.hive, s.path, s.name).to_ascii_lowercase()]
         }
+        SnapshotEntry::FilterKeys { .. } => vec!["filterkeys".into()],
+        SnapshotEntry::DeliveryOptimization { .. } => vec!["reg:hklm:software\\policies\\microsoft\\windows\\deliveryoptimization:domaxbackgrounddownloadbandwidth".into()],
         SnapshotEntry::RegistryKeyCreated { hive, path } => {
             vec![format!("key:{hive}:{path}").to_ascii_lowercase()]
         }

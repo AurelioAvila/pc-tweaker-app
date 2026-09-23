@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
 import { textFor } from "../lib";
+import { CONFIGURABLE_TWEAK_IDS } from "../catalog";
 import { CleanupInfo, ScanIssue, SystemProfile, Toast, TweakAdvice, TweakInfo } from "../types";
 import { BaselineRun, delta } from "./health";
 import { BoltIcon, MagnifierIcon, TrashIcon } from "./icons";
@@ -236,7 +237,8 @@ export function ScanPanel({
           (scanIds?.has(t.id) ?? false) &&
           !t.applied &&
           (isPro || !t.requires_pro) &&
-          t.id !== "turbo_boost",
+          t.id !== "turbo_boost" &&
+          !CONFIGURABLE_TWEAK_IDS.has(t.id),
       )
       .map((t) => ({
         kind: "tweak" as const,
@@ -258,7 +260,13 @@ export function ScanPanel({
       isPro
         ? []
         : (snapshot?.tweaks ?? tweaks)
-            .filter((t) => (scanIds?.has(t.id) ?? false) && !t.applied && t.requires_pro)
+            .filter(
+              (t) =>
+                (scanIds?.has(t.id) ?? false) &&
+                !t.applied &&
+                t.requires_pro &&
+                !CONFIGURABLE_TWEAK_IDS.has(t.id),
+            )
             .map((t) => ({ id: t.id, ...textFor(s.tweaks, t.id, t.name, t.description) })),
     [tweaks, isPro, s, scanIds, snapshot],
   );
@@ -307,7 +315,13 @@ export function ScanPanel({
       setAdvice(map);
       const initialChecked: Record<string, boolean> = {};
       result.tweaks
-        .filter((t) => ids.has(t.id) && !t.applied && (isPro || !t.requires_pro))
+        .filter(
+          (t) =>
+            ids.has(t.id) &&
+            !t.applied &&
+            (isPro || !t.requires_pro) &&
+            !CONFIGURABLE_TWEAK_IDS.has(t.id),
+        )
         .forEach((t) => {
           initialChecked[t.id] = map[t.id]?.verdict === "recommended";
         });
@@ -641,7 +655,7 @@ export function ScanPanel({
               setFixedCount(0);
               setPhase("idle");
             }}
-            className="mt-5 rounded-xl bg-surface-2 px-5 py-2 text-sm font-semibold text-ink-2 transition-colors hover:bg-surface-hover"
+            className="tool-secondary-action mt-5"
           >
             {s.scan.scanAgain}
           </button>
@@ -685,7 +699,7 @@ export function ScanPanel({
               <button
                 onClick={() => fixAll(recommendedIds)}
                 disabled={fixing || recommendedIds.length === 0}
-                className="relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                className="tool-primary-action relative overflow-hidden"
               >
                 {measuring && (
                   <span className="absolute inset-0 grid place-items-center bg-black/20 text-[11px] font-semibold">
@@ -711,7 +725,7 @@ export function ScanPanel({
               <button
                 onClick={() => fixAll(fixableIssues.filter((i) => checked[i.id]).map((i) => i.id))}
                 disabled={fixing || checkedCount === 0}
-                className="relative overflow-hidden rounded-xl border border-line-2 py-2.5 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-surface-2 disabled:opacity-40"
+                className="tool-secondary-action relative overflow-hidden"
               >
                 {measuring && (
                   <span className="absolute inset-0 grid place-items-center bg-black/20 text-[11px] font-semibold">

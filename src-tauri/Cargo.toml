@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "1.14.5"
+version = "1.14.6"
 description = "Real Windows tweaks with automatic one-click rollback"
 authors = ["Aurelio Avila"]
 license-file = "../LICENSE"
@@ -78,9 +78,11 @@ windows-sys = { version = "0.59", features = [
     # DwmSetWindowAttribute, to stop Windows 11 rounding the overlay window
     # underneath the panel's own rounded corners.
     "Win32_Graphics_Dwm",
+    "Win32_Graphics_Gdi",
 ] }
 is_elevated = "0.1"
 runas = "1"
+windows = { version = "0.58", features = ["Management_Deployment", "Foundation_Collections", "ApplicationModel", "Win32_System_Com"] }
 
 # `tauri dev` recognizes a feature literally named "devtools" on the
 # consuming crate and enables it automatically for dev builds; `tauri build`

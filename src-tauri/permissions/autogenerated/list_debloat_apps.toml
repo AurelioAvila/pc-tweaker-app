@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-list-debloat-apps"
+description = "Enables the list_debloat_apps command without any pre-configured scope."
+commands.allow = ["list_debloat_apps"]
+
+[[permission]]
+identifier = "deny-list-debloat-apps"
+description = "Denies the list_debloat_apps command without any pre-configured scope."
+commands.deny = ["list_debloat_apps"]

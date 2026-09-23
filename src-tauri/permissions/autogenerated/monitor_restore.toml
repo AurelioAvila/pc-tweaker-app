@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-monitor-restore"
+description = "Enables the monitor_restore command without any pre-configured scope."
+commands.allow = ["monitor_restore"]
+
+[[permission]]
+identifier = "deny-monitor-restore"
+description = "Denies the monitor_restore command without any pre-configured scope."
+commands.deny = ["monitor_restore"]

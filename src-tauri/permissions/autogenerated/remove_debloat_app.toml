@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-remove-debloat-app"
+description = "Enables the remove_debloat_app command without any pre-configured scope."
+commands.allow = ["remove_debloat_app"]
+
+[[permission]]
+identifier = "deny-remove-debloat-app"
+description = "Denies the remove_debloat_app command without any pre-configured scope."
+commands.deny = ["remove_debloat_app"]

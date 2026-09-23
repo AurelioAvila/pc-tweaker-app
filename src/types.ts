@@ -24,6 +24,7 @@ export type Section =
   | "health"
   | "hardware"
   | "startup"
+  | "debloat"
   | "profiles"
   | "pricing"
   | "ledger";
@@ -126,6 +127,40 @@ export type Toast = {
 };
 
 export type GameEntry = { path: string; name: string };
+
+export type EcoQosState = {
+  enabled: boolean;
+  engine_running: boolean;
+  blocked_global: boolean;
+  rules: { path: string; name: string }[];
+  active_processes: number;
+  pending_restore: number;
+  last_error: string | null;
+};
+
+export type DownloadLimitState = {
+  supported: boolean;
+  configuredKbps: number | null;
+  provider: string;
+  applied: boolean;
+  conflict: string | null;
+};
+
+export type MonitorProfilesState = {
+  displays: {
+    id: string;
+    name: string;
+    current_hz: number;
+    frequencies: number[];
+    supported: boolean;
+  }[];
+  rules: { path: string; name: string; display_id: string; hz: number }[];
+  enabled: boolean;
+  active: string | null;
+  pending_confirmation: boolean;
+  deadline_ms: number | null;
+  error: string | null;
+};
 
 export type ScanIssue = {
   kind: "tweak" | "cleanup";

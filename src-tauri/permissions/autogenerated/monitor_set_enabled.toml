@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-monitor-set-enabled"
+description = "Enables the monitor_set_enabled command without any pre-configured scope."
+commands.allow = ["monitor_set_enabled"]
+
+[[permission]]
+identifier = "deny-monitor-set-enabled"
+description = "Denies the monitor_set_enabled command without any pre-configured scope."
+commands.deny = ["monitor_set_enabled"]

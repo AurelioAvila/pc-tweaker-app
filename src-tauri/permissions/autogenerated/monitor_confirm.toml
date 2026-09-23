@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-monitor-confirm"
+description = "Enables the monitor_confirm command without any pre-configured scope."
+commands.allow = ["monitor_confirm"]
+
+[[permission]]
+identifier = "deny-monitor-confirm"
+description = "Denies the monitor_confirm command without any pre-configured scope."
+commands.deny = ["monitor_confirm"]

@@ -473,6 +473,10 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                 })
                 .collect();
             processes.sort_by_key(|p| (p.pid, p.started_at));
+            if refreshed != 0 {
+                let paths=processes.iter().filter_map(|p|p.executable.clone()).collect::<Vec<_>>();
+                crate::monitor_profiles::tick(&dir,&paths);
+            }
             let store = RollbackStore::new(dir.clone());
             if !recovery_checked {
                 if refreshed == 0 {

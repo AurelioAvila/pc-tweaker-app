@@ -54,10 +54,7 @@ export function IpMaskCard({ s, onExplain }: { s: Strings; onExplain: () => void
           </div>
           <p className="mt-0.5 text-sm text-ink-3">{s.ipMask.description}</p>
         </div>
-        <button
-          onClick={onExplain}
-          className="tool-card-action shrink-0 rounded-xl bg-surface-2 px-4 py-2 text-sm font-semibold text-ink-2 transition hover:-translate-y-px hover:brightness-110"
-        >
+        <button onClick={onExplain} className="tool-secondary-action tool-card-action">
           {s.ipMask.button}
         </button>
       </div>
@@ -158,11 +155,7 @@ export function DuplicateFinder({
           </div>
           <p className="mt-0.5 text-sm text-ink-3">{s.duplicateFinder.description}</p>
         </div>
-        <button
-          onClick={scan}
-          disabled={scanning}
-          className="tool-primary-action tool-card-action shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-px hover:brightness-110 disabled:opacity-60"
-        >
+        <button onClick={scan} disabled={scanning} className="tool-primary-action tool-card-action">
           {scanning ? s.duplicateFinder.scanning : s.duplicateFinder.chooseFolder}
         </button>
       </div>
@@ -196,7 +189,7 @@ export function DuplicateFinder({
           <button
             onClick={deleteSelected}
             disabled={selected.size === 0 || deleting}
-            className="w-full rounded-xl bg-red-500/90 py-2 text-sm font-semibold text-white disabled:opacity-40"
+            className="tool-danger-action w-full"
           >
             {deleting
               ? s.duplicateFinder.deleting
@@ -262,11 +255,7 @@ export function DiskOptimizeCard({
             {running ? s.diskOptimize.running : s.diskOptimize.description}
           </p>
         </div>
-        <button
-          onClick={run}
-          disabled={running}
-          className="tool-card-action shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
-        >
+        <button onClick={run} disabled={running} className="tool-primary-action tool-card-action">
           {running ? (
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-amber-950/30 border-t-amber-950" />
           ) : (
@@ -311,11 +300,7 @@ export function DnsFlushCard({
           <h2 className="font-semibold text-ink">{s.dnsFlush.title}</h2>
           <p className="mt-0.5 text-sm text-ink-3">{s.dnsFlush.description}</p>
         </div>
-        <button
-          onClick={run}
-          disabled={running}
-          className="tool-card-action shrink-0 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-cyan-950 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
-        >
+        <button onClick={run} disabled={running} className="tool-primary-action tool-card-action">
           {running ? s.dnsFlush.running : s.dnsFlush.button}
         </button>
       </div>
@@ -400,7 +385,7 @@ export function BrowserCleanupCard({
               <button
                 onClick={() => clear(b)}
                 disabled={b.running || clearingId === b.id}
-                className="tool-primary-action shrink-0 rounded-xl bg-sky-500 px-3.5 py-1.5 text-sm font-semibold text-sky-950 transition hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                className="tool-primary-action shrink-0"
               >
                 {clearingId === b.id ? s.browserCleanup.clearing : s.browserCleanup.clearButton}
               </button>
@@ -479,20 +464,17 @@ export function UninstallerPromoCard({ s }: { s: Strings }) {
 
             <button
               onClick={() => choose(UNINSTALLER_DOWNLOAD_URL)}
-              className="mt-5 w-full rounded-xl bg-sky-500 py-2.5 text-sm font-semibold text-white"
+              className="tool-primary-action mt-5 w-full"
             >
               {s.uninstallerPromo.confirmDownload}
             </button>
             <button
               onClick={() => choose(UNINSTALLER_PAGE_URL)}
-              className="mt-2 w-full rounded-xl border border-line py-2 text-sm font-medium text-ink-2 hover:bg-surface-2"
+              className="tool-secondary-action mt-2 w-full"
             >
               {s.uninstallerPromo.confirmOpenPage}
             </button>
-            <button
-              onClick={() => setAsking(false)}
-              className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-ink-3 hover:text-ink-2"
-            >
+            <button onClick={() => setAsking(false)} className="tool-secondary-action mt-2 w-full">
               {s.uninstallerPromo.cancel}
             </button>
           </div>
@@ -625,11 +607,7 @@ export function LargeFileFinder({
           </div>
           <p className="mt-0.5 text-sm text-ink-3">{s.largeFiles.description}</p>
         </div>
-        <button
-          onClick={scan}
-          disabled={scanning}
-          className="tool-card-action shrink-0 rounded-xl bg-fuchsia-500 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-px hover:brightness-110 disabled:opacity-60"
-        >
+        <button onClick={scan} disabled={scanning} className="tool-primary-action tool-card-action">
           {scanning ? s.largeFiles.scanning : s.largeFiles.chooseFolder}
         </button>
       </div>
@@ -659,7 +637,7 @@ export function LargeFileFinder({
           <button
             onClick={deleteSelected}
             disabled={selected.size === 0 || deleting}
-            className="mt-3 w-full rounded-xl bg-red-500/90 py-2 text-sm font-semibold text-white disabled:opacity-40"
+            className="tool-danger-action mt-3 w-full"
           >
             {deleting
               ? s.largeFiles.deleting
@@ -877,7 +855,7 @@ export function CleanupCard({
         <button
           disabled={busy}
           onClick={() => (locked ? onRequirePro() : onRun(info))}
-          className="tool-primary-action tool-card-action shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-px hover:brightness-110 disabled:opacity-60"
+          className="tool-primary-action tool-card-action"
         >
           {busy ? s.cleanupRunning : s.cleanupButton}
         </button>
@@ -963,7 +941,7 @@ export function PasswordBreachCheck({ s }: { s: Strings }) {
             <button
               onClick={check}
               disabled={checking || !password}
-              className="tool-primary-action shrink-0 rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-px hover:brightness-110 disabled:opacity-60"
+              className="tool-primary-action shrink-0"
             >
               {checking ? s.passwordCheck.checking : s.passwordCheck.button}
             </button>
@@ -1111,14 +1089,11 @@ export function CleanupConfirmModal({
         <button
           onClick={confirm}
           disabled={nothingToClean || (listable && selected.length === 0)}
-          className="mt-5 w-full rounded-xl bg-sky-500 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="tool-primary-action mt-5 w-full"
         >
           {listable && !allSelected ? s.cleanupConfirm.confirmSelected : s.cleanupConfirm.confirm}
         </button>
-        <button
-          onClick={onCancel}
-          className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-ink-3 hover:text-ink-2"
-        >
+        <button onClick={onCancel} className="tool-secondary-action mt-2 w-full">
           {s.cleanupConfirm.cancel}
         </button>
       </div>

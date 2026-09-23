@@ -538,11 +538,7 @@ export function HealthPanel({
             </svg>
           </div>
           <p className="max-w-xs text-xs leading-relaxed text-ink-3">{idleHint}</p>
-          <button
-            type="button"
-            onClick={compute}
-            className="rounded-xl bg-emerald-400/90 px-5 py-2.5 text-xs font-bold text-emerald-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-300"
-          >
+          <button type="button" onClick={compute} className="tool-primary-action">
             {computeLabel}
           </button>
         </div>

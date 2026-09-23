@@ -144,13 +144,6 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
                 ),
                 applied_factor(
                     inputs,
-                    "perf_responsiveness",
-                    "Multimedia scheduler tuned",
-                    "system_responsiveness",
-                    20,
-                ),
-                applied_factor(
-                    inputs,
                     "perf_throttling",
                     "Power throttling disabled",
                     "disable_power_throttling",
@@ -192,13 +185,6 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
                     "Game DVR overhead removed",
                     "disable_game_dvr",
                     25,
-                ),
-                applied_factor(
-                    inputs,
-                    "gaming_gpu_prio",
-                    "Games get GPU priority",
-                    "games_gpu_priority",
-                    20,
                 ),
                 applied_factor(
                     inputs,
@@ -491,6 +477,19 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
 mod tests {
     use super::*;
 
+    #[test]
+    fn legacy_mmcss_values_do_not_improve_health() {
+        let before = score(&base());
+        let mut applied = base();
+        applied.applied.insert("games_gpu_priority".into());
+        applied.applied.insert("system_responsiveness".into());
+        let after = score(&applied);
+        assert_eq!(before.overall, after.overall);
+        for (left, right) in before.categories.iter().zip(after.categories.iter()) {
+            assert_eq!(left.score, right.score);
+            assert!(right.factors.iter().all(|f| f.id != "gaming_gpu_prio" && f.id != "perf_responsiveness"));
+        }
+    }
     fn base() -> HealthInputs {
         HealthInputs::default()
     }

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-debloat-reinstall-link"
+description = "Enables the debloat_reinstall_link command without any pre-configured scope."
+commands.allow = ["debloat_reinstall_link"]
+
+[[permission]]
+identifier = "deny-debloat-reinstall-link"
+description = "Denies the debloat_reinstall_link command without any pre-configured scope."
+commands.deny = ["debloat_reinstall_link"]

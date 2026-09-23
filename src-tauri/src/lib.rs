@@ -6,6 +6,13 @@ mod browsercleanup;
 mod cleanup;
 mod contextmenu;
 mod cookies;
+mod debloat;
+#[cfg(windows)]
+mod everyday;
+#[cfg(windows)]
+mod download_limit;
+mod ecoqos;
+mod monitor_profiles;
 #[cfg(windows)]
 mod system_tools;
 mod tray;
@@ -66,6 +73,30 @@ mod tweaks;
 mod updatewatch;
 mod x3d;
 mod zerotrace;
+
+pub fn monitor_watchdog(token: &str) { monitor_profiles::watchdog(token); }
+
+#[tauri::command(async)]
+fn download_limit_state(app: tauri::AppHandle) -> Result<download_limit::DownloadLimitState,String> {
+    download_limit::state(&store_for(&app)?)
+}
+#[tauri::command(async)]
+fn set_download_limit(app: tauri::AppHandle, kbps: u32) -> Result<download_limit::DownloadLimitState,String> {
+    let dir=store_for_dir(&app)?;
+    require_pro(&dir)?;
+    if !(1..=1_000_000).contains(&kbps) { return Err("Choose a bandwidth between 1 and 1000000 KB/s".into()); }
+    if !elevation::is_elevated() {
+        elevation::run_elevated_action("--elevated-download-limit",&kbps.to_string())?;
+    } else { download_limit::configure(&RollbackStore::new(dir),kbps)?; }
+    download_limit_state(app)
+}
+#[tauri::command(async)]
+fn restore_download_limit(app: tauri::AppHandle) -> Result<download_limit::DownloadLimitState,String> {
+    if !elevation::is_elevated() {
+        elevation::run_elevated_action("--elevated-download-restore","restore")?;
+    } else { download_limit::rollback(&store_for(&app)?)?; }
+    download_limit_state(app)
+}
 
 use cleanup::CleanupResult;
 use rollback::{RegValue, RollbackStore};
@@ -199,6 +230,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 
     let mut list: Vec<TweakInfo> = tweaks::all_tweaks()
         .into_iter()
+        .filter(|t| t.id != "disable_copilot" || applied_ids.contains(t.id))
         .map(|t| TweakInfo {
             applied: applied_ids.contains(t.id),
             id: t.id.to_string(),
@@ -412,6 +444,21 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         });
     }
 
+    list.push(TweakInfo {
+        id: everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID.into(), name:"Prevent the Filter Keys shortcut".into(),
+        description:"Disables only the right-Shift shortcut for Filter Keys. Existing accessibility settings and timings are preserved.".into(),
+        category:"gaming".into(), hive:"Windows API".into(), requires_admin:false, requires_pro:false,
+        applied:applied_ids.contains(everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID),
+        changes:vec![technical::TechnicalChange::Command{program:"SystemParametersInfoW",arguments:"Read FILTERKEYS; clear FKF_HOTKEYACTIVE only; preserve remaining flags and timings; restore the saved state.".into()}],
+    });
+    for (id,name,description,category,admin) in [
+        ("ecoqos_rules","Background app efficiency","Choose apps for EcoQoS while PC Tweaker is running. Foreground apps are restored; global power-throttling policy may block this feature.","performance",false),
+        ("limit_do_background_download","Windows background download limit","Configure a Delivery Optimization limit in KB/s. Does not limit other applications or disable Windows Update.","performance",true),
+        ("monitor_refresh_profile","Game display refresh profiles","Choose supported refresh rates per game. Preview and restore keep the original resolution and desktop layout.","gaming",false),
+    ] {
+        list.push(TweakInfo{id:id.into(),name:name.into(),description:description.into(),category:category.into(),hive:"Windows API".into(),requires_admin:admin,requires_pro:true,applied:applied_ids.contains(id),changes:vec![]});
+    }
+
     // One pass, not twelve call sites: anything that arrived with no
     // disclosure asks `technical` for its composite one. A tweak whose
     // mechanism we cannot state precisely keeps an empty list and shows no
@@ -432,6 +479,7 @@ pub const PRO_REQUIRED_PREFIX: &str = "PRO_REQUIRED: ";
 
 #[cfg(windows)]
 fn requires_pro_for(id: &str) -> bool {
+    if ["ecoqos_rules","limit_do_background_download","monitor_refresh_profile"].contains(&id) { return true; }
     if let Some(tweak) = power_tuning::find(id) {
         return tweak.pro;
     }
@@ -520,6 +568,12 @@ fn apply_by_id_inner(
     id: &str,
 ) -> Result<(), String> {
     require_tweak_entitlement(app_data_dir, id)?;
+    if [everyday::DISABLE_RESTART_APPS_ID,everyday::ENABLE_LONG_PATHS_ID,everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID].contains(&id) {
+        return everyday::apply(id,store);
+    }
+    if ["ecoqos_rules","limit_do_background_download","monitor_refresh_profile"].contains(&id) {
+        return Err("Configure this control in its dedicated panel; no default configuration is applied automatically".into());
+    }
     if power_tuning::find(id).is_some() {
         return power_tuning::apply(store, id);
     }
@@ -562,6 +616,10 @@ fn rollback_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
 
 #[cfg(windows)]
 fn rollback_by_id_inner(store: &RollbackStore, id: &str) -> Result<(), String> {
+    if [everyday::DISABLE_RESTART_APPS_ID,everyday::ENABLE_LONG_PATHS_ID,everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID].contains(&id) {
+        return everyday::rollback(id,store);
+    }
+    if id==download_limit::TWEAK_ID { return download_limit::rollback(store).map(|_|()); }
     if power_tuning::find(id).is_some() {
         return power_tuning::rollback(store, id);
     }
@@ -591,6 +649,7 @@ fn rollback_by_id_inner(store: &RollbackStore, id: &str) -> Result<(), String> {
 
 #[cfg(windows)]
 fn requires_admin_for(id: &str) -> bool {
+    if id == download_limit::TWEAK_ID { return true; }
     if power_tuning::find(id).is_some() {
         return true;
     }
@@ -1172,6 +1231,11 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     }
 
     let result: Result<(), String> = match action {
+        "--elevated-download-limit" => require_pro(&dir).and_then(|_| {
+            let kbps=id.parse::<u32>().map_err(|_|"Invalid bandwidth".to_string())?;
+            download_limit::configure(&store,kbps).map(|_|())
+        }),
+        "--elevated-download-restore" if id == "restore" => download_limit::rollback(&store).map(|_|()),
         "--elevated-session-apply" => game_sessions::validate_owner_token(id)
             .and_then(|_| require_pro(&dir))
             .and_then(|_| turbo::apply_for_session(&store, id).map(|_| ())),
@@ -1502,10 +1566,30 @@ pub fn run() {
         .on_window_event(tray::window_event)
         .setup(|app| {
             tray::setup(app)?;
+            debloat::reconcile_on_startup(app.handle());
             game_sessions::spawn_watcher(app.handle().clone());
+            ecoqos::start(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            debloat::list_debloat_apps,
+            debloat::remove_debloat_app,
+            debloat::debloat_history,
+            debloat::debloat_reinstall_link,
+            ecoqos::ecoqos_status,
+            ecoqos::ecoqos_add_rule,
+            ecoqos::ecoqos_remove_rule,
+            ecoqos::ecoqos_set_enabled,
+            monitor_profiles::monitor_profiles_state,
+            monitor_profiles::monitor_save_rule,
+            monitor_profiles::monitor_remove_rule,
+            monitor_profiles::monitor_set_enabled,
+            monitor_profiles::monitor_preview,
+            monitor_profiles::monitor_confirm,
+            monitor_profiles::monitor_restore,
+            download_limit_state,
+            set_download_limit,
+            restore_download_limit,
             save_avatar,
             hud::hud_snapshot,
             secure_defrag,
@@ -1607,8 +1691,15 @@ pub fn run() {
             scheduledtasks::set_scheduled_task_enabled,
             netmaintenance::flush_dns_cache
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if matches!(event, tauri::RunEvent::Exit) {
+                if let Err(error) = ecoqos::stop(app) {
+                    eprintln!("EcoQoS recovery remains pending: {error}");
+                }
+            }
+        });
 }
 
 #[cfg(all(test, windows))]
@@ -1620,6 +1711,7 @@ mod tests {
     fn all_visible_ids() -> Vec<String> {
         let mut ids: Vec<String> = tweaks::all_tweaks()
             .iter()
+            .filter(|t| t.id != "disable_copilot")
             .map(|t| t.id.to_string())
             .collect();
         ids.extend(
@@ -1638,6 +1730,10 @@ mod tests {
                 services::WINDOWS_SEARCH_ID,
                 netlatency::TWEAK_ID,
                 netshaper::TWEAK_ID,
+                everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID,
+                "ecoqos_rules",
+                download_limit::TWEAK_ID,
+                "monitor_refresh_profile",
             ]
             .iter()
             .map(|s| s.to_string()),
@@ -1656,6 +1752,21 @@ mod tests {
         for id in &ids {
             assert!(seen.insert(id.clone()), "duplicate tweak id: {}", id);
         }
+    }
+
+    #[test]
+    fn expansion_entitlement_and_elevation_routing() {
+        let dir = std::env::temp_dir().join(format!("pct-expansion-unlicensed-{}", std::process::id()));
+        for id in ["ecoqos_rules", "limit_do_background_download", "monitor_refresh_profile"] {
+            assert!(require_tweak_entitlement(&dir,id).unwrap_err().starts_with(PRO_REQUIRED_PREFIX));
+        }
+        for id in ["disable_restart_apps", "enable_long_paths", "disable_filter_keys_shortcut"] {
+            assert!(require_tweak_entitlement(&dir,id).is_ok());
+        }
+        assert!(requires_admin_for("limit_do_background_download"));
+        assert!(requires_admin_for("enable_long_paths"));
+        assert!(!requires_admin_for("disable_restart_apps"));
+        assert!(!requires_admin_for("disable_filter_keys_shortcut"));
     }
 
     /// The Scan screen's "fix all" must produce at most one elevation request,
@@ -1726,8 +1837,8 @@ mod tests {
     /// at once. If this fails, the catalogue changed — update the numbers
     /// here, then update every surface listed above to match.
     #[test]
-    fn the_catalogue_is_sixty_one_tweaks_twenty_four_of_them_pro() {
-        let registry = tweaks::all_tweaks();
+    fn the_catalogue_is_sixty_six_tweaks_twenty_seven_of_them_pro() {
+        let registry: Vec<_> = tweaks::all_tweaks().into_iter().filter(|t| t.id != "disable_copilot").collect();
         let registry_pro = registry.iter().filter(|t| t.requires_pro).count();
 
         // The composite tweaks, each owning its own Pro flag. Listed by hand
@@ -1748,6 +1859,10 @@ mod tests {
             privacy_extra::typing_personalization_info().requires_pro,
             contextmenu::info().requires_pro,
             services::windows_search_info().requires_pro,
+            false, // Filter Keys shortcut
+            true, // background app EcoQoS
+            true, // Delivery Optimization cap
+            true, // monitor refresh profiles
         ];
 
         let total = registry.len() + composite_pro.len() + power_tuning::TWEAKS.len();
@@ -1755,9 +1870,9 @@ mod tests {
             + composite_pro.iter().filter(|p| **p).count()
             + power_tuning::TWEAKS.iter().filter(|t| t.pro).count();
 
-        assert_eq!(total, 61, "the catalogue no longer has 61 tweaks");
-        assert_eq!(pro, 24, "the Pro count moved");
-        assert_eq!(total - pro, 37, "the free count moved");
+        assert_eq!(total, 66, "the catalogue no longer has 66 tweaks");
+        assert_eq!(pro, 27, "the Pro count moved");
+        assert_eq!(total - pro, 39, "the free count moved");
 
         // The composite list must stay in step with what list_tweaks builds,
         // otherwise the totals above would quietly stop covering everything.

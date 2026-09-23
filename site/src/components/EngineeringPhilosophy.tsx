@@ -3,7 +3,7 @@ import { text } from "../i18n/dictionary";
 import { riseChild, staggerParent, viewportOnce } from "../motion";
 
 const KIND_CLASS: Record<"comment" | "plain" | "strong" | "accent", string> = {
-  comment: "text-[var(--line-2)]",
+  comment: "text-[var(--fg-dim)]",
   plain: "text-[var(--fg-dim)]",
   strong: "text-[var(--fg)] font-bold",
   accent: "text-accent",

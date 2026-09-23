@@ -185,7 +185,6 @@ pub fn is_scan_relevant(id: &str) -> bool {
         id,
         // CPU scheduling and foreground responsiveness
         "priority_separation"
-            | "system_responsiveness"
             | "disable_power_throttling"
             | "power_plan_performance"
             // Startup and background load
@@ -444,6 +443,8 @@ mod scan_scope_tests {
             "disable_tailored_experiences",
             "disable_feedback_requests",
             "disable_game_dvr",
+            "system_responsiveness",
+            "games_gpu_priority",
         ] {
             assert!(!is_scan_relevant(id), "{} should not be a scan finding", id);
         }
@@ -454,7 +455,6 @@ mod scan_scope_tests {
     fn real_performance_work_is_still_reported() {
         for id in [
             "priority_separation",
-            "system_responsiveness",
             "disable_power_throttling",
             "power_plan_performance",
             "disable_startup_delay",

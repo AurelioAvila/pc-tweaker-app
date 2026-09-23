@@ -74,7 +74,7 @@ Read the effect and trade-offs before applying a setting. A disabled tweak is no
 
 ### Five new native power controls in 1.9.0
 
-The catalog now contains **61 tweaks: 37 Free and 24 Pro**. These five additions change only mains-power policy in the selected Windows plan. They record the original plan and value before writing, verify the result, and leave battery policy unchanged.
+The catalog contains **66 controls: 39 Free and 27 Pro**. The five power-policy controls change only mains-power policy in the selected Windows plan. They record the original plan and value before writing, verify the result, and leave battery policy unchanged.
 
 | Control | Access | Purpose and limits |
 | --- | --- | --- |

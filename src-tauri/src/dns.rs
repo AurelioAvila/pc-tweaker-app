@@ -4,10 +4,11 @@ pub const TWEAK_ID: &str = "privacy_dns";
 const PRIMARY_DNS: &str = "1.1.1.1";
 const SECONDARY_DNS: &str = "1.0.0.1";
 
-/// Escapes a value for safe interpolation inside a PowerShell single-quoted
-/// string (the only special character there is the quote itself).
+/// A PowerShell expression that decodes UTF-8 data without parsing it as script.
 fn ps_quote(value: &str) -> String {
-    value.replace('\'', "''")
+    use base64::Engine as _;
+    let encoded = base64::engine::general_purpose::STANDARD.encode(value);
+    format!("([System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{encoded}')))")
 }
 
 #[cfg(windows)]
@@ -42,7 +43,7 @@ fn active_interface_alias() -> Result<String, String> {
 #[cfg(windows)]
 fn current_dns_servers(iface: &str) -> Result<Vec<String>, String> {
     let script = format!(
-        "(Get-DnsClientServerAddress -InterfaceAlias '{}' -AddressFamily IPv4 -ErrorAction Stop).ServerAddresses -join ','",
+        "(Get-DnsClientServerAddress -InterfaceAlias {} -AddressFamily IPv4 -ErrorAction Stop).ServerAddresses -join ','",
         ps_quote(iface)
     );
     let out = run_ps(&script)?;
@@ -77,7 +78,7 @@ fn configured_dns(value: Option<&str>) -> Result<(bool, Vec<String>), String> {
 fn original_dns(iface: &str) -> Result<(bool, Vec<String>), String> {
     use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
     let guid = run_ps(&format!(
-        "(Get-NetAdapter -Name '{}' -ErrorAction Stop).InterfaceGuid.ToString()",
+        "(Get-NetAdapter -Name {} -ErrorAction Stop).InterfaceGuid.ToString()",
         ps_quote(iface)
     ))?;
     let guid = guid.trim_matches(['{', '}']);
@@ -114,7 +115,7 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
     let (automatic, previous) = original_dns(&iface)?;
 
     let script = format!(
-        "Get-DnsClientServerAddress -InterfaceAlias '{}' -AddressFamily IPv4 -ErrorAction Stop | Set-DnsClientServerAddress -ServerAddresses ('{}','{}') -ErrorAction Stop",
+        "Get-DnsClientServerAddress -InterfaceAlias {} -AddressFamily IPv4 -ErrorAction Stop | Set-DnsClientServerAddress -ServerAddresses ('{}','{}') -ErrorAction Stop",
         ps_quote(&iface),
         PRIMARY_DNS,
         SECONDARY_DNS
@@ -153,18 +154,18 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
     let automatic = previous_automatic.ok_or("This legacy DNS snapshot does not record automatic versus static configuration. Recovery data was retained for manual review; no settings were changed.")?;
     if automatic {
         run_ps(&format!(
-            "Get-DnsClientServerAddress -InterfaceAlias '{}' -AddressFamily IPv4 -ErrorAction Stop | Set-DnsClientServerAddress -ResetServerAddresses -ErrorAction Stop",
+            "Get-DnsClientServerAddress -InterfaceAlias {} -AddressFamily IPv4 -ErrorAction Stop | Set-DnsClientServerAddress -ResetServerAddresses -ErrorAction Stop",
             ps_quote(&interface)
         ))
         .map(|_| ())?;
     } else {
         let joined = previous_servers
             .iter()
-            .map(|s| format!("'{}'", ps_quote(s)))
+            .map(|s| ps_quote(s))
             .collect::<Vec<_>>()
             .join(",");
         run_ps(&format!(
-            "Get-DnsClientServerAddress -InterfaceAlias '{}' -AddressFamily IPv4 -ErrorAction Stop | Set-DnsClientServerAddress -ServerAddresses ({}) -ErrorAction Stop",
+            "Get-DnsClientServerAddress -InterfaceAlias {} -AddressFamily IPv4 -ErrorAction Stop | Set-DnsClientServerAddress -ServerAddresses ({}) -ErrorAction Stop",
             ps_quote(&interface),
             joined
         ))

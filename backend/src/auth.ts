@@ -7,6 +7,9 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const TOKEN_TTL = "30d";
 
 function hashPassword(password: string): Promise<string> {
+  if (!isValidPassword(password)) {
+    return Promise.reject(new Error("Password must be at least 8 characters and no more than 72 UTF-8 bytes."));
+  }
   return bcrypt.hash(password, 12);
 }
 
@@ -87,7 +90,8 @@ function isValidEmail(email: unknown): email is string {
 }
 
 function isValidPassword(password: unknown): password is string {
-  return typeof password === "string" && password.length >= 8;
+  // bcrypt silently ignores bytes beyond 72, including part of a Unicode character.
+  return typeof password === "string" && password.length >= 8 && Buffer.byteLength(password, "utf8") <= 72;
 }
 
 export { hashPassword, verifyPassword, signToken, requireAuth, isValidEmail, isValidPassword };

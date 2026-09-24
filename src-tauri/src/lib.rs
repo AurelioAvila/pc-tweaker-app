@@ -1,4 +1,5 @@
 mod appcache;
+mod update_identity;
 mod audit;
 mod avatar;
 pub mod baseline;
@@ -1558,7 +1559,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().default_version_comparator(|current, release| {
+            release.version > current
+                && update_identity::release_matches(&release.version.to_string(), &release.data)
+        }).build())
         .plugin(tauri_plugin_process::init())
         .manage(sysmon::SysMonState::new())
         .manage(fps::FpsState::default())

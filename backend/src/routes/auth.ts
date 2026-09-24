@@ -123,7 +123,7 @@ async function sendPasswordChangedNotice(userId: number, changedAt: Date): Promi
 router.post("/register", async (req: Request, res: Response) => {
   const { email, password, firstName, lastName, dateOfBirth } = req.body || {};
   if (!isValidEmail(email)) return res.status(400).json({ error: "invalid email" });
-  if (!isValidPassword(password)) return res.status(400).json({ error: "password must be at least 8 characters" });
+  if (!isValidPassword(password)) return res.status(400).json({ error: "Password must be at least 8 characters and no more than 72 UTF-8 bytes." });
   if (!firstName || !String(firstName).trim()) return res.status(400).json({ error: "first name is required" });
   if (!lastName || !String(lastName).trim()) return res.status(400).json({ error: "last name is required" });
   if (!dateOfBirth || !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
@@ -375,7 +375,8 @@ function resetForm(token: string, error?: string): string {
        <input type="hidden" name="token" value="${escapeHtml(token)}">
        <label for="pw">New password</label>
        <input id="pw" type="password" name="newPassword" minlength="8" required autofocus
-              autocomplete="new-password" placeholder="At least 8 characters">
+              autocomplete="new-password" placeholder="At least 8 characters" aria-describedby="password-limit">
+       <p id="password-limit" class="hint">Use at least 8 characters and no more than 72 UTF-8 bytes. Accented characters and emoji may use multiple bytes.</p>
        <label for="pw2">Confirm password</label>
        <input id="pw2" type="password" name="confirmPassword" minlength="8" required
               autocomplete="new-password" placeholder="Type it again">
@@ -419,7 +420,7 @@ router.post("/reset-password", async (req: Request, res: Response) => {
   };
 
   if (typeof token !== "string" || token.length === 0) return fail(400, "missing token");
-  if (!isValidPassword(newPassword)) return fail(400, "Password must be at least 8 characters.");
+  if (!isValidPassword(newPassword)) return fail(400, "Password must be at least 8 characters and no more than 72 UTF-8 bytes.");
   // Only enforced for the form, which is the only caller that collects it.
   if (typeof confirmPassword === "string" && confirmPassword !== newPassword) {
     return fail(400, "The two passwords don't match.");

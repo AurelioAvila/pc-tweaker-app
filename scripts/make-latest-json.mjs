@@ -117,8 +117,9 @@ function shippedApplication(msiPath) {
   }
 }
 
+const shipped = shippedApplication(path.join(msiDir, msis[0]));
 const binaries = [
-  shippedApplication(path.join(msiDir, msis[0])),
+  shipped,
   ...fs.readdirSync(releaseDir).filter((file) => file.endsWith(".dll")).map((file) => path.join(releaseDir, file)),
   path.join(nsisDir, setup),
   path.join(msiDir, msis[0]),
@@ -131,6 +132,11 @@ for (const binary of binaries) {
 }
 const updaterSignature = verifyUpdater(path.join(nsisDir, setup), conf.plugins.updater.pubkey);
 verifyUpdater(path.join(msiDir, msis[0]), conf.plugins.updater.pubkey);
+const frontendEntry = fs.readFileSync(path.join(root, "dist", "index.html"), "utf8")
+  .match(/src="\/assets\/([^" ]+\.js)"/)?.[1];
+if (!frontendEntry || !fs.readFileSync(shipped).includes(Buffer.from(frontendEntry))) {
+  throw new Error("Installer payload is missing the production frontend; rebuild with `tauri build`, not `cargo build`.");
+}
 for (const [file, hash] of hashes) {
   if (sha256(file) !== hash) throw new Error(`File changed during verification: ${file}`);
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.14.8
+
+PC Tweaker 1.14.8 is a routine daily maintenance update.
+
 ## v1.14.7
 
 PC Tweaker 1.14.7 is a routine daily maintenance update.

@@ -31,6 +31,9 @@ function Assert-Payload([string]$Directory, [bool]$RequireLibrary = $false) {
   Assert-Signed $exe
   $actual = (Get-Item -LiteralPath $exe).VersionInfo.ProductVersion
   if ($actual -notlike "$version*") { throw "Wrong installed version: $actual" }
+  if (-not [Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes($exe)).Contains('assets/main-')) {
+    throw 'Installed application is missing its embedded frontend and would open the development localhost URL.'
+  }
   $dll = Join-Path $Directory 'tauri_app_lib.dll'
   # Rust links the application library into the executable. WiX also ships
   # the cdylib build output; NSIS deliberately includes only the executable.

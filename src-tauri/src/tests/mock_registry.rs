@@ -14,7 +14,7 @@
 //! keeps that list explicit, so a new tweak cannot slip past both.
 
 use std::cell::{Cell, RefCell};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::rc::Rc;
 
@@ -37,6 +37,9 @@ pub(crate) enum Stored {
 #[derive(Default)]
 pub(crate) struct MemRegistry {
     values: RefCell<BTreeMap<Key, Stored>>,
+    /// Keys created on their own. A key also exists when a value or another
+    /// key lives under it.
+    keys: RefCell<BTreeSet<(&'static str, String)>>,
     /// Writes and deletes fail with "access denied".
     pub deny_writes: Cell<bool>,
     /// Writes and deletes report success but change nothing, the way a policy
@@ -65,6 +68,14 @@ impl MemRegistry {
 
     pub fn dump(&self) -> BTreeMap<Key, Stored> {
         self.values.borrow().clone()
+    }
+
+    /// Keys that exist, explicit or implied by what lives under them.
+    pub fn has_key(&self, hive: Hive, path: &str) -> bool {
+        let (hive, path) = (hive_str(&hive), path.to_ascii_lowercase());
+        let under = |other: &str| other == path || other.starts_with(&format!("{path}\\"));
+        self.values.borrow().keys().any(|(h, p, _)| *h == hive && under(p))
+            || self.keys.borrow().iter().any(|(h, p)| *h == hive && under(p))
     }
 
     fn mutate(&self, change: impl FnOnce(&mut BTreeMap<Key, Stored>)) -> std::io::Result<()> {
@@ -105,6 +116,29 @@ impl RegistryBackend for MemRegistry {
         self.mutate(|map| {
             map.remove(&key(hive, path, name));
         })
+    }
+
+    fn key_exists(&self, hive: Hive, path: &str) -> std::io::Result<bool> {
+        Ok(self.has_key(hive, path))
+    }
+
+    fn create_key(&self, hive: Hive, path: &str) -> std::io::Result<()> {
+        let entry = (hive_str(&hive), path.to_ascii_lowercase());
+        self.mutate(|_| {})?;
+        if !self.drop_writes.get() {
+            self.keys.borrow_mut().insert(entry);
+        }
+        Ok(())
+    }
+
+    fn delete_tree(&self, hive: Hive, path: &str) -> std::io::Result<()> {
+        let (h, prefix) = (hive_str(&hive), path.to_ascii_lowercase());
+        let under = move |p: &str| p == prefix || p.starts_with(&format!("{prefix}\\"));
+        self.mutate(|map| map.retain(|(vh, vp, _), _| !(*vh == h && under(vp))))?;
+        if !self.drop_writes.get() {
+            self.keys.borrow_mut().retain(|(kh, kp)| !(*kh == h && under(kp)));
+        }
+        Ok(())
     }
 }
 

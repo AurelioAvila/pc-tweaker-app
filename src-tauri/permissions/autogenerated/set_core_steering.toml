@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-core-steering"
+description = "Enables the set_core_steering command without any pre-configured scope."
+commands.allow = ["set_core_steering"]
+
+[[permission]]
+identifier = "deny-set-core-steering"
+description = "Denies the set_core_steering command without any pre-configured scope."
+commands.deny = ["set_core_steering"]

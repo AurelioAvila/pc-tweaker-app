@@ -10,10 +10,26 @@ pub enum Category {
     Gaming,
 }
 
-#[derive(Serialize, Clone, Copy)]
+#[derive(Serialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Hive {
     Hkcu,
     Hklm,
+}
+
+/// The three registry operations every tweak is built from. Production code
+/// reaches the real registry through `windows_impl::WinRegistry`; unit tests
+/// install the in-memory backend in `tests/mock_registry.rs`, so the catalogue
+/// and the rollback store can be exercised on a CI runner without touching the
+/// machine running them.
+pub trait RegistryBackend {
+    /// `Ok(None)` when the key or the value is absent. Types other than
+    /// REG_DWORD and REG_SZ are `InvalidData`: nothing here could put them
+    /// back exactly, so no tweak may snapshot them.
+    fn read(&self, hive: Hive, path: &str, name: &str) -> std::io::Result<Option<RegValue>>;
+    /// Creates the key when it does not exist yet.
+    fn write(&self, hive: Hive, path: &str, name: &str, value: &RegValue) -> std::io::Result<()>;
+    /// Removing a value (or key) that is already gone is success.
+    fn delete(&self, hive: Hive, path: &str, name: &str) -> std::io::Result<()>;
 }
 
 /// A tweak backed by a single registry value (DWORD or string).
@@ -626,6 +642,97 @@ pub mod windows_impl {
         write_value(hive, path, name, &RegValue::Dword(value))
     }
 
+    /// The real registry.
+    pub struct WinRegistry;
+
+    impl RegistryBackend for WinRegistry {
+        fn read(&self, hive: Hive, path: &str, name: &str) -> std::io::Result<Option<RegValue>> {
+            let key = match root(&hive).open_subkey(path) {
+                Ok(key) => key,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+                Err(e) => return Err(e),
+            };
+            let value = match key.get_raw_value(name) {
+                Ok(value) => value,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+                Err(e) => return Err(e),
+            };
+            match value.vtype {
+                winreg::enums::REG_DWORD => key
+                    .get_value::<u32, _>(name)
+                    .map(|v| Some(RegValue::Dword(v))),
+                winreg::enums::REG_SZ => key
+                    .get_value::<String, _>(name)
+                    .map(|v| Some(RegValue::Str(v))),
+                _ => Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "unsupported original registry type; the value was not changed",
+                )),
+            }
+        }
+
+        fn write(&self, hive: Hive, path: &str, name: &str, value: &RegValue) -> std::io::Result<()> {
+            refuse_in_unit_tests()?;
+            let (key, _) = root(&hive).create_subkey(path)?;
+            match value {
+                RegValue::Dword(v) => key.set_value(name, v),
+                RegValue::Str(s) => key.set_value(name, s),
+            }
+        }
+
+        fn delete(&self, hive: Hive, path: &str, name: &str) -> std::io::Result<()> {
+            use winreg::enums::{KEY_QUERY_VALUE, KEY_SET_VALUE};
+            refuse_in_unit_tests()?;
+            let key = match root(&hive).open_subkey_with_flags(path, KEY_QUERY_VALUE | KEY_SET_VALUE)
+            {
+                Ok(key) => key,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+                Err(e) => return Err(e),
+            };
+            match key.delete_value(name) {
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+                other => other,
+            }
+        }
+    }
+
+    /// A unit test that forgets to install the mock must fail, not edit the
+    /// registry of whoever runs `cargo test` (CI runners are administrators).
+    /// The disposable-VM suites opt in with the same variable as `vm_guard`.
+    fn refuse_in_unit_tests() -> std::io::Result<()> {
+        if cfg!(test)
+            && std::env::var("PC_TWEAKER_EXPANSION_VM_TEST").as_deref()
+                != Ok("I_ACKNOWLEDGE_DISPOSABLE_VM")
+        {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "unit tests may not write the real registry; install the mock registry",
+            ));
+        }
+        Ok(())
+    }
+
+    #[cfg(test)]
+    thread_local! {
+        static TEST_BACKEND: std::cell::RefCell<Option<std::rc::Rc<dyn RegistryBackend>>> =
+            const { std::cell::RefCell::new(None) };
+    }
+
+    /// Routes this thread's registry calls to `backend` (test builds only).
+    /// Thread-local, so tests running in parallel never see each other's state.
+    #[cfg(test)]
+    pub(crate) fn set_test_backend(backend: Option<std::rc::Rc<dyn RegistryBackend>>) {
+        TEST_BACKEND.with(|slot| *slot.borrow_mut() = backend);
+    }
+
+    fn with_backend<T>(f: impl FnOnce(&dyn RegistryBackend) -> T) -> T {
+        #[cfg(test)]
+        if let Some(backend) = TEST_BACKEND.with(|slot| slot.borrow().clone()) {
+            return f(&*backend);
+        }
+        f(&WinRegistry)
+    }
+
     /// Reads a registry value, trying the same type as `kind_hint` (Dword or Str).
     pub fn read_value(
         hive: Hive,
@@ -633,42 +740,13 @@ pub mod windows_impl {
         name: &str,
         _kind_hint: &RegValue,
     ) -> std::io::Result<Option<RegValue>> {
-        let root = root(&hive);
-        let key = match root.open_subkey(path) {
-            Ok(key) => key,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-            Err(e) => return Err(e),
-        };
-        let value = match key.get_raw_value(name) {
-            Ok(value) => value,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-            Err(e) => return Err(e),
-        };
-        match value.vtype {
-            winreg::enums::REG_DWORD => key
-                .get_value::<u32, _>(name)
-                .map(|v| Some(RegValue::Dword(v))),
-            winreg::enums::REG_SZ => key
-                .get_value::<String, _>(name)
-                .map(|v| Some(RegValue::Str(v))),
-            _ => Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "unsupported original registry type; the value was not changed",
-            )),
-        }
+        with_backend(|registry| registry.read(hive, path, name))
     }
 
-    /// Writes a registry value, creating the key if needed.
+    /// Writes a registry value, creating the key if needed, and reads it back.
     pub fn write_value(hive: Hive, path: &str, name: &str, value: &RegValue) -> Result<(), String> {
-        let root = root(&hive);
-        let (key, _) = root
-            .create_subkey(path)
-            .map_err(|e| format!("could not open {}: {}", path, e))?;
-        match value {
-            RegValue::Dword(v) => key.set_value(name, v),
-            RegValue::Str(s) => key.set_value(name, s),
-        }
-        .map_err(|e| format!("could not write {}: {}", name, e))?;
+        with_backend(|registry| registry.write(hive, path, name, value))
+            .map_err(|e| format!("could not write {} in {}: {}", name, path, e))?;
         if read_value(hive, path, name, value).map_err(|e| e.to_string())? != Some(value.clone()) {
             return Err(format!(
                 "registry verification failed for {name}; the rollback snapshot was retained"
@@ -687,23 +765,15 @@ pub mod windows_impl {
         match &snapshot.original_value {
             Some(value) => write_value(hive, &snapshot.path, &snapshot.name, value)?,
             None => {
-                use winreg::enums::{KEY_QUERY_VALUE, KEY_SET_VALUE};
-                let key = match root(&hive)
-                    .open_subkey_with_flags(&snapshot.path, KEY_QUERY_VALUE | KEY_SET_VALUE)
-                {
-                    Ok(key) => key,
-                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-                    Err(e) => return Err(format!("could not open rollback target: {e}")),
-                };
-                match key.delete_value(&snapshot.name) {
-                    Ok(()) => {}
-                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-                    Err(e) => return Err(format!("could not remove rollback target: {e}")),
-                }
-                match key.get_raw_value(&snapshot.name) {
-                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                with_backend(|registry| registry.delete(hive, &snapshot.path, &snapshot.name))
+                    .map_err(|e| format!("could not remove rollback target: {e}"))?;
+                match read_value(hive, &snapshot.path, &snapshot.name, &RegValue::Dword(0)) {
+                    Ok(None) => {}
+                    Ok(Some(_)) => return Err("registry value still exists after rollback".into()),
+                    Err(e) if e.kind() == std::io::ErrorKind::InvalidData => {
+                        return Err("registry value still exists after rollback".into())
+                    }
                     Err(e) => return Err(format!("could not verify rollback target: {e}")),
-                    Ok(_) => return Err("registry value still exists after rollback".into()),
                 }
             }
         }

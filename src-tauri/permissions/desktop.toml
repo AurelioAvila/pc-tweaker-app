@@ -120,4 +120,9 @@ permissions = [
     "allow-list-scheduled-tasks",
     "allow-set-scheduled-task-enabled",
     "allow-flush-dns-cache",
+    "allow-verify-network",
+    "allow-last-network-verification",
+    "allow-trace-dpc-latency",
+    "allow-core-steering-status",
+    "allow-set-core-steering",
 ]

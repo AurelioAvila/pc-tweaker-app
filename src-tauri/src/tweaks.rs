@@ -30,6 +30,12 @@ pub trait RegistryBackend {
     fn write(&self, hive: Hive, path: &str, name: &str, value: &RegValue) -> std::io::Result<()>;
     /// Removing a value (or key) that is already gone is success.
     fn delete(&self, hive: Hive, path: &str, name: &str) -> std::io::Result<()>;
+    /// Whether the key itself exists, values or not.
+    fn key_exists(&self, hive: Hive, path: &str) -> std::io::Result<bool>;
+    /// Creates the key (and its parents) without writing any value.
+    fn create_key(&self, hive: Hive, path: &str) -> std::io::Result<()>;
+    /// Deletes the key with everything under it. Already gone is success.
+    fn delete_tree(&self, hive: Hive, path: &str) -> std::io::Result<()>;
 }
 
 /// A tweak backed by a single registry value (DWORD or string).
@@ -680,6 +686,27 @@ pub mod windows_impl {
             }
         }
 
+        fn key_exists(&self, hive: Hive, path: &str) -> std::io::Result<bool> {
+            match root(&hive).open_subkey(path) {
+                Ok(_) => Ok(true),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(false),
+                Err(e) => Err(e),
+            }
+        }
+
+        fn create_key(&self, hive: Hive, path: &str) -> std::io::Result<()> {
+            refuse_in_unit_tests()?;
+            root(&hive).create_subkey(path).map(|_| ())
+        }
+
+        fn delete_tree(&self, hive: Hive, path: &str) -> std::io::Result<()> {
+            refuse_in_unit_tests()?;
+            match root(&hive).delete_subkey_all(path) {
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+                other => other,
+            }
+        }
+
         fn delete(&self, hive: Hive, path: &str, name: &str) -> std::io::Result<()> {
             use winreg::enums::{KEY_QUERY_VALUE, KEY_SET_VALUE};
             refuse_in_unit_tests()?;
@@ -699,7 +726,9 @@ pub mod windows_impl {
     /// A unit test that forgets to install the mock must fail, not edit the
     /// registry of whoever runs `cargo test` (CI runners are administrators).
     /// The disposable-VM suites opt in with the same variable as `vm_guard`.
-    fn refuse_in_unit_tests() -> std::io::Result<()> {
+    /// Every other seam (power plans, services, DNS, TCP templates, Filter
+    /// Keys) calls this before a real system write for the same reason.
+    pub(crate) fn refuse_in_unit_tests() -> std::io::Result<()> {
         if cfg!(test)
             && std::env::var("PC_TWEAKER_EXPANSION_VM_TEST").as_deref()
                 != Ok("I_ACKNOWLEDGE_DISPOSABLE_VM")
@@ -753,6 +782,18 @@ pub mod windows_impl {
             ));
         }
         Ok(())
+    }
+
+    pub fn key_exists(hive: Hive, path: &str) -> std::io::Result<bool> {
+        with_backend(|registry| registry.key_exists(hive, path))
+    }
+
+    pub fn create_key(hive: Hive, path: &str) -> std::io::Result<()> {
+        with_backend(|registry| registry.create_key(hive, path))
+    }
+
+    pub fn delete_tree(hive: Hive, path: &str) -> std::io::Result<()> {
+        with_backend(|registry| registry.delete_tree(hive, path))
     }
 
     /// Restores (or removes) a value from a previously taken snapshot.

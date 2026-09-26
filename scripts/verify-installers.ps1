@@ -26,7 +26,7 @@ function Run-Installer([string]$Path, [string[]]$Arguments) {
   $process = Start-Process -FilePath $Path -ArgumentList $Arguments -WindowStyle Hidden -Wait -PassThru
   if ($process.ExitCode -notin @(0,3010)) { throw "Installer returned $($process.ExitCode): $Path" }
 }
-function Assert-Payload([string]$Directory, [bool]$RequireLibrary = $false) {
+function Assert-Payload([string]$Directory) {
   $exe = Join-Path $Directory 'tauri-app.exe'
   Assert-Signed $exe
   $actual = (Get-Item -LiteralPath $exe).VersionInfo.ProductVersion
@@ -35,9 +35,9 @@ function Assert-Payload([string]$Directory, [bool]$RequireLibrary = $false) {
     throw 'Installed application is missing its embedded frontend and would open the development localhost URL.'
   }
   $dll = Join-Path $Directory 'tauri_app_lib.dll'
-  # Rust links the application library into the executable. WiX also ships
-  # the cdylib build output; NSIS deliberately includes only the executable.
-  if ($RequireLibrary -or (Test-Path -LiteralPath $dll)) { Assert-Signed $dll }
+  # Rust links the application library into the executable. Check the DLL
+  # when packaged, but do not require a separate file in either format.
+  if (Test-Path -LiteralPath $dll) { Assert-Signed $dll }
   $app = Start-Process -FilePath $exe -WindowStyle Hidden -PassThru
   try {
     if ($app.WaitForExit(5000)) { throw "Installed application exited during startup: $($app.ExitCode)" }
@@ -74,7 +74,7 @@ if (-not (Test-Path -LiteralPath (Join-Path $msiDirectory 'tauri-app.exe'))) {
   Get-Content (Join-Path $root 'msi-upgrade.log') | Select-String 'INSTALLDIR|Return value 3'
   throw 'MSI did not install to its requested directory'
 }
-Assert-Payload $msiDirectory $true
+Assert-Payload $msiDirectory
 Run-Installer 'msiexec.exe' @('/x',$newMsi[0].FullName,'/qn','/norestart')
 if (Test-Path -LiteralPath (Join-Path $msiDirectory 'tauri-app.exe')) { throw 'MSI uninstall left the application behind' }
 }

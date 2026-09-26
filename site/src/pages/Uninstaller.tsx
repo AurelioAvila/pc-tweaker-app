@@ -1,4 +1,4 @@
-import { DOWNLOAD_EXE, UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "../constants";
+import { UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "../constants";
 
 /* The page a buyer actually lands on.
  *
@@ -7,7 +7,7 @@ import { DOWNLOAD_EXE, UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "..
  * prices existed only inside the installed application, which is a funnel
  * that cannot convert anybody who has not already installed. Every number and
  * every capability below is taken from the shipping code, not from ambition:
- * prices from the Uninstaller's own src/i18n.ts, the free/Pro line from the
+ * prices checked against the live Stripe products, the free/Pro line from the
  * two Pro gates in that file (leftover cleaning and batch removal), the
  * receipt fields from src-tauri/src/ledger.rs, the restore point from
  * src-tauri/src/restore_point.rs. The disclosure that used to be the whole
@@ -72,7 +72,7 @@ export function UninstallerPage() {
       <section className="mb-10 rounded-2xl border border-white/10 p-6">
         <h2 className="mb-2 text-2xl font-semibold text-[var(--fg)]">Uninstaller Pro</h2>
         <p className="mb-4 text-lg font-semibold text-accent">
-          €13.99 per year, or €3.99 per month
+          €9.99 per year
         </p>
         <ul className="mb-5 space-y-2.5 leading-relaxed text-[var(--fg-dim)]">
           {PRO.map((item) => (
@@ -90,16 +90,9 @@ export function UninstallerPage() {
           sign-in, existing Lifetime owners included; that bonus does not renew automatically.
         </p>
         <p className="leading-relaxed text-[var(--fg-dim)]">
-          Pro is bought inside the application, under the account menu, using a PC Tweaker suite
-          account. If you do not have one yet, install{" "}
-          <a
-            href={DOWNLOAD_EXE}
-            className="text-accent underline-offset-4 hover:underline"
-          >
-            PC Tweaker
-          </a>{" "}
-          — it is free and it is where the account is created. One account covers both
-          applications.
+          Create your free suite account inside PC Tweaker Uninstaller, then choose Pro in the
+          account menu. One account covers both applications. Taxes and the final renewal terms
+          are shown at checkout.
         </p>
       </section>
 
@@ -118,9 +111,8 @@ export function UninstallerPage() {
       <section className="mb-10 rounded-2xl border border-white/10 p-6">
         <h2 className="mb-3 text-2xl font-semibold text-[var(--fg)]">Release verification comes first</h2>
         <p className="leading-relaxed text-[var(--fg-dim)]">
-          Version 0.10.0 has verified publisher signatures and trusted timestamps on the
-          Windows installers and application. The publisher is Aurelio Avila. Download the
-          signed release above; historical version 0.8.2 remains unsigned.
+          The current Windows installers and application have verified publisher signatures and
+          trusted timestamps. The publisher is Aurelio Avila. Download the signed release above.
           Code signing identifies the publisher; it does not guarantee that Windows will
           never display a security warning.
         </p>

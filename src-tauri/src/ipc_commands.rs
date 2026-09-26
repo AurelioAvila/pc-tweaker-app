@@ -119,4 +119,9 @@ pub const APP_COMMANDS: &[&str] = &[
     "list_scheduled_tasks",
     "set_scheduled_task_enabled",
     "flush_dns_cache",
+    "verify_network",
+    "last_network_verification",
+    "trace_dpc_latency",
+    "core_steering_status",
+    "set_core_steering",
 ];

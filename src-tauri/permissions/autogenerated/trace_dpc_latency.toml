@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-trace-dpc-latency"
+description = "Enables the trace_dpc_latency command without any pre-configured scope."
+commands.allow = ["trace_dpc_latency"]
+
+[[permission]]
+identifier = "deny-trace-dpc-latency"
+description = "Denies the trace_dpc_latency command without any pre-configured scope."
+commands.deny = ["trace_dpc_latency"]

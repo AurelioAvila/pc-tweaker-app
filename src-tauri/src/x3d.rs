@@ -72,9 +72,8 @@ pub struct ProcessEntry {
 }
 
 #[cfg(windows)]
-mod win {
+pub(crate) mod win {
     use super::{Ccd, ProcessEntry, X3dReport, X3dStatus};
-    use std::os::windows::process::CommandExt;
     use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
     use windows_sys::Win32::System::SystemInformation::{
         GetLogicalProcessorInformationEx, RelationCache, SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX,
@@ -84,8 +83,6 @@ mod win {
         PROCESS_SET_INFORMATION,
     };
 
-    const CREATE_NO_WINDOW: u32 = 0x08000000;
-
     /// Reads the L3 cache groups the machine actually reports.
     ///
     /// The call is made twice on purpose: once with a zero-length buffer to
@@ -93,7 +90,7 @@ mod win {
     /// walked by each record's own `Size` field — indexing them as a fixed
     /// array is the classic way to read this wrong on a machine with a
     /// different cache layout than the one it was tested on.
-    fn l3_groups() -> Option<Vec<(u64, u32)>> {
+    pub(crate) fn l3_groups() -> Option<Vec<(u64, u32)>> {
         unsafe {
             let mut len: u32 = 0;
             GetLogicalProcessorInformationEx(RelationCache, std::ptr::null_mut(), &mut len);
@@ -145,20 +142,13 @@ mod win {
     }
 
     fn cpu_name() -> String {
-        crate::system_tools::run("powershell", |tool| {
-            tool.args([
-                "-NoProfile",
-                "-NonInteractive",
-                "-Command",
-                "(Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name)",
-            ])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
-        })
-        .ok()
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| "Unknown processor".to_string())
+        let mut sys = sysinfo::System::new();
+        sys.refresh_cpu_all();
+        sys.cpus()
+            .first()
+            .map(|cpu| cpu.brand().trim().to_string())
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| "Unknown processor".to_string())
     }
 
     pub fn report() -> X3dReport {

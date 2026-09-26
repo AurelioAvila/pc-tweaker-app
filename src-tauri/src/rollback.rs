@@ -125,6 +125,16 @@ pub enum SnapshotEntry {
     Composite {
         entries: Vec<SnapshotEntry>,
     },
+    /// Default CPU sets a game session gave one running process. The process
+    /// is identified by PID *and* kernel creation time, so a reused PID is
+    /// never touched. Rollback clears the sets, but only while the process
+    /// still has exactly these; one that exited or was changed by someone
+    /// else is left alone.
+    ProcessCpuSets {
+        pid: u32,
+        creation: u64,
+        cpu_sets: Vec<u32>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
@@ -166,7 +176,7 @@ impl RollbackStore {
             validate_snapshot(id, entry)?;
         }
         if state.owners.iter().any(|(id, owner)| {
-            id != crate::turbo::TWEAK_ID
+            !SESSION_OWNED.contains(&id.as_str())
                 || !state.snapshots.contains_key(id)
                 || crate::game_sessions::validate_owner_token(owner).is_err()
         }) {
@@ -308,8 +318,8 @@ impl RollbackTransaction<'_> {
         if self.entry(tweak_id).is_some() {
             return Err("the tweak is already owned or applied".into());
         }
-        if tweak_id != crate::turbo::TWEAK_ID {
-            return Err("only Turbo Gaming supports session ownership".into());
+        if !SESSION_OWNED.contains(&tweak_id) {
+            return Err("only game-session changes support session ownership".into());
         }
         crate::game_sessions::validate_owner_token(owner)?;
         validate_snapshot(tweak_id, &entry)?;
@@ -317,6 +327,25 @@ impl RollbackTransaction<'_> {
         let mut next = self.state.clone();
         next.snapshots.insert(tweak_id.to_owned(), entry);
         next.owners.insert(tweak_id.to_owned(), owner.to_owned());
+        self.commit(next)
+    }
+
+    /// Swaps in a larger snapshot for an entry this owner already holds, so a
+    /// running session can record processes that started after it did. The
+    /// new records reach disk before the caller changes those processes.
+    pub fn replace_owned_entry(
+        &mut self,
+        tweak_id: &str,
+        entry: SnapshotEntry,
+        owner: &str,
+    ) -> Result<(), String> {
+        if self.owner(tweak_id) != Some(owner) || self.entry(tweak_id).is_none() {
+            return Err("this session no longer owns the change".into());
+        }
+        validate_snapshot(tweak_id, &entry)?;
+        self.check_conflicts(tweak_id, &entry)?;
+        let mut next = self.state.clone();
+        next.snapshots.insert(tweak_id.to_owned(), entry);
         self.commit(next)
     }
 
@@ -428,6 +457,12 @@ fn power_index(entry: &SnapshotEntry, allowed: &[&str]) -> bool {
         if valid_guid(scheme_guid) && subgroup_guid.eq_ignore_ascii_case(crate::gaming::SUB_PROCESSOR_GUID)
         && allowed.iter().any(|id| setting_guid.eq_ignore_ascii_case(id)))
 }
+
+/// The only ids a game-session owner token may be attached to.
+const SESSION_OWNED: [&str; 2] = [
+    crate::turbo::TWEAK_ID,
+    crate::engine::dynamic_session::TWEAK_ID,
+];
 
 /// Snapshot files are user-writable input, including when an elevated helper
 /// consumes them. Only targets compiled into this build may be restored.
@@ -564,6 +599,13 @@ pub(crate) fn validate_snapshot(id: &str, entry: &SnapshotEntry) -> Result<(), S
                 SnapshotEntry::Registry(s) if registry_matches(s, "HKLM", r"SYSTEM\CurrentControlSet\Control\FileSystem", "LongPathsEnabled")),
             "disable_filter_keys_shortcut" => matches!(entry,
                 SnapshotEntry::FilterKeys { original } if [original.wait_ms, original.delay_ms, original.repeat_ms, original.bounce_ms].iter().all(|v| *v <= 20_000)),
+            crate::engine::dynamic_session::TWEAK_ID => matches!(entry,
+                SnapshotEntry::Composite { entries }
+                    if (1..=crate::engine::dynamic_session::MAX_PROCESSES).contains(&entries.len())
+                        && entries.iter().all(|e| matches!(e,
+                            SnapshotEntry::ProcessCpuSets { pid, creation, cpu_sets }
+                                if *pid != 0 && *creation != 0
+                                    && (1..=crate::engine::dynamic_session::MAX_CPU_SETS).contains(&cpu_sets.len())))),
             "limit_do_background_download" => matches!(entry,
                 SnapshotEntry::DeliveryOptimization { original_value: None, original_provider, original_percent_provider, original_schedule_provider, written_kbps }
                     if original_provider == "DefaultProvider"
@@ -616,6 +658,9 @@ fn snapshot_targets(entry: &SnapshotEntry) -> Vec<String> {
             vec![format!("tcp:{setting_name}")]
         }
         SnapshotEntry::Composite { entries } => entries.iter().flat_map(snapshot_targets).collect(),
+        SnapshotEntry::ProcessCpuSets { pid, creation, .. } => {
+            vec![format!("cpusets:{pid}:{creation}")]
+        }
     };
     targets.sort();
     targets

@@ -1,4 +1,5 @@
 import { TweakyDriverPromoCard } from "./tweaky-driver-promo";
+import { LatencyTracePanel } from "./diagnostics";
 import { ToolHeader, ToolSearch, ToolDetails } from "./tool-section";
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
@@ -1378,6 +1379,7 @@ export function HardwarePanel({
         <>
           <ThermalsPanel s={s} pushToast={pushToast} />
           <DriversPanel s={s} pushToast={pushToast} />
+          <LatencyTracePanel s={s} />
           <TweakyDriverPromoCard s={s} />
           {/* Sits under the audit it reads from: the audit answers "how old
               are my drivers", this answers "open the pages for the old ones". */}

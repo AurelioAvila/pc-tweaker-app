@@ -1,4 +1,5 @@
 import { TweakyDriverPromoCard } from "./components/tweaky-driver-promo";
+import { NetworkCheckPanel } from "./components/diagnostics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -1007,6 +1008,7 @@ function App() {
                   are what this screen is known for, and the aligner applies to
                   a minority of processors. */}
                 <X3dPanel s={s} pushToast={pushToast} />
+                <NetworkCheckPanel s={s} tweaks={tweaks} />
               </>
             )}
 

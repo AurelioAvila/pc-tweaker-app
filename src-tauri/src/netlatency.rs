@@ -27,7 +27,7 @@ pub fn info() -> NetLatencyInfo {
     NetLatencyInfo {
         id: TWEAK_ID,
         name: "TCP acknowledgments and packet buffering",
-        description: "Sets TcpAckFrequency and TCPNoDelay to 1 on the first adapter Windows reports as Up. This targets TCP behavior; UDP traffic is unaffected. Windows and application support vary, so lower game latency is not guaranteed (HKLM, administrator rights required).",
+        description: "Sets TcpAckFrequency and TCPNoDelay to 1 on the adapter that carries the route to the internet. This targets TCP behavior; UDP traffic is unaffected. Windows and application support vary, so lower game latency is not guaranteed (HKLM, administrator rights required).",
         requires_admin: true,
         requires_pro: true,
     }
@@ -40,48 +40,42 @@ pub(crate) const INTERFACES_PATH: &str =
 /// The two values that together disable packet coalescing and delayed ACKs.
 pub(crate) const VALUES: [&str; 2] = ["TcpAckFrequency", "TCPNoDelay"];
 
-/// GUID of the adapter currently carrying traffic.
-///
-/// `InterfaceGuid` comes straight from the `Get-NetAdapter` object rather than
-/// from parsed display text, so it is unaffected by the system language — the
-/// same reasoning as everywhere else in this codebase.
-#[cfg(windows)]
-fn active_interface_guid() -> Result<String, String> {
-    use std::os::windows::process::CommandExt;
-    const CREATE_NO_WINDOW: u32 = 0x08000000;
-
-    let output = crate::system_tools::run("powershell", |command| command
-        .args([
-            "-NoProfile",
-            "-NonInteractive",
-            "-Command",
-            "(Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object -First 1 -ExpandProperty InterfaceGuid)",
-        ])
-        .creation_flags(CREATE_NO_WINDOW)
-        .output())
-        .map_err(|e| format!("could not enumerate network adapters: {}", e))?;
-
-    let guid = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    if guid.is_empty() {
-        return Err("no active network adapter found".to_string());
-    }
-    Ok(guid)
-}
-
 #[cfg(windows)]
 fn interface_path(guid: &str) -> String {
     format!(r"{}\{}", INTERFACES_PATH, guid)
 }
 
+/// Applies to the adapter Windows would route internet traffic through, not
+/// merely the first one that is up: a VPN or a Hyper-V switch can be up too.
 #[cfg(windows)]
 pub fn apply(store: &RollbackStore) -> Result<(), String> {
+    apply_for_interface(
+        store,
+        &crate::diagnostics::network_verify::internet_interface_guid()?,
+    )
+}
+
+#[cfg(windows)]
+pub(crate) fn apply_for_interface(store: &RollbackStore, guid: &str) -> Result<(), String> {
     let mut transaction = store.transaction()?;
 
     use crate::tweaks::windows_impl::{hive_from_str, read_value, write_value};
 
-    let guid = active_interface_guid()?;
-    let path = interface_path(&guid);
+    let path = interface_path(guid);
     let hive = hive_from_str(HIVE);
+
+    // Applied before on a different adapter (older builds took the first one
+    // that was up, which could be a VPN or Hyper-V switch): put that adapter
+    // back and move the tweak here, in the same transaction, instead of
+    // refusing every re-apply from a profile.
+    if let Some(SnapshotEntry::Composite { entries }) = transaction.entry(TWEAK_ID) {
+        let elsewhere = entries.iter().any(|e| {
+            matches!(e, SnapshotEntry::Registry(s) if !s.path.eq_ignore_ascii_case(&path))
+        });
+        if elsewhere {
+            transaction.restore_entry(TWEAK_ID, restore_values)?;
+        }
+    }
 
     let mut entries = Vec::new();
     for name in VALUES {
@@ -114,20 +108,22 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
 
 #[cfg(windows)]
 pub fn rollback(store: &RollbackStore) -> Result<(), String> {
+    store.restore_entry(TWEAK_ID, restore_values)
+}
+
+#[cfg(windows)]
+fn restore_values(entry: SnapshotEntry) -> Result<(), String> {
     use crate::tweaks::windows_impl::restore_value;
 
-    store.restore_entry(TWEAK_ID, |entry| {
-        let SnapshotEntry::Composite { entries } = entry else {
-            return Err("unexpected snapshot type for the network latency tweak".to_string());
-        };
-
-        for e in entries {
-            if let SnapshotEntry::Registry(snapshot) = e {
-                restore_value(&snapshot)?;
-            }
+    let SnapshotEntry::Composite { entries } = entry else {
+        return Err("unexpected snapshot type for the network latency tweak".to_string());
+    };
+    for e in entries {
+        if let SnapshotEntry::Registry(snapshot) = e {
+            restore_value(&snapshot)?;
         }
-        Ok(())
-    })
+    }
+    Ok(())
 }
 
 #[cfg(not(windows))]
@@ -149,7 +145,8 @@ mod tests {
     /// registry path built from it would silently point nowhere.
     #[test]
     fn the_active_adapter_guid_is_readable_and_well_formed() {
-        let guid = active_interface_guid().expect("no active adapter");
+        let guid = crate::diagnostics::network_verify::internet_interface_guid()
+            .expect("no adapter carries the default route");
         assert!(
             guid.starts_with('{') && guid.ends_with('}'),
             "not a GUID: {}",
@@ -174,7 +171,8 @@ mod tests {
         use winreg::enums::HKEY_LOCAL_MACHINE;
         use winreg::RegKey;
 
-        let guid = active_interface_guid().expect("no active adapter");
+        let guid = crate::diagnostics::network_verify::internet_interface_guid()
+            .expect("no adapter carries the default route");
         match RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey(interface_path(&guid)) {
             Ok(_) => {}
             Err(e) => println!(

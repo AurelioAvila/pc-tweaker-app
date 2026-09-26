@@ -79,6 +79,20 @@ windows-sys = { version = "0.59", features = [
     # underneath the panel's own rounded corners.
     "Win32_Graphics_Dwm",
     "Win32_Graphics_Gdi",
+    # K32EnumDeviceDrivers / K32GetDeviceDriverBaseNameW, to name the driver
+    # behind a DPC or ISR routine address (src/diagnostics/dpc.rs).
+    "Win32_System_ProcessStatus",
+    # ProcessIdToSessionId, so game-session core steering only ever touches
+    # processes in the signed-in user's own session.
+    "Win32_System_RemoteDesktop",
+    # IcmpSendEcho and the default-route adapter lookup, plus getsockopt and
+    # SIO_TCP_INFO on a live connection, for the network verification that
+    # runs around the TCP tweaks (src/diagnostics/network_verify.rs).
+    # WSAIoctl's signature carries an OVERLAPPED, hence System_IO.
+    "Win32_NetworkManagement_IpHelper",
+    "Win32_NetworkManagement_Ndis",
+    "Win32_Networking_WinSock",
+    "Win32_System_IO",
 ] }
 is_elevated = "0.1"
 runas = "1"

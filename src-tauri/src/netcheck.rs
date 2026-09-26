@@ -13,10 +13,12 @@
 //! says so, instead of leaving someone to work out which of the things they
 //! just ticked took their connection away.
 //!
-//! Deliberately not measured: throughput or round-trip time, before against
-//! after. Congestion control only shows itself on a loaded line; an idle
-//! probe would move by noise alone, and reporting noise as evidence is the
-//! move this app exists to refuse.
+//! Deliberately not claimed: that a tweak changed throughput or round-trip
+//! time. Congestion control only shows itself on a loaded line; an idle probe
+//! moves by noise alone, and reporting noise as evidence is the move this app
+//! exists to refuse. `diagnostics::network_verify` does record a ping before
+//! and after, but it only ever reports "no measurable change" or "the line
+//! itself changed", never an effect of the tweak.
 
 use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;

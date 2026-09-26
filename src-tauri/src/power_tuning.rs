@@ -36,7 +36,7 @@ pub fn valid_snapshot(t: &PowerTweak, entry: &SnapshotEntry) -> bool {
             && setting_guid.eq_ignore_ascii_case(t.setting) && *original_value <= t.maximum)
 }
 
-trait PowerBackend {
+pub(crate) trait PowerBackend {
     fn active(&self) -> Result<String, String>;
     fn supported(&self, scheme: &str, t: &PowerTweak) -> Result<(), String>;
     fn read_value(&self, scheme: &str, t: &PowerTweak) -> Result<u32, String>;
@@ -44,7 +44,7 @@ trait PowerBackend {
     fn refresh_if_active(&self, scheme: &str) -> Result<(), String>;
 }
 
-fn apply_with(
+pub(crate) fn apply_with(
     store: &RollbackStore,
     t: &PowerTweak,
     api: &impl PowerBackend,
@@ -69,7 +69,7 @@ fn apply_with(
     api.refresh_if_active(&scheme)
 }
 
-fn restore_with(
+pub(crate) fn restore_with(
     store: &RollbackStore,
     t: &PowerTweak,
     api: &impl PowerBackend,

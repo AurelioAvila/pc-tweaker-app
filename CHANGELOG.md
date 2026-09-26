@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.14.10
+
+PC Tweaker 1.14.10 is a routine daily maintenance update.
+
 ## v1.14.9
 
 PC Tweaker 1.14.9 fixes an issue that caused the installed app to open a localhost connection error instead of the desktop interface.

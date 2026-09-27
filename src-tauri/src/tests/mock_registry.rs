@@ -227,7 +227,8 @@ impl PowerBackend for MemPower {
 }
 
 /// A rollback store in its own temporary directory, which doubles as an
-/// app-data folder with no licence in it (so: a Free user).
+/// app-data folder with no licence in it (so: a Free user). Shared with the
+/// seam tests that live next to the modules they cover.
 pub(crate) struct Fixture {
     pub(crate) dir: PathBuf,
     pub(crate) store: RollbackStore,

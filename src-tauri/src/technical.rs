@@ -126,9 +126,11 @@ pub fn composite_changes(id: &str) -> Vec<TechnicalChange> {
         ];
     }
     if id == dns::TWEAK_ID {
-        return vec![cmd(
-            "powershell",
-            "Set-DnsClientServerAddress -InterfaceAlias <active adapter> -ServerAddresses 1.1.1.1,1.0.0.1",
+        // Written through SetInterfaceDnsSettings; this is the value it sets.
+        return vec![sz(
+            format!("HKLM\\{}\\<active adapter GUID>", netlatency::INTERFACES_PATH),
+            "NameServer",
+            &format!("{},{}", dns::PRIMARY_DNS, dns::SECONDARY_DNS),
         )];
     }
     if id == gaming::INPUT_LAG_ID {

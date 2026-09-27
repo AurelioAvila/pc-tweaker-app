@@ -22,6 +22,7 @@ const require = createRequire(import.meta.url);
  */
 async function sendWithProviderStatus(status, body = "") {
   process.env.RESEND_API_KEY = "test-key";
+  process.env.MAIL_FROM = "PC Tweaker <mail@example.com>";
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => ({
     ok: status >= 200 && status < 300,
@@ -80,4 +81,17 @@ test("a provider outage is not blamed on the address", async () => {
 test("a successful send reports delivery", async () => {
   const result = await sendWithProviderStatus(200);
   assert.equal(result.delivered, true);
+});
+
+test("production never falls back to an unverified sender", async () => {
+  process.env.RESEND_API_KEY = "test-key";
+  delete process.env.MAIL_FROM;
+  process.env.NODE_ENV = "production";
+  delete require.cache[require.resolve("../dist/mailer.js")];
+  const { sendMail, isConfigured } = require("../dist/mailer.js");
+  assert.equal(isConfigured, false);
+  await assert.rejects(
+    () => sendMail({ to: "someone@example.com", subject: "s", html: "<p>h</p>" }),
+    /No email provider is configured/,
+  );
 });

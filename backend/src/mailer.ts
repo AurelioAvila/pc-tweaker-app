@@ -3,8 +3,8 @@ import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 const { RESEND_API_KEY, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM } = process.env;
 
-const useResend = Boolean(RESEND_API_KEY);
-const useSmtp = !useResend && Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS);
+const useResend = Boolean(RESEND_API_KEY && MAIL_FROM);
+const useSmtp = !useResend && Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS && MAIL_FROM);
 const isConfigured = useResend || useSmtp;
 
 // SMTP over a raw socket (port 587/465) is blocked outbound on some hosts
@@ -60,7 +60,7 @@ async function sendViaResend({ to, subject, html, text, replyTo }: MailInput): P
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: MAIL_FROM || "PC Tweaker <onboarding@resend.dev>",
+      from: MAIL_FROM,
       to,
       subject,
       html,
@@ -94,7 +94,7 @@ async function sendMail({ to, subject, html, text, replyTo }: MailInput): Promis
   }
   if (transporter) {
     await transporter.sendMail({
-      from: MAIL_FROM || SMTP_USER,
+      from: MAIL_FROM,
       to,
       subject,
       html,

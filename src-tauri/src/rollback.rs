@@ -113,7 +113,7 @@ pub enum SnapshotEntry {
     /// The TCP congestion-control algorithm in force on one supplemental
     /// template, before this app changed it.
     ///
-    /// Not expressible as `Registry`: `Set-NetTCPSetting` writes into the TCP
+    /// Not expressible as `Registry`: `MSFT_NetTCPSetting` writes into the TCP
     /// stack's own store, not into a registry value that could be snapshotted
     /// and written back. The previous provider is read from the stack itself
     /// so rollback restores what was actually there — including the case where

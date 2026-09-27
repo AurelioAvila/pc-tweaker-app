@@ -96,7 +96,9 @@ windows-sys = { version = "0.59", features = [
 ] }
 is_elevated = "0.1"
 runas = "1"
-windows = { version = "0.58", features = ["Management_Deployment", "Foundation_Collections", "ApplicationModel", "Win32_System_Com"] }
+# Wmi and Variant: the TCP congestion provider through MSFT_NetTCPSetting
+# (src/netshaper.rs), and the qualifier arrays that name its values.
+windows = { version = "0.58", features = ["Management_Deployment", "Foundation_Collections", "ApplicationModel", "Win32_System_Com", "Win32_System_Wmi", "Win32_System_Variant"] }
 
 # `tauri dev` recognizes a feature literally named "devtools" on the
 # consuming crate and enables it automatically for dev builds; `tauri build`

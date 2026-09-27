@@ -292,7 +292,7 @@ pub fn measure() -> NetworkSnapshot {
 }
 
 #[cfg(windows)]
-pub use native::internet_interface_guid;
+pub use native::{interface_guid_for_alias, internet_interface_guid};
 
 /// The same measurement the apply funnel takes, on demand.
 #[tauri::command]
@@ -320,8 +320,9 @@ mod native {
     use windows_sys::core::GUID;
     use windows_sys::Win32::Foundation::HANDLE;
     use windows_sys::Win32::NetworkManagement::IpHelper::{
-        ConvertInterfaceIndexToLuid, ConvertInterfaceLuidToGuid, GetBestInterfaceEx,
-        IcmpCloseHandle, IcmpCreateFile, IcmpSendEcho, ICMP_ECHO_REPLY, IP_SUCCESS,
+        ConvertInterfaceAliasToLuid, ConvertInterfaceIndexToLuid, ConvertInterfaceLuidToGuid,
+        GetBestInterfaceEx, IcmpCloseHandle, IcmpCreateFile, IcmpSendEcho, ICMP_ECHO_REPLY,
+        IP_SUCCESS,
     };
     use windows_sys::Win32::NetworkManagement::Ndis::NET_LUID_LH;
     use windows_sys::Win32::Networking::WinSock::{
@@ -351,16 +352,39 @@ mod native {
                 "no network adapter has a route to the internet (error {code})"
             ));
         }
-        // SAFETY: plain-integer union and struct; zero is valid for both.
+        // SAFETY: plain-integer union; zero is valid.
         let mut luid: NET_LUID_LH = unsafe { zeroed() };
-        let mut guid: GUID = unsafe { zeroed() };
-        // SAFETY: both out-pointers refer to live locals of the right type.
+        // SAFETY: the out-pointer refers to a live local of the right type.
         let code = unsafe { ConvertInterfaceIndexToLuid(index, &mut luid) };
         if code != 0 {
             return Err(format!("could not identify the network adapter (error {code})"));
         }
-        // SAFETY: as above; `luid` was filled in by the previous call.
-        let code = unsafe { ConvertInterfaceLuidToGuid(&luid, &mut guid) };
+        guid_of(&luid)
+    }
+
+    /// GUID of the adapter Windows names `alias` ("Ethernet"), in the same
+    /// format. Only DNS snapshots written by older builds name an adapter
+    /// that way.
+    pub fn interface_guid_for_alias(alias: &str) -> Result<String, String> {
+        let wide: Vec<u16> = alias.encode_utf16().chain(Some(0)).collect();
+        // SAFETY: plain-integer union; zero is valid.
+        let mut luid: NET_LUID_LH = unsafe { zeroed() };
+        // SAFETY: `wide` is NUL-terminated and outlives the call; `luid` is a
+        // live out-parameter of the right type.
+        let code = unsafe { ConvertInterfaceAliasToLuid(wide.as_ptr(), &mut luid) };
+        if code != 0 {
+            return Err(format!(
+                "no network adapter is named \"{alias}\" any more (error {code})"
+            ));
+        }
+        guid_of(&luid)
+    }
+
+    fn guid_of(luid: &NET_LUID_LH) -> Result<String, String> {
+        // SAFETY: plain-integer struct; zero is valid.
+        let mut guid: GUID = unsafe { zeroed() };
+        // SAFETY: `luid` is a live, filled-in LUID and `guid` a live out-parameter.
+        let code = unsafe { ConvertInterfaceLuidToGuid(luid, &mut guid) };
         if code != 0 {
             return Err(format!("could not identify the network adapter (error {code})"));
         }

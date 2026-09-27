@@ -43,12 +43,20 @@ pub fn relevant(id: &str) -> bool {
 /// One pass over the probes. A single reachable endpoint is enough: this asks
 /// "does the line still work", not "is every host on the internet up".
 pub fn online() -> bool {
-    PROBES.iter().any(|probe| {
-        probe.to_socket_addrs().is_ok_and(|addrs| {
-            addrs
-                .take(4)
-                .any(|addr| TcpStream::connect_timeout(&addr, TIMEOUT).is_ok())
-        })
+    PROBES.iter().any(|probe| reachable(probe))
+}
+
+/// The hostname probe alone, for a caller that has just failed to reach
+/// 1.1.1.1:443 itself and would only wait out the same timeout again.
+pub fn hostname_reachable() -> bool {
+    reachable(PROBES[1])
+}
+
+fn reachable(probe: &str) -> bool {
+    probe.to_socket_addrs().is_ok_and(|addrs| {
+        addrs
+            .take(4)
+            .any(|addr| TcpStream::connect_timeout(&addr, TIMEOUT).is_ok())
     })
 }
 
@@ -100,5 +108,13 @@ mod tests {
         assert!(relevant(crate::netshaper::TWEAK_ID));
         assert!(!relevant(crate::dns::TWEAK_ID));
         assert!(!relevant("power_plan"));
+    }
+
+    /// `hostname_reachable` stands in for the probes after the literal
+    /// address, so the second one must be the name, not another address.
+    #[test]
+    fn the_second_probe_is_the_hostname() {
+        assert!(PROBES[0].parse::<std::net::SocketAddr>().is_ok());
+        assert!(PROBES[1].parse::<std::net::SocketAddr>().is_err());
     }
 }

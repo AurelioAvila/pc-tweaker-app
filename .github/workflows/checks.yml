@@ -65,6 +65,12 @@ jobs:
       - name: Rust unit tests
         run: npm run check:rust
 
+      # Hosted Windows runners are administrators, so a real kernel trace
+      # session can start there. The live network test stays out: Azure
+      # blocks outbound ICMP.
+      - name: Live DPC capture
+        run: cargo test --manifest-path src-tauri/Cargo.toml --lib diagnostics::dpc::tests::live -- --ignored --nocapture
+
       - name: DNS PowerShell data boundary
         run: node scripts/test-dns-powershell.mjs
 

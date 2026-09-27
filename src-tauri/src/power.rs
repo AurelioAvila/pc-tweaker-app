@@ -14,6 +14,10 @@ pub(crate) trait PowerPlans {
     /// Makes `guid` the active scheme. Activating the scheme that is already
     /// active is how Windows applies index changes made to it.
     fn activate(&self, guid: &str) -> Result<(), String>;
+    /// The index one setting has in effect in `scheme`: the plan's own
+    /// override, or the default it inherits when there is none.
+    fn read_index(&self, scheme: &str, subgroup: &str, setting: &str, ac: bool)
+        -> Result<u32, String>;
     /// Writes one setting's AC index (`ac`) or DC index in `scheme`.
     fn write_index(
         &self,
@@ -44,6 +48,26 @@ impl PowerPlans for WinPowerPlans {
         // SAFETY: `scheme` lives on this frame for the whole call and is only
         // read. A null root key selects the system power policy store.
         checked(unsafe { PowerSetActiveScheme(std::ptr::null_mut(), &scheme) })
+    }
+
+    fn read_index(&self, scheme: &str, subgroup: &str, setting: &str, ac: bool)
+        -> Result<u32, String> {
+        use crate::power_tuning::native::{checked, guid as parse};
+        use windows_sys::Win32::System::Power::{PowerReadACValueIndex, PowerReadDCValueIndex};
+        let (scheme, subgroup, setting) = (parse(scheme)?, parse(subgroup)?, parse(setting)?);
+        let mut value = 0u32;
+        // SAFETY: the three GUIDs and `value` live on this frame for the whole
+        // call; the GUIDs are only read. A null root key selects the system
+        // power policy store.
+        let code = unsafe {
+            if ac {
+                PowerReadACValueIndex(std::ptr::null_mut(), &scheme, &subgroup, &setting, &mut value)
+            } else {
+                PowerReadDCValueIndex(std::ptr::null_mut(), &scheme, &subgroup, &setting, &mut value)
+            }
+        };
+        checked(code)?;
+        Ok(value)
     }
 
     fn write_index(
@@ -99,6 +123,16 @@ pub fn active_scheme_guid() -> Result<String, String> {
 #[cfg(windows)]
 pub(crate) fn activate_scheme(guid: &str) -> Result<(), String> {
     with_plans(|plans| plans.activate(guid))
+}
+
+#[cfg(windows)]
+pub(crate) fn read_effective_index(
+    scheme: &str,
+    subgroup: &str,
+    setting: &str,
+    ac: bool,
+) -> Result<u32, String> {
+    with_plans(|plans| plans.read_index(scheme, subgroup, setting, ac))
 }
 
 #[cfg(windows)]
@@ -200,6 +234,8 @@ pub(crate) mod tests {
 
     pub(crate) const BALANCED: &str = "381b4222-f694-41f0-9685-ff5bb260df2e";
     pub(crate) const POWER_SAVER: &str = "a1841308-3541-4fab-bc81-f71556f20b4a";
+    /// What a setting with no override in a fake plan reads as in effect.
+    pub(crate) const INHERITED_DEFAULT: u32 = 7;
 
     /// Power plans that live in memory. Index writes land in the installed
     /// `MemRegistry` at `setting_index_path`, exactly where the tweaks read
@@ -244,6 +280,22 @@ pub(crate) mod tests {
                 self.activations.set(self.activations.get() + 1);
             }
             Ok(())
+        }
+
+        fn read_index(&self, scheme: &str, subgroup: &str, setting: &str, ac: bool)
+            -> Result<u32, String> {
+            self.exists(scheme)?;
+            let name = if ac {
+                "ACSettingIndex"
+            } else {
+                "DCSettingIndex"
+            };
+            let path = setting_index_path(scheme, subgroup, setting);
+            match self.registry.read(Hive::Hklm, &path, name).map_err(|e| e.to_string())? {
+                Some(RegValue::Dword(value)) => Ok(value),
+                Some(_) => Err("not a power index".into()),
+                None => Ok(INHERITED_DEFAULT),
+            }
         }
 
         fn write_index(

@@ -43,7 +43,7 @@ pub fn turbo_boost_info() -> GamingInfo {
 pub const CORE_PARKING_MIN_GUID: &str = "0cc5b647-c1df-4637-891a-dec35c318583";
 
 /// Percent of cores kept unparked. 100 is "all of them".
-const CORE_PARKING_ALL_UNPARKED: u32 = 100;
+pub(crate) const CORE_PARKING_ALL_UNPARKED: u32 = 100;
 
 pub fn core_parking_info() -> GamingInfo {
     GamingInfo {
@@ -193,6 +193,8 @@ pub fn apply_core_parking(store: &RollbackStore) -> Result<(), String> {
                 setting_guid: CORE_PARKING_MIN_GUID.to_string(),
                 ac_index,
                 dc_index,
+                ac_effective: inherited(&scheme, CORE_PARKING_MIN_GUID, ac_index, true)?,
+                dc_effective: inherited(&scheme, CORE_PARKING_MIN_GUID, dc_index, false)?,
             },
         )
         .map_err(|e| e.to_string())?;
@@ -223,12 +225,14 @@ pub fn rollback_core_parking(store: &RollbackStore) -> Result<(), String> {
             setting_guid,
             ac_index,
             dc_index,
+            ac_effective,
+            dc_effective,
         } => restore_power_index(
             &scheme_guid,
             &subgroup_guid,
             &setting_guid,
-            ac_index,
-            dc_index,
+            (ac_index, ac_effective),
+            (dc_index, dc_effective),
         ),
         _ => Err("unexpected snapshot type for core parking".to_string()),
     })
@@ -348,6 +352,8 @@ pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
                         setting_guid: PERF_BOOST_MODE_GUID.to_string(),
                         ac_index,
                         dc_index,
+                        ac_effective: inherited(&scheme, PERF_BOOST_MODE_GUID, ac_index, true)?,
+                        dc_effective: inherited(&scheme, PERF_BOOST_MODE_GUID, dc_index, false)?,
                     },
                     SnapshotEntry::PowerSettingIndex {
                         scheme_guid: scheme.clone(),
@@ -355,6 +361,8 @@ pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
                         setting_guid: PROC_THROTTLE_MIN_GUID.to_string(),
                         ac_index: min_ac,
                         dc_index: min_dc,
+                        ac_effective: inherited(&scheme, PROC_THROTTLE_MIN_GUID, min_ac, true)?,
+                        dc_effective: inherited(&scheme, PROC_THROTTLE_MIN_GUID, min_dc, false)?,
                     },
                 ],
             },
@@ -413,12 +421,14 @@ pub fn rollback_turbo_boost(store: &RollbackStore) -> Result<(), String> {
                             setting_guid,
                             ac_index,
                             dc_index,
+                            ac_effective,
+                            dc_effective,
                         } => restore_power_index(
                             &scheme_guid,
                             &subgroup_guid,
                             &setting_guid,
-                            ac_index,
-                            dc_index,
+                            (ac_index, ac_effective),
+                            (dc_index, dc_effective),
                         ),
                         _ => Err("unexpected snapshot type inside turbo boost".to_string()),
                     };
@@ -441,12 +451,14 @@ pub fn rollback_turbo_boost(store: &RollbackStore) -> Result<(), String> {
                 setting_guid,
                 ac_index,
                 dc_index,
+                ac_effective,
+                dc_effective,
             } => restore_power_index(
                 &scheme_guid,
                 &subgroup_guid,
                 &setting_guid,
-                ac_index,
-                dc_index,
+                (ac_index, ac_effective),
+                (dc_index, dc_effective),
             ),
 
             // Legacy data does not identify the original plan. Never guess
@@ -463,40 +475,85 @@ pub fn rollback_turbo_boost(store: &RollbackStore) -> Result<(), String> {
 ///
 /// `None` means the plan had no override and was inheriting the setting's
 /// default, so the honest restore is to delete the value again rather than to
-/// write some guess at what the default was.
+/// write some guess at what the default was. Windows 11 lets only SYSTEM
+/// delete an override, though; when the delete is refused and the journal
+/// recorded the value that was in effect, that value is written back through
+/// the power API instead, which leaves the plan behaving exactly as it did.
 #[cfg(windows)]
 fn restore_power_index(
     scheme_guid: &str,
     subgroup_guid: &str,
     setting_guid: &str,
-    ac_index: Option<u32>,
-    dc_index: Option<u32>,
+    ac: (Option<u32>, Option<u32>),
+    dc: (Option<u32>, Option<u32>),
 ) -> Result<(), String> {
-    for (index, ac, value_name) in [
-        (ac_index, true, "ACSettingIndex"),
-        (dc_index, false, "DCSettingIndex"),
-    ] {
+    let mut expected = [ac.0, dc.0];
+    for (slot, (is_ac, value_name, (index, effective))) in [
+        (true, "ACSettingIndex", ac),
+        (false, "DCSettingIndex", dc),
+    ]
+    .into_iter()
+    .enumerate()
+    {
         match index {
             Some(v) => {
-                crate::power::write_setting_index(scheme_guid, subgroup_guid, setting_guid, ac, v)?
+                crate::power::write_setting_index(scheme_guid, subgroup_guid, setting_guid, is_ac, v)?
             }
-            // The power API has no call that removes one override, so the
-            // value goes straight from the registry, verified gone.
-            None => crate::tweaks::windows_impl::restore_value(&RegistrySnapshot {
-                hive: "HKLM".into(),
-                path: crate::power::setting_index_path(scheme_guid, subgroup_guid, setting_guid),
-                name: value_name.into(),
-                original_value: None,
-            })?,
+            None => {
+                let path = crate::power::setting_index_path(scheme_guid, subgroup_guid, setting_guid);
+                // Nothing to undo where no override exists (this tweak may
+                // never have written that half), and nothing may be created.
+                if crate::tweaks::windows_impl::read_dword(crate::tweaks::Hive::Hklm, &path, value_name)
+                    .map_err(|e| e.to_string())?
+                    .is_none()
+                {
+                    continue;
+                }
+                let deleted = crate::tweaks::windows_impl::restore_value(&RegistrySnapshot {
+                    hive: "HKLM".into(),
+                    path,
+                    name: value_name.into(),
+                    original_value: None,
+                });
+                match (deleted, effective) {
+                    (Ok(()), _) => {}
+                    (Err(_), Some(value)) => {
+                        crate::power::write_setting_index(
+                            scheme_guid,
+                            subgroup_guid,
+                            setting_guid,
+                            is_ac,
+                            value,
+                        )?;
+                        expected[slot] = Some(value);
+                    }
+                    (Err(error), None) => return Err(error),
+                }
+            }
         }
     }
 
-    if read_setting_indexes(scheme_guid, setting_guid)? != (ac_index, dc_index) {
+    if read_setting_indexes(scheme_guid, setting_guid)? != (expected[0], expected[1]) {
         return Err(
             "power setting restoration could not be verified; the snapshot was retained".into(),
         );
     }
     crate::power::reactivate_current_scheme()
+}
+
+/// The value in effect for a setting the plan does not override, recorded so a
+/// restore can put it back when Windows refuses to delete the override.
+#[cfg(windows)]
+fn inherited(
+    scheme: &str,
+    setting: &str,
+    index: Option<u32>,
+    ac: bool,
+) -> Result<Option<u32>, String> {
+    match index {
+        Some(_) => Ok(None),
+        None => crate::power::read_effective_index(scheme, SUB_PROCESSOR_GUID, setting, ac).map(Some),
+    }
 }
 
 #[cfg(not(windows))]
@@ -774,6 +831,51 @@ mod tests {
         assert_eq!(machine.plans.activations.get(), 0);
     }
 
+    /// Windows 11 lets only SYSTEM delete a plan override. A setting that had
+    /// none is then put back by writing the value that was in effect, which
+    /// leaves the plan behaving exactly as before; halves the tweak never
+    /// wrote are left without an override.
+    #[test]
+    fn an_inherited_setting_is_restored_through_the_api_when_the_delete_is_refused() {
+        let inherited = Some(Stored::Value(RegValue::Dword(crate::power::tests::INHERITED_DEFAULT)));
+        for case in &CASES {
+            let (machine, fixture) = seeded(case, None, None);
+            (case.apply)(&fixture.store).unwrap();
+            machine.registry.deny_deletes.set(true);
+            (case.rollback)(&fixture.store).unwrap_or_else(|e| panic!("{}: {e}", case.id));
+            assert!(!fixture.store.is_applied(case.id), "{}", case.id);
+            for (setting, ac, written) in case.slots {
+                let expected = if written.is_some() { inherited.clone() } else { None };
+                assert_eq!(index(&machine, setting, *ac), expected, "{} {setting} ac={ac}", case.id);
+            }
+        }
+    }
+
+    /// A journal from an older build recorded no value in effect, so a refused
+    /// delete keeps it for a retry instead of guessing at a default.
+    #[test]
+    fn an_older_journal_without_the_value_in_effect_keeps_waiting() {
+        let (machine, fixture) = seeded(&CASES[1], None, None);
+        let older = SnapshotEntry::PowerSettingIndex {
+            scheme_guid: BALANCED.into(),
+            subgroup_guid: SUB_PROCESSOR_GUID.into(),
+            setting_guid: CORE_PARKING_MIN_GUID.into(),
+            ac_index: None,
+            dc_index: None,
+            ac_effective: None,
+            dc_effective: None,
+        };
+        let path = setting_index_path(BALANCED, SUB_PROCESSOR_GUID, CORE_PARKING_MIN_GUID);
+        machine.registry.set(Hive::Hklm, &path, "ACSettingIndex", Stored::Value(RegValue::Dword(100)));
+        fixture.store.transaction().unwrap().save_entry(CORE_PARKING_ID, older).unwrap();
+        machine.registry.deny_deletes.set(true);
+        assert!(rollback_core_parking(&fixture.store).is_err());
+        assert!(fixture.store.is_applied(CORE_PARKING_ID));
+        machine.registry.deny_deletes.set(false);
+        rollback_core_parking(&fixture.store).unwrap();
+        assert_eq!(index(&machine, CORE_PARKING_MIN_GUID, true), None);
+    }
+
     /// Journals from older builds: one that recorded boost mode alone is put
     /// back exactly; one that never named its plan is refused untouched.
     #[test]
@@ -785,6 +887,8 @@ mod tests {
             setting_guid: PERF_BOOST_MODE_GUID.into(),
             ac_index: Some(1),
             dc_index: None,
+            ac_effective: None,
+            dc_effective: None,
         };
         let mut transaction = fixture.store.transaction().unwrap();
         transaction.save_entry(TURBO_BOOST_ID, boost_only).unwrap();

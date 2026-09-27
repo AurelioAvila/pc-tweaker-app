@@ -59,9 +59,9 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 
 | Area | Controls and tools |
 | --- | --- |
-| Gaming | Game Sessions, supported gaming settings, hardware scheduling options and X3D placement controls |
+| Gaming | Game Sessions with optional core steering, supported gaming settings, hardware scheduling options, X3D placement controls and a before/after network check |
 | Performance | Power configuration, startup controls and foreground scheduling settings |
-| Hardware | Available sensor readings, supported thermal profiles and driver updates through Windows Update |
+| Hardware | Available sensor readings, a DPC/ISR latency trace that names the responsible driver, supported thermal profiles and driver updates through Windows Update |
 | Privacy | Supported Windows advertising, tracking and diagnostic settings; optional password breach lookup |
 | Maintenance | Integrity checks, guided repair, storage analysis and cleanup with operation-specific recovery limits |
 | Interface | File extensions, taskbar options, appearance and supported Windows preferences |

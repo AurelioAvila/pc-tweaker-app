@@ -34,11 +34,9 @@ fn tool_path(name: &str) -> io::Result<PathBuf> {
     let relative = match name {
         "powershell" => r"WindowsPowerShell\v1.0\powershell.exe",
         "cmd" => "cmd.exe",
-        "sc" => "sc.exe",
         "schtasks" => "schtasks.exe",
         "taskkill" => "taskkill.exe",
         "shutdown" => "shutdown.exe",
-        "powercfg" => "powercfg.exe",
         "ipconfig" => "ipconfig.exe",
         "defrag" => "defrag.exe",
         "dism" | "dism.exe" => "dism.exe",
@@ -116,7 +114,7 @@ mod tests {
     }
     #[test]
     fn uses_absolute_windows_paths() {
-        for name in ["cmd", "powershell", "sc", "sfc", "dism", "explorer.exe"] {
+        for name in ["cmd", "powershell", "sfc", "dism", "explorer.exe"] {
             let path = tool_path(name).unwrap();
             assert!(path.is_absolute());
             assert!(path.is_file(), "missing {}", path.display());

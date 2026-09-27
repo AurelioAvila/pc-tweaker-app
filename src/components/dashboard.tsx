@@ -2,7 +2,7 @@ import "./tool-surfaces.css";
 import { useEffect, useState, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
-import { formatBytes } from "../lib";
+import { formatBytes, uiLocale } from "../lib";
 import { AuditEntry, DriveInfo, Section, StartupEntry, SystemStats } from "../types";
 
 /**
@@ -64,8 +64,8 @@ function timeLabel(ts: number): string {
   const today = new Date();
   const sameDay = d.toDateString() === today.toDateString();
   return sameDay
-    ? d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
-    : d.toLocaleDateString();
+    ? d.toLocaleTimeString(uiLocale(), { hour: "2-digit", minute: "2-digit" })
+    : d.toLocaleDateString(uiLocale());
 }
 
 function Card({

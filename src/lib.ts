@@ -43,11 +43,26 @@ export function reportError(message: string) {
   });
 }
 
+/** The app's language as a BCP 47 tag for `Intl` and `toLocale*` calls. App
+ *  sets it on <html>; every date and number goes through it, never through
+ *  the Windows display language. */
+export function uiLocale(): string {
+  return document.documentElement.lang || "en";
+}
+
+/** A number in the app's language, with exactly `digits` decimals. */
+export function formatNumber(value: number, digits = 0): string {
+  return new Intl.NumberFormat(uiLocale(), {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value);
+}
+
 export function formatBytes(bytes: number): string {
-  if (bytes <= 0) return "0 MB";
+  if (bytes <= 0) return `${formatNumber(0)} MB`;
   const mb = bytes / (1024 * 1024);
-  if (mb < 1024) return `${mb.toFixed(1)} MB`;
-  return `${(mb / 1024).toFixed(2)} GB`;
+  if (mb < 1024) return `${formatNumber(mb, 1)} MB`;
+  return `${formatNumber(mb / 1024, 2)} GB`;
 }
 
 /**
@@ -203,7 +218,7 @@ export function money(amount: number, lang: Lang): string {
 export function formatEpochDate(epochSeconds: string): string {
   const n = Number(epochSeconds);
   if (!Number.isFinite(n) || n <= 0) return "";
-  return new Date(n * 1000).toLocaleDateString();
+  return new Date(n * 1000).toLocaleDateString(uiLocale());
 }
 
 /** SHA-1 hex digest via the Web Crypto API already available in the webview. */

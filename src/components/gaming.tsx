@@ -5,7 +5,7 @@ import { listen } from "@tauri-apps/api/event";
 import { open as openFolderDialog } from "@tauri-apps/plugin-dialog";
 import { format, Strings } from "../i18n";
 import { formatBytes, arcPath, GAUGE_C, GAUGE_R, GAUGE_START, GAUGE_SWEEP, polar } from "../lib";
-import { GameEntry, Toast } from "../types";
+import { CoreSteeringStatus, GameEntry, Toast } from "../types";
 import { BoltIcon } from "./icons";
 
 export function GameSessionsPanel({
@@ -19,6 +19,7 @@ export function GameSessionsPanel({
 }) {
   const [enabled, setEnabled] = useState(false);
   const [games, setGames] = useState<GameEntry[]>([]);
+  const [steering, setSteering] = useState<CoreSteeringStatus | null>(null);
   const [activeGame, setActiveGame] = useState<string | null>(null);
   /** RAM the working-set trim handed back when the session started. Zero is a
    *  real answer on a machine that was already tidy, so it reads as "boost
@@ -27,6 +28,16 @@ export function GameSessionsPanel({
   const [expanded, setExpanded] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /** Separate from `refresh` on purpose: steering status reads the rollback
+   *  journal, and a problem there must never hide the session switch. */
+  function refreshSteering() {
+    // A transient failure (the journal busy) keeps what is on screen; only a
+    // first load that never succeeded leaves the row hidden.
+    invoke<CoreSteeringStatus>("core_steering_status")
+      .then(setSteering)
+      .catch(() => {});
+  }
 
   async function refresh() {
     const [e, list] = await Promise.all([
@@ -39,11 +50,14 @@ export function GameSessionsPanel({
 
   useEffect(() => {
     refresh().catch((reason: unknown) => setError(String(reason)));
+    refreshSteering();
     const unlisten = listen<{ active: boolean; name: string | null; freed_bytes: number }>(
       "game-session-changed",
       (event) => {
         setActiveGame(event.payload.active ? event.payload.name : null);
         setFreedBytes(event.payload.active ? event.payload.freed_bytes : 0);
+        // Steering is applied in the same watcher pass that sends this event.
+        refreshSteering();
       },
     );
     return () => {
@@ -60,6 +74,39 @@ export function GameSessionsPanel({
     await invoke("set_game_sessions_enabled", { enabled: next });
     setEnabled(next);
   }
+
+  async function toggleSteering() {
+    if (!steering) return;
+    if (!isPro && !steering.enabled) {
+      onRequirePro();
+      return;
+    }
+    await invoke("set_core_steering", { enabled: !steering.enabled });
+    setSteering({ ...steering, enabled: !steering.enabled });
+    // The watcher applies or restores on its next pass (every 3 s).
+    window.setTimeout(refreshSteering, 4000);
+  }
+
+  const steeringText =
+    steering?.kind === "vCache"
+      ? format(s.gameSessions.steeringVcache, { count: steering.gameCpuSets })
+      : steering?.kind === "hybrid"
+        ? format(s.gameSessions.steeringHybrid, {
+            game: steering.gameCpuSets,
+            background: steering.backgroundCpuSets,
+          })
+        : s.gameSessions.steeringNone;
+
+  // The watcher keeps steering new background processes during a session,
+  // so the count is re-read while one is running.
+  const steeringLive = Boolean(activeGame && steering?.enabled);
+  useEffect(() => {
+    if (!steeringLive) return;
+    const timer = window.setInterval(refreshSteering, 5000);
+    return () => window.clearInterval(timer);
+  }, [steeringLive]);
+
+  const steeringIdle = !enabled || games.length === 0;
 
   async function addGame() {
     if (!isPro) {
@@ -148,6 +195,38 @@ export function GameSessionsPanel({
           {s.gameSessions.addGame}
         </button>
       </div>
+      {steering && (
+        <div className="tool-session-toolbar">
+          <div className="min-w-0 flex-1">
+            <strong className="text-[13px] text-ink">{s.gameSessions.steeringTitle}</strong>
+            <p className="mt-0.5 text-[12px] text-ink-3">{steeringText}</p>
+            {steering.enabled && steeringIdle && (
+              <p className="mt-0.5 text-[12px] text-ink-3">
+                {s.gameSessions.steeringNeedsSessions}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-label={s.gameSessions.steeringTitle}
+            aria-checked={steering.enabled}
+            disabled={pending || (!steering.enabled && (steering.kind === null || steeringIdle))}
+            onClick={() => void perform(toggleSteering)}
+            className="tool-session-switch"
+            data-enabled={steering.enabled}
+          >
+            <span />
+          </button>
+        </div>
+      )}
+      {activeGame && steering?.enabled && steering.steeredProcesses > 0 && (
+        <ToolStatus tone="active">
+          {steering.kind === "vCache"
+            ? s.gameSessions.steeringActiveVcache
+            : format(s.gameSessions.steeringActive, { count: steering.steeredProcesses })}
+        </ToolStatus>
+      )}
       {expanded && games.length > 0 && (
         <ul className="tool-session-list">
           {games.map((game) => (

@@ -36,7 +36,7 @@ pub fn valid_snapshot(t: &PowerTweak, entry: &SnapshotEntry) -> bool {
             && setting_guid.eq_ignore_ascii_case(t.setting) && *original_value <= t.maximum)
 }
 
-trait PowerBackend {
+pub(crate) trait PowerBackend {
     fn active(&self) -> Result<String, String>;
     fn supported(&self, scheme: &str, t: &PowerTweak) -> Result<(), String>;
     fn read_value(&self, scheme: &str, t: &PowerTweak) -> Result<u32, String>;
@@ -44,7 +44,7 @@ trait PowerBackend {
     fn refresh_if_active(&self, scheme: &str) -> Result<(), String>;
 }
 
-fn apply_with(
+pub(crate) fn apply_with(
     store: &RollbackStore,
     t: &PowerTweak,
     api: &impl PowerBackend,
@@ -69,7 +69,7 @@ fn apply_with(
     api.refresh_if_active(&scheme)
 }
 
-fn restore_with(
+pub(crate) fn restore_with(
     store: &RollbackStore,
     t: &PowerTweak,
     api: &impl PowerBackend,
@@ -93,8 +93,10 @@ fn restore_with(
     })
 }
 
+/// Also used by the power-plan tweaks in power.rs, so both reach the power
+/// API through one GUID parser and one active-scheme reader.
 #[cfg(windows)]
-mod native {
+pub(crate) mod native {
     use super::*;
     use windows_sys::{
         core::GUID,
@@ -102,15 +104,51 @@ mod native {
     };
     use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
-    pub(super) fn guid(value: &str) -> Result<GUID, String> {
+    pub(crate) fn guid(value: &str) -> Result<GUID, String> {
         if !crate::rollback::valid_guid(value) {
             return Err("Invalid power policy GUID".into());
         }
-        u128::from_str_radix(&value.replace('-', ""), 16)
+        let bare = value
+            .strip_prefix('{')
+            .and_then(|v| v.strip_suffix('}'))
+            .unwrap_or(value);
+        u128::from_str_radix(&bare.replace('-', ""), 16)
             .map(GUID::from_u128)
             .map_err(|_| "Invalid GUID".into())
     }
-    pub(super) fn checked(code: u32) -> Result<(), String> {
+    /// Lowercase and unbraced: the form powercfg printed, and so the form
+    /// every stored snapshot already uses.
+    pub(crate) fn guid_string(g: &GUID) -> String {
+        format!(
+            "{:08x}-{:04x}-{:04x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}",
+            g.data1,
+            g.data2,
+            g.data3,
+            g.data4[0],
+            g.data4[1],
+            g.data4[2],
+            g.data4[3],
+            g.data4[4],
+            g.data4[5],
+            g.data4[6],
+            g.data4[7]
+        )
+    }
+    pub(crate) fn active_scheme() -> Result<String, String> {
+        let mut ptr = std::ptr::null_mut();
+        // SAFETY: `ptr` is a valid out-pointer for the call. On success it
+        // holds a LocalAlloc'd GUID, copied out and then freed exactly once.
+        unsafe {
+            checked(PowerGetActiveScheme(std::ptr::null_mut(), &mut ptr))?;
+            if ptr.is_null() {
+                return Err("Windows did not return a power scheme".into());
+            }
+            let g = *ptr;
+            LocalFree(ptr.cast());
+            Ok(guid_string(&g))
+        }
+    }
+    pub(crate) fn checked(code: u32) -> Result<(), String> {
         if code == 0 {
             Ok(())
         } else {
@@ -120,29 +158,7 @@ mod native {
     pub(super) struct WindowsPower;
     impl PowerBackend for WindowsPower {
         fn active(&self) -> Result<String, String> {
-            let mut ptr = std::ptr::null_mut();
-            unsafe {
-                checked(PowerGetActiveScheme(std::ptr::null_mut(), &mut ptr))?;
-                if ptr.is_null() {
-                    return Err("Windows did not return a power scheme".into());
-                }
-                let g = *ptr;
-                LocalFree(ptr.cast());
-                Ok(format!(
-                    "{:08x}-{:04x}-{:04x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}",
-                    g.data1,
-                    g.data2,
-                    g.data3,
-                    g.data4[0],
-                    g.data4[1],
-                    g.data4[2],
-                    g.data4[3],
-                    g.data4[4],
-                    g.data4[5],
-                    g.data4[6],
-                    g.data4[7]
-                ))
-            }
+            active_scheme()
         }
         fn supported(&self, scheme: &str, t: &PowerTweak) -> Result<(), String> {
             if t.hybrid && !hybrid_cpu()? {
@@ -277,6 +293,9 @@ mod native {
 
 #[cfg(windows)]
 pub fn apply(store: &RollbackStore, id: &str) -> Result<(), String> {
+    // The real power policy: never from a unit test (the fakes call
+    // apply_with/restore_with directly).
+    crate::tweaks::windows_impl::refuse_in_unit_tests().map_err(|e| e.to_string())?;
     apply_with(
         store,
         find(id).ok_or("Unknown power tweak")?,
@@ -285,6 +304,7 @@ pub fn apply(store: &RollbackStore, id: &str) -> Result<(), String> {
 }
 #[cfg(windows)]
 pub fn rollback(store: &RollbackStore, id: &str) -> Result<(), String> {
+    crate::tweaks::windows_impl::refuse_in_unit_tests().map_err(|e| e.to_string())?;
     restore_with(
         store,
         find(id).ok_or("Unknown power tweak")?,
@@ -431,20 +451,7 @@ mod tests {
         unsafe {
             LocalFree(duplicated.cast());
         }
-        let clone = format!(
-            "{:08x}-{:04x}-{:04x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}",
-            g.data1,
-            g.data2,
-            g.data3,
-            g.data4[0],
-            g.data4[1],
-            g.data4[2],
-            g.data4[3],
-            g.data4[4],
-            g.data4[5],
-            g.data4[6],
-            g.data4[7]
-        );
+        let clone = native::guid_string(&g);
         assert_ne!(clone, original);
         struct Disposable(String);
         impl Drop for Disposable {

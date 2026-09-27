@@ -90,6 +90,27 @@ fn cmd(program: &'static str, arguments: impl Into<String>) -> TechnicalChange {
     }
 }
 
+/// Where Windows records the active power plan; `PowerSetActiveScheme`
+/// writes it.
+#[cfg(windows)]
+const ACTIVE_SCHEME: (&str, &str) = (
+    r"HKLM\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes",
+    "ActivePowerScheme",
+);
+
+/// A processor setting of the active plan, as `PowerWrite*ValueIndex` stores it.
+#[cfg(windows)]
+fn plan_index(setting: &str, ac: bool, value: u32) -> TechnicalChange {
+    dword(
+        format!(
+            "HKLM\\{}",
+            crate::power::setting_index_path("<active plan GUID>", crate::gaming::SUB_PROCESSOR_GUID, setting)
+        ),
+        if ac { "ACSettingIndex" } else { "DCSettingIndex" },
+        value,
+    )
+}
+
 /// The disclosure for tweaks that are NOT a single registry value.
 ///
 /// Each arm reads the very constants its module writes with, so this can
@@ -102,9 +123,10 @@ pub fn composite_changes(id: &str) -> Vec<TechnicalChange> {
     };
 
     if id == power::TWEAK_ID {
-        return vec![cmd(
-            "powercfg",
-            format!("/setactive {}", power::HIGH_PERFORMANCE_GUID),
+        return vec![sz(
+            ACTIVE_SCHEME.0.into(),
+            ACTIVE_SCHEME.1,
+            power::HIGH_PERFORMANCE_GUID,
         )];
     }
     if id == turbo::info().id {
@@ -119,16 +141,19 @@ pub fn composite_changes(id: &str) -> Vec<TechnicalChange> {
                 turbo::PRIORITY_NAME,
                 turbo::PRIORITY_GAMING_VALUE,
             ),
-            cmd(
-                "powercfg",
-                format!("/setactive {}", power::HIGH_PERFORMANCE_GUID),
+            sz(
+                ACTIVE_SCHEME.0.into(),
+                ACTIVE_SCHEME.1,
+                power::HIGH_PERFORMANCE_GUID,
             ),
         ];
     }
     if id == dns::TWEAK_ID {
-        return vec![cmd(
-            "powershell",
-            "Set-DnsClientServerAddress -InterfaceAlias <active adapter> -ServerAddresses 1.1.1.1,1.0.0.1",
+        // Written through SetInterfaceDnsSettings; this is the value it sets.
+        return vec![sz(
+            format!("HKLM\\{}\\<active adapter GUID>", netlatency::INTERFACES_PATH),
+            "NameServer",
+            &format!("{},{}", dns::PRIMARY_DNS, dns::SECONDARY_DNS),
         )];
     }
     if id == gaming::INPUT_LAG_ID {
@@ -145,17 +170,17 @@ pub fn composite_changes(id: &str) -> Vec<TechnicalChange> {
     }
     if id == gaming::TURBO_BOOST_ID {
         return vec![
-            cmd(
-                "powercfg",
-                format!(
-                    "/setacvalueindex SCHEME_CURRENT {} {} {}",
-                    gaming::SUB_PROCESSOR_GUID,
-                    gaming::PERF_BOOST_MODE_GUID,
-                    gaming::BOOST_AGGRESSIVE
-                ),
-            ),
-            cmd("powercfg", "/setactive SCHEME_CURRENT"),
+            plan_index(gaming::PERF_BOOST_MODE_GUID, true, gaming::BOOST_AGGRESSIVE),
+            plan_index(gaming::PERF_BOOST_MODE_GUID, false, gaming::BOOST_AGGRESSIVE),
+            plan_index(gaming::PROC_THROTTLE_MIN_GUID, true, gaming::THROTTLE_MIN_MAX),
         ];
+    }
+    if id == gaming::CORE_PARKING_ID {
+        return vec![plan_index(
+            gaming::CORE_PARKING_MIN_GUID,
+            true,
+            gaming::CORE_PARKING_ALL_UNPARKED,
+        )];
     }
     if id == game_priority::info().id {
         let path = format!("HKLM\\{}", game_priority::PATH);

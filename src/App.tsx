@@ -1,4 +1,5 @@
 import { TweakyDriverPromoCard } from "./components/tweaky-driver-promo";
+import { NetworkCheckPanel } from "./components/diagnostics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -99,6 +100,12 @@ function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  // Dates and numbers follow the app's language, not the Windows display
+  // language: an English UI on an Italian PC must not print "27/9/2026".
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const [auth, setAuth] = useState<AuthState>(() => {
     const email = readStoredEmail();
@@ -1007,6 +1014,7 @@ function App() {
                   are what this screen is known for, and the aligner applies to
                   a minority of processors. */}
                 <X3dPanel s={s} pushToast={pushToast} />
+                <NetworkCheckPanel s={s} tweaks={tweaks} />
               </>
             )}
 

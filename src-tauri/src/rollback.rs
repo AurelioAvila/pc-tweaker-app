@@ -88,6 +88,15 @@ pub enum SnapshotEntry {
         setting_guid: String,
         ac_index: Option<u32>,
         dc_index: Option<u32>,
+        /// What the plan actually used where `ac_index` / `dc_index` is absent
+        /// (it inherited the default). Windows 11 lets only SYSTEM delete an
+        /// override, so when the delete is refused on restore, writing this
+        /// value back through the power API leaves the plan behaving exactly
+        /// as before. Absent in journals from older builds.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        ac_effective: Option<u32>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        dc_effective: Option<u32>,
     },
     Service {
         name: String,

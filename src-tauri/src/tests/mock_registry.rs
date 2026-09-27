@@ -8,12 +8,11 @@
 //! real on-disk journal, without administrator rights and without touching the
 //! machine. That makes it safe on a GitHub runner, which is an administrator.
 //!
-//! Power plans have a seam of their own (`power::PowerPlans`), whose fake
-//! stores plan settings into this registry; those tweaks are tested next to
-//! it. What stays out of reach is the part that talks to other programs or to
-//! device state: services, DNS, BBR2, the context-menu key and Filter Keys.
-//! `every_visible_tweak_is_either_covered_here_or_listed_as_os_only` keeps
-//! that list explicit, so a new tweak cannot slip past both.
+//! The tweaks that talk to other parts of Windows (power plans, services, DNS,
+//! the TCP stack, Filter Keys, the context-menu key, Delivery Optimization)
+//! have seams of their own and are tested next to their modules, on top of the
+//! registry fake here. `every_visible_tweak_is_covered_by_a_seam_test_or_is_panel_only`
+//! keeps that bookkeeping honest, so a new tweak cannot slip past all of them.
 
 use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, BTreeSet};
@@ -49,6 +48,9 @@ pub(crate) struct MemRegistry {
     pub drop_writes: Cell<bool>,
     /// Successful writes and deletes that changed something.
     pub mutations: Cell<usize>,
+    /// Deletes are refused while writes still work: what Windows 11 does to
+    /// an administrator under the SYSTEM-owned power scheme keys.
+    pub deny_deletes: Cell<bool>,
 }
 
 fn key(hive: Hive, path: &str, name: &str) -> Key {
@@ -115,6 +117,9 @@ impl RegistryBackend for MemRegistry {
     }
 
     fn delete(&self, hive: Hive, path: &str, name: &str) -> std::io::Result<()> {
+        if self.deny_deletes.get() {
+            return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "access denied"));
+        }
         self.mutate(|map| {
             map.remove(&key(hive, path, name));
         })
@@ -296,26 +301,23 @@ const REGISTRY_COMPOSITES: [&str; 5] = [
 
 /// Tweaks driven through a seam of their own, with their round-trip tests
 /// next to it rather than here.
-const COVERED_IN_MODULE: [&str; 4] = [
-    crate::power::TWEAK_ID,         // power::tests (power plans)
-    crate::turbo::TWEAK_ID,         // turbo::tests (registry plus power plans)
-    crate::gaming::TURBO_BOOST_ID,  // gaming::tests (power plans)
-    crate::gaming::CORE_PARKING_ID, // gaming::tests (power plans)
+const COVERED_IN_MODULE: [&str; 10] = [
+    crate::power::TWEAK_ID,                           // power::tests (power plans)
+    crate::turbo::TWEAK_ID,                           // turbo::tests (registry plus power plans)
+    crate::gaming::TURBO_BOOST_ID,                    // gaming::tests (power plans)
+    crate::gaming::CORE_PARKING_ID,                   // gaming::tests (power plans)
+    crate::services::WINDOWS_SEARCH_ID,               // services::tests (service control manager)
+    crate::everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID, // everyday::tests (SystemParametersInfo)
+    crate::contextmenu::TWEAK_ID,                     // contextmenu::tests (registry keys)
+    crate::dns::TWEAK_ID,                             // dns::tests (DNS client settings)
+    crate::netshaper::TWEAK_ID,                       // netshaper::tests (NetTCPSetting over WMI)
+    crate::download_limit::TWEAK_ID,                  // download_limit::tests (registry plus provider state)
 ];
 
-/// Tweaks whose effect lives outside the registry and the AC power policy, so
-/// no in-memory backend can stand in for them. Kept by hand on purpose: adding
-/// a tweak means deciding which list it belongs to.
-const OS_ONLY: [&str; 8] = [
-    crate::dns::TWEAK_ID,               // DNS client cmdlets
-    crate::contextmenu::TWEAK_ID,       // key creation plus an Explorer restart
-    crate::services::WINDOWS_SEARCH_ID, // service control manager
-    crate::netshaper::TWEAK_ID,         // NetTCPSetting
-    crate::everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID, // SystemParametersInfo
-    crate::download_limit::TWEAK_ID,    // reads the Delivery Optimization provider state
-    "ecoqos_rules",                     // panel-only
-    "monitor_refresh_profile",          // panel-only
-];
+/// Visible in the list but configured in their own panels, each with its own
+/// recovery journal and tests (ecoqos, monitor_profiles); the apply funnel
+/// refuses them, so there is no apply/rollback pair to push through a mock.
+const PANEL_ONLY: [&str; 2] = ["ecoqos_rules", "monitor_refresh_profile"];
 
 fn registry_ids() -> Vec<&'static str> {
     let mut ids: Vec<_> = tweaks::all_tweaks()
@@ -643,12 +645,12 @@ fn a_value_that_survives_its_delete_keeps_the_journal() {
 /// Keeps the coverage claim honest: everything the UI lists is either pushed
 /// through a mock above or named in `OS_ONLY` with the reason it cannot be.
 #[test]
-fn every_visible_tweak_is_either_covered_here_or_listed_as_os_only() {
+fn every_visible_tweak_is_covered_by_a_seam_test_or_is_panel_only() {
     let mut covered: Vec<&str> = registry_ids();
     covered.push(crate::netlatency::TWEAK_ID);
     covered.extend(power_tuning::TWEAKS.iter().map(|t| t.id));
     covered.extend(COVERED_IN_MODULE);
-    covered.extend(OS_ONLY);
+    covered.extend(PANEL_ONLY);
     let mut visible = crate::tests::all_visible_ids();
     visible.sort();
     covered.sort();

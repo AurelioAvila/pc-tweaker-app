@@ -5,7 +5,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
-import { verifyUpdater, removeVerificationDirectory } from "./verify-updater.mjs";
+import { signedFileName, verifyUpdater, removeVerificationDirectory } from "./verify-updater.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const conf = JSON.parse(fs.readFileSync(path.join(root, "src-tauri/tauri.conf.json")));
@@ -19,6 +19,28 @@ test("updater cleanup rejects the temporary root and unrelated directories", () 
   assert.ok(fs.existsSync(directory));
   removeVerificationDirectory(directory, temporaryRoot);
   assert.equal(fs.existsSync(directory), false);
+});
+
+test("only the trusted comment installed clients accept yields a file name", () => {
+  const sig = (comment) =>
+    Buffer.from(
+      `untrusted comment: fixture\nfixture\ntrusted comment: ${comment}\nfixture\n`,
+    ).toString("base64");
+  const name = "pc-tweaker-app_1.15.0_x64-setup.exe";
+  assert.equal(signedFileName(sig(`timestamp:1790526360\tfile:${name}`)), name);
+  // What `tauri build` from CLI 2.12 writes; 1.14.7 to 1.15.0 never offer it.
+  assert.equal(signedFileName(sig(`timestamp:1790508346\tfile:${name}\tversion:1.15.0`)), null);
+  assert.equal(signedFileName(sig(`timestamp:\tfile:${name}`)), null);
+  assert.equal(signedFileName("not base64 at all"), null);
+  // Clients decode canonical base64 and strict UTF-8; the gate must not be looser.
+  const padded = sig(`timestamp:1\tfile:${name}`);
+  assert.match(padded, /=$/);
+  assert.equal(signedFileName(padded.replace(/=+$/, "")), null);
+  const invalidUtf8 = Buffer.from(
+    `untrusted comment: \xff\nfixture\ntrusted comment: timestamp:1\tfile:${name}\n`,
+    "latin1",
+  ).toString("base64");
+  assert.equal(signedFileName(invalidUtf8), null);
 });
 
 test("missing and empty updater signatures fail closed", () => {

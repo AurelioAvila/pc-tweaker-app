@@ -43,7 +43,7 @@ pub fn turbo_boost_info() -> GamingInfo {
 pub const CORE_PARKING_MIN_GUID: &str = "0cc5b647-c1df-4637-891a-dec35c318583";
 
 /// Percent of cores kept unparked. 100 is "all of them".
-const CORE_PARKING_ALL_UNPARKED: &str = "100";
+const CORE_PARKING_ALL_UNPARKED: u32 = 100;
 
 pub fn core_parking_info() -> GamingInfo {
     GamingInfo {
@@ -197,20 +197,21 @@ pub fn apply_core_parking(store: &RollbackStore) -> Result<(), String> {
         )
         .map_err(|e| e.to_string())?;
 
-    crate::power::run_powercfg(&[
-        "/setacvalueindex",
+    crate::power::write_setting_index(
         &scheme,
         SUB_PROCESSOR_GUID,
         CORE_PARKING_MIN_GUID,
+        true,
         CORE_PARKING_ALL_UNPARKED,
-    ])?;
-    if read_setting_indexes(&scheme, CORE_PARKING_MIN_GUID)? != (Some(100), dc_index) {
+    )?;
+    if read_setting_indexes(&scheme, CORE_PARKING_MIN_GUID)?
+        != (Some(CORE_PARKING_ALL_UNPARKED), dc_index)
+    {
         return Err(
             "core parking configuration could not be verified; the snapshot was retained".into(),
         );
     }
-    crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
-    Ok(())
+    crate::power::reactivate_current_scheme()
 }
 
 #[cfg(windows)]
@@ -222,17 +223,13 @@ pub fn rollback_core_parking(store: &RollbackStore) -> Result<(), String> {
             setting_guid,
             ac_index,
             dc_index,
-        } => {
-            restore_power_index(
-                &scheme_guid,
-                &subgroup_guid,
-                &setting_guid,
-                ac_index,
-                dc_index,
-            )?;
-            crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
-            Ok(())
-        }
+        } => restore_power_index(
+            &scheme_guid,
+            &subgroup_guid,
+            &setting_guid,
+            ac_index,
+            dc_index,
+        ),
         _ => Err("unexpected snapshot type for core parking".to_string()),
     })
 }
@@ -272,7 +269,7 @@ pub const PERF_BOOST_MODE_GUID: &str = "be337238-0d82-4146-a960-4f3749d470c7";
 /// where the stutter and the slow first frame after a pause come from.
 pub const PROC_THROTTLE_MIN_GUID: &str = "893dee8e-2bef-41e0-89c6-b55d0929964c";
 /// Percent. 100 pins the floor to the ceiling for as long as the tweak is on.
-pub(crate) const THROTTLE_MIN_MAX: &str = "100";
+pub(crate) const THROTTLE_MIN_MAX: u32 = 100;
 
 /// Where Windows *defines* a power setting, independent of any power plan.
 /// Presence here is the honest test for "does this machine support it".
@@ -292,12 +289,8 @@ fn boost_setting_definition_path() -> String {
 /// the definition key sees it whether it is hidden or not.
 #[cfg(windows)]
 fn boost_is_supported() -> bool {
-    use winreg::enums::HKEY_LOCAL_MACHINE;
-    use winreg::RegKey;
-
-    RegKey::predef(HKEY_LOCAL_MACHINE)
-        .open_subkey(boost_setting_definition_path())
-        .is_ok()
+    use crate::tweaks::{windows_impl::key_exists, Hive};
+    key_exists(Hive::Hklm, &boost_setting_definition_path()).unwrap_or(false)
 }
 
 /// The plan's current AC/DC boost indexes, or `None` for either one that has
@@ -314,10 +307,7 @@ fn read_setting_indexes(
     scheme_guid: &str,
     setting_guid: &str,
 ) -> Result<(Option<u32>, Option<u32>), String> {
-    let path = format!(
-        r"SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\{}\{}\{}",
-        scheme_guid, SUB_PROCESSOR_GUID, setting_guid
-    );
+    let path = crate::power::setting_index_path(scheme_guid, SUB_PROCESSOR_GUID, setting_guid);
     use crate::tweaks::{windows_impl::read_dword, Hive};
     Ok((
         read_dword(Hive::Hklm, &path, "ACSettingIndex").map_err(|e| e.to_string())?,
@@ -327,7 +317,7 @@ fn read_setting_indexes(
 
 /// Boost mode 2 = "Aggressive": let the CPU boost above its rated frequency
 /// whenever thermals and power allow.
-pub(crate) const BOOST_AGGRESSIVE: &str = "2";
+pub(crate) const BOOST_AGGRESSIVE: u32 = 2;
 
 #[cfg(windows)]
 pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
@@ -371,41 +361,37 @@ pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
         )
         .map_err(|e| e.to_string())?;
 
-    crate::power::run_powercfg(&[
-        "/setacvalueindex",
-        &scheme,
-        SUB_PROCESSOR_GUID,
-        PERF_BOOST_MODE_GUID,
-        BOOST_AGGRESSIVE,
-    ])?;
-    crate::power::run_powercfg(&[
-        "/setdcvalueindex",
-        &scheme,
-        SUB_PROCESSOR_GUID,
-        PERF_BOOST_MODE_GUID,
-        BOOST_AGGRESSIVE,
-    ])?;
+    use crate::power::write_setting_index;
+    for ac in [true, false] {
+        write_setting_index(
+            &scheme,
+            SUB_PROCESSOR_GUID,
+            PERF_BOOST_MODE_GUID,
+            ac,
+            BOOST_AGGRESSIVE,
+        )?;
+    }
     // The floor. This is the half the user can actually feel — see the
-    // PROC_THROTTLE_MIN_GUID doc comment.
-    crate::power::run_powercfg(&[
-        "/setacvalueindex",
+    // PROC_THROTTLE_MIN_GUID doc comment. AC only: on a laptop this setting on
+    // battery would hold every core at its maximum while unplugged, which is a
+    // battery-life decision the user did not make by pressing a button
+    // labelled Turbo Boost.
+    write_setting_index(
         &scheme,
         SUB_PROCESSOR_GUID,
         PROC_THROTTLE_MIN_GUID,
+        true,
         THROTTLE_MIN_MAX,
-    ])?;
-    if read_boost_indexes(&scheme)? != (Some(2), Some(2))
-        || read_setting_indexes(&scheme, PROC_THROTTLE_MIN_GUID)? != (Some(100), min_dc)
+    )?;
+    if read_boost_indexes(&scheme)? != (Some(BOOST_AGGRESSIVE), Some(BOOST_AGGRESSIVE))
+        || read_setting_indexes(&scheme, PROC_THROTTLE_MIN_GUID)?
+            != (Some(THROTTLE_MIN_MAX), min_dc)
     {
         return Err(
             "CPU boost configuration could not be verified; the snapshot was retained".into(),
         );
     }
-    // AC only. On a laptop this setting on battery would hold every core at
-    // its maximum while unplugged, which is a battery-life decision the user
-    // did not make by pressing a button labelled Turbo Boost.
-    crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
-    Ok(())
+    crate::power::reactivate_current_scheme()
 }
 
 #[cfg(windows)]
@@ -440,7 +426,7 @@ pub fn rollback_turbo_boost(store: &RollbackStore) -> Result<(), String> {
                         first_error.get_or_insert(e);
                     }
                 }
-                crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
+                crate::power::reactivate_current_scheme()?;
                 match first_error {
                     Some(e) => Err(e),
                     None => Ok(()),
@@ -486,40 +472,22 @@ fn restore_power_index(
     ac_index: Option<u32>,
     dc_index: Option<u32>,
 ) -> Result<(), String> {
-    use winreg::enums::{HKEY_LOCAL_MACHINE, KEY_SET_VALUE};
-    use winreg::RegKey;
-
-    for (index, flag, value_name) in [
-        (ac_index, "/setacvalueindex", "ACSettingIndex"),
-        (dc_index, "/setdcvalueindex", "DCSettingIndex"),
+    for (index, ac, value_name) in [
+        (ac_index, true, "ACSettingIndex"),
+        (dc_index, false, "DCSettingIndex"),
     ] {
         match index {
             Some(v) => {
-                crate::power::run_powercfg(&[
-                    flag,
-                    scheme_guid,
-                    subgroup_guid,
-                    setting_guid,
-                    &v.to_string(),
-                ])?;
+                crate::power::write_setting_index(scheme_guid, subgroup_guid, setting_guid, ac, v)?
             }
-            None => {
-                let path = format!(
-                    r"SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\{}\{}\{}",
-                    scheme_guid, subgroup_guid, setting_guid
-                );
-                match RegKey::predef(HKEY_LOCAL_MACHINE)
-                    .open_subkey_with_flags(&path, KEY_SET_VALUE)
-                {
-                    Ok(key) => match key.delete_value(value_name) {
-                        Ok(()) => {}
-                        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-                        Err(e) => return Err(format!("could not remove power override: {e}")),
-                    },
-                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-                    Err(e) => return Err(format!("could not open power override: {e}")),
-                }
-            }
+            // The power API has no call that removes one override, so the
+            // value goes straight from the registry, verified gone.
+            None => crate::tweaks::windows_impl::restore_value(&RegistrySnapshot {
+                hive: "HKLM".into(),
+                path: crate::power::setting_index_path(scheme_guid, subgroup_guid, setting_guid),
+                name: value_name.into(),
+                original_value: None,
+            })?,
         }
     }
 
@@ -528,8 +496,7 @@ fn restore_power_index(
             "power setting restoration could not be verified; the snapshot was retained".into(),
         );
     }
-    crate::power::run_powercfg(&["/setactive", "scheme_current"])?;
-    Ok(())
+    crate::power::reactivate_current_scheme()
 }
 
 #[cfg(not(windows))]
@@ -552,6 +519,10 @@ pub fn rollback_turbo_boost(_store: &RollbackStore) -> Result<(), String> {
 #[cfg(all(test, windows))]
 mod tests {
     use super::*;
+    use crate::mock_registry::{Fixture, Stored};
+    use crate::power::setting_index_path;
+    use crate::power::tests::{machine, Machine, BALANCED, POWER_SAVER};
+    use crate::tweaks::{Hive, RegistryBackend};
 
     /// Regression for the "this PC does not expose the CPU turbo boost
     /// setting" error reported on a Ryzen 7 7800X3D — hardware that very much
@@ -597,5 +568,246 @@ mod tests {
             "implausible DC boost index: {:?}",
             dc
         );
+    }
+
+    type Action = fn(&RollbackStore) -> Result<(), String>;
+
+    /// A processor-setting tweak and what it must leave behind: the setting,
+    /// AC (`true`) or DC, and the index written there, `None` for "untouched".
+    struct Case {
+        id: &'static str,
+        apply: Action,
+        rollback: Action,
+        slots: &'static [(&'static str, bool, Option<u32>)],
+    }
+
+    const CASES: [Case; 2] = [
+        Case {
+            id: TURBO_BOOST_ID,
+            apply: apply_turbo_boost,
+            rollback: rollback_turbo_boost,
+            slots: &[
+                (PERF_BOOST_MODE_GUID, true, Some(BOOST_AGGRESSIVE)),
+                (PERF_BOOST_MODE_GUID, false, Some(BOOST_AGGRESSIVE)),
+                (PROC_THROTTLE_MIN_GUID, true, Some(THROTTLE_MIN_MAX)),
+                (PROC_THROTTLE_MIN_GUID, false, None),
+            ],
+        },
+        Case {
+            id: CORE_PARKING_ID,
+            apply: apply_core_parking,
+            rollback: rollback_core_parking,
+            slots: &[
+                (CORE_PARKING_MIN_GUID, true, Some(CORE_PARKING_ALL_UNPARKED)),
+                (CORE_PARKING_MIN_GUID, false, None),
+            ],
+        },
+    ];
+
+    fn slot_name(ac: bool) -> &'static str {
+        if ac {
+            "ACSettingIndex"
+        } else {
+            "DCSettingIndex"
+        }
+    }
+
+    fn index(machine: &Machine, setting: &str, ac: bool) -> Option<Stored> {
+        let path = setting_index_path(BALANCED, SUB_PROCESSOR_GUID, setting);
+        machine.registry.get(Hive::Hklm, &path, slot_name(ac))
+    }
+
+    /// A machine that defines the boost setting, with Balanced active and its
+    /// processor indexes seeded: `ac`/`dc` of `None` leave the plan on the
+    /// setting's default, which rollback must restore by deleting again.
+    fn seeded(case: &Case, ac: Option<u32>, dc: Option<u32>) -> (Machine, Fixture) {
+        let machine = machine();
+        machine
+            .registry
+            .create_key(Hive::Hklm, &boost_setting_definition_path())
+            .unwrap();
+        for (setting, is_ac, _) in case.slots {
+            let path = setting_index_path(BALANCED, SUB_PROCESSOR_GUID, setting);
+            if let Some(value) = if *is_ac { ac } else { dc } {
+                let value = Stored::Value(RegValue::Dword(value));
+                machine
+                    .registry
+                    .set(Hive::Hklm, &path, slot_name(*is_ac), value);
+            }
+        }
+        (machine, Fixture::new())
+    }
+
+    const SEEDS: [(Option<u32>, Option<u32>); 3] =
+        [(None, None), (Some(1), Some(0)), (Some(1), None)];
+
+    #[test]
+    fn processor_settings_round_trip_to_the_exact_original_indexes() {
+        for case in &CASES {
+            for (ac, dc) in SEEDS {
+                let (machine, fixture) = seeded(case, ac, dc);
+                let before = machine.registry.dump();
+                (case.apply)(&fixture.store).unwrap_or_else(|e| panic!("{}: {e}", case.id));
+                for (setting, is_ac, written) in case.slots {
+                    let seed = if *is_ac { ac } else { dc };
+                    let expected = written.or(seed).map(|v| Stored::Value(RegValue::Dword(v)));
+                    assert_eq!(
+                        index(&machine, setting, *is_ac),
+                        expected,
+                        "{} {setting}",
+                        case.id
+                    );
+                }
+                // The plan in use was activated again, so Windows applies it now.
+                assert!(machine.plans.activations.get() > 0, "{}", case.id);
+                assert_eq!(machine.active(), BALANCED);
+                (case.rollback)(&fixture.store).unwrap_or_else(|e| panic!("{}: {e}", case.id));
+                assert_eq!(machine.registry.dump(), before, "{} {ac:?}/{dc:?}", case.id);
+                assert!(!fixture.store.is_applied(case.id), "{}", case.id);
+            }
+        }
+    }
+
+    #[test]
+    fn reapplying_after_drift_still_restores_the_first_original() {
+        for case in &CASES {
+            let (machine, fixture) = seeded(case, Some(1), Some(0));
+            let before = machine.registry.dump();
+            (case.apply)(&fixture.store).unwrap();
+            let (setting, is_ac, _) = case.slots[0];
+            let path = setting_index_path(BALANCED, SUB_PROCESSOR_GUID, setting);
+            let drifted = Stored::Value(RegValue::Dword(3));
+            machine
+                .registry
+                .set(Hive::Hklm, &path, slot_name(is_ac), drifted);
+            (case.apply)(&fixture.store).unwrap_or_else(|e| panic!("{}: {e}", case.id));
+            (case.rollback)(&fixture.store).unwrap();
+            assert_eq!(machine.registry.dump(), before, "{}", case.id);
+        }
+    }
+
+    /// The snapshot belongs to the plan it was taken from. With another plan
+    /// active, applying again is refused before any write, and rollback still
+    /// restores the original plan's indexes without switching plans.
+    #[test]
+    fn a_plan_change_between_applies_is_refused_and_the_original_still_restores() {
+        for case in &CASES {
+            let (machine, fixture) = seeded(case, Some(1), Some(0));
+            let before = machine.registry.dump();
+            (case.apply)(&fixture.store).unwrap();
+            machine.switch_to(POWER_SAVER);
+            let writes = machine.registry.mutations.get();
+            let error = (case.apply)(&fixture.store).unwrap_err();
+            assert!(error.contains("another target"), "{}: {error}", case.id);
+            assert_eq!(machine.registry.mutations.get(), writes, "{}", case.id);
+            (case.rollback)(&fixture.store).unwrap();
+            assert_eq!(machine.registry.dump(), before, "{}", case.id);
+            assert_eq!(machine.active(), POWER_SAVER);
+        }
+    }
+
+    #[test]
+    fn a_write_that_does_not_stick_fails_and_keeps_the_journal() {
+        for case in &CASES {
+            let (machine, fixture) = seeded(case, Some(1), Some(0));
+            let before = machine.registry.dump();
+            machine.registry.drop_writes.set(true);
+            let error = (case.apply)(&fixture.store).unwrap_err();
+            assert!(
+                error.contains("could not be verified"),
+                "{}: {error}",
+                case.id
+            );
+            assert!(fixture.store.is_applied(case.id), "{}", case.id);
+            assert_eq!(machine.registry.dump(), before, "{}", case.id);
+            machine.registry.drop_writes.set(false);
+            (case.rollback)(&fixture.store).unwrap();
+            assert_eq!(machine.registry.dump(), before, "{}", case.id);
+            assert!(!fixture.store.is_applied(case.id), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn a_failed_restore_keeps_the_journal_for_a_retry() {
+        for case in &CASES {
+            for (ac, dc) in SEEDS {
+                let (machine, fixture) = seeded(case, ac, dc);
+                let before = machine.registry.dump();
+                (case.apply)(&fixture.store).unwrap();
+                machine.registry.drop_writes.set(true);
+                assert!((case.rollback)(&fixture.store).is_err(), "{}", case.id);
+                assert!(fixture.store.is_applied(case.id), "{}", case.id);
+                machine.registry.drop_writes.set(false);
+                (case.rollback)(&fixture.store).unwrap();
+                assert_eq!(machine.registry.dump(), before, "{} {ac:?}/{dc:?}", case.id);
+                assert!(!fixture.store.is_applied(case.id), "{}", case.id);
+            }
+        }
+    }
+
+    /// A plan deleted while the tweak was on cannot take its values back; the
+    /// journal waits until the plan exists again.
+    #[test]
+    fn a_deleted_plan_keeps_the_journal_until_it_exists_again() {
+        for case in &CASES {
+            let (machine, fixture) = seeded(case, Some(1), Some(0));
+            let before = machine.registry.dump();
+            (case.apply)(&fixture.store).unwrap();
+            machine.switch_to(POWER_SAVER);
+            machine.delete_plan(BALANCED);
+            assert!((case.rollback)(&fixture.store).is_err(), "{}", case.id);
+            assert!(fixture.store.is_applied(case.id), "{}", case.id);
+            machine.recreate_plan(BALANCED);
+            (case.rollback)(&fixture.store).unwrap();
+            assert_eq!(machine.registry.dump(), before, "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn turbo_boost_is_refused_where_windows_does_not_define_it() {
+        let machine = machine();
+        let fixture = Fixture::new();
+        let error = apply_turbo_boost(&fixture.store).unwrap_err();
+        assert!(error.contains("does not expose"), "{error}");
+        assert!(!fixture.store.is_applied(TURBO_BOOST_ID));
+        assert_eq!(machine.registry.mutations.get(), 0);
+        assert_eq!(machine.plans.activations.get(), 0);
+    }
+
+    /// Journals from older builds: one that recorded boost mode alone is put
+    /// back exactly; one that never named its plan is refused untouched.
+    #[test]
+    fn older_turbo_boost_journals_restore_or_are_refused_as_recorded() {
+        let (machine, fixture) = seeded(&CASES[0], Some(2), Some(2));
+        let boost_only = SnapshotEntry::PowerSettingIndex {
+            scheme_guid: BALANCED.into(),
+            subgroup_guid: SUB_PROCESSOR_GUID.into(),
+            setting_guid: PERF_BOOST_MODE_GUID.into(),
+            ac_index: Some(1),
+            dc_index: None,
+        };
+        let mut transaction = fixture.store.transaction().unwrap();
+        transaction.save_entry(TURBO_BOOST_ID, boost_only).unwrap();
+        drop(transaction);
+        rollback_turbo_boost(&fixture.store).unwrap();
+        let one = Some(Stored::Value(RegValue::Dword(1)));
+        assert_eq!(index(&machine, PERF_BOOST_MODE_GUID, true), one);
+        assert_eq!(index(&machine, PERF_BOOST_MODE_GUID, false), None);
+        assert!(!fixture.store.is_applied(TURBO_BOOST_ID));
+
+        let legacy = SnapshotEntry::PowerSetting {
+            ac_index: "2".into(),
+            dc_index: "0x2".into(),
+        };
+        let mut transaction = fixture.store.transaction().unwrap();
+        transaction.save_entry(TURBO_BOOST_ID, legacy).unwrap();
+        drop(transaction);
+        let before = machine.registry.dump();
+        let writes = machine.registry.mutations.get();
+        let error = rollback_turbo_boost(&fixture.store).unwrap_err();
+        assert!(error.contains("legacy snapshot"), "{error}");
+        assert!(fixture.store.is_applied(TURBO_BOOST_ID));
+        assert_eq!(machine.registry.dump(), before);
+        assert_eq!(machine.registry.mutations.get(), writes);
     }
 }

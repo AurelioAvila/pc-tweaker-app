@@ -38,7 +38,6 @@ fn tool_path(name: &str) -> io::Result<PathBuf> {
         "schtasks" => "schtasks.exe",
         "taskkill" => "taskkill.exe",
         "shutdown" => "shutdown.exe",
-        "powercfg" => "powercfg.exe",
         "ipconfig" => "ipconfig.exe",
         "defrag" => "defrag.exe",
         "dism" | "dism.exe" => "dism.exe",

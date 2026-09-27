@@ -8,10 +8,12 @@
 //! real on-disk journal, without administrator rights and without touching the
 //! machine. That makes it safe on a GitHub runner, which is an administrator.
 //!
-//! What stays out of reach is the part that talks to other programs or to
-//! device state: power plans switched with powercfg, services, DNS, BBR2, the
-//! context-menu key and Filter Keys. `every_visible_tweak_is_either_covered_here_or_listed_as_os_only`
-//! keeps that list explicit, so a new tweak cannot slip past both.
+//! Power plans have a seam of their own (`power::PowerPlans`), whose fake
+//! stores plan settings into this registry; those tweaks are tested next to
+//! it. What stays out of reach is the part that talks to other programs or to
+//! device state: services, DNS, BBR2, the context-menu key and Filter Keys.
+//! `every_visible_tweak_is_either_covered_here_or_listed_as_os_only` keeps
+//! that list explicit, so a new tweak cannot slip past both.
 
 use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, BTreeSet};
@@ -158,6 +160,14 @@ impl Drop for Installed {
     }
 }
 
+impl Installed {
+    /// Another handle on the same registry, for a fake that stores into it
+    /// (the in-memory power plans in power.rs).
+    pub(crate) fn shared(&self) -> Rc<MemRegistry> {
+        self.0.clone()
+    }
+}
+
 pub(crate) fn install() -> Installed {
     let registry = Rc::new(MemRegistry::default());
     set_test_backend(Some(registry.clone()));
@@ -218,13 +228,13 @@ impl PowerBackend for MemPower {
 
 /// A rollback store in its own temporary directory, which doubles as an
 /// app-data folder with no licence in it (so: a Free user).
-struct Fixture {
-    dir: PathBuf,
-    store: RollbackStore,
+pub(crate) struct Fixture {
+    pub(crate) dir: PathBuf,
+    pub(crate) store: RollbackStore,
 }
 
 impl Fixture {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
         let dir = std::env::temp_dir().join(format!(
             "pct-mock-{}-{}",
@@ -237,7 +247,7 @@ impl Fixture {
         }
     }
 
-    fn snapshot(&self, id: &str) -> Option<SnapshotEntry> {
+    pub(crate) fn snapshot(&self, id: &str) -> Option<SnapshotEntry> {
         self.store.transaction().unwrap().entry(id)
     }
 }
@@ -257,15 +267,20 @@ const REGISTRY_COMPOSITES: [&str; 5] = [
     crate::privacy_extra::TYPING_PERSONALIZATION_ID,
 ];
 
+/// Tweaks driven through a seam of their own, with their round-trip tests
+/// next to it rather than here.
+const COVERED_IN_MODULE: [&str; 4] = [
+    crate::power::TWEAK_ID,         // power::tests (power plans)
+    crate::turbo::TWEAK_ID,         // turbo::tests (registry plus power plans)
+    crate::gaming::TURBO_BOOST_ID,  // gaming::tests (power plans)
+    crate::gaming::CORE_PARKING_ID, // gaming::tests (power plans)
+];
+
 /// Tweaks whose effect lives outside the registry and the AC power policy, so
 /// no in-memory backend can stand in for them. Kept by hand on purpose: adding
 /// a tweak means deciding which list it belongs to.
-const OS_ONLY: [&str; 12] = [
-    crate::power::TWEAK_ID,             // powercfg /setactive
-    crate::turbo::TWEAK_ID,             // registry plus powercfg /setactive
+const OS_ONLY: [&str; 8] = [
     crate::dns::TWEAK_ID,               // DNS client cmdlets
-    crate::gaming::TURBO_BOOST_ID,      // powercfg index writes
-    crate::gaming::CORE_PARKING_ID,     // powercfg index writes
     crate::contextmenu::TWEAK_ID,       // key creation plus an Explorer restart
     crate::services::WINDOWS_SEARCH_ID, // service control manager
     crate::netshaper::TWEAK_ID,         // NetTCPSetting
@@ -605,6 +620,7 @@ fn every_visible_tweak_is_either_covered_here_or_listed_as_os_only() {
     let mut covered: Vec<&str> = registry_ids();
     covered.push(crate::netlatency::TWEAK_ID);
     covered.extend(power_tuning::TWEAKS.iter().map(|t| t.id));
+    covered.extend(COVERED_IN_MODULE);
     covered.extend(OS_ONLY);
     let mut visible = crate::tests::all_visible_ids();
     visible.sort();

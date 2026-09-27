@@ -552,3 +552,144 @@ export type HudSnapshot = {
     sample_frames: number;
   } | null;
 };
+
+/* ---------------- DPC / ISR latency (src-tauri/src/diagnostics/dpc.rs) --- */
+
+/** Which kind of kernel routine a measurement is about. */
+export type RoutineKind = "dpc" | "isr";
+
+/** Mirrors Rust `dpc::KindTotals`: every DPC or every ISR in the capture. */
+export type KindTotals = {
+  kind: RoutineKind;
+  count: number;
+  /** Longest single routine, in microseconds. 0 when none ran. */
+  maxUs: number;
+  /** Routines that ran past `limitUs`. */
+  overLimit: number;
+  /** Microsoft's guidance: 100 us for a DPC, 25 us for an ISR. */
+  limitUs: number;
+};
+
+/** Mirrors Rust `dpc::RoutineTotals`: one driver's DPCs, or its ISRs. */
+export type RoutineTotals = {
+  count: number;
+  maxUs: number;
+  totalUs: number;
+  overLimit: number;
+};
+
+/** Mirrors Rust `dpc::DriverLatency`. */
+export type DriverLatency = {
+  /** File name such as "nvlddmkm.sys"; null when the routine address
+   *  matched no loaded driver. */
+  driver: string | null;
+  dpc: RoutineTotals;
+  isr: RoutineTotals;
+};
+
+/** Mirrors Rust `dpc::Spike`: one of the longest routines of the capture. */
+export type LatencySpike = {
+  kind: RoutineKind;
+  driver: string | null;
+  durationUs: number;
+  /** Milliseconds after the first event of the capture. */
+  atMs: number;
+};
+
+/** Mirrors Rust `dpc::DpcReport`, returned by `trace_dpc_latency`. */
+export type DpcReport = {
+  seconds: number;
+  dpc: KindTotals;
+  isr: KindTotals;
+  /** Worst offender first, ranked by how far past its limit it went. */
+  drivers: DriverLatency[];
+  /** Longest single routines, longest first (at most ten). */
+  worst: LatencySpike[];
+  /** Non-zero means the kernel dropped events and the maxima are a floor. */
+  eventsLost: number;
+  buffersLost: number;
+  skewedEvents: number;
+  /** False when Windows hid every driver address; all rows are then null. */
+  driversResolved: boolean;
+};
+
+/* ---------------- Network verification (src-tauri/src/diagnostics/network_verify.rs) --- */
+
+/** Mirrors Rust `network_verify::LinkQuality`: ICMP echoes to one target. */
+export type LinkQuality = {
+  target: string;
+  sent: number;
+  received: number;
+  /** Successful round trips in microseconds, in the order taken. */
+  samplesUs: number[];
+  minMs: number | null;
+  medianMs: number | null;
+  maxMs: number | null;
+  /** RFC 3550 smoothing over consecutive round-trip differences; a floor
+   *  over 32 samples, not the long-run figure. */
+  jitterMs: number | null;
+};
+
+/** Mirrors Rust `network_verify::TcpView`: one live connection as the TCP
+ *  stack reports it. null means Windows did not say. */
+export type TcpView = {
+  /** Fixed per-socket reservation; does not move with autotuning. */
+  soRcvbuf: number | null;
+  soSndbuf: number | null;
+  /** TCP_NODELAY on an unconfigured socket: false means Nagle is on. */
+  nodelay: boolean | null;
+  rttUs: number | null;
+  minRttUs: number | null;
+  mss: number | null;
+  rcvWnd: number | null;
+  sndWnd: number | null;
+  /** The autotuned receive buffer. */
+  rcvBuf: number | null;
+};
+
+/** Mirrors Rust `network_verify::NetworkSnapshot`, returned by `verify_network`. */
+export type NetworkSnapshot = {
+  online: boolean;
+  link: LinkQuality;
+  tcp: TcpView | null;
+};
+
+/** Mirrors Rust `network_verify::Verdict`. "noMeasurableChange" is the
+ *  expected answer for every TCP tweak: ICMP does not see them. "lineChanged"
+ *  means the round trips moved between the two readings for reasons of the
+ *  line (a download, Wi-Fi rate); it is never credited to the tweak. */
+export type LatencyVerdict = "noMeasurableChange" | "lineChanged" | "inconclusive";
+
+/** Mirrors Rust `network_verify::NetworkVerification`, returned by
+ *  `last_network_verification` after a TCP tweak is applied. */
+export type NetworkVerification = {
+  tweakId: string;
+  /** Unix time in milliseconds when the "after" reading finished. Only
+   *  changes that were kept get a record. */
+  measuredAt: number;
+  before: NetworkSnapshot;
+  after: NetworkSnapshot;
+  latency: LatencyVerdict;
+  /** After minus before, in milliseconds; negative is faster. */
+  medianDeltaMs: number | null;
+  /** Two-sided Mann-Whitney U p-value of the two RTT samples. Echoes taken
+   *  20 ms apart are not independent, so this is a screening threshold. */
+  pValue: number | null;
+};
+
+/* ---------------- Core steering (src-tauri/src/engine/dynamic_session.rs) --- */
+
+/** Mirrors Rust `dynamic_session::PlanKind`. */
+export type SteeringKind = "vCache" | "hybrid";
+
+/** Mirrors Rust `dynamic_session::CoreSteeringStatus`, returned by
+ *  `core_steering_status`. */
+export type CoreSteeringStatus = {
+  enabled: boolean;
+  /** null on a CPU with nothing to steer between. */
+  kind: SteeringKind | null;
+  gameCpuSets: number;
+  backgroundCpuSets: number;
+  /** Processes the running session has steered, the game included. */
+  steeredProcesses: number;
+};

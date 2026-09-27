@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-last-network-verification"
+description = "Enables the last_network_verification command without any pre-configured scope."
+commands.allow = ["last_network_verification"]
+
+[[permission]]
+identifier = "deny-last-network-verification"
+description = "Denies the last_network_verification command without any pre-configured scope."
+commands.deny = ["last_network_verification"]

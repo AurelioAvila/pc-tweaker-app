@@ -8,11 +8,18 @@ mod cleanup;
 mod contextmenu;
 mod cookies;
 mod debloat;
+mod diagnostics {
+    pub mod dpc;
+    pub mod network_verify;
+}
 #[cfg(windows)]
 mod everyday;
 #[cfg(windows)]
 mod download_limit;
 mod ecoqos;
+mod engine {
+    pub mod dynamic_session;
+}
 mod monitor_profiles;
 #[cfg(windows)]
 mod system_tools;
@@ -46,6 +53,9 @@ mod hud_window;
 mod ipc_commands;
 #[cfg(test)]
 mod ipc_tests;
+#[cfg(all(test, windows))]
+#[path = "tests/mock_registry.rs"]
+mod mock_registry;
 mod license;
 mod lifetime_tools;
 mod netcheck;
@@ -538,8 +548,12 @@ fn apply_by_id(
     // Read the line before touching it. Without the earlier reading, a
     // failed probe afterwards cannot be told apart from a machine that was
     // offline the whole time, and the guard would revert a good tweak on a
-    // PC that never had internet.
-    let was_online = netcheck::relevant(id) && netcheck::online();
+    // PC that never had internet. The same reading is the "before" half of
+    // the verification record the UI shows afterwards.
+    // A Pro tweak a Free user cannot apply is refused without the wait.
+    let before = (netcheck::relevant(id) && require_tweak_entitlement(app_data_dir, id).is_ok())
+        .then(diagnostics::network_verify::measure);
+    let was_online = before.as_ref().is_some_and(|b| b.online);
 
     // Single funnel for every apply (direct, batched, and the elevated
     // helper), so this one audit call covers them all exactly once.
@@ -551,6 +565,18 @@ fn apply_by_id(
         // itself with nothing to show for it.
         let restored = rollback_by_id(store, id).is_ok();
         result = Err(netcheck::reverted_message(restored));
+    }
+    // The "after" reading only for a change that was kept, and only when the
+    // "before" one had enough replies to compare against.
+    if let Some(before) = before.filter(|b| {
+        result.is_ok() && diagnostics::network_verify::enough_replies(&b.link)
+    }) {
+        let after = diagnostics::network_verify::measure();
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_millis() as u64);
+        let record = diagnostics::network_verify::compare(id, now, before, after);
+        diagnostics::network_verify::save(app_data_dir, &record);
     }
 
     audit::record(
@@ -568,12 +594,13 @@ fn apply_by_id_inner(
     app_data_dir: &std::path::Path,
     id: &str,
 ) -> Result<(), String> {
+    // Refused for everyone, Pro or not, before the licence is even looked at.
+    if ["ecoqos_rules","limit_do_background_download","monitor_refresh_profile"].contains(&id) {
+        return Err("Configure this control in its dedicated panel; no default configuration is applied automatically".into());
+    }
     require_tweak_entitlement(app_data_dir, id)?;
     if [everyday::DISABLE_RESTART_APPS_ID,everyday::ENABLE_LONG_PATHS_ID,everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID].contains(&id) {
         return everyday::apply(id,store);
-    }
-    if ["ecoqos_rules","limit_do_background_download","monitor_refresh_profile"].contains(&id) {
-        return Err("Configure this control in its dedicated panel; no default configuration is applied automatically".into());
     }
     if power_tuning::find(id).is_some() {
         return power_tuning::apply(store, id);
@@ -1214,6 +1241,10 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     // "apply", the UAC prompt closes, and nothing happens with no explanation
     // anywhere. Recording it is the only way that failure is ever seen.
     crash::install(dir.clone(), crash::PROCESS_ELEVATED);
+    // A read-only measurement: nothing to protect with a restore point.
+    if action == diagnostics::dpc::ELEVATED_FLAG {
+        std::process::exit(diagnostics::dpc::run_elevated(&dir, id));
+    }
     let store = RollbackStore::new(dir.clone());
 
     // Safety net first: a System Restore point before any elevated change.
@@ -1693,7 +1724,12 @@ pub fn run() {
             cookies::set_cookie_whitelist,
             scheduledtasks::list_scheduled_tasks,
             scheduledtasks::set_scheduled_task_enabled,
-            netmaintenance::flush_dns_cache
+            netmaintenance::flush_dns_cache,
+            diagnostics::network_verify::verify_network,
+            diagnostics::network_verify::last_network_verification,
+            diagnostics::dpc::trace_dpc_latency,
+            engine::dynamic_session::core_steering_status,
+            game_sessions::set_core_steering
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
@@ -1701,6 +1737,15 @@ pub fn run() {
             if matches!(event, tauri::RunEvent::Exit) {
                 if let Err(error) = ecoqos::stop(app) {
                     eprintln!("EcoQoS recovery remains pending: {error}");
+                }
+                #[cfg(windows)]
+                diagnostics::dpc::native::abort_if_running();
+                // Background apps must not stay on the E-cores after the
+                // app that put them there has gone.
+                if let Err(error) = store_for(app).and_then(|store| {
+                    engine::dynamic_session::restore_owned_by_this_process(&store)
+                }) {
+                    eprintln!("core steering recovery remains pending: {error}");
                 }
             }
         });
@@ -1712,7 +1757,7 @@ mod tests {
 
     /// Every id the UI can show, gathered from the same places `list_tweaks`
     /// gathers them.
-    fn all_visible_ids() -> Vec<String> {
+    pub(crate) fn all_visible_ids() -> Vec<String> {
         let mut ids: Vec<String> = tweaks::all_tweaks()
             .iter()
             .filter(|t| t.id != "disable_copilot")

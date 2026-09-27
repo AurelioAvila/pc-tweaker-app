@@ -162,6 +162,8 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // "Driver" is the Italian word as well; Windows itself uses it.
+  "it:latencyTrace.colDriver",
   // Product names remain unchanged in each locale.
   "it:tweakyDriverPromo.title",
   "fr:tweakyDriverPromo.title",

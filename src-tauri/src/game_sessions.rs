@@ -4,6 +4,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
+use crate::engine::dynamic_session;
 use crate::rollback::RollbackStore;
 use crate::turbo;
 
@@ -20,6 +21,9 @@ pub struct GameEntry {
 struct Config {
     enabled: bool,
     games: Vec<GameEntry>,
+    /// Steer the game's threads to the cores that suit it while it runs.
+    #[serde(default)]
+    core_steering: bool,
 }
 
 fn config_path(dir: &Path) -> PathBuf {
@@ -71,7 +75,7 @@ fn normalized_executable_path(path: &str) -> Option<String> {
     Some(path.to_lowercase())
 }
 
-fn executable_key(path: &str) -> Option<String> {
+pub(crate) fn executable_key(path: &str) -> Option<String> {
     let resolved = std::fs::canonicalize(path).ok();
     normalized_executable_path(resolved.as_deref().and_then(Path::to_str).unwrap_or(path))
 }
@@ -141,6 +145,25 @@ pub fn add_game_session(app: tauri::AppHandle, path: String) -> Result<GameEntry
     Ok(entry)
 }
 
+pub(crate) fn core_steering_enabled(dir: &Path) -> bool {
+    CONFIG_LOCK
+        .lock()
+        .map(|_guard| load_config(dir).core_steering)
+        .unwrap_or(false)
+}
+
+/// Turning steering on needs Pro; turning it off never does, and the watcher
+/// restores whatever a running session had steered on its next pass.
+#[tauri::command]
+pub fn set_core_steering(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    let dir = crate::store_for_dir(&app)?;
+    authorize_configuration_change(enabled, || crate::require_pro(&dir))?;
+    let _guard = CONFIG_LOCK.lock().map_err(|e| e.to_string())?;
+    let mut config = load_config(&dir);
+    config.core_steering = enabled;
+    save_config(&dir, &config)
+}
+
 #[tauri::command]
 pub fn remove_game_session(app: tauri::AppHandle, path: String) -> Result<(), String> {
     let dir = crate::store_for_dir(&app)?;
@@ -178,6 +201,7 @@ struct ProcessObservation {
     pid: u32,
     started_at: u64,
     executable: Option<String>,
+    parent: Option<u32>,
 }
 
 fn find_matching_game(
@@ -417,6 +441,106 @@ fn rollback_turbo_elevated_if_needed(store: &RollbackStore, owner: &str) -> Resu
     Ok(())
 }
 
+/// Core steering runs its own session beside Turbo Gaming: a separate owner
+/// token and journal entry, no UAC, and a failure in one never holds up the
+/// other.
+struct SteeringBackend<'a> {
+    store: &'a RollbackStore,
+    game: Option<MatchedGame>,
+    candidates: &'a [dynamic_session::Candidate],
+}
+
+impl SessionBackend for SteeringBackend<'_> {
+    fn apply(&mut self, owner: &str) -> Result<bool, String> {
+        let Some(game) = &self.game else {
+            return Ok(false);
+        };
+        dynamic_session::apply(
+            self.store,
+            owner,
+            game.process.pid,
+            &game.process.executable,
+            self.candidates,
+        )
+    }
+
+    fn restore(&mut self, owner: &str) -> Result<(), String> {
+        dynamic_session::restore(self.store, owner)
+    }
+
+    fn trim(&mut self) -> u64 {
+        0
+    }
+}
+
+#[derive(Default)]
+struct Steering {
+    state: SessionState,
+    recovery_checked: bool,
+    retry_after: Option<Instant>,
+}
+
+impl Steering {
+    fn tick(
+        &mut self,
+        store: &RollbackStore,
+        allowed: bool,
+        games: &[GameEntry],
+        processes: &[ProcessObservation],
+        watcher_start: u64,
+    ) {
+        if !self.recovery_checked {
+            // A journal left by a PC Tweaker that is no longer running is put
+            // back first, Pro or not.
+            match dynamic_session::session_owner(store) {
+                Ok(Some(owner)) if originating_watcher_may_be_alive(&owner, processes) => return,
+                Ok(Some(owner)) => self.state = SessionState::CleanupPending { owner },
+                Ok(None) => {}
+                Err(error) => {
+                    eprintln!("core steering: cannot inspect recovery ownership: {error}");
+                    return;
+                }
+            }
+            self.recovery_checked = true;
+        }
+        if self.retry_after.is_some_and(|at| Instant::now() < at) {
+            return;
+        }
+        let matched = if allowed {
+            find_matching_game(games, processes, self.state.game())
+        } else {
+            None
+        };
+        let candidates: Vec<_> = processes
+            .iter()
+            .map(|p| dynamic_session::Candidate {
+                pid: p.pid,
+                parent: p.parent,
+                executable: p.executable.clone(),
+            })
+            .collect();
+        let mut backend = SteeringBackend {
+            store,
+            game: matched.clone(),
+            candidates: &candidates,
+        };
+        let result = self
+            .state
+            .tick(allowed, matched, &mut backend, || new_owner_token(watcher_start))
+            .and_then(|_| match &self.state {
+                SessionState::Active {
+                    game,
+                    owner: Some(owner),
+                } => dynamic_session::extend(store, owner, game.process.pid, &candidates).map(|_| ()),
+                _ => Ok(()),
+            });
+        if let Err(error) = result {
+            eprintln!("core steering: operation pending recovery: {error}");
+            self.retry_after = Some(Instant::now() + Duration::from_secs(30));
+        }
+    }
+}
+
 #[cfg(windows)]
 fn trim_working_sets() -> u64 {
     crate::ramclean::trim_for_session()
@@ -445,6 +569,7 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
         use tauri::Emitter;
 
         let mut state = SessionState::default();
+        let mut steering = Steering::default();
         let mut sys = sysinfo::System::new();
         let mut recovery_checked = false;
         let mut retry_after = Instant::now();
@@ -470,6 +595,7 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                     pid: p.pid().as_u32(),
                     started_at: p.start_time(),
                     executable: p.exe().and_then(Path::to_str).and_then(executable_key),
+                    parent: p.parent().map(|parent| parent.as_u32()),
                 })
                 .collect();
             processes.sort_by_key(|p| (p.pid, p.started_at));
@@ -478,6 +604,19 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                 crate::monitor_profiles::tick(&dir,&paths);
             }
             let store = RollbackStore::new(dir.clone());
+            let watcher_start = processes
+                .iter()
+                .find(|p| p.pid == std::process::id())
+                .map(|p| p.started_at)
+                .unwrap_or(0);
+            let pro = crate::require_pro(&dir).is_ok();
+            // A failed enumeration is not evidence that a game exited, and
+            // steering is never decided on one.
+            if refreshed != 0 {
+                let allowed =
+                    config.enabled && config.core_steering && !config.games.is_empty() && pro;
+                steering.tick(&store, allowed, &config.games, &processes, watcher_start);
+            }
             if !recovery_checked {
                 if refreshed == 0 {
                     continue;
@@ -497,8 +636,7 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                     }
                 }
             }
-            let allowed =
-                config.enabled && !config.games.is_empty() && crate::require_pro(&dir).is_ok();
+            let allowed = config.enabled && !config.games.is_empty() && pro;
             // A failed process enumeration is not evidence that a game exited.
             // Explicit disable/removal/expiry can still restore our own state.
             if allowed && refreshed == 0 {
@@ -512,11 +650,6 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
             } else {
                 None
             };
-            let watcher_start = processes
-                .iter()
-                .find(|p| p.pid == std::process::id())
-                .map(|p| p.started_at)
-                .unwrap_or(0);
             let mut backend = NativeBackend {
                 store: &store,
                 dir: &dir,
@@ -607,6 +740,7 @@ mod tests {
             pid: 123,
             started_at,
             executable: path.and_then(normalized_executable_path),
+            parent: None,
         }
     }
 
@@ -806,18 +940,21 @@ mod tests {
             pid: 100,
             started_at: 200,
             executable: None,
+            parent: None,
         };
         assert!(originating_watcher_may_be_alive(&owner(), &[live]));
         let unknown = ProcessObservation {
             pid: 100,
             started_at: 0,
             executable: None,
+            parent: None,
         };
         assert!(originating_watcher_may_be_alive(&owner(), &[unknown]));
         let reused = ProcessObservation {
             pid: 100,
             started_at: 201,
             executable: None,
+            parent: None,
         };
         assert!(!originating_watcher_may_be_alive(&owner(), &[reused]));
         assert!(!originating_watcher_may_be_alive(&owner(), &[]));
@@ -853,5 +990,67 @@ mod tests {
         ] {
             assert!(validate_owner_token(invalid).is_err(), "{invalid}");
         }
+    }
+
+    /// A journal left by a PC Tweaker that crashed mid-game is put back on
+    /// the next launch's first pass, with steering disabled and no Pro.
+    #[cfg(windows)]
+    #[test]
+    fn steering_recovers_a_journal_left_by_a_dead_session() {
+        let dir = std::env::temp_dir().join(format!("pct-steer-recover-{}", std::process::id()));
+        let store = RollbackStore::new(dir.clone());
+        // PIDs this large are never live, so the processes "exited".
+        let dead_owner = "gs-4000000000-1-2-3";
+        let entry = crate::rollback::SnapshotEntry::Composite {
+            entries: vec![crate::rollback::SnapshotEntry::ProcessCpuSets {
+                pid: 4_000_000_001,
+                creation: 7,
+                cpu_sets: vec![256],
+            }],
+        };
+        store
+            .transaction()
+            .unwrap()
+            .save_owned_entry(dynamic_session::TWEAK_ID, entry, dead_owner)
+            .unwrap();
+        let mut steering = Steering::default();
+        steering.tick(&store, false, &[], &[], 0);
+        assert!(steering.retry_after.is_none(), "restore failed");
+        assert_eq!(dynamic_session::session_owner(&store).unwrap(), None);
+        assert!(!store.is_applied(dynamic_session::TWEAK_ID));
+        assert!(matches!(steering.state, SessionState::Idle));
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    /// While the watcher that wrote the journal is still alive, a second
+    /// instance must not take it over.
+    #[test]
+    fn steering_leaves_a_live_session_journal_alone() {
+        let dir = std::env::temp_dir().join(format!("pct-steer-live-{}", std::process::id()));
+        let store = RollbackStore::new(dir.clone());
+        let owner = "gs-100-200-300-1";
+        let entry = crate::rollback::SnapshotEntry::Composite {
+            entries: vec![crate::rollback::SnapshotEntry::ProcessCpuSets {
+                pid: 4_000_000_001,
+                creation: 7,
+                cpu_sets: vec![256],
+            }],
+        };
+        store
+            .transaction()
+            .unwrap()
+            .save_owned_entry(dynamic_session::TWEAK_ID, entry, owner)
+            .unwrap();
+        let live = ProcessObservation {
+            pid: 100,
+            started_at: 200,
+            executable: None,
+            parent: None,
+        };
+        let mut steering = Steering::default();
+        steering.tick(&store, false, &[], &[live], 0);
+        assert!(!steering.recovery_checked);
+        assert_eq!(dynamic_session::session_owner(&store).unwrap().as_deref(), Some(owner));
+        let _ = std::fs::remove_dir_all(dir);
     }
 }

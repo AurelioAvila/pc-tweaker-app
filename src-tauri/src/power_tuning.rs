@@ -108,7 +108,11 @@ pub(crate) mod native {
         if !crate::rollback::valid_guid(value) {
             return Err("Invalid power policy GUID".into());
         }
-        u128::from_str_radix(&value.replace('-', ""), 16)
+        let bare = value
+            .strip_prefix('{')
+            .and_then(|v| v.strip_suffix('}'))
+            .unwrap_or(value);
+        u128::from_str_radix(&bare.replace('-', ""), 16)
             .map(GUID::from_u128)
             .map_err(|_| "Invalid GUID".into())
     }
@@ -289,6 +293,9 @@ pub(crate) mod native {
 
 #[cfg(windows)]
 pub fn apply(store: &RollbackStore, id: &str) -> Result<(), String> {
+    // The real power policy: never from a unit test (the fakes call
+    // apply_with/restore_with directly).
+    crate::tweaks::windows_impl::refuse_in_unit_tests().map_err(|e| e.to_string())?;
     apply_with(
         store,
         find(id).ok_or("Unknown power tweak")?,
@@ -297,6 +304,7 @@ pub fn apply(store: &RollbackStore, id: &str) -> Result<(), String> {
 }
 #[cfg(windows)]
 pub fn rollback(store: &RollbackStore, id: &str) -> Result<(), String> {
+    crate::tweaks::windows_impl::refuse_in_unit_tests().map_err(|e| e.to_string())?;
     restore_with(
         store,
         find(id).ok_or("Unknown power tweak")?,

@@ -312,6 +312,8 @@ mod tests {
         elevated: Cell<bool>,
         config: RefCell<Option<DoConfig>>,
         managed: Cell<bool>,
+        /// How often the environment was read (Get-DOConfig in production).
+        reads: Cell<usize>,
     }
 
     impl DoEnvironment for FakeEnvironment {
@@ -319,6 +321,7 @@ mod tests {
             self.elevated.get()
         }
         fn read(&self) -> Result<Environment, String> {
+            self.reads.set(self.reads.get() + 1);
             Ok(Environment {
                 config: self.config.borrow().clone(),
                 managed: self.managed.get(),
@@ -347,6 +350,7 @@ mod tests {
                 elevated: Cell::new(true),
                 config: RefCell::new(Some(defaults())),
                 managed: Cell::new(false),
+                reads: Cell::new(0),
             });
             set_test_environment(Some(environment.clone()));
             Machine {
@@ -468,10 +472,13 @@ mod tests {
         m.environment.elevated.set(false);
         assert!(configure(&m.store, 500).unwrap_err().contains("administrator"));
         assert!(m.journal().is_none());
+        assert_eq!(m.environment.reads.get(), 0, "read before the elevation check");
         m.environment.elevated.set(true);
         configure(&m.store, 500).unwrap();
         m.environment.elevated.set(false);
+        let reads = m.environment.reads.get();
         assert!(rollback(&m.store).unwrap_err().contains("administrator"));
+        assert_eq!(m.environment.reads.get(), reads, "read before the elevation check");
         assert_eq!(m.policy(), CAP);
         assert!(m.journal().is_some());
     }
@@ -575,7 +582,10 @@ mod tests {
     #[test]
     fn the_shared_funnel_restores_it_and_never_applies_it() {
         let m = Machine::new();
-        assert!(crate::apply_by_id_inner(&m.store, &m.dir, TWEAK_ID).is_err());
+        let refused = crate::apply_by_id_inner(&m.store, &m.dir, TWEAK_ID).unwrap_err();
+        // The panel-only refusal itself, not the licence gate behind it.
+        assert!(refused.contains("dedicated panel"), "{refused}");
+        assert!(!refused.starts_with(crate::PRO_REQUIRED_PREFIX));
         assert!(m.journal().is_none());
         assert_eq!(m.registry.mutations.get(), 0);
         configure(&m.store, 500).unwrap();

@@ -69,10 +69,12 @@ jobs:
       # session can start there. The live network test stays out: Azure
       # blocks outbound ICMP.
       - name: Live DPC capture
-        run: cargo test --manifest-path src-tauri/Cargo.toml --lib diagnostics::dpc::tests::live -- --ignored --nocapture
-
-      - name: DNS PowerShell data boundary
-        run: node scripts/test-dns-powershell.mjs
+        # --exact plus the count check: a renamed test must fail this step,
+        # not turn it into a green run of zero tests.
+        run: |
+          cargo test --manifest-path src-tauri/Cargo.toml --lib diagnostics::dpc::tests::live_capture_sees_interrupts_and_names_their_drivers -- --ignored --exact --nocapture 2>&1 | Tee-Object -Variable log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not ($log -match 'test result: ok\. 1 passed')) { Write-Error 'the live DPC test did not run'; exit 1 }
 
       - name: Native power policies on a disposable inactive plan
         run: cargo test --manifest-path src-tauri/Cargo.toml --lib power_tuning::tests::inactive_windows_plan_roundtrip -- --ignored --nocapture

@@ -138,7 +138,14 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
             return Err("unexpected snapshot type for the congestion provider tweak".to_string());
         };
 
-        with_templates(|tcp| set_verified(tcp, &setting_name, &previous))
+        with_templates(|tcp| {
+            // Already as recorded (an apply that never took effect): nothing
+            // to write, whatever the provider accepts.
+            if tcp.provider(&setting_name)?.eq_ignore_ascii_case(&previous) {
+                return Ok(());
+            }
+            set_verified(tcp, &setting_name, &previous)
+        })
     })
 }
 
@@ -217,17 +224,30 @@ mod wmi {
                 .find(|(_, name)| name.eq_ignore_ascii_case(provider))
                 .and_then(|(n, _)| u8::try_from(n).ok())
                 .ok_or_else(|| format!("this Windows build does not offer {provider}"))?;
-            let update = session.update(template, number)?;
-            // SAFETY: `update` is a live instance of the class.
-            unsafe {
-                session.services.PutInstance(
-                    &update,
-                    WBEM_GENERIC_FLAG_TYPE(WBEM_FLAG_UPDATE_ONLY.0),
-                    None,
-                    None,
-                )
+            // First the key-only instance (only the provider changes); if the
+            // provider rejects or ignores that shape, the whole instance as
+            // read, with the provider replaced, the way a CIM modify sends it.
+            // Whichever one Windows then reports is what the caller verifies.
+            let put = |instance: &IWbemClassObject| {
+                // SAFETY: `instance` is a live instance of the class.
+                unsafe {
+                    session.services.PutInstance(
+                        instance,
+                        WBEM_GENERIC_FLAG_TYPE(WBEM_FLAG_UPDATE_ONLY.0),
+                        None,
+                        None,
+                    )
+                }
+                .map_err(failed)
+            };
+            let first = put(&session.update(template, number)?);
+            if first.is_ok() && self.provider(template)?.eq_ignore_ascii_case(provider) {
+                return Ok(());
             }
-            .map_err(failed)
+            let full = session.template(template)?;
+            // SAFETY: `full` is a live instance; the VARIANT outlives the call.
+            unsafe { full.Put(PROPERTY, 0, &VARIANT::from(number), 0) }.map_err(failed)?;
+            put(&full).or(first)
         }
 
         fn supports(&self, provider: &str) -> Result<bool, String> {
@@ -441,6 +461,15 @@ mod wmi {
                         .map_err(failed)?;
                 }
                 current.EndEnumeration().map_err(failed)?;
+                // SettingName is not a key, but it is how the template is
+                // named everywhere else; carry it along.
+                let mut setting_name = VARIANT::new();
+                current
+                    .Get(w!("SettingName"), 0, &mut setting_name, None, None)
+                    .map_err(failed)?;
+                update
+                    .Put(w!("SettingName"), 0, &setting_name, 0)
+                    .map_err(failed)?;
                 update
                     .Put(PROPERTY, 0, &VARIANT::from(provider), 0)
                     .map_err(failed)?;

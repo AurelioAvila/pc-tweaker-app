@@ -30,6 +30,8 @@ fn configured_dns(value: Option<&str>) -> Result<(bool, Vec<String>), String> {
 /// is found. Production code goes through `WinDns`; unit tests install a fake
 /// that writes `NameServer` into the in-memory registry, so the tweak's own
 /// read-back verifies it exactly as it verifies Windows.
+const NEEDS_2004: &str = "changing DNS servers needs Windows 10 version 2004 or later";
+
 #[cfg(windows)]
 pub(crate) trait DnsServers {
     /// Braced GUID of the adapter that carries the route to the internet.
@@ -40,6 +42,8 @@ pub(crate) trait DnsServers {
     /// Replaces the adapter's static IPv4 servers. An empty list returns the
     /// adapter to automatic (DHCP) DNS.
     fn set_servers(&self, guid: &str, servers: &[String]) -> Result<(), String>;
+    /// Whether this Windows build has `SetInterfaceDnsSettings` at all.
+    fn can_set(&self) -> bool;
 }
 
 /// The DNS client's own API. `SetInterfaceDnsSettings` only exists from
@@ -56,6 +60,26 @@ impl DnsServers for WinDns {
 
     fn adapter_by_alias(&self, alias: &str) -> Result<String, String> {
         crate::diagnostics::network_verify::interface_guid_for_alias(alias)
+    }
+
+    fn can_set(&self) -> bool {
+        use windows_sys::Win32::Foundation::FreeLibrary;
+        use windows_sys::Win32::System::LibraryLoader::{
+            GetProcAddress, LoadLibraryExW, LOAD_LIBRARY_SEARCH_SYSTEM32,
+        };
+        let dll: Vec<u16> = "iphlpapi.dll\0".encode_utf16().collect();
+        // SAFETY: `dll` is NUL-terminated and outlives the call.
+        let module =
+            unsafe { LoadLibraryExW(dll.as_ptr(), std::ptr::null_mut(), LOAD_LIBRARY_SEARCH_SYSTEM32) };
+        if module.is_null() {
+            return false;
+        }
+        // SAFETY: `module` is live and the name NUL-terminated; the module is
+        // released straight after the lookup and the address never called.
+        let found = unsafe { GetProcAddress(module, c"SetInterfaceDnsSettings".as_ptr().cast()) }.is_some();
+        // SAFETY: `module` came from LoadLibraryExW above.
+        unsafe { FreeLibrary(module) };
+        found
     }
 
     fn set_servers(&self, guid: &str, servers: &[String]) -> Result<(), String> {
@@ -108,7 +132,7 @@ impl DnsServers for WinDns {
         else {
             // SAFETY: `module` came from LoadLibraryExW above.
             unsafe { FreeLibrary(module) };
-            return Err("changing DNS servers needs Windows 10 version 2004 or later".into());
+            return Err(NEEDS_2004.into());
         };
         // SAFETY: the signature matches the export documented in netioapi.h.
         let set = unsafe {
@@ -210,6 +234,11 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
     }
 
     with_dns(|dns| {
+        // Refused before anything is journaled, so there is never a record of
+        // a change this build could not make.
+        if !dns.can_set() {
+            return Err(NEEDS_2004.into());
+        }
         let guid = dns.internet_adapter()?;
         // A snapshot from an older build names the same adapter by alias.
         // Recording it under that name again keeps its original; a different
@@ -264,7 +293,25 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
 
         with_dns(|dns| {
             let guid = adapter_guid(dns, &interface)?;
-            dns.set_servers(&guid, &servers)?;
+            // Already as recorded (an apply that never took effect, or a
+            // change undone by hand): nothing to write, on any build.
+            if read_dns(&guid)? == (automatic, servers.clone()) {
+                return Ok(());
+            }
+            if dns.can_set() {
+                dns.set_servers(&guid, &servers)?;
+            } else {
+                // Only a journal from the PowerShell era can exist on a build
+                // without SetInterfaceDnsSettings. The stack keeps the setting
+                // in this value; the resolver picks it up when the adapter
+                // next connects.
+                crate::tweaks::windows_impl::write_value(
+                    crate::tweaks::Hive::Hklm,
+                    &format!(r"{}\{guid}", crate::netlatency::INTERFACES_PATH),
+                    "NameServer",
+                    &crate::rollback::RegValue::Str(servers.join(",")),
+                )?;
+            }
             if read_dns(&guid)? != (automatic, servers) {
                 return Err(
                     "Restored DNS configuration could not be verified; recovery data was retained"
@@ -298,6 +345,8 @@ mod tests {
         drop_writes: Cell<bool>,
         deny_writes: Cell<bool>,
         writes: RefCell<Vec<(String, Vec<String>)>>,
+        /// False plays a Windows 10 build older than 2004.
+        can_set: Cell<bool>,
     }
 
     impl DnsServers for FakeDns {
@@ -311,7 +360,11 @@ mod tests {
                 .map(|(_, guid)| guid.to_string())
                 .ok_or_else(|| format!("no network adapter is named \"{alias}\" any more"))
         }
+        fn can_set(&self) -> bool {
+            self.can_set.get()
+        }
         fn set_servers(&self, guid: &str, servers: &[String]) -> Result<(), String> {
+            assert!(self.can_set.get(), "SetInterfaceDnsSettings called where it does not exist");
             if self.deny_writes.get() {
                 return Err("Windows refused the DNS change (error 5)".into());
             }
@@ -352,6 +405,7 @@ mod tests {
             drop_writes: Cell::new(false),
             deny_writes: Cell::new(false),
             writes: RefCell::default(),
+            can_set: Cell::new(true),
         });
         set_test_dns(Some(dns.clone()));
         Installed(dns)
@@ -620,6 +674,53 @@ mod tests {
 
     /// The safety net: with no fake installed, a unit test cannot change the
     /// DNS servers of the machine running it.
+    /// Read-only: every supported runner and dev machine is 2004 or later.
+    #[test]
+    fn this_build_has_the_native_dns_api() {
+        assert!(WinDns.can_set());
+    }
+
+    /// A build without SetInterfaceDnsSettings is refused before anything is
+    /// journaled, and a journal from the PowerShell era still restores there.
+    #[test]
+    fn an_older_windows_build_is_refused_up_front_and_can_still_restore() {
+        let registry = install();
+        let dns = install_dns();
+        let fixture = Fixture::new();
+        dns.can_set.set(false);
+        assert!(apply(&fixture.store).unwrap_err().contains("2004"));
+        assert!(!fixture.store.is_applied(TWEAK_ID));
+        assert!(registry.dump().is_empty());
+
+        seed(&registry, ADAPTER, "1.1.1.1,1.0.0.1");
+        let legacy = SnapshotEntry::Dns {
+            interface: ADAPTER.into(),
+            previous_servers: vec!["9.9.9.9".into()],
+            previous_automatic: Some(false),
+        };
+        fixture.store.transaction().unwrap().save_entry(TWEAK_ID, legacy).unwrap();
+        rollback(&fixture.store).unwrap();
+        assert_eq!(name_server(&registry, ADAPTER).as_deref(), Some("9.9.9.9"));
+        assert!(!fixture.store.is_applied(TWEAK_ID));
+    }
+
+    /// A restore finds nothing to do when DNS is already as recorded.
+    #[test]
+    fn a_restore_with_nothing_to_undo_writes_nothing() {
+        let _registry = install();
+        let dns = install_dns();
+        let fixture = Fixture::new();
+        let untouched = SnapshotEntry::Dns {
+            interface: ADAPTER.into(),
+            previous_servers: Vec::new(),
+            previous_automatic: Some(true),
+        };
+        fixture.store.transaction().unwrap().save_entry(TWEAK_ID, untouched).unwrap();
+        rollback(&fixture.store).unwrap();
+        assert!(dns.writes.borrow().is_empty());
+        assert!(!fixture.store.is_applied(TWEAK_ID));
+    }
+
     #[test]
     fn unit_tests_cannot_change_real_dns_servers() {
         if std::env::var("PC_TWEAKER_EXPANSION_VM_TEST").as_deref()

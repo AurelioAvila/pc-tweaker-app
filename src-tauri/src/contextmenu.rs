@@ -53,31 +53,39 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
 
     let mut transaction = store.transaction()?;
 
+    // Already journaled as ours: nothing to do while the override is in
+    // place. If it is not (a first apply that failed after the journal, or a
+    // key someone removed), writing it again repairs it instead of reporting
+    // success with the short menu still there.
     if transaction.entry(TWEAK_ID).is_some() {
-        return Ok(());
-    }
-
-    // Recorded before creating anything: if the user already had this key for
-    // their own reasons, rollback must not delete work that wasn't ours.
-    match registry::key_exists(Hive::Hkcu, CLSID_PATH) {
-        Ok(false) => {}
-        Err(e) => return Err(format!("could not inspect the shell override: {e}")),
-        Ok(true) => {
-            return Err(
-                "this key already exists on your system — PC Tweaker won't overwrite a shell \
-             override it didn't create"
-                    .to_string(),
-            );
+        let in_place = registry::read_value(Hive::Hkcu, INPROC_PATH, "", &RegValue::Str(String::new()))
+            .map_err(|e| format!("could not inspect the shell override: {e}"))?;
+        if in_place == Some(RegValue::Str(String::new())) {
+            return Ok(());
         }
-    }
+    } else {
+        // Recorded before creating anything: if the user already had this key
+        // for their own reasons, rollback must not delete work that wasn't ours.
+        match registry::key_exists(Hive::Hkcu, CLSID_PATH) {
+            Ok(false) => {}
+            Err(e) => return Err(format!("could not inspect the shell override: {e}")),
+            Ok(true) => {
+                return Err(
+                    "this key already exists on your system — PC Tweaker won't overwrite a shell \
+                 override it didn't create"
+                        .to_string(),
+                );
+            }
+        }
 
-    transaction.save_entry(
-        TWEAK_ID,
-        SnapshotEntry::RegistryKeyCreated {
-            hive: HIVE.to_string(),
-            path: CLSID_PATH.to_string(),
-        },
-    )?;
+        transaction.save_entry(
+            TWEAK_ID,
+            SnapshotEntry::RegistryKeyCreated {
+                hive: HIVE.to_string(),
+                path: CLSID_PATH.to_string(),
+            },
+        )?;
+    }
 
     registry::create_key(Hive::Hkcu, INPROC_PATH)
         .map_err(|e| format!("could not create the shell override key: {}", e))?;
@@ -248,6 +256,20 @@ mod tests {
         apply(&fixture.store).unwrap();
         assert_eq!(registry.mutations.get(), writes);
         assert_eq!(registry.dump(), after);
+        rollback(&fixture.store).unwrap();
+        assert!(!registry.has_key(Hive::Hkcu, CLSID_PATH));
+    }
+
+    /// A journal whose key went missing (a failed first apply, or removed by
+    /// hand) is repaired by applying again, not reported as done.
+    #[test]
+    fn reapplying_repairs_a_missing_override() {
+        let registry = install();
+        let fixture = Fixture::new();
+        apply(&fixture.store).unwrap();
+        crate::tweaks::RegistryBackend::delete_tree(&*registry, Hive::Hkcu, CLSID_PATH).unwrap();
+        apply(&fixture.store).unwrap();
+        assert!(registry.has_key(Hive::Hkcu, INPROC_PATH));
         rollback(&fixture.store).unwrap();
         assert!(!registry.has_key(Hive::Hkcu, CLSID_PATH));
     }

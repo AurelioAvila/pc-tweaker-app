@@ -1,4 +1,5 @@
 import { ToolHeader } from "./tool-section";
+import { uiLocale } from "../lib";
 // PC Health Score — the explainable scorecard, staged like an instrument.
 //
 // Design intent (product-owner brief, round three):
@@ -615,7 +616,7 @@ export function HealthPanel({
             )}
             {comparison !== null && (
               <p className="mt-1 text-center text-[10px] text-ink-3">
-                {new Date(comparison.previousTs * 1000).toLocaleString()} ·{" "}
+                {new Date(comparison.previousTs * 1000).toLocaleString(uiLocale())} ·{" "}
                 {comparison.previousOverall}
               </p>
             )}

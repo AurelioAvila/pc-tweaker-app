@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Lang, Strings } from "../i18n";
-import { textFor } from "../lib";
+import { textFor, uiLocale } from "../lib";
 import { AuditEntry, CrashReport, DriftReport, Toast, TweakAdvice, TweakInfo } from "../types";
 import { ProBadge, ShieldBadge } from "./ui";
 import "./workspace-panels.css";
@@ -370,7 +370,7 @@ export function CrashReportsCard({
         {reports.map((r, i) => (
           <li key={i} className="border-line rounded-xl border p-3">
             <div className="text-ink-3 flex flex-wrap items-center gap-2 text-[11px]">
-              <span>{new Date(r.ts * 1000).toLocaleString()}</span>
+              <span>{new Date(r.ts * 1000).toLocaleString(uiLocale())}</span>
               <span>·</span>
               <span>v{r.version}</span>
               <span>·</span>

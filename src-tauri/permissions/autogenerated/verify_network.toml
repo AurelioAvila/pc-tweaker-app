@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-verify-network"
+description = "Enables the verify_network command without any pre-configured scope."
+commands.allow = ["verify_network"]
+
+[[permission]]
+identifier = "deny-verify-network"
+description = "Denies the verify_network command without any pre-configured scope."
+commands.deny = ["verify_network"]

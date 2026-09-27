@@ -438,6 +438,58 @@ export interface Strings {
     activeFreed: string; // uses {name} {freed}
     gamesCount: string; // uses {count}
     addGame: string;
+    steeringTitle: string;
+    steeringVcache: string; // uses {count}
+    steeringHybrid: string; // uses {game} {background}
+    steeringNone: string;
+    steeringActive: string; // uses {count}
+    steeringActiveVcache: string;
+    steeringNeedsSessions: string;
+  };
+  latencyTrace: {
+    title: string;
+    subtitle: string;
+    duration: string;
+    secondsOption: string;
+    run: string;
+    running: string;
+    dpcSummary: string;
+    isrSummary: string;
+    colDriver: string;
+    colDpc: string;
+    colIsr: string;
+    colOver: string;
+    unattributed: string;
+    lost: string;
+    hidden: string;
+    verdictGood: string;
+    verdictBad: string;
+    note: string;
+    verdictMinor: string;
+    verdictBadUnattributed: string;
+    spikesTitle: string;
+    spikeLine: string;
+  };
+  networkCheck: {
+    title: string;
+    subtitle: string;
+    run: string;
+    running: string;
+    offline: string;
+    rtt: string;
+    jitter: string;
+    loss: string;
+    tcpRtt: string;
+    nagleOn: string;
+    nagleOff: string;
+    buffers: string;
+    lastTitle: string;
+    verdictNone: string;
+    verdictInconclusive: string;
+    verdictLineChanged: string;
+    socketsBeforeAfter: string;
+    stateOn: string;
+    stateOff: string;
   };
   turboBoost: {
     title: string;
@@ -1424,6 +1476,76 @@ const it: Strings = {
     activeFreed: "Boost attivo per {name} — {freed} di RAM liberati.",
     gamesCount: "{count} giochi registrati",
     addGame: "+ Aggiungi gioco (.exe)",
+    steeringTitle: "Smistamento dei core",
+    steeringVcache:
+      "Il gioco gira sul die con 3D V-Cache ({count} thread). Le altre app restano dove le mette Windows.",
+    steeringActive: "{count} processi smistati per questo gioco.",
+    steeringNone:
+      "Su questa CPU non c'è nulla da smistare: non risultano né un tipo di core più veloce né una cache più grande delle altre.",
+    steeringActiveVcache: "Il gioco sta girando sul die con V-Cache.",
+    steeringNeedsSessions:
+      "Funziona solo con Game Sessions attivo e mentre uno dei tuoi giochi è in esecuzione.",
+    steeringHybrid:
+      "Il gioco gira sui core ad alte prestazioni ({game} thread) e le altre app della tua sessione passano ai core ad alta efficienza ({background} thread). Le app a cui hai dato una priorità superiore al normale non vengono toccate.",
+  },
+  latencyTrace: {
+    title: "Latenza di DPC e interrupt",
+    subtitle:
+      "Misura quanto durano le chiamate di procedura differite (DPC) e le routine di servizio degli interrupt (ISR) di ogni driver, leggendole direttamente dal kernel di Windows. Non modifica nulla; richiede privilegi di amministratore.",
+    duration: "Durata",
+    secondsOption: "{seconds} s",
+    run: "Misura",
+    running: "Misurazione per {seconds} s…",
+    dpcSummary:
+      "DPC più lunga: {max} ms (limite {limit} ms). {over} su {count} hanno superato il limite.",
+    isrSummary:
+      "Routine di interrupt più lunga: {max} ms (limite {limit} ms). {over} su {count} hanno superato il limite.",
+    colDriver: "Driver",
+    colDpc: "DPC più lunga",
+    colIsr: "Interrupt più lungo",
+    colOver: "Oltre il limite",
+    unattributed: "Non attribuito",
+    hidden:
+      "Windows ha nascosto gli indirizzi dei driver, quindi le routine non si possono attribuire ai driver.",
+    verdictGood:
+      "Durante questa misurazione nessun driver ha superato i limiti indicati da Microsoft.",
+    note: "Indicazioni di Microsoft: una DPC dovrebbe terminare entro 0,1 ms e una ISR entro 0,025 ms. dxgkrnl.sys smista gli interrupt dello schermo, quindi il suo tempo spesso appartiene al driver grafico.",
+    verdictBad:
+      "{driver} ha occupato un processore per {max} ms di fila. Blocchi oltre il millisecondo possono causare crepitii nell'audio e scatti nel frame time; di solito si risolve aggiornando il driver o tornando alla versione precedente.",
+    verdictMinor:
+      "{over} routine hanno superato le indicazioni di Microsoft; la più lunga è durata {max} ms. Sforamenti brevi come questi sono comuni e raramente udibili.",
+    lost: "Durante la misurazione Windows ha perso {events} eventi e {buffers} buffer: i tempi massimi mostrati sono un minimo.",
+    verdictBadUnattributed:
+      "Una routine che non è stato possibile attribuire a un driver ha occupato un processore per {max} ms di fila. Blocchi oltre il millisecondo possono causare crepitii nell'audio e scatti nel frame time.",
+    spikesTitle: "Singole routine più lunghe",
+    spikeLine: "{kind} di {duration} ms in {driver}, a {at} s dall'inizio",
+  },
+  networkCheck: {
+    title: "Verifica di rete",
+    subtitle:
+      "Invia 32 ping a 1.1.1.1 e apre una connessione TCP, poi mostra cosa sta facendo davvero lo stack di rete di Windows. Non modifica nulla.",
+    run: "Verifica",
+    running: "Verifica in corso…",
+    offline: "Nessuna connessione a Internet.",
+    rtt: "Andata e ritorno: mediana {median} ms (min {min}, max {max})",
+    jitter: "Variazione (jitter): {jitter} ms",
+    loss: "Risposte: {received} su {sent}",
+    tcpRtt: "Andata e ritorno secondo lo stack TCP: {rtt} ms",
+    nagleOn:
+      "Le nuove connessioni partono con l'algoritmo di Nagle attivo (TCP_NODELAY disattivato). Le app che hanno bisogno di disattivarlo lo fanno sui propri socket.",
+    nagleOff: "Le nuove connessioni partono con l'algoritmo di Nagle disattivato.",
+    buffers:
+      "Buffer di ricezione: {reserved} riservati per socket, {autotuned} regolati automaticamente da Windows",
+    verdictNone:
+      "Nessuna variazione misurabile della latenza. È normale: un ping non passa dalle impostazioni TCP.",
+    verdictLineChanged:
+      "La linea stessa è cambiata tra le due letture (mediana {delta} ms). Un ping non passa dalle impostazioni TCP, quindi non è l'effetto della modifica.",
+    lastTitle: "Dopo {tweak}, {time}",
+    verdictInconclusive: "Troppo poche risposte per un confronto.",
+    socketsBeforeAfter:
+      "Nuovi socket, prima → dopo: Nagle {nagleBefore} → {nagleAfter}, buffer di ricezione {bufBefore} → {bufAfter}",
+    stateOn: "attivo",
+    stateOff: "disattivato",
   },
   turboBoost: {
     title: "Turbo Boost",
@@ -2041,7 +2163,7 @@ const it: Strings = {
     network_latency: {
       name: "Conferme TCP e raggruppamento dei pacchetti",
       description:
-        "Imposta TcpAckFrequency e TCPNoDelay a 1 sul primo adattatore che Windows indica come attivo. Riguarda il comportamento TCP; il traffico UDP resta invariato. Il supporto dipende da Windows e dalle applicazioni, quindi una minore latenza nei giochi non è garantita (HKLM, richiede privilegi di amministratore).",
+        "Imposta TcpAckFrequency e TCPNoDelay a 1 sull'adattatore che porta la route verso Internet. Riguarda il comportamento TCP; il traffico UDP resta invariato. Il supporto dipende da Windows e dalle applicazioni, quindi una minore latenza nei giochi non è garantita (HKLM, richiede privilegi di amministratore).",
     },
     disable_window_animations: {
       name: "Animazioni finestre istantanee",
@@ -2775,6 +2897,71 @@ const en: Strings = {
     activeFreed: "Boost active for {name} — {freed} of RAM handed back.",
     gamesCount: "{count} games registered",
     addGame: "+ Add game (.exe)",
+    steeringTitle: "Core steering",
+    steeringVcache:
+      "The game runs on the 3D V-Cache die ({count} threads). Other apps stay where Windows puts them.",
+    steeringHybrid:
+      "The game runs on the performance cores ({game} threads) and the other apps in your session move to the efficiency cores ({background} threads). Apps you raise above normal priority are left alone.",
+    steeringActive: "{count} processes steered for this game.",
+    steeringNone:
+      "Nothing to steer on this CPU: no faster core type and no single larger cache were found.",
+    steeringActiveVcache: "The game is running on the V-Cache die.",
+    steeringNeedsSessions: "Runs only while Game Sessions is on and one of your games is running.",
+  },
+  latencyTrace: {
+    title: "DPC and interrupt latency",
+    subtitle:
+      "Measures how long each driver's deferred procedure calls (DPCs) and interrupt service routines (ISRs) run, read straight from the Windows kernel. Changes nothing; needs administrator rights.",
+    duration: "Length",
+    secondsOption: "{seconds} s",
+    run: "Measure",
+    running: "Measuring for {seconds} s…",
+    dpcSummary: "Longest DPC: {max} ms (limit {limit} ms). {over} of {count} ran past the limit.",
+    isrSummary:
+      "Longest interrupt routine: {max} ms (limit {limit} ms). {over} of {count} ran past the limit.",
+    colDriver: "Driver",
+    colDpc: "Longest DPC",
+    colIsr: "Longest interrupt",
+    colOver: "Past the limit",
+    unattributed: "Unattributed",
+    hidden: "Windows hid the driver addresses, so routines could not be matched to drivers.",
+    verdictGood: "No driver ran past Microsoft's limits during this capture.",
+    note: "Microsoft's guidance: a DPC should finish within 0.1 ms and an ISR within 0.025 ms. dxgkrnl.sys dispatches display interrupts, so its time often belongs to the graphics driver.",
+    verdictMinor:
+      "{over} routines ran past Microsoft's guidance; the longest took {max} ms. Short overruns like these are common and rarely audible.",
+    lost: "Windows dropped {events} events and {buffers} buffers during the capture, so the longest times shown are a floor.",
+    verdictBad:
+      "{driver} held a processor for {max} ms without a break. Stalls over a millisecond can cause audio crackle and frame-time hitches; updating or rolling back that driver is the usual fix.",
+    verdictBadUnattributed:
+      "A routine that could not be matched to a driver held a processor for {max} ms without a break. Stalls over a millisecond can cause audio crackle and frame-time hitches.",
+    spikesTitle: "Longest single routines",
+    spikeLine: "{kind} of {duration} ms in {driver}, {at} s into the capture",
+  },
+  networkCheck: {
+    title: "Network check",
+    subtitle:
+      "Pings 1.1.1.1 32 times and opens one TCP connection, then reports what the Windows network stack is actually doing. Changes nothing.",
+    run: "Check",
+    running: "Checking…",
+    offline: "No connection to the internet.",
+    rtt: "Round trip: median {median} ms (min {min}, max {max})",
+    jitter: "Jitter: {jitter} ms",
+    loss: "Replies: {received} of {sent}",
+    tcpRtt: "TCP stack round trip: {rtt} ms",
+    nagleOn:
+      "New connections start with Nagle's algorithm on (TCP_NODELAY off). Apps that need it off set it on their own sockets.",
+    nagleOff: "New connections start with Nagle's algorithm off.",
+    buffers: "Receive buffer: {reserved} reserved per socket, {autotuned} autotuned by Windows",
+    verdictNone:
+      "No measurable change in latency. That is expected: a ping does not go through TCP settings.",
+    verdictInconclusive: "Too few replies to compare.",
+    verdictLineChanged:
+      "The line itself changed between the two readings (median {delta} ms). Ping does not go through TCP settings, so this is not the effect of the change.",
+    lastTitle: "After {tweak}, {time}",
+    socketsBeforeAfter:
+      "New sockets, before → after: Nagle {nagleBefore} → {nagleAfter}, receive buffer {bufBefore} → {bufAfter}",
+    stateOn: "on",
+    stateOff: "off",
   },
   turboBoost: {
     title: "Turbo Boost",
@@ -3387,7 +3574,7 @@ const en: Strings = {
     network_latency: {
       name: "TCP acknowledgments and packet buffering",
       description:
-        "Sets TcpAckFrequency and TCPNoDelay to 1 on the first adapter Windows reports as Up. This targets TCP behavior; UDP traffic is unaffected. Windows and application support vary, so lower game latency is not guaranteed (HKLM, administrator rights required).",
+        "Sets TcpAckFrequency and TCPNoDelay to 1 on the adapter that carries the route to the internet. This targets TCP behavior; UDP traffic is unaffected. Windows and application support vary, so lower game latency is not guaranteed (HKLM, administrator rights required).",
     },
     disable_window_animations: {
       name: "Instant window animations",
@@ -4128,6 +4315,75 @@ const fr: Strings = {
     activeFreed: "Boost actif pour {name} — {freed} de RAM libérés.",
     gamesCount: "{count} jeux enregistrés",
     addGame: "+ Ajouter un jeu (.exe)",
+    steeringTitle: "Répartition des cœurs",
+    steeringVcache:
+      "Le jeu tourne sur le die 3D V-Cache ({count} threads). Les autres applications restent là où Windows les place.",
+    steeringHybrid:
+      "Le jeu tourne sur les cœurs performants ({game} threads) et les autres applications de votre session passent sur les cœurs économes ({background} threads). Les applications dont vous avez relevé la priorité au-dessus de la normale ne sont pas touchées.",
+    steeringActive: "{count} processus répartis pour ce jeu.",
+    steeringNone:
+      "Rien à répartir sur ce processeur : aucun type de cœur plus rapide ni aucun cache plus grand que les autres n'a été trouvé.",
+    steeringActiveVcache: "Le jeu tourne sur le die V-Cache.",
+    steeringNeedsSessions:
+      "Ne fonctionne que lorsque Game Sessions est activé et qu'un de vos jeux est lancé.",
+  },
+  latencyTrace: {
+    title: "Latence des DPC et des interruptions",
+    subtitle:
+      "Mesure la durée des appels de procédure différés (DPC) et des routines de service d'interruption (ISR) de chaque pilote, lue directement dans le noyau Windows. Ne modifie rien ; nécessite les droits administrateur.",
+    duration: "Durée",
+    secondsOption: "{seconds} s",
+    run: "Mesurer",
+    running: "Mesure pendant {seconds} s…",
+    dpcSummary:
+      "DPC la plus longue : {max} ms (limite {limit} ms). {over} sur {count} ont dépassé la limite.",
+    isrSummary:
+      "Routine d'interruption la plus longue : {max} ms (limite {limit} ms). {over} sur {count} ont dépassé la limite.",
+    colDriver: "Pilote",
+    colDpc: "DPC la plus longue",
+    colIsr: "Interruption la plus longue",
+    colOver: "Au-delà de la limite",
+    unattributed: "Non attribué",
+    hidden:
+      "Windows a masqué les adresses des pilotes : les routines n'ont pas pu être attribuées.",
+    verdictGood: "Aucun pilote n'a dépassé les limites de Microsoft pendant cette mesure.",
+    note: "Recommandation de Microsoft : une DPC doit se terminer en moins de 0,1 ms et une ISR en moins de 0,025 ms. dxgkrnl.sys distribue les interruptions d'affichage, son temps revient donc souvent au pilote graphique.",
+    verdictBad:
+      "{driver} a monopolisé un processeur pendant {max} ms d'affilée. Au-delà d'une milliseconde, ces blocages peuvent provoquer des craquements audio et des saccades d'images ; mettre à jour ce pilote ou revenir à la version précédente règle généralement le problème.",
+    verdictMinor:
+      "{over} routines ont dépassé la recommandation de Microsoft ; la plus longue a duré {max} ms. Des dépassements aussi courts sont fréquents et rarement audibles.",
+    lost: "Windows a perdu {events} événements et {buffers} tampons pendant la mesure : les durées maximales affichées sont un minimum.",
+    verdictBadUnattributed:
+      "Une routine qui n'a pu être attribuée à aucun pilote a monopolisé un processeur pendant {max} ms d'affilée. Au-delà d'une milliseconde, ces blocages peuvent provoquer des craquements audio et des saccades d'images.",
+    spikesTitle: "Routines les plus longues",
+    spikeLine: "{kind} de {duration} ms dans {driver}, à {at} s du début",
+  },
+  networkCheck: {
+    title: "Vérification réseau",
+    subtitle:
+      "Envoie 32 pings à 1.1.1.1 et ouvre une connexion TCP, puis indique ce que fait réellement la pile réseau de Windows. Ne modifie rien.",
+    run: "Vérifier",
+    running: "Vérification…",
+    offline: "Aucune connexion à Internet.",
+    rtt: "Aller-retour : médiane {median} ms (min {min}, max {max})",
+    jitter: "Gigue : {jitter} ms",
+    loss: "Réponses : {received} sur {sent}",
+    tcpRtt: "Aller-retour selon la pile TCP : {rtt} ms",
+    nagleOn:
+      "Les nouvelles connexions démarrent avec l'algorithme de Nagle actif (TCP_NODELAY désactivé). Les applications qui ont besoin de le couper le font sur leurs propres sockets.",
+    nagleOff: "Les nouvelles connexions démarrent avec l'algorithme de Nagle désactivé.",
+    buffers:
+      "Tampon de réception : {reserved} réservés par socket, {autotuned} ajustés automatiquement par Windows",
+    verdictNone:
+      "Aucun changement mesurable de la latence. C'est attendu : un ping ne passe pas par les réglages TCP.",
+    verdictInconclusive: "Trop peu de réponses pour comparer.",
+    verdictLineChanged:
+      "La ligne elle-même a changé entre les deux mesures (médiane {delta} ms). Un ping ne passe pas par les réglages TCP : ce n'est donc pas l'effet de la modification.",
+    lastTitle: "Après {tweak}, {time}",
+    socketsBeforeAfter:
+      "Nouveaux sockets, avant → après : Nagle {nagleBefore} → {nagleAfter}, tampon de réception {bufBefore} → {bufAfter}",
+    stateOn: "actif",
+    stateOff: "désactivé",
   },
   turboBoost: {
     title: "Turbo Boost",
@@ -4749,7 +5005,7 @@ const fr: Strings = {
     network_latency: {
       name: "Accusés de réception TCP et regroupement des paquets",
       description:
-        "Définit TcpAckFrequency et TCPNoDelay sur 1 pour le premier adaptateur que Windows indique comme actif. Cela concerne TCP ; le trafic UDP reste inchangé. La prise en charge dépend de Windows et des applications : une latence plus faible dans les jeux n'est pas garantie (HKLM, droits administrateur requis).",
+        "Définit TcpAckFrequency et TCPNoDelay sur 1 sur l'adaptateur qui porte la route vers Internet. Cela concerne TCP ; le trafic UDP reste inchangé. La prise en charge dépend de Windows et des applications : une latence plus faible dans les jeux n'est pas garantie (HKLM, droits administrateur requis).",
     },
     disable_window_animations: {
       name: "Animations de fenetres instantanees",
@@ -5488,6 +5744,75 @@ const es: Strings = {
     activeFreed: "Boost activo para {name}: {freed} de RAM liberados.",
     gamesCount: "{count} juegos registrados",
     addGame: "+ Añadir juego (.exe)",
+    steeringTitle: "Asignación de núcleos",
+    steeringVcache:
+      "El juego se ejecuta en el die con 3D V-Cache ({count} hilos). Las demás aplicaciones siguen donde las coloca Windows.",
+    steeringHybrid:
+      "El juego se ejecuta en los núcleos de rendimiento ({game} hilos) y las demás aplicaciones de tu sesión pasan a los núcleos de eficiencia ({background} hilos). Las aplicaciones a las que subiste la prioridad por encima de lo normal no se tocan.",
+    steeringActive: "{count} procesos asignados para este juego.",
+    steeringNone:
+      "No hay nada que asignar en esta CPU: no se encontró un tipo de núcleo más rápido ni una caché más grande que las demás.",
+    steeringActiveVcache: "El juego se está ejecutando en el die con V-Cache.",
+    steeringNeedsSessions:
+      "Solo funciona con Game Sessions activado y mientras uno de tus juegos está en ejecución.",
+  },
+  latencyTrace: {
+    title: "Latencia de DPC e interrupciones",
+    subtitle:
+      "Mide cuánto duran las llamadas a procedimientos diferidos (DPC) y las rutinas de servicio de interrupción (ISR) de cada controlador, leídas directamente del kernel de Windows. No cambia nada; requiere permisos de administrador.",
+    duration: "Duración",
+    secondsOption: "{seconds} s",
+    run: "Medir",
+    running: "Midiendo durante {seconds} s…",
+    dpcSummary:
+      "DPC más larga: {max} ms (límite {limit} ms). {over} de {count} superaron el límite.",
+    isrSummary:
+      "Rutina de interrupción más larga: {max} ms (límite {limit} ms). {over} de {count} superaron el límite.",
+    colDriver: "Controlador",
+    colDpc: "DPC más larga",
+    colIsr: "Interrupción más larga",
+    colOver: "Por encima del límite",
+    unattributed: "Sin atribuir",
+    hidden:
+      "Windows ocultó las direcciones de los controladores, así que las rutinas no se pudieron atribuir.",
+    verdictGood: "Ningún controlador superó los límites de Microsoft durante esta medición.",
+    note: "Recomendación de Microsoft: una DPC debería terminar en menos de 0,1 ms y una ISR en menos de 0,025 ms. dxgkrnl.sys reparte las interrupciones de pantalla, así que su tiempo suele corresponder al controlador gráfico.",
+    verdictBad:
+      "{driver} ocupó un procesador durante {max} ms seguidos. Los bloqueos de más de un milisegundo pueden provocar chasquidos de audio y tirones en el tiempo de fotograma; actualizar ese controlador o volver a la versión anterior suele solucionarlo.",
+    verdictMinor:
+      "{over} rutinas superaron la recomendación de Microsoft; la más larga duró {max} ms. Excesos tan breves como estos son habituales y rara vez audibles.",
+    lost: "Windows perdió {events} eventos y {buffers} búferes durante la medición, así que los tiempos máximos mostrados son un mínimo.",
+    verdictBadUnattributed:
+      "Una rutina que no se pudo atribuir a ningún controlador ocupó un procesador durante {max} ms seguidos. Los bloqueos de más de un milisegundo pueden provocar chasquidos de audio y tirones en el tiempo de fotograma.",
+    spikesTitle: "Rutinas individuales más largas",
+    spikeLine: "{kind} de {duration} ms en {driver}, a los {at} s de empezar",
+  },
+  networkCheck: {
+    title: "Comprobación de red",
+    subtitle:
+      "Envía 32 pings a 1.1.1.1 y abre una conexión TCP, y luego muestra lo que hace realmente la pila de red de Windows. No cambia nada.",
+    run: "Comprobar",
+    running: "Comprobando…",
+    offline: "No hay conexión a Internet.",
+    rtt: "Ida y vuelta: mediana {median} ms (mín. {min}, máx. {max})",
+    jitter: "Fluctuación (jitter): {jitter} ms",
+    loss: "Respuestas: {received} de {sent}",
+    tcpRtt: "Ida y vuelta según la pila TCP: {rtt} ms",
+    nagleOn:
+      "Las conexiones nuevas empiezan con el algoritmo de Nagle activado (TCP_NODELAY desactivado). Las aplicaciones que necesitan desactivarlo lo hacen en sus propios sockets.",
+    nagleOff: "Las conexiones nuevas empiezan con el algoritmo de Nagle desactivado.",
+    buffers:
+      "Búfer de recepción: {reserved} reservados por socket, {autotuned} ajustados automáticamente por Windows",
+    verdictNone:
+      "Ningún cambio medible en la latencia. Es lo esperado: un ping no pasa por los ajustes de TCP.",
+    verdictInconclusive: "Muy pocas respuestas para comparar.",
+    verdictLineChanged:
+      "La propia línea cambió entre las dos lecturas (mediana {delta} ms). Un ping no pasa por los ajustes de TCP, así que no es el efecto del cambio.",
+    lastTitle: "Tras {tweak}, {time}",
+    socketsBeforeAfter:
+      "Sockets nuevos, antes → después: Nagle {nagleBefore} → {nagleAfter}, búfer de recepción {bufBefore} → {bufAfter}",
+    stateOn: "activado",
+    stateOff: "desactivado",
   },
   turboBoost: {
     title: "Turbo Boost",
@@ -6107,7 +6432,7 @@ const es: Strings = {
     network_latency: {
       name: "Confirmaciones TCP y agrupación de paquetes",
       description:
-        "Establece TcpAckFrequency y TCPNoDelay en 1 en el primer adaptador que Windows indica como activo. Afecta al comportamiento TCP; el tráfico UDP no cambia. La compatibilidad depende de Windows y las aplicaciones, por lo que no se garantiza una menor latencia en juegos (HKLM, requiere permisos de administrador).",
+        "Establece TcpAckFrequency y TCPNoDelay en 1 en el adaptador que lleva la ruta hacia Internet. Afecta al comportamiento TCP; el tráfico UDP no cambia. La compatibilidad depende de Windows y las aplicaciones, por lo que no se garantiza una menor latencia en juegos (HKLM, requiere permisos de administrador).",
     },
     disable_window_animations: {
       name: "Animaciones de ventana instantaneas",
@@ -6850,6 +7175,74 @@ const de: Strings = {
     activeFreed: "Boost aktiv für {name} — {freed} RAM freigegeben.",
     gamesCount: "{count} Spiele registriert",
     addGame: "+ Spiel hinzufügen (.exe)",
+    steeringTitle: "Kernzuweisung",
+    steeringVcache:
+      "Das Spiel läuft auf dem Die mit 3D V-Cache ({count} Threads). Andere Apps bleiben, wo Windows sie einplant.",
+    steeringHybrid:
+      "Das Spiel läuft auf den Leistungskernen ({game} Threads), die übrigen Apps deiner Sitzung wechseln auf die Effizienzkerne ({background} Threads). Apps, deren Priorität du über „Normal“ gesetzt hast, bleiben unberührt.",
+    steeringActive: "{count} Prozesse für dieses Spiel zugewiesen.",
+    steeringNone:
+      "Auf dieser CPU gibt es nichts zuzuweisen: Weder eine schnellere Kernart noch ein einzelner größerer Cache wurde gefunden.",
+    steeringActiveVcache: "Das Spiel läuft auf dem Die mit V-Cache.",
+    steeringNeedsSessions: "Läuft nur, wenn Game Sessions aktiv ist und eines deiner Spiele läuft.",
+  },
+  latencyTrace: {
+    title: "DPC- und Interrupt-Latenz",
+    subtitle:
+      "Misst, wie lange die verzögerten Prozeduraufrufe (DPCs) und Interrupt-Service-Routinen (ISRs) jedes Treibers laufen, direkt aus dem Windows-Kernel gelesen. Ändert nichts; erfordert Administratorrechte.",
+    duration: "Dauer",
+    secondsOption: "{seconds} s",
+    run: "Messen",
+    running: "Messung läuft {seconds} s…",
+    dpcSummary:
+      "Längster DPC: {max} ms (Grenze {limit} ms). {over} von {count} lagen über der Grenze.",
+    isrSummary:
+      "Längste Interrupt-Routine: {max} ms (Grenze {limit} ms). {over} von {count} lagen über der Grenze.",
+    colDriver: "Treiber",
+    colDpc: "Längster DPC",
+    colIsr: "Längster Interrupt",
+    colOver: "Über der Grenze",
+    unattributed: "Nicht zugeordnet",
+    hidden:
+      "Windows hat die Treiberadressen verborgen, daher ließen sich die Routinen keinem Treiber zuordnen.",
+    verdictGood: "Während dieser Messung hat kein Treiber die Grenzen von Microsoft überschritten.",
+    note: "Microsofts Vorgabe: Ein DPC sollte in unter 0,1 ms fertig sein, eine ISR in unter 0,025 ms. dxgkrnl.sys verteilt die Anzeige-Interrupts, seine Zeit gehört daher oft zum Grafiktreiber.",
+    verdictBad:
+      "{driver} hat einen Prozessor {max} ms am Stück belegt. Blockaden über einer Millisekunde können Knacken im Ton und Ruckler bei der Frametime verursachen; meist hilft es, diesen Treiber zu aktualisieren oder auf die vorige Version zurückzusetzen.",
+    verdictMinor:
+      "{over} Routinen lagen über Microsofts Vorgabe; die längste dauerte {max} ms. So kurze Überschreitungen sind häufig und selten hörbar.",
+    lost: "Windows hat während der Messung {events} Ereignisse und {buffers} Puffer verloren, die angezeigten Höchstwerte sind also eine Untergrenze.",
+    verdictBadUnattributed:
+      "Eine Routine, die keinem Treiber zugeordnet werden konnte, hat einen Prozessor {max} ms am Stück belegt. Blockaden über einer Millisekunde können Knacken im Ton und Ruckler bei der Frametime verursachen.",
+    spikesTitle: "Längste einzelne Routinen",
+    spikeLine: "{kind} von {duration} ms in {driver}, {at} s nach Beginn",
+  },
+  networkCheck: {
+    title: "Netzwerkprüfung",
+    subtitle:
+      "Sendet 32 Pings an 1.1.1.1 und öffnet eine TCP-Verbindung und zeigt dann, was der Netzwerkstack von Windows tatsächlich tut. Ändert nichts.",
+    run: "Prüfen",
+    running: "Prüfung läuft…",
+    offline: "Keine Verbindung zum Internet.",
+    rtt: "Umlaufzeit: Median {median} ms (min. {min}, max. {max})",
+    jitter: "Schwankung (Jitter): {jitter} ms",
+    loss: "Antworten: {received} von {sent}",
+    tcpRtt: "Umlaufzeit laut TCP-Stack: {rtt} ms",
+    nagleOn:
+      "Neue Verbindungen starten mit aktivem Nagle-Algorithmus (TCP_NODELAY aus). Apps, die ihn abschalten müssen, tun das an ihren eigenen Sockets.",
+    nagleOff: "Neue Verbindungen starten mit abgeschaltetem Nagle-Algorithmus.",
+    buffers:
+      "Empfangspuffer: {reserved} pro Socket reserviert, {autotuned} von Windows automatisch angepasst",
+    verdictNone:
+      "Keine messbare Änderung der Latenz. Das ist zu erwarten: Ein Ping läuft nicht über die TCP-Einstellungen.",
+    verdictInconclusive: "Zu wenige Antworten für einen Vergleich.",
+    verdictLineChanged:
+      "Die Leitung selbst hat sich zwischen den beiden Messungen verändert (Median {delta} ms). Ein Ping läuft nicht über die TCP-Einstellungen, das ist also nicht die Wirkung der Änderung.",
+    lastTitle: "Nach {tweak}, {time}",
+    socketsBeforeAfter:
+      "Neue Sockets, vorher → nachher: Nagle {nagleBefore} → {nagleAfter}, Empfangspuffer {bufBefore} → {bufAfter}",
+    stateOn: "an",
+    stateOff: "aus",
   },
   turboBoost: {
     title: "Turbo Boost",
@@ -7472,7 +7865,7 @@ const de: Strings = {
     network_latency: {
       name: "TCP-Bestätigungen und Paketbündelung",
       description:
-        "Setzt TcpAckFrequency und TCPNoDelay für den ersten von Windows als aktiv gemeldeten Adapter auf 1. Dies betrifft TCP; UDP-Verkehr bleibt unverändert. Die Unterstützung hängt von Windows und den Anwendungen ab. Eine niedrigere Latenz in Spielen ist nicht garantiert (HKLM, Administratorrechte erforderlich).",
+        "Setzt TcpAckFrequency und TCPNoDelay für den Adapter, über den die Route ins Internet läuft, auf 1. Dies betrifft TCP; UDP-Verkehr bleibt unverändert. Die Unterstützung hängt von Windows und den Anwendungen ab. Eine niedrigere Latenz in Spielen ist nicht garantiert (HKLM, Administratorrechte erforderlich).",
     },
     disable_window_animations: {
       name: "Sofortige Fensteranimationen",
@@ -8214,6 +8607,75 @@ const pt: Strings = {
     activeFreed: "Boost ativo para {name} — {freed} de RAM libertados.",
     gamesCount: "{count} jogos registrados",
     addGame: "+ Adicionar jogo (.exe)",
+    steeringTitle: "Distribuição de núcleos",
+    steeringVcache:
+      "O jogo corre no die com 3D V-Cache ({count} threads). As outras aplicações ficam onde o Windows as coloca.",
+    steeringHybrid:
+      "O jogo corre nos núcleos de desempenho ({game} threads) e as outras aplicações da sua sessão passam para os núcleos de eficiência ({background} threads). As aplicações a que subiu a prioridade acima do normal não são tocadas.",
+    steeringActive: "{count} processos distribuídos para este jogo.",
+    steeringNone:
+      "Não há nada a distribuir neste processador: não foi encontrado um tipo de núcleo mais rápido nem uma cache maior do que as outras.",
+    steeringActiveVcache: "O jogo está a correr no die com V-Cache.",
+    steeringNeedsSessions:
+      "Só funciona com o Game Sessions ativo e enquanto um dos seus jogos está a correr.",
+  },
+  latencyTrace: {
+    title: "Latência de DPC e interrupções",
+    subtitle:
+      "Mede quanto tempo duram as chamadas de procedimento diferidas (DPC) e as rotinas de serviço de interrupção (ISR) de cada controlador, lidas diretamente do kernel do Windows. Não altera nada; requer privilégios de administrador.",
+    duration: "Duração",
+    secondsOption: "{seconds} s",
+    run: "Medir",
+    running: "A medir durante {seconds} s…",
+    dpcSummary:
+      "DPC mais longa: {max} ms (limite {limit} ms). {over} de {count} passaram o limite.",
+    isrSummary:
+      "Rotina de interrupção mais longa: {max} ms (limite {limit} ms). {over} de {count} passaram o limite.",
+    colDriver: "Controlador",
+    colDpc: "DPC mais longa",
+    colIsr: "Interrupção mais longa",
+    colOver: "Acima do limite",
+    unattributed: "Não atribuído",
+    hidden:
+      "O Windows ocultou os endereços dos controladores, por isso as rotinas não puderam ser atribuídas.",
+    verdictGood: "Nenhum controlador passou os limites da Microsoft durante esta medição.",
+    note: "Recomendação da Microsoft: uma DPC deve terminar em menos de 0,1 ms e uma ISR em menos de 0,025 ms. O dxgkrnl.sys distribui as interrupções do ecrã, por isso o seu tempo pertence muitas vezes ao controlador gráfico.",
+    verdictBad:
+      "{driver} ocupou um processador durante {max} ms seguidos. Bloqueios acima de um milissegundo podem causar estalidos no áudio e engasgos no tempo de fotograma; atualizar esse controlador ou voltar à versão anterior costuma resolver.",
+    verdictMinor:
+      "{over} rotinas passaram a recomendação da Microsoft; a mais longa durou {max} ms. Excessos curtos como estes são comuns e raramente audíveis.",
+    lost: "O Windows perdeu {events} eventos e {buffers} buffers durante a medição, por isso os tempos máximos mostrados são um mínimo.",
+    verdictBadUnattributed:
+      "Uma rotina que não foi possível atribuir a nenhum controlador ocupou um processador durante {max} ms seguidos. Bloqueios acima de um milissegundo podem causar estalidos no áudio e engasgos no tempo de fotograma.",
+    spikesTitle: "Rotinas individuais mais longas",
+    spikeLine: "{kind} de {duration} ms em {driver}, aos {at} s do início",
+  },
+  networkCheck: {
+    title: "Verificação de rede",
+    subtitle:
+      "Envia 32 pings para 1.1.1.1 e abre uma ligação TCP, e depois mostra o que a pilha de rede do Windows está realmente a fazer. Não altera nada.",
+    run: "Verificar",
+    running: "A verificar…",
+    offline: "Sem ligação à Internet.",
+    rtt: "Ida e volta: mediana {median} ms (mín. {min}, máx. {max})",
+    jitter: "Variação (jitter): {jitter} ms",
+    loss: "Respostas: {received} de {sent}",
+    tcpRtt: "Ida e volta segundo a pilha TCP: {rtt} ms",
+    nagleOn:
+      "As novas ligações começam com o algoritmo de Nagle ativo (TCP_NODELAY desligado). As aplicações que precisam de o desligar fazem-no nos seus próprios sockets.",
+    nagleOff: "As novas ligações começam com o algoritmo de Nagle desligado.",
+    buffers:
+      "Buffer de receção: {reserved} reservados por socket, {autotuned} ajustados automaticamente pelo Windows",
+    verdictNone:
+      "Nenhuma alteração mensurável na latência. É o esperado: um ping não passa pelas definições TCP.",
+    verdictInconclusive: "Poucas respostas para comparar.",
+    verdictLineChanged:
+      "A própria linha mudou entre as duas leituras (mediana {delta} ms). Um ping não passa pelas definições TCP, por isso não é o efeito da alteração.",
+    lastTitle: "Depois de {tweak}, {time}",
+    socketsBeforeAfter:
+      "Novos sockets, antes → depois: Nagle {nagleBefore} → {nagleAfter}, buffer de receção {bufBefore} → {bufAfter}",
+    stateOn: "ativo",
+    stateOff: "desligado",
   },
   turboBoost: {
     title: "Turbo Boost",
@@ -8833,7 +9295,7 @@ const pt: Strings = {
     network_latency: {
       name: "Confirmações TCP e agrupamento de pacotes",
       description:
-        "Define TcpAckFrequency e TCPNoDelay como 1 no primeiro adaptador que o Windows indica como ativo. Isto afeta o comportamento TCP; o tráfego UDP não muda. O suporte depende do Windows e das aplicações, pelo que não há garantia de menor latência nos jogos (HKLM, requer privilégios de administrador).",
+        "Define TcpAckFrequency e TCPNoDelay como 1 no adaptador que leva a rota para a Internet. Isto afeta o comportamento TCP; o tráfego UDP não muda. O suporte depende do Windows e das aplicações, pelo que não há garantia de menor latência nos jogos (HKLM, requer privilégios de administrador).",
     },
     disable_window_animations: {
       name: "Animações de janela instantâneas",

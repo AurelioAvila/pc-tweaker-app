@@ -18,7 +18,7 @@ const SPIF_SENDCHANGE: u32 = 0x0002;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-struct FilterKeys {
+pub(crate) struct FilterKeys {
     cb_size: u32,
     flags: u32,
     wait_ms: u32,
@@ -66,38 +66,83 @@ fn can_restore(original: FilterKeys, current: FilterKeys) -> bool {
     current == original || current == without_hotkey(original)
 }
 
-fn read_filter_keys() -> Result<FilterKeys, String> {
-    let mut value = FilterKeys {
-        cb_size: std::mem::size_of::<FilterKeys>() as u32,
-        ..Default::default()
-    };
-    // SAFETY: `value` has the documented FILTERKEYS layout and remains writable for the call.
-    if unsafe { SystemParametersInfoW(SPI_GETFILTERKEYS, value.cb_size, &mut value, 0) } == 0 {
-        return Err(format!(
-            "could not read Filter Keys: {}",
-            std::io::Error::last_os_error()
-        ));
+/// Filter Keys as SystemParametersInfoW keeps them. Production code reaches
+/// them through `WinFilterKeys`; unit tests install a fake with
+/// `set_test_filter_keys`, the same seam `tweaks::windows_impl` gives the
+/// registry.
+pub(crate) trait FilterKeysBackend {
+    fn read(&self) -> Result<FilterKeys, String>;
+    /// Writes without reading back; `write_filter_keys` verifies.
+    fn write(&self, value: FilterKeys) -> Result<(), String>;
+}
+
+/// The real current-user setting. Writes refuse to run inside a unit test.
+pub(crate) struct WinFilterKeys;
+
+impl FilterKeysBackend for WinFilterKeys {
+    fn read(&self) -> Result<FilterKeys, String> {
+        let mut value = FilterKeys {
+            cb_size: std::mem::size_of::<FilterKeys>() as u32,
+            ..Default::default()
+        };
+        // SAFETY: `value` has the documented FILTERKEYS layout and remains writable for the call.
+        if unsafe { SystemParametersInfoW(SPI_GETFILTERKEYS, value.cb_size, &mut value, 0) } == 0 {
+            return Err(format!(
+                "could not read Filter Keys: {}",
+                std::io::Error::last_os_error()
+            ));
+        }
+        Ok(value)
     }
-    Ok(value)
+
+    fn write(&self, value: FilterKeys) -> Result<(), String> {
+        registry::refuse_in_unit_tests().map_err(|e| e.to_string())?;
+        let mut value = value;
+        // SAFETY: `value` has the documented FILTERKEYS layout and remains live for the call.
+        if unsafe {
+            SystemParametersInfoW(
+                SPI_SETFILTERKEYS,
+                value.cb_size,
+                &mut value,
+                SPIF_UPDATEINIFILE | SPIF_SENDCHANGE,
+            )
+        } == 0
+        {
+            return Err(format!(
+                "could not set Filter Keys: {}",
+                std::io::Error::last_os_error()
+            ));
+        }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+thread_local! {
+    static TEST_FILTER_KEYS: std::cell::RefCell<Option<std::rc::Rc<dyn FilterKeysBackend>>> =
+        const { std::cell::RefCell::new(None) };
+}
+
+/// Routes this thread's Filter Keys calls to `backend` (test builds only).
+#[cfg(test)]
+pub(crate) fn set_test_filter_keys(backend: Option<std::rc::Rc<dyn FilterKeysBackend>>) {
+    TEST_FILTER_KEYS.with(|slot| *slot.borrow_mut() = backend);
+}
+
+fn with_filter_keys<T>(f: impl FnOnce(&dyn FilterKeysBackend) -> T) -> T {
+    #[cfg(test)]
+    if let Some(backend) = TEST_FILTER_KEYS.with(|slot| slot.borrow().clone()) {
+        return f(&*backend);
+    }
+    f(&WinFilterKeys)
+}
+
+fn read_filter_keys() -> Result<FilterKeys, String> {
+    with_filter_keys(|backend| backend.read())
 }
 
 fn write_filter_keys(value: FilterKeys) -> Result<(), String> {
-    let mut value = value;
-    // SAFETY: `value` has the documented FILTERKEYS layout and remains live for the call.
-    if unsafe {
-        SystemParametersInfoW(
-            SPI_SETFILTERKEYS,
-            value.cb_size,
-            &mut value,
-            SPIF_UPDATEINIFILE | SPIF_SENDCHANGE,
-        )
-    } == 0
-    {
-        return Err(format!(
-            "could not set Filter Keys: {}",
-            std::io::Error::last_os_error()
-        ));
-    }
+    with_filter_keys(|backend| backend.write(value))?;
     if read_filter_keys()? != value {
         return Err("Filter Keys verification failed; rollback snapshot was retained".into());
     }
@@ -247,6 +292,177 @@ pub(crate) mod tests {
         assert!(can_restore(original, changed));
         assert!(can_restore(original, original));
         assert!(!can_restore(original, outside_change));
+    }
+
+    /// Filter Keys held in memory for this thread.
+    #[derive(Default)]
+    struct FakeFilterKeys {
+        value: std::cell::Cell<FilterKeys>,
+        /// Writes report success but change nothing.
+        drop_writes: std::cell::Cell<bool>,
+        /// Writes fail with "access denied".
+        deny_writes: std::cell::Cell<bool>,
+        /// Writes that changed the value.
+        writes: std::cell::Cell<usize>,
+    }
+
+    impl FilterKeysBackend for FakeFilterKeys {
+        fn read(&self) -> Result<FilterKeys, String> {
+            Ok(self.value.get())
+        }
+        fn write(&self, value: FilterKeys) -> Result<(), String> {
+            if self.deny_writes.get() {
+                return Err("access denied".into());
+            }
+            if !self.drop_writes.get() {
+                self.value.set(value);
+                self.writes.set(self.writes.get() + 1);
+            }
+            Ok(())
+        }
+    }
+
+    /// Routes this thread's Filter Keys calls to a fake until dropped.
+    struct Installed(std::rc::Rc<FakeFilterKeys>);
+
+    impl std::ops::Deref for Installed {
+        type Target = FakeFilterKeys;
+        fn deref(&self) -> &FakeFilterKeys {
+            &self.0
+        }
+    }
+
+    impl Drop for Installed {
+        fn drop(&mut self) {
+            set_test_filter_keys(None);
+        }
+    }
+
+    fn install(value: FilterKeys) -> Installed {
+        let fake = std::rc::Rc::new(FakeFilterKeys::default());
+        fake.value.set(value);
+        set_test_filter_keys(Some(fake.clone()));
+        Installed(fake)
+    }
+
+    /// Windows' own defaults: available, shortcut on with its confirmation,
+    /// sound and indicator, and the standard timings.
+    const DEFAULTS: FilterKeys = FilterKeys {
+        cb_size: std::mem::size_of::<FilterKeys>() as u32,
+        flags: 0x7E,
+        wait_ms: 1000,
+        delay_ms: 1000,
+        repeat_ms: 500,
+        bounce_ms: 0,
+    };
+    const ID: &str = DISABLE_FILTER_KEYS_SHORTCUT_ID;
+
+    #[test]
+    fn filter_keys_shortcut_round_trips_through_the_funnel() {
+        for original in [DEFAULTS, without_hotkey(DEFAULTS)] {
+            let fake = install(original);
+            let fixture = crate::mock_registry::Fixture::new();
+            crate::apply_by_id_inner(&fixture.store, &fixture.dir, ID).unwrap();
+            assert_eq!(fake.value.get(), without_hotkey(original));
+            assert!(effective(ID).unwrap());
+            assert!(matches!(fixture.snapshot(ID),
+                Some(SnapshotEntry::FilterKeys { original: saved }) if saved == FilterKeysSnapshot::from(original)));
+            crate::rollback_by_id_inner(&fixture.store, ID).unwrap();
+            assert_eq!(fake.value.get(), original);
+            assert_eq!(effective(ID).unwrap(), original == without_hotkey(original));
+            assert!(!fixture.store.is_applied(ID));
+        }
+    }
+
+    #[test]
+    fn reapplying_keeps_the_oldest_original() {
+        let fake = install(DEFAULTS);
+        let fixture = crate::mock_registry::Fixture::new();
+        apply(ID, &fixture.store).unwrap();
+        let writes = fake.writes.get();
+        apply(ID, &fixture.store).unwrap();
+        assert_eq!(
+            fake.writes.get(),
+            writes,
+            "an applied shortcut was written again"
+        );
+        // Someone turns the shortcut back on while the tweak is applied.
+        fake.value.set(DEFAULTS);
+        apply(ID, &fixture.store).unwrap();
+        assert_eq!(fake.value.get(), without_hotkey(DEFAULTS));
+        assert!(matches!(fixture.snapshot(ID),
+            Some(SnapshotEntry::FilterKeys { original }) if original == FilterKeysSnapshot::from(DEFAULTS)));
+        rollback(ID, &fixture.store).unwrap();
+        assert_eq!(fake.value.get(), DEFAULTS);
+    }
+
+    /// Timings changed in Settings after the tweak: neither re-applying nor
+    /// restoring may overwrite them, and the original stays saved for review.
+    #[test]
+    fn a_change_made_since_application_is_refused_both_ways() {
+        let fake = install(DEFAULTS);
+        let fixture = crate::mock_registry::Fixture::new();
+        apply(ID, &fixture.store).unwrap();
+        let mut changed = without_hotkey(DEFAULTS);
+        changed.repeat_ms += 100;
+        fake.value.set(changed);
+        let writes = fake.writes.get();
+        let error = apply(ID, &fixture.store).unwrap_err();
+        assert!(error.contains("changed since application"), "{error}");
+        let error = rollback(ID, &fixture.store).unwrap_err();
+        assert!(error.contains("changed since application"), "{error}");
+        assert_eq!(fake.writes.get(), writes);
+        assert_eq!(fake.value.get(), changed);
+        assert!(fixture.store.is_applied(ID));
+    }
+
+    #[test]
+    fn a_write_that_does_not_stick_fails_the_apply_and_keeps_the_journal() {
+        let fake = install(DEFAULTS);
+        let fixture = crate::mock_registry::Fixture::new();
+        fake.drop_writes.set(true);
+        let error = apply(ID, &fixture.store).unwrap_err();
+        assert!(error.contains("verification failed"), "{error}");
+        assert!(fixture.store.is_applied(ID));
+        assert_eq!(fake.value.get(), DEFAULTS);
+        // Nothing stuck, so the original is already in place.
+        rollback(ID, &fixture.store).unwrap();
+        assert!(!fixture.store.is_applied(ID));
+    }
+
+    #[test]
+    fn a_failed_restore_keeps_the_journal_for_a_retry() {
+        for denied in [true, false] {
+            let fake = install(DEFAULTS);
+            let fixture = crate::mock_registry::Fixture::new();
+            apply(ID, &fixture.store).unwrap();
+            if denied {
+                fake.deny_writes.set(true);
+            } else {
+                fake.drop_writes.set(true);
+            }
+            assert!(rollback(ID, &fixture.store).is_err(), "denied {denied}");
+            assert!(fixture.store.is_applied(ID));
+            fake.deny_writes.set(false);
+            fake.drop_writes.set(false);
+            rollback(ID, &fixture.store).unwrap();
+            assert_eq!(fake.value.get(), DEFAULTS);
+            assert!(!fixture.store.is_applied(ID));
+        }
+    }
+
+    /// The safety net: with no fake installed, a unit test cannot change the
+    /// Filter Keys of whoever runs it.
+    #[test]
+    fn unit_tests_cannot_write_the_real_filter_keys() {
+        // Skipped only where the guard itself is off: the disposable VM.
+        if std::env::var("PC_TWEAKER_EXPANSION_VM_TEST").as_deref()
+            == Ok("I_ACKNOWLEDGE_DISPOSABLE_VM")
+        {
+            return;
+        }
+        let error = WinFilterKeys.write(DEFAULTS).unwrap_err();
+        assert!(error.contains("unit tests"), "{error}");
     }
 
     #[test]

@@ -8,7 +8,11 @@ Before preparing `latest.json`, `scripts/make-latest-json.mjs` requires the
 application, DLLs in its release directory, EXE installer and MSI installer to pass Windows Authenticode,
 publisher identity (**Aurelio Avila**) and trusted timestamp verification.
 Both installers must also have valid Tauri updater signatures for the public
-key installed in the application. The helper rejects changed bytes.
+key installed in the application. The helper rejects changed bytes. It also
+requires each signature's trusted comment to be exactly
+`timestamp:<digits>\tfile:<installer>`, with the installer names and download
+URL that installed clients hardcode: from 1.14.7 they silently ignore any
+other form, including the `version:` field `tauri build` adds from CLI 2.12.
 
 PowerShell 7, Windows SDK SignTool and minisign must be available locally.
 `SIGNTOOL_PATH` and `MINISIGN_PATH` may identify installed verification tools;

@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import os from "node:os";
-import { verifyUpdater } from "./verify-updater.mjs";
+import { signedFileName, verifyUpdater } from "./verify-updater.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const conf = JSON.parse(fs.readFileSync(path.join(root, "src-tauri", "tauri.conf.json"), "utf8"));
@@ -131,7 +131,34 @@ for (const binary of binaries) {
     path.join(root, "scripts", "verify-authenticode.ps1"), "-Path", binary], { stdio: "inherit" });
 }
 const updaterSignature = verifyUpdater(path.join(nsisDir, setup), conf.plugins.updater.pubkey);
-verifyUpdater(path.join(msiDir, msis[0]), conf.plugins.updater.pubkey);
+const msiSignature = verifyUpdater(path.join(msiDir, msis[0]), conf.plugins.updater.pubkey);
+
+// Installed clients from 1.14.7 hardcode these names and this URL
+// (src-tauri/src/update_identity.rs) and silently ignore anything else.
+const required = {
+  setup: `pc-tweaker-app_${version}_x64-setup.exe`,
+  msi: `pc-tweaker-app_${version}_x64_en-US.msi`,
+  url: `https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v${version}/pc-tweaker-app_${version}_x64-setup.exe`,
+};
+const downloadUrl = `${repoUrl}/releases/download/v${version}/${assetName}`;
+if (setup !== required.setup || msis[0] !== required.msi || downloadUrl !== required.url) {
+  console.error(
+    `Installed clients only accept ${required.setup} served from ${required.url}; this build is ` +
+      `${setup} at ${downloadUrl}. Check productName and the updater endpoint in tauri.conf.json.`,
+  );
+  process.exit(1);
+}
+for (const [file, signature] of [[setup, updaterSignature], [msis[0], msiSignature]]) {
+  if (signedFileName(signature) !== file) {
+    console.error(
+      `${file}: its updater signature is not in the form installed clients accept, so they would ` +
+        "silently see no update. Re-sign both installers with `npx tauri signer sign <installer>`, " +
+        "without --app-version (the key and its password come from TAURI_SIGNING_PRIVATE_KEY or " +
+        "TAURI_SIGNING_PRIVATE_KEY_PATH, and TAURI_SIGNING_PRIVATE_KEY_PASSWORD), then run this again.",
+    );
+    process.exit(1);
+  }
+}
 const frontendEntry = fs.readFileSync(path.join(root, "dist", "index.html"), "utf8")
   .match(/src="\/assets\/([^" ]+\.js)"/)?.[1];
 if (!frontendEntry || !fs.readFileSync(shipped).includes(Buffer.from(frontendEntry))) {
@@ -148,7 +175,7 @@ const manifest = {
   platforms: {
     "windows-x86_64": {
       signature: updaterSignature,
-      url: `${repoUrl}/releases/download/v${version}/${assetName}`,
+      url: downloadUrl,
     },
   },
 };

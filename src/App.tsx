@@ -101,6 +101,12 @@ function App() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
+  // Dates and numbers follow the app's language, not the Windows display
+  // language: an English UI on an Italian PC must not print "27/9/2026".
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
   const [auth, setAuth] = useState<AuthState>(() => {
     const email = readStoredEmail();
     const token = readToken();

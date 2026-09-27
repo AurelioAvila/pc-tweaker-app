@@ -2,7 +2,7 @@ import "./tool-surfaces.css";
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
-import { formatBytes } from "../lib";
+import { formatBytes, formatNumber, uiLocale } from "../lib";
 import { DpcReport, NetworkSnapshot, NetworkVerification, TweakInfo } from "../types";
 import { ToolHeader, ToolStatus } from "./tool-section";
 
@@ -13,8 +13,14 @@ const DRIVER_ROWS = 8;
  *  audio buffers and frame deadlines start to be at risk. */
 const AUDIBLE_US = 1000;
 
-const us = (value: number) => value.toFixed(1);
-const ms = (value: number | null) => (value === null ? "–" : value.toFixed(1));
+/** Kernel routines are measured in microseconds; they are shown in
+ *  milliseconds, the unit people already read ping in. */
+const us = (micros: number) => {
+  const millis = micros / 1000;
+  return formatNumber(millis, millis < 1 ? 3 : 1);
+};
+const ms = (value: number | null) => (value === null ? "–" : formatNumber(value, 1));
+const count = (value: number) => formatNumber(value);
 
 /**
  * DPC and ISR execution times per driver, measured by the kernel (see
@@ -93,16 +99,16 @@ export function LatencyTracePanel({ s }: { s: Strings }) {
                 ? format(t.verdictBad, { driver: severe.driver, max: us(longest(severe)) })
                 : format(t.verdictBadUnattributed, { max: us(longest(severe)) })
               : overruns > 0
-                ? format(t.verdictMinor, { over: overruns, max: us(peak) })
+                ? format(t.verdictMinor, { over: count(overruns), max: us(peak) })
                 : t.verdictGood}
           </ToolStatus>
           {[report.dpc, report.isr].map((totals) => (
             <p key={totals.kind}>
               {format(totals.kind === "dpc" ? t.dpcSummary : t.isrSummary, {
                 max: us(totals.maxUs),
-                limit: totals.limitUs,
-                over: totals.overLimit,
-                count: totals.count,
+                limit: us(totals.limitUs),
+                over: count(totals.overLimit),
+                count: count(totals.count),
               })}
             </p>
           ))}
@@ -123,15 +129,15 @@ export function LatencyTracePanel({ s }: { s: Strings }) {
                     <tr key={row.driver ?? "?"} className="border-t border-white/5">
                       <td className="py-1 text-ink-2">{row.driver ?? t.unattributed}</td>
                       <td className="py-1 text-right tabular-nums text-white/75">
-                        {row.dpc.count > 0 ? `${us(row.dpc.maxUs)} µs` : "–"}
+                        {row.dpc.count > 0 ? `${us(row.dpc.maxUs)} ms` : "–"}
                       </td>
                       <td className="py-1 text-right tabular-nums text-white/75">
-                        {row.isr.count > 0 ? `${us(row.isr.maxUs)} µs` : "–"}
+                        {row.isr.count > 0 ? `${us(row.isr.maxUs)} ms` : "–"}
                       </td>
                       <td
                         className={`py-1 text-right tabular-nums ${over > 0 ? "text-rose-300/90" : "text-ink-3"}`}
                       >
-                        {over}
+                        {count(over)}
                       </td>
                     </tr>
                   );
@@ -149,7 +155,7 @@ export function LatencyTracePanel({ s }: { s: Strings }) {
                       kind: spike.kind.toUpperCase(),
                       duration: us(spike.durationUs),
                       driver: spike.driver ?? t.unattributed,
-                      at: (spike.atMs / 1000).toFixed(2),
+                      at: formatNumber(spike.atMs / 1000, 2),
                     })}
                   </li>
                 ))}
@@ -158,7 +164,10 @@ export function LatencyTracePanel({ s }: { s: Strings }) {
           )}
           {report.eventsLost + report.buffersLost > 0 && (
             <p className="text-ink-3">
-              {format(t.lost, { events: report.eventsLost, buffers: report.buffersLost })}
+              {format(t.lost, {
+                events: count(report.eventsLost),
+                buffers: count(report.buffersLost),
+              })}
             </p>
           )}
           {!report.driversResolved && <p className="text-ink-3">{t.hidden}</p>}
@@ -183,7 +192,7 @@ function SnapshotLines({ s, snapshot }: { s: Strings; snapshot: NetworkSnapshot 
         })}
       </p>
       <p>{format(t.jitter, { jitter: ms(link.jitterMs) })}</p>
-      <p>{format(t.loss, { received: link.received, sent: link.sent })}</p>
+      <p>{format(t.loss, { received: count(link.received), sent: count(link.sent) })}</p>
       {tcp?.rttUs != null && <p>{format(t.tcpRtt, { rtt: ms(tcp.rttUs / 1000) })}</p>}
       {tcp?.nodelay != null && <p>{tcp.nodelay ? t.nagleOff : t.nagleOn}</p>}
       {tcp?.soRcvbuf != null && tcp.rcvBuf != null && (
@@ -269,7 +278,7 @@ export function NetworkCheckPanel({ s, tweaks }: { s: Strings; tweaks: TweakInfo
                 s.tweaks[last.tweakId]?.name ??
                 tweaks.find((tweak) => tweak.id === last.tweakId)?.name ??
                 last.tweakId,
-              time: last.measuredAt ? new Date(last.measuredAt).toLocaleString() : "–",
+              time: last.measuredAt ? new Date(last.measuredAt).toLocaleString(uiLocale()) : "–",
             })}
           </p>
           <p>
@@ -277,7 +286,7 @@ export function NetworkCheckPanel({ s, tweaks }: { s: Strings; tweaks: TweakInfo
               delta:
                 last.medianDeltaMs === null
                   ? "–"
-                  : `${last.medianDeltaMs > 0 ? "+" : ""}${last.medianDeltaMs.toFixed(1)}`,
+                  : `${last.medianDeltaMs > 0 ? "+" : ""}${formatNumber(last.medianDeltaMs, 1)}`,
             })}
           </p>
           {last.before.tcp && last.after.tcp && (

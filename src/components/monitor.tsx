@@ -2,7 +2,14 @@ import "./tool-surfaces.css";
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
-import { formatBytes, gbPair, loadColor, RAM_AUTO_INTERVALS, ramIntervalLabel } from "../lib";
+import {
+  formatBytes,
+  gbPair,
+  loadColor,
+  RAM_AUTO_INTERVALS,
+  ramIntervalLabel,
+  uiLocale,
+} from "../lib";
 import { RamCleanResult, SystemStats, Toast } from "../types";
 import { PulseSample, tracePoints } from "./command";
 import { ChipIcon } from "./icons";
@@ -43,7 +50,7 @@ function useNow(everyMs: number): number {
 
 /** Hour and minute, the way the user's own system writes them. */
 function clockTime(d: Date): string {
-  return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString(uiLocale(), { hour: "2-digit", minute: "2-digit" });
 }
 
 export function StatRing({

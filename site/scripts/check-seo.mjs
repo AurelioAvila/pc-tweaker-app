@@ -80,6 +80,9 @@ for (const url of urls) {
 }
 
 const home = await readFile(new URL("index.html", dist), "utf8");
+for (const [value, label] of [[39, "CONTROLS INCLUDED FREE"], [66, "CONTROLS IN THIS RELEASE"], [1, "PLACE TO REVIEW &amp; RESTORE"]]) {
+  assert.match(home, new RegExp(`<span>${value}</span>[\\s\\S]{0,500}${label}`), `Stat must render its real value in the initial HTML: ${label}`);
+}
 const app = JSON.parse(
   home.match(/<script type="application\/ld\+json" data-ld="app">([\s\S]*?)<\/script>/)[1],
 );

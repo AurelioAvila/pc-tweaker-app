@@ -142,6 +142,32 @@ impl RegistryBackend for MemRegistry {
         }
         Ok(())
     }
+
+    /// Lowercase, since that is how the map stores them.
+    fn names(&self, hive: Hive, path: &str) -> std::io::Result<Vec<String>> {
+        let (h, path) = (hive_str(&hive), path.to_ascii_lowercase());
+        let prefix = format!("{path}\\");
+        // The first path component below `path`, for anything deeper.
+        let child = |p: &str| {
+            p.strip_prefix(&prefix)
+                .and_then(|rest| rest.split('\\').next())
+                .map(str::to_string)
+        };
+        let mut names = BTreeSet::new();
+        for (vh, vp, name) in self.values.borrow().keys() {
+            if *vh == h && *vp == path {
+                names.insert(name.clone());
+            } else if *vh == h {
+                names.extend(child(vp));
+            }
+        }
+        for (kh, kp) in self.keys.borrow().iter() {
+            if *kh == h {
+                names.extend(child(kp));
+            }
+        }
+        Ok(names.into_iter().collect())
+    }
 }
 
 /// Routes this thread's registry calls to a fresh `MemRegistry` until dropped.

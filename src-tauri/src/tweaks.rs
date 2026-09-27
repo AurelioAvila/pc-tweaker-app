@@ -36,6 +36,9 @@ pub trait RegistryBackend {
     fn create_key(&self, hive: Hive, path: &str) -> std::io::Result<()>;
     /// Deletes the key with everything under it. Already gone is success.
     fn delete_tree(&self, hive: Hive, path: &str) -> std::io::Result<()>;
+    /// Names of the values and subkeys directly under a key, empty when the
+    /// key is absent.
+    fn names(&self, hive: Hive, path: &str) -> std::io::Result<Vec<String>>;
 }
 
 /// A tweak backed by a single registry value (DWORD or string).
@@ -707,6 +710,22 @@ pub mod windows_impl {
             }
         }
 
+        fn names(&self, hive: Hive, path: &str) -> std::io::Result<Vec<String>> {
+            let key = match root(&hive).open_subkey(path) {
+                Ok(key) => key,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+                Err(e) => return Err(e),
+            };
+            let mut names = Vec::new();
+            for value in key.enum_values() {
+                names.push(value?.0);
+            }
+            for subkey in key.enum_keys() {
+                names.push(subkey?);
+            }
+            Ok(names)
+        }
+
         fn delete(&self, hive: Hive, path: &str, name: &str) -> std::io::Result<()> {
             use winreg::enums::{KEY_QUERY_VALUE, KEY_SET_VALUE};
             refuse_in_unit_tests()?;
@@ -794,6 +813,10 @@ pub mod windows_impl {
 
     pub fn delete_tree(hive: Hive, path: &str) -> std::io::Result<()> {
         with_backend(|registry| registry.delete_tree(hive, path))
+    }
+
+    pub fn names(hive: Hive, path: &str) -> std::io::Result<Vec<String>> {
+        with_backend(|registry| registry.names(hive, path))
     }
 
     /// Restores (or removes) a value from a previously taken snapshot.

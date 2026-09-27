@@ -30,6 +30,27 @@ export function verifyUpdater(file, encodedPublicKey) {
   }
 }
 
+/**
+ * The installer name a signature's trusted comment binds, or null unless the
+ * comment is exactly `timestamp:<digits>\tfile:<name>`. Installed clients from
+ * 1.14.7 to 1.15.0 accept nothing else (src-tauri/src/update_identity.rs):
+ * `tauri build` from CLI 2.12 appends `\tversion:<v>`, which they read as part
+ * of the filename, and they silently report that no update exists.
+ */
+export function signedFileName(signature) {
+  // As strict as the clients: canonical base64 and valid UTF-8, or nothing.
+  const bytes = Buffer.from(signature, "base64");
+  if (bytes.toString("base64") !== signature) return null;
+  let text;
+  try {
+    text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return null;
+  }
+  const comment = text.split("\n")[2] ?? "";
+  return comment.match(/^trusted comment: timestamp:\d+\tfile:([^\t]+)$/)?.[1] ?? null;
+}
+
 export function removeVerificationDirectory(directory, temporaryRoot) {
   const resolved = fs.realpathSync(directory);
   const root = fs.realpathSync(temporaryRoot);

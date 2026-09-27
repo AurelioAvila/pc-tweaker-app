@@ -471,14 +471,19 @@ pub fn rollback_turbo_boost(store: &RollbackStore) -> Result<(), String> {
     })
 }
 
-/// Puts a power setting back exactly as it was found.
+/// Puts a power setting back as it was found, for the halves this tweak
+/// writes: boost mode on AC and DC, the processor floor and core parking on AC
+/// only. The other half is never touched, so a change the user made to it
+/// meanwhile survives.
 ///
 /// `None` means the plan had no override and was inheriting the setting's
 /// default, so the honest restore is to delete the value again rather than to
-/// write some guess at what the default was. Windows 11 lets only SYSTEM
-/// delete an override, though; when the delete is refused and the journal
-/// recorded the value that was in effect, that value is written back through
-/// the power API instead, which leaves the plan behaving exactly as it did.
+/// write a guess. Windows 11 lets only SYSTEM delete an override, though. When
+/// the delete is refused, the value that was in effect (recorded at apply
+/// time, or read as the plan's default for journals from older builds) is
+/// written back through the power API instead: the plan then behaves as it
+/// did, but keeps an explicit value equal to that default rather than
+/// following a later change of the default.
 #[cfg(windows)]
 fn restore_power_index(
     scheme_guid: &str,
@@ -487,7 +492,9 @@ fn restore_power_index(
     ac: (Option<u32>, Option<u32>),
     dc: (Option<u32>, Option<u32>),
 ) -> Result<(), String> {
-    let mut expected = [ac.0, dc.0];
+    let writes_dc = setting_guid.eq_ignore_ascii_case(PERF_BOOST_MODE_GUID);
+    let current = read_setting_indexes(scheme_guid, setting_guid)?;
+    let mut expected = [ac.0, if writes_dc { dc.0 } else { current.1 }];
     for (slot, (is_ac, value_name, (index, effective))) in [
         (true, "ACSettingIndex", ac),
         (false, "DCSettingIndex", dc),
@@ -495,14 +502,17 @@ fn restore_power_index(
     .into_iter()
     .enumerate()
     {
+        if !is_ac && !writes_dc {
+            continue;
+        }
         match index {
             Some(v) => {
                 crate::power::write_setting_index(scheme_guid, subgroup_guid, setting_guid, is_ac, v)?
             }
             None => {
                 let path = crate::power::setting_index_path(scheme_guid, subgroup_guid, setting_guid);
-                // Nothing to undo where no override exists (this tweak may
-                // never have written that half), and nothing may be created.
+                // Nothing to undo where no override exists, and nothing may
+                // be created.
                 if crate::tweaks::windows_impl::read_dword(crate::tweaks::Hive::Hklm, &path, value_name)
                     .map_err(|e| e.to_string())?
                     .is_none()
@@ -515,19 +525,25 @@ fn restore_power_index(
                     name: value_name.into(),
                     original_value: None,
                 });
-                match (deleted, effective) {
-                    (Ok(()), _) => {}
-                    (Err(_), Some(value)) => {
-                        crate::power::write_setting_index(
+                if let Err(error) = deleted {
+                    let value = match effective {
+                        Some(value) => value,
+                        None => crate::power::default_setting_index(
                             scheme_guid,
                             subgroup_guid,
                             setting_guid,
                             is_ac,
-                            value,
-                        )?;
-                        expected[slot] = Some(value);
-                    }
-                    (Err(error), None) => return Err(error),
+                        )
+                        .map_err(|_| error)?,
+                    };
+                    crate::power::write_setting_index(
+                        scheme_guid,
+                        subgroup_guid,
+                        setting_guid,
+                        is_ac,
+                        value,
+                    )?;
+                    expected[slot] = Some(value);
                 }
             }
         }
@@ -625,6 +641,17 @@ mod tests {
             "implausible DC boost index: {:?}",
             dc
         );
+    }
+
+    /// The plan default a refused delete falls back to is readable here too.
+    #[test]
+    fn the_plan_default_is_readable_for_the_active_plan() {
+        let scheme = crate::power::active_scheme_guid().expect("active scheme");
+        for ac in [true, false] {
+            let value = crate::power::default_setting_index(&scheme, SUB_PROCESSOR_GUID, PERF_BOOST_MODE_GUID, ac)
+                .expect("plan default");
+            assert!(value <= 6, "implausible boost default {value}");
+        }
     }
 
     type Action = fn(&RollbackStore) -> Result<(), String>;
@@ -851,10 +878,10 @@ mod tests {
         }
     }
 
-    /// A journal from an older build recorded no value in effect, so a refused
-    /// delete keeps it for a retry instead of guessing at a default.
+    /// A journal from an older build recorded no value in effect; a refused
+    /// delete then falls back to the plan's own default for that setting.
     #[test]
-    fn an_older_journal_without_the_value_in_effect_keeps_waiting() {
+    fn an_older_journal_falls_back_to_the_plan_default() {
         let (machine, fixture) = seeded(&CASES[1], None, None);
         let older = SnapshotEntry::PowerSettingIndex {
             scheme_guid: BALANCED.into(),
@@ -869,11 +896,26 @@ mod tests {
         machine.registry.set(Hive::Hklm, &path, "ACSettingIndex", Stored::Value(RegValue::Dword(100)));
         fixture.store.transaction().unwrap().save_entry(CORE_PARKING_ID, older).unwrap();
         machine.registry.deny_deletes.set(true);
-        assert!(rollback_core_parking(&fixture.store).is_err());
-        assert!(fixture.store.is_applied(CORE_PARKING_ID));
-        machine.registry.deny_deletes.set(false);
         rollback_core_parking(&fixture.store).unwrap();
-        assert_eq!(index(&machine, CORE_PARKING_MIN_GUID, true), None);
+        assert!(!fixture.store.is_applied(CORE_PARKING_ID));
+        assert_eq!(
+            index(&machine, CORE_PARKING_MIN_GUID, true),
+            Some(Stored::Value(RegValue::Dword(crate::power::tests::INHERITED_DEFAULT)))
+        );
+    }
+
+    /// A half the tweak never writes is left as the user set it, even if
+    /// they changed it while the tweak was applied.
+    #[test]
+    fn a_half_the_tweak_never_writes_keeps_the_users_change() {
+        let (machine, fixture) = seeded(&CASES[1], None, None);
+        apply_core_parking(&fixture.store).unwrap();
+        let path = setting_index_path(BALANCED, SUB_PROCESSOR_GUID, CORE_PARKING_MIN_GUID);
+        let users = Stored::Value(RegValue::Dword(30));
+        machine.registry.set(Hive::Hklm, &path, "DCSettingIndex", users.clone());
+        machine.registry.deny_deletes.set(true);
+        rollback_core_parking(&fixture.store).unwrap();
+        assert_eq!(index(&machine, CORE_PARKING_MIN_GUID, false), Some(users));
     }
 
     /// Journals from older builds: one that recorded boost mode alone is put

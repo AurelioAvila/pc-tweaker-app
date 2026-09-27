@@ -35,8 +35,20 @@ for (const filter of filters) {
   const result = spawnSync(
     "cargo",
     ["test", "--manifest-path", "src-tauri/Cargo.toml", "--lib", filter],
-    { cwd: fileURLToPath(new URL("..", import.meta.url)), stdio: "inherit" },
+    {
+      cwd: fileURLToPath(new URL("..", import.meta.url)),
+      stdio: ["inherit", "pipe", "inherit"],
+      encoding: "utf8",
+    },
   );
   if (result.error) throw result.error;
+  process.stdout.write(result.stdout);
   if (result.status !== 0) process.exit(result.status ?? 1);
+  // A filter that matches nothing passes with "running 0 tests"; a renamed
+  // or re-gated module must fail here instead.
+  const ran = [...result.stdout.matchAll(/running (\d+) tests?/g)].reduce((n, m) => n + Number(m[1]), 0);
+  if (ran === 0) {
+    console.error(`No test matched ${filter}`);
+    process.exit(1);
+  }
 }

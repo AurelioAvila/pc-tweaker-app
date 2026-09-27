@@ -18,6 +18,11 @@ pub(crate) trait PowerPlans {
     /// override, or the default it inherits when there is none.
     fn read_index(&self, scheme: &str, subgroup: &str, setting: &str, ac: bool)
         -> Result<u32, String>;
+    /// The default `scheme` inherits for a setting it does not override: the
+    /// value for the plan's personality (Balanced, High performance or Power
+    /// saver), which is what Windows applies when no override exists.
+    fn default_index(&self, scheme: &str, subgroup: &str, setting: &str, ac: bool)
+        -> Result<u32, String>;
     /// Writes one setting's AC index (`ac`) or DC index in `scheme`.
     fn write_index(
         &self,
@@ -67,6 +72,51 @@ impl PowerPlans for WinPowerPlans {
             }
         };
         checked(code)?;
+        Ok(value)
+    }
+
+    fn default_index(&self, scheme: &str, subgroup: &str, setting: &str, ac: bool)
+        -> Result<u32, String> {
+        use crate::power_tuning::native::{checked, guid as parse};
+        use windows_sys::core::GUID;
+        use windows_sys::Win32::System::Power::{
+            PowerReadACDefaultIndex, PowerReadACValue, PowerReadDCDefaultIndex,
+        };
+        // NO_SUBGROUP_GUID and GUID_POWERSCHEME_PERSONALITY from winnt.h,
+        // spelled out rather than enabling a whole feature for two constants.
+        const NO_SUBGROUP: GUID = GUID::from_u128(0xfea3413e_7e05_4911_9a71_700331f1c294);
+        const PERSONALITY: GUID = GUID::from_u128(0x245d8541_3943_4422_b025_13a784f679b7);
+        let (scheme, subgroup, setting) = (parse(scheme)?, parse(subgroup)?, parse(setting)?);
+        let mut personality = [0u8; 16];
+        let mut size = personality.len() as u32;
+        let mut kind = 0u32;
+        // SAFETY: every pointer refers to a live local of the size passed.
+        checked(unsafe {
+            PowerReadACValue(
+                std::ptr::null_mut(),
+                &scheme,
+                &NO_SUBGROUP,
+                &PERSONALITY,
+                &mut kind,
+                personality.as_mut_ptr(),
+                &mut size,
+            )
+        })?;
+        if size as usize != personality.len() {
+            return Err("Windows returned no personality for the power plan".into());
+        }
+        // SAFETY: GUID is 16 bytes of plain integers; any bit pattern is valid
+        // and read_unaligned copes with the byte array's alignment.
+        let personality: GUID = unsafe { std::ptr::read_unaligned(personality.as_ptr().cast()) };
+        let mut value = 0u32;
+        // SAFETY: the GUIDs and `value` live on this frame for the whole call.
+        checked(unsafe {
+            if ac {
+                PowerReadACDefaultIndex(std::ptr::null_mut(), &personality, &subgroup, &setting, &mut value)
+            } else {
+                PowerReadDCDefaultIndex(std::ptr::null_mut(), &personality, &subgroup, &setting, &mut value)
+            }
+        })?;
         Ok(value)
     }
 
@@ -133,6 +183,16 @@ pub(crate) fn read_effective_index(
     ac: bool,
 ) -> Result<u32, String> {
     with_plans(|plans| plans.read_index(scheme, subgroup, setting, ac))
+}
+
+#[cfg(windows)]
+pub(crate) fn default_setting_index(
+    scheme: &str,
+    subgroup: &str,
+    setting: &str,
+    ac: bool,
+) -> Result<u32, String> {
+    with_plans(|plans| plans.default_index(scheme, subgroup, setting, ac))
 }
 
 #[cfg(windows)]
@@ -296,6 +356,12 @@ pub(crate) mod tests {
                 Some(_) => Err("not a power index".into()),
                 None => Ok(INHERITED_DEFAULT),
             }
+        }
+
+        fn default_index(&self, scheme: &str, _subgroup: &str, _setting: &str, _ac: bool)
+            -> Result<u32, String> {
+            self.exists(scheme)?;
+            Ok(INHERITED_DEFAULT)
         }
 
         fn write_index(

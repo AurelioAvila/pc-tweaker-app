@@ -92,12 +92,14 @@ fn cmd(program: &'static str, arguments: impl Into<String>) -> TechnicalChange {
 
 /// Where Windows records the active power plan; `PowerSetActiveScheme`
 /// writes it.
+#[cfg(windows)]
 const ACTIVE_SCHEME: (&str, &str) = (
     r"HKLM\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes",
     "ActivePowerScheme",
 );
 
 /// A processor setting of the active plan, as `PowerWrite*ValueIndex` stores it.
+#[cfg(windows)]
 fn plan_index(setting: &str, ac: bool, value: u32) -> TechnicalChange {
     dword(
         format!(

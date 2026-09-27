@@ -14,6 +14,7 @@ const filters = [
   "power_tuning::tests",
   "dns::tests",
   "services::tests",
+  "download_limit::tests",
   "mock_registry",
   "diagnostics::dpc::tests",
   "diagnostics::network_verify::tests",

@@ -274,9 +274,10 @@ fn load(app_data_dir: &Path) -> Option<NetworkVerification> {
 pub fn measure() -> NetworkSnapshot {
     let tcp = native::tcp_view(TARGET);
     NetworkSnapshot {
-        // The TCP connection answers "online" for free; the netcheck probes
-        // (with their DNS fallback) only run when 1.1.1.1 is unreachable.
-        online: tcp.is_some() || crate::netcheck::online(),
+        // The TCP connection answers "online" for free. When it failed,
+        // 1.1.1.1:443 is not tried a second time: only the hostname probe
+        // runs, for networks that block Cloudflare.
+        online: tcp.is_some() || crate::netcheck::hostname_reachable(),
         link: summarize(TARGET, &native::echo_series(TARGET)),
         tcp,
     }
@@ -318,22 +319,38 @@ mod native {
     use std::os::windows::io::AsRawSocket;
     use std::time::Instant;
     use windows_sys::core::GUID;
-    use windows_sys::Win32::Foundation::HANDLE;
+    use windows_sys::Win32::Foundation::{ERROR_BUFFER_OVERFLOW, HANDLE};
     use windows_sys::Win32::NetworkManagement::IpHelper::{
         ConvertInterfaceAliasToLuid, ConvertInterfaceIndexToLuid, ConvertInterfaceLuidToGuid,
-        GetBestInterfaceEx, IcmpCloseHandle, IcmpCreateFile, IcmpSendEcho, ICMP_ECHO_REPLY,
-        IP_SUCCESS,
+        GetAdaptersAddresses,
+        GetBestInterfaceEx, IcmpCloseHandle, IcmpCreateFile, IcmpSendEcho, GAA_FLAG_SKIP_ANYCAST,
+        GAA_FLAG_SKIP_DNS_SERVER, GAA_FLAG_SKIP_FRIENDLY_NAME, GAA_FLAG_SKIP_MULTICAST,
+        GAA_FLAG_SKIP_UNICAST, ICMP_ECHO_REPLY, IF_TYPE_ETHERNET_CSMACD, IF_TYPE_IEEE80211,
+        IF_TYPE_SOFTWARE_LOOPBACK, IF_TYPE_TUNNEL, IP_ADAPTER_ADDRESSES_LH, IP_SUCCESS,
     };
-    use windows_sys::Win32::NetworkManagement::Ndis::NET_LUID_LH;
+    use windows_sys::Win32::NetworkManagement::Ndis::{IfOperStatusUp, NET_LUID_LH};
     use windows_sys::Win32::Networking::WinSock::{
-        getsockopt, WSAIoctl, AF_INET, SIO_TCP_INFO, SOCKADDR, SOCKADDR_IN, SOCKET, SOL_SOCKET,
-        SO_RCVBUF, SO_SNDBUF, TCP_INFO_v0,
+        getsockopt, WSAIoctl, AF_INET, AF_UNSPEC, SIO_TCP_INFO, SOCKADDR, SOCKADDR_IN, SOCKET,
+        SOL_SOCKET, SO_RCVBUF, SO_SNDBUF, TCP_INFO_v0,
     };
 
     /// GUID of the adapter Windows would use to reach the internet, formatted
     /// the way `Get-NetAdapter` prints it (the registry compares it
-    /// case-insensitively).
+    /// case-insensitively). With no IPv4 route (a LAN-only or IPv6-only
+    /// machine) it falls back to the adapter `fallback_adapter` picks.
     pub fn internet_interface_guid() -> Result<String, String> {
+        let luid = match best_route_luid() {
+            Ok(luid) => luid,
+            Err(route) => match operational_adapters().map(|list| fallback_adapter(&list)) {
+                Ok(Some(value)) => NET_LUID_LH { Value: value },
+                _ => return Err(route),
+            },
+        };
+        guid_of(&luid)
+    }
+
+    /// The adapter of the IPv4 route to `TARGET`.
+    fn best_route_luid() -> Result<NET_LUID_LH, String> {
         // SAFETY: SOCKADDR_IN is plain integers; all-zero is a valid value.
         let mut destination: SOCKADDR_IN = unsafe { zeroed() };
         destination.sin_family = AF_INET;
@@ -354,12 +371,83 @@ mod native {
         }
         // SAFETY: plain-integer union; zero is valid.
         let mut luid: NET_LUID_LH = unsafe { zeroed() };
-        // SAFETY: the out-pointer refers to a live local of the right type.
+        // SAFETY: `luid` is a live local of the right type.
         let code = unsafe { ConvertInterfaceIndexToLuid(index, &mut luid) };
         if code != 0 {
             return Err(format!("could not identify the network adapter (error {code})"));
         }
-        guid_of(&luid)
+        Ok(luid)
+    }
+
+    /// One adapter as the fallback sees it.
+    #[derive(Clone, Copy)]
+    pub(super) struct Adapter {
+        pub if_type: u32,
+        pub up: bool,
+        pub luid: u64,
+    }
+
+    /// The first adapter that is up and is neither loopback nor a tunnel,
+    /// Ethernet and Wi-Fi ahead of everything else.
+    pub(super) fn fallback_adapter(adapters: &[Adapter]) -> Option<u64> {
+        let usable = |a: &&Adapter| {
+            a.up && ![IF_TYPE_SOFTWARE_LOOPBACK, IF_TYPE_TUNNEL].contains(&a.if_type)
+        };
+        let preferred = |a: &&Adapter| [IF_TYPE_ETHERNET_CSMACD, IF_TYPE_IEEE80211].contains(&a.if_type);
+        let mut candidates = adapters.iter().filter(usable);
+        candidates
+            .clone()
+            .find(preferred)
+            .or_else(|| candidates.next())
+            .map(|a| a.luid)
+    }
+
+    /// Every adapter Windows lists, in its own order.
+    fn operational_adapters() -> Result<Vec<Adapter>, String> {
+        let flags = GAA_FLAG_SKIP_UNICAST
+            | GAA_FLAG_SKIP_ANYCAST
+            | GAA_FLAG_SKIP_MULTICAST
+            | GAA_FLAG_SKIP_DNS_SERVER
+            | GAA_FLAG_SKIP_FRIENDLY_NAME;
+        // The documented starting size, grown to what Windows asks for if an
+        // adapter appears between two calls. u64 storage keeps entries aligned.
+        let mut size = 15_000u32;
+        for _ in 0..3 {
+            let mut buffer = vec![0u64; (size as usize).div_ceil(8)];
+            // SAFETY: `buffer` is live, 8-byte aligned and at least `size`
+            // bytes long; `size` is a live in/out parameter.
+            let code = unsafe {
+                GetAdaptersAddresses(
+                    u32::from(AF_UNSPEC),
+                    flags,
+                    std::ptr::null(),
+                    buffer.as_mut_ptr().cast(),
+                    &mut size,
+                )
+            };
+            if code == ERROR_BUFFER_OVERFLOW {
+                continue;
+            }
+            if code != 0 {
+                return Err(format!("could not list network adapters (error {code})"));
+            }
+            let mut adapters = Vec::new();
+            let mut next = buffer.as_ptr() as *const IP_ADAPTER_ADDRESSES_LH;
+            while !next.is_null() {
+                // SAFETY: on success the list lives inside `buffer`, which
+                // outlives this loop, and every `Next` is null or another
+                // entry of it. Any bit pattern of the LUID union is a u64.
+                let (adapter, luid) = unsafe { (&*next, (*next).Luid.Value) };
+                adapters.push(Adapter {
+                    if_type: adapter.IfType,
+                    up: adapter.OperStatus == IfOperStatusUp,
+                    luid,
+                });
+                next = adapter.Next;
+            }
+            return Ok(adapters);
+        }
+        Err("the network adapter list kept changing".into())
     }
 
     /// GUID of the adapter Windows names `alias` ("Ethernet"), in the same
@@ -648,6 +736,34 @@ mod tests {
         assert!(tcp.rtt_us.is_some() && tcp.so_rcvbuf.is_some() && tcp.nodelay.is_some());
         let guid = internet_interface_guid().unwrap();
         assert!(crate::rollback::valid_guid(&guid), "{guid}");
+    }
+
+    /// With no IPv4 route, the first adapter that is up and not loopback or a
+    /// tunnel, Ethernet and Wi-Fi first.
+    #[cfg(windows)]
+    #[test]
+    fn the_fallback_adapter_prefers_a_live_ethernet_or_wifi_link() {
+        use native::{fallback_adapter, Adapter};
+        const LOOPBACK: u32 = 24;
+        const TUNNEL: u32 = 131;
+        const PPP: u32 = 23;
+        const ETHERNET: u32 = 6;
+        const WIFI: u32 = 71;
+        let adapter = |if_type, up, luid| Adapter { if_type, up, luid };
+        assert_eq!(fallback_adapter(&[]), None);
+        let list = [
+            adapter(LOOPBACK, true, 1),
+            adapter(TUNNEL, true, 2),
+            adapter(PPP, true, 3),
+            adapter(WIFI, false, 4),
+            adapter(ETHERNET, true, 5),
+            adapter(WIFI, true, 6),
+        ];
+        assert_eq!(fallback_adapter(&list), Some(5));
+        assert_eq!(fallback_adapter(&list[..4]), Some(3), "no Ethernet or Wi-Fi is up");
+        assert_eq!(fallback_adapter(&list[..2]), None, "only loopback and a tunnel");
+        assert_eq!(fallback_adapter(&[adapter(WIFI, true, 7), adapter(ETHERNET, true, 8)]), Some(7));
+        assert_eq!(fallback_adapter(&[adapter(ETHERNET, false, 9)]), None);
     }
 
     #[test]

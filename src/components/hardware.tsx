@@ -6,7 +6,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { format, Strings } from "../i18n";
-import { readCachedDriverAudit, writeCachedDriverAudit } from "../lib";
+import { readCachedDriverAudit, writeCachedDriverAudit, uiLocale } from "../lib";
 import {
   DriverAudit,
   DriverEntry,
@@ -1326,7 +1326,9 @@ export function DriversPanel({
             </p>
             {checkedAt && (
               <p className="type-data text-[11px] tabular-nums text-ink-3">
-                {format(s.hardware.driversCheckedAt, { time: checkedAt.toLocaleString() })}
+                {format(s.hardware.driversCheckedAt, {
+                  time: checkedAt.toLocaleString(uiLocale()),
+                })}
               </p>
             )}
           </ToolDetails>

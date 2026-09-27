@@ -3,7 +3,7 @@ import { ToolHeader } from "./tool-section";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
-import { textFor } from "../lib";
+import { textFor, uiLocale } from "../lib";
 import { CONFIGURABLE_TWEAK_IDS } from "../catalog";
 import { CleanupInfo, ScanIssue, SystemProfile, Toast, TweakAdvice, TweakInfo } from "../types";
 import { BaselineRun, delta } from "./health";
@@ -493,7 +493,7 @@ export function ScanPanel({
 
       <p className="tool-scan-last text-xs text-ink-3" aria-live="polite">
         {lastScan
-          ? format(s.scan.lastScan, { time: new Date(lastScan.at).toLocaleString() })
+          ? format(s.scan.lastScan, { time: new Date(lastScan.at).toLocaleString(uiLocale()) })
           : s.scan.neverScanned}
         {lastScan?.partial && <span className="block mt-1">{s.scan.partialScan}</span>}
       </p>

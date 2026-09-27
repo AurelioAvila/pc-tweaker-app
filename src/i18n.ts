@@ -1497,9 +1497,9 @@ const it: Strings = {
     run: "Misura",
     running: "Misurazione per {seconds} s…",
     dpcSummary:
-      "DPC più lunga: {max} µs (limite {limit} µs). {over} su {count} hanno superato il limite.",
+      "DPC più lunga: {max} ms (limite {limit} ms). {over} su {count} hanno superato il limite.",
     isrSummary:
-      "Routine di interrupt più lunga: {max} µs (limite {limit} µs). {over} su {count} hanno superato il limite.",
+      "Routine di interrupt più lunga: {max} ms (limite {limit} ms). {over} su {count} hanno superato il limite.",
     colDriver: "Driver",
     colDpc: "DPC più lunga",
     colIsr: "Interrupt più lungo",
@@ -1509,16 +1509,16 @@ const it: Strings = {
       "Windows ha nascosto gli indirizzi dei driver, quindi le routine non si possono attribuire ai driver.",
     verdictGood:
       "Durante questa misurazione nessun driver ha superato i limiti indicati da Microsoft.",
-    note: "Indicazioni di Microsoft: una DPC dovrebbe terminare entro 100 µs e una ISR entro 25 µs. dxgkrnl.sys smista gli interrupt dello schermo, quindi il suo tempo spesso appartiene al driver grafico.",
+    note: "Indicazioni di Microsoft: una DPC dovrebbe terminare entro 0,1 ms e una ISR entro 0,025 ms. dxgkrnl.sys smista gli interrupt dello schermo, quindi il suo tempo spesso appartiene al driver grafico.",
     verdictBad:
-      "{driver} ha occupato un processore per {max} µs di fila. Blocchi oltre il millisecondo possono causare crepitii nell'audio e scatti nel frame time; di solito si risolve aggiornando il driver o tornando alla versione precedente.",
+      "{driver} ha occupato un processore per {max} ms di fila. Blocchi oltre il millisecondo possono causare crepitii nell'audio e scatti nel frame time; di solito si risolve aggiornando il driver o tornando alla versione precedente.",
     verdictMinor:
-      "{over} routine hanno superato le indicazioni di Microsoft; la più lunga è durata {max} µs. Sforamenti brevi come questi sono comuni e raramente udibili.",
+      "{over} routine hanno superato le indicazioni di Microsoft; la più lunga è durata {max} ms. Sforamenti brevi come questi sono comuni e raramente udibili.",
     lost: "Durante la misurazione Windows ha perso {events} eventi e {buffers} buffer: i tempi massimi mostrati sono un minimo.",
     verdictBadUnattributed:
-      "Una routine che non è stato possibile attribuire a un driver ha occupato un processore per {max} µs di fila. Blocchi oltre il millisecondo possono causare crepitii nell'audio e scatti nel frame time.",
+      "Una routine che non è stato possibile attribuire a un driver ha occupato un processore per {max} ms di fila. Blocchi oltre il millisecondo possono causare crepitii nell'audio e scatti nel frame time.",
     spikesTitle: "Singole routine più lunghe",
-    spikeLine: "{kind} di {duration} µs in {driver}, a {at} s dall'inizio",
+    spikeLine: "{kind} di {duration} ms in {driver}, a {at} s dall'inizio",
   },
   networkCheck: {
     title: "Verifica di rete",
@@ -2916,9 +2916,9 @@ const en: Strings = {
     secondsOption: "{seconds} s",
     run: "Measure",
     running: "Measuring for {seconds} s…",
-    dpcSummary: "Longest DPC: {max} µs (limit {limit} µs). {over} of {count} ran past the limit.",
+    dpcSummary: "Longest DPC: {max} ms (limit {limit} ms). {over} of {count} ran past the limit.",
     isrSummary:
-      "Longest interrupt routine: {max} µs (limit {limit} µs). {over} of {count} ran past the limit.",
+      "Longest interrupt routine: {max} ms (limit {limit} ms). {over} of {count} ran past the limit.",
     colDriver: "Driver",
     colDpc: "Longest DPC",
     colIsr: "Longest interrupt",
@@ -2926,16 +2926,16 @@ const en: Strings = {
     unattributed: "Unattributed",
     hidden: "Windows hid the driver addresses, so routines could not be matched to drivers.",
     verdictGood: "No driver ran past Microsoft's limits during this capture.",
-    note: "Microsoft's guidance: a DPC should finish within 100 µs and an ISR within 25 µs. dxgkrnl.sys dispatches display interrupts, so its time often belongs to the graphics driver.",
+    note: "Microsoft's guidance: a DPC should finish within 0.1 ms and an ISR within 0.025 ms. dxgkrnl.sys dispatches display interrupts, so its time often belongs to the graphics driver.",
     verdictMinor:
-      "{over} routines ran past Microsoft's guidance; the longest took {max} µs. Short overruns like these are common and rarely audible.",
+      "{over} routines ran past Microsoft's guidance; the longest took {max} ms. Short overruns like these are common and rarely audible.",
     lost: "Windows dropped {events} events and {buffers} buffers during the capture, so the longest times shown are a floor.",
     verdictBad:
-      "{driver} held a processor for {max} µs without a break. Stalls over a millisecond can cause audio crackle and frame-time hitches; updating or rolling back that driver is the usual fix.",
+      "{driver} held a processor for {max} ms without a break. Stalls over a millisecond can cause audio crackle and frame-time hitches; updating or rolling back that driver is the usual fix.",
     verdictBadUnattributed:
-      "A routine that could not be matched to a driver held a processor for {max} µs without a break. Stalls over a millisecond can cause audio crackle and frame-time hitches.",
+      "A routine that could not be matched to a driver held a processor for {max} ms without a break. Stalls over a millisecond can cause audio crackle and frame-time hitches.",
     spikesTitle: "Longest single routines",
-    spikeLine: "{kind} of {duration} µs in {driver}, {at} s into the capture",
+    spikeLine: "{kind} of {duration} ms in {driver}, {at} s into the capture",
   },
   networkCheck: {
     title: "Network check",
@@ -4336,9 +4336,9 @@ const fr: Strings = {
     run: "Mesurer",
     running: "Mesure pendant {seconds} s…",
     dpcSummary:
-      "DPC la plus longue : {max} µs (limite {limit} µs). {over} sur {count} ont dépassé la limite.",
+      "DPC la plus longue : {max} ms (limite {limit} ms). {over} sur {count} ont dépassé la limite.",
     isrSummary:
-      "Routine d'interruption la plus longue : {max} µs (limite {limit} µs). {over} sur {count} ont dépassé la limite.",
+      "Routine d'interruption la plus longue : {max} ms (limite {limit} ms). {over} sur {count} ont dépassé la limite.",
     colDriver: "Pilote",
     colDpc: "DPC la plus longue",
     colIsr: "Interruption la plus longue",
@@ -4347,16 +4347,16 @@ const fr: Strings = {
     hidden:
       "Windows a masqué les adresses des pilotes : les routines n'ont pas pu être attribuées.",
     verdictGood: "Aucun pilote n'a dépassé les limites de Microsoft pendant cette mesure.",
-    note: "Recommandation de Microsoft : une DPC doit se terminer en moins de 100 µs et une ISR en moins de 25 µs. dxgkrnl.sys distribue les interruptions d'affichage, son temps revient donc souvent au pilote graphique.",
+    note: "Recommandation de Microsoft : une DPC doit se terminer en moins de 0,1 ms et une ISR en moins de 0,025 ms. dxgkrnl.sys distribue les interruptions d'affichage, son temps revient donc souvent au pilote graphique.",
     verdictBad:
-      "{driver} a monopolisé un processeur pendant {max} µs d'affilée. Au-delà d'une milliseconde, ces blocages peuvent provoquer des craquements audio et des saccades d'images ; mettre à jour ce pilote ou revenir à la version précédente règle généralement le problème.",
+      "{driver} a monopolisé un processeur pendant {max} ms d'affilée. Au-delà d'une milliseconde, ces blocages peuvent provoquer des craquements audio et des saccades d'images ; mettre à jour ce pilote ou revenir à la version précédente règle généralement le problème.",
     verdictMinor:
-      "{over} routines ont dépassé la recommandation de Microsoft ; la plus longue a duré {max} µs. Des dépassements aussi courts sont fréquents et rarement audibles.",
+      "{over} routines ont dépassé la recommandation de Microsoft ; la plus longue a duré {max} ms. Des dépassements aussi courts sont fréquents et rarement audibles.",
     lost: "Windows a perdu {events} événements et {buffers} tampons pendant la mesure : les durées maximales affichées sont un minimum.",
     verdictBadUnattributed:
-      "Une routine qui n'a pu être attribuée à aucun pilote a monopolisé un processeur pendant {max} µs d'affilée. Au-delà d'une milliseconde, ces blocages peuvent provoquer des craquements audio et des saccades d'images.",
+      "Une routine qui n'a pu être attribuée à aucun pilote a monopolisé un processeur pendant {max} ms d'affilée. Au-delà d'une milliseconde, ces blocages peuvent provoquer des craquements audio et des saccades d'images.",
     spikesTitle: "Routines les plus longues",
-    spikeLine: "{kind} de {duration} µs dans {driver}, à {at} s du début",
+    spikeLine: "{kind} de {duration} ms dans {driver}, à {at} s du début",
   },
   networkCheck: {
     title: "Vérification réseau",
@@ -5765,9 +5765,9 @@ const es: Strings = {
     run: "Medir",
     running: "Midiendo durante {seconds} s…",
     dpcSummary:
-      "DPC más larga: {max} µs (límite {limit} µs). {over} de {count} superaron el límite.",
+      "DPC más larga: {max} ms (límite {limit} ms). {over} de {count} superaron el límite.",
     isrSummary:
-      "Rutina de interrupción más larga: {max} µs (límite {limit} µs). {over} de {count} superaron el límite.",
+      "Rutina de interrupción más larga: {max} ms (límite {limit} ms). {over} de {count} superaron el límite.",
     colDriver: "Controlador",
     colDpc: "DPC más larga",
     colIsr: "Interrupción más larga",
@@ -5776,16 +5776,16 @@ const es: Strings = {
     hidden:
       "Windows ocultó las direcciones de los controladores, así que las rutinas no se pudieron atribuir.",
     verdictGood: "Ningún controlador superó los límites de Microsoft durante esta medición.",
-    note: "Recomendación de Microsoft: una DPC debería terminar en menos de 100 µs y una ISR en menos de 25 µs. dxgkrnl.sys reparte las interrupciones de pantalla, así que su tiempo suele corresponder al controlador gráfico.",
+    note: "Recomendación de Microsoft: una DPC debería terminar en menos de 0,1 ms y una ISR en menos de 0,025 ms. dxgkrnl.sys reparte las interrupciones de pantalla, así que su tiempo suele corresponder al controlador gráfico.",
     verdictBad:
-      "{driver} ocupó un procesador durante {max} µs seguidos. Los bloqueos de más de un milisegundo pueden provocar chasquidos de audio y tirones en el tiempo de fotograma; actualizar ese controlador o volver a la versión anterior suele solucionarlo.",
+      "{driver} ocupó un procesador durante {max} ms seguidos. Los bloqueos de más de un milisegundo pueden provocar chasquidos de audio y tirones en el tiempo de fotograma; actualizar ese controlador o volver a la versión anterior suele solucionarlo.",
     verdictMinor:
-      "{over} rutinas superaron la recomendación de Microsoft; la más larga duró {max} µs. Excesos tan breves como estos son habituales y rara vez audibles.",
+      "{over} rutinas superaron la recomendación de Microsoft; la más larga duró {max} ms. Excesos tan breves como estos son habituales y rara vez audibles.",
     lost: "Windows perdió {events} eventos y {buffers} búferes durante la medición, así que los tiempos máximos mostrados son un mínimo.",
     verdictBadUnattributed:
-      "Una rutina que no se pudo atribuir a ningún controlador ocupó un procesador durante {max} µs seguidos. Los bloqueos de más de un milisegundo pueden provocar chasquidos de audio y tirones en el tiempo de fotograma.",
+      "Una rutina que no se pudo atribuir a ningún controlador ocupó un procesador durante {max} ms seguidos. Los bloqueos de más de un milisegundo pueden provocar chasquidos de audio y tirones en el tiempo de fotograma.",
     spikesTitle: "Rutinas individuales más largas",
-    spikeLine: "{kind} de {duration} µs en {driver}, a los {at} s de empezar",
+    spikeLine: "{kind} de {duration} ms en {driver}, a los {at} s de empezar",
   },
   networkCheck: {
     title: "Comprobación de red",
@@ -7195,9 +7195,9 @@ const de: Strings = {
     run: "Messen",
     running: "Messung läuft {seconds} s…",
     dpcSummary:
-      "Längster DPC: {max} µs (Grenze {limit} µs). {over} von {count} lagen über der Grenze.",
+      "Längster DPC: {max} ms (Grenze {limit} ms). {over} von {count} lagen über der Grenze.",
     isrSummary:
-      "Längste Interrupt-Routine: {max} µs (Grenze {limit} µs). {over} von {count} lagen über der Grenze.",
+      "Längste Interrupt-Routine: {max} ms (Grenze {limit} ms). {over} von {count} lagen über der Grenze.",
     colDriver: "Treiber",
     colDpc: "Längster DPC",
     colIsr: "Längster Interrupt",
@@ -7206,16 +7206,16 @@ const de: Strings = {
     hidden:
       "Windows hat die Treiberadressen verborgen, daher ließen sich die Routinen keinem Treiber zuordnen.",
     verdictGood: "Während dieser Messung hat kein Treiber die Grenzen von Microsoft überschritten.",
-    note: "Microsofts Vorgabe: Ein DPC sollte in unter 100 µs fertig sein, eine ISR in unter 25 µs. dxgkrnl.sys verteilt die Anzeige-Interrupts, seine Zeit gehört daher oft zum Grafiktreiber.",
+    note: "Microsofts Vorgabe: Ein DPC sollte in unter 0,1 ms fertig sein, eine ISR in unter 0,025 ms. dxgkrnl.sys verteilt die Anzeige-Interrupts, seine Zeit gehört daher oft zum Grafiktreiber.",
     verdictBad:
-      "{driver} hat einen Prozessor {max} µs am Stück belegt. Blockaden über einer Millisekunde können Knacken im Ton und Ruckler bei der Frametime verursachen; meist hilft es, diesen Treiber zu aktualisieren oder auf die vorige Version zurückzusetzen.",
+      "{driver} hat einen Prozessor {max} ms am Stück belegt. Blockaden über einer Millisekunde können Knacken im Ton und Ruckler bei der Frametime verursachen; meist hilft es, diesen Treiber zu aktualisieren oder auf die vorige Version zurückzusetzen.",
     verdictMinor:
-      "{over} Routinen lagen über Microsofts Vorgabe; die längste dauerte {max} µs. So kurze Überschreitungen sind häufig und selten hörbar.",
+      "{over} Routinen lagen über Microsofts Vorgabe; die längste dauerte {max} ms. So kurze Überschreitungen sind häufig und selten hörbar.",
     lost: "Windows hat während der Messung {events} Ereignisse und {buffers} Puffer verloren, die angezeigten Höchstwerte sind also eine Untergrenze.",
     verdictBadUnattributed:
-      "Eine Routine, die keinem Treiber zugeordnet werden konnte, hat einen Prozessor {max} µs am Stück belegt. Blockaden über einer Millisekunde können Knacken im Ton und Ruckler bei der Frametime verursachen.",
+      "Eine Routine, die keinem Treiber zugeordnet werden konnte, hat einen Prozessor {max} ms am Stück belegt. Blockaden über einer Millisekunde können Knacken im Ton und Ruckler bei der Frametime verursachen.",
     spikesTitle: "Längste einzelne Routinen",
-    spikeLine: "{kind} von {duration} µs in {driver}, {at} s nach Beginn",
+    spikeLine: "{kind} von {duration} ms in {driver}, {at} s nach Beginn",
   },
   networkCheck: {
     title: "Netzwerkprüfung",
@@ -8628,9 +8628,9 @@ const pt: Strings = {
     run: "Medir",
     running: "A medir durante {seconds} s…",
     dpcSummary:
-      "DPC mais longa: {max} µs (limite {limit} µs). {over} de {count} passaram o limite.",
+      "DPC mais longa: {max} ms (limite {limit} ms). {over} de {count} passaram o limite.",
     isrSummary:
-      "Rotina de interrupção mais longa: {max} µs (limite {limit} µs). {over} de {count} passaram o limite.",
+      "Rotina de interrupção mais longa: {max} ms (limite {limit} ms). {over} de {count} passaram o limite.",
     colDriver: "Controlador",
     colDpc: "DPC mais longa",
     colIsr: "Interrupção mais longa",
@@ -8639,16 +8639,16 @@ const pt: Strings = {
     hidden:
       "O Windows ocultou os endereços dos controladores, por isso as rotinas não puderam ser atribuídas.",
     verdictGood: "Nenhum controlador passou os limites da Microsoft durante esta medição.",
-    note: "Recomendação da Microsoft: uma DPC deve terminar em menos de 100 µs e uma ISR em menos de 25 µs. O dxgkrnl.sys distribui as interrupções do ecrã, por isso o seu tempo pertence muitas vezes ao controlador gráfico.",
+    note: "Recomendação da Microsoft: uma DPC deve terminar em menos de 0,1 ms e uma ISR em menos de 0,025 ms. O dxgkrnl.sys distribui as interrupções do ecrã, por isso o seu tempo pertence muitas vezes ao controlador gráfico.",
     verdictBad:
-      "{driver} ocupou um processador durante {max} µs seguidos. Bloqueios acima de um milissegundo podem causar estalidos no áudio e engasgos no tempo de fotograma; atualizar esse controlador ou voltar à versão anterior costuma resolver.",
+      "{driver} ocupou um processador durante {max} ms seguidos. Bloqueios acima de um milissegundo podem causar estalidos no áudio e engasgos no tempo de fotograma; atualizar esse controlador ou voltar à versão anterior costuma resolver.",
     verdictMinor:
-      "{over} rotinas passaram a recomendação da Microsoft; a mais longa durou {max} µs. Excessos curtos como estes são comuns e raramente audíveis.",
+      "{over} rotinas passaram a recomendação da Microsoft; a mais longa durou {max} ms. Excessos curtos como estes são comuns e raramente audíveis.",
     lost: "O Windows perdeu {events} eventos e {buffers} buffers durante a medição, por isso os tempos máximos mostrados são um mínimo.",
     verdictBadUnattributed:
-      "Uma rotina que não foi possível atribuir a nenhum controlador ocupou um processador durante {max} µs seguidos. Bloqueios acima de um milissegundo podem causar estalidos no áudio e engasgos no tempo de fotograma.",
+      "Uma rotina que não foi possível atribuir a nenhum controlador ocupou um processador durante {max} ms seguidos. Bloqueios acima de um milissegundo podem causar estalidos no áudio e engasgos no tempo de fotograma.",
     spikesTitle: "Rotinas individuais mais longas",
-    spikeLine: "{kind} de {duration} µs em {driver}, aos {at} s do início",
+    spikeLine: "{kind} de {duration} ms em {driver}, aos {at} s do início",
   },
   networkCheck: {
     title: "Verificação de rede",

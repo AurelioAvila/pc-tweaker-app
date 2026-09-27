@@ -594,12 +594,13 @@ fn apply_by_id_inner(
     app_data_dir: &std::path::Path,
     id: &str,
 ) -> Result<(), String> {
+    // Refused for everyone, Pro or not, before the licence is even looked at.
+    if ["ecoqos_rules","limit_do_background_download","monitor_refresh_profile"].contains(&id) {
+        return Err("Configure this control in its dedicated panel; no default configuration is applied automatically".into());
+    }
     require_tweak_entitlement(app_data_dir, id)?;
     if [everyday::DISABLE_RESTART_APPS_ID,everyday::ENABLE_LONG_PATHS_ID,everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID].contains(&id) {
         return everyday::apply(id,store);
-    }
-    if ["ecoqos_rules","limit_do_background_download","monitor_refresh_profile"].contains(&id) {
-        return Err("Configure this control in its dedicated panel; no default configuration is applied automatically".into());
     }
     if power_tuning::find(id).is_some() {
         return power_tuning::apply(store, id);

@@ -1,29 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { text } from "../i18n/dictionary";
 import { EASE, riseChild, staggerParent, viewportOnce } from "../motion";
-
-/* ---------- animated integer counter ---------- */
-function CountUp({ target, active }: { target: number; active: boolean }) {
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    if (!active) return;
-    const dur = 1400;
-    const t0 = performance.now();
-    let raf = 0;
-    const tick = (t: number) => {
-      const p = Math.min((t - t0) / dur, 1);
-      const eased = 1 - Math.pow(1 - p, 4);
-      setValue(Math.round(target * eased));
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [active, target]);
-
-  return <span>{value}</span>;
-}
 
 /* ---------- deterministic pseudo-random frame-time traces ---------- */
 function buildTrace(jitter: number, base: number, seed: number): string {
@@ -49,9 +26,6 @@ const STOCK_TRACE = buildTrace(34, 60, 42);
 const TWEAKED_TRACE = buildTrace(6, 118, 1337);
 
 export function PerformanceMetrics() {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.35 });
-
   return (
     <section id="results" className="border-t border-white/5 px-5 py-24 md:px-12">
       <motion.div
@@ -87,14 +61,13 @@ export function PerformanceMetrics() {
 
         {/* stat strip */}
         <motion.div
-          ref={ref}
           variants={riseChild}
           className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/5 bg-white/5 md:grid-cols-4"
         >
           {text.metrics.stats.map((s) => (
             <div key={s.label} className="bg-[var(--bg)] px-7 py-9">
               <div className="font-mono-t text-[clamp(2rem,3.6vw,3rem)] leading-none font-bold text-[var(--fg)] tabular-nums">
-                <CountUp target={s.value} active={inView} />
+                <span>{s.value}</span>
                 <span className="text-accent ml-0.5 text-[0.45em]">{s.unit}</span>
               </div>
               <div className="font-mono-t mt-3 text-[12px] tracking-wide text-[var(--fg-dim)]">

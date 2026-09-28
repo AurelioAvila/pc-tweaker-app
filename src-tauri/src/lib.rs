@@ -74,6 +74,7 @@ mod scheduledtasks;
 mod securedefrag;
 mod services;
 mod startup;
+mod program_icons;
 mod sysmon;
 mod sysrepair;
 mod systemprofile;
@@ -182,7 +183,7 @@ fn store_for(app: &tauri::AppHandle) -> Result<RollbackStore, String> {
 
 /* ---------------------------------------------------------------- *
  * Profile photo. See avatar.rs for why this is a file and not
- * localStorage — in short, people were losing their photos.
+ * localStorage â€” in short, people were losing their photos.
  * ---------------------------------------------------------------- */
 
 /// Every one of these takes the signed-in address, because the photo belongs
@@ -268,7 +269,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: "High performance (power plan)".to_string(),
         description: "Switches to the Windows \"High performance\" power plan. Useful on desktops or when plugged in; restores the previous plan on rollback.".to_string(),
         category: category_str(&Category::Performance).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: false,
         requires_pro: false,
@@ -280,7 +281,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: turbo.name.to_string(),
         description: turbo.description.to_string(),
         category: category_str(&Category::Performance).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: turbo.requires_admin,
         requires_pro: turbo.requires_pro,
@@ -293,7 +294,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: "Private DNS (Cloudflare)".to_string(),
         description: "Switches the active network adapter to privacy-focused DNS servers (1.1.1.1), stopping your provider from logging your DNS queries. It does not hide your IP address (that needs a VPN, see below).".to_string(),
         category: category_str(&Category::Privacy).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: true,
         requires_pro: false,
@@ -306,7 +307,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: input_lag.name.to_string(),
         description: input_lag.description.to_string(),
         category: category_str(&Category::Gaming).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: input_lag.requires_admin,
         requires_pro: input_lag.requires_pro,
@@ -319,7 +320,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: turbo_boost.name.to_string(),
         description: turbo_boost.description.to_string(),
         category: category_str(&Category::Gaming).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: turbo_boost.requires_admin,
         requires_pro: turbo_boost.requires_pro,
@@ -332,7 +333,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: games_priority.name.to_string(),
         description: games_priority.description.to_string(),
         category: category_str(&Category::Gaming).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: games_priority.requires_admin,
         requires_pro: games_priority.requires_pro,
@@ -345,7 +346,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: core_parking.name.to_string(),
         description: core_parking.description.to_string(),
         category: category_str(&Category::Gaming).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: core_parking.requires_admin,
         requires_pro: core_parking.requires_pro,
@@ -358,7 +359,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: keyboard_delay.name.to_string(),
         description: keyboard_delay.description.to_string(),
         category: category_str(&Category::Gaming).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: keyboard_delay.requires_admin,
         requires_pro: keyboard_delay.requires_pro,
@@ -371,7 +372,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: net_latency.name.to_string(),
         description: net_latency.description.to_string(),
         category: category_str(&Category::Gaming).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: net_latency.requires_admin,
         requires_pro: net_latency.requires_pro,
@@ -384,7 +385,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: net_shaper.name.to_string(),
         description: net_shaper.description.to_string(),
         category: category_str(&Category::Gaming).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: net_shaper.requires_admin,
         requires_pro: net_shaper.requires_pro,
@@ -397,7 +398,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: activity_history.name.to_string(),
         description: activity_history.description.to_string(),
         category: category_str(&Category::Privacy).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: activity_history.requires_admin,
         requires_pro: activity_history.requires_pro,
@@ -410,7 +411,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: typing.name.to_string(),
         description: typing.description.to_string(),
         category: category_str(&Category::Privacy).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: typing.requires_admin,
         requires_pro: typing.requires_pro,
@@ -423,7 +424,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: context_menu.name.to_string(),
         description: context_menu.description.to_string(),
         category: category_str(&Category::Ui).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: context_menu.requires_admin,
         requires_pro: context_menu.requires_pro,
@@ -436,7 +437,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         name: windows_search.name.to_string(),
         description: windows_search.description.to_string(),
         category: category_str(&Category::Manutenzione).to_string(),
-        hive: "—".to_string(),
+        hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: windows_search.requires_admin,
         requires_pro: windows_search.requires_pro,
@@ -484,7 +485,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
 }
 
 /// Whether a friendly, stable prefix on a returned error means "this failed
-/// because the Pro license didn't verify" rather than some other failure —
+/// because the Pro license didn't verify" rather than some other failure â€”
 /// checked by the frontend to show the paywall instead of a generic toast.
 pub const PRO_REQUIRED_PREFIX: &str = "PRO_REQUIRED: ";
 
@@ -527,7 +528,7 @@ pub(crate) fn require_tweak_entitlement(
     Ok(())
 }
 
-/// This is the single chokepoint every apply path funnels through — the
+/// This is the single chokepoint every apply path funnels through â€” the
 /// direct GUI call, the batched "fix all", *and* the elevated headless
 /// re-entry (`--elevated-apply`), which calls this function directly and
 /// would otherwise skip any check placed only in the Tauri command handlers
@@ -536,7 +537,7 @@ pub(crate) fn require_tweak_entitlement(
 /// only the commands would have left it wide open.
 ///
 /// Deliberately not applied to `rollback_by_id`: cancelling a subscription
-/// must not strand a tweak the user already paid to have applied — TERMS.md
+/// must not strand a tweak the user already paid to have applied â€” TERMS.md
 /// is explicit that cancellation locks *further* Pro use, not what's already
 /// on the machine.
 #[cfg(windows)]
@@ -737,7 +738,7 @@ fn split_by_elevation(ids: Vec<String>) -> (Vec<String>, Vec<String>) {
 /// Applies several tweaks at once (the Scan screen's "fix all").
 ///
 /// Applying them one by one would fire a separate UAC prompt for every
-/// admin-level tweak — a dozen consecutive prompts for a single click. So the
+/// admin-level tweak â€” a dozen consecutive prompts for a single click. So the
 /// admin ones are collected and handed to a *single* elevated helper run,
 /// while the rest are applied in-process. Failures are collected per id
 /// instead of aborting, so one bad tweak can't silently swallow the rest.
@@ -968,7 +969,7 @@ fn scan_duplicates(root: String) -> Result<Vec<cleanup::DuplicateGroup>, String>
 fn delete_files(paths: Vec<String>) -> CleanupResult {
     let requested = paths.len();
     let result = cleanup::delete_files(paths);
-    // Counts only — never file paths — so the local log stays free of
+    // Counts only â€” never file paths â€” so the local log stays free of
     // anything resembling personal data.
     audit::record(
         "files-deleted",
@@ -1248,7 +1249,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     let store = RollbackStore::new(dir.clone());
 
     // Safety net first: a System Restore point before any elevated change.
-    // Best-effort by design — Windows throttles restore points (one per 24h
+    // Best-effort by design â€” Windows throttles restore points (one per 24h
     // by default) and System Restore can be disabled entirely, and neither
     // condition may block an action the user asked for. The outcome lands in
     // the audit log either way, so "was I protected?" always has an answer.
@@ -1424,7 +1425,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
         }
 
         // Progress goes to a file the unelevated parent polls, exactly as the
-        // secure defrag does — this process has no AppHandle to emit from.
+        // secure defrag does â€” this process has no AppHandle to emit from.
         "--elevated-repair" => {
             let progress_path = repair_progress_path(&dir);
             let result = sysrepair::RepairJob::from_id(id).and_then(|job| {
@@ -1499,8 +1500,8 @@ fn list_audit_log(app: tauri::AppHandle) -> Result<Vec<audit::AuditEntry>, Strin
 /// elevated helper shows up here even though that process never had a window.
 /// Whether Windows has undone any applied tweak since the last look.
 ///
-/// Reads two independent things — the patch level, and the live value of
-/// every registry tweak the rollback store says is applied — and records the
+/// Reads two independent things â€” the patch level, and the live value of
+/// every registry tweak the rollback store says is applied â€” and records the
 /// patch level for next time. Never changes anything: re-applying is a
 /// button, because a watchdog that silently re-applied would make system
 /// changes at the moment the user least expects them.
@@ -1819,7 +1820,7 @@ mod tests {
     }
 
     /// The Scan screen's "fix all" must produce at most one elevation request,
-    /// no matter how many admin tweaks were selected — the whole point of
+    /// no matter how many admin tweaks were selected â€” the whole point of
     /// batching. This asserts the grouping without actually elevating.
     #[test]
     fn admin_tweaks_collapse_into_one_elevated_batch() {
@@ -1883,7 +1884,7 @@ mod tests {
     /// in the pricing card, and they have gone stale before: the site claimed
     /// "50 tweaks" for three releases after the count had moved. A test is the
     /// only place that notices, because nothing else reads all three sources
-    /// at once. If this fails, the catalogue changed — update the numbers
+    /// at once. If this fails, the catalogue changed â€” update the numbers
     /// here, then update every surface listed above to match.
     #[test]
     fn the_catalogue_is_sixty_six_tweaks_twenty_seven_of_them_pro() {
@@ -2008,8 +2009,8 @@ mod tests {
 
     /// The frontend falls back to the English name/description baked into
     /// these Rust structs whenever a tweak id is missing from `s.tweaks`, so a
-    /// forgotten translation doesn't fail loudly — it just leaves one English
-    /// row sitting in an otherwise Italian (or French, …) list. That is
+    /// forgotten translation doesn't fail loudly â€” it just leaves one English
+    /// row sitting in an otherwise Italian (or French, â€¦) list. That is
     /// exactly the "some parts aren't translated" symptom users report, and
     /// nothing else catches it, so assert here that every id the UI can show
     /// has an entry in every locale.
@@ -2161,8 +2162,8 @@ pub(crate) fn repair_progress_path(dir: &std::path::Path) -> std::path::PathBuf 
 
 /// Runs a DISM/SFC job, streaming progress to the UI.
 ///
-/// The read-only check is free — it is the honest way to find out whether
-/// there is anything to repair — while the repairs themselves are Pro.
+/// The read-only check is free â€” it is the honest way to find out whether
+/// there is anything to repair â€” while the repairs themselves are Pro.
 #[cfg(windows)]
 #[tauri::command(async)]
 fn run_system_repair(
@@ -2304,7 +2305,7 @@ fn shred_files(
 /// Opens the overlay: a transparent, always-on-top, click-through window.
 ///
 /// Click-through (`set_ignore_cursor_events`) is what makes it usable over a
-/// game at all — without it the panel would swallow every click that landed on
+/// game at all â€” without it the panel would swallow every click that landed on
 /// it, which in a shooter is the difference between a HUD and a liability. It
 /// also means the window needs no close button of its own: it is dismissed
 /// from the same switch that opened it.
@@ -2313,7 +2314,7 @@ fn shred_files(
 /// Windows 11 rounds the corners of every top-level window, including a
 /// borderless transparent one. The panel already draws its own rounded
 /// corners, and the two radii do not agree, so each corner was left with a
-/// sliver between the system's curve and the panel's — small hard-edged
+/// sliver between the system's curve and the panel's â€” small hard-edged
 /// triangles against whatever was behind the overlay. Telling DWM to leave
 /// this window square hands the corners back to the panel, which is the only
 /// thing that should be shaping them.
@@ -2327,8 +2328,8 @@ fn square_off_corners(window: &tauri::WebviewWindow) {
     };
     let preference = DWMWCP_DONOTROUND;
     // SAFETY: a live window handle and a pointer to a local of the size the
-    // attribute expects. Purely cosmetic, so a failure — on a Windows build
-    // predating the attribute, for instance — is ignored rather than
+    // attribute expects. Purely cosmetic, so a failure â€” on a Windows build
+    // predating the attribute, for instance â€” is ignored rather than
     // surfaced: the overlay is entirely usable with rounded corners.
     unsafe {
         DwmSetWindowAttribute(
@@ -2380,7 +2381,7 @@ fn open_hud_overlay(app: tauri::AppHandle) -> Result<(), String> {
     // Opened interactive on purpose. Click-through is what this window wants
     // while a game is running, but applying it here left the overlay
     // impossible to place: it could not be grabbed, and a click aimed at it
-    // landed on whatever was behind — on the desktop, that dragged the icons
+    // landed on whatever was behind â€” on the desktop, that dragged the icons
     // underneath. It is now a mode the user turns on once the overlay sits
     // where they want it, from the same card that opened it.
     square_off_corners(&window);
@@ -2426,7 +2427,7 @@ fn remember_position(_app: tauri::AppHandle, _window: &tauri::WebviewWindow) {}
 /// Turns the overlay's click-through mode on or off.
 ///
 /// On: the window stops receiving the mouse entirely, so a click over it
-/// reaches the game underneath — what an in-game overlay has to do. Off: it
+/// reaches the game underneath â€” what an in-game overlay has to do. Off: it
 /// can be grabbed and moved again.
 /// Switches the overlay between its normal and compact sizes.
 ///

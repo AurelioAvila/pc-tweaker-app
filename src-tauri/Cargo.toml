@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "1.15.0"
+version = "1.15.1"
 description = "Real Windows tweaks with automatic one-click rollback"
 authors = ["Aurelio Avila"]
 license-file = "../LICENSE"
@@ -20,7 +20,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 # The "devtools" Cargo feature specifically enables DevTools (F12 /
-# right-click Inspect) in RELEASE builds — debug builds already get them for
+# right-click Inspect) in RELEASE builds â€” debug builds already get them for
 # free from `cargo tauri dev` without it. With it on, anyone with local
 # access to the shipped installer could open a full JS console and call
 # `window.__TAURI__.core.invoke(...)` directly with arbitrary arguments,
@@ -41,6 +41,8 @@ base64 = "0.22"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
+# Already present in the lockfile; encode locally extracted Windows icons.
+png = "0.17.16"
 # Reading and editing the browsers' cookie databases, for the selective cookie
 # cleaner (src/cookies.rs). `bundled` compiles SQLite into the binary rather
 # than linking whatever version happens to be on the machine: these are the
@@ -61,11 +63,12 @@ windows-sys = { version = "0.59", features = [
     # GetForegroundWindow / GetWindowThreadProcessId, so the gaming HUD can
     # name the process it is reporting on instead of guessing.
     "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Shell",
     # NtSetSystemInformation, for the standby-list purge in the Zero-Trace
     # cleaner. Declared via LoadLibrary rather than linked, same as srclient.
     "Win32_Security",
     "Win32_System_Memory",
-    # A real-time ETW consumer, for the frame counter. See src/fps.rs — the
+    # A real-time ETW consumer, for the frame counter. See src/fps.rs â€” the
     # DXGI provider's Present events are the only way to observe a game's
     # frame pacing from outside the game.
     "Win32_System_Diagnostics_Etw",
@@ -98,13 +101,13 @@ is_elevated = "0.1"
 runas = "1"
 # Wmi and Variant: the TCP congestion provider through MSFT_NetTCPSetting
 # (src/netshaper.rs), and the qualifier arrays that name its values.
-windows = { version = "0.58", features = ["Management_Deployment", "Foundation_Collections", "ApplicationModel", "Win32_System_Com", "Win32_System_Wmi", "Win32_System_Variant"] }
+windows = { version = "0.58", features = ["Management_Deployment", "Foundation_Collections", "ApplicationModel", "Win32_System_Com", "Win32_System_Wmi", "Win32_System_Variant", "Win32_UI_Shell", "Win32_Storage_FileSystem"] }
 
 # `tauri dev` recognizes a feature literally named "devtools" on the
 # consuming crate and enables it automatically for dev builds; `tauri build`
 # never does. This is the sanctioned way to get DevTools back locally
 # without a Cargo target selector, which does not support debug_assertions
-# (only platform/arch cfgs are valid there — the wrong attempt at this
+# (only platform/arch cfgs are valid there â€” the wrong attempt at this
 # would silently fail to gate anything).
 [features]
 devtools = ["tauri/devtools"]

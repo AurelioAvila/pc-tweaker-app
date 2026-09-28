@@ -3,8 +3,25 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
 import { ScheduledTaskEntry, StartupEntry, Toast } from "../types";
-import { HistoryIcon, RocketIcon } from "./icons";
 import { ShieldBadge, Toggle } from "./ui";
+
+function StartupMark({ name, src }: { name: string; src?: string | null }) {
+  const [failedSource, setFailedSource] = useState<string>();
+  return (
+    <span className="tool-program-mark" aria-hidden="true">
+      {src?.startsWith("data:image/png;base64,") && src !== failedSource ? (
+        <img src={src} alt="" onError={() => setFailedSource(src)} />
+      ) : (
+        <span>
+          {name
+            .replace(/^Microsoft\s+/i, "")
+            .slice(0, 2)
+            .toUpperCase()}
+        </span>
+      )}
+    </span>
+  );
+}
 
 /**
  * Reads and toggles the same StartupApproved entries Windows' own Task Manager
@@ -193,15 +210,7 @@ export function StartupManager({
           className="tool-startup-row animate-card"
         >
           <div className="flex items-center gap-4">
-            <div
-              className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-colors ${
-                item.enabled
-                  ? "bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/30"
-                  : "bg-surface-2 text-ink-3 ring-1 ring-line"
-              }`}
-            >
-              <RocketIcon className="h-5 w-5" />
-            </div>
+            <StartupMark name={displayName(item)} src={item.icon_data_url} />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-semibold text-ink">{displayName(item)}</h3>
@@ -222,6 +231,7 @@ export function StartupManager({
               </ToolDetails>
             </div>
             <Toggle
+              label={item.name}
               checked={item.enabled}
               busy={busyKey === keyOf(item)}
               onClick={() => toggleItem(item)}
@@ -373,15 +383,7 @@ export function ScheduledTaskManager({
           className="tool-startup-row animate-card"
         >
           <div className="flex items-center gap-4">
-            <div
-              className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-colors ${
-                task.enabled
-                  ? "bg-violet-400/15 text-violet-300 ring-1 ring-violet-400/30"
-                  : "bg-surface-2 text-ink-3 ring-1 ring-line"
-              }`}
-            >
-              <HistoryIcon className="h-5 w-5" />
-            </div>
+            <StartupMark name={task.name} src={task.icon_data_url} />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-semibold text-ink">{task.name}</h3>
@@ -397,6 +399,7 @@ export function ScheduledTaskManager({
               </ToolDetails>
             </div>
             <Toggle
+              label={task.name}
               checked={task.enabled}
               busy={busyPath === task.path}
               onClick={() => toggleTask(task)}

@@ -22,8 +22,8 @@ struct CatalogItem {
     store_url: &'static str,
 }
 
-// Each link is a checked Microsoft Store product page. Add an app only after
-// verifying its PackageId identity and Store product on supported Windows VMs.
+// Package identities and Store pages are checked before inclusion. Every removal
+// still rechecks publisher, dependencies, Windows removability and user scope.
 const CATALOG: &[CatalogItem] = &[
     CatalogItem {
         id: "solitaire",
@@ -85,6 +85,76 @@ const CATALOG: &[CatalogItem] = &[
         impact: "Mail and calendar access through this app stops until reinstalled; account settings may need setup again.",
         store_url: "https://apps.microsoft.com/detail/9nrx63209r7b",
     },
+    CatalogItem {
+        id: "todo",
+        package_name: "Microsoft.Todos",
+        publisher_id: "8wekyb3d8bbwe",
+        publisher: "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+        name: "Microsoft To Do",
+        description: "Task lists and reminders.",
+        impact: "Sync your lists first. Local unsynced tasks and account settings may be lost.",
+        store_url: "https://apps.microsoft.com/detail/9nblggh5r558",
+    },
+    CatalogItem {
+        id: "recorder",
+        package_name: "Microsoft.WindowsSoundRecorder",
+        publisher_id: "8wekyb3d8bbwe",
+        publisher: "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+        name: "Sound Recorder",
+        description: "Record and manage voice recordings.",
+        impact: "Export recordings before removal. Reinstalling cannot recover deleted local recordings.",
+        store_url: "https://apps.microsoft.com/detail/9wzdncrfhwkn",
+    },
+    CatalogItem {
+        id: "feedback",
+        package_name: "Microsoft.WindowsFeedbackHub",
+        publisher_id: "8wekyb3d8bbwe",
+        publisher: "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+        name: "Feedback Hub",
+        description: "Submit Windows feedback and diagnostics.",
+        impact: "You will no longer be able to send reports through Feedback Hub until it is reinstalled.",
+        store_url: "https://apps.microsoft.com/detail/9nblggh4r32n",
+    },
+    CatalogItem {
+        id: "phone",
+        package_name: "Microsoft.YourPhone",
+        publisher_id: "8wekyb3d8bbwe",
+        publisher: "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+        name: "Phone Link",
+        description: "Phone notifications, calls and messages on this PC.",
+        impact: "Phone integration stops on this PC. You may need to pair your phone again after reinstalling.",
+        store_url: "https://apps.microsoft.com/detail/9nmpj99vjbwv",
+    },
+    CatalogItem {
+        id: "media",
+        package_name: "Microsoft.ZuneMusic",
+        publisher_id: "8wekyb3d8bbwe",
+        publisher: "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+        name: "Windows Media Player",
+        description: "Play local music and video.",
+        impact: "Choose another default player first. Local playlists and app settings may be lost.",
+        store_url: "https://apps.microsoft.com/detail/9wzdncrfj3pt",
+    },
+    CatalogItem {
+        id: "movies",
+        package_name: "Microsoft.ZuneVideo",
+        publisher_id: "8wekyb3d8bbwe",
+        publisher: "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+        name: "Movies & TV",
+        description: "Microsoft video library and playback.",
+        impact: "Access to videos through this app stops. Check purchased content and offline downloads before removal.",
+        store_url: "https://apps.microsoft.com/detail/9wzdncrfj3p2",
+    },
+    CatalogItem {
+        id: "office",
+        package_name: "Microsoft.MicrosoftOfficeHub",
+        publisher_id: "8wekyb3d8bbwe",
+        publisher: "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+        name: "Microsoft 365 Copilot",
+        description: "Microsoft 365 home and app launcher.",
+        impact: "Removes the hub only, not Word, Excel or your Microsoft 365 subscription. Local settings may be lost.",
+        store_url: "https://apps.microsoft.com/detail/9wzdncrd29v9",
+    },
 ];
 
 #[derive(Clone, Debug, PartialEq)]
@@ -112,6 +182,7 @@ pub struct DebloatApp {
     pub removable: bool,
     pub reason: Option<String>,
     pub store_url: Option<String>,
+    pub icon_data_url: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -203,6 +274,7 @@ fn inventory(system: &impl PackageSystem) -> Result<Vec<DebloatApp>, String> {
                 removable: false,
                 reason: None,
                 store_url: Some(item.store_url.into()),
+                icon_data_url: None,
             });
         }
         for info in found {
@@ -220,6 +292,7 @@ fn inventory(system: &impl PackageSystem) -> Result<Vec<DebloatApp>, String> {
                 removable: verdict.is_ok(),
                 reason: verdict.err(),
                 store_url: Some(item.store_url.into()),
+                icon_data_url: None,
             });
         }
     }
@@ -438,6 +511,8 @@ fn remove_inner(
 pub fn list_debloat_apps() -> Result<Vec<DebloatApp>, String> {
     let mut apps = inventory(&WindowsPackages)?;
     #[cfg(windows)]
+    platform::load_icons(&mut apps);
+    #[cfg(windows)]
     if !crate::elevation::current_user_session_allowed() {
         for app in &mut apps {
             if app.removable {
@@ -506,6 +581,56 @@ mod platform {
     use windows::core::HSTRING;
     use windows::ApplicationModel::PackageSignatureKind;
     use windows::Management::Deployment::PackageManager;
+
+    // Windows resolves the installed package logo. Never fetch remote images or
+    // accept a caller-provided path; an unreadable icon is presentation-only.
+    pub fn load_icons(apps: &mut [DebloatApp]) {
+        use base64::{engine::general_purpose::STANDARD, Engine};
+        use std::io::Read;
+        let Ok(manager) = PackageManager::new() else {
+            return;
+        };
+        let Ok(packages) = manager.FindPackagesByUserSecurityId(&HSTRING::new()) else {
+            return;
+        };
+        for package in packages {
+            let Ok(full_name) = package.Id().and_then(|id| id.FullName()) else {
+                continue;
+            };
+            let Some(app) = apps
+                .iter_mut()
+                .find(|a| a.package_full_name.as_deref() == Some(full_name.to_string().as_str()))
+            else {
+                continue;
+            };
+            let icon = (|| -> Option<String> {
+                let uri = package.Logo().ok()?.AbsoluteUri().ok()?.to_string();
+                let url = tauri::Url::parse(&uri).ok()?;
+                if url.scheme() != "file"
+                    || url
+                        .host_str()
+                        .is_some_and(|host| !host.is_empty() && host != "localhost")
+                {
+                    return None;
+                }
+                let path = url.to_file_path().ok()?;
+                if path.to_string_lossy().starts_with(r"\\") {
+                    return None;
+                }
+                let file = File::open(path).ok()?;
+                if file.metadata().ok()?.len() > 1_048_576 {
+                    return None;
+                }
+                let mut bytes = Vec::new();
+                file.take(1_048_577).read_to_end(&mut bytes).ok()?;
+                if bytes.len() > 1_048_576 || !bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
+                    return None;
+                }
+                Some(format!("data:image/png;base64,{}", STANDARD.encode(bytes)))
+            })();
+            app.icon_data_url = icon;
+        }
+    }
 
     pub fn scan() -> Result<Vec<PackageInfo>, String> {
         let manager = PackageManager::new().map_err(|e| format!("Package manager: {e}"))?;
@@ -886,7 +1011,16 @@ mod live_tests {
     #[test]
     #[ignore = "read-only host inventory; run explicitly outside the mock suite"]
     fn native_inventory() {
-        let apps = inventory(&WindowsPackages).expect("native package and removability inventory");
+        let mut apps =
+            inventory(&WindowsPackages).expect("native package and removability inventory");
+        platform::load_icons(&mut apps);
+        println!(
+            "Installed icons: {}",
+            apps.iter().filter(|a| a.icon_data_url.is_some()).count()
+        );
+        if let Ok(path) = std::env::var("PCT_DEBLOAT_REVIEW_INVENTORY") {
+            std::fs::write(path, serde_json::to_vec(&apps).unwrap()).unwrap();
+        }
         assert!(apps.len() >= CATALOG.len());
         for app in apps {
             println!(
@@ -1081,6 +1215,26 @@ mod tests {
             TEST_SEQ.fetch_add(1, Ordering::Relaxed)
         ));
         Journal::new(&dir)
+    }
+
+    #[test]
+    fn every_catalog_item_still_requires_verified_identity() {
+        let mut ids = std::collections::HashSet::new();
+        let mut packages = std::collections::HashSet::new();
+        for item in CATALOG {
+            assert!(ids.insert(item.id));
+            assert!(packages.insert(item.package_name));
+            assert!(item
+                .store_url
+                .starts_with("https://apps.microsoft.com/detail/"));
+            let mut info = sample();
+            info.name = item.package_name.into();
+            info.publisher_id = item.publisher_id.into();
+            info.publisher = item.publisher.into();
+            assert!(eligible(&info, &[info.clone()]).is_ok());
+            info.store_signed = false;
+            assert!(eligible(&info, &[info.clone()]).is_err());
+        }
     }
 
     #[test]

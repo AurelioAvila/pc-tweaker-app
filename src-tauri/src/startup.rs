@@ -2,9 +2,10 @@ use serde::Serialize;
 
 #[derive(Serialize, Clone)]
 pub struct StartupEntry {
+    pub icon_data_url: Option<String>,
     pub name: String,
     pub command: String,
-    /// "HKCU" or "HKLM" — HKLM entries are machine-wide and need admin to change.
+    /// "HKCU" or "HKLM" â€” HKLM entries are machine-wide and need admin to change.
     pub scope: String,
     /// Which of the three places Windows starts things from this entry lives
     /// in: `run`, `run32` or `folder`. Needed as well as `scope` because each
@@ -33,7 +34,7 @@ pub struct StartupEntry {
 /// (`"C:\...\app.exe" --silent`), an unquoted path with spaces, a bare
 /// `rundll32.exe ...`, and paths built from environment variables. Anything
 /// this cannot resolve to a concrete path returns `None`, which callers treat
-/// as "present" — the parser is only ever allowed to make a row *more*
+/// as "present" â€” the parser is only ever allowed to make a row *more*
 /// visible, never to hide one.
 pub(crate) fn extract_exe_path(command: &str) -> Option<std::path::PathBuf> {
     let command = command.trim();
@@ -74,7 +75,7 @@ pub(crate) fn extract_exe_path(command: &str) -> Option<std::path::PathBuf> {
 /// Expands `%VAR%` references. An unset variable makes the whole expansion
 /// unusable, which surfaces as `None` from the caller rather than as a
 /// half-substituted path that would never exist.
-fn expand_env_vars(input: &str) -> String {
+pub(crate) fn expand_env_vars(input: &str) -> String {
     let mut out = String::with_capacity(input.len());
     let mut rest = input;
     while let Some(start) = rest.find('%') {
@@ -124,7 +125,7 @@ const RUN32_PATH: &str = r"Software\WOW6432Node\Microsoft\Windows\CurrentVersion
 const APPROVED_RUN32_PATH: &str =
     r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32";
 
-/// The Startup *folder* — the one `shell:startup` opens. Explorer, not the
+/// The Startup *folder* â€” the one `shell:startup` opens. Explorer, not the
 /// registry, runs these, but it checks the same style of approval value first,
 /// keyed by the shortcut's file name.
 const APPROVED_FOLDER_PATH: &str =
@@ -195,7 +196,7 @@ fn now_unix_secs() -> u64 {
         .unwrap_or(0)
 }
 
-/// `<scope>|<location>|<0|1>|<name>` — the name is taken as the rest of the
+/// `<scope>|<location>|<0|1>|<name>` â€” the name is taken as the rest of the
 /// string so program names containing `|` still round-trip intact.
 fn parse_payload(payload: &str) -> Result<(String, String, bool, String), String> {
     let mut parts = payload.splitn(4, '|');
@@ -267,6 +268,7 @@ mod imp {
                 continue;
             }
             out.push(StartupEntry {
+                icon_data_url: None,
                 enabled: is_enabled(scope, location, &name),
                 orphaned: super::command_is_orphaned(&command),
                 name,
@@ -283,7 +285,7 @@ mod imp {
     /// The shortcut is reported by its own path rather than by the program it
     /// points at: reading a `.lnk` target needs COM, and the file path is
     /// enough both to identify the entry and to show the user where it lives.
-    /// Nothing here can be orphaned the way a `Run` value can — the file was
+    /// Nothing here can be orphaned the way a `Run` value can â€” the file was
     /// just enumerated, so it exists by definition.
     fn collect_folder(scope: &str, out: &mut Vec<StartupEntry>) {
         let Some(dir) = startup_folder(scope) else {
@@ -305,6 +307,7 @@ mod imp {
                 continue;
             }
             out.push(StartupEntry {
+                icon_data_url: None,
                 enabled: is_enabled(scope, "folder", file_name),
                 orphaned: false,
                 // The file name verbatim, extension included: that is the key
@@ -357,7 +360,17 @@ mod imp {
 #[cfg(windows)]
 #[tauri::command(async)]
 pub fn list_startup_items() -> Vec<StartupEntry> {
-    imp::list()
+    let mut entries = imp::list();
+    for entry in &mut entries {
+        if !entry.orphaned {
+            entry.icon_data_url = if entry.location == "folder" {
+                crate::program_icons::from_shortcut(&entry.command)
+            } else {
+                crate::program_icons::from_command(&entry.command)
+            };
+        }
+    }
+    entries
 }
 
 #[cfg(windows)]
@@ -421,7 +434,7 @@ mod tests {
 
     /// The shapes actually found in a real `Run` key. Getting any of these
     /// wrong means either hiding software that genuinely starts at boot, or
-    /// leaving dead entries on screen — the two failure modes this parser
+    /// leaving dead entries on screen â€” the two failure modes this parser
     /// exists to sit between.
     #[test]
     fn the_executable_is_extracted_from_every_command_shape() {
@@ -579,7 +592,7 @@ mod tests {
 mod unicode_path_tests {
     #[test]
     fn unicode_case_expansion_does_not_change_path_offsets() {
-        for path in [r"C:\İ\tool.exe", r"C:\İİ\工具.EXE"] {
+        for path in [r"C:\Ä°\tool.exe", r"C:\Ä°Ä°\å·¥å…·.EXE"] {
             assert_eq!(
                 super::extract_exe_path(path),
                 Some(std::path::PathBuf::from(path))

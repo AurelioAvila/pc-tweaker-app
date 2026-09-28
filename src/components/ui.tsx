@@ -48,35 +48,54 @@ export function SoonBadge({ label }: { label: string }) {
  * (32×56px) knob was noticeably larger than any toggle in Windows itself or
  * in the apps it's meant to sit alongside.
  */
+// Keep a fast operation legible without delaying its native execution.
+// This timer controls presentation only, never success or progress.
+export function useBusyPresentation(busy: boolean) {
+  const [visible, setVisible] = useState(false);
+  const started = useRef(0);
+  useEffect(() => {
+    if (busy) started.current = performance.now();
+    const timer = window.setTimeout(
+      () => setVisible(busy),
+      busy ? 0 : Math.max(0, 500 - (performance.now() - started.current)),
+    );
+    return () => window.clearTimeout(timer);
+  }, [busy]);
+  return busy || visible;
+}
+
 export function Toggle({
   checked,
   busy,
   onClick,
   s,
+  label,
+  busyLabel,
 }: {
+  label?: string;
+  busyLabel?: string;
   checked: boolean;
   busy: boolean;
   onClick: () => void;
   s: Strings;
 }) {
+  const presenting = useBusyPresentation(busy);
   return (
     <button
       type="button"
-      disabled={busy}
+      disabled={presenting}
       onClick={onClick}
       aria-pressed={checked}
-      className="group flex shrink-0 items-center gap-2 outline-none disabled:cursor-wait"
+      aria-busy={presenting}
+      aria-label={label}
+      className="tweak-toggle group flex shrink-0 items-center gap-2 rounded-md disabled:cursor-wait"
     >
-      {/* 10px, matching the smallest label tier used by the badges and pills
-          elsewhere. At 11px the ON/OFF word sat a step above every other
-          micro-label on the row and pulled attention away from the tweak's
-          own name, which is the thing being read. */}
       <span
-        className={`text-[10px] font-semibold uppercase tracking-[0.08em] tabular-nums transition-colors ${
-          checked ? "text-accent" : "text-[#6f7383]"
+        className={`max-w-24 text-right text-xs font-medium tabular-nums transition-colors ${
+          checked ? "text-accent" : "text-ink-3"
         }`}
       >
-        {checked ? s.toggle.on : s.toggle.off}
+        {presenting ? (busyLabel ?? s.profiles.applying) : checked ? s.toggle.on : s.toggle.off}
       </span>
       <span
         className={`switch relative inline-flex h-5 w-9 items-center rounded-full
@@ -86,8 +105,13 @@ export function Toggle({
           className={`absolute left-0.5 top-0.5 grid h-4 w-4 place-items-center rounded-full shadow transition-all duration-200 ease-out
             ${checked ? "translate-x-4 bg-white" : "translate-x-0 bg-[#9aa1b0]"}`}
         >
-          {busy && (
-            <svg className="h-2.5 w-2.5 animate-spin text-ink-3" viewBox="0 0 24 24" fill="none">
+          {presenting && (
+            <svg
+              aria-hidden="true"
+              className="h-2.5 w-2.5 animate-spin text-zinc-800"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
               <circle
                 cx="12"
                 cy="12"
@@ -121,32 +145,69 @@ export function PaywallModal({
   onClose: () => void;
   onNotify: () => void;
 }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const element = dialog.current;
+    const previousFocus = document.activeElement;
+    element?.showModal();
+    return () => {
+      element?.close();
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm">
-      <div className="animate-card w-full max-w-sm rounded-2xl border border-amber-400/20 bg-slate-900 p-6 shadow-2xl">
-        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-amber-300 to-yellow-500 text-amber-950 shadow-lg shadow-amber-500/30">
-          <svg viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7">
-            <path d="m12 2 2.7 6.6L21 9l-5 4.5L17.3 21 12 17.3 6.7 21 8 13.5 3 9l6.3-.4Z" />
+    <dialog
+      ref={dialog}
+      className="pro-feature-dialog"
+      aria-labelledby="pro-feature-title"
+      aria-describedby="pro-feature-description"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target !== event.currentTarget) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (
+          event.clientX < bounds.left ||
+          event.clientX > bounds.right ||
+          event.clientY < bounds.top ||
+          event.clientY > bounds.bottom
+        )
+          onClose();
+      }}
+    >
+      <header className="pro-feature-header">
+        <span className="pro-feature-brand">
+          <CrownIcon className="h-4 w-4" /> PC Tweaker Pro
+        </span>
+        <button className="pro-feature-close" onClick={onClose} aria-label={s.paywall.notNow}>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="m6 6 12 12M6 18 18 6"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+            />
           </svg>
-        </div>
-        <h3 className="text-center text-lg font-bold text-ink">{s.paywall.title}</h3>
-        <p className="mt-2 text-center text-sm text-ink-3">
-          {format(s.paywall.body, { feature: featureName })}
-        </p>
-        <button
-          onClick={onNotify}
-          className="mt-5 w-full rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 py-2.5 text-sm font-bold text-amber-950 transition hover:-translate-y-px hover:brightness-110"
-        >
-          {s.paywall.unlock}
         </button>
-        <button
-          onClick={onClose}
-          className="mt-2 w-full rounded-xl py-2 text-sm font-medium text-ink-3 hover:text-ink-2"
-        >
+      </header>
+      <div className="pro-feature-content">
+        <span className="pro-feature-eyebrow">{s.paywall.title}</span>
+        <h2 id="pro-feature-title">{featureName}</h2>
+        <p id="pro-feature-description">{format(s.paywall.body, { feature: featureName })}</p>
+      </div>
+      <footer className="pro-feature-actions">
+        <button onClick={onNotify} className="tool-primary-action">
+          {s.paywall.unlock}
+          <span aria-hidden="true">→</span>
+        </button>
+        <button onClick={onClose} className="tool-secondary-action">
           {s.paywall.notNow}
         </button>
-      </div>
-    </div>
+      </footer>
+    </dialog>
   );
 }
 

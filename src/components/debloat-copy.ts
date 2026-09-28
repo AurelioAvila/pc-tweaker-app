@@ -513,3 +513,225 @@ export const DEBLOAT_IMPACT: Record<
   clipchamp: "clipchamp",
   outlook: "outlook",
 };
+
+export const APP_CATEGORIES: Record<string, "media" | "productivity" | "connections" | "windows"> =
+  {
+    solitaire: "media",
+    clipchamp: "media",
+    media: "media",
+    movies: "media",
+    recorder: "media",
+    copilot: "productivity",
+    todo: "productivity",
+    office: "productivity",
+    outlook: "connections",
+    phone: "connections",
+    weather: "windows",
+    news: "windows",
+    feedback: "windows",
+  };
+const libraryEn = {
+  eyebrow: "WINDOWS APP LIBRARY",
+  title: "Make room for what you use.",
+  intro:
+    "Review optional apps, understand what you lose, and remove only what you choose. Nothing is selected for you.",
+  catalogue: "Apps in catalogue",
+  categories: "App categories",
+  media: "Media & games",
+  productivity: "Productivity",
+  connections: "Mail & phone",
+  windows: "Windows extras",
+  showAbsent: "Include apps not installed",
+  notInstalled: "Not installed",
+  selectVisible: "Select removable in view",
+  clear: "Clear selection",
+  sort: "Sort by",
+  name: "Name",
+  category: "Category",
+  selectedOnly: "Selected only",
+};
+export const LIBRARY_COPY: Record<Lang, typeof libraryEn> = {
+  en: libraryEn,
+  it: {
+    eyebrow: "LIBRERIA APP WINDOWS",
+    title: "Spazio a ciò che usi davvero.",
+    intro:
+      "Esamina le app facoltative e le conseguenze della rimozione. Scegli tu cosa eliminare: nessuna preselezione.",
+    catalogue: "App nel catalogo",
+    categories: "Categorie delle app",
+    media: "Media e giochi",
+    productivity: "Produttività",
+    connections: "Posta e telefono",
+    windows: "Extra Windows",
+    showAbsent: "Includi app non installate",
+    notInstalled: "Non installata",
+    selectVisible: "Seleziona le rimovibili visibili",
+    clear: "Svuota selezione",
+    sort: "Ordina per",
+    name: "Nome",
+    category: "Categoria",
+    selectedOnly: "Solo selezionate",
+  },
+  fr: {
+    eyebrow: "BIBLIOTHÈQUE D’APPS WINDOWS",
+    title: "Gardez ce qui vous sert.",
+    intro:
+      "Examinez les apps facultatives et les conséquences de leur suppression. Rien n’est présélectionné.",
+    catalogue: "Apps du catalogue",
+    categories: "Catégories d’apps",
+    media: "Médias et jeux",
+    productivity: "Productivité",
+    connections: "Courrier et téléphone",
+    windows: "Extras Windows",
+    showAbsent: "Inclure les apps non installées",
+    notInstalled: "Non installée",
+    selectVisible: "Sélectionner les apps supprimables affichées",
+    clear: "Effacer la sélection",
+    sort: "Trier par",
+    name: "Nom",
+    category: "Catégorie",
+    selectedOnly: "Sélection uniquement",
+  },
+  es: {
+    eyebrow: "BIBLIOTECA DE APPS DE WINDOWS",
+    title: "Espacio para lo que usas.",
+    intro:
+      "Revisa las apps opcionales y qué perderías al quitarlas. Tú eliges: no hay nada preseleccionado.",
+    catalogue: "Apps del catálogo",
+    categories: "Categorías de apps",
+    media: "Multimedia y juegos",
+    productivity: "Productividad",
+    connections: "Correo y teléfono",
+    windows: "Extras de Windows",
+    showAbsent: "Incluir apps no instaladas",
+    notInstalled: "No instalada",
+    selectVisible: "Seleccionar las extraíbles visibles",
+    clear: "Borrar selección",
+    sort: "Ordenar por",
+    name: "Nombre",
+    category: "Categoría",
+    selectedOnly: "Solo seleccionadas",
+  },
+  de: {
+    eyebrow: "WINDOWS-APP-BIBLIOTHEK",
+    title: "Platz für das, was du nutzt.",
+    intro:
+      "Prüfe optionale Apps und die Folgen einer Entfernung. Du entscheidest: Nichts ist vorausgewählt.",
+    catalogue: "Apps im Katalog",
+    categories: "App-Kategorien",
+    media: "Medien und Spiele",
+    productivity: "Produktivität",
+    connections: "Mail und Telefon",
+    windows: "Windows-Extras",
+    showAbsent: "Nicht installierte Apps einblenden",
+    notInstalled: "Nicht installiert",
+    selectVisible: "Sichtbare entfernbare Apps auswählen",
+    clear: "Auswahl leeren",
+    sort: "Sortieren nach",
+    name: "Name",
+    category: "Kategorie",
+    selectedOnly: "Nur ausgewählte",
+  },
+  pt: {
+    eyebrow: "BIBLIOTECA DE APPS WINDOWS",
+    title: "Espaço para o que utiliza.",
+    intro:
+      "Reveja as apps opcionais e as consequências da remoção. A escolha é sua: nada é pré-selecionado.",
+    catalogue: "Apps no catálogo",
+    categories: "Categorias de apps",
+    media: "Multimédia e jogos",
+    productivity: "Produtividade",
+    connections: "Correio e telefone",
+    windows: "Extras do Windows",
+    showAbsent: "Incluir apps não instaladas",
+    notInstalled: "Não instalada",
+    selectVisible: "Selecionar as removíveis visíveis",
+    clear: "Limpar seleção",
+    sort: "Ordenar por",
+    name: "Nome",
+    category: "Categoria",
+    selectedOnly: "Apenas selecionadas",
+  },
+};
+export const EXTRA_IMPACTS: Record<Lang, Record<string, string>> = {
+  en: {
+    todo: "Sync your lists first. Local unsynced tasks and account settings may be lost.",
+    recorder:
+      "Export recordings before removal. Reinstalling cannot recover deleted local recordings.",
+    feedback: "You cannot send reports through Feedback Hub until it is reinstalled.",
+    phone:
+      "Phone integration stops on this PC. You may need to pair your phone again after reinstalling.",
+    media: "Choose another default player first. Local playlists and app settings may be lost.",
+    movies: "Playback through this app stops. Check purchased content and offline downloads first.",
+    office:
+      "Removes the hub, not Word, Excel or your Microsoft 365 subscription. Local settings may be lost.",
+  },
+  it: {
+    todo: "Sincronizza prima gli elenchi. Attività non sincronizzate e impostazioni locali potrebbero andare perse.",
+    recorder:
+      "Esporta prima le registrazioni. Reinstallare non recupera le registrazioni locali eliminate.",
+    feedback: "Non potrai inviare segnalazioni tramite Hub di Feedback finché non lo reinstalli.",
+    phone:
+      "L’integrazione con il telefono si interrompe. Dopo la reinstallazione potrebbe servire un nuovo abbinamento.",
+    media:
+      "Scegli prima un altro lettore predefinito. Playlist e impostazioni locali potrebbero andare perse.",
+    movies:
+      "La riproduzione tramite questa app si interrompe. Verifica prima acquisti e download offline.",
+    office:
+      "Rimuove l’hub, non Word, Excel o l’abbonamento Microsoft 365. Le impostazioni locali potrebbero andare perse.",
+  },
+  fr: {
+    todo: "Synchronisez vos listes. Les tâches non synchronisées et les réglages locaux peuvent être perdus.",
+    recorder:
+      "Exportez vos enregistrements. Une réinstallation ne récupère pas les enregistrements locaux supprimés.",
+    feedback: "L’envoi de rapports via le Hub de commentaires nécessite sa réinstallation.",
+    phone:
+      "La liaison avec le téléphone s’arrête. Un nouvel appairage peut être nécessaire après réinstallation.",
+    media:
+      "Choisissez un autre lecteur par défaut. Les playlists et réglages locaux peuvent être perdus.",
+    movies:
+      "La lecture dans cette app s’arrête. Vérifiez vos achats et téléchargements hors ligne.",
+    office:
+      "Supprime le hub, pas Word, Excel ni votre abonnement Microsoft 365. Les réglages locaux peuvent être perdus.",
+  },
+  es: {
+    todo: "Sincroniza las listas primero. Las tareas sin sincronizar y los ajustes locales pueden perderse.",
+    recorder:
+      "Exporta las grabaciones antes. Reinstalar no recupera las grabaciones locales eliminadas.",
+    feedback: "No podrás enviar informes con el Centro de opiniones hasta reinstalarlo.",
+    phone:
+      "Se detiene la integración del teléfono. Puede ser necesario volver a emparejarlo tras reinstalar.",
+    media:
+      "Elige otro reproductor predeterminado. Las listas y los ajustes locales pueden perderse.",
+    movies:
+      "Se detiene la reproducción en esta app. Revisa antes tus compras y descargas sin conexión.",
+    office:
+      "Quita el centro, no Word, Excel ni tu suscripción a Microsoft 365. Los ajustes locales pueden perderse.",
+  },
+  de: {
+    todo: "Listen zuerst synchronisieren. Nicht synchronisierte Aufgaben und lokale Einstellungen können verloren gehen.",
+    recorder:
+      "Aufnahmen vorher exportieren. Eine Neuinstallation stellt gelöschte lokale Aufnahmen nicht wieder her.",
+    feedback:
+      "Berichte über den Feedback-Hub sind erst nach dessen Neuinstallation wieder möglich.",
+    phone:
+      "Die Telefonverbindung auf diesem PC endet. Nach der Neuinstallation kann eine neue Kopplung nötig sein.",
+    media:
+      "Zuerst einen anderen Standardplayer wählen. Lokale Wiedergabelisten und Einstellungen können verloren gehen.",
+    movies: "Die Wiedergabe in dieser App endet. Käufe und Offline-Downloads vorher prüfen.",
+    office:
+      "Entfernt den Hub, nicht Word, Excel oder das Microsoft-365-Abo. Lokale Einstellungen können verloren gehen.",
+  },
+  pt: {
+    todo: "Sincronize primeiro as listas. Tarefas não sincronizadas e definições locais podem perder-se.",
+    recorder: "Exporte as gravações primeiro. Reinstalar não recupera gravações locais eliminadas.",
+    feedback: "Não poderá enviar relatórios pelo Hub de Comentários até o reinstalar.",
+    phone:
+      "A integração com o telefone termina neste PC. Poderá ser necessário emparelhar novamente após reinstalar.",
+    media:
+      "Escolha outro leitor predefinido. Listas de reprodução e definições locais podem perder-se.",
+    movies: "A reprodução nesta app termina. Verifique primeiro as compras e os downloads offline.",
+    office:
+      "Remove o hub, não o Word, o Excel nem a subscrição Microsoft 365. As definições locais podem perder-se.",
+  },
+};

@@ -1,4 +1,6 @@
 import "./tool-surfaces.css";
+import { ToolStatus } from "./tool-section";
+import { useBusyPresentation } from "./ui";
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openFolderDialog } from "@tauri-apps/plugin-dialog";
@@ -255,12 +257,20 @@ export function DiskOptimizeCard({
             {running ? s.diskOptimize.running : s.diskOptimize.description}
           </p>
         </div>
-        <button onClick={run} disabled={running} className="tool-primary-action tool-card-action">
-          {running ? (
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-amber-950/30 border-t-amber-950" />
-          ) : (
-            s.diskOptimize.button
+        <button
+          onClick={run}
+          disabled={running}
+          aria-busy={running}
+          className="tool-primary-action tool-card-action"
+        >
+          {running && (
+            <span
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-r-transparent"
+            />
           )}
+          {!running && <DriveIcon className="h-4 w-4" />}
+          {running ? s.diskOptimize.running : s.diskOptimize.button}
         </button>
       </div>
     </li>
@@ -277,13 +287,20 @@ export function DnsFlushCard({
   onToast: (kind: Toast["kind"], message: string) => void;
 }) {
   const [running, setRunning] = useState(false);
+  const presenting = useBusyPresentation(running);
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   async function run() {
+    if (presenting) return;
     setRunning(true);
+    setResult(null);
     try {
-      await invoke<FlushDnsResult>("flush_dns_cache");
+      const response = await invoke<FlushDnsResult>("flush_dns_cache");
+      if (!response.success) throw new Error(response.detail);
+      setResult({ ok: true, message: s.dnsFlush.resultToast });
       onToast("success", s.dnsFlush.resultToast);
     } catch (e) {
+      setResult({ ok: false, message: String(e) });
       onToast("error", String(e));
     } finally {
       setRunning(false);
@@ -300,10 +317,24 @@ export function DnsFlushCard({
           <h2 className="font-semibold text-ink">{s.dnsFlush.title}</h2>
           <p className="mt-0.5 text-sm text-ink-3">{s.dnsFlush.description}</p>
         </div>
-        <button onClick={run} disabled={running} className="tool-primary-action tool-card-action">
-          {running ? s.dnsFlush.running : s.dnsFlush.button}
+        <button
+          onClick={run}
+          disabled={presenting}
+          aria-busy={presenting}
+          className="tool-primary-action tool-card-action"
+        >
+          {presenting && <span className="tool-status-spinner" aria-hidden="true" />}
+          {presenting ? s.dnsFlush.running : s.dnsFlush.button}
         </button>
       </div>
+      {(presenting || result) && (
+        <ToolStatus
+          busy={presenting}
+          tone={presenting ? "neutral" : result?.ok ? "active" : "error"}
+        >
+          {presenting ? s.dnsFlush.running : result?.message}
+        </ToolStatus>
+      )}
     </li>
   );
 }
@@ -656,6 +687,7 @@ export function LargeFileFinder({
 export function DiskHealthCard({ s, drive }: { s: Strings; drive: string }) {
   const [health, setHealth] = useState<DiskHealthInfo | null>(null);
   const [failed, setFailed] = useState(false);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -674,9 +706,7 @@ export function DiskHealthCard({ s, drive }: { s: Strings; drive: string }) {
     return () => {
       alive = false;
     };
-  }, [drive]);
-
-  if (failed) return null;
+  }, [drive, revision]);
 
   const statusLabel = (status: string | undefined) => {
     switch (status) {
@@ -691,7 +721,7 @@ export function DiskHealthCard({ s, drive }: { s: Strings; drive: string }) {
     }
   };
 
-  const info = health ? statusLabel(health.status) : null;
+  const info = health || failed ? statusLabel(health?.status) : null;
 
   return (
     <li className="tool-panel tool-card tool-disk-health-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
@@ -702,12 +732,33 @@ export function DiskHealthCard({ s, drive }: { s: Strings; drive: string }) {
         <div className="tool-card-copy min-w-0 flex-1">
           <h2 className="font-semibold text-ink">{s.diskHealth.title}</h2>
           <p className="mt-0.5 text-sm text-ink-3">
-            {health ? `${health.drive} · ${health.media_type}` : s.diskHealth.loading}
+            {health
+              ? `${health.drive} · ${health.media_type}`
+              : failed
+                ? drive
+                : s.diskHealth.loading}
           </p>
         </div>
+        <button
+          className="tool-secondary-action drive-health-refresh"
+          disabled={!health && !failed}
+          onClick={() => setRevision((value) => value + 1)}
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
+            <path d="M20 7v5h-5M20 12a8 8 0 1 0-2 5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {s.startupManager.refresh}
+        </button>
         {info && (
           <span
-            className={`flex shrink-0 items-center gap-1.5 text-sm font-semibold ${info.color}`}
+            className={`drive-health-status flex shrink-0 items-center gap-1.5 text-sm font-semibold ${info.color}`}
           >
             <span className={`h-2 w-2 rounded-full ${info.dot}`} />
             {info.text}
@@ -760,58 +811,86 @@ export function DiskToolsSection({
   if (!selected) return null;
 
   return (
-    <>
+    <li className="tool-panel tool-drive-workspace animate-card">
+      <header className="tool-header">
+        <div className="tool-header-icon">
+          <DriveIcon className="h-5 w-5" />
+        </div>
+        <div className="tool-header-copy">
+          <h2>
+            {s.diskHealth.title} <span aria-hidden="true">·</span> {s.diskOptimize.title}
+          </h2>
+        </div>
+      </header>
       {drives && drives.length > 0 && (
-        // Shown even with a single drive: it doubles as explicit confirmation
-        // of which drive Health/Optimize below are about to act on, not just
-        // a chooser for when there happens to be more than one.
-        <li className="tool-drive-selector animate-card">
-          <span className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-3">
-            {s.diskHealth.selectDrive}:
-          </span>
-          {drives.map((d) => (
-            <button
-              key={d.letter}
-              aria-pressed={selected === d.letter}
-              onClick={() => setSelected(d.letter)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                selected === d.letter
-                  ? "bg-rose-400/20 text-rose-300 ring-1 ring-rose-400/40"
-                  : "bg-surface-2 text-ink-3 hover:bg-surface-hover hover:text-ink-2"
-              }`}
-            >
-              {d.letter} · {d.media_type} ·{" "}
-              {format(s.diskHealth.freeSpace, { size: formatBytes(d.free_bytes) })}
-            </button>
-          ))}
-        </li>
+        <fieldset className="tool-drive-selector">
+          <legend>{s.diskHealth.selectDrive}</legend>
+          <div className="drive-options">
+            {drives.map((d) => (
+              <button
+                key={d.letter}
+                aria-pressed={selected === d.letter}
+                onClick={() => setSelected(d.letter)}
+                className="drive-option"
+              >
+                <DriveIcon className="drive-option-icon" />
+                <span className="drive-option-copy">
+                  <strong>
+                    {d.letter} <span>{d.media_type}</span>
+                  </strong>
+                  <small>
+                    {format(s.diskHealth.freeSpace, { size: formatBytes(d.free_bytes) })}
+                  </small>
+                </span>
+                <span className="drive-option-check" aria-hidden="true">
+                  {selected === d.letter && (
+                    <svg viewBox="0 0 16 16" fill="none">
+                      <path
+                        d="m4 8 3 3 5-6"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
       )}
-      <DiskHealthCard s={s} drive={selected} />
-      <DiskOptimizeCard
-        s={s}
-        drive={selected}
-        isPro={isPro}
-        onRequirePro={onRequirePro}
-        onToast={onToast}
-      />
-      {/* Secure Defrag sits beside the plain optimizer rather than replacing
-          it: this one reports live progress and refuses to defragment
-          anything not confirmed to be a spinning disk, which is a different
-          promise from "run Windows' optimizer and wait". */}
-      {/* Keyed by drive so switching disks remounts the card. The alternative
+      <ul className="drive-workspace-actions">
+        <DiskHealthCard s={s} drive={selected} />
+        <DiskOptimizeCard
+          s={s}
+          drive={selected}
+          isPro={isPro}
+          onRequirePro={onRequirePro}
+          onToast={onToast}
+        />
+        {/* Keep detailed optimization available without crowding the main action.
+          Secure Defrag retains its existing HDD/SSD checks and live progress. */}
+        {/* Keyed by drive so switching disks remounts the card. The alternative
           was an effect resetting its state on every change, which is the same
           thing with more moving parts — and a stale summary shown under a
           different drive letter would attribute one disk's result to another. */}
-      <SecureDefragCard
-        key={selected}
-        s={s}
-        drive={selected}
-        mediaType={drives?.find((d) => d.letter === selected)?.media_type ?? "Unknown"}
-        isPro={isPro}
-        onRequirePro={onRequirePro}
-        pushToast={onToast}
-      />
-    </>
+        <li className="drive-advanced">
+          <details>
+            <summary>{s.secureDefrag.title}</summary>
+            <SecureDefragCard
+              key={selected}
+              s={s}
+              drive={selected}
+              mediaType={drives?.find((d) => d.letter === selected)?.media_type ?? "Unknown"}
+              isPro={isPro}
+              onRequirePro={onRequirePro}
+              pushToast={onToast}
+            />
+          </details>
+        </li>
+      </ul>
+    </li>
   );
 }
 

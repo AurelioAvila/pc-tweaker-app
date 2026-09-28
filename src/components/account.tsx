@@ -497,21 +497,31 @@ export function AccountMenu({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          {/* A compact panel with scrolling for shorter windows. */}
           <div className="account-panel animate-card absolute right-0 z-50 mt-2 max-h-[calc(100vh-9rem)] overflow-y-auto overflow-x-hidden">
-            <AuthSection
-              s={s}
-              auth={auth}
-              avatar={avatar}
-              onChangePhoto={() => photoInput.current?.click()}
-              onRemovePhoto={removePhoto}
-              onAuthenticate={onAuthenticate}
-              onLogout={onLogout}
-              onResendVerification={onResendVerification}
-              onForgotPassword={onForgotPassword}
-            />
-            {/* The webview's own file input: no plugin, no permissions — the
-                browser dialog hands us the bytes and they stay local. */}
+            <details name="account-settings" className="account-setting account-identity">
+              <summary>
+                <span>
+                  {s.menu.account}
+                  <small>{signedInAs || s.auth.loginButton}</small>
+                </span>
+                <span className="account-chevron" aria-hidden="true">
+                  ›
+                </span>
+              </summary>
+              <div className="account-setting-body">
+                <AuthSection
+                  s={s}
+                  auth={auth}
+                  avatar={avatar}
+                  onChangePhoto={() => photoInput.current?.click()}
+                  onRemovePhoto={removePhoto}
+                  onAuthenticate={onAuthenticate}
+                  onLogout={onLogout}
+                  onResendVerification={onResendVerification}
+                  onForgotPassword={onForgotPassword}
+                />
+              </div>
+            </details>
             <input
               ref={photoInput}
               type="file"
@@ -522,173 +532,117 @@ export function AccountMenu({
                 e.target.value = "";
               }}
             />
-
-            <div className="border-b border-line p-3">
-              {isPro ? (
-                /* Same reasoning as the sidebar card: a Pro subscriber should
-                   see that they bought something, not the same grey line a
-                   Free account gets. */
-                <>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
-                    {s.menu.plan}
-                  </p>
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5">
-                      <CrownIcon className="h-3.5 w-3.5 shrink-0 text-amber-300" />
-                      <span className="text-sm font-bold uppercase tracking-wide text-amber-300">
-                        {s.menu.planPro}
-                      </span>
-                    </span>
-                    <button
-                      onClick={() => {
-                        setOpen(false);
-                        onViewPlan();
-                      }}
-                      className="rounded-lg border border-line-2 px-2.5 py-1 text-xs font-semibold text-ink-2 transition-colors hover:border-amber-400/50 hover:text-ink"
-                    >
-                      {s.menu.viewPlan}
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
-                    {s.menu.plan}
-                  </p>
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-ink">{s.menu.planFree}</span>
-                    <span className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => {
-                          setOpen(false);
-                          onViewPlan();
-                        }}
-                        className="rounded-lg border border-line-2 px-2.5 py-1 text-xs font-semibold text-ink-2 transition-colors hover:border-amber-400/50 hover:text-ink"
-                      >
-                        {s.menu.viewPlan}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setOpen(false);
-                          onUpgrade();
-                        }}
-                        className="rounded-lg bg-gradient-to-r from-amber-300 to-yellow-500 px-3 py-1 text-xs font-bold text-amber-950 transition hover:-translate-y-px hover:brightness-110"
-                      >
-                        {s.menu.upgradeButton}
-                      </button>
-                    </span>
-                  </div>
-                </>
-              )}
+            <div className="account-plan-row">
+              <span>
+                <CrownIcon className="h-4 w-4" />
+                {isPro ? s.menu.planPro : s.menu.planFree}
+              </span>
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  if (isPro) onViewPlan();
+                  else onUpgrade();
+                }}
+              >
+                {isPro ? s.menu.viewPlan : s.menu.upgradeButton} <span aria-hidden="true">↗</span>
+              </button>
             </div>
-
-            <div className="border-b border-line p-3">
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">
-                {s.menu.language}
-              </p>
-              <div className="account-languages">
+            <details name="account-settings" className="account-setting">
+              <summary>
+                <span>{s.menu.language}</span>
+                <span className="account-current">
+                  {LANGUAGES.find((l) => l.code === lang)?.native}
+                </span>
+                <span className="account-chevron" aria-hidden="true">
+                  ›
+                </span>
+              </summary>
+              <div className="account-setting-body account-languages">
                 {LANGUAGES.map((l) => (
                   <button
                     key={l.code}
-                    onClick={() => setLang(l.code)}
-                    aria-pressed={lang === l.code}
                     className="account-language"
+                    aria-pressed={lang === l.code}
+                    onClick={(e) => {
+                      setLang(l.code);
+                      e.currentTarget.closest("details")?.removeAttribute("open");
+                      e.currentTarget.closest("details")?.querySelector("summary")?.focus();
+                    }}
                   >
                     {l.native}
                     {lang === l.code && <CheckIcon className="h-3.5 w-3.5" />}
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div className="border-b border-line p-3">
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">
-                {s.menu.theme}
-              </p>
-              {/* Swatches only: with a dozen themes the labels forced a
-                  two-column grid that dominated the panel. The color is the choice.
-
-                  A fixed 7-column grid rather than flex-wrap, so the dots line
-                  up in even columns instead of drifting with the panel width —
-                  and 14 themes fill it exactly, leaving no orphan gaps. */}
-              {/* 24px dots on a 7-column grid left only ~3px of clearance
-                  either side inside this panel, so the selected dot's 2px ring
-                  and the hover scale both spilled onto their neighbours. 20px
-                  dots with a wider gap leave room for both. `ring-offset` keeps
-                  the ring off the swatch itself rather than growing outwards. */}
-              <div className="account-themes">
+            </details>
+            <details name="account-settings" className="account-setting">
+              <summary>
+                <span>{s.menu.theme}</span>
+                <span className="account-current">
+                  <i style={{ background: THEMES.find((t) => t.code === theme)?.swatch }} />
+                  {THEMES.find((t) => t.code === theme)?.label}
+                </span>
+                <span className="account-chevron" aria-hidden="true">
+                  ›
+                </span>
+              </summary>
+              <div className="account-setting-body account-theme-options">
                 {THEMES.map((t) => (
                   <button
                     key={t.code}
-                    onClick={() => setTheme(t.code)}
-                    title={t.label}
-                    aria-label={t.label}
+                    className="account-theme-option"
                     aria-pressed={theme === t.code}
-                    className="account-theme"
-                    style={{ "--swatch": t.swatch } as React.CSSProperties}
+                    onClick={(e) => {
+                      setTheme(t.code);
+                      e.currentTarget.closest("details")?.removeAttribute("open");
+                      e.currentTarget.closest("details")?.querySelector("summary")?.focus();
+                    }}
                   >
-                    <span className="account-theme-color" />
+                    <i style={{ background: t.swatch }} />
+                    <span>{t.label}</span>
                     {theme === t.code && <CheckIcon className="h-3 w-3" />}
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div className="border-b border-line p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
-                    {s.menu.errorReports}
-                  </p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-ink-3">
-                    {s.menu.errorReportsBody}
-                  </p>
-                </div>
+            </details>
+            <details name="account-settings" className="account-setting">
+              <summary>
+                <span>{s.menu.errorReports}</span>
+                <span className="account-chevron" aria-hidden="true">
+                  ›
+                </span>
+              </summary>
+              <div className="account-setting-body account-privacy">
+                <p>{s.menu.errorReportsBody}</p>
                 <button
                   role="switch"
                   aria-checked={errReports}
                   aria-label={s.menu.errorReports}
                   onClick={toggleErrorReports}
-                  className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors ${
-                    errReports ? "bg-indigo-500" : "bg-surface-hover"
-                  }`}
+                  className="account-switch"
                 >
-                  <span
-                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${
-                      errReports ? "left-[18px]" : "left-0.5"
-                    }`}
-                  />
+                  <span />
                 </button>
               </div>
-            </div>
-
-            <div className="border-b border-line p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
-                {s.menu.support}
-              </p>
-              <button
-                onClick={() => void openUrl("https://pctweaker.app/support")}
-                className="mt-1.5 flex w-full items-center justify-between rounded-lg bg-surface-2 px-2.5 py-1.5 text-left text-[13px] font-medium text-ink-2 transition-colors hover:bg-surface-hover hover:text-ink"
-              >
-                {s.menu.reportIssue}
-                <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5 shrink-0 text-ink-3">
-                  <path
-                    d="M9 5h10v10M19 5 5 19"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <div className="p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
-                {s.menu.about}
-              </p>
-              <p className="mt-1 text-[11px] leading-relaxed text-ink-3">{s.menu.aboutBody}</p>
-            </div>
+            </details>
+            <button
+              className="account-support"
+              onClick={() => void openUrl("https://pctweaker.app/support")}
+            >
+              {s.menu.reportIssue}
+              <span aria-hidden="true">↗</span>
+            </button>
+            <details name="account-settings" className="account-setting">
+              <summary>
+                <span>{s.menu.about}</span>
+                <span className="account-chevron" aria-hidden="true">
+                  ›
+                </span>
+              </summary>
+              <div className="account-setting-body">
+                <p>{s.menu.aboutBody}</p>
+              </div>
+            </details>
           </div>
         </>
       )}

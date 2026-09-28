@@ -41,41 +41,6 @@
   color: var(--text-primary);
   font-size: 12px;
 }
-.advanced-toolbar > button,
-.advanced-rules button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  border: 1px solid color-mix(in oklab, var(--text-primary) 28%, var(--surface-2));
-  border-radius: 4px;
-  background: var(--surface-2);
-  padding: 7px 13px;
-  color: var(--text-primary);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.35;
-  transition:
-    background-color 150ms,
-    border-color 150ms,
-    color 150ms;
-}
-.advanced-toolbar > button:hover:not(:disabled),
-.advanced-rules button:hover:not(:disabled) {
-  border-color: color-mix(in oklab, var(--app-accent) 45%, var(--border-strong));
-  background: var(--surface-hover);
-  color: var(--text-primary);
-}
-.advanced-toolbar > button[data-tone="primary"] {
-  border-color: transparent;
-  background: var(--app-accent);
-  color: var(--color-on-accent);
-}
-.advanced-toolbar > button[data-tone="primary"]:hover:not(:disabled) {
-  border-color: transparent;
-  background: color-mix(in oklab, var(--app-accent) 87%, white);
-  color: var(--color-on-accent);
-}
 .advanced-rules button {
   min-width: 36px;
   padding-inline: 8px;
@@ -146,18 +111,6 @@
 }
 .advanced-refresh {
   justify-self: start;
-  min-height: 32px;
-  border: 1px solid var(--border-strong);
-  border-radius: 7px;
-  padding: 5px 10px;
-  background: var(--surface-2);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 600;
-}
-.advanced-refresh:hover:not(:disabled) {
-  border-color: color-mix(in oklab, var(--app-accent) 45%, var(--border-strong));
-  color: var(--text-primary);
 }
 .advanced-switch {
   display: grid;

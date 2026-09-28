@@ -502,6 +502,7 @@ export interface Strings {
     inactive: string;
     /** The real steps the Rust side performs, shown as it works through them. */
     loadLabel: string;
+    loadHelp: string;
     stageReading: string;
     stageRaising: string;
     stageApplying: string;
@@ -1558,6 +1559,8 @@ const it: Strings = {
     active: "Turbo attivo",
     inactive: "Turbo non attivo",
     loadLabel: "CARICO CPU",
+    loadHelp:
+      "Utilizzo della CPU, non un punteggio del boost. Un carico basso è normale quando il PC è inattivo.",
     stageReading: "Lettura del piano energetico",
     stageRaising: "Aumento del limite di boost",
     stageApplying: "Applicazione al sistema",
@@ -1567,7 +1570,7 @@ const it: Strings = {
     stageMeasuringAfter: "Nuova misurazione",
     gainMeasured: "{factor}x più veloce",
     gainSlight: "{factor}x più veloce — guadagno contenuto",
-    gainAtCeiling: "Già al massimo: questa CPU non aveva altro margine da liberare",
+    gainAtCeiling: "Nessun miglioramento misurato in questo breve test",
     ceilingLocked: "Limite boost bloccato",
     ceilingUnlocked: "Limite boost sbloccato",
   },
@@ -1719,7 +1722,7 @@ const it: Strings = {
   },
   paywall: {
     title: "Funzione Pro",
-    body: '"{feature}" fa parte di PC Tweaker Pro, insieme a Game Sessions, ai preset gaming e a ogni funzione futura.',
+    body: "Questo strumento è disponibile con PC Tweaker Pro. Confronta i piani e scopri cosa includono prima di scegliere.",
     unlock: "Vedi piani e prezzi",
     notNow: "Non ora",
     notConnectedToast: "Il pagamento Pro non è ancora collegato in questa versione di sviluppo.",
@@ -1906,7 +1909,7 @@ const it: Strings = {
     noTempSensor: "Questa scheda non espone un sensore di temperatura.",
     cpuAcpiSource: "letta dalla zona termica ACPI",
     cpuNoSensor:
-      "Il firmware di questo PC non espone una zona termica ACPI, quindi Windows non ha una temperatura della CPU da leggere. I programmi che la mostrano sempre installano un driver a livello kernel per leggere i registri del processore: PC Tweaker non lo fa, e preferisce dirtelo piuttosto che mostrarti un valore inventato.",
+      "Temperatura CPU non disponibile: il firmware non espone una zona termica ACPI. PC Tweaker mostra solo le letture rese disponibili da Windows.",
     noGpuTool:
       "Nessuna scheda NVIDIA rilevata. AMD e Intel non forniscono uno strumento di interrogazione equivalente, quindi le loro temperature non sono leggibili senza software del produttore.",
     thermalsUnavailable: "Non riusciamo a leggere i sensori su questo sistema.",
@@ -2974,6 +2977,7 @@ const en: Strings = {
     active: "Turbo active",
     inactive: "Turbo not active",
     loadLabel: "CPU LOAD",
+    loadHelp: "CPU usage, not a boost score. Low usage is normal when your PC is idle.",
     stageReading: "Reading the power plan",
     stageRaising: "Raising the boost ceiling",
     stageApplying: "Applying to the system",
@@ -2983,7 +2987,7 @@ const en: Strings = {
     stageMeasuringAfter: "Measuring again",
     gainMeasured: "{factor}x faster",
     gainSlight: "{factor}x faster - a modest gain",
-    gainAtCeiling: "Already at full speed: this CPU had no headroom left to unlock",
+    gainAtCeiling: "No improvement measured in this short test",
     ceilingLocked: "Boost ceiling locked",
     ceilingUnlocked: "Boost ceiling unlocked",
   },
@@ -3133,7 +3137,7 @@ const en: Strings = {
   },
   paywall: {
     title: "Pro feature",
-    body: '"{feature}" is part of PC Tweaker Pro, along with Game Sessions, the gaming presets and every future feature.',
+    body: "This tool is available with PC Tweaker Pro. Compare plans and see what is included before choosing.",
     unlock: "See plans & pricing",
     notNow: "Not now",
     notConnectedToast: "Pro payment isn't wired up yet in this development build.",
@@ -3320,7 +3324,7 @@ const en: Strings = {
     noTempSensor: "This card exposes no temperature sensor.",
     cpuAcpiSource: "read from the ACPI thermal zone",
     cpuNoSensor:
-      "This PC's firmware exposes no ACPI thermal zone, so Windows has no CPU temperature to read. Tools that always show one install a kernel-level driver to read the processor's registers directly: PC Tweaker doesn't, and would rather tell you that than show you a number it made up.",
+      "CPU temperature is unavailable: this firmware exposes no ACPI thermal zone. PC Tweaker only displays readings that Windows makes available.",
     noGpuTool:
       "No NVIDIA card detected. AMD and Intel ship no equivalent query tool, so their temperatures can't be read without the vendor's own software.",
     thermalsUnavailable: "We can't read the sensors on this system.",
@@ -4396,6 +4400,8 @@ const fr: Strings = {
     active: "Turbo actif",
     inactive: "Turbo inactif",
     loadLabel: "CHARGE CPU",
+    loadHelp:
+      "Utilisation du processeur, pas un score de boost. Une faible charge est normale au repos.",
     stageReading: "Lecture du mode d'alimentation",
     stageRaising: "Augmentation de la limite de boost",
     stageApplying: "Application au système",
@@ -4405,7 +4411,7 @@ const fr: Strings = {
     stageMeasuringAfter: "Nouvelle mesure",
     gainMeasured: "{factor}x plus rapide",
     gainSlight: "{factor}x plus rapide - gain modeste",
-    gainAtCeiling: "Déjà au maximum : ce processeur n'avait plus de marge à libérer",
+    gainAtCeiling: "Aucune amélioration mesurée lors de ce bref test",
     ceilingLocked: "Limite de boost verrouillee",
     ceilingUnlocked: "Limite de boost debloquee",
   },
@@ -4560,7 +4566,7 @@ const fr: Strings = {
   },
   paywall: {
     title: "Fonction Pro",
-    body: "« {feature} » fait partie de PC Tweaker Pro, avec Game Sessions, les préréglages gaming et toutes les fonctionnalités à venir.",
+    body: "Cet outil est disponible avec PC Tweaker Pro. Comparez les offres et découvrez ce qu’elles incluent avant de choisir.",
     unlock: "Voir les offres et tarifs",
     notNow: "Pas maintenant",
     notConnectedToast:
@@ -4749,7 +4755,7 @@ const fr: Strings = {
     noTempSensor: "Cette carte n'expose aucun capteur de température.",
     cpuAcpiSource: "lue depuis la zone thermique ACPI",
     cpuNoSensor:
-      "Le micrologiciel de ce PC n'expose aucune zone thermique ACPI : Windows n'a donc aucune température de processeur à lire. Les outils qui en affichent toujours une installent un pilote noyau pour lire directement les registres du processeur. PC Tweaker ne le fait pas, et préfère vous le dire plutôt que d'inventer une valeur.",
+      "Température du processeur indisponible : le firmware ne fournit aucune zone thermique ACPI. PC Tweaker affiche uniquement les mesures disponibles via Windows.",
     noGpuTool:
       "Aucune carte NVIDIA détectée. AMD et Intel ne fournissent pas d'outil équivalent, leurs températures sont donc illisibles sans le logiciel du fabricant.",
     thermalsUnavailable: "Impossible de lire les capteurs de ce système.",
@@ -5825,6 +5831,8 @@ const es: Strings = {
     active: "Turbo activo",
     inactive: "Turbo no activo",
     loadLabel: "CARGA CPU",
+    loadHelp:
+      "Uso de la CPU, no una puntuación del boost. Un uso bajo es normal cuando el PC está inactivo.",
     stageReading: "Leyendo el plan de energia",
     stageRaising: "Elevando el limite de boost",
     stageApplying: "Aplicando al sistema",
@@ -5834,7 +5842,7 @@ const es: Strings = {
     stageMeasuringAfter: "Midiendo de nuevo",
     gainMeasured: "{factor}x mas rapido",
     gainSlight: "{factor}x mas rapido - ganancia modesta",
-    gainAtCeiling: "Ya al maximo: esta CPU no tenia mas margen que liberar",
+    gainAtCeiling: "No se midió ninguna mejora en esta prueba breve",
     ceilingLocked: "Limite de boost bloqueado",
     ceilingUnlocked: "Limite de boost desbloqueado",
   },
@@ -5987,7 +5995,7 @@ const es: Strings = {
   },
   paywall: {
     title: "Función Pro",
-    body: '"{feature}" forma parte de PC Tweaker Pro, junto a Game Sessions, los presets de gaming y todas las funciones futuras.',
+    body: "Esta herramienta está disponible con PC Tweaker Pro. Compara los planes y consulta qué incluyen antes de elegir.",
     unlock: "Ver planes y precios",
     notNow: "Ahora no",
     notConnectedToast: "El pago Pro todavía no está conectado en esta versión de desarrollo.",
@@ -6174,7 +6182,7 @@ const es: Strings = {
     noTempSensor: "Esta tarjeta no expone ningún sensor de temperatura.",
     cpuAcpiSource: "leída de la zona térmica ACPI",
     cpuNoSensor:
-      "El firmware de este PC no expone una zona térmica ACPI, así que Windows no tiene ninguna temperatura de CPU que leer. Las herramientas que siempre muestran una instalan un controlador a nivel de kernel para leer los registros del procesador: PC Tweaker no lo hace, y prefiere decírtelo antes que mostrarte un valor inventado.",
+      "Temperatura de la CPU no disponible: el firmware no expone ninguna zona térmica ACPI. PC Tweaker solo muestra las lecturas disponibles a través de Windows.",
     noGpuTool:
       "No se detectó ninguna tarjeta NVIDIA. AMD e Intel no ofrecen una herramienta equivalente, por lo que sus temperaturas no se pueden leer sin el software del fabricante.",
     thermalsUnavailable: "No podemos leer los sensores de este sistema.",
@@ -7255,6 +7263,7 @@ const de: Strings = {
     active: "Turbo aktiv",
     inactive: "Turbo nicht aktiv",
     loadLabel: "CPU-LAST",
+    loadHelp: "CPU-Auslastung, kein Boost-Wert. Eine niedrige Auslastung im Leerlauf ist normal.",
     stageReading: "Energieplan wird gelesen",
     stageRaising: "Boost-Grenze wird angehoben",
     stageApplying: "Wird auf das System angewendet",
@@ -7264,7 +7273,7 @@ const de: Strings = {
     stageMeasuringAfter: "Erneute Messung",
     gainMeasured: "{factor}x schneller",
     gainSlight: "{factor}x schneller - moderater Gewinn",
-    gainAtCeiling: "Bereits am Maximum: Diese CPU hatte keinen Spielraum mehr",
+    gainAtCeiling: "Keine Verbesserung in diesem kurzen Test gemessen",
     ceilingLocked: "Boost-Grenze gesperrt",
     ceilingUnlocked: "Boost-Grenze freigegeben",
   },
@@ -7418,7 +7427,7 @@ const de: Strings = {
   },
   paywall: {
     title: "Pro-Funktion",
-    body: '„{feature}" ist Teil von PC Tweaker Pro — zusammen mit Game Sessions, den Gaming-Presets und jeder künftigen Funktion.',
+    body: "Dieses Tool ist mit PC Tweaker Pro verfügbar. Vergleiche die Tarife und ihre Leistungen, bevor du dich entscheidest.",
     unlock: "Tarife & Preise ansehen",
     notNow: "Nicht jetzt",
     notConnectedToast: "Die Pro-Zahlung ist in dieser Entwicklungsversion noch nicht angebunden.",
@@ -7606,7 +7615,7 @@ const de: Strings = {
     noTempSensor: "Diese Karte stellt keinen Temperatursensor bereit.",
     cpuAcpiSource: "aus der ACPI-Thermalzone gelesen",
     cpuNoSensor:
-      "Die Firmware dieses PCs stellt keine ACPI-Thermalzone bereit, daher hat Windows keine CPU-Temperatur zum Auslesen. Programme, die immer eine anzeigen, installieren einen Kernel-Treiber, um die Prozessorregister direkt zu lesen: PC Tweaker tut das nicht und sagt es Ihnen lieber, als einen erfundenen Wert zu zeigen.",
+      "CPU-Temperatur nicht verfügbar: Die Firmware stellt keine ACPI-Thermalzone bereit. PC Tweaker zeigt nur Messwerte an, die Windows bereitstellt.",
     noGpuTool:
       "Keine NVIDIA-Karte erkannt. AMD und Intel liefern kein vergleichbares Abfragewerkzeug, ihre Temperaturen sind daher ohne Herstellersoftware nicht auslesbar.",
     thermalsUnavailable: "Wir können die Sensoren dieses Systems nicht auslesen.",
@@ -8688,6 +8697,8 @@ const pt: Strings = {
     active: "Turbo ativo",
     inactive: "Turbo inativo",
     loadLabel: "CARGA CPU",
+    loadHelp:
+      "Utilização da CPU, não uma pontuação de boost. Uma carga baixa é normal quando o PC está inativo.",
     stageReading: "Lendo o plano de energia",
     stageRaising: "Elevando o teto de boost",
     stageApplying: "Aplicando ao sistema",
@@ -8697,7 +8708,7 @@ const pt: Strings = {
     stageMeasuringAfter: "Medindo novamente",
     gainMeasured: "{factor}x mais rápido",
     gainSlight: "{factor}x mais rápido - um ganho modesto",
-    gainAtCeiling: "Já na velocidade máxima: esta CPU não tinha mais margem para liberar",
+    gainAtCeiling: "Nenhuma melhoria medida neste teste breve",
     ceilingLocked: "Teto de boost travado",
     ceilingUnlocked: "Teto de boost liberado",
   },
@@ -8850,7 +8861,7 @@ const pt: Strings = {
   },
   paywall: {
     title: "Recurso Pro",
-    body: '"{feature}" faz parte do PC Tweaker Pro, junto com Sessões de jogo, os presets de jogos e todo recurso futuro.',
+    body: "Esta ferramenta está disponível com o PC Tweaker Pro. Compara os planos e vê o que incluem antes de escolher.",
     unlock: "Ver planos e preços",
     notNow: "Agora não",
     notConnectedToast:
@@ -9038,7 +9049,7 @@ const pt: Strings = {
     noTempSensor: "Esta placa não expõe sensor de temperatura.",
     cpuAcpiSource: "lido da zona térmica ACPI",
     cpuNoSensor:
-      "O firmware deste PC não expõe uma zona térmica ACPI, então o Windows não tem temperatura de CPU para ler. Ferramentas que sempre mostram uma instalam um driver em nível de kernel para ler os registradores do processador diretamente: o PC Tweaker não faz isso, e prefere dizer isso a mostrar um número inventado.",
+      "Temperatura da CPU indisponível: o firmware não expõe nenhuma zona térmica ACPI. O PC Tweaker mostra apenas as leituras disponibilizadas pelo Windows.",
     noGpuTool:
       "Nenhuma placa NVIDIA detectada. AMD e Intel não oferecem uma ferramenta de consulta equivalente, então suas temperaturas não podem ser lidas sem o software do próprio fabricante.",
     thermalsUnavailable: "Não conseguimos ler os sensores neste sistema.",

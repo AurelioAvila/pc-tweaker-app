@@ -2,7 +2,7 @@
    The sidebar keeps its commercial controls outside the scrolling navigation. */
 .desktop-refresh {
   --workspace-sidebar-width: 220px;
-  --workspace-gutter: 28px;
+  --workspace-gutter: 32px;
   --workspace-row-radius: 9px;
 
   min-width: 0;
@@ -237,7 +237,7 @@
 .desktop-refresh .workspace-content {
   min-width: 0;
   min-height: 0;
-  padding: 25px var(--workspace-gutter) 32px;
+  padding: 32px var(--workspace-gutter) 40px;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
@@ -277,7 +277,7 @@
 .desktop-refresh .workspace-header .page-title {
   margin: 0;
   color: var(--text-primary);
-  font-size: 25px;
+  font-size: 28px;
   font-weight: 650;
   line-height: 1.2;
   letter-spacing: -0.035em;
@@ -312,21 +312,21 @@
 }
 
 /* Only the existing main-page cards: overlay/dialog styling stays independent. */
-.desktop-refresh .workspace-page > .panel,
-.desktop-refresh .workspace-page > ul > .panel {
+.desktop-refresh .workspace-view > .panel,
+.desktop-refresh .workspace-view > ul > .panel {
   border-color: var(--border-subtle);
   border-radius: 12px;
   background: var(--surface-1);
   box-shadow: 0 2px 3px rgb(0 0 0 / 0.12);
 }
 
-.desktop-refresh .workspace-page > ul > .panel-hover:hover {
+.desktop-refresh .workspace-view > ul > .panel-hover:hover {
   border-color: var(--border-strong);
   background: var(--surface-hover);
   box-shadow: 0 2px 3px rgb(0 0 0 / 0.12);
 }
 
-.desktop-refresh .workspace-page > .backdrop-blur {
+.desktop-refresh .workspace-view > .backdrop-blur {
   backdrop-filter: none;
 }
 
@@ -372,7 +372,7 @@
 
 @media (max-width: 1100px) {
   .desktop-refresh {
-    --workspace-gutter: 24px;
+    --workspace-gutter: 28px;
   }
 }
 
@@ -452,5 +452,52 @@
   .desktop-refresh .workspace-commercial > button,
   .desktop-refresh .workspace-header > .ml-auto > input {
     border: 1px solid ButtonText;
+  }
+}
+
+.workspace-view {
+  max-width: 1120px;
+  margin-inline: auto;
+  animation: workspace-enter 180ms ease-out;
+}
+.workspace-view.workspace-scan-view {
+  max-width: 1240px;
+}
+.desktop-refresh .workspace-page {
+  max-width: none;
+  width: 100%;
+}
+.desktop-refresh .workspace-header {
+  width: 100%;
+}
+@keyframes workspace-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.desktop-refresh .workspace-navigation .nav-item svg [stroke] {
+  stroke-width: 1.5;
+}
+.desktop-refresh .workspace-navigation .nav-item[aria-current="page"] svg [stroke] {
+  stroke-width: 1.9;
+}
+.tweak-toggle {
+  min-height: 36px;
+  transition: opacity 150ms;
+}
+.tweak-toggle:hover:not(:disabled) {
+  opacity: 0.8;
+}
+.desktop-refresh .workspace-view > ul > .panel {
+  padding: 20px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-view {
+    animation: none;
   }
 }

@@ -30,6 +30,18 @@ export function ToolHeader({
   );
 }
 
+export function InfoAlert({ children }: { children: ReactNode }) {
+  return (
+    <div className="tool-info-alert">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M12 11v6m0-10v.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+      <p>{children}</p>
+    </div>
+  );
+}
+
 export function ToolDetails({
   label,
   children,

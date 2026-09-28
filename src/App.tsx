@@ -1,3 +1,4 @@
+import { orderSectionTweaks } from "./feature-order";
 import { TweakyDriverPromoCard } from "./components/tweaky-driver-promo";
 import { NetworkCheckPanel } from "./components/diagnostics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -49,7 +50,6 @@ import {
 import { AccountMenu } from "./components/account";
 import { TweakIcon } from "./components/tweak-icon";
 import { TechnicalDetails, TechnicalToggle } from "./components/technical";
-import { DashboardCards } from "./components/dashboard";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
 import { X3dPanel } from "./components/x3d";
 import { ScanPanel } from "./components/scan";
@@ -59,7 +59,6 @@ import { AppCacheCard, CookieCleanerCard } from "./components/cleaners";
 import { HardwarePanel } from "./components/hardware";
 import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
 import {
-  AdvisorCard,
   CrashReportsCard,
   LedgerPanel,
   DriftWatchToggle,
@@ -397,7 +396,8 @@ function App() {
 
   const [tweaks, setTweaks] = useState<TweakInfo[]>([]);
   const [cleanupTargets, setCleanupTargets] = useState<CleanupInfo[]>([]);
-  const [filter, setFilterState] = useState<Section>("overview");
+  const [filter, setFilterState] = useState<Section>("scan");
+  const scanApplying = useRef(false);
   const [query, setQuery] = useState("");
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -412,6 +412,7 @@ function App() {
    * wins over a leftover query.
    */
   const setFilter = useCallback((section: Section) => {
+    if (scanApplying.current) return;
     setFilterState(section);
     setQuery("");
     contentRef.current?.scrollTo({ top: 0 });
@@ -610,22 +611,7 @@ function App() {
 
     const inCategory = base.filter((t) => t.category === filter);
 
-    // Give Pro items some prominence without turning a section into a
-    // storefront: the first two Pro tweaks move to the top, and every other
-    // one keeps its place further down among the free ones. A section that
-    // opened with nothing but padlocks would read as "this app is all about
-    // the money", which is the opposite of what earns the upgrade.
-    //
-    // Order within each group is preserved (a stable partition), so this never
-    // scrambles the list — it only lifts the first couple of entries.
-    const PROMOTED_PRO = 2;
-    const promoted: TweakInfo[] = [];
-    const rest: TweakInfo[] = [];
-    for (const t of inCategory) {
-      if (t.requires_pro && promoted.length < PROMOTED_PRO) promoted.push(t);
-      else rest.push(t);
-    }
-    return [...promoted, ...rest];
+    return orderSectionTweaks(inCategory, filter);
   }, [tweaks, filter, query, searching, s]);
 
   const showCleanup = filter === "manutenzione" && !searching;
@@ -697,11 +683,7 @@ function App() {
           ref={contentRef}
           className="workspace-content app-field min-w-0 flex-1 overflow-y-auto px-8 py-7"
         >
-          {/* The pricing comparison needs the extra width to sit side by side;
-            every other screen reads better kept narrow. */}
-          <div
-            className={`workspace-page mx-auto ${showPricing ? "workspace-pricing-page" : ""} ${showPricing || showOverview ? "max-w-5xl" : "max-w-3xl"}`}
-          >
+          <div className={`workspace-page ${showPricing ? "workspace-pricing-page" : ""}`}>
             <header
               className={`workspace-header border-line flex items-start justify-between gap-4 ${filter === "debloat" ? "mb-2" : "mb-6 border-b pb-4"}`}
             >
@@ -712,34 +694,40 @@ function App() {
                   <h1 className="type-page page-title">{currentLabel}</h1>
                 )}
                 {/* Overview and Startup provide their own counts. */}
-                {!showOverview && !showStartup && !showPricing && filter !== "debloat" && (
-                  <div className="mt-1 flex items-center gap-3">
-                    <p className="text-ink-3 type-data text-[12.5px]">
-                      {format(s.appliedCount, {
-                        applied: appliedCount,
-                        total: catalogTweaks.length,
-                      })}
-                    </p>
-                    {/* Restore supported settings from their saved values. */}
-                    {restorableCount > 0 && (
-                      <button
-                        onClick={() => setConfirmRestore(true)}
-                        disabled={restoring}
-                        className="flex items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-2.5 py-1 text-xs font-semibold text-ink-2 transition-colors hover:border-line-2 hover:bg-surface-hover hover:text-white disabled:cursor-wait disabled:opacity-60"
-                      >
-                        <UndoIcon className="h-3.5 w-3.5" />
-                        {restoring ? s.restore.running : s.restore.button}
-                      </button>
-                    )}
-                  </div>
-                )}
+                {!showOverview &&
+                  !showScan &&
+                  !showStartup &&
+                  !showPricing &&
+                  filter !== "debloat" && (
+                    <div className="mt-1 flex items-center gap-3">
+                      <p className="text-ink-3 type-data text-[12.5px]">
+                        {format(s.appliedCount, {
+                          applied: appliedCount,
+                          total: catalogTweaks.length,
+                        })}
+                      </p>
+                      {/* Restore supported settings from their saved values. */}
+                      {restorableCount > 0 && (
+                        <button
+                          onClick={() => setConfirmRestore(true)}
+                          disabled={restoring}
+                          className="flex items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-2.5 py-1 text-xs font-semibold text-ink-2 transition-colors hover:border-line-2 hover:bg-surface-hover hover:text-white disabled:cursor-wait disabled:opacity-60"
+                        >
+                          <UndoIcon className="h-3.5 w-3.5" />
+                          {restoring ? s.restore.running : s.restore.button}
+                        </button>
+                      )}
+                    </div>
+                  )}
               </div>
               {!showPricing && filter !== "debloat" && (
                 <div className="relative ml-auto w-56 shrink-0">
                   <MagnifierIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
                   <input
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={(e) => {
+                      if (!scanApplying.current) setQuery(e.target.value);
+                    }}
                     onKeyDown={(e) => e.key === "Escape" && setQuery("")}
                     aria-label={s.search.placeholder}
                     placeholder={s.search.placeholder}
@@ -776,453 +764,443 @@ function App() {
               />
             </header>
 
-            {showOverview && (
-              <OverviewPanel
-                s={s}
-                lang={lang}
-                tweaks={tweaks}
-                samples={pulseSamples}
-                onNavigate={setFilter}
-              />
-            )}
-
-            {/* Free RAM leads the home screen: it is the card people use every
-              day (one click, schedulable), so it earns the top spot over the
-              passive monitor below it. */}
-            {showScan && (
-              <>
-                <RamCleaner
-                  s={s}
-                  samples={pulseSamples}
-                  autoMinutes={ramAutoMinutes}
-                  onChangeAuto={chooseRamAuto}
-                  auto={autoClean}
-                  pushToast={pushToast}
-                />
-                <SystemMonitor s={s} />
-                {/* One concrete, hardware-motivated recommendation — never a
-                  pile. Hidden entirely when the flag is off. */}
-                {FEATURE_INTELLIGENCE && (
-                  <AdvisorCard
-                    s={s}
-                    tweaks={tweaks}
-                    busyId={busyId}
-                    isPro={isProUnlocked}
-                    onRequirePro={() => setPaywallFeature(s.menu.planPro)}
-                    onApply={toggle}
-                  />
-                )}
-              </>
-            )}
-
-            {showScan && <DashboardCards s={s} onNavigate={setFilter} />}
-
-            {showHardware && (
-              <HardwarePanel
-                s={s}
-                isPro={isProUnlocked}
-                onRequirePro={() => setPaywallFeature(s.driverBooster.title)}
-                pushToast={pushToast}
-              />
-            )}
-
-            {showHealth && (
-              <SystemRepairCard
-                s={s}
-                isPro={isProUnlocked}
-                onRequirePro={() => setPaywallFeature(s.systemRepair.title)}
-                pushToast={pushToast}
-              />
-            )}
-
-            {showHealth && (
-              <HealthPanel
-                title={s.healthPanel.title}
-                subtitle={s.healthPanel.subtitle}
-                refreshLabel={s.healthPanel.refresh}
-                computeLabel={s.healthPanel.compute}
-                computingLabel={s.healthPanel.computing}
-                idleHint={s.healthPanel.idleHint}
-                showMore={s.healthPanel.showMore}
-                showLess={s.healthPanel.showLess}
-                stages={[
-                  s.healthPanel.stageProfile,
-                  s.healthPanel.stageTweaks,
-                  s.healthPanel.stageSecurity,
-                  s.healthPanel.stageScoring,
-                ]}
-                verdicts={{
-                  excellent: s.healthPanel.verdictExcellent,
-                  good: s.healthPanel.verdictGood,
-                  fair: s.healthPanel.verdictFair,
-                  needsWork: s.healthPanel.verdictNeedsWork,
-                }}
-                baseline={{
-                  title: s.healthPanel.baselineTitle,
-                  hint: s.healthPanel.baselineHint,
-                  run: s.healthPanel.baselineRun,
-                  running: s.healthPanel.baselineRunning,
-                  empty: s.healthPanel.baselineEmpty,
-                }}
-                change={{
-                  sinceLast: s.healthPanel.changeSinceLast,
-                  noChange: s.healthPanel.changeNone,
-                  firstRun: s.healthPanel.changeFirstRun,
-                  whyTitle: s.healthPanel.changeWhyTitle,
-                  contributes: s.healthPanel.changeContributes,
-                  structural: s.healthPanel.changeStructural,
-                  trend: s.healthPanel.changeTrend,
-                }}
-                categoryLabels={s.healthPanel.categories}
-              />
-            )}
-
-            {showLedger && (
-              <>
-                {/* Above the ledger: a crash is the one thing on this screen
-                  that needs acting on, and it renders nothing at all when
-                  there are no reports. */}
-                {/* Above the crash card: a reverted tweak is something the
-                  user can act on right now, and it renders nothing when
-                  nothing drifted. */}
-                <DriftWatchToggle s={s} pushToast={pushToast} />
-                <UpdateDriftCard s={s} tweaks={tweaks} onChanged={refresh} pushToast={pushToast} />
-                <CrashReportsCard s={s} pushToast={pushToast} />
-                <LedgerPanel
-                  s={s}
-                  lang={lang}
-                  tweaks={tweaks}
-                  onChanged={refresh}
-                  pushToast={pushToast}
-                />
-              </>
-            )}
-
-            {showStartup && <StartupManager s={s} pushToast={pushToast} />}
-
-            {/* Keep operation state alive when navigating during a removal. */}
-            <div hidden={filter !== "debloat" || searching}>
-              <DebloatPanel
-                lang={lang}
-                active={filter === "debloat" && !searching}
-                onNavigate={setFilter}
-              />
-            </div>
-
-            {showStartup && <ScheduledTaskManager s={s} pushToast={pushToast} />}
-
-            {showProfiles && (
-              <ProfilesPanel
-                s={s}
-                lang={lang}
-                lifetimeOwned={
-                  isProUnlocked && auth.status === "authenticated" && auth.plan === "lifetime"
-                }
-                onViewPlans={() => setFilter("pricing")}
-                tweaks={tweaks}
-                isPro={isProUnlocked}
-                authed={auth.status === "authenticated"}
-                onRequireAuth={() => {
-                  pushToast("error", s.profiles.signInRequired);
-                  setAccountMenuOpen(true);
-                }}
-                onRequirePro={() => setPaywallFeature(s.profiles.title)}
-                onChanged={refresh}
-                pushToast={pushToast}
-              />
-            )}
-
-            {showPricing && (
-              <PricingPanel
-                s={s}
-                lang={lang}
-                isPro={isProUnlocked}
-                heldPlan={auth.status === "authenticated" ? auth.plan : null}
-                hasBilling={auth.status === "authenticated" && auth.hasBilling}
-                freeTweakCount={freeTweakCount}
-                onOpenLifetimeTools={() => setFilter("profiles")}
-                onChoosePro={async (plan) => {
-                  // A visitor without an account is exactly who this button is
-                  // for, and it used to answer them with a red toast and
-                  // nowhere to go: startCheckout throws without a token and
-                  // the catch below only reported it. ProfilesPanel already
-                  // had the right shape — say what is missing and open the
-                  // place where it is fixed.
-                  if (auth.status !== "authenticated") {
-                    pushToast("error", s.auth.loginRequiredForCheckout);
-                    setAccountMenuOpen(true);
-                    return;
-                  }
-                  try {
-                    await startCheckout(plan);
-                  } catch (e) {
-                    pushToast("error", String(e instanceof Error ? e.message : e));
-                  }
-                }}
-                onManageBilling={async () => {
-                  try {
-                    await openBillingPortal();
-                  } catch (e) {
-                    pushToast("error", String(e instanceof Error ? e.message : e));
-                  }
-                }}
-              />
-            )}
-
-            {showScan && (
+            <div hidden={!showScan} className="workspace-view workspace-scan-view">
               <div id="scan-results">
                 <ScanPanel
                   s={s}
-                  tweaks={tweaks}
-                  cleanupTargets={cleanupTargets}
+                  lang={lang}
                   isPro={isProUnlocked}
-                  onRequirePro={() => setPaywallFeature(s.menu.planPro)}
                   onFixed={refresh}
                   pushToast={pushToast}
+                  onNavigate={setFilter}
+                  onBusyChange={(busy) => {
+                    scanApplying.current = busy;
+                  }}
                 />
                 <TweakyDriverPromoCard s={s} />
               </div>
-            )}
+            </div>
 
-            {showPrivacyExtras && (
-              <>
-                <ZeroTraceCard
+            <div key={filter} className="workspace-view">
+              {showOverview && (
+                <OverviewPanel
+                  s={s}
+                  lang={lang}
+                  tweaks={tweaks}
+                  samples={pulseSamples}
+                  onNavigate={setFilter}
+                />
+              )}
+
+              {showCleanup && (
+                <>
+                  <RamCleaner
+                    s={s}
+                    samples={pulseSamples}
+                    autoMinutes={ramAutoMinutes}
+                    onChangeAuto={chooseRamAuto}
+                    auto={autoClean}
+                    pushToast={pushToast}
+                  />
+                  <ul className="maintenance-drive-tools">
+                    <DiskToolsSection
+                      s={s}
+                      isPro={isProUnlocked}
+                      onRequirePro={() => setPaywallFeature(s.diskOptimize.title)}
+                      onToast={pushToast}
+                    />
+                  </ul>
+                  <SystemMonitor s={s} />
+                </>
+              )}
+
+              {showHardware && (
+                <HardwarePanel
                   s={s}
                   isPro={isProUnlocked}
-                  onRequirePro={() => setPaywallFeature(s.zeroTrace.title)}
+                  onRequirePro={() => setPaywallFeature(s.driverBooster.title)}
                   pushToast={pushToast}
                 />
-                <PasswordBreachCheck s={s} />
-                <RedaxaPromoCard s={s} />
-              </>
-            )}
+              )}
 
-            {showGamingExtras && (
-              <>
-                <GameSessionsPanel
+              {showHealth && (
+                <SystemRepairCard
                   s={s}
                   isPro={isProUnlocked}
-                  onRequirePro={() => setPaywallFeature(s.gameSessions.title)}
+                  onRequirePro={() => setPaywallFeature(s.systemRepair.title)}
+                  pushToast={pushToast}
                 />
-                <TurboBoostPanel
+              )}
+
+              {showHealth && (
+                <HealthPanel
+                  title={s.healthPanel.title}
+                  subtitle={s.healthPanel.subtitle}
+                  refreshLabel={s.healthPanel.refresh}
+                  computeLabel={s.healthPanel.compute}
+                  computingLabel={s.healthPanel.computing}
+                  idleHint={s.healthPanel.idleHint}
+                  showMore={s.healthPanel.showMore}
+                  showLess={s.healthPanel.showLess}
+                  stages={[
+                    s.healthPanel.stageProfile,
+                    s.healthPanel.stageTweaks,
+                    s.healthPanel.stageSecurity,
+                    s.healthPanel.stageScoring,
+                  ]}
+                  verdicts={{
+                    excellent: s.healthPanel.verdictExcellent,
+                    good: s.healthPanel.verdictGood,
+                    fair: s.healthPanel.verdictFair,
+                    needsWork: s.healthPanel.verdictNeedsWork,
+                  }}
+                  baseline={{
+                    title: s.healthPanel.baselineTitle,
+                    hint: s.healthPanel.baselineHint,
+                    run: s.healthPanel.baselineRun,
+                    running: s.healthPanel.baselineRunning,
+                    empty: s.healthPanel.baselineEmpty,
+                  }}
+                  change={{
+                    sinceLast: s.healthPanel.changeSinceLast,
+                    noChange: s.healthPanel.changeNone,
+                    firstRun: s.healthPanel.changeFirstRun,
+                    whyTitle: s.healthPanel.changeWhyTitle,
+                    contributes: s.healthPanel.changeContributes,
+                    structural: s.healthPanel.changeStructural,
+                    trend: s.healthPanel.changeTrend,
+                  }}
+                  categoryLabels={s.healthPanel.categories}
+                />
+              )}
+
+              {showLedger && (
+                <>
+                  {/* Above the ledger: a crash is the one thing on this screen
+                  that needs acting on, and it renders nothing at all when
+                  there are no reports. */}
+                  {/* Above the crash card: a reverted tweak is something the
+                  user can act on right now, and it renders nothing when
+                  nothing drifted. */}
+                  <DriftWatchToggle s={s} pushToast={pushToast} />
+                  <UpdateDriftCard
+                    s={s}
+                    tweaks={tweaks}
+                    onChanged={refresh}
+                    pushToast={pushToast}
+                  />
+                  <CrashReportsCard s={s} pushToast={pushToast} />
+                  <LedgerPanel
+                    s={s}
+                    lang={lang}
+                    tweaks={tweaks}
+                    onChanged={refresh}
+                    pushToast={pushToast}
+                  />
+                </>
+              )}
+
+              {showStartup && <StartupManager s={s} pushToast={pushToast} />}
+
+              {/* Keep operation state alive when navigating during a removal. */}
+              <div hidden={filter !== "debloat" || searching}>
+                <DebloatPanel
+                  lang={lang}
+                  active={filter === "debloat" && !searching}
+                  onNavigate={setFilter}
+                />
+              </div>
+
+              {showStartup && <ScheduledTaskManager s={s} pushToast={pushToast} />}
+
+              {showProfiles && (
+                <ProfilesPanel
                   s={s}
-                  applied={turboBoostApplied}
+                  lang={lang}
+                  lifetimeOwned={
+                    isProUnlocked && auth.status === "authenticated" && auth.plan === "lifetime"
+                  }
+                  onViewPlans={() => setFilter("pricing")}
+                  tweaks={tweaks}
+                  isPro={isProUnlocked}
+                  authed={auth.status === "authenticated"}
+                  onRequireAuth={() => {
+                    pushToast("error", s.profiles.signInRequired);
+                    setAccountMenuOpen(true);
+                  }}
+                  onRequirePro={() => setPaywallFeature(s.profiles.title)}
                   onChanged={refresh}
                   pushToast={pushToast}
                 />
-                {/* Below the two headline cards: Game Sessions and Turbo Boost
-                  are what this screen is known for, and the aligner applies to
-                  a minority of processors. */}
-                <X3dPanel s={s} pushToast={pushToast} />
-                <NetworkCheckPanel s={s} tweaks={tweaks} />
-              </>
-            )}
+              )}
 
-            {/* On the UI screen: it is a panel the user places, sizes and
+              {showPricing && (
+                <PricingPanel
+                  s={s}
+                  lang={lang}
+                  isPro={isProUnlocked}
+                  heldPlan={auth.status === "authenticated" ? auth.plan : null}
+                  hasBilling={auth.status === "authenticated" && auth.hasBilling}
+                  freeTweakCount={freeTweakCount}
+                  onOpenLifetimeTools={() => setFilter("profiles")}
+                  onChoosePro={async (plan) => {
+                    // A visitor without an account is exactly who this button is
+                    // for, and it used to answer them with a red toast and
+                    // nowhere to go: startCheckout throws without a token and
+                    // the catch below only reported it. ProfilesPanel already
+                    // had the right shape — say what is missing and open the
+                    // place where it is fixed.
+                    if (auth.status !== "authenticated") {
+                      pushToast("error", s.auth.loginRequiredForCheckout);
+                      setAccountMenuOpen(true);
+                      return;
+                    }
+                    try {
+                      await startCheckout(plan);
+                    } catch (e) {
+                      pushToast("error", String(e instanceof Error ? e.message : e));
+                    }
+                  }}
+                  onManageBilling={async () => {
+                    try {
+                      await openBillingPortal();
+                    } catch (e) {
+                      pushToast("error", String(e instanceof Error ? e.message : e));
+                    }
+                  }}
+                />
+              )}
+
+              {showPrivacyExtras && (
+                <>
+                  <ZeroTraceCard
+                    s={s}
+                    isPro={isProUnlocked}
+                    onRequirePro={() => setPaywallFeature(s.zeroTrace.title)}
+                    pushToast={pushToast}
+                  />
+                  <PasswordBreachCheck s={s} />
+                  <RedaxaPromoCard s={s} />
+                </>
+              )}
+
+              {showGamingExtras && (
+                <>
+                  <TurboBoostPanel
+                    s={s}
+                    applied={turboBoostApplied}
+                    onChanged={refresh}
+                    pushToast={pushToast}
+                  />
+                  <GameSessionsPanel
+                    s={s}
+                    isPro={isProUnlocked}
+                    onRequirePro={() => setPaywallFeature(s.gameSessions.title)}
+                  />
+                </>
+              )}
+
+              {/* On the UI screen: it is a panel the user places, sizes and
               locks, which is the kind of thing that screen is for. Above the
               tweak list, like every other screen's headline card — below
               forty-odd rows nobody scrolled far enough to find it. */}
-            {filter === "ui" && !searching && (
-              <GamingHudCard
-                s={s}
-                isPro={isProUnlocked}
-                onRequirePro={() => setPaywallFeature(s.hud.title)}
-                pushToast={pushToast}
-              />
-            )}
+              {filter === "ui" && !searching && (
+                <GamingHudCard
+                  s={s}
+                  isPro={isProUnlocked}
+                  onRequirePro={() => setPaywallFeature(s.hud.title)}
+                  pushToast={pushToast}
+                />
+              )}
 
-            <ul className="flex flex-col gap-3">
-              {visibleTweaks.map((t, i) => {
-                if (
-                  t.id === "ecoqos_rules" ||
-                  t.id === "limit_do_background_download" ||
-                  t.id === "monitor_refresh_profile"
-                ) {
-                  return (
-                    <li key={t.id} className="animate-card">
-                      <AdvancedControlCard
-                        id={t.id}
-                        lang={lang}
-                        isPro={isProUnlocked}
-                        onRequirePro={setPaywallFeature}
-                      />
-                    </li>
-                  );
-                }
-                const style = CATEGORY_STYLE[t.category];
-                const text = textFor(s.tweaks, t.id, t.name, t.description);
-                return (
-                  <li
-                    key={t.id}
-                    style={{ animationDelay: `${i * 40}ms` }}
-                    className="animate-card panel panel-hover group relative overflow-hidden p-4"
-                  >
-                    {/* The category tint only shows on hover, and only at the
-                      corner the light comes from — enough to tell two sections
-                      apart, not enough to colour the card. */}
-                    <div
-                      className={`pointer-events-none absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${style.ring}`}
-                    />
-                    <div className="relative flex items-center gap-4">
-                      {/* A backlit module, not a tile. The backlight is gold on
-                        a Pro tweak and the theme accent otherwise, so the tier
-                        registers before any badge is read. */}
-                      <div
-                        className="icon-module grid h-11 w-11 shrink-0 place-items-center"
-                        style={
-                          {
-                            "--module-tint": style.tint,
-                            "--module-glow": t.requires_pro
-                              ? "rgb(230 187 74 / 0.42)"
-                              : "color-mix(in oklab, var(--accent) 45%, transparent)",
-                          } as React.CSSProperties
+              <ul className="flex flex-col gap-3">
+                {visibleTweaks.map((t, i) => {
+                  if (
+                    t.id === "ecoqos_rules" ||
+                    t.id === "limit_do_background_download" ||
+                    t.id === "monitor_refresh_profile"
+                  ) {
+                    return (
+                      <li
+                        key={t.id}
+                        data-tweak-id={t.id}
+                        data-priority={
+                          !searching && (filter === "performance" || filter === "gaming") && i < 3
                         }
+                        className="animate-card section-tweak"
                       >
-                        <TweakIcon id={t.id} fallback={style.icon} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="text-[13.5px] font-semibold tracking-[-0.01em] text-white">
-                            {text.name}
-                          </h2>
-                          {/* The (i) is the door to the exact system change.
+                        <AdvancedControlCard
+                          id={t.id}
+                          lang={lang}
+                          isPro={isProUnlocked}
+                          onRequirePro={setPaywallFeature}
+                        />
+                      </li>
+                    );
+                  }
+                  const style = CATEGORY_STYLE[t.category];
+                  const text = textFor(s.tweaks, t.id, t.name, t.description);
+                  return (
+                    <li
+                      key={t.id}
+                      data-tweak-id={t.id}
+                      data-priority={
+                        !searching && (filter === "performance" || filter === "gaming") && i < 3
+                      }
+                      style={{ animationDelay: `${i * 40}ms` }}
+                      className="animate-card section-tweak panel panel-hover group relative overflow-hidden p-4"
+                    >
+                      <div className="relative flex items-center gap-4">
+                        <div
+                          className="icon-module grid shrink-0 place-items-center"
+                          style={{ "--module-tint": style.tint } as React.CSSProperties}
+                        >
+                          <TweakIcon id={t.id} fallback={style.icon} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-ink">
+                              {text.name}
+                            </h2>
+                            {/* The (i) is the door to the exact system change.
                             A description can be argued with; a registry path
                             can be checked in regedit, so it is one click away
                             rather than buried in a FAQ. */}
-                          {t.changes.length > 0 ? (
-                            <TechnicalToggle
-                              open={inspecting === t.id}
-                              label={s.transparency.title}
-                              hive={t.hive}
-                              onClick={() => {
-                                setInspecting(inspecting === t.id ? null : t.id);
-                              }}
-                            />
-                          ) : (
-                            t.hive !== "—" && (
-                              <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-2">
-                                {t.hive}
-                              </span>
-                            )
-                          )}
-                          {t.requires_admin && <ShieldBadge label={s.badges.admin} />}
-                          {t.requires_pro && <ProBadge label={s.badges.pro} />}
+                            {t.changes.length > 0 ? (
+                              <TechnicalToggle
+                                open={inspecting === t.id}
+                                label={s.transparency.title}
+                                hive={t.hive}
+                                onClick={() => {
+                                  setInspecting(inspecting === t.id ? null : t.id);
+                                }}
+                              />
+                            ) : (
+                              t.hive !== "—" && (
+                                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-2">
+                                  {t.hive}
+                                </span>
+                              )
+                            )}
+                            {t.requires_admin && <ShieldBadge label={s.badges.admin} />}
+                            {t.requires_pro && <ProBadge label={s.badges.pro} />}
+                          </div>
+                          <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.55] text-ink-3">
+                            {text.description}
+                          </p>
+                          {inspecting === t.id && <TechnicalDetails changes={t.changes} s={s} />}
                         </div>
-                        <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.55] text-ink-3">
-                          {text.description}
-                        </p>
-                        {inspecting === t.id && <TechnicalDetails changes={t.changes} s={s} />}
+                        <Toggle
+                          label={text.name}
+                          busyLabel={t.applied ? s.restore.running : s.profiles.applying}
+                          checked={t.applied}
+                          busy={busyId === t.id}
+                          onClick={() => toggle(t)}
+                          s={s}
+                        />
                       </div>
-                      <Toggle
-                        checked={t.applied}
-                        busy={busyId === t.id}
-                        onClick={() => toggle(t)}
-                        s={s}
-                      />
-                    </div>
+                    </li>
+                  );
+                })}
+
+                {showGamingExtras && (
+                  <li>
+                    <X3dPanel s={s} pushToast={pushToast} />
+                    <NetworkCheckPanel s={s} tweaks={tweaks} />
                   </li>
-                );
-              })}
+                )}
 
-              {showPrivacyExtras && (
-                <IpMaskCard s={s} onExplain={() => pushToast("error", s.ipMask.explainerToast)} />
-              )}
+                {showPrivacyExtras && (
+                  <IpMaskCard s={s} onExplain={() => pushToast("error", s.ipMask.explainerToast)} />
+                )}
 
-              {showCleanup && (
-                <DiskToolsSection
-                  s={s}
-                  isPro={isProUnlocked}
-                  onRequirePro={() => setPaywallFeature(s.diskOptimize.title)}
-                  onToast={pushToast}
-                />
-              )}
+                {showCleanup &&
+                  cleanupTargets.map((c) => (
+                    <CleanupCard
+                      key={c.id}
+                      s={s}
+                      info={c}
+                      text={textFor(s.cleanup, c.id, c.name, c.description)}
+                      busy={busyId === c.id}
+                      isPro={isProUnlocked}
+                      onRequirePro={() =>
+                        setPaywallFeature(textFor(s.cleanup, c.id, c.name, c.description).name)
+                      }
+                      onRun={(info) => setConfirmCleanup(info)}
+                    />
+                  ))}
 
-              {showCleanup &&
-                cleanupTargets.map((c) => (
-                  <CleanupCard
-                    key={c.id}
-                    s={s}
-                    info={c}
-                    text={textFor(s.cleanup, c.id, c.name, c.description)}
-                    busy={busyId === c.id}
-                    isPro={isProUnlocked}
-                    onRequirePro={() =>
-                      setPaywallFeature(textFor(s.cleanup, c.id, c.name, c.description).name)
-                    }
-                    onRun={(info) => setConfirmCleanup(info)}
-                  />
-                ))}
+                {showCleanup && <DnsFlushCard s={s} onToast={pushToast} />}
 
-              {showCleanup && <DnsFlushCard s={s} onToast={pushToast} />}
+                {showCleanup && <BrowserCleanupCard s={s} onToast={pushToast} />}
 
-              {showCleanup && <BrowserCleanupCard s={s} onToast={pushToast} />}
-
-              {/* Directly under the browser cleaner it supersedes for cookies:
+                {/* Directly under the browser cleaner it supersedes for cookies:
                 that card wipes the whole cookie file and signs the user out of
                 everything, which is why most people click it once. This one is
                 the version they can use every week. */}
-              {showCleanup && (
-                <CookieCleanerCard
-                  s={s}
-                  isPro={isProUnlocked}
-                  onRequirePro={() => setPaywallFeature(s.cookieCleaner.title)}
-                  onToast={pushToast}
-                />
-              )}
+                {showCleanup && (
+                  <CookieCleanerCard
+                    s={s}
+                    isPro={isProUnlocked}
+                    onRequirePro={() => setPaywallFeature(s.cookieCleaner.title)}
+                    onToast={pushToast}
+                  />
+                )}
 
-              {showCleanup && (
-                <AppCacheCard
-                  s={s}
-                  isPro={isProUnlocked}
-                  onRequirePro={() => setPaywallFeature(s.appCache.title)}
-                  onToast={pushToast}
-                />
-              )}
+                {showCleanup && (
+                  <AppCacheCard
+                    s={s}
+                    isPro={isProUnlocked}
+                    onRequirePro={() => setPaywallFeature(s.appCache.title)}
+                    onToast={pushToast}
+                  />
+                )}
 
-              {showCleanup && (
-                <DuplicateFinder
-                  s={s}
-                  isPro={isProUnlocked}
-                  onRequirePro={() => setPaywallFeature(s.duplicateFinder.title)}
-                  onToast={pushToast}
-                />
-              )}
+                {showCleanup && (
+                  <DuplicateFinder
+                    s={s}
+                    isPro={isProUnlocked}
+                    onRequirePro={() => setPaywallFeature(s.duplicateFinder.title)}
+                    onToast={pushToast}
+                  />
+                )}
 
-              {showCleanup && (
-                <LargeFileFinder
-                  s={s}
-                  isPro={isProUnlocked}
-                  onRequirePro={() => setPaywallFeature(s.largeFiles.title)}
-                  onToast={pushToast}
-                />
-              )}
+                {showCleanup && (
+                  <LargeFileFinder
+                    s={s}
+                    isPro={isProUnlocked}
+                    onRequirePro={() => setPaywallFeature(s.largeFiles.title)}
+                    onToast={pushToast}
+                  />
+                )}
 
-              {showCleanup && <UninstallerPromoCard s={s} />}
+                {showCleanup && <UninstallerPromoCard s={s} />}
 
-              {/* "No tweaks in this category" only makes sense on a screen that
+                {/* "No tweaks in this category" only makes sense on a screen that
                 IS a tweak category. It was an opt-out list of every other
                 section, which meant each new screen had to remember to add
                 itself — PC Health never did, and has been telling people it
                 had no tweaks coming soon ever since. Asking whether the
                 current filter is a real category cannot drift that way. */}
-              {visibleTweaks.length === 0 &&
-                (searching || Object.prototype.hasOwnProperty.call(CATEGORY_STYLE, filter)) &&
-                !showCleanup &&
-                !showPrivacyExtras &&
-                !showScan &&
-                !showStartup &&
-                !showPricing && (
-                  <li className="animate-card rounded-2xl border border-dashed border-line p-10 text-center text-sm text-ink-3">
-                    {searching
-                      ? format(s.search.noResults, { query: query.trim() })
-                      : s.emptyCategory}
-                  </li>
-                )}
-            </ul>
+                {visibleTweaks.length === 0 &&
+                  (searching || Object.prototype.hasOwnProperty.call(CATEGORY_STYLE, filter)) &&
+                  !showCleanup &&
+                  !showPrivacyExtras &&
+                  !showScan &&
+                  !showStartup &&
+                  !showPricing && (
+                    <li className="animate-card rounded-2xl border border-dashed border-line p-10 text-center text-sm text-ink-3">
+                      {searching
+                        ? format(s.search.noResults, { query: query.trim() })
+                        : s.emptyCategory}
+                    </li>
+                  )}
+              </ul>
 
-            <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-relaxed text-ink-3">
-              {s.headerNote}
-            </p>
+              <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-relaxed text-ink-3">
+                {s.headerNote}
+              </p>
+            </div>
           </div>
         </div>
       </main>

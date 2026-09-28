@@ -4,11 +4,18 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { STRINGS, type Lang } from "../i18n";
 import { FEATURE_INTELLIGENCE } from "../lib";
 import { ToolHeader, ToolStatus } from "./tool-section";
-import { DEBLOAT_COPY, DEBLOAT_IMPACT } from "./debloat-copy";
+import {
+  DEBLOAT_COPY,
+  DEBLOAT_IMPACT,
+  LIBRARY_COPY,
+  APP_CATEGORIES,
+  EXTRA_IMPACTS,
+} from "./debloat-copy";
 import { STARTER_COPY } from "./starter-copy";
 import "./debloat.css";
 
 export interface DebloatApp {
+  iconDataUrl?: string | null;
   catalogId: string;
   name: string;
   description: string;
@@ -40,61 +47,20 @@ const SUGGESTION_IDS = [
   "disable_feedback_requests",
 ] as const;
 
-function AppMark({ id }: { id: string }) {
-  const paths: Record<string, React.ReactNode> = {
-    solitaire: (
-      <>
-        <path d="M12 3 4 12l8 9 8-9-8-9Z" />
-        <path d="M12 7v10M8 12h8" />
-      </>
-    ),
-    weather: (
-      <>
-        <circle cx="8" cy="8" r="3" />
-        <path d="M15 18H6a3 3 0 0 1 0-6h1m5 6h5a3 3 0 0 0-.7-5.9 5 5 0 0 0-9-1" />
-      </>
-    ),
-    news: (
-      <>
-        <path d="M5 3h12v16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm12 4h3v11a2 2 0 0 1-2 2H6" />
-        <path d="M8 7h6M8 11h6M8 15h6" />
-      </>
-    ),
-    copilot: (
-      <>
-        <path d="m12 2 2.1 7.9L22 12l-7.9 2.1L12 22l-2.1-7.9L2 12l7.9-2.1L12 2Z" />
-      </>
-    ),
-    clipchamp: (
-      <>
-        <rect x="3" y="4" width="18" height="16" rx="3" />
-        <path d="m10 8 6 4-6 4V8Z" />
-      </>
-    ),
-    outlook: (
-      <>
-        <rect x="3" y="6" width="18" height="13" rx="2" />
-        <path d="m4 8 8 6 8-6" />
-      </>
-    ),
-  };
+function AppMark({ app }: { app: DebloatApp }) {
+  const [failed, setFailed] = useState(false);
   return (
-    <span className={`debloat-app-mark debloat-app-mark-${id}`} aria-hidden="true">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {paths[id] ?? (
-          <>
-            <rect x="4" y="4" width="16" height="16" rx="4" />
-            <path d="M8 12h8" />
-          </>
-        )}
-      </svg>
+    <span className="debloat-app-mark" aria-hidden="true">
+      {app.iconDataUrl?.startsWith("data:image/png;base64,") && !failed ? (
+        <img src={app.iconDataUrl} alt="" onError={() => setFailed(true)} />
+      ) : (
+        <span className="debloat-monogram">
+          {app.name
+            .replace(/^Microsoft /, "")
+            .slice(0, 2)
+            .toUpperCase()}
+        </span>
+      )}
     </span>
   );
 }
@@ -109,6 +75,11 @@ export function DebloatPanel({
   active?: boolean;
 }) {
   const c = DEBLOAT_COPY[lang];
+  const l = LIBRARY_COPY[lang];
+  const [category, setCategory] = useState("all");
+  const [showAbsent, setShowAbsent] = useState(false);
+  const [sortBy, setSortBy] = useState<"name" | "category">("name");
+  const [selectedOnly, setSelectedOnly] = useState(false);
   const s = STRINGS[lang];
   const [view, setView] = useState<View>("apps");
   const [apps, setApps] = useState<DebloatApp[]>([]);
@@ -239,21 +210,31 @@ export function DebloatPanel({
   const installed = apps.filter((app) => app.installed);
   const removable = installed.filter((app) => app.removable && app.packageFullName);
   const elevated = installed.some((app) => app.reason === "requiresStandardUser");
-  const filtered = installed.filter((app) => {
+  const categoryOf = (app: DebloatApp) => APP_CATEGORIES[app.catalogId] ?? "windows";
+  const filtered = (showAbsent ? apps : installed).filter((app) => {
     const available = app.removable && !!app.packageFullName;
     return (
-      (appFilter === "all" || (appFilter === "removable" ? available : !available)) &&
+      (!selectedOnly || (!!app.packageFullName && selection.has(app.packageFullName))) &&
+      (category === "all" || categoryOf(app) === category) &&
+      (appFilter === "all" ||
+        (appFilter === "removable" ? available : app.installed && !available)) &&
       `${app.name} ${app.packageFullName ?? ""}`
         .toLocaleLowerCase()
         .includes(query.trim().toLocaleLowerCase())
     );
   });
+  filtered.sort(
+    (a, b) =>
+      (sortBy === "category" ? l[categoryOf(a)].localeCompare(l[categoryOf(b)], lang) : 0) ||
+      a.name.localeCompare(b.name, lang),
+  );
   const chosen = installed.filter(
     (app) => app.packageFullName && selection.has(app.packageFullName) && app.removable,
   );
   const appName = (catalogId: string) =>
     apps.find((app) => app.catalogId === catalogId)?.name ?? catalogId;
-  const impact = (app: DebloatApp) => c[DEBLOAT_IMPACT[app.catalogId]] ?? app.impact;
+  const impact = (app: DebloatApp) =>
+    c[DEBLOAT_IMPACT[app.catalogId]] ?? EXTRA_IMPACTS[lang][app.catalogId] ?? app.impact;
   const status = (value: DebloatRecord["status"]) => c[value];
   const reason = (value: string | null) =>
     value === "publisherMismatch" ||
@@ -268,11 +249,27 @@ export function DebloatPanel({
   return (
     <section className="debloat" aria-label={c.title}>
       <div className="debloat-hero">
+        <p className="debloat-eyebrow">{l.eyebrow}</p>
         <ToolHeader
-          title={c.title}
-          description={c.intro}
+          title={l.title}
+          description={l.intro}
           actions={<span className="debloat-scope">{c.currentUser}</span>}
         />
+        <div className="debloat-summary" aria-live="polite">
+          <div>
+            <strong>{scanning ? "—" : installed.length}</strong>
+            <span>{c.installed}</span>
+          </div>
+          <div>
+            <strong>{scanning ? "—" : removable.length}</strong>
+            <span>{c.removable}</span>
+          </div>
+          <div>
+            <strong>{scanning ? "—" : apps.length}</strong>
+            <span>{l.catalogue}</span>
+          </div>
+          <p>{c.scope}</p>
+        </div>
       </div>
 
       <nav className="debloat-tabs" aria-label={c.title}>
@@ -294,10 +291,6 @@ export function DebloatPanel({
           <div className="debloat-toolbar">
             <div>
               <h3>{c.choose}</h3>
-              <p>
-                {installed.length} {c.installed.toLocaleLowerCase()} · {removable.length}{" "}
-                {c.removable.toLocaleLowerCase()}
-              </p>
             </div>
             <button
               type="button"
@@ -320,7 +313,7 @@ export function DebloatPanel({
               <p>{c.requiresStandardUser}</p>
             </div>
           )}
-          {installed.length > 0 && (
+          {apps.length > 0 && (
             <div className="debloat-filters">
               <div className="debloat-filter-buttons" role="group" aria-label={c.filterLabel}>
                 {(["all", "removable", "unavailable"] as const).map((option) => (
@@ -333,7 +326,9 @@ export function DebloatPanel({
                     {c[option]}{" "}
                     <span>
                       {option === "all"
-                        ? installed.length
+                        ? showAbsent
+                          ? apps.length
+                          : installed.length
                         : option === "removable"
                           ? removable.length
                           : installed.length - removable.length}
@@ -353,17 +348,71 @@ export function DebloatPanel({
               </label>
             </div>
           )}
+          <div className="debloat-library-controls">
+            <div className="debloat-categories" role="group" aria-label={l.categories}>
+              {(["all", "media", "productivity", "connections", "windows"] as const).map((key) => (
+                <button key={key} aria-pressed={category === key} onClick={() => setCategory(key)}>
+                  {key === "all" ? c.all : l[key]}
+                  <span>
+                    {
+                      (showAbsent ? apps : installed).filter(
+                        (a) => key === "all" || categoryOf(a) === key,
+                      ).length
+                    }
+                  </span>
+                </button>
+              ))}
+            </div>
+            <label className="debloat-show-absent">
+              <input
+                type="checkbox"
+                checked={showAbsent}
+                onChange={(e) => setShowAbsent(e.target.checked)}
+              />
+              {l.showAbsent}
+            </label>
+          </div>
+          <div className="debloat-view-options">
+            <label>
+              {l.sort}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as "name" | "category")}
+              >
+                <option value="name">{l.name}</option>
+                <option value="category">{l.category}</option>
+              </select>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={selectedOnly}
+                onChange={(e) => setSelectedOnly(e.target.checked)}
+              />
+              {l.selectedOnly} <span>{chosen.length}</span>
+            </label>
+          </div>
+          {recoveryError && <ToolStatus tone="error">{recoveryError}</ToolStatus>}
           {!scanning && !scanError && installed.length === 0 && <ToolStatus>{c.empty}</ToolStatus>}
           {!scanning && installed.length > 0 && filtered.length === 0 && (
             <ToolStatus>{c.noMatch}</ToolStatus>
           )}
-          <div className="debloat-list">
+          <div className="debloat-list" aria-busy={scanning}>
+            {scanning &&
+              !apps.length &&
+              [0, 1, 2, 3].map((n) => (
+                <div className="debloat-skeleton" key={n} aria-hidden="true">
+                  <i />
+                  <span />
+                  <span />
+                </div>
+              ))}
             {filtered.map((app) => {
               const canRemove = app.removable && !!app.packageFullName;
               return (
                 <div
                   key={app.packageFullName ?? app.catalogId}
-                  className={`debloat-row ${canRemove ? "" : "unavailable"}`}
+                  className={`debloat-row ${canRemove ? "" : "unavailable"} ${app.packageFullName && selection.has(app.packageFullName) ? "is-selected" : ""}`}
                 >
                   <label className="debloat-row-choice">
                     <input
@@ -372,19 +421,29 @@ export function DebloatPanel({
                       disabled={!canRemove || scanning || running || !!scanError}
                       onChange={() => toggle(app)}
                     />
-                    <AppMark id={app.catalogId} />
+                    <AppMark app={app} />
                     <span className="debloat-row-main">
                       <strong>{app.name}</strong>
-                      <span className="debloat-impact">{impact(app)}</span>
+                      <span className="debloat-app-category">{l[categoryOf(app)]}</span>
                     </span>
                   </label>
                   <span className={`debloat-availability ${canRemove ? "is-removable" : ""}`}>
-                    {canRemove ? c.removable : c.unavailable}
+                    {!app.installed ? l.notInstalled : canRemove ? c.removable : c.unavailable}
                   </span>
+                  <p className="debloat-impact">{impact(app)}</p>
                   <details className="debloat-row-details">
                     <summary>{c.details}</summary>
-                    <p>{impact(app)}</p>
-                    {!canRemove && app.reason !== "requiresStandardUser" && (
+                    <p>{app.description}</p>
+                    {app.storeUrl && (
+                      <button
+                        className="debloat-store-link"
+                        disabled={!!recoveryBusy || running}
+                        onClick={() => void openRecovery(app.catalogId)}
+                      >
+                        {recoveryBusy === app.catalogId ? c.scanning : "Microsoft Store ↗"}
+                      </button>
+                    )}
+                    {app.installed && !canRemove && app.reason !== "requiresStandardUser" && (
                       <p>{reason(app.reason)}</p>
                     )}
                     {app.packageFullName && (
@@ -403,7 +462,31 @@ export function DebloatPanel({
             <p>{c.protected}</p>
             <p>{c.scope}</p>
           </details>
-          <div className="debloat-action">
+          <div className="debloat-action" data-has-selection={chosen.length > 0 || running}>
+            <div className="debloat-selection-tools">
+              <button
+                disabled={running || scanning || !!scanError || !filtered.some((a) => a.removable)}
+                onClick={() =>
+                  setSelection(
+                    (previous) =>
+                      new Set([
+                        ...previous,
+                        ...filtered
+                          .filter((a) => a.removable && a.packageFullName)
+                          .map((a) => a.packageFullName!),
+                      ]),
+                  )
+                }
+              >
+                {l.selectVisible}
+              </button>
+              <button
+                disabled={running || scanning || !selection.size}
+                onClick={() => setSelection(new Set())}
+              >
+                {l.clear}
+              </button>
+            </div>
             <span>
               {chosen.length} {c.selected}
             </span>

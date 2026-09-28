@@ -27,10 +27,12 @@ export function WorkspaceSidebar({
   const groups: { label: string; keys: Section[]; primary?: boolean }[] = [
     {
       label: s.tabs.groupWorkspace,
-      keys: showHistory ? ["overview", "profiles", "ledger"] : ["overview", "profiles"],
+      keys: showHistory
+        ? ["scan", "overview", "profiles", "ledger"]
+        : ["scan", "overview", "profiles"],
       primary: true,
     },
-    { label: s.tabs.groupMonitor, keys: ["scan", "health", "hardware"] },
+    { label: s.tabs.groupMonitor, keys: ["health", "hardware"] },
     { label: s.tabs.groupOptimize, keys: ["debloat", "performance", "gaming", "privacy", "ui"] },
     { label: s.tabs.groupManage, keys: ["startup", "manutenzione"] },
   ];

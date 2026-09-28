@@ -62,36 +62,41 @@ export function StatRing({
   sublabel: string;
   pct: number;
 }) {
-  const radius = 26;
+  const radius = 34;
   const circumference = 2 * Math.PI * radius;
-  const clamped = Math.max(0, Math.min(100, pct));
+  const known = Number.isFinite(pct);
+  const clamped = known ? Math.max(0, Math.min(100, pct)) : 0;
   return (
-    <div className="flex min-w-0 items-center gap-3">
-      <div className="relative h-16 w-16 shrink-0">
-        <svg viewBox="0 0 64 64" className="h-16 w-16 -rotate-90">
-          <circle cx="32" cy="32" r={radius} fill="none" strokeWidth="6" className="stroke-line" />
+    <div className="tool-stat">
+      <div className="tool-stat-ring" aria-hidden="true">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="40" r={radius} strokeWidth="4" className="stroke-line" />
           <circle
-            cx="32"
-            cy="32"
+            cx="40"
+            cy="40"
             r={radius}
             fill="none"
-            strokeWidth="6"
+            strokeWidth="4"
             strokeLinecap="round"
             stroke={loadColor(clamped)}
             strokeDasharray={circumference}
             strokeDashoffset={circumference - (circumference * clamped) / 100}
-            className="transition-[stroke-dashoffset] duration-700 ease-out"
+            transform="rotate(-90 40 40)"
+            opacity={clamped > 0 ? 1 : 0}
+            className="tool-stat-arc"
           />
         </svg>
-        <span className="absolute inset-0 grid place-items-center text-sm font-bold tabular-nums text-ink">
-          {Math.round(clamped)}%
+        <span className="tool-stat-value">
+          {known ? Math.round(clamped) : "—"}
+          {known && <small>%</small>}
         </span>
       </div>
-      <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wider text-ink-2">{label}</p>
-        <p className="truncate text-xs text-ink-3" title={sublabel}>
-          {sublabel}
+      <div className="tool-stat-copy">
+        <p className="tool-stat-label">
+          {label}
+          <span className="sr-only"> {known ? `${Math.round(clamped)}%` : "—"}</span>
         </p>
+        <p className="tool-stat-detail">{sublabel}</p>
       </div>
     </div>
   );
@@ -129,13 +134,13 @@ export function SystemMonitor({ s }: { s: Strings }) {
     );
   }
 
-  const ramPct = stats.ram_total > 0 ? (stats.ram_used / stats.ram_total) * 100 : 0;
-  const diskPct = stats.disk_total > 0 ? (stats.disk_used / stats.disk_total) * 100 : 0;
+  const ramPct = stats.ram_total > 0 ? (stats.ram_used / stats.ram_total) * 100 : NaN;
+  const diskPct = stats.disk_total > 0 ? (stats.disk_used / stats.disk_total) * 100 : NaN;
   const hours = Math.floor(stats.uptime_secs / 3600);
   const minutes = Math.floor((stats.uptime_secs % 3600) / 60);
 
   return (
-    <div className="tool-panel tool-card tool-system-monitor mb-6 rounded-2xl border border-line bg-surface-1 p-5 backdrop-blur">
+    <div className="tool-panel tool-card tool-system-monitor mb-6 rounded-2xl border border-line bg-surface-1 p-5">
       <div className="tool-monitor-grid">
         <StatRing
           label={s.systemMonitor.cpu}
@@ -332,8 +337,10 @@ export function RamCleaner({
         <button
           onClick={() => void cleanNow()}
           disabled={busy}
-          className="tool-card-action bg-accent text-on-accent shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
+          aria-busy={busy}
+          className="tool-primary-action tool-card-action shrink-0"
         >
+          <ChipIcon className="h-4 w-4" />
           {busy ? s.ram.cleaning : s.ram.button}
         </button>
       </div>

@@ -7,7 +7,7 @@
 //! four updaters and a telemetry uploader at every logon.
 //!
 //! Two rules keep this from becoming a way to break Windows:
-//!   * anything under `\Microsoft\` is not listed at all — those tasks are the
+//!   * anything under `\Microsoft\` is not listed at all â€” those tasks are the
 //!     operating system servicing itself, and a list you can disable things
 //!     from is not the place to put them;
 //!   * a task's state is read from its XML definition rather than from
@@ -19,6 +19,7 @@ use serde::Serialize;
 
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct TaskEntry {
+    pub icon_data_url: Option<String>,
     /// Full scheduler path, e.g. `\Adobe Acrobat Update Task`. Also the id
     /// used to toggle it.
     pub path: String,
@@ -29,7 +30,7 @@ pub struct TaskEntry {
     pub command: String,
     pub author: String,
     pub enabled: bool,
-    /// "logon" or "boot" — the only two kinds listed. A task on a daily
+    /// "logon" or "boot" â€” the only two kinds listed. A task on a daily
     /// schedule is not a startup item and does not belong on this screen.
     pub trigger: String,
     /// Machine-scope tasks need administrator rights to change.
@@ -107,11 +108,34 @@ pub(crate) fn tag_text(xml: &str, tag: &str) -> Option<String> {
 /// The text between `<section>` and `</section>`, so a tag that appears in
 /// several places can be read from the right one.
 pub(crate) fn section<'a>(xml: &'a str, name: &str) -> Option<&'a str> {
-    let open = format!("<{}>", name);
+    let open = format!("<{}", name);
     let close = format!("</{}>", name);
-    let start = xml.find(&open)? + open.len();
-    let end = xml[start..].find(&close)? + start;
-    Some(&xml[start..end])
+    xml.match_indices(&open).find_map(|(offset, _)| {
+        let tail = &xml[offset + open.len()..];
+        let first = tail.chars().next()?;
+        if first != '>' && !first.is_ascii_whitespace() {
+            return None;
+        }
+        // Windows emits e.g. <Actions Context="Author">. Honor quoted values.
+        let mut quote = None;
+        let end = tail.char_indices().find_map(|(i, c)| {
+            if quote == Some(c) {
+                quote = None;
+            } else if quote.is_none() {
+                if c == '"' || c == '\'' {
+                    quote = Some(c);
+                } else if c == '>' {
+                    return Some(i);
+                }
+            }
+            None
+        })?;
+        if tail[..end].trim_end().ends_with('/') {
+            return None;
+        }
+        let body = &tail[end + 1..];
+        Some(&body[..body.find(&close)?])
+    })
 }
 
 /// Reads a task's XML definition into an entry, or `None` when the task is
@@ -133,7 +157,7 @@ pub(crate) fn parse_task(path: &str, xml: &str) -> Option<TaskEntry> {
 
     let settings = section(xml, "Settings").unwrap_or("");
     // An absent `<Enabled>` in Settings means the schema default, which is
-    // enabled — the same reading Task Scheduler itself applies.
+    // enabled â€” the same reading Task Scheduler itself applies.
     let enabled = tag_text(settings, "Enabled")
         .map(|v| v.eq_ignore_ascii_case("true"))
         .unwrap_or(true);
@@ -159,6 +183,7 @@ pub(crate) fn parse_task(path: &str, xml: &str) -> Option<TaskEntry> {
         .to_string();
 
     Some(TaskEntry {
+        icon_data_url: None,
         path: path.to_string(),
         name,
         command,
@@ -190,7 +215,7 @@ mod imp {
     /// user cannot read makes the whole query exit non-zero while still
     /// printing every task it *could* read, and throwing that away would show
     /// an empty list on exactly the machines that most need one. A *change*
-    /// gets the strict reading — reporting "disabled" for a call that was
+    /// gets the strict reading â€” reporting "disabled" for a call that was
     /// denied is the one failure this screen must never have.
     fn schtasks(args: &[&str], tolerate_partial: bool) -> Result<Vec<u8>, String> {
         let output = crate::system_tools::run("schtasks", |tool| {
@@ -272,10 +297,14 @@ mod imp {
 #[cfg(windows)]
 #[tauri::command(async)]
 pub fn list_scheduled_tasks() -> Vec<TaskEntry> {
-    imp::list()
+    let mut entries = imp::list();
+    for entry in &mut entries {
+        entry.icon_data_url = crate::program_icons::from_command(&entry.command);
+    }
+    entries
 }
 
-/// `<path>|<0|1>` — the path is taken as the tail so task names containing a
+/// `<path>|<0|1>` â€” the path is taken as the tail so task names containing a
 /// pipe still round-trip through the elevated relaunch intact.
 pub fn build_task_payload(path: &str, enabled: bool) -> String {
     format!("{}|{}", if enabled { 1 } else { 0 }, path)
@@ -349,6 +378,24 @@ pub fn set_scheduled_task_enabled(_path: String, _enabled: bool) -> Result<(), S
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reads_actions_with_context_attributes() {
+        let xml = r#"<Task><Triggers><LogonTrigger/></Triggers><ActionsExtra>wrong</ActionsExtra><Actions Context="Author"><Exec><Command>C:\Apps\app.exe</Command></Exec></Actions></Task>"#;
+        assert_eq!(
+            parse_task(r"\An app", xml).unwrap().command,
+            r"C:\Apps\app.exe"
+        );
+        assert_eq!(
+            section(r#"<Actions Context="a>b">value</Actions>"#, "Actions"),
+            Some("value")
+        );
+        assert_eq!(
+            section("<ActionsExtra>wrong</ActionsExtra>", "Actions"),
+            None
+        );
+        assert_eq!(section("<Actions/>", "Actions"), None);
+    }
 
     /// Real task names from a normal machine. A name that survives the round
     /// trip wrong is a name `/tn` will not find, so the toggle silently does

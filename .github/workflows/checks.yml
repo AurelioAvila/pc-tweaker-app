@@ -53,6 +53,15 @@ jobs:
       - name: Updater startup and tray lifecycle
         run: npm run test:updater
 
+      - name: Scan eligibility and UI regressions
+        run: |
+          node scripts/test-scan.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/test-feature-order.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/test-ui-polish.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Translations (keys + placeholders across all languages)
         run: npm run check:i18n
 

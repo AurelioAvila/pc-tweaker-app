@@ -308,6 +308,7 @@ export type RamCleanResult = {
 };
 
 export type StartupEntry = {
+  icon_data_url?: string | null;
   name: string;
   command: string;
   scope: string;
@@ -325,6 +326,7 @@ export type StartupEntry = {
 /** A third-party task that runs at logon or boot. Windows' own tasks are
  *  never returned; see src-tauri/src/scheduledtasks.rs. */
 export type ScheduledTaskEntry = {
+  icon_data_url?: string | null;
   /** Full scheduler path, and the id used to toggle it. */
   path: string;
   name: string;

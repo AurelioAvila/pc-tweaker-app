@@ -743,33 +743,115 @@ body {
   box-shadow: 0 0 12px 0 color-mix(in oklab, var(--accent) 70%, transparent);
 }
 
-/* ==========================================================================
-   5. The icon module
-   ==========================================================================
-   The square in front of every tweak card. It keeps its original footprint —
-   changing the shape would have re-cut the whole list — but it stops being a
-   flat tinted tile and becomes a small piece of hardware: a lit top edge, a
-   dark bottom edge, glass over a gradient, and a backlight cast onto the card
-   behind it. Two custom properties drive the colour, set per card:
-
-     --module-glow : the backlight
-     --led-color   : the status dot (accent normally, gold on a Pro tweak)
-   ========================================================================== */
+/* Frameless hardware symbols; finite hover/focus motion respects reduced motion. */
 
 .icon-module {
+  --symbol-color: var(--module-tint, var(--app-accent));
   position: relative;
-  border-radius: 10px;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  background: var(--surface-2);
+  isolation: isolate;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 0;
+  color: color-mix(in srgb, var(--symbol-color) 76%, white);
+  background: none;
   box-shadow: none;
-  transition:
-    color 150ms ease,
-    border-color 150ms ease;
 }
+.icon-module::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--symbol-color) 14%, transparent),
+    transparent 72%
+  );
+  opacity: 0.65;
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+.tweak-symbol,
 .tweak-symbol-fallback svg {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
+  overflow: visible;
+}
+.tweak-symbol .symbol-body > :not(:first-child) {
+  fill: none;
+}
+.tweak-symbol .symbol-highlight {
+  stroke: color-mix(in srgb, currentColor 35%, white);
+  opacity: 0.8;
+}
+.symbol-body {
+  transform-origin: 12px 12px;
+  transition: transform 240ms ease;
+}
+.symbol-fan {
+  transform-origin: 14px 11.5px;
+}
+.section-tweak:is(:hover, :focus-within) .symbol-body {
+  transform: translateY(-1px) scale(1.08);
+}
+.section-tweak:is(:hover, :focus-within) .icon-module::before {
+  opacity: 1;
+  transform: scale(1.15);
+}
+.section-tweak:is(:hover, :focus-within) .symbol-fan {
+  animation: symbol-spin 650ms ease-out;
+}
+.section-tweak:is(:hover, :focus-within) .symbol-wheel {
+  animation: symbol-scroll 600ms ease;
+}
+.section-tweak:is(:hover, :focus-within) :is(.symbol-keys, .symbol-core) {
+  animation: symbol-light 650ms ease;
+}
+@keyframes symbol-spin {
+  to {
+    transform: rotate(180deg);
+  }
+}
+@keyframes symbol-scroll {
+  50% {
+    transform: translateY(1.5px);
+  }
+}
+@keyframes symbol-light {
+  45% {
+    stroke: white;
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .section-tweak .symbol-body,
+  .icon-module::before {
+    transition: none;
+    transform: none !important;
+  }
+  .section-tweak :is(.symbol-fan, .symbol-wheel, .symbol-keys, .symbol-core) {
+    animation: none !important;
+  }
+}
+.icon-module:has([data-tone="cyan"]) {
+  --symbol-color: #39c6d9;
+}
+.icon-module:has([data-tone="sky"]) {
+  --symbol-color: #60a5fa;
+}
+.icon-module:has([data-tone="violet"]) {
+  --symbol-color: #a78bfa;
+}
+.icon-module:has([data-tone="mint"]) {
+  --symbol-color: #34d399;
+}
+.icon-module:has([data-tone="amber"]) {
+  --symbol-color: #fbbf62;
+}
+.icon-module:has([data-tone="rose"]) {
+  --symbol-color: #fb7aa0;
 }
 /* Used by the avatar only. The tweak modules carried one of these too and it
    read as a defect rather than as status — one indicator per row is enough,
@@ -786,13 +868,6 @@ body {
     0 0 0 1px rgb(0 0 0 / 0.4),
     0 0 5px 0 var(--led-color);
   transition: box-shadow var(--dur-base) var(--ease-standard);
-}
-
-/* Hovering the card, not the module: the whole row is the target, so the
-   module lighting up is a response to where the user actually is. */
-.group:hover .icon-module {
-  color: var(--accent);
-  border-color: var(--accent);
 }
 
 /* ---- Account ring ---------------------------------------------------------- */

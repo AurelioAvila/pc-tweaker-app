@@ -1,6 +1,6 @@
 import { TweakyDriverPromoCard } from "./tweaky-driver-promo";
 import { LatencyTracePanel } from "./diagnostics";
-import { ToolHeader, ToolSearch, ToolDetails } from "./tool-section";
+import { ToolHeader, ToolSearch, ToolDetails, InfoAlert } from "./tool-section";
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -248,7 +248,7 @@ export function judgeSession(samples: ThermalSample[]): Verdict {
 function verdictStyle(v: Verdict): { text: string; ring: string; dot: string } {
   if (v === "risky") {
     return {
-      text: "text-rose-300",
+      text: "bg-rose-400/10 text-rose-300",
       ring: "ring-[color-mix(in_oklab,#f87171_40%,transparent)]",
       dot: "#f87171",
     };
@@ -262,7 +262,7 @@ function verdictStyle(v: Verdict): { text: string; ring: string; dot: string } {
   }
   if (v === "normal") {
     return {
-      text: "text-emerald-300",
+      text: "bg-emerald-400/10 text-emerald-300",
       ring: "ring-[color-mix(in_oklab,#34d399_35%,transparent)]",
       dot: "#34d399",
     };
@@ -788,9 +788,9 @@ export function ThermalsPanel({
       {/* CPU: a reading when the firmware publishes one, an explanation when
           it doesn't. Never a number this app cannot stand behind. */}
       <div className="tool-panel tool-cpu-thermal-card">
-        <p className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-accent">
+        <h2 className="mb-4 text-xl font-semibold tracking-tight text-ink">
           {s.hardware.cpuLabel}
-        </p>
+        </h2>
         {report.cpu_temp_c !== null ? (
           <div className="mt-2 flex items-baseline gap-3">
             <span
@@ -802,9 +802,7 @@ export function ThermalsPanel({
             <span className="text-[12px] text-ink-3">{s.hardware.cpuAcpiSource}</span>
           </div>
         ) : (
-          <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-ink-3">
-            {s.hardware.cpuNoSensor}
-          </p>
+          <InfoAlert>{s.hardware.cpuNoSensor}</InfoAlert>
         )}
       </div>
 
@@ -824,7 +822,10 @@ function tierStyle(tier: string): { ring: string; text: string } {
     return { ring: "ring-[color-mix(in_oklab,#f87171_38%,transparent)]", text: "text-rose-300" };
   }
   if (tier === "aging") {
-    return { ring: "ring-[color-mix(in_oklab,#fbbf24_38%,transparent)]", text: "text-amber-300" };
+    return {
+      ring: "ring-[color-mix(in_oklab,#fbbf24_38%,transparent)]",
+      text: "bg-amber-400/10 text-amber-300",
+    };
   }
   return { ring: "ring-[color-mix(in_oklab,#34d399_30%,transparent)]", text: "text-emerald-300" };
 }
@@ -857,14 +858,18 @@ function DriverRow({ entry, s }: { entry: DriverEntry; s: Strings }) {
         </p>
       </div>
       <span
-        className={`type-data shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ring-1 ${style.ring} ${style.text}`}
+        className={`type-data inline-flex items-center gap-1.5 shrink-0 rounded-full px-2.5 py-1.5 text-[11px] font-semibold tabular-nums ring-1 ${style.ring} ${style.text}`}
       >
+        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
+          <circle cx="8" cy="8" r="6" stroke="currentColor" />
+          <path d="M8 4.5V8l2 1.5" stroke="currentColor" strokeLinecap="round" />
+        </svg>
         {ageLabel(entry.age_days, s)}
       </span>
       {entry.vendor_url && (
         <button
           onClick={() => void openUrl(entry.vendor_url as string).catch(() => {})}
-          className="shrink-0 rounded-lg border border-line-2 px-2.5 py-1.5 text-[11.5px] font-semibold text-ink-2 transition-colors hover:border-accent/40 hover:text-ink"
+          className="tool-secondary-action shrink-0"
         >
           {s.hardware.vendorSite}
         </button>
@@ -1024,20 +1029,37 @@ export function DriversPanel({
         title={s.hardware.driversTitle}
         description={s.hardware.driversSubtitle}
         actions={
-          <button
-            onClick={run}
-            disabled={busy}
-            className="shrink-0 rounded-xl border border-line-2 px-4 py-2 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-accent/40 hover:text-ink disabled:cursor-wait disabled:opacity-60"
-          >
+          <button onClick={run} disabled={busy} aria-busy={busy} className="tool-primary-action">
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 20 20"
+              fill="none"
+              className={busy ? "h-4 w-4 animate-spin" : "h-4 w-4"}
+            >
+              <path
+                d="M16 8a6 6 0 1 0 0 4M16 4v4h-4"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             {busy ? s.hardware.driversScanning : s.hardware.driversRescan}
           </button>
         }
       />
 
+      {checkedAt && !busy && (
+        <p className="mb-4 text-xs tabular-nums text-ink-3">
+          {format(s.hardware.driversCheckedAt, { time: checkedAt.toLocaleString(uiLocale()) })}
+        </p>
+      )}
+      {!audit && !busy && !error && <InfoAlert>{s.hardware.driversNoUpdateCheck}</InfoAlert>}
+
       {/* Progress is shown as position-in-work: which class, how many of how
           many, and the percentage that follows from those two. */}
       {busy && (
-        <div className="mt-4">
+        <div className="mt-4" role="status" aria-live="polite">
           <div className="mb-1.5 flex items-baseline justify-between gap-3">
             <span className="truncate text-[12px] text-ink-2">
               {progress && progress.class
@@ -1054,16 +1076,38 @@ export function DriversPanel({
                 : ""}
             </span>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
+          <div
+            role="progressbar"
+            aria-label={s.hardware.driversScanning}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progress ? pct : undefined}
+            className="h-1 overflow-hidden rounded-full bg-surface-2"
+          >
             <div
               className="h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
               style={{ width: `${String(Math.max(2, pct))}%` }}
             />
           </div>
+          <div className="mt-5" aria-hidden="true">
+            {[0, 1, 2, 3].map((row) => (
+              <div key={row} className="tool-driver-skeleton">
+                <div className="min-w-0 flex-1 space-y-2.5">
+                  <div className="skeleton h-3.5 w-2/3 rounded" />
+                  <div className="skeleton h-2.5 w-5/6 rounded" />
+                </div>
+                <div className="skeleton h-7 w-20 rounded-full" />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {error && <p className="mt-4 text-[12.5px] text-rose-300">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-4 text-[12.5px] text-rose-300">
+          {error}
+        </p>
+      )}
 
       {/* Only shown when Windows itself reports a pending restart, so it is
           never a routine nag. */}
@@ -1162,10 +1206,10 @@ export function DriversPanel({
               onboard audio and chipset drivers especially - never publish
               to at all. The label exists so nobody reads this as "checked
               your Realtek/AMD/NVIDIA drivers specifically and they're fine". */}
-          <div className="mt-4 border-t border-line pt-4">
-            <p className="text-[10.5px] font-bold uppercase tracking-wider text-ink-3">
+          <div className="tool-windows-update">
+            <h3 className="text-base font-semibold tracking-tight text-ink">
               {s.hardware.winUpdateLabel}
-            </p>
+            </h3>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
                 onClick={() => {
@@ -1186,11 +1230,8 @@ export function DriversPanel({
                    with no motion for that long is indistinguishable from a
                    button that did nothing when clicked — which is exactly how
                    it was being read. */
-                className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-[12.5px] font-semibold transition-colors disabled:cursor-wait ${
-                  searching
-                    ? "border-accent/50 text-ink"
-                    : "border-line-2 text-ink-2 hover:border-accent/40 hover:text-ink disabled:opacity-60"
-                }`}
+                aria-busy={searching}
+                className="tool-secondary-action"
               >
                 {searching && (
                   <span className="border-accent inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-t-transparent" />
@@ -1222,7 +1263,8 @@ export function DriversPanel({
                       .finally(() => setInstalling(false));
                   }}
                   disabled={installing || selectedTitles.size === 0}
-                  className="rounded-xl bg-accent px-4 py-2 text-[12.5px] font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
+                  aria-busy={installing}
+                  className="tool-primary-action"
                 >
                   {installing
                     ? s.hardware.winUpdateInstalling
@@ -1324,13 +1366,6 @@ export function DriversPanel({
             <p className="text-[11.5px] leading-relaxed text-ink-3">
               {s.hardware.driversNoUpdateCheck}
             </p>
-            {checkedAt && (
-              <p className="type-data text-[11px] tabular-nums text-ink-3">
-                {format(s.hardware.driversCheckedAt, {
-                  time: checkedAt.toLocaleString(uiLocale()),
-                })}
-              </p>
-            )}
           </ToolDetails>
         </>
       )}

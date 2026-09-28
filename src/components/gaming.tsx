@@ -1,5 +1,5 @@
 import { ToolHeader, ToolStatus } from "./tool-section";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open as openFolderDialog } from "@tauri-apps/plugin-dialog";
@@ -254,8 +254,7 @@ export function GameSessionsPanel({
 }
 
 export function TurboGauge({ value, engaged }: { value: number; engaged: boolean }) {
-  // The last fifth is the "redline" — the part boost mode actually unlocks.
-  const REDLINE = 0.8;
+  value = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
   const angle = GAUGE_START + GAUGE_SWEEP * value;
   // A tapered needle with a counterweight tail, like a real rev counter's,
   // instead of a uniform line from the hub.
@@ -284,13 +283,9 @@ export function TurboGauge({ value, engaged }: { value: number; engaged: boolean
         cx={GAUGE_C}
         cy={GAUGE_C}
         r={GAUGE_R + 8}
-        stroke={engaged ? "rgba(251,146,60,0.55)" : "rgba(255,255,255,0.06)"}
-        strokeWidth={engaged ? 1.5 : 1}
-        fill={engaged ? "rgba(251,146,60,0.05)" : "rgba(255,255,255,0.02)"}
-        style={{
-          filter: engaged ? "drop-shadow(0 0 10px rgba(251,146,60,0.35))" : "none",
-          transition: "all 500ms ease-out",
-        }}
+        stroke="rgba(255,255,255,0.06)"
+        strokeWidth="1"
+        fill="rgba(255,255,255,0.02)"
       />
 
       {/* Track */}
@@ -301,35 +296,6 @@ export function TurboGauge({ value, engaged }: { value: number; engaged: boolean
         fill="none"
         strokeLinecap="round"
       />
-      {/* Redline zone. Dim while the ceiling is capped, lit once boost mode is
-          Aggressive and the processor floor is pinned — this band is precisely
-          what the tweak unlocks, so lighting it is a statement about the
-          setting, not about the current load. The needle is left alone: it
-          goes on reporting real utilisation. */}
-      <path
-        d={arcPath(REDLINE, 1, GAUGE_R)}
-        stroke={engaged ? "rgba(251,146,60,0.95)" : "rgba(239,68,68,0.35)"}
-        strokeWidth={engaged ? 8.5 : 7}
-        fill="none"
-        strokeLinecap="round"
-        style={{
-          filter: engaged ? "drop-shadow(0 0 7px rgba(251,146,60,0.8))" : "none",
-          transition: "all 500ms ease-out",
-        }}
-      />
-      {/* Outer headroom ring, drawn only when engaged: the span of the dial
-          the processor is now permitted to reach and hold. */}
-      {engaged && (
-        <path
-          d={arcPath(0, 1, GAUGE_R + 8)}
-          stroke="url(#turbo-fill)"
-          strokeWidth="2"
-          fill="none"
-          strokeLinecap="round"
-          opacity="0.5"
-        />
-      )}
-
       {/* Tick marks */}
       {Array.from({ length: 21 }, (_, i) => {
         const f = i / 20;
@@ -344,7 +310,7 @@ export function TurboGauge({ value, engaged }: { value: number; engaged: boolean
             y1={outer.y}
             x2={inner.x}
             y2={inner.y}
-            stroke={f >= REDLINE ? "rgba(248,113,113,0.8)" : "rgba(255,255,255,0.32)"}
+            stroke="rgba(255,255,255,0.32)"
             strokeWidth={major ? 2 : 1}
             strokeLinecap="round"
           />
@@ -362,7 +328,7 @@ export function TurboGauge({ value, engaged }: { value: number; engaged: boolean
             textAnchor="middle"
             fontSize="8"
             fontWeight="700"
-            fill={f >= REDLINE ? "rgba(248,113,113,0.8)" : "rgba(148,163,184,0.75)"}
+            fill="rgba(148,163,184,0.75)"
             style={{ fontVariantNumeric: "tabular-nums" }}
           >
             {Math.round(f * 100)}
@@ -424,7 +390,6 @@ export function TurboBoostPanel({
   pushToast: (kind: Toast["kind"], message: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const [needle, setNeedle] = useState(0);
   const [stage, setStage] = useState<string | null>(null);
   // Rated clock, shown as a fact under the gauge. Deliberately not a live
   // frequency: Windows reports a nominal constant on CPPC processors, so a
@@ -433,38 +398,30 @@ export function TurboBoostPanel({
   const [ratedMhz, setRatedMhz] = useState<number | null>(null);
   // Live CPU load. This is what the needle rests on when idle, so the gauge is
   // a working instrument between activations rather than a dead dial.
-  const [load, setLoad] = useState(0);
+  const [load, setLoad] = useState<number | null>(null);
   // The measured before/after ratio, kept until the next activation so the
   // user can still read it after the sweep settles.
   const [gain, setGain] = useState<number | null>(null);
-  const timer = useRef<number | null>(null);
-  // The live needle value. `needle` state is only for rendering; reading it
-  // inside an async sequence would capture whatever it was when the click
-  // handler started, so every sweep after the first would jump back to that
-  // stale value instead of continuing from where the last one stopped.
-  const needleRef = useRef(0);
-
-  const setNeedleValue = useCallback((v: number) => {
-    needleRef.current = v;
-    setNeedle(v);
-  }, []);
-
   useEffect(() => {
     invoke<{ max_mhz: number } | null>("cpu_clock")
       .then((c) => setRatedMhz(c?.max_mhz ?? null))
       .catch(() => setRatedMhz(null));
   }, []);
 
-  // Poll CPU load while the panel is on screen, and let the needle follow it
-  // whenever an activation isn't driving it.
+  // The dial reports measured load, including during activation.
   useEffect(() => {
     let cancelled = false;
     const tick = () => {
       invoke<{ cpu_usage: number }>("system_stats")
         .then((st) => {
-          if (!cancelled) setLoad(Math.max(0, Math.min(100, st.cpu_usage)));
+          if (!cancelled)
+            setLoad(
+              Number.isFinite(st.cpu_usage) ? Math.max(0, Math.min(100, st.cpu_usage)) : null,
+            );
         })
-        .catch(() => {});
+        .catch(() => {
+          if (!cancelled) setLoad(null);
+        });
     };
     tick();
     const id = window.setInterval(tick, 1200);
@@ -474,128 +431,44 @@ export function TurboBoostPanel({
     };
   }, []);
 
-  // Resting position: the live load, so the dial breathes with the machine.
-  useEffect(() => {
-    if (!busy) setNeedleValue(load / 100);
-  }, [load, busy, setNeedleValue]);
-
-  useEffect(
-    () => () => {
-      if (timer.current) window.clearTimeout(timer.current);
-    },
-    [],
-  );
-
-  const stages = [s.turboBoost.stageReading, s.turboBoost.stageRaising, s.turboBoost.stageApplying];
-
-  /**
-   * Sweeps the needle to `to`, resolving when it lands.
-   *
-   * Driven by setTimeout rather than requestAnimationFrame on purpose:
-   * browsers stop firing rAF entirely for a window that isn't being
-   * composited. Since the whole activation sequence awaits these sweeps,
-   * an rAF that never fires would leave the promise pending forever — the
-   * button stuck disabled and the gauge frozen — if the user minimised the
-   * window mid-activation. Timers keep firing (throttled) when hidden, so the
-   * sequence always finishes even if it finishes without being watched.
-   */
-  function sweep(to: number, ms: number): Promise<void> {
-    const from = needleRef.current;
-    return new Promise((resolve) => {
-      const t0 = performance.now();
-      const step = () => {
-        const t = Math.min(1, (performance.now() - t0) / ms);
-        // Ease-out: quick off the line, settling into the target the way a rev
-        // counter does rather than crawling linearly.
-        const eased = 1 - Math.pow(1 - t, 3);
-        setNeedleValue(from + (to - from) * eased);
-        if (t < 1) timer.current = window.setTimeout(step, 16);
-        else resolve();
-      };
-      step();
-    });
-  }
-
   async function toggleTurbo() {
+    if (busy) return;
     setBusy(true);
+    setGain(null);
     const engaging = !applied;
-
-    // Kick the real work off immediately; the animation runs alongside it
-    // rather than delaying it.
-    const work = engaging
-      ? invoke("apply_tweak", { id: "turbo_boost" })
-      : invoke("rollback_tweak", { id: "turbo_boost" });
-
-    // Never let an unhandled rejection escape while the sweep is running.
-    const settled = work.then(
-      () => ({ ok: true as const }),
-      (e) => ({ ok: false as const, error: e }),
-    );
-
     try {
+      let before: { score: number } | null = null;
       if (engaging) {
-        // Measure first, so the "after" number has something honest to be
-        // compared against. Both runs use the same fixed workload on the same
-        // machine minutes apart, which is the only comparison that means
-        // anything — the absolute score is never shown.
         setStage(s.turboBoost.stageMeasuringBefore);
-        const before = await invoke<{ score: number }>("cpu_benchmark", { budgetMs: 900 }).catch(
+        before = await invoke<{ score: number }>("cpu_benchmark", { budgetMs: 900 }).catch(
           () => null,
         );
-        await sweep(0.3, 300);
-
-        for (let i = 0; i < stages.length; i++) {
-          setStage(stages[i]);
-          await sweep(0.3 + ((i + 1) / stages.length) * 0.62, 340);
-        }
-
-        // The registry write has to have landed before the second run, or the
-        // comparison measures nothing.
-        // Deliberately not named `applied`: that shadowed the outer applied
-        // state, and the fallback below then read the result *object* — always
-        // truthy — so a failed activation pinned the needle at the redline
-        // while showing an error, the exact opposite of what happened.
-        const engaged = await settled;
-        if (!engaged.ok) {
-          setNeedleValue(applied ? 1 : 0);
-          pushToast("error", String(engaged.error));
-          return;
-        }
-
+      }
+      setStage(engaging ? s.turboBoost.stageApplying : s.turboBoost.deactivating);
+      await invoke(engaging ? "apply_tweak" : "rollback_tweak", { id: "turbo_boost" });
+      if (engaging) {
         setStage(s.turboBoost.stageMeasuringAfter);
         const after = await invoke<{ score: number }>("cpu_benchmark", { budgetMs: 900 }).catch(
           () => null,
         );
-        // No fabricated figure when either run failed: no number beats a
-        // wrong one.
-        setGain(before && after && before.score > 0 ? after.score / before.score : null);
-
-        await sweep(1, 260);
-        pushToast("success", format(s.toasts.applied, { name: s.turboBoost.title }));
-        await onChanged();
-        return;
-      } else {
-        setStage(s.turboBoost.deactivating);
-        setGain(null);
-        await sweep(0, 620);
+        setGain(
+          before &&
+            after &&
+            Number.isFinite(before.score) &&
+            Number.isFinite(after.score) &&
+            before.score > 0 &&
+            after.score > 0
+            ? after.score / before.score
+            : null,
+        );
       }
-
-      const result = await settled;
-      if (!result.ok) {
-        // Fall back to whatever the machine is really in, so a failed apply
-        // never leaves the gauge sitting at the redline.
-        setNeedleValue(applied ? 1 : 0);
-        pushToast("error", String(result.error));
-        return;
-      }
-
-      // The redline flourish is a transition, not a resting state: the
-      // effect above takes the needle back to real load once `busy` clears.
       pushToast(
         "success",
         format(engaging ? s.toasts.applied : s.toasts.rolledBack, { name: s.turboBoost.title }),
       );
       await onChanged();
+    } catch (error) {
+      pushToast("error", String(error));
     } finally {
       setStage(null);
       setBusy(false);
@@ -607,11 +480,7 @@ export function TurboBoostPanel({
   // silicon and never moves. What changed is the ceiling, so that is what the
   // readout names — and once measured, by how much it actually mattered.
   const ceiling = applied ? s.turboBoost.ceilingUnlocked : s.turboBoost.ceilingLocked;
-  // Three bands rather than "gain / no gain". Reporting a measured 1.02x as
-  // "no measurable gain" understated a real if small result and read as the
-  // app admitting it did nothing; and when there genuinely is no headroom,
-  // that is a fact about the processor — already running flat out — not a
-  // failure of the tweak, so it is worded as such.
+  // This short workload comparison cannot establish the CPU's maximum speed.
   const gainText =
     gain === null
       ? null
@@ -635,7 +504,7 @@ export function TurboBoostPanel({
             {applied && !busy && (
               <span className="absolute h-32 w-32 rounded-full bg-orange-500/15 blur-2xl" />
             )}
-            <TurboGauge value={needle} engaged={applied || busy} />
+            <TurboGauge value={(load ?? 0) / 100} engaged={applied || busy} />
           </div>
 
           {/* The readout used to sit inside the dial's open bottom, the way a rev
@@ -652,7 +521,7 @@ export function TurboBoostPanel({
               }`}
               style={{ fontSize: 26 }}
             >
-              {Math.round(needle * 100)}
+              {load === null ? "—" : Math.round(load)}
               <span className="text-[13px]">%</span>
             </span>
             {/* Labelled, because an unlabelled figure under a dial called Turbo
@@ -668,6 +537,7 @@ export function TurboBoostPanel({
           </div>
         </div>
         <div className="tool-boost-summary">
+          <p className="text-xs text-ink-3 mb-3">{s.turboBoost.loadHelp}</p>
           <p
             role="status"
             aria-live="polite"
@@ -701,8 +571,12 @@ export function TurboBoostPanel({
            carry the state, so the button does not need to dim to say it. */
             className="tool-primary-action mt-4 flex items-center gap-2"
           >
-            <BoltIcon className={`h-4 w-4 ${busy ? "animate-pulse" : ""}`} />
-            {busy ? "···" : applied ? s.turboBoost.stopLabel : s.turboBoost.startLabel}
+            {busy ? (
+              <span className="scan-spinner" aria-hidden="true" />
+            ) : (
+              <BoltIcon className="h-4 w-4" />
+            )}
+            {busy ? stage : applied ? s.turboBoost.stopLabel : s.turboBoost.startLabel}
           </button>
         </div>
       </div>

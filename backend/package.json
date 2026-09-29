@@ -5,7 +5,7 @@
   "license": "UNLICENSED",
   "type": "commonjs",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "build": "tsc",
@@ -23,7 +23,7 @@
     "express-rate-limit": "^7.4.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^9.1.1",
+    "nodemailer": "^10.0.12",
     "pg": "^8.12.0",
     "stripe": "^16.9.0"
   },

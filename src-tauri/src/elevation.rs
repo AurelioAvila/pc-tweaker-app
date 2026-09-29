@@ -127,3 +127,78 @@ pub fn run_elevated_action(action_flag: &str, tweak_id: &str) -> Result<(), Stri
         Err("elevation is not implemented on this platform yet".to_string())
     }
 }
+
+/// The elevated helper reads and writes the user's app data folder, which any
+/// process running as that user can change. A junction or symbolic link in its
+/// place would send the administrator's writes to another location, so the
+/// helper refuses to run through one. A missing folder is fine: the helper
+/// creates it as a plain directory.
+pub fn ensure_plain_app_data_dir(dir: &std::path::Path) -> Result<(), String> {
+    match std::fs::symlink_metadata(dir) {
+        Ok(metadata) if is_link(&metadata) => Err(format!(
+            "{} is a link to another location; administrator actions were refused",
+            dir.display()
+        )),
+        Ok(metadata) if !metadata.is_dir() => Err(format!(
+            "{} is not a folder; administrator actions were refused",
+            dir.display()
+        )),
+        Ok(_) => Ok(()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(format!("could not inspect {}: {}", dir.display(), e)),
+    }
+}
+
+fn is_link(metadata: &std::fs::Metadata) -> bool {
+    if metadata.file_type().is_symlink() {
+        return true;
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::MetadataExt;
+        // FILE_ATTRIBUTE_REPARSE_POINT covers junctions as well as symbolic links.
+        metadata.file_attributes() & 0x400 != 0
+    }
+    #[cfg(not(windows))]
+    false
+}
+
+#[cfg(test)]
+mod app_data_dir_tests {
+    use super::ensure_plain_app_data_dir;
+
+    fn temp(name: &str) -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!("pct-elevation-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        dir
+    }
+
+    #[test]
+    fn a_missing_or_plain_folder_is_accepted() {
+        let dir = temp("plain");
+        assert!(ensure_plain_app_data_dir(&dir).is_ok());
+        std::fs::create_dir_all(&dir).unwrap();
+        assert!(ensure_plain_app_data_dir(&dir).is_ok());
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn a_file_in_place_of_the_folder_is_refused() {
+        let dir = temp("file");
+        std::fs::write(&dir, b"x").unwrap();
+        assert!(ensure_plain_app_data_dir(&dir).is_err());
+        std::fs::remove_file(&dir).ok();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_link_in_place_of_the_folder_is_refused() {
+        let target = temp("target");
+        let link = temp("link");
+        std::fs::create_dir_all(&target).unwrap();
+        std::os::unix::fs::symlink(&target, &link).unwrap();
+        assert!(ensure_plain_app_data_dir(&link).is_err());
+        std::fs::remove_file(&link).ok();
+        std::fs::remove_dir_all(&target).ok();
+    }
+}

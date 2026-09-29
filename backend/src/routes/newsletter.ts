@@ -116,10 +116,14 @@ router.get("/unsubscribe", asyncRoute(async (req: Request, res: Response) => {
   const sig = typeof req.query.sig === "string" ? req.query.sig : "";
   const expected = unsubscribeSignature(email);
 
+  // Compare byte lengths, not string lengths: a non-ASCII signature of the
+  // right character count encodes to more bytes, and timingSafeEqual throws
+  // on a length mismatch, which turned a bad link into a 500.
+  const given = Buffer.from(sig);
   const valid =
     Boolean(expected) &&
-    sig.length === expected!.length &&
-    crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected!));
+    given.length === Buffer.byteLength(expected!) &&
+    crypto.timingSafeEqual(given, Buffer.from(expected!));
 
   if (!isValidEmail(email) || !valid) {
     res.status(400).type("html").send("<p>This unsubscribe link is invalid or expired.</p>");

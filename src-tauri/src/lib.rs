@@ -1238,6 +1238,11 @@ pub fn run_drift_check_headless() -> ! {
 
 pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     let dir = dirs_app_data_dir();
+    // Checked before anything, including crash reporting, writes to it.
+    if let Err(e) = elevation::ensure_plain_app_data_dir(&dir) {
+        eprintln!("{e}");
+        std::process::exit(1);
+    }
     // This process has no window, so a panic here is silent: the user clicks
     // "apply", the UAC prompt closes, and nothing happens with no explanation
     // anywhere. Recording it is the only way that failure is ever seen.

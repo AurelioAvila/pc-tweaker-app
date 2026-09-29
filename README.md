@@ -22,7 +22,7 @@
 
 **[Download Free for Windows](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest)** · **[Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87)** · [Website](https://pctweaker.app/) · [Support](https://pctweaker.app/support/) · [Release notes](CHANGELOG.md)
 
-<p align="center"><img src="Screenshot/scan_screenshot.png" alt="PC Tweaker Scan interface; appearance and counts may differ by release" width="85%"></p>
+<p align="center"><img src="Screenshot/overview.png" alt="PC Tweaker Overview showing CPU, memory and applied settings; appearance and counts may differ by release" width="85%"></p>
 
 **Start with one task:** review a setting, read its trade-offs, apply it if appropriate,
 and use its restore control when supported. Free includes core tools without an account.

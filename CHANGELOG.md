@@ -2,11 +2,24 @@
 
 ## v1.15.1
 
-PC Tweaker 1.15.1 is a routine daily maintenance update.
+- Rebuilds Scan as one workspace. Ten checks report their progress one by one: Windows settings, supported changes, hardware recommendations, system profile, free storage, startup programs, memory usage, pending restart, security signals and driver dates. A check that cannot finish stays unknown instead of counting as passed.
+- Results separate recommended changes, optional improvements that depend on how you use the PC, and recommendations that need Pro. Optional improvements are never included in Fix all.
+- Fix all first shows the exact settings it will change, re-reads their eligibility before writing and reports each one as verified, not verified or no longer eligible. It never changes files, startup apps, drivers or security settings.
+- Memory cleanup moves from Scan to Maintenance.
+- Debloat now covers 13 optional Windows apps, adding Microsoft To Do, Sound Recorder, Feedback Hub, Phone Link, Windows Media Player, Movies & TV and Microsoft 365 Copilot.
+- Performance, Gaming and Maintenance list broad, scoped controls before cosmetic or system-wide trade-offs. The order is not a recommendation to enable everything.
+- Refreshes the desktop layout of tool sections, Debloat, Hardware, Startup and the account menu; the theme picker names the current theme.
+- Some copies from 1.14.7 onward did not offer 1.15.0 until it was re-signed. Update signatures are now checked before publication in the form installed copies accept.
 
 ## v1.15.0
 
-PC Tweaker 1.15.0 is a routine maintenance update.
+- Adds a DPC and ISR latency trace to Diagnostics. A 5 to 30 second kernel capture measures how long each driver routine holds a processor and names the driver responsible. Results follow Microsoft's 100 µs and 25 µs guidance, only stalls over one millisecond are marked red, and durations are shown in milliseconds. Without administrator rights the capture asks for approval once; it changes nothing, so no restore point is created.
+- Game Sessions can steer a registered game to the V-Cache die on AMD X3D processors or to the performance cores on Intel hybrid processors. On hybrid processors other apps in your session move to the efficiency cores, except Windows components, the game's own processes, apps with their own CPU sets and apps raised above normal priority. Nothing is suspended. Every change is recorded first and undone when the game exits, when steering is turned off, when PC Tweaker quits, or at the next launch after a crash.
+- Adds a network check: 32 pings with jitter, plus a reading of one live TCP connection, taken before and after the two TCP tweaks and on demand. A difference is reported as a change in the line, never as the effect of a tweak. Latency tweaks now target the adapter that carries the internet route.
+- Power plan, CPU turbo boost, core parking, DNS, BBR2 and Windows Search controls use native Windows APIs instead of powercfg, sc.exe and PowerShell.
+- Turbo boost and core parking now restore on Windows 11 when Windows refuses to delete a plan override: the previously effective value is written back, and battery settings you changed meanwhile are kept.
+- Dates, times, numbers and sizes follow the app's language instead of the Windows display language.
+- Re-applying the classic context menu repairs a missing key.
 
 ## v1.14.10
 
@@ -22,11 +35,17 @@ PC Tweaker 1.14.8 is a routine daily maintenance update.
 
 ## v1.14.7
 
-PC Tweaker 1.14.7 is a routine daily maintenance update.
+- Automatic updates install only an installer whose signed file name matches the offered version, so an older signed installer cannot be replayed as an update.
+- The private DNS control validates every value before passing it to Windows.
+- New account passwords longer than the 72-byte hashing limit are refused instead of being shortened.
 
 ## v1.14.6
 
-PC Tweaker 1.14.6 is a routine daily maintenance update.
+- Adds Debloat: remove optional Windows apps for the current user only, starting with Microsoft Solitaire Collection, MSN Weather, Microsoft News, Microsoft Copilot, Microsoft Clipchamp and Outlook for Windows. Each package must match its verified publisher, and you review the exact packages before removal. Store, App Installer, frameworks, shell, security components, WebView2 and gaming services are excluded. Every result is verified, and the removal history links to the Store page to reinstall an app.
+- Adds three configurable Pro controls: background app efficiency rules that lower the energy priority of chosen non-critical apps while PC Tweaker is open, a limit for Windows background downloads through Delivery Optimization, and per-game monitor refresh profiles with a 15-second preview that reverts unless confirmed.
+- Adds three Free controls: stop reopening apps after sign-in, enable long paths for compatible apps, and turn off the Filter Keys shortcut.
+- Renames and re-describes two legacy multimedia values to match Microsoft's documentation; they no longer raise the scan or health score. The retired Copilot policy becomes restore-only, and the current Copilot app is managed in Debloat.
+- The catalog now contains 66 controls: 39 Free and 27 Pro.
 
 ## v1.14.5
 
@@ -34,7 +53,7 @@ PC Tweaker 1.14.5 is a routine daily maintenance update.
 
 ## v1.14.4
 
-PC Tweaker 1.14.4 is a routine daily maintenance update.
+- Hardware adds a link to Tweaky Driver, a separate driver tool from the same developer. It is not a scan finding and is not part of Pro.
 
 ## v1.14.3
 

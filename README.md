@@ -22,11 +22,11 @@
 
 **[Download Free for Windows](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest)** · **[Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87)** · [Website](https://pctweaker.app/) · [Support](https://pctweaker.app/support/) · [Release notes](CHANGELOG.md)
 
+<p align="center"><a href="#whats-new-in-115">What's new</a> · <a href="#what-you-can-do">Features</a> · <a href="#what-changes-on-your-system">What changes</a> · <a href="#free-and-pro">Free and Pro</a> · <a href="#download-integrity-and-code-signing">Code signing</a> · <a href="#build-from-source">Build from source</a></p>
+
 <p align="center"><img src="Screenshot/overview.png" alt="PC Tweaker Overview showing CPU, memory and applied settings; appearance and counts may differ by release" width="85%"></p>
 
-**Start with one task:** review a setting, read its trade-offs, apply it if appropriate,
-and use its restore control when supported. Free includes core tools without an account.
-See [what changes on your system](#what-changes-on-your-system) before tuning.
+**Start with one task:** review a setting, read its trade-offs, apply it if appropriate, and use its restore control when supported. Free includes core tools without an account. See [what changes on your system](#what-changes-on-your-system) before tuning.
 
 <p align="center">
   <a href="#safe-download-via-winget"><img src="https://img.shields.io/badge/Safe_download-via_Winget-1793D1?style=for-the-badge" alt="Safe download via Winget"></a>
@@ -55,6 +55,16 @@ Package catalogs can lag behind a release. Check the release version before inst
 
 Closing the window keeps PC Tweaker running in the Windows notification area. Click its icon to reopen it, or right-click and choose **Exit PC Tweaker** to quit. To make closing the window quit instead, clear **Keep running in the background** in the icon's menu. Windows may place the icon in its hidden-icons panel.
 
+## What's new in 1.15
+
+- **Driver latency trace.** A 5 to 30 second kernel capture measures DPC and ISR routines and names the driver behind each long one, judged against Microsoft's guidance.
+- **Core steering for Game Sessions.** A registered game runs on the V-Cache die of AMD X3D processors or the performance cores of Intel hybrid processors. Every change is recorded and undone when the game exits, even after a crash.
+- **Network check.** Jitter, latency and a live TCP connection reading before and after the TCP tweaks. A difference is reported as a change in the line, never as the effect of a tweak.
+- **A rebuilt Scan.** Ten checks, recommended and optional changes kept apart, and a Fix all that shows the exact settings first and verifies each one afterwards.
+- **Debloat.** Remove up to 13 optional Windows apps for your account after reviewing the exact packages, with history and Store links to reinstall.
+
+See the [changelog](CHANGELOG.md) for every release.
+
 ## What you can do
 
 | Area | Controls and tools |
@@ -62,17 +72,18 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 | Gaming | Game Sessions with optional core steering, supported gaming settings, hardware scheduling options, X3D placement controls and a before/after network check |
 | Performance | Power configuration, startup controls and foreground scheduling settings |
 | Hardware | Available sensor readings, a DPC/ISR latency trace that names the responsible driver, supported thermal profiles and driver updates through Windows Update |
+| Debloat | Optional Windows apps removed for the current account only, verified by publisher, with removal history and reinstall links |
 | Privacy | Supported Windows advertising, tracking and diagnostic settings; optional password breach lookup |
 | Maintenance | Integrity checks, guided repair, storage analysis and cleanup with operation-specific recovery limits |
 | Interface | File extensions, taskbar options, appearance and supported Windows preferences |
 
 Read the effect and trade-offs before applying a setting. A disabled tweak is not evidence of a fault, and a higher configuration score is not a measured performance gain.
 
-### Ready-to-use profiles in 1.10.0
+### Ready-to-use profiles
 
 **Gaming, Study and Work are included in Free.** Open Profiles, review or customize the selection, then apply the pending tweaks with one click. Each template explains its tradeoffs; optional settings start unchecked. Profiles add the selected settings without undoing other tweaks. Restore individual changes from their category. Results depend on your hardware and workload; no FPS gain is promised.
 
-### Five new native power controls in 1.9.0
+### Native power controls
 
 The catalog contains **66 controls: 39 Free and 27 Pro**. The five power-policy controls change only mains-power policy in the selected Windows plan. They record the original plan and value before writing, verify the result, and leave battery policy unchanged.
 

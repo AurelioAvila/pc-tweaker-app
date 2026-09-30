@@ -9,3 +9,6 @@
  * address, add a separate public alias instead of exporting this one.
  */
 export const SUPPORT_INBOX = process.env.SUPPORT_EMAIL || "canadesino91@gmail.com";
+
+// Public replies stay branded; owner notifications retain their private destination.
+export const SUPPORT_REPLY_TO = "support@pctweaker.app";

@@ -15,7 +15,7 @@ import {
 } from "../stripe-policy";
 import { sendMail } from "../mailer";
 import { brandFor, proWelcomeHtml, proWelcomeSubject, proWelcomeText } from "../emails/pro-welcome";
-import { SUPPORT_INBOX } from "../support-inbox";
+import { SUPPORT_INBOX, SUPPORT_REPLY_TO } from "../support-inbox";
 import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
 import { queueReceipt, type Receipt } from "../receipt-outbox";
 
@@ -558,7 +558,7 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
     const result = await sendMail({
       to: user.email,
       subject: proWelcomeSubject(product),
-      replyTo: SUPPORT_INBOX,
+      replyTo: SUPPORT_REPLY_TO,
       text: proWelcomeText({
         product,
         firstName: user.first_name || "there",

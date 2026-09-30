@@ -19,7 +19,7 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/uninstaller": {
     title: "Windows Uninstaller That Shows the Risk First | PC Tweaker",
     description:
-      "See what an uninstall removes before it runs: a safety score with its reasons, the exact command, a restore point taken first, and the space freed.",
+      "Review a Windows uninstall before it runs: inspect its risk score, command and permissions, then check restore-point status and the local removal receipt.",
     canonical: `${ORIGIN}/uninstaller/`,
     ogType: "website",
   },

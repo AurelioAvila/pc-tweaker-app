@@ -105,14 +105,14 @@ export function emailShell({
     : "";
 
   return `<!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(productName)}</title>
+<title>${escapeHtml(headline)} — ${escapeHtml(productName)}</title>
 </head>
 <body style="margin:0; padding:0; background:#050506; font-family:'Segoe UI', Arial, sans-serif;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050506; padding:48px 16px;">
+<table lang="en" dir="ltr" role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050506; padding:48px 16px;">
   <tr>
     <td align="center">
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#0a0a0c; border:1px solid #2a2d33; border-radius:20px; overflow:hidden;">

@@ -87,7 +87,7 @@ async function sendViaResend({ to, subject, html, text, replyTo }: MailInput): P
  * bodies to logs because they can contain password-reset tokens or personal
  * support content.
  */
-async function sendMail({ to, subject, html, text, replyTo }: MailInput): Promise<{ delivered: boolean }> {
+async function sendMail({ to, subject, html, text, replyTo = "support@pctweaker.app" }: MailInput): Promise<{ delivered: boolean }> {
   if (useResend) {
     await sendViaResend({ to, subject, html, text, replyTo });
     return { delivered: true };

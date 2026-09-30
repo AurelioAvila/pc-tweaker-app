@@ -83,6 +83,28 @@ test("a successful send reports delivery", async () => {
   assert.equal(result.delivered, true);
 });
 
+test("customer replies use the branded alias without replacing support-form replies", async () => {
+  process.env.RESEND_API_KEY = "test-key";
+  process.env.MAIL_FROM = "PC Tweaker <mail@example.com>";
+  const originalFetch = globalThis.fetch;
+  const payloads = [];
+  globalThis.fetch = async (_url, init) => {
+    payloads.push(JSON.parse(init.body));
+    return { ok: true };
+  };
+  try {
+    delete require.cache[require.resolve("../dist/mailer.js")];
+    const { sendMail } = require("../dist/mailer.js");
+    const message = { to: "someone@example.com", subject: "test", html: "<p>test</p>" };
+    await sendMail(message);
+    await sendMail({ ...message, replyTo: "customer@example.com" });
+    assert.equal(payloads[0].reply_to, "support@pctweaker.app");
+    assert.equal(payloads[1].reply_to, "customer@example.com");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("production never falls back to an unverified sender", async () => {
   process.env.RESEND_API_KEY = "test-key";
   delete process.env.MAIL_FROM;

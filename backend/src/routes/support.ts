@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import { isValidEmail } from "../auth";
 import { sendMail, isConfigured as mailIsConfigured, MailError } from "../mailer";
-import { SUPPORT_INBOX } from "../support-inbox";
+import { SUPPORT_INBOX, SUPPORT_REPLY_TO } from "../support-inbox";
 import { consumeGlobalBudget, singleLine } from "../public-form-guard";
 import { emailShell } from "../emails/layout";
 
@@ -179,7 +179,7 @@ router.post("/", supportLimiter, async (req: Request, res: Response) => {
   void sendMail({
     to: email,
     subject: "We received your PC Tweaker support request",
-    replyTo: SUPPORT_INBOX,
+    replyTo: SUPPORT_REPLY_TO,
     html: emailShell({
       eyebrow: "Support request received",
       headline: "We're on it.",

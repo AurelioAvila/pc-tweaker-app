@@ -227,7 +227,7 @@ The website is in [`site/`](site/): run `npm ci` and `npm run build` from that d
 
 ## Report a problem
 
-Use [support](https://pctweaker.app/support/) for billing or private diagnostics. For a reproducible software bug, open a [GitHub issue](https://github.com/AurelioAvila/pc-tweaker-app/issues) with the app version, Windows build, hardware, selected tweak, steps, expected behavior and actual outcome. Remove tokens, email addresses, license files and private paths from public attachments.
+Use [support](https://pctweaker.app/support/) or email [support@pctweaker.app](mailto:support@pctweaker.app) for billing or private diagnostics. For a reproducible software bug, open a [GitHub issue](https://github.com/AurelioAvila/pc-tweaker-app/issues) with the app version, Windows build, hardware, selected tweak, steps, expected behavior and actual outcome. Remove tokens, email addresses, license files and private paths from public attachments.
 
 ## Source availability and license
 
@@ -240,3 +240,4 @@ Created and maintained by **Aurelio Avila**.
 Lifetime includes everything in Pro, plus exclusive access to selected future tweaks, priority support, saved-profile comparison and portable tuning reports. Future exclusive tweaks will arrive in upcoming releases.
 
 PC Tweaker Lifetime includes Uninstaller Pro for 12 months from the first sign-in to Uninstaller with the same account, including existing Lifetime owners. No automatic renewal. Standalone Uninstaller licenses remain separate.
+

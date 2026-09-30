@@ -17,7 +17,7 @@ const FREE = [
   "Unlimited single uninstalls, for classic desktop software and Store apps alike",
   "A safety score for every program, with the reasons it arrived at that score spelled out",
   "The removal brief: the exact command that will run and the permissions it will ask for, before it runs",
-  "A Windows restore point taken before the removal is attempted",
+  "A restore-point attempt before elevated removals, with the outcome recorded in the receipt",
   "The Removal Ledger: a local receipt of what was removed, by what method, with what result and how much space was actually freed",
 ];
 
@@ -36,8 +36,8 @@ export function UninstallerPage() {
       <p className="mb-8 text-lg leading-relaxed text-[var(--fg-dim)]">
         PC Tweaker Uninstaller is a Windows application that reads every installed program,
         scores how risky removing it is and shows you the exact command and permissions it
-        will use. It takes a restore point first, then writes a receipt of what actually
-        happened. Single uninstalls are free, for good.
+        will use. Before elevated removals, it attempts to create a Windows restore point,
+        then records the outcome and what actually happened. Single uninstalls are free, for good.
       </p>
 
       <div className="mb-12 flex flex-wrap items-center gap-4">
@@ -121,11 +121,13 @@ export function UninstallerPage() {
       <section className="mb-10">
         <h2 className="mb-3 text-2xl font-semibold text-[var(--fg)]">Understand the limits</h2>
         <p className="leading-relaxed text-[var(--fg-dim)]">
-          Review the removal brief and maintain an independent backup. Recovery applies only
+          Review the removal brief and maintain an independent backup. Restore-point creation
+          can fail or be skipped; Windows settings, permissions and throttling affect availability.
+          Check the recorded outcome before relying on it. Recovery applies only
           to supported operations and is not a guarantee that a removed application, its
           settings or its data can be restored. This is a separate application with its own
-          Pro entitlement: a PC Tweaker subscription does not unlock it by itself, it only
-          sets the price.
+          Pro entitlement: a PC Tweaker subscription qualifies for the reduced price, while
+          Lifetime includes the 12-month bonus described above.
         </p>
       </section>
     </main>

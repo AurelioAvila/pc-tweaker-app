@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.15.2
+
+PC Tweaker 1.15.2 is a routine daily maintenance update.
+
 ## v1.15.1
 
 - Rebuilds Scan as one workspace. Ten checks report their progress one by one: Windows settings, supported changes, hardware recommendations, system profile, free storage, startup programs, memory usage, pending restart, security signals and driver dates. A check that cannot finish stays unknown instead of counting as passed.

@@ -10,7 +10,7 @@ $root = Join-Path $env:RUNNER_TEMP 'pct-installer-check'
 $old = Join-Path $root 'old'
 $candidate = Join-Path $root 'candidate'
 New-Item -ItemType Directory -Path $old,$candidate -Force | Out-Null
-gh release download v1.8.0 --repo $env:GITHUB_REPOSITORY --pattern '*_x64-setup.exe' --pattern '*_x64_en-US.msi' --dir $old
+gh release download v1.15.1 --repo $env:GITHUB_REPOSITORY --pattern '*_x64-setup.exe' --pattern '*_x64_en-US.msi' --dir $old
 if ($LASTEXITCODE -ne 0) { throw 'Could not download upgrade baseline' }
 gh release download $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --pattern '*_x64-setup.exe' --pattern '*_x64_en-US.msi' --dir $candidate
 if ($LASTEXITCODE -ne 0) { throw 'Could not download candidate installers' }
@@ -78,4 +78,4 @@ Assert-Payload $msiDirectory
 Run-Installer 'msiexec.exe' @('/x',$newMsi[0].FullName,'/qn','/norestart')
 if (Test-Path -LiteralPath (Join-Path $msiDirectory 'tauri-app.exe')) { throw 'MSI uninstall left the application behind' }
 }
-Write-Output "PASS ($env:INSTALLER_FORMAT): signed installer and payload, startup, upgrade from 1.8.0 and uninstall."
+Write-Output "PASS ($env:INSTALLER_FORMAT): signed installer and payload, startup, upgrade from 1.15.1 and uninstall."

@@ -12,10 +12,10 @@ import "./advanced-controls.css";
 export type AdvancedId =
   "ecoqos_rules" | "limit_do_background_download" | "monitor_refresh_profile";
 
-async function chooseExecutable() {
+async function chooseExecutable(label: string) {
   const path = await open({
     multiple: false,
-    filters: [{ name: "Windows executable", extensions: ["exe"] }],
+    filters: [{ name: label, extensions: ["exe"] }],
   });
   return typeof path === "string" ? path : null;
 }
@@ -166,7 +166,7 @@ function EcoCard({
           disabled={busy || !state || !!state.blocked_global}
           onClick={() =>
             void act(async () => {
-              const path = await chooseExecutable();
+              const path = await chooseExecutable(c.path);
               if (path) await invoke("ecoqos_add_rule", { path });
             })
           }
@@ -532,7 +532,7 @@ function MonitorCard({
           disabled={busy || !canChange || selectedHz !== display?.current_hz}
           onClick={() =>
             void act(async () => {
-              const path = await chooseExecutable();
+              const path = await chooseExecutable(c.path);
               if (path)
                 await invoke("monitor_save_rule", {
                   path,

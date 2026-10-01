@@ -6,8 +6,11 @@ import type {
   SystemStats,
   TweakAdvice,
   TweakInfo,
+  ScheduledTaskEntry,
+  EcoQosState,
 } from "./types";
 import type { HealthResult } from "./components/health";
+import type { DebloatApp } from "./components/debloat";
 import { CONFIGURABLE_TWEAK_IDS } from "./catalog";
 type Call = <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
 
@@ -22,6 +25,9 @@ export const SCAN_PROBES = [
   "reboot_pending",
   "health_report",
   "driver_audit",
+  "list_scheduled_tasks",
+  "list_debloat_apps",
+  "ecoqos_status",
 ] as const;
 export type ScanProbe = (typeof SCAN_PROBES)[number];
 export type ProbeStatus = "reading" | "complete" | "unavailable";
@@ -60,16 +66,20 @@ export async function collectScan(
     const advice = await probe<TweakAdvice[]>("advise_tweaks", { ids: ids ?? [] });
     return { tweaks, ids, advice };
   });
-  const [settings, profile, drives, startup, stats, reboot, health, drivers] = await Promise.all([
-    inventory,
-    probe<SystemProfile>("system_profile"),
-    probe<DriveInfo[]>("list_drives_cmd"),
-    probe<StartupEntry[]>("list_startup_items"),
-    probe<SystemStats>("system_stats"),
-    probe<boolean>("reboot_pending"),
-    probe<HealthResult>("health_report"),
-    probe<DriverAudit>("driver_audit"),
-  ]);
+  const [settings, profile, drives, startup, stats, reboot, health, drivers, tasks, apps, eco] =
+    await Promise.all([
+      inventory,
+      probe<SystemProfile>("system_profile"),
+      probe<DriveInfo[]>("list_drives_cmd"),
+      probe<StartupEntry[]>("list_startup_items"),
+      probe<SystemStats>("system_stats"),
+      probe<boolean>("reboot_pending"),
+      probe<HealthResult>("health_report"),
+      probe<DriverAudit>("driver_audit"),
+      probe<ScheduledTaskEntry[]>("list_scheduled_tasks"),
+      probe<DebloatApp[]>("list_debloat_apps"),
+      probe<EcoQosState>("ecoqos_status"),
+    ]);
   return {
     ...settings,
     profile,
@@ -79,6 +89,9 @@ export async function collectScan(
     reboot,
     health,
     drivers,
+    tasks,
+    apps,
+    eco,
     unavailable,
     partial: unavailable.length > 0,
     at: Date.now(),
@@ -169,9 +182,18 @@ export async function applyScanSelection(
 }
 export type ScanObservation = {
   id: string;
-  kind: "storage" | "startup" | "memory" | "restart" | "security" | "drivers";
+  kind:
+    | "storage"
+    | "startup"
+    | "memory"
+    | "restart"
+    | "security"
+    | "drivers"
+    | "tasks"
+    | "apps"
+    | "efficiency";
   evidence: string;
-  section: "manutenzione" | "startup" | "health" | "hardware";
+  section: "manutenzione" | "startup" | "health" | "hardware" | "debloat" | "performance";
   warning: boolean;
 };
 export function scanObservations(r: ScanReport): ScanObservation[] {
@@ -227,6 +249,32 @@ export function scanObservations(r: ScanReport): ScanObservation[] {
         section: "hardware",
         warning: false,
       });
+  const tasks = (r.tasks ?? []).filter((task) => task.enabled);
+  if (tasks.length)
+    rows.push({
+      id: "scheduled-startup",
+      kind: "tasks",
+      evidence: tasks.map((task) => task.name).join(", "),
+      section: "startup",
+      warning: false,
+    });
+  const apps = (r.apps ?? []).filter((app) => app.installed && app.removable);
+  if (apps.length)
+    rows.push({
+      id: "optional-windows-apps",
+      kind: "apps",
+      evidence: apps.map((app) => app.name).join(", "),
+      section: "debloat",
+      warning: false,
+    });
+  if (r.eco?.blocked_global && r.eco.enabled)
+    rows.push({
+      id: "efficiency-conflict",
+      kind: "efficiency",
+      evidence: "EcoQoS",
+      section: "performance",
+      warning: true,
+    });
   return rows;
 }
 

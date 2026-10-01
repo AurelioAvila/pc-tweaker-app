@@ -71,20 +71,30 @@ export function Toggle({
   s,
   label,
   busyLabel,
+  disabled = false,
 }: {
   label?: string;
   busyLabel?: string;
+  disabled?: boolean;
   checked: boolean;
   busy: boolean;
   onClick: () => void;
   s: Strings;
 }) {
-  const presenting = useBusyPresentation(busy);
+  const [feedback, setFeedback] = useState(false);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(feedbackTimer.current), []);
+  const presenting = useBusyPresentation(busy) || feedback;
   return (
     <button
       type="button"
-      disabled={presenting}
-      onClick={onClick}
+      disabled={presenting || disabled}
+      onClick={() => {
+        // A click is visible even when the parent operation settles within one render.
+        setFeedback(true);
+        feedbackTimer.current = setTimeout(() => setFeedback(false), 550);
+        onClick();
+      }}
       aria-pressed={checked}
       aria-busy={presenting}
       aria-label={label}

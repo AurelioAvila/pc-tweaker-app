@@ -37,13 +37,16 @@ const report = (extra = {}) =>
     reboot: false,
     health: null,
     drivers: null,
+    tasks: [],
+    apps: [],
+    eco: null,
     unavailable: [],
     partial: false,
     at: Date.now(),
     ...extra,
   }) as ScanReport;
 
-test("ten native reads report monotonic real progress; failures stay unknown", async () => {
+test("all native reads report monotonic real progress; failures stay unknown", async () => {
   const calls: string[] = [];
   const progress: number[] = [];
   const r = await collectScan(
@@ -66,8 +69,34 @@ test("ten native reads report monotonic real progress; failures stay unknown", a
     },
     () => {},
   );
-  assert.equal(failed.unavailable.length, 10);
+  assert.equal(failed.unavailable.length, SCAN_PROBES.length);
   assert.deepEqual(recommendedTweaks(failed, true), []);
+});
+test("new checks offer genuine review items without turning optional apps or tasks into defects", () => {
+  const r = report({
+    tasks: [
+      { name: "Updater", enabled: true },
+      { name: "Off", enabled: false },
+    ],
+    apps: [
+      { name: "Weather", installed: true, removable: true },
+      { name: "Core", installed: true, removable: false },
+    ],
+    eco: { enabled: true, blocked_global: true },
+  });
+  const rows = scanObservations(r);
+  assert.deepEqual(
+    rows.map((row) => [row.kind, row.warning, row.section]),
+    [
+      ["tasks", false, "startup"],
+      ["apps", false, "debloat"],
+      ["efficiency", true, "performance"],
+    ],
+  );
+  assert.deepEqual(recommendedTweaks(r, true), []);
+  assert.equal(rows[0].evidence, "Updater");
+  assert.equal(rows[1].evidence, "Weather");
+  assert.deepEqual(scanObservations(report({ eco: { enabled: false, blocked_global: true } })), []);
 });
 test("fixes require supported hardware advice and respect tiers and dedicated controls", () => {
   const tweaks = [

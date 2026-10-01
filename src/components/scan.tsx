@@ -59,7 +59,7 @@ export function ScanPanel({
   const operation = useRef(false);
   const alive = useRef(true);
   const dialog = useRef<HTMLDialogElement>(null);
-  const results = useRef<HTMLDivElement>(null);
+  const results = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -119,7 +119,10 @@ export function ScanPanel({
       const drivers = settled("driver_audit") ? 1 : driver ? driver.done / driver.total : 0;
       // Driver inventory is the long phase: 60% of weighted work, the other reads 40%.
       // Keep 100% reserved for the complete report, not the final progress event.
-      target = Math.max(target, Math.min(99, (checks / 9) * 40 + drivers * 60));
+      target = Math.max(
+        target,
+        Math.min(99, (checks / (SCAN_PROBES.length - 1)) * 40 + drivers * 60),
+      );
     };
     const animation = window.setInterval(() => {
       if (!alive.current) {
@@ -128,8 +131,9 @@ export function ScanPanel({
         return;
       }
       const now = performance.now();
-      // At most 12.5 points/second; never animate ahead of completed native work.
-      displayed = Math.min(target, displayed + Math.min(now - lastFrame, 100) / 80);
+      // Ease towards completed work; no minimum duration or scripted stage pauses.
+      displayed += (target - displayed) * (1 - Math.exp(-(now - lastFrame) / 180));
+      if (target - displayed < 0.1) displayed = target;
       lastFrame = now;
       setProgress(Math.floor(displayed));
       setElapsed(Math.floor((now - startedAt) / 1000));
@@ -166,8 +170,6 @@ export function ScanPanel({
       if (!alive.current) return;
       window.clearInterval(animation);
       setProgress(100);
-      await new Promise<void>((resolve) => window.setTimeout(resolve, 240));
-      if (!alive.current) return;
       setReport(next);
       setSelected(recommendedTweaks(next, isPro).map((t) => t.id));
       // A completely failed attempt must not replace the last completed scan.
@@ -352,8 +354,14 @@ export function ScanPanel({
           )}
         </div>
         <aside className="scan-scope">
-          <details open={!report}>
-            <summary>{c.scope}</summary>
+          <details>
+            <summary>
+              <span>{c.scope}</span>
+              <span className="scan-scope-count">
+                {SCAN_PROBES.length}
+                <small>{c.newChecks}</small>
+              </span>
+            </summary>
             <ol>
               {SCAN_PROBES.map((probe, i) => (
                 <li key={probe} data-state={probes[probe] || "idle"}>
@@ -366,7 +374,10 @@ export function ScanPanel({
                       String(i + 1).padStart(2, "0")
                     )}
                   </span>
-                  <span>{c.probes[i]}</span>
+                  <span className="scan-probe-copy">
+                    {c.probes[i]}
+                    {i >= 10 && <small>{c.newDetails[i - 10]}</small>}
+                  </span>
                   {probes[probe] === "unavailable" && (
                     <span className="scan-probe-note">{s.scan.unavailable}</span>
                   )}
@@ -444,173 +455,185 @@ export function ScanPanel({
         </div>
       )}
       {report && (
-        <div className="scan-results" ref={results} tabIndex={-1} data-has-fixes={fixes.length > 0}>
-          <div className="scan-auto-results">
-            <div className="scan-section-heading">
-              <div>
-                <p className="scan-eyebrow">
-                  {report.partial || unknownSecurity.length ? c.partial : c.complete}
-                </p>
-                <h3>{c.recommendations}</h3>
+        <details className="scan-report" ref={results} tabIndex={-1} open>
+          <summary className="scan-report-summary">
+            <span>{c.results}</span>
+            <span className="scan-report-toggle">
+              <span className="scan-report-hide">{c.hideResults}</span>
+              <span className="scan-report-show">{c.showResults}</span>
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="m4 6 4 4 4-4" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+            </span>
+          </summary>
+          <div className="scan-results" data-has-fixes={fixes.length > 0}>
+            <div className="scan-auto-results">
+              <div className="scan-section-heading">
+                <div>
+                  <p className="scan-eyebrow">
+                    {report.partial || unknownSecurity.length ? c.partial : c.complete}
+                  </p>
+                  <h3>{c.recommendations}</h3>
+                </div>
+                {fixes.length > 0 && (
+                  <div className="scan-result-actions">
+                    <button
+                      className="scan-secondary"
+                      disabled={applying || !selectedFixes.length}
+                      onClick={() => setReviewIds(selectedFixes.map((t) => t.id))}
+                    >
+                      {c.apply} ({selectedFixes.length})
+                    </button>
+                    <button
+                      className="scan-primary"
+                      disabled={applying || !fixes.length}
+                      onClick={() => setReviewIds(fixes.map((t) => t.id))}
+                    >
+                      {s.scan.fixAll} ({fixes.length})
+                    </button>
+                  </div>
+                )}
               </div>
-              {fixes.length > 0 && (
-                <div className="scan-result-actions">
-                  <button
-                    className="scan-secondary"
-                    disabled={applying || !selectedFixes.length}
-                    onClick={() => setReviewIds(selectedFixes.map((t) => t.id))}
-                  >
-                    {c.apply} ({selectedFixes.length})
-                  </button>
-                  <button
-                    className="scan-primary"
-                    disabled={applying || !fixes.length}
-                    onClick={() => setReviewIds(fixes.map((t) => t.id))}
-                  >
-                    {s.scan.fixAll} ({fixes.length})
-                  </button>
+              {fixes.length ? (
+                <ul className="scan-findings">
+                  {fixes.map((t) => {
+                    const text = textFor(s.tweaks, t.id, t.name, t.description);
+                    const reason = report.advice?.find((a) => a.id === t.id)?.reason_key;
+                    return (
+                      <li key={t.id} className="scan-finding">
+                        <input
+                          type="checkbox"
+                          aria-label={text.name}
+                          checked={selected.includes(t.id)}
+                          disabled={applying}
+                          onChange={(e) =>
+                            setSelected((previous) =>
+                              e.target.checked
+                                ? [...previous, t.id]
+                                : previous.filter((id) => id !== t.id),
+                            )
+                          }
+                        />
+                        <div>
+                          <div className="scan-finding-title">
+                            <h4>{text.name}</h4>
+                            {t.requires_admin && <span className="scan-tag">{c.admin}</span>}
+                          </div>
+                          <p>{text.description}</p>
+                          {reason && (
+                            <p className="scan-reason">
+                              {(s.scan.reasons as Record<string, string>)[reason]}
+                            </p>
+                          )}
+                          {t.changes.length > 0 && (
+                            <details className="scan-technical">
+                              <summary>{s.transparency.title}</summary>
+                              <TechnicalDetails changes={t.changes} s={s} />
+                            </details>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <div className="scan-empty">
+                  <CheckIcon className="h-5 w-5" />
+                  <div>
+                    <h4>{report.tweaks && report.advice && report.ids ? c.empty : c.partial}</h4>
+                    <p>
+                      {report.tweaks && report.advice && report.ids ? c.emptyBody : c.unavailable}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {lockedFixes.length > 0 && (
+                <div className="scan-locked-results">
+                  <h4>{c.proRecommendations}</h4>
+                  <p>{c.proRecommendationsBody}</p>
+                  {lockedFixes.map((t) => (
+                    <div key={t.id} className="scan-locked-row">
+                      <span>{textFor(s.tweaks, t.id, t.name, t.description).name}</span>
+                      <button
+                        className="scan-secondary"
+                        onClick={() => onNavigate(t.category)}
+                        disabled={applying}
+                      >
+                        {c.manual} · Pro ↗
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-            {fixes.length ? (
-              <ul className="scan-findings">
-                {fixes.map((t) => {
-                  const text = textFor(s.tweaks, t.id, t.name, t.description);
-                  const reason = report.advice?.find((a) => a.id === t.id)?.reason_key;
-                  return (
-                    <li key={t.id} className="scan-finding">
-                      <input
-                        type="checkbox"
-                        aria-label={text.name}
-                        checked={selected.includes(t.id)}
-                        disabled={applying}
-                        onChange={(e) =>
-                          setSelected((previous) =>
-                            e.target.checked
-                              ? [...previous, t.id]
-                              : previous.filter((id) => id !== t.id),
-                          )
-                        }
-                      />
-                      <div>
-                        <div className="scan-finding-title">
-                          <h4>{text.name}</h4>
-                          {t.requires_admin && <span className="scan-tag">{c.admin}</span>}
-                        </div>
-                        <p>{text.description}</p>
-                        {reason && (
-                          <p className="scan-reason">
-                            {(s.scan.reasons as Record<string, string>)[reason]}
-                          </p>
-                        )}
-                        {t.changes.length > 0 && (
-                          <details className="scan-technical">
-                            <summary>{s.transparency.title}</summary>
-                            <TechnicalDetails changes={t.changes} s={s} />
-                          </details>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <div className="scan-empty">
-                <CheckIcon className="h-5 w-5" />
-                <div>
-                  <h4>{report.tweaks && report.advice && report.ids ? c.empty : c.partial}</h4>
-                  <p>
-                    {report.tweaks && report.advice && report.ids ? c.emptyBody : c.unavailable}
-                  </p>
-                </div>
-              </div>
-            )}
-            {lockedFixes.length > 0 && (
-              <div className="scan-locked-results">
-                <h4>{c.proRecommendations}</h4>
-                <p>{c.proRecommendationsBody}</p>
-                {lockedFixes.map((t) => (
-                  <div key={t.id} className="scan-locked-row">
-                    <span>{textFor(s.tweaks, t.id, t.name, t.description).name}</span>
-                    <button
-                      className="scan-secondary"
-                      onClick={() => onNavigate(t.category)}
-                      disabled={applying}
-                    >
-                      {c.manual} · Pro ↗
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="scan-review-results">
-            <div className="scan-section-heading">
-              <h3>{c.review}</h3>
-              <span className="scan-tag">{observations.length}</span>
-            </div>
-            {observations.length ? (
-              <ul className="scan-findings">
-                {observations.map((o) => (
-                  <li key={o.id} className="scan-finding scan-manual">
-                    <span
-                      className={`scan-observation-mark ${o.warning ? "is-warning" : ""}`}
-                      aria-hidden="true"
-                    >
-                      {o.warning ? "!" : "i"}
-                    </span>
-                    <div>
-                      <h4>{c.observations[o.kind][0]}</h4>
-                      <p>{c.observations[o.kind][1]}</p>
-                      {o.evidence && <p className="scan-evidence">{o.evidence}</p>}
-                    </div>
-                    <button
-                      className="scan-secondary"
-                      disabled={applying}
-                      onClick={() => onNavigate(o.section)}
-                    >
-                      {c.manual} <span aria-hidden="true">↗</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="scan-empty-note">{c.noReview}</p>
-            )}
-          </div>
-          {optional.length > 0 && (
-            <div className="scan-optional-results">
+            <div className="scan-review-results">
               <div className="scan-section-heading">
-                <h3>{c.optional}</h3>
-                <span className="scan-tag">{optional.length}</span>
+                <h3>{c.review}</h3>
+                <span className="scan-tag">{observations.length}</span>
               </div>
-              <p className="scan-optional-intro">{c.optionalBody}</p>
-              <ul className="scan-findings">
-                {optional.map((t) => {
-                  const text = textFor(s.tweaks, t.id, t.name, t.description);
-                  return (
-                    <li key={t.id} className="scan-finding scan-manual">
+              {observations.length ? (
+                <ul className="scan-findings">
+                  {observations.map((o) => (
+                    <li key={o.id} className="scan-finding scan-manual">
+                      <span
+                        className={`scan-observation-mark ${o.warning ? "is-warning" : ""}`}
+                        aria-hidden="true"
+                      >
+                        {o.warning ? "!" : "i"}
+                      </span>
                       <div>
-                        <h4>
-                          {text.name}
-                          {t.requires_pro && <span className="scan-tag">Pro</span>}
-                        </h4>
-                        <p>{text.description}</p>
+                        <h4>{c.observations[o.kind][0]}</h4>
+                        <p>{c.observations[o.kind][1]}</p>
+                        {o.evidence && <p className="scan-evidence">{o.evidence}</p>}
                       </div>
                       <button
                         className="scan-secondary"
                         disabled={applying}
-                        onClick={() => onNavigate(t.category)}
+                        onClick={() => onNavigate(o.section)}
                       >
-                        {c.manual} ↗
+                        {c.manual} <span aria-hidden="true">↗</span>
                       </button>
                     </li>
-                  );
-                })}
-              </ul>
+                  ))}
+                </ul>
+              ) : (
+                <p className="scan-empty-note">{c.noReview}</p>
+              )}
             </div>
-          )}
-        </div>
+            {optional.length > 0 && (
+              <div className="scan-optional-results">
+                <div className="scan-section-heading">
+                  <h3>{c.optional}</h3>
+                  <span className="scan-tag">{optional.length}</span>
+                </div>
+                <p className="scan-optional-intro">{c.optionalBody}</p>
+                <ul className="scan-findings">
+                  {optional.map((t) => {
+                    const text = textFor(s.tweaks, t.id, t.name, t.description);
+                    return (
+                      <li key={t.id} className="scan-finding scan-manual">
+                        <div>
+                          <h4>
+                            {text.name}
+                            {t.requires_pro && <span className="scan-tag">Pro</span>}
+                          </h4>
+                          <p>{text.description}</p>
+                        </div>
+                        <button
+                          className="scan-secondary"
+                          disabled={applying}
+                          onClick={() => onNavigate(t.category)}
+                        >
+                          {c.manual} ↗
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </div>
+        </details>
       )}
       <button
         className="scan-maintenance-link"

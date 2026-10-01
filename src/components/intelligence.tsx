@@ -3,7 +3,9 @@ import { invoke } from "@tauri-apps/api/core";
 import { format, Lang, Strings } from "../i18n";
 import { textFor, uiLocale } from "../lib";
 import { AuditEntry, CrashReport, DriftReport, Toast, TweakAdvice, TweakInfo } from "../types";
-import { ProBadge, ShieldBadge } from "./ui";
+import { ProBadge, ShieldBadge, Toggle } from "./ui";
+import { ToolHeader } from "./tool-section";
+import { HistoryIcon } from "./icons";
 import "./workspace-panels.css";
 
 /**
@@ -268,8 +270,10 @@ export function UpdateDriftCard({
       <button
         onClick={() => void reapply()}
         disabled={busy}
-        className="bg-accent text-on-accent mt-4 rounded-xl px-4 py-2.5 text-[13px] font-bold transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:hover:translate-y-0 disabled:hover:brightness-100"
+        aria-busy={busy}
+        className="tool-primary-action mt-4"
       >
+        {busy && <span className="scan-spinner" aria-hidden="true" />}
         {busy
           ? s.drift.reapplying
           : one
@@ -678,22 +682,21 @@ export function DriftWatchToggle({
   }
 
   return (
-    <div className="border-line bg-surface-1 mb-6 flex items-center gap-4 rounded-2xl border p-4">
-      <div className="min-w-0 flex-1">
-        <h3 className="text-ink text-sm font-semibold">{s.driftWatch.title}</h3>
-        <p className="text-ink-3 mt-0.5 text-[12.5px] leading-relaxed">{s.driftWatch.body}</p>
-      </div>
-      <button
-        onClick={toggle}
-        disabled={on === null || busy}
-        className={`shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition disabled:opacity-40 ${
-          on
-            ? "bg-emerald-400/15 text-emerald-300"
-            : "bg-surface-2 text-ink-2 hover:bg-surface-hover"
-        }`}
-      >
-        {on === null ? "…" : on ? s.driftWatch.on : s.driftWatch.off}
-      </button>
+    <div className="tool-panel mb-6">
+      <ToolHeader
+        title={s.driftWatch.title}
+        description={s.driftWatch.body}
+        icon={<HistoryIcon className="h-5 w-5" />}
+        actions={
+          <Toggle
+            checked={on === true}
+            busy={busy || on === null}
+            onClick={() => void toggle()}
+            s={s}
+            label={s.driftWatch.title}
+          />
+        }
+      />
     </div>
   );
 }

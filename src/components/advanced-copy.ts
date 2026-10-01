@@ -12,6 +12,7 @@ const en = {
   ecoStopped: "Engine stopped",
   ecoActive: "Processes currently managed",
   ecoPending: "Restores pending",
+  ecoRestore: "Restore the previous power throttling setting",
   ecoConflict:
     "Windows power throttling is disabled globally. Restore that setting before using these rules.",
   doTitle: "Windows background download limit",
@@ -64,6 +65,7 @@ export const ADVANCED_COPY: Record<Lang, AdvancedCopy> = {
     ecoStopped: "Motore fermo",
     ecoActive: "Processi gestiti ora",
     ecoPending: "Ripristini in attesa",
+    ecoRestore: "Ripristina il power throttling precedente",
     ecoConflict:
       "Il risparmio energetico di Windows è disattivato globalmente. Ripristina quell'impostazione prima di usare le regole.",
     doTitle: "Limite ai download Windows in background",
@@ -112,6 +114,7 @@ export const ADVANCED_COPY: Record<Lang, AdvancedCopy> = {
     ecoStopped: "Moteur arrêté",
     ecoActive: "Processus gérés actuellement",
     ecoPending: "Restaurations en attente",
+    ecoRestore: "Restaurer la limitation énergétique précédente",
     ecoConflict:
       "La limitation énergétique Windows est désactivée globalement. Restaurez ce réglage avant d'utiliser ces règles.",
     doTitle: "Limite des téléchargements Windows en arrière-plan",
@@ -161,6 +164,7 @@ export const ADVANCED_COPY: Record<Lang, AdvancedCopy> = {
     ecoStopped: "Motor detenido",
     ecoActive: "Procesos gestionados ahora",
     ecoPending: "Restauraciones pendientes",
+    ecoRestore: "Restaurar la limitación energética anterior",
     ecoConflict:
       "El ahorro energético de Windows está desactivado globalmente. Restaura ese ajuste antes de usar estas reglas.",
     doTitle: "Límite de descargas de Windows en segundo plano",
@@ -209,6 +213,7 @@ export const ADVANCED_COPY: Record<Lang, AdvancedCopy> = {
     ecoStopped: "Steuerung gestoppt",
     ecoActive: "Aktuell verwaltete Prozesse",
     ecoPending: "Ausstehende Wiederherstellungen",
+    ecoRestore: "Vorherige Energiebegrenzung wiederherstellen",
     ecoConflict:
       "Windows-Energiedrosselung ist global deaktiviert. Stellen Sie diese Einstellung vor der Nutzung der Regeln wieder her.",
     doTitle: "Limit für Windows-Hintergrunddownloads",
@@ -258,6 +263,7 @@ export const ADVANCED_COPY: Record<Lang, AdvancedCopy> = {
     ecoStopped: "Motor parado",
     ecoActive: "Processos geridos agora",
     ecoPending: "Restauros pendentes",
+    ecoRestore: "Restaurar a limitação energética anterior",
     ecoConflict:
       "A limitação energética do Windows está desativada globalmente. Restaure essa definição antes de usar estas regras.",
     doTitle: "Limite de transferências Windows em segundo plano",

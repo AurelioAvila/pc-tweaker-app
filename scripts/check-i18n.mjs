@@ -7,26 +7,17 @@
 // to every user of that language. This catches that before it ships.
 //
 // Run with: npm run check:i18n
-import { build } from "esbuild";
+import { loadTranslations } from "./i18n-tables.mjs";
 
 const LANGS = ["it", "en", "fr", "es", "de", "pt"];
 const REFERENCE = "it";
 
-const bundled = await build({
-  entryPoints: ["src/i18n.ts"],
-  bundle: true,
-  write: false,
-  format: "esm",
-  platform: "neutral",
-});
-
-const code = Buffer.from(bundled.outputFiles[0].text).toString("base64");
-const { STRINGS } = await import(`data:text/javascript;base64,${code}`);
+const STRINGS = await loadTranslations();
 
 function flatten(value, prefix = "", out = {}) {
   for (const [key, child] of Object.entries(value)) {
     const path = prefix ? `${prefix}.${key}` : key;
-    if (child && typeof child === "object" && !Array.isArray(child)) flatten(child, path, out);
+    if (child && typeof child === "object") flatten(child, path, out);
     else out[path] = child;
   }
   return out;
@@ -52,6 +43,9 @@ for (const key of Object.keys(flat[REFERENCE])) {
     if (value.trim() === "") {
       problems.push(`${lang}: "${key}" is empty`);
       continue;
+    }
+    if (/\uFFFD|\u00c3[\u0080-\u00bf]|\u00c2[\u0080-\u00bf]|\u00e2\u20ac/.test(value)) {
+      problems.push(`${lang}: "${key}" contains corrupted encoding`);
     }
 
     const actual = placeholders(value);

@@ -7,6 +7,7 @@ import { format, Strings } from "../i18n";
 import { formatBytes, arcPath, GAUGE_C, GAUGE_R, GAUGE_START, GAUGE_SWEEP, polar } from "../lib";
 import { CoreSteeringStatus, GameEntry, Toast } from "../types";
 import { BoltIcon } from "./icons";
+import { Toggle } from "./ui";
 
 export function GameSessionsPanel({
   s,
@@ -151,18 +152,13 @@ export function GameSessionsPanel({
         }
         description={s.gameSessions.subtitle}
         actions={
-          <button
-            type="button"
-            role="switch"
-            aria-label={s.gameSessions.title}
-            aria-checked={enabled}
-            disabled={pending}
+          <Toggle
+            label={s.gameSessions.title}
+            checked={enabled}
+            busy={pending}
+            s={s}
             onClick={() => void perform(toggleEnabled)}
-            className="tool-session-switch"
-            data-enabled={enabled}
-          >
-            <span />
-          </button>
+          />
         }
       />
       {activeGame && (
@@ -206,18 +202,14 @@ export function GameSessionsPanel({
               </p>
             )}
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-label={s.gameSessions.steeringTitle}
-            aria-checked={steering.enabled}
-            disabled={pending || (!steering.enabled && (steering.kind === null || steeringIdle))}
+          <Toggle
+            label={s.gameSessions.steeringTitle}
+            checked={steering.enabled}
+            busy={pending}
+            s={s}
+            disabled={!steering.enabled && (steering.kind === null || steeringIdle)}
             onClick={() => void perform(toggleSteering)}
-            className="tool-session-switch"
-            data-enabled={steering.enabled}
-          >
-            <span />
-          </button>
+          />
         </div>
       )}
       {activeGame && steering?.enabled && steering.steeredProcesses > 0 && (
@@ -424,7 +416,7 @@ export function TurboBoostPanel({
         });
     };
     tick();
-    const id = window.setInterval(tick, 1200);
+    const id = window.setInterval(tick, 20_000);
     return () => {
       cancelled = true;
       window.clearInterval(id);
@@ -497,6 +489,11 @@ export function TurboBoostPanel({
         title={s.turboBoost.title}
         description={s.turboBoost.subtitle}
         icon={<BoltIcon className="h-5 w-5" />}
+        actions={
+          <span className="tool-boost-state" data-active={applied}>
+            {applied ? s.toggle.on : s.toggle.off}
+          </span>
+        }
       />
       <div className="tool-boost-layout">
         <div className="tool-boost-instrument">
@@ -535,6 +532,7 @@ export function TurboBoostPanel({
               {s.turboBoost.loadLabel}
             </span>
           </div>
+          <p className="tool-boost-cadence">{s.turboBoost.loadCadence}</p>
         </div>
         <div className="tool-boost-summary">
           <p className="text-xs text-ink-3 mb-3">{s.turboBoost.loadHelp}</p>

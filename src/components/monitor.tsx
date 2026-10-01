@@ -62,26 +62,27 @@ export function StatRing({
   sublabel: string;
   pct: number;
 }) {
-  const radius = 34;
-  const circumference = 2 * Math.PI * radius;
   const known = Number.isFinite(pct);
   const clamped = known ? Math.max(0, Math.min(100, pct)) : 0;
   return (
     <div className="tool-stat">
       <div className="tool-stat-ring" aria-hidden="true">
         <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-          <circle cx="40" cy="40" r={radius} strokeWidth="4" className="stroke-line" />
-          <circle
-            cx="40"
-            cy="40"
-            r={radius}
+          <path
+            d="M16 64 A34 34 0 1 1 64 64"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            className="stroke-line"
+          />
+          <path
+            d="M16 64 A34 34 0 1 1 64 64"
             fill="none"
-            strokeWidth="4"
+            strokeWidth="3.5"
             strokeLinecap="round"
             stroke={loadColor(clamped)}
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference - (circumference * clamped) / 100}
-            transform="rotate(-90 40 40)"
+            pathLength="100"
+            strokeDasharray="100"
+            strokeDashoffset={100 - clamped}
             opacity={clamped > 0 ? 1 : 0}
             className="tool-stat-arc"
           />

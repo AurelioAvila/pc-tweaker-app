@@ -22,7 +22,7 @@ export function TweakyDriverPromoCard({ s }: { s: Strings }) {
     }
   }
   return (
-    <section className="my-5 rounded-2xl border border-line bg-surface-1 p-4">
+    <section className="tool-product-link">
       <div className="flex flex-wrap items-center gap-4">
         <img src={driverMark} alt="" className="h-11 w-11 shrink-0 rounded-xl" />
         <div className="min-w-0 flex-1 basis-52">
@@ -35,10 +35,25 @@ export function TweakyDriverPromoCard({ s }: { s: Strings }) {
           type="button"
           onClick={() => void openPage()}
           disabled={opening}
-          className="max-w-full rounded-xl border border-line bg-accent-soft px-4 py-2 text-sm font-semibold text-accent transition hover:brightness-110 disabled:opacity-60"
+          aria-busy={opening}
+          className="tool-product-action"
         >
-          {s.tweakyDriverPromo.button}
-          <span aria-hidden="true"> ↗</span>
+          <span>{s.tweakyDriverPromo.button}</span>
+          <span className="tool-product-arrow" aria-hidden="true">
+            {opening ? (
+              <span className="scan-spinner" />
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M6 18 18 6M6 6h12v12"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
         </button>
       </div>
       {failed && (

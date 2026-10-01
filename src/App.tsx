@@ -1034,6 +1034,7 @@ function App() {
                           lang={lang}
                           isPro={isProUnlocked}
                           onRequirePro={setPaywallFeature}
+                          onChanged={refresh}
                         />
                       </li>
                     );

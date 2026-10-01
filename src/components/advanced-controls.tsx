@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import type { Lang } from "../i18n";
+import { STRINGS, type Lang } from "../i18n";
 import type { DownloadLimitState, EcoQosState, MonitorProfilesState } from "../types";
 import { ADVANCED_COPY } from "./advanced-copy";
 import { reconcileDownloadState } from "./download-limit-reconcile";
 import { ToolHeader, ToolStatus } from "./tool-section";
+import { Toggle } from "./ui";
 import "./advanced-controls.css";
 
 export type AdvancedId =
   "ecoqos_rules" | "limit_do_background_download" | "monitor_refresh_profile";
 
-async function chooseExecutable() {
+async function chooseExecutable(label: string) {
   const path = await open({
     multiple: false,
-    filters: [{ name: "Windows executable", extensions: ["exe"] }],
+    filters: [{ name: label, extensions: ["exe"] }],
   });
   return typeof path === "string" ? path : null;
 }
@@ -24,15 +25,24 @@ export function AdvancedControlCard({
   lang,
   isPro,
   onRequirePro,
+  onChanged,
 }: {
   id: AdvancedId;
   lang: Lang;
   isPro: boolean;
   onRequirePro: (title: string) => void;
+  onChanged: () => Promise<void>;
 }) {
   const c = ADVANCED_COPY[lang];
   if (id === "ecoqos_rules")
-    return <EcoCard lang={lang} isPro={isPro} onRequirePro={() => onRequirePro(c.ecoTitle)} />;
+    return (
+      <EcoCard
+        lang={lang}
+        isPro={isPro}
+        onRequirePro={() => onRequirePro(c.ecoTitle)}
+        onChanged={onChanged}
+      />
+    );
   if (id === "limit_do_background_download")
     return <DownloadCard lang={lang} isPro={isPro} onRequirePro={() => onRequirePro(c.doTitle)} />;
   return (
@@ -44,10 +54,12 @@ function EcoCard({
   lang,
   isPro,
   onRequirePro,
+  onChanged,
 }: {
   lang: Lang;
   isPro: boolean;
   onRequirePro: () => void;
+  onChanged: () => Promise<void>;
 }) {
   const c = ADVANCED_COPY[lang];
   const [state, setState] = useState<EcoQosState | null>(null);
@@ -62,6 +74,7 @@ function EcoCard({
       .catch((e: unknown) => setError(String(e)));
   }, []);
   async function act(task: () => Promise<unknown>, requiresPro = true) {
+    if (busy) return;
     if (requiresPro && !isPro) {
       onRequirePro();
       return;
@@ -87,25 +100,41 @@ function EcoCard({
         }
         description={c.ecoDescription}
         actions={
-          <button
-            className="advanced-switch"
-            type="button"
-            role="switch"
-            aria-label={c.ecoTitle}
-            aria-checked={state?.enabled ?? false}
-            disabled={busy || !state}
+          <Toggle
+            checked={state?.enabled ?? false}
+            busy={busy || (!state && !error)}
+            disabled={!state}
+            label={c.ecoTitle}
+            busyLabel={c.working}
+            s={STRINGS[lang]}
             onClick={() =>
               void act(
                 () => invoke("ecoqos_set_enabled", { enabled: !state?.enabled }),
                 !state?.enabled,
               )
             }
-          >
-            <span />
-          </button>
+          />
         }
       />
-      {state?.blocked_global && <ToolStatus tone="error">{c.ecoConflict}</ToolStatus>}
+      {state?.blocked_global && (
+        <div className="advanced-conflict">
+          <ToolStatus tone="error">{c.ecoConflict}</ToolStatus>
+          <button
+            className="tool-secondary-action"
+            disabled={busy}
+            aria-busy={busy}
+            onClick={() =>
+              void act(async () => {
+                await invoke("rollback_tweak", { id: "disable_power_throttling" });
+                await onChanged();
+              }, false)
+            }
+          >
+            {busy && <span className="scan-spinner" aria-hidden="true" />}
+            {c.ecoRestore}
+          </button>
+        </div>
+      )}
       {state && (
         <div className="advanced-facts">
           <span>{state.enabled ? c.ecoOn : c.ecoOff}</span>
@@ -124,19 +153,20 @@ function EcoCard({
         className="advanced-refresh"
         type="button"
         disabled={busy}
-        onClick={() => void refresh().catch((e: unknown) => setError(String(e)))}
+        aria-busy={busy}
+        onClick={() => void act(async () => {}, false)}
       >
-        {c.refresh}
+        {busy ? c.working : c.refresh}
       </button>
       <div className="advanced-toolbar">
         <strong>{c.path}</strong>
         <button
           type="button"
           data-tone="primary"
-          disabled={busy || !!state?.blocked_global}
+          disabled={busy || !state || !!state.blocked_global}
           onClick={() =>
             void act(async () => {
-              const path = await chooseExecutable();
+              const path = await chooseExecutable(c.path);
               if (path) await invoke("ecoqos_add_rule", { path });
             })
           }
@@ -326,6 +356,7 @@ function MonitorCard({
   async function refresh() {
     setState(await invoke<MonitorProfilesState>("monitor_profiles_state"));
     setNow(Date.now());
+    setError(null);
   }
   useEffect(() => {
     void invoke<MonitorProfilesState>("monitor_profiles_state")
@@ -388,22 +419,20 @@ function MonitorCard({
         }
         description={c.monitorDescription}
         actions={
-          <button
-            className="advanced-switch"
-            type="button"
-            role="switch"
-            aria-label={c.monitorTitle}
-            aria-checked={state?.enabled ?? false}
-            disabled={busy || !state}
+          <Toggle
+            label={c.monitorTitle}
+            checked={state?.enabled ?? false}
+            busy={busy || (!state && !error)}
+            disabled={!state}
+            s={STRINGS[lang]}
+            busyLabel={c.working}
             onClick={() =>
               void act(
                 () => invoke("monitor_set_enabled", { enabled: !state?.enabled }),
                 !state?.enabled,
               )
             }
-          >
-            <span />
-          </button>
+          />
         }
       />
       {state && !state.displays.some((d) => d.supported) && (
@@ -503,7 +532,7 @@ function MonitorCard({
           disabled={busy || !canChange || selectedHz !== display?.current_hz}
           onClick={() =>
             void act(async () => {
-              const path = await chooseExecutable();
+              const path = await chooseExecutable(c.path);
               if (path)
                 await invoke("monitor_save_rule", {
                   path,

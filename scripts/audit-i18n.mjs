@@ -15,25 +15,9 @@
  * correct ("CPU", "Pro", "Gaming", "{hours}h {minutes}m"), so the output is
  * meant to be read, not blindly obeyed.
  */
-import { build } from "esbuild";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { loadTranslations } from "./i18n-tables.mjs";
 
-const root = path.dirname(fileURLToPath(import.meta.url));
-const entry = path.join(root, "..", "src", "i18n.ts");
-
-const result = await build({
-  entryPoints: [entry],
-  bundle: true,
-  write: false,
-  format: "esm",
-  platform: "neutral",
-});
-const mod = await import(
-  "data:text/javascript;base64," + Buffer.from(result.outputFiles[0].text).toString("base64")
-);
-
-const STRINGS = mod.STRINGS;
+const STRINGS = await loadTranslations();
 const LOCALES = Object.keys(STRINGS);
 
 /** Flattens nested objects/arrays into dotted paths. */
@@ -162,6 +146,12 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // Reviewed component copy: these are ordinary words in the target locale.
+  "de:componentAdvanced.doValue", // Limit and KB/s are valid German.
+  "fr:componentAdvanced.doProvider", // Source is also French.
+  "de:componentLibrary.name", // Name is also German.
+  "fr:componentPricing.minutes", // minutes is also French.
+  "de:componentStarter.optional", // Optional is also German.
   // "Driver" is the Italian word as well; Windows itself uses it.
   "it:latencyTrace.colDriver",
   // Product names remain unchanged in each locale.

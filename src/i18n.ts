@@ -502,6 +502,7 @@ export interface Strings {
     inactive: string;
     /** The real steps the Rust side performs, shown as it works through them. */
     loadLabel: string;
+    loadCadence: string;
     loadHelp: string;
     stageReading: string;
     stageRaising: string;
@@ -1559,6 +1560,7 @@ const it: Strings = {
     active: "Turbo attivo",
     inactive: "Turbo non attivo",
     loadLabel: "CARICO CPU",
+    loadCadence: "Lettura reale · ogni 20 s",
     loadHelp:
       "Utilizzo della CPU, non un punteggio del boost. Un carico basso è normale quando il PC è inattivo.",
     stageReading: "Lettura del piano energetico",
@@ -2977,6 +2979,7 @@ const en: Strings = {
     active: "Turbo active",
     inactive: "Turbo not active",
     loadLabel: "CPU LOAD",
+    loadCadence: "Measured load · every 20 s",
     loadHelp: "CPU usage, not a boost score. Low usage is normal when your PC is idle.",
     stageReading: "Reading the power plan",
     stageRaising: "Raising the boost ceiling",
@@ -4400,6 +4403,7 @@ const fr: Strings = {
     active: "Turbo actif",
     inactive: "Turbo inactif",
     loadLabel: "CHARGE CPU",
+    loadCadence: "Mesure réelle · toutes les 20 s",
     loadHelp:
       "Utilisation du processeur, pas un score de boost. Une faible charge est normale au repos.",
     stageReading: "Lecture du mode d'alimentation",
@@ -5831,9 +5835,10 @@ const es: Strings = {
     active: "Turbo activo",
     inactive: "Turbo no activo",
     loadLabel: "CARGA CPU",
+    loadCadence: "Lectura real · cada 20 s",
     loadHelp:
       "Uso de la CPU, no una puntuación del boost. Un uso bajo es normal cuando el PC está inactivo.",
-    stageReading: "Leyendo el plan de energia",
+    stageReading: "Leyendo el plan de energía",
     stageRaising: "Elevando el limite de boost",
     stageApplying: "Aplicando al sistema",
     modeAggressive: "Modo agresivo",
@@ -7263,6 +7268,7 @@ const de: Strings = {
     active: "Turbo aktiv",
     inactive: "Turbo nicht aktiv",
     loadLabel: "CPU-LAST",
+    loadCadence: "Echte Messung · alle 20 s",
     loadHelp: "CPU-Auslastung, kein Boost-Wert. Eine niedrige Auslastung im Leerlauf ist normal.",
     stageReading: "Energieplan wird gelesen",
     stageRaising: "Boost-Grenze wird angehoben",
@@ -8697,6 +8703,7 @@ const pt: Strings = {
     active: "Turbo ativo",
     inactive: "Turbo inativo",
     loadLabel: "CARGA CPU",
+    loadCadence: "Leitura real · a cada 20 s",
     loadHelp:
       "Utilização da CPU, não uma pontuação de boost. Uma carga baixa é normal quando o PC está inativo.",
     stageReading: "Lendo o plano de energia",

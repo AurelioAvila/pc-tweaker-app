@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XML_DIZ_INFO>
+  <MASTER_PAD_VERSION_INFO>
+    <MASTER_PAD_VERSION>3.11</MASTER_PAD_VERSION>
+    <MASTER_PAD_EDITOR>Aurelio Avila publisher metadata</MASTER_PAD_EDITOR>
+    <MASTER_PAD_INFO>Self-hosted PAD 3.11 with HTTPS URLs. Not AppVisor-certified.</MASTER_PAD_INFO>
+  </MASTER_PAD_VERSION_INFO>
+  <Company_Info>
+    <Company_Name>Aurelio Avila</Company_Name>
+    <Address_1></Address_1>
+    <Address_2></Address_2>
+    <City_Town>Amsterdam</City_Town>
+    <State_Province></State_Province>
+    <Zip_Postal_Code></Zip_Postal_Code>
+    <Country>Netherlands</Country>
+    <Company_WebSite_URL>https://getcertsprint.com/</Company_WebSite_URL>
+    <Contact_Info>
+      <Author_First_Name>Aurelio</Author_First_Name>
+      <Author_Last_Name>Avila</Author_Last_Name>
+      <Author_Email>support@pctweaker.app</Author_Email>
+      <Contact_First_Name>Aurelio</Contact_First_Name>
+      <Contact_Last_Name>Avila</Contact_Last_Name>
+      <Contact_Email>support@pctweaker.app</Contact_Email>
+    </Contact_Info>
+    <Support_Info>
+      <Sales_Email>support@pctweaker.app</Sales_Email>
+      <Support_Email>support@pctweaker.app</Support_Email>
+      <General_Email>support@pctweaker.app</General_Email>
+      <Sales_Phone></Sales_Phone>
+      <Support_Phone></Support_Phone>
+      <General_Phone></General_Phone>
+      <Fax_Phone></Fax_Phone>
+    </Support_Info>
+  </Company_Info>
+  <Program_Info>
+    <Program_Name>PC Tweaker</Program_Name>
+    <Program_Version>1.15.4</Program_Version>
+    <Program_Release_Month>10</Program_Release_Month>
+    <Program_Release_Day>02</Program_Release_Day>
+    <Program_Release_Year>2026</Program_Release_Year>
+    <Program_Cost_Dollars></Program_Cost_Dollars>
+    <Program_Cost_Other_Code></Program_Cost_Other_Code>
+    <Program_Cost_Other></Program_Cost_Other>
+    <Program_Type>Freeware</Program_Type>
+    <Program_Release_Status>Minor Update</Program_Release_Status>
+    <Program_Install_Support>Install and Uninstall</Program_Install_Support>
+    <Program_OS_Support>WinOther</Program_OS_Support>
+    <Program_Language>English</Program_Language>
+    <File_Info>
+      <File_Size_Bytes>5864568</File_Size_Bytes>
+      <File_Size_K>5727.12</File_Size_K>
+      <File_Size_MB>5.59</File_Size_MB>
+    </File_Info>
+    <Expire_Info>
+      <Has_Expire_Info>N</Has_Expire_Info>
+      <Expire_Count></Expire_Count>
+      <Expire_Based_On></Expire_Based_On>
+      <Expire_Other_Info>Paid access and trial eligibility follow the official plan and checkout.</Expire_Other_Info>
+      <Expire_Month></Expire_Month>
+      <Expire_Day></Expire_Day>
+      <Expire_Year></Expire_Year>
+    </Expire_Info>
+    <Program_Change_Info>1.15.4 maintenance release. Read the official release notes for changes and limitations.</Program_Change_Info>
+    <Program_Category_Class>System Utilities::System Maintenance</Program_Category_Class>
+    <Program_Specific_Category></Program_Specific_Category>
+    <Program_System_Requirements>Windows 10/11 x64; internet for accounts, updates and supported online features.</Program_System_Requirements>
+  </Program_Info>
+  <Program_Descriptions>
+    <English>
+      <Keywords>Windows tuning,Windows privacy,PC maintenance,gaming settings,restore settings,PC Tweaker,Aurelio Avila</Keywords>
+      <Char_Desc_45>Windows tuning, privacy and maintenance.</Char_Desc_45>
+      <Char_Desc_80>Review Windows tuning, privacy and maintenance settings before applying changes.</Char_Desc_80>
+      <Char_Desc_250>Review Windows tuning, privacy and maintenance settings before applying changes. By Aurelio Avila. Current signed Windows download; free and paid access are documented officially.</Char_Desc_250>
+      <Char_Desc_450>Review Windows tuning, privacy and maintenance settings before applying changes. By Aurelio Avila. Review limitations and access requirements on the official product page. Windows downloads are publisher-signed and timestamped; signing is not a safety guarantee. Screenshots illustrate the app and may show an earlier release.</Char_Desc_450>
+      <Char_Desc_2000>PC Tweaker by Aurelio Avila brings Windows tuning, privacy settings and maintenance tools into one desktop app. Review the effect and trade-offs before applying a setting. Restore controls cover supported settings; cleanup, repair and driver operations have different recovery limits. Core tools are free without an account; advanced Pro tools are paid. No universal FPS or performance gain is promised. Official Windows binaries are signed and timestamped. Code signing identifies the publisher and detects changes; it does not guarantee security or eliminate SmartScreen warnings.</Char_Desc_2000>
+    </English>
+  </Program_Descriptions>
+  <Web_Info>
+    <Application_URLs>
+      <Application_Info_URL>https://pctweaker.app/</Application_Info_URL>
+      <Application_Order_URL></Application_Order_URL>
+      <Application_Screenshot_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/Screenshot/overview.png</Application_Screenshot_URL>
+      <Application_Icon_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/src-tauri/icons/32x32.png</Application_Icon_URL>
+      <Application_XML_File_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/pad.xml</Application_XML_File_URL>
+    </Application_URLs>
+    <Download_URLs>
+      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.15.4/pc-tweaker-app_1.15.4_x64-setup.exe</Primary_Download_URL>
+      <Secondary_Download_URL></Secondary_Download_URL>
+      <Additional_Download_URL_1></Additional_Download_URL_1>
+      <Additional_Download_URL_2></Additional_Download_URL_2>
+    </Download_URLs>
+  </Web_Info>
+  <Permissions>
+    <Distribution_Permissions>Catalogs may link to the unmodified official signed download. Repackaging, modification and source redistribution are not authorized. Proprietary terms: https://github.com/AurelioAvila/pc-tweaker-app/blob/master/LICENSE</Distribution_Permissions>
+    <EULA></EULA>
+  </Permissions>
+</XML_DIZ_INFO>

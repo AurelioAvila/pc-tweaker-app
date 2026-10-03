@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.15.6
+
+PC Tweaker 1.15.6 is a routine daily maintenance update.
+
 ## v1.15.5
 
 PC Tweaker 1.15.5 is a routine daily maintenance update.

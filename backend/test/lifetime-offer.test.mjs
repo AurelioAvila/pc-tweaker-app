@@ -43,7 +43,7 @@ function response() {
 let sequence = 0;
 async function user({ lifetime = false } = {}) {
   const { rows } = await getPool().query(
-    "INSERT INTO users (email, password_hash, is_pro, plan) VALUES ($1, 'fixture', $2, $3) RETURNING id",
+    "INSERT INTO users (email, password_hash, is_pro, plan, email_verified) VALUES ($1, 'fixture', $2, $3, TRUE) RETURNING id",
     [`offer-${++sequence}@example.com`, lifetime, lifetime ? "lifetime" : null],
   );
   return rows[0].id;

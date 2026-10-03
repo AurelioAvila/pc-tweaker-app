@@ -141,3 +141,6 @@ manifests/
 
 scripts/.advisor-test-bundle.css
 scripts/.thermals-test-bundle.css
+
+# Internal design and review notes (kept out of the public repository)
+/DESIGN.md

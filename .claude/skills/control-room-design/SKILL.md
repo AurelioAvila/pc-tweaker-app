@@ -48,8 +48,24 @@ Modificatori di opacita' ammessi: `bg-ok/10`, `ring-danger/30`, `text-ok/80`.
 | `violet/fuchsia/indigo` decorativi | `accent` / `accent-soft` (segue il tema) |
 | colori hex in SVG (`stroke="#34d399"`) | `stroke="var(--success)"` ecc. |
 
-Eccezione voluta: il quadrante arcobaleno del punteggio salute (`hsl()` per
-tacca) e' una visualizzazione di dati, non va migrato.
+| icona di un tool (`tool-card-icon`) con tinta per tool | `bg-accent-soft text-accent ring-1 ring-accent/30` (modello di `monitor.tsx`) |
+| overlay dialoghi `bg-black/60` | `bg-[var(--overlay)]` |
+| pannello dialogo `bg-slate-900` | `bg-surface-2 border-line-2` |
+| pozzetti interni piu' scuri della card (`bg-black/20`) | `bg-app` |
+| `accent-sky-400` (checkbox) | `accent-accent` |
+| `shadow-lg shadow-black/20` su `.tool-panel` | togliere: e' codice morto, vince l'ombra di `.tool-panel` (verificato con getComputedStyle) |
+
+Eccezioni volute (restano nella baseline):
+- quadrante arcobaleno del punteggio salute (`hsl()` per tacca): e' una
+  visualizzazione di dati;
+- card promozionali di altri prodotti (Uninstaller fucsia, Redaxa viola in
+  `maintenance.tsx`): portano il colore di marca di quel prodotto.
+
+Decisione aperta (chiedere all'utente prima di toccarla): `CATEGORY_STYLE`
+in `src/categories.tsx` da' un colore fisso per categoria (performance
+ambra, privacy verde, ui fucsia, manutenzione azzurro, gaming rosa) usato in
+tutta l'app. Contraddice "un solo accento", ma e' anche un codice visivo
+per categoria: cambiarlo tocca ogni schermata.
 
 ## Tipografia
 Classi `.type-display` (24), `.type-page` (20), `.type-section` (15),

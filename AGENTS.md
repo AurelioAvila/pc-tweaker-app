@@ -18,7 +18,8 @@ grezza di Tailwind. Ogni modifica visiva si chiude con screenshot prima/dopo
   Dopo una migrazione: `node scripts/check-design-tokens.mjs --update`.
 
 ## Stato della migrazione ai token (2026-10-03)
-`health.tsx` migrato (0 classi grezze). Restano 226 classi in 14 file; le
-piu' pesanti: `maintenance.tsx` (69), `categories.tsx` (37), `pro.tsx`,
-`ui.tsx`, `technical.tsx`, `hardware.tsx`, `account.tsx`. Valori aggiornati
-nella baseline.
+Migrati: `health.tsx` (0), `maintenance.tsx` (69 -> 19, restano solo le card
+promozionali con colore di marca), icone tool di `cleaners.tsx`. Restano 169
+classi in 14 file; le piu' pesanti: `categories.tsx` (37, decisione aperta:
+vedi skill), `pro.tsx`, `ui.tsx`, `technical.tsx`, `hardware.tsx`,
+`account.tsx`. Valori esatti nella baseline.

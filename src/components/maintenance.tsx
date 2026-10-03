@@ -30,9 +30,9 @@ import redaxaMark from "../assets/redaxa-mark.svg";
 
 export function IpMaskCard({ s, onExplain }: { s: Strings; onExplain: () => void }) {
   return (
-    <li className="tool-panel tool-card tool-ip-mask-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
+    <li className="tool-panel tool-card tool-ip-mask-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4">
       <div className="tool-card-head flex items-center gap-4">
-        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/30">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/30">
           <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
             <path
               d="M12 3 5 6v5c0 4.4 3 8.4 7 10 4-1.6 7-5.6 7-10V6l-7-3Z"
@@ -138,9 +138,9 @@ export function DuplicateFinder({
   }
 
   return (
-    <li className="tool-panel tool-card tool-duplicate-finder animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
+    <li className="tool-panel tool-card tool-duplicate-finder animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4">
       <div className="tool-card-head flex items-center gap-4">
-        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-400/15 text-sky-300 ring-1 ring-sky-400/30">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/30">
           <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
             <path
               d="M8 4h8l4 4v12H8V4Zm-4 4h8v12H4V8Z"
@@ -165,7 +165,7 @@ export function DuplicateFinder({
       {groups && groups.length > 0 && (
         <div className="mt-4 max-h-72 space-y-3 overflow-y-auto border-t border-line pt-4">
           {groups.map((g, gi) => (
-            <div key={gi} className="rounded-xl bg-black/20 p-3">
+            <div key={gi} className="rounded-xl bg-app p-3">
               <p className="mb-2 text-xs font-medium text-ink-3">
                 {format(s.duplicateFinder.copies, {
                   count: g.paths.length,
@@ -240,9 +240,9 @@ export function DiskOptimizeCard({
   }
 
   return (
-    <li className="tool-panel tool-card tool-disk-optimize-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
+    <li className="tool-panel tool-card tool-disk-optimize-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4">
       <div className="tool-card-head flex items-center gap-4">
-        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-400/15 text-amber-300 ring-1 ring-amber-400/30">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/30">
           <DriveIcon className="h-5 w-5" />
         </div>
         <div className="tool-card-copy min-w-0 flex-1">
@@ -308,9 +308,9 @@ export function DnsFlushCard({
   }
 
   return (
-    <li className="tool-panel tool-card tool-dns-flush-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
+    <li className="tool-panel tool-card tool-dns-flush-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4">
       <div className="tool-card-head flex items-center gap-4">
-        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-cyan-400/15 text-cyan-300 ring-1 ring-cyan-400/30">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/30">
           <GlobeIcon className="h-5 w-5" />
         </div>
         <div className="tool-card-copy min-w-0 flex-1">
@@ -385,9 +385,9 @@ export function BrowserCleanupCard({
   }
 
   return (
-    <li className="tool-panel tool-card tool-browser-cleanup-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
+    <li className="tool-panel tool-card tool-browser-cleanup-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4">
       <div className="tool-card-head flex items-center gap-4">
-        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-400/15 text-sky-300 ring-1 ring-sky-400/30">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/30">
           <GlobeIcon className="h-5 w-5" />
         </div>
         <div className="tool-card-copy min-w-0 flex-1">
@@ -483,13 +483,13 @@ export function UninstallerPromoCard({ s }: { s: Strings }) {
       </li>
 
       {asking && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm">
-          <div className="animate-card w-full max-w-md rounded-2xl border border-line bg-slate-900 p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-6 backdrop-blur-sm">
+          <div className="animate-card w-full max-w-md rounded-2xl border border-line-2 bg-surface-2 p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-ink">{s.uninstallerPromo.confirmTitle}</h3>
             <p className="mt-2 text-sm leading-relaxed text-ink-3">
               {s.uninstallerPromo.confirmBody}
             </p>
-            <p className="mt-3 text-[12.5px] leading-relaxed text-amber-200/80">
+            <p className="mt-3 text-[12.5px] leading-relaxed text-warn/80">
               {s.uninstallerPromo.confirmUnsigned}
             </p>
 
@@ -626,9 +626,9 @@ export function LargeFileFinder({
   }
 
   return (
-    <li className="tool-panel tool-card tool-large-file-finder animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
+    <li className="tool-panel tool-card tool-large-file-finder animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4">
       <div className="tool-card-head flex items-center gap-4">
-        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-fuchsia-400/15 text-fuchsia-300 ring-1 ring-fuchsia-400/30">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/30">
           <TrashIcon className="h-5 w-5" />
         </div>
         <div className="tool-card-copy min-w-0 flex-1">
@@ -648,7 +648,7 @@ export function LargeFileFinder({
           <p className="mb-2 text-xs font-medium text-ink-3">
             {format(s.largeFiles.foundCount, { count: files.length })}
           </p>
-          <div className="max-h-72 space-y-0.5 overflow-y-auto rounded-xl bg-black/20 p-3">
+          <div className="max-h-72 space-y-0.5 overflow-y-auto rounded-xl bg-app p-3">
             {files.map((f) => (
               <label
                 key={f.path}
@@ -711,11 +711,11 @@ export function DiskHealthCard({ s, drive }: { s: Strings; drive: string }) {
   const statusLabel = (status: string | undefined) => {
     switch (status) {
       case "Healthy":
-        return { text: s.diskHealth.healthy, color: "text-emerald-400", dot: "bg-emerald-400" };
+        return { text: s.diskHealth.healthy, color: "text-ok", dot: "bg-ok" };
       case "Warning":
-        return { text: s.diskHealth.warning, color: "text-amber-400", dot: "bg-amber-400" };
+        return { text: s.diskHealth.warning, color: "text-warn", dot: "bg-warn" };
       case "Unhealthy":
-        return { text: s.diskHealth.unhealthy, color: "text-red-400", dot: "bg-red-400" };
+        return { text: s.diskHealth.unhealthy, color: "text-danger", dot: "bg-danger" };
       default:
         return { text: s.diskHealth.unknown, color: "text-ink-3", dot: "bg-ink-3" };
     }
@@ -724,9 +724,9 @@ export function DiskHealthCard({ s, drive }: { s: Strings; drive: string }) {
   const info = health || failed ? statusLabel(health?.status) : null;
 
   return (
-    <li className="tool-panel tool-card tool-disk-health-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
+    <li className="tool-panel tool-card tool-disk-health-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4">
       <div className="tool-card-head flex items-center gap-4">
-        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-rose-400/15 text-rose-300 ring-1 ring-rose-400/30">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/30">
           <HeartPulseIcon className="h-5 w-5" />
         </div>
         <div className="tool-card-copy min-w-0 flex-1">
@@ -915,7 +915,7 @@ export function CleanupCard({
   const locked = info.requires_pro && !isPro;
 
   return (
-    <li className="tool-panel tool-card tool-cleanup-card animate-card group relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20 transition-all duration-200 hover:border-line-2 hover:bg-surface-2">
+    <li className="tool-panel tool-card tool-cleanup-card animate-card group relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 transition-all duration-200 hover:border-line-2 hover:bg-surface-2">
       <div
         className={`pointer-events-none absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${style.ring}`}
       />
@@ -982,9 +982,9 @@ export function PasswordBreachCheck({ s }: { s: Strings }) {
   }
 
   return (
-    <li className="tool-panel tool-card tool-password-breach-check animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
+    <li className="tool-panel tool-card tool-password-breach-check animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4">
       <div className="tool-card-head flex items-center gap-4">
-        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-rose-400/15 text-rose-300 ring-1 ring-rose-400/30">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/30">
           <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
             <rect
               x="5"
@@ -1015,7 +1015,7 @@ export function PasswordBreachCheck({ s }: { s: Strings }) {
                 setResult(null);
               }}
               placeholder={s.passwordCheck.placeholder}
-              className="min-w-0 flex-1 rounded-lg border border-line bg-black/20 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-line-2"
+              className="min-w-0 flex-1 rounded-lg border border-line bg-app px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-line-2"
             />
             <button
               onClick={check}
@@ -1029,9 +1029,9 @@ export function PasswordBreachCheck({ s }: { s: Strings }) {
             <p
               className={`mt-2 text-sm font-medium ${
                 result.kind === "safe"
-                  ? "text-emerald-400"
+                  ? "text-ok"
                   : result.kind === "breached"
-                    ? "text-rose-400"
+                    ? "text-danger"
                     : "text-ink-3"
               }`}
             >
@@ -1113,8 +1113,8 @@ export function CleanupConfirmModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm">
-      <div className="animate-card w-full max-w-md rounded-2xl border border-line bg-slate-900 p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-6 backdrop-blur-sm">
+      <div className="animate-card w-full max-w-md rounded-2xl border border-line-2 bg-surface-2 p-6 shadow-2xl">
         <h3 className="text-lg font-bold text-ink">{s.cleanupConfirm.title}</h3>
         <p className="mt-2 text-sm text-ink-3">
           {format(s.cleanupConfirm.body, { name: displayName })}
@@ -1127,7 +1127,7 @@ export function CleanupConfirmModal({
           <p className="mt-4 text-[12.5px] text-ink-3">{s.cleanupConfirm.previewEmpty}</p>
         )}
         {preview !== null && !preview.accessible && (
-          <p className="mt-4 text-[12.5px] leading-relaxed text-amber-200/80">
+          <p className="mt-4 text-[12.5px] leading-relaxed text-warn/80">
             {s.cleanupConfirm.previewNotAccessible}
           </p>
         )}

@@ -42,7 +42,7 @@ const [,, tag, ...tabs] = process.argv;
           list_health_history: [ {ts: now-86400*6, overall: 61}, {ts: now-86400*3, overall: 66}, {ts: now, overall: 72} ],
           list_baselines: [ { ts: now-86400, cpuScore: 1830, memoryTouchMs: 41, diskWriteMs: 120, diskRandomReadMs: 9 } ],
           list_drives_cmd: [ { letter:'C:', media_type:'SSD', total_bytes: 1000e9, free_bytes: 90e9, is_system:true }, { letter:'D:', media_type:'HDD', total_bytes: 2000e9, free_bytes: 1200e9, is_system:false } ],
-          disk_health: [ { drive:'C:', media_type:'SSD', status:'Healthy' } ],
+          disk_health: { drive:'C:', media_type:'SSD', status:'Warning' },
           'plugin:app|version': '1.15.6',
         };
         if (cmd in F) return F[cmd];

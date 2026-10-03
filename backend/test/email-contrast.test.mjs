@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { EMAIL_MUTED_TEXT, emailShell, detailRow } from '../dist/emails/layout.js';
 import { proWelcomeHtml } from '../dist/emails/pro-welcome.js';
+import { verificationHtml, passwordResetHtml, accountWelcomeHtml } from '../dist/emails/account.js';
 
 function luminance(hex) {
   const channels = hex.slice(1).match(/../g).map(value => parseInt(value, 16) / 255)
@@ -20,6 +21,12 @@ test('account notes, receipt labels and purchase headings use readable text', ()
   const receipt = proWelcomeHtml({ firstName: 'Aurelio', email: 'test@example.com', plan: 'annual', priceLabel: 'EUR 24.00', renewsOn: 'September 7, 2027' });
   for (const html of [shell, receipt, detailRow('Plan', 'Annual')]) {
     assert.ok(html.includes(`color:${EMAIL_MUTED_TEXT}`));
+    assert.ok(!html.includes('#5b5f66'));
+  }
+});
+
+test('account emails keep the link fallback and section labels readable', () => {
+  for (const html of [verificationHtml('Aurelio', 'https://pctweaker.app/verify?t=1'), passwordResetHtml('https://pctweaker.app/reset?t=1'), accountWelcomeHtml('Aurelio', 12)]) {
     assert.ok(!html.includes('#5b5f66'));
   }
 });

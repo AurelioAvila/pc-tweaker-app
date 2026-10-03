@@ -943,6 +943,7 @@ export interface Strings {
     lastName: string;
     registerDetailsRequired: string;
     loginRequiredForCheckout: string;
+    verifyEmailForCheckout: string;
     forgotPasswordLink: string;
     forgotPasswordButton: string;
     forgotPasswordSent: string;
@@ -2044,6 +2045,7 @@ const it: Strings = {
     lastName: "Cognome",
     registerDetailsRequired: "Nome, cognome e data di nascita sono obbligatori.",
     loginRequiredForCheckout: "Accedi o registrati prima di sbloccare Pro.",
+    verifyEmailForCheckout: "Conferma la tua email prima di sbloccare Pro: apri il link che ti abbiamo inviato o richiedine uno nuovo qui.",
     forgotPasswordLink: "Password dimenticata?",
     forgotPasswordButton: "Invia link di ripristino",
     forgotPasswordSent: "Se l'email è registrata, riceverai un link per reimpostare la password.",
@@ -3457,6 +3459,7 @@ const en: Strings = {
     lastName: "Last name",
     registerDetailsRequired: "First name, last name and date of birth are required.",
     loginRequiredForCheckout: "Log in or sign up before unlocking Pro.",
+    verifyEmailForCheckout: "Confirm your email before unlocking Pro: open the link we sent you, or request a new one here.",
     forgotPasswordLink: "Forgot password?",
     forgotPasswordButton: "Send reset link",
     forgotPasswordSent: "If that email is registered, you'll receive a password reset link.",
@@ -4891,6 +4894,7 @@ const fr: Strings = {
     lastName: "Nom",
     registerDetailsRequired: "Le prénom, le nom et la date de naissance sont obligatoires.",
     loginRequiredForCheckout: "Connectez-vous ou inscrivez-vous avant de débloquer Pro.",
+    verifyEmailForCheckout: "Confirmez votre e-mail avant de débloquer Pro : ouvrez le lien envoyé ou demandez-en un nouveau ici.",
     forgotPasswordLink: "Mot de passe oublié ?",
     forgotPasswordButton: "Envoyer le lien de réinitialisation",
     forgotPasswordSent: "Si cet e-mail est enregistré, vous recevrez un lien de réinitialisation.",
@@ -6320,6 +6324,7 @@ const es: Strings = {
     lastName: "Apellido",
     registerDetailsRequired: "Nombre, apellido y fecha de nacimiento son obligatorios.",
     loginRequiredForCheckout: "Inicia sesión o regístrate antes de desbloquear Pro.",
+    verifyEmailForCheckout: "Confirma tu correo antes de desbloquear Pro: abre el enlace que te enviamos o solicita uno nuevo aquí.",
     forgotPasswordLink: "¿Olvidaste la contraseña?",
     forgotPasswordButton: "Enviar enlace de restablecimiento",
     forgotPasswordSent:
@@ -7755,6 +7760,7 @@ const de: Strings = {
     lastName: "Nachname",
     registerDetailsRequired: "Vorname, Nachname und Geburtsdatum sind erforderlich.",
     loginRequiredForCheckout: "Vor dem Freischalten von Pro anmelden oder registrieren.",
+    verifyEmailForCheckout: "Bestätige vor dem Freischalten von Pro deine E-Mail: Öffne den gesendeten Link oder fordere hier einen neuen an.",
     forgotPasswordLink: "Passwort vergessen?",
     forgotPasswordButton: "Link zum Zurücksetzen senden",
     forgotPasswordSent:
@@ -9188,6 +9194,7 @@ const pt: Strings = {
     lastName: "Sobrenome",
     registerDetailsRequired: "Nome, sobrenome e data de nascimento são obrigatórios.",
     loginRequiredForCheckout: "Entre ou cadastre-se antes de desbloquear o Pro.",
+    verifyEmailForCheckout: "Confirme seu e-mail antes de desbloquear o Pro: abra o link que enviamos ou peça um novo aqui.",
     forgotPasswordLink: "Esqueceu a senha?",
     forgotPasswordButton: "Enviar link de redefinição",
     forgotPasswordSent:

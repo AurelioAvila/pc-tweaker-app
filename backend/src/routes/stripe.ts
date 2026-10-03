@@ -134,6 +134,16 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
     if (!isConfigured) {
       return res.status(503).json({ error: "database not configured" });
     }
+    // Card testing on 2026-09-01 came from a throwaway account cycling stolen
+    // cards through one Checkout page. A confirmed inbox raises the cost of
+    // each such account, and every paying customer so far had verified first.
+    const { rows: [account] } = await getPool().query("SELECT email_verified FROM users WHERE id = $1", [req.userId]);
+    if (!account?.email_verified) {
+      return res.status(403).json({
+        error: "Please verify your email before upgrading. Open the link we sent you, or request a new one from your account.",
+        code: "email_unverified",
+      });
+    }
 
     const resolved = await resolveCheckoutPrice(req.userId as number, product, planKey);
     if ("error" in resolved) {

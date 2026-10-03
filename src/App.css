@@ -179,6 +179,9 @@
   --warning: #fbbf24;
   --danger: #f87171;
   --info: #7dd3fc;
+  /* Between warning and danger, for 4-step scales (e.g. health "Fair").
+     Derived, not a new hue: it moves with the two colors it sits between. */
+  --caution: color-mix(in oklab, var(--warning) 50%, var(--danger));
   --overlay: rgb(0 0 0 / 0.6);
 }
 
@@ -204,6 +207,7 @@
   --color-ok: var(--success);
   --color-warn: var(--warning);
   --color-danger: var(--danger);
+  --color-caution: var(--caution);
   --color-info: var(--info);
 
   --font-sans: var(--font-app);

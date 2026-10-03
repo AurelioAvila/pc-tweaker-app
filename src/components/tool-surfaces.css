@@ -77,6 +77,11 @@
   line-height: 1.75;
   color: var(--text-secondary);
 }
+.pro-feature-content .pro-feature-price {
+  margin-top: 12px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
 .pro-feature-actions {
   display: flex;
   flex-direction: column;

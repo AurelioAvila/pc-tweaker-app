@@ -1262,6 +1262,7 @@ function App() {
       {paywallFeature && (
         <PaywallModal
           s={s}
+          lang={lang}
           featureName={paywallFeature}
           onClose={() => setPaywallFeature(null)}
           // Send them to the plans instead of straight to a checkout for a

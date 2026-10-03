@@ -1729,7 +1729,8 @@ const it: Strings = {
     body: "Questo strumento è disponibile con PC Tweaker Pro. Confronta i piani e scopri cosa includono prima di scegliere.",
     unlock: "Vedi piani e prezzi",
     notNow: "Non ora",
-    priceLine: "Lifetime: {lifetime} una volta sola, senza rinnovi. Oppure {annual} all'anno o {monthly} al mese.",
+    priceLine:
+      "Lifetime: {lifetime} una volta sola, senza rinnovi. Oppure {annual} all'anno o {monthly} al mese.",
     notConnectedToast: "Il pagamento Pro non è ancora collegato in questa versione di sviluppo.",
   },
   cleanupConfirm: {
@@ -2047,7 +2048,8 @@ const it: Strings = {
     lastName: "Cognome",
     registerDetailsRequired: "Nome, cognome e data di nascita sono obbligatori.",
     loginRequiredForCheckout: "Accedi o registrati prima di sbloccare Pro.",
-    verifyEmailForCheckout: "Conferma la tua email prima di sbloccare Pro: apri il link che ti abbiamo inviato o richiedine uno nuovo qui.",
+    verifyEmailForCheckout:
+      "Conferma la tua email prima di sbloccare Pro: apri il link che ti abbiamo inviato o richiedine uno nuovo qui.",
     forgotPasswordLink: "Password dimenticata?",
     forgotPasswordButton: "Invia link di ripristino",
     forgotPasswordSent: "Se l'email è registrata, riceverai un link per reimpostare la password.",
@@ -3147,7 +3149,8 @@ const en: Strings = {
     body: "This tool is available with PC Tweaker Pro. Compare plans and see what is included before choosing.",
     unlock: "See plans & pricing",
     notNow: "Not now",
-    priceLine: "Lifetime: {lifetime} once, with no renewals. Or {annual} a year, or {monthly} a month.",
+    priceLine:
+      "Lifetime: {lifetime} once, with no renewals. Or {annual} a year, or {monthly} a month.",
     notConnectedToast: "Pro payment isn't wired up yet in this development build.",
   },
   cleanupConfirm: {
@@ -3462,7 +3465,8 @@ const en: Strings = {
     lastName: "Last name",
     registerDetailsRequired: "First name, last name and date of birth are required.",
     loginRequiredForCheckout: "Log in or sign up before unlocking Pro.",
-    verifyEmailForCheckout: "Confirm your email before unlocking Pro: open the link we sent you, or request a new one here.",
+    verifyEmailForCheckout:
+      "Confirm your email before unlocking Pro: open the link we sent you, or request a new one here.",
     forgotPasswordLink: "Forgot password?",
     forgotPasswordButton: "Send reset link",
     forgotPasswordSent: "If that email is registered, you'll receive a password reset link.",
@@ -4579,7 +4583,8 @@ const fr: Strings = {
     body: "Cet outil est disponible avec PC Tweaker Pro. Comparez les offres et découvrez ce qu’elles incluent avant de choisir.",
     unlock: "Voir les offres et tarifs",
     notNow: "Pas maintenant",
-    priceLine: "Lifetime : {lifetime} en une seule fois, sans renouvellement. Ou {annual} par an, ou {monthly} par mois.",
+    priceLine:
+      "Lifetime : {lifetime} en une seule fois, sans renouvellement. Ou {annual} par an, ou {monthly} par mois.",
     notConnectedToast:
       "Le paiement Pro n'est pas encore connecté dans cette version de développement.",
   },
@@ -4898,7 +4903,8 @@ const fr: Strings = {
     lastName: "Nom",
     registerDetailsRequired: "Le prénom, le nom et la date de naissance sont obligatoires.",
     loginRequiredForCheckout: "Connectez-vous ou inscrivez-vous avant de débloquer Pro.",
-    verifyEmailForCheckout: "Confirmez votre e-mail avant de débloquer Pro : ouvrez le lien envoyé ou demandez-en un nouveau ici.",
+    verifyEmailForCheckout:
+      "Confirmez votre e-mail avant de débloquer Pro : ouvrez le lien envoyé ou demandez-en un nouveau ici.",
     forgotPasswordLink: "Mot de passe oublié ?",
     forgotPasswordButton: "Envoyer le lien de réinitialisation",
     forgotPasswordSent: "Si cet e-mail est enregistré, vous recevrez un lien de réinitialisation.",
@@ -6011,7 +6017,8 @@ const es: Strings = {
     body: "Esta herramienta está disponible con PC Tweaker Pro. Compara los planes y consulta qué incluyen antes de elegir.",
     unlock: "Ver planes y precios",
     notNow: "Ahora no",
-    priceLine: "Lifetime: {lifetime} en un solo pago, sin renovaciones. O {annual} al año, o {monthly} al mes.",
+    priceLine:
+      "Lifetime: {lifetime} en un solo pago, sin renovaciones. O {annual} al año, o {monthly} al mes.",
     notConnectedToast: "El pago Pro todavía no está conectado en esta versión de desarrollo.",
   },
   cleanupConfirm: {
@@ -6329,7 +6336,8 @@ const es: Strings = {
     lastName: "Apellido",
     registerDetailsRequired: "Nombre, apellido y fecha de nacimiento son obligatorios.",
     loginRequiredForCheckout: "Inicia sesión o regístrate antes de desbloquear Pro.",
-    verifyEmailForCheckout: "Confirma tu correo antes de desbloquear Pro: abre el enlace que te enviamos o solicita uno nuevo aquí.",
+    verifyEmailForCheckout:
+      "Confirma tu correo antes de desbloquear Pro: abre el enlace que te enviamos o solicita uno nuevo aquí.",
     forgotPasswordLink: "¿Olvidaste la contraseña?",
     forgotPasswordButton: "Enviar enlace de restablecimiento",
     forgotPasswordSent:
@@ -7446,7 +7454,8 @@ const de: Strings = {
     body: "Dieses Tool ist mit PC Tweaker Pro verfügbar. Vergleiche die Tarife und ihre Leistungen, bevor du dich entscheidest.",
     unlock: "Tarife & Preise ansehen",
     notNow: "Nicht jetzt",
-    priceLine: "Lifetime: {lifetime} einmalig, ohne Verlängerung. Oder {annual} pro Jahr bzw. {monthly} pro Monat.",
+    priceLine:
+      "Lifetime: {lifetime} einmalig, ohne Verlängerung. Oder {annual} pro Jahr bzw. {monthly} pro Monat.",
     notConnectedToast: "Die Pro-Zahlung ist in dieser Entwicklungsversion noch nicht angebunden.",
   },
   cleanupConfirm: {
@@ -7766,7 +7775,8 @@ const de: Strings = {
     lastName: "Nachname",
     registerDetailsRequired: "Vorname, Nachname und Geburtsdatum sind erforderlich.",
     loginRequiredForCheckout: "Vor dem Freischalten von Pro anmelden oder registrieren.",
-    verifyEmailForCheckout: "Bestätige vor dem Freischalten von Pro deine E-Mail: Öffne den gesendeten Link oder fordere hier einen neuen an.",
+    verifyEmailForCheckout:
+      "Bestätige vor dem Freischalten von Pro deine E-Mail: Öffne den gesendeten Link oder fordere hier einen neuen an.",
     forgotPasswordLink: "Passwort vergessen?",
     forgotPasswordButton: "Link zum Zurücksetzen senden",
     forgotPasswordSent:
@@ -8883,7 +8893,8 @@ const pt: Strings = {
     body: "Esta ferramenta está disponível com o PC Tweaker Pro. Compara os planos e vê o que incluem antes de escolher.",
     unlock: "Ver planos e preços",
     notNow: "Agora não",
-    priceLine: "Lifetime: {lifetime} num único pagamento, sem renovações. Ou {annual} por ano, ou {monthly} por mês.",
+    priceLine:
+      "Lifetime: {lifetime} num único pagamento, sem renovações. Ou {annual} por ano, ou {monthly} por mês.",
     notConnectedToast:
       "O pagamento do Pro ainda não está configurado nesta build de desenvolvimento.",
   },
@@ -9201,7 +9212,8 @@ const pt: Strings = {
     lastName: "Sobrenome",
     registerDetailsRequired: "Nome, sobrenome e data de nascimento são obrigatórios.",
     loginRequiredForCheckout: "Entre ou cadastre-se antes de desbloquear o Pro.",
-    verifyEmailForCheckout: "Confirme seu e-mail antes de desbloquear o Pro: abra o link que enviamos ou peça um novo aqui.",
+    verifyEmailForCheckout:
+      "Confirme seu e-mail antes de desbloquear o Pro: abra o link que enviamos ou peça um novo aqui.",
     forgotPasswordLink: "Esqueceu a senha?",
     forgotPasswordButton: "Enviar link de redefinição",
     forgotPasswordSent:

@@ -87,7 +87,7 @@ export interface Strings {
     performance: string;
     privacy: string;
     ui: string;
-    manutenzione: string;
+    maintenance: string;
     gaming: string;
     startup: string;
     profiles: string;
@@ -1060,7 +1060,7 @@ const it: Strings = {
     performance: "Prestazioni",
     privacy: "Privacy",
     ui: "Interfaccia",
-    manutenzione: "Manutenzione",
+    maintenance: "Manutenzione",
     gaming: "Gaming",
     startup: "Avvio",
     profiles: "Profili",
@@ -2493,7 +2493,7 @@ const en: Strings = {
     performance: "Performance",
     privacy: "Privacy",
     ui: "UI",
-    manutenzione: "Maintenance",
+    maintenance: "Maintenance",
     gaming: "Gaming",
     startup: "Startup",
     profiles: "Profiles",
@@ -3907,7 +3907,7 @@ const fr: Strings = {
     performance: "Performances",
     privacy: "Confidentialité",
     ui: "Interface",
-    manutenzione: "Entretien",
+    maintenance: "Entretien",
     gaming: "Gaming",
     startup: "Démarrage",
     profiles: "Profils",
@@ -5345,7 +5345,7 @@ const es: Strings = {
     performance: "Rendimiento",
     privacy: "Privacidad",
     ui: "Interfaz",
-    manutenzione: "Mantenimiento",
+    maintenance: "Mantenimiento",
     gaming: "Gaming",
     startup: "Inicio",
     profiles: "Perfiles",
@@ -6778,7 +6778,7 @@ const de: Strings = {
     performance: "Leistung",
     privacy: "Datenschutz",
     ui: "Oberfläche",
-    manutenzione: "Wartung",
+    maintenance: "Wartung",
     gaming: "Gaming",
     startup: "Autostart",
     profiles: "Profile",
@@ -8214,7 +8214,7 @@ const pt: Strings = {
     performance: "Desempenho",
     privacy: "Privacidade",
     ui: "Interface",
-    manutenzione: "Manutenção",
+    maintenance: "Manutenção",
     gaming: "Jogos",
     startup: "Inicialização",
     profiles: "Perfis",

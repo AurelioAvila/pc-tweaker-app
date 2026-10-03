@@ -521,7 +521,7 @@ export function UninstallerPromoCard({ s }: { s: Strings }) {
  *  Static card, no IPC; the web app works instantly, no install needed. */
 export function RedaxaPromoCard({ s }: { s: Strings }) {
   function openPage() {
-    void openUrl("https://promptshield-beta.vercel.app");
+    void openUrl("https://redaxa.getcertsprint.com/?ref=pctweaker");
   }
 
   return (

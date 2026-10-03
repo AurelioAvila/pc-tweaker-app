@@ -666,6 +666,7 @@ export interface Strings {
     body: string; // uses {feature}
     unlock: string;
     notNow: string;
+    priceLine: string;
     notConnectedToast: string;
   };
   cleanupConfirm: {
@@ -1728,6 +1729,7 @@ const it: Strings = {
     body: "Questo strumento è disponibile con PC Tweaker Pro. Confronta i piani e scopri cosa includono prima di scegliere.",
     unlock: "Vedi piani e prezzi",
     notNow: "Non ora",
+    priceLine: "Lifetime: {lifetime} una volta sola, senza rinnovi. Oppure {annual} all'anno o {monthly} al mese.",
     notConnectedToast: "Il pagamento Pro non è ancora collegato in questa versione di sviluppo.",
   },
   cleanupConfirm: {
@@ -3145,6 +3147,7 @@ const en: Strings = {
     body: "This tool is available with PC Tweaker Pro. Compare plans and see what is included before choosing.",
     unlock: "See plans & pricing",
     notNow: "Not now",
+    priceLine: "Lifetime: {lifetime} once, with no renewals. Or {annual} a year, or {monthly} a month.",
     notConnectedToast: "Pro payment isn't wired up yet in this development build.",
   },
   cleanupConfirm: {
@@ -4576,6 +4579,7 @@ const fr: Strings = {
     body: "Cet outil est disponible avec PC Tweaker Pro. Comparez les offres et découvrez ce qu’elles incluent avant de choisir.",
     unlock: "Voir les offres et tarifs",
     notNow: "Pas maintenant",
+    priceLine: "Lifetime : {lifetime} en une seule fois, sans renouvellement. Ou {annual} par an, ou {monthly} par mois.",
     notConnectedToast:
       "Le paiement Pro n'est pas encore connecté dans cette version de développement.",
   },
@@ -6007,6 +6011,7 @@ const es: Strings = {
     body: "Esta herramienta está disponible con PC Tweaker Pro. Compara los planes y consulta qué incluyen antes de elegir.",
     unlock: "Ver planes y precios",
     notNow: "Ahora no",
+    priceLine: "Lifetime: {lifetime} en un solo pago, sin renovaciones. O {annual} al año, o {monthly} al mes.",
     notConnectedToast: "El pago Pro todavía no está conectado en esta versión de desarrollo.",
   },
   cleanupConfirm: {
@@ -7441,6 +7446,7 @@ const de: Strings = {
     body: "Dieses Tool ist mit PC Tweaker Pro verfügbar. Vergleiche die Tarife und ihre Leistungen, bevor du dich entscheidest.",
     unlock: "Tarife & Preise ansehen",
     notNow: "Nicht jetzt",
+    priceLine: "Lifetime: {lifetime} einmalig, ohne Verlängerung. Oder {annual} pro Jahr bzw. {monthly} pro Monat.",
     notConnectedToast: "Die Pro-Zahlung ist in dieser Entwicklungsversion noch nicht angebunden.",
   },
   cleanupConfirm: {
@@ -8877,6 +8883,7 @@ const pt: Strings = {
     body: "Esta ferramenta está disponível com o PC Tweaker Pro. Compara os planos e vê o que incluem antes de escolher.",
     unlock: "Ver planos e preços",
     notNow: "Agora não",
+    priceLine: "Lifetime: {lifetime} num único pagamento, sem renovações. Ou {annual} por ano, ou {monthly} por mês.",
     notConnectedToast:
       "O pagamento do Pro ainda não está configurado nesta build de desenvolvimento.",
   },

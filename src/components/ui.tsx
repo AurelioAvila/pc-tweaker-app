@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { check as checkForUpdate, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
-import { format, Strings } from "../i18n";
+import { format, Lang, Strings } from "../i18n";
+import { money, PRICE_ANNUAL, PRICE_LIFETIME, PRICE_MONTHLY } from "../lib";
 import { Toast } from "../types";
 import { CrownIcon } from "./icons";
 
@@ -146,11 +147,13 @@ export function Toggle({
 
 export function PaywallModal({
   s,
+  lang,
   featureName,
   onClose,
   onNotify,
 }: {
   s: Strings;
+  lang: Lang;
   featureName: string;
   onClose: () => void;
   onNotify: () => void;
@@ -207,6 +210,16 @@ export function PaywallModal({
         <span className="pro-feature-eyebrow">{s.paywall.title}</span>
         <h2 id="pro-feature-title">{featureName}</h2>
         <p id="pro-feature-description">{format(s.paywall.body, { feature: featureName })}</p>
+        {/* Lifetime leads because it is what people actually buy; the
+            subscriptions follow so nobody has to open the plans to learn
+            the price of the thing they just tried to use. */}
+        <p className="pro-feature-price">
+          {format(s.paywall.priceLine, {
+            lifetime: money(PRICE_LIFETIME, lang),
+            annual: money(PRICE_ANNUAL, lang),
+            monthly: money(PRICE_MONTHLY, lang),
+          })}
+        </p>
       </div>
       <footer className="pro-feature-actions">
         <button onClick={onNotify} className="tool-primary-action">

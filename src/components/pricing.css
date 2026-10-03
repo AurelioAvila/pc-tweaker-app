@@ -11,6 +11,9 @@
   position: absolute;
   top: 0;
   right: 0;
+  width: auto;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
   z-index: 20;
   margin: 0;
   padding: 0;

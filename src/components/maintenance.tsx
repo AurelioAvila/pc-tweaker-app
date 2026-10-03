@@ -911,7 +911,7 @@ export function CleanupCard({
   onRequirePro: () => void;
   onRun: (info: CleanupInfo) => void;
 }) {
-  const style = CATEGORY_STYLE.manutenzione;
+  const style = CATEGORY_STYLE.maintenance;
   const locked = info.requires_pro && !isPro;
 
   return (

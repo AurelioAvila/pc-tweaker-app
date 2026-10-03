@@ -395,7 +395,7 @@ function App() {
     { key: "startup", label: s.tabs.startup, icon: <RocketIcon className="h-[18px] w-[18px]" /> },
     { key: "debloat", label: "Debloat", icon: <LayersIcon className="h-[18px] w-[18px]" /> },
     { key: "ui", label: s.tabs.ui, icon: CATEGORY_STYLE.ui.icon },
-    { key: "manutenzione", label: s.tabs.manutenzione, icon: CATEGORY_STYLE.manutenzione.icon },
+    { key: "maintenance", label: s.tabs.maintenance, icon: CATEGORY_STYLE.maintenance.icon },
     { key: "profiles", label: s.tabs.profiles, icon: <LayersIcon className="h-[18px] w-[18px]" /> },
     { key: "ledger", label: s.tabs.ledger, icon: <HistoryIcon className="h-[18px] w-[18px]" /> },
     { key: "pricing", label: s.tabs.pricing, icon: <GemIcon className="h-[18px] w-[18px]" /> },
@@ -621,7 +621,7 @@ function App() {
     return orderSectionTweaks(inCategory, filter);
   }, [tweaks, filter, query, searching, s]);
 
-  const showCleanup = filter === "manutenzione" && !searching;
+  const showCleanup = filter === "maintenance" && !searching;
   const showPrivacyExtras = filter === "privacy" && !searching;
   const showGamingExtras = filter === "gaming" && !searching;
   const showOverview = filter === "overview" && !searching;

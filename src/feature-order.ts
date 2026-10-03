@@ -37,7 +37,7 @@ const SECTION_ORDER: Record<string, readonly string[]> = {
     "global_timer_resolution",
     "disable_memory_integrity",
   ],
-  manutenzione: ["enable_long_paths", "disable_delivery_optimization", "auto_end_frozen_tasks"],
+  maintenance: ["enable_long_paths", "disable_delivery_optimization", "auto_end_frozen_tasks"],
 };
 
 export function orderSectionTweaks<T extends { id: string }>(items: T[], section: string): T[] {

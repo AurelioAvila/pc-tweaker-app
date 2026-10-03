@@ -18,6 +18,10 @@ const compiled = await build({
   format: "cjs",
   platform: "node",
   jsx: "automatic",
+  // ui.tsx now reaches src/lib.ts, which reads Vite's import.meta.env. In a
+  // cjs bundle esbuild empties import.meta, so give env a stand-in object:
+  // lib.ts then falls back to its default API base URL, as in production.
+  define: { "import.meta.env": "{}" },
   plugins: [
     {
       name: "adapters",

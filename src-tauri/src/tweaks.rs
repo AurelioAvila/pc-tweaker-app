@@ -6,7 +6,7 @@ pub enum Category {
     Performance,
     Privacy,
     Ui,
-    Manutenzione,
+    Maintenance,
     Gaming,
 }
 
@@ -74,7 +74,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "enable_long_paths", name: "Enable long paths for compatible apps",
             description: "Allows long Win32 paths for applications that declare longPathAware support. Does not remove every application's path limit. Restart applications or Windows. Restoring the old limit may make existing long paths inaccessible to those apps.",
-            category: Category::Manutenzione, hive: Hive::Hklm,
+            category: Category::Maintenance, hive: Hive::Hklm,
             key_path: r"SYSTEM\CurrentControlSet\Control\FileSystem", value_name: "LongPathsEnabled",
             on_value: RegValue::Dword(1), requires_admin: true, requires_pro: false,
         },
@@ -226,7 +226,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
             id: "auto_end_frozen_tasks",
             name: "Don't let a frozen app block shutdown",
             description: "When an application stops responding during shutdown, Windows waits and shows the \"This app is preventing shutdown\" screen until someone clicks it. This closes unresponsive apps automatically instead, so a hung program cannot leave the machine sitting powered on (HKCU, no elevation required).",
-            category: Category::Manutenzione,
+            category: Category::Maintenance,
             hive: Hive::Hkcu,
             key_path: r"Control Panel\Desktop",
             value_name: "AutoEndTasks",
@@ -492,7 +492,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
             id: "disable_delivery_optimization",
             name: "Stop sharing Windows updates with strangers",
             description: "Windows uploads downloaded update files to other PCs over your connection by default. This limits Delivery Optimization to your own machine, which stops that upload eating bandwidth mid-game (HKLM, requires administrator rights).",
-            category: Category::Manutenzione,
+            category: Category::Maintenance,
             hive: Hive::Hklm,
             key_path: r"SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization",
             value_name: "DODownloadMode",

@@ -155,26 +155,26 @@ const CATEGORY_ICONS: Record<string, ReactElement> = {
 function tone(score: number): { text: string; stroke: string; badge: string } {
   if (score >= 85)
     return {
-      text: "text-emerald-300",
-      stroke: "#34d399",
-      badge: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/30",
+      text: "text-ok",
+      stroke: "var(--success)",
+      badge: "bg-ok/10 text-ok ring-ok/30",
     };
   if (score >= 65)
     return {
-      text: "text-amber-300",
-      stroke: "#fbbf24",
-      badge: "bg-amber-400/10 text-amber-300 ring-amber-400/30",
+      text: "text-warn",
+      stroke: "var(--warning)",
+      badge: "bg-warn/10 text-warn ring-warn/30",
     };
   if (score >= 45)
     return {
-      text: "text-orange-300",
-      stroke: "#fb923c",
-      badge: "bg-orange-400/10 text-orange-300 ring-orange-400/30",
+      text: "text-caution",
+      stroke: "var(--caution)",
+      badge: "bg-caution/10 text-caution ring-caution/30",
     };
   return {
-    text: "text-rose-300",
-    stroke: "#fb7185",
-    badge: "bg-rose-400/10 text-rose-300 ring-rose-400/30",
+    text: "text-danger",
+    stroke: "var(--danger)",
+    badge: "bg-danger/10 text-danger ring-danger/30",
   };
 }
 
@@ -523,7 +523,7 @@ export function HealthPanel({
         }
       />
 
-      {error !== null && <p className="relative mt-4 text-xs text-rose-300">{error}</p>}
+      {error !== null && <p className="relative mt-4 text-xs text-danger">{error}</p>}
 
       {phase === "idle" && (
         <div className="tool-health-start relative mb-2 mt-5 flex flex-col items-center gap-3 text-center">
@@ -550,8 +550,8 @@ export function HealthPanel({
            checklist that completes stage by stage. */
         <div className="tool-health-loading relative mb-2 mt-5 flex flex-col items-center gap-4">
           <div className="relative grid h-32 w-32 place-items-center">
-            <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-emerald-400/70 [animation-duration:1.1s]" />
-            <div className="absolute inset-2 animate-spin rounded-full border-2 border-transparent border-b-amber-400/50 [animation-duration:1.7s]" />
+            <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-accent/70 [animation-duration:1.1s]" />
+            <div className="absolute inset-2 animate-spin rounded-full border-2 border-transparent border-b-accent/35 [animation-duration:1.7s]" />
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
               {computingLabel}
             </span>
@@ -562,7 +562,7 @@ export function HealthPanel({
               return (
                 <li
                   key={label}
-                  className={`flex items-center gap-2 transition-colors ${state === "pending" ? "text-ink-3" : state === "active" ? "text-ink-2" : "text-emerald-300/80"}`}
+                  className={`flex items-center gap-2 transition-colors ${state === "pending" ? "text-ink-3" : state === "active" ? "text-ink-2" : "text-ok/80"}`}
                 >
                   <span className="grid h-4 w-4 place-items-center">
                     {state === "done" ? (
@@ -606,8 +606,8 @@ export function HealthPanel({
               <span
                 className={`mt-1 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ring-1 ${
                   comparison.delta > 0
-                    ? "bg-emerald-400/10 text-emerald-300 ring-emerald-400/25"
-                    : "bg-rose-400/10 text-rose-300 ring-rose-400/25"
+                    ? "bg-ok/10 text-ok ring-ok/25"
+                    : "bg-danger/10 text-danger ring-danger/25"
                 }`}
               >
                 {comparison.delta > 0 ? "+" : ""}
@@ -655,7 +655,7 @@ export function HealthPanel({
                     <MiniRing score={cat.score} />
                     <button
                       type="button"
-                      className="shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold text-ink-3 transition hover:bg-white/5 hover:text-white"
+                      className="shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold text-ink-3 transition hover:bg-surface-hover hover:text-ink"
                       onClick={() => {
                         setOpen(expanded ? null : cat.id);
                       }}
@@ -677,14 +677,14 @@ export function HealthPanel({
                               {f.label}
                               <span className="ml-1.5 text-ink-3">· {f.evidence}</span>
                             </span>
-                            <span className="h-1 overflow-hidden rounded-full bg-white/10">
+                            <span className="h-1 overflow-hidden rounded-full bg-line">
                               <span
-                                className={`block h-full rounded-full ${ratio >= 1 ? "bg-emerald-400/80" : ratio <= 0 ? "bg-rose-400/60" : "bg-amber-400/70"}`}
+                                className={`block h-full rounded-full ${ratio >= 1 ? "bg-ok/80" : ratio <= 0 ? "bg-danger/60" : "bg-warn/70"}`}
                                 style={{ width: `${String(Math.max(4, ratio * 100))}%` }}
                               />
                             </span>
                             <span
-                              className={`text-right tabular-nums ${ratio >= 1 ? "text-emerald-300/80" : ratio <= 0 ? "text-rose-300/70" : "text-ink-3"}`}
+                              className={`text-right tabular-nums ${ratio >= 1 ? "text-ok/80" : ratio <= 0 ? "text-danger/70" : "text-ink-3"}`}
                             >
                               {f.earned}/{f.max}
                             </span>
@@ -711,7 +711,7 @@ export function HealthPanel({
               setWhyOpen((v) => !v);
             }}
             aria-expanded={whyOpen}
-            className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition hover:bg-white/[0.03]"
+            className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition hover:bg-surface-hover"
           >
             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-surface-hover text-ink-2">
               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
@@ -727,7 +727,7 @@ export function HealthPanel({
               {comparison.categories.slice(0, 3).map((c) => (
                 <span
                   key={c.id}
-                  className={`rounded px-1.5 py-0.5 ring-1 ${c.delta > 0 ? "bg-emerald-400/10 text-emerald-300/90 ring-emerald-400/20" : "bg-rose-400/10 text-rose-300/90 ring-rose-400/20"}`}
+                  className={`rounded px-1.5 py-0.5 ring-1 ${c.delta > 0 ? "bg-ok/10 text-ok/90 ring-ok/20" : "bg-danger/10 text-danger/90 ring-danger/20"}`}
                 >
                   {c.delta > 0 ? "+" : ""}
                   {c.delta} {categoryLabels[c.id] ?? c.id}
@@ -742,23 +742,23 @@ export function HealthPanel({
           {whyOpen && (
             <div className="border-t border-line px-3.5 py-3">
               {comparison.structuralChange && (
-                <p className="mb-2.5 rounded-lg bg-amber-400/[0.07] px-2.5 py-1.5 text-[10.5px] leading-relaxed text-amber-200/80 ring-1 ring-amber-400/20">
+                <p className="mb-2.5 rounded-lg bg-warn/[0.07] px-2.5 py-1.5 text-[10.5px] leading-relaxed text-warn/80 ring-1 ring-warn/20">
                   {change.structural}
                 </p>
               )}
               <ul className="grid gap-2.5">
                 {comparison.categories.map((c) => (
-                  <li key={c.id} className="rounded-lg bg-white/[0.03] px-3 py-2">
+                  <li key={c.id} className="rounded-lg bg-surface-hover px-3 py-2">
                     <div className="flex items-center gap-2.5">
                       <span className="text-ink-3">{CATEGORY_ICONS[c.id]}</span>
-                      <span className="min-w-0 flex-1 truncate text-[11.5px] font-semibold text-white/75">
+                      <span className="min-w-0 flex-1 truncate text-[11.5px] font-semibold text-ink-2">
                         {categoryLabels[c.id] ?? c.id}
                       </span>
                       <span className="shrink-0 text-[10.5px] tabular-nums text-ink-3">
                         {c.before} → {c.after}
                       </span>
                       <span
-                        className={`shrink-0 text-[11px] font-bold tabular-nums ${c.delta > 0 ? "text-emerald-300" : "text-rose-300"}`}
+                        className={`shrink-0 text-[11px] font-bold tabular-nums ${c.delta > 0 ? "text-ok" : "text-danger"}`}
                       >
                         {c.delta > 0 ? "+" : ""}
                         {c.delta}
@@ -767,11 +767,11 @@ export function HealthPanel({
                     {/* The facts behind the move, quoted from both
                         measurements — never a paraphrase. */}
                     {c.reasons.length > 0 && (
-                      <ul className="mt-1.5 grid gap-1 border-t border-white/5 pt-1.5">
+                      <ul className="mt-1.5 grid gap-1 border-t border-line pt-1.5">
                         {c.reasons.map((r) => (
                           <li key={r.id} className="text-[10.5px] leading-relaxed text-ink-3">
                             <span className="text-ink-2">{labelFor(r.id)}</span>
-                            <span className="mx-1.5 text-white/20">·</span>
+                            <span className="mx-1.5 text-line-2">·</span>
                             <span className="text-ink-3">{r.evidenceBefore}</span>
                             <span className="mx-1 text-ink-3">→</span>
                             <span className="text-ink-2">{r.evidenceAfter}</span>
@@ -805,7 +805,7 @@ export function HealthPanel({
               type="button"
               onClick={runBaseline}
               disabled={benchBusy}
-              className="rounded-lg border border-line px-3 py-1.5 text-[11px] font-semibold text-ink-2 transition hover:bg-white/5 hover:text-white disabled:opacity-40"
+              className="rounded-lg border border-line px-3 py-1.5 text-[11px] font-semibold text-ink-2 transition hover:bg-surface-hover hover:text-ink disabled:opacity-40"
             >
               {benchBusy ? baseline.running : baseline.run}
             </button>
@@ -828,17 +828,15 @@ export function HealthPanel({
                   const prev = runs.length > 1 ? runs[runs.length - 2] : null;
                   const d = prev ? delta(get(prev), get(last), higher) : null;
                   return (
-                    <tr key={label} className="border-t border-white/5">
+                    <tr key={label} className="border-t border-line">
                       <td className="py-1 text-ink-2">{label}</td>
-                      <td className="py-1 text-right tabular-nums text-white/75">
+                      <td className="py-1 text-right tabular-nums text-ink-2">
                         {get(last)}
                         {unit}
                       </td>
                       <td className="w-14 py-1 text-right tabular-nums">
                         {d && (
-                          <span className={d.good ? "text-emerald-300/90" : "text-rose-300/90"}>
-                            {d.text}
-                          </span>
+                          <span className={d.good ? "text-ok/90" : "text-danger/90"}>{d.text}</span>
                         )}
                       </td>
                     </tr>

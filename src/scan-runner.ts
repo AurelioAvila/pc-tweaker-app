@@ -193,7 +193,7 @@ export type ScanObservation = {
     | "apps"
     | "efficiency";
   evidence: string;
-  section: "manutenzione" | "startup" | "health" | "hardware" | "debloat" | "performance";
+  section: "maintenance" | "startup" | "health" | "hardware" | "debloat" | "performance";
   warning: boolean;
 };
 export function scanObservations(r: ScanReport): ScanObservation[] {
@@ -204,7 +204,7 @@ export function scanObservations(r: ScanReport): ScanObservation[] {
         id: `drive:${d.letter}`,
         kind: "storage",
         evidence: `${d.letter} · ${(d.free_bytes / 1024 ** 3).toFixed(1)} GB · ${Math.round((d.free_bytes / d.total_bytes) * 100)}%`,
-        section: "manutenzione",
+        section: "maintenance",
         warning: true,
       });
   const enabled = (r.startup ?? []).filter((x) => x.enabled);
@@ -221,7 +221,7 @@ export function scanObservations(r: ScanReport): ScanObservation[] {
       id: "memory",
       kind: "memory",
       evidence: `${Math.round((r.stats.ram_used / r.stats.ram_total) * 100)}%`,
-      section: "manutenzione",
+      section: "maintenance",
       warning: true,
     });
   if (r.reboot === true)

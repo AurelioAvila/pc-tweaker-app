@@ -28,7 +28,7 @@ export const NAV_ACCENT: Record<string, string> = {
   privacy: "text-teal-300",
   ui: "text-fuchsia-300",
   startup: "text-violet-300",
-  manutenzione: "text-sky-300",
+  maintenance: "text-sky-300",
   profiles: "text-indigo-300",
   ledger: "text-blue-300",
   pricing: "text-yellow-300",
@@ -140,7 +140,7 @@ export const CATEGORY_STYLE: Record<
       </svg>
     ),
   },
-  manutenzione: {
+  maintenance: {
     // Plate hue. Kept separate from `glyph` because the module paints
     // itself with this and the icon has to stay legible on top of it.
     tint: "#0ea5e9",

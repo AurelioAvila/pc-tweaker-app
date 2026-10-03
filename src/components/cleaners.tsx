@@ -106,7 +106,7 @@ export function AppCacheCard({
   return (
     <li className="tool-panel tool-card tool-app-cache-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
       <div className="tool-card-head flex items-start gap-4">
-        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-400/15 text-sky-300 ring-1 ring-sky-400/30">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/30">
           <TrashIcon className="h-5 w-5" />
         </div>
         <div className="tool-card-copy min-w-0 flex-1">
@@ -172,7 +172,7 @@ export function AppCacheCard({
                               return next;
                             })
                           }
-                          className="h-4 w-4 shrink-0 accent-sky-400"
+                          className="h-4 w-4 shrink-0 accent-accent"
                         />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-ink">
@@ -291,7 +291,7 @@ export function CookieCleanerCard({
   return (
     <li className="tool-panel tool-card tool-cookie-cleaner-card animate-card relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 shadow-lg shadow-black/20">
       <div className="tool-card-head flex items-start gap-4">
-        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-teal-400/15 text-teal-300 ring-1 ring-teal-400/30">
+        <div className="tool-card-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/30">
           <GlobeIcon className="h-5 w-5" />
         </div>
         <div className="tool-card-copy min-w-0 flex-1">

@@ -144,3 +144,10 @@ scripts/.thermals-test-bundle.css
 
 # Internal design and review notes (kept out of the public repository)
 /DESIGN.md
+
+# Local working notes and editor/assistant configuration
+AGENTS.md
+CLAUDE.md
+.agents/
+.claude/
+scripts/sync-skills.mjs

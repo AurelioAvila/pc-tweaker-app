@@ -638,7 +638,7 @@ export function ScanPanel({
       <button
         className="scan-maintenance-link"
         disabled={applying}
-        onClick={() => onNavigate("manutenzione")}
+        onClick={() => onNavigate("maintenance")}
       >
         {c.ram} <span aria-hidden="true">→</span>
       </button>

@@ -18,8 +18,9 @@ const { upsertEntitlement, productEntitlement } = await import("../dist/products
 
 await initSchema();
 
-const REAL_PERIOD_END = new Date("2026-10-02T12:00:00Z");
-const PROVISIONAL = new Date("2026-09-05T12:00:00Z");
+const now = Date.now();
+const REAL_PERIOD_END = new Date(now + 30 * 24 * 60 * 60 * 1000);
+const PROVISIONAL = new Date(now + 3 * 24 * 60 * 60 * 1000);
 
 async function createUser(email) {
   const { rows } = await getPool().query(

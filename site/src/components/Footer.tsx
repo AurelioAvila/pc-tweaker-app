@@ -64,6 +64,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
                 { label: text.footer.changelog, href: `${GH}/blob/master/CHANGELOG.md` },
                 { label: text.footer.source, href: GH },
                 { label: "PC Tweaker Uninstaller", href: "/uninstaller/" },
+                { label: "Tweaky Driver", href: "https://pctweaker.app/tweaky-driver/" },
                 { label: text.support.navLabel, href: "/support/" },
                 { label: text.footer.contact, href: "/support/" },
               ]}

@@ -18,6 +18,8 @@ const compiled = await build({
   format: "cjs",
   platform: "node",
   jsx: "automatic",
+  // Vite fills import.meta.env at build time; the CommonJS bundle has none.
+  define: { "import.meta.env": "{}" },
   plugins: [
     {
       name: "adapters",

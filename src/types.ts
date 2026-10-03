@@ -14,7 +14,7 @@ export type AuthState =
       hasBilling: boolean;
     };
 
-export type Category = "performance" | "privacy" | "ui" | "manutenzione" | "gaming";
+export type Category = "performance" | "privacy" | "ui" | "maintenance" | "gaming";
 
 /** Navigable sections: the tweak categories plus the two standalone screens. */
 export type Section =

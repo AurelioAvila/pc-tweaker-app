@@ -159,7 +159,7 @@ fn category_str(c: &Category) -> &'static str {
         Category::Performance => "performance",
         Category::Privacy => "privacy",
         Category::Ui => "ui",
-        Category::Manutenzione => "manutenzione",
+        Category::Maintenance => "maintenance",
         Category::Gaming => "gaming",
     }
 }
@@ -436,7 +436,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         id: windows_search.id.to_string(),
         name: windows_search.name.to_string(),
         description: windows_search.description.to_string(),
-        category: category_str(&Category::Manutenzione).to_string(),
+        category: category_str(&Category::Maintenance).to_string(),
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: windows_search.requires_admin,

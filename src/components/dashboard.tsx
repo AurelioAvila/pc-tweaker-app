@@ -159,7 +159,7 @@ export function DashboardCards({
       {showDrives && (
         <Card
           title={s.scan.dashDrivesTitle}
-          onAction={() => onNavigate("manutenzione")}
+          onAction={() => onNavigate("maintenance")}
           actionLabel={s.scan.dashManage}
         >
           <div className="flex flex-col gap-3">

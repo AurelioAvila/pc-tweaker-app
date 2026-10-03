@@ -80,6 +80,13 @@ import { CONFIGURABLE_TWEAK_IDS, isCurrentCatalogTweak } from "./catalog";
 import "./App.css";
 import "./desktop-refresh.css";
 
+/** Carries the backend's machine-readable reason alongside its message. */
+class CheckoutError extends Error {
+  constructor(message: string, readonly code?: string) {
+    super(message);
+  }
+}
+
 function App() {
   const [lang, setLangState] = useState<Lang>(() => detectInitialLang());
   const s = STRINGS[lang];
@@ -322,8 +329,8 @@ function App() {
       body: JSON.stringify({ plan }),
     });
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}) as { error?: string });
-      throw new Error(body.error || `HTTP ${res.status}`);
+      const body = await res.json().catch(() => ({}) as { error?: string; code?: string });
+      throw new CheckoutError(body.error || `HTTP ${res.status}`, body.code);
     }
     const data = (await res.json()) as { url: string };
     await openUrl(data.url);
@@ -958,6 +965,15 @@ function App() {
                     try {
                       await startCheckout(plan);
                     } catch (e) {
+                      // Checkout needs a confirmed inbox. Same shape as above: say
+                      // what is missing and open the menu with the resend button.
+                      // The server decides, since emailVerified starts false
+                      // until refreshAccount() answers.
+                      if (e instanceof CheckoutError && e.code === "email_unverified") {
+                        pushToast("error", s.auth.verifyEmailForCheckout);
+                        setAccountMenuOpen(true);
+                        return;
+                      }
                       pushToast("error", String(e instanceof Error ? e.message : e));
                     }
                   }}

@@ -82,7 +82,10 @@ import "./desktop-refresh.css";
 
 /** Carries the backend's machine-readable reason alongside its message. */
 class CheckoutError extends Error {
-  constructor(message: string, readonly code?: string) {
+  constructor(
+    message: string,
+    readonly code?: string,
+  ) {
     super(message);
   }
 }

@@ -52,6 +52,10 @@ const PRODUCT_ID: &str = "pctweaker";
 /// to cover a weekend or a short trip without connectivity; short enough
 /// that a cancelled subscription doesn't keep working offline indefinitely.
 const GRACE_PERIOD_SECS: u64 = 3 * 24 * 60 * 60;
+/// Lifetime has nothing to lapse; only a refund or dispute revokes it. A
+/// month offline keeps a paid-for licence working on a laptop away from a
+/// network, while a revoked one still stops at the next refresh.
+const LIFETIME_GRACE_PERIOD_SECS: u64 = 30 * 24 * 60 * 60;
 const MAX_CLOCK_SKEW_SECS: u64 = 5 * 60;
 
 /// Field names must match `backend/src/license.ts`'s `LicensePayload` type
@@ -187,10 +191,18 @@ fn is_fresh(payload: &LicensePayload) -> bool {
     is_fresh_at(payload, effective_now)
 }
 
+fn grace_period(payload: &LicensePayload) -> u64 {
+    if payload.is_pro && payload.plan.as_deref() == Some("lifetime") {
+        LIFETIME_GRACE_PERIOD_SECS
+    } else {
+        GRACE_PERIOD_SECS
+    }
+}
+
 fn is_fresh_at(payload: &LicensePayload, now: u64) -> bool {
     payload.issued_at > 0
         && payload.issued_at <= now.saturating_add(MAX_CLOCK_SKEW_SECS)
-        && now.saturating_sub(payload.issued_at) <= GRACE_PERIOD_SECS
+        && now.saturating_sub(payload.issued_at) <= grace_period(payload)
         && payload.expires_at.is_none_or(|expiry| now < expiry)
 }
 
@@ -402,7 +414,7 @@ mod tests {
             ("another-product", now_secs()),
             (
                 PRODUCT_ID,
-                now_secs().saturating_sub(GRACE_PERIOD_SECS + 3600),
+                now_secs().saturating_sub(LIFETIME_GRACE_PERIOD_SECS + 3600),
             ),
             (
                 PRODUCT_ID,
@@ -595,13 +607,16 @@ mod tests {
             verify_with_public_key(&tampered, &response.signature, &public_key),
             Err(VerifyError::SignatureInvalid)
         );
-        // Lifetime and older signed caches without a cutoff still need periodic refresh.
+        // Caches without a cutoff still need periodic refresh; Lifetime gets a month.
         payload.expires_at = None;
-        for plan in ["lifetime", "monthly"] {
-            payload.plan = Some(plan.into());
-            assert!(is_fresh_at(&payload, now));
-            assert!(!is_fresh_at(&payload, now + GRACE_PERIOD_SECS + 1));
-        }
+        payload.plan = Some("monthly".into());
+        assert!(is_fresh_at(&payload, now));
+        assert!(!is_fresh_at(&payload, now + GRACE_PERIOD_SECS + 1));
+        payload.plan = Some("lifetime".into());
+        assert!(is_fresh_at(&payload, now + LIFETIME_GRACE_PERIOD_SECS));
+        assert!(!is_fresh_at(&payload, now + LIFETIME_GRACE_PERIOD_SECS + 1));
+        payload.is_pro = false;
+        assert!(!is_fresh_at(&payload, now + GRACE_PERIOD_SECS + 1));
     }
 
     /// After `delete`, a previously fresh cache must no longer read as Pro —

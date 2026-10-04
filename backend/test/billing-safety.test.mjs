@@ -309,3 +309,37 @@ test("recurring checkout requires a matching subscription identity and valid pro
   await assert.rejects(handleEvent(event("customer.subscription.created", subscription(id, { created: NaN })), effects()), /creation time/);
   assert.equal((await productEntitlement(id, "pctweaker")).active, false);
 });
+
+test("a full refund or dispute of the Lifetime payment revokes Lifetime, nothing else does", async () => {
+  const alerts = [];
+  const lifetimeSession = (userId) => ({
+    mode: "payment",
+    client_reference_id: userId,
+    metadata: { userId, product: "pctweaker", plan: "lifetime" },
+    line_items: { data: [{ price: { id: process.env.STRIPE_PRICE_LIFETIME } }] },
+  });
+  const fx = (session) => effects({
+    async loadCheckoutForPayment() { return session; },
+    alertReversal(userId, reason) { alerts.push([userId, reason]); },
+  });
+
+  const refunded = await user();
+  await grantPro(refunded, { customerId: `cus_r_${refunded}`, plan: "lifetime", expiresAt: null });
+  await handleEvent(event("charge.refunded", { refunded: false, payment_intent: "pi_partial" }), fx(lifetimeSession(refunded)));
+  assert.equal((await row(refunded)).is_pro, true, "partial refund keeps Lifetime");
+  await handleEvent(event("charge.refunded", { refunded: true, payment_intent: "pi_full" }), fx(lifetimeSession(refunded)));
+  assert.equal((await row(refunded)).is_pro, false);
+  assert.deepEqual(alerts, [[refunded, "charge.refunded"]]);
+
+  const disputed = await user();
+  await grantPro(disputed, { customerId: `cus_d_${disputed}`, plan: "lifetime", expiresAt: null });
+  await handleEvent(event("charge.dispute.created", { payment_intent: "pi_dispute" }), fx(lifetimeSession(disputed)));
+  assert.equal((await row(disputed)).is_pro, false);
+
+  const tipper = await user();
+  await grantPro(tipper, { customerId: `cus_t_${tipper}`, plan: "lifetime", expiresAt: null });
+  const tip = { ...lifetimeSession(tipper), line_items: { data: [{ price: { id: "price_tip_fixture" } }] } };
+  await handleEvent(event("charge.refunded", { refunded: true, payment_intent: "pi_tip" }), fx(tip));
+  await handleEvent(event("charge.refunded", { refunded: true, payment_intent: "pi_none" }), fx(null));
+  assert.equal((await row(tipper)).is_pro, true, "a refunded tip or unrelated payment keeps Lifetime");
+});

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-is-store-install"
+description = "Enables the is_store_install command without any pre-configured scope."
+commands.allow = ["is_store_install"]
+
+[[permission]]
+identifier = "deny-is-store-install"
+description = "Denies the is_store_install command without any pre-configured scope."
+commands.deny = ["is_store_install"]

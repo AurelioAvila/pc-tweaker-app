@@ -151,6 +151,15 @@ export function storeSession(token: string, email: string, remember: boolean) {
   store.setItem(EMAIL_KEY, email);
 }
 
+/** Keeps a session alive: once the current token is a day old, authenticated
+ * API calls return a replacement, stored wherever the old one lives. */
+export function adoptRenewedToken(res: Response) {
+  const next = res.headers.get("X-Session-Token");
+  if (!next) return;
+  if (localStorage.getItem(TOKEN_KEY)) localStorage.setItem(TOKEN_KEY, next);
+  else if (sessionStorage.getItem(TOKEN_KEY)) sessionStorage.setItem(TOKEN_KEY, next);
+}
+
 export function clearSession() {
   for (const store of [localStorage, sessionStorage]) {
     store.removeItem(TOKEN_KEY);

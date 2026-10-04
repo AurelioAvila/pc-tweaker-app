@@ -10,6 +10,7 @@ const mocks = {
   "@tauri-apps/plugin-updater": `export const check=()=>h.check();`,
   "@tauri-apps/api/event": `export const listen=(event,fn)=>{h.listeners.set(event,fn);return Promise.resolve(()=>h.listeners.delete(event))};`,
   "@tauri-apps/plugin-process": `export const relaunch=()=>Promise.resolve();`,
+  "@tauri-apps/api/core": `export const invoke=(cmd)=>Promise.resolve(cmd==="is_store_install"&&h.store===true);`,
 };
 const compiled = await build({
   entryPoints: [fileURLToPath(new URL("../src/components/ui.tsx", import.meta.url))],
@@ -83,6 +84,7 @@ const flush = async () => {
 };
 render();
 const stop = h.effects[0]();
+await flush();
 assert.equal(h.requests.length, 1, "startup checks for updates");
 h.listeners.get("app-reopened")();
 h.listeners.get("app-reopened")();
@@ -109,6 +111,7 @@ let actions = buttons(render());
 actions.find((b) => b.props.children === "Later").props.onClick();
 assert.equal(render(), null, "Later dismisses the current offer");
 h.listeners.get("app-reopened")();
+await flush();
 assert.equal(h.requests.length, 2);
 h.requests[1].resolve(update);
 await flush();
@@ -124,16 +127,31 @@ rejectInstall(Error("network unavailable"));
 await attempt;
 assert.equal(h.values[1], "offer", "failed installation can be retried");
 h.listeners.get("app-reopened")();
+await flush();
 h.requests[2].reject(Error("offline"));
 await flush();
 assert.equal(toasts.length, 2, "installation and check failures are visible");
 h.listeners.get("app-reopened")();
+await flush();
 const old = h.values[0];
 stop();
 h.requests[3].resolve({ version: "10.0.0" });
 await flush();
 assert.equal(h.values[0], old, "late response after unmount cannot update state");
 assert.equal(h.listeners.size, 0, "unmount removes tray listener");
+// The Microsoft Store build is updated by the Store: it never asks GitHub.
+h.store = true;
+h.requests.length = 0;
+h.effects.length = 0;
+h.values.length = 0;
+h.refs.length = 0;
+render();
+const stopStore = h.effects[0]();
+await flush();
+h.listeners.get("app-reopened")();
+await flush();
+assert.equal(h.requests.length, 0, "the Store build never checks GitHub for updates");
+stopStore();
 console.log(
-  "Updater lifecycle passed: startup, tray reopen, dismissal, concurrency, failure and unmount.",
+  "Updater lifecycle passed: startup, tray reopen, dismissal, concurrency, failure, unmount and Store build.",
 );

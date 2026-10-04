@@ -55,7 +55,10 @@ export function lifetimeOffer(
       end - start !== LIFETIME_CAMPAIGN_DURATION_MS) {
     return { ...base, status: "invalid", available: false };
   }
-  const status = nowMs < start ? "scheduled" : nowMs >= end ? "expired" : "active";
+  // After a campaign, Lifetime returns to normal sale at the regular price.
+  // Reporting "disabled" also clears the countdown in already-installed apps.
+  if (nowMs >= end) return base;
+  const status = nowMs < start ? "scheduled" : "active";
   return {
     ...base,
     id: rawId,
@@ -81,9 +84,6 @@ export function lifetimeCheckoutDecision(offer: LifetimeOffer, alreadyOwnsLifeti
   }
   if (offer.status === "scheduled") {
     return { allowed: false, status: 409, code: "LIFETIME_OFFER_NOT_STARTED", error: "The Lifetime offer has not started yet." };
-  }
-  if (offer.status === "expired") {
-    return { allowed: false, status: 409, code: "LIFETIME_OFFER_ENDED", error: "This Lifetime offer has ended. Existing Lifetime access remains valid." };
   }
   if (!offer.available) {
     return { allowed: false, status: 503, code: "LIFETIME_OFFER_UNAVAILABLE", error: "Lifetime checkout is temporarily unavailable." };

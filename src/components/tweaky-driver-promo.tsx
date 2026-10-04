@@ -4,7 +4,7 @@ import type { Strings } from "../i18n";
 import driverMark from "../assets/tweaky-driver-icon.png";
 
 export const TWEAKY_DRIVER_URL =
-  "https://github.com/AurelioAvila/Tweaky-Driver-Releases/releases/latest";
+  "https://pctweaker.app/tweaky-driver/?utm_source=pc-tweaker&utm_medium=app&utm_campaign=tweaky-driver-card";
 
 /** A separate product, not a scan finding or a bundled Pro entitlement. */
 export function TweakyDriverPromoCard({ s }: { s: Strings }) {

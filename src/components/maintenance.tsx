@@ -437,10 +437,11 @@ export function BrowserCleanupCard({
  *  person to find the right asset among six on a releases page. It now offers
  *  the installer itself, behind a confirmation that says what is about to be
  *  downloaded and warns about SmartScreen before it appears rather than
- *  after — the uninstaller is not code-signed yet, and an unexplained blue
- *  warning box is how a download gets abandoned. Opening the page is still
- *  there for anyone who wants to look first. */
-const UNINSTALLER_PAGE_URL = "https://github.com/AurelioAvila/pc-tweaker-uninstaller";
+ *  after: a new signed publisher can still trigger it, and an unexplained
+ *  blue warning box is how a download gets abandoned. "Learn more" opens the
+ *  product page, tagged so the site can tell visits from the app apart. */
+const UNINSTALLER_PAGE_URL =
+  "https://pctweaker.app/uninstaller/?utm_source=pc-tweaker&utm_medium=app&utm_campaign=uninstaller-card";
 /** Version-less on purpose: GitHub resolves `releases/latest/download/<name>`
  *  only for an exact filename, so this points at the stable-named copy the
  *  uninstaller's release script publishes alongside the versioned one. A

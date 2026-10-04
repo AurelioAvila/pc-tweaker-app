@@ -66,8 +66,8 @@ $token = (Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com
     }).access_token
 $headers = @{ Authorization = "Bearer $token" }
 function Invoke-Store($Method, $Path, $Body) {
-    $params = @{ Method = $Method; Uri = "$api/$AppId$Path"; Headers = $headers }
-    if ($null -ne $Body) { $params.Body = ($Body | ConvertTo-Json -Depth 50); $params.ContentType = 'application/json' }
+    $params = @{ Method = $Method; Uri = "$api/$AppId$Path"; Headers = $headers; ContentType = 'application/json' }
+    if ($null -ne $Body) { $params.Body = ($Body | ConvertTo-Json -Depth 50) }
     Invoke-RestMethod @params
 }
 
@@ -77,6 +77,8 @@ if ($Status) {
         lastPublished = $app.lastPublishedApplicationSubmission
         pending       = $app.PSObject.Properties['pendingApplicationSubmission']?.Value
     } | ConvertTo-Json -Depth 5
+    $open = $app.PSObject.Properties['pendingApplicationSubmission']?.Value
+    if ($open) { Invoke-Store Get "/submissions/$($open.id)/status" | ConvertTo-Json -Depth 10 }
     return
 }
 
@@ -132,10 +134,10 @@ Invoke-Store Post "/submissions/$($submission.id)/commit" | Out-Null
 
 do {
     Start-Sleep -Seconds 30
-    $status = Invoke-Store Get "/submissions/$($submission.id)/status"
-    Write-Host "Submission $($submission.id): $($status.status)"
-} while ($status.status -eq 'CommitStarted')
-if ($status.status -like '*Failed') {
-    throw "Submission $($submission.id) failed: $($status.statusDetails | ConvertTo-Json -Depth 10 -Compress)"
+    $state = Invoke-Store Get "/submissions/$($submission.id)/status"
+    Write-Host "Submission $($submission.id): $($state.status)"
+} while ($state.status -eq 'CommitStarted')
+if ($state.status -like '*Failed') {
+    throw "Submission $($submission.id) failed: $($state.statusDetails | ConvertTo-Json -Depth 10 -Compress)"
 }
 Write-Host "Submitted $msixName (SHA256 $msixHash). Microsoft now certifies and publishes it; the listing updates when that finishes."

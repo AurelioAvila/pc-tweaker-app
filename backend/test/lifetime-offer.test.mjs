@@ -85,12 +85,13 @@ test("one absolute 48-hour window has exact inclusive start and exclusive end", 
     [START - 1, "scheduled", false],
     [START, "active", true],
     [END - 1, "active", true],
-    [END, "expired", false],
-    [END + 365 * 86_400_000, "expired", false],
+    [END, "disabled", true],
+    [END + 365 * 86_400_000, "disabled", true],
   ]) {
     const offer = lifetimeOffer(campaignEnvironment, now);
     assert.equal(offer.status, status);
     assert.equal(offer.available, available);
+    if (status === "disabled") { assert.equal(offer.endsAt, null); continue; }
     assert.equal(Date.parse(offer.endsAt) - Date.parse(offer.startsAt), 48 * 60 * 60 * 1000);
     assert.equal(offer.serverTime, new Date(now).toISOString());
   }
@@ -148,14 +149,14 @@ test("campaign checkout expiry stays within Stripe limits and a bounded deadline
   }
 });
 
-test("the public expired endpoint returns a stable closed offer and no-store", () => {
+test("after the campaign the public endpoint returns normal Lifetime without a countdown", () => {
   const res = response();
   lifetimeOfferHandler(campaignEnvironment, () => END)({}, res);
   assert.equal(res.statusCode, 200);
   assert.equal(res.headers["cache-control"], "no-store");
-  assert.equal(res.body.status, "expired");
-  assert.equal(res.body.available, false);
-  assert.equal(res.body.endsAt, campaignEnvironment.LIFETIME_CAMPAIGN_ENDS_AT);
+  assert.equal(res.body.status, "disabled");
+  assert.equal(res.body.available, true);
+  assert.equal(res.body.endsAt, null);
 });
 
 test("the public invalid endpoint returns 503 and no-store instead of an invented deadline", () => {
@@ -184,10 +185,18 @@ test("the actual checkout handler enforces server campaign metadata and Stripe e
   assert.ok(params.expires_at <= END / 1000 + LIFETIME_CHECKOUT_GRACE_SECONDS);
 });
 
-test("scheduled, expired, and invalid campaigns cannot create Lifetime checkouts", async () => {
+test("after the campaign Lifetime checkout continues at the normal price without campaign metadata", async () => {
+  const { res, calls } = await startCheckout({ now: END, body: { plan: "lifetime" } });
+  assert.equal(res.statusCode, 200);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].line_items[0].price, checkoutEnvironment.STRIPE_PRICE_LIFETIME);
+  assert.equal(calls[0].expires_at, undefined);
+  assert.equal(calls[0].metadata?.lifetime_campaign_id, undefined);
+});
+
+test("scheduled and invalid campaigns cannot create Lifetime checkouts", async () => {
   for (const [environment, now, status, code] of [
     [campaignEnvironment, START - 1, 409, "LIFETIME_OFFER_NOT_STARTED"],
-    [campaignEnvironment, END, 409, "LIFETIME_OFFER_ENDED"],
     [{ ...campaignEnvironment, LIFETIME_CAMPAIGN_ENDS_AT: "invalid" }, START, 503, "LIFETIME_OFFER_UNAVAILABLE"],
   ]) {
     const { res, calls } = await startCheckout({ environment, now });
@@ -218,7 +227,7 @@ test("an active Lifetime owner cannot repurchase during or outside a campaign", 
   }
 });
 
-test("an expired Lifetime campaign does not block monthly or annual checkout", async () => {
+test("a finished Lifetime campaign does not block monthly or annual checkout", async () => {
   for (const plan of ["monthly", "annual"]) {
     const { res, calls } = await startCheckout({ now: END, body: { plan } });
     assert.equal(res.statusCode, 200);
@@ -232,7 +241,7 @@ test("a paid pre-deadline session is honored even when settlement arrives after 
   const userId = await user();
   const { calls } = await startCheckout({ userId, now: END - 1000 });
   const params = calls[0];
-  assert.equal(lifetimeOffer(campaignEnvironment, END + 3600_000).status, "expired");
+  assert.equal(lifetimeOffer(campaignEnvironment, END + 3600_000).status, "disabled");
   await handleEvent({
     id: "evt_paid_after_campaign_fixture",
     type: "checkout.session.async_payment_succeeded",

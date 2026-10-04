@@ -5,6 +5,9 @@ import { getPool, isConfigured } from "./db";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const TOKEN_TTL = "30d";
+// Sliding session: once a token is a day old, any authenticated call returns
+// a fresh one, so someone who opens the app at least monthly stays signed in.
+const RENEW_AFTER_SECONDS = 24 * 60 * 60;
 
 function hashPassword(password: string): Promise<string> {
   if (!isValidPassword(password)) {
@@ -26,6 +29,15 @@ function signToken(userId: number, tokenVersion: number): string {
     throw new Error("JWT_SECRET is not configured on the server");
   }
   return jwt.sign({ sub: userId, tv: tokenVersion }, JWT_SECRET, { expiresIn: TOKEN_TTL });
+}
+
+/** A replacement token when `payload` is old enough to renew, otherwise null.
+ * The old token stays valid until it expires; bumping `token_version`
+ * ("log out everywhere", password reset) still revokes both. */
+function renewedToken(payload: jwt.JwtPayload, nowSeconds = Date.now() / 1000): string | null {
+  if (typeof payload.iat !== "number" || typeof payload.tv !== "number") return null;
+  if (nowSeconds - payload.iat < RENEW_AFTER_SECONDS) return null;
+  return signToken(payload.sub as unknown as number, payload.tv);
 }
 
 /** Express middleware: requires a valid, non-revoked `Authorization: Bearer <token>` header. */
@@ -78,6 +90,8 @@ async function requireAuth(req: Request, res: Response, next: NextFunction): Pro
   // never stringified, so this reflects what is actually on the wire, not a
   // real type mismatch.
   req.userId = payload.sub as unknown as number;
+  const renewed = renewedToken(payload);
+  if (renewed) res.setHeader("X-Session-Token", renewed);
   next();
 }
 
@@ -94,4 +108,4 @@ function isValidPassword(password: unknown): password is string {
   return typeof password === "string" && password.length >= 8 && Buffer.byteLength(password, "utf8") <= 72;
 }
 
-export { hashPassword, verifyPassword, signToken, requireAuth, isValidEmail, isValidPassword };
+export { hashPassword, verifyPassword, signToken, requireAuth, isValidEmail, isValidPassword, renewedToken };

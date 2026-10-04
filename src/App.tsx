@@ -17,6 +17,7 @@ import {
   formatBytes,
   readStoredEmail,
   readToken,
+  adoptRenewedToken,
   storeSession,
   storedRamAutoMinutes,
   textFor,
@@ -158,6 +159,7 @@ function App() {
         pushToast("error", s.toasts.accountRefreshFailed);
         return;
       }
+      adoptRenewedToken(res);
       const data = (await res.json()) as {
         email: string;
         isPro: boolean;

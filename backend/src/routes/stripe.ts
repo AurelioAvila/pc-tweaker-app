@@ -36,6 +36,17 @@ const checkoutLimiter = rateLimit({
   keyGenerator: (req: Request) => (req.userId ? `user:${req.userId}` : `ip:${req.ip}`),
 });
 
+// /tip needs no account and req.ip can be spoofed behind the proxy, so a
+// per-IP limit alone does not stop someone minting Checkout pages to test
+// stolen cards. Real tips are rare: one shared bucket caps the total.
+const tipLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: () => "tip",
+});
+
 /** How long checkout alone buys, until the subscription event confirms the
  * real billing period. Generous enough to absorb a slow or retried webhook,
  * short enough that a permanently missing one costs days, not a lifetime. */
@@ -216,7 +227,7 @@ router.post("/checkout", requireAuth, checkoutLimiter, requireStripe, createChec
 // entitlement, nothing granted on the webhook side — someone paying €1 to
 // say thanks shouldn't need an account first, and there is nothing for that
 // payment to unlock.
-router.post("/tip", checkoutLimiter, requireStripe, async (req: Request, res: Response) => {
+router.post("/tip", checkoutLimiter, tipLimiter, requireStripe, async (req: Request, res: Response) => {
   const priceId = process.env.STRIPE_PRICE_COFFEE;
   if (!priceId) {
     return res.status(503).json({ error: "STRIPE_PRICE_COFFEE is not configured" });
@@ -656,6 +667,9 @@ async function resolveUserId(subscription: Stripe.Subscription): Promise<string 
  * handler and SQL without contacting Stripe or an email provider. */
 type BillingEffects = {
   loadCheckout: (id: string) => Promise<Stripe.Checkout.Session>;
+  /** The Checkout Session that took a payment, with its line items, if any. */
+  loadCheckoutForPayment: (paymentIntentId: string) => Promise<Stripe.Checkout.Session | null>;
+  alertReversal: (userId: string, reason: string, paymentIntentId: string) => void;
   loadSubscription: (id: string) => Promise<Stripe.Subscription>;
   stopSubscriptions: (userId: string, customerId: string | null) => Promise<void>;
   welcome: typeof sendProWelcomeEmail;
@@ -666,6 +680,27 @@ const billingEffects: BillingEffects = {
   async loadCheckout(id) {
     if (!stripe) throw new Error("Stripe is unavailable for checkout verification");
     return stripe.checkout.sessions.retrieve(id, { expand: ["line_items"] });
+  },
+  async loadCheckoutForPayment(paymentIntentId) {
+    if (!stripe) throw new Error("Stripe is unavailable for payment verification");
+    const { data } = await stripe.checkout.sessions.list({
+      payment_intent: paymentIntentId,
+      limit: 1,
+      expand: ["data.line_items"],
+    });
+    return data[0] ?? null;
+  },
+  alertReversal(userId, reason, paymentIntentId) {
+    void (async () => {
+      const { rows } = await getPool().query("SELECT email FROM users WHERE id = $1", [userId]);
+      await sendMail({
+        to: SUPPORT_INBOX,
+        subject: "Lifetime Pro revoked after a refund or dispute",
+        html: `<p>Lifetime Pro was removed from <strong>${escapeHtml(rows[0]?.email ?? "(unknown address)")}</strong>
+                 because of <strong>${escapeHtml(reason)}</strong> on payment ${escapeHtml(paymentIntentId)}.</p>
+               <p>If a dispute is later won, restore the plan by hand.</p>`,
+      });
+    })().catch((err: Error) => console.error("refund alert not sent:", err.message));
   },
   async loadSubscription(id) {
     if (!stripe) throw new Error("Stripe is unavailable for subscription verification");
@@ -848,6 +883,31 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
 
     // The one that actually matters for revenue integrity: without it, a user
     // who cancels (or whose card ultimately fails) would keep Pro forever.
+    case "charge.refunded":
+    case "charge.dispute.created": {
+      // Only a full refund or a dispute of the Lifetime payment itself revokes
+      // Lifetime; tips, partial refunds and subscription invoices do not.
+      const object = event.data.object as Stripe.Charge | Stripe.Dispute;
+      if (event.type === "charge.refunded" && !(object as Stripe.Charge).refunded) break;
+      const intent = object.payment_intent;
+      const paymentIntentId = typeof intent === "string" ? intent : intent?.id;
+      if (!paymentIntentId) break;
+      const session = await effects.loadCheckoutForPayment(paymentIntentId);
+      if (session?.mode !== "payment") break;
+      const lifetimePrices = [process.env.STRIPE_PRICE_LIFETIME, process.env.STRIPE_PRICE_ID].filter(Boolean);
+      const priceIds = session.line_items?.data?.flatMap((item) => item.price ? [item.price.id] : []) ?? [];
+      if (!priceIds.some((id) => lifetimePrices.includes(id))) break;
+      const userId = session.client_reference_id || session.metadata?.userId;
+      if (!userId) break;
+      const { rowCount } = await getPool().query(
+        `UPDATE users SET is_pro = FALSE, plan = NULL, pro_expires_at = NULL
+          WHERE id = $1 AND plan = 'lifetime'`,
+        [userId],
+      );
+      if (rowCount) effects.alertReversal(userId, event.type, paymentIntentId);
+      break;
+    }
+
     case "customer.subscription.deleted": {
       const subscription = event.data.object as Stripe.Subscription;
       const product = subscriptionProduct(subscription);

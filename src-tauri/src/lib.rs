@@ -832,6 +832,20 @@ fn rollback_tweak(_app: tauri::AppHandle, _id: String) -> Result<(), String> {
     Err("tweaks are currently only supported on Windows".to_string())
 }
 
+/// True when the app runs from its Microsoft Store package. Store installs are
+/// updated by the Store, so the GitHub updater must not offer a second copy.
+#[tauri::command]
+fn is_store_install() -> bool {
+    #[cfg(windows)]
+    {
+        windows::ApplicationModel::Package::Current().is_ok()
+    }
+    #[cfg(not(windows))]
+    {
+        false
+    }
+}
+
 #[tauri::command]
 fn list_cleanup_targets() -> Vec<cleanup::CleanupInfo> {
     cleanup::cleanup_targets()
@@ -1735,7 +1749,8 @@ pub fn run() {
             diagnostics::network_verify::last_network_verification,
             diagnostics::dpc::trace_dpc_latency,
             engine::dynamic_session::core_steering_status,
-            game_sessions::set_core_steering
+            game_sessions::set_core_steering,
+            is_store_install
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

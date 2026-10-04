@@ -124,4 +124,5 @@ pub const APP_COMMANDS: &[&str] = &[
     "trace_dpc_latency",
     "core_steering_status",
     "set_core_steering",
+    "is_store_install",
 ];

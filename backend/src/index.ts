@@ -80,7 +80,7 @@ const firstPartyOrigins = [
 // API by omission.
 const extraOrigins = (process.env.CORS_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
 const allowedOrigins = [...new Set([...firstPartyOrigins, ...extraOrigins])];
-app.use(cors({ origin: allowedOrigins }));
+app.use(cors({ origin: allowedOrigins, exposedHeaders: ["X-Session-Token"] }));
 
 // Stripe needs the raw, unparsed body to verify the webhook signature, so
 // this route is registered before the global express.json() middleware.

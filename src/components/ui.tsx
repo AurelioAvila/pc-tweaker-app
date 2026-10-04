@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import { check as checkForUpdate, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { format, Lang, Strings } from "../i18n";
@@ -344,7 +345,8 @@ export function Avatar({
 }
 
 /**
- * Checks GitHub at startup and after reopening from the tray for a newer signed build and, when one
+ * Checks GitHub (outside the Microsoft Store build, which the Store updates)
+ * at startup and after reopening from the tray for a newer signed build and, when one
  * exists, offers it in a small card next to the toasts. A failed check
  * surfaces as the same brief, auto-dismissing toast used for every other
  * background error — never a blocking popup — so a broken updater is
@@ -376,7 +378,9 @@ export function UpdateBanner({
       reopenOffer ||= reopened;
       if (checking) return;
       checking = true;
-      void checkForUpdate()
+      void invoke<boolean>("is_store_install")
+        .catch(() => false)
+        .then((store) => (store ? null : checkForUpdate()))
         .then((u) => {
           if (alive && u) {
             setUpdate(u);

@@ -125,4 +125,5 @@ permissions = [
     "allow-trace-dpc-latency",
     "allow-core-steering-status",
     "allow-set-core-steering",
+    "allow-is-store-install",
 ]

@@ -1,5 +1,6 @@
 import { PRACTICAL_GUIDES } from "./pages/practical-guides";
 import { text } from "./i18n/dictionary";
+import { UNINSTALLER_DOWNLOAD_EXE } from "./constants";
 
 export interface RouteSeo {
   readonly title: string;
@@ -128,8 +129,32 @@ const faqPage = (
   })),
 });
 
+// The Uninstaller is its own product with its own prices, so its page carries
+// its own SoftwareApplication rather than borrowing PC Tweaker's from the
+// homepage. The offers mirror the plan cards on that page; check-seo.mjs pins
+// them so a price change on the page cannot leave the markup behind.
+const uninstallerApp = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "@id": `${ORIGIN}/uninstaller/#software`,
+  name: "PC Tweaker Uninstaller",
+  operatingSystem: "Windows 10, Windows 11",
+  applicationCategory: "UtilitiesApplication",
+  downloadUrl: UNINSTALLER_DOWNLOAD_EXE,
+  url: `${ORIGIN}/uninstaller/`,
+  description:
+    "Windows uninstaller that shows each removal's risk score, command and permissions before it runs, then keeps a local receipt of what was removed.",
+  author: { "@type": "Person", name: "Aurelio Avila" },
+  publisher: { "@id": `${ORIGIN}/#organization` },
+  offers: [
+    { "@type": "Offer", price: "0", priceCurrency: "EUR", name: "Free", description: "Single uninstalls, risk review and the local removal ledger" },
+    { "@type": "Offer", price: "9.99", priceCurrency: "EUR", name: "Uninstaller Pro annual", description: "Pro subscription billed yearly" },
+  ],
+};
+
 export const ROUTE_JSONLD: Record<string, readonly object[]> = {
   "/": [faqPage(`${ORIGIN}/#faq`, `${ORIGIN}/`, text.faq.items)],
+  "/uninstaller": [uninstallerApp],
   "/support": [
     faqPage(`${ORIGIN}/support/#faq`, `${ORIGIN}/support/`, text.support.selfServe),
   ],

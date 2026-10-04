@@ -99,6 +99,17 @@ assert.deepEqual(
   ["0", "59.99", "7.99", "99"].sort(),
   "SoftwareApplication offers must match the published pricing",
 );
+const uninstallerApp = [...uninstaller.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)]
+  .map((match) => JSON.parse(match[1]))
+  .find((item) => item["@type"] === "SoftwareApplication");
+assert.ok(uninstallerApp, "Uninstaller page must carry its own SoftwareApplication");
+assert.equal(uninstallerApp.name, "PC Tweaker Uninstaller");
+assert.deepEqual(
+  uninstallerApp.offers.map((offer) => offer.price).sort(),
+  ["0", "9.99"],
+  "Uninstaller offers must match the plan cards on /uninstaller/",
+);
+assert.ok(uninstaller.includes("€9.99 per year"), "Uninstaller Pro price on the page changed; update its offers");
 assert.ok(!home.includes("Free plan — 35 tweaks"), "Stale Free plan count");
 assert.ok(home.includes("/uninstaller/"), "Uninstaller must have an internal link");
 assert.ok(home.match(/<script type="application\/ld\+json">[\s\S]*?FAQPage/), "Homepage FAQ must be marked up");

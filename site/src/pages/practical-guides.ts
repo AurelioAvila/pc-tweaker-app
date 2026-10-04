@@ -2,9 +2,12 @@ export const PRACTICAL_GUIDES = {
   "/how-to-undo-windows-tweaks": {
     eyebrow: "RECOVERY GUIDE",
     title: "How to undo Windows tweaks",
-    seoTitle: "How to Undo Windows Tweaks Safely",
+    // Search Console: 85 impressions at position 8.7 and no clicks. The searches
+    // around it ("how to remove tweaks from pc", "undo selected tweaks") are
+    // people with a problem after a change, so the snippet now starts there.
+    seoTitle: "How to Undo Windows Tweaks and Restore Settings",
     seoDescription:
-      "Undo a Windows tweak properly: identify the change, restore the value that was recorded rather than a generic default, then retest what behaved oddly.",
+      "Changed a Windows setting and something broke? Find the tweak, restore the value it replaced rather than a generic default, then check the problem is gone.",
     intro: "Start with the setting you changed and the value it had before. A generic Windows default is not necessarily your previous configuration.",
     sections: [
       { heading: "1. Identify the change", body: "Open the category where you applied the tweak, or review Change history. Note the tweak name and when you applied it. If the issue began after several changes, investigate them individually instead of adding another preset." },

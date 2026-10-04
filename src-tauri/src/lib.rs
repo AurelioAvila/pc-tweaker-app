@@ -975,7 +975,12 @@ fn run_cleanup(_app: tauri::AppHandle, _id: String) -> Result<CleanupResult, Str
 }
 
 #[tauri::command(async)]
-fn scan_duplicates(root: String) -> Result<Vec<cleanup::DuplicateGroup>, String> {
+fn scan_duplicates(
+    app: tauri::AppHandle,
+    root: String,
+) -> Result<Vec<cleanup::DuplicateGroup>, String> {
+    // Pro in the UI; the native check is the boundary that holds.
+    require_pro(&store_for_dir(&app)?)?;
     cleanup::scan_duplicates(&root)
 }
 
@@ -998,7 +1003,12 @@ fn delete_files(paths: Vec<String>) -> CleanupResult {
 }
 
 #[tauri::command(async)]
-fn scan_large_files(root: String, min_bytes: u64) -> Result<Vec<cleanup::LargeFile>, String> {
+fn scan_large_files(
+    app: tauri::AppHandle,
+    root: String,
+    min_bytes: u64,
+) -> Result<Vec<cleanup::LargeFile>, String> {
+    require_pro(&store_for_dir(&app)?)?;
     cleanup::scan_large_files(&root, min_bytes)
 }
 

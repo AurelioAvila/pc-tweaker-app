@@ -19,9 +19,15 @@ pwsh scripts/store/Publish-MicrosoftStore.ps1 -Version 1.15.8
 [CmdletBinding(DefaultParameterSetName = 'Publish')]
 param(
     [Parameter(ParameterSetName = 'Credential', Mandatory)][switch]$SaveCredential,
+    [Parameter(ParameterSetName = 'Credential')][string]$TenantId,
+    [Parameter(ParameterSetName = 'Credential')][string]$ClientId,
+    # Read the client secret from the clipboard instead of prompting, then clear the clipboard.
+    [Parameter(ParameterSetName = 'Credential')][switch]$SecretFromClipboard,
+    # Only report the app's current submission state.
+    [Parameter(ParameterSetName = 'Status', Mandatory)][switch]$Status,
     [Parameter(ParameterSetName = 'Publish', Mandatory)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version,
     [Parameter(ParameterSetName = 'Publish')][string]$Exe = "$PSScriptRoot/../../src-tauri/target/release/tauri-app.shipped.exe",
-    [Parameter(ParameterSetName = 'Publish')][string]$AppId = '9NH3C6DT1G87',
+    [Parameter(ParameterSetName = 'Publish')][Parameter(ParameterSetName = 'Status')][string]$AppId = '9NH3C6DT1G87',
     [Parameter(ParameterSetName = 'Publish')][string]$ReleaseNotes,
     # A draft left open in Partner Center blocks new submissions; this deletes it first.
     [Parameter(ParameterSetName = 'Publish')][switch]$ReplacePending,
@@ -35,13 +41,42 @@ $credentialPath = Join-Path $env:APPDATA 'PCTweaker-Store/msstore.json'
 $api = 'https://manage.devcenter.microsoft.com/v1.0/my/applications'
 
 if ($SaveCredential) {
-    $tenant = Read-Host 'Tenant ID'
-    $client = Read-Host 'Client ID'
-    $secret = Read-Host 'Client secret' -AsSecureString
+    $tenant = if ($TenantId) { $TenantId } else { Read-Host 'Tenant ID' }
+    $client = if ($ClientId) { $ClientId } else { Read-Host 'Client ID' }
+    if ($SecretFromClipboard) {
+        $clip = (Get-Clipboard -Raw).Trim()
+        if (-not $clip -or $clip -match '^[0-9a-f-]{36}$') { throw 'The clipboard does not hold a client secret value (a key ID is a GUID).' }
+        $secret = ConvertTo-SecureString $clip -AsPlainText -Force
+        Set-Clipboard -Value $null
+    } else { $secret = Read-Host 'Client secret' -AsSecureString }
     New-Item -ItemType Directory -Force (Split-Path $credentialPath) | Out-Null
     [ordered]@{ tenantId = $tenant.Trim(); clientId = $client.Trim(); clientSecret = ConvertFrom-SecureString $secret } |
         ConvertTo-Json | Set-Content -LiteralPath $credentialPath -Encoding utf8
     Write-Host "Saved to $credentialPath (secret protected with DPAPI)."
+    return
+}
+
+# 3. Authenticate as the Partner Center Entra application.
+if (-not (Test-Path -LiteralPath $credentialPath)) { throw 'No Store credential. Run with -SaveCredential first.' }
+$cred = Get-Content -LiteralPath $credentialPath -Raw | ConvertFrom-Json
+$secret = [Net.NetworkCredential]::new('', (ConvertTo-SecureString $cred.clientSecret)).Password
+$token = (Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$($cred.tenantId)/oauth2/token" -Body @{
+        grant_type = 'client_credentials'; client_id = $cred.clientId; client_secret = $secret
+        resource = 'https://manage.devcenter.microsoft.com'
+    }).access_token
+$headers = @{ Authorization = "Bearer $token" }
+function Invoke-Store($Method, $Path, $Body) {
+    $params = @{ Method = $Method; Uri = "$api/$AppId$Path"; Headers = $headers }
+    if ($null -ne $Body) { $params.Body = ($Body | ConvertTo-Json -Depth 50); $params.ContentType = 'application/json' }
+    Invoke-RestMethod @params
+}
+
+if ($Status) {
+    $app = Invoke-Store Get ''
+    [ordered]@{
+        lastPublished = $app.lastPublishedApplicationSubmission
+        pending       = $app.PSObject.Properties['pendingApplicationSubmission']?.Value
+    } | ConvertTo-Json -Depth 5
     return
 }
 
@@ -71,21 +106,6 @@ if ($LASTEXITCODE) { throw "MakeAppx failed with exit code $LASTEXITCODE." }
 $msixHash = (Get-FileHash -LiteralPath $msix -Algorithm SHA256).Hash
 Write-Host "MSIX $msixName  SHA256 $msixHash"
 if ($DryRun) { Write-Host "Dry run: nothing sent. Package at $msix"; return }
-
-# 3. Authenticate as the Partner Center Entra application.
-if (-not (Test-Path -LiteralPath $credentialPath)) { throw 'No Store credential. Run with -SaveCredential first.' }
-$cred = Get-Content -LiteralPath $credentialPath -Raw | ConvertFrom-Json
-$secret = [Net.NetworkCredential]::new('', (ConvertTo-SecureString $cred.clientSecret)).Password
-$token = (Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$($cred.tenantId)/oauth2/token" -Body @{
-        grant_type = 'client_credentials'; client_id = $cred.clientId; client_secret = $secret
-        resource = 'https://manage.devcenter.microsoft.com'
-    }).access_token
-$headers = @{ Authorization = "Bearer $token" }
-function Invoke-Store($Method, $Path, $Body) {
-    $params = @{ Method = $Method; Uri = "$api/$AppId$Path"; Headers = $headers }
-    if ($null -ne $Body) { $params.Body = ($Body | ConvertTo-Json -Depth 50); $params.ContentType = 'application/json' }
-    Invoke-RestMethod @params
-}
 
 # 4. Only one submission can be open at a time.
 $app = Invoke-Store Get ''

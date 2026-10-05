@@ -58,12 +58,14 @@ interface AccentSpec {
 
 export const ACCENTS: Record<AccentTheme, AccentSpec> = {
   amber: {
-    hex: "#ff5500",
-    glow: "rgba(255,85,0,0.35)",
-    soft: "rgba(255,85,0,0.08)",
-    label: "AMBER",
-    bg: "#050506",
-    bg2: "#0a0a0c",
+    // The app's default (Graphite Ember) uses the same accent on a grey
+    // ramp; the site keeps its darker ground but shares the colour.
+    hex: "#ff6a3d",
+    glow: "rgba(255,106,61,0.35)",
+    soft: "rgba(255,106,61,0.08)",
+    label: "EMBER",
+    bg: "#0a0a0d",
+    bg2: "#121217",
     fg: "#f3f4f6",
     fgDim: "#9ca3af",
     line: "#2a2d33",

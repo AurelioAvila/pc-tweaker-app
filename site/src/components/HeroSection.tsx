@@ -100,7 +100,9 @@ export function HeroSection() {
       <motion.div
         className="mx-auto max-w-7xl"
         variants={staggerParent}
-        initial="hidden"
+        // Rendered visible from the first byte: the prerendered hero is the LCP element, and an
+        // opacity:0 entrance kept it blank until the JS bundle had loaded (~3.6 s FCP on mobile).
+        initial={false}
         animate="show"
       >
         <motion.div

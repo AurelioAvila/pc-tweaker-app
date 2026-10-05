@@ -8,7 +8,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
 import { getPool, initSchema, isConfigured } from "./db";
-import { isConfigured as mailIsConfigured } from "./mailer";
+import { isConfigured as mailIsConfigured, sendMail } from "./mailer";
 import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
 import licenseRoutes from "./routes/license";
@@ -18,7 +18,8 @@ import errorReportRoutes from "./routes/error-reports";
 import newsletterRoutes from "./routes/newsletter";
 import supportRoutes from "./routes/support";
 import offerRoutes from "./routes/offers";
-import { router as stripeRoutes, webhookHandler, deliverProReceipt } from "./routes/stripe";
+import { router as stripeRoutes, webhookHandler, deliverProReceipt, listExpiredCheckouts } from "./routes/stripe";
+import { lifetimeReminderEmail, startCheckoutReminderWorker } from "./checkout-recovery";
 import { startReceiptWorker } from "./receipt-outbox";
 
 const app = express();
@@ -306,11 +307,13 @@ const port = process.env.PORT || 3000;
 const SHUTDOWN_GRACE_MS = 10_000;
 let shuttingDown = false;
 let stopReceiptWorker = () => {};
+let stopReminderWorker = () => {};
 
 function shutdown(signal: string, server: import("http").Server): void {
   if (shuttingDown) return; // a second SIGTERM must not restart the sequence
   shuttingDown = true;
   stopReceiptWorker();
+  stopReminderWorker();
   console.log(`${signal} received: refusing new connections, draining in-flight requests`);
 
   const forceExit = setTimeout(() => {
@@ -339,6 +342,11 @@ initSchema()
   })
   .finally(() => {
     if (isConfigured) stopReceiptWorker = startReceiptWorker(deliverProReceipt);
+    if (isConfigured && mailIsConfigured && process.env.STRIPE_SECRET_KEY) {
+      stopReminderWorker = startCheckoutReminderWorker(listExpiredCheckouts, async (to) => {
+        await sendMail(lifetimeReminderEmail(to));
+      });
+    }
     const server = app.listen(port, () => {
       console.log(
         `pc-tweaker-backend listening on :${port} (database ${isConfigured ? "configured" : "NOT configured"}, email ${mailIsConfigured ? "configured" : "NOT configured"})`,

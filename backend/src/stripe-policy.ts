@@ -212,8 +212,8 @@ export function tipSessionParams(priceId: string, appUrl: string, quantity: unkn
         adjustable_quantity: { enabled: true, minimum: 1, maximum: TIP_MAX_QUANTITY },
       },
     ],
-    success_url: `${appUrl}?tip=thanks`,
-    cancel_url: appUrl,
+    success_url: `${appUrl.replace(/\/$/, "")}/tip-thanks`,
+    cancel_url: `${appUrl.replace(/\/$/, "")}/checkout-cancel`,
     automatic_tax: { enabled: true },
     customer_creation: "always" as const,
   };

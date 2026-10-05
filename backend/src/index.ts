@@ -186,13 +186,14 @@ serveMarkdownAsHtml("/privacy", path.join(__dirname, "..", "legal", "PRIVACY.md"
  * granted by the Stripe webhook independently of this page, so a closed tab
  * here never blocks entitlement — this is purely the human-facing receipt.
  */
-function checkoutResultPage(kind: "success" | "cancel"): string {
-  const isSuccess = kind === "success";
+function checkoutResultPage(kind: "success" | "cancel" | "tip"): string {
+  const isSuccess = kind !== "cancel";
+  const isTip = kind === "tip";
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>${isSuccess ? "You're Pro" : "Checkout cancelled"} — PC Tweaker</title>
+<title>${isTip ? "Thank you" : isSuccess ? "You're Pro" : "Checkout cancelled"} — PC Tweaker</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <style>
@@ -211,9 +212,11 @@ function checkoutResultPage(kind: "success" | "cancel"): string {
 <body>
 <div class="card">
   <div class="badge">${isSuccess ? "&#10003;" : "&#10005;"}</div>
-  <h1>${isSuccess ? "Payment successful" : "Checkout cancelled"}</h1>
+  <h1>${isTip ? "Thank you for your support" : isSuccess ? "Payment successful" : "Checkout cancelled"}</h1>
   <p>${
-    isSuccess
+    isTip
+      ? "Your tip goes straight into new features and daily updates for PC Tweaker. Stripe will email your receipt."
+      : isSuccess
       ? "Your Pro tweaks and presets are unlocked. Switch back to PC Tweaker — the app picks up your new plan automatically the next time it checks your license."
       : "No charge was made. You can restart checkout from the app whenever you're ready."
   }</p>
@@ -228,6 +231,9 @@ app.get("/checkout-success", (_req: Request, res: Response) => {
 });
 app.get("/checkout-cancel", (_req: Request, res: Response) => {
   res.type("html").send(checkoutResultPage("cancel"));
+});
+app.get("/tip-thanks", (_req: Request, res: Response) => {
+  res.type("html").send(checkoutResultPage("tip"));
 });
 
 // TikTok Developer Portal domain/URL-prefix verification file (one-off,
@@ -253,6 +259,11 @@ app.use("/api/entitlements", entitlementsRoutes);
 app.use("/api/error-reports", errorReportRoutes);
 app.use("/api/offers", offerRoutes);
 app.use("/api", stripeRoutes);
+// Unknown routes answer in the same JSON shape as every other error, not
+// with Express's default HTML page.
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({ error: "Not found" });
+});
 
 app.use((err: Error, _req: Request, res: Response, _next: express.NextFunction) => {
   console.error("unhandled error:", err);

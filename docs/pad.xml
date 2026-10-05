@@ -34,7 +34,7 @@
   </Company_Info>
   <Program_Info>
     <Program_Name>PC Tweaker</Program_Name>
-    <Program_Version>1.15.8</Program_Version>
+    <Program_Version>1.15.9</Program_Version>
     <Program_Release_Month>10</Program_Release_Month>
     <Program_Release_Day>04</Program_Release_Day>
     <Program_Release_Year>2026</Program_Release_Year>
@@ -47,9 +47,9 @@
     <Program_OS_Support>WinOther</Program_OS_Support>
     <Program_Language>English</Program_Language>
     <File_Info>
-      <File_Size_Bytes>5863328</File_Size_Bytes>
-      <File_Size_K>5725.91</File_Size_K>
-      <File_Size_MB>5.59</File_Size_MB>
+      <File_Size_Bytes>5873464</File_Size_Bytes>
+      <File_Size_K>5735.80</File_Size_K>
+      <File_Size_MB>5.60</File_Size_MB>
     </File_Info>
     <Expire_Info>
       <Has_Expire_Info>N</Has_Expire_Info>
@@ -60,7 +60,7 @@
       <Expire_Day></Expire_Day>
       <Expire_Year></Expire_Year>
     </Expire_Info>
-    <Program_Change_Info>1.15.8 maintenance release. Read the official release notes for changes and limitations.</Program_Change_Info>
+    <Program_Change_Info>1.15.9 maintenance release. Read the official release notes for changes and limitations.</Program_Change_Info>
     <Program_Category_Class>System Utilities::System Maintenance</Program_Category_Class>
     <Program_Specific_Category></Program_Specific_Category>
     <Program_System_Requirements>Windows 10/11 x64; internet for accounts, updates and supported online features.</Program_System_Requirements>
@@ -84,7 +84,7 @@
       <Application_XML_File_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/pad.xml</Application_XML_File_URL>
     </Application_URLs>
     <Download_URLs>
-      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.15.8/pc-tweaker-app_1.15.8_x64-setup.exe</Primary_Download_URL>
+      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.15.9/pc-tweaker-app_1.15.9_x64-setup.exe</Primary_Download_URL>
       <Secondary_Download_URL></Secondary_Download_URL>
       <Additional_Download_URL_1></Additional_Download_URL_1>
       <Additional_Download_URL_2></Additional_Download_URL_2>

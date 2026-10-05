@@ -3,20 +3,20 @@
 /* ============================================================
    PC TWEAKER — DESIGN SYSTEM
    Cyber-Sleek / Haute-Couture Tech
-   bg #050506 · text #F3F4F6 / #9CA3AF · dynamic accent themes
+   bg #0a0a0d · text #F3F4F6 / #9CA3AF · dynamic accent themes
    ============================================================ */
 
 :root {
-  /* default theme: amber — industrial telemetry orange */
-  --accent: #ff5500;
-  --accent-glow: rgba(255, 85, 0, 0.35);
-  --accent-soft: rgba(255, 85, 0, 0.08);
+  /* default theme: ember — the app's accent on the site's darker ground */
+  --accent: #ff6a3d;
+  --accent-glow: rgba(255, 106, 61, 0.35);
+  --accent-soft: rgba(255, 106, 61, 0.08);
 
   /* Dominant surface + type ramp. Every component reads these instead of a
      literal hex, so a theme can repaint the whole page background without a
      single layout or spacing value changing. theme.tsx overwrites them. */
-  --bg: #050506; /* page */
-  --bg-2: #0a0a0c; /* raised card / panel */
+  --bg: #0a0a0d; /* page */
+  --bg-2: #121217; /* raised card / panel */
   --fg: #f3f4f6; /* primary text */
   --fg-dim: #9ca3af; /* supporting text */
   --line: #2a2d33; /* hairline */

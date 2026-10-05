@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "1.15.9"
+version = "1.16.0"
 description = "Real Windows tweaks with automatic one-click rollback"
 authors = ["Aurelio Avila"]
 license-file = "../LICENSE"
@@ -36,6 +36,7 @@ trash = "5"
 sysinfo = "0.32"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+tauri-plugin-single-instance = "2"
 ed25519-dalek = "2"
 base64 = "0.22"
 

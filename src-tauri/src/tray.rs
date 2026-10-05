@@ -11,7 +11,7 @@ pub struct BackgroundState {
     notified: AtomicBool,
 }
 
-fn show(app: &tauri::AppHandle) {
+pub fn show(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let was_hidden = !window.is_visible().unwrap_or(true);
         let _ = window.show();
@@ -95,6 +95,11 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
 pub fn window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
     if window.label() != "main" {
         return;
+    }
+    match event {
+        tauri::WindowEvent::Resized(s) => crate::window_state::remember(window, Some(*s), None),
+        tauri::WindowEvent::Moved(p) => crate::window_state::remember(window, None, Some(*p)),
+        _ => {}
     }
     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
         let app = window.app_handle();

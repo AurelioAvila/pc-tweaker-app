@@ -1219,9 +1219,15 @@ function App() {
                   )}
               </ul>
 
-              <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-relaxed text-ink-3">
-                {s.headerNote}
-              </p>
+              {/* Only where a change can be applied: on Scan, Overview, Profiles,
+              Hardware, Startup and Plans the same sentence was noise. */}
+              {(Object.prototype.hasOwnProperty.call(CATEGORY_STYLE, filter) ||
+                showCleanup ||
+                showHealth) && (
+                <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-relaxed text-ink-3">
+                  {s.headerNote}
+                </p>
+              )}
             </div>
           </div>
         </div>

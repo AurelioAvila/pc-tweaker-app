@@ -96,7 +96,7 @@ export function HeroSection() {
   };
 
   return (
-    <header className="overflow-hidden px-5 pt-36 pb-24 md:px-12">
+    <header className="overflow-hidden px-5 pt-28 pb-24 md:px-12">
       <motion.div
         className="mx-auto max-w-7xl"
         variants={staggerParent}
@@ -114,22 +114,18 @@ export function HeroSection() {
           <ThemeSelector />
         </motion.div>
 
-        <motion.h1
-          variants={riseChild}
-          className="font-display text-[clamp(3rem,8.5vw,7rem)] leading-[0.98] font-bold tracking-[-0.03em] text-[var(--fg)]"
-        >
-          {text.hero.title1}
-          <br />
-          {text.hero.title2}
-          <br />
-          <span className="text-accent">{text.hero.title3}</span>
-        </motion.h1>
-
-        {/* asymmetric lower row: deliberate void left, payload right */}
-        <div className="mt-14 grid gap-12 md:grid-cols-12">
-          <div className="hidden md:col-span-5 md:block" aria-hidden />
-          <motion.div variants={riseChild} className="md:col-span-7 lg:col-span-6">
-            <p className="max-w-md text-[16.5px] leading-relaxed text-[var(--fg-dim)]">
+        {/* Copy and download on the left, the real app on the right: a visitor
+            sees what they are downloading before deciding to. */}
+        <div className="grid gap-12 md:grid-cols-12 md:items-start">
+          <motion.div variants={riseChild} className="md:col-span-6">
+            <h1 className="font-display text-[clamp(2.6rem,5.2vw,4.6rem)] leading-[0.98] font-bold tracking-[-0.03em] text-[var(--fg)]">
+              {text.hero.title1}
+              <br />
+              {text.hero.title2}
+              <br />
+              <span className="text-accent">{text.hero.title3}</span>
+            </h1>
+            <p className="mt-8 max-w-md text-[16.5px] leading-relaxed text-[var(--fg-dim)]">
               <strong className="font-semibold text-[var(--fg)]">{text.hero.subBold}</strong>
               {text.hero.sub}
             </p>
@@ -170,7 +166,11 @@ export function HeroSection() {
               {text.hero.badges.map((b) => (
                 <a
                   key={b.label}
-                  href={b.href.startsWith("https://apps.microsoft.com/detail/9nh3c6dt1g87") ? storeLink : b.href}
+                  href={
+                    b.href.startsWith("https://apps.microsoft.com/detail/9nh3c6dt1g87")
+                      ? storeLink
+                      : b.href
+                  }
                   target="_blank"
                   rel="noopener"
                   className="font-mono-t flex items-center gap-2 text-[12.5px] text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)]"
@@ -181,6 +181,20 @@ export function HeroSection() {
               ))}
             </div>
           </motion.div>
+          <motion.figure variants={riseChild} className="md:col-span-6 md:mt-4">
+            <div className="ring-accent-soft overflow-hidden rounded-2xl border border-white/10 bg-[var(--bg-2)] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.75)]">
+              <img
+                src="/images/app-overview.webp"
+                width={1264}
+                height={800}
+                alt={text.hero.screenshotAlt}
+                className="block h-auto w-full"
+              />
+            </div>
+            <figcaption className="font-mono-t mt-3 text-[11.5px] text-[var(--fg-dim)]">
+              {text.hero.screenshotCaption}
+            </figcaption>
+          </motion.figure>
         </div>
       </motion.div>
     </header>

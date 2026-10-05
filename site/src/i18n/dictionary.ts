@@ -31,6 +31,8 @@ export interface Dictionary {
     readonly sub: string;
     readonly cta: string;
     readonly safetyNote: string;
+    readonly screenshotAlt: string;
+    readonly screenshotCaption: string;
     readonly terminalTitle: string;
     readonly terminalCmd: string;
     readonly terminalHint: string;
@@ -97,6 +99,14 @@ export interface Dictionary {
       readonly price: string;
       readonly per: string;
       readonly save: string;
+      readonly features: readonly string[];
+      readonly cta: string;
+    };
+    readonly lifetime: {
+      readonly plan: string;
+      readonly price: string;
+      readonly per: string;
+      readonly badge: string;
       readonly features: readonly string[];
       readonly cta: string;
     };
@@ -202,7 +212,7 @@ export const engDictionary: Dictionary = {
     "results": "Evidence",
     "arsenal": "Features",
     "protocol": "How it works",
-    "access": "Free & Pro",
+    "access": "Pricing",
     "faq": "FAQ",
     "download": "Download Free"
   },
@@ -215,6 +225,8 @@ export const engDictionary: Dictionary = {
     "sub": " Review Windows settings for gaming, privacy and everyday use. See what each tweak changes, save its previous state and restore supported settings when you need to. Start free. No account required.",
     "cta": "Download Free for Windows",
     "safetyNote": "PC Tweaker installers are code-signed. Our signed Windows installers identify Aurelio Avila as the publisher. Older downloads may be unsigned; check the file's Digital Signatures tab. SmartScreen may still show a warning for a new release.",
+    "screenshotAlt": "PC Tweaker Overview screen with processor and memory usage, the number of applied settings and a suggested next step.",
+    "screenshotCaption": "The Overview screen, as it appears in the app.",
     "terminalTitle": "Install with Windows Package Manager",
     "terminalCmd": "winget install --id AurelioAvila.PCTweaker --exact",
     "terminalHint": "# install the official PC Tweaker package",
@@ -380,7 +392,7 @@ export const engDictionary: Dictionary = {
         "title": "Make Windows feel familiar",
         "body": "Adjust file extensions, taskbar options, appearance and other supported interface settings. Choose your app language and theme while keeping the controls close at hand.",
         "pro": false,
-        "span": "wide"
+        "span": "std"
       }
     ]
   },
@@ -452,7 +464,7 @@ export const engDictionary: Dictionary = {
     ]
   },
   "pricing": {
-    "tag": "05 / FREE & PRO",
+    "tag": "05 / PLANS",
     "title": "Start with control. Upgrade for convenience.",
     "free": {
       "plan": "FREE",
@@ -482,6 +494,21 @@ export const engDictionary: Dictionary = {
         "Account-based Pro activation"
       ],
       "cta": "Download & Explore Pro"
+    },
+    "lifetime": {
+      "plan": "LIFETIME",
+      "price": "€99",
+      "per": "/ once · no renewal",
+      "badge": "MOST CHOSEN",
+      "features": [
+        "Everything in Pro, without a subscription",
+        "New features in early preview",
+        "Exclusive access to selected future tweaks",
+        "Priority support",
+        "12 months of Uninstaller Pro from your first sign-in",
+        "Compare saved profiles and export tuning reports"
+      ],
+      "cta": "Download & Get Lifetime"
     }
   },
   "faq": {

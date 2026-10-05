@@ -81,9 +81,29 @@ pub fn build(
         version: version.to_string(),
         process: process.to_string(),
         message: scrub(raw_message),
-        location: location.to_string(),
+        location: short_location(location),
         thread: thread.to_string(),
     }
+}
+
+/// Trims a dependency's compile-time path to the crate folder onwards.
+///
+/// Panics inside dependencies carry the *build* machine's cargo home
+/// (`C:\Users\<dev>\.cargo\registry\src\<index>\tauri-2.12.0\src\app.rs`),
+/// which [`scrub`] cannot catch because it is not the user's profile. The
+/// crate name and version identify the code just as well.
+pub fn short_location(location: &str) -> String {
+    let unified = location.replace('\\', "/");
+    for (marker, skip) in [("/registry/src/", 1), ("/git/checkouts/", 2)] {
+        if let Some(i) = unified.find(marker) {
+            let mut rest = &unified[i + marker.len()..];
+            for _ in 0..skip {
+                rest = rest.split_once('/').map_or(rest, |(_, r)| r);
+            }
+            return rest.to_string();
+        }
+    }
+    location.to_string()
 }
 
 /// Removes the two things that identify a person from free-form panic text.
@@ -231,7 +251,12 @@ pub fn list_in(dir: &Path) -> Vec<CrashReport> {
     };
     let mut reports: Vec<CrashReport> = text
         .lines()
-        .filter_map(|l| serde_json::from_str(l).ok())
+        .filter_map(|l| serde_json::from_str::<CrashReport>(l).ok())
+        // Reports written by earlier builds kept the full path.
+        .map(|mut r| {
+            r.location = short_location(&r.location);
+            r
+        })
         .collect();
     reports.reverse();
     reports
@@ -347,6 +372,15 @@ mod tests {
             Some("bob"),
         );
         assert_eq!(scrubbed, r"copy %USERPROFILE%\a to %USERPROFILE%\b");
+    }
+
+    #[test]
+    fn a_dependency_path_loses_the_build_machine_profile() {
+        let loc = r"C:\Users\dev\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-2.12.0\src\app.rs:1444";
+        assert_eq!(short_location(loc), "tauri-2.12.0/src/app.rs:1444");
+        let git = "/home/dev/.cargo/git/checkouts/tao-abc/1f2e3d4/src/lib.rs:7";
+        assert_eq!(short_location(git), "src/lib.rs:7");
+        assert_eq!(short_location("src/lib.rs:9"), "src/lib.rs:9");
     }
 
     #[test]

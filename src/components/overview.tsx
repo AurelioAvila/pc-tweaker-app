@@ -3,9 +3,10 @@ import { invoke } from "@tauri-apps/api/core";
 import type { Lang, Strings } from "../i18n";
 import type { AuditEntry, Section, TweakInfo } from "../types";
 import { textFor } from "../lib";
+import { CATEGORY_STYLE } from "../categories";
 import { CONFIGURABLE_TWEAK_IDS, isCurrentCatalogTweak } from "../catalog";
 import { type PulseSample, tracePoints } from "./command";
-import { ChipIcon, HeartPulseIcon, HistoryIcon, LayersIcon, RadarIcon } from "./icons";
+import { ChipIcon, HistoryIcon, LayersIcon, RadarIcon } from "./icons";
 import "./overview.css";
 
 interface OverviewCopy {
@@ -405,7 +406,7 @@ export function OverviewPanel({
               onClick={() => onNavigate("gaming")}
             >
               <span className="overview-row-icon" aria-hidden="true">
-                <HeartPulseIcon className="overview-icon" />
+                {CATEGORY_STYLE.gaming.icon}
               </span>
               <span className="overview-row-copy">
                 <strong>{copy.gamingTitle}</strong>

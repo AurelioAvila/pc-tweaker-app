@@ -78,18 +78,16 @@ export function WorkspaceSidebar({
           data-active={active === "pricing"}
           className="workspace-plan-link nav-item flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-left text-[13px] font-semibold text-ink"
         >
-          <GemIcon className="h-[18px] w-[18px] shrink-0 text-accent" />
-          <span>{s.tabs.pricing}</span>
+          {/* One entry for plans: a second "Upgrade to Pro" row led to the
+              same screen and pushed Startup and Maintenance out of view. */}
+          {isPro ? (
+            <CrownIcon className="h-[18px] w-[18px] shrink-0 text-accent" />
+          ) : (
+            <GemIcon className="h-[18px] w-[18px] shrink-0 text-accent" />
+          )}
+          <span>{isPro ? s.menu.planPro : s.tabs.pricing}</span>
         </button>
         <CoffeeCard s={s} onTip={(quantity) => void onTip(quantity)} />
-        <button
-          type="button"
-          onClick={() => onNavigate("pricing")}
-          className="workspace-pro-state flex w-full items-center gap-2 rounded-[8px] px-3 py-2 text-left text-[12px] font-semibold text-ink-2"
-        >
-          <CrownIcon className="h-4 w-4 shrink-0 text-accent" />
-          <span>{isPro ? s.menu.planPro : s.menu.upgradeButton}</span>
-        </button>
       </div>
     </aside>
   );

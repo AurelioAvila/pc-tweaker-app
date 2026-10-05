@@ -40,7 +40,7 @@ export function BespokeArsenal() {
           {text.arsenal.title}
         </motion.h2>
 
-        <div className="mt-14 grid gap-4 md:grid-cols-6">
+        <div className="mt-14 grid gap-4 md:grid-flow-dense md:grid-cols-6">
           {text.arsenal.cards.map((c) => (
             <motion.div
               key={c.tag}

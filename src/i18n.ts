@@ -1068,7 +1068,7 @@ const it: Strings = {
     ledger: "Cronologia modifiche",
   },
   healthPanel: {
-    title: "Salute del PC",
+    title: "Punteggio di salute",
     subtitle: "Un punteggio spiegabile: ogni numero mostra i fatti da cui è calcolato.",
     why: "Perché {score}?",
     refresh: "Ricalcola",
@@ -1555,8 +1555,8 @@ const it: Strings = {
     title: "Turbo Boost",
     subtitle:
       "Modifica la modalità boost della CPU e lo stato minimo del processore. Consumi e calore possono aumentare; i risultati dipendono dal carico di lavoro.",
-    startLabel: "START",
-    stopLabel: "STOP",
+    startLabel: "Avvia",
+    stopLabel: "Ferma",
     activating: "Attivazione turbo in corso...",
     deactivating: "Ripristino in corso...",
     active: "Turbo attivo",
@@ -2124,82 +2124,82 @@ const it: Strings = {
     disable_startup_delay: {
       name: "Rimuovi il ritardo dei programmi all'avvio",
       description:
-        "Windows aspetta di proposito circa 10 secondi dopo l'accesso prima di lanciare i programmi all'avvio. Questa opzione elimina quell'attesa (HKCU, nessuna elevazione richiesta).",
+        "Windows aspetta di proposito circa 10 secondi dopo l'accesso prima di lanciare i programmi all'avvio. Questa opzione elimina quell'attesa.",
     },
     menu_show_delay: {
       name: "Risposta immediata dei menu",
       description:
-        "Elimina il ritardo con cui si aprono i menu: tutto il desktop risulta subito più reattivo (HKCU, nessuna elevazione richiesta).",
+        "Elimina il ritardo con cui si aprono i menu: tutto il desktop risulta subito più reattivo.",
     },
     disable_power_throttling: {
       name: "Disattiva il risparmio energetico della CPU",
       description:
-        "Impedisce a Windows di rallentare i processi in background per risparmiare energia: utile sui portatili, dove questo causa scatti durante le sessioni lunghe (HKLM, richiede privilegi di amministratore).",
+        "Impedisce a Windows di rallentare i processi in background per risparmiare energia: utile sui portatili, dove questo causa scatti durante le sessioni lunghe.",
     },
     games_gpu_priority: {
       name: "Imposta il valore GPU Priority legacy dei giochi",
       description:
-        "Scrive il valore GPU Priority dei giochi, che Microsoft documenta come non utilizzato. Non sono previsti aumenti della priorità GPU o dei fotogrammi al secondo (HKLM, richiede privilegi di amministratore).",
+        "Scrive il valore GPU Priority dei giochi, che Microsoft documenta come non utilizzato. Non sono previsti aumenti della priorità GPU o dei fotogrammi al secondo.",
     },
     disable_tailored_experiences: {
       name: "Disattiva le esperienze personalizzate",
       description:
-        "Impedisce a Windows di usare i tuoi dati diagnostici per personalizzare pubblicità, suggerimenti e consigli (HKCU, nessuna elevazione richiesta).",
+        "Impedisce a Windows di usare i tuoi dati diagnostici per personalizzare pubblicità, suggerimenti e consigli.",
     },
     disable_app_launch_tracking: {
       name: "Non tracciare le app che apri",
       description:
-        "Windows registra quanto spesso avvii ogni programma per ordinare i risultati del menu Start. Questa opzione disattiva quel tracciamento (HKCU, nessuna elevazione richiesta).",
+        "Windows registra quanto spesso avvii ogni programma per ordinare i risultati del menu Start. Questa opzione disattiva quel tracciamento.",
     },
     disable_feedback_requests: {
       name: "Blocca le richieste di feedback di Windows",
       description:
-        'Impedisce a Windows di interromperti con i sondaggi "Quanto consiglieresti..." (HKCU, nessuna elevazione richiesta).',
+        'Impedisce a Windows di interromperti con i sondaggi "Quanto consiglieresti...".',
     },
     disable_cortana: {
       name: "Disattiva Cortana",
       description:
-        "Disattiva Cortana tramite policy di sistema, liberando le risorse che riserva in background (HKLM, richiede privilegi di amministratore).",
+        "Disattiva Cortana tramite policy di sistema, liberando le risorse che riserva in background.",
     },
     show_file_extensions: {
       name: "Mostra sempre le estensioni dei file",
       description:
-        'Rivela la vera estensione di ogni file. Vale la pena attivarla anche solo per sicurezza: smaschera file come "fattura.pdf.exe" che Windows altrimenti nasconde (HKCU, nessuna elevazione richiesta).',
+        'Rivela la vera estensione di ogni file. Vale la pena attivarla anche solo per sicurezza: smaschera file come "fattura.pdf.exe" che Windows altrimenti nasconde.',
     },
     hide_taskbar_widgets: {
       name: "Nascondi i Widget dalla barra delle applicazioni",
       description:
-        "Rimuove il pulsante Widget (meteo/notizie), che carica contenuti in background anche se non lo apri mai (HKCU, nessuna elevazione richiesta).",
+        "Rimuove il pulsante Widget (meteo/notizie), che carica contenuti in background anche se non lo apri mai.",
     },
     network_latency: {
       name: "Conferme TCP e raggruppamento dei pacchetti",
       description:
-        "Imposta TcpAckFrequency e TCPNoDelay a 1 sull'adattatore che porta la route verso Internet. Riguarda il comportamento TCP; il traffico UDP resta invariato. Il supporto dipende da Windows e dalle applicazioni, quindi una minore latenza nei giochi non è garantita (HKLM, richiede privilegi di amministratore).",
+        "Imposta TcpAckFrequency e TCPNoDelay a 1 sull'adattatore che porta la route verso Internet. Riguarda il comportamento TCP; il traffico UDP resta invariato. Il supporto dipende da Windows e dalle applicazioni, quindi una minore latenza nei giochi non è garantita.",
     },
     disable_window_animations: {
       name: "Animazioni finestre istantanee",
       description:
-        "Elimina l'animazione di apertura, chiusura e riduzione a icona delle finestre. Quell'animazione è puro tempo di attesa: toglierla fa rispondere il desktop nell'istante in cui clicchi e libera il lavoro GPU dietro di essa (HKCU, nessuna elevazione richiesta).",
+        "Elimina l'animazione di apertura, chiusura e riduzione a icona delle finestre. Quell'animazione è puro tempo di attesa: toglierla fa rispondere il desktop nell'istante in cui clicchi e libera il lavoro GPU dietro di essa.",
     },
     disable_drag_full_windows: {
       name: "Trascinamento finestre più leggero",
       description:
-        "Mentre trascini una finestra ne disegna solo il contorno invece di ridisegnarne tutto il contenuto a ogni fotogramma. Quasi impercettibile su una GPU veloce, differenza netta su grafica integrata o su un PC datato (HKCU, nessuna elevazione richiesta).",
+        "Mentre trascini una finestra ne disegna solo il contorno invece di ridisegnarne tutto il contenuto a ogni fotogramma. Quasi impercettibile su una GPU veloce, differenza netta su grafica integrata o su un PC datato.",
     },
     mouse_hover_delay: {
       name: "Risposta immediata al passaggio del mouse",
       description:
-        "Windows aspetta 400 ms prima di reagire al puntatore fermo su un elemento: anteprime della barra, suggerimenti, menu. Questo riduce l'attesa quasi a zero, così l'interfaccia segue il mouse invece di inseguirlo (HKCU, nessuna elevazione richiesta).",
+        "Windows aspetta 400 ms prima di reagire al puntatore fermo su un elemento: anteprime della barra, suggerimenti, menu. Questo riduce l'attesa quasi a zero, così l'interfaccia segue il mouse invece di inseguirlo.",
     },
     disable_background_apps: {
       name: "Blocca le app in background",
       description:
-        "Impedisce alle app dello Store di girare, aggiornarsi e interrogare la rete mentre non le stai usando. Sono CPU, RAM e batteria reali spese per app che non hai aperto (HKCU, nessuna elevazione richiesta).",
+        "Impedisce alle app dello Store di girare, aggiornarsi e interrogare la rete mentre non le stai usando. Sono CPU, RAM e batteria reali spese per app che non hai aperto.",
     },
     disable_delivery_optimization: {
       name: "Smetti di condividere gli aggiornamenti Windows",
       description:
-        "Per impostazione predefinita Windows carica i file di aggiornamento scaricati verso altri PC usando la tua connessione. Questo limita Delivery Optimization al tuo solo computer, così quell'upload non ti mangia banda mentre giochi (HKLM, richiede diritti di amministratore).",
+        "Per impostazione predefinita Windows carica i file di aggiornamento scaricati verso altri PC usando la tua connessione. Questo limita Delivery Optimization al tuo solo computer, così quell'upload non ti mangia banda mentre giochi.",
     },
     disable_copilot: {
       name: "Criterio Copilot legacy (solo ripristino)",
@@ -2209,27 +2209,27 @@ const it: Strings = {
     disable_suggested_apps: {
       name: "Impedisci a Windows di installare app da solo",
       description:
-        "Windows installa in silenzio app e giochi “consigliati” nel menu Start senza chiedertelo, all'installazione e di nuovo dopo i grandi aggiornamenti. Questo lo disattiva: sul tuo PC non finisce più niente che non hai scelto tu (HKCU, nessuna elevazione richiesta).",
+        "Windows installa in silenzio app e giochi “consigliati” nel menu Start senza chiedertelo, all'installazione e di nuovo dopo i grandi aggiornamenti. Questo lo disattiva: sul tuo PC non finisce più niente che non hai scelto tu.",
     },
     disable_mouse_acceleration: {
       name: "Disattiva l'accelerazione del mouse",
       description:
-        "Disattiva “Aumenta la precisione del puntatore”, che fa percorrere al cursore più strada quando muovi il mouse velocemente. È esattamente la risposta variabile che non vuoi quando miri: lo stesso gesto deve coprire sempre la stessa distanza sullo schermo (HKCU, nessuna elevazione richiesta).",
+        "Disattiva “Aumenta la precisione del puntatore”, che fa percorrere al cursore più strada quando muovi il mouse velocemente. È esattamente la risposta variabile che non vuoi quando miri: lo stesso gesto deve coprire sempre la stessa distanza sullo schermo.",
     },
     disable_sticky_keys_prompt: {
       name: "Elimina il popup del Filtro tasti",
       description:
-        "Premere Maiusc cinque volte apre la finestra del Filtro tasti, che in un gioco significa uscire dallo schermo intero nel momento peggiore, di solito durante uno scontro. Questo disattiva la scorciatoia e il suo avviso; il Filtro tasti resta disponibile nelle Impostazioni (HKCU, nessuna elevazione richiesta).",
+        "Premere Maiusc cinque volte apre la finestra del Filtro tasti, che in un gioco significa uscire dallo schermo intero nel momento peggiore, di solito durante uno scontro. Questo disattiva la scorciatoia e il suo avviso; il Filtro tasti resta disponibile nelle Impostazioni.",
     },
     disable_recall: {
       name: "Disattiva Recall (istantanee AI dello schermo)",
       description:
-        "Recall cattura lo schermo ogni pochi secondi e costruisce una cronologia indicizzata dall'AI di tutto ciò che hai guardato: password e messaggi privati inclusi, perché registra qualunque cosa sia a schermo. Questo imposta il criterio di sistema che gli impedisce di analizzare o conservare alcunché (HKLM, richiede diritti di amministratore).",
+        "Recall cattura lo schermo ogni pochi secondi e costruisce una cronologia indicizzata dall'AI di tutto ciò che hai guardato: password e messaggi privati inclusi, perché registra qualunque cosa sia a schermo. Questo imposta il criterio di sistema che gli impedisce di analizzare o conservare alcunché.",
     },
     global_timer_resolution: {
       name: "Risoluzione timer globale",
       description:
-        "Imposta il valore di registro GlobalTimerResolutionRequests a 1. Questa operazione non richiede né verifica una risoluzione specifica del timer. Il comportamento dipende dalla versione di Windows; latenza inferiore o FPS superiori non sono garantiti. Richiede un riavvio (HKLM, richiede privilegi di amministratore).",
+        "Imposta il valore di registro GlobalTimerResolutionRequests a 1. Questa operazione non richiede né verifica una risoluzione specifica del timer. Il comportamento dipende dalla versione di Windows; latenza inferiore o FPS superiori non sono garantiti. Richiede un riavvio.",
     },
     disable_core_parking: {
       name: "Disattiva il parcheggio dei core",
@@ -2239,61 +2239,57 @@ const it: Strings = {
     disable_memory_integrity: {
       name: "Disattiva Integrità della memoria (VBS)",
       description:
-        "Richiede la disattivazione di Integrità della memoria (HVCI). Se applicata, rimuove un livello di protezione del kernel; altre funzioni VBS possono restare attive. L'impatto sulle prestazioni dipende da hardware e carico di lavoro. Criteri di sistema o blocco UEFI possono impedire la modifica. Riavvia e verifica lo stato in Sicurezza di Windows (HKLM, richiede privilegi di amministratore).",
+        "Richiede la disattivazione di Integrità della memoria (HVCI). Se applicata, rimuove un livello di protezione del kernel; altre funzioni VBS possono restare attive. L'impatto sulle prestazioni dipende da hardware e carico di lavoro. Criteri di sistema o blocco UEFI possono impedire la modifica. Riavvia e verifica lo stato in Sicurezza di Windows.",
     },
     disable_typing_personalization: {
       name: "Impedisci a Windows di studiare come scrivi",
       description:
-        "Windows costruisce un dizionario personale da ciò che digiti e scrivi a mano — anche nei gestori di password, nelle chat e nelle caselle di ricerca — e lo sincronizza con il tuo account Microsoft per migliorare i suggerimenti. Questo disattiva sia la raccolta del testo sia quella della scrittura a mano (HKCU, nessuna elevazione richiesta).",
+        "Windows costruisce un dizionario personale da ciò che digiti e scrivi a mano — anche nei gestori di password, nelle chat e nelle caselle di ricerca — e lo sincronizza con il tuo account Microsoft per migliorare i suggerimenti. Questo disattiva sia la raccolta del testo sia quella della scrittura a mano.",
     },
     classic_context_menu: {
       name: "Riporta il menu del tasto destro completo",
       description:
-        "Windows 11 nasconde gran parte del menu contestuale dietro “Mostra altre opzioni”, trasformando un clic in due per cose che fai tutto il giorno. Questo ripristina il menu completo di Windows 10 ovunque, in Esplora file e sul desktop. Esplora risorse viene riavviato per applicarlo, quindi le finestre aperte lampeggeranno una volta (HKCU, nessuna elevazione richiesta).",
+        "Windows 11 nasconde gran parte del menu contestuale dietro “Mostra altre opzioni”, trasformando un clic in due per cose che fai tutto il giorno. Questo ripristina il menu completo di Windows 10 ovunque, in Esplora file e sul desktop. Esplora risorse viene riavviato per applicarlo, quindi le finestre aperte lampeggeranno una volta.",
     },
     disable_transparency: {
       name: "Disattiva gli effetti di trasparenza",
       description:
-        "Disattiva gli effetti sfocatura/acrilico di barra e menu. Un risparmio di GPU piccolo ma reale, che rende più fluidi i PC datati o con grafica integrata (HKCU, nessuna elevazione richiesta).",
+        "Disattiva gli effetti sfocatura/acrilico di barra e menu. Un risparmio di GPU piccolo ma reale, che rende più fluidi i PC datati o con grafica integrata.",
     },
     dark_mode: {
       name: "Modalità scura",
-      description: "Attiva il tema scuro per app e sistema (HKCU, nessuna elevazione richiesta).",
+      description: "Attiva il tema scuro per app e sistema.",
     },
     show_hidden_files: {
       name: "Mostra file nascosti",
-      description:
-        "Mostra i file e le cartelle nascosti in Esplora file (HKCU, nessuna elevazione richiesta).",
+      description: "Mostra i file e le cartelle nascosti in Esplora file.",
     },
     priority_separation: {
       name: "Ottimizza priorità processore",
       description:
-        "Regola Win32PrioritySeparation (0x26) per dare all'app in primo piano quanti di CPU brevi e variabili con priorità 3x — il classico valore per reattività desktop/gaming (HKLM, richiede privilegi di amministratore).",
+        "Regola Win32PrioritySeparation (0x26) per dare all'app in primo piano quanti di CPU brevi e variabili con priorità 3x — il classico valore per reattività desktop/gaming.",
     },
     disable_game_dvr: {
       name: "Disattiva Xbox Game Bar / Game DVR",
       description:
-        "Disattiva la registrazione in background di Xbox Game Bar, che consuma CPU/GPU durante il gioco (HKCU, nessuna elevazione richiesta).",
+        "Disattiva la registrazione in background di Xbox Game Bar, che consuma CPU/GPU durante il gioco.",
     },
     disable_telemetry_tasks: {
       name: "Riduci raccolta dati diagnostici",
-      description:
-        "Imposta il livello di diagnostica di Windows al minimo consentito (HKLM, richiede privilegi di amministratore).",
+      description: "Imposta il livello di diagnostica di Windows al minimo consentito.",
     },
     reset_advertising_id: {
       name: "Disattiva ID pubblicità",
-      description:
-        "Impedisce alle app di usare il tuo ID pubblicitario per la profilazione (HKCU, nessuna elevazione richiesta).",
+      description: "Impedisce alle app di usare il tuo ID pubblicitario per la profilazione.",
     },
     disable_location_tracking: {
       name: "Disattiva tracciamento posizione",
       description:
-        "Blocca l'accesso alla posizione geografica per tutte le app tramite policy di sistema (HKLM, richiede privilegi di amministratore).",
+        "Blocca l'accesso alla posizione geografica per tutte le app tramite policy di sistema.",
     },
     disable_bing_search: {
       name: "Disattiva ricerca Bing nel menu Start",
-      description:
-        "Impedisce che le tue ricerche nel menu Start vengano inviate a Bing (HKCU, nessuna elevazione richiesta).",
+      description: "Impedisce che le tue ricerche nel menu Start vengano inviate a Bing.",
     },
     power_plan_performance: {
       name: "Prestazioni elevate (piano di alimentazione)",
@@ -2313,12 +2309,12 @@ const it: Strings = {
     hardware_gpu_scheduling: {
       name: "Pianificazione GPU con accelerazione hardware",
       description:
-        "Richiede la pianificazione GPU con accelerazione hardware (HAGS). Servono GPU, driver e versione di Windows compatibili. Prestazioni e latenza possono migliorare, peggiorare o restare invariate secondo il gioco. Riavvia e verifica la disponibilità nelle impostazioni Grafica di Windows (HKLM, richiede privilegi di amministratore).",
+        "Richiede la pianificazione GPU con accelerazione hardware (HAGS). Servono GPU, driver e versione di Windows compatibili. Prestazioni e latenza possono migliorare, peggiorare o restare invariate secondo il gioco. Riavvia e verifica la disponibilità nelle impostazioni Grafica di Windows.",
     },
     reduce_input_lag: {
       name: "Riduci ritardo di input (mouse)",
       description:
-        'Disattiva l\'accelerazione del puntatore ("Migliora precisione puntatore") per un movimento del mouse 1:1, senza ritardi introdotti dal sistema (HKCU, nessuna elevazione richiesta).',
+        'Disattiva l\'accelerazione del puntatore ("Migliora precisione puntatore") per un movimento del mouse 1:1, senza ritardi introdotti dal sistema.',
     },
     turbo_boost: {
       name: "Turbo Boost processore",
@@ -2328,37 +2324,37 @@ const it: Strings = {
     network_throttling_index: {
       name: "Disattiva limitazione di rete multimediale",
       description:
-        "Rimuove il limite che Windows impone al traffico di rete durante l'uso di app multimediali/giochi, utile per ridurre micro-lag online (HKLM, richiede privilegi di amministratore).",
+        "Rimuove il limite che Windows impone al traffico di rete durante l'uso di app multimediali/giochi, utile per ridurre micro-lag online.",
     },
     system_responsiveness: {
       name: "Imposta la quota CPU in background di MMCSS",
       description:
-        "Scrive SystemResponsiveness=0, che Windows tratta come 20%. Non elimina la quota CPU per i task a priorità inferiore né dà priorità a tutte le app in primo piano (HKLM, richiede privilegi di amministratore).",
+        "Scrive SystemResponsiveness=0, che Windows tratta come 20%. Non elimina la quota CPU per i task a priorità inferiore né dà priorità a tutte le app in primo piano.",
     },
     games_task_priority: {
       name: "Imposta la categoria MMCSS Games",
       description:
-        "Imposta su High la categoria Games per i thread registrati con MMCSS; High tratta Priority come 2. I valori GPU Priority e SFIO Priority scritti sono inutilizzati. Non dà priorità a tutti i processi di gioco (HKLM, richiede privilegi di amministratore).",
+        "Imposta su High la categoria Games per i thread registrati con MMCSS; High tratta Priority come 2. I valori GPU Priority e SFIO Priority scritti sono inutilizzati. Non dà priorità a tutti i processi di gioco.",
     },
     reduce_keyboard_delay: {
       name: "Riduci ritardo di input (tastiera)",
       description:
-        "Azzera il ritardo prima che una pressione prolungata dei tasti inizi a ripetersi e ne massimizza la velocità di ripetizione, per una risposta più immediata in gioco (HKCU, nessuna elevazione richiesta).",
+        "Azzera il ritardo prima che una pressione prolungata dei tasti inizi a ripetersi e ne massimizza la velocità di ripetizione, per una risposta più immediata in gioco.",
     },
     keep_kernel_in_ram: {
       name: "Tieni kernel e driver nella RAM",
       description:
-        "Windows può spostare su disco parti del kernel e del codice dei driver anche quando la memoria abbonda, e rileggerle è una pausa che senti come uno scatto. Questo li tiene in memoria. Conviene se hai RAM in abbondanza; su un PC con poca memoria lascialo disattivato (HKLM, richiede diritti di amministratore).",
+        "Windows può spostare su disco parti del kernel e del codice dei driver anche quando la memoria abbonda, e rileggerle è una pausa che senti come uno scatto. Questo li tiene in memoria. Conviene se hai RAM in abbondanza; su un PC con poca memoria lascialo disattivato.",
     },
     auto_end_frozen_tasks: {
       name: "Non far bloccare lo spegnimento da un'app freezata",
       description:
-        'Quando un programma smette di rispondere durante lo spegnimento, Windows aspetta e mostra la schermata "Questa app impedisce l\'arresto" finché qualcuno non clicca. Questo chiude da solo le app bloccate, così un programma piantato non può lasciare il PC acceso (HKCU, nessuna elevazione richiesta).',
+        'Quando un programma smette di rispondere durante lo spegnimento, Windows aspetta e mostra la schermata "Questa app impedisce l\'arresto" finché qualcuno non clicca. Questo chiude da solo le app bloccate, così un programma piantato non può lasciare il PC acceso.',
     },
     instant_folder_loading: {
       name: "Apri ogni cartella all'istante",
       description:
-        "Esplora file analizza il contenuto di una cartella per indovinare se è Immagini, Musica o Documenti, e una cartella con migliaia di file multimediali può restare bloccata per secondi mentre decide. Questo fissa tutte le cartelle sul layout generale, così si aprono subito (HKCU, nessuna elevazione richiesta).",
+        "Esplora file analizza il contenuto di una cartella per indovinare se è Immagini, Musica o Documenti, e una cartella con migliaia di file multimediali può restare bloccata per secondi mentre decide. Questo fissa tutte le cartelle sul layout generale, così si aprono subito.",
     },
     tcp_congestion_bbr: {
       name: "Ping stabile anche con la linea occupata (BBR2)",
@@ -2368,32 +2364,31 @@ const it: Strings = {
     taskbar_align_left: {
       name: "Allinea la barra delle applicazioni a sinistra",
       description:
-        "Riporta le icone della taskbar allineate a sinistra (stile Windows 10) invece che al centro (HKCU, nessuna elevazione richiesta).",
+        "Riporta le icone della taskbar allineate a sinistra (stile Windows 10) invece che al centro.",
     },
     hide_taskbar_chat: {
       name: "Nascondi Chat/Teams dalla barra delle applicazioni",
-      description:
-        "Rimuove l'icona Chat (Microsoft Teams) dalla taskbar (HKCU, nessuna elevazione richiesta).",
+      description: "Rimuove l'icona Chat (Microsoft Teams) dalla taskbar.",
     },
     disable_start_suggestions: {
       name: "Disattiva suggerimenti e app consigliate nel menu Start",
       description:
-        "Impedisce a Windows di mostrare app consigliate, annunci e suggerimenti nel menu Start (HKCU, nessuna elevazione richiesta).",
+        "Impedisce a Windows di mostrare app consigliate, annunci e suggerimenti nel menu Start.",
     },
     disable_activity_history: {
       name: "Disattiva cronologia attività (Windows Timeline)",
       description:
-        "Impedisce a Windows di registrare, salvare e inviare a Microsoft la cronologia delle app e dei documenti usati, tramite policy di sistema (HKLM, richiede privilegi di amministratore).",
+        "Impedisce a Windows di registrare, salvare e inviare a Microsoft la cronologia delle app e dei documenti usati, tramite policy di sistema.",
     },
     hide_taskbar_search: {
       name: "Nascondi la casella di ricerca dalla barra delle applicazioni",
       description:
-        "Rimuove la casella/icona di ricerca dalla taskbar, per una barra più pulita (la ricerca resta comunque disponibile dal tasto Windows) (HKCU, nessuna elevazione richiesta).",
+        "Rimuove la casella/icona di ricerca dalla taskbar, per una barra più pulita (la ricerca resta comunque disponibile dal tasto Windows).",
     },
     disable_fullscreen_optimizations_global: {
       name: "Disattiva ottimizzazioni schermo intero globalmente",
       description:
-        "Forza DXGI a rispettare la vera modalità a schermo intero esclusiva invece della simulazione di Windows, riducendo micro-scatti e input lag in molti giochi più datati (HKCU, nessuna elevazione richiesta).",
+        "Forza DXGI a rispettare la vera modalità a schermo intero esclusiva invece della simulazione di Windows, riducendo micro-scatti e input lag in molti giochi più datati.",
     },
     disable_windows_search_service: {
       name: "Disattiva servizio di indicizzazione (Windows Search)",
@@ -2503,7 +2498,7 @@ const en: Strings = {
     ledger: "Change history",
   },
   healthPanel: {
-    title: "PC Health",
+    title: "Health score",
     subtitle: "An explainable score: every number shows the facts it was computed from.",
     why: "Why {score}?",
     refresh: "Recompute",
@@ -2978,8 +2973,8 @@ const en: Strings = {
     title: "Turbo Boost",
     subtitle:
       "Adjust CPU boost behavior and minimum processor state. Power use and heat may increase; results depend on the workload.",
-    startLabel: "START",
-    stopLabel: "STOP",
+    startLabel: "Start",
+    stopLabel: "Stop",
     activating: "Activating turbo...",
     deactivating: "Restoring...",
     active: "Turbo active",
@@ -3541,82 +3536,82 @@ const en: Strings = {
     disable_startup_delay: {
       name: "Remove the startup app delay",
       description:
-        "Windows deliberately waits about 10 seconds after sign-in before launching your startup programs. This removes that wait (HKCU, no elevation required).",
+        "Windows deliberately waits about 10 seconds after sign-in before launching your startup programs. This removes that wait.",
     },
     menu_show_delay: {
       name: "Instant menu response",
       description:
-        "Removes the built-in delay before menus open, which makes the whole desktop feel noticeably snappier (HKCU, no elevation required).",
+        "Removes the built-in delay before menus open, which makes the whole desktop feel noticeably snappier.",
     },
     disable_power_throttling: {
       name: "Disable CPU power throttling",
       description:
-        "Stops Windows from slowing down background processes to save power - useful on laptops where throttling causes stutter during long sessions (HKLM, requires administrator rights).",
+        "Stops Windows from slowing down background processes to save power - useful on laptops where throttling causes stutter during long sessions.",
     },
     games_gpu_priority: {
       name: "Set legacy Games GPU Priority value",
       description:
-        "Writes the Games GPU Priority value, which Microsoft documents as unused. No GPU priority or frame-rate gain is expected (HKLM, requires administrator rights).",
+        "Writes the Games GPU Priority value, which Microsoft documents as unused. No GPU priority or frame-rate gain is expected.",
     },
     disable_tailored_experiences: {
       name: "Disable tailored experiences",
       description:
-        "Stops Windows from using your diagnostic data to personalize ads, tips and recommendations (HKCU, no elevation required).",
+        "Stops Windows from using your diagnostic data to personalize ads, tips and recommendations.",
     },
     disable_app_launch_tracking: {
       name: "Stop tracking which apps you open",
       description:
-        "Windows records how often you launch each program to rank Start menu results. This turns that logging off (HKCU, no elevation required).",
+        "Windows records how often you launch each program to rank Start menu results. This turns that logging off.",
     },
     disable_feedback_requests: {
       name: "Stop Windows feedback prompts",
       description:
-        "Prevents Windows from interrupting you with 'How likely are you to recommend...' surveys (HKCU, no elevation required).",
+        "Prevents Windows from interrupting you with 'How likely are you to recommend...' surveys.",
     },
     disable_cortana: {
       name: "Disable Cortana",
       description:
-        "Turns Cortana off through system policy, freeing the background resources it reserves (HKLM, requires administrator rights).",
+        "Turns Cortana off through system policy, freeing the background resources it reserves.",
     },
     show_file_extensions: {
       name: "Always show file extensions",
       description:
-        "Reveals the real extension of every file. Worth turning on for safety alone: it exposes files like 'invoice.pdf.exe' that Windows otherwise hides (HKCU, no elevation required).",
+        "Reveals the real extension of every file. Worth turning on for safety alone: it exposes files like 'invoice.pdf.exe' that Windows otherwise hides.",
     },
     hide_taskbar_widgets: {
       name: "Hide Widgets from the taskbar",
       description:
-        "Removes the weather/news Widgets button, which loads content in the background even when you never open it (HKCU, no elevation required).",
+        "Removes the weather/news Widgets button, which loads content in the background even when you never open it.",
     },
     network_latency: {
       name: "TCP acknowledgments and packet buffering",
       description:
-        "Sets TcpAckFrequency and TCPNoDelay to 1 on the adapter that carries the route to the internet. This targets TCP behavior; UDP traffic is unaffected. Windows and application support vary, so lower game latency is not guaranteed (HKLM, administrator rights required).",
+        "Sets TcpAckFrequency and TCPNoDelay to 1 on the adapter that carries the route to the internet. This targets TCP behavior; UDP traffic is unaffected. Windows and application support vary, so lower game latency is not guaranteed.",
     },
     disable_window_animations: {
       name: "Instant window animations",
       description:
-        "Removes the slide/fade animation Windows plays every time a window opens, closes or minimizes. The animation is pure waiting time - cutting it makes the desktop respond the moment you click, and frees the GPU work behind it (HKCU, no elevation required).",
+        "Removes the slide/fade animation Windows plays every time a window opens, closes or minimizes. The animation is pure waiting time - cutting it makes the desktop respond the moment you click, and frees the GPU work behind it.",
     },
     disable_drag_full_windows: {
       name: "Lighter window dragging",
       description:
-        "Draws an outline while you drag a window instead of repainting its whole contents every frame. Barely noticeable on a fast GPU, a clear difference on integrated graphics or an older machine (HKCU, no elevation required).",
+        "Draws an outline while you drag a window instead of repainting its whole contents every frame. Barely noticeable on a fast GPU, a clear difference on integrated graphics or an older machine.",
     },
     mouse_hover_delay: {
       name: "Instant mouse hover response",
       description:
-        "Windows waits 400 ms before reacting to the pointer resting on something - taskbar previews, tooltips, menu hovers. This drops that wait to almost nothing, so the interface follows the mouse instead of trailing it (HKCU, no elevation required).",
+        "Windows waits 400 ms before reacting to the pointer resting on something - taskbar previews, tooltips, menu hovers. This drops that wait to almost nothing, so the interface follows the mouse instead of trailing it.",
     },
     disable_background_apps: {
       name: "Stop apps running in the background",
       description:
-        "Stops Store apps from running, refreshing and polling the network while you are not using them. This is real CPU, RAM and battery spent on apps you did not open (HKCU, no elevation required).",
+        "Stops Store apps from running, refreshing and polling the network while you are not using them. This is real CPU, RAM and battery spent on apps you did not open.",
     },
     disable_delivery_optimization: {
       name: "Stop sharing Windows updates with strangers",
       description:
-        "Windows uploads downloaded update files to other PCs over your connection by default. This limits Delivery Optimization to your own machine, which stops that upload eating bandwidth mid-game (HKLM, requires administrator rights).",
+        "Windows uploads downloaded update files to other PCs over your connection by default. This limits Delivery Optimization to your own machine, which stops that upload eating bandwidth mid-game.",
     },
     disable_copilot: {
       name: "Legacy Copilot policy (restore only)",
@@ -3626,27 +3621,27 @@ const en: Strings = {
     disable_suggested_apps: {
       name: "Stop Windows installing apps by itself",
       description:
-        "Windows quietly installs “suggested” apps and games into your Start menu without asking, on a fresh install and again after big updates. This turns that off, so nothing lands on your machine that you didn't choose (HKCU, no elevation required).",
+        "Windows quietly installs “suggested” apps and games into your Start menu without asking, on a fresh install and again after big updates. This turns that off, so nothing lands on your machine that you didn't choose.",
     },
     disable_mouse_acceleration: {
       name: "Disable mouse acceleration",
       description:
-        "Turns off “Enhance pointer precision”, which makes the cursor travel further when you move the mouse faster. That variable response is exactly what you don't want when aiming: the same physical flick should always cover the same distance on screen (HKCU, no elevation required).",
+        "Turns off “Enhance pointer precision”, which makes the cursor travel further when you move the mouse faster. That variable response is exactly what you don't want when aiming: the same physical flick should always cover the same distance on screen.",
     },
     disable_sticky_keys_prompt: {
       name: "Stop the Sticky Keys popup",
       description:
-        "Tapping Shift five times normally opens the Sticky Keys dialog — which in a game means an alt-tab out of fullscreen at the worst possible moment, usually mid-fight. This disables the shortcut and its prompt; Sticky Keys itself stays available in Settings (HKCU, no elevation required).",
+        "Tapping Shift five times normally opens the Sticky Keys dialog — which in a game means an alt-tab out of fullscreen at the worst possible moment, usually mid-fight. This disables the shortcut and its prompt; Sticky Keys itself stays available in Settings.",
     },
     disable_recall: {
       name: "Disable Recall (AI screen snapshots)",
       description:
-        "Recall takes a screenshot of your desktop every few seconds and builds a searchable, AI-indexed history of everything you have looked at — passwords and private messages included, since it captures whatever is on screen. This sets the system policy that stops it analysing or storing anything (HKLM, requires administrator rights).",
+        "Recall takes a screenshot of your desktop every few seconds and builds a searchable, AI-indexed history of everything you have looked at — passwords and private messages included, since it captures whatever is on screen. This sets the system policy that stops it analysing or storing anything.",
     },
     global_timer_resolution: {
       name: "Global timer resolution",
       description:
-        "Sets the GlobalTimerResolutionRequests registry flag to 1. This does not itself request or verify a specific timer resolution. Behavior depends on the Windows version; lower latency or higher FPS is not guaranteed. Restart required (HKLM, administrator rights required).",
+        "Sets the GlobalTimerResolutionRequests registry flag to 1. This does not itself request or verify a specific timer resolution. Behavior depends on the Windows version; lower latency or higher FPS is not guaranteed. Restart required.",
     },
     disable_core_parking: {
       name: "Disable core parking",
@@ -3656,60 +3651,56 @@ const en: Strings = {
     disable_memory_integrity: {
       name: "Disable Memory Integrity (VBS)",
       description:
-        "Requests that Memory Integrity (HVCI) be disabled. If applied, this removes a layer of kernel protection; other VBS features may remain active. Performance impact varies by hardware and workload. Policy or UEFI lock may prevent the change. Restart and verify the status in Windows Security (HKLM, administrator rights required).",
+        "Requests that Memory Integrity (HVCI) be disabled. If applied, this removes a layer of kernel protection; other VBS features may remain active. Performance impact varies by hardware and workload. Policy or UEFI lock may prevent the change. Restart and verify the status in Windows Security.",
     },
     disable_typing_personalization: {
       name: "Stop Windows learning how you type",
       description:
-        "Windows builds a personal dictionary from what you type and handwrite — including in password managers, chat windows and search boxes — and syncs it to your Microsoft account to improve its suggestions. This turns off both the text and the handwriting collection (HKCU, no elevation required).",
+        "Windows builds a personal dictionary from what you type and handwrite — including in password managers, chat windows and search boxes — and syncs it to your Microsoft account to improve its suggestions. This turns off both the text and the handwriting collection.",
     },
     classic_context_menu: {
       name: "Bring back the full right-click menu",
       description:
-        "Windows 11 hides most of the right-click menu behind “Show more options”, turning one click into two for things you do all day. This restores the complete Windows 10 menu everywhere in File Explorer and on the desktop. Explorer restarts to apply it, so open windows will flicker once (HKCU, no elevation required).",
+        "Windows 11 hides most of the right-click menu behind “Show more options”, turning one click into two for things you do all day. This restores the complete Windows 10 menu everywhere in File Explorer and on the desktop. Explorer restarts to apply it, so open windows will flicker once.",
     },
     disable_transparency: {
       name: "Disable transparency effects",
       description:
-        "Turns off the blur/acrylic effects in the taskbar and menus. Small but real GPU saving, and it makes older or integrated-graphics machines feel smoother (HKCU, no elevation required).",
+        "Turns off the blur/acrylic effects in the taskbar and menus. Small but real GPU saving, and it makes older or integrated-graphics machines feel smoother.",
     },
     dark_mode: {
       name: "Dark mode",
-      description: "Turns on dark theme for apps and system (HKCU, no elevation required).",
+      description: "Turns on dark theme for apps and system.",
     },
     show_hidden_files: {
       name: "Show hidden files",
-      description: "Shows hidden files and folders in File Explorer (HKCU, no elevation required).",
+      description: "Shows hidden files and folders in File Explorer.",
     },
     priority_separation: {
       name: "Optimize CPU priority",
       description:
-        "Tunes Win32PrioritySeparation (0x26) so the foreground app gets short, variable CPU time slices with a 3x priority boost — the classic desktop/gaming responsiveness value (HKLM, requires administrator rights).",
+        "Tunes Win32PrioritySeparation (0x26) so the foreground app gets short, variable CPU time slices with a 3x priority boost — the classic desktop/gaming responsiveness value.",
     },
     disable_game_dvr: {
       name: "Disable Xbox Game Bar / Game DVR",
       description:
-        "Turns off Xbox Game Bar's background recording, which eats CPU/GPU while gaming (HKCU, no elevation required).",
+        "Turns off Xbox Game Bar's background recording, which eats CPU/GPU while gaming.",
     },
     disable_telemetry_tasks: {
       name: "Reduce diagnostic data collection",
-      description:
-        "Sets Windows' diagnostic data level to the minimum allowed (HKLM, requires administrator rights).",
+      description: "Sets Windows' diagnostic data level to the minimum allowed.",
     },
     reset_advertising_id: {
       name: "Disable advertising ID",
-      description:
-        "Stops apps from using your advertising ID for profiling (HKCU, no elevation required).",
+      description: "Stops apps from using your advertising ID for profiling.",
     },
     disable_location_tracking: {
       name: "Disable location tracking",
-      description:
-        "Blocks location access for all apps via system policy (HKLM, requires administrator rights).",
+      description: "Blocks location access for all apps via system policy.",
     },
     disable_bing_search: {
       name: "Disable Bing search in the Start menu",
-      description:
-        "Stops your Start menu searches from being sent to Bing (HKCU, no elevation required).",
+      description: "Stops your Start menu searches from being sent to Bing.",
     },
     power_plan_performance: {
       name: "High performance (power plan)",
@@ -3729,12 +3720,12 @@ const en: Strings = {
     hardware_gpu_scheduling: {
       name: "Hardware-accelerated GPU scheduling",
       description:
-        "Requests hardware-accelerated GPU scheduling (HAGS). Requires a compatible GPU, driver and Windows version. Performance and latency can improve, worsen or remain unchanged depending on the game. Restart and verify availability in Windows Graphics settings (HKLM, administrator rights required).",
+        "Requests hardware-accelerated GPU scheduling (HAGS). Requires a compatible GPU, driver and Windows version. Performance and latency can improve, worsen or remain unchanged depending on the game. Restart and verify availability in Windows Graphics settings.",
     },
     reduce_input_lag: {
       name: "Reduce input lag (mouse)",
       description:
-        'Disables pointer acceleration ("Enhance pointer precision") for 1:1 mouse movement, with no delay added by the system (HKCU, no elevation required).',
+        'Disables pointer acceleration ("Enhance pointer precision") for 1:1 mouse movement, with no delay added by the system.',
     },
     turbo_boost: {
       name: "CPU Turbo Boost",
@@ -3744,37 +3735,37 @@ const en: Strings = {
     network_throttling_index: {
       name: "Disable multimedia network throttling",
       description:
-        "Removes the limit Windows places on network traffic while multimedia/gaming apps are active, useful for reducing online micro-lag (HKLM, requires administrator rights).",
+        "Removes the limit Windows places on network traffic while multimedia/gaming apps are active, useful for reducing online micro-lag.",
     },
     system_responsiveness: {
       name: "Set MMCSS background CPU reserve",
       description:
-        "Writes SystemResponsiveness=0, which Windows treats as 20%. This does not eliminate the CPU share for lower-priority tasks or prioritize every foreground app (HKLM, requires administrator rights).",
+        "Writes SystemResponsiveness=0, which Windows treats as 20%. This does not eliminate the CPU share for lower-priority tasks or prioritize every foreground app.",
     },
     games_task_priority: {
       name: "Set MMCSS Games task category",
       description:
-        "Sets the Games task category to High for threads registered with MMCSS; High treats Priority as 2. The GPU and SFIO Priority values also written here are unused. This does not prioritize every game process (HKLM, requires administrator rights).",
+        "Sets the Games task category to High for threads registered with MMCSS; High treats Priority as 2. The GPU and SFIO Priority values also written here are unused. This does not prioritize every game process.",
     },
     reduce_keyboard_delay: {
       name: "Reduce input delay (keyboard)",
       description:
-        "Zeroes out the delay before a held key starts repeating and maximizes its repeat rate, for a snappier response in games (HKCU, no elevation required).",
+        "Zeroes out the delay before a held key starts repeating and maximizes its repeat rate, for a snappier response in games.",
     },
     keep_kernel_in_ram: {
       name: "Keep the kernel and drivers in RAM",
       description:
-        "Windows may page parts of the kernel and driver code out to disk even when memory is plentiful, and paging them back in is a stall you feel as a stutter. This keeps them resident. Worth it on machines with RAM to spare; on a low-memory PC leave it off (HKLM, requires administrator rights).",
+        "Windows may page parts of the kernel and driver code out to disk even when memory is plentiful, and paging them back in is a stall you feel as a stutter. This keeps them resident. Worth it on machines with RAM to spare; on a low-memory PC leave it off.",
     },
     auto_end_frozen_tasks: {
       name: "Don't let a frozen app block shutdown",
       description:
-        'When an application stops responding during shutdown, Windows waits and shows the "This app is preventing shutdown" screen until someone clicks it. This closes unresponsive apps automatically instead, so a hung program cannot leave the machine sitting powered on (HKCU, no elevation required).',
+        'When an application stops responding during shutdown, Windows waits and shows the "This app is preventing shutdown" screen until someone clicks it. This closes unresponsive apps automatically instead, so a hung program cannot leave the machine sitting powered on.',
     },
     instant_folder_loading: {
       name: "Open every folder instantly",
       description:
-        "Explorer inspects a folder's contents to guess whether it is Pictures, Music or Documents, and a folder holding thousands of media files can hang for seconds while it decides. This pins every folder to the general layout so it opens at once (HKCU, no elevation required).",
+        "Explorer inspects a folder's contents to guess whether it is Pictures, Music or Documents, and a folder holding thousands of media files can hang for seconds while it decides. This pins every folder to the general layout so it opens at once.",
     },
     tcp_congestion_bbr: {
       name: "Keep latency low when the line is busy (BBR2)",
@@ -3783,33 +3774,31 @@ const en: Strings = {
     },
     taskbar_align_left: {
       name: "Align the taskbar to the left",
-      description:
-        "Moves taskbar icons back to the left (Windows 10 style) instead of centered (HKCU, no elevation required).",
+      description: "Moves taskbar icons back to the left (Windows 10 style) instead of centered.",
     },
     hide_taskbar_chat: {
       name: "Hide Chat/Teams from the taskbar",
-      description:
-        "Removes the Chat (Microsoft Teams) icon from the taskbar (HKCU, no elevation required).",
+      description: "Removes the Chat (Microsoft Teams) icon from the taskbar.",
     },
     disable_start_suggestions: {
       name: "Disable Start menu suggestions and recommended apps",
       description:
-        "Stops Windows from showing recommended apps, ads, and suggestions in the Start menu (HKCU, no elevation required).",
+        "Stops Windows from showing recommended apps, ads, and suggestions in the Start menu.",
     },
     disable_activity_history: {
       name: "Disable activity history (Windows Timeline)",
       description:
-        "Stops Windows from recording, saving, and sending Microsoft your app and document usage history, via system policy (HKLM, requires administrator rights).",
+        "Stops Windows from recording, saving, and sending Microsoft your app and document usage history, via system policy.",
     },
     hide_taskbar_search: {
       name: "Hide the search box from the taskbar",
       description:
-        "Removes the search box/icon from the taskbar for a cleaner bar (search is still available from the Windows key) (HKCU, no elevation required).",
+        "Removes the search box/icon from the taskbar for a cleaner bar (search is still available from the Windows key).",
     },
     disable_fullscreen_optimizations_global: {
       name: "Disable fullscreen optimizations globally",
       description:
-        "Forces DXGI to honor true exclusive fullscreen instead of Windows' simulated mode, reducing micro-stutter and input lag in many older games (HKCU, no elevation required).",
+        "Forces DXGI to honor true exclusive fullscreen instead of Windows' simulated mode, reducing micro-stutter and input lag in many older games.",
     },
     disable_windows_search_service: {
       name: "Disable the indexing service (Windows Search)",
@@ -3919,7 +3908,7 @@ const fr: Strings = {
     ledger: "Historique des modifications",
   },
   healthPanel: {
-    title: "Santé du PC",
+    title: "Score de santé",
     subtitle: "Un score explicable : chaque nombre montre les faits dont il est calculé.",
     why: "Pourquoi {score} ?",
     refresh: "Recalculer",
@@ -4406,8 +4395,8 @@ const fr: Strings = {
     title: "Turbo Boost",
     subtitle:
       "Modifie le mode boost et l'état minimal du processeur. La consommation et la chaleur peuvent augmenter ; les résultats dépendent de la charge de travail.",
-    startLabel: "START",
-    stopLabel: "STOP",
+    startLabel: "Démarrer",
+    stopLabel: "Arrêter",
     activating: "Activation du turbo...",
     deactivating: "Restauration...",
     active: "Turbo actif",
@@ -4979,82 +4968,82 @@ const fr: Strings = {
     disable_startup_delay: {
       name: "Supprimer le délai des programmes au démarrage",
       description:
-        "Windows attend volontairement environ 10 secondes après la connexion avant de lancer vos programmes de démarrage. Cette option supprime cette attente (HKCU, aucune élévation requise).",
+        "Windows attend volontairement environ 10 secondes après la connexion avant de lancer vos programmes de démarrage. Cette option supprime cette attente.",
     },
     menu_show_delay: {
       name: "Réponse instantanée des menus",
       description:
-        "Supprime le délai d'ouverture des menus, ce qui rend tout le bureau nettement plus réactif (HKCU, aucune élévation requise).",
+        "Supprime le délai d'ouverture des menus, ce qui rend tout le bureau nettement plus réactif.",
     },
     disable_power_throttling: {
       name: "Désactiver la limitation d'énergie du processeur",
       description:
-        "Empêche Windows de ralentir les processus en arrière-plan pour économiser l'énergie - utile sur les portables, où cela provoque des saccades lors des longues sessions (HKLM, nécessite des droits administrateur).",
+        "Empêche Windows de ralentir les processus en arrière-plan pour économiser l'énergie - utile sur les portables, où cela provoque des saccades lors des longues sessions.",
     },
     games_gpu_priority: {
       name: "Définir l'ancienne valeur GPU Priority des jeux",
       description:
-        "Écrit la valeur GPU Priority des jeux, que Microsoft indique comme inutilisée. Aucun gain de priorité GPU ni de fréquence d'images n'est attendu (HKLM, nécessite des droits administrateur).",
+        "Écrit la valeur GPU Priority des jeux, que Microsoft indique comme inutilisée. Aucun gain de priorité GPU ni de fréquence d'images n'est attendu.",
     },
     disable_tailored_experiences: {
       name: "Désactiver les expériences personnalisées",
       description:
-        "Empêche Windows d'utiliser vos données de diagnostic pour personnaliser publicités, conseils et recommandations (HKCU, aucune élévation requise).",
+        "Empêche Windows d'utiliser vos données de diagnostic pour personnaliser publicités, conseils et recommandations.",
     },
     disable_app_launch_tracking: {
       name: "Ne plus suivre les applications que vous ouvrez",
       description:
-        "Windows enregistre la fréquence de lancement de chaque programme pour classer les résultats du menu Démarrer. Cette option désactive ce suivi (HKCU, aucune élévation requise).",
+        "Windows enregistre la fréquence de lancement de chaque programme pour classer les résultats du menu Démarrer. Cette option désactive ce suivi.",
     },
     disable_feedback_requests: {
       name: "Bloquer les demandes de commentaires de Windows",
       description:
-        "Empêche Windows de vous interrompre avec les sondages « Quelle est la probabilité que vous recommandiez... » (HKCU, aucune élévation requise).",
+        "Empêche Windows de vous interrompre avec les sondages « Quelle est la probabilité que vous recommandiez... ».",
     },
     disable_cortana: {
       name: "Désactiver Cortana",
       description:
-        "Désactive Cortana via une stratégie système, libérant les ressources qu'il réserve en arrière-plan (HKLM, nécessite des droits administrateur).",
+        "Désactive Cortana via une stratégie système, libérant les ressources qu'il réserve en arrière-plan.",
     },
     show_file_extensions: {
       name: "Toujours afficher les extensions de fichiers",
       description:
-        "Révèle la véritable extension de chaque fichier. À activer ne serait-ce que pour la sécurité : cela démasque les fichiers du type « facture.pdf.exe » que Windows masque autrement (HKCU, aucune élévation requise).",
+        "Révèle la véritable extension de chaque fichier. À activer ne serait-ce que pour la sécurité : cela démasque les fichiers du type « facture.pdf.exe » que Windows masque autrement.",
     },
     hide_taskbar_widgets: {
       name: "Masquer les Widgets de la barre des tâches",
       description:
-        "Supprime le bouton Widgets (météo/actualités), qui charge du contenu en arrière-plan même si vous ne l'ouvrez jamais (HKCU, aucune élévation requise).",
+        "Supprime le bouton Widgets (météo/actualités), qui charge du contenu en arrière-plan même si vous ne l'ouvrez jamais.",
     },
     network_latency: {
       name: "Accusés de réception TCP et regroupement des paquets",
       description:
-        "Définit TcpAckFrequency et TCPNoDelay sur 1 sur l'adaptateur qui porte la route vers Internet. Cela concerne TCP ; le trafic UDP reste inchangé. La prise en charge dépend de Windows et des applications : une latence plus faible dans les jeux n'est pas garantie (HKLM, droits administrateur requis).",
+        "Définit TcpAckFrequency et TCPNoDelay sur 1 sur l'adaptateur qui porte la route vers Internet. Cela concerne TCP ; le trafic UDP reste inchangé. La prise en charge dépend de Windows et des applications : une latence plus faible dans les jeux n'est pas garantie.",
     },
     disable_window_animations: {
       name: "Animations de fenetres instantanees",
       description:
-        "Supprime l'animation jouée à chaque ouverture, fermeture ou réduction d'une fenêtre. Cette animation n'est que du temps d'attente : la retirer fait répondre le bureau à l'instant du clic et libère le travail GPU correspondant (HKCU, aucune élévation requise).",
+        "Supprime l'animation jouée à chaque ouverture, fermeture ou réduction d'une fenêtre. Cette animation n'est que du temps d'attente : la retirer fait répondre le bureau à l'instant du clic et libère le travail GPU correspondant.",
     },
     disable_drag_full_windows: {
       name: "Deplacement de fenetres allege",
       description:
-        "Dessine un contour pendant que vous deplacez une fenetre au lieu de redessiner tout son contenu a chaque image. A peine perceptible sur un GPU rapide, nettement visible sur un circuit graphique integre ou une machine ancienne (HKCU, aucune elevation requise).",
+        "Dessine un contour pendant que vous deplacez une fenetre au lieu de redessiner tout son contenu a chaque image. A peine perceptible sur un GPU rapide, nettement visible sur un circuit graphique integre ou une machine ancienne.",
     },
     mouse_hover_delay: {
       name: "Reaction immediate au survol de la souris",
       description:
-        "Windows attend 400 ms avant de reagir au pointeur pose sur un element : apercus de la barre des taches, info-bulles, survol des menus. Ce delai tombe presque a zero, l'interface suit la souris au lieu de la suivre en retard (HKCU, aucune elevation requise).",
+        "Windows attend 400 ms avant de reagir au pointeur pose sur un element : apercus de la barre des taches, info-bulles, survol des menus. Ce delai tombe presque a zero, l'interface suit la souris au lieu de la suivre en retard.",
     },
     disable_background_apps: {
       name: "Arreter les applications en arriere-plan",
       description:
-        "Empêche les applications du Store de s'exécuter, de s'actualiser et d'interroger le réseau pendant que vous ne les utilisez pas. C'est du processeur, de la mémoire et de la batterie dépensés pour des applications que vous n'avez pas ouvertes (HKCU, aucune élévation requise).",
+        "Empêche les applications du Store de s'exécuter, de s'actualiser et d'interroger le réseau pendant que vous ne les utilisez pas. C'est du processeur, de la mémoire et de la batterie dépensés pour des applications que vous n'avez pas ouvertes.",
     },
     disable_delivery_optimization: {
       name: "Ne plus partager les mises a jour Windows",
       description:
-        "Par defaut, Windows envoie les fichiers de mise a jour telecharges vers d'autres PC via votre connexion. Ceci limite Delivery Optimization a votre seule machine, pour que cet envoi ne consomme plus votre bande passante en pleine partie (HKLM, necessite des droits administrateur).",
+        "Par defaut, Windows envoie les fichiers de mise a jour telecharges vers d'autres PC via votre connexion. Ceci limite Delivery Optimization a votre seule machine, pour que cet envoi ne consomme plus votre bande passante en pleine partie.",
     },
     disable_copilot: {
       name: "Ancienne stratégie Copilot (restauration uniquement)",
@@ -5064,27 +5053,27 @@ const fr: Strings = {
     disable_suggested_apps: {
       name: "Empêcher Windows d'installer des applications tout seul",
       description:
-        "Windows installe discrètement des applications et des jeux « suggérés » dans votre menu Démarrer sans rien demander, à l'installation puis après chaque grosse mise à jour. Ceci désactive ce comportement : plus rien n'arrive sur votre machine sans votre accord (HKCU, aucune élévation requise).",
+        "Windows installe discrètement des applications et des jeux « suggérés » dans votre menu Démarrer sans rien demander, à l'installation puis après chaque grosse mise à jour. Ceci désactive ce comportement : plus rien n'arrive sur votre machine sans votre accord.",
     },
     disable_mouse_acceleration: {
       name: "Désactiver l'accélération de la souris",
       description:
-        "Désactive « Améliorer la précision du pointeur », qui fait parcourir au curseur une distance plus grande quand vous bougez vite. C'est exactement la réponse variable dont vous ne voulez pas pour viser : un même geste doit toujours couvrir la même distance à l'écran (HKCU, aucune élévation requise).",
+        "Désactive « Améliorer la précision du pointeur », qui fait parcourir au curseur une distance plus grande quand vous bougez vite. C'est exactement la réponse variable dont vous ne voulez pas pour viser : un même geste doit toujours couvrir la même distance à l'écran.",
     },
     disable_sticky_keys_prompt: {
       name: "Supprimer la fenêtre des touches rémanentes",
       description:
-        "Appuyer cinq fois sur Maj ouvre la boîte de dialogue des touches rémanentes, ce qui en jeu signifie sortir du plein écran au pire moment, généralement en plein combat. Ceci désactive le raccourci et son avertissement ; les touches rémanentes restent disponibles dans les Paramètres (HKCU, aucune élévation requise).",
+        "Appuyer cinq fois sur Maj ouvre la boîte de dialogue des touches rémanentes, ce qui en jeu signifie sortir du plein écran au pire moment, généralement en plein combat. Ceci désactive le raccourci et son avertissement ; les touches rémanentes restent disponibles dans les Paramètres.",
     },
     disable_recall: {
       name: "Désactiver Recall (captures d'écran par IA)",
       description:
-        "Recall capture votre écran toutes les quelques secondes et construit un historique indexé par IA de tout ce que vous avez consulté — mots de passe et messages privés compris, puisqu'il enregistre tout ce qui s'affiche. Ceci applique la stratégie système qui l'empêche d'analyser ou de conserver quoi que ce soit (HKLM, nécessite des droits administrateur).",
+        "Recall capture votre écran toutes les quelques secondes et construit un historique indexé par IA de tout ce que vous avez consulté — mots de passe et messages privés compris, puisqu'il enregistre tout ce qui s'affiche. Ceci applique la stratégie système qui l'empêche d'analyser ou de conserver quoi que ce soit.",
     },
     global_timer_resolution: {
       name: "Résolution du minuteur globale",
       description:
-        "Définit la valeur de registre GlobalTimerResolutionRequests sur 1. Cette opération ne demande ni ne vérifie une résolution précise du minuteur. Le comportement dépend de la version de Windows ; une latence plus faible ou davantage de FPS ne sont pas garantis. Redémarrage requis (HKLM, droits administrateur requis).",
+        "Définit la valeur de registre GlobalTimerResolutionRequests sur 1. Cette opération ne demande ni ne vérifie une résolution précise du minuteur. Le comportement dépend de la version de Windows ; une latence plus faible ou davantage de FPS ne sont pas garantis. Redémarrage requis.",
     },
     disable_core_parking: {
       name: "Désactiver le parcage des cœurs",
@@ -5094,62 +5083,58 @@ const fr: Strings = {
     disable_memory_integrity: {
       name: "Désactiver l'intégrité de la mémoire (VBS)",
       description:
-        "Demande la désactivation de l'intégrité de la mémoire (HVCI). Si elle est appliquée, une couche de protection du noyau est supprimée ; d'autres fonctions VBS peuvent rester actives. L'effet sur les performances dépend du matériel et de la charge de travail. Une stratégie système ou un verrouillage UEFI peut empêcher la modification. Redémarrez et vérifiez l'état dans Sécurité Windows (HKLM, droits administrateur requis).",
+        "Demande la désactivation de l'intégrité de la mémoire (HVCI). Si elle est appliquée, une couche de protection du noyau est supprimée ; d'autres fonctions VBS peuvent rester actives. L'effet sur les performances dépend du matériel et de la charge de travail. Une stratégie système ou un verrouillage UEFI peut empêcher la modification. Redémarrez et vérifiez l'état dans Sécurité Windows.",
     },
     disable_typing_personalization: {
       name: "Empêcher Windows d'apprendre votre façon d'écrire",
       description:
-        "Windows constitue un dictionnaire personnel à partir de ce que vous tapez et écrivez à la main — y compris dans les gestionnaires de mots de passe, les fenêtres de discussion et les champs de recherche — et le synchronise avec votre compte Microsoft pour améliorer ses suggestions. Ceci désactive la collecte du texte et celle de l'écriture manuscrite (HKCU, aucune élévation requise).",
+        "Windows constitue un dictionnaire personnel à partir de ce que vous tapez et écrivez à la main — y compris dans les gestionnaires de mots de passe, les fenêtres de discussion et les champs de recherche — et le synchronise avec votre compte Microsoft pour améliorer ses suggestions. Ceci désactive la collecte du texte et celle de l'écriture manuscrite.",
     },
     classic_context_menu: {
       name: "Rétablir le menu clic droit complet",
       description:
-        "Windows 11 cache la majeure partie du menu contextuel derrière « Afficher d'autres options », transformant un clic en deux pour des gestes quotidiens. Ceci rétablit le menu complet de Windows 10 partout, dans l'Explorateur et sur le bureau. L'Explorateur redémarre pour l'appliquer, les fenêtres ouvertes clignoteront donc une fois (HKCU, aucune élévation requise).",
+        "Windows 11 cache la majeure partie du menu contextuel derrière « Afficher d'autres options », transformant un clic en deux pour des gestes quotidiens. Ceci rétablit le menu complet de Windows 10 partout, dans l'Explorateur et sur le bureau. L'Explorateur redémarre pour l'appliquer, les fenêtres ouvertes clignoteront donc une fois.",
     },
     disable_transparency: {
       name: "Désactiver les effets de transparence",
       description:
-        "Désactive les effets de flou/acrylique de la barre des tâches et des menus. Une économie de GPU modeste mais réelle, qui rend plus fluides les PC anciens ou à carte graphique intégrée (HKCU, aucune élévation requise).",
+        "Désactive les effets de flou/acrylique de la barre des tâches et des menus. Une économie de GPU modeste mais réelle, qui rend plus fluides les PC anciens ou à carte graphique intégrée.",
     },
     dark_mode: {
       name: "Mode sombre",
-      description:
-        "Active le thème sombre pour les applications et le système (HKCU, aucune élévation requise).",
+      description: "Active le thème sombre pour les applications et le système.",
     },
     show_hidden_files: {
       name: "Afficher les fichiers cachés",
-      description:
-        "Affiche les fichiers et dossiers cachés dans l'Explorateur (HKCU, aucune élévation requise).",
+      description: "Affiche les fichiers et dossiers cachés dans l'Explorateur.",
     },
     priority_separation: {
       name: "Optimiser la priorité du processeur",
       description:
-        "Ajuste Win32PrioritySeparation (0x26) pour donner à l'application au premier plan des quanta CPU courts et variables avec une priorité 3x — la valeur classique de réactivité bureau/jeu (HKLM, droits administrateur requis).",
+        "Ajuste Win32PrioritySeparation (0x26) pour donner à l'application au premier plan des quanta CPU courts et variables avec une priorité 3x — la valeur classique de réactivité bureau/jeu.",
     },
     disable_game_dvr: {
       name: "Désactiver Xbox Game Bar / Game DVR",
       description:
-        "Désactive l'enregistrement en arrière-plan de Xbox Game Bar, gourmand en CPU/GPU pendant le jeu (HKCU, aucune élévation requise).",
+        "Désactive l'enregistrement en arrière-plan de Xbox Game Bar, gourmand en CPU/GPU pendant le jeu.",
     },
     disable_telemetry_tasks: {
       name: "Réduire la collecte de données de diagnostic",
-      description:
-        "Règle le niveau de diagnostic de Windows au minimum autorisé (HKLM, droits administrateur requis).",
+      description: "Règle le niveau de diagnostic de Windows au minimum autorisé.",
     },
     reset_advertising_id: {
       name: "Désactiver l'ID publicitaire",
       description:
-        "Empêche les applications d'utiliser votre ID publicitaire à des fins de profilage (HKCU, aucune élévation requise).",
+        "Empêche les applications d'utiliser votre ID publicitaire à des fins de profilage.",
     },
     disable_location_tracking: {
       name: "Désactiver le suivi de localisation",
       description:
-        "Bloque l'accès à la localisation pour toutes les applications via une stratégie système (HKLM, droits administrateur requis).",
+        "Bloque l'accès à la localisation pour toutes les applications via une stratégie système.",
     },
     disable_bing_search: {
       name: "Désactiver la recherche Bing dans le menu Démarrer",
-      description:
-        "Empêche l'envoi de vos recherches du menu Démarrer à Bing (HKCU, aucune élévation requise).",
+      description: "Empêche l'envoi de vos recherches du menu Démarrer à Bing.",
     },
     power_plan_performance: {
       name: "Performances élevées (mode d'alimentation)",
@@ -5169,12 +5154,12 @@ const fr: Strings = {
     hardware_gpu_scheduling: {
       name: "Planification GPU accélérée par le matériel",
       description:
-        "Demande la planification GPU accélérée par le matériel (HAGS). Une carte graphique, un pilote et une version de Windows compatibles sont nécessaires. Les performances et la latence peuvent s'améliorer, se dégrader ou rester inchangées selon le jeu. Redémarrez et vérifiez la disponibilité dans les paramètres graphiques de Windows (HKLM, droits administrateur requis).",
+        "Demande la planification GPU accélérée par le matériel (HAGS). Une carte graphique, un pilote et une version de Windows compatibles sont nécessaires. Les performances et la latence peuvent s'améliorer, se dégrader ou rester inchangées selon le jeu. Redémarrez et vérifiez la disponibilité dans les paramètres graphiques de Windows.",
     },
     reduce_input_lag: {
       name: "Réduire le délai d'entrée (souris)",
       description:
-        "Désactive l'accélération du pointeur (« Améliorer la précision du pointeur ») pour un mouvement de souris 1:1, sans délai ajouté par le système (HKCU, aucune élévation requise).",
+        "Désactive l'accélération du pointeur (« Améliorer la précision du pointeur ») pour un mouvement de souris 1:1, sans délai ajouté par le système.",
     },
     turbo_boost: {
       name: "Turbo Boost du processeur",
@@ -5184,37 +5169,37 @@ const fr: Strings = {
     network_throttling_index: {
       name: "Désactiver la limitation réseau multimédia",
       description:
-        "Supprime la limite imposée par Windows au trafic réseau pendant l'utilisation d'apps multimédias/jeux, utile pour réduire les micro-latences en ligne (HKLM, droits administrateur requis).",
+        "Supprime la limite imposée par Windows au trafic réseau pendant l'utilisation d'apps multimédias/jeux, utile pour réduire les micro-latences en ligne.",
     },
     system_responsiveness: {
       name: "Définir la réserve CPU MMCSS en arrière-plan",
       description:
-        "Écrit SystemResponsiveness=0, que Windows traite comme 20 %. Cela ne supprime pas la part CPU des tâches moins prioritaires et ne privilégie pas toutes les apps au premier plan (HKLM, droits administrateur requis).",
+        "Écrit SystemResponsiveness=0, que Windows traite comme 20 %. Cela ne supprime pas la part CPU des tâches moins prioritaires et ne privilégie pas toutes les apps au premier plan.",
     },
     games_task_priority: {
       name: "Définir la catégorie MMCSS Games",
       description:
-        "Définit la catégorie Games sur High pour les threads inscrits auprès de MMCSS ; High traite Priority comme 2. Les valeurs GPU Priority et SFIO Priority écrites sont inutilisées. Cela ne privilégie pas tous les processus de jeu (HKLM, droits administrateur requis).",
+        "Définit la catégorie Games sur High pour les threads inscrits auprès de MMCSS ; High traite Priority comme 2. Les valeurs GPU Priority et SFIO Priority écrites sont inutilisées. Cela ne privilégie pas tous les processus de jeu.",
     },
     reduce_keyboard_delay: {
       name: "Réduire le délai d'entrée (clavier)",
       description:
-        "Ramène à zéro le délai avant qu'une touche maintenue commence à se répéter et maximise sa vitesse de répétition, pour une réponse plus immédiate en jeu (HKCU, aucune élévation requise).",
+        "Ramène à zéro le délai avant qu'une touche maintenue commence à se répéter et maximise sa vitesse de répétition, pour une réponse plus immédiate en jeu.",
     },
     keep_kernel_in_ram: {
       name: "Garder le noyau et les pilotes en RAM",
       description:
-        "Windows peut déplacer sur le disque des parties du noyau et du code des pilotes même quand la mémoire est abondante, et les relire est une pause que vous ressentez comme un à-coup. Ceci les garde en mémoire. Utile si vous avez de la RAM à revendre ; sur un PC peu doté, laissez désactivé (HKLM, droits administrateur requis).",
+        "Windows peut déplacer sur le disque des parties du noyau et du code des pilotes même quand la mémoire est abondante, et les relire est une pause que vous ressentez comme un à-coup. Ceci les garde en mémoire. Utile si vous avez de la RAM à revendre ; sur un PC peu doté, laissez désactivé.",
     },
     auto_end_frozen_tasks: {
       name: "Empêcher une application figée de bloquer l'arrêt",
       description:
-        "Quand une application cesse de répondre pendant l'arrêt, Windows attend et affiche l'écran \"Cette application empêche l'arrêt\" jusqu'à ce que quelqu'un clique. Ceci ferme automatiquement les applications qui ne répondent plus, pour qu'un programme figé ne laisse pas la machine allumée (HKCU, aucune élévation requise).",
+        "Quand une application cesse de répondre pendant l'arrêt, Windows attend et affiche l'écran \"Cette application empêche l'arrêt\" jusqu'à ce que quelqu'un clique. Ceci ferme automatiquement les applications qui ne répondent plus, pour qu'un programme figé ne laisse pas la machine allumée.",
     },
     instant_folder_loading: {
       name: "Ouvrir chaque dossier instantanément",
       description:
-        "L'Explorateur inspecte le contenu d'un dossier pour deviner s'il s'agit d'Images, Musique ou Documents, et un dossier contenant des milliers de fichiers multimédias peut se figer plusieurs secondes pendant qu'il décide. Ceci fixe tous les dossiers sur la disposition générale, pour qu'ils s'ouvrent aussitôt (HKCU, aucune élévation requise).",
+        "L'Explorateur inspecte le contenu d'un dossier pour deviner s'il s'agit d'Images, Musique ou Documents, et un dossier contenant des milliers de fichiers multimédias peut se figer plusieurs secondes pendant qu'il décide. Ceci fixe tous les dossiers sur la disposition générale, pour qu'ils s'ouvrent aussitôt.",
     },
     tcp_congestion_bbr: {
       name: "Un ping stable même quand la ligne est chargée (BBR2)",
@@ -5224,32 +5209,31 @@ const fr: Strings = {
     taskbar_align_left: {
       name: "Aligner la barre des tâches à gauche",
       description:
-        "Replace les icônes de la barre des tâches à gauche (style Windows 10) au lieu du centre (HKCU, aucune élévation requise).",
+        "Replace les icônes de la barre des tâches à gauche (style Windows 10) au lieu du centre.",
     },
     hide_taskbar_chat: {
       name: "Masquer Chat/Teams de la barre des tâches",
-      description:
-        "Retire l'icône Chat (Microsoft Teams) de la barre des tâches (HKCU, aucune élévation requise).",
+      description: "Retire l'icône Chat (Microsoft Teams) de la barre des tâches.",
     },
     disable_start_suggestions: {
       name: "Désactiver les suggestions et apps recommandées du menu Démarrer",
       description:
-        "Empêche Windows d'afficher des apps recommandées, publicités et suggestions dans le menu Démarrer (HKCU, aucune élévation requise).",
+        "Empêche Windows d'afficher des apps recommandées, publicités et suggestions dans le menu Démarrer.",
     },
     disable_activity_history: {
       name: "Désactiver l'historique d'activité (Windows Timeline)",
       description:
-        "Empêche Windows d'enregistrer, de sauvegarder et d'envoyer à Microsoft l'historique de vos apps et documents utilisés, via une stratégie système (HKLM, droits administrateur requis).",
+        "Empêche Windows d'enregistrer, de sauvegarder et d'envoyer à Microsoft l'historique de vos apps et documents utilisés, via une stratégie système.",
     },
     hide_taskbar_search: {
       name: "Masquer la barre de recherche de la barre des tâches",
       description:
-        "Retire la case/icône de recherche de la barre des tâches pour une barre plus épurée (la recherche reste accessible via la touche Windows) (HKCU, aucune élévation requise).",
+        "Retire la case/icône de recherche de la barre des tâches pour une barre plus épurée (la recherche reste accessible via la touche Windows).",
     },
     disable_fullscreen_optimizations_global: {
       name: "Désactiver les optimisations plein écran globalement",
       description:
-        "Force DXGI à respecter le vrai mode plein écran exclusif au lieu de la simulation de Windows, réduisant les micro-saccades et l'input lag dans de nombreux jeux plus anciens (HKCU, aucune élévation requise).",
+        "Force DXGI à respecter le vrai mode plein écran exclusif au lieu de la simulation de Windows, réduisant les micro-saccades et l'input lag dans de nombreux jeux plus anciens.",
     },
     disable_windows_search_service: {
       name: "Désactiver le service d'indexation (Windows Search)",
@@ -5359,7 +5343,7 @@ const es: Strings = {
     ledger: "Historial de cambios",
   },
   healthPanel: {
-    title: "Salud del PC",
+    title: "Puntuación de salud",
     subtitle: "Una puntuación explicable: cada número muestra los hechos de los que se calcula.",
     why: "¿Por qué {score}?",
     refresh: "Recalcular",
@@ -5842,8 +5826,8 @@ const es: Strings = {
     title: "Turbo Boost",
     subtitle:
       "Ajusta el modo turbo y el estado mínimo del procesador. El consumo y el calor pueden aumentar; los resultados dependen de la carga de trabajo.",
-    startLabel: "START",
-    stopLabel: "STOP",
+    startLabel: "Iniciar",
+    stopLabel: "Detener",
     activating: "Activando turbo...",
     deactivating: "Restaurando...",
     active: "Turbo activo",
@@ -6413,82 +6397,82 @@ const es: Strings = {
     disable_startup_delay: {
       name: "Eliminar el retraso de los programas al inicio",
       description:
-        "Windows espera a propósito unos 10 segundos tras iniciar sesión antes de abrir tus programas de inicio. Esta opción elimina esa espera (HKCU, no requiere elevación).",
+        "Windows espera a propósito unos 10 segundos tras iniciar sesión antes de abrir tus programas de inicio. Esta opción elimina esa espera.",
     },
     menu_show_delay: {
       name: "Respuesta instantánea de los menús",
       description:
-        "Elimina el retraso con el que se abren los menús, lo que hace que todo el escritorio se sienta más ágil (HKCU, no requiere elevación).",
+        "Elimina el retraso con el que se abren los menús, lo que hace que todo el escritorio se sienta más ágil.",
     },
     disable_power_throttling: {
       name: "Desactivar la limitación de energía de la CPU",
       description:
-        "Impide que Windows ralentice los procesos en segundo plano para ahorrar energía: útil en portátiles, donde provoca tirones en sesiones largas (HKLM, requiere permisos de administrador).",
+        "Impide que Windows ralentice los procesos en segundo plano para ahorrar energía: útil en portátiles, donde provoca tirones en sesiones largas.",
     },
     games_gpu_priority: {
       name: "Establecer el valor heredado GPU Priority de juegos",
       description:
-        "Escribe el valor GPU Priority de juegos, que Microsoft documenta como no utilizado. No se espera una mejora de prioridad de GPU ni de FPS (HKLM, requiere permisos de administrador).",
+        "Escribe el valor GPU Priority de juegos, que Microsoft documenta como no utilizado. No se espera una mejora de prioridad de GPU ni de FPS.",
     },
     disable_tailored_experiences: {
       name: "Desactivar las experiencias personalizadas",
       description:
-        "Impide que Windows use tus datos de diagnóstico para personalizar anuncios, sugerencias y recomendaciones (HKCU, no requiere elevación).",
+        "Impide que Windows use tus datos de diagnóstico para personalizar anuncios, sugerencias y recomendaciones.",
     },
     disable_app_launch_tracking: {
       name: "Dejar de registrar qué aplicaciones abres",
       description:
-        "Windows registra con qué frecuencia abres cada programa para ordenar los resultados del menú Inicio. Esta opción desactiva ese registro (HKCU, no requiere elevación).",
+        "Windows registra con qué frecuencia abres cada programa para ordenar los resultados del menú Inicio. Esta opción desactiva ese registro.",
     },
     disable_feedback_requests: {
       name: "Bloquear las peticiones de opinión de Windows",
       description:
-        "Evita que Windows te interrumpa con encuestas del tipo «¿Qué probabilidad hay de que recomiendes...?» (HKCU, no requiere elevación).",
+        "Evita que Windows te interrumpa con encuestas del tipo «¿Qué probabilidad hay de que recomiendes...?».",
     },
     disable_cortana: {
       name: "Desactivar Cortana",
       description:
-        "Desactiva Cortana mediante directiva del sistema, liberando los recursos que reserva en segundo plano (HKLM, requiere permisos de administrador).",
+        "Desactiva Cortana mediante directiva del sistema, liberando los recursos que reserva en segundo plano.",
     },
     show_file_extensions: {
       name: "Mostrar siempre las extensiones de archivo",
       description:
-        "Revela la extensión real de cada archivo. Merece la pena activarlo solo por seguridad: destapa archivos como «factura.pdf.exe» que Windows oculta (HKCU, no requiere elevación).",
+        "Revela la extensión real de cada archivo. Merece la pena activarlo solo por seguridad: destapa archivos como «factura.pdf.exe» que Windows oculta.",
     },
     hide_taskbar_widgets: {
       name: "Ocultar los Widgets de la barra de tareas",
       description:
-        "Quita el botón de Widgets (tiempo/noticias), que carga contenido en segundo plano aunque nunca lo abras (HKCU, no requiere elevación).",
+        "Quita el botón de Widgets (tiempo/noticias), que carga contenido en segundo plano aunque nunca lo abras.",
     },
     network_latency: {
       name: "Confirmaciones TCP y agrupación de paquetes",
       description:
-        "Establece TcpAckFrequency y TCPNoDelay en 1 en el adaptador que lleva la ruta hacia Internet. Afecta al comportamiento TCP; el tráfico UDP no cambia. La compatibilidad depende de Windows y las aplicaciones, por lo que no se garantiza una menor latencia en juegos (HKLM, requiere permisos de administrador).",
+        "Establece TcpAckFrequency y TCPNoDelay en 1 en el adaptador que lleva la ruta hacia Internet. Afecta al comportamiento TCP; el tráfico UDP no cambia. La compatibilidad depende de Windows y las aplicaciones, por lo que no se garantiza una menor latencia en juegos.",
     },
     disable_window_animations: {
       name: "Animaciones de ventana instantaneas",
       description:
-        "Elimina la animacion que Windows reproduce al abrir, cerrar o minimizar una ventana. Esa animacion es puro tiempo de espera: quitarla hace que el escritorio responda en el instante del clic y libera el trabajo de GPU asociado (HKCU, no requiere elevacion).",
+        "Elimina la animacion que Windows reproduce al abrir, cerrar o minimizar una ventana. Esa animacion es puro tiempo de espera: quitarla hace que el escritorio responda en el instante del clic y libera el trabajo de GPU asociado.",
     },
     disable_drag_full_windows: {
       name: "Arrastre de ventanas mas ligero",
       description:
-        "Dibuja solo el contorno mientras arrastras una ventana en lugar de repintar todo su contenido en cada fotograma. Apenas se nota en una GPU rapida, se nota claramente en graficos integrados o en un equipo antiguo (HKCU, no requiere elevacion).",
+        "Dibuja solo el contorno mientras arrastras una ventana en lugar de repintar todo su contenido en cada fotograma. Apenas se nota en una GPU rapida, se nota claramente en graficos integrados o en un equipo antiguo.",
     },
     mouse_hover_delay: {
       name: "Respuesta inmediata al pasar el raton",
       description:
-        "Windows espera 400 ms antes de reaccionar al puntero detenido sobre algo: vistas previas de la barra de tareas, descripciones emergentes, menus. Esto reduce la espera casi a cero, asi la interfaz sigue al raton en vez de ir por detras (HKCU, no requiere elevacion).",
+        "Windows espera 400 ms antes de reaccionar al puntero detenido sobre algo: vistas previas de la barra de tareas, descripciones emergentes, menus. Esto reduce la espera casi a cero, asi la interfaz sigue al raton en vez de ir por detras.",
     },
     disable_background_apps: {
       name: "Detener las apps en segundo plano",
       description:
-        "Impide que las aplicaciones de la Store se ejecuten, se actualicen y consulten la red mientras no las usas. Es CPU, RAM y bateria reales gastadas en aplicaciones que no has abierto (HKCU, no requiere elevacion).",
+        "Impide que las aplicaciones de la Store se ejecuten, se actualicen y consulten la red mientras no las usas. Es CPU, RAM y bateria reales gastadas en aplicaciones que no has abierto.",
     },
     disable_delivery_optimization: {
       name: "Dejar de compartir las actualizaciones de Windows",
       description:
-        "De forma predeterminada Windows sube los archivos de actualizacion descargados a otros PC usando tu conexion. Esto limita Delivery Optimization a tu propio equipo, para que esa subida no consuma ancho de banda mientras juegas (HKLM, requiere derechos de administrador).",
+        "De forma predeterminada Windows sube los archivos de actualizacion descargados a otros PC usando tu conexion. Esto limita Delivery Optimization a tu propio equipo, para que esa subida no consuma ancho de banda mientras juegas.",
     },
     disable_copilot: {
       name: "Directiva antigua de Copilot (solo restauración)",
@@ -6498,27 +6482,27 @@ const es: Strings = {
     disable_suggested_apps: {
       name: "Impedir que Windows instale aplicaciones por su cuenta",
       description:
-        "Windows instala en silencio aplicaciones y juegos «sugeridos» en tu menú Inicio sin preguntarte, al instalar y de nuevo tras las actualizaciones grandes. Esto lo desactiva: en tu equipo ya no aparece nada que no hayas elegido tú (HKCU, no requiere elevación).",
+        "Windows instala en silencio aplicaciones y juegos «sugeridos» en tu menú Inicio sin preguntarte, al instalar y de nuevo tras las actualizaciones grandes. Esto lo desactiva: en tu equipo ya no aparece nada que no hayas elegido tú.",
     },
     disable_mouse_acceleration: {
       name: "Desactivar la aceleración del ratón",
       description:
-        "Desactiva «Mejorar la precisión del puntero», que hace que el cursor recorra más distancia cuando mueves el ratón deprisa. Esa respuesta variable es justo lo que no quieres al apuntar: el mismo gesto debe cubrir siempre la misma distancia en pantalla (HKCU, no requiere elevación).",
+        "Desactiva «Mejorar la precisión del puntero», que hace que el cursor recorra más distancia cuando mueves el ratón deprisa. Esa respuesta variable es justo lo que no quieres al apuntar: el mismo gesto debe cubrir siempre la misma distancia en pantalla.",
     },
     disable_sticky_keys_prompt: {
       name: "Eliminar el aviso de Teclas especiales",
       description:
-        "Pulsar Mayús cinco veces abre el cuadro de Teclas especiales, lo que en un juego significa salir de pantalla completa en el peor momento, normalmente en pleno combate. Esto desactiva el atajo y su aviso; las Teclas especiales siguen disponibles en Configuración (HKCU, no requiere elevación).",
+        "Pulsar Mayús cinco veces abre el cuadro de Teclas especiales, lo que en un juego significa salir de pantalla completa en el peor momento, normalmente en pleno combate. Esto desactiva el atajo y su aviso; las Teclas especiales siguen disponibles en Configuración.",
     },
     disable_recall: {
       name: "Desactivar Recall (capturas de pantalla con IA)",
       description:
-        "Recall captura tu pantalla cada pocos segundos y construye un historial indexado por IA de todo lo que has mirado: contraseñas y mensajes privados incluidos, porque graba lo que haya en pantalla. Esto aplica la directiva del sistema que le impide analizar o guardar nada (HKLM, requiere derechos de administrador).",
+        "Recall captura tu pantalla cada pocos segundos y construye un historial indexado por IA de todo lo que has mirado: contraseñas y mensajes privados incluidos, porque graba lo que haya en pantalla. Esto aplica la directiva del sistema que le impide analizar o guardar nada.",
     },
     global_timer_resolution: {
       name: "Resolución del temporizador global",
       description:
-        "Establece el valor del registro GlobalTimerResolutionRequests en 1. Esta operación no solicita ni verifica una resolución concreta del temporizador. El comportamiento depende de la versión de Windows; no se garantiza menor latencia ni más FPS. Requiere reiniciar (HKLM, requiere permisos de administrador).",
+        "Establece el valor del registro GlobalTimerResolutionRequests en 1. Esta operación no solicita ni verifica una resolución concreta del temporizador. El comportamiento depende de la versión de Windows; no se garantiza menor latencia ni más FPS. Requiere reiniciar.",
     },
     disable_core_parking: {
       name: "Desactivar el aparcamiento de núcleos",
@@ -6528,61 +6512,57 @@ const es: Strings = {
     disable_memory_integrity: {
       name: "Desactivar Integridad de memoria (VBS)",
       description:
-        "Solicita desactivar Integridad de memoria (HVCI). Si se aplica, elimina una capa de protección del kernel; otras funciones VBS pueden seguir activas. El efecto en el rendimiento depende del hardware y la carga de trabajo. Las directivas del sistema o el bloqueo UEFI pueden impedir el cambio. Reinicia y comprueba el estado en Seguridad de Windows (HKLM, requiere permisos de administrador).",
+        "Solicita desactivar Integridad de memoria (HVCI). Si se aplica, elimina una capa de protección del kernel; otras funciones VBS pueden seguir activas. El efecto en el rendimiento depende del hardware y la carga de trabajo. Las directivas del sistema o el bloqueo UEFI pueden impedir el cambio. Reinicia y comprueba el estado en Seguridad de Windows.",
     },
     disable_typing_personalization: {
       name: "Impedir que Windows aprenda cómo escribes",
       description:
-        "Windows crea un diccionario personal a partir de lo que escribes con el teclado y a mano —también en gestores de contraseñas, chats y cuadros de búsqueda— y lo sincroniza con tu cuenta de Microsoft para mejorar sus sugerencias. Esto desactiva tanto la recopilación de texto como la de escritura a mano (HKCU, no requiere elevación).",
+        "Windows crea un diccionario personal a partir de lo que escribes con el teclado y a mano —también en gestores de contraseñas, chats y cuadros de búsqueda— y lo sincroniza con tu cuenta de Microsoft para mejorar sus sugerencias. Esto desactiva tanto la recopilación de texto como la de escritura a mano.",
     },
     classic_context_menu: {
       name: "Recuperar el menú contextual completo",
       description:
-        "Windows 11 esconde la mayor parte del menú del botón derecho tras «Mostrar más opciones», convirtiendo un clic en dos para cosas que haces todo el día. Esto restaura el menú completo de Windows 10 en todas partes, en el Explorador y en el escritorio. El Explorador se reinicia para aplicarlo, así que las ventanas abiertas parpadearán una vez (HKCU, no requiere elevación).",
+        "Windows 11 esconde la mayor parte del menú del botón derecho tras «Mostrar más opciones», convirtiendo un clic en dos para cosas que haces todo el día. Esto restaura el menú completo de Windows 10 en todas partes, en el Explorador y en el escritorio. El Explorador se reinicia para aplicarlo, así que las ventanas abiertas parpadearán una vez.",
     },
     disable_transparency: {
       name: "Desactivar los efectos de transparencia",
       description:
-        "Desactiva los efectos de desenfoque/acrílico de la barra de tareas y los menús. Un ahorro de GPU pequeño pero real, que hace más fluidos los equipos antiguos o con gráficos integrados (HKCU, no requiere elevación).",
+        "Desactiva los efectos de desenfoque/acrílico de la barra de tareas y los menús. Un ahorro de GPU pequeño pero real, que hace más fluidos los equipos antiguos o con gráficos integrados.",
     },
     dark_mode: {
       name: "Modo oscuro",
-      description: "Activa el tema oscuro para apps y sistema (HKCU, sin elevación requerida).",
+      description: "Activa el tema oscuro para apps y sistema.",
     },
     show_hidden_files: {
       name: "Mostrar archivos ocultos",
-      description:
-        "Muestra archivos y carpetas ocultos en el Explorador de archivos (HKCU, sin elevación requerida).",
+      description: "Muestra archivos y carpetas ocultos en el Explorador de archivos.",
     },
     priority_separation: {
       name: "Optimizar prioridad del procesador",
       description:
-        "Ajusta Win32PrioritySeparation (0x26) para dar a la aplicación en primer plano cuantos de CPU cortos y variables con prioridad 3x — el valor clásico de capacidad de respuesta para escritorio/juegos (HKLM, requiere privilegios de administrador).",
+        "Ajusta Win32PrioritySeparation (0x26) para dar a la aplicación en primer plano cuantos de CPU cortos y variables con prioridad 3x — el valor clásico de capacidad de respuesta para escritorio/juegos.",
     },
     disable_game_dvr: {
       name: "Desactivar Xbox Game Bar / Game DVR",
       description:
-        "Desactiva la grabación en segundo plano de Xbox Game Bar, que consume CPU/GPU durante el juego (HKCU, sin elevación requerida).",
+        "Desactiva la grabación en segundo plano de Xbox Game Bar, que consume CPU/GPU durante el juego.",
     },
     disable_telemetry_tasks: {
       name: "Reducir la recopilación de datos de diagnóstico",
-      description:
-        "Establece el nivel de diagnóstico de Windows al mínimo permitido (HKLM, requiere privilegios de administrador).",
+      description: "Establece el nivel de diagnóstico de Windows al mínimo permitido.",
     },
     reset_advertising_id: {
       name: "Desactivar ID de publicidad",
-      description:
-        "Impide que las apps usen tu ID de publicidad para elaborar perfiles (HKCU, sin elevación requerida).",
+      description: "Impide que las apps usen tu ID de publicidad para elaborar perfiles.",
     },
     disable_location_tracking: {
       name: "Desactivar seguimiento de ubicación",
       description:
-        "Bloquea el acceso a la ubicación para todas las apps mediante directiva del sistema (HKLM, requiere privilegios de administrador).",
+        "Bloquea el acceso a la ubicación para todas las apps mediante directiva del sistema.",
     },
     disable_bing_search: {
       name: "Desactivar la búsqueda de Bing en el menú Inicio",
-      description:
-        "Impide que tus búsquedas del menú Inicio se envíen a Bing (HKCU, sin elevación requerida).",
+      description: "Impide que tus búsquedas del menú Inicio se envíen a Bing.",
     },
     power_plan_performance: {
       name: "Alto rendimiento (plan de energía)",
@@ -6602,12 +6582,12 @@ const es: Strings = {
     hardware_gpu_scheduling: {
       name: "Programación de GPU acelerada por hardware",
       description:
-        "Solicita la programación de GPU acelerada por hardware (HAGS). Requiere GPU, controlador y versión de Windows compatibles. El rendimiento y la latencia pueden mejorar, empeorar o no cambiar según el juego. Reinicia y comprueba la disponibilidad en la configuración de gráficos de Windows (HKLM, requiere permisos de administrador).",
+        "Solicita la programación de GPU acelerada por hardware (HAGS). Requiere GPU, controlador y versión de Windows compatibles. El rendimiento y la latencia pueden mejorar, empeorar o no cambiar según el juego. Reinicia y comprueba la disponibilidad en la configuración de gráficos de Windows.",
     },
     reduce_input_lag: {
       name: "Reducir el retardo de entrada (ratón)",
       description:
-        'Desactiva la aceleración del puntero ("Mejorar precisión del puntero") para un movimiento del ratón 1:1, sin retardo añadido por el sistema (HKCU, sin elevación requerida).',
+        'Desactiva la aceleración del puntero ("Mejorar precisión del puntero") para un movimiento del ratón 1:1, sin retardo añadido por el sistema.',
     },
     turbo_boost: {
       name: "Turbo Boost del procesador",
@@ -6617,37 +6597,37 @@ const es: Strings = {
     network_throttling_index: {
       name: "Desactivar la limitación de red multimedia",
       description:
-        "Elimina el límite que Windows impone al tráfico de red mientras usas apps multimedia/juegos, útil para reducir microlags online (HKLM, requiere privilegios de administrador).",
+        "Elimina el límite que Windows impone al tráfico de red mientras usas apps multimedia/juegos, útil para reducir microlags online.",
     },
     system_responsiveness: {
       name: "Establecer la reserva de CPU en segundo plano de MMCSS",
       description:
-        "Escribe SystemResponsiveness=0, que Windows trata como 20 %. No elimina la cuota de CPU para tareas de menor prioridad ni prioriza todas las apps en primer plano (HKLM, requiere privilegios de administrador).",
+        "Escribe SystemResponsiveness=0, que Windows trata como 20 %. No elimina la cuota de CPU para tareas de menor prioridad ni prioriza todas las apps en primer plano.",
     },
     games_task_priority: {
       name: "Establecer la categoría MMCSS Games",
       description:
-        "Establece la categoría Games en High para los hilos registrados con MMCSS; High trata Priority como 2. Los valores GPU Priority y SFIO Priority también escritos no se utilizan. No prioriza todos los procesos de juego (HKLM, requiere privilegios de administrador).",
+        "Establece la categoría Games en High para los hilos registrados con MMCSS; High trata Priority como 2. Los valores GPU Priority y SFIO Priority también escritos no se utilizan. No prioriza todos los procesos de juego.",
     },
     reduce_keyboard_delay: {
       name: "Reducir el retardo de entrada (teclado)",
       description:
-        "Reduce a cero el retardo antes de que una tecla mantenida empiece a repetirse y maximiza su velocidad de repetición, para una respuesta más inmediata en el juego (HKCU, no requiere elevación).",
+        "Reduce a cero el retardo antes de que una tecla mantenida empiece a repetirse y maximiza su velocidad de repetición, para una respuesta más inmediata en el juego.",
     },
     keep_kernel_in_ram: {
       name: "Mantener el kernel y los controladores en la RAM",
       description:
-        "Windows puede pasar al disco partes del kernel y del código de los controladores incluso cuando sobra memoria, y volver a leerlas es una pausa que notas como un tirón. Esto los mantiene en memoria. Merece la pena si te sobra RAM; en un PC con poca memoria déjalo desactivado (HKLM, requiere permisos de administrador).",
+        "Windows puede pasar al disco partes del kernel y del código de los controladores incluso cuando sobra memoria, y volver a leerlas es una pausa que notas como un tirón. Esto los mantiene en memoria. Merece la pena si te sobra RAM; en un PC con poca memoria déjalo desactivado.",
     },
     auto_end_frozen_tasks: {
       name: "Que una app colgada no bloquee el apagado",
       description:
-        'Cuando una aplicación deja de responder durante el apagado, Windows espera y muestra la pantalla "Esta aplicación impide el apagado" hasta que alguien hace clic. Esto cierra solo las aplicaciones que no responden, para que un programa colgado no deje el equipo encendido (HKCU, sin elevación).',
+        'Cuando una aplicación deja de responder durante el apagado, Windows espera y muestra la pantalla "Esta aplicación impide el apagado" hasta que alguien hace clic. Esto cierra solo las aplicaciones que no responden, para que un programa colgado no deje el equipo encendido.',
     },
     instant_folder_loading: {
       name: "Abrir cada carpeta al instante",
       description:
-        "El Explorador inspecciona el contenido de una carpeta para adivinar si es Imágenes, Música o Documentos, y una carpeta con miles de archivos multimedia puede quedarse bloqueada varios segundos mientras decide. Esto fija todas las carpetas al diseño general, para que se abran de inmediato (HKCU, sin elevación).",
+        "El Explorador inspecciona el contenido de una carpeta para adivinar si es Imágenes, Música o Documentos, y una carpeta con miles de archivos multimedia puede quedarse bloqueada varios segundos mientras decide. Esto fija todas las carpetas al diseño general, para que se abran de inmediato.",
     },
     tcp_congestion_bbr: {
       name: "Ping estable aunque la línea esté ocupada (BBR2)",
@@ -6657,32 +6637,31 @@ const es: Strings = {
     taskbar_align_left: {
       name: "Alinear la barra de tareas a la izquierda",
       description:
-        "Vuelve a alinear los iconos de la barra de tareas a la izquierda (estilo Windows 10) en vez de al centro (HKCU, no requiere elevación).",
+        "Vuelve a alinear los iconos de la barra de tareas a la izquierda (estilo Windows 10) en vez de al centro.",
     },
     hide_taskbar_chat: {
       name: "Ocultar Chat/Teams de la barra de tareas",
-      description:
-        "Elimina el icono de Chat (Microsoft Teams) de la barra de tareas (HKCU, no requiere elevación).",
+      description: "Elimina el icono de Chat (Microsoft Teams) de la barra de tareas.",
     },
     disable_start_suggestions: {
       name: "Desactivar sugerencias y apps recomendadas en el menú Inicio",
       description:
-        "Evita que Windows muestre apps recomendadas, anuncios y sugerencias en el menú Inicio (HKCU, no requiere elevación).",
+        "Evita que Windows muestre apps recomendadas, anuncios y sugerencias en el menú Inicio.",
     },
     disable_activity_history: {
       name: "Desactivar el historial de actividad (Windows Timeline)",
       description:
-        "Evita que Windows registre, guarde y envíe a Microsoft el historial de tus apps y documentos usados, mediante una política del sistema (HKLM, requiere privilegios de administrador).",
+        "Evita que Windows registre, guarde y envíe a Microsoft el historial de tus apps y documentos usados, mediante una política del sistema.",
     },
     hide_taskbar_search: {
       name: "Ocultar el cuadro de búsqueda de la barra de tareas",
       description:
-        "Elimina el cuadro/icono de búsqueda de la barra de tareas, para una barra más limpia (la búsqueda sigue disponible desde la tecla Windows) (HKCU, no requiere elevación).",
+        "Elimina el cuadro/icono de búsqueda de la barra de tareas, para una barra más limpia (la búsqueda sigue disponible desde la tecla Windows).",
     },
     disable_fullscreen_optimizations_global: {
       name: "Desactivar las optimizaciones de pantalla completa globalmente",
       description:
-        "Obliga a DXGI a respetar el verdadero modo de pantalla completa exclusiva en lugar de la simulación de Windows, reduciendo microcortes y latencia de entrada en muchos juegos más antiguos (HKCU, no requiere elevación).",
+        "Obliga a DXGI a respetar el verdadero modo de pantalla completa exclusiva en lugar de la simulación de Windows, reduciendo microcortes y latencia de entrada en muchos juegos más antiguos.",
     },
     disable_windows_search_service: {
       name: "Desactivar el servicio de indexación (Windows Search)",
@@ -6794,7 +6773,7 @@ const de: Strings = {
     ledger: "Änderungsverlauf",
   },
   healthPanel: {
-    title: "PC-Zustand",
+    title: "Gesundheitswert",
     subtitle: "Ein erklärbarer Wert: jede Zahl zeigt die Fakten, aus denen sie berechnet wurde.",
     why: "Warum {score}?",
     refresh: "Neu berechnen",
@@ -7279,8 +7258,8 @@ const de: Strings = {
     title: "Turbo Boost",
     subtitle:
       "Passt den CPU-Boost-Modus und den minimalen Prozessorzustand an. Stromverbrauch und Wärme können steigen; die Ergebnisse hängen von der Arbeitslast ab.",
-    startLabel: "START",
-    stopLabel: "STOP",
+    startLabel: "Starten",
+    stopLabel: "Stoppen",
     activating: "Turbo wird aktiviert...",
     deactivating: "Wird wiederhergestellt...",
     active: "Turbo aktiv",
@@ -7852,82 +7831,82 @@ const de: Strings = {
     disable_startup_delay: {
       name: "Verzögerung der Autostart-Programme entfernen",
       description:
-        "Windows wartet nach der Anmeldung absichtlich etwa 10 Sekunden, bevor Autostart-Programme gestartet werden. Diese Option entfernt die Wartezeit (HKCU, keine Erhöhung erforderlich).",
+        "Windows wartet nach der Anmeldung absichtlich etwa 10 Sekunden, bevor Autostart-Programme gestartet werden. Diese Option entfernt die Wartezeit.",
     },
     menu_show_delay: {
       name: "Sofortige Menüreaktion",
       description:
-        "Entfernt die Verzögerung beim Öffnen von Menüs, wodurch sich der gesamte Desktop spürbar flotter anfühlt (HKCU, keine Erhöhung erforderlich).",
+        "Entfernt die Verzögerung beim Öffnen von Menüs, wodurch sich der gesamte Desktop spürbar flotter anfühlt.",
     },
     disable_power_throttling: {
       name: "CPU-Energiedrosselung deaktivieren",
       description:
-        "Verhindert, dass Windows Hintergrundprozesse zum Energiesparen ausbremst - nützlich bei Notebooks, wo das bei langen Sitzungen zu Rucklern führt (HKLM, erfordert Administratorrechte).",
+        "Verhindert, dass Windows Hintergrundprozesse zum Energiesparen ausbremst - nützlich bei Notebooks, wo das bei langen Sitzungen zu Rucklern führt.",
     },
     games_gpu_priority: {
       name: "Veralteten GPU-Priority-Wert für Spiele setzen",
       description:
-        "Schreibt den GPU-Priority-Wert für Spiele, den Microsoft als ungenutzt dokumentiert. Eine höhere GPU-Priorität oder Bildrate ist nicht zu erwarten (HKLM, erfordert Administratorrechte).",
+        "Schreibt den GPU-Priority-Wert für Spiele, den Microsoft als ungenutzt dokumentiert. Eine höhere GPU-Priorität oder Bildrate ist nicht zu erwarten.",
     },
     disable_tailored_experiences: {
       name: "Personalisierte Erlebnisse deaktivieren",
       description:
-        "Verhindert, dass Windows deine Diagnosedaten nutzt, um Werbung, Tipps und Empfehlungen zu personalisieren (HKCU, keine Erhöhung erforderlich).",
+        "Verhindert, dass Windows deine Diagnosedaten nutzt, um Werbung, Tipps und Empfehlungen zu personalisieren.",
     },
     disable_app_launch_tracking: {
       name: "Nicht mehr erfassen, welche Apps du öffnest",
       description:
-        "Windows protokolliert, wie oft du jedes Programm startest, um Startmenü-Ergebnisse zu sortieren. Diese Option schaltet das ab (HKCU, keine Erhöhung erforderlich).",
+        "Windows protokolliert, wie oft du jedes Programm startest, um Startmenü-Ergebnisse zu sortieren. Diese Option schaltet das ab.",
     },
     disable_feedback_requests: {
       name: "Windows-Feedback-Abfragen unterbinden",
       description:
-        'Verhindert, dass Windows dich mit Umfragen wie „Wie wahrscheinlich ist es, dass du ... weiterempfiehlst" unterbricht (HKCU, keine Erhöhung erforderlich).',
+        'Verhindert, dass Windows dich mit Umfragen wie „Wie wahrscheinlich ist es, dass du ... weiterempfiehlst" unterbricht.',
     },
     disable_cortana: {
       name: "Cortana deaktivieren",
       description:
-        "Schaltet Cortana per Systemrichtlinie ab und gibt die im Hintergrund reservierten Ressourcen frei (HKLM, erfordert Administratorrechte).",
+        "Schaltet Cortana per Systemrichtlinie ab und gibt die im Hintergrund reservierten Ressourcen frei.",
     },
     show_file_extensions: {
       name: "Dateiendungen immer anzeigen",
       description:
-        'Zeigt die echte Endung jeder Datei. Allein aus Sicherheitsgründen sinnvoll: Dateien wie „rechnung.pdf.exe" werden so sichtbar, die Windows sonst verbirgt (HKCU, keine Erhöhung erforderlich).',
+        'Zeigt die echte Endung jeder Datei. Allein aus Sicherheitsgründen sinnvoll: Dateien wie „rechnung.pdf.exe" werden so sichtbar, die Windows sonst verbirgt.',
     },
     hide_taskbar_widgets: {
       name: "Widgets aus der Taskleiste ausblenden",
       description:
-        "Entfernt die Widgets-Schaltfläche (Wetter/Nachrichten), die auch dann Inhalte im Hintergrund lädt, wenn du sie nie öffnest (HKCU, keine Erhöhung erforderlich).",
+        "Entfernt die Widgets-Schaltfläche (Wetter/Nachrichten), die auch dann Inhalte im Hintergrund lädt, wenn du sie nie öffnest.",
     },
     network_latency: {
       name: "TCP-Bestätigungen und Paketbündelung",
       description:
-        "Setzt TcpAckFrequency und TCPNoDelay für den Adapter, über den die Route ins Internet läuft, auf 1. Dies betrifft TCP; UDP-Verkehr bleibt unverändert. Die Unterstützung hängt von Windows und den Anwendungen ab. Eine niedrigere Latenz in Spielen ist nicht garantiert (HKLM, Administratorrechte erforderlich).",
+        "Setzt TcpAckFrequency und TCPNoDelay für den Adapter, über den die Route ins Internet läuft, auf 1. Dies betrifft TCP; UDP-Verkehr bleibt unverändert. Die Unterstützung hängt von Windows und den Anwendungen ab. Eine niedrigere Latenz in Spielen ist nicht garantiert.",
     },
     disable_window_animations: {
       name: "Sofortige Fensteranimationen",
       description:
-        "Entfernt die Animation, die Windows bei jedem Oeffnen, Schliessen oder Minimieren eines Fensters abspielt. Diese Animation ist reine Wartezeit: Ohne sie reagiert der Desktop im Moment des Klicks, und die dahinterliegende GPU-Arbeit entfaellt (HKCU, keine Erhoehung erforderlich).",
+        "Entfernt die Animation, die Windows bei jedem Oeffnen, Schliessen oder Minimieren eines Fensters abspielt. Diese Animation ist reine Wartezeit: Ohne sie reagiert der Desktop im Moment des Klicks, und die dahinterliegende GPU-Arbeit entfaellt.",
     },
     disable_drag_full_windows: {
       name: "Leichteres Verschieben von Fenstern",
       description:
-        "Zeichnet beim Verschieben eines Fensters nur dessen Umriss, statt den gesamten Inhalt in jedem Einzelbild neu zu zeichnen. Auf einer schnellen GPU kaum spuerbar, auf integrierter Grafik oder einem aelteren Rechner deutlich (HKCU, keine Erhoehung erforderlich).",
+        "Zeichnet beim Verschieben eines Fensters nur dessen Umriss, statt den gesamten Inhalt in jedem Einzelbild neu zu zeichnen. Auf einer schnellen GPU kaum spuerbar, auf integrierter Grafik oder einem aelteren Rechner deutlich.",
     },
     mouse_hover_delay: {
       name: "Sofortige Reaktion beim Ueberfahren mit der Maus",
       description:
-        "Windows wartet 400 ms, bevor es auf den ruhenden Mauszeiger reagiert - Taskleistenvorschauen, QuickInfos, Menues. Diese Wartezeit sinkt auf nahezu null, die Oberflaeche folgt der Maus, statt ihr hinterherzuhinken (HKCU, keine Erhoehung erforderlich).",
+        "Windows wartet 400 ms, bevor es auf den ruhenden Mauszeiger reagiert - Taskleistenvorschauen, QuickInfos, Menues. Diese Wartezeit sinkt auf nahezu null, die Oberflaeche folgt der Maus, statt ihr hinterherzuhinken.",
     },
     disable_background_apps: {
       name: "Apps im Hintergrund stoppen",
       description:
-        "Verhindert, dass Store-Apps laufen, sich aktualisieren und das Netzwerk abfragen, waehrend Sie sie nicht nutzen. Das sind echte CPU-, RAM- und Akkuressourcen fuer Apps, die Sie nie geoeffnet haben (HKCU, keine Erhoehung erforderlich).",
+        "Verhindert, dass Store-Apps laufen, sich aktualisieren und das Netzwerk abfragen, waehrend Sie sie nicht nutzen. Das sind echte CPU-, RAM- und Akkuressourcen fuer Apps, die Sie nie geoeffnet haben.",
     },
     disable_delivery_optimization: {
       name: "Windows-Updates nicht mehr mit Fremden teilen",
       description:
-        "Windows laedt heruntergeladene Updatedateien standardmaessig ueber Ihre Verbindung zu anderen PCs hoch. Dies beschraenkt die Uebermittlungsoptimierung auf Ihren eigenen Rechner, damit dieser Upload nicht mitten im Spiel Bandbreite frisst (HKLM, erfordert Administratorrechte).",
+        "Windows laedt heruntergeladene Updatedateien standardmaessig ueber Ihre Verbindung zu anderen PCs hoch. Dies beschraenkt die Uebermittlungsoptimierung auf Ihren eigenen Rechner, damit dieser Upload nicht mitten im Spiel Bandbreite frisst.",
     },
     disable_copilot: {
       name: "Alte Copilot-Richtlinie (nur Wiederherstellung)",
@@ -7937,27 +7916,27 @@ const de: Strings = {
     disable_suggested_apps: {
       name: "Verhindern, dass Windows selbst Apps installiert",
       description:
-        "Windows installiert unaufgefordert „vorgeschlagene“ Apps und Spiele in Ihr Startmenü — bei der Installation und erneut nach großen Updates. Dies schaltet das ab, sodass nichts mehr auf Ihrem Rechner landet, was Sie nicht selbst ausgewählt haben (HKCU, keine Erhöhung erforderlich).",
+        "Windows installiert unaufgefordert „vorgeschlagene“ Apps und Spiele in Ihr Startmenü — bei der Installation und erneut nach großen Updates. Dies schaltet das ab, sodass nichts mehr auf Ihrem Rechner landet, was Sie nicht selbst ausgewählt haben.",
     },
     disable_mouse_acceleration: {
       name: "Mausbeschleunigung deaktivieren",
       description:
-        "Schaltet „Zeigerbeschleunigung verbessern“ ab, wodurch der Zeiger bei schnellen Bewegungen weiter läuft. Genau diese variable Reaktion will man beim Zielen nicht: Dieselbe Handbewegung muss immer dieselbe Strecke auf dem Bildschirm zurücklegen (HKCU, keine Erhöhung erforderlich).",
+        "Schaltet „Zeigerbeschleunigung verbessern“ ab, wodurch der Zeiger bei schnellen Bewegungen weiter läuft. Genau diese variable Reaktion will man beim Zielen nicht: Dieselbe Handbewegung muss immer dieselbe Strecke auf dem Bildschirm zurücklegen.",
     },
     disable_sticky_keys_prompt: {
       name: "Die Einrastfunktion-Meldung abschalten",
       description:
-        "Fünfmal Umschalt öffnet den Einrastfunktion-Dialog — im Spiel bedeutet das ein Verlassen des Vollbilds im ungünstigsten Moment, meist mitten im Kampf. Dies deaktiviert das Tastenkürzel und seine Meldung; die Einrastfunktion selbst bleibt in den Einstellungen verfügbar (HKCU, keine Erhöhung erforderlich).",
+        "Fünfmal Umschalt öffnet den Einrastfunktion-Dialog — im Spiel bedeutet das ein Verlassen des Vollbilds im ungünstigsten Moment, meist mitten im Kampf. Dies deaktiviert das Tastenkürzel und seine Meldung; die Einrastfunktion selbst bleibt in den Einstellungen verfügbar.",
     },
     disable_recall: {
       name: "Recall deaktivieren (KI-Bildschirmaufnahmen)",
       description:
-        "Recall nimmt alle paar Sekunden ein Bild Ihres Bildschirms auf und baut daraus einen KI-durchsuchbaren Verlauf von allem, was Sie angesehen haben — Passwörter und private Nachrichten eingeschlossen, denn es erfasst alles, was auf dem Bildschirm steht. Dies setzt die Systemrichtlinie, die jede Analyse und Speicherung unterbindet (HKLM, erfordert Administratorrechte).",
+        "Recall nimmt alle paar Sekunden ein Bild Ihres Bildschirms auf und baut daraus einen KI-durchsuchbaren Verlauf von allem, was Sie angesehen haben — Passwörter und private Nachrichten eingeschlossen, denn es erfasst alles, was auf dem Bildschirm steht. Dies setzt die Systemrichtlinie, die jede Analyse und Speicherung unterbindet.",
     },
     global_timer_resolution: {
       name: "Globale Timer-Auflösung",
       description:
-        "Setzt den Registrierungswert GlobalTimerResolutionRequests auf 1. Dies fordert keine bestimmte Timerauflösung an und prüft sie auch nicht. Das Verhalten hängt von der Windows-Version ab; niedrigere Latenz oder höhere FPS sind nicht garantiert. Neustart erforderlich (HKLM, Administratorrechte erforderlich).",
+        "Setzt den Registrierungswert GlobalTimerResolutionRequests auf 1. Dies fordert keine bestimmte Timerauflösung an und prüft sie auch nicht. Das Verhalten hängt von der Windows-Version ab; niedrigere Latenz oder höhere FPS sind nicht garantiert. Neustart erforderlich.",
     },
     disable_core_parking: {
       name: "Core-Parking deaktivieren",
@@ -7967,62 +7946,56 @@ const de: Strings = {
     disable_memory_integrity: {
       name: "Speicherintegrität (VBS) deaktivieren",
       description:
-        "Fordert die Deaktivierung der Speicherintegrität (HVCI) an. Wird sie umgesetzt, entfällt eine Schutzschicht des Kernels; andere VBS-Funktionen können aktiv bleiben. Die Auswirkungen auf die Leistung hängen von Hardware und Arbeitslast ab. Systemrichtlinien oder eine UEFI-Sperre können die Änderung verhindern. Starte neu und prüfe den Status in Windows-Sicherheit (HKLM, Administratorrechte erforderlich).",
+        "Fordert die Deaktivierung der Speicherintegrität (HVCI) an. Wird sie umgesetzt, entfällt eine Schutzschicht des Kernels; andere VBS-Funktionen können aktiv bleiben. Die Auswirkungen auf die Leistung hängen von Hardware und Arbeitslast ab. Systemrichtlinien oder eine UEFI-Sperre können die Änderung verhindern. Starte neu und prüfe den Status in Windows-Sicherheit.",
     },
     disable_typing_personalization: {
       name: "Verhindern, dass Windows Ihren Schreibstil lernt",
       description:
-        "Windows baut aus dem, was Sie tippen und handschriftlich eingeben, ein persönliches Wörterbuch auf — auch in Passwort-Managern, Chatfenstern und Suchfeldern — und synchronisiert es mit Ihrem Microsoft-Konto, um seine Vorschläge zu verbessern. Dies schaltet sowohl die Text- als auch die Handschrifterfassung ab (HKCU, keine Erhöhung erforderlich).",
+        "Windows baut aus dem, was Sie tippen und handschriftlich eingeben, ein persönliches Wörterbuch auf — auch in Passwort-Managern, Chatfenstern und Suchfeldern — und synchronisiert es mit Ihrem Microsoft-Konto, um seine Vorschläge zu verbessern. Dies schaltet sowohl die Text- als auch die Handschrifterfassung ab.",
     },
     classic_context_menu: {
       name: "Das vollständige Rechtsklick-Menü zurückholen",
       description:
-        "Windows 11 versteckt den größten Teil des Kontextmenüs hinter „Weitere Optionen anzeigen“ und macht aus einem Klick zwei — bei Dingen, die man den ganzen Tag tut. Dies stellt das vollständige Windows-10-Menü überall wieder her, im Explorer und auf dem Desktop. Der Explorer startet zum Anwenden neu, offene Fenster flackern daher einmal (HKCU, keine Erhöhung erforderlich).",
+        "Windows 11 versteckt den größten Teil des Kontextmenüs hinter „Weitere Optionen anzeigen“ und macht aus einem Klick zwei — bei Dingen, die man den ganzen Tag tut. Dies stellt das vollständige Windows-10-Menü überall wieder her, im Explorer und auf dem Desktop. Der Explorer startet zum Anwenden neu, offene Fenster flackern daher einmal.",
     },
     disable_transparency: {
       name: "Transparenzeffekte deaktivieren",
       description:
-        "Schaltet die Weichzeichner-/Acryleffekte in Taskleiste und Menüs ab. Eine kleine, aber echte GPU-Ersparnis, die ältere Rechner oder Systeme mit integrierter Grafik flüssiger macht (HKCU, keine Erhöhung erforderlich).",
+        "Schaltet die Weichzeichner-/Acryleffekte in Taskleiste und Menüs ab. Eine kleine, aber echte GPU-Ersparnis, die ältere Rechner oder Systeme mit integrierter Grafik flüssiger macht.",
     },
     dark_mode: {
       name: "Dunkler Modus",
-      description:
-        "Aktiviert das dunkle Design für Apps und System (HKCU, keine Rechteerhöhung erforderlich).",
+      description: "Aktiviert das dunkle Design für Apps und System.",
     },
     show_hidden_files: {
       name: "Versteckte Dateien anzeigen",
-      description:
-        "Zeigt versteckte Dateien und Ordner im Explorer an (HKCU, keine Rechteerhöhung erforderlich).",
+      description: "Zeigt versteckte Dateien und Ordner im Explorer an.",
     },
     priority_separation: {
       name: "CPU-Priorität optimieren",
       description:
-        "Stellt Win32PrioritySeparation (0x26) so ein, dass die Vordergrund-App kurze, variable CPU-Zeitscheiben mit 3x-Priorität erhält — der klassische Wert für Desktop-/Gaming-Reaktionsschnelligkeit (HKLM, Administratorrechte erforderlich).",
+        "Stellt Win32PrioritySeparation (0x26) so ein, dass die Vordergrund-App kurze, variable CPU-Zeitscheiben mit 3x-Priorität erhält — der klassische Wert für Desktop-/Gaming-Reaktionsschnelligkeit.",
     },
     disable_game_dvr: {
       name: "Xbox Game Bar / Game DVR deaktivieren",
       description:
-        "Deaktiviert die Hintergrundaufnahme der Xbox Game Bar, die beim Spielen CPU/GPU beansprucht (HKCU, keine Rechteerhöhung erforderlich).",
+        "Deaktiviert die Hintergrundaufnahme der Xbox Game Bar, die beim Spielen CPU/GPU beansprucht.",
     },
     disable_telemetry_tasks: {
       name: "Diagnosedatenerfassung reduzieren",
-      description:
-        "Setzt die Windows-Diagnosestufe auf das minimal zulässige Niveau (HKLM, Administratorrechte erforderlich).",
+      description: "Setzt die Windows-Diagnosestufe auf das minimal zulässige Niveau.",
     },
     reset_advertising_id: {
       name: "Werbe-ID deaktivieren",
-      description:
-        "Verhindert, dass Apps deine Werbe-ID zur Profilbildung nutzen (HKCU, keine Rechteerhöhung erforderlich).",
+      description: "Verhindert, dass Apps deine Werbe-ID zur Profilbildung nutzen.",
     },
     disable_location_tracking: {
       name: "Standortverfolgung deaktivieren",
-      description:
-        "Blockiert den Standortzugriff für alle Apps per Systemrichtlinie (HKLM, Administratorrechte erforderlich).",
+      description: "Blockiert den Standortzugriff für alle Apps per Systemrichtlinie.",
     },
     disable_bing_search: {
       name: "Bing-Suche im Startmenü deaktivieren",
-      description:
-        "Verhindert, dass deine Suchanfragen im Startmenü an Bing gesendet werden (HKCU, keine Rechteerhöhung erforderlich).",
+      description: "Verhindert, dass deine Suchanfragen im Startmenü an Bing gesendet werden.",
     },
     power_plan_performance: {
       name: "Hohe Leistung (Energiesparplan)",
@@ -8042,12 +8015,12 @@ const de: Strings = {
     hardware_gpu_scheduling: {
       name: "Hardwarebeschleunigte GPU-Planung",
       description:
-        "Fordert hardwarebeschleunigte GPU-Planung (HAGS) an. Erfordert eine kompatible GPU, einen passenden Treiber und eine unterstützte Windows-Version. Leistung und Latenz können sich je nach Spiel verbessern, verschlechtern oder unverändert bleiben. Starte neu und prüfe die Verfügbarkeit in den Windows-Grafikeinstellungen (HKLM, Administratorrechte erforderlich).",
+        "Fordert hardwarebeschleunigte GPU-Planung (HAGS) an. Erfordert eine kompatible GPU, einen passenden Treiber und eine unterstützte Windows-Version. Leistung und Latenz können sich je nach Spiel verbessern, verschlechtern oder unverändert bleiben. Starte neu und prüfe die Verfügbarkeit in den Windows-Grafikeinstellungen.",
     },
     reduce_input_lag: {
       name: "Eingabeverzögerung reduzieren (Maus)",
       description:
-        'Deaktiviert die Zeigerbeschleunigung („Mauspräzision verbessern") für eine 1:1-Mausbewegung ohne systemseitige Verzögerung (HKCU, keine Rechteerhöhung erforderlich).',
+        'Deaktiviert die Zeigerbeschleunigung („Mauspräzision verbessern") für eine 1:1-Mausbewegung ohne systemseitige Verzögerung.',
     },
     turbo_boost: {
       name: "Prozessor-Turbo-Boost",
@@ -8057,37 +8030,37 @@ const de: Strings = {
     network_throttling_index: {
       name: "Netzwerk-Drosselung für Multimedia deaktivieren",
       description:
-        "Entfernt die Begrenzung, die Windows dem Netzwerkverkehr bei Multimedia-/Spiele-Apps auferlegt — nützlich, um Online-Mikroruckler zu reduzieren (HKLM, Administratorrechte erforderlich).",
+        "Entfernt die Begrenzung, die Windows dem Netzwerkverkehr bei Multimedia-/Spiele-Apps auferlegt — nützlich, um Online-Mikroruckler zu reduzieren.",
     },
     system_responsiveness: {
       name: "MMCSS-CPU-Reserve für Hintergrundaufgaben setzen",
       description:
-        "Schreibt SystemResponsiveness=0, was Windows als 20 % behandelt. Das beseitigt den CPU-Anteil für Aufgaben mit niedrigerer Priorität nicht und priorisiert nicht jede Vordergrund-App (HKLM, Administratorrechte erforderlich).",
+        "Schreibt SystemResponsiveness=0, was Windows als 20 % behandelt. Das beseitigt den CPU-Anteil für Aufgaben mit niedrigerer Priorität nicht und priorisiert nicht jede Vordergrund-App.",
     },
     games_task_priority: {
       name: "MMCSS-Kategorie Games setzen",
       description:
-        "Setzt die Kategorie Games für bei MMCSS registrierte Threads auf High; bei High gilt Priority als 2. Die ebenfalls geschriebenen GPU- und SFIO-Priority-Werte werden nicht verwendet. Das priorisiert nicht jeden Spielprozess (HKLM, Administratorrechte erforderlich).",
+        "Setzt die Kategorie Games für bei MMCSS registrierte Threads auf High; bei High gilt Priority als 2. Die ebenfalls geschriebenen GPU- und SFIO-Priority-Werte werden nicht verwendet. Das priorisiert nicht jeden Spielprozess.",
     },
     reduce_keyboard_delay: {
       name: "Eingabeverzögerung reduzieren (Tastatur)",
       description:
-        "Setzt die Verzögerung, bevor eine gehaltene Taste zu wiederholen beginnt, auf null und maximiert die Wiederholrate — für eine unmittelbarere Reaktion beim Spielen (HKCU, keine Elevation erforderlich).",
+        "Setzt die Verzögerung, bevor eine gehaltene Taste zu wiederholen beginnt, auf null und maximiert die Wiederholrate — für eine unmittelbarere Reaktion beim Spielen.",
     },
     keep_kernel_in_ram: {
       name: "Kernel und Treiber im RAM halten",
       description:
-        "Windows kann Teile des Kernels und des Treibercodes selbst bei reichlich Speicher auf die Festplatte auslagern, und sie zurückzulesen ist eine Pause, die sich als Ruckler anfühlt. Dies hält sie resident. Lohnt sich, wenn RAM übrig ist; auf einem PC mit wenig Speicher besser aus lassen (HKLM, erfordert Administratorrechte).",
+        "Windows kann Teile des Kernels und des Treibercodes selbst bei reichlich Speicher auf die Festplatte auslagern, und sie zurückzulesen ist eine Pause, die sich als Ruckler anfühlt. Dies hält sie resident. Lohnt sich, wenn RAM übrig ist; auf einem PC mit wenig Speicher besser aus lassen.",
     },
     auto_end_frozen_tasks: {
       name: "Eine eingefrorene App soll das Herunterfahren nicht blockieren",
       description:
-        'Wenn eine Anwendung beim Herunterfahren nicht mehr reagiert, wartet Windows und zeigt den Bildschirm "Diese App verhindert das Herunterfahren", bis jemand klickt. Dies schließt nicht reagierende Anwendungen automatisch, damit ein hängendes Programm den Rechner nicht eingeschaltet stehen lässt (HKCU, keine Erhöhung nötig).',
+        'Wenn eine Anwendung beim Herunterfahren nicht mehr reagiert, wartet Windows und zeigt den Bildschirm "Diese App verhindert das Herunterfahren", bis jemand klickt. Dies schließt nicht reagierende Anwendungen automatisch, damit ein hängendes Programm den Rechner nicht eingeschaltet stehen lässt.',
     },
     instant_folder_loading: {
       name: "Jeden Ordner sofort öffnen",
       description:
-        "Der Explorer durchsucht den Inhalt eines Ordners, um zu raten, ob es Bilder, Musik oder Dokumente sind, und ein Ordner mit Tausenden Mediendateien kann dabei sekundenlang hängen. Dies legt alle Ordner auf das allgemeine Layout fest, sodass sie sofort öffnen (HKCU, keine Erhöhung nötig).",
+        "Der Explorer durchsucht den Inhalt eines Ordners, um zu raten, ob es Bilder, Musik oder Dokumente sind, und ein Ordner mit Tausenden Mediendateien kann dabei sekundenlang hängen. Dies legt alle Ordner auf das allgemeine Layout fest, sodass sie sofort öffnen.",
     },
     tcp_congestion_bbr: {
       name: "Niedrige Latenz auch bei ausgelasteter Leitung (BBR2)",
@@ -8097,32 +8070,31 @@ const de: Strings = {
     taskbar_align_left: {
       name: "Taskleiste links ausrichten",
       description:
-        "Richtet die Taskleisten-Symbole wieder links aus (Windows-10-Stil) statt zentriert (HKCU, keine Elevation erforderlich).",
+        "Richtet die Taskleisten-Symbole wieder links aus (Windows-10-Stil) statt zentriert.",
     },
     hide_taskbar_chat: {
       name: "Chat/Teams aus der Taskleiste ausblenden",
-      description:
-        "Entfernt das Chat-Symbol (Microsoft Teams) aus der Taskleiste (HKCU, keine Elevation erforderlich).",
+      description: "Entfernt das Chat-Symbol (Microsoft Teams) aus der Taskleiste.",
     },
     disable_start_suggestions: {
       name: "Startmenü-Vorschläge und empfohlene Apps deaktivieren",
       description:
-        "Verhindert, dass Windows empfohlene Apps, Werbung und Vorschläge im Startmenü anzeigt (HKCU, keine Elevation erforderlich).",
+        "Verhindert, dass Windows empfohlene Apps, Werbung und Vorschläge im Startmenü anzeigt.",
     },
     disable_activity_history: {
       name: "Aktivitätsverlauf deaktivieren (Windows Timeline)",
       description:
-        "Verhindert, dass Windows deinen App- und Dokumentenverlauf per Systemrichtlinie aufzeichnet, speichert und an Microsoft sendet (HKLM, Administratorrechte erforderlich).",
+        "Verhindert, dass Windows deinen App- und Dokumentenverlauf per Systemrichtlinie aufzeichnet, speichert und an Microsoft sendet.",
     },
     hide_taskbar_search: {
       name: "Suchfeld aus der Taskleiste ausblenden",
       description:
-        "Entfernt das Suchfeld/-symbol aus der Taskleiste für eine aufgeräumtere Leiste (die Suche bleibt über die Windows-Taste verfügbar) (HKCU, keine Elevation erforderlich).",
+        "Entfernt das Suchfeld/-symbol aus der Taskleiste für eine aufgeräumtere Leiste (die Suche bleibt über die Windows-Taste verfügbar).",
     },
     disable_fullscreen_optimizations_global: {
       name: "Vollbildoptimierungen global deaktivieren",
       description:
-        "Zwingt DXGI dazu, den echten exklusiven Vollbildmodus statt der simulierten Windows-Variante zu verwenden, was Mikroruckler und Eingabeverzögerung in vielen älteren Spielen reduziert (HKCU, keine Elevation erforderlich).",
+        "Zwingt DXGI dazu, den echten exklusiven Vollbildmodus statt der simulierten Windows-Variante zu verwenden, was Mikroruckler und Eingabeverzögerung in vielen älteren Spielen reduziert.",
     },
     disable_windows_search_service: {
       name: "Indizierungsdienst deaktivieren (Windows Search)",
@@ -8232,7 +8204,7 @@ const pt: Strings = {
     ledger: "Histórico de alterações",
   },
   healthPanel: {
-    title: "Saúde do PC",
+    title: "Pontuação de saúde",
     subtitle:
       "Uma pontuação explicável: todo número mostra os fatos a partir dos quais foi calculado.",
     why: "Por que {score}?",
@@ -8718,8 +8690,8 @@ const pt: Strings = {
     title: "Turbo Boost",
     subtitle:
       "Ajusta o modo boost e o estado mínimo do processador. O consumo e o calor podem aumentar; os resultados dependem da carga de trabalho.",
-    startLabel: "INICIAR",
-    stopLabel: "PARAR",
+    startLabel: "Iniciar",
+    stopLabel: "Parar",
     activating: "Ativando o turbo...",
     deactivating: "Restaurando...",
     active: "Turbo ativo",
@@ -9289,82 +9261,82 @@ const pt: Strings = {
     disable_startup_delay: {
       name: "Remover o atraso de apps na inicialização",
       description:
-        "O Windows espera propositalmente cerca de 10 segundos após o login antes de abrir seus programas de inicialização. Isto remove essa espera (HKCU, sem elevação necessária).",
+        "O Windows espera propositalmente cerca de 10 segundos após o login antes de abrir seus programas de inicialização. Isto remove essa espera.",
     },
     menu_show_delay: {
       name: "Resposta instantânea dos menus",
       description:
-        "Remove o atraso embutido antes de os menus abrirem, o que torna toda a área de trabalho perceptivelmente mais ágil (HKCU, sem elevação necessária).",
+        "Remove o atraso embutido antes de os menus abrirem, o que torna toda a área de trabalho perceptivelmente mais ágil.",
     },
     disable_power_throttling: {
       name: "Desativar limitação de energia da CPU",
       description:
-        "Impede o Windows de reduzir a velocidade de processos em segundo plano para economizar energia - útil em notebooks onde a limitação causa engasgos em sessões longas (HKLM, requer privilégios de administrador).",
+        "Impede o Windows de reduzir a velocidade de processos em segundo plano para economizar energia - útil em notebooks onde a limitação causa engasgos em sessões longas.",
     },
     games_gpu_priority: {
       name: "Definir o valor legado GPU Priority dos jogos",
       description:
-        "Grava o valor GPU Priority dos jogos, que a Microsoft documenta como não utilizado. Não se espera ganho de prioridade de GPU nem de quadros por segundo (HKLM, requer privilégios de administrador).",
+        "Grava o valor GPU Priority dos jogos, que a Microsoft documenta como não utilizado. Não se espera ganho de prioridade de GPU nem de quadros por segundo.",
     },
     disable_tailored_experiences: {
       name: "Desativar experiências personalizadas",
       description:
-        "Impede o Windows de usar seus dados de diagnóstico para personalizar anúncios, dicas e recomendações (HKCU, sem elevação necessária).",
+        "Impede o Windows de usar seus dados de diagnóstico para personalizar anúncios, dicas e recomendações.",
     },
     disable_app_launch_tracking: {
       name: "Parar de rastrear quais apps você abre",
       description:
-        "O Windows registra a frequência com que você abre cada programa para classificar os resultados do menu Iniciar. Isto desativa esse registro (HKCU, sem elevação necessária).",
+        "O Windows registra a frequência com que você abre cada programa para classificar os resultados do menu Iniciar. Isto desativa esse registro.",
     },
     disable_feedback_requests: {
       name: "Parar as solicitações de feedback do Windows",
       description:
-        "Impede que o Windows te interrompa com pesquisas do tipo 'Qual a probabilidade de você recomendar...' (HKCU, sem elevação necessária).",
+        "Impede que o Windows te interrompa com pesquisas do tipo 'Qual a probabilidade de você recomendar...'.",
     },
     disable_cortana: {
       name: "Desativar a Cortana",
       description:
-        "Desativa a Cortana via política de sistema, liberando os recursos em segundo plano que ela reserva (HKLM, requer privilégios de administrador).",
+        "Desativa a Cortana via política de sistema, liberando os recursos em segundo plano que ela reserva.",
     },
     show_file_extensions: {
       name: "Sempre mostrar extensões de arquivo",
       description:
-        "Revela a extensão real de cada arquivo. Vale a pena ativar só pela segurança: expõe arquivos como 'fatura.pdf.exe' que o Windows normalmente esconde (HKCU, sem elevação necessária).",
+        "Revela a extensão real de cada arquivo. Vale a pena ativar só pela segurança: expõe arquivos como 'fatura.pdf.exe' que o Windows normalmente esconde.",
     },
     hide_taskbar_widgets: {
       name: "Ocultar Widgets da barra de tarefas",
       description:
-        "Remove o botão de Widgets de clima/notícias, que carrega conteúdo em segundo plano mesmo quando você nunca o abre (HKCU, sem elevação necessária).",
+        "Remove o botão de Widgets de clima/notícias, que carrega conteúdo em segundo plano mesmo quando você nunca o abre.",
     },
     network_latency: {
       name: "Confirmações TCP e agrupamento de pacotes",
       description:
-        "Define TcpAckFrequency e TCPNoDelay como 1 no adaptador que leva a rota para a Internet. Isto afeta o comportamento TCP; o tráfego UDP não muda. O suporte depende do Windows e das aplicações, pelo que não há garantia de menor latência nos jogos (HKLM, requer privilégios de administrador).",
+        "Define TcpAckFrequency e TCPNoDelay como 1 no adaptador que leva a rota para a Internet. Isto afeta o comportamento TCP; o tráfego UDP não muda. O suporte depende do Windows e das aplicações, pelo que não há garantia de menor latência nos jogos.",
     },
     disable_window_animations: {
       name: "Animações de janela instantâneas",
       description:
-        "Remove a animação de deslizar/esmaecer que o Windows exibe toda vez que uma janela abre, fecha ou minimiza. A animação é tempo de espera puro - removê-la faz a área de trabalho responder no instante do clique, e libera o trabalho de GPU por trás dela (HKCU, sem elevação necessária).",
+        "Remove a animação de deslizar/esmaecer que o Windows exibe toda vez que uma janela abre, fecha ou minimiza. A animação é tempo de espera puro - removê-la faz a área de trabalho responder no instante do clique, e libera o trabalho de GPU por trás dela.",
     },
     disable_drag_full_windows: {
       name: "Arraste de janelas mais leve",
       description:
-        "Desenha um contorno enquanto você arrasta uma janela em vez de redesenhar todo o seu conteúdo a cada quadro. Quase imperceptível em uma GPU rápida, uma diferença clara em gráficos integrados ou máquinas mais antigas (HKCU, sem elevação necessária).",
+        "Desenha um contorno enquanto você arrasta uma janela em vez de redesenhar todo o seu conteúdo a cada quadro. Quase imperceptível em uma GPU rápida, uma diferença clara em gráficos integrados ou máquinas mais antigas.",
     },
     mouse_hover_delay: {
       name: "Resposta instantânea ao passar o mouse",
       description:
-        "O Windows espera 400 ms antes de reagir ao ponteiro parado sobre algo - prévias da barra de tarefas, dicas de ferramentas, menus. Isto reduz essa espera a quase nada, para que a interface acompanhe o mouse em vez de ficar atrás dele (HKCU, sem elevação necessária).",
+        "O Windows espera 400 ms antes de reagir ao ponteiro parado sobre algo - prévias da barra de tarefas, dicas de ferramentas, menus. Isto reduz essa espera a quase nada, para que a interface acompanhe o mouse em vez de ficar atrás dele.",
     },
     disable_background_apps: {
       name: "Impedir apps de rodar em segundo plano",
       description:
-        "Impede que apps da Store rodem, atualizem e consultem a rede enquanto você não os está usando. Isso é CPU, RAM e bateria de verdade gastos em apps que você não abriu (HKCU, sem elevação necessária).",
+        "Impede que apps da Store rodem, atualizem e consultem a rede enquanto você não os está usando. Isso é CPU, RAM e bateria de verdade gastos em apps que você não abriu.",
     },
     disable_delivery_optimization: {
       name: "Parar de compartilhar atualizações do Windows com estranhos",
       description:
-        "Por padrão, o Windows envia arquivos de atualização já baixados para outros PCs pela sua conexão. Isto limita o Delivery Optimization à sua própria máquina, o que impede esse envio de consumir banda no meio de um jogo (HKLM, requer privilégios de administrador).",
+        "Por padrão, o Windows envia arquivos de atualização já baixados para outros PCs pela sua conexão. Isto limita o Delivery Optimization à sua própria máquina, o que impede esse envio de consumir banda no meio de um jogo.",
     },
     disable_copilot: {
       name: "Política antiga do Copilot (apenas restauro)",
@@ -9374,27 +9346,27 @@ const pt: Strings = {
     disable_suggested_apps: {
       name: "Impedir o Windows de instalar apps sozinho",
       description:
-        "O Windows instala silenciosamente apps e jogos 'sugeridos' no seu menu Iniciar sem perguntar, em uma instalação nova e novamente após grandes atualizações. Isto desativa isso, para que nada chegue à sua máquina sem você escolher (HKCU, sem elevação necessária).",
+        "O Windows instala silenciosamente apps e jogos 'sugeridos' no seu menu Iniciar sem perguntar, em uma instalação nova e novamente após grandes atualizações. Isto desativa isso, para que nada chegue à sua máquina sem você escolher.",
     },
     disable_mouse_acceleration: {
       name: "Desativar aceleração do mouse",
       description:
-        "Desativa 'Aprimorar precisão do ponteiro', que faz o cursor percorrer mais distância quando você move o mouse mais rápido. Essa resposta variável é exatamente o que você não quer ao mirar: o mesmo movimento físico deve sempre cobrir a mesma distância na tela (HKCU, sem elevação necessária).",
+        "Desativa 'Aprimorar precisão do ponteiro', que faz o cursor percorrer mais distância quando você move o mouse mais rápido. Essa resposta variável é exatamente o que você não quer ao mirar: o mesmo movimento físico deve sempre cobrir a mesma distância na tela.",
     },
     disable_sticky_keys_prompt: {
       name: "Parar o pop-up das Teclas de Aderência",
       description:
-        "Pressionar Shift cinco vezes normalmente abre a janela das Teclas de Aderência — o que em um jogo significa sair da tela cheia no pior momento possível, geralmente no meio de uma luta. Isto desativa o atalho e seu aviso; as Teclas de Aderência continuam disponíveis nas Configurações (HKCU, sem elevação necessária).",
+        "Pressionar Shift cinco vezes normalmente abre a janela das Teclas de Aderência — o que em um jogo significa sair da tela cheia no pior momento possível, geralmente no meio de uma luta. Isto desativa o atalho e seu aviso; as Teclas de Aderência continuam disponíveis nas Configurações.",
     },
     disable_recall: {
       name: "Desativar o Recall (capturas de tela por IA)",
       description:
-        "O Recall tira uma captura de tela da sua área de trabalho a cada poucos segundos e monta um histórico pesquisável, indexado por IA, de tudo que você já viu — senhas e mensagens privadas incluídas, já que captura o que estiver na tela. Isto define a política de sistema que impede que ele analise ou armazene qualquer coisa (HKLM, requer privilégios de administrador).",
+        "O Recall tira uma captura de tela da sua área de trabalho a cada poucos segundos e monta um histórico pesquisável, indexado por IA, de tudo que você já viu — senhas e mensagens privadas incluídas, já que captura o que estiver na tela. Isto define a política de sistema que impede que ele analise ou armazene qualquer coisa.",
     },
     global_timer_resolution: {
       name: "Resolução do temporizador global",
       description:
-        "Define o valor de registo GlobalTimerResolutionRequests como 1. Esta operação não solicita nem verifica uma resolução específica do temporizador. O comportamento depende da versão do Windows; não há garantia de menor latência ou mais FPS. Requer reinício (HKLM, requer privilégios de administrador).",
+        "Define o valor de registo GlobalTimerResolutionRequests como 1. Esta operação não solicita nem verifica uma resolução específica do temporizador. O comportamento depende da versão do Windows; não há garantia de menor latência ou mais FPS. Requer reinício.",
     },
     disable_core_parking: {
       name: "Desativar o estacionamento de núcleos",
@@ -9404,61 +9376,56 @@ const pt: Strings = {
     disable_memory_integrity: {
       name: "Desativar Integridade de Memória (VBS)",
       description:
-        "Solicita a desativação da Integridade de Memória (HVCI). Se aplicada, remove uma camada de proteção do kernel; outras funções VBS podem continuar ativas. O efeito no desempenho depende do hardware e da carga de trabalho. Políticas do sistema ou um bloqueio UEFI podem impedir a alteração. Reinicie e verifique o estado na Segurança do Windows (HKLM, requer privilégios de administrador).",
+        "Solicita a desativação da Integridade de Memória (HVCI). Se aplicada, remove uma camada de proteção do kernel; outras funções VBS podem continuar ativas. O efeito no desempenho depende do hardware e da carga de trabalho. Políticas do sistema ou um bloqueio UEFI podem impedir a alteração. Reinicie e verifique o estado na Segurança do Windows.",
     },
     disable_typing_personalization: {
       name: "Impedir o Windows de aprender como você digita",
       description:
-        "O Windows monta um dicionário pessoal a partir do que você digita e escreve à mão — incluindo em gerenciadores de senha, janelas de chat e caixas de busca — e o sincroniza com sua conta Microsoft para melhorar suas sugestões. Isto desativa tanto a coleta de texto quanto a de escrita à mão (HKCU, sem elevação necessária).",
+        "O Windows monta um dicionário pessoal a partir do que você digita e escreve à mão — incluindo em gerenciadores de senha, janelas de chat e caixas de busca — e o sincroniza com sua conta Microsoft para melhorar suas sugestões. Isto desativa tanto a coleta de texto quanto a de escrita à mão.",
     },
     classic_context_menu: {
       name: "Restaurar o menu de clique direito completo",
       description:
-        "O Windows 11 esconde a maior parte do menu de clique direito atrás de 'Mostrar mais opções', transformando um clique em dois para coisas que você faz o dia todo. Isto restaura o menu completo do Windows 10 em todo o Explorador de Arquivos e na área de trabalho. O Explorer reinicia para aplicar, então janelas abertas vão piscar uma vez (HKCU, sem elevação necessária).",
+        "O Windows 11 esconde a maior parte do menu de clique direito atrás de 'Mostrar mais opções', transformando um clique em dois para coisas que você faz o dia todo. Isto restaura o menu completo do Windows 10 em todo o Explorador de Arquivos e na área de trabalho. O Explorer reinicia para aplicar, então janelas abertas vão piscar uma vez.",
     },
     disable_transparency: {
       name: "Desativar efeitos de transparência",
       description:
-        "Desativa os efeitos de desfoque/acrílico na barra de tarefas e nos menus. Uma economia de GPU pequena mas real, e deixa máquinas mais antigas ou com gráficos integrados mais fluidas (HKCU, sem elevação necessária).",
+        "Desativa os efeitos de desfoque/acrílico na barra de tarefas e nos menus. Uma economia de GPU pequena mas real, e deixa máquinas mais antigas ou com gráficos integrados mais fluidas.",
     },
     dark_mode: {
       name: "Modo escuro",
-      description: "Ativa o tema escuro para apps e sistema (HKCU, sem elevação necessária).",
+      description: "Ativa o tema escuro para apps e sistema.",
     },
     show_hidden_files: {
       name: "Mostrar arquivos ocultos",
-      description:
-        "Mostra arquivos e pastas ocultos no Explorador de Arquivos (HKCU, sem elevação necessária).",
+      description: "Mostra arquivos e pastas ocultos no Explorador de Arquivos.",
     },
     priority_separation: {
       name: "Otimizar prioridade da CPU",
       description:
-        "Ajusta o Win32PrioritySeparation (0x26) para que o app em primeiro plano receba fatias de tempo de CPU curtas e variáveis com um aumento de prioridade de 3x — o valor clássico de responsividade para desktop/jogos (HKLM, requer privilégios de administrador).",
+        "Ajusta o Win32PrioritySeparation (0x26) para que o app em primeiro plano receba fatias de tempo de CPU curtas e variáveis com um aumento de prioridade de 3x — o valor clássico de responsividade para desktop/jogos.",
     },
     disable_game_dvr: {
       name: "Desativar Xbox Game Bar / Game DVR",
       description:
-        "Desativa a gravação em segundo plano da Xbox Game Bar, que consome CPU/GPU durante os jogos (HKCU, sem elevação necessária).",
+        "Desativa a gravação em segundo plano da Xbox Game Bar, que consome CPU/GPU durante os jogos.",
     },
     disable_telemetry_tasks: {
       name: "Reduzir a coleta de dados de diagnóstico",
-      description:
-        "Define o nível de dados de diagnóstico do Windows para o mínimo permitido (HKLM, requer privilégios de administrador).",
+      description: "Define o nível de dados de diagnóstico do Windows para o mínimo permitido.",
     },
     reset_advertising_id: {
       name: "Desativar ID de publicidade",
-      description:
-        "Impede que apps usem seu ID de publicidade para perfilamento (HKCU, sem elevação necessária).",
+      description: "Impede que apps usem seu ID de publicidade para perfilamento.",
     },
     disable_location_tracking: {
       name: "Desativar rastreamento de localização",
-      description:
-        "Bloqueia o acesso à localização para todos os apps via política de sistema (HKLM, requer privilégios de administrador).",
+      description: "Bloqueia o acesso à localização para todos os apps via política de sistema.",
     },
     disable_bing_search: {
       name: "Desativar a busca do Bing no menu Iniciar",
-      description:
-        "Impede que suas buscas no menu Iniciar sejam enviadas ao Bing (HKCU, sem elevação necessária).",
+      description: "Impede que suas buscas no menu Iniciar sejam enviadas ao Bing.",
     },
     power_plan_performance: {
       name: "Alto desempenho (plano de energia)",
@@ -9478,12 +9445,12 @@ const pt: Strings = {
     hardware_gpu_scheduling: {
       name: "Agendamento de GPU acelerado por hardware",
       description:
-        "Solicita o agendamento de GPU acelerado por hardware (HAGS). Requer GPU, controlador e versão do Windows compatíveis. O desempenho e a latência podem melhorar, piorar ou manter-se iguais conforme o jogo. Reinicie e verifique a disponibilidade nas definições de gráficos do Windows (HKLM, requer privilégios de administrador).",
+        "Solicita o agendamento de GPU acelerado por hardware (HAGS). Requer GPU, controlador e versão do Windows compatíveis. O desempenho e a latência podem melhorar, piorar ou manter-se iguais conforme o jogo. Reinicie e verifique a disponibilidade nas definições de gráficos do Windows.",
     },
     reduce_input_lag: {
       name: "Reduzir latência de entrada (mouse)",
       description:
-        'Desativa a aceleração do ponteiro ("Aprimorar precisão do ponteiro") para movimento do mouse 1:1, sem atraso adicionado pelo sistema (HKCU, sem elevação necessária).',
+        'Desativa a aceleração do ponteiro ("Aprimorar precisão do ponteiro") para movimento do mouse 1:1, sem atraso adicionado pelo sistema.',
     },
     turbo_boost: {
       name: "CPU Turbo Boost",
@@ -9493,37 +9460,37 @@ const pt: Strings = {
     network_throttling_index: {
       name: "Desativar limitação de rede multimídia",
       description:
-        "Remove o limite que o Windows impõe ao tráfego de rede enquanto apps de multimídia/jogos estão ativos, útil para reduzir microtravamentos online (HKLM, requer privilégios de administrador).",
+        "Remove o limite que o Windows impõe ao tráfego de rede enquanto apps de multimídia/jogos estão ativos, útil para reduzir microtravamentos online.",
     },
     system_responsiveness: {
       name: "Definir a reserva de CPU em segundo plano do MMCSS",
       description:
-        "Grava SystemResponsiveness=0, que o Windows trata como 20%. Isso não elimina a parcela de CPU para tarefas de prioridade menor nem prioriza todos os apps em primeiro plano (HKLM, requer privilégios de administrador).",
+        "Grava SystemResponsiveness=0, que o Windows trata como 20%. Isso não elimina a parcela de CPU para tarefas de prioridade menor nem prioriza todos os apps em primeiro plano.",
     },
     games_task_priority: {
       name: "Definir a categoria MMCSS Games",
       description:
-        "Define a categoria Games como High para threads registrados no MMCSS; High trata Priority como 2. Os valores GPU Priority e SFIO Priority também gravados não são usados. Isso não prioriza todos os processos de jogo (HKLM, requer privilégios de administrador).",
+        "Define a categoria Games como High para threads registrados no MMCSS; High trata Priority como 2. Os valores GPU Priority e SFIO Priority também gravados não são usados. Isso não prioriza todos os processos de jogo.",
     },
     reduce_keyboard_delay: {
       name: "Reduzir atraso de entrada (teclado)",
       description:
-        "Zera o atraso antes de uma tecla pressionada começar a se repetir e maximiza sua taxa de repetição, para uma resposta mais ágil em jogos (HKCU, sem elevação necessária).",
+        "Zera o atraso antes de uma tecla pressionada começar a se repetir e maximiza sua taxa de repetição, para uma resposta mais ágil em jogos.",
     },
     keep_kernel_in_ram: {
       name: "Manter o kernel e os drivers na RAM",
       description:
-        "O Windows pode enviar partes do kernel e do código dos drivers para o disco mesmo com memória de sobra, e recarregá-las é uma pausa que se sente como um engasgo. Isto os mantém residentes. Vale a pena em máquinas com RAM sobrando; em um PC com pouca memória, deixe desativado (HKLM, requer privilégios de administrador).",
+        "O Windows pode enviar partes do kernel e do código dos drivers para o disco mesmo com memória de sobra, e recarregá-las é uma pausa que se sente como um engasgo. Isto os mantém residentes. Vale a pena em máquinas com RAM sobrando; em um PC com pouca memória, deixe desativado.",
     },
     auto_end_frozen_tasks: {
       name: "Não deixar um app travado bloquear o desligamento",
       description:
-        'Quando um aplicativo para de responder durante o desligamento, o Windows espera e mostra a tela "Este app está impedindo o desligamento" até alguém clicar. Isto fecha automaticamente os apps que não respondem, para que um programa travado não deixe a máquina ligada (HKCU, sem elevação necessária).',
+        'Quando um aplicativo para de responder durante o desligamento, o Windows espera e mostra a tela "Este app está impedindo o desligamento" até alguém clicar. Isto fecha automaticamente os apps que não respondem, para que um programa travado não deixe a máquina ligada.',
     },
     instant_folder_loading: {
       name: "Abrir toda pasta instantaneamente",
       description:
-        "O Explorer examina o conteúdo de uma pasta para adivinhar se é Imagens, Música ou Documentos, e uma pasta com milhares de arquivos de mídia pode travar por segundos enquanto decide. Isto fixa todas as pastas no layout geral, para que abram na hora (HKCU, sem elevação necessária).",
+        "O Explorer examina o conteúdo de uma pasta para adivinhar se é Imagens, Música ou Documentos, e uma pasta com milhares de arquivos de mídia pode travar por segundos enquanto decide. Isto fixa todas as pastas no layout geral, para que abram na hora.",
     },
     tcp_congestion_bbr: {
       name: "Manter a latência baixa quando a conexão está ocupada (BBR2)",
@@ -9533,32 +9500,31 @@ const pt: Strings = {
     taskbar_align_left: {
       name: "Alinhar a barra de tarefas à esquerda",
       description:
-        "Move os ícones da barra de tarefas de volta para a esquerda (estilo Windows 10) em vez de centralizados (HKCU, sem elevação necessária).",
+        "Move os ícones da barra de tarefas de volta para a esquerda (estilo Windows 10) em vez de centralizados.",
     },
     hide_taskbar_chat: {
       name: "Ocultar Chat/Teams da barra de tarefas",
-      description:
-        "Remove o ícone do Chat (Microsoft Teams) da barra de tarefas (HKCU, sem elevação necessária).",
+      description: "Remove o ícone do Chat (Microsoft Teams) da barra de tarefas.",
     },
     disable_start_suggestions: {
       name: "Desativar sugestões e apps recomendados no menu Iniciar",
       description:
-        "Impede que o Windows mostre apps recomendados, anúncios e sugestões no menu Iniciar (HKCU, sem elevação necessária).",
+        "Impede que o Windows mostre apps recomendados, anúncios e sugestões no menu Iniciar.",
     },
     disable_activity_history: {
       name: "Desativar histórico de atividades (Linha do Tempo do Windows)",
       description:
-        "Impede que o Windows registre, salve e envie à Microsoft seu histórico de uso de apps e documentos, via política de sistema (HKLM, requer privilégios de administrador).",
+        "Impede que o Windows registre, salve e envie à Microsoft seu histórico de uso de apps e documentos, via política de sistema.",
     },
     hide_taskbar_search: {
       name: "Ocultar a caixa de busca da barra de tarefas",
       description:
-        "Remove a caixa/ícone de busca da barra de tarefas para uma barra mais limpa (a busca continua disponível pela tecla Windows) (HKCU, sem elevação necessária).",
+        "Remove a caixa/ícone de busca da barra de tarefas para uma barra mais limpa (a busca continua disponível pela tecla Windows).",
     },
     disable_fullscreen_optimizations_global: {
       name: "Desativar otimizações de tela cheia globalmente",
       description:
-        "Força o DXGI a respeitar a tela cheia exclusiva de verdade em vez do modo simulado do Windows, reduzindo microtravamentos e latência de entrada em muitos jogos mais antigos (HKCU, sem elevação necessária).",
+        "Força o DXGI a respeitar a tela cheia exclusiva de verdade em vez do modo simulado do Windows, reduzindo microtravamentos e latência de entrada em muitos jogos mais antigos.",
     },
     disable_windows_search_service: {
       name: "Desativar o serviço de indexação (Windows Search)",

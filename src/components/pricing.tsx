@@ -11,7 +11,7 @@ import {
   savingsPercent,
 } from "../lib";
 import { offerClock } from "../lifetime-offer";
-import { CheckIcon, CrownIcon, LayersIcon } from "./icons";
+import { CheckIcon, CrownIcon, LayersIcon, SparkIcon } from "./icons";
 import { PRICING_COPY } from "./pricing-copy";
 import { useLifetimeOffer } from "./use-lifetime-offer";
 import "./pricing.css";
@@ -149,16 +149,16 @@ export function PricingPanel({
             <strong>{money(0, lang)}</strong>
           </div>
           <p className="pricing-price-note">{s.pricing.freePriceNote}</p>
-          <ul className="pricing-highlights">
-            <li>{format(s.pricing.freeFeatures[0], { count: freeTweakCount })}</li>
-            <li>{copy.essentials}</li>
-            <li>{copy.restores}</li>
-          </ul>
           <div className="pricing-plan-footer">
             <span className="pricing-plan-status">
               {isPro ? s.pricing.included : s.pricing.freeCta}
             </span>
           </div>
+          <ul className="pricing-highlights">
+            <li>{format(s.pricing.freeFeatures[0], { count: freeTweakCount })}</li>
+            <li>{copy.essentials}</li>
+            <li>{copy.restores}</li>
+          </ul>
         </article>
         <article className="pricing-plan pricing-plan-pro">
           <div className="pricing-plan-name">
@@ -189,11 +189,6 @@ export function PricingPanel({
               ? format(s.pricing.saveBadge, { percent: savingsPercent })
               : format(s.pricing.annualNudge, { price: money(PRICE_ANNUAL / 12, lang) })}
           </p>
-          <ul className="pricing-highlights">
-            <li>{s.pricing.everythingInFree}</li>
-            <li>{copy.advanced}</li>
-            <li>{copy.sessions}</li>
-          </ul>
           <div className="pricing-plan-footer">
             {!isPro ? (
               <button
@@ -219,8 +214,17 @@ export function PricingPanel({
               </button>
             )}
           </div>
+          <ul className="pricing-highlights">
+            <li>{s.pricing.everythingInFree}</li>
+            <li>{copy.advanced}</li>
+            <li>{copy.sessions}</li>
+          </ul>
         </article>
         <article className="pricing-plan pricing-plan-lifetime">
+          <span className="pricing-ribbon">
+            <SparkIcon />
+            {copy.mostChosen}
+          </span>
           <div className="pricing-plan-name">
             <h2>
               <CrownIcon className="h-4 w-4" />
@@ -241,15 +245,6 @@ export function PricingPanel({
             )}
           </div>
           <p className="pricing-price-note">{copy.perpetual}</p>
-          <ul className="pricing-highlights">
-            <li>{s.pricing.everythingInPro}</li>
-            <li>{copy.earlyAccess}</li>
-            <li>{copy.futureTweaks}</li>
-            <li>{copy.prioritySupport}</li>
-            <li>{copy.uninstallerBonus}</li>
-            <li>{copy.profiles}</li>
-            <li>{copy.reports}</li>
-          </ul>
           <div className="pricing-plan-footer">
             {ownsLifetime ? (
               <button
@@ -273,6 +268,15 @@ export function PricingPanel({
               </button>
             )}
           </div>
+          <ul className="pricing-highlights">
+            <li>{s.pricing.everythingInPro}</li>
+            <li>{copy.earlyAccess}</li>
+            <li>{copy.futureTweaks}</li>
+            <li>{copy.prioritySupport}</li>
+            <li>{copy.uninstallerBonus}</li>
+            <li>{copy.profiles}</li>
+            <li>{copy.reports}</li>
+          </ul>
         </article>
       </div>
       {!ownsLifetime && (

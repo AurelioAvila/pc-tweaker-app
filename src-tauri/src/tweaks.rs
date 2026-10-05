@@ -81,7 +81,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "dark_mode",
             name: "Dark mode",
-            description: "Turns on the dark theme for apps and the system (HKCU, no elevation required).",
+            description: "Turns on the dark theme for apps and the system.",
             category: Category::Ui,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize",
@@ -93,7 +93,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "show_hidden_files",
             name: "Show hidden files",
-            description: "Shows hidden files and folders in File Explorer (HKCU, no elevation required).",
+            description: "Shows hidden files and folders in File Explorer.",
             category: Category::Ui,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
@@ -105,7 +105,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "priority_separation",
             name: "Optimize CPU priority",
-            description: "Tunes Win32PrioritySeparation (0x26) so the foreground app gets short, variable CPU time slices with a 3x priority boost - the classic desktop/gaming responsiveness value (HKLM, requires administrator rights).",
+            description: "Tunes Win32PrioritySeparation (0x26) so the foreground app gets short, variable CPU time slices with a 3x priority boost - the classic desktop/gaming responsiveness value.",
             category: Category::Performance,
             hive: Hive::Hklm,
             key_path: r"SYSTEM\CurrentControlSet\Control\PriorityControl",
@@ -117,7 +117,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_game_dvr",
             name: "Disable Xbox Game Bar / Game DVR",
-            description: "Turns off Xbox Game Bar's background recording, which uses CPU/GPU while gaming (HKCU, no elevation required).",
+            description: "Turns off Xbox Game Bar's background recording, which uses CPU/GPU while gaming.",
             category: Category::Performance,
             hive: Hive::Hkcu,
             key_path: r"System\GameConfigStore",
@@ -129,7 +129,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_telemetry_tasks",
             name: "Reduce diagnostic data collection",
-            description: "Sets Windows diagnostic data to the lowest allowed level (HKLM, requires administrator rights).",
+            description: "Sets Windows diagnostic data to the lowest allowed level.",
             category: Category::Privacy,
             hive: Hive::Hklm,
             key_path: r"SOFTWARE\Policies\Microsoft\Windows\DataCollection",
@@ -141,7 +141,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "reset_advertising_id",
             name: "Disable advertising ID",
-            description: "Stops apps from using your advertising ID to profile you (HKCU, no elevation required).",
+            description: "Stops apps from using your advertising ID to profile you.",
             category: Category::Privacy,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo",
@@ -153,7 +153,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_location_tracking",
             name: "Disable location tracking",
-            description: "Blocks location access for all apps through system policy (HKLM, requires administrator rights).",
+            description: "Blocks location access for all apps through system policy.",
             category: Category::Privacy,
             hive: Hive::Hklm,
             key_path: r"SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors",
@@ -165,7 +165,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_bing_search",
             name: "Disable Bing search in the Start menu",
-            description: "Stops your Start menu searches from being sent to Bing (HKCU, no elevation required).",
+            description: "Stops your Start menu searches from being sent to Bing.",
             category: Category::Privacy,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Search",
@@ -177,7 +177,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "hardware_gpu_scheduling",
             name: "Hardware-accelerated GPU scheduling",
-            description: "Requests hardware-accelerated GPU scheduling (HAGS). Requires a compatible GPU, driver and Windows version. Performance and latency can improve, worsen or remain unchanged depending on the game. Restart and verify availability in Windows Graphics settings (HKLM, administrator rights required).",
+            description: "Requests hardware-accelerated GPU scheduling (HAGS). Requires a compatible GPU, driver and Windows version. Performance and latency can improve, worsen or remain unchanged depending on the game. Restart and verify availability in Windows Graphics settings.",
             category: Category::Gaming,
             hive: Hive::Hklm,
             key_path: r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers",
@@ -189,7 +189,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "network_throttling_index",
             name: "Disable multimedia network throttling",
-            description: "Removes the cap Windows puts on network traffic while multimedia apps/games are running (MMCSS NetworkThrottlingIndex), useful against online micro-lag (HKLM, requires administrator rights).",
+            description: "Removes the cap Windows puts on network traffic while multimedia apps/games are running (MMCSS NetworkThrottlingIndex), useful against online micro-lag.",
             category: Category::Gaming,
             hive: Hive::Hklm,
             key_path: r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile",
@@ -201,7 +201,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "system_responsiveness",
             name: "Set MMCSS background CPU reserve",
-            description: "Writes SystemResponsiveness=0, which Windows treats as 20%; this does not eliminate the CPU share for lower-priority tasks or prioritize every foreground app (HKLM, requires administrator rights).",
+            description: "Writes SystemResponsiveness=0, which Windows treats as 20%; this does not eliminate the CPU share for lower-priority tasks or prioritize every foreground app.",
             category: Category::Gaming,
             hive: Hive::Hklm,
             key_path: r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile",
@@ -213,7 +213,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "keep_kernel_in_ram",
             name: "Keep the kernel and drivers in RAM",
-            description: "Windows may page parts of the kernel and driver code out to disk even when memory is plentiful, and paging them back in is a stall you feel as a stutter. This keeps them resident. Worth it on machines with RAM to spare; on a low-memory PC leave it off (HKLM, requires administrator rights).",
+            description: "Windows may page parts of the kernel and driver code out to disk even when memory is plentiful, and paging them back in is a stall you feel as a stutter. This keeps them resident. Worth it on machines with RAM to spare; on a low-memory PC leave it off.",
             category: Category::Performance,
             hive: Hive::Hklm,
             key_path: r"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management",
@@ -225,7 +225,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "auto_end_frozen_tasks",
             name: "Don't let a frozen app block shutdown",
-            description: "When an application stops responding during shutdown, Windows waits and shows the \"This app is preventing shutdown\" screen until someone clicks it. This closes unresponsive apps automatically instead, so a hung program cannot leave the machine sitting powered on (HKCU, no elevation required).",
+            description: "When an application stops responding during shutdown, Windows waits and shows the \"This app is preventing shutdown\" screen until someone clicks it. This closes unresponsive apps automatically instead, so a hung program cannot leave the machine sitting powered on.",
             category: Category::Maintenance,
             hive: Hive::Hkcu,
             key_path: r"Control Panel\Desktop",
@@ -237,7 +237,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "instant_folder_loading",
             name: "Open every folder instantly",
-            description: "Explorer inspects a folder's contents to guess whether it is Pictures, Music or Documents, and a folder holding thousands of media files can hang for seconds while it decides. This pins every folder to the general layout so it opens at once (HKCU, no elevation required).",
+            description: "Explorer inspects a folder's contents to guess whether it is Pictures, Music or Documents, and a folder holding thousands of media files can hang for seconds while it decides. This pins every folder to the general layout so it opens at once.",
             category: Category::Ui,
             hive: Hive::Hkcu,
             key_path: r"Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell",
@@ -249,7 +249,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "taskbar_align_left",
             name: "Align the taskbar to the left",
-            description: "Puts taskbar icons back on the left (Windows 10 style) instead of centered (HKCU, no elevation required).",
+            description: "Puts taskbar icons back on the left (Windows 10 style) instead of centered.",
             category: Category::Ui,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
@@ -261,7 +261,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "hide_taskbar_chat",
             name: "Hide Chat/Teams from the taskbar",
-            description: "Removes the Chat (Microsoft Teams) icon from the taskbar (HKCU, no elevation required).",
+            description: "Removes the Chat (Microsoft Teams) icon from the taskbar.",
             category: Category::Ui,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
@@ -273,7 +273,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_start_suggestions",
             name: "Disable Start menu suggestions and recommended apps",
-            description: "Stops Windows from showing recommended apps, ads and tips in the Start menu (HKCU, no elevation required).",
+            description: "Stops Windows from showing recommended apps, ads and tips in the Start menu.",
             category: Category::Privacy,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager",
@@ -285,7 +285,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "hide_taskbar_search",
             name: "Hide the search box from the taskbar",
-            description: "Removes the search box/icon from the taskbar for a cleaner bar (search still works from the Windows key) (HKCU, no elevation required).",
+            description: "Removes the search box/icon from the taskbar for a cleaner bar (search still works from the Windows key).",
             category: Category::Ui,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Search",
@@ -297,7 +297,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_fullscreen_optimizations_global",
             name: "Disable fullscreen optimizations globally",
-            description: "Forces DXGI to honor true exclusive fullscreen instead of Windows' emulation, reducing stutter and input lag in many older games (HKCU, no elevation required).",
+            description: "Forces DXGI to honor true exclusive fullscreen instead of Windows' emulation, reducing stutter and input lag in many older games.",
             category: Category::Gaming,
             hive: Hive::Hkcu,
             key_path: r"System\GameConfigStore",
@@ -309,7 +309,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_startup_delay",
             name: "Remove the startup app delay",
-            description: "Windows deliberately waits about 10 seconds after sign-in before launching your startup programs. This removes that wait (HKCU, no elevation required).",
+            description: "Windows deliberately waits about 10 seconds after sign-in before launching your startup programs. This removes that wait.",
             category: Category::Performance,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Serialize",
@@ -321,7 +321,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "menu_show_delay",
             name: "Instant menu response",
-            description: "Removes the built-in delay before menus open, which makes the whole desktop feel noticeably snappier (HKCU, no elevation required).",
+            description: "Removes the built-in delay before menus open, which makes the whole desktop feel noticeably snappier.",
             category: Category::Performance,
             hive: Hive::Hkcu,
             key_path: r"Control Panel\Desktop",
@@ -333,7 +333,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_power_throttling",
             name: "Disable CPU power throttling",
-            description: "Stops Windows from slowing down background processes to save power - useful on laptops where throttling causes stutter during long sessions (HKLM, requires administrator rights).",
+            description: "Stops Windows from slowing down background processes to save power - useful on laptops where throttling causes stutter during long sessions.",
             category: Category::Performance,
             hive: Hive::Hklm,
             key_path: r"SYSTEM\CurrentControlSet\Control\Power\PowerThrottling",
@@ -345,7 +345,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "games_gpu_priority",
             name: "Set legacy Games GPU Priority value",
-            description: "Writes the Games GPU Priority value, which Microsoft documents as unused. No GPU priority or frame-rate gain is expected (HKLM, requires administrator rights).",
+            description: "Writes the Games GPU Priority value, which Microsoft documents as unused. No GPU priority or frame-rate gain is expected.",
             category: Category::Gaming,
             hive: Hive::Hklm,
             key_path: r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games",
@@ -357,7 +357,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_tailored_experiences",
             name: "Disable tailored experiences",
-            description: "Stops Windows from using your diagnostic data to personalize ads, tips and recommendations (HKCU, no elevation required).",
+            description: "Stops Windows from using your diagnostic data to personalize ads, tips and recommendations.",
             category: Category::Privacy,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy",
@@ -369,7 +369,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_app_launch_tracking",
             name: "Stop tracking which apps you open",
-            description: "Windows records how often you launch each program to rank Start menu results. This turns that logging off (HKCU, no elevation required).",
+            description: "Windows records how often you launch each program to rank Start menu results. This turns that logging off.",
             category: Category::Privacy,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
@@ -381,7 +381,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_feedback_requests",
             name: "Stop Windows feedback prompts",
-            description: "Prevents Windows from interrupting you with 'How likely are you to recommend...' surveys (HKCU, no elevation required).",
+            description: "Prevents Windows from interrupting you with 'How likely are you to recommend...' surveys.",
             category: Category::Privacy,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Siuf\Rules",
@@ -393,7 +393,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_cortana",
             name: "Disable Cortana",
-            description: "Turns Cortana off through system policy, freeing the background resources it reserves (HKLM, requires administrator rights).",
+            description: "Turns Cortana off through system policy, freeing the background resources it reserves.",
             category: Category::Privacy,
             hive: Hive::Hklm,
             key_path: r"SOFTWARE\Policies\Microsoft\Windows\Windows Search",
@@ -405,7 +405,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "show_file_extensions",
             name: "Always show file extensions",
-            description: "Reveals the real extension of every file. Worth turning on for safety alone: it exposes files like 'invoice.pdf.exe' that Windows otherwise hides (HKCU, no elevation required).",
+            description: "Reveals the real extension of every file. Worth turning on for safety alone: it exposes files like 'invoice.pdf.exe' that Windows otherwise hides.",
             category: Category::Ui,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
@@ -417,7 +417,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "hide_taskbar_widgets",
             name: "Hide Widgets from the taskbar",
-            description: "Removes the weather/news Widgets button, which loads content in the background even when you never open it (HKCU, no elevation required).",
+            description: "Removes the weather/news Widgets button, which loads content in the background even when you never open it.",
             category: Category::Ui,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
@@ -429,7 +429,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_transparency",
             name: "Disable transparency effects",
-            description: "Turns off the blur/acrylic effects in the taskbar and menus. Small but real GPU saving, and it makes older or integrated-graphics machines feel smoother (HKCU, no elevation required).",
+            description: "Turns off the blur/acrylic effects in the taskbar and menus. Small but real GPU saving, and it makes older or integrated-graphics machines feel smoother.",
             category: Category::Ui,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize",
@@ -441,7 +441,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_window_animations",
             name: "Instant window animations",
-            description: "Removes the slide/fade animation Windows plays every time a window opens, closes or minimizes. The animation is pure waiting time — cutting it makes the desktop respond the moment you click, and frees the GPU work behind it (HKCU, no elevation required).",
+            description: "Removes the slide/fade animation Windows plays every time a window opens, closes or minimizes. The animation is pure waiting time — cutting it makes the desktop respond the moment you click, and frees the GPU work behind it.",
             category: Category::Performance,
             hive: Hive::Hkcu,
             key_path: r"Control Panel\Desktop\WindowMetrics",
@@ -455,7 +455,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_drag_full_windows",
             name: "Lighter window dragging",
-            description: "Draws an outline while you drag a window instead of repainting its whole contents every frame. Barely noticeable on a fast GPU, a clear difference on integrated graphics or an older machine (HKCU, no elevation required).",
+            description: "Draws an outline while you drag a window instead of repainting its whole contents every frame. Barely noticeable on a fast GPU, a clear difference on integrated graphics or an older machine.",
             category: Category::Performance,
             hive: Hive::Hkcu,
             key_path: r"Control Panel\Desktop",
@@ -467,7 +467,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "mouse_hover_delay",
             name: "Instant mouse hover response",
-            description: "Windows waits 400 ms before reacting to the pointer resting on something - taskbar previews, tooltips, menu hovers. This drops that wait to almost nothing, so the interface follows the mouse instead of trailing it (HKCU, no elevation required).",
+            description: "Windows waits 400 ms before reacting to the pointer resting on something - taskbar previews, tooltips, menu hovers. This drops that wait to almost nothing, so the interface follows the mouse instead of trailing it.",
             category: Category::Performance,
             hive: Hive::Hkcu,
             key_path: r"Control Panel\Mouse",
@@ -479,7 +479,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_background_apps",
             name: "Stop apps running in the background",
-            description: "Stops Store apps from running, refreshing and polling the network while you are not using them. This is real CPU, RAM and battery spent on apps you did not open (HKCU, no elevation required).",
+            description: "Stops Store apps from running, refreshing and polling the network while you are not using them. This is real CPU, RAM and battery spent on apps you did not open.",
             category: Category::Performance,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications",
@@ -491,7 +491,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_delivery_optimization",
             name: "Stop sharing Windows updates with strangers",
-            description: "Windows uploads downloaded update files to other PCs over your connection by default. This limits Delivery Optimization to your own machine, which stops that upload eating bandwidth mid-game (HKLM, requires administrator rights).",
+            description: "Windows uploads downloaded update files to other PCs over your connection by default. This limits Delivery Optimization to your own machine, which stops that upload eating bandwidth mid-game.",
             category: Category::Maintenance,
             hive: Hive::Hklm,
             key_path: r"SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization",
@@ -515,7 +515,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_suggested_apps",
             name: "Stop Windows installing apps by itself",
-            description: "Windows quietly installs \"suggested\" apps and games into your Start menu without asking, on a fresh install and again after big updates. This turns that off, so nothing lands on your machine that you didn't choose (HKCU, no elevation required).",
+            description: "Windows quietly installs \"suggested\" apps and games into your Start menu without asking, on a fresh install and again after big updates. This turns that off, so nothing lands on your machine that you didn't choose.",
             category: Category::Privacy,
             hive: Hive::Hkcu,
             key_path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager",
@@ -527,7 +527,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_mouse_acceleration",
             name: "Disable mouse acceleration",
-            description: "Turns off \"Enhance pointer precision\", which makes the cursor travel further when you move the mouse faster. That variable response is exactly what you don't want when aiming: the same physical flick should always cover the same distance on screen (HKCU, no elevation required).",
+            description: "Turns off \"Enhance pointer precision\", which makes the cursor travel further when you move the mouse faster. That variable response is exactly what you don't want when aiming: the same physical flick should always cover the same distance on screen.",
             category: Category::Gaming,
             hive: Hive::Hkcu,
             key_path: r"Control Panel\Mouse",
@@ -539,7 +539,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_sticky_keys_prompt",
             name: "Stop the Sticky Keys popup",
-            description: "Tapping Shift five times normally opens the Sticky Keys dialog — which in a game means an alt-tab out of fullscreen at the worst possible moment, usually mid-fight. This disables the shortcut and its prompt; Sticky Keys itself stays available in Settings (HKCU, no elevation required).",
+            description: "Tapping Shift five times normally opens the Sticky Keys dialog — which in a game means an alt-tab out of fullscreen at the worst possible moment, usually mid-fight. This disables the shortcut and its prompt; Sticky Keys itself stays available in Settings.",
             category: Category::Gaming,
             hive: Hive::Hkcu,
             key_path: r"Control Panel\Accessibility\StickyKeys",
@@ -551,7 +551,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_recall",
             name: "Disable Recall (AI screen snapshots)",
-            description: "Recall takes a screenshot of your desktop every few seconds and builds a searchable, AI-indexed history of everything you have looked at — passwords and private messages included, since it captures whatever is on screen. This sets the system policy that stops it analysing or storing anything (HKLM, requires administrator rights).",
+            description: "Recall takes a screenshot of your desktop every few seconds and builds a searchable, AI-indexed history of everything you have looked at — passwords and private messages included, since it captures whatever is on screen. This sets the system policy that stops it analysing or storing anything.",
             category: Category::Privacy,
             hive: Hive::Hklm,
             key_path: r"SOFTWARE\Policies\Microsoft\Windows\WindowsAI",
@@ -563,7 +563,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "global_timer_resolution",
             name: "Global timer resolution",
-            description: "Sets the GlobalTimerResolutionRequests registry flag to 1. This does not itself request or verify a specific timer resolution. Behavior depends on the Windows version; lower latency or higher FPS is not guaranteed. Restart required (HKLM, administrator rights required).",
+            description: "Sets the GlobalTimerResolutionRequests registry flag to 1. This does not itself request or verify a specific timer resolution. Behavior depends on the Windows version; lower latency or higher FPS is not guaranteed. Restart required.",
             category: Category::Gaming,
             hive: Hive::Hklm,
             key_path: r"SYSTEM\CurrentControlSet\Control\Session Manager\kernel",
@@ -575,7 +575,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_memory_integrity",
             name: "Disable Memory Integrity (VBS)",
-            description: "Requests that Memory Integrity (HVCI) be disabled. If applied, this removes a layer of kernel protection; other VBS features may remain active. Performance impact varies by hardware and workload. Policy or UEFI lock may prevent the change. Restart and verify the status in Windows Security (HKLM, administrator rights required).",
+            description: "Requests that Memory Integrity (HVCI) be disabled. If applied, this removes a layer of kernel protection; other VBS features may remain active. Performance impact varies by hardware and workload. Policy or UEFI lock may prevent the change. Restart and verify the status in Windows Security.",
             category: Category::Gaming,
             hive: Hive::Hklm,
             key_path: r"SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity",

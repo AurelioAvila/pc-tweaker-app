@@ -159,6 +159,16 @@ async function initSchema(): Promise<void> {
     `CREATE UNIQUE INDEX IF NOT EXISTS newsletter_subscribers_email_idx ON newsletter_subscribers (lower(email));`,
   );
 
+  // One row per account: when the last abandoned-Lifetime reminder went out.
+  // Keyed on the user so the 30-day cooldown is a single atomic upsert.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS checkout_reminders (
+      user_id INTEGER PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      sent_at TIMESTAMPTZ NOT NULL
+    );
+  `);
+
   // Anonymous, opt-in error reports from the desktop apps (see
   // routes/error-reports.ts). No user reference on purpose: the report pipe
   // is anonymous by design, and a foreign key would tempt someone to join it

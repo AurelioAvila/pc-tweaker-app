@@ -44,6 +44,13 @@ function unsubscribeSignature(email: string): string | null {
   return crypto.createHmac("sha256", secret).update(email.toLowerCase()).digest("hex");
 }
 
+/** Signed one-click link; also used by account emails such as checkout reminders. */
+export function unsubscribeUrl(email: string): string | null {
+  const sig = unsubscribeSignature(email);
+  if (!sig) return null;
+  return `${process.env.PUBLIC_API_URL || "https://api.pctweaker.app"}/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}&sig=${sig}`;
+}
+
 router.post("/", newsletterLimiter, asyncRoute(async (req: Request, res: Response) => {
   const email = typeof req.body?.email === "string" ? req.body.email.trim() : "";
   const rawSource = typeof req.body?.source === "string" ? req.body.source : "";
@@ -91,15 +98,14 @@ router.post("/", newsletterLimiter, asyncRoute(async (req: Request, res: Respons
   // Welcome email is best-effort and only for genuinely new addresses — a
   // repeat submit must not trigger a repeat email, or the form becomes a way
   // to nag any inbox with our sending domain's reputation behind it.
-  const sig = unsubscribeSignature(email);
-  if (isNew && mailIsConfigured && sig) {
-    const unsubscribeUrl = `${process.env.PUBLIC_API_URL || "https://api.pctweaker.app"}/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}&sig=${sig}`;
+  const link = unsubscribeUrl(email);
+  if (isNew && mailIsConfigured && link) {
     void sendMail({
       to: email,
       subject: "You're on the PC Tweaker list",
       html: `<p>Thanks for subscribing!</p>
              <p>You'll get occasional emails about new PC Tweaker releases, new tweaks, and new tools from the same developer. No spam, no daily drip.</p>
-             <p style="font-size:12px;color:#888">Didn't sign up, or changed your mind? <a href="${unsubscribeUrl}">Unsubscribe with one click</a> — no login needed.</p>`,
+             <p style="font-size:12px;color:#888">Didn't sign up, or changed your mind? <a href="${link}">Unsubscribe with one click</a> — no login needed.</p>`,
     }).catch((err: Error) => console.error("newsletter welcome email failed:", err.message));
   }
 
@@ -135,7 +141,8 @@ router.get("/unsubscribe", asyncRoute(async (req: Request, res: Response) => {
   }
 
   await getPool().query(
-    `UPDATE newsletter_subscribers SET unsubscribed_at = now() WHERE lower(email) = lower($1)`,
+    `INSERT INTO newsletter_subscribers (email, source, unsubscribed_at) VALUES ($1, 'unsubscribe', now())
+     ON CONFLICT (lower(email)) DO UPDATE SET unsubscribed_at = now()`,
     [email],
   );
   res

@@ -63,6 +63,22 @@ const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey, { apiVersion: "2025-03-31.basil" as Stripe.LatestApiVersion })
   : null;
 
+/** Lifetime-reminder input: sessions that expired unpaid since `sinceSeconds`. */
+export async function listExpiredCheckouts(sinceSeconds: number) {
+  if (!stripe) return [];
+  const sessions = [];
+  for await (const s of stripe.checkout.sessions.list({ status: "expired", created: { gte: sinceSeconds }, limit: 100 })) {
+    sessions.push({
+      id: s.id,
+      mode: s.mode,
+      userId: s.client_reference_id,
+      plan: s.metadata?.plan,
+      product: s.metadata?.product,
+    });
+  }
+  return sessions;
+}
+
 function requireStripe(req: Request, res: Response, next: NextFunction) {
   if (!stripe) {
     return res.status(503).json({ error: "Stripe is not configured (STRIPE_SECRET_KEY missing)" });

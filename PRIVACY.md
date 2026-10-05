@@ -28,6 +28,11 @@ such as a Pro subscription. When you register, our backend stores:
   maintain or cancel the entitlement
 - A session-revocation version used to invalidate existing sign-ins
 
+The same account signs you in to PC Tweaker, PC Tweaker Uninstaller and Tweaky
+Driver. Each app keeps its own sign-in sessions and its own paid plan; a
+subscription to one app does not unlock another. Changing or resetting your
+password applies to all three and signs you out of each.
+
 ## Information you choose to submit
 
 - A support request includes your name, email address, subject, message and any

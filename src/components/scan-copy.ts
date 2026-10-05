@@ -56,7 +56,6 @@ const en = {
   noReview: "No review items found in the completed checks.",
   unavailable: "Unavailable checks remain unknown, not passed.",
   manual: "Review",
-  ram: "Memory cleanup is now in Maintenance.",
   probes: [
     "Windows settings",
     "Supported changes",
@@ -171,7 +170,6 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     noReview: "Nessun elemento da esaminare nei controlli completati.",
     unavailable: "I controlli non disponibili restano sconosciuti, non superati.",
     manual: "Esamina",
-    ram: "La pulizia RAM si trova ora in Manutenzione.",
     probes: [
       "Impostazioni Windows",
       "Modifiche supportate",
@@ -283,7 +281,6 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     noReview: "Aucun point à examiner parmi les contrôles terminés.",
     unavailable: "Un contrôle indisponible reste inconnu, pas réussi.",
     manual: "Examiner",
-    ram: "Le nettoyage RAM se trouve dans Maintenance.",
     probes: [
       "Réglages Windows",
       "Modifications prises en charge",
@@ -395,7 +392,6 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     noReview: "No hay elementos para revisar en las comprobaciones completas.",
     unavailable: "Una comprobación no disponible es desconocida, no superada.",
     manual: "Revisar",
-    ram: "La limpieza de RAM está en Mantenimiento.",
     probes: [
       "Ajustes de Windows",
       "Cambios compatibles",
@@ -507,7 +503,6 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     noReview: "Keine weiteren Hinweise aus den abgeschlossenen Prüfungen.",
     unavailable: "Nicht verfügbare Prüfungen bleiben unbekannt, nicht bestanden.",
     manual: "Prüfen",
-    ram: "Die RAM-Bereinigung findest du unter Wartung.",
     probes: [
       "Windows-Einstellungen",
       "Unterstützte Änderungen",
@@ -619,7 +614,6 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     noReview: "Nenhum item para revisar nas verificações concluídas.",
     unavailable: "Verificações indisponíveis permanecem desconhecidas, não aprovadas.",
     manual: "Revisar",
-    ram: "A limpeza de RAM está em Manutenção.",
     probes: [
       "Configurações do Windows",
       "Alterações compatíveis",

@@ -83,8 +83,9 @@ export function textFor(
 
 export const LARGE_FILE_THRESHOLD_BYTES = 100 * 1024 * 1024;
 
-/** Gauge geometry: a 260-degree arc opening at the bottom, like a rev counter. */
-export const GAUGE_START = 140;
+/** Gauge geometry: a 260-degree arc opening at the bottom, like a rev counter.
+ *  Angles run clockwise from 12 o'clock, so 230 starts at lower left. */
+export const GAUGE_START = 230;
 export const GAUGE_SWEEP = 260;
 export const GAUGE_R = 62;
 export const GAUGE_C = 80;

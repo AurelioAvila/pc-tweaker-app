@@ -11,6 +11,7 @@ type PricingCopy = {
   lifetime: string;
   renewal: string;
   perpetual: string;
+  mostChosen: string;
   compare: string;
   capability: string;
   essentials: string;
@@ -63,6 +64,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     lifetime: "Every Pro tool, no recurring bill. Two additional tools for your tuning workflow.",
     renewal: "Renews until canceled. Manage it from your account.",
     perpetual: "One payment. No subscription renewal.",
+    mostChosen: "Most chosen",
     compare: "Choose by what you use",
     capability: "What is included",
     essentials: "Core tweaks and live monitoring",
@@ -74,8 +76,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     reports: "Portable tuning reports",
     futureTweaks: "Exclusive access to selected future tweaks",
     prioritySupport: "Priority support",
-    uninstallerBonus:
-      "Uninstaller Pro for 12 months from your first Uninstaller sign-in. Included with Lifetime, including existing owners. No automatic renewal.",
+    uninstallerBonus: "12 months of Uninstaller Pro from your first sign-in. No automatic renewal.",
     profileDetail:
       "Put two saved profiles side by side. See shared settings and the differences before choosing one.",
     reportDetail:
@@ -120,6 +121,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
       "Tutti gli strumenti Pro, senza rinnovi. Due strumenti aggiuntivi per le tue configurazioni.",
     renewal: "Si rinnova fino alla disdetta. Gestiscilo dal tuo account.",
     perpetual: "Un pagamento. Nessun rinnovo dell'abbonamento.",
+    mostChosen: "Il più scelto",
     compare: "Scegli in base a ciò che usi",
     capability: "Cosa è incluso",
     essentials: "Tweak essenziali e monitoraggio live",
@@ -131,8 +133,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     reports: "Report delle impostazioni esportabili",
     futureTweaks: "Accesso esclusivo a futuri tweak selezionati",
     prioritySupport: "Assistenza prioritaria",
-    uninstallerBonus:
-      "Uninstaller Pro per 12 mesi dal primo accesso a Uninstaller. Incluso con Lifetime, anche per chi lo possiede già. Nessun rinnovo automatico.",
+    uninstallerBonus: "12 mesi di Uninstaller Pro dal primo accesso. Nessun rinnovo automatico.",
     profileDetail:
       "Affianca due profili salvati. Controlla impostazioni comuni e differenze prima di sceglierne uno.",
     reportDetail:
@@ -181,6 +182,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
       "Tous les outils Pro, sans renouvellement. Deux outils supplémentaires pour vos configurations.",
     renewal: "Renouvellement jusqu'à résiliation. Gérez-le depuis votre compte.",
     perpetual: "Un paiement. Aucun renouvellement d'abonnement.",
+    mostChosen: "Le plus choisi",
     compare: "Choisissez selon vos usages",
     capability: "Fonctions incluses",
     essentials: "Réglages essentiels et suivi en direct",
@@ -193,7 +195,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     futureTweaks: "Accès exclusif à de futurs réglages sélectionnés",
     prioritySupport: "Assistance prioritaire",
     uninstallerBonus:
-      "Uninstaller Pro pendant 12 mois dès votre première connexion à Uninstaller. Inclus avec Lifetime, même pour les clients existants. Aucun renouvellement automatique.",
+      "12 mois d'Uninstaller Pro dès votre première connexion. Sans renouvellement automatique.",
     profileDetail:
       "Comparez deux profils enregistrés. Consultez les réglages communs et les différences avant de choisir.",
     reportDetail:
@@ -238,6 +240,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
       "Todas las herramientas Pro, sin renovaciones. Dos herramientas adicionales para tus configuraciones.",
     renewal: "Se renueva hasta que lo canceles. Gestión desde tu cuenta.",
     perpetual: "Un pago. Sin renovación de suscripción.",
+    mostChosen: "El más elegido",
     compare: "Elige según lo que uses",
     capability: "Qué incluye",
     essentials: "Ajustes esenciales y monitorización en vivo",
@@ -250,7 +253,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     futureTweaks: "Acceso exclusivo a futuros ajustes seleccionados",
     prioritySupport: "Asistencia prioritaria",
     uninstallerBonus:
-      "Uninstaller Pro durante 12 meses desde el primer inicio de sesión en Uninstaller. Incluido con Lifetime, también para clientes actuales. Sin renovación automática.",
+      "12 meses de Uninstaller Pro desde tu primer inicio de sesión. Sin renovación automática.",
     profileDetail:
       "Compara dos perfiles guardados. Revisa los ajustes comunes y las diferencias antes de elegir.",
     reportDetail:
@@ -296,6 +299,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
       "Alle Pro-Werkzeuge ohne laufendes Abo. Zwei zusätzliche Werkzeuge für deine Konfigurationen.",
     renewal: "Verlängert sich bis zur Kündigung. Verwaltung über dein Konto.",
     perpetual: "Eine Zahlung. Keine Aboverlängerung.",
+    mostChosen: "Am häufigsten gewählt",
     compare: "Wähle nach deinem Bedarf",
     capability: "Enthaltene Funktionen",
     essentials: "Grundlegende Tweaks und Live-Monitoring",
@@ -308,7 +312,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     futureTweaks: "Exklusiver Zugang zu ausgewählten zukünftigen Tweaks",
     prioritySupport: "Bevorzugter Support",
     uninstallerBonus:
-      "Uninstaller Pro für 12 Monate ab der ersten Anmeldung in Uninstaller. In Lifetime enthalten, auch für bestehende Kunden. Keine automatische Verlängerung.",
+      "12 Monate Uninstaller Pro ab der ersten Anmeldung. Keine automatische Verlängerung.",
     profileDetail:
       "Vergleiche zwei gespeicherte Profile. Prüfe gemeinsame Einstellungen und Unterschiede vor deiner Auswahl.",
     reportDetail:
@@ -354,6 +358,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
       "Todas as ferramentas Pro, sem renovações. Duas ferramentas adicionais para as suas configurações.",
     renewal: "Renova até ao cancelamento. Gestão através da sua conta.",
     perpetual: "Um pagamento. Sem renovação de subscrição.",
+    mostChosen: "O mais escolhido",
     compare: "Escolha pelo que utiliza",
     capability: "O que está incluído",
     essentials: "Ajustes essenciais e monitorização em direto",
@@ -366,7 +371,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     futureTweaks: "Acesso exclusivo a futuros ajustes selecionados",
     prioritySupport: "Suporte prioritário",
     uninstallerBonus:
-      "Uninstaller Pro por 12 meses a partir do primeiro acesso ao Uninstaller. Incluído no Lifetime, também para clientes atuais. Sem renovação automática.",
+      "12 meses de Uninstaller Pro a partir do primeiro acesso. Sem renovação automática.",
     profileDetail:
       "Compare dois perfis guardados. Consulte as definições comuns e as diferenças antes de escolher.",
     reportDetail:

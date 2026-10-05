@@ -1,4 +1,5 @@
 export type ThemeName =
+  | "graphite_ember"
   | "violet"
   | "teal_depths"
   | "amber_dusk"
@@ -8,7 +9,6 @@ export type ThemeName =
   | "royal_gold"
   | "slate_mono"
   | "indigo_night"
-  | "coral_sunset"
   | "rose_quartz"
   | "cyber_lime"
   | "copper_forge"
@@ -27,6 +27,7 @@ export type ThemeName =
  * left two visibly empty slots dangling under the second row.
  */
 export const THEMES: { code: ThemeName; label: string; swatch: string }[] = [
+  { code: "graphite_ember", label: "Graphite Ember", swatch: "#ff6a3d" },
   { code: "violet", label: "Violet", swatch: "#ff5c8a" },
   { code: "teal_depths", label: "Teal Depths", swatch: "#35e0c0" },
   { code: "amber_dusk", label: "Amber Dusk", swatch: "#ffb84d" },
@@ -36,14 +37,28 @@ export const THEMES: { code: ThemeName; label: string; swatch: string }[] = [
   { code: "royal_gold", label: "Royal Gold", swatch: "#e8b923" },
   { code: "slate_mono", label: "Slate Mono", swatch: "#9aa5b1" },
   { code: "indigo_night", label: "Indigo Night", swatch: "#6c63ff" },
-  { code: "coral_sunset", label: "Coral Sunset", swatch: "#ff7a45" },
   { code: "rose_quartz", label: "Rose Quartz", swatch: "#ffafcb" },
   { code: "cyber_lime", label: "Cyber Lime", swatch: "#b6ff3c" },
   { code: "copper_forge", label: "Copper Forge", swatch: "#d98b4a" },
   { code: "magenta_pulse", label: "Magenta Pulse", swatch: "#ff2fd0" },
 ];
 
+/** Bumped when a new default should reach everyone once, including people
+ *  who had picked a theme before it existed. They can switch back after. */
+const THEME_RESET = "pc-tweaker-theme-reset";
+const THEME_RESET_VERSION = "graphite_ember";
+
 export function detectInitialTheme(): ThemeName {
+  try {
+    if (localStorage.getItem(THEME_RESET) !== THEME_RESET_VERSION) {
+      localStorage.setItem(THEME_RESET, THEME_RESET_VERSION);
+      localStorage.removeItem("pc-tweaker-theme");
+      return "graphite_ember";
+    }
+  } catch {
+    // Storage blocked: the default still applies, it just will not persist.
+  }
   const stored = localStorage.getItem("pc-tweaker-theme");
-  return THEMES.some((t) => t.code === stored) ? (stored as ThemeName) : "violet";
+  // Coral Sunset was folded into the new default, which it closely resembled.
+  return THEMES.some((t) => t.code === stored) ? (stored as ThemeName) : "graphite_ember";
 }

@@ -165,6 +165,35 @@
   font-weight: 650;
 }
 
+/* The default 1000x700 window could not show the whole menu: Startup and
+   Maintenance sat below a scroll nobody noticed. Short windows get tighter
+   rows (still 30px targets); taller ones keep the roomier spacing. */
+@media (max-height: 820px) {
+  .desktop-refresh .workspace-sidebar .nav-item {
+    min-height: 30px;
+    margin-block: 1px;
+    padding-block: 5px;
+  }
+
+  .desktop-refresh .workspace-primary .nav-item {
+    min-height: 32px;
+    padding-block: 6px;
+  }
+
+  .desktop-refresh .workspace-primary {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+
+  .desktop-refresh .workspace-nav-group {
+    margin-bottom: 8px;
+  }
+
+  .desktop-refresh .workspace-nav-group > .type-label {
+    margin-bottom: 3px;
+  }
+}
+
 /* No fixed height or nested scrolling: opening the coffee controls reduces
    navigation space while pricing, tipping and the plan state remain visible. */
 .desktop-refresh .workspace-commercial {
@@ -246,6 +275,9 @@
 
 .desktop-refresh .workspace-page {
   width: 100%;
+  /* The window now opens up to 1280 wide; text columns stop here so a
+     description does not run the full width, while grids keep the room. */
+  max-width: 1120px;
   min-width: 0;
   margin-inline: auto;
 }

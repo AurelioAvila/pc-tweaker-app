@@ -17,7 +17,7 @@ pub fn input_lag_info() -> GamingInfo {
     GamingInfo {
         id: INPUT_LAG_ID,
         name: "Reduce input lag (mouse)",
-        description: "Turns off pointer acceleration (\"Enhance pointer precision\") for true 1:1 mouse movement, with no delay added by the system (HKCU, no elevation required).",
+        description: "Turns off pointer acceleration (\"Enhance pointer precision\") for true 1:1 mouse movement, with no delay added by the system.",
         requires_admin: false,
         requires_pro: false,
     }
@@ -59,7 +59,7 @@ pub fn keyboard_delay_info() -> GamingInfo {
     GamingInfo {
         id: KEYBOARD_DELAY_ID,
         name: "Reduce input lag (keyboard)",
-        description: "Zeroes the delay before a held key starts repeating and maximizes its repeat rate, for a more immediate response in game (HKCU, no elevation required).",
+        description: "Zeroes the delay before a held key starts repeating and maximizes its repeat rate, for a more immediate response in game.",
         requires_admin: false,
         requires_pro: false,
     }

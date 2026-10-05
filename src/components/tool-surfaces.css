@@ -268,10 +268,11 @@
   min-height: 40px;
   padding: 9px 15px;
   border: 1px solid transparent;
-  border-radius: 6px 6px 6px 2px;
-  font-size: 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
   line-height: 1.35;
   font-weight: 600;
+  letter-spacing: 0.01em;
   text-align: center;
   white-space: normal;
   transition:
@@ -319,6 +320,12 @@
 .tool-danger-action:hover:not(:disabled) {
   border-color: var(--danger);
   background: color-mix(in oklab, var(--danger) 14%, var(--surface-2));
+}
+.tool-primary-action:active:not(:disabled),
+.tool-secondary-action:active:not(:disabled),
+.tool-danger-action:active:not(:disabled),
+.advanced-toolbar > button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 .tool-primary-action:disabled,
 .tool-secondary-action:disabled,

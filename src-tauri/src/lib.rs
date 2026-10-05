@@ -83,6 +83,7 @@ mod thermals;
 mod turbo;
 mod tweaks;
 mod updatewatch;
+mod window_state;
 mod x3d;
 mod zerotrace;
 
@@ -235,6 +236,21 @@ fn discard_legacy_avatar(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/// "Active" means in effect now, not merely recorded. A value Windows or the
+/// user put back used to stay "on" (and its starter profile "already
+/// applied") while Change history reported it reverted, leaving no way to
+/// re-apply it there. Re-applying keeps the oldest snapshot, so the original
+/// value stays restorable. An unreadable value keeps the recorded state.
+fn in_effect(t: &tweaks::RegistryTweak, recorded: bool) -> bool {
+    #[cfg(windows)]
+    return recorded && !matches!(t.read_current(), Ok(v) if v.as_ref() != Some(&t.on_value));
+    #[cfg(not(windows))]
+    {
+        let _ = t;
+        recorded
+    }
+}
+
 #[tauri::command(async)]
 fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
     let store = store_for(&app)?;
@@ -244,7 +260,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         .into_iter()
         .filter(|t| t.id != "disable_copilot" || applied_ids.contains(t.id))
         .map(|t| TweakInfo {
-            applied: applied_ids.contains(t.id),
+            applied: in_effect(&t, applied_ids.contains(t.id)),
             id: t.id.to_string(),
             name: t.name.to_string(),
             description: t.description.to_string(),
@@ -1618,6 +1634,13 @@ pub fn run() {
     crash::install(dirs_app_data_dir(), crash::PROCESS_APP);
 
     tauri::Builder::default()
+        // First, so a second launch exits before it starts a monitor, a game
+        // session watcher or a scheduled cleanup of its own. Closing to the
+        // tray made this common: the shortcut opened a new copy beside the
+        // hidden one. Elevated and headless relaunches exit in main() first.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            tray::show(app)
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().default_version_comparator(|current, release| {
@@ -1630,6 +1653,7 @@ pub fn run() {
         .manage(systemprofile::SystemProfileState::new())
         .on_window_event(tray::window_event)
         .setup(|app| {
+            window_state::restore(app);
             tray::setup(app)?;
             debloat::reconcile_on_startup(app.handle());
             game_sessions::spawn_watcher(app.handle().clone());

@@ -45,7 +45,7 @@
 
 :root,
 [data-theme="graphite_ember"] {
-  /* Default since 1.15.4: a near-neutral grey so the content carries the
+  /* Default since 1.16.0: a near-neutral grey so the content carries the
      colour, and one warm accent reserved for actions. Matches the site. */
   --app-bg-a: #1c1c22;
   --app-bg-b: #121217;

@@ -153,8 +153,8 @@ test("a tip carries no identity, so the webhook can never grant it access", () =
 
 test("the tipper is sent back to a page that says thank you", () => {
   const params = tipSessionParams("price_coffee", "http://localhost:5173");
-  assert.equal(params.success_url, "http://localhost:5173?tip=thanks");
-  assert.equal(params.cancel_url, "http://localhost:5173");
+  assert.equal(params.success_url, "http://localhost:5173/tip-thanks");
+  assert.equal(params.cancel_url, "http://localhost:5173/checkout-cancel");
 });
 
 test("Checkout keeps its own stepper, within bounds", () => {

@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-09-12
+Last updated: 2026-10-05
 
 PC Tweaker is a desktop application. Windows tweaks, snapshots, rollback data,
 hardware readings and file scans are processed locally on your device. They are
@@ -56,6 +56,11 @@ subscription and payment status required to grant or revoke an entitlement.
 Transactional email is delivered through our configured email provider. The
 provider receives the recipient address, message and delivery metadata needed to
 send verification, password-reset, support, receipt or newsletter email.
+
+If you start a Lifetime checkout from your verified account and it closes
+without payment, we may send one reminder about it, at most once every 30
+days. Every reminder carries a one-click unsubscribe link, and unsubscribing
+also stops newsletter email.
 
 ## Infrastructure and service providers
 

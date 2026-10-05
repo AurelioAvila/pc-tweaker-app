@@ -1,6 +1,7 @@
 import { DOWNLOAD_EXE } from "../constants";
 import { useCampaignStoreLink } from "../campaign-store";
 import { PRACTICAL_GUIDES } from "./practical-guides";
+import { GUIDE_FAQS } from "./guide-faqs";
 import { Link } from "../router";
 
 interface Guide {
@@ -28,6 +29,11 @@ interface Guide {
    * straight to the URL that answers.
    */
   readonly related?: readonly { readonly to: string; readonly label: string; readonly note: string }[];
+  /** External pages the guide's factual claims were checked against, with the date. */
+  readonly sources?: {
+    readonly checked: string;
+    readonly items: readonly { readonly label: string; readonly url: string }[];
+  };
 }
 
 export const GUIDES: Record<string, Guide> = {
@@ -58,6 +64,55 @@ export const GUIDES: Record<string, Guide> = {
         heading: "Start from a reading, not from a preset",
         body:
           "Open Scan before changing anything and write down what the machine does while idle: processor and memory use, free disk space, uptime and how many tweaks are already active. That number is the only thing you can compare against later. A disk sitting at 90 percent full is a storage problem no registry value will solve, and memory at half capacity has headroom that a RAM-clearing tool will not improve. Change one setting, repeat the same task, then compare against the reading you started from.",
+      },
+      // The next four sections answer what "windows 11 optimizer" searchers
+      // actually want to know: what such a tool changes, which changes are
+      // worth having, and in what order. Every control named here is read
+      // from the app's own catalogue (src-tauri/src/tweaks.rs), including the
+      // caveats; nothing is claimed that the catalogue does not.
+      {
+        heading: "What a Windows 11 optimizer can actually change",
+        body:
+          "Strip away the marketing and an optimizer is a list of Windows settings. PC Tweaker's list is grouped the way you will meet it in the app. Performance: the roughly ten-second delay Windows adds before launching startup programs, the delay before menus open, the 400 ms the interface waits before reacting to a resting pointer, the open-and-close window animations, and Store apps that keep running, refreshing and polling the network when you are not using them. Gaming: Xbox Game Bar background recording, the network throttle Windows applies while multimedia runs, the Sticky Keys shortcut that drops you out of a fullscreen game, mouse acceleration, fullscreen optimizations and hardware-accelerated GPU scheduling. Privacy: diagnostic data level, the advertising ID, Bing results in Start, tailored experiences, app-launch tracking, feedback prompts, suggested apps and the Recall screenshot policy. Interface: file extensions, Widgets, the Chat button, the taskbar search box and alignment, transparency, and Explorer's folder-type guessing. Maintenance: Delivery Optimization uploads, the long-path limit and the screen that lets a frozen app block shutdown.",
+        points: [
+          "Performance: startup, menu and hover delays, animations, background Store apps",
+          "Gaming: Game Bar recording, network throttle, Sticky Keys, mouse acceleration",
+          "Privacy: diagnostic data, advertising ID, Bing in Start, suggestions, Recall",
+          "Interface and maintenance: extensions, Widgets, transparency, update uploads",
+        ],
+      },
+      {
+        heading: "The changes that are worth having, and why",
+        body:
+          "The ones you can feel are the delays. Windows deliberately waits about ten seconds after sign-in before starting your startup apps, holds menus for a moment before opening them, and waits 400 ms before reacting to the pointer resting on a taskbar button or a tooltip; removing those three makes the desktop respond when you click rather than shortly after. Window animations are pure waiting time with GPU work behind them, which matters most on integrated graphics. Store apps running in the background are real CPU, memory and battery spent on apps you did not open. Delivery Optimization uploads your downloaded updates to other people's PCs by default, which is the upstream bandwidth you notice mid-game; limiting it to your own machine stops that. Always showing file extensions is worth turning on for safety alone, because it exposes a file named invoice.pdf.exe for what it is. None of these adds speed to the hardware. They remove work the hardware was doing for nothing.",
+        points: [
+          "Startup, menu and hover delays: the difference you feel first",
+          "Background Store apps: CPU, memory and battery you were not using",
+          "Delivery Optimization: stop uploading updates to strangers",
+          "File extensions: a safety setting, not a performance one",
+        ],
+      },
+      {
+        heading: "The changes the app refuses to oversell",
+        body:
+          "Several settings that other optimizers sell as performance gains are listed in PC Tweaker with their limits spelled out, because the limits are documented. The MMCSS background reserve is written as 0, which Windows treats as 20%; it does not hand every foreground app the whole CPU. The legacy Games GPU Priority value is one Microsoft documents as unused, and the app says so: no gain is expected from it. The global timer resolution flag does not itself request or verify a timer resolution, and its effect depends on the Windows version. Disabling Memory Integrity removes a layer of kernel protection in exchange for a performance change that varies by hardware, and a policy or UEFI lock may prevent it anyway. Hardware-accelerated GPU scheduling can improve, worsen or leave latency unchanged depending on the game. Reducing diagnostic data requests the lowest level Windows allows and is not an off switch. If you want those settings, apply them knowing what they are.",
+        points: [
+          "MMCSS reserve 0 means 20%, not zero",
+          "Games GPU Priority: documented as unused, no gain expected",
+          "Memory Integrity off: a protection removed, not a free gain",
+          "HAGS: better, worse or unchanged, by game",
+        ],
+      },
+      {
+        heading: "The order that gets results on Windows 11",
+        body:
+          "Tweaks are the last few percent, so do the big things first. Install pending updates in Settings, Windows Update, and restart. Check Settings, System, Storage: a drive near full slows everything and no setting fixes it. Review Settings, Apps, Startup and switch off what you do not need at sign-in; that is where most slow boots live. On a laptop, check the power mode and whether clock speeds fall under load, which is cooling, not configuration. Then run the Scan to record the baseline, apply the delay and background-app controls first because they are the ones you will notice, and leave the gaming and privacy settings until you have a specific reason for each. Change one thing, repeat the same task, compare with the reading you started from.",
+        points: [
+          "Updates and restart before anything else",
+          "Free disk space and startup apps in Settings",
+          "Power mode and thermals on laptops",
+          "Then baseline, then one tweak at a time",
+        ],
       },
       {
         heading: "Per-user, machine-wide and power settings behave differently",
@@ -93,6 +148,17 @@ export const GUIDES: Record<string, Guide> = {
         note: "If you would rather begin from a reviewed selection than from individual toggles.",
       },
     ],
+    sources: {
+      checked: "5 October 2026",
+      items: [
+        { label: "Microsoft: Multimedia Class Scheduler Service (SystemResponsiveness, NetworkThrottlingIndex)", url: "https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service" },
+        { label: "Microsoft: configure Windows diagnostic data (AllowTelemetry levels)", url: "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization" },
+        { label: "Microsoft: Delivery Optimization for Windows updates", url: "https://learn.microsoft.com/en-us/windows/deployment/do/waas-delivery-optimization" },
+        { label: "Microsoft: manage Recall", url: "https://learn.microsoft.com/en-us/windows/client-management/manage-recall" },
+        { label: "Microsoft: startup apps in Windows", url: "https://support.microsoft.com/en-us/windows/add-an-app-to-run-automatically-at-startup-in-windows-10-150da165-dcd9-7230-517b-cf3c295d89dd" },
+        { label: "PC Tweaker: the tweak catalogue in the source", url: "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/tweaks.rs" },
+      ],
+    },
   },
   "/gaming-performance": {
     eyebrow: "GAMING PERFORMANCE",
@@ -340,6 +406,29 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
                   {" — "}
                   {item.note}
                 </li>
+              ))}
+            </ul>
+          </nav>
+        )}
+        {GUIDE_FAQS[path] && (
+          <section className="mt-14 border-t border-white/10 pt-9" aria-labelledby="guide-faq">
+            <h2 id="guide-faq" className="font-display text-xl font-bold text-[var(--fg)]">Common questions</h2>
+            <div className="mt-5 space-y-6">
+              {GUIDE_FAQS[path].map((item) => (
+                <div key={item.q}>
+                  <h3 className="text-[16px] font-semibold text-[var(--fg)]">{item.q}</h3>
+                  <p className="mt-2 max-w-3xl text-[15px] leading-7 text-[var(--fg-dim)]">{item.a}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        {guide.sources && (
+          <nav aria-label="Sources" className="mt-10 text-sm text-[var(--fg-dim)]">
+            <p>Claims on this page were checked against these pages on {guide.sources.checked}:</p>
+            <ul className="mt-3 space-y-1.5">
+              {guide.sources.items.map((item) => (
+                <li key={item.url}><a href={item.url} className="text-accent" rel="noopener">{item.label}</a></li>
               ))}
             </ul>
           </nav>

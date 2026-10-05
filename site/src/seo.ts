@@ -1,4 +1,5 @@
 import { PRACTICAL_GUIDES } from "./pages/practical-guides";
+import { GUIDE_FAQS } from "./pages/guide-faqs";
 import { text } from "./i18n/dictionary";
 import { UNINSTALLER_DOWNLOAD_EXE } from "./constants";
 
@@ -158,6 +159,10 @@ export const ROUTE_JSONLD: Record<string, readonly object[]> = {
   "/support": [
     faqPage(`${ORIGIN}/support/#faq`, `${ORIGIN}/support/`, text.support.selfServe),
   ],
+  // Guides that render a "Common questions" section (src/pages/guide-faqs.ts).
+  ...Object.fromEntries(Object.entries(GUIDE_FAQS).map(([path, items]) => [
+    path, [faqPage(`${ORIGIN}${path}/#faq`, `${ORIGIN}${path}/`, items)],
+  ])),
 };
 
 export const NOT_FOUND_SEO: RouteSeo = {

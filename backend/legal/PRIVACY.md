@@ -66,6 +66,11 @@ nothing else (no IP address, device details or identifier), so we can count
 downloads per post. They contain no personal identifier and are never stored
 in your browser.
 
+After a purchase, the confirmation page asks, optionally, how you found PC
+Tweaker. If you pick an answer, only that answer (for example "youtube") is
+added to your order's record at Stripe; nothing is stored in your browser and
+skipping the question changes nothing.
+
 ## Email
 
 Transactional email is delivered through our configured email provider. The

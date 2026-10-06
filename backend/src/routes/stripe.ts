@@ -63,6 +63,35 @@ const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey, { apiVersion: "2025-03-31.basil" as Stripe.LatestApiVersion })
   : null;
 
+/** Answers offered by the post-payment "How did you find PC Tweaker?" question. */
+export const SELF_REPORTED_SOURCES: Record<string, string> = {
+  youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", facebook: "Facebook",
+  search: "Search engine", friend: "A friend", other: "Somewhere else",
+};
+
+type SessionApi = Pick<Stripe["checkout"]["sessions"], "retrieve" | "update">;
+
+/**
+ * Optional one-click answer from the thanks page. The buyer's own session id
+ * (only they get it, in the success URL) is checked against Stripe: it must be
+ * a completed checkout this backend created, and the first answer wins. Only
+ * `self_reported_source` is written; Stripe merges it into the existing
+ * metadata. Returns whether it was recorded; never throws.
+ */
+export async function recordSelfReportedSource(sessionId: unknown, source: unknown, api: SessionApi | null = stripe?.checkout.sessions ?? null): Promise<boolean> {
+  if (!api || typeof sessionId !== "string" || !/^cs_(test|live)_[A-Za-z0-9]{10,200}$/.test(sessionId)) return false;
+  if (typeof source !== "string" || !Object.hasOwn(SELF_REPORTED_SOURCES, source)) return false;
+  try {
+    const session = await api.retrieve(sessionId);
+    if (session.status !== "complete" || !session.metadata?.product || session.metadata.self_reported_source) return false;
+    await api.update(sessionId, { metadata: { self_reported_source: source } });
+    return true;
+  } catch (err) {
+    console.error("self-reported source not recorded:", (err as Error).message);
+    return false;
+  }
+}
+
 /** Lifetime-reminder input: sessions that expired unpaid since `sinceSeconds`. */
 export async function listExpiredCheckouts(sinceSeconds: number) {
   if (!stripe) return [];

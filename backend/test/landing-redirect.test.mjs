@@ -45,6 +45,17 @@ test("only the retired landing redirects; service routes remain available", { ti
     assert.equal(response.status, 200, route);
     assert.equal(response.headers.get("location"), null, route);
   }
+  const asked = await (await fetch(base + "/checkout-success?session_id=cs_test_a1B2c3D4e5F6g7")).text();
+  assert.match(asked, /name="session_id" value="cs_test_a1B2c3D4e5F6g7"/);
+  assert.match(asked, /name="source" value="youtube"/);
+  const forged = await (await fetch(base + "/checkout-success?session_id=%22%3E%3Cscript%3E")).text();
+  assert.doesNotMatch(forged, /<form|<script/);
+  const noted = await fetch(base + "/checkout-success", {
+    method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: "session_id=cs_test_a1B2c3D4e5F6g7&source=youtube",
+  });
+  assert.equal(noted.status, 200);
+  assert.match(await noted.text(), /Thanks for telling us/);
   assert.equal((await fetch(base + "/ready")).status, 503);
   assert.equal((await fetch(base + "/", { method: "POST", redirect: "manual" })).status, 404);
   assert.equal((await fetch(base + "/missing", { redirect: "manual" })).status, 404);

@@ -11,6 +11,24 @@ export interface GuideFaq {
 }
 
 export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
+  "/uninstall-programs-completely": [
+    {
+      q: "Is it safe to delete a program's folder instead of uninstalling it?",
+      a: "No. The folder is only part of what an installer created. Services, drivers, file associations, Start Menu entries and the registry entry Windows lists the program under all stay behind, and the program's own uninstaller is the only thing that knows how to remove them. Uninstall first, then clean what is left.",
+    },
+    {
+      q: "Where do programs leave files after uninstalling?",
+      a: "Most often in a folder named after the program under %APPDATA%, %LOCALAPPDATA% or %PROGRAMDATA%, in Start Menu shortcuts, in per-user registry keys under HKEY_CURRENT_USER\\Software, and sometimes in the original install folder when the uninstaller could not remove a file that was in use.",
+    },
+    {
+      q: "Can leftover cleanup be undone?",
+      a: "Files and folders are moved to the Recycle Bin, so yes, from Windows itself. Per-user registry keys are deleted outright and are flagged as the one irreversible step before you confirm. Machine-wide registry keys are reported but never removed.",
+    },
+    {
+      q: "Is PC Tweaker Uninstaller free?",
+      a: "Single uninstalls, the safety score, the removal brief, the restore-point attempt, the leftover scan and the Removal Ledger are free with no account. Cleaning the leftovers the scan finds and batch removal are Pro, at 9.99 euro per year.",
+    },
+  ],
   "/turn-off-windows-recall": [
     {
       q: "Is Windows Recall on by default?",

@@ -1,4 +1,33 @@
 export const PRACTICAL_GUIDES = {
+  "/uninstall-programs-completely": {
+    eyebrow: "UNINSTALL GUIDE",
+    title: "How to completely uninstall a program on Windows",
+    seoTitle: "Completely Uninstall a Program on Windows",
+    seoDescription:
+      "A program's own uninstaller leaves data folders, shortcuts and registry keys behind. Where leftovers live, how to remove them reversibly and what to keep.",
+    intro: "Windows runs the program's own uninstaller and reports success when that exits. What it leaves behind is up to the program: settings in AppData, a folder under ProgramData, Start Menu shortcuts, per-user registry keys, sometimes the install folder itself. Here is the order that removes a program without breaking something else.",
+    sections: [
+      { heading: "1. Uninstall the normal way first", body: "Open Settings, then Apps, then Installed apps, find the program and choose Uninstall from its menu. Microsoft notes that some programs are not listed there yet; for those, Control Panel, then Programs and Features, still works. Either route runs the uninstaller the program registered when it was installed, which is the only thing that knows how to remove its services, drivers and file associations properly. Skipping this step and deleting the folder by hand is how orphaned entries and broken context menus happen." },
+      { heading: "2. Know what you are about to run", body: "PC Tweaker Uninstaller reads the same registry entries Windows uses and shows, before anything runs, the exact uninstall command, whether it needs administrator rights, and a safety score with the reasons behind it: a program other installed software depends on, a driver package or a vendor suite component scores differently from a game. Before an elevated removal it attempts a Windows restore point and records whether that succeeded. Reviewing the removal brief is free and needs no account." },
+      { heading: "3. Find the leftovers", body: "Once the uninstaller has finished, the program's name, publisher and install location, captured from the registry before the uninstall erased them, are used to look in the places leftovers actually live: the install folder if it still exists, folders named after the program under %APPDATA%, %LOCALAPPDATA% and %PROGRAMDATA%, Start Menu shortcuts, and per-user keys under HKEY_CURRENT_USER\\Software. A folder only counts when its name matches the program's own name, not the publisher's: %APPDATA%\\JetBrains or HKCU\\Software\\Logitech hold every product from that vendor, so matching them would offer to delete software that is still installed." },
+      { heading: "4. Remove them reversibly", body: "Cleanup moves files and folders to the Recycle Bin rather than deleting them, so a wrong guess is reversible from Windows itself. Per-user registry keys cannot go to a bin; they are the one destructive step, and the app flags them as such before you confirm. Keys under HKEY_LOCAL_MACHINE are reported but never touched, because a machine-wide key can belong to a driver, a shared runtime or a different edition of the same product. Leftover cleanup and batch removal are the Pro features; the scan that finds them is free." },
+      { heading: "What to leave alone on purpose", body: "Some leftovers are worth keeping. A settings folder is what makes a reinstall pick up where you left off, and a licence file in ProgramData may be what the vendor's activation checks. Shared runtimes such as Visual C++ redistributables, .NET versions and vendor frameworks are listed as separate programs and are often used by software you still have; the safety score says so when it can tell. If you are removing a program because it misbehaves, Microsoft's Program Install and Uninstall troubleshooter repairs a broken registration before you try to delete around it." },
+      { heading: "If the uninstaller is missing or fails", body: "A program whose uninstaller no longer exists leaves an entry Windows cannot act on. Reinstalling the same version over the top usually restores the uninstaller, after which the normal route works. A failing uninstaller is a case for the troubleshooter above, not for deleting the folder: the registration, services and file associations stay behind and are harder to clean afterwards than the folder was. Keep the receipt either way: the Removal Ledger records what was removed, by which method, with what result and how much space it actually freed, so you can see later whether a problem started with a removal." }
+    ],
+    related: [
+      { to: "/uninstaller/", label: "what PC Tweaker Uninstaller shows before a removal runs", note: "The safety score, the command and the permissions, with prices for the Pro cleanup." },
+      { to: "/what-pc-tweaker-changes/", label: "which operations have their own recovery limits", note: "Uninstalls and cleanup are not settings; a restore point is not a file backup." },
+      { to: "/how-to-undo-windows-tweaks/", label: "how to recover when a change broke something", note: "Start from the change and the value it had before, not from a generic default." }
+    ],
+    sources: {
+      checked: "6 October 2026",
+      items: [
+        { label: "Microsoft Support: uninstall or remove apps and programs in Windows", url: "https://support.microsoft.com/en-us/windows/uninstall-or-remove-apps-and-programs-in-windows-4b55f974-2cc6-2d2b-d092-5905080eaf98" },
+        { label: "Microsoft Support: fix problems that block programs from being installed or removed", url: "https://support.microsoft.com/en-us/windows/deployment/install-upgrade/fix-problems-that-block-programs-from-being-installed-or-removed" },
+        { label: "PC Tweaker Uninstaller: the leftover-detection rules in the source (residue.rs)", url: "https://github.com/AurelioAvila/pc-tweaker-uninstaller/blob/master/src-tauri/src/residue.rs" }
+      ]
+    }
+  },
   "/turn-off-windows-recall": {
     eyebrow: "PRIVACY GUIDE",
     title: "How to turn off Windows Recall, and keep it off",

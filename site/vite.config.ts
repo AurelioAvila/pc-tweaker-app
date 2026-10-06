@@ -20,6 +20,7 @@ const ROUTES = [
   "reversible-windows-tweaks",
   "windows-privacy-tool",
   "turn-off-windows-recall",
+  "uninstall-programs-completely",
 ];
 
 /**

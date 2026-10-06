@@ -55,6 +55,14 @@ export function UninstallerPage() {
         </a>
       </div>
 
+      <p className="mb-12 text-[var(--fg-dim)]">
+        New to this? Read{" "}
+        <a href="/uninstall-programs-completely/" className="text-[var(--fg)] underline underline-offset-4">
+          how to completely uninstall a program on Windows
+        </a>
+        , including where leftovers live and which ones to keep.
+      </p>
+
       <section className="mb-10">
         <h2 className="mb-4 text-2xl font-semibold text-[var(--fg)]">What you get without paying</h2>
         <ul className="space-y-2.5 leading-relaxed text-[var(--fg-dim)]">

@@ -36,6 +36,7 @@ const PAGES = {
   "/windows-gaming-work-study-profiles/": ["src/pages/practical-guides.ts"],
   "/what-pc-tweaker-changes/": ["src/pages/practical-guides.ts"],
   "/turn-off-windows-recall/": ["src/pages/practical-guides.ts", "src/pages/guide-faqs.ts"],
+  "/uninstall-programs-completely/": ["src/pages/practical-guides.ts", "src/pages/guide-faqs.ts"],
 };
 
 /** Most recent author date (YYYY-MM-DD) across the given paths, or null. */

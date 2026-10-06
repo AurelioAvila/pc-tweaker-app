@@ -152,7 +152,7 @@ export function CookiesPage() {
         on your own device if you pick a theme. It never leaves your browser and you can clear it at
         any time from your browser settings.
       </p>
-      <p className="mb-5 text-[15px] leading-relaxed text-[var(--fg-dim)]">Microsoft Store links can contain a shared campaign label, such as the guide or channel you came from. This is not a personal identifier. The label stays in memory while you browse and is sent to Microsoft only when you follow a Store link. Microsoft reports qualifying campaign page views and acquisitions under its own policies.</p>
+      <p className="mb-5 text-[15px] leading-relaxed text-[var(--fg-dim)]">Microsoft Store links can contain a shared campaign label, such as the guide or channel you came from. This is not a personal identifier. The label stays in memory while you browse and is sent to Microsoft only when you follow a Store link. Microsoft reports qualifying campaign page views and acquisitions under its own policies. The same in-memory labels from a social post link (utm_source, utm_medium, utm_campaign, utm_content) are attached only to a tip checkout you start, so we can see which posts lead to payments.</p>
       <p className="text-[15px] leading-relaxed text-[var(--fg-dim)]">
         Because nothing here requires consent under the ePrivacy directive or the GDPR, the site
         shows no cookie banner — there is nothing to accept or refuse.

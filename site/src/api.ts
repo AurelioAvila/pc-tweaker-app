@@ -1,4 +1,5 @@
 import { API_BASE } from "./constants";
+import { campaignLabels } from "./campaign-store";
 
 /**
  * The public rating carries no visitor-submitted text — written feedback is
@@ -46,7 +47,7 @@ export function fetchReviews(): Promise<ReviewSummary> {
 /** Opens a Stripe Checkout for a one-off tip. No login, nothing unlocked.
  *  The count is clamped server-side, so this argument is convenience only. */
 export function buyCoffee(quantity: number): Promise<{ url: string }> {
-  return request("/api/tip", { method: "POST", body: JSON.stringify({ quantity }) });
+  return request("/api/tip", { method: "POST", body: JSON.stringify({ quantity, utm: campaignLabels() }) });
 }
 
 /** Only `rating` is required; the rest are optional and stay private. */

@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import App from "./App";
 import { ThemeProvider } from "./theme";
+import { captureEntry } from "./campaign-store";
 // Self-hosted fonts (previously Google Fonts <link>s): keeps every visitor
 // request on our own origin — no IPs sent to Google, nothing to consent to.
 // Weights match what the old fonts.googleapis.com URL loaded.
@@ -16,6 +17,8 @@ import "@fontsource/inter/500.css";
 import "@fontsource/inter/600.css";
 import "./index.css";
 import faviconUrl from "./assets/favicon.png";
+
+captureEntry(window.location.search);
 
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("#root not found");

@@ -153,6 +153,7 @@ export function checkoutSessionParams({
   customerEmail,
   successUrl,
   cancelUrl,
+  utm,
 }: {
   priceId: string;
   mode: "subscription" | "payment";
@@ -163,8 +164,9 @@ export function checkoutSessionParams({
   customerEmail: string | undefined;
   successUrl: string;
   cancelUrl: string;
+  utm?: unknown;
 }) {
-  const metadata = { userId, plan: planKey, product };
+  const metadata = { userId, plan: planKey, product, ...utmMetadata(utm) };
   return {
     mode,
     line_items: [{ price: priceId, quantity: 1 }],
@@ -199,10 +201,29 @@ export function checkoutSessionParams({
   };
 }
 
-export function tipSessionParams(priceId: string, appUrl: string, quantity: unknown = 1) {
+/** First-touch social campaign labels the website keeps in memory for the
+ * page session (site/src/campaign-store.ts). Only the four UTM keys with short
+ * label-like values pass, so nothing personal or unbounded reaches Stripe.
+ * Read back by the owner's local attribution report. */
+const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content"] as const;
+export function utmMetadata(raw: unknown): Record<string, string> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const input = raw as Record<string, unknown>;
+  const out: Record<string, string> = {};
+  for (const key of UTM_KEYS) {
+    const value = input[key];
+    if (typeof value === "string" && /^[A-Za-z0-9_.-]{1,80}$/.test(value)) out[key] = value;
+  }
+  return out;
+}
+
+export function tipSessionParams(priceId: string, appUrl: string, quantity: unknown = 1, utm?: unknown) {
   const qty = tipQuantity(quantity);
+  // Campaign labels only, never an identity (see the webhook test on tips).
+  const campaign = utmMetadata(utm);
   return {
     mode: "payment" as const,
+    ...(Object.keys(campaign).length ? { metadata: campaign } : {}),
     // The caller picks the count, and Checkout still shows its own stepper so
     // it can be changed on Stripe's page without coming back here.
     line_items: [

@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-10-05
+Last updated: 2026-10-06
 
 PC Tweaker is a desktop application. Windows tweaks, snapshots, rollback data,
 hardware readings and file scans are processed locally on your device. They are
@@ -55,6 +55,13 @@ website or inside the desktop application.
 Payments are processed by **Stripe Checkout**. PC Tweaker never receives or
 stores your full card number. Stripe sends our backend the customer,
 subscription and payment status required to grant or revoke an entitlement.
+
+If you reached the website from one of our social posts, the link's campaign
+labels (utm_source, utm_medium, utm_campaign and utm_content, for example
+"youtube" and a video name) are kept in memory for that page visit only and
+are attached to a tip checkout you start there, so we can see which posts
+lead to payments. They contain no personal identifier and are never stored
+in your browser.
 
 ## Email
 

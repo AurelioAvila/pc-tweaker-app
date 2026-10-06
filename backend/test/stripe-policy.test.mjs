@@ -10,6 +10,7 @@ const {
   tipQuantity,
   tipSessionParams,
   TIP_MAX_QUANTITY,
+  utmMetadata,
 } = await import("../dist/stripe-policy.js");
 
 test("lifetime Checkout reuses an existing customer without asking Stripe to create another", () => {
@@ -190,4 +191,18 @@ test("a quantity that is not a usable number falls back to one coffee", () => {
   assert.equal(tipQuantity({}), 1);
   assert.equal(tipQuantity(2.7), 2);
   assert.equal(tipQuantity("3"), 3);
+});
+
+test("social campaign labels reach session metadata, nothing else does", () => {
+  const utm = { utm_source: "youtube", utm_medium: "social", utm_campaign: "pctweaker_shorts", utm_content: "pc-x-v1", email: "a@b.c" };
+  const tip = tipSessionParams("price_coffee", "https://pctweaker.app", 1, utm);
+  assert.deepEqual(tip.metadata, { utm_source: "youtube", utm_medium: "social", utm_campaign: "pctweaker_shorts", utm_content: "pc-x-v1" });
+  assert.equal(tip.client_reference_id, undefined);
+  const checkout = checkoutSessionParams({
+    priceId: "p", mode: "payment", userId: "7", planKey: "lifetime", product: "pctweaker",
+    customerId: null, customerEmail: undefined, successUrl: "s", cancelUrl: "c", utm: { utm_source: "tiktok" },
+  });
+  assert.deepEqual(checkout.metadata, { userId: "7", plan: "lifetime", product: "pctweaker", utm_source: "tiktok" });
+  assert.deepEqual(utmMetadata({ utm_source: "a b", utm_term: "x" }), {});
+  assert.deepEqual(utmMetadata("youtube"), {});
 });

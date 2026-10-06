@@ -209,6 +209,7 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
         customerEmail,
         successUrl: effects.environment.CHECKOUT_SUCCESS_URL || "https://example.com/checkout-success",
         cancelUrl: effects.environment.CHECKOUT_CANCEL_URL || "https://example.com/checkout-cancel",
+        utm: req.body?.utm,
       });
       if (product === "pctweaker" && (planKey === "lifetime" || alreadyOwnsLifetime)) {
         // Read server time after database work, immediately before the Stripe
@@ -250,7 +251,7 @@ router.post("/tip", checkoutLimiter, tipLimiter, requireStripe, async (req: Requ
   }
   try {
     const session = await stripe!.checkout.sessions.create(
-      tipSessionParams(priceId, process.env.APP_URL || "https://pctweaker.app", req.body?.quantity),
+      tipSessionParams(priceId, process.env.APP_URL || "https://pctweaker.app", req.body?.quantity, req.body?.utm),
     );
     res.json({ url: session.url });
   } catch (err) {

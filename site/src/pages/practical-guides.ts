@@ -4,7 +4,7 @@ export const PRACTICAL_GUIDES = {
     title: "How to completely uninstall a program on Windows",
     seoTitle: "Completely Uninstall a Program on Windows",
     seoDescription:
-      "A program's own uninstaller leaves data folders, shortcuts and registry keys behind. Where leftovers live, how to remove them reversibly, and what to leave alone.",
+      "A program's own uninstaller leaves data folders, shortcuts and registry keys behind. Where leftovers live, how to remove them reversibly and what to keep.",
     intro: "Windows runs the program's own uninstaller and reports success when that exits. What it leaves behind is up to the program: settings in AppData, a folder under ProgramData, Start Menu shortcuts, per-user registry keys, sometimes the install folder itself. Here is the order that removes a program without breaking something else.",
     sections: [
       { heading: "1. Uninstall the normal way first", body: "Open Settings, then Apps, then Installed apps, find the program and choose Uninstall from its menu. Microsoft notes that some programs are not listed there yet; for those, Control Panel, then Programs and Features, still works. Either route runs the uninstaller the program registered when it was installed, which is the only thing that knows how to remove its services, drivers and file associations properly. Skipping this step and deleting the folder by hand is how orphaned entries and broken context menus happen." },

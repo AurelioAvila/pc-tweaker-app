@@ -19,7 +19,8 @@ import newsletterRoutes from "./routes/newsletter";
 import supportRoutes from "./routes/support";
 import offerRoutes from "./routes/offers";
 import downloadRoutes from "./routes/downloads";
-import { router as stripeRoutes, webhookHandler, deliverProReceipt, listExpiredCheckouts } from "./routes/stripe";
+import { router as stripeRoutes, webhookHandler, deliverProReceipt, listExpiredCheckouts, recordSelfReportedSource, SELF_REPORTED_SOURCES } from "./routes/stripe";
+import { consumeGlobalBudget } from "./public-form-guard";
 import { lifetimeReminderEmail, startCheckoutReminderWorker } from "./checkout-recovery";
 import { startReceiptWorker } from "./receipt-outbox";
 
@@ -188,9 +189,19 @@ serveMarkdownAsHtml("/privacy", path.join(__dirname, "..", "legal", "PRIVACY.md"
  * granted by the Stripe webhook independently of this page, so a closed tab
  * here never blocks entitlement — this is purely the human-facing receipt.
  */
-function checkoutResultPage(kind: "success" | "cancel" | "tip"): string {
+function checkoutResultPage(kind: "success" | "cancel" | "tip" | "noted", sessionId?: string): string {
   const isSuccess = kind !== "cancel";
   const isTip = kind === "tip";
+  // Optional attribution question: a plain form, so no script, cookie or
+  // storage is involved. Shown only when Stripe filled in the session id.
+  const question = kind === "success" && sessionId && /^cs_(test|live)_[A-Za-z0-9]{10,200}$/.test(sessionId)
+    ? `<form class="ask" method="post" action="/checkout-success">
+  <p class="q">Optional: how did you find PC Tweaker?</p>
+  <input type="hidden" name="session_id" value="${sessionId}">
+  <div class="opts">${Object.entries(SELF_REPORTED_SOURCES)
+    .map(([value, label]) => `<button type="submit" name="source" value="${value}">${label}</button>`).join("")}</div>
+</form>`
+    : "";
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -209,27 +220,46 @@ function checkoutResultPage(kind: "success" | "cancel" | "tip"): string {
     font-size:28px; background:${isSuccess ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "#232032"}; }
   h1 { font-size:22px; margin:0 0 10px; }
   p { color:#b7b3c9; font-size:14.5px; margin:0 0 24px; }
+  .ask { border-top:1px solid #232032; padding-top:20px; margin:0 0 20px; }
+  .ask .q { color:#e7e4f0; font-size:14px; margin:0 0 12px; }
+  .opts { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .opts button { font:inherit; font-size:13.5px; color:#e7e4f0; background:#1b1828; border:1px solid #2e2a42;
+    border-radius:999px; padding:7px 14px; cursor:pointer; }
+  .opts button:hover, .opts button:focus-visible { border-color:#8b5cf6; outline:none; }
 </style>
 </head>
 <body>
 <div class="card">
   <div class="badge">${isSuccess ? "&#10003;" : "&#10005;"}</div>
-  <h1>${isTip ? "Thank you for your support" : isSuccess ? "Payment successful" : "Checkout cancelled"}</h1>
+  <h1>${kind === "noted" ? "Thanks for telling us" : isTip ? "Thank you for your support" : isSuccess ? "Payment successful" : "Checkout cancelled"}</h1>
   <p>${
-    isTip
+    kind === "noted"
+      ? "It helps us know where to keep posting. Switch back to PC Tweaker: your new plan is picked up automatically."
+      : isTip
       ? "Your tip goes straight into new features and daily updates for PC Tweaker. Stripe will email your receipt."
       : isSuccess
       ? "Your Pro tweaks and presets are unlocked. Switch back to PC Tweaker — the app picks up your new plan automatically the next time it checks your license."
       : "No charge was made. You can restart checkout from the app whenever you're ready."
   }</p>
+  ${question}
   <p style="color:#8b87a0; font-size:13px; margin:0;">You can close this tab.</p>
 </div>
 </body>
 </html>`;
 }
 
-app.get("/checkout-success", (_req: Request, res: Response) => {
-  res.type("html").send(checkoutResultPage("success"));
+app.get("/checkout-success", (req: Request, res: Response) => {
+  const sessionId = typeof req.query.session_id === "string" ? req.query.session_id : undefined;
+  res.type("html").send(checkoutResultPage("success", sessionId));
+});
+// The thanks-page answer. Each one costs two Stripe calls, so a global hourly
+// ceiling bounds scripted abuse; the reply is the same whether or not it was
+// recorded, so it reveals nothing about a session id.
+app.post("/checkout-success", async (req: Request, res: Response) => {
+  if (consumeGlobalBudget("self-reported-source", 300)) {
+    await recordSelfReportedSource(req.body?.session_id, req.body?.source);
+  }
+  res.type("html").send(checkoutResultPage("noted"));
 });
 app.get("/checkout-cancel", (_req: Request, res: Response) => {
   res.type("html").send(checkoutResultPage("cancel"));

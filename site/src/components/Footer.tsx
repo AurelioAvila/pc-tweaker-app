@@ -100,6 +100,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
                 { label: "Reversible tweaks", href: "/reversible-windows-tweaks/" },
                 { label: "Windows privacy", href: "/windows-privacy-tool/" },
                 { label: "Turn off Recall", href: "/turn-off-windows-recall/" },
+                { label: "Uninstall completely", href: "/uninstall-programs-completely/" },
               ]}
             />
             <Col

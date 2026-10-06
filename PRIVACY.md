@@ -60,7 +60,10 @@ If you reached the website from one of our social posts, the link's campaign
 labels (utm_source, utm_medium, utm_campaign and utm_content, for example
 "youtube" and a video name) are kept in memory for that page visit only and
 are attached to a tip checkout you start there, so we can see which posts
-lead to payments. They contain no personal identifier and are never stored
+lead to payments. If you click the installer download during that visit, the
+same labels are sent once to our server, which stores them with the time and
+nothing else (no IP address, device details or identifier), so we can count
+downloads per post. They contain no personal identifier and are never stored
 in your browser.
 
 ## Email

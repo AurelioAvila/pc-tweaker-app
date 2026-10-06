@@ -186,7 +186,7 @@ router.post("/", writeLimiter, asyncRoute(async (req: Request, res: Response) =>
  * Lengths are compared first because timingSafeEqual throws on a mismatch,
  * and length alone is not the secret.
  */
-function isAdmin(req: Request): boolean {
+export function isAdmin(req: Request): boolean {
   const expected = process.env.ADMIN_TOKEN;
   const provided = req.get("x-admin-token");
   if (!expected || !provided) return false;

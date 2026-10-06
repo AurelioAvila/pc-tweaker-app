@@ -5,6 +5,7 @@ import { ACCENTS, THEME_ORDER, useTheme } from "../theme";
 import { EASE, riseChild, staggerParent } from "../motion";
 import { DOWNLOAD_EXE } from "../constants";
 import { CoffeeTip } from "./CoffeeTip";
+import { NewsletterSignup } from "./NewsletterSignup";
 import { useCampaignStoreLink } from "../campaign-store";
 
 /* ---------- theme selector: one geometric dot per palette ---------- */
@@ -159,6 +160,11 @@ export function HeroSection() {
             <p className="mt-3 max-w-md text-[12.5px] leading-relaxed text-[var(--fg-dim)]">
               {text.hero.safetyNote}
             </p>
+
+            {/* Social traffic lands on phones, where an .exe is a dead end. */}
+            <div className="md:hidden">
+              <NewsletterSignup source="site-mobile" copy={text.sendToPc} />
+            </div>
 
             <div className="mt-6 max-w-md">
               <WingetTerminal />

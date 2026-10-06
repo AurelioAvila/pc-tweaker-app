@@ -19,7 +19,17 @@ const router = express.Router();
 const GLOBAL_NEWSLETTER_PER_HOUR = 120;
 
 /** Where a signup came from ("site-footer" today; other products later). */
-const SOURCES = new Set(["site-footer", "site-hero", "app"]);
+const SOURCES = new Set(["site-footer", "site-hero", "site-mobile", "app"]);
+
+/**
+ * Phone visitors can't run a Windows installer, so the mobile hero offers to
+ * email them the download link instead. Same list and same isNew guard as the
+ * welcome email: a repeat submit sends nothing, so the form can't be used to
+ * nag an inbox.
+ * ponytail: someone already subscribed gets no link; add a per-address
+ * cooldown column if that case shows up.
+ */
+const DOWNLOAD_PAGE = "https://pctweaker.app/?utm_source=email&utm_medium=send-to-pc";
 
 /**
  * Keyed on req.ip — spoofable (see routes/auth.ts), but the failure mode here
@@ -100,7 +110,38 @@ router.post("/", newsletterLimiter, asyncRoute(async (req: Request, res: Respons
   // repeat submit must not trigger a repeat email, or the form becomes a way
   // to nag any inbox with our sending domain's reputation behind it.
   const link = unsubscribeUrl(email);
-  if (isNew && mailIsConfigured && link) {
+  if (isNew && mailIsConfigured && link && source === "site-mobile") {
+    void sendMail({
+      to: email,
+      subject: "Your PC Tweaker download link",
+      html: emailShell({
+        eyebrow: "For your PC",
+        headline: "Open this on your Windows PC.",
+        intro:
+          "Here's the link you asked for. Open it on the Windows 10 or 11 PC you want to tune and download PC Tweaker from there. You'll also get occasional emails about new releases. No spam and no daily drip.",
+        action: { label: "Download PC Tweaker", url: DOWNLOAD_PAGE },
+        afterActionHtml: `
+        <tr>
+          <td style="padding:24px 40px 0; text-align:center;">
+            <p style="margin:0; font-size:12px; line-height:1.6; color:${EMAIL_MUTED_TEXT};">
+              Didn't ask for this? <a href="${escapeHtml(link)}" style="color:${EMAIL_MUTED_TEXT};">Unsubscribe with one click</a>, no sign-in needed.
+            </p>
+          </td>
+        </tr>`,
+      }),
+      text: `Open this on your Windows PC.
+
+Here's the link you asked for. Open it on the Windows 10 or 11 PC you want to tune and download PC Tweaker from there:
+${DOWNLOAD_PAGE}
+
+You'll also get occasional emails about new releases. No spam and no daily drip.
+
+Didn't ask for this? Unsubscribe with one click, no sign-in needed:
+${link}
+
+PC Tweaker - https://pctweaker.app`,
+    }).catch((err: Error) => console.error("send-to-pc email failed:", err.message));
+  } else if (isNew && mailIsConfigured && link) {
     void sendMail({
       to: email,
       subject: "You're on the PC Tweaker list",

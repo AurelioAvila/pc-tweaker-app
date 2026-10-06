@@ -945,6 +945,7 @@ export interface Strings {
     registerDetailsRequired: string;
     loginRequiredForCheckout: string;
     verifyEmailForCheckout: string;
+    checkInboxAfterSignup: string;
     forgotPasswordLink: string;
     forgotPasswordButton: string;
     forgotPasswordSent: string;
@@ -2050,6 +2051,8 @@ const it: Strings = {
     loginRequiredForCheckout: "Accedi o registrati prima di sbloccare Pro.",
     verifyEmailForCheckout:
       "Conferma la tua email prima di sbloccare Pro: apri il link che ti abbiamo inviato o richiedine uno nuovo qui.",
+    checkInboxAfterSignup:
+      "Ti abbiamo inviato un link di conferma a {email}. Controlla anche lo spam: dopo la conferma il pagamento Pro si apre da solo.",
     forgotPasswordLink: "Password dimenticata?",
     forgotPasswordButton: "Invia link di ripristino",
     forgotPasswordSent: "Se l'email è registrata, riceverai un link per reimpostare la password.",
@@ -3462,6 +3465,8 @@ const en: Strings = {
     loginRequiredForCheckout: "Log in or sign up before unlocking Pro.",
     verifyEmailForCheckout:
       "Confirm your email before unlocking Pro: open the link we sent you, or request a new one here.",
+    checkInboxAfterSignup:
+      "We sent a confirmation link to {email}. Check your spam folder too. Once you confirm, Pro checkout opens on its own.",
     forgotPasswordLink: "Forgot password?",
     forgotPasswordButton: "Send reset link",
     forgotPasswordSent: "If that email is registered, you'll receive a password reset link.",
@@ -4894,6 +4899,8 @@ const fr: Strings = {
     loginRequiredForCheckout: "Connectez-vous ou inscrivez-vous avant de débloquer Pro.",
     verifyEmailForCheckout:
       "Confirmez votre e-mail avant de débloquer Pro : ouvrez le lien envoyé ou demandez-en un nouveau ici.",
+    checkInboxAfterSignup:
+      "Nous avons envoyé un lien de confirmation à {email}. Vérifiez aussi vos spams : après confirmation, le paiement Pro s'ouvre tout seul.",
     forgotPasswordLink: "Mot de passe oublié ?",
     forgotPasswordButton: "Envoyer le lien de réinitialisation",
     forgotPasswordSent: "Si cet e-mail est enregistré, vous recevrez un lien de réinitialisation.",
@@ -6322,6 +6329,8 @@ const es: Strings = {
     loginRequiredForCheckout: "Inicia sesión o regístrate antes de desbloquear Pro.",
     verifyEmailForCheckout:
       "Confirma tu correo antes de desbloquear Pro: abre el enlace que te enviamos o solicita uno nuevo aquí.",
+    checkInboxAfterSignup:
+      "Te enviamos un enlace de confirmación a {email}. Revisa también la carpeta de spam: al confirmar, el pago de Pro se abre solo.",
     forgotPasswordLink: "¿Olvidaste la contraseña?",
     forgotPasswordButton: "Enviar enlace de restablecimiento",
     forgotPasswordSent:
@@ -7756,6 +7765,8 @@ const de: Strings = {
     loginRequiredForCheckout: "Vor dem Freischalten von Pro anmelden oder registrieren.",
     verifyEmailForCheckout:
       "Bestätige vor dem Freischalten von Pro deine E-Mail: Öffne den gesendeten Link oder fordere hier einen neuen an.",
+    checkInboxAfterSignup:
+      "Wir haben einen Bestätigungslink an {email} gesendet. Sieh auch im Spam nach: Nach der Bestätigung öffnet sich die Pro-Zahlung von selbst.",
     forgotPasswordLink: "Passwort vergessen?",
     forgotPasswordButton: "Link zum Zurücksetzen senden",
     forgotPasswordSent:
@@ -9186,6 +9197,8 @@ const pt: Strings = {
     loginRequiredForCheckout: "Entre ou cadastre-se antes de desbloquear o Pro.",
     verifyEmailForCheckout:
       "Confirme seu e-mail antes de desbloquear o Pro: abra o link que enviamos ou peça um novo aqui.",
+    checkInboxAfterSignup:
+      "Enviamos um link de confirmação para {email}. Confira também o spam: depois da confirmação, o pagamento do Pro abre sozinho.",
     forgotPasswordLink: "Esqueceu a senha?",
     forgotPasswordButton: "Enviar link de redefinição",
     forgotPasswordSent:

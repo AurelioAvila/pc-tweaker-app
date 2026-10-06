@@ -13,7 +13,10 @@ const newsletterRoutes = newsletterModule.default.default ?? newsletterModule.de
 
 await initSchema();
 
+const { getPool } = await import("../dist/db.js");
+
 const app = express();
+app.use(express.json());
 app.use("/api/newsletter", newsletterRoutes);
 app.use((_err, _req, res, _next) => res.status(500).send("error"));
 const server = app.listen(0);
@@ -37,4 +40,17 @@ test("a non-ASCII signature of the right length is rejected, not a server error"
 test("a wrong ASCII signature is rejected", async () => {
   const res = await fetch(url("0".repeat(sig.length)));
   assert.equal(res.status, 400);
+});
+
+test("a phone visitor asking for the download link is stored as site-mobile", async () => {
+  const res = await fetch(base.replace("/unsubscribe", ""), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "phone@example.com", source: "site-mobile" }),
+  });
+  assert.equal(res.status, 200);
+  const { rows } = await getPool().query(
+    "SELECT source FROM newsletter_subscribers WHERE email = 'phone@example.com'",
+  );
+  assert.equal(rows[0].source, "site-mobile");
 });

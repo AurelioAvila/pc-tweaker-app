@@ -18,6 +18,7 @@ import errorReportRoutes from "./routes/error-reports";
 import newsletterRoutes from "./routes/newsletter";
 import supportRoutes from "./routes/support";
 import offerRoutes from "./routes/offers";
+import downloadRoutes from "./routes/downloads";
 import { router as stripeRoutes, webhookHandler, deliverProReceipt, listExpiredCheckouts } from "./routes/stripe";
 import { lifetimeReminderEmail, startCheckoutReminderWorker } from "./checkout-recovery";
 import { startReceiptWorker } from "./receipt-outbox";
@@ -259,6 +260,7 @@ app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/entitlements", entitlementsRoutes);
 app.use("/api/error-reports", errorReportRoutes);
 app.use("/api/offers", offerRoutes);
+app.use("/api/download", downloadRoutes);
 app.use("/api", stripeRoutes);
 // Unknown routes answer in the same JSON shape as every other error, not
 // with Express's default HTML page.

@@ -202,6 +202,20 @@ async function initSchema(): Promise<void> {
       PRIMARY KEY (user_id, product)
     );
   `);
+
+  // One row per website download click that arrived from a tagged social
+  // post (routes/downloads.ts). Campaign labels and a timestamp only: no IP,
+  // no user agent, no identifier, so a row can never be joined to a person.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS download_attributions (
+      id SERIAL PRIMARY KEY,
+      utm_source TEXT NOT NULL,
+      utm_medium TEXT,
+      utm_campaign TEXT,
+      utm_content TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
 }
 
 const isConfigured = Boolean(pool);

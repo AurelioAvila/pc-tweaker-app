@@ -2,7 +2,8 @@ import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import App from "./App";
 import { ThemeProvider } from "./theme";
-import { captureEntry } from "./campaign-store";
+import { campaignLabels, captureEntry } from "./campaign-store";
+import { API_BASE, DOWNLOAD_EXE } from "./constants";
 // Self-hosted fonts (previously Google Fonts <link>s): keeps every visitor
 // request on our own origin — no IPs sent to Google, nothing to consent to.
 // Weights match what the old fonts.googleapis.com URL loaded.
@@ -19,6 +20,16 @@ import "./index.css";
 import faviconUrl from "./assets/favicon.png";
 
 captureEntry(window.location.search);
+
+// A visitor who arrived from a tagged social post and clicks the installer
+// download: count it against that post's labels. The download itself is the
+// unchanged link; the beacon carries only the in-memory labels, nothing else.
+document.addEventListener("click", (event) => {
+  const utm = campaignLabels();
+  if (utm.utm_source && (event.target as Element | null)?.closest?.(`a[href="${DOWNLOAD_EXE}"]`)) {
+    navigator.sendBeacon(`${API_BASE}/api/download?${new URLSearchParams(utm)}`);
+  }
+});
 
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("#root not found");

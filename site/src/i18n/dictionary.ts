@@ -173,6 +173,7 @@ export interface Dictionary {
     readonly thanks: string;
     readonly genericError: string;
   };
+  readonly sendToPc: Dictionary["newsletter"];
   readonly footer: {
     readonly tagline: string;
     readonly product: string;
@@ -652,6 +653,13 @@ export const engDictionary: Dictionary = {
     "button": "Get Updates",
     "thanks": "Thank you. Check your inbox for your welcome email.",
     "genericError": "We could not save your subscription. Please try again."
+  },
+  "sendToPc": {
+    "pitch": "On your phone? PC Tweaker runs on Windows. We'll email you the download link so you can open it on your PC.",
+    "placeholder": "Your email address",
+    "button": "Send link",
+    "thanks": "Sent. Open the email on your Windows PC to download PC Tweaker.",
+    "genericError": "We could not send the link. Please try again."
   },
   "footer": {
     "tagline": "Windows tuning. Visible changes. Informed decisions.",

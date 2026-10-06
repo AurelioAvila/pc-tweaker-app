@@ -137,6 +137,15 @@ function App() {
 
   const isProUnlocked = auth.status === "authenticated" && auth.isPro;
 
+  // The plan someone clicked before being stopped by sign-in or an
+  // unconfirmed inbox. Without it they had to find the pricing panel again
+  // and click a third time; now checkout reopens on its own once the account
+  // can pay. Expires so a stale click never opens Stripe hours later.
+  const pendingPlan = useRef<{ plan: ProPlan; until: number } | null>(null);
+  function rememberPlan(plan: ProPlan) {
+    pendingPlan.current = { plan, until: Date.now() + 60 * 60 * 1000 };
+  }
+
   // Re-reads Pro status from the backend. Called on mount (if already logged
   // in), right after login/register, and when the window regains focus —
   // that last one is what picks up a Stripe payment completed in the system
@@ -181,6 +190,15 @@ function App() {
       // Fire-and-forget: refreshLicense() has its own error handling and
       // must never block the UI's account status on a signing hiccup.
       void refreshLicense();
+      const pending = pendingPlan.current;
+      if (pending && (data.isPro || pending.until < Date.now())) {
+        pendingPlan.current = null;
+      } else if (pending && data.emailVerified) {
+        pendingPlan.current = null;
+        startCheckout(pending.plan).catch((e) =>
+          pushToast("error", String(e instanceof Error ? e.message : e)),
+        );
+      }
     } catch {
       // Network hiccup: keep whatever Pro status we already had rather than
       // dropping the user back to Free on a transient failure — but say so,
@@ -269,7 +287,7 @@ function App() {
       const body = await res.json().catch(() => ({}) as { error?: string });
       throw new Error(body.error || `HTTP ${res.status}`);
     }
-    const data = (await res.json()) as { token: string };
+    const data = (await res.json()) as { token: string; verificationEmailSent?: boolean };
     // "Remember me" decides *where* the session lives, not just whether we
     // prefill an address: sessionStorage is cleared when the app closes, so
     // unticking it genuinely means "don't keep me signed in on this machine"
@@ -283,6 +301,9 @@ function App() {
       plan: null,
       hasBilling: false,
     });
+    if (mode === "register" && data.verificationEmailSent) {
+      pushToast("success", format(s.auth.checkInboxAfterSignup, { email }), 12000);
+    }
     await refreshAccount();
   }
 
@@ -465,7 +486,7 @@ function App() {
     refresh().catch((e) => pushToast("error", String(e)));
   }, []);
 
-  function pushToast(kind: Toast["kind"], message: string) {
+  function pushToast(kind: Toast["kind"], message: string, ms = 4000) {
     // Every user-visible error funnels through here, which makes it the one
     // honest hook for opt-in error reporting: what gets reported is exactly
     // what the user saw, never more.
@@ -474,7 +495,7 @@ function App() {
     setToasts((t) => [...t, { id, kind, message }]);
     setTimeout(() => {
       setToasts((t) => t.filter((x) => x.id !== id));
-    }, 4000);
+    }, ms);
   }
 
   async function toggle(tweak: TweakInfo) {
@@ -963,6 +984,7 @@ function App() {
                     // had the right shape — say what is missing and open the
                     // place where it is fixed.
                     if (auth.status !== "authenticated") {
+                      rememberPlan(plan);
                       pushToast("error", s.auth.loginRequiredForCheckout);
                       setAccountMenuOpen(true);
                       return;
@@ -975,6 +997,7 @@ function App() {
                       // The server decides, since emailVerified starts false
                       // until refreshAccount() answers.
                       if (e instanceof CheckoutError && e.code === "email_unverified") {
+                        rememberPlan(plan);
                         pushToast("error", s.auth.verifyEmailForCheckout);
                         setAccountMenuOpen(true);
                         return;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { postNewsletterSignup, ApiError } from "../api";
-import { text } from "../i18n/dictionary";
+import { text, type Dictionary } from "../i18n/dictionary";
 
 /**
  * Compact email-capture form for the footer. Kept deliberately small — one
@@ -8,7 +8,13 @@ import { text } from "../i18n/dictionary";
  * never compete with the download CTA. The hidden `company` input is the
  * honeypot the backend checks (same convention as the support form).
  */
-export function NewsletterSignup() {
+export function NewsletterSignup({
+  source = "site-footer",
+  copy = text.newsletter,
+}: {
+  source?: string;
+  copy?: Dictionary["newsletter"];
+}) {
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
   const [state, setState] = useState<"idle" | "pending" | "done">("idle");
@@ -16,7 +22,7 @@ export function NewsletterSignup() {
 
   if (state === "done") {
     return (
-      <p className="mt-5 max-w-xs text-[13px] text-[var(--accent)]">{text.newsletter.thanks}</p>
+      <p className="mt-5 max-w-xs text-[13px] text-[var(--accent)]">{copy.thanks}</p>
     );
   }
 
@@ -28,23 +34,23 @@ export function NewsletterSignup() {
         setError("");
         setState("pending");
         try {
-          await postNewsletterSignup({ email, source: "site-footer", company });
+          await postNewsletterSignup({ email, source, company });
           setState("done");
         } catch (err) {
-          setError(err instanceof ApiError ? err.message : text.newsletter.genericError);
+          setError(err instanceof ApiError ? err.message : copy.genericError);
           setState("idle");
         }
       }}
     >
-      <p className="mb-2.5 text-[13px] text-[var(--fg-dim)]">{text.newsletter.pitch}</p>
+      <p className="mb-2.5 text-[13px] text-[var(--fg-dim)]">{copy.pitch}</p>
       <div className="flex gap-2">
         <input
           type="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder={text.newsletter.placeholder}
-          aria-label={text.newsletter.placeholder}
+          placeholder={copy.placeholder}
+          aria-label={copy.placeholder}
           className="w-full rounded-xl border border-white/10 bg-[var(--bg)] px-3.5 py-2.5 text-[13.5px] text-[var(--fg)] outline-none transition-colors placeholder:text-[var(--fg-dim)]/60 focus:border-[var(--accent)]"
         />
         <button
@@ -52,7 +58,7 @@ export function NewsletterSignup() {
           disabled={state === "pending"}
           className="bg-accent shrink-0 cursor-pointer rounded-xl px-4 py-2.5 text-[13.5px] font-bold text-[var(--bg)] transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
         >
-          {state === "pending" ? "…" : text.newsletter.button}
+          {state === "pending" ? "…" : copy.button}
         </button>
       </div>
       {/* Honeypot: hidden from people (and from the tab order / screen

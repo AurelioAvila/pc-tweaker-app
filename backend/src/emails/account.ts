@@ -58,7 +58,7 @@ export function verificationHtml(firstName: string, link: string): string {
     eyebrow: "Confirm your email",
     headline: name ? `One step left, ${name}.` : "One step left.",
     intro:
-      "Confirm this address and your PC Tweaker account is ready. It is what lets you sign in on another PC and keeps your licence attached to you rather than to one machine.",
+      "Confirm this address and your PC Tweaker account is ready. It is what lets you sign in on another PC and keeps your license attached to you rather than to one machine.",
     action: { label: "Confirm my email", url: link },
     afterActionHtml: linkFallback(link),
     note: "The link works for 24 hours.",

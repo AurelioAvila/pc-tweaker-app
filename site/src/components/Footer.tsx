@@ -99,6 +99,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
                 { label: "Gaming performance", href: "/gaming-performance/" },
                 { label: "Reversible tweaks", href: "/reversible-windows-tweaks/" },
                 { label: "Windows privacy", href: "/windows-privacy-tool/" },
+                { label: "Turn off Recall", href: "/turn-off-windows-recall/" },
               ]}
             />
             <Col

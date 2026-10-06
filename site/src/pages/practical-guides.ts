@@ -1,4 +1,33 @@
 export const PRACTICAL_GUIDES = {
+  "/turn-off-windows-recall": {
+    eyebrow: "PRIVACY GUIDE",
+    title: "How to turn off Windows Recall, and keep it off",
+    seoTitle: "How to Turn Off Windows Recall and Keep It Off",
+    seoDescription:
+      "Recall is opt-in and only exists on Copilot+ PCs, but a policy can stop it being enabled at all. Check the setting, set the policy, remove the component, undo.",
+    intro: "Recall saves snapshots of your screen every few seconds and indexes them so you can search what you saw. It is off unless you turn it on, and it only exists on Copilot+ PCs. If you want a guarantee rather than a toggle, there are three layers: the Settings switch, a machine policy, and removing the component itself.",
+    sections: [
+      { heading: "First, check whether Recall is even on", body: "Open Settings, then Privacy & security, then Recall & snapshots. If the page is missing, your PC is not a Copilot+ PC and Recall is not installed; nothing on this page is running. If the page is there, the Save snapshots switch shows the current state. Microsoft documents that saving snapshots is off by default and needs your explicit opt-in the first time Recall opens, so a PC nobody has opted in on has no snapshots to delete." },
+      { heading: "Layer 1: the Settings switch", body: "Turning Save snapshots off stops new snapshots. On the same page you can delete the snapshots already saved, set how much disk space Recall may use and filter apps and websites. This is the right level if you want Recall available later. It is a per-user preference, so another account on the same PC can still opt in, and a future prompt can invite you to turn it back on." },
+      { heading: "Layer 2: the policy PC Tweaker sets", body: "The Disable Recall control in the Privacy category writes DisableAIDataAnalysis = 1 under HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI. That is the registry form of the Group Policy called Turn off saving snapshots for Recall. With it set, Windows will not save snapshots for any user on the machine, the Save snapshots switch cannot be turned on, and Microsoft states that snapshots previously saved on the device are deleted. It is a machine-wide policy key, so the control needs administrator rights and is part of Pro. PC Tweaker records the previous value, which on a home PC is usually that the key did not exist." },
+      { heading: "Layer 3: remove the component", body: "The policy stops snapshots; it does not uninstall Recall. If you want the bits gone, Microsoft's documented route is an elevated PowerShell command: Disable-WindowsOptionalFeature -Online -FeatureName \"Recall\" -Remove, followed by a restart. The same feature appears as Recall under Windows Features (optionalfeatures.exe) when it is present. On managed devices there is a second policy, Allow Recall to be enabled, that removes the component through Group Policy or Intune; on a home edition the PowerShell command is the practical equivalent." },
+      { heading: "What these layers do not cover", body: "None of them change Windows diagnostic data, which is a separate setting with its own control in PC Tweaker. Click to Do, the feature that lets you act on text and images on screen, has its own policy and is not switched off by the Recall ones. Browser history, OneDrive and the cloud history of whatever apps you use are untouched; Recall only ever stored its snapshots locally. And on a PC without the Recall & snapshots page, applying the policy is harmless but changes nothing you could notice." },
+      { heading: "If you want Recall back", body: "Use the restore control on the Disable Recall tweak and PC Tweaker writes back the recorded previous value, removing the policy if the key was absent before. If you removed the component, reinstall it with Enable-WindowsOptionalFeature -Online -FeatureName \"Recall\" from an elevated PowerShell, restart, then opt in again under Recall & snapshots. Deleted snapshots do not come back: Microsoft says they are removed when the policy is applied, and a restore writes a registry value, not a snapshot store." }
+    ],
+    related: [
+      { to: "/windows-privacy-tool/", label: "the other privacy settings PC Tweaker can change", note: "Diagnostic data, advertising ID, suggestions and feedback requests, each with its own control." },
+      { to: "/how-to-undo-windows-tweaks/", label: "how the restore control puts back the recorded value", note: "Why a removed policy key is restored as absent, not as a Windows default." },
+      { to: "/what-pc-tweaker-changes/", label: "which keys are machine-wide and need administrator rights", note: "The Recall policy is one of them." }
+    ],
+    sources: {
+      checked: "6 October 2026",
+      items: [
+        { label: "Microsoft Learn: manage Recall (policies, component removal, snapshot deletion)", url: "https://learn.microsoft.com/en-us/windows/client-management/manage-recall" },
+        { label: "Microsoft Support: retrace your steps with Recall (opt-in, Settings path, requirements)", url: "https://support.microsoft.com/en-us/windows/retrace-your-steps-with-recall-aa03f8a0-a78b-4b3e-b0a1-2eb8ac48701c" },
+        { label: "PC Tweaker: the disable_recall entry in the tweak catalogue", url: "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/tweaks.rs" }
+      ]
+    }
+  },
   "/how-to-undo-windows-tweaks": {
     eyebrow: "RECOVERY GUIDE",
     title: "How to undo Windows tweaks",

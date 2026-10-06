@@ -11,6 +11,24 @@ export interface GuideFaq {
 }
 
 export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
+  "/turn-off-windows-recall": [
+    {
+      q: "Is Windows Recall on by default?",
+      a: "No. Microsoft documents that saving snapshots is off until you opt in, and Recall only exists on Copilot+ PCs that meet its hardware requirements. If Settings has no Recall & snapshots page, Recall is not installed on your PC.",
+    },
+    {
+      q: "Does the PC Tweaker control delete my existing snapshots?",
+      a: "Microsoft states that snapshots previously saved on the device are deleted when the Turn off saving snapshots policy is applied, and that policy is what the Disable Recall control writes. If you want to keep them, export or review them before applying it.",
+    },
+    {
+      q: "Why does the Recall control need administrator rights and Pro?",
+      a: "It writes a machine-wide policy key under HKEY_LOCAL_MACHINE, which affects every user on the PC and needs elevation. Machine-wide policy controls are part of Pro; the per-user Settings switch is free and needs no tool at all.",
+    },
+    {
+      q: "Does disabling Recall turn off Copilot or Click to Do?",
+      a: "No. Copilot and Click to Do have their own settings and policies. The Recall policy only stops screen snapshots from being saved and indexed.",
+    },
+  ],
   "/windows-11-optimizer": [
     {
       q: "Is it safe to use a Windows 11 optimizer?",

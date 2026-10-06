@@ -35,6 +35,7 @@ const PAGES = {
   "/how-to-undo-windows-tweaks/": ["src/pages/practical-guides.ts"],
   "/windows-gaming-work-study-profiles/": ["src/pages/practical-guides.ts"],
   "/what-pc-tweaker-changes/": ["src/pages/practical-guides.ts"],
+  "/turn-off-windows-recall/": ["src/pages/practical-guides.ts", "src/pages/guide-faqs.ts"],
 };
 
 /** Most recent author date (YYYY-MM-DD) across the given paths, or null. */

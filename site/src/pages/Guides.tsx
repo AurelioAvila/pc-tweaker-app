@@ -340,6 +340,11 @@ export const GUIDES: Record<string, Guide> = {
     ],
     related: [
       {
+        to: "/turn-off-windows-recall/",
+        label: "how to turn off Windows Recall, and keep it off",
+        note: "The Settings switch, the machine policy PC Tweaker writes and removing the component, with what each one deletes.",
+      },
+      {
         to: "/what-pc-tweaker-changes/",
         label: "the registry keys and permissions behind each setting",
         note: "Useful if you want to verify a privacy change rather than take it on trust.",

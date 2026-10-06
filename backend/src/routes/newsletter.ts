@@ -4,6 +4,7 @@ import rateLimit from "express-rate-limit";
 import { asyncRoute } from "../async-route";
 import { isValidEmail } from "../auth";
 import { getPool, isConfigured } from "../db";
+import { EMAIL_MUTED_TEXT, emailShell, escapeHtml } from "../emails/layout";
 import { sendMail, isConfigured as mailIsConfigured } from "../mailer";
 import { consumeGlobalBudget } from "../public-form-guard";
 
@@ -103,9 +104,29 @@ router.post("/", newsletterLimiter, asyncRoute(async (req: Request, res: Respons
     void sendMail({
       to: email,
       subject: "You're on the PC Tweaker list",
-      html: `<p>Thanks for subscribing!</p>
-             <p>You'll get occasional emails about new PC Tweaker releases, new tweaks, and new tools from the same developer. No spam, no daily drip.</p>
-             <p style="font-size:12px;color:#888">Didn't sign up, or changed your mind? <a href="${link}">Unsubscribe with one click</a> — no login needed.</p>`,
+      html: emailShell({
+        eyebrow: "Subscribed",
+        headline: "You're on the list.",
+        intro:
+          "You'll get occasional emails about new PC Tweaker releases, new tweaks and new tools from the same developer. No spam and no daily drip.",
+        action: { label: "Open PC Tweaker", url: "https://pctweaker.app" },
+        afterActionHtml: `
+        <tr>
+          <td style="padding:24px 40px 0; text-align:center;">
+            <p style="margin:0; font-size:12px; line-height:1.6; color:${EMAIL_MUTED_TEXT};">
+              Didn't sign up, or changed your mind? <a href="${escapeHtml(link)}" style="color:${EMAIL_MUTED_TEXT};">Unsubscribe with one click</a>, no sign-in needed.
+            </p>
+          </td>
+        </tr>`,
+      }),
+      text: `You're on the PC Tweaker list.
+
+You'll get occasional emails about new PC Tweaker releases, new tweaks and new tools from the same developer. No spam and no daily drip.
+
+Didn't sign up, or changed your mind? Unsubscribe with one click, no sign-in needed:
+${link}
+
+PC Tweaker - https://pctweaker.app`,
     }).catch((err: Error) => console.error("newsletter welcome email failed:", err.message));
   }
 

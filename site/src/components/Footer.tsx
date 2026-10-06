@@ -67,6 +67,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
                 { label: "Tweaky Driver", href: "https://pctweaker.app/tweaky-driver/" },
                 { label: text.support.navLabel, href: "/support/" },
                 { label: text.footer.contact, href: "/support/" },
+                { label: "Facebook", href: "https://www.facebook.com/Pctweaker10" },
               ]}
             />
             <Col

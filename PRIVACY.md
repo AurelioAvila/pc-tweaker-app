@@ -40,9 +40,9 @@ password applies to all three and signs you out of each.
 - A rating may include your name, email address and written feedback. Only the
   aggregate star rating and count are shown publicly; the submitted name, email
   and message are not returned by the public reviews endpoint. To spot repeated
-  ratings from the same connection, we also store a keyed one-way hash of the
-  IP address the rating came from, never the address itself; it is used only
-  to moderate ratings.
+  ratings from the same connection, we also store the IP address the rating
+  came from and a keyed one-way hash of it. Both are used only to moderate
+  ratings; the address is deleted 90 days after the rating, the hash is kept.
 - A newsletter subscription stores your email address, signup source and
   unsubscribe status. Every newsletter message must provide an unsubscribe path.
 - Optional anonymous error reporting is **off by default**. If you enable it in

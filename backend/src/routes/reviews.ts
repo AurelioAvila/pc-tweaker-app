@@ -68,19 +68,28 @@ function escapeHtml(s: string): string {
 }
 
 /**
- * Moderation fingerprint of the submitting connection: a keyed hash, so the
- * stored value can't be reversed into an address or matched against other
- * datasets. Railway's edge appends the real client as the leftmost
- * X-Forwarded-For entry; req.ip is the fallback for local runs. A determined
- * abuser can still vary it — this is a hint for spotting repeat voters, not
- * an identity, which is also why it never gates submission.
+ * The submitting connection, for moderation. Railway's edge appends the real
+ * client as the leftmost X-Forwarded-For entry; req.ip is the fallback for
+ * local runs. A determined abuser can still vary it — it's a hint for
+ * spotting repeat voters, not an identity, which is why it never gates
+ * submission.
  */
-function voterHash(req: Request): string | null {
+function clientIp(req: Request): string {
+  return (req.get("x-forwarded-for")?.split(",")[0] ?? req.ip ?? "").trim().slice(0, 64);
+}
+
+/**
+ * Keyed hash of the address. It outlives the address itself (purged after
+ * IP_RETENTION_DAYS), so repeat voters stay linkable without keeping IPs.
+ */
+function voterHash(ip: string): string | null {
   const secret = process.env.REVIEW_IP_SECRET || process.env.JWT_SECRET;
-  const ip = (req.get("x-forwarded-for")?.split(",")[0] ?? req.ip ?? "").trim();
   if (!secret || !ip) return null;
   return createHmac("sha256", secret).update(ip).digest("hex").slice(0, 16);
 }
+
+/** How long a rating's raw IP is kept; PRIVACY.md states the same figure. */
+const IP_RETENTION_DAYS = 90;
 
 type ReviewRow = {
   id: number;
@@ -157,25 +166,33 @@ router.post("/", writeLimiter, asyncRoute(async (req: Request, res: Response) =>
   //
   // Rows without an address can't participate in the one-row-per-address
   // upsert (NULLs don't conflict), so they're inserted plainly.
-  const ipHash = voterHash(req);
+  const ip = clientIp(req);
+  const ipHash = voterHash(ip);
+  // Raw addresses are kept only for IP_RETENTION_DAYS after the last vote
+  // (confirmed_at is refreshed when an address re-rates); the hash stays.
+  await getPool().query(
+    `UPDATE reviews SET ip = NULL WHERE ip IS NOT NULL AND confirmed_at < now() - ($1 || ' days')::interval`,
+    [String(IP_RETENTION_DAYS)],
+  );
   const { rows } = contact
     ? await getPool().query<ReviewRow>(
-        `INSERT INTO reviews (name, email, rating, body, published, confirmed_at, ip_hash)
-         VALUES ($1, $2, $3, $4, TRUE, now(), $5)
+        `INSERT INTO reviews (name, email, rating, body, published, confirmed_at, ip_hash, ip)
+         VALUES ($1, $2, $3, $4, TRUE, now(), $5, $6)
          ON CONFLICT (lower(email)) DO UPDATE
             SET name = EXCLUDED.name,
                 body = EXCLUDED.body,
                 rating = EXCLUDED.rating,
                 ip_hash = EXCLUDED.ip_hash,
+                ip = EXCLUDED.ip,
                 confirmed_at = now()
          RETURNING id, rating, created_at`,
-        [singleLine(name), contact, rating, body, ipHash],
+        [singleLine(name), contact, rating, body, ipHash, ip || null],
       )
     : await getPool().query<ReviewRow>(
-        `INSERT INTO reviews (name, email, rating, body, published, confirmed_at, ip_hash)
-         VALUES ($1, NULL, $2, $3, TRUE, now(), $4)
+        `INSERT INTO reviews (name, email, rating, body, published, confirmed_at, ip_hash, ip)
+         VALUES ($1, NULL, $2, $3, TRUE, now(), $4, $5)
          RETURNING id, rating, created_at`,
-        [singleLine(name), rating, body, ipHash],
+        [singleLine(name), rating, body, ipHash, ip || null],
       );
   const saved = rows[0];
 
@@ -187,11 +204,11 @@ router.post("/", writeLimiter, asyncRoute(async (req: Request, res: Response) =>
         [ipHash, saved.id],
       )
     : { rows: [] as { id: number }[] };
+  // The address comes from a request header, so it is escaped like any input.
   const sameIpNote = !ipHash
-    ? "Connection: unknown"
-    : sameIp.length
-      ? `Connection ${ipHash}: same as earlier rating(s) #${sameIp.map((r) => r.id).join(", #")}`
-      : `Connection ${ipHash}: no earlier ratings`;
+    ? "IP: unknown"
+    : `IP ${escapeHtml(ip)} (connection ${ipHash}): ` +
+      (sameIp.length ? `same as earlier rating(s) #${sameIp.map((r) => r.id).join(", #")}` : "no earlier ratings");
 
   // Written feedback reaches a human only through this message, so a failure
   // here means it was accepted and then lost — hence the shouty log line.
@@ -243,7 +260,7 @@ router.get("/pending", asyncRoute(async (req: Request, res: Response) => {
     return;
   }
   const { rows } = await getPool().query(
-    `SELECT id, name, email, rating, body, published, ip_hash, created_at
+    `SELECT id, name, email, rating, body, published, ip, ip_hash, created_at
        FROM reviews
       WHERE published = FALSE
       ORDER BY created_at DESC

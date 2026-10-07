@@ -1,4 +1,4 @@
-// Ratings store a keyed hash of the submitting IP, never the address itself.
+// Ratings store the submitting IP (purged after 90 days) and a keyed hash of it.
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 
@@ -43,4 +43,15 @@ test("same connection under different addresses gets the same hash", async () =>
 test("a different connection gets a different hash", async () => {
   assert.equal((await rate("c@example.com", "198.51.100.9")).status, 201);
   assert.notEqual(await hashOf("c@example.com"), await hashOf("a@example.com"));
+});
+
+test("the raw address is stored, and cleared once it is past retention", async () => {
+  const ip = async (email) =>
+    (await getPool().query("SELECT ip FROM reviews WHERE email = $1", [email])).rows[0].ip;
+  assert.equal(await ip("c@example.com"), "198.51.100.9");
+  await getPool().query("UPDATE reviews SET confirmed_at = now() - interval '91 days' WHERE email = 'c@example.com'");
+  assert.equal((await rate("d@example.com", "192.0.2.1")).status, 201);
+  assert.equal(await ip("c@example.com"), null);
+  assert.equal(await ip("d@example.com"), "192.0.2.1");
+  assert.match(await hashOf("c@example.com"), /^[0-9a-f]{16}$/);
 });

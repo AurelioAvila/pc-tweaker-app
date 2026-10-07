@@ -48,6 +48,11 @@ pub fn default_size(work_w: f64, work_h: f64) -> (f64, f64) {
 /// A saved placement is reused only when it lands fully on the current
 /// work area; a window last seen on an unplugged second monitor would
 /// otherwise open off-screen.
+///
+/// Nor when it covers the whole work area. That is a maximized window
+/// recorded as a normal size (a frameless window can report a resize before
+/// it reports being maximized), and reusing it opens the app full-screen
+/// but not maximized, so Restore has no smaller size to go back to.
 pub fn fits(p: &Placement, work_w: f64, work_h: f64) -> bool {
     p.w >= 400.0
         && p.h >= 300.0
@@ -55,6 +60,7 @@ pub fn fits(p: &Placement, work_w: f64, work_h: f64) -> bool {
         && p.y >= -8.0
         && p.x + p.w <= work_w + 8.0
         && p.y + p.h <= work_h + 8.0
+        && !(p.w >= work_w - 16.0 && p.h >= work_h - 16.0)
 }
 
 pub fn read(dir: &Path) -> Option<Placement> {
@@ -154,6 +160,13 @@ pub fn remember(window: &tauri::Window, size: Option<PhysicalSize<u32>>, pos: Op
     if p.w < 400.0 || p.h < 300.0 {
         return;
     }
+    // A full-screen size is a maximize caught mid-transition; keep the last
+    // real size instead of overwriting it.
+    if let Some((ww, wh)) = work_area(scale) {
+        if !fits(&p, ww, wh) {
+            return;
+        }
+    }
     let Ok(mut last) = saver.last.lock() else { return };
     if last.0 == Some(p) || last.1.elapsed() < Duration::from_millis(400) && last.0.is_some() {
         return;
@@ -187,6 +200,16 @@ mod tests {
         let off = Placement { x: 2000.0, ..on };
         assert!(fits(&on, 1920.0, 1032.0));
         assert!(!fits(&off, 1920.0, 1032.0));
+    }
+
+    #[test]
+    fn a_maximized_size_saved_as_normal_is_not_reused() {
+        // The placement found on a 1920x1080 desktop that kept reopening
+        // PC Tweaker full-screen with no way back to its normal size.
+        let full = Placement { w: 1920.0, h: 1030.0, x: -7.0, y: 0.0 };
+        assert!(!fits(&full, 1920.0, 1032.0));
+        let large = Placement { w: 1600.0, h: 900.0, x: 100.0, y: 50.0 };
+        assert!(fits(&large, 1920.0, 1032.0));
     }
 
     #[test]

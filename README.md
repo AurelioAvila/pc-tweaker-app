@@ -8,8 +8,8 @@
 
 <p align="center">
   <a href="#reviews-and-distribution"><img src="https://img.shields.io/badge/Total_downloads-100k%2B-2E7D32?style=for-the-badge" alt="100,000+ total downloads across distribution channels"></a>
-  <a href="https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"><img src="https://img.shields.io/badge/Softpedia-5%2F5%20%7C%2074%20votes-0078D4?style=for-the-badge" alt="Softpedia user rating: 5 out of 5 from 74 votes"></a>
-  <a href="https://www.majorgeeks.com/files/details/pc_tweaker.html"><img src="https://img.shields.io/badge/MajorGeeks-5%2F5%20%7C%20101%20votes-C48B28?style=for-the-badge" alt="MajorGeeks user rating: 5 out of 5 from 101 votes"></a>
+  <a href="https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"><img src="https://img.shields.io/badge/Softpedia-5%2F5%20%7C%2092%20votes-0078D4?style=for-the-badge" alt="Softpedia user rating: 5 out of 5 from 92 votes"></a>
+  <a href="https://www.majorgeeks.com/files/details/pc_tweaker.html"><img src="https://img.shields.io/badge/MajorGeeks-5%2F5%20%7C%20129%20votes-C48B28?style=for-the-badge" alt="MajorGeeks user rating: 5 out of 5 from 129 votes"></a>
 </p>
 
 <p align="center">
@@ -168,10 +168,10 @@ A valid signature does not guarantee the absence of SmartScreen prompts. Microso
 
 **100,000+ total downloads** across distribution channels as of September 2026, counted in Microsoft Partner Center. Most of that total is the Microsoft Store, which publishes no public figure; the live GitHub badge covers GitHub release assets only, a small share of it.
 
-User ratings checked September 6, 2026. Existing feedback remains available at its original source:
+User ratings checked October 7, 2026. Existing feedback remains available at its original source:
 
-- [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml): user rating **5.0/5 from 74 votes**; editorial review **4.5/5**.
-- [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html): user rating **5/5 from 101 votes**; listing and reader reviews.
+- [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml): user rating **5.0/5 from 92 votes**; editorial review **4.5/5**.
+- [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html): user rating **5/5 from 129 votes**; listing and reader reviews.
 
 The GitHub download badge counts release-asset requests, including assets used for updates. It does not count unique people, unique installations or every distribution channel. Third-party listings may describe older releases; this repository's [LICENSE](LICENSE) is the authoritative source for licensing terms.
 

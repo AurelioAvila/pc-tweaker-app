@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 import express, { Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import { getPool, isConfigured } from "../db";
@@ -65,6 +65,21 @@ function escapeHtml(s: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+/**
+ * Moderation fingerprint of the submitting connection: a keyed hash, so the
+ * stored value can't be reversed into an address or matched against other
+ * datasets. Railway's edge appends the real client as the leftmost
+ * X-Forwarded-For entry; req.ip is the fallback for local runs. A determined
+ * abuser can still vary it — this is a hint for spotting repeat voters, not
+ * an identity, which is also why it never gates submission.
+ */
+function voterHash(req: Request): string | null {
+  const secret = process.env.REVIEW_IP_SECRET || process.env.JWT_SECRET;
+  const ip = (req.get("x-forwarded-for")?.split(",")[0] ?? req.ip ?? "").trim();
+  if (!secret || !ip) return null;
+  return createHmac("sha256", secret).update(ip).digest("hex").slice(0, 16);
 }
 
 type ReviewRow = {
@@ -142,25 +157,41 @@ router.post("/", writeLimiter, asyncRoute(async (req: Request, res: Response) =>
   //
   // Rows without an address can't participate in the one-row-per-address
   // upsert (NULLs don't conflict), so they're inserted plainly.
+  const ipHash = voterHash(req);
   const { rows } = contact
     ? await getPool().query<ReviewRow>(
-        `INSERT INTO reviews (name, email, rating, body, published, confirmed_at)
-         VALUES ($1, $2, $3, $4, TRUE, now())
+        `INSERT INTO reviews (name, email, rating, body, published, confirmed_at, ip_hash)
+         VALUES ($1, $2, $3, $4, TRUE, now(), $5)
          ON CONFLICT (lower(email)) DO UPDATE
             SET name = EXCLUDED.name,
                 body = EXCLUDED.body,
                 rating = EXCLUDED.rating,
+                ip_hash = EXCLUDED.ip_hash,
                 confirmed_at = now()
          RETURNING id, rating, created_at`,
-        [singleLine(name), contact, rating, body],
+        [singleLine(name), contact, rating, body, ipHash],
       )
     : await getPool().query<ReviewRow>(
-        `INSERT INTO reviews (name, email, rating, body, published, confirmed_at)
-         VALUES ($1, NULL, $2, $3, TRUE, now())
+        `INSERT INTO reviews (name, email, rating, body, published, confirmed_at, ip_hash)
+         VALUES ($1, NULL, $2, $3, TRUE, now(), $4)
          RETURNING id, rating, created_at`,
-        [singleLine(name), rating, body],
+        [singleLine(name), rating, body, ipHash],
       );
   const saved = rows[0];
+
+  // Earlier ratings from the same connection, so a repeat voter using new
+  // names and addresses is visible in the notification itself.
+  const { rows: sameIp } = ipHash
+    ? await getPool().query<{ id: number }>(
+        `SELECT id FROM reviews WHERE ip_hash = $1 AND id <> $2 ORDER BY id`,
+        [ipHash, saved.id],
+      )
+    : { rows: [] as { id: number }[] };
+  const sameIpNote = !ipHash
+    ? "Connection: unknown"
+    : sameIp.length
+      ? `Connection ${ipHash}: same as earlier rating(s) #${sameIp.map((r) => r.id).join(", #")}`
+      : `Connection ${ipHash}: no earlier ratings`;
 
   // Written feedback reaches a human only through this message, so a failure
   // here means it was accepted and then lost — hence the shouty log line.
@@ -171,6 +202,7 @@ router.post("/", writeLimiter, asyncRoute(async (req: Request, res: Response) =>
     html: `<p><strong>${escapeHtml(who)}</strong> rated PC Tweaker ${rating}/5.</p>
            ${body ? `<p>They wrote:</p><blockquote style="white-space:pre-wrap">${escapeHtml(body)}</blockquote>` : "<p>They left no written feedback.</p>"}
            <p>Rating id: ${saved.id}${contact ? ` · ${escapeHtml(contact)}` : " · no address given"}</p>
+           <p>${sameIpNote}</p>
            <p>The score is already counted in the public average. To exclude it, PATCH /api/reviews/${saved.id} with {"published": false}.</p>`,
     ...(contact ? { replyTo: contact } : {}),
   }).catch((err: Error) => console.error("RATING FEEDBACK LOST — notification failed:", err.message));
@@ -211,7 +243,7 @@ router.get("/pending", asyncRoute(async (req: Request, res: Response) => {
     return;
   }
   const { rows } = await getPool().query(
-    `SELECT id, name, email, rating, body, published, created_at
+    `SELECT id, name, email, rating, body, published, ip_hash, created_at
        FROM reviews
       WHERE published = FALSE
       ORDER BY created_at DESC

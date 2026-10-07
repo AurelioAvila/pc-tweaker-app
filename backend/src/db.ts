@@ -129,6 +129,10 @@ async function initSchema(): Promise<void> {
   await pool.query(`ALTER TABLE reviews ADD COLUMN IF NOT EXISTS confirm_token_hash TEXT;`);
   await pool.query(`ALTER TABLE reviews ADD COLUMN IF NOT EXISTS confirm_expires_at TIMESTAMPTZ;`);
   await pool.query(`ALTER TABLE reviews ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ;`);
+  // Keyed hash of the submitting IP (routes/reviews.ts), never the address:
+  // lets moderation see that differently-named ratings came from one
+  // connection. NULL on rows written before it existed.
+  await pool.query(`ALTER TABLE reviews ADD COLUMN IF NOT EXISTS ip_hash TEXT;`);
   // Deliberately NOT a partial index. Postgres requires ON CONFLICT to repeat
   // a partial index's predicate for inference to match, and the upsert in
   // routes/reviews.ts infers on `lower(email)` alone — pg-mem accepts the

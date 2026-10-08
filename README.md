@@ -25,7 +25,7 @@
 
 <p align="center"><a href="#whats-new-in-115">What's new</a> · <a href="#what-you-can-do">Features</a> · <a href="#what-changes-on-your-system">What changes</a> · <a href="#free-and-pro">Free and Pro</a> · <a href="#download-integrity-and-code-signing">Code signing</a> · <a href="#build-from-source">Build from source</a></p>
 
-<p align="center"><img src="Screenshot/overview.png" alt="PC Tweaker Overview showing CPU, memory and applied settings; appearance and counts may differ by release" width="85%"></p>
+<p align="center"><img src="Screenshot/pc-tweaker-1.16-overview.png" alt="PC Tweaker 1.16 Overview in the default Graphite Ember theme, showing live CPU, memory and applied settings" width="85%"></p>
 
 **Start with one task:** review a setting, read its trade-offs, apply it if appropriate, and use its restore control when supported. Free includes core tools without an account. See [what changes on your system](#what-changes-on-your-system) before tuning.
 

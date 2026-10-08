@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.16.3
+
+PC Tweaker 1.16.3 is a routine maintenance update.
+
+## v1.16.2
+
+PC Tweaker 1.16.2 is a routine maintenance update.
+
 ## v1.16.1
 
 PC Tweaker 1.16.1 is a routine maintenance update.

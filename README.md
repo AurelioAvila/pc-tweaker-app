@@ -166,7 +166,7 @@ A valid signature does not guarantee the absence of SmartScreen prompts. Microso
 
 ## Reviews and distribution
 
-**120,000+ total downloads** across distribution channels as of September 2026, counted in Microsoft Partner Center. Most of that total is the Microsoft Store, which publishes no public figure; the live GitHub badge covers GitHub release assets only, a small share of it.
+**120,000+ total downloads** estimated across the Microsoft Store, WinGet and dozens of download sites, as of October 2026. Most of that total is the Microsoft Store, which publishes no public figure; the live GitHub badge covers GitHub release assets only, a small share of it.
 
 User ratings checked October 7, 2026. Existing feedback remains available at its original source:
 

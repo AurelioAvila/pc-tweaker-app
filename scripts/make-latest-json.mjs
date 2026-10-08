@@ -74,7 +74,7 @@ const releaseDir = path.join(root, "src-tauri", "target", "release");
 /**
  * The application binary that actually ships, taken out of the MSI.
  *
- * Verifying `target/release/tauri-app.exe` looks right and is wrong. Tauri
+ * Verifying `target/release/PC Tweaker.exe` looks right and is wrong. Tauri
  * patches that file with bundle-type information, signs it, packages it, and
  * then restores the pre-patch bytes when it is finished - so after a correct
  * signed build the leftover in `target/release` is unsigned while the copy
@@ -98,7 +98,7 @@ function shippedApplication(msiPath) {
       for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) walk(full);
-        else if (entry.name.toLowerCase() === "tauri-app.exe") found.push(full);
+        else if (entry.name.toLowerCase() === "pc tweaker.exe") found.push(full);
       }
     };
     walk(staging);
@@ -106,12 +106,12 @@ function shippedApplication(msiPath) {
     // Copied out before the staging directory goes away, and left in place:
     // the verification below reads it, and a human comparing hashes after the
     // fact needs it to still be there.
-    const destination = path.join(releaseDir, "tauri-app.shipped.exe");
+    const destination = path.join(releaseDir, "PC Tweaker.shipped.exe");
     fs.copyFileSync(found[0], destination);
     return destination;
   } catch (error) {
     console.warn(`Could not unpack the MSI payload (${error.message}); verifying the build output instead.`);
-    return path.join(releaseDir, "tauri-app.exe");
+    return path.join(releaseDir, "PC Tweaker.exe");
   } finally {
     fs.rmSync(staging, { recursive: true, force: true });
   }
@@ -144,7 +144,7 @@ const downloadUrl = `${repoUrl}/releases/download/v${version}/${assetName}`;
 if (setup !== required.setup || msis[0] !== required.msi || downloadUrl !== required.url) {
   console.error(
     `Installed clients only accept ${required.setup} served from ${required.url}; this build is ` +
-      `${setup} at ${downloadUrl}. Check productName and the updater endpoint in tauri.conf.json.`,
+      `${setup} at ${downloadUrl}. Run scripts/legacy-artifact-names.mjs before signing, and check the updater endpoint in tauri.conf.json.`,
   );
   process.exit(1);
 }

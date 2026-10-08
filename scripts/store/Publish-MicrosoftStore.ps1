@@ -26,7 +26,7 @@ param(
     # Only report the app's current submission state.
     [Parameter(ParameterSetName = 'Status', Mandatory)][switch]$Status,
     [Parameter(ParameterSetName = 'Publish', Mandatory)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version,
-    [Parameter(ParameterSetName = 'Publish')][string]$Exe = "$PSScriptRoot/../../src-tauri/target/release/tauri-app.shipped.exe",
+    [Parameter(ParameterSetName = 'Publish')][string]$Exe = "$PSScriptRoot/../../src-tauri/target/release/PC Tweaker.shipped.exe",
     [Parameter(ParameterSetName = 'Publish')][Parameter(ParameterSetName = 'Status')][string]$AppId = '9NH3C6DT1G87',
     [Parameter(ParameterSetName = 'Publish')][string]$ReleaseNotes,
     # A draft left open in Partner Center blocks new submissions; this deletes it first.
@@ -100,7 +100,7 @@ $stage = New-Item -ItemType Directory -Force (Join-Path $work 'stage')
 Copy-Item -LiteralPath "$PSScriptRoot/msix/Assets" -Destination $stage -Recurse
 (Get-Content -LiteralPath "$PSScriptRoot/msix/AppxManifest.xml" -Raw).Replace('{{VERSION}}', "$Version.0") |
     Set-Content -LiteralPath (Join-Path $stage 'AppxManifest.xml') -Encoding utf8 -NoNewline
-Copy-Item -LiteralPath $Exe -Destination (Join-Path $stage 'tauri-app.exe')
+Copy-Item -LiteralPath $Exe -Destination (Join-Path $stage 'PC Tweaker.exe')
 $msixName = "PCTweaker_$($Version).0_x64.msix"
 $msix = Join-Path $work $msixName
 & $makeAppx pack /d $stage /p $msix /o | Out-Null

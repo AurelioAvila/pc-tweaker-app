@@ -1139,6 +1139,44 @@ fn set_drift_watch(enabled: bool) -> Result<bool, String> {
     Ok(actual)
 }
 
+/// Text of `schtasks /xml` output, which Windows may write as UTF-16.
+#[cfg(any(windows, test))]
+fn task_xml_text(bytes: &[u8]) -> String {
+    if bytes.len() >= 2 && bytes.contains(&0) {
+        let units: Vec<u16> = bytes.chunks_exact(2).map(|pair| u16::from_le_bytes([pair[0], pair[1]])).collect();
+        String::from_utf16_lossy(&units)
+    } else {
+        String::from_utf8_lossy(bytes).into_owned()
+    }
+}
+
+/// The update watch task stores the path of the program that registered it.
+/// Up to 1.16.1 that was `pc-tweaker-app	auri-app.exe`; since the move to the
+/// PC Tweaker name it would start a file that no longer exists. When the task
+/// is registered and points anywhere but this program, register it again with
+/// the same schedule. Nothing happens when the watch is off.
+#[cfg(windows)]
+fn refresh_drift_watch_target() {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+    let Ok(exe) = std::env::current_exe() else { return };
+    let Ok(output) = crate::system_tools::run("schtasks", |tool| {
+        tool.args(["/query", "/tn", updatewatch::TASK_NAME, "/xml"])
+            .creation_flags(CREATE_NO_WINDOW)
+            .output()
+    }) else {
+        return;
+    };
+    if !output.status.success() {
+        return;
+    }
+    let xml = task_xml_text(&output.stdout).to_lowercase();
+    if !xml.contains(&exe.to_string_lossy().to_lowercase()) {
+        let _ = configure_drift_watch(true);
+    }
+}
+
 #[cfg(windows)]
 fn configure_drift_watch(enabled: bool) -> Result<(), String> {
     use std::os::windows::process::CommandExt;
@@ -1658,6 +1696,8 @@ pub fn run() {
             debloat::reconcile_on_startup(app.handle());
             game_sessions::spawn_watcher(app.handle().clone());
             ecoqos::start(app.handle().clone());
+            #[cfg(windows)]
+            std::thread::spawn(refresh_drift_watch_target);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -1809,6 +1849,14 @@ pub fn run() {
 #[cfg(all(test, windows))]
 mod tests {
     use super::*;
+
+    #[test]
+    fn task_xml_is_read_in_either_encoding() {
+        let text = r"<Command>C:\Apps\PC Tweaker\PC Tweaker.exe</Command>";
+        let utf16: Vec<u8> = text.encode_utf16().flat_map(u16::to_le_bytes).collect();
+        assert_eq!(task_xml_text(text.as_bytes()), text);
+        assert_eq!(task_xml_text(&utf16), text);
+    }
 
     /// Every id the UI can show, gathered from the same places `list_tweaks`
     /// gathers them.

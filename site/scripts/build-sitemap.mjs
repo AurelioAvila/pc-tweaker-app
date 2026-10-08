@@ -19,7 +19,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // Files that, when changed, genuinely change what the page says. The shell
 // (nav, footer, theme) is deliberately left out: it touches every page, so
 // including it would move all 14 dates together on any layout tweak.
-const SHARED = ["src/seo.ts", "index.html"];
+const SHARED = [];
 const PAGES = {
   "/": ["src/App.tsx", "src/components", "src/i18n/dictionary.ts"],
   "/uninstaller/": ["src/pages/Uninstaller.tsx"],

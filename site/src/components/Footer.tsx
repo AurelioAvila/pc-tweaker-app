@@ -1,3 +1,4 @@
+import { DOWNLOAD_EXE } from "../constants";
 import { text } from "../i18n/dictionary";
 import { Link } from "../router";
 import { NewsletterSignup } from "./NewsletterSignup";
@@ -60,7 +61,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
               navigate={navigate}
               title={text.footer.product}
               links={[
-                { label: text.footer.download, href: `${GH}/releases/latest` },
+                { label: text.footer.download, href: DOWNLOAD_EXE },
                 { label: text.footer.changelog, href: `${GH}/blob/master/CHANGELOG.md` },
                 { label: text.footer.source, href: GH },
                 { label: "PC Tweaker Uninstaller", href: "/uninstaller/" },

@@ -21,7 +21,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-proprietary-6B7280" alt="Source available under a proprietary license"></a>
 </p>
 
-**[Download Free for Windows](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest)** · **[Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87)** · [Chocolatey](https://community.chocolatey.org/packages/pc-tweaker) · [Website](https://pctweaker.app/) · [Support](https://pctweaker.app/support/) · [Release notes](CHANGELOG.md)
+**[Download Free for Windows](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/PCTweaker-Setup.exe)** · **[Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87)** · [Chocolatey](https://community.chocolatey.org/packages/pc-tweaker) · [Website](https://pctweaker.app/) · [Support](https://pctweaker.app/support/) · [Release notes](CHANGELOG.md)
 
 <p align="center"><a href="#whats-new-in-115">What's new</a> · <a href="#what-you-can-do">Features</a> · <a href="#what-changes-on-your-system">What changes</a> · <a href="#free-and-pro">Free and Pro</a> · <a href="#download-integrity-and-code-signing">Code signing</a> · <a href="#build-from-source">Build from source</a></p>
 

@@ -1,7 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "pc-tweaker-app",
-  "version": "1.16.1",
+  "productName": "PC Tweaker",
+  "mainBinaryName": "PC Tweaker",
+  "version": "1.16.2",
   "identifier": "com.aurel.pc-tweaker-app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -48,7 +49,11 @@
     ],
     "windows": {
       "nsis": {
-        "installerIcon": "icons/icon.ico"
+        "installerIcon": "icons/icon.ico",
+        "installerHooks": "./windows/installer-hooks.nsh"
+      },
+      "wix": {
+        "upgradeCode": "8D2CADB9-D0FC-51AC-989D-06B9BDCE5614"
       }
     }
   }

@@ -79,7 +79,7 @@
     <Application_URLs>
       <Application_Info_URL>https://pctweaker.app/</Application_Info_URL>
       <Application_Order_URL></Application_Order_URL>
-      <Application_Screenshot_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/Screenshot/overview.png</Application_Screenshot_URL>
+      <Application_Screenshot_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/screenshots/pc-tweaker-1.16-overview.png</Application_Screenshot_URL>
       <Application_Icon_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/src-tauri/icons/32x32.png</Application_Icon_URL>
       <Application_XML_File_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/pad.xml</Application_XML_File_URL>
     </Application_URLs>

@@ -77,9 +77,9 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     ogType: "website",
   },
   "/windows-11-optimizer": {
-    title: "Windows 11 Optimizer with Reversible Tweaks | PC Tweaker",
+    title: "Windows 11 Optimizer and Tweaker, Reversible | PC Tweaker",
     description:
-      "Optimize Windows 11 with documented performance, privacy and maintenance tweaks you apply one at a time, review before committing and can roll back.",
+      "Optimize and tweak Windows 11 with documented performance, privacy and maintenance changes you apply one at a time, review first and can roll back.",
     canonical: `${ORIGIN}/windows-11-optimizer/`,
     ogType: "website",
   },

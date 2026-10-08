@@ -78,8 +78,45 @@ function appVersion(): Plugin {
   };
 }
 
+/**
+ * Start the above-the-fold fonts at the same time as the stylesheet.
+ *
+ * Without this the browser only discovers the .woff2 files after it has
+ * downloaded and parsed the CSS, so the first line of text waits on a second
+ * round trip. File names are hashed, so they are looked up in the bundle
+ * instead of being written by hand. Only the weights the hero actually uses.
+ */
+const PRELOAD_FONTS = [
+  /inter-latin-400-normal-.*\.woff2$/,
+  /inter-latin-600-normal-.*\.woff2$/,
+  /space-grotesk-latin-700-normal-.*\.woff2$/,
+  /jetbrains-mono-latin-400-normal-.*\.woff2$/,
+];
+
+function preloadFonts(): Plugin {
+  return {
+    name: "preload-fonts",
+    apply: "build",
+    transformIndexHtml: {
+      order: "post",
+      handler(html, ctx) {
+        const files = Object.keys(ctx.bundle ?? {});
+        const links = PRELOAD_FONTS.flatMap((re) => files.filter((f) => re.test(f))).map(
+          (f) => `  <link rel="preload" as="font" type="font/woff2" href="/${f}" crossorigin />`,
+        );
+        return links.length ? html.replace("</title>", `</title>\n${links.join("\n")}`) : html;
+      },
+    },
+  };
+}
+
 export default defineConfig(({ isSsrBuild }) => ({
   // Keep fonts as same-origin files, as required by font-src 'self'.
   build: { assetsInlineLimit: 0 },
-  plugins: [react(), tailwindcss(), appVersion(), ...(isSsrBuild ? [] : [spaFallback()])],
+  plugins: [
+    react(),
+    tailwindcss(),
+    appVersion(),
+    ...(isSsrBuild ? [] : [preloadFonts(), spaFallback()]),
+  ],
 }));

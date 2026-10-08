@@ -229,9 +229,16 @@ async function initSchema(): Promise<void> {
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       redeemed_at TIMESTAMPTZ NOT NULL,
       expires_at TIMESTAMPTZ NOT NULL,
+      email_key TEXT NOT NULL,
+      ip_hash TEXT,
       PRIMARY KEY (code, user_id)
     );
   `);
+  // One activation per person, not per account: the address without its
+  // +tag (and, for Gmail, without dots) may appear once per code.
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS licence_code_redemptions_person_idx ON licence_code_redemptions (code, email_key);`,
+  );
 
   // One row per website download click that arrived from a tagged social
   // post (routes/downloads.ts). Campaign labels and a timestamp only: no IP,

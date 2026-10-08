@@ -43,6 +43,11 @@ password applies to all three and signs you out of each.
   ratings from the same connection, we also store the IP address the rating
   came from and a keyed one-way hash of it. Both are used only to moderate
   ratings; the address is deleted 90 days after the rating, the hash is kept.
+- Activating a licence code (for example from a partner giveaway) stores which
+  code your account used, when, until when Pro lasts, a normalised form of your
+  email address and a keyed one-way hash of the connection it came from. They
+  are used only to allow one activation per person; the IP address itself is
+  not stored.
 - A newsletter subscription stores your email address, signup source and
   unsubscribe status. Every newsletter message must provide an unsubscribe path.
 - Optional anonymous error reporting is **off by default**. If you enable it in

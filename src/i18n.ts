@@ -934,7 +934,14 @@ export interface Strings {
     licenseCodePending: string;
     planUntil: string; // uses {date}
     licenseCodeErrors: Record<
-      "invalid" | "notStarted" | "ended" | "alreadyRedeemed" | "alreadyPro" | "tooMany" | "failed",
+      | "invalid"
+      | "notStarted"
+      | "ended"
+      | "alreadyRedeemed"
+      | "duplicate"
+      | "alreadyPro"
+      | "tooMany"
+      | "failed",
       string
     >;
   };
@@ -2047,7 +2054,7 @@ const it: Strings = {
     licenseCodeActivate: "Attiva",
     licenseCodeActivating: "Attivazione…",
     licenseCodeSignedOut:
-      "Prima accedi o crea un account gratuito: la licenza è legata al tuo account, non a questo PC.",
+      "Crea un account gratuito per attivarlo: la licenza è legata al tuo account, non a questo PC.",
     licenseCodeVerify:
       "Verifica il tuo indirizzo email per attivare un codice. Usa il link che ti abbiamo inviato alla registrazione, oppure richiedilo di nuovo da Account.",
     licenseCodeActive: "Pro è attivo. Scadenza: {date}.",
@@ -2060,6 +2067,8 @@ const it: Strings = {
       notStarted: "Questo codice non è ancora attivo. Riprova quando inizia la promozione.",
       ended: "Questo codice è scaduto: la promozione è terminata.",
       alreadyRedeemed: "Questo codice è già attivo sul tuo account.",
+      duplicate:
+        "Questo codice è già stato attivato per te, su un altro account o da questa connessione. Vale una volta per persona.",
       alreadyPro: "Il tuo account ha già Pro: non c'è nulla da attivare.",
       tooMany: "Troppi tentativi. Attendi qualche minuto e riprova.",
       failed: "Impossibile contattare il server. Controlla la connessione e riprova.",
@@ -3485,7 +3494,7 @@ const en: Strings = {
     licenseCodeActivate: "Activate",
     licenseCodeActivating: "Activating…",
     licenseCodeSignedOut:
-      "Sign in or create a free account first: the license is linked to your account, not to this PC.",
+      "Create a free account to activate it: the license is linked to your account, not to this PC.",
     licenseCodeVerify:
       "Verify your email address to activate a code. Use the link we sent when you signed up, or send it again from Account.",
     licenseCodeActive: "Pro is active until {date}.",
@@ -3497,6 +3506,8 @@ const en: Strings = {
       notStarted: "This code isn't active yet. Try again when the promotion starts.",
       ended: "This code has expired: the promotion is over.",
       alreadyRedeemed: "This code is already active on your account.",
+      duplicate:
+        "This code has already been activated for you, on another account or from this connection. It's one per person.",
       alreadyPro: "Your account already has Pro, so there's nothing to activate.",
       tooMany: "Too many attempts. Wait a few minutes and try again.",
       failed: "Couldn't reach the server. Check your connection and try again.",
@@ -4940,7 +4951,7 @@ const fr: Strings = {
     licenseCodeActivate: "Activer",
     licenseCodeActivating: "Activation…",
     licenseCodeSignedOut:
-      "Connectez-vous ou créez d'abord un compte gratuit : la licence est liée à votre compte, pas à ce PC.",
+      "Créez un compte gratuit pour l'activer : la licence est liée à votre compte, pas à ce PC.",
     licenseCodeVerify:
       "Vérifiez votre adresse e-mail pour activer un code. Utilisez le lien envoyé lors de l'inscription, ou renvoyez-le depuis Compte.",
     licenseCodeActive: "Pro est actif jusqu'au {date}.",
@@ -4953,6 +4964,8 @@ const fr: Strings = {
       notStarted: "Ce code n'est pas encore actif. Réessayez au début de la promotion.",
       ended: "Ce code a expiré : la promotion est terminée.",
       alreadyRedeemed: "Ce code est déjà actif sur votre compte.",
+      duplicate:
+        "Ce code a déjà été activé pour vous, sur un autre compte ou depuis cette connexion. Il est limité à une personne.",
       alreadyPro: "Votre compte a déjà Pro : il n'y a rien à activer.",
       tooMany: "Trop de tentatives. Patientez quelques minutes et réessayez.",
       failed: "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
@@ -6393,7 +6406,7 @@ const es: Strings = {
     licenseCodeActivate: "Activar",
     licenseCodeActivating: "Activando…",
     licenseCodeSignedOut:
-      "Primero inicia sesión o crea una cuenta gratuita: la licencia está vinculada a tu cuenta, no a este PC.",
+      "Crea una cuenta gratuita para activarlo: la licencia está vinculada a tu cuenta, no a este PC.",
     licenseCodeVerify:
       "Verifica tu dirección de correo para activar un código. Usa el enlace que te enviamos al registrarte o vuelve a enviarlo desde Cuenta.",
     licenseCodeActive: "Pro está activo hasta el {date}.",
@@ -6406,6 +6419,8 @@ const es: Strings = {
       notStarted: "Este código aún no está activo. Inténtalo de nuevo cuando empiece la promoción.",
       ended: "Este código ha caducado: la promoción ha terminado.",
       alreadyRedeemed: "Este código ya está activo en tu cuenta.",
+      duplicate:
+        "Este código ya se activó para ti, en otra cuenta o desde esta conexión. Es uno por persona.",
       alreadyPro: "Tu cuenta ya tiene Pro: no hay nada que activar.",
       tooMany: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
       failed: "No se pudo contactar con el servidor. Comprueba la conexión e inténtalo de nuevo.",
@@ -7852,7 +7867,7 @@ const de: Strings = {
     licenseCodeActivate: "Aktivieren",
     licenseCodeActivating: "Wird aktiviert…",
     licenseCodeSignedOut:
-      "Melde dich zuerst an oder erstelle ein kostenloses Konto: Die Lizenz ist an dein Konto gebunden, nicht an diesen PC.",
+      "Erstelle ein kostenloses Konto, um ihn zu aktivieren: Die Lizenz ist an dein Konto gebunden, nicht an diesen PC.",
     licenseCodeVerify:
       "Bestätige deine E-Mail-Adresse, um einen Code zu aktivieren. Nutze den Link aus der Registrierung oder sende ihn unter Konto erneut.",
     licenseCodeActive: "Pro ist aktiv bis {date}.",
@@ -7866,6 +7881,8 @@ const de: Strings = {
         "Dieser Code ist noch nicht aktiv. Versuche es erneut, sobald die Aktion beginnt.",
       ended: "Dieser Code ist abgelaufen: Die Aktion ist beendet.",
       alreadyRedeemed: "Dieser Code ist bereits auf deinem Konto aktiv.",
+      duplicate:
+        "Dieser Code wurde für dich bereits aktiviert, mit einem anderen Konto oder über diese Verbindung. Er gilt einmal pro Person.",
       alreadyPro: "Dein Konto hat bereits Pro, es gibt nichts zu aktivieren.",
       tooMany: "Zu viele Versuche. Warte ein paar Minuten und versuche es erneut.",
       failed: "Der Server ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
@@ -9308,7 +9325,7 @@ const pt: Strings = {
     licenseCodeActivate: "Ativar",
     licenseCodeActivating: "Ativando…",
     licenseCodeSignedOut:
-      "Primeiro entre ou crie uma conta gratuita: a licença fica vinculada à sua conta, não a este PC.",
+      "Crie uma conta gratuita para ativá-lo: a licença fica vinculada à sua conta, não a este PC.",
     licenseCodeVerify:
       "Confirme seu endereço de e-mail para ativar um código. Use o link que enviamos no cadastro ou reenvie-o em Conta.",
     licenseCodeActive: "O Pro está ativo até {date}.",
@@ -9320,6 +9337,8 @@ const pt: Strings = {
       notStarted: "Este código ainda não está ativo. Tente novamente quando a promoção começar.",
       ended: "Este código expirou: a promoção terminou.",
       alreadyRedeemed: "Este código já está ativo na sua conta.",
+      duplicate:
+        "Este código já foi ativado para você, em outra conta ou a partir desta conexão. Vale uma vez por pessoa.",
       alreadyPro: "Sua conta já tem o Pro: não há nada para ativar.",
       tooMany: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
       failed: "Não foi possível acessar o servidor. Verifique sua conexão e tente novamente.",

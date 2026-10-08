@@ -1,3 +1,4 @@
+import { createHmac } from "crypto";
 import { getPool } from "./db";
 import { isEntitled } from "./entitlement";
 
@@ -14,7 +15,33 @@ import { isEntitled } from "./entitlement";
 
 export const PROMO_PLAN = "promo";
 
-export type RedeemFailure = "invalid" | "not_started" | "ended" | "already_redeemed" | "verify_email" | "already_pro";
+export type RedeemFailure =
+  | "invalid"
+  | "not_started"
+  | "ended"
+  | "already_redeemed"
+  | "duplicate"
+  | "verify_email"
+  | "already_pro";
+
+/** Accounts on one connection that may activate the same code: a household
+ *  shares a router, a farm of throwaway accounts shares it too. */
+export const MAX_PER_CONNECTION = 3;
+
+/** The person behind an address, so "name+1@" and "n.a.m.e@gmail" count once. */
+export function emailKey(email: string): string {
+  const [local = "", domain = ""] = email.trim().toLowerCase().split("@");
+  const gmail = domain === "gmail.com" || domain === "googlemail.com";
+  const base = local.split("+")[0];
+  return `${gmail ? base.replace(/\./g, "") : base}@${gmail ? "gmail.com" : domain}`;
+}
+
+/** Keyed one-way hash of the client address; the address itself is never stored. */
+export function connectionHash(ip: string | undefined): string | null {
+  const secret = process.env.REVIEW_IP_SECRET || process.env.JWT_SECRET;
+  if (!secret || !ip) return null;
+  return createHmac("sha256", secret).update(`licence:${ip}`).digest("hex").slice(0, 16);
+}
 export type RedeemResult = { ok: true; expiresAt: Date } | { ok: false; reason: RedeemFailure };
 
 /** Codes are shown grouped ("PCT-7KQ2-M9XD"); people type them with or
@@ -36,7 +63,12 @@ export function addMonths(from: Date, months: number): Date {
   return end;
 }
 
-export async function redeemLicenceCode(userId: number, raw: unknown, now: Date = new Date()): Promise<RedeemResult> {
+export async function redeemLicenceCode(
+  userId: number,
+  raw: unknown,
+  now: Date = new Date(),
+  ip?: string,
+): Promise<RedeemResult> {
   const code = normalizeCode(raw);
   if (!code) return { ok: false, reason: "invalid" };
   const pool = getPool();
@@ -54,7 +86,7 @@ export async function redeemLicenceCode(userId: number, raw: unknown, now: Date 
   if (earlier.length) return { ok: false, reason: "already_redeemed" };
 
   const { rows: users } = await pool.query(
-    "SELECT is_pro, plan, pro_expires_at, legacy_pro_grant, email_verified FROM users WHERE id = $1",
+    "SELECT email, is_pro, plan, pro_expires_at, legacy_pro_grant, email_verified FROM users WHERE id = $1",
     [userId],
   );
   const user = users[0];
@@ -64,13 +96,32 @@ export async function redeemLicenceCode(userId: number, raw: unknown, now: Date 
   if (!user.email_verified) return { ok: false, reason: "verify_email" };
   if (isEntitled(user, now)) return { ok: false, reason: "already_pro" };
 
-  const expiresAt = addMonths(now, Number(found.months));
-  const inserted = await pool.query(
-    `INSERT INTO licence_code_redemptions (code, user_id, redeemed_at, expires_at)
-     VALUES ($1, $2, $3, $4) ON CONFLICT (code, user_id) DO NOTHING`,
-    [code, userId, now, expiresAt],
+  // One code, one person: the same address under another alias, or a run of
+  // accounts from one connection, does not get a second six months.
+  const person = emailKey(String(user.email));
+  const connection = connectionHash(ip);
+  const { rows: same } = await pool.query(
+    "SELECT 1 FROM licence_code_redemptions WHERE code = $1 AND email_key = $2",
+    [code, person],
   );
-  if (!inserted.rowCount) return { ok: false, reason: "already_redeemed" };
+  if (same.length) return { ok: false, reason: "duplicate" };
+  if (connection) {
+    const { rows: nearby } = await pool.query(
+      "SELECT count(*)::int AS n FROM licence_code_redemptions WHERE code = $1 AND ip_hash = $2",
+      [code, connection],
+    );
+    if (Number(nearby[0]?.n ?? 0) >= MAX_PER_CONNECTION) return { ok: false, reason: "duplicate" };
+  }
+
+  const expiresAt = addMonths(now, Number(found.months));
+  // No conflict target: a race on either the account or the person key ends
+  // here as a refusal rather than a second grant.
+  const inserted = await pool.query(
+    `INSERT INTO licence_code_redemptions (code, user_id, redeemed_at, expires_at, email_key, ip_hash)
+     VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
+    [code, userId, now, expiresAt, person, connection],
+  );
+  if (!inserted.rowCount) return { ok: false, reason: "duplicate" };
 
   // The entitlement check is repeated inside the UPDATE, so a purchase that
   // lands between the read above and this write is never overwritten.

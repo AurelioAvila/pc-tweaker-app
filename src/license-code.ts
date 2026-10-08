@@ -36,6 +36,7 @@ const SERVER_REASONS: Record<string, LicenseCodeError | "verify"> = {
   not_started: "notStarted",
   ended: "ended",
   already_redeemed: "alreadyRedeemed",
+  duplicate: "duplicate",
   already_pro: "alreadyPro",
   rate_limited: "tooMany",
   verify_email: "verify",

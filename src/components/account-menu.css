@@ -272,7 +272,12 @@
 .account-license-field input[aria-invalid="true"] {
   border-color: color-mix(in oklab, var(--danger) 70%, transparent);
 }
+.account-license-actions {
+  display: flex;
+  gap: 6px;
+}
 .account-license-field button,
+.account-license-primary,
 .account-license-secondary {
   height: 36px;
   padding: 0 14px;
@@ -284,7 +289,8 @@
     transform 140ms ease-out,
     opacity 150ms ease;
 }
-.account-license-field button {
+.account-license-field button,
+.account-license-primary {
   background: var(--accent);
   color: var(--on-accent);
 }
@@ -293,11 +299,11 @@
   cursor: default;
 }
 .account-license-field button:not(:disabled):active,
+.account-license-primary:active,
 .account-license-secondary:active {
   transform: scale(0.97);
 }
 .account-license-secondary {
-  align-self: flex-start;
   border: 1px solid var(--border-strong);
   color: var(--text-primary);
 }

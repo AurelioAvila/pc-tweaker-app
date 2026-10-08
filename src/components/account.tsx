@@ -25,6 +25,7 @@ import "./account-menu.css";
 export function AuthSection({
   s,
   auth,
+  initialMode = "login",
   avatar = null,
   onChangePhoto,
   onRemovePhoto,
@@ -35,6 +36,8 @@ export function AuthSection({
 }: {
   s: Strings;
   auth: AuthState;
+  /** Which form a signed-out visitor sees first. */
+  initialMode?: "login" | "register";
   /** Device-local profile photo and its controls, owned by AccountMenu. */
   avatar?: string | null;
   onChangePhoto?: () => void;
@@ -50,7 +53,7 @@ export function AuthSection({
   onResendVerification: () => Promise<void>;
   onForgotPassword: (email: string) => Promise<void>;
 }) {
-  const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
+  const [mode, setMode] = useState<"login" | "register" | "forgot">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -359,7 +362,7 @@ function LicenseCodeSection({
   onRedeemCode: (code: string) => Promise<RedeemOutcome>;
   onSavePendingCode: (email: string, code: string) => void;
   onActivated: () => void;
-  onSignIn: () => void;
+  onSignIn: (mode: "login" | "register") => void;
 }) {
   const [code, setCode] = useState("");
   const [working, setWorking] = useState(false);
@@ -385,9 +388,22 @@ function LicenseCodeSection({
     return (
       <div className="account-license">
         <p>{s.menu.licenseCodeSignedOut}</p>
-        <button type="button" className="account-license-secondary" onClick={onSignIn}>
-          {s.auth.loginButton}
-        </button>
+        <div className="account-license-actions">
+          <button
+            type="button"
+            className="account-license-primary"
+            onClick={() => onSignIn("register")}
+          >
+            {s.auth.registerButton}
+          </button>
+          <button
+            type="button"
+            className="account-license-secondary"
+            onClick={() => onSignIn("login")}
+          >
+            {s.auth.loginButton}
+          </button>
+        </div>
       </div>
     );
   }
@@ -520,6 +536,11 @@ export function AccountMenu({
   const [justActivated, setJustActivated] = useState(false);
   const showCode = !isPro || justActivated;
   const identity = useRef<HTMLDetailsElement | null>(null);
+  // Remounts the sign-in form in the mode the licence code entry asked for.
+  const [authStart, setAuthStart] = useState<{ mode: "login" | "register"; n: number }>({
+    mode: "login",
+    n: 0,
+  });
 
   // Device-local profile photo, kept as a file by the Rust side; there is no
   // upload — see fileToAvatarDataUrl in lib.ts and src-tauri/src/avatar.rs.
@@ -649,6 +670,8 @@ export function AccountMenu({
               </summary>
               <div className="account-setting-body">
                 <AuthSection
+                  key={authStart.n}
+                  initialMode={authStart.mode}
                   s={s}
                   auth={auth}
                   avatar={avatar}
@@ -712,7 +735,8 @@ export function AccountMenu({
                     onRedeemCode={onRedeemCode}
                     onSavePendingCode={onSavePendingCode}
                     onActivated={() => setJustActivated(true)}
-                    onSignIn={() => {
+                    onSignIn={(mode) => {
+                      setAuthStart((current) => ({ mode, n: current.n + 1 }));
                       const details = identity.current;
                       if (!details) return;
                       details.open = true;

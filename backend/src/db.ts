@@ -209,6 +209,30 @@ async function initSchema(): Promise<void> {
     );
   `);
 
+  // Licence codes handed out by partners (a one-day giveaway, for instance):
+  // anyone signed in may redeem one during its window for `months` of Pro,
+  // once per account. Created by scripts/create-licence-code.mjs only; there
+  // is no HTTP route that writes this table.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS licence_codes (
+      code TEXT PRIMARY KEY,
+      label TEXT NOT NULL,
+      months INTEGER NOT NULL,
+      starts_at TIMESTAMPTZ NOT NULL,
+      ends_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS licence_code_redemptions (
+      code TEXT NOT NULL REFERENCES licence_codes(code),
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      redeemed_at TIMESTAMPTZ NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      PRIMARY KEY (code, user_id)
+    );
+  `);
+
   // One row per website download click that arrived from a tagged social
   // post (routes/downloads.ts). Campaign labels and a timestamp only: no IP,
   // no user agent, no identifier, so a row can never be joined to a person.

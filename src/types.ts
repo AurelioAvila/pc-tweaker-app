@@ -12,6 +12,9 @@ export type AuthState =
       /** Whether a Stripe customer exists for this account. Pro without one
        *  has nothing a billing portal could show. */
       hasBilling: boolean;
+      /** When Pro ends on its own (a subscription period, a licence code).
+       *  Null for Lifetime and for Free. */
+      proExpiresAt: string | null;
     };
 
 export type Category = "performance" | "privacy" | "ui" | "maintenance" | "gaming";

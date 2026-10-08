@@ -97,7 +97,7 @@ async function main() {
     } else if (billing && user.plan !== "lifetime" && (!stored || stored.getTime() < paidUntil.getTime() - SLACK_MS)) {
       problem = `SHORT EXPIRY — app ends ${day(stored)}, Stripe billed through ${day(paidUntil)}`;
       repair = paidUntil;
-    } else if (!billing && entitled && user.plan !== "lifetime") {
+    } else if (!billing && entitled && user.plan !== "lifetime" && user.plan !== "promo") {
       problem = "OVER-GRANTED — Pro with nothing billing it";
     }
 

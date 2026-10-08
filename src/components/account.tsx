@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { LANGUAGES, Lang, Strings } from "../i18n";
+import { LANGUAGES, Lang, Strings, format } from "../i18n";
 import { THEMES, ThemeName } from "../theme";
 import {
   ERROR_REPORTS_KEY,
@@ -11,7 +11,14 @@ import {
   writeAvatar,
 } from "../lib";
 import { AuthState } from "../types";
-import { CheckIcon, CrownIcon } from "./icons";
+import {
+  formatExpiry,
+  formatLicenseCode,
+  isCompleteLicenseCode,
+  LICENSE_CODE_PLACEHOLDER,
+  RedeemOutcome,
+} from "../license-code";
+import { CheckIcon, CrownIcon, KeyIcon } from "./icons";
 import { Avatar } from "./ui";
 import "./account-menu.css";
 
@@ -332,6 +339,118 @@ export function AuthSection({
   );
 }
 
+/**
+ * "License code": where a promotion or partner code turns into Pro on the
+ * account. Signed out it explains why an account comes first; unverified it
+ * keeps the code and activates it once the address is confirmed.
+ */
+function LicenseCodeSection({
+  s,
+  lang,
+  auth,
+  onRedeemCode,
+  onSavePendingCode,
+  onActivated,
+  onSignIn,
+}: {
+  s: Strings;
+  lang: Lang;
+  auth: AuthState;
+  onRedeemCode: (code: string) => Promise<RedeemOutcome>;
+  onSavePendingCode: (email: string, code: string) => void;
+  onActivated: () => void;
+  onSignIn: () => void;
+}) {
+  const [code, setCode] = useState("");
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [activeUntil, setActiveUntil] = useState<string | null>(null);
+
+  if (activeUntil) {
+    return (
+      <div className="account-license-success" role="status">
+        <CheckIcon className="h-4 w-4" />
+        <div>
+          <strong>
+            {format(s.menu.licenseCodeActive, { date: formatExpiry(activeUntil, lang) })}
+          </strong>
+          <span>{s.menu.licenseCodeKeeps}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (auth.status !== "authenticated") {
+    return (
+      <div className="account-license">
+        <p>{s.menu.licenseCodeSignedOut}</p>
+        <button type="button" className="account-license-secondary" onClick={onSignIn}>
+          {s.auth.loginButton}
+        </button>
+      </div>
+    );
+  }
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (working || !isCompleteLicenseCode(code) || auth.status !== "authenticated") return;
+    setError(null);
+    setNotice(null);
+    if (!auth.emailVerified) {
+      onSavePendingCode(auth.email, code);
+      setNotice(s.menu.licenseCodePending);
+      return;
+    }
+    setWorking(true);
+    try {
+      const outcome = await onRedeemCode(code);
+      if (outcome.ok) {
+        onActivated();
+        setActiveUntil(outcome.expiresAt);
+      } else if (outcome.reason === "verify") setNotice(s.menu.licenseCodePending);
+      else setError(s.menu.licenseCodeErrors[outcome.reason]);
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return (
+    <form className="account-license" onSubmit={submit} noValidate>
+      <p>{auth.emailVerified ? s.menu.licenseCodeHint : s.menu.licenseCodeVerify}</p>
+      <div className="account-license-field">
+        <input
+          value={code}
+          onChange={(e) => {
+            setCode(formatLicenseCode(e.target.value));
+            setError(null);
+          }}
+          placeholder={LICENSE_CODE_PLACEHOLDER}
+          aria-label={s.menu.licenseCode}
+          aria-invalid={error ? true : undefined}
+          autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+          maxLength={39}
+        />
+        <button type="submit" disabled={working || !isCompleteLicenseCode(code)}>
+          {working ? s.menu.licenseCodeActivating : s.menu.licenseCodeActivate}
+        </button>
+      </div>
+      {error && (
+        <p className="account-license-error" role="alert">
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p className="account-license-notice" role="status">
+          {notice}
+        </p>
+      )}
+    </form>
+  );
+}
+
 export function AccountMenu({
   s,
   lang,
@@ -347,6 +466,8 @@ export function AccountMenu({
   onForgotPassword,
   onUpgrade,
   onViewPlan,
+  onRedeemCode,
+  onSavePendingCode,
   pushToast,
 }: {
   s: Strings;
@@ -374,6 +495,8 @@ export function AccountMenu({
   /** Opens the plans screen. Same destination for both tiers: a Free
    *  account is comparing, a Pro account is checking what it pays for. */
   onViewPlan: () => void;
+  onRedeemCode: (code: string) => Promise<RedeemOutcome>;
+  onSavePendingCode: (email: string, code: string) => void;
   pushToast: (kind: "success" | "error", message: string) => void;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
@@ -382,9 +505,21 @@ export function AccountMenu({
     const next = typeof v === "function" ? v(open) : v;
     onOpenChange?.(next);
     setInternalOpen(next);
+    if (!next) setJustActivated(false);
   };
   const [errReports, setErrReports] = useState(() => errorReportsEnabled());
   const isPro = auth.status === "authenticated" && auth.isPro;
+  // Pro from a licence code ends on a date the user should see; a renewing
+  // subscription shows no date here, since it does not end.
+  const promoUntil =
+    auth.status === "authenticated" && auth.isPro && auth.plan === "promo" && auth.proExpiresAt
+      ? auth.proExpiresAt
+      : null;
+  // Stays visible right after a successful activation (isPro flips to true)
+  // so the confirmation is read in place, until the menu is closed.
+  const [justActivated, setJustActivated] = useState(false);
+  const showCode = !isPro || justActivated;
+  const identity = useRef<HTMLDetailsElement | null>(null);
 
   // Device-local profile photo, kept as a file by the Rust side; there is no
   // upload — see fileToAvatarDataUrl in lib.ts and src-tauri/src/avatar.rs.
@@ -498,7 +633,11 @@ export function AccountMenu({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="account-panel animate-card absolute right-0 z-50 mt-2 max-h-[calc(100vh-9rem)] overflow-y-auto overflow-x-hidden">
-            <details name="account-settings" className="account-setting account-identity">
+            <details
+              ref={identity}
+              name="account-settings"
+              className="account-setting account-identity"
+            >
               <summary>
                 <span>
                   {s.menu.account}
@@ -535,7 +674,14 @@ export function AccountMenu({
             <div className="account-plan-row">
               <span>
                 <CrownIcon className="h-4 w-4" />
-                {isPro ? s.menu.planPro : s.menu.planFree}
+                <span className="account-plan-name">
+                  {isPro ? s.menu.planPro : s.menu.planFree}
+                  {promoUntil && (
+                    <small>
+                      {format(s.menu.planUntil, { date: formatExpiry(promoUntil, lang) })}
+                    </small>
+                  )}
+                </span>
               </span>
               <button
                 onClick={() => {
@@ -547,6 +693,36 @@ export function AccountMenu({
                 {isPro ? s.menu.viewPlan : s.menu.upgradeButton} <span aria-hidden="true">↗</span>
               </button>
             </div>
+            {showCode && (
+              <details name="account-settings" className="account-setting account-license-setting">
+                <summary>
+                  <span className="account-license-title">
+                    <KeyIcon className="h-4 w-4" />
+                    {s.menu.licenseCode}
+                  </span>
+                  <span className="account-chevron" aria-hidden="true">
+                    ›
+                  </span>
+                </summary>
+                <div className="account-setting-body">
+                  <LicenseCodeSection
+                    s={s}
+                    lang={lang}
+                    auth={auth}
+                    onRedeemCode={onRedeemCode}
+                    onSavePendingCode={onSavePendingCode}
+                    onActivated={() => setJustActivated(true)}
+                    onSignIn={() => {
+                      const details = identity.current;
+                      if (!details) return;
+                      details.open = true;
+                      details.querySelector("summary")?.focus();
+                      details.scrollIntoView({ block: "nearest" });
+                    }}
+                  />
+                </div>
+              </details>
+            )}
             <details name="account-settings" className="account-setting">
               <summary>
                 <span>{s.menu.language}</span>

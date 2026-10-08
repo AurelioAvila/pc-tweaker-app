@@ -321,3 +321,17 @@ export function HistoryIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function KeyIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="8" cy="15" r="4" stroke="currentColor" strokeWidth="1.6" />
+      <path
+        d="m11 12 8.5-8.5M16.5 6.5l2.5 2.5M14 9l2 2"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}

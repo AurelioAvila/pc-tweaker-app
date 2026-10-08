@@ -923,6 +923,20 @@ export interface Strings {
     reportIssue: string;
     aboutBody: string;
     close: string;
+    licenseCode: string;
+    licenseCodeHint: string;
+    licenseCodeActivate: string;
+    licenseCodeActivating: string;
+    licenseCodeSignedOut: string;
+    licenseCodeVerify: string;
+    licenseCodeActive: string; // uses {date}
+    licenseCodeKeeps: string;
+    licenseCodePending: string;
+    planUntil: string; // uses {date}
+    licenseCodeErrors: Record<
+      "invalid" | "notStarted" | "ended" | "alreadyRedeemed" | "alreadyPro" | "tooMany" | "failed",
+      string
+    >;
   };
   auth: {
     login: string;
@@ -2027,6 +2041,29 @@ const it: Strings = {
     reportIssue: "Segnala un problema",
     aboutBody: "PC Tweaker — tweak di sistema con backup e ripristino automatico.",
     close: "Chiudi",
+    licenseCode: "Codice licenza",
+    licenseCodeHint:
+      "Hai un codice da una promozione o da un partner? Inseriscilo per attivare Pro sul tuo account.",
+    licenseCodeActivate: "Attiva",
+    licenseCodeActivating: "Attivazione…",
+    licenseCodeSignedOut:
+      "Prima accedi o crea un account gratuito: la licenza è legata al tuo account, non a questo PC.",
+    licenseCodeVerify:
+      "Verifica il tuo indirizzo email per attivare un codice. Usa il link che ti abbiamo inviato alla registrazione, oppure richiedilo di nuovo da Account.",
+    licenseCodeActive: "Pro è attivo. Scadenza: {date}.",
+    licenseCodeKeeps:
+      "Aggiornamenti e reinstallazioni lo mantengono: la licenza segue il tuo account.",
+    licenseCodePending: "Salvato. Si attiva appena verifichi la tua email.",
+    planUntil: "scadenza {date}",
+    licenseCodeErrors: {
+      invalid: "Questo codice non è valido. Controllalo e riprova.",
+      notStarted: "Questo codice non è ancora attivo. Riprova quando inizia la promozione.",
+      ended: "Questo codice è scaduto: la promozione è terminata.",
+      alreadyRedeemed: "Questo codice è già attivo sul tuo account.",
+      alreadyPro: "Il tuo account ha già Pro: non c'è nulla da attivare.",
+      tooMany: "Troppi tentativi. Attendi qualche minuto e riprova.",
+      failed: "Impossibile contattare il server. Controlla la connessione e riprova.",
+    },
   },
   auth: {
     login: "Accedi",
@@ -3442,6 +3479,28 @@ const en: Strings = {
     reportIssue: "Report an issue",
     aboutBody: "PC Tweaker — system tweaks with automatic backup and rollback.",
     close: "Close",
+    licenseCode: "License code",
+    licenseCodeHint:
+      "Got a code from a promotion or a partner? Enter it to activate Pro on your account.",
+    licenseCodeActivate: "Activate",
+    licenseCodeActivating: "Activating…",
+    licenseCodeSignedOut:
+      "Sign in or create a free account first: the license is linked to your account, not to this PC.",
+    licenseCodeVerify:
+      "Verify your email address to activate a code. Use the link we sent when you signed up, or send it again from Account.",
+    licenseCodeActive: "Pro is active until {date}.",
+    licenseCodeKeeps: "Updates and reinstalls keep it: the license follows your account.",
+    licenseCodePending: "Saved. It activates as soon as you verify your email.",
+    planUntil: "until {date}",
+    licenseCodeErrors: {
+      invalid: "This code isn't valid. Check it and try again.",
+      notStarted: "This code isn't active yet. Try again when the promotion starts.",
+      ended: "This code has expired: the promotion is over.",
+      alreadyRedeemed: "This code is already active on your account.",
+      alreadyPro: "Your account already has Pro, so there's nothing to activate.",
+      tooMany: "Too many attempts. Wait a few minutes and try again.",
+      failed: "Couldn't reach the server. Check your connection and try again.",
+    },
   },
   auth: {
     login: "Log in",
@@ -4875,6 +4934,29 @@ const fr: Strings = {
     reportIssue: "Signaler un problème",
     aboutBody: "PC Tweaker — optimisations système avec sauvegarde et restauration automatiques.",
     close: "Fermer",
+    licenseCode: "Code de licence",
+    licenseCodeHint:
+      "Vous avez un code obtenu lors d'une promotion ou via un partenaire ? Saisissez-le pour activer Pro sur votre compte.",
+    licenseCodeActivate: "Activer",
+    licenseCodeActivating: "Activation…",
+    licenseCodeSignedOut:
+      "Connectez-vous ou créez d'abord un compte gratuit : la licence est liée à votre compte, pas à ce PC.",
+    licenseCodeVerify:
+      "Vérifiez votre adresse e-mail pour activer un code. Utilisez le lien envoyé lors de l'inscription, ou renvoyez-le depuis Compte.",
+    licenseCodeActive: "Pro est actif jusqu'au {date}.",
+    licenseCodeKeeps:
+      "Les mises à jour et réinstallations le conservent : la licence suit votre compte.",
+    licenseCodePending: "Enregistré. Il s'activera dès que votre e-mail sera vérifié.",
+    planUntil: "jusqu'au {date}",
+    licenseCodeErrors: {
+      invalid: "Ce code n'est pas valide. Vérifiez-le et réessayez.",
+      notStarted: "Ce code n'est pas encore actif. Réessayez au début de la promotion.",
+      ended: "Ce code a expiré : la promotion est terminée.",
+      alreadyRedeemed: "Ce code est déjà actif sur votre compte.",
+      alreadyPro: "Votre compte a déjà Pro : il n'y a rien à activer.",
+      tooMany: "Trop de tentatives. Patientez quelques minutes et réessayez.",
+      failed: "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
+    },
   },
   auth: {
     login: "Connexion",
@@ -6305,6 +6387,29 @@ const es: Strings = {
     aboutBody:
       "PC Tweaker — ajustes del sistema con copia de seguridad y restauración automáticas.",
     close: "Cerrar",
+    licenseCode: "Código de licencia",
+    licenseCodeHint:
+      "¿Tienes un código de una promoción o de un socio? Introdúcelo para activar Pro en tu cuenta.",
+    licenseCodeActivate: "Activar",
+    licenseCodeActivating: "Activando…",
+    licenseCodeSignedOut:
+      "Primero inicia sesión o crea una cuenta gratuita: la licencia está vinculada a tu cuenta, no a este PC.",
+    licenseCodeVerify:
+      "Verifica tu dirección de correo para activar un código. Usa el enlace que te enviamos al registrarte o vuelve a enviarlo desde Cuenta.",
+    licenseCodeActive: "Pro está activo hasta el {date}.",
+    licenseCodeKeeps:
+      "Las actualizaciones y reinstalaciones lo conservan: la licencia sigue a tu cuenta.",
+    licenseCodePending: "Guardado. Se activará en cuanto verifiques tu correo.",
+    planUntil: "hasta el {date}",
+    licenseCodeErrors: {
+      invalid: "Este código no es válido. Revísalo e inténtalo de nuevo.",
+      notStarted: "Este código aún no está activo. Inténtalo de nuevo cuando empiece la promoción.",
+      ended: "Este código ha caducado: la promoción ha terminado.",
+      alreadyRedeemed: "Este código ya está activo en tu cuenta.",
+      alreadyPro: "Tu cuenta ya tiene Pro: no hay nada que activar.",
+      tooMany: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+      failed: "No se pudo contactar con el servidor. Comprueba la conexión e inténtalo de nuevo.",
+    },
   },
   auth: {
     login: "Iniciar sesión",
@@ -7741,6 +7846,30 @@ const de: Strings = {
     aboutBody:
       "PC Tweaker — Systemoptimierungen mit automatischer Sicherung und Wiederherstellung.",
     close: "Schließen",
+    licenseCode: "Lizenzcode",
+    licenseCodeHint:
+      "Du hast einen Code aus einer Aktion oder von einem Partner? Gib ihn ein, um Pro für dein Konto zu aktivieren.",
+    licenseCodeActivate: "Aktivieren",
+    licenseCodeActivating: "Wird aktiviert…",
+    licenseCodeSignedOut:
+      "Melde dich zuerst an oder erstelle ein kostenloses Konto: Die Lizenz ist an dein Konto gebunden, nicht an diesen PC.",
+    licenseCodeVerify:
+      "Bestätige deine E-Mail-Adresse, um einen Code zu aktivieren. Nutze den Link aus der Registrierung oder sende ihn unter Konto erneut.",
+    licenseCodeActive: "Pro ist aktiv bis {date}.",
+    licenseCodeKeeps:
+      "Updates und Neuinstallationen behalten sie bei: Die Lizenz folgt deinem Konto.",
+    licenseCodePending: "Gespeichert. Er wird aktiviert, sobald du deine E-Mail bestätigt hast.",
+    planUntil: "bis {date}",
+    licenseCodeErrors: {
+      invalid: "Dieser Code ist ungültig. Prüfe ihn und versuche es erneut.",
+      notStarted:
+        "Dieser Code ist noch nicht aktiv. Versuche es erneut, sobald die Aktion beginnt.",
+      ended: "Dieser Code ist abgelaufen: Die Aktion ist beendet.",
+      alreadyRedeemed: "Dieser Code ist bereits auf deinem Konto aktiv.",
+      alreadyPro: "Dein Konto hat bereits Pro, es gibt nichts zu aktivieren.",
+      tooMany: "Zu viele Versuche. Warte ein paar Minuten und versuche es erneut.",
+      failed: "Der Server ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
+    },
   },
   auth: {
     login: "Anmelden",
@@ -9173,6 +9302,28 @@ const pt: Strings = {
     reportIssue: "Relatar um problema",
     aboutBody: "PC Tweaker — ajustes de sistema com backup e reversão automáticos.",
     close: "Fechar",
+    licenseCode: "Código de licença",
+    licenseCodeHint:
+      "Tem um código de uma promoção ou de um parceiro? Digite-o para ativar o Pro na sua conta.",
+    licenseCodeActivate: "Ativar",
+    licenseCodeActivating: "Ativando…",
+    licenseCodeSignedOut:
+      "Primeiro entre ou crie uma conta gratuita: a licença fica vinculada à sua conta, não a este PC.",
+    licenseCodeVerify:
+      "Confirme seu endereço de e-mail para ativar um código. Use o link que enviamos no cadastro ou reenvie-o em Conta.",
+    licenseCodeActive: "O Pro está ativo até {date}.",
+    licenseCodeKeeps: "Atualizações e reinstalações o mantêm: a licença acompanha a sua conta.",
+    licenseCodePending: "Salvo. Ele será ativado assim que você confirmar seu e-mail.",
+    planUntil: "até {date}",
+    licenseCodeErrors: {
+      invalid: "Este código não é válido. Confira e tente novamente.",
+      notStarted: "Este código ainda não está ativo. Tente novamente quando a promoção começar.",
+      ended: "Este código expirou: a promoção terminou.",
+      alreadyRedeemed: "Este código já está ativo na sua conta.",
+      alreadyPro: "Sua conta já tem o Pro: não há nada para ativar.",
+      tooMany: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+      failed: "Não foi possível acessar o servidor. Verifique sua conexão e tente novamente.",
+    },
   },
   auth: {
     login: "Entrar",

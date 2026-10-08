@@ -223,3 +223,138 @@
     transition: none;
   }
 }
+
+/* ---- License code ------------------------------------------------------ */
+.account-license-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.account-license-title svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.account-license {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.account-license-field {
+  display: flex;
+  gap: 6px;
+}
+.account-license-field input {
+  min-width: 0;
+  flex: 1;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-family: var(--font-data);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+.account-license-field input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.55;
+}
+.account-license-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.account-license-field input[aria-invalid="true"] {
+  border-color: color-mix(in oklab, var(--danger) 70%, transparent);
+}
+.account-license-field button,
+.account-license-secondary {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    transform 140ms ease-out,
+    opacity 150ms ease;
+}
+.account-license-field button {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.account-license-field button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.account-license-field button:not(:disabled):active,
+.account-license-secondary:active {
+  transform: scale(0.97);
+}
+.account-license-secondary {
+  align-self: flex-start;
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+}
+.account-license-secondary:hover {
+  background: var(--surface-hover);
+}
+.account-setting-body .account-license-error {
+  color: var(--danger);
+}
+.account-setting-body .account-license-notice {
+  color: var(--text-secondary);
+}
+.account-license-success {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid color-mix(in oklab, var(--success) 30%, transparent);
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--success) 9%, transparent);
+  animation: account-license-in 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.account-license-success svg {
+  margin-top: 1px;
+  color: var(--success);
+  flex-shrink: 0;
+}
+.account-license-success strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.account-license-success span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+.account-plan-name small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.account-plan-row button {
+  white-space: nowrap;
+}
+@keyframes account-license-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .account-license-success {
+    animation: none;
+  }
+}

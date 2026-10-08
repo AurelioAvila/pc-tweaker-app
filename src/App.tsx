@@ -49,6 +49,14 @@ import {
   UninstallerPromoCard,
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
+import {
+  clearPendingCode,
+  formatExpiry,
+  readPendingCode,
+  redeemLicenseCode,
+  RedeemOutcome,
+  savePendingCode,
+} from "./license-code";
 import { TweakIcon } from "./components/tweak-icon";
 import { TechnicalDetails, TechnicalToggle } from "./components/technical";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
@@ -131,6 +139,7 @@ function App() {
           emailVerified: false,
           plan: null,
           hasBilling: false,
+          proExpiresAt: null,
         }
       : { status: "anonymous" };
   });
@@ -175,6 +184,7 @@ function App() {
         emailVerified: boolean;
         plan?: string | null;
         hasBilling?: boolean;
+        proExpiresAt?: string | null;
       };
       setAuth({
         status: "authenticated",
@@ -186,10 +196,16 @@ function App() {
         // that cannot work.
         plan: data.plan ?? null,
         hasBilling: data.hasBilling ?? false,
+        proExpiresAt: data.proExpiresAt ?? null,
       });
       // Fire-and-forget: refreshLicense() has its own error handling and
       // must never block the UI's account status on a signing hiccup.
       void refreshLicense();
+      const pendingCode = readPendingCode(data.email);
+      if (pendingCode && (data.isPro || data.emailVerified)) {
+        clearPendingCode();
+        if (!data.isPro) void redeemCode(pendingCode, true);
+      }
       const pending = pendingPlan.current;
       if (pending && (data.isPro || pending.until < Date.now())) {
         pendingPlan.current = null;
@@ -300,11 +316,37 @@ function App() {
       emailVerified: false,
       plan: null,
       hasBilling: false,
+      proExpiresAt: null,
     });
     if (mode === "register" && data.verificationEmailSent) {
       pushToast("success", format(s.auth.checkInboxAfterSignup, { email }), 12000);
     }
     await refreshAccount();
+  }
+
+  /** Redeems a licence code; a code typed before the address is verified is
+   *  kept and redeemed by the first refresh that sees it verified. */
+  async function redeemCode(code: string, announce = false): Promise<RedeemOutcome> {
+    const outcome = await redeemLicenseCode(code);
+    if (outcome.ok) {
+      // Not awaited: the menu marks the activation first, so its confirmation
+      // stays on screen when the refreshed account turns Pro.
+      void refreshAccount();
+      if (announce)
+        pushToast(
+          "success",
+          format(s.menu.licenseCodeActive, { date: formatExpiry(outcome.expiresAt, lang) }),
+          10000,
+        );
+    } else if (outcome.reason === "verify" && auth.status === "authenticated") {
+      savePendingCode(auth.email, code);
+    } else if (announce) {
+      pushToast(
+        "error",
+        s.menu.licenseCodeErrors[outcome.reason === "verify" ? "failed" : outcome.reason],
+      );
+    }
+    return outcome;
   }
 
   async function resendVerification() {
@@ -793,6 +835,8 @@ function App() {
                 onForgotPassword={forgotPassword}
                 onUpgrade={() => setPaywallFeature(s.menu.planPro)}
                 onViewPlan={() => setFilter("pricing")}
+                onRedeemCode={redeemCode}
+                onSavePendingCode={savePendingCode}
                 pushToast={pushToast}
               />
             </header>

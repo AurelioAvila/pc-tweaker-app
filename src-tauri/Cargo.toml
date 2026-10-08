@@ -39,6 +39,8 @@ tauri-plugin-process = "2"
 tauri-plugin-single-instance = "2"
 ed25519-dalek = "2"
 base64 = "0.22"
+# Already in the lockfile through ed25519-dalek; hashes the licence-code device key.
+sha2 = "0.10"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"

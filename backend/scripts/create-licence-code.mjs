@@ -3,7 +3,7 @@
  * months to every verified account that redeems it inside its window.
  *
  *   railway run --service Postgres node scripts/create-licence-code.mjs \
- *     --label "Giveaway of the Day" --months 6 \
+ *     --label "Giveaway of the Day" --months 6 --max 1000 \
  *     --starts 2026-10-22T00:00:00Z --ends 2026-10-23T12:00:00Z
  *
  * Prints the code, grouped for display (PCT-XXXX-XXXX-XXXX). Pass --code to
@@ -19,8 +19,10 @@ const args = Object.fromEntries(
 const months = Number(args.months);
 const starts = new Date(args.starts);
 const ends = new Date(args.ends);
-if (!args.label || !Number.isInteger(months) || months < 1 || months > 24 || Number.isNaN(starts.getTime()) || !(ends > starts)) {
-  console.error('Usage: --label "..." --months 1-24 --starts <ISO> --ends <ISO> [--code ABCD1234]');
+const max = args.max === undefined ? null : Number(args.max);
+if (!args.label || !Number.isInteger(months) || months < 1 || months > 24 || Number.isNaN(starts.getTime()) || !(ends > starts)
+    || (max !== null && (!Number.isInteger(max) || max < 1))) {
+  console.error('Usage: --label "..." --months 1-24 --starts <ISO> --ends <ISO> [--max 1000] [--code ABCD1234]');
   process.exit(2);
 }
 // No 0/O or 1/I: the code is read off a web page and typed by hand.
@@ -38,11 +40,11 @@ const client = new pg.Client({ connectionString: url, ssl: url?.includes("localh
 await client.connect();
 try {
   await client.query(
-    "INSERT INTO licence_codes (code, label, months, starts_at, ends_at) VALUES ($1, $2, $3, $4, $5)",
-    [code, args.label, months, starts, ends],
+    "INSERT INTO licence_codes (code, label, months, max_redemptions, starts_at, ends_at) VALUES ($1, $2, $3, $4, $5, $6)",
+    [code, args.label, months, max, starts, ends],
   );
 } finally {
   await client.end();
 }
 const shown = code.startsWith("PCT") ? "PCT-" + code.slice(3).match(/.{1,4}/g).join("-") : code.match(/.{1,4}/g).join("-");
-console.log(`Created ${shown}: ${months} months of Pro, redeemable ${starts.toISOString()} to ${ends.toISOString()} (${args.label}).`);
+console.log(`Created ${shown}: ${months} months of Pro, ${max ?? "unlimited"} activations, redeemable ${starts.toISOString()} to ${ends.toISOString()} (${args.label}).`);

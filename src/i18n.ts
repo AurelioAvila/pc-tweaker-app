@@ -939,6 +939,7 @@ export interface Strings {
       | "ended"
       | "alreadyRedeemed"
       | "duplicate"
+      | "soldOut"
       | "alreadyPro"
       | "tooMany"
       | "failed",
@@ -2068,7 +2069,8 @@ const it: Strings = {
       ended: "Questo codice è scaduto: la promozione è terminata.",
       alreadyRedeemed: "Questo codice è già attivo sul tuo account.",
       duplicate:
-        "Questo codice è già stato attivato per te, su un altro account o da questa connessione. Vale una volta per persona.",
+        "Questo codice è già stato attivato su questo PC o per te su un altro account. Vale una volta per persona.",
+      soldOut: "Le licenze di questa promozione sono esaurite.",
       alreadyPro: "Il tuo account ha già Pro: non c'è nulla da attivare.",
       tooMany: "Troppi tentativi. Attendi qualche minuto e riprova.",
       failed: "Impossibile contattare il server. Controlla la connessione e riprova.",
@@ -3507,7 +3509,8 @@ const en: Strings = {
       ended: "This code has expired: the promotion is over.",
       alreadyRedeemed: "This code is already active on your account.",
       duplicate:
-        "This code has already been activated for you, on another account or from this connection. It's one per person.",
+        "This code has already been activated on this PC or for you on another account. It's one per person.",
+      soldOut: "All the licenses for this promotion have been claimed.",
       alreadyPro: "Your account already has Pro, so there's nothing to activate.",
       tooMany: "Too many attempts. Wait a few minutes and try again.",
       failed: "Couldn't reach the server. Check your connection and try again.",
@@ -4965,7 +4968,8 @@ const fr: Strings = {
       ended: "Ce code a expiré : la promotion est terminée.",
       alreadyRedeemed: "Ce code est déjà actif sur votre compte.",
       duplicate:
-        "Ce code a déjà été activé pour vous, sur un autre compte ou depuis cette connexion. Il est limité à une personne.",
+        "Ce code a déjà été activé sur ce PC ou pour vous sur un autre compte. Il est limité à une personne.",
+      soldOut: "Toutes les licences de cette promotion ont été attribuées.",
       alreadyPro: "Votre compte a déjà Pro : il n'y a rien à activer.",
       tooMany: "Trop de tentatives. Patientez quelques minutes et réessayez.",
       failed: "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
@@ -6420,7 +6424,8 @@ const es: Strings = {
       ended: "Este código ha caducado: la promoción ha terminado.",
       alreadyRedeemed: "Este código ya está activo en tu cuenta.",
       duplicate:
-        "Este código ya se activó para ti, en otra cuenta o desde esta conexión. Es uno por persona.",
+        "Este código ya se activó en este PC o para ti en otra cuenta. Es uno por persona.",
+      soldOut: "Ya se han agotado las licencias de esta promoción.",
       alreadyPro: "Tu cuenta ya tiene Pro: no hay nada que activar.",
       tooMany: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
       failed: "No se pudo contactar con el servidor. Comprueba la conexión e inténtalo de nuevo.",
@@ -7882,7 +7887,8 @@ const de: Strings = {
       ended: "Dieser Code ist abgelaufen: Die Aktion ist beendet.",
       alreadyRedeemed: "Dieser Code ist bereits auf deinem Konto aktiv.",
       duplicate:
-        "Dieser Code wurde für dich bereits aktiviert, mit einem anderen Konto oder über diese Verbindung. Er gilt einmal pro Person.",
+        "Dieser Code wurde auf diesem PC oder für dich mit einem anderen Konto bereits aktiviert. Er gilt einmal pro Person.",
+      soldOut: "Alle Lizenzen dieser Aktion sind bereits vergeben.",
       alreadyPro: "Dein Konto hat bereits Pro, es gibt nichts zu aktivieren.",
       tooMany: "Zu viele Versuche. Warte ein paar Minuten und versuche es erneut.",
       failed: "Der Server ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
@@ -9338,7 +9344,8 @@ const pt: Strings = {
       ended: "Este código expirou: a promoção terminou.",
       alreadyRedeemed: "Este código já está ativo na sua conta.",
       duplicate:
-        "Este código já foi ativado para você, em outra conta ou a partir desta conexão. Vale uma vez por pessoa.",
+        "Este código já foi ativado neste PC ou para você em outra conta. Vale uma vez por pessoa.",
+      soldOut: "As licenças desta promoção já se esgotaram.",
       alreadyPro: "Sua conta já tem o Pro: não há nada para ativar.",
       tooMany: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
       failed: "Não foi possível acessar o servidor. Verifique sua conexão e tente novamente.",

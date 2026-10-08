@@ -56,7 +56,9 @@ const REDEEM_ERRORS: Record<RedeemFailure, { status: number; error: string }> = 
   not_started: { status: 409, error: "This licence code is not active yet." },
   ended: { status: 410, error: "This licence code has expired." },
   already_redeemed: { status: 409, error: "This licence code is already active on your account." },
-  duplicate: { status: 409, error: "This licence code has already been activated for this person or connection." },
+  duplicate: { status: 409, error: "This licence code has already been activated on this PC or for this person." },
+  sold_out: { status: 410, error: "All the licences for this promotion have been claimed." },
+  no_device: { status: 400, error: "Activate licence codes from the PC Tweaker app." },
   verify_email: { status: 403, error: "Verify your email address before activating a licence code." },
   already_pro: { status: 409, error: "Your account already has Pro." },
 };
@@ -80,7 +82,10 @@ router.post(
       res.status(503).json({ error: "database not configured (DATABASE_URL missing)" });
       return;
     }
-    const result = await redeemLicenceCode(req.userId as number, req.body?.code, new Date(), req.ip);
+    const result = await redeemLicenceCode(req.userId as number, req.body?.code, {
+      ip: req.ip,
+      device: req.body?.device,
+    });
     if (!result.ok) {
       const failure = REDEEM_ERRORS[result.reason];
       res.status(failure.status).json({ error: failure.error, code: result.reason });

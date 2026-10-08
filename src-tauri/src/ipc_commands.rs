@@ -59,6 +59,7 @@ pub const APP_COMMANDS: &[&str] = &[
     "save_license",
     "license_status",
     "clear_license",
+    "license_device_key",
     "list_tweaks",
     "apply_tweak",
     "apply_tweaks",

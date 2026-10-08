@@ -218,6 +218,7 @@ async function initSchema(): Promise<void> {
       code TEXT PRIMARY KEY,
       label TEXT NOT NULL,
       months INTEGER NOT NULL,
+      max_redemptions INTEGER,
       starts_at TIMESTAMPTZ NOT NULL,
       ends_at TIMESTAMPTZ NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -230,6 +231,7 @@ async function initSchema(): Promise<void> {
       redeemed_at TIMESTAMPTZ NOT NULL,
       expires_at TIMESTAMPTZ NOT NULL,
       email_key TEXT NOT NULL,
+      device_hash TEXT NOT NULL,
       ip_hash TEXT,
       PRIMARY KEY (code, user_id)
     );
@@ -238,6 +240,10 @@ async function initSchema(): Promise<void> {
   // +tag (and, for Gmail, without dots) may appear once per code.
   await pool.query(
     `CREATE UNIQUE INDEX IF NOT EXISTS licence_code_redemptions_person_idx ON licence_code_redemptions (code, email_key);`,
+  );
+  // ...and once per PC, whichever account is signed in on it.
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS licence_code_redemptions_device_idx ON licence_code_redemptions (code, device_hash);`,
   );
 
   // One row per website download click that arrived from a tagged social

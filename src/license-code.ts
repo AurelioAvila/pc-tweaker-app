@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { API_BASE_URL, readToken } from "./lib";
 import { Strings } from "./i18n";
 
@@ -37,6 +38,7 @@ const SERVER_REASONS: Record<string, LicenseCodeError | "verify"> = {
   ended: "ended",
   already_redeemed: "alreadyRedeemed",
   duplicate: "duplicate",
+  sold_out: "soldOut",
   already_pro: "alreadyPro",
   rate_limited: "tooMany",
   verify_email: "verify",
@@ -46,10 +48,13 @@ export async function redeemLicenseCode(code: string): Promise<RedeemOutcome> {
   const token = readToken();
   if (!API_BASE_URL || !token) return { ok: false, reason: "failed" };
   try {
+    // One activation per PC: a one-way key of this Windows installation,
+    // computed natively (see license_device_key in src-tauri/src/license.rs).
+    const device = await invoke<string>("license_device_key");
     const res = await fetch(`${API_BASE_URL}/api/account/redeem`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code, device }),
     });
     const body = (await res.json().catch(() => ({}))) as { code?: string; proExpiresAt?: string };
     if (res.ok && body.proExpiresAt) return { ok: true, expiresAt: body.proExpiresAt };

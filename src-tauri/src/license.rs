@@ -310,10 +310,57 @@ pub fn clear_license(app: tauri::AppHandle) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
+/// A one-way key for this Windows installation, sent only when a licence code
+/// is redeemed, so one PC cannot activate the same giveaway code from several
+/// accounts. It is SHA-256 of a product-specific prefix and Windows'
+/// MachineGuid: the GUID itself never leaves the machine, and the key means
+/// nothing outside this one check. The server hashes it again with its own
+/// secret before storing it.
+#[tauri::command]
+pub fn license_device_key() -> Result<String, String> {
+    #[cfg(windows)]
+    {
+        use winreg::enums::{HKEY_LOCAL_MACHINE, KEY_READ, KEY_WOW64_64KEY};
+        use winreg::RegKey;
+        let key = RegKey::predef(HKEY_LOCAL_MACHINE)
+            .open_subkey_with_flags(
+                "SOFTWARE\\Microsoft\\Cryptography",
+                KEY_READ | KEY_WOW64_64KEY,
+            )
+            .map_err(|e| e.to_string())?;
+        let guid: String = key.get_value("MachineGuid").map_err(|e| e.to_string())?;
+        Ok(device_key_from(&guid))
+    }
+    #[cfg(not(windows))]
+    {
+        Err("licence codes are activated on Windows".into())
+    }
+}
+
+fn device_key_from(machine_guid: &str) -> String {
+    use sha2::{Digest, Sha256};
+    let digest = Sha256::digest(format!(
+        "pctweaker-licence-device-v1:{}",
+        machine_guid.trim().to_lowercase()
+    ));
+    digest.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use ed25519_dalek::{Signer, SigningKey};
+
+    #[test]
+    fn the_device_key_is_stable_and_does_not_carry_the_machine_guid() {
+        let guid = "6F1C2A9E-1234-4D2B-9C3A-ABCDEF012345";
+        let key = device_key_from(guid);
+        assert_eq!(key.len(), 64);
+        assert!(key.chars().all(|c| c.is_ascii_hexdigit()));
+        assert_eq!(key, device_key_from(&format!(" {} ", guid.to_lowercase())));
+        assert!(!key.contains("6f1c2a9e"));
+        assert_ne!(key, device_key_from("another-guid"));
+    }
     use std::path::PathBuf;
 
     fn temp_dir(tag: &str) -> PathBuf {

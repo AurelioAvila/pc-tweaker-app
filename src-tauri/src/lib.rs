@@ -1759,6 +1759,7 @@ pub fn run() {
             license::save_license,
             license::license_status,
             license::clear_license,
+            license::license_device_key,
             list_tweaks,
             apply_tweak,
             apply_tweaks,

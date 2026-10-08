@@ -21,8 +21,18 @@ export type RedeemFailure =
   | "ended"
   | "already_redeemed"
   | "duplicate"
+  | "sold_out"
+  | "no_device"
   | "verify_email"
   | "already_pro";
+
+export type RedeemContext = {
+  now?: Date;
+  /** Client address, only ever stored as a keyed hash. */
+  ip?: string;
+  /** The app's one-way key for this Windows installation (64 hex). */
+  device?: unknown;
+};
 
 /** Accounts on one connection that may activate the same code: a household
  *  shares a router, a farm of throwaway accounts shares it too. */
@@ -36,11 +46,22 @@ export function emailKey(email: string): string {
   return `${gmail ? base.replace(/\./g, "") : base}@${gmail ? "gmail.com" : domain}`;
 }
 
+function keyed(purpose: string, value: string): string | null {
+  const secret = process.env.REVIEW_IP_SECRET || process.env.JWT_SECRET;
+  if (!secret) return null;
+  return createHmac("sha256", secret).update(`${purpose}:${value}`).digest("hex").slice(0, 32);
+}
+
 /** Keyed one-way hash of the client address; the address itself is never stored. */
 export function connectionHash(ip: string | undefined): string | null {
-  const secret = process.env.REVIEW_IP_SECRET || process.env.JWT_SECRET;
-  if (!secret || !ip) return null;
-  return createHmac("sha256", secret).update(`licence:${ip}`).digest("hex").slice(0, 16);
+  return ip ? keyed("licence", ip) : null;
+}
+
+/** The app sends a one-way key for the PC; it is hashed again here, with the
+ *  server's secret, before being stored. */
+export function deviceHash(device: unknown): string | null {
+  if (typeof device !== "string" || !/^[0-9a-f]{64}$/.test(device)) return null;
+  return keyed("licence-device", device) ?? device;
 }
 export type RedeemResult = { ok: true; expiresAt: Date } | { ok: false; reason: RedeemFailure };
 
@@ -66,18 +87,31 @@ export function addMonths(from: Date, months: number): Date {
 export async function redeemLicenceCode(
   userId: number,
   raw: unknown,
-  now: Date = new Date(),
-  ip?: string,
+  { now = new Date(), ip, device }: RedeemContext = {},
 ): Promise<RedeemResult> {
   const code = normalizeCode(raw);
   if (!code) return { ok: false, reason: "invalid" };
+  const machine = deviceHash(device);
+  if (!machine) return { ok: false, reason: "no_device" };
   const pool = getPool();
 
-  const { rows: codes } = await pool.query("SELECT months, starts_at, ends_at FROM licence_codes WHERE code = $1", [code]);
+  const { rows: codes } = await pool.query(
+    "SELECT months, max_redemptions, starts_at, ends_at FROM licence_codes WHERE code = $1",
+    [code],
+  );
   const found = codes[0];
   if (!found) return { ok: false, reason: "invalid" };
   if (now.getTime() < new Date(found.starts_at).getTime()) return { ok: false, reason: "not_started" };
   if (now.getTime() >= new Date(found.ends_at).getTime()) return { ok: false, reason: "ended" };
+  if (found.max_redemptions != null) {
+    // ponytail: count-then-insert, so two activations racing for the very last
+    // place can both succeed; the cap may be exceeded by a handful, never more.
+    const { rows: used } = await pool.query(
+      "SELECT count(*)::int AS n FROM licence_code_redemptions WHERE code = $1",
+      [code],
+    );
+    if (Number(used[0]?.n ?? 0) >= Number(found.max_redemptions)) return { ok: false, reason: "sold_out" };
+  }
 
   const { rows: earlier } = await pool.query(
     "SELECT 1 FROM licence_code_redemptions WHERE code = $1 AND user_id = $2",
@@ -96,8 +130,8 @@ export async function redeemLicenceCode(
   if (!user.email_verified) return { ok: false, reason: "verify_email" };
   if (isEntitled(user, now)) return { ok: false, reason: "already_pro" };
 
-  // One code, one person: the same address under another alias, or a run of
-  // accounts from one connection, does not get a second six months.
+  // One code, one person: the same PC, the same address under another alias,
+  // or a run of accounts from one connection does not get a second six months.
   const person = emailKey(String(user.email));
   const connection = connectionHash(ip);
   const { rows: same } = await pool.query(
@@ -105,6 +139,11 @@ export async function redeemLicenceCode(
     [code, person],
   );
   if (same.length) return { ok: false, reason: "duplicate" };
+  const { rows: samePc } = await pool.query(
+    "SELECT 1 FROM licence_code_redemptions WHERE code = $1 AND device_hash = $2",
+    [code, machine],
+  );
+  if (samePc.length) return { ok: false, reason: "duplicate" };
   if (connection) {
     const { rows: nearby } = await pool.query(
       "SELECT count(*)::int AS n FROM licence_code_redemptions WHERE code = $1 AND ip_hash = $2",
@@ -114,12 +153,12 @@ export async function redeemLicenceCode(
   }
 
   const expiresAt = addMonths(now, Number(found.months));
-  // No conflict target: a race on either the account or the person key ends
+  // No conflict target: a race on the account, person or PC key ends
   // here as a refusal rather than a second grant.
   const inserted = await pool.query(
-    `INSERT INTO licence_code_redemptions (code, user_id, redeemed_at, expires_at, email_key, ip_hash)
-     VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
-    [code, userId, now, expiresAt, person, connection],
+    `INSERT INTO licence_code_redemptions (code, user_id, redeemed_at, expires_at, email_key, device_hash, ip_hash)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING`,
+    [code, userId, now, expiresAt, person, machine, connection],
   );
   if (!inserted.rowCount) return { ok: false, reason: "duplicate" };
 

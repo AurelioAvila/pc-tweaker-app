@@ -60,6 +60,7 @@ permissions = [
     "allow-save-license",
     "allow-license-status",
     "allow-clear-license",
+    "allow-license-device-key",
     "allow-list-tweaks",
     "allow-apply-tweak",
     "allow-apply-tweaks",

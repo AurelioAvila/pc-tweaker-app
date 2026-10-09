@@ -47,3 +47,20 @@ test("email validation rejects malformed and oversized input", () => {
   }
   assert.equal(isValidEmail(`${"a".repeat(250)}@b.co`), false);
 });
+
+test("registration accepts only real past dates of birth and bounded names", async () => {
+  const module = await import("../dist/routes/auth.js");
+  const { isValidDateOfBirth } = module.default;
+  for (const value of ["1990-05-17", "2000-02-29"]) assert.equal(isValidDateOfBirth(value), true, value);
+  for (const value of ["2026-02-31", "1990-13-01", "1899-12-31", "9999-01-01", "1990-5-17", "", null, 19900517]) {
+    assert.equal(isValidDateOfBirth(value), false, String(value));
+  }
+  const router = module.default.default;
+  const layer = router.stack.find((entry) => entry.route?.path === "/register" && entry.route.methods.post);
+  let status;
+  const response = { status(value) { status = value; return this; }, json() { return this; } };
+  await layer.route.stack[0].handle({ body: {
+    email: "person@example.com", password: "a".repeat(12), firstName: "x".repeat(101), lastName: "Doe", dateOfBirth: "1990-05-17",
+  } }, response);
+  assert.equal(status, 400);
+});

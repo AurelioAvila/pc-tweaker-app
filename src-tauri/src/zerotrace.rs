@@ -98,21 +98,33 @@ fn fill_pattern(buffer: &mut [u8], pass: usize, seed: &mut u64) {
 fn shred_one(path: &std::path::Path) -> Result<u64, String> {
     use std::io::{Seek, SeekFrom, Write};
 
-    let len = std::fs::metadata(path)
-        .map_err(|e| format!("could not read the file: {}", e))?
-        .len();
+    let mut options = std::fs::OpenOptions::new();
+    options.write(true);
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        // FILE_FLAG_OPEN_REPARSE_POINT: a link swapped in after the caller's
+        // check is opened as itself and refused below, never followed.
+        options.custom_flags(0x0020_0000);
+    }
+    let mut file = options
+        .open(path)
+        .map_err(|e| format!("could not open the file for overwriting: {}", e))?;
+    let metadata = file
+        .metadata()
+        .map_err(|e| format!("could not read the file: {}", e))?;
+    if !metadata.is_file() || crate::elevation::is_link(&metadata) {
+        return Err("not a plain file".to_string());
+    }
+    let len = metadata.len();
 
     // A zero-length file has no contents to overwrite; removing it is the
-    // whole job, and opening it for writing would be pointless work.
+    // whole job.
     if len == 0 {
+        drop(file);
         std::fs::remove_file(path).map_err(|e| format!("could not remove the file: {}", e))?;
         return Ok(0);
     }
-
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .open(path)
-        .map_err(|e| format!("could not open the file for overwriting: {}", e))?;
 
     let mut seed: u64 = 0x9E3779B97F4A7C15;
     let mut buffer = vec![0u8; CHUNK];
@@ -148,7 +160,12 @@ pub fn shred_files(paths: Vec<String>) -> ShredResult {
     let mut result = ShredResult::default();
     for p in paths {
         let path = std::path::PathBuf::from(&p);
-        if crate::cleanup::touches_protected_dir(&path) || !path.is_file() {
+        // `is_file` follows links, and the protected-folder check reads only the
+        // path given: a link would overwrite whatever it points at, protected or
+        // not. Only plain files are shredded.
+        let plain_file = std::fs::symlink_metadata(&path)
+            .is_ok_and(|m| m.is_file() && !crate::elevation::is_link(&m));
+        if crate::cleanup::touches_protected_dir(&path) || !plain_file {
             result.skipped_count += 1;
             continue;
         }
@@ -420,6 +437,34 @@ mod tests {
         let result = shred_files(vec![r"C:\Windows\System32\kernel32.dll".to_string()]);
         assert_eq!(result.shredded_count, 0);
         assert_eq!(result.skipped_count, 1);
+    }
+
+    /// A link is skipped, and what it points at keeps its contents.
+    #[test]
+    fn a_link_is_skipped_and_its_target_survives() {
+        let dir = std::env::temp_dir().join(format!("pctweaker-shred-link-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let target = dir.join("target.txt");
+        let link = dir.join("link.txt");
+        std::fs::write(&target, b"keep me").unwrap();
+        #[cfg(windows)]
+        let made = std::os::windows::fs::symlink_file(&target, &link);
+        #[cfg(unix)]
+        let made = std::os::unix::fs::symlink(&target, &link);
+        if made.is_err() {
+            // Creating symbolic links needs Developer Mode or administrator
+            // rights on Windows; without one there is nothing to test.
+            std::fs::remove_dir_all(&dir).ok();
+            return;
+        }
+        let result = shred_files(vec![link.to_string_lossy().to_string()]);
+        assert_eq!(result.shredded_count, 0);
+        assert_eq!(result.skipped_count, 1);
+        assert_eq!(std::fs::read(&target).unwrap(), b"keep me");
+        assert!(shred_one(&link).is_err(), "a link must never be opened through");
+        assert_eq!(std::fs::read(&target).unwrap(), b"keep me");
+        std::fs::remove_dir_all(&dir).ok();
     }
 
     #[test]

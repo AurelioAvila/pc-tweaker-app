@@ -149,7 +149,7 @@ pub fn ensure_plain_app_data_dir(dir: &std::path::Path) -> Result<(), String> {
     }
 }
 
-fn is_link(metadata: &std::fs::Metadata) -> bool {
+pub(crate) fn is_link(metadata: &std::fs::Metadata) -> bool {
     if metadata.file_type().is_symlink() {
         return true;
     }

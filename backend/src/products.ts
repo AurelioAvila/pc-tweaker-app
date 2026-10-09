@@ -132,10 +132,14 @@ export async function upsertEntitlement(
 }
 
 /** Ends a non-pctweaker entitlement immediately (cancellation/refund path).
- *  The row is kept — history matters for support — but the expiry is now. */
-export async function revokeEntitlement(userId: number | string, product: Product): Promise<void> {
+ *  The row is kept — history matters for support — but the expiry is now.
+ *  Given a subscription, only that subscription's grant ends: a late event
+ *  for an old subscription must not cut off the one that replaced it. */
+export async function revokeEntitlement(userId: number | string, product: Product, subscriptionId?: string): Promise<void> {
   await getPool().query(
-    "UPDATE entitlements SET expires_at = now(), updated_at = now() WHERE user_id = $1 AND product = $2",
-    [userId, product],
+    `UPDATE entitlements SET expires_at = now(), updated_at = now()
+      WHERE user_id = $1 AND product = $2
+        AND ($3::text IS NULL OR stripe_subscription_id IS NULL OR stripe_subscription_id = $3)`,
+    [userId, product, subscriptionId ?? null],
   );
 }

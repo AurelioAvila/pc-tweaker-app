@@ -51,12 +51,24 @@ fn memory_touch() -> u64 {
 fn disk_bench() -> Result<(u64, u64), String> {
     const SIZE: usize = 32 * 1024 * 1024;
     const READS: u64 = 200;
-    let path = std::env::temp_dir().join("pctweaker-baseline.bin");
+    // A fresh name, created exclusively: a fixed name in %TEMP% could already
+    // exist as a link, and writing through it would overwrite its target.
+    let path = std::env::temp_dir().join(format!(
+        "pctweaker-baseline-{}-{}.bin",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_nanos())
+    ));
     let chunk = vec![0xA5u8; 1024 * 1024];
 
     let write_start = Instant::now();
     {
-        let mut file = std::fs::File::create(&path).map_err(|e| e.to_string())?;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+            .map_err(|e| e.to_string())?;
         for _ in 0..(SIZE / chunk.len()) {
             file.write_all(&chunk).map_err(|e| e.to_string())?;
         }
@@ -155,6 +167,11 @@ mod tests {
     fn disk_bench_measures_and_cleans_up() {
         let (write_ms, read_ms) = disk_bench().expect("disk bench");
         assert!(write_ms >= 1 && read_ms >= 1);
-        assert!(!std::env::temp_dir().join("pctweaker-baseline.bin").exists());
+        let prefix = format!("pctweaker-baseline-{}-", std::process::id());
+        let leftover = std::fs::read_dir(std::env::temp_dir())
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .any(|e| e.file_name().to_string_lossy().starts_with(&prefix));
+        assert!(!leftover, "the benchmark file was left behind");
     }
 }

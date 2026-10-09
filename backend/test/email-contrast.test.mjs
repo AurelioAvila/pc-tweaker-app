@@ -17,7 +17,7 @@ test('secondary email text meets AA contrast on both dark surfaces', () => {
 });
 
 test('account notes, receipt labels and purchase headings use readable text', () => {
-  const shell = emailShell({ eyebrow: 'Account', headline: 'Check your email', intro: 'Continue securely.', note: 'This link expires.', footerNote: 'Contact support.' });
+  const shell = emailShell({ preheader: 'Preview text.', eyebrow: 'Account', headline: 'Check your email', intro: 'Continue securely.', note: 'This link expires.', footerNote: 'Contact support.' });
   const receipt = proWelcomeHtml({ firstName: 'Aurelio', email: 'test@example.com', plan: 'annual', priceLabel: 'EUR 24.00', renewsOn: 'September 7, 2027' });
   for (const html of [shell, receipt, detailRow('Plan', 'Annual')]) {
     assert.ok(html.includes(`color:${EMAIL_MUTED_TEXT}`));

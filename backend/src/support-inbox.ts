@@ -8,7 +8,7 @@
  * scrapers. Keep it that way — if a route ever needs to show a contact
  * address, add a separate public alias instead of exporting this one.
  */
-export const SUPPORT_INBOX = process.env.SUPPORT_EMAIL || "canadesino91@gmail.com";
-
-// Public replies stay branded; owner notifications retain their private destination.
+// The product alias is routed to the owner's mailbox by Cloudflare Email
+// Routing, so no personal address has to live in the code or the deploy.
 export const SUPPORT_REPLY_TO = "support@pctweaker.app";
+export const SUPPORT_INBOX = process.env.SUPPORT_EMAIL || SUPPORT_REPLY_TO;

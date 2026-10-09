@@ -55,6 +55,7 @@ export function verificationSubject(): string {
 export function verificationHtml(firstName: string, link: string): string {
   const name = (firstName || "").trim().split(/\s+/)[0];
   return emailShell({
+    preheader: "Confirm this address to activate your PC Tweaker account. The link works for 24 hours.",
     eyebrow: "Confirm your email",
     headline: name ? `One step left, ${name}.` : "One step left.",
     intro:
@@ -73,6 +74,7 @@ export function passwordResetSubject(): string {
 
 export function passwordResetHtml(link: string): string {
   return emailShell({
+    preheader: "Set a new password with the link inside. It works once, for one hour.",
     eyebrow: "Password reset",
     headline: "Choose a new password.",
     intro: "Use the button below to set a new password for your PC Tweaker account.",
@@ -121,6 +123,7 @@ export function passwordChangedHtml(firstName: string, when: string): string {
           </td>
         </tr>`;
   return emailShell({
+    preheader: "Every signed-in device has been signed out. If this was not you, contact support now.",
     eyebrow: "Security notice",
     headline: name ? `Your password was changed, ${name}.` : "Your password was changed.",
     intro: `The password on your PC Tweaker account was changed on ${when}. Every device that was signed in has been signed out.`,
@@ -161,6 +164,7 @@ ${bulletRow(ACCENT, "Startup manager, temporary file cleanup and a password brea
           </td>
         </tr>`;
   return emailShell({
+    preheader: "Your email is confirmed. Here is what your free account already includes.",
     eyebrow: "Account ready",
     headline: name ? `You're in, ${name}.` : "You're in.",
     intro:

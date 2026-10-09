@@ -18,6 +18,10 @@ export type EmailAction = {
 };
 
 export type EmailShellInput = {
+  /** Inbox preview text shown after the subject. Required so no message
+   *  falls back to whatever text the client scrapes first (the logo's alt
+   *  text and the eyebrow). Plain text; it is escaped. */
+  preheader: string;
   /** Small uppercase line above the headline, e.g. "Confirm your email". */
   eyebrow: string;
   headline: string;
@@ -72,6 +76,7 @@ export function detailRow(label: string, value: string): string {
 }
 
 export function emailShell({
+  preheader,
   eyebrow,
   headline,
   intro,
@@ -98,7 +103,7 @@ export function emailShell({
   const noteRow = note
     ? `
         <tr>
-          <td style="padding:8px 40px 0; text-align:center;">
+          <td style="padding:${action ? 8 : 24}px 40px 0; text-align:center;">
             <p style="margin:0; font-size:13px; color:${EMAIL_MUTED_TEXT}; line-height:1.6;">${escapeHtml(note)}</p>
           </td>
         </tr>`
@@ -109,9 +114,12 @@ export function emailShell({
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
 <title>${escapeHtml(headline)} — ${escapeHtml(productName)}</title>
 </head>
 <body style="margin:0; padding:0; background:#050506; font-family:'Segoe UI', Arial, sans-serif;">
+<div style="display:none; max-height:0; max-width:0; overflow:hidden; opacity:0; mso-hide:all; font-size:1px; line-height:1px; color:#050506;">${escapeHtml(preheader)}${"&#8199;&#847;".repeat(60)}</div>
 <table lang="en" dir="ltr" role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050506; padding:48px 16px;">
   <tr>
     <td align="center">

@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import { getPool, isConfigured } from "../db";
 import { hashPassword, verifyPassword, signToken, requireAuth, isValidEmail, isValidPassword } from "../auth";
-import { createActionToken, consumeActionToken } from "../tokens";
+import { createActionToken, consumeActionToken, confirmsVerifiedAddress } from "../tokens";
 import { sendMail, MailError } from "../mailer";
 import {
   accountWelcomeText,
@@ -255,7 +255,7 @@ function escapeHtml(value: unknown): string {
  * `style-src` allows 'unsafe-inline' while `script-src` does not — which is
  * precisely why these pages carry no JavaScript at all.
  */
-function htmlPage(title: string, bodyHtml: string): string {
+export function htmlPage(title: string, bodyHtml: string): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${title} — PC Tweaker</title>
@@ -304,6 +304,9 @@ router.get("/verify-email", async (req: Request, res: Response) => {
 
   try {
     const userId = await consumeActionToken(token, "email_verify");
+    if (!userId && (await confirmsVerifiedAddress(token))) {
+      return res.send(htmlPage("Email verified", "<p class=success>Your email is already verified. You can close this window and return to PC Tweaker.</p>"));
+    }
     if (!userId) {
       return res
         .status(400)

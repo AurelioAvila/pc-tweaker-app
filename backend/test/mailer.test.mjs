@@ -97,9 +97,11 @@ test("customer replies use the branded alias without replacing support-form repl
     const { sendMail } = require("../dist/mailer.js");
     const message = { to: "someone@example.com", subject: "test", html: "<p>test</p>" };
     await sendMail(message);
-    await sendMail({ ...message, replyTo: "customer@example.com" });
+    await sendMail({ ...message, replyTo: "customer@example.com", headers: { "List-Unsubscribe": "<https://x.test/u>" } });
     assert.equal(payloads[0].reply_to, "support@pctweaker.app");
     assert.equal(payloads[1].reply_to, "customer@example.com");
+    assert.equal(payloads[0].headers, undefined);
+    assert.deepEqual(payloads[1].headers, { "List-Unsubscribe": "<https://x.test/u>" });
   } finally {
     globalThis.fetch = originalFetch;
   }

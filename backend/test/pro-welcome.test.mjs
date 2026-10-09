@@ -56,3 +56,26 @@ test("the recipient address is escaped, not injected", () => {
     "the complete recipient address must be rendered as escaped text",
   );
 });
+
+const { refundHtml, refundText, refundSubject } = await import("../dist/emails/pro-welcome.js");
+
+test("the refund notice states the amount, the access change and, for subscriptions, renewal", () => {
+  const lifetime = { firstName: "Sam", plan: "lifetime", refundedLabel: "€99.00" };
+  assert.equal(refundSubject(), "Your PC Tweaker Pro refund is confirmed");
+  assert.equal(refundSubject("uninstaller"), "Your PC Tweaker Uninstaller Pro refund is confirmed");
+  for (const body of [refundHtml(lifetime), refundText(lifetime)]) {
+    assert.match(body, /€99\.00/);
+    assert.match(body, /has ended/);
+    assert.doesNotMatch(body, /renew/);
+  }
+  assert.match(refundHtml({ ...lifetime, plan: "monthly" }), /does not renew/);
+  assert.match(refundText({ ...lifetime, refundedLabel: null }), /refunded your payment/);
+  assert.match(refundHtml({ ...lifetime, firstName: "" }), /Your refund is on its way./);
+  assert.doesNotMatch(refundHtml({ ...lifetime, firstName: "<b>x</b>" }), /<b>x<\/b>/);
+});
+
+test("every shell carries a hidden preheader and declares its colour scheme", () => {
+  const html = refundHtml({ firstName: "Sam", plan: "lifetime", refundedLabel: "€99.00" });
+  assert.match(html, /<meta name="color-scheme" content="light dark">/);
+  assert.match(html, /<div style="display:none;[^"]*">We've refunded €99\.00/);
+});

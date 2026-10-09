@@ -192,20 +192,26 @@ const PLAN_LABELS: Record<string, string> = {
 };
 const ACCESS_ENDED = "The Pro access that came with this payment has ended. Your account and the free features keep working.";
 const STOP_RENEWAL = "If the subscription is still active, cancel it from your account settings so it does not renew.";
+const MISTAKE = "If you think this is a mistake, just reply to this email and we'll look into it.";
+// Digital purchases are not refundable: this notice reports a reversal Stripe
+// told us about and never mentions, offers or implies a refund.
+const reversedHeadline = (firstName: string) => firstName ? `Your payment was reversed, ${firstName}.` : "Your payment was reversed.";
+const reversedIntro = (brand: ProductBrand, label: string | null) =>
+  `${label ? `Your payment of ${label}` : "Your payment"} for ${brand.name} was reversed by your payment provider.`;
 
 export function refundSubject(product?: string | null): string {
-  return `Your ${brandFor(product).name} refund is confirmed`;
+  return `Your ${brandFor(product).name} payment was reversed`;
 }
 
-/** Sent once per fully refunded charge, after access has been removed. */
+/** Sent once per fully reversed (refunded) charge, after access has been removed. */
 export function refundText({ product, firstName, plan, refundedLabel }: RefundEmailInput): string {
   const brand = brandFor(product);
   return [
-    firstName ? `Your refund is on its way, ${firstName}.` : "Your refund is on its way.", "",
-    `We've refunded ${refundedLabel ?? "your payment"} for ${brand.name}. Banks usually show it within 5 to 10 business days.`, "",
+    reversedHeadline(firstName), "",
+    reversedIntro(brand, refundedLabel), "",
     ACCESS_ENDED,
     ...(plan === "monthly" || plan === "annual" ? ["", STOP_RENEWAL] : []), "",
-    "Questions about this refund? Just reply to this email.",
+    MISTAKE,
   ].join("\n");
 }
 
@@ -216,7 +222,7 @@ export function refundHtml({ product, firstName, plan, refundedLabel }: RefundEm
         <tr>
           <td style="padding:24px 40px 0;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-${refundedLabel ? detailRow("Refunded", refundedLabel) : ""}
+${refundedLabel ? detailRow("Amount reversed", refundedLabel) : ""}
 ${plan && PLAN_LABELS[plan] ? detailRow("Plan", PLAN_LABELS[plan]) : ""}
 ${detailRow("Pro access", "Ended")}
             </table>
@@ -228,12 +234,12 @@ ${detailRow("Pro access", "Ended")}
           </td>
         </tr>`;
   return emailShell({
-    preheader: `We've refunded ${refundedLabel ?? "your payment"} for ${brand.name}. Here is what changes.`,
-    eyebrow: "Refund confirmed",
-    headline: firstName ? `Your refund is on its way, ${firstName}.` : "Your refund is on its way.",
-    intro: `We've refunded ${refundedLabel ?? "your payment"} for ${brand.name}. Banks usually show it within 5 to 10 business days.`,
+    preheader: `${reversedIntro(brand, refundedLabel)} Here is what changes.`,
+    eyebrow: "Payment reversed",
+    headline: reversedHeadline(firstName),
+    intro: reversedIntro(brand, refundedLabel),
     bodyHtml: details,
-    footerNote: "Questions about this refund? Just reply to this email.",
+    footerNote: MISTAKE,
     accent: brand.accent,
     productName: brand.name,
     siteUrl: brand.siteUrl,

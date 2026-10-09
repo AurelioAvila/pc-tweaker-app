@@ -92,7 +92,7 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
 
    For the website's support form and reviews section, also set:
    `SUPPORT_EMAIL` (where support requests are delivered — defaults to the
-   maintainer's inbox; it is never exposed to any client) and `ADMIN_TOKEN`
+   product alias support@pctweaker.app; it is never exposed to any client) and `ADMIN_TOKEN`
    (a long random string; without it the rating moderation endpoints stay
    closed and answer 404). Only the star rating is public — written feedback
    is emailed to `SUPPORT_EMAIL` and never rendered on the site, which is why

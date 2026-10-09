@@ -14,6 +14,14 @@ const newsletterRoutes = newsletterModule.default.default ?? newsletterModule.de
 await initSchema();
 
 const { getPool } = await import("../dist/db.js");
+const { listUnsubscribeHeaders } = newsletterModule.default.default ? newsletterModule.default : newsletterModule;
+
+test("list mail carries one-click unsubscribe headers", () => {
+  assert.deepEqual(listUnsubscribeHeaders("https://api.pctweaker.app/u?x=1"), {
+    "List-Unsubscribe": "<https://api.pctweaker.app/u?x=1>",
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  });
+});
 
 const app = express();
 app.use(express.json());
@@ -27,9 +35,31 @@ const email = "reader@example.com";
 const sig = crypto.createHmac("sha256", "test-secret").update(email).digest("hex");
 const url = (s) => `${base}?email=${encodeURIComponent(email)}&sig=${encodeURIComponent(s)}`;
 
-test("a valid signature unsubscribes", async () => {
+const optedOut = async () => {
+  const { rows } = await getPool().query(
+    "SELECT unsubscribed_at FROM newsletter_subscribers WHERE lower(email) = $1", [email],
+  );
+  return Boolean(rows[0]?.unsubscribed_at);
+};
+
+test("opening the link only asks, so mail scanners cannot unsubscribe anyone", async () => {
   const res = await fetch(url(sig));
   assert.equal(res.status, 200);
+  const page = await res.text();
+  assert.match(page, /<form method="post" action="\/api\/newsletter\/unsubscribe\?email=reader%40example\.com&amp;sig=/);
+  assert.equal(await optedOut(), false);
+});
+
+test("the confirm button and an RFC 8058 one-click POST both unsubscribe", async () => {
+  const res = await fetch(url(sig), {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: "List-Unsubscribe=One-Click",
+  });
+  assert.equal(res.status, 200);
+  assert.match(await res.text(), /unsubscribed/);
+  assert.equal(await optedOut(), true);
+  assert.equal((await fetch(url("0".repeat(sig.length)), { method: "POST" })).status, 400);
 });
 
 test("a non-ASCII signature of the right length is rejected, not a server error", async () => {

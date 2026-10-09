@@ -44,4 +44,18 @@ async function consumeActionToken(rawToken: string, purpose: string): Promise<nu
   return result.rowCount && result.rowCount > 0 ? result.rows[0].user_id : null;
 }
 
-export { createActionToken, consumeActionToken };
+/**
+ * True when a verification token belongs to an account whose address is
+ * already confirmed. Mail scanners open links before people do, and people
+ * click twice: that link has nothing left to do, so it is not an error.
+ */
+async function confirmsVerifiedAddress(rawToken: string): Promise<boolean> {
+  const result = await getPool().query(
+    `SELECT 1 FROM action_tokens t JOIN users u ON u.id = t.user_id
+      WHERE t.token_hash = $1 AND t.purpose = 'email_verify' AND u.email_verified`,
+    [hashToken(rawToken)],
+  );
+  return result.rows.length > 0;
+}
+
+export { createActionToken, consumeActionToken, confirmsVerifiedAddress };

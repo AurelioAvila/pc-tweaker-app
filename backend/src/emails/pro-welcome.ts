@@ -157,6 +157,7 @@ ${detailRow(renewsOn ? "Renews on" : "Access", renewsOn ?? "Never expires")}
         </tr>`;
 
   return emailShell({
+    preheader: `Your payment went through and ${brand.name} is active on your account. Plan details inside.`,
     eyebrow: brand.eyebrow,
     headline: `${brand.headline}, ${firstName || "there"}.`,
     intro: renewsOn ? brand.intro : brand.introOneOff,
@@ -177,3 +178,65 @@ ${detailRow(renewsOn ? "Renews on" : "Access", renewsOn ?? "Never expires")}
 // `name` is escaped by emailShell now; the local binding is kept out of the
 // template to avoid escaping twice.
 void escapeHtml;
+
+export type RefundEmailInput = {
+  product?: string | null;
+  firstName: string;
+  plan: string | null;
+  /** e.g. "€99.00"; null when Stripe gave no amount. */
+  refundedLabel: string | null;
+};
+
+const PLAN_LABELS: Record<string, string> = {
+  lifetime: "Pro — Lifetime", annual: "Pro — Annual", monthly: "Pro — Monthly",
+};
+const ACCESS_ENDED = "The Pro access that came with this payment has ended. Your account and the free features keep working.";
+const STOP_RENEWAL = "If the subscription is still active, cancel it from your account settings so it does not renew.";
+
+export function refundSubject(product?: string | null): string {
+  return `Your ${brandFor(product).name} refund is confirmed`;
+}
+
+/** Sent once per fully refunded charge, after access has been removed. */
+export function refundText({ product, firstName, plan, refundedLabel }: RefundEmailInput): string {
+  const brand = brandFor(product);
+  return [
+    firstName ? `Your refund is on its way, ${firstName}.` : "Your refund is on its way.", "",
+    `We've refunded ${refundedLabel ?? "your payment"} for ${brand.name}. Banks usually show it within 5 to 10 business days.`, "",
+    ACCESS_ENDED,
+    ...(plan === "monthly" || plan === "annual" ? ["", STOP_RENEWAL] : []), "",
+    "Questions about this refund? Just reply to this email.",
+  ].join("\n");
+}
+
+export function refundHtml({ product, firstName, plan, refundedLabel }: RefundEmailInput): string {
+  const brand = brandFor(product);
+  const details = `
+        <tr><td style="padding:32px 40px 0;"><div style="height:1px; background:#2a2d33;"></div></td></tr>
+        <tr>
+          <td style="padding:24px 40px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+${refundedLabel ? detailRow("Refunded", refundedLabel) : ""}
+${plan && PLAN_LABELS[plan] ? detailRow("Plan", PLAN_LABELS[plan]) : ""}
+${detailRow("Pro access", "Ended")}
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 40px 0; text-align:center;">
+            <p style="margin:0; font-size:13px; color:${EMAIL_MUTED_TEXT}; line-height:1.6;">${escapeHtml(plan === "monthly" || plan === "annual" ? `${ACCESS_ENDED} ${STOP_RENEWAL}` : ACCESS_ENDED)}</p>
+          </td>
+        </tr>`;
+  return emailShell({
+    preheader: `We've refunded ${refundedLabel ?? "your payment"} for ${brand.name}. Here is what changes.`,
+    eyebrow: "Refund confirmed",
+    headline: firstName ? `Your refund is on its way, ${firstName}.` : "Your refund is on its way.",
+    intro: `We've refunded ${refundedLabel ?? "your payment"} for ${brand.name}. Banks usually show it within 5 to 10 business days.`,
+    bodyHtml: details,
+    footerNote: "Questions about this refund? Just reply to this email.",
+    accent: brand.accent,
+    productName: brand.name,
+    siteUrl: brand.siteUrl,
+    logoUrl: brand.logoUrl,
+  });
+}

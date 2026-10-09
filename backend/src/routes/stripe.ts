@@ -14,7 +14,7 @@ import {
   tipSessionParams,
 } from "../stripe-policy";
 import { sendMail } from "../mailer";
-import { brandFor, proWelcomeHtml, proWelcomeSubject, proWelcomeText } from "../emails/pro-welcome";
+import { brandFor, proWelcomeHtml, proWelcomeSubject, proWelcomeText, refundHtml, refundSubject, refundText } from "../emails/pro-welcome";
 import { SUPPORT_INBOX, SUPPORT_REPLY_TO } from "../support-inbox";
 import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
 import { queueReceipt, type Receipt } from "../receipt-outbox";
@@ -610,6 +610,18 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
     );
     const user = rows[0];
     if (!user?.email) return;
+    if (receipt.kind === "refund") {
+      const input = { product, firstName: user.first_name || "", plan, refundedLabel: chargedLabel };
+      const sent = await sendMail({
+        to: user.email,
+        subject: refundSubject(product),
+        replyTo: SUPPORT_REPLY_TO,
+        text: refundText(input),
+        html: refundHtml(input),
+      });
+      if (!sent.delivered) throw new Error("Refund notice provider did not accept the message");
+      return;
+    }
     // No expiry means the purchase never renews, and the template says so.
     // The previous `expiresAt ?? new Date()` quietly turned that case into
     // "renews on <today>", which for a lifetime buyer is both wrong and
@@ -715,7 +727,11 @@ type BillingEffects = {
   loadCheckout: (id: string) => Promise<Stripe.Checkout.Session>;
   /** The Checkout Session that took a payment, with its line items, if any. */
   loadCheckoutForPayment: (paymentIntentId: string) => Promise<Stripe.Checkout.Session | null>;
-  alertReversal: (userId: string, reason: string, paymentIntentId: string) => void;
+  /** The subscription whose invoice a payment settled, if any. */
+  loadSubscriptionForPayment: (paymentIntentId: string) => Promise<Stripe.Subscription | null>;
+  alertReversal: (userId: string, reason: string, paymentIntentId: string, product: string) => void;
+  /** Durable, once per key: the refund confirmation to the customer. */
+  queueRefundNotice: (key: string, receipt: Receipt) => Promise<void>;
   loadSubscription: (id: string) => Promise<Stripe.Subscription>;
   stopSubscriptions: (userId: string, customerId: string | null) => Promise<void>;
   welcome: typeof sendProWelcomeEmail;
@@ -736,18 +752,41 @@ const billingEffects: BillingEffects = {
     });
     return data[0] ?? null;
   },
-  alertReversal(userId, reason, paymentIntentId) {
+  async loadSubscriptionForPayment(paymentIntentId) {
+    if (!stripe) throw new Error("Stripe is unavailable for payment verification");
+    // Since API 2025-03-31.basil neither the charge nor the payment intent
+    // names its invoice; the invoice lists its payments instead.
+    const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const customer = typeof intent.customer === "string" ? intent.customer : intent.customer?.id;
+    if (!customer) return null;
+    // ponytail: newest 100 invoices only; paginate if a customer ever has more.
+    const { data } = await stripe.invoices.list({ customer, limit: 100, expand: ["data.payments"] });
+    type BasilInvoice = Stripe.Invoice & {
+      payments?: { data: { payment?: { payment_intent?: string | { id: string } } }[] };
+      parent?: { subscription_details?: { subscription?: string | { id: string } } };
+    };
+    const invoice = (data as BasilInvoice[]).find((inv) => inv.payments?.data?.some((p) => {
+      const pi = p.payment?.payment_intent;
+      return (typeof pi === "string" ? pi : pi?.id) === paymentIntentId;
+    }));
+    const ref = invoice?.parent?.subscription_details?.subscription;
+    const subscriptionId = typeof ref === "string" ? ref : ref?.id;
+    return subscriptionId ? stripe.subscriptions.retrieve(subscriptionId) : null;
+  },
+  alertReversal(userId, reason, paymentIntentId, product) {
     void (async () => {
       const { rows } = await getPool().query("SELECT email FROM users WHERE id = $1", [userId]);
       await sendMail({
         to: SUPPORT_INBOX,
-        subject: "Lifetime Pro revoked after a refund or dispute",
-        html: `<p>Lifetime Pro was removed from <strong>${escapeHtml(rows[0]?.email ?? "(unknown address)")}</strong>
+        subject: `${brandFor(product).name} revoked after a refund or dispute`,
+        html: `<p>${escapeHtml(brandFor(product).name)} was removed from <strong>${escapeHtml(rows[0]?.email ?? "(unknown address)")}</strong>
                  because of <strong>${escapeHtml(reason)}</strong> on payment ${escapeHtml(paymentIntentId)}.</p>
-               <p>If a dispute is later won, restore the plan by hand.</p>`,
+               <p>If this was a subscription that is still active, cancel it in Stripe so it does not renew.
+                  If a dispute is later reversed, restore the plan by hand.</p>`,
       });
     })().catch((err: Error) => console.error("refund alert not sent:", err.message));
   },
+  queueRefundNotice: queueReceipt,
   async loadSubscription(id) {
     if (!stripe) throw new Error("Stripe is unavailable for subscription verification");
     return stripe.subscriptions.retrieve(id);
@@ -843,6 +882,110 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
   effects.notifySale(userId, plan, session.mode, product);
 }
 
+type ReversedPurchase = { userId: string; product: Product; plan: string | null; subscriptionId: string | null };
+
+/** What a payment bought: the Lifetime checkout, or a subscription invoice.
+ *  Tips and unrelated payments on the shared account resolve to null. */
+async function findPurchase(paymentIntentId: string, effects: BillingEffects): Promise<ReversedPurchase | null> {
+  const session = await effects.loadCheckoutForPayment(paymentIntentId);
+  if (session?.mode === "payment") {
+    const lifetimePrices = [process.env.STRIPE_PRICE_LIFETIME, process.env.STRIPE_PRICE_ID].filter(Boolean);
+    const priceIds = session.line_items?.data?.flatMap((item) => item.price ? [item.price.id] : []) ?? [];
+    const userId = session.client_reference_id || session.metadata?.userId;
+    if (!userId || !priceIds.some((id) => lifetimePrices.includes(id))) return null;
+    return { userId, product: "pctweaker", plan: "lifetime", subscriptionId: null };
+  }
+  if (session) return null;
+  const subscription = await effects.loadSubscriptionForPayment(paymentIntentId);
+  const product = subscription ? subscriptionProduct(subscription) : null;
+  const userId = subscription && product ? await resolveUserId(subscription) : null;
+  if (!subscription || !product || !userId) return null;
+  let plan: string | null = null;
+  try { plan = subscriptionPlan(subscription); } catch { /* the email omits the plan row */ }
+  return { userId: String(userId), product, plan, subscriptionId: subscription.id };
+}
+
+/** Ends the access this purchase granted, and only that access: a refunded
+ *  subscription never touches Lifetime, nor a newer subscription's grant.
+ *  Returns whether anything was still active. */
+async function revokePurchase({ userId, product, plan, subscriptionId }: ReversedPurchase): Promise<boolean> {
+  if (plan === "lifetime") {
+    const { rowCount } = await getPool().query(
+      `UPDATE users SET is_pro = FALSE, plan = NULL, pro_expires_at = NULL
+        WHERE id = $1 AND plan = 'lifetime'`,
+      [userId],
+    );
+    return Boolean(rowCount);
+  }
+  if (product === "pctweaker") {
+    const { rowCount } = await getPool().query(
+      `UPDATE users SET is_pro = FALSE, pro_expires_at = NULL, legacy_pro_grant = FALSE
+        WHERE id = $1 AND is_pro = TRUE AND COALESCE(plan, '') <> 'lifetime'
+          AND stripe_subscription_id = $2`,
+      [userId, subscriptionId],
+    );
+    return Boolean(rowCount);
+  }
+  const { rowCount } = await getPool().query(
+    `UPDATE entitlements SET expires_at = now(), updated_at = now()
+      WHERE user_id = $1 AND product = $2
+        AND (stripe_subscription_id IS NULL OR stripe_subscription_id = $3)
+        AND (expires_at IS NULL OR expires_at > now())`,
+    [userId, product, subscriptionId],
+  );
+  return Boolean(rowCount);
+}
+
+/**
+ * Refunds and disputes. Access bought by a charge ends when the charge is
+ * fully refunded or a dispute over it is lost; a partial refund, an open
+ * dispute and a won dispute change nothing and are only logged. Under Managed
+ * Payments, Link refunds and handles disputes, but the charges and these
+ * events still belong to this account. Every write is idempotent and the
+ * customer notice is keyed by charge, so Stripe's retries are safe.
+ */
+async function handleReversal(event: Stripe.Event, effects: BillingEffects): Promise<void> {
+  const refund = event.type === "charge.refunded" ? event.data.object as Stripe.Charge : null;
+  const dispute = refund ? null : event.data.object as Stripe.Dispute;
+  const chargeRef = refund ? refund.id : dispute!.charge;
+  const chargeId = typeof chargeRef === "string" ? chargeRef : chargeRef?.id;
+  const intent = (refund ?? dispute!).payment_intent;
+  const paymentIntentId = typeof intent === "string" ? intent : intent?.id;
+
+  if (refund && !refund.refunded) {
+    console.log(`partial refund on ${refund.id}: ${refund.amount_refunded} of ${refund.amount} ${refund.currency} refunded, access unchanged`);
+    return;
+  }
+  if (dispute && (event.type !== "charge.dispute.closed" || dispute.status !== "lost")) {
+    console.log(`dispute ${dispute.id} on ${chargeId}: ${event.type}, status ${dispute.status}, access unchanged unless it is lost`);
+    return;
+  }
+  if (!paymentIntentId) return;
+
+  const purchase = await findPurchase(paymentIntentId, effects);
+  if (!purchase) {
+    console.log(`${event.type} on ${chargeId}: not a product purchase, nothing to revoke`);
+    return;
+  }
+  const revoked = await revokePurchase(purchase);
+  console.log(`${event.type} on ${chargeId}: ${purchase.product} ${purchase.plan ?? ""} for user ${purchase.userId} ${revoked ? "revoked" : "was already inactive"}`);
+  if (revoked) effects.alertReversal(purchase.userId, event.type, paymentIntentId, purchase.product);
+  if (refund) {
+    await effects.queueRefundNotice(`refund:${refund.id}`, {
+      kind: "refund",
+      userId: purchase.userId,
+      plan: purchase.plan,
+      expiresAt: null,
+      product: purchase.product,
+      // The formatter labels one-off charges "once"; a refund is just an amount.
+      chargedLabel: formatChargedAmount(refund.amount_refunded, refund.currency, null)?.replace(/ once$/, "") ?? null,
+    }).catch((err: { code?: string }) => {
+      // A deleted account has nobody to notify; anything else must retry.
+      if (err?.code !== "23503") throw err;
+    });
+  }
+}
+
 async function handleEvent(event: Stripe.Event, effects: BillingEffects = billingEffects): Promise<void> {
   if (!isConfigured) throw new Error("Database is not configured; event was not accepted");
 
@@ -927,30 +1070,10 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
       break;
     }
 
-    // The one that actually matters for revenue integrity: without it, a user
-    // who cancels (or whose card ultimately fails) would keep Pro forever.
     case "charge.refunded":
-    case "charge.dispute.created": {
-      // Only a full refund or a dispute of the Lifetime payment itself revokes
-      // Lifetime; tips, partial refunds and subscription invoices do not.
-      const object = event.data.object as Stripe.Charge | Stripe.Dispute;
-      if (event.type === "charge.refunded" && !(object as Stripe.Charge).refunded) break;
-      const intent = object.payment_intent;
-      const paymentIntentId = typeof intent === "string" ? intent : intent?.id;
-      if (!paymentIntentId) break;
-      const session = await effects.loadCheckoutForPayment(paymentIntentId);
-      if (session?.mode !== "payment") break;
-      const lifetimePrices = [process.env.STRIPE_PRICE_LIFETIME, process.env.STRIPE_PRICE_ID].filter(Boolean);
-      const priceIds = session.line_items?.data?.flatMap((item) => item.price ? [item.price.id] : []) ?? [];
-      if (!priceIds.some((id) => lifetimePrices.includes(id))) break;
-      const userId = session.client_reference_id || session.metadata?.userId;
-      if (!userId) break;
-      const { rowCount } = await getPool().query(
-        `UPDATE users SET is_pro = FALSE, plan = NULL, pro_expires_at = NULL
-          WHERE id = $1 AND plan = 'lifetime'`,
-        [userId],
-      );
-      if (rowCount) effects.alertReversal(userId, event.type, paymentIntentId);
+    case "charge.dispute.created":
+    case "charge.dispute.closed": {
+      await handleReversal(event, effects);
       break;
     }
 

@@ -69,6 +69,10 @@ function effects(overrides = {}) {
     async stopSubscriptions() {},
     async welcome() {},
     notifySale() {},
+    async loadCheckoutForPayment() { return null; },
+    async loadSubscriptionForPayment() { return null; },
+    alertReversal() {},
+    async queueRefundNotice() {},
     ...overrides,
   };
 }
@@ -310,36 +314,102 @@ test("recurring checkout requires a matching subscription identity and valid pro
   assert.equal((await productEntitlement(id, "pctweaker")).active, false);
 });
 
-test("a full refund or dispute of the Lifetime payment revokes Lifetime, nothing else does", async () => {
+const lifetimeSession = (userId) => ({
+  mode: "payment",
+  client_reference_id: userId,
+  metadata: { userId, product: "pctweaker", plan: "lifetime" },
+  line_items: { data: [{ price: { id: process.env.STRIPE_PRICE_LIFETIME } }] },
+});
+const charge = (id, overrides = {}) => ({
+  object: "charge", id, payment_intent: `pi_${id}`, amount: 9900, amount_refunded: 9900, currency: "eur", refunded: true, ...overrides,
+});
+const dispute = (id, status) => ({ object: "dispute", id, charge: `ch_${id}`, payment_intent: `pi_${id}`, status });
+
+test("a full refund or a lost dispute of the Lifetime payment revokes Lifetime, nothing else does", async () => {
   const alerts = [];
-  const lifetimeSession = (userId) => ({
-    mode: "payment",
-    client_reference_id: userId,
-    metadata: { userId, product: "pctweaker", plan: "lifetime" },
-    line_items: { data: [{ price: { id: process.env.STRIPE_PRICE_LIFETIME } }] },
-  });
+  const notices = [];
   const fx = (session) => effects({
     async loadCheckoutForPayment() { return session; },
     alertReversal(userId, reason) { alerts.push([userId, reason]); },
+    async queueRefundNotice(key, receipt) { notices.push([key, receipt]); },
   });
 
   const refunded = await user();
   await grantPro(refunded, { customerId: `cus_r_${refunded}`, plan: "lifetime", expiresAt: null });
-  await handleEvent(event("charge.refunded", { refunded: false, payment_intent: "pi_partial" }), fx(lifetimeSession(refunded)));
+  await handleEvent(event("charge.refunded", charge("ch_partial", { refunded: false, amount_refunded: 1000 })), fx(lifetimeSession(refunded)));
   assert.equal((await row(refunded)).is_pro, true, "partial refund keeps Lifetime");
-  await handleEvent(event("charge.refunded", { refunded: true, payment_intent: "pi_full" }), fx(lifetimeSession(refunded)));
+  assert.equal(notices.length, 0, "a partial refund is only logged");
+  await handleEvent(event("charge.refunded", charge("ch_full")), fx(lifetimeSession(refunded)));
   assert.equal((await row(refunded)).is_pro, false);
   assert.deepEqual(alerts, [[refunded, "charge.refunded"]]);
+  assert.deepEqual(notices.map(([key, r]) => [key, r.kind, r.plan, r.chargedLabel]), [["refund:ch_full", "refund", "lifetime", "€99.00"]]);
 
   const disputed = await user();
   await grantPro(disputed, { customerId: `cus_d_${disputed}`, plan: "lifetime", expiresAt: null });
-  await handleEvent(event("charge.dispute.created", { payment_intent: "pi_dispute" }), fx(lifetimeSession(disputed)));
+  await handleEvent(event("charge.dispute.created", dispute("dp_1", "needs_response")), fx(lifetimeSession(disputed)));
+  await handleEvent(event("charge.dispute.closed", dispute("dp_1", "won")), fx(lifetimeSession(disputed)));
+  assert.equal((await row(disputed)).is_pro, true, "an open or won dispute keeps Lifetime");
+  await handleEvent(event("charge.dispute.closed", dispute("dp_2", "lost")), fx(lifetimeSession(disputed)));
   assert.equal((await row(disputed)).is_pro, false);
+  assert.equal(notices.length, 1, "a dispute sends the customer no refund notice");
 
   const tipper = await user();
   await grantPro(tipper, { customerId: `cus_t_${tipper}`, plan: "lifetime", expiresAt: null });
   const tip = { ...lifetimeSession(tipper), line_items: { data: [{ price: { id: "price_tip_fixture" } }] } };
-  await handleEvent(event("charge.refunded", { refunded: true, payment_intent: "pi_tip" }), fx(tip));
-  await handleEvent(event("charge.refunded", { refunded: true, payment_intent: "pi_none" }), fx(null));
+  await handleEvent(event("charge.refunded", charge("ch_tip")), fx(tip));
+  await handleEvent(event("charge.refunded", charge("ch_none")), fx(null));
   assert.equal((await row(tipper)).is_pro, true, "a refunded tip or unrelated payment keeps Lifetime");
+  assert.equal(notices.length, 1);
+});
+
+test("a refunded subscription payment ends only the access that subscription granted", async () => {
+  const notices = [];
+  const fx = (sub) => effects({
+    async loadSubscriptionForPayment() { return sub; },
+    async queueRefundNotice(key, receipt) { notices.push([key, receipt]); },
+  });
+
+  const id = await user();
+  const sub = subscription(id, { id: "sub_refunded" });
+  await handleEvent(event("customer.subscription.created", sub), effects());
+  assert.equal((await productEntitlement(id, "pctweaker")).active, true);
+  await handleEvent(event("charge.refunded", charge("ch_sub", { amount: 799, amount_refunded: 799 })), fx(sub));
+  assert.equal((await productEntitlement(id, "pctweaker")).active, false);
+  assert.deepEqual(notices.map(([key, r]) => [key, r.plan, r.chargedLabel]), [["refund:ch_sub", "monthly", "€7.99"]]);
+
+  // An old subscription's refund cannot take a newer one's access or Lifetime.
+  const other = await user();
+  const old = subscription(other, { id: "sub_old_refunded", created: created - 86_400 });
+  const current = subscription(other, { id: "sub_current_kept", created });
+  await handleEvent(event("customer.subscription.created", current), effects());
+  await handleEvent(event("charge.refunded", charge("ch_old")), fx(old));
+  assert.equal((await productEntitlement(other, "pctweaker")).active, true);
+  const owner = await user();
+  await grantPro(owner, { customerId: null, plan: "lifetime", expiresAt: null });
+  await handleEvent(event("charge.refunded", charge("ch_lifetime_owner_sub")), fx(subscription(owner, { id: "sub_beside_lifetime" })));
+  assert.equal((await row(owner)).plan, "lifetime");
+
+  const buyer = await user();
+  const uninstaller = subscription(buyer, {
+    id: "sub_uninstaller_refunded",
+    metadata: { userId: buyer, product: "uninstaller", plan: "annual" },
+    items: { data: [{ current_period_end: periodEnd, price: { id: process.env.STRIPE_PRICE_UNINSTALLER_ANNUAL, recurring: { interval: "year" } } }] },
+  });
+  await handleEvent(event("customer.subscription.created", uninstaller), effects());
+  assert.equal((await productEntitlement(buyer, "uninstaller")).active, true);
+  await handleEvent(event("charge.refunded", charge("ch_uninstaller")), fx(uninstaller));
+  assert.equal((await productEntitlement(buyer, "uninstaller")).active, false);
+  assert.equal(notices.at(-1)[1].product, "uninstaller");
+});
+
+test("refund notices are queued once per charge however often Stripe retries", async () => {
+  const { queueReceipt } = await import("../dist/receipt-outbox.js");
+  const id = await user();
+  await grantPro(id, { customerId: null, plan: "lifetime", expiresAt: null });
+  const fx = effects({ async loadCheckoutForPayment() { return lifetimeSession(id); }, queueRefundNotice: queueReceipt });
+  await handleEvent(event("charge.refunded", charge("ch_retry")), fx);
+  await handleEvent(event("charge.refunded", charge("ch_retry")), fx);
+  const { rows } = await getPool().query("SELECT payload FROM billing_receipts WHERE receipt_key = 'refund:ch_retry'");
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].payload.kind, "refund");
 });

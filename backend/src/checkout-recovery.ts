@@ -1,5 +1,6 @@
 import { getPool } from "./db";
-import { unsubscribeUrl } from "./routes/newsletter";
+import { EMAIL_MUTED_TEXT, emailShell, escapeHtml } from "./emails/layout";
+import { listUnsubscribeHeaders, unsubscribeUrl } from "./routes/newsletter";
 
 /** An expired Checkout Session, reduced to what the reminder needs. */
 export type ExpiredCheckout = {
@@ -70,9 +71,6 @@ export async function remindAbandonedLifetime(
   return sent;
 }
 
-const escapeHtml = (value: string) =>
-  value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-
 export function lifetimeReminderEmail(to: ReminderRecipient) {
   const greeting = to.firstName ? `Hi ${to.firstName.trim()},` : "Hi,";
   const lines = [
@@ -82,12 +80,29 @@ export function lifetimeReminderEmail(to: ReminderRecipient) {
   ];
   const footer = "This is the only reminder about this checkout.";
   const unsubscribe = to.unsubscribeUrl
-    ? `<p style="font-size:12px;color:#888">${footer} Don't want emails like this? <a href="${escapeHtml(to.unsubscribeUrl)}">Unsubscribe with one click</a>.</p>`
-    : `<p style="font-size:12px;color:#888">${footer}</p>`;
+    ? `
+        <tr>
+          <td style="padding:24px 40px 0; text-align:center;">
+            <p style="margin:0; font-size:12px; line-height:1.6; color:${EMAIL_MUTED_TEXT};">
+              Don't want emails like this? <a href="${escapeHtml(to.unsubscribeUrl)}" style="color:${EMAIL_MUTED_TEXT};">Unsubscribe with one click</a>.
+            </p>
+          </td>
+        </tr>`
+    : "";
   return {
     to: to.email,
     subject: "Your PC Tweaker Lifetime checkout",
-    html: `<p>${escapeHtml(greeting)}</p>${lines.map((l) => `<p>${l}</p>`).join("")}${unsubscribe}`,
+    ...(to.unsubscribeUrl ? { headers: listUnsubscribeHeaders(to.unsubscribeUrl) } : {}),
+    html: emailShell({
+      preheader: "Your Lifetime checkout closed before payment, so nothing was charged.",
+      eyebrow: "Checkout not completed",
+      headline: to.firstName?.trim() ? `Still want Lifetime, ${to.firstName.trim()}?` : "Still want Lifetime?",
+      intro: `${lines[0]} ${lines[1]}`,
+      action: { label: "Open PC Tweaker", url: "https://pctweaker.app" },
+      note: lines[2],
+      afterActionHtml: unsubscribe,
+      footerNote: footer,
+    }),
     text: [greeting, ...lines, footer + (to.unsubscribeUrl ? ` Unsubscribe: ${to.unsubscribeUrl}` : "")].join("\n\n"),
   };
 }

@@ -2,10 +2,13 @@ import { randomUUID } from "crypto";
 import { getPool } from "./db";
 
 export type Receipt = {
+  /** Absent for purchase receipts; "refund" for the refund confirmation. */
+  kind?: "refund";
   userId: string;
   plan: string | null;
   expiresAt: string | null;
   product: string;
+  /** The amount charged, or for a refund the amount refunded. */
   chargedLabel: string | null;
 };
 

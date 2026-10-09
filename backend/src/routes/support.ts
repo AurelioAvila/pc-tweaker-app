@@ -181,6 +181,7 @@ router.post("/", supportLimiter, async (req: Request, res: Response) => {
     subject: "We received your PC Tweaker support request",
     replyTo: SUPPORT_REPLY_TO,
     html: emailShell({
+      preheader: "Your message reached the PC Tweaker support team. We'll reply to this address.",
       eyebrow: "Support request received",
       headline: "We're on it.",
       intro: `Hi ${name}, your message has reached the PC Tweaker support team. We'll reply to this email address.`,

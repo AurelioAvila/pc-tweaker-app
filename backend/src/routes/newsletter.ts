@@ -7,6 +7,7 @@ import { getPool, isConfigured } from "../db";
 import { EMAIL_MUTED_TEXT, emailShell, escapeHtml } from "../emails/layout";
 import { sendMail, isConfigured as mailIsConfigured } from "../mailer";
 import { consumeGlobalBudget } from "../public-form-guard";
+import { htmlPage } from "./auth";
 
 const router = express.Router();
 
@@ -62,6 +63,12 @@ export function unsubscribeUrl(email: string): string | null {
   return `${process.env.PUBLIC_API_URL || "https://api.pctweaker.app"}/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}&sig=${sig}`;
 }
 
+/** RFC 8058 headers: Gmail and Yahoo show their own Unsubscribe button and
+ *  POST to the link, which the route below accepts without a second click. */
+export function listUnsubscribeHeaders(link: string): Record<string, string> {
+  return { "List-Unsubscribe": `<${link}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" };
+}
+
 router.post("/", newsletterLimiter, asyncRoute(async (req: Request, res: Response) => {
   const email = typeof req.body?.email === "string" ? req.body.email.trim() : "";
   const rawSource = typeof req.body?.source === "string" ? req.body.source : "";
@@ -114,7 +121,9 @@ router.post("/", newsletterLimiter, asyncRoute(async (req: Request, res: Respons
     void sendMail({
       to: email,
       subject: "Your PC Tweaker download link",
+      headers: listUnsubscribeHeaders(link),
       html: emailShell({
+        preheader: "Open this on your Windows 10 or 11 PC to download PC Tweaker.",
         eyebrow: "For your PC",
         headline: "Open this on your Windows PC.",
         intro:
@@ -145,7 +154,9 @@ PC Tweaker - https://pctweaker.app`,
     void sendMail({
       to: email,
       subject: "You're on the PC Tweaker list",
+      headers: listUnsubscribeHeaders(link),
       html: emailShell({
+        preheader: "Occasional news about releases and new tools. No daily emails, and you can leave in one click.",
         eyebrow: "Subscribed",
         headline: "You're on the list.",
         intro:
@@ -175,11 +186,11 @@ PC Tweaker - https://pctweaker.app`,
 }));
 
 /**
- * One-click unsubscribe from the welcome email. GET because it's a link in an
- * email; the HMAC check means only links we minted work, so a third party
- * can't unsubscribe someone by guessing their address.
+ * The address a link was minted for, or null. The HMAC check means only links
+ * we minted work, so a third party can't unsubscribe someone by guessing
+ * their address.
  */
-router.get("/unsubscribe", asyncRoute(async (req: Request, res: Response) => {
+function signedAddress(req: Request): string | null {
   const email = typeof req.query.email === "string" ? req.query.email : "";
   const sig = typeof req.query.sig === "string" ? req.query.sig : "";
   const expected = unsubscribeSignature(email);
@@ -192,13 +203,41 @@ router.get("/unsubscribe", asyncRoute(async (req: Request, res: Response) => {
     Boolean(expected) &&
     given.length === Buffer.byteLength(expected!) &&
     crypto.timingSafeEqual(given, Buffer.from(expected!));
+  return isValidEmail(email) && valid ? email : null;
+}
 
-  if (!isValidEmail(email) || !valid) {
-    res.status(400).type("html").send("<p>This unsubscribe link is invalid or expired.</p>");
+const INVALID_LINK = htmlPage(
+  "Link not valid",
+  `<p class="error">This unsubscribe link is incomplete. Open it again from the email.</p>`,
+);
+const STILL_SENT = "Account emails such as password resets and receipts still arrive.";
+
+/**
+ * The link in the email only asks. Mail filters open every URL they scan,
+ * and a GET that unsubscribed would quietly drop readers who never clicked.
+ */
+router.get("/unsubscribe", (req: Request, res: Response) => {
+  const email = signedAddress(req);
+  if (!email) {
+    res.status(400).type("html").send(INVALID_LINK);
+    return;
+  }
+  res.type("html").send(htmlPage(
+    "Unsubscribe",
+    `<p class="lead">Stop PC Tweaker news and reminder emails to ${escapeHtml(email)}? ${STILL_SENT}</p>
+     <form method="post" action="${escapeHtml(req.originalUrl)}"><button type="submit">Unsubscribe</button></form>`,
+  ));
+});
+
+/** The confirm button, and RFC 8058 one-click POSTs from mailbox providers. */
+router.post("/unsubscribe", asyncRoute(async (req: Request, res: Response) => {
+  const email = signedAddress(req);
+  if (!email) {
+    res.status(400).type("html").send(INVALID_LINK);
     return;
   }
   if (!isConfigured) {
-    res.status(503).type("html").send("<p>Temporarily unavailable — please try again shortly.</p>");
+    res.status(503).type("html").send(htmlPage("Try again shortly", `<p class="error">Temporarily unavailable. Please try again in a moment.</p>`));
     return;
   }
 
@@ -207,12 +246,10 @@ router.get("/unsubscribe", asyncRoute(async (req: Request, res: Response) => {
      ON CONFLICT (lower(email)) DO UPDATE SET unsubscribed_at = now()`,
     [email],
   );
-  res
-    .type("html")
-    .send(`<body style="font-family:sans-serif;max-width:520px;margin:80px auto;text-align:center">
-             <h2>You're unsubscribed</h2>
-             <p>No more newsletter emails will be sent to this address.</p>
-           </body>`);
+  res.type("html").send(htmlPage(
+    "You're unsubscribed",
+    `<p class="success">No more PC Tweaker news or reminder emails will be sent to this address. ${STILL_SENT}</p>`,
+  ));
 }));
 
 export default router;

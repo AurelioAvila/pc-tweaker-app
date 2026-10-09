@@ -55,7 +55,8 @@ test("a failed send is not retried", async () => {
 test("the email escapes the name, promises nothing new and carries the unsubscribe link", () => {
   const mail = lifetimeReminderEmail({ email: "a@example.com", firstName: "<b>Eve</b>", unsubscribeUrl: "https://api.pctweaker.app/api/newsletter/unsubscribe?email=a%40example.com&sig=ab" });
   assert.equal(mail.to, "a@example.com");
-  assert.match(mail.html, /Hi &lt;b&gt;Eve&lt;\/b&gt;,/);
+  assert.match(mail.html, /Still want Lifetime, &lt;b&gt;Eve&lt;\/b&gt;\?/);
+  assert.equal(mail.headers["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click");
   assert.match(mail.html, /nothing was charged/);
   assert.match(mail.html, /email=a%40example\.com&amp;sig=ab/);
   assert.match(mail.text, /Unsubscribe: https:\/\/api\.pctweaker\.app/);

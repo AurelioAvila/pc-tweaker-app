@@ -181,6 +181,27 @@ test("uninstaller and unknown legacy events never grant or revoke PC Tweaker", a
   assert.equal((await productEntitlement(id, "pctweaker")).active, true);
 });
 
+test("a late uninstaller update cannot re-grant a cancelled subscription, nor an old deletion end a new one", async () => {
+  const id = await user();
+  const uninstallerItems = { data: [{ current_period_end: periodEnd, price: { id: process.env.STRIPE_PRICE_UNINSTALLER_ANNUAL, recurring: { interval: "year" } } }] };
+  const old = subscription(id, { id: "sub_uninstaller_old", metadata: { userId: id, product: "uninstaller", plan: "annual" }, items: uninstallerItems });
+  await handleEvent(event("customer.subscription.created", old), effects());
+  assert.equal((await productEntitlement(id, "uninstaller")).active, true);
+
+  // Cancelled at Stripe; the deletion arrives, then a stale "active" update.
+  currentSubscriptions.set(old.id, { ...old, status: "canceled" });
+  await handleEvent(event("customer.subscription.deleted", { ...old, status: "canceled" }), effects());
+  await handleEvent(event("customer.subscription.updated", old), effects());
+  assert.equal((await productEntitlement(id, "uninstaller")).active, false);
+
+  // A new subscription, then a replayed deletion of the old one.
+  const fresh = subscription(id, { id: "sub_uninstaller_new", metadata: { userId: id, product: "uninstaller", plan: "annual" }, items: uninstallerItems });
+  await handleEvent(event("customer.subscription.created", fresh), effects());
+  assert.equal((await productEntitlement(id, "uninstaller")).active, true);
+  await handleEvent(event("customer.subscription.deleted", { ...old, status: "canceled" }), effects());
+  assert.equal((await productEntitlement(id, "uninstaller")).active, true);
+});
+
 test("product evidence rejects conflicting or ambiguous subscriptions", () => {
   const catalogue = { price_pc: "pctweaker", price_other: "uninstaller" };
   assert.equal(billingProductFromEvidence({}, ["price_pc"], catalogue), "pctweaker");

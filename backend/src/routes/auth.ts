@@ -120,13 +120,30 @@ async function sendPasswordChangedNotice(userId: number, changedAt: Date): Promi
   });
 }
 
+/** Names reach every email we send; nobody's first or last name is longer. */
+const MAX_NAME = 100;
+
+/** A real calendar date in the past. "2026-02-31" used to pass the pattern
+ *  check and then fail in PostgreSQL as a 500 instead of a 400. */
+export function isValidDateOfBirth(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime())
+    && date.toISOString().slice(0, 10) === value
+    && date.getUTCFullYear() >= 1900
+    && date.getTime() <= Date.now();
+}
+
 router.post("/register", async (req: Request, res: Response) => {
   const { email, password, firstName, lastName, dateOfBirth } = req.body || {};
   if (!isValidEmail(email)) return res.status(400).json({ error: "invalid email" });
   if (!isValidPassword(password)) return res.status(400).json({ error: "Password must be at least 8 characters and no more than 72 UTF-8 bytes." });
   if (!firstName || !String(firstName).trim()) return res.status(400).json({ error: "first name is required" });
   if (!lastName || !String(lastName).trim()) return res.status(400).json({ error: "last name is required" });
-  if (!dateOfBirth || !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
+  if (String(firstName).trim().length > MAX_NAME || String(lastName).trim().length > MAX_NAME) {
+    return res.status(400).json({ error: `names can be up to ${MAX_NAME} characters` });
+  }
+  if (!isValidDateOfBirth(dateOfBirth)) {
     return res.status(400).json({ error: "date of birth is required (YYYY-MM-DD)" });
   }
   if (!isConfigured) return res.status(503).json({ error: "database not configured (DATABASE_URL missing)" });

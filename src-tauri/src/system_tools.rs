@@ -1,7 +1,7 @@
 //! Resolve native tools from Windows-owned directories, never PATH or cwd.
 use std::{io, path::PathBuf, process::Command};
 
-fn windows_directory(system: bool) -> io::Result<PathBuf> {
+pub(crate) fn windows_directory(system: bool) -> io::Result<PathBuf> {
     use std::os::windows::ffi::OsStringExt;
     use windows_sys::Win32::System::SystemInformation::{
         GetSystemDirectoryW, GetWindowsDirectoryW,

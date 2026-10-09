@@ -896,14 +896,31 @@ fn last_cleanup_result_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf
     Ok(dir.join("last_cleanup_result.json"))
 }
 
+/// Whether a cleanup needs administrator rights, after its Pro gate. The gate
+/// lives here rather than only on the card: `invoke` and the elevated command
+/// line both reach the cleanup without passing through the UI.
+fn authorize_cleanup(app_data_dir: &std::path::Path, id: &str) -> Result<bool, String> {
+    let target = cleanup::target(id).ok_or_else(|| format!("unknown cleanup action: {}", id))?;
+    if target.requires_pro {
+        require_pro(app_data_dir)?;
+    }
+    Ok(target.requires_admin)
+}
+
+/// The elevated helper only runs the cleanups that need it. Anything else
+/// would be an administrator emptying a folder the signed-in user chooses.
+fn authorize_elevated_cleanup(app_data_dir: &std::path::Path, id: &str) -> Result<(), String> {
+    if authorize_cleanup(app_data_dir, id)? {
+        Ok(())
+    } else {
+        Err("this cleanup does not run as administrator".to_string())
+    }
+}
+
 #[cfg(windows)]
 #[tauri::command(async)]
 fn run_cleanup(app: tauri::AppHandle, id: String) -> Result<CleanupResult, String> {
-    let requires_admin = cleanup::cleanup_targets()
-        .into_iter()
-        .find(|c| c.id == id)
-        .map(|c| c.requires_admin)
-        .unwrap_or(false);
+    let requires_admin = authorize_cleanup(&store_for_dir(&app)?, &id)?;
 
     if requires_admin && !elevation::is_elevated() {
         elevation::run_elevated_action("--elevated-cleanup", &id)?;
@@ -941,11 +958,7 @@ fn run_cleanup_selected(
     id: String,
     names: Vec<String>,
 ) -> Result<CleanupResult, String> {
-    let requires_admin = cleanup::cleanup_targets()
-        .iter()
-        .find(|c| c.id == id)
-        .map(|c| c.requires_admin)
-        .unwrap_or(false);
+    let requires_admin = authorize_cleanup(&store_for_dir(&app)?, &id)?;
 
     if requires_admin && !elevation::is_elevated() {
         // Validate before the payload is built, so a bad name fails here
@@ -1421,7 +1434,8 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             result
         }
         "--elevated-cleanup" => {
-            let result = cleanup::run_cleanup(id);
+            let result =
+                authorize_elevated_cleanup(&dir, id).and_then(|_| cleanup::run_cleanup(id));
             audit::record(
                 "cleanup",
                 id,
@@ -1438,6 +1452,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             // Re-decoded and re-validated on this side: the elevated entry
             // point must not trust that its caller was our own app.
             let result = cleanup::decode_selected_payload(id).and_then(|(cleanup_id, names)| {
+                authorize_elevated_cleanup(&dir, &cleanup_id)?;
                 let outcome = cleanup::run_cleanup_selected(&cleanup_id, &names);
                 audit::record(
                     "cleanup",
@@ -1456,7 +1471,9 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
         // Re-validated on this side too: the elevated entry point is a plain
         // CLI flag, so it must not trust that its caller was our own app.
         "--elevated-diskopt" => {
-            let result = diskinfo::validate_drive(id).and_then(|drive| diskopt::optimize(&drive));
+            let result = require_pro(&dir)
+                .and_then(|_| diskinfo::validate_drive(id))
+                .and_then(|drive| diskopt::optimize(&drive));
             audit::record(
                 "disk-optimize",
                 id,
@@ -1473,7 +1490,8 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
         // process has no AppHandle, so it cannot emit events itself.
         "--elevated-securedefrag" => {
             let progress_path = defrag_progress_path(&dir);
-            let result = diskinfo::validate_drive(id).and_then(|drive| {
+            let drive = require_pro(&dir).and_then(|_| diskinfo::validate_drive(id));
+            let result = drive.and_then(|drive| {
                 securedefrag::run(&drive, |p| {
                     if let Ok(json) = serde_json::to_string(&p) {
                         let _ = std::fs::write(&progress_path, json);
@@ -1494,7 +1512,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
         }
 
         "--elevated-memorypurge" => {
-            let result = zerotrace::purge_standby_memory();
+            let result = require_pro(&dir).and_then(|_| zerotrace::purge_standby_memory());
             audit::record(
                 "memory-purge",
                 id,
@@ -1512,6 +1530,10 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
         "--elevated-repair" => {
             let progress_path = repair_progress_path(&dir);
             let result = sysrepair::RepairJob::from_id(id).and_then(|job| {
+                // Same gate as `run_system_repair`: only the check is free.
+                if job != sysrepair::RepairJob::Check {
+                    require_pro(&dir)?;
+                }
                 sysrepair::run(job, |p| {
                     if let Ok(json) = serde_json::to_string(&p) {
                         let _ = std::fs::write(&progress_path, json);
@@ -1978,6 +2000,24 @@ mod tests {
             pro_id,
             err
         );
+    }
+
+    /// Cleanups: the Pro one is refused without a licence on every path, the
+    /// free one stays free, and the elevated helper runs only the admin one.
+    #[test]
+    fn cleanup_gates_hold_without_a_license() {
+        let dir = std::env::temp_dir().join(format!(
+            "pc-tweaker-cleanup-gate-test-{}",
+            std::process::id()
+        ));
+        assert_eq!(authorize_cleanup(&dir, "temp_cleanup"), Ok(false));
+        let pro = authorize_cleanup(&dir, "winupdate_cache_cleanup").unwrap_err();
+        assert!(pro.starts_with(PRO_REQUIRED_PREFIX), "{pro}");
+        assert!(authorize_cleanup(&dir, "no_such_cleanup").is_err());
+        assert!(authorize_elevated_cleanup(&dir, "temp_cleanup").is_err());
+        assert!(authorize_elevated_cleanup(&dir, "winupdate_cache_cleanup")
+            .unwrap_err()
+            .starts_with(PRO_REQUIRED_PREFIX));
     }
 
     /// The catalogue's size and its free/Pro split, pinned.

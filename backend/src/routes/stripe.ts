@@ -1003,13 +1003,14 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
       let subscription = event.data.object as Stripe.Subscription;
       const product = subscriptionProduct(subscription);
       if (!product) break;
-      if (product === "pctweaker") {
-        const current = await effects.loadSubscription(subscription.id);
-        if (current.id !== subscription.id || subscriptionProduct(current) !== product) {
-          throw new Error(`Subscription ${subscription.id} no longer matches its product`);
-        }
-        subscription = current;
+      // Every product acts on the subscription as it is now, not as the event
+      // describes it: Stripe does not order events, and a late "active" update
+      // must not re-grant a subscription that has since been cancelled.
+      const current = await effects.loadSubscription(subscription.id);
+      if (current.id !== subscription.id || subscriptionProduct(current) !== product) {
+        throw new Error(`Subscription ${subscription.id} no longer matches its product`);
       }
+      subscription = current;
       const userId = await resolveUserId(subscription);
       if (!userId) break;
       const active = ["active", "trialing", "past_due"].includes(subscription.status);
@@ -1033,7 +1034,7 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
             );
           }
         } else {
-          await revokeEntitlement(userId, product);
+          await revokeEntitlement(userId, product, subscription.id);
         }
         break;
       }
@@ -1084,7 +1085,7 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
       const userId = await resolveUserId(subscription);
       if (!userId) break;
       if (product !== "pctweaker") {
-        await revokeEntitlement(userId, product);
+        await revokeEntitlement(userId, product, subscription.id);
         break;
       }
       if (await holdsLifetime(userId)) break;

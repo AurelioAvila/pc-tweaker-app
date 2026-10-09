@@ -58,17 +58,23 @@ pub fn cleanup_targets() -> Vec<CleanupInfo> {
     ]
 }
 
+/// The catalogue entry for a cleanup id; the native gates read its flags.
+pub fn target(id: &str) -> Option<CleanupInfo> {
+    cleanup_targets().into_iter().find(|c| c.id == id)
+}
+
 fn target_dir(id: &str) -> Option<PathBuf> {
     match id {
         "temp_cleanup" => Some(std::env::temp_dir()),
-        "winupdate_cache_cleanup" => {
-            let windir = std::env::var("WINDIR").unwrap_or_else(|_| r"C:\Windows".to_string());
-            Some(
-                PathBuf::from(windir)
-                    .join("SoftwareDistribution")
-                    .join("Download"),
-            )
-        }
+        // Runs as administrator, so the folder comes from Windows itself, never
+        // from %WINDIR%: a per-user environment variable can override that one,
+        // and would point an elevated cleanup at any folder it named.
+        #[cfg(windows)]
+        "winupdate_cache_cleanup" => crate::system_tools::windows_directory(false)
+            .ok()
+            .map(|windir| windir.join("SoftwareDistribution").join("Download")),
+        #[cfg(not(windows))]
+        "winupdate_cache_cleanup" => None,
         _ => None,
     }
 }
@@ -430,6 +436,22 @@ pub fn delete_files(paths: Vec<String>) -> CleanupResult {
 mod tests {
     use super::*;
     use std::fs;
+
+    /// The elevated cleanup's folder comes from Windows, not from %WINDIR%,
+    /// which a per-user environment variable can override.
+    #[cfg(windows)]
+    #[test]
+    fn the_update_cache_folder_ignores_the_windir_variable() {
+        let real = crate::system_tools::windows_directory(false).unwrap();
+        let saved = std::env::var_os("WINDIR");
+        std::env::set_var("WINDIR", std::env::temp_dir());
+        let dir = target_dir("winupdate_cache_cleanup");
+        match saved {
+            Some(value) => std::env::set_var("WINDIR", value),
+            None => std::env::remove_var("WINDIR"),
+        }
+        assert_eq!(dir, Some(real.join("SoftwareDistribution").join("Download")));
+    }
 
     fn temp_dir(tag: &str) -> PathBuf {
         let dir = std::env::temp_dir().join(format!(

@@ -434,3 +434,18 @@ test("refund notices are queued once per charge however often Stripe retries", a
   assert.equal(rows.length, 1);
   assert.equal(rows[0].payload.kind, "refund");
 });
+
+test("a promotional subscription's welcome email says the first payment was discounted", async () => {
+  const labels = [];
+  const welcome = async (_userId, _plan, _expires, _product, label) => { labels.push(label); };
+  for (const metadata of [{ promo_id: "halloween-2026" }, {}]) {
+    const id = await user();
+    const sub = subscription(id, {
+      id: `sub_promo_${id}`,
+      metadata: { userId: id, product: "pctweaker", plan: "annual", ...metadata },
+      items: { data: [{ current_period_end: periodEnd, price: { id: process.env.STRIPE_PRICE_ANNUAL, unit_amount: 5999, currency: "eur", recurring: { interval: "year" } } }] },
+    });
+    await handleEvent(event("customer.subscription.created", sub), effects({ welcome }));
+  }
+  assert.deepEqual(labels, ["€59.99 / year (first payment discounted)", "€59.99 / year"]);
+});

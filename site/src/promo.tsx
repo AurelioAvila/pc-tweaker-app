@@ -1,0 +1,117 @@
+import { useEffect, useState } from "react";
+import { API_BASE } from "./constants";
+// Shared with the desktop app, so both read the server's offer the same way.
+import { msUntil, parsePromo, previewPromo, promoClock, promoPercent, type Promo, type PromoOffer } from "../../src/promo";
+
+/** The live promotion, fetched after hydration: the prerendered page always
+ *  carries regular prices, and any failure leaves them in place. */
+export function usePromo() {
+  const clock = () => ({ perf: performance.now(), wall: Date.now() });
+  const [received, setReceived] = useState<{ promo: Promo; at: ReturnType<typeof clock> } | null>(null);
+  const [now, setNow] = useState(clock);
+  useEffect(() => {
+    const preview = import.meta.env.DEV ? import.meta.env.VITE_PROMO_PREVIEW : undefined;
+    const accept = (promo: Promo | null) => setReceived(promo ? { promo, at: clock() } : null);
+    let controller = new AbortController();
+    const read = () => {
+      if (preview) return accept(previewPromo(preview, Date.now()));
+      controller.abort();
+      controller = new AbortController();
+      fetch(`${API_BASE}/api/offers/promo`, { cache: "no-store", signal: controller.signal })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((v) => accept(parsePromo(v)))
+        .catch((e) => e?.name !== "AbortError" && accept(null));
+    };
+    // A tab left open (or a laptop asleep) through the deadline or a manual stop re-reads on return.
+    const onVisible = () => document.visibilityState === "visible" && read();
+    read();
+    // One-second steps drive the countdown; it is computed from the real deadline, never reset.
+    const tick = window.setInterval(() => setNow(clock()), 1000);
+    window.addEventListener("focus", read);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      controller.abort();
+      window.clearInterval(tick);
+      window.removeEventListener("focus", read);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+  const promo = received?.promo ?? null;
+  // Whichever clock advanced more: a wrong or paused clock can only shorten the offer.
+  const elapsed = received ? Math.max(now.perf - received.at.perf, now.wall - received.at.wall) : 0;
+  const active =
+    promo?.status === "active" &&
+    msUntil(promo, promo.startsAt, elapsed) <= 0 &&
+    msUntil(promo, promo.endsAt, elapsed) > 0;
+  return {
+    promo: active ? promo : null,
+    remaining: active && promo ? msUntil(promo, promo.endsAt, elapsed) : 0,
+    offer: (product: string, plan: string): PromoOffer | null =>
+      (active && promo?.offers.find((o) => o.product === product && o.plan === plan)) || null,
+  };
+}
+
+export const euro = (cents: number) =>
+  new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 2, minimumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100);
+
+/** Struck lowest-30-day price, promotional price and the real percentage. */
+export function PromoPrice({ offer, className }: { offer: PromoOffer; className?: string }) {
+  return (
+    <span className={className}>
+      <s className="mr-3 align-middle text-[0.45em] font-medium text-[var(--fg-dim)]">{euro(offer.reference)}</s>
+      {euro(offer.price)}
+      <span className="font-mono-t text-accent ml-3 align-middle text-[0.3em] tracking-wider">−{promoPercent(offer)}%</span>
+    </span>
+  );
+}
+
+export function promoTerms(offer: PromoOffer) {
+  return offer.firstPeriodOnly
+    ? `first ${offer.plan === "monthly" ? "month" : "year"}, then ${euro(offer.regular)} / ${offer.plan === "monthly" ? "month" : "year"}`
+    : "once · no renewal";
+}
+
+/** The deadline in the visitor's own time zone, named so it cannot be misread. */
+export function PromoBanner({ promo, remaining }: { promo: Promo; remaining: number }) {
+  const clock = promoClock(remaining);
+  const units = ["days", "hours", "min", "sec"];
+  const end = new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeStyle: "short" }).format(
+    new Date(Date.parse(promo.endsAt) - 60_000),
+  );
+  const zone = new Intl.DateTimeFormat("en-GB", { timeZoneName: "short" })
+    .formatToParts(new Date(promo.endsAt))
+    .find((p) => p.type === "timeZoneName")?.value;
+  return (
+    <aside
+      className="flex flex-wrap items-start gap-4 rounded-2xl border px-6 py-5"
+      style={{ borderColor: "var(--accent-glow)", background: "var(--accent-soft)" }}
+      aria-label="Halloween offer"
+    >
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="mt-0.5 h-6 w-6 flex-none" style={{ color: "#f28c28" }}>
+        <path d="M12 7.5c-1.6-1-4.4-1.2-6.2.4C3.6 9.8 3.4 14 4.6 16.6c1.3 2.8 4.3 3.6 7.4 2.6 3.1 1 6.1.2 7.4-2.6 1.2-2.6 1-6.8-1.2-8.7-1.8-1.6-4.6-1.4-6.2-.4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+        <path d="M12 7.5c-1.3 2.4-1.3 9.3 0 11.7m0-11.7c1.3 2.4 1.3 9.3 0 11.7M12 7.5c0-1.6.6-3 2-3.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+      <div className="min-w-0 flex-1 basis-64">
+        <p className="text-[15px] font-semibold text-[var(--fg)]">Halloween offer</p>
+        <p className="mt-1 text-[13px] leading-relaxed text-[var(--fg-dim)]">
+          Ends {end}{zone ? ` ${zone}` : ""}. Struck-through prices are the lowest we charged in the 30 days before the offer
+          began. Subscription discounts cover the first month or year; renewals are at the regular price. Prices exclude
+          VAT, which is added at checkout where applicable.
+        </p>
+      </div>
+      <div
+        className="flex gap-2 font-mono-t tabular-nums"
+        role="timer"
+        aria-live="off"
+        aria-label={clock.map((v, i) => `${v} ${units[i]}`).join(", ")}
+      >
+        {clock.map((value, i) => (
+          <div key={units[i]} className="min-w-[3.25rem] rounded-lg border border-white/10 bg-[var(--bg)] px-2 py-1.5 text-center">
+            <div className="text-[20px] font-bold leading-none text-[var(--fg)]">{value}</div>
+            <div className="mt-1 text-[10px] tracking-wider text-[var(--fg-dim)] uppercase">{units[i]}</div>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}

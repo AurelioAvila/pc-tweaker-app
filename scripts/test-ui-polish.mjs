@@ -50,6 +50,35 @@ const appSource = fs.readFileSync(new URL("../src/App.tsx", import.meta.url), "u
 const mainSource = fs.readFileSync(new URL("../src/main.tsx", import.meta.url), "utf8");
 assert.equal(appSource.match(/<PageBoundary /g)?.length, 2, "both workspace views are guarded");
 assert.match(mainSource, /<PageBoundary[^>]*scope="app"[^>]*>\s*<App \/>/, "the root is guarded");
+// Public text never talks about anti-cheat systems or bans: no warnings,
+// no disclaimers, no vendor names. The app's own detection lists live in the
+// Rust backend (process_guard.rs), which is not public copy and is not read.
+{
+  const { execFileSync } = await import("node:child_process");
+  const tracked = execFileSync("git", ["ls-files"], { encoding: "utf8" }).split("\n");
+  const publicText = tracked.filter(
+    (f) =>
+      /\.(ts|tsx|md|html|json|txt|astro)$/.test(f) &&
+      !f.startsWith("src-tauri/") &&
+      !f.includes("node_modules/") &&
+      !/(^|\/)package(-lock)?\.json$/.test(f) &&
+      f !== "scripts/test-ui-polish.mjs",
+  );
+  const forbidden = [
+    /anti-?cheat/i,
+    /\beasy ?anti/i,
+    /\bbattl?eye\b/i,
+    /\bvanguard\b/i,
+    /\bfaceit\b/i,
+    /\bban(s|ned|ning)?\b/i,
+  ];
+  for (const file of publicText) {
+    const text = fs.readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
+    for (const word of forbidden)
+      assert.doesNotMatch(text, word, `${file}: public text mentions ${word.source}`);
+  }
+  assert.ok(publicText.length > 100, "the public text files were found");
+}
 const { outputFiles } = await build({
   stdin: {
     contents: `

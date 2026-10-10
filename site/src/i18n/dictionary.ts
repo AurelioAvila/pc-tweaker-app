@@ -530,7 +530,7 @@ export const engDictionary: Dictionary = {
       },
       {
         "q": "Can I use it with competitive games?",
-        "a": "PC Tweaker configures Windows and uses supported monitoring paths; it is not an aim or gameplay modification tool. Game and anti-cheat policies can change. Check the rules for your game, league or tournament. Compatibility and freedom from bans cannot be guaranteed."
+        "a": "PC Tweaker tunes Windows itself and reads performance data through standard Windows interfaces. It never changes a game's files, memory or gameplay, and a game that manages its own performance is left exactly as it is while it runs."
       },
       {
         "q": "What is free, and how does Pro work?",

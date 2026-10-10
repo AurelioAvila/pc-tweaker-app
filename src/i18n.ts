@@ -516,13 +516,9 @@ export interface Strings {
     /** The real steps the Rust side performs, shown as it works through them. */
     loadLabel: string;
     loadCadence: string;
-    loadHelp: string;
     stageReading: string;
     stageRaising: string;
     stageApplying: string;
-    /** Readout under the gauge once boost is engaged. */
-    modeAggressive: string;
-    modeDefault: string;
     /** Benchmark stages and the measured outcome. */
     stageMeasuringBefore: string;
     stageMeasuringAfter: string;
@@ -531,6 +527,22 @@ export interface Strings {
     gainAtCeiling: string;
     ceilingLocked: string;
     ceilingUnlocked: string;
+    speedEffective: string;
+    loadExplain: string;
+    chartLoad: string;
+    chartSpeed: string;
+    testTitle: string;
+    testHint: string;
+    testRun: string;
+    testRunning: string;
+    colDefault: string;
+    colBoost: string;
+    rowWork: string;
+    rowAvg: string;
+    rowPeak: string;
+    rowTemp: string;
+    notRun: string;
+    relative: string;
   };
   profiles: {
     title: string;
@@ -1680,14 +1692,10 @@ const it: Strings = {
     active: "Turbo attivo",
     inactive: "Turbo non attivo",
     loadLabel: "CARICO CPU",
-    loadCadence: "Lettura reale · ogni 20 s",
-    loadHelp:
-      "Utilizzo della CPU, non un punteggio del boost. Un carico basso è normale quando il PC è inattivo.",
+    loadCadence: "Carico misurato · aggiornato ogni secondo",
     stageReading: "Lettura del piano energetico",
     stageRaising: "Aumento del limite di boost",
     stageApplying: "Applicazione al sistema",
-    modeAggressive: "Modalità aggressiva",
-    modeDefault: "Modalità predefinita",
     stageMeasuringBefore: "Misurazione prima",
     stageMeasuringAfter: "Nuova misurazione",
     gainMeasured: "{factor}x più veloce",
@@ -1695,6 +1703,24 @@ const it: Strings = {
     gainAtCeiling: "Nessun miglioramento misurato in questo breve test",
     ceilingLocked: "Limite boost bloccato",
     ceilingUnlocked: "Limite boost sbloccato",
+    speedEffective: "{ghz} GHz ora",
+    loadExplain:
+      "Il carico è quanto lavoro sta facendo il processore; Turbo Boost cambia quanto veloce può andare, non quanto è occupato. Un valore alto significa che i programmi su questo PC sono al lavoro in questo momento.",
+    chartLoad: "Carico",
+    chartSpeed: "Velocità",
+    testTitle: "Stessa prova in ogni modalità",
+    testHint:
+      "Un carico fisso di 3 secondi. Eseguilo una volta per modalità per vedere cosa cambia con il boost.",
+    testRun: "Esegui prova di 3 secondi",
+    testRunning: "Prova in corso…",
+    colDefault: "Predefinita",
+    colBoost: "Boost",
+    rowWork: "Lavoro svolto",
+    rowAvg: "Velocità media",
+    rowPeak: "Velocità di picco",
+    rowTemp: "Temperatura CPU",
+    notRun: "Non ancora eseguita",
+    relative: "{pct}% della predefinita",
   },
   profiles: {
     title: "I tuoi profili",
@@ -3289,13 +3315,10 @@ const en: Strings = {
     active: "Turbo active",
     inactive: "Turbo not active",
     loadLabel: "CPU LOAD",
-    loadCadence: "Measured load · every 20 s",
-    loadHelp: "CPU usage, not a boost score. Low usage is normal when your PC is idle.",
+    loadCadence: "Measured load · updated every second",
     stageReading: "Reading the power plan",
     stageRaising: "Raising the boost ceiling",
     stageApplying: "Applying to the system",
-    modeAggressive: "Aggressive mode",
-    modeDefault: "Default mode",
     stageMeasuringBefore: "Measuring before",
     stageMeasuringAfter: "Measuring again",
     gainMeasured: "{factor}x faster",
@@ -3303,6 +3326,23 @@ const en: Strings = {
     gainAtCeiling: "No improvement measured in this short test",
     ceilingLocked: "Boost ceiling locked",
     ceilingUnlocked: "Boost ceiling unlocked",
+    speedEffective: "{ghz} GHz now",
+    loadExplain:
+      "Load is how much work the processor is doing; Turbo Boost changes how fast it may run, not how busy it is. A high reading means programs on this PC are busy right now.",
+    chartLoad: "Load",
+    chartSpeed: "Speed",
+    testTitle: "Same test in each mode",
+    testHint: "A fixed 3-second workload. Run it once in each mode to see what boost changes.",
+    testRun: "Run 3-second test",
+    testRunning: "Testing…",
+    colDefault: "Default",
+    colBoost: "Boost",
+    rowWork: "Work done",
+    rowAvg: "Average speed",
+    rowPeak: "Peak speed",
+    rowTemp: "CPU temperature",
+    notRun: "Not run yet",
+    relative: "{pct}% of Default",
   },
   profiles: {
     title: "Your profiles",
@@ -4901,14 +4941,10 @@ const fr: Strings = {
     active: "Turbo actif",
     inactive: "Turbo inactif",
     loadLabel: "CHARGE CPU",
-    loadCadence: "Mesure réelle · toutes les 20 s",
-    loadHelp:
-      "Utilisation du processeur, pas un score de boost. Une faible charge est normale au repos.",
+    loadCadence: "Charge mesurée · mise à jour chaque seconde",
     stageReading: "Lecture du mode d'alimentation",
     stageRaising: "Augmentation de la limite de boost",
     stageApplying: "Application au système",
-    modeAggressive: "Mode agressif",
-    modeDefault: "Mode par defaut",
     stageMeasuringBefore: "Mesure avant",
     stageMeasuringAfter: "Nouvelle mesure",
     gainMeasured: "{factor}x plus rapide",
@@ -4916,6 +4952,24 @@ const fr: Strings = {
     gainAtCeiling: "Aucune amélioration mesurée lors de ce bref test",
     ceilingLocked: "Limite de boost verrouillee",
     ceilingUnlocked: "Limite de boost debloquee",
+    speedEffective: "{ghz} GHz maintenant",
+    loadExplain:
+      "La charge indique le travail du processeur ; Turbo Boost change la vitesse à laquelle il peut tourner, pas son occupation. Une valeur élevée signifie que des programmes travaillent sur ce PC en ce moment.",
+    chartLoad: "Charge",
+    chartSpeed: "Vitesse",
+    testTitle: "Même test dans chaque mode",
+    testHint:
+      "Une charge fixe de 3 secondes. Lancez-la une fois dans chaque mode pour voir ce que le boost change.",
+    testRun: "Lancer le test de 3 secondes",
+    testRunning: "Test en cours…",
+    colDefault: "Par défaut",
+    colBoost: "Boost",
+    rowWork: "Travail effectué",
+    rowAvg: "Vitesse moyenne",
+    rowPeak: "Vitesse maximale",
+    rowTemp: "Température du processeur",
+    notRun: "Pas encore lancé",
+    relative: "{pct} % du mode par défaut",
   },
   profiles: {
     title: "Vos profils",
@@ -6523,14 +6577,10 @@ const es: Strings = {
     active: "Turbo activo",
     inactive: "Turbo no activo",
     loadLabel: "CARGA CPU",
-    loadCadence: "Lectura real · cada 20 s",
-    loadHelp:
-      "Uso de la CPU, no una puntuación del boost. Un uso bajo es normal cuando el PC está inactivo.",
+    loadCadence: "Carga medida · se actualiza cada segundo",
     stageReading: "Leyendo el plan de energía",
     stageRaising: "Elevando el limite de boost",
     stageApplying: "Aplicando al sistema",
-    modeAggressive: "Modo agresivo",
-    modeDefault: "Modo predeterminado",
     stageMeasuringBefore: "Midiendo antes",
     stageMeasuringAfter: "Midiendo de nuevo",
     gainMeasured: "{factor}x mas rapido",
@@ -6538,6 +6588,24 @@ const es: Strings = {
     gainAtCeiling: "No se midió ninguna mejora en esta prueba breve",
     ceilingLocked: "Limite de boost bloqueado",
     ceilingUnlocked: "Limite de boost desbloqueado",
+    speedEffective: "{ghz} GHz ahora",
+    loadExplain:
+      "La carga es cuánto trabajo hace el procesador; Turbo Boost cambia lo rápido que puede ir, no lo ocupado que está. Un valor alto significa que hay programas trabajando en este PC ahora mismo.",
+    chartLoad: "Carga",
+    chartSpeed: "Velocidad",
+    testTitle: "La misma prueba en cada modo",
+    testHint:
+      "Una carga fija de 3 segundos. Ejecútala una vez en cada modo para ver qué cambia con el boost.",
+    testRun: "Ejecutar prueba de 3 segundos",
+    testRunning: "Probando…",
+    colDefault: "Predeterminado",
+    colBoost: "Boost",
+    rowWork: "Trabajo hecho",
+    rowAvg: "Velocidad media",
+    rowPeak: "Velocidad máxima",
+    rowTemp: "Temperatura de la CPU",
+    notRun: "Aún sin ejecutar",
+    relative: "{pct} % del predeterminado",
   },
   profiles: {
     title: "Tus perfiles",
@@ -8146,13 +8214,10 @@ const de: Strings = {
     active: "Turbo aktiv",
     inactive: "Turbo nicht aktiv",
     loadLabel: "CPU-LAST",
-    loadCadence: "Echte Messung · alle 20 s",
-    loadHelp: "CPU-Auslastung, kein Boost-Wert. Eine niedrige Auslastung im Leerlauf ist normal.",
+    loadCadence: "Gemessene Last · jede Sekunde aktualisiert",
     stageReading: "Energieplan wird gelesen",
     stageRaising: "Boost-Grenze wird angehoben",
     stageApplying: "Wird auf das System angewendet",
-    modeAggressive: "Aggressiver Modus",
-    modeDefault: "Standardmodus",
     stageMeasuringBefore: "Messung vorher",
     stageMeasuringAfter: "Erneute Messung",
     gainMeasured: "{factor}x schneller",
@@ -8160,6 +8225,24 @@ const de: Strings = {
     gainAtCeiling: "Keine Verbesserung in diesem kurzen Test gemessen",
     ceilingLocked: "Boost-Grenze gesperrt",
     ceilingUnlocked: "Boost-Grenze freigegeben",
+    speedEffective: "{ghz} GHz jetzt",
+    loadExplain:
+      "Die Last zeigt, wie viel der Prozessor arbeitet; Turbo Boost ändert, wie schnell er laufen darf, nicht wie ausgelastet er ist. Ein hoher Wert heißt, dass gerade Programme auf diesem PC arbeiten.",
+    chartLoad: "Last",
+    chartSpeed: "Takt",
+    testTitle: "Derselbe Test in jedem Modus",
+    testHint:
+      "Eine feste 3-Sekunden-Last. Führe sie in jedem Modus einmal aus, um zu sehen, was Boost ändert.",
+    testRun: "3-Sekunden-Test starten",
+    testRunning: "Test läuft…",
+    colDefault: "Standard",
+    colBoost: "Boost",
+    rowWork: "Geleistete Arbeit",
+    rowAvg: "Durchschnittstakt",
+    rowPeak: "Spitzentakt",
+    rowTemp: "CPU-Temperatur",
+    notRun: "Noch nicht ausgeführt",
+    relative: "{pct} % von Standard",
   },
   profiles: {
     title: "Deine Profile",
@@ -9772,14 +9855,10 @@ const pt: Strings = {
     active: "Turbo ativo",
     inactive: "Turbo inativo",
     loadLabel: "CARGA CPU",
-    loadCadence: "Leitura real · a cada 20 s",
-    loadHelp:
-      "Utilização da CPU, não uma pontuação de boost. Uma carga baixa é normal quando o PC está inativo.",
+    loadCadence: "Carga medida · atualizada a cada segundo",
     stageReading: "Lendo o plano de energia",
     stageRaising: "Elevando o teto de boost",
     stageApplying: "Aplicando ao sistema",
-    modeAggressive: "Modo agressivo",
-    modeDefault: "Modo padrão",
     stageMeasuringBefore: "Medindo antes",
     stageMeasuringAfter: "Medindo novamente",
     gainMeasured: "{factor}x mais rápido",
@@ -9787,6 +9866,24 @@ const pt: Strings = {
     gainAtCeiling: "Nenhuma melhoria medida neste teste breve",
     ceilingLocked: "Teto de boost travado",
     ceilingUnlocked: "Teto de boost liberado",
+    speedEffective: "{ghz} GHz agora",
+    loadExplain:
+      "A carga é o trabalho que o processador está a fazer; o Turbo Boost muda a velocidade a que pode trabalhar, não quão ocupado está. Um valor alto significa que há programas a trabalhar neste PC neste momento.",
+    chartLoad: "Carga",
+    chartSpeed: "Velocidade",
+    testTitle: "O mesmo teste em cada modo",
+    testHint:
+      "Uma carga fixa de 3 segundos. Execute-a uma vez em cada modo para ver o que o boost muda.",
+    testRun: "Executar teste de 3 segundos",
+    testRunning: "A testar…",
+    colDefault: "Predefinido",
+    colBoost: "Boost",
+    rowWork: "Trabalho feito",
+    rowAvg: "Velocidade média",
+    rowPeak: "Velocidade máxima",
+    rowTemp: "Temperatura da CPU",
+    notRun: "Ainda não executado",
+    relative: "{pct}% do predefinido",
   },
   profiles: {
     title: "Seus perfis",

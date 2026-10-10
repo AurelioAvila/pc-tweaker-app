@@ -33,7 +33,7 @@ const GPU_EVERY = 10;
 const CPU_TEMP_EVERY = 60;
 const DRIVE_EVERY = 15;
 
-function useForeground(): boolean {
+export function useForeground(): boolean {
   const read = () => document.visibilityState === "visible" && document.hasFocus();
   const [on, setOn] = useState(read);
   useEffect(() => {
@@ -50,7 +50,7 @@ function useForeground(): boolean {
   return on;
 }
 
-function useReducedMotion(): boolean {
+export function useReducedMotion(): boolean {
   const query = "(prefers-reduced-motion: reduce)";
   const [reduced, setReduced] = useState(() => window.matchMedia?.(query).matches ?? false);
   useEffect(() => {
@@ -66,7 +66,7 @@ function useReducedMotion(): boolean {
 /** A number that eases to each new reading over most of a second. It writes
  *  its own text node frame by frame, so the rest of the dashboard renders
  *  once per reading, not sixty times. */
-function Num({
+export function Num({
   value,
   reduced,
   suffix = "",
@@ -102,11 +102,11 @@ function Num({
   return <span ref={node}>–</span>;
 }
 
-type Series = { values: (number | null)[]; tone: "accent" | "second"; label: string };
+export type Series = { values: (number | null)[]; tone: "accent" | "second"; label: string };
 
 /** An area chart that slides one step left per reading. Hover shows the value
  *  under the pointer and how long ago it was read. */
-function Spark({
+export function Spark({
   series,
   max,
   height = 64,

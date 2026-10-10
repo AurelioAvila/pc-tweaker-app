@@ -2166,6 +2166,7 @@ pub fn run() {
             recommend::scan_relevant_ids,
             cpuclock::cpu_clock,
             cpubench::cpu_benchmark,
+            cpubench::boost_probe,
             profiles::capture_profile,
             profiles::save_profile,
             profiles::list_profiles,

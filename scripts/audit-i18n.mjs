@@ -146,6 +146,12 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // "Boost" names the mode in every language, like the Turbo Boost title.
+  "it:turboBoost.colBoost",
+  "fr:turboBoost.colBoost",
+  "es:turboBoost.colBoost",
+  "de:turboBoost.colBoost",
+  "pt:turboBoost.colBoost",
   // French uses the same word for the scan's pause button.
   "fr:componentScan.pause",
   // "Total" is the word in French, Spanish and Portuguese; "Download" and

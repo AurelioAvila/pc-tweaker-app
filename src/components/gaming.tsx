@@ -8,6 +8,9 @@ import { friendlyError, arcPath, GAUGE_C, GAUGE_R, GAUGE_START, GAUGE_SWEEP, pol
 import { CoreSteeringStatus, GameEntry, Toast } from "../types";
 import { BoltIcon } from "./icons";
 import { Badge, Toggle } from "./ui";
+import { Spark, useForeground, useReducedMotion } from "./live-dashboard";
+import { push } from "../live-metrics";
+import type { LiveSample } from "../live-metrics";
 
 export function GameSessionsPanel({
   s,
@@ -386,6 +389,15 @@ export function TurboBoostPanel({
   // Live CPU load. This is what the needle rests on when idle, so the gauge is
   // a working instrument between activations rather than a dead dial.
   const [load, setLoad] = useState<number | null>(null);
+  const [mhz, setMhz] = useState<number | null>(null);
+  const [loads, setLoads] = useState<number[]>([]);
+  const [speeds, setSpeeds] = useState<(number | null)[]>([]);
+  const [tick, setTick] = useState(0);
+  // The same fixed test in each mode, kept until the panel closes.
+  const [tests, setTests] = useState<{ default?: Probe; boost?: Probe }>({});
+  const [testing, setTesting] = useState(false);
+  const foreground = useForeground();
+  const reduced = useReducedMotion();
   // The measured before/after ratio, kept until the next activation so the
   // user can still read it after the sweep settles.
   const [gain, setGain] = useState<number | null>(null);
@@ -395,28 +407,56 @@ export function TurboBoostPanel({
       .catch(() => setRatedMhz(null));
   }, []);
 
-  // The dial reports measured load, including during activation.
+  // The dial reports measured load once a second while the panel is on
+  // screen and the window is in front, from the same system-wide counters as
+  // PC Health. It used to read every 20 seconds, so a busy moment (a build, an
+  // update) stayed on the dial long after it ended and looked like a stuck 99%.
   useEffect(() => {
+    if (!foreground) return;
     let cancelled = false;
     const tick = () => {
-      invoke<{ cpu_usage: number }>("system_stats")
-        .then((st) => {
-          if (!cancelled)
-            setLoad(
-              Number.isFinite(st.cpu_usage) ? Math.max(0, Math.min(100, st.cpu_usage)) : null,
-            );
+      invoke<LiveSample>("live_sample")
+        .then((sample) => {
+          if (cancelled) return;
+          const value = Number.isFinite(sample.cpu) ? Math.max(0, Math.min(100, sample.cpu)) : null;
+          setLoad(value);
+          setMhz(sample.cpu_mhz);
+          if (value !== null) setLoads((v) => push(v, value));
+          setSpeeds((v) => push(v, sample.cpu_mhz));
+          setTick((t) => t + 1);
         })
         .catch(() => {
           if (!cancelled) setLoad(null);
         });
     };
     tick();
-    const id = window.setInterval(tick, 20_000);
+    const id = window.setInterval(tick, 1000);
     return () => {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, []);
+  }, [foreground]);
+
+  /** The fixed test, plus the CPU temperature when this PC reports one. */
+  async function probe(seconds: number): Promise<Probe | null> {
+    const result = await invoke<Probe>("boost_probe", { seconds }).catch(() => null);
+    if (!result) return null;
+    const temp = await invoke<{ cpu_temp_c: number | null }>("thermal_report")
+      .then((r) => r.cpu_temp_c)
+      .catch(() => null);
+    return { ...result, temp_c: temp };
+  }
+
+  async function runTest() {
+    if (busy || testing) return;
+    setTesting(true);
+    try {
+      const result = await probe(3);
+      if (result) setTests((t) => ({ ...t, [applied ? "boost" : "default"]: result }));
+    } finally {
+      setTesting(false);
+    }
+  }
 
   async function toggleTurbo() {
     if (busy) return;
@@ -424,20 +464,18 @@ export function TurboBoostPanel({
     setGain(null);
     const engaging = !applied;
     try {
-      let before: { score: number } | null = null;
+      let before: Probe | null = null;
       if (engaging) {
         setStage(s.turboBoost.stageMeasuringBefore);
-        before = await invoke<{ score: number }>("cpu_benchmark", { budgetMs: 900 }).catch(
-          () => null,
-        );
+        before = await probe(2);
+        if (before) setTests((t) => ({ ...t, default: before ?? undefined }));
       }
       setStage(engaging ? s.turboBoost.stageApplying : s.turboBoost.deactivating);
       await invoke(engaging ? "apply_tweak" : "rollback_tweak", { id: "turbo_boost" });
       if (engaging) {
         setStage(s.turboBoost.stageMeasuringAfter);
-        const after = await invoke<{ score: number }>("cpu_benchmark", { budgetMs: 900 }).catch(
-          () => null,
-        );
+        const after = await probe(2);
+        if (after) setTests((t) => ({ ...t, boost: after }));
         setGain(
           before &&
             after &&
@@ -530,7 +568,7 @@ export function TurboBoostPanel({
           <p className="tool-boost-cadence">{s.turboBoost.loadCadence}</p>
         </div>
         <div className="tool-boost-summary">
-          <p className="text-xs text-ink-3 mb-3">{s.turboBoost.loadHelp}</p>
+          <p className="text-xs text-ink-3 mb-3">{s.turboBoost.loadExplain}</p>
           <p
             role="status"
             aria-live="polite"
@@ -546,10 +584,14 @@ export function TurboBoostPanel({
           >
             {readout}
           </p>
-          {!busy && ratedMhz !== null && (
-            <p className="tool-boost-clock text-[12px] text-ink-3">
-              {(ratedMhz / 1000).toFixed(2)} GHz ·{" "}
-              {applied ? s.turboBoost.modeAggressive : s.turboBoost.modeDefault}
+          {!busy && (mhz !== null || ratedMhz !== null) && (
+            <p className="tool-boost-clock flex items-center gap-2 text-[12px] text-ink-3">
+              <Badge kind={applied ? "accent" : "neutral"}>
+                {applied ? s.turboBoost.colBoost : s.turboBoost.colDefault}
+              </Badge>
+              {mhz !== null
+                ? format(s.turboBoost.speedEffective, { ghz: (mhz / 1000).toFixed(2) })
+                : `${((ratedMhz ?? 0) / 1000).toFixed(2)} GHz`}
             </p>
           )}
 
@@ -573,6 +615,98 @@ export function TurboBoostPanel({
           </button>
         </div>
       </div>
+      <div className="tool-boost-charts">
+        <div>
+          <span className="type-label text-ink-3">{s.turboBoost.chartLoad}</span>
+          <Spark
+            series={[{ values: loads, tone: "accent", label: s.turboBoost.chartLoad }]}
+            max={100}
+            height={56}
+            tick={tick}
+            reduced={reduced}
+            formatValue={(v) => (v === null ? "–" : `${Math.round(v)}%`)}
+            s={s}
+          />
+        </div>
+        <div>
+          <span className="type-label text-ink-3">{s.turboBoost.chartSpeed}</span>
+          <Spark
+            series={[{ values: speeds, tone: "second", label: s.turboBoost.chartSpeed }]}
+            max={Math.max(1000, ...speeds.map((v) => v ?? 0)) * 1.1}
+            height={56}
+            tick={tick}
+            reduced={reduced}
+            formatValue={(v) => (v === null ? "–" : `${(v / 1000).toFixed(2)} GHz`)}
+            s={s}
+          />
+        </div>
+      </div>
+      <div className="tool-boost-test">
+        <div className="tool-boost-test-head">
+          <div>
+            <h3>{s.turboBoost.testTitle}</h3>
+            <p>{s.turboBoost.testHint}</p>
+          </div>
+          <button
+            type="button"
+            className="tool-secondary-action"
+            disabled={busy || testing}
+            onClick={() => void runTest()}
+          >
+            {testing ? s.turboBoost.testRunning : s.turboBoost.testRun}
+          </button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th />
+              <th data-active={!applied}>{s.turboBoost.colDefault}</th>
+              <th data-active={applied}>{s.turboBoost.colBoost}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(
+              [
+                [
+                  s.turboBoost.rowWork,
+                  (p: Probe) =>
+                    tests.default && p !== tests.default
+                      ? format(s.turboBoost.relative, {
+                          pct: Math.round((p.score / tests.default.score) * 100),
+                        })
+                      : "100%",
+                ],
+                [s.turboBoost.rowAvg, (p: Probe) => ghz(p.avg_mhz)],
+                [s.turboBoost.rowPeak, (p: Probe) => ghz(p.peak_mhz)],
+                ...(tests.default?.temp_c != null || tests.boost?.temp_c != null
+                  ? [
+                      [
+                        s.turboBoost.rowTemp,
+                        (p: Probe) => (p.temp_c == null ? "–" : `${Math.round(p.temp_c)} °C`),
+                      ] as const,
+                    ]
+                  : []),
+              ] as const
+            ).map(([label, cell]) => (
+              <tr key={label}>
+                <th scope="row">{label}</th>
+                <td>{tests.default ? cell(tests.default) : s.turboBoost.notRun}</td>
+                <td>{tests.boost ? cell(tests.boost) : s.turboBoost.notRun}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
+
+type Probe = {
+  score: number;
+  duration_ms: number;
+  avg_mhz: number | null;
+  peak_mhz: number | null;
+  temp_c?: number | null;
+};
+
+const ghz = (mhz: number | null) => (mhz === null ? "–" : `${(mhz / 1000).toFixed(2)} GHz`);

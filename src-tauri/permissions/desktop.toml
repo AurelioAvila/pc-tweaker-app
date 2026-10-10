@@ -46,6 +46,7 @@ permissions = [
     "allow-scan-relevant-ids",
     "allow-cpu-clock",
     "allow-cpu-benchmark",
+    "allow-boost-probe",
     "allow-capture-profile",
     "allow-save-profile",
     "allow-list-profiles",

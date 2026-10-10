@@ -215,6 +215,59 @@ mod pdh {
     }
 }
 
+/// The processor's performance percentage, read every `every` for `total`
+/// on a query of its own (so the live charts' rates are not disturbed).
+/// Empty when the counter is unavailable.
+#[cfg(windows)]
+pub fn sample_performance(total: std::time::Duration, every: std::time::Duration) -> Vec<f64> {
+    use windows_sys::Win32::System::Performance::{
+        PdhAddEnglishCounterW, PdhCloseQuery, PdhCollectQueryData, PdhGetFormattedCounterValue,
+        PdhOpenQueryW, PDH_FMT_COUNTERVALUE, PDH_FMT_DOUBLE,
+    };
+    let mut query = 0isize;
+    let mut counter = 0isize;
+    let path: Vec<u16> = r"\Processor Information(_Total)\% Processor Performance"
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
+    // SAFETY: local out-pointers, NUL-terminated path, the query is closed below.
+    unsafe {
+        if PdhOpenQueryW(std::ptr::null(), 0, &mut query) != 0 {
+            return Vec::new();
+        }
+        if PdhAddEnglishCounterW(query, path.as_ptr(), 0, &mut counter) != 0 {
+            PdhCloseQuery(query);
+            return Vec::new();
+        }
+        PdhCollectQueryData(query);
+    }
+    let started = std::time::Instant::now();
+    let mut out = Vec::new();
+    while started.elapsed() < total {
+        std::thread::sleep(every);
+        // SAFETY: valid handles; PDH_FMT_DOUBLE selects the double member.
+        unsafe {
+            if PdhCollectQueryData(query) != 0 {
+                continue;
+            }
+            let mut value: PDH_FMT_COUNTERVALUE = std::mem::zeroed();
+            if PdhGetFormattedCounterValue(
+                counter,
+                PDH_FMT_DOUBLE,
+                std::ptr::null_mut(),
+                &mut value,
+            ) == 0
+                && value.CStatus == 0
+            {
+                out.push(value.Anonymous.doubleValue);
+            }
+        }
+    }
+    // SAFETY: the query was opened above.
+    unsafe { PdhCloseQuery(query) };
+    out
+}
+
 #[cfg(windows)]
 fn memory() -> Option<(u64, u64, u64)> {
     use windows_sys::Win32::System::ProcessStatus::{

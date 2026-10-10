@@ -83,9 +83,74 @@ pub async fn cpu_benchmark(budget_ms: Option<u64>) -> Result<BenchResult, String
         .map_err(|e| format!("benchmark did not finish: {}", e))
 }
 
+/// What one repeatable boost test measured: the workload's score, and the
+/// processor's effective speed while it ran (rated clock times Windows'
+/// performance counter, sampled every quarter second).
+#[derive(Serialize, Clone, Debug)]
+pub struct BoostProbe {
+    pub score: u64,
+    pub duration_ms: u64,
+    pub avg_mhz: Option<u32>,
+    pub peak_mhz: Option<u32>,
+}
+
+/// Average and peak of the sampled speeds, or `None` without samples.
+pub fn speed_summary(rated_mhz: Option<u32>, samples: &[f64]) -> (Option<u32>, Option<u32>) {
+    let speeds: Vec<u32> = samples
+        .iter()
+        .filter_map(|&p| crate::livemetrics::effective_mhz(rated_mhz, Some(p)))
+        .collect();
+    if speeds.is_empty() {
+        return (None, None);
+    }
+    let avg = speeds.iter().map(|&m| u64::from(m)).sum::<u64>() / speeds.len() as u64;
+    (Some(avg as u32), speeds.iter().copied().max())
+}
+
+/// The same fixed workload as [`cpu_benchmark`], for a fixed time, with the
+/// speed sampled alongside. Run in each mode, it shows what boost changes:
+/// how fast the processor runs under the same load, not how busy it is.
+#[tauri::command]
+pub async fn boost_probe(seconds: Option<u64>) -> Result<BoostProbe, String> {
+    let budget = seconds.unwrap_or(3).clamp(1, 6) * 1000;
+    tauri::async_runtime::spawn_blocking(move || {
+        let work = std::thread::spawn(move || run_for(budget));
+        #[cfg(windows)]
+        let samples = crate::livemetrics::sample_performance(
+            std::time::Duration::from_millis(budget),
+            std::time::Duration::from_millis(250),
+        );
+        #[cfg(not(windows))]
+        let samples: Vec<f64> = Vec::new();
+        let bench = work
+            .join()
+            .map_err(|_| "boost test did not finish".to_string())?;
+        let (avg_mhz, peak_mhz) =
+            speed_summary(crate::cpuclock::read().map(|c| c.max_mhz), &samples);
+        Ok(BoostProbe {
+            score: bench.score,
+            duration_ms: bench.duration_ms,
+            avg_mhz,
+            peak_mhz,
+        })
+    })
+    .await
+    .map_err(|e| format!("boost test did not finish: {}", e))?
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn speed_summary_averages_and_peaks_only_real_samples() {
+        assert_eq!(speed_summary(Some(4000), &[]), (None, None));
+        assert_eq!(speed_summary(None, &[100.0]), (None, None));
+        assert_eq!(
+            speed_summary(Some(4000), &[100.0, 110.0, f64::NAN, 120.0]),
+            (Some(4400), Some(4800))
+        );
+    }
 
     #[test]
     fn the_benchmark_produces_a_usable_score() {

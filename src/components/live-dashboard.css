@@ -2,9 +2,13 @@
    primary series and a quieter second tone, soft gradients under the lines,
    a faint glow, big tabular numbers. */
 
+/* The quieter second series colour, wherever a live chart is drawn. */
+.live-dashboard,
+.live-spark {
+  --live-second: color-mix(in oklab, var(--info) 75%, var(--text-secondary));
+}
 .live-dashboard {
   container-type: inline-size;
-  --live-second: color-mix(in oklab, var(--info) 75%, var(--text-secondary));
   display: grid;
   gap: 16px;
 }

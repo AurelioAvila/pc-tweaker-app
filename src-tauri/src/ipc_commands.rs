@@ -45,6 +45,7 @@ pub const APP_COMMANDS: &[&str] = &[
     "scan_relevant_ids",
     "cpu_clock",
     "cpu_benchmark",
+    "boost_probe",
     "capture_profile",
     "save_profile",
     "list_profiles",

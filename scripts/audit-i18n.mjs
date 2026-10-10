@@ -152,6 +152,15 @@ const REVIEWED_AS_CORRECT = new Set([
   "es:turboBoost.colBoost",
   "de:turboBoost.colBoost",
   "pt:turboBoost.colBoost",
+  // "1 min" and "5 min" are the same abbreviation in these languages.
+  "it:live.zoomShort",
+  "fr:live.zoomShort",
+  "es:live.zoomShort",
+  "pt:live.zoomShort",
+  "it:live.zoomLong",
+  "fr:live.zoomLong",
+  "es:live.zoomLong",
+  "pt:live.zoomLong",
   // French uses the same word for the scan's pause button.
   "fr:componentScan.pause",
   // "Total" is the word in French, Spanish and Portuguese; "Download" and

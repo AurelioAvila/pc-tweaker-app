@@ -883,7 +883,7 @@ function App() {
                 />
               )}
 
-              {showHealth && <LiveDashboard s={s} lang={lang} />}
+              {showHealth && <LiveDashboard s={s} lang={lang} onNavigate={setFilter} />}
               {showHealth && (
                 <SystemRepairCard
                   s={s}

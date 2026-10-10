@@ -191,6 +191,8 @@ pub struct DebloatApp {
     pub size_bytes: Option<u64>,
     /// Size of this account's data for the app, which removal deletes.
     pub data_bytes: Option<u64>,
+    /// When Windows installed the package for this account, Unix seconds.
+    pub installed_at: Option<i64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -286,6 +288,7 @@ fn inventory(system: &impl PackageSystem) -> Result<Vec<DebloatApp>, String> {
                 publisher: None,
                 size_bytes: None,
                 data_bytes: None,
+                installed_at: None,
             });
         }
         for info in found {
@@ -307,6 +310,7 @@ fn inventory(system: &impl PackageSystem) -> Result<Vec<DebloatApp>, String> {
                 publisher: None,
                 size_bytes: None,
                 data_bytes: None,
+                installed_at: None,
             });
         }
     }
@@ -673,6 +677,12 @@ mod platform {
                 Some(format!("data:image/png;base64,{}", STANDARD.encode(bytes)))
             })();
             app.icon_data_url = icon;
+            // FILETIME ticks (100 ns since 1601) to Unix seconds.
+            app.installed_at = package
+                .InstalledDate()
+                .ok()
+                .map(|d| d.UniversalTime / 10_000_000 - 11_644_473_600)
+                .filter(|&t| t > 0);
             app.publisher = package
                 .PublisherDisplayName()
                 .ok()

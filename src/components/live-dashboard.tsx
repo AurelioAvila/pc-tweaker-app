@@ -1,29 +1,33 @@
 // "Right now" on PC Health: live charts for CPU, memory, disk, network and,
-// where the PC exposes them, graphics and temperature sensors.
+// where the PC exposes them, graphics and temperature sensors, what is using
+// the machine, and a plain word on anything that needs attention.
 //
 // The page promises that nothing runs in the background, so sampling is
 // strictly tied to being looked at: one shared one-second timer, started only
 // while this block is mounted, the document is visible and the window is in
 // front, and stopped the moment any of those stops being true. Every reading
-// is a system-wide counter (livemetrics.rs); no process is opened or listed
-// and nothing is written to disk.
+// is a system-wide counter or the handle-free process table (livemetrics.rs,
+// process_guard.rs); no process is opened and nothing is written to disk.
 import { useEffect, useId, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, type Lang, type Strings } from "../i18n";
-import type { SystemStats, ThermalReport } from "../types";
+import type { Section, SystemStats, ThermalReport } from "../types";
 import {
   formatGB,
   formatRate,
   hasSensors,
   HISTORY,
+  insights,
   memorySplit,
   niceCeiling,
+  peakOf,
   push,
   sparkPoints,
   verdict,
+  WINDOW_SHORT,
   type LiveSample,
 } from "../live-metrics";
-import { Badge } from "./ui";
+import { Badge, type BadgeKind } from "./ui";
 import "./live-dashboard.css";
 
 /** Sensors need an outside tool (nvidia-smi, or PowerShell for the CPU zone),
@@ -32,6 +36,11 @@ import "./live-dashboard.css";
 const GPU_EVERY = 10;
 const CPU_TEMP_EVERY = 60;
 const DRIVE_EVERY = 15;
+/** The process table is read every other second: plenty for a top five. */
+const USERS_EVERY = 2;
+
+type ResourceUser = { name: string; processes: number; cpu: number; memory: number };
+type ResourceUsers = { cpu: ResourceUser[]; memory: ResourceUser[] };
 
 export function useForeground(): boolean {
   const read = () => document.visibilityState === "visible" && document.hasFocus();
@@ -105,7 +114,9 @@ export function Num({
 export type Series = { values: (number | null)[]; tone: "accent" | "second"; label: string };
 
 /** An area chart that slides one step left per reading. Hover shows the value
- *  under the pointer and how long ago it was read. */
+ *  under the pointer and how long ago it was read. With `axis`, it draws a
+ *  thin grid with labels; with `peak`, it marks the first series' highest
+ *  point in view. */
 export function Spark({
   series,
   max,
@@ -114,6 +125,9 @@ export function Spark({
   reduced,
   formatValue,
   s,
+  slots = WINDOW_SHORT,
+  axis,
+  peak = false,
 }: {
   series: Series[];
   max: number;
@@ -122,64 +136,84 @@ export function Spark({
   reduced: boolean;
   formatValue: (v: number | null) => string;
   s: Strings;
+  slots?: number;
+  axis?: number[];
+  peak?: boolean;
 }) {
-  const width = 300;
+  const width = 600;
   const [hover, setHover] = useState<number | null>(null);
   const id = `spark${useId().replace(/:/g, "")}`;
-  const length = Math.max(...series.map((x) => x.values.length));
+  const shown = series.map((x) => ({ ...x, values: x.values.slice(-slots) }));
+  const length = Math.max(0, ...shown.map((x) => x.values.length));
+  const x = (index: number) => ((slots - length + index) / (slots - 1)) * 100;
+  const top = peak ? peakOf(shown[0]?.values ?? []) : null;
   return (
     <div
       className="live-spark"
+      data-axis={!!axis}
+      style={{ height }}
       onMouseLeave={() => setHover(null)}
       onMouseMove={(e) => {
         const box = e.currentTarget.getBoundingClientRect();
-        const slot = Math.round(((e.clientX - box.left) / box.width) * (HISTORY - 1));
-        const index = slot - (HISTORY - length);
+        const slot = Math.round(((e.clientX - box.left) / box.width) * (slots - 1));
+        const index = slot - (slots - length);
         setHover(index >= 0 && index < length ? index : null);
       }}
     >
-      <div
-        key={tick}
-        className={reduced ? "live-track" : "live-track live-slide"}
-        style={{ "--live-step": `${100 / (HISTORY - 1)}%` } as React.CSSProperties}
-      >
-        <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            {series.map((x) => (
-              <linearGradient key={x.tone} id={`${id}-${x.tone}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" className={`live-stop-${x.tone}`} stopOpacity="0.35" />
-                <stop offset="100%" className={`live-stop-${x.tone}`} stopOpacity="0" />
-              </linearGradient>
-            ))}
-          </defs>
-          {series.map((x) => {
-            const points = sparkPoints(x.values, max, width, height);
-            if (points.length < 2) return null;
-            const line = points.map(([px, py], i) => `${i ? "L" : "M"}${px},${py}`).join(" ");
-            const area = `${line} L${points[points.length - 1][0]},${height} L${points[0][0]},${height} Z`;
-            return (
-              <g key={x.tone} className={`live-series live-series-${x.tone}`}>
-                <path d={area} fill={`url(#${id}-${x.tone})`} />
-                <path d={line} className="live-line" vectorEffect="non-scaling-stroke" />
-              </g>
-            );
-          })}
-        </svg>
+      {axis?.map((value) => (
+        <span
+          key={value}
+          className="live-grid-line"
+          style={{ bottom: `${(value / max) * 100}%` }}
+          aria-hidden="true"
+        >
+          <small>{formatValue(value)}</small>
+        </span>
+      ))}
+      <div className="live-clip">
+        <div
+          key={tick}
+          className={reduced ? "live-track" : "live-track live-slide"}
+          style={{ "--live-step": `${100 / (slots - 1)}%` } as React.CSSProperties}
+        >
+          <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              {shown.map((x) => (
+                <linearGradient key={x.tone} id={`${id}-${x.tone}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" className={`live-stop-${x.tone}`} stopOpacity="0.35" />
+                  <stop offset="100%" className={`live-stop-${x.tone}`} stopOpacity="0" />
+                </linearGradient>
+              ))}
+            </defs>
+            {shown.map((x) => {
+              const points = sparkPoints(x.values, max, width, height, slots);
+              if (points.length < 2) return null;
+              const line = points.map(([px, py], i) => `${i ? "L" : "M"}${px},${py}`).join(" ");
+              const area = `${line} L${points[points.length - 1][0]},${height} L${points[0][0]},${height} Z`;
+              return (
+                <g key={x.tone} className={`live-series live-series-${x.tone}`}>
+                  <path d={area} fill={`url(#${id}-${x.tone})`} />
+                  <path d={line} className="live-line" vectorEffect="non-scaling-stroke" />
+                </g>
+              );
+            })}
+          </svg>
+          {top && top.value > 0 && (
+            <span
+              className="live-peak"
+              style={{ left: `${x(top.index)}%`, bottom: `${Math.min(1, top.value / max) * 100}%` }}
+            >
+              <small>{format(s.live.peak, { value: formatValue(top.value) })}</small>
+            </span>
+          )}
+        </div>
       </div>
       {hover !== null && (
-        <span
-          className="live-cursor"
-          style={{ left: `${((HISTORY - length + hover) / (HISTORY - 1)) * 100}%` }}
-          aria-hidden="true"
-        />
+        <span className="live-cursor" style={{ left: `${x(hover)}%` }} aria-hidden="true" />
       )}
       {hover !== null && (
-        <div
-          className="live-tooltip"
-          style={{ left: `${((HISTORY - length + hover) / (HISTORY - 1)) * 100}%` }}
-          role="tooltip"
-        >
-          {series.map((x) => (
+        <div className="live-tooltip" style={{ left: `${x(hover)}%` }} role="tooltip">
+          {shown.map((x) => (
             <span key={x.tone} data-tone={x.tone}>
               {x.label} <strong>{formatValue(x.values[hover] ?? null)}</strong>
             </span>
@@ -235,16 +269,18 @@ function Card({
   value,
   extra,
   wide = false,
+  index,
   children,
 }: {
   title: string;
-  wide?: boolean;
   value?: React.ReactNode;
   extra?: React.ReactNode;
+  wide?: boolean;
+  index: number;
   children: React.ReactNode;
 }) {
   return (
-    <section className="live-card" data-wide={wide}>
+    <section className="live-card" data-wide={wide} style={{ "--i": index } as React.CSSProperties}>
       <header>
         <h3>{title}</h3>
         {extra}
@@ -255,12 +291,56 @@ function Card({
   );
 }
 
-export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
+function UsersList({
+  users,
+  value,
+  s,
+}: {
+  users: ResourceUser[];
+  value: (u: ResourceUser) => { text: string; ratio: number };
+  s: Strings;
+}) {
+  if (!users.length) return <p className="live-muted">{s.live.measuring}</p>;
+  return (
+    <ol className="live-users">
+      {users.map((u) => {
+        const v = value(u);
+        return (
+          <li key={u.name}>
+            <span className="live-user-name">
+              <strong>{u.name}</strong>
+              <small>
+                {u.processes === 1
+                  ? s.live.processOne
+                  : format(s.live.processes, { count: u.processes })}
+              </small>
+            </span>
+            <span className="live-user-value">{v.text}</span>
+            <span className="live-user-bar" aria-hidden="true">
+              <span style={{ width: `${Math.max(2, Math.min(100, v.ratio * 100))}%` }} />
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+export function LiveDashboard({
+  s,
+  lang,
+  onNavigate,
+}: {
+  s: Strings;
+  lang: Lang;
+  onNavigate?: (section: Section) => void;
+}) {
   const foreground = useForeground();
   const reduced = useReducedMotion();
   const l = s.live;
   const [latest, setLatest] = useState<LiveSample | null>(null);
   const [cpu, setCpu] = useState<number[]>([]);
+  const [ram, setRam] = useState<(number | null)[]>([]);
   const [cores, setCores] = useState<number[][]>([]);
   const [disk, setDisk] = useState<{ read: (number | null)[]; write: (number | null)[] }>({
     read: [],
@@ -270,10 +350,12 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
     down: [],
     up: [],
   });
+  const [users, setUsers] = useState<ResourceUsers | null>(null);
   const [drive, setDrive] = useState<{ used: number; total: number } | null>(null);
   const [sensors, setSensors] = useState<ThermalReport | null | "none">(null);
   const [tick, setTick] = useState(0);
   const [failed, setFailed] = useState(false);
+  const [slots, setSlots] = useState(WINDOW_SHORT);
   /** What the first full report found; null until it has answered. */
   const sensorsSeen = useRef<{ cpu: boolean; gpu: boolean } | null>(null);
 
@@ -289,6 +371,7 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
         setFailed(false);
         setLatest(next);
         setCpu((v) => push(v, next.cpu));
+        setRam((v) => push(v, next.ram_total ? (next.ram_used / next.ram_total) * 100 : null));
         setCores((v) => next.cores.map((c, i) => push(v[i] ?? [], c, 30)));
         setDisk((v) => ({
           read: push(v.read, next.disk_read_bps),
@@ -296,6 +379,11 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
         }));
         setNet((v) => ({ down: push(v.down, next.net_down_bps), up: push(v.up, next.net_up_bps) }));
         setTick((t) => t + 1);
+        if (count % USERS_EVERY === 0) {
+          void invoke<ResourceUsers>("resource_users")
+            .then(setUsers)
+            .catch(() => undefined);
+        }
         if (count % DRIVE_EVERY === 0) {
           void invoke<SystemStats>("system_stats")
             .then(
@@ -339,15 +427,24 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
   }, [foreground]);
 
   const ramPct = latest && latest.ram_total ? (latest.ram_used / latest.ram_total) * 100 : null;
+  const drivePct = drive ? (drive.used / drive.total) * 100 : null;
   const judged = verdict(cpu, ramPct);
+  const notes = insights({ cpu, memoryPct: ramPct, drivePct });
   const split = latest ? memorySplit(latest) : null;
-  const diskMax = niceCeiling([...disk.read, ...disk.write], 1_000_000);
-  const netMax = niceCeiling([...net.down, ...net.up], 200_000);
+  const diskMax = niceCeiling([...disk.read, ...disk.write].slice(-slots * 2), 1_000_000);
+  const netMax = niceCeiling([...net.down, ...net.up].slice(-slots * 2), 200_000);
   const rate = (v: number | null) => formatRate(v, lang) ?? l.measuring;
   const pct = (v: number | null) => (v === null ? l.measuring : `${Math.round(v)}%`);
+  const peakRate = (values: (number | null)[]) =>
+    formatRate(peakOf(values.slice(-slots))?.value ?? null, lang);
   const gpu = sensors && sensors !== "none" ? sensors.gpus[0] : undefined;
   const cpuTemp = sensors && sensors !== "none" ? sensors.cpu_temp_c : null;
   const loading = latest === null;
+  const totalCpu = Math.max(1, ...(users?.cpu.map((u) => u.cpu) ?? [0]));
+  const totalMemory = latest?.ram_total ?? 1;
+  const minutes = slots / 60;
+  const diskPeak = peakRate([...disk.read, ...disk.write]);
+  const netPeak = peakRate([...net.down, ...net.up]);
 
   const verdictBadge = !foreground ? (
     <Badge kind="muted">{l.paused}</Badge>
@@ -360,6 +457,19 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
   ) : (
     <Badge kind="muted">{l.measuring}</Badge>
   );
+  const noteText = (id: (typeof notes)[number]["id"], value?: number) =>
+    id === "memory"
+      ? format(l.insightMemory, { pct: value ?? 0 })
+      : id === "cpu"
+        ? format(l.insightCpu, { pct: value ?? 0 })
+        : id === "drive"
+          ? format(l.insightDrive, { pct: value ?? 0 })
+          : l.insightCalm;
+  const noteKind: Record<(typeof notes)[number]["tone"], BadgeKind> = {
+    ok: "ok",
+    warn: "warn",
+    danger: "danger",
+  };
 
   return (
     <section className="tool-panel live-dashboard" aria-label={l.title}>
@@ -381,62 +491,93 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
       </header>
       {failed && <p className="live-error">{l.failed}</p>}
 
+      {!loading && (
+        <ul className="live-notes" aria-live="polite">
+          {notes.map((note) => (
+            <li key={note.id} data-tone={note.tone}>
+              <Badge kind={noteKind[note.tone]}>{note.tone === "ok" ? "✓" : "!"}</Badge>
+              <span>{noteText(note.id, note.pct)}</span>
+              {note.id === "memory" && onNavigate && (
+                <button
+                  type="button"
+                  className="tool-secondary-action"
+                  onClick={() => onNavigate("startup")}
+                >
+                  {l.actionStartup}
+                </button>
+              )}
+              {note.id === "drive" && onNavigate && (
+                <button
+                  type="button"
+                  className="tool-secondary-action"
+                  onClick={() => onNavigate("maintenance")}
+                >
+                  {l.actionCleanup}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
       <div className="live-grid" data-loading={loading}>
         <Card
+          index={0}
           wide
-          title={l.cpu}
-          value={
-            <>
-              <strong>
-                <Num value={latest ? latest.cpu : null} reduced={reduced} />
-              </strong>
-              <small>%</small>
-            </>
-          }
+          title={l.activity}
           extra={
-            <span className="live-meta">
-              {latest?.cpu_mhz
-                ? format(l.speed, { ghz: (latest.cpu_mhz / 1000).toFixed(2) })
-                : null}
-              {cpuTemp !== null && cpuTemp !== undefined && <span>{Math.round(cpuTemp)} °C</span>}
+            <div className="live-zoom" role="group" aria-label={l.activity}>
+              {[WINDOW_SHORT, HISTORY].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  aria-pressed={slots === n}
+                  onClick={() => setSlots(n)}
+                >
+                  {n === WINDOW_SHORT ? l.zoomShort : l.zoomLong}
+                </button>
+              ))}
+            </div>
+          }
+          value={
+            <span className="live-pair">
+              <span data-tone="accent">
+                {l.cpu}{" "}
+                <strong>
+                  <Num value={latest ? latest.cpu : null} reduced={reduced} suffix="%" />
+                </strong>
+              </span>
+              <span data-tone="second">
+                {l.memory}{" "}
+                <strong>
+                  <Num value={ramPct} reduced={reduced} suffix="%" />
+                </strong>
+              </span>
             </span>
           }
         >
           <Spark
-            series={[{ values: cpu, tone: "accent", label: l.cpu }]}
+            series={[
+              { values: cpu, tone: "accent", label: l.cpu },
+              { values: ram, tone: "second", label: l.memory },
+            ]}
             max={100}
+            height={170}
             tick={tick}
             reduced={reduced}
             formatValue={pct}
             s={s}
+            slots={slots}
+            axis={[25, 50, 75, 100]}
+            peak
           />
-          {cores.length > 0 && (
-            <div className="live-cores" aria-label={format(l.cores, { count: cores.length })}>
-              {cores.map((values, i) => {
-                const now = values[values.length - 1] ?? 0;
-                const points = sparkPoints(values, 100, 60, 18, 30);
-                return (
-                  <div
-                    key={i}
-                    className="live-core"
-                    title={`${format(l.core, { n: i + 1 })}: ${Math.round(now)}%`}
-                  >
-                    <svg viewBox="0 0 60 18" preserveAspectRatio="none" aria-hidden="true">
-                      {points.length > 1 && (
-                        <path
-                          d={`${points.map(([x, y], j) => `${j ? "L" : "M"}${x},${y}`).join(" ")} L60,18 L${points[0][0]},18 Z`}
-                        />
-                      )}
-                    </svg>
-                    <span>{Math.round(now)}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div className="live-axis-x" aria-hidden="true">
+            <span>{format(l.minutesAgo, { n: minutes })}</span>
+            <span>{l.now}</span>
+          </div>
         </Card>
 
-        <Card title={l.memory}>
+        <Card index={1} title={l.memory}>
           <div className="live-memory">
             <Ring
               split={split}
@@ -467,6 +608,75 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
         </Card>
 
         <Card
+          index={2}
+          title={l.cpu}
+          value={
+            <>
+              <strong>
+                <Num value={latest ? latest.cpu : null} reduced={reduced} />
+              </strong>
+              <small>%</small>
+            </>
+          }
+          extra={
+            <span className="live-meta">
+              {latest?.cpu_mhz
+                ? format(l.speed, { ghz: (latest.cpu_mhz / 1000).toFixed(2) })
+                : null}
+              {cpuTemp !== null && cpuTemp !== undefined && <span>{Math.round(cpuTemp)} °C</span>}
+            </span>
+          }
+        >
+          {cores.length > 0 && (
+            <div className="live-cores" aria-label={format(l.cores, { count: cores.length })}>
+              {cores.map((values, i) => {
+                const now = values[values.length - 1] ?? 0;
+                const points = sparkPoints(values, 100, 60, 18, 30);
+                return (
+                  <div
+                    key={i}
+                    className="live-core"
+                    title={`${format(l.core, { n: i + 1 })}: ${Math.round(now)}%`}
+                  >
+                    <svg viewBox="0 0 60 18" preserveAspectRatio="none" aria-hidden="true">
+                      {points.length > 1 && (
+                        <path
+                          d={`${points.map(([px, py], j) => `${j ? "L" : "M"}${px},${py}`).join(" ")} L60,18 L${points[0][0]},18 Z`}
+                        />
+                      )}
+                    </svg>
+                    <span>{Math.round(now)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
+        <Card index={3} title={l.usingTitle} wide>
+          <p className="live-muted">{l.usingHint}</p>
+          <div className="live-users-grid">
+            <div>
+              <h4>{l.usingCpu}</h4>
+              <UsersList
+                users={users?.cpu ?? []}
+                value={(u) => ({ text: `${u.cpu.toFixed(1)}%`, ratio: u.cpu / totalCpu })}
+                s={s}
+              />
+            </div>
+            <div>
+              <h4>{l.usingMemory}</h4>
+              <UsersList
+                users={users?.memory ?? []}
+                value={(u) => ({ text: formatGB(u.memory, lang), ratio: u.memory / totalMemory })}
+                s={s}
+              />
+            </div>
+          </div>
+        </Card>
+
+        <Card
+          index={4}
           title={l.disk}
           value={
             <span className="live-pair">
@@ -478,6 +688,9 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
               </span>
             </span>
           }
+          extra={
+            diskPeak && <span className="live-meta">{format(l.peak, { value: diskPeak })}</span>
+          }
         >
           <Spark
             series={[
@@ -485,19 +698,15 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
               { values: disk.write, tone: "second", label: l.write },
             ]}
             max={diskMax}
+            height={72}
             tick={tick}
             reduced={reduced}
             formatValue={rate}
             s={s}
+            slots={slots}
           />
           {drive && (
-            <div
-              className="live-bar"
-              title={format(l.systemDrive, {
-                used: formatGB(drive.used, lang),
-                total: formatGB(drive.total, lang),
-              })}
-            >
+            <div className="live-bar">
               <span style={{ width: `${(drive.used / drive.total) * 100}%` }} />
               <small>
                 {format(l.systemDrive, {
@@ -510,6 +719,7 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
         </Card>
 
         <Card
+          index={5}
           title={l.network}
           value={
             <span className="live-pair">
@@ -521,6 +731,7 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
               </span>
             </span>
           }
+          extra={netPeak && <span className="live-meta">{format(l.peak, { value: netPeak })}</span>}
         >
           <Spark
             series={[
@@ -528,15 +739,18 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
               { values: net.up, tone: "second", label: l.up },
             ]}
             max={netMax}
+            height={72}
             tick={tick}
             reduced={reduced}
             formatValue={rate}
             s={s}
+            slots={slots}
           />
         </Card>
 
         {gpu ? (
           <Card
+            index={6}
             title={l.gpu}
             value={
               <>
@@ -584,7 +798,7 @@ export function LiveDashboard({ s, lang }: { s: Strings; lang: Lang }) {
           </Card>
         ) : (
           sensors === "none" && (
-            <Card title={l.sensors}>
+            <Card index={6} title={l.sensors}>
               <div className="live-empty">
                 <Badge kind="muted">{l.notAvailable}</Badge>
                 <p>{l.sensorsHint}</p>

@@ -290,52 +290,131 @@
   text-align: right;
   white-space: nowrap;
 }
-.debloat-row-more {
-  display: contents;
-}
-.debloat-row-more summary {
+.debloat-lose {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 32px;
   padding: 0 10px;
+  border: 0;
   border-radius: 8px;
+  background: transparent;
   color: var(--text-secondary);
   font-size: 12px;
   font-weight: 600;
-  list-style: none;
-  cursor: pointer;
   white-space: nowrap;
+  cursor: pointer;
 }
-.debloat-row-more summary::-webkit-details-marker {
-  display: none;
-}
-.debloat-row-more summary:hover,
-.debloat-row-more[open] summary {
+.debloat-lose:hover {
   background: var(--surface-hover);
   color: var(--text-primary);
 }
-.debloat-row-more summary svg {
+.debloat-lose svg {
   width: 15px;
   height: 15px;
 }
-.debloat-row-details {
-  display: grid;
-  grid-column: 1 / -1;
-  gap: 8px;
-  margin: 4px 0 2px 70px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  background: color-mix(in oklab, var(--surface-2) 60%, transparent);
+/* "What you lose": a popover anchored under its button where the browser
+   supports anchoring, centred otherwise. */
+.debloat-popover {
+  width: min(380px, calc(100vw - 32px));
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-l);
+  background: var(--surface-2);
+  box-shadow: 0 18px 50px rgb(0 0 0 / 0.5);
   color: var(--text-secondary);
   font-size: 12.5px;
   line-height: 1.55;
 }
-.debloat-row-details p {
+.debloat-popover:popover-open {
+  display: grid;
+  gap: 8px;
+}
+@supports (position-area: bottom) {
+  .debloat-popover {
+    position-area: bottom span-left;
+    margin-top: 6px;
+    position-try-fallbacks: flip-block;
+  }
+}
+.debloat-popover p {
   margin: 0;
 }
-.debloat-row-details > button {
+.debloat-popover > p:first-of-type {
+  color: var(--text-primary);
+}
+.debloat-popover .debloat-app-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+}
+.debloat-popover .debloat-app-mark img {
+  width: 22px;
+  height: 22px;
+}
+.debloat-popover > button {
   justify-self: start;
+}
+.debloat-popover-facts {
+  display: flex;
+  gap: 18px;
+  margin: 0;
+}
+.debloat-popover-facts dt {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.debloat-popover-facts dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Category groups, collapsible, each with its own quick action. */
+.debloat-group {
+  display: grid;
+  gap: 8px;
+}
+.debloat-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.debloat-group-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 2px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.debloat-group-toggle:hover {
+  background: var(--surface-hover);
+}
+.debloat-group-toggle svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+.debloat-group[data-open="false"] .debloat-group-toggle svg {
+  transform: rotate(-90deg);
+}
+.debloat-group-toggle h3 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 650;
+}
+.debloat-group-size {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 .debloat-identity {
   display: grid;
@@ -432,11 +511,13 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px 10px 18px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--border-strong));
   border-radius: var(--radius-l);
-  background: color-mix(in oklab, var(--surface-2) 92%, transparent);
-  box-shadow: 0 14px 36px rgb(0 0 0 / 0.4);
-  backdrop-filter: blur(10px);
+  /* Opaque, so nothing reads through it while it floats over the list. */
+  background: var(--surface-2);
+  box-shadow:
+    0 -1px 0 color-mix(in oklab, white 6%, transparent) inset,
+    0 16px 40px rgb(0 0 0 / 0.55);
   transition:
     opacity var(--dur-base) var(--ease-standard),
     transform var(--dur-base) var(--ease-standard);
@@ -664,13 +745,10 @@
     grid-column: 2;
     grid-row: 1;
   }
-  .debloat-row-more summary {
+  .debloat-lose {
     grid-column: 1 / -1;
     justify-self: start;
     margin-left: 62px;
-  }
-  .debloat-row-details {
-    margin-left: 0;
   }
   .debloat-actionbar {
     flex-wrap: wrap;

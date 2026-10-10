@@ -797,6 +797,23 @@ export interface Strings {
     sensorsHint: string;
     now: string;
     secondsAgo: string;
+    activity: string;
+    zoomShort: string;
+    zoomLong: string;
+    minutesAgo: string;
+    peak: string;
+    insightCalm: string;
+    insightMemory: string;
+    insightCpu: string;
+    insightDrive: string;
+    actionStartup: string;
+    actionCleanup: string;
+    usingTitle: string;
+    usingHint: string;
+    usingCpu: string;
+    usingMemory: string;
+    processes: string;
+    processOne: string;
   };
   folderScan: {
     stop: string;
@@ -1993,6 +2010,27 @@ const it: Strings = {
       "Su questo PC Windows non espone questi sensori senza gli strumenti del produttore, quindi non tiriamo a indovinare.",
     now: "ora",
     secondsAgo: "{s} s fa",
+    activity: "Attività",
+    zoomShort: "1 min",
+    zoomLong: "5 min",
+    minutesAgo: "{n} min fa",
+    peak: "Picco {value}",
+    insightCalm: "È tutto tranquillo. Al momento nulla richiede la tua attenzione.",
+    insightMemory:
+      "La memoria è quasi piena ({pct}%). Chiudi le app che non usi o controlla cosa parte con Windows.",
+    insightCpu:
+      "Il processore è impegnato da un po' ({pct}% in media). L'elenco qui sotto mostra cosa lo sta usando.",
+    insightDrive:
+      "L'unità di sistema è quasi piena ({pct}%). Windows rallenta quando resta senza spazio.",
+    actionStartup: "Apri Avvio",
+    actionCleanup: "Libera spazio",
+    usingTitle: "Cosa sta usando le risorse",
+    usingHint:
+      "App raggruppate per nome, dall'elenco dei processi di Windows. Non viene aperto né modificato nulla.",
+    usingCpu: "Processore",
+    usingMemory: "Memoria",
+    processes: "{count} processi",
+    processOne: "1 processo",
   },
   folderScan: {
     stop: "Interrompi ricerca",
@@ -3613,6 +3651,27 @@ const en: Strings = {
       "Windows doesn't expose these sensors on this PC without the hardware maker's own tools, so nothing is guessed.",
     now: "now",
     secondsAgo: "{s} s ago",
+    activity: "Activity",
+    zoomShort: "1 min",
+    zoomLong: "5 min",
+    minutesAgo: "{n} min ago",
+    peak: "Peak {value}",
+    insightCalm: "Everything looks calm. Nothing needs your attention right now.",
+    insightMemory:
+      "Memory is running high ({pct}%). Close apps you aren't using, or check what starts with Windows.",
+    insightCpu:
+      "The processor has been busy for a while ({pct}% on average). The list below shows what is using it.",
+    insightDrive:
+      "Your system drive is nearly full ({pct}%). Windows slows down when it runs short of space.",
+    actionStartup: "Open Startup",
+    actionCleanup: "Free up space",
+    usingTitle: "What's using resources",
+    usingHint:
+      "Apps grouped by name, from Windows' own process list. Nothing is opened or changed.",
+    usingCpu: "Processor",
+    usingMemory: "Memory",
+    processes: "{count} processes",
+    processOne: "1 process",
   },
   folderScan: {
     stop: "Stop search",
@@ -5247,6 +5306,27 @@ const fr: Strings = {
       "Sur ce PC, Windows n'expose pas ces capteurs sans les outils du fabricant : rien n'est donc deviné.",
     now: "maintenant",
     secondsAgo: "il y a {s} s",
+    activity: "Activité",
+    zoomShort: "1 min",
+    zoomLong: "5 min",
+    minutesAgo: "il y a {n} min",
+    peak: "Pic {value}",
+    insightCalm: "Tout est calme. Rien ne demande votre attention pour le moment.",
+    insightMemory:
+      "La mémoire est très sollicitée ({pct} %). Fermez les applications inutilisées ou vérifiez ce qui démarre avec Windows.",
+    insightCpu:
+      "Le processeur est occupé depuis un moment ({pct} % en moyenne). La liste ci-dessous montre ce qui l'utilise.",
+    insightDrive:
+      "Le lecteur système est presque plein ({pct} %). Windows ralentit quand l'espace vient à manquer.",
+    actionStartup: "Ouvrir Démarrage",
+    actionCleanup: "Libérer de l'espace",
+    usingTitle: "Ce qui utilise les ressources",
+    usingHint:
+      "Applications regroupées par nom, à partir de la liste des processus de Windows. Rien n'est ouvert ni modifié.",
+    usingCpu: "Processeur",
+    usingMemory: "Mémoire",
+    processes: "{count} processus",
+    processOne: "1 processus",
   },
   folderScan: {
     stop: "Arrêter la recherche",
@@ -6879,6 +6959,27 @@ const es: Strings = {
       "En este PC, Windows no expone estos sensores sin las herramientas del fabricante, así que no se inventa nada.",
     now: "ahora",
     secondsAgo: "hace {s} s",
+    activity: "Actividad",
+    zoomShort: "1 min",
+    zoomLong: "5 min",
+    minutesAgo: "hace {n} min",
+    peak: "Pico {value}",
+    insightCalm: "Todo está tranquilo. Ahora mismo nada necesita tu atención.",
+    insightMemory:
+      "La memoria está muy ocupada ({pct} %). Cierra las apps que no uses o revisa qué se inicia con Windows.",
+    insightCpu:
+      "El procesador lleva un rato ocupado ({pct} % de media). La lista de abajo muestra qué lo está usando.",
+    insightDrive:
+      "La unidad del sistema está casi llena ({pct} %). Windows se ralentiza cuando le falta espacio.",
+    actionStartup: "Abrir Inicio",
+    actionCleanup: "Liberar espacio",
+    usingTitle: "Qué está usando recursos",
+    usingHint:
+      "Apps agrupadas por nombre, a partir de la lista de procesos de Windows. No se abre ni se cambia nada.",
+    usingCpu: "Procesador",
+    usingMemory: "Memoria",
+    processes: "{count} procesos",
+    processOne: "1 proceso",
   },
   folderScan: {
     stop: "Detener búsqueda",
@@ -8518,6 +8619,27 @@ const de: Strings = {
       "Windows stellt diese Sensoren auf diesem PC ohne die Tools des Herstellers nicht bereit, deshalb wird nichts geschätzt.",
     now: "jetzt",
     secondsAgo: "vor {s} s",
+    activity: "Aktivität",
+    zoomShort: "1 Min.",
+    zoomLong: "5 Min.",
+    minutesAgo: "vor {n} Min.",
+    peak: "Spitze {value}",
+    insightCalm: "Alles ruhig. Gerade braucht nichts deine Aufmerksamkeit.",
+    insightMemory:
+      "Der Arbeitsspeicher ist stark belegt ({pct} %). Schließe Apps, die du nicht nutzt, oder prüfe, was mit Windows startet.",
+    insightCpu:
+      "Der Prozessor ist schon eine Weile ausgelastet ({pct} % im Schnitt). Die Liste unten zeigt, was ihn nutzt.",
+    insightDrive:
+      "Das Systemlaufwerk ist fast voll ({pct} %). Windows wird langsamer, wenn der Platz knapp wird.",
+    actionStartup: "Autostart öffnen",
+    actionCleanup: "Speicher freigeben",
+    usingTitle: "Was Ressourcen nutzt",
+    usingHint:
+      "Apps nach Namen gruppiert, aus der Prozessliste von Windows. Es wird nichts geöffnet oder geändert.",
+    usingCpu: "Prozessor",
+    usingMemory: "Arbeitsspeicher",
+    processes: "{count} Prozesse",
+    processOne: "1 Prozess",
   },
   folderScan: {
     stop: "Suche abbrechen",
@@ -10158,6 +10280,27 @@ const pt: Strings = {
       "Neste PC, o Windows não expõe estes sensores sem as ferramentas do fabricante, por isso nada é estimado.",
     now: "agora",
     secondsAgo: "há {s} s",
+    activity: "Atividade",
+    zoomShort: "1 min",
+    zoomLong: "5 min",
+    minutesAgo: "há {n} min",
+    peak: "Pico {value}",
+    insightCalm: "Está tudo calmo. Neste momento nada precisa da sua atenção.",
+    insightMemory:
+      "A memória está muito ocupada ({pct}%). Feche as apps que não está a usar ou veja o que arranca com o Windows.",
+    insightCpu:
+      "O processador está ocupado há algum tempo ({pct}% em média). A lista abaixo mostra o que o está a usar.",
+    insightDrive:
+      "A unidade do sistema está quase cheia ({pct}%). O Windows fica mais lento quando falta espaço.",
+    actionStartup: "Abrir Arranque",
+    actionCleanup: "Libertar espaço",
+    usingTitle: "O que está a usar recursos",
+    usingHint:
+      "Apps agrupadas por nome, a partir da lista de processos do Windows. Nada é aberto nem alterado.",
+    usingCpu: "Processador",
+    usingMemory: "Memória",
+    processes: "{count} processos",
+    processOne: "1 processo",
   },
   folderScan: {
     stop: "Parar pesquisa",

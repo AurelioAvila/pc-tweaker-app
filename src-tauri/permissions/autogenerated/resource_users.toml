@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-resource-users"
+description = "Enables the resource_users command without any pre-configured scope."
+commands.allow = ["resource_users"]
+
+[[permission]]
+identifier = "deny-resource-users"
+description = "Denies the resource_users command without any pre-configured scope."
+commands.deny = ["resource_users"]

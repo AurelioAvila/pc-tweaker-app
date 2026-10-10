@@ -109,6 +109,10 @@ const en = {
   appData: "Your data",
   emptyFilter: "No apps match these filters.",
   clearFilters: "Clear filters",
+  installedOn: "Installed {date}",
+  selectGroup: "Select all",
+  toggleGroup: "Show or hide {name}",
+  summaryDone: "{removed} removed · {failed} failed",
 };
 type Copy = typeof en;
 export const DEBLOAT_COPY: Record<Lang, Copy> = {
@@ -224,6 +228,10 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     appData: "I tuoi dati",
     emptyFilter: "Nessuna app corrisponde a questi filtri.",
     clearFilters: "Azzera filtri",
+    installedOn: "Installata il {date}",
+    selectGroup: "Seleziona tutte",
+    toggleGroup: "Mostra o nascondi {name}",
+    summaryDone: "{removed} rimosse · {failed} non riuscite",
   },
   fr: {
     title: "Debloat sous contrôle",
@@ -338,6 +346,10 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     appData: "Vos données",
     emptyFilter: "Aucune application ne correspond à ces filtres.",
     clearFilters: "Effacer les filtres",
+    installedOn: "Installée le {date}",
+    selectGroup: "Tout sélectionner",
+    toggleGroup: "Afficher ou masquer {name}",
+    summaryDone: "{removed} supprimées · {failed} en échec",
   },
   es: {
     title: "Debloat con control",
@@ -451,6 +463,10 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     appData: "Tus datos",
     emptyFilter: "Ninguna app coincide con estos filtros.",
     clearFilters: "Borrar filtros",
+    installedOn: "Instalada el {date}",
+    selectGroup: "Seleccionar todas",
+    toggleGroup: "Mostrar u ocultar {name}",
+    summaryDone: "{removed} quitadas · {failed} con error",
   },
   de: {
     title: "Debloat mit Kontrolle",
@@ -566,6 +582,10 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     appData: "Deine Daten",
     emptyFilter: "Keine App passt zu diesen Filtern.",
     clearFilters: "Filter zurücksetzen",
+    installedOn: "Installiert am {date}",
+    selectGroup: "Alle auswählen",
+    toggleGroup: "{name} ein- oder ausblenden",
+    summaryDone: "{removed} entfernt · {failed} fehlgeschlagen",
   },
   pt: {
     title: "Debloat com controlo",
@@ -679,6 +699,10 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     appData: "Os seus dados",
     emptyFilter: "Nenhuma app corresponde a estes filtros.",
     clearFilters: "Limpar filtros",
+    installedOn: "Instalada em {date}",
+    selectGroup: "Selecionar todas",
+    toggleGroup: "Mostrar ou ocultar {name}",
+    summaryDone: "{removed} removidas · {failed} com falha",
   },
 };
 

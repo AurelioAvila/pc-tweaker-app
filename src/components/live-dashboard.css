@@ -173,8 +173,13 @@
 .live-spark {
   position: relative;
   height: 64px;
-  overflow: hidden;
   border-bottom: 1px solid var(--border-subtle);
+}
+/* Clips the sliding chart only, so the tooltip and labels can sit outside. */
+.live-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
 }
 /* The chart is drawn once per reading and slid by the compositor, so the
    one-second glide costs no repaint. */
@@ -482,4 +487,218 @@
   .live-meter > span {
     transition: none;
   }
+}
+
+/* v2: grid, peaks, notes, zoom, resource users, entrance. */
+.live-grid-line {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 0;
+  border-top: 1px dashed color-mix(in oklab, var(--border-subtle) 80%, transparent);
+  pointer-events: none;
+}
+.live-grid-line small {
+  position: absolute;
+  top: -15px;
+  left: 2px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.live-track {
+  position: relative;
+}
+.live-peak {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: 0 0 -3.5px -3.5px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--surface-1);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent);
+}
+.live-peak small {
+  position: absolute;
+  bottom: 9px;
+  left: 50%;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--accent) 18%, var(--surface-2));
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.live-axis-x {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: 10.5px;
+}
+.live-zoom {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+.live-zoom button {
+  min-height: 24px;
+  padding: 2px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.live-zoom button[aria-pressed="true"] {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+.live-notes {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.live-notes li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-m);
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.5;
+  animation: live-in 360ms var(--ease-standard) backwards;
+}
+.live-notes li > span:not(.badge) {
+  flex: 1 1 260px;
+}
+.live-notes li[data-tone="warn"] {
+  border-color: color-mix(in oklab, var(--warning) 35%, var(--border-subtle));
+}
+.live-notes li[data-tone="danger"] {
+  border-color: color-mix(in oklab, var(--danger) 40%, var(--border-subtle));
+}
+.live-muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.live-users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px 24px;
+}
+.live-users-grid h4 {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.live-users {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.live-users li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: baseline;
+}
+.live-user-name {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.live-user-name strong {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.live-user-name small {
+  flex: none;
+  color: var(--text-muted);
+  font-size: 10.5px;
+}
+.live-user-value {
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.live-user-bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+.live-user-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--accent) 55%, transparent),
+    var(--accent)
+  );
+  transition: width 600ms var(--ease-standard);
+}
+.live-card {
+  animation: live-in 420ms var(--ease-standard) backwards;
+  animation-delay: calc(var(--i, 0) * 55ms);
+  transition:
+    border-color var(--dur-base) var(--ease-standard),
+    transform var(--dur-base) var(--ease-standard),
+    box-shadow var(--dur-base) var(--ease-standard);
+}
+.live-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.22);
+}
+@keyframes live-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-card,
+  .live-notes li {
+    animation: none;
+  }
+  .live-card:hover {
+    transform: none;
+  }
+  .live-user-bar > span {
+    transition: none;
+  }
+}
+.live-spark[data-axis="true"] {
+  margin-top: 16px;
 }

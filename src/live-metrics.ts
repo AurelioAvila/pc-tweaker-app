@@ -15,8 +15,10 @@ export type LiveSample = {
   net_up_bps: number | null;
 };
 
-/** Seconds of history the charts show. */
-export const HISTORY = 60;
+/** Seconds of history kept: five minutes. The charts show the last minute or
+ *  all five. */
+export const HISTORY = 300;
+export const WINDOW_SHORT = 60;
 
 /** Appends a value and keeps the newest `max`. Never mutates `values`. */
 export function push<T>(values: readonly T[], value: T, max = HISTORY): T[] {
@@ -110,4 +112,50 @@ export function sparkPoints(
       max > 0 && v !== null && Number.isFinite(v) ? Math.min(1, Math.max(0, v / max)) : 0;
     return [(offset + i) * step, height - ratio * height];
   });
+}
+
+/** The highest real value and where it is, or null when there is none. */
+export function peakOf(
+  values: readonly (number | null)[],
+): { index: number; value: number } | null {
+  let best: { index: number; value: number } | null = null;
+  values.forEach((v, index) => {
+    if (v !== null && Number.isFinite(v) && (best === null || v > best.value))
+      best = { index, value: v };
+  });
+  return best;
+}
+
+export type Insight = {
+  id: "memory" | "cpu" | "drive" | "calm";
+  tone: "ok" | "warn" | "danger";
+  pct?: number;
+};
+
+/** What deserves a word, from real readings only: memory pressure, a CPU
+ *  that has been busy for the last half minute, a nearly full system drive.
+ *  Nothing to say is said once, calmly. */
+export function insights(input: {
+  cpu: readonly number[];
+  memoryPct: number | null;
+  drivePct: number | null;
+}): Insight[] {
+  const out: Insight[] = [];
+  const level = (v: number, warn: number, danger: number) =>
+    v >= danger ? "danger" : v >= warn ? "warn" : null;
+  if (input.memoryPct !== null) {
+    const tone = level(input.memoryPct, 85, 92);
+    if (tone) out.push({ id: "memory", tone, pct: Math.round(input.memoryPct) });
+  }
+  const recent = input.cpu.slice(-30);
+  if (recent.length >= 10) {
+    const average = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const tone = level(average, 75, 90);
+    if (tone) out.push({ id: "cpu", tone, pct: Math.round(average) });
+  }
+  if (input.drivePct !== null) {
+    const tone = level(input.drivePct, 90, 95);
+    if (tone) out.push({ id: "drive", tone, pct: Math.round(input.drivePct) });
+  }
+  return out.length ? out : [{ id: "calm", tone: "ok" }];
 }

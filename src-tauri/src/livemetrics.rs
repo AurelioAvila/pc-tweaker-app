@@ -328,9 +328,159 @@ pub fn live_sample() -> Result<LiveSample, String> {
     Err("not supported on this platform".to_string())
 }
 
+/// One app's share of the machine: every process with the same executable
+/// name added together.
+#[derive(Serialize, Clone, Debug, PartialEq)]
+pub struct ResourceUser {
+    pub name: String,
+    pub processes: u32,
+    /// Share of the whole machine's CPU time since the previous reading.
+    pub cpu: f32,
+    pub memory: u64,
+}
+
+#[derive(Serialize, Clone, Debug, Default)]
+pub struct ResourceUsers {
+    pub cpu: Vec<ResourceUser>,
+    pub memory: Vec<ResourceUser>,
+}
+
+/// Groups a process table by executable name. CPU shares compare each process
+/// with the same process instance (pid and creation time) in `previous`,
+/// taken `elapsed` seconds earlier; the idle process is left out.
+pub fn group_users(
+    previous: Option<(&[crate::process_guard::ProcessInfo], f64)>,
+    now: &[crate::process_guard::ProcessInfo],
+    logical_cores: usize,
+) -> Vec<ResourceUser> {
+    use std::collections::HashMap;
+    let before: HashMap<(u32, u64), u64> = previous
+        .map(|(table, _)| {
+            table
+                .iter()
+                .map(|p| ((p.pid, p.created), p.cpu_time))
+                .collect()
+        })
+        .unwrap_or_default();
+    let budget = previous
+        .map(|(_, secs)| secs * 1e7 * logical_cores.max(1) as f64)
+        .filter(|b| *b > 0.0);
+    let mut groups: HashMap<String, ResourceUser> = HashMap::new();
+    for p in now.iter().filter(|p| p.pid != 0) {
+        let name = p
+            .name
+            .strip_suffix(".exe")
+            .or_else(|| p.name.strip_suffix(".EXE"))
+            .unwrap_or(&p.name)
+            .to_string();
+        let used = before
+            .get(&(p.pid, p.created))
+            .map_or(0, |&b| p.cpu_time.saturating_sub(b));
+        let entry = groups
+            .entry(name.to_ascii_lowercase())
+            .or_insert(ResourceUser {
+                name,
+                processes: 0,
+                cpu: 0.0,
+                memory: 0,
+            });
+        entry.processes += 1;
+        entry.memory += p.working_set;
+        if let Some(budget) = budget {
+            entry.cpu += (used as f64 / budget * 100.0) as f32;
+        }
+    }
+    groups.into_values().collect()
+}
+
+/// The top five by CPU and by memory, from the handle-free process table
+/// (process_guard): names, CPU time and working sets only, no process opened.
+pub fn top_users(mut users: Vec<ResourceUser>) -> ResourceUsers {
+    let mut by_memory = users.clone();
+    users.retain(|u| u.cpu >= 0.1);
+    users.sort_by(|a, b| b.cpu.total_cmp(&a.cpu));
+    users.truncate(5);
+    by_memory.sort_by_key(|u| std::cmp::Reverse(u.memory));
+    by_memory.truncate(5);
+    ResourceUsers {
+        cpu: users,
+        memory: by_memory,
+    }
+}
+
+type Snapshot = (Vec<crate::process_guard::ProcessInfo>, std::time::Instant);
+static LAST_TABLE: std::sync::Mutex<Option<Snapshot>> = std::sync::Mutex::new(None);
+
+#[tauri::command(async)]
+pub fn resource_users() -> Result<ResourceUsers, String> {
+    let now = crate::process_guard::processes()?;
+    let cores = std::thread::available_parallelism().map_or(1, |n| n.get());
+    let mut last = LAST_TABLE.lock().unwrap_or_else(|e| e.into_inner());
+    let previous = last
+        .as_ref()
+        .map(|(table, at)| (table.as_slice(), at.elapsed().as_secs_f64()));
+    let users = group_users(previous, &now, cores);
+    *last = Some((now, std::time::Instant::now()));
+    Ok(top_users(users))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn p(
+        pid: u32,
+        name: &str,
+        created: u64,
+        cpu_time: u64,
+        working_set: u64,
+    ) -> crate::process_guard::ProcessInfo {
+        crate::process_guard::ProcessInfo {
+            pid,
+            parent: None,
+            name: name.into(),
+            created,
+            session: 1,
+            working_set,
+            cpu_time,
+        }
+    }
+
+    #[test]
+    fn apps_are_grouped_by_name_and_cpu_follows_the_same_process_instance() {
+        let before = [
+            p(0, "Idle", 0, 0, 0),
+            p(10, "brave.exe", 1, 1_000, 100),
+            p(11, "brave.exe", 2, 2_000, 200),
+            p(20, "game.exe", 3, 0, 1_000),
+            // pid 30 was another process before: its time must not count.
+            p(30, "old.exe", 4, 9_000_000, 10),
+        ];
+        let now = [
+            p(0, "Idle", 0, 50_000_000, 0),
+            p(10, "brave.exe", 1, 1_000 + 5_000_000, 150),
+            p(11, "brave.exe", 2, 2_000 + 5_000_000, 250),
+            p(20, "game.exe", 3, 20_000_000, 1_000),
+            p(30, "new.exe", 9, 9_500_000, 10),
+        ];
+        // One second on 4 cores = 4e7 ticks of CPU time.
+        let users = group_users(Some((&before, 1.0)), &now, 4);
+        let get = |n: &str| users.iter().find(|u| u.name == n).cloned().unwrap();
+        assert!(users.iter().all(|u| u.name != "Idle"));
+        let brave = get("brave");
+        assert_eq!((brave.processes, brave.memory), (2, 400));
+        assert!((brave.cpu - 25.0).abs() < 0.01, "{}", brave.cpu);
+        assert!((get("game").cpu - 50.0).abs() < 0.01);
+        assert_eq!(get("new").cpu, 0.0, "a reused pid starts from zero");
+        let top = top_users(users);
+        assert_eq!(
+            top.cpu.iter().map(|u| u.name.as_str()).collect::<Vec<_>>(),
+            ["game", "brave"]
+        );
+        assert_eq!(top.memory[0].name, "game");
+        // Without a previous table, memory is known and CPU is not.
+        assert!(group_users(None, &now, 4).iter().all(|u| u.cpu == 0.0));
+    }
 
     #[test]
     fn virtual_and_loopback_adapters_are_not_counted_twice() {

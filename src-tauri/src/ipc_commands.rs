@@ -87,6 +87,7 @@ pub const APP_COMMANDS: &[&str] = &[
     "clear_crash_reports",
     "system_stats",
     "live_sample",
+    "resource_users",
     "start_fps_capture",
     "stop_fps_capture",
     "fps_status",

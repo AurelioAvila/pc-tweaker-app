@@ -2208,6 +2208,7 @@ pub fn run() {
             clear_crash_reports,
             sysmon::system_stats,
             livemetrics::live_sample,
+            livemetrics::resource_users,
             fps::imp::start_fps_capture,
             fps::imp::stop_fps_capture,
             fps::imp::fps_status,

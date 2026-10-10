@@ -2,6 +2,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  insights,
+  peakOf,
+  WINDOW_SHORT,
   formatRate,
   hasSensors,
   HISTORY,
@@ -96,4 +99,42 @@ test("chart points fill from the right, clamp to the box and draw gaps at zero",
   assert.deepEqual(points[1], [40, 10], "a missing reading sits on the baseline");
   assert.deepEqual(points[2], [60, 0], "over the ceiling is clamped");
   assert.deepEqual(sparkPoints([10], 0, 60, 10, 4)[0], [60, 10], "no ceiling: flat");
+});
+
+test("the peak is the highest real reading, and nothing when there is none", () => {
+  assert.equal(peakOf([]), null);
+  assert.equal(peakOf([null, Number.NaN]), null);
+  assert.deepEqual(peakOf([3, null, 9, 9, 2]), { index: 2, value: 9 }, "the first of equal peaks");
+  assert.ok(HISTORY >= WINDOW_SHORT * 5, "five minutes of history behind the one-minute view");
+});
+
+test("insights speak only about real pressure, and say calm once otherwise", () => {
+  const calm = insights({ cpu: Array(30).fill(20), memoryPct: 50, drivePct: 60 });
+  assert.deepEqual(calm, [{ id: "calm", tone: "ok" }]);
+  const busy = insights({ cpu: Array(30).fill(80), memoryPct: 88, drivePct: 96 });
+  assert.deepEqual(
+    busy.map((i) => [i.id, i.tone, i.pct]),
+    [
+      ["memory", "warn", 88],
+      ["cpu", "warn", 80],
+      ["drive", "danger", 96],
+    ],
+  );
+  assert.equal(
+    insights({ cpu: Array(30).fill(95), memoryPct: 93, drivePct: null })[0].tone,
+    "danger",
+  );
+  // A short spike is not "busy for a while", and unknown readings say nothing.
+  assert.deepEqual(insights({ cpu: [99, 99, 99], memoryPct: null, drivePct: null }), [
+    { id: "calm", tone: "ok" },
+  ]);
+  assert.equal(
+    insights({
+      cpu: [...Array(40).fill(99), ...Array(30).fill(10)],
+      memoryPct: 40,
+      drivePct: 40,
+    })[0].id,
+    "calm",
+    "only the last 30 seconds count",
+  );
 });

@@ -43,6 +43,7 @@ export interface DebloatApp {
   publisher?: string | null;
   sizeBytes?: number | null;
   dataBytes?: number | null;
+  installedAt?: number | null;
 }
 
 export interface DebloatRecord {
@@ -127,6 +128,7 @@ export function DebloatPanel({
   const [running, setRunning] = useState(false);
   const [recoveryBusy, setRecoveryBusy] = useState<string | null>(null);
   const [recoveryError, setRecoveryError] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const dialogRef = useRef<HTMLDialogElement>(null);
   const runningRef = useRef(false);
   const loadedRef = useRef(false);
@@ -295,12 +297,12 @@ export function DebloatPanel({
             <dt>{c.removable}</dt>
             <dd>{scanning && !apps.length ? "–" : removable.length}</dd>
           </div>
-          <div title={c.spaceNote}>
-            <dt>{c.statSpace}</dt>
-            <dd>
-              {scanning && !apps.length ? "–" : format(c.upTo, { size: size(freeable.bytes) })}
-            </dd>
-          </div>
+          {freeable.bytes > 0 && (
+            <div title={c.spaceNote}>
+              <dt>{c.statSpace}</dt>
+              <dd>{format(c.upTo, { size: size(freeable.bytes) })}</dd>
+            </div>
+          )}
         </dl>
         <Badge kind="muted" className="debloat-scope-badge">
           {c.currentUser}
@@ -443,116 +445,211 @@ export function DebloatPanel({
             </div>
           )}
 
-          <ul className="debloat-list" aria-busy={scanning}>
-            {scanning &&
-              !apps.length &&
-              [0, 1, 2, 3, 4].map((n) => (
+          {scanning && !apps.length && (
+            <ul className="debloat-list" aria-busy="true">
+              {[0, 1, 2, 3, 4].map((n) => (
                 <li className="debloat-skeleton" key={n} aria-hidden="true">
                   <i />
                   <span />
                   <span />
                 </li>
               ))}
-            {visible.map((app) => {
-              const removableApp = canRemove(app);
-              const selected = removableApp && selection.has(app.packageFullName!);
-              const tier = tierOf(app);
-              const bytes = footprint(app);
-              return (
-                <li
-                  key={app.packageFullName ?? app.catalogId}
-                  className="debloat-row"
-                  data-selected={selected}
-                  data-locked={!removableApp}
-                >
-                  <label className="debloat-row-hit">
-                    <input
-                      type="checkbox"
-                      className="debloat-check"
-                      checked={selected}
-                      disabled={!removableApp || busy}
-                      onChange={() => toggle(app)}
-                      aria-describedby={`impact-${app.catalogId}`}
-                    />
-                    <AppMark app={app} />
-                    <span className="debloat-row-text">
-                      <span className="debloat-row-title">
-                        <strong>{app.name}</strong>
-                        {app.installed && (
-                          <Badge kind={TIER_KIND[tier]} title={tierHint(tier)}>
-                            {tierLabel(tier)}
-                          </Badge>
-                        )}
-                        {app.installed && !removableApp && (
-                          <Badge kind="muted" title={reason(app.reason)}>
-                            {c.lockedBadge}
-                          </Badge>
-                        )}
-                        {!app.installed && <Badge kind="muted">{l.notInstalled}</Badge>}
+            </ul>
+          )}
+          {CATEGORIES.filter((key) => key !== "all").map((group) => {
+            const members = visible.filter((app) => categoryOf(app) === group);
+            if (!members.length) return null;
+            const open = !collapsed.has(group);
+            const pickable = members.filter(canRemove).map((app) => app.packageFullName!);
+            const groupSpace = estimatedSpace(members, new Set(pickable));
+            return (
+              <section key={group} className="debloat-group" data-open={open}>
+                <header className="debloat-group-head">
+                  <button
+                    type="button"
+                    className="debloat-group-toggle"
+                    aria-expanded={open}
+                    aria-label={format(c.toggleGroup, { name: l[group] })}
+                    onClick={() =>
+                      setCollapsed((current) => {
+                        const next = new Set(current);
+                        if (next.has(group)) next.delete(group);
+                        else next.add(group);
+                        return next;
+                      })
+                    }
+                  >
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                      <path
+                        d="m5 6 3 3 3-3"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <h3>{l[group]}</h3>
+                    <Badge>{members.length}</Badge>
+                    {groupSpace.bytes > 0 && (
+                      <span className="debloat-group-size">
+                        {format(c.upTo, { size: size(groupSpace.bytes) })}
                       </span>
-                      <span className="debloat-row-sub">
-                        {[app.publisher, l[categoryOf(app)]].filter(Boolean).join(" · ")}
-                      </span>
-                    </span>
-                  </label>
-                  <span className="debloat-row-size" title={c.spaceNote}>
-                    {app.installed ? size(bytes) : ""}
-                  </span>
-                  <details className="debloat-row-more">
-                    <summary title={impact(app)}>
-                      <svg viewBox="0 0 16 16" aria-hidden="true">
-                        <circle
-                          cx="8"
-                          cy="8"
-                          r="6.2"
-                          stroke="currentColor"
-                          strokeWidth="1.3"
-                          fill="none"
-                        />
-                        <path
-                          d="M8 7.2v4"
-                          stroke="currentColor"
-                          strokeWidth="1.4"
-                          strokeLinecap="round"
-                        />
-                        <circle cx="8" cy="5" r="0.8" fill="currentColor" />
-                      </svg>
-                      {c.whatYouLose}
-                    </summary>
-                    <div className="debloat-row-details">
-                      <p id={`impact-${app.catalogId}`}>{impact(app)}</p>
-                      <p className="debloat-muted">{app.description}</p>
-                      {app.installed && !removableApp && (
-                        <p className="debloat-muted">{reason(app.reason)}</p>
-                      )}
-                      {app.installed && (app.sizeBytes != null || app.dataBytes != null) && (
-                        <p className="debloat-muted">
-                          {c.appFiles}: {size(app.sizeBytes ?? null)} · {c.appData}:{" "}
-                          {size(app.dataBytes ?? null)}
-                        </p>
-                      )}
-                      {app.packageFullName && (
-                        <p className="debloat-identity">
-                          <small>{c.identity}</small>
-                          <code>{app.packageFullName}</code>
-                        </p>
-                      )}
-                      {app.storeUrl && (
-                        <button
-                          type="button"
-                          className="tool-secondary-action"
-                          disabled={!!recoveryBusy || running}
-                          onClick={() => void openRecovery(app.catalogId)}
+                    )}
+                  </button>
+                  {pickable.length > 0 && (
+                    <button
+                      type="button"
+                      className="tool-secondary-action"
+                      disabled={busy || pickable.every((id) => selection.has(id))}
+                      onClick={() =>
+                        setSelection((previous) => new Set([...previous, ...pickable]))
+                      }
+                    >
+                      {c.selectGroup}
+                    </button>
+                  )}
+                </header>
+                {open && (
+                  <ul className="debloat-list">
+                    {members.map((app) => {
+                      const removableApp = canRemove(app);
+                      const selected = removableApp && selection.has(app.packageFullName!);
+                      const tier = tierOf(app);
+                      const bytes = footprint(app);
+                      const key = (app.packageFullName ?? app.catalogId).replace(/[^\w-]/g, "_");
+                      return (
+                        <li
+                          key={app.packageFullName ?? app.catalogId}
+                          className="debloat-row"
+                          data-selected={selected}
+                          data-locked={!removableApp}
                         >
-                          {recoveryBusy === app.catalogId ? c.scanning : `${c.recovery} ↗`}
-                        </button>
-                      )}
-                    </div>
-                  </details>
-                </li>
-              );
-            })}
-          </ul>
+                          <label className="debloat-row-hit">
+                            <input
+                              type="checkbox"
+                              className="debloat-check"
+                              checked={selected}
+                              disabled={!removableApp || busy}
+                              onChange={() => toggle(app)}
+                              aria-describedby={`impact-${key}`}
+                            />
+                            <AppMark app={app} />
+                            <span className="debloat-row-text">
+                              <span className="debloat-row-title">
+                                <strong>{app.name}</strong>
+                                {app.installed && (
+                                  <Badge kind={TIER_KIND[tier]} title={tierHint(tier)}>
+                                    {tierLabel(tier)}
+                                  </Badge>
+                                )}
+                                {app.installed && !removableApp && (
+                                  <Badge kind="muted" title={reason(app.reason)}>
+                                    {c.lockedBadge}
+                                  </Badge>
+                                )}
+                                {!app.installed && <Badge kind="muted">{l.notInstalled}</Badge>}
+                              </span>
+                              <span className="debloat-row-sub">
+                                {[
+                                  app.publisher,
+                                  app.installedAt
+                                    ? format(c.installedOn, {
+                                        date: new Date(app.installedAt * 1000).toLocaleDateString(
+                                          lang,
+                                        ),
+                                      })
+                                    : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </span>
+                            </span>
+                          </label>
+                          <span className="debloat-row-size" title={c.spaceNote}>
+                            {app.installed && bytes !== null ? formatSize(bytes, lang) : ""}
+                          </span>
+                          <button
+                            type="button"
+                            className="debloat-lose"
+                            popoverTarget={`lose-${key}`}
+                            style={{ anchorName: `--lose-${key}` } as React.CSSProperties}
+                          >
+                            <svg viewBox="0 0 16 16" aria-hidden="true">
+                              <circle
+                                cx="8"
+                                cy="8"
+                                r="6.2"
+                                stroke="currentColor"
+                                strokeWidth="1.3"
+                                fill="none"
+                              />
+                              <path
+                                d="M8 7.2v4"
+                                stroke="currentColor"
+                                strokeWidth="1.4"
+                                strokeLinecap="round"
+                              />
+                              <circle cx="8" cy="5" r="0.8" fill="currentColor" />
+                            </svg>
+                            {c.whatYouLose}
+                          </button>
+                          <div
+                            id={`lose-${key}`}
+                            popover="auto"
+                            className="debloat-popover"
+                            style={{ positionAnchor: `--lose-${key}` } as React.CSSProperties}
+                          >
+                            <span className="debloat-row-title">
+                              <AppMark app={app} />
+                              <strong>{app.name}</strong>
+                              {app.installed && (
+                                <Badge kind={TIER_KIND[tier]}>{tierLabel(tier)}</Badge>
+                              )}
+                            </span>
+                            <p id={`impact-${key}`}>{impact(app)}</p>
+                            <p className="debloat-muted">{tierHint(tier)}</p>
+                            <p className="debloat-muted">{app.description}</p>
+                            {app.installed && !removableApp && (
+                              <p className="debloat-muted">{reason(app.reason)}</p>
+                            )}
+                            {app.installed && (app.sizeBytes != null || app.dataBytes != null) && (
+                              <dl className="debloat-popover-facts">
+                                <div>
+                                  <dt>{c.appFiles}</dt>
+                                  <dd>{size(app.sizeBytes ?? null)}</dd>
+                                </div>
+                                <div>
+                                  <dt>{c.appData}</dt>
+                                  <dd>{size(app.dataBytes ?? null)}</dd>
+                                </div>
+                              </dl>
+                            )}
+                            {app.packageFullName && (
+                              <p className="debloat-identity">
+                                <small>{c.identity}</small>
+                                <code>{app.packageFullName}</code>
+                              </p>
+                            )}
+                            {app.storeUrl && (
+                              <button
+                                type="button"
+                                className="tool-secondary-action"
+                                disabled={!!recoveryBusy || running}
+                                onClick={() => void openRecovery(app.catalogId)}
+                              >
+                                {recoveryBusy === app.catalogId ? c.scanning : `${c.recovery} ↗`}
+                              </button>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </section>
+            );
+          })}
 
           <details className="debloat-protected">
             <summary>{c.protectedTitle}</summary>
@@ -566,6 +663,15 @@ export function DebloatPanel({
                 <h3>
                   {running ? format(c.progress, { done, total: steps.length }) : c.resultTitle}
                 </h3>
+                {!running && (
+                  <p className="debloat-muted">
+                    {format(c.summaryDone, {
+                      removed: steps.filter((st) => st.state === "removed").length,
+                      failed: steps.filter((st) => st.state === "failed" || st.state === "unknown")
+                        .length,
+                    })}
+                  </p>
+                )}
                 <div className="debloat-progress-bar" aria-hidden="true">
                   <span style={{ width: `${(done / steps.length) * 100}%` }} />
                 </div>
@@ -598,10 +704,9 @@ export function DebloatPanel({
           <div className="debloat-actionbar" data-visible={chosen.length > 0 && !running}>
             <span className="debloat-actionbar-summary">
               {chosen.length
-                ? format(c.selectionSummary, {
-                    count: chosen.length,
-                    size: size(space.bytes),
-                  })
+                ? space.bytes > 0
+                  ? format(c.selectionSummary, { count: chosen.length, size: size(space.bytes) })
+                  : `${chosen.length} ${c.selected}`
                 : c.selectionNone}
             </span>
             <button

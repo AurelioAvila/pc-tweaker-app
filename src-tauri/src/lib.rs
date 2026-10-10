@@ -2395,7 +2395,10 @@ mod tests {
         assert!(ids.iter().any(|id| id == "disable_memory_integrity"));
         let bulk = bulk_applicable(ids.clone());
         assert!(!bulk.iter().any(|id| id == "disable_memory_integrity"));
-        assert_eq!(bulk.len(), ids.len() - 1);
+        // Settings this PC's build or edition does not support also stay out,
+        // so the count depends on the machine running the test.
+        let fitting = ids.iter().filter(|id| fits_this_pc(id)).count();
+        assert_eq!(bulk.len(), fitting - 1);
         assert!(MANUAL_ONLY_TWEAKS
             .iter()
             .all(|id| find_tweak(id).is_some_and(|t| t.requires_admin)));

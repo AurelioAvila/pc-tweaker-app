@@ -113,6 +113,8 @@ function preloadFonts(): Plugin {
 export default defineConfig(({ isSsrBuild }) => ({
   // Keep fonts as same-origin files, as required by font-src 'self'.
   build: { assetsInlineLimit: 0 },
+  // The shared Halloween banner in ../src must use the site's React, not the app's.
+  resolve: { dedupe: ["react", "react-dom"] },
   plugins: [
     react(),
     tailwindcss(),

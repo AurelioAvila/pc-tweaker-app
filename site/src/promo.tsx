@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 import { API_BASE } from "./constants";
+import { HalloweenOfferBanner } from "../../src/components/halloween-offer";
 // Shared with the desktop app, so both read the server's offer the same way.
-import { msUntil, parsePromo, previewPromo, promoClock, promoPercent, type Promo, type PromoOffer } from "../../src/promo";
+import { msUntil, parsePromo, previewPromo, promoPercent, PROMO_LAYOUT_UNTIL, type Promo, type PromoOffer } from "../../src/promo";
 
 /** The live promotion, fetched after hydration: the prerendered page always
  *  carries regular prices, and any failure leaves them in place. */
 export function usePromo() {
   const clock = () => ({ perf: performance.now(), wall: Date.now() });
-  const [received, setReceived] = useState<{ promo: Promo; at: ReturnType<typeof clock> } | null>(null);
+  // undefined until the server has answered once: the panel's room is kept meanwhile.
+  const [received, setReceived] = useState<{ promo: Promo; at: ReturnType<typeof clock> } | null | undefined>(undefined);
   const [now, setNow] = useState(clock);
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    setMounted(true);
     const preview = import.meta.env.DEV ? import.meta.env.VITE_PROMO_PREVIEW : undefined;
     const accept = (promo: Promo | null) => setReceived(promo ? { promo, at: clock() } : null);
     let controller = new AbortController();
@@ -45,6 +49,9 @@ export function usePromo() {
     msUntil(promo, promo.endsAt, elapsed) > 0;
   return {
     promo: active ? promo : null,
+    /** Room for the panel while the first answer is pending, during the offer window only. */
+    // The first render matches the prerendered page; the deadline check waits for mount.
+    reserve: received === undefined && (!mounted || now.wall < PROMO_LAYOUT_UNTIL),
     remaining: active && promo ? msUntil(promo, promo.endsAt, elapsed) : 0,
     offer: (product: string, plan: string): PromoOffer | null =>
       (active && promo?.offers.find((o) => o.product === product && o.plan === plan)) || null,
@@ -71,47 +78,28 @@ export function promoTerms(offer: PromoOffer) {
     : "once · no renewal";
 }
 
+const UNITS: [string, string, string, string] = ["Days", "Hours", "Minutes", "Seconds"];
+const FINE = "Struck-through prices are our lowest in the 30 days before the offer. Prices exclude VAT.";
+
 /** The deadline in the visitor's own time zone, named so it cannot be misread. */
-export function PromoBanner({ promo, remaining }: { promo: Promo; remaining: number }) {
-  const clock = promoClock(remaining);
-  const units = ["days", "hours", "min", "sec"];
-  const end = new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeStyle: "short" }).format(
-    new Date(Date.parse(promo.endsAt) - 60_000),
-  );
+function endLine(endsAt: string) {
+  const end = new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeStyle: "short" }).format(new Date(Date.parse(endsAt) - 60_000));
   const zone = new Intl.DateTimeFormat("en-GB", { timeZoneName: "short" })
-    .formatToParts(new Date(promo.endsAt))
+    .formatToParts(new Date(endsAt))
     .find((p) => p.type === "timeZoneName")?.value;
+  return `Ends ${end}${zone ? ` ${zone}` : ""}`;
+}
+
+/** Same banner as the desktop app, above the plans. */
+export function PromoBanner({ promo, remaining }: { promo: Promo; remaining: number }) {
   return (
-    <aside
-      className="flex flex-wrap items-start gap-4 rounded-2xl border px-6 py-5"
-      style={{ borderColor: "var(--accent-glow)", background: "var(--accent-soft)" }}
-      aria-label="Halloween offer"
-    >
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="mt-0.5 h-6 w-6 flex-none" style={{ color: "#f28c28" }}>
-        <path d="M12 7.5c-1.6-1-4.4-1.2-6.2.4C3.6 9.8 3.4 14 4.6 16.6c1.3 2.8 4.3 3.6 7.4 2.6 3.1 1 6.1.2 7.4-2.6 1.2-2.6 1-6.8-1.2-8.7-1.8-1.6-4.6-1.4-6.2-.4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        <path d="M12 7.5c-1.3 2.4-1.3 9.3 0 11.7m0-11.7c1.3 2.4 1.3 9.3 0 11.7M12 7.5c0-1.6.6-3 2-3.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-      <div className="min-w-0 flex-1 basis-64">
-        <p className="text-[15px] font-semibold text-[var(--fg)]">Halloween offer</p>
-        <p className="mt-1 text-[13px] leading-relaxed text-[var(--fg-dim)]">
-          Ends {end}{zone ? ` ${zone}` : ""}. Struck-through prices are the lowest we charged in the 30 days before the offer
-          began. Subscription discounts cover the first month or year; renewals are at the regular price. Prices exclude
-          VAT, which is added at checkout where applicable.
-        </p>
-      </div>
-      <div
-        className="flex gap-2 font-mono-t tabular-nums"
-        role="timer"
-        aria-live="off"
-        aria-label={clock.map((v, i) => `${v} ${units[i]}`).join(", ")}
-      >
-        {clock.map((value, i) => (
-          <div key={units[i]} className="min-w-[3.25rem] rounded-lg border border-white/10 bg-[var(--bg)] px-2 py-1.5 text-center">
-            <div className="text-[20px] font-bold leading-none text-[var(--fg)]">{value}</div>
-            <div className="mt-1 text-[10px] tracking-wider text-[var(--fg-dim)] uppercase">{units[i]}</div>
-          </div>
-        ))}
-      </div>
-    </aside>
+    <HalloweenOfferBanner headingLevel={3} kicker="Halloween offer" heading={endLine(promo.endsAt)} fine={FINE} endsIn="Ends in" units={UNITS} remaining={remaining} />
   );
+}
+
+/** An invisible copy of the banner, holding its exact place until the server answers.
+ *  Rome time, so the prerendered page and the browser render the same text. */
+export function PromoPlaceholder() {
+  const end = new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Rome" }).format(PROMO_LAYOUT_UNTIL - 60_000);
+  return <HalloweenOfferBanner reserved headingLevel={3} kicker="Halloween offer" heading={`Ends ${end} CET`} fine={FINE} endsIn="Ends in" units={UNITS} remaining={0} />;
 }

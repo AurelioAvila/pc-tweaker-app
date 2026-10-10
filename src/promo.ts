@@ -58,6 +58,11 @@ export function msUntil(promo: Promo, iso: string, elapsedMs: number): number {
   return Date.parse(iso) - Date.parse(promo.serverTime) - Math.max(0, elapsedMs);
 }
 
+/** Until this instant the pricing page keeps room for the offer panel while
+ *  the server answers, so the plans do not jump down when it appears. It only
+ *  reserves space: nothing about the offer is shown without the server. */
+export const PROMO_LAYOUT_UNTIL = Date.parse("2026-11-06T23:00:00.000Z");
+
 /** Days, hours, minutes and seconds left, for a countdown that only ever
  *  reaches zero at the real deadline. */
 export function promoClock(ms: number): [string, string, string, string] {

@@ -244,17 +244,6 @@
 .tool-header-actions > .tool-header-actions {
   flex-shrink: 1;
 }
-.tool-pro-tag {
-  padding: 2px 6px;
-  border-radius: 5px;
-  background: color-mix(in oklab, var(--app-accent) 12%, var(--surface-2));
-  color: var(--app-accent);
-  border: 1px solid color-mix(in oklab, var(--app-accent) 24%, transparent);
-  font-size: 9px;
-  line-height: 1.5;
-  letter-spacing: 0.06em;
-}
-
 .tool-primary-action,
 .tool-secondary-action,
 .tool-danger-action,
@@ -836,9 +825,34 @@
   line-height: 1.6;
   min-height: 22px;
 }
-.tool-boost-clock {
-  margin-top: 6px;
-  line-height: 1.6;
+.tool-boost-note {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.tool-boost-facts {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0 0;
+  font-size: 12px;
+}
+.tool-boost-facts > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 12px;
+}
+.tool-boost-facts dt {
+  color: var(--text-muted);
+}
+.tool-boost-facts dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 .tool-scan-panel {
@@ -1407,4 +1421,136 @@
   .tool-product-action:hover:not(:disabled) svg {
     transform: none;
   }
+}
+
+/* Tool cards title like the tweak rows beside them: same size and weight. */
+.tool-card-head h2 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Turbo Boost: live load and speed, and the same test in each mode. */
+.tool-boost-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.tool-boost-charts > div {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-m);
+  background: color-mix(in oklab, var(--surface-2) 40%, transparent);
+}
+.tool-boost-charts .live-spark {
+  height: 56px;
+}
+.tool-boost-test {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+.tool-boost-test-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.tool-boost-test h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.tool-boost-test p {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.tool-boost-test table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+.tool-boost-test th,
+.tool-boost-test td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: right;
+}
+.tool-boost-test th[scope="row"] {
+  color: var(--text-muted);
+  font-weight: 500;
+  text-align: left;
+}
+.tool-boost-test thead th {
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.tool-boost-test thead th[data-active="true"] {
+  color: var(--accent);
+}
+.tool-boost-test td {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* A page that failed to render: calm, with a way back. */
+.page-error {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  max-width: 560px;
+  margin: 40px auto;
+  padding: 32px 28px;
+  text-align: center;
+}
+.page-error-mark {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--warning) 14%, transparent);
+  color: var(--warning);
+}
+.page-error-mark svg {
+  width: 26px;
+  height: 26px;
+}
+.page-error h2 {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 650;
+}
+.page-error p {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.page-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.page-error details {
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+.page-error code {
+  display: block;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  font-family: var(--font-data);
 }

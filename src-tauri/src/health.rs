@@ -388,7 +388,7 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
                 applied_factor(
                     inputs,
                     "priv_telemetry",
-                    "Telemetry tasks disabled",
+                    "Diagnostic data reduced",
                     "disable_telemetry_tasks",
                     25,
                 ),

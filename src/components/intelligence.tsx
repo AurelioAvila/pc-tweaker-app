@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Lang, Strings } from "../i18n";
-import { textFor, uiLocale } from "../lib";
+import { friendlyError, textFor, uiLocale } from "../lib";
+import { MANUAL_ONLY_TWEAK_IDS } from "../catalog";
 import { AuditEntry, CrashReport, DriftReport, Toast, TweakAdvice, TweakInfo } from "../types";
-import { ProBadge, ShieldBadge, Toggle } from "./ui";
+import { Badge, Toggle } from "./ui";
 import { ToolHeader } from "./tool-section";
 import { HistoryIcon } from "./icons";
 import "./workspace-panels.css";
@@ -113,8 +114,8 @@ export function AdvisorCard({
             <div className="min-w-0">
               <h2 className="flex items-center gap-2 font-semibold text-ink">
                 {textFor(s.tweaks, top.id, top.name, top.description).name}
-                {top.requires_admin && <ShieldBadge label={s.badges.admin} />}
-                {top.requires_pro && <ProBadge label={s.badges.pro} />}
+                {top.requires_admin && <Badge kind="admin">{s.badges.admin}</Badge>}
+                {top.requires_pro && <Badge kind="pro">{s.badges.pro}</Badge>}
               </h2>
               {/* The reason is the card's substance: this machine's hardware
                   argues for the change, and the user can check the argument. */}
@@ -131,7 +132,7 @@ export function AdvisorCard({
                 void onApply(top);
               }}
               disabled={busyId === top.id}
-              className="shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
+              className="tool-primary-action shrink-0"
             >
               {busyId === top.id ? "···" : s.advisor.applyButton}
             </button>
@@ -164,6 +165,15 @@ const ACTION_KEYS: Record<string, keyof Strings["ledger"]["actions"]> = {
   "disk-optimize": "diskOptimize",
   "startup-change": "startupChange",
   "restore-point": "restorePoint",
+  "process-guard": "processGuard",
+  "core-steering": "coreSteering",
+  "ram-trim": "ramTrim",
+  "tweak-auto-reverted": "autoReverted",
+  "priority-applied": "priorityRule",
+  "priority-restored": "priorityRule",
+  "temp-cleanup-scheduled": "scheduledCleanup",
+  "ecoqos-applied": "ecoqos",
+  "ecoqos-restored": "ecoqos",
 };
 
 /**
@@ -190,6 +200,8 @@ export function UpdateDriftCard({
 }) {
   const [report, setReport] = useState<DriftReport | null>(null);
   const [busy, setBusy] = useState(false);
+  // Ids the user unticked: everything else in the report is re-applied.
+  const [skipped, setSkipped] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     let alive = true;
@@ -206,9 +218,12 @@ export function UpdateDriftCard({
     };
   }, []);
 
-  if (!report || report.reverted.length === 0) return null;
+  // Turned off on purpose by the user, never offered for a one-click re-apply.
+  const offered = report ? report.reverted.filter((id) => !MANUAL_ONLY_TWEAK_IDS.has(id)) : [];
+  if (!report || offered.length === 0) return null;
 
-  const one = report.reverted.length === 1;
+  const one = offered.length === 1;
+  const chosen = offered.filter((id) => !skipped.has(id));
 
   const nameOf = (id: string) => {
     const t = tweaks.find((x) => x.id === id);
@@ -216,23 +231,39 @@ export function UpdateDriftCard({
   };
 
   async function reapply() {
-    if (!report) return;
+    if (!report || chosen.length === 0) return;
     setBusy(true);
     try {
-      await invoke("apply_tweaks", { ids: report.reverted });
+      const failures = await invoke<string[]>("apply_tweaks", { ids: chosen });
+      // Counted from what is in effect now, not from the failure list: an
+      // elevated batch that was cancelled reports one failure for all of it.
+      const after = await invoke<TweakInfo[]>("list_tweaks");
+      const done = chosen.filter((id) => after.some((t) => t.id === id && t.applied));
       await onChanged();
-      pushToast(
-        "success",
-        one
-          ? s.drift.reappliedOne
-          : format(s.drift.reappliedMany, { count: report.reverted.length }),
-      );
-      setReport({ ...report, reverted: [] });
+      failures.forEach((f) => pushToast("error", friendlyError(f, s)));
+      if (done.length > 0) {
+        pushToast(
+          "success",
+          done.length === 1
+            ? s.drift.reappliedOne
+            : format(s.drift.reappliedMany, { count: done.length }),
+        );
+      }
+      setReport({ ...report, reverted: report.reverted.filter((id) => !done.includes(id)) });
     } catch (e) {
-      pushToast("error", String(e));
+      pushToast("error", friendlyError(e, s));
     } finally {
       setBusy(false);
     }
+  }
+
+  function toggleChoice(id: string) {
+    setSkipped((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   return (
@@ -248,37 +279,52 @@ export function UpdateDriftCard({
           ? one
             ? format(s.drift.afterUpdateOne, { patch: report.currentPatch })
             : format(s.drift.afterUpdateMany, {
-                count: report.reverted.length,
+                count: offered.length,
                 patch: report.currentPatch,
               })
           : one
             ? s.drift.noUpdateOne
-            : format(s.drift.noUpdateMany, { count: report.reverted.length })}
+            : format(s.drift.noUpdateMany, { count: offered.length })}
       </p>
 
+      {/* Guided, never silent: every item is listed and can be left out. */}
+      {!one && <p className="text-ink-3 mt-2 text-[12px]">{s.drift.pickHint}</p>}
       <ul className="mt-3 flex flex-wrap gap-2">
-        {report.reverted.map((id) => (
-          <li
-            key={id}
-            className="border-line-2 text-ink-2 rounded-full border px-3 py-1 text-[12px]"
-          >
-            {nameOf(id)}
-          </li>
-        ))}
+        {offered.map((id) => {
+          const picked = !skipped.has(id);
+          return (
+            <li key={id}>
+              <label
+                className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1 text-[12px] transition-colors ${
+                  picked ? "border-accent/40 text-ink" : "border-line-2 text-ink-3 line-through"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={picked}
+                  disabled={busy || one}
+                  onChange={() => toggleChoice(id)}
+                  className="accent-[var(--app-accent)]"
+                />
+                {nameOf(id)}
+              </label>
+            </li>
+          );
+        })}
       </ul>
 
       <button
         onClick={() => void reapply()}
-        disabled={busy}
+        disabled={busy || chosen.length === 0}
         aria-busy={busy}
         className="tool-primary-action mt-4"
       >
         {busy && <span className="scan-spinner" aria-hidden="true" />}
         {busy
           ? s.drift.reapplying
-          : one
+          : chosen.length === 1
             ? s.drift.reapplyOne
-            : format(s.drift.reapplyMany, { count: report.reverted.length })}
+            : format(s.drift.reapplyMany, { count: chosen.length })}
       </button>
     </div>
   );
@@ -350,7 +396,7 @@ export function CrashReportsCard({
                 .then(() => pushToast("success", s.crashes.copied))
                 .catch((e: unknown) => pushToast("error", String(e)));
             }}
-            className="border-line-2 text-ink-2 rounded-xl border px-3 py-2 text-[12.5px] font-bold transition hover:-translate-y-px hover:brightness-110"
+            className="tool-secondary-action"
           >
             {s.crashes.copy}
           </button>
@@ -363,7 +409,7 @@ export function CrashReportsCard({
                 })
                 .catch((e: unknown) => pushToast("error", String(e)));
             }}
-            className="border-line-2 text-ink-2 rounded-xl border px-3 py-2 text-[12.5px] font-bold transition hover:-translate-y-px hover:brightness-110"
+            className="tool-secondary-action"
           >
             {s.crashes.clear}
           </button>
@@ -380,9 +426,9 @@ export function CrashReportsCard({
               <span>·</span>
               {/* Which process died is the single most useful field here, so
                   it is a chip rather than another item in the grey run-on. */}
-              <span className="border-line-2 text-ink-2 rounded-full border px-2 py-0.5 font-semibold">
+              <Badge>
                 {r.process === "elevated" ? s.crashes.processElevated : s.crashes.processApp}
-              </span>
+              </Badge>
             </div>
             <p className="text-ink mt-1 font-mono text-[12px] break-words">{r.message}</p>
             <p className="text-ink-3 mt-0.5 font-mono text-[11px]">{r.location}</p>
@@ -493,6 +539,22 @@ export function LedgerPanel({
   };
   const dayOf = (entry: AuditEntry) => dateOf(entry)?.toLocaleDateString(lang) ?? "—";
 
+  /** What a ledger row is about, in the user's language where the entry
+   *  has a known shape; anything else is shown as recorded. */
+  function ledgerTarget(e: AuditEntry): string {
+    if (e.action.startsWith("tweak-")) return tweakName(e.target);
+    if (e.action === "process-guard") {
+      return e.target === "paused" ? s.ledger.guardPaused : s.ledger.guardResumed;
+    }
+    if (e.target === "restored") return s.ledger.restored;
+    if (e.target === "postponed") return s.ledger.postponed;
+    if (e.action === "ram-trim") return s.ram.title;
+    if (e.target === "temp_cleanup") return textFor(s.cleanup, e.target, e.target, "").name;
+    const count = /^(\d+) processes$/.exec(e.target);
+    if (count) return format(s.ledger.processes, { count: Number(count[1]) });
+    return e.target;
+  }
+
   return (
     <section className="workspace-ledger">
       <header className="workspace-panel-header">
@@ -543,9 +605,8 @@ export function LedgerPanel({
             aria-pressed={failedOnly}
             className={`workspace-ledger-filter ${failedOnly ? "is-active" : ""}`}
           >
-            <span aria-hidden="true">×</span>
             {s.ledger.failed}
-            <strong>{failedCount}</strong>
+            <Badge kind={failedCount ? "danger" : "neutral"}>{failedCount}</Badge>
           </button>
         </div>
       )}
@@ -599,9 +660,7 @@ export function LedgerPanel({
                     {e.success ? "✓" : "×"}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="workspace-ledger-target">
-                      {e.action.startsWith("tweak-") ? tweakName(e.target) : e.target}
-                    </p>
+                    <p className="workspace-ledger-target">{ledgerTarget(e)}</p>
                     <div className="workspace-ledger-meta">
                       <span>{label}</span>
                       <time dateTime={timestamp?.toISOString()}>

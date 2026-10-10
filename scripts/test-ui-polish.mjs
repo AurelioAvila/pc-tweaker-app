@@ -5,13 +5,80 @@ const native = fs.readFileSync(new URL("../src-tauri/src/lib.rs", import.meta.ur
 const hives = [...native.matchAll(/hive:\s*"([^"]*)"/g)].map((match) => match[1]);
 assert.equal(
   hives.filter((value) => value === "\\u{2014}").length,
-  14,
+  15,
   "All composite tweaks use the encoding-safe sentinel",
 );
 assert.ok(
   hives.every((value) => ["\\u{2014}", "Windows API"].includes(value)),
   "No corrupted native badges",
 );
+// One badge component. Every tag in the app goes through `Badge`, so Pro,
+// Admin, hive and status tags cannot drift apart again.
+const ui = fs.readFileSync(new URL("../src/components/ui.tsx", import.meta.url), "utf8");
+assert.match(ui, /export function Badge\(/, "Badge is exported from ui.tsx");
+assert.doesNotMatch(
+  ui,
+  /export function (ProBadge|ShieldBadge|SoonBadge)\b/,
+  "no second badge component",
+);
+const sources = fs
+  .readdirSync(new URL("../src", import.meta.url), { recursive: true })
+  .filter((f) => /\.(tsx|css)$/.test(f))
+  .map((f) => [
+    f.replaceAll("\\", "/"),
+    fs.readFileSync(new URL(`../src/${f}`, import.meta.url), "utf8"),
+  ]);
+// A deliberate exception: the removable filter chip in the cookie cleaner is an input, not a tag.
+const pillAllowed = new Set(["components/cleaners.tsx"]);
+for (const [file, text] of sources) {
+  assert.doesNotMatch(text, /\b(tool-pro-tag|scan-tag|pro-chip)\b/, `${file}: local badge class`);
+  assert.doesNotMatch(
+    text,
+    /\baccent-sky-\d+/,
+    `${file}: checkbox colour outside the theme accent`,
+  );
+  if (file.endsWith(".tsx") && !pillAllowed.has(file))
+    assert.doesNotMatch(
+      text,
+      /<span\s+className=[{"`][^"`]*rounded-full[^"`]*\bpy-(?:0\.5|1|1\.5)\b/,
+      `${file}: hand-made pill; use <Badge>`,
+    );
+}
+// A failing page shows a way back instead of a blank window: both workspace
+// views sit inside a page boundary, and the whole app inside a root one.
+const appSource = fs.readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
+const mainSource = fs.readFileSync(new URL("../src/main.tsx", import.meta.url), "utf8");
+assert.equal(appSource.match(/<PageBoundary /g)?.length, 2, "both workspace views are guarded");
+assert.match(mainSource, /<PageBoundary[^>]*scope="app"[^>]*>\s*<App \/>/, "the root is guarded");
+// Public text never talks about anti-cheat systems or bans: no warnings,
+// no disclaimers, no vendor names. The app's own detection lists live in the
+// Rust backend (process_guard.rs), which is not public copy and is not read.
+{
+  const { execFileSync } = await import("node:child_process");
+  const tracked = execFileSync("git", ["ls-files"], { encoding: "utf8" }).split("\n");
+  const publicText = tracked.filter(
+    (f) =>
+      /\.(ts|tsx|md|html|json|txt|astro)$/.test(f) &&
+      !f.startsWith("src-tauri/") &&
+      !f.includes("node_modules/") &&
+      !/(^|\/)package(-lock)?\.json$/.test(f) &&
+      f !== "scripts/test-ui-polish.mjs",
+  );
+  const forbidden = [
+    /anti-?cheat/i,
+    /\beasy ?anti/i,
+    /\bbattl?eye\b/i,
+    /\bvanguard\b/i,
+    /\bfaceit\b/i,
+    /\bban(s|ned|ning)?\b/i,
+  ];
+  for (const file of publicText) {
+    const text = fs.readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
+    for (const word of forbidden)
+      assert.doesNotMatch(text, word, `${file}: public text mentions ${word.source}`);
+  }
+  assert.ok(publicText.length > 100, "the public text files were found");
+}
 const { outputFiles } = await build({
   stdin: {
     contents: `

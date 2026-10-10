@@ -146,6 +146,38 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // "Boost" names the mode in every language, like the Turbo Boost title.
+  "it:turboBoost.colBoost",
+  "fr:turboBoost.colBoost",
+  "es:turboBoost.colBoost",
+  "de:turboBoost.colBoost",
+  "pt:turboBoost.colBoost",
+  // "1 min" and "5 min" are the same abbreviation in these languages.
+  "it:live.zoomShort",
+  "fr:live.zoomShort",
+  "es:live.zoomShort",
+  "pt:live.zoomShort",
+  "it:live.zoomLong",
+  "fr:live.zoomLong",
+  "es:live.zoomLong",
+  "pt:live.zoomLong",
+  // French uses the same word for the scan's pause button.
+  "fr:componentScan.pause",
+  // "Total" is the word in French, Spanish and Portuguese; "Download" and
+  // "Upload" are the everyday network terms in Italian, German and Portuguese.
+  "fr:live.total",
+  "es:live.total",
+  "pt:live.total",
+  "it:live.down",
+  "de:live.down",
+  "pt:live.down",
+  "it:live.up",
+  "de:live.up",
+  "pt:live.up",
+  // "Normal" is the Windows priority name in Spanish, German and Portuguese too.
+  "es:priorityRules.normal",
+  "de:priorityRules.normal",
+  "pt:priorityRules.normal",
   // Reviewed component copy: these are ordinary words in the target locale.
   "de:componentAdvanced.doValue", // Limit and KB/s are valid German.
   "fr:componentAdvanced.doProvider", // Source is also French.

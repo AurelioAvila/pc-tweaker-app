@@ -33,40 +33,122 @@ export type ScanProbe = (typeof SCAN_PROBES)[number];
 export type ProbeStatus = "reading" | "complete" | "unavailable";
 
 /** Progress follows completed native reads, never a cosmetic timer. */
-export async function collectScan(
+/** Thrown by [`collectScan`] when its signal is aborted. */
+export class ScanCancelled extends Error {
+  constructor() {
+    super("SCAN_CANCELLED");
+    this.name = "ScanCancelled";
+  }
+}
+
+/** One finished read: its answer (null when the source was unavailable) and
+ *  when it was read, so a resumed scan can say how old each part is. */
+export type ScanStep = { state: Exclude<ProbeStatus, "reading">; at: number; value: unknown };
+
+/** A scan that can be paused and resumed. Every read is independent and
+ *  read-only, so a paused scan keeps what it finished and a resume runs only
+ *  what is missing; a read cut off by the pause is simply read again. The
+ *  driver inventory resumes from the device class it stopped at (the backend
+ *  keeps its partial list under `id`). Lives in memory only: closing the app
+ *  discards it. */
+export type ScanSession = {
+  id: string;
+  startedAt: number;
+  steps: Partial<Record<ScanProbe, ScanStep>>;
+  /** The driver audit request still running in the backend, if any. A pause
+   *  or an end waits for it, so the backend has saved (or dropped) its partial
+   *  inventory before the next request for this session arrives. */
+  auditInFlight?: Promise<unknown>;
+};
+
+/** Resolves once no driver audit for `session` is running in the backend. */
+export async function settled(session: ScanSession): Promise<void> {
+  await session.auditInFlight?.catch(() => undefined);
+}
+
+export function newScanSession(now = Date.now()): ScanSession {
+  return { id: `scan-${now}-${Math.random().toString(36).slice(2, 8)}`, startedAt: now, steps: {} };
+}
+
+/** Weighted progress of a scan, 0-99 (100 is kept for the finished report).
+ *  The driver inventory is the long phase: 60% of the work, the other reads
+ *  40%, and within it the device classes read so far. */
+export function scanProgress(
+  steps: ScanSession["steps"],
+  driver: { done: number; total: number } | null,
+): number {
+  const checks = SCAN_PROBES.filter((p) => p !== "driver_audit" && steps[p]).length;
+  const drivers = steps.driver_audit
+    ? 1
+    : driver && driver.total > 0
+      ? driver.done / driver.total
+      : 0;
+  return Math.min(99, (checks / (SCAN_PROBES.length - 1)) * 40 + drivers * 60);
+}
+
+export function finishedSteps(session: ScanSession): number {
+  return SCAN_PROBES.filter((probe) => session.steps[probe]).length;
+}
+
+/** Runs the reads `session` does not have yet, recording each one as it
+ *  finishes. Resolves true when every read is done, false when `signal` was
+ *  aborted first (a pause or a stop): the finished reads stay in `session`,
+ *  answers that arrive after the abort are dropped. */
+export async function runScanSession(
   call: Call,
-  progress: (percent: number, probe: ScanProbe, state: ProbeStatus) => void,
-) {
-  let completed = 0;
-  const unavailable: ScanProbe[] = [];
+  session: ScanSession,
+  progress: (probe: ScanProbe, state: ProbeStatus) => void,
+  signal?: AbortSignal,
+): Promise<boolean> {
+  const stopped = new Promise<never>((_, reject) => {
+    if (signal?.aborted) reject(new ScanCancelled());
+    signal?.addEventListener("abort", () => reject(new ScanCancelled()), { once: true });
+  });
+  stopped.catch(() => undefined);
   async function probe<T>(command: ScanProbe, args?: Record<string, unknown>): Promise<T | null> {
-    progress(Math.round((completed / SCAN_PROBES.length) * 100), command, "reading");
-    let state: ProbeStatus = "complete";
+    const done = session.steps[command];
+    if (done) return done.value as T | null;
+    if (signal?.aborted) throw new ScanCancelled();
+    progress(command, "reading");
     let timeout: ReturnType<typeof setTimeout> | undefined;
+    let step: ScanStep;
+    const request = call<T>(command, args);
+    if (command === "driver_audit") {
+      session.auditInFlight = request;
+      request.then(
+        () => undefined,
+        () => undefined,
+      );
+    }
     try {
-      return await Promise.race([
-        call<T>(command, args),
+      const value = await Promise.race([
+        request,
         new Promise<never>((_, reject) => {
-          timeout = setTimeout(() => reject(new Error("Read timed out")), 60_000);
+          timeout = setTimeout(() => {
+            // A read that ran out of time must not keep running behind the scan.
+            if (command === "driver_audit") void call("cancel_scan").catch(() => undefined);
+            reject(new Error("Read timed out"));
+          }, 60_000);
         }),
+        stopped,
       ]);
+      step = { state: "complete", at: Date.now(), value };
     } catch {
-      unavailable.push(command);
-      state = "unavailable";
-      return null;
+      if (signal?.aborted) throw new ScanCancelled();
+      step = { state: "unavailable", at: Date.now(), value: null };
     } finally {
       clearTimeout(timeout);
-      progress(Math.round((++completed / SCAN_PROBES.length) * 100), command, state);
     }
+    if (signal?.aborted) throw new ScanCancelled();
+    session.steps[command] = step;
+    progress(command, step.state);
+    return step.value as T | null;
   }
   const inventory = Promise.all([
     probe<TweakInfo[]>("list_tweaks"),
     probe<string[]>("scan_relevant_ids"),
-  ]).then(async ([tweaks, ids]) => {
-    const advice = await probe<TweakAdvice[]>("advise_tweaks", { ids: ids ?? [] });
-    return { tweaks, ids, advice };
-  });
-  const [settings, profile, drives, startup, stats, reboot, health, drivers, tasks, apps, eco] =
+  ]).then(([, ids]) => probe<TweakAdvice[]>("advise_tweaks", { ids: ids ?? [] }));
+  try {
     await Promise.all([
       inventory,
       probe<SystemProfile>("system_profile"),
@@ -75,29 +157,68 @@ export async function collectScan(
       probe<SystemStats>("system_stats"),
       probe<boolean>("reboot_pending"),
       probe<HealthResult>("health_report"),
-      probe<DriverAudit>("driver_audit"),
+      probe<DriverAudit>("driver_audit", { cancellable: true, session: session.id }),
       probe<ScheduledTaskEntry[]>("list_scheduled_tasks"),
       probe<DebloatApp[]>("list_debloat_apps"),
       probe<EcoQosState>("ecoqos_status"),
     ]);
+  } catch (e) {
+    if (e instanceof ScanCancelled || signal?.aborted) return false;
+    throw e;
+  }
+  return !signal?.aborted;
+}
+
+/** The report a session supports so far. Reads that never ran are listed in
+ *  `skipped`, separately from reads that ran and failed (`unavailable`). */
+export function scanReport(session: ScanSession, at = Date.now()) {
+  const value = <T>(probe: ScanProbe) => (session.steps[probe]?.value ?? null) as T | null;
+  const unavailable = SCAN_PROBES.filter((p) => session.steps[p]?.state === "unavailable");
+  const skipped = SCAN_PROBES.filter((p) => !session.steps[p]);
+  const times = SCAN_PROBES.flatMap((p) => (session.steps[p] ? [session.steps[p].at] : []));
   return {
-    ...settings,
-    profile,
-    drives,
-    startup,
-    stats,
-    reboot,
-    health,
-    drivers,
-    tasks,
-    apps,
-    eco,
+    tweaks: value<TweakInfo[]>("list_tweaks"),
+    ids: value<string[]>("scan_relevant_ids"),
+    advice: value<TweakAdvice[]>("advise_tweaks"),
+    profile: value<SystemProfile>("system_profile"),
+    drives: value<DriveInfo[]>("list_drives_cmd"),
+    startup: value<StartupEntry[]>("list_startup_items"),
+    stats: value<SystemStats>("system_stats"),
+    reboot: value<boolean>("reboot_pending"),
+    health: value<HealthResult>("health_report"),
+    drivers: value<DriverAudit>("driver_audit"),
+    tasks: value<ScheduledTaskEntry[]>("list_scheduled_tasks"),
+    apps: value<DebloatApp[]>("list_debloat_apps"),
+    eco: value<EcoQosState>("ecoqos_status"),
     unavailable,
-    partial: unavailable.length > 0,
-    at: Date.now(),
+    skipped,
+    partial: unavailable.length > 0 || skipped.length > 0,
+    /** When the oldest finished read was taken. */
+    oldestAt: times.length ? Math.min(...times) : at,
+    at,
   };
 }
-export type ScanReport = Awaited<ReturnType<typeof collectScan>>;
+
+/** Reads every source in one go. Aborting `signal` rejects at once with
+ *  [`ScanCancelled`]; reads still in flight are left to finish on their own
+ *  (all of them are read-only) and their answers are dropped. */
+export async function collectScan(
+  call: Call,
+  progress: (percent: number, probe: ScanProbe, state: ProbeStatus) => void,
+  signal?: AbortSignal,
+) {
+  const session = newScanSession();
+  const done = await runScanSession(
+    call,
+    session,
+    (probe, state) =>
+      progress(Math.round((finishedSteps(session) / SCAN_PROBES.length) * 100), probe, state),
+    signal,
+  );
+  if (!done) throw new ScanCancelled();
+  return scanReport(session);
+}
+export type ScanReport = ReturnType<typeof scanReport>;
 
 export function unknownSecuritySignals(report: ScanReport): string[] {
   if (!report.health) return [];

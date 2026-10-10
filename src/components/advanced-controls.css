@@ -58,7 +58,9 @@
   font-size: 11px;
 }
 .advanced-toolbar input,
-.advanced-toolbar select {
+.advanced-toolbar select,
+.advanced-rules select,
+.tool-select {
   min-height: 32px;
   max-width: 220px;
   border: 1px solid var(--border-strong);
@@ -89,6 +91,7 @@
 }
 .advanced-rules li > span {
   display: grid;
+  flex: 1;
   gap: 2px;
   min-width: 0;
 }

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-priority-rules-remove"
+description = "Enables the priority_rules_remove command without any pre-configured scope."
+commands.allow = ["priority_rules_remove"]
+
+[[permission]]
+identifier = "deny-priority-rules-remove"
+description = "Denies the priority_rules_remove command without any pre-configured scope."
+commands.deny = ["priority_rules_remove"]

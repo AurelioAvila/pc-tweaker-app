@@ -497,7 +497,7 @@ mod tests {
     }
 
     /// These exact byte patterns were read back from this machine's real
-    /// registry: Discord enabled as `02 00 ..`, FACEIT/Steam/RiotClient
+    /// registry: Discord enabled as `02 00 ..`, Steam and two game clients
     /// disabled as `03 00 ..` followed by a FILETIME.
     #[test]
     fn reads_the_same_enabled_state_windows_does() {
@@ -532,7 +532,7 @@ mod tests {
     #[test]
     fn payload_round_trips_through_the_elevated_helper() {
         for (scope, location, enabled, name) in [
-            ("HKLM", "run", false, "Riot Vanguard"),
+            ("HKLM", "run", false, "Game Client Service"),
             ("HKCU", "run", true, "Discord"),
             ("HKLM", "run32", false, "Old 32-bit Updater"),
             ("HKCU", "folder", true, "Backup Tool.lnk"),

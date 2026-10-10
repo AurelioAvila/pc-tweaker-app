@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-discard-scan-session"
+description = "Enables the discard_scan_session command without any pre-configured scope."
+commands.allow = ["discard_scan_session"]
+
+[[permission]]
+identifier = "deny-discard-scan-session"
+description = "Denies the discard_scan_session command without any pre-configured scope."
+commands.deny = ["discard_scan_session"]

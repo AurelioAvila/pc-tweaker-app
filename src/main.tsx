@@ -5,9 +5,15 @@ import ReactDOM from "react-dom/client";
 // silently rendered in the system fallback.
 import "@fontsource-variable/inter";
 import App from "./App";
+import { PageBoundary } from "./components/page-boundary";
+import { detectInitialLang, STRINGS } from "./i18n";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <App />
+    {/* The last line of defence: an error outside any page still shows a way
+        back instead of a blank window. */}
+    <PageBoundary s={STRINGS[detectInitialLang()]} resetKey="app" scope="app">
+      <App />
+    </PageBoundary>
   </React.StrictMode>,
 );

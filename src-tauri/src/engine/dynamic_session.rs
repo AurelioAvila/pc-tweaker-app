@@ -196,7 +196,7 @@ pub fn restore(store: &RollbackStore, owner: &str) -> Result<(), String> {
     if transaction.owner(TWEAK_ID) != Some(owner) || transaction.entry(TWEAK_ID).is_none() {
         return Ok(());
     }
-    transaction.restore_entry(TWEAK_ID, |entry| {
+    let result = transaction.restore_entry(TWEAK_ID, |entry| {
         // Every process gets its turn even when one fails; the journal is
         // kept for a retry, and the ones already put back are skipped then
         // because their sets no longer match.
@@ -207,7 +207,14 @@ pub fn restore(store: &RollbackStore, owner: &str) -> Result<(), String> {
             }
         }
         first_error.map_or(Ok(()), Err)
-    })
+    });
+    crate::process_guard::audit(
+        "core-steering",
+        "restored",
+        result.is_ok(),
+        result.as_ref().err().cloned(),
+    );
+    result
 }
 
 /// For `RunEvent::Exit`: restore whatever the session in *this* process
@@ -261,19 +268,16 @@ pub fn core_steering_status(app: tauri::AppHandle) -> Result<CoreSteeringStatus,
 mod native {
     use super::*;
     use std::mem::{size_of, zeroed};
-    use windows_sys::Win32::Foundation::{
-        CloseHandle, GetLastError, ERROR_INSUFFICIENT_BUFFER, FILETIME, HANDLE,
-    };
+    use crate::process_guard::{self, Access, OpenError, ProcessHandle};
+    use windows_sys::Win32::Foundation::{GetLastError, ERROR_INSUFFICIENT_BUFFER, FILETIME};
     use windows_sys::Win32::System::RemoteDesktop::ProcessIdToSessionId;
     use windows_sys::Win32::System::SystemInformation::{
         CpuSetInformation, GetSystemCpuSetInformation, GetWindowsDirectoryW,
         SYSTEM_CPU_SET_INFORMATION, SYSTEM_CPU_SET_INFORMATION_ALLOCATED,
     };
     use windows_sys::Win32::System::Threading::{
-        GetPriorityClass, GetProcessDefaultCpuSets, GetProcessTimes, OpenProcess,
-        QueryFullProcessImageNameW, SetProcessDefaultCpuSets, BELOW_NORMAL_PRIORITY_CLASS,
-        IDLE_PRIORITY_CLASS, NORMAL_PRIORITY_CLASS, PROCESS_NAME_WIN32,
-        PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_SET_LIMITED_INFORMATION,
+        GetPriorityClass, GetProcessDefaultCpuSets, GetProcessTimes, SetProcessDefaultCpuSets,
+        BELOW_NORMAL_PRIORITY_CLASS, IDLE_PRIORITY_CLASS, NORMAL_PRIORITY_CLASS,
     };
 
     /// Every CPU set on the machine, with the size of the L3 it sits under.
@@ -341,38 +345,17 @@ mod native {
         Ok(sets)
     }
 
-    struct Process(HANDLE);
-
-    impl Drop for Process {
-        fn drop(&mut self) {
-            // SAFETY: opened by OpenProcess and closed exactly once.
-            unsafe { CloseHandle(self.0) };
-        }
-    }
+    /// A process opened through the guard with query-limited and set-limited
+    /// rights only: enough for CPU sets, refused for protected processes.
+    struct Process(ProcessHandle);
 
     impl Process {
-        /// Query and set-limited rights only: enough for CPU sets, refused by
-        /// protected processes, which is the point.
         fn open(pid: u32) -> Option<Self> {
             Self::open_checked(pid).ok()
         }
 
-        /// The Win32 error on failure: 87 means there is no such process, 5
-        /// that it exists but this token may not touch it.
-        fn open_checked(pid: u32) -> Result<Self, u32> {
-            // SAFETY: plain call; a null result is checked.
-            let handle = unsafe {
-                OpenProcess(
-                    PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_SET_LIMITED_INFORMATION,
-                    0,
-                    pid,
-                )
-            };
-            if handle.is_null() {
-                // SAFETY: read straight after the failing call.
-                return Err(unsafe { GetLastError() });
-            }
-            Ok(Process(handle))
+        fn open_checked(pid: u32) -> Result<Self, OpenError> {
+            process_guard::open(pid, Access::CpuSets).map(Process)
         }
 
         fn creation(&self) -> Option<u64> {
@@ -380,19 +363,9 @@ mod native {
             let mut times: [FILETIME; 4] = unsafe { zeroed() };
             let [created, exited, kernel, user] = &mut times;
             // SAFETY: the handle is open with query rights.
-            let ok = unsafe { GetProcessTimes(self.0, created, exited, kernel, user) };
+            let ok = unsafe { GetProcessTimes(self.0.raw(), created, exited, kernel, user) };
             let value = (u64::from(times[0].dwHighDateTime) << 32) | u64::from(times[0].dwLowDateTime);
             (ok != 0 && value != 0).then_some(value)
-        }
-
-        fn image(&self) -> Option<String> {
-            let mut path = vec![0u16; 32_768];
-            let mut len = path.len() as u32;
-            // SAFETY: `path` holds `len` u16s.
-            let ok = unsafe {
-                QueryFullProcessImageNameW(self.0, PROCESS_NAME_WIN32, path.as_mut_ptr(), &mut len)
-            };
-            (ok != 0).then(|| String::from_utf16_lossy(&path[..len as usize]))
         }
 
         fn is_running(&self) -> bool {
@@ -400,7 +373,7 @@ mod native {
             const STILL_ACTIVE: u32 = 259;
             let mut code = 0u32;
             // SAFETY: the handle is open with query rights; `code` is live.
-            (unsafe { windows_sys::Win32::System::Threading::GetExitCodeProcess(self.0, &mut code) } != 0)
+            (unsafe { windows_sys::Win32::System::Threading::GetExitCodeProcess(self.0.raw(), &mut code) } != 0)
                 && code == STILL_ACTIVE
         }
 
@@ -414,7 +387,7 @@ mod native {
 
         fn priority_is_normal_or_lower(&self) -> bool {
             // SAFETY: the handle is open with query rights.
-            let class = unsafe { GetPriorityClass(self.0) };
+            let class = unsafe { GetPriorityClass(self.0.raw()) };
             [NORMAL_PRIORITY_CLASS, BELOW_NORMAL_PRIORITY_CLASS, IDLE_PRIORITY_CLASS].contains(&class)
         }
 
@@ -424,7 +397,7 @@ mod native {
                 let mut required = 0u32;
                 // SAFETY: `ids` holds `ids.len()` u32s.
                 let ok = unsafe {
-                    GetProcessDefaultCpuSets(self.0, ids.as_mut_ptr(), ids.len() as u32, &mut required)
+                    GetProcessDefaultCpuSets(self.0.raw(), ids.as_mut_ptr(), ids.len() as u32, &mut required)
                 };
                 if ok != 0 {
                     ids.truncate(required as usize);
@@ -445,7 +418,7 @@ mod native {
         fn set_cpu_sets(&self, ids: &[u32]) -> bool {
             let pointer = if ids.is_empty() { std::ptr::null() } else { ids.as_ptr() };
             // SAFETY: `pointer` is null with a zero count, or `ids` itself.
-            (unsafe { SetProcessDefaultCpuSets(self.0, pointer, ids.len() as u32) }) != 0
+            (unsafe { SetProcessDefaultCpuSets(self.0.raw(), pointer, ids.len() as u32) }) != 0
         }
     }
 
@@ -531,8 +504,7 @@ mod native {
         if let Some(game) = Process::open(game_pid) {
             // The PID must still be the game that was matched, and a game
             // that chose its own CPU sets keeps them.
-            let same = game
-                .image()
+            let same = process_guard::image_path(game_pid)
                 .and_then(|path| crate::game_sessions::executable_key(&path))
                 .is_some_and(|key| key == game_executable);
             if let (true, Some(creation), Some(true)) =
@@ -570,6 +542,12 @@ mod native {
         if changed.len() != records.len() {
             transaction.replace_owned_entry(TWEAK_ID, composite(&changed), owner)?;
         }
+        crate::process_guard::audit(
+            "core-steering",
+            &format!("{} processes", changed.len()),
+            true,
+            None,
+        );
         Ok(true)
     }
 
@@ -618,6 +596,14 @@ mod native {
             kept.extend(changed.iter().cloned());
             transaction.replace_owned_entry(TWEAK_ID, composite(&kept), owner)?;
         }
+        if !changed.is_empty() {
+            crate::process_guard::audit(
+                "core-steering",
+                &format!("{} processes", changed.len()),
+                true,
+                None,
+            );
+        }
         Ok(changed.len())
     }
 
@@ -627,13 +613,14 @@ mod native {
     /// be opened (steered while PC Tweaker ran elevated, restored now without)
     /// keeps the journal, which resolves itself once that process exits.
     pub fn restore_process(pid: u32, creation: u64, applied: &[u32]) -> Result<(), String> {
-        const ERROR_INVALID_PARAMETER: u32 = 87;
         let process = match Process::open_checked(pid) {
             Ok(process) => process,
-            Err(ERROR_INVALID_PARAMETER) => return Ok(()), // exited
-            Err(code) => {
+            Err(OpenError::Gone) => return Ok(()), // exited
+            // A protected process is never opened; its CPU sets die with it,
+            // and the journal entry resolves itself once it has exited.
+            Err(error) => {
                 return Err(format!(
-                    "process {pid} could not be opened to restore its CPU sets (error {code})"
+                    "process {pid} could not be opened to restore its CPU sets: {error}"
                 ))
             }
         };

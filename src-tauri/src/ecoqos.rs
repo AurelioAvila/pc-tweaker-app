@@ -13,6 +13,7 @@ static OWNER_CREATION: AtomicU64 = AtomicU64::new(0);
 static CONFIG_SEQUENCE: AtomicU64 = AtomicU64::new(1);
 static ENGINE_STATUS: Mutex<EngineStatus> = Mutex::new(EngineStatus {
     blocked_global: false,
+    paused: false,
     active_processes: 0,
     pending_restore: 0,
     last_error: None,
@@ -21,6 +22,8 @@ static ENGINE_STATUS: Mutex<EngineStatus> = Mutex::new(EngineStatus {
 #[derive(Clone, Default)]
 struct EngineStatus {
     blocked_global: bool,
+    /// Waiting for a game that manages its own performance to close.
+    paused: bool,
     active_processes: usize,
     pending_restore: usize,
     last_error: Option<String>,
@@ -43,6 +46,7 @@ pub struct EcoQosStatus {
     pub enabled: bool,
     pub engine_running: bool,
     pub blocked_global: bool,
+    pub paused: bool,
     pub rules: Vec<EcoQosRule>,
     pub active_processes: usize,
     pub pending_restore: usize,
@@ -122,6 +126,9 @@ fn selected_executable(path: &str) -> Result<(String, String), String> {
     {
         return Err("Windows and security processes cannot have EcoQoS rules".to_string());
     }
+    if crate::process_guard::is_protected_executable(&key) {
+        return Err(crate::process_guard::self_managed_error());
+    }
     Ok((canonical.to_string(), key))
 }
 
@@ -135,6 +142,7 @@ pub fn ecoqos_status(app: tauri::AppHandle) -> Result<EcoQosStatus, String> {
         enabled: config.enabled,
         engine_running: ENGINE_RUNNING.load(Ordering::Relaxed),
         blocked_global: status.blocked_global,
+        paused: status.paused,
         rules: config.rules,
         active_processes: status.active_processes,
         pending_restore: status.pending_restore,
@@ -305,25 +313,21 @@ enum RestoreDecision {
 #[cfg(windows)]
 mod native {
     use super::{path_key, Identity, Masks};
+    use crate::process_guard::{self, Access, OpenError, ProcessHandle};
     use std::mem::size_of;
-    use windows_sys::Win32::Foundation::{CloseHandle, FILETIME, HANDLE};
+    use windows_sys::Win32::Foundation::{FILETIME, HANDLE};
     use windows_sys::Win32::System::Threading::{
-        GetCurrentProcess, GetProcessInformation, GetProcessTimes, OpenProcess,
-        ProcessPowerThrottling, QueryFullProcessImageNameW, SetProcessInformation,
-        PROCESS_POWER_THROTTLING_CURRENT_VERSION, PROCESS_POWER_THROTTLING_STATE,
-        PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_SET_INFORMATION,
+        GetCurrentProcess, GetProcessInformation, GetProcessTimes, ProcessPowerThrottling,
+        SetProcessInformation, PROCESS_POWER_THROTTLING_CURRENT_VERSION,
+        PROCESS_POWER_THROTTLING_STATE,
     };
     use windows_sys::Win32::UI::WindowsAndMessaging::{
         GetForegroundWindow, GetWindowThreadProcessId,
     };
 
-    pub(super) struct Process(HANDLE);
-
-    impl Drop for Process {
-        fn drop(&mut self) {
-            unsafe { CloseHandle(self.0) };
-        }
-    }
+    /// Opened through the guard: query-limited to read, plus set-information
+    /// (scheduling priority) only for the moment of a write.
+    pub(super) struct Process(ProcessHandle);
 
     fn creation(handle: HANDLE) -> Result<u64, String> {
         let mut created = FILETIME {
@@ -345,40 +349,22 @@ mod native {
 
     impl Process {
         pub(super) fn open(pid: u32, write: bool) -> Result<Option<Self>, String> {
-            let handle = unsafe {
-                OpenProcess(
-                    PROCESS_QUERY_LIMITED_INFORMATION
-                        | if write { PROCESS_SET_INFORMATION } else { 0 },
-                    0,
-                    pid,
-                )
-            };
-            if handle.is_null() {
-                let error = std::io::Error::last_os_error();
-                if error.raw_os_error() == Some(87) {
-                    Ok(None)
-                } else {
-                    Err(format!("OpenProcess({pid}): {error}"))
-                }
-            } else {
-                Ok(Some(Self(handle)))
+            let access = if write { Access::Priority } else { Access::Query };
+            match process_guard::open(pid, access) {
+                Ok(handle) => Ok(Some(Self(handle))),
+                Err(OpenError::Gone) => Ok(None),
+                Err(error) => Err(format!("process {pid} could not be opened: {error}")),
             }
         }
 
         pub(super) fn creation(&self) -> Result<u64, String> {
-            creation(self.0)
+            creation(self.0.raw())
         }
 
+        /// PID, kernel creation time and canonical path. The path comes from
+        /// the kernel's process table, not from this handle.
         pub(super) fn identity(&self, pid: u32) -> Result<Identity, String> {
-            let mut chars = vec![0u16; 32768];
-            let mut len = chars.len() as u32;
-            if unsafe { QueryFullProcessImageNameW(self.0, 0, chars.as_mut_ptr(), &mut len) } == 0 {
-                return Err(format!(
-                    "QueryFullProcessImageNameW: {}",
-                    std::io::Error::last_os_error()
-                ));
-            }
-            let name = String::from_utf16(&chars[..len as usize]).map_err(|e| e.to_string())?;
+            let name = process_guard::image_path(pid).ok_or("Process path is unavailable")?;
             let canonical = std::fs::canonicalize(&name).map_err(|e| e.to_string())?;
             let executable = path_key(
                 canonical
@@ -388,7 +374,7 @@ mod native {
             .ok_or("Process path is not a local executable")?;
             Ok(Identity {
                 pid,
-                creation: creation(self.0)?,
+                creation: creation(self.0.raw())?,
                 executable,
             })
         }
@@ -401,7 +387,7 @@ mod native {
             };
             if unsafe {
                 GetProcessInformation(
-                    self.0,
+                    self.0.raw(),
                     ProcessPowerThrottling,
                     &mut state as *mut _ as _,
                     size_of::<PROCESS_POWER_THROTTLING_STATE>() as u32,
@@ -428,7 +414,7 @@ mod native {
             };
             if unsafe {
                 SetProcessInformation(
-                    self.0,
+                    self.0.raw(),
                     ProcessPowerThrottling,
                     &state as *const _ as _,
                     size_of::<PROCESS_POWER_THROTTLING_STATE>() as u32,
@@ -493,8 +479,10 @@ mod native {
     }
 }
 
+/// The foreground process and the processes that started it, read from the
+/// handle-free process table.
 #[cfg(windows)]
-fn foreground_ancestors(sys: &sysinfo::System) -> HashSet<u32> {
+fn foreground_ancestors(table: &[crate::process_guard::ProcessInfo]) -> HashSet<u32> {
     let mut result = HashSet::new();
     let Some(mut pid) = native::foreground_pid() else {
         return result;
@@ -503,19 +491,19 @@ fn foreground_ancestors(sys: &sysinfo::System) -> HashSet<u32> {
         if !result.insert(pid) {
             break;
         }
-        let Some(process) = sys.process(sysinfo::Pid::from_u32(pid)) else {
+        let Some(process) = table.iter().find(|p| p.pid == pid) else {
             break;
         };
-        let Some(parent) = process.parent() else {
+        let Some(parent) = process.parent else {
             break;
         };
-        let Some(parent_process) = sys.process(parent) else {
+        let Some(parent_process) = table.iter().find(|p| p.pid == parent) else {
             break;
         };
-        if parent_process.start_time() == 0 || parent_process.start_time() > process.start_time() {
+        if parent_process.created == 0 || parent_process.created > process.created {
             break;
         }
-        pid = parent.as_u32();
+        pid = parent;
     }
     result
 }
@@ -548,6 +536,12 @@ fn restore_record(
             if process.masks()? != record.original {
                 return Err("EcoQoS restoration did not reproduce the saved masks".to_string());
             }
+            crate::process_guard::audit(
+                "ecoqos-restored",
+                "restored",
+                true,
+                None,
+            );
         }
         RestoreDecision::ExternalChange => {
             suppressed.insert(record.identity.clone());
@@ -558,12 +552,22 @@ fn restore_record(
     Ok(decision == RestoreDecision::Restore)
 }
 
+/// Whether `name` is the file name of one of the rule paths.
+fn named_like_a_rule(rule_keys: &[String], name: &str) -> bool {
+    rule_keys
+        .iter()
+        .any(|k| k.rsplit('\\').next().is_some_and(|n| n.eq_ignore_ascii_case(name)))
+}
+
+/// One pass of the engine. `paused` freezes it: while a game that manages its
+/// own performance runs, no process is opened, so nothing new is applied and
+/// nothing applied is verified or restored until that game has closed.
 #[cfg(windows)]
 fn tick(
     dir: &Path,
-    sys: &mut sysinfo::System,
     owner_creation: u64,
     suppressed: &mut HashSet<Identity>,
+    paused: bool,
 ) -> Result<EngineStatus, String> {
     let mut status = EngineStatus::default();
     let config = match load_config(dir) {
@@ -588,23 +592,36 @@ fn tick(
         }
     };
     status.blocked_global = blocked_global;
+    let records = read_recoveries(dir)?;
+    if paused {
+        status.paused = true;
+        status.active_processes = records.len();
+        return Ok(status);
+    }
     let allowed = supported
         && !blocked_global
         && !SHUTTING_DOWN.load(Ordering::SeqCst)
         && config.enabled
         && crate::require_pro(dir).is_ok();
-    let refreshed = sys.refresh_processes_specifics(
-        sysinfo::ProcessesToUpdate::All,
-        true,
-        sysinfo::ProcessRefreshKind::new().with_exe(sysinfo::UpdateKind::Always),
-    );
-    let foreground = foreground_ancestors(sys);
+    let table = crate::process_guard::processes();
+    let refreshed = table.is_ok();
+    if !refreshed {
+        // Without the table, another live instance's records would look
+        // orphaned. Nothing is decided on a failed read.
+        status.active_processes = records.len();
+        status.last_error = Some("The process list could not be read".to_string());
+        return Ok(status);
+    }
+    let table = table.unwrap_or_default();
+    let foreground = foreground_ancestors(&table);
     let owner_pid = std::process::id();
-    let records = read_recoveries(dir)?;
+    let rule_keys: Vec<String> = config.rules.iter().filter_map(|r| path_key(&r.path)).collect();
     let mut observed = HashMap::new();
-    if refreshed != 0 {
-        for process in sys.processes().values() {
-            let Some(exe) = process.exe().and_then(Path::to_str) else {
+    if refreshed {
+        // Only processes named like a rule have their path resolved, and the
+        // path comes from the kernel by PID: nothing is opened to find them.
+        for process in table.iter().filter(|p| named_like_a_rule(&rule_keys, &p.name)) {
+            let Some(exe) = crate::process_guard::image_path(process.pid) else {
                 continue;
             };
             let Ok(canonical) = std::fs::canonicalize(exe) else {
@@ -613,12 +630,8 @@ fn tick(
             let Some(key) = canonical.to_str().and_then(path_key) else {
                 continue;
             };
-            if config
-                .rules
-                .iter()
-                .any(|rule| path_key(&rule.path).as_deref() == Some(key.as_str()))
-            {
-                observed.insert(process.pid().as_u32(), key);
+            if rule_keys.contains(&key) && !crate::process_guard::is_protected_executable(&key) {
+                observed.insert(process.pid, key);
             }
         }
     }
@@ -628,11 +641,11 @@ fn tick(
         let owner_is_self =
             record.owner_pid == owner_pid && record.owner_creation == owner_creation;
         if !owner_is_self {
-            // Another live PC Tweaker instance retains ownership. Avoid two watchers racing.
-            let old_owner_alive = match native::Process::open(record.owner_pid, false)? {
-                Some(process) => process.creation()? == record.owner_creation,
-                None => false,
-            };
+            // Another live PC Tweaker instance retains ownership. Avoid two
+            // watchers racing. Answered from the process table, not a handle.
+            let old_owner_alive = table
+                .iter()
+                .any(|p| p.pid == record.owner_pid && p.created == record.owner_creation);
             if old_owner_alive {
                 recovery_failed = true;
                 status.last_error =
@@ -642,19 +655,21 @@ fn tick(
         }
         let desired = owner_is_self
             && allowed
-            && refreshed != 0
+            && refreshed
             && observed.get(&record.identity.pid) == Some(&record.identity.executable)
             && !foreground.contains(&record.identity.pid);
-        if desired {
-            if let Ok(Some(process)) = native::Process::open(record.identity.pid, true) {
-                if process.identity(record.identity.pid).ok().as_ref() == Some(&record.identity)
-                    && process.masks().ok() == Some(record.applied)
-                {
-                    owned.insert(record.identity.clone());
-                    status.active_processes += 1;
-                    continue;
-                }
-            }
+        // Still the same process instance, read from the process table: no
+        // handle is opened every few seconds to re-check it. A mask someone
+        // else changed meanwhile is caught when it is restored, which compares
+        // before it writes.
+        if desired
+            && table
+                .iter()
+                .any(|p| p.pid == record.identity.pid && p.created == record.identity.creation)
+        {
+            owned.insert(record.identity.clone());
+            status.active_processes += 1;
+            continue;
         }
         if let Err(e) = restore_record(path, record, suppressed) {
             status.last_error = Some(e);
@@ -667,18 +682,26 @@ fn tick(
     if recovery_failed {
         return Ok(status);
     }
-    if !allowed || refreshed == 0 {
+    if !allowed || !refreshed {
         if !supported && status.last_error.is_none() {
             status.last_error = Some("EcoQoS requires Windows 11".to_string());
         }
         return Ok(status);
     }
     suppressed.retain(|id| {
-        sys.process(sysinfo::Pid::from_u32(id.pid))
-            .is_some_and(|p| p.start_time() != 0 && observed.get(&id.pid) == Some(&id.executable))
+        table
+            .iter()
+            .any(|p| p.pid == id.pid && p.created == id.creation)
+            && observed.get(&id.pid) == Some(&id.executable)
     });
+    let mut applied_now = 0usize;
     for (pid, key) in observed {
         if foreground.contains(&pid) {
+            continue;
+        }
+        let created = table.iter().find(|p| p.pid == pid).map_or(0, |p| p.created);
+        if owned.iter().chain(suppressed.iter()).any(|id| id.pid == pid && id.creation == created) {
+            // Already handled for this process instance: nothing is reopened.
             continue;
         }
         let Ok(Some(process)) = native::Process::open(pid, true) else {
@@ -720,6 +743,15 @@ fn tick(
             return Err("EcoQoS write did not match its saved ownership state".to_string());
         }
         status.active_processes += 1;
+        applied_now += 1;
+    }
+    if applied_now > 0 {
+        crate::process_guard::audit(
+            "ecoqos-applied",
+            &format!("{applied_now} processes"),
+            true,
+            None,
+        );
     }
     status.pending_restore = read_recoveries(dir)?
         .len()
@@ -745,12 +777,12 @@ pub fn start(app: tauri::AppHandle) {
             }
         };
         OWNER_CREATION.store(owner_creation, Ordering::SeqCst);
-        let mut sys = sysinfo::System::new();
         let mut suppressed = HashSet::new();
         loop {
             let result = crate::store_for_dir(&app).and_then(|dir| {
+                let paused = crate::process_guard::paused(&dir);
                 let _guard = LOCK.lock().map_err(|e| e.to_string())?;
-                tick(&dir, &mut sys, owner_creation, &mut suppressed)
+                tick(&dir, owner_creation, &mut suppressed, paused)
             });
             if let Ok(mut status) = ENGINE_STATUS.lock() {
                 match result {
@@ -782,9 +814,11 @@ pub fn stop(app: &tauri::AppHandle) -> Result<(), String> {
     }
     let dir = crate::store_for_dir(app)?;
     let _guard = LOCK.lock().map_err(|e| e.to_string())?;
-    let mut sys = sysinfo::System::new();
     let mut suppressed = HashSet::new();
-    let status = tick(&dir, &mut sys, owner_creation, &mut suppressed)?;
+    // On exit the app restores what it changed even during a protected
+    // session: protected processes are refused by the guard itself, and the
+    // apps restored here are the ones the user chose.
+    let status = tick(&dir, owner_creation, &mut suppressed, false)?;
     if status.pending_restore != 0 {
         return Err(
             "EcoQoS restoration remains pending; it will be retried on next launch".to_string(),
@@ -902,6 +936,28 @@ mod tests {
         std::fs::remove_file(path).unwrap();
         std::fs::remove_dir(recovery_dir(&dir)).unwrap();
         std::fs::remove_dir(dir).unwrap();
+    }
+
+    /// Reading a process's EcoQoS state must work with query-limited rights
+    /// alone, since that is all the engine asks for until it writes. Read
+    /// only: a child this test starts is inspected, never changed.
+    #[cfg(windows)]
+    #[test]
+    fn masks_are_readable_with_query_limited_rights_only() {
+        use std::os::windows::process::CommandExt;
+        let mut child = std::process::Command::new("cmd.exe")
+            .args(["/c", "ping -n 6 127.0.0.1 >nul"])
+            .creation_flags(0x0800_0000) // CREATE_NO_WINDOW
+            .spawn()
+            .unwrap();
+        let read = native::Process::open(child.id(), false)
+            .unwrap()
+            .expect("child is running")
+            .masks();
+        let _ = child.kill();
+        let _ = child.wait();
+        let masks = read.unwrap();
+        assert!(native::valid_version(masks));
     }
 
     /// Explicit VM probe of the same native read/write path as the watcher.

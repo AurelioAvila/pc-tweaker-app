@@ -2,7 +2,7 @@ import "./tool-surfaces.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
-import { formatBytes } from "../lib";
+import { formatBytes, friendlyError } from "../lib";
 import { ProcessEntry, Toast, X3dReport } from "../types";
 import { ChipIcon } from "./icons";
 
@@ -178,7 +178,7 @@ export function X3dPanel({
             <button
               onClick={loadProcesses}
               disabled={loadingProcesses}
-              className="border-line-2 text-ink-2 hover:border-accent/40 hover:text-ink shrink-0 rounded-xl border px-3 py-1.5 text-[12px] font-semibold transition-colors disabled:cursor-wait disabled:opacity-60"
+              className="tool-secondary-action shrink-0"
             >
               {loadingProcesses ? s.x3d.refreshing : s.x3d.refresh}
             </button>
@@ -221,13 +221,11 @@ export function X3dPanel({
                           );
                           loadProcesses();
                         })
-                        .catch((e: unknown) => toastRef.current("error", String(e)))
+                        .catch((e: unknown) => toastRef.current("error", friendlyError(e, s)))
                         .finally(() => setBusyPid(null));
                     }}
                     disabled={busyPid === p.pid}
-                    className={`shrink-0 rounded-lg px-3 py-1.5 text-[11.5px] font-bold transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60 ${
-                      aligned ? "border-line-2 text-ink-2 border" : "bg-accent text-on-accent"
-                    }`}
+                    className={`shrink-0 ${aligned ? "tool-secondary-action" : "tool-primary-action"}`}
                   >
                     {aligned ? s.x3d.reset : s.x3d.align}
                   </button>

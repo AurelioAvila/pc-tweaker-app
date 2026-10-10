@@ -1,7 +1,7 @@
 import "./tool-surfaces.css";
 import { ToolStatus } from "./tool-section";
 import { useBusyPresentation } from "./ui";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openFolderDialog } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -23,7 +23,7 @@ import {
   Toast,
 } from "../types";
 import { DriveIcon, GlobeIcon, HeartPulseIcon, TrashIcon } from "./icons";
-import { ProBadge, ShieldBadge, SoonBadge } from "./ui";
+import { Badge, Toggle } from "./ui";
 import { SecureDefragCard } from "./pro";
 import uninstallerIcon from "../assets/uninstaller-icon.png";
 import redaxaMark from "../assets/redaxa-mark.svg";
@@ -52,7 +52,7 @@ export function IpMaskCard({ s, onExplain }: { s: Strings; onExplain: () => void
         <div className="tool-card-copy min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="font-semibold text-ink">{s.ipMask.title}</h2>
-            <SoonBadge label={s.badges.soon} />
+            <Badge>{s.badges.soon}</Badge>
           </div>
           <p className="mt-0.5 text-sm text-ink-3">{s.ipMask.description}</p>
         </div>
@@ -61,6 +61,33 @@ export function IpMaskCard({ s, onExplain }: { s: Strings; onExplain: () => void
         </button>
       </div>
     </li>
+  );
+}
+
+/** Shown in place of the search button while a folder search runs. */
+function StopSearchButton({
+  s,
+  stopping,
+  onStop,
+}: {
+  s: Strings;
+  stopping: boolean;
+  onStop: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onStop}
+      disabled={stopping}
+      aria-busy={!stopping}
+      className="tool-secondary-action tool-card-action"
+    >
+      <span
+        aria-hidden="true"
+        className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-r-transparent"
+      />
+      {stopping ? s.folderScan.stopping : s.folderScan.stop}
+    </button>
   );
 }
 
@@ -76,6 +103,8 @@ export function DuplicateFinder({
   onToast: (kind: Toast["kind"], message: string) => void;
 }) {
   const [scanning, setScanning] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const stopped = useRef(false);
   const [groups, setGroups] = useState<DuplicateGroup[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
@@ -91,15 +120,20 @@ export function DuplicateFinder({
     setGroups(null);
     setSelected(new Set());
     try {
+      stopped.current = false;
       const result = await invoke<DuplicateGroup[]>("scan_duplicates", { root: folder });
       setGroups(result);
-      if (result.length === 0) {
+      // A stopped search returns what it had confirmed by then.
+      if (stopped.current) {
+        onToast("success", result.length ? s.folderScan.stoppedPartial : s.folderScan.stoppedEmpty);
+      } else if (result.length === 0) {
         onToast("success", s.duplicateFinder.noneFound);
       }
     } catch (e) {
       onToast("error", String(e));
     } finally {
       setScanning(false);
+      setStopping(false);
     }
   }
 
@@ -153,13 +187,25 @@ export function DuplicateFinder({
         <div className="tool-card-copy min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="font-semibold text-ink">{s.duplicateFinder.title}</h2>
-            <ProBadge label={s.badges.pro} />
+            <Badge kind="pro">{s.badges.pro}</Badge>
           </div>
           <p className="mt-0.5 text-sm text-ink-3">{s.duplicateFinder.description}</p>
         </div>
-        <button onClick={scan} disabled={scanning} className="tool-primary-action tool-card-action">
-          {scanning ? s.duplicateFinder.scanning : s.duplicateFinder.chooseFolder}
-        </button>
+        {scanning ? (
+          <StopSearchButton
+            s={s}
+            stopping={stopping}
+            onStop={() => {
+              stopped.current = true;
+              setStopping(true);
+              void invoke("cancel_folder_scan", { kind: "duplicates" });
+            }}
+          />
+        ) : (
+          <button onClick={scan} className="tool-primary-action tool-card-action">
+            {s.duplicateFinder.chooseFolder}
+          </button>
+        )}
       </div>
 
       {groups && groups.length > 0 && (
@@ -181,7 +227,7 @@ export function DuplicateFinder({
                     type="checkbox"
                     checked={selected.has(p)}
                     onChange={() => toggleSelected(p)}
-                    className="h-3.5 w-3.5 shrink-0 accent-sky-500"
+                    className="h-3.5 w-3.5 shrink-0"
                   />
                   <span className="truncate">{p}</span>
                 </label>
@@ -250,12 +296,15 @@ export function DiskOptimizeCard({
             <h2 className="font-semibold text-ink">
               {s.diskOptimize.title} <span className="font-normal text-ink-3">({drive})</span>
             </h2>
-            <ShieldBadge label={s.badges.admin} />
-            <ProBadge label={s.badges.pro} />
+            <Badge kind="admin">{s.badges.admin}</Badge>
+            <Badge kind="pro">{s.badges.pro}</Badge>
           </div>
           <p className="mt-0.5 text-sm text-ink-3">
             {running ? s.diskOptimize.running : s.diskOptimize.description}
           </p>
+          {running && (
+            <p className="mt-1 text-xs leading-relaxed text-ink-3">{s.diskOptimize.cannotStop}</p>
+          )}
         </div>
         <button
           onClick={run}
@@ -564,6 +613,8 @@ export function LargeFileFinder({
   onToast: (kind: Toast["kind"], message: string) => void;
 }) {
   const [scanning, setScanning] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const stopped = useRef(false);
   const [files, setFiles] = useState<LargeFile[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
@@ -579,12 +630,15 @@ export function LargeFileFinder({
     setFiles(null);
     setSelected(new Set());
     try {
+      stopped.current = false;
       const result = await invoke<LargeFile[]>("scan_large_files", {
         root: folder,
         minBytes: LARGE_FILE_THRESHOLD_BYTES,
       });
       setFiles(result);
-      if (result.length === 0) {
+      if (stopped.current) {
+        onToast("success", result.length ? s.folderScan.stoppedPartial : s.folderScan.stoppedEmpty);
+      } else if (result.length === 0) {
         onToast(
           "success",
           format(s.largeFiles.noneFound, { size: formatBytes(LARGE_FILE_THRESHOLD_BYTES) }),
@@ -594,6 +648,7 @@ export function LargeFileFinder({
       onToast("error", String(e));
     } finally {
       setScanning(false);
+      setStopping(false);
     }
   }
 
@@ -635,13 +690,25 @@ export function LargeFileFinder({
         <div className="tool-card-copy min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="font-semibold text-ink">{s.largeFiles.title}</h2>
-            <ProBadge label={s.badges.pro} />
+            <Badge kind="pro">{s.badges.pro}</Badge>
           </div>
           <p className="mt-0.5 text-sm text-ink-3">{s.largeFiles.description}</p>
         </div>
-        <button onClick={scan} disabled={scanning} className="tool-primary-action tool-card-action">
-          {scanning ? s.largeFiles.scanning : s.largeFiles.chooseFolder}
-        </button>
+        {scanning ? (
+          <StopSearchButton
+            s={s}
+            stopping={stopping}
+            onStop={() => {
+              stopped.current = true;
+              setStopping(true);
+              void invoke("cancel_folder_scan", { kind: "large" });
+            }}
+          />
+        ) : (
+          <button onClick={scan} className="tool-primary-action tool-card-action">
+            {s.largeFiles.chooseFolder}
+          </button>
+        )}
       </div>
 
       {files && files.length > 0 && (
@@ -927,8 +994,8 @@ export function CleanupCard({
         <div className="tool-card-copy min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="font-semibold text-ink">{text.name}</h2>
-            {info.requires_admin && <ShieldBadge label={s.badges.admin} />}
-            {info.requires_pro && <ProBadge label={s.badges.pro} />}
+            {info.requires_admin && <Badge kind="admin">{s.badges.admin}</Badge>}
+            {info.requires_pro && <Badge kind="pro">{s.badges.pro}</Badge>}
           </div>
           <p className="mt-0.5 text-sm text-ink-3">{text.description}</p>
         </div>
@@ -1143,7 +1210,7 @@ export function CleanupConfirmModal({
                       type="checkbox"
                       checked={!unchecked.has(item.name)}
                       onChange={() => toggle(item.name)}
-                      className="h-3.5 w-3.5 accent-sky-500"
+                      className="h-3.5 w-3.5"
                     />
                     <span className="min-w-0 flex-1 truncate text-ink-2">
                       {item.name}
@@ -1178,5 +1245,70 @@ export function CleanupConfirmModal({
         </button>
       </div>
     </div>
+  );
+}
+
+/** The weekly temporary-file cleanup: a logon task with the user's own rights
+ *  that moves only files untouched for a day, waits while a game is running,
+ *  and never touches memory. Turning it on needs Pro; turning it off never
+ *  does. */
+export function ScheduledCleanupCard({
+  s,
+  isPro,
+  onRequirePro,
+  onToast,
+}: {
+  s: Strings;
+  isPro: boolean;
+  onRequirePro: () => void;
+  onToast: (kind: "success" | "error", message: string) => void;
+}) {
+  const [on, setOn] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    invoke<boolean>("scheduled_cleanup_enabled")
+      .then(setOn)
+      .catch(() => setOn(false));
+  }, []);
+
+  async function toggle() {
+    if (on === null || busy) return;
+    if (!on && !isPro) {
+      onRequirePro();
+      return;
+    }
+    setBusy(true);
+    try {
+      setOn(await invoke<boolean>("set_scheduled_cleanup", { enabled: !on }));
+    } catch (e) {
+      onToast("error", String(e));
+    }
+    setBusy(false);
+  }
+
+  const style = CATEGORY_STYLE.maintenance;
+  return (
+    <li className="tool-panel tool-card tool-cleanup-card animate-card group relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 transition-all duration-200 hover:border-line-2 hover:bg-surface-2">
+      <div className="tool-card-head relative flex items-center gap-4">
+        <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${style.chip}`}>
+          <TrashIcon className="h-5 w-5" />
+        </div>
+        <div className="tool-card-copy min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-semibold text-ink">{s.scheduledCleanup.title}</h2>
+            <Badge kind="pro">{s.badges.pro}</Badge>
+          </div>
+          <p className="mt-0.5 text-sm text-ink-3">{s.scheduledCleanup.body}</p>
+        </div>
+        <Toggle
+          checked={on === true}
+          busy={busy || on === null}
+          onClick={() => void toggle()}
+          s={s}
+          label={s.scheduledCleanup.title}
+        />
+      </div>
+    </li>
   );
 }

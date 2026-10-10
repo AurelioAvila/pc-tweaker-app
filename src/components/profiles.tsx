@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { open as openFolderDialog, save as saveFileDialog } from "@tauri-apps/plugin-dialog";
 import { format, Lang, Strings } from "../i18n";
 import { formatEpochDate } from "../lib";
+import { MANUAL_ONLY_TWEAK_IDS } from "../catalog";
 import { FolderIcon, LayersIcon } from "./icons";
 import { LoadedProfile, Toast, TweakInfo, TweakProfile } from "../types";
 import "./workspace-panels.css";
@@ -192,8 +193,10 @@ export function ProfilesPanel({
 
     applyingProfile.current = true;
     setBusy(profile.name);
+    // Switches that apply only on their own are left out of every profile.
+    const ids = profile.tweaks.filter((id) => !MANUAL_ONLY_TWEAK_IDS.has(id));
     try {
-      const failures = await invoke<string[]>("apply_tweaks", { ids: profile.tweaks });
+      const failures = await invoke<string[]>("apply_tweaks", { ids });
       failures.forEach((f) =>
         pushToast("error", f.includes("PRO_REQUIRED: ") ? s.toasts.licenseNeedsRefresh : f),
       );
@@ -201,7 +204,7 @@ export function ProfilesPanel({
       if (failures.length === 0)
         pushToast(
           "success",
-          format(s.profiles.appliedToast, { count: profile.tweaks.length - failures.length }),
+          format(s.profiles.appliedToast, { count: ids.length - failures.length }),
         );
     } catch (e) {
       pushToast("error", String(e));

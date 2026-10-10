@@ -20,7 +20,7 @@ import {
   typicalDuration,
 } from "./repair-eta";
 import { ToolDetails, ToolHeader } from "./tool-section";
-import { ProBadge, ShieldBadge } from "./ui";
+import { Badge } from "./ui";
 
 /* ------------------------------------------------------------------ *
  * A repair outlives the screen it was started from.
@@ -528,7 +528,7 @@ export function SystemRepairCard({
         title={
           <>
             {s.systemRepair.title}
-            <ShieldBadge label={s.badges.admin} />
+            <Badge kind="admin">{s.badges.admin}</Badge>
           </>
         }
         description={s.systemRepair.description}
@@ -704,6 +704,7 @@ export function SystemRepairCard({
               {s.systemRepair.timeNote}{" "}
               <span className="font-medium text-warn">{s.systemRepair.runningNote}</span>
             </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-ink-3">{s.systemRepair.cannotStop}</p>
           </div>
         )}
 
@@ -747,7 +748,7 @@ export function SystemRepairCard({
                     className="tool-primary-action"
                   >
                     {s.systemRepair.askRepairYes}
-                    {!isPro && <ProBadge label={s.badges.pro} />}
+                    {!isPro && <Badge kind="pro">{s.badges.pro}</Badge>}
                   </button>
                   <button
                     type="button"
@@ -777,7 +778,7 @@ export function SystemRepairCard({
                     className="tool-secondary-action"
                   >
                     {s.systemRepair.repairAnyway}
-                    {!isPro && <ProBadge label={s.badges.pro} />}
+                    {!isPro && <Badge kind="pro">{s.badges.pro}</Badge>}
                   </button>
                 </>
               )}
@@ -806,7 +807,7 @@ export function SystemRepairCard({
           className="tool-secondary-action"
         >
           {s.systemRepair.cleanupButton}
-          {!isPro && <ProBadge label={s.badges.pro} />}
+          {!isPro && <Badge kind="pro">{s.badges.pro}</Badge>}
         </button>
       </div>
     </section>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
-import { formatBytes, RAM_AUTO_INTERVALS, ramIntervalLabel } from "../lib";
+import { formatBytes, friendlyError, RAM_AUTO_INTERVALS, ramIntervalLabel } from "../lib";
 import { RamCleanResult, SystemStats, Toast, TweakInfo } from "../types";
 
 /**
@@ -162,18 +162,11 @@ export function SystemPulse({
           <p className="type-caption mt-1">{s.command.consent}</p>
         </div>
         {hasFindings ? (
-          <button
-            onClick={onReview}
-            className="bg-accent text-on-accent rounded-[8px] px-4 py-2 text-[13px] font-semibold transition-opacity duration-150 hover:opacity-90"
-          >
+          <button onClick={onReview} className="tool-primary-action">
             {format(s.command.reviewFindings, { count: findings })}
           </button>
         ) : (
-          <button
-            onClick={onRunScan}
-            disabled={scanning}
-            className="bg-accent text-on-accent rounded-[8px] px-4 py-2 text-[13px] font-semibold transition-opacity duration-150 hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
-          >
+          <button onClick={onRunScan} disabled={scanning} className="tool-primary-action">
             {s.command.runScan}
           </button>
         )}
@@ -247,7 +240,7 @@ export function MemoryPressure({
           : s.ram.freedNothing,
       );
     } catch (e) {
-      pushToast("error", String(e));
+      pushToast("error", friendlyError(e, s));
     } finally {
       setTrimming(false);
     }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { LANGUAGES, Lang, Strings } from "../i18n";
 import { THEMES, ThemeName } from "../theme";
@@ -10,7 +11,7 @@ import {
   removeAvatar,
   writeAvatar,
 } from "../lib";
-import { AuthState } from "../types";
+import { AuthState, ProcessGuardStatus } from "../types";
 import { CheckIcon, CrownIcon } from "./icons";
 import { Avatar } from "./ui";
 import "./account-menu.css";
@@ -450,6 +451,30 @@ export function AccountMenu({
     localStorage.setItem(ERROR_REPORTS_KEY, next ? "on" : "off");
   }
 
+  // Kept by the Rust side, which is what enforces it; read when the menu opens.
+  const [guard, setGuard] = useState<ProcessGuardStatus | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    invoke<ProcessGuardStatus>("process_guard_status")
+      .then((g) => {
+        if (alive) setGuard(g);
+      })
+      .catch(() => {
+        if (alive) setGuard(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [open]);
+
+  function toggleGuard() {
+    if (!guard) return;
+    void invoke<ProcessGuardStatus>("set_process_guard", { respectGames: !guard.respectGames })
+      .then(setGuard)
+      .catch(() => undefined);
+  }
+
   return (
     <div
       className="relative"
@@ -619,6 +644,27 @@ export function AccountMenu({
                   aria-checked={errReports}
                   aria-label={s.menu.errorReports}
                   onClick={toggleErrorReports}
+                  className="account-switch"
+                >
+                  <span />
+                </button>
+              </div>
+            </details>
+            <details name="account-settings" className="account-setting">
+              <summary>
+                <span>{s.guard.settingTitle}</span>
+                <span className="account-chevron" aria-hidden="true">
+                  ›
+                </span>
+              </summary>
+              <div className="account-setting-body account-privacy">
+                <p>{s.guard.settingBody}</p>
+                <button
+                  role="switch"
+                  aria-checked={guard?.respectGames ?? true}
+                  aria-label={s.guard.settingTitle}
+                  disabled={!guard}
+                  onClick={toggleGuard}
                   className="account-switch"
                 >
                   <span />

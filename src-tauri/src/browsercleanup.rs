@@ -255,13 +255,13 @@ fn parse_firefox_default_profile(ini: &str) -> Option<String> {
     install_default.or(profile_default)
 }
 
+/// Read from the kernel's process table: knowing that a browser is open does
+/// not require opening it. An unreadable table counts as running, which only
+/// ever postpones a cleanup.
 pub(crate) fn is_running(process_name: &str) -> bool {
-    use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System};
-    let mut sys = System::new_with_specifics(RefreshKind::new());
-    sys.refresh_processes_specifics(ProcessesToUpdate::All, true, ProcessRefreshKind::new());
-    sys.processes()
-        .values()
-        .any(|p| p.name().to_string_lossy().eq_ignore_ascii_case(process_name))
+    crate::process_guard::processes().map_or(true, |list| {
+        list.iter().any(|p| p.name.eq_ignore_ascii_case(process_name))
+    })
 }
 
 pub(crate) fn paths_for(id: &str) -> Option<(Vec<PathBuf>, Vec<PathBuf>)> {

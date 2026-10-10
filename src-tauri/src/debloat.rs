@@ -183,6 +183,16 @@ pub struct DebloatApp {
     pub reason: Option<String>,
     pub store_url: Option<String>,
     pub icon_data_url: Option<String>,
+    /// The publisher's display name, as Windows shows it.
+    pub publisher: Option<String>,
+    /// Size of the app's own files on disk. Windows keeps them while another
+    /// account still uses the app, so this is an upper bound on what removal
+    /// frees.
+    pub size_bytes: Option<u64>,
+    /// Size of this account's data for the app, which removal deletes.
+    pub data_bytes: Option<u64>,
+    /// When Windows installed the package for this account, Unix seconds.
+    pub installed_at: Option<i64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -275,6 +285,10 @@ fn inventory(system: &impl PackageSystem) -> Result<Vec<DebloatApp>, String> {
                 reason: None,
                 store_url: Some(item.store_url.into()),
                 icon_data_url: None,
+                publisher: None,
+                size_bytes: None,
+                data_bytes: None,
+                installed_at: None,
             });
         }
         for info in found {
@@ -293,6 +307,10 @@ fn inventory(system: &impl PackageSystem) -> Result<Vec<DebloatApp>, String> {
                 reason: verdict.err(),
                 store_url: Some(item.store_url.into()),
                 icon_data_url: None,
+                publisher: None,
+                size_bytes: None,
+                data_bytes: None,
+                installed_at: None,
             });
         }
     }
@@ -511,7 +529,7 @@ fn remove_inner(
 pub fn list_debloat_apps() -> Result<Vec<DebloatApp>, String> {
     let mut apps = inventory(&WindowsPackages)?;
     #[cfg(windows)]
-    platform::load_icons(&mut apps);
+    platform::load_details(&mut apps);
     #[cfg(windows)]
     if !crate::elevation::current_user_session_allowed() {
         for app in &mut apps {
@@ -582,9 +600,44 @@ mod platform {
     use windows::ApplicationModel::PackageSignatureKind;
     use windows::Management::Deployment::PackageManager;
 
+    /// Total size of the files under `dir`, without following links (on
+    /// Windows the link check covers junctions too). Stops, returning `None`,
+    /// past a file or time budget, so one huge folder cannot hold up the list;
+    /// an unreadable folder also reads as unknown, never as 0.
+    fn folder_size(dir: &std::path::Path) -> Option<u64> {
+        const MAX_FILES: usize = 50_000;
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(750);
+        let mut total = 0u64;
+        let mut files = 0usize;
+        let mut stack = vec![dir.to_path_buf()];
+        while let Some(current) = stack.pop() {
+            if std::time::Instant::now() > deadline {
+                return None;
+            }
+            for entry in std::fs::read_dir(&current).ok()?.flatten() {
+                let kind = entry.file_type().ok()?;
+                if kind.is_symlink() {
+                    continue;
+                }
+                if kind.is_dir() {
+                    stack.push(entry.path());
+                } else {
+                    files += 1;
+                    if files > MAX_FILES {
+                        return None;
+                    }
+                    total += entry.metadata().map(|m| m.len()).unwrap_or(0);
+                }
+            }
+        }
+        Some(total)
+    }
+
     // Windows resolves the installed package logo. Never fetch remote images or
     // accept a caller-provided path; an unreadable icon is presentation-only.
-    pub fn load_icons(apps: &mut [DebloatApp]) {
+    // The same pass reads the publisher's display name and how much disk the
+    // app's files and this account's data for it use.
+    pub fn load_details(apps: &mut [DebloatApp]) {
         use base64::{engine::general_purpose::STANDARD, Engine};
         use std::io::Read;
         let Ok(manager) = PackageManager::new() else {
@@ -629,6 +682,33 @@ mod platform {
                 Some(format!("data:image/png;base64,{}", STANDARD.encode(bytes)))
             })();
             app.icon_data_url = icon;
+            // FILETIME ticks (100 ns since 1601) to Unix seconds.
+            app.installed_at = package
+                .InstalledDate()
+                .ok()
+                .map(|d| d.UniversalTime / 10_000_000 - 11_644_473_600)
+                .filter(|&t| t > 0);
+            app.publisher = package
+                .PublisherDisplayName()
+                .ok()
+                .map(|p| p.to_string())
+                .filter(|p| !p.trim().is_empty());
+            app.size_bytes = package
+                .InstalledPath()
+                .ok()
+                .and_then(|path| folder_size(std::path::Path::new(&path.to_string())));
+            app.data_bytes = package
+                .Id()
+                .and_then(|id| id.FamilyName())
+                .ok()
+                .and_then(|family| {
+                    let local = std::env::var_os("LOCALAPPDATA")?;
+                    folder_size(
+                        &std::path::Path::new(&local)
+                            .join("Packages")
+                            .join(family.to_string()),
+                    )
+                });
         }
     }
 
@@ -1013,7 +1093,7 @@ mod live_tests {
     fn native_inventory() {
         let mut apps =
             inventory(&WindowsPackages).expect("native package and removability inventory");
-        platform::load_icons(&mut apps);
+        platform::load_details(&mut apps);
         println!(
             "Installed icons: {}",
             apps.iter().filter(|a| a.icon_data_url.is_some()).count()

@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
 import {
   formatBytes,
+  friendlyError,
   gbPair,
   loadColor,
   RAM_AUTO_INTERVALS,
@@ -20,11 +21,13 @@ import { ChipIcon } from "./icons";
  * make the "freed" figure meaningless and double the work for nothing.
  */
 let ramCleanInFlight = false;
-export async function runRamClean(): Promise<RamCleanResult | null> {
+export async function runRamClean(scheduled = false): Promise<RamCleanResult | null> {
   if (ramCleanInFlight) return null;
   ramCleanInFlight = true;
   try {
-    return await invoke<RamCleanResult>("clean_ram");
+    // A scheduled pass cannot ask for administrator permission; the backend
+    // says so instead of prompting in the middle of whatever the user does.
+    return await invoke<RamCleanResult>("clean_ram", { scheduled });
   } finally {
     ramCleanInFlight = false;
   }
@@ -237,7 +240,7 @@ export function useScheduledRamClean(autoMinutes: number): AutoCleanState | null
       const nextDue = Date.now() + periodMs;
       dueRef.current = nextDue;
       setSchedule({ minutes: autoMinutes, dueAt: nextDue });
-      runRamClean()
+      runRamClean(true)
         .then((result) => {
           // `null` means a pass was already in flight; nothing happened, so
           // the previous result stays on screen rather than being blanked.
@@ -317,7 +320,7 @@ export function RamCleaner({
           : s.ram.freedNothing,
       );
     } catch (e) {
-      pushToast("error", String(e));
+      pushToast("error", friendlyError(e, s));
     } finally {
       setBusy(false);
     }
@@ -455,7 +458,9 @@ export function RamCleaner({
             )}
             {auto.lastError !== null && (
               <span className="text-warn text-[11.5px]">
-                {format(s.ram.autoFailed, { detail: auto.lastError })}
+                {auto.lastError.startsWith("NEEDS_ADMIN_SCHEDULE: ")
+                  ? s.ram.autoNeedsAdmin
+                  : format(s.ram.autoFailed, { detail: friendlyError(auto.lastError, s) })}
               </span>
             )}
           </div>

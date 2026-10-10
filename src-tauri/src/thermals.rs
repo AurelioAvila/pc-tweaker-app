@@ -64,7 +64,7 @@ mod imp {
         f.parse::<T>().ok()
     }
 
-    fn read_nvidia() -> Vec<GpuReading> {
+    pub(super) fn read_nvidia() -> Vec<GpuReading> {
         let output = crate::system_tools::run("nvidia-smi", |tool| {
             tool
             .args([
@@ -175,6 +175,21 @@ pub fn thermal_report() -> Result<ThermalReport, String> {
 #[tauri::command(async)]
 pub fn thermal_report() -> Result<ThermalReport, String> {
     Err("not supported on this platform".to_string())
+}
+
+/// The graphics cards alone, for the live charts on PC Health: one
+/// nvidia-smi call, without the PowerShell round trip the CPU temperature
+/// needs. Empty where there is no NVIDIA card.
+#[cfg(windows)]
+#[tauri::command(async)]
+pub fn gpu_readings() -> Vec<GpuReading> {
+    imp::read_nvidia()
+}
+
+#[cfg(not(windows))]
+#[tauri::command(async)]
+pub fn gpu_readings() -> Vec<GpuReading> {
+    Vec::new()
 }
 
 #[cfg(all(test, windows))]

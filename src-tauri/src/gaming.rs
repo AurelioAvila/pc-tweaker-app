@@ -402,6 +402,66 @@ pub fn apply_turbo_boost(store: &RollbackStore) -> Result<(), String> {
     crate::power::reactivate_current_scheme()
 }
 
+/// True when a plan already runs the processor the way Turbo Boost sets it:
+/// boost mode Aggressive on mains and battery, minimum state 100% on mains.
+pub(crate) fn already_boosted(boost_ac: u32, boost_dc: u32, min_ac: u32) -> bool {
+    boost_ac == BOOST_AGGRESSIVE && boost_dc == BOOST_AGGRESSIVE && min_ac == THROTTLE_MIN_MAX
+}
+
+/// Whether Turbo Boost changes (or, once on, changed) any value on this PC.
+/// Before it is applied, the question is about the active plan; after, about
+/// the values recorded before it, so "already set" survives the apply. Read
+/// only: nothing is written.
+#[cfg(windows)]
+#[tauri::command(async)]
+pub fn turbo_boost_already_set(app: tauri::AppHandle) -> Result<bool, String> {
+    turbo_already_set_in(&RollbackStore::new(crate::store_for_dir(&app)?))
+}
+
+#[cfg(windows)]
+pub(crate) fn turbo_already_set_in(store: &RollbackStore) -> Result<bool, String> {
+    let recorded = store.transaction()?.entry(TURBO_BOOST_ID);
+    if let Some(SnapshotEntry::Composite { entries }) = recorded {
+        let (mut boost, mut min_ac) = (None, None);
+        for entry in entries {
+            if let SnapshotEntry::PowerSettingIndex {
+                setting_guid,
+                ac_index,
+                dc_index,
+                ac_effective,
+                dc_effective,
+                ..
+            } = entry
+            {
+                let (ac, dc) = (ac_index.or(ac_effective), dc_index.or(dc_effective));
+                if setting_guid == PERF_BOOST_MODE_GUID {
+                    boost = ac.zip(dc);
+                } else if setting_guid == PROC_THROTTLE_MIN_GUID {
+                    min_ac = ac;
+                }
+            }
+        }
+        return Ok(
+            matches!((boost, min_ac), (Some((ac, dc)), Some(min)) if already_boosted(ac, dc, min)),
+        );
+    }
+    let scheme = crate::power::active_scheme_guid()?;
+    let read = |setting: &str, ac: bool| {
+        crate::power::read_effective_index(&scheme, SUB_PROCESSOR_GUID, setting, ac)
+    };
+    Ok(already_boosted(
+        read(PERF_BOOST_MODE_GUID, true)?,
+        read(PERF_BOOST_MODE_GUID, false)?,
+        read(PROC_THROTTLE_MIN_GUID, true)?,
+    ))
+}
+
+#[cfg(not(windows))]
+#[tauri::command(async)]
+pub fn turbo_boost_already_set() -> Result<bool, String> {
+    Err("not supported on this platform".to_string())
+}
+
 #[cfg(windows)]
 pub fn rollback_turbo_boost(store: &RollbackStore) -> Result<(), String> {
     store.restore_entry(TURBO_BOOST_ID, |entry| {
@@ -720,6 +780,50 @@ mod tests {
             }
         }
         (machine, Fixture::new())
+    }
+
+    /// "Your plan already had these settings" is judged on the values the
+    /// plan had before Turbo Boost, so it reads the same before an apply,
+    /// while applied and after a rollback.
+    #[test]
+    fn turbo_reports_whether_the_plan_already_had_its_values() {
+        let set = |machine: &Machine, setting: &str, ac: bool, value: u32| {
+            let path = setting_index_path(BALANCED, SUB_PROCESSOR_GUID, setting);
+            let value = Stored::Value(RegValue::Dword(value));
+            machine
+                .registry
+                .set(Hive::Hklm, &path, slot_name(ac), value);
+        };
+        for (boost, floor, expected) in [
+            (BOOST_AGGRESSIVE, THROTTLE_MIN_MAX, true),
+            (1, 5, false),
+            (BOOST_AGGRESSIVE, 5, false),
+            (1, THROTTLE_MIN_MAX, false),
+        ] {
+            let (machine, fixture) = seeded(&CASES[0], None, None);
+            set(&machine, PERF_BOOST_MODE_GUID, true, boost);
+            set(&machine, PERF_BOOST_MODE_GUID, false, boost);
+            set(&machine, PROC_THROTTLE_MIN_GUID, true, floor);
+            let label = format!("boost {boost}, floor {floor}");
+            assert_eq!(
+                turbo_already_set_in(&fixture.store),
+                Ok(expected),
+                "before: {label}"
+            );
+            apply_turbo_boost(&fixture.store).unwrap();
+            assert_eq!(
+                turbo_already_set_in(&fixture.store),
+                Ok(expected),
+                "applied: {label}"
+            );
+            rollback_turbo_boost(&fixture.store).unwrap();
+            assert_eq!(
+                turbo_already_set_in(&fixture.store),
+                Ok(expected),
+                "restored: {label}"
+            );
+        }
+        assert!(already_boosted(2, 2, 100) && !already_boosted(2, 1, 100));
     }
 
     const SEEDS: [(Option<u32>, Option<u32>); 3] =

@@ -44,6 +44,7 @@ export interface Strings {
     reapplying: string;
     reappliedOne: string;
     reappliedMany: string; // uses {count}
+    pickHint: string;
   };
   crashes: {
     title: string;
@@ -65,6 +66,11 @@ export interface Strings {
     revert: string;
     elevated: string;
     failed: string;
+    guardPaused: string;
+    guardResumed: string;
+    processes: string; // uses {count}
+    restored: string;
+    postponed: string;
     actions: {
       applied: string;
       reverted: string;
@@ -73,6 +79,13 @@ export interface Strings {
       diskOptimize: string;
       startupChange: string;
       restorePoint: string;
+      processGuard: string;
+      coreSteering: string;
+      ramTrim: string;
+      autoReverted: string;
+      priorityRule: string;
+      scheduledCleanup: string;
+      ecoqos: string;
     };
   };
   tabs: {
@@ -222,6 +235,7 @@ export interface Strings {
     cleaningUp: string;
     cleanupNote: string;
     runningNote: string;
+    cannotStop: string;
     stepQuick: string;
     stepScan: string;
     stepRestore: string;
@@ -435,7 +449,6 @@ export interface Strings {
     title: string;
     subtitle: string;
     active: string; // uses {name}
-    activeFreed: string; // uses {name} {freed}
     gamesCount: string; // uses {count}
     addGame: string;
     steeringTitle: string;
@@ -503,21 +516,36 @@ export interface Strings {
     /** The real steps the Rust side performs, shown as it works through them. */
     loadLabel: string;
     loadCadence: string;
-    loadHelp: string;
     stageReading: string;
     stageRaising: string;
     stageApplying: string;
-    /** Readout under the gauge once boost is engaged. */
-    modeAggressive: string;
-    modeDefault: string;
     /** Benchmark stages and the measured outcome. */
     stageMeasuringBefore: string;
     stageMeasuringAfter: string;
-    gainMeasured: string; // uses {factor}
-    gainSlight: string; // uses {factor}
-    gainAtCeiling: string;
-    ceilingLocked: string;
-    ceilingUnlocked: string;
+    factAverage: string;
+    factFastest: string;
+    factPeak: string;
+    factFloor: string;
+    ofBase: string; // uses {pct}
+    usersTitle: string;
+    appliedAt: string; // uses {time}
+    planAlreadyUses: string;
+    planAlreadyHad: string;
+    loadExplain: string;
+    chartLoad: string;
+    chartSpeed: string;
+    testTitle: string;
+    testHint: string;
+    testRun: string;
+    testRunning: string;
+    colDefault: string;
+    colBoost: string;
+    rowWork: string;
+    rowAvg: string;
+    rowPeak: string;
+    rowTemp: string;
+    notRun: string;
+    relative: string;
   };
   profiles: {
     title: string;
@@ -640,6 +668,7 @@ export interface Strings {
     autoLast: string; // uses {time} and {amount}
     autoNoneYet: string;
     autoFailed: string; // uses {detail}
+    autoNeedsAdmin: string;
   };
   restore: {
     button: string;
@@ -690,6 +719,7 @@ export interface Strings {
     description: string;
     button: string;
     running: string;
+    cannotStop: string;
     resultToast: string; // uses {media}
   };
   dnsFlush: {
@@ -732,6 +762,77 @@ export interface Strings {
     confirmOpenPage: string;
     cancel: string;
   };
+  live: {
+    title: string;
+    subtitle: string;
+    paused: string;
+    pausedHint: string;
+    measuring: string;
+    smooth: string;
+    busy: string;
+    strained: string;
+    verdictDetail: string;
+    failed: string;
+    cpu: string;
+    speed: string;
+    cores: string;
+    core: string;
+    memory: string;
+    used: string;
+    cached: string;
+    free: string;
+    total: string;
+    cachedHint: string;
+    notAvailable: string;
+    disk: string;
+    read: string;
+    write: string;
+    systemDrive: string;
+    network: string;
+    down: string;
+    up: string;
+    gpu: string;
+    gpuLoad: string;
+    temp: string;
+    fan: string;
+    vram: string;
+    sensors: string;
+    sensorsHint: string;
+    now: string;
+    secondsAgo: string;
+    activity: string;
+    zoomShort: string;
+    zoomLong: string;
+    minutesAgo: string;
+    peak: string;
+    insightCalm: string;
+    insightMemory: string;
+    insightCpu: string;
+    insightDrive: string;
+    actionStartup: string;
+    actionCleanup: string;
+    usingTitle: string;
+    usingHint: string;
+    usingCpu: string;
+    usingMemory: string;
+    processes: string;
+    processOne: string;
+  };
+  pageError: {
+    title: string;
+    body: string;
+    reload: string;
+    reloadApp: string;
+    details: string;
+    appTitle: string;
+    appBody: string;
+  };
+  folderScan: {
+    stop: string;
+    stopping: string;
+    stoppedEmpty: string;
+    stoppedPartial: string;
+  };
   largeFiles: {
     title: string;
     description: string;
@@ -773,6 +874,7 @@ export interface Strings {
   toasts: {
     applied: string; // uses {name}
     rolledBack: string; // uses {name}
+    elevationDeclined: string;
     licenseNeedsRefresh: string;
     accountRefreshFailed: string;
   };
@@ -961,6 +1063,51 @@ export interface Strings {
     on: string;
     off: string;
   };
+  guard: {
+    settingTitle: string;
+    settingBody: string;
+    selfManaged: string;
+    gameRunning: string;
+    paused: string;
+    selfManagedBadge: string;
+    registeredGameRunning: string;
+  };
+  preview: {
+    title: string;
+    loading: string;
+    now: string;
+    notSet: string;
+    willChange: string; // uses {count} {total}
+    noChange: string;
+    readAtApply: string;
+    failed: string;
+  };
+  requirements: {
+    minBuild: string; // uses {version}
+    proEdition: string;
+    unavailableVersion: string; // uses {version}
+    unavailableEdition: string;
+    enterpriseEdition: string;
+    unavailableEnterpriseEdition: string;
+    notPresent: string;
+  };
+  scheduledCleanup: {
+    title: string;
+    body: string;
+  };
+  priorityRules: {
+    title: string;
+    subtitle: string;
+    remove: string;
+    empty: string;
+    active: string; // uses {count}
+    levelLabel: string; // uses {name}
+    idle: string;
+    belowNormal: string;
+    normal: string;
+    aboveNormal: string;
+    high: string;
+  };
   tweaks: Record<string, TweakText>;
   cleanup: Record<string, TweakText>;
   coffee: {
@@ -1001,6 +1148,7 @@ const it: Strings = {
       "Niente da consigliare al momento — la tua configurazione rispecchia già i nostri consigli.",
   },
   drift: {
+    pickHint: "Togli la spunta a ciò che hai cambiato di proposito.",
     titleAfterUpdate: "Windows ha rimesso mano alle tue impostazioni",
     titleNoUpdate: "Alcune impostazioni non sono più attive",
     afterUpdateOne:
@@ -1029,6 +1177,11 @@ const it: Strings = {
     processElevated: "operazione con diritti admin",
   },
   ledger: {
+    guardPaused: "Regolazioni sulle app in pausa",
+    guardResumed: "Regolazioni sulle app riprese",
+    processes: "Processi: {count}",
+    restored: "Ripristinato",
+    postponed: "Rimandata mentre era in corso un gioco",
     title: "Registro modifiche",
     subtitle:
       "Tutto ciò che questa app ha modificato su questo PC, dal più recente. Salvato in locale, mai caricato online.",
@@ -1040,6 +1193,13 @@ const it: Strings = {
     elevated: "con diritti admin",
     failed: "non riuscita",
     actions: {
+      processGuard: "Gioco che si gestisce da solo",
+      coreSteering: "Smistamento dei core",
+      ramTrim: "Pulizia della RAM",
+      autoReverted: "Annullato automaticamente",
+      priorityRule: "Regola di priorità",
+      scheduledCleanup: "Pulizia pianificata",
+      ecoqos: "Efficienza delle app in background",
       applied: "Tweak applicato",
       reverted: "Tweak ripristinato",
       cleanup: "Pulizia",
@@ -1143,7 +1303,7 @@ const it: Strings = {
     memTopTitle: "Processi principali",
     trimTitle: "Riduci i working set",
     trimExplainer:
-      "Chiede a Windows di spostare le pagine inattive fuori dai working set delle app (EmptyWorkingSet). Utile quando la pressione è alta; le app potrebbero ricaricare brevemente le pagine al prossimo uso. Nessun dato viene perso.",
+      "Chiede al gestore della memoria di Windows di spostare le pagine inattive fuori dai working set delle app. Utile quando la pressione è alta; le app potrebbero ricaricare brevemente le pagine al prossimo uso. Nessun dato viene perso. Windows chiede il permesso di amministratore.",
     trimButton: "Riduci ora",
     autoTitle: "Riduzione automatica",
     profilesTitle: "Profili sessione",
@@ -1206,6 +1366,8 @@ const it: Strings = {
     cleanupNote:
       "Rimuove dalla cartella WinSxS le versioni dei componenti ormai sostituite. Gli aggiornamenti installati di recente restano disinstallabili.",
     runningNote: "Non spegnere né riavviare il PC mentre è in corso.",
+    cannotStop:
+      "Una volta avviato non si può interrompere: Windows sta controllando e riparando i propri file di sistema, e fermarlo a metà potrebbe lasciarli riparati solo in parte. Nel frattempo puoi continuare a usare il PC e PC Tweaker.",
     stepQuick: "Lettura rapida dello stato",
     stepScan: "Controllo dell'archivio componenti",
     stepRestore: "Riparazione dell'archivio componenti",
@@ -1478,7 +1640,6 @@ const it: Strings = {
     subtitle:
       "Rileva automaticamente i tuoi giochi e applica/annulla il preset Turbo Gaming da solo.",
     active: "Sessione attiva: {name}",
-    activeFreed: "Boost attivo per {name} — {freed} di RAM liberati.",
     gamesCount: "{count} giochi registrati",
     addGame: "+ Aggiungi gioco (.exe)",
     steeringTitle: "Smistamento dei core",
@@ -1542,7 +1703,7 @@ const it: Strings = {
     buffers:
       "Buffer di ricezione: {reserved} riservati per socket, {autotuned} regolati automaticamente da Windows",
     verdictNone:
-      "Nessuna variazione misurabile della latenza. È normale: un ping non passa dalle impostazioni TCP.",
+      "Un ping non passa dalle impostazioni TCP, quindi queste letture descrivono la connessione stessa.",
     verdictLineChanged:
       "La linea stessa è cambiata tra le due letture (mediana {delta} ms). Un ping non passa dalle impostazioni TCP, quindi non è l'effetto della modifica.",
     lastTitle: "Dopo {tweak}, {time}",
@@ -1563,21 +1724,40 @@ const it: Strings = {
     active: "Turbo attivo",
     inactive: "Turbo non attivo",
     loadLabel: "CARICO CPU",
-    loadCadence: "Lettura reale · ogni 20 s",
-    loadHelp:
-      "Utilizzo della CPU, non un punteggio del boost. Un carico basso è normale quando il PC è inattivo.",
+    loadCadence: "Misurato ogni secondo, smussato su circa 3 secondi",
     stageReading: "Lettura del piano energetico",
     stageRaising: "Aumento del limite di boost",
     stageApplying: "Applicazione al sistema",
-    modeAggressive: "Modalità aggressiva",
-    modeDefault: "Modalità predefinita",
     stageMeasuringBefore: "Misurazione prima",
     stageMeasuringAfter: "Nuova misurazione",
-    gainMeasured: "{factor}x più veloce",
-    gainSlight: "{factor}x più veloce — guadagno contenuto",
-    gainAtCeiling: "Nessun miglioramento misurato in questo breve test",
-    ceilingLocked: "Limite boost bloccato",
-    ceilingUnlocked: "Limite boost sbloccato",
+    factAverage: "Velocità media ora",
+    factFastest: "Core più veloce ora",
+    factPeak: "Massimo in questa sessione",
+    factFloor: "Stato minimo del processore",
+    ofBase: "{pct}% della frequenza base",
+    usersTitle: "Chi usa la CPU ora",
+    appliedAt:
+      "Attivato il {time} · modalità boost Aggressiva, stato minimo del processore al 100% con alimentazione da rete",
+    planAlreadyUses: "Il piano energetico corrente usa già queste impostazioni.",
+    planAlreadyHad:
+      "Il piano energetico corrente aveva già queste impostazioni, quindi nessun valore è cambiato.",
+    loadExplain:
+      "Il carico è quanto lavoro sta facendo il processore; Turbo Boost cambia quanto veloce può andare, non quanto è occupato. Un valore alto significa che i programmi su questo PC sono al lavoro in questo momento.",
+    chartLoad: "Carico",
+    chartSpeed: "Velocità",
+    testTitle: "Stessa prova in ogni modalità",
+    testHint:
+      "Un carico fisso di 3 secondi. Eseguilo una volta per modalità per vedere cosa cambia con il boost.",
+    testRun: "Esegui prova di 3 secondi",
+    testRunning: "Prova in corso…",
+    colDefault: "Predefinita",
+    colBoost: "Boost",
+    rowWork: "Lavoro svolto",
+    rowAvg: "Velocità media",
+    rowPeak: "Velocità di picco",
+    rowTemp: "Temperatura CPU",
+    notRun: "Non ancora eseguita",
+    relative: "{pct}% della predefinita",
   },
   profiles: {
     title: "I tuoi profili",
@@ -1685,9 +1865,11 @@ const it: Strings = {
     fixHeading: "Pronte da applicare",
   },
   ram: {
+    autoNeedsAdmin:
+      "La pulizia automatica funziona solo quando PC Tweaker ha i diritti di amministratore.",
     title: "Libera RAM",
     subtitle:
-      "Chiede a Windows di rilasciare la memoria che i programmi tengono occupata senza usarla. Puoi farlo quante volte vuoi.",
+      "Chiede a Windows di rilasciare la memoria che i programmi tengono occupata senza usarla. Windows chiede ogni volta il permesso di amministratore, e la pulizia aspetta se è in corso un gioco.",
     button: "Libera ora",
     cleaning: "Pulizia in corso...",
     freed: "Liberati {amount}",
@@ -1697,7 +1879,7 @@ const it: Strings = {
     autoOff: "Disattivata",
     autoEvery: "Ogni {interval}",
     autoHint:
-      "Con la pulizia automatica attiva, PC Tweaker libera la RAM da solo a intervalli regolari finché l'app resta aperta.",
+      "Con la pulizia automatica attiva, PC Tweaker libera la RAM da solo a intervalli regolari, purché sia in esecuzione con i diritti di amministratore.",
     autoNext: "Prossima pulizia alle {time}",
     autoDue: "Pulizia in corso...",
     autoLast: "Ultima alle {time}: {amount} liberati",
@@ -1757,6 +1939,8 @@ const it: Strings = {
       "Esegue lo strumento di ottimizzazione integrato di Windows: deframmentazione su HDD, oppure TRIM sugli SSD (mai una deframmentazione completa, che li usurerebbe inutilmente).",
     button: "Ottimizza ora",
     running: "Ottimizzazione in corso... può richiedere qualche minuto",
+    cannotStop:
+      "Lo fa l'ottimizzatore di unità di Windows con i diritti di amministratore, quindi arriva alla fine da solo e non si può fermare da qui. Puoi continuare a lavorare tranquillamente.",
     resultToast: "Disco ({media}) ottimizzato con successo.",
   },
   dnsFlush: {
@@ -1806,6 +1990,84 @@ const it: Strings = {
     confirmOpenPage: "Apri invece la pagina",
     cancel: "Annulla",
   },
+  live: {
+    title: "In questo momento",
+    subtitle:
+      "Aggiornato ogni secondo mentre questa pagina è aperta e PC Tweaker è in primo piano. In background non viene misurato nulla.",
+    paused: "In pausa",
+    pausedHint: "In pausa mentre PC Tweaker è in background. Riprende quando torni.",
+    measuring: "Misurazione…",
+    smooth: "Tutto fluido",
+    busy: "Impegnato",
+    strained: "Sotto forte carico",
+    verdictDetail: "CPU al {cpu}% negli ultimi 10 secondi · memoria in uso al {ram}%",
+    failed: "Le letture in tempo reale non sono disponibili al momento.",
+    cpu: "Processore",
+    speed: "{ghz} GHz",
+    cores: "{count} processori logici",
+    core: "Processore {n}",
+    memory: "Memoria",
+    used: "In uso",
+    cached: "Cache",
+    free: "Libera",
+    total: "Totale",
+    cachedHint: "La memoria in cache viene restituita appena un programma ne ha bisogno.",
+    notAvailable: "Non disponibile su questo PC",
+    disk: "Attività del disco",
+    read: "Lettura",
+    write: "Scrittura",
+    systemDrive: "Unità di sistema: {used} usati su {total}",
+    network: "Rete",
+    down: "Download",
+    up: "Upload",
+    gpu: "Grafica",
+    gpuLoad: "Carico",
+    temp: "Temperatura",
+    fan: "Ventola",
+    vram: "Memoria video",
+    sensors: "Temperature e ventole",
+    sensorsHint:
+      "Su questo PC Windows non espone questi sensori senza gli strumenti del produttore, quindi non tiriamo a indovinare.",
+    now: "ora",
+    secondsAgo: "{s} s fa",
+    activity: "Attività",
+    zoomShort: "1 min",
+    zoomLong: "5 min",
+    minutesAgo: "{n} min fa",
+    peak: "Picco {value}",
+    insightCalm: "È tutto tranquillo. Al momento nulla richiede la tua attenzione.",
+    insightMemory:
+      "La memoria è quasi piena ({pct}%). Chiudi le app che non usi o controlla cosa parte con Windows.",
+    insightCpu:
+      "Il processore è impegnato da un po' ({pct}% in media). L'elenco qui sotto mostra cosa lo sta usando.",
+    insightDrive:
+      "L'unità di sistema è quasi piena ({pct}%). Windows rallenta quando resta senza spazio.",
+    actionStartup: "Apri Avvio",
+    actionCleanup: "Libera spazio",
+    usingTitle: "Cosa sta usando le risorse",
+    usingHint:
+      "App raggruppate per nome, dall'elenco dei processi di Windows. Non viene aperto né modificato nulla.",
+    usingCpu: "Processore",
+    usingMemory: "Memoria",
+    processes: "{count} processi",
+    processOne: "1 processo",
+  },
+  pageError: {
+    title: "Questa pagina ha avuto un problema",
+    body: "Il resto di PC Tweaker funziona ancora e questo errore non ha modificato nulla sul PC. Ricarica la pagina per riprovare.",
+    reload: "Ricarica la pagina",
+    reloadApp: "Ricarica PC Tweaker",
+    details: "Dettagli tecnici",
+    appTitle: "PC Tweaker ha avuto un problema",
+    appBody: "Questo errore non ha modificato nulla sul PC. Ricarica PC Tweaker per continuare.",
+  },
+  folderScan: {
+    stop: "Interrompi ricerca",
+    stopping: "Interruzione…",
+    stoppedEmpty: "Ricerca interrotta. Nessun file è stato spostato o eliminato.",
+    stoppedPartial:
+      "Ricerca interrotta. Questi sono i risultati trovati prima dell'interruzione; ciò che non era ancora stato raggiunto non è stato controllato.",
+  },
   largeFiles: {
     title: "Trova file di grandi dimensioni",
     description:
@@ -1853,6 +2115,8 @@ const it: Strings = {
     rolledBack: '"{name}" ripristinato al valore originale.',
     licenseNeedsRefresh:
       "Non riusciamo a verificare il tuo abbonamento Pro offline da troppo tempo. Riconnettiti a internet e riprova.",
+    elevationDeclined:
+      "L'autorizzazione di amministratore non è stata concessa, quindi non è stato modificato nulla.",
     accountRefreshFailed:
       "Non riusciamo a verificare lo stato del tuo account. Lo stato mostrato qui potrebbe non essere aggiornato — controlla la connessione o riprova più tardi.",
   },
@@ -2068,7 +2332,132 @@ const it: Strings = {
     on: "Attiva",
     off: "Disattivata",
   },
+  guard: {
+    settingTitle: "Lascia stare i giochi che si gestiscono da soli",
+    settingBody:
+      "Alcuni giochi gestiscono da soli le proprie prestazioni. Mentre uno di questi è in esecuzione, PC Tweaker sospende le regolazioni sulle app e lascia il gioco esattamente com'è.",
+    selfManaged: "Questo gioco gestisce da solo le sue prestazioni: PC Tweaker lo lascia com'è.",
+    gameRunning:
+      "È in esecuzione un gioco che gestisce da solo le sue prestazioni: PC Tweaker lascia le app come sono finché non lo chiudi.",
+    paused: "In pausa mentre è in esecuzione un gioco che gestisce da solo le sue prestazioni.",
+    selfManagedBadge: "Gestisce da solo le prestazioni",
+    registeredGameRunning: "È in esecuzione uno dei tuoi giochi: PC Tweaker aspetta che si chiuda.",
+  },
+  preview: {
+    title: "Anteprima",
+    loading: "Lettura dei valori attuali...",
+    now: "Ora",
+    notSet: "Non impostato",
+    willChange: "Applicandolo cambiano {count} valori su {total}.",
+    noChange: "Già in vigore: applicandolo non cambia nulla.",
+    readAtApply: "Lo stato attuale viene letto e salvato nel momento in cui lo applichi.",
+    failed: "Non è stato possibile leggere i valori attuali.",
+  },
+  requirements: {
+    minBuild: "{version} o successivo",
+    proEdition: "Pro, Enterprise o Education",
+    unavailableVersion: "Non disponibile su questo PC: richiede {version} o successivo.",
+    unavailableEdition:
+      "Non disponibile su questo PC: richiede Windows Pro, Enterprise o Education.",
+    enterpriseEdition: "Enterprise o Education",
+    unavailableEnterpriseEdition:
+      "Non disponibile su questo PC: richiede Windows Enterprise o Education.",
+    notPresent: "Questo PC non ha questa funzione, quindi non c'è nulla da disattivare.",
+  },
+  scheduledCleanup: {
+    title: "Pulizia settimanale dei file temporanei",
+    body: "Una volta a settimana, pochi minuti dopo l'accesso, sposta nel Cestino i file temporanei che nessuno tocca da almeno un giorno. Aspetta se è in corso un gioco e non tocca mai la memoria né le app aperte.",
+  },
+  priorityRules: {
+    title: "Regole di priorità per le app",
+    subtitle:
+      "Scegli un'app e una priorità. PC Tweaker la imposta ogni volta che l'app si avvia mentre PC Tweaker è aperto, e rimette la priorità di prima quando rimuovi la regola o chiudi PC Tweaker. Mai oltre Alta.",
+    remove: "Rimuovi",
+    empty: "Nessuna app per ora.",
+    active: "App in esecuzione regolate: {count}",
+    levelLabel: "Priorità di {name}",
+    idle: "Bassa",
+    belowNormal: "Inferiore al normale",
+    normal: "Normale",
+    aboveNormal: "Superiore al normale",
+    high: "Alta",
+  },
   tweaks: {
+    disable_click_to_do: {
+      name: "Disattiva Click to Do",
+      description:
+        "Imposta il criterio di Windows che rimuove Click to Do, la funzione che cattura lo schermo e lo analizza per proporre azioni. I suoi punti di accesso spariscono per tutti gli account di questo PC. Impostazioni lo mostrerà come gestito dall'organizzazione: è così che Windows indica i criteri. Ha effetto solo sui PC in cui Windows offre Click to Do.",
+    },
+    disable_edge_ai: {
+      name: "Disattiva le funzioni IA di Microsoft Edge",
+      description:
+        "Imposta i criteri di Microsoft Edge che nascondono la barra laterale, impediscono a Edge di scaricare il suo modello IA locale e disattivano la ricerca nella cronologia con l'IA, i temi generati dall'IA e l'accesso di Copilot al contenuto delle pagine. Alcuni di questi controlli valgono solo per i profili di lavoro o scuola. Edge li applica senza riavvio; li trovi elencati in edge://policy. Edge indicherà di essere gestito dall'organizzazione: è così che segnala i criteri.",
+    },
+    disable_paint_ai: {
+      name: "Disattiva le funzioni IA di Paint",
+      description:
+        "Imposta i criteri di Windows che disattivano Cocreator, Image Creator e il riempimento generativo in Paint. Tutto il resto di Paint funziona come prima.",
+    },
+    disable_notepad_ai: {
+      name: "Disattiva le funzioni IA del Blocco note",
+      description:
+        "Imposta il criterio del Blocco note che disattiva i suoi strumenti di scrittura Copilot (riscrivi, riassumi, scrivi). Chiudi e riapri il Blocco note per vedere la modifica.",
+    },
+    disable_fast_startup: {
+      name: "Disattiva l'avvio rapido",
+      description:
+        "Fa sì che Arresta il sistema spenga davvero il PC invece di ibernarlo in parte. Da spento Windows si avvia qualche secondo più lentamente, ma driver e aggiornamenti si caricano da zero ogni volta, e chi usa il dual boot non trova più il disco di Windows bloccato.",
+    },
+    disable_storage_sense: {
+      name: "Disattiva Sensore memoria",
+      description:
+        "Impedisce a Windows di eliminare i file temporanei, svuotare il Cestino e lasciare online i file di OneDrive secondo un suo calendario. Decidi tu cosa pulire e quando.",
+    },
+    taskbar_end_task: {
+      name: "Aggiungi Termina attività alla barra delle applicazioni",
+      description:
+        "Aggiunge Termina attività al menu del tasto destro delle app sulla barra delle applicazioni, così chiudi un'app bloccata senza aprire Gestione attività.",
+    },
+    disable_drag_tray: {
+      name: "Disattiva il pannello di condivisione al trascinamento",
+      description:
+        "Impedisce al pannello di condivisione di scendere dall'alto dello schermo ogni volta che trascini un file, così il normale trascinamento funziona senza intralci.",
+    },
+    explorer_open_this_pc: {
+      name: "Apri Esplora file su Questo PC",
+      description:
+        "Esplora file si apre su Questo PC, con unità e cartelle, invece che su Home con i file recenti.",
+    },
+    block_oem_device_apps: {
+      name: "Impedisci alle app dei produttori di installarsi da sole",
+      description:
+        "Impedisce a Windows di scaricare le app dei produttori e le icone personalizzate per i dispositivi che colleghi: è così che alcune utility per mouse, tastiere e schede madri arrivano senza che tu le abbia chieste. I driver si installano come sempre.",
+    },
+    disable_windows_suggestions: {
+      name: "Disattiva consigli e suggerimenti di Windows",
+      description:
+        "Un solo interruttore per i messaggi che Windows aggiunge di sua iniziativa: consigli e suggerimenti, la schermata di benvenuto dopo gli aggiornamenti, i suggerimenti in Impostazioni, «completa la configurazione del dispositivo», le notifiche suggerite, i consigli e gli avvisi sull'account nel menu Start e la pubblicità dei provider di sincronizzazione in Esplora file.",
+    },
+    disable_widgets: {
+      name: "Disattiva completamente i Widget",
+      description:
+        "Imposta il criterio di Windows che disattiva la bacheca dei Widget, non solo il suo pulsante sulla barra delle applicazioni, così le notizie smettono di caricarsi in background. Impostazioni lo mostrerà come gestito dall'organizzazione: è così che Windows indica i criteri.",
+    },
+    hide_start_recommended: {
+      name: "Rimuovi Consigliati dal menu Start",
+      description:
+        "Imposta il criterio di Windows che rimuove la sezione Consigliati da Start e lascia tutto lo spazio alle app aggiunte. Impostazioni lo mostrerà come gestito dall'organizzazione: è così che Windows indica i criteri.",
+    },
+    disable_game_bar_captures: {
+      name: "Disattiva le acquisizioni della Game Bar",
+      description:
+        "Disattiva la funzione di acquisizione della Game Bar e la registrazione in background, che conserva di continuo un video degli ultimi minuti di gioco. Completa l'interruttore Game Bar / Game DVR.",
+    },
+    disable_ai_fabric_service: {
+      name: "Disattiva il servizio Windows AI Fabric",
+      description:
+        "Arresta e disattiva il servizio alla base delle funzioni IA locali di Windows, come Recall, Click to Do e alcune funzioni dei Sottotitoli in tempo reale, liberando la memoria che occupa in background. Queste funzioni smettono di funzionare finché non lo riattivi. Presente solo sui PC che le hanno.",
+    },
     disable_restart_apps: {
       name: "Non riaprire automaticamente le app dopo l'accesso",
       description:
@@ -2279,7 +2668,8 @@ const it: Strings = {
     },
     disable_telemetry_tasks: {
       name: "Riduci raccolta dati diagnostici",
-      description: "Imposta il livello di diagnostica di Windows al minimo consentito.",
+      description:
+        "Imposta il criterio dei dati di diagnostica di Windows al livello più basso. Home e Pro lo trattano come dati di diagnostica obbligatori; solo Enterprise ed Education li disattivano del tutto.",
     },
     reset_advertising_id: {
       name: "Disattiva ID pubblicità",
@@ -2433,6 +2823,7 @@ const en: Strings = {
     empty: "Nothing to recommend right now — your setup already matches our advice.",
   },
   drift: {
+    pickHint: "Untick anything you changed on purpose.",
     titleAfterUpdate: "Windows changed your settings back",
     titleNoUpdate: "Some settings are no longer in effect",
     afterUpdateOne:
@@ -2461,6 +2852,11 @@ const en: Strings = {
     processElevated: "admin-rights operation",
   },
   ledger: {
+    guardPaused: "App adjustments paused",
+    guardResumed: "App adjustments resumed",
+    processes: "Processes: {count}",
+    restored: "Restored",
+    postponed: "Postponed while a game was running",
     title: "Change Ledger",
     subtitle:
       "Everything this app changed on this PC, newest first. Stored locally, never uploaded.",
@@ -2472,6 +2868,13 @@ const en: Strings = {
     elevated: "with admin rights",
     failed: "failed",
     actions: {
+      processGuard: "Self-managed game",
+      coreSteering: "Core steering",
+      ramTrim: "RAM cleanup",
+      autoReverted: "Undone automatically",
+      priorityRule: "Priority rule",
+      scheduledCleanup: "Scheduled cleanup",
+      ecoqos: "Background app efficiency",
       applied: "Tweak applied",
       reverted: "Tweak reverted",
       cleanup: "Cleanup",
@@ -2572,7 +2975,7 @@ const en: Strings = {
     memTopTitle: "Top processes",
     trimTitle: "Trim working sets",
     trimExplainer:
-      "Asks Windows to move idle pages out of app working sets (EmptyWorkingSet). Useful under high pressure; apps may briefly reload pages on next use. No data is lost.",
+      "Asks the Windows memory manager to move idle pages out of app working sets. Useful under high pressure; apps may briefly reload pages on next use. No data is lost. Windows asks for administrator permission.",
     trimButton: "Trim now",
     autoTitle: "Automatic trim",
     profilesTitle: "Session profiles",
@@ -2635,6 +3038,8 @@ const en: Strings = {
     cleanupNote:
       "Removes superseded component versions from WinSxS. Recently installed updates stay uninstallable.",
     runningNote: "Don't shut down or restart while this is running.",
+    cannotStop:
+      "Once started it can't be stopped: Windows is checking and repairing its own system files, and cutting that off halfway could leave them half repaired. You can keep using your PC and PC Tweaker meanwhile.",
     stepQuick: "Quick status read",
     stepScan: "Checking the component store",
     stepRestore: "Repairing the component store",
@@ -2903,7 +3308,6 @@ const en: Strings = {
     title: "Game Sessions",
     subtitle: "Auto-detects your games and applies/reverts the Turbo Gaming preset on its own.",
     active: "Session active: {name}",
-    activeFreed: "Boost active for {name} — {freed} of RAM handed back.",
     gamesCount: "{count} games registered",
     addGame: "+ Add game (.exe)",
     steeringTitle: "Core steering",
@@ -2962,7 +3366,7 @@ const en: Strings = {
     nagleOff: "New connections start with Nagle's algorithm off.",
     buffers: "Receive buffer: {reserved} reserved per socket, {autotuned} autotuned by Windows",
     verdictNone:
-      "No measurable change in latency. That is expected: a ping does not go through TCP settings.",
+      "A ping does not go through TCP settings, so these readings describe the connection itself.",
     verdictInconclusive: "Too few replies to compare.",
     verdictLineChanged:
       "The line itself changed between the two readings (median {delta} ms). Ping does not go through TCP settings, so this is not the effect of the change.",
@@ -2983,20 +3387,38 @@ const en: Strings = {
     active: "Turbo active",
     inactive: "Turbo not active",
     loadLabel: "CPU LOAD",
-    loadCadence: "Measured load · every 20 s",
-    loadHelp: "CPU usage, not a boost score. Low usage is normal when your PC is idle.",
+    loadCadence: "Measured every second, smoothed over about 3 seconds",
     stageReading: "Reading the power plan",
     stageRaising: "Raising the boost ceiling",
     stageApplying: "Applying to the system",
-    modeAggressive: "Aggressive mode",
-    modeDefault: "Default mode",
     stageMeasuringBefore: "Measuring before",
     stageMeasuringAfter: "Measuring again",
-    gainMeasured: "{factor}x faster",
-    gainSlight: "{factor}x faster - a modest gain",
-    gainAtCeiling: "No improvement measured in this short test",
-    ceilingLocked: "Boost ceiling locked",
-    ceilingUnlocked: "Boost ceiling unlocked",
+    factAverage: "Average speed now",
+    factFastest: "Fastest core now",
+    factPeak: "Highest this session",
+    factFloor: "Minimum processor state",
+    ofBase: "{pct}% of base clock",
+    usersTitle: "Using the CPU now",
+    appliedAt:
+      "Turned on {time} · boost mode Aggressive, minimum processor state 100% on mains power",
+    planAlreadyUses: "The current power plan already uses these settings.",
+    planAlreadyHad: "The current power plan already had these settings, so no value changed.",
+    loadExplain:
+      "Load is how much work the processor is doing; Turbo Boost changes how fast it may run, not how busy it is. A high reading means programs on this PC are busy right now.",
+    chartLoad: "Load",
+    chartSpeed: "Speed",
+    testTitle: "Same test in each mode",
+    testHint: "A fixed 3-second workload. Run it once in each mode to see what boost changes.",
+    testRun: "Run 3-second test",
+    testRunning: "Testing…",
+    colDefault: "Default",
+    colBoost: "Boost",
+    rowWork: "Work done",
+    rowAvg: "Average speed",
+    rowPeak: "Peak speed",
+    rowTemp: "CPU temperature",
+    notRun: "Not run yet",
+    relative: "{pct}% of Default",
   },
   profiles: {
     title: "Your profiles",
@@ -3102,9 +3524,10 @@ const en: Strings = {
     fixHeading: "Ready to apply",
   },
   ram: {
+    autoNeedsAdmin: "Automatic cleanup runs only while PC Tweaker has administrator rights.",
     title: "Free up RAM",
     subtitle:
-      "Asks Windows to release memory that programs are holding but not using. Run it as often as you like.",
+      "Asks Windows to release memory that programs are holding but not using. Windows asks for administrator permission each time, and it waits while a game is running.",
     button: "Free now",
     cleaning: "Cleaning up...",
     freed: "Freed {amount}",
@@ -3114,7 +3537,7 @@ const en: Strings = {
     autoOff: "Off",
     autoEvery: "Every {interval}",
     autoHint:
-      "With automatic cleanup on, PC Tweaker frees RAM by itself at a regular interval for as long as the app stays open.",
+      "With automatic cleanup on, PC Tweaker frees RAM by itself at a regular interval, as long as it is running with administrator rights.",
     autoNext: "Next cleanup at {time}",
     autoDue: "Cleanup due now...",
     autoLast: "Last at {time}: {amount} freed",
@@ -3174,6 +3597,8 @@ const en: Strings = {
       "Runs Windows' own built-in optimizer: defragmentation on an HDD, or TRIM on an SSD (never a full defrag, which would only wear it out for no benefit).",
     button: "Optimize now",
     running: "Optimizing... this can take a few minutes",
+    cannotStop:
+      "Windows' own drive optimizer does this with administrator rights, so it runs to the end on its own and can't be stopped from here. It's safe to keep working.",
     resultToast: "Drive ({media}) optimized successfully.",
   },
   dnsFlush: {
@@ -3223,6 +3648,85 @@ const en: Strings = {
     confirmOpenPage: "Open the page instead",
     cancel: "Cancel",
   },
+  live: {
+    title: "Right now",
+    subtitle:
+      "Updated every second while this page is open and PC Tweaker is in front. Nothing is measured in the background.",
+    paused: "Paused",
+    pausedHint:
+      "Paused while PC Tweaker is in the background. It picks up again when you come back.",
+    measuring: "Measuring…",
+    smooth: "Running smoothly",
+    busy: "Busy",
+    strained: "Under heavy load",
+    verdictDetail: "CPU {cpu}% over the last 10 seconds · memory {ram}% in use",
+    failed: "Live readings are unavailable right now.",
+    cpu: "Processor",
+    speed: "{ghz} GHz",
+    cores: "{count} logical processors",
+    core: "Processor {n}",
+    memory: "Memory",
+    used: "In use",
+    cached: "Cached",
+    free: "Free",
+    total: "Total",
+    cachedHint: "Cached memory is handed back the moment a program needs it.",
+    notAvailable: "Not available on this PC",
+    disk: "Disk activity",
+    read: "Read",
+    write: "Write",
+    systemDrive: "System drive: {used} of {total} used",
+    network: "Network",
+    down: "Download",
+    up: "Upload",
+    gpu: "Graphics",
+    gpuLoad: "Load",
+    temp: "Temperature",
+    fan: "Fan",
+    vram: "Video memory",
+    sensors: "Temperatures and fans",
+    sensorsHint:
+      "Windows doesn't expose these sensors on this PC without the hardware maker's own tools, so nothing is guessed.",
+    now: "now",
+    secondsAgo: "{s} s ago",
+    activity: "Activity",
+    zoomShort: "1 min",
+    zoomLong: "5 min",
+    minutesAgo: "{n} min ago",
+    peak: "Peak {value}",
+    insightCalm: "Everything looks calm. Nothing needs your attention right now.",
+    insightMemory:
+      "Memory is running high ({pct}%). Close apps you aren't using, or check what starts with Windows.",
+    insightCpu:
+      "The processor has been busy for a while ({pct}% on average). The list below shows what is using it.",
+    insightDrive:
+      "Your system drive is nearly full ({pct}%). Windows slows down when it runs short of space.",
+    actionStartup: "Open Startup",
+    actionCleanup: "Free up space",
+    usingTitle: "What's using resources",
+    usingHint:
+      "Apps grouped by name, from Windows' own process list. Nothing is opened or changed.",
+    usingCpu: "Processor",
+    usingMemory: "Memory",
+    processes: "{count} processes",
+    processOne: "1 process",
+  },
+  pageError: {
+    title: "This page ran into a problem",
+    body: "The rest of PC Tweaker is still working, and nothing on your PC was changed by this error. Reload the page to try again.",
+    reload: "Reload this page",
+    reloadApp: "Reload PC Tweaker",
+    details: "Technical details",
+    appTitle: "PC Tweaker ran into a problem",
+    appBody: "Nothing on your PC was changed by this error. Reload PC Tweaker to carry on.",
+  },
+  folderScan: {
+    stop: "Stop search",
+    stopping: "Stopping…",
+    stoppedEmpty: "Search stopped. Nothing was moved or deleted.",
+    stoppedPartial:
+      "Search stopped. These are the results found before you stopped it; anything not reached yet wasn't checked.",
+  },
   largeFiles: {
     title: "Find large files",
     description:
@@ -3270,6 +3774,7 @@ const en: Strings = {
     rolledBack: '"{name}" restored to its original value.',
     licenseNeedsRefresh:
       "We can't verify your Pro subscription after this long offline. Reconnect to the internet and try again.",
+    elevationDeclined: "Administrator permission was not given, so nothing was changed.",
     accountRefreshFailed:
       "We couldn't verify your account status. What's shown here may be out of date — check your connection or try again later.",
   },
@@ -3482,7 +3987,131 @@ const en: Strings = {
     on: "On",
     off: "Off",
   },
+  guard: {
+    settingTitle: "Leave self-managed games alone",
+    settingBody:
+      "Some games manage their own performance. While one is running, PC Tweaker pauses its per-app adjustments and leaves the game exactly as it is.",
+    selfManaged: "This game manages its own performance, so PC Tweaker leaves it as it is.",
+    gameRunning:
+      "A game that manages its own performance is running, so PC Tweaker leaves apps as they are until it closes.",
+    paused: "Paused while a game that manages its own performance is running.",
+    selfManagedBadge: "Manages its own performance",
+    registeredGameRunning: "One of your games is running, so PC Tweaker waits until it closes.",
+  },
+  preview: {
+    title: "Preview",
+    loading: "Reading the current values...",
+    now: "Now",
+    notSet: "Not set",
+    willChange: "Applying this changes {count} of {total} values.",
+    noChange: "Already in place: applying this changes nothing.",
+    readAtApply: "The current state is read and saved the moment you apply it.",
+    failed: "The current values could not be read.",
+  },
+  requirements: {
+    minBuild: "{version} or later",
+    proEdition: "Pro, Enterprise or Education",
+    unavailableVersion: "Not available on this PC: it needs {version} or later.",
+    unavailableEdition: "Not available on this PC: it needs Windows Pro, Enterprise or Education.",
+    enterpriseEdition: "Enterprise or Education",
+    unavailableEnterpriseEdition:
+      "Not available on this PC: it needs Windows Enterprise or Education.",
+    notPresent: "This PC does not have this feature, so there is nothing to turn off.",
+  },
+  scheduledCleanup: {
+    title: "Weekly temporary file cleanup",
+    body: "Once a week, a few minutes after you sign in, moves temporary files nobody has touched for a day to the Recycle Bin. It waits while a game is running and never touches memory or open apps.",
+  },
+  priorityRules: {
+    title: "App priority rules",
+    subtitle:
+      "Pick an app and a priority. PC Tweaker sets it each time the app starts while PC Tweaker is open, and puts the old priority back when you remove the rule or close PC Tweaker. Never above High.",
+    remove: "Remove",
+    empty: "No apps yet.",
+    active: "Running apps adjusted: {count}",
+    levelLabel: "Priority for {name}",
+    idle: "Low",
+    belowNormal: "Below normal",
+    normal: "Normal",
+    aboveNormal: "Above normal",
+    high: "High",
+  },
   tweaks: {
+    disable_click_to_do: {
+      name: "Turn off Click to Do",
+      description:
+        "Sets the Windows policy that removes Click to Do, the feature that takes a screenshot of your screen and analyzes it to suggest actions. Its entry points disappear for every account on this PC. Settings will show it as managed by your organization, which is how Windows labels policies. It has an effect only on PCs where Windows offers Click to Do.",
+    },
+    disable_edge_ai: {
+      name: "Turn off AI features in Microsoft Edge",
+      description:
+        "Sets Microsoft Edge policies that hide the sidebar, stop Edge from downloading its on-device AI model, and turn off AI history search, AI-generated themes and Copilot's access to page content. Some of these controls apply only to work or school profiles. Edge picks them up without a restart; edge://policy lists them. Edge will show that it is managed by your organization, which is how it labels policies.",
+    },
+    disable_paint_ai: {
+      name: "Turn off AI features in Paint",
+      description:
+        "Sets the Windows policies that turn off Cocreator, Image Creator and generative fill in Paint. Everything else in Paint works as before.",
+    },
+    disable_notepad_ai: {
+      name: "Turn off AI features in Notepad",
+      description:
+        "Sets the Notepad policy that turns off its Copilot writing tools (rewrite, summarize, write). Close and reopen Notepad to see the change.",
+    },
+    disable_fast_startup: {
+      name: "Turn off Fast Startup",
+      description:
+        "Makes Shut down a real shutdown instead of a partial hibernation. Windows starts a few seconds slower from cold, but drivers and updates load fresh every time, and dual-boot setups no longer find the Windows drive locked.",
+    },
+    disable_storage_sense: {
+      name: "Turn off Storage Sense",
+      description:
+        "Stops Windows from deleting temporary files, emptying the Recycle Bin and moving OneDrive files online on its own schedule. You decide what gets cleaned and when.",
+    },
+    taskbar_end_task: {
+      name: "Add End task to the taskbar",
+      description:
+        "Adds End task to the right-click menu of apps on the taskbar, so a frozen app can be closed without opening Task Manager.",
+    },
+    disable_drag_tray: {
+      name: "Turn off the drag tray",
+      description:
+        "Stops the sharing tray from sliding down from the top of the screen every time you drag a file, so ordinary drag and drop works without it getting in the way.",
+    },
+    explorer_open_this_pc: {
+      name: "Open File Explorer to This PC",
+      description:
+        "File Explorer opens on This PC, with your drives and folders, instead of Home and its recent files.",
+    },
+    block_oem_device_apps: {
+      name: "Stop device makers' apps from installing themselves",
+      description:
+        "Stops Windows from downloading manufacturers' apps and custom icons for the devices you plug in, which is how some mouse, keyboard and motherboard utilities arrive without being asked for. Drivers still install as usual.",
+    },
+    disable_windows_suggestions: {
+      name: "Turn off Windows tips and suggestions",
+      description:
+        'One switch for the prompts Windows adds on its own: tips and suggestions, the welcome screen after updates, suggestions in Settings, "finish setting up your device", suggested notifications, Start menu recommendations and account notices, and sync provider ads in File Explorer.',
+    },
+    disable_widgets: {
+      name: "Turn off Widgets entirely",
+      description:
+        "Sets the Windows policy that turns off the Widgets board itself, not just its taskbar button, so its news feed stops loading in the background. Settings will show it as managed by your organization, which is how Windows labels policies.",
+    },
+    hide_start_recommended: {
+      name: "Remove Recommended from the Start menu",
+      description:
+        "Sets the Windows policy that removes the Recommended section from Start, giving your pinned apps the space to themselves. Settings will show it as managed by your organization, which is how Windows labels policies.",
+    },
+    disable_game_bar_captures: {
+      name: "Turn off Game Bar captures",
+      description:
+        "Turns off Game Bar's capture feature and its background recording, which keeps a rolling video of your last few minutes of play. Complements the Game Bar / Game DVR switch.",
+    },
+    disable_ai_fabric_service: {
+      name: "Turn off the Windows AI Fabric service",
+      description:
+        "Stops and disables the service behind Windows' on-device AI features, such as Recall, Click to Do and some Live Captions features, freeing the memory it holds in the background. Those features stop working until you turn it back on. Only present on PCs that have these features.",
+    },
     disable_restart_apps: {
       name: "Stop apps reopening after sign-in",
       description:
@@ -3693,7 +4322,8 @@ const en: Strings = {
     },
     disable_telemetry_tasks: {
       name: "Reduce diagnostic data collection",
-      description: "Sets Windows' diagnostic data level to the minimum allowed.",
+      description:
+        "Sets the Windows diagnostic data policy to its lowest level. Home and Pro treat that as Required diagnostic data; only Enterprise and Education turn it off completely.",
     },
     reset_advertising_id: {
       name: "Disable advertising ID",
@@ -3845,6 +4475,7 @@ const fr: Strings = {
     empty: "Rien à recommander pour l'instant — votre configuration suit déjà nos conseils.",
   },
   drift: {
+    pickHint: "Décochez ce que vous avez modifié volontairement.",
     titleAfterUpdate: "Windows a modifié vos réglages",
     titleNoUpdate: "Certains réglages ne sont plus actifs",
     afterUpdateOne:
@@ -3873,6 +4504,11 @@ const fr: Strings = {
     processElevated: "opération avec droits admin",
   },
   ledger: {
+    guardPaused: "Réglages des applications en pause",
+    guardResumed: "Réglages des applications repris",
+    processes: "Processus : {count}",
+    restored: "Rétabli",
+    postponed: "Reporté pendant qu'un jeu était en cours",
     title: "Registre des modifications",
     subtitle:
       "Tout ce que cette application a modifié sur ce PC, du plus récent au plus ancien. Conservé en local, jamais envoyé en ligne.",
@@ -3884,6 +4520,13 @@ const fr: Strings = {
     elevated: "avec droits admin",
     failed: "échec",
     actions: {
+      processGuard: "Jeu qui se gère seul",
+      coreSteering: "Répartition des cœurs",
+      ramTrim: "Nettoyage de la RAM",
+      autoReverted: "Annulé automatiquement",
+      priorityRule: "Règle de priorité",
+      scheduledCleanup: "Nettoyage planifié",
+      ecoqos: "Efficacité des applications en arrière-plan",
       applied: "Réglage appliqué",
       reverted: "Réglage rétabli",
       cleanup: "Nettoyage",
@@ -3986,7 +4629,7 @@ const fr: Strings = {
     memTopTitle: "Processus principaux",
     trimTitle: "Réduire les working sets",
     trimExplainer:
-      "Demande à Windows de déplacer les pages inactives hors des working sets des applications (EmptyWorkingSet). Utile en cas de forte pression ; les applications peuvent recharger brièvement des pages. Aucune donnée n'est perdue.",
+      "Demande au gestionnaire de mémoire de Windows de déplacer les pages inactives hors des working sets des applications. Utile en cas de forte pression ; les applications peuvent recharger brièvement des pages. Aucune donnée n'est perdue. Windows demande l'autorisation d'administrateur.",
     trimButton: "Réduire maintenant",
     autoTitle: "Réduction automatique",
     profilesTitle: "Profils de session",
@@ -4049,6 +4692,8 @@ const fr: Strings = {
     cleanupNote:
       "Supprime du dossier WinSxS les versions de composants remplacées. Les mises à jour récentes restent désinstallables.",
     runningNote: "N'éteignez pas et ne redémarrez pas le PC pendant l'opération.",
+    cannotStop:
+      "Une fois lancée, l'opération ne peut pas être arrêtée : Windows vérifie et répare ses propres fichiers système, et l'interrompre en cours de route pourrait les laisser à moitié réparés. Vous pouvez continuer à utiliser votre PC et PC Tweaker en attendant.",
     stepQuick: "Lecture rapide de l'état",
     stepScan: "Analyse du magasin de composants",
     stepRestore: "Réparation du magasin de composants",
@@ -4323,7 +4968,6 @@ const fr: Strings = {
     subtitle:
       "Détecte automatiquement vos jeux et applique/annule le préréglage Turbo Gaming tout seul.",
     active: "Session active : {name}",
-    activeFreed: "Boost actif pour {name} — {freed} de RAM libérés.",
     gamesCount: "{count} jeux enregistrés",
     addGame: "+ Ajouter un jeu (.exe)",
     steeringTitle: "Répartition des cœurs",
@@ -4386,7 +5030,7 @@ const fr: Strings = {
     buffers:
       "Tampon de réception : {reserved} réservés par socket, {autotuned} ajustés automatiquement par Windows",
     verdictNone:
-      "Aucun changement mesurable de la latence. C'est attendu : un ping ne passe pas par les réglages TCP.",
+      "Un ping ne passe pas par les réglages TCP, donc ces mesures décrivent la connexion elle-même.",
     verdictInconclusive: "Trop peu de réponses pour comparer.",
     verdictLineChanged:
       "La ligne elle-même a changé entre les deux mesures (médiane {delta} ms). Un ping ne passe pas par les réglages TCP : ce n'est donc pas l'effet de la modification.",
@@ -4407,21 +5051,40 @@ const fr: Strings = {
     active: "Turbo actif",
     inactive: "Turbo inactif",
     loadLabel: "CHARGE CPU",
-    loadCadence: "Mesure réelle · toutes les 20 s",
-    loadHelp:
-      "Utilisation du processeur, pas un score de boost. Une faible charge est normale au repos.",
+    loadCadence: "Mesurée chaque seconde, lissée sur environ 3 secondes",
     stageReading: "Lecture du mode d'alimentation",
     stageRaising: "Augmentation de la limite de boost",
     stageApplying: "Application au système",
-    modeAggressive: "Mode agressif",
-    modeDefault: "Mode par defaut",
     stageMeasuringBefore: "Mesure avant",
     stageMeasuringAfter: "Nouvelle mesure",
-    gainMeasured: "{factor}x plus rapide",
-    gainSlight: "{factor}x plus rapide - gain modeste",
-    gainAtCeiling: "Aucune amélioration mesurée lors de ce bref test",
-    ceilingLocked: "Limite de boost verrouillee",
-    ceilingUnlocked: "Limite de boost debloquee",
+    factAverage: "Vitesse moyenne actuelle",
+    factFastest: "Cœur le plus rapide",
+    factPeak: "Maximum de cette session",
+    factFloor: "État minimal du processeur",
+    ofBase: "{pct} % de la fréquence de base",
+    usersTitle: "Qui utilise le processeur",
+    appliedAt:
+      "Activé le {time} · mode boost Agressif, état minimal du processeur à 100 % sur secteur",
+    planAlreadyUses: "Le mode de gestion de l'alimentation actuel utilise déjà ces réglages.",
+    planAlreadyHad:
+      "Le mode de gestion de l'alimentation actuel avait déjà ces réglages, donc aucune valeur n'a changé.",
+    loadExplain:
+      "La charge indique le travail du processeur ; Turbo Boost change la vitesse à laquelle il peut tourner, pas son occupation. Une valeur élevée signifie que des programmes travaillent sur ce PC en ce moment.",
+    chartLoad: "Charge",
+    chartSpeed: "Vitesse",
+    testTitle: "Même test dans chaque mode",
+    testHint:
+      "Une charge fixe de 3 secondes. Lancez-la une fois dans chaque mode pour voir ce que le boost change.",
+    testRun: "Lancer le test de 3 secondes",
+    testRunning: "Test en cours…",
+    colDefault: "Par défaut",
+    colBoost: "Boost",
+    rowWork: "Travail effectué",
+    rowAvg: "Vitesse moyenne",
+    rowPeak: "Vitesse maximale",
+    rowTemp: "Température du processeur",
+    notRun: "Pas encore lancé",
+    relative: "{pct} % du mode par défaut",
   },
   profiles: {
     title: "Vos profils",
@@ -4531,9 +5194,11 @@ const fr: Strings = {
     fixHeading: "Prêtes à appliquer",
   },
   ram: {
+    autoNeedsAdmin:
+      "Le nettoyage automatique ne fonctionne que lorsque PC Tweaker dispose des droits d'administrateur.",
     title: "Libérer la RAM",
     subtitle:
-      "Demande à Windows de libérer la mémoire que les programmes occupent sans l'utiliser. À lancer aussi souvent que vous voulez.",
+      "Demande à Windows de libérer la mémoire que les programmes occupent sans l'utiliser. Windows demande chaque fois l'autorisation d'administrateur, et le nettoyage attend si un jeu est en cours.",
     button: "Libérer maintenant",
     cleaning: "Nettoyage en cours...",
     freed: "{amount} libérés",
@@ -4543,7 +5208,7 @@ const fr: Strings = {
     autoOff: "Désactivé",
     autoEvery: "Toutes les {interval}",
     autoHint:
-      "Avec le nettoyage automatique, PC Tweaker libère la RAM tout seul à intervalle régulier tant que l'application reste ouverte.",
+      "Avec le nettoyage automatique, PC Tweaker libère la RAM tout seul à intervalle régulier, tant qu'il tourne avec les droits d'administrateur.",
     autoNext: "Prochain nettoyage à {time}",
     autoDue: "Nettoyage imminent...",
     autoLast: "Dernier à {time} : {amount} libérés",
@@ -4605,6 +5270,8 @@ const fr: Strings = {
       "Lance l'optimiseur integre de Windows : defragmentation sur un HDD, ou TRIM sur un SSD (jamais une defragmentation complete, qui ne ferait que l'user inutilement).",
     button: "Optimiser maintenant",
     running: "Optimisation en cours... cela peut prendre quelques minutes",
+    cannotStop:
+      "C'est l'optimiseur de lecteurs de Windows qui s'en charge, avec les droits d'administrateur : il va jusqu'au bout tout seul et ne peut pas être arrêté d'ici. Vous pouvez continuer à travailler sans risque.",
     resultToast: "Disque ({media}) optimise avec succes.",
   },
   dnsFlush: {
@@ -4654,6 +5321,85 @@ const fr: Strings = {
     confirmOpenPage: "Ouvrir plutôt la page",
     cancel: "Annuler",
   },
+  live: {
+    title: "En ce moment",
+    subtitle:
+      "Mis à jour chaque seconde tant que cette page est ouverte et que PC Tweaker est au premier plan. Rien n'est mesuré en arrière-plan.",
+    paused: "En pause",
+    pausedHint: "En pause tant que PC Tweaker est en arrière-plan. Reprise dès votre retour.",
+    measuring: "Mesure…",
+    smooth: "Tout est fluide",
+    busy: "Occupé",
+    strained: "Forte charge",
+    verdictDetail:
+      "Processeur à {cpu} % sur les 10 dernières secondes · mémoire utilisée à {ram} %",
+    failed: "Les mesures en direct ne sont pas disponibles pour le moment.",
+    cpu: "Processeur",
+    speed: "{ghz} GHz",
+    cores: "{count} processeurs logiques",
+    core: "Processeur {n}",
+    memory: "Mémoire",
+    used: "Utilisée",
+    cached: "En cache",
+    free: "Libre",
+    total: "Total",
+    cachedHint: "La mémoire en cache est rendue dès qu'un programme en a besoin.",
+    notAvailable: "Non disponible sur ce PC",
+    disk: "Activité du disque",
+    read: "Lecture",
+    write: "Écriture",
+    systemDrive: "Lecteur système : {used} utilisés sur {total}",
+    network: "Réseau",
+    down: "Téléchargement",
+    up: "Envoi",
+    gpu: "Graphismes",
+    gpuLoad: "Charge",
+    temp: "Température",
+    fan: "Ventilateur",
+    vram: "Mémoire vidéo",
+    sensors: "Températures et ventilateurs",
+    sensorsHint:
+      "Sur ce PC, Windows n'expose pas ces capteurs sans les outils du fabricant : rien n'est donc deviné.",
+    now: "maintenant",
+    secondsAgo: "il y a {s} s",
+    activity: "Activité",
+    zoomShort: "1 min",
+    zoomLong: "5 min",
+    minutesAgo: "il y a {n} min",
+    peak: "Pic {value}",
+    insightCalm: "Tout est calme. Rien ne demande votre attention pour le moment.",
+    insightMemory:
+      "La mémoire est très sollicitée ({pct} %). Fermez les applications inutilisées ou vérifiez ce qui démarre avec Windows.",
+    insightCpu:
+      "Le processeur est occupé depuis un moment ({pct} % en moyenne). La liste ci-dessous montre ce qui l'utilise.",
+    insightDrive:
+      "Le lecteur système est presque plein ({pct} %). Windows ralentit quand l'espace vient à manquer.",
+    actionStartup: "Ouvrir Démarrage",
+    actionCleanup: "Libérer de l'espace",
+    usingTitle: "Ce qui utilise les ressources",
+    usingHint:
+      "Applications regroupées par nom, à partir de la liste des processus de Windows. Rien n'est ouvert ni modifié.",
+    usingCpu: "Processeur",
+    usingMemory: "Mémoire",
+    processes: "{count} processus",
+    processOne: "1 processus",
+  },
+  pageError: {
+    title: "Cette page a rencontré un problème",
+    body: "Le reste de PC Tweaker fonctionne toujours, et cette erreur n'a rien modifié sur votre PC. Rechargez la page pour réessayer.",
+    reload: "Recharger la page",
+    reloadApp: "Recharger PC Tweaker",
+    details: "Détails techniques",
+    appTitle: "PC Tweaker a rencontré un problème",
+    appBody: "Cette erreur n'a rien modifié sur votre PC. Rechargez PC Tweaker pour continuer.",
+  },
+  folderScan: {
+    stop: "Arrêter la recherche",
+    stopping: "Arrêt…",
+    stoppedEmpty: "Recherche arrêtée. Aucun fichier n'a été déplacé ni supprimé.",
+    stoppedPartial:
+      "Recherche arrêtée. Voici les résultats trouvés avant l'arrêt ; ce qui n'avait pas encore été atteint n'a pas été vérifié.",
+  },
   largeFiles: {
     title: "Trouver les gros fichiers",
     description:
@@ -4699,6 +5445,8 @@ const fr: Strings = {
   toasts: {
     applied: "« {name} » appliqué.",
     rolledBack: "« {name} » restauré à sa valeur d'origine.",
+    elevationDeclined:
+      "L'autorisation administrateur n'a pas été accordée, donc rien n'a été modifié.",
     licenseNeedsRefresh:
       "Impossible de vérifier votre abonnement Pro après une si longue période hors ligne. Reconnectez-vous à internet et réessayez.",
     accountRefreshFailed:
@@ -4916,7 +5664,131 @@ const fr: Strings = {
     on: "Activée",
     off: "Désactivée",
   },
+  guard: {
+    settingTitle: "Laisser tranquilles les jeux qui se gèrent seuls",
+    settingBody:
+      "Certains jeux gèrent eux-mêmes leurs performances. Pendant que l'un d'eux tourne, PC Tweaker met en pause ses réglages par application et laisse le jeu exactement tel qu'il est.",
+    selfManaged: "Ce jeu gère lui-même ses performances : PC Tweaker le laisse tel quel.",
+    gameRunning:
+      "Un jeu qui gère lui-même ses performances est en cours : PC Tweaker laisse les applications telles quelles jusqu'à sa fermeture.",
+    paused: "En pause pendant qu'un jeu qui gère lui-même ses performances est en cours.",
+    selfManagedBadge: "Gère lui-même ses performances",
+    registeredGameRunning: "L'un de vos jeux est en cours : PC Tweaker attend qu'il se ferme.",
+  },
+  preview: {
+    title: "Aperçu",
+    loading: "Lecture des valeurs actuelles...",
+    now: "Actuel",
+    notSet: "Non défini",
+    willChange: "L'appliquer modifie {count} valeurs sur {total}.",
+    noChange: "Déjà en place : l'appliquer ne change rien.",
+    readAtApply: "L'état actuel est lu et enregistré au moment où vous l'appliquez.",
+    failed: "Impossible de lire les valeurs actuelles.",
+  },
+  requirements: {
+    minBuild: "{version} ou plus récent",
+    proEdition: "Pro, Entreprise ou Éducation",
+    unavailableVersion: "Indisponible sur ce PC : nécessite {version} ou plus récent.",
+    unavailableEdition: "Indisponible sur ce PC : nécessite Windows Pro, Entreprise ou Éducation.",
+    enterpriseEdition: "Entreprise ou Éducation",
+    unavailableEnterpriseEdition:
+      "Indisponible sur ce PC : nécessite Windows Entreprise ou Éducation.",
+    notPresent: "Ce PC ne dispose pas de cette fonction, il n'y a donc rien à désactiver.",
+  },
+  scheduledCleanup: {
+    title: "Nettoyage hebdomadaire des fichiers temporaires",
+    body: "Une fois par semaine, quelques minutes après votre connexion, place dans la Corbeille les fichiers temporaires que rien n'a modifiés depuis un jour. Il attend si un jeu est en cours et ne touche jamais à la mémoire ni aux applications ouvertes.",
+  },
+  priorityRules: {
+    title: "Règles de priorité des applications",
+    subtitle:
+      "Choisissez une application et une priorité. PC Tweaker l'applique à chaque lancement de l'application tant qu'il est ouvert, et rétablit l'ancienne priorité quand vous supprimez la règle ou fermez PC Tweaker. Jamais au-dessus de Haute.",
+    remove: "Supprimer",
+    empty: "Aucune application pour l'instant.",
+    active: "Applications en cours ajustées : {count}",
+    levelLabel: "Priorité de {name}",
+    idle: "Basse",
+    belowNormal: "Inférieure à la normale",
+    normal: "Normale",
+    aboveNormal: "Supérieure à la normale",
+    high: "Haute",
+  },
   tweaks: {
+    disable_click_to_do: {
+      name: "Désactiver Click to Do",
+      description:
+        "Applique la stratégie Windows qui supprime Click to Do, la fonction qui capture votre écran et l'analyse pour proposer des actions. Ses points d'accès disparaissent pour tous les comptes de ce PC. Paramètres l'indiquera comme géré par votre organisation : c'est ainsi que Windows signale les stratégies. Elle n'a d'effet que sur les PC où Windows propose Click to Do.",
+    },
+    disable_edge_ai: {
+      name: "Désactiver les fonctions d'IA de Microsoft Edge",
+      description:
+        "Applique les stratégies Microsoft Edge qui masquent la barre latérale, empêchent Edge de télécharger son modèle d'IA local et désactivent la recherche par IA dans l'historique, les thèmes générés par IA et l'accès de Copilot au contenu des pages. Certains de ces réglages ne concernent que les profils professionnels ou scolaires. Edge les prend en compte sans redémarrage ; edge://policy les affiche. Edge indiquera qu'il est géré par votre organisation : c'est ainsi qu'il signale les stratégies.",
+    },
+    disable_paint_ai: {
+      name: "Désactiver les fonctions d'IA de Paint",
+      description:
+        "Applique les stratégies Windows qui désactivent Cocreator, Image Creator et le remplissage génératif dans Paint. Le reste de Paint fonctionne comme avant.",
+    },
+    disable_notepad_ai: {
+      name: "Désactiver les fonctions d'IA du Bloc-notes",
+      description:
+        "Applique la stratégie du Bloc-notes qui désactive ses outils d'écriture Copilot (réécrire, résumer, écrire). Fermez puis rouvrez le Bloc-notes pour voir le changement.",
+    },
+    disable_fast_startup: {
+      name: "Désactiver le démarrage rapide",
+      description:
+        "Fait d'Arrêter un véritable arrêt plutôt qu'une mise en veille prolongée partielle. Windows démarre à froid quelques secondes plus lentement, mais les pilotes et les mises à jour se chargent à neuf à chaque fois, et les configurations en double démarrage ne trouvent plus le disque de Windows verrouillé.",
+    },
+    disable_storage_sense: {
+      name: "Désactiver l'Assistant Stockage",
+      description:
+        "Empêche Windows de supprimer les fichiers temporaires, de vider la Corbeille et de basculer des fichiers OneDrive en ligne selon son propre calendrier. C'est vous qui décidez quoi nettoyer, et quand.",
+    },
+    taskbar_end_task: {
+      name: "Ajouter Fin de tâche à la barre des tâches",
+      description:
+        "Ajoute Fin de tâche au menu contextuel des applications dans la barre des tâches, pour fermer une application figée sans ouvrir le Gestionnaire des tâches.",
+    },
+    disable_drag_tray: {
+      name: "Désactiver le panneau de partage au glissement",
+      description:
+        "Empêche le panneau de partage de descendre du haut de l'écran chaque fois que vous faites glisser un fichier, pour que le glisser-déposer habituel fonctionne sans gêne.",
+    },
+    explorer_open_this_pc: {
+      name: "Ouvrir l'Explorateur de fichiers sur Ce PC",
+      description:
+        "L'Explorateur de fichiers s'ouvre sur Ce PC, avec vos lecteurs et dossiers, au lieu de l'Accueil et de ses fichiers récents.",
+    },
+    block_oem_device_apps: {
+      name: "Empêcher les applications des fabricants de s'installer seules",
+      description:
+        "Empêche Windows de télécharger les applications des fabricants et les icônes personnalisées des périphériques que vous branchez : c'est ainsi que certains utilitaires de souris, de clavier ou de carte mère arrivent sans avoir été demandés. Les pilotes s'installent comme d'habitude.",
+    },
+    disable_windows_suggestions: {
+      name: "Désactiver les conseils et suggestions de Windows",
+      description:
+        "Un seul interrupteur pour les messages que Windows ajoute de lui-même : conseils et suggestions, écran d'accueil après les mises à jour, suggestions dans Paramètres, « terminer la configuration de l'appareil », notifications suggérées, recommandations et avis de compte dans le menu Démarrer, et publicités des fournisseurs de synchronisation dans l'Explorateur de fichiers.",
+    },
+    disable_widgets: {
+      name: "Désactiver complètement les widgets",
+      description:
+        "Applique la stratégie Windows qui désactive le tableau des widgets lui-même, pas seulement son bouton dans la barre des tâches : son fil d'actualités cesse de se charger en arrière-plan. Paramètres l'indiquera comme géré par votre organisation : c'est ainsi que Windows signale les stratégies.",
+    },
+    hide_start_recommended: {
+      name: "Retirer Recommandé du menu Démarrer",
+      description:
+        "Applique la stratégie Windows qui retire la section Recommandé du menu Démarrer et laisse toute la place à vos applications épinglées. Paramètres l'indiquera comme géré par votre organisation : c'est ainsi que Windows signale les stratégies.",
+    },
+    disable_game_bar_captures: {
+      name: "Désactiver les captures de la Game Bar",
+      description:
+        "Désactive la fonction de capture de la Game Bar et son enregistrement en arrière-plan, qui conserve en continu une vidéo de vos dernières minutes de jeu. Complète l'interrupteur Game Bar / Game DVR.",
+    },
+    disable_ai_fabric_service: {
+      name: "Désactiver le service Windows AI Fabric",
+      description:
+        "Arrête et désactive le service qui fait fonctionner les fonctions d'IA locales de Windows, comme Recall, Click to Do et certaines fonctions des Sous-titres en direct, et libère la mémoire qu'il occupe en arrière-plan. Ces fonctions ne marchent plus tant que vous ne le réactivez pas. Présent uniquement sur les PC qui les proposent.",
+    },
     disable_restart_apps: {
       name: "Empêcher la réouverture des apps après connexion",
       description:
@@ -5127,7 +5999,8 @@ const fr: Strings = {
     },
     disable_telemetry_tasks: {
       name: "Réduire la collecte de données de diagnostic",
-      description: "Règle le niveau de diagnostic de Windows au minimum autorisé.",
+      description:
+        "Règle la stratégie de données de diagnostic de Windows au niveau le plus bas. Les éditions Famille et Pro l'appliquent comme données de diagnostic obligatoires ; seules Entreprise et Éducation les désactivent complètement.",
     },
     reset_advertising_id: {
       name: "Désactiver l'ID publicitaire",
@@ -5282,6 +6155,7 @@ const es: Strings = {
     empty: "Nada que recomendar ahora mismo: tu configuración ya sigue nuestros consejos.",
   },
   drift: {
+    pickHint: "Desmarca lo que hayas cambiado a propósito.",
     titleAfterUpdate: "Windows volvió a cambiar tus ajustes",
     titleNoUpdate: "Algunos ajustes ya no están activos",
     afterUpdateOne:
@@ -5310,6 +6184,11 @@ const es: Strings = {
     processElevated: "operación con permisos de administrador",
   },
   ledger: {
+    guardPaused: "Ajustes de aplicaciones en pausa",
+    guardResumed: "Ajustes de aplicaciones reanudados",
+    processes: "Procesos: {count}",
+    restored: "Restaurado",
+    postponed: "Aplazada mientras había un juego abierto",
     title: "Registro de cambios",
     subtitle:
       "Todo lo que esta aplicación cambió en este PC, de más reciente a más antiguo. Guardado en local, nunca se sube.",
@@ -5321,6 +6200,13 @@ const es: Strings = {
     elevated: "con permisos de admin",
     failed: "falló",
     actions: {
+      processGuard: "Juego que se gestiona solo",
+      coreSteering: "Asignación de núcleos",
+      ramTrim: "Limpieza de RAM",
+      autoReverted: "Deshecho automáticamente",
+      priorityRule: "Regla de prioridad",
+      scheduledCleanup: "Limpieza programada",
+      ecoqos: "Eficiencia de aplicaciones en segundo plano",
       applied: "Ajuste aplicado",
       reverted: "Ajuste revertido",
       cleanup: "Limpieza",
@@ -5423,7 +6309,7 @@ const es: Strings = {
     memTopTitle: "Procesos principales",
     trimTitle: "Recortar working sets",
     trimExplainer:
-      "Pide a Windows mover las páginas inactivas fuera de los working sets de las apps (EmptyWorkingSet). Útil con presión alta; las apps pueden recargar páginas brevemente. No se pierde ningún dato.",
+      "Pide al administrador de memoria de Windows que saque las páginas inactivas de los working sets de las apps. Útil con presión alta; las apps pueden recargar páginas brevemente. No se pierde ningún dato. Windows pide permiso de administrador.",
     trimButton: "Recortar ahora",
     autoTitle: "Recorte automático",
     profilesTitle: "Perfiles de sesión",
@@ -5486,6 +6372,8 @@ const es: Strings = {
     cleanupNote:
       "Elimina de WinSxS las versiones de componentes ya sustituidas. Las actualizaciones instaladas hace poco se pueden seguir desinstalando.",
     runningNote: "No apagues ni reinicies el PC mientras se ejecuta.",
+    cannotStop:
+      "Una vez iniciado no se puede detener: Windows está comprobando y reparando sus propios archivos del sistema, y cortarlo a mitad podría dejarlos reparados solo en parte. Mientras tanto puedes seguir usando el PC y PC Tweaker.",
     stepQuick: "Lectura rápida del estado",
     stepScan: "Comprobando el almacén de componentes",
     stepRestore: "Reparando el almacén de componentes",
@@ -5756,7 +6644,6 @@ const es: Strings = {
     subtitle:
       "Detecta automáticamente tus juegos y aplica/revierte el preset Turbo Gaming por sí solo.",
     active: "Sesión activa: {name}",
-    activeFreed: "Boost activo para {name}: {freed} de RAM liberados.",
     gamesCount: "{count} juegos registrados",
     addGame: "+ Añadir juego (.exe)",
     steeringTitle: "Asignación de núcleos",
@@ -5819,7 +6706,7 @@ const es: Strings = {
     buffers:
       "Búfer de recepción: {reserved} reservados por socket, {autotuned} ajustados automáticamente por Windows",
     verdictNone:
-      "Ningún cambio medible en la latencia. Es lo esperado: un ping no pasa por los ajustes de TCP.",
+      "Un ping no pasa por los ajustes de TCP, así que estas lecturas describen la propia conexión.",
     verdictInconclusive: "Muy pocas respuestas para comparar.",
     verdictLineChanged:
       "La propia línea cambió entre las dos lecturas (mediana {delta} ms). Un ping no pasa por los ajustes de TCP, así que no es el efecto del cambio.",
@@ -5840,21 +6727,40 @@ const es: Strings = {
     active: "Turbo activo",
     inactive: "Turbo no activo",
     loadLabel: "CARGA CPU",
-    loadCadence: "Lectura real · cada 20 s",
-    loadHelp:
-      "Uso de la CPU, no una puntuación del boost. Un uso bajo es normal cuando el PC está inactivo.",
+    loadCadence: "Medida cada segundo, suavizada en unos 3 segundos",
     stageReading: "Leyendo el plan de energía",
     stageRaising: "Elevando el limite de boost",
     stageApplying: "Aplicando al sistema",
-    modeAggressive: "Modo agresivo",
-    modeDefault: "Modo predeterminado",
     stageMeasuringBefore: "Midiendo antes",
     stageMeasuringAfter: "Midiendo de nuevo",
-    gainMeasured: "{factor}x mas rapido",
-    gainSlight: "{factor}x mas rapido - ganancia modesta",
-    gainAtCeiling: "No se midió ninguna mejora en esta prueba breve",
-    ceilingLocked: "Limite de boost bloqueado",
-    ceilingUnlocked: "Limite de boost desbloqueado",
+    factAverage: "Velocidad media ahora",
+    factFastest: "Núcleo más rápido ahora",
+    factPeak: "Máximo en esta sesión",
+    factFloor: "Estado mínimo del procesador",
+    ofBase: "{pct} % de la frecuencia base",
+    usersTitle: "Quién usa la CPU ahora",
+    appliedAt:
+      "Activado el {time} · modo turbo Agresivo, estado mínimo del procesador al 100 % con corriente",
+    planAlreadyUses: "El plan de energía actual ya usa estos ajustes.",
+    planAlreadyHad:
+      "El plan de energía actual ya tenía estos ajustes, así que no cambió ningún valor.",
+    loadExplain:
+      "La carga es cuánto trabajo hace el procesador; Turbo Boost cambia lo rápido que puede ir, no lo ocupado que está. Un valor alto significa que hay programas trabajando en este PC ahora mismo.",
+    chartLoad: "Carga",
+    chartSpeed: "Velocidad",
+    testTitle: "La misma prueba en cada modo",
+    testHint:
+      "Una carga fija de 3 segundos. Ejecútala una vez en cada modo para ver qué cambia con el boost.",
+    testRun: "Ejecutar prueba de 3 segundos",
+    testRunning: "Probando…",
+    colDefault: "Predeterminado",
+    colBoost: "Boost",
+    rowWork: "Trabajo hecho",
+    rowAvg: "Velocidad media",
+    rowPeak: "Velocidad máxima",
+    rowTemp: "Temperatura de la CPU",
+    notRun: "Aún sin ejecutar",
+    relative: "{pct} % del predeterminado",
   },
   profiles: {
     title: "Tus perfiles",
@@ -5962,9 +6868,11 @@ const es: Strings = {
     fixHeading: "Listas para aplicar",
   },
   ram: {
+    autoNeedsAdmin:
+      "La limpieza automática solo funciona cuando PC Tweaker tiene permisos de administrador.",
     title: "Liberar RAM",
     subtitle:
-      "Pide a Windows que libere la memoria que los programas ocupan sin usarla. Puedes hacerlo tantas veces como quieras.",
+      "Pide a Windows que libere la memoria que los programas ocupan sin usarla. Windows pide permiso de administrador cada vez, y la limpieza espera si hay un juego abierto.",
     button: "Liberar ahora",
     cleaning: "Limpiando...",
     freed: "{amount} liberados",
@@ -5974,7 +6882,7 @@ const es: Strings = {
     autoOff: "Desactivada",
     autoEvery: "Cada {interval}",
     autoHint:
-      "Con la limpieza automática activada, PC Tweaker libera la RAM por sí solo a intervalos regulares mientras la app siga abierta.",
+      "Con la limpieza automática activada, PC Tweaker libera la RAM por sí solo a intervalos regulares, siempre que se ejecute con permisos de administrador.",
     autoNext: "Próxima limpieza a las {time}",
     autoDue: "Limpieza inminente...",
     autoLast: "Última a las {time}: {amount} liberados",
@@ -6035,6 +6943,8 @@ const es: Strings = {
       "Ejecuta el optimizador integrado de Windows: desfragmentacion en un HDD, o TRIM en un SSD (nunca una desfragmentacion completa, que solo lo desgastaria sin beneficio).",
     button: "Optimizar ahora",
     running: "Optimizando... puede tardar unos minutos",
+    cannotStop:
+      "Lo hace el optimizador de unidades de Windows con permisos de administrador, así que termina por sí solo y no se puede detener desde aquí. Puedes seguir trabajando sin problema.",
     resultToast: "Disco ({media}) optimizado correctamente.",
   },
   dnsFlush: {
@@ -6084,6 +6994,84 @@ const es: Strings = {
     confirmOpenPage: "Abrir la página en su lugar",
     cancel: "Cancelar",
   },
+  live: {
+    title: "Ahora mismo",
+    subtitle:
+      "Se actualiza cada segundo mientras esta página está abierta y PC Tweaker está en primer plano. No se mide nada en segundo plano.",
+    paused: "En pausa",
+    pausedHint: "En pausa mientras PC Tweaker está en segundo plano. Se reanuda cuando vuelves.",
+    measuring: "Midiendo…",
+    smooth: "Funciona con fluidez",
+    busy: "Ocupado",
+    strained: "Con mucha carga",
+    verdictDetail: "CPU al {cpu} % en los últimos 10 segundos · memoria en uso al {ram} %",
+    failed: "Las lecturas en directo no están disponibles ahora mismo.",
+    cpu: "Procesador",
+    speed: "{ghz} GHz",
+    cores: "{count} procesadores lógicos",
+    core: "Procesador {n}",
+    memory: "Memoria",
+    used: "En uso",
+    cached: "En caché",
+    free: "Libre",
+    total: "Total",
+    cachedHint: "La memoria en caché se devuelve en cuanto un programa la necesita.",
+    notAvailable: "No disponible en este PC",
+    disk: "Actividad del disco",
+    read: "Lectura",
+    write: "Escritura",
+    systemDrive: "Unidad del sistema: {used} usados de {total}",
+    network: "Red",
+    down: "Descarga",
+    up: "Subida",
+    gpu: "Gráficos",
+    gpuLoad: "Carga",
+    temp: "Temperatura",
+    fan: "Ventilador",
+    vram: "Memoria de vídeo",
+    sensors: "Temperaturas y ventiladores",
+    sensorsHint:
+      "En este PC, Windows no expone estos sensores sin las herramientas del fabricante, así que no se inventa nada.",
+    now: "ahora",
+    secondsAgo: "hace {s} s",
+    activity: "Actividad",
+    zoomShort: "1 min",
+    zoomLong: "5 min",
+    minutesAgo: "hace {n} min",
+    peak: "Pico {value}",
+    insightCalm: "Todo está tranquilo. Ahora mismo nada necesita tu atención.",
+    insightMemory:
+      "La memoria está muy ocupada ({pct} %). Cierra las apps que no uses o revisa qué se inicia con Windows.",
+    insightCpu:
+      "El procesador lleva un rato ocupado ({pct} % de media). La lista de abajo muestra qué lo está usando.",
+    insightDrive:
+      "La unidad del sistema está casi llena ({pct} %). Windows se ralentiza cuando le falta espacio.",
+    actionStartup: "Abrir Inicio",
+    actionCleanup: "Liberar espacio",
+    usingTitle: "Qué está usando recursos",
+    usingHint:
+      "Apps agrupadas por nombre, a partir de la lista de procesos de Windows. No se abre ni se cambia nada.",
+    usingCpu: "Procesador",
+    usingMemory: "Memoria",
+    processes: "{count} procesos",
+    processOne: "1 proceso",
+  },
+  pageError: {
+    title: "Esta página ha tenido un problema",
+    body: "El resto de PC Tweaker sigue funcionando y este error no ha cambiado nada en tu PC. Recarga la página para volver a intentarlo.",
+    reload: "Recargar la página",
+    reloadApp: "Recargar PC Tweaker",
+    details: "Detalles técnicos",
+    appTitle: "PC Tweaker ha tenido un problema",
+    appBody: "Este error no ha cambiado nada en tu PC. Recarga PC Tweaker para continuar.",
+  },
+  folderScan: {
+    stop: "Detener búsqueda",
+    stopping: "Deteniendo…",
+    stoppedEmpty: "Búsqueda detenida. No se ha movido ni eliminado nada.",
+    stoppedPartial:
+      "Búsqueda detenida. Estos son los resultados encontrados antes de que la detuvieras; lo que aún no se había alcanzado no se ha comprobado.",
+  },
   largeFiles: {
     title: "Buscar archivos grandes",
     description:
@@ -6131,6 +7119,7 @@ const es: Strings = {
     rolledBack: '"{name}" restaurado a su valor original.',
     licenseNeedsRefresh:
       "No podemos verificar tu suscripción Pro tras tanto tiempo sin conexión. Reconectate a internet e inténtalo de nuevo.",
+    elevationDeclined: "No se concedió el permiso de administrador, así que no se cambió nada.",
     accountRefreshFailed:
       "No pudimos verificar el estado de tu cuenta. Lo que se muestra aquí puede estar desactualizado: revisa tu conexión o inténtalo más tarde.",
   },
@@ -6347,7 +7336,132 @@ const es: Strings = {
     on: "Activada",
     off: "Desactivada",
   },
+  guard: {
+    settingTitle: "No tocar los juegos que se gestionan solos",
+    settingBody:
+      "Algunos juegos gestionan su propio rendimiento. Mientras uno de ellos está abierto, PC Tweaker pausa sus ajustes por aplicación y deja el juego exactamente como está.",
+    selfManaged: "Este juego gestiona su propio rendimiento, así que PC Tweaker lo deja como está.",
+    gameRunning:
+      "Hay un juego abierto que gestiona su propio rendimiento, así que PC Tweaker deja las aplicaciones como están hasta que lo cierres.",
+    paused: "En pausa mientras haya abierto un juego que gestiona su propio rendimiento.",
+    selfManagedBadge: "Gestiona su propio rendimiento",
+    registeredGameRunning:
+      "Uno de tus juegos está abierto, así que PC Tweaker espera a que se cierre.",
+  },
+  preview: {
+    title: "Vista previa",
+    loading: "Leyendo los valores actuales...",
+    now: "Ahora",
+    notSet: "Sin definir",
+    willChange: "Aplicarlo cambia {count} de {total} valores.",
+    noChange: "Ya está aplicado: aplicarlo no cambia nada.",
+    readAtApply: "El estado actual se lee y se guarda en el momento de aplicarlo.",
+    failed: "No se pudieron leer los valores actuales.",
+  },
+  requirements: {
+    minBuild: "{version} o posterior",
+    proEdition: "Pro, Enterprise o Education",
+    unavailableVersion: "No disponible en este PC: necesita {version} o posterior.",
+    unavailableEdition: "No disponible en este PC: necesita Windows Pro, Enterprise o Education.",
+    enterpriseEdition: "Enterprise o Education",
+    unavailableEnterpriseEdition:
+      "No disponible en este PC: necesita Windows Enterprise o Education.",
+    notPresent: "Este PC no tiene esta función, así que no hay nada que desactivar.",
+  },
+  scheduledCleanup: {
+    title: "Limpieza semanal de archivos temporales",
+    body: "Una vez por semana, unos minutos después de iniciar sesión, mueve a la Papelera de reciclaje los archivos temporales que nadie ha tocado en un día. Espera si hay un juego abierto y nunca toca la memoria ni las aplicaciones abiertas.",
+  },
+  priorityRules: {
+    title: "Reglas de prioridad de aplicaciones",
+    subtitle:
+      "Elige una aplicación y una prioridad. PC Tweaker la aplica cada vez que la aplicación se inicia mientras PC Tweaker está abierto, y devuelve la prioridad anterior cuando quitas la regla o cierras PC Tweaker. Nunca por encima de Alta.",
+    remove: "Quitar",
+    empty: "Todavía no hay aplicaciones.",
+    active: "Aplicaciones abiertas ajustadas: {count}",
+    levelLabel: "Prioridad de {name}",
+    idle: "Baja",
+    belowNormal: "Por debajo de lo normal",
+    normal: "Normal",
+    aboveNormal: "Por encima de lo normal",
+    high: "Alta",
+  },
   tweaks: {
+    disable_click_to_do: {
+      name: "Desactivar Click to Do",
+      description:
+        "Aplica la directiva de Windows que elimina Click to Do, la función que captura tu pantalla y la analiza para sugerir acciones. Sus accesos desaparecen para todas las cuentas de este PC. Configuración lo mostrará como administrado por tu organización: así es como Windows indica las directivas. Solo tiene efecto en los PC en los que Windows ofrece Click to Do.",
+    },
+    disable_edge_ai: {
+      name: "Desactivar las funciones de IA de Microsoft Edge",
+      description:
+        "Aplica directivas de Microsoft Edge que ocultan la barra lateral, impiden que Edge descargue su modelo de IA local y desactivan la búsqueda con IA en el historial, los temas generados por IA y el acceso de Copilot al contenido de las páginas. Algunos de estos controles solo afectan a los perfiles profesionales o educativos. Edge los aplica sin reiniciar; puedes verlos en edge://policy. Edge indicará que lo administra tu organización: así es como señala las directivas.",
+    },
+    disable_paint_ai: {
+      name: "Desactivar las funciones de IA de Paint",
+      description:
+        "Aplica las directivas de Windows que desactivan Cocreator, Image Creator y el relleno generativo en Paint. El resto de Paint funciona como siempre.",
+    },
+    disable_notepad_ai: {
+      name: "Desactivar las funciones de IA del Bloc de notas",
+      description:
+        "Aplica la directiva del Bloc de notas que desactiva sus herramientas de escritura de Copilot (reescribir, resumir, escribir). Cierra y vuelve a abrir el Bloc de notas para ver el cambio.",
+    },
+    disable_fast_startup: {
+      name: "Desactivar el inicio rápido",
+      description:
+        "Hace que Apagar sea un apagado real y no una hibernación parcial. Windows tarda unos segundos más en arrancar en frío, pero los controladores y las actualizaciones se cargan desde cero cada vez, y los equipos con arranque dual ya no encuentran bloqueado el disco de Windows.",
+    },
+    disable_storage_sense: {
+      name: "Desactivar el Sensor de almacenamiento",
+      description:
+        "Impide que Windows elimine archivos temporales, vacíe la Papelera de reciclaje y deje archivos de OneDrive solo en línea según su propio calendario. Tú decides qué se limpia y cuándo.",
+    },
+    taskbar_end_task: {
+      name: "Añadir Finalizar tarea a la barra de tareas",
+      description:
+        "Añade Finalizar tarea al menú contextual de las aplicaciones en la barra de tareas, para cerrar una aplicación bloqueada sin abrir el Administrador de tareas.",
+    },
+    disable_drag_tray: {
+      name: "Desactivar el panel de arrastre",
+      description:
+        "Evita que el panel para compartir baje desde la parte superior de la pantalla cada vez que arrastras un archivo, para que arrastrar y soltar funcione sin estorbos.",
+    },
+    explorer_open_this_pc: {
+      name: "Abrir el Explorador de archivos en Este equipo",
+      description:
+        "El Explorador de archivos se abre en Este equipo, con tus unidades y carpetas, en lugar de Inicio y sus archivos recientes.",
+    },
+    block_oem_device_apps: {
+      name: "Impedir que las aplicaciones de los fabricantes se instalen solas",
+      description:
+        "Impide que Windows descargue aplicaciones de los fabricantes e iconos personalizados para los dispositivos que conectas, que es como algunas utilidades de ratón, teclado y placa base llegan sin que nadie las pida. Los controladores se siguen instalando con normalidad.",
+    },
+    disable_windows_suggestions: {
+      name: "Desactivar los consejos y sugerencias de Windows",
+      description:
+        "Un solo interruptor para los avisos que Windows añade por su cuenta: consejos y sugerencias, la pantalla de bienvenida tras las actualizaciones, sugerencias en Configuración, «terminar de configurar el dispositivo», notificaciones sugeridas, recomendaciones y avisos de cuenta en el menú Inicio, y anuncios de proveedores de sincronización en el Explorador de archivos.",
+    },
+    disable_widgets: {
+      name: "Desactivar los widgets por completo",
+      description:
+        "Aplica la directiva de Windows que desactiva el panel de widgets en sí, no solo su botón en la barra de tareas, para que sus noticias dejen de cargarse en segundo plano. Configuración lo mostrará como administrado por tu organización: así es como Windows indica las directivas.",
+    },
+    hide_start_recommended: {
+      name: "Quitar Recomendado del menú Inicio",
+      description:
+        "Aplica la directiva de Windows que quita la sección Recomendado de Inicio y deja todo el espacio a tus aplicaciones ancladas. Configuración lo mostrará como administrado por tu organización: así es como Windows indica las directivas.",
+    },
+    disable_game_bar_captures: {
+      name: "Desactivar las capturas de Game Bar",
+      description:
+        "Desactiva la función de captura de Game Bar y su grabación en segundo plano, que guarda de forma continua un vídeo de tus últimos minutos de juego. Complementa el interruptor de Game Bar / Game DVR.",
+    },
+    disable_ai_fabric_service: {
+      name: "Desactivar el servicio Windows AI Fabric",
+      description:
+        "Detiene y desactiva el servicio en el que se basan las funciones de IA locales de Windows, como Recall, Click to Do y algunas funciones de Subtítulos en directo, y libera la memoria que ocupa en segundo plano. Esas funciones dejan de funcionar hasta que lo vuelvas a activar. Solo existe en los PC que las tienen.",
+    },
     disable_restart_apps: {
       name: "Evitar que las apps se reabran al iniciar sesión",
       description:
@@ -6558,7 +7672,8 @@ const es: Strings = {
     },
     disable_telemetry_tasks: {
       name: "Reducir la recopilación de datos de diagnóstico",
-      description: "Establece el nivel de diagnóstico de Windows al mínimo permitido.",
+      description:
+        "Establece la directiva de datos de diagnóstico de Windows en su nivel más bajo. Home y Pro la aplican como datos de diagnóstico obligatorios; solo Enterprise y Education los desactivan por completo.",
     },
     reset_advertising_id: {
       name: "Desactivar ID de publicidad",
@@ -6713,6 +7828,7 @@ const de: Strings = {
       "Derzeit nichts zu empfehlen — deine Konfiguration entspricht bereits unseren Empfehlungen.",
   },
   drift: {
+    pickHint: "Entferne das Häkchen bei allem, was du absichtlich geändert hast.",
     titleAfterUpdate: "Windows hat Ihre Einstellungen zurückgesetzt",
     titleNoUpdate: "Einige Einstellungen sind nicht mehr aktiv",
     afterUpdateOne:
@@ -6741,6 +7857,11 @@ const de: Strings = {
     processElevated: "Vorgang mit Administratorrechten",
   },
   ledger: {
+    guardPaused: "App-Anpassungen pausiert",
+    guardResumed: "App-Anpassungen fortgesetzt",
+    processes: "Prozesse: {count}",
+    restored: "Wiederhergestellt",
+    postponed: "Verschoben, weil ein Spiel lief",
     title: "Änderungsprotokoll",
     subtitle:
       "Alles, was diese App auf diesem PC geändert hat, neueste zuerst. Lokal gespeichert, nie hochgeladen.",
@@ -6753,6 +7874,13 @@ const de: Strings = {
     elevated: "mit Adminrechten",
     failed: "fehlgeschlagen",
     actions: {
+      processGuard: "Spiel mit eigener Leistungssteuerung",
+      coreSteering: "Kernzuweisung",
+      ramTrim: "RAM-Bereinigung",
+      autoReverted: "Automatisch rückgängig gemacht",
+      priorityRule: "Prioritätsregel",
+      scheduledCleanup: "Geplante Bereinigung",
+      ecoqos: "Effizienz von Hintergrund-Apps",
       applied: "Tweak angewendet",
       reverted: "Tweak zurückgesetzt",
       cleanup: "Bereinigung",
@@ -6855,7 +7983,7 @@ const de: Strings = {
     memTopTitle: "Top-Prozesse",
     trimTitle: "Working Sets trimmen",
     trimExplainer:
-      "Bittet Windows, inaktive Seiten aus den Working Sets der Apps zu verschieben (EmptyWorkingSet). Nützlich bei hohem Druck; Apps laden Seiten beim nächsten Zugriff kurz nach. Es gehen keine Daten verloren.",
+      "Bittet die Speicherverwaltung von Windows, inaktive Seiten aus den Working Sets der Apps zu verschieben. Nützlich bei hohem Druck; Apps laden Seiten beim nächsten Zugriff kurz nach. Es gehen keine Daten verloren. Windows fragt nach Administratorrechten.",
     trimButton: "Jetzt trimmen",
     autoTitle: "Automatisches Trimmen",
     profilesTitle: "Sitzungsprofile",
@@ -6918,6 +8046,8 @@ const de: Strings = {
     cleanupNote:
       "Entfernt überholte Komponentenversionen aus WinSxS. Kürzlich installierte Updates lassen sich weiterhin deinstallieren.",
     runningNote: "Den PC währenddessen nicht herunterfahren oder neu starten.",
+    cannotStop:
+      "Einmal gestartet, lässt sich der Vorgang nicht abbrechen: Windows prüft und repariert gerade seine eigenen Systemdateien, und ein Abbruch mittendrin könnte sie halb repariert zurücklassen. Du kannst den PC und PC Tweaker in der Zwischenzeit weiter nutzen.",
     stepQuick: "Schnelle Statusabfrage",
     stepScan: "Komponentenspeicher wird geprüft",
     stepRestore: "Komponentenspeicher wird repariert",
@@ -7191,7 +8321,6 @@ const de: Strings = {
     subtitle:
       "Erkennt deine Spiele automatisch und wendet das Turbo-Gaming-Preset selbstständig an/rückgängig.",
     active: "Sitzung aktiv: {name}",
-    activeFreed: "Boost aktiv für {name} — {freed} RAM freigegeben.",
     gamesCount: "{count} Spiele registriert",
     addGame: "+ Spiel hinzufügen (.exe)",
     steeringTitle: "Kernzuweisung",
@@ -7253,7 +8382,7 @@ const de: Strings = {
     buffers:
       "Empfangspuffer: {reserved} pro Socket reserviert, {autotuned} von Windows automatisch angepasst",
     verdictNone:
-      "Keine messbare Änderung der Latenz. Das ist zu erwarten: Ein Ping läuft nicht über die TCP-Einstellungen.",
+      "Ein Ping läuft nicht über die TCP-Einstellungen, daher beschreiben diese Werte die Verbindung selbst.",
     verdictInconclusive: "Zu wenige Antworten für einen Vergleich.",
     verdictLineChanged:
       "Die Leitung selbst hat sich zwischen den beiden Messungen verändert (Median {delta} ms). Ein Ping läuft nicht über die TCP-Einstellungen, das ist also nicht die Wirkung der Änderung.",
@@ -7274,20 +8403,40 @@ const de: Strings = {
     active: "Turbo aktiv",
     inactive: "Turbo nicht aktiv",
     loadLabel: "CPU-LAST",
-    loadCadence: "Echte Messung · alle 20 s",
-    loadHelp: "CPU-Auslastung, kein Boost-Wert. Eine niedrige Auslastung im Leerlauf ist normal.",
+    loadCadence: "Jede Sekunde gemessen, über etwa 3 Sekunden geglättet",
     stageReading: "Energieplan wird gelesen",
     stageRaising: "Boost-Grenze wird angehoben",
     stageApplying: "Wird auf das System angewendet",
-    modeAggressive: "Aggressiver Modus",
-    modeDefault: "Standardmodus",
     stageMeasuringBefore: "Messung vorher",
     stageMeasuringAfter: "Erneute Messung",
-    gainMeasured: "{factor}x schneller",
-    gainSlight: "{factor}x schneller - moderater Gewinn",
-    gainAtCeiling: "Keine Verbesserung in diesem kurzen Test gemessen",
-    ceilingLocked: "Boost-Grenze gesperrt",
-    ceilingUnlocked: "Boost-Grenze freigegeben",
+    factAverage: "Durchschnittstakt jetzt",
+    factFastest: "Schnellster Kern jetzt",
+    factPeak: "Höchstwert dieser Sitzung",
+    factFloor: "Minimaler Leistungszustand des Prozessors",
+    ofBase: "{pct} % des Basistakts",
+    usersTitle: "Wer die CPU gerade nutzt",
+    appliedAt:
+      "Aktiviert am {time} · Boost-Modus Aggressiv, minimaler Prozessorzustand im Netzbetrieb 100 %",
+    planAlreadyUses: "Der aktuelle Energiesparplan nutzt diese Einstellungen bereits.",
+    planAlreadyHad:
+      "Der aktuelle Energiesparplan hatte diese Einstellungen bereits, daher hat sich kein Wert geändert.",
+    loadExplain:
+      "Die Last zeigt, wie viel der Prozessor arbeitet; Turbo Boost ändert, wie schnell er laufen darf, nicht wie ausgelastet er ist. Ein hoher Wert heißt, dass gerade Programme auf diesem PC arbeiten.",
+    chartLoad: "Last",
+    chartSpeed: "Takt",
+    testTitle: "Derselbe Test in jedem Modus",
+    testHint:
+      "Eine feste 3-Sekunden-Last. Führe sie in jedem Modus einmal aus, um zu sehen, was Boost ändert.",
+    testRun: "3-Sekunden-Test starten",
+    testRunning: "Test läuft…",
+    colDefault: "Standard",
+    colBoost: "Boost",
+    rowWork: "Geleistete Arbeit",
+    rowAvg: "Durchschnittstakt",
+    rowPeak: "Spitzentakt",
+    rowTemp: "CPU-Temperatur",
+    notRun: "Noch nicht ausgeführt",
+    relative: "{pct} % von Standard",
   },
   profiles: {
     title: "Deine Profile",
@@ -7396,9 +8545,11 @@ const de: Strings = {
     fixHeading: "Bereit zum Anwenden",
   },
   ram: {
+    autoNeedsAdmin:
+      "Die automatische Bereinigung läuft nur, solange PC Tweaker Administratorrechte hat.",
     title: "RAM freigeben",
     subtitle:
-      "Fordert Windows auf, Speicher freizugeben, den Programme belegen, aber nicht nutzen. So oft ausführbar, wie du willst.",
+      "Fordert Windows auf, Speicher freizugeben, den Programme belegen, aber nicht nutzen. Windows fragt jedes Mal nach Administratorrechten, und läuft gerade ein Spiel, wartet die Bereinigung.",
     button: "Jetzt freigeben",
     cleaning: "Wird bereinigt...",
     freed: "{amount} freigegeben",
@@ -7408,7 +8559,7 @@ const de: Strings = {
     autoOff: "Aus",
     autoEvery: "Alle {interval}",
     autoHint:
-      "Bei aktiver automatischer Bereinigung gibt PC Tweaker den RAM selbstständig in regelmäßigen Abständen frei, solange die App geöffnet bleibt.",
+      "Bei aktiver automatischer Bereinigung gibt PC Tweaker den RAM selbstständig in regelmäßigen Abständen frei, solange es mit Administratorrechten läuft.",
     autoNext: "Nächste Bereinigung um {time}",
     autoDue: "Bereinigung steht an...",
     autoLast: "Zuletzt um {time}: {amount} freigegeben",
@@ -7469,6 +8620,8 @@ const de: Strings = {
       "Fuhrt das integrierte Windows-Optimierungstool aus: Defragmentierung bei einer HDD oder TRIM bei einer SSD (nie eine vollstandige Defragmentierung, die sie nur unnotig abnutzen wurde).",
     button: "Jetzt optimieren",
     running: "Optimierung lauft... kann einige Minuten dauern",
+    cannotStop:
+      "Das übernimmt die Laufwerksoptimierung von Windows mit Administratorrechten. Sie läuft von selbst zu Ende und lässt sich hier nicht abbrechen. Du kannst bedenkenlos weiterarbeiten.",
     resultToast: "Laufwerk ({media}) erfolgreich optimiert.",
   },
   dnsFlush: {
@@ -7518,6 +8671,86 @@ const de: Strings = {
     confirmOpenPage: "Stattdessen die Seite öffnen",
     cancel: "Abbrechen",
   },
+  live: {
+    title: "Gerade jetzt",
+    subtitle:
+      "Wird jede Sekunde aktualisiert, solange diese Seite offen und PC Tweaker im Vordergrund ist. Im Hintergrund wird nichts gemessen.",
+    paused: "Pausiert",
+    pausedHint:
+      "Pausiert, solange PC Tweaker im Hintergrund ist. Geht weiter, sobald du zurückkommst.",
+    measuring: "Wird gemessen…",
+    smooth: "Läuft flüssig",
+    busy: "Ausgelastet",
+    strained: "Unter hoher Last",
+    verdictDetail: "CPU {cpu} % in den letzten 10 Sekunden · Arbeitsspeicher zu {ram} % belegt",
+    failed: "Live-Werte sind gerade nicht verfügbar.",
+    cpu: "Prozessor",
+    speed: "{ghz} GHz",
+    cores: "{count} logische Prozessoren",
+    core: "Prozessor {n}",
+    memory: "Arbeitsspeicher",
+    used: "Belegt",
+    cached: "Im Cache",
+    free: "Frei",
+    total: "Gesamt",
+    cachedHint: "Speicher im Cache wird freigegeben, sobald ein Programm ihn braucht.",
+    notAvailable: "Auf diesem PC nicht verfügbar",
+    disk: "Datenträgeraktivität",
+    read: "Lesen",
+    write: "Schreiben",
+    systemDrive: "Systemlaufwerk: {used} von {total} belegt",
+    network: "Netzwerk",
+    down: "Download",
+    up: "Upload",
+    gpu: "Grafik",
+    gpuLoad: "Auslastung",
+    temp: "Temperatur",
+    fan: "Lüfter",
+    vram: "Grafikspeicher",
+    sensors: "Temperaturen und Lüfter",
+    sensorsHint:
+      "Windows stellt diese Sensoren auf diesem PC ohne die Tools des Herstellers nicht bereit, deshalb wird nichts geschätzt.",
+    now: "jetzt",
+    secondsAgo: "vor {s} s",
+    activity: "Aktivität",
+    zoomShort: "1 Min.",
+    zoomLong: "5 Min.",
+    minutesAgo: "vor {n} Min.",
+    peak: "Spitze {value}",
+    insightCalm: "Alles ruhig. Gerade braucht nichts deine Aufmerksamkeit.",
+    insightMemory:
+      "Der Arbeitsspeicher ist stark belegt ({pct} %). Schließe Apps, die du nicht nutzt, oder prüfe, was mit Windows startet.",
+    insightCpu:
+      "Der Prozessor ist schon eine Weile ausgelastet ({pct} % im Schnitt). Die Liste unten zeigt, was ihn nutzt.",
+    insightDrive:
+      "Das Systemlaufwerk ist fast voll ({pct} %). Windows wird langsamer, wenn der Platz knapp wird.",
+    actionStartup: "Autostart öffnen",
+    actionCleanup: "Speicher freigeben",
+    usingTitle: "Was Ressourcen nutzt",
+    usingHint:
+      "Apps nach Namen gruppiert, aus der Prozessliste von Windows. Es wird nichts geöffnet oder geändert.",
+    usingCpu: "Prozessor",
+    usingMemory: "Arbeitsspeicher",
+    processes: "{count} Prozesse",
+    processOne: "1 Prozess",
+  },
+  pageError: {
+    title: "Auf dieser Seite ist ein Problem aufgetreten",
+    body: "Der Rest von PC Tweaker funktioniert weiter, und dieser Fehler hat nichts an deinem PC geändert. Lade die Seite neu, um es noch einmal zu versuchen.",
+    reload: "Seite neu laden",
+    reloadApp: "PC Tweaker neu laden",
+    details: "Technische Details",
+    appTitle: "In PC Tweaker ist ein Problem aufgetreten",
+    appBody:
+      "Dieser Fehler hat nichts an deinem PC geändert. Lade PC Tweaker neu, um weiterzumachen.",
+  },
+  folderScan: {
+    stop: "Suche abbrechen",
+    stopping: "Wird abgebrochen…",
+    stoppedEmpty: "Suche abgebrochen. Es wurde nichts verschoben oder gelöscht.",
+    stoppedPartial:
+      "Suche abgebrochen. Das sind die Ergebnisse bis zum Abbruch; was noch nicht erreicht war, wurde nicht geprüft.",
+  },
   largeFiles: {
     title: "Grosse Dateien finden",
     description:
@@ -7565,6 +8798,8 @@ const de: Strings = {
     rolledBack: '„{name}" auf den ursprünglichen Wert zurückgesetzt.',
     licenseNeedsRefresh:
       "Wir können Ihr Pro-Abonnement nach so langer Offline-Zeit nicht bestätigen. Stellen Sie eine Internetverbindung her und versuchen Sie es erneut.",
+    elevationDeclined:
+      "Die Administratorberechtigung wurde nicht erteilt, daher wurde nichts geändert.",
     accountRefreshFailed:
       "Wir konnten den Status Ihres Kontos nicht überprüfen. Die hier angezeigten Informationen sind möglicherweise veraltet — prüfen Sie Ihre Verbindung oder versuchen Sie es später erneut.",
   },
@@ -7783,7 +9018,134 @@ const de: Strings = {
     on: "Aktiv",
     off: "Inaktiv",
   },
+  guard: {
+    settingTitle: "Spiele mit eigener Leistungssteuerung in Ruhe lassen",
+    settingBody:
+      "Manche Spiele steuern ihre Leistung selbst. Solange eines davon läuft, pausiert PC Tweaker seine Anpassungen an Apps und lässt das Spiel genau so, wie es ist.",
+    selfManaged:
+      "Dieses Spiel steuert seine Leistung selbst, deshalb lässt PC Tweaker es, wie es ist.",
+    gameRunning:
+      "Ein Spiel, das seine Leistung selbst steuert, läuft gerade. PC Tweaker lässt die Apps, wie sie sind, bis es geschlossen ist.",
+    paused: "Pausiert, solange ein Spiel läuft, das seine Leistung selbst steuert.",
+    selfManagedBadge: "Steuert seine Leistung selbst",
+    registeredGameRunning:
+      "Eines deiner Spiele läuft gerade, deshalb wartet PC Tweaker, bis es geschlossen ist.",
+  },
+  preview: {
+    title: "Vorschau",
+    loading: "Aktuelle Werte werden gelesen...",
+    now: "Jetzt",
+    notSet: "Nicht gesetzt",
+    willChange: "Beim Anwenden ändern sich {count} von {total} Werten.",
+    noChange: "Bereits aktiv: Anwenden ändert nichts.",
+    readAtApply: "Der aktuelle Zustand wird beim Anwenden gelesen und gesichert.",
+    failed: "Die aktuellen Werte konnten nicht gelesen werden.",
+  },
+  requirements: {
+    minBuild: "{version} oder neuer",
+    proEdition: "Pro, Enterprise oder Education",
+    unavailableVersion: "Auf diesem PC nicht verfügbar: erfordert {version} oder neuer.",
+    unavailableEdition:
+      "Auf diesem PC nicht verfügbar: erfordert Windows Pro, Enterprise oder Education.",
+    enterpriseEdition: "Enterprise oder Education",
+    unavailableEnterpriseEdition:
+      "Auf diesem PC nicht verfügbar: erfordert Windows Enterprise oder Education.",
+    notPresent: "Dieser PC hat diese Funktion nicht, es gibt also nichts abzuschalten.",
+  },
+  scheduledCleanup: {
+    title: "Wöchentliche Bereinigung temporärer Dateien",
+    body: "Einmal pro Woche, ein paar Minuten nach der Anmeldung, verschiebt sie temporäre Dateien, die seit einem Tag niemand angefasst hat, in den Papierkorb. Läuft gerade ein Spiel, wartet sie, und sie rührt weder den Arbeitsspeicher noch geöffnete Apps an.",
+  },
+  priorityRules: {
+    title: "Prioritätsregeln für Apps",
+    subtitle:
+      "Wähle eine App und eine Priorität. PC Tweaker setzt sie bei jedem Start der App, solange PC Tweaker geöffnet ist, und stellt die vorherige Priorität wieder her, wenn du die Regel entfernst oder PC Tweaker schließt. Nie über Hoch.",
+    remove: "Entfernen",
+    empty: "Noch keine Apps.",
+    active: "Angepasste laufende Apps: {count}",
+    levelLabel: "Priorität für {name}",
+    idle: "Niedrig",
+    belowNormal: "Niedriger als normal",
+    normal: "Normal",
+    aboveNormal: "Höher als normal",
+    high: "Hoch",
+  },
   tweaks: {
+    disable_click_to_do: {
+      name: "Click to Do deaktivieren",
+      description:
+        "Setzt die Windows-Richtlinie, die Click to Do entfernt – die Funktion, die deinen Bildschirm aufnimmt und analysiert, um Aktionen vorzuschlagen. Ihre Einstiegspunkte verschwinden für alle Konten auf diesem PC. Die Einstellungen zeigen die Option dann als von deiner Organisation verwaltet an – so kennzeichnet Windows Richtlinien. Sie wirkt nur auf PCs, auf denen Windows Click to Do anbietet.",
+    },
+    disable_edge_ai: {
+      name: "KI-Funktionen in Microsoft Edge deaktivieren",
+      description:
+        "Setzt Microsoft-Edge-Richtlinien, die die Seitenleiste ausblenden, Edge am Herunterladen seines lokalen KI-Modells hindern und die KI-Suche im Verlauf, KI-generierte Designs sowie den Zugriff von Copilot auf Seiteninhalte abschalten. Einige dieser Einstellungen gelten nur für Geschäfts- oder Schulprofile. Edge übernimmt sie ohne Neustart; edge://policy listet sie auf. Edge zeigt dann an, dass es von deiner Organisation verwaltet wird – so kennzeichnet es Richtlinien.",
+    },
+    disable_paint_ai: {
+      name: "KI-Funktionen in Paint deaktivieren",
+      description:
+        "Setzt die Windows-Richtlinien, die Cocreator, Image Creator und generatives Füllen in Paint abschalten. Alles andere in Paint funktioniert wie bisher.",
+    },
+    disable_notepad_ai: {
+      name: "KI-Funktionen im Editor deaktivieren",
+      description:
+        "Setzt die Editor-Richtlinie, die dessen Copilot-Schreibwerkzeuge (Umschreiben, Zusammenfassen, Schreiben) abschaltet. Schließe den Editor und öffne ihn erneut, um die Änderung zu sehen.",
+    },
+    disable_fast_startup: {
+      name: "Schnellstart deaktivieren",
+      description:
+        "Macht Herunterfahren zu einem echten Herunterfahren statt eines teilweisen Ruhezustands. Windows startet aus dem ausgeschalteten Zustand ein paar Sekunden langsamer, dafür laden Treiber und Updates jedes Mal frisch, und Dual-Boot-Systeme finden das Windows-Laufwerk nicht mehr gesperrt vor.",
+    },
+    disable_storage_sense: {
+      name: "Speicheroptimierung deaktivieren",
+      description:
+        "Verhindert, dass Windows nach eigenem Zeitplan temporäre Dateien löscht, den Papierkorb leert und OneDrive-Dateien nur noch online vorhält. Du entscheidest, was wann bereinigt wird.",
+    },
+    taskbar_end_task: {
+      name: "„Task beenden“ zur Taskleiste hinzufügen",
+      description:
+        "Fügt dem Rechtsklickmenü von Apps in der Taskleiste den Eintrag „Task beenden“ hinzu, sodass sich eine eingefrorene App ohne den Task-Manager schließen lässt.",
+    },
+    disable_drag_tray: {
+      name: "Freigabeleiste beim Ziehen deaktivieren",
+      description:
+        "Verhindert, dass die Freigabeleiste bei jedem Ziehen einer Datei vom oberen Bildschirmrand herunterfährt, damit normales Drag & Drop ungestört funktioniert.",
+    },
+    explorer_open_this_pc: {
+      name: "Datei-Explorer bei „Dieser PC“ öffnen",
+      description:
+        "Der Datei-Explorer öffnet sich bei „Dieser PC“ mit deinen Laufwerken und Ordnern statt bei „Start“ mit den zuletzt verwendeten Dateien.",
+    },
+    block_oem_device_apps: {
+      name: "Hersteller-Apps nicht mehr selbst installieren lassen",
+      description:
+        "Verhindert, dass Windows Hersteller-Apps und benutzerdefinierte Symbole für angeschlossene Geräte herunterlädt – so landen manche Maus-, Tastatur- und Mainboard-Tools auf dem PC, ohne dass jemand danach gefragt hat. Treiber werden weiterhin wie gewohnt installiert.",
+    },
+    disable_windows_suggestions: {
+      name: "Windows-Tipps und -Vorschläge deaktivieren",
+      description:
+        "Ein Schalter für die Hinweise, die Windows von sich aus einblendet: Tipps und Vorschläge, den Willkommensbildschirm nach Updates, Vorschläge in den Einstellungen, „Einrichtung des Geräts abschließen“, vorgeschlagene Benachrichtigungen, Empfehlungen und Kontohinweise im Startmenü sowie Werbung von Synchronisierungsanbietern im Datei-Explorer.",
+    },
+    disable_widgets: {
+      name: "Widgets vollständig deaktivieren",
+      description:
+        "Setzt die Windows-Richtlinie, die das Widgets-Board selbst abschaltet, nicht nur seine Schaltfläche in der Taskleiste – der Nachrichten-Feed lädt dann nicht mehr im Hintergrund. Die Einstellungen zeigen die Option dann als von deiner Organisation verwaltet an – so kennzeichnet Windows Richtlinien.",
+    },
+    hide_start_recommended: {
+      name: "„Empfohlen“ aus dem Startmenü entfernen",
+      description:
+        "Setzt die Windows-Richtlinie, die den Bereich „Empfohlen“ aus dem Startmenü entfernt und deinen angehefteten Apps den ganzen Platz überlässt. Die Einstellungen zeigen die Option dann als von deiner Organisation verwaltet an – so kennzeichnet Windows Richtlinien.",
+    },
+    disable_game_bar_captures: {
+      name: "Game-Bar-Aufnahmen deaktivieren",
+      description:
+        "Schaltet die Aufnahmefunktion der Game Bar und ihre Hintergrundaufzeichnung ab, die fortlaufend ein Video deiner letzten Spielminuten vorhält. Ergänzt den Schalter für Game Bar / Game DVR.",
+    },
+    disable_ai_fabric_service: {
+      name: "Windows-AI-Fabric-Dienst deaktivieren",
+      description:
+        "Beendet und deaktiviert den Dienst hinter den lokalen KI-Funktionen von Windows wie Recall, Click to Do und einigen Funktionen der Liveuntertitel und gibt den Speicher frei, den er im Hintergrund belegt. Diese Funktionen arbeiten erst wieder, wenn du ihn erneut aktivierst. Nur auf PCs vorhanden, die diese Funktionen haben.",
+    },
     disable_restart_apps: {
       name: "Apps nach der Anmeldung nicht erneut öffnen",
       description:
@@ -7994,7 +9356,8 @@ const de: Strings = {
     },
     disable_telemetry_tasks: {
       name: "Diagnosedatenerfassung reduzieren",
-      description: "Setzt die Windows-Diagnosestufe auf das minimal zulässige Niveau.",
+      description:
+        "Setzt die Windows-Richtlinie für Diagnosedaten auf die niedrigste Stufe. Home und Pro behandeln das als erforderliche Diagnosedaten; nur Enterprise und Education schalten sie vollständig ab.",
     },
     reset_advertising_id: {
       name: "Werbe-ID deaktivieren",
@@ -8147,6 +9510,7 @@ const pt: Strings = {
     empty: "Nada a recomendar por agora — sua configuração já está de acordo com nossos critérios.",
   },
   drift: {
+    pickHint: "Desmarque o que você mudou de propósito.",
     titleAfterUpdate: "O Windows voltou a mexer nas suas definições",
     titleNoUpdate: "Algumas definições já não estão ativas",
     afterUpdateOne:
@@ -8175,6 +9539,11 @@ const pt: Strings = {
     processElevated: "operação com direitos de administrador",
   },
   ledger: {
+    guardPaused: "Ajustes de apps em pausa",
+    guardResumed: "Ajustes de apps retomados",
+    processes: "Processos: {count}",
+    restored: "Restaurado",
+    postponed: "Adiada enquanto um jogo estava aberto",
     title: "Registro de alterações",
     subtitle:
       "Tudo o que este app alterou neste PC, mais recente primeiro. Armazenado localmente, nunca enviado.",
@@ -8186,6 +9555,13 @@ const pt: Strings = {
     elevated: "com privilégios de administrador",
     failed: "falhou",
     actions: {
+      processGuard: "Jogo que se gerencia sozinho",
+      coreSteering: "Distribuição de núcleos",
+      ramTrim: "Limpeza de RAM",
+      autoReverted: "Desfeito automaticamente",
+      priorityRule: "Regra de prioridade",
+      scheduledCleanup: "Limpeza agendada",
+      ecoqos: "Eficiência de apps em segundo plano",
       applied: "Ajuste aplicado",
       reverted: "Ajuste revertido",
       cleanup: "Limpeza",
@@ -8291,7 +9667,7 @@ const pt: Strings = {
     memTopTitle: "Principais processos",
     trimTitle: "Reduzir conjuntos de trabalho",
     trimExplainer:
-      "Pede ao Windows para mover páginas ociosas para fora dos conjuntos de trabalho dos apps (EmptyWorkingSet). Útil sob alta pressão; os apps podem recarregar páginas brevemente no próximo uso. Nenhum dado é perdido.",
+      "Pede ao gerenciador de memória do Windows para mover páginas ociosas para fora dos conjuntos de trabalho dos apps. Útil sob alta pressão; os apps podem recarregar páginas brevemente no próximo uso. Nenhum dado é perdido. O Windows pede permissão de administrador.",
     trimButton: "Reduzir agora",
     autoTitle: "Redução automática",
     profilesTitle: "Perfis de sessão",
@@ -8354,6 +9730,8 @@ const pt: Strings = {
     cleanupNote:
       "Remove do WinSxS as versões de componentes já substituídas. As atualizações instaladas há pouco continuam a poder ser desinstaladas.",
     runningNote: "Não desligue nem reinicie o PC enquanto isto decorre.",
+    cannotStop:
+      "Depois de iniciado, não pode ser interrompido: o Windows está a verificar e a reparar os próprios ficheiros de sistema, e pará-lo a meio pode deixá-los reparados só em parte. Entretanto, pode continuar a usar o PC e o PC Tweaker.",
     stepQuick: "Leitura rápida do estado",
     stepScan: "A verificar o arquivo de componentes",
     stepRestore: "A reparar o arquivo de componentes",
@@ -8624,7 +10002,6 @@ const pt: Strings = {
     title: "Sessões de jogo",
     subtitle: "Detecta seus jogos automaticamente e aplica/reverte o preset Turbo Gaming sozinho.",
     active: "Sessão ativa: {name}",
-    activeFreed: "Boost ativo para {name} — {freed} de RAM libertados.",
     gamesCount: "{count} jogos registrados",
     addGame: "+ Adicionar jogo (.exe)",
     steeringTitle: "Distribuição de núcleos",
@@ -8687,7 +10064,7 @@ const pt: Strings = {
     buffers:
       "Buffer de receção: {reserved} reservados por socket, {autotuned} ajustados automaticamente pelo Windows",
     verdictNone:
-      "Nenhuma alteração mensurável na latência. É o esperado: um ping não passa pelas definições TCP.",
+      "Um ping não passa pelas definições TCP, por isso estas leituras descrevem a própria conexão.",
     verdictInconclusive: "Poucas respostas para comparar.",
     verdictLineChanged:
       "A própria linha mudou entre as duas leituras (mediana {delta} ms). Um ping não passa pelas definições TCP, por isso não é o efeito da alteração.",
@@ -8708,21 +10085,40 @@ const pt: Strings = {
     active: "Turbo ativo",
     inactive: "Turbo inativo",
     loadLabel: "CARGA CPU",
-    loadCadence: "Leitura real · a cada 20 s",
-    loadHelp:
-      "Utilização da CPU, não uma pontuação de boost. Uma carga baixa é normal quando o PC está inativo.",
+    loadCadence: "Medida a cada segundo, suavizada em cerca de 3 segundos",
     stageReading: "Lendo o plano de energia",
     stageRaising: "Elevando o teto de boost",
     stageApplying: "Aplicando ao sistema",
-    modeAggressive: "Modo agressivo",
-    modeDefault: "Modo padrão",
     stageMeasuringBefore: "Medindo antes",
     stageMeasuringAfter: "Medindo novamente",
-    gainMeasured: "{factor}x mais rápido",
-    gainSlight: "{factor}x mais rápido - um ganho modesto",
-    gainAtCeiling: "Nenhuma melhoria medida neste teste breve",
-    ceilingLocked: "Teto de boost travado",
-    ceilingUnlocked: "Teto de boost liberado",
+    factAverage: "Velocidade média agora",
+    factFastest: "Núcleo mais rápido agora",
+    factPeak: "Máximo nesta sessão",
+    factFloor: "Estado mínimo do processador",
+    ofBase: "{pct}% da frequência base",
+    usersTitle: "Quem usa a CPU agora",
+    appliedAt:
+      "Ativado em {time} · modo boost Agressivo, estado mínimo do processador a 100% com alimentação elétrica",
+    planAlreadyUses: "O plano de energia atual já usa estas definições.",
+    planAlreadyHad:
+      "O plano de energia atual já tinha estas definições, por isso nenhum valor mudou.",
+    loadExplain:
+      "A carga é o trabalho que o processador está a fazer; o Turbo Boost muda a velocidade a que pode trabalhar, não quão ocupado está. Um valor alto significa que há programas a trabalhar neste PC neste momento.",
+    chartLoad: "Carga",
+    chartSpeed: "Velocidade",
+    testTitle: "O mesmo teste em cada modo",
+    testHint:
+      "Uma carga fixa de 3 segundos. Execute-a uma vez em cada modo para ver o que o boost muda.",
+    testRun: "Executar teste de 3 segundos",
+    testRunning: "A testar…",
+    colDefault: "Predefinido",
+    colBoost: "Boost",
+    rowWork: "Trabalho feito",
+    rowAvg: "Velocidade média",
+    rowPeak: "Velocidade máxima",
+    rowTemp: "Temperatura da CPU",
+    notRun: "Ainda não executado",
+    relative: "{pct}% do predefinido",
   },
   profiles: {
     title: "Seus perfis",
@@ -8830,9 +10226,11 @@ const pt: Strings = {
     fixHeading: "Pronto para aplicar",
   },
   ram: {
+    autoNeedsAdmin:
+      "A limpeza automática só funciona quando o PC Tweaker tem direitos de administrador.",
     title: "Liberar RAM",
     subtitle:
-      "Pede ao Windows para liberar memória que os programas estão retendo mas não usando. Execute quantas vezes quiser.",
+      "Pede ao Windows para liberar memória que os programas estão retendo mas não usando. O Windows pede permissão de administrador a cada vez, e a limpeza espera se houver um jogo aberto.",
     button: "Liberar agora",
     cleaning: "Limpando...",
     freed: "{amount} liberados",
@@ -8842,7 +10240,7 @@ const pt: Strings = {
     autoOff: "Desativada",
     autoEvery: "A cada {interval}",
     autoHint:
-      "Com a limpeza automática ativada, o PC Tweaker libera RAM sozinho em intervalos regulares enquanto o app estiver aberto.",
+      "Com a limpeza automática ativada, o PC Tweaker libera RAM sozinho em intervalos regulares, desde que esteja rodando com direitos de administrador.",
     autoNext: "Próxima limpeza às {time}",
     autoDue: "Limpeza prestes a ocorrer...",
     autoLast: "Última às {time}: {amount} liberados",
@@ -8904,6 +10302,8 @@ const pt: Strings = {
       "Executa o próprio otimizador do Windows: desfragmentação em um HDD, ou TRIM em um SSD (nunca uma desfragmentação completa, que só o desgastaria sem benefício algum).",
     button: "Otimizar agora",
     running: "Otimizando... isso pode levar alguns minutos",
+    cannotStop:
+      "Quem o faz é o otimizador de unidades do Windows, com direitos de administrador, por isso vai até ao fim sozinho e não pode ser parado daqui. Pode continuar a trabalhar sem problema.",
     resultToast: "Unidade ({media}) otimizada com sucesso.",
   },
   dnsFlush: {
@@ -8953,6 +10353,84 @@ const pt: Strings = {
     confirmOpenPage: "Abrir a página",
     cancel: "Cancelar",
   },
+  live: {
+    title: "Neste momento",
+    subtitle:
+      "Atualizado a cada segundo enquanto esta página está aberta e o PC Tweaker está em primeiro plano. Nada é medido em segundo plano.",
+    paused: "Em pausa",
+    pausedHint: "Em pausa enquanto o PC Tweaker está em segundo plano. Retoma quando voltar.",
+    measuring: "A medir…",
+    smooth: "Tudo fluido",
+    busy: "Ocupado",
+    strained: "Sob carga elevada",
+    verdictDetail: "CPU a {cpu}% nos últimos 10 segundos · memória em uso a {ram}%",
+    failed: "As leituras em tempo real não estão disponíveis neste momento.",
+    cpu: "Processador",
+    speed: "{ghz} GHz",
+    cores: "{count} processadores lógicos",
+    core: "Processador {n}",
+    memory: "Memória",
+    used: "Em uso",
+    cached: "Em cache",
+    free: "Livre",
+    total: "Total",
+    cachedHint: "A memória em cache é devolvida assim que um programa precisa dela.",
+    notAvailable: "Não disponível neste PC",
+    disk: "Atividade do disco",
+    read: "Leitura",
+    write: "Escrita",
+    systemDrive: "Unidade do sistema: {used} usados de {total}",
+    network: "Rede",
+    down: "Download",
+    up: "Upload",
+    gpu: "Gráficos",
+    gpuLoad: "Carga",
+    temp: "Temperatura",
+    fan: "Ventoinha",
+    vram: "Memória de vídeo",
+    sensors: "Temperaturas e ventoinhas",
+    sensorsHint:
+      "Neste PC, o Windows não expõe estes sensores sem as ferramentas do fabricante, por isso nada é estimado.",
+    now: "agora",
+    secondsAgo: "há {s} s",
+    activity: "Atividade",
+    zoomShort: "1 min",
+    zoomLong: "5 min",
+    minutesAgo: "há {n} min",
+    peak: "Pico {value}",
+    insightCalm: "Está tudo calmo. Neste momento nada precisa da sua atenção.",
+    insightMemory:
+      "A memória está muito ocupada ({pct}%). Feche as apps que não está a usar ou veja o que arranca com o Windows.",
+    insightCpu:
+      "O processador está ocupado há algum tempo ({pct}% em média). A lista abaixo mostra o que o está a usar.",
+    insightDrive:
+      "A unidade do sistema está quase cheia ({pct}%). O Windows fica mais lento quando falta espaço.",
+    actionStartup: "Abrir Arranque",
+    actionCleanup: "Libertar espaço",
+    usingTitle: "O que está a usar recursos",
+    usingHint:
+      "Apps agrupadas por nome, a partir da lista de processos do Windows. Nada é aberto nem alterado.",
+    usingCpu: "Processador",
+    usingMemory: "Memória",
+    processes: "{count} processos",
+    processOne: "1 processo",
+  },
+  pageError: {
+    title: "Esta página teve um problema",
+    body: "O resto do PC Tweaker continua a funcionar e este erro não alterou nada no seu PC. Recarregue a página para tentar novamente.",
+    reload: "Recarregar a página",
+    reloadApp: "Recarregar o PC Tweaker",
+    details: "Detalhes técnicos",
+    appTitle: "O PC Tweaker teve um problema",
+    appBody: "Este erro não alterou nada no seu PC. Recarregue o PC Tweaker para continuar.",
+  },
+  folderScan: {
+    stop: "Parar pesquisa",
+    stopping: "A parar…",
+    stoppedEmpty: "Pesquisa interrompida. Nada foi movido nem eliminado.",
+    stoppedPartial:
+      "Pesquisa interrompida. Estes são os resultados encontrados antes da interrupção; o que ainda não tinha sido alcançado não foi verificado.",
+  },
   largeFiles: {
     title: "Encontrar arquivos grandes",
     description:
@@ -9000,6 +10478,8 @@ const pt: Strings = {
     rolledBack: '"{name}" restaurado ao valor original.',
     licenseNeedsRefresh:
       "Não conseguimos verificar sua assinatura Pro depois de tanto tempo offline. Reconecte-se à internet e tente novamente.",
+    elevationDeclined:
+      "A permissão de administrador não foi concedida, por isso nada foi alterado.",
     accountRefreshFailed:
       "Não conseguimos verificar o estado da sua conta. O que aparece aqui pode estar desatualizado — verifique sua conexão ou tente novamente mais tarde.",
   },
@@ -9215,7 +10695,131 @@ const pt: Strings = {
     on: "Ligada",
     off: "Desligada",
   },
+  guard: {
+    settingTitle: "Deixar em paz os jogos que se gerenciam sozinhos",
+    settingBody:
+      "Alguns jogos gerenciam o próprio desempenho. Enquanto um deles está aberto, o PC Tweaker pausa os ajustes por app e deixa o jogo exatamente como está.",
+    selfManaged: "Este jogo gerencia o próprio desempenho, então o PC Tweaker o deixa como está.",
+    gameRunning:
+      "Há um jogo aberto que gerencia o próprio desempenho, então o PC Tweaker deixa os apps como estão até você fechá-lo.",
+    paused: "Em pausa enquanto houver um jogo aberto que gerencia o próprio desempenho.",
+    selfManagedBadge: "Gerencia o próprio desempenho",
+    registeredGameRunning:
+      "Um dos seus jogos está aberto, então o PC Tweaker espera até ele fechar.",
+  },
+  preview: {
+    title: "Prévia",
+    loading: "Lendo os valores atuais...",
+    now: "Agora",
+    notSet: "Não definido",
+    willChange: "Aplicar muda {count} de {total} valores.",
+    noChange: "Já está em vigor: aplicar não muda nada.",
+    readAtApply: "O estado atual é lido e salvo no momento em que você aplica.",
+    failed: "Não foi possível ler os valores atuais.",
+  },
+  requirements: {
+    minBuild: "{version} ou mais recente",
+    proEdition: "Pro, Enterprise ou Education",
+    unavailableVersion: "Indisponível neste PC: requer {version} ou mais recente.",
+    unavailableEdition: "Indisponível neste PC: requer Windows Pro, Enterprise ou Education.",
+    enterpriseEdition: "Enterprise ou Education",
+    unavailableEnterpriseEdition: "Indisponível neste PC: requer Windows Enterprise ou Education.",
+    notPresent: "Este PC não tem este recurso, então não há nada para desativar.",
+  },
+  scheduledCleanup: {
+    title: "Limpeza semanal de arquivos temporários",
+    body: "Uma vez por semana, alguns minutos depois que você entra, move para a Lixeira os arquivos temporários que ninguém tocou há um dia. Espera se houver um jogo aberto e nunca mexe na memória nem nos apps abertos.",
+  },
+  priorityRules: {
+    title: "Regras de prioridade de apps",
+    subtitle:
+      "Escolha um app e uma prioridade. O PC Tweaker a aplica sempre que o app inicia enquanto o PC Tweaker está aberto, e devolve a prioridade anterior quando você remove a regra ou fecha o PC Tweaker. Nunca acima de Alta.",
+    remove: "Remover",
+    empty: "Nenhum app ainda.",
+    active: "Apps abertos ajustados: {count}",
+    levelLabel: "Prioridade de {name}",
+    idle: "Baixa",
+    belowNormal: "Abaixo do normal",
+    normal: "Normal",
+    aboveNormal: "Acima do normal",
+    high: "Alta",
+  },
   tweaks: {
+    disable_click_to_do: {
+      name: "Desativar o Click to Do",
+      description:
+        "Aplica a política do Windows que remove o Click to Do, o recurso que captura a sua tela e a analisa para sugerir ações. Os pontos de acesso desaparecem para todas as contas deste PC. As Configurações vão mostrá-la como gerenciada pela sua organização: é assim que o Windows indica as políticas. Só tem efeito nos PCs em que o Windows oferece o Click to Do.",
+    },
+    disable_edge_ai: {
+      name: "Desativar os recursos de IA do Microsoft Edge",
+      description:
+        "Aplica políticas do Microsoft Edge que ocultam a barra lateral, impedem o Edge de baixar seu modelo de IA local e desativam a pesquisa com IA no histórico, os temas gerados por IA e o acesso do Copilot ao conteúdo das páginas. Alguns desses controles valem apenas para perfis corporativos ou escolares. O Edge os aplica sem reiniciar; edge://policy mostra a lista. O Edge vai indicar que é gerenciado pela sua organização: é assim que ele indica as políticas.",
+    },
+    disable_paint_ai: {
+      name: "Desativar os recursos de IA do Paint",
+      description:
+        "Aplica as políticas do Windows que desativam o Cocreator, o Image Creator e o preenchimento generativo no Paint. O resto do Paint funciona como antes.",
+    },
+    disable_notepad_ai: {
+      name: "Desativar os recursos de IA do Bloco de Notas",
+      description:
+        "Aplica a política do Bloco de Notas que desativa as ferramentas de escrita do Copilot (reescrever, resumir, escrever). Feche e abra de novo o Bloco de Notas para ver a mudança.",
+    },
+    disable_fast_startup: {
+      name: "Desativar a inicialização rápida",
+      description:
+        "Faz o comando Desligar desligar de verdade, em vez de hibernar parcialmente. O Windows leva alguns segundos a mais para iniciar a frio, mas drivers e atualizações carregam do zero toda vez, e sistemas com dual boot não encontram mais o disco do Windows bloqueado.",
+    },
+    disable_storage_sense: {
+      name: "Desativar o Sensor de Armazenamento",
+      description:
+        "Impede que o Windows exclua arquivos temporários, esvazie a Lixeira e deixe arquivos do OneDrive só online seguindo o próprio cronograma. Você decide o que é limpo e quando.",
+    },
+    taskbar_end_task: {
+      name: "Adicionar Finalizar tarefa à barra de tarefas",
+      description:
+        "Adiciona Finalizar tarefa ao menu de clique direito dos apps na barra de tarefas, para fechar um app travado sem abrir o Gerenciador de Tarefas.",
+    },
+    disable_drag_tray: {
+      name: "Desativar o painel de arrastar",
+      description:
+        "Impede que o painel de compartilhamento desça do topo da tela toda vez que você arrasta um arquivo, para que o arrastar e soltar comum funcione sem atrapalhar.",
+    },
+    explorer_open_this_pc: {
+      name: "Abrir o Explorador de Arquivos em Este Computador",
+      description:
+        "O Explorador de Arquivos abre em Este Computador, com suas unidades e pastas, em vez do Início e dos arquivos recentes.",
+    },
+    block_oem_device_apps: {
+      name: "Impedir que apps dos fabricantes se instalem sozinhos",
+      description:
+        "Impede que o Windows baixe apps dos fabricantes e ícones personalizados para os dispositivos que você conecta, que é como alguns utilitários de mouse, teclado e placa-mãe chegam sem ninguém pedir. Os drivers continuam sendo instalados normalmente.",
+    },
+    disable_windows_suggestions: {
+      name: "Desativar dicas e sugestões do Windows",
+      description:
+        'Um único botão para os avisos que o Windows adiciona por conta própria: dicas e sugestões, a tela de boas-vindas após atualizações, sugestões em Configurações, "concluir a configuração do dispositivo", notificações sugeridas, recomendações e avisos de conta no menu Iniciar e anúncios de provedores de sincronização no Explorador de Arquivos.',
+    },
+    disable_widgets: {
+      name: "Desativar os widgets por completo",
+      description:
+        "Aplica a política do Windows que desativa o próprio quadro de widgets, não só o botão na barra de tarefas, para que o feed de notícias pare de carregar em segundo plano. As Configurações vão mostrá-la como gerenciada pela sua organização: é assim que o Windows indica as políticas.",
+    },
+    hide_start_recommended: {
+      name: "Remover Recomendados do menu Iniciar",
+      description:
+        "Aplica a política do Windows que remove a seção Recomendados do Iniciar e deixa todo o espaço para os seus apps fixados. As Configurações vão mostrá-la como gerenciada pela sua organização: é assim que o Windows indica as políticas.",
+    },
+    disable_game_bar_captures: {
+      name: "Desativar as capturas da Game Bar",
+      description:
+        "Desativa o recurso de captura da Game Bar e a gravação em segundo plano, que mantém um vídeo contínuo dos seus últimos minutos de jogo. Complementa o botão Game Bar / Game DVR.",
+    },
+    disable_ai_fabric_service: {
+      name: "Desativar o serviço Windows AI Fabric",
+      description:
+        "Interrompe e desativa o serviço por trás dos recursos de IA locais do Windows, como o Recall, o Click to Do e alguns recursos da Legenda ao Vivo, liberando a memória que ele ocupa em segundo plano. Esses recursos param de funcionar até você reativá-lo. Só existe nos PCs que têm esses recursos.",
+    },
     disable_restart_apps: {
       name: "Impedir a reabertura de apps após iniciar sessão",
       description:
@@ -9426,7 +11030,8 @@ const pt: Strings = {
     },
     disable_telemetry_tasks: {
       name: "Reduzir a coleta de dados de diagnóstico",
-      description: "Define o nível de dados de diagnóstico do Windows para o mínimo permitido.",
+      description:
+        "Define a política de dados de diagnóstico do Windows no nível mais baixo. Home e Pro a aplicam como dados de diagnóstico obrigatórios; só Enterprise e Education os desativam por completo.",
     },
     reset_advertising_id: {
       name: "Desativar ID de publicidade",
@@ -9571,6 +11176,6 @@ export const STRINGS: Record<Lang, Strings> = { it, en, fr, es, de, pt };
  */
 export function detectInitialLang(): Lang {
   const stored = localStorage.getItem("pc-tweaker-lang");
-  if (stored && stored in STRINGS) return stored as Lang;
+  if (stored && Object.prototype.hasOwnProperty.call(STRINGS, stored)) return stored as Lang;
   return "en";
 }

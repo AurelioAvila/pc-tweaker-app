@@ -425,6 +425,7 @@ mod tests {
                 requires_pro: false,
                 applied: *id == "beta",
                 changes: vec![],
+                ..Default::default()
             })
             .collect()
     }

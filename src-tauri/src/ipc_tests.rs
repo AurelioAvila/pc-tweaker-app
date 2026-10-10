@@ -87,3 +87,21 @@ fn actual_capabilities_restrict_hud_before_any_handler_runs() {
         }
     }
 }
+
+/// The elevated helper has no AppHandle and builds the app data folder itself.
+/// It must be the folder Tauri gives the window, or an administrator change is
+/// recorded where the window never looks (the dev build has its own
+/// identifier, and used to apply into the installed app's folder).
+#[test]
+fn the_elevated_helper_uses_the_windows_app_data_folder() {
+    use tauri::Manager;
+    let app = tauri::test::mock_builder()
+        .build(tauri::generate_context!())
+        .expect("mock app");
+    assert_eq!(app.config().identifier, env!("PCT_APP_IDENTIFIER"));
+    #[cfg(windows)]
+    assert_eq!(
+        app.path().app_data_dir().expect("app data dir"),
+        crate::dirs_app_data_dir()
+    );
+}

@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "1.17.1"
+version = "1.18.0"
 description = "Real Windows tweaks with automatic one-click rollback"
 authors = ["Aurelio Avila"]
 license-file = "../LICENSE"
@@ -17,6 +17,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+serde_json = "1"
 
 [dependencies]
 # The "devtools" Cargo feature specifically enables DevTools (F12 /
@@ -97,6 +98,13 @@ windows-sys = { version = "0.59", features = [
     "Win32_NetworkManagement_Ndis",
     "Win32_Networking_WinSock",
     "Win32_System_IO",
+    # A process list that opens no process handles at all (process_guard.rs):
+    # NtQuerySystemInformation for names, parents and creation times, the
+    # SYSTEM_PROCESS_INFORMATION layout it fills, and QueryDosDeviceW to turn
+    # the kernel's \Device\HarddiskVolumeN image paths back into drive letters.
+    "Wdk_System_SystemInformation",
+    "Win32_System_WindowsProgramming",
+    "Win32_Storage_FileSystem",
 ] }
 is_elevated = "0.1"
 runas = "1"

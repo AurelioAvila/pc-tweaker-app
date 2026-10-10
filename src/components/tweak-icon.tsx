@@ -53,7 +53,7 @@ export function TweakIcon({ id, fallback }: { id: string; fallback: ReactNode })
         <path d="M6 9h2m-2 4h2m-2 5v3m4-3v3m4-3v3" />
       </>
     );
-  } else if (/dvr|recall|record/.test(id)) {
+  } else if (/dvr|recall|record|capture/.test(id)) {
     tone = "rose";
     drawing = (
       <>
@@ -102,7 +102,7 @@ export function TweakIcon({ id, fallback }: { id: string; fallback: ReactNode })
         <rect x="16" y="16" width="6" height="5" rx="1" />
       </>
     );
-  } else if (/file|folder|extension/.test(id)) {
+  } else if (/file|folder|extension|explorer/.test(id)) {
     tone = "sky";
     drawing = (
       <>
@@ -118,7 +118,11 @@ export function TweakIcon({ id, fallback }: { id: string; fallback: ReactNode })
         <circle cx="12" cy="10" r="2.5" />
       </>
     );
-  } else if (/telemetry|tracking|advertising|tailored|feedback|cortana|privacy/.test(id)) {
+  } else if (
+    /telemetry|tracking|advertising|tailored|feedback|cortana|privacy|suggestions|oem|click_to_do|(^|_)ai(_|$)/.test(
+      id,
+    )
+  ) {
     tone = "mint";
     drawing = (
       <>
@@ -137,7 +141,9 @@ export function TweakIcon({ id, fallback }: { id: string; fallback: ReactNode })
   } else if (/dark/.test(id)) {
     tone = "violet";
     drawing = <path d="M20 14A8.5 8.5 0 0 1 10 3 9 9 0 1 0 20 14Z" />;
-  } else if (/taskbar|menu|start|fullscreen|visual|animation|transparen/.test(id)) {
+  } else if (
+    /taskbar|menu|start|fullscreen|visual|animation|transparen|drag_tray|widgets/.test(id)
+  ) {
     tone = "sky";
     drawing = (
       <>

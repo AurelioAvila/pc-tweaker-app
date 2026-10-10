@@ -1,5 +1,6 @@
 import { ToolHeader } from "./tool-section";
 import { uiLocale } from "../lib";
+import { Badge, type BadgeKind } from "./ui";
 // PC Health Score — the explainable scorecard, staged like an instrument.
 //
 // Design intent (product-owner brief, round three):
@@ -152,29 +153,29 @@ const CATEGORY_ICONS: Record<string, ReactElement> = {
   ),
 };
 
-function tone(score: number): { text: string; stroke: string; badge: string } {
+function tone(score: number): { text: string; stroke: string; badge: BadgeKind } {
   if (score >= 85)
     return {
       text: "text-ok",
       stroke: "var(--success)",
-      badge: "bg-ok/10 text-ok ring-ok/30",
+      badge: "ok",
     };
   if (score >= 65)
     return {
       text: "text-warn",
       stroke: "var(--warning)",
-      badge: "bg-warn/10 text-warn ring-warn/30",
+      badge: "warn",
     };
   if (score >= 45)
     return {
       text: "text-caution",
       stroke: "var(--caution)",
-      badge: "bg-caution/10 text-caution ring-caution/30",
+      badge: "caution",
     };
   return {
     text: "text-danger",
     stroke: "var(--danger)",
-    badge: "bg-danger/10 text-danger ring-danger/30",
+    badge: "danger",
   };
 }
 
@@ -603,16 +604,10 @@ export function HealthPanel({
             ) : comparison.delta === 0 ? (
               <p className="mt-1 text-center text-[10.5px] text-ink-3">{change.noChange}</p>
             ) : (
-              <span
-                className={`mt-1 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ring-1 ${
-                  comparison.delta > 0
-                    ? "bg-ok/10 text-ok ring-ok/25"
-                    : "bg-danger/10 text-danger ring-danger/25"
-                }`}
-              >
+              <Badge kind={comparison.delta > 0 ? "ok" : "danger"} className="mt-1 tabular-nums">
                 {comparison.delta > 0 ? "+" : ""}
                 {comparison.delta} {change.sinceLast}
-              </span>
+              </Badge>
             )}
             {comparison !== null && (
               <p className="mt-1 text-center text-[10px] text-ink-3">
@@ -647,11 +642,9 @@ export function HealthPanel({
                     <span className="tool-health-category-name min-w-0 flex-1 text-xs font-semibold text-ink">
                       {categoryLabels[cat.id] ?? cat.id}
                     </span>
-                    <span
-                      className={`hidden shrink-0 rounded-full px-2 py-0.5 text-[9px] font-extrabold tracking-wider ring-1 sm:inline ${t.badge}`}
-                    >
+                    <Badge kind={t.badge} className="hidden shrink-0 sm:inline-flex">
                       {verdictFor(cat.score)}
-                    </span>
+                    </Badge>
                     <MiniRing score={cat.score} />
                     <button
                       type="button"
@@ -805,7 +798,7 @@ export function HealthPanel({
               type="button"
               onClick={runBaseline}
               disabled={benchBusy}
-              className="rounded-lg border border-line px-3 py-1.5 text-[11px] font-semibold text-ink-2 transition hover:bg-surface-hover hover:text-ink disabled:opacity-40"
+              className="tool-secondary-action"
             >
               {benchBusy ? baseline.running : baseline.run}
             </button>

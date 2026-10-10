@@ -97,6 +97,62 @@ pub fn run<T>(name: &str, action: impl FnOnce(&mut Command) -> io::Result<T>) ->
     action(&mut command)
 }
 
+/// `Command::output`, except that the child is killed as soon as `stop`
+/// returns true, so a cancelled read leaves no process behind. `Ok(None)`
+/// means it was stopped. The pipes are drained on their own threads: a child
+/// that fills one would otherwise block forever while this waits for it.
+pub(crate) fn output_unless(
+    command: &mut Command,
+    stop: &dyn Fn() -> bool,
+) -> io::Result<Option<std::process::Output>> {
+    use std::io::Read;
+    use std::process::Stdio;
+    let mut child = command
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+    let drain = |pipe: Option<Box<dyn Read + Send>>| {
+        std::thread::spawn(move || {
+            let mut bytes = Vec::new();
+            if let Some(mut pipe) = pipe {
+                let _ = pipe.read_to_end(&mut bytes);
+            }
+            bytes
+        })
+    };
+    let stdout = drain(
+        child
+            .stdout
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+    );
+    let stderr = drain(
+        child
+            .stderr
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+    );
+    let status = loop {
+        if let Some(status) = child.try_wait()? {
+            break Some(status);
+        }
+        if stop() {
+            let _ = child.kill();
+            let _ = child.wait();
+            break None;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    };
+    let stdout = stdout.join().unwrap_or_default();
+    let stderr = stderr.join().unwrap_or_default();
+    Ok(status.map(|status| std::process::Output {
+        status,
+        stdout,
+        stderr,
+    }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -111,6 +167,33 @@ mod tests {
         ] {
             assert!(tool_path(name).is_err());
         }
+    }
+    #[test]
+    fn a_stopped_child_is_killed_and_a_finished_one_keeps_its_output() {
+        let done = run("cmd", |c| {
+            output_unless(c.args(["/C", "echo", "finished"]), &|| false)
+        })
+        .unwrap()
+        .expect("not stopped");
+        assert_eq!(String::from_utf8_lossy(&done.stdout).trim(), "finished");
+
+        // A child that would run for 30 s comes back in well under that.
+        let started = std::time::Instant::now();
+        let stop_at = started + std::time::Duration::from_millis(300);
+        let stopped = run("powershell", |c| {
+            output_unless(
+                c.args([
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    "Start-Sleep 30",
+                ]),
+                &|| std::time::Instant::now() >= stop_at,
+            )
+        })
+        .unwrap();
+        assert!(stopped.is_none());
+        assert!(started.elapsed() < std::time::Duration::from_secs(10));
     }
     #[test]
     fn uses_absolute_windows_paths() {

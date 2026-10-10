@@ -18,8 +18,12 @@
 //! * It does not pretend to help on a single-die part. A 7800X3D has one CCD
 //!   and every core on it already sees the V-Cache, so there is nothing to
 //!   steer and the UI says exactly that rather than offering a placebo switch.
-//! * It does not persist. Affinity belongs to a running process and dies with
-//!   it; claiming otherwise would be a lie the next reboot exposes.
+//! * It does not persist. The steering belongs to a running process and dies
+//!   with it; claiming otherwise would be a lie the next reboot exposes.
+//! * It does not use affinity masks. A die is applied as the process's default
+//!   CPU sets, the mechanism Microsoft's game guidance recommends, which needs
+//!   only `PROCESS_SET_LIMITED_INFORMATION`. Threads a program pins itself keep
+//!   their own choice. Games that manage their own performance are left alone.
 
 use serde::Serialize;
 
@@ -66,22 +70,23 @@ pub struct ProcessEntry {
     pub name: String,
     pub cpu_pct: f32,
     pub memory_bytes: u64,
-    /// Current affinity mask, so the UI can show a process as already aligned
-    /// instead of offering to do what is already done.
+    /// The logical processors the process is steered to, as a mask, so the UI
+    /// can show a process as already aligned instead of offering to do what is
+    /// already done. All processors when it has no CPU sets of its own; `None`
+    /// when it was not looked at (a game that manages its own performance, or
+    /// a moment when such a game is running).
     pub affinity: Option<u64>,
 }
 
 #[cfg(windows)]
 pub(crate) mod win {
     use super::{Ccd, ProcessEntry, X3dReport, X3dStatus};
-    use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
+    use crate::process_guard::{self, Access};
+    use windows_sys::Win32::Foundation::{GetLastError, ERROR_INSUFFICIENT_BUFFER};
     use windows_sys::Win32::System::SystemInformation::{
         GetLogicalProcessorInformationEx, RelationCache, SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX,
     };
-    use windows_sys::Win32::System::Threading::{
-        GetProcessAffinityMask, OpenProcess, SetProcessAffinityMask, PROCESS_QUERY_INFORMATION,
-        PROCESS_SET_INFORMATION,
-    };
+    use windows_sys::Win32::System::Threading::{GetProcessDefaultCpuSets, SetProcessDefaultCpuSets};
 
     /// Reads the L3 cache groups the machine actually reports.
     ///
@@ -209,53 +214,79 @@ pub(crate) mod win {
         }
     }
 
-    struct OwnedHandle(HANDLE);
-
-    impl Drop for OwnedHandle {
-        fn drop(&mut self) {
-            unsafe {
-                CloseHandle(self.0);
-            }
-        }
+    /// CPU set ids for the logical processors in `mask` (processor group 0,
+    /// which is all a consumer desktop has).
+    fn sets_for_mask(mask: u64) -> Result<Vec<u32>, String> {
+        let sets = crate::engine::dynamic_session::cpu_sets()?;
+        Ok(sets
+            .iter()
+            .filter(|s| s.group == 0 && s.logical_index < 64 && mask & (1u64 << s.logical_index) != 0)
+            .map(|s| s.id)
+            .collect())
     }
 
-    fn open(pid: u32, access: u32) -> Result<OwnedHandle, String> {
-        let h = unsafe { OpenProcess(access, 0, pid) };
-        if h.is_null() {
-            // Almost always an elevated or protected process being asked about
-            // by a non-elevated app. Say which, rather than a bare error code.
-            return Err(format!(
-                "process {} could not be opened - it is likely running with higher privileges than this app",
-                pid
-            ));
+    /// The mask of every logical processor in group 0: what "not steered"
+    /// looks like.
+    fn all_processors_mask() -> Result<u64, String> {
+        let sets = crate::engine::dynamic_session::cpu_sets()?;
+        Ok(sets
+            .iter()
+            .filter(|s| s.group == 0 && s.logical_index < 64)
+            .fold(0u64, |mask, s| mask | (1u64 << s.logical_index)))
+    }
+
+    fn mask_for_sets(ids: &[u32]) -> Result<u64, String> {
+        if ids.is_empty() {
+            return all_processors_mask();
         }
-        Ok(OwnedHandle(h))
+        let sets = crate::engine::dynamic_session::cpu_sets()?;
+        Ok(sets
+            .iter()
+            .filter(|s| s.group == 0 && s.logical_index < 64 && ids.contains(&s.id))
+            .fold(0u64, |mask, s| mask | (1u64 << s.logical_index)))
+    }
+
+    /// The process's default CPU sets, read with query-limited rights.
+    fn current_sets(pid: u32) -> Option<Vec<u32>> {
+        let process = process_guard::open(pid, Access::Query).ok()?;
+        let mut ids = vec![0u32; 64];
+        loop {
+            let mut required = 0u32;
+            // SAFETY: `ids` holds `ids.len()` u32s; the handle is live.
+            let ok = unsafe {
+                GetProcessDefaultCpuSets(process.raw(), ids.as_mut_ptr(), ids.len() as u32, &mut required)
+            };
+            if ok != 0 {
+                ids.truncate(required as usize);
+                return Some(ids);
+            }
+            // SAFETY: read straight after the failing call.
+            if unsafe { GetLastError() } != ERROR_INSUFFICIENT_BUFFER
+                || required as usize <= ids.len()
+                || required > 1024
+            {
+                return None;
+            }
+            ids.resize(required as usize, 0);
+        }
     }
 
     fn affinity_of(pid: u32) -> Option<u64> {
-        let h = open(pid, PROCESS_QUERY_INFORMATION).ok()?;
-        let mut process_mask: usize = 0;
-        let mut system_mask: usize = 0;
-        let ok = unsafe { GetProcessAffinityMask(h.0, &mut process_mask, &mut system_mask) };
-        if ok == 0 {
-            None
-        } else {
-            Some(process_mask as u64)
-        }
+        mask_for_sets(&current_sets(pid)?).ok()
     }
 
-    /// The system's own mask: what "all cores" means on this machine, which is
-    /// what resetting has to restore. Hard-coding `u64::MAX` would set bits for
-    /// processors that do not exist and fail.
-    fn system_mask() -> Result<u64, String> {
-        let h = open(std::process::id(), PROCESS_QUERY_INFORMATION)?;
-        let mut process_mask: usize = 0;
-        let mut system_mask: usize = 0;
-        let ok = unsafe { GetProcessAffinityMask(h.0, &mut process_mask, &mut system_mask) };
-        if ok == 0 {
-            return Err("Windows did not report a system affinity mask".to_string());
+    fn write_sets(pid: u32, ids: &[u32]) -> Result<(), String> {
+        let process = process_guard::open(pid, Access::CpuSets)
+            .map_err(|e| format!("process {pid} could not be opened: {e}"))?;
+        let pointer = if ids.is_empty() { std::ptr::null() } else { ids.as_ptr() };
+        // SAFETY: `pointer` is null with a zero count, or `ids` itself.
+        if unsafe { SetProcessDefaultCpuSets(process.raw(), pointer, ids.len() as u32) } == 0 {
+            return Err(format!(
+                "Windows refused to steer process {pid}: {}",
+                std::io::Error::last_os_error()
+            ));
         }
-        Ok(system_mask as u64)
+        Ok(())
     }
 
     pub fn set_affinity(pid: u32, mask: u64) -> Result<(), String> {
@@ -264,48 +295,58 @@ pub(crate) mod win {
                 "an empty affinity mask would leave the process no core to run on".to_string(),
             );
         }
-        let h = open(pid, PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION)?;
-        let ok = unsafe { SetProcessAffinityMask(h.0, mask as usize) };
-        if ok == 0 {
-            return Err(format!(
-                "Windows refused the affinity change for process {}",
-                pid
-            ));
+        let ids = sets_for_mask(mask)?;
+        if ids.is_empty() {
+            return Err("that mask names no processor on this machine".to_string());
         }
-        Ok(())
+        write_sets(pid, &ids)
     }
 
+    /// Back to every core: the process's default CPU sets are cleared.
     pub fn reset_affinity(pid: u32) -> Result<(), String> {
-        set_affinity(pid, system_mask()?)
+        write_sets(pid, &[])
     }
 
     /// Running processes worth offering, busiest first.
     ///
     /// Filtered to things with a real memory footprint and excluding this app
     /// itself: a list of 300 entries where 280 are service hosts is a list
-    /// nobody reads.
-    pub fn processes() -> Vec<ProcessEntry> {
-        use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System};
-
-        let mut sys = System::new_with_specifics(
-            RefreshKind::new().with_processes(ProcessRefreshKind::everything()),
-        );
-        // sysinfo reports CPU as a delta between refreshes, so a single
-        // snapshot would report 0% for everything.
+    /// nobody reads. Read from the kernel's process table twice, 300 ms apart,
+    /// for the CPU figure: no process is opened to list it. The current
+    /// steering is read only for processes the guard allows, and for none
+    /// while `paused`.
+    pub fn processes(paused: bool) -> Vec<ProcessEntry> {
+        let Ok(first) = process_guard::processes() else {
+            return Vec::new();
+        };
+        let started = std::time::Instant::now();
         std::thread::sleep(std::time::Duration::from_millis(300));
-        sys.refresh_processes(ProcessesToUpdate::All, true);
-
+        let Ok(second) = process_guard::processes() else {
+            return Vec::new();
+        };
+        let elapsed_100ns = (started.elapsed().as_nanos() / 100).max(1) as f64;
+        let cpus = std::thread::available_parallelism().map_or(1, |n| n.get()) as f64;
+        let protected = process_guard::current().protected.clone();
         let self_pid = std::process::id();
-        let mut list: Vec<ProcessEntry> = sys
-            .processes()
+        let mut list: Vec<ProcessEntry> = second
             .iter()
-            .filter(|(pid, p)| pid.as_u32() != self_pid && p.memory() > 64 * 1024 * 1024)
-            .map(|(pid, p)| ProcessEntry {
-                pid: pid.as_u32(),
-                name: p.name().to_string_lossy().into_owned(),
-                cpu_pct: p.cpu_usage(),
-                memory_bytes: p.memory(),
-                affinity: affinity_of(pid.as_u32()),
+            .filter(|p| p.pid > 4 && p.pid != self_pid && p.working_set > 64 * 1024 * 1024)
+            .map(|p| {
+                let before = first
+                    .iter()
+                    .find(|q| q.pid == p.pid && q.created == p.created)
+                    .map_or(p.cpu_time, |q| q.cpu_time);
+                let busy = p.cpu_time.saturating_sub(before) as f64;
+                let off_limits = paused
+                    || protected.contains(&p.pid)
+                    || process_guard::is_protected_name(&p.name);
+                ProcessEntry {
+                    pid: p.pid,
+                    name: p.name.clone(),
+                    cpu_pct: (busy / elapsed_100ns * 100.0 / cpus).clamp(0.0, 100.0) as f32,
+                    memory_bytes: p.working_set,
+                    affinity: if off_limits { None } else { affinity_of(p.pid) },
+                }
             })
             .collect();
 
@@ -334,7 +375,7 @@ pub fn report() -> X3dReport {
 }
 
 #[cfg(not(windows))]
-pub fn processes() -> Vec<ProcessEntry> {
+pub fn processes(_paused: bool) -> Vec<ProcessEntry> {
     Vec::new()
 }
 
@@ -401,8 +442,25 @@ pub fn x3d_report() -> X3dReport {
 }
 
 #[tauri::command(async)]
-pub fn x3d_processes() -> Vec<ProcessEntry> {
-    processes()
+pub fn x3d_processes(app: tauri::AppHandle) -> Vec<ProcessEntry> {
+    let paused = crate::store_for_dir(&app).map_or(true, |dir| crate::process_guard::paused(&dir));
+    processes(paused)
+}
+
+/// A manual steer is refused for a game that manages its own performance, and
+/// for anything at all while such a game is running.
+fn may_steer(app: &tauri::AppHandle, pid: u32) -> Result<(), String> {
+    let dir = crate::store_for_dir(app)?;
+    if crate::process_guard::paused(&dir) {
+        return Err(crate::process_guard::game_running_error());
+    }
+    if crate::process_guard::is_protected_pid(pid)
+        || crate::process_guard::image_path(pid)
+            .is_some_and(|path| crate::process_guard::is_protected_executable(&path))
+    {
+        return Err(crate::process_guard::self_managed_error());
+    }
+    Ok(())
 }
 
 /// Pins one process to one die.
@@ -412,11 +470,12 @@ pub fn x3d_processes() -> Vec<ProcessEntry> {
 /// a mask naming processors this machine does not have would either fail
 /// cryptically or — worse — succeed at pinning a game to nothing useful.
 #[tauri::command(async)]
-pub fn x3d_align(pid: u32, mask: u64) -> Result<(), String> {
+pub fn x3d_align(app: tauri::AppHandle, pid: u32, mask: u64) -> Result<(), String> {
     let r = report();
     if !r.ccds.iter().any(|c| c.mask == mask) {
         return Err("that affinity mask does not match any die on this processor".to_string());
     }
+    may_steer(&app, pid)?;
     let result = set_affinity(pid, mask);
     crate::audit::record(
         "x3d-aligned",
@@ -428,7 +487,8 @@ pub fn x3d_align(pid: u32, mask: u64) -> Result<(), String> {
 }
 
 #[tauri::command(async)]
-pub fn x3d_reset(pid: u32) -> Result<(), String> {
+pub fn x3d_reset(app: tauri::AppHandle, pid: u32) -> Result<(), String> {
+    may_steer(&app, pid)?;
     let result = reset_affinity(pid);
     crate::audit::record(
         "x3d-reset",

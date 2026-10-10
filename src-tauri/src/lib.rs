@@ -1,3 +1,4 @@
+mod process_guard;
 mod appcache;
 mod update_identity;
 mod audit;
@@ -65,17 +66,20 @@ mod netshaper;
 mod power;
 mod power_tuning;
 mod privacy_extra;
+mod process_rules;
 mod profiles;
 mod ramclean;
 mod recommend;
 mod restore_point;
 mod rollback;
 mod scheduledtasks;
+mod settings_tweaks;
 mod securedefrag;
 mod services;
 mod startup;
 mod program_icons;
 mod sysmon;
+mod livemetrics;
 mod sysrepair;
 mod systemprofile;
 mod technical;
@@ -120,7 +124,7 @@ use tweaks::{find_tweak, Category, Hive};
 // NOT `rename_all = "camelCase"`: the frontend `TweakInfo` type has read
 // `requires_admin`/`requires_pro` since the first release, and renaming them
 // here would silently blank every badge in the list.
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct TweakInfo {
     id: String,
     name: String,
@@ -139,6 +143,17 @@ pub struct TweakInfo {
     /// precisely; see `technical.rs` for why this is derived from the apply
     /// path rather than kept in a parallel data file.
     changes: Vec<technical::TechnicalChange>,
+    /// The first Windows build the tweak supports, when it needs a newer one
+    /// than Windows 10.
+    min_build: Option<u32>,
+    /// Supported on Pro, Enterprise and Education only.
+    pro_edition: bool,
+    /// Supported on Enterprise and Education only.
+    enterprise_edition: bool,
+    /// Why it cannot be applied on this PC: `windows_version`,
+    /// `windows_edition`, `windows_edition_enterprise` or `not_present`. The
+    /// frontend translates the code.
+    unavailable: Option<&'static str>,
 }
 
 fn reg_value_type(v: &RegValue) -> &'static str {
@@ -253,7 +268,10 @@ fn in_effect(t: &tweaks::RegistryTweak, recorded: bool) -> bool {
 
 #[tauri::command(async)]
 fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
-    let store = store_for(&app)?;
+    tweak_infos(&store_for(&app)?)
+}
+
+fn tweak_infos(store: &RollbackStore) -> Result<Vec<TweakInfo>, String> {
     let applied_ids = store.applied_ids()?;
 
     let mut list: Vec<TweakInfo> = tweaks::all_tweaks()
@@ -275,8 +293,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
                 value_name: t.value_name.to_string(),
                 value_type: reg_value_type(&t.on_value),
                 sets_to: reg_value_display(&t.on_value),
-            }],
-        })
+            }], ..Default::default() })
         .collect();
 
     list.push(TweakInfo {
@@ -288,8 +305,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: false,
-        requires_pro: false,
-    });
+        requires_pro: false, ..Default::default() });
 
     let turbo = turbo::info();
     list.push(TweakInfo {
@@ -301,8 +317,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: turbo.requires_admin,
         requires_pro: turbo.requires_pro,
-        applied: applied_ids.contains(turbo.id),
-    });
+        applied: applied_ids.contains(turbo.id), ..Default::default() });
 
     list.push(TweakInfo {
         applied: applied_ids.contains(dns::TWEAK_ID),
@@ -313,8 +328,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: true,
-        requires_pro: false,
-    });
+        requires_pro: false, ..Default::default() });
 
     let input_lag = gaming::input_lag_info();
     list.push(TweakInfo {
@@ -326,8 +340,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: input_lag.requires_admin,
-        requires_pro: input_lag.requires_pro,
-    });
+        requires_pro: input_lag.requires_pro, ..Default::default() });
 
     let turbo_boost = gaming::turbo_boost_info();
     list.push(TweakInfo {
@@ -339,8 +352,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: turbo_boost.requires_admin,
-        requires_pro: turbo_boost.requires_pro,
-    });
+        requires_pro: turbo_boost.requires_pro, ..Default::default() });
 
     let games_priority = game_priority::info();
     list.push(TweakInfo {
@@ -352,8 +364,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: games_priority.requires_admin,
-        requires_pro: games_priority.requires_pro,
-    });
+        requires_pro: games_priority.requires_pro, ..Default::default() });
 
     let core_parking = gaming::core_parking_info();
     list.push(TweakInfo {
@@ -365,8 +376,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: core_parking.requires_admin,
-        requires_pro: core_parking.requires_pro,
-    });
+        requires_pro: core_parking.requires_pro, ..Default::default() });
 
     let keyboard_delay = gaming::keyboard_delay_info();
     list.push(TweakInfo {
@@ -378,8 +388,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: keyboard_delay.requires_admin,
-        requires_pro: keyboard_delay.requires_pro,
-    });
+        requires_pro: keyboard_delay.requires_pro, ..Default::default() });
 
     let net_latency = netlatency::info();
     list.push(TweakInfo {
@@ -391,8 +400,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: net_latency.requires_admin,
-        requires_pro: net_latency.requires_pro,
-    });
+        requires_pro: net_latency.requires_pro, ..Default::default() });
 
     let net_shaper = netshaper::info();
     list.push(TweakInfo {
@@ -404,8 +412,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: net_shaper.requires_admin,
-        requires_pro: net_shaper.requires_pro,
-    });
+        requires_pro: net_shaper.requires_pro, ..Default::default() });
 
     let activity_history = privacy_extra::activity_history_info();
     list.push(TweakInfo {
@@ -417,8 +424,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: activity_history.requires_admin,
-        requires_pro: activity_history.requires_pro,
-    });
+        requires_pro: activity_history.requires_pro, ..Default::default() });
 
     let typing = privacy_extra::typing_personalization_info();
     list.push(TweakInfo {
@@ -430,8 +436,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: typing.requires_admin,
-        requires_pro: typing.requires_pro,
-    });
+        requires_pro: typing.requires_pro, ..Default::default() });
 
     let context_menu = contextmenu::info();
     list.push(TweakInfo {
@@ -443,8 +448,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: context_menu.requires_admin,
-        requires_pro: context_menu.requires_pro,
-    });
+        requires_pro: context_menu.requires_pro, ..Default::default() });
 
     let windows_search = services::windows_search_info();
     list.push(TweakInfo {
@@ -456,8 +460,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         hive: "\u{2014}".to_string(),
         changes: Vec::new(), // composite: filled by the pass below
         requires_admin: windows_search.requires_admin,
-        requires_pro: windows_search.requires_pro,
-    });
+        requires_pro: windows_search.requires_pro, ..Default::default() });
 
     for tweak in &power_tuning::TWEAKS {
         list.push(TweakInfo {
@@ -468,8 +471,7 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
             changes: vec![technical::TechnicalChange::Command {
                 program: "PowerWriteACValueIndex",
                 arguments: format!("Current plan; subgroup {}; setting {}; AC index {}. Battery policy unchanged. Restore writes the prior effective AC value as an explicit plan value, including when it was inherited. Refresh with PowerSetActiveScheme only if this plan remains active.", tweak.subgroup,tweak.setting,tweak.value),
-            }],
-        });
+            }], ..Default::default() });
     }
 
     list.push(TweakInfo {
@@ -477,15 +479,60 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
         description:"Disables only the right-Shift shortcut for Filter Keys. Existing accessibility settings and timings are preserved.".into(),
         category:"gaming".into(), hive:"Windows API".into(), requires_admin:false, requires_pro:false,
         applied:applied_ids.contains(everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID),
-        changes:vec![technical::TechnicalChange::Command{program:"SystemParametersInfoW",arguments:"Read FILTERKEYS; clear FKF_HOTKEYACTIVE only; preserve remaining flags and timings; restore the saved state.".into()}],
-    });
+        changes:vec![technical::TechnicalChange::Command{program:"SystemParametersInfoW",arguments:"Read FILTERKEYS; clear FKF_HOTKEYACTIVE only; preserve remaining flags and timings; restore the saved state.".into()}], ..Default::default() });
     for (id,name,description,category,admin) in [
         ("ecoqos_rules","Background app efficiency","Choose apps for EcoQoS while PC Tweaker is running. Foreground apps are restored; global power-throttling policy may block this feature.","performance",false),
         ("limit_do_background_download","Windows background download limit","Configure a Delivery Optimization limit in KB/s. Does not limit other applications or disable Windows Update.","performance",true),
         ("monitor_refresh_profile","Game display refresh profiles","Choose supported refresh rates per game. Preview and restore keep the original resolution and desktop layout.","gaming",false),
     ] {
-        list.push(TweakInfo{id:id.into(),name:name.into(),description:description.into(),category:category.into(),hive:"Windows API".into(),requires_admin:admin,requires_pro:true,applied:applied_ids.contains(id),changes:vec![]});
+        list.push(TweakInfo{id:id.into(),name:name.into(),description:description.into(),category:category.into(),hive:"Windows API".into(),requires_admin:admin,requires_pro:true,applied:applied_ids.contains(id),changes:vec![],..Default::default()});
     }
+
+    #[cfg(windows)]
+    let (build, edition) = settings_tweaks::machine();
+    #[cfg(not(windows))]
+    let (build, edition): (Option<u32>, Option<String>) = (None, None);
+    for t in &settings_tweaks::TWEAKS {
+        let recorded = applied_ids.contains(t.id);
+        #[cfg(windows)]
+        let applied = recorded && settings_tweaks::in_effect(t).unwrap_or(true);
+        #[cfg(not(windows))]
+        let applied = recorded;
+        list.push(TweakInfo {
+            id: t.id.into(),
+            name: t.name.into(),
+            description: t.description.into(),
+            category: category_str(&t.category).into(),
+            hive: hive_str(&t.hive).into(),
+            requires_admin: t.requires_admin(),
+            requires_pro: t.requires_pro,
+            applied,
+            changes: settings_tweaks::changes(t),
+            min_build: (t.min_build > 0).then_some(t.min_build),
+            pro_edition: t.edition == settings_tweaks::Edition::ProOrHigher,
+            enterprise_edition: t.edition == settings_tweaks::Edition::EnterpriseOrEducation,
+            unavailable: settings_tweaks::availability(t, build, edition.as_deref())
+                .err()
+                .map(|why| why.code()),
+        });
+    }
+
+    let ai_fabric = services::ai_fabric_info();
+    list.push(TweakInfo {
+        applied: applied_ids.contains(ai_fabric.id),
+        id: ai_fabric.id.to_string(),
+        name: ai_fabric.name.to_string(),
+        description: ai_fabric.description.to_string(),
+        category: category_str(&Category::Privacy).to_string(),
+        hive: "\u{2014}".to_string(),
+        requires_admin: ai_fabric.requires_admin,
+        requires_pro: ai_fabric.requires_pro,
+        min_build: Some(settings_tweaks::BUILD_24H2),
+        // Present only where the on-device AI features are; never offered
+        // where there is nothing to turn off, unless it is already applied.
+        unavailable: ai_fabric_unavailable(applied_ids.contains(ai_fabric.id)),
+        ..Default::default()
+    });
 
     // One pass, not twelve call sites: anything that arrived with no
     // disclosure asks `technical` for its composite one. A tweak whose
@@ -500,6 +547,179 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
     Ok(list)
 }
 
+/// The multi-value settings, for the update watch: each one is in effect only
+/// while every one of its values still is.
+#[cfg(windows)]
+fn settings_drift_states(
+    applied_ids: &std::collections::HashSet<String>,
+) -> Vec<updatewatch::TweakState> {
+    settings_tweaks::TWEAKS
+        .iter()
+        .map(|t| {
+            let recorded_applied = applied_ids.contains(t.id);
+            updatewatch::TweakState {
+                id: t.id.to_string(),
+                recorded_applied,
+                live_matches: if recorded_applied {
+                    settings_tweaks::in_effect(t)
+                } else {
+                    None
+                },
+            }
+        })
+        .collect()
+}
+
+#[cfg(windows)]
+fn ai_fabric_unavailable(applied: bool) -> Option<&'static str> {
+    (!applied && !services::installed(services::AI_FABRIC_SERVICE)).then_some("not_present")
+}
+
+#[cfg(not(windows))]
+fn ai_fabric_unavailable(_applied: bool) -> Option<&'static str> {
+    Some("not_present")
+}
+
+/// One line of a dry run: a change the tweak would make, what is there now
+/// and whether applying would change it.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PreviewRow {
+    change: technical::TechnicalChange,
+    /// The value as it reads now, the way regedit shows it. `None` when it is
+    /// not set, or for a change that is not a registry value.
+    current: Option<String>,
+    /// False only when the value already is what the tweak would write.
+    changes: bool,
+}
+
+/// Mirrors `TweakPreview` in src/types.ts.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TweakPreview {
+    id: String,
+    rows: Vec<PreviewRow>,
+    applied: bool,
+    will_change: bool,
+    requires_admin: bool,
+    unavailable: Option<&'static str>,
+}
+
+/// Reads a registry change's current value, as regedit renders it.
+#[cfg(windows)]
+fn current_value(path: &str, name: &str) -> Option<String> {
+    let (hive, key) = match path.split_once('\\')? {
+        ("HKLM", key) => (Hive::Hklm, key),
+        ("HKCU", key) => (Hive::Hkcu, key),
+        _ => return None,
+    };
+    match tweaks::windows_impl::read_value(hive, key, name, &RegValue::Dword(0)) {
+        Ok(Some(value)) => Some(reg_value_display(&value)),
+        _ => None,
+    }
+}
+
+#[cfg(not(windows))]
+fn current_value(_path: &str, _name: &str) -> Option<String> {
+    None
+}
+
+/// The dry run behind "Preview": every change a tweak would make, against
+/// what the machine has now. Reads only.
+pub(crate) fn preview_for(store: &RollbackStore, id: &str) -> Result<TweakPreview, String> {
+    let info = tweak_infos(store)?
+        .into_iter()
+        .find(|t| t.id == id)
+        .ok_or_else(|| format!("unknown tweak: {id}"))?;
+    let rows: Vec<PreviewRow> = info
+        .changes
+        .into_iter()
+        .map(|change| {
+            let (current, changes) = match &change {
+                technical::TechnicalChange::Registry {
+                    path,
+                    value_name,
+                    sets_to,
+                    ..
+                } => {
+                    let current = current_value(path, value_name);
+                    let changes = current.as_deref() != Some(sets_to.as_str());
+                    (current, changes)
+                }
+                _ => (None, true),
+            };
+            PreviewRow {
+                change,
+                current,
+                changes,
+            }
+        })
+        .collect();
+    Ok(TweakPreview {
+        id: info.id,
+        will_change: rows.iter().any(|r| r.changes),
+        rows,
+        applied: info.applied,
+        requires_admin: info.requires_admin,
+        unavailable: info.unavailable,
+    })
+}
+
+#[tauri::command(async)]
+fn preview_tweak(app: tauri::AppHandle, id: String) -> Result<TweakPreview, String> {
+    preview_for(&store_for(&app)?, &id)
+}
+
+/// Inner errors say the snapshot was kept for a retry. After an automatic
+/// undo that is no longer true, so the clause is dropped.
+fn without_retention_note(error: &str) -> String {
+    let mut text = error.to_string();
+    for note in [
+        "; the rollback snapshot was retained",
+        ", the rollback snapshot was retained",
+        "; recovery data was retained",
+    ] {
+        text = text.replace(note, "");
+    }
+    text.trim_end_matches('.').to_string()
+}
+
+/// Applies a tweak, and when the apply fails after its snapshot was saved (a
+/// later value refused, a value that would not stick), puts every original
+/// back at once rather than leaving the tweak half applied. A tweak that was
+/// already applied before this attempt is left exactly as it was.
+#[cfg(windows)]
+pub(crate) fn apply_or_undo(
+    store: &RollbackStore,
+    app_data_dir: &std::path::Path,
+    id: &str,
+) -> Result<(), String> {
+    let was_applied = store.is_applied_checked(id).unwrap_or(true);
+    let error = match apply_by_id_inner(store, app_data_dir, id) {
+        Ok(()) => return Ok(()),
+        Err(error) => error,
+    };
+    if was_applied || !store.is_applied(id) {
+        return Err(error);
+    }
+    let undone = rollback_by_id_inner(store, id);
+    if !cfg!(test) {
+        audit::record(
+            "tweak-auto-reverted",
+            id,
+            undone.is_ok(),
+            undone.as_ref().err().cloned(),
+        );
+    }
+    Err(match undone {
+        Ok(()) => format!(
+            "{}. The change was undone automatically, so nothing was left half applied.",
+            without_retention_note(&error)
+        ),
+        Err(undo) => format!("{error}. Undoing it automatically failed too ({undo}); use Restore to try again."),
+    })
+}
+
 /// Whether a friendly, stable prefix on a returned error means "this failed
 /// because the Pro license didn't verify" rather than some other failure â€”
 /// checked by the frontend to show the paywall instead of a generic toast.
@@ -510,6 +730,9 @@ fn requires_pro_for(id: &str) -> bool {
     if ["ecoqos_rules","limit_do_background_download","monitor_refresh_profile"].contains(&id) { return true; }
     if let Some(tweak) = power_tuning::find(id) {
         return tweak.pro;
+    }
+    if let Some(tweak) = settings_tweaks::find(id) {
+        return tweak.requires_pro;
     }
     match id {
         power::TWEAK_ID => false,
@@ -528,6 +751,7 @@ fn requires_pro_for(id: &str) -> bool {
         }
         contextmenu::TWEAK_ID => contextmenu::info().requires_pro,
         services::WINDOWS_SEARCH_ID => services::windows_search_info().requires_pro,
+        services::AI_FABRIC_ID => services::ai_fabric_info().requires_pro,
         _ => find_tweak(id).map(|t| t.requires_pro).unwrap_or(false),
     }
 }
@@ -574,7 +798,7 @@ fn apply_by_id(
 
     // Single funnel for every apply (direct, batched, and the elevated
     // helper), so this one audit call covers them all exactly once.
-    let mut result = apply_by_id_inner(store, app_data_dir, id);
+    let mut result = apply_or_undo(store, app_data_dir, id);
 
     if result.is_ok() && netcheck::regressed(was_online) {
         // Reverted through the public funnel so the audit log carries the
@@ -622,6 +846,12 @@ fn apply_by_id_inner(
     if power_tuning::find(id).is_some() {
         return power_tuning::apply(store, id);
     }
+    if let Some(tweak) = settings_tweaks::find(id) {
+        return settings_tweaks::apply(store, tweak);
+    }
+    if let Some(tweak) = services::find(id) {
+        return services::apply_service(store, tweak);
+    }
     match id {
         power::TWEAK_ID => power::apply(store),
         turbo::TWEAK_ID => turbo::apply(store),
@@ -638,7 +868,6 @@ fn apply_by_id_inner(
             privacy_extra::apply_typing_personalization(store)
         }
         contextmenu::TWEAK_ID => contextmenu::apply(store),
-        services::WINDOWS_SEARCH_ID => services::apply(store),
         _ => {
             let tweak = find_tweak(id).ok_or_else(|| format!("unknown tweak: {}", id))?;
             tweak.apply(store)
@@ -668,6 +897,12 @@ fn rollback_by_id_inner(store: &RollbackStore, id: &str) -> Result<(), String> {
     if power_tuning::find(id).is_some() {
         return power_tuning::rollback(store, id);
     }
+    if let Some(tweak) = settings_tweaks::find(id) {
+        return settings_tweaks::rollback(store, tweak);
+    }
+    if let Some(tweak) = services::find(id) {
+        return services::rollback_service(store, tweak);
+    }
     match id {
         power::TWEAK_ID => power::rollback(store),
         turbo::TWEAK_ID => turbo::rollback(store),
@@ -684,7 +919,6 @@ fn rollback_by_id_inner(store: &RollbackStore, id: &str) -> Result<(), String> {
             privacy_extra::rollback_typing_personalization(store)
         }
         contextmenu::TWEAK_ID => contextmenu::rollback(store),
-        services::WINDOWS_SEARCH_ID => services::rollback(store),
         _ => {
             let tweak = find_tweak(id).ok_or_else(|| format!("unknown tweak: {}", id))?;
             tweak.rollback(store)
@@ -696,6 +930,12 @@ fn rollback_by_id_inner(store: &RollbackStore, id: &str) -> Result<(), String> {
 fn requires_admin_for(id: &str) -> bool {
     if id == download_limit::TWEAK_ID { return true; }
     if power_tuning::find(id).is_some() {
+        return true;
+    }
+    if let Some(tweak) = settings_tweaks::find(id) {
+        return tweak.requires_admin();
+    }
+    if services::find(id).is_some() {
         return true;
     }
     match id {
@@ -714,7 +954,6 @@ fn requires_admin_for(id: &str) -> bool {
             privacy_extra::typing_personalization_info().requires_admin
         }
         contextmenu::TWEAK_ID => contextmenu::info().requires_admin,
-        services::WINDOWS_SEARCH_ID => true,
         _ => find_tweak(id).map(|t| t.requires_admin).unwrap_or(false),
     }
 }
@@ -738,6 +977,32 @@ fn rollback_tweak(app: tauri::AppHandle, id: String) -> Result<(), String> {
     }
     let store = store_for(&app)?;
     rollback_by_id(&store, &id)
+}
+
+/// Tweaks that only ever apply through their own switch: never in a batch,
+/// a profile, a re-apply after an update, or anything else done in bulk.
+/// Turning Memory Integrity off is a security trade the user makes once, on
+/// purpose, for this machine.
+pub(crate) const MANUAL_ONLY_TWEAKS: [&str; 1] = ["disable_memory_integrity"];
+
+/// The ids of a bulk request that a bulk request may apply: never the
+/// manual-only ones, and never a setting this PC's Windows build or edition
+/// does not support (a profile made on another PC may name one).
+pub(crate) fn bulk_applicable(ids: Vec<String>) -> Vec<String> {
+    ids.into_iter()
+        .filter(|id| !MANUAL_ONLY_TWEAKS.contains(&id.as_str()))
+        .filter(|id| fits_this_pc(id))
+        .collect()
+}
+
+#[cfg(windows)]
+fn fits_this_pc(id: &str) -> bool {
+    settings_tweaks::find(id).is_none_or(|t| settings_tweaks::available_here(t).is_ok())
+}
+
+#[cfg(not(windows))]
+fn fits_this_pc(_id: &str) -> bool {
+    true
 }
 
 /// Splits a batch into (needs-elevation, can-run-directly). Kept separate so
@@ -765,7 +1030,7 @@ fn apply_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, 
     let store = RollbackStore::new(dir.clone());
     let mut failures = Vec::new();
 
-    let (needs_admin, direct) = split_by_elevation(ids);
+    let (needs_admin, direct) = split_by_elevation(bulk_applicable(ids));
 
     for id in &direct {
         if let Err(e) = apply_by_id(&store, &dir, id) {
@@ -1010,7 +1275,18 @@ fn scan_duplicates(
 ) -> Result<Vec<cleanup::DuplicateGroup>, String> {
     // Pro in the UI; the native check is the boundary that holds.
     require_pro(&store_for_dir(&app)?)?;
-    cleanup::scan_duplicates(&root)
+    let stop = cleanup::folder_scan_stop(cleanup::FolderScan::Duplicates);
+    cleanup::scan_duplicates(&root, &stop)
+}
+
+/// Stops a running duplicate (`"duplicates"`) or large-file search.
+#[tauri::command]
+fn cancel_folder_scan(kind: String) {
+    cleanup::cancel_folder_scan(if kind == "duplicates" {
+        cleanup::FolderScan::Duplicates
+    } else {
+        cleanup::FolderScan::LargeFiles
+    });
 }
 
 #[tauri::command(async)]
@@ -1038,7 +1314,8 @@ fn scan_large_files(
     min_bytes: u64,
 ) -> Result<Vec<cleanup::LargeFile>, String> {
     require_pro(&store_for_dir(&app)?)?;
-    cleanup::scan_large_files(&root, min_bytes)
+    let stop = cleanup::folder_scan_stop(cleanup::FolderScan::LargeFiles);
+    cleanup::scan_large_files(&root, min_bytes, &stop)
 }
 
 fn last_diskopt_result_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
@@ -1192,6 +1469,13 @@ fn refresh_drift_watch_target() {
 
 #[cfg(windows)]
 fn configure_drift_watch(enabled: bool) -> Result<(), String> {
+    configure_logon_task(updatewatch::TASK_NAME, "--check-drift", "0002:00", enabled)
+}
+
+/// Registers (or removes) a task that starts this program with one flag a
+/// few minutes after the user signs in, with the user's limited rights.
+#[cfg(windows)]
+fn configure_logon_task(task: &str, flag: &str, delay: &str, enabled: bool) -> Result<(), String> {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
@@ -1205,23 +1489,18 @@ fn configure_drift_watch(enabled: bool) -> Result<(), String> {
             "/create".into(),
             "/f".into(),
             "/tn".into(),
-            updatewatch::TASK_NAME.into(),
+            task.into(),
             "/tr".into(),
-            format!("\"{exe}\" --check-drift"),
+            format!("\"{exe}\" {flag}"),
             "/sc".into(),
             "onlogon".into(),
             "/delay".into(),
-            "0002:00".into(),
+            delay.into(),
             "/rl".into(),
             "LIMITED".into(),
         ]
     } else {
-        vec![
-            "/delete".into(),
-            "/f".into(),
-            "/tn".into(),
-            updatewatch::TASK_NAME.into(),
-        ]
+        vec!["/delete".into(), "/f".into(), "/tn".into(), task.into()]
     };
 
     let refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
@@ -1257,6 +1536,111 @@ fn set_drift_watch(_enabled: bool) -> Result<bool, String> {
     Err("the update watchdog is Windows-only".to_string())
 }
 
+/// The scheduled temporary-file cleanup: a logon task, at most one pass a
+/// week, limited rights, and only files untouched for a day.
+pub(crate) const TEMP_CLEANUP_TASK: &str = "PC Tweaker Temp Cleanup";
+const TEMP_CLEANUP_STATE: &str = "temp-cleanup-schedule.json";
+const TEMP_CLEANUP_EVERY: std::time::Duration = std::time::Duration::from_secs(7 * 24 * 3600);
+const TEMP_CLEANUP_MIN_AGE: std::time::Duration = std::time::Duration::from_secs(24 * 3600);
+
+#[cfg(windows)]
+fn task_registered(task: &str) -> bool {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    crate::system_tools::run("schtasks", |tool| {
+        tool.args(["/query", "/tn", task])
+            .creation_flags(CREATE_NO_WINDOW)
+            .output()
+    })
+    .map(|o| o.status.success())
+    .unwrap_or(false)
+}
+
+#[cfg(windows)]
+#[tauri::command(async)]
+fn scheduled_cleanup_enabled() -> bool {
+    task_registered(TEMP_CLEANUP_TASK)
+}
+
+/// Turning the weekly cleanup on needs Pro; turning it off never does.
+#[cfg(windows)]
+#[tauri::command(async)]
+fn set_scheduled_cleanup(app: tauri::AppHandle, enabled: bool) -> Result<bool, String> {
+    if enabled {
+        require_pro(&store_for_dir(&app)?)?;
+    }
+    configure_logon_task(TEMP_CLEANUP_TASK, "--scheduled-temp-cleanup", "0010:00", enabled)?;
+    let actual = task_registered(TEMP_CLEANUP_TASK);
+    if actual != enabled {
+        return Err("Windows did not keep the scheduled cleanup task".to_string());
+    }
+    audit::record(
+        "temp-cleanup-schedule",
+        if enabled { "enabled" } else { "disabled" },
+        true,
+        None,
+    );
+    Ok(actual)
+}
+
+#[cfg(not(windows))]
+#[tauri::command(async)]
+fn scheduled_cleanup_enabled() -> bool {
+    false
+}
+
+#[cfg(not(windows))]
+#[tauri::command(async)]
+fn set_scheduled_cleanup(_app: tauri::AppHandle, _enabled: bool) -> Result<bool, String> {
+    Err("not supported on this platform".to_string())
+}
+
+#[derive(Serialize, serde::Deserialize, Default)]
+struct TempCleanupState {
+    last_run: u64,
+}
+
+/// Whether a week has passed since the last pass. Pure.
+fn temp_cleanup_due(last_run: u64, now: u64) -> bool {
+    now.saturating_sub(last_run) >= TEMP_CLEANUP_EVERY.as_secs()
+}
+
+/// The scheduled half: no window, user rights, at most weekly. It waits for
+/// another logon while a game is running and never touches memory.
+#[cfg(windows)]
+pub fn run_scheduled_temp_cleanup_headless() -> ! {
+    let dir = dirs_app_data_dir();
+    crash::install(dir.clone(), crash::PROCESS_ELEVATED);
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs());
+    let path = dir.join(TEMP_CLEANUP_STATE);
+    let state: TempCleanupState = std::fs::read(&path)
+        .ok()
+        .and_then(|raw| serde_json::from_slice(&raw).ok())
+        .unwrap_or_default();
+    if require_pro(&dir).is_err() || !temp_cleanup_due(state.last_run, now) {
+        std::process::exit(0);
+    }
+    if process_guard::paused(&dir) || game_sessions::registered_game_running(&dir) {
+        audit::record("temp-cleanup-scheduled", "postponed", true, None);
+        std::process::exit(0);
+    }
+    let result = cleanup::run_cleanup_older_than("temp_cleanup", TEMP_CLEANUP_MIN_AGE);
+    audit::record(
+        "temp-cleanup-scheduled",
+        "temp_cleanup",
+        result.is_ok(),
+        result.as_ref().err().cloned(),
+    );
+    if result.is_ok() {
+        if let Ok(json) = serde_json::to_vec(&TempCleanupState { last_run: now }) {
+            let _ = std::fs::write(&path, json);
+        }
+    }
+    std::process::exit(0)
+}
+
 /// The scheduled half of the update watchdog.
 ///
 /// Runs the same comparison `check_update_drift` does, with no window and no
@@ -1287,6 +1671,7 @@ pub fn run_drift_check_headless() -> ! {
 
     let states: Vec<updatewatch::TweakState> = tweaks::all_tweaks()
         .iter()
+        .filter(|t| !MANUAL_ONLY_TWEAKS.contains(&t.id))
         .map(|t| {
             let recorded_applied = applied_ids.contains(t.id);
             let live_matches = if recorded_applied {
@@ -1306,6 +1691,8 @@ pub fn run_drift_check_headless() -> ! {
         })
         .collect();
 
+    let mut states = states;
+    states.extend(settings_drift_states(&applied_ids));
     let report = updatewatch::build_report(previous, current.clone(), &states);
     let _ = updatewatch::write_state(
         &dir,
@@ -1342,6 +1729,17 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     if action == diagnostics::dpc::ELEVATED_FLAG {
         std::process::exit(diagnostics::dpc::run_elevated(&dir, id));
     }
+    // A RAM trim changes no setting, so it needs no restore point either.
+    if action == "--elevated-ramtrim" {
+        let code = match ramclean::run_elevated(&dir) {
+            Ok(()) => 0,
+            Err(e) => {
+                eprintln!("{e}");
+                1
+            }
+        };
+        std::process::exit(code);
+    }
     let store = RollbackStore::new(dir.clone());
 
     // Safety net first: a System Restore point before any elevated change.
@@ -1375,7 +1773,8 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             // One prompt, many tweaks: keep going past a failure so a single
             // unsupported tweak doesn't cancel everything else the user asked for.
             let mut failed = Vec::new();
-            for one in id.split(',').filter(|s| !s.is_empty()) {
+            let batch = bulk_applicable(id.split(',').map(str::to_owned).collect());
+            for one in batch.iter().filter(|s| !s.is_empty()) {
                 if let Err(e) = apply_by_id(&store, &dir, one) {
                     failed.push(format!("{}: {}", one, e));
                 }
@@ -1587,8 +1986,11 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
 pub(crate) fn dirs_app_data_dir() -> std::path::PathBuf {
     // Mirrors Tauri's own resolution (%APPDATA%/<identifier>) without needing
     // a running AppHandle, since the elevated helper process never builds a UI.
+    // The identifier is the one this build was configured with (see build.rs):
+    // a fixed name sent a dev build's administrator changes to the installed
+    // app's folder, so the dev window never saw them applied.
     let base = std::env::var("APPDATA").unwrap_or_else(|_| ".".to_string());
-    std::path::PathBuf::from(base).join("com.aurel.pc-tweaker-app")
+    std::path::PathBuf::from(base).join(env!("PCT_APP_IDENTIFIER"))
 }
 
 /// Last audit entries, newest first, for the dashboard's history card. The
@@ -1628,6 +2030,7 @@ fn check_update_drift(app: tauri::AppHandle) -> Result<updatewatch::DriftReport,
     // there.
     let states: Vec<updatewatch::TweakState> = tweaks::all_tweaks()
         .into_iter()
+        .filter(|t| !MANUAL_ONLY_TWEAKS.contains(&t.id))
         .map(|t| {
             let recorded_applied = applied_ids.contains(t.id);
             let live_matches = if recorded_applied {
@@ -1649,6 +2052,8 @@ fn check_update_drift(app: tauri::AppHandle) -> Result<updatewatch::DriftReport,
         })
         .collect();
 
+    let mut states = states;
+    states.extend(settings_drift_states(&applied_ids));
     let report = updatewatch::build_report(previous, current, &states);
 
     // Recorded after the comparison, so a failure above leaves the previous
@@ -1718,6 +2123,7 @@ pub fn run() {
             debloat::reconcile_on_startup(app.handle());
             game_sessions::spawn_watcher(app.handle().clone());
             ecoqos::start(app.handle().clone());
+            process_rules::start(app.handle().clone());
             #[cfg(windows)]
             std::thread::spawn(refresh_drift_watch_target);
             Ok(())
@@ -1767,6 +2173,7 @@ pub fn run() {
             recommend::scan_relevant_ids,
             cpuclock::cpu_clock,
             cpubench::cpu_benchmark,
+            cpubench::boost_probe,
             profiles::capture_profile,
             profiles::save_profile,
             profiles::list_profiles,
@@ -1793,6 +2200,7 @@ pub fn run() {
             list_browser_cleanup,
             run_browser_cleanup,
             scan_duplicates,
+            cancel_folder_scan,
             delete_files,
             game_sessions::list_game_sessions,
             game_sessions::game_sessions_enabled,
@@ -1806,6 +2214,9 @@ pub fn run() {
             list_crash_reports,
             clear_crash_reports,
             sysmon::system_stats,
+            livemetrics::live_sample,
+            livemetrics::resource_users,
+            gaming::turbo_boost_already_set,
             fps::imp::start_fps_capture,
             fps::imp::stop_fps_capture,
             fps::imp::fps_status,
@@ -1817,7 +2228,10 @@ pub fn run() {
             diskhealth::disk_health,
             diskinfo::list_drives_cmd,
             thermals::thermal_report,
+            thermals::gpu_readings,
             drivers::driver_audit,
+            drivers::cancel_scan,
+            drivers::discard_scan_session,
             gpupower::gpu_power_info,
             gpupower::set_gpu_profile,
             drivers::open_windows_update,
@@ -1846,6 +2260,17 @@ pub fn run() {
             diagnostics::dpc::trace_dpc_latency,
             engine::dynamic_session::core_steering_status,
             game_sessions::set_core_steering,
+            preview_tweak,
+            scheduled_cleanup_enabled,
+            set_scheduled_cleanup,
+            process_rules::priority_rules_status,
+            process_rules::priority_rules_add,
+            process_rules::priority_rules_remove,
+            process_rules::priority_rules_set_enabled,
+            process_rules::priority_rules_set_priority,
+            process_guard::process_guard_status,
+            process_guard::set_process_guard,
+            process_guard::set_process_guard_hold,
             is_store_install
         ])
         .build(tauri::generate_context!())
@@ -1854,6 +2279,9 @@ pub fn run() {
             if matches!(event, tauri::RunEvent::Exit) {
                 if let Err(error) = ecoqos::stop(app) {
                     eprintln!("EcoQoS recovery remains pending: {error}");
+                }
+                if let Err(error) = process_rules::stop(app) {
+                    eprintln!("priority recovery remains pending: {error}");
                 }
                 #[cfg(windows)]
                 diagnostics::dpc::native::abort_if_running();
@@ -1913,6 +2341,8 @@ mod tests {
             .map(|s| s.to_string()),
         );
         ids.extend(power_tuning::TWEAKS.iter().map(|t| t.id.to_string()));
+        ids.extend(settings_tweaks::TWEAKS.iter().map(|t| t.id.to_string()));
+        ids.push(services::AI_FABRIC_ID.to_string());
         ids
     }
 
@@ -1946,6 +2376,34 @@ mod tests {
     /// The Scan screen's "fix all" must produce at most one elevation request,
     /// no matter how many admin tweaks were selected â€” the whole point of
     /// batching. This asserts the grouping without actually elevating.
+    #[test]
+    fn the_scheduled_cleanup_runs_at_most_once_a_week() {
+        let week = 7 * 24 * 3600;
+        assert!(temp_cleanup_due(0, week));
+        assert!(!temp_cleanup_due(1_000, 1_000 + week - 1));
+        assert!(temp_cleanup_due(1_000, 1_000 + week));
+        // A clock set backwards never makes it run again early.
+        assert!(!temp_cleanup_due(5_000, 4_000));
+    }
+
+    /// Memory Integrity is turned off only by its own switch: every bulk path
+    /// (batch apply, profiles, update re-apply) filters it out, and nothing
+    /// else is dropped on the way.
+    #[test]
+    fn manual_only_tweaks_never_ride_along_in_a_batch() {
+        let ids = all_visible_ids();
+        assert!(ids.iter().any(|id| id == "disable_memory_integrity"));
+        let bulk = bulk_applicable(ids.clone());
+        assert!(!bulk.iter().any(|id| id == "disable_memory_integrity"));
+        // Settings this PC's build or edition does not support also stay out,
+        // so the count depends on the machine running the test.
+        let fitting = ids.iter().filter(|id| fits_this_pc(id)).count();
+        assert_eq!(bulk.len(), fitting - 1);
+        assert!(MANUAL_ONLY_TWEAKS
+            .iter()
+            .all(|id| find_tweak(id).is_some_and(|t| t.requires_admin)));
+    }
+
     #[test]
     fn admin_tweaks_collapse_into_one_elevated_batch() {
         let ids = all_visible_ids();
@@ -2029,7 +2487,7 @@ mod tests {
     /// at once. If this fails, the catalogue changed â€” update the numbers
     /// here, then update every surface listed above to match.
     #[test]
-    fn the_catalogue_is_sixty_six_tweaks_twenty_seven_of_them_pro() {
+    fn the_catalogue_is_eighty_one_tweaks_thirty_five_of_them_pro() {
         let registry: Vec<_> = tweaks::all_tweaks().into_iter().filter(|t| t.id != "disable_copilot").collect();
         let registry_pro = registry.iter().filter(|t| t.requires_pro).count();
 
@@ -2051,25 +2509,28 @@ mod tests {
             privacy_extra::typing_personalization_info().requires_pro,
             contextmenu::info().requires_pro,
             services::windows_search_info().requires_pro,
+            services::ai_fabric_info().requires_pro,
             false, // Filter Keys shortcut
             true, // background app EcoQoS
             true, // Delivery Optimization cap
             true, // monitor refresh profiles
         ];
 
-        let total = registry.len() + composite_pro.len() + power_tuning::TWEAKS.len();
+        let settings = &settings_tweaks::TWEAKS;
+        let total = registry.len() + composite_pro.len() + power_tuning::TWEAKS.len() + settings.len();
         let pro = registry_pro
             + composite_pro.iter().filter(|p| **p).count()
-            + power_tuning::TWEAKS.iter().filter(|t| t.pro).count();
+            + power_tuning::TWEAKS.iter().filter(|t| t.pro).count()
+            + settings.iter().filter(|t| t.requires_pro).count();
 
-        assert_eq!(total, 66, "the catalogue no longer has 66 tweaks");
-        assert_eq!(pro, 27, "the Pro count moved");
-        assert_eq!(total - pro, 39, "the free count moved");
+        assert_eq!(total, 81, "the catalogue no longer has 81 tweaks");
+        assert_eq!(pro, 35, "the Pro count moved");
+        assert_eq!(total - pro, 46, "the free count moved");
 
         // The composite list must stay in step with what list_tweaks builds,
         // otherwise the totals above would quietly stop covering everything.
         assert_eq!(
-            composite_pro.len() + power_tuning::TWEAKS.len(),
+            composite_pro.len() + power_tuning::TWEAKS.len() + settings.len(),
             all_visible_ids().len() - registry.len(),
             "a composite tweak was added or removed without updating this test",
         );

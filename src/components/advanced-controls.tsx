@@ -1,12 +1,19 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { STRINGS, type Lang } from "../i18n";
-import type { DownloadLimitState, EcoQosState, MonitorProfilesState } from "../types";
+import { STRINGS, format, type Lang } from "../i18n";
+import { friendlyError } from "../lib";
+import type {
+  DownloadLimitState,
+  EcoQosState,
+  MonitorProfilesState,
+  Priority,
+  PriorityRulesStatus,
+} from "../types";
 import { ADVANCED_COPY } from "./advanced-copy";
 import { reconcileDownloadState } from "./download-limit-reconcile";
 import { ToolHeader, ToolStatus } from "./tool-section";
-import { Toggle } from "./ui";
+import { Badge, Toggle } from "./ui";
 import "./advanced-controls.css";
 
 export type AdvancedId =
@@ -36,12 +43,19 @@ export function AdvancedControlCard({
   const c = ADVANCED_COPY[lang];
   if (id === "ecoqos_rules")
     return (
-      <EcoCard
-        lang={lang}
-        isPro={isPro}
-        onRequirePro={() => onRequirePro(c.ecoTitle)}
-        onChanged={onChanged}
-      />
+      <div className="grid gap-3">
+        <EcoCard
+          lang={lang}
+          isPro={isPro}
+          onRequirePro={() => onRequirePro(c.ecoTitle)}
+          onChanged={onChanged}
+        />
+        <PriorityRulesCard
+          lang={lang}
+          isPro={isPro}
+          onRequirePro={() => onRequirePro(STRINGS[lang].priorityRules.title)}
+        />
+      </div>
     );
   if (id === "limit_do_background_download")
     return <DownloadCard lang={lang} isPro={isPro} onRequirePro={() => onRequirePro(c.doTitle)} />;
@@ -85,7 +99,7 @@ function EcoCard({
       await task();
       await refresh();
     } catch (e) {
-      setError(String(e));
+      setError(friendlyError(e, STRINGS[lang]));
     } finally {
       setBusy(false);
     }
@@ -95,7 +109,8 @@ function EcoCard({
       <ToolHeader
         title={
           <>
-            {c.ecoTitle} <span className="tool-pro-tag">PRO</span>
+            {c.ecoTitle}
+            <Badge kind="pro">{STRINGS[lang].badges.pro}</Badge>
           </>
         }
         description={c.ecoDescription}
@@ -135,6 +150,7 @@ function EcoCard({
           </button>
         </div>
       )}
+      {state?.paused && <ToolStatus>{STRINGS[lang].guard.paused}</ToolStatus>}
       {state && (
         <div className="advanced-facts">
           <span>{state.enabled ? c.ecoOn : c.ecoOff}</span>
@@ -205,6 +221,154 @@ function EcoCard({
   );
 }
 
+const PRIORITIES: Priority[] = ["idle", "below_normal", "normal", "above_normal", "high"];
+
+/** "Whenever this app runs, give it this priority." Opt-in, Pro, never above
+ *  High, never Windows' own processes or a game that manages its own
+ *  performance; the engine and its journal live in process_rules.rs. */
+function PriorityRulesCard({
+  lang,
+  isPro,
+  onRequirePro,
+}: {
+  lang: Lang;
+  isPro: boolean;
+  onRequirePro: () => void;
+}) {
+  const s = STRINGS[lang];
+  const c = ADVANCED_COPY[lang];
+  const p = s.priorityRules;
+  const label: Record<Priority, string> = {
+    idle: p.idle,
+    below_normal: p.belowNormal,
+    normal: p.normal,
+    above_normal: p.aboveNormal,
+    high: p.high,
+  };
+  const [state, setState] = useState<PriorityRulesStatus | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function refresh() {
+    setState(await invoke<PriorityRulesStatus>("priority_rules_status"));
+  }
+  useEffect(() => {
+    void invoke<PriorityRulesStatus>("priority_rules_status")
+      .then(setState)
+      .catch((e: unknown) => setError(friendlyError(e, s)));
+  }, [s]);
+  async function act(task: () => Promise<unknown>, requiresPro = true) {
+    if (busy) return;
+    if (requiresPro && !isPro) {
+      onRequirePro();
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await task();
+      await refresh();
+    } catch (e) {
+      setError(friendlyError(e, s));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="tool-panel advanced-card" aria-busy={busy}>
+      <ToolHeader
+        title={
+          <>
+            {p.title}
+            <Badge kind="pro">{STRINGS[lang].badges.pro}</Badge>
+          </>
+        }
+        description={p.subtitle}
+        actions={
+          <Toggle
+            checked={state?.enabled ?? false}
+            busy={busy || (!state && !error)}
+            disabled={!state}
+            label={p.title}
+            s={s}
+            onClick={() =>
+              void act(
+                () => invoke("priority_rules_set_enabled", { enabled: !state?.enabled }),
+                !state?.enabled,
+              )
+            }
+          />
+        }
+      />
+      {state?.paused && <ToolStatus>{s.guard.paused}</ToolStatus>}
+      {state && state.enabled && state.activeProcesses > 0 && (
+        <ToolStatus tone="active">{format(p.active, { count: state.activeProcesses })}</ToolStatus>
+      )}
+      <div className="advanced-toolbar">
+        <strong>{c.path}</strong>
+        <button
+          type="button"
+          data-tone="primary"
+          disabled={busy || !state}
+          onClick={() =>
+            void act(async () => {
+              const path = await chooseExecutable(p.title);
+              if (path) await invoke("priority_rules_add", { path, priority: "above_normal" });
+            })
+          }
+        >
+          {c.ecoAdd}
+        </button>
+      </div>
+      {state?.rules.length ? (
+        <ul className="advanced-rules">
+          {state.rules.map((rule) => (
+            <li key={rule.path}>
+              <span>
+                <strong>{rule.name}</strong>
+                <small title={rule.path}>{rule.path}</small>
+              </span>
+              <select
+                aria-label={format(p.levelLabel, { name: rule.name })}
+                value={rule.priority}
+                disabled={busy}
+                onChange={(e) =>
+                  void act(() =>
+                    invoke("priority_rules_set_priority", {
+                      path: rule.path,
+                      priority: e.target.value as Priority,
+                    }),
+                  )
+                }
+              >
+                {PRIORITIES.map((level) => (
+                  <option key={level} value={level}>
+                    {label[level]}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={busy}
+                aria-label={`${p.remove}: ${rule.name}`}
+                onClick={() =>
+                  void act(() => invoke("priority_rules_remove", { path: rule.path }), false)
+                }
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="advanced-empty">{p.empty}</p>
+      )}
+      {(error || state?.lastError) && (
+        <ToolStatus tone="error">{error || friendlyError(state?.lastError, s)}</ToolStatus>
+      )}
+    </section>
+  );
+}
+
 function DownloadCard({
   lang,
   isPro,
@@ -262,7 +426,8 @@ function DownloadCard({
       <ToolHeader
         title={
           <>
-            {c.doTitle} <span className="tool-pro-tag">PRO</span>
+            {c.doTitle}
+            <Badge kind="pro">{STRINGS[lang].badges.pro}</Badge>
           </>
         }
         description={c.doDescription}
@@ -414,7 +579,8 @@ function MonitorCard({
       <ToolHeader
         title={
           <>
-            {c.monitorTitle} <span className="tool-pro-tag">PRO</span>
+            {c.monitorTitle}
+            <Badge kind="pro">{STRINGS[lang].badges.pro}</Badge>
           </>
         }
         description={c.monitorDescription}

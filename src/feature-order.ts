@@ -22,6 +22,7 @@ const SECTION_ORDER: Record<string, readonly string[]> = {
     "monitor_refresh_profile",
     "reduce_input_lag",
     "disable_sticky_keys_prompt",
+    "disable_game_bar_captures",
     "hardware_gpu_scheduling",
     "disable_filter_keys_shortcut",
     "reduce_keyboard_delay",
@@ -37,7 +38,14 @@ const SECTION_ORDER: Record<string, readonly string[]> = {
     "global_timer_resolution",
     "disable_memory_integrity",
   ],
-  maintenance: ["enable_long_paths", "disable_delivery_optimization", "auto_end_frozen_tasks"],
+  maintenance: [
+    "enable_long_paths",
+    "disable_fast_startup",
+    "block_oem_device_apps",
+    "disable_storage_sense",
+    "disable_delivery_optimization",
+    "auto_end_frozen_tasks",
+  ],
 };
 
 export function orderSectionTweaks<T extends { id: string }>(items: T[], section: string): T[] {

@@ -19,9 +19,7 @@ pub fn current_user_session_allowed() -> bool {
     use windows_sys::Win32::{
         Foundation::CloseHandle,
         Security::{EqualSid, GetTokenInformation, TokenUser, TOKEN_QUERY, TOKEN_USER},
-        System::Threading::{
-            GetCurrentProcess, OpenProcess, OpenProcessToken, PROCESS_QUERY_LIMITED_INFORMATION,
-        },
+        System::Threading::{GetCurrentProcess, OpenProcessToken},
         UI::WindowsAndMessaging::{GetShellWindow, GetWindowThreadProcessId},
     };
     use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
@@ -39,14 +37,16 @@ pub fn current_user_session_allowed() -> bool {
         }
         let mut pid = 0;
         GetWindowThreadProcessId(shell, &mut pid);
-        let process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
-        if process.is_null() {
+        // Explorer, opened query-limited through the guard like every other
+        // process this app looks at.
+        let Ok(process) = crate::process_guard::open(pid, crate::process_guard::Access::Query)
+        else {
             return false;
-        }
+        };
         let mut shell_token = std::ptr::null_mut();
         let mut own_token = std::ptr::null_mut();
-        let opened_shell = OpenProcessToken(process, TOKEN_QUERY, &mut shell_token) != 0;
-        CloseHandle(process);
+        let opened_shell = OpenProcessToken(process.raw(), TOKEN_QUERY, &mut shell_token) != 0;
+        drop(process);
         if !opened_shell {
             return false;
         }

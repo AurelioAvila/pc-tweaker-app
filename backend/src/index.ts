@@ -18,6 +18,7 @@ import errorReportRoutes from "./routes/error-reports";
 import newsletterRoutes from "./routes/newsletter";
 import supportRoutes from "./routes/support";
 import offerRoutes from "./routes/offers";
+import flagRoutes from "./routes/flags";
 import downloadRoutes from "./routes/downloads";
 import { router as stripeRoutes, webhookHandler, deliverProReceipt, listExpiredCheckouts, recordSelfReportedSource, SELF_REPORTED_SOURCES } from "./routes/stripe";
 import { consumeGlobalBudget } from "./public-form-guard";
@@ -290,6 +291,7 @@ app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/entitlements", entitlementsRoutes);
 app.use("/api/error-reports", errorReportRoutes);
 app.use("/api/offers", offerRoutes);
+app.use("/api/flags", flagRoutes);
 app.use("/api/download", downloadRoutes);
 app.use("/api", stripeRoutes);
 // Unknown routes answer in the same JSON shape as every other error, not

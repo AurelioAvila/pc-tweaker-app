@@ -620,3 +620,6 @@
     transition: none !important;
   }
 }
+.pricing-workspace .hw-offer {
+  margin-bottom: 12px;
+}

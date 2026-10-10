@@ -197,7 +197,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     days: "jours",
     endsIn: "Se termine dans",
     promoReferenceShort:
-      "Les prix barrés sont nos plus bas des 30 jours précédant l'offre. Prix hors TVA.",
+      "Les prix barrés sont nos prix les plus bas des 30 jours précédant l'offre. Prix hors TVA.",
     firstMonth: "Premier mois, puis {price}/mois",
     firstYear: "Première année, puis {price}/an",
     promoTerms:
@@ -333,7 +333,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     days: "Tage",
     endsIn: "Endet in",
     promoReferenceShort:
-      "Durchgestrichene Preise sind unsere niedrigsten der 30 Tage vor dem Angebot. Preise ohne MwSt.",
+      "Durchgestrichene Preise sind die niedrigsten Preise der 30 Tage vor dem Angebot. Preise ohne MwSt.",
     firstMonth: "Erster Monat, danach {price}/Monat",
     firstYear: "Erstes Jahr, danach {price}/Jahr",
     promoTerms:

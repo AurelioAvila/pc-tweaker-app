@@ -21,6 +21,7 @@ export function HalloweenOfferBanner({
   badge,
   reserved = false,
   headingId = "halloween-offer-title",
+  headingLevel = 2,
 }: {
   kicker: string;
   heading: ReactNode;
@@ -34,8 +35,11 @@ export function HalloweenOfferBanner({
   badge?: ReactNode;
   reserved?: boolean;
   headingId?: string;
+  /** 2 in the app; 3 on a page whose plans section is already an h2. */
+  headingLevel?: 2 | 3;
 }) {
   const clock = promoClock(remaining);
+  const Heading = headingLevel === 3 ? "h3" : "h2";
   return (
     <section
       className={`hw-offer${reserved ? " hw-offer-reserved" : ""}`}
@@ -54,13 +58,11 @@ export function HalloweenOfferBanner({
           dangerouslySetInnerHTML={{ __html: HALLOWEEN_DECOR_RIGHT }}
         />
         <div className="hw-offer-copy">
-          <p className="hw-offer-kicker">
+          <Heading className="hw-offer-kicker" id={reserved ? undefined : headingId}>
             {kicker}
             {badge}
-          </p>
-          <p className="hw-offer-heading" id={reserved ? undefined : headingId}>
-            {heading}
-          </p>
+          </Heading>
+          <p className="hw-offer-heading">{heading}</p>
           {fine && <p className="hw-offer-fine">{fine}</p>}
         </div>
         <div className="hw-offer-timer">

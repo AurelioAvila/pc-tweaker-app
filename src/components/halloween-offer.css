@@ -11,7 +11,6 @@
   --hw-muted: var(--text-secondary, var(--fg-dim, #a6a6b0));
   --hw-line: var(--border-subtle, rgba(255, 255, 255, 0.08));
   container-type: inline-size;
-  margin-bottom: 12px;
 }
 .hw-offer-inner {
   position: relative;

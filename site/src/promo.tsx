@@ -11,7 +11,9 @@ export function usePromo() {
   // undefined until the server has answered once: the panel's room is kept meanwhile.
   const [received, setReceived] = useState<{ promo: Promo; at: ReturnType<typeof clock> } | null | undefined>(undefined);
   const [now, setNow] = useState(clock);
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    setMounted(true);
     const preview = import.meta.env.DEV ? import.meta.env.VITE_PROMO_PREVIEW : undefined;
     const accept = (promo: Promo | null) => setReceived(promo ? { promo, at: clock() } : null);
     let controller = new AbortController();
@@ -48,7 +50,8 @@ export function usePromo() {
   return {
     promo: active ? promo : null,
     /** Room for the panel while the first answer is pending, during the offer window only. */
-    reserve: received === undefined && now.wall < PROMO_LAYOUT_UNTIL,
+    // The first render matches the prerendered page; the deadline check waits for mount.
+    reserve: received === undefined && (!mounted || now.wall < PROMO_LAYOUT_UNTIL),
     remaining: active && promo ? msUntil(promo, promo.endsAt, elapsed) : 0,
     offer: (product: string, plan: string): PromoOffer | null =>
       (active && promo?.offers.find((o) => o.product === product && o.plan === plan)) || null,
@@ -90,7 +93,7 @@ function endLine(endsAt: string) {
 /** Same banner as the desktop app, above the plans. */
 export function PromoBanner({ promo, remaining }: { promo: Promo; remaining: number }) {
   return (
-    <HalloweenOfferBanner kicker="Halloween offer" heading={endLine(promo.endsAt)} fine={FINE} endsIn="Ends in" units={UNITS} remaining={remaining} />
+    <HalloweenOfferBanner headingLevel={3} kicker="Halloween offer" heading={endLine(promo.endsAt)} fine={FINE} endsIn="Ends in" units={UNITS} remaining={remaining} />
   );
 }
 
@@ -98,5 +101,5 @@ export function PromoBanner({ promo, remaining }: { promo: Promo; remaining: num
  *  Rome time, so the prerendered page and the browser render the same text. */
 export function PromoPlaceholder() {
   const end = new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Rome" }).format(PROMO_LAYOUT_UNTIL - 60_000);
-  return <HalloweenOfferBanner reserved kicker="Halloween offer" heading={`Ends ${end} CET`} fine={FINE} endsIn="Ends in" units={UNITS} remaining={0} />;
+  return <HalloweenOfferBanner reserved headingLevel={3} kicker="Halloween offer" heading={`Ends ${end} CET`} fine={FINE} endsIn="Ends in" units={UNITS} remaining={0} />;
 }

@@ -35,7 +35,7 @@ export function AccessPricing() {
         </motion.h2>
 
         {(promo.promo || promo.reserve) && (
-          <div className="mt-10 [&_.hw-offer]:mb-0">
+          <div className="mt-10">
             {promo.promo ? <PromoBanner promo={promo.promo} remaining={promo.remaining} /> : <PromoPlaceholder />}
           </div>
         )}

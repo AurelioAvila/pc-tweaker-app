@@ -91,16 +91,18 @@ fn write(dir: &Path, p: &Placement) {
     if std::fs::create_dir_all(dir).is_ok() {
         if let Ok(text) = serde_json::to_string(p) {
             let temp = dir.join(format!("{FILE}.{}.tmp", std::process::id()));
-            if std::fs::write(&temp, text).is_ok() && std::fs::rename(&temp, dir.join(FILE)).is_err() {
+            if std::fs::write(&temp, text).is_err() || std::fs::rename(&temp, dir.join(FILE)).is_err() {
                 let _ = std::fs::remove_file(&temp);
             }
         }
     }
 }
 
-/// The primary monitor's work area (screen minus taskbar), logical pixels.
+/// The primary monitor's work area (screen minus taskbar), logical pixels:
+/// (width, height, left, top). The origin is not 0,0 when the taskbar sits on
+/// the left or at the top.
 #[cfg(windows)]
-fn work_area(scale: f64) -> Option<(f64, f64)> {
+fn work_rect(scale: f64) -> Option<(f64, f64, f64, f64)> {
     use windows_sys::Win32::Foundation::RECT;
     use windows_sys::Win32::UI::WindowsAndMessaging::{SystemParametersInfoW, SPI_GETWORKAREA};
     let mut r = RECT { left: 0, top: 0, right: 0, bottom: 0 };
@@ -112,12 +114,36 @@ fn work_area(scale: f64) -> Option<(f64, f64)> {
     Some((
         f64::from(r.right - r.left) / scale,
         f64::from(r.bottom - r.top) / scale,
+        f64::from(r.left) / scale,
+        f64::from(r.top) / scale,
     ))
 }
 
 #[cfg(not(windows))]
-fn work_area(_scale: f64) -> Option<(f64, f64)> {
+fn work_rect(_scale: f64) -> Option<(f64, f64, f64, f64)> {
     None
+}
+
+/// A placement in work-area coordinates, so the checks below can assume the
+/// work area starts at 0,0.
+fn relative(p: &Placement, left: f64, top: f64) -> Placement {
+    Placement { x: p.x - left, y: p.y - top, ..*p }
+}
+
+/// Windows' own word on whether the window is in a Snap layout, for the
+/// shapes the geometry check cannot see (thirds, quarters).
+#[cfg(windows)]
+fn arranged(window: &tauri::Window) -> bool {
+    use windows_sys::Win32::UI::WindowsAndMessaging::IsWindowArranged;
+    window
+        .hwnd()
+        // SAFETY: a live window handle owned by this process.
+        .is_ok_and(|hwnd| unsafe { IsWindowArranged(hwnd.0 as _) } != 0)
+}
+
+#[cfg(not(windows))]
+fn arranged(_window: &tauri::Window) -> bool {
+    false
 }
 
 /// Throttles the saves that a drag produces dozens of times a second.
@@ -140,19 +166,19 @@ pub fn restore(app: &tauri::App) {
         Err(_) => return,
     };
     let scale = window.scale_factor().unwrap_or(1.0);
-    let work = work_area(scale).or_else(|| {
+    let work = work_rect(scale).or_else(|| {
         window
             .current_monitor()
             .ok()
             .flatten()
             .map(|m| {
                 let s = m.size().to_logical::<f64>(scale);
-                (s.width, s.height - 48.0)
+                (s.width, s.height - 48.0, 0.0, 0.0)
             })
     });
-    let Some((ww, wh)) = work else { return };
+    let Some((ww, wh, left, top)) = work else { return };
 
-    match read(&dir).filter(|p| fits(p, ww, wh)) {
+    match read(&dir).filter(|p| fits(&relative(p, left, top), ww, wh)) {
         Some(p) => {
             let _ = window.set_size(LogicalSize::new(p.w, p.h));
             let _ = window.set_position(LogicalPosition::new(p.x, p.y));
@@ -168,7 +194,11 @@ pub fn restore(app: &tauri::App) {
 
 /// Called from the window event hook on every move and resize.
 pub fn remember(window: &tauri::Window, size: Option<PhysicalSize<u32>>, pos: Option<PhysicalPosition<i32>>) {
-    if window.label() != "main" || window.is_maximized().unwrap_or(false) || window.is_minimized().unwrap_or(false) {
+    if window.label() != "main"
+        || window.is_maximized().unwrap_or(false)
+        || window.is_minimized().unwrap_or(false)
+        || arranged(window)
+    {
         return;
     }
     let Some(saver) = window.app_handle().try_state::<Saver>() else { return };
@@ -184,8 +214,8 @@ pub fn remember(window: &tauri::Window, size: Option<PhysicalSize<u32>>, pos: Op
     }
     // A full-screen size is a maximize caught mid-transition; keep the last
     // real size instead of overwriting it.
-    if let Some((ww, wh)) = work_area(scale) {
-        if !fits(&p, ww, wh) {
+    if let Some((ww, wh, left, top)) = work_rect(scale) {
+        if !fits(&relative(&p, left, top), ww, wh) {
             return;
         }
     }
@@ -246,6 +276,11 @@ mod tests {
         // A tall window the user placed away from the edges is fine.
         let tall = Placement { w: 1000.0, h: 1000.0, x: 300.0, y: 10.0 };
         assert!(fits(&tall, 1920.0, 1032.0));
+        // With the taskbar on the left (work area starting at x=48), a left
+        // half snap is caught once the placement is made relative to it.
+        let after_taskbar = Placement { w: 936.0, h: 1080.0, x: 48.0, y: 0.0 };
+        assert!(fits(&after_taskbar, 1872.0, 1080.0), "absolute: looks placed");
+        assert!(!fits(&relative(&after_taskbar, 48.0, 0.0), 1872.0, 1080.0));
         // Below the window's own minimum, or not a number: not reused.
         assert!(!fits(&Placement { w: 700.0, h: 640.0, x: 100.0, y: 100.0 }, 1920.0, 1032.0));
         assert!(!fits(&Placement { w: f64::NAN, h: 700.0, x: 0.0, y: 0.0 }, 1920.0, 1032.0));

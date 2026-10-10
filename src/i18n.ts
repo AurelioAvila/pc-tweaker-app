@@ -11114,6 +11114,6 @@ export const STRINGS: Record<Lang, Strings> = { it, en, fr, es, de, pt };
  */
 export function detectInitialLang(): Lang {
   const stored = localStorage.getItem("pc-tweaker-lang");
-  if (stored && stored in STRINGS) return stored as Lang;
+  if (stored && Object.prototype.hasOwnProperty.call(STRINGS, stored)) return stored as Lang;
   return "en";
 }

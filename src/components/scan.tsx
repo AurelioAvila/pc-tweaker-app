@@ -29,6 +29,24 @@ import { SCAN_COPY } from "./scan-copy";
 import "./scan-workspace.css";
 import { TechnicalDetails } from "./technical";
 
+/** Waits for the backend driver audit to stop, re-sending the cancel every
+ *  half second (an audit can start after the first cancel arrived, while it
+ *  was still queued) and giving up after 15 seconds so the panel never stays
+ *  stuck. */
+async function stopAudit(session: ScanSession): Promise<void> {
+  let done = false;
+  const retry = window.setInterval(() => {
+    if (!done) void invoke("cancel_scan").catch(() => undefined);
+  }, 500);
+  await Promise.race([
+    settled(session).then(() => {
+      done = true;
+    }),
+    new Promise((resolve) => window.setTimeout(resolve, 15_000)),
+  ]);
+  window.clearInterval(retry);
+}
+
 /** A paused scan outlives the page, like a running repair does: leaving Scan
  *  and coming back finds it where it was. Memory only, so closing the app
  *  discards it. */
@@ -147,7 +165,7 @@ export function ScanPanel({
   /** Ends a scan where it is and shows what it found, labelled partial. */
   function end(session: ScanSession) {
     heldScan = null;
-    void settled(session).then(() =>
+    void stopAudit(session).then(() =>
       invoke("discard_scan_session", { session: session.id }).catch(() => undefined),
     );
     const partial = scanReport(session);
@@ -265,7 +283,7 @@ export function ScanPanel({
           // Paused. The backend audit is given time to save where it was
           // before Resume can be pressed.
           heldScan = { session, driver, elapsed: seconds };
-          await settled(session);
+          await stopAudit(session);
           if (alive.current) {
             setPaused(true);
             setProgress(Math.floor(scanProgress(session.steps, driver)));

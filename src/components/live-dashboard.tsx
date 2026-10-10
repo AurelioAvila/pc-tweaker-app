@@ -375,7 +375,7 @@ export function LiveDashboard({
         if (cancelled) return;
         // After a pause the charts start again rather than joining two
         // moments with a line that suggests nothing happened in between.
-        const gap = lastRead.current.sample > 0 && Date.now() - lastRead.current.sample > 3000;
+        const gap = lastRead.current.sample > 0 && Date.now() - lastRead.current.sample > 5000;
         lastRead.current.sample = Date.now();
         const from = <T,>(v: T[]) => (gap ? [] : v);
         setFailed(false);

@@ -788,6 +788,14 @@ mod tests {
         let key = path_key(std::fs::canonicalize(&exe).unwrap().to_str().unwrap()).unwrap();
         let process = native::Process::open(pid).unwrap().unwrap();
         let before = process.class();
+        // CI runners may start processes below Normal already, so the rule
+        // picks a class the child is not at.
+        assert!(Priority::from_class(before).is_some(), "unexpected class {before:#x}");
+        let applied = if before == Priority::BelowNormal.class() {
+            Priority::Normal
+        } else {
+            Priority::BelowNormal
+        };
         let r = Recovery {
             identity: Identity {
                 pid,
@@ -795,7 +803,7 @@ mod tests {
                 executable: key,
             },
             original: before,
-            applied: Priority::BelowNormal.class(),
+            applied: applied.class(),
             owner_pid: std::process::id(),
             owner_creation: own,
         };

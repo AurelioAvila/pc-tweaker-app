@@ -298,3 +298,155 @@ test("unknown security signals are not reported as passed or disabled", () => {
   assert.deepEqual(unknownSecuritySignals(r), ["Defender: Unreadable", "SmartScreen: Unknown"]);
   assert.deepEqual(scanObservations(r), []);
 });
+
+test("stopping a scan rejects at once, drops late answers and lets the next scan run", async () => {
+  const { ScanCancelled } = await import("../src/scan-runner");
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  const calls: { command: string; args?: Record<string, unknown> }[] = [];
+  const slowDrivers = async <T>(command: string, args?: Record<string, unknown>) => {
+    calls.push({ command, args });
+    if (command === "driver_audit") await held;
+    return [] as T;
+  };
+  const controller = new AbortController();
+  const states: string[] = [];
+  const running = collectScan(
+    slowDrivers,
+    (_p, probe, state) => states.push(`${probe}:${state}`),
+    controller.signal,
+  );
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.ok(states.includes("driver_audit:reading"));
+  const before = states.length;
+  controller.abort();
+  controller.abort(); // a second click changes nothing
+  const started = Date.now();
+  await assert.rejects(running, (e) => e instanceof ScanCancelled);
+  assert.ok(Date.now() - started < 1000, "did not wait for the slow read");
+  // The audit was told it may be cancelled; nothing after the stop is reported.
+  assert.equal(calls.find((c) => c.command === "driver_audit")?.args?.cancellable, true);
+  release();
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(states.length, before, "no progress after the stop");
+
+  // A scan started after the cancelled one completes normally.
+  const again = await collectScan(
+    async <T>() => [] as T,
+    () => undefined,
+    new AbortController().signal,
+  );
+  assert.equal(again.unavailable.length, 0);
+  assert.equal(again.partial, false);
+});
+
+test("a signal aborted before the scan starts reads nothing", async () => {
+  const { ScanCancelled } = await import("../src/scan-runner");
+  const controller = new AbortController();
+  controller.abort();
+  let calls = 0;
+  await assert.rejects(
+    collectScan(
+      async <T>() => (calls++, [] as T),
+      () => undefined,
+      controller.signal,
+    ),
+    (e) => e instanceof ScanCancelled,
+  );
+  assert.equal(calls, 0);
+});
+
+test("a paused scan keeps what it finished and a resume reads only what is missing", async () => {
+  const { newScanSession, runScanSession, scanReport, finishedSteps } =
+    await import("../src/scan-runner");
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  const calls: string[] = [];
+  const auditArgs: unknown[] = [];
+  const reads = async <T>(command: string, args?: Record<string, unknown>) => {
+    calls.push(command);
+    if (command === "driver_audit") {
+      auditArgs.push(args);
+      await held;
+    }
+    if (command === "health_report") throw Error("denied");
+    return [] as T;
+  };
+  const session = newScanSession();
+  const pause = new AbortController();
+  const running = runScanSession(reads, session, () => undefined, pause.signal);
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  pause.abort();
+  pause.abort(); // a double click changes nothing
+  assert.equal(await running, false, "paused, not finished");
+  release();
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(finishedSteps(session), SCAN_PROBES.length - 1, "everything but the audit kept");
+  assert.equal(session.steps.driver_audit, undefined, "the late audit answer is dropped");
+
+  // Readable while paused: what ran, what failed and what never ran are distinct.
+  const partial = scanReport(session);
+  assert.deepEqual(partial.skipped, ["driver_audit"]);
+  assert.deepEqual(partial.unavailable, ["health_report"]);
+  assert.equal(partial.partial, true);
+
+  // Resume: only the missing read runs, under the same session id.
+  calls.length = 0;
+  assert.equal(await runScanSession(reads, session, () => undefined), true);
+  assert.deepEqual(calls, ["driver_audit"]);
+  assert.equal((auditArgs[0] as { session: string }).session, session.id);
+  assert.equal((auditArgs[1] as { session: string }).session, session.id);
+  const full = scanReport(session);
+  assert.deepEqual(full.skipped, []);
+  assert.deepEqual(full.unavailable, ["health_report"]);
+
+  // A scan run again after ending starts from nothing.
+  calls.length = 0;
+  const again = newScanSession();
+  assert.notEqual(again.id, session.id);
+  assert.equal(
+    await runScanSession(
+      async <T>(c: string) => (calls.push(c), [] as T),
+      again,
+      () => undefined,
+    ),
+    true,
+  );
+  assert.equal(new Set(calls).size, SCAN_PROBES.length);
+});
+
+test("pausing during the last read resumes with just that read", async () => {
+  const { newScanSession, runScanSession } = await import("../src/scan-runner");
+  const session = newScanSession();
+  const pause = new AbortController();
+  const last = new Promise<void>(() => undefined); // never answers before the pause
+  const reads = async <T>(command: string) => {
+    if (command === "ecoqos_status") await last;
+    return [] as T;
+  };
+  const running = runScanSession(reads, session, () => undefined, pause.signal);
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  pause.abort();
+  assert.equal(await running, false);
+  const resumed: string[] = [];
+  await runScanSession(
+    async <T>(c: string) => (resumed.push(c), [] as T),
+    session,
+    () => undefined,
+  );
+  assert.deepEqual(resumed, ["ecoqos_status"]);
+});
+
+test("scan progress weighs the driver inventory and never reaches 100 before the report", async () => {
+  const { scanProgress } = await import("../src/scan-runner");
+  const step = { state: "complete" as const, at: 0, value: null };
+  assert.equal(scanProgress({}, null), 0);
+  assert.equal(Math.round(scanProgress({}, { done: 5, total: 10 })), 30);
+  assert.equal(scanProgress({}, { done: 1, total: 0 }), 0, "an empty class list is not progress");
+  const all = Object.fromEntries(SCAN_PROBES.map((p) => [p, step]));
+  assert.equal(scanProgress(all, null), 99);
+  const noDrivers = Object.fromEntries(
+    SCAN_PROBES.filter((p) => p !== "driver_audit").map((p) => [p, step]),
+  );
+  assert.equal(Math.round(scanProgress(noDrivers, null)), 40);
+});

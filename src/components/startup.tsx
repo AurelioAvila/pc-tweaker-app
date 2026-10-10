@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
 import { ScheduledTaskEntry, StartupEntry, Toast } from "../types";
-import { ShieldBadge, Toggle } from "./ui";
+import { Badge, Toggle } from "./ui";
 
 function StartupMark({ name, src }: { name: string; src?: string | null }) {
   const [failedSource, setFailedSource] = useState<string>();
@@ -153,12 +153,12 @@ export function StartupManager({
           actions={
             <div className="tool-header-actions">
               {loaded && visible.length > 0 && (
-                <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium text-ink-2">
+                <Badge>
                   {format(s.startupManager.activeCount, {
                     enabled: enabledCount,
                     total: visible.length,
                   })}
-                </span>
+                </Badge>
               )}
               <button
                 onClick={() => void rescan()}
@@ -214,15 +214,11 @@ export function StartupManager({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-semibold text-ink">{displayName(item)}</h3>
-                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-3">
-                  {locationLabel[item.location]}
-                </span>
+                <Badge kind="muted">{locationLabel[item.location]}</Badge>
                 {item.requires_admin && (
                   <>
-                    <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-2">
-                      {s.startupManager.machineWide}
-                    </span>
-                    <ShieldBadge label={s.badges.admin} />
+                    <Badge>{s.startupManager.machineWide}</Badge>
+                    <Badge kind="admin">{s.badges.admin}</Badge>
                   </>
                 )}
               </div>
@@ -331,12 +327,12 @@ export function ScheduledTaskManager({
           actions={
             <div className="tool-header-actions">
               {loaded && tasks.length > 0 && (
-                <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium text-ink-2">
+                <Badge>
                   {format(s.scheduledTasks.activeCount, {
                     enabled: enabledCount,
                     total: tasks.length,
                   })}
-                </span>
+                </Badge>
               )}
               <button
                 onClick={() => void rescan()}
@@ -387,12 +383,12 @@ export function ScheduledTaskManager({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-semibold text-ink">{task.name}</h3>
-                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-3">
+                <Badge kind="muted">
                   {task.trigger === "boot"
                     ? s.scheduledTasks.triggerBoot
                     : s.scheduledTasks.triggerLogon}
-                </span>
-                {task.requires_admin && <ShieldBadge label={s.badges.admin} />}
+                </Badge>
+                {task.requires_admin && <Badge kind="admin">{s.badges.admin}</Badge>}
               </div>
               <ToolDetails label={s.healthPanel.showMore}>
                 <code className="tool-command">{task.command || task.path}</code>

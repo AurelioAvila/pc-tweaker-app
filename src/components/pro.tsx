@@ -14,7 +14,7 @@ import {
   ShredResult,
   Toast,
 } from "../types";
-import { ProBadge, ShieldBadge } from "./ui";
+import { Badge } from "./ui";
 
 /* ------------------------------------------------------------------ *
  * Secure Defragmentation
@@ -89,12 +89,12 @@ export function SecureDefragCard({
       <div className="tool-card-head flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="font-semibold text-ink">{s.secureDefrag.title}</h3>
-          <ShieldBadge label={s.badges.admin} />
-          <ProBadge label={s.badges.pro} />
+          <Badge kind="admin">{s.badges.admin}</Badge>
+          <Badge kind="pro">{s.badges.pro}</Badge>
         </div>
-        <span className="type-data rounded-full bg-surface-2 px-2.5 py-0.5 text-[11.5px] font-bold text-ink-2">
+        <Badge>
           {drive} · {mediaType}
-        </span>
+        </Badge>
       </div>
 
       <p className="mt-1.5 text-sm leading-relaxed text-ink-3">
@@ -165,11 +165,7 @@ export function SecureDefragCard({
         </div>
       )}
 
-      <button
-        onClick={() => void run()}
-        disabled={running}
-        className="mt-4 flex items-center gap-2 rounded-xl bg-accent px-5 py-2 text-[13px] font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:hover:translate-y-0 disabled:hover:brightness-100"
-      >
+      <button onClick={() => void run()} disabled={running} className="tool-primary-action mt-4">
         {running && (
           <span className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
         )}
@@ -260,7 +256,7 @@ export function ZeroTraceCard({
     <div className="tool-panel tool-card tool-zero-trace-card mb-6 rounded-2xl border border-line bg-surface-1 p-5">
       <div className="tool-card-head flex flex-wrap items-center gap-2">
         <h2 className="font-semibold text-ink">{s.zeroTrace.title}</h2>
-        <ProBadge label={s.badges.pro} />
+        <Badge kind="pro">{s.badges.pro}</Badge>
       </div>
       <p className="mt-1 text-sm leading-relaxed text-ink-3">{s.zeroTrace.subtitle}</p>
 
@@ -269,7 +265,7 @@ export function ZeroTraceCard({
         <div className="rounded-xl border border-line-2 p-4">
           <div className="flex items-center gap-2">
             <h3 className="text-[13px] font-bold text-ink">{s.zeroTrace.purgeTitle}</h3>
-            <ShieldBadge label={s.badges.admin} />
+            <Badge kind="admin">{s.badges.admin}</Badge>
           </div>
           <p className="mt-1 text-[11.5px] leading-relaxed text-ink-3">{s.zeroTrace.purgeBody}</p>
 
@@ -285,7 +281,7 @@ export function ZeroTraceCard({
           <button
             onClick={() => void runPurge()}
             disabled={purging}
-            className="mt-3 flex items-center gap-2 rounded-lg border border-line-2 px-3.5 py-1.5 text-[12px] font-semibold text-ink-2 transition-colors hover:border-accent/40 hover:text-ink disabled:cursor-wait"
+            className="tool-secondary-action mt-3"
           >
             {purging && (
               <span className="inline-block h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -320,7 +316,7 @@ export function ZeroTraceCard({
           <button
             onClick={() => void runShred()}
             disabled={shredding}
-            className="mt-3 flex items-center gap-2 rounded-lg border border-rose-400/40 px-3.5 py-1.5 text-[12px] font-semibold text-rose-300 transition-colors hover:bg-rose-400/10 disabled:cursor-wait"
+            className="tool-danger-action mt-3"
           >
             {shredding && (
               <span className="inline-block h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -498,7 +494,7 @@ export function GamingHudCard({
         <div className="tool-card-copy min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-[13.5px] font-semibold text-ink">{s.hud.title}</h2>
-            <ProBadge label={s.badges.pro} />
+            <Badge kind="pro">{s.badges.pro}</Badge>
           </div>
           <p className="mt-0.5 text-[12px] leading-relaxed text-ink-3">{s.hud.subtitle}</p>
           <p className="mt-1 text-[11px] leading-relaxed text-ink-3">{s.hud.fpsAbout}</p>
@@ -530,38 +526,27 @@ export function GamingHudCard({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {open && (
-            <button
-              onClick={() => void toggleSize()}
-              className="rounded-xl border border-line-2 px-3 py-2 text-[12.5px] font-bold text-ink-2 transition hover:-translate-y-px hover:brightness-110"
-            >
+            <button onClick={() => void toggleSize()} className="tool-secondary-action">
               {compact ? s.hud.sizeNormal : s.hud.sizeCompact}
             </button>
           )}
           {open && (
-            <button
-              onClick={() => void toggleLock()}
-              className="rounded-xl border border-line-2 px-3 py-2 text-[12.5px] font-bold text-ink-2 transition hover:-translate-y-px hover:brightness-110"
-            >
+            <button onClick={() => void toggleLock()} className="tool-secondary-action">
               {locked ? s.hud.unlock : s.hud.lock}
             </button>
           )}
           {elevated && (
             <button
               onClick={() => void toggleFps()}
-              className={`rounded-xl px-3 py-2 text-[12.5px] font-bold transition hover:-translate-y-px hover:brightness-110 ${
-                measuring
-                  ? "border border-emerald-400/40 text-emerald-300"
-                  : "border border-line-2 text-ink-2"
-              }`}
+              className="tool-secondary-action"
+              data-active={measuring}
             >
               {measuring ? s.hud.fpsStop : s.hud.fpsStart}
             </button>
           )}
           <button
             onClick={() => void toggle()}
-            className={`rounded-xl px-4 py-2 text-[12.5px] font-bold transition hover:-translate-y-px hover:brightness-110 ${
-              open ? "border border-line-2 text-ink-2" : "bg-accent text-on-accent"
-            }`}
+            className={open ? "tool-secondary-action" : "tool-primary-action"}
           >
             {open ? s.hud.hide : s.hud.show}
           </button>
@@ -697,7 +682,7 @@ export function DriverBoosterCard({
         <div className="tool-card-copy min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold text-ink">{s.driverBooster.title}</h3>
-            <ProBadge label={s.badges.pro} />
+            <Badge kind="pro">{s.badges.pro}</Badge>
           </div>
           <p className="mt-1 max-w-xl text-[12.5px] leading-relaxed text-ink-3">
             {s.driverBooster.subtitle}
@@ -706,7 +691,7 @@ export function DriverBoosterCard({
         <button
           onClick={() => void scan()}
           disabled={scanning}
-          className="tool-card-action flex shrink-0 items-center gap-2 rounded-xl bg-accent px-4 py-2 text-[12.5px] font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:hover:translate-y-0 disabled:hover:brightness-100"
+          className="tool-primary-action tool-card-action"
         >
           {scanning && (
             <span className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -768,15 +753,12 @@ export function DriverBoosterCard({
                       {entry.class} · {entry.provider} · {entry.version}
                     </span>
                   </span>
-                  <span
-                    className={`type-data shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-bold tabular-nums ${
-                      entry.tier === "stale"
-                        ? "bg-rose-400/15 text-rose-300"
-                        : "bg-amber-400/15 text-amber-300"
-                    }`}
+                  <Badge
+                    kind={entry.tier === "stale" ? "danger" : "warn"}
+                    className="shrink-0 tabular-nums"
                   >
                     {Math.round(entry.age_days / 365)}y
-                  </span>
+                  </Badge>
                 </label>
               );
             })}
@@ -785,7 +767,7 @@ export function DriverBoosterCard({
           <button
             onClick={() => void openSelected()}
             disabled={selectedPages.length === 0}
-            className="mt-3 w-full rounded-xl bg-[linear-gradient(to_right,var(--app-accent),var(--app-accent2))] py-2.5 text-[13px] font-bold text-slate-900 transition hover:-translate-y-px hover:brightness-110 disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:brightness-100"
+            className="tool-primary-action mt-3 w-full"
           >
             {format(s.driverBooster.openSelected, { count: selectedPages.length })}
           </button>

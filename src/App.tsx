@@ -35,7 +35,7 @@ import {
   HeartPulseIcon,
   ThermometerIcon,
 } from "./components/icons";
-import { PaywallModal, ProBadge, ShieldBadge, Toggle, UpdateBanner } from "./components/ui";
+import { Badge, PaywallModal, Toggle, UpdateBanner } from "./components/ui";
 import {
   BrowserCleanupCard,
   CleanupCard,
@@ -1147,16 +1147,12 @@ function App() {
                                 }}
                               />
                             ) : (
-                              t.hive !== "—" && (
-                                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-2">
-                                  {t.hive}
-                                </span>
-                              )
+                              t.hive !== "—" && <Badge>{t.hive}</Badge>
                             )}
-                            {t.requires_admin && <ShieldBadge label={s.badges.admin} />}
-                            {t.requires_pro && <ProBadge label={s.badges.pro} />}
+                            {t.requires_admin && <Badge kind="admin">{s.badges.admin}</Badge>}
+                            {t.requires_pro && <Badge kind="pro">{s.badges.pro}</Badge>}
                             {(t.min_build || t.pro_edition) && (
-                              <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-3">
+                              <Badge kind="muted">
                                 {[
                                   t.min_build
                                     ? format(s.requirements.minBuild, {
@@ -1167,7 +1163,7 @@ function App() {
                                 ]
                                   .filter(Boolean)
                                   .join(" · ")}
-                              </span>
+                              </Badge>
                             )}
                           </div>
                           <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.55] text-ink-3">

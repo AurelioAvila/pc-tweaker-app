@@ -542,7 +542,7 @@ function ThermalProfiles({
         <button
           onClick={() => void apply()}
           disabled={busy || plan === null || applied}
-          className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2 text-[13px] font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-default disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:brightness-100"
+          className="tool-primary-action"
         >
           {busy && (
             <span className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -1120,14 +1120,11 @@ export function DriversPanel({
               onClick={() => {
                 void invoke("reboot_now").catch((e: unknown) => pushToast("error", String(e)));
               }}
-              className="rounded-lg bg-accent px-3.5 py-1.5 text-[12px] font-bold text-on-accent"
+              className="tool-primary-action"
             >
               {s.hardware.rebootNow}
             </button>
-            <button
-              onClick={() => setRebootNeeded(false)}
-              className="rounded-lg border border-line-2 px-3.5 py-1.5 text-[12px] font-semibold text-ink-2 hover:text-ink"
-            >
+            <button onClick={() => setRebootNeeded(false)} className="tool-secondary-action">
               {s.hardware.rebootLater}
             </button>
           </div>

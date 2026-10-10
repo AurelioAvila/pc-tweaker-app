@@ -5,13 +5,45 @@ const native = fs.readFileSync(new URL("../src-tauri/src/lib.rs", import.meta.ur
 const hives = [...native.matchAll(/hive:\s*"([^"]*)"/g)].map((match) => match[1]);
 assert.equal(
   hives.filter((value) => value === "\\u{2014}").length,
-  14,
+  15,
   "All composite tweaks use the encoding-safe sentinel",
 );
 assert.ok(
   hives.every((value) => ["\\u{2014}", "Windows API"].includes(value)),
   "No corrupted native badges",
 );
+// One badge component. Every tag in the app goes through `Badge`, so Pro,
+// Admin, hive and status tags cannot drift apart again.
+const ui = fs.readFileSync(new URL("../src/components/ui.tsx", import.meta.url), "utf8");
+assert.match(ui, /export function Badge\(/, "Badge is exported from ui.tsx");
+assert.doesNotMatch(
+  ui,
+  /export function (ProBadge|ShieldBadge|SoonBadge)\b/,
+  "no second badge component",
+);
+const sources = fs
+  .readdirSync(new URL("../src", import.meta.url), { recursive: true })
+  .filter((f) => /\.(tsx|css)$/.test(f))
+  .map((f) => [
+    f.replaceAll("\\", "/"),
+    fs.readFileSync(new URL(`../src/${f}`, import.meta.url), "utf8"),
+  ]);
+// A deliberate exception: the removable filter chip in the cookie cleaner is an input, not a tag.
+const pillAllowed = new Set(["components/cleaners.tsx"]);
+for (const [file, text] of sources) {
+  assert.doesNotMatch(text, /\b(tool-pro-tag|scan-tag|pro-chip)\b/, `${file}: local badge class`);
+  assert.doesNotMatch(
+    text,
+    /\baccent-sky-\d+/,
+    `${file}: checkbox colour outside the theme accent`,
+  );
+  if (file.endsWith(".tsx") && !pillAllowed.has(file))
+    assert.doesNotMatch(
+      text,
+      /className=[{"`][^"`]*rounded-full[^"`]*\bpy-0\.5\b/,
+      `${file}: hand-made pill; use <Badge>`,
+    );
+}
 const { outputFiles } = await build({
   stdin: {
     contents: `

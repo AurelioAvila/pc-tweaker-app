@@ -70,7 +70,7 @@ export function LatencyTracePanel({ s }: { s: Strings }) {
               value={seconds}
               disabled={running}
               onChange={(event) => setSeconds(Number(event.target.value))}
-              className="rounded-lg border border-line bg-surface-1 px-2 py-1.5 text-[12px] text-ink-2"
+              className="tool-select"
             >
               {CAPTURE_LENGTHS.map((value) => (
                 <option key={value} value={value}>

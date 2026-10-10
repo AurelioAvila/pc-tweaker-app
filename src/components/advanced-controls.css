@@ -59,7 +59,8 @@
 }
 .advanced-toolbar input,
 .advanced-toolbar select,
-.advanced-rules select {
+.advanced-rules select,
+.tool-select {
   min-height: 32px;
   max-width: 220px;
   border: 1px solid var(--border-strong);

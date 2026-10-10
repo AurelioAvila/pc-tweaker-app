@@ -66,9 +66,68 @@ pub struct ScanProgress {
     pub class: String,
 }
 
+/// Bumped by [`cancel_scan`]. A cancellable audit remembers the value it
+/// started under and stops, killing its PowerShell, once it changes.
+static SCAN_GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Error a cancelled audit returns.
+pub const SCAN_CANCELLED: &str = "SCAN_CANCELLED";
+
+/// Stops the scan's driver audit, if one is running. Everything the scan
+/// reads is read-only, so there is nothing to undo.
+#[tauri::command]
+pub fn cancel_scan() {
+    SCAN_GENERATION.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+}
+
+/// Whether the generation an audit started under is no longer current.
+fn stale(started: Option<u64>) -> bool {
+    started.is_some_and(|g| g != SCAN_GENERATION.load(std::sync::atomic::Ordering::SeqCst))
+}
+
+/// How far a paused scan's driver inventory got: the classes it is walking
+/// and everything read from the first `done` of them. A resumed audit with
+/// the same session id carries on from there; the class that was being read
+/// when the pause came is read again (reads are idempotent).
+#[derive(Clone, Default)]
+struct PartialAudit {
+    session: String,
+    classes: Vec<String>,
+    done: usize,
+    entries: Vec<DriverEntry>,
+    excluded_inbox: usize,
+    total_scanned: usize,
+}
+
+/// Memory only, and one at a time: a different session forgets the last.
+static PARTIAL: std::sync::Mutex<Option<PartialAudit>> = std::sync::Mutex::new(None);
+
+fn save_partial(partial: PartialAudit) {
+    *PARTIAL.lock().unwrap_or_else(|e| e.into_inner()) = Some(partial);
+}
+
+/// The partial inventory of `session`, if that is what is held. Anything
+/// held for another session is dropped.
+fn take_partial(session: &str) -> Option<PartialAudit> {
+    let mut held = PARTIAL.lock().unwrap_or_else(|e| e.into_inner());
+    held.take().filter(|p| p.session == session)
+}
+
+/// Forgets a paused scan's partial driver inventory (the scan was ended).
+#[tauri::command]
+pub fn discard_scan_session(session: String) {
+    let mut held = PARTIAL.lock().unwrap_or_else(|e| e.into_inner());
+    if held.as_ref().is_some_and(|p| p.session == session) {
+        *held = None;
+    }
+}
+
 #[cfg(windows)]
 mod imp {
-    use super::{DriverAudit, DriverEntry, ScanProgress};
+    use super::{
+        save_partial, stale, take_partial, DriverAudit, DriverEntry, PartialAudit, ScanProgress,
+        SCAN_CANCELLED,
+    };
     use std::os::windows::process::CommandExt;
 
     use tauri::Emitter;
@@ -87,13 +146,16 @@ mod imp {
         "BLUETOOTH",
     ];
 
-    fn run_ps(script: &str) -> Result<String, String> {
+    fn run_ps(script: &str, scan: Option<u64>) -> Result<String, String> {
         let output = crate::system_tools::run("powershell", |tool| {
-            tool.args(["-NoProfile", "-NonInteractive", "-Command", script])
-                .creation_flags(CREATE_NO_WINDOW)
-                .output()
+            crate::system_tools::output_unless(
+                tool.args(["-NoProfile", "-NonInteractive", "-Command", script])
+                    .creation_flags(CREATE_NO_WINDOW),
+                &|| stale(scan),
+            )
         })
-        .map_err(|e| format!("could not run PowerShell: {}", e))?;
+        .map_err(|e| format!("could not run PowerShell: {}", e))?
+        .ok_or_else(|| SCAN_CANCELLED.to_string())?;
         if !output.status.success() {
             return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
         }
@@ -141,10 +203,11 @@ mod imp {
 
     /// Every device class this machine actually has, asked for once so the
     /// scan's total is the real number of steps rather than a guess.
-    fn list_classes() -> Result<Vec<String>, String> {
+    fn list_classes(scan: Option<u64>) -> Result<Vec<String>, String> {
         let raw = run_ps(
             "(Get-CimInstance Win32_PnPSignedDriver -ErrorAction SilentlyContinue | \
              Select-Object -ExpandProperty DeviceClass -Unique | Where-Object { $_ }) -join ','",
+            scan,
         )?;
         let mut classes: Vec<String> = raw
             .split(',')
@@ -158,7 +221,10 @@ mod imp {
     }
 
     /// Reads one class. Returns (vendor rows, inbox count, rows seen).
-    fn scan_class(class: &str) -> Result<(Vec<DriverEntry>, usize, usize), String> {
+    fn scan_class(
+        class: &str,
+        scan: Option<u64>,
+    ) -> Result<(Vec<DriverEntry>, usize, usize), String> {
         // The class name is interpolated into a PowerShell filter, so it is
         // pinned to the shape Windows uses for class names before it can get
         // anywhere near the shell.
@@ -182,7 +248,7 @@ mod imp {
             class = class
         );
 
-        let raw = run_ps(&script)?;
+        let raw = run_ps(&script, scan)?;
         if raw.is_empty() {
             return Ok((Vec::new(), 0, 0));
         }
@@ -242,15 +308,35 @@ mod imp {
         Ok((entries, inbox, seen))
     }
 
-    pub fn audit(app: &tauri::AppHandle) -> Result<DriverAudit, String> {
-        let classes = list_classes()?;
+    /// `scan` is the generation a cancellable audit started under; `None`
+    /// runs to the end whatever happens to a scan. With `session`, a stopped
+    /// audit keeps what it read and the next call for that session resumes.
+    pub fn audit(
+        app: &tauri::AppHandle,
+        scan: Option<u64>,
+        session: Option<&str>,
+    ) -> Result<DriverAudit, String> {
+        let mut state = match session.and_then(take_partial) {
+            Some(partial) => partial,
+            None => PartialAudit {
+                session: session.unwrap_or_default().to_string(),
+                classes: list_classes(scan)?,
+                ..Default::default()
+            },
+        };
+        let classes = state.classes.clone();
         let total = classes.len().max(1);
+        let paused = |state: PartialAudit, done: usize| {
+            if session.is_some() {
+                save_partial(PartialAudit { done, ..state });
+            }
+            Err(SCAN_CANCELLED.to_string())
+        };
 
-        let mut entries: Vec<DriverEntry> = Vec::new();
-        let mut excluded_inbox = 0usize;
-        let mut total_scanned = 0usize;
-
-        for (i, class) in classes.iter().enumerate() {
+        for (i, class) in classes.iter().enumerate().skip(state.done) {
+            if stale(scan) {
+                return paused(state, i);
+            }
             let _ = app.emit(
                 "driver-scan-progress",
                 ScanProgress {
@@ -261,12 +347,22 @@ mod imp {
             );
             // One unreadable class must not abandon the whole inventory:
             // partial truth beats an error page listing nothing.
-            if let Ok((rows, inbox, seen)) = scan_class(class) {
-                entries.extend(rows);
-                excluded_inbox += inbox;
-                total_scanned += seen;
+            match scan_class(class, scan) {
+                Ok((rows, inbox, seen)) => {
+                    state.entries.extend(rows);
+                    state.excluded_inbox += inbox;
+                    state.total_scanned += seen;
+                }
+                Err(e) if e == SCAN_CANCELLED => return paused(state, i),
+                Err(_) => {}
             }
         }
+        let PartialAudit {
+            mut entries,
+            excluded_inbox,
+            total_scanned,
+            ..
+        } = state;
 
         let _ = app.emit(
             "driver-scan-progress",
@@ -293,10 +389,19 @@ mod imp {
     }
 }
 
+/// `cancellable` is set by the scan, so that [`cancel_scan`] stops this audit
+/// and no other one (the Hardware page runs its own).
 #[cfg(windows)]
 #[tauri::command(async)]
-pub fn driver_audit(app: tauri::AppHandle) -> Result<DriverAudit, String> {
-    imp::audit(&app)
+pub fn driver_audit(
+    app: tauri::AppHandle,
+    cancellable: Option<bool>,
+    session: Option<String>,
+) -> Result<DriverAudit, String> {
+    let scan = cancellable
+        .unwrap_or(false)
+        .then(|| SCAN_GENERATION.load(std::sync::atomic::Ordering::SeqCst));
+    imp::audit(&app, scan, session.as_deref())
 }
 
 /// Opens Windows Update, which is the channel that actually installs drivers.
@@ -364,7 +469,11 @@ pub fn reboot_now() -> Result<(), String> {
 
 #[cfg(not(windows))]
 #[tauri::command(async)]
-pub fn driver_audit(_app: tauri::AppHandle) -> Result<DriverAudit, String> {
+pub fn driver_audit(
+    _app: tauri::AppHandle,
+    _cancellable: Option<bool>,
+    _session: Option<String>,
+) -> Result<DriverAudit, String> {
     Err("not supported on this platform".to_string())
 }
 
@@ -384,4 +493,52 @@ pub fn reboot_pending() -> Result<bool, String> {
 #[tauri::command(async)]
 pub fn reboot_now() -> Result<(), String> {
     Err("not supported on this platform".to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cancelling_stops_only_audits_started_before_it() {
+        let before = SCAN_GENERATION.load(std::sync::atomic::Ordering::SeqCst);
+        assert!(!stale(None), "a plain audit is never cancelled");
+        assert!(!stale(Some(before)));
+        cancel_scan();
+        assert!(stale(Some(before)), "the running audit stops");
+        assert!(!stale(None));
+        // A scan started after the cancel runs normally.
+        let after = SCAN_GENERATION.load(std::sync::atomic::Ordering::SeqCst);
+        assert!(!stale(Some(after)));
+        // Cancelling twice is harmless.
+        cancel_scan();
+        cancel_scan();
+        assert!(stale(Some(after)));
+    }
+
+    #[test]
+    fn a_paused_inventory_resumes_only_for_its_own_session() {
+        let partial = |session: &str, done| PartialAudit {
+            session: session.into(),
+            classes: vec!["DISPLAY".into(), "NET".into(), "MEDIA".into()],
+            done,
+            total_scanned: 7,
+            ..Default::default()
+        };
+        save_partial(partial("scan-a", 2));
+        let resumed = take_partial("scan-a").expect("held for scan-a");
+        assert_eq!((resumed.done, resumed.total_scanned), (2, 7));
+        assert!(take_partial("scan-a").is_none(), "taken once");
+
+        // A new scan forgets an old pause instead of mixing the two.
+        save_partial(partial("scan-a", 1));
+        assert!(take_partial("scan-b").is_none());
+        assert!(take_partial("scan-a").is_none());
+
+        // Ending a scan discards its partial inventory, and only its own.
+        save_partial(partial("scan-c", 1));
+        discard_scan_session("scan-d".into());
+        discard_scan_session("scan-c".into());
+        assert!(take_partial("scan-c").is_none());
+    }
 }

@@ -4,7 +4,7 @@ import { format, Lang, Strings } from "../i18n";
 import { friendlyError, textFor, uiLocale } from "../lib";
 import { MANUAL_ONLY_TWEAK_IDS } from "../catalog";
 import { AuditEntry, CrashReport, DriftReport, Toast, TweakAdvice, TweakInfo } from "../types";
-import { ProBadge, ShieldBadge, Toggle } from "./ui";
+import { Badge, Toggle } from "./ui";
 import { ToolHeader } from "./tool-section";
 import { HistoryIcon } from "./icons";
 import "./workspace-panels.css";
@@ -114,8 +114,8 @@ export function AdvisorCard({
             <div className="min-w-0">
               <h2 className="flex items-center gap-2 font-semibold text-ink">
                 {textFor(s.tweaks, top.id, top.name, top.description).name}
-                {top.requires_admin && <ShieldBadge label={s.badges.admin} />}
-                {top.requires_pro && <ProBadge label={s.badges.pro} />}
+                {top.requires_admin && <Badge kind="admin">{s.badges.admin}</Badge>}
+                {top.requires_pro && <Badge kind="pro">{s.badges.pro}</Badge>}
               </h2>
               {/* The reason is the card's substance: this machine's hardware
                   argues for the change, and the user can check the argument. */}
@@ -132,7 +132,7 @@ export function AdvisorCard({
                 void onApply(top);
               }}
               disabled={busyId === top.id}
-              className="shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-on-accent transition hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
+              className="tool-primary-action shrink-0"
             >
               {busyId === top.id ? "···" : s.advisor.applyButton}
             </button>
@@ -396,7 +396,7 @@ export function CrashReportsCard({
                 .then(() => pushToast("success", s.crashes.copied))
                 .catch((e: unknown) => pushToast("error", String(e)));
             }}
-            className="border-line-2 text-ink-2 rounded-xl border px-3 py-2 text-[12.5px] font-bold transition hover:-translate-y-px hover:brightness-110"
+            className="tool-secondary-action"
           >
             {s.crashes.copy}
           </button>
@@ -409,7 +409,7 @@ export function CrashReportsCard({
                 })
                 .catch((e: unknown) => pushToast("error", String(e)));
             }}
-            className="border-line-2 text-ink-2 rounded-xl border px-3 py-2 text-[12.5px] font-bold transition hover:-translate-y-px hover:brightness-110"
+            className="tool-secondary-action"
           >
             {s.crashes.clear}
           </button>
@@ -426,9 +426,9 @@ export function CrashReportsCard({
               <span>·</span>
               {/* Which process died is the single most useful field here, so
                   it is a chip rather than another item in the grey run-on. */}
-              <span className="border-line-2 text-ink-2 rounded-full border px-2 py-0.5 font-semibold">
+              <Badge>
                 {r.process === "elevated" ? s.crashes.processElevated : s.crashes.processApp}
-              </span>
+              </Badge>
             </div>
             <p className="text-ink mt-1 font-mono text-[12px] break-words">{r.message}</p>
             <p className="text-ink-3 mt-0.5 font-mono text-[11px]">{r.location}</p>

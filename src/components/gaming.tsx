@@ -7,7 +7,7 @@ import { format, Strings } from "../i18n";
 import { friendlyError, arcPath, GAUGE_C, GAUGE_R, GAUGE_START, GAUGE_SWEEP, polar } from "../lib";
 import { CoreSteeringStatus, GameEntry, Toast } from "../types";
 import { BoltIcon } from "./icons";
-import { Toggle } from "./ui";
+import { Badge, Toggle } from "./ui";
 
 export function GameSessionsPanel({
   s,
@@ -142,7 +142,7 @@ export function GameSessionsPanel({
         title={
           <>
             {s.gameSessions.title}
-            <span className="tool-pro-tag">PRO</span>
+            <Badge kind="pro">{s.badges.pro}</Badge>
           </>
         }
         description={s.gameSessions.subtitle}

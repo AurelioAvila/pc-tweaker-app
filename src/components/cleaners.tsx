@@ -14,7 +14,7 @@ import {
   Toast,
 } from "../types";
 import { GlobeIcon, TrashIcon } from "./icons";
-import { ProBadge } from "./ui";
+import { Badge } from "./ui";
 
 const CATEGORY_ORDER: CacheCategory[] = ["shaders", "launchers", "apps", "dev", "windows"];
 
@@ -131,7 +131,7 @@ export function AppCacheCard({
               className="tool-secondary-action"
             >
               {cleaning ? s.appCache.cleaning : s.appCache.cleanButton}
-              {!isPro && <ProBadge label={s.badges.pro} />}
+              {!isPro && <Badge kind="pro">{s.badges.pro}</Badge>}
             </button>
             <span className="text-xs text-ink-3">
               {format(s.appCache.selectedTotal, { size: formatBytes(selectedBytes) })}
@@ -303,7 +303,7 @@ export function CookieCleanerCard({
       <div className="tool-control-group mt-4 flex flex-wrap items-center gap-2">
         <button onClick={() => void scan()} disabled={scanning} className="tool-primary-action">
           {scanning ? s.cookieCleaner.scanning : s.cookieCleaner.scanButton}
-          {!isPro && <ProBadge label={s.badges.pro} />}
+          {!isPro && <Badge kind="pro">{s.badges.pro}</Badge>}
         </button>
         <button
           onClick={() => setShowList((v) => !v)}

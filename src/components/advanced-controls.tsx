@@ -13,7 +13,7 @@ import type {
 import { ADVANCED_COPY } from "./advanced-copy";
 import { reconcileDownloadState } from "./download-limit-reconcile";
 import { ToolHeader, ToolStatus } from "./tool-section";
-import { Toggle } from "./ui";
+import { Badge, Toggle } from "./ui";
 import "./advanced-controls.css";
 
 export type AdvancedId =
@@ -43,7 +43,7 @@ export function AdvancedControlCard({
   const c = ADVANCED_COPY[lang];
   if (id === "ecoqos_rules")
     return (
-      <>
+      <div className="grid gap-3">
         <EcoCard
           lang={lang}
           isPro={isPro}
@@ -55,7 +55,7 @@ export function AdvancedControlCard({
           isPro={isPro}
           onRequirePro={() => onRequirePro(STRINGS[lang].priorityRules.title)}
         />
-      </>
+      </div>
     );
   if (id === "limit_do_background_download")
     return <DownloadCard lang={lang} isPro={isPro} onRequirePro={() => onRequirePro(c.doTitle)} />;
@@ -109,7 +109,8 @@ function EcoCard({
       <ToolHeader
         title={
           <>
-            {c.ecoTitle} <span className="tool-pro-tag">PRO</span>
+            {c.ecoTitle}
+            <Badge kind="pro">{STRINGS[lang].badges.pro}</Badge>
           </>
         }
         description={c.ecoDescription}
@@ -235,6 +236,7 @@ function PriorityRulesCard({
   onRequirePro: () => void;
 }) {
   const s = STRINGS[lang];
+  const c = ADVANCED_COPY[lang];
   const p = s.priorityRules;
   const label: Record<Priority, string> = {
     idle: p.idle,
@@ -276,7 +278,8 @@ function PriorityRulesCard({
       <ToolHeader
         title={
           <>
-            {p.title} <span className="tool-pro-tag">PRO</span>
+            {p.title}
+            <Badge kind="pro">{STRINGS[lang].badges.pro}</Badge>
           </>
         }
         description={p.subtitle}
@@ -301,7 +304,7 @@ function PriorityRulesCard({
         <ToolStatus tone="active">{format(p.active, { count: state.activeProcesses })}</ToolStatus>
       )}
       <div className="advanced-toolbar">
-        <strong>{p.title}</strong>
+        <strong>{c.path}</strong>
         <button
           type="button"
           data-tone="primary"
@@ -313,7 +316,7 @@ function PriorityRulesCard({
             })
           }
         >
-          {p.add}
+          {c.ecoAdd}
         </button>
       </div>
       {state?.rules.length ? (
@@ -423,7 +426,8 @@ function DownloadCard({
       <ToolHeader
         title={
           <>
-            {c.doTitle} <span className="tool-pro-tag">PRO</span>
+            {c.doTitle}
+            <Badge kind="pro">{STRINGS[lang].badges.pro}</Badge>
           </>
         }
         description={c.doDescription}
@@ -575,7 +579,8 @@ function MonitorCard({
       <ToolHeader
         title={
           <>
-            {c.monitorTitle} <span className="tool-pro-tag">PRO</span>
+            {c.monitorTitle}
+            <Badge kind="pro">{STRINGS[lang].badges.pro}</Badge>
           </>
         }
         description={c.monitorDescription}

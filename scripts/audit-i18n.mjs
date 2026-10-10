@@ -146,6 +146,8 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // French uses the same word for the scan's pause button.
+  "fr:componentScan.pause",
   // "Normal" is the Windows priority name in Spanish, German and Portuguese too.
   "es:priorityRules.normal",
   "de:priorityRules.normal",

@@ -235,6 +235,7 @@ export interface Strings {
     cleaningUp: string;
     cleanupNote: string;
     runningNote: string;
+    cannotStop: string;
     stepQuick: string;
     stepScan: string;
     stepRestore: string;
@@ -703,6 +704,7 @@ export interface Strings {
     description: string;
     button: string;
     running: string;
+    cannotStop: string;
     resultToast: string; // uses {media}
   };
   dnsFlush: {
@@ -744,6 +746,12 @@ export interface Strings {
     confirmDownload: string;
     confirmOpenPage: string;
     cancel: string;
+  };
+  folderScan: {
+    stop: string;
+    stopping: string;
+    stoppedEmpty: string;
+    stoppedPartial: string;
   };
   largeFiles: {
     title: string;
@@ -1007,7 +1015,6 @@ export interface Strings {
   priorityRules: {
     title: string;
     subtitle: string;
-    add: string;
     remove: string;
     empty: string;
     active: string; // uses {count}
@@ -1276,6 +1283,8 @@ const it: Strings = {
     cleanupNote:
       "Rimuove dalla cartella WinSxS le versioni dei componenti ormai sostituite. Gli aggiornamenti installati di recente restano disinstallabili.",
     runningNote: "Non spegnere né riavviare il PC mentre è in corso.",
+    cannotStop:
+      "Una volta avviato non si può interrompere: Windows sta controllando e riparando i propri file di sistema, e fermarlo a metà potrebbe lasciarli riparati solo in parte. Nel frattempo puoi continuare a usare il PC e PC Tweaker.",
     stepQuick: "Lettura rapida dello stato",
     stepScan: "Controllo dell'archivio componenti",
     stepRestore: "Riparazione dell'archivio componenti",
@@ -1828,6 +1837,8 @@ const it: Strings = {
       "Esegue lo strumento di ottimizzazione integrato di Windows: deframmentazione su HDD, oppure TRIM sugli SSD (mai una deframmentazione completa, che li usurerebbe inutilmente).",
     button: "Ottimizza ora",
     running: "Ottimizzazione in corso... può richiedere qualche minuto",
+    cannotStop:
+      "Lo fa l'ottimizzatore di unità di Windows con i diritti di amministratore, quindi arriva alla fine da solo e non si può fermare da qui. Puoi continuare a lavorare tranquillamente.",
     resultToast: "Disco ({media}) ottimizzato con successo.",
   },
   dnsFlush: {
@@ -1876,6 +1887,13 @@ const it: Strings = {
     confirmDownload: "Scarica",
     confirmOpenPage: "Apri invece la pagina",
     cancel: "Annulla",
+  },
+  folderScan: {
+    stop: "Interrompi ricerca",
+    stopping: "Interruzione…",
+    stoppedEmpty: "Ricerca interrotta. Nessun file è stato spostato o eliminato.",
+    stoppedPartial:
+      "Ricerca interrotta. Questi sono i risultati trovati prima dell'interruzione; il resto della cartella non è stato esaminato.",
   },
   largeFiles: {
     title: "Trova file di grandi dimensioni",
@@ -2176,7 +2194,6 @@ const it: Strings = {
     title: "Regole di priorità per le app",
     subtitle:
       "Scegli un'app e una priorità. PC Tweaker la imposta ogni volta che l'app si avvia mentre PC Tweaker è aperto, e rimette la priorità di prima quando rimuovi la regola o chiudi PC Tweaker. Mai oltre Alta.",
-    add: "+ Aggiungi app (.exe)",
     remove: "Rimuovi",
     empty: "Nessuna app per ora.",
     active: "App in esecuzione regolate: {count}",
@@ -2843,6 +2860,8 @@ const en: Strings = {
     cleanupNote:
       "Removes superseded component versions from WinSxS. Recently installed updates stay uninstallable.",
     runningNote: "Don't shut down or restart while this is running.",
+    cannotStop:
+      "Once started it can't be stopped: Windows is checking and repairing its own system files, and cutting that off halfway could leave them half repaired. You can keep using your PC and PC Tweaker meanwhile.",
     stepQuick: "Quick status read",
     stepScan: "Checking the component store",
     stepRestore: "Repairing the component store",
@@ -3382,6 +3401,8 @@ const en: Strings = {
       "Runs Windows' own built-in optimizer: defragmentation on an HDD, or TRIM on an SSD (never a full defrag, which would only wear it out for no benefit).",
     button: "Optimize now",
     running: "Optimizing... this can take a few minutes",
+    cannotStop:
+      "Windows' own drive optimizer does this with administrator rights, so it runs to the end on its own and can't be stopped from here. It's safe to keep working.",
     resultToast: "Drive ({media}) optimized successfully.",
   },
   dnsFlush: {
@@ -3430,6 +3451,13 @@ const en: Strings = {
     confirmDownload: "Download",
     confirmOpenPage: "Open the page instead",
     cancel: "Cancel",
+  },
+  folderScan: {
+    stop: "Stop search",
+    stopping: "Stopping…",
+    stoppedEmpty: "Search stopped. Nothing was moved or deleted.",
+    stoppedPartial:
+      "Search stopped. These are the results found before the stop; the rest of the folder was not searched.",
   },
   largeFiles: {
     title: "Find large files",
@@ -3726,7 +3754,6 @@ const en: Strings = {
     title: "App priority rules",
     subtitle:
       "Pick an app and a priority. PC Tweaker sets it each time the app starts while PC Tweaker is open, and puts the old priority back when you remove the rule or close PC Tweaker. Never above High.",
-    add: "+ Add app (.exe)",
     remove: "Remove",
     empty: "No apps yet.",
     active: "Running apps adjusted: {count}",
@@ -4393,6 +4420,8 @@ const fr: Strings = {
     cleanupNote:
       "Supprime du dossier WinSxS les versions de composants remplacées. Les mises à jour récentes restent désinstallables.",
     runningNote: "N'éteignez pas et ne redémarrez pas le PC pendant l'opération.",
+    cannotStop:
+      "Une fois lancée, l'opération ne peut pas être arrêtée : Windows vérifie et répare ses propres fichiers système, et l'interrompre en cours de route pourrait les laisser à moitié réparés. Vous pouvez continuer à utiliser votre PC et PC Tweaker en attendant.",
     stepQuick: "Lecture rapide de l'état",
     stepScan: "Analyse du magasin de composants",
     stepRestore: "Réparation du magasin de composants",
@@ -4950,6 +4979,8 @@ const fr: Strings = {
       "Lance l'optimiseur integre de Windows : defragmentation sur un HDD, ou TRIM sur un SSD (jamais une defragmentation complete, qui ne ferait que l'user inutilement).",
     button: "Optimiser maintenant",
     running: "Optimisation en cours... cela peut prendre quelques minutes",
+    cannotStop:
+      "C'est l'optimiseur de lecteurs de Windows qui s'en charge, avec les droits d'administrateur : il va jusqu'au bout tout seul et ne peut pas être arrêté d'ici. Vous pouvez continuer à travailler sans risque.",
     resultToast: "Disque ({media}) optimise avec succes.",
   },
   dnsFlush: {
@@ -4998,6 +5029,13 @@ const fr: Strings = {
     confirmDownload: "Télécharger",
     confirmOpenPage: "Ouvrir plutôt la page",
     cancel: "Annuler",
+  },
+  folderScan: {
+    stop: "Arrêter la recherche",
+    stopping: "Arrêt…",
+    stoppedEmpty: "Recherche arrêtée. Aucun fichier n'a été déplacé ni supprimé.",
+    stoppedPartial:
+      "Recherche arrêtée. Voici les résultats trouvés avant l'arrêt ; le reste du dossier n'a pas été parcouru.",
   },
   largeFiles: {
     title: "Trouver les gros fichiers",
@@ -5297,7 +5335,6 @@ const fr: Strings = {
     title: "Règles de priorité des applications",
     subtitle:
       "Choisissez une application et une priorité. PC Tweaker l'applique à chaque lancement de l'application tant qu'il est ouvert, et rétablit l'ancienne priorité quand vous supprimez la règle ou fermez PC Tweaker. Jamais au-dessus de Haute.",
-    add: "+ Ajouter une application (.exe)",
     remove: "Supprimer",
     empty: "Aucune application pour l'instant.",
     active: "Applications en cours ajustées : {count}",
@@ -5967,6 +6004,8 @@ const es: Strings = {
     cleanupNote:
       "Elimina de WinSxS las versiones de componentes ya sustituidas. Las actualizaciones instaladas hace poco se pueden seguir desinstalando.",
     runningNote: "No apagues ni reinicies el PC mientras se ejecuta.",
+    cannotStop:
+      "Una vez iniciado no se puede detener: Windows está comprobando y reparando sus propios archivos del sistema, y cortarlo a mitad podría dejarlos reparados solo en parte. Mientras tanto puedes seguir usando el PC y PC Tweaker.",
     stepQuick: "Lectura rápida del estado",
     stepScan: "Comprobando el almacén de componentes",
     stepRestore: "Reparando el almacén de componentes",
@@ -6517,6 +6556,8 @@ const es: Strings = {
       "Ejecuta el optimizador integrado de Windows: desfragmentacion en un HDD, o TRIM en un SSD (nunca una desfragmentacion completa, que solo lo desgastaria sin beneficio).",
     button: "Optimizar ahora",
     running: "Optimizando... puede tardar unos minutos",
+    cannotStop:
+      "Lo hace el optimizador de unidades de Windows con permisos de administrador, así que termina por sí solo y no se puede detener desde aquí. Puedes seguir trabajando sin problema.",
     resultToast: "Disco ({media}) optimizado correctamente.",
   },
   dnsFlush: {
@@ -6565,6 +6606,13 @@ const es: Strings = {
     confirmDownload: "Descargar",
     confirmOpenPage: "Abrir la página en su lugar",
     cancel: "Cancelar",
+  },
+  folderScan: {
+    stop: "Detener búsqueda",
+    stopping: "Deteniendo…",
+    stoppedEmpty: "Búsqueda detenida. No se ha movido ni eliminado nada.",
+    stoppedPartial:
+      "Búsqueda detenida. Estos son los resultados encontrados antes de detenerla; el resto de la carpeta no se ha revisado.",
   },
   largeFiles: {
     title: "Buscar archivos grandes",
@@ -6866,7 +6914,6 @@ const es: Strings = {
     title: "Reglas de prioridad de aplicaciones",
     subtitle:
       "Elige una aplicación y una prioridad. PC Tweaker la aplica cada vez que la aplicación se inicia mientras PC Tweaker está abierto, y devuelve la prioridad anterior cuando quitas la regla o cierras PC Tweaker. Nunca por encima de Alta.",
-    add: "+ Añadir aplicación (.exe)",
     remove: "Quitar",
     empty: "Todavía no hay aplicaciones.",
     active: "Aplicaciones abiertas ajustadas: {count}",
@@ -7537,6 +7584,8 @@ const de: Strings = {
     cleanupNote:
       "Entfernt überholte Komponentenversionen aus WinSxS. Kürzlich installierte Updates lassen sich weiterhin deinstallieren.",
     runningNote: "Den PC währenddessen nicht herunterfahren oder neu starten.",
+    cannotStop:
+      "Einmal gestartet, lässt sich der Vorgang nicht abbrechen: Windows prüft und repariert gerade seine eigenen Systemdateien, und ein Abbruch mittendrin könnte sie halb repariert zurücklassen. Du kannst den PC und PC Tweaker in der Zwischenzeit weiter nutzen.",
     stepQuick: "Schnelle Statusabfrage",
     stepScan: "Komponentenspeicher wird geprüft",
     stepRestore: "Komponentenspeicher wird repariert",
@@ -8089,6 +8138,8 @@ const de: Strings = {
       "Fuhrt das integrierte Windows-Optimierungstool aus: Defragmentierung bei einer HDD oder TRIM bei einer SSD (nie eine vollstandige Defragmentierung, die sie nur unnotig abnutzen wurde).",
     button: "Jetzt optimieren",
     running: "Optimierung lauft... kann einige Minuten dauern",
+    cannotStop:
+      "Das übernimmt die Laufwerksoptimierung von Windows mit Administratorrechten. Sie läuft von selbst zu Ende und lässt sich hier nicht abbrechen. Du kannst bedenkenlos weiterarbeiten.",
     resultToast: "Laufwerk ({media}) erfolgreich optimiert.",
   },
   dnsFlush: {
@@ -8137,6 +8188,13 @@ const de: Strings = {
     confirmDownload: "Herunterladen",
     confirmOpenPage: "Stattdessen die Seite öffnen",
     cancel: "Abbrechen",
+  },
+  folderScan: {
+    stop: "Suche abbrechen",
+    stopping: "Wird abgebrochen…",
+    stoppedEmpty: "Suche abgebrochen. Es wurde nichts verschoben oder gelöscht.",
+    stoppedPartial:
+      "Suche abgebrochen. Das sind die Ergebnisse bis zum Abbruch; der Rest des Ordners wurde nicht durchsucht.",
   },
   largeFiles: {
     title: "Grosse Dateien finden",
@@ -8442,7 +8500,6 @@ const de: Strings = {
     title: "Prioritätsregeln für Apps",
     subtitle:
       "Wähle eine App und eine Priorität. PC Tweaker setzt sie bei jedem Start der App, solange PC Tweaker geöffnet ist, und stellt die vorherige Priorität wieder her, wenn du die Regel entfernst oder PC Tweaker schließt. Nie über Hoch.",
-    add: "+ App hinzufügen (.exe)",
     remove: "Entfernen",
     empty: "Noch keine Apps.",
     active: "Angepasste laufende Apps: {count}",
@@ -9113,6 +9170,8 @@ const pt: Strings = {
     cleanupNote:
       "Remove do WinSxS as versões de componentes já substituídas. As atualizações instaladas há pouco continuam a poder ser desinstaladas.",
     runningNote: "Não desligue nem reinicie o PC enquanto isto decorre.",
+    cannotStop:
+      "Depois de iniciado, não pode ser interrompido: o Windows está a verificar e a reparar os próprios ficheiros de sistema, e pará-lo a meio pode deixá-los reparados só em parte. Entretanto, pode continuar a usar o PC e o PC Tweaker.",
     stepQuick: "Leitura rápida do estado",
     stepScan: "A verificar o arquivo de componentes",
     stepRestore: "A reparar o arquivo de componentes",
@@ -9664,6 +9723,8 @@ const pt: Strings = {
       "Executa o próprio otimizador do Windows: desfragmentação em um HDD, ou TRIM em um SSD (nunca uma desfragmentação completa, que só o desgastaria sem benefício algum).",
     button: "Otimizar agora",
     running: "Otimizando... isso pode levar alguns minutos",
+    cannotStop:
+      "Quem o faz é o otimizador de unidades do Windows, com direitos de administrador, por isso vai até ao fim sozinho e não pode ser parado daqui. Pode continuar a trabalhar sem problema.",
     resultToast: "Unidade ({media}) otimizada com sucesso.",
   },
   dnsFlush: {
@@ -9712,6 +9773,13 @@ const pt: Strings = {
     confirmDownload: "Baixar",
     confirmOpenPage: "Abrir a página",
     cancel: "Cancelar",
+  },
+  folderScan: {
+    stop: "Parar pesquisa",
+    stopping: "A parar…",
+    stoppedEmpty: "Pesquisa interrompida. Nada foi movido nem eliminado.",
+    stoppedPartial:
+      "Pesquisa interrompida. Estes são os resultados encontrados antes da interrupção; o resto da pasta não foi analisado.",
   },
   largeFiles: {
     title: "Encontrar arquivos grandes",
@@ -10012,7 +10080,6 @@ const pt: Strings = {
     title: "Regras de prioridade de apps",
     subtitle:
       "Escolha um app e uma prioridade. O PC Tweaker a aplica sempre que o app inicia enquanto o PC Tweaker está aberto, e devolve a prioridade anterior quando você remove a regra ou fecha o PC Tweaker. Nunca acima de Alta.",
-    add: "+ Adicionar app (.exe)",
     remove: "Remover",
     empty: "Nenhum app ainda.",
     active: "Apps abertos ajustados: {count}",

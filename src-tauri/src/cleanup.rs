@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 
@@ -317,7 +318,33 @@ pub fn run_cleanup_older_than(id: &str, min_age: std::time::Duration) -> Result<
     Ok(result)
 }
 
-fn walk_files(dir: &Path, out: &mut Vec<PathBuf>) {
+/// Bumped by [`cancel_folder_scan`], one counter per kind of folder search.
+/// A search remembers the value it started under and stops once it changes.
+static FOLDER_SCAN_GENERATION: [AtomicU64; 2] = [AtomicU64::new(0), AtomicU64::new(0)];
+
+
+#[derive(Clone, Copy)]
+pub enum FolderScan {
+    Duplicates = 0,
+    LargeFiles = 1,
+}
+
+/// Stops a running search of this kind. Searching only reads, so a stopped
+/// one leaves nothing behind; it returns what it had found by then.
+pub fn cancel_folder_scan(kind: FolderScan) {
+    FOLDER_SCAN_GENERATION[kind as usize].fetch_add(1, Ordering::SeqCst);
+}
+
+/// A check that turns true once a search of `kind` started now is cancelled.
+pub fn folder_scan_stop(kind: FolderScan) -> impl Fn() -> bool {
+    let started = FOLDER_SCAN_GENERATION[kind as usize].load(Ordering::SeqCst);
+    move || FOLDER_SCAN_GENERATION[kind as usize].load(Ordering::SeqCst) != started
+}
+
+fn walk_files(dir: &Path, out: &mut Vec<PathBuf>, stop: &dyn Fn() -> bool) {
+    if stop() {
+        return;
+    }
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
     };
@@ -329,7 +356,7 @@ fn walk_files(dir: &Path, out: &mut Vec<PathBuf>) {
             continue;
         }
         if file_type.is_dir() {
-            walk_files(&entry.path(), out);
+            walk_files(&entry.path(), out, stop);
         } else if file_type.is_file() {
             out.push(entry.path());
         }
@@ -345,14 +372,17 @@ fn hash_file(path: &Path) -> Option<u64> {
 
 /// Scans a folder recursively for byte-identical files (grouped first by
 /// size, then by content hash, to avoid hashing everything up front).
-pub fn scan_duplicates(root: &str) -> Result<Vec<DuplicateGroup>, String> {
+pub fn scan_duplicates(
+    root: &str,
+    stop: &dyn Fn() -> bool,
+) -> Result<Vec<DuplicateGroup>, String> {
     let root_path = Path::new(root);
     if !root_path.is_dir() {
         return Err("the selected path is not a valid folder".to_string());
     }
 
     let mut files = Vec::new();
-    walk_files(root_path, &mut files);
+    walk_files(root_path, &mut files, stop);
 
     let mut by_size: HashMap<u64, Vec<PathBuf>> = HashMap::new();
     for path in files {
@@ -365,13 +395,18 @@ pub fn scan_duplicates(root: &str) -> Result<Vec<DuplicateGroup>, String> {
         }
     }
 
+    // Stopped or not, every group returned is a confirmed set of identical
+    // files; a stopped search just has not compared everything.
     let mut groups = Vec::new();
     for (size, paths) in by_size.into_iter() {
-        if paths.len() < 2 {
+        if paths.len() < 2 || stop() {
             continue;
         }
         let mut by_hash: HashMap<u64, Vec<String>> = HashMap::new();
         for path in paths {
+            if stop() {
+                break;
+            }
             if let Some(hash) = hash_file(&path) {
                 by_hash
                     .entry(hash)
@@ -401,14 +436,19 @@ const MAX_LARGE_FILES: usize = 200;
 /// the content-hashing step entirely — size alone is what matters here, so
 /// this stays fast even on folders scan_duplicates would spend a while
 /// hashing through.
-pub fn scan_large_files(root: &str, min_bytes: u64) -> Result<Vec<LargeFile>, String> {
+pub fn scan_large_files(
+    root: &str,
+    min_bytes: u64,
+    stop: &dyn Fn() -> bool,
+) -> Result<Vec<LargeFile>, String> {
     let root_path = Path::new(root);
     if !root_path.is_dir() {
         return Err("the selected path is not a valid folder".to_string());
     }
 
+    // A stopped search lists the large files among those it reached.
     let mut files = Vec::new();
-    walk_files(root_path, &mut files);
+    walk_files(root_path, &mut files, stop);
 
     let mut large: Vec<LargeFile> = files
         .into_iter()
@@ -520,6 +560,37 @@ mod tests {
     use super::*;
     use std::fs;
 
+    #[test]
+    fn a_stopped_folder_search_returns_nothing_and_the_other_kind_runs_on() {
+        let dir = std::env::temp_dir().join(format!("pct-stop-{}", std::process::id()));
+        fs::create_dir_all(dir.join("sub")).unwrap();
+        fs::write(dir.join("a.bin"), [7u8; 4096]).unwrap();
+        fs::write(dir.join("sub").join("b.bin"), [7u8; 4096]).unwrap();
+        let root = dir.to_str().unwrap();
+
+        let duplicates = folder_scan_stop(FolderScan::Duplicates);
+        let large = folder_scan_stop(FolderScan::LargeFiles);
+        assert_eq!(scan_duplicates(root, &duplicates).unwrap().len(), 1);
+        cancel_folder_scan(FolderScan::Duplicates);
+        cancel_folder_scan(FolderScan::Duplicates); // a second click changes nothing
+        // Stopped before comparing anything: nothing is claimed as a duplicate.
+        assert!(scan_duplicates(root, &duplicates).unwrap().is_empty());
+        // Stopping one kind leaves the other alone, and a new search runs.
+        assert_eq!(scan_large_files(root, 1_000, &large).unwrap().len(), 2);
+        let again = folder_scan_stop(FolderScan::Duplicates);
+        assert_eq!(scan_duplicates(root, &again).unwrap().len(), 1);
+        // Stopped after the top folder: the large files found there are kept.
+        let checks = std::cell::Cell::new(0);
+        let stop_after_root = || {
+            checks.set(checks.get() + 1);
+            checks.get() > 1
+        };
+        let partial = scan_large_files(root, 1_000, &stop_after_root).unwrap();
+        assert_eq!(partial.len(), 1);
+        assert!(partial[0].path.ends_with("a.bin"));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
     /// The elevated cleanup's folder comes from Windows, not from %WINDIR%,
     /// which a per-user environment variable can override.
     #[cfg(windows)]
@@ -557,7 +628,7 @@ mod tests {
         fs::write(dir.join("medium.bin"), vec![0u8; 5_000]).unwrap();
         fs::write(dir.join("big.bin"), vec![0u8; 20_000]).unwrap();
 
-        let found = scan_large_files(dir.to_str().unwrap(), 1_000).unwrap();
+        let found = scan_large_files(dir.to_str().unwrap(), 1_000, &|| false).unwrap();
 
         assert_eq!(
             found.len(),
@@ -575,7 +646,7 @@ mod tests {
 
     #[test]
     fn an_invalid_path_is_a_clear_error_not_an_empty_result() {
-        let err = scan_large_files(r"Z:\this\path\does\not\exist\at\all", 0).unwrap_err();
+        let err = scan_large_files(r"Z:\this\path\does\not\exist\at\all", 0, &|| false).unwrap_err();
         assert!(err.contains("not a valid folder"));
     }
 
@@ -584,7 +655,7 @@ mod tests {
         let dir = temp_dir("no-large-files");
         fs::write(dir.join("small.txt"), vec![0u8; 100]).unwrap();
 
-        let found = scan_large_files(dir.to_str().unwrap(), 1_000_000).unwrap();
+        let found = scan_large_files(dir.to_str().unwrap(), 1_000_000, &|| false).unwrap();
         assert!(found.is_empty());
 
         fs::remove_dir_all(&dir).ok();

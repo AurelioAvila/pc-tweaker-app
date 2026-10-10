@@ -1270,7 +1270,18 @@ fn scan_duplicates(
 ) -> Result<Vec<cleanup::DuplicateGroup>, String> {
     // Pro in the UI; the native check is the boundary that holds.
     require_pro(&store_for_dir(&app)?)?;
-    cleanup::scan_duplicates(&root)
+    let stop = cleanup::folder_scan_stop(cleanup::FolderScan::Duplicates);
+    cleanup::scan_duplicates(&root, &stop)
+}
+
+/// Stops a running duplicate (`"duplicates"`) or large-file search.
+#[tauri::command]
+fn cancel_folder_scan(kind: String) {
+    cleanup::cancel_folder_scan(if kind == "duplicates" {
+        cleanup::FolderScan::Duplicates
+    } else {
+        cleanup::FolderScan::LargeFiles
+    });
 }
 
 #[tauri::command(async)]
@@ -1298,7 +1309,8 @@ fn scan_large_files(
     min_bytes: u64,
 ) -> Result<Vec<cleanup::LargeFile>, String> {
     require_pro(&store_for_dir(&app)?)?;
-    cleanup::scan_large_files(&root, min_bytes)
+    let stop = cleanup::folder_scan_stop(cleanup::FolderScan::LargeFiles);
+    cleanup::scan_large_files(&root, min_bytes, &stop)
 }
 
 fn last_diskopt_result_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
@@ -2179,6 +2191,7 @@ pub fn run() {
             list_browser_cleanup,
             run_browser_cleanup,
             scan_duplicates,
+            cancel_folder_scan,
             delete_files,
             game_sessions::list_game_sessions,
             game_sessions::game_sessions_enabled,
@@ -2204,6 +2217,8 @@ pub fn run() {
             diskinfo::list_drives_cmd,
             thermals::thermal_report,
             drivers::driver_audit,
+            drivers::cancel_scan,
+            drivers::discard_scan_session,
             gpupower::gpu_power_info,
             gpupower::set_gpu_profile,
             drivers::open_windows_update,

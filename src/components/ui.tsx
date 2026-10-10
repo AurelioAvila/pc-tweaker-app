@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { check as checkForUpdate, type Update } from "@tauri-apps/plugin-updater";
@@ -8,38 +8,44 @@ import { money, PRICE_ANNUAL, PRICE_LIFETIME, PRICE_MONTHLY } from "../lib";
 import { Toast } from "../types";
 import { CrownIcon } from "./icons";
 
-export function ShieldBadge({ label }: { label: string }) {
+/**
+ * The app's only badge. Pro, Admin, registry hive, requirements, Soon and
+ * status verdicts all share one shape, size and position, so a tag means the
+ * same thing wherever it appears; the look lives in `.badge` (App.css).
+ * `className` is for layout only (e.g. hiding it on narrow windows).
+ */
+export type BadgeKind =
+  "pro" | "admin" | "neutral" | "muted" | "accent" | "ok" | "warn" | "caution" | "danger";
+
+export function Badge({
+  kind = "neutral",
+  children,
+  title,
+  className,
+}: {
+  kind?: BadgeKind;
+  children: ReactNode;
+  title?: string;
+  className?: string;
+}) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-sky-400/15 px-2 py-0.5 text-[11px] font-semibold text-sky-300 ring-1 ring-sky-400/30">
-      <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3">
-        <path
-          d="M12 3 5 6v5c0 4.4 3 8.4 7 10 4-1.6 7-5.6 7-10V6l-7-3Z"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-      </svg>
-      {label}
+    <span className={className ? `badge ${className}` : "badge"} data-kind={kind} title={title}>
+      {kind === "pro" && <BadgeIcon d={STAR} fill />}
+      {kind === "admin" && <BadgeIcon d={SHIELD} />}
+      {children}
     </span>
   );
 }
 
-export function ProBadge({ label }: { label: string }) {
-  return (
-    <span className="pro-chip inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-bold tracking-[0.02em]">
-      <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3">
-        <path d="m12 2 2.7 6.6L21 9l-5 4.5L17.3 21 12 17.3 6.7 21 8 13.5 3 9l6.3-.4Z" />
-      </svg>
-      {label}
-    </span>
-  );
-}
+const STAR = "m12 2 2.7 6.6L21 9l-5 4.5L17.3 21 12 17.3 6.7 21 8 13.5 3 9l6.3-.4Z";
+const SHIELD = "M12 3 5 6v5c0 4.4 3 8.4 7 10 4-1.6 7-5.6 7-10V6l-7-3Z";
 
-export function SoonBadge({ label }: { label: string }) {
+function BadgeIcon({ d, fill = false }: { d: string; fill?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-bold text-ink-2 ring-1 ring-line-2">
-      {label}
-    </span>
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill={fill ? "currentColor" : "none"}>
+      {!fill && <path d={d} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />}
+      {fill && <path d={d} />}
+    </svg>
   );
 }
 

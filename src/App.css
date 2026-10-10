@@ -674,13 +674,94 @@ body {
     0 0 14px -1px color-mix(in oklab, var(--accent) 75%, transparent);
 }
 
-/* ---- Pro chip -------------------------------------------------------------- */
+/* ---- Badges --------------------------------------------------------------- */
+/* One shape for every tag in the app (`Badge` in ui.tsx): Pro, Admin, registry
+   hive, requirements, Soon and status verdicts. Same height, padding, type and
+   icon size everywhere, so a badge reads the same in a tweak row, a tool card
+   header or a scan result; only the colour says which kind it is. */
+
+.badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.badge svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+.badge[data-kind="muted"] {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.badge[data-kind="accent"] {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent);
+}
+.badge[data-kind="admin"] {
+  background: color-mix(in oklab, var(--info) 14%, transparent);
+  color: var(--info);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--info) 30%, transparent);
+}
+.badge[data-kind="ok"],
+.badge[data-kind="warn"],
+.badge[data-kind="caution"],
+.badge[data-kind="danger"] {
+  --badge-tone: var(--success);
+  background: color-mix(in oklab, var(--badge-tone) 12%, transparent);
+  color: var(--badge-tone);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--badge-tone) 30%, transparent);
+}
+.badge[data-kind="warn"] {
+  --badge-tone: var(--warning);
+}
+.badge[data-kind="caution"] {
+  --badge-tone: var(--caution);
+}
+.badge[data-kind="danger"] {
+  --badge-tone: var(--danger);
+}
+button.badge {
+  cursor: pointer;
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast);
+}
+button.badge:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+button.badge svg {
+  opacity: 0.7;
+}
+
+/* Every checkbox and radio takes the theme accent. */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent);
+}
+
 /* Gold is fixed across all 14 themes on purpose: it marks a commercial tier,
    not a state of the machine, so it must not restyle itself per palette. The
    stops are a metal reflection — light edge, body, a dark band where the
    surface turns, then a highlight — not a two-colour gradient. */
 
-.pro-chip {
+.badge[data-kind="pro"] {
+  font-weight: 700;
   background: linear-gradient(
     135deg,
     #fbeeb4 0%,

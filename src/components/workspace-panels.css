@@ -58,11 +58,12 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-  min-height: 36px;
+  /* Same size and type as the tool actions (tool-surfaces.css). */
+  min-height: 40px;
   border: 1px solid transparent;
   border-radius: 8px;
-  padding: 8px 13px;
-  font-size: 11.5px;
+  padding: 9px 15px;
+  font-size: 12.5px;
   font-weight: 650;
   line-height: 1.3;
   cursor: pointer;

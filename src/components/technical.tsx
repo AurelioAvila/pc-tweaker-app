@@ -217,14 +217,11 @@ export function TechnicalToggle({
       aria-expanded={open}
       title={label}
       aria-label={label}
-      className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
-        open
-          ? "bg-[var(--app-accent)]/20 text-ink"
-          : "bg-surface-2 text-ink-2 hover:bg-surface-hover hover:text-ink"
-      }`}
+      className="badge"
+      data-kind={open ? "accent" : "neutral"}
     >
       {hive !== "—" && hive}
-      <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3 opacity-70">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
         <path d="M12 11v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         <circle cx="12" cy="7.9" r="1" fill="currentColor" />

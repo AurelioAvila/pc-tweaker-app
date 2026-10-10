@@ -967,9 +967,15 @@ mod tests {
         let mut ordinary: Vec<String> = ["chrome.exe", "explorer.exe", "obs64.exe", "Discord.exe"]
             .map(String::from)
             .into();
-        // An exact name with one more letter, a suffix used as a whole name,
-        // and only the first part of a dotted prefix.
+        // An exact name with one more letter, a name that starts like a prefix
+        // and then goes its own way, a suffix used as a whole name, and only
+        // the first part of a dotted prefix.
         ordinary.extend(SESSION_NAMES.iter().map(|n| n.replace(".exe", "x.exe")));
+        ordinary.extend(
+            SESSION_PREFIXES
+                .iter()
+                .map(|p| format!("{}st.exe", &p[..2])),
+        );
         ordinary.extend(
             SESSION_SUFFIXES
                 .iter()
@@ -981,6 +987,8 @@ mod tests {
                 .filter_map(|p| p.split_once('.'))
                 .map(|(stem, _)| format!("{stem}.exe")),
         );
+        let derived = SESSION_NAMES.len() + SESSION_PREFIXES.len() + SESSION_SUFFIXES.len();
+        assert!(ordinary.len() > 4 + derived, "a near-miss kind has no case");
         for name in ordinary {
             assert!(!is_protected_name(&name), "{name}");
         }
@@ -994,7 +1002,8 @@ mod tests {
             .iter()
             .map(|p| format!("{}.exe", p.to_ascii_uppercase()))
             .collect();
-        for name in &clients {
+        let longer = RESIDENT_PREFIXES.map(|p| format!("{p}service.exe"));
+        for name in clients.iter().chain(&longer) {
             assert!(is_protected_name(name), "{name}");
             assert!(!starts_session(name), "{name}");
         }
@@ -1024,6 +1033,11 @@ mod tests {
             // The folder, not a file that happens to carry its name.
             let file = format!(r"C:\Games{}.exe", dir.trim_end_matches('\\'));
             assert!(!is_protected_path_text(&file), "{file}");
+            // Nor a folder named after only the first word of it.
+            if let Some((first, _)) = dir.split_once(' ') {
+                let other = format!(r"C:\Games{first}\notes.exe");
+                assert!(!is_protected_path_text(&other), "{other}");
+            }
         }
     }
 
@@ -1061,6 +1075,44 @@ mod tests {
             Path::new(r"C:\Program Files\OBS\obs64.exe"),
             &exists
         ));
+        // Every marker, folder or file, counts when it sits beside the binary.
+        let dir = Path::new(r"F:\Games\Racer");
+        for marker in MARKER_DIRS.iter().chain(MARKER_FILES.iter()) {
+            let beside = dir.join(marker);
+            assert!(
+                has_folder_marker(&dir.join("Racer.exe"), &|p: &Path| p == beside),
+                "{marker}"
+            );
+        }
+    }
+
+    /// The tests above build their names from the lists, so they cannot see a
+    /// typo or a dropped entry. This pins the lists themselves: any edit has to
+    /// update the digest on purpose.
+    #[test]
+    fn the_recognition_lists_change_only_on_purpose() {
+        let lists: [&[&str]; 9] = [
+            &SESSION_PREFIXES,
+            &SESSION_NAMES,
+            &SESSION_SUFFIXES,
+            &RESIDENT_PREFIXES,
+            &SESSION_SERVICES,
+            &RESIDENT_DRIVERS,
+            &MARKER_DIRS,
+            &MARKER_FILES,
+            &PROTECTED_INSTALL_DIRS,
+        ];
+        // FNV-1a 64: stable across Rust releases, unlike DefaultHasher.
+        let mut digest = 0xcbf2_9ce4_8422_2325_u64;
+        for list in lists {
+            for byte in list.iter().flat_map(|s| s.bytes().chain([0])).chain([1]) {
+                digest = (digest ^ u64::from(byte)).wrapping_mul(0x0100_0000_01b3);
+            }
+        }
+        assert_eq!(
+            digest, 0xbe15_b3a2_8e0a_2b5c,
+            "lists changed; if intended, pin {digest:#018x}"
+        );
     }
 
     #[test]

@@ -12,9 +12,18 @@ import { LIFETIME_CHECKOUT_GRACE_SECONDS } from "./lifetime-offer";
  *               night, €59.99 since.
  *   - Monthly   €9.99 until 2026-09-14, €7.99 since.
  *   - Uninstaller standard €9.99 since 2026-08-19.
- * Starting at 00:00 on 15 October Rome time (22:00 UTC on the 14th) puts every
- * lower price outside the window, so each reference equals today's price.
- * Starting earlier would make €79.99 and €49.99 the only lawful references.
+ * No lower-price checkout stayed open: the last one (an €49.99 audit session)
+ * was expired at 02:08:36 UTC on 14 September; the €79.99 ones closed by the
+ * 13th. Starting at 00:00 on 15 October Rome time (22:00 UTC on the 14th) puts
+ * every lower price outside the window, so each reference equals today's
+ * price. Starting earlier would make €79.99 and €49.99 the only lawful references.
+ *
+ * Next promotions: until about 6 December the lowest prices of the previous
+ * 30 days are these promo prices, so a Black Friday reduction must strike
+ * them, not the regular ones. Live checks opened by halloween-coupons.mjs
+ * carry metadata.promo_verification and are not prices offered to anyone.
+ * Coupons cannot be edited: a different end date needs new coupon IDs, and no
+ * STRIPE_PRICE_* may change during the window (amount_off is fixed).
  *
  * Every amount is in euro cents and excludes VAT, like the Stripe Prices.
  * The coupon behind each offer must take exactly `regular - price` off once

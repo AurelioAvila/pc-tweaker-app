@@ -4,10 +4,8 @@ import {
   money,
   PRICE_ANNUAL,
   PRICE_LIFETIME,
-  PRICE_LIFETIME_BEFORE,
   PRICE_MONTHLY,
   ProPlan,
-  lifetimeDiscountPercent,
   savingsPercent,
 } from "../lib";
 import { offerClock } from "../lifetime-offer";
@@ -287,25 +285,15 @@ export function PricingPanel({
           <p className="pricing-plan-description">{copy.lifetime}</p>
           <span className="pricing-payment-label">{s.pricing.oneTimeBadge}</span>
           <div className="pricing-price">
-            {lifetimeOffer ? (
+            {lifetimeOffer && (
               <s className="pricing-price-before">{money(lifetimeOffer.reference / 100, lang)}</s>
-            ) : (
-              activeCampaign &&
-              PRICE_LIFETIME_BEFORE > PRICE_LIFETIME && (
-                <s className="pricing-price-before">{money(PRICE_LIFETIME_BEFORE, lang)}</s>
-              )
             )}
             <strong>
               {money(lifetimeOffer ? lifetimeOffer.price / 100 : PRICE_LIFETIME, lang)}
             </strong>
             <span>{s.pricing.once}</span>
-            {lifetimeOffer ? (
+            {lifetimeOffer && (
               <span className="pricing-discount">-{promoPercent(lifetimeOffer)}%</span>
-            ) : (
-              activeCampaign &&
-              PRICE_LIFETIME_BEFORE > PRICE_LIFETIME && (
-                <span className="pricing-discount">-{lifetimeDiscountPercent}%</span>
-              )
             )}
           </div>
           <p className="pricing-price-note">{copy.perpetual}</p>

@@ -37,8 +37,9 @@ test("the window is 15 October 00:00 to 6 November 23:59:59, Rome time", () => {
 });
 
 test("every struck price is the lowest one charged in the 30 days before the start", () => {
-  // Last lower prices (Stripe history): Lifetime €79.99 until 2026-09-14 02:06 UTC,
-  // Annual €49.99 until 02:19 UTC the same night. Moving the start earlier breaks this.
+  // Last lower prices (Stripe history): Lifetime €79.99 configured until 2026-09-14 02:06 UTC,
+  // Annual €49.99 until 02:19 UTC the same night; the last lower-price checkout session was
+  // expired at 02:08:36 UTC and none stayed payable after. Moving the start earlier breaks this.
   assert.ok(START - 30 * 86_400_000 > Date.parse("2026-09-14T02:20:00Z"));
   const current = { "pctweaker:monthly": 799, "pctweaker:annual": 5999, "pctweaker:lifetime": 9900, "uninstaller:annual": 999 };
   for (const offer of PROMO.offers) {

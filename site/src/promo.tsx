@@ -6,26 +6,38 @@ import { msUntil, parsePromo, previewPromo, promoPercent, type Promo, type Promo
 /** The live promotion, fetched after hydration: the prerendered page always
  *  carries regular prices, and any failure leaves them in place. */
 export function usePromo() {
-  const [received, setReceived] = useState<{ promo: Promo; at: number } | null>(null);
-  const [now, setNow] = useState(0);
+  const clock = () => ({ perf: performance.now(), wall: Date.now() });
+  const [received, setReceived] = useState<{ promo: Promo; at: ReturnType<typeof clock> } | null>(null);
+  const [now, setNow] = useState(clock);
   useEffect(() => {
     const preview = import.meta.env.DEV ? import.meta.env.VITE_PROMO_PREVIEW : undefined;
-    const accept = (promo: Promo | null) => promo && setReceived({ promo, at: performance.now() });
-    const controller = new AbortController();
-    if (preview) accept(previewPromo(preview, Date.now()));
-    else
+    const accept = (promo: Promo | null) => setReceived(promo ? { promo, at: clock() } : null);
+    let controller = new AbortController();
+    const read = () => {
+      if (preview) return accept(previewPromo(preview, Date.now()));
+      controller.abort();
+      controller = new AbortController();
       fetch(`${API_BASE}/api/offers/promo`, { cache: "no-store", signal: controller.signal })
         .then((r) => (r.ok ? r.json() : null))
         .then((v) => accept(parsePromo(v)))
-        .catch(() => {});
-    const tick = window.setInterval(() => setNow(performance.now()), 30_000);
+        .catch((e) => e?.name !== "AbortError" && accept(null));
+    };
+    // A tab left open (or a laptop asleep) through the deadline or a manual stop re-reads on return.
+    const onVisible = () => document.visibilityState === "visible" && read();
+    read();
+    const tick = window.setInterval(() => setNow(clock()), 30_000);
+    window.addEventListener("focus", read);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       controller.abort();
       window.clearInterval(tick);
+      window.removeEventListener("focus", read);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
   const promo = received?.promo ?? null;
-  const elapsed = received ? now - received.at : 0;
+  // Whichever clock advanced more: a wrong or paused clock can only shorten the offer.
+  const elapsed = received ? Math.max(now.perf - received.at.perf, now.wall - received.at.wall) : 0;
   const active =
     promo?.status === "active" &&
     msUntil(promo, promo.startsAt, elapsed) <= 0 &&

@@ -88,7 +88,7 @@ export function AccessPricing() {
             </div>
             <div className="mt-2 text-[13px] text-[var(--fg-dim)]">
               {annualOffer
-                ? `/ ${promoTerms(annualOffer)}${monthlyOffer ? ` · monthly ${euro(monthlyOffer.regular)}, first month ${euro(monthlyOffer.price)}` : ""}`
+                ? `/ ${promoTerms(annualOffer)}${monthlyOffer ? ` · Monthly: ${euro(monthlyOffer.price)} for the first month, then ${euro(monthlyOffer.regular)}` : ""}`
                 : pro.per}
             </div>
             <ul className="my-7 grid flex-1 content-start gap-2.5">

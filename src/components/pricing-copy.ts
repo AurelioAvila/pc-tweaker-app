@@ -61,12 +61,12 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
   en: {
     promoTitle: "Halloween offer: {percent}% off",
     promoReference:
-      "Struck-through prices are the lowest we charged in the 30 days before the offer began.",
+      "Struck-through prices are the lowest we charged in the 30 days before the offer began. Prices exclude VAT, which is added at checkout where applicable.",
     promoSoon: "The Halloween offer opens on {date}.",
     firstMonth: "First month, then {price}/month",
     firstYear: "First year, then {price}/year",
     promoTerms:
-      "Halloween offer: for subscriptions, the discount covers the first month or year only; renewals are at the regular price. A checkout opened before the offer ends stays valid for 30 minutes.",
+      "Halloween offer: for subscriptions, the discount covers the first month or year only; renewals are at the regular price. If you open checkout in the last 30 minutes of the offer, you still have 30 minutes to complete it at the offer price.",
     title: "Your PC. Your terms.",
     intro: "Start with the essentials. Add advanced tools. Or make Pro yours with one payment.",
     signed: "Code-signed Windows releases",
@@ -124,12 +124,12 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
   it: {
     promoTitle: "Offerta di Halloween: sconto del {percent}%",
     promoReference:
-      "I prezzi barrati sono i più bassi applicati nei 30 giorni precedenti l'inizio dell'offerta.",
+      "I prezzi barrati sono i più bassi applicati nei 30 giorni precedenti l'inizio dell'offerta. I prezzi non includono l'IVA, aggiunta al pagamento dove dovuta.",
     promoSoon: "L'offerta di Halloween inizia il {date}.",
     firstMonth: "Primo mese, poi {price}/mese",
     firstYear: "Primo anno, poi {price}/anno",
     promoTerms:
-      "Offerta di Halloween: per gli abbonamenti lo sconto vale solo per il primo mese o il primo anno; i rinnovi sono al prezzo normale. Un pagamento avviato prima della fine dell'offerta resta valido per 30 minuti.",
+      "Offerta di Halloween: per gli abbonamenti lo sconto vale solo per il primo mese o il primo anno; i rinnovi sono al prezzo normale. Se avvii il pagamento negli ultimi 30 minuti dell'offerta, hai ancora 30 minuti per completarlo al prezzo scontato.",
     title: "Il tuo PC. Alle tue condizioni.",
     intro:
       "Parti dagli strumenti essenziali. Aggiungi quelli avanzati. Oppure scegli Pro con un solo pagamento.",
@@ -192,12 +192,12 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
   fr: {
     promoTitle: "Offre d'Halloween : {percent}% de réduction",
     promoReference:
-      "Les prix barrés sont les plus bas pratiqués au cours des 30 jours précédant le début de l'offre.",
+      "Les prix barrés sont les plus bas pratiqués au cours des 30 jours précédant le début de l'offre. Les prix s'entendent hors TVA ; la TVA applicable est ajoutée au paiement.",
     promoSoon: "L'offre d'Halloween commence le {date}.",
     firstMonth: "Premier mois, puis {price}/mois",
     firstYear: "Première année, puis {price}/an",
     promoTerms:
-      "Offre d'Halloween : pour les abonnements, la réduction ne porte que sur le premier mois ou la première année ; les renouvellements se font au prix normal. Un paiement ouvert avant la fin de l'offre reste valable 30 minutes.",
+      "Offre d'Halloween : pour les abonnements, la réduction ne porte que sur le premier mois ou la première année ; les renouvellements se font au prix normal. Si vous ouvrez le paiement dans les 30 dernières minutes de l'offre, vous disposez encore de 30 minutes pour le finaliser au prix de l'offre.",
     title: "Votre PC. Votre choix.",
     intro:
       "Commencez par l'essentiel. Ajoutez les outils avancés. Ou choisissez Pro en un seul paiement.",
@@ -260,12 +260,12 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
   es: {
     promoTitle: "Oferta de Halloween: {percent}% de descuento",
     promoReference:
-      "Los precios tachados son los más bajos aplicados en los 30 días anteriores al inicio de la oferta.",
+      "Los precios tachados son los más bajos aplicados en los 30 días anteriores al inicio de la oferta. Los precios no incluyen el IVA, que se añade al pagar cuando corresponde.",
     promoSoon: "La oferta de Halloween empieza el {date}.",
     firstMonth: "Primer mes, luego {price}/mes",
     firstYear: "Primer año, luego {price}/año",
     promoTerms:
-      "Oferta de Halloween: en las suscripciones, el descuento solo cubre el primer mes o el primer año; las renovaciones se cobran al precio habitual. Un pago iniciado antes del fin de la oferta sigue siendo válido durante 30 minutos.",
+      "Oferta de Halloween: en las suscripciones, el descuento solo cubre el primer mes o el primer año; las renovaciones se cobran al precio habitual. Si inicias el pago en los últimos 30 minutos de la oferta, aún tienes 30 minutos para completarlo al precio de la oferta.",
     title: "Tu PC. Tú decides.",
     intro: "Empieza por lo esencial. Añade herramientas avanzadas. O elige Pro con un solo pago.",
     signed: "Versiones de Windows con firma digital",
@@ -326,12 +326,12 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
   de: {
     promoTitle: "Halloween-Angebot: {percent}% Rabatt",
     promoReference:
-      "Durchgestrichene Preise sind die niedrigsten Preise der 30 Tage vor Beginn des Angebots.",
+      "Durchgestrichene Preise sind die niedrigsten Preise, die wir in den 30 Tagen vor Beginn des Angebots verlangt haben. Preise ohne MwSt.; die anfallende MwSt. wird beim Bezahlen hinzugefügt.",
     promoSoon: "Das Halloween-Angebot beginnt am {date}.",
     firstMonth: "Erster Monat, danach {price}/Monat",
     firstYear: "Erstes Jahr, danach {price}/Jahr",
     promoTerms:
-      "Halloween-Angebot: Bei Abos gilt der Rabatt nur für den ersten Monat bzw. das erste Jahr; Verlängerungen erfolgen zum regulären Preis. Ein vor Angebotsende geöffneter Checkout bleibt 30 Minuten gültig.",
+      "Halloween-Angebot: Bei Abos gilt der Rabatt nur für den ersten Monat bzw. das erste Jahr; Verlängerungen erfolgen zum regulären Preis. Wenn du den Checkout in den letzten 30 Minuten des Angebots öffnest, hast du noch 30 Minuten Zeit, ihn zum Angebotspreis abzuschließen.",
     title: "Dein PC. Deine Entscheidung.",
     intro:
       "Beginne mit dem Wesentlichen. Ergänze erweiterte Werkzeuge. Oder wähle Pro mit einer einzigen Zahlung.",
@@ -393,12 +393,12 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
   pt: {
     promoTitle: "Oferta de Halloween: {percent}% de desconto",
     promoReference:
-      "Os preços riscados são os mais baixos praticados nos 30 dias anteriores ao início da oferta.",
+      "Os preços riscados são os mais baixos praticados nos 30 dias anteriores ao início da oferta. Os preços não incluem IVA, que é acrescentado no pagamento quando aplicável.",
     promoSoon: "A oferta de Halloween começa a {date}.",
     firstMonth: "Primeiro mês, depois {price}/mês",
     firstYear: "Primeiro ano, depois {price}/ano",
     promoTerms:
-      "Oferta de Halloween: nas subscrições, o desconto aplica-se apenas ao primeiro mês ou ao primeiro ano; as renovações são feitas ao preço normal. Um pagamento iniciado antes do fim da oferta continua válido durante 30 minutos.",
+      "Oferta de Halloween: nas subscrições, o desconto aplica-se apenas ao primeiro mês ou ao primeiro ano; as renovações são feitas ao preço normal. Se iniciar o pagamento nos últimos 30 minutos da oferta, ainda tem 30 minutos para o concluir ao preço da oferta.",
     title: "O seu PC. A sua escolha.",
     intro:
       "Comece pelo essencial. Adicione ferramentas avançadas. Ou escolha Pro com um único pagamento.",

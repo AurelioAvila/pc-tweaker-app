@@ -263,8 +263,10 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       // The discount follows the Price resolved above, never the client.
       const promo = promoCheckout(effects.environment, effects.now(), resolved.envName);
       if (promo) {
-        params.discounts = [{ coupon: promo.coupon }];
-        params.expires_at = Math.min(params.expires_at ?? promo.expiresAt, promo.expiresAt);
+        if (promo.coupon) params.discounts = [{ coupon: promo.coupon }];
+        // Lifetime has its own promo Price, so the Stripe page shows the price paid.
+        if (promo.price) params.line_items = [{ price: promo.price, quantity: 1 }];
+        if (promo.expiresAt !== undefined) params.expires_at = Math.min(params.expires_at ?? promo.expiresAt, promo.expiresAt);
         params.after_expiration = { recovery: { enabled: false } };
         params.metadata = { ...params.metadata, promo_id: promo.id };
         // A once-only coupon is gone from the subscription by the time the
@@ -451,11 +453,17 @@ function subscriptionSource(subscription: Stripe.Subscription): { subscriptionId
   return { subscriptionId: subscription.id, subscriptionCreatedAt: date };
 }
 
+/** Every Price that sells Lifetime: the regular one and the promotional one. */
+function lifetimePriceIds(): string[] {
+  return [process.env.STRIPE_PRICE_LIFETIME, process.env.STRIPE_PRICE_LIFETIME_PROMO].filter((id): id is string => Boolean(id));
+}
+
 function priceProducts(): Record<string, Product> {
   const pairs: [string | undefined, Product][] = [
     [process.env.STRIPE_PRICE_MONTHLY, "pctweaker"],
     [process.env.STRIPE_PRICE_ANNUAL, "pctweaker"],
     [process.env.STRIPE_PRICE_LIFETIME, "pctweaker"],
+    [process.env.STRIPE_PRICE_LIFETIME_PROMO, "pctweaker"],
     [process.env.STRIPE_PRICE_ID, "pctweaker"],
     [process.env.STRIPE_PRICE_UNINSTALLER_ANNUAL, "uninstaller"],
     [process.env.STRIPE_PRICE_UNINSTALLER_LOYALTY, "uninstaller"],
@@ -840,7 +848,7 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
     await effects.stopSubscriptions(userId, customerId);
     return;
   }
-  const pricePlan = priceIds.map((id) => planFromPrice(id, {
+  const pricePlan = priceIds.map((id) => planFromPrice(lifetimePriceIds().includes(id) ? process.env.STRIPE_PRICE_LIFETIME : id, {
     monthly: process.env.STRIPE_PRICE_MONTHLY,
     annual: process.env.STRIPE_PRICE_ANNUAL,
     lifetime: process.env.STRIPE_PRICE_LIFETIME,
@@ -904,10 +912,13 @@ type ReversedPurchase = { userId: string; product: Product; plan: string | null;
 async function findPurchase(paymentIntentId: string, effects: BillingEffects): Promise<ReversedPurchase | null> {
   const session = await effects.loadCheckoutForPayment(paymentIntentId);
   if (session?.mode === "payment") {
-    const lifetimePrices = [process.env.STRIPE_PRICE_LIFETIME, process.env.STRIPE_PRICE_ID].filter(Boolean);
+    const lifetimePrices = [...lifetimePriceIds(), process.env.STRIPE_PRICE_ID].filter(Boolean);
     const priceIds = session.line_items?.data?.flatMap((item) => item.price ? [item.price.id] : []) ?? [];
     const userId = session.client_reference_id || session.metadata?.userId;
-    if (!userId || !priceIds.some((id) => lifetimePrices.includes(id))) return null;
+    // Our own Lifetime checkouts also carry product/plan metadata, so a
+    // refund is still matched if a promo Price variable is ever removed.
+    const lifetimeCheckout = session.metadata?.product === "pctweaker" && session.metadata?.plan === "lifetime";
+    if (!userId || !(lifetimeCheckout || priceIds.some((id) => lifetimePrices.includes(id)))) return null;
     return { userId, product: "pctweaker", plan: "lifetime", subscriptionId: null };
   }
   if (session) return null;

@@ -102,8 +102,8 @@ export function previewPromo(kind: string | undefined, now: number): Promo | nul
       kind === "active"
         ? [
             offer("pctweaker", "monthly", 799, 799, 399),
-            offer("pctweaker", "annual", 5999, 4999, 2999),
-            offer("pctweaker", "lifetime", 9900, 7999, 4950),
+            offer("pctweaker", "annual", 5999, 4999, 2499),
+            offer("pctweaker", "lifetime", 9900, 7999, 3999),
             offer("uninstaller", "annual", 999, 999, 499),
           ]
         : [],

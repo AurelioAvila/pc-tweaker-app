@@ -7,6 +7,7 @@ delete process.env.RESEND_API_KEY;
 process.env.STRIPE_PRICE_MONTHLY = "price_pc_monthly_fixture";
 process.env.STRIPE_PRICE_ANNUAL = "price_pc_annual_fixture";
 process.env.STRIPE_PRICE_LIFETIME = "price_pc_lifetime_fixture";
+process.env.STRIPE_PRICE_LIFETIME_PROMO = "price_pc_lifetime_promo_fixture";
 process.env.STRIPE_PRICE_ID = "price_pc_legacy_fixture";
 process.env.STRIPE_PRICE_UNINSTALLER_ANNUAL = "price_uninstaller_fixture";
 process.env.STRIPE_PRICE_UNINSTALLER_LOYALTY = "price_uninstaller_loyalty_fixture";
@@ -376,7 +377,8 @@ test("a full refund or a lost dispute of the Lifetime payment revokes Lifetime, 
 
   const tipper = await user();
   await grantPro(tipper, { customerId: `cus_t_${tipper}`, plan: "lifetime", expiresAt: null });
-  const tip = { ...lifetimeSession(tipper), line_items: { data: [{ price: { id: "price_tip_fixture" } }] } };
+  // A real tip carries no account and no product metadata (see tipSessionParams).
+  const tip = { mode: "payment", metadata: {}, line_items: { data: [{ price: { id: "price_tip_fixture" } }] } };
   await handleEvent(event("charge.refunded", charge("ch_tip")), fx(tip));
   await handleEvent(event("charge.refunded", charge("ch_none")), fx(null));
   assert.equal((await row(tipper)).is_pro, true, "a refunded tip or unrelated payment keeps Lifetime");
@@ -448,4 +450,37 @@ test("a promotional subscription's welcome email says the first payment was disc
     await handleEvent(event("customer.subscription.created", sub), effects({ welcome }));
   }
   assert.deepEqual(labels, ["€59.99 / year (first payment discounted)", "€59.99 / year"]);
+});
+
+test("Lifetime bought at the promotional Price is granted, and a full refund of it revokes it", async () => {
+  const id = await user();
+  const promoSession = {
+    ...checkout(id, "lifetime"),
+    line_items: { data: [{ price: { id: process.env.STRIPE_PRICE_LIFETIME_PROMO } }] },
+    amount_total: 3999,
+    currency: "eur",
+  };
+  await handleEvent(event("checkout.session.completed", promoSession), effects());
+  const granted = await row(id);
+  assert.equal(granted.is_pro, true);
+  assert.equal(granted.plan, "lifetime");
+  assert.equal(granted.pro_expires_at, null);
+  await handleEvent(event("charge.refunded", charge("ch_promo", { amount: 3999, amount_refunded: 3999 })), effects({
+    async loadCheckoutForPayment() { return promoSession; },
+  }));
+  assert.equal((await row(id)).is_pro, false, "the promo Price is recognised as Lifetime when refunded");
+
+  // Even with the promo Price variable gone, our Lifetime metadata still identifies the purchase.
+  const later = await user();
+  await grantPro(later, { customerId: `cus_l_${later}`, plan: "lifetime", expiresAt: null });
+  const saved = process.env.STRIPE_PRICE_LIFETIME_PROMO;
+  delete process.env.STRIPE_PRICE_LIFETIME_PROMO;
+  try {
+    await handleEvent(event("charge.refunded", charge("ch_promo_later", { amount: 3999, amount_refunded: 3999 })), effects({
+      async loadCheckoutForPayment() { return { ...promoSession, client_reference_id: later, metadata: { userId: later, product: "pctweaker", plan: "lifetime" } }; },
+    }));
+  } finally {
+    process.env.STRIPE_PRICE_LIFETIME_PROMO = saved;
+  }
+  assert.equal((await row(later)).is_pro, false);
 });

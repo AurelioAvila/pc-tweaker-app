@@ -52,7 +52,7 @@ assert.deepEqual(promoClock(999), ["00", "00", "00", "00"]);
 assert.deepEqual(promoClock(-5000), ["00", "00", "00", "00"]);
 assert.deepEqual(promoClock(Number.NaN), ["00", "00", "00", "00"]);
 // Half price against a lower lawful reference shows only the real reduction.
-assert.equal(promoPercent({ ...offer, regular: 9900, reference: 7999, price: 4950 }), 38);
-assert.equal(promoPercent({ ...offer, regular: 5999, reference: 4999, price: 2999 }), 40);
+assert.equal(promoPercent({ ...offer, regular: 9900, reference: 7999, price: 3999 }), 50);
+assert.equal(promoPercent({ ...offer, regular: 5999, reference: 4999, price: 2499 }), 50);
 
 console.log("promo display checks passed");

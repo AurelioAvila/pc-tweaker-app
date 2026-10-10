@@ -92,7 +92,9 @@ export function lifetimeCheckoutDecision(offer: LifetimeOffer, alreadyOwnsLifeti
 
   const nowSeconds = Math.floor(Date.parse(offer.serverTime) / 1000);
   const endSeconds = Math.floor(Date.parse(offer.endsAt!) / 1000);
-  const expiresAt = Math.min(nowSeconds + 24 * 60 * 60, Math.max(endSeconds, nowSeconds + LIFETIME_CHECKOUT_GRACE_SECONDS));
+  // Stripe rejects expires_at even two seconds past 24 hours on its own
+  // clock, so the cap keeps an hour of margin.
+  const expiresAt = Math.min(nowSeconds + 23 * 60 * 60, Math.max(endSeconds, nowSeconds + LIFETIME_CHECKOUT_GRACE_SECONDS));
   return {
     allowed: true,
     expiresAt,

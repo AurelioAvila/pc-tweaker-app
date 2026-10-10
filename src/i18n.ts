@@ -2037,7 +2037,7 @@ const it: Strings = {
     stopping: "Interruzione…",
     stoppedEmpty: "Ricerca interrotta. Nessun file è stato spostato o eliminato.",
     stoppedPartial:
-      "Ricerca interrotta. Questi sono i risultati trovati prima dell'interruzione; il resto della cartella non è stato esaminato.",
+      "Ricerca interrotta. Questi sono i risultati trovati prima dell'interruzione; ciò che non era ancora stato raggiunto non è stato controllato.",
   },
   largeFiles: {
     title: "Trova file di grandi dimensioni",
@@ -3678,7 +3678,7 @@ const en: Strings = {
     stopping: "Stopping…",
     stoppedEmpty: "Search stopped. Nothing was moved or deleted.",
     stoppedPartial:
-      "Search stopped. These are the results found before the stop; the rest of the folder was not searched.",
+      "Search stopped. These are the results found before you stopped it; anything not reached yet wasn't checked.",
   },
   largeFiles: {
     title: "Find large files",
@@ -5333,7 +5333,7 @@ const fr: Strings = {
     stopping: "Arrêt…",
     stoppedEmpty: "Recherche arrêtée. Aucun fichier n'a été déplacé ni supprimé.",
     stoppedPartial:
-      "Recherche arrêtée. Voici les résultats trouvés avant l'arrêt ; le reste du dossier n'a pas été parcouru.",
+      "Recherche arrêtée. Voici les résultats trouvés avant l'arrêt ; ce qui n'avait pas encore été atteint n'a pas été vérifié.",
   },
   largeFiles: {
     title: "Trouver les gros fichiers",
@@ -6986,7 +6986,7 @@ const es: Strings = {
     stopping: "Deteniendo…",
     stoppedEmpty: "Búsqueda detenida. No se ha movido ni eliminado nada.",
     stoppedPartial:
-      "Búsqueda detenida. Estos son los resultados encontrados antes de detenerla; el resto de la carpeta no se ha revisado.",
+      "Búsqueda detenida. Estos son los resultados encontrados antes de que la detuvieras; lo que aún no se había alcanzado no se ha comprobado.",
   },
   largeFiles: {
     title: "Buscar archivos grandes",
@@ -8646,7 +8646,7 @@ const de: Strings = {
     stopping: "Wird abgebrochen…",
     stoppedEmpty: "Suche abgebrochen. Es wurde nichts verschoben oder gelöscht.",
     stoppedPartial:
-      "Suche abgebrochen. Das sind die Ergebnisse bis zum Abbruch; der Rest des Ordners wurde nicht durchsucht.",
+      "Suche abgebrochen. Das sind die Ergebnisse bis zum Abbruch; was noch nicht erreicht war, wurde nicht geprüft.",
   },
   largeFiles: {
     title: "Grosse Dateien finden",
@@ -10307,7 +10307,7 @@ const pt: Strings = {
     stopping: "A parar…",
     stoppedEmpty: "Pesquisa interrompida. Nada foi movido nem eliminado.",
     stoppedPartial:
-      "Pesquisa interrompida. Estes são os resultados encontrados antes da interrupção; o resto da pasta não foi analisado.",
+      "Pesquisa interrompida. Estes são os resultados encontrados antes da interrupção; o que ainda não tinha sido alcançado não foi verificado.",
   },
   largeFiles: {
     title: "Encontrar arquivos grandes",

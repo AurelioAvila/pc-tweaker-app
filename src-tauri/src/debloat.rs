@@ -600,15 +600,20 @@ mod platform {
     use windows::ApplicationModel::PackageSignatureKind;
     use windows::Management::Deployment::PackageManager;
 
-    /// Total size of the files under `dir`, without following links. Stops
-    /// (returning `None`) past a file budget, so one huge folder cannot hold
-    /// up the list; an unreadable folder also reads as unknown, never as 0.
+    /// Total size of the files under `dir`, without following links (on
+    /// Windows the link check covers junctions too). Stops, returning `None`,
+    /// past a file or time budget, so one huge folder cannot hold up the list;
+    /// an unreadable folder also reads as unknown, never as 0.
     fn folder_size(dir: &std::path::Path) -> Option<u64> {
         const MAX_FILES: usize = 50_000;
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(750);
         let mut total = 0u64;
         let mut files = 0usize;
         let mut stack = vec![dir.to_path_buf()];
         while let Some(current) = stack.pop() {
+            if std::time::Instant::now() > deadline {
+                return None;
+            }
             for entry in std::fs::read_dir(&current).ok()?.flatten() {
                 let kind = entry.file_type().ok()?;
                 if kind.is_symlink() {

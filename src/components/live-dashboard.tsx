@@ -358,26 +358,41 @@ export function LiveDashboard({
   const [slots, setSlots] = useState(WINDOW_SHORT);
   /** What the first full report found; null until it has answered. */
   const sensorsSeen = useRef<{ cpu: boolean; gpu: boolean } | null>(null);
+  /** When each slow source was last read, so coming back to the window does
+   *  not start PowerShell or nvidia-smi again straight away. */
+  const lastRead = useRef({ cpuTemp: 0, gpu: 0, sample: 0 });
 
   useEffect(() => {
     if (!foreground) return;
     let count = 0;
     let busy = false;
+    let cancelled = false;
     const sample = async () => {
       if (busy) return;
       busy = true;
       try {
         const next = await invoke<LiveSample>("live_sample");
+        if (cancelled) return;
+        // After a pause the charts start again rather than joining two
+        // moments with a line that suggests nothing happened in between.
+        const gap = lastRead.current.sample > 0 && Date.now() - lastRead.current.sample > 3000;
+        lastRead.current.sample = Date.now();
+        const from = <T,>(v: T[]) => (gap ? [] : v);
         setFailed(false);
         setLatest(next);
-        setCpu((v) => push(v, next.cpu));
-        setRam((v) => push(v, next.ram_total ? (next.ram_used / next.ram_total) * 100 : null));
-        setCores((v) => next.cores.map((c, i) => push(v[i] ?? [], c, 30)));
+        setCpu((v) => push(from(v), next.cpu));
+        setRam((v) =>
+          push(from(v), next.ram_total ? (next.ram_used / next.ram_total) * 100 : null),
+        );
+        setCores((v) => next.cores.map((c, i) => push(from(v)[i] ?? [], c, 30)));
         setDisk((v) => ({
-          read: push(v.read, next.disk_read_bps),
-          write: push(v.write, next.disk_write_bps),
+          read: push(from(v.read), next.disk_read_bps),
+          write: push(from(v.write), next.disk_write_bps),
         }));
-        setNet((v) => ({ down: push(v.down, next.net_down_bps), up: push(v.up, next.net_up_bps) }));
+        setNet((v) => ({
+          down: push(from(v.down), next.net_down_bps),
+          up: push(from(v.up), next.net_up_bps),
+        }));
         setTick((t) => t + 1);
         if (count % USERS_EVERY === 0) {
           void invoke<ResourceUsers>("resource_users")
@@ -392,7 +407,12 @@ export function LiveDashboard({
             .catch(() => undefined);
         }
         const seen = sensorsSeen.current;
-        if ((count === 0 && !seen) || (seen?.cpu && count % CPU_TEMP_EVERY === 0)) {
+        const now = Date.now();
+        if (
+          (!seen && count === 0) ||
+          (seen?.cpu && now - lastRead.current.cpuTemp >= CPU_TEMP_EVERY * 1000)
+        ) {
+          lastRead.current.cpuTemp = now;
           void invoke<ThermalReport>("thermal_report")
             .then((report) => {
               sensorsSeen.current ??= {
@@ -405,7 +425,8 @@ export function LiveDashboard({
               sensorsSeen.current ??= { cpu: false, gpu: false };
               setSensors("none");
             });
-        } else if (seen?.gpu && count % GPU_EVERY === 0) {
+        } else if (seen?.gpu && now - lastRead.current.gpu >= GPU_EVERY * 1000) {
+          lastRead.current.gpu = now;
           void invoke<ThermalReport["gpus"]>("gpu_readings")
             .then((gpus) =>
               setSensors((current) =>
@@ -423,7 +444,10 @@ export function LiveDashboard({
     };
     void sample();
     const timer = window.setInterval(() => void sample(), 1000);
-    return () => window.clearInterval(timer);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, [foreground]);
 
   const ramPct = latest && latest.ram_total ? (latest.ram_used / latest.ram_total) * 100 : null;

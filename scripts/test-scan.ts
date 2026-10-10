@@ -450,3 +450,36 @@ test("scan progress weighs the driver inventory and never reaches 100 before the
   );
   assert.equal(Math.round(scanProgress(noDrivers, null)), 40);
 });
+
+test("a pause waits for the backend audit before anything can resume or discard it", async () => {
+  const { newScanSession, runScanSession, settled } = await import("../src/scan-runner");
+  const order: string[] = [];
+  let finishFirst!: () => void;
+  const firstAudit = new Promise<void>((resolve) => (finishFirst = resolve));
+  let audits = 0;
+  const reads = async <T>(command: string) => {
+    if (command === "driver_audit") {
+      audits++;
+      if (audits === 1) {
+        await firstAudit;
+        order.push("first audit saved its place");
+        throw Error("SCAN_CANCELLED");
+      }
+      order.push("resumed audit started");
+    }
+    return [] as T;
+  };
+  const session = newScanSession();
+  const pause = new AbortController();
+  const running = runScanSession(reads, session, () => undefined, pause.signal);
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  pause.abort();
+  assert.equal(await running, false);
+  const waiting = settled(session).then(() => order.push("settled"));
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.deepEqual(order, [], "still waiting for the backend");
+  finishFirst();
+  await waiting;
+  await runScanSession(reads, session, () => undefined);
+  assert.deepEqual(order, ["first audit saved its place", "settled", "resumed audit started"]);
+});

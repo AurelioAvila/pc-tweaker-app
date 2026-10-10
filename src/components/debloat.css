@@ -317,7 +317,6 @@
    supports anchoring, centred otherwise. */
 .debloat-popover {
   width: min(380px, calc(100vw - 32px));
-  margin: 0;
   padding: 16px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-l);
@@ -333,8 +332,8 @@
 }
 @supports (position-area: bottom) {
   .debloat-popover {
+    margin: 6px 0 0;
     position-area: bottom span-left;
-    margin-top: 6px;
     position-try-fallbacks: flip-block;
   }
 }

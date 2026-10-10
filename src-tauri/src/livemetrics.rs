@@ -79,7 +79,9 @@ mod pdh {
         disk_write: isize,
         net_down: isize,
         net_up: isize,
-        collected: bool,
+        /// When the counters were last collected. Rates are averages since
+        /// then, so after a pause the next reading starts over.
+        collected: Option<std::time::Instant>,
     }
 
     static COUNTERS: Mutex<Option<Counters>> = Mutex::new(None);
@@ -111,7 +113,7 @@ mod pdh {
             disk_write: add(r"\PhysicalDisk(_Total)\Disk Write Bytes/sec"),
             net_down: add(r"\Network Interface(*)\Bytes Received/sec"),
             net_up: add(r"\Network Interface(*)\Bytes Sent/sec"),
-            collected: false,
+            collected: None,
         })
     }
 
@@ -199,9 +201,11 @@ mod pdh {
         };
         // SAFETY: valid query handle.
         let ok = unsafe { PdhCollectQueryData(c.query) } == 0;
-        let first = !c.collected;
-        c.collected = true;
-        if !ok || first {
+        let fresh = c
+            .collected
+            .is_some_and(|at| at.elapsed() <= std::time::Duration::from_secs(3));
+        c.collected = Some(std::time::Instant::now());
+        if !ok || !fresh {
             return (None, None, None, None, None);
         }
         let keep = super::counts_as_traffic;
@@ -390,7 +394,13 @@ pub fn group_users(
             entry.cpu += (used as f64 / budget * 100.0) as f32;
         }
     }
-    groups.into_values().collect()
+    groups
+        .into_values()
+        .map(|mut u| {
+            u.cpu = u.cpu.clamp(0.0, 100.0);
+            u
+        })
+        .collect()
 }
 
 /// The top five by CPU and by memory, from the handle-free process table
@@ -408,20 +418,37 @@ pub fn top_users(mut users: Vec<ResourceUser>) -> ResourceUsers {
     }
 }
 
-type Snapshot = (Vec<crate::process_guard::ProcessInfo>, std::time::Instant);
+type Snapshot = (
+    Vec<crate::process_guard::ProcessInfo>,
+    std::time::Instant,
+    ResourceUsers,
+);
 static LAST_TABLE: std::sync::Mutex<Option<Snapshot>> = std::sync::Mutex::new(None);
+
+/// Shares measured over less than this are noise (one scheduler tick looks
+/// like a whole core), so a caller that asks again too soon gets the last
+/// answer; over more than [`STALE_TABLE`] they would be an average over a gap,
+/// so the table is treated as new.
+const MIN_INTERVAL: std::time::Duration = std::time::Duration::from_millis(500);
+const STALE_TABLE: std::time::Duration = std::time::Duration::from_secs(5);
 
 #[tauri::command(async)]
 pub fn resource_users() -> Result<ResourceUsers, String> {
+    let mut last = LAST_TABLE.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some((_, at, users)) = last.as_ref() {
+        if at.elapsed() < MIN_INTERVAL {
+            return Ok(users.clone());
+        }
+    }
     let now = crate::process_guard::processes()?;
     let cores = std::thread::available_parallelism().map_or(1, |n| n.get());
-    let mut last = LAST_TABLE.lock().unwrap_or_else(|e| e.into_inner());
     let previous = last
         .as_ref()
-        .map(|(table, at)| (table.as_slice(), at.elapsed().as_secs_f64()));
-    let users = group_users(previous, &now, cores);
-    *last = Some((now, std::time::Instant::now()));
-    Ok(top_users(users))
+        .filter(|(_, at, _)| at.elapsed() <= STALE_TABLE)
+        .map(|(table, at, _)| (table.as_slice(), at.elapsed().as_secs_f64()));
+    let users = top_users(group_users(previous, &now, cores));
+    *last = Some((now, std::time::Instant::now(), users.clone()));
+    Ok(users)
 }
 
 #[cfg(test)]
@@ -480,6 +507,10 @@ mod tests {
         assert_eq!(top.memory[0].name, "game");
         // Without a previous table, memory is known and CPU is not.
         assert!(group_users(None, &now, 4).iter().all(|u| u.cpu == 0.0));
+        // A share is never more than the whole machine.
+        let burst = [p(40, "burst.exe", 5, 0, 1)];
+        let later = [p(40, "burst.exe", 5, 900_000_000, 1)];
+        assert_eq!(group_users(Some((&burst, 0.01)), &later, 1)[0].cpu, 100.0);
     }
 
     #[test]
@@ -517,6 +548,7 @@ mod tests {
     /// administrator rights and a sample costs a few milliseconds.
     #[cfg(windows)]
     #[test]
+    #[ignore = "reads live performance counters; run on a desktop"]
     fn a_reading_is_cheap_and_needs_no_administrator() {
         let _ = pdh::read();
         std::thread::sleep(std::time::Duration::from_millis(1100));

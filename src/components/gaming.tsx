@@ -459,7 +459,7 @@ export function TurboBoostPanel({
   }
 
   async function toggleTurbo() {
-    if (busy) return;
+    if (busy || testing) return;
     setBusy(true);
     setGain(null);
     const engaging = !applied;
@@ -597,7 +597,7 @@ export function TurboBoostPanel({
 
           <button
             onClick={toggleTurbo}
-            disabled={busy}
+            disabled={busy || testing}
             /* Both states carry the same gold treatment. STOP used to fall back to
            a flat grey surface, which read as a disabled control rather than
            the live "this is running, press to end it" action it actually is —

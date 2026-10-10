@@ -55,7 +55,16 @@ export type ScanSession = {
   id: string;
   startedAt: number;
   steps: Partial<Record<ScanProbe, ScanStep>>;
+  /** The driver audit request still running in the backend, if any. A pause
+   *  or an end waits for it, so the backend has saved (or dropped) its partial
+   *  inventory before the next request for this session arrives. */
+  auditInFlight?: Promise<unknown>;
 };
+
+/** Resolves once no driver audit for `session` is running in the backend. */
+export async function settled(session: ScanSession): Promise<void> {
+  await session.auditInFlight?.catch(() => undefined);
+}
 
 export function newScanSession(now = Date.now()): ScanSession {
   return { id: `scan-${now}-${Math.random().toString(36).slice(2, 8)}`, startedAt: now, steps: {} };
@@ -103,11 +112,23 @@ export async function runScanSession(
     progress(command, "reading");
     let timeout: ReturnType<typeof setTimeout> | undefined;
     let step: ScanStep;
+    const request = call<T>(command, args);
+    if (command === "driver_audit") {
+      session.auditInFlight = request;
+      request.then(
+        () => undefined,
+        () => undefined,
+      );
+    }
     try {
       const value = await Promise.race([
-        call<T>(command, args),
+        request,
         new Promise<never>((_, reject) => {
-          timeout = setTimeout(() => reject(new Error("Read timed out")), 60_000);
+          timeout = setTimeout(() => {
+            // A read that ran out of time must not keep running behind the scan.
+            if (command === "driver_audit") void call("cancel_scan").catch(() => undefined);
+            reject(new Error("Read timed out"));
+          }, 60_000);
         }),
         stopped,
       ]);

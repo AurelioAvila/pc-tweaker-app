@@ -14,6 +14,7 @@ import {
   runScanSession,
   scanProgress,
   scanReport,
+  settled,
   SCAN_PROBES,
   scanObservations,
   unknownSecuritySignals,
@@ -102,7 +103,8 @@ export function ScanPanel({
     alive.current = true;
     return () => {
       alive.current = false;
-      // Leaving the page pauses a running scan: it is still there on return.
+      // The panel stays mounted while the user visits other pages, so this
+      // only runs when the app itself goes away; a running scan is paused.
       if (abort.current && !abort.current.signal.aborted) {
         intent.current = "pause";
         abort.current.abort();
@@ -145,7 +147,9 @@ export function ScanPanel({
   /** Ends a scan where it is and shows what it found, labelled partial. */
   function end(session: ScanSession) {
     heldScan = null;
-    void invoke("discard_scan_session", { session: session.id }).catch(() => undefined);
+    void settled(session).then(() =>
+      invoke("discard_scan_session", { session: session.id }).catch(() => undefined),
+    );
     const partial = scanReport(session);
     setPaused(false);
     setReport(partial);
@@ -258,8 +262,10 @@ export function ScanPanel({
           if (alive.current) end(session);
           else heldScan = null;
         } else {
-          // Paused, by the button or by leaving the page.
+          // Paused. The backend audit is given time to save where it was
+          // before Resume can be pressed.
           heldScan = { session, driver, elapsed: seconds };
+          await settled(session);
           if (alive.current) {
             setPaused(true);
             setProgress(Math.floor(scanProgress(session.steps, driver)));

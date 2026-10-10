@@ -132,13 +132,35 @@ fn relative(p: &Placement, left: f64, top: f64) -> Placement {
 
 /// Windows' own word on whether the window is in a Snap layout, for the
 /// shapes the geometry check cannot see (thirds, quarters).
+///
+/// Looked up at run time: user32 exports IsWindowArranged only from Windows 10
+/// 1903, and a load-time import would stop the whole executable (the window,
+/// the elevated helper and the scheduled tasks) from starting on older builds.
 #[cfg(windows)]
 fn arranged(window: &tauri::Window) -> bool {
-    use windows_sys::Win32::UI::WindowsAndMessaging::IsWindowArranged;
+    use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleW, GetProcAddress};
+    type IsWindowArranged = unsafe extern "system" fn(*mut core::ffi::c_void) -> i32;
+    static ENTRY: std::sync::OnceLock<Option<IsWindowArranged>> = std::sync::OnceLock::new();
+    let entry = *ENTRY.get_or_init(|| {
+        let name: Vec<u16> = "user32.dll\0".encode_utf16().collect();
+        // SAFETY: NUL-terminated name; user32 stays loaded for the life of a
+        // GUI process, so the handle needs no release.
+        let user32 = unsafe { GetModuleHandleW(name.as_ptr()) };
+        if user32.is_null() {
+            return None;
+        }
+        // SAFETY: a live module and a NUL-terminated name; the address is
+        // reinterpreted with the documented signature BOOL(HWND).
+        unsafe { GetProcAddress(user32, c"IsWindowArranged".as_ptr().cast()) }
+            .map(|f| unsafe { std::mem::transmute::<_, IsWindowArranged>(f) })
+    });
+    let Some(is_arranged) = entry else {
+        return false;
+    };
     window
         .hwnd()
         // SAFETY: a live window handle owned by this process.
-        .is_ok_and(|hwnd| unsafe { IsWindowArranged(hwnd.0 as _) } != 0)
+        .is_ok_and(|hwnd| unsafe { is_arranged(hwnd.0 as _) } != 0)
 }
 
 #[cfg(not(windows))]
@@ -306,5 +328,12 @@ mod tests {
         write(&dir, &p);
         assert_eq!(read(&dir), Some(p));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn snap_detection_is_looked_up_at_run_time() {
+        // A load-time import would keep the app from starting before 1903.
+        let source = include_str!("window_state.rs");
+        assert!(!source.contains(concat!("WindowsAndMessaging::", "IsWindowArranged")));
     }
 }

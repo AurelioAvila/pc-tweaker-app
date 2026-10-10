@@ -530,7 +530,7 @@ export const engDictionary: Dictionary = {
       },
       {
         "q": "Can I use it with competitive games?",
-        "a": "PC Tweaker tunes Windows itself and reads performance data through standard Windows interfaces. It never changes a game's files, memory or gameplay, and a game that manages its own performance is left exactly as it is while it runs."
+        "a": "PC Tweaker tunes Windows itself and reads performance data through standard Windows interfaces. It never changes a game's files or gameplay, and a game that manages its own performance is left exactly as it is while it runs."
       },
       {
         "q": "What is free, and how does Pro work?",
@@ -538,7 +538,7 @@ export const engDictionary: Dictionary = {
       },
       {
         "q": "What leaves my PC?",
-        "a": "Applying local settings is separate from online services. Account, license, update, payment, support and optional breach-check requests contact their respective services. The breach check sends a hash prefix, not your complete password. Read the Privacy Policy for details. Private feedback is not reused as a public testimonial without permission."
+        "a": "Applying local settings is separate from online services. Account, license, update, payment, support and optional breach-check requests contact their respective services. The app also reads one on/off service setting once an hour; that request carries no account or PC details. The breach check sends a hash prefix, not your complete password. Read the Privacy Policy for details. Private feedback is not reused as a public testimonial without permission."
       },
       {
         "q": "Is PC Tweaker code-signed?",

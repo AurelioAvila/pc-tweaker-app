@@ -522,12 +522,15 @@ export interface Strings {
     /** Benchmark stages and the measured outcome. */
     stageMeasuringBefore: string;
     stageMeasuringAfter: string;
-    gainMeasured: string; // uses {factor}
-    gainSlight: string; // uses {factor}
-    gainAtCeiling: string;
-    ceilingLocked: string;
-    ceilingUnlocked: string;
-    speedEffective: string;
+    factAverage: string;
+    factFastest: string;
+    factPeak: string;
+    factFloor: string;
+    ofBase: string; // uses {pct}
+    usersTitle: string;
+    appliedAt: string; // uses {time}
+    planAlreadyUses: string;
+    planAlreadyHad: string;
     loadExplain: string;
     chartLoad: string;
     chartSpeed: string;
@@ -871,6 +874,7 @@ export interface Strings {
   toasts: {
     applied: string; // uses {name}
     rolledBack: string; // uses {name}
+    elevationDeclined: string;
     licenseNeedsRefresh: string;
     accountRefreshFailed: string;
   };
@@ -1697,7 +1701,7 @@ const it: Strings = {
     buffers:
       "Buffer di ricezione: {reserved} riservati per socket, {autotuned} regolati automaticamente da Windows",
     verdictNone:
-      "Nessuna variazione misurabile della latenza. È normale: un ping non passa dalle impostazioni TCP.",
+      "Un ping non passa dalle impostazioni TCP, quindi queste letture descrivono la connessione stessa.",
     verdictLineChanged:
       "La linea stessa è cambiata tra le due letture (mediana {delta} ms). Un ping non passa dalle impostazioni TCP, quindi non è l'effetto della modifica.",
     lastTitle: "Dopo {tweak}, {time}",
@@ -1718,18 +1722,23 @@ const it: Strings = {
     active: "Turbo attivo",
     inactive: "Turbo non attivo",
     loadLabel: "CARICO CPU",
-    loadCadence: "Carico misurato · aggiornato ogni secondo",
+    loadCadence: "Misurato ogni secondo, smussato su circa 3 secondi",
     stageReading: "Lettura del piano energetico",
     stageRaising: "Aumento del limite di boost",
     stageApplying: "Applicazione al sistema",
     stageMeasuringBefore: "Misurazione prima",
     stageMeasuringAfter: "Nuova misurazione",
-    gainMeasured: "{factor}x più veloce",
-    gainSlight: "{factor}x più veloce — guadagno contenuto",
-    gainAtCeiling: "Nessun miglioramento misurato in questo breve test",
-    ceilingLocked: "Limite boost bloccato",
-    ceilingUnlocked: "Limite boost sbloccato",
-    speedEffective: "{ghz} GHz ora",
+    factAverage: "Velocità media ora",
+    factFastest: "Core più veloce ora",
+    factPeak: "Massimo in questa sessione",
+    factFloor: "Stato minimo del processore",
+    ofBase: "{pct}% della frequenza base",
+    usersTitle: "Chi usa la CPU ora",
+    appliedAt:
+      "Attivato il {time} · modalità boost Aggressiva, stato minimo del processore al 100% con alimentazione da rete",
+    planAlreadyUses: "Il piano energetico corrente usa già queste impostazioni.",
+    planAlreadyHad:
+      "Il piano energetico corrente aveva già queste impostazioni, quindi nessun valore è cambiato.",
     loadExplain:
       "Il carico è quanto lavoro sta facendo il processore; Turbo Boost cambia quanto veloce può andare, non quanto è occupato. Un valore alto significa che i programmi su questo PC sono al lavoro in questo momento.",
     chartLoad: "Carico",
@@ -2104,6 +2113,8 @@ const it: Strings = {
     rolledBack: '"{name}" ripristinato al valore originale.',
     licenseNeedsRefresh:
       "Non riusciamo a verificare il tuo abbonamento Pro offline da troppo tempo. Riconnettiti a internet e riprova.",
+    elevationDeclined:
+      "L'autorizzazione di amministratore non è stata concessa, quindi non è stato modificato nulla.",
     accountRefreshFailed:
       "Non riusciamo a verificare lo stato del tuo account. Lo stato mostrato qui potrebbe non essere aggiornato — controlla la connessione o riprova più tardi.",
   },
@@ -3350,7 +3361,7 @@ const en: Strings = {
     nagleOff: "New connections start with Nagle's algorithm off.",
     buffers: "Receive buffer: {reserved} reserved per socket, {autotuned} autotuned by Windows",
     verdictNone:
-      "No measurable change in latency. That is expected: a ping does not go through TCP settings.",
+      "A ping does not go through TCP settings, so these readings describe the connection itself.",
     verdictInconclusive: "Too few replies to compare.",
     verdictLineChanged:
       "The line itself changed between the two readings (median {delta} ms). Ping does not go through TCP settings, so this is not the effect of the change.",
@@ -3371,18 +3382,22 @@ const en: Strings = {
     active: "Turbo active",
     inactive: "Turbo not active",
     loadLabel: "CPU LOAD",
-    loadCadence: "Measured load · updated every second",
+    loadCadence: "Measured every second, smoothed over about 3 seconds",
     stageReading: "Reading the power plan",
     stageRaising: "Raising the boost ceiling",
     stageApplying: "Applying to the system",
     stageMeasuringBefore: "Measuring before",
     stageMeasuringAfter: "Measuring again",
-    gainMeasured: "{factor}x faster",
-    gainSlight: "{factor}x faster - a modest gain",
-    gainAtCeiling: "No improvement measured in this short test",
-    ceilingLocked: "Boost ceiling locked",
-    ceilingUnlocked: "Boost ceiling unlocked",
-    speedEffective: "{ghz} GHz now",
+    factAverage: "Average speed now",
+    factFastest: "Fastest core now",
+    factPeak: "Highest this session",
+    factFloor: "Minimum processor state",
+    ofBase: "{pct}% of base clock",
+    usersTitle: "Using the CPU now",
+    appliedAt:
+      "Turned on {time} · boost mode Aggressive, minimum processor state 100% on mains power",
+    planAlreadyUses: "The current power plan already uses these settings.",
+    planAlreadyHad: "The current power plan already had these settings, so no value changed.",
     loadExplain:
       "Load is how much work the processor is doing; Turbo Boost changes how fast it may run, not how busy it is. A high reading means programs on this PC are busy right now.",
     chartLoad: "Load",
@@ -3754,6 +3769,7 @@ const en: Strings = {
     rolledBack: '"{name}" restored to its original value.',
     licenseNeedsRefresh:
       "We can't verify your Pro subscription after this long offline. Reconnect to the internet and try again.",
+    elevationDeclined: "Administrator permission was not given, so nothing was changed.",
     accountRefreshFailed:
       "We couldn't verify your account status. What's shown here may be out of date — check your connection or try again later.",
   },
@@ -5006,7 +5022,7 @@ const fr: Strings = {
     buffers:
       "Tampon de réception : {reserved} réservés par socket, {autotuned} ajustés automatiquement par Windows",
     verdictNone:
-      "Aucun changement mesurable de la latence. C'est attendu : un ping ne passe pas par les réglages TCP.",
+      "Un ping ne passe pas par les réglages TCP, donc ces mesures décrivent la connexion elle-même.",
     verdictInconclusive: "Trop peu de réponses pour comparer.",
     verdictLineChanged:
       "La ligne elle-même a changé entre les deux mesures (médiane {delta} ms). Un ping ne passe pas par les réglages TCP : ce n'est donc pas l'effet de la modification.",
@@ -5027,18 +5043,23 @@ const fr: Strings = {
     active: "Turbo actif",
     inactive: "Turbo inactif",
     loadLabel: "CHARGE CPU",
-    loadCadence: "Charge mesurée · mise à jour chaque seconde",
+    loadCadence: "Mesurée chaque seconde, lissée sur environ 3 secondes",
     stageReading: "Lecture du mode d'alimentation",
     stageRaising: "Augmentation de la limite de boost",
     stageApplying: "Application au système",
     stageMeasuringBefore: "Mesure avant",
     stageMeasuringAfter: "Nouvelle mesure",
-    gainMeasured: "{factor}x plus rapide",
-    gainSlight: "{factor}x plus rapide - gain modeste",
-    gainAtCeiling: "Aucune amélioration mesurée lors de ce bref test",
-    ceilingLocked: "Limite de boost verrouillee",
-    ceilingUnlocked: "Limite de boost debloquee",
-    speedEffective: "{ghz} GHz maintenant",
+    factAverage: "Vitesse moyenne actuelle",
+    factFastest: "Cœur le plus rapide",
+    factPeak: "Maximum de cette session",
+    factFloor: "État minimal du processeur",
+    ofBase: "{pct} % de la fréquence de base",
+    usersTitle: "Qui utilise le processeur",
+    appliedAt:
+      "Activé le {time} · mode boost Agressif, état minimal du processeur à 100 % sur secteur",
+    planAlreadyUses: "Le mode de gestion de l'alimentation actuel utilise déjà ces réglages.",
+    planAlreadyHad:
+      "Le mode de gestion de l'alimentation actuel avait déjà ces réglages, donc aucune valeur n'a changé.",
     loadExplain:
       "La charge indique le travail du processeur ; Turbo Boost change la vitesse à laquelle il peut tourner, pas son occupation. Une valeur élevée signifie que des programmes travaillent sur ce PC en ce moment.",
     chartLoad: "Charge",
@@ -5416,6 +5437,8 @@ const fr: Strings = {
   toasts: {
     applied: "« {name} » appliqué.",
     rolledBack: "« {name} » restauré à sa valeur d'origine.",
+    elevationDeclined:
+      "L'autorisation administrateur n'a pas été accordée, donc rien n'a été modifié.",
     licenseNeedsRefresh:
       "Impossible de vérifier votre abonnement Pro après une si longue période hors ligne. Reconnectez-vous à internet et réessayez.",
     accountRefreshFailed:
@@ -6672,7 +6695,7 @@ const es: Strings = {
     buffers:
       "Búfer de recepción: {reserved} reservados por socket, {autotuned} ajustados automáticamente por Windows",
     verdictNone:
-      "Ningún cambio medible en la latencia. Es lo esperado: un ping no pasa por los ajustes de TCP.",
+      "Un ping no pasa por los ajustes de TCP, así que estas lecturas describen la propia conexión.",
     verdictInconclusive: "Muy pocas respuestas para comparar.",
     verdictLineChanged:
       "La propia línea cambió entre las dos lecturas (mediana {delta} ms). Un ping no pasa por los ajustes de TCP, así que no es el efecto del cambio.",
@@ -6693,18 +6716,23 @@ const es: Strings = {
     active: "Turbo activo",
     inactive: "Turbo no activo",
     loadLabel: "CARGA CPU",
-    loadCadence: "Carga medida · se actualiza cada segundo",
+    loadCadence: "Medida cada segundo, suavizada en unos 3 segundos",
     stageReading: "Leyendo el plan de energía",
     stageRaising: "Elevando el limite de boost",
     stageApplying: "Aplicando al sistema",
     stageMeasuringBefore: "Midiendo antes",
     stageMeasuringAfter: "Midiendo de nuevo",
-    gainMeasured: "{factor}x mas rapido",
-    gainSlight: "{factor}x mas rapido - ganancia modesta",
-    gainAtCeiling: "No se midió ninguna mejora en esta prueba breve",
-    ceilingLocked: "Limite de boost bloqueado",
-    ceilingUnlocked: "Limite de boost desbloqueado",
-    speedEffective: "{ghz} GHz ahora",
+    factAverage: "Velocidad media ahora",
+    factFastest: "Núcleo más rápido ahora",
+    factPeak: "Máximo en esta sesión",
+    factFloor: "Estado mínimo del procesador",
+    ofBase: "{pct} % de la frecuencia base",
+    usersTitle: "Quién usa la CPU ahora",
+    appliedAt:
+      "Activado el {time} · modo turbo Agresivo, estado mínimo del procesador al 100 % con corriente",
+    planAlreadyUses: "El plan de energía actual ya usa estos ajustes.",
+    planAlreadyHad:
+      "El plan de energía actual ya tenía estos ajustes, así que no cambió ningún valor.",
     loadExplain:
       "La carga es cuánto trabajo hace el procesador; Turbo Boost cambia lo rápido que puede ir, no lo ocupado que está. Un valor alto significa que hay programas trabajando en este PC ahora mismo.",
     chartLoad: "Carga",
@@ -7080,6 +7108,7 @@ const es: Strings = {
     rolledBack: '"{name}" restaurado a su valor original.',
     licenseNeedsRefresh:
       "No podemos verificar tu suscripción Pro tras tanto tiempo sin conexión. Reconectate a internet e inténtalo de nuevo.",
+    elevationDeclined: "No se concedió el permiso de administrador, así que no se cambió nada.",
     accountRefreshFailed:
       "No pudimos verificar el estado de tu cuenta. Lo que se muestra aquí puede estar desactualizado: revisa tu conexión o inténtalo más tarde.",
   },
@@ -8339,7 +8368,7 @@ const de: Strings = {
     buffers:
       "Empfangspuffer: {reserved} pro Socket reserviert, {autotuned} von Windows automatisch angepasst",
     verdictNone:
-      "Keine messbare Änderung der Latenz. Das ist zu erwarten: Ein Ping läuft nicht über die TCP-Einstellungen.",
+      "Ein Ping läuft nicht über die TCP-Einstellungen, daher beschreiben diese Werte die Verbindung selbst.",
     verdictInconclusive: "Zu wenige Antworten für einen Vergleich.",
     verdictLineChanged:
       "Die Leitung selbst hat sich zwischen den beiden Messungen verändert (Median {delta} ms). Ein Ping läuft nicht über die TCP-Einstellungen, das ist also nicht die Wirkung der Änderung.",
@@ -8360,18 +8389,23 @@ const de: Strings = {
     active: "Turbo aktiv",
     inactive: "Turbo nicht aktiv",
     loadLabel: "CPU-LAST",
-    loadCadence: "Gemessene Last · jede Sekunde aktualisiert",
+    loadCadence: "Jede Sekunde gemessen, über etwa 3 Sekunden geglättet",
     stageReading: "Energieplan wird gelesen",
     stageRaising: "Boost-Grenze wird angehoben",
     stageApplying: "Wird auf das System angewendet",
     stageMeasuringBefore: "Messung vorher",
     stageMeasuringAfter: "Erneute Messung",
-    gainMeasured: "{factor}x schneller",
-    gainSlight: "{factor}x schneller - moderater Gewinn",
-    gainAtCeiling: "Keine Verbesserung in diesem kurzen Test gemessen",
-    ceilingLocked: "Boost-Grenze gesperrt",
-    ceilingUnlocked: "Boost-Grenze freigegeben",
-    speedEffective: "{ghz} GHz jetzt",
+    factAverage: "Durchschnittstakt jetzt",
+    factFastest: "Schnellster Kern jetzt",
+    factPeak: "Höchstwert dieser Sitzung",
+    factFloor: "Minimaler Leistungszustand des Prozessors",
+    ofBase: "{pct} % des Basistakts",
+    usersTitle: "Wer die CPU gerade nutzt",
+    appliedAt:
+      "Aktiviert am {time} · Boost-Modus Aggressiv, minimaler Prozessorzustand im Netzbetrieb 100 %",
+    planAlreadyUses: "Der aktuelle Energiesparplan nutzt diese Einstellungen bereits.",
+    planAlreadyHad:
+      "Der aktuelle Energiesparplan hatte diese Einstellungen bereits, daher hat sich kein Wert geändert.",
     loadExplain:
       "Die Last zeigt, wie viel der Prozessor arbeitet; Turbo Boost ändert, wie schnell er laufen darf, nicht wie ausgelastet er ist. Ein hoher Wert heißt, dass gerade Programme auf diesem PC arbeiten.",
     chartLoad: "Last",
@@ -8750,6 +8784,8 @@ const de: Strings = {
     rolledBack: '„{name}" auf den ursprünglichen Wert zurückgesetzt.',
     licenseNeedsRefresh:
       "Wir können Ihr Pro-Abonnement nach so langer Offline-Zeit nicht bestätigen. Stellen Sie eine Internetverbindung her und versuchen Sie es erneut.",
+    elevationDeclined:
+      "Die Administratorberechtigung wurde nicht erteilt, daher wurde nichts geändert.",
     accountRefreshFailed:
       "Wir konnten den Status Ihres Kontos nicht überprüfen. Die hier angezeigten Informationen sind möglicherweise veraltet — prüfen Sie Ihre Verbindung oder versuchen Sie es später erneut.",
   },
@@ -10011,7 +10047,7 @@ const pt: Strings = {
     buffers:
       "Buffer de receção: {reserved} reservados por socket, {autotuned} ajustados automaticamente pelo Windows",
     verdictNone:
-      "Nenhuma alteração mensurável na latência. É o esperado: um ping não passa pelas definições TCP.",
+      "Um ping não passa pelas definições TCP, por isso estas leituras descrevem a própria conexão.",
     verdictInconclusive: "Poucas respostas para comparar.",
     verdictLineChanged:
       "A própria linha mudou entre as duas leituras (mediana {delta} ms). Um ping não passa pelas definições TCP, por isso não é o efeito da alteração.",
@@ -10032,18 +10068,23 @@ const pt: Strings = {
     active: "Turbo ativo",
     inactive: "Turbo inativo",
     loadLabel: "CARGA CPU",
-    loadCadence: "Carga medida · atualizada a cada segundo",
+    loadCadence: "Medida a cada segundo, suavizada em cerca de 3 segundos",
     stageReading: "Lendo o plano de energia",
     stageRaising: "Elevando o teto de boost",
     stageApplying: "Aplicando ao sistema",
     stageMeasuringBefore: "Medindo antes",
     stageMeasuringAfter: "Medindo novamente",
-    gainMeasured: "{factor}x mais rápido",
-    gainSlight: "{factor}x mais rápido - um ganho modesto",
-    gainAtCeiling: "Nenhuma melhoria medida neste teste breve",
-    ceilingLocked: "Teto de boost travado",
-    ceilingUnlocked: "Teto de boost liberado",
-    speedEffective: "{ghz} GHz agora",
+    factAverage: "Velocidade média agora",
+    factFastest: "Núcleo mais rápido agora",
+    factPeak: "Máximo nesta sessão",
+    factFloor: "Estado mínimo do processador",
+    ofBase: "{pct}% da frequência base",
+    usersTitle: "Quem usa a CPU agora",
+    appliedAt:
+      "Ativado em {time} · modo boost Agressivo, estado mínimo do processador a 100% com alimentação elétrica",
+    planAlreadyUses: "O plano de energia atual já usa estas definições.",
+    planAlreadyHad:
+      "O plano de energia atual já tinha estas definições, por isso nenhum valor mudou.",
     loadExplain:
       "A carga é o trabalho que o processador está a fazer; o Turbo Boost muda a velocidade a que pode trabalhar, não quão ocupado está. Um valor alto significa que há programas a trabalhar neste PC neste momento.",
     chartLoad: "Carga",
@@ -10420,6 +10461,8 @@ const pt: Strings = {
     rolledBack: '"{name}" restaurado ao valor original.',
     licenseNeedsRefresh:
       "Não conseguimos verificar sua assinatura Pro depois de tanto tempo offline. Reconecte-se à internet e tente novamente.",
+    elevationDeclined:
+      "A permissão de administrador não foi concedida, por isso nada foi alterado.",
     accountRefreshFailed:
       "Não conseguimos verificar o estado da sua conta. O que aparece aqui pode estar desatualizado — verifique sua conexão ou tente novamente mais tarde.",
   },

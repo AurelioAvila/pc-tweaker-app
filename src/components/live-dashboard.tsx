@@ -39,8 +39,8 @@ const DRIVE_EVERY = 15;
 /** The process table is read every other second: plenty for a top five. */
 const USERS_EVERY = 2;
 
-type ResourceUser = { name: string; processes: number; cpu: number; memory: number };
-type ResourceUsers = { cpu: ResourceUser[]; memory: ResourceUser[] };
+export type ResourceUser = { name: string; processes: number; cpu: number; memory: number };
+export type ResourceUsers = { cpu: ResourceUser[]; memory: ResourceUser[] };
 
 export function useForeground(): boolean {
   const read = () => document.visibilityState === "visible" && document.hasFocus();
@@ -291,7 +291,7 @@ function Card({
   );
 }
 
-function UsersList({
+export function UsersList({
   users,
   value,
   s,

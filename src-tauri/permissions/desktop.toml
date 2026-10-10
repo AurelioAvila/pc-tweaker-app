@@ -89,6 +89,7 @@ permissions = [
     "allow-system-stats",
     "allow-live-sample",
     "allow-resource-users",
+    "allow-turbo-boost-already-set",
     "allow-start-fps-capture",
     "allow-stop-fps-capture",
     "allow-fps-status",

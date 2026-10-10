@@ -1982,8 +1982,11 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
 pub(crate) fn dirs_app_data_dir() -> std::path::PathBuf {
     // Mirrors Tauri's own resolution (%APPDATA%/<identifier>) without needing
     // a running AppHandle, since the elevated helper process never builds a UI.
+    // The identifier is the one this build was configured with (see build.rs):
+    // a fixed name sent a dev build's administrator changes to the installed
+    // app's folder, so the dev window never saw them applied.
     let base = std::env::var("APPDATA").unwrap_or_else(|_| ".".to_string());
-    std::path::PathBuf::from(base).join("com.aurel.pc-tweaker-app")
+    std::path::PathBuf::from(base).join(env!("PCT_APP_IDENTIFIER"))
 }
 
 /// Last audit entries, newest first, for the dashboard's history card. The
@@ -2209,6 +2212,7 @@ pub fn run() {
             sysmon::system_stats,
             livemetrics::live_sample,
             livemetrics::resource_users,
+            gaming::turbo_boost_already_set,
             fps::imp::start_fps_capture,
             fps::imp::stop_fps_capture,
             fps::imp::fps_status,

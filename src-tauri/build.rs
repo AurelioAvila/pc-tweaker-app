@@ -9,6 +9,26 @@ fn main() {
     )
     .expect("could not generate the application capability manifest");
 
+    // The elevated helper never builds an AppHandle, so it cannot ask Tauri
+    // for the app data folder. It gets the same identifier Tauri resolves,
+    // including a TAURI_CONFIG override (the dev build has its own), so both
+    // processes always read and write one folder.
+    println!("cargo:rerun-if-env-changed=TAURI_CONFIG");
+    println!("cargo:rerun-if-changed=tauri.conf.json");
+    let identifier = |json: &str| {
+        serde_json::from_str::<serde_json::Value>(json)
+            .ok()?
+            .get("identifier")?
+            .as_str()
+            .map(str::to_owned)
+    };
+    let identifier = std::env::var("TAURI_CONFIG")
+        .ok()
+        .and_then(|config| identifier(&config))
+        .or_else(|| identifier(&std::fs::read_to_string("tauri.conf.json").ok()?))
+        .expect("tauri.conf.json names an identifier");
+    println!("cargo:rustc-env=PCT_APP_IDENTIFIER={identifier}");
+
     // Tauri supplies its Windows resource to binary targets only. Library
     // tests also link native dialogs, which require Common Controls v6.
     // Keep the existing Tauri resource unchanged for the application binary.

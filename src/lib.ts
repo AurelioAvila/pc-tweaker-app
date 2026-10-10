@@ -415,5 +415,7 @@ export function friendlyError(error: unknown, s: Strings): string {
   if (message.startsWith("SELF_MANAGED_GAME: ")) return s.guard.selfManaged;
   if (message.startsWith("REGISTERED_GAME_RUNNING: ")) return s.guard.registeredGameRunning;
   if (message.startsWith("NEEDS_ADMIN_SCHEDULE: ")) return s.ram.autoNeedsAdmin;
+  // The UAC prompt was declined or closed (elevation.rs).
+  if (message.startsWith("elevation was cancelled or failed")) return s.toasts.elevationDeclined;
   return message;
 }

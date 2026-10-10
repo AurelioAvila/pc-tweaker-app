@@ -13,7 +13,21 @@ export type LiveSample = {
   disk_write_bps: number | null;
   net_down_bps: number | null;
   net_up_bps: number | null;
+  rated_mhz: number | null;
+  busiest_mhz: number | null;
+  peak_mhz: number | null;
+  min_state_pct: number | null;
 };
+
+/** Exponential smoothing of real readings, so a dial follows the load without
+ *  jumping on every one-second blip. At 1 Hz, alpha 0.3 is a time constant of
+ *  about 3 s. It never invents a value: each output lies between the previous
+ *  output and the new reading, and it settles on a steady reading. */
+export function ema(previous: number | null, next: number, alpha = 0.3): number {
+  return previous === null || !Number.isFinite(previous)
+    ? next
+    : previous + alpha * (next - previous);
+}
 
 /** Seconds of history kept: five minutes. The charts show the last minute or
  *  all five. */

@@ -2,6 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  ema,
   insights,
   peakOf,
   WINDOW_SHORT,
@@ -14,6 +15,8 @@ import {
   sparkPoints,
   verdict,
 } from "../src/live-metrics";
+import { friendlyError } from "../src/lib";
+import { STRINGS } from "../src/i18n";
 
 test("the history keeps the newest readings and never grows past its length", () => {
   let values: number[] = [];
@@ -26,6 +29,23 @@ test("the history keeps the newest readings and never grows past its length", ()
   assert.equal(values[0], 25);
   assert.equal(values[HISTORY - 1], HISTORY + 24);
   assert.deepEqual(push([1, 2, 3], 4, 3), [2, 3, 4]);
+});
+
+test("smoothing follows real readings and never invents one", () => {
+  assert.equal(ema(null, 12), 12, "the first reading is shown as it is");
+  assert.equal(ema(Number.NaN, 12), 12);
+  assert.equal(ema(5, 100), 33.5, "a one-second spike moves the dial part of the way");
+  let v: number | null = null;
+  const readings = [8, 9, 7, 70, 75, 72, 74, 10, 9, 8];
+  for (const r of readings) {
+    const before: number | null = v;
+    v = ema(v, r);
+    if (before !== null) {
+      assert.ok(v >= Math.min(before, r) && v <= Math.max(before, r), "between output and reading");
+    }
+  }
+  for (let i = 0; i < 40; i++) v = ema(v, 20);
+  assert.ok(Math.abs((v ?? 0) - 20) < 0.01, "settles on a steady reading");
 });
 
 test("rate charts scale to a round ceiling and an idle line stays flat", () => {
@@ -136,5 +156,17 @@ test("insights speak only about real pressure, and say calm once otherwise", () 
     })[0].id,
     "calm",
     "only the last 30 seconds count",
+  );
+});
+
+test("a declined administrator prompt reads as a plain sentence in every language", () => {
+  const declined = "elevation was cancelled or failed: The operation was canceled by the user.";
+  for (const [lang, s] of Object.entries(STRINGS)) {
+    assert.equal(friendlyError(declined, s), s.toasts.elevationDeclined, lang);
+    assert.ok(s.toasts.elevationDeclined.length > 10, lang);
+  }
+  assert.equal(
+    friendlyError("the elevated action exited with code Some(1)", STRINGS.en),
+    "the elevated action exited with code Some(1)",
   );
 });

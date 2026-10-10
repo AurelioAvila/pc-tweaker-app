@@ -825,9 +825,34 @@
   line-height: 1.6;
   min-height: 22px;
 }
-.tool-boost-clock {
-  margin-top: 6px;
-  line-height: 1.6;
+.tool-boost-note {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.tool-boost-facts {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0 0;
+  font-size: 12px;
+}
+.tool-boost-facts > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 12px;
+}
+.tool-boost-facts dt {
+  color: var(--text-muted);
+}
+.tool-boost-facts dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 .tool-scan-panel {

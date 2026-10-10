@@ -4,12 +4,27 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open as openFolderDialog } from "@tauri-apps/plugin-dialog";
 import { format, Strings } from "../i18n";
-import { friendlyError, arcPath, GAUGE_C, GAUGE_R, GAUGE_START, GAUGE_SWEEP, polar } from "../lib";
+import {
+  friendlyError,
+  arcPath,
+  GAUGE_C,
+  GAUGE_R,
+  GAUGE_START,
+  GAUGE_SWEEP,
+  polar,
+  uiLocale,
+} from "../lib";
 import { CoreSteeringStatus, GameEntry, Toast } from "../types";
 import { BoltIcon } from "./icons";
 import { Badge, Toggle } from "./ui";
-import { Spark, useForeground, useReducedMotion } from "./live-dashboard";
-import { push } from "../live-metrics";
+import {
+  Spark,
+  UsersList,
+  useForeground,
+  useReducedMotion,
+  type ResourceUsers,
+} from "./live-dashboard";
+import { ema, push } from "../live-metrics";
 import type { LiveSample } from "../live-metrics";
 
 export function GameSessionsPanel({
@@ -243,9 +258,21 @@ export function GameSessionsPanel({
   );
 }
 
-export function TurboGauge({ value, engaged }: { value: number; engaged: boolean }) {
+export function TurboGauge({
+  value,
+  engaged,
+  glide = true,
+}: {
+  value: number;
+  engaged: boolean;
+  /** Animate between readings (off for reduced motion). */
+  glide?: boolean;
+}) {
   value = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
-  const angle = GAUGE_START + GAUGE_SWEEP * value;
+  // The needle is drawn at zero and turned, so CSS can glide it from one real
+  // reading to the next instead of jumping once a second.
+  const angle = GAUGE_START;
+  const motion = glide ? "transform 0.9s ease-out, stroke-dasharray 0.9s ease-out" : undefined;
   // A tapered needle with a counterweight tail, like a real rev counter's,
   // instead of a uniform line from the hub.
   const tip = polar(angle, GAUGE_R - 14);
@@ -331,30 +358,43 @@ export function TurboGauge({ value, engaged }: { value: number; engaged: boolean
       {value > 0.002 && (
         <>
           <path
-            d={arcPath(0, value, GAUGE_R)}
+            d={arcPath(0, 1, GAUGE_R)}
+            pathLength={1}
+            strokeDasharray={`${value} 2`}
             stroke="url(#turbo-fill)"
             strokeWidth="11"
             fill="none"
             strokeLinecap="round"
             opacity={engaged ? 0.4 : 0.18}
-            style={{ filter: "blur(4px)" }}
+            style={{ filter: "blur(4px)", transition: motion }}
           />
           <path
-            d={arcPath(0, value, GAUGE_R)}
+            d={arcPath(0, 1, GAUGE_R)}
+            pathLength={1}
+            strokeDasharray={`${value} 2`}
             stroke="url(#turbo-fill)"
             strokeWidth="6"
             fill="none"
             strokeLinecap="round"
+            style={{ transition: motion }}
           />
         </>
       )}
 
       {/* Needle */}
-      <polygon
-        points={`${tip.x},${tip.y} ${baseA.x},${baseA.y} ${tail.x},${tail.y} ${baseB.x},${baseB.y}`}
-        fill={engaged ? "#fb923c" : "#cbd5e1"}
-        style={{ filter: engaged ? "drop-shadow(0 0 4px rgba(251,146,60,0.7))" : "none" }}
-      />
+      <g
+        style={{
+          transform: `rotate(${GAUGE_SWEEP * value}deg)`,
+          transformOrigin: `${GAUGE_C}px ${GAUGE_C}px`,
+          transition: motion,
+        }}
+      >
+        <polygon
+          points={`${tip.x},${tip.y} ${baseA.x},${baseA.y} ${tail.x},${tail.y} ${baseB.x},${baseB.y}`}
+          fill={engaged ? "#fb923c" : "#cbd5e1"}
+          style={{ filter: engaged ? "drop-shadow(0 0 4px rgba(251,146,60,0.7))" : "none" }}
+        />
+      </g>
       <circle
         cx={GAUGE_C}
         cy={GAUGE_C}
@@ -381,15 +421,12 @@ export function TurboBoostPanel({
 }) {
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState<string | null>(null);
-  // Rated clock, shown as a fact under the gauge. Deliberately not a live
-  // frequency: Windows reports a nominal constant on CPPC processors, so a
-  // "current MHz" readout would be a fixed number pretending to be live.
-  // See src-tauri/src/cpuclock.rs.
-  const [ratedMhz, setRatedMhz] = useState<number | null>(null);
-  // Live CPU load. This is what the needle rests on when idle, so the gauge is
-  // a working instrument between activations rather than a dead dial.
+  // Live CPU load, smoothed (see `ema`): the needle shows what the machine is
+  // really doing, without a jump on every one-second blip. The charts below
+  // keep the raw per-second readings.
   const [load, setLoad] = useState<number | null>(null);
-  const [mhz, setMhz] = useState<number | null>(null);
+  const [sample, setSample] = useState<LiveSample | null>(null);
+  const [users, setUsers] = useState<ResourceUsers | null>(null);
   const [loads, setLoads] = useState<number[]>([]);
   const [speeds, setSpeeds] = useState<(number | null)[]>([]);
   const [tick, setTick] = useState(0);
@@ -398,15 +435,29 @@ export function TurboBoostPanel({
   const [testing, setTesting] = useState(false);
   const foreground = useForeground();
   const reduced = useReducedMotion();
-  // The measured before/after ratio, kept until the next activation so the
-  // user can still read it after the sweep settles.
-  const [gain, setGain] = useState<number | null>(null);
+  // When Turbo Boost was last turned on (from the audit log) and whether the
+  // plan already ran the processor this way, read again whenever the applied
+  // state changes. The panel states these facts; it never grades the result.
+  const [appliedAt, setAppliedAt] = useState<number | null>(null);
+  const [alreadySet, setAlreadySet] = useState<boolean | null>(null);
   useEffect(() => {
-    invoke<{ max_mhz: number } | null>("cpu_clock")
-      .then((c) => setRatedMhz(c?.max_mhz ?? null))
-      .catch(() => setRatedMhz(null));
-  }, []);
-
+    let cancelled = false;
+    invoke<boolean>("turbo_boost_already_set")
+      .then((v) => !cancelled && setAlreadySet(v))
+      .catch(() => !cancelled && setAlreadySet(null));
+    invoke<{ ts: number; action: string; target: string; success: boolean }[]>("list_audit_log")
+      .then((log) => {
+        if (cancelled) return;
+        const last = log.find(
+          (e) => e.target === "turbo_boost" && e.action === "tweak-applied" && e.success,
+        );
+        setAppliedAt(last ? last.ts : null);
+      })
+      .catch(() => !cancelled && setAppliedAt(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [applied]);
   // The dial reports measured load once a second while the panel is on
   // screen and the window is in front, from the same system-wide counters as
   // PC Health. It used to read every 20 seconds, so a busy moment (a build, an
@@ -414,15 +465,22 @@ export function TurboBoostPanel({
   useEffect(() => {
     if (!foreground) return;
     let cancelled = false;
+    let count = 0;
     const tick = () => {
+      // The process table every other second, as on PC Health.
+      if (count++ % 2 === 0) {
+        void invoke<ResourceUsers>("resource_users")
+          .then((u) => !cancelled && setUsers(u))
+          .catch(() => undefined);
+      }
       invoke<LiveSample>("live_sample")
-        .then((sample) => {
+        .then((next) => {
           if (cancelled) return;
-          const value = Number.isFinite(sample.cpu) ? Math.max(0, Math.min(100, sample.cpu)) : null;
-          setLoad(value);
-          setMhz(sample.cpu_mhz);
+          const value = Number.isFinite(next.cpu) ? Math.max(0, Math.min(100, next.cpu)) : null;
+          setLoad((prev) => (value === null ? null : ema(prev, value)));
+          setSample(next);
           if (value !== null) setLoads((v) => push(v, value));
-          setSpeeds((v) => push(v, sample.cpu_mhz));
+          setSpeeds((v) => push(v, next.cpu_mhz));
           setTick((t) => t + 1);
         })
         .catch(() => {
@@ -461,7 +519,6 @@ export function TurboBoostPanel({
   async function toggleTurbo() {
     if (busy || testing) return;
     setBusy(true);
-    setGain(null);
     const engaging = !applied;
     try {
       let before: Probe | null = null;
@@ -476,16 +533,6 @@ export function TurboBoostPanel({
         setStage(s.turboBoost.stageMeasuringAfter);
         const after = await probe(2);
         if (after) setTests((t) => ({ ...t, boost: after }));
-        setGain(
-          before &&
-            after &&
-            Number.isFinite(before.score) &&
-            Number.isFinite(after.score) &&
-            before.score > 0 &&
-            after.score > 0
-            ? after.score / before.score
-            : null,
-        );
       }
       pushToast(
         "success",
@@ -493,28 +540,34 @@ export function TurboBoostPanel({
       );
       await onChanged();
     } catch (error) {
-      pushToast("error", String(error));
+      pushToast("error", friendlyError(error, s));
     } finally {
       setStage(null);
       setBusy(false);
     }
   }
 
-  // "Aggressive mode - 4.20 GHz" after "Default mode - 4.20 GHz" read as
-  // nothing having changed, because the rated clock is a constant of the
-  // silicon and never moves. What changed is the ceiling, so that is what the
-  // readout names — and once measured, by how much it actually mattered.
-  const ceiling = applied ? s.turboBoost.ceilingUnlocked : s.turboBoost.ceilingLocked;
-  // This short workload comparison cannot establish the CPU's maximum speed.
-  const gainText =
-    gain === null
-      ? null
-      : gain >= 1.03
-        ? format(s.turboBoost.gainMeasured, { factor: gain.toFixed(2) })
-        : gain >= 1.005
-          ? format(s.turboBoost.gainSlight, { factor: gain.toFixed(2) })
-          : s.turboBoost.gainAtCeiling;
-  const readout = busy ? stage : (gainText ?? ceiling);
+  // The state, never a verdict: a short test cannot say whether boost helps a
+  // real workload, so the numbers in the table below speak for themselves.
+  const readout = busy ? stage : applied ? s.turboBoost.active : s.turboBoost.inactive;
+  // Measured facts only: speeds from the processor's own performance counters,
+  // the floor from the active power plan. A row without a reading is left out.
+  const rated = sample?.rated_mhz ?? null;
+  const topUser = Math.max(1, ...(users?.cpu.map((u) => u.cpu) ?? [0]));
+  const speed = (mhz: number) =>
+    rated
+      ? `${ghz(mhz)} · ${format(s.turboBoost.ofBase, { pct: Math.round((mhz / rated) * 100) })}`
+      : ghz(mhz);
+  const facts: [string, string | null][] = [
+    [s.turboBoost.factAverage, sample?.cpu_mhz == null ? null : speed(sample.cpu_mhz)],
+    [s.turboBoost.factFastest, sample?.busiest_mhz == null ? null : speed(sample.busiest_mhz)],
+    [s.turboBoost.factPeak, sample?.peak_mhz == null ? null : speed(sample.peak_mhz)],
+    [
+      s.turboBoost.factFloor,
+      // As Windows shows it in Power Options: a bare percentage.
+      sample?.min_state_pct == null ? null : `${sample.min_state_pct}%`,
+    ],
+  ];
 
   return (
     <div className="tool-panel tool-boost-panel" aria-busy={busy}>
@@ -534,7 +587,7 @@ export function TurboBoostPanel({
             {applied && !busy && (
               <span className="absolute h-32 w-32 rounded-full bg-orange-500/15 blur-2xl" />
             )}
-            <TurboGauge value={(load ?? 0) / 100} engaged={applied || busy} />
+            <TurboGauge value={(load ?? 0) / 100} engaged={applied || busy} glide={!reduced} />
           </div>
 
           {/* The readout used to sit inside the dial's open bottom, the way a rev
@@ -558,8 +611,8 @@ export function TurboBoostPanel({
             Boost reads as the feature's own output — and this one is live CPU
             load, which the tweak does not change and should not. Naming it is
             what stops an idle 2% looking like a failure. Set beside the number
-            rather than under it: the card already stacks the gain readout and
-            the clock line below this, and a fourth centred row made the whole
+            rather than under it: the card already stacks the state readout and
+            the measured facts below this, and a fourth centred row made the whole
             lower half read as a list of unrelated captions. */}
             <span className="type-label text-ink-3 text-[9px] tracking-[0.18em]">
               {s.turboBoost.loadLabel}
@@ -573,26 +626,38 @@ export function TurboBoostPanel({
             role="status"
             aria-live="polite"
             className={`tool-boost-readout mt-1 text-left text-[12.5px] font-semibold transition-colors ${
-              busy
-                ? "text-orange-300"
-                : gain !== null
-                  ? "text-emerald-300"
-                  : applied
-                    ? "text-orange-300/80"
-                    : "text-ink-3"
+              busy ? "text-orange-300" : applied ? "text-orange-300/80" : "text-ink-3"
             }`}
           >
             {readout}
           </p>
-          {!busy && (mhz !== null || ratedMhz !== null) && (
-            <p className="tool-boost-clock flex items-center gap-2 text-[12px] text-ink-3">
-              <Badge kind={applied ? "accent" : "neutral"}>
-                {applied ? s.turboBoost.colBoost : s.turboBoost.colDefault}
-              </Badge>
-              {mhz !== null
-                ? format(s.turboBoost.speedEffective, { ghz: (mhz / 1000).toFixed(2) })
-                : `${((ratedMhz ?? 0) / 1000).toFixed(2)} GHz`}
+          {!busy && applied && appliedAt !== null && (
+            <p className="tool-boost-note">
+              {format(s.turboBoost.appliedAt, {
+                time: new Date(appliedAt * 1000).toLocaleString(uiLocale(), {
+                  dateStyle: "short",
+                  timeStyle: "short",
+                }),
+              })}
             </p>
+          )}
+          {!busy && alreadySet && (
+            <p className="tool-boost-note">
+              {applied ? s.turboBoost.planAlreadyHad : s.turboBoost.planAlreadyUses}
+            </p>
+          )}
+          {facts.some(([, value]) => value !== null) && (
+            <dl className="tool-boost-facts">
+              {facts.map(
+                ([label, value]) =>
+                  value !== null && (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ),
+              )}
+            </dl>
           )}
 
           <button
@@ -637,6 +702,14 @@ export function TurboBoostPanel({
             tick={tick}
             reduced={reduced}
             formatValue={(v) => (v === null ? "–" : `${(v / 1000).toFixed(2)} GHz`)}
+            s={s}
+          />
+        </div>
+        <div>
+          <span className="type-label text-ink-3">{s.turboBoost.usersTitle}</span>
+          <UsersList
+            users={users?.cpu ?? []}
+            value={(u) => ({ text: `${u.cpu.toFixed(1)}%`, ratio: u.cpu / topUser })}
             s={s}
           />
         </div>

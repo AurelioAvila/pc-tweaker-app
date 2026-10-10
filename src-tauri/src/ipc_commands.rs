@@ -88,6 +88,7 @@ pub const APP_COMMANDS: &[&str] = &[
     "system_stats",
     "live_sample",
     "resource_users",
+    "turbo_boost_already_set",
     "start_fps_capture",
     "stop_fps_capture",
     "fps_status",

@@ -148,8 +148,11 @@ pub struct TweakInfo {
     min_build: Option<u32>,
     /// Supported on Pro, Enterprise and Education only.
     pro_edition: bool,
+    /// Supported on Enterprise and Education only.
+    enterprise_edition: bool,
     /// Why it cannot be applied on this PC: `windows_version`,
-    /// `windows_edition` or `not_present`. The frontend translates the code.
+    /// `windows_edition`, `windows_edition_enterprise` or `not_present`. The
+    /// frontend translates the code.
     unavailable: Option<&'static str>,
 }
 
@@ -507,6 +510,7 @@ fn tweak_infos(store: &RollbackStore) -> Result<Vec<TweakInfo>, String> {
             changes: settings_tweaks::changes(t),
             min_build: (t.min_build > 0).then_some(t.min_build),
             pro_edition: t.edition == settings_tweaks::Edition::ProOrHigher,
+            enterprise_edition: t.edition == settings_tweaks::Edition::EnterpriseOrEducation,
             unavailable: settings_tweaks::availability(t, build, edition.as_deref())
                 .err()
                 .map(|why| why.code()),

@@ -46,8 +46,11 @@ export type TweakInfo = {
   min_build?: number | null;
   /** Needs Windows Pro, Enterprise or Education. */
   pro_edition?: boolean;
+  /** Needs Windows Enterprise or Education. */
+  enterprise_edition?: boolean;
   /** Why it cannot be applied on this PC, when it cannot. */
-  unavailable?: "windows_version" | "windows_edition" | "not_present" | null;
+  unavailable?:
+    "windows_version" | "windows_edition" | "windows_edition_enterprise" | "not_present" | null;
 };
 
 /** One row of the dry run (`preview_tweak`): a change, what is there now and

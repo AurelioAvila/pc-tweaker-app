@@ -1087,6 +1087,8 @@ export interface Strings {
     proEdition: string;
     unavailableVersion: string; // uses {version}
     unavailableEdition: string;
+    enterpriseEdition: string;
+    unavailableEnterpriseEdition: string;
     notPresent: string;
   };
   scheduledCleanup: {
@@ -2357,6 +2359,9 @@ const it: Strings = {
     unavailableVersion: "Non disponibile su questo PC: richiede {version} o successivo.",
     unavailableEdition:
       "Non disponibile su questo PC: richiede Windows Pro, Enterprise o Education.",
+    enterpriseEdition: "Enterprise o Education",
+    unavailableEnterpriseEdition:
+      "Non disponibile su questo PC: richiede Windows Enterprise o Education.",
     notPresent: "Questo PC non ha questa funzione, quindi non c'è nulla da disattivare.",
   },
   scheduledCleanup: {
@@ -2381,7 +2386,7 @@ const it: Strings = {
     disable_click_to_do: {
       name: "Disattiva Click to Do",
       description:
-        "Imposta il criterio di Windows che rimuove Click to Do, la funzione che cattura lo schermo e lo analizza per proporre azioni. I suoi punti di accesso spariscono per tutti gli account di questo PC. Impostazioni lo mostrerà come gestito dall'organizzazione: è così che Windows indica i criteri.",
+        "Imposta il criterio di Windows che rimuove Click to Do, la funzione che cattura lo schermo e lo analizza per proporre azioni. I suoi punti di accesso spariscono per tutti gli account di questo PC. Impostazioni lo mostrerà come gestito dall'organizzazione: è così che Windows indica i criteri. Ha effetto solo sui PC in cui Windows offre Click to Do.",
     },
     disable_edge_ai: {
       name: "Disattiva le funzioni IA di Microsoft Edge",
@@ -4008,6 +4013,9 @@ const en: Strings = {
     proEdition: "Pro, Enterprise or Education",
     unavailableVersion: "Not available on this PC: it needs {version} or later.",
     unavailableEdition: "Not available on this PC: it needs Windows Pro, Enterprise or Education.",
+    enterpriseEdition: "Enterprise or Education",
+    unavailableEnterpriseEdition:
+      "Not available on this PC: it needs Windows Enterprise or Education.",
     notPresent: "This PC does not have this feature, so there is nothing to turn off.",
   },
   scheduledCleanup: {
@@ -4032,7 +4040,7 @@ const en: Strings = {
     disable_click_to_do: {
       name: "Turn off Click to Do",
       description:
-        "Sets the Windows policy that removes Click to Do, the feature that takes a screenshot of your screen and analyzes it to suggest actions. Its entry points disappear for every account on this PC. Settings will show it as managed by your organization, which is how Windows labels policies.",
+        "Sets the Windows policy that removes Click to Do, the feature that takes a screenshot of your screen and analyzes it to suggest actions. Its entry points disappear for every account on this PC. Settings will show it as managed by your organization, which is how Windows labels policies. It has an effect only on PCs where Windows offers Click to Do.",
     },
     disable_edge_ai: {
       name: "Turn off AI features in Microsoft Edge",
@@ -5682,6 +5690,9 @@ const fr: Strings = {
     proEdition: "Pro, Entreprise ou Éducation",
     unavailableVersion: "Indisponible sur ce PC : nécessite {version} ou plus récent.",
     unavailableEdition: "Indisponible sur ce PC : nécessite Windows Pro, Entreprise ou Éducation.",
+    enterpriseEdition: "Entreprise ou Éducation",
+    unavailableEnterpriseEdition:
+      "Indisponible sur ce PC : nécessite Windows Entreprise ou Éducation.",
     notPresent: "Ce PC ne dispose pas de cette fonction, il n'y a donc rien à désactiver.",
   },
   scheduledCleanup: {
@@ -5706,7 +5717,7 @@ const fr: Strings = {
     disable_click_to_do: {
       name: "Désactiver Click to Do",
       description:
-        "Applique la stratégie Windows qui supprime Click to Do, la fonction qui capture votre écran et l'analyse pour proposer des actions. Ses points d'accès disparaissent pour tous les comptes de ce PC. Paramètres l'indiquera comme géré par votre organisation : c'est ainsi que Windows signale les stratégies.",
+        "Applique la stratégie Windows qui supprime Click to Do, la fonction qui capture votre écran et l'analyse pour proposer des actions. Ses points d'accès disparaissent pour tous les comptes de ce PC. Paramètres l'indiquera comme géré par votre organisation : c'est ainsi que Windows signale les stratégies. Elle n'a d'effet que sur les PC où Windows propose Click to Do.",
     },
     disable_edge_ai: {
       name: "Désactiver les fonctions d'IA de Microsoft Edge",
@@ -7352,6 +7363,9 @@ const es: Strings = {
     proEdition: "Pro, Enterprise o Education",
     unavailableVersion: "No disponible en este PC: necesita {version} o posterior.",
     unavailableEdition: "No disponible en este PC: necesita Windows Pro, Enterprise o Education.",
+    enterpriseEdition: "Enterprise o Education",
+    unavailableEnterpriseEdition:
+      "No disponible en este PC: necesita Windows Enterprise o Education.",
     notPresent: "Este PC no tiene esta función, así que no hay nada que desactivar.",
   },
   scheduledCleanup: {
@@ -7376,7 +7390,7 @@ const es: Strings = {
     disable_click_to_do: {
       name: "Desactivar Click to Do",
       description:
-        "Aplica la directiva de Windows que elimina Click to Do, la función que captura tu pantalla y la analiza para sugerir acciones. Sus accesos desaparecen para todas las cuentas de este PC. Configuración lo mostrará como administrado por tu organización: así es como Windows indica las directivas.",
+        "Aplica la directiva de Windows que elimina Click to Do, la función que captura tu pantalla y la analiza para sugerir acciones. Sus accesos desaparecen para todas las cuentas de este PC. Configuración lo mostrará como administrado por tu organización: así es como Windows indica las directivas. Solo tiene efecto en los PC en los que Windows ofrece Click to Do.",
     },
     disable_edge_ai: {
       name: "Desactivar las funciones de IA de Microsoft Edge",
@@ -9033,6 +9047,9 @@ const de: Strings = {
     unavailableVersion: "Auf diesem PC nicht verfügbar: erfordert {version} oder neuer.",
     unavailableEdition:
       "Auf diesem PC nicht verfügbar: erfordert Windows Pro, Enterprise oder Education.",
+    enterpriseEdition: "Enterprise oder Education",
+    unavailableEnterpriseEdition:
+      "Auf diesem PC nicht verfügbar: erfordert Windows Enterprise oder Education.",
     notPresent: "Dieser PC hat diese Funktion nicht, es gibt also nichts abzuschalten.",
   },
   scheduledCleanup: {
@@ -9057,7 +9074,7 @@ const de: Strings = {
     disable_click_to_do: {
       name: "Click to Do deaktivieren",
       description:
-        "Setzt die Windows-Richtlinie, die Click to Do entfernt – die Funktion, die deinen Bildschirm aufnimmt und analysiert, um Aktionen vorzuschlagen. Ihre Einstiegspunkte verschwinden für alle Konten auf diesem PC. Die Einstellungen zeigen die Option dann als von deiner Organisation verwaltet an – so kennzeichnet Windows Richtlinien.",
+        "Setzt die Windows-Richtlinie, die Click to Do entfernt – die Funktion, die deinen Bildschirm aufnimmt und analysiert, um Aktionen vorzuschlagen. Ihre Einstiegspunkte verschwinden für alle Konten auf diesem PC. Die Einstellungen zeigen die Option dann als von deiner Organisation verwaltet an – so kennzeichnet Windows Richtlinien. Sie wirkt nur auf PCs, auf denen Windows Click to Do anbietet.",
     },
     disable_edge_ai: {
       name: "KI-Funktionen in Microsoft Edge deaktivieren",
@@ -10705,6 +10722,8 @@ const pt: Strings = {
     proEdition: "Pro, Enterprise ou Education",
     unavailableVersion: "Indisponível neste PC: requer {version} ou mais recente.",
     unavailableEdition: "Indisponível neste PC: requer Windows Pro, Enterprise ou Education.",
+    enterpriseEdition: "Enterprise ou Education",
+    unavailableEnterpriseEdition: "Indisponível neste PC: requer Windows Enterprise ou Education.",
     notPresent: "Este PC não tem este recurso, então não há nada para desativar.",
   },
   scheduledCleanup: {
@@ -10729,7 +10748,7 @@ const pt: Strings = {
     disable_click_to_do: {
       name: "Desativar o Click to Do",
       description:
-        "Aplica a política do Windows que remove o Click to Do, o recurso que captura a sua tela e a analisa para sugerir ações. Os pontos de acesso desaparecem para todas as contas deste PC. As Configurações vão mostrá-la como gerenciada pela sua organização: é assim que o Windows indica as políticas.",
+        "Aplica a política do Windows que remove o Click to Do, o recurso que captura a sua tela e a analisa para sugerir ações. Os pontos de acesso desaparecem para todas as contas deste PC. As Configurações vão mostrá-la como gerenciada pela sua organização: é assim que o Windows indica as políticas. Só tem efeito nos PCs em que o Windows oferece o Click to Do.",
     },
     disable_edge_ai: {
       name: "Desativar os recursos de IA do Microsoft Edge",

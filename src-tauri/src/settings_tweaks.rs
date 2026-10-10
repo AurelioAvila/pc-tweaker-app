@@ -27,6 +27,9 @@ pub enum Edition {
     /// Pro, Enterprise or Education (and their IoT/Workstation variants):
     /// the editions Microsoft documents the policy for. Home is refused.
     ProOrHigher,
+    /// Enterprise or Education (and their IoT, LTSC and SE variants): for a
+    /// policy Microsoft lists for Pro that Start is reported to ignore there.
+    EnterpriseOrEducation,
 }
 
 pub struct SettingsTweak {
@@ -71,12 +74,15 @@ pub static TWEAKS: [SettingsTweak; 14] = [
     SettingsTweak {
         id: "disable_click_to_do",
         name: "Turn off Click to Do",
-        description: "Sets the Windows policy that removes Click to Do, the feature that takes a screenshot of your screen and analyzes it to suggest actions. Its entry points disappear for every account on this PC. Settings will show it as managed by your organization, which is how Windows labels policies.",
+        description: "Sets the Windows policy that removes Click to Do, the feature that takes a screenshot of your screen and analyzes it to suggest actions. Its entry points disappear for every account on this PC. Settings will show it as managed by your organization, which is how Windows labels policies. It has an effect only on PCs where Windows offers Click to Do.",
         category: Category::Privacy,
         hive: Hive::Hklm,
         writes: &[Write { path: r"SOFTWARE\Policies\Microsoft\Windows\WindowsAI", name: "DisableClickToDo", value: 1 }],
         requires_pro: true,
-        min_build: BUILD_24H2,
+        // Microsoft's Policy CSP still lists this policy for Insider builds
+        // only, so no Windows version is claimed; the policy is inert where
+        // Click to Do does not exist.
+        min_build: 0,
         edition: Edition::ProOrHigher,
     },
     SettingsTweak {
@@ -231,7 +237,7 @@ pub static TWEAKS: [SettingsTweak; 14] = [
         writes: &[Write { path: r"SOFTWARE\Policies\Microsoft\Windows\Explorer", name: "HideRecommendedSection", value: 1 }],
         requires_pro: true,
         min_build: BUILD_22H2,
-        edition: Edition::ProOrHigher,
+        edition: Edition::EnterpriseOrEducation,
     },
     SettingsTweak {
         id: "disable_game_bar_captures",
@@ -259,6 +265,7 @@ pub fn find(id: &str) -> Option<&'static SettingsTweak> {
 pub enum Unavailable {
     WindowsVersion,
     WindowsEdition,
+    WindowsEditionEnterprise,
 }
 
 impl Unavailable {
@@ -266,6 +273,7 @@ impl Unavailable {
         match self {
             Unavailable::WindowsVersion => "windows_version",
             Unavailable::WindowsEdition => "windows_edition",
+            Unavailable::WindowsEditionEnterprise => "windows_edition_enterprise",
         }
     }
 
@@ -275,6 +283,9 @@ impl Unavailable {
             Unavailable::WindowsEdition => {
                 "This setting needs Windows Pro, Enterprise or Education."
             }
+            Unavailable::WindowsEditionEnterprise => {
+                "This setting needs Windows Enterprise or Education."
+            }
         }
     }
 }
@@ -283,6 +294,17 @@ impl Unavailable {
 /// CoreSingleLanguage, CoreCountrySpecific, CoreN).
 fn is_home_edition(edition_id: &str) -> bool {
     edition_id.to_ascii_lowercase().starts_with("core")
+}
+
+/// Enterprise (EnterpriseN, EnterpriseS for LTSC, IoTEnterprise, ServerRdsh
+/// for multi-session), Education (EducationN, ProfessionalEducation) and
+/// Windows 11 SE (CloudEdition).
+fn is_enterprise_or_education(edition_id: &str) -> bool {
+    let id = edition_id.to_ascii_lowercase();
+    ["enterprise", "education", "iotenterprise", "serverrdsh", "cloudedition"]
+        .iter()
+        .any(|family| id.starts_with(family))
+        || id.starts_with("professionaleducation")
 }
 
 /// Pure: whether `tweak` fits a machine with this build and edition. Unknown
@@ -297,6 +319,11 @@ pub fn availability(
     }
     if tweak.edition == Edition::ProOrHigher && edition_id.is_some_and(is_home_edition) {
         return Err(Unavailable::WindowsEdition);
+    }
+    if tweak.edition == Edition::EnterpriseOrEducation
+        && edition_id.is_some_and(|id| !is_enterprise_or_education(id))
+    {
+        return Err(Unavailable::WindowsEditionEnterprise);
     }
     Ok(())
 }
@@ -495,8 +522,13 @@ mod tests {
     fn builds_and_editions_are_checked_and_unknowns_do_not_block() {
         let click = find("disable_click_to_do").unwrap();
         assert_eq!(
-            availability(click, Some(22631), Some("Professional")),
+            availability(find("disable_drag_tray").unwrap(), Some(22631), Some("Professional")),
             Err(Unavailable::WindowsVersion)
+        );
+        assert_eq!(
+            availability(click, Some(22631), Some("Professional")),
+            Ok(()),
+            "no Windows version is claimed for Click to Do"
         );
         assert_eq!(
             availability(click, Some(26100), Some("Core")),
@@ -512,6 +544,22 @@ mod tests {
         );
         assert_eq!(availability(click, Some(26200), Some("Enterprise")), Ok(()));
         assert_eq!(availability(click, None, None), Ok(()));
+        let start = find("hide_start_recommended").unwrap();
+        for id in ["Professional", "ProfessionalWorkstation", "Core"] {
+            assert_eq!(
+                availability(start, Some(26100), Some(id)),
+                Err(Unavailable::WindowsEditionEnterprise),
+                "{id}"
+            );
+        }
+        for id in ["Enterprise", "EnterpriseS", "Education", "ProfessionalEducation", "IoTEnterprise", "ServerRdsh", "CloudEdition"] {
+            assert_eq!(availability(start, Some(26100), Some(id)), Ok(()), "{id}");
+        }
+        assert_eq!(availability(start, Some(26100), None), Ok(()), "unknown edition does not block");
+        assert_eq!(
+            availability(start, Some(19045), Some("Enterprise")),
+            Err(Unavailable::WindowsVersion)
+        );
         let explorer = find("explorer_open_this_pc").unwrap();
         assert_eq!(availability(explorer, Some(19045), Some("Core")), Ok(()));
         assert_eq!(

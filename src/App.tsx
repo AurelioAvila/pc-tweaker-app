@@ -1160,7 +1160,7 @@ function App() {
                               )}
                               {t.requires_admin && <Badge kind="admin">{s.badges.admin}</Badge>}
                               {t.requires_pro && <Badge kind="pro">{s.badges.pro}</Badge>}
-                              {(t.min_build || t.pro_edition) && (
+                              {(t.min_build || t.pro_edition || t.enterprise_edition) && (
                                 <Badge kind="muted">
                                   {[
                                     t.min_build
@@ -1169,6 +1169,7 @@ function App() {
                                         })
                                       : null,
                                     t.pro_edition ? s.requirements.proEdition : null,
+                                    t.enterprise_edition ? s.requirements.enterpriseEdition : null,
                                   ]
                                     .filter(Boolean)
                                     .join(" · ")}
@@ -1186,7 +1187,9 @@ function App() {
                                     })
                                   : t.unavailable === "windows_edition"
                                     ? s.requirements.unavailableEdition
-                                    : s.requirements.notPresent}
+                                    : t.unavailable === "windows_edition_enterprise"
+                                      ? s.requirements.unavailableEnterpriseEdition
+                                      : s.requirements.notPresent}
                               </p>
                             )}
                             {inspecting === t.id && (

@@ -9,8 +9,9 @@ import {
   savingsPercent,
 } from "../lib";
 import { offerClock } from "../lifetime-offer";
-import { promoClock, promoPercent } from "../promo";
-import { CheckIcon, CrownIcon, LayersIcon, PumpkinIcon, SparkIcon } from "./icons";
+import { promoPercent, PROMO_LAYOUT_UNTIL } from "../promo";
+import { HalloweenOfferBanner } from "./halloween-offer";
+import { CheckIcon, CrownIcon, LayersIcon, SparkIcon } from "./icons";
 import { PRICING_COPY } from "./pricing-copy";
 import { useLifetimeOffer } from "./use-lifetime-offer";
 import { usePromo } from "./use-promo";
@@ -50,6 +51,11 @@ export function PricingPanel({
   const proOffer = promo.offer("pctweaker", period);
   const lifetimeOffer = promo.offer("pctweaker", "lifetime");
   const promoOffers = promo.active ? (promo.promo?.offers ?? []) : [];
+  const showPromo = !ownsLifetime && promoOffers.length > 0;
+  // Until the server answers, an invisible copy of the panel holds its exact
+  // place, so the plans never jump when the real one arrives.
+  const reservePromo = !ownsLifetime && !showPromo && promo.reserve;
+  const promoEnd = showPromo ? promo.promo?.endsAt : new Date(PROMO_LAYOUT_UNTIL).toISOString();
   const promoDate = (iso: string | undefined, offsetMs = 0, timeStyle?: "short") =>
     iso
       ? new Intl.DateTimeFormat(lang, { dateStyle: "long", timeStyle }).format(
@@ -124,45 +130,6 @@ export function PricingPanel({
         <p>{copy.signature}</p>
         {import.meta.env.DEV && <p>{copy.previewBuild}</p>}
       </details>
-      {!ownsLifetime && (promo.upcoming || promoOffers.length > 0) && (
-        <aside className="pricing-campaign pricing-promo" aria-label={copy.promoTitle}>
-          <PumpkinIcon className="pricing-promo-icon" />
-          <div className="pricing-campaign-copy">
-            {promo.preview && <span className="pricing-preview">{copy.preview}</span>}
-            {promo.upcoming ? (
-              <h2>{format(copy.promoSoon, { date: promoDate(promo.promo?.startsAt) })}</h2>
-            ) : (
-              <>
-                <h2>{copy.promoTitle}</h2>
-                <p>{copy.promoReference}</p>
-                <span className="pricing-deadline">
-                  {copy.ends}:{" "}
-                  <time dateTime={promo.promo?.endsAt}>
-                    {promoDate(promo.promo?.endsAt, -60_000, "short")}
-                  </time>
-                </span>
-              </>
-            )}
-          </div>
-          {!promo.upcoming && (
-            <div
-              className="pricing-clock"
-              role="timer"
-              aria-live="off"
-              aria-label={promoClock(promo.remaining)
-                .map((v, i) => `${v} ${[copy.days, copy.hours, copy.minutes, copy.seconds][i]}`)
-                .join(", ")}
-            >
-              {promoClock(promo.remaining).map((value, index) => (
-                <div key={index}>
-                  <strong>{value}</strong>
-                  <span>{[copy.days, copy.hours, copy.minutes, copy.seconds][index]}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </aside>
-      )}
       {(!ownsLifetime || campaign.preview) && activeCampaign && !lifetimeOffer && (
         <aside className="pricing-campaign" aria-label={copy.campaign}>
           <div className="pricing-campaign-copy">
@@ -187,6 +154,23 @@ export function PricingPanel({
             ))}
           </div>
         </aside>
+      )}
+      {(showPromo || reservePromo) && (
+        <HalloweenOfferBanner
+          kicker={copy.promoTitle}
+          badge={promo.preview && <span className="pricing-preview">{copy.preview}</span>}
+          heading={
+            <>
+              {copy.ends}: <time dateTime={promoEnd}>{promoDate(promoEnd, -60_000, "short")}</time>
+            </>
+          }
+          fine={copy.promoReferenceShort}
+          endsIn={copy.endsIn}
+          units={[copy.days, copy.hours, copy.minutes, copy.seconds]}
+          remaining={showPromo ? promo.remaining : 0}
+          reserved={reservePromo}
+          headingId="pricing-promo-title"
+        />
       )}
       <div className="pricing-plans">
         <article className="pricing-plan">

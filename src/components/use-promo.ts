@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../lib";
-import { msUntil, parsePromo, previewPromo, Promo, PromoOffer } from "../promo";
+import { msUntil, parsePromo, previewPromo, Promo, PromoOffer, PROMO_LAYOUT_UNTIL } from "../promo";
 
 /** The current promotion, re-read every five minutes and on focus. It hides
  *  itself at the deadline even if the server cannot be reached; any failure
  *  simply shows regular prices. */
 type Clock = { perf: number; wall: number };
 const clock = (): Clock => ({ perf: performance.now(), wall: Date.now() });
+type Received = { promo: Promo; at: Clock } | null;
+// The last answer outlives the Plans tab, so reopening it does not flash or jump.
+let lastReceived: Received | undefined;
 
 export function usePromo() {
   const preview = import.meta.env.DEV ? import.meta.env.VITE_PROMO_PREVIEW : undefined;
-  const [received, setReceived] = useState<{ promo: Promo; at: Clock } | null>(null);
+  const [received, setReceived] = useState<Received | undefined>(() => lastReceived);
   const [now, setNow] = useState(clock);
 
   useEffect(() => {
@@ -29,7 +32,8 @@ export function usePromo() {
       } catch {
         promo = null;
       }
-      if (!disposed) setReceived(promo ? { promo, at: clock() } : null);
+      lastReceived = promo ? { promo, at: clock() } : null;
+      if (!disposed) setReceived(lastReceived);
     }
     void read();
     const refresh = window.setInterval(() => void read(), 5 * 60_000);
@@ -52,11 +56,11 @@ export function usePromo() {
   const active = started && promo?.status === "active";
   return {
     promo: live ? promo : null,
+    /** No answer yet during the offer window: keep the panel's room. */
+    reserve: received === undefined && now.wall < PROMO_LAYOUT_UNTIL,
     active,
     /** Milliseconds to the real deadline, on the server's clock. */
     remaining: promo ? Math.max(0, msUntil(promo, promo.endsAt, elapsed)) : 0,
-    /** Known start, no prices yet: the only thing shown is the date. */
-    upcoming: live && !started,
     preview: Boolean(preview),
     offer(product: string, plan: string): PromoOffer | null {
       return (

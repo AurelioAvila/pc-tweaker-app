@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.17.1
+
+PC Tweaker 1.17.1 is a routine maintenance update.
+
 ## v1.17.0
 
 PC Tweaker 1.17.0 is a routine maintenance update.

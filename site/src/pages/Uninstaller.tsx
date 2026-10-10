@@ -1,5 +1,5 @@
 import { UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "../constants";
-import { euro, PromoBanner, usePromo } from "../promo";
+import { euro, PromoBanner, PromoPlaceholder, usePromo } from "../promo";
 import { promoPercent } from "../../../src/promo";
 
 /* The page a buyer actually lands on.
@@ -81,9 +81,9 @@ export function UninstallerPage() {
         </ul>
       </section>
 
-      {uninstallerOffer && promo.promo && (
+      {(promo.reserve || (uninstallerOffer && promo.promo)) && (
         <div className="mb-4">
-          <PromoBanner promo={promo.promo} remaining={promo.remaining} />
+          {uninstallerOffer && promo.promo ? <PromoBanner promo={promo.promo} remaining={promo.remaining} /> : <PromoPlaceholder />}
         </div>
       )}
       <section className="mb-10 rounded-2xl border border-white/10 p-6">

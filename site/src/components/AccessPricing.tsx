@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { text } from "../i18n/dictionary";
 import { riseChild, staggerParent, viewportOnce } from "../motion";
 import { DOWNLOAD_EXE } from "../constants";
-import { euro, PromoBanner, PromoPrice, promoTerms, usePromo } from "../promo";
+import { euro, PromoBanner, PromoPlaceholder, PromoPrice, promoTerms, usePromo } from "../promo";
 
 export function AccessPricing() {
   const { free, pro, lifetime } = text.pricing;
@@ -34,15 +34,15 @@ export function AccessPricing() {
           {text.pricing.title}
         </motion.h2>
 
-        {promo.promo && (
-          <motion.div variants={riseChild} className="mt-8">
-            <PromoBanner promo={promo.promo} remaining={promo.remaining} />
-          </motion.div>
+        {(promo.promo || promo.reserve) && (
+          <div className="mt-10 [&_.hw-offer]:mb-0">
+            {promo.promo ? <PromoBanner promo={promo.promo} remaining={promo.remaining} /> : <PromoPlaceholder />}
+          </div>
         )}
 
         {/* Free and Pro are quiet; Lifetime, the plan most buyers choose, carries
             the accent. */}
-        <div className="mt-14 grid items-stretch gap-5 pt-3 md:grid-cols-3">
+        <div className={`${promo.promo || promo.reserve ? "mt-6" : "mt-14"} grid items-stretch gap-5 pt-3 md:grid-cols-3`}>
           <motion.div
             variants={riseChild}
             className="flex flex-col rounded-2xl border border-white/5 bg-[var(--bg-2)] p-9"

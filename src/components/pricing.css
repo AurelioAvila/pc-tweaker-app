@@ -620,16 +620,3 @@
     transition: none !important;
   }
 }
-
-/* Halloween promotion: the campaign banner with a small line pumpkin, no
-   countdown. The pumpkin keeps its own orange on every theme. */
-.pricing-promo {
-  align-items: flex-start;
-}
-.pricing-promo-icon {
-  flex: none;
-  width: 22px;
-  height: 22px;
-  margin-top: 1px;
-  color: #f28c28;
-}

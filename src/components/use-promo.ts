@@ -5,10 +5,13 @@ import { msUntil, parsePromo, previewPromo, Promo, PromoOffer } from "../promo";
 /** The current promotion, re-read every five minutes and on focus. It hides
  *  itself at the deadline even if the server cannot be reached; any failure
  *  simply shows regular prices. */
+type Clock = { perf: number; wall: number };
+const clock = (): Clock => ({ perf: performance.now(), wall: Date.now() });
+
 export function usePromo() {
   const preview = import.meta.env.DEV ? import.meta.env.VITE_PROMO_PREVIEW : undefined;
-  const [received, setReceived] = useState<{ promo: Promo; at: number } | null>(null);
-  const [now, setNow] = useState(() => performance.now());
+  const [received, setReceived] = useState<{ promo: Promo; at: Clock } | null>(null);
+  const [now, setNow] = useState(clock);
 
   useEffect(() => {
     let disposed = false;
@@ -26,12 +29,12 @@ export function usePromo() {
       } catch {
         promo = null;
       }
-      if (!disposed) setReceived(promo ? { promo, at: performance.now() } : null);
+      if (!disposed) setReceived(promo ? { promo, at: clock() } : null);
     }
     void read();
     const refresh = window.setInterval(() => void read(), 5 * 60_000);
     // One-second steps drive the visible countdown; it is computed, never reset.
-    const tick = window.setInterval(() => setNow(performance.now()), 1000);
+    const tick = window.setInterval(() => setNow(clock()), 1000);
     window.addEventListener("focus", read);
     return () => {
       disposed = true;
@@ -42,7 +45,8 @@ export function usePromo() {
   }, [preview]);
 
   const promo = received?.promo ?? null;
-  const elapsed = received ? now - received.at : 0;
+  // Whichever clock advanced more: a paused (sleep) or wrong clock can only shorten the offer.
+  const elapsed = received ? Math.max(now.perf - received.at.perf, now.wall - received.at.wall) : 0;
   const live = Boolean(promo && msUntil(promo, promo.endsAt, elapsed) > 0);
   const started = Boolean(live && promo && msUntil(promo, promo.startsAt, elapsed) <= 0);
   const active = started && promo?.status === "active";

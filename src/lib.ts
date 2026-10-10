@@ -209,7 +209,7 @@ export function money(amount: number, lang: Lang): string {
     style: "currency",
     currency: "EUR",
     // €49.50, never €49.5: whole euros stay short, anything else shows cents.
-    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    minimumFractionDigits: Number.isInteger(Math.round(amount * 100) / 100) ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(amount);
 }

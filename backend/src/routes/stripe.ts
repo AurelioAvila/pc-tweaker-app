@@ -266,7 +266,7 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
         if (promo.coupon) params.discounts = [{ coupon: promo.coupon }];
         // Lifetime has its own promo Price, so the Stripe page shows the price paid.
         if (promo.price) params.line_items = [{ price: promo.price, quantity: 1 }];
-        params.expires_at = Math.min(params.expires_at ?? promo.expiresAt, promo.expiresAt);
+        if (promo.expiresAt !== undefined) params.expires_at = Math.min(params.expires_at ?? promo.expiresAt, promo.expiresAt);
         params.after_expiration = { recovery: { enabled: false } };
         params.metadata = { ...params.metadata, promo_id: promo.id };
         // A once-only coupon is gone from the subscription by the time the

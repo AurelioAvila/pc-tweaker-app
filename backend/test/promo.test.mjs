@@ -108,14 +108,21 @@ test("the kill switch and missing coupons turn offers off", () => {
   assert.equal(promoCheckout(onlyLifetime, DURING, "STRIPE_PRICE_ANNUAL"), null);
 });
 
-test("checkout deadline stays inside Stripe's limits and the 31-minute grace", () => {
-  for (const now of [START, DURING, END - 3600_000, END - 1000]) {
+test("checkout expiry: none far from the end, then well inside Stripe's 24 hours and the grace", () => {
+  // Stripe rejects expires_at even two seconds past 24 hours on its own clock.
+  for (const now of [START, DURING, END - 24 * 3600_000, END - 23.5 * 3600_000 - 1000]) {
+    assert.equal(promoCheckout(environment, now, "STRIPE_PRICE_ANNUAL").expiresAt, undefined, new Date(now).toISOString());
+  }
+  for (const now of [END - 23.5 * 3600_000, END - 12 * 3600_000, END - 3600_000, END - 31 * 60_000, END - 1000]) {
     const { expiresAt } = promoCheckout(environment, now, "STRIPE_PRICE_LIFETIME");
     const nowSeconds = Math.floor(now / 1000);
-    assert.ok(expiresAt >= nowSeconds + 30 * 60);
-    assert.ok(expiresAt <= nowSeconds + 24 * 60 * 60);
-    assert.ok(expiresAt <= END / 1000 + 31 * 60);
+    assert.ok(expiresAt - nowSeconds <= 23.5 * 3600, "at least 30 minutes of margin for clock skew");
+    assert.ok(expiresAt >= nowSeconds + 30 * 60, "Stripe's 30-minute minimum");
+    assert.ok(expiresAt <= END / 1000 + 31 * 60, "never past the deadline plus the grace");
   }
+  // Without an explicit expiry Stripe's default 24 hours still ends within the grace.
+  const lastImplicit = END - 23.5 * 3600_000 - 1000;
+  assert.ok(lastImplicit / 1000 + 24 * 3600 <= END / 1000 + 31 * 60);
 });
 
 test("the public route is uncached and carries no Stripe identifiers", () => {

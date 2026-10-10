@@ -105,6 +105,14 @@ export function promoState(environment: NodeJS.ProcessEnv = process.env, nowMs: 
   };
 }
 
+/** An explicit expiry is sent only near the deadline, and always well inside
+ *  Stripe's 24-hour maximum: Stripe measures that limit on its own clock and
+ *  rejects even a couple of seconds over (verified live on 10 Oct 2026), so a
+ *  server clock slightly ahead would otherwise fail every promo checkout.
+ *  Further from the end, Stripe's default 24-hour expiry already ends before
+ *  the deadline plus the grace. */
+export const EXPLICIT_EXPIRY_WITHIN_SECONDS = 23.5 * 60 * 60;
+
 /** The discount for a checkout about to be created, decided by the server
  *  from the Price it resolved. A checkout opened before the deadline stays
  *  payable for the usual grace (Stripe's 30-minute minimum), never longer. */
@@ -119,6 +127,8 @@ export function promoCheckout(environment: NodeJS.ProcessEnv, nowMs: number, pri
       ? { coupon: environment[offer.couponEnv]!, price: undefined }
       : { coupon: undefined, price: environment[offer.promoPriceEnv]! }),
     id: PROMO.id,
-    expiresAt: Math.min(nowSeconds + 24 * 60 * 60, Math.max(endSeconds, nowSeconds + LIFETIME_CHECKOUT_GRACE_SECONDS)),
+    expiresAt: endSeconds - nowSeconds > EXPLICIT_EXPIRY_WITHIN_SECONDS
+      ? undefined
+      : Math.max(endSeconds, nowSeconds + LIFETIME_CHECKOUT_GRACE_SECONDS),
   };
 }

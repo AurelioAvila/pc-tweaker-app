@@ -423,9 +423,7 @@ fn expired(a: &Active, now: u64, owner_start: Option<u64>) -> bool {
 mod native {
     use super::*;
     use windows_sys::Win32::{
-        Foundation::{CloseHandle, FILETIME},
         Graphics::Gdi::*,
-        System::Threading::{GetProcessTimes, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION},
         UI::WindowsAndMessaging::{
             GetSystemMetrics, EDD_GET_DEVICE_INTERFACE_NAME, SM_REMOTESESSION,
         },
@@ -607,20 +605,14 @@ mod native {
         }
         Ok(())
     }
+    /// When the owning PC Tweaker started, from the kernel's process table:
+    /// checking that it is still alive opens nothing.
     pub fn process_start(pid: u32) -> Option<u64> {
-        unsafe {
-            let h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
-            if h.is_null() {
-                return None;
-            }
-            let mut c: FILETIME = std::mem::zeroed();
-            let mut e = c;
-            let mut k = c;
-            let mut u = c;
-            let ok = GetProcessTimes(h, &mut c, &mut e, &mut k, &mut u) != 0;
-            CloseHandle(h);
-            ok.then_some(((c.dwHighDateTime as u64) << 32) | c.dwLowDateTime as u64)
-        }
+        crate::process_guard::processes()
+            .ok()?
+            .into_iter()
+            .find(|p| p.pid == pid)
+            .map(|p| p.created)
     }
     pub fn spawn_guard(token: &str) -> Result<(), String> {
         use std::os::windows::process::CommandExt;

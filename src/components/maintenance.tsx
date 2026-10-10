@@ -23,7 +23,7 @@ import {
   Toast,
 } from "../types";
 import { DriveIcon, GlobeIcon, HeartPulseIcon, TrashIcon } from "./icons";
-import { ProBadge, ShieldBadge, SoonBadge } from "./ui";
+import { ProBadge, ShieldBadge, SoonBadge, Toggle } from "./ui";
 import { SecureDefragCard } from "./pro";
 import uninstallerIcon from "../assets/uninstaller-icon.png";
 import redaxaMark from "../assets/redaxa-mark.svg";
@@ -1178,5 +1178,70 @@ export function CleanupConfirmModal({
         </button>
       </div>
     </div>
+  );
+}
+
+/** The weekly temporary-file cleanup: a logon task with the user's own rights
+ *  that moves only files untouched for a day, waits while a game is running,
+ *  and never touches memory. Turning it on needs Pro; turning it off never
+ *  does. */
+export function ScheduledCleanupCard({
+  s,
+  isPro,
+  onRequirePro,
+  onToast,
+}: {
+  s: Strings;
+  isPro: boolean;
+  onRequirePro: () => void;
+  onToast: (kind: "success" | "error", message: string) => void;
+}) {
+  const [on, setOn] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    invoke<boolean>("scheduled_cleanup_enabled")
+      .then(setOn)
+      .catch(() => setOn(false));
+  }, []);
+
+  async function toggle() {
+    if (on === null || busy) return;
+    if (!on && !isPro) {
+      onRequirePro();
+      return;
+    }
+    setBusy(true);
+    try {
+      setOn(await invoke<boolean>("set_scheduled_cleanup", { enabled: !on }));
+    } catch (e) {
+      onToast("error", String(e));
+    }
+    setBusy(false);
+  }
+
+  const style = CATEGORY_STYLE.maintenance;
+  return (
+    <li className="tool-panel tool-card tool-cleanup-card animate-card group relative overflow-hidden rounded-2xl border border-line bg-surface-1 p-4 transition-all duration-200 hover:border-line-2 hover:bg-surface-2">
+      <div className="tool-card-head relative flex items-center gap-4">
+        <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${style.chip}`}>
+          <TrashIcon className="h-5 w-5" />
+        </div>
+        <div className="tool-card-copy min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-semibold text-ink">{s.scheduledCleanup.title}</h2>
+            <ProBadge label={s.badges.pro} />
+          </div>
+          <p className="mt-0.5 text-sm text-ink-3">{s.scheduledCleanup.body}</p>
+        </div>
+        <Toggle
+          checked={on === true}
+          busy={busy || on === null}
+          onClick={() => void toggle()}
+          s={s}
+          label={s.scheduledCleanup.title}
+        />
+      </div>
+    </li>
   );
 }

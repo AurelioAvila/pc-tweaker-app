@@ -51,6 +51,9 @@ pub(crate) struct MemRegistry {
     /// Deletes are refused while writes still work: what Windows 11 does to
     /// an administrator under the SYSTEM-owned power scheme keys.
     pub deny_deletes: Cell<bool>,
+    /// Once this many changes have succeeded, the next one is refused, once:
+    /// a tweak that fails halfway through its writes.
+    pub fail_after: Cell<Option<usize>>,
 }
 
 fn key(hive: Hive, path: &str, name: &str) -> Key {
@@ -83,7 +86,12 @@ impl MemRegistry {
     }
 
     fn mutate(&self, change: impl FnOnce(&mut BTreeMap<Key, Stored>)) -> std::io::Result<()> {
-        if self.deny_writes.get() {
+        // One refusal, then writes work again: the next caller is the undo.
+        let tripped = self.fail_after.get().is_some_and(|n| self.mutations.get() >= n);
+        if tripped {
+            self.fail_after.set(None);
+        }
+        if self.deny_writes.get() || tripped {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::PermissionDenied,
                 "access denied",
@@ -301,12 +309,13 @@ const REGISTRY_COMPOSITES: [&str; 5] = [
 
 /// Tweaks driven through a seam of their own, with their round-trip tests
 /// next to it rather than here.
-const COVERED_IN_MODULE: [&str; 10] = [
+const COVERED_IN_MODULE: [&str; 11] = [
     crate::power::TWEAK_ID,                           // power::tests (power plans)
     crate::turbo::TWEAK_ID,                           // turbo::tests (registry plus power plans)
     crate::gaming::TURBO_BOOST_ID,                    // gaming::tests (power plans)
     crate::gaming::CORE_PARKING_ID,                   // gaming::tests (power plans)
     crate::services::WINDOWS_SEARCH_ID,               // services::tests (service control manager)
+    crate::services::AI_FABRIC_ID,                    // services::tests (service control manager)
     crate::everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID, // everyday::tests (SystemParametersInfo)
     crate::contextmenu::TWEAK_ID,                     // contextmenu::tests (registry keys)
     crate::dns::TWEAK_ID,                             // dns::tests (DNS client settings)
@@ -326,6 +335,7 @@ fn registry_ids() -> Vec<&'static str> {
         .filter(|id| *id != "disable_copilot")
         .collect();
     ids.extend(REGISTRY_COMPOSITES);
+    ids.extend(crate::settings_tweaks::TWEAKS.iter().map(|t| t.id));
     ids
 }
 
@@ -345,6 +355,10 @@ fn apply_direct(store: &RollbackStore, id: &str) -> Result<(), String> {
         }
         everyday::DISABLE_RESTART_APPS_ID | everyday::ENABLE_LONG_PATHS_ID => {
             everyday::apply(id, store)
+        }
+        // The writes themselves; the build and edition gate has its own test.
+        _ if crate::settings_tweaks::find(id).is_some() => {
+            crate::settings_tweaks::apply_writes(store, crate::settings_tweaks::find(id).unwrap())
         }
         _ => tweaks::find_tweak(id).unwrap().apply(store),
     }
@@ -678,4 +692,61 @@ fn unit_tests_cannot_write_the_real_registry() {
     assert!(WinRegistry
         .delete(Hive::Hkcu, r"Software\PC Tweaker Unit Test", "Refused")
         .is_err());
+}
+
+/// A tweak that fails after some of its values were written is undone at
+/// once by the apply funnel: the registry is exactly as it was and no journal
+/// is left behind.
+#[test]
+fn a_tweak_that_fails_halfway_is_rolled_back_automatically() {
+    let multi: Vec<_> = crate::settings_tweaks::TWEAKS
+        .iter()
+        .filter(|t| t.writes.len() > 1 && !t.requires_pro)
+        .collect();
+    assert!(!multi.is_empty(), "test needs a free multi-value tweak");
+    for tweak in multi {
+        let (registry, fixture, before) = seeded(tweak.id);
+        registry.fail_after.set(Some(1));
+        let error = crate::apply_or_undo(&fixture.store, &fixture.dir, tweak.id).unwrap_err();
+        assert!(error.contains("undone automatically"), "{}: {error}", tweak.id);
+        assert_eq!(registry.dump(), before, "{}: not restored", tweak.id);
+        assert!(!fixture.store.is_applied(tweak.id), "{}: journal left", tweak.id);
+    }
+}
+
+/// A tweak that was already applied before a failed re-apply is left exactly
+/// as the user had it.
+#[test]
+fn a_failed_reapply_does_not_undo_what_the_user_already_had() {
+    let tweak = crate::settings_tweaks::find("disable_game_bar_captures").unwrap();
+    let registry = install();
+    let fixture = Fixture::new();
+    crate::apply_or_undo(&fixture.store, &fixture.dir, tweak.id).unwrap();
+    let applied = registry.dump();
+    registry.deny_writes.set(true);
+    assert!(crate::apply_or_undo(&fixture.store, &fixture.dir, tweak.id).is_err());
+    assert_eq!(registry.dump(), applied);
+    assert!(fixture.store.is_applied(tweak.id));
+}
+
+/// The dry run reads the live values and changes nothing.
+#[test]
+fn the_preview_reads_current_values_without_writing() {
+    let tweak = crate::settings_tweaks::find("disable_game_bar_captures").unwrap();
+    let registry = install();
+    registry.set(
+        Hive::Hkcu,
+        tweak.writes[0].path,
+        tweak.writes[0].name,
+        Stored::Value(RegValue::Dword(1)),
+    );
+    let fixture = Fixture::new();
+    let preview = crate::preview_for(&fixture.store, tweak.id).unwrap();
+    assert_eq!(registry.mutations.get(), 0);
+    assert_eq!(preview.rows.len(), tweak.writes.len());
+    assert_eq!(preview.rows[0].current.as_deref(), Some("1 (0x1)"));
+    assert!(preview.rows[0].changes);
+    assert_eq!(preview.rows[1].current, None, "an absent value reads as not set");
+    assert!(preview.will_change);
+    assert!(!preview.applied);
 }

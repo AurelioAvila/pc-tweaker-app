@@ -17,6 +17,24 @@ pub struct GameEntry {
     pub name: String,
 }
 
+/// A registered game as the panel shows it. `self_managed` marks a game that
+/// tunes its own performance: Turbo Gaming still applies, but its process is
+/// never steered. Computed on every listing, never stored.
+#[derive(Serialize)]
+pub struct GameView {
+    pub path: String,
+    pub name: String,
+    pub self_managed: bool,
+}
+
+fn view(game: GameEntry) -> GameView {
+    GameView {
+        self_managed: crate::process_guard::is_protected_executable(&game.path),
+        path: game.path,
+        name: game.name,
+    }
+}
+
 #[derive(Serialize, Deserialize, Default)]
 struct Config {
     enabled: bool,
@@ -93,10 +111,13 @@ fn authorize_configuration_change(
 }
 
 #[tauri::command]
-pub fn list_game_sessions(app: tauri::AppHandle) -> Result<Vec<GameEntry>, String> {
+pub fn list_game_sessions(app: tauri::AppHandle) -> Result<Vec<GameView>, String> {
     let dir = crate::store_for_dir(&app)?;
-    let _guard = CONFIG_LOCK.lock().map_err(|e| e.to_string())?;
-    Ok(load_config(&dir).games)
+    let games = {
+        let _guard = CONFIG_LOCK.lock().map_err(|e| e.to_string())?;
+        load_config(&dir).games
+    };
+    Ok(games.into_iter().map(view).collect())
 }
 
 #[tauri::command]
@@ -117,7 +138,7 @@ pub fn set_game_sessions_enabled(app: tauri::AppHandle, enabled: bool) -> Result
 }
 
 #[tauri::command]
-pub fn add_game_session(app: tauri::AppHandle, path: String) -> Result<GameEntry, String> {
+pub fn add_game_session(app: tauri::AppHandle, path: String) -> Result<GameView, String> {
     let dir = crate::store_for_dir(&app)?;
     authorize_configuration_change(true, || crate::require_pro(&dir))?;
     let requested = PathBuf::from(&path);
@@ -142,7 +163,7 @@ pub fn add_game_session(app: tauri::AppHandle, path: String) -> Result<GameEntry
     let entry = GameEntry { path, name };
     config.games.push(entry.clone());
     save_config(&dir, &config)?;
-    Ok(entry)
+    Ok(view(entry))
 }
 
 pub(crate) fn core_steering_enabled(dir: &Path) -> bool {
@@ -180,8 +201,6 @@ pub fn remove_game_session(app: tauri::AppHandle, path: String) -> Result<(), St
 struct SessionEvent {
     active: bool,
     name: Option<String>,
-    /// This is observed reclaimed memory, not an estimated performance gain.
-    freed_bytes: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -299,7 +318,6 @@ trait SessionBackend {
     fn apply(&mut self, owner: &str) -> Result<bool, String>;
     /// Success also includes a manual takeover or an already removed snapshot.
     fn restore(&mut self, owner: &str) -> Result<(), String>;
-    fn trim(&mut self) -> u64;
 }
 
 #[derive(Default)]
@@ -335,7 +353,6 @@ impl SessionState {
         Ok(SessionEvent {
             active: false,
             name: None,
-            freed_bytes: 0,
         })
     }
 
@@ -371,12 +388,13 @@ impl SessionState {
         *self = Self::CleanupPending {
             owner: owner.clone(),
         };
+        // No working-set trim here: it would reach the game that just
+        // started, and trimming other processes one by one needs
+        // PROCESS_SET_QUOTA, which this app never requests.
         let created = backend.apply(&owner)?;
-        let freed_bytes = if created { backend.trim() } else { 0 };
         let event = SessionEvent {
             active: true,
             name: Some(game.name.clone()),
-            freed_bytes,
         };
         *self = Self::Active {
             game,
@@ -401,10 +419,6 @@ impl SessionBackend for NativeBackend<'_> {
 
     fn restore(&mut self, owner: &str) -> Result<(), String> {
         rollback_turbo_elevated_if_needed(self.store, owner)
-    }
-
-    fn trim(&mut self) -> u64 {
-        trim_working_sets()
     }
 }
 
@@ -466,10 +480,6 @@ impl SessionBackend for SteeringBackend<'_> {
 
     fn restore(&mut self, owner: &str) -> Result<(), String> {
         dynamic_session::restore(self.store, owner)
-    }
-
-    fn trim(&mut self) -> u64 {
-        0
     }
 }
 
@@ -541,16 +551,6 @@ impl Steering {
     }
 }
 
-#[cfg(windows)]
-fn trim_working_sets() -> u64 {
-    crate::ramclean::trim_for_session()
-}
-
-#[cfg(not(windows))]
-fn trim_working_sets() -> u64 {
-    0
-}
-
 #[cfg(not(windows))]
 fn apply_turbo_elevated_if_needed(_store: &RollbackStore, _owner: &str) -> Result<bool, String> {
     Err("not supported on this platform".to_string())
@@ -559,6 +559,61 @@ fn apply_turbo_elevated_if_needed(_store: &RollbackStore, _owner: &str) -> Resul
 #[cfg(not(windows))]
 fn rollback_turbo_elevated_if_needed(_store: &RollbackStore, _owner: &str) -> Result<(), String> {
     Err("not supported on this platform".to_string())
+}
+
+/// Executable keys of running processes, resolved once per process instance:
+/// the image path comes from the kernel by PID (no handle), and canonicalizing
+/// it touches the disk, so neither is repeated every three seconds.
+#[derive(Default)]
+struct ExecutableCache(std::collections::HashMap<(u32, u64), Option<String>>);
+
+impl ExecutableCache {
+    fn observe(&mut self, list: &[crate::process_guard::ProcessInfo]) -> Vec<ProcessObservation> {
+        let live: std::collections::HashSet<(u32, u64)> =
+            list.iter().map(|p| (p.pid, p.created)).collect();
+        self.0.retain(|key, _| live.contains(key));
+        list.iter()
+            .map(|p| ProcessObservation {
+                pid: p.pid,
+                started_at: p.created,
+                executable: self
+                    .0
+                    .entry((p.pid, p.created))
+                    .or_insert_with(|| {
+                        crate::process_guard::image_path(p.pid).and_then(|path| executable_key(&path))
+                    })
+                    .clone(),
+                parent: p.parent,
+            })
+            .collect()
+    }
+}
+
+/// Whether one of the registered games is running right now. Only processes
+/// whose file name matches a registered game have their path resolved.
+pub(crate) fn registered_game_running(dir: &Path) -> bool {
+    let games = match CONFIG_LOCK.lock() {
+        Ok(_guard) => load_config(dir).games,
+        Err(_) => return true,
+    };
+    if games.is_empty() {
+        return false;
+    }
+    let Ok(list) = crate::process_guard::processes() else {
+        // Unknown counts as running: nothing is better than the wrong thing.
+        return true;
+    };
+    let keys: Vec<String> = games.iter().filter_map(|g| executable_key(&g.path)).collect();
+    list.iter()
+        .filter(|p| {
+            keys.iter()
+                .any(|k| k.rsplit('\\').next().is_some_and(|n| n.eq_ignore_ascii_case(&p.name)))
+        })
+        .any(|p| {
+            crate::process_guard::image_path(p.pid)
+                .and_then(|path| executable_key(&path))
+                .is_some_and(|key| keys.contains(&key))
+        })
 }
 
 /// Only the snapshot bearing this session's durable owner token can be restored.
@@ -570,7 +625,8 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
 
         let mut state = SessionState::default();
         let mut steering = Steering::default();
-        let mut sys = sysinfo::System::new();
+        let mut executables = ExecutableCache::default();
+        let mut self_managed = std::collections::HashMap::<String, bool>::new();
         let mut recovery_checked = false;
         let mut retry_after = Instant::now();
         loop {
@@ -583,23 +639,13 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                 Ok(_guard) => load_config(&dir),
                 Err(_) => continue,
             };
-            let refreshed = sys.refresh_processes_specifics(
-                sysinfo::ProcessesToUpdate::All,
-                true,
-                sysinfo::ProcessRefreshKind::new().with_exe(sysinfo::UpdateKind::Always),
-            );
-            let mut processes: Vec<_> = sys
-                .processes()
-                .values()
-                .map(|p| ProcessObservation {
-                    pid: p.pid().as_u32(),
-                    started_at: p.start_time(),
-                    executable: p.exe().and_then(Path::to_str).and_then(executable_key),
-                    parent: p.parent().map(|parent| parent.as_u32()),
-                })
-                .collect();
+            // Read from the kernel's process table: no process is opened to
+            // learn its name, parent, start time or path.
+            let snapshot = crate::process_guard::processes();
+            let refreshed = snapshot.is_ok();
+            let mut processes = executables.observe(&snapshot.unwrap_or_default());
             processes.sort_by_key(|p| (p.pid, p.started_at));
-            if refreshed != 0 {
+            if refreshed {
                 let paths=processes.iter().filter_map(|p|p.executable.clone()).collect::<Vec<_>>();
                 crate::monitor_profiles::tick(&dir,&paths);
             }
@@ -610,15 +656,33 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                 .map(|p| p.started_at)
                 .unwrap_or(0);
             let pro = crate::require_pro(&dir).is_ok();
+            // While a protected game runs, steering is frozen: nothing new is
+            // steered and nothing steered is touched until the game is gone.
+            let paused = crate::process_guard::paused(&dir);
+            // Verdicts for games no longer registered are dropped, so a game
+            // removed and added again is looked at afresh.
+            self_managed.retain(|path, _| config.games.iter().any(|g| &g.path == path));
             // A failed enumeration is not evidence that a game exited, and
             // steering is never decided on one.
-            if refreshed != 0 {
+            if refreshed && !paused {
+                // A game that manages its own performance keeps Turbo Gaming
+                // but is never steered itself.
+                let steerable: Vec<GameEntry> = config
+                    .games
+                    .iter()
+                    .filter(|g| {
+                        !*self_managed
+                            .entry(g.path.clone())
+                            .or_insert_with(|| crate::process_guard::is_protected_executable(&g.path))
+                    })
+                    .cloned()
+                    .collect();
                 let allowed =
-                    config.enabled && config.core_steering && !config.games.is_empty() && pro;
-                steering.tick(&store, allowed, &config.games, &processes, watcher_start);
+                    config.enabled && config.core_steering && !steerable.is_empty() && pro;
+                steering.tick(&store, allowed, &steerable, &processes, watcher_start);
             }
             if !recovery_checked {
-                if refreshed == 0 {
+                if !refreshed {
                     continue;
                 }
                 match turbo::session_owner(&store) {
@@ -639,7 +703,7 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
             let allowed = config.enabled && !config.games.is_empty() && pro;
             // A failed process enumeration is not evidence that a game exited.
             // Explicit disable/removal/expiry can still restore our own state.
-            if allowed && refreshed == 0 {
+            if allowed && !refreshed {
                 continue;
             }
             if Instant::now() < retry_after {
@@ -682,7 +746,6 @@ mod tests {
         manual: bool,
         apply_calls: usize,
         restore_calls: usize,
-        trim_calls: usize,
         fail_apply: bool,
         fail_restore: bool,
     }
@@ -709,10 +772,6 @@ mod tests {
             }
             self.snapshot_owner = None;
             Ok(())
-        }
-        fn trim(&mut self) -> u64 {
-            self.trim_calls += 1;
-            42
         }
     }
 
@@ -745,7 +804,7 @@ mod tests {
     }
 
     #[test]
-    fn manual_preset_survives_game_exit_without_trim_or_restore() {
+    fn manual_preset_survives_game_exit_without_restore() {
         let mut state = SessionState::default();
         let mut backend = MockBackend {
             manual: true,
@@ -755,11 +814,10 @@ mod tests {
             .tick(true, Some(game()), &mut backend, owner)
             .unwrap()
             .unwrap();
-        assert_eq!(started.freed_bytes, 0);
+        assert!(started.active);
         state.tick(true, None, &mut backend, owner).unwrap();
         assert!(backend.manual);
         assert_eq!(backend.restore_calls, 0);
-        assert_eq!(backend.trim_calls, 0);
     }
 
     #[test]
@@ -833,7 +891,6 @@ mod tests {
         state.tick(true, Some(game()), &mut backend, owner).unwrap();
         assert_eq!(backend.apply_calls, 1);
         assert_eq!(backend.restore_calls, 1);
-        assert_eq!(backend.trim_calls, 0);
     }
 
     #[test]
@@ -922,7 +979,7 @@ mod tests {
     }
 
     #[test]
-    fn repeated_observation_does_not_reapply_or_trim_again() {
+    fn repeated_observation_does_not_reapply() {
         let mut state = SessionState::default();
         let mut backend = MockBackend::default();
         state.tick(true, Some(game()), &mut backend, owner).unwrap();
@@ -931,7 +988,6 @@ mod tests {
             .unwrap()
             .is_none());
         assert_eq!(backend.apply_calls, 1);
-        assert_eq!(backend.trim_calls, 1);
     }
 
     #[test]

@@ -2,6 +2,30 @@ use crate::rollback::{RollbackStore, SnapshotEntry};
 
 pub const WINDOWS_SEARCH_ID: &str = "disable_windows_search_service";
 pub(crate) const SERVICE_NAME: &str = "WSearch";
+pub const AI_FABRIC_ID: &str = "disable_ai_fabric_service";
+pub(crate) const AI_FABRIC_SERVICE: &str = "WSAIFabricSvc";
+
+/// A tweak that stops one service and disables it, restoring both its start
+/// type and whether it was running.
+pub struct ServiceTweak {
+    pub id: &'static str,
+    pub service: &'static str,
+}
+
+pub const SERVICE_TWEAKS: [ServiceTweak; 2] = [
+    ServiceTweak {
+        id: WINDOWS_SEARCH_ID,
+        service: SERVICE_NAME,
+    },
+    ServiceTweak {
+        id: AI_FABRIC_ID,
+        service: AI_FABRIC_SERVICE,
+    },
+];
+
+pub fn find(id: &str) -> Option<&'static ServiceTweak> {
+    SERVICE_TWEAKS.iter().find(|t| t.id == id)
+}
 
 pub struct ServiceInfo {
     pub id: &'static str,
@@ -9,6 +33,16 @@ pub struct ServiceInfo {
     pub description: &'static str,
     pub requires_admin: bool,
     pub requires_pro: bool,
+}
+
+pub fn ai_fabric_info() -> ServiceInfo {
+    ServiceInfo {
+        id: AI_FABRIC_ID,
+        name: "Turn off the Windows AI Fabric service",
+        description: "Stops and disables the service behind Windows' on-device AI features, such as Recall, Click to Do and some Live Captions features, freeing the memory it holds in the background. Those features stop working until you turn it back on. Only present on PCs that have these features.",
+        requires_admin: true,
+        requires_pro: true,
+    }
 }
 
 pub fn windows_search_info() -> ServiceInfo {
@@ -102,7 +136,7 @@ struct OpenService {
 }
 
 #[cfg(windows)]
-fn open_service(access: u32) -> Result<OpenService, String> {
+fn open_service(service_name: &str, access: u32) -> Result<OpenService, String> {
     use windows_sys::Win32::System::Services::{OpenSCManagerW, OpenServiceW, SC_MANAGER_CONNECT};
     // SAFETY: null machine/database selects the local active SCM database.
     let manager = unsafe { OpenSCManagerW(std::ptr::null(), std::ptr::null(), SC_MANAGER_CONNECT) };
@@ -113,14 +147,16 @@ fn open_service(access: u32) -> Result<OpenService, String> {
         ));
     }
     let manager = ScHandle(manager);
-    let name: Vec<u16> = SERVICE_NAME.encode_utf16().chain(Some(0)).collect();
+    let name: Vec<u16> = service_name.encode_utf16().chain(Some(0)).collect();
     // SAFETY: manager is live and name is NUL-terminated for this call.
     let service = unsafe { OpenServiceW(manager.0, name.as_ptr(), access) };
     if service.is_null() {
-        return Err(format!(
-            "could not open Windows Search: {}",
-            std::io::Error::last_os_error()
-        ));
+        let error = std::io::Error::last_os_error();
+        // ERROR_SERVICE_DOES_NOT_EXIST: the feature is simply not on this PC.
+        if error.raw_os_error() == Some(1060) {
+            return Err(format!("{service_name} is not installed on this PC"));
+        }
+        return Err(format!("could not open {service_name}: {error}"));
     }
     Ok(OpenService {
         service: ScHandle(service),
@@ -131,7 +167,13 @@ fn open_service(access: u32) -> Result<OpenService, String> {
 /// The real service control manager. Every change first refuses to run inside
 /// a unit test, the way the real registry does.
 #[cfg(windows)]
-pub(crate) struct WinServices;
+pub(crate) struct WinServices(pub &'static str);
+
+/// Whether a service exists on this machine. Opens the service manager only.
+#[cfg(windows)]
+pub fn installed(service: &str) -> bool {
+    open_service(service, windows_sys::Win32::System::Services::SERVICE_QUERY_STATUS).is_ok()
+}
 
 #[cfg(windows)]
 impl ServiceControl for WinServices {
@@ -141,7 +183,7 @@ impl ServiceControl for WinServices {
             SERVICE_CONFIG_DELAYED_AUTO_START_INFO, SERVICE_DELAYED_AUTO_START_INFO,
             SERVICE_DEMAND_START, SERVICE_DISABLED, SERVICE_QUERY_CONFIG,
         };
-        let opened = open_service(SERVICE_QUERY_CONFIG)?;
+        let opened = open_service(self.0, SERVICE_QUERY_CONFIG)?;
         // 8 KiB is the documented maximum for the structure and its strings;
         // u64 storage keeps its pointer fields aligned.
         let mut buffer = vec![0u64; 8 * 1024 / 8];
@@ -158,7 +200,8 @@ impl ServiceControl for WinServices {
         };
         if read == 0 {
             return Err(format!(
-                "could not read the Windows Search start type: {}",
+                "could not read the {} start type: {}",
+                self.0,
                 std::io::Error::last_os_error()
             ));
         }
@@ -171,7 +214,8 @@ impl ServiceControl for WinServices {
             SERVICE_DISABLED => return Ok(StartType::Disabled),
             other => {
                 return Err(format!(
-                    "Windows Search has an unexpected start type ({other})"
+                    "{} has an unexpected start type ({other})",
+                    self.0
                 ))
             }
         }
@@ -191,7 +235,8 @@ impl ServiceControl for WinServices {
         };
         if read == 0 {
             return Err(format!(
-                "could not read the Windows Search start delay: {}",
+                "could not read the {} start delay: {}",
+                self.0,
                 std::io::Error::last_os_error()
             ));
         }
@@ -214,7 +259,7 @@ impl ServiceControl for WinServices {
             StartType::Demand => SERVICE_DEMAND_START,
             StartType::Disabled => SERVICE_DISABLED,
         };
-        let opened = open_service(SERVICE_CHANGE_CONFIG)?;
+        let opened = open_service(self.0, SERVICE_CHANGE_CONFIG)?;
         let null = std::ptr::null();
         // SAFETY: the handle is live; SERVICE_NO_CHANGE and null pointers leave
         // every other part of the configuration as it is.
@@ -235,7 +280,8 @@ impl ServiceControl for WinServices {
         };
         if changed == 0 {
             return Err(format!(
-                "could not change the Windows Search start type: {}",
+                "could not change the {} start type: {}",
+                self.0,
                 std::io::Error::last_os_error()
             ));
         }
@@ -255,7 +301,8 @@ impl ServiceControl for WinServices {
             };
             if changed == 0 {
                 return Err(format!(
-                    "could not change the Windows Search start delay: {}",
+                    "could not change the {} start delay: {}",
+                    self.0,
                     std::io::Error::last_os_error()
                 ));
             }
@@ -268,7 +315,7 @@ impl ServiceControl for WinServices {
             QueryServiceStatusEx, SC_STATUS_PROCESS_INFO, SERVICE_QUERY_STATUS,
             SERVICE_STATUS_PROCESS,
         };
-        let opened = open_service(SERVICE_QUERY_STATUS)?;
+        let opened = open_service(self.0, SERVICE_QUERY_STATUS)?;
         let mut status = std::mem::MaybeUninit::<SERVICE_STATUS_PROCESS>::zeroed();
         let mut needed = 0;
         // SAFETY: the output points to a correctly sized/aligned status structure.
@@ -283,7 +330,8 @@ impl ServiceControl for WinServices {
         };
         if result == 0 {
             return Err(format!(
-                "could not read Windows Search status: {}",
+                "could not read the {} status: {}",
+                self.0,
                 std::io::Error::last_os_error()
             ));
         }
@@ -297,7 +345,7 @@ impl ServiceControl for WinServices {
             ControlService, SERVICE_CONTROL_STOP, SERVICE_STATUS, SERVICE_STOP,
         };
         crate::tweaks::windows_impl::refuse_in_unit_tests().map_err(|e| e.to_string())?;
-        let opened = open_service(SERVICE_STOP)?;
+        let opened = open_service(self.0, SERVICE_STOP)?;
         let mut status = std::mem::MaybeUninit::<SERVICE_STATUS>::zeroed();
         // SAFETY: the handle is live and `status` is a writable SERVICE_STATUS.
         let stopped =
@@ -305,7 +353,7 @@ impl ServiceControl for WinServices {
         if stopped == 0 {
             let error = std::io::Error::last_os_error();
             if error.raw_os_error() != Some(ERROR_SERVICE_NOT_ACTIVE as i32) {
-                return Err(format!("could not stop Windows Search: {error}"));
+                return Err(format!("could not stop {}: {error}", self.0));
             }
         }
         Ok(())
@@ -315,13 +363,13 @@ impl ServiceControl for WinServices {
         use windows_sys::Win32::Foundation::ERROR_SERVICE_ALREADY_RUNNING;
         use windows_sys::Win32::System::Services::{StartServiceW, SERVICE_START};
         crate::tweaks::windows_impl::refuse_in_unit_tests().map_err(|e| e.to_string())?;
-        let opened = open_service(SERVICE_START)?;
+        let opened = open_service(self.0, SERVICE_START)?;
         // SAFETY: the handle is live; no arguments means a count of 0 and a
         // null vector.
         if unsafe { StartServiceW(opened.service.0, 0, std::ptr::null()) } == 0 {
             let error = std::io::Error::last_os_error();
             if error.raw_os_error() != Some(ERROR_SERVICE_ALREADY_RUNNING as i32) {
-                return Err(format!("could not start Windows Search: {error}"));
+                return Err(format!("could not start {}: {error}", self.0));
             }
         }
         Ok(())
@@ -341,12 +389,13 @@ pub(crate) fn set_test_services(backend: Option<std::rc::Rc<dyn ServiceControl>>
 }
 
 #[cfg(windows)]
-fn with_services<T>(f: impl FnOnce(&dyn ServiceControl) -> T) -> T {
+fn with_services<T>(service: &'static str, f: impl FnOnce(&dyn ServiceControl) -> T) -> T {
     #[cfg(test)]
     if let Some(backend) = TEST_SERVICES.with(|slot| slot.borrow().clone()) {
+        let _ = service;
         return f(&*backend);
     }
-    f(&WinServices)
+    f(&WinServices(service))
 }
 
 #[cfg(windows)]
@@ -355,7 +404,7 @@ fn captured_running_state(state: u32) -> Result<bool, String> {
     match state {
         SERVICE_RUNNING => Ok(true),
         SERVICE_STOPPED => Ok(false),
-        _ => Err("Windows Search is paused or changing state; wait for it to settle before applying this tweak".into()),
+        _ => Err("the service is paused or changing state; wait for it to settle before applying this tweak".into()),
     }
 }
 
@@ -373,24 +422,35 @@ fn wait_for_service_state(scm: &dyn ServiceControl, running: bool) -> Result<(),
             return Ok(());
         }
         if std::time::Instant::now() >= deadline {
-            return Err("Windows Search did not reach the requested state; the rollback snapshot was retained".into());
+            return Err("the service did not reach the requested state; the rollback snapshot was retained".into());
         }
         std::thread::sleep(std::time::Duration::from_millis(125));
     }
 }
 
+/// Windows Search, the original service tweak, as its tests drive it.
+#[cfg(all(test, windows))]
+fn apply(store: &RollbackStore) -> Result<(), String> {
+    apply_service(store, &SERVICE_TWEAKS[0])
+}
+
+#[cfg(all(test, windows))]
+fn rollback(store: &RollbackStore) -> Result<(), String> {
+    rollback_service(store, &SERVICE_TWEAKS[0])
+}
+
 #[cfg(windows)]
-pub fn apply(store: &RollbackStore) -> Result<(), String> {
-    with_services(|scm| {
+pub fn apply_service(store: &RollbackStore, tweak: &ServiceTweak) -> Result<(), String> {
+    with_services(tweak.service, |scm| {
         let mut transaction = store.transaction()?;
 
         let previous = scm.start_type()?;
         let was_running = captured_running_state(scm.state()?)?;
 
         transaction.save_entry(
-            WINDOWS_SEARCH_ID,
+            tweak.id,
             SnapshotEntry::Service {
-                name: SERVICE_NAME.to_string(),
+                name: tweak.service.to_string(),
                 previous_start_type: previous.snapshot_text().to_string(),
                 was_running: Some(was_running),
             },
@@ -406,8 +466,8 @@ pub fn apply(store: &RollbackStore) -> Result<(), String> {
 }
 
 #[cfg(windows)]
-pub fn rollback(store: &RollbackStore) -> Result<(), String> {
-    store.restore_entry(WINDOWS_SEARCH_ID, |entry| {
+pub fn rollback_service(store: &RollbackStore, tweak: &ServiceTweak) -> Result<(), String> {
+    store.restore_entry(tweak.id, |entry| {
         let SnapshotEntry::Service {
             previous_start_type,
             was_running,
@@ -417,7 +477,7 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
             return Err("unexpected snapshot type for the service".to_string());
         };
 
-        with_services(|scm| {
+        with_services(tweak.service, |scm| {
             let previous = StartType::from_snapshot(&previous_start_type);
             // Legacy snapshots did not capture runtime state. New snapshots
             // never start a service that the user had deliberately left stopped.
@@ -450,11 +510,11 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
 }
 
 #[cfg(not(windows))]
-pub fn apply(_store: &RollbackStore) -> Result<(), String> {
+pub fn apply_service(_store: &RollbackStore, _tweak: &ServiceTweak) -> Result<(), String> {
     Err("not supported on this platform".to_string())
 }
 #[cfg(not(windows))]
-pub fn rollback(_store: &RollbackStore) -> Result<(), String> {
+pub fn rollback_service(_store: &RollbackStore, _tweak: &ServiceTweak) -> Result<(), String> {
     Err("not supported on this platform".to_string())
 }
 
@@ -592,6 +652,32 @@ mod tests {
                 assert_eq!(scm.start_type.get(), start_type);
                 assert_eq!(scm.running.get(), running, "{start_type:?}");
                 assert!(!fixture.store.is_applied(WINDOWS_SEARCH_ID));
+            }
+        }
+    }
+
+    /// The AI Fabric tweak is the same machinery under its own id and service
+    /// name: its own journal entry, restored exactly, never confused with
+    /// Windows Search.
+    #[test]
+    fn the_ai_fabric_service_round_trips_under_its_own_id() {
+        let tweak = find(AI_FABRIC_ID).unwrap();
+        for start_type in ALL {
+            for running in [false, true] {
+                let scm = install(start_type, running);
+                let fixture = Fixture::new();
+                apply_service(&fixture.store, tweak).unwrap();
+                assert_eq!(scm.start_type.get(), StartType::Disabled);
+                assert!(!scm.running.get());
+                match fixture.snapshot(AI_FABRIC_ID) {
+                    Some(SnapshotEntry::Service { name, .. }) => assert_eq!(name, AI_FABRIC_SERVICE),
+                    other => panic!("unexpected snapshot: {other:?}"),
+                }
+                assert!(!fixture.store.is_applied(WINDOWS_SEARCH_ID));
+                crate::rollback_by_id_inner(&fixture.store, AI_FABRIC_ID).unwrap();
+                assert_eq!(scm.start_type.get(), start_type);
+                assert_eq!(scm.running.get(), running);
+                assert!(!fixture.store.is_applied(AI_FABRIC_ID));
             }
         }
     }
@@ -757,9 +843,9 @@ mod tests {
             return;
         }
         for result in [
-            WinServices.set_start_type(StartType::Disabled),
-            WinServices.stop(),
-            WinServices.start(),
+            WinServices(SERVICE_NAME).set_start_type(StartType::Disabled),
+            WinServices(SERVICE_NAME).stop(),
+            WinServices(SERVICE_NAME).start(),
         ] {
             assert!(result.unwrap_err().contains("unit tests"));
         }

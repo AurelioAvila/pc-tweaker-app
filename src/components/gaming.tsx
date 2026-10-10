@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open as openFolderDialog } from "@tauri-apps/plugin-dialog";
 import { format, Strings } from "../i18n";
-import { formatBytes, arcPath, GAUGE_C, GAUGE_R, GAUGE_START, GAUGE_SWEEP, polar } from "../lib";
+import { friendlyError, arcPath, GAUGE_C, GAUGE_R, GAUGE_START, GAUGE_SWEEP, polar } from "../lib";
 import { CoreSteeringStatus, GameEntry, Toast } from "../types";
 import { BoltIcon } from "./icons";
 import { Toggle } from "./ui";
@@ -22,10 +22,6 @@ export function GameSessionsPanel({
   const [games, setGames] = useState<GameEntry[]>([]);
   const [steering, setSteering] = useState<CoreSteeringStatus | null>(null);
   const [activeGame, setActiveGame] = useState<string | null>(null);
-  /** RAM the working-set trim handed back when the session started. Zero is a
-   *  real answer on a machine that was already tidy, so it reads as "boost
-   *  active" without a number rather than as "0 B freed". */
-  const [freedBytes, setFreedBytes] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,11 +48,10 @@ export function GameSessionsPanel({
   useEffect(() => {
     refresh().catch((reason: unknown) => setError(String(reason)));
     refreshSteering();
-    const unlisten = listen<{ active: boolean; name: string | null; freed_bytes: number }>(
+    const unlisten = listen<{ active: boolean; name: string | null }>(
       "game-session-changed",
       (event) => {
         setActiveGame(event.payload.active ? event.payload.name : null);
-        setFreedBytes(event.payload.active ? event.payload.freed_bytes : 0);
         // Steering is applied in the same watcher pass that sends this event.
         refreshSteering();
       },
@@ -135,7 +130,7 @@ export function GameSessionsPanel({
     try {
       await operation();
     } catch (reason) {
-      setError(String(reason));
+      setError(friendlyError(reason, s));
     } finally {
       setPending(false);
     }
@@ -162,14 +157,7 @@ export function GameSessionsPanel({
         }
       />
       {activeGame && (
-        <ToolStatus tone="active">
-          {freedBytes > 0
-            ? format(s.gameSessions.activeFreed, {
-                name: activeGame,
-                freed: formatBytes(freedBytes),
-              })
-            : format(s.gameSessions.active, { name: activeGame })}
-        </ToolStatus>
+        <ToolStatus tone="active">{format(s.gameSessions.active, { name: activeGame })}</ToolStatus>
       )}
       <div className="tool-session-toolbar">
         <button
@@ -226,6 +214,13 @@ export function GameSessionsPanel({
               <div>
                 <strong>{game.name}</strong>
                 <span title={game.path}>{game.path}</span>
+                {/* Turbo Gaming still applies; only the game's own process
+                    is never steered. */}
+                {game.self_managed && (
+                  <span className="text-ink-3" title={s.guard.selfManaged}>
+                    {s.guard.selfManagedBadge}
+                  </span>
+                )}
               </div>
               <button
                 type="button"

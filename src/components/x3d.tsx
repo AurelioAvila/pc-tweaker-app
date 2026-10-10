@@ -2,7 +2,7 @@ import "./tool-surfaces.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
-import { formatBytes } from "../lib";
+import { formatBytes, friendlyError } from "../lib";
 import { ProcessEntry, Toast, X3dReport } from "../types";
 import { ChipIcon } from "./icons";
 
@@ -221,7 +221,7 @@ export function X3dPanel({
                           );
                           loadProcesses();
                         })
-                        .catch((e: unknown) => toastRef.current("error", String(e)))
+                        .catch((e: unknown) => toastRef.current("error", friendlyError(e, s)))
                         .finally(() => setBusyPid(null));
                     }}
                     disabled={busyPid === p.pid}

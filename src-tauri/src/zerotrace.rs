@@ -210,10 +210,11 @@ mod imp {
     /// Windows releases.
     const SYSTEM_MEMORY_LIST_INFORMATION: u32 = 80;
     /// `MemoryPurgeStandbyList` — release the cached pages of exited
-    /// processes. Deliberately *not* `MemoryEmptyWorkingSets` (2), which
-    /// evicts the working sets of everything currently running and makes the
-    /// whole machine stutter as it faults its own code back in.
+    /// processes. Deliberately *not* `MemoryEmptyWorkingSets` (2) here, which
+    /// evicts the working sets of everything currently running; that one is
+    /// the RAM cleaner's, which refuses to run while a game is open.
     const MEMORY_PURGE_STANDBY_LIST: u32 = 4;
+    pub const MEMORY_EMPTY_WORKING_SETS: u32 = 2;
 
     const SE_PRIVILEGE_ENABLED: u32 = 0x0002;
     const TOKEN_ADJUST_PRIVILEGES: u32 = 0x0020;
@@ -325,13 +326,11 @@ mod imp {
         }
     }
 
-    pub fn purge_standby(
-        free_before_mb: u64,
-        free_after_mb: impl Fn() -> u64,
-    ) -> Result<PurgeResult, String> {
+    /// One memory-list command, executed by the kernel for the whole system.
+    /// No process is opened: the memory manager does the work itself.
+    pub fn memory_list_command(command: u32) -> Result<(), String> {
         enable_profile_privilege()?;
-
-        let mut command: u32 = MEMORY_PURGE_STANDBY_LIST;
+        let mut command = command;
         // SAFETY: the pointer is to a live local of exactly the declared size.
         let status = unsafe {
             NtSetSystemInformation(
@@ -342,10 +341,18 @@ mod imp {
         };
         if status != 0 {
             return Err(format!(
-                "Windows refused the memory purge (status 0x{:X}). This needs administrator rights.",
+                "Windows refused the memory operation (status 0x{:X}). This needs administrator rights.",
                 status
             ));
         }
+        Ok(())
+    }
+
+    pub fn purge_standby(
+        free_before_mb: u64,
+        free_after_mb: impl Fn() -> u64,
+    ) -> Result<PurgeResult, String> {
+        memory_list_command(MEMORY_PURGE_STANDBY_LIST)?;
 
         Ok(PurgeResult {
             free_before_mb,
@@ -363,6 +370,14 @@ mod imp {
     ) -> Result<PurgeResult, String> {
         Err("the memory purge is only available on Windows".to_string())
     }
+}
+
+/// Asks the memory manager to trim every working set on the system at once.
+/// Administrator only. Handle-free, which is why the RAM cleaner uses it
+/// instead of opening each process.
+#[cfg(windows)]
+pub fn empty_working_sets() -> Result<(), String> {
+    imp::memory_list_command(imp::MEMORY_EMPTY_WORKING_SETS)
 }
 
 pub fn purge_standby_memory() -> Result<PurgeResult, String> {

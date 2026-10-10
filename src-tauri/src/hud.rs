@@ -113,11 +113,10 @@ pub struct HudSnapshot {
 #[cfg(windows)]
 mod imp {
     use super::ForegroundApp;
-    use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
+    use crate::process_guard::{self, Access};
     use windows_sys::Win32::System::Threading::{
-        GetPriorityClass, OpenProcess, QueryFullProcessImageNameW, ABOVE_NORMAL_PRIORITY_CLASS,
-        BELOW_NORMAL_PRIORITY_CLASS, HIGH_PRIORITY_CLASS, IDLE_PRIORITY_CLASS,
-        NORMAL_PRIORITY_CLASS, PROCESS_QUERY_LIMITED_INFORMATION, REALTIME_PRIORITY_CLASS,
+        GetPriorityClass, ABOVE_NORMAL_PRIORITY_CLASS, BELOW_NORMAL_PRIORITY_CLASS,
+        HIGH_PRIORITY_CLASS, IDLE_PRIORITY_CLASS, NORMAL_PRIORITY_CLASS, REALTIME_PRIORITY_CLASS,
     };
     use windows_sys::Win32::UI::WindowsAndMessaging::{
         GetForegroundWindow, GetWindowThreadProcessId,
@@ -141,8 +140,8 @@ mod imp {
     ///
     /// Deliberately separate from [`describe`], and deliberately handle-free.
     /// `GetWindowThreadProcessId` answers this from the window alone, whereas
-    /// naming the process needs `OpenProcess` — and that is exactly what an
-    /// anti-cheat driver refuses for the process it is protecting. While the
+    /// naming the process needs `OpenProcess` — and that is exactly what a
+    /// protected game's driver refuses for the game it is protecting. While the
     /// two were one function, a protected game failed the handle step and took
     /// the process id down with it, so the frame counter had nothing to
     /// attribute frames to and reported no rate at all inside precisely the
@@ -163,55 +162,40 @@ mod imp {
         }
     }
 
-    /// The process's name and scheduling class, when Windows will say.
+    /// The process's name and, when allowed, its scheduling class.
     ///
-    /// Returns `None` for a process whose handles an anti-cheat driver
-    /// withholds. That is a normal outcome, not an error: the overlay shows a
-    /// dash where the name would be and goes on reporting everything that did
-    /// not need the handle — the frame rate above all.
-    pub fn describe(pid: u32) -> Option<ForegroundApp> {
-        // SAFETY: the handle is closed on every path out, including the early
-        // returns.
-        unsafe {
-            // LIMITED_INFORMATION is the least privilege that answers both
-            // questions, and unlike PROCESS_QUERY_INFORMATION it is granted
-            // across integrity levels. It is still not always granted: an
-            // anti-cheat driver can refuse every handle to the process it
-            // protects, however modest the access asked for. Hence the split
-            // above — this failing must cost the overlay a name, and nothing
-            // else.
-            let handle: HANDLE = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
-            if handle.is_null() {
-                return None;
-            }
-
-            let mut buffer = [0u16; 260];
-            let mut len: u32 = buffer.len() as u32;
-            let ok = QueryFullProcessImageNameW(handle, 0, buffer.as_mut_ptr(), &mut len);
-            let class = GetPriorityClass(handle);
-            CloseHandle(handle);
-
-            if ok == 0 || len == 0 {
-                return None;
-            }
-            let full = String::from_utf16_lossy(&buffer[..len as usize]);
-            // Just the executable name: the full path would leak the user's
-            // folder layout onto a screen they may well be streaming.
-            let name = full
-                .rsplit(['\\', '/'])
-                .next()
-                .unwrap_or(&full)
-                .trim_end_matches(".exe")
-                .to_string();
-            if name.is_empty() {
-                return None;
-            }
-            Some(ForegroundApp {
-                name,
-                pid,
-                priority: priority_name(class).to_string(),
-            })
+    /// The name comes from the kernel's process table by PID: no handle is
+    /// opened to learn it, so a protected game is named like any other window.
+    /// The priority needs a handle, so it is read only when `read_priority` is
+    /// true and the guard does not protect the process; otherwise it is left
+    /// empty and the overlay shows the name alone.
+    pub fn describe(pid: u32, read_priority: bool) -> Option<ForegroundApp> {
+        let full = process_guard::image_path(pid)?;
+        // Just the executable name: the full path would leak the user's
+        // folder layout onto a screen they may well be streaming.
+        let name = full
+            .rsplit(['\\', '/'])
+            .next()
+            .unwrap_or(&full)
+            .trim_end_matches(".exe")
+            .to_string();
+        if name.is_empty() {
+            return None;
         }
+        let priority = if read_priority && !process_guard::is_protected_executable(&full) {
+            process_guard::open(pid, Access::Query)
+                .ok()
+                // SAFETY: the handle is open with query-limited rights.
+                .map(|process| priority_name(unsafe { GetPriorityClass(process.raw()) }))
+                .unwrap_or("")
+        } else {
+            ""
+        };
+        Some(ForegroundApp {
+            name,
+            pid,
+            priority: priority.to_string(),
+        })
     }
 }
 
@@ -221,7 +205,7 @@ mod imp {
     pub fn foreground_pid() -> Option<u32> {
         None
     }
-    pub fn describe(_pid: u32) -> Option<ForegroundApp> {
+    pub fn describe(_pid: u32, _read_priority: bool) -> Option<ForegroundApp> {
         None
     }
 }
@@ -243,7 +227,10 @@ fn fps_for(_pid: u32) -> Option<crate::fps::FpsStats> {
 /// the overlay polls at a deliberately unhurried interval rather than trying
 /// to look like a 60 Hz instrument it has no way of being.
 #[tauri::command(async)]
-pub fn hud_snapshot(state: tauri::State<'_, crate::sysmon::SysMonState>) -> HudSnapshot {
+pub fn hud_snapshot(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, crate::sysmon::SysMonState>,
+) -> HudSnapshot {
     let (cpu_pct, ram_used_mb, ram_total_mb) = crate::sysmon::cpu_and_memory(&state);
     // `thermal_report` is the platform-agnostic entry point; on a machine with
     // no NVIDIA card it simply returns an empty GPU list, which the fields
@@ -260,7 +247,11 @@ pub fn hud_snapshot(state: tauri::State<'_, crate::sysmon::SysMonState>) -> HudS
     // The id first, then the description — never the other way round. A game
     // that will not be described is still a game whose frames were counted.
     let pid = imp::foreground_pid();
-    let foreground = pid.and_then(imp::describe);
+    // While a game that manages its own performance runs, no process handle
+    // is opened for the overlay at all.
+    let read_priority =
+        crate::store_for_dir(&app).is_ok_and(|dir| !crate::process_guard::paused(&dir));
+    let foreground = pid.and_then(|pid| imp::describe(pid, read_priority));
     let fps = pid.and_then(fps_for);
     HudSnapshot {
         cpu_pct,

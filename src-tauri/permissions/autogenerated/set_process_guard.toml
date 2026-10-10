@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-process-guard"
+description = "Enables the set_process_guard command without any pre-configured scope."
+commands.allow = ["set_process_guard"]
+
+[[permission]]
+identifier = "deny-set-process-guard"
+description = "Denies the set_process_guard command without any pre-configured scope."
+commands.deny = ["set_process_guard"]

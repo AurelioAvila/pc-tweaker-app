@@ -9,9 +9,10 @@
 // One component for every tweak: rows are driven by the tagged union, so
 // hundreds of tweaks need no per-tweak UI code, and a new backend variant
 // fails the build here rather than rendering as the wrong kind of row.
-import { useState } from "react";
-import { Strings } from "../i18n";
-import { TechnicalChange } from "../types";
+import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { format, Strings } from "../i18n";
+import { PreviewRow, TechnicalChange, TweakPreview } from "../types";
 
 const KIND_CHIP: Record<TechnicalChange["kind"], string> = {
   registry: "bg-sky-400/10 text-sky-300 ring-sky-400/25",
@@ -19,7 +20,16 @@ const KIND_CHIP: Record<TechnicalChange["kind"], string> = {
   service: "bg-amber-400/10 text-amber-300 ring-amber-400/25",
 };
 
-function Row({ change, s }: { change: TechnicalChange; s: Strings }) {
+function Row({
+  change,
+  s,
+  now,
+}: {
+  change: TechnicalChange;
+  s: Strings;
+  /** The live reading for this row, when a preview was asked for. */
+  now?: PreviewRow;
+}) {
   const [copied, setCopied] = useState(false);
 
   function copy(text: string) {
@@ -77,6 +87,18 @@ function Row({ change, s }: { change: TechnicalChange; s: Strings }) {
             <dt className="w-14 shrink-0 text-ink-3">{s.transparency.value}</dt>
             <dd className="min-w-0 flex-1 break-all font-mono text-ink-2">{change.valueName}</dd>
           </div>
+          {now && (
+            <div className="flex flex-wrap gap-x-2">
+              <dt className="w-14 shrink-0 text-ink-3">{s.preview.now}</dt>
+              <dd
+                className={`min-w-0 flex-1 break-all font-mono ${
+                  now.changes ? "text-ink-2" : "text-ok"
+                }`}
+              >
+                {now.current ?? s.preview.notSet}
+              </dd>
+            </div>
+          )}
           <div className="flex flex-wrap gap-x-2">
             <dt className="w-14 shrink-0 text-ink-3">{s.transparency.setsTo}</dt>
             <dd className="min-w-0 flex-1 break-all font-mono text-emerald-300/90">
@@ -101,18 +123,74 @@ function Row({ change, s }: { change: TechnicalChange; s: Strings }) {
   );
 }
 
+/** The dry run's one-line verdict: how many values applying would change. */
+function previewSummary(preview: TweakPreview, s: Strings): string {
+  const registry = preview.rows.filter((r) => r.change.kind === "registry");
+  const changing = registry.filter((r) => r.changes).length;
+  const parts: string[] = [];
+  if (registry.length > 0) {
+    parts.push(
+      changing === 0
+        ? s.preview.noChange
+        : format(s.preview.willChange, { count: changing, total: registry.length }),
+    );
+  }
+  if (registry.length < preview.rows.length) parts.push(s.preview.readAtApply);
+  return `${s.preview.title}: ${parts.join(" ")}`;
+}
+
 /** The disclosure panel. Renders nothing when there is nothing precise to
- *  say — an empty "Technical details" box would imply we're hiding something. */
-export function TechnicalDetails({ changes, s }: { changes: TechnicalChange[]; s: Strings }) {
+ *  say — an empty "Technical details" box would imply we're hiding something.
+ *  With `previewId` it is also the dry run: every value is read live and
+ *  shown next to what applying would write. Nothing is changed. */
+export function TechnicalDetails({
+  changes,
+  s,
+  previewId,
+}: {
+  changes: TechnicalChange[];
+  s: Strings;
+  previewId?: string;
+}) {
+  const [preview, setPreview] = useState<TweakPreview | "failed" | null>(null);
+  useEffect(() => {
+    if (!previewId) return;
+    let alive = true;
+    invoke<TweakPreview>("preview_tweak", { id: previewId })
+      .then((p) => {
+        if (alive) setPreview(p);
+      })
+      .catch(() => {
+        if (alive) setPreview("failed");
+      });
+    return () => {
+      alive = false;
+    };
+  }, [previewId]);
   if (changes.length === 0) return null;
+  const live = preview && preview !== "failed" ? preview : null;
   return (
     <div className="mt-2.5 rounded-xl border border-line-2 bg-black/20 p-2.5">
       <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-ink-3">
         {s.transparency.title}
       </p>
+      {previewId && (
+        <p className="mb-2 text-[11.5px] leading-relaxed text-ink-2" role="status">
+          {preview === null
+            ? s.preview.loading
+            : preview === "failed"
+              ? s.preview.failed
+              : previewSummary(preview, s)}
+        </p>
+      )}
       <ul className="grid gap-1.5">
         {changes.map((c, i) => (
-          <Row key={`${c.kind}-${String(i)}`} change={c} s={s} />
+          <Row
+            key={`${c.kind}-${String(i)}`}
+            change={c}
+            s={s}
+            now={c.kind === "registry" ? live?.rows[i] : undefined}
+          />
         ))}
       </ul>
       <p className="mt-2 text-[10.5px] leading-relaxed text-ink-3">{s.transparency.note}</p>

@@ -42,6 +42,50 @@ export type TweakInfo = {
    *  disclosure. Empty when the mechanism cannot be stated precisely - the
    *  app shows no panel rather than a plausible-looking guess. */
   changes: TechnicalChange[];
+  /** First Windows build that supports it, when newer than Windows 10. */
+  min_build?: number | null;
+  /** Needs Windows Pro, Enterprise or Education. */
+  pro_edition?: boolean;
+  /** Why it cannot be applied on this PC, when it cannot. */
+  unavailable?: "windows_version" | "windows_edition" | "not_present" | null;
+};
+
+/** One row of the dry run (`preview_tweak`): a change, what is there now and
+ *  whether applying would change it. Mirrors `PreviewRow` in lib.rs. */
+export type PreviewRow = {
+  change: TechnicalChange;
+  current: string | null;
+  changes: boolean;
+};
+
+export type TweakPreview = {
+  id: string;
+  rows: PreviewRow[];
+  applied: boolean;
+  willChange: boolean;
+  requiresAdmin: boolean;
+  unavailable: TweakInfo["unavailable"];
+};
+
+/** Mirrors `GuardStatus` in process_guard.rs. */
+export type ProcessGuardStatus = {
+  respectGames: boolean;
+  paused: boolean;
+};
+
+export type Priority = "idle" | "below_normal" | "normal" | "above_normal" | "high";
+
+export type PriorityRule = { path: string; name: string; priority: Priority };
+
+/** Mirrors `PriorityRulesStatus` in process_rules.rs. */
+export type PriorityRulesStatus = {
+  enabled: boolean;
+  engineRunning: boolean;
+  paused: boolean;
+  rules: PriorityRule[];
+  activeProcesses: number;
+  pendingRestore: number;
+  lastError: string | null;
 };
 
 /** Mirrors the Rust `TechnicalChange` tagged union (serde `tag = "kind"`).
@@ -126,12 +170,14 @@ export type Toast = {
   message: string;
 };
 
-export type GameEntry = { path: string; name: string };
+export type GameEntry = { path: string; name: string; self_managed?: boolean };
 
 export type EcoQosState = {
   enabled: boolean;
   engine_running: boolean;
   blocked_global: boolean;
+  /** Waiting for a game that manages its own performance to close. */
+  paused?: boolean;
   rules: { path: string; name: string }[];
   active_processes: number;
   pending_restore: number;

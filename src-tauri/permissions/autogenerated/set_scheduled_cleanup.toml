@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-scheduled-cleanup"
+description = "Enables the set_scheduled_cleanup command without any pre-configured scope."
+commands.allow = ["set_scheduled_cleanup"]
+
+[[permission]]
+identifier = "deny-set-scheduled-cleanup"
+description = "Denies the set_scheduled_cleanup command without any pre-configured scope."
+commands.deny = ["set_scheduled_cleanup"]

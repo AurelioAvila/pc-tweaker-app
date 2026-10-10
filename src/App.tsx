@@ -15,6 +15,7 @@ import {
   clearSession,
   discardLegacyAvatar,
   formatBytes,
+  friendlyError,
   readStoredEmail,
   readToken,
   adoptRenewedToken,
@@ -38,6 +39,7 @@ import { PaywallModal, ProBadge, ShieldBadge, Toggle, UpdateBanner } from "./com
 import {
   BrowserCleanupCard,
   CleanupCard,
+  ScheduledCleanupCard,
   CleanupConfirmModal,
   DiskToolsSection,
   DnsFlushCard,
@@ -77,7 +79,7 @@ import { OverviewPanel } from "./components/overview";
 import { WorkspaceSidebar } from "./components/workspace-sidebar";
 import { DebloatPanel } from "./components/debloat";
 import { AdvancedControlCard } from "./components/advanced-controls";
-import { CONFIGURABLE_TWEAK_IDS, isCurrentCatalogTweak } from "./catalog";
+import { CONFIGURABLE_TWEAK_IDS, buildName, isCurrentCatalogTweak } from "./catalog";
 import "./App.css";
 import "./desktop-refresh.css";
 
@@ -238,6 +240,30 @@ function App() {
       // and a real subscriber should never see noise from it.
     }
   }
+
+  // The server can hold every runtime adjustment to other apps for everyone
+  // (off by default). Read at start and hourly; an unreachable server
+  // changes nothing, so the last answer stands.
+  useEffect(() => {
+    async function readHold() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/flags`, {
+          cache: "no-store",
+          signal: AbortSignal.timeout(8000),
+        });
+        if (!res.ok) return;
+        const flags = (await res.json()) as { processGuardHold?: unknown };
+        if (typeof flags.processGuardHold === "boolean") {
+          await invoke("set_process_guard_hold", { hold: flags.processGuardHold });
+        }
+      } catch {
+        // Offline or unreachable: keep the last known state.
+      }
+    }
+    void readHold();
+    const id = window.setInterval(() => void readHold(), 60 * 60_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     refreshAccount();
@@ -526,7 +552,7 @@ function App() {
       if (message.startsWith("PRO_REQUIRED: ")) {
         pushToast("error", s.toasts.licenseNeedsRefresh);
       } else {
-        pushToast("error", message);
+        pushToast("error", friendlyError(message, s));
       }
     } finally {
       setBusyId(null);
@@ -1129,17 +1155,45 @@ function App() {
                             )}
                             {t.requires_admin && <ShieldBadge label={s.badges.admin} />}
                             {t.requires_pro && <ProBadge label={s.badges.pro} />}
+                            {(t.min_build || t.pro_edition) && (
+                              <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink-3">
+                                {[
+                                  t.min_build
+                                    ? format(s.requirements.minBuild, {
+                                        version: buildName(t.min_build),
+                                      })
+                                    : null,
+                                  t.pro_edition ? s.requirements.proEdition : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </span>
+                            )}
                           </div>
                           <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.55] text-ink-3">
                             {text.description}
                           </p>
-                          {inspecting === t.id && <TechnicalDetails changes={t.changes} s={s} />}
+                          {t.unavailable && !t.applied && (
+                            <p className="mt-1.5 max-w-[52ch] text-[12px] leading-[1.5] text-warn">
+                              {t.unavailable === "windows_version"
+                                ? format(s.requirements.unavailableVersion, {
+                                    version: buildName(t.min_build ?? 22000),
+                                  })
+                                : t.unavailable === "windows_edition"
+                                  ? s.requirements.unavailableEdition
+                                  : s.requirements.notPresent}
+                            </p>
+                          )}
+                          {inspecting === t.id && (
+                            <TechnicalDetails changes={t.changes} s={s} previewId={t.id} />
+                          )}
                         </div>
                         <Toggle
                           label={text.name}
                           busyLabel={t.applied ? s.restore.running : s.profiles.applying}
                           checked={t.applied}
                           busy={busyId === t.id}
+                          disabled={!!t.unavailable && !t.applied}
                           onClick={() => toggle(t)}
                           s={s}
                         />
@@ -1174,6 +1228,15 @@ function App() {
                       onRun={(info) => setConfirmCleanup(info)}
                     />
                   ))}
+
+                {showCleanup && (
+                  <ScheduledCleanupCard
+                    s={s}
+                    isPro={isProUnlocked}
+                    onRequirePro={() => setPaywallFeature(s.scheduledCleanup.title)}
+                    onToast={pushToast}
+                  />
+                )}
 
                 {showCleanup && <DnsFlushCard s={s} onToast={pushToast} />}
 

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-priority-rules-set-enabled"
+description = "Enables the priority_rules_set_enabled command without any pre-configured scope."
+commands.allow = ["priority_rules_set_enabled"]
+
+[[permission]]
+identifier = "deny-priority-rules-set-enabled"
+description = "Denies the priority_rules_set_enabled command without any pre-configured scope."
+commands.deny = ["priority_rules_set_enabled"]

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
-import { formatBytes, RAM_AUTO_INTERVALS, ramIntervalLabel } from "../lib";
+import { formatBytes, friendlyError, RAM_AUTO_INTERVALS, ramIntervalLabel } from "../lib";
 import { RamCleanResult, SystemStats, Toast, TweakInfo } from "../types";
 
 /**
@@ -247,7 +247,7 @@ export function MemoryPressure({
           : s.ram.freedNothing,
       );
     } catch (e) {
-      pushToast("error", String(e));
+      pushToast("error", friendlyError(e, s));
     } finally {
       setTrimming(false);
     }

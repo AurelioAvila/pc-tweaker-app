@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-process-guard-status"
+description = "Enables the process_guard_status command without any pre-configured scope."
+commands.allow = ["process_guard_status"]
+
+[[permission]]
+identifier = "deny-process-guard-status"
+description = "Denies the process_guard_status command without any pre-configured scope."
+commands.deny = ["process_guard_status"]

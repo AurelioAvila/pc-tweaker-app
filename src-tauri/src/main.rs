@@ -14,7 +14,7 @@ fn main() {
         // relaunches fell straight through to `run()` and started a second,
         // full GUI running as administrator instead of performing the action
         // headlessly and exiting. Anything added there has to be added here.
-        const ELEVATED_ACTIONS: [&str; 20] = [
+        const ELEVATED_ACTIONS: [&str; 21] = [
             "--elevated-download-limit",
             "--elevated-download-restore",
             "--elevated-session-apply",
@@ -35,10 +35,14 @@ fn main() {
             "--elevated-repair",
             "--elevated-task",
             "--elevated-dpc-trace",
+            "--elevated-ramtrim",
         ];
         // The scheduled watchdog: one argument, no id, no window, no GUI.
         if args.len() == 2 && args[1] == "--check-drift" {
             tauri_app_lib::run_drift_check_headless();
+        }
+        if args.len() == 2 && args[1] == "--scheduled-temp-cleanup" {
+            tauri_app_lib::run_scheduled_temp_cleanup_headless();
         }
         if args.len() == 3 && ELEVATED_ACTIONS.contains(&args[1].as_str()) {
             // Relaunched via UAC to perform exactly one privileged action headlessly.

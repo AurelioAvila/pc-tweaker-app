@@ -129,7 +129,7 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
         RegistryTweak {
             id: "disable_telemetry_tasks",
             name: "Reduce diagnostic data collection",
-            description: "Sets Windows diagnostic data to the lowest allowed level.",
+            description: "Sets the Windows diagnostic data policy to its lowest level. Home and Pro treat that as Required diagnostic data; only Enterprise and Education turn it off completely. Scheduled tasks are not changed.",
             category: Category::Privacy,
             hive: Hive::Hklm,
             key_path: r"SOFTWARE\Policies\Microsoft\Windows\DataCollection",

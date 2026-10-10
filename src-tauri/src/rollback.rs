@@ -478,6 +478,12 @@ const SESSION_OWNED: [&str; 2] = [
 pub(crate) fn validate_snapshot(id: &str, entry: &SnapshotEntry) -> Result<(), String> {
     let allowed = if let Some(tweak) = crate::power_tuning::find(id) {
         crate::power_tuning::valid_snapshot(tweak, entry)
+    } else if let Some(tweak) = crate::settings_tweaks::find(id) {
+        crate::settings_tweaks::valid_snapshot(tweak, entry)
+    } else if let Some(tweak) = crate::services::find(id) {
+        matches!(entry, SnapshotEntry::Service { name, previous_start_type, .. }
+            if name == tweak.service && previous_start_type.len() < 256
+                && ["AUTO_START", "DEMAND_START", "DISABLED"].iter().any(|v| previous_start_type.contains(v)))
     } else if let Some(tweak) = crate::tweaks::find_tweak(id) {
         let hive = match tweak.hive {
             crate::tweaks::Hive::Hkcu => "HKCU",
@@ -592,11 +598,6 @@ pub(crate) fn validate_snapshot(id: &str, entry: &SnapshotEntry) -> Result<(), S
                 if !interface.is_empty() && interface.len() <= 256 && !interface.contains('\0')
                     && (*previous_automatic != Some(false) || !previous_servers.is_empty())
                     && previous_servers.len() <= 16 && previous_servers.iter().all(|s| s.parse::<std::net::Ipv4Addr>().is_ok()))
-            }
-            crate::services::WINDOWS_SEARCH_ID => {
-                matches!(entry, SnapshotEntry::Service { name, previous_start_type, .. }
-                if name == crate::services::SERVICE_NAME && previous_start_type.len() < 256
-                    && ["AUTO_START", "DEMAND_START", "DISABLED"].iter().any(|v| previous_start_type.contains(v)))
             }
             crate::netshaper::TWEAK_ID => {
                 matches!(entry, SnapshotEntry::TcpCongestionProvider { setting_name, previous }

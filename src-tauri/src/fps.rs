@@ -24,7 +24,7 @@
 //! Not a hook, not an injection, not a handle into the game. An ETW consumer
 //! reads telemetry the operating system emits regardless of who is listening,
 //! which is why this approach — rather than the overlay-injection route — is
-//! the one used by tools that run alongside anti-cheat.
+//! the one used by tools that run alongside protected games.
 //!
 //! ## Why it needs administrator
 //!

@@ -1,11 +1,13 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Default, Clone)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub struct RamCleanResult {
     /// Bytes of physical RAM that went from "in use" to "available". Can be 0
     /// (or even negative in reality, which we clamp) when the system was
     /// already tidy — that is a legitimate outcome, not a failure.
     pub freed_bytes: u64,
+    /// Kept for the frontend contract. The memory manager trims every working
+    /// set itself, so there is no per-process count to report any more.
     pub trimmed_processes: u32,
     pub skipped_processes: u32,
     pub ram_used_before: u64,
@@ -13,118 +15,122 @@ pub struct RamCleanResult {
     pub ram_total: u64,
 }
 
-#[cfg(windows)]
-mod imp {
-    use super::RamCleanResult;
-    use sysinfo::{ProcessesToUpdate, System};
+/// Prefix of the error a scheduled pass returns when PC Tweaker is not running
+/// as administrator: the schedule cannot ask for permission on its own.
+pub const NEEDS_ADMIN_PREFIX: &str = "NEEDS_ADMIN_SCHEDULE: ";
 
-    // Declared by hand rather than pulling in the whole `windows` crate: three
-    // functions, stable since Windows XP, and this keeps the dependency tree
-    // (and build time) where it is.
-    #[link(name = "kernel32")]
-    extern "system" {
-        fn OpenProcess(access: u32, inherit: i32, pid: u32) -> isize;
-        fn CloseHandle(handle: isize) -> i32;
+const RESULT_FILE: &str = "last_ramtrim_result.json";
+
+/// Why a pass may not run right now, if it may not. A game that is running,
+/// one of the user's registered games included, keeps its memory.
+pub(crate) fn refusal(dir: &std::path::Path) -> Option<String> {
+    if crate::process_guard::paused(dir) {
+        return Some(crate::process_guard::game_running_error());
     }
-
-    #[link(name = "psapi")]
-    extern "system" {
-        fn EmptyWorkingSet(process: isize) -> i32;
-    }
-
-    const PROCESS_QUERY_LIMITED_INFORMATION: u32 = 0x1000;
-    const PROCESS_SET_QUOTA: u32 = 0x0100;
-
-    /// Asks Windows to page out a process's private working set. The pages are
-    /// not lost: anything still needed is faulted straight back in. This is the
-    /// same mechanism Windows itself uses under memory pressure, just requested
-    /// early, which is why it is safe to run repeatedly.
-    fn trim(pid: u32) -> bool {
-        // PID 0 (System Idle) and 4 (System) are kernel-owned; opening them
-        // always fails and trimming them is meaningless.
-        if pid == 0 || pid == 4 {
-            return false;
-        }
-        unsafe {
-            let handle = OpenProcess(
-                PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_SET_QUOTA,
-                0,
-                pid,
-            );
-            if handle == 0 {
-                // Access denied on protected/elevated processes is the normal
-                // case for a non-elevated run, not an error worth surfacing.
-                return false;
-            }
-            let ok = EmptyWorkingSet(handle) != 0;
-            CloseHandle(handle);
-            ok
-        }
-    }
-
-    pub fn clean(sys: &mut System) -> RamCleanResult {
-        sys.refresh_memory();
-        let ram_total = sys.total_memory();
-        let ram_used_before = sys.used_memory();
-
-        sys.refresh_processes(ProcessesToUpdate::All, true);
-        let pids: Vec<u32> = sys.processes().keys().map(|p| p.as_u32()).collect();
-
-        let mut trimmed = 0u32;
-        let mut skipped = 0u32;
-        for pid in pids {
-            if trim(pid) {
-                trimmed += 1;
-            } else {
-                skipped += 1;
-            }
-        }
-
-        sys.refresh_memory();
-        let ram_used_after = sys.used_memory();
-
-        RamCleanResult {
-            // Memory use is a moving target — other processes allocate while we
-            // work — so "after" can legitimately exceed "before". Report 0
-            // rather than underflowing into a huge bogus number.
-            freed_bytes: ram_used_before.saturating_sub(ram_used_after),
-            trimmed_processes: trimmed,
-            skipped_processes: skipped,
-            ram_used_before,
-            ram_used_after,
-            ram_total,
-        }
-    }
+    crate::game_sessions::registered_game_running(dir)
+        .then(crate::process_guard::registered_game_error)
 }
 
-/// The same trim, without the shared monitor state.
+/// The trim itself, for an elevated process.
 ///
-/// The game-session watcher runs on its own thread and has no `State` handle
-/// to borrow, and it must not block on the monitor's mutex either — the HUD
-/// holds that every second, and a watcher waiting on it would delay the boost
-/// past the point the game has already finished loading.
+/// Earlier versions opened every process with `PROCESS_SET_QUOTA` and called
+/// `EmptyWorkingSet` on each. That right is outside what PC Tweaker requests
+/// from any process now, so the memory manager is asked to do the same work
+/// for the whole system in one call, without a single process handle.
 #[cfg(windows)]
-pub fn trim_for_session() -> u64 {
-    let mut sys = sysinfo::System::new();
-    imp::clean(&mut sys).freed_bytes
+pub(crate) fn trim_now(sys: &mut sysinfo::System) -> Result<RamCleanResult, String> {
+    sys.refresh_memory();
+    let ram_total = sys.total_memory();
+    let ram_used_before = sys.used_memory();
+    crate::zerotrace::empty_working_sets()?;
+    sys.refresh_memory();
+    let ram_used_after = sys.used_memory();
+    Ok(RamCleanResult {
+        // Memory use is a moving target — other processes allocate while this
+        // runs — so "after" can legitimately exceed "before". Report 0 rather
+        // than underflowing into a huge bogus number.
+        freed_bytes: ram_used_before.saturating_sub(ram_used_after),
+        trimmed_processes: 0,
+        skipped_processes: 0,
+        ram_used_before,
+        ram_used_after,
+        ram_total,
+    })
 }
 
+/// The elevated helper's side of `clean_ram`: checks again, trims, and leaves
+/// the result where the unelevated app reads it back.
+#[cfg(windows)]
+pub(crate) fn run_elevated(dir: &std::path::Path) -> Result<(), String> {
+    if let Some(reason) = refusal(dir) {
+        return Err(reason);
+    }
+    let result = trim_now(&mut sysinfo::System::new());
+    crate::audit::record(
+        "ram-trim",
+        "system",
+        result.is_ok(),
+        result.as_ref().err().cloned(),
+    );
+    let result = result?;
+    let json = serde_json::to_string(&result).map_err(|e| e.to_string())?;
+    // Written beside the target and moved over it, so a link planted at the
+    // result's name is replaced rather than followed by an administrator.
+    let temp = dir.join(format!("{RESULT_FILE}.{}.tmp", std::process::id()));
+    std::fs::write(&temp, json).map_err(|e| e.to_string())?;
+    crate::rollback::replace_file(&temp, &dir.join(RESULT_FILE)).map_err(|e| {
+        let _ = std::fs::remove_file(&temp);
+        e.to_string()
+    })
+}
+
+/// Frees RAM. A click asks Windows for administrator permission when the app
+/// does not already have it; a scheduled pass cannot ask, so it runs only in
+/// an elevated app and otherwise reports why it did not.
 #[cfg(windows)]
 #[tauri::command(async)]
 pub fn clean_ram(
+    app: tauri::AppHandle,
     state: tauri::State<'_, crate::sysmon::SysMonState>,
+    scheduled: Option<bool>,
 ) -> Result<RamCleanResult, String> {
-    let mut guard = state
-        .0
-        .lock()
-        .map_err(|_| "system monitor state is unavailable".to_string())?;
-    Ok(imp::clean(&mut guard.sys))
+    let dir = crate::store_for_dir(&app)?;
+    if let Some(reason) = refusal(&dir) {
+        return Err(reason);
+    }
+    if crate::elevation::is_elevated() {
+        let mut guard = state
+            .0
+            .lock()
+            .map_err(|_| "system monitor state is unavailable".to_string())?;
+        let result = trim_now(&mut guard.sys);
+        crate::audit::record(
+            "ram-trim",
+            "system",
+            result.is_ok(),
+            result.as_ref().err().cloned(),
+        );
+        return result;
+    }
+    if scheduled == Some(true) {
+        return Err(format!(
+            "{NEEDS_ADMIN_PREFIX}Automatic cleanup runs only while PC Tweaker has administrator rights."
+        ));
+    }
+    let path = dir.join(RESULT_FILE);
+    let _ = std::fs::remove_file(&path);
+    crate::elevation::run_elevated_action("--elevated-ramtrim", "system")?;
+    let json = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let _ = std::fs::remove_file(&path);
+    serde_json::from_str(&json).map_err(|e| e.to_string())
 }
 
 #[cfg(not(windows))]
 #[tauri::command(async)]
 pub fn clean_ram(
+    _app: tauri::AppHandle,
     _state: tauri::State<'_, crate::sysmon::SysMonState>,
+    _scheduled: Option<bool>,
 ) -> Result<RamCleanResult, String> {
     Err("RAM cleanup is only available on Windows".to_string())
 }
@@ -157,22 +163,14 @@ pub fn top_by_memory(rows: Vec<(String, u64)>, limit: usize) -> Vec<ProcessMemor
 }
 
 /// The heaviest memory consumers right now, grouped by process name.
-/// Strictly read-only: the Memory Pressure panel shows WHO is using memory
-/// before offering any action at all.
+/// Strictly read-only, and read from the kernel's process table: no process
+/// is opened to learn how much memory it holds.
 #[tauri::command(async)]
-pub fn top_memory_processes(
-    state: tauri::State<'_, crate::sysmon::SysMonState>,
-) -> Result<Vec<ProcessMemory>, String> {
-    let mut guard = state
-        .0
-        .lock()
-        .map_err(|_| "system monitor state is unavailable".to_string())?;
-    let sys = &mut guard.sys;
-    sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
-    let rows: Vec<(String, u64)> = sys
-        .processes()
-        .values()
-        .map(|p| (p.name().to_string_lossy().to_string(), p.memory()))
+pub fn top_memory_processes() -> Result<Vec<ProcessMemory>, String> {
+    let rows: Vec<(String, u64)> = crate::process_guard::processes()?
+        .into_iter()
+        .filter(|p| p.pid > 4)
+        .map(|p| (p.name, p.working_set))
         .collect();
     Ok(top_by_memory(rows, 8))
 }
@@ -206,6 +204,9 @@ mod tests {
         let r = RamCleanResult::default();
         assert_eq!(r.freed_bytes, 0);
         assert_eq!(r.trimmed_processes, 0);
+        let back: RamCleanResult =
+            serde_json::from_str(&serde_json::to_string(&r).unwrap()).unwrap();
+        assert_eq!(back.ram_total, 0);
     }
 
     #[test]
@@ -222,5 +223,15 @@ mod tests {
         assert_eq!(top[0].name, "chrome.exe");
         assert_eq!(top[0].mem_bytes, 700);
         assert_eq!(top[1].name, "steam.exe");
+    }
+
+    /// The heaviest list comes from the handle-free table and is never empty
+    /// on a running machine.
+    #[cfg(windows)]
+    #[test]
+    fn top_memory_processes_reads_the_live_table() {
+        let top = top_memory_processes().unwrap();
+        assert!(!top.is_empty());
+        assert!(top.iter().all(|p| !p.name.is_empty()));
     }
 }

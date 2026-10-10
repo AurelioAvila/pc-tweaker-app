@@ -231,9 +231,9 @@ pub fn composite_changes(id: &str) -> Vec<TechnicalChange> {
             ),
         ];
     }
-    if id == services::WINDOWS_SEARCH_ID {
+    if let Some(tweak) = services::find(id) {
         return vec![TechnicalChange::Service {
-            name: services::SERVICE_NAME,
+            name: tweak.service,
             action: "stopped, then set to Disabled",
         }];
     }

@@ -146,6 +146,10 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // "Normal" is the Windows priority name in Spanish, German and Portuguese too.
+  "es:priorityRules.normal",
+  "de:priorityRules.normal",
+  "pt:priorityRules.normal",
   // Reviewed component copy: these are ordinary words in the target locale.
   "de:componentAdvanced.doValue", // Limit and KB/s are valid German.
   "fr:componentAdvanced.doProvider", // Source is also French.

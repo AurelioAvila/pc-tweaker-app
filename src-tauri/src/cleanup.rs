@@ -261,6 +261,62 @@ pub fn run_cleanup(id: &str) -> Result<CleanupResult, String> {
     Ok(result)
 }
 
+/// The newest modification time anywhere under `path` (itself included),
+/// bounded so a huge tree cannot stall an unattended run. `None` when nothing
+/// could be read.
+fn newest_change(path: &Path, depth: usize, budget: &mut usize) -> Option<std::time::SystemTime> {
+    let meta = std::fs::symlink_metadata(path).ok()?;
+    let mut newest = meta.modified().ok();
+    if meta.is_dir() && depth > 0 {
+        for entry in std::fs::read_dir(path).ok()?.filter_map(|e| e.ok()) {
+            if *budget == 0 {
+                // Too big to inspect fully: treat it as just changed, so it stays.
+                return Some(std::time::SystemTime::now());
+            }
+            *budget -= 1;
+            let child = newest_change(&entry.path(), depth - 1, budget)?;
+            newest = Some(newest.map_or(child, |n| n.max(child)));
+        }
+    }
+    newest
+}
+
+/// The unattended version of `run_cleanup`: only top-level items in which
+/// nothing has changed for `min_age`, so an installer or an app still working
+/// in its temporary folder is never pulled out from under it. Unreadable
+/// items are left alone. Still the Recycle Bin, never a permanent delete.
+pub fn run_cleanup_older_than(id: &str, min_age: std::time::Duration) -> Result<CleanupResult, String> {
+    let dir = target_dir(id).ok_or_else(|| format!("unknown cleanup action: {}", id))?;
+    let cutoff = std::time::SystemTime::now()
+        .checked_sub(min_age)
+        .ok_or("invalid age")?;
+    let mut result = CleanupResult::default();
+    let Ok(entries) = std::fs::read_dir(&dir) else {
+        return Ok(result);
+    };
+    for entry in entries.filter_map(|e| e.ok()) {
+        let path = entry.path();
+        let mut budget = 20_000;
+        let old_enough = newest_change(&path, 8, &mut budget).is_some_and(|newest| newest < cutoff);
+        if !old_enough {
+            result.skipped_count += 1;
+            continue;
+        }
+        let size = entry
+            .metadata()
+            .map(|m| if m.is_dir() { dir_size(&path) } else { m.len() })
+            .unwrap_or(0);
+        match trash::delete(&path) {
+            Ok(()) => {
+                result.freed_bytes += size;
+                result.deleted_count += 1;
+            }
+            Err(_) => result.skipped_count += 1,
+        }
+    }
+    Ok(result)
+}
+
 fn walk_files(dir: &Path, out: &mut Vec<PathBuf>) {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
@@ -430,6 +486,33 @@ pub fn delete_files(paths: Vec<String>) -> CleanupResult {
         }
     }
     result
+}
+
+#[cfg(test)]
+mod age_tests {
+    use super::*;
+
+    /// A folder with one recently touched file inside counts as recent, even
+    /// though the folder itself is old: that is an app still at work.
+    #[test]
+    fn the_newest_change_inside_a_folder_decides_its_age() {
+        let root = std::env::temp_dir().join(format!("pct-age-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join("a/b")).unwrap();
+        std::fs::write(root.join("a/b/new.txt"), b"x").unwrap();
+        let mut budget = 100;
+        let newest = newest_change(&root.join("a"), 8, &mut budget).unwrap();
+        let age = std::time::SystemTime::now().duration_since(newest).unwrap_or_default();
+        assert!(age < std::time::Duration::from_secs(60));
+        // An exhausted budget never declares an unexplored tree old.
+        let mut none_left = 0;
+        let capped = newest_change(&root.join("a"), 8, &mut none_left).unwrap();
+        assert!(
+            std::time::SystemTime::now().duration_since(capped).unwrap_or_default()
+                < std::time::Duration::from_secs(5)
+        );
+        let _ = std::fs::remove_dir_all(root);
+    }
 }
 
 #[cfg(test)]

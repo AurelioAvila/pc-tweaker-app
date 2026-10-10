@@ -915,7 +915,10 @@ async function findPurchase(paymentIntentId: string, effects: BillingEffects): P
     const lifetimePrices = [...lifetimePriceIds(), process.env.STRIPE_PRICE_ID].filter(Boolean);
     const priceIds = session.line_items?.data?.flatMap((item) => item.price ? [item.price.id] : []) ?? [];
     const userId = session.client_reference_id || session.metadata?.userId;
-    if (!userId || !priceIds.some((id) => lifetimePrices.includes(id))) return null;
+    // Our own Lifetime checkouts also carry product/plan metadata, so a
+    // refund is still matched if a promo Price variable is ever removed.
+    const lifetimeCheckout = session.metadata?.product === "pctweaker" && session.metadata?.plan === "lifetime";
+    if (!userId || !(lifetimeCheckout || priceIds.some((id) => lifetimePrices.includes(id)))) return null;
     return { userId, product: "pctweaker", plan: "lifetime", subscriptionId: null };
   }
   if (session) return null;

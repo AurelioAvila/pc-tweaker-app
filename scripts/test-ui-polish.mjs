@@ -44,6 +44,12 @@ for (const [file, text] of sources) {
       `${file}: hand-made pill; use <Badge>`,
     );
 }
+// A failing page shows a way back instead of a blank window: both workspace
+// views sit inside a page boundary, and the whole app inside a root one.
+const appSource = fs.readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
+const mainSource = fs.readFileSync(new URL("../src/main.tsx", import.meta.url), "utf8");
+assert.equal(appSource.match(/<PageBoundary /g)?.length, 2, "both workspace views are guarded");
+assert.match(mainSource, /<PageBoundary[^>]*scope="app"[^>]*>\s*<App \/>/, "the root is guarded");
 const { outputFiles } = await build({
   stdin: {
     contents: `

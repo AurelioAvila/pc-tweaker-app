@@ -815,6 +815,15 @@ export interface Strings {
     processes: string;
     processOne: string;
   };
+  pageError: {
+    title: string;
+    body: string;
+    reload: string;
+    reloadApp: string;
+    details: string;
+    appTitle: string;
+    appBody: string;
+  };
   folderScan: {
     stop: string;
     stopping: string;
@@ -2031,6 +2040,15 @@ const it: Strings = {
     usingMemory: "Memoria",
     processes: "{count} processi",
     processOne: "1 processo",
+  },
+  pageError: {
+    title: "Questa pagina ha avuto un problema",
+    body: "Il resto di PC Tweaker funziona ancora e questo errore non ha modificato nulla sul PC. Ricarica la pagina per riprovare.",
+    reload: "Ricarica la pagina",
+    reloadApp: "Ricarica PC Tweaker",
+    details: "Dettagli tecnici",
+    appTitle: "PC Tweaker ha avuto un problema",
+    appBody: "Questo errore non ha modificato nulla sul PC. Ricarica PC Tweaker per continuare.",
   },
   folderScan: {
     stop: "Interrompi ricerca",
@@ -3672,6 +3690,15 @@ const en: Strings = {
     usingMemory: "Memory",
     processes: "{count} processes",
     processOne: "1 process",
+  },
+  pageError: {
+    title: "This page ran into a problem",
+    body: "The rest of PC Tweaker is still working, and nothing on your PC was changed by this error. Reload the page to try again.",
+    reload: "Reload this page",
+    reloadApp: "Reload PC Tweaker",
+    details: "Technical details",
+    appTitle: "PC Tweaker ran into a problem",
+    appBody: "Nothing on your PC was changed by this error. Reload PC Tweaker to carry on.",
   },
   folderScan: {
     stop: "Stop search",
@@ -5328,6 +5355,15 @@ const fr: Strings = {
     processes: "{count} processus",
     processOne: "1 processus",
   },
+  pageError: {
+    title: "Cette page a rencontré un problème",
+    body: "Le reste de PC Tweaker fonctionne toujours, et cette erreur n'a rien modifié sur votre PC. Rechargez la page pour réessayer.",
+    reload: "Recharger la page",
+    reloadApp: "Recharger PC Tweaker",
+    details: "Détails techniques",
+    appTitle: "PC Tweaker a rencontré un problème",
+    appBody: "Cette erreur n'a rien modifié sur votre PC. Rechargez PC Tweaker pour continuer.",
+  },
   folderScan: {
     stop: "Arrêter la recherche",
     stopping: "Arrêt…",
@@ -6980,6 +7016,15 @@ const es: Strings = {
     usingMemory: "Memoria",
     processes: "{count} procesos",
     processOne: "1 proceso",
+  },
+  pageError: {
+    title: "Esta página ha tenido un problema",
+    body: "El resto de PC Tweaker sigue funcionando y este error no ha cambiado nada en tu PC. Recarga la página para volver a intentarlo.",
+    reload: "Recargar la página",
+    reloadApp: "Recargar PC Tweaker",
+    details: "Detalles técnicos",
+    appTitle: "PC Tweaker ha tenido un problema",
+    appBody: "Este error no ha cambiado nada en tu PC. Recarga PC Tweaker para continuar.",
   },
   folderScan: {
     stop: "Detener búsqueda",
@@ -8641,6 +8686,16 @@ const de: Strings = {
     processes: "{count} Prozesse",
     processOne: "1 Prozess",
   },
+  pageError: {
+    title: "Auf dieser Seite ist ein Problem aufgetreten",
+    body: "Der Rest von PC Tweaker funktioniert weiter, und dieser Fehler hat nichts an deinem PC geändert. Lade die Seite neu, um es noch einmal zu versuchen.",
+    reload: "Seite neu laden",
+    reloadApp: "PC Tweaker neu laden",
+    details: "Technische Details",
+    appTitle: "In PC Tweaker ist ein Problem aufgetreten",
+    appBody:
+      "Dieser Fehler hat nichts an deinem PC geändert. Lade PC Tweaker neu, um weiterzumachen.",
+  },
   folderScan: {
     stop: "Suche abbrechen",
     stopping: "Wird abgebrochen…",
@@ -10301,6 +10356,15 @@ const pt: Strings = {
     usingMemory: "Memória",
     processes: "{count} processos",
     processOne: "1 processo",
+  },
+  pageError: {
+    title: "Esta página teve um problema",
+    body: "O resto do PC Tweaker continua a funcionar e este erro não alterou nada no seu PC. Recarregue a página para tentar novamente.",
+    reload: "Recarregar a página",
+    reloadApp: "Recarregar o PC Tweaker",
+    details: "Detalhes técnicos",
+    appTitle: "O PC Tweaker teve um problema",
+    appBody: "Este erro não alterou nada no seu PC. Recarregue o PC Tweaker para continuar.",
   },
   folderScan: {
     stop: "Parar pesquisa",

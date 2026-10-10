@@ -45,6 +45,20 @@ pub fn default_size(work_w: f64, work_h: f64) -> (f64, f64) {
     )
 }
 
+/// The window's own minimum size (tauri.conf.json `minWidth`/`minHeight`).
+const SMALLEST: (f64, f64) = (820.0, 600.0);
+
+/// Whether a placement is a Windows Snap layout rather than a size the user
+/// chose: full work-area height and flush with the left or right edge, the
+/// way a half or a quarter-column snap lands. Windows reports the snapped
+/// rectangle as the window's position, so remembering it reopened the app
+/// glued to one half of the screen with its title bar under the top edge.
+pub fn snapped(p: &Placement, work_w: f64, work_h: f64) -> bool {
+    let full_height = p.y <= 8.0 && p.h >= work_h - 16.0;
+    let at_side = p.x <= 8.0 || p.x + p.w >= work_w - 8.0;
+    full_height && at_side
+}
+
 /// A saved placement is reused only when it lands fully on the current
 /// work area; a window last seen on an unplugged second monitor would
 /// otherwise open off-screen.
@@ -52,10 +66,13 @@ pub fn default_size(work_w: f64, work_h: f64) -> (f64, f64) {
 /// Nor when it covers the whole work area. That is a maximized window
 /// recorded as a normal size (a frameless window can report a resize before
 /// it reports being maximized), and reusing it opens the app full-screen
-/// but not maximized, so Restore has no smaller size to go back to.
+/// but not maximized, so Restore has no smaller size to go back to. Nor
+/// when it is a snapped layout or smaller than the window's minimum size.
 pub fn fits(p: &Placement, work_w: f64, work_h: f64) -> bool {
-    p.w >= 400.0
-        && p.h >= 300.0
+    [p.w, p.h, p.x, p.y].iter().all(|v| v.is_finite())
+        && p.w >= SMALLEST.0
+        && p.h >= SMALLEST.1
+        && !snapped(p, work_w, work_h)
         && p.x >= -8.0
         && p.y >= -8.0
         && p.x + p.w <= work_w + 8.0
@@ -68,10 +85,15 @@ pub fn read(dir: &Path) -> Option<Placement> {
     serde_json::from_str(&text).ok()
 }
 
+/// Written to a temporary file and renamed over the old one, so a process
+/// killed mid-write leaves the previous placement, not half a file.
 fn write(dir: &Path, p: &Placement) {
     if std::fs::create_dir_all(dir).is_ok() {
         if let Ok(text) = serde_json::to_string(p) {
-            let _ = std::fs::write(dir.join(FILE), text);
+            let temp = dir.join(format!("{FILE}.{}.tmp", std::process::id()));
+            if std::fs::write(&temp, text).is_ok() && std::fs::rename(&temp, dir.join(FILE)).is_err() {
+                let _ = std::fs::remove_file(&temp);
+            }
         }
     }
 }
@@ -157,7 +179,7 @@ pub fn remember(window: &tauri::Window, size: Option<PhysicalSize<u32>>, pos: Op
     let size = size.to_logical::<f64>(scale);
     let pos = pos.to_logical::<f64>(scale);
     let p = Placement { w: size.width, h: size.height, x: pos.x, y: pos.y };
-    if p.w < 400.0 || p.h < 300.0 {
+    if p.w < SMALLEST.0 || p.h < SMALLEST.1 {
         return;
     }
     // A full-screen size is a maximize caught mid-transition; keep the last
@@ -210,6 +232,36 @@ mod tests {
         assert!(!fits(&full, 1920.0, 1032.0));
         let large = Placement { w: 1600.0, h: 900.0, x: 100.0, y: 50.0 };
         assert!(fits(&large, 1920.0, 1032.0));
+    }
+
+    #[test]
+    fn a_snapped_or_too_small_placement_is_not_reused() {
+        // The placement found after the dev window reopened glued to the left
+        // half of a 1920x1080 desktop (work area 1920x1032).
+        let left_half = Placement { w: 984.0, h: 1023.0, x: 0.0, y: 0.0 };
+        assert!(snapped(&left_half, 1920.0, 1032.0));
+        assert!(!fits(&left_half, 1920.0, 1032.0));
+        let right_half = Placement { w: 968.0, h: 1032.0, x: 952.0, y: 0.0 };
+        assert!(!fits(&right_half, 1920.0, 1032.0));
+        // A tall window the user placed away from the edges is fine.
+        let tall = Placement { w: 1000.0, h: 1000.0, x: 300.0, y: 10.0 };
+        assert!(fits(&tall, 1920.0, 1032.0));
+        // Below the window's own minimum, or not a number: not reused.
+        assert!(!fits(&Placement { w: 700.0, h: 640.0, x: 100.0, y: 100.0 }, 1920.0, 1032.0));
+        assert!(!fits(&Placement { w: f64::NAN, h: 700.0, x: 0.0, y: 0.0 }, 1920.0, 1032.0));
+    }
+
+    #[test]
+    fn a_half_written_file_is_ignored_and_writes_replace_whole_files() {
+        let dir = std::env::temp_dir().join(format!("pct-wp-cut-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join(FILE), "{\"w\":1200.0,\"h\":7").unwrap();
+        assert_eq!(read(&dir), None);
+        let p = Placement { w: 1200.0, h: 760.0, x: 10.0, y: 20.0 };
+        write(&dir, &p);
+        assert_eq!(read(&dir), Some(p));
+        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 1, "no temporary file left");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

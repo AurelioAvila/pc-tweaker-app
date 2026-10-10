@@ -1476,3 +1476,56 @@
   color: var(--text-primary);
   font-weight: 600;
 }
+
+/* A page that failed to render: calm, with a way back. */
+.page-error {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  max-width: 560px;
+  margin: 40px auto;
+  padding: 32px 28px;
+  text-align: center;
+}
+.page-error-mark {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--warning) 14%, transparent);
+  color: var(--warning);
+}
+.page-error-mark svg {
+  width: 26px;
+  height: 26px;
+}
+.page-error h2 {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 650;
+}
+.page-error p {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.page-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.page-error details {
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+.page-error code {
+  display: block;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  font-family: var(--font-data);
+}

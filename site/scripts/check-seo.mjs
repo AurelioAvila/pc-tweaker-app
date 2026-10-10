@@ -84,7 +84,7 @@ const uninstaller = await readFile(new URL("uninstaller/index.html", dist), "utf
 assert.ok(uninstaller.includes("it attempts to create a Windows restore point"), "Restore-point creation must not be guaranteed");
 assert.ok(uninstaller.includes("can fail or be skipped"), "Restore-point limits must be visible");
 assert.ok(!uninstaller.includes("a restore point taken first"), "Metadata must not promise a restore point");
-for (const [value, label] of [[39, "CONTROLS INCLUDED FREE"], [66, "CONTROLS IN THIS RELEASE"], [1, "PLACE TO REVIEW &amp; RESTORE"]]) {
+for (const [value, label] of [[46, "CONTROLS INCLUDED FREE"], [81, "CONTROLS IN THIS RELEASE"], [1, "PLACE TO REVIEW &amp; RESTORE"]]) {
   assert.match(home, new RegExp(`<span>${value}</span>[\\s\\S]{0,500}${label}`), `Stat must render its real value in the initial HTML: ${label}`);
 }
 const app = JSON.parse(

@@ -1,0 +1,481 @@
+/* "Right now" on PC Health. Graphite surfaces, the theme accent for the
+   primary series and a quieter second tone, soft gradients under the lines,
+   a faint glow, big tabular numbers. */
+
+.live-dashboard {
+  container-type: inline-size;
+  --live-second: color-mix(in oklab, var(--info) 75%, var(--text-secondary));
+  display: grid;
+  gap: 16px;
+}
+.live-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.live-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+.live-head p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.live-dot {
+  position: relative;
+}
+.live-dot[data-on="true"] {
+  background: var(--success);
+}
+/* A ring that grows and fades: transform and opacity only. */
+.live-dot[data-on="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--success);
+  animation: live-pulse 2.4s var(--ease-standard) infinite;
+}
+@keyframes live-pulse {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+.live-error {
+  margin: 0;
+  color: var(--warning);
+  font-size: 12px;
+}
+
+.live-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+}
+.live-card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-l);
+  background:
+    radial-gradient(
+      120% 80% at 100% 0%,
+      color-mix(in oklab, var(--accent) 6%, transparent),
+      transparent 60%
+    ),
+    var(--surface-1);
+  transition: border-color var(--dur-base) var(--ease-standard);
+}
+.live-card:hover {
+  border-color: var(--border-strong);
+}
+.live-card header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.live-card h3 {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.live-meta {
+  display: inline-flex;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.live-value {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.live-value > strong {
+  color: var(--text-primary);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.live-value > small {
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+.live-pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+.live-pair strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.live-pair [data-tone="accent"]::before,
+.live-pair [data-tone="second"]::before,
+.live-memory [data-tone] dt::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 2px;
+  background: var(--accent);
+  vertical-align: 1px;
+}
+.live-pair [data-tone="second"]::before {
+  background: var(--live-second);
+}
+
+/* Charts */
+.live-spark {
+  position: relative;
+  height: 64px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-subtle);
+}
+/* The chart is drawn once per reading and slid by the compositor, so the
+   one-second glide costs no repaint. */
+.live-track {
+  height: 100%;
+  will-change: transform;
+}
+.live-track svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.live-stop-accent {
+  stop-color: var(--accent);
+}
+.live-stop-second {
+  stop-color: var(--live-second);
+}
+.live-line {
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.live-series-accent .live-line {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 4px color-mix(in oklab, var(--accent) 55%, transparent));
+}
+.live-series-second .live-line {
+  stroke: var(--live-second);
+}
+.live-slide {
+  animation: live-slide 1000ms linear both;
+}
+@keyframes live-slide {
+  from {
+    transform: translateX(var(--live-step));
+  }
+  to {
+    transform: none;
+  }
+}
+.live-cursor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--text-muted);
+  pointer-events: none;
+}
+.live-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  z-index: 2;
+  display: grid;
+  gap: 2px;
+  min-width: 112px;
+  padding: 7px 9px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  background: var(--surface-2);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.live-tooltip strong {
+  color: var(--text-primary);
+}
+.live-tooltip small {
+  color: var(--text-muted);
+}
+
+/* Cores: a compact grid of tiny area charts. */
+.live-cores {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 6px;
+}
+.live-core {
+  position: relative;
+  height: 26px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--surface-2) 70%, transparent);
+}
+.live-core svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.live-core path {
+  fill: color-mix(in oklab, var(--accent) 45%, transparent);
+}
+.live-core span {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  color: var(--text-secondary);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Memory ring */
+.live-memory {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px 18px;
+}
+.live-memory dl {
+  flex: 1 1 150px;
+}
+.live-memory dt,
+.live-memory dd {
+  white-space: nowrap;
+}
+.live-ring {
+  position: relative;
+  flex-shrink: 0;
+  width: 116px;
+  height: 116px;
+}
+.live-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.live-ring circle {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
+  transition:
+    stroke-dasharray 700ms var(--ease-standard),
+    stroke-dashoffset 700ms var(--ease-standard);
+}
+.live-ring-track {
+  stroke: var(--surface-2);
+}
+.live-ring-used {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--accent) 45%, transparent));
+}
+.live-ring-cached {
+  stroke: color-mix(in oklab, var(--accent) 35%, var(--surface-2));
+}
+.live-ring-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+.live-ring-center strong {
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.live-ring-center small {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.live-memory dl,
+.live-facts {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+  font-size: 12px;
+}
+.live-memory dl > div,
+.live-facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.live-memory dt,
+.live-facts dt {
+  color: var(--text-muted);
+}
+.live-memory dd,
+.live-facts dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.live-memory [data-tone="cached"] dt::before {
+  background: color-mix(in oklab, var(--accent) 35%, var(--surface-2));
+}
+.live-memory [data-tone="free"] dt::before {
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.live-memory [data-tone] {
+  align-items: center;
+}
+
+/* Drive usage */
+.live-bar {
+  display: grid;
+  gap: 5px;
+}
+.live-bar::before {
+  content: "";
+  grid-area: 1 / 1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+.live-bar > span {
+  grid-area: 1 / 1;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--accent) 60%, transparent),
+    var(--accent)
+  );
+}
+.live-bar small {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.live-empty {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+.live-empty p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* Loading: a soft shimmer until the first reading lands. */
+.live-grid[data-loading="true"] .live-card {
+  overflow: hidden;
+}
+.live-grid[data-loading="true"] .live-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in oklab, white 5%, transparent) 50%,
+    transparent 70%
+  );
+  animation: live-shimmer 1.4s linear infinite;
+}
+@keyframes live-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot[data-on="true"]::after,
+  .live-slide,
+  .live-grid[data-loading="true"] .live-card::after {
+    animation: none;
+  }
+  .live-ring circle,
+  .live-card {
+    transition: none;
+  }
+}
+
+/* The processor gets a full row in two columns, two of three in three. */
+@container (min-width: 472px) {
+  .live-card[data-wide="true"] {
+    grid-column: span 2;
+  }
+}
+.live-meter {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+.live-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--accent) 60%, transparent),
+    var(--accent)
+  );
+  box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 45%, transparent);
+  transition: width 700ms var(--ease-standard);
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-meter > span {
+    transition: none;
+  }
+}

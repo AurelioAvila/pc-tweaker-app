@@ -148,6 +148,17 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
 const REVIEWED_AS_CORRECT = new Set([
   // French uses the same word for the scan's pause button.
   "fr:componentScan.pause",
+  // "Total" is the word in French, Spanish and Portuguese; "Download" and
+  // "Upload" are the everyday network terms in Italian, German and Portuguese.
+  "fr:live.total",
+  "es:live.total",
+  "pt:live.total",
+  "it:live.down",
+  "de:live.down",
+  "pt:live.down",
+  "it:live.up",
+  "de:live.up",
+  "pt:live.up",
   // "Normal" is the Windows priority name in Spanish, German and Portuguese too.
   "es:priorityRules.normal",
   "de:priorityRules.normal",

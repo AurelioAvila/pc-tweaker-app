@@ -747,6 +747,45 @@ export interface Strings {
     confirmOpenPage: string;
     cancel: string;
   };
+  live: {
+    title: string;
+    subtitle: string;
+    paused: string;
+    pausedHint: string;
+    measuring: string;
+    smooth: string;
+    busy: string;
+    strained: string;
+    verdictDetail: string;
+    failed: string;
+    cpu: string;
+    speed: string;
+    cores: string;
+    core: string;
+    memory: string;
+    used: string;
+    cached: string;
+    free: string;
+    total: string;
+    cachedHint: string;
+    notAvailable: string;
+    disk: string;
+    read: string;
+    write: string;
+    systemDrive: string;
+    network: string;
+    down: string;
+    up: string;
+    gpu: string;
+    gpuLoad: string;
+    temp: string;
+    fan: string;
+    vram: string;
+    sensors: string;
+    sensorsHint: string;
+    now: string;
+    secondsAgo: string;
+  };
   folderScan: {
     stop: string;
     stopping: string;
@@ -1887,6 +1926,47 @@ const it: Strings = {
     confirmDownload: "Scarica",
     confirmOpenPage: "Apri invece la pagina",
     cancel: "Annulla",
+  },
+  live: {
+    title: "In questo momento",
+    subtitle:
+      "Aggiornato ogni secondo mentre questa pagina è aperta e PC Tweaker è in primo piano. In background non viene misurato nulla.",
+    paused: "In pausa",
+    pausedHint: "In pausa mentre PC Tweaker è in background. Riprende quando torni.",
+    measuring: "Misurazione…",
+    smooth: "Tutto fluido",
+    busy: "Impegnato",
+    strained: "Sotto forte carico",
+    verdictDetail: "CPU al {cpu}% negli ultimi 10 secondi · memoria in uso al {ram}%",
+    failed: "Le letture in tempo reale non sono disponibili al momento.",
+    cpu: "Processore",
+    speed: "{ghz} GHz",
+    cores: "{count} processori logici",
+    core: "Processore {n}",
+    memory: "Memoria",
+    used: "In uso",
+    cached: "Cache",
+    free: "Libera",
+    total: "Totale",
+    cachedHint: "La memoria in cache viene restituita appena un programma ne ha bisogno.",
+    notAvailable: "Non disponibile su questo PC",
+    disk: "Attività del disco",
+    read: "Lettura",
+    write: "Scrittura",
+    systemDrive: "Unità di sistema: {used} usati su {total}",
+    network: "Rete",
+    down: "Download",
+    up: "Upload",
+    gpu: "Grafica",
+    gpuLoad: "Carico",
+    temp: "Temperatura",
+    fan: "Ventola",
+    vram: "Memoria video",
+    sensors: "Temperature e ventole",
+    sensorsHint:
+      "Su questo PC Windows non espone questi sensori senza gli strumenti del produttore, quindi non tiriamo a indovinare.",
+    now: "ora",
+    secondsAgo: "{s} s fa",
   },
   folderScan: {
     stop: "Interrompi ricerca",
@@ -3451,6 +3531,48 @@ const en: Strings = {
     confirmDownload: "Download",
     confirmOpenPage: "Open the page instead",
     cancel: "Cancel",
+  },
+  live: {
+    title: "Right now",
+    subtitle:
+      "Updated every second while this page is open and PC Tweaker is in front. Nothing is measured in the background.",
+    paused: "Paused",
+    pausedHint:
+      "Paused while PC Tweaker is in the background. It picks up again when you come back.",
+    measuring: "Measuring…",
+    smooth: "Running smoothly",
+    busy: "Busy",
+    strained: "Under heavy load",
+    verdictDetail: "CPU {cpu}% over the last 10 seconds · memory {ram}% in use",
+    failed: "Live readings are unavailable right now.",
+    cpu: "Processor",
+    speed: "{ghz} GHz",
+    cores: "{count} logical processors",
+    core: "Processor {n}",
+    memory: "Memory",
+    used: "In use",
+    cached: "Cached",
+    free: "Free",
+    total: "Total",
+    cachedHint: "Cached memory is handed back the moment a program needs it.",
+    notAvailable: "Not available on this PC",
+    disk: "Disk activity",
+    read: "Read",
+    write: "Write",
+    systemDrive: "System drive: {used} of {total} used",
+    network: "Network",
+    down: "Download",
+    up: "Upload",
+    gpu: "Graphics",
+    gpuLoad: "Load",
+    temp: "Temperature",
+    fan: "Fan",
+    vram: "Video memory",
+    sensors: "Temperatures and fans",
+    sensorsHint:
+      "Windows doesn't expose these sensors on this PC without the hardware maker's own tools, so nothing is guessed.",
+    now: "now",
+    secondsAgo: "{s} s ago",
   },
   folderScan: {
     stop: "Stop search",
@@ -5030,6 +5152,48 @@ const fr: Strings = {
     confirmOpenPage: "Ouvrir plutôt la page",
     cancel: "Annuler",
   },
+  live: {
+    title: "En ce moment",
+    subtitle:
+      "Mis à jour chaque seconde tant que cette page est ouverte et que PC Tweaker est au premier plan. Rien n'est mesuré en arrière-plan.",
+    paused: "En pause",
+    pausedHint: "En pause tant que PC Tweaker est en arrière-plan. Reprise dès votre retour.",
+    measuring: "Mesure…",
+    smooth: "Tout est fluide",
+    busy: "Occupé",
+    strained: "Forte charge",
+    verdictDetail:
+      "Processeur à {cpu} % sur les 10 dernières secondes · mémoire utilisée à {ram} %",
+    failed: "Les mesures en direct ne sont pas disponibles pour le moment.",
+    cpu: "Processeur",
+    speed: "{ghz} GHz",
+    cores: "{count} processeurs logiques",
+    core: "Processeur {n}",
+    memory: "Mémoire",
+    used: "Utilisée",
+    cached: "En cache",
+    free: "Libre",
+    total: "Total",
+    cachedHint: "La mémoire en cache est rendue dès qu'un programme en a besoin.",
+    notAvailable: "Non disponible sur ce PC",
+    disk: "Activité du disque",
+    read: "Lecture",
+    write: "Écriture",
+    systemDrive: "Lecteur système : {used} utilisés sur {total}",
+    network: "Réseau",
+    down: "Téléchargement",
+    up: "Envoi",
+    gpu: "Graphismes",
+    gpuLoad: "Charge",
+    temp: "Température",
+    fan: "Ventilateur",
+    vram: "Mémoire vidéo",
+    sensors: "Températures et ventilateurs",
+    sensorsHint:
+      "Sur ce PC, Windows n'expose pas ces capteurs sans les outils du fabricant : rien n'est donc deviné.",
+    now: "maintenant",
+    secondsAgo: "il y a {s} s",
+  },
   folderScan: {
     stop: "Arrêter la recherche",
     stopping: "Arrêt…",
@@ -6606,6 +6770,47 @@ const es: Strings = {
     confirmDownload: "Descargar",
     confirmOpenPage: "Abrir la página en su lugar",
     cancel: "Cancelar",
+  },
+  live: {
+    title: "Ahora mismo",
+    subtitle:
+      "Se actualiza cada segundo mientras esta página está abierta y PC Tweaker está en primer plano. No se mide nada en segundo plano.",
+    paused: "En pausa",
+    pausedHint: "En pausa mientras PC Tweaker está en segundo plano. Se reanuda cuando vuelves.",
+    measuring: "Midiendo…",
+    smooth: "Funciona con fluidez",
+    busy: "Ocupado",
+    strained: "Con mucha carga",
+    verdictDetail: "CPU al {cpu} % en los últimos 10 segundos · memoria en uso al {ram} %",
+    failed: "Las lecturas en directo no están disponibles ahora mismo.",
+    cpu: "Procesador",
+    speed: "{ghz} GHz",
+    cores: "{count} procesadores lógicos",
+    core: "Procesador {n}",
+    memory: "Memoria",
+    used: "En uso",
+    cached: "En caché",
+    free: "Libre",
+    total: "Total",
+    cachedHint: "La memoria en caché se devuelve en cuanto un programa la necesita.",
+    notAvailable: "No disponible en este PC",
+    disk: "Actividad del disco",
+    read: "Lectura",
+    write: "Escritura",
+    systemDrive: "Unidad del sistema: {used} usados de {total}",
+    network: "Red",
+    down: "Descarga",
+    up: "Subida",
+    gpu: "Gráficos",
+    gpuLoad: "Carga",
+    temp: "Temperatura",
+    fan: "Ventilador",
+    vram: "Memoria de vídeo",
+    sensors: "Temperaturas y ventiladores",
+    sensorsHint:
+      "En este PC, Windows no expone estos sensores sin las herramientas del fabricante, así que no se inventa nada.",
+    now: "ahora",
+    secondsAgo: "hace {s} s",
   },
   folderScan: {
     stop: "Detener búsqueda",
@@ -8188,6 +8393,48 @@ const de: Strings = {
     confirmDownload: "Herunterladen",
     confirmOpenPage: "Stattdessen die Seite öffnen",
     cancel: "Abbrechen",
+  },
+  live: {
+    title: "Gerade jetzt",
+    subtitle:
+      "Wird jede Sekunde aktualisiert, solange diese Seite offen und PC Tweaker im Vordergrund ist. Im Hintergrund wird nichts gemessen.",
+    paused: "Pausiert",
+    pausedHint:
+      "Pausiert, solange PC Tweaker im Hintergrund ist. Geht weiter, sobald du zurückkommst.",
+    measuring: "Wird gemessen…",
+    smooth: "Läuft flüssig",
+    busy: "Ausgelastet",
+    strained: "Unter hoher Last",
+    verdictDetail: "CPU {cpu} % in den letzten 10 Sekunden · Arbeitsspeicher zu {ram} % belegt",
+    failed: "Live-Werte sind gerade nicht verfügbar.",
+    cpu: "Prozessor",
+    speed: "{ghz} GHz",
+    cores: "{count} logische Prozessoren",
+    core: "Prozessor {n}",
+    memory: "Arbeitsspeicher",
+    used: "Belegt",
+    cached: "Im Cache",
+    free: "Frei",
+    total: "Gesamt",
+    cachedHint: "Speicher im Cache wird freigegeben, sobald ein Programm ihn braucht.",
+    notAvailable: "Auf diesem PC nicht verfügbar",
+    disk: "Datenträgeraktivität",
+    read: "Lesen",
+    write: "Schreiben",
+    systemDrive: "Systemlaufwerk: {used} von {total} belegt",
+    network: "Netzwerk",
+    down: "Download",
+    up: "Upload",
+    gpu: "Grafik",
+    gpuLoad: "Auslastung",
+    temp: "Temperatur",
+    fan: "Lüfter",
+    vram: "Grafikspeicher",
+    sensors: "Temperaturen und Lüfter",
+    sensorsHint:
+      "Windows stellt diese Sensoren auf diesem PC ohne die Tools des Herstellers nicht bereit, deshalb wird nichts geschätzt.",
+    now: "jetzt",
+    secondsAgo: "vor {s} s",
   },
   folderScan: {
     stop: "Suche abbrechen",
@@ -9773,6 +10020,47 @@ const pt: Strings = {
     confirmDownload: "Baixar",
     confirmOpenPage: "Abrir a página",
     cancel: "Cancelar",
+  },
+  live: {
+    title: "Neste momento",
+    subtitle:
+      "Atualizado a cada segundo enquanto esta página está aberta e o PC Tweaker está em primeiro plano. Nada é medido em segundo plano.",
+    paused: "Em pausa",
+    pausedHint: "Em pausa enquanto o PC Tweaker está em segundo plano. Retoma quando voltar.",
+    measuring: "A medir…",
+    smooth: "Tudo fluido",
+    busy: "Ocupado",
+    strained: "Sob carga elevada",
+    verdictDetail: "CPU a {cpu}% nos últimos 10 segundos · memória em uso a {ram}%",
+    failed: "As leituras em tempo real não estão disponíveis neste momento.",
+    cpu: "Processador",
+    speed: "{ghz} GHz",
+    cores: "{count} processadores lógicos",
+    core: "Processador {n}",
+    memory: "Memória",
+    used: "Em uso",
+    cached: "Em cache",
+    free: "Livre",
+    total: "Total",
+    cachedHint: "A memória em cache é devolvida assim que um programa precisa dela.",
+    notAvailable: "Não disponível neste PC",
+    disk: "Atividade do disco",
+    read: "Leitura",
+    write: "Escrita",
+    systemDrive: "Unidade do sistema: {used} usados de {total}",
+    network: "Rede",
+    down: "Download",
+    up: "Upload",
+    gpu: "Gráficos",
+    gpuLoad: "Carga",
+    temp: "Temperatura",
+    fan: "Ventoinha",
+    vram: "Memória de vídeo",
+    sensors: "Temperaturas e ventoinhas",
+    sensorsHint:
+      "Neste PC, o Windows não expõe estes sensores sem as ferramentas do fabricante, por isso nada é estimado.",
+    now: "agora",
+    secondsAgo: "há {s} s",
   },
   folderScan: {
     stop: "Parar pesquisa",

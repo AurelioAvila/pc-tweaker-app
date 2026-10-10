@@ -58,6 +58,7 @@ import { X3dPanel } from "./components/x3d";
 import { ScanPanel } from "./components/scan";
 import { HealthPanel } from "./components/health";
 import { SystemRepairCard } from "./components/repair";
+import { LiveDashboard } from "./components/live-dashboard";
 import { AppCacheCard, CookieCleanerCard } from "./components/cleaners";
 import { HardwarePanel } from "./components/hardware";
 import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
@@ -882,6 +883,7 @@ function App() {
                 />
               )}
 
+              {showHealth && <LiveDashboard s={s} lang={lang} />}
               {showHealth && (
                 <SystemRepairCard
                   s={s}

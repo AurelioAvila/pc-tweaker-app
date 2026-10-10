@@ -79,6 +79,7 @@ mod services;
 mod startup;
 mod program_icons;
 mod sysmon;
+mod livemetrics;
 mod sysrepair;
 mod systemprofile;
 mod technical;
@@ -2205,6 +2206,7 @@ pub fn run() {
             list_crash_reports,
             clear_crash_reports,
             sysmon::system_stats,
+            livemetrics::live_sample,
             fps::imp::start_fps_capture,
             fps::imp::stop_fps_capture,
             fps::imp::fps_status,
@@ -2216,6 +2218,7 @@ pub fn run() {
             diskhealth::disk_health,
             diskinfo::list_drives_cmd,
             thermals::thermal_report,
+            thermals::gpu_readings,
             drivers::driver_audit,
             drivers::cancel_scan,
             drivers::discard_scan_session,

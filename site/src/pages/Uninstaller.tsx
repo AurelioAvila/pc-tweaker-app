@@ -1,4 +1,6 @@
 import { UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "../constants";
+import { euro, PromoBanner, usePromo } from "../promo";
+import { promoPercent } from "../../../src/promo";
 
 /* The page a buyer actually lands on.
  *
@@ -27,6 +29,8 @@ const PRO = [
 ];
 
 export function UninstallerPage() {
+  const promo = usePromo();
+  const uninstallerOffer = promo.offer("uninstaller", "annual");
   return (
     <main id="main-content" className="mx-auto max-w-3xl px-5 pt-36 pb-24 md:px-8">
       <p className="font-mono-t mb-5 text-sm tracking-widest text-accent">PC TWEAKER SUITE</p>
@@ -77,10 +81,23 @@ export function UninstallerPage() {
         </ul>
       </section>
 
+      {uninstallerOffer && promo.promo && (
+        <div className="mb-4">
+          <PromoBanner promo={promo.promo} />
+        </div>
+      )}
       <section className="mb-10 rounded-2xl border border-white/10 p-6">
         <h2 className="mb-2 text-2xl font-semibold text-[var(--fg)]">Uninstaller Pro</h2>
         <p className="mb-4 text-lg font-semibold text-accent">
-          €9.99 per year
+          {uninstallerOffer ? (
+            <>
+              <s className="mr-2 font-medium text-[var(--fg-dim)]">{euro(uninstallerOffer.reference)}</s>
+              {euro(uninstallerOffer.price)} for the first year ({promoPercent(uninstallerOffer)}% off), then{" "}
+              {euro(uninstallerOffer.regular)} per year
+            </>
+          ) : (
+            "€9.99 per year"
+          )}
         </p>
         <ul className="mb-5 space-y-2.5 leading-relaxed text-[var(--fg-dim)]">
           {PRO.map((item) => (

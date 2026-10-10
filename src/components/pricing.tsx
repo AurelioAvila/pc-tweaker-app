@@ -11,9 +11,11 @@ import {
   savingsPercent,
 } from "../lib";
 import { offerClock } from "../lifetime-offer";
-import { CheckIcon, CrownIcon, LayersIcon, SparkIcon } from "./icons";
+import { promoPercent } from "../promo";
+import { CheckIcon, CrownIcon, LayersIcon, PumpkinIcon, SparkIcon } from "./icons";
 import { PRICING_COPY } from "./pricing-copy";
 import { useLifetimeOffer } from "./use-lifetime-offer";
+import { usePromo } from "./use-promo";
 import "./pricing.css";
 
 export function PricingPanel({
@@ -43,8 +45,19 @@ export function PricingPanel({
   const [busy, setBusy] = useState<ProPlan | "manage" | null>(null);
   const actionPending = useRef(false);
   const campaign = useLifetimeOffer();
+  const promo = usePromo();
+  const previewing = campaign.preview || promo.preview;
   const ownsLifetime = isPro && heldPlan === "lifetime";
   const annual = period === "annual";
+  const proOffer = promo.offer("pctweaker", period);
+  const lifetimeOffer = promo.offer("pctweaker", "lifetime");
+  const promoOffers = promo.active ? (promo.promo?.offers ?? []) : [];
+  const promoDate = (iso: string | undefined, offsetMs = 0, timeStyle?: "short") =>
+    iso
+      ? new Intl.DateTimeFormat(lang, { dateStyle: "long", timeStyle }).format(
+          new Date(Date.parse(iso) + offsetMs),
+        )
+      : "";
   const clock = offerClock(campaign.remaining);
   const activeCampaign =
     campaign.offer?.status === "active" && !campaign.expired && campaign.available;
@@ -58,7 +71,7 @@ export function PricingPanel({
   async function act(plan: ProPlan | "manage") {
     if (
       actionPending.current ||
-      (plan !== "manage" && campaign.preview) ||
+      (plan !== "manage" && previewing) ||
       (plan === "lifetime" && !campaign.available)
     )
       return;
@@ -113,7 +126,36 @@ export function PricingPanel({
         <p>{copy.signature}</p>
         {import.meta.env.DEV && <p>{copy.previewBuild}</p>}
       </details>
-      {(!ownsLifetime || campaign.preview) && activeCampaign && (
+      {!ownsLifetime && (promo.upcoming || promoOffers.length > 0) && (
+        <aside
+          className="pricing-campaign pricing-promo"
+          aria-label={copy.promoTitle.split(":")[0]}
+        >
+          <PumpkinIcon className="pricing-promo-icon" />
+          <div className="pricing-campaign-copy">
+            {promo.preview && <span className="pricing-preview">{copy.preview}</span>}
+            {promo.upcoming ? (
+              <h2>{format(copy.promoSoon, { date: promoDate(promo.promo?.startsAt) })}</h2>
+            ) : (
+              <>
+                <h2>
+                  {format(copy.promoTitle, {
+                    percent: Math.min(...promoOffers.map(promoPercent)),
+                  })}
+                </h2>
+                <p>{copy.promoReference}</p>
+                <span className="pricing-deadline">
+                  {copy.ends}:{" "}
+                  <time dateTime={promo.promo?.endsAt}>
+                    {promoDate(promo.promo?.endsAt, -60_000, "short")}
+                  </time>
+                </span>
+              </>
+            )}
+          </div>
+        </aside>
+      )}
+      {(!ownsLifetime || campaign.preview) && activeCampaign && !lifetimeOffer && (
         <aside className="pricing-campaign" aria-label={copy.campaign}>
           <div className="pricing-campaign-copy">
             {campaign.preview && <span className="pricing-preview">{copy.preview}</span>}
@@ -181,19 +223,29 @@ export function PricingPanel({
             </button>
           </div>
           <div className="pricing-price">
-            <strong>{money(annual ? PRICE_ANNUAL : PRICE_MONTHLY, lang)}</strong>
+            {proOffer && (
+              <s className="pricing-price-before">{money(proOffer.reference / 100, lang)}</s>
+            )}
+            <strong>
+              {money(proOffer ? proOffer.price / 100 : annual ? PRICE_ANNUAL : PRICE_MONTHLY, lang)}
+            </strong>
             <span>{annual ? s.pricing.perYear : s.pricing.perMonth}</span>
+            {proOffer && <span className="pricing-discount">-{promoPercent(proOffer)}%</span>}
           </div>
           <p className="pricing-price-note">
-            {annual
-              ? format(s.pricing.saveBadge, { percent: savingsPercent })
-              : format(s.pricing.annualNudge, { price: money(PRICE_ANNUAL / 12, lang) })}
+            {proOffer
+              ? format(annual ? copy.firstYear : copy.firstMonth, {
+                  price: money(proOffer.regular / 100, lang),
+                })
+              : annual
+                ? format(s.pricing.saveBadge, { percent: savingsPercent })
+                : format(s.pricing.annualNudge, { price: money(PRICE_ANNUAL / 12, lang) })}
           </p>
           <div className="pricing-plan-footer">
             {!isPro ? (
               <button
                 className="pricing-button pricing-button-secondary"
-                disabled={busy !== null || campaign.preview}
+                disabled={busy !== null || previewing}
                 aria-busy={busy === period}
                 onClick={() => void act(period)}
               >
@@ -235,13 +287,25 @@ export function PricingPanel({
           <p className="pricing-plan-description">{copy.lifetime}</p>
           <span className="pricing-payment-label">{s.pricing.oneTimeBadge}</span>
           <div className="pricing-price">
-            {activeCampaign && PRICE_LIFETIME_BEFORE > PRICE_LIFETIME && (
-              <s className="pricing-price-before">{money(PRICE_LIFETIME_BEFORE, lang)}</s>
+            {lifetimeOffer ? (
+              <s className="pricing-price-before">{money(lifetimeOffer.reference / 100, lang)}</s>
+            ) : (
+              activeCampaign &&
+              PRICE_LIFETIME_BEFORE > PRICE_LIFETIME && (
+                <s className="pricing-price-before">{money(PRICE_LIFETIME_BEFORE, lang)}</s>
+              )
             )}
-            <strong>{money(PRICE_LIFETIME, lang)}</strong>
+            <strong>
+              {money(lifetimeOffer ? lifetimeOffer.price / 100 : PRICE_LIFETIME, lang)}
+            </strong>
             <span>{s.pricing.once}</span>
-            {activeCampaign && PRICE_LIFETIME_BEFORE > PRICE_LIFETIME && (
-              <span className="pricing-discount">-{lifetimeDiscountPercent}%</span>
+            {lifetimeOffer ? (
+              <span className="pricing-discount">-{promoPercent(lifetimeOffer)}%</span>
+            ) : (
+              activeCampaign &&
+              PRICE_LIFETIME_BEFORE > PRICE_LIFETIME && (
+                <span className="pricing-discount">-{lifetimeDiscountPercent}%</span>
+              )
             )}
           </div>
           <p className="pricing-price-note">{copy.perpetual}</p>
@@ -256,7 +320,7 @@ export function PricingPanel({
             ) : (
               <button
                 className="pricing-button pricing-button-primary"
-                disabled={busy !== null || !campaign.available || campaign.preview}
+                disabled={busy !== null || !campaign.available || previewing}
                 aria-busy={busy === "lifetime"}
                 onClick={() => void act("lifetime")}
               >
@@ -281,7 +345,7 @@ export function PricingPanel({
       </div>
       {!ownsLifetime && (
         <div className="pricing-offer-status" role="status">
-          {campaign.preview
+          {previewing
             ? copy.previewCheckout
             : campaign.loading
               ? copy.checking
@@ -292,7 +356,7 @@ export function PricingPanel({
                   : !campaign.available
                     ? copy.unavailable
                     : null}
-          {!campaign.preview && (campaign.failed || (!campaign.available && !campaign.loading)) && (
+          {!previewing && (campaign.failed || (!campaign.available && !campaign.loading)) && (
             <button onClick={campaign.refresh}>{copy.retry}</button>
           )}
         </div>
@@ -370,6 +434,7 @@ export function PricingPanel({
         </p>
         <p>{format(copy.twoYears, { price: money(PRICE_ANNUAL * 2, lang) })}</p>
         <p>{copy.afterCancel}</p>
+        {promoOffers.length > 0 && <p>{copy.promoTerms}</p>}
         {activeCampaign && <p>{copy.mayChange}</p>}
       </details>
     </section>

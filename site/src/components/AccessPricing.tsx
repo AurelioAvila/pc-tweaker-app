@@ -2,9 +2,14 @@ import { motion } from "framer-motion";
 import { text } from "../i18n/dictionary";
 import { riseChild, staggerParent, viewportOnce } from "../motion";
 import { DOWNLOAD_EXE } from "../constants";
+import { euro, PromoBanner, PromoPrice, promoTerms, usePromo } from "../promo";
 
 export function AccessPricing() {
   const { free, pro, lifetime } = text.pricing;
+  const promo = usePromo();
+  const annualOffer = promo.offer("pctweaker", "annual");
+  const monthlyOffer = promo.offer("pctweaker", "monthly");
+  const lifetimeOffer = promo.offer("pctweaker", "lifetime");
 
   return (
     <section id="access" className="border-t border-white/5 px-5 py-24 md:px-12">
@@ -28,6 +33,12 @@ export function AccessPricing() {
         >
           {text.pricing.title}
         </motion.h2>
+
+        {promo.promo && (
+          <motion.div variants={riseChild} className="mt-8">
+            <PromoBanner promo={promo.promo} />
+          </motion.div>
+        )}
 
         {/* Free and Pro are quiet; Lifetime, the plan most buyers choose, carries
             the accent. */}
@@ -67,15 +78,19 @@ export function AccessPricing() {
               className="font-mono-t text-accent absolute top-8 right-8 rounded-full border px-3 py-1 text-[10.5px] tracking-wider"
               style={{ borderColor: "var(--accent-glow)" }}
             >
-              {pro.save}
+              {annualOffer ? "HALLOWEEN" : pro.save}
             </span>
             <div className="font-mono-t mb-4 text-[12px] tracking-[0.14em] text-[var(--fg-dim)]">
               {pro.plan}
             </div>
             <div className="font-display text-[44px] leading-none font-bold text-[var(--fg)]">
-              {pro.price}
+              {annualOffer ? <PromoPrice offer={annualOffer} /> : pro.price}
             </div>
-            <div className="mt-2 text-[13px] text-[var(--fg-dim)]">{pro.per}</div>
+            <div className="mt-2 text-[13px] text-[var(--fg-dim)]">
+              {annualOffer
+                ? `/ ${promoTerms(annualOffer)}${monthlyOffer ? ` · monthly ${euro(monthlyOffer.regular)}, first month ${euro(monthlyOffer.price)}` : ""}`
+                : pro.per}
+            </div>
             <ul className="my-7 grid flex-1 content-start gap-2.5">
               {pro.features.map((f) => (
                 <li key={f} className="relative pl-5 text-[14px] text-[var(--fg-dim)]">
@@ -111,7 +126,7 @@ export function AccessPricing() {
               {lifetime.plan}
             </div>
             <div className="font-display text-[44px] leading-none font-bold text-[var(--fg)]">
-              {lifetime.price}
+              {lifetimeOffer ? <PromoPrice offer={lifetimeOffer} /> : lifetime.price}
             </div>
             <div className="mt-2 text-[13px] text-[var(--fg-dim)]">{lifetime.per}</div>
             <ul className="my-7 grid flex-1 content-start gap-2.5">

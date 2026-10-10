@@ -1,6 +1,6 @@
 # Terms of Service
 
-Last updated: 2026-10-04
+Last updated: 2026-10-10
 
 Welcome to PC Tweaker ("we", "us", "our"). By downloading, installing, or using PC Tweaker, you agree to these Terms of Service.
 
@@ -15,6 +15,7 @@ PC Tweaker is a Windows desktop app for system settings, maintenance and current
 - Purchases are sold through Link, Stripe's merchant of record, which collects any applicable tax, sends the receipt and handles payment support. Link's own buyer terms apply to the transaction.
 - You can cancel anytime; Pro access continues until the end of the current billing period, then reverts to the Free tier — cancelling does not undo tweaks already applied, it only locks further use of Pro-only tweaks and presets.
 - Prices are listed in the app and may change; changes do not affect the price of an active subscription until its next renewal.
+- Time-limited offers show their end date. A struck-through price is the lowest price charged in the 30 days before the offer began. For subscriptions, an offer discounts only the first billing period; renewals are at the regular price. A checkout opened before an offer ends can be completed within the following 30 minutes.
 - Pro is digital content that starts as soon as payment completes, so purchases are not refundable, except where Link's buyer terms or the law require a refund. A refunded or charged-back purchase ends the Pro access it paid for.
 
 ## 3. Accounts

@@ -17,6 +17,7 @@ import { sendMail } from "../mailer";
 import { brandFor, proWelcomeHtml, proWelcomeSubject, proWelcomeText, refundHtml, refundSubject, refundText } from "../emails/pro-welcome";
 import { SUPPORT_INBOX, SUPPORT_REPLY_TO } from "../support-inbox";
 import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
+import { promoCheckout } from "../promo";
 import { queueReceipt, type Receipt } from "../receipt-outbox";
 
 const router = express.Router();
@@ -257,6 +258,19 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
           // An expired checkout must not generate a recovery URL that reopens
           // this campaign after the server has stopped selling it.
           params.after_expiration = { recovery: { enabled: false } };
+        }
+      }
+      // The discount follows the Price resolved above, never the client.
+      const promo = promoCheckout(effects.environment, effects.now(), resolved.envName);
+      if (promo) {
+        params.discounts = [{ coupon: promo.coupon }];
+        params.expires_at = Math.min(params.expires_at ?? promo.expiresAt, promo.expiresAt);
+        params.after_expiration = { recovery: { enabled: false } };
+        params.metadata = { ...params.metadata, promo_id: promo.id };
+        // A once-only coupon is gone from the subscription by the time the
+        // welcome email is sent; this is how the email knows to say so.
+        if (params.subscription_data) {
+          params.subscription_data = { ...params.subscription_data, metadata: { ...params.subscription_data.metadata, promo_id: promo.id } };
         }
       }
       const session = await effects.createSession(params);
@@ -572,11 +586,12 @@ function sessionCharge(session: Stripe.Checkout.Session): string | null {
 /** The same for a subscription, which carries its interval as well. */
 function subscriptionCharge(subscription: Stripe.Subscription): string | null {
   const price = subscription.items?.data?.[0]?.price;
-  return formatChargedAmount(
+  const label = formatChargedAmount(
     price?.unit_amount,
     price?.currency,
     price?.recurring?.interval ?? null,
   );
+  return label && subscription.metadata?.promo_id ? `${label} (first payment discounted)` : label;
 }
 
 const PLAN_PRICE_LABELS: Record<string, string> = {

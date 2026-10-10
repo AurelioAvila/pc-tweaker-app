@@ -92,6 +92,8 @@ pub struct BoostProbe {
     pub duration_ms: u64,
     pub avg_mhz: Option<u32>,
     pub peak_mhz: Option<u32>,
+    /// The busiest single processor's top speed during the test.
+    pub peak_core_mhz: Option<u32>,
 }
 
 /// Average and peak of the sampled speeds, or `None` without samples.
@@ -116,22 +118,25 @@ pub async fn boost_probe(seconds: Option<u64>) -> Result<BoostProbe, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let work = std::thread::spawn(move || run_for(budget));
         #[cfg(windows)]
-        let samples = crate::livemetrics::sample_performance(
+        let (samples, busiest) = crate::livemetrics::sample_performance(
             std::time::Duration::from_millis(budget),
             std::time::Duration::from_millis(250),
         );
         #[cfg(not(windows))]
-        let samples: Vec<f64> = Vec::new();
+        let (samples, busiest): (Vec<f64>, Option<f64>) = (Vec::new(), None);
         let bench = work
             .join()
             .map_err(|_| "boost test did not finish".to_string())?;
-        let (avg_mhz, peak_mhz) =
-            speed_summary(crate::cpuclock::read().map(|c| c.max_mhz), &samples);
+        let rated = crate::cpuclock::read().map(|c| c.max_mhz);
+        let (avg_mhz, peak_mhz) = speed_summary(rated, &samples);
+        let peak_core_mhz = crate::livemetrics::effective_mhz(rated, busiest);
+        crate::livemetrics::note_peak(peak_core_mhz);
         Ok(BoostProbe {
             score: bench.score,
             duration_ms: bench.duration_ms,
             avg_mhz,
             peak_mhz,
+            peak_core_mhz,
         })
     })
     .await

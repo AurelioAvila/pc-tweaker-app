@@ -457,7 +457,10 @@ function App() {
 
   const [tweaks, setTweaks] = useState<TweakInfo[]>([]);
   const [cleanupTargets, setCleanupTargets] = useState<CleanupInfo[]>([]);
-  const [filter, setFilterState] = useState<Section>("scan");
+  // Dev builds only: VITE_START_SECTION opens a chosen page for review.
+  const [filter, setFilterState] = useState<Section>(
+    () => (import.meta.env.DEV && (import.meta.env.VITE_START_SECTION as Section)) || "scan",
+  );
   const scanApplying = useRef(false);
   const [query, setQuery] = useState("");
   const contentRef = useRef<HTMLDivElement>(null);

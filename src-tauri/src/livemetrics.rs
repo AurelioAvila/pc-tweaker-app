@@ -32,6 +32,48 @@ pub struct LiveSample {
     pub disk_write_bps: Option<f64>,
     pub net_down_bps: Option<f64>,
     pub net_up_bps: Option<f64>,
+    /// The processor's rated (base) clock, MHz.
+    pub rated_mhz: Option<u32>,
+    /// The busiest logical processor's effective speed right now, MHz.
+    pub busiest_mhz: Option<u32>,
+    /// The fastest single-core speed measured since the app started, MHz.
+    pub peak_mhz: Option<u32>,
+    /// The power plan's minimum processor state for the current power
+    /// source, percent of the rated clock.
+    pub min_state_pct: Option<u32>,
+}
+
+/// The fastest single-core speed seen in this session (live readings and the
+/// boost test), so the boost level has a measured top, never a guessed one.
+static PEAK_MHZ: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+pub fn note_peak(mhz: Option<u32>) -> Option<u32> {
+    use std::sync::atomic::Ordering;
+    if let Some(m) = mhz {
+        PEAK_MHZ.fetch_max(m, Ordering::Relaxed);
+    }
+    Some(PEAK_MHZ.load(Ordering::Relaxed)).filter(|&m| m > 0)
+}
+
+/// The power plan's minimum processor state for the power source in use.
+#[cfg(windows)]
+fn min_processor_state() -> Option<u32> {
+    use crate::power::PowerPlans;
+    use windows_sys::Win32::System::Power::{GetSystemPowerStatus, SYSTEM_POWER_STATUS};
+    // SAFETY: a zeroed POD the call fills.
+    let mut status: SYSTEM_POWER_STATUS = unsafe { std::mem::zeroed() };
+    let on_battery = unsafe { GetSystemPowerStatus(&mut status) } != 0 && status.ACLineStatus == 0;
+    let plans = crate::power::WinPowerPlans;
+    let scheme = plans.active().ok()?;
+    plans
+        .read_index(
+            &scheme,
+            crate::gaming::SUB_PROCESSOR_GUID,
+            crate::gaming::PROC_THROTTLE_MIN_GUID,
+            !on_battery,
+        )
+        .ok()
+        .filter(|&v| v <= 100)
 }
 
 /// Adapters whose traffic is already counted on a physical one, or that carry
@@ -79,6 +121,7 @@ mod pdh {
         disk_write: isize,
         net_down: isize,
         net_up: isize,
+        cores: isize,
         /// When the counters were last collected. Rates are averages since
         /// then, so after a pause the next reading starts over.
         collected: Option<std::time::Instant>,
@@ -113,6 +156,7 @@ mod pdh {
             disk_write: add(r"\PhysicalDisk(_Total)\Disk Write Bytes/sec"),
             net_down: add(r"\Network Interface(*)\Bytes Received/sec"),
             net_up: add(r"\Network Interface(*)\Bytes Sent/sec"),
+            cores: add(r"\Processor Information(*)\% Processor Performance"),
             collected: None,
         })
     }
@@ -136,6 +180,27 @@ mod pdh {
 
     /// Sum over the instances of a wildcard counter that `keep` accepts.
     fn sum(counter: isize, keep: impl Fn(&str) -> bool) -> Option<f64> {
+        let items = instances(counter)?;
+        Some(
+            items
+                .iter()
+                .filter(|(name, _)| keep(name))
+                .map(|(_, v)| v)
+                .sum(),
+        )
+    }
+
+    /// The highest value among the real processors (not the totals).
+    pub(super) fn busiest(counter: isize) -> Option<f64> {
+        instances(counter)?
+            .into_iter()
+            .filter(|(name, _)| !name.contains("_Total"))
+            .map(|(_, v)| v)
+            .reduce(f64::max)
+    }
+
+    /// Every instance of a wildcard counter with its value.
+    pub(super) fn instances(counter: isize) -> Option<Vec<(String, f64)>> {
         if counter == 0 {
             return None;
         }
@@ -164,7 +229,7 @@ mod pdh {
             return None;
         }
         debug_assert!(count as usize * item <= bytes as usize);
-        let mut total = 0.0;
+        let mut out = Vec::new();
         for i in 0..count as usize {
             // SAFETY: PDH wrote `count` items; names point into the same buffer.
             let entry = unsafe { &*items.add(i) };
@@ -175,15 +240,17 @@ mod pdh {
                 }
                 String::from_utf16_lossy(std::slice::from_raw_parts(entry.szName, len))
             };
-            if entry.FmtValue.CStatus == 0 && keep(&name) {
-                total += unsafe { entry.FmtValue.Anonymous.doubleValue };
+            if entry.FmtValue.CStatus == 0 {
+                out.push((name, unsafe { entry.FmtValue.Anonymous.doubleValue }));
             }
         }
-        Some(total)
+        Some(out)
     }
 
-    /// (performance %, disk read B/s, disk write B/s, net down B/s, net up B/s)
+    /// (performance %, disk read B/s, disk write B/s, net down B/s, net up B/s,
+    /// busiest processor's performance %)
     pub type Rates = (
+        Option<f64>,
         Option<f64>,
         Option<f64>,
         Option<f64>,
@@ -197,7 +264,7 @@ mod pdh {
             *held = open();
         }
         let Some(c) = held.as_mut() else {
-            return (None, None, None, None, None);
+            return (None, None, None, None, None, None);
         };
         // SAFETY: valid query handle.
         let ok = unsafe { PdhCollectQueryData(c.query) } == 0;
@@ -206,7 +273,7 @@ mod pdh {
             .is_some_and(|at| at.elapsed() <= std::time::Duration::from_secs(3));
         c.collected = Some(std::time::Instant::now());
         if !ok || !fresh {
-            return (None, None, None, None, None);
+            return (None, None, None, None, None, None);
         }
         let keep = super::counts_as_traffic;
         (
@@ -215,38 +282,51 @@ mod pdh {
             value(c.disk_write),
             sum(c.net_down, keep),
             sum(c.net_up, keep),
+            busiest(c.cores),
         )
     }
 }
 
 /// The processor's performance percentage, read every `every` for `total`
-/// on a query of its own (so the live charts' rates are not disturbed).
-/// Empty when the counter is unavailable.
+/// on a query of its own (so the live charts' rates are not disturbed), and
+/// the busiest single processor's highest percentage in that time. Empty
+/// when the counter is unavailable.
 #[cfg(windows)]
-pub fn sample_performance(total: std::time::Duration, every: std::time::Duration) -> Vec<f64> {
+pub fn sample_performance(
+    total: std::time::Duration,
+    every: std::time::Duration,
+) -> (Vec<f64>, Option<f64>) {
     use windows_sys::Win32::System::Performance::{
         PdhAddEnglishCounterW, PdhCloseQuery, PdhCollectQueryData, PdhGetFormattedCounterValue,
         PdhOpenQueryW, PDH_FMT_COUNTERVALUE, PDH_FMT_DOUBLE,
     };
     let mut query = 0isize;
     let mut counter = 0isize;
-    let path: Vec<u16> = r"\Processor Information(_Total)\% Processor Performance"
-        .encode_utf16()
-        .chain(std::iter::once(0))
-        .collect();
-    // SAFETY: local out-pointers, NUL-terminated path, the query is closed below.
+    let mut cores = 0isize;
+    let wide = |s: &str| {
+        s.encode_utf16()
+            .chain(std::iter::once(0))
+            .collect::<Vec<u16>>()
+    };
+    let path = wide(r"\Processor Information(_Total)\% Processor Performance");
+    let each = wide(r"\Processor Information(*)\% Processor Performance");
+    // SAFETY: local out-pointers, NUL-terminated paths, the query is closed below.
     unsafe {
         if PdhOpenQueryW(std::ptr::null(), 0, &mut query) != 0 {
-            return Vec::new();
+            return (Vec::new(), None);
         }
         if PdhAddEnglishCounterW(query, path.as_ptr(), 0, &mut counter) != 0 {
             PdhCloseQuery(query);
-            return Vec::new();
+            return (Vec::new(), None);
+        }
+        if PdhAddEnglishCounterW(query, each.as_ptr(), 0, &mut cores) != 0 {
+            cores = 0;
         }
         PdhCollectQueryData(query);
     }
     let started = std::time::Instant::now();
     let mut out = Vec::new();
+    let mut peak: Option<f64> = None;
     while started.elapsed() < total {
         std::thread::sleep(every);
         // SAFETY: valid handles; PDH_FMT_DOUBLE selects the double member.
@@ -266,10 +346,15 @@ pub fn sample_performance(total: std::time::Duration, every: std::time::Duration
                 out.push(value.Anonymous.doubleValue);
             }
         }
+        if cores != 0 {
+            if let Some(b) = pdh::busiest(cores) {
+                peak = Some(peak.map_or(b, |p| p.max(b)));
+            }
+        }
     }
     // SAFETY: the query was opened above.
     unsafe { PdhCloseQuery(query) };
-    out
+    (out, peak)
 }
 
 #[cfg(windows)]
@@ -307,7 +392,9 @@ pub fn live_sample(
         let cores = guard.sys.cpus().iter().map(|c| c.cpu_usage()).collect();
         (cpu, cores)
     };
-    let (performance, disk_read, disk_write, net_down, net_up) = pdh::read();
+    let (performance, disk_read, disk_write, net_down, net_up, busiest) = pdh::read();
+    let rated = crate::cpuclock::read().map(|c| c.max_mhz);
+    let busiest_mhz = effective_mhz(rated, busiest);
     let (ram_total, ram_used, ram_cached) = match memory() {
         Some((total, used, cached)) => (total, used, Some(cached)),
         None => (0, 0, None),
@@ -315,7 +402,7 @@ pub fn live_sample(
     Ok(LiveSample {
         cpu,
         cores,
-        cpu_mhz: effective_mhz(crate::cpuclock::read().map(|c| c.max_mhz), performance),
+        cpu_mhz: effective_mhz(rated, performance),
         ram_total,
         ram_used,
         ram_cached,
@@ -323,6 +410,10 @@ pub fn live_sample(
         disk_write_bps: disk_write,
         net_down_bps: net_down,
         net_up_bps: net_up,
+        rated_mhz: rated,
+        busiest_mhz,
+        peak_mhz: note_peak(busiest_mhz),
+        min_state_pct: min_processor_state(),
     })
 }
 

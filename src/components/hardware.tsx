@@ -18,6 +18,7 @@ import {
   UpdateSearchResult,
 } from "../types";
 import { DriverBoosterCard } from "./pro";
+import { Badge, type BadgeKind } from "./ui";
 
 /* ------------------------------------------------------------------ *
  * Shared thermal scale
@@ -245,29 +246,11 @@ export function judgeSession(samples: ThermalSample[]): Verdict {
   return peakUnderLoad < COOL_UNDER_LOAD_C ? "better" : "normal";
 }
 
-function verdictStyle(v: Verdict): { text: string; ring: string; dot: string } {
-  if (v === "risky") {
-    return {
-      text: "bg-rose-400/10 text-rose-300",
-      ring: "ring-[color-mix(in_oklab,#f87171_40%,transparent)]",
-      dot: "#f87171",
-    };
-  }
-  if (v === "better") {
-    return {
-      text: "text-sky-300",
-      ring: "ring-[color-mix(in_oklab,#38bdf8_40%,transparent)]",
-      dot: "#38bdf8",
-    };
-  }
-  if (v === "normal") {
-    return {
-      text: "bg-emerald-400/10 text-emerald-300",
-      ring: "ring-[color-mix(in_oklab,#34d399_35%,transparent)]",
-      dot: "#34d399",
-    };
-  }
-  return { text: "text-ink-3", ring: "ring-line-2", dot: "#6b7280" };
+function verdictKind(v: Verdict): BadgeKind {
+  if (v === "risky") return "danger";
+  if (v === "better") return "info";
+  if (v === "normal") return "ok";
+  return "neutral";
 }
 
 function verdictLabel(v: Verdict, s: Strings): string {
@@ -301,7 +284,7 @@ function SessionWatch({
   samples: ThermalSample[];
 }) {
   const verdict = judgeSession(samples);
-  const style = verdictStyle(verdict);
+  const kind = verdictKind(verdict);
   const peak = samples.length > 0 ? Math.max(...samples.map((x) => x.tempC)) : null;
 
   return (
@@ -316,16 +299,7 @@ function SessionWatch({
       </div>
 
       <div className="min-w-0 flex-1">
-        <span
-          className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[12px] font-bold ring-1 ${style.ring} ${style.text}`}
-        >
-          <span
-            className="h-1.5 w-1.5 shrink-0 rounded-full"
-            style={{ backgroundColor: style.dot }}
-            aria-hidden="true"
-          />
-          {verdictLabel(verdict, s)}
-        </span>
+        <Badge kind={kind}>{verdictLabel(verdict, s)}</Badge>
         <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-3">{verdictHint(verdict, s)}</p>
       </div>
 
@@ -484,9 +458,9 @@ function ThermalProfiles({
           </p>
         </div>
         {info.current_w !== null && (
-          <span className="type-data shrink-0 rounded-full bg-surface-2 px-3 py-1.5 text-[11.5px] font-bold tabular-nums text-ink-2">
+          <Badge className="tabular-nums">
             {format(s.hardware.currentLimit, { watts: String(info.current_w) })}
-          </span>
+          </Badge>
         )}
       </div>
 
@@ -696,9 +670,7 @@ export function ThermalsPanel({
                   </p>
                 )}
               </div>
-              <span className="shrink-0 rounded-full bg-surface-2 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-3">
-                {s.hardware.liveBadge}
-              </span>
+              <Badge kind="accent">{s.hardware.liveBadge}</Badge>
             </div>
 
             <div className="tool-thermal-readings">
@@ -817,17 +789,8 @@ export function ThermalsPanel({
  * Drivers
  * ------------------------------------------------------------------ */
 
-function tierStyle(tier: string): { ring: string; text: string } {
-  if (tier === "stale") {
-    return { ring: "ring-[color-mix(in_oklab,#f87171_38%,transparent)]", text: "text-rose-300" };
-  }
-  if (tier === "aging") {
-    return {
-      ring: "ring-[color-mix(in_oklab,#fbbf24_38%,transparent)]",
-      text: "bg-amber-400/10 text-amber-300",
-    };
-  }
-  return { ring: "ring-[color-mix(in_oklab,#34d399_30%,transparent)]", text: "text-emerald-300" };
+function tierKind(tier: string): BadgeKind {
+  return tier === "stale" ? "danger" : tier === "aging" ? "warn" : "ok";
 }
 
 function ageLabel(days: number, s: Strings): string {
@@ -845,7 +808,6 @@ function ageLabel(days: number, s: Strings): string {
 }
 
 function DriverRow({ entry, s }: { entry: DriverEntry; s: Strings }) {
-  const style = tierStyle(entry.tier);
   return (
     <div className="tool-driver-row">
       <div className="min-w-0 flex-1">
@@ -857,15 +819,13 @@ function DriverRow({ entry, s }: { entry: DriverEntry; s: Strings }) {
           {format(s.hardware.driverInstalled, { version: entry.version, date: entry.date })}
         </p>
       </div>
-      <span
-        className={`type-data inline-flex items-center gap-1.5 shrink-0 rounded-full px-2.5 py-1.5 text-[11px] font-semibold tabular-nums ring-1 ${style.ring} ${style.text}`}
-      >
-        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
+      <Badge kind={tierKind(entry.tier)} className="tabular-nums">
+        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="6" stroke="currentColor" />
           <path d="M8 4.5V8l2 1.5" stroke="currentColor" strokeLinecap="round" />
         </svg>
         {ageLabel(entry.age_days, s)}
-      </span>
+      </Badge>
       {entry.vendor_url && (
         <button
           onClick={() => void openUrl(entry.vendor_url as string).catch(() => {})}
@@ -1134,29 +1094,25 @@ export function DriversPanel({
       {audit && !error && !busy && (
         <>
           <div className="mt-4 flex flex-wrap gap-2">
-            <span className="rounded-full bg-surface-2 px-3 py-1.5 text-[11.5px] font-semibold text-ink-2">
+            <Badge>
               {format(s.hardware.driversScannedAll, {
                 total: String(audit.total_scanned),
                 classes: String(audit.classes_scanned),
               })}
-            </span>
-            <span className="rounded-full bg-surface-2 px-3 py-1.5 text-[11.5px] font-semibold text-ink-2">
+            </Badge>
+            <Badge>
               {format(s.hardware.driversCounted, { count: String(audit.entries.length) })}
-            </span>
+            </Badge>
             {aging > 0 && (
-              <span className="rounded-full px-3 py-1.5 text-[11.5px] font-semibold text-amber-300 ring-1 ring-[color-mix(in_oklab,#fbbf24_38%,transparent)]">
-                {format(s.hardware.driversAging, { count: String(aging) })}
-              </span>
+              <Badge kind="warn">{format(s.hardware.driversAging, { count: String(aging) })}</Badge>
             )}
             {stale > 0 && (
-              <span className="rounded-full px-3 py-1.5 text-[11.5px] font-semibold text-rose-300 ring-1 ring-[color-mix(in_oklab,#f87171_38%,transparent)]">
+              <Badge kind="danger">
                 {format(s.hardware.driversStale, { count: String(stale) })}
-              </span>
+              </Badge>
             )}
             {aging === 0 && stale === 0 && audit.entries.length > 0 && (
-              <span className="rounded-full px-3 py-1.5 text-[11.5px] font-semibold text-emerald-300 ring-1 ring-[color-mix(in_oklab,#34d399_30%,transparent)]">
-                {s.hardware.driversAllCurrent}
-              </span>
+              <Badge kind="ok">{s.hardware.driversAllCurrent}</Badge>
             )}
           </div>
 

@@ -15,7 +15,7 @@ import { CrownIcon } from "./icons";
  * `className` is for layout only (e.g. hiding it on narrow windows).
  */
 export type BadgeKind =
-  "pro" | "admin" | "neutral" | "muted" | "accent" | "ok" | "warn" | "caution" | "danger";
+  "pro" | "admin" | "info" | "neutral" | "muted" | "accent" | "ok" | "warn" | "caution" | "danger";
 
 export function Badge({
   kind = "neutral",

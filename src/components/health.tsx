@@ -604,16 +604,10 @@ export function HealthPanel({
             ) : comparison.delta === 0 ? (
               <p className="mt-1 text-center text-[10.5px] text-ink-3">{change.noChange}</p>
             ) : (
-              <span
-                className={`mt-1 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ring-1 ${
-                  comparison.delta > 0
-                    ? "bg-ok/10 text-ok ring-ok/25"
-                    : "bg-danger/10 text-danger ring-danger/25"
-                }`}
-              >
+              <Badge kind={comparison.delta > 0 ? "ok" : "danger"} className="mt-1 tabular-nums">
                 {comparison.delta > 0 ? "+" : ""}
                 {comparison.delta} {change.sinceLast}
-              </span>
+              </Badge>
             )}
             {comparison !== null && (
               <p className="mt-1 text-center text-[10px] text-ink-3">

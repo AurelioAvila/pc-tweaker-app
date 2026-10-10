@@ -517,10 +517,21 @@ export function ScanPanel({
         <aside className="scan-scope">
           <details open={paused || undefined}>
             <summary>
-              <span>{c.scope}</span>
+              <span className="scan-scope-title">
+                <span>{c.scope}</span>
+                <small>{c.scopeHint}</small>
+              </span>
               <span className="scan-scope-count">
-                {SCAN_PROBES.length}
-                <small>{c.newChecks}</small>
+                {(reading || paused) && (
+                  <span className="scan-scope-meter" aria-hidden="true">
+                    <span style={{ width: `${(complete / SCAN_PROBES.length) * 100}%` }} />
+                  </span>
+                )}
+                <Badge>
+                  {reading || paused
+                    ? format(c.scopeProgress, { done: complete, total: SCAN_PROBES.length })
+                    : format(c.scopeCount, { count: SCAN_PROBES.length })}
+                </Badge>
               </span>
             </summary>
             <ol>
@@ -536,11 +547,14 @@ export function ScanPanel({
                     )}
                   </span>
                   <span className="scan-probe-copy">
-                    {c.probes[i]}
+                    <span className="scan-probe-name">
+                      {c.probes[i]}
+                      {i >= 10 && <Badge kind="accent">{c.newBadge}</Badge>}
+                    </span>
                     {i >= 10 && <small>{c.newDetails[i - 10]}</small>}
                   </span>
                   {probes[probe] === "unavailable" && (
-                    <span className="scan-probe-note">{s.scan.unavailable}</span>
+                    <Badge kind="warn">{s.scan.unavailable}</Badge>
                   )}
                   {(paused || !!report?.skipped.length) && stepTimes[probe] && (
                     <time className="scan-probe-time">{clock(stepTimes[probe])}</time>

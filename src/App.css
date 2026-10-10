@@ -712,7 +712,8 @@ body {
   color: var(--text-primary);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent);
 }
-.badge[data-kind="admin"] {
+.badge[data-kind="admin"],
+.badge[data-kind="info"] {
   background: color-mix(in oklab, var(--info) 14%, transparent);
   color: var(--info);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--info) 30%, transparent);

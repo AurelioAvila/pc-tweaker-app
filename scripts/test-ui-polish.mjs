@@ -40,7 +40,7 @@ for (const [file, text] of sources) {
   if (file.endsWith(".tsx") && !pillAllowed.has(file))
     assert.doesNotMatch(
       text,
-      /className=[{"`][^"`]*rounded-full[^"`]*\bpy-0\.5\b/,
+      /<span\s+className=[{"`][^"`]*rounded-full[^"`]*\bpy-(?:0\.5|1|1\.5)\b/,
       `${file}: hand-made pill; use <Badge>`,
     );
 }

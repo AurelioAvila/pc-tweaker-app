@@ -605,9 +605,8 @@ export function LedgerPanel({
             aria-pressed={failedOnly}
             className={`workspace-ledger-filter ${failedOnly ? "is-active" : ""}`}
           >
-            <span aria-hidden="true">×</span>
             {s.ledger.failed}
-            <strong>{failedCount}</strong>
+            <Badge kind={failedCount ? "danger" : "neutral"}>{failedCount}</Badge>
           </button>
         </div>
       )}

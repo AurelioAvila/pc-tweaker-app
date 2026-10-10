@@ -9,7 +9,7 @@ import {
   savingsPercent,
 } from "../lib";
 import { offerClock } from "../lifetime-offer";
-import { promoPercent } from "../promo";
+import { promoClock, promoPercent } from "../promo";
 import { CheckIcon, CrownIcon, LayersIcon, PumpkinIcon, SparkIcon } from "./icons";
 import { PRICING_COPY } from "./pricing-copy";
 import { useLifetimeOffer } from "./use-lifetime-offer";
@@ -125,10 +125,7 @@ export function PricingPanel({
         {import.meta.env.DEV && <p>{copy.previewBuild}</p>}
       </details>
       {!ownsLifetime && (promo.upcoming || promoOffers.length > 0) && (
-        <aside
-          className="pricing-campaign pricing-promo"
-          aria-label={copy.promoTitle.split(":")[0]}
-        >
+        <aside className="pricing-campaign pricing-promo" aria-label={copy.promoTitle}>
           <PumpkinIcon className="pricing-promo-icon" />
           <div className="pricing-campaign-copy">
             {promo.preview && <span className="pricing-preview">{copy.preview}</span>}
@@ -136,11 +133,7 @@ export function PricingPanel({
               <h2>{format(copy.promoSoon, { date: promoDate(promo.promo?.startsAt) })}</h2>
             ) : (
               <>
-                <h2>
-                  {format(copy.promoTitle, {
-                    percent: Math.min(...promoOffers.map(promoPercent)),
-                  })}
-                </h2>
+                <h2>{copy.promoTitle}</h2>
                 <p>{copy.promoReference}</p>
                 <span className="pricing-deadline">
                   {copy.ends}:{" "}
@@ -151,6 +144,23 @@ export function PricingPanel({
               </>
             )}
           </div>
+          {!promo.upcoming && (
+            <div
+              className="pricing-clock"
+              role="timer"
+              aria-live="off"
+              aria-label={promoClock(promo.remaining)
+                .map((v, i) => `${v} ${[copy.days, copy.hours, copy.minutes, copy.seconds][i]}`)
+                .join(", ")}
+            >
+              {promoClock(promo.remaining).map((value, index) => (
+                <div key={index}>
+                  <strong>{value}</strong>
+                  <span>{[copy.days, copy.hours, copy.minutes, copy.seconds][index]}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </aside>
       )}
       {(!ownsLifetime || campaign.preview) && activeCampaign && !lifetimeOffer && (

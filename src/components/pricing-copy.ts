@@ -50,6 +50,7 @@ type PricingCopy = {
   afterCancel: string;
   previewCheckout: string;
   promoTitle: string;
+  days: string;
   promoReference: string;
   promoSoon: string;
   firstMonth: string;
@@ -59,7 +60,8 @@ type PricingCopy = {
 
 export const PRICING_COPY: Record<Lang, PricingCopy> = {
   en: {
-    promoTitle: "Halloween offer: {percent}% off",
+    promoTitle: "Halloween offer",
+    days: "days",
     promoReference:
       "Struck-through prices are the lowest we charged in the 30 days before the offer began. Prices exclude VAT, which is added at checkout where applicable.",
     promoSoon: "The Halloween offer opens on {date}.",
@@ -122,7 +124,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     previewCheckout: "Checkout is disabled for this campaign preview.",
   },
   it: {
-    promoTitle: "Offerta di Halloween: sconto del {percent}%",
+    promoTitle: "Offerta di Halloween",
+    days: "giorni",
     promoReference:
       "I prezzi barrati sono i più bassi applicati nei 30 giorni precedenti l'inizio dell'offerta. I prezzi non includono l'IVA, aggiunta al pagamento dove dovuta.",
     promoSoon: "L'offerta di Halloween inizia il {date}.",
@@ -190,7 +193,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     previewCheckout: "Il checkout è disabilitato nell'anteprima della campagna.",
   },
   fr: {
-    promoTitle: "Offre d'Halloween : {percent}% de réduction",
+    promoTitle: "Offre d'Halloween",
+    days: "jours",
     promoReference:
       "Les prix barrés sont les plus bas pratiqués au cours des 30 jours précédant le début de l'offre. Les prix s'entendent hors TVA ; la TVA applicable est ajoutée au paiement.",
     promoSoon: "L'offre d'Halloween commence le {date}.",
@@ -258,7 +262,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     previewCheckout: "Le paiement est désactivé dans cet aperçu de campagne.",
   },
   es: {
-    promoTitle: "Oferta de Halloween: {percent}% de descuento",
+    promoTitle: "Oferta de Halloween",
+    days: "días",
     promoReference:
       "Los precios tachados son los más bajos aplicados en los 30 días anteriores al inicio de la oferta. Los precios no incluyen el IVA, que se añade al pagar cuando corresponde.",
     promoSoon: "La oferta de Halloween empieza el {date}.",
@@ -324,7 +329,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     previewCheckout: "El pago está desactivado en esta vista previa de campaña.",
   },
   de: {
-    promoTitle: "Halloween-Angebot: {percent}% Rabatt",
+    promoTitle: "Halloween-Angebot",
+    days: "Tage",
     promoReference:
       "Durchgestrichene Preise sind die niedrigsten Preise, die wir in den 30 Tagen vor Beginn des Angebots verlangt haben. Preise ohne MwSt.; die anfallende MwSt. wird beim Bezahlen hinzugefügt.",
     promoSoon: "Das Halloween-Angebot beginnt am {date}.",
@@ -391,7 +397,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     previewCheckout: "Zahlungen sind in dieser Kampagnenvorschau deaktiviert.",
   },
   pt: {
-    promoTitle: "Oferta de Halloween: {percent}% de desconto",
+    promoTitle: "Oferta de Halloween",
+    days: "dias",
     promoReference:
       "Os preços riscados são os mais baixos praticados nos 30 dias anteriores ao início da oferta. Os preços não incluem IVA, que é acrescentado no pagamento quando aplicável.",
     promoSoon: "A oferta de Halloween começa a {date}.",

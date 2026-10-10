@@ -9,7 +9,7 @@ const compiled = await build({
   platform: "node",
   format: "esm",
 });
-const { parsePromo, promoPercent, msUntil } = await import(
+const { parsePromo, promoPercent, msUntil, promoClock } = await import(
   `data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString("base64")}`
 );
 
@@ -45,5 +45,14 @@ assert.equal(promoPercent({ ...offer, reference: 1000, price: 801 }), 19);
 assert.equal(msUntil(active, active.endsAt, 0), 60_000);
 assert.ok(msUntil(active, active.endsAt, 60_000) <= 0);
 assert.equal(msUntil(active, active.endsAt, -5_000), 60_000, "negative elapsed time cannot extend the offer");
+
+// The countdown shows days, hours, minutes and seconds left, and stops at zero.
+assert.deepEqual(promoClock(27 * 86_400_000 + 13 * 3_600_000 + 5 * 60_000 + 12_000), ["27", "13", "05", "12"]);
+assert.deepEqual(promoClock(999), ["00", "00", "00", "00"]);
+assert.deepEqual(promoClock(-5000), ["00", "00", "00", "00"]);
+assert.deepEqual(promoClock(Number.NaN), ["00", "00", "00", "00"]);
+// Half price against a lower lawful reference shows only the real reduction.
+assert.equal(promoPercent({ ...offer, regular: 9900, reference: 7999, price: 4950 }), 38);
+assert.equal(promoPercent({ ...offer, regular: 5999, reference: 4999, price: 2999 }), 40);
 
 console.log("promo display checks passed");

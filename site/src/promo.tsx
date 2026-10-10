@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_BASE } from "./constants";
 // Shared with the desktop app, so both read the server's offer the same way.
-import { msUntil, parsePromo, previewPromo, promoPercent, type Promo, type PromoOffer } from "../../src/promo";
+import { msUntil, parsePromo, previewPromo, promoClock, promoPercent, type Promo, type PromoOffer } from "../../src/promo";
 
 /** The live promotion, fetched after hydration: the prerendered page always
  *  carries regular prices, and any failure leaves them in place. */
@@ -25,7 +25,8 @@ export function usePromo() {
     // A tab left open (or a laptop asleep) through the deadline or a manual stop re-reads on return.
     const onVisible = () => document.visibilityState === "visible" && read();
     read();
-    const tick = window.setInterval(() => setNow(clock()), 30_000);
+    // One-second steps drive the countdown; it is computed from the real deadline, never reset.
+    const tick = window.setInterval(() => setNow(clock()), 1000);
     window.addEventListener("focus", read);
     document.addEventListener("visibilitychange", onVisible);
     return () => {
@@ -44,6 +45,7 @@ export function usePromo() {
     msUntil(promo, promo.endsAt, elapsed) > 0;
   return {
     promo: active ? promo : null,
+    remaining: active && promo ? msUntil(promo, promo.endsAt, elapsed) : 0,
     offer: (product: string, plan: string): PromoOffer | null =>
       (active && promo?.offers.find((o) => o.product === product && o.plan === plan)) || null,
   };
@@ -70,8 +72,9 @@ export function promoTerms(offer: PromoOffer) {
 }
 
 /** The deadline in the visitor's own time zone, named so it cannot be misread. */
-export function PromoBanner({ promo }: { promo: Promo }) {
-  const percent = Math.min(...promo.offers.map(promoPercent));
+export function PromoBanner({ promo, remaining }: { promo: Promo; remaining: number }) {
+  const clock = promoClock(remaining);
+  const units = ["days", "hours", "min", "sec"];
   const end = new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeStyle: "short" }).format(
     new Date(Date.parse(promo.endsAt) - 60_000),
   );
@@ -80,7 +83,7 @@ export function PromoBanner({ promo }: { promo: Promo }) {
     .find((p) => p.type === "timeZoneName")?.value;
   return (
     <aside
-      className="flex items-start gap-4 rounded-2xl border px-6 py-5"
+      className="flex flex-wrap items-start gap-4 rounded-2xl border px-6 py-5"
       style={{ borderColor: "var(--accent-glow)", background: "var(--accent-soft)" }}
       aria-label="Halloween offer"
     >
@@ -88,13 +91,26 @@ export function PromoBanner({ promo }: { promo: Promo }) {
         <path d="M12 7.5c-1.6-1-4.4-1.2-6.2.4C3.6 9.8 3.4 14 4.6 16.6c1.3 2.8 4.3 3.6 7.4 2.6 3.1 1 6.1.2 7.4-2.6 1.2-2.6 1-6.8-1.2-8.7-1.8-1.6-4.6-1.4-6.2-.4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
         <path d="M12 7.5c-1.3 2.4-1.3 9.3 0 11.7m0-11.7c1.3 2.4 1.3 9.3 0 11.7M12 7.5c0-1.6.6-3 2-3.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
-      <div>
-        <p className="text-[15px] font-semibold text-[var(--fg)]">Halloween offer: {percent}% off</p>
+      <div className="min-w-0 flex-1 basis-64">
+        <p className="text-[15px] font-semibold text-[var(--fg)]">Halloween offer</p>
         <p className="mt-1 text-[13px] leading-relaxed text-[var(--fg-dim)]">
           Ends {end}{zone ? ` ${zone}` : ""}. Struck-through prices are the lowest we charged in the 30 days before the offer
           began. Subscription discounts cover the first month or year; renewals are at the regular price. Prices exclude
           VAT, which is added at checkout where applicable.
         </p>
+      </div>
+      <div
+        className="flex gap-2 font-mono-t tabular-nums"
+        role="timer"
+        aria-live="off"
+        aria-label={clock.map((v, i) => `${v} ${units[i]}`).join(", ")}
+      >
+        {clock.map((value, i) => (
+          <div key={units[i]} className="min-w-[3.25rem] rounded-lg border border-white/10 bg-[var(--bg)] px-2 py-1.5 text-center">
+            <div className="text-[20px] font-bold leading-none text-[var(--fg)]">{value}</div>
+            <div className="mt-1 text-[10px] tracking-wider text-[var(--fg-dim)] uppercase">{units[i]}</div>
+          </div>
+        ))}
       </div>
     </aside>
   );

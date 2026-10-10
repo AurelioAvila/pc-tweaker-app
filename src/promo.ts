@@ -58,14 +58,32 @@ export function msUntil(promo: Promo, iso: string, elapsedMs: number): number {
   return Date.parse(iso) - Date.parse(promo.serverTime) - Math.max(0, elapsedMs);
 }
 
+/** Days, hours, minutes and seconds left, for a countdown that only ever
+ *  reaches zero at the real deadline. */
+export function promoClock(ms: number): [string, string, string, string] {
+  const s = Number.isFinite(ms) ? Math.max(0, Math.floor(ms / 1000)) : 0;
+  return [
+    Math.floor(s / 86_400),
+    Math.floor((s % 86_400) / 3600),
+    Math.floor((s % 3600) / 60),
+    s % 60,
+  ].map((v) => String(v).padStart(2, "0")) as [string, string, string, string];
+}
+
 /** Development-only sample (VITE_PROMO_PREVIEW=active|scheduled). */
 export function previewPromo(kind: string | undefined, now: number): Promo | null {
   if (kind !== "active" && kind !== "scheduled") return null;
-  const offer = (product: string, plan: string, regular: number, price: number) => ({
+  const offer = (
+    product: string,
+    plan: string,
+    regular: number,
+    reference: number,
+    price: number,
+  ) => ({
     product,
     plan,
     regular,
-    reference: regular,
+    reference,
     price,
     firstPeriodOnly: plan !== "lifetime",
   });
@@ -78,10 +96,10 @@ export function previewPromo(kind: string | undefined, now: number): Promo | nul
     offers:
       kind === "active"
         ? [
-            offer("pctweaker", "monthly", 799, 639),
-            offer("pctweaker", "annual", 5999, 4799),
-            offer("pctweaker", "lifetime", 9900, 7900),
-            offer("uninstaller", "annual", 999, 799),
+            offer("pctweaker", "monthly", 799, 799, 399),
+            offer("pctweaker", "annual", 5999, 4999, 2999),
+            offer("pctweaker", "lifetime", 9900, 7999, 4950),
+            offer("uninstaller", "annual", 999, 999, 499),
           ]
         : [],
   };

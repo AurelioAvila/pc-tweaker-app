@@ -83,7 +83,7 @@ export function UninstallerPage() {
 
       {uninstallerOffer && promo.promo && (
         <div className="mb-4">
-          <PromoBanner promo={promo.promo} />
+          <PromoBanner promo={promo.promo} remaining={promo.remaining} />
         </div>
       )}
       <section className="mb-10 rounded-2xl border border-white/10 p-6">

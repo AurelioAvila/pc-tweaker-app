@@ -14,7 +14,7 @@
  * are not secrets.
  */
 import Stripe from "stripe";
-import { PROMO, percentOff } from "../dist/promo.js";
+import { PROMO } from "../dist/promo.js";
 import { LIFETIME_CHECKOUT_GRACE_SECONDS } from "../dist/lifetime-offer.js";
 
 const apply = process.argv.includes("--apply");
@@ -54,7 +54,7 @@ for (const offer of PROMO.offers) {
       id,
       ...wanted,
       applies_to: { products: [price.product] },
-      name: `Halloween · ${percentOff(offer.reference, offer.price)}% off`,
+      name: "Halloween offer",
       metadata: { promo: PROMO.id, product: offer.product, plan: offer.plan },
       expand: ["applies_to"],
     });

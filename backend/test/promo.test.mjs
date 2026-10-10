@@ -29,29 +29,43 @@ const environment = {
   CHECKOUT_CANCEL_URL: "https://example.com/cancel",
 };
 
-test("the window is 15 October 00:00 to 6 November 23:59:59, Rome time", () => {
+test("the offer ends at 23:59:59 on 6 November, Rome time", () => {
   const rome = (ms) => new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Rome", dateStyle: "short", timeStyle: "medium" }).format(ms);
-  assert.equal(rome(START), "15/10/2026, 00:00:00");
   assert.equal(rome(END - 1000), "06/11/2026, 23:59:59");
   assert.equal(rome(END), "07/11/2026, 00:00:00");
+  assert.ok(START <= Date.parse("2026-10-10T12:00:00Z"));
 });
 
-test("every struck price is the lowest one charged in the 30 days before the start", () => {
-  // Last lower prices (Stripe history): Lifetime €79.99 configured until 2026-09-14 02:06 UTC,
-  // Annual €49.99 until 02:19 UTC the same night; the last lower-price checkout session was
-  // expired at 02:08:36 UTC and none stayed payable after. Moving the start earlier breaks this.
-  assert.ok(START - 30 * 86_400_000 > Date.parse("2026-09-14T02:20:00Z"));
-  const current = { "pctweaker:monthly": 799, "pctweaker:annual": 5999, "pctweaker:lifetime": 9900, "uninstaller:annual": 999 };
+// Prices charged to the public, from live Stripe Checkout Sessions and the
+// configuration changes of 14 September (UTC). [from, until, cents]
+const HISTORY = {
+  "pctweaker:lifetime": [["2026-08-31T01:24Z", "2026-09-07T22:36Z", 7499], ["2026-09-07T22:36Z", "2026-09-11T08:24Z", 8999], ["2026-09-11T08:24Z", "2026-09-14T02:06Z", 7999], ["2026-09-14T02:06Z", null, 9900]],
+  "pctweaker:annual": [["2026-08-03T11:35Z", "2026-09-14T02:03Z", 5900], ["2026-09-14T02:03Z", "2026-09-14T02:20Z", 4999], ["2026-09-14T02:20Z", null, 5999]],
+  "pctweaker:monthly": [["2026-08-03T11:33Z", "2026-09-14T02:03Z", 999], ["2026-09-14T02:03Z", null, 799]],
+  "uninstaller:annual": [["2026-08-19T23:59Z", null, 999]],
+};
+function lowestBefore(key, startMs) {
+  const from = startMs - 30 * 86_400_000;
+  return Math.min(...HISTORY[key]
+    .filter(([a, b]) => Date.parse(a) < startMs && (b === null || Date.parse(b) > from))
+    .map(([, , cents]) => cents));
+}
+
+test("every struck price is the lowest charged in the 30 days before the start, and never above it later", () => {
   for (const offer of PROMO.offers) {
-    assert.equal(offer.reference, current[`${offer.product}:${offer.plan}`]);
-    assert.equal(offer.regular, offer.reference);
-    assert.ok(offer.price < offer.reference);
-    assert.equal(percentOff(offer.reference, offer.price), 20);
+    const key = `${offer.product}:${offer.plan}`;
+    assert.equal(offer.reference, lowestBefore(key, START), key);
+    // A later go-live (up to the end) can only make the lawful reference higher, never lower.
+    for (let t = START; t < END; t += 3_600_000) assert.ok(offer.reference <= lowestBefore(key, t), `${key} at ${new Date(t).toISOString()}`);
+    assert.ok(offer.price < offer.reference && offer.reference <= offer.regular);
+    assert.equal(offer.price, Math.floor(offer.regular / 2), `${key} is half the list price, rounded down to the cent`);
   }
+  assert.deepEqual(PROMO.offers.map((o) => percentOff(o.reference, o.price)), [50, 40, 38, 50]);
 });
 
 test("the percentage is rounded down, never up", () => {
-  assert.equal(percentOff(799, 639), 20); // 20.03%
+  assert.equal(percentOff(7999, 4950), 38); // 38.1%
+  assert.equal(percentOff(4999, 2999), 40); // 40.008%
   assert.equal(percentOff(1000, 801), 19); // 19.9%
 });
 
@@ -65,7 +79,7 @@ test("simulated clock: nothing before the start, every offer during, nothing fro
     assert.equal(state.offers.length, 4);
     assert.equal(state.endsAt, PROMO.endsAt);
     assert.deepEqual(state.offers.find((o) => o.plan === "lifetime"),
-      { product: "pctweaker", plan: "lifetime", currency: "eur", regular: 9900, reference: 9900, price: 7900, percentOff: 20, firstPeriodOnly: false });
+      { product: "pctweaker", plan: "lifetime", currency: "eur", regular: 9900, reference: 7999, price: 4950, percentOff: 38, firstPeriodOnly: false });
     assert.equal(state.offers.find((o) => o.plan === "monthly").firstPeriodOnly, true);
   }
   for (const now of [END, END + 86_400_000, Date.parse("2027-10-31T12:00:00Z")]) {
@@ -129,9 +143,9 @@ test("checkout applies the plan's own coupon only inside the window", async () =
   ]) {
     const during = await checkout(body, DURING);
     assert.deepEqual(during.discounts, [{ coupon }]);
-    assert.equal(during.metadata.promo_id, "halloween-2026");
+    assert.equal(during.metadata.promo_id, "halloween50-2026");
     assert.deepEqual(during.after_expiration, { recovery: { enabled: false } });
-    if (during.mode === "subscription") assert.equal(during.subscription_data.metadata.promo_id, "halloween-2026");
+    if (during.mode === "subscription") assert.equal(during.subscription_data.metadata.promo_id, "halloween50-2026");
     assert.equal(during.line_items[0].price.endsWith("_fixture"), true, "the base price never changes");
     for (const now of [START - 1, END, END + 7 * 86_400_000]) {
       const outside = await checkout(body, now);

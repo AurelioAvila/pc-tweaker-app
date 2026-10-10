@@ -208,7 +208,8 @@ export function money(amount: number, lang: Lang): string {
   return new Intl.NumberFormat(lang, {
     style: "currency",
     currency: "EUR",
-    minimumFractionDigits: 0,
+    // €49.50, never €49.5: whole euros stay short, anything else shows cents.
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(amount);
 }

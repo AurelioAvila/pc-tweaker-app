@@ -30,7 +30,8 @@ export function usePromo() {
     }
     void read();
     const refresh = window.setInterval(() => void read(), 5 * 60_000);
-    const tick = window.setInterval(() => setNow(performance.now()), 15_000);
+    // One-second steps drive the visible countdown; it is computed, never reset.
+    const tick = window.setInterval(() => setNow(performance.now()), 1000);
     window.addEventListener("focus", read);
     return () => {
       disposed = true;
@@ -48,6 +49,8 @@ export function usePromo() {
   return {
     promo: live ? promo : null,
     active,
+    /** Milliseconds to the real deadline, on the server's clock. */
+    remaining: promo ? Math.max(0, msUntil(promo, promo.endsAt, elapsed)) : 0,
     /** Known start, no prices yet: the only thing shown is the date. */
     upcoming: live && !started,
     preview: Boolean(preview),

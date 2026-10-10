@@ -1,45 +1,51 @@
 import { LIFETIME_CHECKOUT_GRACE_SECONDS } from "./lifetime-offer";
 
 /**
- * Halloween 2026: 20% off every paid plan, 15 October to 6 November (Europe/Rome).
+ * Halloween 2026: half price on every paid plan, from release to 23:59:59 on
+ * 6 November (Europe/Rome). Owner decision of 10 October 2026.
  *
  * `reference` is the price that may be struck through. EU law (Omnibus
  * Directive, art. 17-bis Codice del consumo) allows only the LOWEST price
- * charged to the public in the 30 days before the reduction starts.
- * Reconstructed from live Stripe Checkout Sessions on 2026-10-10:
- *   - Lifetime  €79.99 until 2026-09-14 02:06 UTC, €99 since.
- *   - Annual    €59 until 2026-09-14, €49.99 between 02:03 and 02:19 UTC that
- *               night, €59.99 since.
- *   - Monthly   €9.99 until 2026-09-14, €7.99 since.
- *   - Uninstaller standard €9.99 since 2026-08-19.
- * No lower-price checkout stayed open: the last one (an €49.99 audit session)
- * was expired at 02:08:36 UTC on 14 September; the €79.99 ones closed by the
- * 13th. Starting at 00:00 on 15 October Rome time (22:00 UTC on the 14th) puts
- * every lower price outside the window, so each reference equals today's
- * price. Starting earlier would make €79.99 and €49.99 the only lawful references.
+ * charged to the public in the 30 days before the reduction starts, and the
+ * percentage shown is measured against it. Reconstructed from live Stripe
+ * Checkout Sessions and the price changes of 14 September:
+ *   - Lifetime  €89.99 until 11 Sep 08:24 UTC, €79.99 (48-hour campaign, then
+ *               still configured) until 14 Sep 02:06 UTC, €99 since.
+ *   - Annual    €59 until 14 Sep 02:03 UTC, €49.99 configured until 02:19 UTC
+ *               that night, €59.99 since.
+ *   - Monthly   €9.99 until 14 Sep 02:03 UTC, €7.99 since.
+ *   - Uninstaller standard €9.99 since 19 Aug.
+ * So for a start on 10 October the references are €79.99, €49.99, €7.99 and
+ * €9.99, and Lifetime and Annual show smaller percentages than "half price"
+ * (test/promo.test.mjs recomputes this from the history above). The reference
+ * stays fixed for the whole promotion even after the older prices leave the
+ * 30-day window.
  *
  * Next promotions: until about 6 December the lowest prices of the previous
  * 30 days are these promo prices, so a Black Friday reduction must strike
- * them, not the regular ones. Live checks opened by halloween-coupons.mjs
- * carry metadata.promo_verification and are not prices offered to anyone.
- * Coupons cannot be edited: a different end date needs new coupon IDs, and no
- * STRIPE_PRICE_* may change during the window (amount_off is fixed).
+ * them. Live checks opened by halloween-coupons.mjs carry
+ * metadata.promo_verification and are not prices offered to anyone. Coupons
+ * cannot be edited: a different amount or end date needs new coupon IDs, and
+ * no STRIPE_PRICE_* may change during the window (amount_off is fixed). The
+ * unused 20% coupons "halloween-2026-*" created earlier on 10 October are not
+ * referenced by anything.
  *
  * Every amount is in euro cents and excludes VAT, like the Stripe Prices.
  * The coupon behind each offer must take exactly `regular - price` off once
  * (see scripts/halloween-coupons.mjs); this file never talks to Stripe.
  */
 export const PROMO = {
-  id: "halloween-2026",
-  startsAt: "2026-10-14T22:00:00.000Z",
+  id: "halloween50-2026",
+  // The earliest go-live; the offer runs once the coupon variables are set.
+  startsAt: "2026-10-10T00:00:00.000Z",
   // Exclusive: the last second on sale is 23:59:59 on 6 November, Rome (CET).
   endsAt: "2026-11-06T23:00:00.000Z",
   offers: [
-    { product: "pctweaker", plan: "monthly", priceEnv: "STRIPE_PRICE_MONTHLY", couponEnv: "STRIPE_COUPON_HALLOWEEN_MONTHLY", regular: 799, reference: 799, price: 639 },
-    { product: "pctweaker", plan: "annual", priceEnv: "STRIPE_PRICE_ANNUAL", couponEnv: "STRIPE_COUPON_HALLOWEEN_ANNUAL", regular: 5999, reference: 5999, price: 4799 },
-    { product: "pctweaker", plan: "lifetime", priceEnv: "STRIPE_PRICE_LIFETIME", couponEnv: "STRIPE_COUPON_HALLOWEEN_LIFETIME", regular: 9900, reference: 9900, price: 7900 },
-    // Standard price only: the loyalty price is already lower and stays as it is.
-    { product: "uninstaller", plan: "annual", priceEnv: "STRIPE_PRICE_UNINSTALLER_ANNUAL", couponEnv: "STRIPE_COUPON_HALLOWEEN_UNINSTALLER", regular: 999, reference: 999, price: 799 },
+    { product: "pctweaker", plan: "monthly", priceEnv: "STRIPE_PRICE_MONTHLY", couponEnv: "STRIPE_COUPON_HALLOWEEN_MONTHLY", regular: 799, reference: 799, price: 399 },
+    { product: "pctweaker", plan: "annual", priceEnv: "STRIPE_PRICE_ANNUAL", couponEnv: "STRIPE_COUPON_HALLOWEEN_ANNUAL", regular: 5999, reference: 4999, price: 2999 },
+    { product: "pctweaker", plan: "lifetime", priceEnv: "STRIPE_PRICE_LIFETIME", couponEnv: "STRIPE_COUPON_HALLOWEEN_LIFETIME", regular: 9900, reference: 7999, price: 4950 },
+    // Standard price only: the loyalty price (€4.99) already equals the promo price and is not discounted twice.
+    { product: "uninstaller", plan: "annual", priceEnv: "STRIPE_PRICE_UNINSTALLER_ANNUAL", couponEnv: "STRIPE_COUPON_HALLOWEEN_UNINSTALLER", regular: 999, reference: 999, price: 499 },
   ],
 } as const;
 

@@ -36,7 +36,7 @@ export function AccessPricing() {
 
         {promo.promo && (
           <motion.div variants={riseChild} className="mt-8">
-            <PromoBanner promo={promo.promo} />
+            <PromoBanner promo={promo.promo} remaining={promo.remaining} />
           </motion.div>
         )}
 

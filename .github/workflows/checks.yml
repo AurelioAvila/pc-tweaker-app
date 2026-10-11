@@ -72,6 +72,9 @@ jobs:
       - name: Translation quality (nothing silently left in English)
         run: npm run check:i18n-quality
 
+      - name: Public texts state the shipped catalog (README, site, Store listing)
+        run: npm run check:public-counts
+
       - name: Design tokens (no new raw palette classes)
         run: npm run check:design-tokens
 

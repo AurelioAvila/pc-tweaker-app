@@ -125,6 +125,21 @@ pub fn clean_ram(
     serde_json::from_str(&json).map_err(|e| e.to_string())
 }
 
+/// Whether a scheduled cleanup can run: only an app already running as
+/// administrator can trim without asking, so the card can say so before the
+/// first pass fails instead of after.
+#[tauri::command]
+pub fn ram_schedule_ready() -> bool {
+    #[cfg(windows)]
+    {
+        crate::elevation::is_elevated()
+    }
+    #[cfg(not(windows))]
+    {
+        false
+    }
+}
+
 #[cfg(not(windows))]
 #[tauri::command(async)]
 pub fn clean_ram(

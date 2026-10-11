@@ -125,11 +125,6 @@ export interface Strings {
     verdictGood: string;
     verdictFair: string;
     verdictNeedsWork: string;
-    baselineTitle: string;
-    baselineHint: string;
-    baselineRun: string;
-    baselineRunning: string;
-    baselineEmpty: string;
     changeSinceLast: string;
     changeNone: string;
     changeFirstRun: string;
@@ -669,6 +664,7 @@ export interface Strings {
     autoNoneYet: string;
     autoFailed: string; // uses {detail}
     autoNeedsAdmin: string;
+    autoPausedNotAdmin: string;
   };
   restore: {
     button: string;
@@ -1247,13 +1243,6 @@ const it: Strings = {
     computing: "Analisi in corso...",
     idleHint:
       "Nessuna analisi in background: il punteggio viene calcolato solo quando lo chiedi tu, interamente su questo PC.",
-    baselineTitle: "Baseline",
-    baselineHint:
-      "Misure rapide e ripetibili — confrontabili solo con esecuzioni precedenti su questo PC.",
-    baselineRun: "Esegui baseline",
-    baselineRunning: "Misurazione in corso (~5 s)...",
-    baselineEmpty:
-      "Nessuna baseline ancora. Eseguine una prima di applicare modifiche, e una dopo.",
     changeSinceLast: "dall'ultimo controllo",
     changeNone: "Nessun cambiamento dall'ultimo controllo.",
     changeFirstRun:
@@ -1879,7 +1868,9 @@ const it: Strings = {
     autoOff: "Disattivata",
     autoEvery: "Ogni {interval}",
     autoHint:
-      "Con la pulizia automatica attiva, PC Tweaker libera la RAM da solo a intervalli regolari, purché sia in esecuzione con i diritti di amministratore.",
+      "Con la pulizia automatica attiva, PC Tweaker libera la RAM da solo a intervalli regolari. Può farlo solo quando è in esecuzione come amministratore: Windows chiede il permesso per ogni pulizia e una pulizia programmata non può chiederlo.",
+    autoPausedNotAdmin:
+      "In pausa: PC Tweaker non è in esecuzione come amministratore, quindi la pulizia automatica non può partire. Per usarla, chiudi PC Tweaker e riaprilo con «Esegui come amministratore». La pulizia manuale funziona comunque: Windows chiede il permesso ogni volta.",
     autoNext: "Prossima pulizia alle {time}",
     autoDue: "Pulizia in corso...",
     autoLast: "Ultima alle {time}: {amount} liberati",
@@ -2391,7 +2382,7 @@ const it: Strings = {
     disable_edge_ai: {
       name: "Disattiva le funzioni IA di Microsoft Edge",
       description:
-        "Imposta i criteri di Microsoft Edge che nascondono la barra laterale, impediscono a Edge di scaricare il suo modello IA locale e disattivano la ricerca nella cronologia con l'IA, i temi generati dall'IA e l'accesso di Copilot al contenuto delle pagine. Alcuni di questi controlli valgono solo per i profili di lavoro o scuola. Edge li applica senza riavvio; li trovi elencati in edge://policy. Edge indicherà di essere gestito dall'organizzazione: è così che segnala i criteri.",
+        "Imposta i criteri di Microsoft Edge per le sue funzioni IA. Quali hanno effetto dipende dal profilo di Edge: impedire a Edge di scaricare il suo modello IA locale funziona per tutti i profili; nascondere la barra laterale e disattivare la ricerca nella cronologia con l'IA e i temi generati dall'IA funziona per i profili non connessi con un account Microsoft personale; disattivare l'accesso di Copilot al contenuto delle pagine e il suo aiuto alla scrittura funziona solo per i profili di lavoro o scuola. Edge li applica senza riavvio; li trovi elencati in edge://policy. Edge indicherà di essere gestito dall'organizzazione: è così che segnala i criteri.",
     },
     disable_paint_ai: {
       name: "Disattiva le funzioni IA di Paint",
@@ -2421,7 +2412,7 @@ const it: Strings = {
     disable_drag_tray: {
       name: "Disattiva il pannello di condivisione al trascinamento",
       description:
-        "Impedisce al pannello di condivisione di scendere dall'alto dello schermo ogni volta che trascini un file, così il normale trascinamento funziona senza intralci.",
+        "Impedisce al pannello di condivisione (chiamato Drop tray nelle build più recenti) di scendere dall'alto dello schermo ogni volta che trascini un file, così il normale trascinamento funziona senza intralci. Il valore proviene dalla documentazione della community di Windows, non da Microsoft; gli aggiornamenti recenti di Windows 11 offrono questo interruttore anche in Impostazioni.",
     },
     explorer_open_this_pc: {
       name: "Apri Esplora file su Questo PC",
@@ -2436,7 +2427,7 @@ const it: Strings = {
     disable_windows_suggestions: {
       name: "Disattiva consigli e suggerimenti di Windows",
       description:
-        "Un solo interruttore per i messaggi che Windows aggiunge di sua iniziativa: consigli e suggerimenti, la schermata di benvenuto dopo gli aggiornamenti, i suggerimenti in Impostazioni, «completa la configurazione del dispositivo», le notifiche suggerite, i consigli e gli avvisi sull'account nel menu Start e la pubblicità dei provider di sincronizzazione in Esplora file.",
+        "Un solo interruttore per i messaggi che Windows aggiunge di sua iniziativa: consigli e suggerimenti, la schermata di benvenuto dopo gli aggiornamenti, i suggerimenti in Impostazioni, «completa la configurazione del dispositivo», le notifiche suggerite, i consigli e gli avvisi sull'account nel menu Start e la pubblicità dei provider di sincronizzazione in Esplora file. Sono i valori che scrivono gli interruttori di Impostazioni di Windows, come documentato dalla community di Windows; Microsoft non li documenta, quindi un aggiornamento di Windows può cambiarli.",
     },
     disable_widgets: {
       name: "Disattiva completamente i Widget",
@@ -2454,9 +2445,9 @@ const it: Strings = {
         "Disattiva la funzione di acquisizione della Game Bar e la registrazione in background, che conserva di continuo un video degli ultimi minuti di gioco. Completa l'interruttore Game Bar / Game DVR.",
     },
     disable_ai_fabric_service: {
-      name: "Disattiva il servizio Windows AI Fabric",
+      name: "Avvia l'host dei componenti IA di Windows solo quando serve",
       description:
-        "Arresta e disattiva il servizio alla base delle funzioni IA locali di Windows, come Recall, Click to Do e alcune funzioni dei Sottotitoli in tempo reale, liberando la memoria che occupa in background. Queste funzioni smettono di funzionare finché non lo riattivi. Presente solo sui PC che le hanno.",
+        "Arresta il servizio Host dei componenti IA di Windows (WSAIFabricSvc) e lo imposta su Manuale, così non parte più insieme a Windows. Se un'app o una funzione di Windows lo richiede, Windows lo avvia come sempre, quindi nessuna funzione viene disattivata. Windows lo descrive così: «Fornisce servizi di componenti di intelligenza artificiale alle app e ad altri servizi di Windows». Presente solo sui PC che lo hanno.",
     },
     disable_restart_apps: {
       name: "Non riaprire automaticamente le app dopo l'accesso",
@@ -2922,11 +2913,6 @@ const en: Strings = {
     computing: "Analyzing...",
     idleHint:
       "Nothing runs in the background: the score is computed only when you ask, entirely on this PC.",
-    baselineTitle: "Baseline",
-    baselineHint: "Quick, repeatable measurements — only comparable to previous runs on this PC.",
-    baselineRun: "Run baseline",
-    baselineRunning: "Measuring (~5 s)...",
-    baselineEmpty: "No baselines yet. Run one before applying changes, and one after.",
     changeSinceLast: "since your last check",
     changeNone: "No change since your last check.",
     changeFirstRun: "First measurement recorded. Run it again after a change to see what moved.",
@@ -3537,7 +3523,9 @@ const en: Strings = {
     autoOff: "Off",
     autoEvery: "Every {interval}",
     autoHint:
-      "With automatic cleanup on, PC Tweaker frees RAM by itself at a regular interval, as long as it is running with administrator rights.",
+      "With automatic cleanup on, PC Tweaker frees RAM by itself at a regular interval. It can do this only while it runs as administrator: Windows asks for permission for every cleanup, and a scheduled one cannot ask.",
+    autoPausedNotAdmin:
+      "Paused: PC Tweaker is not running as administrator, so automatic cleanup cannot run. To use it, close PC Tweaker and open it with “Run as administrator”. Manual cleanup still works: Windows asks for permission each time.",
     autoNext: "Next cleanup at {time}",
     autoDue: "Cleanup due now...",
     autoLast: "Last at {time}: {amount} freed",
@@ -4045,7 +4033,7 @@ const en: Strings = {
     disable_edge_ai: {
       name: "Turn off AI features in Microsoft Edge",
       description:
-        "Sets Microsoft Edge policies that hide the sidebar, stop Edge from downloading its on-device AI model, and turn off AI history search, AI-generated themes and Copilot's access to page content. Some of these controls apply only to work or school profiles. Edge picks them up without a restart; edge://policy lists them. Edge will show that it is managed by your organization, which is how it labels policies.",
+        "Sets Microsoft Edge policies for its AI features. Which ones take effect depends on the Edge profile: stopping Edge from downloading its on-device AI model works for every profile; hiding the sidebar and turning off AI history search and AI-generated themes work for profiles not signed in with a personal Microsoft account; turning off Copilot's access to page content and its writing help works only for work or school profiles. Edge picks them up without a restart; edge://policy lists them. Edge will show that it is managed by your organization, which is how it labels policies.",
     },
     disable_paint_ai: {
       name: "Turn off AI features in Paint",
@@ -4075,7 +4063,7 @@ const en: Strings = {
     disable_drag_tray: {
       name: "Turn off the drag tray",
       description:
-        "Stops the sharing tray from sliding down from the top of the screen every time you drag a file, so ordinary drag and drop works without it getting in the way.",
+        "Stops the sharing tray (called Drop tray on newer builds) from sliding down from the top of the screen every time you drag a file, so ordinary drag and drop works without it getting in the way. The value comes from Windows community documentation, not from Microsoft; recent Windows 11 updates also offer this switch in Settings.",
     },
     explorer_open_this_pc: {
       name: "Open File Explorer to This PC",
@@ -4090,7 +4078,7 @@ const en: Strings = {
     disable_windows_suggestions: {
       name: "Turn off Windows tips and suggestions",
       description:
-        'One switch for the prompts Windows adds on its own: tips and suggestions, the welcome screen after updates, suggestions in Settings, "finish setting up your device", suggested notifications, Start menu recommendations and account notices, and sync provider ads in File Explorer.',
+        'One switch for the prompts Windows adds on its own: tips and suggestions, the welcome screen after updates, suggestions in Settings, "finish setting up your device", suggested notifications, Start menu recommendations and account notices, and sync provider ads in File Explorer. These are the values Windows\' own Settings switches write, as documented by the Windows community; Microsoft does not document them, so a Windows update can change them.',
     },
     disable_widgets: {
       name: "Turn off Widgets entirely",
@@ -4108,9 +4096,9 @@ const en: Strings = {
         "Turns off Game Bar's capture feature and its background recording, which keeps a rolling video of your last few minutes of play. Complements the Game Bar / Game DVR switch.",
     },
     disable_ai_fabric_service: {
-      name: "Turn off the Windows AI Fabric service",
+      name: "Start Windows AI Components Host only when needed",
       description:
-        "Stops and disables the service behind Windows' on-device AI features, such as Recall, Click to Do and some Live Captions features, freeing the memory it holds in the background. Those features stop working until you turn it back on. Only present on PCs that have these features.",
+        "Stops the Windows AI Components Host service (WSAIFabricSvc) and sets it to Manual, so it no longer starts with Windows. If an app or Windows feature asks for it, Windows starts it as usual, so no feature is switched off. Windows describes it as providing AI component services to apps and other Windows services. Only present on PCs that have it.",
     },
     disable_restart_apps: {
       name: "Stop apps reopening after sign-in",
@@ -4574,12 +4562,6 @@ const fr: Strings = {
     computing: "Analyse en cours...",
     idleHint:
       "Rien ne tourne en arrière-plan : le score n'est calculé que lorsque vous le demandez, entièrement sur ce PC.",
-    baselineTitle: "Référence",
-    baselineHint:
-      "Mesures rapides et répétables — comparables uniquement aux exécutions précédentes sur ce PC.",
-    baselineRun: "Lancer la référence",
-    baselineRunning: "Mesure en cours (~5 s)...",
-    baselineEmpty: "Aucune référence. Lancez-en une avant vos modifications, puis une après.",
     changeSinceLast: "depuis votre dernier contrôle",
     changeNone: "Aucun changement depuis votre dernier contrôle.",
     changeFirstRun:
@@ -5208,7 +5190,9 @@ const fr: Strings = {
     autoOff: "Désactivé",
     autoEvery: "Toutes les {interval}",
     autoHint:
-      "Avec le nettoyage automatique, PC Tweaker libère la RAM tout seul à intervalle régulier, tant qu'il tourne avec les droits d'administrateur.",
+      "Avec le nettoyage automatique, PC Tweaker libère la RAM tout seul à intervalle régulier. Il ne peut le faire que lorsqu'il s'exécute en tant qu'administrateur : Windows demande l'autorisation pour chaque nettoyage, et un nettoyage programmé ne peut pas la demander.",
+    autoPausedNotAdmin:
+      "En pause : PC Tweaker ne s'exécute pas en tant qu'administrateur, le nettoyage automatique ne peut donc pas se lancer. Pour l'utiliser, fermez PC Tweaker et rouvrez-le avec « Exécuter en tant qu'administrateur ». Le nettoyage manuel fonctionne toujours : Windows demande l'autorisation à chaque fois.",
     autoNext: "Prochain nettoyage à {time}",
     autoDue: "Nettoyage imminent...",
     autoLast: "Dernier à {time} : {amount} libérés",
@@ -5722,7 +5706,7 @@ const fr: Strings = {
     disable_edge_ai: {
       name: "Désactiver les fonctions d'IA de Microsoft Edge",
       description:
-        "Applique les stratégies Microsoft Edge qui masquent la barre latérale, empêchent Edge de télécharger son modèle d'IA local et désactivent la recherche par IA dans l'historique, les thèmes générés par IA et l'accès de Copilot au contenu des pages. Certains de ces réglages ne concernent que les profils professionnels ou scolaires. Edge les prend en compte sans redémarrage ; edge://policy les affiche. Edge indiquera qu'il est géré par votre organisation : c'est ainsi qu'il signale les stratégies.",
+        "Applique les stratégies Microsoft Edge pour ses fonctions d'IA. Leur effet dépend du profil Edge : empêcher Edge de télécharger son modèle d'IA local fonctionne pour tous les profils ; masquer la barre latérale et désactiver la recherche par IA dans l'historique et les thèmes générés par IA fonctionne pour les profils qui ne sont pas connectés avec un compte Microsoft personnel ; désactiver l'accès de Copilot au contenu des pages et son aide à la rédaction ne fonctionne que pour les profils professionnels ou scolaires. Edge les prend en compte sans redémarrage ; edge://policy les affiche. Edge indiquera qu'il est géré par votre organisation : c'est ainsi qu'il signale les stratégies.",
     },
     disable_paint_ai: {
       name: "Désactiver les fonctions d'IA de Paint",
@@ -5752,7 +5736,7 @@ const fr: Strings = {
     disable_drag_tray: {
       name: "Désactiver le panneau de partage au glissement",
       description:
-        "Empêche le panneau de partage de descendre du haut de l'écran chaque fois que vous faites glisser un fichier, pour que le glisser-déposer habituel fonctionne sans gêne.",
+        "Empêche le panneau de partage (appelé Drop tray dans les builds récentes) de descendre du haut de l'écran chaque fois que vous faites glisser un fichier, pour que le glisser-déposer habituel fonctionne sans gêne. La valeur provient de la documentation de la communauté Windows, pas de Microsoft ; les mises à jour récentes de Windows 11 proposent aussi ce réglage dans Paramètres.",
     },
     explorer_open_this_pc: {
       name: "Ouvrir l'Explorateur de fichiers sur Ce PC",
@@ -5767,7 +5751,7 @@ const fr: Strings = {
     disable_windows_suggestions: {
       name: "Désactiver les conseils et suggestions de Windows",
       description:
-        "Un seul interrupteur pour les messages que Windows ajoute de lui-même : conseils et suggestions, écran d'accueil après les mises à jour, suggestions dans Paramètres, « terminer la configuration de l'appareil », notifications suggérées, recommandations et avis de compte dans le menu Démarrer, et publicités des fournisseurs de synchronisation dans l'Explorateur de fichiers.",
+        "Un seul interrupteur pour les messages que Windows ajoute de lui-même : conseils et suggestions, écran d'accueil après les mises à jour, suggestions dans Paramètres, « terminer la configuration de l'appareil », notifications suggérées, recommandations et avis de compte dans le menu Démarrer, et publicités des fournisseurs de synchronisation dans l'Explorateur de fichiers. Ce sont les valeurs qu'écrivent les interrupteurs de Paramètres de Windows, telles que documentées par la communauté Windows ; Microsoft ne les documente pas, donc une mise à jour de Windows peut les modifier.",
     },
     disable_widgets: {
       name: "Désactiver complètement les widgets",
@@ -5785,9 +5769,9 @@ const fr: Strings = {
         "Désactive la fonction de capture de la Game Bar et son enregistrement en arrière-plan, qui conserve en continu une vidéo de vos dernières minutes de jeu. Complète l'interrupteur Game Bar / Game DVR.",
     },
     disable_ai_fabric_service: {
-      name: "Désactiver le service Windows AI Fabric",
+      name: "Ne démarrer l'hôte des composants d'IA de Windows qu'au besoin",
       description:
-        "Arrête et désactive le service qui fait fonctionner les fonctions d'IA locales de Windows, comme Recall, Click to Do et certaines fonctions des Sous-titres en direct, et libère la mémoire qu'il occupe en arrière-plan. Ces fonctions ne marchent plus tant que vous ne le réactivez pas. Présent uniquement sur les PC qui les proposent.",
+        "Arrête le service hôte des composants d'IA de Windows (WSAIFabricSvc) et le règle sur Manuel, pour qu'il ne démarre plus avec Windows. Si une application ou une fonction de Windows en a besoin, Windows le démarre normalement : aucune fonction n'est désactivée. Windows le décrit comme fournissant des services de composants d'IA aux applications et aux autres services Windows. Présent uniquement sur les PC qui l'ont.",
     },
     disable_restart_apps: {
       name: "Empêcher la réouverture des apps après connexion",
@@ -6254,12 +6238,6 @@ const es: Strings = {
     computing: "Analizando...",
     idleHint:
       "Nada se ejecuta en segundo plano: la puntuación se calcula solo cuando lo pides, íntegramente en este PC.",
-    baselineTitle: "Línea base",
-    baselineHint:
-      "Mediciones rápidas y repetibles — solo comparables con ejecuciones previas en este PC.",
-    baselineRun: "Ejecutar línea base",
-    baselineRunning: "Midiendo (~5 s)...",
-    baselineEmpty: "Aún no hay líneas base. Ejecuta una antes de aplicar cambios, y otra después.",
     changeSinceLast: "desde tu última comprobación",
     changeNone: "Sin cambios desde tu última comprobación.",
     changeFirstRun:
@@ -6882,7 +6860,9 @@ const es: Strings = {
     autoOff: "Desactivada",
     autoEvery: "Cada {interval}",
     autoHint:
-      "Con la limpieza automática activada, PC Tweaker libera la RAM por sí solo a intervalos regulares, siempre que se ejecute con permisos de administrador.",
+      "Con la limpieza automática activada, PC Tweaker libera la RAM por sí solo a intervalos regulares. Solo puede hacerlo mientras se ejecuta como administrador: Windows pide permiso para cada limpieza y una limpieza programada no puede pedirlo.",
+    autoPausedNotAdmin:
+      "En pausa: PC Tweaker no se está ejecutando como administrador, así que la limpieza automática no puede ejecutarse. Para usarla, cierra PC Tweaker y vuelve a abrirlo con «Ejecutar como administrador». La limpieza manual sigue funcionando: Windows pide permiso cada vez.",
     autoNext: "Próxima limpieza a las {time}",
     autoDue: "Limpieza inminente...",
     autoLast: "Última a las {time}: {amount} liberados",
@@ -7395,7 +7375,7 @@ const es: Strings = {
     disable_edge_ai: {
       name: "Desactivar las funciones de IA de Microsoft Edge",
       description:
-        "Aplica directivas de Microsoft Edge que ocultan la barra lateral, impiden que Edge descargue su modelo de IA local y desactivan la búsqueda con IA en el historial, los temas generados por IA y el acceso de Copilot al contenido de las páginas. Algunos de estos controles solo afectan a los perfiles profesionales o educativos. Edge los aplica sin reiniciar; puedes verlos en edge://policy. Edge indicará que lo administra tu organización: así es como señala las directivas.",
+        "Aplica directivas de Microsoft Edge para sus funciones de IA. Cuáles surten efecto depende del perfil de Edge: impedir que Edge descargue su modelo de IA local funciona en todos los perfiles; ocultar la barra lateral y desactivar la búsqueda con IA en el historial y los temas generados por IA funciona en los perfiles que no han iniciado sesión con una cuenta Microsoft personal; desactivar el acceso de Copilot al contenido de las páginas y su ayuda para escribir solo funciona en perfiles profesionales o educativos. Edge los aplica sin reiniciar; puedes verlos en edge://policy. Edge indicará que lo administra tu organización: así es como señala las directivas.",
     },
     disable_paint_ai: {
       name: "Desactivar las funciones de IA de Paint",
@@ -7425,7 +7405,7 @@ const es: Strings = {
     disable_drag_tray: {
       name: "Desactivar el panel de arrastre",
       description:
-        "Evita que el panel para compartir baje desde la parte superior de la pantalla cada vez que arrastras un archivo, para que arrastrar y soltar funcione sin estorbos.",
+        "Evita que el panel para compartir (llamado Drop tray en las compilaciones recientes) baje desde la parte superior de la pantalla cada vez que arrastras un archivo, para que arrastrar y soltar funcione sin estorbos. El valor procede de la documentación de la comunidad de Windows, no de Microsoft; las actualizaciones recientes de Windows 11 también ofrecen este interruptor en Configuración.",
     },
     explorer_open_this_pc: {
       name: "Abrir el Explorador de archivos en Este equipo",
@@ -7440,7 +7420,7 @@ const es: Strings = {
     disable_windows_suggestions: {
       name: "Desactivar los consejos y sugerencias de Windows",
       description:
-        "Un solo interruptor para los avisos que Windows añade por su cuenta: consejos y sugerencias, la pantalla de bienvenida tras las actualizaciones, sugerencias en Configuración, «terminar de configurar el dispositivo», notificaciones sugeridas, recomendaciones y avisos de cuenta en el menú Inicio, y anuncios de proveedores de sincronización en el Explorador de archivos.",
+        "Un solo interruptor para los avisos que Windows añade por su cuenta: consejos y sugerencias, la pantalla de bienvenida tras las actualizaciones, sugerencias en Configuración, «terminar de configurar el dispositivo», notificaciones sugeridas, recomendaciones y avisos de cuenta en el menú Inicio, y anuncios de proveedores de sincronización en el Explorador de archivos. Son los valores que escriben los interruptores de Configuración de Windows, según la documentación de la comunidad de Windows; Microsoft no los documenta, así que una actualización de Windows puede cambiarlos.",
     },
     disable_widgets: {
       name: "Desactivar los widgets por completo",
@@ -7458,9 +7438,9 @@ const es: Strings = {
         "Desactiva la función de captura de Game Bar y su grabación en segundo plano, que guarda de forma continua un vídeo de tus últimos minutos de juego. Complementa el interruptor de Game Bar / Game DVR.",
     },
     disable_ai_fabric_service: {
-      name: "Desactivar el servicio Windows AI Fabric",
+      name: "Iniciar el host de componentes de IA de Windows solo cuando haga falta",
       description:
-        "Detiene y desactiva el servicio en el que se basan las funciones de IA locales de Windows, como Recall, Click to Do y algunas funciones de Subtítulos en directo, y libera la memoria que ocupa en segundo plano. Esas funciones dejan de funcionar hasta que lo vuelvas a activar. Solo existe en los PC que las tienen.",
+        "Detiene el servicio host de componentes de IA de Windows (WSAIFabricSvc) y lo configura como Manual, para que ya no se inicie con Windows. Si una aplicación o una función de Windows lo necesita, Windows lo inicia como siempre, así que no se desactiva ninguna función. Windows lo describe como el servicio que proporciona servicios de componentes de IA a las aplicaciones y a otros servicios de Windows. Solo existe en los PC que lo tienen.",
     },
     disable_restart_apps: {
       name: "Evitar que las apps se reabran al iniciar sesión",
@@ -7928,12 +7908,6 @@ const de: Strings = {
     computing: "Analyse läuft...",
     idleHint:
       "Nichts läuft im Hintergrund: Der Wert wird nur auf Ihre Anfrage berechnet, vollständig auf diesem PC.",
-    baselineTitle: "Basiswert",
-    baselineHint:
-      "Schnelle, wiederholbare Messungen — nur mit früheren Läufen auf diesem PC vergleichbar.",
-    baselineRun: "Basiswert messen",
-    baselineRunning: "Messung läuft (~5 s)...",
-    baselineEmpty: "Noch keine Basiswerte. Einen vor den Änderungen messen, einen danach.",
     changeSinceLast: "seit Ihrer letzten Prüfung",
     changeNone: "Keine Änderung seit Ihrer letzten Prüfung.",
     changeFirstRun:
@@ -8559,7 +8533,9 @@ const de: Strings = {
     autoOff: "Aus",
     autoEvery: "Alle {interval}",
     autoHint:
-      "Bei aktiver automatischer Bereinigung gibt PC Tweaker den RAM selbstständig in regelmäßigen Abständen frei, solange es mit Administratorrechten läuft.",
+      "Bei aktiver automatischer Bereinigung gibt PC Tweaker den RAM selbstständig in regelmäßigen Abständen frei. Das geht nur, solange es als Administrator läuft: Windows fragt bei jeder Bereinigung nach der Berechtigung, und eine geplante Bereinigung kann nicht fragen.",
+    autoPausedNotAdmin:
+      "Pausiert: PC Tweaker läuft nicht als Administrator, daher kann die automatische Bereinigung nicht starten. Um sie zu nutzen, schließe PC Tweaker und öffne es mit „Als Administrator ausführen“. Die manuelle Bereinigung funktioniert weiterhin: Windows fragt jedes Mal nach der Berechtigung.",
     autoNext: "Nächste Bereinigung um {time}",
     autoDue: "Bereinigung steht an...",
     autoLast: "Zuletzt um {time}: {amount} freigegeben",
@@ -9079,7 +9055,7 @@ const de: Strings = {
     disable_edge_ai: {
       name: "KI-Funktionen in Microsoft Edge deaktivieren",
       description:
-        "Setzt Microsoft-Edge-Richtlinien, die die Seitenleiste ausblenden, Edge am Herunterladen seines lokalen KI-Modells hindern und die KI-Suche im Verlauf, KI-generierte Designs sowie den Zugriff von Copilot auf Seiteninhalte abschalten. Einige dieser Einstellungen gelten nur für Geschäfts- oder Schulprofile. Edge übernimmt sie ohne Neustart; edge://policy listet sie auf. Edge zeigt dann an, dass es von deiner Organisation verwaltet wird – so kennzeichnet es Richtlinien.",
+        "Setzt Microsoft-Edge-Richtlinien für seine KI-Funktionen. Welche wirken, hängt vom Edge-Profil ab: Edge am Herunterladen seines lokalen KI-Modells zu hindern, wirkt in jedem Profil; die Seitenleiste auszublenden sowie die KI-Suche im Verlauf und KI-generierte Designs abzuschalten, wirkt in Profilen, die nicht mit einem privaten Microsoft-Konto angemeldet sind; den Zugriff von Copilot auf Seiteninhalte und seine Schreibhilfe abzuschalten, wirkt nur in Geschäfts- oder Schulprofilen. Edge übernimmt sie ohne Neustart; edge://policy listet sie auf. Edge zeigt dann an, dass es von deiner Organisation verwaltet wird – so kennzeichnet es Richtlinien.",
     },
     disable_paint_ai: {
       name: "KI-Funktionen in Paint deaktivieren",
@@ -9109,7 +9085,7 @@ const de: Strings = {
     disable_drag_tray: {
       name: "Freigabeleiste beim Ziehen deaktivieren",
       description:
-        "Verhindert, dass die Freigabeleiste bei jedem Ziehen einer Datei vom oberen Bildschirmrand herunterfährt, damit normales Drag & Drop ungestört funktioniert.",
+        "Verhindert, dass die Freigabeleiste (in neueren Builds „Drop tray“) bei jedem Ziehen einer Datei vom oberen Bildschirmrand herunterfährt, damit normales Drag & Drop ungestört funktioniert. Der Wert stammt aus Dokumentation der Windows-Community, nicht von Microsoft; neuere Windows-11-Updates bieten diesen Schalter auch in den Einstellungen.",
     },
     explorer_open_this_pc: {
       name: "Datei-Explorer bei „Dieser PC“ öffnen",
@@ -9124,7 +9100,7 @@ const de: Strings = {
     disable_windows_suggestions: {
       name: "Windows-Tipps und -Vorschläge deaktivieren",
       description:
-        "Ein Schalter für die Hinweise, die Windows von sich aus einblendet: Tipps und Vorschläge, den Willkommensbildschirm nach Updates, Vorschläge in den Einstellungen, „Einrichtung des Geräts abschließen“, vorgeschlagene Benachrichtigungen, Empfehlungen und Kontohinweise im Startmenü sowie Werbung von Synchronisierungsanbietern im Datei-Explorer.",
+        "Ein Schalter für die Hinweise, die Windows von sich aus einblendet: Tipps und Vorschläge, den Willkommensbildschirm nach Updates, Vorschläge in den Einstellungen, „Einrichtung des Geräts abschließen“, vorgeschlagene Benachrichtigungen, Empfehlungen und Kontohinweise im Startmenü sowie Werbung von Synchronisierungsanbietern im Datei-Explorer. Es sind die Werte, die die Schalter in den Windows-Einstellungen schreiben, wie von der Windows-Community dokumentiert; Microsoft dokumentiert sie nicht, daher kann ein Windows-Update sie ändern.",
     },
     disable_widgets: {
       name: "Widgets vollständig deaktivieren",
@@ -9142,9 +9118,9 @@ const de: Strings = {
         "Schaltet die Aufnahmefunktion der Game Bar und ihre Hintergrundaufzeichnung ab, die fortlaufend ein Video deiner letzten Spielminuten vorhält. Ergänzt den Schalter für Game Bar / Game DVR.",
     },
     disable_ai_fabric_service: {
-      name: "Windows-AI-Fabric-Dienst deaktivieren",
+      name: "Windows-KI-Komponentenhost nur bei Bedarf starten",
       description:
-        "Beendet und deaktiviert den Dienst hinter den lokalen KI-Funktionen von Windows wie Recall, Click to Do und einigen Funktionen der Liveuntertitel und gibt den Speicher frei, den er im Hintergrund belegt. Diese Funktionen arbeiten erst wieder, wenn du ihn erneut aktivierst. Nur auf PCs vorhanden, die diese Funktionen haben.",
+        "Beendet den Dienst Windows-KI-Komponentenhost (WSAIFabricSvc) und stellt ihn auf Manuell, damit er nicht mehr mit Windows startet. Fordert eine App oder Windows-Funktion ihn an, startet Windows ihn wie gewohnt, es wird also keine Funktion abgeschaltet. Windows beschreibt ihn als Dienst, der Apps und anderen Windows-Diensten KI-Komponentendienste bereitstellt. Nur auf PCs vorhanden, die ihn haben.",
     },
     disable_restart_apps: {
       name: "Apps nach der Anmeldung nicht erneut öffnen",
@@ -9610,13 +9586,6 @@ const pt: Strings = {
     computing: "Analisando...",
     idleHint:
       "Nada roda em segundo plano: a pontuação só é calculada quando você pede, inteiramente neste PC.",
-    baselineTitle: "Referência",
-    baselineHint:
-      "Medições rápidas e repetíveis — só comparáveis com execuções anteriores neste PC.",
-    baselineRun: "Executar referência",
-    baselineRunning: "Medindo (~5 s)...",
-    baselineEmpty:
-      "Nenhuma referência ainda. Execute uma antes de aplicar alterações, e outra depois.",
     changeSinceLast: "desde sua última verificação",
     changeNone: "Nenhuma alteração desde sua última verificação.",
     changeFirstRun:
@@ -10240,7 +10209,9 @@ const pt: Strings = {
     autoOff: "Desativada",
     autoEvery: "A cada {interval}",
     autoHint:
-      "Com a limpeza automática ativada, o PC Tweaker libera RAM sozinho em intervalos regulares, desde que esteja rodando com direitos de administrador.",
+      "Com a limpeza automática ativada, o PC Tweaker libera RAM sozinho em intervalos regulares. Ele só consegue fazer isso enquanto roda como administrador: o Windows pede permissão para cada limpeza, e uma limpeza programada não pode pedir.",
+    autoPausedNotAdmin:
+      "Pausada: o PC Tweaker não está rodando como administrador, então a limpeza automática não pode ser executada. Para usá-la, feche o PC Tweaker e abra-o de novo com “Executar como administrador”. A limpeza manual continua funcionando: o Windows pede permissão a cada vez.",
     autoNext: "Próxima limpeza às {time}",
     autoDue: "Limpeza prestes a ocorrer...",
     autoLast: "Última às {time}: {amount} liberados",
@@ -10753,7 +10724,7 @@ const pt: Strings = {
     disable_edge_ai: {
       name: "Desativar os recursos de IA do Microsoft Edge",
       description:
-        "Aplica políticas do Microsoft Edge que ocultam a barra lateral, impedem o Edge de baixar seu modelo de IA local e desativam a pesquisa com IA no histórico, os temas gerados por IA e o acesso do Copilot ao conteúdo das páginas. Alguns desses controles valem apenas para perfis corporativos ou escolares. O Edge os aplica sem reiniciar; edge://policy mostra a lista. O Edge vai indicar que é gerenciado pela sua organização: é assim que ele indica as políticas.",
+        "Aplica políticas do Microsoft Edge para seus recursos de IA. Quais têm efeito depende do perfil do Edge: impedir que o Edge baixe seu modelo de IA local funciona em todos os perfis; ocultar a barra lateral e desativar a pesquisa com IA no histórico e os temas gerados por IA funciona nos perfis que não estão conectados com uma conta Microsoft pessoal; desativar o acesso do Copilot ao conteúdo das páginas e a ajuda de escrita dele funciona apenas em perfis corporativos ou escolares. O Edge os aplica sem reiniciar; edge://policy mostra a lista. O Edge vai indicar que é gerenciado pela sua organização: é assim que ele indica as políticas.",
     },
     disable_paint_ai: {
       name: "Desativar os recursos de IA do Paint",
@@ -10783,7 +10754,7 @@ const pt: Strings = {
     disable_drag_tray: {
       name: "Desativar o painel de arrastar",
       description:
-        "Impede que o painel de compartilhamento desça do topo da tela toda vez que você arrasta um arquivo, para que o arrastar e soltar comum funcione sem atrapalhar.",
+        "Impede que o painel de compartilhamento (chamado Drop tray nas versões mais recentes) desça do topo da tela toda vez que você arrasta um arquivo, para que o arrastar e soltar comum funcione sem atrapalhar. O valor vem da documentação da comunidade do Windows, não da Microsoft; as atualizações recentes do Windows 11 também oferecem essa opção em Configurações.",
     },
     explorer_open_this_pc: {
       name: "Abrir o Explorador de Arquivos em Este Computador",
@@ -10798,7 +10769,7 @@ const pt: Strings = {
     disable_windows_suggestions: {
       name: "Desativar dicas e sugestões do Windows",
       description:
-        'Um único botão para os avisos que o Windows adiciona por conta própria: dicas e sugestões, a tela de boas-vindas após atualizações, sugestões em Configurações, "concluir a configuração do dispositivo", notificações sugeridas, recomendações e avisos de conta no menu Iniciar e anúncios de provedores de sincronização no Explorador de Arquivos.',
+        'Um único botão para os avisos que o Windows adiciona por conta própria: dicas e sugestões, a tela de boas-vindas após atualizações, sugestões em Configurações, "concluir a configuração do dispositivo", notificações sugeridas, recomendações e avisos de conta no menu Iniciar e anúncios de provedores de sincronização no Explorador de Arquivos. São os valores que os botões de Configurações do Windows gravam, conforme documentado pela comunidade do Windows; a Microsoft não os documenta, então uma atualização do Windows pode alterá-los.',
     },
     disable_widgets: {
       name: "Desativar os widgets por completo",
@@ -10816,9 +10787,9 @@ const pt: Strings = {
         "Desativa o recurso de captura da Game Bar e a gravação em segundo plano, que mantém um vídeo contínuo dos seus últimos minutos de jogo. Complementa o botão Game Bar / Game DVR.",
     },
     disable_ai_fabric_service: {
-      name: "Desativar o serviço Windows AI Fabric",
+      name: "Iniciar o host de componentes de IA do Windows só quando necessário",
       description:
-        "Interrompe e desativa o serviço por trás dos recursos de IA locais do Windows, como o Recall, o Click to Do e alguns recursos da Legenda ao Vivo, liberando a memória que ele ocupa em segundo plano. Esses recursos param de funcionar até você reativá-lo. Só existe nos PCs que têm esses recursos.",
+        "Interrompe o serviço host de componentes de IA do Windows (WSAIFabricSvc) e o define como Manual, para que ele não inicie mais com o Windows. Se um aplicativo ou recurso do Windows precisar dele, o Windows o inicia normalmente, então nenhum recurso é desativado. O Windows o descreve como o serviço que fornece serviços de componentes de IA a aplicativos e a outros serviços do Windows. Só existe nos PCs que o têm.",
     },
     disable_restart_apps: {
       name: "Impedir a reabertura de apps após iniciar sessão",

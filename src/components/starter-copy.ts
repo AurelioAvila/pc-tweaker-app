@@ -5,6 +5,18 @@ const en = {
   gaming: "Gaming",
   study: "Study",
   work: "Work",
+  laptop: "Laptop",
+  quiet: "No interruptions",
+  streaming: "Streaming",
+  laptopBody: "Fewer visual effects and no apps reopening on their own after sign-in.",
+  quietBody: "No feedback surveys, suggested apps or Sticky Keys pop-ups.",
+  streamingBody: "Game DVR recording off and fewer Windows pop-ups that could appear on stream.",
+  laptopNote:
+    "Animations and transparency are turned off, so Windows looks plainer. How much battery this saves depends on the laptop and is not measured here; power settings are not changed.",
+  quietNote:
+    "This is about pop-ups, not fan noise: fan and power settings are not changed. Notifications from your own apps keep working.",
+  streamingNote:
+    "Game Bar background recording stops, so record with your streaming app. Windows feedback surveys and the Sticky Keys pop-up no longer appear over your game.",
   gamingBody: "Consistent Windows pointer movement and control over Game DVR recording.",
   studyBody: "Fewer Windows suggestions, survey prompts and taskbar distractions.",
   workBody: "Visible file extensions, faster menu opening and no startup app delay.",
@@ -35,6 +47,19 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     gaming: "Gaming",
     study: "Studio",
     work: "Lavoro",
+    laptop: "Portatile",
+    quiet: "Senza interruzioni",
+    streaming: "Streaming",
+    laptopBody: "Meno effetti visivi e nessuna app che si riapre da sola dopo l’accesso.",
+    quietBody: "Niente sondaggi di feedback, app suggerite o finestre dei Tasti permanenti.",
+    streamingBody:
+      "Registrazione Game DVR disattivata e meno finestre di Windows che possono comparire in diretta.",
+    laptopNote:
+      "Animazioni e trasparenza vengono disattivate, quindi Windows appare più sobrio. Quanta batteria si risparmia dipende dal portatile e qui non viene misurato; le impostazioni di alimentazione non cambiano.",
+    quietNote:
+      "Riguarda le finestre a comparsa, non il rumore delle ventole: ventole e alimentazione non cambiano. Le notifiche delle tue app continuano a funzionare.",
+    streamingNote:
+      "La registrazione in background della Game Bar si ferma: per registrare usa la tua app di streaming. I sondaggi di Windows e la finestra dei Tasti permanenti non compaiono più sopra il gioco.",
     gamingBody: "Movimento del puntatore coerente e controllo della registrazione Game DVR.",
     studyBody:
       "Meno suggerimenti di Windows, sondaggi e distrazioni nella barra delle applicazioni.",
@@ -63,6 +88,20 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     gaming: "Jeu",
     study: "Études",
     work: "Travail",
+    laptop: "Portable",
+    quiet: "Sans interruptions",
+    streaming: "Streaming",
+    laptopBody:
+      "Moins d’effets visuels et plus d’applications qui se rouvrent seules après la connexion.",
+    quietBody: "Plus de sondages, d’applications suggérées ni de fenêtre des touches rémanentes.",
+    streamingBody:
+      "Enregistrement Game DVR désactivé et moins de fenêtres Windows susceptibles d’apparaître en direct.",
+    laptopNote:
+      "Les animations et la transparence sont désactivées : Windows paraît plus sobre. L’économie de batterie dépend du portable et n’est pas mesurée ici ; les réglages d’alimentation ne changent pas.",
+    quietNote:
+      "Il s’agit des fenêtres surgissantes, pas du bruit des ventilateurs : ventilateurs et alimentation ne changent pas. Les notifications de vos applications continuent de fonctionner.",
+    streamingNote:
+      "L’enregistrement en arrière-plan de la Game Bar s’arrête : enregistrez avec votre logiciel de streaming. Les sondages Windows et la fenêtre des touches rémanentes n’apparaissent plus par-dessus le jeu.",
     gamingBody: "Un pointeur Windows constant et le contrôle de l’enregistrement Game DVR.",
     studyBody: "Moins de suggestions Windows, de sondages et de distractions.",
     workBody: "Extensions visibles, menus immédiats et applications sans délai au démarrage.",
@@ -90,6 +129,21 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     gaming: "Gaming",
     study: "Estudio",
     work: "Trabajo",
+    laptop: "Portátil",
+    quiet: "Sin interrupciones",
+    streaming: "Streaming",
+    laptopBody:
+      "Menos efectos visuales y ninguna aplicación que se vuelva a abrir sola al iniciar sesión.",
+    quietBody:
+      "Sin encuestas de opinión, aplicaciones sugeridas ni la ventana de Teclas especiales.",
+    streamingBody:
+      "Grabación de Game DVR desactivada y menos ventanas de Windows que puedan aparecer en directo.",
+    laptopNote:
+      "Se desactivan las animaciones y la transparencia, así que Windows se ve más sobrio. Cuánta batería se ahorra depende del portátil y aquí no se mide; la configuración de energía no cambia.",
+    quietNote:
+      "Se trata de ventanas emergentes, no del ruido de los ventiladores: los ventiladores y la energía no cambian. Las notificaciones de tus aplicaciones siguen funcionando.",
+    streamingNote:
+      "La grabación en segundo plano de la Game Bar se detiene: graba con tu aplicación de streaming. Las encuestas de Windows y la ventana de Teclas especiales ya no aparecen sobre el juego.",
     gamingBody: "Movimiento constante del puntero y control de la grabación Game DVR.",
     studyBody: "Menos sugerencias de Windows, encuestas y distracciones.",
     workBody: "Extensiones visibles, menús inmediatos y aplicaciones sin demora al iniciar.",
@@ -117,6 +171,20 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     gaming: "Gaming",
     study: "Lernen",
     work: "Arbeit",
+    laptop: "Laptop",
+    quiet: "Ohne Unterbrechungen",
+    streaming: "Streaming",
+    laptopBody:
+      "Weniger visuelle Effekte und keine Apps, die sich nach der Anmeldung von selbst wieder öffnen.",
+    quietBody: "Keine Feedback-Umfragen, vorgeschlagenen Apps oder Hinweise der Einrastfunktion.",
+    streamingBody:
+      "Game-DVR-Aufnahme aus und weniger Windows-Pop-ups, die im Stream erscheinen könnten.",
+    laptopNote:
+      "Animationen und Transparenz werden abgeschaltet, Windows wirkt dadurch schlichter. Wie viel Akku das spart, hängt vom Laptop ab und wird hier nicht gemessen; Energieeinstellungen bleiben unverändert.",
+    quietNote:
+      "Es geht um Pop-ups, nicht um Lüftergeräusche: Lüfter- und Energieeinstellungen bleiben unverändert. Benachrichtigungen deiner Apps funktionieren weiter.",
+    streamingNote:
+      "Die Hintergrundaufnahme der Game Bar stoppt, nimm also mit deiner Streaming-App auf. Windows-Umfragen und der Hinweis der Einrastfunktion erscheinen nicht mehr über dem Spiel.",
     gamingBody: "Gleichmäßige Windows-Zeigerbewegung und Kontrolle über Game-DVR-Aufnahmen.",
     studyBody: "Weniger Windows-Vorschläge, Umfragen und Ablenkungen.",
     workBody: "Sichtbare Dateiendungen, direkte Menüs und Autostart ohne Verzögerung.",
@@ -144,21 +212,35 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     gaming: "Gaming",
     study: "Estudo",
     work: "Trabalho",
-    gamingBody: "Movimento consistente do ponteiro e controlo da gravação Game DVR.",
-    studyBody: "Menos sugestões do Windows, questionários e distrações.",
-    workBody: "Extensões visíveis, menus imediatos e aplicações sem atraso no arranque.",
+    laptop: "Notebook",
+    quiet: "Sem interrupções",
+    streaming: "Streaming",
+    gamingBody: "Movimento consistente do ponteiro e controle da gravação do Game DVR.",
+    studyBody: "Menos sugestões do Windows, pesquisas e distrações.",
+    workBody: "Extensões visíveis, menus imediatos e aplicativos sem atraso na inicialização.",
+    laptopBody: "Menos efeitos visuais e nenhum aplicativo reabrindo sozinho depois de entrar.",
+    quietBody:
+      "Sem pesquisas de feedback, aplicativos sugeridos ou a janela das Teclas de Aderência.",
+    streamingBody:
+      "Gravação do Game DVR desativada e menos janelas do Windows que possam aparecer na transmissão.",
     gamingNote:
-      "Desativa o Game DVR. O rato também muda no ambiente de trabalho; jogos com entrada direta podem ignorar o ajuste. A opção de teclas presas desativa o respetivo atalho.",
+      "Desativa o Game DVR. O mouse também muda na área de trabalho; jogos com entrada direta podem ignorar o ajuste. A opção de Teclas de Aderência desativa o atalho dela.",
     studyNote:
-      "Oculta os widgets da barra. Não silencia mensagens nem bloqueia sites. Algumas alterações podem exigir terminar a sessão.",
+      "Oculta os widgets da barra. Não silencia mensagens nem bloqueia sites. Algumas alterações podem exigir sair da conta e entrar de novo.",
     workNote:
-      "Os menus abrem sem atraso. As aplicações podem iniciar em conjunto. As extensões ficam visíveis; ficheiros ocultos são opcionais.",
+      "Os menus abrem sem atraso. Os aplicativos podem iniciar juntos. As extensões ficam visíveis; arquivos ocultos são opcionais.",
+    laptopNote:
+      "Animações e transparência são desativadas, então o Windows fica com visual mais simples. Quanto de bateria isso economiza depende do notebook e não é medido aqui; as configurações de energia não mudam.",
+    quietNote:
+      "Trata-se de janelas pop-up, não do barulho das ventoinhas: ventoinhas e energia não mudam. As notificações dos seus aplicativos continuam funcionando.",
+    streamingNote:
+      "A gravação em segundo plano da Game Bar para, então grave com seu aplicativo de streaming. As pesquisas do Windows e a janela das Teclas de Aderência não aparecem mais sobre o jogo.",
     apply: "Aplicar seleção",
-    applying: "A aplicar…",
+    applying: "Aplicando…",
     active: "Já aplicado",
     optional: "Opcional",
     notice:
-      "Adiciona os ajustes selecionados e mantém os restantes. Restaure alterações na categoria ou no histórico. Não substitui integralmente o modo anterior.",
+      "Adiciona os ajustes selecionados e mantém os demais. Restaure alterações na categoria ou no histórico. Não substitui integralmente o modo anterior.",
     empty: "Selecione uma alteração.",
     ready: "Todos os ajustes selecionados já estão aplicados.",
     missing: "Algumas opções não estão disponíveis nesta versão.",

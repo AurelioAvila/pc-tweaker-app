@@ -31,8 +31,22 @@ export function StarterProfiles({
   const preset = STARTER_PRESETS.find((p) => p.id === current)!;
   const selection = selections[current];
   const { available, missing, pending } = presetSelection(preset, tweaks, selection, isPro);
-  const body = { gaming: copy.gamingBody, study: copy.studyBody, work: copy.workBody };
-  const note = { gaming: copy.gamingNote, study: copy.studyNote, work: copy.workNote };
+  const body: Record<string, string> = {
+    gaming: copy.gamingBody,
+    study: copy.studyBody,
+    work: copy.workBody,
+    laptop: copy.laptopBody,
+    quiet: copy.quietBody,
+    streaming: copy.streamingBody,
+  };
+  const note: Record<string, string> = {
+    gaming: copy.gamingNote,
+    study: copy.studyNote,
+    work: copy.workNote,
+    laptop: copy.laptopNote,
+    quiet: copy.quietNote,
+    streaming: copy.streamingNote,
+  };
   return (
     <section className="starter-profiles" aria-label={copy.heading}>
       <header>
@@ -67,6 +81,21 @@ export function StarterProfiles({
                 <>
                   <path d="M12 6C9 4 6 4 3 5v15c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Zm0 0v15" />
                   <path d="M6 9h3m-3 4h3m6-4h3m-3 4h3" />
+                </>
+              ) : p.id === "laptop" ? (
+                <>
+                  <rect x="5" y="5" width="14" height="10" rx="1.5" />
+                  <path d="M2.5 19h19l-2-4h-15l-2 4Z" />
+                </>
+              ) : p.id === "quiet" ? (
+                <>
+                  <path d="M18 15V11a6 6 0 0 0-9.3-5M6.3 8.5A6 6 0 0 0 6 11v4l-2 2h13" />
+                  <path d="M10 20a2 2 0 0 0 4 0M3 3l18 18" />
+                </>
+              ) : p.id === "streaming" ? (
+                <>
+                  <circle cx="12" cy="12" r="2" />
+                  <path d="M8.5 15.5a5 5 0 0 1 0-7m7 0a5 5 0 0 1 0 7M5.6 18.4a9 9 0 0 1 0-12.8m12.8 0a9 9 0 0 1 0 12.8" />
                 </>
               ) : (
                 <>

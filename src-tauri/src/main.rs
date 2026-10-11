@@ -14,7 +14,7 @@ fn main() {
         // relaunches fell straight through to `run()` and started a second,
         // full GUI running as administrator instead of performing the action
         // headlessly and exiting. Anything added there has to be added here.
-        const ELEVATED_ACTIONS: [&str; 21] = [
+        const ELEVATED_ACTIONS: [&str; 22] = [
             "--elevated-download-limit",
             "--elevated-download-restore",
             "--elevated-session-apply",
@@ -36,6 +36,7 @@ fn main() {
             "--elevated-task",
             "--elevated-dpc-trace",
             "--elevated-ramtrim",
+            "--elevated-boot-times",
         ];
         // The scheduled watchdog: one argument, no id, no window, no GUI.
         if args.len() == 2 && args[1] == "--check-drift" {

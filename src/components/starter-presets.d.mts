@@ -1,6 +1,6 @@
 import type { TweakInfo } from "../types";
 export type StarterPreset = {
-  id: "gaming" | "study" | "work";
+  id: "gaming" | "streaming" | "work" | "study" | "laptop" | "quiet";
   icon: string;
   tweaks: { id: string; selected: boolean }[];
 };

@@ -38,6 +38,7 @@ fn tool_path(name: &str) -> io::Result<PathBuf> {
         "taskkill" => "taskkill.exe",
         "shutdown" => "shutdown.exe",
         "ipconfig" => "ipconfig.exe",
+        "wevtutil" => "wevtutil.exe",
         "defrag" => "defrag.exe",
         "dism" | "dism.exe" => "dism.exe",
         "sfc" | "sfc.exe" => "sfc.exe",

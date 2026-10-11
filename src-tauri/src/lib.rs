@@ -10,6 +10,7 @@ mod contextmenu;
 mod cookies;
 mod debloat;
 mod diagnostics {
+    pub mod boot;
     pub mod dpc;
     pub mod network_verify;
 }
@@ -1729,6 +1730,9 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     if action == diagnostics::dpc::ELEVATED_FLAG {
         std::process::exit(diagnostics::dpc::run_elevated(&dir, id));
     }
+    if action == diagnostics::boot::ELEVATED_FLAG && id == "read" {
+        std::process::exit(diagnostics::boot::run_elevated(&dir));
+    }
     // A RAM trim changes no setting, so it needs no restore point either.
     if action == "--elevated-ramtrim" {
         let code = match ramclean::run_elevated(&dir) {
@@ -2168,7 +2172,8 @@ pub fn run() {
             drift_watch_enabled,
             set_drift_watch,
             baseline::run_baseline,
-            baseline::list_baselines,
+            baseline::before_after,
+            baseline::save_report_png,
             recommend::advise_tweaks,
             recommend::scan_relevant_ids,
             cpuclock::cpu_clock,
@@ -2258,6 +2263,8 @@ pub fn run() {
             diagnostics::network_verify::verify_network,
             diagnostics::network_verify::last_network_verification,
             diagnostics::dpc::trace_dpc_latency,
+            diagnostics::boot::boot_times,
+            ramclean::ram_schedule_ready,
             engine::dynamic_session::core_steering_status,
             game_sessions::set_core_steering,
             preview_tweak,

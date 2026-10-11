@@ -234,7 +234,11 @@ pub fn composite_changes(id: &str) -> Vec<TechnicalChange> {
     if let Some(tweak) = services::find(id) {
         return vec![TechnicalChange::Service {
             name: tweak.service,
-            action: "stopped, then set to Disabled",
+            action: if tweak.manual {
+                "stopped, then set to Manual"
+            } else {
+                "stopped, then set to Disabled"
+            },
         }];
     }
     Vec::new()

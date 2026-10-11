@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-boot-times"
+description = "Enables the boot_times command without any pre-configured scope."
+commands.allow = ["boot_times"]
+
+[[permission]]
+identifier = "deny-boot-times"
+description = "Denies the boot_times command without any pre-configured scope."
+commands.deny = ["boot_times"]

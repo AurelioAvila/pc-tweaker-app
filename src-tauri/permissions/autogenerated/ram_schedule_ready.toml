@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ram-schedule-ready"
+description = "Enables the ram_schedule_ready command without any pre-configured scope."
+commands.allow = ["ram_schedule_ready"]
+
+[[permission]]
+identifier = "deny-ram-schedule-ready"
+description = "Denies the ram_schedule_ready command without any pre-configured scope."
+commands.deny = ["ram_schedule_ready"]

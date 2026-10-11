@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-before-after"
+description = "Enables the before_after command without any pre-configured scope."
+commands.allow = ["before_after"]
+
+[[permission]]
+identifier = "deny-before-after"
+description = "Denies the before_after command without any pre-configured scope."
+commands.deny = ["before_after"]

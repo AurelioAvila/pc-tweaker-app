@@ -57,6 +57,7 @@ import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
 import { X3dPanel } from "./components/x3d";
 import { ScanPanel } from "./components/scan";
 import { HealthPanel } from "./components/health";
+import { BeforeAfterPanel } from "./components/before-after";
 import { SystemRepairCard } from "./components/repair";
 import { LiveDashboard } from "./components/live-dashboard";
 import { PageBoundary } from "./components/page-boundary";
@@ -892,6 +893,9 @@ function App() {
 
                 {showHealth && <LiveDashboard s={s} lang={lang} onNavigate={setFilter} />}
                 {showHealth && (
+                  <BeforeAfterPanel s={s} lang={lang} tweaks={tweaks} pushToast={pushToast} />
+                )}
+                {showHealth && (
                   <SystemRepairCard
                     s={s}
                     isPro={isProUnlocked}
@@ -921,13 +925,6 @@ function App() {
                       good: s.healthPanel.verdictGood,
                       fair: s.healthPanel.verdictFair,
                       needsWork: s.healthPanel.verdictNeedsWork,
-                    }}
-                    baseline={{
-                      title: s.healthPanel.baselineTitle,
-                      hint: s.healthPanel.baselineHint,
-                      run: s.healthPanel.baselineRun,
-                      running: s.healthPanel.baselineRunning,
-                      empty: s.healthPanel.baselineEmpty,
                     }}
                     change={{
                       sinceLast: s.healthPanel.changeSinceLast,

@@ -315,12 +315,22 @@
   border-radius: 16px;
   color: var(--fg, #f3f4f6);
   background:
-    radial-gradient(90% 120% at 100% 0%, color-mix(in srgb, var(--hw-ember) 17%, transparent), transparent 60%),
-    linear-gradient(180deg, color-mix(in srgb, var(--bg-2, #121217) 92%, #fff), var(--bg-2, #121217));
+    radial-gradient(
+      90% 120% at 100% 0%,
+      color-mix(in srgb, var(--hw-ember) 17%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-2, #121217) 92%, #fff),
+      var(--bg-2, #121217)
+    );
   box-shadow:
     0 22px 48px -26px color-mix(in srgb, var(--hw-ember) 60%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 .hw-card:hover {
   border-color: var(--hw-ember);
@@ -457,7 +467,9 @@
   display: none;
 }
 .hw-strip-cta {
-  transition: transform 0.18s ease, background-color 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease;
 }
 .hw-strip-cta:hover {
   transform: translateY(-1px);

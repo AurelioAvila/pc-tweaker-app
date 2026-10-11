@@ -96,12 +96,21 @@ export const HALLOWEEN_DECOR_RIGHT = svg(
 /** One clean pumpkin mark in a 64x60 box, drawn flat: five lobes, a stem, a carved face.
  *  `ember` is for dark surfaces (warm body, candle-lit face); `ink` is for the ember strip
  *  (dark body, ember cut-outs). Decorative: mark the container aria-hidden. */
-function mark(p: string, body: string, rim: string, face: string, stem: string, glow: boolean): string {
+function mark(
+  p: string,
+  body: string,
+  rim: string,
+  face: string,
+  stem: string,
+  glow: boolean,
+): string {
   return svg(
     p,
     "0 0 64 60",
     `<defs><linearGradient id="${p}-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${body}"/><stop offset="1" stop-color="${rim}"/></linearGradient>${
-      glow ? `<radialGradient id="${p}-f" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#fff3c4"/><stop offset="1" stop-color="#ffb347"/></radialGradient>` : ""
+      glow
+        ? `<radialGradient id="${p}-f" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#fff3c4"/><stop offset="1" stop-color="#ffb347"/></radialGradient>`
+        : ""
     }</defs>
 <ellipse cx="32" cy="56" rx="21" ry="2.6" fill="#000" opacity=".28"/>
 <ellipse cx="16.5" cy="35" rx="12.5" ry="18" fill="url(#${p}-g)"/>

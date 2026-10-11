@@ -1,5 +1,10 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { HALLOWEEN_DECOR_LEFT, HALLOWEEN_DECOR_RIGHT, HALLOWEEN_MARK_EMBER, HALLOWEEN_MARK_INK } from "../halloween-decor";
+import { useState, type ReactNode } from "react";
+import {
+  HALLOWEEN_DECOR_LEFT,
+  HALLOWEEN_DECOR_RIGHT,
+  HALLOWEEN_MARK_EMBER,
+  HALLOWEEN_MARK_INK,
+} from "../halloween-decor";
 import { promoClock } from "../promo";
 import "./halloween-offer.css";
 
@@ -123,14 +128,15 @@ export function HalloweenStrip({
   closeLabel: string;
   storageKey: string;
 }) {
-  const [closed, setClosed] = useState(false);
-  useEffect(() => {
+  // Read once, when the strip mounts: the site mounts it only after the offer is known
+  // (never during hydration), and a new key comes with a new strip.
+  const [closed, setClosed] = useState(() => {
     try {
-      if (localStorage.getItem(storageKey) === "1") setClosed(true);
+      return localStorage.getItem(storageKey) === "1";
     } catch {
-      /* storage blocked: the strip simply shows */
+      return false; // storage blocked (or no browser): the strip simply shows
     }
-  }, [storageKey]);
+  });
   if (closed) return null;
   const clock = promoClock(remaining);
   return (
@@ -176,7 +182,12 @@ export function HalloweenStrip({
           }}
         >
           <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false">
-            <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <path
+              d="M2 2l8 8M10 2l-8 8"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
       </div>
@@ -209,7 +220,11 @@ export function HalloweenCard({
 }) {
   return (
     <aside className="hw-card" aria-label={`${tag} ${pct}`}>
-      <span className="hw-card-mark" aria-hidden="true" dangerouslySetInnerHTML={{ __html: HALLOWEEN_MARK_EMBER }} />
+      <span
+        className="hw-card-mark"
+        aria-hidden="true"
+        dangerouslySetInnerHTML={{ __html: HALLOWEEN_MARK_EMBER }}
+      />
       <span className="hw-card-tag">{tag}</span>
       <div className="hw-card-row">
         <span className="hw-card-now">{now}</span>
@@ -222,7 +237,14 @@ export function HalloweenCard({
         <a className="hw-card-cta" href={href}>
           {cta}
           <svg viewBox="0 0 14 10" width="14" height="10" aria-hidden="true" focusable="false">
-            <path d="M1 5h11M8 1l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M1 5h11M8 1l4 4-4 4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </a>
       </div>

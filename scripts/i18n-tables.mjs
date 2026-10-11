@@ -13,10 +13,12 @@ export async function loadTranslations() {
         import { PRICING_COPY } from './src/components/pricing-copy';
         import { STARTER_COPY } from './src/components/starter-copy';
         import { BEFORE_AFTER_COPY } from './src/components/before-after-copy';
+        import { HISTORY_COPY } from './src/components/history-copy';
         const tables = { componentScan: SCAN_COPY, componentAdvanced: ADVANCED_COPY,
           componentDebloat: DEBLOAT_COPY, componentLibrary: LIBRARY_COPY,
           componentImpacts: EXTRA_IMPACTS, componentPricing: PRICING_COPY,
-          componentStarter: STARTER_COPY, componentBeforeAfter: BEFORE_AFTER_COPY };
+          componentStarter: STARTER_COPY, componentBeforeAfter: BEFORE_AFTER_COPY,
+          componentHistory: HISTORY_COPY };
         export const translations = Object.fromEntries(Object.entries(STRINGS).map(([lang, strings]) =>
           [lang, { ...strings, ...Object.fromEntries(Object.entries(tables).map(([key, table]) => [key, table[lang]])) }]));
       `,

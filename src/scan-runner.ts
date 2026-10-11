@@ -286,7 +286,7 @@ export async function applyScanSelection(
   let errors: string[] = [];
   if (apply.length) {
     try {
-      errors = await call<string[]>("apply_tweaks", { ids: apply });
+      errors = await call<string[]>("apply_tweaks", { ids: apply, source: "scan" });
     } catch (error) {
       errors = [String(error)];
     }

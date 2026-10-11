@@ -197,7 +197,9 @@ export function ProfilesPanel({
     const ids = profile.tweaks.filter((id) => !MANUAL_ONLY_TWEAK_IDS.has(id));
     const wasApplied = new Set(tweaks.filter((t) => t.applied).map((t) => t.id));
     try {
-      const failures = await invoke<string[]>("apply_tweaks", { ids });
+      // Named in the history: a starter profile has no creation date.
+      const source = `${profile.created_at ? "profile" : "starter"}:${profile.name}`;
+      const failures = await invoke<string[]>("apply_tweaks", { ids, source });
       // Counted from what is in effect now, not from the failure list: a
       // cancelled administrator prompt reports one failure for the whole
       // elevated part, and a control this PC does not support is skipped

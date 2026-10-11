@@ -477,6 +477,16 @@ export type AuditEntry = {
   elevated: boolean;
   success: boolean;
   detail?: string | null;
+  /** Registry values the change wrote, read before and after it (1.18.1+). */
+  changes?: ValueChange[];
+};
+
+/** One registry value as it was before a change and after it; null = not set. */
+export type ValueChange = {
+  path: string;
+  name: string;
+  before: string | null;
+  after: string | null;
 };
 
 /** What the update watchdog saw (src-tauri/src/updatewatch.rs). The two

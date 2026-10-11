@@ -64,12 +64,8 @@ import { PageBoundary } from "./components/page-boundary";
 import { AppCacheCard, CookieCleanerCard } from "./components/cleaners";
 import { HardwarePanel } from "./components/hardware";
 import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
-import {
-  CrashReportsCard,
-  LedgerPanel,
-  DriftWatchToggle,
-  UpdateDriftCard,
-} from "./components/intelligence";
+import { CrashReportsCard, DriftWatchToggle, UpdateDriftCard } from "./components/intelligence";
+import { ChangeHistory } from "./components/change-history";
 import { usePulseSamples } from "./components/command";
 import { ScheduledTaskManager, StartupManager } from "./components/startup";
 import { ProfilesPanel } from "./components/profiles";
@@ -966,7 +962,7 @@ function App() {
                       pushToast={pushToast}
                     />
                     <CrashReportsCard s={s} pushToast={pushToast} />
-                    <LedgerPanel
+                    <ChangeHistory
                       s={s}
                       lang={lang}
                       tweaks={tweaks}

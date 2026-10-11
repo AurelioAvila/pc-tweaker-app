@@ -81,7 +81,11 @@ export function buildHistory(entries: AuditEntry[], removals: RemovalRecord[] = 
   for (let i = entries.length - 1; i >= 0; i--) {
     const e = entries[i];
     if (e.action === "origin") {
-      open.push({ ts: e.ts, origin: originOf(e.target), ids: new Set((e.detail ?? "").split(",")) });
+      open.push({
+        ts: e.ts,
+        origin: originOf(e.target),
+        ids: new Set((e.detail ?? "").split(",")),
+      });
     } else if (e.action === "tweak-applied") {
       const marker = [...open]
         .reverse()

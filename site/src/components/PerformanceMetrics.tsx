@@ -102,7 +102,7 @@ export function PerformanceMetrics() {
             viewBox="0 0 560 160"
             className="w-full"
             role="img"
-            aria-label="Illustrative frame-time traces, not measured benchmark data"
+            aria-label="Example frame-time traces, not measured benchmark data"
           >
             {[0, 40, 80, 120, 160].map((y) => (
               <line

@@ -256,7 +256,7 @@ export const engDictionary: Dictionary = {
   "metrics": {
     "tag": "01 / WHAT TO MEASURE",
     "title": "Average FPS is only part of the story.",
-    "sub": "Judge a change by repeated runs: frame-time spikes, 1% lows and consistency. Results depend on your hardware, drivers and game. The chart below is an illustration, not a captured benchmark or a promised improvement.",
+    "sub": "Judge a change by repeated runs: frame-time spikes, 1% lows and consistency. Results depend on your hardware, drivers and game. The chart below is a concept sketch, not a captured benchmark or a promised improvement.",
     "stats": [
       {
         "value": 46,
@@ -279,10 +279,10 @@ export const engDictionary: Dictionary = {
         "label": "PLACE TO REVIEW & RESTORE"
       }
     ],
-    "graphTitle": "ILLUSTRATIVE COMPARISON — NOT MEASURED DATA",
+    "graphTitle": "EXAMPLE COMPARISON — NOT MEASURED DATA",
     "graphStock": "EXAMPLE A",
     "graphTweaked": "EXAMPLE B",
-    "graphNote": "Illustrative traces and FPS values. No measured frame-time, micro-stutter or DPC-latency improvement is claimed by this chart.",
+    "graphNote": "Example traces and FPS values. No measured frame-time, micro-stutter or DPC-latency improvement is claimed by this chart.",
     "fpsStock": 330,
     "fpsTweaked": 551
   },

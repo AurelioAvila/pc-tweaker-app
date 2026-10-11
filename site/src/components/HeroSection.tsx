@@ -192,7 +192,7 @@ export function HeroSection() {
           <motion.figure variants={riseChild} className="md:col-span-6 md:mt-4">
             <div className="ring-accent-soft overflow-hidden rounded-2xl border border-white/10 bg-[var(--bg-2)] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.75)]">
               <img
-                src="/images/app-overview.webp"
+                src="/images/app-overview-20261011.webp"
                 width={1264}
                 height={800}
                 alt={text.hero.screenshotAlt}

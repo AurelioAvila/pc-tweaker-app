@@ -1,0 +1,60 @@
+{
+  "shortDescription": "81 réglages Windows que vous pouvez lire avant de les appliquer. Chaque modification est prévisualisée, enregistrée et réversible, avec un tableau de bord Santé du PC en direct, une Analyse en 13 vérifications et un Debloat plus clair.",
+  "description": "PC Tweaker vous donne 81 réglages Windows (46 Free, 35 Pro) pour les performances, le jeu, la confidentialité et l'usage de tous les jours. Chaque réglage montre exactement ce qu'il va écrire avant que quoi que ce soit change, et enregistre la valeur précédente pour que vous puissiez la remettre.\n\nAPERÇU AVANT D'APPLIQUER\nOuvrez « Ce que cela modifie, exactement » sur n'importe quel réglage pour voir chaque clé de registre ou paramètre, la valeur actuelle et celle qui sera appliquée, lues sur votre PC sans rien modifier. Si une application échoue en cours de route, les valeurs déjà écrites sont restaurées immédiatement.\n\nDES MISES À JOUR WINDOWS SANS SURPRISE\nAvec « Surveiller les mises à jour Windows » activé, PC Tweaker vérifie à l'ouverture de session et ne vous prévient que lorsqu'un réglage n'est réellement plus en vigueur. Vous obtenez une liste avec une case par réglage : décochez ce que vous avez changé volontairement et réappliquez le reste. Rien n'est réappliqué tout seul.\n\nLES FONCTIONS D'IA DE WINDOWS, À VOTRE CHOIX\nDes réglages pour Click to Do (là où Windows le propose), le service Windows AI Fabric et les fonctions d'IA de Microsoft Edge, Paint et du Bloc-notes. Chaque carte indique ce qu'elle exige : portée utilisateur ou machine, droits d'administrateur, version et édition de Windows. Un réglage qui ne s'applique pas à votre PC le dit.\n\nSANTÉ DU PC EN DIRECT\nCharge du processeur par cœur, mémoire utilisée, en cache et libre, activité du disque et du réseau, et ce qui utilise les ressources, regroupé par application à partir de la liste des processus de Windows, sur 1 ou 5 minutes. Charge, température, ventilateur et mémoire vidéo de la carte graphique sur les cartes NVIDIA. Les capteurs absents sont signalés, pas devinés. Le Health Score évalue votre PC dans neuf domaines, et chaque point vient de quelque chose de mesurable sur votre machine.\n\nANALYSE, DEBLOAT ET JEU\nL'Analyse exécute 13 vérifications et peut être mise en pause, reprise ou terminée ; si vous l'arrêtez plus tôt, vous gardez un résultat partiel qui nomme les contrôles non exécutés. Debloat regroupe les applications de votre PC par type avec leur taille réelle et explique ce que vous perdez avant toute suppression. Rien n'est sélectionné à votre place. Turbo Boost affiche la charge mesurée du processeur, les fréquences et un test fixe de 3 secondes, pour comparer les modes avec des chiffres.\n\nAVEC PRO\n35 réglages de plus, des règles de priorité par application (jamais au-dessus de Haute), un nettoyage hebdomadaire des fichiers temporaires vers la Corbeille, la Défragmentation sécurisée, Zero-Trace Cleaner, un overlay de jeu qui laisse passer les clics, Driver Booster et des profils thermiques.\n\nSix langues : anglais, italien, français, espagnol, allemand et portugais. Windows 10 et 11, 64 bits. Les exécutables Windows sont signés par Aurelio Avila.",
+  "features": [
+    "81 réglages Windows : 46 Free et 35 Pro",
+    "Voyez chaque valeur actuelle et celle qui sera appliquée, avant d'appliquer",
+    "Chaque modification est enregistrée et réversible ; une application qui échoue est annulée aussitôt",
+    "Réapplication guidée après les mises à jour Windows, une case par réglage",
+    "Des réglages pour les fonctions d'IA de Windows et l'IA d'Edge, de Paint et du Bloc-notes",
+    "Santé du PC en direct : charge par cœur, mémoire, disque, réseau et ce qui utilise les ressources",
+    "Analyse en 13 vérifications, à mettre en pause, reprendre ou terminer",
+    "Debloat avec la taille réelle des applications et ce que vous perdez, avant toute suppression",
+    "Turbo Boost avec charge mesurée, fréquences et un test fixe de 3 secondes",
+    "Six langues, Windows 10 et 11 (64 bits), exécutables signés"
+  ],
+  "keywords": [
+    "PC Tweaker",
+    "optimisation Windows",
+    "confidentialité Windows 11",
+    "supprimer apps Windows",
+    "surveillance PC",
+    "réglages jeu PC",
+    "réglages registre"
+  ],
+  "screenshots": [
+    {
+      "file": "01-scan.png",
+      "caption": "L'Analyse exécute 13 vérifications et peut être mise en pause, reprise ou terminée"
+    },
+    {
+      "file": "02-health.png",
+      "caption": "Santé du PC en direct : charge par cœur, mémoire, disque, réseau et ce qui utilise les ressources"
+    },
+    {
+      "file": "03-preview.png",
+      "caption": "Voyez chaque valeur actuelle et celle qui sera appliquée, avant d'appliquer"
+    },
+    {
+      "file": "04-privacy.png",
+      "caption": "Des réglages pour les fonctions d'IA de Windows, chacun avec ses conditions"
+    },
+    {
+      "file": "05-debloat.png",
+      "caption": "Debloat avec les tailles réelles et ce que vous perdez, avant toute suppression"
+    },
+    {
+      "file": "06-gaming.png",
+      "caption": "Turbo Boost avec charge et fréquences mesurées. Rien que des chiffres."
+    },
+    {
+      "file": "07-hardware.png",
+      "caption": "Capteurs matériels et pilotes au même endroit"
+    },
+    {
+      "file": "08-profiles.png",
+      "caption": "Partez d'un profil Jeu, Études ou Travail et ajustez-le avant de l'appliquer"
+    }
+  ],
+  "releaseNotes": "PC Tweaker 1.18.0 « Halloween Update » : 15 nouveaux réglages, un aperçu avant chaque modification, une annulation automatique si quelque chose tourne mal et un tableau de bord Santé du PC en direct.\n\n- 81 réglages (46 Free, 35 Pro).\n- L'IA de Windows, c'est vous qui décidez : Click to Do (si disponible), le service Windows AI Fabric et les fonctions d'IA d'Edge, de Paint et du Bloc-notes.\n- Voyez chaque valeur actuelle et celle qui sera appliquée. Une application qui échoue est annulée d'elle-même.\n- Après une mise à jour de Windows, les réglages rétablis sont listés avec une case chacun. Rien n'est réappliqué en silence.\n- Santé du PC en direct : CPU par cœur, mémoire, disque, réseau et ce qui utilise les ressources.\n- Également nouveau : Démarrage rapide et Assistant Stockage désactivés, Fin de tâche dans le menu de la barre des tâches, tiroir de glisser-déposer désactivé, Explorateur sur Ce PC, Widgets désactivés, captures de la Game Bar désactivées, applications du fabricant bloquées, conseils et suggestions en un seul interrupteur, règles de priorité par application et nettoyage hebdomadaire des fichiers temporaires.\n- Analyse avec Pause, Reprendre et Terminer, Debloat repensé et Turbo Boost avec charge et fréquences mesurées.\n\nRéglages, licences et historique des modifications sont conservés."
+}

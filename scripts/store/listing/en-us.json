@@ -1,0 +1,60 @@
+{
+  "shortDescription": "81 Windows controls you can read before you apply. Every change is previewed, recorded and reversible, with a live PC Health dashboard, a 13-check Scan and a clearer Debloat.",
+  "description": "PC Tweaker gives you 81 Windows controls (46 Free, 35 Pro) for performance, gaming, privacy and everyday use. Every control shows exactly what it will write before anything changes, and records the previous value so you can put it back.\n\nPREVIEW BEFORE YOU APPLY\nOpen \"What this changes, exactly\" on any control to see each registry key or setting, the value it holds now and the value it will be set to, read from your PC without changing anything. If an application fails partway, the values already written are restored immediately.\n\nWINDOWS UPDATES WITHOUT SURPRISES\nWith \"Watch for Windows updates\" on, PC Tweaker checks at sign-in and tells you only when something has actually stopped being in effect. You get a list with one checkbox per control: untick anything you changed on purpose and re-apply the rest. Nothing is re-applied on its own.\n\nTHE WINDOWS AI FEATURES, YOUR CALL\nControls for Click to Do (where Windows offers it), the Windows AI Fabric service and the AI features in Microsoft Edge, Paint and Notepad. Each card states what it needs: user or machine scope, administrator rights, Windows version and edition. A control that does not apply to your PC says so.\n\nPC HEALTH, LIVE\nProcessor load per core, memory in use, cached and free, disk and network activity, and what is using resources, grouped by app from Windows' own process list, over 1 or 5 minutes. Graphics load, temperature, fan and video memory on NVIDIA graphics cards. Missing sensors are reported, not guessed. The Health Score rates your PC in nine areas, and every point comes from something measurable on your machine.\n\nSCAN, DEBLOAT AND GAMING\nScan runs 13 checks and can be paused, resumed or ended; ending early keeps a partial result that names the checks that did not run. Debloat groups the apps on your PC by kind with their real size and explains what you lose before anything is removed. Nothing is selected for you. Turbo Boost shows measured processor load, clock speeds and a fixed 3-second test, so you can compare modes with numbers.\n\nWITH PRO\n35 more controls, app priority rules (never above High), a weekly cleanup of temporary files to the Recycle Bin, Secure Defragmentation, Zero-Trace Cleaner, a click-through gaming overlay, Driver Booster and thermal profiles.\n\nSix languages: English, Italian, French, Spanish, German and Portuguese. Windows 10 and 11, 64-bit. The Windows binaries are signed by Aurelio Avila.",
+  "features": [
+    "81 Windows controls: 46 Free and 35 Pro",
+    "See each value as it is now and as it will be set, before you apply",
+    "Every change is recorded and restorable; a failed apply is undone at once",
+    "Guided re-apply after Windows updates, one checkbox per control",
+    "Controls for the Windows AI features and the AI in Edge, Paint and Notepad",
+    "Live PC Health: load per core, memory, disk, network and what is using resources",
+    "Scan with 13 checks that can be paused, resumed or ended",
+    "Debloat with real app sizes and what you lose, before anything is removed",
+    "Turbo Boost with measured load, clock speeds and a fixed 3-second test",
+    "Six languages, Windows 10 and 11 (64-bit), signed binaries"
+  ],
+  "keywords": [
+    "PC Tweaker",
+    "Windows tweaks",
+    "Windows 11 privacy",
+    "debloat Windows",
+    "PC health monitor",
+    "gaming settings",
+    "registry settings"
+  ],
+  "screenshots": [
+    {
+      "file": "01-scan.png",
+      "caption": "Scan runs 13 checks and can be paused, resumed or ended"
+    },
+    {
+      "file": "02-health.png",
+      "caption": "PC Health, live: load per core, memory, disk, network and what is using resources"
+    },
+    {
+      "file": "03-preview.png",
+      "caption": "See every value as it is now and as it will be set, before you apply"
+    },
+    {
+      "file": "04-privacy.png",
+      "caption": "Controls for the Windows AI features, each with its requirements"
+    },
+    {
+      "file": "05-debloat.png",
+      "caption": "Debloat with real sizes and what you lose, before anything is removed"
+    },
+    {
+      "file": "06-gaming.png",
+      "caption": "Turbo Boost with measured load and clock speeds. Numbers only."
+    },
+    {
+      "file": "07-hardware.png",
+      "caption": "Hardware sensors and drivers in one place"
+    },
+    {
+      "file": "08-profiles.png",
+      "caption": "Start from a Gaming, Study or Work profile and adjust it before applying"
+    }
+  ],
+  "releaseNotes": "PC Tweaker 1.18.0 \"Halloween Update\": 15 new controls, a preview before every change, automatic undo when something goes wrong and a live PC Health dashboard.\n\n- 81 controls (46 Free, 35 Pro).\n- Windows AI, your call: Click to Do (where available), the Windows AI Fabric service and the AI features in Edge, Paint and Notepad.\n- Preview each value as it is now and as it will be set. A failed apply is undone on its own.\n- After a Windows update, settings that were put back are listed with one checkbox each. Nothing is re-applied silently.\n- PC Health, live: CPU per core, memory, disk, network and what is using resources.\n- Also new: Fast Startup and Storage Sense off, End task in the taskbar menu, drag tray off, File Explorer opening to This PC, Widgets off, Game Bar captures off, manufacturer apps blocked, tips and suggestions in one switch, app priority rules and a weekly temporary file cleanup.\n- Scan with Pause, Resume and End, a redesigned Debloat, and Turbo Boost with measured load and speeds.\n\nSettings, licenses and the change history are kept."
+}

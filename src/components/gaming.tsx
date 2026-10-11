@@ -7,6 +7,7 @@ import { format, Strings } from "../i18n";
 import {
   friendlyError,
   arcPath,
+  formatNumber,
   GAUGE_C,
   GAUGE_R,
   GAUGE_START,
@@ -701,7 +702,7 @@ export function TurboBoostPanel({
             height={56}
             tick={tick}
             reduced={reduced}
-            formatValue={(v) => (v === null ? "–" : `${(v / 1000).toFixed(2)} GHz`)}
+            formatValue={(v) => (v === null ? "–" : `${formatNumber(v / 1000, 2)} GHz`)}
             s={s}
           />
         </div>
@@ -709,7 +710,7 @@ export function TurboBoostPanel({
           <span className="type-label text-ink-3">{s.turboBoost.usersTitle}</span>
           <UsersList
             users={users?.cpu ?? []}
-            value={(u) => ({ text: `${u.cpu.toFixed(1)}%`, ratio: u.cpu / topUser })}
+            value={(u) => ({ text: `${formatNumber(u.cpu, 1)}%`, ratio: u.cpu / topUser })}
             s={s}
           />
         </div>
@@ -782,4 +783,4 @@ type Probe = {
   temp_c?: number | null;
 };
 
-const ghz = (mhz: number | null) => (mhz === null ? "–" : `${(mhz / 1000).toFixed(2)} GHz`);
+const ghz = (mhz: number | null) => (mhz === null ? "–" : `${formatNumber(mhz / 1000, 2)} GHz`);

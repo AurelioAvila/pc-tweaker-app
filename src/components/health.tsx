@@ -1,5 +1,5 @@
 import { ToolHeader } from "./tool-section";
-import { uiLocale } from "../lib";
+import { formatNumber, uiLocale } from "../lib";
 import { Badge, type BadgeKind } from "./ui";
 // PC Health Score — the explainable scorecard, staged like an instrument.
 //
@@ -736,7 +736,7 @@ export function HealthPanel({
                         not hidden, or the arithmetic looks broken. */}
                     <p className="mt-1.5 text-[10px] text-ink-3">
                       {change.contributes} {c.overallContribution > 0 ? "+" : ""}
-                      {c.overallContribution.toFixed(1)}
+                      {formatNumber(c.overallContribution, 1)}
                     </p>
                   </li>
                 ))}

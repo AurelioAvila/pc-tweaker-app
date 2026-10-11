@@ -27,6 +27,7 @@ import {
   WINDOW_SHORT,
   type LiveSample,
 } from "../live-metrics";
+import { formatNumber } from "../lib";
 import { Badge, type BadgeKind } from "./ui";
 import "./live-dashboard.css";
 
@@ -684,7 +685,7 @@ export function LiveDashboard({
               <h4>{l.usingCpu}</h4>
               <UsersList
                 users={users?.cpu ?? []}
-                value={(u) => ({ text: `${u.cpu.toFixed(1)}%`, ratio: u.cpu / totalCpu })}
+                value={(u) => ({ text: `${formatNumber(u.cpu, 1)}%`, ratio: u.cpu / totalCpu })}
                 s={s}
               />
             </div>

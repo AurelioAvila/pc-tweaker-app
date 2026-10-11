@@ -2,7 +2,7 @@ import "./tool-surfaces.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { format, Strings } from "../i18n";
-import { formatBytes, friendlyError } from "../lib";
+import { formatBytes, formatNumber, friendlyError } from "../lib";
 import { ProcessEntry, Toast, X3dReport } from "../types";
 import { ChipIcon } from "./icons";
 
@@ -202,7 +202,7 @@ export function X3dPanel({
                       )}
                     </p>
                     <p className="type-data text-[11px] text-ink-3">
-                      {p.cpu_pct.toFixed(1)}% · {formatBytes(p.memory_bytes)}
+                      {formatNumber(p.cpu_pct, 1)}% · {formatBytes(p.memory_bytes)}
                     </p>
                   </div>
                   <button

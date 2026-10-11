@@ -106,7 +106,7 @@ export function arcPath(fromFrac: number, toFrac: number, radius: number) {
 
 /** "12.4 / 31.1 GB" — one unit shown once, so it fits next to the gauge. */
 export function gbPair(used: number, total: number): string {
-  const gb = (n: number) => (n / 1024 ** 3).toFixed(1);
+  const gb = (n: number) => formatNumber(n / 1024 ** 3, 1);
   return `${gb(used)} / ${gb(total)} GB`;
 }
 

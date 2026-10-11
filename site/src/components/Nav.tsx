@@ -1,6 +1,7 @@
 import { text } from "../i18n/dictionary";
 import { DOWNLOAD_EXE } from "../constants";
 import { Link } from "../router";
+import { PromoStrip } from "../promo";
 import logoUrl from "../assets/favicon.png";
 
 export function Nav({
@@ -29,6 +30,7 @@ export function Nav({
 
   return (
     <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-[var(--bg)]/70 backdrop-blur-xl">
+      <PromoStrip href={`${prefix}#access`} />
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 md:px-12">
         <Link
           to="/"

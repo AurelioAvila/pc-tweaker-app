@@ -6,6 +6,7 @@ import { EASE, riseChild, staggerParent } from "../motion";
 import { DOWNLOAD_EXE } from "../constants";
 import { CoffeeTip } from "./CoffeeTip";
 import { NewsletterSignup } from "./NewsletterSignup";
+import { PromoCard } from "../promo";
 import { useCampaignStoreLink } from "../campaign-store";
 
 /* ---------- theme selector: one geometric dot per palette ---------- */
@@ -132,6 +133,8 @@ export function HeroSection() {
               <strong className="font-semibold text-[var(--fg)]">{text.hero.subBold}</strong>
               {text.hero.sub}
             </p>
+
+            <PromoCard />
 
             {/* CoffeeTip owns this row so the tip pill can sit beside the
                 download button while its stepper unfolds under both. */}

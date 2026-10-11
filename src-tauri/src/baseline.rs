@@ -270,7 +270,28 @@ fn readings() -> Vec<Metric> {
     out
 }
 
-fn measure() -> Result<Vec<Metric>, String> {
+/// Benchmark files an earlier run could not delete because PC Tweaker was
+/// closed mid-test. Only this app's own names, only plain files (never a link
+/// someone planted under that name), and never the files of this process.
+fn remove_stale_files() {
+    let own = format!("pctweaker-baseline-{}-", std::process::id());
+    let Ok(entries) = std::fs::read_dir(std::env::temp_dir()) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if name.starts_with("pctweaker-baseline-")
+            && name.ends_with(".bin")
+            && !name.starts_with(&own)
+            && entry.file_type().is_ok_and(|t| t.is_file())
+        {
+            let _ = std::fs::remove_file(entry.path());
+        }
+    }
+}
+
+fn measure() -> Vec<Metric> {
+    remove_stale_files();
     let mut metrics = readings();
     let mut timed = |id: &str, count: usize, f: &mut dyn FnMut() -> Option<f64>| {
         let samples: Vec<f64> = (0..count).filter_map(|_| f()).collect();
@@ -286,19 +307,20 @@ fn measure() -> Result<Vec<Metric>, String> {
     timed("launch_ms", LAUNCH_REPEATS, &mut launch_ms);
     timed("cpu", REPEATS, &mut || Some(crate::cpubench::bench(300).score as f64));
     timed("memory_touch_ms", REPEATS, &mut || Some(memory_touch()));
-    let mut disk = Vec::with_capacity(REPEATS);
-    for _ in 0..REPEATS {
-        disk.push(disk_round()?);
+    // A full or read-only temp drive loses the two disk tests, not the run:
+    // the comparison simply has no disk rows.
+    let disk: Vec<(f64, f64)> = (0..REPEATS).map_while(|_| disk_round().ok()).collect();
+    if !disk.is_empty() {
+        metrics.push(Metric {
+            id: "disk_write_ms".into(),
+            samples: disk.iter().map(|d| d.0).collect(),
+        });
+        metrics.push(Metric {
+            id: "disk_read_us".into(),
+            samples: disk.iter().map(|d| d.1).collect(),
+        });
     }
-    metrics.push(Metric {
-        id: "disk_write_ms".into(),
-        samples: disk.iter().map(|d| d.0).collect(),
-    });
-    metrics.push(Metric {
-        id: "disk_read_us".into(),
-        samples: disk.iter().map(|d| d.1).collect(),
-    });
-    Ok(metrics)
+    metrics
 }
 
 // ---------------------------------------------------------------------------
@@ -551,23 +573,53 @@ fn read_runs(app: &tauri::AppHandle) -> Result<Vec<BaselineRun>, String> {
     let Ok(content) = std::fs::read_to_string(&path) else {
         return Ok(Vec::new());
     };
-    let mut runs: Vec<BaselineRun> = content
+    let runs: Vec<BaselineRun> = content
         .lines()
         .filter_map(|line| serde_json::from_str(line).ok())
         .collect();
-    if runs.len() > HISTORY_CAP {
-        runs.drain(..runs.len() - HISTORY_CAP);
+    Ok(recent(runs))
+}
+
+/// The last `HISTORY_CAP` runs, always including the latest "before": many
+/// "after" measurements must not push the starting point out of view.
+fn recent(mut runs: Vec<BaselineRun>) -> Vec<BaselineRun> {
+    let start = runs.len().saturating_sub(HISTORY_CAP);
+    let before = runs
+        .iter()
+        .rposition(|r| r.role == Some(Role::Before) && !r.metrics.is_empty());
+    match before {
+        Some(b) if b < start => {
+            let mut kept = vec![runs[b].clone()];
+            kept.extend(runs.drain(start + 1..));
+            kept
+        }
+        _ => runs.split_off(start),
     }
-    Ok(runs)
 }
 
 /// Runs every test (about 10 s) and appends the result to the local history.
 /// `role` says whether this is the "before" a later comparison starts from.
+static MEASURING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Releases the one-measurement-at-a-time flag on every exit path.
+struct Measuring;
+
+impl Drop for Measuring {
+    fn drop(&mut self) {
+        MEASURING.store(false, std::sync::atomic::Ordering::Release);
+    }
+}
+
 #[tauri::command(async)]
 pub async fn run_baseline(app: tauri::AppHandle, role: Role) -> Result<BeforeAfter, String> {
+    // Two runs at once would each measure the other's load.
+    if MEASURING.swap(true, std::sync::atomic::Ordering::AcqRel) {
+        return Err("a measurement is already running".into());
+    }
+    let _measuring = Measuring;
     let metrics = tauri::async_runtime::spawn_blocking(measure)
         .await
-        .map_err(|e| format!("baseline task failed: {e}"))??;
+        .map_err(|e| format!("baseline task failed: {e}"))?;
     let pick = |id: &str| {
         metrics
             .iter()
@@ -598,8 +650,9 @@ pub async fn run_baseline(app: tauri::AppHandle, role: Role) -> Result<BeforeAft
     Ok(before_after_of(&read_runs(&app)?))
 }
 
-/// The current comparison, without measuring anything.
-#[tauri::command]
+/// The current comparison, without measuring anything. Async so the file
+/// read never runs on the window's thread.
+#[tauri::command(async)]
 pub fn before_after(app: tauri::AppHandle) -> Result<BeforeAfter, String> {
     Ok(before_after_of(&read_runs(&app)?))
 }
@@ -761,6 +814,70 @@ mod tests {
         let startup = result.changes.iter().find(|c| c.id == "startup_apps").unwrap();
         assert_eq!((startup.verdict, startup.confirmed), (Verdict::Better, 2));
         assert_eq!(startup.before_spread_pct, None);
+    }
+
+    /// Many "after" runs never push the "before" out of the window.
+    #[test]
+    fn the_latest_before_survives_the_history_cap() {
+        let mut runs = vec![run(1, Some(Role::Before), &[("cpu", &[1.0])])];
+        runs.extend((2..80).map(|ts| run(ts, Some(Role::After), &[("cpu", &[1.0])])));
+        let kept = recent(runs);
+        assert_eq!(kept.len(), HISTORY_CAP);
+        assert_eq!(kept[0].ts, 1, "the before is kept");
+        assert_eq!(kept.last().unwrap().ts, 79);
+        assert_eq!(before_after_of(&kept).before.unwrap().ts, 1);
+        let short = recent(vec![run(5, Some(Role::Before), &[("cpu", &[1.0])])]);
+        assert_eq!(short.len(), 1);
+    }
+
+    /// The method's honesty, simulated: with nothing changed, a timed test is
+    /// almost never called better or worse, even with noisy runs and the odd
+    /// spike; a real 20% change is almost always found.
+    #[test]
+    fn identical_conditions_are_called_the_same_and_real_changes_are_found() {
+        let mut state: u64 = 0x9e37_79b9_7f4a_7c15;
+        let mut uniform = move || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            (state >> 11) as f64 / (1u64 << 53) as f64
+        };
+        let mut series = |n: usize, centre: f64| -> Vec<f64> {
+            (0..n)
+                .map(|_| {
+                    let noise = 1.0 + (uniform() - 0.5) * 0.3; // +-15%
+                    let spike = if uniform() < 0.05 { 3.0 } else { 1.0 }; // background hiccup
+                    centre * noise * spike
+                })
+                .collect()
+        };
+        const TRIALS: usize = 2000;
+        let mut false_claims = 0;
+        let mut found = 0;
+        for _ in 0..TRIALS {
+            let before = series(LAUNCH_REPEATS, 40.0);
+            if judge("launch_ms", &before, &series(LAUNCH_REPEATS, 40.0)).unwrap().0 != Verdict::Same {
+                false_claims += 1;
+            }
+            if judge("launch_ms", &before, &series(LAUNCH_REPEATS, 32.0)).unwrap().0 == Verdict::Better {
+                found += 1;
+            }
+        }
+        let false_rate = false_claims as f64 / TRIALS as f64;
+        let power = found as f64 / TRIALS as f64;
+        println!("false claims {false_rate:.4}, real 20% change found {power:.3}");
+        // The exact test runs at the 1% level, so about 1% is the design; twice
+        // that would mean the method claims changes that are not there.
+        assert!(false_rate < 0.02, "{false_rate}");
+        assert!(power > 0.85, "{power}");
+    }
+
+    #[test]
+    fn stale_benchmark_files_from_other_runs_are_removed() {
+        let other = std::env::temp_dir().join("pctweaker-baseline-999999999-1.bin");
+        std::fs::write(&other, b"left behind").unwrap();
+        remove_stale_files();
+        assert!(!other.exists());
     }
 
     #[test]

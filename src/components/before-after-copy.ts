@@ -37,6 +37,7 @@ type Copy = {
   higher: string;
   lower: string;
   worseHint: string;
+  noisy: string;
   spread: string;
   medianOf: string;
   reading: string;
@@ -96,6 +97,8 @@ const en: Copy = {
   lower: "Lower this time",
   worseHint:
     "Updates, indexing or an open app can affect a single measurement. Measure again to check.",
+  noisy:
+    "The runs varied a lot (more than ±20%), which usually means the PC was busy. Measure again with other apps closed for a clearer comparison.",
   spread: "±{pct}% typical variation",
   medianOf: "median of {count}",
   reading: "single reading",
@@ -213,6 +216,8 @@ const it: Copy = {
   lower: "Più basso questa volta",
   worseHint:
     "Aggiornamenti, indicizzazione o un'app aperta possono influire su una singola misurazione. Misura di nuovo per verificare.",
+  noisy:
+    "Le esecuzioni sono variate molto (oltre ±20%): di solito significa che il PC era occupato. Misura di nuovo con le altre app chiuse per un confronto più chiaro.",
   spread: "±{pct}% di variazione tipica",
   medianOf: "mediana di {count}",
   reading: "lettura singola",
@@ -331,6 +336,8 @@ const fr: Copy = {
   lower: "Plus bas cette fois",
   worseHint:
     "Une mise à jour, l'indexation ou une application ouverte peuvent influencer une mesure isolée. Mesurez à nouveau pour vérifier.",
+  noisy:
+    "Les exécutions ont beaucoup varié (plus de ±20 %), ce qui signifie en général que le PC était occupé. Mesurez à nouveau avec les autres applications fermées pour une comparaison plus nette.",
   spread: "±{pct} % de variation habituelle",
   medianOf: "médiane de {count}",
   reading: "lecture unique",
@@ -449,6 +456,8 @@ const es: Copy = {
   lower: "Más bajo esta vez",
   worseHint:
     "Las actualizaciones, la indexación o una aplicación abierta pueden afectar a una medición aislada. Vuelve a medir para comprobarlo.",
+  noisy:
+    "Las ejecuciones variaron mucho (más de ±20 %), lo que suele significar que el PC estaba ocupado. Vuelve a medir con las demás aplicaciones cerradas para una comparación más clara.",
   spread: "±{pct} % de variación habitual",
   medianOf: "mediana de {count}",
   reading: "lectura única",
@@ -569,6 +578,8 @@ const de: Copy = {
   lower: "Diesmal niedriger",
   worseHint:
     "Updates, die Indizierung oder eine geöffnete App können eine einzelne Messung beeinflussen. Zur Prüfung erneut messen.",
+  noisy:
+    "Die Durchläufe schwankten stark (mehr als ±20 %), meist ein Zeichen, dass der PC beschäftigt war. Miss erneut mit geschlossenen Apps, um klarer zu vergleichen.",
   spread: "±{pct} % übliche Schwankung",
   medianOf: "Median aus {count}",
   reading: "einzelner Messwert",
@@ -643,9 +654,9 @@ const de: Copy = {
       impact: "weniger belegter Arbeitsspeicher",
     },
     disk_free_mb: {
-      name: "Freier Speicher auf dem Systemlaufwerk",
+      name: "Freier Speicherplatz auf dem Systemlaufwerk",
       help: "Verfügbarer Platz auf dem Laufwerk, auf dem Windows installiert ist.",
-      impact: "mehr freier Speicher",
+      impact: "mehr freier Speicherplatz",
     },
   },
 };
@@ -687,6 +698,8 @@ const pt: Copy = {
   lower: "Mais baixo desta vez",
   worseHint:
     "Atualizações, a indexação ou um aplicativo aberto podem afetar uma medição isolada. Meça de novo para confirmar.",
+  noisy:
+    "As execuções variaram muito (mais de ±20%), o que costuma significar que o PC estava ocupado. Meça de novo com os outros aplicativos fechados para uma comparação mais clara.",
   spread: "±{pct}% de variação habitual",
   medianOf: "mediana de {count}",
   reading: "leitura única",

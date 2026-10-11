@@ -72,11 +72,13 @@ export function presetSelection(preset, tweaks, selected, isPro) {
     const tweak = catalog.get(item.id);
     return tweak ? [tweak] : [];
   });
-  const pending = available.filter((t) => chosen.has(t.id) && !t.applied);
+  // A control this PC's Windows does not support is shown, never applied.
+  const pending = available.filter((t) => chosen.has(t.id) && !t.applied && !t.unavailable);
   return {
     available,
     missing: preset.tweaks.filter((t) => !catalog.has(t.id)).map((t) => t.id),
     pending,
     locked: pending.filter((t) => t.requires_pro && !isPro),
+    unsupported: available.filter((t) => t.unavailable).map((t) => t.id),
   };
 }

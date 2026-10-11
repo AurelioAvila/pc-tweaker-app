@@ -97,7 +97,11 @@ class CheckoutError extends Error {
 }
 
 function App() {
-  const [lang, setLangState] = useState<Lang>(() => detectInitialLang());
+  // Dev builds only: VITE_START_LANG opens in a chosen language for review,
+  // the way VITE_START_SECTION opens a chosen page.
+  const [lang, setLangState] = useState<Lang>(
+    () => (import.meta.env.DEV && (import.meta.env.VITE_START_LANG as Lang)) || detectInitialLang(),
+  );
   const s = STRINGS[lang];
 
   function setLang(l: Lang) {
@@ -583,9 +587,14 @@ function App() {
     setRestoring(true);
     try {
       const failures = await invoke<string[]>("rollback_tweaks", { ids: appliedIds });
-      failures.forEach((f) => pushToast("error", f));
+      failures.forEach((f) => pushToast("error", friendlyError(f, s)));
       await refresh();
-      const restored = appliedIds.length - failures.length;
+      // From what is still in effect, not from the failure list: a cancelled
+      // administrator prompt is one failure for every elevated tweak.
+      const after = await invoke<TweakInfo[]>("list_tweaks");
+      const restored = appliedIds.filter(
+        (id) => !after.some((t) => t.id === id && t.applied),
+      ).length;
       if (restored > 0) pushToast("success", format(s.restore.doneToast, { count: restored }));
     } catch (e) {
       pushToast("error", String(e));

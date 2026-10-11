@@ -5087,7 +5087,7 @@ const fr: Strings = {
     appliedToast: "{count} reglages appliques",
     exportedToast: "Fichier exporte",
     importedToast: "Importee : {count} reglages a verifier",
-    droppedWarning: "{count} entrees non reconnues par cette version ont ete ignorees",
+    droppedWarning: "{count} entrées non reconnues par cette version ont été ignorées",
     nameRequired: "Donnez un nom a la configuration",
     reviewNotice:
       "Une configuration importee n'est jamais appliquee toute seule : vous la verifiez d'abord.",
@@ -6759,7 +6759,7 @@ const es: Strings = {
     appliedToast: "{count} ajustes aplicados",
     exportedToast: "Archivo exportado",
     importedToast: "Importada: {count} ajustes listos para revisar",
-    droppedWarning: "Se descartaron {count} entradas que esta version no reconoce",
+    droppedWarning: "Se descartaron {count} entradas que esta versión no reconoce",
     nameRequired: "Ponle un nombre a la configuración",
     reviewNotice: "Una configuración importada nunca se aplica sola: la revisas tú antes.",
     signInRequired: "Inicia sesión o crea una cuenta para guardar configuraciones.",
@@ -8431,7 +8431,7 @@ const de: Strings = {
     appliedToast: "{count} Optimierungen angewendet",
     exportedToast: "Datei exportiert",
     importedToast: "Importiert: {count} Optimierungen zur Pruefung",
-    droppedWarning: "{count} von dieser Version nicht erkannte Eintraege wurden verworfen",
+    droppedWarning: "{count} von dieser Version nicht erkannte Einträge wurden verworfen",
     nameRequired: "Geben Sie der Konfiguration einen Namen",
     reviewNotice:
       "Eine importierte Konfiguration wird nie von selbst angewendet - Sie pruefen sie zuerst.",

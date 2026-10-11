@@ -122,11 +122,13 @@ export function StarterProfiles({
           {available.map((t) => {
             const text = textFor(s.tweaks, t.id, t.name, t.description);
             const optional = !preset.tweaks.find((item) => item.id === t.id)?.selected;
+            const notHere = !!t.unavailable;
             return (
-              <label key={t.id} className="starter-option">
+              <label key={t.id} className="starter-option" data-unavailable={notHere || undefined}>
                 <input
                   type="checkbox"
-                  checked={selection.includes(t.id)}
+                  disabled={notHere}
+                  checked={selection.includes(t.id) && !notHere}
                   onChange={(e) =>
                     setSelections((prev) => ({
                       ...prev,
@@ -140,7 +142,11 @@ export function StarterProfiles({
                   <strong>{text.name}</strong>
                   <small>{text.description}</small>
                 </span>
-                {(t.applied || optional) && <em>{t.applied ? copy.active : copy.optional}</em>}
+                {notHere ? (
+                  <em>{copy.notHere}</em>
+                ) : (
+                  (t.applied || optional) && <em>{t.applied ? copy.active : copy.optional}</em>
+                )}
               </label>
             );
           })}

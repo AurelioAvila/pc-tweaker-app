@@ -118,6 +118,10 @@
   font-size: 11px;
   line-height: 1.6;
 }
+.starter-option[data-unavailable] {
+  cursor: default;
+  opacity: 0.6;
+}
 .starter-option em {
   font-style: normal;
   font-size: 10px;

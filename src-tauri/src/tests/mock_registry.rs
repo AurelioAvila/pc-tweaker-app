@@ -485,6 +485,65 @@ fn seeded(id: &str) -> (Installed, Fixture, BTreeMap<Key, Stored>) {
     (registry, Fixture::new(), before)
 }
 
+/// The tweak ids of every starter profile, read from the file the app ships,
+/// so a preset can never name something this test does not cover.
+fn starter_presets() -> Vec<(String, Vec<String>)> {
+    let source = include_str!("../../../src/components/starter-presets.mjs");
+    let mut presets: Vec<(String, Vec<String>)> = Vec::new();
+    for line in source.lines().map(str::trim) {
+        let Some(rest) = line.strip_prefix("id: \"") else {
+            let Some(rest) = line.strip_prefix("{ id: \"") else { continue };
+            let id = rest.split('"').next().unwrap().to_string();
+            presets.last_mut().expect("tweak before preset").1.push(id);
+            continue;
+        };
+        presets.push((rest.split('"').next().unwrap().to_string(), Vec::new()));
+    }
+    assert!(presets.len() >= 6 && presets.iter().all(|p| !p.1.is_empty()), "{presets:?}");
+    presets
+}
+
+/// Each starter profile, applied as one batch over values the user had set
+/// differently, with one of its tweaks already applied, then switched to
+/// every other profile, then restored all at once: the registry ends exactly
+/// as the user had it.
+#[test]
+fn every_starter_profile_round_trips_through_switching_and_restore_all() {
+    let presets = starter_presets();
+    for (name, ids) in &presets {
+        let all: Vec<&str> = presets
+            .iter()
+            .flat_map(|(_, ids)| ids.iter().map(String::as_str))
+            .collect();
+        let touched: Vec<_> = all.iter().flat_map(|id| discover(id)).collect();
+        let registry = install();
+        for ((hive, path, value_name), written) in &touched {
+            registry.set(*hive, path, value_name, user_value(written));
+        }
+        let before = registry.dump();
+        let fixture = Fixture::new();
+        // Already applied beforehand, as the profile list shows it.
+        apply_direct(&fixture.store, &ids[0]).unwrap_or_else(|e| panic!("{name}: {e}"));
+        for id in ids.iter().filter(|id| !fixture.store.is_applied(id)) {
+            apply_direct(&fixture.store, id).unwrap_or_else(|e| panic!("{name}/{id}: {e}"));
+        }
+        // A quick switch to every other profile on top.
+        for (_, other) in presets.iter().filter(|(n, _)| n != name) {
+            for id in other.iter().filter(|id| !fixture.store.is_applied(id)) {
+                apply_direct(&fixture.store, id).unwrap_or_else(|e| panic!("{name}->{id}: {e}"));
+            }
+        }
+        assert_ne!(registry.dump(), before, "{name}: nothing changed");
+        let mut applied: Vec<&str> = all.clone();
+        applied.sort_unstable();
+        applied.dedup();
+        for id in applied {
+            rollback_direct(&fixture.store, id).unwrap_or_else(|e| panic!("{name} restore {id}: {e}"));
+        }
+        assert_eq!(registry.dump(), before, "{name}");
+    }
+}
+
 #[test]
 fn a_write_that_does_not_stick_fails_the_apply_and_keeps_the_original() {
     for id in registry_ids() {

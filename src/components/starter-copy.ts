@@ -12,7 +12,7 @@ const en = {
   quietBody: "No feedback surveys, suggested apps or Sticky Keys pop-ups.",
   streamingBody: "Game DVR recording off and fewer Windows pop-ups that could appear on stream.",
   laptopNote:
-    "Animations and transparency are turned off, so Windows looks plainer. How much battery this saves depends on the laptop and is not measured here; power settings are not changed.",
+    "Animations and transparency are turned off, so Windows looks plainer; the changes show after you sign out and back in. How much battery this saves depends on the laptop and is not measured here; power settings are not changed.",
   quietNote:
     "This is about pop-ups, not fan noise: fan and power settings are not changed. Notifications from your own apps keep working.",
   streamingNote:
@@ -25,7 +25,7 @@ const en = {
   studyNote:
     "Widgets disappear from the taskbar. This does not mute messages or block websites. Some changes may need a sign-out to appear.",
   workNote:
-    "Menus open without their usual delay. Startup apps may launch together after sign-in. File extensions become visible; hidden files are optional.",
+    "Menus open without their usual delay. Startup apps may launch together after sign-in. File extensions become visible; hidden files are optional. The menu change shows after you sign out and back in.",
   apply: "Apply selected",
   applying: "Applying…",
   active: "Already applied",
@@ -36,6 +36,7 @@ const en = {
   ready: "All selected tweaks are already applied.",
   missing: "Some options are unavailable in this build.",
   free: "Included in Free",
+  notHere: "Not available on this PC",
 };
 type Copy = typeof en;
 export const STARTER_COPY: Record<Lang, Copy> = {
@@ -55,7 +56,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     streamingBody:
       "Registrazione Game DVR disattivata e meno finestre di Windows che possono comparire in diretta.",
     laptopNote:
-      "Animazioni e trasparenza vengono disattivate, quindi Windows appare più sobrio. Quanta batteria si risparmia dipende dal portatile e qui non viene misurato; le impostazioni di alimentazione non cambiano.",
+      "Animazioni e trasparenza vengono disattivate, quindi Windows appare più sobrio; le modifiche si vedono dopo essere usciti e rientrati nell’account. Quanta batteria si risparmia dipende dal portatile e qui non viene misurato; le impostazioni di alimentazione non cambiano.",
     quietNote:
       "Riguarda le finestre a comparsa, non il rumore delle ventole: ventole e alimentazione non cambiano. Le notifiche delle tue app continuano a funzionare.",
     streamingNote:
@@ -69,7 +70,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     studyNote:
       "I widget scompaiono dalla barra. Non silenzia i messaggi e non blocca i siti. Alcune modifiche possono richiedere di uscire e rientrare nell’account Windows.",
     workNote:
-      "I menu si aprono senza attesa. Le app possono avviarsi insieme dopo l’accesso. Le estensioni diventano visibili; i file nascosti sono facoltativi.",
+      "I menu si aprono senza attesa. Le app possono avviarsi insieme dopo l’accesso. Le estensioni diventano visibili; i file nascosti sono facoltativi. La modifica ai menu si vede dopo essere usciti e rientrati nell’account.",
     apply: "Applica selezionati",
     applying: "Applicazione…",
     active: "Già applicato",
@@ -80,6 +81,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     ready: "Tutti i tweak selezionati sono già applicati.",
     missing: "Alcune opzioni non sono disponibili in questa versione.",
     free: "Incluso in Free",
+    notHere: "Non disponibile su questo PC",
   },
   fr: {
     ...en,
@@ -97,7 +99,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     streamingBody:
       "Enregistrement Game DVR désactivé et moins de fenêtres Windows susceptibles d’apparaître en direct.",
     laptopNote:
-      "Les animations et la transparence sont désactivées : Windows paraît plus sobre. L’économie de batterie dépend du portable et n’est pas mesurée ici ; les réglages d’alimentation ne changent pas.",
+      "Les animations et la transparence sont désactivées : Windows paraît plus sobre ; les changements apparaissent après une déconnexion puis une reconnexion. L’économie de batterie dépend du portable et n’est pas mesurée ici ; les réglages d’alimentation ne changent pas.",
     quietNote:
       "Il s’agit des fenêtres surgissantes, pas du bruit des ventilateurs : ventilateurs et alimentation ne changent pas. Les notifications de vos applications continuent de fonctionner.",
     streamingNote:
@@ -110,7 +112,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     studyNote:
       "Masque les widgets de la barre. Ne coupe pas les messages et ne bloque pas les sites. Certaines modifications peuvent nécessiter une déconnexion.",
     workNote:
-      "Les menus s’ouvrent sans délai. Les applications peuvent démarrer ensemble. Les extensions sont visibles ; les fichiers cachés sont facultatifs.",
+      "Les menus s’ouvrent sans délai. Les applications peuvent démarrer ensemble. Les extensions sont visibles ; les fichiers cachés sont facultatifs. Le changement des menus apparaît après une déconnexion puis une reconnexion.",
     apply: "Appliquer la sélection",
     applying: "Application…",
     active: "Déjà appliqué",
@@ -121,6 +123,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     ready: "Tous les réglages sélectionnés sont appliqués.",
     missing: "Certaines options sont indisponibles dans cette version.",
     free: "Inclus dans Free",
+    notHere: "Non disponible sur ce PC",
   },
   es: {
     ...en,
@@ -139,7 +142,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     streamingBody:
       "Grabación de Game DVR desactivada y menos ventanas de Windows que puedan aparecer en directo.",
     laptopNote:
-      "Se desactivan las animaciones y la transparencia, así que Windows se ve más sobrio. Cuánta batería se ahorra depende del portátil y aquí no se mide; la configuración de energía no cambia.",
+      "Se desactivan las animaciones y la transparencia, así que Windows se ve más sobrio; los cambios se ven después de cerrar sesión y volver a entrar. Cuánta batería se ahorra depende del portátil y aquí no se mide; la configuración de energía no cambia.",
     quietNote:
       "Se trata de ventanas emergentes, no del ruido de los ventiladores: los ventiladores y la energía no cambian. Las notificaciones de tus aplicaciones siguen funcionando.",
     streamingNote:
@@ -152,7 +155,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     studyNote:
       "Oculta los widgets de la barra. No silencia mensajes ni bloquea sitios. Algunos cambios pueden requerir cerrar sesión.",
     workNote:
-      "Los menús se abren sin demora. Las aplicaciones pueden iniciarse juntas. Las extensiones quedan visibles; los archivos ocultos son opcionales.",
+      "Los menús se abren sin demora. Las aplicaciones pueden iniciarse juntas. Las extensiones quedan visibles; los archivos ocultos son opcionales. El cambio en los menús se ve después de cerrar sesión y volver a entrar.",
     apply: "Aplicar selección",
     applying: "Aplicando…",
     active: "Ya aplicado",
@@ -163,6 +166,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     ready: "Todos los ajustes seleccionados están aplicados.",
     missing: "Algunas opciones no están disponibles en esta versión.",
     free: "Incluido en Free",
+    notHere: "No disponible en este PC",
   },
   de: {
     ...en,
@@ -180,7 +184,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     streamingBody:
       "Game-DVR-Aufnahme aus und weniger Windows-Pop-ups, die im Stream erscheinen könnten.",
     laptopNote:
-      "Animationen und Transparenz werden abgeschaltet, Windows wirkt dadurch schlichter. Wie viel Akku das spart, hängt vom Laptop ab und wird hier nicht gemessen; Energieeinstellungen bleiben unverändert.",
+      "Animationen und Transparenz werden abgeschaltet, Windows wirkt dadurch schlichter; die Änderungen werden nach Ab- und erneuter Anmeldung sichtbar. Wie viel Akku das spart, hängt vom Laptop ab und wird hier nicht gemessen; Energieeinstellungen bleiben unverändert.",
     quietNote:
       "Es geht um Pop-ups, nicht um Lüftergeräusche: Lüfter- und Energieeinstellungen bleiben unverändert. Benachrichtigungen deiner Apps funktionieren weiter.",
     streamingNote:
@@ -193,7 +197,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     studyNote:
       "Blendet Widgets in der Taskleiste aus. Schaltet Nachrichten nicht stumm und blockiert keine Websites. Einige Änderungen erfordern eine erneute Anmeldung.",
     workNote:
-      "Menüs öffnen ohne Verzögerung. Autostart-Apps können gleichzeitig starten. Dateiendungen werden sichtbar; versteckte Dateien sind optional.",
+      "Menüs öffnen ohne Verzögerung. Autostart-Apps können gleichzeitig starten. Dateiendungen werden sichtbar; versteckte Dateien sind optional. Die Menüänderung wird nach Ab- und erneuter Anmeldung sichtbar.",
     apply: "Auswahl anwenden",
     applying: "Wird angewendet…",
     active: "Bereits angewendet",
@@ -204,6 +208,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     ready: "Alle gewählten Einstellungen sind bereits aktiv.",
     missing: "Einige Optionen fehlen in dieser Version.",
     free: "In Free enthalten",
+    notHere: "Auf diesem PC nicht verfügbar",
   },
   pt: {
     ...en,
@@ -228,9 +233,9 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     studyNote:
       "Oculta os widgets da barra. Não silencia mensagens nem bloqueia sites. Algumas alterações podem exigir sair da conta e entrar de novo.",
     workNote:
-      "Os menus abrem sem atraso. Os aplicativos podem iniciar juntos. As extensões ficam visíveis; arquivos ocultos são opcionais.",
+      "Os menus abrem sem atraso. Os aplicativos podem iniciar juntos. As extensões ficam visíveis; arquivos ocultos são opcionais. A mudança nos menus aparece depois que você sai da conta e entra de novo.",
     laptopNote:
-      "Animações e transparência são desativadas, então o Windows fica com visual mais simples. Quanto de bateria isso economiza depende do notebook e não é medido aqui; as configurações de energia não mudam.",
+      "Animações e transparência são desativadas, então o Windows fica com visual mais simples; as mudanças aparecem depois que você sai da conta e entra de novo. Quanto de bateria isso economiza depende do notebook e não é medido aqui; as configurações de energia não mudam.",
     quietNote:
       "Trata-se de janelas pop-up, não do barulho das ventoinhas: ventoinhas e energia não mudam. As notificações dos seus aplicativos continuam funcionando.",
     streamingNote:
@@ -245,5 +250,6 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     ready: "Todos os ajustes selecionados já estão aplicados.",
     missing: "Algumas opções não estão disponíveis nesta versão.",
     free: "Incluído em Free",
+    notHere: "Não disponível neste PC",
   },
 };

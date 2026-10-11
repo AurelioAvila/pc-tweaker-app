@@ -16,6 +16,7 @@ import { format, type Lang, type Strings } from "../i18n";
 import { formatNumber, uiLocale } from "../lib";
 import type { AuditEntry, Toast, TweakInfo } from "../types";
 import { ToolDetails, ToolHeader, ToolStatus } from "./tool-section";
+import { PageBoundary } from "./page-boundary";
 import { Badge, type BadgeKind } from "./ui";
 import { BEFORE_AFTER_COPY } from "./before-after-copy";
 import "./before-after.css";
@@ -338,17 +339,24 @@ function renderReport(data: BeforeAfter, changes: MetricChange[], c: Copy): stri
   return out.toDataURL("image/png");
 }
 
-export function BeforeAfterPanel({
-  s,
-  lang,
-  tweaks,
-  pushToast,
-}: {
+type PanelProps = {
   s: Strings;
   lang: Lang;
   tweaks: TweakInfo[];
   pushToast: (kind: Toast["kind"], message: string) => void;
-}) {
+};
+
+/** A failure inside Before & After stays inside it: the rest of PC Health
+ *  keeps working. */
+export function BeforeAfterPanel(props: PanelProps) {
+  return (
+    <PageBoundary s={props.s} resetKey="before-after">
+      <BeforeAfterContent {...props} />
+    </PageBoundary>
+  );
+}
+
+function BeforeAfterContent({ s, lang, tweaks, pushToast }: PanelProps) {
   const c = BEFORE_AFTER_COPY[lang];
   const [data, setData] = useState<BeforeAfter | null>(null);
   const [busy, setBusy] = useState(false);
@@ -405,6 +413,10 @@ export function BeforeAfterPanel({
   const changes = useMemo(() => sorted(data?.changes ?? []), [data]);
   const better = changes.filter((ch) => ch.verdict === "better");
   const worse = changes.filter((ch) => ch.verdict === "worse");
+  // Runs that spread this widely mostly mean the PC was busy while measuring.
+  const noisy = changes.some(
+    (ch) => TIMED.has(ch.id) && Math.max(ch.beforeSpreadPct ?? 0, ch.afterSpreadPct ?? 0) > 20,
+  );
   const bootChange = boot?.change ?? null;
 
   // What PC Tweaker changed between the two measurements, from its own log.
@@ -557,6 +569,7 @@ export function BeforeAfterPanel({
             {better.length > 0 && worse.length === 0 && better.length < changes.length && (
               <p className="ba-quiet">{c.impactAlso}</p>
             )}
+            {noisy && <p className="ba-quiet">{c.noisy}</p>}
             <p className="ba-when">
               {format(c.measuredAt, { before: when(data.before.ts), after: when(data.after.ts) })}
             </p>

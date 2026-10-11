@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { API_BASE } from "./constants";
-import { HalloweenCard, HalloweenOfferBanner, HalloweenStrip } from "../../src/components/halloween-offer";
+import { HalloweenCard, HalloweenStrip } from "../../src/components/halloween-offer";
 // Shared with the desktop app, so both read the server's offer the same way.
 import { msUntil, parsePromo, previewPromo, promoPercent, PROMO_LAYOUT_UNTIL, type Promo, type PromoOffer } from "../../src/promo";
 
@@ -182,18 +182,15 @@ export function PromoCard() {
   );
 }
 
-/** Same banner as the desktop app, above the plans. */
-export function PromoBanner({ promo, remaining }: { promo: Promo; remaining: number }) {
+/** The note that belongs with struck prices, under the plans. While the first answer is
+ *  pending it only holds its line, so the plans below do not move. */
+export function PromoFine({ className = "" }: { className?: string }) {
+  const { promo, reserve } = usePromo();
   const c = useCopy();
+  if (!promo && !reserve) return null;
   return (
-    <HalloweenOfferBanner headingLevel={3} kicker={c.kicker} heading={endLine(promo.endsAt, c)} fine={c.fine} endsIn={c.endsIn} units={c.units} remaining={remaining} />
+    <p className={className} style={promo ? undefined : { visibility: "hidden" }} aria-hidden={promo ? undefined : true}>
+      {c.fine}
+    </p>
   );
-}
-
-/** An invisible copy of the banner, holding its exact place until the server answers.
- *  Rome time, so the prerendered page and the browser render the same text. */
-export function PromoPlaceholder() {
-  const end = new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Rome" }).format(PROMO_LAYOUT_UNTIL - 60_000);
-  const c = COPY.en;
-  return <HalloweenOfferBanner reserved headingLevel={3} kicker={c.kicker} heading={`Ends ${end} CET`} fine={c.fine} endsIn={c.endsIn} units={c.units} remaining={0} />;
 }

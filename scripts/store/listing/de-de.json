@@ -1,0 +1,60 @@
+{
+  "shortDescription": "81 Windows-Einstellungen, die du lesen kannst, bevor du sie anwendest. Jede Änderung wird vorab gezeigt, festgehalten und lässt sich rückgängig machen, mit einem Live-Dashboard für den PC-Zustand, einem Systemscan mit 13 Prüfungen und einem übersichtlicheren Debloat.",
+  "description": "PC Tweaker bietet dir 81 Windows-Einstellungen (46 Free, 35 Pro) für Leistung, Gaming, Datenschutz und den Alltag. Jede Einstellung zeigt genau, was sie schreiben wird, bevor sich etwas ändert, und hält den vorherigen Wert fest, damit du ihn zurücksetzen kannst.\n\nVORSCHAU VOR DEM ANWENDEN\nÖffne bei jeder Einstellung „Was genau geändert wird“, um jeden Registry-Schlüssel oder jede Einstellung zu sehen, mit dem aktuellen Wert und dem Wert, der gesetzt wird, direkt von deinem PC gelesen, ohne etwas zu ändern. Bricht ein Vorgang mittendrin ab, werden die bereits geschriebenen Werte sofort wiederhergestellt.\n\nWINDOWS-UPDATES OHNE ÜBERRASCHUNGEN\nMit „Windows-Updates überwachen“ prüft PC Tweaker bei der Anmeldung und meldet sich nur, wenn etwas tatsächlich nicht mehr wirkt. Du bekommst eine Liste mit einem Kontrollkästchen pro Einstellung: Entferne das Häkchen bei allem, was du absichtlich geändert hast, und wende den Rest erneut an. Nichts wird von selbst erneut angewendet.\n\nDIE KI-FUNKTIONEN VON WINDOWS, DEINE ENTSCHEIDUNG\nEinstellungen für Click to Do (wo Windows es anbietet), den Windows-AI-Fabric-Dienst und die KI-Funktionen in Microsoft Edge, Paint und Editor. Jede Karte nennt, was sie voraussetzt: Benutzer- oder Computerbereich, Administratorrechte, Windows-Version und -Edition. Eine Einstellung, die für deinen PC nicht gilt, sagt das.\n\nPC-ZUSTAND LIVE\nProzessorlast pro Kern, belegter, zwischengespeicherter und freier Arbeitsspeicher, Datenträger- und Netzwerkaktivität und was Ressourcen nutzt, nach App gruppiert aus der Prozessliste von Windows, über 1 oder 5 Minuten. Grafiklast, Temperatur, Lüfter und Grafikspeicher bei NVIDIA-Grafikkarten. Fehlende Sensoren werden angezeigt, nicht geschätzt. Der Health Score bewertet deinen PC in neun Bereichen, und jeder Punkt beruht auf etwas Messbarem auf deinem Rechner.\n\nSYSTEMSCAN, DEBLOAT UND GAMING\nDer Systemscan führt 13 Prüfungen aus und lässt sich pausieren, fortsetzen oder beenden; beendest du ihn vorzeitig, bleibt ein Teilergebnis, das die nicht ausgeführten Prüfungen nennt. Debloat gruppiert die Apps auf deinem PC nach Art mit ihrer tatsächlichen Größe und erklärt, was du verlierst, bevor etwas entfernt wird. Nichts wird für dich ausgewählt. Turbo Boost zeigt die gemessene Prozessorlast, die Taktfrequenzen und einen festen 3-Sekunden-Test, damit du Modi mit Zahlen vergleichen kannst.\n\nMIT PRO\n35 weitere Einstellungen, Prioritätsregeln für Apps (nie über Hoch), eine wöchentliche Bereinigung temporärer Dateien in den Papierkorb, Sichere Defragmentierung, Zero-Trace Cleaner, ein durchklickbares Spiel-Overlay, Driver Booster und Temperaturprofile.\n\nSechs Sprachen: Englisch, Italienisch, Französisch, Spanisch, Deutsch und Portugiesisch. Windows 10 und 11, 64 Bit. Die Windows-Programmdateien sind von Aurelio Avila signiert.",
+  "features": [
+    "81 Windows-Einstellungen: 46 Free und 35 Pro",
+    "Sieh jeden Wert, wie er jetzt ist und wie er gesetzt wird, bevor du anwendest",
+    "Jede Änderung wird festgehalten und ist umkehrbar; ein fehlgeschlagener Vorgang wird sofort zurückgenommen",
+    "Geführtes erneutes Anwenden nach Windows-Updates, ein Kontrollkästchen pro Einstellung",
+    "Einstellungen für die KI-Funktionen von Windows und die KI in Edge, Paint und Editor",
+    "PC-Zustand live: Last pro Kern, Arbeitsspeicher, Datenträger, Netzwerk und was Ressourcen nutzt",
+    "Systemscan mit 13 Prüfungen, pausieren, fortsetzen oder beenden",
+    "Debloat mit der tatsächlichen Größe der Apps und was du verlierst, bevor etwas entfernt wird",
+    "Turbo Boost mit gemessener Last, Taktfrequenzen und einem festen 3-Sekunden-Test",
+    "Sechs Sprachen, Windows 10 und 11 (64 Bit), signierte Programmdateien"
+  ],
+  "keywords": [
+    "PC Tweaker",
+    "Windows optimieren",
+    "Windows 11 Datenschutz",
+    "Windows Apps entfernen",
+    "PC Monitor",
+    "Gaming Einstellungen",
+    "Registry Einstellungen"
+  ],
+  "screenshots": [
+    {
+      "file": "01-scan.png",
+      "caption": "Der Systemscan führt 13 Prüfungen aus und lässt sich pausieren, fortsetzen oder beenden"
+    },
+    {
+      "file": "02-health.png",
+      "caption": "PC-Zustand live: Last pro Kern, Arbeitsspeicher, Datenträger, Netzwerk und was Ressourcen nutzt"
+    },
+    {
+      "file": "03-preview.png",
+      "caption": "Sieh jeden Wert, wie er jetzt ist und wie er gesetzt wird, bevor du anwendest"
+    },
+    {
+      "file": "04-privacy.png",
+      "caption": "Einstellungen für die KI-Funktionen von Windows, jeweils mit ihren Voraussetzungen"
+    },
+    {
+      "file": "05-debloat.png",
+      "caption": "Debloat mit tatsächlichen Größen und was du verlierst, bevor etwas entfernt wird"
+    },
+    {
+      "file": "06-gaming.png",
+      "caption": "Turbo Boost mit gemessener Last und Taktfrequenz. Nur Zahlen."
+    },
+    {
+      "file": "07-hardware.png",
+      "caption": "Hardware-Sensoren und Treiber an einem Ort"
+    },
+    {
+      "file": "08-profiles.png",
+      "caption": "Starte mit einem Profil Gaming, Lernen oder Arbeit und passe es vor dem Anwenden an"
+    }
+  ],
+  "releaseNotes": "PC Tweaker 1.18.0 „Halloween Update“: 15 neue Einstellungen, eine Vorschau vor jeder Änderung, automatisches Rückgängigmachen, wenn etwas schiefgeht, und ein Live-Dashboard für den PC-Zustand.\n\n- 81 Einstellungen (46 Free, 35 Pro).\n- Die KI von Windows, deine Entscheidung: Click to Do (wo verfügbar), der Windows-AI-Fabric-Dienst und die KI-Funktionen in Edge, Paint und Editor.\n- Sieh jeden Wert, wie er jetzt ist und wie er gesetzt wird. Ein fehlgeschlagener Vorgang wird von selbst zurückgenommen.\n- Nach einem Windows-Update werden zurückgesetzte Einstellungen mit je einem Kontrollkästchen aufgelistet. Nichts wird im Stillen erneut angewendet.\n- PC-Zustand live: CPU pro Kern, Arbeitsspeicher, Datenträger, Netzwerk und was Ressourcen nutzt.\n- Außerdem neu: Schnellstart und Speicheroptimierung aus, „Task beenden“ im Taskleistenmenü, Ziehablage aus, Explorer öffnet „Dieser PC“, Widgets aus, Game-Bar-Aufnahmen aus, Hersteller-Apps blockiert, Tipps und Vorschläge mit einem Schalter, Prioritätsregeln für Apps und eine wöchentliche Bereinigung temporärer Dateien.\n- Systemscan mit Pause, Fortsetzen und Beenden, neu gestaltetes Debloat und Turbo Boost mit gemessener Last und Taktfrequenz.\n\nEinstellungen, Lizenzen und der Änderungsverlauf bleiben erhalten."
+}

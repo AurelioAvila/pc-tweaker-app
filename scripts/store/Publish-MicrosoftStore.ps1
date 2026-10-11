@@ -11,10 +11,18 @@ A release run verifies the binary's Authenticode signature, packs the MSIX, uplo
 through the Microsoft Store submission API and commits the submission. Certification and
 publication then happen on Microsoft's side; the script reports the state it reached.
 
+With -ListingDir the same submission also replaces the Store listing in every language
+(short description, description, features, keywords, release notes) from
+<dir>/<language>.json; with -Screenshots it replaces the screenshots with
+<dir>/<two-letter language>/<file> and their captions. -ListingOnly submits the listing
+without a new package.
+
 .EXAMPLE
 pwsh scripts/store/Publish-MicrosoftStore.ps1 -SaveCredential
 pwsh scripts/store/Publish-MicrosoftStore.ps1 -Version 1.15.8 -DryRun
 pwsh scripts/store/Publish-MicrosoftStore.ps1 -Version 1.15.8
+pwsh scripts/store/Publish-MicrosoftStore.ps1 -ListingOnly -ListingDir scripts/store/listing -Screenshots <dir> -DryRun
+pwsh scripts/store/Publish-MicrosoftStore.ps1 -ExportListing <dir>
 #>
 [CmdletBinding(DefaultParameterSetName = 'Publish')]
 param(
@@ -25,14 +33,21 @@ param(
     [Parameter(ParameterSetName = 'Credential')][switch]$SecretFromClipboard,
     # Only report the app's current submission state.
     [Parameter(ParameterSetName = 'Status', Mandatory)][switch]$Status,
+    # Write the published listing of every language to <dir>/<language>.json (read only).
+    [Parameter(ParameterSetName = 'Export', Mandatory)][string]$ExportListing,
     [Parameter(ParameterSetName = 'Publish', Mandatory)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version,
     [Parameter(ParameterSetName = 'Publish')][string]$Exe = "$PSScriptRoot/../../src-tauri/target/release/PC Tweaker.shipped.exe",
-    [Parameter(ParameterSetName = 'Publish')][Parameter(ParameterSetName = 'Status')][string]$AppId = '9NH3C6DT1G87',
+    [Parameter(ParameterSetName = 'Publish')][Parameter(ParameterSetName = 'Status')][Parameter(ParameterSetName = 'Export')][Parameter(ParameterSetName = 'Listing')][string]$AppId = '9NH3C6DT1G87',
     [Parameter(ParameterSetName = 'Publish')][string]$ReleaseNotes,
+    # Listing texts (<dir>/<language>.json) and screenshots (<dir>/<two-letter language>/<file>).
+    [Parameter(ParameterSetName = 'Publish')][Parameter(ParameterSetName = 'Listing', Mandatory)][string]$ListingDir,
+    [Parameter(ParameterSetName = 'Publish')][Parameter(ParameterSetName = 'Listing')][string]$Screenshots,
+    # Submit the listing without a new package.
+    [Parameter(ParameterSetName = 'Listing', Mandatory)][switch]$ListingOnly,
     # A draft left open in Partner Center blocks new submissions; this deletes it first.
-    [Parameter(ParameterSetName = 'Publish')][switch]$ReplacePending,
-    # Build and verify the MSIX without contacting the Store.
-    [Parameter(ParameterSetName = 'Publish')][switch]$DryRun
+    [Parameter(ParameterSetName = 'Publish')][Parameter(ParameterSetName = 'Listing')][switch]$ReplacePending,
+    # Build and verify the MSIX (and check the listing files) without contacting the Store.
+    [Parameter(ParameterSetName = 'Publish')][Parameter(ParameterSetName = 'Listing')][switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -82,6 +97,56 @@ if ($Status) {
     return
 }
 
+if ($ExportListing) {
+    $app = Invoke-Store Get ''
+    $published = Invoke-Store Get "/submissions/$($app.lastPublishedApplicationSubmission.id)"
+    New-Item -ItemType Directory -Force $ExportListing | Out-Null
+    foreach ($language in $published.listings.PSObject.Properties) {
+        $language.Value.baseListing | ConvertTo-Json -Depth 20 |
+            Set-Content -LiteralPath (Join-Path $ExportListing "$($language.Name).json") -Encoding utf8
+    }
+    Write-Host "Exported $(@($published.listings.PSObject.Properties).Count) listings from submission $($published.id)."
+    return
+}
+
+# Listing texts and screenshots are checked before anything is packed or sent.
+$listingTexts = @{}
+if ($ListingDir) {
+    $field = { param($text, $name) $text.PSObject.Properties[$name]?.Value }
+    foreach ($file in Get-ChildItem -LiteralPath $ListingDir -Filter *.json) {
+        $text = Get-Content -LiteralPath $file.FullName -Raw -Encoding utf8 | ConvertFrom-Json
+        foreach ($limit in @(@('shortDescription', 1000), @('description', 10000), @('releaseNotes', 1500))) {
+            if ((& $field $text $limit[0])?.Length -gt $limit[1]) { throw "$($file.Name): $($limit[0]) is over $($limit[1]) characters." }
+        }
+        $features = @(& $field $text 'features')
+        if ($features.Count -gt 20 -or @($features | Where-Object { $_.Length -gt 200 }).Count) { throw "$($file.Name): features exceed 20 items or 200 characters." }
+        if (@(& $field $text 'keywords').Count -gt 7) { throw "$($file.Name): more than 7 keywords." }
+        if ($Screenshots) {
+            $shots = @(& $field $text 'screenshots')
+            if ($shots.Count -lt 1 -or $shots.Count -gt 10) { throw "$($file.Name): 1 to 10 screenshots are needed." }
+            foreach ($shot in $shots) {
+                $path = Join-Path $Screenshots "$(($file.BaseName -split '-')[0])/$($shot.file)"
+                if (-not (Test-Path -LiteralPath $path)) { throw "Missing screenshot $path" }
+                if ($shot.caption.Length -gt 200) { throw "$($file.Name): caption over 200 characters for $($shot.file)." }
+            }
+        }
+        $listingTexts[$file.BaseName] = $text
+    }
+    Write-Host "Listing texts checked: $(($listingTexts.Keys | Sort-Object) -join ', ')"
+    # The listing languages are chosen in Partner Center; the files must match them exactly.
+    $published = Invoke-Store Get "/submissions/$((Invoke-Store Get '').lastPublishedApplicationSubmission.id)"
+    $storeLanguages = @($published.listings.PSObject.Properties.Name | Sort-Object)
+    $fileLanguages = @($listingTexts.Keys | Sort-Object)
+    if (Compare-Object $storeLanguages $fileLanguages) {
+        throw "Store listing languages ($($storeLanguages -join ', ')) differ from $ListingDir ($($fileLanguages -join ', ')). Change the languages in Partner Center (app overview, Add/remove languages) or the files first."
+    }
+}
+$work = Join-Path ([IO.Path]::GetTempPath()) "pctweaker-store-$(if ($ListingOnly) { 'listing' } else { $Version })"
+Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force $work | Out-Null
+if ($ListingOnly -and $DryRun) { Write-Host 'Dry run: nothing sent.'; return }
+
+if (-not $ListingOnly) {
 # 1. The Store package must carry the exact binary that was signed for this release.
 $Exe = (Resolve-Path -LiteralPath $Exe).Path
 & "$PSScriptRoot/../verify-authenticode.ps1" -Path $Exe | Out-Null
@@ -94,8 +159,6 @@ if ($productVersion -notmatch "^$([regex]::Escape($Version))(\D|$)") {
 $makeAppx = Get-ChildItem -LiteralPath (Join-Path ${env:ProgramFiles(x86)} 'Windows Kits/10/bin') -Filter makeappx.exe -Recurse |
     Where-Object { $_.Directory.Name -eq 'x64' } | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
 if (-not $makeAppx) { throw 'Windows SDK MakeAppx is required.' }
-$work = Join-Path ([IO.Path]::GetTempPath()) "pctweaker-store-$Version"
-Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
 $stage = New-Item -ItemType Directory -Force (Join-Path $work 'stage')
 Copy-Item -LiteralPath "$PSScriptRoot/msix/Assets" -Destination $stage -Recurse
 (Get-Content -LiteralPath "$PSScriptRoot/msix/AppxManifest.xml" -Raw).Replace('{{VERSION}}', "$Version.0") |
@@ -108,6 +171,7 @@ if ($LASTEXITCODE) { throw "MakeAppx failed with exit code $LASTEXITCODE." }
 $msixHash = (Get-FileHash -LiteralPath $msix -Algorithm SHA256).Hash
 Write-Host "MSIX $msixName  SHA256 $msixHash"
 if ($DryRun) { Write-Host "Dry run: nothing sent. Package at $msix"; return }
+}
 
 # 4. Only one submission can be open at a time.
 $app = Invoke-Store Get ''
@@ -119,16 +183,45 @@ if ($pending -and $pending.Value) {
 
 # 5. Clone the published submission, swap the package, upload and commit.
 $submission = Invoke-Store Post '/submissions'
-foreach ($package in $submission.applicationPackages) { $package.fileStatus = 'PendingDelete' }
-$submission.applicationPackages += [pscustomobject]@{
-    fileName = $msixName; fileStatus = 'PendingUpload'; minimumDirectXVersion = 'None'; minimumSystemRam = 'None'
+$uploads = @()
+if (-not $ListingOnly) {
+    foreach ($package in $submission.applicationPackages) { $package.fileStatus = 'PendingDelete' }
+    $submission.applicationPackages += [pscustomobject]@{
+        fileName = $msixName; fileStatus = 'PendingUpload'; minimumDirectXVersion = 'None'; minimumSystemRam = 'None'
+    }
+    $uploads += $msix
 }
 if ($ReleaseNotes) {
     foreach ($listing in $submission.listings.PSObject.Properties.Value) { $listing.baseListing | Add-Member -NotePropertyName releaseNotes -NotePropertyValue $ReleaseNotes -Force }
 }
-$zip = Join-Path $work 'upload.zip'
-Compress-Archive -LiteralPath $msix -DestinationPath $zip -Force
-Invoke-RestMethod -Method Put -Uri $submission.fileUploadUrl -InFile $zip -Headers @{ 'x-ms-blob-type' = 'BlockBlob' } | Out-Null
+if ($ListingDir) {
+    foreach ($language in $submission.listings.PSObject.Properties) {
+        $text = $listingTexts[$language.Name]
+        if (-not $text) { throw "No listing text for $($language.Name) in $ListingDir." }
+        $base = $language.Value.baseListing
+        foreach ($name in 'shortDescription', 'description', 'features', 'keywords', 'releaseNotes') {
+            $value = $text.PSObject.Properties[$name]?.Value
+            if ($null -ne $value) { $base | Add-Member -NotePropertyName $name -NotePropertyValue $value -Force }
+        }
+        if ($Screenshots) {
+            $short = ($language.Name -split '-')[0]
+            $images = @($base.images | Where-Object { $_.imageType -ne 'Screenshot' })
+            foreach ($old in @($base.images | Where-Object { $_.imageType -eq 'Screenshot' })) { $old.fileStatus = 'PendingDelete'; $images += $old }
+            foreach ($shot in $text.screenshots) {
+                $name = "$short-$($shot.file)"
+                Copy-Item -LiteralPath (Join-Path $Screenshots "$short/$($shot.file)") -Destination (Join-Path $work $name) -Force
+                $uploads += Join-Path $work $name
+                $images += [pscustomobject]@{ fileName = $name; fileStatus = 'PendingUpload'; imageType = 'Screenshot'; description = $shot.caption }
+            }
+            $base | Add-Member -NotePropertyName images -NotePropertyValue $images -Force
+        }
+    }
+}
+if ($uploads) {
+    $zip = Join-Path $work 'upload.zip'
+    Compress-Archive -LiteralPath $uploads -DestinationPath $zip -Force
+    Invoke-RestMethod -Method Put -Uri $submission.fileUploadUrl -InFile $zip -Headers @{ 'x-ms-blob-type' = 'BlockBlob' } | Out-Null
+}
 Invoke-Store Put "/submissions/$($submission.id)" $submission | Out-Null
 Invoke-Store Post "/submissions/$($submission.id)/commit" | Out-Null
 
@@ -140,4 +233,5 @@ do {
 if ($state.status -like '*Failed') {
     throw "Submission $($submission.id) failed: $($state.statusDetails | ConvertTo-Json -Depth 10 -Compress)"
 }
+if ($ListingOnly) { Write-Host "Submitted the listing update $($submission.id). Microsoft certifies it; the Store page changes when that finishes."; return }
 Write-Host "Submitted $msixName (SHA256 $msixHash). Microsoft now certifies and publishes it; the listing updates when that finishes."

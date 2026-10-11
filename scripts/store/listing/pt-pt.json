@@ -1,0 +1,36 @@
+{
+  "shortDescription": "81 controlos do Windows que pode ler antes de aplicar. Cada alteração é mostrada antes, registada e reversível, com um painel de Saúde do PC em tempo real, uma Verificação de 13 testes e um Debloat mais claro.",
+  "description": "O PC Tweaker oferece 81 controlos do Windows (46 Free, 35 Pro) para desempenho, jogos, privacidade e utilização diária. Cada controlo mostra exatamente o que vai escrever antes de qualquer alteração e regista o valor anterior, para que o possa repor.\n\nPRÉ-VISUALIZAÇÃO ANTES DE APLICAR\nAbra \"O que isto altera, exatamente\" em qualquer controlo para ver cada chave de registo ou definição, o valor atual e o valor que será aplicado, lidos do seu PC sem alterar nada. Se uma aplicação falhar a meio, os valores já escritos são repostos de imediato.\n\nATUALIZAÇÕES DO WINDOWS SEM SURPRESAS\nCom \"Vigiar as atualizações do Windows\" ativado, o PC Tweaker verifica ao iniciar sessão e só avisa quando algo deixou realmente de estar em vigor. Recebe uma lista com uma caixa de verificação por controlo: desmarque o que alterou de propósito e volte a aplicar o resto. Nada é reaplicado sozinho.\n\nAS FUNCIONALIDADES DE IA DO WINDOWS, À SUA ESCOLHA\nControlos para o Click to Do (onde o Windows o disponibiliza), o serviço Windows AI Fabric e as funcionalidades de IA do Microsoft Edge, do Paint e do Bloco de Notas. Cada cartão indica o que exige: âmbito de utilizador ou de computador, direitos de administrador, versão e edição do Windows. Um controlo que não se aplica ao seu PC indica-o.\n\nSAÚDE DO PC EM TEMPO REAL\nCarga do processador por núcleo, memória em utilização, em cache e livre, atividade do disco e da rede, e o que está a utilizar recursos, agrupado por aplicação a partir da lista de processos do Windows, em 1 ou 5 minutos. Carga, temperatura, ventoinha e memória de vídeo da placa gráfica nas placas NVIDIA. Os sensores em falta são indicados, não estimados. O Health Score avalia o seu PC em nove áreas e cada ponto resulta de algo mensurável no seu computador.\n\nVERIFICAÇÃO, DEBLOAT E JOGOS\nA Verificação executa 13 testes e pode ser colocada em pausa, retomada ou terminada; se a terminar mais cedo, fica com um resultado parcial que indica os testes que não foram feitos. O Debloat agrupa as aplicações do seu PC por tipo, com o tamanho real, e explica o que perde antes de remover qualquer coisa. Nada é selecionado por si. O Turbo Boost mostra a carga medida do processador, as frequências e um teste fixo de 3 segundos, para comparar modos com números.\n\nCOM O PRO\nMais 35 controlos, regras de prioridade por aplicação (nunca acima de Alta), uma limpeza semanal de ficheiros temporários para a Reciclagem, Desfragmentação segura, Zero-Trace Cleaner, uma sobreposição de jogo que deixa passar os cliques, Driver Booster e perfis térmicos.\n\nSeis idiomas: inglês, italiano, francês, espanhol, alemão e português. Windows 10 e 11, 64 bits. Os executáveis do Windows são assinados por Aurelio Avila.",
+  "features": [
+    "81 controlos do Windows: 46 Free e 35 Pro",
+    "Veja cada valor como está agora e como ficará, antes de aplicar",
+    "Cada alteração é registada e reversível; uma aplicação que falhe é anulada de imediato",
+    "Reaplicação guiada após as atualizações do Windows, uma caixa por controlo",
+    "Controlos para as funcionalidades de IA do Windows e a IA do Edge, do Paint e do Bloco de Notas",
+    "Saúde do PC em tempo real: carga por núcleo, memória, disco, rede e o que utiliza recursos",
+    "Verificação de 13 testes que pode ser colocada em pausa, retomada ou terminada",
+    "Debloat com o tamanho real das aplicações e o que perde, antes de remover",
+    "Turbo Boost com carga medida, frequências e um teste fixo de 3 segundos",
+    "Seis idiomas, Windows 10 e 11 (64 bits), executáveis assinados"
+  ],
+  "keywords": [
+    "PC Tweaker",
+    "otimizar Windows",
+    "privacidade Windows 11",
+    "remover aplicações Windows",
+    "monitor do PC",
+    "definições de jogos",
+    "registo do Windows"
+  ],
+  "screenshots": [
+    { "file": "01-scan.png", "caption": "A Verificação executa 13 testes e pode ser colocada em pausa, retomada ou terminada" },
+    { "file": "02-health.png", "caption": "Saúde do PC em tempo real: carga por núcleo, memória, disco, rede e o que utiliza recursos" },
+    { "file": "03-preview.png", "caption": "Veja cada valor como está agora e como ficará, antes de aplicar" },
+    { "file": "04-privacy.png", "caption": "Controlos para as funcionalidades de IA do Windows, cada um com os seus requisitos" },
+    { "file": "05-debloat.png", "caption": "Debloat com tamanhos reais e o que perde, antes de remover qualquer coisa" },
+    { "file": "06-gaming.png", "caption": "Turbo Boost com carga e frequências medidas. Apenas números." },
+    { "file": "07-hardware.png", "caption": "Sensores de hardware e controladores num só lugar" },
+    { "file": "08-profiles.png", "caption": "Comece com um perfil Gaming, Estudo ou Trabalho e ajuste-o antes de aplicar" }
+  ],
+  "releaseNotes": "PC Tweaker 1.18.0 \"Halloween Update\": 15 novos controlos, uma pré-visualização antes de cada alteração, anulação automática se algo correr mal e um painel de Saúde do PC em tempo real.\n\n- 81 controlos (46 Free, 35 Pro).\n- A IA do Windows, à sua escolha: Click to Do (onde estiver disponível), o serviço Windows AI Fabric e as funcionalidades de IA do Edge, do Paint e do Bloco de Notas.\n- Veja cada valor como está agora e como ficará. Uma aplicação que falhe é anulada sozinha.\n- Depois de uma atualização do Windows, as definições repostas são listadas com uma caixa cada. Nada é reaplicado em silêncio.\n- Saúde do PC em tempo real: CPU por núcleo, memória, disco, rede e o que utiliza recursos.\n- Também novo: Arranque rápido e Sensor de Armazenamento desativados, Terminar tarefa no menu da barra de tarefas, bandeja de arrastar desativada, Explorador de Ficheiros a abrir em Este PC, Widgets desativados, capturas da Game Bar desativadas, aplicações do fabricante bloqueadas, sugestões e dicas num único interruptor, regras de prioridade por aplicação e limpeza semanal de ficheiros temporários.\n- Verificação com Pausa, Retomar e Terminar, Debloat redesenhado e Turbo Boost com carga e frequências medidas.\n\nAs definições, as licenças e o histórico de alterações são mantidos."
+}

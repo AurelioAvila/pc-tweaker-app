@@ -10,7 +10,7 @@ import { promoPercent } from "../../../src/promo";
  * that cannot convert anybody who has not already installed. Every number and
  * every capability below is taken from the shipping code, not from ambition:
  * prices checked against the live Stripe products, the free/Pro line from the
- * two Pro gates in that file (leftover cleaning and batch removal), the
+ * app's Pro gates (leftover cleaning, batch removal, broken entries), the
  * receipt fields from src-tauri/src/ledger.rs, the restore point from
  * src-tauri/src/restore_point.rs. The disclosure that used to be the whole
  * page is still here, below the fold, where disclosure belongs. */
@@ -19,6 +19,7 @@ const FREE = [
   "Unlimited single uninstalls, for classic desktop software and Store apps alike",
   "A safety score for every program, with the reasons it arrived at that score spelled out",
   "The removal brief: the exact command that will run and the permissions it will ask for, before it runs",
+  "A leftover scan right after every uninstall, so you see what the program left behind",
   "A restore-point attempt before elevated removals, with the outcome recorded in the receipt",
   "The Removal Ledger: a local receipt of what was removed, by what method, with what result and how much space was actually freed",
 ];
@@ -26,6 +27,7 @@ const FREE = [
 const PRO = [
   "Clean the leftovers the free scan finds — the files, folders and registry keys the program's own uninstaller left behind",
   "Batch removal: queue several programs and let them run in sequence instead of babysitting one dialog at a time",
+  "Remove broken entries: programs whose own uninstaller no longer exists, taken off the installed list",
 ];
 
 export function UninstallerPage() {
@@ -115,9 +117,9 @@ export function UninstallerPage() {
           sign-in, existing Lifetime owners included; that bonus does not renew automatically.
         </p>
         <p className="leading-relaxed text-[var(--fg-dim)]">
-          Create your free suite account inside PC Tweaker Uninstaller, then choose Pro in the
-          account menu. One account covers both applications. Taxes and the final renewal terms
-          are shown at checkout.
+          Open Plans &amp; pricing in the app&apos;s top bar: sign in or create your free suite
+          account there, then choose Go Pro. One account covers both applications. Taxes and the
+          final renewal terms are shown at checkout.
         </p>
       </section>
 

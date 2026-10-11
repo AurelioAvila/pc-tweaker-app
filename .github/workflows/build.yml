@@ -40,3 +40,7 @@ jobs:
       - name: Build without distributing verification artifacts
         shell: bash
         run: npm run tauri build -- --config '{"bundle":{"createUpdaterArtifacts":false}}'
+
+      # The Pro unlock of VM test builds must never be in a release.
+      - name: Refuse release binaries built with the test unlock
+        run: node scripts/check-no-test-pro.mjs --binary src-tauri/target/release

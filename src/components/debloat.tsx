@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { format, STRINGS, type Lang } from "../i18n";
+import { format, STRINGS, type Lang, localeOf } from "../i18n";
 import { FEATURE_INTELLIGENCE } from "../lib";
 import {
   canRemove,
@@ -825,7 +825,7 @@ export function DebloatPanel({
                         </span>
                         <time>
                           {Number.isFinite(record.timestamp)
-                            ? new Date(record.timestamp * 1000).toLocaleString(lang)
+                            ? new Date(record.timestamp * 1000).toLocaleString(localeOf(lang))
                             : c.dateUnknown}
                         </time>
                         <code>{record.packageFullName}</code>

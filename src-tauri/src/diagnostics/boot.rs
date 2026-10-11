@@ -201,16 +201,30 @@ pub struct BootReport {
     pub change: Option<crate::baseline::MetricChange>,
 }
 
+/// Restarts compared on each side: the most recent ones before the "before"
+/// measurement and the first ones after it, so months-old boots on another
+/// Windows build never weigh in.
+const SIDE: usize = 10;
+
+/// When the boot began. Windows logs event 100 only once the desktop has
+/// settled, which can be minutes after sign-in; splitting on the log time
+/// would count a boot that began before the "before" measurement as after.
+pub fn started(record: &BootRecord) -> u64 {
+    record.ts.saturating_sub(record.boot_ms / 1000)
+}
+
 pub fn report(records: Vec<BootRecord>, before_ts: Option<u64>) -> BootReport {
     let change = before_ts.and_then(|split| {
-        let side = |after: bool| -> Vec<f64> {
-            records
-                .iter()
-                .filter(|r| (r.ts > split) == after)
-                .map(|r| r.boot_ms as f64)
-                .collect()
-        };
-        crate::baseline::change_of("boot_ms", &side(false), &side(true), 1)
+        let mut before: Vec<&BootRecord> = records.iter().filter(|r| started(r) <= split).collect();
+        let after: Vec<f64> = records
+            .iter()
+            .filter(|r| started(r) > split)
+            .take(SIDE)
+            .map(|r| r.boot_ms as f64)
+            .collect();
+        let keep = before.len().saturating_sub(SIDE);
+        let before: Vec<f64> = before.drain(keep..).map(|r| r.boot_ms as f64).collect();
+        crate::baseline::change_of("boot_ms", &before, &after, 1)
     });
     BootReport { records, change }
 }
@@ -237,7 +251,15 @@ pub async fn boot_times(
         let merged = merge(known, fresh);
         let json = serde_json::to_vec(&merged).map_err(|e| e.to_string())?;
         std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-        std::fs::write(dir.join(HISTORY_FILE), json).map_err(|e| e.to_string())?;
+        // Through a temporary file: an interrupted write must not leave an
+        // unreadable history that silently reads back as empty.
+        let temp = dir.join(format!("{HISTORY_FILE}.{}.tmp", std::process::id()));
+        std::fs::write(&temp, json)
+            .and_then(|()| std::fs::rename(&temp, dir.join(HISTORY_FILE)))
+            .map_err(|e| {
+                let _ = std::fs::remove_file(&temp);
+                e.to_string()
+            })?;
         Ok(report(merged, before_ts))
     }
     #[cfg(not(windows))]
@@ -267,7 +289,10 @@ mod tests {
     fn event_times_convert_to_unix_seconds() {
         assert_eq!(parse_system_time("1970-01-01T00:00:00Z"), Some(0));
         assert_eq!(parse_system_time("2000-03-01T00:00:00Z"), Some(951_868_800));
-        assert_eq!(parse_system_time("2026-10-11T07:12:33.1234567Z"), Some(1_791_702_753));
+        assert_eq!(
+            parse_system_time("2026-10-11T07:12:33.1234567Z"),
+            Some(1_791_702_753)
+        );
         assert_eq!(parse_system_time("2026-13-11T07:12:33Z"), None);
         assert_eq!(parse_system_time("not a time"), None);
     }
@@ -294,9 +319,16 @@ mod tests {
         };
         let slow = [30_000, 31_000, 32_000, 30_500];
         let fast = [22_000, 21_000, 23_000, 22_500];
-        let mut records: Vec<BootRecord> =
-            slow.iter().enumerate().map(|(i, ms)| r(i as u64, *ms)).collect();
-        records.extend(fast.iter().enumerate().map(|(i, ms)| r(100 + i as u64, *ms)));
+        let mut records: Vec<BootRecord> = slow
+            .iter()
+            .enumerate()
+            .map(|(i, ms)| r(i as u64, *ms))
+            .collect();
+        records.extend(
+            fast.iter()
+                .enumerate()
+                .map(|(i, ms)| r(100 + i as u64, *ms)),
+        );
         let change = report(records.clone(), Some(50)).change.unwrap();
         assert_eq!(change.verdict, crate::baseline::Verdict::Better);
         assert_eq!((change.before_samples, change.after_samples), (4, 4));
@@ -304,5 +336,24 @@ mod tests {
         let few = report(records[..7].to_vec(), Some(50)).change.unwrap();
         assert_eq!(few.verdict, crate::baseline::Verdict::Inconclusive);
         assert!(report(records, None).change.is_none());
+    }
+
+    #[test]
+    fn a_boot_is_placed_by_when_it_began_and_old_boots_are_left_out() {
+        let r = |ts, ms| BootRecord {
+            ts,
+            boot_ms: ms,
+            main_path_ms: None,
+            post_boot_ms: None,
+        };
+        // Logged at 1100 after a 200 s boot: it began at 900, before the
+        // measurement at 1000, so it is a "before" boot.
+        assert_eq!(started(&r(1100, 200_000)), 900);
+        let mut records: Vec<BootRecord> = (0..30).map(|i| r(i, 90_000)).collect();
+        records.push(r(1100, 200_000));
+        records.extend((0..4).map(|i| r(2000 + i, 20_000)));
+        let change = report(records, Some(1000)).change.unwrap();
+        assert_eq!(change.before_samples, SIDE, "only the most recent before");
+        assert_eq!(change.after_samples, 4);
     }
 }

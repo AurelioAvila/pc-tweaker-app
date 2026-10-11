@@ -64,6 +64,10 @@ pub struct BaselineRun {
     pub role: Option<Role>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub metrics: Vec<Metric>,
+    /// When Windows last started, Unix seconds, so a restart between two
+    /// measurements is never mistaken for the effect of a tweak.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub boot_ts: Option<u64>,
 }
 
 impl BaselineRun {
@@ -186,6 +190,9 @@ fn disk_round() -> Result<(f64, f64), String> {
         // 4 KB window out of a slightly larger allocation.
         let mut raw = vec![0u8; BLOCK * 2];
         let offset = raw.as_ptr().align_offset(BLOCK);
+        if offset >= BLOCK {
+            return Err("could not align the read buffer".into());
+        }
         let page = &mut raw[offset..offset + BLOCK];
         // Deterministic pseudo-random offsets: repeatability beats randomness.
         let mut state: u64 = 0x1234_5678_9abc_def0;
@@ -219,7 +226,9 @@ fn launch_ms() -> Option<f64> {
             .stderr(Stdio::null());
         let start = Instant::now();
         let status = command.status()?;
-        Ok(status.success().then(|| start.elapsed().as_secs_f64() * 1000.0))
+        Ok(status
+            .success()
+            .then(|| start.elapsed().as_secs_f64() * 1000.0))
     })
     .ok()
     .flatten()
@@ -245,7 +254,9 @@ fn readings() -> Vec<Metric> {
     };
     push(
         "processes",
-        crate::process_guard::processes().ok().map(|p| p.len() as f64),
+        crate::process_guard::processes()
+            .ok()
+            .map(|p| p.len() as f64),
     );
     push(
         "startup_apps",
@@ -305,7 +316,9 @@ fn measure() -> Vec<Metric> {
     // A program start takes tens of milliseconds and varies the most, so it
     // gets more repetitions for the same few hundred milliseconds of waiting.
     timed("launch_ms", LAUNCH_REPEATS, &mut launch_ms);
-    timed("cpu", REPEATS, &mut || Some(crate::cpubench::bench(300).score as f64));
+    timed("cpu", REPEATS, &mut || {
+        Some(crate::cpubench::bench(300).score as f64)
+    });
     timed("memory_touch_ms", REPEATS, &mut || Some(memory_touch()));
     // A full or read-only temp drive loses the two disk tests, not the run:
     // the comparison simply has no disk rows.
@@ -508,6 +521,18 @@ pub struct BeforeAfter {
     pub after: Option<BaselineRun>,
     pub after_runs: u32,
     pub changes: Vec<MetricChange>,
+    /// Windows restarted between the two measurements. A restart alone
+    /// lowers memory in use and running processes and changes cold-start
+    /// timings, so the screen says so next to the results.
+    pub restarted_between: bool,
+}
+
+/// Two boot times further apart than this are two different boots; closer
+/// is the clock reading the same boot twice.
+const SAME_BOOT_SLACK_S: u64 = 120;
+
+fn restarted(before: &BaselineRun, after: &BaselineRun) -> bool {
+    matches!((before.boot_ts, after.boot_ts), (Some(b), Some(a)) if a.abs_diff(b) > SAME_BOOT_SLACK_S)
 }
 
 pub fn before_after_of(runs: &[BaselineRun]) -> BeforeAfter {
@@ -521,6 +546,7 @@ pub fn before_after_of(runs: &[BaselineRun]) -> BeforeAfter {
             after: None,
             after_runs: 0,
             changes: Vec::new(),
+            restarted_between: false,
         };
     };
     let before = &runs[start];
@@ -531,6 +557,7 @@ pub fn before_after_of(runs: &[BaselineRun]) -> BeforeAfter {
             after: None,
             after_runs: 0,
             changes: Vec::new(),
+            restarted_between: false,
         };
     };
     let changes = before
@@ -555,6 +582,7 @@ pub fn before_after_of(runs: &[BaselineRun]) -> BeforeAfter {
         after: Some((*after).clone()),
         after_runs: afters.len() as u32,
         changes,
+        restarted_between: restarted(before, after),
     }
 }
 
@@ -597,8 +625,6 @@ fn recent(mut runs: Vec<BaselineRun>) -> Vec<BaselineRun> {
     }
 }
 
-/// Runs every test (about 10 s) and appends the result to the local history.
-/// `role` says whether this is the "before" a later comparison starts from.
 static MEASURING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 /// Releases the one-measurement-at-a-time flag on every exit path.
@@ -610,6 +636,8 @@ impl Drop for Measuring {
     }
 }
 
+/// Runs every test (about 10 s) and appends the result to the local history.
+/// `role` says whether this is the "before" a later comparison starts from.
 #[tauri::command(async)]
 pub async fn run_baseline(app: tauri::AppHandle, role: Role) -> Result<BeforeAfter, String> {
     // Two runs at once would each measure the other's load.
@@ -637,6 +665,7 @@ pub async fn run_baseline(app: tauri::AppHandle, role: Role) -> Result<BeforeAft
         disk_random_read_ms: pick("disk_read_us") * 64 / 1000,
         role: Some(role),
         metrics,
+        boot_ts: Some(sysinfo::System::boot_time()).filter(|t| *t > 0),
     };
 
     let path = history_path(&app)?;
@@ -647,7 +676,29 @@ pub async fn run_baseline(app: tauri::AppHandle, role: Role) -> Result<BeforeAft
         .open(&path)
         .map_err(|e| e.to_string())?;
     writeln!(file, "{line}").map_err(|e| e.to_string())?;
-    Ok(before_after_of(&read_runs(&app)?))
+    drop(file);
+    let runs = read_runs(&app)?;
+    compact(&path, &runs);
+    Ok(before_after_of(&runs))
+}
+
+/// Keeps the history file from growing without end: once it holds four
+/// times what is read, it is rewritten with only what is read, through a
+/// temporary file so an interruption never leaves half a history.
+fn compact(path: &std::path::Path, kept: &[BaselineRun]) {
+    let lines = std::fs::read_to_string(path).map_or(0, |c| c.lines().count());
+    if lines <= HISTORY_CAP * 4 {
+        return;
+    }
+    let text: String = kept
+        .iter()
+        .filter_map(|r| serde_json::to_string(r).ok())
+        .map(|l| l + "\n")
+        .collect();
+    let temp = path.with_extension("jsonl.tmp");
+    if std::fs::write(&temp, text).is_err() || std::fs::rename(&temp, path).is_err() {
+        let _ = std::fs::remove_file(&temp);
+    }
 }
 
 /// The current comparison, without measuring anything. Async so the file
@@ -667,8 +718,16 @@ pub fn save_report_png(path: String, data_base64: String) -> Result<(), String> 
     let is_png = target
         .extension()
         .is_some_and(|e| e.eq_ignore_ascii_case("png"));
-    if !is_png || !target.is_absolute() {
-        return Err("the report can only be saved as a .png file".into());
+    // A local drive path only: no network share (which would send this
+    // user's credentials to it), no device path, no alternate data stream.
+    let bytes_of_path = path.as_bytes();
+    let local_drive = bytes_of_path.len() > 3
+        && bytes_of_path[0].is_ascii_alphabetic()
+        && bytes_of_path[1] == b':'
+        && (bytes_of_path[2] == b'\\' || bytes_of_path[2] == b'/')
+        && !path[2..].contains(':');
+    if !is_png || !target.is_absolute() || !local_drive {
+        return Err("the report can only be saved as a .png file on a local drive".into());
     }
     if data_base64.len() > MAX_BYTES / 3 * 4 + 4 {
         return Err("the report image is too large".into());
@@ -701,6 +760,7 @@ mod tests {
                     samples: s.to_vec(),
                 })
                 .collect(),
+            boot_ts: None,
         }
     }
 
@@ -743,7 +803,10 @@ mod tests {
     fn noise_is_no_significant_change() {
         let before = [100.0, 104.0, 98.0, 101.0, 103.0, 97.0, 102.0];
         let after = [99.0, 103.0, 101.0, 98.0, 104.0, 100.0, 97.0];
-        assert_eq!(judge("launch_ms", &before, &after).unwrap().0, Verdict::Same);
+        assert_eq!(
+            judge("launch_ms", &before, &after).unwrap().0,
+            Verdict::Same
+        );
     }
 
     #[test]
@@ -773,13 +836,34 @@ mod tests {
 
     #[test]
     fn readings_need_to_clear_their_floor() {
-        assert_eq!(judge("processes", &[200.0], &[198.0]).unwrap().0, Verdict::Same);
-        assert_eq!(judge("processes", &[200.0], &[190.0]).unwrap().0, Verdict::Better);
-        assert_eq!(judge("startup_apps", &[9.0], &[7.0]).unwrap().0, Verdict::Better);
-        assert_eq!(judge("startup_apps", &[7.0], &[7.0]).unwrap().0, Verdict::Same);
-        assert_eq!(judge("memory_used_mb", &[8000.0], &[7900.0]).unwrap().0, Verdict::Same);
-        assert_eq!(judge("memory_used_mb", &[8000.0], &[9000.0]).unwrap().0, Verdict::Worse);
-        assert_eq!(judge("disk_free_mb", &[50_000.0], &[52_400.0]).unwrap().0, Verdict::Better);
+        assert_eq!(
+            judge("processes", &[200.0], &[198.0]).unwrap().0,
+            Verdict::Same
+        );
+        assert_eq!(
+            judge("processes", &[200.0], &[190.0]).unwrap().0,
+            Verdict::Better
+        );
+        assert_eq!(
+            judge("startup_apps", &[9.0], &[7.0]).unwrap().0,
+            Verdict::Better
+        );
+        assert_eq!(
+            judge("startup_apps", &[7.0], &[7.0]).unwrap().0,
+            Verdict::Same
+        );
+        assert_eq!(
+            judge("memory_used_mb", &[8000.0], &[7900.0]).unwrap().0,
+            Verdict::Same
+        );
+        assert_eq!(
+            judge("memory_used_mb", &[8000.0], &[9000.0]).unwrap().0,
+            Verdict::Worse
+        );
+        assert_eq!(
+            judge("disk_free_mb", &[50_000.0], &[52_400.0]).unwrap().0,
+            Verdict::Better
+        );
         assert!(judge("unknown", &[1.0], &[2.0]).is_none());
     }
 
@@ -798,9 +882,21 @@ mod tests {
             // An old single-shot row and an older "before" are both ignored.
             run(1, None, &[]),
             run(2, Some(Role::Before), &[("launch_ms", fast)]),
-            run(3, Some(Role::Before), &[("launch_ms", slow), ("startup_apps", &[9.0])]),
-            run(4, Some(Role::After), &[("launch_ms", slow), ("startup_apps", &[8.0])]),
-            run(5, Some(Role::After), &[("launch_ms", fast), ("startup_apps", &[8.0])]),
+            run(
+                3,
+                Some(Role::Before),
+                &[("launch_ms", slow), ("startup_apps", &[9.0])],
+            ),
+            run(
+                4,
+                Some(Role::After),
+                &[("launch_ms", slow), ("startup_apps", &[8.0])],
+            ),
+            run(
+                5,
+                Some(Role::After),
+                &[("launch_ms", fast), ("startup_apps", &[8.0])],
+            ),
         ];
         let result = before_after_of(&runs);
         assert_eq!(result.before.as_ref().unwrap().ts, 3);
@@ -811,7 +907,11 @@ mod tests {
         assert_eq!((launch.confirmed, launch.after_runs), (1, 2));
         assert!(launch.change_pct.unwrap() < -20.0);
         assert!(launch.before_spread_pct.is_some());
-        let startup = result.changes.iter().find(|c| c.id == "startup_apps").unwrap();
+        let startup = result
+            .changes
+            .iter()
+            .find(|c| c.id == "startup_apps")
+            .unwrap();
         assert_eq!((startup.verdict, startup.confirmed), (Verdict::Better, 2));
         assert_eq!(startup.before_spread_pct, None);
     }
@@ -856,10 +956,18 @@ mod tests {
         let mut found = 0;
         for _ in 0..TRIALS {
             let before = series(LAUNCH_REPEATS, 40.0);
-            if judge("launch_ms", &before, &series(LAUNCH_REPEATS, 40.0)).unwrap().0 != Verdict::Same {
+            if judge("launch_ms", &before, &series(LAUNCH_REPEATS, 40.0))
+                .unwrap()
+                .0
+                != Verdict::Same
+            {
                 false_claims += 1;
             }
-            if judge("launch_ms", &before, &series(LAUNCH_REPEATS, 32.0)).unwrap().0 == Verdict::Better {
+            if judge("launch_ms", &before, &series(LAUNCH_REPEATS, 32.0))
+                .unwrap()
+                .0
+                == Verdict::Better
+            {
                 found += 1;
             }
         }
@@ -881,6 +989,42 @@ mod tests {
     }
 
     #[test]
+    fn a_restart_between_the_measurements_is_reported() {
+        let mut before = run(1, Some(Role::Before), &[("processes", &[300.0])]);
+        let mut after = run(2, Some(Role::After), &[("processes", &[250.0])]);
+        before.boot_ts = Some(1_000);
+        after.boot_ts = Some(1_060);
+        assert!(!before_after_of(&[before.clone(), after.clone()]).restarted_between);
+        after.boot_ts = Some(9_000);
+        assert!(before_after_of(&[before.clone(), after.clone()]).restarted_between);
+        after.boot_ts = None;
+        assert!(
+            !before_after_of(&[before, after]).restarted_between,
+            "unknown is not a restart"
+        );
+    }
+
+    #[test]
+    fn the_history_file_is_compacted_once_it_grows() {
+        let dir = std::env::temp_dir().join(format!("pct-compact-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("baseline-history.jsonl");
+        let all: Vec<BaselineRun> = (0..(HISTORY_CAP * 4 + 5) as u64)
+            .map(|ts| run(ts, Some(Role::After), &[("cpu", &[1.0])]))
+            .collect();
+        let text: String = all
+            .iter()
+            .map(|r| serde_json::to_string(r).unwrap() + "\n")
+            .collect();
+        std::fs::write(&path, text).unwrap();
+        let kept = recent(all);
+        compact(&path, &kept);
+        let lines = std::fs::read_to_string(&path).unwrap().lines().count();
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(lines, HISTORY_CAP);
+    }
+
+    #[test]
     fn no_before_or_no_after_yields_no_changes() {
         assert!(before_after_of(&[]).before.is_none());
         let only_before = before_after_of(&[run(1, Some(Role::Before), &[("cpu", &[1.0])])]);
@@ -890,7 +1034,8 @@ mod tests {
 
     #[test]
     fn rows_written_by_older_versions_still_parse() {
-        let old = r#"{"ts":1,"cpuScore":10,"memoryTouchMs":2,"diskWriteMs":3,"diskRandomReadMs":4}"#;
+        let old =
+            r#"{"ts":1,"cpuScore":10,"memoryTouchMs":2,"diskWriteMs":3,"diskRandomReadMs":4}"#;
         let parsed: BaselineRun = serde_json::from_str(old).unwrap();
         assert!(parsed.role.is_none() && parsed.metrics.is_empty());
         let new = serde_json::to_string(&run(2, Some(Role::After), &[("cpu", &[1.0])])).unwrap();
@@ -909,7 +1054,10 @@ mod tests {
         assert!(save_report_png(target.to_string_lossy().into(), not_png).is_err());
         let exe = dir.join("pct-report.exe");
         assert!(save_report_png(exe.to_string_lossy().into(), png.clone()).is_err());
-        assert!(save_report_png("relative.png".into(), png).is_err());
+        assert!(save_report_png("relative.png".into(), png.clone()).is_err());
+        assert!(save_report_png(r"\\server\share\r.png".into(), png.clone()).is_err());
+        assert!(save_report_png(r"\\?\C:\r.png".into(), png.clone()).is_err());
+        assert!(save_report_png(r"C:\a.txt:s.png".into(), png).is_err());
         assert!(!exe.exists() && !target.exists());
     }
 }

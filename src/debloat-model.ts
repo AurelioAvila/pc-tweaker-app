@@ -2,6 +2,7 @@
 // is filtered and sorted, what "Select recommended" picks and how much space
 // a selection can free. Pure functions, tested without a window.
 import type { DebloatApp } from "./components/debloat";
+import { localeOf } from "./i18n";
 
 export type Tier = "recommended" | "safe" | "caution";
 
@@ -124,5 +125,5 @@ export function formatSize(bytes: number | null, lang?: string): string | null {
     unit++;
   }
   const digits = value >= 100 || unit < 2 ? 0 : 1;
-  return `${value.toLocaleString(lang, { maximumFractionDigits: digits, minimumFractionDigits: digits })} ${units[unit]}`;
+  return `${value.toLocaleString(localeOf(lang), { maximumFractionDigits: digits, minimumFractionDigits: digits })} ${units[unit]}`;
 }

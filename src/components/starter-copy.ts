@@ -12,7 +12,7 @@ const en = {
   quietBody: "No feedback surveys, suggested apps or Sticky Keys pop-ups.",
   streamingBody: "Game DVR recording off and fewer Windows pop-ups that could appear on stream.",
   laptopNote:
-    "Animations and transparency are turned off, so Windows looks plainer; the changes show after you sign out and back in. How much battery this saves depends on the laptop and is not measured here; power settings are not changed.",
+    "Animations and transparency are turned off, so Windows looks plainer; the changes show after you sign out and back in. Whether this saves battery depends on the laptop and is not measured here; power settings are not changed.",
   quietNote:
     "This is about pop-ups, not fan noise: fan and power settings are not changed. Notifications from your own apps keep working.",
   streamingNote:
@@ -56,7 +56,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     streamingBody:
       "Registrazione Game DVR disattivata e meno finestre di Windows che possono comparire in diretta.",
     laptopNote:
-      "Animazioni e trasparenza vengono disattivate, quindi Windows appare più sobrio; le modifiche si vedono dopo essere usciti e rientrati nell’account. Quanta batteria si risparmia dipende dal portatile e qui non viene misurato; le impostazioni di alimentazione non cambiano.",
+      "Animazioni e trasparenza vengono disattivate, quindi Windows appare più sobrio; le modifiche si vedono dopo essere usciti e rientrati nell’account. Se questo faccia risparmiare batteria dipende dal portatile e qui non viene misurato; le impostazioni di alimentazione non cambiano.",
     quietNote:
       "Riguarda le finestre a comparsa, non il rumore delle ventole: ventole e alimentazione non cambiano. Le notifiche delle tue app continuano a funzionare.",
     streamingNote:
@@ -94,12 +94,12 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     quiet: "Sans interruptions",
     streaming: "Streaming",
     laptopBody:
-      "Moins d’effets visuels et plus d’applications qui se rouvrent seules après la connexion.",
+      "Moins d’effets visuels et aucune application qui se rouvre seule après la connexion.",
     quietBody: "Plus de sondages, d’applications suggérées ni de fenêtre des touches rémanentes.",
     streamingBody:
       "Enregistrement Game DVR désactivé et moins de fenêtres Windows susceptibles d’apparaître en direct.",
     laptopNote:
-      "Les animations et la transparence sont désactivées : Windows paraît plus sobre ; les changements apparaissent après une déconnexion puis une reconnexion. L’économie de batterie dépend du portable et n’est pas mesurée ici ; les réglages d’alimentation ne changent pas.",
+      "Les animations et la transparence sont désactivées : Windows paraît plus sobre ; les changements apparaissent après une déconnexion puis une reconnexion. Une éventuelle économie de batterie dépend du portable et n’est pas mesurée ici ; les réglages d’alimentation ne changent pas.",
     quietNote:
       "Il s’agit des fenêtres surgissantes, pas du bruit des ventilateurs : ventilateurs et alimentation ne changent pas. Les notifications de vos applications continuent de fonctionner.",
     streamingNote:
@@ -142,7 +142,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     streamingBody:
       "Grabación de Game DVR desactivada y menos ventanas de Windows que puedan aparecer en directo.",
     laptopNote:
-      "Se desactivan las animaciones y la transparencia, así que Windows se ve más sobrio; los cambios se ven después de cerrar sesión y volver a entrar. Cuánta batería se ahorra depende del portátil y aquí no se mide; la configuración de energía no cambia.",
+      "Se desactivan las animaciones y la transparencia, así que Windows se ve más sobrio; los cambios se ven después de cerrar sesión y volver a entrar. Si esto ahorra batería depende del portátil y aquí no se mide; la configuración de energía no cambia.",
     quietNote:
       "Se trata de ventanas emergentes, no del ruido de los ventiladores: los ventiladores y la energía no cambian. Las notificaciones de tus aplicaciones siguen funcionando.",
     streamingNote:
@@ -184,7 +184,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     streamingBody:
       "Game-DVR-Aufnahme aus und weniger Windows-Pop-ups, die im Stream erscheinen könnten.",
     laptopNote:
-      "Animationen und Transparenz werden abgeschaltet, Windows wirkt dadurch schlichter; die Änderungen werden nach Ab- und erneuter Anmeldung sichtbar. Wie viel Akku das spart, hängt vom Laptop ab und wird hier nicht gemessen; Energieeinstellungen bleiben unverändert.",
+      "Animationen und Transparenz werden abgeschaltet, Windows wirkt dadurch schlichter; die Änderungen werden nach Ab- und erneuter Anmeldung sichtbar. Ob das Akku spart, hängt vom Laptop ab und wird hier nicht gemessen; Energieeinstellungen bleiben unverändert.",
     quietNote:
       "Es geht um Pop-ups, nicht um Lüftergeräusche: Lüfter- und Energieeinstellungen bleiben unverändert. Benachrichtigungen deiner Apps funktionieren weiter.",
     streamingNote:
@@ -217,35 +217,35 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     gaming: "Gaming",
     study: "Estudo",
     work: "Trabalho",
-    laptop: "Notebook",
+    laptop: "Portátil",
     quiet: "Sem interrupções",
     streaming: "Streaming",
-    gamingBody: "Movimento consistente do ponteiro e controle da gravação do Game DVR.",
-    studyBody: "Menos sugestões do Windows, pesquisas e distrações.",
-    workBody: "Extensões visíveis, menus imediatos e aplicativos sem atraso na inicialização.",
-    laptopBody: "Menos efeitos visuais e nenhum aplicativo reabrindo sozinho depois de entrar.",
-    quietBody:
-      "Sem pesquisas de feedback, aplicativos sugeridos ou a janela das Teclas de Aderência.",
+    gamingBody: "Movimento consistente do ponteiro e controlo da gravação Game DVR.",
+    studyBody: "Menos sugestões do Windows, questionários e distrações.",
+    workBody: "Extensões visíveis, menus imediatos e aplicações sem atraso no arranque.",
+    laptopBody:
+      "Menos efeitos visuais e nenhuma aplicação a reabrir sozinha depois de iniciar sessão.",
+    quietBody: "Sem questionários de opinião, aplicações sugeridas nem a janela das Teclas Fixas.",
     streamingBody:
-      "Gravação do Game DVR desativada e menos janelas do Windows que possam aparecer na transmissão.",
+      "Gravação Game DVR desativada e menos janelas do Windows que possam aparecer na transmissão.",
     gamingNote:
-      "Desativa o Game DVR. O mouse também muda na área de trabalho; jogos com entrada direta podem ignorar o ajuste. A opção de Teclas de Aderência desativa o atalho dela.",
+      "Desativa o Game DVR. O rato também muda no ambiente de trabalho; jogos com entrada direta podem ignorar o ajuste. A opção das Teclas Fixas desativa o respetivo atalho.",
     studyNote:
-      "Oculta os widgets da barra. Não silencia mensagens nem bloqueia sites. Algumas alterações podem exigir sair da conta e entrar de novo.",
+      "Oculta os widgets da barra. Não silencia mensagens nem bloqueia sites. Algumas alterações podem exigir terminar a sessão.",
     workNote:
-      "Os menus abrem sem atraso. Os aplicativos podem iniciar juntos. As extensões ficam visíveis; arquivos ocultos são opcionais. A mudança nos menus aparece depois que você sai da conta e entra de novo.",
+      "Os menus abrem sem atraso. As aplicações podem iniciar em conjunto. As extensões ficam visíveis; ficheiros ocultos são opcionais. A alteração dos menus nota-se depois de terminar a sessão e voltar a entrar.",
     laptopNote:
-      "Animações e transparência são desativadas, então o Windows fica com visual mais simples; as mudanças aparecem depois que você sai da conta e entra de novo. Quanto de bateria isso economiza depende do notebook e não é medido aqui; as configurações de energia não mudam.",
+      "As animações e a transparência são desativadas, por isso o Windows fica com um aspeto mais simples; as alterações notam-se depois de terminar a sessão e voltar a entrar. Se isto poupa bateria depende do portátil e não é medido aqui; as definições de energia não mudam.",
     quietNote:
-      "Trata-se de janelas pop-up, não do barulho das ventoinhas: ventoinhas e energia não mudam. As notificações dos seus aplicativos continuam funcionando.",
+      "Trata-se de janelas que surgem no ecrã, não do ruído das ventoinhas: as definições de ventoinhas e de energia não mudam. As notificações das suas aplicações continuam a funcionar.",
     streamingNote:
-      "A gravação em segundo plano da Game Bar para, então grave com seu aplicativo de streaming. As pesquisas do Windows e a janela das Teclas de Aderência não aparecem mais sobre o jogo.",
+      "A gravação em segundo plano da Game Bar para, por isso grave com a sua aplicação de streaming. Os questionários do Windows e a janela das Teclas Fixas deixam de aparecer por cima do jogo.",
     apply: "Aplicar seleção",
-    applying: "Aplicando…",
+    applying: "A aplicar…",
     active: "Já aplicado",
     optional: "Opcional",
     notice:
-      "Adiciona os ajustes selecionados e mantém os demais. Restaure alterações na categoria ou no histórico. Não substitui integralmente o modo anterior.",
+      "Adiciona os ajustes selecionados e mantém os restantes. Restaure alterações na categoria ou no histórico. Não substitui integralmente o modo anterior.",
     empty: "Selecione uma alteração.",
     ready: "Todos os ajustes selecionados já estão aplicados.",
     missing: "Algumas opções não estão disponíveis nesta versão.",

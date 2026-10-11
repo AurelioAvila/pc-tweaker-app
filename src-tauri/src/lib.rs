@@ -116,6 +116,10 @@ fn restore_download_limit(app: tauri::AppHandle) -> Result<download_limit::Downl
     download_limit_state(app)
 }
 
+// The Pro unlock for VM tests must never reach a release build.
+#[cfg(all(feature = "test-pro", not(debug_assertions)))]
+compile_error!("the test-pro feature is for debug VM test builds only and must never be in a release build");
+
 use cleanup::CleanupResult;
 use rollback::{RegValue, RollbackStore};
 use serde::Serialize;
@@ -1730,8 +1734,14 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     if action == diagnostics::dpc::ELEVATED_FLAG {
         std::process::exit(diagnostics::dpc::run_elevated(&dir, id));
     }
-    if action == diagnostics::boot::ELEVATED_FLAG && id == "read" {
-        std::process::exit(diagnostics::boot::run_elevated(&dir));
+    // Matched on the flag alone, so an unexpected id exits here instead of
+    // falling through to the restore point every changing action takes.
+    if action == diagnostics::boot::ELEVATED_FLAG {
+        std::process::exit(if id == "read" {
+            diagnostics::boot::run_elevated(&dir)
+        } else {
+            2
+        });
     }
     // A RAM trim changes no setting, so it needs no restore point either.
     if action == "--elevated-ramtrim" {
@@ -2672,12 +2682,114 @@ mod tests {
 /// Shared Pro gate. Returns the `PRO_REQUIRED_PREFIX` error the frontend
 /// already knows how to turn into a paywall rather than a red toast.
 pub(crate) fn require_pro(app_data_dir: &std::path::Path) -> Result<(), String> {
-    if license::LicenseStore::new(app_data_dir.to_path_buf()).is_pro_and_fresh() {
-        return Ok(());
+    // Debug VM test builds only (feature "test-pro"); see Cargo.toml.
+    #[cfg(feature = "test-pro")]
+    {
+        let _ = app_data_dir;
+        Ok(())
     }
-    Err(format!(
-        "{}this feature requires an active PC Tweaker Pro license",
-        PRO_REQUIRED_PREFIX
+    #[cfg(not(feature = "test-pro"))]
+    {
+        if license::LicenseStore::new(app_data_dir.to_path_buf()).is_pro_and_fresh() {
+            return Ok(());
+        }
+        Err(format!(
+            "{}this feature requires an active PC Tweaker Pro license",
+            PRO_REQUIRED_PREFIX
+        ))
+    }
+}
+
+/// Marker the release checks look for: present in a binary only when it was
+/// built with the test-pro feature.
+#[cfg(feature = "test-pro")]
+pub const TEST_PRO_MARKER: &str = "PCT-TEST-PRO-BUILD";
+
+/// VM verification builds only: applies or restores controls by id, in this
+/// process, the way the app's own apply funnel does (audit log, rollback
+/// journal, build and edition checks), and writes what happened to
+/// test-pro-cli.log in the app data folder. Run it as administrator for the
+/// machine-wide controls. The exit code is the number of failures.
+#[cfg(all(windows, feature = "test-pro"))]
+pub fn test_pro_cli(action: &str, ids: &str) -> i32 {
+    use rollback::SnapshotEntry;
+    use std::collections::HashMap;
+    let dir = dirs_app_data_dir();
+    let store = RollbackStore::new(dir.clone());
+    // What each apply recorded, so the restore can be checked against the
+    // live registry, and so only what this run applied is restored.
+    let snaps_path = dir.join("test-pro-snapshots.json");
+    let mut snaps: HashMap<String, SnapshotEntry> = std::fs::read(&snaps_path)
+        .ok()
+        .and_then(|b| serde_json::from_slice(&b).ok())
+        .unwrap_or_default();
+    let mut log = format!("{TEST_PRO_MARKER} {action}\n");
+    let mut failed = 0;
+    for id in ids.split(',').map(str::trim).filter(|id| !id.is_empty()) {
+        let result = if action == "--test-apply" {
+            let r = apply_by_id(&store, &dir, id).map(|_| "applied".to_string());
+            let entry = store.transaction().ok().and_then(|t| t.entry(id));
+            if let (Ok(_), Some(entry)) = (&r, entry) {
+                snaps.insert(id.to_string(), entry);
+            }
+            r
+        } else {
+            let Some(entry) = snaps.remove(id) else {
+                log.push_str(&format!("{id}: skipped, not applied by this test run\n"));
+                continue;
+            };
+            rollback_by_id(&store, id).and_then(|_| test_restore_check(&entry))
+        };
+        if result.is_err() {
+            failed += 1;
+        }
+        log.push_str(&format!("{id}: {result:?}\n"));
+    }
+    let _ = std::fs::create_dir_all(&dir);
+    let _ = std::fs::write(&snaps_path, serde_json::to_vec(&snaps).unwrap_or_default());
+    let _ = std::fs::write(dir.join("test-pro-cli.log"), log);
+    failed
+}
+
+/// Reads back every registry value a restore should have put back. Other
+/// kinds (services, power plans, ...) are listed as not compared here;
+/// verify-tweaks.ps1 checks the services of the 1.18 controls itself.
+#[cfg(all(windows, feature = "test-pro"))]
+fn test_restore_check(entry: &rollback::SnapshotEntry) -> Result<String, String> {
+    use rollback::SnapshotEntry as E;
+    use tweaks::windows_impl::{hive_from_str, key_exists, read_value};
+    fn walk(e: &E, ok: &mut usize, skipped: &mut Vec<String>, bad: &mut Vec<String>) {
+        match e {
+            E::Composite { entries } => {
+                for inner in entries {
+                    walk(inner, ok, skipped, bad);
+                }
+            }
+            E::Registry(s) => {
+                let hint = s.original_value.clone().unwrap_or(RegValue::Dword(0));
+                match read_value(hive_from_str(&s.hive), &s.path, &s.name, &hint) {
+                    Ok(live) if live == s.original_value => *ok += 1,
+                    live => bad.push(format!(
+                        "{}\\{}\\{}: expected {:?}, found {:?}",
+                        s.hive, s.path, s.name, s.original_value, live
+                    )),
+                }
+            }
+            E::RegistryKeyCreated { hive, path } => match key_exists(hive_from_str(hive), path) {
+                Ok(false) => *ok += 1,
+                live => bad.push(format!("{hive}\\{path}: should be gone, exists: {live:?}")),
+            },
+            other => skipped.push(format!("{other:?}").split([' ', '{', '(']).next().unwrap_or("").to_string()),
+        }
+    }
+    let (mut ok, mut skipped, mut bad) = (0, Vec::new(), Vec::new());
+    walk(entry, &mut ok, &mut skipped, &mut bad);
+    if !bad.is_empty() {
+        return Err(format!("restore mismatch: {}", bad.join("; ")));
+    }
+    Ok(format!(
+        "restored, {ok} registry value(s) read back identical{}",
+        if skipped.is_empty() { String::new() } else { format!(", not compared: {}", skipped.join(", ")) }
     ))
 }
 

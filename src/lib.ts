@@ -1,7 +1,7 @@
 // Shared non-visual helpers: config, session, error reporting, formatting.
 import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
-import { format, Lang, Strings } from "./i18n";
+import { format, Lang, Strings, localeOf } from "./i18n";
 import { DriverAudit } from "./types";
 
 // The first-party Cloudflare hostname is the stable production endpoint.
@@ -205,7 +205,7 @@ export const LIFETIME_BREAK_EVEN_MONTHS = Math.round(PRICE_LIFETIME / (PRICE_ANN
 export const savingsPercent = Math.round((1 - PRICE_ANNUAL / (PRICE_MONTHLY * 12)) * 100);
 
 export function money(amount: number, lang: Lang): string {
-  return new Intl.NumberFormat(lang, {
+  return new Intl.NumberFormat(localeOf(lang), {
     style: "currency",
     currency: "EUR",
     // €49.50, never €49.5: whole euros stay short, anything else shows cents.

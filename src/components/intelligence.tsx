@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { format, Lang, Strings } from "../i18n";
+import { format, Lang, Strings, localeOf } from "../i18n";
 import { friendlyError, textFor, uiLocale } from "../lib";
 import { MANUAL_ONLY_TWEAK_IDS } from "../catalog";
 import { AuditEntry, CrashReport, DriftReport, Toast, TweakAdvice, TweakInfo } from "../types";
@@ -537,7 +537,7 @@ export function LedgerPanel({
     const date = new Date(entry.ts * 1000);
     return Number.isFinite(date.getTime()) ? date : null;
   };
-  const dayOf = (entry: AuditEntry) => dateOf(entry)?.toLocaleDateString(lang) ?? "—";
+  const dayOf = (entry: AuditEntry) => dateOf(entry)?.toLocaleDateString(localeOf(lang)) ?? "—";
 
   /** What a ledger row is about, in the user's language where the entry
    *  has a known shape; anything else is shown as recorded. */
@@ -643,7 +643,7 @@ export function LedgerPanel({
               <li key={`${e.ts}-${i}`}>
                 {startsDay && (
                   <p className="workspace-ledger-date">
-                    {timestamp?.toLocaleDateString(lang, {
+                    {timestamp?.toLocaleDateString(localeOf(lang), {
                       weekday: "short",
                       day: "numeric",
                       month: "long",
@@ -664,7 +664,7 @@ export function LedgerPanel({
                     <div className="workspace-ledger-meta">
                       <span>{label}</span>
                       <time dateTime={timestamp?.toISOString()}>
-                        {timestamp?.toLocaleTimeString(lang, {
+                        {timestamp?.toLocaleTimeString(localeOf(lang), {
                           hour: "2-digit",
                           minute: "2-digit",
                           second: "2-digit",

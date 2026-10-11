@@ -30,7 +30,16 @@ export function StarterProfiles({
   );
   const preset = STARTER_PRESETS.find((p) => p.id === current)!;
   const selection = selections[current];
-  const { available, missing, pending } = presetSelection(preset, tweaks, selection, isPro);
+  const { available, missing, pending, unsupported } = presetSelection(
+    preset,
+    tweaks,
+    selection,
+    isPro,
+  );
+  // Selected, not yet applied, but this PC's Windows does not support it.
+  const onlyUnsupported = selection.some(
+    (id) => unsupported.includes(id) && !available.find((t) => t.id === id)?.applied,
+  );
   const body: Record<string, string> = {
     gaming: copy.gamingBody,
     study: copy.studyBody,
@@ -172,7 +181,7 @@ export function StarterProfiles({
         </footer>
         {!pending.length && (
           <p className="starter-complete" role="status">
-            {selection.length ? copy.ready : copy.empty}
+            {!selection.length ? copy.empty : onlyUnsupported ? copy.notHere : copy.ready}
           </p>
         )}
       </div>

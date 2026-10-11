@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { save as saveFileDialog } from "@tauri-apps/plugin-dialog";
 import { format, type Lang, type Strings } from "../i18n";
-import { formatNumber, uiLocale } from "../lib";
+import { formatNumber, friendlyError, uiLocale } from "../lib";
 import type { AuditEntry, Toast, TweakInfo } from "../types";
 import { ToolDetails, ToolHeader, ToolStatus } from "./tool-section";
 import { PageBoundary } from "./page-boundary";
@@ -44,6 +44,7 @@ export type BeforeAfter = {
   after: Run | null;
   afterRuns: number;
   changes: MetricChange[];
+  restartedBetween: boolean;
 };
 /** Mirrors `BootRecord` and `BootReport` in src-tauri/src/diagnostics/boot.rs. */
 type BootRecord = { ts: number; bootMs: number };
@@ -64,7 +65,18 @@ export const METRIC_ORDER = [
   "disk_free_mb",
 ];
 const HIGHER_IS_BETTER = new Set(["cpu", "disk_free_mb"]);
-const TIMED = new Set(["cpu", "launch_ms", "memory_touch_ms", "disk_write_ms", "disk_read_us"]);
+const TIMED = new Set([
+  "cpu",
+  "launch_ms",
+  "memory_touch_ms",
+  "disk_write_ms",
+  "disk_read_us",
+  "boot_ms",
+]);
+
+/** When a boot began: Windows logs it only once the desktop has settled
+ *  (the same split as diagnostics/boot.rs). */
+const bootStart = (r: BootRecord) => r.ts - Math.floor(r.bootMs / 1000);
 
 function percent(fraction: number, signed = false): string {
   const digits = Math.abs(fraction) < 0.1 ? 1 : 0;
@@ -376,11 +388,11 @@ function BeforeAfterContent({ s, lang, tweaks, pushToast }: PanelProps) {
           if (refresh) setBootRead(true);
         })
         .catch((e: unknown) => {
-          if (refresh) setError(format(c.failed, { error: String(e) }));
+          if (refresh) setError(format(c.failed, { error: friendlyError(e, s) }));
         })
         .finally(() => setBootBusy(false));
     },
-    [beforeTs, c.failed],
+    [beforeTs, c.failed, s],
   );
 
   useEffect(() => {
@@ -406,18 +418,21 @@ function BeforeAfterContent({ s, lang, tweaks, pushToast }: PanelProps) {
     setError(null);
     invoke<BeforeAfter>("run_baseline", { role })
       .then(setData)
-      .catch((e: unknown) => setError(format(c.failed, { error: String(e) })))
+      .catch((e: unknown) => setError(format(c.failed, { error: friendlyError(e, s) })))
       .finally(() => setBusy(false));
   };
 
   const changes = useMemo(() => sorted(data?.changes ?? []), [data]);
   const better = changes.filter((ch) => ch.verdict === "better");
-  const worse = changes.filter((ch) => ch.verdict === "worse");
+  const bootChange = boot?.change ?? null;
+  // The startup result counts in the summary like every other row.
+  const worse = [...changes, ...(bootChange ? [bootChange] : [])].filter(
+    (ch) => ch.verdict === "worse",
+  );
   // Runs that spread this widely mostly mean the PC was busy while measuring.
   const noisy = changes.some(
     (ch) => TIMED.has(ch.id) && Math.max(ch.beforeSpreadPct ?? 0, ch.afterSpreadPct ?? 0) > 20,
   );
-  const bootChange = boot?.change ?? null;
 
   // What PC Tweaker changed between the two measurements, from its own log.
   const between = useMemo(() => {
@@ -429,6 +444,8 @@ function BeforeAfterContent({ s, lang, tweaks, pushToast }: PanelProps) {
       "files-deleted": s.ledger.actions.filesDeleted,
       "disk-optimize": s.ledger.actions.diskOptimize,
       "startup-change": s.ledger.actions.startupChange,
+      // Its own restore points take disk space, so they are listed too.
+      "restore-point": s.ledger.actions.restorePoint,
     };
     const name = (id: string) => s.tweaks[id]?.name ?? tweaks.find((t) => t.id === id)?.name ?? id;
     return audit
@@ -449,15 +466,17 @@ function BeforeAfterContent({ s, lang, tweaks, pushToast }: PanelProps) {
         filters: [{ name: "PNG", extensions: ["png"] }],
       });
       if (!path) return;
-      const url = renderReport(data, changes, c);
+      const shown =
+        bootChange && bootChange.verdict !== "inconclusive" ? [...changes, bootChange] : changes;
+      const url = renderReport(data, shown, c);
       await invoke("save_report_png", { path, dataBase64: url.split(",")[1] ?? "" });
       pushToast("success", c.saved);
     } catch (e) {
-      pushToast("error", String(e));
+      pushToast("error", friendlyError(e, s));
     }
   };
 
-  const step = !data?.before ? 0 : !data.after ? 2 : 3;
+  const step = !data?.before ? 0 : !data.after ? 1 : 3;
   const hasResult = data?.before && data.after;
 
   return (
@@ -480,8 +499,7 @@ function BeforeAfterContent({ s, lang, tweaks, pushToast }: PanelProps) {
 
       <ol className="ba-steps">
         {[c.stepBefore, c.stepChange, c.stepAfter].map((label, i) => {
-          const state =
-            i < step ? "done" : i === step || (step === 2 && i === 1) ? "current" : "todo";
+          const state = i < step ? "done" : i === step ? "current" : "todo";
           return (
             <li
               key={label}
@@ -570,6 +588,7 @@ function BeforeAfterContent({ s, lang, tweaks, pushToast }: PanelProps) {
               <p className="ba-quiet">{c.impactAlso}</p>
             )}
             {noisy && <p className="ba-quiet">{c.noisy}</p>}
+            {data.restartedBetween && <p className="ba-quiet">{c.restartNote}</p>}
             <p className="ba-when">
               {format(c.measuredAt, { before: when(data.before.ts), after: when(data.after.ts) })}
             </p>
@@ -639,8 +658,8 @@ function BeforeAfterContent({ s, lang, tweaks, pushToast }: PanelProps) {
             <>
               <p className="ba-quiet">
                 {format(c.bootCounts, {
-                  before: boot.records.filter((r) => r.ts <= data.before!.ts).length,
-                  after: boot.records.filter((r) => r.ts > data.before!.ts).length,
+                  before: boot.records.filter((r) => bootStart(r) <= data.before!.ts).length,
+                  after: boot.records.filter((r) => bootStart(r) > data.before!.ts).length,
                 })}
               </p>
               {bootChange && bootChange.verdict !== "inconclusive" ? (

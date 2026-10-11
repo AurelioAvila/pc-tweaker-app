@@ -195,6 +195,7 @@ export function ProfilesPanel({
     setBusy(profile.name);
     // Switches that apply only on their own are left out of every profile.
     const ids = profile.tweaks.filter((id) => !MANUAL_ONLY_TWEAK_IDS.has(id));
+    const wasApplied = new Set(tweaks.filter((t) => t.applied).map((t) => t.id));
     try {
       const failures = await invoke<string[]>("apply_tweaks", { ids });
       // Counted from what is in effect now, not from the failure list: a
@@ -209,7 +210,11 @@ export function ProfilesPanel({
           f.includes("PRO_REQUIRED: ") ? s.toasts.licenseNeedsRefresh : friendlyError(f, s),
         ),
       );
-      const done = ids.filter((id) => after.some((t) => t.id === id && t.applied));
+      // Only what this apply turned on: tweaks that were already on are not
+      // counted again.
+      const done = ids.filter(
+        (id) => !wasApplied.has(id) && after.some((t) => t.id === id && t.applied),
+      );
       if (done.length > 0)
         pushToast("success", format(s.profiles.appliedToast, { count: done.length }));
     } catch (e) {

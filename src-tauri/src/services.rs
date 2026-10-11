@@ -49,7 +49,7 @@ pub fn ai_fabric_info() -> ServiceInfo {
         name: "Start Windows AI Components Host only when needed",
         // Name and quoted description are Windows' own (WSAIFabricHost.dll
         // string resources 112 and 113, en-US).
-        description: "Stops the Windows AI Components Host service (WSAIFabricSvc) and sets it to Manual, so it no longer starts with Windows. If an app or Windows feature asks for it, Windows starts it as usual, so no feature is switched off. Windows describes it as providing AI component services to apps and other Windows services. Only present on PCs that have it.",
+        description: "Stops the Windows AI Components Host service (WSAIFabricSvc) and sets it to Manual, so it no longer starts with Windows. Windows can still start it when an app or Windows feature asks for it. Windows describes it as providing AI component services to apps and other Windows services. Only present on PCs that have it.",
         requires_admin: true,
         requires_pro: true,
     }

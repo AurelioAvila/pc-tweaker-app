@@ -266,9 +266,9 @@ export const ADVANCED_COPY: Record<Lang, AdvancedCopy> = {
     ecoRestore: "Restaurar a limitação energética anterior",
     ecoConflict:
       "A limitação energética do Windows está desativada globalmente. Restaure essa definição antes de usar estas regras.",
-    doTitle: "Limite de transferências Windows em segundo plano",
+    doTitle: "Limite das transferências do Windows em segundo plano",
     doDescription:
-      "Limita transferências Microsoft geridas por Delivery Optimization. Requer direitos de administrador. Steam, outros dispositivos e o router não mudam. Não garante menor latência.",
+      "Limita as transferências da Microsoft geridas pela Otimização da Entrega. Requer direitos de administrador. O Steam, outros dispositivos e o router não mudam. Não garante menor latência.",
     doValue: "Limite (KB/s)",
     doSave: "Definir limite",
     doRestore: "Restaurar definição anterior",
@@ -276,14 +276,14 @@ export const ADVANCED_COPY: Record<Lang, AdvancedCopy> = {
     doConfigured: "Limite configurado",
     doUnlimited: "Nenhum limite definido pela app",
     doReadback: "Configuração confirmada; a velocidade real não foi medida.",
-    doUnsupported: "O controlo Delivery Optimization não está disponível neste Windows.",
+    doUnsupported: "O controlo da Otimização da Entrega não está disponível neste Windows.",
     monitorTitle: "Perfil de frequência do monitor para jogos",
     monitorDescription:
       "Escolha uma frequência suportada para um monitor durante uma sessão de jogo. A pré-visualização reverte após 15 segundos sem confirmação; não aumenta os fotogramas produzidos pela GPU.",
     monitorGuide: "Pré-visualize e confirme outra frequência antes de guardar uma regra de jogo.",
     monitorDisplay: "Monitor",
     monitorFrequency: "Frequência",
-    monitorPreview: "Pré-visualizar por 15 segundos",
+    monitorPreview: "Pré-visualizar durante 15 segundos",
     monitorConfirm: "Manter esta frequência",
     monitorRestore: "Restaurar frequência anterior",
     monitorAdd: "Guardar regra de jogo",

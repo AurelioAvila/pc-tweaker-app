@@ -4,7 +4,7 @@ import { NetworkCheckPanel } from "./components/diagnostics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { STRINGS, Lang, detectInitialLang, format } from "./i18n";
+import { STRINGS, Lang, detectInitialLang, format, localeOf } from "./i18n";
 import { ThemeName, detectInitialTheme } from "./theme";
 import {
   API_BASE_URL,
@@ -123,7 +123,9 @@ function App() {
   // Dates and numbers follow the app's language, not the Windows display
   // language: an English UI on an Italian PC must not print "27/9/2026".
   useEffect(() => {
-    document.documentElement.lang = lang;
+    // European Portuguese only (owner decision, 11 Oct 2026): dates and
+    // numbers use the pt-PT conventions, not the Brazilian ones.
+    document.documentElement.lang = localeOf(lang) ?? "en";
   }, [lang]);
 
   const [auth, setAuth] = useState<AuthState>(() => {

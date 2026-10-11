@@ -38,6 +38,11 @@ fn main() {
             "--elevated-ramtrim",
             "--elevated-boot-times",
         ];
+        // VM verification builds only (Cargo feature "test-pro", debug profile).
+        #[cfg(feature = "test-pro")]
+        if args.len() == 3 && (args[1] == "--test-apply" || args[1] == "--test-rollback") {
+            std::process::exit(tauri_app_lib::test_pro_cli(&args[1], &args[2]));
+        }
         // The scheduled watchdog: one argument, no id, no window, no GUI.
         if args.len() == 2 && args[1] == "--check-drift" {
             tauri_app_lib::run_drift_check_headless();

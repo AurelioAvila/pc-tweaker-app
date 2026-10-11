@@ -411,7 +411,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
       "Comece pelo essencial. Adicione ferramentas avançadas. Ou escolha Pro com um único pagamento.",
     signed: "Versões Windows assinadas digitalmente",
     signature:
-      "A assinatura digital já está disponível. Os instaladores assinados por Aurelio Avila permitem ao Windows verificar o editor e a integridade. Os downloads anteriores podem não estar assinados. O SmartScreen ainda pode apresentar avisos.",
+      "A assinatura digital já está disponível. Os instaladores assinados por Aurelio Avila permitem ao Windows verificar o editor e a integridade. As transferências anteriores podem não estar assinadas. O SmartScreen ainda pode apresentar avisos.",
     previewBuild: "Está a usar uma versão de desenvolvimento, não um instalador assinado.",
     free: "Conheça o seu PC e escolha os primeiros ajustes.",
     pro: "Ferramentas avançadas de ajustes, privacidade e sessões de jogo.",

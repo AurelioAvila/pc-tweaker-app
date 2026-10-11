@@ -934,7 +934,8 @@ export const EXTRA_IMPACTS: Record<Lang, Record<string, string>> = {
       "A integração com o telefone termina neste PC. Poderá ser necessário emparelhar novamente após reinstalar.",
     media:
       "Escolha outro leitor predefinido. Listas de reprodução e definições locais podem perder-se.",
-    movies: "A reprodução nesta app termina. Verifique primeiro as compras e os downloads offline.",
+    movies:
+      "A reprodução nesta app termina. Verifique primeiro as compras e as transferências offline.",
     office:
       "Remove o hub, não o Word, o Excel nem a subscrição Microsoft 365. As definições locais podem perder-se.",
   },

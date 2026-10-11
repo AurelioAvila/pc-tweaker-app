@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { open as openFileDialog, save as saveFileDialog } from "@tauri-apps/plugin-dialog";
 import { format, STRINGS, type Lang, localeOf } from "../i18n";
 import { FEATURE_INTELLIGENCE } from "../lib";
 import {
@@ -9,11 +10,14 @@ import {
   filterApps,
   footprint,
   formatSize,
+  idleDays,
+  presetSelection,
   pruneSelection,
-  recommendedSelection,
+  selectFromList,
   sortApps,
   tierOf,
   type Category,
+  type Preset,
   type SortKey,
   type Tier,
 } from "../debloat-model";
@@ -44,6 +48,12 @@ export interface DebloatApp {
   sizeBytes?: number | null;
   dataBytes?: number | null;
   installedAt?: number | null;
+  /** Unix seconds: the last write to its data folder (background updates too). */
+  lastActivity?: number | null;
+  /** Has a startup task Windows runs at sign-in; null when it has none. */
+  startsWithWindows?: boolean | null;
+  /** Memory its running processes use now; null when not running. */
+  memoryBytes?: number | null;
 }
 
 export interface DebloatRecord {
@@ -129,6 +139,10 @@ export function DebloatPanel({
   const [recoveryBusy, setRecoveryBusy] = useState<string | null>(null);
   const [recoveryError, setRecoveryError] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [listStatus, setListStatus] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  // When the list was read: "days without activity" counts from here, so the
+  // number never moves while the page is drawn.
+  const [scannedAt, setScannedAt] = useState(0);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const runningRef = useRef(false);
   const loadedRef = useRef(false);
@@ -138,6 +152,7 @@ export function DebloatPanel({
     setScanError(null);
     try {
       const next = await invoke<DebloatApp[]>("list_debloat_apps");
+      setScannedAt(Math.floor(Date.now() / 1000));
       setApps(next);
       setSelection((previous) => pruneSelection(next, previous));
     } catch (error) {
@@ -228,6 +243,46 @@ export function DebloatPanel({
     setRunning(false);
   }
 
+  /** Saves the chosen apps as a list (catalogue ids only). */
+  async function saveList() {
+    const path = await saveFileDialog({
+      defaultPath: "pc-tweaker-debloat-list.json",
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    }).catch(() => null);
+    if (!path) return;
+    try {
+      await invoke("write_debloat_list", { path, catalogIds: chosen.map((a) => a.catalogId) });
+      setListStatus({ tone: "ok", text: c.listSaved });
+    } catch (error) {
+      setListStatus({ tone: "error", text: String(error) });
+    }
+  }
+
+  /** Selects what a list names. Never removes: the preview still follows. */
+  async function loadList() {
+    const picked = await openFileDialog({
+      multiple: false,
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    }).catch(() => null);
+    if (typeof picked !== "string") return;
+    try {
+      const ids = await invoke<string[]>("read_debloat_list", { path: picked });
+      const { selection: next, missing } = selectFromList(apps, ids);
+      setSelection(new Set(next));
+      setListStatus({
+        tone: "ok",
+        text: [
+          format(c.listLoaded, { count: next.length }),
+          missing ? format(c.listMissing, { count: missing }) : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+      });
+    } catch (error) {
+      setListStatus({ tone: "error", text: String(error) });
+    }
+  }
+
   async function openRecovery(catalogId: string) {
     if (recoveryBusy) return;
     setRecoveryBusy(catalogId);
@@ -254,7 +309,25 @@ export function DebloatPanel({
   const space = estimatedSpace(apps, selection);
   const freeable = estimatedSpace(apps, new Set(removable.map((a) => a.packageFullName!)));
   const size = (bytes: number | null) => formatSize(bytes, lang) ?? c.sizeUnknown;
-  const recommended = recommendedSelection(visible);
+  const presets: [Preset, string, string][] = [
+    ["minimal", c.presetMinimal, c.presetMinimalHint],
+    ["balanced", c.presetBalanced, c.presetBalancedHint],
+    ["aggressive", c.presetAggressive, c.presetAggressiveHint],
+  ];
+  const dateOf = (seconds: number) => new Date(seconds * 1000).toLocaleDateString(localeOf(lang));
+  /** Facts about real use: activity, startup, memory. Only what Windows reports. */
+  const usage = (app: DebloatApp): string[] => {
+    const idle = scannedAt ? idleDays(app, scannedAt) : null;
+    return [
+      app.startsWithWindows ? c.startsWithWindows : null,
+      app.memoryBytes != null ? format(c.runningNow, { size: size(app.memoryBytes) }) : null,
+      idle !== null && idle >= 30
+        ? format(c.idleDays, { days: idle })
+        : app.lastActivity
+          ? format(c.lastActivity, { date: dateOf(app.lastActivity) })
+          : null,
+    ].filter((x): x is string => !!x);
+  };
   const appByCatalog = (catalogId: string) => apps.find((app) => app.catalogId === catalogId);
   const impact = (app: DebloatApp) =>
     c[DEBLOAT_IMPACT[app.catalogId]] ?? EXTRA_IMPACTS[lang][app.catalogId] ?? app.impact;
@@ -354,6 +427,7 @@ export function DebloatPanel({
               >
                 <option value="tier">{c.sortTier}</option>
                 <option value="size">{c.sortSize}</option>
+                <option value="activity">{c.sortActivity}</option>
                 <option value="name">{l.name}</option>
               </select>
             </label>
@@ -402,13 +476,54 @@ export function DebloatPanel({
             <button
               type="button"
               className="tool-secondary-action"
-              disabled={busy || recommended.every((id) => selection.has(id))}
-              title={c.tierHintRecommended}
-              onClick={() => setSelection((previous) => new Set([...previous, ...recommended]))}
+              disabled={busy}
+              onClick={() => void loadList()}
             >
-              {c.selectRecommended}
+              {c.loadList}
+            </button>
+            <button
+              type="button"
+              className="tool-secondary-action"
+              disabled={busy || chosen.length === 0}
+              onClick={() => void saveList()}
+            >
+              {c.saveList}
             </button>
           </div>
+
+          {/* Presets fill the selection only when clicked; the preview still
+          lists every app before anything is removed. */}
+          <div className="debloat-segments debloat-presets" role="group" aria-label={c.presetLabel}>
+            <span>{c.presetLabel}</span>
+            {presets.map(([key, label, hint]) => {
+              const ids = presetSelection(apps, key);
+              const current =
+                ids.length > 0 &&
+                ids.length === selection.size &&
+                ids.every((id) => selection.has(id));
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={current}
+                  title={hint}
+                  disabled={busy || ids.length === 0}
+                  onClick={() => {
+                    setSelection(new Set(ids));
+                    setListStatus({ tone: "ok", text: hint });
+                  }}
+                >
+                  {label}
+                  <Badge kind={current ? "accent" : "neutral"}>{ids.length}</Badge>
+                </button>
+              );
+            })}
+          </div>
+          {listStatus && (
+            <ToolStatus tone={listStatus.tone === "ok" ? "neutral" : "error"}>
+              {listStatus.text}
+            </ToolStatus>
+          )}
 
           {scanError && (
             <ToolStatus tone="error">
@@ -560,6 +675,7 @@ export function DebloatPanel({
                                         ),
                                       })
                                     : null,
+                                  ...(app.installed ? usage(app) : []),
                                 ]
                                   .filter(Boolean)
                                   .join(" · ")}
@@ -622,6 +738,34 @@ export function DebloatPanel({
                                 <div>
                                   <dt>{c.appData}</dt>
                                   <dd>{size(app.dataBytes ?? null)}</dd>
+                                </div>
+                              </dl>
+                            )}
+                            {app.installed && (
+                              <dl className="debloat-popover-facts">
+                                <div title={c.lastActivityHint}>
+                                  <dt>{c.sortActivity}</dt>
+                                  <dd>
+                                    {app.lastActivity
+                                      ? dateOf(app.lastActivity)
+                                      : c.unknownActivity}
+                                  </dd>
+                                </div>
+                                <div>
+                                  <dt>{c.startupFact}</dt>
+                                  <dd>
+                                    {app.startsWithWindows == null
+                                      ? c.noStartupTask
+                                      : app.startsWithWindows
+                                        ? c.yes
+                                        : c.no}
+                                  </dd>
+                                </div>
+                                <div>
+                                  <dt>{c.memoryNow}</dt>
+                                  <dd>
+                                    {app.memoryBytes != null ? size(app.memoryBytes) : c.notRunning}
+                                  </dd>
                                 </div>
                               </dl>
                             )}

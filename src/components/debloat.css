@@ -768,3 +768,18 @@
     transition: none;
   }
 }
+
+/* Selection presets: a label, then the three buttons as segments. */
+.debloat-presets {
+  align-items: center;
+}
+.debloat-presets > span {
+  padding: 0 8px 0 6px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.debloat-presets button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}

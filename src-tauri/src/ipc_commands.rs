@@ -44,6 +44,8 @@ pub const APP_COMMANDS: &[&str] = &[
     "save_report_png",
     "active_changes",
     "save_history_export",
+    "write_debloat_list",
+    "read_debloat_list",
     "advise_tweaks",
     "scan_relevant_ids",
     "cpu_clock",

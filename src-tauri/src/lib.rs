@@ -2383,6 +2383,8 @@ pub fn run() {
             list_audit_log,
             active_changes,
             save_history_export,
+            debloat::write_debloat_list,
+            debloat::read_debloat_list,
             check_update_drift,
             list_crash_reports,
             clear_crash_reports,

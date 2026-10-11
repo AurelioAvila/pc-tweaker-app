@@ -45,6 +45,8 @@ permissions = [
     "allow-save-report-png",
     "allow-active-changes",
     "allow-save-history-export",
+    "allow-write-debloat-list",
+    "allow-read-debloat-list",
     "allow-boot-times",
     "allow-ram-schedule-ready",
     "allow-advise-tweaks",

@@ -147,6 +147,9 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  "it:componentDebloat.no",
+  "es:componentDebloat.no",
+  "de:componentDebloat.presetMinimal",
   "fr:componentHistory.type",
   // "Boost" names the mode in every language, like the Turbo Boost title.
   "it:turboBoost.colBoost",

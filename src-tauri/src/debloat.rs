@@ -193,6 +193,15 @@ pub struct DebloatApp {
     pub data_bytes: Option<u64>,
     /// When Windows installed the package for this account, Unix seconds.
     pub installed_at: Option<i64>,
+    /// The last time the app wrote to its data folder (its settings file or
+    /// local state), Unix seconds. Background updates count too, so this is
+    /// the latest it can have been used, never proof that someone opened it.
+    pub last_activity: Option<i64>,
+    /// Whether the app has a startup task Windows runs at sign-in: `None`
+    /// when it has no startup task at all.
+    pub starts_with_windows: Option<bool>,
+    /// Memory its running processes use now; `None` when it is not running.
+    pub memory_bytes: Option<u64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -289,6 +298,9 @@ fn inventory(system: &impl PackageSystem) -> Result<Vec<DebloatApp>, String> {
                 size_bytes: None,
                 data_bytes: None,
                 installed_at: None,
+                last_activity: None,
+                starts_with_windows: None,
+                memory_bytes: None,
             });
         }
         for info in found {
@@ -311,6 +323,9 @@ fn inventory(system: &impl PackageSystem) -> Result<Vec<DebloatApp>, String> {
                 size_bytes: None,
                 data_bytes: None,
                 installed_at: None,
+                last_activity: None,
+                starts_with_windows: None,
+                memory_bytes: None,
             });
         }
     }
@@ -562,6 +577,57 @@ pub fn debloat_history(app: tauri::AppHandle) -> Result<Vec<DebloatRecord>, Stri
     )
 }
 
+/// A Debloat list file: catalogue ids only, never package names or paths, so
+/// a list made on another PC selects the same apps and nothing else.
+#[derive(Serialize, Deserialize)]
+struct ListFile {
+    format: u32,
+    kind: String,
+    apps: Vec<String>,
+}
+
+const LIST_KIND: &str = "pc-tweaker-debloat-list";
+
+fn known_ids(ids: Vec<String>) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    for id in ids {
+        if CATALOG.iter().any(|item| item.id == id) && !out.contains(&id) {
+            out.push(id);
+        }
+    }
+    out
+}
+
+/// Saves the chosen apps as a list another PC can load. Selecting from a
+/// list never removes anything: the usual preview and confirmation follow.
+#[tauri::command(async)]
+pub fn write_debloat_list(path: String, catalog_ids: Vec<String>) -> Result<(), String> {
+    let target = crate::baseline::local_file(&path, &["json"])
+        .ok_or("the list can only be saved as a .json file on a local drive")?;
+    let file = ListFile { format: 1, kind: LIST_KIND.into(), apps: known_ids(catalog_ids) };
+    std::fs::write(target, serde_json::to_string_pretty(&file).map_err(|e| e.to_string())?)
+        .map_err(|e| e.to_string())
+}
+
+/// Reads a Debloat list: the catalogue ids it names that this version knows.
+#[tauri::command(async)]
+pub fn read_debloat_list(path: String) -> Result<Vec<String>, String> {
+    parse_list(&std::fs::read(&path).map_err(|e| format!("could not read the file: {e}"))?)
+}
+
+fn parse_list(bytes: &[u8]) -> Result<Vec<String>, String> {
+    const MAX_BYTES: usize = 64 * 1024;
+    let not_a_list = || "this file isn't a PC Tweaker Debloat list".to_string();
+    if bytes.len() > MAX_BYTES {
+        return Err(not_a_list());
+    }
+    let file: ListFile = serde_json::from_slice(bytes).map_err(|_| not_a_list())?;
+    if file.kind != LIST_KIND || file.format != 1 {
+        return Err(not_a_list());
+    }
+    Ok(known_ids(file.apps))
+}
+
 #[tauri::command(async)]
 pub fn debloat_reinstall_link(catalog_id: String) -> Result<String, String> {
     CATALOG
@@ -646,6 +712,15 @@ mod platform {
         let Ok(packages) = manager.FindPackagesByUserSecurityId(&HSTRING::new()) else {
             return;
         };
+        // Running processes and where their executables live, read once: a
+        // packaged app runs from its own install folder.
+        let running: Vec<(String, u64)> = crate::process_guard::processes()
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|p| {
+                crate::process_guard::image_path(p.pid).map(|path| (path.to_lowercase(), p.working_set))
+            })
+            .collect();
         for package in packages {
             let Ok(full_name) = package.Id().and_then(|id| id.FullName()) else {
                 continue;
@@ -697,6 +772,24 @@ mod platform {
                 .InstalledPath()
                 .ok()
                 .and_then(|path| folder_size(std::path::Path::new(&path.to_string())));
+            app.memory_bytes = package.InstalledPath().ok().and_then(|path| {
+                let root = format!("{}\\", path.to_string().to_lowercase().trim_end_matches('\\'));
+                let mut found = false;
+                let bytes = running
+                    .iter()
+                    .filter(|(exe, _)| exe.starts_with(&root))
+                    .inspect(|_| found = true)
+                    .map(|(_, ws)| ws)
+                    .sum::<u64>();
+                found.then_some(bytes)
+            });
+            if let Ok(family) = package.Id().and_then(|id| id.FamilyName()) {
+                let family = family.to_string();
+                app.starts_with_windows = startup_task_enabled(&family);
+                app.last_activity = std::env::var_os("LOCALAPPDATA").and_then(|local| {
+                    last_activity(&std::path::Path::new(&local).join("Packages").join(&family))
+                });
+            }
             app.data_bytes = package
                 .Id()
                 .and_then(|id| id.FamilyName())
@@ -710,6 +803,41 @@ mod platform {
                     )
                 });
         }
+    }
+
+    /// A packaged app's startup tasks as Windows records them for this user
+    /// (the StartupTaskState values: 2 enabled, 4 enabled by policy).
+    fn startup_task_enabled(family: &str) -> Option<bool> {
+        use winreg::{enums::HKEY_CURRENT_USER, RegKey};
+        let key = RegKey::predef(HKEY_CURRENT_USER)
+            .open_subkey(format!(
+                r"Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData\{family}"
+            ))
+            .ok()?;
+        let states: Vec<u32> = key
+            .enum_keys()
+            .flatten()
+            .filter_map(|task| key.open_subkey(&task).ok()?.get_value::<u32, _>("State").ok())
+            .collect();
+        (!states.is_empty()).then(|| states.iter().any(|s| *s == 2 || *s == 4))
+    }
+
+    /// The newest change in an app's data folder: its settings file and the
+    /// top level of its local state.
+    fn last_activity(dir: &std::path::Path) -> Option<i64> {
+        let mut newest: Option<std::time::SystemTime> = None;
+        let mut consider = |p: std::path::PathBuf| {
+            if let Ok(t) = std::fs::metadata(p).and_then(|m| m.modified()) {
+                newest = Some(newest.map_or(t, |n| n.max(t)));
+            }
+        };
+        consider(dir.join("Settings").join("settings.dat"));
+        if let Ok(entries) = std::fs::read_dir(dir.join("LocalState")) {
+            entries.flatten().take(500).for_each(|e| consider(e.path()));
+        }
+        newest
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_secs() as i64)
     }
 
     pub fn scan() -> Result<Vec<PackageInfo>, String> {
@@ -1235,6 +1363,20 @@ mod tests {
     use super::*;
     use std::cell::{Cell, RefCell};
     use std::collections::VecDeque;
+
+    #[test]
+    fn a_list_file_keeps_known_apps_once_and_refuses_anything_else() {
+        let ok = br#"{"format":1,"kind":"pc-tweaker-debloat-list","apps":["solitaire","news","solitaire","C:\\x.exe","nope"]}"#;
+        assert_eq!(parse_list(ok).unwrap(), ["solitaire", "news"]);
+        for bad in [
+            &br#"{"format":1,"kind":"pc-tweaker-profile","apps":["solitaire"]}"#[..],
+            br#"{"format":2,"kind":"pc-tweaker-debloat-list","apps":[]}"#,
+            b"not json",
+        ] {
+            assert!(parse_list(bad).is_err());
+        }
+        assert!(parse_list(&vec![b' '; 70 * 1024]).is_err(), "too large");
+    }
 
     struct Fake {
         scans: RefCell<VecDeque<Vec<PackageInfo>>>,

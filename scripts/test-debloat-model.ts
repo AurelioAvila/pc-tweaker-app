@@ -1,5 +1,5 @@
 // The rules behind the Debloat list: filters, order, the explicit
-// "Select recommended", and the space estimate.
+// selection presets, usage facts, lists and the space estimate.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -8,8 +8,10 @@ import {
   filterApps,
   footprint,
   formatSize,
+  idleDays,
+  presetSelection,
   pruneSelection,
-  recommendedSelection,
+  selectFromList,
   sortApps,
   tierOf,
   TIERS,
@@ -94,11 +96,37 @@ test("sorting keeps removable apps first, then follows the chosen key", () => {
   );
 });
 
-test("Select recommended picks only removable recommended apps", () => {
-  assert.deepEqual(recommendedSelection(apps).sort(), ["pkg.news", "pkg.solitaire"]);
+test("presets fill only removable apps, from minimal to aggressive", () => {
+  assert.deepEqual(presetSelection(apps, "minimal").sort(), ["pkg.news", "pkg.solitaire"]);
+  assert.deepEqual(presetSelection(apps, "balanced").sort(), ["pkg.news", "pkg.solitaire", "pkg.weather"]);
+  assert.deepEqual(presetSelection(apps, "aggressive").sort(), [
+    "pkg.clipchamp",
+    "pkg.news",
+    "pkg.solitaire",
+    "pkg.weather",
+  ]);
   const locked = apps.map((a) => (a.catalogId === "news" ? { ...a, removable: false } : a));
-  assert.deepEqual(recommendedSelection(locked), ["pkg.solitaire"]);
+  assert.deepEqual(presetSelection(locked, "minimal"), ["pkg.solitaire"]);
   assert.equal(apps.filter(canRemove).length, 4);
+});
+
+test("usage facts: idle days and the activity order", () => {
+  const now = 1_800_000_000;
+  assert.equal(idleDays({ lastActivity: now - 45 * 86_400 }, now), 45);
+  assert.equal(idleDays({ lastActivity: null }, now), null);
+  assert.equal(idleDays({ lastActivity: now + 60 }, now), null, "a future time is not trusted");
+  const dated = [
+    app("news", { lastActivity: now - 10 }),
+    app("weather", { lastActivity: null }),
+    app("solitaire", { lastActivity: now - 99_999 }),
+  ];
+  assert.deepEqual(ids(sortApps(dated, "activity")), ["solitaire", "news", "weather"]);
+});
+
+test("a loaded list selects removable apps and counts the rest", () => {
+  const { selection, missing } = selectFromList(apps, ["solitaire", "phone", "todo", "unknown"]);
+  assert.deepEqual(selection, ["pkg.solitaire"]);
+  assert.equal(missing, 3, "protected, not installed, unknown");
 });
 
 test("the space estimate adds files and data, and flags unknown sizes", () => {

@@ -1,5 +1,5 @@
 import { UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "../constants";
-import { euro, PromoFine, usePromo } from "../promo";
+import { euro, PromoCard, PromoFine, usePromo } from "../promo";
 import { promoPercent } from "../../../src/promo";
 
 /* The page a buyer actually lands on.
@@ -46,19 +46,22 @@ export function UninstallerPage() {
         then records the outcome and what actually happened. Single uninstalls are free, for good.
       </p>
 
-      <div className="mb-12 flex flex-wrap items-center gap-4">
-        <a
-          href={UNINSTALLER_DOWNLOAD_EXE}
-          className="inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-[var(--bg)]"
-        >
-          Download for Windows — free
-        </a>
-        <a
-          href={UNINSTALLER_RELEASES}
-          className="text-[14px] font-medium text-[var(--fg-dim)] underline-offset-4 hover:text-[var(--fg)] hover:underline"
-        >
-          Installer, MSI, checksums and release notes
-        </a>
+      <div className="mb-12">
+        <div className="flex flex-wrap items-center gap-4">
+          <a
+            href={UNINSTALLER_DOWNLOAD_EXE}
+            className="inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-[var(--bg)]"
+          >
+            Download for Windows — free
+          </a>
+          <a
+            href={UNINSTALLER_RELEASES}
+            className="text-[14px] font-medium text-[var(--fg-dim)] underline-offset-4 hover:text-[var(--fg)] hover:underline"
+          >
+            Installer, MSI, checksums and release notes
+          </a>
+        </div>
+        <PromoCard product="uninstaller" plan="annual" href="#uninstaller-pro" />
       </div>
 
       <p className="mb-12 text-[var(--fg-dim)]">
@@ -83,7 +86,7 @@ export function UninstallerPage() {
         </ul>
       </section>
 
-      <section className="mb-10 rounded-2xl border border-white/10 p-6">
+      <section id="uninstaller-pro" className="mb-10 scroll-mt-28 rounded-2xl border border-white/10 p-6">
         <h2 className="mb-2 text-2xl font-semibold text-[var(--fg)]">Uninstaller Pro</h2>
         <p className="mb-4 text-lg font-semibold text-accent">
           {uninstallerOffer ? (

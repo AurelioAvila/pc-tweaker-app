@@ -128,7 +128,7 @@ The following compact benchmark register distinguishes measured results from mis
 | Driver latency trace | DPC/ISR durations and module attribution | Not established |
 | App overhead | CPU time, working set, wakeups, baseline versus monitoring | Not established |
 
-The website has previously displayed a 330-to-551 FPS comparison. Its drawn frame-time traces are illustrative; they are not raw capture data. Treat any individual demonstration as specific to its setup until the full test conditions and repeat runs are available.
+The website has previously displayed a 330-to-551 FPS comparison. Its drawn frame-time traces are schematic; they are not raw capture data. Treat any individual demonstration as specific to its setup until the full test conditions and repeat runs are available.
 
 For useful comparisons, keep the game build, scene, settings, drivers, power source and capture method fixed. Warm caches, alternate baseline/tuned runs, retain all valid runs and publish raw data. Separate security-reducing configurations from normal recommendations. Report regressions and unchanged results alongside gains.
 

@@ -106,6 +106,7 @@ const COPY = {
     close: "Dismiss the Halloween offer banner",
     tag: "HALLOWEEN",
     lifetime: "Lifetime · one payment",
+    firstYear: (then: string) => `First year, then ${then} / year`,
     ends: (d: string) => `Ends ${d}`,
     fine: "Struck-through prices are our lowest in the 30 days before the offer. Prices exclude VAT.",
   },
@@ -120,6 +121,7 @@ const COPY = {
     close: "Fechar o aviso da oferta de Halloween",
     tag: "HALLOWEEN",
     lifetime: "Vitalício · pagamento único",
+    firstYear: (then: string) => `Primeiro ano, depois ${then} / ano`,
     ends: (d: string) => `Termina a ${d}`,
     fine: "Os preços riscados são os mais baixos dos 30 dias anteriores à oferta. Preços sem IVA.",
   },
@@ -178,28 +180,29 @@ export function PromoStrip({ href }: { href: string }) {
   return <HalloweenStrip key={promo.id} label={c.strip(pct)} shortLabel={c.stripShort(pct)} endsIn={c.endsIn} units={c.units} remaining={remaining} cta={c.cta} href={href} closeLabel={c.close} storageKey={`pct-hw-strip:${promo.id}`} />;
 }
 
-/** Offer card beside the home headline: Lifetime, struck reference and promo price, from the server. */
-export function PromoCard() {
+/** Offer card for a page headline: struck reference and promo price, from the server.
+ *  Home: PC Tweaker Lifetime. Uninstaller page: its Pro year. */
+export function PromoCard({ product = "pctweaker", plan = "lifetime", href = "#access" }: { product?: string; plan?: string; href?: string }) {
   const { promo, offer, reserve } = usePromo();
   const c = useCopy();
-  const o = offer("pctweaker", "lifetime");
+  const o = offer(product, plan);
   if (!promo && reserve)
     return (
       <Reserved>
-        <HalloweenCard tag={c.tag} plan={c.lifetime} was="€00.00" now="€00.00" pct="−00%" note={c.ends("0 November 0000, 00:00 CET")} cta={c.cta} href="#access" />
+        <HalloweenCard tag={c.tag} plan={plan === "lifetime" ? c.lifetime : c.firstYear("€0.00")} was="€00.00" now="€00.00" pct="−00%" note={c.ends("0 November 0000, 00:00 CET")} cta={c.cta} href={href} />
       </Reserved>
     );
   if (!promo || !o) return null;
   return (
     <HalloweenCard
       tag={c.tag}
-      plan={c.lifetime}
+      plan={o.firstPeriodOnly ? c.firstYear(euro(o.regular)) : c.lifetime}
       was={euro(o.reference)}
       now={euro(o.price)}
       pct={`−${promoPercent(o)}%`}
       note={endLine(promo.endsAt, c)}
       cta={c.cta}
-      href="#access"
+      href={href}
     />
   );
 }

@@ -115,7 +115,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
         navigate={navigate}
         onSubpage={path !== "/"}
         {...(path === "/uninstaller"
-          ? { downloadHref: UNINSTALLER_DOWNLOAD_EXE, downloadLabel: "Download Uninstaller" }
+          ? { downloadHref: UNINSTALLER_DOWNLOAD_EXE, downloadLabel: "Download Uninstaller", offerHref: "#uninstaller-pro" }
           : {})}
       />
       {page}

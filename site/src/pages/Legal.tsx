@@ -145,12 +145,12 @@ export function CookiesPage() {
         data to third parties.
       </p>
       <p className="mb-5 text-[15px] leading-relaxed text-[var(--fg-dim)]">
-        The only thing stored in your browser is your color-theme preference, kept in{" "}
+        The only things stored in your browser are your color-theme preference and, if you dismiss the Halloween offer banner, that choice, kept in{" "}
         <code className="font-mono-t rounded bg-white/5 px-1.5 py-0.5 text-[13px]">
           localStorage
         </code>{" "}
-        on your own device if you pick a theme. It never leaves your browser and you can clear it at
-        any time from your browser settings.
+        on your own device. They never leave your browser and you can clear them at any time from
+        your browser settings.
       </p>
       <p className="mb-5 text-[15px] leading-relaxed text-[var(--fg-dim)]">Microsoft Store links can contain a shared campaign label, such as the guide or channel you came from. This is not a personal identifier. The label stays in memory while you browse and is sent to Microsoft only when you follow a Store link. Microsoft reports qualifying campaign page views and acquisitions under its own policies. The same in-memory labels from a social post link (utm_source, utm_medium, utm_campaign, utm_content) are attached only to a tip checkout you start, and counted once if you click the installer download (stored with the time only, no IP or identifier), so we can see which posts lead to downloads and payments.</p>
       <p className="text-[15px] leading-relaxed text-[var(--fg-dim)]">

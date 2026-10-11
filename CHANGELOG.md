@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.18.1
+
+PC Tweaker 1.18.1 makes Before & After a measured comparison, turns Change history into a record you can filter, export and undo by session, gives Debloat facts about how each app is really used, adds starter profiles and moves Portuguese to European Portuguese.
+
+- Before & After, on PC Health: measure, apply your changes, measure again. Each timed test runs at least 7 times and shows its median with the usual spread. A difference is reported only when the two series are clearly apart (exact rank test, p < 0.01), at least 5% apart and in the same direction; otherwise it says there is no meaningful change. Processes, startup apps, memory in use and free space are read once and count only above stated thresholds. Boot time comes from the times Windows itself records, which needs administrator permission to read. If Windows restarted between the two measurements, the result says so. The comparison can be saved as an image that includes the method.
+- Starter profiles: Gaming, Streaming, Work, Study, Laptop and Quiet. They use only reversible, per-user switches. Nothing is selected or applied until you choose, and a control this PC's Windows does not support is shown but never applied.
+- Change history becomes a timeline by day and session. Each change says where it came from (its own switch, a profile, a starter profile, Scan, or a re-apply after a Windows update), whether it is still in effect, and, from this version on, the registry values before and after. Undo one change, a whole session or everything still in effect, always after a confirmation that lists what goes back. Filter by type, result and period, search names and registry values, export to CSV or JSON, or print to PDF. App removals from Debloat appear in the same timeline. Clearing the history asks first.
+- Debloat shows, for each app, when its data last changed, whether it starts with Windows and how much memory it uses while running, all as Windows records them; a data change is a hint, not proof of use. Minimal, Balanced and Aggressive fill the selection only when clicked, and the preview still lists every app before anything is removed. A selection can be saved as a list and loaded on another PC, which selects apps but never removes them. Apps can be sorted by their last data change.
+- Turbo Boost shows how much of the processor load is PC Tweaker itself and how much is everything else.
+- The Windows AI Components Host control now sets the service to Manual instead of Disabled, so Windows can still start it when an app or a Windows feature asks for it.
+- The Microsoft Edge AI control states which policies apply to personal profiles and which only to work or school profiles. The drag tray and Windows suggestions controls state that their values come from Windows community documentation. Automatic RAM cleanup explains that it needs PC Tweaker running as administrator.
+- On current Windows 11, Windows protects the taskbar Widgets switch from other apps. Where it does, "Hide Widgets from the taskbar" is shown as unavailable, with the way to change it in Settings, instead of failing.
+- Portuguese is now European Portuguese throughout, and the language menu lists it as Português (Portugal). English remains the language on first launch, whatever the Windows language; a language you choose is remembered.
+- Decimals follow the app's language on PC Health, Gaming and the X3D list.
+- The catalog is unchanged: 81 controls, 46 Free and 35 Pro.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
 ## v1.18.0
 
 PC Tweaker 1.18.0 "Halloween Update" adds 15 controls, including the Windows AI features, shows exactly what every change will write before it is written, undoes a failed application on its own, asks before re-applying anything a Windows update put back, and turns PC Health into a live dashboard.

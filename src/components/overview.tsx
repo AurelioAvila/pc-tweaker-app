@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { Lang, Strings } from "../i18n";
+import { localeOf, type Lang, type Strings } from "../i18n";
 import type { AuditEntry, Section, TweakInfo } from "../types";
 import { textFor } from "../lib";
 import { CATEGORY_STYLE } from "../categories";
@@ -194,9 +194,9 @@ const COPY: Record<Lang, OverviewCopy> = {
     completed: "Abgeschlossen",
   },
   pt: {
-    eyebrow: "O TEU PC NUM RELANCE",
-    title: "Primeiro compreende. Depois ajusta com critério.",
-    introduction: "Observa a atividade do sistema, revê as definições e escolhe o próximo passo.",
+    eyebrow: "O SEU PC NUM RELANCE",
+    title: "Primeiro compreenda. Depois ajuste com critério.",
+    introduction: "Observe a atividade do sistema, reveja as definições e escolha o próximo passo.",
     snapshot: "Últimas leituras do sistema",
     waiting: "A aguardar leituras",
     cpuUse: "Utilização do processador",
@@ -205,17 +205,17 @@ const COPY: Record<Lang, OverviewCopy> = {
     recordedHint: "Registadas pelo PC Tweaker",
     viewChanges: "Rever alterações",
     next: "Um próximo passo claro",
-    scanTitle: "Descobre o que importa neste PC.",
-    scanDescription: "Revê as recomendações para o teu hardware antes de escolher o que alterar.",
+    scanTitle: "Descubra o que importa neste PC.",
+    scanDescription: "Reveja as recomendações para o seu hardware antes de escolher o que alterar.",
     scanAction: "Abrir verificação",
-    gamingTitle: "Explora a configuração de jogo",
-    gamingDescription: "Explora as sessões de jogo, o Turbo Boost e as definições de cada jogo.",
-    profilesTitle: "Reúne as tuas definições",
-    profilesDescription: "Guarda, revê ou carrega um perfil com os ajustes que escolheste.",
+    gamingTitle: "Explore a configuração de jogo",
+    gamingDescription: "Explore as sessões de jogo, o Turbo Boost e as definições de cada jogo.",
+    profilesTitle: "Reúna as suas definições",
+    profilesDescription: "Guarde, reveja ou carregue um perfil com os ajustes que escolheu.",
     recent: "Atividade recente",
     viewHistory: "Abrir o histórico",
     loadingHistory: "A ler o histórico local…",
-    emptyHistory: "O teu histórico começa aqui.",
+    emptyHistory: "O seu histórico começa aqui.",
     emptyHint: "As ações registadas pelo PC Tweaker aparecerão aqui.",
     historyError: "Não foi possível carregar o histórico local.",
     retry: "Tentar novamente",
@@ -297,9 +297,9 @@ export function OverviewPanel({
   const ram = percentage(
     latest && latest.ramTotal > 0 ? (latest.ramUsed / latest.ramTotal) * 100 : undefined,
   );
-  const number = new Intl.NumberFormat(lang, { maximumFractionDigits: 0 });
-  const memory = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 });
-  const time = new Intl.DateTimeFormat(lang, {
+  const number = new Intl.NumberFormat(localeOf(lang), { maximumFractionDigits: 0 });
+  const memory = new Intl.NumberFormat(localeOf(lang), { maximumFractionDigits: 1 });
+  const time = new Intl.DateTimeFormat(localeOf(lang), {
     month: "short",
     day: "numeric",
     hour: "2-digit",

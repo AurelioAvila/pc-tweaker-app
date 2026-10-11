@@ -151,3 +151,6 @@ CLAUDE.md
 .agents/
 .claude/
 scripts/sync-skills.mjs
+
+# VM verification output (scripts/vm/README.md)
+scripts/vm/results/

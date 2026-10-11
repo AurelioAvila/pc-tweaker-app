@@ -1,7 +1,7 @@
 // Shared non-visual helpers: config, session, error reporting, formatting.
 import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
-import { format, Lang, Strings } from "./i18n";
+import { format, Lang, Strings, localeOf } from "./i18n";
 import { DriverAudit } from "./types";
 
 // The first-party Cloudflare hostname is the stable production endpoint.
@@ -106,7 +106,7 @@ export function arcPath(fromFrac: number, toFrac: number, radius: number) {
 
 /** "12.4 / 31.1 GB" — one unit shown once, so it fits next to the gauge. */
 export function gbPair(used: number, total: number): string {
-  const gb = (n: number) => (n / 1024 ** 3).toFixed(1);
+  const gb = (n: number) => formatNumber(n / 1024 ** 3, 1);
   return `${gb(used)} / ${gb(total)} GB`;
 }
 
@@ -205,7 +205,7 @@ export const LIFETIME_BREAK_EVEN_MONTHS = Math.round(PRICE_LIFETIME / (PRICE_ANN
 export const savingsPercent = Math.round((1 - PRICE_ANNUAL / (PRICE_MONTHLY * 12)) * 100);
 
 export function money(amount: number, lang: Lang): string {
-  return new Intl.NumberFormat(lang, {
+  return new Intl.NumberFormat(localeOf(lang), {
     style: "currency",
     currency: "EUR",
     // €49.50, never €49.5: whole euros stay short, anything else shows cents.

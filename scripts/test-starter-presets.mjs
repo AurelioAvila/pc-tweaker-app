@@ -64,6 +64,29 @@ assert.deepEqual(
   ).pending,
   [],
 );
+// A control this PC's Windows does not support is listed but never applied,
+// even when it was selected, and does not block the rest of the preset.
+const gated = catalog.map((t, i) => ({
+  ...t,
+  applied: false,
+  unavailable: i === 0 ? "windows_version" : null,
+}));
+const withUnsupported = presetSelection(
+  preset,
+  gated,
+  preset.tweaks.map((t) => t.id),
+  true,
+);
+assert.ok(!withUnsupported.pending.some((t) => t.id === preset.tweaks[0].id));
+assert.deepEqual(withUnsupported.unsupported, [preset.tweaks[0].id]);
+assert.equal(withUnsupported.pending.length, preset.tweaks.length - 1);
+assert.deepEqual(withUnsupported.missing, []);
+// Every preset ships with at least one change selected, so Apply is never a no-op.
+for (const p of STARTER_PRESETS)
+  assert.ok(
+    p.tweaks.some((t) => t.selected),
+    p.id,
+  );
 console.log(
   "Starter profile checks passed: catalog, Free/user scope, selection, already applied, unavailable and Pro gating.",
 );

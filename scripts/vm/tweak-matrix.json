@@ -1,0 +1,386 @@
+{
+  "generatedBy": "cargo test settings_tweaks::tests::the_vm_matrix_matches_the_catalogue (PCT_WRITE_VM_MATRIX=1 rewrites it)",
+  "services": [
+    {
+      "expected": "applies where the service is installed; otherwise not_present",
+      "id": "disable_ai_fabric_service",
+      "service": "WSAIFabricSvc",
+      "startTypeWhenApplied": "DEMAND_START"
+    }
+  ],
+  "settings": [
+    {
+      "edition": "ProOrHigher",
+      "expected": {
+        "win10-22h2-pro": "applies",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "windows_edition",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKLM",
+      "id": "disable_click_to_do",
+      "minBuild": 0,
+      "writes": [
+        {
+          "name": "DisableClickToDo",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "edition": "Any",
+      "expected": {
+        "win10-22h2-pro": "applies",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "applies",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKLM",
+      "id": "disable_edge_ai",
+      "minBuild": 0,
+      "writes": [
+        {
+          "name": "HubsSidebarEnabled",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "value": 0
+        },
+        {
+          "name": "GenAILocalFoundationalModelSettings",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "value": 1
+        },
+        {
+          "name": "EdgeHistoryAISearchEnabled",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "value": 0
+        },
+        {
+          "name": "AIGenThemesEnabled",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "value": 0
+        },
+        {
+          "name": "CopilotPageContext",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "value": 0
+        },
+        {
+          "name": "ComposeInlineEnabled",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "edition": "ProOrHigher",
+      "expected": {
+        "win10-22h2-pro": "windows_version",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "windows_edition",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKLM",
+      "id": "disable_paint_ai",
+      "minBuild": 22621,
+      "writes": [
+        {
+          "name": "DisableCocreator",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint",
+          "value": 1
+        },
+        {
+          "name": "DisableImageCreator",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint",
+          "value": 1
+        },
+        {
+          "name": "DisableGenerativeFill",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "edition": "Any",
+      "expected": {
+        "win10-22h2-pro": "windows_version",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "applies",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKLM",
+      "id": "disable_notepad_ai",
+      "minBuild": 22621,
+      "writes": [
+        {
+          "name": "DisableAIFeatures",
+          "path": "SOFTWARE\\Policies\\WindowsNotepad",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "edition": "Any",
+      "expected": {
+        "win10-22h2-pro": "applies",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "applies",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKLM",
+      "id": "disable_fast_startup",
+      "minBuild": 0,
+      "writes": [
+        {
+          "name": "HiberbootEnabled",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "edition": "Any",
+      "expected": {
+        "win10-22h2-pro": "applies",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "applies",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKCU",
+      "id": "disable_storage_sense",
+      "minBuild": 0,
+      "writes": [
+        {
+          "name": "01",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\StorageSense\\Parameters\\StoragePolicy",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "edition": "Any",
+      "expected": {
+        "win10-22h2-pro": "windows_version",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "applies",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKCU",
+      "id": "taskbar_end_task",
+      "minBuild": 22631,
+      "writes": [
+        {
+          "name": "TaskbarEndTask",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\TaskbarDeveloperSettings",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "edition": "Any",
+      "expected": {
+        "win10-22h2-pro": "windows_version",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "applies",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKCU",
+      "id": "disable_drag_tray",
+      "minBuild": 26100,
+      "writes": [
+        {
+          "name": "DragTrayEnabled",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CDP",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "edition": "Any",
+      "expected": {
+        "win10-22h2-pro": "applies",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "applies",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKCU",
+      "id": "explorer_open_this_pc",
+      "minBuild": 0,
+      "writes": [
+        {
+          "name": "LaunchTo",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "edition": "Any",
+      "expected": {
+        "win10-22h2-pro": "applies",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "applies",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKLM",
+      "id": "block_oem_device_apps",
+      "minBuild": 0,
+      "writes": [
+        {
+          "name": "PreventDeviceMetadataFromNetwork",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Device Metadata",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "edition": "Any",
+      "expected": {
+        "win10-22h2-pro": "applies",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "applies",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKCU",
+      "id": "disable_windows_suggestions",
+      "minBuild": 0,
+      "writes": [
+        {
+          "name": "SubscribedContent-338389Enabled",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "value": 0
+        },
+        {
+          "name": "SubscribedContent-310093Enabled",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "value": 0
+        },
+        {
+          "name": "SubscribedContent-353694Enabled",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "value": 0
+        },
+        {
+          "name": "SubscribedContent-353696Enabled",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "value": 0
+        },
+        {
+          "name": "SoftLandingEnabled",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "value": 0
+        },
+        {
+          "name": "ScoobeSystemSettingEnabled",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\UserProfileEngagement",
+          "value": 0
+        },
+        {
+          "name": "Enabled",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\\Windows.SystemToast.Suggested",
+          "value": 0
+        },
+        {
+          "name": "ShowSyncProviderNotifications",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "value": 0
+        },
+        {
+          "name": "Start_IrisRecommendations",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "value": 0
+        },
+        {
+          "name": "Start_AccountNotifications",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "edition": "ProOrHigher",
+      "expected": {
+        "win10-22h2-pro": "windows_version",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "windows_edition",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKLM",
+      "id": "disable_widgets",
+      "minBuild": 22000,
+      "writes": [
+        {
+          "name": "AllowNewsAndInterests",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Dsh",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "edition": "EnterpriseOrEducation",
+      "expected": {
+        "win10-22h2-pro": "windows_version",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "windows_edition_enterprise",
+        "win11-pro-24h2": "windows_edition_enterprise"
+      },
+      "hive": "HKLM",
+      "id": "hide_start_recommended",
+      "minBuild": 22621,
+      "writes": [
+        {
+          "name": "HideRecommendedSection",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "edition": "Any",
+      "expected": {
+        "win10-22h2-pro": "applies",
+        "win11-education-24h2": "applies",
+        "win11-home-24h2": "applies",
+        "win11-pro-24h2": "applies"
+      },
+      "hive": "HKCU",
+      "id": "disable_game_bar_captures",
+      "minBuild": 0,
+      "writes": [
+        {
+          "name": "AppCaptureEnabled",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+          "value": 0
+        },
+        {
+          "name": "HistoricalCaptureEnabled",
+          "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+          "value": 0
+        }
+      ]
+    }
+  ],
+  "targets": [
+    {
+      "build": 26100,
+      "editionId": "Professional",
+      "label": "win11-pro-24h2"
+    },
+    {
+      "build": 26100,
+      "editionId": "Core",
+      "label": "win11-home-24h2"
+    },
+    {
+      "build": 26100,
+      "editionId": "Education",
+      "label": "win11-education-24h2"
+    },
+    {
+      "build": 19045,
+      "editionId": "Professional",
+      "label": "win10-22h2-pro"
+    }
+  ]
+}

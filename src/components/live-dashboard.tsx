@@ -27,6 +27,7 @@ import {
   WINDOW_SHORT,
   type LiveSample,
 } from "../live-metrics";
+import { formatNumber } from "../lib";
 import { Badge, type BadgeKind } from "./ui";
 import "./live-dashboard.css";
 
@@ -40,7 +41,13 @@ const DRIVE_EVERY = 15;
 const USERS_EVERY = 2;
 
 export type ResourceUser = { name: string; processes: number; cpu: number; memory: number };
-export type ResourceUsers = { cpu: ResourceUser[]; memory: ResourceUser[] };
+export type ResourceUsers = {
+  cpu: ResourceUser[];
+  memory: ResourceUser[];
+  /** PC Tweaker's own share (with its WebView2 processes) and everything else's. */
+  own_cpu?: number | null;
+  others_cpu?: number | null;
+};
 
 export function useForeground(): boolean {
   const read = () => document.visibilityState === "visible" && document.hasFocus();
@@ -684,7 +691,7 @@ export function LiveDashboard({
               <h4>{l.usingCpu}</h4>
               <UsersList
                 users={users?.cpu ?? []}
-                value={(u) => ({ text: `${u.cpu.toFixed(1)}%`, ratio: u.cpu / totalCpu })}
+                value={(u) => ({ text: `${formatNumber(u.cpu, 1)}%`, ratio: u.cpu / totalCpu })}
                 s={s}
               />
             </div>

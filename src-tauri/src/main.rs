@@ -14,7 +14,7 @@ fn main() {
         // relaunches fell straight through to `run()` and started a second,
         // full GUI running as administrator instead of performing the action
         // headlessly and exiting. Anything added there has to be added here.
-        const ELEVATED_ACTIONS: [&str; 21] = [
+        const ELEVATED_ACTIONS: [&str; 22] = [
             "--elevated-download-limit",
             "--elevated-download-restore",
             "--elevated-session-apply",
@@ -36,7 +36,17 @@ fn main() {
             "--elevated-task",
             "--elevated-dpc-trace",
             "--elevated-ramtrim",
+            "--elevated-boot-times",
         ];
+        // VM verification builds only (Cargo feature "test-pro", debug profile).
+        #[cfg(feature = "test-pro")]
+        if args.len() == 3 && (args[1] == "--test-apply" || args[1] == "--test-rollback") {
+            std::process::exit(tauri_app_lib::test_pro_cli(&args[1], &args[2]));
+        }
+        #[cfg(feature = "test-pro")]
+        if args.len() == 3 && args[1] == "--test-debloat" {
+            std::process::exit(tauri_app_lib::test_pro_debloat_cli(&args[2]));
+        }
         // The scheduled watchdog: one argument, no id, no window, no GUI.
         if args.len() == 2 && args[1] == "--check-drift" {
             tauri_app_lib::run_drift_check_headless();

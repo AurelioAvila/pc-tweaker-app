@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "1.18.0"
+version = "1.18.1"
 description = "Real Windows tweaks with automatic one-click rollback"
 authors = ["Aurelio Avila"]
 license-file = "../LICENSE"
@@ -120,6 +120,12 @@ windows = { version = "0.58", features = ["Management_Deployment", "Foundation_C
 # would silently fail to gate anything).
 [features]
 devtools = ["tauri/devtools"]
+# VM verification builds only: unlocks Pro controls without a licence and adds
+# the --test-apply / --test-rollback command line. Debug profile only: a
+# release build with it fails to compile (lib.rs), and
+# scripts/check-no-test-pro.mjs refuses any release binary that carries it.
+# Build for a VM: npm run tauri build -- --debug --no-bundle --features test-pro
+test-pro = []
 
 [dev-dependencies]
 tauri = { version = "2", features = ["test"] }

@@ -10,6 +10,7 @@ mod contextmenu;
 mod cookies;
 mod debloat;
 mod diagnostics {
+    pub mod boot;
     pub mod dpc;
     pub mod network_verify;
 }
@@ -114,6 +115,10 @@ fn restore_download_limit(app: tauri::AppHandle) -> Result<download_limit::Downl
     } else { download_limit::rollback(&store_for(&app)?)?; }
     download_limit_state(app)
 }
+
+// The Pro unlock for VM tests must never reach a release build.
+#[cfg(all(feature = "test-pro", not(debug_assertions)))]
+compile_error!("the test-pro feature is for debug VM test builds only and must never be in a release build");
 
 use cleanup::CleanupResult;
 use rollback::{RegValue, RollbackStore};
@@ -271,6 +276,12 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
     tweak_infos(&store_for(&app)?)
 }
 
+/// The taskbar Widgets switch. Windows' User Choice Protection refuses other
+/// programs' writes to it, so where that protection runs it is offered as
+/// unavailable, with the way to change it in Settings, instead of failing.
+const TASKBAR_WIDGETS_ID: &str = "hide_taskbar_widgets";
+const TASKBAR_WIDGETS_PROTECTED: &str = "Windows protects this switch on this PC and refuses changes from other apps. Turn Widgets off in Settings > Personalization > Taskbar.";
+
 fn tweak_infos(store: &RollbackStore) -> Result<Vec<TweakInfo>, String> {
     let applied_ids = store.applied_ids()?;
 
@@ -293,7 +304,10 @@ fn tweak_infos(store: &RollbackStore) -> Result<Vec<TweakInfo>, String> {
                 value_name: t.value_name.to_string(),
                 value_type: reg_value_type(&t.on_value),
                 sets_to: reg_value_display(&t.on_value),
-            }], ..Default::default() })
+            }],
+            unavailable: (t.id == TASKBAR_WIDGETS_ID && services::user_choice_protected())
+                .then_some("windows_protected"),
+            ..Default::default() })
         .collect();
 
     list.push(TweakInfo {
@@ -796,6 +810,14 @@ fn apply_by_id(
         .then(diagnostics::network_verify::measure);
     let was_online = before.as_ref().is_some_and(|b| b.online);
 
+    // What a re-apply is about to overwrite (after a Windows update put a
+    // value back, say): read now, because the snapshot keeps the value from
+    // before PC Tweaker first touched it. Empty for a first apply.
+    let overwritten: Vec<(String, Option<String>)> = registry_parts_of(store, id)
+        .iter()
+        .map(|part| (format!("{}\\{}", part.path, part.name), live_value(part)))
+        .collect();
+
     // Single funnel for every apply (direct, batched, and the elevated
     // helper), so this one audit call covers them all exactly once.
     let mut result = apply_or_undo(store, app_data_dir, id);
@@ -820,13 +842,73 @@ fn apply_by_id(
         diagnostics::network_verify::save(app_data_dir, &record);
     }
 
-    audit::record(
+    // What the change wrote, read back now: the history shows it as before
+    // and after. Only for a change that was kept.
+    let changes = if result.is_ok() {
+        registry_parts_of(store, id)
+            .iter()
+            .map(|part| {
+                let key = format!("{}\\{}", part.path, part.name);
+                audit::ValueChange {
+                    path: format!("{}\\{}", part.hive, part.path),
+                    name: part.name.clone(),
+                    before: match overwritten.iter().find(|(k, _)| *k == key) {
+                        Some((_, live)) => live.clone(),
+                        None => part.original_value.as_ref().map(reg_value_display),
+                    },
+                    after: live_value(part),
+                }
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+    audit::record_with(
         "tweak-applied",
         id,
         result.is_ok(),
         result.as_ref().err().cloned(),
+        changes,
     );
     result
+}
+
+/// The plain registry values a recorded change is made of, nested ones
+/// included: the part of a change that can be shown as before and after.
+#[cfg(windows)]
+fn registry_parts(entry: &rollback::SnapshotEntry, out: &mut Vec<rollback::RegistrySnapshot>) {
+    match entry {
+        rollback::SnapshotEntry::Registry(part) => out.push(part.clone()),
+        rollback::SnapshotEntry::Composite { entries } => {
+            entries.iter().for_each(|e| registry_parts(e, out))
+        }
+        _ => {}
+    }
+}
+
+#[cfg(windows)]
+fn registry_parts_of(store: &RollbackStore, id: &str) -> Vec<rollback::RegistrySnapshot> {
+    let mut parts = Vec::new();
+    if let Some(entry) = store.transaction().ok().and_then(|t| t.entry(id)) {
+        registry_parts(&entry, &mut parts);
+    }
+    parts
+}
+
+/// A value as regedit would show it now; `None` when it is not set.
+#[cfg(windows)]
+fn live_value(part: &rollback::RegistrySnapshot) -> Option<String> {
+    let hint = part.original_value.clone().unwrap_or(RegValue::Dword(0));
+    tweaks::windows_impl::read_value(
+        tweaks::windows_impl::hive_from_str(&part.hive),
+        &part.path,
+        &part.name,
+        &hint,
+    )
+    .ok()
+    .flatten()
+    .as_ref()
+    .map(reg_value_display)
 }
 
 #[cfg(windows)]
@@ -840,6 +922,9 @@ fn apply_by_id_inner(
         return Err("Configure this control in its dedicated panel; no default configuration is applied automatically".into());
     }
     require_tweak_entitlement(app_data_dir, id)?;
+    if id == TASKBAR_WIDGETS_ID && services::user_choice_protected() {
+        return Err(TASKBAR_WIDGETS_PROTECTED.into());
+    }
     if [everyday::DISABLE_RESTART_APPS_ID,everyday::ENABLE_LONG_PATHS_ID,everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID].contains(&id) {
         return everyday::apply(id,store);
     }
@@ -877,13 +962,31 @@ fn apply_by_id_inner(
 
 #[cfg(windows)]
 fn rollback_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
-    // Same single-funnel audit as apply_by_id.
+    // Same single-funnel audit as apply_by_id, with each value read just
+    // before the restore and just after it.
+    let parts = registry_parts_of(store, id);
+    let before: Vec<Option<String>> = parts.iter().map(live_value).collect();
     let result = rollback_by_id_inner(store, id);
-    audit::record(
+    let changes = if result.is_ok() {
+        parts
+            .iter()
+            .zip(before)
+            .map(|(part, before)| audit::ValueChange {
+                path: format!("{}\\{}", part.hive, part.path),
+                name: part.name.clone(),
+                before,
+                after: live_value(part),
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+    audit::record_with(
         "tweak-reverted",
         id,
         result.is_ok(),
         result.as_ref().err().cloned(),
+        changes,
     );
     result
 }
@@ -998,6 +1101,7 @@ pub(crate) fn bulk_applicable(ids: Vec<String>) -> Vec<String> {
 #[cfg(windows)]
 fn fits_this_pc(id: &str) -> bool {
     settings_tweaks::find(id).is_none_or(|t| settings_tweaks::available_here(t).is_ok())
+        && !(id == TASKBAR_WIDGETS_ID && services::user_choice_protected())
 }
 
 #[cfg(not(windows))]
@@ -1025,10 +1129,25 @@ fn split_by_elevation(ids: Vec<String>) -> (Vec<String>, Vec<String>) {
 /// instead of aborting, so one bad tweak can't silently swallow the rest.
 #[cfg(windows)]
 #[tauri::command(async)]
-fn apply_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, String> {
+fn apply_tweaks(
+    app: tauri::AppHandle,
+    ids: Vec<String>,
+    source: Option<String>,
+) -> Result<Vec<String>, String> {
     let dir = store_for_dir(&app)?;
     let store = RollbackStore::new(dir.clone());
     let mut failures = Vec::new();
+    // A profile or the scan names some settings that are already on: those
+    // are left as they are rather than written again, so the history does not
+    // credit this batch with them. A re-apply after a Windows update is the
+    // one batch that must write settings already recorded as on.
+    let ids: Vec<String> = if source.as_deref() == Some("reapply") {
+        ids
+    } else {
+        let applied = store.applied_ids().unwrap_or_default();
+        ids.into_iter().filter(|id| !applied.contains(id)).collect()
+    };
+    record_origin(source, &ids);
 
     let (needs_admin, direct) = split_by_elevation(bulk_applicable(ids));
 
@@ -1089,9 +1208,25 @@ fn rollback_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String
     Ok(failures)
 }
 
+/// Where a batch came from (a profile, the scan, ...), written to the history
+/// just before the changes it explains so the history can say "from".
+fn record_origin(source: Option<String>, ids: &[String]) {
+    // A label, never a path or free text: short and printable.
+    let Some(source) = source.filter(|s| {
+        !s.is_empty() && s.len() <= 120 && !s.chars().any(char::is_control)
+    }) else {
+        return;
+    };
+    audit::record("origin", &source, true, Some(ids.join(",")));
+}
+
 #[cfg(not(windows))]
 #[tauri::command(async)]
-fn apply_tweaks(_app: tauri::AppHandle, _ids: Vec<String>) -> Result<Vec<String>, String> {
+fn apply_tweaks(
+    _app: tauri::AppHandle,
+    _ids: Vec<String>,
+    _source: Option<String>,
+) -> Result<Vec<String>, String> {
     Err("tweaks are currently only supported on Windows".to_string())
 }
 
@@ -1729,6 +1864,15 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     if action == diagnostics::dpc::ELEVATED_FLAG {
         std::process::exit(diagnostics::dpc::run_elevated(&dir, id));
     }
+    // Matched on the flag alone, so an unexpected id exits here instead of
+    // falling through to the restore point every changing action takes.
+    if action == diagnostics::boot::ELEVATED_FLAG {
+        std::process::exit(if id == "read" {
+            diagnostics::boot::run_elevated(&dir)
+        } else {
+            2
+        });
+    }
     // A RAM trim changes no setting, so it needs no restore point either.
     if action == "--elevated-ramtrim" {
         let code = match ramclean::run_elevated(&dir) {
@@ -1993,12 +2137,69 @@ pub(crate) fn dirs_app_data_dir() -> std::path::PathBuf {
     std::path::PathBuf::from(base).join(env!("PCT_APP_IDENTIFIER"))
 }
 
+/// One change PC Tweaker is keeping in effect: each registry value as it was
+/// before PC Tweaker first touched it, and as it is now.
+#[derive(Serialize)]
+struct ActiveChange {
+    id: String,
+    changes: Vec<audit::ValueChange>,
+}
+
+/// "Now compared with before PC Tweaker": every change still in effect.
+#[cfg(windows)]
+#[tauri::command(async)]
+fn active_changes(app: tauri::AppHandle) -> Result<Vec<ActiveChange>, String> {
+    let store = store_for(&app)?;
+    // Changes a running game session owns end with the session, not here.
+    // One transaction at a time: the store's lock is per handle.
+    let all = store.applied_ids()?;
+    let mut ids: Vec<String> = {
+        let transaction = store.transaction()?;
+        all.into_iter().filter(|id| transaction.owner(id).is_none()).collect()
+    };
+    ids.sort();
+    Ok(ids
+        .into_iter()
+        .map(|id| ActiveChange {
+            changes: registry_parts_of(&store, &id)
+                .iter()
+                .map(|part| audit::ValueChange {
+                    path: format!("{}\\{}", part.hive, part.path),
+                    name: part.name.clone(),
+                    before: part.original_value.as_ref().map(reg_value_display),
+                    after: live_value(part),
+                })
+                .collect(),
+            id,
+        })
+        .collect())
+}
+
+#[cfg(not(windows))]
+#[tauri::command(async)]
+fn active_changes(_app: tauri::AppHandle) -> Result<Vec<ActiveChange>, String> {
+    Ok(Vec::new())
+}
+
+/// Writes an exported history (CSV or JSON text) to the path the user picked
+/// in the save dialog: a local drive only, and only those two file types.
+#[tauri::command(async)]
+fn save_history_export(path: String, contents: String) -> Result<(), String> {
+    const MAX_BYTES: usize = 20 * 1024 * 1024;
+    let target = baseline::local_file(&path, &["csv", "json"])
+        .ok_or("the history can only be saved as a .csv or .json file on a local drive")?;
+    if contents.len() > MAX_BYTES {
+        return Err("the history export is too large".into());
+    }
+    std::fs::write(target, contents).map_err(|e| e.to_string())
+}
+
 /// Last audit entries, newest first, for the dashboard's history card. The
 /// full file stays on disk for anyone who wants the complete record.
 #[tauri::command(async)]
 fn list_audit_log(app: tauri::AppHandle) -> Result<Vec<audit::AuditEntry>, String> {
     let dir = store_for_dir(&app)?;
-    Ok(audit::list_in(&dir, 100))
+    Ok(audit::list_in(&dir, 1000))
 }
 
 /// Crash reports recorded on this machine, newest first.
@@ -2168,7 +2369,8 @@ pub fn run() {
             drift_watch_enabled,
             set_drift_watch,
             baseline::run_baseline,
-            baseline::list_baselines,
+            baseline::before_after,
+            baseline::save_report_png,
             recommend::advise_tweaks,
             recommend::scan_relevant_ids,
             cpuclock::cpu_clock,
@@ -2210,6 +2412,10 @@ pub fn run() {
             startup::list_startup_items,
             startup::set_startup_enabled,
             list_audit_log,
+            active_changes,
+            save_history_export,
+            debloat::write_debloat_list,
+            debloat::read_debloat_list,
             check_update_drift,
             list_crash_reports,
             clear_crash_reports,
@@ -2258,6 +2464,8 @@ pub fn run() {
             diagnostics::network_verify::verify_network,
             diagnostics::network_verify::last_network_verification,
             diagnostics::dpc::trace_dpc_latency,
+            diagnostics::boot::boot_times,
+            ramclean::ram_schedule_ready,
             engine::dynamic_session::core_steering_status,
             game_sessions::set_core_steering,
             preview_tweak,
@@ -2486,6 +2694,14 @@ mod tests {
     /// only place that notices, because nothing else reads all three sources
     /// at once. If this fails, the catalogue changed â€” update the numbers
     /// here, then update every surface listed above to match.
+    /// The Windows-protection guard keys on this id; a rename would silently
+    /// bring back the "Access is denied" failure on current Windows 11.
+    #[test]
+    fn the_protected_widgets_switch_is_a_real_tweak() {
+        let tweak = find_tweak(TASKBAR_WIDGETS_ID).expect("hide_taskbar_widgets exists");
+        assert_eq!(tweak.value_name, "TaskbarDa");
+    }
+
     #[test]
     fn the_catalogue_is_eighty_one_tweaks_thirty_five_of_them_pro() {
         let registry: Vec<_> = tweaks::all_tweaks().into_iter().filter(|t| t.id != "disable_copilot").collect();
@@ -2665,12 +2881,122 @@ mod tests {
 /// Shared Pro gate. Returns the `PRO_REQUIRED_PREFIX` error the frontend
 /// already knows how to turn into a paywall rather than a red toast.
 pub(crate) fn require_pro(app_data_dir: &std::path::Path) -> Result<(), String> {
-    if license::LicenseStore::new(app_data_dir.to_path_buf()).is_pro_and_fresh() {
-        return Ok(());
+    // Debug VM test builds only (feature "test-pro"); see Cargo.toml.
+    #[cfg(feature = "test-pro")]
+    {
+        let _ = app_data_dir;
+        Ok(())
     }
-    Err(format!(
-        "{}this feature requires an active PC Tweaker Pro license",
-        PRO_REQUIRED_PREFIX
+    #[cfg(not(feature = "test-pro"))]
+    {
+        if license::LicenseStore::new(app_data_dir.to_path_buf()).is_pro_and_fresh() {
+            return Ok(());
+        }
+        Err(format!(
+            "{}this feature requires an active PC Tweaker Pro license",
+            PRO_REQUIRED_PREFIX
+        ))
+    }
+}
+
+/// Marker the release checks look for: present in a binary only when it was
+/// built with the test-pro feature.
+#[cfg(feature = "test-pro")]
+pub const TEST_PRO_MARKER: &str = "PCT-TEST-PRO-BUILD";
+
+/// VM verification builds only: removes Debloat catalogue apps, see
+/// `debloat::test_pro_debloat`. Run it in a normal, non-elevated shell:
+/// removal is for the signed-in user only.
+#[cfg(all(windows, feature = "test-pro"))]
+pub fn test_pro_debloat_cli(catalog_ids: &str) -> i32 {
+    debloat::test_pro_debloat(catalog_ids, &dirs_app_data_dir())
+}
+
+/// VM verification builds only: applies or restores controls by id, in this
+/// process, the way the app's own apply funnel does (audit log, rollback
+/// journal, build and edition checks), and writes what happened to
+/// test-pro-cli.log in the app data folder. Run it as administrator for the
+/// machine-wide controls. The exit code is the number of failures.
+#[cfg(all(windows, feature = "test-pro"))]
+pub fn test_pro_cli(action: &str, ids: &str) -> i32 {
+    use rollback::SnapshotEntry;
+    use std::collections::HashMap;
+    let dir = dirs_app_data_dir();
+    let store = RollbackStore::new(dir.clone());
+    // What each apply recorded, so the restore can be checked against the
+    // live registry, and so only what this run applied is restored.
+    let snaps_path = dir.join("test-pro-snapshots.json");
+    let mut snaps: HashMap<String, SnapshotEntry> = std::fs::read(&snaps_path)
+        .ok()
+        .and_then(|b| serde_json::from_slice(&b).ok())
+        .unwrap_or_default();
+    let mut log = format!("{TEST_PRO_MARKER} {action}\n");
+    let mut failed = 0;
+    for id in ids.split(',').map(str::trim).filter(|id| !id.is_empty()) {
+        let result = if action == "--test-apply" {
+            let r = apply_by_id(&store, &dir, id).map(|_| "applied".to_string());
+            let entry = store.transaction().ok().and_then(|t| t.entry(id));
+            if let (Ok(_), Some(entry)) = (&r, entry) {
+                snaps.insert(id.to_string(), entry);
+            }
+            r
+        } else {
+            let Some(entry) = snaps.remove(id) else {
+                log.push_str(&format!("{id}: skipped, not applied by this test run\n"));
+                continue;
+            };
+            rollback_by_id(&store, id).and_then(|_| test_restore_check(&entry))
+        };
+        if result.is_err() {
+            failed += 1;
+        }
+        log.push_str(&format!("{id}: {result:?}\n"));
+    }
+    let _ = std::fs::create_dir_all(&dir);
+    let _ = std::fs::write(&snaps_path, serde_json::to_vec(&snaps).unwrap_or_default());
+    let _ = std::fs::write(dir.join("test-pro-cli.log"), log);
+    failed
+}
+
+/// Reads back every registry value a restore should have put back. Other
+/// kinds (services, power plans, ...) are listed as not compared here;
+/// verify-tweaks.ps1 checks the services of the 1.18 controls itself.
+#[cfg(all(windows, feature = "test-pro"))]
+fn test_restore_check(entry: &rollback::SnapshotEntry) -> Result<String, String> {
+    use rollback::SnapshotEntry as E;
+    use tweaks::windows_impl::{hive_from_str, key_exists, read_value};
+    fn walk(e: &E, ok: &mut usize, skipped: &mut Vec<String>, bad: &mut Vec<String>) {
+        match e {
+            E::Composite { entries } => {
+                for inner in entries {
+                    walk(inner, ok, skipped, bad);
+                }
+            }
+            E::Registry(s) => {
+                let hint = s.original_value.clone().unwrap_or(RegValue::Dword(0));
+                match read_value(hive_from_str(&s.hive), &s.path, &s.name, &hint) {
+                    Ok(live) if live == s.original_value => *ok += 1,
+                    live => bad.push(format!(
+                        "{}\\{}\\{}: expected {:?}, found {:?}",
+                        s.hive, s.path, s.name, s.original_value, live
+                    )),
+                }
+            }
+            E::RegistryKeyCreated { hive, path } => match key_exists(hive_from_str(hive), path) {
+                Ok(false) => *ok += 1,
+                live => bad.push(format!("{hive}\\{path}: should be gone, exists: {live:?}")),
+            },
+            other => skipped.push(format!("{other:?}").split([' ', '{', '(']).next().unwrap_or("").to_string()),
+        }
+    }
+    let (mut ok, mut skipped, mut bad) = (0, Vec::new(), Vec::new());
+    walk(entry, &mut ok, &mut skipped, &mut bad);
+    if !bad.is_empty() {
+        return Err(format!("restore mismatch: {}", bad.join("; ")));
+    }
+    Ok(format!(
+        "restored, {ok} registry value(s) read back identical{}",
+        if skipped.is_empty() { String::new() } else { format!(", not compared: {}", skipped.join(", ")) }
     ))
 }
 

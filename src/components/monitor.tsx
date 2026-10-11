@@ -291,6 +291,15 @@ export function RamCleaner({
   // Matches the scheduler's own heartbeat: the readout can never be more than
   // one heartbeat behind what the scheduler is doing.
   const now = useNow(15_000);
+  // A scheduled pass can only run in an app already running as administrator.
+  // Known up front, so the card says so instead of showing a next run that
+  // will not happen.
+  const [scheduleReady, setScheduleReady] = useState<boolean | null>(null);
+  useEffect(() => {
+    invoke<boolean>("ram_schedule_ready")
+      .then(setScheduleReady)
+      .catch(() => setScheduleReady(null));
+  }, []);
 
   // Live figures come from the shared sampling loop rather than a second
   // poll of our own: one IPC feed, every home card in step.
@@ -434,7 +443,15 @@ export function RamCleaner({
         {/* A schedule you cannot see is a schedule you cannot trust. This is
             the timer's actual state: when the next pass is due, and what the
             last one did. */}
-        {auto !== null && (
+        {auto !== null && scheduleReady === false && (
+          <p
+            role="status"
+            className="tool-control-group well text-ink-2 mt-3 px-3 py-2 text-[11.5px] leading-relaxed"
+          >
+            {s.ram.autoPausedNotAdmin}
+          </p>
+        )}
+        {auto !== null && scheduleReady !== false && (
           <div className="tool-control-group well mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2">
             <span className="type-data text-[11.5px] text-ink-2">
               {/* A pass that came due while the machine was asleep is run by

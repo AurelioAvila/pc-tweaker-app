@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openFolderDialog, save as saveFileDialog } from "@tauri-apps/plugin-dialog";
 import { format, Lang, Strings } from "../i18n";
-import { formatEpochDate } from "../lib";
+import { formatEpochDate, friendlyError } from "../lib";
 import { MANUAL_ONLY_TWEAK_IDS } from "../catalog";
 import { FolderIcon, LayersIcon } from "./icons";
 import { LoadedProfile, Toast, TweakInfo, TweakProfile } from "../types";
@@ -195,17 +195,30 @@ export function ProfilesPanel({
     setBusy(profile.name);
     // Switches that apply only on their own are left out of every profile.
     const ids = profile.tweaks.filter((id) => !MANUAL_ONLY_TWEAK_IDS.has(id));
+    const wasApplied = new Set(tweaks.filter((t) => t.applied).map((t) => t.id));
     try {
-      const failures = await invoke<string[]>("apply_tweaks", { ids });
-      failures.forEach((f) =>
-        pushToast("error", f.includes("PRO_REQUIRED: ") ? s.toasts.licenseNeedsRefresh : f),
-      );
+      // Named in the history: a starter profile has no creation date.
+      const source = `${profile.created_at ? "profile" : "starter"}:${profile.name}`;
+      const failures = await invoke<string[]>("apply_tweaks", { ids, source });
+      // Counted from what is in effect now, not from the failure list: a
+      // cancelled administrator prompt reports one failure for the whole
+      // elevated part, and a control this PC does not support is skipped
+      // without one.
+      const after = await invoke<TweakInfo[]>("list_tweaks");
       await onChanged();
-      if (failures.length === 0)
+      failures.forEach((f) =>
         pushToast(
-          "success",
-          format(s.profiles.appliedToast, { count: ids.length - failures.length }),
-        );
+          "error",
+          f.includes("PRO_REQUIRED: ") ? s.toasts.licenseNeedsRefresh : friendlyError(f, s),
+        ),
+      );
+      // Only what this apply turned on: tweaks that were already on are not
+      // counted again.
+      const done = ids.filter(
+        (id) => !wasApplied.has(id) && after.some((t) => t.id === id && t.applied),
+      );
+      if (done.length > 0)
+        pushToast("success", format(s.profiles.appliedToast, { count: done.length }));
     } catch (e) {
       pushToast("error", String(e));
     } finally {

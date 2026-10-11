@@ -373,6 +373,18 @@ pub fn list_startup_items() -> Vec<StartupEntry> {
     entries
 }
 
+/// Apps set to start with Windows, without the icon extraction the list view
+/// pays for.
+#[cfg(windows)]
+pub fn enabled_count() -> Option<usize> {
+    Some(imp::list().iter().filter(|e| e.enabled).count())
+}
+
+#[cfg(not(windows))]
+pub fn enabled_count() -> Option<usize> {
+    None
+}
+
 #[cfg(windows)]
 #[tauri::command(async)]
 pub fn set_startup_enabled(

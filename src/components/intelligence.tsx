@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { format, Lang, Strings } from "../i18n";
+import { format, Strings } from "../i18n";
 import { friendlyError, textFor, uiLocale } from "../lib";
 import { MANUAL_ONLY_TWEAK_IDS } from "../catalog";
-import { AuditEntry, CrashReport, DriftReport, Toast, TweakAdvice, TweakInfo } from "../types";
+import { CrashReport, DriftReport, Toast, TweakAdvice, TweakInfo } from "../types";
 import { Badge, Toggle } from "./ui";
 import { ToolHeader } from "./tool-section";
 import { HistoryIcon } from "./icons";
@@ -155,27 +155,6 @@ export function AdvisorCard({
   );
 }
 
-/* ---- Change Ledger --------------------------------------------------------- */
-
-const ACTION_KEYS: Record<string, keyof Strings["ledger"]["actions"]> = {
-  "tweak-applied": "applied",
-  "tweak-reverted": "reverted",
-  cleanup: "cleanup",
-  "files-deleted": "filesDeleted",
-  "disk-optimize": "diskOptimize",
-  "startup-change": "startupChange",
-  "restore-point": "restorePoint",
-  "process-guard": "processGuard",
-  "core-steering": "coreSteering",
-  "ram-trim": "ramTrim",
-  "tweak-auto-reverted": "autoReverted",
-  "priority-applied": "priorityRule",
-  "priority-restored": "priorityRule",
-  "temp-cleanup-scheduled": "scheduledCleanup",
-  "ecoqos-applied": "ecoqos",
-  "ecoqos-restored": "ecoqos",
-};
-
 /**
  * The update watchdog's finding, shown only when something actually drifted.
  *
@@ -234,7 +213,7 @@ export function UpdateDriftCard({
     if (!report || chosen.length === 0) return;
     setBusy(true);
     try {
-      const failures = await invoke<string[]>("apply_tweaks", { ids: chosen });
+      const failures = await invoke<string[]>("apply_tweaks", { ids: chosen, source: "reapply" });
       // Counted from what is in effect now, not from the failure list: an
       // elevated batch that was cancelled reports one failure for all of it.
       const after = await invoke<TweakInfo[]>("list_tweaks");
@@ -445,260 +424,6 @@ export function CrashReportsCard({
  * anything still applied. Read-only over `audit-log.jsonl`; the file never
  * leaves the machine.
  */
-export function LedgerPanel({
-  s,
-  lang,
-  tweaks,
-  onChanged,
-  pushToast,
-}: {
-  s: Strings;
-  lang: Lang;
-  tweaks: TweakInfo[];
-  onChanged: () => Promise<void>;
-  pushToast: (kind: Toast["kind"], message: string) => void;
-}) {
-  const [entries, setEntries] = useState<AuditEntry[] | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [clearing, setClearing] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [failedOnly, setFailedOnly] = useState(false);
-  const readRequest = useRef(0);
-
-  const readEntries = useCallback(() => {
-    const request = ++readRequest.current;
-    invoke<AuditEntry[]>("list_audit_log")
-      .then((v) => {
-        // The native audit reader already returns newest-first entries.
-        if (request === readRequest.current) setEntries(v);
-      })
-      .catch((e: unknown) => {
-        if (request === readRequest.current) {
-          setLoadError(String(e));
-          setEntries((current) => current ?? []);
-        }
-      });
-  }, []);
-
-  useEffect(() => {
-    readEntries();
-    return () => {
-      readRequest.current += 1;
-    };
-  }, [readEntries]);
-
-  function load() {
-    setLoadError(null);
-    readEntries();
-  }
-
-  const appliedIds = useMemo(
-    () => new Set(tweaks.filter((t) => t.applied).map((t) => t.id)),
-    [tweaks],
-  );
-  const tweakName = (id: string) => {
-    const t = tweaks.find((x) => x.id === id);
-    return t ? textFor(s.tweaks, t.id, t.name, t.description).name : id;
-  };
-
-  async function rollback(id: string) {
-    setBusy(id);
-    try {
-      await invoke("rollback_tweak", { id });
-      await onChanged();
-      pushToast("success", format(s.toasts.rolledBack, { name: tweakName(id) }));
-      load();
-    } catch (e) {
-      pushToast("error", String(e));
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  if (entries === null) {
-    return (
-      <section className="workspace-ledger" aria-busy="true">
-        <header className="workspace-panel-header">
-          <div>
-            <h2>{s.ledger.title}</h2>
-            <p>{s.ledger.subtitle}</p>
-          </div>
-        </header>
-        <div className="workspace-panel-empty" role="status">
-          {s.scheduledTasks.refreshing}
-        </div>
-      </section>
-    );
-  }
-
-  const failedCount = entries.filter((entry) => !entry.success).length;
-  const visibleEntries = failedOnly ? entries.filter((entry) => !entry.success) : entries;
-  const dateOf = (entry: AuditEntry) => {
-    const date = new Date(entry.ts * 1000);
-    return Number.isFinite(date.getTime()) ? date : null;
-  };
-  const dayOf = (entry: AuditEntry) => dateOf(entry)?.toLocaleDateString(lang) ?? "—";
-
-  /** What a ledger row is about, in the user's language where the entry
-   *  has a known shape; anything else is shown as recorded. */
-  function ledgerTarget(e: AuditEntry): string {
-    if (e.action.startsWith("tweak-")) return tweakName(e.target);
-    if (e.action === "process-guard") {
-      return e.target === "paused" ? s.ledger.guardPaused : s.ledger.guardResumed;
-    }
-    if (e.target === "restored") return s.ledger.restored;
-    if (e.target === "postponed") return s.ledger.postponed;
-    if (e.action === "ram-trim") return s.ram.title;
-    if (e.target === "temp_cleanup") return textFor(s.cleanup, e.target, e.target, "").name;
-    const count = /^(\d+) processes$/.exec(e.target);
-    if (count) return format(s.ledger.processes, { count: Number(count[1]) });
-    return e.target;
-  }
-
-  return (
-    <section className="workspace-ledger">
-      <header className="workspace-panel-header">
-        <div>
-          <h2>{s.ledger.title}</h2>
-          <p>{s.ledger.subtitle}</p>
-        </div>
-        {/* Only offered when there is something to clear, so the control
-            never implies history exists where none does. */}
-        {entries.length > 0 && (
-          <button
-            onClick={() => {
-              setClearing(true);
-              invoke("clear_audit_log")
-                .then(() => {
-                  readRequest.current += 1;
-                  setEntries([]);
-                  pushToast("success", s.ledger.cleared);
-                })
-                .catch((e: unknown) => pushToast("error", String(e)))
-                .finally(() => setClearing(false));
-            }}
-            disabled={clearing}
-            className="workspace-button workspace-button-secondary"
-          >
-            {clearing ? s.ledger.clearing : s.ledger.clear}
-          </button>
-        )}
-      </header>
-
-      {loadError && (
-        <div className="workspace-panel-error" role="alert">
-          <p>{loadError}</p>
-          <button onClick={load} className="workspace-button workspace-button-secondary">
-            {s.scheduledTasks.refresh}
-          </button>
-        </div>
-      )}
-
-      {entries.length > 0 && (
-        <div className="workspace-ledger-toolbar">
-          <span className="workspace-count">
-            <strong>{entries.length}</strong>
-            {s.ledger.title}
-          </span>
-          <button
-            onClick={() => setFailedOnly((value) => !value)}
-            aria-pressed={failedOnly}
-            className={`workspace-ledger-filter ${failedOnly ? "is-active" : ""}`}
-          >
-            {s.ledger.failed}
-            <Badge kind={failedCount ? "danger" : "neutral"}>{failedCount}</Badge>
-          </button>
-        </div>
-      )}
-
-      {entries.length === 0 && !loadError ? (
-        <div className="workspace-panel-empty">
-          <span className="workspace-empty-symbol" aria-hidden="true">
-            <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M4 7v5h5M4.7 12a8 8 0 1 1 2.5 6M12 8v4l3 2"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <p>{s.ledger.empty}</p>
-        </div>
-      ) : entries.length > 0 && visibleEntries.length === 0 ? (
-        <p className="workspace-panel-empty" role="status">
-          {format(s.search.noResults, { query: s.ledger.failed })}
-        </p>
-      ) : entries.length > 0 ? (
-        <ol className="workspace-ledger-list">
-          {visibleEntries.map((e, i) => {
-            const key = ACTION_KEYS[e.action];
-            const label = key ? s.ledger.actions[key] : e.action;
-            const isTweak = e.action === "tweak-applied";
-            const canRevert = e.success && isTweak && appliedIds.has(e.target);
-            const timestamp = dateOf(e);
-            const startsDay = i === 0 || dayOf(e) !== dayOf(visibleEntries[i - 1]);
-            return (
-              <li key={`${e.ts}-${i}`}>
-                {startsDay && (
-                  <p className="workspace-ledger-date">
-                    {timestamp?.toLocaleDateString(lang, {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    }) ?? "—"}
-                  </p>
-                )}
-                <div className={`workspace-ledger-event ${e.success ? "" : "has-failed"}`}>
-                  {/* Status is shape + color, never color alone. */}
-                  <span
-                    className={`workspace-ledger-status ${e.success ? "is-success" : "is-failed"}`}
-                    aria-hidden="true"
-                  >
-                    {e.success ? "✓" : "×"}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="workspace-ledger-target">{ledgerTarget(e)}</p>
-                    <div className="workspace-ledger-meta">
-                      <span>{label}</span>
-                      <time dateTime={timestamp?.toISOString()}>
-                        {timestamp?.toLocaleTimeString(lang, {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                        }) ?? "—"}
-                      </time>
-                      {e.elevated && (
-                        <span className="workspace-ledger-admin">{s.ledger.elevated}</span>
-                      )}
-                      {!e.success && (
-                        <span className="workspace-ledger-failure">{s.ledger.failed}</span>
-                      )}
-                    </div>
-                    {e.detail && <p className="workspace-ledger-detail">{e.detail}</p>}
-                  </div>
-                  {canRevert && (
-                    <button
-                      onClick={() => void rollback(e.target)}
-                      disabled={busy !== null}
-                      aria-label={`${s.ledger.revert} · ${tweakName(e.target)}`}
-                      className="workspace-button workspace-button-secondary"
-                    >
-                      {busy === e.target ? "···" : s.ledger.revert}
-                    </button>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      ) : null}
-    </section>
-  );
-}
-
 /** Turns the scheduled half of the watchdog on and off.
  *
  * Its own component, and deliberately not inside UpdateDriftCard: that card

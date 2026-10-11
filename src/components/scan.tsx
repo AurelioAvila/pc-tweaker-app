@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { format, type Lang, type Strings } from "../i18n";
+import { format, type Lang, type Strings, localeOf } from "../i18n";
 import { textFor } from "../lib";
 import type { ScanProgress, Section, Toast } from "../types";
 import {
@@ -467,7 +467,9 @@ export function ScanPanel({
             )}
             <span className="scan-last" hidden={reading || paused}>
               {lastScan
-                ? format(s.scan.lastScan, { time: new Date(lastScan.at).toLocaleString(lang) })
+                ? format(s.scan.lastScan, {
+                    time: new Date(lastScan.at).toLocaleString(localeOf(lang)),
+                  })
                 : s.scan.neverScanned}
               {lastScan?.partial && <small className="block">{c.partial}</small>}
             </span>

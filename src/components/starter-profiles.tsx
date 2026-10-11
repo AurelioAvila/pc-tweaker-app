@@ -30,9 +30,32 @@ export function StarterProfiles({
   );
   const preset = STARTER_PRESETS.find((p) => p.id === current)!;
   const selection = selections[current];
-  const { available, missing, pending } = presetSelection(preset, tweaks, selection, isPro);
-  const body = { gaming: copy.gamingBody, study: copy.studyBody, work: copy.workBody };
-  const note = { gaming: copy.gamingNote, study: copy.studyNote, work: copy.workNote };
+  const { available, missing, pending, unsupported } = presetSelection(
+    preset,
+    tweaks,
+    selection,
+    isPro,
+  );
+  // Selected, not yet applied, but this PC's Windows does not support it.
+  const onlyUnsupported = selection.some(
+    (id) => unsupported.includes(id) && !available.find((t) => t.id === id)?.applied,
+  );
+  const body: Record<string, string> = {
+    gaming: copy.gamingBody,
+    study: copy.studyBody,
+    work: copy.workBody,
+    laptop: copy.laptopBody,
+    quiet: copy.quietBody,
+    streaming: copy.streamingBody,
+  };
+  const note: Record<string, string> = {
+    gaming: copy.gamingNote,
+    study: copy.studyNote,
+    work: copy.workNote,
+    laptop: copy.laptopNote,
+    quiet: copy.quietNote,
+    streaming: copy.streamingNote,
+  };
   return (
     <section className="starter-profiles" aria-label={copy.heading}>
       <header>
@@ -68,6 +91,21 @@ export function StarterProfiles({
                   <path d="M12 6C9 4 6 4 3 5v15c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Zm0 0v15" />
                   <path d="M6 9h3m-3 4h3m6-4h3m-3 4h3" />
                 </>
+              ) : p.id === "laptop" ? (
+                <>
+                  <rect x="5" y="5" width="14" height="10" rx="1.5" />
+                  <path d="M2.5 19h19l-2-4h-15l-2 4Z" />
+                </>
+              ) : p.id === "quiet" ? (
+                <>
+                  <path d="M18 15V11a6 6 0 0 0-9.3-5M6.3 8.5A6 6 0 0 0 6 11v4l-2 2h13" />
+                  <path d="M10 20a2 2 0 0 0 4 0M3 3l18 18" />
+                </>
+              ) : p.id === "streaming" ? (
+                <>
+                  <circle cx="12" cy="12" r="2" />
+                  <path d="M8.5 15.5a5 5 0 0 1 0-7m7 0a5 5 0 0 1 0 7M5.6 18.4a9 9 0 0 1 0-12.8m12.8 0a9 9 0 0 1 0 12.8" />
+                </>
               ) : (
                 <>
                   <rect x="3" y="7" width="18" height="14" rx="2" />
@@ -93,11 +131,13 @@ export function StarterProfiles({
           {available.map((t) => {
             const text = textFor(s.tweaks, t.id, t.name, t.description);
             const optional = !preset.tweaks.find((item) => item.id === t.id)?.selected;
+            const notHere = !!t.unavailable;
             return (
-              <label key={t.id} className="starter-option">
+              <label key={t.id} className="starter-option" data-unavailable={notHere || undefined}>
                 <input
                   type="checkbox"
-                  checked={selection.includes(t.id)}
+                  disabled={notHere}
+                  checked={selection.includes(t.id) && !notHere}
                   onChange={(e) =>
                     setSelections((prev) => ({
                       ...prev,
@@ -111,7 +151,11 @@ export function StarterProfiles({
                   <strong>{text.name}</strong>
                   <small>{text.description}</small>
                 </span>
-                {(t.applied || optional) && <em>{t.applied ? copy.active : copy.optional}</em>}
+                {notHere ? (
+                  <em>{copy.notHere}</em>
+                ) : (
+                  (t.applied || optional) && <em>{t.applied ? copy.active : copy.optional}</em>
+                )}
               </label>
             );
           })}
@@ -137,7 +181,7 @@ export function StarterProfiles({
         </footer>
         {!pending.length && (
           <p className="starter-complete" role="status">
-            {selection.length ? copy.ready : copy.empty}
+            {!selection.length ? copy.empty : onlyUnsupported ? copy.notHere : copy.ready}
           </p>
         )}
       </div>

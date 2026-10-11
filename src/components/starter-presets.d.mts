@@ -1,6 +1,6 @@
 import type { TweakInfo } from "../types";
 export type StarterPreset = {
-  id: "gaming" | "study" | "work";
+  id: "gaming" | "streaming" | "work" | "study" | "laptop" | "quiet";
   icon: string;
   tweaks: { id: string; selected: boolean }[];
 };
@@ -10,4 +10,10 @@ export function presetSelection(
   tweaks: TweakInfo[],
   selected: string[],
   isPro: boolean,
-): { available: TweakInfo[]; missing: string[]; pending: TweakInfo[]; locked: TweakInfo[] };
+): {
+  available: TweakInfo[];
+  missing: string[];
+  pending: TweakInfo[];
+  locked: TweakInfo[];
+  unsupported: string[];
+};

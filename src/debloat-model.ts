@@ -2,6 +2,7 @@
 // is filtered and sorted, what "Select recommended" picks and how much space
 // a selection can free. Pure functions, tested without a window.
 import type { DebloatApp } from "./components/debloat";
+import { localeOf } from "./i18n";
 
 export type Tier = "recommended" | "safe" | "caution";
 
@@ -34,7 +35,7 @@ export const canRemove = (app: DebloatApp) =>
   app.installed && app.removable && !!app.packageFullName;
 
 export type Category = "all" | "media" | "productivity" | "connections" | "windows";
-export type SortKey = "name" | "size" | "tier";
+export type SortKey = "name" | "size" | "tier" | "activity";
 
 export type Filters = {
   category: Category;
@@ -80,15 +81,48 @@ export function sortApps(apps: readonly DebloatApp[], by: SortKey, lang?: string
         ? (footprint(b) ?? -1) - (footprint(a) ?? -1)
         : by === "tier"
           ? TIER_ORDER[tierOf(a)] - TIER_ORDER[tierOf(b)]
-          : 0;
+          : by === "activity"
+            ? // Longest without activity first; unknown after every known date.
+              (a.lastActivity ?? a.dataSince ?? Infinity) -
+                (b.lastActivity ?? b.dataSince ?? Infinity) || 0
+            : 0;
     return key || a.name.localeCompare(b.name, lang);
   });
 }
 
-/** What "Select recommended" adds: removable apps marked recommended. It is
- *  only ever a button; nothing is selected without the user asking. */
-export const recommendedSelection = (apps: readonly DebloatApp[]): string[] =>
-  apps.filter((a) => canRemove(a) && tierOf(a) === "recommended").map((a) => a.packageFullName!);
+export type Preset = "minimal" | "balanced" | "aggressive";
+
+/** What each selection preset fills in: minimal = recommended apps,
+ *  balanced = recommended and safe ones, aggressive = every removable app.
+ *  Only ever a button: nothing is selected until the user picks one, and the
+ *  preview still lists every app before anything is removed. */
+export function presetSelection(apps: readonly DebloatApp[], preset: Preset): string[] {
+  const allowed: Tier[] =
+    preset === "minimal"
+      ? ["recommended"]
+      : preset === "balanced"
+        ? ["recommended", "safe"]
+        : ["recommended", "safe", "caution"];
+  return apps
+    .filter((a) => canRemove(a) && allowed.includes(tierOf(a)))
+    .map((a) => a.packageFullName!);
+}
+
+/** Whole days since the app last wrote to its data folder; null if unknown. */
+export function idleDays(app: Pick<DebloatApp, "lastActivity">, nowSec: number): number | null {
+  if (app.lastActivity == null || app.lastActivity > nowSec) return null;
+  return Math.floor((nowSec - app.lastActivity) / 86_400);
+}
+
+/** The removable apps a loaded list names, and how many of its names are not
+ *  removable here (not installed, or protected on this PC). */
+export function selectFromList(apps: readonly DebloatApp[], catalogIds: readonly string[]) {
+  const picked = apps.filter((a) => canRemove(a) && catalogIds.includes(a.catalogId));
+  return {
+    selection: picked.map((a) => a.packageFullName!),
+    missing: catalogIds.filter((id) => !picked.some((a) => a.catalogId === id)).length,
+  };
+}
 
 /** Upper bound on the space a selection frees, and whether every app in it
  *  had a known size. Windows keeps an app's files while another account still
@@ -124,5 +158,5 @@ export function formatSize(bytes: number | null, lang?: string): string | null {
     unit++;
   }
   const digits = value >= 100 || unit < 2 ? 0 : 1;
-  return `${value.toLocaleString(lang, { maximumFractionDigits: digits, minimumFractionDigits: digits })} ${units[unit]}`;
+  return `${value.toLocaleString(localeOf(lang), { maximumFractionDigits: digits, minimumFractionDigits: digits })} ${units[unit]}`;
 }

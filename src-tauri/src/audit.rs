@@ -36,6 +36,20 @@ pub struct AuditEntry {
     pub success: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub detail: Option<String>,
+    /// The registry values the action changed, as read before and after it.
+    /// Absent in entries written before 1.18.1 and for changes that are not
+    /// plain registry values (services, power plans, ...).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub changes: Vec<ValueChange>,
+}
+
+/// One registry value an action changed. `None` means the value was not set.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct ValueChange {
+    pub path: String,
+    pub name: String,
+    pub before: Option<String>,
+    pub after: Option<String>,
 }
 
 fn now_secs() -> u64 {
@@ -53,6 +67,7 @@ pub fn entry(action: &str, target: &str, success: bool, detail: Option<String>) 
         elevated: crate::elevation::is_elevated(),
         success,
         detail,
+        changes: Vec::new(),
     }
 }
 
@@ -118,7 +133,22 @@ fn default_dir() -> PathBuf {
 /// Best-effort record into the real log. Auditing must never break the
 /// action it describes, so failures are deliberately swallowed here.
 pub fn record(action: &str, target: &str, success: bool, detail: Option<String>) {
-    let _ = append_in(&default_dir(), &entry(action, target, success, detail));
+    record_with(action, target, success, detail, Vec::new());
+}
+
+/// [`record`] with the values the action changed.
+pub fn record_with(
+    action: &str,
+    target: &str,
+    success: bool,
+    detail: Option<String>,
+    changes: Vec<ValueChange>,
+) {
+    let e = AuditEntry {
+        changes,
+        ..entry(action, target, success, detail)
+    };
+    let _ = append_in(&default_dir(), &e);
 }
 
 #[cfg(test)]
@@ -140,6 +170,7 @@ mod tests {
             elevated: false,
             success: true,
             detail: None,
+            changes: Vec::new(),
         }
     }
 
@@ -183,6 +214,27 @@ mod tests {
         let out = list_in(&dir, 1);
         assert_eq!(out[0].target, format!("t{}", TRIM_THRESHOLD + 4));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn entries_without_values_still_read_and_values_round_trip() {
+        // A line written by 1.18.0 and earlier has no "changes".
+        let old: AuditEntry = serde_json::from_str(
+            r#"{"ts":5,"action":"tweak-applied","target":"dark_mode","elevated":false,"success":true}"#,
+        )
+        .unwrap();
+        assert!(old.changes.is_empty());
+        let with = AuditEntry {
+            changes: vec![ValueChange {
+                path: "HKCU\\X".into(),
+                name: "V".into(),
+                before: None,
+                after: Some("0 (0x0)".into()),
+            }],
+            ..e("tweak-applied", "t")
+        };
+        let back: AuditEntry = serde_json::from_str(&serde_json::to_string(&with).unwrap()).unwrap();
+        assert_eq!(back, with);
     }
 
     #[test]

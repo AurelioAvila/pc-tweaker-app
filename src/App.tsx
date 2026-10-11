@@ -4,7 +4,7 @@ import { NetworkCheckPanel } from "./components/diagnostics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { STRINGS, Lang, detectInitialLang, format } from "./i18n";
+import { STRINGS, Lang, detectInitialLang, format, localeOf } from "./i18n";
 import { ThemeName, detectInitialTheme } from "./theme";
 import {
   API_BASE_URL,
@@ -57,18 +57,15 @@ import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
 import { X3dPanel } from "./components/x3d";
 import { ScanPanel } from "./components/scan";
 import { HealthPanel } from "./components/health";
+import { BeforeAfterPanel } from "./components/before-after";
 import { SystemRepairCard } from "./components/repair";
 import { LiveDashboard } from "./components/live-dashboard";
 import { PageBoundary } from "./components/page-boundary";
 import { AppCacheCard, CookieCleanerCard } from "./components/cleaners";
 import { HardwarePanel } from "./components/hardware";
 import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
-import {
-  CrashReportsCard,
-  LedgerPanel,
-  DriftWatchToggle,
-  UpdateDriftCard,
-} from "./components/intelligence";
+import { CrashReportsCard, DriftWatchToggle, UpdateDriftCard } from "./components/intelligence";
+import { ChangeHistory } from "./components/change-history";
 import { usePulseSamples } from "./components/command";
 import { ScheduledTaskManager, StartupManager } from "./components/startup";
 import { ProfilesPanel } from "./components/profiles";
@@ -96,7 +93,11 @@ class CheckoutError extends Error {
 }
 
 function App() {
-  const [lang, setLangState] = useState<Lang>(() => detectInitialLang());
+  // Dev builds only: VITE_START_LANG opens in a chosen language for review,
+  // the way VITE_START_SECTION opens a chosen page.
+  const [lang, setLangState] = useState<Lang>(
+    () => (import.meta.env.DEV && (import.meta.env.VITE_START_LANG as Lang)) || detectInitialLang(),
+  );
   const s = STRINGS[lang];
 
   function setLang(l: Lang) {
@@ -118,7 +119,9 @@ function App() {
   // Dates and numbers follow the app's language, not the Windows display
   // language: an English UI on an Italian PC must not print "27/9/2026".
   useEffect(() => {
-    document.documentElement.lang = lang;
+    // European Portuguese only (owner decision, 11 Oct 2026): dates and
+    // numbers use the pt-PT conventions, not the Brazilian ones.
+    document.documentElement.lang = localeOf(lang) ?? "en";
   }, [lang]);
 
   const [auth, setAuth] = useState<AuthState>(() => {
@@ -582,9 +585,14 @@ function App() {
     setRestoring(true);
     try {
       const failures = await invoke<string[]>("rollback_tweaks", { ids: appliedIds });
-      failures.forEach((f) => pushToast("error", f));
+      failures.forEach((f) => pushToast("error", friendlyError(f, s)));
       await refresh();
-      const restored = appliedIds.length - failures.length;
+      // From what is still in effect, not from the failure list: a cancelled
+      // administrator prompt is one failure for every elevated tweak.
+      const after = await invoke<TweakInfo[]>("list_tweaks");
+      const restored = appliedIds.filter(
+        (id) => !after.some((t) => t.id === id && t.applied),
+      ).length;
       if (restored > 0) pushToast("success", format(s.restore.doneToast, { count: restored }));
     } catch (e) {
       pushToast("error", String(e));
@@ -892,6 +900,9 @@ function App() {
 
                 {showHealth && <LiveDashboard s={s} lang={lang} onNavigate={setFilter} />}
                 {showHealth && (
+                  <BeforeAfterPanel s={s} lang={lang} tweaks={tweaks} pushToast={pushToast} />
+                )}
+                {showHealth && (
                   <SystemRepairCard
                     s={s}
                     isPro={isProUnlocked}
@@ -922,13 +933,6 @@ function App() {
                       fair: s.healthPanel.verdictFair,
                       needsWork: s.healthPanel.verdictNeedsWork,
                     }}
-                    baseline={{
-                      title: s.healthPanel.baselineTitle,
-                      hint: s.healthPanel.baselineHint,
-                      run: s.healthPanel.baselineRun,
-                      running: s.healthPanel.baselineRunning,
-                      empty: s.healthPanel.baselineEmpty,
-                    }}
                     change={{
                       sinceLast: s.healthPanel.changeSinceLast,
                       noChange: s.healthPanel.changeNone,
@@ -958,7 +962,7 @@ function App() {
                       pushToast={pushToast}
                     />
                     <CrashReportsCard s={s} pushToast={pushToast} />
-                    <LedgerPanel
+                    <ChangeHistory
                       s={s}
                       lang={lang}
                       tweaks={tweaks}
@@ -1189,7 +1193,9 @@ function App() {
                                     ? s.requirements.unavailableEdition
                                     : t.unavailable === "windows_edition_enterprise"
                                       ? s.requirements.unavailableEnterpriseEdition
-                                      : s.requirements.notPresent}
+                                      : t.unavailable === "windows_protected"
+                                        ? s.requirements.windowsProtected
+                                        : s.requirements.notPresent}
                               </p>
                             )}
                             {inspecting === t.id && (

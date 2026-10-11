@@ -438,6 +438,42 @@ pub struct ResourceUser {
 pub struct ResourceUsers {
     pub cpu: Vec<ResourceUser>,
     pub memory: Vec<ResourceUser>,
+    /// PC Tweaker's own share of the machine (this process and the WebView2
+    /// processes it started), and everything else's, over the same interval.
+    pub own_cpu: Option<f32>,
+    pub others_cpu: Option<f32>,
+}
+
+/// Splits the machine's CPU time over the last interval between `me` with
+/// every process it started and everything else (the idle process left out),
+/// as shares of the whole machine. Same arithmetic as [`group_users`].
+pub fn own_and_others(
+    previous: Option<(&[crate::process_guard::ProcessInfo], f64)>,
+    now: &[crate::process_guard::ProcessInfo],
+    logical_cores: usize,
+    me: u32,
+) -> Option<(f32, f32)> {
+    let (table, secs) = previous?;
+    let budget = secs * 1e7 * logical_cores.max(1) as f64;
+    if budget <= 0.0 {
+        return None;
+    }
+    let before: std::collections::HashMap<(u32, u64), u64> =
+        table.iter().map(|p| ((p.pid, p.created), p.cpu_time)).collect();
+    let family = crate::process_guard::with_descendants(now, &std::collections::HashSet::from([me]));
+    let (mut own, mut others) = (0u64, 0u64);
+    for p in now.iter().filter(|p| p.pid != 0) {
+        let used = before
+            .get(&(p.pid, p.created))
+            .map_or(0, |&b| p.cpu_time.saturating_sub(b));
+        if family.contains(&p.pid) {
+            own += used;
+        } else {
+            others += used;
+        }
+    }
+    let share = |t: u64| ((t as f64 / budget) * 100.0).clamp(0.0, 100.0) as f32;
+    Some((share(own), share(others)))
 }
 
 /// Groups a process table by executable name. CPU shares compare each process
@@ -506,6 +542,7 @@ pub fn top_users(mut users: Vec<ResourceUser>) -> ResourceUsers {
     ResourceUsers {
         cpu: users,
         memory: by_memory,
+        ..Default::default()
     }
 }
 
@@ -537,7 +574,11 @@ pub fn resource_users() -> Result<ResourceUsers, String> {
         .as_ref()
         .filter(|(_, at, _)| at.elapsed() <= STALE_TABLE)
         .map(|(table, at, _)| (table.as_slice(), at.elapsed().as_secs_f64()));
-    let users = top_users(group_users(previous, &now, cores));
+    let mut users = top_users(group_users(previous, &now, cores));
+    if let Some((own, others)) = own_and_others(previous, &now, cores, std::process::id()) {
+        users.own_cpu = Some(own);
+        users.others_cpu = Some(others);
+    }
     *last = Some((now, std::time::Instant::now(), users.clone()));
     Ok(users)
 }
@@ -602,6 +643,33 @@ mod tests {
         let burst = [p(40, "burst.exe", 5, 0, 1)];
         let later = [p(40, "burst.exe", 5, 900_000_000, 1)];
         assert_eq!(group_users(Some((&burst, 0.01)), &later, 1)[0].cpu, 100.0);
+    }
+
+    #[test]
+    fn the_app_and_what_it_started_are_counted_apart_from_the_rest() {
+        let child = |pid, parent, name: &str, created, cpu| crate::process_guard::ProcessInfo {
+            parent: Some(parent),
+            ..p(pid, name, created, cpu, 0)
+        };
+        let before = [
+            p(0, "Idle", 0, 0, 0),
+            p(100, "pc-tweaker.exe", 10, 0, 0),
+            child(101, 100, "msedgewebview2.exe", 11, 0),
+            child(102, 101, "msedgewebview2.exe", 12, 0),
+            p(200, "vboxheadless.exe", 5, 0, 0),
+        ];
+        // One second on 4 cores: 4e7 ticks is the whole machine.
+        let now = [
+            p(0, "Idle", 0, 30_000_000, 0),
+            p(100, "pc-tweaker.exe", 10, 400_000, 0),
+            child(101, 100, "msedgewebview2.exe", 11, 200_000),
+            child(102, 101, "msedgewebview2.exe", 12, 200_000),
+            p(200, "vboxheadless.exe", 5, 8_000_000, 0),
+        ];
+        let (own, others) = own_and_others(Some((&before, 1.0)), &now, 4, 100).unwrap();
+        assert!((own - 2.0).abs() < 0.01, "{own}");
+        assert!((others - 20.0).abs() < 0.01, "{others}");
+        assert_eq!(own_and_others(None, &now, 4, 100), None);
     }
 
     #[test]

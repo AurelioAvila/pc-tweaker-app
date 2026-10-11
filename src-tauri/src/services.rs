@@ -5,21 +5,29 @@ pub(crate) const SERVICE_NAME: &str = "WSearch";
 pub const AI_FABRIC_ID: &str = "disable_ai_fabric_service";
 pub(crate) const AI_FABRIC_SERVICE: &str = "WSAIFabricSvc";
 
-/// A tweak that stops one service and disables it, restoring both its start
-/// type and whether it was running.
+/// A tweak that stops one service and sets its start type, restoring both
+/// its start type and whether it was running.
 pub struct ServiceTweak {
     pub id: &'static str,
     pub service: &'static str,
+    /// Manual instead of Disabled: the service stops starting with Windows,
+    /// but anything that asks for it can still start it.
+    pub manual: bool,
 }
 
 pub const SERVICE_TWEAKS: [ServiceTweak; 2] = [
     ServiceTweak {
         id: WINDOWS_SEARCH_ID,
         service: SERVICE_NAME,
+        manual: false,
     },
+    // Manual, not Disabled: a disabled AI Components Host has been reported
+    // to leave taskbar and system tray icons missing, and Manual still keeps
+    // it from starting with Windows.
     ServiceTweak {
         id: AI_FABRIC_ID,
         service: AI_FABRIC_SERVICE,
+        manual: true,
     },
 ];
 
@@ -38,8 +46,10 @@ pub struct ServiceInfo {
 pub fn ai_fabric_info() -> ServiceInfo {
     ServiceInfo {
         id: AI_FABRIC_ID,
-        name: "Turn off the Windows AI Fabric service",
-        description: "Stops and disables the service behind Windows' on-device AI features, such as Recall, Click to Do and some Live Captions features, freeing the memory it holds in the background. Those features stop working until you turn it back on. Only present on PCs that have these features.",
+        name: "Start Windows AI Components Host only when needed",
+        // Name and quoted description are Windows' own (WSAIFabricHost.dll
+        // string resources 112 and 113, en-US).
+        description: "Stops the Windows AI Components Host service (WSAIFabricSvc) and sets it to Manual, so it no longer starts with Windows. Windows can still start it when an app or Windows feature asks for it. Windows describes it as providing AI component services to apps and other Windows services. Only present on PCs that have it.",
         requires_admin: true,
         requires_pro: true,
     }
@@ -173,6 +183,20 @@ pub(crate) struct WinServices(pub &'static str);
 #[cfg(windows)]
 pub fn installed(service: &str) -> bool {
     open_service(service, windows_sys::Win32::System::Services::SERVICE_QUERY_STATUS).is_ok()
+}
+
+/// Whether Windows' User Choice Protection Driver (UCPD) is running. While it
+/// is, Windows refuses every other program's write to the taskbar Widgets
+/// switch, administrator or not ("Access is denied" in the 1.18.1 VM run on
+/// Windows 11 build 26300); Settings itself can still change it. Read-only.
+#[cfg(all(windows, not(test)))]
+pub fn user_choice_protected() -> bool {
+    WinServices("UCPD").state() == Ok(windows_sys::Win32::System::Services::SERVICE_RUNNING)
+}
+
+#[cfg(any(not(windows), test))]
+pub fn user_choice_protected() -> bool {
+    false
 }
 
 #[cfg(windows)]
@@ -455,10 +479,15 @@ pub fn apply_service(store: &RollbackStore, tweak: &ServiceTweak) -> Result<(), 
                 was_running: Some(was_running),
             },
         )?;
+        let target = if tweak.manual {
+            StartType::Demand
+        } else {
+            StartType::Disabled
+        };
         scm.stop()?;
         wait_for_service_state(scm, false)?;
-        scm.set_start_type(StartType::Disabled)?;
-        if scm.start_type()? != StartType::Disabled {
+        scm.set_start_type(target)?;
+        if scm.start_type()? != target {
             return Err("service startup configuration could not be verified".into());
         }
         Ok(())
@@ -667,7 +696,7 @@ mod tests {
                 let scm = install(start_type, running);
                 let fixture = Fixture::new();
                 apply_service(&fixture.store, tweak).unwrap();
-                assert_eq!(scm.start_type.get(), StartType::Disabled);
+                assert_eq!(scm.start_type.get(), StartType::Demand, "Manual, never Disabled");
                 assert!(!scm.running.get());
                 match fixture.snapshot(AI_FABRIC_ID) {
                     Some(SnapshotEntry::Service { name, .. }) => assert_eq!(name, AI_FABRIC_SERVICE),

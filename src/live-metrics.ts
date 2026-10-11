@@ -2,6 +2,8 @@
 // scaling for the rate charts, the "how is the PC doing" verdict and the
 // memory split. Pure functions, so every rule is tested without a window.
 
+import { localeOf } from "./i18n";
+
 export type LiveSample = {
   cpu: number;
   cores: number[];
@@ -88,12 +90,12 @@ export function formatRate(bps: number | null, lang?: string): string | null {
     unit++;
   }
   const digits = value >= 100 || unit === 0 ? 0 : 1;
-  return `${value.toLocaleString(lang, { maximumFractionDigits: digits, minimumFractionDigits: digits })} ${units[unit]}`;
+  return `${value.toLocaleString(localeOf(lang), { maximumFractionDigits: digits, minimumFractionDigits: digits })} ${units[unit]}`;
 }
 
 /** Bytes as GB with one decimal: memory and drive sizes. */
 export function formatGB(bytes: number, lang?: string): string {
-  return `${(bytes / 1024 ** 3).toLocaleString(lang, { maximumFractionDigits: 1, minimumFractionDigits: 1 })} GB`;
+  return `${(bytes / 1024 ** 3).toLocaleString(localeOf(lang), { maximumFractionDigits: 1, minimumFractionDigits: 1 })} GB`;
 }
 
 /** Whether the thermal report has any real sensor reading at all. */

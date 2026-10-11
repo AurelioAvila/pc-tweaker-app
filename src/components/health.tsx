@@ -1,5 +1,5 @@
 import { ToolHeader } from "./tool-section";
-import { uiLocale } from "../lib";
+import { formatNumber, uiLocale } from "../lib";
 import { Badge, type BadgeKind } from "./ui";
 // PC Health Score — the explainable scorecard, staged like an instrument.
 //
@@ -52,13 +52,6 @@ export type HealthResult = {
   comparison: HealthComparison | null;
 };
 type HealthSnapshot = { ts: number; overall: number };
-export type BaselineRun = {
-  ts: number;
-  cpuScore: number;
-  memoryTouchMs: number;
-  diskWriteMs: number;
-  diskRandomReadMs: number;
-};
 
 const stroke = { strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round" } as const;
 const CATEGORY_ICONS: Record<string, ReactElement> = {
@@ -177,19 +170,6 @@ function tone(score: number): { text: string; stroke: string; badge: BadgeKind }
     stroke: "var(--danger)",
     badge: "danger",
   };
-}
-
-/** Signed percentage delta; `higherIsBetter` decides which direction is green. */
-export function delta(
-  prev: number,
-  now: number,
-  higherIsBetter: boolean,
-): { text: string; good: boolean } | null {
-  if (prev <= 0 || now <= 0) return null;
-  const pct = ((now - prev) / prev) * 100;
-  if (Math.abs(pct) < 0.5) return { text: "=", good: true };
-  const good = higherIsBetter ? pct > 0 : pct < 0;
-  return { text: `${pct > 0 ? "+" : ""}${pct.toFixed(0)}%`, good };
 }
 
 /** 0 → target count-up, eased, driven by rAF. */
@@ -393,7 +373,6 @@ export function HealthPanel({
   showLess,
   stages,
   verdicts,
-  baseline,
   change,
   categoryLabels,
 }: {
@@ -407,7 +386,6 @@ export function HealthPanel({
   showLess: string;
   stages: [string, string, string, string];
   verdicts: { excellent: string; good: string; fair: string; needsWork: string };
-  baseline: { title: string; hint: string; run: string; running: string; empty: string };
   change: {
     sinceLast: string;
     noChange: string;
@@ -427,8 +405,6 @@ export function HealthPanel({
   const [phase, setPhase] = useState<"idle" | "loading" | "done">("idle");
   const [stageIndex, setStageIndex] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
-  const [runs, setRuns] = useState<BaselineRun[] | null>(null);
-  const [benchBusy, setBenchBusy] = useState(false);
 
   /** The live report is the only place a factor's English label exists — the
    *  stored history keeps ids so an old snapshot never carries a label that
@@ -490,24 +466,7 @@ export function HealthPanel({
         setError(typeof e === "string" ? e : "Health report failed.");
         setPhase(report ? "done" : "idle");
       });
-    invoke<BaselineRun[]>("list_baselines")
-      .then(setRuns)
-      .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const runBaseline = useCallback(() => {
-    setBenchBusy(true);
-    invoke<BaselineRun>("run_baseline")
-      .then(() =>
-        invoke<BaselineRun[]>("list_baselines")
-          .then(setRuns)
-          .catch(() => undefined),
-      )
-      .catch(() => undefined)
-      .finally(() => {
-        setBenchBusy(false);
-      });
   }, []);
 
   return (
@@ -777,66 +736,12 @@ export function HealthPanel({
                         not hidden, or the arithmetic looks broken. */}
                     <p className="mt-1.5 text-[10px] text-ink-3">
                       {change.contributes} {c.overallContribution > 0 ? "+" : ""}
-                      {c.overallContribution.toFixed(1)}
+                      {formatNumber(c.overallContribution, 1)}
                     </p>
                   </li>
                 ))}
               </ul>
             </div>
-          )}
-        </div>
-      )}
-
-      {phase === "done" && report !== null && (
-        <div className="relative mt-4 rounded-xl border border-line bg-surface-2 p-3.5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="text-xs font-bold text-ink-2">{baseline.title}</h3>
-              <p className="mt-0.5 text-[11px] text-ink-3">{baseline.hint}</p>
-            </div>
-            <button
-              type="button"
-              onClick={runBaseline}
-              disabled={benchBusy}
-              className="tool-secondary-action"
-            >
-              {benchBusy ? baseline.running : baseline.run}
-            </button>
-          </div>
-          {runs !== null && runs.length === 0 && !benchBusy && (
-            <p className="mt-2.5 text-[11px] text-ink-3">{baseline.empty}</p>
-          )}
-          {runs !== null && runs.length > 0 && (
-            <table className="mt-2.5 w-full text-[11px]">
-              <tbody>
-                {(
-                  [
-                    ["CPU", (r: BaselineRun) => r.cpuScore, true, ""],
-                    ["Memory touch", (r: BaselineRun) => r.memoryTouchMs, false, " ms"],
-                    ["Disk write", (r: BaselineRun) => r.diskWriteMs, false, " ms"],
-                    ["Disk random read", (r: BaselineRun) => r.diskRandomReadMs, false, " ms"],
-                  ] as [string, (r: BaselineRun) => number, boolean, string][]
-                ).map(([label, get, higher, unit]) => {
-                  const last = runs[runs.length - 1];
-                  const prev = runs.length > 1 ? runs[runs.length - 2] : null;
-                  const d = prev ? delta(get(prev), get(last), higher) : null;
-                  return (
-                    <tr key={label} className="border-t border-line">
-                      <td className="py-1 text-ink-2">{label}</td>
-                      <td className="py-1 text-right tabular-nums text-ink-2">
-                        {get(last)}
-                        {unit}
-                      </td>
-                      <td className="w-14 py-1 text-right tabular-nums">
-                        {d && (
-                          <span className={d.good ? "text-ok/90" : "text-danger/90"}>{d.text}</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
           )}
         </div>
       )}

@@ -51,6 +51,7 @@ const SAME_ON_PURPOSE = new Set([
   "DNS",
   "VPN",
   "Turbo Gaming",
+  "Streaming",
   "Game Sessions",
   "SCAN",
   "OK",
@@ -146,6 +147,10 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  "it:componentDebloat.no",
+  "es:componentDebloat.no",
+  "de:componentDebloat.presetMinimal",
+  "fr:componentHistory.type",
   // "Boost" names the mode in every language, like the Turbo Boost title.
   "it:turboBoost.colBoost",
   "fr:turboBoost.colBoost",
@@ -184,6 +189,7 @@ const REVIEWED_AS_CORRECT = new Set([
   "de:componentLibrary.name", // Name is also German.
   "fr:componentPricing.minutes", // minutes is also French.
   "de:componentStarter.optional", // Optional is also German.
+  "de:componentStarter.laptop", // Laptop is the German word too.
   // "Driver" is the Italian word as well; Windows itself uses it.
   "it:latencyTrace.colDriver",
   // Product names remain unchanged in each locale.
@@ -270,7 +276,6 @@ const REVIEWED_AS_CORRECT = new Set([
   "de:redaxaPromo.title",
   "pt:redaxaPromo.title",
   "fr:transparency.kindService",
-  "it:healthPanel.baselineTitle", // "baseline" is standard Italian tech usage
   "fr:healthPanel.verdictExcellent", // EXCELLENT is the same word in French
 
   // "Focus" is standard Italian product language; "Active" is valid French.

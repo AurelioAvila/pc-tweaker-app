@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { format, Lang, Strings } from "../i18n";
+import { format, Lang, Strings, localeOf } from "../i18n";
 import {
   money,
   PRICE_ANNUAL,
@@ -58,7 +58,7 @@ export function PricingPanel({
   const promoEnd = showPromo ? promo.promo?.endsAt : new Date(PROMO_LAYOUT_UNTIL).toISOString();
   const promoDate = (iso: string | undefined, offsetMs = 0, timeStyle?: "short") =>
     iso
-      ? new Intl.DateTimeFormat(lang, { dateStyle: "long", timeStyle }).format(
+      ? new Intl.DateTimeFormat(localeOf(lang), { dateStyle: "long", timeStyle }).format(
           new Date(Date.parse(iso) + offsetMs),
         )
       : "";
@@ -67,7 +67,7 @@ export function PricingPanel({
     campaign.offer?.status === "active" && !campaign.expired && campaign.available;
   const deadline = campaign.offer?.endsAt;
   const deadlineText = deadline
-    ? new Intl.DateTimeFormat(lang, { dateStyle: "medium", timeStyle: "short" }).format(
+    ? new Intl.DateTimeFormat(localeOf(lang), { dateStyle: "medium", timeStyle: "short" }).format(
         new Date(deadline),
       )
     : "";

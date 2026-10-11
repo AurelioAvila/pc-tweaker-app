@@ -29,10 +29,10 @@ pub struct BenchResult {
 /// Uses a wall-clock budget rather than a fixed iteration count so a slow
 /// machine isn't left grinding for a minute, and checks the clock every 4096
 /// iterations so the timing call itself doesn't dominate the measurement.
-/// One fixed-budget run for the Baseline Engine: same workload, same rules
+/// One fixed-budget repetition for Before & After: same workload, same rules
 /// (only comparable against another run on this machine).
-pub fn bench_once() -> BenchResult {
-    run_for(1200)
+pub fn bench(budget_ms: u64) -> BenchResult {
+    run_for(budget_ms)
 }
 
 fn run_for(budget_ms: u64) -> BenchResult {

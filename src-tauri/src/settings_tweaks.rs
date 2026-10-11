@@ -88,7 +88,11 @@ pub static TWEAKS: [SettingsTweak; 14] = [
     SettingsTweak {
         id: "disable_edge_ai",
         name: "Turn off AI features in Microsoft Edge",
-        description: "Sets Microsoft Edge policies that hide the sidebar, stop Edge from downloading its on-device AI model, and turn off AI history search, AI-generated themes and Copilot's access to page content. Some of these controls apply only to work or school profiles. Edge picks them up without a restart; edge://policy lists them. Edge will show that it is managed by your organization, which is how it labels policies.",
+        // Which profiles each policy reaches is from Microsoft's Edge policy
+        // reference ("Applies to a profile that is signed in with a Microsoft
+        // account"): only GenAILocalFoundationalModelSettings says yes, and
+        // CopilotPageContext and ComposeInlineEnabled are Entra ID only.
+        description: "Sets Microsoft Edge policies for its AI features. Which ones take effect depends on the Edge profile: stopping Edge from downloading its on-device AI model works for every profile; hiding the sidebar and turning off AI history search and AI-generated themes work for profiles not signed in with a personal Microsoft account; turning off Copilot's access to page content and its writing help works only for work or school profiles. Edge picks them up without a restart; edge://policy lists them. Edge will show that it is managed by your organization, which is how it labels policies.",
         category: Category::Privacy,
         hive: Hive::Hklm,
         writes: &[
@@ -165,7 +169,7 @@ pub static TWEAKS: [SettingsTweak; 14] = [
     SettingsTweak {
         id: "disable_drag_tray",
         name: "Turn off the drag tray",
-        description: "Stops the sharing tray from sliding down from the top of the screen every time you drag a file, so ordinary drag and drop works without it getting in the way.",
+        description: "Stops the sharing tray (called Drop tray on newer builds) from sliding down from the top of the screen every time you drag a file, so ordinary drag and drop works without it getting in the way. The value comes from Windows community documentation, not from Microsoft; recent Windows 11 updates also offer this switch in Settings.",
         category: Category::Ui,
         hive: Hive::Hkcu,
         writes: &[Write { path: r"SOFTWARE\Microsoft\Windows\CurrentVersion\CDP", name: "DragTrayEnabled", value: 0 }],
@@ -198,7 +202,7 @@ pub static TWEAKS: [SettingsTweak; 14] = [
     SettingsTweak {
         id: "disable_windows_suggestions",
         name: "Turn off Windows tips and suggestions",
-        description: "One switch for the prompts Windows adds on its own: tips and suggestions, the welcome screen after updates, suggestions in Settings, \"finish setting up your device\", suggested notifications, Start menu recommendations and account notices, and sync provider ads in File Explorer.",
+        description: "One switch for the prompts Windows adds on its own: tips and suggestions, the welcome screen after updates, suggestions in Settings, \"finish setting up your device\", suggested notifications, Start menu recommendations and account notices, and sync provider ads in File Explorer. These are the values Windows' own Settings switches write, as documented by the Windows community; Microsoft does not document them, so a Windows update can change them.",
         category: Category::Privacy,
         hive: Hive::Hkcu,
         writes: &[
@@ -607,5 +611,72 @@ mod tests {
             )
         ));
         assert!(crate::rollback::validate_snapshot(t.id, &snap(&all, "HKLM")).is_ok());
+    }
+
+    /// The Windows versions the 1.18 controls are verified on in a VM, as
+    /// (label, CurrentBuild, EditionID).
+    const VM_TARGETS: [(&str, u32, &str); 4] = [
+        ("win11-pro-24h2", 26100, "Professional"),
+        ("win11-home-24h2", 26100, "Core"),
+        ("win11-education-24h2", 26100, "Education"),
+        ("win10-22h2-pro", 19045, "Professional"),
+    ];
+
+    fn vm_matrix() -> serde_json::Value {
+        let tweaks: Vec<serde_json::Value> = TWEAKS
+            .iter()
+            .map(|t| {
+                let expected: serde_json::Map<String, serde_json::Value> = VM_TARGETS
+                    .iter()
+                    .map(|(label, build, edition)| {
+                        let verdict = match availability(t, Some(*build), Some(edition)) {
+                            Ok(()) => "applies",
+                            Err(why) => why.code(),
+                        };
+                        ((*label).to_string(), verdict.into())
+                    })
+                    .collect();
+                serde_json::json!({
+                    "id": t.id,
+                    "hive": t.hive_name(),
+                    "minBuild": t.min_build,
+                    "edition": format!("{:?}", t.edition),
+                    "writes": t.writes.iter().map(|w| serde_json::json!({
+                        "path": w.path, "name": w.name, "value": w.value,
+                    })).collect::<Vec<_>>(),
+                    "expected": expected,
+                })
+            })
+            .collect();
+        let fabric = crate::services::find(crate::services::AI_FABRIC_ID).unwrap();
+        serde_json::json!({
+            "generatedBy": "cargo test settings_tweaks::tests::the_vm_matrix_matches_the_catalogue (PCT_WRITE_VM_MATRIX=1 rewrites it)",
+            "targets": VM_TARGETS.iter().map(|(label, build, edition)| serde_json::json!({
+                "label": label, "build": build, "editionId": edition,
+            })).collect::<Vec<_>>(),
+            "settings": tweaks,
+            "services": [{
+                "id": fabric.id,
+                "service": fabric.service,
+                "startTypeWhenApplied": if fabric.manual { "DEMAND_START" } else { "DISABLED" },
+                "expected": "applies where the service is installed; otherwise not_present",
+            }],
+        })
+    }
+
+    /// The VM verification script reads its expectations from this file, so
+    /// it is derived from the catalogue and checked here: it cannot drift.
+    #[test]
+    fn the_vm_matrix_matches_the_catalogue() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../scripts/vm/tweak-matrix.json");
+        let current = serde_json::to_string_pretty(&vm_matrix()).unwrap() + "\n";
+        if std::env::var_os("PCT_WRITE_VM_MATRIX").is_some() {
+            std::fs::write(&path, &current).unwrap();
+        }
+        let stored = std::fs::read_to_string(&path)
+            .unwrap_or_default()
+            .replace("\r\n", "\n");
+        assert_eq!(stored, current, "run with PCT_WRITE_VM_MATRIX=1 to refresh {}", path.display());
     }
 }

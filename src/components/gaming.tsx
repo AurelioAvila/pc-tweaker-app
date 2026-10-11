@@ -7,6 +7,7 @@ import { format, Strings } from "../i18n";
 import {
   friendlyError,
   arcPath,
+  formatNumber,
   GAUGE_C,
   GAUGE_R,
   GAUGE_START,
@@ -619,6 +620,18 @@ export function TurboBoostPanel({
             </span>
           </div>
           <p className="tool-boost-cadence">{s.turboBoost.loadCadence}</p>
+          {/* How much of the load is the app itself, so a reading at rest says
+          what is really keeping the processor busy. Both numbers come from the
+          same process table over the same few seconds; the dial is a separate,
+          smoother reading, so the two need not add up to it exactly. */}
+          {users?.own_cpu != null && users.others_cpu != null && (
+            <p className="tool-boost-cadence">
+              {format(s.turboBoost.ownLoad, {
+                own: formatNumber(users.own_cpu, 1),
+                rest: formatNumber(users.others_cpu, 1),
+              })}
+            </p>
+          )}
         </div>
         <div className="tool-boost-summary">
           <p className="text-xs text-ink-3 mb-3">{s.turboBoost.loadExplain}</p>
@@ -701,7 +714,7 @@ export function TurboBoostPanel({
             height={56}
             tick={tick}
             reduced={reduced}
-            formatValue={(v) => (v === null ? "–" : `${(v / 1000).toFixed(2)} GHz`)}
+            formatValue={(v) => (v === null ? "–" : `${formatNumber(v / 1000, 2)} GHz`)}
             s={s}
           />
         </div>
@@ -709,7 +722,7 @@ export function TurboBoostPanel({
           <span className="type-label text-ink-3">{s.turboBoost.usersTitle}</span>
           <UsersList
             users={users?.cpu ?? []}
-            value={(u) => ({ text: `${u.cpu.toFixed(1)}%`, ratio: u.cpu / topUser })}
+            value={(u) => ({ text: `${formatNumber(u.cpu, 1)}%`, ratio: u.cpu / topUser })}
             s={s}
           />
         </div>
@@ -782,4 +795,4 @@ type Probe = {
   temp_c?: number | null;
 };
 
-const ghz = (mhz: number | null) => (mhz === null ? "–" : `${(mhz / 1000).toFixed(2)} GHz`);
+const ghz = (mhz: number | null) => (mhz === null ? "–" : `${formatNumber(mhz / 1000, 2)} GHz`);

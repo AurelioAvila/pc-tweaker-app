@@ -620,6 +620,17 @@ export function TurboBoostPanel({
             </span>
           </div>
           <p className="tool-boost-cadence">{s.turboBoost.loadCadence}</p>
+          {/* How much of the load is the app itself, so a reading at rest says
+          what is really keeping the processor busy. Same process table, same
+          interval for both numbers. */}
+          {users?.own_cpu != null && users.others_cpu != null && (
+            <p className="tool-boost-cadence">
+              {format(s.turboBoost.ownLoad, {
+                own: formatNumber(users.own_cpu, 1),
+                rest: formatNumber(users.others_cpu, 1),
+              })}
+            </p>
+          )}
         </div>
         <div className="tool-boost-summary">
           <p className="text-xs text-ink-3 mb-3">{s.turboBoost.loadExplain}</p>

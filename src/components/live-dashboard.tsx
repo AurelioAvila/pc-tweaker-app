@@ -41,7 +41,13 @@ const DRIVE_EVERY = 15;
 const USERS_EVERY = 2;
 
 export type ResourceUser = { name: string; processes: number; cpu: number; memory: number };
-export type ResourceUsers = { cpu: ResourceUser[]; memory: ResourceUser[] };
+export type ResourceUsers = {
+  cpu: ResourceUser[];
+  memory: ResourceUser[];
+  /** PC Tweaker's own share (with its WebView2 processes) and everything else's. */
+  own_cpu?: number | null;
+  others_cpu?: number | null;
+};
 
 export function useForeground(): boolean {
   const read = () => document.visibilityState === "visible" && document.hasFocus();

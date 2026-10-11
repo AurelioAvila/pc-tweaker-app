@@ -834,13 +834,67 @@ fn apply_by_id(
         diagnostics::network_verify::save(app_data_dir, &record);
     }
 
-    audit::record(
+    // What the change wrote, read back now: the history shows it as before
+    // and after. Only for a change that was kept.
+    let changes = if result.is_ok() {
+        registry_parts_of(store, id)
+            .iter()
+            .map(|part| audit::ValueChange {
+                path: format!("{}\\{}", part.hive, part.path),
+                name: part.name.clone(),
+                before: part.original_value.as_ref().map(reg_value_display),
+                after: live_value(part),
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+    audit::record_with(
         "tweak-applied",
         id,
         result.is_ok(),
         result.as_ref().err().cloned(),
+        changes,
     );
     result
+}
+
+/// The plain registry values a recorded change is made of, nested ones
+/// included: the part of a change that can be shown as before and after.
+#[cfg(windows)]
+fn registry_parts(entry: &rollback::SnapshotEntry, out: &mut Vec<rollback::RegistrySnapshot>) {
+    match entry {
+        rollback::SnapshotEntry::Registry(part) => out.push(part.clone()),
+        rollback::SnapshotEntry::Composite { entries } => {
+            entries.iter().for_each(|e| registry_parts(e, out))
+        }
+        _ => {}
+    }
+}
+
+#[cfg(windows)]
+fn registry_parts_of(store: &RollbackStore, id: &str) -> Vec<rollback::RegistrySnapshot> {
+    let mut parts = Vec::new();
+    if let Some(entry) = store.transaction().ok().and_then(|t| t.entry(id)) {
+        registry_parts(&entry, &mut parts);
+    }
+    parts
+}
+
+/// A value as regedit would show it now; `None` when it is not set.
+#[cfg(windows)]
+fn live_value(part: &rollback::RegistrySnapshot) -> Option<String> {
+    let hint = part.original_value.clone().unwrap_or(RegValue::Dword(0));
+    tweaks::windows_impl::read_value(
+        tweaks::windows_impl::hive_from_str(&part.hive),
+        &part.path,
+        &part.name,
+        &hint,
+    )
+    .ok()
+    .flatten()
+    .as_ref()
+    .map(reg_value_display)
 }
 
 #[cfg(windows)]
@@ -894,13 +948,31 @@ fn apply_by_id_inner(
 
 #[cfg(windows)]
 fn rollback_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
-    // Same single-funnel audit as apply_by_id.
+    // Same single-funnel audit as apply_by_id, with each value read just
+    // before the restore and just after it.
+    let parts = registry_parts_of(store, id);
+    let before: Vec<Option<String>> = parts.iter().map(live_value).collect();
     let result = rollback_by_id_inner(store, id);
-    audit::record(
+    let changes = if result.is_ok() {
+        parts
+            .iter()
+            .zip(before)
+            .map(|(part, before)| audit::ValueChange {
+                path: format!("{}\\{}", part.hive, part.path),
+                name: part.name.clone(),
+                before,
+                after: live_value(part),
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+    audit::record_with(
         "tweak-reverted",
         id,
         result.is_ok(),
         result.as_ref().err().cloned(),
+        changes,
     );
     result
 }
@@ -1042,10 +1114,15 @@ fn split_by_elevation(ids: Vec<String>) -> (Vec<String>, Vec<String>) {
 /// instead of aborting, so one bad tweak can't silently swallow the rest.
 #[cfg(windows)]
 #[tauri::command(async)]
-fn apply_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String>, String> {
+fn apply_tweaks(
+    app: tauri::AppHandle,
+    ids: Vec<String>,
+    source: Option<String>,
+) -> Result<Vec<String>, String> {
     let dir = store_for_dir(&app)?;
     let store = RollbackStore::new(dir.clone());
     let mut failures = Vec::new();
+    record_origin(source, &ids);
 
     let (needs_admin, direct) = split_by_elevation(bulk_applicable(ids));
 
@@ -1106,9 +1183,25 @@ fn rollback_tweaks(app: tauri::AppHandle, ids: Vec<String>) -> Result<Vec<String
     Ok(failures)
 }
 
+/// Where a batch came from (a profile, the scan, ...), written to the history
+/// just before the changes it explains so the history can say "from".
+fn record_origin(source: Option<String>, ids: &[String]) {
+    // A label, never a path or free text: short and printable.
+    let Some(source) = source.filter(|s| {
+        !s.is_empty() && s.len() <= 120 && !s.chars().any(char::is_control)
+    }) else {
+        return;
+    };
+    audit::record("origin", &source, true, Some(ids.join(",")));
+}
+
 #[cfg(not(windows))]
 #[tauri::command(async)]
-fn apply_tweaks(_app: tauri::AppHandle, _ids: Vec<String>) -> Result<Vec<String>, String> {
+fn apply_tweaks(
+    _app: tauri::AppHandle,
+    _ids: Vec<String>,
+    _source: Option<String>,
+) -> Result<Vec<String>, String> {
     Err("tweaks are currently only supported on Windows".to_string())
 }
 
@@ -2019,12 +2112,63 @@ pub(crate) fn dirs_app_data_dir() -> std::path::PathBuf {
     std::path::PathBuf::from(base).join(env!("PCT_APP_IDENTIFIER"))
 }
 
+/// One change PC Tweaker is keeping in effect: each registry value as it was
+/// before PC Tweaker first touched it, and as it is now.
+#[derive(Serialize)]
+struct ActiveChange {
+    id: String,
+    changes: Vec<audit::ValueChange>,
+}
+
+/// "Now compared with before PC Tweaker": every change still in effect.
+#[cfg(windows)]
+#[tauri::command(async)]
+fn active_changes(app: tauri::AppHandle) -> Result<Vec<ActiveChange>, String> {
+    let store = store_for(&app)?;
+    let mut ids: Vec<String> = store.applied_ids()?.into_iter().collect();
+    ids.sort();
+    Ok(ids
+        .into_iter()
+        .map(|id| ActiveChange {
+            changes: registry_parts_of(&store, &id)
+                .iter()
+                .map(|part| audit::ValueChange {
+                    path: format!("{}\\{}", part.hive, part.path),
+                    name: part.name.clone(),
+                    before: part.original_value.as_ref().map(reg_value_display),
+                    after: live_value(part),
+                })
+                .collect(),
+            id,
+        })
+        .collect())
+}
+
+#[cfg(not(windows))]
+#[tauri::command(async)]
+fn active_changes(_app: tauri::AppHandle) -> Result<Vec<ActiveChange>, String> {
+    Ok(Vec::new())
+}
+
+/// Writes an exported history (CSV or JSON text) to the path the user picked
+/// in the save dialog: a local drive only, and only those two file types.
+#[tauri::command(async)]
+fn save_history_export(path: String, contents: String) -> Result<(), String> {
+    const MAX_BYTES: usize = 20 * 1024 * 1024;
+    let target = baseline::local_file(&path, &["csv", "json"])
+        .ok_or("the history can only be saved as a .csv or .json file on a local drive")?;
+    if contents.len() > MAX_BYTES {
+        return Err("the history export is too large".into());
+    }
+    std::fs::write(target, contents).map_err(|e| e.to_string())
+}
+
 /// Last audit entries, newest first, for the dashboard's history card. The
 /// full file stays on disk for anyone who wants the complete record.
 #[tauri::command(async)]
 fn list_audit_log(app: tauri::AppHandle) -> Result<Vec<audit::AuditEntry>, String> {
     let dir = store_for_dir(&app)?;
-    Ok(audit::list_in(&dir, 100))
+    Ok(audit::list_in(&dir, 1000))
 }
 
 /// Crash reports recorded on this machine, newest first.
@@ -2237,6 +2381,8 @@ pub fn run() {
             startup::list_startup_items,
             startup::set_startup_enabled,
             list_audit_log,
+            active_changes,
+            save_history_export,
             check_update_drift,
             list_crash_reports,
             clear_crash_reports,

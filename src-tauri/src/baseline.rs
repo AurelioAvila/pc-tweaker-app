@@ -708,27 +708,32 @@ pub fn before_after(app: tauri::AppHandle) -> Result<BeforeAfter, String> {
     Ok(before_after_of(&read_runs(&app)?))
 }
 
+/// A file on a local drive with one of `extensions`: no network share (which
+/// would send this user's credentials to it), no device path, no alternate
+/// data stream. For files the user picked in a save dialog.
+pub(crate) fn local_file(path: &str, extensions: &[&str]) -> Option<std::path::PathBuf> {
+    let target = std::path::PathBuf::from(path);
+    let allowed = target
+        .extension()
+        .and_then(|e| e.to_str())
+        .is_some_and(|e| extensions.iter().any(|x| e.eq_ignore_ascii_case(x)));
+    let b = path.as_bytes();
+    let local_drive = b.len() > 3
+        && b[0].is_ascii_alphabetic()
+        && b[1] == b':'
+        && (b[2] == b'\\' || b[2] == b'/')
+        && !path[2..].contains(':');
+    (allowed && local_drive).then_some(target)
+}
+
 /// Writes the exported report image to the path the user picked in the save
 /// dialog. Only a PNG is accepted, by extension and by content.
 #[tauri::command(async)]
 pub fn save_report_png(path: String, data_base64: String) -> Result<(), String> {
     use base64::Engine;
     const MAX_BYTES: usize = 20 * 1024 * 1024;
-    let target = std::path::PathBuf::from(&path);
-    let is_png = target
-        .extension()
-        .is_some_and(|e| e.eq_ignore_ascii_case("png"));
-    // A local drive path only: no network share (which would send this
-    // user's credentials to it), no device path, no alternate data stream.
-    let bytes_of_path = path.as_bytes();
-    let local_drive = bytes_of_path.len() > 3
-        && bytes_of_path[0].is_ascii_alphabetic()
-        && bytes_of_path[1] == b':'
-        && (bytes_of_path[2] == b'\\' || bytes_of_path[2] == b'/')
-        && !path[2..].contains(':');
-    if !is_png || !target.is_absolute() || !local_drive {
-        return Err("the report can only be saved as a .png file on a local drive".into());
-    }
+    let target = local_file(&path, &["png"])
+        .ok_or("the report can only be saved as a .png file on a local drive")?;
     if data_base64.len() > MAX_BYTES / 3 * 4 + 4 {
         return Err("the report image is too large".into());
     }

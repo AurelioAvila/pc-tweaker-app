@@ -42,6 +42,8 @@ pub const APP_COMMANDS: &[&str] = &[
     "run_baseline",
     "before_after",
     "save_report_png",
+    "active_changes",
+    "save_history_export",
     "advise_tweaks",
     "scan_relevant_ids",
     "cpu_clock",

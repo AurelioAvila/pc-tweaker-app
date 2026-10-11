@@ -43,6 +43,8 @@ permissions = [
     "allow-run-baseline",
     "allow-before-after",
     "allow-save-report-png",
+    "allow-active-changes",
+    "allow-save-history-export",
     "allow-boot-times",
     "allow-ram-schedule-ready",
     "allow-advise-tweaks",

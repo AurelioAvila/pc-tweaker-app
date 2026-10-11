@@ -675,7 +675,7 @@ export function DebloatPanel({
                                   app.installedAt
                                     ? format(c.installedOn, {
                                         date: new Date(app.installedAt * 1000).toLocaleDateString(
-                                          lang,
+                                          localeOf(lang),
                                         ),
                                       })
                                     : null,

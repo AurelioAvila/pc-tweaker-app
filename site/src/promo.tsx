@@ -175,7 +175,7 @@ export function PromoStrip({ href }: { href: string }) {
   if (!promo) return null;
   const pct = headlinePercent(promo);
   if (pct < 1) return null;
-  return <HalloweenStrip label={c.strip(pct)} shortLabel={c.stripShort(pct)} endsIn={c.endsIn} units={c.units} remaining={remaining} cta={c.cta} href={href} closeLabel={c.close} storageKey={`pct-hw-strip:${promo.id}`} />;
+  return <HalloweenStrip key={promo.id} label={c.strip(pct)} shortLabel={c.stripShort(pct)} endsIn={c.endsIn} units={c.units} remaining={remaining} cta={c.cta} href={href} closeLabel={c.close} storageKey={`pct-hw-strip:${promo.id}`} />;
 }
 
 /** Offer card beside the home headline: Lifetime, struck reference and promo price, from the server. */

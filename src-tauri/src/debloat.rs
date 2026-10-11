@@ -1657,3 +1657,38 @@ impl PackageSystem for WindowsPackages {
         Err("Debloat requires Windows".into())
     }
 }
+
+/// VM verification builds only (feature "test-pro"): removes the named
+/// catalogue apps through the app's own removal funnel (identity checks,
+/// journal, verification), as the signed-in user, then lists the apps again.
+/// Writes test-pro-debloat.log next to the app data; the exit code is the
+/// number of named apps that are still installed afterwards.
+#[cfg(all(windows, feature = "test-pro"))]
+pub fn test_pro_debloat(catalog_ids: &str, dir: &Path) -> i32 {
+    let journal = Journal::new(dir);
+    let mut log = String::from("PCT-TEST-PRO-BUILD --test-debloat\n");
+    let wanted: Vec<&str> = catalog_ids.split(',').map(str::trim).filter(|s| !s.is_empty()).collect();
+    let before = list_debloat_apps().unwrap_or_default();
+    for id in &wanted {
+        let Some(app) = before.iter().find(|a| a.catalog_id == *id) else {
+            log.push_str(&format!("{id}: not in the catalogue\n"));
+            continue;
+        };
+        match (&app.package_full_name, app.removable) {
+            (Some(name), true) => {
+                let result = remove_inner(&WindowsPackages, &journal, name);
+                log.push_str(&format!("{id}: {:?}\n", result.map(|r| r.status)));
+            }
+            _ => log.push_str(&format!("{id}: not removable here ({:?})\n", app.reason)),
+        }
+    }
+    let after = list_debloat_apps().unwrap_or_default();
+    let still = wanted
+        .iter()
+        .filter(|id| after.iter().any(|a| a.catalog_id == **id && a.installed))
+        .count();
+    log.push_str(&format!("still installed after removal: {still}\n"));
+    let _ = std::fs::create_dir_all(dir);
+    let _ = std::fs::write(dir.join("test-pro-debloat.log"), log);
+    still as i32
+}

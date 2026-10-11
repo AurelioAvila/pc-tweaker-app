@@ -2873,6 +2873,14 @@ pub(crate) fn require_pro(app_data_dir: &std::path::Path) -> Result<(), String> 
 #[cfg(feature = "test-pro")]
 pub const TEST_PRO_MARKER: &str = "PCT-TEST-PRO-BUILD";
 
+/// VM verification builds only: removes Debloat catalogue apps, see
+/// `debloat::test_pro_debloat`. Run it in a normal, non-elevated shell:
+/// removal is for the signed-in user only.
+#[cfg(all(windows, feature = "test-pro"))]
+pub fn test_pro_debloat_cli(catalog_ids: &str) -> i32 {
+    debloat::test_pro_debloat(catalog_ids, &dirs_app_data_dir())
+}
+
 /// VM verification builds only: applies or restores controls by id, in this
 /// process, the way the app's own apply funnel does (audit log, rollback
 /// journal, build and edition checks), and writes what happened to

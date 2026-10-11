@@ -92,3 +92,14 @@ Beyond the registry: on A and C, also check by eye that the taskbar and
 system tray icons are all present after applying the AI Components Host
 control (it now sets Manual rather than Disabled for this reason), and that
 `edge://policy` lists the Edge policies.
+
+## Debloat check (non-elevated)
+
+In a normal PowerShell as the test user, from a clean snapshot:
+
+    .\run-debloat.ps1 -TestBuild 'C:\test\PC Tweaker.exe'
+
+It removes Solitaire, Microsoft News and Feedback Hub through the app's own
+removal path (identity checks, journal, verification) and checks with
+`Get-AppxPackage` that they are gone. The exit code is the number of those
+apps still installed. Reinstalling is a Store action; revert the snapshot.

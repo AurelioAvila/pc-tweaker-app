@@ -154,10 +154,26 @@ function headlinePercent(promo: Promo) {
   return list.length ? Math.min(...list.map(promoPercent)) : 0;
 }
 
+/** Holds a piece's exact room, invisible, while the first answer is pending, so the
+ *  page does not jump when the offer arrives. Placeholder text only, never a price. */
+function Reserved({ children }: { children: ReactNode }) {
+  return (
+    <div style={{ visibility: "hidden" }} aria-hidden="true">
+      {children}
+    </div>
+  );
+}
+
 /** Top-of-page strip, rendered by the nav; nothing without a live offer. */
 export function PromoStrip({ href }: { href: string }) {
-  const { promo, remaining } = usePromo();
+  const { promo, remaining, reserve } = usePromo();
   const c = useCopy();
+  if (!promo && reserve)
+    return (
+      <Reserved>
+        <HalloweenStrip label={c.strip(50)} shortLabel={c.stripShort(50)} endsIn={c.endsIn} units={c.units} remaining={0} cta={c.cta} href={href} closeLabel={c.close} storageKey="pct-hw-strip:reserved" />
+      </Reserved>
+    );
   if (!promo) return null;
   const pct = headlinePercent(promo);
   if (pct < 1) return null;
@@ -167,9 +183,15 @@ export function PromoStrip({ href }: { href: string }) {
 /** Offer card for a page headline: struck reference and promo price, from the server.
  *  Home: PC Tweaker Lifetime. Uninstaller page: its Pro year. */
 export function PromoCard({ product = "pctweaker", plan = "lifetime", href = "#access" }: { product?: string; plan?: string; href?: string }) {
-  const { promo, offer } = usePromo();
+  const { promo, offer, reserve } = usePromo();
   const c = useCopy();
   const o = offer(product, plan);
+  if (!promo && reserve)
+    return (
+      <Reserved>
+        <HalloweenCard tag={c.tag} plan={plan === "lifetime" ? c.lifetime : c.firstYear("€0.00")} was="€00.00" now="€00.00" pct="−00%" note={c.ends("0 November 0000, 00:00 CET")} cta={c.cta} href={href} />
+      </Reserved>
+    );
   if (!promo || !o) return null;
   return (
     <HalloweenCard

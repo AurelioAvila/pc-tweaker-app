@@ -92,3 +92,27 @@ export const HALLOWEEN_DECOR_RIGHT = svg(
   `<ellipse class="hw-aura" cx="52" cy="62" rx="50" ry="36" fill="url(#hwr-aura)"/>
 <g transform="translate(6 14) scale(.86)">${pumpkin("hwr", "sly")}</g>`,
 );
+
+/** One clean pumpkin mark in a 64x60 box, drawn flat: five lobes, a stem, a carved face.
+ *  `ember` is for dark surfaces (warm body, candle-lit face); `ink` is for the ember strip
+ *  (dark body, ember cut-outs). Decorative: mark the container aria-hidden. */
+function mark(p: string, body: string, rim: string, face: string, stem: string, glow: boolean): string {
+  return svg(
+    p,
+    "0 0 64 60",
+    `<defs><linearGradient id="${p}-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${body}"/><stop offset="1" stop-color="${rim}"/></linearGradient>${
+      glow ? `<radialGradient id="${p}-f" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#fff3c4"/><stop offset="1" stop-color="#ffb347"/></radialGradient>` : ""
+    }</defs>
+<ellipse cx="32" cy="56" rx="21" ry="2.6" fill="#000" opacity=".28"/>
+<ellipse cx="16.5" cy="35" rx="12.5" ry="18" fill="url(#${p}-g)"/>
+<ellipse cx="47.5" cy="35" rx="12.5" ry="18" fill="url(#${p}-g)"/>
+<ellipse cx="24" cy="35" rx="13" ry="19.5" fill="url(#${p}-g)" stroke="${rim}" stroke-opacity=".5" stroke-width=".8"/>
+<ellipse cx="40" cy="35" rx="13" ry="19.5" fill="url(#${p}-g)" stroke="${rim}" stroke-opacity=".5" stroke-width=".8"/>
+<ellipse cx="32" cy="35" rx="9.5" ry="20.5" fill="url(#${p}-g)" stroke="${rim}" stroke-opacity=".5" stroke-width=".8"/>
+<path d="M30 15.5c-.4-5 1.2-8.6 5.6-11.200l2.300 3c-2.6 1.8-3.5 4-3.3 8.2z" fill="${stem}"/>
+<g class="${glow ? "hw-flicker" : ""}" fill="${glow ? `url(#${p}-f)` : face}"><path d="M19.500 31.500l7-4 1.3 7.2z"/><path d="M44.500 31.500l-7-4-1.3 7.2z"/><path d="M32 36.500l-2 3.8h4z"/><path d="M19.500 41.500q12.500 10 25 0l-3.4 6.2-3.600-3.200-3.300 4.200-3.300-4.200-3.6 3.2z"/></g>`,
+  );
+}
+
+export const HALLOWEEN_MARK_EMBER = mark("hwme", "#ff8a5c", "#c2400f", "", "#6a5524", true);
+export const HALLOWEEN_MARK_INK = mark("hwmi", "#0a0a0d", "#0a0a0d", "#ff6a3d", "#0a0a0d", false);

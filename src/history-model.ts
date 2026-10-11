@@ -74,23 +74,32 @@ function originOf(marker: string): HistoryItem["origin"] {
  * from. A tweak change with no marker was made with its own switch.
  */
 export function buildHistory(entries: AuditEntry[], removals: RemovalRecord[] = []): HistoryItem[] {
-  const markers = entries
-    .filter((e) => e.action === "origin")
-    .map((e) => ({
-      ts: e.ts,
-      origin: originOf(e.target),
-      ids: new Set((e.detail ?? "").split(",")),
-    }));
+  // Oldest first, so each marker claims the first apply of each of its ids
+  // after it, and only that one: a later switch or a restore is not the batch.
+  const claimed = new Map<number, HistoryItem["origin"]>();
+  const open: { ts: number; origin: HistoryItem["origin"]; ids: Set<string> }[] = [];
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const e = entries[i];
+    if (e.action === "origin") {
+      open.push({ ts: e.ts, origin: originOf(e.target), ids: new Set((e.detail ?? "").split(",")) });
+    } else if (e.action === "tweak-applied") {
+      const marker = [...open]
+        .reverse()
+        .find((m) => m.ids.has(e.target) && e.ts >= m.ts && e.ts - m.ts <= ORIGIN_WINDOW_S);
+      if (marker) {
+        claimed.set(i, marker.origin);
+        marker.ids.delete(e.target);
+      }
+    }
+  }
   const items: HistoryItem[] = entries
-    .filter((e) => e.action !== "origin")
-    .map((e, i) => {
+    .map((e, i) => ({ e, i }))
+    .filter(({ e }) => e.action !== "origin")
+    .map(({ e, i }) => {
       const kind = kindOf(e.action);
       let origin: HistoryItem["origin"] = { kind: kind === "tweak" ? "switch" : "app" };
       if (kind === "tweak") {
-        const marker = markers
-          .filter((m) => m.ts <= e.ts && e.ts - m.ts <= ORIGIN_WINDOW_S && m.ids.has(e.target))
-          .sort((a, b) => b.ts - a.ts)[0];
-        if (marker) origin = marker.origin;
+        origin = claimed.get(i) ?? origin;
         if (e.action === "tweak-auto-reverted") origin = { kind: "app" };
       }
       return {
@@ -170,9 +179,8 @@ export function filterItems(
 export function summary(items: HistoryItem[], activeNow: number) {
   return {
     active: activeNow,
-    undone: items.filter(
-      (i) => i.success && (i.action === "tweak-reverted" || i.action === "tweak-auto-reverted"),
-    ).length,
+    // Restores the user asked for; the network check's automatic ones are not.
+    undone: items.filter((i) => i.success && i.action === "tweak-reverted").length,
     failed: items.filter((i) => !i.success).length,
   };
 }
@@ -199,10 +207,16 @@ export function sessionUndoable(
  * that can say "in effect" and offer Undo. An older apply of the same tweak
  * was superseded by a restore or a later apply.
  */
+/** An apply that wrote nothing new: every recorded value was already there. */
+export const unchanged = (item: HistoryItem) =>
+  item.action === "tweak-applied" &&
+  item.changes.length > 0 &&
+  item.changes.every((c) => c.before === c.after);
+
 export function latestApplies(items: HistoryItem[]): Map<string, string> {
   const latest = new Map<string, string>();
   for (const item of items) {
-    if (item.kind !== "tweak" || latest.has(item.target)) continue;
+    if (item.kind !== "tweak" || latest.has(item.target) || unchanged(item)) continue;
     // Newest first: the first tweak row decides. A restore after the last
     // apply means nothing in this history is in effect for it.
     latest.set(item.target, item.action === "tweak-applied" && item.success ? item.key : "");

@@ -19,6 +19,7 @@ import {
   type RemovalRecord,
 } from "../history-model";
 import { HISTORY_COPY } from "./history-copy";
+import { CONFIGURABLE_TWEAK_IDS } from "../catalog";
 import { Badge } from "./ui";
 import "./workspace-panels.css";
 import "./change-history.css";
@@ -52,7 +53,8 @@ const ACTION_KEYS: Record<string, keyof Strings["ledger"]["actions"]> = {
 };
 
 type ActiveChange = { id: string; changes: ValueChange[] };
-type Confirm = { title: string; ids: string[] };
+/** An undo (of these ids) or clearing the history, waiting for a yes. */
+type Confirm = { title: string; ids: string[]; clear?: boolean };
 
 const DAY_S = 24 * 60 * 60;
 
@@ -130,8 +132,13 @@ export function ChangeHistory({
     if (!confirm && dialog?.open) dialog.close();
   }, [confirm]);
 
+  // The same set "Restore active tweaks" works on: applied switches, minus
+  // the controls that live in their own panels (and their own undo).
   const appliedNow = useMemo(
-    () => new Set(tweaks.filter((t) => t.applied).map((t) => t.id)),
+    () =>
+      new Set(
+        tweaks.filter((t) => t.applied && !CONFIGURABLE_TWEAK_IDS.has(t.id)).map((t) => t.id),
+      ),
     [tweaks],
   );
   const tweakName = useCallback(
@@ -166,6 +173,7 @@ export function ChangeHistory({
   );
 
   const items = useMemo(() => buildHistory(entries ?? [], removals), [entries, removals]);
+  const inEffect = useMemo(() => active.filter((a) => appliedNow.has(a.id)), [active, appliedNow]);
   const visible = useMemo(
     () => filterItems(items, { ...filters, since }, nameOf),
     [items, filters, since, nameOf],
@@ -258,6 +266,18 @@ export function ChangeHistory({
       .finally(() => setClearing(false));
   }
 
+  /** Print styles apply only while this class is on, so printing any other
+   *  page is unaffected. */
+  function printHistory() {
+    document.body.classList.add("printing-history");
+    const done = () => {
+      document.body.classList.remove("printing-history");
+      window.removeEventListener("afterprint", done);
+    };
+    window.addEventListener("afterprint", done);
+    window.print();
+  }
+
   const toggleOpen = (key: string) =>
     setOpen((current) => {
       const next = new Set(current);
@@ -310,14 +330,11 @@ export function ChangeHistory({
             >
               JSON
             </button>
-            <button
-              className="workspace-button workspace-button-secondary"
-              onClick={() => window.print()}
-            >
+            <button className="workspace-button workspace-button-secondary" onClick={printHistory}>
               {c.exportPdf}
             </button>
             <button
-              onClick={clearHistory}
+              onClick={() => setConfirm({ title: c.clearTitle, ids: [], clear: true })}
               disabled={clearing}
               className="workspace-button workspace-button-secondary workspace-button-delete"
             >
@@ -355,30 +372,32 @@ export function ChangeHistory({
         <div className="history-compare-head">
           <div>
             <h3 id="history-compare-title">{c.compareTitle}</h3>
-            <p>{active.length ? c.compareBody : c.compareEmpty}</p>
+            <p>{inEffect.length ? c.compareBody : c.compareEmpty}</p>
           </div>
-          {active.length > 0 && (
+          {inEffect.length > 0 && (
             <div className="history-compare-actions no-print">
               <button
                 className="workspace-button workspace-button-secondary"
                 aria-expanded={compareOpen}
                 onClick={() => setCompareOpen((v) => !v)}
               >
-                {compareOpen ? c.compareHide : format(c.compareShow, { count: active.length })}
+                {compareOpen ? c.compareHide : format(c.compareShow, { count: inEffect.length })}
               </button>
               <button
                 className="workspace-button workspace-button-secondary"
                 disabled={busy}
-                onClick={() => setConfirm({ title: c.undoTitleAll, ids: active.map((a) => a.id) })}
+                onClick={() =>
+                  setConfirm({ title: c.undoTitleAll, ids: inEffect.map((a) => a.id) })
+                }
               >
-                {format(c.undoAll, { count: active.length })}
+                {format(c.undoAll, { count: inEffect.length })}
               </button>
             </div>
           )}
         </div>
-        {active.length > 0 && compareOpen && (
+        {inEffect.length > 0 && compareOpen && (
           <ul className="history-compare-list">
-            {active.map((a) => (
+            {inEffect.map((a) => (
               <li key={a.id}>
                 <strong>{tweakName(a.id)}</strong>
                 {a.changes.length ? (
@@ -474,7 +493,11 @@ export function ChangeHistory({
       ) : (
         <ol className="workspace-ledger-list history-sessions">
           {grouped.map((session, i) => {
-            const undoable = sessionUndoable(session, appliedNow, latest);
+            const whole = {
+              ...session,
+              items: items.filter((it) => it.ts >= session.start && it.ts <= session.end),
+            };
+            const undoable = sessionUndoable(whole, appliedNow, latest);
             const newDay = i === 0 || day(session.end) !== day(grouped[i - 1].end);
             return (
               <li key={`${session.end}-${session.items[0].key}`}>
@@ -548,20 +571,22 @@ export function ChangeHistory({
         {confirm && (
           <div>
             <h2 id="history-confirm-title">{confirm.title}</h2>
-            <p className="history-muted">{c.undoBody}</p>
-            <ul>
-              {confirm.ids.map((id) => {
-                const values = active.find((a) => a.id === id)?.changes ?? [];
-                return (
-                  <li key={id}>
-                    <div>
-                      <strong>{tweakName(id)}</strong>
-                      {values.length > 0 && <Values changes={values} c={c} />}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+            <p className="history-muted">{confirm.clear ? c.clearBody : c.undoBody}</p>
+            {confirm.ids.length > 0 && (
+              <ul>
+                {confirm.ids.map((id) => {
+                  const values = active.find((a) => a.id === id)?.changes ?? [];
+                  return (
+                    <li key={id}>
+                      <div>
+                        <strong>{tweakName(id)}</strong>
+                        {values.length > 0 && <Values changes={values} c={c} />}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
             <div className="debloat-dialog-actions">
               <button
                 type="button"
@@ -575,11 +600,18 @@ export function ChangeHistory({
                 type="button"
                 className="tool-danger-action"
                 disabled={busy}
-                onClick={() => void undo(confirm.ids)}
+                onClick={() => {
+                  if (confirm.clear) {
+                    setConfirm(null);
+                    clearHistory();
+                  } else void undo(confirm.ids);
+                }}
               >
-                {confirm.ids.length === 1
-                  ? c.undoConfirmOne
-                  : format(c.undoConfirmCount, { count: confirm.ids.length })}
+                {confirm.clear
+                  ? s.ledger.clear
+                  : confirm.ids.length === 1
+                    ? c.undoConfirmOne
+                    : format(c.undoConfirmCount, { count: confirm.ids.length })}
               </button>
             </div>
           </div>

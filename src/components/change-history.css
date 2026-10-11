@@ -249,16 +249,16 @@
 
 /* "PDF (print)": only the history, on white, without controls. */
 @media print {
-  body * {
+  body.printing-history * {
     visibility: hidden;
   }
 
-  .change-history,
-  .change-history * {
+  body.printing-history .change-history,
+  body.printing-history .change-history * {
     visibility: visible;
   }
 
-  .change-history {
+  body.printing-history .change-history {
     position: absolute;
     inset: 0 auto auto 0;
     width: 100%;
@@ -266,16 +266,16 @@
     background: #fff;
   }
 
-  .change-history .no-print,
-  .change-history dialog {
+  body.printing-history .change-history .no-print,
+  body.printing-history .change-history dialog {
     display: none !important;
   }
 
-  .history-print-only {
+  body.printing-history .history-print-only {
     display: block;
   }
 
-  .history-session {
+  body.printing-history .history-session {
     break-inside: avoid;
   }
 }

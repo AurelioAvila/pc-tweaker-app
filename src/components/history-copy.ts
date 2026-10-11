@@ -28,6 +28,9 @@ const en = {
   undoTitleSession: "Undo this session?",
   undoTitleOne: "Undo this change?",
   undoTitleAll: "Undo every change in effect?",
+  clearTitle: "Clear the history?",
+  clearBody:
+    "This deletes the record of every change, with its origin and values, from this PC. Settings that are on stay on, and can still be undone from their switches.",
   undoBody:
     "These settings go back to the values Windows had before PC Tweaker changed them. Nothing else is touched.",
   undoConfirmCount: "Undo {count} changes",
@@ -36,7 +39,7 @@ const en = {
   undoPartial:
     "{done} of {total} changes undone. The others are still in effect; see the history for why.",
   cancel: "Cancel",
-  originSwitch: "Own switch",
+  originSwitch: "Its own switch",
   originProfile: "Profile “{name}”",
   originStarter: "Starter profile “{name}”",
   originScan: "Scan",
@@ -104,6 +107,9 @@ const it: Copy = {
   undoTitleSession: "Annullare questa sessione?",
   undoTitleOne: "Annullare questa modifica?",
   undoTitleAll: "Annullare tutte le modifiche attive?",
+  clearTitle: "Svuotare la cronologia?",
+  clearBody:
+    "Elimina da questo PC la registrazione di ogni modifica, con origine e valori. Le impostazioni attive restano attive e si possono ancora annullare dai loro interruttori.",
   undoBody:
     "Queste impostazioni tornano ai valori che Windows aveva prima che PC Tweaker le cambiasse. Nient'altro viene toccato.",
   undoConfirmCount: "Annulla {count} modifiche",
@@ -179,6 +185,9 @@ const fr: Copy = {
   undoTitleSession: "Annuler cette session ?",
   undoTitleOne: "Annuler cette modification ?",
   undoTitleAll: "Annuler toutes les modifications actives ?",
+  clearTitle: "Effacer l'historique ?",
+  clearBody:
+    "Supprime de ce PC l'enregistrement de chaque modification, avec son origine et ses valeurs. Les réglages actifs le restent et peuvent toujours être annulés depuis leurs interrupteurs.",
   undoBody:
     "Ces réglages reprennent les valeurs que Windows avait avant que PC Tweaker les modifie. Rien d'autre n'est touché.",
   undoConfirmCount: "Annuler {count} modifications",
@@ -254,6 +263,9 @@ const es: Copy = {
   undoTitleSession: "¿Deshacer esta sesión?",
   undoTitleOne: "¿Deshacer este cambio?",
   undoTitleAll: "¿Deshacer todos los cambios activos?",
+  clearTitle: "¿Borrar el historial?",
+  clearBody:
+    "Elimina de este PC el registro de cada cambio, con su origen y sus valores. Los ajustes activos siguen activos y aún se pueden deshacer desde sus interruptores.",
   undoBody:
     "Estos ajustes vuelven a los valores que Windows tenía antes de que PC Tweaker los cambiara. No se toca nada más.",
   undoConfirmCount: "Deshacer {count} cambios",
@@ -262,7 +274,7 @@ const es: Copy = {
   undoPartial:
     "{done} de {total} cambios deshechos. Los demás siguen activos; en el historial verás por qué.",
   cancel: "Cancelar",
-  originSwitch: "Su propio interruptor",
+  originSwitch: "Interruptor propio",
   originProfile: "Perfil «{name}»",
   originStarter: "Perfil inicial «{name}»",
   originScan: "Análisis",
@@ -327,6 +339,9 @@ const de: Copy = {
   undoTitleSession: "Diese Sitzung rückgängig machen?",
   undoTitleOne: "Diese Änderung rückgängig machen?",
   undoTitleAll: "Alle aktiven Änderungen rückgängig machen?",
+  clearTitle: "Verlauf löschen?",
+  clearBody:
+    "Löscht auf diesem PC die Aufzeichnung jeder Änderung samt Herkunft und Werten. Aktive Einstellungen bleiben aktiv und lassen sich weiter über ihre Schalter rückgängig machen.",
   undoBody:
     "Diese Einstellungen bekommen die Werte zurück, die Windows hatte, bevor PC Tweaker sie geändert hat. Sonst wird nichts angefasst.",
   undoConfirmCount: "{count} Änderungen rückgängig machen",
@@ -353,7 +368,7 @@ const de: Copy = {
   export: "Exportieren",
   exportPdf: "PDF (Drucken)",
   exported: "Verlauf gespeichert.",
-  compareTitle: "Jetzt im Vergleich zu vor PC Tweaker",
+  compareTitle: "Jetzt im Vergleich zum Zustand vor PC Tweaker",
   compareBody: "Jede Änderung, die PC Tweaker aktiv hält, mit dem Wert, den Windows vorher hatte.",
   compareEmpty:
     "PC Tweaker hält keine Änderung aktiv: Diese Einstellungen sind so, wie Windows sie hatte.",
@@ -400,6 +415,9 @@ const pt: Copy = {
   undoTitleSession: "Anular esta sessão?",
   undoTitleOne: "Anular esta alteração?",
   undoTitleAll: "Anular todas as alterações ativas?",
+  clearTitle: "Limpar o histórico?",
+  clearBody:
+    "Apaga deste PC o registo de cada alteração, com a origem e os valores. As definições ativas continuam ativas e ainda podem ser anuladas nos respetivos interruptores.",
   undoBody:
     "Estas definições voltam aos valores que o Windows tinha antes de o PC Tweaker as alterar. Nada mais é tocado.",
   undoConfirmCount: "Anular {count} alterações",
@@ -408,7 +426,7 @@ const pt: Copy = {
   undoPartial:
     "{done} de {total} alterações anuladas. As restantes continuam ativas; o histórico indica porquê.",
   cancel: "Cancelar",
-  originSwitch: "Botão próprio",
+  originSwitch: "Interruptor próprio",
   originProfile: "Perfil «{name}»",
   originStarter: "Perfil inicial «{name}»",
   originScan: "Verificação",
@@ -435,7 +453,7 @@ const pt: Copy = {
   compareShow: "Mostrar as alterações ativas ({count})",
   compareHide: "Ocultar",
   compareNoValues:
-    "Não é um simples valor do Registo (um plano de energia, um serviço, uma definição de rede): anulá-la repõe exatamente o que lá estava.",
+    "Não é um simples valor do Registo (um plano de energia, um serviço, uma definição de rede): anulá-lo repõe exatamente o que lá estava.",
   emptyFiltered: "Nenhuma alteração corresponde a estes filtros.",
   clearFilters: "Limpar filtros",
   removalRemoved: "Aplicação removida",

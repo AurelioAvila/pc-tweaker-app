@@ -810,6 +810,14 @@ fn apply_by_id(
         .then(diagnostics::network_verify::measure);
     let was_online = before.as_ref().is_some_and(|b| b.online);
 
+    // What a re-apply is about to overwrite (after a Windows update put a
+    // value back, say): read now, because the snapshot keeps the value from
+    // before PC Tweaker first touched it. Empty for a first apply.
+    let overwritten: Vec<(String, Option<String>)> = registry_parts_of(store, id)
+        .iter()
+        .map(|part| (format!("{}\\{}", part.path, part.name), live_value(part)))
+        .collect();
+
     // Single funnel for every apply (direct, batched, and the elevated
     // helper), so this one audit call covers them all exactly once.
     let mut result = apply_or_undo(store, app_data_dir, id);
@@ -839,11 +847,17 @@ fn apply_by_id(
     let changes = if result.is_ok() {
         registry_parts_of(store, id)
             .iter()
-            .map(|part| audit::ValueChange {
-                path: format!("{}\\{}", part.hive, part.path),
-                name: part.name.clone(),
-                before: part.original_value.as_ref().map(reg_value_display),
-                after: live_value(part),
+            .map(|part| {
+                let key = format!("{}\\{}", part.path, part.name);
+                audit::ValueChange {
+                    path: format!("{}\\{}", part.hive, part.path),
+                    name: part.name.clone(),
+                    before: match overwritten.iter().find(|(k, _)| *k == key) {
+                        Some((_, live)) => live.clone(),
+                        None => part.original_value.as_ref().map(reg_value_display),
+                    },
+                    after: live_value(part),
+                }
             })
             .collect()
     } else {
@@ -1087,6 +1101,7 @@ pub(crate) fn bulk_applicable(ids: Vec<String>) -> Vec<String> {
 #[cfg(windows)]
 fn fits_this_pc(id: &str) -> bool {
     settings_tweaks::find(id).is_none_or(|t| settings_tweaks::available_here(t).is_ok())
+        && !(id == TASKBAR_WIDGETS_ID && services::user_choice_protected())
 }
 
 #[cfg(not(windows))]
@@ -1122,6 +1137,16 @@ fn apply_tweaks(
     let dir = store_for_dir(&app)?;
     let store = RollbackStore::new(dir.clone());
     let mut failures = Vec::new();
+    // A profile or the scan names some settings that are already on: those
+    // are left as they are rather than written again, so the history does not
+    // credit this batch with them. A re-apply after a Windows update is the
+    // one batch that must write settings already recorded as on.
+    let ids: Vec<String> = if source.as_deref() == Some("reapply") {
+        ids
+    } else {
+        let applied = store.applied_ids().unwrap_or_default();
+        ids.into_iter().filter(|id| !applied.contains(id)).collect()
+    };
     record_origin(source, &ids);
 
     let (needs_admin, direct) = split_by_elevation(bulk_applicable(ids));
@@ -2125,7 +2150,13 @@ struct ActiveChange {
 #[tauri::command(async)]
 fn active_changes(app: tauri::AppHandle) -> Result<Vec<ActiveChange>, String> {
     let store = store_for(&app)?;
-    let mut ids: Vec<String> = store.applied_ids()?.into_iter().collect();
+    // Changes a running game session owns end with the session, not here.
+    // One transaction at a time: the store's lock is per handle.
+    let all = store.applied_ids()?;
+    let mut ids: Vec<String> = {
+        let transaction = store.transaction()?;
+        all.into_iter().filter(|id| transaction.owner(id).is_none()).collect()
+    };
     ids.sort();
     Ok(ids
         .into_iter()

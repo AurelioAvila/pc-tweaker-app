@@ -708,9 +708,11 @@ pub fn before_after(app: tauri::AppHandle) -> Result<BeforeAfter, String> {
     Ok(before_after_of(&read_runs(&app)?))
 }
 
-/// A file on a local drive with one of `extensions`: no network share (which
-/// would send this user's credentials to it), no device path, no alternate
-/// data stream. For files the user picked in a save dialog.
+/// A file on a local drive with one of `extensions`: no network share or
+/// mapped network drive (either would send this user's credentials to it), no
+/// device path, no alternate data stream, and nothing inside the app's own
+/// data folder (its journals and licence are not export targets). For files
+/// the user picked in a save or open dialog.
 pub(crate) fn local_file(path: &str, extensions: &[&str]) -> Option<std::path::PathBuf> {
     let target = std::path::PathBuf::from(path);
     let allowed = target
@@ -722,8 +724,31 @@ pub(crate) fn local_file(path: &str, extensions: &[&str]) -> Option<std::path::P
         && b[0].is_ascii_alphabetic()
         && b[1] == b':'
         && (b[2] == b'\\' || b[2] == b'/')
-        && !path[2..].contains(':');
-    (allowed && local_drive).then_some(target)
+        && !path[2..].contains(':')
+        && !is_network_drive(b[0]);
+    let normalized = path.replace('/', "\\").to_lowercase();
+    #[cfg(windows)]
+    let app_data = crate::dirs_app_data_dir().to_string_lossy().to_lowercase();
+    #[cfg(not(windows))]
+    let app_data = String::new();
+    let in_app_data = !app_data.is_empty()
+        && normalized.starts_with(&format!("{}\\", app_data.trim_end_matches('\\')));
+    (allowed && local_drive && !in_app_data && !normalized.contains("\\..\\")).then_some(target)
+}
+
+/// A drive letter Windows maps to a network share.
+#[cfg(windows)]
+fn is_network_drive(letter: u8) -> bool {
+    use windows_sys::Win32::Storage::FileSystem::GetDriveTypeW;
+    const DRIVE_REMOTE: u32 = 4;
+    let root: Vec<u16> = format!("{}:\\", letter as char).encode_utf16().chain(Some(0)).collect();
+    // SAFETY: a NUL-terminated root path that lives for the call.
+    unsafe { GetDriveTypeW(root.as_ptr()) == DRIVE_REMOTE }
+}
+
+#[cfg(not(windows))]
+fn is_network_drive(_letter: u8) -> bool {
+    false
 }
 
 /// Writes the exported report image to the path the user picked in the save
@@ -1064,5 +1089,17 @@ mod tests {
         assert!(save_report_png(r"\\?\C:\r.png".into(), png.clone()).is_err());
         assert!(save_report_png(r"C:\a.txt:s.png".into(), png).is_err());
         assert!(!exe.exists() && !target.exists());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn exports_never_land_in_the_app_data_folder_or_climb_out_of_a_folder() {
+        assert!(local_file(r"C:\Users\x\history.json", &["json"]).is_some());
+        assert!(local_file(r"C:\Users\x\history.JSON", &["json"]).is_some());
+        let own = crate::dirs_app_data_dir().join("rollback_store.json");
+        assert!(local_file(&own.to_string_lossy(), &["json"]).is_none());
+        assert!(local_file(r"C:\Users\x\..\history.json", &["json"]).is_none());
+        assert!(local_file(r"\\server\share\h.json", &["json"]).is_none());
+        assert!(local_file(r"C:\Users\x\h.exe", &["json"]).is_none());
     }
 }

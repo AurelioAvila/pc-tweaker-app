@@ -621,8 +621,9 @@ export function TurboBoostPanel({
           </div>
           <p className="tool-boost-cadence">{s.turboBoost.loadCadence}</p>
           {/* How much of the load is the app itself, so a reading at rest says
-          what is really keeping the processor busy. Same process table, same
-          interval for both numbers. */}
+          what is really keeping the processor busy. Both numbers come from the
+          same process table over the same few seconds; the dial is a separate,
+          smoother reading, so the two need not add up to it exactly. */}
           {users?.own_cpu != null && users.others_cpu != null && (
             <p className="tool-boost-cadence">
               {format(s.turboBoost.ownLoad, {

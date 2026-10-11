@@ -111,6 +111,28 @@ assert.equal(
 // Summary.
 assert.deepEqual(m.summary(items, 3), { active: 3, undone: 1, failed: 1 });
 
+// A marker claims only the first apply of each id after it: a later switch
+// flip and a restore are not the batch's.
+const later = m.buildHistory([
+  e(T + 400, "tweak-applied", "dark_mode"),
+  e(T + 300, "tweak-reverted", "dark_mode"),
+  e(T + 60, "tweak-applied", "dark_mode"),
+  e(T + 59, "origin", "profile:Work", { detail: "dark_mode" }),
+]);
+assert.deepEqual(later.map((i) => i.origin.kind), ["switch", "switch", "profile"]);
+
+// An apply that changed nothing does not make a session the owner.
+const noop = m.buildHistory([
+  e(T + 500, "tweak-applied", "dark_mode", {
+    changes: [{ path: "HKCU\X", name: "V", before: "0 (0x0)", after: "0 (0x0)" }],
+  }),
+  e(T, "tweak-applied", "dark_mode", {
+    changes: [{ path: "HKCU\X", name: "V", before: "1 (0x1)", after: "0 (0x0)" }],
+  }),
+]);
+assert.equal(m.latestApplies(noop).get("dark_mode"), noop[1].key);
+assert.ok(m.unchanged(noop[0]) && !m.unchanged(noop[1]));
+
 // CSV: one row per value, quoted, formulas neutralised.
 const csv = m.toCsv(
   [...items, { ...items[0], target: "=HYPERLINK(1)", changes: [] }],

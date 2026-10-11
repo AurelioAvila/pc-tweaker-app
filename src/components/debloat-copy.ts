@@ -112,11 +112,11 @@ const en = {
   selectGroup: "Select all",
   toggleGroup: "Show or hide {name}",
   summaryDone: "{removed} removed · {failed} failed",
-  lastActivity: "Last activity {date}",
+  lastActivity: "Data last changed {date}",
   lastActivityHint:
-    "When the app last wrote to its data folder. Background updates count too, so you may have opened it less recently than this.",
-  idleDays: "No activity for {days} days",
-  noActivitySince: "No activity since {date}",
+    "When the app last changed a file in its data folder. Background updates count too, and some apps keep data elsewhere: a hint, not proof of use.",
+  idleDays: "No changes in its data for {days} days",
+  noActivitySince: "No changes in its data since {date}",
   startsWithWindows: "Starts with Windows",
   runningNow: "Running · {size}",
   memoryNow: "Memory now",
@@ -139,7 +139,7 @@ const en = {
   listSaved: "List saved.",
   listLoaded: "{count} apps selected from the list. Review them before removing anything.",
   listMissing: "{count} apps in the list are not installed or cannot be removed here.",
-  sortActivity: "Last activity",
+  sortActivity: "Last data change",
 };
 type Copy = typeof en;
 export const DEBLOAT_COPY: Record<Lang, Copy> = {
@@ -258,11 +258,11 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     selectGroup: "Seleziona tutte",
     toggleGroup: "Mostra o nascondi {name}",
     summaryDone: "{removed} rimosse · {failed} non riuscite",
-    lastActivity: "Ultima attività {date}",
+    lastActivity: "Dati modificati l'ultima volta il {date}",
     lastActivityHint:
-      "Quando l'app ha scritto l'ultima volta nella sua cartella dati. Contano anche gli aggiornamenti in background, quindi potresti averla aperta meno di recente.",
-    idleDays: "Nessuna attività da {days} giorni",
-    noActivitySince: "Nessuna attività dal {date}",
+      "Quando l'app ha modificato l'ultima volta un file nella sua cartella dati. Contano anche gli aggiornamenti in background e alcune app tengono i dati altrove: è un indizio, non una prova d'uso.",
+    idleDays: "Nessuna modifica ai suoi dati da {days} giorni",
+    noActivitySince: "Nessuna modifica ai suoi dati dal {date}",
     startsWithWindows: "Si avvia con Windows",
     runningNow: "In esecuzione · {size}",
     memoryNow: "Memoria ora",
@@ -286,7 +286,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     listLoaded:
       "{count} app selezionate dall'elenco. Controllale prima di rimuovere qualsiasi cosa.",
     listMissing: "{count} app dell'elenco non sono installate o non si possono rimuovere qui.",
-    sortActivity: "Ultima attività",
+    sortActivity: "Ultima modifica ai dati",
   },
   fr: {
     title: "Debloat sous contrôle",
@@ -404,11 +404,11 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     selectGroup: "Tout sélectionner",
     toggleGroup: "Afficher ou masquer {name}",
     summaryDone: "{removed} supprimées · {failed} en échec",
-    lastActivity: "Dernière activité le {date}",
+    lastActivity: "Données modifiées pour la dernière fois le {date}",
     lastActivityHint:
-      "Quand l'application a écrit pour la dernière fois dans son dossier de données. Les mises à jour en arrière-plan comptent aussi : vous l'avez peut-être ouverte moins récemment.",
-    idleDays: "Aucune activité depuis {days} jours",
-    noActivitySince: "Aucune activité depuis le {date}",
+      "Date à laquelle l'application a modifié pour la dernière fois un fichier de son dossier de données. Les mises à jour en arrière-plan comptent aussi et certaines applications gardent leurs données ailleurs : c'est un indice, pas une preuve d'utilisation.",
+    idleDays: "Aucune modification de ses données depuis {days} jours",
+    noActivitySince: "Aucune modification de ses données depuis le {date}",
     startsWithWindows: "Démarre avec Windows",
     runningNow: "En cours d'exécution · {size}",
     memoryNow: "Mémoire actuelle",
@@ -434,7 +434,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
       "{count} applications sélectionnées depuis la liste. Vérifiez-les avant de supprimer quoi que ce soit.",
     listMissing:
       "{count} applications de la liste ne sont pas installées ou ne peuvent pas être supprimées ici.",
-    sortActivity: "Dernière activité",
+    sortActivity: "Dernière modification des données",
   },
   es: {
     title: "Debloat con control",
@@ -551,11 +551,11 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     selectGroup: "Seleccionar todas",
     toggleGroup: "Mostrar u ocultar {name}",
     summaryDone: "{removed} quitadas · {failed} con error",
-    lastActivity: "Última actividad: {date}",
+    lastActivity: "Datos modificados por última vez el {date}",
     lastActivityHint:
-      "Cuándo escribió la aplicación por última vez en su carpeta de datos. También cuentan las actualizaciones en segundo plano, así que quizá la abriste hace más tiempo.",
-    idleDays: "Sin actividad desde hace {days} días",
-    noActivitySince: "Sin actividad desde el {date}",
+      "Cuándo modificó la aplicación por última vez un archivo de su carpeta de datos. También cuentan las actualizaciones en segundo plano y algunas aplicaciones guardan datos en otro sitio: es una pista, no una prueba de uso.",
+    idleDays: "Sin cambios en sus datos desde hace {days} días",
+    noActivitySince: "Sin cambios en sus datos desde el {date}",
     startsWithWindows: "Se inicia con Windows",
     runningNow: "En ejecución · {size}",
     memoryNow: "Memoria ahora",
@@ -580,7 +580,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     listLoaded:
       "{count} aplicaciones seleccionadas desde la lista. Revísalas antes de quitar nada.",
     listMissing: "{count} aplicaciones de la lista no están instaladas o no se pueden quitar aquí.",
-    sortActivity: "Última actividad",
+    sortActivity: "Último cambio en los datos",
   },
   de: {
     title: "Debloat mit Kontrolle",
@@ -699,14 +699,14 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     selectGroup: "Alle auswählen",
     toggleGroup: "{name} ein- oder ausblenden",
     summaryDone: "{removed} entfernt · {failed} fehlgeschlagen",
-    lastActivity: "Letzte Aktivität {date}",
+    lastActivity: "Daten zuletzt geändert am {date}",
     lastActivityHint:
-      "Wann die App zuletzt in ihren Datenordner geschrieben hat. Updates im Hintergrund zählen mit, du hast sie also vielleicht länger nicht geöffnet.",
-    idleDays: "Seit {days} Tagen keine Aktivität",
-    noActivitySince: "Keine Aktivität seit {date}",
+      "Wann die App zuletzt eine Datei in ihrem Datenordner geändert hat. Updates im Hintergrund zählen mit, und manche Apps speichern Daten woanders: ein Hinweis, kein Beweis für Nutzung.",
+    idleDays: "Seit {days} Tagen keine Änderung an seinen Daten",
+    noActivitySince: "Keine Änderung an seinen Daten seit {date}",
     startsWithWindows: "Startet mit Windows",
     runningNow: "Läuft · {size}",
-    memoryNow: "Speicher jetzt",
+    memoryNow: "Arbeitsspeicher jetzt",
     startupFact: "Startet mit Windows",
     yes: "Ja",
     no: "Nein",
@@ -728,7 +728,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     listLoaded: "{count} Apps aus der Liste ausgewählt. Prüfe sie, bevor du etwas entfernst.",
     listMissing:
       "{count} Apps aus der Liste sind nicht installiert oder lassen sich hier nicht entfernen.",
-    sortActivity: "Letzte Aktivität",
+    sortActivity: "Letzte Datenänderung",
   },
   pt: {
     title: "Debloat com controlo",
@@ -845,11 +845,11 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     selectGroup: "Selecionar todas",
     toggleGroup: "Mostrar ou ocultar {name}",
     summaryDone: "{removed} removidas · {failed} com falha",
-    lastActivity: "Última atividade: {date}",
+    lastActivity: "Dados alterados pela última vez em {date}",
     lastActivityHint:
-      "Quando a aplicação escreveu pela última vez na sua pasta de dados. As atualizações em segundo plano também contam, por isso pode tê-la aberto há mais tempo.",
-    idleDays: "Sem atividade há {days} dias",
-    noActivitySince: "Sem atividade desde {date}",
+      "Quando a aplicação alterou pela última vez um ficheiro da sua pasta de dados. As atualizações em segundo plano também contam e algumas aplicações guardam dados noutro lado: é um indício, não uma prova de utilização.",
+    idleDays: "Sem alterações nos seus dados há {days} dias",
+    noActivitySince: "Sem alterações nos seus dados desde {date}",
     startsWithWindows: "Inicia com o Windows",
     runningNow: "Em execução · {size}",
     memoryNow: "Memória agora",
@@ -875,7 +875,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
       "{count} aplicações selecionadas a partir da lista. Reveja-as antes de remover o que quer que seja.",
     listMissing:
       "{count} aplicações da lista não estão instaladas ou não podem ser removidas aqui.",
-    sortActivity: "Última atividade",
+    sortActivity: "Última alteração dos dados",
   },
 };
 

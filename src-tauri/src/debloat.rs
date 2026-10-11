@@ -617,7 +617,20 @@ pub fn write_debloat_list(path: String, catalog_ids: Vec<String>) -> Result<(), 
 /// Reads a Debloat list: the catalogue ids it names that this version knows.
 #[tauri::command(async)]
 pub fn read_debloat_list(path: String) -> Result<Vec<String>, String> {
-    parse_list(&std::fs::read(&path).map_err(|e| format!("could not read the file: {e}"))?)
+    use std::io::Read;
+    // Same rules as saving: a local .json file only, never a share, device or
+    // pipe, and never more than the size limit read into memory.
+    let target = crate::baseline::local_file(&path, &["json"])
+        .ok_or("the list can only be read from a .json file on a local drive")?;
+    let file = std::fs::File::open(&target).map_err(|e| format!("could not read the file: {e}"))?;
+    if !file.metadata().map_err(|e| e.to_string())?.is_file() {
+        return Err("this file isn't a PC Tweaker Debloat list".into());
+    }
+    let mut bytes = Vec::new();
+    file.take(64 * 1024 + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|e| format!("could not read the file: {e}"))?;
+    parse_list(&bytes)
 }
 
 fn parse_list(bytes: &[u8]) -> Result<Vec<String>, String> {
@@ -831,25 +844,45 @@ mod platform {
         (!states.is_empty()).then(|| states.iter().any(|s| *s == 2 || *s == 4))
     }
 
-    /// The newest change in an app's data folder: its settings file and the
-    /// top level of its local state.
+    /// The newest file change anywhere in an app's data folder (settings,
+    /// local, roaming, cache and temporary state), walked within a file and
+    /// time budget like [`folder_size`].
     ///
     /// Template files arrive with the dates they were built on, years before
     /// this account had the app, so only changes made after the folder was
-    /// created for this account count as activity.
+    /// created for this account count. Some apps keep data elsewhere, so the
+    /// UI words this as changes seen in its data, never as proof of use.
     fn last_activity(dir: &std::path::Path) -> Option<i64> {
+        const MAX_FILES: usize = 20_000;
         let created = std::fs::metadata(dir).and_then(|m| m.created()).ok()?;
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(400);
         let mut newest: Option<std::time::SystemTime> = None;
-        let mut consider = |p: std::path::PathBuf| {
-            if let Ok(t) = std::fs::metadata(p).and_then(|m| m.modified()) {
-                if t > created {
-                    newest = Some(newest.map_or(t, |n| n.max(t)));
+        let mut files = 0usize;
+        let mut stack: Vec<_> = ["Settings", "LocalState", "RoamingState", "LocalCache", "AC", "TempState"]
+            .iter()
+            .map(|sub| dir.join(sub))
+            .collect();
+        'walk: while let Some(current) = stack.pop() {
+            let Ok(entries) = std::fs::read_dir(&current) else { continue };
+            for entry in entries.flatten() {
+                if files >= MAX_FILES || std::time::Instant::now() > deadline {
+                    break 'walk;
+                }
+                let Ok(kind) = entry.file_type() else { continue };
+                if kind.is_symlink() {
+                    continue;
+                }
+                if kind.is_dir() {
+                    stack.push(entry.path());
+                    continue;
+                }
+                files += 1;
+                if let Ok(t) = entry.metadata().and_then(|m| m.modified()) {
+                    if t > created {
+                        newest = Some(newest.map_or(t, |n| n.max(t)));
+                    }
                 }
             }
-        };
-        consider(dir.join("Settings").join("settings.dat"));
-        if let Ok(entries) = std::fs::read_dir(dir.join("LocalState")) {
-            entries.flatten().take(500).for_each(|e| consider(e.path()));
         }
         newest
             .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())

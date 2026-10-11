@@ -1086,6 +1086,8 @@ export interface Strings {
     enterpriseEdition: string;
     unavailableEnterpriseEdition: string;
     notPresent: string;
+    /** Windows refuses other apps' changes to this switch (User Choice Protection). */
+    windowsProtected: string;
   };
   scheduledCleanup: {
     title: string;
@@ -2354,6 +2356,8 @@ const it: Strings = {
     unavailableEnterpriseEdition:
       "Non disponibile su questo PC: richiede Windows Enterprise o Education.",
     notPresent: "Questo PC non ha questa funzione, quindi non c'è nulla da disattivare.",
+    windowsProtected:
+      "Su questo PC Windows protegge questa opzione e non accetta modifiche da altre app. Disattiva Widget in Impostazioni > Personalizzazione > Barra delle applicazioni.",
   },
   scheduledCleanup: {
     title: "Pulizia settimanale dei file temporanei",
@@ -4005,6 +4009,8 @@ const en: Strings = {
     unavailableEnterpriseEdition:
       "Not available on this PC: it needs Windows Enterprise or Education.",
     notPresent: "This PC does not have this feature, so there is nothing to turn off.",
+    windowsProtected:
+      "Windows protects this switch on this PC and refuses changes from other apps. Turn Widgets off in Settings > Personalization > Taskbar.",
   },
   scheduledCleanup: {
     title: "Weekly temporary file cleanup",
@@ -5678,6 +5684,8 @@ const fr: Strings = {
     unavailableEnterpriseEdition:
       "Indisponible sur ce PC : nécessite Windows Entreprise ou Éducation.",
     notPresent: "Ce PC ne dispose pas de cette fonction, il n'y a donc rien à désactiver.",
+    windowsProtected:
+      "Sur ce PC, Windows protège ce réglage et refuse les modifications venant d'autres applications. Désactivez Widgets dans Paramètres > Personnalisation > Barre des tâches.",
   },
   scheduledCleanup: {
     title: "Nettoyage hebdomadaire des fichiers temporaires",
@@ -7347,6 +7355,8 @@ const es: Strings = {
     unavailableEnterpriseEdition:
       "No disponible en este PC: necesita Windows Enterprise o Education.",
     notPresent: "Este PC no tiene esta función, así que no hay nada que desactivar.",
+    windowsProtected:
+      "En este PC, Windows protege esta opción y no acepta cambios de otras aplicaciones. Desactiva Widgets en Configuración > Personalización > Barra de tareas.",
   },
   scheduledCleanup: {
     title: "Limpieza semanal de archivos temporales",
@@ -9027,6 +9037,8 @@ const de: Strings = {
     unavailableEnterpriseEdition:
       "Auf diesem PC nicht verfügbar: erfordert Windows Enterprise oder Education.",
     notPresent: "Dieser PC hat diese Funktion nicht, es gibt also nichts abzuschalten.",
+    windowsProtected:
+      "Auf diesem PC schützt Windows diese Einstellung und lässt keine Änderungen durch andere Apps zu. Schalte Widgets unter Einstellungen > Personalisierung > Taskleiste aus.",
   },
   scheduledCleanup: {
     title: "Wöchentliche Bereinigung temporärer Dateien",
@@ -10698,6 +10710,8 @@ const pt: Strings = {
     enterpriseEdition: "Enterprise ou Education",
     unavailableEnterpriseEdition: "Indisponível neste PC: requer Windows Enterprise ou Education.",
     notPresent: "Este PC não tem esta funcionalidade, por isso não há nada para desativar.",
+    windowsProtected:
+      "Neste PC, o Windows protege esta opção e recusa alterações de outras aplicações. Desative os Widgets em Definições > Personalização > Barra de tarefas.",
   },
   scheduledCleanup: {
     title: "Limpeza semanal de ficheiros temporários",

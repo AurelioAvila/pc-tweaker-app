@@ -276,6 +276,12 @@ fn list_tweaks(app: tauri::AppHandle) -> Result<Vec<TweakInfo>, String> {
     tweak_infos(&store_for(&app)?)
 }
 
+/// The taskbar Widgets switch. Windows' User Choice Protection refuses other
+/// programs' writes to it, so where that protection runs it is offered as
+/// unavailable, with the way to change it in Settings, instead of failing.
+const TASKBAR_WIDGETS_ID: &str = "hide_taskbar_widgets";
+const TASKBAR_WIDGETS_PROTECTED: &str = "Windows protects this switch on this PC and refuses changes from other apps. Turn Widgets off in Settings > Personalization > Taskbar.";
+
 fn tweak_infos(store: &RollbackStore) -> Result<Vec<TweakInfo>, String> {
     let applied_ids = store.applied_ids()?;
 
@@ -298,7 +304,10 @@ fn tweak_infos(store: &RollbackStore) -> Result<Vec<TweakInfo>, String> {
                 value_name: t.value_name.to_string(),
                 value_type: reg_value_type(&t.on_value),
                 sets_to: reg_value_display(&t.on_value),
-            }], ..Default::default() })
+            }],
+            unavailable: (t.id == TASKBAR_WIDGETS_ID && services::user_choice_protected())
+                .then_some("windows_protected"),
+            ..Default::default() })
         .collect();
 
     list.push(TweakInfo {
@@ -845,6 +854,9 @@ fn apply_by_id_inner(
         return Err("Configure this control in its dedicated panel; no default configuration is applied automatically".into());
     }
     require_tweak_entitlement(app_data_dir, id)?;
+    if id == TASKBAR_WIDGETS_ID && services::user_choice_protected() {
+        return Err(TASKBAR_WIDGETS_PROTECTED.into());
+    }
     if [everyday::DISABLE_RESTART_APPS_ID,everyday::ENABLE_LONG_PATHS_ID,everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID].contains(&id) {
         return everyday::apply(id,store);
     }
@@ -2503,6 +2515,14 @@ mod tests {
     /// only place that notices, because nothing else reads all three sources
     /// at once. If this fails, the catalogue changed â€” update the numbers
     /// here, then update every surface listed above to match.
+    /// The Windows-protection guard keys on this id; a rename would silently
+    /// bring back the "Access is denied" failure on current Windows 11.
+    #[test]
+    fn the_protected_widgets_switch_is_a_real_tweak() {
+        let tweak = find_tweak(TASKBAR_WIDGETS_ID).expect("hide_taskbar_widgets exists");
+        assert_eq!(tweak.value_name, "TaskbarDa");
+    }
+
     #[test]
     fn the_catalogue_is_eighty_one_tweaks_thirty_five_of_them_pro() {
         let registry: Vec<_> = tweaks::all_tweaks().into_iter().filter(|t| t.id != "disable_copilot").collect();

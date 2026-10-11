@@ -50,7 +50,12 @@ export type TweakInfo = {
   enterprise_edition?: boolean;
   /** Why it cannot be applied on this PC, when it cannot. */
   unavailable?:
-    "windows_version" | "windows_edition" | "windows_edition_enterprise" | "not_present" | null;
+    | "windows_version"
+    | "windows_edition"
+    | "windows_edition_enterprise"
+    | "not_present"
+    | "windows_protected"
+    | null;
 };
 
 /** One row of the dry run (`preview_tweak`): a change, what is there now and

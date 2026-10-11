@@ -185,6 +185,20 @@ pub fn installed(service: &str) -> bool {
     open_service(service, windows_sys::Win32::System::Services::SERVICE_QUERY_STATUS).is_ok()
 }
 
+/// Whether Windows' User Choice Protection Driver (UCPD) is running. While it
+/// is, Windows refuses every other program's write to the taskbar Widgets
+/// switch, administrator or not ("Access is denied" in the 1.18.1 VM run on
+/// Windows 11 build 26300); Settings itself can still change it. Read-only.
+#[cfg(all(windows, not(test)))]
+pub fn user_choice_protected() -> bool {
+    WinServices("UCPD").state() == Ok(windows_sys::Win32::System::Services::SERVICE_RUNNING)
+}
+
+#[cfg(any(not(windows), test))]
+pub fn user_choice_protected() -> bool {
+    false
+}
+
 #[cfg(windows)]
 impl ServiceControl for WinServices {
     fn start_type(&self) -> Result<StartType, String> {

@@ -1197,7 +1197,9 @@ function App() {
                                     ? s.requirements.unavailableEdition
                                     : t.unavailable === "windows_edition_enterprise"
                                       ? s.requirements.unavailableEnterpriseEdition
-                                      : s.requirements.notPresent}
+                                      : t.unavailable === "windows_protected"
+                                        ? s.requirements.windowsProtected
+                                        : s.requirements.notPresent}
                               </p>
                             )}
                             {inspecting === t.id && (

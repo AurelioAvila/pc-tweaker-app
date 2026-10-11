@@ -17,7 +17,7 @@ const listings = fs
 const files = ["README.md", "site/src/i18n/dictionary.ts", "site/src/pages/practical-guides.ts", ...listings];
 
 // A number right before a catalog noun, in the six languages the texts use.
-const NOUN = String.raw`(?:Windows[ -])?(?:Free |Pro )?(?:controls?|tweaks?|settings|controlli|impostazioni|réglages|contrôles|ajustes|controles|Einstellungen)`;
+const NOUN = String.raw`(?:Windows[ -])?(?:Free |Pro )?(?:controls?|tweaks?|settings|controlli|impostazioni|réglages|contrôles|ajustes|controles|controlos|Einstellungen)`;
 const claim = new RegExp(String.raw`\b(\d{2,3})\s+${NOUN}`, "gi");
 const NEW = /^\s*(new|nuovi|nouveaux|nuevos|neue|novos)\b/i;
 const problems = [];

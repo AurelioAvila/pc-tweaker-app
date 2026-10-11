@@ -133,6 +133,13 @@ if ($ListingDir) {
         $listingTexts[$file.BaseName] = $text
     }
     Write-Host "Listing texts checked: $(($listingTexts.Keys | Sort-Object) -join ', ')"
+    # The listing languages are chosen in Partner Center; the files must match them exactly.
+    $published = Invoke-Store Get "/submissions/$((Invoke-Store Get '').lastPublishedApplicationSubmission.id)"
+    $storeLanguages = @($published.listings.PSObject.Properties.Name | Sort-Object)
+    $fileLanguages = @($listingTexts.Keys | Sort-Object)
+    if (Compare-Object $storeLanguages $fileLanguages) {
+        throw "Store listing languages ($($storeLanguages -join ', ')) differ from $ListingDir ($($fileLanguages -join ', ')). Change the languages in Partner Center (app overview, Add/remove languages) or the files first."
+    }
 }
 $work = Join-Path ([IO.Path]::GetTempPath()) "pctweaker-store-$(if ($ListingOnly) { 'listing' } else { $Version })"
 Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue

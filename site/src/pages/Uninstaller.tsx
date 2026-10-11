@@ -1,5 +1,5 @@
 import { UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "../constants";
-import { euro, PromoBanner, PromoCard, PromoPlaceholder, usePromo } from "../promo";
+import { euro, PromoCard, PromoFine, usePromo } from "../promo";
 import { promoPercent } from "../../../src/promo";
 
 /* The page a buyer actually lands on.
@@ -86,11 +86,6 @@ export function UninstallerPage() {
         </ul>
       </section>
 
-      {(promo.reserve || (uninstallerOffer && promo.promo)) && (
-        <div className="mb-4">
-          {uninstallerOffer && promo.promo ? <PromoBanner promo={promo.promo} remaining={promo.remaining} /> : <PromoPlaceholder />}
-        </div>
-      )}
       <section id="uninstaller-pro" className="mb-10 scroll-mt-28 rounded-2xl border border-white/10 p-6">
         <h2 className="mb-2 text-2xl font-semibold text-[var(--fg)]">Uninstaller Pro</h2>
         <p className="mb-4 text-lg font-semibold text-accent">
@@ -104,6 +99,7 @@ export function UninstallerPage() {
             "€9.99 per year"
           )}
         </p>
+        {uninstallerOffer && <PromoFine className="-mt-2 mb-4 text-[12.5px] text-[var(--fg-dim)]" />}
         <ul className="mb-5 space-y-2.5 leading-relaxed text-[var(--fg-dim)]">
           {PRO.map((item) => (
             <li key={item} className="flex gap-3">

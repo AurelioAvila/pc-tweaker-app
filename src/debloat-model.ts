@@ -83,7 +83,8 @@ export function sortApps(apps: readonly DebloatApp[], by: SortKey, lang?: string
           ? TIER_ORDER[tierOf(a)] - TIER_ORDER[tierOf(b)]
           : by === "activity"
             ? // Longest without activity first; unknown after every known date.
-              (a.lastActivity ?? Infinity) - (b.lastActivity ?? Infinity) || 0
+              (a.lastActivity ?? a.dataSince ?? Infinity) -
+                (b.lastActivity ?? b.dataSince ?? Infinity) || 0
             : 0;
     return key || a.name.localeCompare(b.name, lang);
   });

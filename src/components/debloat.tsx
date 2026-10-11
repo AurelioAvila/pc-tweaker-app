@@ -54,6 +54,8 @@ export interface DebloatApp {
   startsWithWindows?: boolean | null;
   /** Memory its running processes use now; null when not running. */
   memoryBytes?: number | null;
+  /** Unix seconds: when this account got the app (its data folder was made). */
+  dataSince?: number | null;
 }
 
 export interface DebloatRecord {
@@ -325,7 +327,9 @@ export function DebloatPanel({
         ? format(c.idleDays, { days: idle })
         : app.lastActivity
           ? format(c.lastActivity, { date: dateOf(app.lastActivity) })
-          : null,
+          : app.dataSince
+            ? format(c.noActivitySince, { date: dateOf(app.dataSince) })
+            : null,
     ].filter((x): x is string => !!x);
   };
   const appByCatalog = (catalogId: string) => apps.find((app) => app.catalogId === catalogId);
@@ -748,7 +752,9 @@ export function DebloatPanel({
                                   <dd>
                                     {app.lastActivity
                                       ? dateOf(app.lastActivity)
-                                      : c.unknownActivity}
+                                      : app.dataSince
+                                        ? format(c.noActivitySince, { date: dateOf(app.dataSince) })
+                                        : c.unknownActivity}
                                   </dd>
                                 </div>
                                 <div>

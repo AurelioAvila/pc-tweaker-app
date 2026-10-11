@@ -202,6 +202,9 @@ pub struct DebloatApp {
     pub starts_with_windows: Option<bool>,
     /// Memory its running processes use now; `None` when it is not running.
     pub memory_bytes: Option<u64>,
+    /// When this account got the app (its data folder was created), Unix
+    /// seconds: with no activity since, "unused since" this date.
+    pub data_since: Option<i64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -301,6 +304,7 @@ fn inventory(system: &impl PackageSystem) -> Result<Vec<DebloatApp>, String> {
                 last_activity: None,
                 starts_with_windows: None,
                 memory_bytes: None,
+                data_since: None,
             });
         }
         for info in found {
@@ -326,6 +330,7 @@ fn inventory(system: &impl PackageSystem) -> Result<Vec<DebloatApp>, String> {
                 last_activity: None,
                 starts_with_windows: None,
                 memory_bytes: None,
+                data_since: None,
             });
         }
     }
@@ -786,8 +791,12 @@ mod platform {
             if let Ok(family) = package.Id().and_then(|id| id.FamilyName()) {
                 let family = family.to_string();
                 app.starts_with_windows = startup_task_enabled(&family);
-                app.last_activity = std::env::var_os("LOCALAPPDATA").and_then(|local| {
-                    last_activity(&std::path::Path::new(&local).join("Packages").join(&family))
+                let data = std::env::var_os("LOCALAPPDATA")
+                    .map(|local| std::path::Path::new(&local).join("Packages").join(&family));
+                app.last_activity = data.as_deref().and_then(last_activity);
+                app.data_since = data.as_deref().and_then(|dir| {
+                    let t = std::fs::metadata(dir).and_then(|m| m.created()).ok()?;
+                    Some(t.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs() as i64)
                 });
             }
             app.data_bytes = package
@@ -824,11 +833,18 @@ mod platform {
 
     /// The newest change in an app's data folder: its settings file and the
     /// top level of its local state.
+    ///
+    /// Template files arrive with the dates they were built on, years before
+    /// this account had the app, so only changes made after the folder was
+    /// created for this account count as activity.
     fn last_activity(dir: &std::path::Path) -> Option<i64> {
+        let created = std::fs::metadata(dir).and_then(|m| m.created()).ok()?;
         let mut newest: Option<std::time::SystemTime> = None;
         let mut consider = |p: std::path::PathBuf| {
             if let Ok(t) = std::fs::metadata(p).and_then(|m| m.modified()) {
-                newest = Some(newest.map_or(t, |n| n.max(t)));
+                if t > created {
+                    newest = Some(newest.map_or(t, |n| n.max(t)));
+                }
             }
         };
         consider(dir.join("Settings").join("settings.dat"));

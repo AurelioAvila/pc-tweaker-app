@@ -43,12 +43,14 @@ for (const file of listings) {
   for (const n of [total, free, pro]) {
     if (!description.includes(String(n))) problems.push(`${file}: description does not state ${n}`);
   }
+  // Every euro amount as written, "€59.99" or "59,99 €", normalised to "59.99".
+  const amounts = new Set(
+    [...description.matchAll(/€(\d+(?:[.,]\d+)?)|(?<![\d.,])(\d+(?:[.,]\d+)?) €/g)].map((m) =>
+      (m[1] ?? m[2]).replace(",", "."),
+    ),
+  );
   for (const price of prices) {
-    // "€59.99" or "59,99 €", as a whole amount ("99 €" inside "59,99 €" does not count).
-    const [en, eu] = [`€${price}`, `${price.replace(".", ",")} €`].map((s) => s.replace(/[.]/g, "\\."));
-    if (!new RegExp(`${en}(?![\\d.,])|(?<![\\d.,])${eu}`).test(description)) {
-      problems.push(`${file}: description does not state the Pro price ${price} €`);
-    }
+    if (!amounts.has(price)) problems.push(`${file}: description does not state the Pro price ${price} €`);
   }
 }
 const seo = read("site/scripts/check-seo.mjs");

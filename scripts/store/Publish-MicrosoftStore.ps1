@@ -15,7 +15,8 @@ With -ListingDir the same submission also replaces the Store listing in every la
 (short description, description, features, keywords, release notes) from
 <dir>/<language>.json; with -Screenshots it replaces the screenshots with
 <dir>/<two-letter language>/<file> and their captions. -ListingOnly submits the listing
-without a new package.
+without a new package. -SetLanguages makes the Store listing languages match the files
+(for example pt to pt-pt); -CertificationNotes leaves notes for the certification testers.
 
 .EXAMPLE
 pwsh scripts/store/Publish-MicrosoftStore.ps1 -SaveCredential
@@ -44,6 +45,11 @@ param(
     [Parameter(ParameterSetName = 'Publish')][Parameter(ParameterSetName = 'Listing')][string]$Screenshots,
     # Submit the listing without a new package.
     [Parameter(ParameterSetName = 'Listing', Mandatory)][switch]$ListingOnly,
+    # Make the Store listing languages match the files: add the missing ones (new languages
+    # need -Screenshots) and remove the others. Without it a difference stops the run.
+    [Parameter(ParameterSetName = 'Publish')][Parameter(ParameterSetName = 'Listing')][switch]$SetLanguages,
+    # Notes for the certification testers, saved on the submission (up to 2000 characters).
+    [Parameter(ParameterSetName = 'Publish')][Parameter(ParameterSetName = 'Listing')][ValidateLength(1, 2000)][string]$CertificationNotes,
     # A draft left open in Partner Center blocks new submissions; this deletes it first.
     [Parameter(ParameterSetName = 'Publish')][Parameter(ParameterSetName = 'Listing')][switch]$ReplacePending,
     # Build and verify the MSIX (and check the listing files) without contacting the Store.
@@ -138,7 +144,12 @@ if ($ListingDir) {
     $storeLanguages = @($published.listings.PSObject.Properties.Name | Sort-Object)
     $fileLanguages = @($listingTexts.Keys | Sort-Object)
     if (Compare-Object $storeLanguages $fileLanguages) {
-        throw "Store listing languages ($($storeLanguages -join ', ')) differ from $ListingDir ($($fileLanguages -join ', ')). Change the languages in Partner Center (app overview, Add/remove languages) or the files first."
+        if (-not $SetLanguages) {
+            throw "Store listing languages ($($storeLanguages -join ', ')) differ from $ListingDir ($($fileLanguages -join ', ')). Change the languages in Partner Center (app overview, Add/remove languages) or the files first, or pass -SetLanguages."
+        }
+        $added = @($fileLanguages | Where-Object { $_ -notin $storeLanguages })
+        if ($added -and -not $Screenshots) { throw "New listing languages ($($added -join ', ')) need screenshots: pass -Screenshots." }
+        Write-Host "Listing languages change from $($storeLanguages -join ', ') to $($fileLanguages -join ', ')."
     }
 }
 $work = Join-Path ([IO.Path]::GetTempPath()) "pctweaker-store-$(if ($ListingOnly) { 'listing' } else { $Version })"
@@ -194,6 +205,24 @@ if (-not $ListingOnly) {
 if ($ReleaseNotes) {
     foreach ($listing in $submission.listings.PSObject.Properties.Value) { $listing.baseListing | Add-Member -NotePropertyName releaseNotes -NotePropertyValue $ReleaseNotes -Force }
 }
+if ($CertificationNotes) { $submission.notesForCertification = $CertificationNotes }
+if ($ListingDir -and $SetLanguages) {
+    # Keep the listings whose language has a file, drop the others, and start each new language
+    # from the listing of the same base language (pt for pt-pt), else en-us: title, links and
+    # contact carry over, images do not (the screenshots below replace them).
+    $listings = [ordered]@{}
+    foreach ($name in $listingTexts.Keys | Sort-Object) {
+        $listing = $submission.listings.PSObject.Properties[$name]?.Value
+        if (-not $listing) {
+            $source = @($submission.listings.PSObject.Properties | Where-Object { ($_.Name -split '-')[0] -eq ($name -split '-')[0] })[0]
+            if (-not $source) { $source = $submission.listings.PSObject.Properties['en-us'] }
+            $listing = $source.Value | ConvertTo-Json -Depth 30 | ConvertFrom-Json
+            $listing.baseListing | Add-Member -NotePropertyName images -NotePropertyValue @() -Force
+        }
+        $listings[$name] = $listing
+    }
+    $submission.listings = [pscustomobject]$listings
+}
 if ($ListingDir) {
     foreach ($language in $submission.listings.PSObject.Properties) {
         $text = $listingTexts[$language.Name]
@@ -223,6 +252,12 @@ if ($uploads) {
     Invoke-RestMethod -Method Put -Uri $submission.fileUploadUrl -InFile $zip -Headers @{ 'x-ms-blob-type' = 'BlockBlob' } | Out-Null
 }
 Invoke-Store Put "/submissions/$($submission.id)" $submission | Out-Null
+if ($ListingDir -and $SetLanguages) {
+    $saved = @((Invoke-Store Get "/submissions/$($submission.id)").listings.PSObject.Properties.Name | Sort-Object)
+    if (Compare-Object $saved @($listingTexts.Keys | Sort-Object)) {
+        throw "The Store kept the listing languages $($saved -join ', '). Submission $($submission.id) is left as an uncommitted draft: set the languages on it in Partner Center (Store listings, Add/remove languages) and submit it there."
+    }
+}
 Invoke-Store Post "/submissions/$($submission.id)/commit" | Out-Null
 
 do {

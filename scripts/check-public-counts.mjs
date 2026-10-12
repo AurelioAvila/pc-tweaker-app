@@ -31,10 +31,26 @@ for (const file of files) {
     problems.push(`${file}: "${m[0]}" (catalog: ${total} total, ${free} Free, ${pro} Pro)`);
   }
 }
+// Store policy 10.8.4 (the 1.18.0 submission failed on it): the description must state the
+// in-app purchase types and prices, so it has to carry the prices the app charges.
+const appLib = read("src/lib.ts");
+const prices = ["PRICE_MONTHLY", "PRICE_ANNUAL", "PRICE_LIFETIME"].map(
+  (name) => appLib.match(new RegExp(`export const ${name} = ([\\d.]+);`))?.[1],
+);
+if (prices.some((p) => !p)) throw new Error("Pro prices not found in src/lib.ts");
 for (const file of listings) {
   const { description } = JSON.parse(read(file));
   for (const n of [total, free, pro]) {
     if (!description.includes(String(n))) problems.push(`${file}: description does not state ${n}`);
+  }
+  // Every euro amount as written, "€59.99" or "59,99 €", normalised to "59.99".
+  const amounts = new Set(
+    [...description.matchAll(/€(\d+(?:[.,]\d+)?)|(?<![\d.,])(\d+(?:[.,]\d+)?) €/g)].map((m) =>
+      (m[1] ?? m[2]).replace(",", "."),
+    ),
+  );
+  for (const price of prices) {
+    if (!amounts.has(price)) problems.push(`${file}: description does not state the Pro price ${price} €`);
   }
 }
 const seo = read("site/scripts/check-seo.mjs");

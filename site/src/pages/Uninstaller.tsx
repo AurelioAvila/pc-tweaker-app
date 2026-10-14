@@ -30,11 +30,48 @@ const PRO = [
   "Remove broken entries: programs whose own uninstaller no longer exists, taken off the installed list",
 ];
 
+/* Real captures of v0.13.0 (Graphite Ember, English) on a clean Windows 11
+ * test machine with a dozen common free programs installed. Nothing here is
+ * mocked: the rows, verdicts, command and receipt are what the app produced. */
+const SHOTS = {
+  inventory: {
+    src: "/images/pc-tweaker-uninstaller-installed-apps.webp",
+    alt: "PC Tweaker Uninstaller showing a list of installed programs sorted by size, with the version, size, install date and a Safe to remove verdict beside each program",
+  },
+  brief: {
+    src: "/images/pc-tweaker-uninstaller-removal-brief.webp",
+    alt: "The removal brief for Notepad++: the method, the privileges needed, the space to reclaim, the confidence rating and the exact command that will run, with Cancel and Uninstall buttons",
+  },
+  ledger: {
+    src: "/images/pc-tweaker-uninstaller-removal-ledger.webp",
+    alt: "The Removal Ledger listing a completed WinSCP removal with its date, the 99 MB freed and verified, and the restore point outcome, with Export JSON and Open log folder buttons",
+  },
+} as const;
+
+function Shot({ shot, caption, hero = false }: { shot: { src: string; alt: string }; caption: string; hero?: boolean }) {
+  return (
+    <figure className={hero ? "mb-14" : ""}>
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[var(--bg-2)] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.75)]">
+        <img
+          src={shot.src}
+          width={1267}
+          height={972}
+          alt={shot.alt}
+          className="block h-auto w-full"
+          {...(hero ? { loading: "eager", fetchpriority: "high" } : { loading: "lazy" })}
+        />
+      </div>
+      <figcaption className="font-mono-t mt-3 text-[11.5px] text-[var(--fg-dim)]">{caption}</figcaption>
+    </figure>
+  );
+}
+
 export function UninstallerPage() {
   const promo = usePromo();
   const uninstallerOffer = promo.offer("uninstaller", "annual");
   return (
-    <main id="main-content" className="mx-auto max-w-3xl px-5 pt-36 pb-24 md:px-8">
+    <main id="main-content" className="mx-auto max-w-5xl px-5 pt-36 pb-24 md:px-8">
+      <div className="max-w-3xl">
       <p className="font-mono-t mb-5 text-sm tracking-widest text-accent">PC TWEAKER SUITE</p>
       <h1 className="font-display mb-6 text-4xl font-bold text-[var(--fg)] md:text-5xl">
         See what an uninstall will do, before it does it
@@ -63,6 +100,15 @@ export function UninstallerPage() {
         </div>
         <PromoCard product="uninstaller" plan="annual" href="#uninstaller-pro" />
       </div>
+      </div>
+
+      <Shot
+        hero
+        shot={SHOTS.inventory}
+        caption="PC Tweaker Uninstaller 0.13.0, sorted by size. Sample programs on a clean Windows 11 test PC."
+      />
+
+      <div className="max-w-3xl">
 
       <p className="mb-12 text-[var(--fg-dim)]">
         New to this? Read{" "}
@@ -85,7 +131,20 @@ export function UninstallerPage() {
           ))}
         </ul>
       </section>
+      </div>
 
+      <div className="mb-14 grid gap-8 md:grid-cols-2">
+        <Shot
+          shot={SHOTS.brief}
+          caption="The removal brief: the exact command, the permissions and the confidence rating, before anything runs."
+        />
+        <Shot
+          shot={SHOTS.ledger}
+          caption="The Removal Ledger: a local receipt with the space actually freed and the restore point outcome."
+        />
+      </div>
+
+      <div className="max-w-3xl">
       <section id="uninstaller-pro" className="mb-10 scroll-mt-28 rounded-2xl border border-white/10 p-6">
         <h2 className="mb-2 text-2xl font-semibold text-[var(--fg)]">Uninstaller Pro</h2>
         <p className="mb-4 text-lg font-semibold text-accent">
@@ -156,6 +215,7 @@ export function UninstallerPage() {
           Lifetime includes the 12-month bonus described above.
         </p>
       </section>
+      </div>
     </main>
   );
 }

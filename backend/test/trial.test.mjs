@@ -258,6 +258,8 @@ test("two trial checkouts by one account yield one trial", async () => {
   const { rows } = await getPool().query("SELECT subscription_id FROM trial_claims WHERE product = 'pctweaker' AND user_id = $1", [id]);
   assert.equal(rows.length, 1);
   assert.notEqual(rows[0].subscription_id, log.cancelled[0]);
+  assert.equal((await receipts(id)).some((r) => r.receipt_key.startsWith("trial_rejected:")), false, "their own trial goes on");
+  assert.equal((await status(id)).state, "trialing");
 });
 
 test("the trial is per product: the Uninstaller trial is separate and granted only by subscription events", async () => {

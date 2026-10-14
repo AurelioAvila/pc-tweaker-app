@@ -867,9 +867,14 @@ async function admitTrial(userId: string, product: Product, subscription: Stripe
       );
       await revokeEntitlement(userId, product, subscription.id, TRIAL_REJECTED);
     }
-    await queueReceipt(`trial_rejected:${subscription.id}`, {
-      kind: "trial_rejected", userId, product, plan, expiresAt: null, subscriptionId: subscription.id, chargedLabel: null,
-    });
+    // A second checkout by someone already in trial is simply dropped: their
+    // own trial goes on, so there is nothing to tell them.
+    const { rows: own } = await getPool().query("SELECT 1 FROM trial_claims WHERE product = $1 AND user_id = $2", [product, userId]);
+    if (!own.length) {
+      await queueReceipt(`trial_rejected:${subscription.id}`, {
+        kind: "trial_rejected", userId, product, plan, expiresAt: null, subscriptionId: subscription.id, chargedLabel: null,
+      });
+    }
     console.log(`trial refused for user ${userId} on ${product}: already used; ${subscription.id} cancelled before any charge`);
     return false;
   }

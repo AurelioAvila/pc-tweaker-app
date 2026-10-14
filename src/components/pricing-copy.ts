@@ -419,7 +419,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
       "Todas as ferramentas Pro, sem renovações. Duas ferramentas adicionais para as suas configurações.",
     renewal: "Renova até ao cancelamento. Gestão através da sua conta.",
     perpetual: "Um pagamento. Sem renovação de subscrição.",
-    mostChosen: "O mais escolhido",
+    mostChosen: "Mais escolhido",
     compare: "Escolha pelo que utiliza",
     capability: "O que está incluído",
     essentials: "Ajustes essenciais e monitorização em direto",

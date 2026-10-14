@@ -108,19 +108,19 @@ const environment = {
   STRIPE_PRICE_UNINSTALLER_LOYALTY: "price_uninstaller_loyalty_fixture",
   STRIPE_COUPON_HALLOWEEN_MONTHLY: "coupon_monthly",
 };
-async function checkout(userId, body, env = environment, at = Date.parse("2026-11-20T10:00:00Z")) {
+async function checkout(userId, body, env = environment, at = Date.parse("2026-11-20T10:00:00Z"), expected = 200) {
   const calls = [];
   const handler = createCheckoutHandler({ environment: env, now: () => at,
     async createSession(params) { calls.push(params); return { url: "https://checkout.stripe.com/c/pay/cs_test_fixture" }; } });
   const res = { statusCode: 200, status(v) { this.statusCode = v; return this; }, json(v) { this.body = v; return this; } };
   await handler({ userId: Number(userId), body }, res);
-  assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+  assert.equal(res.statusCode, expected, JSON.stringify(res.body));
   return { params: calls[0], body: res.body };
 }
 
 test("checkout adds the trial to subscription plans only, and only with the switch on", async () => {
   const id = await user();
-  const monthly = await checkout(id, { plan: "monthly" });
+  const monthly = await checkout(id, { plan: "monthly", start_trial: true });
   assert.equal(monthly.body.trial, true);
   assert.equal(monthly.body.trial_days, 3);
   assert.equal(monthly.params.subscription_data.trial_period_days, 3);
@@ -132,22 +132,38 @@ test("checkout adds the trial to subscription plans only, and only with the swit
 
   const lifetime = await checkout(id, { plan: "lifetime" });
   assert.equal(lifetime.body.trial, false);
+  const lifetimeTrial = await checkout(id, { plan: "lifetime", start_trial: true }, environment, undefined, 409);
+  assert.equal(lifetimeTrial.body.code, "trial_unavailable");
   assert.equal(lifetime.params.payment_method_collection, undefined);
   assert.equal(lifetime.params.subscription_data, undefined);
 
-  const uninstaller = await checkout(id, { product: "uninstaller", plan: "annual" });
+  const uninstaller = await checkout(id, { product: "uninstaller", plan: "annual", start_trial: true });
   assert.equal(uninstaller.body.trial, true);
   assert.equal(uninstaller.params.subscription_data.trial_period_days, 3);
 
-  const off = await checkout(id, { plan: "annual" }, { ...environment, TRIAL_ENABLED: "false" });
+  assert.equal((await checkout(id, { plan: "annual", start_trial: true }, { ...environment, TRIAL_ENABLED: "false" }, undefined, 409)).body.code, "trial_unavailable");
+  const off = await checkout(id, { plan: "annual", start_trial: false }, { ...environment, TRIAL_ENABLED: "false" });
   assert.equal(off.body.trial, false);
   assert.equal(off.params.subscription_data.trial_period_days, undefined);
   assert.equal(off.params.payment_method_collection, undefined);
 });
 
+test("the customer chooses: Subscribe now has no trial even when one is available, and charges at once", async () => {
+  const id = await user();
+  for (const body of [{ plan: "monthly", start_trial: false }, { plan: "monthly" }]) {
+    const now = await checkout(id, body);
+    assert.equal(now.body.trial, false);
+    assert.equal(now.params.subscription_data.trial_period_days, undefined);
+    assert.equal(now.params.payment_method_collection, undefined);
+    assert.equal(now.params.subscription_data.metadata.trial, undefined);
+  }
+  assert.equal((await status(id)).can_start_trial, true, "choosing to pay now does not use the trial");
+  await checkout(id, { plan: "monthly", start_trial: "yes" }, environment, undefined, 400);
+});
+
 test("the Halloween coupon stays on a trial checkout, so the first charge after the trial is the promo price", async () => {
   const id = await user();
-  const during = await checkout(id, { plan: "monthly" }, environment, Date.parse("2026-10-31T20:00:00Z"));
+  const during = await checkout(id, { plan: "monthly", start_trial: true }, environment, Date.parse("2026-10-31T20:00:00Z"));
   assert.deepEqual(during.params.discounts, [{ coupon: "coupon_monthly" }]);
   assert.equal(during.params.subscription_data.trial_period_days, 3);
   assert.equal(during.params.subscription_data.metadata.promo_id, PROMO.id);
@@ -217,7 +233,8 @@ test("the trial is refused, before any charge, to a second account with the same
   // Same mailbox written differently: the checkout no longer offers the trial...
   const second = await user("annabianchi+2@googlemail.com");
   assert.equal((await status(second)).can_start_trial, false);
-  assert.equal((await checkout(second, { plan: "monthly" })).body.trial, false);
+  assert.equal((await checkout(second, { plan: "monthly", start_trial: true }, environment, undefined, 409)).body.code, "trial_unavailable");
+  assert.equal((await checkout(second, { plan: "monthly" })).body.trial, false, "subscribing straight away is the only choice left");
   // ...and a trial subscription that slipped through is cancelled.
   const log = {};
   const sneaky = trialSubscription(second);
@@ -314,4 +331,30 @@ test("Lifetime never gets a trial and reads as active", async () => {
   assert.equal(state.status, "lifetime");
   assert.equal(state.can_start_trial, false);
   assert.equal(state.current_period_end, null);
+});
+
+test("prices come from Stripe, cached, with the Uninstaller's loyalty price for PC Tweaker subscribers", async () => {
+  const { publicPrices, billingStatus: status2 } = await import("../dist/routes/stripe.js");
+  const reads = [];
+  const catalogue = {
+    price_pc_monthly_fixture: { active: true, unit_amount: 799, currency: "eur", recurring: { interval: "month" }, tax_behavior: "exclusive" },
+    price_pc_annual_fixture: { active: true, unit_amount: 5999, currency: "eur", recurring: { interval: "year" }, tax_behavior: "exclusive" },
+    price_uninstaller_fixture: { active: true, unit_amount: 999, currency: "eur", recurring: { interval: "year" }, tax_behavior: "exclusive" },
+    price_uninstaller_loyalty_fixture: { active: true, unit_amount: 499, currency: "eur", recurring: { interval: "year" }, tax_behavior: "exclusive" },
+  };
+  const read = async (id) => { reads.push(id); return catalogue[id]; };
+  const listed = await publicPrices(environment, read);
+  assert.deepEqual(listed.prices.map((p) => [p.product, p.plan, p.amount, p.interval]), [
+    ["pctweaker", "monthly", 799, "month"], ["pctweaker", "annual", 5999, "year"], ["uninstaller", "annual", 999, "year"],
+  ]);
+  assert.equal(listed.trial_days, 3);
+  await publicPrices(environment, read);
+  assert.equal(reads.length, 3, "cached");
+
+  const subscriber = await user();
+  await getPool().query("UPDATE users SET is_pro = TRUE, plan = 'annual', pro_expires_at = now() + interval '30 days' WHERE id = $1", [subscriber]);
+  const [uninstaller] = (await status2(subscriber, ["uninstaller"], environment, Date.now(), read)).products;
+  assert.deepEqual(uninstaller.prices.map((p) => [p.plan, p.amount]), [["annual", 499]]);
+  const [pctweaker] = (await status2(await user(), ["pctweaker"], environment, Date.now(), read)).products;
+  assert.deepEqual(pctweaker.prices.map((p) => [p.plan, p.amount]), [["monthly", 799], ["annual", 5999]]);
 });

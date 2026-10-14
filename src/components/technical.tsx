@@ -132,7 +132,9 @@ function previewSummary(preview: TweakPreview, s: Strings): string {
     parts.push(
       changing === 0
         ? s.preview.noChange
-        : format(s.preview.willChange, { count: changing, total: registry.length }),
+        : registry.length === 1
+          ? s.preview.willChangeOne
+          : format(s.preview.willChange, { count: changing, total: registry.length }),
     );
   }
   if (registry.length < preview.rows.length) parts.push(s.preview.readAtApply);

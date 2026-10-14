@@ -9,7 +9,8 @@ test("migration preserves existing undated grants but never blesses later missin
   const pool = getPool();
   await pool.query(`CREATE TABLE users (
     id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL,
-    is_pro BOOLEAN NOT NULL DEFAULT FALSE, plan TEXT, pro_expires_at TIMESTAMPTZ
+    is_pro BOOLEAN NOT NULL DEFAULT FALSE, plan TEXT, pro_expires_at TIMESTAMPTZ,
+    subscription_status TEXT, trial_ends_at TIMESTAMPTZ, cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE
   )`);
   const { rows: old } = await pool.query(
     "INSERT INTO users (email, password_hash, is_pro, plan) VALUES ('legacy@example.com', 'fixture', TRUE, 'monthly') RETURNING id",

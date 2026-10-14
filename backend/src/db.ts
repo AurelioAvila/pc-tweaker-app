@@ -225,6 +225,33 @@ async function initSchema(): Promise<void> {
     );
   `);
 
+  // The Stripe status and trial end behind each recurring grant, so the apps
+  // can tell "in trial" from "paid" and "blocked by a failed payment" from
+  // "never subscribed". Additive: code that predates them ignores them.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status TEXT;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ;`);
+  await pool.query(`ALTER TABLE entitlements ADD COLUMN IF NOT EXISTS subscription_status TEXT;`);
+  await pool.query(`ALTER TABLE entitlements ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE;`);
+  await pool.query(`ALTER TABLE entitlements ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE;`);
+  // One free trial per product: per account, per normalised email (hashed)
+  // and per card fingerprint where Stripe gives one. No foreign key on
+  // purpose: deleting an account must not hand its trial back.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS trial_claims (
+      product TEXT NOT NULL,
+      user_id INTEGER NOT NULL,
+      email_hash TEXT NOT NULL,
+      card_fingerprint TEXT,
+      subscription_id TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (product, user_id)
+    );
+  `);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS trial_claims_email_idx ON trial_claims (product, email_hash);`);
+  // NULL fingerprints never collide with each other in a unique index.
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS trial_claims_card_idx ON trial_claims (product, card_fingerprint);`);
+
   // One row per website download click that arrived from a tagged social
   // post (routes/downloads.ts). Campaign labels and a timestamp only: no IP,
   // no user agent, no identifier, so a row can never be joined to a person.

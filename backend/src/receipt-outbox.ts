@@ -3,8 +3,9 @@ import { getPool } from "./db";
 
 export type Receipt = {
   /** Absent for purchase receipts; "refund" for a reversal, "ending" for a
-   *  subscription set to end, "bonus" for the Uninstaller year of Lifetime. */
-  kind?: "refund" | "ending" | "bonus";
+   *  subscription set to end, "bonus" for the Uninstaller year of Lifetime,
+   *  "trial_*" for the free trial (expiresAt = the trial's end). */
+  kind?: "refund" | "ending" | "bonus" | "trial_started" | "trial_ending" | "trial_rejected";
   userId: string;
   plan: string | null;
   expiresAt: string | null;
@@ -13,6 +14,8 @@ export type Receipt = {
   chargedLabel: string | null;
   /** "ending": why, and the subscription to re-check before sending. */
   reason?: "cancelled" | "payment_failed";
+  /** "ending"/payment_failed: Pro is already blocked (no grace); expiresAt is when. */
+  blocked?: boolean;
   subscriptionId?: string;
   /** "bonus": when the year started. */
   startedAt?: string;

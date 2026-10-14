@@ -14,8 +14,9 @@
  *   timeout or network error. A 409 from Resend means the same key is already
  *   in flight there, so nothing else is tried.
  * - Never two copies. One idempotency key per message, kept for every provider.
- *   Resend dedupes on it for 24 hours, so an ambiguous Resend answer (timeout,
- *   5xx, unreadable 2xx) is asked once more with the same key before moving on.
+ *   Any 2xx counts as taken, even with an unreadable body. Resend dedupes on the
+ *   key for 24 hours, so an ambiguous Resend answer (timeout, network error,
+ *   5xx) is asked once more with the same key before moving on.
  *   Within one process a key that was accepted is never sent again.
  * - EMAIL_SINK=1 (or true / dry-run) sends nothing anywhere: the message is
  *   written to EMAIL_SINK_DIR (default <tmp>/email-sink) for previews where a
@@ -42,7 +43,8 @@ export type Mail = {
 export type Outcome = "sent" | "skipped" | "rejected" | "ambiguous" | "conflict";
 export type Attempt = { provider: string; outcome: Outcome; status?: number; code?: string };
 export type Result =
-  | { ok: true; provider: string; id: string; key: string; attempts: Attempt[]; duplicate?: boolean }
+  /** id: the provider's message id, null when a 2xx carried none (still taken, never handed on). */
+  | { ok: true; provider: string; id: string | null; key: string; attempts: Attempt[]; duplicate?: boolean }
   | { ok: false; error: "no_provider_configured" | "all_providers_failed" | "in_flight_elsewhere"; key: string; attempts: Attempt[]; rejectedAddress: boolean };
 
 type Env = Record<string, string | undefined>;
@@ -154,7 +156,7 @@ export const DEFAULT_ORDER = "resend,smtp2go,mailjet";
 const DAY_MS = 86_400_000;
 const REMEMBERED = 1000;
 const BODY_LIMIT = 16_384;
-const sentKeys = new Map<string, { provider: string; id: string; at: number }>();
+const sentKeys = new Map<string, { provider: string; id: string | null; at: number }>();
 const inFlight = new Map<string, Promise<Result>>();
 const counters: Record<string, Record<Outcome, number>> = {};
 
@@ -215,9 +217,10 @@ async function attempt(name: string, provider: Provider, env: Env, mail: Mail, k
   const json = await readJson(response);
   const code = safeCode(provider.code(json));
   if (status >= 200 && status < 300) {
-    const id = json ? provider.accepted(json) : null;
-    if (id) return { provider: name, outcome: "sent", status, id };
-    return { provider: name, outcome: json && provider.refused(json) ? "rejected" : "ambiguous", status, code };
+    // A 2xx is the provider taking the message unless its body says otherwise.
+    // An unreadable body still counts as taken: handing it on could mail twice.
+    if (json && provider.refused(json)) return { provider: name, outcome: "rejected", status, code };
+    return { provider: name, outcome: "sent", status, id: (json && provider.accepted(json)) || undefined };
   }
   if (status === 409) return { provider: name, outcome: "conflict", status, code };
   return { provider: name, outcome: status >= 500 ? "ambiguous" : "rejected", status, code };
@@ -259,10 +262,10 @@ async function run(env: Env, mail: Mail, key: string, fetcher: Fetch, timeoutMs:
     attempts.push(entry);
     count(name, entry.outcome);
     log({ event: "mail_attempt", key, ...entry });
-    if (entry.outcome === "sent" && id) {
-      sentKeys.set(key, { provider: name, id, at: Date.now() });
+    if (entry.outcome === "sent") {
+      sentKeys.set(key, { provider: name, id: id ?? null, at: Date.now() });
       if (sentKeys.size > REMEMBERED) sentKeys.delete(sentKeys.keys().next().value as string);
-      return { ok: true, provider: name, id, key, attempts };
+      return { ok: true, provider: name, id: id ?? null, key, attempts };
     }
     if (entry.outcome === "conflict") {
       log({ event: "mail_in_flight_elsewhere", key, provider: name });

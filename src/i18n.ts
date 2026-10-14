@@ -1048,6 +1048,15 @@ export interface Strings {
     forgotPasswordLink: string;
     forgotPasswordButton: string;
     forgotPasswordSent: string;
+    securityTitle: string;
+    currentPassword: string;
+    newPassword: string;
+    changePassword: string;
+    passwordChanged: string;
+    newEmail: string;
+    changeEmail: string;
+    changeEmailSent: string;
+    errorCurrentPassword: string;
     backToLogin: string;
     emailNotVerified: string;
     emailVerified: string;
@@ -2329,6 +2338,17 @@ const it: Strings = {
     forgotPasswordLink: "Password dimenticata?",
     forgotPasswordButton: "Invia link di ripristino",
     forgotPasswordSent: "Se l'email è registrata, riceverai un link per reimpostare la password.",
+    securityTitle: "Password ed email",
+    currentPassword: "Password attuale",
+    newPassword: "Nuova password",
+    changePassword: "Cambia password",
+    passwordChanged:
+      "Password cambiata. Gli altri PC sono stati disconnessi; questo resta connesso.",
+    newEmail: "Nuovo indirizzo email",
+    changeEmail: "Cambia email",
+    changeEmailSent:
+      "Controlla la nuova casella: la modifica avviene quando confermi il link che trovi lì.",
+    errorCurrentPassword: "La password attuale non è corretta.",
     backToLogin: "Torna al login",
     emailNotVerified: "Email non verificata",
     emailVerified: "Email verificata",
@@ -4001,6 +4021,15 @@ const en: Strings = {
     forgotPasswordLink: "Forgot password?",
     forgotPasswordButton: "Send reset link",
     forgotPasswordSent: "If that email is registered, you'll receive a password reset link.",
+    securityTitle: "Password and email",
+    currentPassword: "Current password",
+    newPassword: "New password",
+    changePassword: "Change password",
+    passwordChanged: "Password changed. Other PCs were signed out; this one stays signed in.",
+    newEmail: "New email address",
+    changeEmail: "Change email",
+    changeEmailSent: "Check the new inbox: the change happens when you confirm the link there.",
+    errorCurrentPassword: "The current password is not correct.",
     backToLogin: "Back to login",
     emailNotVerified: "Email not verified",
     emailVerified: "Email verified",
@@ -5694,6 +5723,17 @@ const fr: Strings = {
     forgotPasswordLink: "Mot de passe oublié ?",
     forgotPasswordButton: "Envoyer le lien de réinitialisation",
     forgotPasswordSent: "Si cet e-mail est enregistré, vous recevrez un lien de réinitialisation.",
+    securityTitle: "Mot de passe et e-mail",
+    currentPassword: "Mot de passe actuel",
+    newPassword: "Nouveau mot de passe",
+    changePassword: "Changer le mot de passe",
+    passwordChanged:
+      "Mot de passe modifié. Les autres PC ont été déconnectés ; celui-ci reste connecté.",
+    newEmail: "Nouvelle adresse e-mail",
+    changeEmail: "Changer d'adresse e-mail",
+    changeEmailSent:
+      "Consultez la nouvelle boîte de réception : le changement a lieu quand vous confirmez le lien qu'elle contient.",
+    errorCurrentPassword: "Le mot de passe actuel n'est pas correct.",
     backToLogin: "Retour à la connexion",
     emailNotVerified: "E-mail non vérifié",
     emailVerified: "E-mail vérifié",
@@ -7383,6 +7423,17 @@ const es: Strings = {
     forgotPasswordButton: "Enviar enlace de restablecimiento",
     forgotPasswordSent:
       "Si ese correo está registrado, recibirás un enlace para restablecer la contraseña.",
+    securityTitle: "Contraseña y correo",
+    currentPassword: "Contraseña actual",
+    newPassword: "Contraseña nueva",
+    changePassword: "Cambiar contraseña",
+    passwordChanged:
+      "Contraseña cambiada. Se cerró la sesión en los demás PC; en este sigues conectado.",
+    newEmail: "Nueva dirección de correo",
+    changeEmail: "Cambiar correo",
+    changeEmailSent:
+      "Revisa la nueva bandeja de entrada: el cambio se hace cuando confirmes el enlace que encontrarás allí.",
+    errorCurrentPassword: "La contraseña actual no es correcta.",
     backToLogin: "Volver al inicio de sesión",
     emailNotVerified: "Correo no verificado",
     emailVerified: "Correo verificado",
@@ -9082,6 +9133,16 @@ const de: Strings = {
     forgotPasswordButton: "Link zum Zurücksetzen senden",
     forgotPasswordSent:
       "Falls diese E-Mail registriert ist, erhältst du einen Link zum Zurücksetzen des Passworts.",
+    securityTitle: "Passwort und E-Mail",
+    currentPassword: "Aktuelles Passwort",
+    newPassword: "Neues Passwort",
+    changePassword: "Passwort ändern",
+    passwordChanged: "Passwort geändert. Andere PCs wurden abgemeldet; dieser bleibt angemeldet.",
+    newEmail: "Neue E-Mail-Adresse",
+    changeEmail: "E-Mail ändern",
+    changeEmailSent:
+      "Sieh im neuen Postfach nach: Die Änderung erfolgt, wenn du den Link dort bestätigst.",
+    errorCurrentPassword: "Das aktuelle Passwort ist nicht korrekt.",
     backToLogin: "Zurück zur Anmeldung",
     emailNotVerified: "E-Mail nicht bestätigt",
     emailVerified: "E-Mail bestätigt",
@@ -10777,6 +10838,17 @@ const pt: Strings = {
     forgotPasswordButton: "Enviar ligação de reposição",
     forgotPasswordSent:
       "Se esse e-mail estiver registado, receberá uma ligação para repor a palavra-passe.",
+    securityTitle: "Palavra-passe e e-mail",
+    currentPassword: "Palavra-passe atual",
+    newPassword: "Nova palavra-passe",
+    changePassword: "Alterar a palavra-passe",
+    passwordChanged:
+      "Palavra-passe alterada. A sessão terminou nos outros PCs; neste continua iniciada.",
+    newEmail: "Novo endereço de e-mail",
+    changeEmail: "Alterar o e-mail",
+    changeEmailSent:
+      "Verifique a nova caixa de correio: a alteração acontece quando confirmar a ligação que lá encontrar.",
+    errorCurrentPassword: "A palavra-passe atual não está correta.",
     backToLogin: "Voltar ao início de sessão",
     emailNotVerified: "E-mail não verificado",
     emailVerified: "E-mail verificado",

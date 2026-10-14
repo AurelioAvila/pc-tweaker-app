@@ -1064,8 +1064,13 @@ fn requires_admin_for(id: &str) -> bool {
 #[cfg(windows)]
 #[tauri::command(async)]
 fn apply_tweak(app: tauri::AppHandle, id: String) -> Result<(), String> {
-    if requires_admin_for(&id) && !elevation::is_elevated() {
-        return elevation::run_elevated_action("--elevated-apply", &id);
+    if requires_admin_for(&id) {
+        if !elevation::is_elevated() {
+            return elevation::run_elevated_action("--elevated-apply", &id);
+        }
+        // Already elevated (Run as administrator, or UAC turned off): the
+        // helper is skipped, so its restore point is taken here instead.
+        restore_point_before_change();
     }
     let dir = store_for_dir(&app)?;
     let store = RollbackStore::new(dir.clone());
@@ -1159,6 +1164,7 @@ fn apply_tweaks(
 
     if !needs_admin.is_empty() {
         if elevation::is_elevated() {
+            restore_point_before_change();
             for id in &needs_admin {
                 if let Err(e) = apply_by_id(&store, &dir, id) {
                     failures.push(format!("{}: {}", id, e));
@@ -1849,6 +1855,24 @@ pub fn run_drift_check_headless() -> ! {
     std::process::exit(0)
 }
 
+/// Safety net before an elevated system change: a System Restore point.
+/// Best-effort by design: Windows throttles restore points (one per 24h by
+/// default) and System Restore can be disabled entirely, and neither may
+/// block an action the user asked for. The outcome lands in the audit log
+/// either way, so "was I protected?" always has an answer, and a disabled
+/// System Restore shows up there as a failed restore point.
+fn restore_point_before_change() {
+    match restore_point::create_restore_point() {
+        restore_point::RestorePointOutcome::Created => {
+            audit::record("restore-point", "system", true, None);
+        }
+        restore_point::RestorePointOutcome::Failed { reason } => {
+            audit::record("restore-point", "system", false, Some(reason));
+        }
+        restore_point::RestorePointOutcome::Skipped { .. } => {}
+    }
+}
+
 pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     let dir = dirs_app_data_dir();
     // Checked before anything, including crash reporting, writes to it.
@@ -1886,20 +1910,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     }
     let store = RollbackStore::new(dir.clone());
 
-    // Safety net first: a System Restore point before any elevated change.
-    // Best-effort by design â€” Windows throttles restore points (one per 24h
-    // by default) and System Restore can be disabled entirely, and neither
-    // condition may block an action the user asked for. The outcome lands in
-    // the audit log either way, so "was I protected?" always has an answer.
-    match restore_point::create_restore_point() {
-        restore_point::RestorePointOutcome::Created => {
-            audit::record("restore-point", "system", true, None);
-        }
-        restore_point::RestorePointOutcome::Failed { reason } => {
-            audit::record("restore-point", "system", false, Some(reason));
-        }
-        restore_point::RestorePointOutcome::Skipped { .. } => {}
-    }
+    restore_point_before_change();
 
     let result: Result<(), String> = match action {
         "--elevated-download-limit" => require_pro(&dir).and_then(|_| {

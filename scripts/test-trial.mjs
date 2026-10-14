@@ -56,8 +56,13 @@ assert.equal(trialOffer("pctweaker", "monthly", { ...prices, trialEnabled: false
 assert.equal(trialOffer("pctweaker", "monthly", prices, status([row()], { trial_enabled: false })), null);
 assert.equal(trialOffer("pctweaker", "monthly", prices, status([row({ can_start_trial: false })])), null);
 // An account-specific renewal price (loyalty) wins over the public list.
-assert.deepEqual(trialOffer("uninstaller", "annual", prices, status([row({ product: "uninstaller", renew_amount: 499 })])), { days: 3, amount: 499 });
-assert.equal(status([row({ renew_amount: 4.5 })]).products[0].renewAmount, null);
+assert.deepEqual(
+  trialOffer("uninstaller", "annual", prices, status([row({ product: "uninstaller", prices: [{ plan: "annual", amount: 499, currency: "eur", interval: "year" }] })])),
+  { days: 3, amount: 499 },
+);
+assert.deepEqual(status([row({ prices: [{ plan: "monthly", amount: 4.5 }, { plan: "annual", amount: 599, currency: "usd" }] })]).products[0].prices, []);
+// Contract v3 shape: per-item currency and tax behaviour.
+assert.equal(parsePriceList({ trial_enabled: true, trial_days: 3, prices: [{ product: "pctweaker", plan: "monthly", amount: 799, currency: "eur", interval: "month", tax_behavior: "exclusive" }] }).prices[0].amount, 799);
 // With the price list missing, a live promotion's regular price is still the server's.
 assert.deepEqual(trialOffer("pctweaker", "monthly", null, status([row()]), 799), { days: 3, amount: 799 });
 // A malformed price is dropped rather than printed.

@@ -5,6 +5,9 @@ import type { Lang } from "../i18n";
  *  pronoun so they sit next to the plans' existing copy either way. */
 type TrialCopy = {
   start: string;
+  subscribeNow: string;
+  subscribe: string;
+  subscribeNowNote: string;
   thenMonth: string;
   thenYear: string;
   thenMonthPromo: string;
@@ -33,6 +36,9 @@ type TrialCopy = {
 export const TRIAL_COPY: Record<Lang, TrialCopy> = {
   en: {
     start: "Start {days}-day free trial",
+    subscribeNow: "Subscribe now",
+    subscribe: "Subscribe",
+    subscribeNowNote: "Or subscribe now: {price} charged today, no trial.",
     thenMonth:
       "Then {price} a month, first charge on {date}. Cancel anytime from the billing portal.",
     thenYear:
@@ -65,6 +71,9 @@ export const TRIAL_COPY: Record<Lang, TrialCopy> = {
   },
   it: {
     start: "Inizia {days} giorni di prova gratuita",
+    subscribeNow: "Abbonati subito",
+    subscribe: "Abbonati",
+    subscribeNowNote: "Oppure abbonati subito: {price} addebitati oggi, senza prova.",
     thenMonth:
       "Poi {price} ogni mese, primo addebito il {date}. Disdici quando vuoi dal portale di pagamento.",
     thenYear:
@@ -97,6 +106,9 @@ export const TRIAL_COPY: Record<Lang, TrialCopy> = {
   },
   fr: {
     start: "Commencer l'essai gratuit de {days} jours",
+    subscribeNow: "S'abonner maintenant",
+    subscribe: "S'abonner",
+    subscribeNowNote: "Ou abonnez-vous maintenant : {price} prélevés aujourd'hui, sans essai.",
     thenMonth:
       "Ensuite {price} par mois, premier prélèvement le {date}. Résiliable à tout moment depuis le portail de facturation.",
     thenYear:
@@ -129,6 +141,9 @@ export const TRIAL_COPY: Record<Lang, TrialCopy> = {
   },
   es: {
     start: "Empezar la prueba gratuita de {days} días",
+    subscribeNow: "Suscribirse ahora",
+    subscribe: "Suscribirse",
+    subscribeNowNote: "O suscríbete ahora: {price} con cargo hoy, sin prueba.",
     thenMonth:
       "Después, {price} al mes, con el primer cargo el {date}. Cancela cuando quieras desde el portal de pagos.",
     thenYear:
@@ -161,6 +176,9 @@ export const TRIAL_COPY: Record<Lang, TrialCopy> = {
   },
   de: {
     start: "{days} Tage kostenlos testen",
+    subscribeNow: "Jetzt abonnieren",
+    subscribe: "Abonnieren",
+    subscribeNowNote: "Oder jetzt abonnieren: {price} werden heute abgebucht, ohne Testphase.",
     thenMonth:
       "Danach {price} pro Monat, erste Abbuchung am {date}. Jederzeit im Kundenportal kündbar.",
     thenYear:
@@ -193,6 +211,9 @@ export const TRIAL_COPY: Record<Lang, TrialCopy> = {
   },
   pt: {
     start: "Experimentar {days} dias grátis",
+    subscribeNow: "Subscrever agora",
+    subscribe: "Subscrever",
+    subscribeNowNote: "Ou subscreva agora: {price} cobrados hoje, sem avaliação gratuita.",
     thenMonth:
       "Depois, {price} por mês, com a primeira cobrança a {date}. Pode cancelar quando quiser no portal de faturação.",
     thenYear:

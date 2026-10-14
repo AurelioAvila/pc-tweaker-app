@@ -17,10 +17,13 @@ export type ProductBilling = {
   cancelAtPeriodEnd: boolean;
   canStartTrial: boolean;
   blockedReason: BlockedReason;
-  /** What this account renews at, in cents, when the server says so (a
-   *  loyalty price differs from the public list). */
-  renewAmount: number | null;
+  /** This account's prices in cents (CONTRATTO.md v3): the Uninstaller's
+   *  loyalty price differs from the public list. */
+  prices: Price[];
 };
+
+/** A plan's price in euro cents, excluding VAT (Link adds it at checkout). */
+export type Price = { plan: string; amount: number };
 
 export type BillingStatus = {
   trialEnabled: boolean;
@@ -33,7 +36,7 @@ export type BillingStatus = {
 export type PriceList = {
   trialEnabled: boolean;
   trialDays: number;
-  prices: { product: string; plan: string; amount: number }[];
+  prices: (Price & { product: string })[];
 };
 
 const STATES: EntitlementState[] = ["none", "trialing", "active", "blocked"];
@@ -44,6 +47,20 @@ const ms = (v: unknown): number | null => {
   const t = typeof v === "string" ? Date.parse(v) : NaN;
   return Number.isFinite(t) ? t : null;
 };
+/** Well-formed euro prices only: a broken entry must never print a price. */
+function priceEntries(value: unknown): (Price & { product: string | undefined })[] {
+  if (!Array.isArray(value)) return [];
+  return (value as (Record<string, unknown> | null)[]).flatMap((p) =>
+    p &&
+    typeof p.plan === "string" &&
+    (p.product === undefined || typeof p.product === "string") &&
+    (p.currency === undefined || p.currency === "eur") &&
+    Number.isInteger(p.amount) &&
+    (p.amount as number) > 0
+      ? [{ plan: p.plan, amount: p.amount as number, product: p.product }]
+      : [],
+  );
+}
 const days = (v: unknown) =>
   Number.isInteger(v) && (v as number) > 0 && (v as number) <= 31 ? (v as number) : 0;
 
@@ -75,10 +92,7 @@ export function parseBillingStatus(value: unknown): BillingStatus | null {
               : REASONS.includes(reason) && reason !== "none"
                 ? reason
                 : "canceled",
-          renewAmount:
-            Number.isInteger(p.renew_amount) && (p.renew_amount as number) > 0
-              ? (p.renew_amount as number)
-              : null,
+          prices: priceEntries(p.prices).map(({ plan, amount }) => ({ plan, amount })),
         },
       ];
     },
@@ -96,15 +110,13 @@ export function parsePriceList(value: unknown): PriceList | null {
   const v = value as Record<string, unknown> | null;
   if (!v || typeof v !== "object" || !Array.isArray(v.prices)) return null;
   if (v.currency !== undefined && v.currency !== "eur") return null;
-  const prices = (v.prices as (Record<string, unknown> | null)[]).filter(
-    (p) =>
-      p &&
-      typeof p.product === "string" &&
-      typeof p.plan === "string" &&
-      Number.isInteger(p.amount) &&
-      (p.amount as number) > 0,
-  ) as PriceList["prices"];
-  return { trialEnabled: v.trial_enabled === true, trialDays: days(v.trial_days), prices };
+  return {
+    trialEnabled: v.trial_enabled === true,
+    trialDays: days(v.trial_days),
+    prices: priceEntries(v.prices).flatMap((p) =>
+      p.product ? [{ ...p, product: p.product }] : [],
+    ),
+  };
 }
 
 /** What the trial button needs: whether to offer it, for how many days, and
@@ -120,8 +132,8 @@ export function trialOffer(
 ): { days: number; amount: number } | null {
   const mine = status?.products.find((p) => p.product === product);
   const amount =
-    // The Uninstaller sells one plan, so its account price is that plan's.
-    (product === "uninstaller" ? mine?.renewAmount : null) ??
+    // The account's own price first (a loyalty price), then the public list.
+    mine?.prices.find((p) => p.plan === plan)?.amount ??
     prices?.prices.find((p) => p.product === product && p.plan === plan)?.amount ??
     promoRegular ??
     null;

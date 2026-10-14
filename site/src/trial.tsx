@@ -23,7 +23,7 @@ function usePriceList(): PriceList | null {
 const fill = (text: string, values: Record<string, string | number>) =>
   text.replace(/\{(\w+)\}/g, (all, key: string) => (key in values ? String(values[key]) : all));
 
-/** "Start 3-day free trial in the app. Then €59.99 a year, first charge on
+/** "Start 3-day free trial or subscribe now in the app. Then €59.99 a year, first charge on
  *  October 17, 2026. Cancel anytime from the billing portal." Only while the
  *  server offers trials, with the server's price and any live offer. */
 export function TrialLine({
@@ -50,7 +50,10 @@ export function TrialLine({
   );
   return (
     <p className={className}>
-      <strong className="text-[var(--fg)]">{fill(t.start, { days: trial.days })} in the app.</strong> {line}
+      <strong className="text-[var(--fg)]">
+        {fill(t.start, { days: trial.days })} or {t.subscribeNow.toLowerCase()} in the app.
+      </strong>{" "}
+      {line}
     </p>
   );
 }

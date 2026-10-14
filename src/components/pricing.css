@@ -675,3 +675,12 @@
 .pricing-trial-alert {
   color: var(--danger);
 }
+/* Trial or pay now: the trial leads, "Subscribe now" sits under it. */
+.pricing-choice {
+  display: grid;
+  gap: 8px;
+}
+.pricing-trial .pricing-trial-alt {
+  margin-top: 4px;
+  color: var(--text-muted);
+}

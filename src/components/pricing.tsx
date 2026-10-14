@@ -36,7 +36,9 @@ export function PricingPanel({
   /** This account's trial and subscription state (GET /api/billing/status). */
   billing?: BillingStatus | null;
   freeTweakCount: number;
-  onChoosePro: (plan: ProPlan) => void | Promise<void>;
+  /** `startTrial` is set only when a trial is on offer: true for the
+   *  trial button, false for "Subscribe now". */
+  onChoosePro: (plan: ProPlan, startTrial?: boolean) => void | Promise<void>;
   onManageBilling: () => void | Promise<void>;
   onOpenLifetimeTools: () => void;
 }) {
@@ -51,6 +53,7 @@ export function PricingPanel({
   const [selectedPeriod, setPeriod] = useState<"monthly" | "annual" | null>(null);
   const period = selectedPeriod ?? (heldPlan === "monthly" ? "monthly" : "annual");
   const [busy, setBusy] = useState<ProPlan | "manage" | null>(null);
+  const [busyTrial, setBusyTrial] = useState<boolean | undefined>(undefined);
   const actionPending = useRef(false);
   const campaign = useLifetimeOffer();
   const promo = usePromo();
@@ -113,7 +116,7 @@ export function PricingPanel({
       )
     : "";
 
-  async function act(plan: ProPlan | "manage") {
+  async function act(plan: ProPlan | "manage", startTrial?: boolean) {
     if (
       actionPending.current ||
       (plan !== "manage" && previewing) ||
@@ -122,8 +125,9 @@ export function PricingPanel({
       return;
     actionPending.current = true;
     setBusy(plan);
+    setBusyTrial(startTrial);
     try {
-      await (plan === "manage" ? onManageBilling() : onChoosePro(plan));
+      await (plan === "manage" ? onManageBilling() : onChoosePro(plan, startTrial));
     } finally {
       actionPending.current = false;
       setBusy(null);
@@ -292,23 +296,36 @@ export function PricingPanel({
               >
                 {busy === "manage" ? "…" : t.updatePayment}
               </button>
+            ) : !isPro && trial ? (
+              <div className="pricing-choice">
+                <button
+                  className="pricing-button pricing-button-trial"
+                  disabled={busy !== null || previewing}
+                  aria-busy={busy === period && busyTrial === true}
+                  aria-describedby="pricing-trial-line"
+                  onClick={() => void act(period, true)}
+                >
+                  {busy === period && busyTrial === true
+                    ? "…"
+                    : format(t.start, { days: trial.days })}
+                </button>
+                <button
+                  className="pricing-button pricing-button-secondary"
+                  disabled={busy !== null || previewing}
+                  aria-busy={busy === period && busyTrial === false}
+                  onClick={() => void act(period, false)}
+                >
+                  {busy === period && busyTrial === false ? "…" : t.subscribeNow}
+                </button>
+              </div>
             ) : !isPro ? (
               <button
-                className={
-                  trial
-                    ? "pricing-button pricing-button-trial"
-                    : "pricing-button pricing-button-secondary"
-                }
+                className="pricing-button pricing-button-secondary"
                 disabled={busy !== null || previewing}
                 aria-busy={busy === period}
-                aria-describedby={trialLine ? "pricing-trial-line" : undefined}
                 onClick={() => void act(period)}
               >
-                {busy === period
-                  ? "…"
-                  : trial
-                    ? format(t.start, { days: trial.days })
-                    : s.pricing.proCta}
+                {busy === period ? "…" : trialSpent ? t.subscribe : s.pricing.proCta}
               </button>
             ) : ownsLifetime || !hasBilling ? (
               <span className="pricing-plan-status">
@@ -349,8 +366,17 @@ export function PricingPanel({
                 <p className="pricing-trial-alert">
                   {t.paymentFailed}. {t.paymentFailedHint}
                 </p>
+              ) : trial ? (
+                <>
+                  <p>{trialLine}</p>
+                  <p className="pricing-trial-alt">
+                    {format(t.subscribeNowNote, {
+                      price: money((proOffer ? proOffer.price : trial.amount) / 100, lang),
+                    })}
+                  </p>
+                </>
               ) : (
-                <p>{trialLine ?? t.used}</p>
+                <p>{t.used}</p>
               )}
             </div>
           )}

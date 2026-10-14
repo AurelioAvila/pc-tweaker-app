@@ -87,7 +87,7 @@ export const PROVIDERS: Record<string, Provider> = {
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Idempotency-Key": key },
       body: {
         from: mail.from,
-        to: list(mail.to),
+        to: mail.to, // as given: Resend takes a string or a list
         subject: mail.subject,
         html: mail.html,
         ...(mail.text ? { text: mail.text } : {}),

@@ -58,7 +58,7 @@ export function WorkspaceSidebar({
                 >
                   <span
                     aria-hidden="true"
-                    className={`shrink-0 ${selected ? (NAV_ACCENT[key] ?? "text-accent") : "text-ink-3 group-hover:text-ink-2"}`}
+                    className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center [&>svg]:h-full [&>svg]:w-full ${selected ? (NAV_ACCENT[key] ?? "text-accent") : "text-ink-3 group-hover:text-ink-2"}`}
                   >
                     {item.icon}
                   </span>

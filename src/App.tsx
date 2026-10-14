@@ -81,6 +81,7 @@ import { AdvancedControlCard } from "./components/advanced-controls";
 import { CONFIGURABLE_TWEAK_IDS, buildName, isCurrentCatalogTweak } from "./catalog";
 import "./App.css";
 import "./desktop-refresh.css";
+import "./family-polish.css";
 
 /** Carries the backend's machine-readable reason alongside its message. */
 class CheckoutError extends Error {

@@ -823,6 +823,14 @@ async function queueBlockedNotice(userId: string, product: Product, subscription
   });
 }
 
+/** The status recorded when access ends. A trial we refused stays
+ *  "trial_rejected" whatever order its cancellation events arrive in:
+ *  Stripe keeps the reason on the subscription. */
+function revokedStatus(subscription: Stripe.Subscription): string {
+  if (subscription.cancellation_details?.comment === TRIAL_REJECTED) return TRIAL_REJECTED;
+  return subscription.status === "active" || subscription.status === "trialing" ? "canceled" : subscription.status;
+}
+
 /** Status, trial end and renewal flag as Stripe has them now. */
 function billingFields(subscription: Stripe.Subscription) {
   return {
@@ -1035,7 +1043,7 @@ const billingEffects: BillingEffects = {
   async cancelSubscription(id) {
     if (!stripe) throw new Error("Stripe is unavailable for subscription cancellation");
     try {
-      await stripe.subscriptions.cancel(id);
+      await stripe.subscriptions.cancel(id, { cancellation_details: { comment: TRIAL_REJECTED } });
     } catch (err) {
       // A retried event: the subscription was cancelled on the first attempt.
       if ((await stripe.subscriptions.retrieve(id)).status !== "canceled") throw err;
@@ -1106,7 +1114,7 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
       throw new Error(`Checkout ${session.id} does not match its subscription`);
     }
     if (!grantsAccess(current)) {
-      await revokePro(userId, current.id, current.status);
+      await revokePro(userId, current.id, revokedStatus(current));
       return;
     }
     if (!(await admitTrial(userId, "pctweaker", current, effects))) return;
@@ -1248,7 +1256,7 @@ async function syncSubscription(
   const welcome = created && !isOurTrial(subscription);
   if (product !== "pctweaker") {
     if (!active) {
-      await revokeEntitlement(userId, product, subscription.id, subscription.status);
+      await revokeEntitlement(userId, product, subscription.id, revokedStatus(subscription));
       await queueBlockedNotice(userId, product, subscription);
       return { userId };
     }
@@ -1274,7 +1282,7 @@ async function syncSubscription(
     return null;
   }
   if (!active) {
-    await revokePro(userId, subscription.id, subscription.status);
+    await revokePro(userId, subscription.id, revokedStatus(subscription));
     await queueBlockedNotice(userId, "pctweaker", subscription);
     return { userId };
   }
@@ -1370,11 +1378,11 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
       const userId = await resolveUserId(subscription);
       if (!userId) break;
       if (product !== "pctweaker") {
-        await revokeEntitlement(userId, product, subscription.id, "canceled");
+        await revokeEntitlement(userId, product, subscription.id, revokedStatus(subscription));
         break;
       }
       if (await holdsLifetime(userId)) break;
-      await revokePro(userId, subscription.id, "canceled");
+      await revokePro(userId, subscription.id, revokedStatus(subscription));
       break;
     }
 

@@ -66,7 +66,10 @@ function effects(log = {}, cards = {}) {
     alertReversal() {},
     async queueRefundNotice() {},
     async cardFingerprint(subscription) { return cards[subscription.id] ?? null; },
-    async cancelSubscription(id) { log.cancelled.push(id); update(subscriptions.get(id), { status: "canceled" }); },
+    async cancelSubscription(id) {
+      log.cancelled.push(id);
+      update(subscriptions.get(id), { status: "canceled", cancellation_details: { comment: "trial_rejected" } });
+    },
   };
 }
 const event = (type, object) => ({ id: `evt_${++sequence}`, type, data: { object } });
@@ -225,6 +228,10 @@ test("the trial is refused, before any charge, to a second account with the same
   assert.equal(state.state, "blocked");
   assert.equal(state.blocked_reason, "trial_already_used");
   assert.ok((await receipts(second)).some((r) => r.receipt_key === `trial_rejected:${sneaky.id}`));
+  // Stripe's own cancellation events, in any order, keep the reason.
+  await handleEvent(event("customer.subscription.updated", sneaky), effects());
+  await handleEvent(event("customer.subscription.deleted", subscriptions.get(sneaky.id)), effects());
+  assert.equal((await status(second)).blocked_reason, "trial_already_used");
 
   // Same card, unrelated email.
   const cardOwner = await user();

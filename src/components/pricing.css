@@ -203,9 +203,9 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
-  /* A ring in the page colour cuts the pill cleanly out of the card border. */
+  /* A hairline in the page colour separates the pill from the card border. */
   box-shadow:
-    0 0 0 3px var(--app-bg-b, var(--surface-1)),
+    0 0 0 1px color-mix(in srgb, var(--app-bg-b, var(--surface-1)) 70%, transparent),
     0 6px 18px -8px var(--app-accent);
 }
 .pricing-ribbon svg {

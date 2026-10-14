@@ -122,7 +122,10 @@ export function AccessPricing() {
               <span
                 id="most-chosen"
                 className="font-mono-t bg-accent absolute -top-3.5 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-[0.14em] whitespace-nowrap text-[var(--bg)]"
-                style={{ boxShadow: "0 0 0 4px var(--bg), 0 8px 22px -8px var(--accent)" }}
+                style={{
+                  boxShadow:
+                    "0 0 0 1px color-mix(in srgb, var(--bg) 70%, transparent), 0 8px 22px -8px var(--accent)",
+                }}
               >
                 <span aria-hidden="true">✦</span>
                 {lifetime.badge}

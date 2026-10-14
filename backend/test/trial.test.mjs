@@ -244,7 +244,7 @@ test("the trial is refused, before any charge, to a second account with the same
   const state = await status(second);
   assert.equal(state.state, "blocked");
   assert.equal(state.blocked_reason, "trial_already_used");
-  assert.ok((await receipts(second)).some((r) => r.receipt_key === `trial_rejected:${sneaky.id}`));
+  assert.equal((await receipts(second)).length, 0, "a refused trial is not mailed: the pack has no such message");
   // Stripe's own cancellation events, in any order, keep the reason.
   await handleEvent(event("customer.subscription.updated", sneaky), effects());
   await handleEvent(event("customer.subscription.deleted", subscriptions.get(sneaky.id)), effects());
@@ -357,4 +357,77 @@ test("prices come from Stripe, cached, with the Uninstaller's loyalty price for 
   assert.deepEqual(uninstaller.prices.map((p) => [p.plan, p.amount]), [["annual", 499]]);
   const [pctweaker] = (await status2(await user(), ["pctweaker"], environment, Date.now(), read)).products;
   assert.deepEqual(pctweaker.prices.map((p) => [p.plan, p.amount]), [["monthly", 799], ["annual", 5999]]);
+});
+
+test("trial mail routing: paid marks the trial's first receipt, a refused or a direct subscription gets no trial mail", async () => {
+  const id = await user();
+  const log = {};
+  let sub = trialSubscription(id);
+  await handleEvent(event("customer.subscription.created", sub), effects(log));
+  sub = update(sub, { status: "active", items: { data: [{ ...sub.items.data[0], current_period_end: now() + 33 * DAY }] } });
+  await handleEvent(event("invoice.paid", { id: "in_first", amount_paid: 399, currency: "eur", parent: { subscription_details: { subscription: sub.id } } }), effects(log));
+  assert.equal(log.welcomes.length, 1);
+  assert.deepEqual(log.welcomes[0][6], { kind: "trial_paid", subscriptionId: sub.id, amountMinor: 399, currency: "eur" });
+
+  // Subscribe now: the ordinary receipt, nothing from the trial pack.
+  const direct = await user();
+  const plain = trialSubscription(direct, { status: "active", trial_end: null, metadata: { userId: direct, product: "pctweaker", plan: "monthly" } });
+  const directLog = {};
+  await handleEvent(event("customer.subscription.created", plain), effects(directLog));
+  assert.equal(directLog.welcomes.length, 1);
+  assert.equal(directLog.welcomes[0][6], undefined);
+  assert.equal((await receipts(direct)).some((r) => r.receipt_key.startsWith("trial_")), false);
+  await handleEvent(event("customer.subscription.deleted", update(plain, { status: "canceled", ended_at: now() })), effects());
+  assert.equal((await receipts(direct)).some((r) => r.receipt_key.startsWith("trial_")), false);
+});
+
+test("trial ended without payment is mailed once, with the reason; not after a payment, not for a refused trial", async () => {
+  const id = await user();
+  const sub = trialSubscription(id, { cancel_at_period_end: true });
+  await handleEvent(event("customer.subscription.created", sub), effects());
+  const ended = update(sub, { status: "canceled", ended_at: sub.trial_end, cancellation_details: { reason: "cancellation_requested" } });
+  await handleEvent(event("customer.subscription.deleted", ended), effects());
+  await handleEvent(event("customer.subscription.deleted", ended), effects());
+  const mails = (await receipts(id)).filter((r) => r.receipt_key === `trial_ended:${sub.id}`);
+  assert.equal(mails.length, 1);
+  assert.equal(mails[0].payload.reason, "cancelled");
+  assert.equal(Date.parse(mails[0].payload.expiresAt), sub.trial_end * 1000);
+
+  const noCard = await user();
+  const bare = trialSubscription(noCard);
+  await handleEvent(event("customer.subscription.created", bare), effects());
+  await handleEvent(event("customer.subscription.deleted", update(bare, { status: "canceled", ended_at: bare.trial_end, cancellation_details: { reason: null } })), effects());
+  assert.equal((await receipts(noCard)).find((r) => r.receipt_key === `trial_ended:${bare.id}`).payload.reason, "no_method");
+
+  const converted = await user();
+  const later = trialSubscription(converted);
+  await handleEvent(event("customer.subscription.created", later), effects());
+  await handleEvent(event("customer.subscription.deleted", update(later, { status: "canceled", ended_at: later.trial_end + 40 * DAY })), effects());
+  assert.equal((await receipts(converted)).some((r) => r.receipt_key.startsWith("trial_ended:")), false);
+
+  const refused = await user();
+  const rejected = trialSubscription(refused);
+  await handleEvent(event("customer.subscription.deleted", update(rejected, { status: "canceled", ended_at: now(), cancellation_details: { comment: "trial_rejected" } })), effects());
+  assert.equal((await receipts(refused)).some((r) => r.receipt_key.startsWith("trial_ended:")), false);
+});
+
+test("a blocked notice says whether it is the trial's first charge or a renewal", async () => {
+  const id = await user();
+  let sub = trialSubscription(id);
+  await handleEvent(event("customer.subscription.created", sub), effects());
+  sub = update(sub, { status: "past_due", trial_end: now() - 3600, items: { data: [{ ...sub.items.data[0], current_period_end: now() + 30 * DAY }] } });
+  await handleEvent(event("invoice.payment_failed", { id: "in_fail_2", parent: { subscription_details: { subscription: sub.id } } }), effects());
+  assert.equal((await receipts(id)).find((r) => r.receipt_key.startsWith(`ending:payment_failed:${sub.id}:`)).payload.trial, true);
+
+  const legacy = await user();
+  const old = trialSubscription(legacy, { status: "past_due", trial_end: null, metadata: { userId: legacy, product: "pctweaker", plan: "monthly" } });
+  process.env.TRIAL_ENABLED = "true";
+  try {
+    await handleEvent(event("customer.subscription.updated", old), effects());
+  } finally {
+    delete process.env.TRIAL_ENABLED;
+  }
+  const notice = (await receipts(legacy)).find((r) => r.receipt_key.startsWith(`ending:payment_failed:${old.id}:`));
+  assert.equal(notice.payload.blocked, true);
+  assert.equal(notice.payload.trial, undefined, "a renewal, worded as one");
 });

@@ -1,15 +1,17 @@
 /** Direct one-click installer download — bypasses the release page entirely.
  *  A "Stable download alias" GitHub Action re-uploads this fixed filename on
- *  every published release, so the URL never needs to change again. */
+ *  every published release, so the URL never needs to change again.
+ *  Links go through our own domain, which redirects (302) to that alias: the
+ *  download can move off GitHub without touching the site again. */
 export const DOWNLOAD_EXE =
-  "https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/PCTweaker-Setup.exe";
+  "https://dl.pctweaker.app/pc-tweaker/PCTweaker-Setup.exe";
 
 /** The Uninstaller is a separate product with its own release stream and its
  *  own stable alias. The nav's Download button used to serve PC Tweaker's
  *  installer on every page, including /uninstaller/ — the loudest control on
  *  that page downloaded the wrong application. */
 export const UNINSTALLER_DOWNLOAD_EXE =
-  "https://github.com/AurelioAvila/pc-tweaker-uninstaller/releases/latest/download/PCTweakerUninstaller-Setup.exe";
+  "https://dl.pctweaker.app/uninstaller/PCTweakerUninstaller-Setup.exe";
 
 export const UNINSTALLER_RELEASES =
   "https://github.com/AurelioAvila/pc-tweaker-uninstaller/releases/latest";

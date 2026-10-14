@@ -533,3 +533,21 @@
     animation: none;
   }
 }
+
+/* Bordered fields get one focus ring: the border turns to the focus colour and
+   a 1px shadow thickens it. The offset outline drawn on top of the border was
+   a second, concentric line. !important wins over the per-screen outline rules.
+   Tailwind-styled fields (outline-none) and checkable inputs are left alone. */
+:is(
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
+    select,
+    textarea
+  ):not([class*="outline-none"]):focus-visible {
+  outline: none !important;
+  border-color: var(--focus) !important;
+  box-shadow: 0 0 0 1px var(--focus) !important;
+}
+.tool-search-field input:focus-visible {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}

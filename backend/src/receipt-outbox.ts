@@ -4,18 +4,26 @@ import { getPool } from "./db";
 export type Receipt = {
   /** Absent for purchase receipts; "refund" for a reversal, "ending" for a
    *  subscription set to end, "bonus" for the Uninstaller year of Lifetime,
-   *  "trial_*" for the free trial (expiresAt = the trial's end). */
-  kind?: "refund" | "ending" | "bonus" | "trial_started" | "trial_ending" | "trial_rejected";
+   *  "trial_*" for the free trial (expiresAt = the trial's end; for
+   *  "trial_paid", the next renewal). "trial_rejected" is no longer queued:
+   *  the copy pack has no such message, and old rows are delivered as no-ops. */
+  kind?: "refund" | "ending" | "bonus" | "trial_started" | "trial_ending" | "trial_rejected" | "trial_paid" | "trial_ended";
   userId: string;
   plan: string | null;
   expiresAt: string | null;
   product: string;
   /** The amount charged, or for a refund the amount refunded. */
   chargedLabel: string | null;
-  /** "ending": why, and the subscription to re-check before sending. */
-  reason?: "cancelled" | "payment_failed";
+  /** "ending": why, and the subscription to re-check before sending.
+   *  "trial_ended": cancelled during the trial, or no payment method at its end. */
+  reason?: "cancelled" | "payment_failed" | "no_method";
   /** "ending"/payment_failed: Pro is already blocked (no grace); expiresAt is when. */
   blocked?: boolean;
+  /** "ending"/payment_failed, blocked: the first charge after our trial failed. */
+  trial?: boolean;
+  /** "trial_paid": what the paid invoice took, in minor units. */
+  amountMinor?: number;
+  currency?: string;
   subscriptionId?: string;
   /** "bonus": when the year started. */
   startedAt?: string;

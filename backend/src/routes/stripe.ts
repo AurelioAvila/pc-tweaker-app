@@ -21,7 +21,7 @@ import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
 import { promoCheckout } from "../promo";
 import { queueReceipt, type Receipt } from "../receipt-outbox";
 import { asyncRoute } from "../async-route";
-import { trialMail } from "../emails/trial";
+import { failureKey, trialMail, type Money, type TrialMailKind } from "../emails/trial";
 import {
   TRIAL_DAYS, TRIAL_MARK, TRIAL_REJECTED, blockedReason, claimTrial, grantsAccess, isOurTrial, trialEligible, trialEnabled,
 } from "../trial";
@@ -759,10 +759,12 @@ async function sendProWelcomeEmail(
    *  only describes PC Tweaker's own prices. */
   chargedLabel: string | null = null,
   receiptKey?: string,
+  /** A trial's first payment: { kind: "trial_paid", subscriptionId, amountMinor, currency }. */
+  extra: Partial<Receipt> = {},
 ): Promise<void> {
   if (!receiptKey) throw new Error("A billing receipt requires a purchase identity");
   await queueReceipt(receiptKey, { userId, plan: plan ?? null,
-    expiresAt: expiresAt?.toISOString() ?? null, product, chargedLabel });
+    expiresAt: expiresAt?.toISOString() ?? null, product, chargedLabel, ...extra });
 }
 
 /** Whether a queued "plan ending" notice still describes the subscription:
@@ -797,33 +799,50 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
       await deliver({ subject: refundSubject(product, c), text: refundText(input, c), html: refundHtml(input, c) });
       return;
     }
+    const firstName = (user.first_name || "").trim().split(/\s+/)[0] ?? "";
+    const trialMessage = (kind: TrialMailKind, input: Partial<Parameters<typeof trialMail>[1]>) =>
+      deliver(trialMail(kind, { product, firstName, email: user.email, plan, ...input }, c));
     if (receipt.kind === "ending") {
       // Delivered as a no-op when it stopped being true: nothing to retry.
       if (!expiresAt || !(await endingStillTrue(receipt))) return;
+      if (receipt.blocked && receipt.reason === "payment_failed") {
+        // Pro is already suspended: the trial pack's payment-failed message,
+        // for the trial's first charge or reworded for a renewal.
+        const failed = await failedCharge(receipt.subscriptionId!);
+        await trialMessage(receipt.trial ? "trial_payment_failed" : "renewal_payment_failed", {
+          amount: failed.amount, failure: failed.failure,
+          portalUrl: process.env.STRIPE_PORTAL_LOGIN_URL || failed.payUrl || brandFor(product).visual.siteUrl,
+        });
+        return;
+      }
       const reason = receipt.reason === "payment_failed" ? "payment_failed" : "cancelled";
       await deliver(endingMail({ product, firstName: user.first_name || "", plan, endsOn: formatDay(c, expiresAt), reason }, c));
       return;
     }
-    if (receipt.kind === "trial_started" || receipt.kind === "trial_ending" || receipt.kind === "trial_rejected") {
-      let chargeLabel: string | null = null;
-      let renewLabel: string | null = null;
-      if (receipt.kind !== "trial_rejected") {
-        // Delivered as a no-op once it stopped being true: the trial ended,
-        // was cancelled, or (for the reminder) will not convert.
-        if (!receipt.subscriptionId || !stripe || !expiresAt) return;
-        const current = await stripe.subscriptions.retrieve(receipt.subscriptionId);
-        if (current.status !== "trialing" || (current.trial_end ?? 0) * 1000 !== expiresAt.getTime()) return;
-        if (receipt.kind === "trial_ending" && current.cancel_at_period_end) return;
-        chargeLabel = await upcomingCharge(current.id);
-        const price = current.items?.data?.[0]?.price;
-        renewLabel = formatChargedAmount(price?.unit_amount, price?.currency, price?.recurring?.interval ?? null);
-      }
-      const mail = trialMail(receipt.kind, {
-        product, firstName: user.first_name || "", plan,
-        trialEndsOn: expiresAt ? formatDay(c, expiresAt) : null, chargeLabel, renewLabel,
-      }, c);
-      if (!mail) throw new Error("The trial mail template is not written yet");
-      await deliver(mail);
+    // Queued by older code; the copy pack has no such message.
+    if (receipt.kind === "trial_rejected") return;
+    if (receipt.kind === "trial_started" || receipt.kind === "trial_ending") {
+      // Delivered as a no-op once it stopped being true: the trial ended,
+      // was cancelled, or (for the reminder) will not convert.
+      if (!receipt.subscriptionId || !stripe || !expiresAt) return;
+      const current = await stripe.subscriptions.retrieve(receipt.subscriptionId);
+      if (current.status !== "trialing" || (current.trial_end ?? 0) * 1000 !== expiresAt.getTime()) return;
+      if (receipt.kind === "trial_ending" && current.cancel_at_period_end) return;
+      await trialMessage(receipt.kind, {
+        trialEnd: expiresAt, amount: (await upcomingCharge(current.id)) ?? priceOf(current), card: await subscriptionCard(current),
+      });
+      return;
+    }
+    if (receipt.kind === "trial_paid") {
+      const current = receipt.subscriptionId && stripe ? await stripe.subscriptions.retrieve(receipt.subscriptionId) : null;
+      await trialMessage("trial_paid", {
+        amount: receipt.amountMinor != null && receipt.currency ? { minor: receipt.amountMinor, currency: receipt.currency } : current && priceOf(current),
+        renewsOn: expiresAt, card: current ? await subscriptionCard(current) : null,
+      });
+      return;
+    }
+    if (receipt.kind === "trial_ended") {
+      await trialMessage("trial_ended", { trialEnd: expiresAt, reason: receipt.reason === "no_method" ? "no_method" : "cancelled" });
       return;
     }
     if (receipt.kind === "bonus") {
@@ -848,15 +867,61 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
 }
 
 /** The first charge after a trial as Stripe previews it: coupon, tax and
- *  currency included. Null when Stripe cannot say; the mail then omits it. */
-async function upcomingCharge(subscriptionId: string): Promise<string | null> {
+ *  currency included. Null when Stripe cannot say; the caller then quotes
+ *  the plan's price. */
+async function upcomingCharge(subscriptionId: string): Promise<Money | null> {
   try {
     const preview = await stripe!.invoices.createPreview({ subscription: subscriptionId });
-    return formatChargedAmount(preview.amount_due, preview.currency, null)?.replace(/ once$/, "") ?? null;
+    return { minor: preview.amount_due, currency: preview.currency };
   } catch (err) {
     console.error("could not preview the first charge after a trial:", (err as Error).message);
     return null;
   }
+}
+
+/** The plan's own price, when nothing more precise is known. */
+function priceOf(subscription: Stripe.Subscription): Money | null {
+  const price = subscription.items?.data?.[0]?.price;
+  return price?.unit_amount != null && price.currency ? { minor: price.unit_amount, currency: price.currency } : null;
+}
+
+/** Brand and last four digits of the card a subscription charges; null for
+ *  anything that is not a card. Read at send time, never stored. */
+async function subscriptionCard(subscription: Stripe.Subscription): Promise<{ brand: string; last4: string } | null> {
+  try {
+    const ref = subscription.default_payment_method;
+    const method = typeof ref === "string" ? await stripe!.paymentMethods.retrieve(ref) : ref;
+    return method?.card ? { brand: method.card.brand, last4: method.card.last4 } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The invoice a failed charge left open: its amount, why the charge failed
+ *  (a key of the copy's failureReasons) and Stripe's page to pay it. */
+async function failedCharge(subscriptionId: string): Promise<{ amount: Money | null; failure: string; payUrl: string | null }> {
+  if (!stripe) throw new Error("Stripe is unavailable for the payment-failed notice");
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  type PaidInvoice = Stripe.Invoice & { payments?: { data: { payment?: { payment_intent?: string | { id: string } } }[] } };
+  let invoice: PaidInvoice | null = null;
+  let failure = "generic";
+  try {
+    const invoiceId = typeof subscription.latest_invoice === "string" ? subscription.latest_invoice : subscription.latest_invoice?.id;
+    if (invoiceId) invoice = await stripe.invoices.retrieve(invoiceId, { expand: ["payments"] }) as PaidInvoice;
+    const ref = invoice?.payments?.data?.[0]?.payment?.payment_intent;
+    const id = typeof ref === "string" ? ref : ref?.id;
+    if (id) {
+      const intent = await stripe.paymentIntents.retrieve(id);
+      failure = failureKey(intent.last_payment_error, intent.status === "requires_action");
+    }
+  } catch (err) {
+    console.error("could not read why a charge failed:", (err as Error).message);
+  }
+  return {
+    amount: invoice && invoice.amount_due > 0 ? { minor: invoice.amount_due, currency: invoice.currency } : priceOf(subscription),
+    failure,
+    payUrl: invoice?.hosted_invoice_url ?? null,
+  };
 }
 
 /**
@@ -885,9 +950,39 @@ async function queueBlockedNotice(userId: string, product: Product, subscription
   if (!periodEnd) return;
   let plan: string | null = null;
   try { plan = subscriptionPlan(subscription); } catch { /* the mail omits the plan row */ }
+  // The first charge after our trial (Stripe tries it about an hour after the
+  // trial ends) gets the trial's wording; anything later is a renewal.
+  const trial = isOurTrial(subscription) && subscription.trial_end != null && Date.now() - subscription.trial_end * 1000 < 2 * 24 * 60 * 60 * 1000;
   await queueReceipt(`ending:payment_failed:${subscription.id}:${periodEnd.getTime()}`, {
     kind: "ending", reason: "payment_failed", blocked: true, subscriptionId: subscription.id, userId, product,
-    plan, expiresAt: new Date().toISOString(), chargedLabel: null,
+    plan, expiresAt: new Date().toISOString(), chargedLabel: null, ...(trial ? { trial: true } : {}),
+  });
+}
+
+/** "Trial ended, nothing charged", once per subscription: our trial ended by
+ *  its end date with no payment, cancelled by the customer or left without a
+ *  payment method. Never for a trial we refused or one that was paid. */
+async function queueTrialEnded(userId: string, product: Product, subscription: Stripe.Subscription): Promise<void> {
+  const trialEnd = subscription.trial_end;
+  if (!isOurTrial(subscription) || !trialEnd || revokedStatus(subscription) === TRIAL_REJECTED) return;
+  const endedAt = subscription.ended_at ?? subscription.canceled_at ?? trialEnd;
+  // Stripe charges about an hour after the trial; an end after that came
+  // from a failed or later payment, which has its own notices.
+  if (endedAt > trialEnd + 2 * 3600) return;
+  let plan: string | null = null;
+  try { plan = subscriptionPlan(subscription); } catch { /* not printed by this message */ }
+  // Stripe reports "cancellation_requested" for both endings (tested): the
+  // customer's own cancellation shows as cancel_at / an earlier canceled_at,
+  // a trial left without a card has no payment method.
+  const asked = subscription.cancel_at_period_end === true || subscription.cancel_at != null ||
+    (subscription.canceled_at ?? trialEnd) < trialEnd || Boolean(subscription.default_payment_method);
+  await queueReceipt(`trial_ended:${subscription.id}`, {
+    kind: "trial_ended", userId, product, plan, subscriptionId: subscription.id, chargedLabel: null,
+    expiresAt: new Date(Math.min(endedAt, trialEnd) * 1000).toISOString(),
+    reason: asked ? "cancelled" : "no_method",
+  }).catch((err: { code?: string }) => {
+    // A deleted account has nobody to notify; anything else must retry.
+    if (err?.code !== "23503") throw err;
   });
 }
 
@@ -935,14 +1030,8 @@ async function admitTrial(userId: string, product: Product, subscription: Stripe
       );
       await revokeEntitlement(userId, product, subscription.id, TRIAL_REJECTED);
     }
-    // A second checkout by someone already in trial is simply dropped: their
-    // own trial goes on, so there is nothing to tell them.
-    const { rows: own } = await getPool().query("SELECT 1 FROM trial_claims WHERE product = $1 AND user_id = $2", [product, userId]);
-    if (!own.length) {
-      await queueReceipt(`trial_rejected:${subscription.id}`, {
-        kind: "trial_rejected", userId, product, plan, expiresAt: null, subscriptionId: subscription.id, chargedLabel: null,
-      });
-    }
+    // No mail: the copy pack has none for a refused trial. The app shows the
+    // reason (blocked_reason trial_already_used) and nothing was charged.
     console.log(`trial refused for user ${userId} on ${product}: already used; ${subscription.id} cancelled before any charge`);
     return false;
   }
@@ -1422,9 +1511,11 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
       if (!product) break;
       const synced = await syncSubscription(current, product, false, effects);
       if (synced && event.type === "invoice.paid" && (invoice.amount_paid ?? 0) > 0 && isOurTrial(current) && grantsAccess(current)) {
+        // Same key as a direct subscription's receipt: once per subscription.
         await effects.welcome(
           synced.userId, subscriptionPlan(current), periodEndFromSubscription(current), product,
           subscriptionCharge(current), `subscription:${current.id}`,
+          { kind: "trial_paid", subscriptionId: current.id, amountMinor: invoice.amount_paid, currency: invoice.currency },
         );
       }
       break;
@@ -1452,10 +1543,12 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
       if (!userId) break;
       if (product !== "pctweaker") {
         await revokeEntitlement(userId, product, subscription.id, revokedStatus(subscription));
+        await queueTrialEnded(userId, product, subscription);
         break;
       }
       if (await holdsLifetime(userId)) break;
       await revokePro(userId, subscription.id, revokedStatus(subscription));
+      await queueTrialEnded(userId, product, subscription);
       break;
     }
 

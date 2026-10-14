@@ -8,6 +8,16 @@ const serverBundle = path.join(root, "dist-ssr", "entry-server.js");
 const { render, ROUTE_SEO, ROUTE_JSONLD, NOT_FOUND_SEO } = await import(pathToFileURL(serverBundle));
 const template = await readFile(path.join(dist, "index.html"), "utf8");
 
+// The Pro prices in the structured data come from the same constants the app
+// charges (src/lib.ts), so the markup cannot drift from the product.
+const PRICES = readPrices(await readFile(path.join(root, "..", "src", "lib.ts"), "utf8"));
+function readPrices(source) {
+  const read = (name) => source.match(new RegExp(`export const ${name} = ([\\d.]+);`))?.[1];
+  const prices = { __PRICE_MONTHLY__: read("PRICE_MONTHLY"), __PRICE_ANNUAL__: read("PRICE_ANNUAL"), __PRICE_LIFETIME__: read("PRICE_LIFETIME") };
+  if (Object.values(prices).some((p) => !p)) throw new Error("Pro prices not found in src/lib.ts");
+  return prices;
+}
+
 function escapeAttribute(value) {
   return value
     .replaceAll("&", "&amp;")
@@ -32,6 +42,7 @@ function jsonLdScript(payload) {
 
 function buildPage(route, seo, noindex = false) {
   let html = template;
+  for (const [token, price] of Object.entries(PRICES)) html = html.replaceAll(token, price);
   // The SoftwareApplication block describes the product and belongs on the
   // page that is about the product. The sitewide Organization/WebSite graph
   // above it stays on every page so the whole property resolves to one entity.

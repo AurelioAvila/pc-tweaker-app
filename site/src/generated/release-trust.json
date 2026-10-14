@@ -1,0 +1,50 @@
+{
+  "pc-tweaker": {
+    "version": "1.18.3",
+    "tag": "v1.18.3",
+    "published": "2026-10-14T16:25:36Z",
+    "file": "pc-tweaker-app_1.18.3_x64-setup.exe",
+    "size": 6168920,
+    "sha256": "5bc254dde27b35ccd718ec73e333aa7d592357cb672dca97dc4cf29d1e2b2883",
+    "download": "https://dl.pctweaker.app/pc-tweaker/v1.18.3/pc-tweaker-app_1.18.3_x64-setup.exe",
+    "releasePage": "https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.18.3",
+    "signature": {
+      "status": "Valid",
+      "signer": "Aurelio Avila",
+      "thumbprint": "4F8341A74D16077AE1849DC8B8CAC99F22606754",
+      "timestamped": true
+    }
+  },
+  "tweaky-driver": {
+    "version": "0.1.20",
+    "tag": "v0.1.20",
+    "published": "2026-10-14T17:42:15Z",
+    "file": "Tweaky-Driver-0.1.20-x64-setup.exe",
+    "size": 4684784,
+    "sha256": "62522a403632ed39cc92d2fe61c93cbb40ffd89eb77c29d0eeab4377aaf5c3ef",
+    "download": "https://dl.pctweaker.app/tweaky-driver/v0.1.20/Tweaky-Driver-0.1.20-x64-setup.exe",
+    "releasePage": "https://github.com/AurelioAvila/Tweaky-Driver-Releases/releases/tag/v0.1.20",
+    "signature": {
+      "status": "Valid",
+      "signer": "Aurelio Avila",
+      "thumbprint": "4F8341A74D16077AE1849DC8B8CAC99F22606754",
+      "timestamped": true
+    }
+  },
+  "uninstaller": {
+    "version": "0.13.2",
+    "tag": "v0.13.2",
+    "published": "2026-10-14T16:25:38Z",
+    "file": "PC.Tweaker.Uninstaller_0.13.2_x64-setup.exe",
+    "size": 4310824,
+    "sha256": "57b63be1888cc8229c3a039de1cd38d2413346363ba478827f04191f33ed5389",
+    "download": "https://dl.pctweaker.app/uninstaller/v0.13.2/PC.Tweaker.Uninstaller_0.13.2_x64-setup.exe",
+    "releasePage": "https://github.com/AurelioAvila/pc-tweaker-uninstaller/releases/tag/v0.13.2",
+    "signature": {
+      "status": "Valid",
+      "signer": "Aurelio Avila",
+      "thumbprint": "4F8341A74D16077AE1849DC8B8CAC99F22606754",
+      "timestamped": true
+    }
+  }
+}

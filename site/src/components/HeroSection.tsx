@@ -4,6 +4,7 @@ import { text } from "../i18n/dictionary";
 import { ACCENTS, THEME_ORDER, useTheme } from "../theme";
 import { EASE, riseChild, staggerParent } from "../motion";
 import { DOWNLOAD_EXE } from "../constants";
+import { ReleaseTrust } from "./ReleaseTrust";
 import { CoffeeTip } from "./CoffeeTip";
 import { NewsletterSignup } from "./NewsletterSignup";
 import { PromoCard } from "../promo";
@@ -163,6 +164,7 @@ export function HeroSection() {
             <p className="mt-3 max-w-md text-[12.5px] leading-relaxed text-[var(--fg-dim)]">
               {text.hero.safetyNote}
             </p>
+            <ReleaseTrust product="pc-tweaker" saveAs="PCTweaker-Setup.exe" />
 
             {/* Social traffic lands on phones, where an .exe is a dead end. */}
             <div className="md:hidden">

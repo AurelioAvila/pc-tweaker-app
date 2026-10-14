@@ -1,5 +1,5 @@
 import { getPool } from "./db";
-import { emailShell, mutedLink, smallPrint, textFooter } from "./emails/layout";
+import { button, details, emailShell, escapeHtml, mutedLink, note, paragraph, textFooter } from "./emails/layout";
 import { listUnsubscribeHeaders, unsubscribeUrl } from "./routes/newsletter";
 
 /** An expired Checkout Session, reduced to what the reminder needs. */
@@ -72,31 +72,43 @@ export async function remindAbandonedLifetime(
 }
 
 export function lifetimeReminderEmail(to: ReminderRecipient) {
-  const greeting = to.firstName ? `Hi ${to.firstName.trim()},` : "Hi,";
-  const lines = [
-    "Your PC Tweaker Lifetime checkout closed before payment, so nothing was charged.",
-    "If you still want it, open PC Tweaker, go to Plans and choose Lifetime: one payment, Pro for good, no renewals.",
-    "If something got in the way, such as a payment method or a question about what Pro includes, just reply to this email.",
-  ];
-  const footer = "This is the only reminder about this checkout.";
-  const unsubscribe = to.unsubscribeUrl
-    ? smallPrint(`Don't want emails like this? ${mutedLink(to.unsubscribeUrl, "Unsubscribe with one click")}.`)
-    : "";
+  const name = to.firstName?.trim().split(/\s+/)[0] ?? "";
+  const headline = name ? `Nothing was charged, ${name}.` : "Nothing was charged.";
+  const intro =
+    "You opened a Lifetime checkout for PC Tweaker Pro and the Stripe page closed before a payment went through. No card was charged and your account is exactly as it was. If something got in the way, here is what people usually ask before deciding.";
+  const retry =
+    "To try again, open Plans & pricing in the app and choose Lifetime. Checkout needs a confirmed email address; if the button is greyed out, that is why, and Resend in the account menu fixes it. The current price is on the plan card and on the Stripe page.";
+  const doubts =
+    "If a payment method was refused, Stripe shows the reason on its page; a different card or a wallet usually works. And if you decided against it, that is fine: Free stays Free, and this is the only reminder you will get about this checkout.";
+  const why =
+    "You received this email because a Lifetime checkout was started from the PC Tweaker account at this address and not completed. One reminder only.";
   return {
     to: to.email,
     subject: "Your PC Tweaker Lifetime checkout",
     ...(to.unsubscribeUrl ? { headers: listUnsubscribeHeaders(to.unsubscribeUrl) } : {}),
     html: emailShell({
-      preheader: "Your Lifetime checkout closed before payment, so nothing was charged.",
+      preheader: "The checkout closed before payment, so nothing was charged. This is the only reminder.",
       eyebrow: "Checkout not completed",
-      headline: to.firstName?.trim() ? `Still want Lifetime, ${to.firstName.trim()}?` : "Still want Lifetime?",
-      intro: `${lines[0]} ${lines[1]}`,
-      action: { label: "Open PC Tweaker", url: "https://pctweaker.app" },
-      note: lines[2],
-      afterActionHtml: unsubscribe,
-      footerNote: footer,
+      headline,
+      intro,
+      blocks: [
+        details([
+          ["Lifetime", "One payment. No renewal, ever."],
+          ["Covers", "All 81 controls, Game Sessions, every update"],
+          ["PCs", "Every PC you sign in to with this account"],
+          ["Also included", "12 months of PC Tweaker Uninstaller Pro"],
+        ]),
+        button({ label: "Open PC Tweaker", url: "https://pctweaker.app" }),
+        paragraph(escapeHtml(retry)),
+        note(escapeHtml(doubts)),
+      ],
+      help: { title: "A question before you decide?", text: "A real person answers." },
+      why,
+      whyHtml: to.unsubscribeUrl ? mutedLink(to.unsubscribeUrl, "Unsubscribe from emails like this.") : "",
     }),
-    text: [greeting, ...lines, footer + (to.unsubscribeUrl ? ` Unsubscribe: ${to.unsubscribeUrl}` : "")].join("\n\n") + textFooter(),
+    text:
+      [headline, intro, retry, doubts, `${why}${to.unsubscribeUrl ? ` Unsubscribe: ${to.unsubscribeUrl}` : ""}`].join("\n\n") +
+      textFooter(),
   };
 }
 

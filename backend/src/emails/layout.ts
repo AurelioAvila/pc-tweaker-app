@@ -1,17 +1,14 @@
 /**
- * The shell every message from this backend is built in, and the one the
- * Tweaky Driver account service mirrors: PC Tweaker, PC Tweaker Uninstaller
- * and Tweaky Driver share one account, so a customer of two of them should
- * see one family of emails, not three visual languages.
+ * The shell every message from this backend is built in: the family email
+ * design kit (email-design-kit/_base/layout.html), the same layout the Tweaky
+ * Driver account service uses with its own brand. PC Tweaker and the
+ * Uninstaller are dark brands: the dark-mode query pins their own colours so
+ * a client cannot invert them into something unreadable.
  *
- * Light first, because that is what renders the same in every client,
- * Outlook for Windows included. Clients that honour `prefers-color-scheme`
- * (Apple Mail, iOS, Outlook.com) get a matching dark version from the classes
- * below; Gmail inverts the light version on its own. Every colour pair is
- * checked for WCAG AA in test/email-contrast.test.mjs.
- *
- * Content goes in through the helpers at the bottom of this file, never as
- * hand-coloured markup, so a new email cannot drift from the palette.
+ * Content goes in through the block helpers below, never as hand-coloured
+ * markup, so every email stays in the kit. Anything that came from a person
+ * (name, address, subject line) is escaped by the helper that prints it, or
+ * by the caller with `escapeHtml` before it is passed as markup.
  */
 
 export type EmailAction = {
@@ -20,66 +17,76 @@ export type EmailAction = {
 };
 
 export type EmailBrand = {
-  /** Product name next to the logo and in the footer. */
+  /** Product name in the header, the footer and the title. */
   name: string;
-  /** Top bar and button. */
+  bg: string;
+  card: string;
+  panel: string;
+  line: string;
+  ink: string;
+  muted: string;
+  /** Top rule, button and step numbers. */
   accent: string;
-  /** Button label colour, chosen for AA contrast on `accent`. */
+  /** Text on the accent (button label, step numbers). */
   buttonText: string;
-  /** Eyebrow and links on the light card, and on the dark one. */
+  /** Links and the eyebrow on the card. */
   accentText: string;
+  /** Same as accentText for these dark brands; kept for list marks. */
   accentTextDark: string;
+  display: string;
+  body: string;
+  googleFonts: string;
   siteUrl: string;
   siteLabel: string;
-  /** 96 px PNG served from the website, shown at 48 px. */
+  privacyUrl: string;
+  termsUrl: string;
+  supportEmail: string;
+  /** 96 px PNG served from the website, shown at 40 px. */
   logoUrl: string;
+};
+
+const GRAPHITE = {
+  bg: "#0a0a0d",
+  card: "#121217",
+  panel: "#1a1a21",
+  line: "#2a2d33",
+  ink: "#f3f4f6",
+  muted: "#9ca3af",
+  accent: "#ff6a3d",
+  buttonText: "#0a0a0d",
+  accentText: "#ff8a63",
+  accentTextDark: "#ff8a63",
+  display: "'Space Grotesk','Segoe UI',Arial,sans-serif",
+  body: "Inter,'Segoe UI',Arial,sans-serif",
+  googleFonts: "family=Inter:wght@400;600;700&family=Space+Grotesk:wght@600;700",
+  privacyUrl: "https://pctweaker.app/privacy/",
+  termsUrl: "https://pctweaker.app/terms/",
+  supportEmail: "support@pctweaker.app",
 };
 
 export const EMAIL_BRANDS = {
   pctweaker: {
+    ...GRAPHITE,
     name: "PC Tweaker",
-    accent: "#ff5500",
-    buttonText: "#111111",
-    accentText: "#c2410c",
-    accentTextDark: "#ff8a4c",
     siteUrl: "https://pctweaker.app",
     siteLabel: "pctweaker.app",
     logoUrl: "https://pctweaker.app/email/pc-tweaker.png",
   },
   uninstaller: {
+    ...GRAPHITE,
     name: "PC Tweaker Uninstaller",
-    accent: "#7c3aed",
-    buttonText: "#ffffff",
-    accentText: "#6d28d9",
-    accentTextDark: "#b69cff",
-    siteUrl: "https://pctweaker.app/uninstaller",
+    siteUrl: "https://pctweaker.app/uninstaller/",
     siteLabel: "pctweaker.app/uninstaller",
     logoUrl: "https://pctweaker.app/email/uninstaller.png",
   },
 } satisfies Record<string, EmailBrand>;
 
-export type EmailShellInput = {
-  /** Inbox preview text shown after the subject. Required so no message
-   *  falls back to whatever text the client scrapes first. Plain text; it is
-   *  escaped. */
-  preheader: string;
-  /** Small uppercase line above the headline, e.g. "Confirm your email". */
-  eyebrow: string;
-  headline: string;
-  /** Sentence under the headline. Plain text; it is escaped. */
-  intro: string;
-  /** Rows built with the helpers below, between the intro and the button. */
-  bodyHtml?: string;
-  action?: EmailAction;
-  /** Rows placed after the button — the purchase receipt sits here, where a
-   *  reader looks for it once they have been told what happened. */
-  afterActionHtml?: string;
-  /** Small print under the button. Plain text; it is escaped. */
-  note?: string;
-  /** Why this message was sent, first line of the footer. Plain text. */
-  footerNote?: string;
-  brand?: EmailBrand;
-};
+/** Secondary text colour of both brands; AA on the card and on the panel. */
+export const EMAIL_MUTED_TEXT = GRAPHITE.muted;
+/** The surfaces and text colours the contrast test checks. These brands are
+ *  dark in every client, so both names describe the same palette. */
+export const EMAIL_LIGHT = { card: GRAPHITE.card, box: GRAPHITE.panel, text: GRAPHITE.ink, muted: GRAPHITE.muted } as const;
+export const EMAIL_DARK = EMAIL_LIGHT;
 
 export function escapeHtml(value: string): string {
   return value
@@ -89,105 +96,161 @@ export function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-// Light palette (inline, the default everywhere) and its dark counterpart
-// (applied by class where the client supports it).
-const PAGE = "#f3f4f6";
-const CARD = "#ffffff";
-const LINE = "#e5e7eb";
-const BOX = "#f9fafb";
-const HEADING = "#111827";
-const TEXT = "#374151";
-/** Secondary text; AA on the card and on boxes. */
-export const EMAIL_MUTED_TEXT = "#6b7280";
-export const EMAIL_DARK = {
-  page: "#0b0c0f",
-  card: "#16181d",
-  line: "#2a2e36",
-  box: "#1d2027",
-  heading: "#f3f4f6",
-  text: "#d1d5db",
-  muted: "#9ca3af",
-} as const;
-export const EMAIL_LIGHT = { page: PAGE, card: CARD, line: LINE, box: BOX, heading: HEADING, text: TEXT, muted: EMAIL_MUTED_TEXT } as const;
-
-const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-const PAD = 40;
-
-/** One content row of the card. `html` is trusted markup from the helpers. */
-export function row(html: string, top = 24): string {
-  return `
-        <tr>
-          <td class="fx-pad" style="padding:${top}px ${PAD}px 0;">${html}</td>
-        </tr>`;
+/** Our own block markup as plain text for the text part. Splitting on "<"
+ *  drops every tag and leaves no "<" at all; "&amp;" and "&quot;" are then
+ *  decoded in a single pass so nothing is unescaped twice ("&lt;" stays). */
+export function plainText(html: string): string {
+  return html
+    .split("<")
+    .map((part, i) => (i === 0 ? part : part.slice(part.indexOf(">") + 1)))
+    .join("")
+    .replace(/&(amp|quot);/g, (_, name: string) => (name === "amp" ? "&" : '"'));
 }
 
-export function divider(top = 28): string {
-  return row(`<div class="fx-rule" style="height:1px; line-height:1px; font-size:1px; background:${LINE};">&nbsp;</div>`, top);
+/** Blocks are rendered for one brand; the shell passes it down. */
+export type Block = (brand: EmailBrand) => string;
+
+const font = (b: EmailBrand) => `font-family:${b.body};`;
+
+/** A body paragraph. `html` is trusted markup. */
+export function paragraph(html: string): Block {
+  return (b) => `<p class="ink" style="margin:0 0 18px;${font(b)}font-size:16px;line-height:25px;color:${b.ink};">${html}</p>`;
 }
 
-/** Small uppercase heading for a list or a receipt. Plain text; escaped. */
-export function sectionLabel(text: string): string {
-  return `<div class="fx-m" style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:${EMAIL_MUTED_TEXT}; margin:0 0 12px;">${escapeHtml(text)}</div>`;
+/** Small print tied to this email. `html` is trusted markup. */
+export function note(html: string): Block {
+  return (b) => `<p class="muted" style="margin:0 0 20px;${font(b)}font-size:13px;line-height:19px;color:${b.muted};">${html}</p>`;
+}
+/** The same block under the name the list mail uses. */
+export const smallPrint = note;
+
+/** Small uppercase heading over steps or a list. Plain text; escaped. */
+export function sectionLabel(text: string): Block {
+  return (b) => `<p class="muted" style="margin:0 0 10px;${font(b)}font-size:12px;line-height:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${b.muted};">${escapeHtml(text)}</p>`;
 }
 
-/** A muted paragraph. `html` is trusted markup (links built by the caller). */
-export function smallPrint(html: string, top = 20): string {
-  return row(`<p class="fx-m" style="margin:0; font-size:13px; line-height:1.6; color:${EMAIL_MUTED_TEXT};">${html}</p>`, top);
-}
-
-/** A tinted panel for the one paragraph a reader must not skim past. */
-export function infoBox(html: string, top = 24): string {
-  return row(
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="fx-box" style="background:${BOX}; border:1px solid ${LINE}; border-radius:12px;">
-              <tr><td class="fx-t" style="padding:16px 18px; font-size:15px; line-height:1.6; color:${TEXT};">${html}</td></tr>
-            </table>`,
-    top,
-  );
-}
-
-/** A muted inline link. */
-export function mutedLink(url: string, label: string): string {
-  return `<a href="${escapeHtml(url)}" class="fx-m" style="color:${EMAIL_MUTED_TEXT}; text-decoration:underline;">${escapeHtml(label)}</a>`;
-}
-
-/** The URL under a button, shown so it can be read rather than trusted. */
-export function linkFallback(url: string): string {
-  return smallPrint(
-    `Or paste this into your browser:<br><span style="word-break:break-all;">${escapeHtml(url)}</span>`,
-  );
-}
-
-/** A list line with the brand's accent mark. `text` is trusted markup. */
-export function bulletRow(accent: string, text: string): string {
-  return `              <tr>
-                <td width="22" valign="top" style="padding:7px 0; font-size:15px; line-height:1.5; color:${accent}; font-weight:700;">&#10003;</td>
-                <td class="fx-t" style="padding:7px 0; color:${TEXT}; font-size:15px; line-height:1.5;">${text}</td>
+/** The label/value card: plan, amount, dates. Values are plain text; escaped. */
+export function details(rows: [label: string, value: string][]): Block {
+  return (b) => {
+    const cells = rows
+      .map(([label, value], i) => {
+        const rule = i < rows.length - 1 ? `border-bottom:1px solid ${b.line};` : "";
+        return `<tr>
+                <td class="muted" width="38%" valign="top" style="padding:10px 12px 10px 0;${rule}${font(b)}font-size:13px;line-height:20px;color:${b.muted};">${escapeHtml(label)}</td>
+                <td class="ink" valign="top" style="padding:10px 0;${rule}${font(b)}font-size:15px;line-height:20px;font-weight:700;color:${b.ink};word-break:break-word;">${escapeHtml(value)}</td>
               </tr>`;
+      })
+      .join("\n");
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="panel" bgcolor="${b.panel}" style="background:${b.panel};border-radius:10px;margin:0 0 24px;">
+          <tr><td style="padding:6px 18px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+${cells}
+            </table>
+          </td></tr>
+        </table>`;
+  };
 }
 
-/** A two-column key/value row, for the receipt block. */
-export function detailRow(label: string, value: string): string {
-  return `              <tr>
-                <td class="fx-m" style="font-size:14px; color:${EMAIL_MUTED_TEXT}; padding:6px 0;">${escapeHtml(label)}</td>
-                <td class="fx-h" style="font-size:14px; color:${HEADING}; padding:6px 0; text-align:right; font-weight:600;">${escapeHtml(value)}</td>
-              </tr>`;
+/** The one button of an email, bulletproof in Outlook. */
+export function button(action: EmailAction): Block {
+  return (b) => {
+    const url = escapeHtml(action.url);
+    const label = escapeHtml(action.label);
+    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" class="btn" style="margin:4px 0 24px;">
+          <tr><td align="center" bgcolor="${b.accent}" style="border-radius:10px;background:${b.accent};">
+            <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${url}" style="height:48px;v-text-anchor:middle;width:260px;" arcsize="21%" stroke="f" fillcolor="${b.accent}"><w:anchorlock/><center style="color:${b.buttonText};font-family:Arial,sans-serif;font-size:16px;font-weight:700;">${label}</center></v:roundrect><![endif]-->
+            <!--[if !mso]><!--><a href="${url}" style="display:inline-block;padding:14px 28px;${font(b)}font-size:16px;line-height:20px;font-weight:700;color:${b.buttonText};text-decoration:none;border-radius:10px;background:${b.accent};">${label}</a><!--<![endif]-->
+          </td></tr>
+        </table>`;
+  };
 }
 
-/** A list or a receipt: rows from bulletRow/detailRow inside one table. */
-export function listTable(rows: string): string {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+/** The address under a button that carries a token, so it can be read
+ *  rather than trusted. */
+export function linkFallback(url: string): Block {
+  return (b) => {
+    const safe = escapeHtml(url);
+    return `<p class="muted" style="margin:-8px 0 24px;${font(b)}font-size:13px;line-height:19px;color:${b.muted};word-break:break-all;">If the button does not open, copy this address into your browser:<br><a href="${safe}" class="link" style="color:${b.accentText};">${safe}</a></p>`;
+  };
+}
+
+/** Numbered steps: two to four things the reader can do. Items are trusted markup. */
+export function steps(heading: string, items: string[]): Block {
+  return (b) => {
+    const rows = items
+      .map(
+        (item, i) => `<tr>
+            <td width="24" valign="top" style="padding:1px 12px 12px 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" width="24" height="24" bgcolor="${b.accent}" style="width:24px;height:24px;border-radius:12px;background:${b.accent};font-family:Arial,sans-serif;font-size:12px;line-height:24px;font-weight:700;color:${b.buttonText};">${i + 1}</td></tr></table></td>
+            <td class="ink" valign="top" style="padding:0 0 12px;${font(b)}font-size:15px;line-height:22px;color:${b.ink};">${item}</td>
+          </tr>`,
+      )
+      .join("\n");
+    return `${sectionLabel(heading)(b)}
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
 ${rows}
-            </table>`;
+        </table>`;
+  };
 }
 
-/** The lines every message ends with, for the plain-text part. */
-export function textFooter(brand: EmailBrand = EMAIL_BRANDS.pctweaker): string {
+/** "If this was you / if it was not", for security notices. Trusted markup. */
+export function security(ifYou: string, ifNot: string): Block {
+  return (b) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="panel" bgcolor="${b.panel}" style="background:${b.panel};border-radius:10px;margin:0 0 24px;">
+          <tr><td style="padding:16px 18px;">
+            <p class="ink" style="margin:0 0 8px;${font(b)}font-size:15px;line-height:22px;color:${b.ink};"><strong>If this was you:</strong> ${ifYou}</p>
+            <p class="ink" style="margin:0;${font(b)}font-size:15px;line-height:22px;color:${b.ink};"><strong>If it was not:</strong> ${ifNot}</p>
+          </td></tr>
+        </table>`;
+}
+
+/** An underlined link in body text, in the brand's link colour. */
+export function link(url: string, label: string): string {
+  return `<a href="${escapeHtml(url)}" class="link" style="color:${GRAPHITE.accentText};text-decoration:underline;">${escapeHtml(label)}</a>`;
+}
+
+/** A muted inline link, for unsubscribe lines. */
+export function mutedLink(url: string, label: string): string {
+  return `<a href="${escapeHtml(url)}" class="muted" style="color:${EMAIL_MUTED_TEXT};text-decoration:underline;">${escapeHtml(label)}</a>`;
+}
+
+/** A plain key/value row, for callers that print one outside `details`. */
+export function detailRow(label: string, value: string): string {
+  return `<tr><td class="muted" style="padding:8px 12px 8px 0;font-size:13px;color:${EMAIL_MUTED_TEXT};">${escapeHtml(label)}</td><td class="ink" style="padding:8px 0;font-size:15px;font-weight:700;color:${GRAPHITE.ink};">${escapeHtml(value)}</td></tr>`;
+}
+
+export type EmailShellInput = {
+  /** Inbox preview text: a sentence that adds to the subject. Escaped. */
+  preheader: string;
+  /** Small uppercase line above the headline, e.g. "Confirm your email". */
+  eyebrow: string;
+  headline: string;
+  /** Paragraph under the headline: plain text, escaped. Or `introHtml`. */
+  intro: string;
+  introHtml?: string;
+  blocks?: Block[];
+  /** Help block inside the card: a question, and what to do (trusted
+   *  markup). The support address, the reply expectation and the
+   *  never-send-a-password line are appended. */
+  help: { title: string; text: string; expectation?: string };
+  /** Why the reader got this email, first footer line. Escaped. */
+  why: string;
+  /** Extra trusted markup after the "why" line, e.g. an unsubscribe link. */
+  whyHtml?: string;
+  brand?: EmailBrand;
+};
+
+const STANDARD_EXPECTATION = "We read everything and usually answer within one working day.";
+
+/** The plain-text help and footer every message ends with. */
+export function textFooter(brand: EmailBrand = EMAIL_BRANDS.pctweaker, why = ""): string {
   return [
+    "\n",
+    `Questions? Write to ${brand.supportEmail} or reply to this email. Never send a password or card number by email.`,
     "",
     "--",
+    ...(why ? [why] : []),
     `${brand.name} · ${brand.siteUrl}`,
     "One account for PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver.",
-    "Support: https://pctweaker.app/support · Privacy: https://pctweaker.app/privacy",
+    `Support: https://pctweaker.app/support/ · Privacy: ${brand.privacyUrl} · Terms: ${brand.termsUrl}`,
   ].join("\n");
 }
 
@@ -196,110 +259,93 @@ export function emailShell({
   eyebrow,
   headline,
   intro,
-  bodyHtml = "",
-  action,
-  afterActionHtml = "",
-  note,
-  footerNote,
-  brand = EMAIL_BRANDS.pctweaker,
+  introHtml,
+  blocks = [],
+  help,
+  why,
+  whyHtml = "",
+  brand: b = EMAIL_BRANDS.pctweaker,
 }: EmailShellInput): string {
-  const D = EMAIL_DARK;
-  const button = action
-    ? row(
-        `<table role="presentation" cellpadding="0" cellspacing="0"><tr>
-              <td bgcolor="${brand.accent}" style="border-radius:10px; background:${brand.accent};">
-                <a href="${escapeHtml(action.url)}" style="display:inline-block; padding:14px 28px; font-family:${FONT}; font-size:16px; font-weight:700; line-height:1.2; color:${brand.buttonText}; text-decoration:none; border-radius:10px;">${escapeHtml(action.label)}</a>
-              </td>
-            </tr></table>`,
-        28,
-      )
-    : "";
-  const noteRow = note
-    ? `
-        <tr>
-          <td class="fx-pad" style="padding:${action ? 14 : 24}px ${PAD}px 0;">
-            <p class="fx-m" style="margin:0; font-size:13px; color:${EMAIL_MUTED_TEXT}; line-height:1.6;">${escapeHtml(note)}</p>
-          </td>
-        </tr>`
-    : "";
-  const footerLink = (url: string, label: string) =>
-    `<a href="${url}" class="fx-m" style="color:${EMAIL_MUTED_TEXT}; text-decoration:underline;">${label}</a>`;
-
+  const support = escapeHtml(b.supportEmail);
   return `<!doctype html>
-<html lang="en" dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en" dir="ltr" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="x-apple-disable-message-reformatting">
 <meta name="color-scheme" content="light dark">
 <meta name="supported-color-schemes" content="light dark">
-<title>${escapeHtml(headline)} · ${escapeHtml(brand.name)}</title>
+<meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
+<title>${escapeHtml(headline)} · ${escapeHtml(b.name)}</title>
+<!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
+<!--[if !mso]><!--><link href="https://fonts.googleapis.com/css2?${b.googleFonts}&display=swap" rel="stylesheet"><!--<![endif]-->
 <style>
-  body { margin:0; padding:0; -webkit-text-size-adjust:100%; }
-  a { text-decoration-skip-ink:auto; }
-  @media only screen and (max-width:620px) {
-    .fx-pad { padding-left:24px !important; padding-right:24px !important; }
-    .fx-h1 { font-size:24px !important; }
-    .fx-outer { padding:16px 8px !important; }
+  body,table,td,p,a,li{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
+  table,td{mso-table-lspace:0;mso-table-rspace:0;border-collapse:collapse}
+  img{border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;display:block}
+  body{margin:0;padding:0;width:100%!important}
+  a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important}
+  @media only screen and (max-width:620px){
+    .wrap{padding:16px 10px!important}
+    .card-pad{padding:26px 20px 8px!important}
+    .head{padding:18px 20px!important}
+    .help{padding:18px 20px!important}
+    .h1{font-size:24px!important;line-height:30px!important}
+    .btn,.btn td,.btn a{width:100%!important;display:block!important;text-align:center!important;box-sizing:border-box!important}
   }
-  @media (prefers-color-scheme: dark) {
-    .fx-bg { background:${D.page} !important; }
-    .fx-card { background:${D.card} !important; border-color:${D.line} !important; }
-    .fx-box { background:${D.box} !important; border-color:${D.line} !important; }
-    .fx-rule { background:${D.line} !important; }
-    .fx-h { color:${D.heading} !important; }
-    .fx-t { color:${D.text} !important; }
-    .fx-m { color:${D.muted} !important; }
-    .fx-acc { color:${brand.accentTextDark} !important; }
+  @media (prefers-color-scheme: dark){
+    .bg{background:${b.bg}!important}
+    .card{background:${b.card}!important;border-color:${b.line}!important}
+    .panel{background:${b.panel}!important}
+    .ink{color:${b.ink}!important}
+    .muted{color:${b.muted}!important}
+    .link{color:${b.accentText}!important}
   }
-  [data-ogsc] .fx-h { color:${D.heading} !important; }
-  [data-ogsc] .fx-t { color:${D.text} !important; }
-  [data-ogsc] .fx-m { color:${D.muted} !important; }
-  [data-ogsc] .fx-acc { color:${brand.accentTextDark} !important; }
-  [data-ogsb] .fx-bg { background:${D.page} !important; }
-  [data-ogsb] .fx-card { background:${D.card} !important; }
-  [data-ogsb] .fx-box { background:${D.box} !important; }
+  [data-ogsc] .bg{background:${b.bg}!important}
+  [data-ogsc] .card{background:${b.card}!important;border-color:${b.line}!important}
+  [data-ogsc] .panel{background:${b.panel}!important}
+  [data-ogsc] .ink{color:${b.ink}!important}
+  [data-ogsc] .muted{color:${b.muted}!important}
+  [data-ogsc] .link{color:${b.accentText}!important}
 </style>
 </head>
-<body class="fx-bg" style="margin:0; padding:0; background:${PAGE}; font-family:${FONT};">
-<div style="display:none; max-height:0; max-width:0; overflow:hidden; opacity:0; mso-hide:all; font-size:1px; line-height:1px; color:${PAGE};">${escapeHtml(preheader)}${"&#8199;&#847;".repeat(60)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="fx-bg" bgcolor="${PAGE}" style="background:${PAGE};">
-  <tr>
-    <td align="center" class="fx-outer" style="padding:40px 16px;">
-      <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0"><tr><td><![endif]-->
-      <table lang="en" dir="ltr" role="presentation" width="100%" cellpadding="0" cellspacing="0" class="fx-card" bgcolor="${CARD}" style="max-width:600px; width:100%; background:${CARD}; border:1px solid ${LINE}; border-radius:16px; overflow:hidden; font-family:${FONT};">
-        <tr><td height="4" bgcolor="${brand.accent}" style="height:4px; line-height:4px; font-size:4px; background:${brand.accent};">&nbsp;</td></tr>
-        <tr>
-          <td class="fx-pad" style="padding:28px ${PAD}px 0;">
-            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-              <td width="40" valign="middle"><img src="${escapeHtml(brand.logoUrl)}" width="40" height="40" alt="" style="display:block; border:0; border-radius:10px;"></td>
-              <td valign="middle" class="fx-h" style="padding-left:12px; font-size:16px; font-weight:700; color:${HEADING}; letter-spacing:-0.1px;">${escapeHtml(brand.name)}</td>
-            </tr></table>
-          </td>
-        </tr>
-        <tr>
-          <td class="fx-pad" style="padding:32px ${PAD}px 0;">
-            <div class="fx-acc" style="font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:${brand.accentText};">${escapeHtml(eyebrow)}</div>
-            <h1 class="fx-h fx-h1" style="margin:10px 0 0; font-size:28px; line-height:1.25; font-weight:800; color:${HEADING}; letter-spacing:-0.4px;">${escapeHtml(headline)}</h1>
-            <p class="fx-t" style="margin:14px 0 0; font-size:16px; line-height:1.65; color:${TEXT};">${escapeHtml(intro)}</p>
-          </td>
-        </tr>
-${bodyHtml}${button}${noteRow}${afterActionHtml}
-        <tr><td style="padding:0 0 40px;">&nbsp;</td></tr>
-      </table>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
-        <tr>
-          <td class="fx-pad" style="padding:24px ${PAD}px 0; font-family:${FONT};">
-            <p class="fx-m" style="margin:0; font-size:12px; line-height:1.7; color:${EMAIL_MUTED_TEXT};">
-              ${footerNote ? `${escapeHtml(footerNote)}<br>` : ""}One account for PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver.<br>
-              ${footerLink("https://pctweaker.app/support", "Support")} &nbsp;&middot;&nbsp; ${footerLink("https://pctweaker.app/privacy", "Privacy")} &nbsp;&middot;&nbsp; ${footerLink(escapeHtml(brand.siteUrl), escapeHtml(brand.siteLabel))}
-            </p>
-          </td>
-        </tr>
-      </table>
-      <!--[if mso]></td></tr></table><![endif]-->
-    </td>
-  </tr>
+<body class="bg" style="margin:0;padding:0;background:${b.bg};">
+<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;color:${b.bg};">${escapeHtml(preheader)}${"&#8199;&#847;".repeat(30)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg" bgcolor="${b.bg}" style="background:${b.bg};" lang="en" dir="ltr">
+<tr><td align="center" class="wrap" style="padding:32px 16px;">
+<!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td><![endif]-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="max-width:600px;margin:0 auto;">
+  <tr><td class="card" bgcolor="${b.card}" style="background:${b.card};border:1px solid ${b.line};border-radius:14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td style="height:5px;font-size:0;line-height:0;background:${b.accent};border-radius:14px 14px 0 0;">&nbsp;</td></tr>
+      <tr><td class="head" style="padding:20px 32px;border-bottom:1px solid ${b.line};">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="40" valign="middle" style="padding:0 12px 0 0;"><a href="${escapeHtml(b.siteUrl)}" style="text-decoration:none;"><img src="${escapeHtml(b.logoUrl)}" width="40" height="40" alt="${escapeHtml(b.name)}" style="display:block;width:40px;height:40px;border-radius:10px;"></a></td>
+            <td valign="middle" style="font-family:${b.display};font-size:19px;line-height:24px;font-weight:700;letter-spacing:-0.2px;"><a href="${escapeHtml(b.siteUrl)}" class="ink" style="color:${b.ink};text-decoration:none;">${escapeHtml(b.name)}</a></td>
+          </tr>
+        </table>
+      </td></tr>
+      <tr><td class="card-pad" style="padding:32px 32px 8px;">
+        <p style="margin:0 0 10px;${font(b)}font-size:12px;line-height:16px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${b.accentText};">${escapeHtml(eyebrow)}</p>
+        <h1 class="h1 ink" style="margin:0 0 14px;font-family:${b.display};font-size:26px;line-height:32px;font-weight:700;letter-spacing:-0.4px;color:${b.ink};">${escapeHtml(headline)}</h1>
+        <p class="ink" style="margin:0 0 22px;${font(b)}font-size:16px;line-height:25px;color:${b.ink};">${introHtml ?? escapeHtml(intro)}</p>
+${blocks.map((block) => `        ${block(b)}`).join("\n")}
+      </td></tr>
+      <tr><td class="panel help" bgcolor="${b.panel}" style="background:${b.panel};padding:18px 32px;border-radius:0 0 14px 14px;">
+        <p class="ink" style="margin:0 0 4px;${font(b)}font-size:14px;line-height:21px;font-weight:700;color:${b.ink};">${escapeHtml(help.title)}</p>
+        <p class="muted" style="margin:0;${font(b)}font-size:14px;line-height:21px;color:${b.muted};">${help.text} Write to <a href="mailto:${support}" class="link" style="color:${b.accentText};">${support}</a> or reply to this email. ${escapeHtml(help.expectation ?? STANDARD_EXPECTATION)} Never send a password or card number by email.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td align="center" style="padding:20px 8px 0;">
+    <p class="muted" style="margin:0 0 6px;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">${escapeHtml(why)}${whyHtml ? ` ${whyHtml}` : ""}</p>
+    <p class="muted" style="margin:0 0 6px;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">One account for PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver.</p>
+    <p class="muted" style="margin:0;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">${escapeHtml(b.name)} &middot; <a href="${escapeHtml(b.siteUrl)}" class="link" style="color:${b.muted};">${escapeHtml(b.siteLabel)}</a> &middot; <a href="https://pctweaker.app/support/" class="link" style="color:${b.muted};">Support</a> &middot; <a href="${escapeHtml(b.privacyUrl)}" class="link" style="color:${b.muted};">Privacy</a> &middot; <a href="${escapeHtml(b.termsUrl)}" class="link" style="color:${b.muted};">Terms</a></p>
+  </td></tr>
+</table>
+<!--[if mso]></td></tr></table><![endif]-->
+</td></tr>
 </table>
 </body>
 </html>`;

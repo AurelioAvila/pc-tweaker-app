@@ -4,7 +4,7 @@ import { isValidEmail } from "../auth";
 import { sendMail, isConfigured as mailIsConfigured, MailError } from "../mailer";
 import { SUPPORT_INBOX, SUPPORT_REPLY_TO } from "../support-inbox";
 import { consumeGlobalBudget, singleLine } from "../public-form-guard";
-import { emailShell, textFooter } from "../emails/layout";
+import { supportAckEmail } from "../emails/support-ack";
 
 const router = express.Router();
 
@@ -174,22 +174,11 @@ router.post("/", supportLimiter, async (req: Request, res: Response) => {
   // Deliberately does NOT echo the message back. The recipient address is
   // attacker-controlled, so quoting 5000 characters of their text would turn
   // this endpoint into a way to deliver abuse to any inbox with our domain's
-  // reputation behind it. The subject line is enough for the sender to
-  // recognise their own request.
-  void sendMail({
-    to: email,
-    subject: "We received your PC Tweaker support request",
-    replyTo: SUPPORT_REPLY_TO,
-    html: emailShell({
-      preheader: "Your message reached the PC Tweaker support team. We'll reply to this address.",
-      eyebrow: "Support request received",
-      headline: "We're on it.",
-      intro: `Hi ${name}, your message has reached the PC Tweaker support team. We'll reply to this email address.`,
-      note: "If you did not contact us, you can ignore this message.",
-      footerNote: "Need to add a detail? Reply to this email. Never send your password or payment card details.",
-    }),
-    text: `Hi ${name},\n\nYour message has reached the PC Tweaker support team. We'll reply to this email address.\n\nNeed to add a detail? Reply to this email. Never send your password or payment card details.\n\nIf you did not contact us, you can ignore this message.${textFooter()}`,
-  }).catch((err: Error) => console.error("support acknowledgement failed:", err.message));
+  // reputation behind it. Their subject line is not echoed either, for the
+  // same reason; the fixed email subject is enough to recognise the request.
+  const ack = supportAckEmail(name, email);
+  void sendMail({ to: email, replyTo: SUPPORT_REPLY_TO, ...ack })
+    .catch((err: Error) => console.error("support acknowledgement failed:", err.message));
 
   res.status(200).json({ ok: true });
 });

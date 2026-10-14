@@ -19,6 +19,7 @@ import {
   verificationSubject,
 } from "../emails/account";
 import { EMAIL_BRANDS, type EmailBrand } from "../emails/layout";
+import { consumeGlobalBudget } from "../public-form-guard";
 
 /** What the free tier includes, quoted in the welcome email. Kept beside the
  *  one place that sends it rather than hidden in the template, so a change to
@@ -162,6 +163,12 @@ router.post("/register", async (req: Request, res: Response) => {
     return res.status(400).json({ error: "date of birth is required (YYYY-MM-DD)" });
   }
   if (!isConfigured) return res.status(503).json({ error: "database not configured (DATABASE_URL missing)" });
+  // Each registration mails an address the caller chose. The per-email
+  // limiter cannot stop one sender walking a list of victims; a global hourly
+  // ceiling (far above real sign-ups) keeps our domain from becoming a relay.
+  if (!consumeGlobalBudget("register", 120)) {
+    return res.status(429).json({ error: "Too many sign-ups right now. Please try again later." });
+  }
 
   try {
     const pool = getPool();
@@ -375,7 +382,9 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
 
   try {
     const result = await getPool().query("SELECT id FROM users WHERE email = $1", [email.toLowerCase()]);
-    if (result.rowCount && result.rowCount > 0) {
+    // Same reasoning as registration: bound how much reset mail anyone can
+    // trigger. The answer stays generic either way.
+    if (result.rowCount && result.rowCount > 0 && consumeGlobalBudget("password-reset-mail", 120)) {
       const brand = brandOf(product);
       const userId = result.rows[0].id;
       const token = await createActionToken(userId, "password_reset", 60 * 60 * 1000);

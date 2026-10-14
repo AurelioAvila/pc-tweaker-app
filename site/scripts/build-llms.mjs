@@ -126,8 +126,8 @@ await writeFile(
   tweakyFile,
   tweakyHtml.replace(
     "<!--RELEASE_TRUST-->",
-    `<details data-release-trust="tweaky-driver" style="max-width:720px;padding:12px 0"><summary style="font-size:16px">Verify this download (v${t.version})</summary><p class="small">TweakyDriver-Setup.exe is the installer of release v${t.version}. SHA-256: <code style="word-break:break-all">${t.sha256}</code>.</p><p class="small">Authenticode signature: ${t.signature.status}, publisher ${t.signature.signer}${t.signature.timestamped ? ", with a trusted timestamp" : ""}. Certificate thumbprint <code style="word-break:break-all">${t.signature.thumbprint}</code>.</p><p class="small">In PowerShell, from the folder you saved it to:</p><pre class="small" style="overflow-x:auto"><code>Get-FileHash .\TweakyDriver-Setup.exe -Algorithm SHA256
-Get-AuthenticodeSignature .\TweakyDriver-Setup.exe | Format-List Status, SignerCertificate</code></pre></details>`,
+    `<details data-release-trust="tweaky-driver" style="max-width:720px;padding:12px 0"><summary style="font-size:16px">Verify this download (v${t.version})</summary><p class="small">TweakyDriver-Setup.exe is the installer of release v${t.version}. SHA-256: <code style="word-break:break-all">${t.sha256}</code>.</p><p class="small">Authenticode signature: ${t.signature.status}, publisher ${t.signature.signer}${t.signature.timestamped ? ", with a trusted timestamp" : ""}. Certificate thumbprint <code style="word-break:break-all">${t.signature.thumbprint}</code>.</p><p class="small">In PowerShell, from the folder you saved it to:</p><pre class="small" style="overflow-x:auto"><code>Get-FileHash .\\TweakyDriver-Setup.exe -Algorithm SHA256
+Get-AuthenticodeSignature .\\TweakyDriver-Setup.exe | Format-List Status, SignerCertificate</code></pre></details>`,
   ),
   "utf8",
 );

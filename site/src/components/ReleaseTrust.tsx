@@ -25,7 +25,7 @@ export function ReleaseTrust({ product, saveAs }: { product: TrustProduct; saveA
         <code className="font-mono-t break-all">{r.signature.thumbprint}</code>.
       </p>
       <p className="mt-2">Check it yourself in PowerShell, from the folder you saved it to:</p>
-      <pre className="font-mono-t mt-1 overflow-x-auto rounded-md bg-black/20 p-2 text-[11.5px] text-[var(--fg)]">{`Get-FileHash .\${saveAs} -Algorithm SHA256\nGet-AuthenticodeSignature .\${saveAs} | Format-List Status, SignerCertificate`}</pre>
+      <pre className="font-mono-t mt-1 overflow-x-auto rounded-md bg-black/20 p-2 text-[11.5px] text-[var(--fg)]">{`Get-FileHash .\\${saveAs} -Algorithm SHA256\nGet-AuthenticodeSignature .\\${saveAs} | Format-List Status, SignerCertificate`}</pre>
     </details>
   );
 }

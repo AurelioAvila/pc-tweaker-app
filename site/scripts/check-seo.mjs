@@ -120,6 +120,7 @@ for (const [key, route] of [["pc-tweaker", ""], ["uninstaller", "uninstaller/"],
   assert.ok(llms.includes(trust.sha256), `llms.txt does not carry the ${key} SHA-256`);
   const page = await readFile(new URL(`${route}index.html`, dist), "utf8");
   assert.ok(page.includes(trust.sha256), `${route || "/"} does not show the ${key} SHA-256`);
+  assert.match(page, /Get-FileHash \.\\[A-Za-z]+/, `${route || "/"}: the verify command lost its .\\file path`);
 }
 const uninstallerApp = [...uninstaller.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)]
   .map((match) => JSON.parse(match[1]))

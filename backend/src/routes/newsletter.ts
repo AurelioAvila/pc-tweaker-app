@@ -4,7 +4,7 @@ import rateLimit from "express-rate-limit";
 import { asyncRoute } from "../async-route";
 import { isValidEmail } from "../auth";
 import { getPool, isConfigured } from "../db";
-import { emailShell, escapeHtml, mutedLink, smallPrint, textFooter } from "../emails/layout";
+import { button, emailShell, escapeHtml, mutedLink, smallPrint, textFooter } from "../emails/layout";
 import { sendMail, isConfigured as mailIsConfigured } from "../mailer";
 import { consumeGlobalBudget } from "../public-form-guard";
 import { htmlPage } from "./auth";
@@ -128,8 +128,12 @@ router.post("/", newsletterLimiter, asyncRoute(async (req: Request, res: Respons
         headline: "Open this on your Windows PC.",
         intro:
           "Here's the link you asked for. Open it on the Windows 10 or 11 PC you want to tune and download PC Tweaker from there. You'll also get occasional emails about new releases. No spam and no daily drip.",
-        action: { label: "Download PC Tweaker", url: DOWNLOAD_PAGE },
-        afterActionHtml: smallPrint(`Didn't ask for this? ${mutedLink(link, "Unsubscribe with one click")}, no sign-in needed.`),
+        blocks: [
+          button({ label: "Download PC Tweaker", url: DOWNLOAD_PAGE }),
+          smallPrint(`Didn't ask for this? ${mutedLink(link, "Unsubscribe with one click")}, no sign-in needed.`),
+        ],
+        help: { title: "Questions before you install?", text: "Ask us anything about what PC Tweaker changes." },
+        why: "You received this email because you asked pctweaker.app to send the download link to this address.",
       }),
       text: `Open this on your Windows PC.
 
@@ -152,8 +156,12 @@ ${link}${textFooter()}`,
         headline: "You're on the list.",
         intro:
           "You'll get occasional emails about new PC Tweaker releases, new tweaks and new tools from the same developer. No spam and no daily drip.",
-        action: { label: "Open PC Tweaker", url: "https://pctweaker.app" },
-        afterActionHtml: smallPrint(`Didn't sign up, or changed your mind? ${mutedLink(link, "Unsubscribe with one click")}, no sign-in needed.`),
+        blocks: [
+          button({ label: "Open PC Tweaker", url: "https://pctweaker.app" }),
+          smallPrint(`Didn't sign up, or changed your mind? ${mutedLink(link, "Unsubscribe with one click")}, no sign-in needed.`),
+        ],
+        help: { title: "Something you want to see?", text: "Tell us which tweak or tool you would like next." },
+        why: "You received this email because this address joined the PC Tweaker list.",
       }),
       text: `You're on the PC Tweaker list.
 

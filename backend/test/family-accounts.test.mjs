@@ -66,11 +66,11 @@ test("the auth limiter answers in JSON the apps can read", async () => {
 test("mail is branded for the app that asked, in both parts", () => {
   const link = "https://api.pctweaker.app/api/auth/verify-email?token=t&product=uninstaller";
   const html = verificationHtml("Ada", link, EMAIL_BRANDS.uninstaller);
-  assert.match(html, /Confirm this address and your PC Tweaker Uninstaller account is ready/);
+  assert.match(html, /You created a PC Tweaker Uninstaller account with this address/);
   assert.ok(html.includes(EMAIL_BRANDS.uninstaller.logoUrl));
   assert.ok(html.includes(EMAIL_BRANDS.uninstaller.accent));
   assert.match(verificationText(link, EMAIL_BRANDS.uninstaller), /Privacy: https:\/\/pctweaker\.app\/privacy/);
-  assert.match(passwordResetHtml(link), /applies to PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver/);
+  assert.match(passwordResetHtml(link), /Applies to<\/td>[\s\S]*?>PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver</);
 });
 
 test("the purchase email quotes the Uninstaller's real Pro features and the catalogue counts", () => {
@@ -78,5 +78,5 @@ test("the purchase email quotes the Uninstaller's real Pro features and the cata
   assert.match(uninstaller, /Leftover cleanup/);
   assert.doesNotMatch(uninstaller, /Deep scan/, "the leftover scan is free, not a Pro feature");
   const tweaker = proWelcomeHtml({ firstName: "Ada", email: "a@example.com", plan: "annual", priceLabel: "€24.99 / year", renewsOn: "1 October 2027" });
-  assert.match(tweaker, /All 81 controls \(46 Free, 35 Pro\)/);
+  assert.match(tweaker, /All 81 controls are available now: the 46 you had on Free plus the 35 Pro ones/);
 });

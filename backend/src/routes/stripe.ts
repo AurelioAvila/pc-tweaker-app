@@ -659,7 +659,7 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
       : null;
     const result = await sendMail({
       to: user.email,
-      subject: proWelcomeSubject(product),
+      subject: proWelcomeSubject(product, plan),
       replyTo: SUPPORT_REPLY_TO,
       text: proWelcomeText({
         product,

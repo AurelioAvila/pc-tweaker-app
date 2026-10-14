@@ -17,7 +17,7 @@ test("a purchase that never renews is not given a renewal date", () => {
 
   assert.match(html, /Never expires/, "the row must state that access does not lapse");
   assert.doesNotMatch(html, /Renews on/, "nothing renews, so nothing should say it does");
-  assert.match(html, /Pro — Lifetime/, "the plan name must not fall back to Monthly");
+  assert.match(html, /Pro, Lifetime/, "the plan name must not fall back to Monthly");
 });
 
 test("a subscription still quotes its renewal date", () => {
@@ -31,7 +31,7 @@ test("a subscription still quotes its renewal date", () => {
 
   assert.match(html, /Renews on/);
   assert.match(html, /September 24, 2027/);
-  assert.match(html, /Pro — Annual/);
+  assert.match(html, /Pro, Annual/);
   assert.doesNotMatch(html, /Never expires/);
 });
 

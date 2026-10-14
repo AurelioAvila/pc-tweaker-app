@@ -23,7 +23,7 @@ test("plain-text messages preserve action URLs, expiry and account details", () 
   assert.ok(passwordResetText(LINK).includes(LINK));
   assert.match(passwordResetText(LINK), /once.*one hour/);
   assert.ok(passwordChangedText(WHEN).includes(WHEN));
-  assert.match(accountWelcomeText(27), /27 tweaks/);
+  assert.match(accountWelcomeText(27), /27 Free controls/);
 });
 
 test("the confirmation shows the destination as text, after the button", () => {
@@ -31,8 +31,8 @@ test("the confirmation shows the destination as text, after the button", () => {
   // able to see where the link goes without clicking it. After the button,
   // because that is where someone looks once the button did not work.
   const html = verificationHtml("Marco Rossi", LINK);
-  assert.ok(html.includes("Or paste this into your browser"));
-  assert.ok(html.indexOf("Confirm my email") < html.indexOf("Or paste this"));
+  assert.ok(html.includes("copy this address into your browser"));
+  assert.ok(html.indexOf("Confirm my email") < html.indexOf("copy this address"));
   assert.match(html, /token=abc&amp;x=1/, "the ampersand must be escaped, not dropped");
 });
 
@@ -59,8 +59,8 @@ test("the reset email states the two limits that matter", () => {
 test("the welcome quotes the free tweak count it was given", () => {
   // Passed in rather than written into the template, so the email cannot go
   // on promising a number that stopped being true.
-  assert.match(accountWelcomeHtml("Marco", 35), /35 tweaks/);
-  assert.match(accountWelcomeHtml("Marco", 40), /40 tweaks/);
+  assert.match(accountWelcomeHtml("Marco", 35), /35 Free controls/);
+  assert.match(accountWelcomeHtml("Marco", 40), /40 Free controls/);
 });
 
 test("every subject names the product", () => {
@@ -83,7 +83,7 @@ test("all four are complete documents in the same shell", () => {
   ]) {
     assert.ok(html.startsWith("<!doctype html>"));
     assert.ok(html.includes("pctweaker.app"));
-    assert.ok(html.includes("#ff5500"), "the shared accent, not a second visual language");
+    assert.ok(html.includes("#ff6a3d"), "the shared accent, not a second visual language");
   }
 });
 

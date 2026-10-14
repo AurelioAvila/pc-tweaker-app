@@ -169,8 +169,11 @@
   border-radius: 12px;
   background: var(--surface-1);
 }
-.pricing-plan-lifetime {
+.pricing-plan {
   position: relative;
+}
+.pricing-plan-lifetime,
+.pricing-plan[data-most-chosen] {
   border-color: color-mix(in srgb, var(--app-accent) 60%, var(--border-subtle));
   background:
     radial-gradient(
@@ -195,12 +198,15 @@
   border-radius: 999px;
   color: var(--on-accent, #17091e);
   background: var(--app-accent);
-  box-shadow: 0 6px 18px -8px var(--app-accent);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
+  /* A ring in the page colour cuts the pill cleanly out of the card border. */
+  box-shadow:
+    0 0 0 3px var(--app-bg-b, var(--surface-1)),
+    0 6px 18px -8px var(--app-accent);
 }
 .pricing-ribbon svg {
   width: 12px;
@@ -545,6 +551,8 @@
 @container (max-width: 600px) {
   .pricing-plans {
     grid-template-columns: 1fr;
+    /* Stacked, the pill hangs 13px above its card: keep it off the card above. */
+    row-gap: 22px;
   }
   .pricing-plan {
     display: grid;

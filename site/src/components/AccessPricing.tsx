@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { text } from "../i18n/dictionary";
 import { riseChild, staggerParent, viewportOnce } from "../motion";
 import { DOWNLOAD_EXE } from "../constants";
+import { MOST_CHOSEN } from "../../../src/most-chosen";
 import { euro, PromoFine, PromoPrice, promoTerms, usePromo } from "../promo";
 
 export function AccessPricing() {
@@ -10,6 +11,7 @@ export function AccessPricing() {
   const annualOffer = promo.offer("pctweaker", "annual");
   const monthlyOffer = promo.offer("pctweaker", "monthly");
   const lifetimeOffer = promo.offer("pctweaker", "lifetime");
+  const lifetimeChosen = MOST_CHOSEN.pctweaker === "lifetime";
 
   return (
     <section id="access" className="border-t border-white/5 px-5 py-24 md:px-12">
@@ -104,18 +106,22 @@ export function AccessPricing() {
           <motion.div
             variants={riseChild}
             className="glow-accent relative flex flex-col rounded-2xl border p-9"
+            aria-describedby={lifetimeChosen ? "most-chosen" : undefined}
             style={{
               borderColor: "var(--accent-glow)",
               background: "linear-gradient(160deg, var(--bg-2) 60%, var(--accent-soft))",
             }}
           >
-            <span
-              className="font-mono-t bg-accent absolute -top-3.5 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[10.5px] font-bold tracking-[0.14em] whitespace-nowrap text-[var(--bg)]"
-              style={{ boxShadow: "0 0 0 4px var(--bg), 0 8px 22px -8px var(--accent)" }}
-            >
-              <span aria-hidden="true">✦</span>
-              {lifetime.badge}
-            </span>
+            {lifetimeChosen && (
+              <span
+                id="most-chosen"
+                className="font-mono-t bg-accent absolute -top-3.5 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-[0.14em] whitespace-nowrap text-[var(--bg)]"
+                style={{ boxShadow: "0 0 0 4px var(--bg), 0 8px 22px -8px var(--accent)" }}
+              >
+                <span aria-hidden="true">✦</span>
+                {lifetime.badge}
+              </span>
+            )}
             <div className="font-mono-t mb-4 text-[12px] tracking-[0.14em] text-[var(--fg-dim)]">
               {lifetime.plan}
             </div>

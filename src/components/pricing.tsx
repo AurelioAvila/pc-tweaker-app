@@ -9,6 +9,7 @@ import {
   savingsPercent,
 } from "../lib";
 import { offerClock } from "../lifetime-offer";
+import { MOST_CHOSEN, type SoldPlan } from "../most-chosen";
 import { promoPercent, PROMO_LAYOUT_UNTIL } from "../promo";
 import { HalloweenOfferBanner } from "./halloween-offer";
 import { CheckIcon, CrownIcon, LayersIcon, SparkIcon } from "./icons";
@@ -48,6 +49,7 @@ export function PricingPanel({
   const previewing = campaign.preview || promo.preview;
   const ownsLifetime = isPro && heldPlan === "lifetime";
   const annual = period === "annual";
+  const mostChosen = (plan: SoldPlan) => MOST_CHOSEN.pctweaker === plan;
   const proOffer = promo.offer("pctweaker", period);
   const lifetimeOffer = promo.offer("pctweaker", "lifetime");
   const promoOffers = promo.active ? (promo.promo?.offers ?? []) : [];
@@ -194,7 +196,17 @@ export function PricingPanel({
             <li>{copy.restores}</li>
           </ul>
         </article>
-        <article className="pricing-plan pricing-plan-pro">
+        <article
+          className="pricing-plan pricing-plan-pro"
+          data-most-chosen={mostChosen(period) || undefined}
+          aria-describedby={mostChosen(period) ? "pricing-most-chosen" : undefined}
+        >
+          {mostChosen(period) && (
+            <span className="pricing-ribbon" id="pricing-most-chosen">
+              <SparkIcon />
+              {copy.mostChosen}
+            </span>
+          )}
           <div className="pricing-plan-name">
             <h2>{s.pricing.proName}</h2>
             {isPro && heldPlan === period && (
@@ -264,11 +276,17 @@ export function PricingPanel({
             <li>{copy.sessions}</li>
           </ul>
         </article>
-        <article className="pricing-plan pricing-plan-lifetime">
-          <span className="pricing-ribbon">
-            <SparkIcon />
-            {copy.mostChosen}
-          </span>
+        <article
+          className="pricing-plan pricing-plan-lifetime"
+          data-most-chosen={mostChosen("lifetime") || undefined}
+          aria-describedby={mostChosen("lifetime") ? "pricing-most-chosen" : undefined}
+        >
+          {mostChosen("lifetime") && (
+            <span className="pricing-ribbon" id="pricing-most-chosen">
+              <SparkIcon />
+              {copy.mostChosen}
+            </span>
+          )}
           <div className="pricing-plan-name">
             <h2>
               <CrownIcon className="h-4 w-4" />

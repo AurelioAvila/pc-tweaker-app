@@ -386,6 +386,8 @@ export function AccountMenu({
   onLogout,
   onResendVerification,
   onForgotPassword,
+  onChangePassword,
+  onChangeEmail,
   onUpgrade,
   onViewPlan,
   onManageBilling,
@@ -412,6 +414,8 @@ export function AccountMenu({
   onLogout: () => void;
   onResendVerification: () => Promise<void>;
   onForgotPassword: (email: string) => Promise<void>;
+  onChangePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  onChangeEmail: (password: string, newEmail: string) => Promise<void>;
   onUpgrade: () => void;
   /** Opens the plans screen. Same destination for both tiers: a Free
    *  account is comparing, a Pro account is checking what it pays for. */
@@ -601,6 +605,23 @@ export function AccountMenu({
                 e.target.value = "";
               }}
             />
+            {auth.status === "authenticated" && (
+              <details name="account-settings" className="account-setting">
+                <summary>
+                  <span>{s.auth.securityTitle}</span>
+                  <span className="account-chevron" aria-hidden="true">
+                    ›
+                  </span>
+                </summary>
+                <div className="account-setting-body">
+                  <AccountChanges
+                    s={s}
+                    onChangePassword={onChangePassword}
+                    onChangeEmail={onChangeEmail}
+                  />
+                </div>
+              </details>
+            )}
             <div className="account-plan-row">
               <span>
                 <CrownIcon className="h-4 w-4" />
@@ -847,4 +868,122 @@ function productPlanLabel(
   return end && Number.isFinite(end.getTime())
     ? `${name} · ${words.planUntil.replace("{date}", end.toLocaleDateString(lang, { dateStyle: "medium" }))}`
     : name;
+}
+
+const FIELD =
+  "rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-[var(--app-accent)]";
+const SUBMIT =
+  "rounded-lg bg-[var(--app-accent)] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-60";
+
+/** Change the password, or move the account to another address. Both need
+ *  the current password; the server sends the notices. */
+function AccountChanges({
+  s,
+  onChangePassword,
+  onChangeEmail,
+}: {
+  s: Strings;
+  onChangePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  onChangeEmail: (password: string, newEmail: string) => Promise<void>;
+}) {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [password, setPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [working, setWorking] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function run(action: () => Promise<void>, done: string) {
+    setResult(null);
+    setWorking(true);
+    try {
+      await action();
+      setResult({ ok: true, text: done });
+      setCurrent("");
+      setNext("");
+      setPassword("");
+      setNewEmail("");
+    } catch (err) {
+      setResult({ ok: false, text: String(err instanceof Error ? err.message : err) });
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <form
+        className="flex flex-col gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (next.length < 8) return setResult({ ok: false, text: s.auth.passwordTooShort });
+          if (new TextEncoder().encode(next).length > 72)
+            return setResult({ ok: false, text: s.auth.passwordTooLong });
+          void run(() => onChangePassword(current, next), s.auth.passwordChanged);
+        }}
+      >
+        <input
+          type="password"
+          autoComplete="current-password"
+          value={current}
+          onChange={(e) => setCurrent(e.target.value)}
+          placeholder={s.auth.currentPassword}
+          aria-label={s.auth.currentPassword}
+          className={FIELD}
+          required
+        />
+        <input
+          type="password"
+          autoComplete="new-password"
+          value={next}
+          onChange={(e) => setNext(e.target.value)}
+          placeholder={s.auth.newPassword}
+          aria-label={s.auth.newPassword}
+          className={FIELD}
+          required
+        />
+        <button type="submit" disabled={working} className={SUBMIT}>
+          {working ? s.auth.working : s.auth.changePassword}
+        </button>
+      </form>
+      <form
+        className="flex flex-col gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail))
+            return setResult({ ok: false, text: s.auth.emailInvalid });
+          void run(() => onChangeEmail(password, newEmail.trim()), s.auth.changeEmailSent);
+        }}
+      >
+        <input
+          type="email"
+          autoComplete="email"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          placeholder={s.auth.newEmail}
+          aria-label={s.auth.newEmail}
+          className={FIELD}
+          required
+        />
+        <input
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={s.auth.currentPassword}
+          aria-label={s.auth.currentPassword}
+          className={FIELD}
+          required
+        />
+        <button type="submit" disabled={working} className={SUBMIT}>
+          {working ? s.auth.working : s.auth.changeEmail}
+        </button>
+      </form>
+      {result && (
+        <p className={`text-xs ${result.ok ? "text-emerald-400" : "text-red-400"}`} role="status">
+          {result.text}
+        </p>
+      )}
+    </div>
+  );
 }

@@ -16,10 +16,12 @@ import {
   discardLegacyAvatar,
   formatBytes,
   friendlyError,
+  installationId,
   readStoredEmail,
   readToken,
   adoptRenewedToken,
   storeSession,
+  TOKEN_KEY,
   storedRamAutoMinutes,
   textFor,
 } from "./lib";
@@ -447,7 +449,15 @@ function App() {
     const res = await accountFetch(`${API_BASE_URL}/api/auth/${mode}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, ...registerDetails }),
+      // The language mail is written in, and this installation's id, so a
+      // sign-in from somewhere new can be reported without anything personal.
+      body: JSON.stringify({
+        email,
+        password,
+        ...registerDetails,
+        locale: lang,
+        deviceId: installationId(),
+      }),
     });
     if (!res.ok) throw accountFailure(res.status);
     const data = (await res.json()) as { token: string; verificationEmailSent?: boolean };
@@ -476,7 +486,8 @@ function App() {
     if (!token) throw new Error(s.auth.loginRequiredForCheckout);
     const res = await accountFetch(`${API_BASE_URL}/api/auth/resend-verification`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ locale: lang }),
     });
     if (!res.ok) throw accountFailure(res.status);
   }
@@ -486,8 +497,40 @@ function App() {
     const res = await accountFetch(`${API_BASE_URL}/api/auth/forgot-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, locale: lang }),
     });
+    if (!res.ok) throw accountFailure(res.status);
+  }
+
+  /** Needs the current password; this session continues with the token the
+   *  server returns, every other one ends. */
+  async function changePassword(currentPassword: string, newPassword: string) {
+    if (!API_BASE_URL) throw new Error(s.auth.backendNotConfigured);
+    const token = readToken();
+    const email = readStoredEmail();
+    if (!token || !email) throw new Error(s.auth.loginRequiredForCheckout);
+    const res = await accountFetch(`${API_BASE_URL}/api/auth/change-password`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword, newPassword, locale: lang }),
+    });
+    if (res.status === 401) throw new Error(s.auth.errorCurrentPassword);
+    if (!res.ok) throw accountFailure(res.status);
+    const data = (await res.json()) as { token: string };
+    storeSession(data.token, email, localStorage.getItem(TOKEN_KEY) !== null);
+  }
+
+  /** Nothing changes until the link sent to the new address is confirmed. */
+  async function changeEmail(password: string, newEmail: string) {
+    if (!API_BASE_URL) throw new Error(s.auth.backendNotConfigured);
+    const token = readToken();
+    if (!token) throw new Error(s.auth.loginRequiredForCheckout);
+    const res = await accountFetch(`${API_BASE_URL}/api/auth/change-email`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ password, newEmail, locale: lang }),
+    });
+    if (res.status === 401) throw new Error(s.auth.errorCurrentPassword);
     if (!res.ok) throw accountFailure(res.status);
   }
 
@@ -960,6 +1003,8 @@ function App() {
                 onLogout={logout}
                 onResendVerification={resendVerification}
                 onForgotPassword={forgotPassword}
+                onChangePassword={changePassword}
+                onChangeEmail={changeEmail}
                 onUpgrade={() => setPaywallFeature(s.menu.planPro)}
                 onViewPlan={() => setFilter("pricing")}
                 onManageBilling={() =>

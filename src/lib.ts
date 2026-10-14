@@ -125,6 +125,22 @@ export const RAM_AUTO_STORAGE_KEY = "pc-tweaker-ram-auto";
 /** Only honor a stored value we actually offer: a hand-edited or stale entry
  *  must not become a rogue interval (or a 0ms one, which would spin the CPU). */
 export const TOKEN_KEY = "pc-tweaker-token";
+const INSTALLATION_KEY = "pc-tweaker-installation-id";
+
+/** A random id this installation keeps, sent at sign-in so the account can
+ *  tell a new PC from a known one. Not a hardware fingerprint. */
+export function installationId(): string {
+  try {
+    let id = localStorage.getItem(INSTALLATION_KEY);
+    if (!id || !/^[A-Za-z0-9-]{16,64}$/.test(id)) {
+      id = crypto.randomUUID();
+      localStorage.setItem(INSTALLATION_KEY, id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
+}
 
 export const EMAIL_KEY = "pc-tweaker-email";
 

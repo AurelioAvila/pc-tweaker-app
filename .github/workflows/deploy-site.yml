@@ -11,6 +11,10 @@ on:
       # release that bumps the version but never touches site/ leaves the
       # deployed site announcing a stale one, as happened for 1.7.0 and 1.7.1.
       - "src-tauri/tauri.conf.json"
+      # The legal pages render the root PRIVACY.md and TERMS.md (Legal.tsx imports them
+      # with ?raw), so editing either must republish the site.
+      - "PRIVACY.md"
+      - "TERMS.md"
   workflow_dispatch:
 
 permissions:

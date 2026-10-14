@@ -34,9 +34,9 @@
   </Company_Info>
   <Program_Info>
     <Program_Name>PC Tweaker</Program_Name>
-    <Program_Version>1.16.1</Program_Version>
+    <Program_Version>1.18.1</Program_Version>
     <Program_Release_Month>10</Program_Release_Month>
-    <Program_Release_Day>07</Program_Release_Day>
+    <Program_Release_Day>11</Program_Release_Day>
     <Program_Release_Year>2026</Program_Release_Year>
     <Program_Cost_Dollars></Program_Cost_Dollars>
     <Program_Cost_Other_Code></Program_Cost_Other_Code>
@@ -47,9 +47,9 @@
     <Program_OS_Support>WinOther</Program_OS_Support>
     <Program_Language>English</Program_Language>
     <File_Info>
-      <File_Size_Bytes>5886712</File_Size_Bytes>
-      <File_Size_K>5748.74</File_Size_K>
-      <File_Size_MB>5.61</File_Size_MB>
+      <File_Size_Bytes>6150688</File_Size_Bytes>
+      <File_Size_K>6006.53</File_Size_K>
+      <File_Size_MB>5.87</File_Size_MB>
     </File_Info>
     <Expire_Info>
       <Has_Expire_Info>N</Has_Expire_Info>
@@ -60,7 +60,7 @@
       <Expire_Day></Expire_Day>
       <Expire_Year></Expire_Year>
     </Expire_Info>
-    <Program_Change_Info>PC Tweaker 1.16.1 is a routine maintenance update.</Program_Change_Info>
+    <Program_Change_Info>PC Tweaker 1.18.1 makes Before &amp; After a measured comparison, turns Change history into a record you can filter, export and undo by session, gives Debloat facts about how each app is really used, adds starter profiles and moves Portuguese to European Portuguese.</Program_Change_Info>
     <Program_Category_Class>System Utilities::System Maintenance</Program_Category_Class>
     <Program_Specific_Category></Program_Specific_Category>
     <Program_System_Requirements>Windows 10/11 x64; internet for accounts, updates and supported online features.</Program_System_Requirements>
@@ -84,7 +84,7 @@
       <Application_XML_File_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/pad.xml</Application_XML_File_URL>
     </Application_URLs>
     <Download_URLs>
-      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.16.1/pc-tweaker-app_1.16.1_x64-setup.exe</Primary_Download_URL>
+      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.18.1/pc-tweaker-app_1.18.1_x64-setup.exe</Primary_Download_URL>
       <Secondary_Download_URL></Secondary_Download_URL>
       <Additional_Download_URL_1></Additional_Download_URL_1>
       <Additional_Download_URL_2></Additional_Download_URL_2>

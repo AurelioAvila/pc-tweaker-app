@@ -27,9 +27,18 @@ fn matches(platform: &ReleaseManifestPlatform, version: &str) -> bool {
         format!("pc-tweaker-app_{version}_x64_en-US.msi"),
     ];
     expected.contains(&filename.to_string())
-        && platform.url.as_str()
-            == format!("https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v{version}/{filename}")
+        && RELEASE_HOSTS
+            .iter()
+            .any(|base| platform.url.as_str() == format!("{base}/v{version}/{filename}"))
 }
+
+// Where a signed installer may be downloaded from: the GitHub release, or the
+// same bytes on our own download domain (my-apps/tools/github-indipendenza).
+// The minisign signature covers the bytes, so the host only has to be ours.
+const RELEASE_HOSTS: [&str; 2] = [
+    "https://github.com/AurelioAvila/pc-tweaker-app/releases/download",
+    "https://dl.pctweaker.app/pc-tweaker",
+];
 
 pub fn release_matches(version: &str, data: &RemoteReleaseInner) -> bool {
     match data {
@@ -76,5 +85,17 @@ mod tests {
         let mut wrong_host = platform("2.0.0", "2.0.0");
         wrong_host.url = "https://example.com/installer.exe".parse().unwrap();
         assert!(!matches(&wrong_host, "2.0.0"));
+    }
+
+    #[test]
+    fn our_download_domain_serves_the_same_signed_file() {
+        let mut ours = platform("2.0.0", "2.0.0");
+        ours.url = "https://dl.pctweaker.app/pc-tweaker/v2.0.0/pc-tweaker-app_2.0.0_x64-setup.exe".parse().unwrap();
+        assert!(matches(&ours, "2.0.0"));
+        // Same domain, but another version's folder or a look-alike host.
+        ours.url = "https://dl.pctweaker.app/pc-tweaker/v1.0.0/pc-tweaker-app_2.0.0_x64-setup.exe".parse().unwrap();
+        assert!(!matches(&ours, "2.0.0"));
+        ours.url = "https://dl.pctweaker.app.example.com/pc-tweaker/v2.0.0/pc-tweaker-app_2.0.0_x64-setup.exe".parse().unwrap();
+        assert!(!matches(&ours, "2.0.0"));
     }
 }

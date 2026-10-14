@@ -1,8 +1,17 @@
 import express, { Request, Response } from "express";
 import rateLimit from "express-rate-limit";
+import crypto from "crypto";
 import { getPool, isConfigured } from "../db";
 import { hashPassword, verifyPassword, signToken, requireAuth, isValidEmail, isValidPassword } from "../auth";
-import { createActionToken, consumeActionToken, confirmsVerifiedAddress, invalidatePasswordResets } from "../tokens";
+import {
+  createActionToken,
+  consumeActionToken,
+  confirmsVerifiedAddress,
+  invalidatePasswordResets,
+  peekEmailChange,
+  consumeEmailChange,
+  invalidateActionTokens,
+} from "../tokens";
 import { sendMail, MailError } from "../mailer";
 import {
   accountWelcomeText,
@@ -17,8 +26,12 @@ import {
   passwordResetSubject,
   verificationHtml,
   verificationSubject,
+  emailChangeMail,
+  emailChangedNotice,
+  newSignInMail,
 } from "../emails/account";
 import { EMAIL_BRANDS, type EmailBrand } from "../emails/layout";
+import { copyFor, formatMoment, fromAcceptLanguage, isLocale, type Copy, type Locale } from "../emails/copy";
 import { consumeGlobalBudget } from "../public-form-guard";
 
 /** What the free tier includes, quoted in the welcome email. Kept beside the
@@ -35,6 +48,24 @@ function brandOf(product: unknown): EmailBrand {
 }
 function productQuery(brand: EmailBrand): string {
   return brand === EMAIL_BRANDS.uninstaller ? "&product=uninstaller" : "";
+}
+
+/**
+ * The language a message to this person is written in: the one the app sent
+ * with this request, else the one saved on the account, else the language the
+ * browser or Windows asked for, else English.
+ */
+function languageOf(req: Request, saved?: unknown): Locale {
+  const sent = req.body?.locale ?? req.query?.lang;
+  if (isLocale(sent)) return sent;
+  if (isLocale(saved)) return saved;
+  return fromAcceptLanguage(req.get("accept-language")) ?? "en";
+}
+
+/** Saves the language the app sent, so mail that is not a reply to a request
+ *  (receipts, notices) uses it too. Nothing is saved when the app sent none. */
+async function rememberLanguage(req: Request, userId: number): Promise<void> {
+  if (isLocale(req.body?.locale)) await getPool().query("UPDATE users SET locale = $1 WHERE id = $2", [req.body.locale, userId]);
 }
 
 const router = express.Router();
@@ -71,6 +102,7 @@ router.use(authLimiter);
 const APP_URL =
   process.env.APP_URL ||
   (process.env.NODE_ENV === "production" ? "https://api.pctweaker.app" : "http://localhost:3000");
+const API = () => APP_URL.replace(/\/$/, "");
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Resolves to false when no email provider is configured, so callers can
@@ -78,15 +110,16 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * going to receive anything. `sendMail` only *throws* when a configured
  * provider refuses; with no provider at all it logs and reports undelivered,
  * and that distinction used to be dropped on the floor here. */
-async function sendVerificationEmail(userId: number, email: string, brand: EmailBrand = EMAIL_BRANDS.pctweaker): Promise<boolean> {
+async function sendVerificationEmail(userId: number, email: string, brand: EmailBrand, lang: Locale): Promise<boolean> {
   const token = await createActionToken(userId, "email_verify", DAY_MS);
-  const link = `${APP_URL.replace(/\/$/, "")}/api/auth/verify-email?token=${token}${productQuery(brand)}`;
+  const link = `${API()}/api/auth/verify-email?token=${token}${productQuery(brand)}&lang=${lang}`;
   const { rows } = await getPool().query("SELECT first_name FROM users WHERE id = $1", [userId]);
+  const c = copyFor(lang);
   const { delivered } = await sendMail({
     to: email,
-    subject: verificationSubject(brand),
-    html: verificationHtml(rows[0]?.first_name ?? "", link, brand),
-    text: verificationText(link, brand),
+    subject: verificationSubject(brand, c),
+    html: verificationHtml(rows[0]?.first_name ?? "", link, brand, c),
+    text: verificationText(link, brand, c),
   });
   return delivered;
 }
@@ -97,18 +130,16 @@ async function sendVerificationEmail(userId: number, email: string, brand: Email
  * The free tweak count is read from the same place the app reads it, so the
  * email cannot quietly promise a number that stopped being true.
  */
-async function sendAccountWelcome(userId: number, brand: EmailBrand = EMAIL_BRANDS.pctweaker): Promise<void> {
-  const { rows } = await getPool().query(
-    "SELECT email, first_name FROM users WHERE id = $1",
-    [userId],
-  );
+async function sendAccountWelcome(userId: number, brand: EmailBrand, lang: Locale): Promise<void> {
+  const { rows } = await getPool().query("SELECT email, first_name FROM users WHERE id = $1", [userId]);
   const user = rows[0];
   if (!user?.email) return;
+  const c = copyFor(lang);
   await sendMail({
     to: user.email,
-    subject: accountWelcomeSubject(brand),
-    html: accountWelcomeHtml(user.first_name ?? "", FREE_TWEAK_COUNT, brand),
-    text: accountWelcomeText(FREE_TWEAK_COUNT, brand),
+    subject: accountWelcomeSubject(brand, c),
+    html: accountWelcomeHtml(user.first_name ?? "", FREE_TWEAK_COUNT, brand, c),
+    text: accountWelcomeText(FREE_TWEAK_COUNT, brand, c),
   });
 }
 
@@ -117,23 +148,75 @@ async function sendAccountWelcome(userId: number, brand: EmailBrand = EMAIL_BRAN
  *
  * The reset flow proves control of the inbox before it will change anything,
  * so this is not a second authorization step — it is the only way the person
- * who owns the account finds out, if the reset was not theirs. Sent from the
- * one place that writes a new password_hash, so a second way to change one
- * cannot quietly ship without it.
+ * who owns the account finds out, if the change was not theirs. Sent from
+ * both places that write a new password_hash (reset and change), so a third
+ * way to change one cannot quietly ship without it.
  */
-async function sendPasswordChangedNotice(userId: number, changedAt: Date, brand: EmailBrand = EMAIL_BRANDS.pctweaker): Promise<void> {
-  const { rows } = await getPool().query(
-    "SELECT email, first_name FROM users WHERE id = $1",
-    [userId],
-  );
+async function sendPasswordChangedNotice(userId: number, changedAt: Date, brand: EmailBrand, lang?: Locale): Promise<void> {
+  const { rows } = await getPool().query("SELECT email, first_name, locale FROM users WHERE id = $1", [userId]);
   const user = rows[0];
   if (!user?.email) return;
+  const c = copyFor(lang ?? user.locale);
+  const when = formatMoment(c, changedAt);
   await sendMail({
     to: user.email,
-    subject: passwordChangedSubject(brand),
-    html: passwordChangedHtml(user.first_name ?? "", changedAt.toUTCString(), brand),
-    text: passwordChangedText(changedAt.toUTCString(), brand),
+    subject: passwordChangedSubject(brand, c),
+    html: passwordChangedHtml(user.first_name ?? "", when, brand, c),
+    text: passwordChangedText(when, brand, c),
   });
+}
+
+// ---------------------------------------------------------------- sign-in alerts
+
+/** A PC the app identifies itself (a random id it keeps), or else the
+ *  network and browser engine: coarse on purpose, so a dynamic address does
+ *  not look like a new PC every day. Stored only as a keyed hash. */
+function signInFingerprint(req: Request): string {
+  const deviceId = req.body?.deviceId;
+  let source: string;
+  if (typeof deviceId === "string" && /^[A-Za-z0-9-]{16,64}$/.test(deviceId)) {
+    source = `device:${deviceId}`;
+  } else {
+    const ip = (req.ip ?? "").replace(/^::ffff:/, "");
+    const network = ip.includes(":") ? ip.split(":").slice(0, 3).join(":") : ip.split(".").slice(0, 2).join(".");
+    const engine = /Edg\//.test(req.get("user-agent") ?? "") ? "edge" : "other";
+    source = `network:${network}|${engine}`;
+  }
+  return crypto.createHmac("sha256", process.env.JWT_SECRET ?? "").update(source).digest("hex");
+}
+
+/** The computer name the app sent, made safe to print, or null. */
+function deviceName(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const name = value.trim().slice(0, 64);
+  return name && !/[\u0000-\u001f\u007f-\u009f<>]/.test(name) ? name : null;
+}
+
+/**
+ * Records where an account signed in from and, the first time a new PC or
+ * network appears on an account that already had one, tells the owner.
+ * The first sign-in after this shipped only records: every existing account
+ * would otherwise get an alert at once. At most one alert per six hours.
+ */
+// ponytail: rows are never pruned; add a cap per account if networks churn.
+async function noticeSignIn(req: Request, user: { id: number; email: string; locale: string | null }): Promise<void> {
+  const fingerprint = signInFingerprint(req);
+  const db = getPool();
+  const { rows } = await db.query("SELECT fingerprint, alerted, first_seen FROM sign_in_devices WHERE user_id = $1", [user.id]);
+  if (rows.some((row) => row.fingerprint === fingerprint)) {
+    await db.query("UPDATE sign_in_devices SET last_seen = now() WHERE user_id = $1 AND fingerprint = $2", [user.id, fingerprint]);
+    return;
+  }
+  const recent = rows.some((row) => row.alerted && Date.now() - new Date(row.first_seen).getTime() < 6 * 60 * 60 * 1000);
+  const alert = rows.length > 0 && !recent;
+  await db.query(
+    "INSERT INTO sign_in_devices (user_id, fingerprint, alerted) VALUES ($1, $2, $3) ON CONFLICT (user_id, fingerprint) DO NOTHING",
+    [user.id, fingerprint, alert],
+  );
+  if (!alert) return;
+  const c = copyFor(languageOf(req, user.locale));
+  const mail = newSignInMail(user.email, deviceName(req.body?.deviceName), formatMoment(c, new Date()), brandOf(req.body?.product), c);
+  await sendMail({ to: user.email, ...mail });
 }
 
 /** Names reach every email we send; nobody's first or last name is longer. */
@@ -170,6 +253,7 @@ router.post("/register", async (req: Request, res: Response) => {
     return res.status(429).json({ error: "Too many sign-ups right now. Please try again later." });
   }
 
+  const lang = languageOf(req);
   try {
     const pool = getPool();
     const existing = await pool.query("SELECT id FROM users WHERE email = $1", [email.toLowerCase()]);
@@ -179,15 +263,18 @@ router.post("/register", async (req: Request, res: Response) => {
 
     const passwordHash = await hashPassword(password);
     const result = await pool.query(
-      "INSERT INTO users (email, password_hash, first_name, last_name, date_of_birth) VALUES ($1, $2, $3, $4, $5) RETURNING id, token_version",
-      [email.toLowerCase(), passwordHash, String(firstName).trim(), String(lastName).trim(), dateOfBirth],
+      "INSERT INTO users (email, password_hash, first_name, last_name, date_of_birth, locale) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, token_version",
+      [email.toLowerCase(), passwordHash, String(firstName).trim(), String(lastName).trim(), dateOfBirth, lang],
     );
     const { id, token_version } = result.rows[0];
     const token = signToken(id, token_version);
+    // The PC that registered is the account's first: it never triggers a
+    // new-sign-in alert, and later ones are compared against it.
+    await noticeSignIn(req, { id, email: email.toLowerCase(), locale: lang }).catch(() => undefined);
 
     let verificationEmailSent = false;
     try {
-      verificationEmailSent = await sendVerificationEmail(id, email.toLowerCase(), brandOf(product));
+      verificationEmailSent = await sendVerificationEmail(id, email.toLowerCase(), brandOf(product), lang);
     } catch (err) {
       // Registration itself succeeded; don't fail the whole request just
       // because the verification email couldn't be sent. But do report it:
@@ -219,7 +306,7 @@ router.post("/login", async (req: Request, res: Response) => {
 
   try {
     const result = await getPool().query(
-      "SELECT id, password_hash, token_version FROM users WHERE email = $1",
+      "SELECT id, email, password_hash, token_version, locale FROM users WHERE email = $1",
       [email.toLowerCase()],
     );
     if (result.rowCount === 0) {
@@ -231,6 +318,9 @@ router.post("/login", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "invalid email or password" });
     }
     const token = signToken(user.id, user.token_version);
+    await rememberLanguage(req, user.id).catch(() => undefined);
+    // Best-effort: an alert that cannot be sent must not block the sign-in.
+    void noticeSignIn(req, user).catch((err) => console.error("sign-in notice failed:", err));
     res.json({ token });
   } catch (err) {
     console.error("login failed:", err);
@@ -251,11 +341,17 @@ router.post("/logout-all", requireAuth, async (req: Request, res: Response) => {
 router.post("/resend-verification", requireAuth, async (req: Request, res: Response) => {
   if (!isConfigured) return res.status(503).json({ error: "database not configured (DATABASE_URL missing)" });
   try {
-    const result = await getPool().query("SELECT email, email_verified FROM users WHERE id = $1", [req.userId]);
+    const result = await getPool().query("SELECT email, email_verified, locale FROM users WHERE id = $1", [req.userId]);
     if (result.rowCount === 0) return res.status(404).json({ error: "account not found" });
     if (result.rows[0].email_verified) return res.json({ ok: true, alreadyVerified: true });
 
-    const delivered = await sendVerificationEmail(req.userId as number, result.rows[0].email, brandOf(req.body?.product));
+    await rememberLanguage(req, req.userId as number);
+    const delivered = await sendVerificationEmail(
+      req.userId as number,
+      result.rows[0].email,
+      brandOf(req.body?.product),
+      languageOf(req, result.rows[0].locale),
+    );
     if (!delivered) {
       // No provider configured at all — a server-side misconfiguration, not
       // anything the user can act on. Saying "sent" would leave them
@@ -277,6 +373,73 @@ router.post("/resend-verification", requireAuth, async (req: Request, res: Respo
   }
 });
 
+/**
+ * Changes the password of the signed-in account. The current password is
+ * required: a session left open on someone else's PC must not be enough.
+ * Every other session ends; this one gets a fresh token.
+ */
+router.post("/change-password", requireAuth, async (req: Request, res: Response) => {
+  const { currentPassword, newPassword, product } = req.body || {};
+  if (typeof currentPassword !== "string" || !isValidPassword(newPassword)) {
+    return res.status(400).json({ error: "Password must be at least 8 characters and no more than 72 UTF-8 bytes." });
+  }
+  try {
+    const { rows } = await getPool().query("SELECT password_hash FROM users WHERE id = $1", [req.userId]);
+    if (!rows.length || !(await verifyPassword(currentPassword, rows[0].password_hash))) {
+      return res.status(401).json({ error: "the current password is not correct" });
+    }
+    const passwordHash = await hashPassword(newPassword);
+    const updated = await getPool().query(
+      "UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE id = $2 RETURNING token_version",
+      [passwordHash, req.userId],
+    );
+    await invalidatePasswordResets(req.userId as number);
+    await rememberLanguage(req, req.userId as number);
+    void sendPasswordChangedNotice(req.userId as number, new Date(), brandOf(product), isLocale(req.body?.locale) ? req.body.locale : undefined).catch(
+      (err) => console.error("failed to send the password changed notice:", err),
+    );
+    res.json({ token: signToken(req.userId as number, updated.rows[0].token_version) });
+  } catch (err) {
+    console.error("change-password failed:", err);
+    res.status(500).json({ error: "Could not change the password. Please try again." });
+  }
+});
+
+/**
+ * Starts moving the account to another address: the password is required,
+ * and nothing changes until a link sent to the new address is confirmed.
+ * The answer is the same whether or not that address is free, so this cannot
+ * be used to find out which addresses have accounts.
+ */
+router.post("/change-email", requireAuth, async (req: Request, res: Response) => {
+  const { password, newEmail, product } = req.body || {};
+  if (!isValidEmail(newEmail) || typeof password !== "string") return res.status(400).json({ error: "invalid email" });
+  const target = newEmail.toLowerCase();
+  const generic = { ok: true, message: "If that address can be used, a confirmation link has been sent to it." };
+  try {
+    const { rows } = await getPool().query("SELECT email, password_hash, first_name, locale FROM users WHERE id = $1", [req.userId]);
+    const user = rows[0];
+    if (!user || !(await verifyPassword(password, user.password_hash))) {
+      return res.status(401).json({ error: "the current password is not correct" });
+    }
+    if (target === user.email) return res.status(400).json({ error: "that is already the address of this account" });
+    const taken = await getPool().query("SELECT 1 FROM users WHERE email = $1", [target]);
+    await rememberLanguage(req, req.userId as number);
+    if (taken.rows.length || !consumeGlobalBudget("email-change-mail", 60)) return res.json(generic);
+    const brand = brandOf(product);
+    const lang = languageOf(req, user.locale);
+    await invalidateActionTokens(req.userId as number, "email_change");
+    const token = await createActionToken(req.userId as number, "email_change", DAY_MS, target);
+    const link = `${API()}/api/auth/confirm-email-change?token=${token}${productQuery(brand)}&lang=${lang}`;
+    const mail = emailChangeMail(user.first_name ?? "", link, brand, copyFor(lang));
+    await sendMail({ to: target, ...mail });
+    res.json(generic);
+  } catch (err) {
+    console.error("change-email failed:", err);
+    res.status(500).json({ error: "Could not start the change. Please try again." });
+  }
+});
+
 function escapeHtml(value: unknown): string {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -294,12 +457,12 @@ function escapeHtml(value: unknown): string {
  * `style-src` allows 'unsafe-inline' while `script-src` does not — which is
  * precisely why these pages carry no JavaScript at all.
  */
-export function htmlPage(title: string, bodyHtml: string, brand: EmailBrand = EMAIL_BRANDS.pctweaker): string {
+export function htmlPage(title: string, bodyHtml: string, brand: EmailBrand = EMAIL_BRANDS.pctweaker, c: Copy = copyFor("en")): string {
   const initial = escapeHtml(brand.name.replace(/^PC Tweaker /, "").charAt(0));
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8">
+  return `<!doctype html><html lang="${c.tag}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>${title} — ${escapeHtml(brand.name)}</title>
+<title>${title} · ${escapeHtml(brand.name)}</title>
 <style>
 :root{color-scheme:light dark;--page:#f3f4f6;--card:#fff;--line:#e5e7eb;--h:#111827;--t:#374151;--m:#6b7280;
   --field:#fff;--accent:${brand.accent};--on-accent:${brand.buttonText};--acc-text:${brand.accentText}}
@@ -334,26 +497,27 @@ footer a{color:var(--m)}
 <body><div class="card">
 <div class="brand"><div class="mark" aria-hidden="true">${initial}</div><span>${escapeHtml(brand.name)}</span></div>
 <h2>${title}</h2>${bodyHtml}
-<footer>One account for PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver. <a href="https://pctweaker.app/support">Support</a> · <a href="https://pctweaker.app/privacy">Privacy</a></footer>
+<footer>${escapeHtml(c.shell.family)} <a href="https://pctweaker.app/support">${escapeHtml(c.shell.support)}</a> · <a href="https://pctweaker.app/privacy">${escapeHtml(c.shell.privacy)}</a></footer>
 </div></body></html>`;
 }
 
 router.get("/verify-email", async (req: Request, res: Response) => {
   const { token } = req.query;
   const brand = brandOf(req.query.product);
-  const page = (title: string, body: string) => htmlPage(title, body, brand);
-  if (!isConfigured) return res.status(503).send(page("Error", "<p class=error>Database not configured.</p>"));
-  if (typeof token !== "string") return res.status(400).send(page("Error", "<p class=error>Missing token.</p>"));
+  const lang = languageOf(req);
+  const c = copyFor(lang);
+  const g = c.pages;
+  const page = (title: string, body: string) => htmlPage(escapeHtml(title), body, brand, c);
+  if (!isConfigured) return res.status(503).send(page(g.error, `<p class=error>${escapeHtml(g.unavailable)}</p>`));
+  if (typeof token !== "string") return res.status(400).send(page(g.error, `<p class=error>${escapeHtml(g.missingToken)}</p>`));
 
   try {
     const userId = await consumeActionToken(token, "email_verify");
     if (!userId && (await confirmsVerifiedAddress(token))) {
-      return res.send(page("Email verified", `<p class=success>Your email is already verified. You can close this window and return to ${escapeHtml(brand.name)}.</p>`));
+      return res.send(page(g.verifiedTitle, `<p class=success>${escapeHtml(g.alreadyVerified(brand.name))}</p>`));
     }
     if (!userId) {
-      return res
-        .status(400)
-        .send(page("Link expired", "<p class=error>This verification link is invalid or has expired. Request a new one from the app.</p>"));
+      return res.status(400).send(page(g.expiredTitle, `<p class=error>${escapeHtml(g.verifyExpired)}</p>`));
     }
     await getPool().query("UPDATE users SET email_verified = TRUE WHERE id = $1", [userId]);
     // The welcome waits until here rather than going out at registration,
@@ -361,13 +525,11 @@ router.get("/verify-email", async (req: Request, res: Response) => {
     // confirm — two at once makes the one that needs acting on easier to
     // miss. Best-effort: a failed send must not make a confirmed address look
     // unconfirmed.
-    void sendAccountWelcome(userId, brand).catch((err) =>
-      console.error("failed to send the account welcome:", err),
-    );
-    res.send(page("Email verified", `<p class=success>Your email is verified. You can close this window and return to ${escapeHtml(brand.name)}.</p>`));
+    void sendAccountWelcome(userId, brand, lang).catch((err) => console.error("failed to send the account welcome:", err));
+    res.send(page(g.verifiedTitle, `<p class=success>${escapeHtml(g.verified(brand.name))}</p>`));
   } catch (err) {
     console.error("verify-email failed:", err);
-    res.status(500).send(page("Error", "<p class=error>Something went wrong. Try again later.</p>"));
+    res.status(500).send(page(g.error, `<p class=error>${escapeHtml(g.failed)}</p>`));
   }
 });
 
@@ -381,19 +543,21 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
   if (!isConfigured) return res.json(genericResponse);
 
   try {
-    const result = await getPool().query("SELECT id FROM users WHERE email = $1", [email.toLowerCase()]);
+    const result = await getPool().query("SELECT id, locale FROM users WHERE email = $1", [email.toLowerCase()]);
     // Same reasoning as registration: bound how much reset mail anyone can
     // trigger. The answer stays generic either way.
     if (result.rowCount && result.rowCount > 0 && consumeGlobalBudget("password-reset-mail", 120)) {
       const brand = brandOf(product);
       const userId = result.rows[0].id;
+      const lang = languageOf(req, result.rows[0].locale);
+      const c = copyFor(lang);
       const token = await createActionToken(userId, "password_reset", 60 * 60 * 1000);
-      const link = `${APP_URL.replace(/\/$/, "")}/api/auth/reset-password?token=${token}${productQuery(brand)}`;
+      const link = `${API()}/api/auth/reset-password?token=${token}${productQuery(brand)}&lang=${lang}`;
       await sendMail({
         to: email.toLowerCase(),
-        subject: passwordResetSubject(brand),
-        html: passwordResetHtml(link, brand),
-        text: passwordResetText(link, brand),
+        subject: passwordResetSubject(brand, c),
+        html: passwordResetHtml(link, brand, c),
+        text: passwordResetText(link, brand, c),
       }).catch((err) => console.error("failed to send reset email:", err));
     }
   } catch (err) {
@@ -416,75 +580,76 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
  * `error` re-renders the form with a message instead of throwing the user back
  * to a dead end, keeping the token in the hidden field so they can retry.
  */
-function resetForm(token: string, brand: EmailBrand, error?: string): string {
+function resetForm(token: string, brand: EmailBrand, c: Copy, error?: string): string {
+  const g = c.pages;
   const product = brand === EMAIL_BRANDS.uninstaller ? `<input type="hidden" name="product" value="uninstaller">` : "";
   return htmlPage(
-    "Choose a new password",
-    `<p class="lead">Pick something you don't use anywhere else. It applies to PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver, and you'll be signed out on your other devices.</p>
+    escapeHtml(g.resetTitle),
+    `<p class="lead">${escapeHtml(g.resetLead)}</p>
      <form method="post" action="/api/auth/reset-password">
        <input type="hidden" name="token" value="${escapeHtml(token)}">${product}
-       <label for="pw">New password</label>
+       <input type="hidden" name="lang" value="${c.tag}">
+       <label for="pw">${escapeHtml(g.newPassword)}</label>
        <input id="pw" type="password" name="newPassword" minlength="8" required autofocus
-              autocomplete="new-password" placeholder="At least 8 characters" aria-describedby="password-limit">
-       <p id="password-limit" class="hint">Use at least 8 characters and no more than 72 UTF-8 bytes. Accented characters and emoji may use multiple bytes.</p>
-       <label for="pw2">Confirm password</label>
+              autocomplete="new-password" placeholder="${escapeHtml(g.newPasswordPlaceholder)}" aria-describedby="password-limit">
+       <p id="password-limit" class="hint">${escapeHtml(g.passwordHint)}</p>
+       <label for="pw2">${escapeHtml(g.confirmPassword)}</label>
        <input id="pw2" type="password" name="confirmPassword" minlength="8" required
-              autocomplete="new-password" placeholder="Type it again">
-       <button type="submit">Update password</button>
+              autocomplete="new-password" placeholder="${escapeHtml(g.confirmPlaceholder)}">
+       <button type="submit">${escapeHtml(g.update)}</button>
      </form>
      ${error ? `<p class="error">${escapeHtml(error)}</p>` : ""}
-     <p class="hint">This link works once and expires an hour after it was sent.</p>`,
+     <p class="hint">${escapeHtml(g.resetHint)}</p>`,
     brand,
+    c,
   );
 }
 
 router.get("/reset-password", (req: Request, res: Response) => {
   const { token } = req.query;
   const brand = brandOf(req.query.product);
+  const c = copyFor(languageOf(req));
   if (typeof token !== "string" || token.length === 0) {
     return res
       .status(400)
-      .send(
-        htmlPage(
-          "Link not valid",
-          `<p class="lead">This page needs the link from your reset email — open that link directly rather than reloading this page.</p>`,
-          brand,
-        ),
-      );
+      .send(htmlPage(escapeHtml(c.pages.notValidTitle), `<p class="lead">${escapeHtml(c.pages.notValidLead)}</p>`, brand, c));
   }
-  res.send(resetForm(token, brand));
+  res.send(resetForm(token, brand, c));
 });
 
 router.post("/reset-password", async (req: Request, res: Response) => {
   const { token, newPassword, confirmPassword, product } = req.body || {};
   const brand = brandOf(product);
+  const lang = isLocale(req.body?.lang) ? req.body.lang : languageOf(req);
+  const c = copyFor(lang);
+  const g = c.pages;
 
   // The browser form posts url-encoded and expects HTML back; the desktop app
   // posts JSON and expects JSON. One handler serves both, deciding by whether
   // a confirm field came along (only the form sends one) and by Accept.
   const wantsHtml = typeof confirmPassword === "string" || (req.get("accept") || "").includes("text/html");
-  const fail = (status: number, message: string) => {
+  const fail = (status: number, message: string, pageMessage = message) => {
     if (wantsHtml && typeof token === "string" && token.length > 0) {
-      return res.status(status).send(resetForm(token, brand, message));
+      return res.status(status).send(resetForm(token, brand, c, pageMessage));
     }
     if (wantsHtml) {
-      return res.status(status).send(htmlPage("Link not valid", `<p class="error">${escapeHtml(message)}</p>`, brand));
+      return res.status(status).send(htmlPage(escapeHtml(g.notValidTitle), `<p class="error">${escapeHtml(pageMessage)}</p>`, brand, c));
     }
     return res.status(status).json({ error: message });
   };
 
-  if (typeof token !== "string" || token.length === 0) return fail(400, "missing token");
-  if (!isValidPassword(newPassword)) return fail(400, "Password must be at least 8 characters and no more than 72 UTF-8 bytes.");
+  if (typeof token !== "string" || token.length === 0) return fail(400, "missing token", g.notValidLead);
+  if (!isValidPassword(newPassword)) return fail(400, "Password must be at least 8 characters and no more than 72 UTF-8 bytes.", g.passwordRule);
   // Only enforced for the form, which is the only caller that collects it.
   if (typeof confirmPassword === "string" && confirmPassword !== newPassword) {
-    return fail(400, "The two passwords don't match.");
+    return fail(400, "The two passwords don't match.", g.mismatch);
   }
-  if (!isConfigured) return fail(503, "database not configured (DATABASE_URL missing)");
+  if (!isConfigured) return fail(503, "database not configured (DATABASE_URL missing)", g.unavailable);
 
   try {
     const userId = await consumeActionToken(token, "password_reset");
     if (!userId) {
-      return fail(400, "This reset link is invalid, already used, or has expired.");
+      return fail(400, "This reset link is invalid, already used, or has expired.", g.resetInvalid);
     }
     const passwordHash = await hashPassword(newPassword);
     // Bumping token_version signs out every session that used the old
@@ -502,24 +667,93 @@ router.post("/reset-password", async (req: Request, res: Response) => {
     // Best-effort, like the welcome: the password has already changed by now,
     // and failing the request would tell the user their reset did not work
     // when it did. A missing notice is worth a log line, not a dead end.
-    void sendPasswordChangedNotice(userId, new Date(), brand).catch((err) =>
+    void sendPasswordChangedNotice(userId, new Date(), brand, lang).catch((err) =>
       console.error("failed to send the password changed notice:", err),
     );
 
     if (wantsHtml) {
       return res.send(
         htmlPage(
-          "Password updated",
-          `<p class="success">Done. Go back to ${escapeHtml(brand.name)} and sign in with your new password.</p>
-           <p class="hint">You can close this window.</p>`,
+          escapeHtml(g.updatedTitle),
+          `<p class="success">${escapeHtml(g.updated(brand.name))}</p>
+           <p class="hint">${escapeHtml(g.closeHint)}</p>`,
           brand,
+          c,
         ),
       );
     }
     res.json({ ok: true });
   } catch (err) {
     console.error("reset-password failed:", err);
-    return fail(500, "Could not reset the password. Please try again.");
+    return fail(500, "Could not reset the password. Please try again.", g.resetFailed);
+  }
+});
+
+/**
+ * The page behind the link sent to a new address. Opening it changes
+ * nothing: mail scanners open links before people do, and an address typed
+ * by mistake must not receive the account because a scanner followed the
+ * link. The move happens on the button.
+ */
+router.get("/confirm-email-change", async (req: Request, res: Response) => {
+  const brand = brandOf(req.query.product);
+  const c = copyFor(languageOf(req));
+  const g = c.pages;
+  const token = typeof req.query.token === "string" ? req.query.token : "";
+  const pending = token ? await peekEmailChange(token).catch(() => null) : null;
+  if (!pending) {
+    return res.status(400).send(htmlPage(escapeHtml(g.notValidTitle), `<p class="error">${escapeHtml(g.emailChangeInvalid)}</p>`, brand, c));
+  }
+  const product = brand === EMAIL_BRANDS.uninstaller ? `<input type="hidden" name="product" value="uninstaller">` : "";
+  res.send(
+    htmlPage(
+      escapeHtml(c.emailChange.eyebrow),
+      `<p class="lead">${escapeHtml(c.emailChange.intro)}</p>
+       <p class="lead"><strong>${escapeHtml(pending.email)}</strong></p>
+       <form method="post" action="/api/auth/confirm-email-change">
+         <input type="hidden" name="token" value="${escapeHtml(token)}">${product}
+         <input type="hidden" name="lang" value="${c.tag}">
+         <button type="submit">${escapeHtml(c.emailChange.button)}</button>
+       </form>`,
+      brand,
+      c,
+    ),
+  );
+});
+
+router.post("/confirm-email-change", async (req: Request, res: Response) => {
+  const brand = brandOf(req.body?.product);
+  const lang = isLocale(req.body?.lang) ? req.body.lang : languageOf(req);
+  const c = copyFor(lang);
+  const g = c.pages;
+  const page = (title: string, body: string, status = 200) => res.status(status).send(htmlPage(escapeHtml(title), body, brand, c));
+  const token = typeof req.body?.token === "string" ? req.body.token : "";
+  try {
+    const change = token ? await consumeEmailChange(token) : null;
+    if (!change) return page(g.notValidTitle, `<p class="error">${escapeHtml(g.emailChangeInvalid)}</p>`, 400);
+    const before = await getPool().query("SELECT email, first_name, locale FROM users WHERE id = $1", [change.userId]);
+    const previous = before.rows[0];
+    if (!previous) return page(g.notValidTitle, `<p class="error">${escapeHtml(g.emailChangeInvalid)}</p>`, 400);
+    try {
+      // The unique index decides a race with a registration for the same
+      // address. Every session ends: the old address no longer signs in.
+      await getPool().query(
+        "UPDATE users SET email = $1, email_verified = TRUE, token_version = token_version + 1 WHERE id = $2",
+        [change.email, change.userId],
+      );
+    } catch (err: any) {
+      if (err?.code === "23505") return page(g.error, `<p class="error">${escapeHtml(g.emailTaken)}</p>`, 409);
+      throw err;
+    }
+    await invalidatePasswordResets(change.userId);
+    await invalidateActionTokens(change.userId, "email_change");
+    const cOld = copyFor(previous.locale ?? lang);
+    const notice = emailChangedNotice(previous.first_name ?? "", change.email, formatMoment(cOld, new Date()), brand, cOld);
+    void sendMail({ to: previous.email, ...notice }).catch((err) => console.error("failed to send the email changed notice:", err));
+    page(g.emailChangedTitle, `<p class="success">${escapeHtml(g.emailChanged(brand.name, change.email))}</p><p class="hint">${escapeHtml(g.closeHint)}</p>`);
+  } catch (err) {
+    console.error("confirm-email-change failed:", err);
+    page(g.error, `<p class="error">${escapeHtml(g.failed)}</p>`, 500);
   }
 });
 

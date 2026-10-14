@@ -95,6 +95,22 @@ async function initSchema(): Promise<void> {
     );
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS action_tokens_hash_idx ON action_tokens (token_hash);`);
+  // The new address an email-change link moves the account to.
+  await pool.query(`ALTER TABLE action_tokens ADD COLUMN IF NOT EXISTS data TEXT;`);
+  // The language mail is written in: the one the app last sent, if any.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS locale TEXT;`);
+  // PCs and networks an account has signed in from, as keyed hashes, so a
+  // sign-in from somewhere new can be reported once. No address is stored.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS sign_in_devices (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      fingerprint TEXT NOT NULL,
+      alerted BOOLEAN NOT NULL DEFAULT FALSE,
+      first_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
+      last_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (user_id, fingerprint)
+    );
+  `);
 
   // Public product reviews left from the website. `email` is collected so a
   // reviewer can be contacted about a complaint but is never returned by the

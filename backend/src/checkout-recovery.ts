@@ -1,5 +1,8 @@
 import { getPool } from "./db";
 import { button, details, emailShell, escapeHtml, mutedLink, note, paragraph, textFooter } from "./emails/layout";
+import { en } from "./emails/copy/en";
+import type { Copy } from "./emails/copy";
+import { CATALOGUE } from "./emails/pro-welcome";
 import { listUnsubscribeHeaders, unsubscribeUrl } from "./routes/newsletter";
 
 /** An expired Checkout Session, reduced to what the reminder needs. */
@@ -71,44 +74,32 @@ export async function remindAbandonedLifetime(
   return sent;
 }
 
-export function lifetimeReminderEmail(to: ReminderRecipient) {
-  const name = to.firstName?.trim().split(/\s+/)[0] ?? "";
-  const headline = name ? `Nothing was charged, ${name}.` : "Nothing was charged.";
-  const intro =
-    "You opened a Lifetime checkout for PC Tweaker Pro and the Stripe page closed before a payment went through. No card was charged and your account is exactly as it was. If something got in the way, here is what people usually ask before deciding.";
-  const retry =
-    "To try again, open Plans & pricing in the app and choose Lifetime. Checkout needs a confirmed email address; if the button is greyed out, that is why, and Resend in the account menu fixes it. The current price is on the plan card and on the Stripe page.";
-  const doubts =
-    "If a payment method was refused, Stripe shows the reason on its page; a different card or a wallet usually works. And if you decided against it, that is fine: Free stays Free, and this is the only reminder you will get about this checkout.";
-  const why =
-    "You received this email because a Lifetime checkout was started from the PC Tweaker account at this address and not completed. One reminder only.";
+export function lifetimeReminderEmail(to: ReminderRecipient, c: Copy = en) {
+  const x = c.reminder;
+  const headline = x.headline(to.firstName?.trim().split(/\s+/)[0] ?? "");
   return {
     to: to.email,
-    subject: "Your PC Tweaker Lifetime checkout",
+    subject: x.subject,
     ...(to.unsubscribeUrl ? { headers: listUnsubscribeHeaders(to.unsubscribeUrl) } : {}),
     html: emailShell({
-      preheader: "The checkout closed before payment, so nothing was charged. This is the only reminder.",
-      eyebrow: "Checkout not completed",
+      c,
+      preheader: x.preheader,
+      eyebrow: x.eyebrow,
       headline,
-      intro,
+      intro: x.intro,
       blocks: [
-        details([
-          ["Lifetime", "One payment. No renewal, ever."],
-          ["Covers", "All 81 controls, Game Sessions, every update"],
-          ["PCs", "Every PC you sign in to with this account"],
-          ["Also included", "12 months of PC Tweaker Uninstaller Pro"],
-        ]),
-        button({ label: "Open PC Tweaker", url: "https://pctweaker.app" }),
-        paragraph(escapeHtml(retry)),
-        note(escapeHtml(doubts)),
+        details(x.rows(CATALOGUE.total)),
+        button({ label: x.button, url: "https://pctweaker.app" }),
+        paragraph(escapeHtml(x.retry)),
+        note(escapeHtml(x.doubts)),
       ],
-      help: { title: "A question before you decide?", text: "A real person answers." },
-      why,
-      whyHtml: to.unsubscribeUrl ? mutedLink(to.unsubscribeUrl, "Unsubscribe from emails like this.") : "",
+      help: { title: x.helpTitle, text: escapeHtml(x.helpText) },
+      why: x.why,
+      whyHtml: to.unsubscribeUrl ? mutedLink(to.unsubscribeUrl, x.unsubscribe) : "",
     }),
     text:
-      [headline, intro, retry, doubts, `${why}${to.unsubscribeUrl ? ` Unsubscribe: ${to.unsubscribeUrl}` : ""}`].join("\n\n") +
-      textFooter(),
+      [headline, x.intro, x.retry, x.doubts, `${x.why}${to.unsubscribeUrl ? ` ${c.shell.unsubscribe}: ${to.unsubscribeUrl}` : ""}`].join("\n\n") +
+      textFooter(undefined, "", c),
   };
 }
 

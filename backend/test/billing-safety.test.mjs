@@ -484,3 +484,42 @@ test("Lifetime bought at the promotional Price is granted, and a full refund of 
   }
   assert.equal((await row(later)).is_pro, false);
 });
+
+test("a subscription that will not renew queues one plan-ending notice: a week ahead when cancelled, at once when the renewal failed", async () => {
+  const id = await user();
+  const cancelled = subscription(id, { cancel_at_period_end: true });
+  await handleEvent(event("customer.subscription.updated", cancelled), effects());
+  await handleEvent(event("customer.subscription.updated", cancelled), effects());
+  const notices = async () =>
+    (await getPool().query("SELECT receipt_key, payload, next_attempt_at FROM billing_receipts WHERE user_id = $1 AND receipt_key LIKE 'ending:%'", [id])).rows;
+  let rows = await notices();
+  assert.equal(rows.length, 1, "replayed events queue it once");
+  assert.equal(rows[0].payload.reason, "cancelled");
+  assert.equal(rows[0].payload.subscriptionId, cancelled.id);
+  const weekBefore = periodEnd * 1000 - 7 * 86_400_000;
+  assert.ok(Math.abs(new Date(rows[0].next_attempt_at).getTime() - weekBefore) < 5_000, "sent a week before the end");
+
+  const failed = subscription(id, { id: cancelled.id, status: "past_due", cancel_at_period_end: false });
+  await handleEvent(event("customer.subscription.updated", failed), effects());
+  rows = await notices();
+  const late = rows.find((row) => row.payload.reason === "payment_failed");
+  assert.ok(late && new Date(late.next_attempt_at).getTime() <= Date.now() + 1000, "a failed renewal is told at once");
+
+  const renewing = await user();
+  await handleEvent(event("customer.subscription.updated", subscription(renewing)), effects());
+  assert.equal((await getPool().query("SELECT 1 FROM billing_receipts WHERE user_id = $1 AND receipt_key LIKE 'ending:%'", [renewing])).rows.length, 0);
+});
+
+test("the Uninstaller year included with Lifetime is announced once, when it starts", async () => {
+  const id = await user();
+  await handleEvent(event("checkout.session.completed", checkout(id, "lifetime")), effects());
+  await productEntitlement(id, "uninstaller", true);
+  await productEntitlement(id, "uninstaller", true);
+  const { rows } = await getPool().query("SELECT payload FROM billing_receipts WHERE receipt_key = $1", [`bonus:${id}`]);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].payload.kind, "bonus");
+  assert.ok(rows[0].payload.startedAt && rows[0].payload.expiresAt);
+  const plain = await user();
+  await productEntitlement(plain, "uninstaller", true);
+  assert.equal((await getPool().query("SELECT 1 FROM billing_receipts WHERE receipt_key = $1", [`bonus:${plain}`])).rows.length, 0);
+});

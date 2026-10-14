@@ -1,5 +1,6 @@
 import { getPool } from "./db";
 import { isEntitled, PERPETUAL_PLANS } from "./entitlement";
+import { queueReceipt } from "./receipt-outbox";
 
 /**
  * The ecosystem's product catalogue, and the data access for the per-product
@@ -75,8 +76,15 @@ export async function productEntitlement(userId: number | string, product: Produ
     const start = new Date();
     const end = new Date(start);
     end.setUTCFullYear(end.getUTCFullYear() + 1);
-    await getPool().query(`INSERT INTO lifetime_uninstaller_bonus (user_id, activated_at, expires_at)
-      VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING`, [userId, start, end]);
+    const inserted = await getPool().query(`INSERT INTO lifetime_uninstaller_bonus (user_id, activated_at, expires_at)
+      VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING RETURNING user_id`, [userId, start, end]);
+    // The year starts once; so does the email saying so (kit 03).
+    if (inserted.rows.length) {
+      await queueReceipt(`bonus:${userId}`, {
+        kind: "bonus", userId: String(userId), plan: "lifetime_bonus", product: "uninstaller",
+        expiresAt: end.toISOString(), startedAt: start.toISOString(), chargedLabel: null,
+      }).catch((err) => console.error("could not queue the Uninstaller year notice:", err));
+    }
   }
   const { rows: bonuses } = await getPool().query("SELECT expires_at FROM lifetime_uninstaller_bonus WHERE user_id = $1", [userId]);
   const bonusExpiry = bonuses[0]?.expires_at ? new Date(bonuses[0].expires_at) : null;

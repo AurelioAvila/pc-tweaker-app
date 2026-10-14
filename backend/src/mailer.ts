@@ -1,16 +1,23 @@
 import nodemailer, { Transporter } from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
+import { readyProviders, sendEmail, type Mail } from "./email-relay";
 
-const { RESEND_API_KEY, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM } = process.env;
+const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM } = process.env;
 
-const useResend = Boolean(RESEND_API_KEY && MAIL_FROM);
-const useSmtp = !useResend && Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS && MAIL_FROM);
-const isConfigured = useResend || useSmtp;
+// HTTPS providers in EMAIL_PROVIDERS order (default resend,smtp2go,mailjet),
+// each used only once its key is set: RESEND_API_KEY, SMTP2GO_API_KEY,
+// MAILJET_API_KEY + MAILJET_API_SECRET. The next one takes a message only when
+// the previous one did not (quota, refusal, 5xx, timeout); see email-relay.ts.
+const useRelay = Boolean(readyProviders().length && MAIL_FROM);
+const useSmtp = !useRelay && Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS && MAIL_FROM);
+const isConfigured = useRelay || useSmtp;
+/** EMAIL_SINK=1: nothing leaves the process, the HTML lands in EMAIL_SINK_DIR for previews. */
+const sinkOn = ["1", "true", "yes", "dry-run"].includes(String(process.env.EMAIL_SINK || "").toLowerCase());
 
 // SMTP over a raw socket (port 587/465) is blocked outbound on some hosts
 // (Railway included) — connections just hang until the OS/nodemailer
-// timeout instead of failing fast. Resend's HTTP API sends mail over normal
-// HTTPS, so it isn't affected by that. Prefer Resend when configured; keep
+// timeout instead of failing fast. The HTTP providers send mail over normal
+// HTTPS, so they aren't affected by that. Prefer them when configured; keep
 // SMTP as a fallback for local development against providers that do allow it.
 // `family` (force IPv4) is a real nodemailer/Node `net.connect` option that
 // @types/nodemailer doesn't declare — the intersection adds it back without
@@ -53,36 +60,20 @@ type MailInput = {
   to: string; subject: string; html: string; text?: string; replyTo?: string;
   /** Extra MIME headers, e.g. List-Unsubscribe on list mail. */
   headers?: Record<string, string>;
+  /** Stable per message (receipt key, token) so a retry can never mail twice; random when absent. */
+  idempotencyKey?: string;
 };
 
-async function sendViaResend({ to, subject, html, text, replyTo, headers }: MailInput): Promise<void> {
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    signal: AbortSignal.timeout(30_000),
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: MAIL_FROM,
-      to,
-      subject,
-      html,
-      ...(text ? { text } : {}),
-      ...(replyTo ? { reply_to: replyTo } : {}),
-      ...(headers ? { headers } : {}),
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    // Only blame the recipient for 4xx codes that are actually about the
-    // request we sent. 401/403 mean our credentials are wrong and 429 means we
-    // hit our own sending quota — telling the user to "check your address"
-    // in either case would send them chasing a problem that isn't theirs.
-    const OUR_FAULT = new Set([401, 403, 429]);
-    throw new MailError(`Resend API ${res.status}: ${body}`, {
-      rejectedAddress: res.status >= 400 && res.status < 500 && !OUR_FAULT.has(res.status),
-    });
+async function sendViaRelay(mail: MailInput): Promise<void> {
+  const result = await sendEmail({ ...mail, from: MAIL_FROM ?? "" } satisfies Mail, { timeoutMs: 15_000 });
+  if (!result.ok) {
+    // Only blame the recipient when the first provider refused the address
+    // itself (a 4xx other than 401/403/429). Credentials, quota and outages
+    // are ours: telling the user to "check your address" for those would send
+    // them chasing a problem that isn't theirs. Provider bodies are never
+    // repeated here: they can echo the recipient.
+    const tried = result.attempts.map((a) => `${a.provider} ${a.outcome}${a.status ? ` ${a.status}` : ""}${a.code ? ` ${a.code}` : ""}`);
+    throw new MailError(`email not sent (${result.error}): ${tried.join(", ")}`, { rejectedAddress: result.rejectedAddress });
   }
 }
 
@@ -92,9 +83,9 @@ async function sendViaResend({ to, subject, html, text, replyTo, headers }: Mail
  * bodies to logs because they can contain password-reset tokens or personal
  * support content.
  */
-async function sendMail({ to, subject, html, text, replyTo = "support@pctweaker.app", headers }: MailInput): Promise<{ delivered: boolean }> {
-  if (useResend) {
-    await sendViaResend({ to, subject, html, text, replyTo, headers });
+async function sendMail({ to, subject, html, text, replyTo = "support@pctweaker.app", headers, idempotencyKey }: MailInput): Promise<{ delivered: boolean }> {
+  if (useRelay || sinkOn) {
+    await sendViaRelay({ to, subject, html, text, replyTo, headers, idempotencyKey });
     return { delivered: true };
   }
   if (transporter) {

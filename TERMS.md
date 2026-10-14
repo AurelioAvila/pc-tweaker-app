@@ -1,8 +1,8 @@
 # Terms of Service
 
-Last updated: 2026-10-10
+Last updated: 2026-10-14
 
-Welcome to PC Tweaker ("we", "us", "our"). By downloading, installing, or using PC Tweaker, you agree to these Terms of Service.
+Welcome to PC Tweaker ("we", "us", "our"), run by Aurelio Avila. By downloading, installing, or using PC Tweaker, you agree to these Terms of Service.
 
 ## 1. What PC Tweaker does
 
@@ -40,4 +40,4 @@ We may update these Terms as the app evolves; the "Last updated" date above refl
 
 ## 8. Contact
 
-Questions about these Terms? Open an issue at [github.com/AurelioAvila/pc-tweaker-app/issues](https://github.com/AurelioAvila/pc-tweaker-app/issues).
+Questions about these Terms? Email support@pctweaker.app.

@@ -1,10 +1,17 @@
 # Privacy Policy
 
-Last updated: 2026-10-06
+Last updated: 2026-10-14
 
 PC Tweaker is a desktop application. Windows tweaks, snapshots, rollback data,
 hardware readings and file scans are processed locally on your device. They are
 not uploaded to PC Tweaker.
+
+## Who is responsible for your data
+
+PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver are run by Aurelio Avila,
+a private individual, who is the controller of the personal data described in
+this policy. You can reach him at support@pctweaker.app. No data protection
+officer has been appointed.
 
 ## Connection check
 
@@ -39,7 +46,10 @@ password applies to all three and signs you out of each.
   optional system details you enter. It is delivered to our support mailbox.
 - A rating may include your name, email address and written feedback. Only the
   aggregate star rating and count are shown publicly; the submitted name, email
-  and message are not returned by the public reviews endpoint.
+  and message are not returned by the public reviews endpoint. To spot repeated
+  ratings from the same connection, we also store the IP address the rating
+  came from and a keyed one-way hash of it. Both are used only to moderate
+  ratings; the address is deleted 90 days after the rating, the hash is kept.
 - A newsletter subscription stores your email address, signup source and
   unsubscribe status. Every newsletter message must provide an unsubscribe path.
 - Optional anonymous error reporting is **off by default**. If you enable it in
@@ -113,13 +123,19 @@ data it collects and treats failures as closed rather than granting access.
 ## Your choices and rights
 
 You can leave optional error reporting disabled, unsubscribe from newsletters,
-and request access, correction or deletion of your personal data. Use the
-private support form at https://pctweaker.app/support. Do not publish personal
-information in a public GitHub issue.
+and request access, correction or deletion of your personal data. Email
+support@pctweaker.app or use the private support form at
+https://pctweaker.app/support. Do not publish personal information in a public
+GitHub issue.
 
 Some payment or security records may need to be retained where required by law
 or to resolve an active dispute. Identity verification may be required before a
 data request is completed.
+
+If you believe your data has been handled unlawfully, you can lodge a complaint
+with the Italian data protection authority, the Garante per la protezione dei
+dati personali (https://www.garanteprivacy.it), or with the supervisory
+authority of the EU country where you live or work.
 
 ## Changes
 

@@ -4,7 +4,7 @@ import rateLimit from "express-rate-limit";
 import { asyncRoute } from "../async-route";
 import { isValidEmail } from "../auth";
 import { getPool, isConfigured } from "../db";
-import { EMAIL_MUTED_TEXT, emailShell, escapeHtml } from "../emails/layout";
+import { emailShell, escapeHtml, mutedLink, smallPrint, textFooter } from "../emails/layout";
 import { sendMail, isConfigured as mailIsConfigured } from "../mailer";
 import { consumeGlobalBudget } from "../public-form-guard";
 import { htmlPage } from "./auth";
@@ -129,14 +129,7 @@ router.post("/", newsletterLimiter, asyncRoute(async (req: Request, res: Respons
         intro:
           "Here's the link you asked for. Open it on the Windows 10 or 11 PC you want to tune and download PC Tweaker from there. You'll also get occasional emails about new releases. No spam and no daily drip.",
         action: { label: "Download PC Tweaker", url: DOWNLOAD_PAGE },
-        afterActionHtml: `
-        <tr>
-          <td style="padding:24px 40px 0; text-align:center;">
-            <p style="margin:0; font-size:12px; line-height:1.6; color:${EMAIL_MUTED_TEXT};">
-              Didn't ask for this? <a href="${escapeHtml(link)}" style="color:${EMAIL_MUTED_TEXT};">Unsubscribe with one click</a>, no sign-in needed.
-            </p>
-          </td>
-        </tr>`,
+        afterActionHtml: smallPrint(`Didn't ask for this? ${mutedLink(link, "Unsubscribe with one click")}, no sign-in needed.`),
       }),
       text: `Open this on your Windows PC.
 
@@ -146,9 +139,7 @@ ${DOWNLOAD_PAGE}
 You'll also get occasional emails about new releases. No spam and no daily drip.
 
 Didn't ask for this? Unsubscribe with one click, no sign-in needed:
-${link}
-
-PC Tweaker - https://pctweaker.app`,
+${link}${textFooter()}`,
     }).catch((err: Error) => console.error("send-to-pc email failed:", err.message));
   } else if (isNew && mailIsConfigured && link) {
     void sendMail({
@@ -162,23 +153,14 @@ PC Tweaker - https://pctweaker.app`,
         intro:
           "You'll get occasional emails about new PC Tweaker releases, new tweaks and new tools from the same developer. No spam and no daily drip.",
         action: { label: "Open PC Tweaker", url: "https://pctweaker.app" },
-        afterActionHtml: `
-        <tr>
-          <td style="padding:24px 40px 0; text-align:center;">
-            <p style="margin:0; font-size:12px; line-height:1.6; color:${EMAIL_MUTED_TEXT};">
-              Didn't sign up, or changed your mind? <a href="${escapeHtml(link)}" style="color:${EMAIL_MUTED_TEXT};">Unsubscribe with one click</a>, no sign-in needed.
-            </p>
-          </td>
-        </tr>`,
+        afterActionHtml: smallPrint(`Didn't sign up, or changed your mind? ${mutedLink(link, "Unsubscribe with one click")}, no sign-in needed.`),
       }),
       text: `You're on the PC Tweaker list.
 
 You'll get occasional emails about new PC Tweaker releases, new tweaks and new tools from the same developer. No spam and no daily drip.
 
 Didn't sign up, or changed your mind? Unsubscribe with one click, no sign-in needed:
-${link}
-
-PC Tweaker - https://pctweaker.app`,
+${link}${textFooter()}`,
     }).catch((err: Error) => console.error("newsletter welcome email failed:", err.message));
   }
 

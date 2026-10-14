@@ -9,15 +9,27 @@
  * buying twice.
  */
 
-/** The per-product words and colours the shared layout is filled with. */
-import { bulletRow, detailRow, emailShell, EMAIL_MUTED_TEXT } from "./layout";
+import {
+  EMAIL_BRANDS,
+  bulletRow,
+  detailRow,
+  divider,
+  emailShell,
+  listTable,
+  row,
+  sectionLabel,
+  smallPrint,
+  textFooter,
+  escapeHtml,
+  type EmailBrand,
+} from "./layout";
 
+/** The per-product words the shared layout is filled with. */
 export type ProductBrand = {
-  /** Shown in the subject line and the footer, e.g. "PC Tweaker Pro". */
+  /** Shown in the subject line, e.g. "PC Tweaker Pro". */
   name: string;
-  accent: string;
-  siteUrl: string;
-  logoUrl: string;
+  /** Logo, colours and site of the app. */
+  visual: EmailBrand;
   /** Small uppercase line above the headline, e.g. "Pro activated". */
   eyebrow: string;
   headline: string;
@@ -26,48 +38,51 @@ export type ProductBrand = {
    *  wrong sentence to send someone who deliberately paid once so they would
    *  never have a subscription. */
   introOneOff: string;
-  /** Three concrete things the payment just unlocked. Kept to three: a list
-   *  long enough to scroll reads as marketing, not as a receipt. */
+  /** Three concrete things the payment just unlocked, worded as the app's
+   *  own plan page words them. Kept to three: a list long enough to scroll
+   *  reads as marketing, not as a receipt. */
   highlights: [string, string, string];
   ctaLabel: string;
   signInHint: string;
 };
 
+/** Catalogue counts quoted below. scripts/check-public-counts.mjs fails the
+ *  build when they differ from the catalogue the app ships. */
+const TOTAL_CONTROLS = 81;
+const FREE_CONTROLS = 46;
+const PRO_CONTROLS = 35;
+
 export const PRODUCT_BRANDS: Record<string, ProductBrand> = {
   pctweaker: {
     name: "PC Tweaker Pro",
-    accent: "#ff5500",
-    siteUrl: "https://pctweaker.app",
-    logoUrl: "https://pctweaker.app/logo.png",
+    visual: EMAIL_BRANDS.pctweaker,
     eyebrow: "Pro activated",
     headline: "You're Pro now",
     intro:
-      "Thanks for subscribing to PC Tweaker Pro. Your account is upgraded and every Pro tweak is unlocked — no extra setup needed.",
+      "Thanks for subscribing to PC Tweaker Pro. Your account is upgraded and every Pro tweak is unlocked, with no extra setup needed.",
     introOneOff:
-      "Thanks for buying PC Tweaker Pro. Your account is upgraded for good and every Pro tweak is unlocked — no extra setup needed.",
+      "Thanks for buying PC Tweaker Pro. Your account is upgraded for good and every Pro tweak is unlocked, with no extra setup needed.",
     highlights: [
-      "All 66 controls (39 Free, 27 Pro), including Turbo Gaming &amp; Game Sessions",
-      "Duplicate &amp; large file finders, drive optimization",
-      "Disable Recall &amp; Memory Integrity, classic right-click menu",
+      `All ${TOTAL_CONTROLS} controls (${FREE_CONTROLS} Free, ${PRO_CONTROLS} Pro), with Game Sessions and the Turbo Gaming preset`,
+      "Advanced privacy controls for telemetry and activity history",
+      "Duplicate file finder, Windows Update cache cleanup and indexing control",
     ],
     ctaLabel: "Open PC Tweaker",
     signInHint: "Sign in with {email} to see your Pro tweaks.",
   },
   uninstaller: {
     name: "PC Tweaker Uninstaller Pro",
-    accent: "#ff5500",
-    siteUrl: "https://pctweaker.app/uninstaller",
-    logoUrl: "https://pctweaker.app/logo.png",
+    visual: EMAIL_BRANDS.uninstaller,
     eyebrow: "Pro activated",
     headline: "Uninstaller Pro is yours",
     intro:
-      "Thanks for subscribing to Uninstaller Pro. Your account is upgraded — the deep scan and everything behind it is unlocked, with no extra setup needed.",
+      "Thanks for subscribing to Uninstaller Pro. Your account is upgraded and leftover cleanup, batch removal and broken-entry removal are unlocked, with no extra setup needed.",
     introOneOff:
-      "Thanks for buying Uninstaller Pro. Your account is upgraded — the deep scan and everything behind it is unlocked, with no extra setup needed.",
+      "Thanks for buying Uninstaller Pro. Your account is upgraded and leftover cleanup, batch removal and broken-entry removal are unlocked, with no extra setup needed.",
     highlights: [
-      "Deep scan for the files and registry keys an uninstaller leaves behind",
-      "Bulk removal, so a queue of programs goes in one pass",
-      "Removal reports, and a record of what was taken off the machine",
+      "Leftover cleanup, with files sent to the Recycle Bin",
+      "Batch removal of several programs, in a safe order",
+      "Removal of broken entries whose uninstaller is gone",
     ],
     ctaLabel: "Open Uninstaller",
     signInHint: "Sign in with {email} to unlock it on this PC.",
@@ -88,14 +103,6 @@ export type ProWelcomeEmailInput = {
   renewsOn: string | null;
 };
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 export function brandFor(product: string | null | undefined): ProductBrand {
   return PRODUCT_BRANDS[product ?? ""] ?? PRODUCT_BRANDS.pctweaker;
 }
@@ -107,77 +114,59 @@ export function proWelcomeSubject(product?: string | null): string {
     : "You're Pro now — welcome to PC Tweaker Pro";
 }
 
+const planLabelFor = (plan: string) =>
+  plan === "lifetime" ? "Pro — Lifetime" : plan === "annual" ? "Pro — Annual" : "Pro — Monthly";
+
 export function proWelcomeText({ product, firstName, email, plan, priceLabel, renewsOn }: ProWelcomeEmailInput): string {
   const brand = brandFor(product);
-  const planLabel = plan === "lifetime" ? "Pro — Lifetime" : plan === "annual" ? "Pro — Annual" : "Pro — Monthly";
   return [
     `${brand.headline}, ${firstName || "there"}.`, "",
     renewsOn ? brand.intro : brand.introOneOff, "",
-    "What you've unlocked:", ...brand.highlights.map(line => `- ${line.replace(/&amp;/g, "&")}`), "",
-    `Plan: ${planLabel}`, `Price: ${priceLabel}`,
+    "What you've unlocked:", ...brand.highlights.map((line) => `- ${line}`), "",
+    `Plan: ${planLabelFor(plan)}`, `Price: ${priceLabel}`,
     renewsOn ? `Renews on: ${renewsOn}` : "Access: Never expires", "",
-    `${brand.ctaLabel}: ${brand.siteUrl}`, brand.signInHint.replace("{email}", email), "",
+    `${brand.ctaLabel}: ${brand.visual.siteUrl}`, brand.signInHint.replace("{email}", email), "",
     renewsOn ? "Cancel anytime from your account settings." : "This purchase does not renew.",
     "Questions? Just reply to this email.",
-  ].join("\n");
+  ].join("\n") + textFooter(brand.visual);
 }
 
 export function proWelcomeHtml({ product, firstName, email, plan, priceLabel, renewsOn }: ProWelcomeEmailInput): string {
   const brand = brandFor(product);
-  const name = escapeHtml(firstName || "there");
-  const planLabel =
-    plan === "lifetime"
-      ? "Pro — Lifetime"
-      : plan === "annual"
-        ? "Pro — Annual"
-        : "Pro — Monthly";
-
-  const body = `
-        <tr><td style="padding:32px 40px 0;"><div style="height:1px; background:#2a2d33;"></div></td></tr>
-
-        <tr>
-          <td style="padding:28px 40px 0;">
-            <div style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:${EMAIL_MUTED_TEXT}; margin-bottom:16px;">What you've unlocked</div>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-${brand.highlights.map((h) => bulletRow(brand.accent, h)).join("\n")}
-            </table>
-          </td>
-        </tr>`;
-
-  const receipt = `
-        <tr><td style="padding:32px 40px 0;"><div style="height:1px; background:#2a2d33;"></div></td></tr>
-        <tr>
-          <td style="padding:24px 40px 8px;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-${detailRow("Plan", planLabel)}
-${detailRow("Price", priceLabel)}
-${detailRow(renewsOn ? "Renews on" : "Access", renewsOn ?? "Never expires")}
-            </table>
-          </td>
-        </tr>`;
+  const unlocked =
+    divider() +
+    row(
+      sectionLabel("What you've unlocked") +
+        listTable(brand.highlights.map((h) => bulletRow(brand.visual.accentText, escapeHtml(h))).join("\n")),
+    );
+  const receipt =
+    divider() +
+    row(
+      sectionLabel("Your plan") +
+        listTable(
+          [
+            detailRow("Plan", planLabelFor(plan)),
+            detailRow("Price", priceLabel),
+            detailRow(renewsOn ? "Renews on" : "Access", renewsOn ?? "Never expires"),
+          ].join("\n"),
+        ),
+    );
 
   return emailShell({
     preheader: `Your payment went through and ${brand.name} is active on your account. Plan details inside.`,
     eyebrow: brand.eyebrow,
     headline: `${brand.headline}, ${firstName || "there"}.`,
     intro: renewsOn ? brand.intro : brand.introOneOff,
-    bodyHtml: body,
-    action: { label: brand.ctaLabel, url: brand.siteUrl },
+    bodyHtml: unlocked,
+    action: { label: brand.ctaLabel, url: brand.visual.siteUrl },
     note: brand.signInHint.replace("{email}", email),
     // The receipt sits after the button, where a reader looks for it once
     // they have already been told what happened.
     afterActionHtml: receipt,
     footerNote: `${renewsOn ? "Cancel anytime from your account settings." : "This purchase does not renew."} Questions? Just reply to this email.`,
-    accent: brand.accent,
-    productName: brand.name,
-    siteUrl: brand.siteUrl,
-    logoUrl: brand.logoUrl,
+    brand: brand.visual,
   });
 }
-
-// `name` is escaped by emailShell now; the local binding is kept out of the
-// template to avoid escaping twice.
-void escapeHtml;
 
 export type RefundEmailInput = {
   product?: string | null;
@@ -212,27 +201,23 @@ export function refundText({ product, firstName, plan, refundedLabel }: RefundEm
     ACCESS_ENDED,
     ...(plan === "monthly" || plan === "annual" ? ["", STOP_RENEWAL] : []), "",
     MISTAKE,
-  ].join("\n");
+  ].join("\n") + textFooter(brand.visual);
 }
 
 export function refundHtml({ product, firstName, plan, refundedLabel }: RefundEmailInput): string {
   const brand = brandFor(product);
-  const details = `
-        <tr><td style="padding:32px 40px 0;"><div style="height:1px; background:#2a2d33;"></div></td></tr>
-        <tr>
-          <td style="padding:24px 40px 0;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-${refundedLabel ? detailRow("Amount reversed", refundedLabel) : ""}
-${plan && PLAN_LABELS[plan] ? detailRow("Plan", PLAN_LABELS[plan]) : ""}
-${detailRow("Pro access", "Ended")}
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:24px 40px 0; text-align:center;">
-            <p style="margin:0; font-size:13px; color:${EMAIL_MUTED_TEXT}; line-height:1.6;">${escapeHtml(plan === "monthly" || plan === "annual" ? `${ACCESS_ENDED} ${STOP_RENEWAL}` : ACCESS_ENDED)}</p>
-          </td>
-        </tr>`;
+  const details =
+    divider() +
+    row(
+      listTable(
+        [
+          refundedLabel ? detailRow("Amount reversed", refundedLabel) : "",
+          plan && PLAN_LABELS[plan] ? detailRow("Plan", PLAN_LABELS[plan]) : "",
+          detailRow("Pro access", "Ended"),
+        ].filter(Boolean).join("\n"),
+      ),
+    ) +
+    smallPrint(escapeHtml(plan === "monthly" || plan === "annual" ? `${ACCESS_ENDED} ${STOP_RENEWAL}` : ACCESS_ENDED));
   return emailShell({
     preheader: `${reversedIntro(brand, refundedLabel)} Here is what changes.`,
     eyebrow: "Payment reversed",
@@ -240,9 +225,6 @@ ${detailRow("Pro access", "Ended")}
     intro: reversedIntro(brand, refundedLabel),
     bodyHtml: details,
     footerNote: MISTAKE,
-    accent: brand.accent,
-    productName: brand.name,
-    siteUrl: brand.siteUrl,
-    logoUrl: brand.logoUrl,
+    brand: brand.visual,
   });
 }

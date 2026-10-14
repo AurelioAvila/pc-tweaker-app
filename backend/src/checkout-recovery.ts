@@ -1,5 +1,5 @@
 import { getPool } from "./db";
-import { EMAIL_MUTED_TEXT, emailShell, escapeHtml } from "./emails/layout";
+import { emailShell, mutedLink, smallPrint, textFooter } from "./emails/layout";
 import { listUnsubscribeHeaders, unsubscribeUrl } from "./routes/newsletter";
 
 /** An expired Checkout Session, reduced to what the reminder needs. */
@@ -80,14 +80,7 @@ export function lifetimeReminderEmail(to: ReminderRecipient) {
   ];
   const footer = "This is the only reminder about this checkout.";
   const unsubscribe = to.unsubscribeUrl
-    ? `
-        <tr>
-          <td style="padding:24px 40px 0; text-align:center;">
-            <p style="margin:0; font-size:12px; line-height:1.6; color:${EMAIL_MUTED_TEXT};">
-              Don't want emails like this? <a href="${escapeHtml(to.unsubscribeUrl)}" style="color:${EMAIL_MUTED_TEXT};">Unsubscribe with one click</a>.
-            </p>
-          </td>
-        </tr>`
+    ? smallPrint(`Don't want emails like this? ${mutedLink(to.unsubscribeUrl, "Unsubscribe with one click")}.`)
     : "";
   return {
     to: to.email,
@@ -103,7 +96,7 @@ export function lifetimeReminderEmail(to: ReminderRecipient) {
       afterActionHtml: unsubscribe,
       footerNote: footer,
     }),
-    text: [greeting, ...lines, footer + (to.unsubscribeUrl ? ` Unsubscribe: ${to.unsubscribeUrl}` : "")].join("\n\n"),
+    text: [greeting, ...lines, footer + (to.unsubscribeUrl ? ` Unsubscribe: ${to.unsubscribeUrl}` : "")].join("\n\n") + textFooter(),
   };
 }
 

@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import { getPool, isConfigured } from "../db";
 import { hashPassword, verifyPassword, signToken, requireAuth, isValidEmail, isValidPassword } from "../auth";
-import { createActionToken, consumeActionToken, confirmsVerifiedAddress } from "../tokens";
+import { createActionToken, consumeActionToken, confirmsVerifiedAddress, invalidatePasswordResets } from "../tokens";
 import { sendMail, MailError } from "../mailer";
 import {
   accountWelcomeText,
@@ -18,11 +18,23 @@ import {
   verificationHtml,
   verificationSubject,
 } from "../emails/account";
+import { EMAIL_BRANDS, type EmailBrand } from "../emails/layout";
 
 /** What the free tier includes, quoted in the welcome email. Kept beside the
  *  one place that sends it rather than hidden in the template, so a change to
- *  what is free is a change here. */
-const FREE_TWEAK_COUNT = 39;
+ *  what is free is a change here. scripts/check-public-counts.mjs fails the
+ *  build when it differs from the catalogue the app ships. */
+const FREE_TWEAK_COUNT = 46;
+
+/** The account is shared by the family; mail is branded for the app that
+ *  asked. Only a known product changes anything, so a forged value costs
+ *  nothing but the logo. Tweaky Driver mails from its own service. */
+function brandOf(product: unknown): EmailBrand {
+  return product === "uninstaller" ? EMAIL_BRANDS.uninstaller : EMAIL_BRANDS.pctweaker;
+}
+function productQuery(brand: EmailBrand): string {
+  return brand === EMAIL_BRANDS.uninstaller ? "&product=uninstaller" : "";
+}
 
 const router = express.Router();
 
@@ -45,6 +57,9 @@ const authLimiter = rateLimit({
   limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  // JSON like every other error here, so the apps can read it and show
+  // their own translated message instead of a raw status code.
+  message: { error: "Too many attempts. Please wait 15 minutes and try again." },
   keyGenerator: (req) => {
     const email = req.body?.email;
     return typeof email === "string" && email ? `email:${email.toLowerCase()}` : `ip:${req.ip}`;
@@ -62,15 +77,15 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * going to receive anything. `sendMail` only *throws* when a configured
  * provider refuses; with no provider at all it logs and reports undelivered,
  * and that distinction used to be dropped on the floor here. */
-async function sendVerificationEmail(userId: number, email: string): Promise<boolean> {
+async function sendVerificationEmail(userId: number, email: string, brand: EmailBrand = EMAIL_BRANDS.pctweaker): Promise<boolean> {
   const token = await createActionToken(userId, "email_verify", DAY_MS);
-  const link = `${APP_URL.replace(/\/$/, "")}/api/auth/verify-email?token=${token}`;
+  const link = `${APP_URL.replace(/\/$/, "")}/api/auth/verify-email?token=${token}${productQuery(brand)}`;
   const { rows } = await getPool().query("SELECT first_name FROM users WHERE id = $1", [userId]);
   const { delivered } = await sendMail({
     to: email,
-    subject: verificationSubject(),
-    html: verificationHtml(rows[0]?.first_name ?? "", link),
-    text: verificationText(link),
+    subject: verificationSubject(brand),
+    html: verificationHtml(rows[0]?.first_name ?? "", link, brand),
+    text: verificationText(link, brand),
   });
   return delivered;
 }
@@ -81,7 +96,7 @@ async function sendVerificationEmail(userId: number, email: string): Promise<boo
  * The free tweak count is read from the same place the app reads it, so the
  * email cannot quietly promise a number that stopped being true.
  */
-async function sendAccountWelcome(userId: number): Promise<void> {
+async function sendAccountWelcome(userId: number, brand: EmailBrand = EMAIL_BRANDS.pctweaker): Promise<void> {
   const { rows } = await getPool().query(
     "SELECT email, first_name FROM users WHERE id = $1",
     [userId],
@@ -90,9 +105,9 @@ async function sendAccountWelcome(userId: number): Promise<void> {
   if (!user?.email) return;
   await sendMail({
     to: user.email,
-    subject: accountWelcomeSubject(),
-    html: accountWelcomeHtml(user.first_name ?? "", FREE_TWEAK_COUNT),
-    text: accountWelcomeText(FREE_TWEAK_COUNT),
+    subject: accountWelcomeSubject(brand),
+    html: accountWelcomeHtml(user.first_name ?? "", FREE_TWEAK_COUNT, brand),
+    text: accountWelcomeText(FREE_TWEAK_COUNT, brand),
   });
 }
 
@@ -105,7 +120,7 @@ async function sendAccountWelcome(userId: number): Promise<void> {
  * one place that writes a new password_hash, so a second way to change one
  * cannot quietly ship without it.
  */
-async function sendPasswordChangedNotice(userId: number, changedAt: Date): Promise<void> {
+async function sendPasswordChangedNotice(userId: number, changedAt: Date, brand: EmailBrand = EMAIL_BRANDS.pctweaker): Promise<void> {
   const { rows } = await getPool().query(
     "SELECT email, first_name FROM users WHERE id = $1",
     [userId],
@@ -114,9 +129,9 @@ async function sendPasswordChangedNotice(userId: number, changedAt: Date): Promi
   if (!user?.email) return;
   await sendMail({
     to: user.email,
-    subject: passwordChangedSubject(),
-    html: passwordChangedHtml(user.first_name ?? "", changedAt.toUTCString()),
-    text: passwordChangedText(changedAt.toUTCString()),
+    subject: passwordChangedSubject(brand),
+    html: passwordChangedHtml(user.first_name ?? "", changedAt.toUTCString(), brand),
+    text: passwordChangedText(changedAt.toUTCString(), brand),
   });
 }
 
@@ -135,7 +150,7 @@ export function isValidDateOfBirth(value: unknown): value is string {
 }
 
 router.post("/register", async (req: Request, res: Response) => {
-  const { email, password, firstName, lastName, dateOfBirth } = req.body || {};
+  const { email, password, firstName, lastName, dateOfBirth, product } = req.body || {};
   if (!isValidEmail(email)) return res.status(400).json({ error: "invalid email" });
   if (!isValidPassword(password)) return res.status(400).json({ error: "Password must be at least 8 characters and no more than 72 UTF-8 bytes." });
   if (!firstName || !String(firstName).trim()) return res.status(400).json({ error: "first name is required" });
@@ -165,7 +180,7 @@ router.post("/register", async (req: Request, res: Response) => {
 
     let verificationEmailSent = false;
     try {
-      verificationEmailSent = await sendVerificationEmail(id, email.toLowerCase());
+      verificationEmailSent = await sendVerificationEmail(id, email.toLowerCase(), brandOf(product));
     } catch (err) {
       // Registration itself succeeded; don't fail the whole request just
       // because the verification email couldn't be sent. But do report it:
@@ -233,7 +248,7 @@ router.post("/resend-verification", requireAuth, async (req: Request, res: Respo
     if (result.rowCount === 0) return res.status(404).json({ error: "account not found" });
     if (result.rows[0].email_verified) return res.json({ ok: true, alreadyVerified: true });
 
-    const delivered = await sendVerificationEmail(req.userId as number, result.rows[0].email);
+    const delivered = await sendVerificationEmail(req.userId as number, result.rows[0].email, brandOf(req.body?.product));
     if (!delivered) {
       // No provider configured at all — a server-side misconfiguration, not
       // anything the user can act on. Saying "sent" would leave them
@@ -272,62 +287,66 @@ function escapeHtml(value: unknown): string {
  * `style-src` allows 'unsafe-inline' while `script-src` does not — which is
  * precisely why these pages carry no JavaScript at all.
  */
-export function htmlPage(title: string, bodyHtml: string): string {
+export function htmlPage(title: string, bodyHtml: string, brand: EmailBrand = EMAIL_BRANDS.pctweaker): string {
+  const initial = escapeHtml(brand.name.replace(/^PC Tweaker /, "").charAt(0));
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${title} — PC Tweaker</title>
+<meta name="color-scheme" content="light dark">
+<title>${title} — ${escapeHtml(brand.name)}</title>
 <style>
-:root{color-scheme:dark}
+:root{color-scheme:light dark;--page:#f3f4f6;--card:#fff;--line:#e5e7eb;--h:#111827;--t:#374151;--m:#6b7280;
+  --field:#fff;--accent:${brand.accent};--on-accent:${brand.buttonText};--acc-text:${brand.accentText}}
+@media (prefers-color-scheme:dark){:root{--page:#0b0c0f;--card:#16181d;--line:#2a2e36;--h:#f3f4f6;--t:#d1d5db;--m:#9ca3af;
+  --field:#1d2027;--acc-text:${brand.accentTextDark}}}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;
-  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
-  background:radial-gradient(1200px 600px at 50% -10%,#241a3d 0%,#12091f 55%,#0b0616 100%);
-  color:#e9e6f5}
-.card{width:100%;max-width:400px;background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:32px 28px;
-  box-shadow:0 24px 60px rgba(0,0,0,.45)}
-.brand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
-.mark{width:34px;height:34px;border-radius:10px;flex:none;
-  background:linear-gradient(135deg,#ff8a3d,#ff5c8a);display:grid;place-items:center;
-  font-weight:800;color:#1b1030;font-size:17px}
-.brand span{font-weight:700;letter-spacing:.2px}
-h2{margin:0 0 6px;font-size:21px;font-weight:700}
-p.lead{margin:0 0 22px;color:#a79fc4;font-size:14px;line-height:1.55}
-label{display:block;font-size:12px;font-weight:600;letter-spacing:.06em;
-  text-transform:uppercase;color:#8f86b0;margin:14px 0 6px}
-input{width:100%;padding:12px 14px;font-size:15px;color:#f2effc;
-  background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12);border-radius:11px;
-  outline:none}
-input:focus{border-color:#ff5c8a;box-shadow:0 0 0 3px rgba(255,92,138,.16)}
-button{width:100%;margin-top:22px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;
-  color:#1b1030;border:0;border-radius:11px;
-  background:linear-gradient(135deg,#ff8a3d,#ff5c8a)}
-button:hover{filter:brightness(1.07)}
-.hint{margin-top:14px;font-size:12.5px;color:#7d749b;line-height:1.5}
-.error{margin:16px 0 0;padding:11px 13px;border-radius:10px;font-size:13.5px;
-  color:#ffb4b4;background:rgba(239,68,68,.11);border:1px solid rgba(239,68,68,.28)}
-.success{margin:16px 0 0;padding:11px 13px;border-radius:10px;font-size:13.5px;
-  color:#a7f3d0;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.28)}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--page);color:var(--t);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-top:4px solid var(--accent);
+  border-radius:16px;padding:28px 28px 30px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:24px;color:var(--h);font-weight:700}
+.mark{width:36px;height:36px;border-radius:10px;flex:none;background:var(--accent);color:var(--on-accent);
+  display:grid;place-items:center;font-weight:800;font-size:17px}
+h2{margin:0 0 8px;font-size:22px;font-weight:800;color:var(--h);letter-spacing:-.3px}
+p.lead{margin:0 0 20px;color:var(--t);font-size:15px;line-height:1.6}
+label{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--m);margin:16px 0 6px}
+input{width:100%;padding:12px 14px;font-size:15px;color:var(--h);background:var(--field);border:1px solid var(--line);
+  border-radius:10px;outline:none}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+button{width:100%;margin-top:22px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;color:var(--on-accent);
+  border:0;border-radius:10px;background:var(--accent)}
+button:hover{filter:brightness(1.06)}
+.hint{margin-top:14px;font-size:13px;color:var(--m);line-height:1.55}
+.error,.success{margin:16px 0 0;padding:12px 14px;border-radius:10px;font-size:14px;line-height:1.5}
+.error{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca}
+.success{color:#047857;background:#ecfdf5;border:1px solid #a7f3d0}
+@media (prefers-color-scheme:dark){.error{color:#fca5a5;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3)}
+  .success{color:#6ee7b7;background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3)}}
+footer{margin-top:22px;font-size:12px;color:var(--m)}
+footer a{color:var(--m)}
 </style></head>
 <body><div class="card">
-<div class="brand"><div class="mark">P</div><span>PC Tweaker</span></div>
-<h2>${title}</h2>${bodyHtml}</div></body></html>`;
+<div class="brand"><div class="mark" aria-hidden="true">${initial}</div><span>${escapeHtml(brand.name)}</span></div>
+<h2>${title}</h2>${bodyHtml}
+<footer>One account for PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver. <a href="https://pctweaker.app/support">Support</a> · <a href="https://pctweaker.app/privacy">Privacy</a></footer>
+</div></body></html>`;
 }
 
 router.get("/verify-email", async (req: Request, res: Response) => {
   const { token } = req.query;
-  if (!isConfigured) return res.status(503).send(htmlPage("Error", "<p class=error>Database not configured.</p>"));
-  if (typeof token !== "string") return res.status(400).send(htmlPage("Error", "<p class=error>Missing token.</p>"));
+  const brand = brandOf(req.query.product);
+  const page = (title: string, body: string) => htmlPage(title, body, brand);
+  if (!isConfigured) return res.status(503).send(page("Error", "<p class=error>Database not configured.</p>"));
+  if (typeof token !== "string") return res.status(400).send(page("Error", "<p class=error>Missing token.</p>"));
 
   try {
     const userId = await consumeActionToken(token, "email_verify");
     if (!userId && (await confirmsVerifiedAddress(token))) {
-      return res.send(htmlPage("Email verified", "<p class=success>Your email is already verified. You can close this window and return to PC Tweaker.</p>"));
+      return res.send(page("Email verified", `<p class=success>Your email is already verified. You can close this window and return to ${escapeHtml(brand.name)}.</p>`));
     }
     if (!userId) {
       return res
         .status(400)
-        .send(htmlPage("Link expired", "<p class=error>This verification link is invalid or has expired. Request a new one from the app.</p>"));
+        .send(page("Link expired", "<p class=error>This verification link is invalid or has expired. Request a new one from the app.</p>"));
     }
     await getPool().query("UPDATE users SET email_verified = TRUE WHERE id = $1", [userId]);
     // The welcome waits until here rather than going out at registration,
@@ -335,18 +354,18 @@ router.get("/verify-email", async (req: Request, res: Response) => {
     // confirm — two at once makes the one that needs acting on easier to
     // miss. Best-effort: a failed send must not make a confirmed address look
     // unconfirmed.
-    void sendAccountWelcome(userId).catch((err) =>
+    void sendAccountWelcome(userId, brand).catch((err) =>
       console.error("failed to send the account welcome:", err),
     );
-    res.send(htmlPage("Email verified", "<p class=success>Your email is verified. You can close this window and return to PC Tweaker.</p>"));
+    res.send(page("Email verified", `<p class=success>Your email is verified. You can close this window and return to ${escapeHtml(brand.name)}.</p>`));
   } catch (err) {
     console.error("verify-email failed:", err);
-    res.status(500).send(htmlPage("Error", "<p class=error>Something went wrong. Try again later.</p>"));
+    res.status(500).send(page("Error", "<p class=error>Something went wrong. Try again later.</p>"));
   }
 });
 
 router.post("/forgot-password", async (req: Request, res: Response) => {
-  const { email } = req.body || {};
+  const { email, product } = req.body || {};
   if (!isValidEmail(email)) return res.status(400).json({ error: "invalid email" });
 
   // Always respond the same way regardless of whether the account exists,
@@ -357,14 +376,15 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
   try {
     const result = await getPool().query("SELECT id FROM users WHERE email = $1", [email.toLowerCase()]);
     if (result.rowCount && result.rowCount > 0) {
+      const brand = brandOf(product);
       const userId = result.rows[0].id;
       const token = await createActionToken(userId, "password_reset", 60 * 60 * 1000);
-      const link = `${APP_URL.replace(/\/$/, "")}/api/auth/reset-password?token=${token}`;
+      const link = `${APP_URL.replace(/\/$/, "")}/api/auth/reset-password?token=${token}${productQuery(brand)}`;
       await sendMail({
         to: email.toLowerCase(),
-        subject: passwordResetSubject(),
-        html: passwordResetHtml(link),
-        text: passwordResetText(link),
+        subject: passwordResetSubject(brand),
+        html: passwordResetHtml(link, brand),
+        text: passwordResetText(link, brand),
       }).catch((err) => console.error("failed to send reset email:", err));
     }
   } catch (err) {
@@ -387,12 +407,13 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
  * `error` re-renders the form with a message instead of throwing the user back
  * to a dead end, keeping the token in the hidden field so they can retry.
  */
-function resetForm(token: string, error?: string): string {
+function resetForm(token: string, brand: EmailBrand, error?: string): string {
+  const product = brand === EMAIL_BRANDS.uninstaller ? `<input type="hidden" name="product" value="uninstaller">` : "";
   return htmlPage(
     "Choose a new password",
-    `<p class="lead">Pick something you don't use anywhere else. You'll be signed out on your other devices.</p>
+    `<p class="lead">Pick something you don't use anywhere else. It applies to PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver, and you'll be signed out on your other devices.</p>
      <form method="post" action="/api/auth/reset-password">
-       <input type="hidden" name="token" value="${escapeHtml(token)}">
+       <input type="hidden" name="token" value="${escapeHtml(token)}">${product}
        <label for="pw">New password</label>
        <input id="pw" type="password" name="newPassword" minlength="8" required autofocus
               autocomplete="new-password" placeholder="At least 8 characters" aria-describedby="password-limit">
@@ -404,11 +425,13 @@ function resetForm(token: string, error?: string): string {
      </form>
      ${error ? `<p class="error">${escapeHtml(error)}</p>` : ""}
      <p class="hint">This link works once and expires an hour after it was sent.</p>`,
+    brand,
   );
 }
 
 router.get("/reset-password", (req: Request, res: Response) => {
   const { token } = req.query;
+  const brand = brandOf(req.query.product);
   if (typeof token !== "string" || token.length === 0) {
     return res
       .status(400)
@@ -416,14 +439,16 @@ router.get("/reset-password", (req: Request, res: Response) => {
         htmlPage(
           "Link not valid",
           `<p class="lead">This page needs the link from your reset email — open that link directly rather than reloading this page.</p>`,
+          brand,
         ),
       );
   }
-  res.send(resetForm(token));
+  res.send(resetForm(token, brand));
 });
 
 router.post("/reset-password", async (req: Request, res: Response) => {
-  const { token, newPassword, confirmPassword } = req.body || {};
+  const { token, newPassword, confirmPassword, product } = req.body || {};
+  const brand = brandOf(product);
 
   // The browser form posts url-encoded and expects HTML back; the desktop app
   // posts JSON and expects JSON. One handler serves both, deciding by whether
@@ -431,10 +456,10 @@ router.post("/reset-password", async (req: Request, res: Response) => {
   const wantsHtml = typeof confirmPassword === "string" || (req.get("accept") || "").includes("text/html");
   const fail = (status: number, message: string) => {
     if (wantsHtml && typeof token === "string" && token.length > 0) {
-      return res.status(status).send(resetForm(token, message));
+      return res.status(status).send(resetForm(token, brand, message));
     }
     if (wantsHtml) {
-      return res.status(status).send(htmlPage("Link not valid", `<p class="error">${escapeHtml(message)}</p>`));
+      return res.status(status).send(htmlPage("Link not valid", `<p class="error">${escapeHtml(message)}</p>`, brand));
     }
     return res.status(status).json({ error: message });
   };
@@ -460,11 +485,15 @@ router.post("/reset-password", async (req: Request, res: Response) => {
       "UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE id = $2",
       [passwordHash, userId],
     );
+    // Any other reset link still in an inbox would let whoever holds it
+    // change the password again for up to an hour. The one that was used
+    // just proved control of the account; the rest are now stale.
+    await invalidatePasswordResets(userId);
 
     // Best-effort, like the welcome: the password has already changed by now,
     // and failing the request would tell the user their reset did not work
     // when it did. A missing notice is worth a log line, not a dead end.
-    void sendPasswordChangedNotice(userId, new Date()).catch((err) =>
+    void sendPasswordChangedNotice(userId, new Date(), brand).catch((err) =>
       console.error("failed to send the password changed notice:", err),
     );
 
@@ -472,8 +501,9 @@ router.post("/reset-password", async (req: Request, res: Response) => {
       return res.send(
         htmlPage(
           "Password updated",
-          `<p class="success">Done. Go back to PC Tweaker and sign in with your new password.</p>
+          `<p class="success">Done. Go back to ${escapeHtml(brand.name)} and sign in with your new password.</p>
            <p class="hint">You can close this window.</p>`,
+          brand,
         ),
       );
     }

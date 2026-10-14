@@ -4057,6 +4057,7 @@ dependencies = [
  "png 0.17.16",
  "runas",
  "rusqlite",
+ "semver",
  "serde",
  "serde_json",
  "sysinfo",

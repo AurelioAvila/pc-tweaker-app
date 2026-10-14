@@ -2,13 +2,14 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openFolderDialog, save as saveFileDialog } from "@tauri-apps/plugin-dialog";
 import { format, Lang, Strings } from "../i18n";
-import { formatEpochDate, friendlyError } from "../lib";
+import { formatEpochDate, friendlyError, textFor } from "../lib";
 import { MANUAL_ONLY_TWEAK_IDS } from "../catalog";
 import { FolderIcon, LayersIcon } from "./icons";
 import { LoadedProfile, Toast, TweakInfo, TweakProfile } from "../types";
 import "./workspace-panels.css";
 import { LifetimeTools } from "./lifetime-tools";
 import { StarterProfiles } from "./starter-profiles";
+import { STARTER_COPY } from "./starter-copy";
 
 /**
  * Saved configurations: capture what's applied, put it back later, or hand it
@@ -340,6 +341,26 @@ export function ProfilesPanel({
         <section className="workspace-profile-section">
           <h3 className="workspace-section-label">{s.profiles.importButton}</h3>
           <ProfileRow s={s} profile={pending.profile} imported busy={busy} onApply={applyProfile} />
+          {/* What the file would change on this PC, before anything is applied. */}
+          <ul className="workspace-import-preview">
+            {pending.profile.tweaks.map((id) => {
+              const t = tweaks.find((x) => x.id === id);
+              if (!t || MANUAL_ONLY_TWEAK_IDS.has(id)) return null;
+              const status = t.unavailable
+                ? STARTER_COPY[lang].notHere
+                : t.applied
+                  ? STARTER_COPY[lang].active
+                  : t.requires_pro && !isPro
+                    ? s.badges.pro
+                    : null;
+              return (
+                <li key={id}>
+                  <span>{textFor(s.tweaks, t.id, t.name, t.description).name}</span>
+                  {status && <em>{status}</em>}
+                </li>
+              );
+            })}
+          </ul>
           {pending.unknown.length > 0 && (
             <p className="workspace-import-warning" role="status">
               {format(s.profiles.droppedWarning, { count: pending.unknown.length })}

@@ -7,6 +7,9 @@ import type { Copy } from "./index";
  */
 const named = (lead: string, n: string, end = ".") => (n ? `${lead}, ${n}${end}` : `${lead}${end}`);
 
+/** "em um PC" is Brazilian; European Portuguese contracts it to "num PC". */
+const em = (place: string) => (place.startsWith("um ") ? `n${place}` : `em ${place}`);
+
 export const pt: Copy = {
   tag: "pt",
   dateLocale: "pt-PT",
@@ -170,10 +173,10 @@ export const pt: Copy = {
 
   signIn: {
     subject: (b: string) => `Novo início de sessão na sua conta ${b}`,
-    preheader: (device: string, when: string) => `Sessão iniciada em ${device} a ${when}. Se foi o próprio, não precisa de fazer nada.`,
+    preheader: (device: string, when: string) => `Sessão iniciada ${em(device)} a ${when}. Se foi o próprio, não precisa de fazer nada.`,
     eyebrow: "Novo início de sessão",
     aPc: "um PC com Windows",
-    headline: (device: string) => `Novo início de sessão em ${device}.`,
+    headline: (device: string) => `Novo início de sessão ${em(device)}.`,
     intro: (b: string) =>
       `Foi iniciada sessão na sua conta ${b} a partir de um PC ou de uma rede que ainda não tínhamos visto nesta conta. Enviamos isto uma vez por cada PC novo, e só quando a palavra-passe está correta; uma palavra-passe errada nunca gera este e-mail.`,
     rows: { device: "PC", when: "Quando", account: "Conta" },

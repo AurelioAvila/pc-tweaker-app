@@ -64,6 +64,7 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 - **Change history by session.** Registry values before and after each change, with undo for one change, a whole session or everything still in effect, plus filters and export.
 - **Re-apply after Windows updates.** A check at sign-in lists only the tweaks a cumulative update put back, one checkbox each. Nothing is re-applied on its own.
 - **1.18.2.** Pro keeps working when the PC's clock runs behind, account errors appear in the app's language, and the account menu shows the plan each product has.
+- **1.18.3.** Change your password and email from the account menu, account emails in the app's language, and nothing undone under a running game when Pro ends.
 
 See the [changelog](CHANGELOG.md) for every release.
 

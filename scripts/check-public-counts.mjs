@@ -53,6 +53,17 @@ for (const file of listings) {
     if (!amounts.has(price)) problems.push(`${file}: description does not state the Pro price ${price} €`);
   }
 }
+// The welcome and Pro purchase emails quote the catalogue as well.
+const constant = (file, name) => Number(read(file).match(new RegExp(`const ${name} = (\\d+);`))?.[1]);
+const emailCounts = {
+  "backend/src/emails/pro-welcome.ts TOTAL_CONTROLS": [constant("backend/src/emails/pro-welcome.ts", "TOTAL_CONTROLS"), total],
+  "backend/src/emails/pro-welcome.ts FREE_CONTROLS": [constant("backend/src/emails/pro-welcome.ts", "FREE_CONTROLS"), free],
+  "backend/src/emails/pro-welcome.ts PRO_CONTROLS": [constant("backend/src/emails/pro-welcome.ts", "PRO_CONTROLS"), pro],
+  "backend/src/routes/auth.ts FREE_TWEAK_COUNT": [constant("backend/src/routes/auth.ts", "FREE_TWEAK_COUNT"), free],
+};
+for (const [where, [stated, shipped]] of Object.entries(emailCounts)) {
+  if (stated !== shipped) problems.push(`${where} is ${stated}, the catalog ships ${shipped}`);
+}
 const seo = read("site/scripts/check-seo.mjs");
 if (!seo.includes(`[${free}, "CONTROLS INCLUDED FREE"]`) || !seo.includes(`[${total}, "CONTROLS IN THIS RELEASE"]`)) {
   problems.push(`site/scripts/check-seo.mjs: homepage stats are not ${free} Free / ${total} total`);

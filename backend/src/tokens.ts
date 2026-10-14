@@ -58,4 +58,14 @@ async function confirmsVerifiedAddress(rawToken: string): Promise<boolean> {
   return result.rows.length > 0;
 }
 
-export { createActionToken, consumeActionToken, confirmsVerifiedAddress };
+/** Marks every unused reset link of an account as spent. Called once a reset
+ *  succeeds, so no other link still sitting in an inbox can change the
+ *  password again. */
+async function invalidatePasswordResets(userId: number): Promise<void> {
+  await getPool().query(
+    "UPDATE action_tokens SET used_at = now() WHERE user_id = $1 AND purpose = 'password_reset' AND used_at IS NULL",
+    [userId],
+  );
+}
+
+export { createActionToken, consumeActionToken, confirmsVerifiedAddress, invalidatePasswordResets };

@@ -4,7 +4,7 @@ import { isValidEmail } from "../auth";
 import { sendMail, isConfigured as mailIsConfigured, MailError } from "../mailer";
 import { SUPPORT_INBOX, SUPPORT_REPLY_TO } from "../support-inbox";
 import { consumeGlobalBudget, singleLine } from "../public-form-guard";
-import { emailShell } from "../emails/layout";
+import { emailShell, textFooter } from "../emails/layout";
 
 const router = express.Router();
 
@@ -188,7 +188,7 @@ router.post("/", supportLimiter, async (req: Request, res: Response) => {
       note: "If you did not contact us, you can ignore this message.",
       footerNote: "Need to add a detail? Reply to this email. Never send your password or payment card details.",
     }),
-    text: `Hi ${name},\n\nYour message has reached the PC Tweaker support team. We'll reply to this email address.\n\nNeed to add a detail? Reply to this email. Never send your password or payment card details.\n\nIf you did not contact us, you can ignore this message.\n\nPC Tweaker`,
+    text: `Hi ${name},\n\nYour message has reached the PC Tweaker support team. We'll reply to this email address.\n\nNeed to add a detail? Reply to this email. Never send your password or payment card details.\n\nIf you did not contact us, you can ignore this message.${textFooter()}`,
   }).catch((err: Error) => console.error("support acknowledgement failed:", err.message));
 
   res.status(200).json({ ok: true });

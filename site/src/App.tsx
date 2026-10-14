@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { MotionConfig } from "framer-motion";
 import { Nav } from "./components/Nav";
 import { UNINSTALLER_DOWNLOAD_EXE } from "./constants";
 import { HeroSection } from "./components/HeroSection";
@@ -124,6 +125,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
   }
 
   return (
+    <MotionConfig reducedMotion="user">
     <PromoProvider>
       <RouteStructuredData path={path} />
       {/* Visually hidden until focused: the first Tab press lets keyboard and
@@ -150,5 +152,6 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       {page}
       <Footer navigate={navigate} currentPath={path} />
     </PromoProvider>
+    </MotionConfig>
   );
 }

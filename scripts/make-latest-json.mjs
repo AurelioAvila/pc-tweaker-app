@@ -20,7 +20,10 @@ import { signedFileName, verifyUpdater } from "./verify-updater.mjs";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const conf = JSON.parse(fs.readFileSync(path.join(root, "src-tauri", "tauri.conf.json"), "utf8"));
 const version = conf.version;
-const repoUrl = conf.plugins?.updater?.endpoints?.[0]?.match(/https:\/\/github\.com\/[^/]+\/[^/]+/)?.[0];
+// The GitHub endpoint, wherever it sits in the list: our own domain comes first.
+const repoUrl = (conf.plugins?.updater?.endpoints ?? [])
+  .map((endpoint) => endpoint.match(/https:\/\/github\.com\/[^/]+\/[^/]+/)?.[0])
+  .find(Boolean);
 if (!repoUrl) {
   console.error("Could not derive the repo URL from the updater endpoint.");
   process.exit(1);

@@ -873,7 +873,7 @@ function productPlanLabel(
 const FIELD =
   "rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-[var(--app-accent)]";
 const SUBMIT =
-  "rounded-lg bg-[var(--app-accent)] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-60";
+  "rounded-lg bg-[var(--app-accent)] px-3 py-1.5 text-sm font-semibold text-on-accent disabled:opacity-60";
 
 /** Change the password, or move the account to another address. Both need
  *  the current password; the server sends the notices. */
@@ -980,7 +980,7 @@ function AccountChanges({
         </button>
       </form>
       {result && (
-        <p className={`text-xs ${result.ok ? "text-emerald-400" : "text-red-400"}`} role="status">
+        <p className={`text-xs ${result.ok ? "text-ok" : "text-danger"}`} role="status">
           {result.text}
         </p>
       )}

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { MotionConfig } from "framer-motion";
 import { Nav } from "./components/Nav";
 import { UNINSTALLER_DOWNLOAD_EXE } from "./constants";
 import { HeroSection } from "./components/HeroSection";
@@ -101,6 +102,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
   }
 
   return (
+    <MotionConfig reducedMotion="user">
     <PromoProvider>
       {/* Visually hidden until focused: the first Tab press lets keyboard and
           screen-reader users jump past the nav straight to the content. */}
@@ -121,5 +123,6 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       {page}
       <Footer navigate={navigate} />
     </PromoProvider>
+    </MotionConfig>
   );
 }

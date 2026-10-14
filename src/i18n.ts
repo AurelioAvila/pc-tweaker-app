@@ -10570,7 +10570,7 @@ const pt: Strings = {
     verdictBetterHint:
       "Ficou abaixo dos 65° enquanto trabalhava a sério: arrefecimento melhor do que a média.",
     verdictIdleHint:
-      "Ainda não trabalhou o suficiente para avaliar. Uma placa inativa está fria de qualquer forma, por isso isso não provaria nada.",
+      "Ainda não trabalhou o suficiente para avaliar. Uma placa inativa está fria de qualquer forma, por isso não provaria nada.",
     profilesTitle: "Perfis térmicos",
     profilesSubtitle:
       "Estes definem o limite de energia da placa, a alavanca que realmente controla o calor e o ruído da ventoinha. Cada valor vem dos limites que a própria placa indica.",

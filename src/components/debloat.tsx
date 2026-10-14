@@ -367,11 +367,11 @@ export function DebloatPanel({
         </div>
         <dl className="debloat-stats" aria-live="polite">
           <div>
-            <dt>{c.installed}</dt>
+            <dt>{installed.length === 1 ? c.installedOne : c.installed}</dt>
             <dd>{scanning && !apps.length ? "–" : installed.length}</dd>
           </div>
           <div>
-            <dt>{c.removable}</dt>
+            <dt>{removable.length === 1 ? c.removableOne : c.removable}</dt>
             <dd>{scanning && !apps.length ? "–" : removable.length}</dd>
           </div>
           {freeable.bytes > 0 && (
@@ -856,7 +856,7 @@ export function DebloatPanel({
               {chosen.length
                 ? space.bytes > 0
                   ? format(c.selectionSummary, { count: chosen.length, size: size(space.bytes) })
-                  : `${chosen.length} ${c.selected}`
+                  : `${chosen.length} ${chosen.length === 1 ? c.selectedOne : c.selected}`
                 : c.selectionNone}
             </span>
             <button

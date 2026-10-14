@@ -187,6 +187,12 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
   return async (req: Request, res: Response) => {
     const planKey = String(req.body?.plan || "annual") as PlanKey;
     const product = req.body?.product ?? "pctweaker";
+    // The customer's choice: "Start 3-day trial" (true) or "Subscribe now"
+    // (false or absent, which is also what apps without the trial send).
+    const startTrial = req.body?.start_trial;
+    if (startTrial !== undefined && typeof startTrial !== "boolean") {
+      return res.status(400).json({ error: "start_trial must be true or false" });
+    }
     // `PLANS[planKey]` alone would resolve a key like "__proto__" or
     // "constructor" to Object.prototype instead of undefined, since PLANS is a
     // plain object literal — resolveCheckoutPrice guards it with hasOwnProperty
@@ -281,12 +287,18 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
           params.subscription_data = { ...params.subscription_data, metadata: { ...params.subscription_data.metadata, promo_id: promo.id } };
         }
       }
-      // The trial is the server's decision, never the client's: subscription
-      // plans only, never Lifetime, and only for an account that has not had
-      // this product's trial (re-checked when Stripe creates the subscription).
-      const trial = plan.mode === "subscription" && await trialEligible(
+      // Asked for by the customer, granted by the server: subscription plans
+      // only, never Lifetime, and only for an account that has not had this
+      // product's trial (re-checked when Stripe creates the subscription).
+      const trial = startTrial === true;
+      if (trial && !(plan.mode === "subscription" && await trialEligible(
         req.userId as number, product, await productEntitlement(req.userId as number, product), effects.environment,
-      );
+      ))) {
+        return res.status(409).json({
+          error: "The free trial is not available for this account. Subscribe directly instead.",
+          code: "trial_unavailable",
+        });
+      }
       if (trial) {
         params.metadata = { ...params.metadata, trial: TRIAL_MARK };
         params.payment_method_collection = "always";

@@ -108,19 +108,19 @@ const environment = {
   STRIPE_PRICE_UNINSTALLER_LOYALTY: "price_uninstaller_loyalty_fixture",
   STRIPE_COUPON_HALLOWEEN_MONTHLY: "coupon_monthly",
 };
-async function checkout(userId, body, env = environment, at = Date.parse("2026-11-20T10:00:00Z")) {
+async function checkout(userId, body, env = environment, at = Date.parse("2026-11-20T10:00:00Z"), expected = 200) {
   const calls = [];
   const handler = createCheckoutHandler({ environment: env, now: () => at,
     async createSession(params) { calls.push(params); return { url: "https://checkout.stripe.com/c/pay/cs_test_fixture" }; } });
   const res = { statusCode: 200, status(v) { this.statusCode = v; return this; }, json(v) { this.body = v; return this; } };
   await handler({ userId: Number(userId), body }, res);
-  assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+  assert.equal(res.statusCode, expected, JSON.stringify(res.body));
   return { params: calls[0], body: res.body };
 }
 
 test("checkout adds the trial to subscription plans only, and only with the switch on", async () => {
   const id = await user();
-  const monthly = await checkout(id, { plan: "monthly" });
+  const monthly = await checkout(id, { plan: "monthly", start_trial: true });
   assert.equal(monthly.body.trial, true);
   assert.equal(monthly.body.trial_days, 3);
   assert.equal(monthly.params.subscription_data.trial_period_days, 3);
@@ -132,22 +132,38 @@ test("checkout adds the trial to subscription plans only, and only with the swit
 
   const lifetime = await checkout(id, { plan: "lifetime" });
   assert.equal(lifetime.body.trial, false);
+  const lifetimeTrial = await checkout(id, { plan: "lifetime", start_trial: true }, environment, undefined, 409);
+  assert.equal(lifetimeTrial.body.code, "trial_unavailable");
   assert.equal(lifetime.params.payment_method_collection, undefined);
   assert.equal(lifetime.params.subscription_data, undefined);
 
-  const uninstaller = await checkout(id, { product: "uninstaller", plan: "annual" });
+  const uninstaller = await checkout(id, { product: "uninstaller", plan: "annual", start_trial: true });
   assert.equal(uninstaller.body.trial, true);
   assert.equal(uninstaller.params.subscription_data.trial_period_days, 3);
 
-  const off = await checkout(id, { plan: "annual" }, { ...environment, TRIAL_ENABLED: "false" });
+  assert.equal((await checkout(id, { plan: "annual", start_trial: true }, { ...environment, TRIAL_ENABLED: "false" }, undefined, 409)).body.code, "trial_unavailable");
+  const off = await checkout(id, { plan: "annual", start_trial: false }, { ...environment, TRIAL_ENABLED: "false" });
   assert.equal(off.body.trial, false);
   assert.equal(off.params.subscription_data.trial_period_days, undefined);
   assert.equal(off.params.payment_method_collection, undefined);
 });
 
+test("the customer chooses: Subscribe now has no trial even when one is available, and charges at once", async () => {
+  const id = await user();
+  for (const body of [{ plan: "monthly", start_trial: false }, { plan: "monthly" }]) {
+    const now = await checkout(id, body);
+    assert.equal(now.body.trial, false);
+    assert.equal(now.params.subscription_data.trial_period_days, undefined);
+    assert.equal(now.params.payment_method_collection, undefined);
+    assert.equal(now.params.subscription_data.metadata.trial, undefined);
+  }
+  assert.equal((await status(id)).can_start_trial, true, "choosing to pay now does not use the trial");
+  await checkout(id, { plan: "monthly", start_trial: "yes" }, environment, undefined, 400);
+});
+
 test("the Halloween coupon stays on a trial checkout, so the first charge after the trial is the promo price", async () => {
   const id = await user();
-  const during = await checkout(id, { plan: "monthly" }, environment, Date.parse("2026-10-31T20:00:00Z"));
+  const during = await checkout(id, { plan: "monthly", start_trial: true }, environment, Date.parse("2026-10-31T20:00:00Z"));
   assert.deepEqual(during.params.discounts, [{ coupon: "coupon_monthly" }]);
   assert.equal(during.params.subscription_data.trial_period_days, 3);
   assert.equal(during.params.subscription_data.metadata.promo_id, PROMO.id);
@@ -217,7 +233,8 @@ test("the trial is refused, before any charge, to a second account with the same
   // Same mailbox written differently: the checkout no longer offers the trial...
   const second = await user("annabianchi+2@googlemail.com");
   assert.equal((await status(second)).can_start_trial, false);
-  assert.equal((await checkout(second, { plan: "monthly" })).body.trial, false);
+  assert.equal((await checkout(second, { plan: "monthly", start_trial: true }, environment, undefined, 409)).body.code, "trial_unavailable");
+  assert.equal((await checkout(second, { plan: "monthly" })).body.trial, false, "subscribing straight away is the only choice left");
   // ...and a trial subscription that slipped through is cancelled.
   const log = {};
   const sneaky = trialSubscription(second);

@@ -616,9 +616,18 @@ pub(crate) fn registered_game_running(dir: &Path) -> bool {
         })
 }
 
+/// Pro starts a session; it does not end one. When the licence lapses mid-game
+/// (a trial that ended, a payment that failed) the running session finishes
+/// when the game exits, as it would have anyway: nothing is restored under a
+/// game that is still running, and no new session starts. Turning automation
+/// off or removing the games still ends a session at once.
+fn automation_allowed(enabled: bool, pro: bool, session_running: bool) -> bool {
+    enabled && (pro || session_running)
+}
+
 /// Only the snapshot bearing this session's durable owner token can be restored.
-/// Disabling automation, removing its games and losing Pro all use that same
-/// recovery path. A manual preset (including a manual takeover) is never undone.
+/// Disabling automation, removing its games and the game exiting all use that
+/// same recovery path. A manual preset (including a manual takeover) is never undone.
 pub fn spawn_watcher(app: tauri::AppHandle) {
     std::thread::spawn(move || {
         use tauri::Emitter;
@@ -677,8 +686,11 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                     })
                     .cloned()
                     .collect();
-                let allowed =
-                    config.enabled && config.core_steering && !steerable.is_empty() && pro;
+                let allowed = automation_allowed(
+                    config.enabled && config.core_steering && !steerable.is_empty(),
+                    pro,
+                    state.game().is_some(),
+                );
                 steering.tick(&store, allowed, &steerable, &processes, watcher_start);
             }
             if !recovery_checked {
@@ -700,9 +712,13 @@ pub fn spawn_watcher(app: tauri::AppHandle) {
                     }
                 }
             }
-            let allowed = config.enabled && !config.games.is_empty() && pro;
+            let allowed = automation_allowed(
+                config.enabled && !config.games.is_empty(),
+                pro,
+                state.game().is_some(),
+            );
             // A failed process enumeration is not evidence that a game exited.
-            // Explicit disable/removal/expiry can still restore our own state.
+            // Explicit disable/removal can still restore our own state.
             if allowed && !refreshed {
                 continue;
             }
@@ -907,6 +923,35 @@ mod tests {
             .tick(false, Some(game()), &mut backend, owner)
             .unwrap();
         assert_eq!(backend.restore_calls, 1);
+    }
+
+    #[test]
+    fn a_lapsed_licence_lets_the_running_session_finish_and_starts_no_new_one() {
+        let mut state = SessionState::default();
+        let mut backend = MockBackend::default();
+        state
+            .tick(automation_allowed(true, true, false), Some(game()), &mut backend, owner)
+            .unwrap();
+        // Pro lapses while the game runs: its session stays.
+        let allowed = automation_allowed(true, false, state.game().is_some());
+        assert!(state
+            .tick(allowed, Some(game()), &mut backend, owner)
+            .unwrap()
+            .is_none());
+        assert_eq!(backend.restore_calls, 0);
+        // The game exits: the usual restore.
+        let allowed = automation_allowed(true, false, state.game().is_some());
+        state.tick(allowed, None, &mut backend, owner).unwrap();
+        assert_eq!(backend.restore_calls, 1);
+        // The next launch starts nothing without Pro.
+        let allowed = automation_allowed(true, false, state.game().is_some());
+        assert!(state
+            .tick(allowed, Some(game()), &mut backend, owner)
+            .unwrap()
+            .is_none());
+        assert_eq!(backend.apply_calls, 1);
+        // Turning automation off still ends a running session.
+        assert!(!automation_allowed(false, true, true));
     }
 
     #[test]

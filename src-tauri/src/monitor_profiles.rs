@@ -353,7 +353,9 @@ pub fn tick(dir: &Path, paths: &[String]) {
                     suppress_active_game(&mut s);
                     restore(dir, &mut s)?;
                 } else if a.game.as_ref().is_some_and(|p| !paths.contains(p))
-                    || (a.game.is_some() && (!s.enabled || crate::require_pro(dir).is_err()))
+                    // A lapsed licence starts nothing new below, but never
+                    // switches the display back under a game still running.
+                    || (a.game.is_some() && !s.enabled)
                 {
                     restore(dir, &mut s)?;
                 } else {

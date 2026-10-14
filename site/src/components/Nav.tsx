@@ -34,7 +34,7 @@ export function Nav({
   return (
     <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-[var(--bg)]/70 backdrop-blur-xl">
       <PromoStrip href={offerHref ?? `${prefix}#access`} />
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 md:px-12">
+      <div className="mx-auto flex h-16 max-w-[86rem] items-center justify-between px-5 md:px-12">
         <Link
           to="/"
           onNavigate={navigate}

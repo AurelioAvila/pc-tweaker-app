@@ -13,25 +13,30 @@ import { useCampaignStoreLink } from "../campaign-store";
 function ThemeSelector() {
   const { theme, setTheme } = useTheme();
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
       <span className="font-mono-t text-[10px] tracking-[0.2em] text-[var(--fg-dim)]">
         {text.hero.themeLabel}
       </span>
-      <div className="flex flex-wrap items-center gap-2.5">
+      {/* 24px targets (WCAG 2.5.8) around 14px dots: 13 of them fit one row at 360px. */}
+      <div className="flex flex-wrap items-center">
         {THEME_ORDER.map((t) => (
           <button
             key={t}
             aria-label={ACCENTS[t].label}
             title={ACCENTS[t].label}
             onClick={() => setTheme(t)}
-            className="h-3.5 w-3.5 rounded-full border transition-all duration-300"
-            style={{
-              backgroundColor: ACCENTS[t].hex,
-              borderColor: theme === t ? "var(--fg)" : "transparent",
-              transform: theme === t ? "scale(1.35)" : "scale(1)",
-              boxShadow: theme === t ? `0 0 14px ${ACCENTS[t].glow}` : "none",
-            }}
-          />
+            className="grid h-6 w-6 place-items-center rounded-full"
+          >
+            <span
+              className="block h-3.5 w-3.5 rounded-full border transition-all duration-300"
+              style={{
+                backgroundColor: ACCENTS[t].hex,
+                borderColor: theme === t ? "var(--fg)" : "transparent",
+                transform: theme === t ? "scale(1.35)" : "scale(1)",
+                boxShadow: theme === t ? `0 0 14px ${ACCENTS[t].glow}` : "none",
+              }}
+            />
+          </button>
         ))}
       </div>
     </div>
@@ -192,7 +197,7 @@ export function HeroSection() {
               ))}
             </div>
           </motion.div>
-          <motion.figure variants={riseChild} className="md:col-span-6 md:mt-4">
+          <motion.figure variants={riseChild} className="md:col-span-6 md:self-center">
             <div className="ring-accent-soft overflow-hidden rounded-2xl border border-white/10 bg-[var(--bg-2)] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.75)]">
               <img
                 src="/images/app-overview-20261011.webp"

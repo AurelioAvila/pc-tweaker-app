@@ -38,6 +38,17 @@ body {
   overflow-x: hidden;
 }
 
+/* Headings break into even lines instead of leaving a single word ("Tell / us.")
+   alone on the last one; body copy avoids a one-word last line. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
 ::selection {
   background: var(--accent);
   color: var(--bg);
@@ -145,6 +156,19 @@ body {
 /* This stylesheet had no reduced-motion block at all, so the guard covers the
    controls added here rather than silently ignoring the preference. */
 @media (prefers-reduced-motion: reduce) {
+  /* Smooth scrolling, the blinking caret, hover lifts and card glows all stop;
+     framer-motion entrances are handled by <MotionConfig reducedMotion="user">. */
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .coffee-mark {
     transition-duration: 0.01ms;
   }

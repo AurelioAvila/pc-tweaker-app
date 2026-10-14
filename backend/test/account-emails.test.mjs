@@ -21,7 +21,8 @@ test("plain-text messages preserve action URLs, expiry and account details", () 
   assert.ok(verificationText(LINK).includes(LINK));
   assert.match(verificationText(LINK), /24 hours/);
   assert.ok(passwordResetText(LINK).includes(LINK));
-  assert.match(passwordResetText(LINK), /once.*one hour/);
+  assert.match(passwordResetText(LINK), /one hour/i);
+  assert.match(passwordResetText(LINK), /one use|only once/);
   assert.ok(passwordChangedText(WHEN).includes(WHEN));
   assert.match(accountWelcomeText(27), /27 Free controls/);
 });

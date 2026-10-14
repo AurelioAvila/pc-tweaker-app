@@ -14,7 +14,8 @@ import {
   tipSessionParams,
 } from "../stripe-policy";
 import { sendMail } from "../mailer";
-import { brandFor, proWelcomeHtml, proWelcomeSubject, proWelcomeText, refundHtml, refundSubject, refundText } from "../emails/pro-welcome";
+import { bonusMail, brandFor, endingMail, proWelcomeHtml, proWelcomeSubject, proWelcomeText, refundHtml, refundSubject, refundText } from "../emails/pro-welcome";
+import { copyFor, formatDay } from "../emails/copy";
 import { SUPPORT_INBOX, SUPPORT_REPLY_TO } from "../support-inbox";
 import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
 import { promoCheckout } from "../promo";
@@ -624,62 +625,81 @@ async function sendProWelcomeEmail(
     expiresAt: expiresAt?.toISOString() ?? null, product, chargedLabel });
 }
 
+/** Whether a queued "plan ending" notice still describes the subscription:
+ *  the customer may have resumed it, paid, or moved to Lifetime meanwhile. */
+async function endingStillTrue(receipt: Receipt): Promise<boolean> {
+  if (!receipt.subscriptionId || !stripe) return false;
+  if (receipt.product === "pctweaker" && (await holdsLifetime(receipt.userId))) return false;
+  const current = await stripe.subscriptions.retrieve(receipt.subscriptionId);
+  return receipt.reason === "payment_failed"
+    ? ["past_due", "unpaid"].includes(current.status)
+    : current.cancel_at_period_end === true && ["active", "trialing", "past_due"].includes(current.status);
+}
+
 export async function deliverProReceipt(receipt: Receipt): Promise<void> {
     const { userId, plan, product, chargedLabel } = receipt;
     const expiresAt = receipt.expiresAt ? new Date(receipt.expiresAt) : null;
     const { rows } = await getPool().query(
-      "SELECT email, first_name FROM users WHERE id = $1",
+      "SELECT email, first_name, locale FROM users WHERE id = $1",
       [userId],
     );
     const user = rows[0];
     if (!user?.email) return;
+    // Mail that answers no request goes out in the language the app last
+    // sent for this account, English when it never sent one.
+    const c = copyFor(user.locale);
+    const deliver = async (mail: { subject: string; html: string; text: string }) => {
+      const sent = await sendMail({ to: user.email, replyTo: SUPPORT_REPLY_TO, ...mail });
+      if (!sent.delivered) throw new Error("Billing mail provider did not accept the message");
+    };
     if (receipt.kind === "refund") {
       const input = { product, firstName: user.first_name || "", plan, refundedLabel: chargedLabel };
-      const sent = await sendMail({
-        to: user.email,
-        subject: refundSubject(product),
-        replyTo: SUPPORT_REPLY_TO,
-        text: refundText(input),
-        html: refundHtml(input),
-      });
-      if (!sent.delivered) throw new Error("Refund notice provider did not accept the message");
+      await deliver({ subject: refundSubject(product, c), text: refundText(input, c), html: refundHtml(input, c) });
+      return;
+    }
+    if (receipt.kind === "ending") {
+      // Delivered as a no-op when it stopped being true: nothing to retry.
+      if (!expiresAt || !(await endingStillTrue(receipt))) return;
+      const reason = receipt.reason === "payment_failed" ? "payment_failed" : "cancelled";
+      await deliver(endingMail({ product, firstName: user.first_name || "", plan, endsOn: formatDay(c, expiresAt), reason }, c));
+      return;
+    }
+    if (receipt.kind === "bonus") {
+      if (!expiresAt) return;
+      const started = receipt.startedAt ? new Date(receipt.startedAt) : new Date();
+      await deliver(bonusMail(user.first_name || "", formatDay(c, started), formatDay(c, expiresAt), c));
       return;
     }
     // No expiry means the purchase never renews, and the template says so.
     // The previous `expiresAt ?? new Date()` quietly turned that case into
     // "renews on <today>", which for a lifetime buyer is both wrong and
     // alarming.
-    const renewsOn = expiresAt
-      ? expiresAt.toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          timeZone: "UTC",
-        })
-      : null;
-    const result = await sendMail({
-      to: user.email,
-      subject: proWelcomeSubject(product, plan),
-      replyTo: SUPPORT_REPLY_TO,
-      text: proWelcomeText({
-        product,
-        firstName: user.first_name || "there",
-        email: user.email,
-        plan: plan || "monthly",
-        priceLabel: chargedLabel ?? PLAN_PRICE_LABELS[plan || "monthly"] ?? PLAN_PRICE_LABELS.monthly,
-        renewsOn,
-      }),
-      html: proWelcomeHtml({
-        product,
-        firstName: user.first_name || "there",
-        email: user.email,
-        plan: plan || "monthly",
-        priceLabel:
-          chargedLabel ?? PLAN_PRICE_LABELS[plan || "monthly"] ?? PLAN_PRICE_LABELS.monthly,
-        renewsOn,
-      }),
-    });
-    if (!result.delivered) throw new Error("Receipt provider did not accept the message");
+    const input = {
+      product,
+      firstName: user.first_name || "",
+      email: user.email,
+      plan: plan || "monthly",
+      priceLabel: chargedLabel ?? PLAN_PRICE_LABELS[plan || "monthly"] ?? PLAN_PRICE_LABELS.monthly,
+      renewsOn: expiresAt ? formatDay(c, expiresAt) : null,
+    };
+    await deliver({ subject: proWelcomeSubject(product, plan, c), text: proWelcomeText(input, c), html: proWelcomeHtml(input, c) });
+}
+
+/**
+ * Queues the "plan ending" notice (kit 09) for a subscription that will not
+ * renew: a week before the end for a cancellation, at once for a failed
+ * renewal. The key carries the period end, so each period is mailed once,
+ * and delivery re-checks Stripe first (endingStillTrue).
+ */
+async function queueEnding(userId: string, product: Product, subscription: Stripe.Subscription, expiresAt: Date): Promise<void> {
+  const failed = ["past_due", "unpaid"].includes(subscription.status);
+  if (!failed && subscription.cancel_at_period_end !== true) return;
+  const reason = failed ? "payment_failed" : "cancelled";
+  const notBefore = failed ? new Date() : new Date(Math.max(Date.now(), expiresAt.getTime() - 7 * 24 * 60 * 60 * 1000));
+  await queueReceipt(`ending:${reason}:${subscription.id}:${expiresAt.getTime()}`, {
+    kind: "ending", reason, subscriptionId: subscription.id, userId, product,
+    plan: subscriptionPlan(subscription), expiresAt: expiresAt.toISOString(), chargedLabel: null,
+  }, notBefore);
 }
 
 // Local, like every other route file's copy: the address and the plan name
@@ -1049,6 +1069,7 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
             expiresAt,
             stripeSubscriptionId: subscription.id,
           });
+          await queueEnding(userId, product, subscription, expiresAt);
           if (event.type === "customer.subscription.created") {
             await effects.welcome(
               userId,
@@ -1079,6 +1100,7 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
           expiresAt,
           ...subscriptionSource(subscription),
         });
+        if (granted) await queueEnding(userId, "pctweaker", subscription, expiresAt);
         // Only on creation, not every renewal/update — this event fires once
         // per subscription's lifecycle start.
         if (granted && event.type === "customer.subscription.created") {

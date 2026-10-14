@@ -1,11 +1,15 @@
 /**
  * The confirmation a customer gets after paying, for any product on this
- * backend, and the notice when a payment is reversed. Family email kit
- * (email-design-kit/pc-tweaker 05a, 05b, 06). Stripe's own receipt is an
- * accounting document; this says what was unlocked, where to use it, and
- * what to do on a second PC or after a reinstall.
+ * backend, the notice when a payment is reversed, the subscription-ending
+ * notice and the Uninstaller year included with Lifetime. Family email kit
+ * (email-design-kit/pc-tweaker 05a, 05b, 06, 09 and pc-tweaker-uninstaller
+ * 01 to 03), in the reader's language (copy/). Stripe's own receipt is an
+ * accounting document; these say what was unlocked, where to use it, and what
+ * to do on a second PC or after a reinstall.
  */
 
+import { en } from "./copy/en";
+import type { Copy } from "./copy";
 import {
   EMAIL_BRANDS,
   button,
@@ -26,18 +30,18 @@ import {
 const TOTAL_CONTROLS = 81;
 const FREE_CONTROLS = 46;
 const PRO_CONTROLS = 35;
+export const CATALOGUE = { total: TOTAL_CONTROLS, free: FREE_CONTROLS, pro: PRO_CONTROLS };
 
 export type ProductBrand = {
-  /** Shown in subjects and the plan row, e.g. "PC Tweaker Pro". */
+  /** Shown in the plan row, e.g. "PC Tweaker Pro". */
   name: string;
   /** Logo, colours and site of the app. */
   visual: EmailBrand;
-  ctaLabel: string;
 };
 
 export const PRODUCT_BRANDS: Record<string, ProductBrand> = {
-  pctweaker: { name: "PC Tweaker Pro", visual: EMAIL_BRANDS.pctweaker, ctaLabel: "Open PC Tweaker" },
-  uninstaller: { name: "PC Tweaker Uninstaller Pro", visual: EMAIL_BRANDS.uninstaller, ctaLabel: "Open Uninstaller" },
+  pctweaker: { name: "PC Tweaker Pro", visual: EMAIL_BRANDS.pctweaker },
+  uninstaller: { name: "PC Tweaker Uninstaller Pro", visual: EMAIL_BRANDS.uninstaller },
 };
 
 export type ProWelcomeEmailInput = {
@@ -48,7 +52,7 @@ export type ProWelcomeEmailInput = {
   email: string;
   plan: "monthly" | "annual" | "lifetime" | string;
   priceLabel: string; // e.g. "€9.99 / month"
-  /** Pre-formatted, e.g. "September 24, 2026". Null for a one-off purchase,
+  /** Pre-formatted in the reader's language. Null for a one-off purchase,
    *  which never renews: the card then says so instead of quoting a date
    *  that would simply be untrue. */
   renewsOn: string | null;
@@ -58,28 +62,16 @@ export function brandFor(product: string | null | undefined): ProductBrand {
   return PRODUCT_BRANDS[product ?? ""] ?? PRODUCT_BRANDS.pctweaker;
 }
 
-const PLAN_LABELS: Record<string, string> = {
-  lifetime: "Pro, Lifetime",
-  annual: "Pro, Annual",
-  monthly: "Pro, Monthly",
-};
-const planLabelFor = (plan: string | null) => PLAN_LABELS[plan ?? ""] ?? PLAN_LABELS.monthly;
-const greet = (lead: string, firstName: string, tail = ".") => {
-  const name = (firstName || "").trim().split(/\s+/)[0];
-  return name ? `${lead}, ${name}${tail}` : `${lead}${tail}`;
-};
+const firstWord = (value: string) => (value || "").trim().split(/\s+/)[0] ?? "";
+const planLabel = (c: Copy, plan: string | null) => c.plans[plan ?? ""] ?? c.plans.monthly;
+const listed = (rows: [string, string][]) => rows.map(([label, value]) => `${label}: ${value}`);
+const numbered = (title: string, items: string[]) => [`${title}:`, ...items.map((item, i) => `${i + 1}. ${plainText(item)}`)];
 
-export function proWelcomeSubject(product?: string | null, plan?: string | null): string {
-  if (product === "uninstaller")
-    return plan === "lifetime"
-      ? `Your ${brandFor(product).name} purchase is confirmed`
-      : `Your ${brandFor(product).name} subscription is active`;
-  return plan === "lifetime"
-    ? "Your PC Tweaker Pro Lifetime license is active"
-    : "Your PC Tweaker Pro subscription is active";
+export function proWelcomeSubject(product?: string | null, plan?: string | null, c: Copy = en): string {
+  return c.receipt.subject(product === "uninstaller", plan === "lifetime");
 }
 
-type Receipt = {
+type Mail = {
   eyebrow: string;
   headline: string;
   preheader: string;
@@ -88,146 +80,111 @@ type Receipt = {
   heading: string;
   items: string[];
   noteHtml: string;
-  help: { title: string; text: string; expectation: string };
+  button: string;
+  help: { title: string; text: string; expectation?: string };
   why: string;
 };
 
-function receipt({ product, firstName, email, plan, priceLabel, renewsOn }: ProWelcomeEmailInput): Receipt {
-  const brand = brandFor(product);
+function receipt({ product, firstName, email, plan, priceLabel, renewsOn }: ProWelcomeEmailInput, c: Copy): Mail {
+  const r = c.receipt;
+  const rows = r.rows;
   const lifetime = renewsOn === null;
   const who = escapeHtml(email);
-  const help = {
-    title: "Paid but still not Pro, or charged something you did not expect?",
-    text: "Tell us the account address and the date on the Stripe receipt.",
-    expectation: "Billing replies usually go out within one working day.",
-  };
+  const name = firstWord(firstName);
+  const help = { title: r.help.title, text: escapeHtml(r.help.text), expectation: r.help.expectation };
 
   if (product === "uninstaller") {
-    const items = [
-      "Pick a program rated <strong>Safe</strong> by the Confidence Score and read its Removal Brief: the exact command, whether Windows Installer or the program's own uninstaller runs, the permissions it asks for and the reported size. Nothing runs until you confirm.",
-      "After the uninstall, the leftover scan lists the folders, shortcuts and registry keys the program left behind. With Pro you can remove them from that same screen. Files go to the Recycle Bin, so a wrong guess is recoverable until you empty it; registry values are kept in the Removal Ledger.",
-      "For a bigger clear-out, tick several programs and start a batch. Protected programs are never batchable, the related-programs check still warns before a parent takes its plugins with it, and the restore-point attempt runs before elevated removals, with the outcome recorded.",
-    ];
-    if (!lifetime)
-      items.push(
-        `<strong>Managing the plan.</strong> Plans &amp; pricing in the top bar shows the account and plan and opens Stripe's billing portal for the card, the interval or a cancellation. A cancelled plan stays Pro until ${escapeHtml(renewsOn ?? "")}. Signing in with ${who} on another PC makes it Pro there too.`,
-      );
     return {
-      eyebrow: "Pro activated",
-      headline: greet("Pro is on", firstName, ". Leftovers are now yours to remove."),
-      preheader: `${planLabelFor(plan)}, ${priceLabel}${renewsOn ? `, renews on ${renewsOn}` : ", no renewal"}. Leftover cleanup, batch removal and broken entries are on.`,
-      intro: `Stripe confirmed the payment and the Uninstaller Pro license for ${email} is signed. Three things change in the app: the leftover scan can now clean what it finds, several programs can be queued and removed in one run, and entries whose own uninstaller is gone can be removed too. Everything you had on Free, including the Confidence Score and the Removal Ledger, stays exactly as it was.`,
+      eyebrow: r.eyebrowPro,
+      headline: r.un.headline(name),
+      preheader: r.un.preheader(planLabel(c, plan), priceLabel, renewsOn),
+      intro: r.un.intro(email),
       rows: [
-        ["Plan", planLabelFor(plan)],
-        ["Charged", priceLabel],
-        renewsOn ? ["Renews on", renewsOn] : ["Access", "Never expires"],
-        ["Account", `${email} (shared with PC Tweaker)`],
+        [rows.plan, planLabel(c, plan)],
+        [rows.charged, priceLabel],
+        renewsOn ? [rows.renewsOn, renewsOn] : [rows.access, rows.neverExpires],
+        [rows.account, rows.shared(email)],
       ],
-      heading: "A first clean removal with Pro",
-      items,
-      noteHtml: `${lifetime ? "This purchase does not renew. " : ""}One account, two licenses: a PC Tweaker Pro license does not unlock Uninstaller and this one does not unlock PC Tweaker; each app verifies its own. Stripe sends the invoice separately. If Uninstaller still shows Free after a few minutes, sign out and in from Plans &amp; pricing.`,
-      help: {
-        title: "Paid but still not Pro, or a removal that did not go as the Brief said?",
-        text: "Tell us the app version and the Removal Ledger entry (it exports to CSV).",
-        expectation: "We usually answer within one working day.",
-      },
-      why: lifetime
-        ? `You received this email because ${brand.name} was bought on the PC Tweaker account at this address.`
-        : "You received this email because an Uninstaller Pro subscription was started on the PC Tweaker account at this address.",
+      heading: r.un.stepsTitle,
+      items: r.un.stepsHtml(lifetime, who, escapeHtml(renewsOn ?? "")),
+      noteHtml: escapeHtml(r.un.note(lifetime)),
+      button: r.buttonUn,
+      help: { title: r.un.help.title, text: escapeHtml(r.un.help.text), expectation: r.un.help.expectation },
+      why: r.un.why(lifetime),
     };
   }
 
   if (lifetime) {
     return {
-      eyebrow: "Lifetime license",
-      headline: greet("Pro, for good. Thank you", firstName),
-      preheader: `One payment of ${priceLabel}, no renewal. Includes 12 months of Uninstaller Pro, activated on first sign-in.`,
-      intro: `You paid once and that is the last time we charge this account. The Lifetime license for ${email} is signed and all ${TOTAL_CONTROLS} controls, Game Sessions and the Turbo Gaming preset are available now.`,
+      eyebrow: r.eyebrowLifetime,
+      headline: r.lifetime.headline(name),
+      preheader: r.lifetime.preheader(priceLabel),
+      intro: r.lifetime.intro(email, TOTAL_CONTROLS),
       rows: [
-        ["Plan", planLabelFor("lifetime")],
-        ["Charged", priceLabel],
-        ["Access", "Never expires"],
-        ["Renewal", "None. Nothing is charged again."],
-        ["Included", "12 months of PC Tweaker Uninstaller Pro"],
-        ["Account", email],
+        [rows.plan, planLabel(c, "lifetime")],
+        [rows.charged, priceLabel],
+        [rows.access, rows.neverExpires],
+        [rows.renewal, rows.renewalNone],
+        [rows.included, rows.includedValue],
+        [rows.account, email],
       ],
-      heading: "What Lifetime means in practice",
-      items: [
-        `<strong>Every PC you own.</strong> Sign in with ${who} on any Windows 10 or 11 PC and it is Pro there. There is no activation count to manage and no license key to type: the account is the key.`,
-        `<strong>Uninstaller Pro for a year.</strong> Install PC Tweaker Uninstaller from ${link("https://pctweaker.app/uninstaller/", "pctweaker.app/uninstaller")} and sign in with the same account. The 12 months start the first time you sign in there, not today. It is a separate, time-limited benefit, not an Uninstaller Lifetime license.`,
-        "<strong>Reinstalls and new hardware.</strong> Nothing to transfer. After a fresh Windows, install PC Tweaker, sign in, and Pro is back. The Change history belongs to the old installation, so start from a profile rather than expecting old settings to reappear.",
-        "<strong>Updates.</strong> PC Tweaker checks for updates itself, and Lifetime covers every update to PC Tweaker Pro.",
-      ],
-      noteHtml:
-        "Stripe sends the invoice separately. If you ever see a monthly charge from us after this purchase, write to us straight away: a Lifetime account must never be billed again, and we will put it right.",
+      heading: r.lifetime.stepsTitle,
+      items: r.lifetime.stepsHtml(who, link("https://pctweaker.app/uninstaller/", "pctweaker.app/uninstaller")),
+      noteHtml: escapeHtml(r.lifetime.note),
+      button: r.buttonPct,
       help,
-      why: `You received this email because a PC Tweaker Pro Lifetime license was bought on the account at this address.`,
+      why: r.lifetime.why,
     };
   }
 
   return {
-    eyebrow: "Pro activated",
-    headline: greet("Pro is on your account", firstName),
-    preheader: `${planLabelFor(plan)}, ${priceLabel}, renews on ${renewsOn}. How to manage the plan and use Pro on a second PC.`,
-    intro: `Stripe confirmed the payment and the license for ${email} is signed. All ${TOTAL_CONTROLS} controls are available now: the ${FREE_CONTROLS} you had on Free plus the ${PRO_CONTROLS} Pro ones, Game Sessions and the Turbo Gaming preset included. The app refreshes its license when you return from checkout while online, so Pro should already show.`,
+    eyebrow: r.eyebrowPro,
+    headline: r.sub.headline(name),
+    preheader: r.sub.preheader(planLabel(c, plan), priceLabel, renewsOn ?? ""),
+    intro: r.sub.intro(email, TOTAL_CONTROLS, FREE_CONTROLS, PRO_CONTROLS),
     rows: [
-      ["Plan", planLabelFor(plan)],
-      ["Charged", priceLabel],
-      ["Renews on", renewsOn ?? ""],
-      ["Account", email],
+      [rows.plan, planLabel(c, plan)],
+      [rows.charged, priceLabel],
+      [rows.renewsOn, renewsOn ?? ""],
+      [rows.account, email],
     ],
-    heading: "Good to know from day one",
-    items: [
-      `<strong>Managing the plan.</strong> Open Plans &amp; pricing in the app. It shows the plan and opens Stripe's billing portal, where you change the card or cancel. A cancelled plan stays Pro until ${escapeHtml(renewsOn ?? "")} and is not charged again.`,
-      `<strong>A second PC.</strong> Install PC Tweaker there and sign in with ${who}. The license is signed for the account, not the machine, so it is Pro on both. Applied controls and Change history stay per machine.`,
-      "<strong>After a Windows reinstall or new hardware.</strong> Sign in again and Pro comes back on its own. Change history does not carry over, so re-apply a profile rather than looking for a restore.",
-      "<strong>Where to start with Pro.</strong> Gaming, then Game Sessions: register a game and the turbo settings switch on when it launches and are undone when it exits.",
-    ],
-    noteHtml:
-      "Stripe sends the invoice and payment receipt separately, from its own address; keep that one for your records. If the app still says Free after a few minutes, sign out and in once: the license is fetched again at sign-in.",
+    heading: r.sub.stepsTitle,
+    items: r.sub.stepsHtml(who, escapeHtml(renewsOn ?? "")),
+    noteHtml: escapeHtml(r.sub.note),
+    button: r.buttonPct,
     help,
-    why: `You received this email because a PC Tweaker Pro subscription was started on the account at this address.`,
+    why: r.sub.why,
   };
 }
 
-export function proWelcomeText(input: ProWelcomeEmailInput): string {
-  const r = receipt(input);
-  const brand = brandFor(input.product);
-  return [
-    r.headline,
-    "",
-    r.intro,
-    "",
-    ...r.rows.map(([label, value]) => `${label}: ${value}`),
-    "",
-    `${r.heading}:`,
-    ...r.items.map((s, i) => `${i + 1}. ${plainText(s)}`),
-    "",
-    plainText(r.noteHtml),
-    "",
-    `${brand.ctaLabel}: ${brand.visual.siteUrl}`,
-  ].join("\n") + textFooter(brand.visual, r.why);
+function render(m: Mail, brand: EmailBrand, c: Copy) {
+  return {
+    html: emailShell({
+      brand,
+      c,
+      preheader: m.preheader,
+      eyebrow: m.eyebrow,
+      headline: m.headline,
+      intro: m.intro,
+      blocks: [details(m.rows), button({ label: m.button, url: brand.siteUrl }), steps(m.heading, m.items), note(m.noteHtml)],
+      help: m.help,
+      why: m.why,
+    }),
+    text:
+      [m.headline, "", m.intro, "", ...listed(m.rows), "", ...numbered(m.heading, m.items), "", plainText(m.noteHtml), "", `${m.button}: ${brand.siteUrl}`].join("\n") +
+      textFooter(brand, m.why, c),
+  };
 }
 
-export function proWelcomeHtml(input: ProWelcomeEmailInput): string {
-  const r = receipt(input);
-  const brand = brandFor(input.product);
-  return emailShell({
-    brand: brand.visual,
-    preheader: r.preheader,
-    eyebrow: r.eyebrow,
-    headline: r.headline,
-    intro: r.intro,
-    blocks: [
-      details(r.rows),
-      button({ label: brand.ctaLabel, url: brand.visual.siteUrl }),
-      steps(r.heading, r.items),
-      note(r.noteHtml),
-    ],
-    help: r.help,
-    why: r.why,
-  });
+export function proWelcomeText(input: ProWelcomeEmailInput, c: Copy = en): string {
+  return render(receipt(input, c), brandFor(input.product).visual, c).text;
 }
+
+export function proWelcomeHtml(input: ProWelcomeEmailInput, c: Copy = en): string {
+  return render(receipt(input, c), brandFor(input.product).visual, c).html;
+}
+
+// ---------------------------------------------------------------- reversal
 
 export type RefundEmailInput = {
   product?: string | null;
@@ -239,107 +196,145 @@ export type RefundEmailInput = {
 
 // Digital purchases are not refundable: this notice reports a reversal Stripe
 // told us about and never mentions, offers or implies a refund.
-const reversedIntro = (brand: ProductBrand, label: string | null) =>
-  `${label ? `Your payment of ${label}` : "Your payment"} for ${brand.name} was reversed by your payment provider.`;
-const ACCESS_ENDED = "The Pro access that came with this payment has ended. Your account and the free features keep working.";
-const STOP_RENEWAL = "If the subscription itself is still active, cancel it from Plans & pricing so it does not renew.";
-const ONE_OFF = "This was a one-off purchase, so there is no subscription left to cancel.";
-const MISTAKE = "If you think this happened by mistake, reply to this email and we will look at the Stripe record with you.";
 const subscriptionPlan = (plan: string | null) => plan === "monthly" || plan === "annual";
 
-/** Uninstaller copy (kit pc-tweaker-uninstaller 02): the reversal touches
- *  Uninstaller only, and its Free side keeps working. */
-function uninstallerReversal(firstName: string, plan: string | null, refundedLabel: string | null) {
-  const paid = refundedLabel ? `the payment of ${refundedLabel}` : "your payment";
+export function refundSubject(product?: string | null, c: Copy = en): string {
+  return c.reversal.subject(product === "uninstaller");
+}
+
+function reversal({ product, firstName, plan, refundedLabel }: RefundEmailInput, c: Copy) {
+  const x = c.reversal;
+  const rows = x.rows;
+  const amount = refundedLabel ? [[rows.amount, refundedLabel] as [string, string]] : [];
+  const planRow = plan && c.plans[plan] ? [[rows.plan, c.plans[plan]] as [string, string]] : [];
+  const headline = x.headline(firstWord(firstName));
+  if (product === "uninstaller") {
+    const u = x.un;
+    return {
+      brand: EMAIL_BRANDS.uninstaller,
+      headline,
+      preheader: u.preheader(refundedLabel),
+      intro: u.intro(refundedLabel),
+      rows: [...amount, ...planRow, [rows.unPro, rows.ended], [rows.unFree, rows.unFreeValue]] as [string, string][],
+      paragraphs: [u.stops, subscriptionPlan(plan) ? u.stopRenewal : u.oneOff],
+      noteText: u.origin,
+      textParagraphs: [u.stops, subscriptionPlan(plan) ? u.stopRenewal : u.oneOff, u.origin],
+      why: x.why(true),
+    };
+  }
+  const p = x.pct;
+  const lead = p.lead(refundedLabel);
   return {
-    preheader: `${refundedLabel ?? "Your payment"} was reversed by your payment provider. Pro has ended; single uninstalls, the Brief and the Ledger keep working.`,
-    headline: greet("Your payment was reversed", firstName),
-    intro: `Your payment provider reversed ${paid} for PC Tweaker Uninstaller Pro, and Stripe has told us. The Pro entitlement tied to that payment has ended. Your account stays open, and so does the PC Tweaker side of it: this reversal touches Uninstaller only.`,
-    rows: [
-      ...(refundedLabel ? [["Amount reversed", refundedLabel] as [string, string]] : []),
-      ...(plan && PLAN_LABELS[plan] ? [["Plan", PLAN_LABELS[plan]] as [string, string]] : []),
-      ["Uninstaller Pro", "Ended"],
-      ["Still yours on Free", "Single uninstalls, Confidence Score, Removal Brief, leftover scan, Removal Ledger"],
-    ] as [string, string][],
-    stops:
-      "What stops: leftover cleanup, batch removal and the removal of broken entries. What does not change: anything already removed stays removed, the Removal Ledger keeps every receipt, and files you sent to the Recycle Bin are still there until you empty it.",
-    next: subscriptionPlan(plan)
-      ? "If the subscription is still listed as active in Stripe, cancel it from Plans & pricing in the top bar so it does not attempt another charge."
-      : "This was a one-off entitlement, so there is nothing left to cancel.",
-    origin:
-      "This reversal came from your bank or card issuer, not from us. If you did not ask your bank for it, reply to this email with the date and amount on your statement and we will go through the Stripe record with you.",
-    why: "You received this email because a payment for Uninstaller Pro on the PC Tweaker account at this address was reversed.",
+    brand: EMAIL_BRANDS.pctweaker,
+    headline,
+    preheader: `${lead} ${p.preheaderTail}`,
+    intro: `${lead} ${p.introTail}`,
+    rows: [...amount, ...planRow, [rows.proAccess, rows.ended], [rows.account, rows.accountValue]] as [string, string][],
+    paragraphs: [`${p.ended} ${p.endedTail}`, subscriptionPlan(plan) ? p.stopRenewal : p.oneOff],
+    noteText: p.mistake,
+    textParagraphs: [lead, p.ended, subscriptionPlan(plan) ? p.stopRenewal : p.oneOff, p.mistake],
+    why: x.why(false),
   };
 }
 
-export function refundSubject(product?: string | null): string {
-  return `Your ${brandFor(product).name} payment was reversed`;
-}
-
 /** Sent once per fully reversed charge, after access has been removed. */
-export function refundText({ product, firstName, plan, refundedLabel }: RefundEmailInput): string {
-  const brand = brandFor(product);
-  if (product === "uninstaller") {
-    const u = uninstallerReversal(firstName, plan, refundedLabel);
-    return [
-      u.headline,
-      u.intro,
-      u.rows.map(([label, value]) => `${label}: ${value}`).join("\n"),
-      u.stops,
-      u.next,
-      u.origin,
-    ].join("\n\n") + textFooter(brand.visual, u.why);
-  }
-  return [
-    greet("Your payment was reversed", firstName),
-    "",
-    reversedIntro(brand, refundedLabel),
-    "",
-    ACCESS_ENDED,
-    "",
-    subscriptionPlan(plan) ? STOP_RENEWAL : ONE_OFF,
-    "",
-    MISTAKE,
-  ].join("\n") + textFooter(brand.visual, `You received this email because a payment for ${brand.name} on the account at this address was reversed.`);
+export function refundText(input: RefundEmailInput, c: Copy = en): string {
+  const r = reversal(input, c);
+  const body = input.product === "uninstaller" ? [r.intro, listed(r.rows).join("\n"), ...r.textParagraphs] : r.textParagraphs;
+  return [r.headline, ...body].join("\n\n") + textFooter(r.brand, r.why, c);
 }
 
-export function refundHtml({ product, firstName, plan, refundedLabel }: RefundEmailInput): string {
-  const brand = brandFor(product);
-  if (product === "uninstaller") {
-    const u = uninstallerReversal(firstName, plan, refundedLabel);
-    return emailShell({
-      brand: brand.visual,
-      preheader: u.preheader,
-      eyebrow: "Payment reversed",
-      headline: u.headline,
-      intro: u.intro,
-      blocks: [details(u.rows), paragraph(escapeHtml(u.stops)), paragraph(escapeHtml(u.next)), note(escapeHtml(u.origin))],
-      help: { title: "Questions about this reversal?", text: "Tell us the date and the amount on your bank statement." },
-      why: u.why,
-    });
-  }
-  const rows: [string, string][] = [
-    ...(refundedLabel ? [["Amount reversed", refundedLabel] as [string, string]] : []),
-    ...(plan && PLAN_LABELS[plan] ? [["Plan", PLAN_LABELS[plan]] as [string, string]] : []),
-    ["Pro access", "Ended"],
-    ["Your account", "Open, on Free"],
-  ];
+export function refundHtml(input: RefundEmailInput, c: Copy = en): string {
+  const r = reversal(input, c);
   return emailShell({
-    brand: brand.visual,
-    preheader: `${reversedIntro(brand, refundedLabel)} Pro access has ended; the free features keep working.`,
-    eyebrow: "Payment reversed",
-    headline: greet("Your payment was reversed", firstName),
-    intro: `${reversedIntro(brand, refundedLabel)} Stripe has notified us, and the Pro access that came with that payment has ended on your account. This email is a record of what changed; it is not a request for anything.`,
-    blocks: [
-      details(rows),
-      paragraph(escapeHtml(`${ACCESS_ENDED} The app drops back to Free the next time it checks the license, usually at the next start or sign-in.`)),
-      paragraph(escapeHtml(subscriptionPlan(plan) ? STOP_RENEWAL : ONE_OFF)),
-      note(escapeHtml(MISTAKE)),
-    ],
-    help: {
-      title: "Questions about this reversal?",
-      text: "Tell us the date and the amount on your bank statement.",
-    },
-    why: `You received this email because a payment for ${brand.name} on the account at this address was reversed.`,
+    brand: r.brand,
+    c,
+    preheader: r.preheader,
+    eyebrow: c.reversal.eyebrow,
+    headline: r.headline,
+    intro: r.intro,
+    blocks: [details(r.rows), ...r.paragraphs.map((text) => paragraph(escapeHtml(text))), note(escapeHtml(r.noteText))],
+    help: { title: c.reversal.helpTitle, text: escapeHtml(c.reversal.helpText) },
+    why: r.why,
   });
+}
+
+// ---------------------------------------------------------------- ending
+
+export type EndingInput = {
+  product: string;
+  firstName: string;
+  plan: string | null;
+  endsOn: string;
+  reason: "cancelled" | "payment_failed";
+};
+
+/** Kit 09: a subscription set to end, by cancellation or a failed renewal. */
+export function endingMail({ product, firstName, plan, endsOn, reason }: EndingInput, c: Copy = en) {
+  const x = c.ending;
+  const u = product === "uninstaller";
+  const brand = u ? EMAIL_BRANDS.uninstaller : EMAIL_BRANDS.pctweaker;
+  const failed = reason === "payment_failed";
+  const rows: [string, string][] = [
+    [x.rows.plan, planLabel(c, plan)],
+    [x.rows.until, endsOn],
+    [x.rows.next, x.rows.nextValue],
+    [x.rows.after, x.afterValue(u, FREE_CONTROLS)],
+  ];
+  const items = x.steps(u, failed);
+  const headline = x.headline(firstWord(firstName), endsOn);
+  return {
+    subject: x.subject(brand.name, endsOn),
+    html: emailShell({
+      brand,
+      c,
+      preheader: x.preheader(endsOn),
+      eyebrow: x.eyebrow,
+      headline,
+      intro: x.intro(brand.name, failed, endsOn),
+      blocks: [
+        details(rows),
+        steps(x.stepsTitle(endsOn), items.map(escapeHtml)),
+        button({ label: x.button(brand.name), url: brand.siteUrl }),
+        note(escapeHtml(x.note)),
+      ],
+      help: { title: x.helpTitle, text: escapeHtml(x.helpText) },
+      why: x.why(brand.name),
+    }),
+    text:
+      [headline, "", x.intro(brand.name, failed, endsOn), "", ...listed(rows), "", ...numbered(x.stepsTitle(endsOn), items), "", x.note].join("\n") +
+      textFooter(brand, x.why(brand.name), c),
+  };
+}
+
+// ---------------------------------------------------------------- bonus
+
+/** Uninstaller kit 03: the year of Uninstaller Pro that comes with Lifetime. */
+export function bonusMail(firstName: string, startedOn: string, endsOn: string, c: Copy = en) {
+  const x = c.bonus;
+  const brand = EMAIL_BRANDS.uninstaller;
+  const rows: [string, string][] = [
+    [x.rows.entitlement, x.rows.entitlementValue],
+    [x.rows.started, startedOn],
+    [x.rows.ends, endsOn],
+    [x.rows.charged, x.rows.chargedValue],
+  ];
+  const headline = x.headline(firstWord(firstName));
+  return {
+    subject: x.subject,
+    html: emailShell({
+      brand,
+      c,
+      preheader: x.preheader(endsOn),
+      eyebrow: x.eyebrow,
+      headline,
+      intro: x.intro(endsOn),
+      blocks: [details(rows), steps(x.stepsTitle, x.stepsHtml), button({ label: x.button, url: brand.siteUrl }), note(escapeHtml(x.note(endsOn)))],
+      help: { title: x.helpTitle, text: escapeHtml(x.helpText) },
+      why: x.why,
+    }),
+    text:
+      [headline, "", x.intro(endsOn), "", ...listed(rows), "", ...numbered(x.stepsTitle, x.stepsHtml), "", x.note(endsOn), "", `${x.button}: ${brand.siteUrl}`].join("\n") +
+      textFooter(brand, x.why, c),
+  };
 }

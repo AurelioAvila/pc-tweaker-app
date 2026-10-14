@@ -5,6 +5,7 @@ import { sendMail, isConfigured as mailIsConfigured, MailError } from "../mailer
 import { SUPPORT_INBOX, SUPPORT_REPLY_TO } from "../support-inbox";
 import { consumeGlobalBudget, singleLine } from "../public-form-guard";
 import { supportAckEmail } from "../emails/support-ack";
+import { copyFor, fromAcceptLanguage, isLocale } from "../emails/copy";
 
 const router = express.Router();
 
@@ -176,7 +177,9 @@ router.post("/", supportLimiter, async (req: Request, res: Response) => {
   // this endpoint into a way to deliver abuse to any inbox with our domain's
   // reputation behind it. Their subject line is not echoed either, for the
   // same reason; the fixed email subject is enough to recognise the request.
-  const ack = supportAckEmail(name, email);
+  // In the visitor's language: the site's own, else the browser's.
+  const language = isLocale(req.body?.locale) ? req.body.locale : fromAcceptLanguage(req.get("accept-language"));
+  const ack = supportAckEmail(name, email, copyFor(language));
   void sendMail({ to: email, replyTo: SUPPORT_REPLY_TO, ...ack })
     .catch((err: Error) => console.error("support acknowledgement failed:", err.message));
 

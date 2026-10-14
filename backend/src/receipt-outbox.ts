@@ -2,24 +2,30 @@ import { randomUUID } from "crypto";
 import { getPool } from "./db";
 
 export type Receipt = {
-  /** Absent for purchase receipts; "refund" for the refund confirmation. */
-  kind?: "refund";
+  /** Absent for purchase receipts; "refund" for a reversal, "ending" for a
+   *  subscription set to end, "bonus" for the Uninstaller year of Lifetime. */
+  kind?: "refund" | "ending" | "bonus";
   userId: string;
   plan: string | null;
   expiresAt: string | null;
   product: string;
   /** The amount charged, or for a refund the amount refunded. */
   chargedLabel: string | null;
+  /** "ending": why, and the subscription to re-check before sending. */
+  reason?: "cancelled" | "payment_failed";
+  subscriptionId?: string;
+  /** "bonus": when the year started. */
+  startedAt?: string;
 };
 
 /** Commit receipt delivery before acknowledging the paid event. Access is
  * granted separately, so a mail-provider outage never withholds the license. */
-export async function queueReceipt(key: string, receipt: Receipt): Promise<void> {
+export async function queueReceipt(key: string, receipt: Receipt, notBefore: Date = new Date()): Promise<void> {
   if (!key || key.length > 255) throw new Error("Invalid receipt identity");
   await getPool().query(
-    `INSERT INTO billing_receipts (receipt_key, user_id, payload)
-     VALUES ($1, $2, $3) ON CONFLICT (receipt_key) DO NOTHING`,
-    [key, receipt.userId, JSON.stringify(receipt)],
+    `INSERT INTO billing_receipts (receipt_key, user_id, payload, next_attempt_at)
+     VALUES ($1, $2, $3, $4) ON CONFLICT (receipt_key) DO NOTHING`,
+    [key, receipt.userId, JSON.stringify(receipt), notBefore],
   );
 }
 

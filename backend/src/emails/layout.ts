@@ -11,6 +11,9 @@
  * by the caller with `escapeHtml` before it is passed as markup.
  */
 
+import { en } from "./copy/en";
+import type { Copy } from "./copy";
+
 export type EmailAction = {
   label: string;
   url: string;
@@ -107,8 +110,8 @@ export function plainText(html: string): string {
     .replace(/&(amp|quot);/g, (_, name: string) => (name === "amp" ? "&" : '"'));
 }
 
-/** Blocks are rendered for one brand; the shell passes it down. */
-export type Block = (brand: EmailBrand) => string;
+/** Blocks are rendered for one brand and language; the shell passes both down. */
+export type Block = (brand: EmailBrand, c: Copy) => string;
 
 const font = (b: EmailBrand) => `font-family:${b.body};`;
 
@@ -168,15 +171,15 @@ export function button(action: EmailAction): Block {
 /** The address under a button that carries a token, so it can be read
  *  rather than trusted. */
 export function linkFallback(url: string): Block {
-  return (b) => {
+  return (b, c) => {
     const safe = escapeHtml(url);
-    return `<p class="muted" style="margin:-8px 0 24px;${font(b)}font-size:13px;line-height:19px;color:${b.muted};word-break:break-all;">If the button does not open, copy this address into your browser:<br><a href="${safe}" class="link" style="color:${b.accentText};">${safe}</a></p>`;
+    return `<p class="muted" style="margin:-8px 0 24px;${font(b)}font-size:13px;line-height:19px;color:${b.muted};word-break:break-all;">${escapeHtml(c.shell.linkFallback)}<br><a href="${safe}" class="link" style="color:${b.accentText};">${safe}</a></p>`;
   };
 }
 
 /** Numbered steps: two to four things the reader can do. Items are trusted markup. */
 export function steps(heading: string, items: string[]): Block {
-  return (b) => {
+  return (b, c) => {
     const rows = items
       .map(
         (item, i) => `<tr>
@@ -185,7 +188,7 @@ export function steps(heading: string, items: string[]): Block {
           </tr>`,
       )
       .join("\n");
-    return `${sectionLabel(heading)(b)}
+    return `${sectionLabel(heading)(b, c)}
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
 ${rows}
         </table>`;
@@ -194,10 +197,10 @@ ${rows}
 
 /** "If this was you / if it was not", for security notices. Trusted markup. */
 export function security(ifYou: string, ifNot: string): Block {
-  return (b) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="panel" bgcolor="${b.panel}" style="background:${b.panel};border-radius:10px;margin:0 0 24px;">
+  return (b, c) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="panel" bgcolor="${b.panel}" style="background:${b.panel};border-radius:10px;margin:0 0 24px;">
           <tr><td style="padding:16px 18px;">
-            <p class="ink" style="margin:0 0 8px;${font(b)}font-size:15px;line-height:22px;color:${b.ink};"><strong>If this was you:</strong> ${ifYou}</p>
-            <p class="ink" style="margin:0;${font(b)}font-size:15px;line-height:22px;color:${b.ink};"><strong>If it was not:</strong> ${ifNot}</p>
+            <p class="ink" style="margin:0 0 8px;${font(b)}font-size:15px;line-height:22px;color:${b.ink};"><strong>${escapeHtml(c.shell.ifYou)}</strong> ${ifYou}</p>
+            <p class="ink" style="margin:0;${font(b)}font-size:15px;line-height:22px;color:${b.ink};"><strong>${escapeHtml(c.shell.ifNot)}</strong> ${ifNot}</p>
           </td></tr>
         </table>`;
 }
@@ -236,21 +239,22 @@ export type EmailShellInput = {
   /** Extra trusted markup after the "why" line, e.g. an unsubscribe link. */
   whyHtml?: string;
   brand?: EmailBrand;
+  /** The reader's language; English when absent. */
+  c?: Copy;
 };
 
-const STANDARD_EXPECTATION = "We read everything and usually answer within one working day.";
-
 /** The plain-text help and footer every message ends with. */
-export function textFooter(brand: EmailBrand = EMAIL_BRANDS.pctweaker, why = ""): string {
+export function textFooter(brand: EmailBrand = EMAIL_BRANDS.pctweaker, why = "", c: Copy = en): string {
+  const s = c.shell;
   return [
     "\n",
-    `Questions? Write to ${brand.supportEmail} or reply to this email. Never send a password or card number by email.`,
+    `${s.questions} ${s.writeTo(brand.supportEmail)} ${s.neverSend}`,
     "",
     "--",
     ...(why ? [why] : []),
     `${brand.name} · ${brand.siteUrl}`,
-    "One account for PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver.",
-    `Support: https://pctweaker.app/support/ · Privacy: ${brand.privacyUrl} · Terms: ${brand.termsUrl}`,
+    s.family,
+    `${s.support}: https://pctweaker.app/support/ · ${s.privacy}: ${brand.privacyUrl} · ${s.terms}: ${brand.termsUrl}`,
   ].join("\n");
 }
 
@@ -265,10 +269,12 @@ export function emailShell({
   why,
   whyHtml = "",
   brand: b = EMAIL_BRANDS.pctweaker,
+  c = en,
 }: EmailShellInput): string {
   const support = escapeHtml(b.supportEmail);
+  const s = c.shell;
   return `<!doctype html>
-<html lang="en" dir="ltr" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="${c.tag}" dir="ltr" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -311,7 +317,7 @@ export function emailShell({
 </head>
 <body class="bg" style="margin:0;padding:0;background:${b.bg};">
 <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;color:${b.bg};">${escapeHtml(preheader)}${"&#8199;&#847;".repeat(30)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg" bgcolor="${b.bg}" style="background:${b.bg};" lang="en" dir="ltr">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg" bgcolor="${b.bg}" style="background:${b.bg};" lang="${c.tag}" dir="ltr">
 <tr><td align="center" class="wrap" style="padding:32px 16px;">
 <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td><![endif]-->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="max-width:600px;margin:0 auto;">
@@ -330,18 +336,18 @@ export function emailShell({
         <p style="margin:0 0 10px;${font(b)}font-size:12px;line-height:16px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${b.accentText};">${escapeHtml(eyebrow)}</p>
         <h1 class="h1 ink" style="margin:0 0 14px;font-family:${b.display};font-size:26px;line-height:32px;font-weight:700;letter-spacing:-0.4px;color:${b.ink};">${escapeHtml(headline)}</h1>
         <p class="ink" style="margin:0 0 22px;${font(b)}font-size:16px;line-height:25px;color:${b.ink};">${introHtml ?? escapeHtml(intro)}</p>
-${blocks.map((block) => `        ${block(b)}`).join("\n")}
+${blocks.map((block) => `        ${block(b, c)}`).join("\n")}
       </td></tr>
       <tr><td class="panel help" bgcolor="${b.panel}" style="background:${b.panel};padding:18px 32px;border-radius:0 0 14px 14px;">
         <p class="ink" style="margin:0 0 4px;${font(b)}font-size:14px;line-height:21px;font-weight:700;color:${b.ink};">${escapeHtml(help.title)}</p>
-        <p class="muted" style="margin:0;${font(b)}font-size:14px;line-height:21px;color:${b.muted};">${help.text} Write to <a href="mailto:${support}" class="link" style="color:${b.accentText};">${support}</a> or reply to this email. ${escapeHtml(help.expectation ?? STANDARD_EXPECTATION)} Never send a password or card number by email.</p>
+        <p class="muted" style="margin:0;${font(b)}font-size:14px;line-height:21px;color:${b.muted};">${help.text} ${s.writeTo(`<a href="mailto:${support}" class="link" style="color:${b.accentText};">${support}</a>`)} ${escapeHtml(help.expectation ?? s.expectation)} ${escapeHtml(s.neverSend)}</p>
       </td></tr>
     </table>
   </td></tr>
   <tr><td align="center" style="padding:20px 8px 0;">
     <p class="muted" style="margin:0 0 6px;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">${escapeHtml(why)}${whyHtml ? ` ${whyHtml}` : ""}</p>
-    <p class="muted" style="margin:0 0 6px;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">One account for PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver.</p>
-    <p class="muted" style="margin:0;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">${escapeHtml(b.name)} &middot; <a href="${escapeHtml(b.siteUrl)}" class="link" style="color:${b.muted};">${escapeHtml(b.siteLabel)}</a> &middot; <a href="https://pctweaker.app/support/" class="link" style="color:${b.muted};">Support</a> &middot; <a href="${escapeHtml(b.privacyUrl)}" class="link" style="color:${b.muted};">Privacy</a> &middot; <a href="${escapeHtml(b.termsUrl)}" class="link" style="color:${b.muted};">Terms</a></p>
+    <p class="muted" style="margin:0 0 6px;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">${escapeHtml(s.family)}</p>
+    <p class="muted" style="margin:0;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">${escapeHtml(b.name)} &middot; <a href="${escapeHtml(b.siteUrl)}" class="link" style="color:${b.muted};">${escapeHtml(b.siteLabel)}</a> &middot; <a href="https://pctweaker.app/support/" class="link" style="color:${b.muted};">${escapeHtml(s.support)}</a> &middot; <a href="${escapeHtml(b.privacyUrl)}" class="link" style="color:${b.muted};">${escapeHtml(s.privacy)}</a> &middot; <a href="${escapeHtml(b.termsUrl)}" class="link" style="color:${b.muted};">${escapeHtml(s.terms)}</a></p>
   </td></tr>
 </table>
 <!--[if mso]></td></tr></table><![endif]-->

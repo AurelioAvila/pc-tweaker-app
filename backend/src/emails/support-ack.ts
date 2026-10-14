@@ -1,54 +1,45 @@
 /**
- * The acknowledgement a visitor gets after the support form (kit 08).
+ * The acknowledgement a visitor gets after the support form (kit 08), in the
+ * language their browser asked for.
  *
  * The recipient address is whatever the visitor typed, so this message echoes
  * nothing they wrote except the first word of their name: no message body and
  * no subject line, or the form would deliver arbitrary text to any inbox with
  * our domain's reputation behind it.
  */
+import { en } from "./copy/en";
+import type { Copy } from "./copy";
 import { details, emailShell, escapeHtml, link, paragraph, steps, textFooter } from "./layout";
 
 const UNDO_GUIDE = "https://pctweaker.app/how-to-undo-windows-tweaks/";
 
-const INTRO =
-  "Your message reached the PC Tweaker support inbox. A person reads it, not a bot, and the answer comes back to this address. Most replies go out within one working day; something that needs a reproduction on our side can take a little longer, and we will say so.";
-const SPEED_UP = [
-  "Reply to this email with anything you forgot: the app version, your Windows version, and the exact control or scan you used. One thread keeps everything together.",
-  "If a setting is misbehaving, open Change history and tell us what the entry says. Every applied control is listed there with the value it set and the one it replaced, which is usually the whole diagnosis.",
-  "Screenshots help; blur anything personal first. Never include a password, a license token or card details, and if we ever seem to ask for them, the message is not from us.",
-];
-const WAIT =
-  "While you wait: if a change needs undoing right now, Restore All in Change history puts every recorded setting back without waiting for us.";
-const NOT_YOU =
-  "Someone typed this address into the support form. You can ignore this email; nothing on an account changes through the form. If it keeps happening, tell us and we will block the source.";
-const WHY = "You received this email because a support request was sent to PC Tweaker from this address.";
-
-export function supportAckEmail(name: string, email: string) {
-  const firstName = (name || "").trim().split(/\s+/)[0].slice(0, 40);
-  const headline = firstName ? `Got it, ${firstName}. It is in the queue.` : "Got it. It is in the queue.";
+export function supportAckEmail(name: string, email: string, c: Copy = en) {
+  const x = c.supportAck;
+  const headline = x.headline((name || "").trim().split(/\s+/)[0].slice(0, 40));
   return {
-    subject: "We received your PC Tweaker support request",
+    subject: x.subject,
     html: emailShell({
-      preheader: "Your message is in the queue. Reply to this email to add a detail or a screenshot.",
-      eyebrow: "Support request received",
+      c,
+      preheader: x.preheader,
+      eyebrow: x.eyebrow,
       headline,
-      intro: INTRO,
+      intro: x.intro,
       blocks: [
-        details([["We reply to", email]]),
-        steps("What speeds up the answer", SPEED_UP.map(escapeHtml)),
-        paragraph(`${escapeHtml(WAIT)} The ${link(UNDO_GUIDE, "undo guide")} covers the cases it does not reach.`),
+        details([[x.replyTo, email]]),
+        steps(x.stepsTitle, x.steps.map(escapeHtml)),
+        paragraph(`${escapeHtml(x.wait)} ${x.guide(link(UNDO_GUIDE, x.guideLabel))}`),
       ],
-      help: { title: "Did not contact us?", text: escapeHtml(NOT_YOU) },
-      why: WHY,
+      help: { title: x.notYouTitle, text: escapeHtml(x.notYou) },
+      why: x.why,
     }),
     text:
       [
         headline,
-        INTRO,
-        `We reply to: ${email}`,
-        `What speeds up the answer\n${SPEED_UP.map((item, i) => `${i + 1}. ${item}`).join("\n")}`,
-        `${WAIT} The undo guide covers the cases it does not reach: ${UNDO_GUIDE}`,
-        `Did not contact us? ${NOT_YOU}`,
-      ].join("\n\n") + textFooter(undefined, WHY),
+        x.intro,
+        `${x.replyTo}: ${email}`,
+        `${x.stepsTitle}\n${x.steps.map((item, i) => `${i + 1}. ${item}`).join("\n")}`,
+        `${x.wait} ${x.guide(x.guideLabel)}: ${UNDO_GUIDE}`,
+        `${x.notYouTitle} ${x.notYou}`,
+      ].join("\n\n") + textFooter(undefined, x.why, c),
   };
 }

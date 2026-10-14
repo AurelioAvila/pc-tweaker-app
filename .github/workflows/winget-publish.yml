@@ -10,9 +10,13 @@ name: Publish to winget
 # "released" rather than "published": winget-releaser's own recommendation,
 # and it excludes pre-releases specifically — a beta build has no business
 # reaching winget's index.
+#
+# From the release after 1.18.3 / 0.13.2 the installer URL in winget points at
+# dl.pctweaker.app, which winget-releaser cannot do: the submission is made
+# locally with wingetcreate after dl-publish.ps1 has put the same signed file
+# there (my-apps/tools/github-indipendenza/README.md). This workflow stays as
+# a manual fallback that submits the GitHub URL.
 on:
-  release:
-    types: [released]
   workflow_dispatch:
     inputs:
       tag:

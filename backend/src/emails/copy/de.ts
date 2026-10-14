@@ -471,4 +471,25 @@ export const de: Copy = {
     emailChangeInvalid: "Dieser Link ist ungültig, wurde schon benutzt oder ist abgelaufen. Fordere die Änderung in der App erneut an.",
     emailTaken: "Diese Adresse wird bereits von einem anderen Konto verwendet. Es wurde nichts geändert.",
   },
+
+  checkout: {
+    paidTitle: "Zahlung abgeschlossen",
+    paidBody: (app: string) =>
+      `Pro ist jetzt in deinem Konto aktiv. Wechsle zurück zu ${app}: Der neue Tarif wird bei der nächsten Lizenzprüfung automatisch übernommen.`,
+    trialTitle: "Deine kostenlose Testphase hat begonnen",
+    trialBody: (app: string, days: number) =>
+      `Heute wurde nichts abgebucht, und Pro ist ${days} Tage lang in deinem Konto aktiv. Am Ende der Testphase wird die erste Zahlung automatisch abgebucht, außer du kündigst vorher unter Tarife und Preise in ${app}. Wir schreiben dir am Tag davor.`,
+    cancelTitle: "Bezahlvorgang abgebrochen",
+    cancelBody: "Es wurde nichts abgebucht. Du kannst den Bezahlvorgang jederzeit erneut aus der App starten.",
+    tipTitle: "Danke für deine Unterstützung",
+    tipBody: "Dein Trinkgeld fließt direkt in neue Funktionen und die täglichen Updates von PC Tweaker. Stripe schickt dir die Quittung per E-Mail.",
+    notedTitle: "Danke für deine Antwort",
+    notedBody: "So wissen wir, wo wir weiter posten sollten. Wechsle zurück zur App: Dein neuer Tarif wird automatisch übernommen.",
+    ask: "Optional: Wie bist du auf PC Tweaker gestoßen?",
+    sources: {
+      youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", facebook: "Facebook",
+      search: "Suchmaschine", friend: "Über Freunde", other: "Woanders",
+    } as Record<string, string>,
+    close: "Du kannst diesen Tab schließen.",
+  },
 };

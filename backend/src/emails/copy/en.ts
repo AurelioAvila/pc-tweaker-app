@@ -475,4 +475,26 @@ export const en = {
     emailChangeInvalid: "This link is invalid, already used, or has expired. Ask for the change again from the app.",
     emailTaken: "That address is already used by another account. Nothing was changed.",
   },
+
+  /** The pages Stripe Checkout returns to (index.ts). */
+  checkout: {
+    paidTitle: "Payment complete",
+    paidBody: (app: string): string =>
+      `Pro is now on your account. Switch back to ${app}: it picks up the new plan by itself the next time it checks your license.`,
+    trialTitle: "Your free trial has started",
+    trialBody: (app: string, days: number): string =>
+      `Nothing was charged today, and Pro is on your account for ${days} days. When the trial ends, the first payment is taken automatically unless you cancel before then from Plans & pricing in ${app}. We email you the day before.`,
+    cancelTitle: "Checkout cancelled",
+    cancelBody: "No charge was made. You can restart checkout from the app whenever you're ready.",
+    tipTitle: "Thank you for your support",
+    tipBody: "Your tip goes straight into new features and daily updates for PC Tweaker. Stripe will email your receipt.",
+    notedTitle: "Thanks for telling us",
+    notedBody: "It helps us know where to keep posting. Switch back to the app: your new plan is picked up automatically.",
+    ask: "Optional: how did you find PC Tweaker?",
+    sources: {
+      youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", facebook: "Facebook",
+      search: "Search engine", friend: "A friend", other: "Somewhere else",
+    } as Record<string, string>,
+    close: "You can close this tab.",
+  },
 };

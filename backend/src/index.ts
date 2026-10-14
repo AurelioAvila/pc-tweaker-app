@@ -24,6 +24,8 @@ import { router as stripeRoutes, webhookHandler, deliverProReceipt, listExpiredC
 import { consumeGlobalBudget } from "./public-form-guard";
 import { lifetimeReminderEmail, startCheckoutReminderWorker } from "./checkout-recovery";
 import { startReceiptWorker } from "./receipt-outbox";
+import { copyFor, fromAcceptLanguage, isLocale, type Copy } from "./emails/copy";
+import { TRIAL_DAYS } from "./trial";
 
 const app = express();
 
@@ -190,24 +192,42 @@ serveMarkdownAsHtml("/privacy", path.join(__dirname, "..", "legal", "PRIVACY.md"
  * granted by the Stripe webhook independently of this page, so a closed tab
  * here never blocks entitlement — this is purely the human-facing receipt.
  */
-function checkoutResultPage(kind: "success" | "cancel" | "tip" | "noted", sessionId?: string): string {
+type ResultKind = "success" | "cancel" | "tip" | "noted";
+
+/** The account's language from the return URL, else the browser's, else English. */
+function resultCopy(req: Request): Copy {
+  const asked = req.query.lang ?? req.body?.lang;
+  return copyFor(isLocale(asked) ? asked : fromAcceptLanguage(req.get("accept-language")));
+}
+
+function checkoutResultPage(kind: ResultKind, c: Copy, { sessionId, product, trial }: { sessionId?: string; product?: unknown; trial?: boolean } = {}): string {
+  const x = c.checkout;
   const isSuccess = kind !== "cancel";
-  const isTip = kind === "tip";
+  // The app the buyer goes back to: the Uninstaller only when its checkout said so.
+  const app = product === "uninstaller" ? "PC Tweaker Uninstaller" : "PC Tweaker";
   // Optional attribution question: a plain form, so no script, cookie or
   // storage is involved. Shown only when Stripe filled in the session id.
   const question = kind === "success" && sessionId && /^cs_(test|live)_[A-Za-z0-9]{10,200}$/.test(sessionId)
     ? `<form class="ask" method="post" action="/checkout-success">
-  <p class="q">Optional: how did you find PC Tweaker?</p>
+  <p class="q">${escapeHtml(x.ask)}</p>
   <input type="hidden" name="session_id" value="${sessionId}">
-  <div class="opts">${Object.entries(SELF_REPORTED_SOURCES)
-    .map(([value, label]) => `<button type="submit" name="source" value="${value}">${label}</button>`).join("")}</div>
+  <input type="hidden" name="lang" value="${c.tag}">
+  <div class="opts">${Object.keys(SELF_REPORTED_SOURCES)
+    .map((value) => `<button type="submit" name="source" value="${value}">${escapeHtml(x.sources[value] ?? SELF_REPORTED_SOURCES[value])}</button>`).join("")}</div>
 </form>`
     : "";
+  // A trial charges nothing today: "Payment complete" would not be true.
+  const [title, body] = {
+    success: trial ? [x.trialTitle, x.trialBody(app, TRIAL_DAYS)] : [x.paidTitle, x.paidBody(app)],
+    cancel: [x.cancelTitle, x.cancelBody],
+    tip: [x.tipTitle, x.tipBody],
+    noted: [x.notedTitle, x.notedBody],
+  }[kind];
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${c.tag}">
 <head>
 <meta charset="utf-8">
-<title>${isTip ? "Thank you" : isSuccess ? "You're Pro" : "Checkout cancelled"} — PC Tweaker</title>
+<title>${escapeHtml(title)} — ${escapeHtml(app)}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <style>
@@ -231,19 +251,11 @@ function checkoutResultPage(kind: "success" | "cancel" | "tip" | "noted", sessio
 </head>
 <body>
 <div class="card">
-  <div class="badge">${isSuccess ? "&#10003;" : "&#10005;"}</div>
-  <h1>${kind === "noted" ? "Thanks for telling us" : isTip ? "Thank you for your support" : isSuccess ? "Payment successful" : "Checkout cancelled"}</h1>
-  <p>${
-    kind === "noted"
-      ? "It helps us know where to keep posting. Switch back to PC Tweaker: your new plan is picked up automatically."
-      : isTip
-      ? "Your tip goes straight into new features and daily updates for PC Tweaker. Stripe will email your receipt."
-      : isSuccess
-      ? "Your Pro tweaks and presets are unlocked. Switch back to PC Tweaker — the app picks up your new plan automatically the next time it checks your license."
-      : "No charge was made. You can restart checkout from the app whenever you're ready."
-  }</p>
+  <div class="badge" aria-hidden="true">${isSuccess ? "&#10003;" : "&#10005;"}</div>
+  <h1>${escapeHtml(title)}</h1>
+  <p>${escapeHtml(body)}</p>
   ${question}
-  <p style="color:#8b87a0; font-size:13px; margin:0;">You can close this tab.</p>
+  <p style="color:#8b87a0; font-size:13px; margin:0;">${escapeHtml(x.close)}</p>
 </div>
 </body>
 </html>`;
@@ -251,7 +263,7 @@ function checkoutResultPage(kind: "success" | "cancel" | "tip" | "noted", sessio
 
 app.get("/checkout-success", (req: Request, res: Response) => {
   const sessionId = typeof req.query.session_id === "string" ? req.query.session_id : undefined;
-  res.type("html").send(checkoutResultPage("success", sessionId));
+  res.type("html").send(checkoutResultPage("success", resultCopy(req), { sessionId, product: req.query.product, trial: req.query.trial === "1" }));
 });
 // The thanks-page answer. Each one costs two Stripe calls, so a global hourly
 // ceiling bounds scripted abuse; the reply is the same whether or not it was
@@ -260,13 +272,13 @@ app.post("/checkout-success", async (req: Request, res: Response) => {
   if (consumeGlobalBudget("self-reported-source", 300)) {
     await recordSelfReportedSource(req.body?.session_id, req.body?.source);
   }
-  res.type("html").send(checkoutResultPage("noted"));
+  res.type("html").send(checkoutResultPage("noted", resultCopy(req)));
 });
-app.get("/checkout-cancel", (_req: Request, res: Response) => {
-  res.type("html").send(checkoutResultPage("cancel"));
+app.get("/checkout-cancel", (req: Request, res: Response) => {
+  res.type("html").send(checkoutResultPage("cancel", resultCopy(req)));
 });
-app.get("/tip-thanks", (_req: Request, res: Response) => {
-  res.type("html").send(checkoutResultPage("tip"));
+app.get("/tip-thanks", (req: Request, res: Response) => {
+  res.type("html").send(checkoutResultPage("tip", resultCopy(req)));
 });
 
 // TikTok Developer Portal domain/URL-prefix verification file (one-off,

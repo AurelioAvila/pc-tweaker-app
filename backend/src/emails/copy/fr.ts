@@ -467,4 +467,25 @@ export const fr: Copy = {
     emailChangeInvalid: "Ce lien n’est pas valable, a déjà servi ou a expiré. Redemandez la modification depuis l’application.",
     emailTaken: "Cette adresse est déjà utilisée par un autre compte. Rien n’a été modifié.",
   },
+
+  checkout: {
+    paidTitle: "Paiement effectué",
+    paidBody: (app: string) =>
+      `Pro est maintenant actif sur votre compte. Revenez dans ${app} : la nouvelle offre est prise en compte automatiquement à la prochaine vérification de la licence.`,
+    trialTitle: "Votre essai gratuit a commencé",
+    trialBody: (app: string, days: number) =>
+      `Rien n’a été débité aujourd’hui et Pro est actif sur votre compte pendant ${days} jours. À la fin de l’essai, le premier paiement est prélevé automatiquement, sauf si vous résiliez avant depuis Offres et tarifs dans ${app}. Nous vous écrivons la veille.`,
+    cancelTitle: "Paiement annulé",
+    cancelBody: "Aucun montant n’a été débité. Vous pouvez relancer le paiement depuis l’application quand vous le souhaitez.",
+    tipTitle: "Merci pour votre soutien",
+    tipBody: "Votre pourboire finance directement les nouvelles fonctions et les mises à jour quotidiennes de PC Tweaker. Stripe vous enverra le reçu par e-mail.",
+    notedTitle: "Merci de nous l’avoir dit",
+    notedBody: "Cela nous aide à savoir où continuer à publier. Revenez dans l’application : votre nouvelle offre est prise en compte automatiquement.",
+    ask: "Facultatif : comment avez-vous découvert PC Tweaker ?",
+    sources: {
+      youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", facebook: "Facebook",
+      search: "Moteur de recherche", friend: "Un ami", other: "Ailleurs",
+    } as Record<string, string>,
+    close: "Vous pouvez fermer cet onglet.",
+  },
 };

@@ -467,4 +467,25 @@ export const it: Copy = {
     emailChangeInvalid: "Questo link non è valido, è già stato usato o è scaduto. Chiedi di nuovo la modifica dall'app.",
     emailTaken: "Questo indirizzo è già usato da un altro account. Non è cambiato nulla.",
   },
+
+  checkout: {
+    paidTitle: "Pagamento completato",
+    paidBody: (app: string) =>
+      `Pro è attivo sul tuo account. Torna in ${app}: il nuovo piano viene rilevato da solo al prossimo controllo della licenza.`,
+    trialTitle: "La tua prova gratuita è iniziata",
+    trialBody: (app: string, days: number) =>
+      `Oggi non ti è stato addebitato nulla e Pro è attivo sul tuo account per ${days} giorni. Alla fine della prova il primo pagamento viene addebitato automaticamente, a meno che tu non disdica prima da Piani e prezzi in ${app}. Ti scriviamo il giorno prima.`,
+    cancelTitle: "Pagamento annullato",
+    cancelBody: "Non è stato addebitato nulla. Puoi riaprire il pagamento dall'app quando vuoi.",
+    tipTitle: "Grazie per il tuo supporto",
+    tipBody: "La tua mancia va direttamente in nuove funzioni e negli aggiornamenti quotidiani di PC Tweaker. Stripe ti invierà la ricevuta via email.",
+    notedTitle: "Grazie per avercelo detto",
+    notedBody: "Ci aiuta a capire dove continuare a pubblicare. Torna nell'app: il nuovo piano viene rilevato in automatico.",
+    ask: "Facoltativo: come hai conosciuto PC Tweaker?",
+    sources: {
+      youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", facebook: "Facebook",
+      search: "Motore di ricerca", friend: "Un amico", other: "Altrove",
+    } as Record<string, string>,
+    close: "Puoi chiudere questa scheda.",
+  },
 };

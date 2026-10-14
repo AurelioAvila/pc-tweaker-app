@@ -16,3 +16,10 @@ test("the support acknowledgement echoes only a first name, escaped, and stays i
   assert.doesNotMatch(ack.text, /!/, "no exclamation marks");
   assert.match(supportAckEmail("", "a@example.com").text, /^Got it\. It is in the queue\./);
 });
+
+test("plain text drops tags, never keeps a '<' and unescapes only once", async () => {
+  const { plainText } = await import("../dist/emails/layout.js");
+  assert.equal(plainText('<strong>Plans &amp; pricing</strong> <a href="x">guide</a>'), "Plans & pricing guide");
+  assert.equal(plainText("a &amp;lt; b &quot;c&quot;"), 'a &lt; b "c"');
+  assert.ok(!plainText("<<script>script>alert(1)</script> x <").includes("<"));
+});

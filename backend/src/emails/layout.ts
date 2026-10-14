@@ -96,14 +96,14 @@ export function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-/** Our own block markup as plain text for the text part: tags dropped, any
- *  stray "<" removed, and "&amp;" / "&quot;" decoded in a single pass so
- *  nothing is unescaped twice. "&lt;" stays as written: the text part never
- *  regains a "<". */
+/** Our own block markup as plain text for the text part. Splitting on "<"
+ *  drops every tag and leaves no "<" at all; "&amp;" and "&quot;" are then
+ *  decoded in a single pass so nothing is unescaped twice ("&lt;" stays). */
 export function plainText(html: string): string {
   return html
-    .replace(/<[^>]*>/g, "")
-    .replace(/</g, "")
+    .split("<")
+    .map((part, i) => (i === 0 ? part : part.slice(part.indexOf(">") + 1)))
+    .join("")
     .replace(/&(amp|quot);/g, (_, name: string) => (name === "amp" ? "&" : '"'));
 }
 

@@ -23,7 +23,7 @@
 
 **[Download Free for Windows](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/PCTweaker-Setup.exe)** · **[Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87)** · [Chocolatey](https://community.chocolatey.org/packages/pc-tweaker) · [Website](https://pctweaker.app/) · [Support](https://pctweaker.app/support/) · [Release notes](CHANGELOG.md)
 
-<p align="center"><a href="#whats-new-in-115">What's new</a> · <a href="#what-you-can-do">Features</a> · <a href="#what-changes-on-your-system">What changes</a> · <a href="#free-and-pro">Free and Pro</a> · <a href="#download-integrity-and-code-signing">Code signing</a> · <a href="#build-from-source">Build from source</a></p>
+<p align="center"><a href="#whats-new-in-118">What's new</a> · <a href="#what-you-can-do">Features</a> · <a href="#what-changes-on-your-system">What changes</a> · <a href="#free-and-pro">Free and Pro</a> · <a href="#download-integrity-and-code-signing">Code signing</a> · <a href="#build-from-source">Build from source</a></p>
 
 <p align="center"><img src="docs/screenshots/pc-tweaker-1.16-overview.png" alt="PC Tweaker 1.16 Overview in the default Graphite Ember theme, showing live CPU, memory and applied settings" width="85%"></p>
 
@@ -56,13 +56,14 @@ Package catalogs can lag behind a release. Check the release version before inst
 
 Closing the window keeps PC Tweaker running in the Windows notification area. Click its icon to reopen it, or right-click and choose **Exit PC Tweaker** to quit. To make closing the window quit instead, clear **Keep running in the background** in the icon's menu. Windows may place the icon in its hidden-icons panel.
 
-## What's new in 1.15
+## What's new in 1.18
 
-- **Driver latency trace.** A 5 to 30 second kernel capture measures DPC and ISR routines and names the driver behind each long one, judged against Microsoft's guidance.
-- **Core steering for Game Sessions.** A registered game runs on the V-Cache die of AMD X3D processors or the performance cores of Intel hybrid processors. Every change is recorded and undone when the game exits, even after a crash.
-- **Network check.** Jitter, latency and a live TCP connection reading before and after the TCP tweaks. A difference is reported as a change in the line, never as the effect of a tweak.
-- **A rebuilt Scan.** Ten checks, recommended and optional changes kept apart, and a Fix all that shows the exact settings first and verifies each one afterwards.
-- **Debloat.** Remove up to 13 optional Windows apps for your account after reviewing the exact packages, with history and Store links to reinstall.
+- **Every value before it is written.** Each control has a "What this changes, exactly" panel with the value as it is now and as it will be set. If an application fails partway, the values already written are restored at once.
+- **Windows AI controls.** The catalog has 81 controls, 46 Free and 35 Pro, including Click to Do, the Windows AI Fabric service and the AI features in Microsoft Edge, Paint and Notepad.
+- **A measured Before & After.** PC Health runs each timed test at least 7 times and reports a difference only when the two series are clearly apart.
+- **Change history by session.** Registry values before and after each change, with undo for one change, a whole session or everything still in effect, plus filters and export.
+- **Re-apply after Windows updates.** A check at sign-in lists only the tweaks a cumulative update put back, one checkbox each. Nothing is re-applied on its own.
+- **1.18.2.** Pro keeps working when the PC's clock runs behind, account errors appear in the app's language, and the account menu shows the plan each product has.
 
 See the [changelog](CHANGELOG.md) for every release.
 

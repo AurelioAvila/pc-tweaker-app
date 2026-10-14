@@ -23,7 +23,15 @@ import {
   storedRamAutoMinutes,
   textFor,
 } from "./lib";
-import { AuthState, CleanupInfo, CleanupResult, Section, Toast, TweakInfo, type ProductPlan } from "./types";
+import {
+  AuthState,
+  CleanupInfo,
+  CleanupResult,
+  Section,
+  Toast,
+  TweakInfo,
+  type ProductPlan,
+} from "./types";
 import {
   GemIcon,
   HistoryIcon,

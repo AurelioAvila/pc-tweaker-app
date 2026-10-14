@@ -729,7 +729,14 @@ export function AccountMenu({
  *  plan in a few words, in the app's language. */
 function productPlanLabel(
   p: ProductPlan,
-  words: { planLifetime: string; planAnnual: string; planMonthly: string; planBonus: string; planUntil: string; planInactive: string },
+  words: {
+    planLifetime: string;
+    planAnnual: string;
+    planMonthly: string;
+    planBonus: string;
+    planUntil: string;
+    planInactive: string;
+  },
   lang: string,
 ): string {
   if (!p.active) return words.planInactive;

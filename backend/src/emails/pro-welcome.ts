@@ -15,6 +15,7 @@ import {
   link,
   note,
   paragraph,
+  plainText,
   steps,
   textFooter,
   type EmailBrand,
@@ -67,7 +68,6 @@ const greet = (lead: string, firstName: string, tail = ".") => {
   const name = (firstName || "").trim().split(/\s+/)[0];
   return name ? `${lead}, ${name}${tail}` : `${lead}${tail}`;
 };
-const plain = (html: string) => html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"');
 
 export function proWelcomeSubject(product?: string | null, plan?: string | null): string {
   if (product === "uninstaller")
@@ -201,9 +201,9 @@ export function proWelcomeText(input: ProWelcomeEmailInput): string {
     ...r.rows.map(([label, value]) => `${label}: ${value}`),
     "",
     `${r.heading}:`,
-    ...r.items.map((s, i) => `${i + 1}. ${plain(s)}`),
+    ...r.items.map((s, i) => `${i + 1}. ${plainText(s)}`),
     "",
-    plain(r.noteHtml),
+    plainText(r.noteHtml),
     "",
     `${brand.ctaLabel}: ${brand.visual.siteUrl}`,
   ].join("\n") + textFooter(brand.visual, r.why);

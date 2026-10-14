@@ -23,6 +23,7 @@ import {
   linkFallback,
   note,
   paragraph,
+  plainText,
   security,
   steps,
   textFooter,
@@ -36,7 +37,6 @@ const greet = (lead: string, firstName: string) => {
   const name = firstWord(firstName);
   return name ? `${lead}, ${name}.` : `${lead}.`;
 };
-const plain = (html: string) => html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"');
 
 // ---------------------------------------------------------------- confirm
 
@@ -66,7 +66,7 @@ export function verificationText(link: string, brand: EmailBrand = EMAIL_BRANDS.
     link,
     "",
     "After you confirm:",
-    ...verificationSteps(brand).map((s, i) => `${i + 1}. ${plain(s)}`),
+    ...verificationSteps(brand).map((s, i) => `${i + 1}. ${plainText(s)}`),
     "",
     "This link expires in 24 hours and works once. If you did not create this account, ignore this message: nothing happens without the click.",
   ].join("\n") + textFooter(brand, `You received this email because a ${brand.name} account was created with this address.`);
@@ -135,9 +135,9 @@ export function accountWelcomeText(freeTweakCount: number, brand: EmailBrand = E
     c.intro,
     "",
     `${c.heading}:`,
-    ...c.items.map((s, i) => `${i + 1}. ${plain(s)}`),
+    ...c.items.map((s, i) => `${i + 1}. ${plainText(s)}`),
     "",
-    plain(c.noteHtml),
+    plainText(c.noteHtml),
     "",
     `Open ${brand.name}: ${brand.siteUrl}`,
   ].join("\n") + textFooter(brand, `You received this email because you confirmed a ${brand.name} account with this address. It is sent once.`);

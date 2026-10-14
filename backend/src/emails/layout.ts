@@ -96,6 +96,17 @@ export function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+/** Our own block markup as plain text for the text part: tags dropped, any
+ *  stray "<" removed, and "&amp;" / "&quot;" decoded in a single pass so
+ *  nothing is unescaped twice. "&lt;" stays as written: the text part never
+ *  regains a "<". */
+export function plainText(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/</g, "")
+    .replace(/&(amp|quot);/g, (_, name: string) => (name === "amp" ? "&" : '"'));
+}
+
 /** Blocks are rendered for one brand; the shell passes it down. */
 export type Block = (brand: EmailBrand) => string;
 

@@ -1,4 +1,6 @@
 // Shared data shapes crossing module boundaries. Pure types only.
+import type { BillingStatus } from "./trial";
+
 export type AuthState =
   | { status: "anonymous" }
   | {
@@ -15,6 +17,9 @@ export type AuthState =
       /** Each product's plan on this one family account, from
        *  /api/entitlements; absent until it has been read. */
       products?: ProductPlan[];
+      /** Trial and subscription state per product, from /api/billing/status;
+       *  absent until read, and on a backend that does not publish it yet. */
+      billing?: BillingStatus;
     };
 
 export type ProductPlan = {

@@ -631,3 +631,47 @@
 .pricing-workspace .hw-offer {
   margin-bottom: 12px;
 }
+
+/* Free trial: an accent outline, so it reads as the way in without competing
+   with the filled Lifetime button. The line under it is the whole deal in
+   one sentence: price after the trial, first charge date, how to cancel. */
+.pricing-button-trial {
+  background: color-mix(in srgb, var(--app-accent) 12%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--app-accent) 70%, var(--border-strong));
+  color: var(--text-primary);
+}
+.pricing-button-trial:hover:not(:disabled) {
+  border-color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 20%, var(--surface-2));
+}
+.pricing-trial {
+  margin: -8px 0 16px;
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.pricing-trial p {
+  margin: 0;
+}
+.pricing-trial-left {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+.pricing-trial-bar {
+  display: block;
+  height: 4px;
+  margin: 7px 0 8px;
+  border-radius: 999px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+.pricing-trial-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--app-accent);
+}
+.pricing-trial-alert {
+  color: var(--danger);
+}

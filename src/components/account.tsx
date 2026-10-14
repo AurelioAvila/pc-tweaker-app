@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { LANGUAGES, Lang, Strings } from "../i18n";
+import { format, LANGUAGES, Lang, Strings, localeOf } from "../i18n";
 import { THEMES, ThemeName } from "../theme";
 import {
   ERROR_REPORTS_KEY,
@@ -13,6 +13,8 @@ import {
 } from "../lib";
 import { AuthState, ProcessGuardStatus, type ProductPlan } from "../types";
 import { CheckIcon, CrownIcon } from "./icons";
+import { TRIAL_COPY } from "./trial-copy";
+import { trialLeft, trialUsed, type BillingStatus } from "../trial";
 import { Avatar } from "./ui";
 import "./account-menu.css";
 
@@ -26,10 +28,13 @@ export function AuthSection({
   onLogout,
   onResendVerification,
   onForgotPassword,
+  onManageBilling,
   lang = "en",
 }: {
   s: Strings;
   auth: AuthState;
+  /** Opens the Stripe billing portal (update a card that failed). */
+  onManageBilling?: () => void;
   /** BCP 47 language for dates in the plan list. */
   lang?: string;
   /** Device-local profile photo and its controls, owned by AccountMenu. */
@@ -59,6 +64,12 @@ export function AuthSection({
   // Defaults on, like every desktop app people already use. Off means the
   // session lives only until the app closes.
   const [remember, setRemember] = useState(true);
+  // Half-minute steps keep a running trial's countdown honest while open.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   if (auth.status === "authenticated") {
     // "Logged in as name@example.com" as a bare line of text reads like a
@@ -123,14 +134,15 @@ export function AuthSection({
             </p>
             <ul className="mt-1 space-y-0.5 text-[12px]">
               {auth.products.map((p) => (
-                <li key={p.product} className="flex items-baseline justify-between gap-2">
-                  <span className="text-ink-2">
-                    {p.product === "uninstaller" ? "PC Tweaker Uninstaller" : "PC Tweaker"}
-                  </span>
-                  <span className={p.active ? "font-semibold text-ok" : "text-ink-3"}>
-                    {productPlanLabel(p, s.auth, lang)}
-                  </span>
-                </li>
+                <ProductRow
+                  key={p.product}
+                  plan={p}
+                  billing={auth.billing ?? null}
+                  label={productPlanLabel(p, s.auth, lang)}
+                  lang={lang}
+                  now={now}
+                  onManageBilling={onManageBilling}
+                />
               ))}
             </ul>
           </div>
@@ -376,6 +388,7 @@ export function AccountMenu({
   onForgotPassword,
   onUpgrade,
   onViewPlan,
+  onManageBilling,
   pushToast,
 }: {
   s: Strings;
@@ -403,6 +416,7 @@ export function AccountMenu({
   /** Opens the plans screen. Same destination for both tiers: a Free
    *  account is comparing, a Pro account is checking what it pays for. */
   onViewPlan: () => void;
+  onManageBilling?: () => void;
   pushToast: (kind: "success" | "error", message: string) => void;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
@@ -572,6 +586,7 @@ export function AccountMenu({
                   onLogout={onLogout}
                   onResendVerification={onResendVerification}
                   onForgotPassword={onForgotPassword}
+                  onManageBilling={onManageBilling}
                   lang={lang}
                 />
               </div>
@@ -722,6 +737,85 @@ export function AccountMenu({
         </>
       )}
     </div>
+  );
+}
+
+/** One product on the family account. A running trial shows its countdown
+ *  and the first charge; a failed payment says so and opens the portal. */
+function ProductRow({
+  plan,
+  billing,
+  label,
+  lang,
+  now,
+  onManageBilling,
+}: {
+  plan: ProductPlan;
+  billing: BillingStatus | null;
+  label: string;
+  lang: string;
+  now: number;
+  onManageBilling?: () => void;
+}) {
+  const t = TRIAL_COPY[lang as Lang] ?? TRIAL_COPY.en;
+  const b = billing?.products.find((x) => x.product === plan.product);
+  const name = plan.product === "uninstaller" ? "PC Tweaker Uninstaller" : "PC Tweaker";
+  const date = (ms: number) =>
+    new Date(ms).toLocaleDateString(localeOf(lang) ?? lang, { dateStyle: "medium" });
+  const trial = b?.state === "trialing" && b.trialEndsAt ? b : null;
+  const failed = b?.state === "blocked" && b.blockedReason === "payment_failed";
+  const left = trial ? trialLeft(trial.trialEndsAt!, billing?.trialDays ?? 3, now) : null;
+  return (
+    <li>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-ink-2">{name}</span>
+        <span
+          className={
+            failed
+              ? "font-semibold text-danger"
+              : plan.active
+                ? "font-semibold text-ok"
+                : "text-ink-3"
+          }
+        >
+          {trial ? t.trial : failed ? t.paymentFailed : label}
+        </span>
+      </div>
+      {trial && left && (
+        <div className="account-trial">
+          <span>
+            {left.days
+              ? format(t.leftDays, { days: left.days, hours: left.hours })
+              : left.hours
+                ? format(t.leftHours, { hours: left.hours, minutes: left.minutes })
+                : format(t.leftMinutes, { minutes: Math.max(1, left.minutes) })}
+          </span>
+          <i aria-hidden="true">
+            <b style={{ width: `${Math.round(left.used * 100)}%` }} />
+          </i>
+          <span>
+            {format(trial.cancelAtPeriodEnd ? t.noCharge : t.firstCharge, {
+              date: date(trial.trialEndsAt!),
+            })}
+          </span>
+        </div>
+      )}
+      {failed && (
+        <div className="account-trial">
+          <span>{t.paymentFailedHint}</span>
+          {onManageBilling && (
+            <button type="button" onClick={onManageBilling}>
+              {t.updatePayment}
+            </button>
+          )}
+        </div>
+      )}
+      {!plan.active && !failed && trialUsed(plan.product, billing) && (
+        <div className="account-trial">
+          <span>{t.trialUsed}</span>
+        </div>
+      )}
+    </li>
   );
 }
 

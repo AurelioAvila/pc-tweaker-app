@@ -81,6 +81,9 @@ jobs:
       - name: Starter profiles selection and catalog validation
         run: node scripts/test-starter-presets.mjs
 
+      - name: Free trial state tests
+        run: node scripts/test-trial.mjs
+
       - name: The Pro unlock of VM test builds stays out of release configuration
         run: node scripts/check-no-test-pro.mjs --self-test
 

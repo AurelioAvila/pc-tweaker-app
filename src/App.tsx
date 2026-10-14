@@ -43,7 +43,17 @@ import {
   HeartPulseIcon,
   ThermometerIcon,
 } from "./components/icons";
-import { Badge, PaywallModal, Toggle, UpdateBanner } from "./components/ui";
+import { Badge, BillingNotice, PaywallModal, Toggle, UpdateBanner } from "./components/ui";
+import { TRIAL_COPY } from "./components/trial-copy";
+import {
+  billingChanges,
+  billingSnapshot,
+  nextTrialEnd,
+  parseBillingStatus,
+  parsePriceList,
+  type BillingChange,
+  type PriceList,
+} from "./trial";
 import {
   BrowserCleanupCard,
   CleanupCard,
@@ -152,6 +162,27 @@ function App() {
   });
 
   const isProUnlocked = auth.status === "authenticated" && auth.isPro;
+  const billing = auth.status === "authenticated" ? auth.billing : undefined;
+  const [billingNotice, setBillingNotice] = useState<BillingChange | null>(null);
+  // Public plan prices and the trial switch: the plans print a renewal price
+  // from here or not at all.
+  const [prices, setPrices] = useState<PriceList | null>(null);
+  useEffect(() => {
+    async function loadPrices() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/billing/prices`, {
+          cache: "no-store",
+          signal: AbortSignal.timeout(8000),
+        });
+        if (res.ok) setPrices(parsePriceList(await res.json()));
+      } catch {
+        // Offline: no trial line rather than a guessed price.
+      }
+    }
+    void loadPrices();
+    const id = window.setInterval(() => void loadPrices(), 60 * 60_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   // The plan someone clicked before being stopped by sign-in or an
   // unconfirmed inbox. Without it they had to find the pricing panel again
@@ -207,6 +238,7 @@ function App() {
       // must never block the UI's account status on a signing hiccup.
       void refreshLicense();
       void refreshProducts(token);
+      void refreshBilling(token, data.email);
       const pending = pendingPlan.current;
       if (pending && (data.isPro || pending.until < Date.now())) {
         pendingPlan.current = null;
@@ -246,6 +278,36 @@ function App() {
       );
     } catch {
       // Offline: the menu keeps the single Pro/Free line it already shows.
+    }
+  }
+
+  /** Trial and subscription state for the plans, the account menu and the
+   *  one notice shown on return when Pro stopped or a trial became a
+   *  subscription. A backend without the route leaves everything as before. */
+  async function refreshBilling(token: string, email: string) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/billing/status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const billing = parseBillingStatus(await res.json());
+      if (!billing || readToken() !== token) return;
+      setAuth((current) =>
+        current.status === "authenticated" ? { ...current, billing } : current,
+      );
+      const key = `pc-tweaker-billing-seen:${email.toLowerCase()}`;
+      let seen: Record<string, string> | null = null;
+      try {
+        seen = JSON.parse(localStorage.getItem(key) ?? "null") as Record<string, string> | null;
+        localStorage.setItem(key, JSON.stringify(billingSnapshot(billing)));
+      } catch {
+        // Unreadable or blocked storage: no notice is better than a wrong one.
+      }
+      const change = billingChanges(seen, billing).find((c) => c.product === "pctweaker");
+      if (change?.kind === "converted") pushToast("success", TRIAL_COPY[lang].converted, 8000);
+      else if (change) setBillingNotice(change);
+    } catch {
+      // Offline: the plans keep their last answer.
     }
   }
 
@@ -318,6 +380,19 @@ function App() {
     return () => window.removeEventListener("focus", onFocus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Look again just after a trial ends: Pro stops there unless the first
+  // payment went through, and the licence on disk expires at that second.
+  useEffect(() => {
+    const end = nextTrialEnd(billing ?? null, Date.now());
+    if (end === null) return;
+    const id = window.setTimeout(
+      () => refreshAccount(),
+      Math.min(end - Date.now() + 15_000, 2_000_000_000),
+    );
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [billing]);
 
   function logout() {
     clearSession();
@@ -585,7 +660,9 @@ function App() {
 
   async function toggle(tweak: TweakInfo) {
     const text = textFor(s.tweaks, tweak.id, tweak.name, tweak.description);
-    if (tweak.requires_pro && !isProUnlocked) {
+    // Turning an applied Pro tweak off is a restore, and restores never
+    // need Pro: a trial or subscription that ended must not strand a change.
+    if (tweak.requires_pro && !isProUnlocked && !tweak.applied) {
       setPaywallFeature(text.name);
       return;
     }
@@ -883,6 +960,11 @@ function App() {
                 onForgotPassword={forgotPassword}
                 onUpgrade={() => setPaywallFeature(s.menu.planPro)}
                 onViewPlan={() => setFilter("pricing")}
+                onManageBilling={() =>
+                  openBillingPortal().catch((e) =>
+                    pushToast("error", String(e instanceof Error ? e.message : e)),
+                  )
+                }
                 pushToast={pushToast}
               />
             </header>
@@ -1064,6 +1146,8 @@ function App() {
                     isPro={isProUnlocked}
                     heldPlan={auth.status === "authenticated" ? auth.plan : null}
                     hasBilling={auth.status === "authenticated" && auth.hasBilling}
+                    prices={prices}
+                    billing={billing ?? null}
                     freeTweakCount={freeTweakCount}
                     onOpenLifetimeTools={() => setFilter("profiles")}
                     onChoosePro={async (plan) => {
@@ -1435,6 +1519,25 @@ function App() {
           // plan they never picked — they should see monthly vs yearly first.
           onNotify={() => {
             setPaywallFeature(null);
+            setFilter("pricing");
+          }}
+        />
+      )}
+
+      {billingNotice && !paywallFeature && (
+        <BillingNotice
+          s={s}
+          lang={lang}
+          kind={billingNotice.kind}
+          onClose={() => setBillingNotice(null)}
+          onPortal={() => {
+            setBillingNotice(null);
+            openBillingPortal().catch((e) =>
+              pushToast("error", String(e instanceof Error ? e.message : e)),
+            );
+          }}
+          onPlans={() => {
+            setBillingNotice(null);
             setFilter("pricing");
           }}
         />

@@ -223,3 +223,41 @@
     transition: none;
   }
 }
+
+/* A product's trial or payment state under its plan line: countdown, a thin
+   bar for the share of the trial used, and the first charge date. */
+.account-trial {
+  display: grid;
+  gap: 4px;
+  margin: 3px 0 6px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+.account-trial > i {
+  display: block;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+.account-trial > i > b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--app-accent);
+}
+.account-trial > button {
+  justify-self: start;
+  margin-top: 2px;
+  padding: 4px 9px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--border-strong));
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface-2));
+}
+.account-trial > button:hover {
+  border-color: var(--danger);
+}

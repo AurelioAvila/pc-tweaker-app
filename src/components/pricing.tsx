@@ -1,19 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format, Lang, Strings, localeOf } from "../i18n";
-import {
-  money,
-  PRICE_ANNUAL,
-  PRICE_LIFETIME,
-  PRICE_MONTHLY,
-  ProPlan,
-  savingsPercent,
-} from "../lib";
+import { money, PRICE_ANNUAL, PRICE_LIFETIME, PRICE_MONTHLY, ProPlan } from "../lib";
 import { offerClock } from "../lifetime-offer";
 import { MOST_CHOSEN, type SoldPlan } from "../most-chosen";
 import { promoPercent, PROMO_LAYOUT_UNTIL } from "../promo";
 import { HalloweenOfferBanner } from "./halloween-offer";
 import { CheckIcon, CrownIcon, LayersIcon, SparkIcon } from "./icons";
 import { PRICING_COPY } from "./pricing-copy";
+import { TRIAL_COPY } from "./trial-copy";
+import { trialLeft, trialOffer, trialUsed, type BillingStatus, type PriceList } from "../trial";
 import { useLifetimeOffer } from "./use-lifetime-offer";
 import { usePromo } from "./use-promo";
 import "./pricing.css";
@@ -24,6 +19,8 @@ export function PricingPanel({
   isPro,
   heldPlan,
   hasBilling,
+  prices = null,
+  billing = null,
   freeTweakCount,
   onChoosePro,
   onManageBilling,
@@ -34,12 +31,23 @@ export function PricingPanel({
   isPro: boolean;
   heldPlan: string | null;
   hasBilling: boolean;
+  /** Public prices and the trial switch (GET /api/billing/prices). */
+  prices?: PriceList | null;
+  /** This account's trial and subscription state (GET /api/billing/status). */
+  billing?: BillingStatus | null;
   freeTweakCount: number;
   onChoosePro: (plan: ProPlan) => void | Promise<void>;
   onManageBilling: () => void | Promise<void>;
   onOpenLifetimeTools: () => void;
 }) {
   const copy = PRICING_COPY[lang];
+  const t = TRIAL_COPY[lang];
+  // Half-minute steps keep the first-charge date and the trial countdown current.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
   const [selectedPeriod, setPeriod] = useState<"monthly" | "annual" | null>(null);
   const period = selectedPeriod ?? (heldPlan === "monthly" ? "monthly" : "annual");
   const [busy, setBusy] = useState<ProPlan | "manage" | null>(null);
@@ -52,6 +60,37 @@ export function PricingPanel({
   const mostChosen = (plan: SoldPlan) => MOST_CHOSEN.pctweaker === plan;
   const proOffer = promo.offer("pctweaker", period);
   const lifetimeOffer = promo.offer("pctweaker", "lifetime");
+  // The server's price list wins over the figures compiled into the app.
+  const listed = (plan: "monthly" | "annual") =>
+    (prices?.prices.find((p) => p.product === "pctweaker" && p.plan === plan)?.amount ?? 0) / 100 ||
+    (plan === "annual" ? PRICE_ANNUAL : PRICE_MONTHLY);
+  const save = Math.round((1 - listed("annual") / (listed("monthly") * 12)) * 100);
+  const mine = billing?.products.find((p) => p.product === "pctweaker") ?? null;
+  const trial = isPro ? null : trialOffer("pctweaker", period, prices, billing, proOffer?.regular);
+  const trialSpent = !isPro && trialUsed("pctweaker", billing);
+  const paymentFailed = mine?.state === "blocked" && mine.blockedReason === "payment_failed";
+  const longDate = (ms: number) =>
+    new Intl.DateTimeFormat(localeOf(lang), { dateStyle: "long" }).format(new Date(ms));
+  const trialLine = trial
+    ? format(
+        proOffer
+          ? annual
+            ? t.thenYearPromo
+            : t.thenMonthPromo
+          : annual
+            ? t.thenYear
+            : t.thenMonth,
+        {
+          price: money((proOffer ? proOffer.price : trial.amount) / 100, lang),
+          regular: money(trial.amount / 100, lang),
+          date: longDate(now + trial.days * 86_400_000),
+        },
+      )
+    : null;
+  const left =
+    isPro && mine?.state === "trialing" && mine.trialEndsAt
+      ? trialLeft(mine.trialEndsAt, billing?.trialDays ?? 3, now)
+      : null;
   const promoOffers = promo.active ? (promo.promo?.offers ?? []) : [];
   const showPromo = !ownsLifetime && promoOffers.length > 0;
   // Until the server answers, an invisible copy of the panel holds its exact
@@ -210,7 +249,7 @@ export function PricingPanel({
           <div className="pricing-plan-name">
             <h2>{s.pricing.proName}</h2>
             {isPro && heldPlan === period && (
-              <span className="pricing-current">{copy.current}</span>
+              <span className="pricing-current">{left ? t.trial : copy.current}</span>
             )}
           </div>
           <p className="pricing-plan-description">{copy.pro}</p>
@@ -230,9 +269,7 @@ export function PricingPanel({
             {proOffer && (
               <s className="pricing-price-before">{money(proOffer.reference / 100, lang)}</s>
             )}
-            <strong>
-              {money(proOffer ? proOffer.price / 100 : annual ? PRICE_ANNUAL : PRICE_MONTHLY, lang)}
-            </strong>
+            <strong>{money(proOffer ? proOffer.price / 100 : listed(period), lang)}</strong>
             <span>{annual ? s.pricing.perYear : s.pricing.perMonth}</span>
             {proOffer && <span className="pricing-discount">-{promoPercent(proOffer)}%</span>}
           </div>
@@ -242,18 +279,36 @@ export function PricingPanel({
                   price: money(proOffer.regular / 100, lang),
                 })
               : annual
-                ? format(s.pricing.saveBadge, { percent: savingsPercent })
-                : format(s.pricing.annualNudge, { price: money(PRICE_ANNUAL / 12, lang) })}
+                ? format(s.pricing.saveBadge, { percent: save })
+                : format(s.pricing.annualNudge, { price: money(listed("annual") / 12, lang) })}
           </p>
           <div className="pricing-plan-footer">
-            {!isPro ? (
+            {!isPro && paymentFailed ? (
               <button
                 className="pricing-button pricing-button-secondary"
+                disabled={busy !== null}
+                aria-busy={busy === "manage"}
+                onClick={() => void act("manage")}
+              >
+                {busy === "manage" ? "…" : t.updatePayment}
+              </button>
+            ) : !isPro ? (
+              <button
+                className={
+                  trial
+                    ? "pricing-button pricing-button-trial"
+                    : "pricing-button pricing-button-secondary"
+                }
                 disabled={busy !== null || previewing}
                 aria-busy={busy === period}
+                aria-describedby={trialLine ? "pricing-trial-line" : undefined}
                 onClick={() => void act(period)}
               >
-                {busy === period ? "…" : s.pricing.proCta}
+                {busy === period
+                  ? "…"
+                  : trial
+                    ? format(t.start, { days: trial.days })
+                    : s.pricing.proCta}
               </button>
             ) : ownsLifetime || !hasBilling ? (
               <span className="pricing-plan-status">
@@ -270,6 +325,35 @@ export function PricingPanel({
               </button>
             )}
           </div>
+          {(trialLine || trialSpent || paymentFailed || left) && (
+            <div className="pricing-trial" id="pricing-trial-line" role="status">
+              {left && mine?.trialEndsAt ? (
+                <>
+                  <p className="pricing-trial-left">
+                    {left.days
+                      ? format(t.leftDays, { days: left.days, hours: left.hours })
+                      : left.hours
+                        ? format(t.leftHours, { hours: left.hours, minutes: left.minutes })
+                        : format(t.leftMinutes, { minutes: Math.max(1, left.minutes) })}
+                  </p>
+                  <span className="pricing-trial-bar" aria-hidden="true">
+                    <i style={{ width: `${Math.round(left.used * 100)}%` }} />
+                  </span>
+                  <p>
+                    {format(mine.cancelAtPeriodEnd ? t.noCharge : t.firstCharge, {
+                      date: longDate(mine.trialEndsAt),
+                    })}
+                  </p>
+                </>
+              ) : paymentFailed ? (
+                <p className="pricing-trial-alert">
+                  {t.paymentFailed}. {t.paymentFailedHint}
+                </p>
+              ) : (
+                <p>{trialLine ?? t.used}</p>
+              )}
+            </div>
+          )}
           <ul className="pricing-highlights">
             <li>{s.pricing.everythingInFree}</li>
             <li>{copy.advanced}</li>
@@ -432,7 +516,7 @@ export function PricingPanel({
         <p>
           <strong>{s.pricing.lifetime}:</strong> {copy.perpetual}
         </p>
-        <p>{format(copy.twoYears, { price: money(PRICE_ANNUAL * 2, lang) })}</p>
+        <p>{format(copy.twoYears, { price: money(listed("annual") * 2, lang) })}</p>
         <p>{copy.afterCancel}</p>
         {promoOffers.length > 0 && <p>{copy.promoTerms}</p>}
         {activeCampaign && <p>{copy.mayChange}</p>}

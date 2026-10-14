@@ -4,6 +4,7 @@ import { riseChild, staggerParent, viewportOnce } from "../motion";
 import { DOWNLOAD_EXE } from "../constants";
 import { MOST_CHOSEN } from "../../../src/most-chosen";
 import { euro, PromoFine, PromoPrice, promoTerms, usePromo } from "../promo";
+import { TrialLine } from "../trial";
 
 export function AccessPricing() {
   const { free, pro, lifetime } = text.pricing;
@@ -87,6 +88,11 @@ export function AccessPricing() {
                 ? `/ ${promoTerms(annualOffer)}${monthlyOffer ? ` · Monthly: ${euro(monthlyOffer.price)} for the first month, then ${euro(monthlyOffer.regular)}` : ""}`
                 : pro.per}
             </div>
+            <TrialLine
+              product="pctweaker"
+              plan="annual"
+              className="mt-3 text-[13px] leading-relaxed text-[var(--fg-dim)]"
+            />
             <ul className="my-7 grid flex-1 content-start gap-2.5">
               {pro.features.map((f) => (
                 <li key={f} className="relative pl-5 text-[14px] text-[var(--fg-dim)]">

@@ -56,7 +56,12 @@ const GRACE_PERIOD_SECS: u64 = 3 * 24 * 60 * 60;
 /// month offline keeps a paid-for licence working on a laptop away from a
 /// network, while a revoked one still stops at the next refresh.
 const LIFETIME_GRACE_PERIOD_SECS: u64 = 30 * 24 * 60 * 60;
-const MAX_CLOCK_SKEW_SECS: u64 = 5 * 60;
+/// How far this PC's clock may run behind the server's before a freshly
+/// signed licence looks "issued in the future". Five minutes locked Pro out
+/// of PCs whose clock had drifted further or whose time zone was set by hand;
+/// a day matches the account service's allowance. It cannot extend the
+/// offline window: freshness is still measured from the signed `issued_at`.
+const MAX_CLOCK_SKEW_SECS: u64 = 24 * 60 * 60;
 
 /// Field names must match `backend/src/license.ts`'s `LicensePayload` type
 /// exactly, camelCase included — this is parsed directly from the JSON
@@ -548,6 +553,10 @@ mod tests {
         assert!(!is_fresh_at(&payload, now));
         payload.issued_at = u64::MAX;
         assert!(!is_fresh_at(&payload, now));
+        // Regression: a PC two hours behind the server (a hand-set time zone)
+        // must still accept a licence signed a moment ago.
+        payload.issued_at = now + 2 * 60 * 60;
+        assert!(is_fresh_at(&payload, now));
         payload.issued_at = 0;
         assert!(!is_fresh_at(&payload, now));
     }

@@ -11,7 +11,7 @@ import {
   removeAvatar,
   writeAvatar,
 } from "../lib";
-import { AuthState, ProcessGuardStatus } from "../types";
+import { AuthState, ProcessGuardStatus, type ProductPlan } from "../types";
 import { CheckIcon, CrownIcon } from "./icons";
 import { Avatar } from "./ui";
 import "./account-menu.css";
@@ -26,9 +26,12 @@ export function AuthSection({
   onLogout,
   onResendVerification,
   onForgotPassword,
+  lang = "en",
 }: {
   s: Strings;
   auth: AuthState;
+  /** BCP 47 language for dates in the plan list. */
+  lang?: string;
   /** Device-local profile photo and its controls, owned by AccountMenu. */
   avatar?: string | null;
   onChangePhoto?: () => void;
@@ -112,6 +115,26 @@ export function AuthSection({
             )}
           </div>
         </div>
+
+        {auth.products && auth.products.length > 0 && (
+          <div className="relative mt-3 rounded-lg border border-line bg-surface-2 px-2.5 py-2">
+            <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink-3">
+              {s.auth.plansTitle}
+            </p>
+            <ul className="mt-1 space-y-0.5 text-[12px]">
+              {auth.products.map((p) => (
+                <li key={p.product} className="flex items-baseline justify-between gap-2">
+                  <span className="text-ink-2">
+                    {p.product === "uninstaller" ? "PC Tweaker Uninstaller" : "PC Tweaker"}
+                  </span>
+                  <span className={p.active ? "font-semibold text-ok" : "text-ink-3"}>
+                    {productPlanLabel(p, s.auth, lang)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {!auth.emailVerified && (
           <button
@@ -216,6 +239,11 @@ export function AuthSection({
     }
     if (password.length < 8) {
       setError(s.auth.passwordTooShort);
+      return;
+    }
+    // bcrypt's limit, enforced by the server; said here in the app's language.
+    if (new TextEncoder().encode(password).length > 72) {
+      setError(s.auth.passwordTooLong);
       return;
     }
     if (mode === "register" && (!firstName.trim() || !lastName.trim() || !dateOfBirth)) {
@@ -544,6 +572,7 @@ export function AccountMenu({
                   onLogout={onLogout}
                   onResendVerification={onResendVerification}
                   onForgotPassword={onForgotPassword}
+                  lang={lang}
                 />
               </div>
             </details>
@@ -694,4 +723,27 @@ export function AccountMenu({
       )}
     </div>
   );
+}
+
+/** "Lifetime", "Annual · until 14 Oct 2027", "Not active": one product's
+ *  plan in a few words, in the app's language. */
+function productPlanLabel(
+  p: ProductPlan,
+  words: { planLifetime: string; planAnnual: string; planMonthly: string; planBonus: string; planUntil: string; planInactive: string },
+  lang: string,
+): string {
+  if (!p.active) return words.planInactive;
+  if (p.plan === "lifetime") return words.planLifetime;
+  const name =
+    p.plan === "lifetime_bonus"
+      ? words.planBonus
+      : p.plan === "monthly"
+        ? words.planMonthly
+        : p.plan === "annual"
+          ? words.planAnnual
+          : "Pro";
+  const end = p.expiresAt ? new Date(p.expiresAt) : null;
+  return end && Number.isFinite(end.getTime())
+    ? `${name} · ${words.planUntil.replace("{date}", end.toLocaleDateString(lang, { dateStyle: "medium" }))}`
+    : name;
 }

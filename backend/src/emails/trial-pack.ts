@@ -25,7 +25,8 @@ export const TRIAL_STRINGS: Record<string, Record<string, Record<string, Record<
      "processing_error": "a processing error at the bank",
      "generic": "the payment was not accepted"
     },
-    "paymentMethodCard": "${brand} ending ${last4}"
+    "paymentMethodCard": "${brand} ending ${last4}",
+    "paymentMethodFallbackAfter": {}
    },
    "ts": {
     "subject": "Your PC Tweaker Pro trial has started",
@@ -179,7 +180,10 @@ export const TRIAL_STRINGS: Record<string, Record<string, Record<string, Record<
      "processing_error": "un errore di elaborazione della banca",
      "generic": "il pagamento non è stato accettato"
     },
-    "paymentMethodCard": "${brand} che termina con ${last4}"
+    "paymentMethodCard": "${brand} che termina con ${last4}",
+    "paymentMethodFallbackAfter": {
+     "su": "sul metodo di pagamento salvato al momento dell'acquisto"
+    }
    },
    "ts": {
     "subject": "La tua prova di PC Tweaker Pro è iniziata",
@@ -333,7 +337,8 @@ export const TRIAL_STRINGS: Record<string, Record<string, Record<string, Record<
      "processing_error": "une erreur de traitement chez la banque",
      "generic": "le paiement n’a pas été accepté"
     },
-    "paymentMethodCard": "${brand} se terminant par ${last4}"
+    "paymentMethodCard": "${brand} se terminant par ${last4}",
+    "paymentMethodFallbackAfter": {}
    },
    "ts": {
     "subject": "Votre essai PC Tweaker Pro a commencé",
@@ -487,7 +492,10 @@ export const TRIAL_STRINGS: Record<string, Record<string, Record<string, Record<
      "processing_error": "un error de procesamiento en el banco",
      "generic": "el pago no fue aceptado"
     },
-    "paymentMethodCard": "${brand} terminada en ${last4}"
+    "paymentMethodCard": "${brand} terminada en ${last4}",
+    "paymentMethodFallbackAfter": {
+     "a": "al método de pago guardado al contratar"
+    }
    },
    "ts": {
     "subject": "Tu prueba de PC Tweaker Pro ha empezado",
@@ -641,7 +649,10 @@ export const TRIAL_STRINGS: Record<string, Record<string, Record<string, Record<
      "processing_error": "ein Verarbeitungsfehler bei der Bank",
      "generic": "die Zahlung wurde nicht angenommen"
     },
-    "paymentMethodCard": "${brand} mit Endziffern ${last4}"
+    "paymentMethodCard": "${brand} mit Endziffern ${last4}",
+    "paymentMethodFallbackAfter": {
+     "von": "von der beim Kauf hinterlegten Zahlungsmethode"
+    }
    },
    "ts": {
     "subject": "Ihre PC Tweaker Pro Testphase hat begonnen",
@@ -795,7 +806,10 @@ export const TRIAL_STRINGS: Record<string, Record<string, Record<string, Record<
      "processing_error": "um erro de processamento no banco",
      "generic": "o pagamento não foi aceite"
     },
-    "paymentMethodCard": "${brand} terminada em ${last4}"
+    "paymentMethodCard": "${brand} terminada em ${last4}",
+    "paymentMethodFallbackAfter": {
+     "em": "no método de pagamento guardado na compra"
+    }
    },
    "ts": {
     "subject": "A sua avaliação do PC Tweaker Pro começou",
@@ -951,7 +965,8 @@ export const TRIAL_STRINGS: Record<string, Record<string, Record<string, Record<
      "processing_error": "a processing error at the bank",
      "generic": "the payment was not accepted"
     },
-    "paymentMethodCard": "${brand} ending ${last4}"
+    "paymentMethodCard": "${brand} ending ${last4}",
+    "paymentMethodFallbackAfter": {}
    },
    "ts": {
     "subject": "Your Uninstaller Pro trial has started",
@@ -1105,7 +1120,10 @@ export const TRIAL_STRINGS: Record<string, Record<string, Record<string, Record<
      "processing_error": "un errore di elaborazione della banca",
      "generic": "il pagamento non è stato accettato"
     },
-    "paymentMethodCard": "${brand} che termina con ${last4}"
+    "paymentMethodCard": "${brand} che termina con ${last4}",
+    "paymentMethodFallbackAfter": {
+     "su": "sul metodo di pagamento salvato al momento dell'acquisto"
+    }
    },
    "ts": {
     "subject": "La tua prova di Uninstaller Pro è iniziata",
@@ -1259,7 +1277,8 @@ export const TRIAL_STRINGS: Record<string, Record<string, Record<string, Record<
      "processing_error": "une erreur de traitement chez la banque",
      "generic": "le paiement n’a pas été accepté"
     },
-    "paymentMethodCard": "${brand} se terminant par ${last4}"
+    "paymentMethodCard": "${brand} se terminant par ${last4}",
+    "paymentMethodFallbackAfter": {}
    },
    "ts": {
     "subject": "Votre essai Uninstaller Pro a commencé",
@@ -1413,7 +1432,10 @@ export const TRIAL_STRINGS: Record<string, Record<string, Record<string, Record<
      "processing_error": "un error de procesamiento en el banco",
      "generic": "el pago no fue aceptado"
     },
-    "paymentMethodCard": "${brand} terminada en ${last4}"
+    "paymentMethodCard": "${brand} terminada en ${last4}",
+    "paymentMethodFallbackAfter": {
+     "a": "al método de pago guardado al contratar"
+    }
    },
    "ts": {
     "subject": "Tu prueba de Uninstaller Pro ha empezado",
@@ -1567,7 +1589,10 @@ export const TRIAL_STRINGS: Record<string, Record<string, Record<string, Record<
      "processing_error": "ein Verarbeitungsfehler bei der Bank",
      "generic": "die Zahlung wurde nicht angenommen"
     },
-    "paymentMethodCard": "${brand} mit Endziffern ${last4}"
+    "paymentMethodCard": "${brand} mit Endziffern ${last4}",
+    "paymentMethodFallbackAfter": {
+     "von": "von der beim Kauf hinterlegten Zahlungsmethode"
+    }
    },
    "ts": {
     "subject": "Ihre Uninstaller Pro Testphase hat begonnen",
@@ -1721,7 +1746,10 @@ export const TRIAL_STRINGS: Record<string, Record<string, Record<string, Record<
      "processing_error": "um erro de processamento no banco",
      "generic": "o pagamento não foi aceite"
     },
-    "paymentMethodCard": "${brand} terminada em ${last4}"
+    "paymentMethodCard": "${brand} terminada em ${last4}",
+    "paymentMethodFallbackAfter": {
+     "em": "no método de pagamento guardado na compra"
+    }
    },
    "ts": {
     "subject": "A sua avaliação do Uninstaller Pro começou",

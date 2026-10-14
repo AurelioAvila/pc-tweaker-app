@@ -110,10 +110,15 @@ export function trialMail(kind: TrialMailKind, input: TrialMailInput, c: Copy): 
     failureReason: reasons[input.failure ?? "generic"] ?? reasons.generic,
     portalUrl: input.portalUrl ?? null,
   };
+  // The generic label after a preposition contracts or declines ("sul",
+  // "al", "no", "von der ... hinterlegten"): the pack lists those forms.
+  const after = Object.entries(input.card ? {} : (t.common.paymentMethodFallbackAfter as Record<string, string> | undefined) ?? {});
+  const named = (text: string) => after.reduce(
+    (out, [prep, phrase]) => out.replace(new RegExp(`(^|\\s)${prep} \\$\\{paymentMethodLabel\\}`, "g"), (_, lead: string) => lead + phrase), text);
   // A value the message needs but does not have fails the delivery, which is
   // retried: nothing half-filled ever reaches a customer.
   const fill = (text: string) =>
-    (input.firstName ? text : text.replace(/, \$\{firstName\}/g, "")).replace(/\$\{(\w+)\}/g, (_, key: string) => {
+    named(input.firstName ? text : text.replace(/, \$\{firstName\}/g, "")).replace(/\$\{(\w+)\}/g, (_, key: string) => {
       const value = vars[key];
       if (!value) throw new Error(`trial mail ${kind}: no value for ${key}`);
       return value;

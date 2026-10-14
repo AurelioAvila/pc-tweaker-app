@@ -59,7 +59,10 @@ test("values are escaped, the empty name drops cleanly, and the card, moment and
   assert.equal(trialMoment("en-GB", new Date("2026-12-17T12:05:00Z")), "17 December 2026, 13:05 (CET)");
 
   const noCard = trialMail("trial_ending", { ...full, product: "uninstaller", card: null }, copyFor("de"));
-  assert.match(noCard.text, /die beim Kauf hinterlegte Zahlungsmethode/);
+  assert.match(noCard.text, /von der beim Kauf hinterlegten Zahlungsmethode abgebucht/, "dative after von");
+  assert.match(trialMail("trial_started", { ...full, product: "pctweaker", card: null }, copyFor("it")).text, /addebitato sul metodo di pagamento/);
+  assert.match(trialMail("trial_started", { ...full, product: "pctweaker", card: null }, copyFor("es")).text, /con cargo al método de pago/);
+  assert.match(trialMail("trial_started", { ...full, product: "pctweaker", card: null }, copyFor("pt")).text, /cobrados no método de pagamento/);
   assert.match(noCard.subject, /Uninstaller/);
 
   const renewal = trialMail("renewal_payment_failed", { ...full, product: "pctweaker" }, copyFor("en"));

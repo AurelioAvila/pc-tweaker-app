@@ -23,7 +23,7 @@ import {
   storedRamAutoMinutes,
   textFor,
 } from "./lib";
-import { AuthState, CleanupInfo, CleanupResult, Section, Toast, TweakInfo } from "./types";
+import { AuthState, CleanupInfo, CleanupResult, Section, Toast, TweakInfo, type ProductPlan } from "./types";
 import {
   GemIcon,
   HistoryIcon,
@@ -198,6 +198,7 @@ function App() {
       // Fire-and-forget: refreshLicense() has its own error handling and
       // must never block the UI's account status on a signing hiccup.
       void refreshLicense();
+      void refreshProducts(token);
       const pending = pendingPlan.current;
       if (pending && (data.isPro || pending.until < Date.now())) {
         pendingPlan.current = null;
@@ -214,6 +215,29 @@ function App() {
       // having lost Pro access (see: the account that looked like it had
       // reverted to Free while the server still reported it as Pro).
       pushToast("error", s.toasts.accountRefreshFailed);
+    }
+  }
+
+  /** Every product's plan on the family account, so the account menu can say
+   *  "Uninstaller · Lifetime" instead of a single Pro/Free flag. Informational
+   *  only; enforcement stays in the signed licence. */
+  async function refreshProducts(token: string) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/entitlements`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { products?: ProductPlan[] };
+      const products = (data.products ?? []).filter(
+        (p) => p.product === "pctweaker" || p.product === "uninstaller",
+      );
+      setAuth((current) =>
+        current.status === "authenticated" && readToken() === token
+          ? { ...current, products }
+          : current,
+      );
+    } catch {
+      // Offline: the menu keeps the single Pro/Free line it already shows.
     }
   }
 
@@ -300,6 +324,33 @@ function App() {
     void discardLegacyAvatar();
   }
 
+  /** A message in the app's language for a failed account request. The
+   *  server's own error text is English and was shown verbatim, including a
+   *  bare "HTTP 429" when the rate limiter answered. */
+  function accountFailure(status: number): Error {
+    return new Error(
+      status === 401
+        ? s.auth.errorCredentials
+        : status === 409
+          ? s.auth.errorAlreadyRegistered
+          : status === 429
+            ? s.auth.errorRateLimited
+            : status >= 500
+              ? s.auth.errorServer
+              : s.auth.errorInvalid,
+    );
+  }
+
+  /** fetch() for the account routes: an unreachable server is a translated
+   *  message too, not the browser's "Failed to fetch". */
+  async function accountFetch(url: string, init: RequestInit): Promise<Response> {
+    try {
+      return await fetch(url, init);
+    } catch {
+      throw new Error(s.auth.errorNetwork);
+    }
+  }
+
   async function authenticate(
     mode: "login" | "register",
     email: string,
@@ -310,15 +361,12 @@ function App() {
     if (!API_BASE_URL) {
       throw new Error(s.auth.backendNotConfigured);
     }
-    const res = await fetch(`${API_BASE_URL}/api/auth/${mode}`, {
+    const res = await accountFetch(`${API_BASE_URL}/api/auth/${mode}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, ...registerDetails }),
     });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}) as { error?: string });
-      throw new Error(body.error || `HTTP ${res.status}`);
-    }
+    if (!res.ok) throw accountFailure(res.status);
     const data = (await res.json()) as { token: string; verificationEmailSent?: boolean };
     // "Remember me" decides *where* the session lives, not just whether we
     // prefill an address: sessionStorage is cleared when the app closes, so
@@ -343,27 +391,21 @@ function App() {
     if (!API_BASE_URL) throw new Error(s.auth.backendNotConfigured);
     const token = readToken();
     if (!token) throw new Error(s.auth.loginRequiredForCheckout);
-    const res = await fetch(`${API_BASE_URL}/api/auth/resend-verification`, {
+    const res = await accountFetch(`${API_BASE_URL}/api/auth/resend-verification`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}) as { error?: string });
-      throw new Error(body.error || `HTTP ${res.status}`);
-    }
+    if (!res.ok) throw accountFailure(res.status);
   }
 
   async function forgotPassword(email: string) {
     if (!API_BASE_URL) throw new Error(s.auth.backendNotConfigured);
-    const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+    const res = await accountFetch(`${API_BASE_URL}/api/auth/forgot-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}) as { error?: string });
-      throw new Error(body.error || `HTTP ${res.status}`);
-    }
+    if (!res.ok) throw accountFailure(res.status);
   }
 
   // Opens real Stripe Checkout in the system browser (Checkout can't run

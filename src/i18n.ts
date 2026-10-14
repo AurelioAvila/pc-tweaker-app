@@ -1053,6 +1053,20 @@ export interface Strings {
     emailVerified: string;
     resendVerification: string;
     verificationSent: string;
+    errorCredentials: string;
+    errorAlreadyRegistered: string;
+    errorRateLimited: string;
+    errorInvalid: string;
+    errorServer: string;
+    errorNetwork: string;
+    passwordTooLong: string;
+    plansTitle: string;
+    planLifetime: string;
+    planAnnual: string;
+    planMonthly: string;
+    planBonus: string;
+    planUntil: string;
+    planInactive: string;
   };
   driftWatch: {
     title: string;
@@ -2320,6 +2334,20 @@ const it: Strings = {
     emailVerified: "Email verificata",
     resendVerification: "Invia di nuovo",
     verificationSent: "Email di verifica inviata.",
+    errorCredentials: "Email o password non corretti.",
+    errorAlreadyRegistered: "Questa email ha già un account, magari creato in PC Tweaker Uninstaller o Tweaky Driver. Accedi con quello oppure reimposta la password.",
+    errorRateLimited: "Troppi tentativi. Attendi 15 minuti e riprova.",
+    errorInvalid: "Controlla i dati inseriti e riprova.",
+    errorServer: "Il servizio account non risponde in questo momento. Riprova tra qualche minuto.",
+    errorNetwork: "Impossibile raggiungere il servizio account. Controlla la connessione a internet e riprova.",
+    passwordTooLong: "La password può essere lunga al massimo 72 byte: lettere accentate ed emoji ne occupano più di uno.",
+    plansTitle: "Piani di questo account",
+    planLifetime: "A vita",
+    planAnnual: "Annuale",
+    planMonthly: "Mensile",
+    planBonus: "Incluso con il piano a vita",
+    planUntil: "fino al {date}",
+    planInactive: "Non attivo",
   },
   driftWatch: {
     title: "Sorveglia gli aggiornamenti di Windows",
@@ -3975,6 +4003,20 @@ const en: Strings = {
     emailVerified: "Email verified",
     resendVerification: "Resend",
     verificationSent: "Verification email sent.",
+    errorCredentials: "The email or password is incorrect.",
+    errorAlreadyRegistered: "This email already has an account, perhaps from PC Tweaker Uninstaller or Tweaky Driver. Sign in with it, or reset the password.",
+    errorRateLimited: "Too many attempts. Wait 15 minutes and try again.",
+    errorInvalid: "Check the details you entered and try again.",
+    errorServer: "The account service is not responding right now. Try again in a few minutes.",
+    errorNetwork: "Could not reach the account service. Check your internet connection and try again.",
+    passwordTooLong: "The password can be at most 72 bytes long: accented letters and emoji count as more than one.",
+    plansTitle: "Plans on this account",
+    planLifetime: "Lifetime",
+    planAnnual: "Annual",
+    planMonthly: "Monthly",
+    planBonus: "Included with Lifetime",
+    planUntil: "until {date}",
+    planInactive: "Not active",
   },
   driftWatch: {
     title: "Watch for Windows updates",
@@ -5651,6 +5693,20 @@ const fr: Strings = {
     emailVerified: "E-mail vérifié",
     resendVerification: "Renvoyer",
     verificationSent: "E-mail de vérification envoyé.",
+    errorCredentials: "L'e-mail ou le mot de passe est incorrect.",
+    errorAlreadyRegistered: "Cet e-mail a déjà un compte, peut-être créé dans PC Tweaker Uninstaller ou Tweaky Driver. Connectez-vous avec celui-ci ou réinitialisez le mot de passe.",
+    errorRateLimited: "Trop de tentatives. Patientez 15 minutes, puis réessayez.",
+    errorInvalid: "Vérifiez les informations saisies, puis réessayez.",
+    errorServer: "Le service de compte ne répond pas pour le moment. Réessayez dans quelques minutes.",
+    errorNetwork: "Impossible de joindre le service de compte. Vérifiez votre connexion internet, puis réessayez.",
+    passwordTooLong: "Le mot de passe peut compter au maximum 72 octets : les lettres accentuées et les emoji en occupent plus d'un.",
+    plansTitle: "Offres de ce compte",
+    planLifetime: "À vie",
+    planAnnual: "Annuelle",
+    planMonthly: "Mensuelle",
+    planBonus: "Inclus avec l'offre à vie",
+    planUntil: "jusqu'au {date}",
+    planInactive: "Non active",
   },
   driftWatch: {
     title: "Surveiller les mises à jour Windows",
@@ -7322,6 +7378,20 @@ const es: Strings = {
     emailVerified: "Correo verificado",
     resendVerification: "Reenviar",
     verificationSent: "Correo de verificación enviado.",
+    errorCredentials: "El correo o la contraseña no son correctos.",
+    errorAlreadyRegistered: "Este correo ya tiene una cuenta, quizá creada en PC Tweaker Uninstaller o Tweaky Driver. Inicia sesión con ella o restablece la contraseña.",
+    errorRateLimited: "Demasiados intentos. Espera 15 minutos y vuelve a intentarlo.",
+    errorInvalid: "Revisa los datos introducidos y vuelve a intentarlo.",
+    errorServer: "El servicio de cuentas no responde en este momento. Inténtalo de nuevo en unos minutos.",
+    errorNetwork: "No se pudo conectar con el servicio de cuentas. Comprueba tu conexión a internet y vuelve a intentarlo.",
+    passwordTooLong: "La contraseña puede tener como máximo 72 bytes: las letras con tilde y los emoji ocupan más de uno.",
+    plansTitle: "Planes de esta cuenta",
+    planLifetime: "De por vida",
+    planAnnual: "Anual",
+    planMonthly: "Mensual",
+    planBonus: "Incluido con el plan de por vida",
+    planUntil: "hasta el {date}",
+    planInactive: "No activo",
   },
   driftWatch: {
     title: "Vigilar las actualizaciones de Windows",
@@ -9003,6 +9073,20 @@ const de: Strings = {
     emailVerified: "E-Mail bestätigt",
     resendVerification: "Erneut senden",
     verificationSent: "Bestätigungs-E-Mail gesendet.",
+    errorCredentials: "E-Mail-Adresse oder Passwort ist falsch.",
+    errorAlreadyRegistered: "Für diese E-Mail-Adresse gibt es bereits ein Konto, vielleicht aus PC Tweaker Uninstaller oder Tweaky Driver. Damit anmelden oder das Passwort zurücksetzen.",
+    errorRateLimited: "Zu viele Versuche. Bitte 15 Minuten warten und erneut versuchen.",
+    errorInvalid: "Bitte die Eingaben prüfen und erneut versuchen.",
+    errorServer: "Der Kontodienst antwortet gerade nicht. Bitte in einigen Minuten erneut versuchen.",
+    errorNetwork: "Der Kontodienst ist nicht erreichbar. Bitte die Internetverbindung prüfen und erneut versuchen.",
+    passwordTooLong: "Das Passwort darf höchstens 72 Byte lang sein: Umlaute und Emoji belegen mehr als eines.",
+    plansTitle: "Tarife dieses Kontos",
+    planLifetime: "Lebenslang",
+    planAnnual: "Jährlich",
+    planMonthly: "Monatlich",
+    planBonus: "Im Lebenslang-Tarif enthalten",
+    planUntil: "bis {date}",
+    planInactive: "Nicht aktiv",
   },
   driftWatch: {
     title: "Windows-Updates überwachen",
@@ -10680,6 +10764,20 @@ const pt: Strings = {
     emailVerified: "E-mail verificado",
     resendVerification: "Reenviar",
     verificationSent: "E-mail de verificação enviado.",
+    errorCredentials: "O e-mail ou a palavra-passe estão incorretos.",
+    errorAlreadyRegistered: "Este e-mail já tem uma conta, talvez criada no PC Tweaker Uninstaller ou no Tweaky Driver. Inicie sessão com ela ou reponha a palavra-passe.",
+    errorRateLimited: "Demasiadas tentativas. Aguarde 15 minutos e tente novamente.",
+    errorInvalid: "Verifique os dados introduzidos e tente novamente.",
+    errorServer: "O serviço de contas não está a responder neste momento. Tente novamente dentro de alguns minutos.",
+    errorNetwork: "Não foi possível contactar o serviço de contas. Verifique a ligação à internet e tente novamente.",
+    passwordTooLong: "A palavra-passe pode ter no máximo 72 bytes: as letras acentuadas e os emojis ocupam mais do que um.",
+    plansTitle: "Planos desta conta",
+    planLifetime: "Vitalício",
+    planAnnual: "Anual",
+    planMonthly: "Mensal",
+    planBonus: "Incluído no plano vitalício",
+    planUntil: "até {date}",
+    planInactive: "Inativo",
   },
   driftWatch: {
     title: "Vigiar as atualizações do Windows",

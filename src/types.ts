@@ -12,7 +12,17 @@ export type AuthState =
       /** Whether a Stripe customer exists for this account. Pro without one
        *  has nothing a billing portal could show. */
       hasBilling: boolean;
+      /** Each product's plan on this one family account, from
+       *  /api/entitlements; absent until it has been read. */
+      products?: ProductPlan[];
     };
+
+export type ProductPlan = {
+  product: "pctweaker" | "uninstaller";
+  active: boolean;
+  plan: string | null;
+  expiresAt?: string | null;
+};
 
 export type Category = "performance" | "privacy" | "ui" | "maintenance" | "gaming";
 

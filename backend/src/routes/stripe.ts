@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
 import Stripe from "stripe";
+import { createHash } from "crypto";
 import { getPool, isConfigured } from "../db";
 import { requireAuth } from "../auth";
 import { periodEndFromSubscription } from "../entitlement";
@@ -636,7 +637,8 @@ async function endingStillTrue(receipt: Receipt): Promise<boolean> {
     : current.cancel_at_period_end === true && ["active", "trialing", "past_due"].includes(current.status);
 }
 
-export async function deliverProReceipt(receipt: Receipt): Promise<void> {
+/** `key` is the outbox row: every retry of one receipt carries the same idempotency key, so a provider that did take an earlier attempt is not asked to send it again. */
+export async function deliverProReceipt(receipt: Receipt, key?: string): Promise<void> {
     const { userId, plan, product, chargedLabel } = receipt;
     const expiresAt = receipt.expiresAt ? new Date(receipt.expiresAt) : null;
     const { rows } = await getPool().query(
@@ -649,7 +651,8 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
     // sent for this account, English when it never sent one.
     const c = copyFor(user.locale);
     const deliver = async (mail: { subject: string; html: string; text: string }) => {
-      const sent = await sendMail({ to: user.email, replyTo: SUPPORT_REPLY_TO, ...mail });
+      const idempotencyKey = key ? `pct-receipt-${createHash("sha256").update(key).digest("hex")}` : undefined;
+      const sent = await sendMail({ to: user.email, replyTo: SUPPORT_REPLY_TO, idempotencyKey, ...mail });
       if (!sent.delivered) throw new Error("Billing mail provider did not accept the message");
     };
     if (receipt.kind === "refund") {

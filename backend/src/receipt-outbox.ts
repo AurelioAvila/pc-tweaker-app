@@ -32,7 +32,7 @@ export async function queueReceipt(key: string, receipt: Receipt, notBefore: Dat
 /** A lease prevents competing API instances from sending the same row.
  * Delivery is at-least-once: a crash after provider acceptance can duplicate
  * a receipt, but cannot duplicate a charge or grant a different entitlement. */
-export async function deliverReceipts(send: (receipt: Receipt) => Promise<void>, now = new Date()): Promise<number> {
+export async function deliverReceipts(send: (receipt: Receipt, key: string) => Promise<void>, now = new Date()): Promise<number> {
   const db = getPool();
   const { rows } = await db.query(
     `SELECT receipt_key FROM billing_receipts WHERE delivered_at IS NULL
@@ -53,7 +53,7 @@ export async function deliverReceipts(send: (receipt: Receipt) => Promise<void>,
     if (!claimed.rows.length) continue;
     const receipt = claimed.rows[0];
     try {
-      await send(receipt.payload as Receipt);
+      await send(receipt.payload as Receipt, row.receipt_key);
       await db.query(
         `UPDATE billing_receipts SET delivered_at = $3, locked_until = NULL, lock_token = NULL
          WHERE receipt_key = $1 AND lock_token = $2`, [row.receipt_key, token, new Date()],
@@ -72,7 +72,7 @@ export async function deliverReceipts(send: (receipt: Receipt) => Promise<void>,
   return delivered;
 }
 
-export function startReceiptWorker(send: (receipt: Receipt) => Promise<void>): () => void {
+export function startReceiptWorker(send: (receipt: Receipt, key: string) => Promise<void>): () => void {
   let running = false;
   const tick = async () => {
     if (running) return;

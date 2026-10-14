@@ -24,11 +24,8 @@ async function sendWithProviderStatus(status, body = "") {
   process.env.RESEND_API_KEY = "test-key";
   process.env.MAIL_FROM = "PC Tweaker <mail@example.com>";
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => ({
-    ok: status >= 200 && status < 300,
-    status,
-    text: async () => body,
-  });
+  globalThis.fetch = async () =>
+    new Response(status === 200 ? JSON.stringify({ id: "fixture-id" }) : body, { status, headers: { "content-type": "application/json" } });
   try {
     // Fresh module each time: mailer reads RESEND_API_KEY at import.
     delete require.cache[require.resolve("../dist/mailer.js")];
@@ -90,7 +87,7 @@ test("customer replies use the branded alias without replacing support-form repl
   const payloads = [];
   globalThis.fetch = async (_url, init) => {
     payloads.push(JSON.parse(init.body));
-    return { ok: true };
+    return new Response(JSON.stringify({ id: `fixture-${payloads.length}` }), { status: 200, headers: { "content-type": "application/json" } });
   };
   try {
     delete require.cache[require.resolve("../dist/mailer.js")];
@@ -118,4 +115,57 @@ test("production never falls back to an unverified sender", async () => {
     () => sendMail({ to: "someone@example.com", subject: "s", html: "<p>h</p>" }),
     /No email provider is configured/,
   );
+});
+
+/** The fallback chain, end to end through the shipped mailer: fetch is a stub, nothing leaves the process. */
+async function sendThroughChain(script, extraEnv = {}) {
+  const saved = { ...process.env };
+  Object.assign(process.env, { RESEND_API_KEY: "test-key", MAIL_FROM: "PC Tweaker <mail@example.com>", NODE_ENV: "test" }, extraEnv);
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, init) => {
+    const name = url.includes("resend") ? "resend" : url.includes("smtp2go") ? "smtp2go" : "mailjet";
+    calls.push({ name, init });
+    return script[name]();
+  };
+  try {
+    delete require.cache[require.resolve("../dist/mailer.js")];
+    const { sendMail } = require("../dist/mailer.js");
+    const result = await sendMail({ to: "someone@example.com", subject: "s", html: "<p>h</p>", text: "h" }).catch((err) => err);
+    return { result, calls };
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const key of Object.keys(process.env)) if (!(key in saved)) delete process.env[key];
+    Object.assign(process.env, saved);
+  }
+}
+const reply = (status, body) => () => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+
+test("Resend out of quota hands the message to SMTP2GO once its key is set", async () => {
+  const { result, calls } = await sendThroughChain(
+    { resend: reply(429, { name: "daily_quota_exceeded" }), smtp2go: reply(200, { data: { succeeded: 1, failed: 0, email_id: "s2g" } }) },
+    { SMTP2GO_API_KEY: "api-test" },
+  );
+  assert.equal(result.delivered, true);
+  assert.deepEqual(calls.map((c) => c.name), ["resend", "smtp2go"]);
+  assert.equal(calls[1].init.headers["X-Smtp2go-Api-Key"], "api-test");
+});
+
+test("without the fallback keys a Resend refusal fails exactly as before, after one call", async () => {
+  const { result, calls } = await sendThroughChain({ resend: reply(429, { name: "daily_quota_exceeded" }) });
+  assert.equal(result.name, "MailError");
+  assert.equal(result.rejectedAddress, false);
+  assert.deepEqual(calls.map((c) => c.name), ["resend"]);
+  assert.ok(!result.message.includes("someone@example.com"));
+});
+
+test("EMAIL_SINK sends nothing", async () => {
+  const dir = (await import("node:fs")).mkdtempSync((await import("node:path")).join((await import("node:os")).tmpdir(), "pct-sink-"));
+  try {
+    const { result, calls } = await sendThroughChain({}, { EMAIL_SINK: "1", EMAIL_SINK_DIR: dir });
+    assert.equal(result.delivered, true);
+    assert.equal(calls.length, 0);
+  } finally {
+    (await import("node:fs")).rmSync(dir, { recursive: true, force: true });
+  }
 });

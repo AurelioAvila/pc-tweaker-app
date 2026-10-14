@@ -47,7 +47,7 @@ import { Badge, BillingNotice, PaywallModal, Toggle, UpdateBanner } from "./comp
 import { TRIAL_COPY } from "./components/trial-copy";
 import {
   billingChanges,
-  billingSnapshot,
+  planSnapshot,
   nextTrialEnd,
   parseBillingStatus,
   parsePriceList,
@@ -295,11 +295,11 @@ function App() {
       setAuth((current) =>
         current.status === "authenticated" ? { ...current, billing } : current,
       );
-      const key = `pc-tweaker-billing-seen:${email.toLowerCase()}`;
+      const key = `pc-tweaker-plan-seen:${email.toLowerCase()}`;
       let seen: Record<string, string> | null = null;
       try {
         seen = JSON.parse(localStorage.getItem(key) ?? "null") as Record<string, string> | null;
-        localStorage.setItem(key, JSON.stringify(billingSnapshot(billing)));
+        localStorage.setItem(key, JSON.stringify(planSnapshot(billing)));
       } catch {
         // Unreadable or blocked storage: no notice is better than a wrong one.
       }

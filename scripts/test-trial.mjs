@@ -9,7 +9,7 @@ const compiled = await build({
   platform: "node",
   format: "esm",
 });
-const { parseBillingStatus, parsePriceList, trialOffer, trialUsed, trialLeft, nextTrialEnd, billingSnapshot, billingChanges } =
+const { parseBillingStatus, parsePriceList, trialOffer, trialUsed, trialLeft, nextTrialEnd, planSnapshot, billingChanges } =
   await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString("base64")}`);
 
 const row = (over = {}) => ({
@@ -88,7 +88,7 @@ assert.equal(nextTrialEnd(trialing, Date.parse("2026-10-18T00:00:00Z")), null);
 
 // One notice on return: paused after a failed payment, ended after a trial
 // or plan that stopped, a toast when a trial became a subscription.
-const seen = billingSnapshot(trialing);
+const seen = planSnapshot(trialing);
 const after = (state, blocked_reason = "none") => status([row({ state, blocked_reason, can_start_trial: false })]);
 assert.deepEqual(billingChanges(seen, after("blocked", "payment_failed")), [{ product: "pctweaker", kind: "paused" }]);
 assert.deepEqual(billingChanges(seen, after("blocked", "canceled")), [{ product: "pctweaker", kind: "trialEnded" }]);
@@ -96,6 +96,6 @@ assert.deepEqual(billingChanges(seen, after("active")), [{ product: "pctweaker",
 assert.deepEqual(billingChanges({ pctweaker: "active" }, after("blocked", "canceled")), [{ product: "pctweaker", kind: "ended" }]);
 assert.deepEqual(billingChanges(null, after("blocked", "payment_failed")), [], "first look: nothing to compare");
 assert.deepEqual(billingChanges({ pctweaker: "none" }, after("blocked", "trial_already_used")), []);
-assert.deepEqual(billingChanges(billingSnapshot(after("blocked", "payment_failed")), after("blocked", "payment_failed")), [], "shown once");
+assert.deepEqual(billingChanges(planSnapshot(after("blocked", "payment_failed")), after("blocked", "payment_failed")), [], "shown once");
 
 console.log("trial: ok");

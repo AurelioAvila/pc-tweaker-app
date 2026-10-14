@@ -175,7 +175,7 @@ export type BillingChange = {
   kind: "paused" | "trialEnded" | "ended" | "converted";
 };
 
-export function billingSnapshot(status: BillingStatus): Record<string, string> {
+export function planSnapshot(status: BillingStatus): Record<string, string> {
   return Object.fromEntries(
     status.products.map((p) => [
       p.product,

@@ -1098,6 +1098,7 @@ export interface Strings {
     now: string;
     notSet: string;
     willChange: string; // uses {count} {total}
+    willChangeOne: string; // exactly one value
     noChange: string;
     readAtApply: string;
     failed: string;
@@ -2395,6 +2396,7 @@ const it: Strings = {
     now: "Ora",
     notSet: "Non impostato",
     willChange: "Applicandolo cambiano {count} valori su {total}.",
+    willChangeOne: "Applicandolo cambia il valore.",
     noChange: "Già in vigore: applicandolo non cambia nulla.",
     readAtApply: "Lo stato attuale viene letto e salvato nel momento in cui lo applichi.",
     failed: "Non è stato possibile leggere i valori attuali.",
@@ -4076,6 +4078,7 @@ const en: Strings = {
     now: "Now",
     notSet: "Not set",
     willChange: "Applying this changes {count} of {total} values.",
+    willChangeOne: "Applying this changes the value.",
     noChange: "Already in place: applying this changes nothing.",
     readAtApply: "The current state is read and saved the moment you apply it.",
     failed: "The current values could not be read.",
@@ -5781,6 +5784,7 @@ const fr: Strings = {
     now: "Actuel",
     notSet: "Non défini",
     willChange: "L'appliquer modifie {count} valeurs sur {total}.",
+    willChangeOne: "L'appliquer modifie la valeur.",
     noChange: "Déjà en place : l'appliquer ne change rien.",
     readAtApply: "L'état actuel est lu et enregistré au moment où vous l'appliquez.",
     failed: "Impossible de lire les valeurs actuelles.",
@@ -7482,6 +7486,7 @@ const es: Strings = {
     now: "Ahora",
     notSet: "Sin definir",
     willChange: "Aplicarlo cambia {count} de {total} valores.",
+    willChangeOne: "Aplicarlo cambia el valor.",
     noChange: "Ya está aplicado: aplicarlo no cambia nada.",
     readAtApply: "El estado actual se lee y se guarda en el momento de aplicarlo.",
     failed: "No se pudieron leer los valores actuales.",
@@ -9192,6 +9197,7 @@ const de: Strings = {
     now: "Jetzt",
     notSet: "Nicht gesetzt",
     willChange: "Beim Anwenden ändern sich {count} von {total} Werten.",
+    willChangeOne: "Beim Anwenden ändert sich der Wert.",
     noChange: "Bereits aktiv: Anwenden ändert nichts.",
     readAtApply: "Der aktuelle Zustand wird beim Anwenden gelesen und gesichert.",
     failed: "Die aktuellen Werte konnten nicht gelesen werden.",
@@ -10897,6 +10903,7 @@ const pt: Strings = {
     now: "Agora",
     notSet: "Não definido",
     willChange: "Aplicar muda {count} de {total} valores.",
+    willChangeOne: "Aplicar muda o valor.",
     noChange: "Já está em vigor: aplicar não muda nada.",
     readAtApply: "O estado atual é lido e guardado no momento em que aplica.",
     failed: "Não foi possível ler os valores atuais.",

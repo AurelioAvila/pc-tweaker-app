@@ -47,6 +47,8 @@ router.get(
       product,
       issuedAt: Math.floor(Date.now() / 1000),
       expiresAt: entitlement.expiresAt ? Math.floor(new Date(entitlement.expiresAt).getTime() / 1000) : null,
+      trialEndsAt: entitlement.active && entitlement.status === "trialing" && entitlement.trialEndsAt
+        ? Math.floor(new Date(entitlement.trialEndsAt).getTime() / 1000) : null,
     });
 
     res.json(license);

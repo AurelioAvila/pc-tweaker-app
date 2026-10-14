@@ -4,7 +4,7 @@ import Stripe from "stripe";
 import { getPool, isConfigured } from "../db";
 import { requireAuth } from "../auth";
 import { periodEndFromSubscription } from "../entitlement";
-import { isKnownProduct, productEntitlement, upsertEntitlement, revokeEntitlement, type Product } from "../products";
+import { PRODUCTS, isKnownProduct, productEntitlement, upsertEntitlement, revokeEntitlement, type Product } from "../products";
 import {
   checkoutSessionParams,
   billingProductFromEvidence,
@@ -20,6 +20,11 @@ import { SUPPORT_INBOX, SUPPORT_REPLY_TO } from "../support-inbox";
 import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
 import { promoCheckout } from "../promo";
 import { queueReceipt, type Receipt } from "../receipt-outbox";
+import { asyncRoute } from "../async-route";
+import { trialMail } from "../emails/trial";
+import {
+  TRIAL_DAYS, TRIAL_MARK, TRIAL_REJECTED, blockedReason, claimTrial, grantsAccess, isOurTrial, trialEligible, trialEnabled,
+} from "../trial";
 
 const router = express.Router();
 
@@ -276,8 +281,24 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
           params.subscription_data = { ...params.subscription_data, metadata: { ...params.subscription_data.metadata, promo_id: promo.id } };
         }
       }
+      // The trial is the server's decision, never the client's: subscription
+      // plans only, never Lifetime, and only for an account that has not had
+      // this product's trial (re-checked when Stripe creates the subscription).
+      const trial = plan.mode === "subscription" && await trialEligible(
+        req.userId as number, product, await productEntitlement(req.userId as number, product), effects.environment,
+      );
+      if (trial) {
+        params.metadata = { ...params.metadata, trial: TRIAL_MARK };
+        params.payment_method_collection = "always";
+        params.subscription_data = {
+          ...params.subscription_data,
+          trial_period_days: TRIAL_DAYS,
+          trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
+          metadata: { ...params.subscription_data?.metadata, trial: TRIAL_MARK },
+        };
+      }
       const session = await effects.createSession(params);
-      res.json({ url: session.url });
+      res.json({ url: session.url, trial, trial_days: TRIAL_DAYS });
     } catch (err) {
       console.error("checkout session creation failed:", err);
       res.status(500).json({ error: "could not start checkout" });
@@ -285,6 +306,50 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
   };
 }
 router.post("/checkout", requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler());
+
+/**
+ * GET /api/billing/status: what each product's Pro looks like for this
+ * account, for the apps' plan screens. Informational like /entitlements: the
+ * signed license and the checkout decide, this only describes.
+ */
+export async function billingStatus(userId: number | string, products: readonly Product[], environment: NodeJS.ProcessEnv = process.env, now = Date.now()) {
+  const { rows } = await getPool().query("SELECT stripe_customer_id FROM users WHERE id = $1", [userId]);
+  const items = [];
+  for (const product of products) {
+    const entitlement = await productEntitlement(userId, product);
+    const perpetual = entitlement.plan === "lifetime" || entitlement.plan === "lifetime_bonus";
+    const trialEnd = entitlement.trialEndsAt ? Date.parse(entitlement.trialEndsAt) : null;
+    const status = entitlement.status ?? null;
+    const state = entitlement.active
+      ? (!perpetual && status === "trialing" && trialEnd !== null && trialEnd > now ? "trialing" : "active")
+      : (status && !["active", "trialing"].includes(status) ? "blocked" : "none");
+    items.push({
+      product,
+      state,
+      status: perpetual && entitlement.active ? "lifetime" : status,
+      plan: entitlement.plan,
+      trial_ends_at: state === "trialing" ? entitlement.trialEndsAt : null,
+      current_period_end: entitlement.active && !perpetual ? entitlement.expiresAt ?? null : null,
+      cancel_at_period_end: Boolean(entitlement.active && entitlement.cancelAtPeriodEnd),
+      can_start_trial: await trialEligible(userId, product, entitlement, environment),
+      blocked_reason: state === "blocked" ? blockedReason(status) : "none",
+    });
+  }
+  return { trial_enabled: trialEnabled(environment), trial_days: TRIAL_DAYS, portal_available: Boolean(rows[0]?.stripe_customer_id), products: items };
+}
+
+router.get("/billing/status", requireAuth, asyncRoute(async (req: Request, res: Response) => {
+  if (!isConfigured) {
+    res.status(503).json({ error: "database not configured" });
+    return;
+  }
+  const requested = req.query.product;
+  if (requested !== undefined && !isKnownProduct(requested)) {
+    res.status(400).json({ error: "unknown product" });
+    return;
+  }
+  res.json(await billingStatus(req.userId as number, requested ? [requested as Product] : PRODUCTS));
+}));
 
 // A one-off tip. Deliberately outside the account system: no login, no
 // entitlement, nothing granted on the webhook side — someone paying €1 to
@@ -400,9 +465,11 @@ async function webhookHandler(req: Request, res: Response): Promise<void> {
  */
 async function grantPro(
   userId: string,
-  { customerId, plan, expiresAt, provisional, subscriptionId, subscriptionCreatedAt }: {
+  { customerId, plan, expiresAt, provisional, subscriptionId, subscriptionCreatedAt, status, trialEndsAt, cancelAtPeriodEnd }: {
     customerId: string | null; plan?: string | null; expiresAt?: Date | null; provisional?: boolean;
     subscriptionId?: string; subscriptionCreatedAt?: Date;
+    /** The subscription as Stripe has it now (absent for Lifetime). */
+    status?: string | null; trialEndsAt?: Date | null; cancelAtPeriodEnd?: boolean;
   },
 ): Promise<boolean> {
   if (plan !== "lifetime" && (!expiresAt || !Number.isFinite(expiresAt.getTime()))) {
@@ -423,26 +490,31 @@ async function grantPro(
               WHEN $5::boolean AND pro_expires_at IS NOT NULL AND pro_expires_at > $4::timestamptz
                 THEN pro_expires_at
               ELSE $4::timestamptz
-            END
+            END,
+            subscription_status = CASE WHEN $2 = 'lifetime' THEN NULL ELSE COALESCE($8, subscription_status) END,
+            trial_ends_at = CASE WHEN $2 = 'lifetime' THEN NULL WHEN $8::text IS NULL THEN trial_ends_at ELSE $9::timestamptz END,
+            cancel_at_period_end = CASE WHEN $2 = 'lifetime' THEN FALSE WHEN $8::text IS NULL THEN cancel_at_period_end ELSE $10::boolean END
       WHERE id = $1
         AND ($2 = 'lifetime' OR NOT (is_pro = TRUE AND COALESCE(plan, '') = 'lifetime'))
         AND ($2 = 'lifetime' OR stripe_subscription_id IS NULL
              OR stripe_subscription_id = $6
              OR ($6::text IS NOT NULL AND stripe_subscription_created_at < $7::timestamptz))
       RETURNING id`,
-    [userId, plan || null, customerId || null, expiresAt ?? null, provisional === true, subscriptionId ?? null, subscriptionCreatedAt ?? null],
+    [userId, plan || null, customerId || null, expiresAt ?? null, provisional === true, subscriptionId ?? null, subscriptionCreatedAt ?? null,
+      status ?? null, trialEndsAt ?? null, cancelAtPeriodEnd === true],
   );
   return result.rows.length > 0;
 }
 
 /** Subscription revocation must never revoke a separately purchased lifetime grant.
  * The guard belongs in the UPDATE too, so a concurrent checkout cannot race it. */
-async function revokePro(userId: string, subscriptionId?: string): Promise<void> {
+async function revokePro(userId: string, subscriptionId?: string, status?: string): Promise<void> {
   await getPool().query(
-    `UPDATE users SET is_pro = FALSE, pro_expires_at = NULL, legacy_pro_grant = FALSE
+    `UPDATE users SET is_pro = FALSE, pro_expires_at = NULL, legacy_pro_grant = FALSE,
+            subscription_status = COALESCE($3, subscription_status), trial_ends_at = NULL, cancel_at_period_end = FALSE
       WHERE id = $1 AND NOT (is_pro = TRUE AND COALESCE(plan, '') = 'lifetime')
         AND (stripe_subscription_id IS NULL OR stripe_subscription_id = $2)`,
-    [userId, subscriptionId ?? null],
+    [userId, subscriptionId ?? null, status ?? null],
   );
 }
 
@@ -664,6 +736,28 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
       await deliver(endingMail({ product, firstName: user.first_name || "", plan, endsOn: formatDay(c, expiresAt), reason }, c));
       return;
     }
+    if (receipt.kind === "trial_started" || receipt.kind === "trial_ending" || receipt.kind === "trial_rejected") {
+      let chargeLabel: string | null = null;
+      let renewLabel: string | null = null;
+      if (receipt.kind !== "trial_rejected") {
+        // Delivered as a no-op once it stopped being true: the trial ended,
+        // was cancelled, or (for the reminder) will not convert.
+        if (!receipt.subscriptionId || !stripe || !expiresAt) return;
+        const current = await stripe.subscriptions.retrieve(receipt.subscriptionId);
+        if (current.status !== "trialing" || (current.trial_end ?? 0) * 1000 !== expiresAt.getTime()) return;
+        if (receipt.kind === "trial_ending" && current.cancel_at_period_end) return;
+        chargeLabel = await upcomingCharge(current.id);
+        const price = current.items?.data?.[0]?.price;
+        renewLabel = formatChargedAmount(price?.unit_amount, price?.currency, price?.recurring?.interval ?? null);
+      }
+      const mail = trialMail(receipt.kind, {
+        product, firstName: user.first_name || "", plan,
+        trialEndsOn: expiresAt ? formatDay(c, expiresAt) : null, chargeLabel, renewLabel,
+      }, c);
+      if (!mail) throw new Error("The trial mail template is not written yet");
+      await deliver(mail);
+      return;
+    }
     if (receipt.kind === "bonus") {
       if (!expiresAt) return;
       const started = receipt.startedAt ? new Date(receipt.startedAt) : new Date();
@@ -685,6 +779,18 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
     await deliver({ subject: proWelcomeSubject(product, plan, c), text: proWelcomeText(input, c), html: proWelcomeHtml(input, c) });
 }
 
+/** The first charge after a trial as Stripe previews it: coupon, tax and
+ *  currency included. Null when Stripe cannot say; the mail then omits it. */
+async function upcomingCharge(subscriptionId: string): Promise<string | null> {
+  try {
+    const preview = await stripe!.invoices.createPreview({ subscription: subscriptionId });
+    return formatChargedAmount(preview.amount_due, preview.currency, null)?.replace(/ once$/, "") ?? null;
+  } catch (err) {
+    console.error("could not preview the first charge after a trial:", (err as Error).message);
+    return null;
+  }
+}
+
 /**
  * Queues the "plan ending" notice (kit 09) for a subscription that will not
  * renew: a week before the end for a cancellation, at once for a failed
@@ -700,6 +806,75 @@ async function queueEnding(userId: string, product: Product, subscription: Strip
     kind: "ending", reason, subscriptionId: subscription.id, userId, product,
     plan: subscriptionPlan(subscription), expiresAt: expiresAt.toISOString(), chargedLabel: null,
   }, notBefore);
+}
+
+/** Strict revocation (no grace): a failed charge has already blocked Pro, so
+ *  the payment_failed notice goes out now and says so (`blocked`). Same key
+ *  as queueEnding's, so a period is never mailed twice. */
+async function queueBlockedNotice(userId: string, product: Product, subscription: Stripe.Subscription): Promise<void> {
+  if (!["past_due", "unpaid"].includes(subscription.status)) return;
+  const periodEnd = periodEndFromSubscription(subscription);
+  if (!periodEnd) return;
+  let plan: string | null = null;
+  try { plan = subscriptionPlan(subscription); } catch { /* the mail omits the plan row */ }
+  await queueReceipt(`ending:payment_failed:${subscription.id}:${periodEnd.getTime()}`, {
+    kind: "ending", reason: "payment_failed", blocked: true, subscriptionId: subscription.id, userId, product,
+    plan, expiresAt: new Date().toISOString(), chargedLabel: null,
+  });
+}
+
+/** Status, trial end and renewal flag as Stripe has them now. */
+function billingFields(subscription: Stripe.Subscription) {
+  return {
+    status: subscription.status,
+    trialEndsAt: subscription.status === "trialing" && subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
+    cancelAtPeriodEnd: subscription.cancel_at_period_end === true,
+  };
+}
+
+/**
+ * A subscription sold with our trial keeps it only while it holds this
+ * product's trial claim (account, normalised email, card). One that does not
+ * is cancelled at once, before anything is charged, and recorded as
+ * "trial_rejected". Returns whether access may be granted. Idempotent: a
+ * replayed event finds its own claim; a cancellation retried by Stripe finds
+ * the subscription already cancelled.
+ */
+async function admitTrial(userId: string, product: Product, subscription: Stripe.Subscription, effects: BillingEffects): Promise<boolean> {
+  if (subscription.status !== "trialing" || !isOurTrial(subscription)) return true;
+  let plan: string | null = null;
+  try { plan = subscriptionPlan(subscription); } catch { /* the mail omits the plan row */ }
+  const claimed = await claimTrial({
+    product, userId, subscriptionId: subscription.id, fingerprint: await effects.cardFingerprint(subscription),
+  });
+  if (!claimed) {
+    await effects.cancelSubscription(subscription.id);
+    if (product === "pctweaker") {
+      await revokePro(userId, subscription.id, TRIAL_REJECTED);
+    } else {
+      await getPool().query(
+        `INSERT INTO entitlements (user_id, product, plan, expires_at, stripe_subscription_id, subscription_status)
+         VALUES ($1, $2, $3, now(), $4, $5) ON CONFLICT (user_id, product) DO NOTHING`,
+        [userId, product, plan, subscription.id, TRIAL_REJECTED],
+      );
+      await revokeEntitlement(userId, product, subscription.id, TRIAL_REJECTED);
+    }
+    await queueReceipt(`trial_rejected:${subscription.id}`, {
+      kind: "trial_rejected", userId, product, plan, expiresAt: null, subscriptionId: subscription.id, chargedLabel: null,
+    });
+    console.log(`trial refused for user ${userId} on ${product}: already used; ${subscription.id} cancelled before any charge`);
+    return false;
+  }
+  if (subscription.trial_end) {
+    const trialEnd = new Date(subscription.trial_end * 1000);
+    const base = { userId, product, plan, expiresAt: trialEnd.toISOString(), subscriptionId: subscription.id, chargedLabel: null };
+    await queueReceipt(`trial_started:${subscription.id}`, { kind: "trial_started", ...base });
+    // The reminder waits in the durable outbox until a day before the end;
+    // delivery re-reads Stripe, so a cancelled or converted trial is skipped.
+    await queueReceipt(`trial_ending:${subscription.id}:${subscription.trial_end}`, { kind: "trial_ending", ...base },
+      new Date(Math.max(Date.now(), trialEnd.getTime() - 24 * 60 * 60 * 1000)));
+  }
+  return true;
 }
 
 // Local, like every other route file's copy: the address and the plan name
@@ -779,6 +954,10 @@ type BillingEffects = {
   stopSubscriptions: (userId: string, customerId: string | null) => Promise<void>;
   welcome: typeof sendProWelcomeEmail;
   notifySale: typeof notifyOwnerOfSale;
+  /** The card fingerprint behind a subscription, where Stripe exposes one. */
+  cardFingerprint: (subscription: Stripe.Subscription) => Promise<string | null>;
+  /** Ends a subscription immediately, without charging (a refused trial). */
+  cancelSubscription: (id: string) => Promise<void>;
 };
 
 const billingEffects: BillingEffects = {
@@ -845,6 +1024,23 @@ const billingEffects: BillingEffects = {
   },
   welcome: sendProWelcomeEmail,
   notifySale: notifyOwnerOfSale,
+  async cardFingerprint(subscription) {
+    if (!stripe) throw new Error("Stripe is unavailable for trial verification");
+    const ref = subscription.default_payment_method;
+    const id = typeof ref === "string" ? ref : ref?.id;
+    if (!id) return null;
+    const method = typeof ref === "object" && ref ? ref : await stripe.paymentMethods.retrieve(id);
+    return method.card?.fingerprint ?? null;
+  },
+  async cancelSubscription(id) {
+    if (!stripe) throw new Error("Stripe is unavailable for subscription cancellation");
+    try {
+      await stripe.subscriptions.cancel(id);
+    } catch (err) {
+      // A retried event: the subscription was cancelled on the first attempt.
+      if ((await stripe.subscriptions.retrieve(id)).status !== "canceled") throw err;
+    }
+  },
 };
 
 async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: BillingEffects): Promise<void> {
@@ -889,9 +1085,13 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
   if (expiresAt && !Number.isFinite(expiresAt.getTime())) {
     throw new Error(`Checkout ${session.id} has an invalid creation time`);
   }
+  const trial = session.metadata?.trial === TRIAL_MARK;
+  const saleLabel = trial ? `${plan} (${TRIAL_DAYS}-day free trial)` : plan;
   if (product !== "pctweaker") {
-    await upsertEntitlement(userId, product, { plan: plan!, expiresAt, provisional: true });
-    effects.notifySale(userId, plan, session.mode, product);
+    // A trial is granted only by the subscription events, which check the
+    // trial claim first: a provisional grant here could outlive a refusal.
+    if (!trial) await upsertEntitlement(userId, product, { plan: plan!, expiresAt, provisional: true });
+    effects.notifySale(userId, saleLabel, session.mode, product);
     return;
   }
 
@@ -905,13 +1105,14 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
         (customerId && typeof current.customer === "string" && current.customer !== customerId)) {
       throw new Error(`Checkout ${session.id} does not match its subscription`);
     }
-    if (!["active", "trialing", "past_due"].includes(current.status)) {
-      await revokePro(userId, current.id);
+    if (!grantsAccess(current)) {
+      await revokePro(userId, current.id, current.status);
       return;
     }
+    if (!(await admitTrial(userId, "pctweaker", current, effects))) return;
     expiresAt = periodEndFromSubscription(current);
     if (!expiresAt) throw new Error(`Subscription ${current.id} has an invalid period end`);
-    source = subscriptionSource(current);
+    source = { ...subscriptionSource(current), ...billingFields(current) };
     plan = subscriptionPlan(current);
   }
   const granted = await grantPro(userId, { customerId, plan, expiresAt, ...source });
@@ -922,7 +1123,7 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
     await effects.stopSubscriptions(userId, customerId);
     await effects.welcome(userId, plan, null, product, sessionCharge(session), `checkout:${session.id}`);
   }
-  effects.notifySale(userId, plan, session.mode, product);
+  effects.notifySale(userId, saleLabel, session.mode, product);
 }
 
 type ReversedPurchase = { userId: string; product: Product; plan: string | null; subscriptionId: string | null };
@@ -1032,6 +1233,69 @@ async function handleReversal(event: Stripe.Event, effects: BillingEffects): Pro
   }
 }
 
+/**
+ * Applies a subscription's current state to its product: Pro while it is
+ * active or in trial (and, for the trial, holds its claim), blocked at once
+ * otherwise; see trial.ts for the one legacy grace. Returns the account it
+ * belongs to, or null when nothing was granted to anyone.
+ */
+async function syncSubscription(
+  subscription: Stripe.Subscription, product: Product, created: boolean, effects: BillingEffects,
+): Promise<{ userId: string } | null> {
+  const userId = await resolveUserId(subscription);
+  if (!userId) return null;
+  const active = grantsAccess(subscription);
+  const welcome = created && !isOurTrial(subscription);
+  if (product !== "pctweaker") {
+    if (!active) {
+      await revokeEntitlement(userId, product, subscription.id, subscription.status);
+      await queueBlockedNotice(userId, product, subscription);
+      return { userId };
+    }
+    if (!(await admitTrial(userId, product, subscription, effects))) return null;
+    const expiresAt = periodEndFromSubscription(subscription);
+    if (!expiresAt) throw new Error(`Subscription ${subscription.id} has an invalid period end`);
+    await upsertEntitlement(userId, product, {
+      plan: subscriptionPlan(subscription),
+      expiresAt,
+      stripeSubscriptionId: subscription.id,
+      ...billingFields(subscription),
+    });
+    await queueEnding(userId, product, subscription, expiresAt);
+    if (welcome) {
+      await effects.welcome(userId, subscriptionPlan(subscription), expiresAt, product, subscriptionCharge(subscription), `subscription:${subscription.id}`);
+    }
+    return { userId };
+  }
+
+  const customerId = typeof subscription.customer === "string" ? subscription.customer : null;
+  if (await holdsLifetime(userId)) {
+    await effects.stopSubscriptions(userId, customerId);
+    return null;
+  }
+  if (!active) {
+    await revokePro(userId, subscription.id, subscription.status);
+    await queueBlockedNotice(userId, "pctweaker", subscription);
+    return { userId };
+  }
+  if (!(await admitTrial(userId, "pctweaker", subscription, effects))) return null;
+  const expiresAt = periodEndFromSubscription(subscription);
+  if (!expiresAt) throw new Error(`Subscription ${subscription.id} has an invalid period end`);
+  const granted = await grantPro(userId, {
+    customerId,
+    plan: subscriptionPlan(subscription),
+    expiresAt,
+    ...subscriptionSource(subscription),
+    ...billingFields(subscription),
+  });
+  if (granted) await queueEnding(userId, "pctweaker", subscription, expiresAt);
+  // Only on creation, not every renewal/update; a trial's receipt waits for its first charge.
+  if (granted && welcome) {
+    await effects.welcome(userId, subscriptionPlan(subscription), expiresAt, "pctweaker", subscriptionCharge(subscription), `subscription:${subscription.id}`);
+  }
+  return granted ? { userId } : null;
+}
+
 async function handleEvent(event: Stripe.Event, effects: BillingEffects = billingEffects): Promise<void> {
   if (!isConfigured) throw new Error("Database is not configured; event was not accepted");
 
@@ -1046,7 +1310,7 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
     // reinstated after a failed payment.
     case "customer.subscription.created":
     case "customer.subscription.updated": {
-      let subscription = event.data.object as Stripe.Subscription;
+      const subscription = event.data.object as Stripe.Subscription;
       const product = subscriptionProduct(subscription);
       if (!product) break;
       // Every product acts on the subscription as it is now, not as the event
@@ -1056,66 +1320,39 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
       if (current.id !== subscription.id || subscriptionProduct(current) !== product) {
         throw new Error(`Subscription ${subscription.id} no longer matches its product`);
       }
-      subscription = current;
-      const userId = await resolveUserId(subscription);
-      if (!userId) break;
-      const active = ["active", "trialing", "past_due"].includes(subscription.status);
-      if (product !== "pctweaker") {
-        if (active) {
-          const expiresAt = periodEndFromSubscription(subscription);
-          if (!expiresAt) throw new Error(`Subscription ${subscription.id} has an invalid period end`);
-          await upsertEntitlement(userId, product, {
-            plan: subscriptionPlan(subscription),
-            expiresAt,
-            stripeSubscriptionId: subscription.id,
-          });
-          await queueEnding(userId, product, subscription, expiresAt);
-          if (event.type === "customer.subscription.created") {
-            await effects.welcome(
-              userId,
-              subscriptionPlan(subscription),
-              expiresAt,
-              product,
-              subscriptionCharge(subscription),
-              `subscription:${subscription.id}`,
-            );
-          }
-        } else {
-          await revokeEntitlement(userId, product, subscription.id);
-        }
-        break;
-      }
+      await syncSubscription(current, product, event.type === "customer.subscription.created", effects);
+      break;
+    }
 
-      const customerId = typeof subscription.customer === "string" ? subscription.customer : null;
-      if (await holdsLifetime(userId)) {
-        await effects.stopSubscriptions(userId, customerId);
-        break;
+    // Invoice outcomes move the subscription (trial converted, renewal failed,
+    // retry succeeded): re-read it and apply the same rules. The first paid
+    // invoice of a trial is its purchase, so that is when the receipt goes.
+    case "invoice.paid":
+    case "invoice.payment_failed":
+    case "invoice.payment_action_required": {
+      const invoice = event.data.object as Stripe.Invoice & {
+        parent?: { subscription_details?: { subscription?: string | { id: string } } };
+      };
+      const ref = invoice.parent?.subscription_details?.subscription ?? (invoice as { subscription?: string | { id: string } }).subscription;
+      const subscriptionId = typeof ref === "string" ? ref : ref?.id;
+      if (!subscriptionId) break;
+      const current = await effects.loadSubscription(subscriptionId);
+      const product = subscriptionProduct(current);
+      if (!product) break;
+      const synced = await syncSubscription(current, product, false, effects);
+      if (synced && event.type === "invoice.paid" && (invoice.amount_paid ?? 0) > 0 && isOurTrial(current) && grantsAccess(current)) {
+        await effects.welcome(
+          synced.userId, subscriptionPlan(current), periodEndFromSubscription(current), product,
+          subscriptionCharge(current), `subscription:${current.id}`,
+        );
       }
-      if (active) {
-        const expiresAt = periodEndFromSubscription(subscription);
-        if (!expiresAt) throw new Error(`Subscription ${subscription.id} has an invalid period end`);
-        const granted = await grantPro(userId, {
-          customerId,
-          plan: subscriptionPlan(subscription),
-          expiresAt,
-          ...subscriptionSource(subscription),
-        });
-        if (granted) await queueEnding(userId, "pctweaker", subscription, expiresAt);
-        // Only on creation, not every renewal/update — this event fires once
-        // per subscription's lifecycle start.
-        if (granted && event.type === "customer.subscription.created") {
-          await effects.welcome(
-            userId,
-            subscriptionPlan(subscription),
-            expiresAt,
-            "pctweaker",
-            subscriptionCharge(subscription),
-            `subscription:${subscription.id}`,
-          );
-        }
-      } else {
-        await revokePro(userId, subscription.id);
-      }
+      break;
+    }
+
+    // With a three-day trial Stripe sends this at the start: nothing to do.
+    case "customer.subscription.trial_will_end": {
+      const subscription = event.data.object as Stripe.Subscription;
+      console.log(`trial of ${subscription.id} ends at ${subscription.trial_end ?? "?"}`);
       break;
     }
 
@@ -1133,11 +1370,11 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
       const userId = await resolveUserId(subscription);
       if (!userId) break;
       if (product !== "pctweaker") {
-        await revokeEntitlement(userId, product, subscription.id);
+        await revokeEntitlement(userId, product, subscription.id, "canceled");
         break;
       }
       if (await holdsLifetime(userId)) break;
-      await revokePro(userId, subscription.id);
+      await revokePro(userId, subscription.id, "canceled");
       break;
     }
 

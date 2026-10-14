@@ -28,6 +28,10 @@ export type ProductEntitlement = {
   active: boolean;
   plan: string | null;
   expiresAt?: string | null;
+  /** Stripe status of the subscription behind the grant ("trial_rejected" is ours). */
+  status?: string | null;
+  trialEndsAt?: string | null;
+  cancelAtPeriodEnd?: boolean;
 };
 
 type EntitlementTableRow = {
@@ -54,7 +58,7 @@ export function isProductRowEntitled(row: EntitlementTableRow | null | undefined
 export async function productEntitlement(userId: number | string, product: Product, activateBonus = false): Promise<ProductEntitlement> {
   if (product === "pctweaker") {
     const { rows } = await getPool().query(
-      "SELECT is_pro, plan, pro_expires_at, legacy_pro_grant FROM users WHERE id = $1",
+      "SELECT is_pro, plan, pro_expires_at, legacy_pro_grant, subscription_status, trial_ends_at, cancel_at_period_end FROM users WHERE id = $1",
       [userId],
     );
     const row = rows[0];
@@ -62,10 +66,13 @@ export async function productEntitlement(userId: number | string, product: Produ
       product, active: isEntitled(row), plan: row?.plan ?? null,
       expiresAt: row?.plan && PERPETUAL_PLANS.has(row.plan) ? null
         : row?.pro_expires_at ? new Date(row.pro_expires_at).toISOString() : null,
+      status: row?.subscription_status ?? null,
+      trialEndsAt: row?.trial_ends_at ? new Date(row.trial_ends_at).toISOString() : null,
+      cancelAtPeriodEnd: row?.cancel_at_period_end === true,
     };
   }
   const { rows } = await getPool().query(
-    "SELECT plan, expires_at FROM entitlements WHERE user_id = $1 AND product = $2",
+    "SELECT plan, expires_at, subscription_status, trial_ends_at, cancel_at_period_end FROM entitlements WHERE user_id = $1 AND product = $2",
     [userId, product],
   );
   const row = rows[0];
@@ -90,11 +97,16 @@ export async function productEntitlement(userId: number | string, product: Produ
   const bonusExpiry = bonuses[0]?.expires_at ? new Date(bonuses[0].expires_at) : null;
   const bonusActive = lifetime && bonusExpiry !== null && bonusExpiry.getTime() > Date.now();
   const paidExpiry = row?.expires_at ? new Date(row.expires_at) : null;
+  const billing = {
+    status: row?.subscription_status ?? null,
+    trialEndsAt: row?.trial_ends_at ? new Date(row.trial_ends_at).toISOString() : null,
+    cancelAtPeriodEnd: row?.cancel_at_period_end === true,
+  };
   if (paidActive && (row.plan === "lifetime" || !bonusActive || (paidExpiry && paidExpiry >= bonusExpiry!))) {
-    return { product, active: true, plan: row.plan, expiresAt: row.plan === "lifetime" ? null : paidExpiry?.toISOString() };
+    return { product, active: true, plan: row.plan, expiresAt: row.plan === "lifetime" ? null : paidExpiry?.toISOString(), ...billing };
   }
-  if (bonusActive) return { product, active: true, plan: "lifetime_bonus", expiresAt: bonusExpiry!.toISOString() };
-  return { product, active: false, plan: row?.plan ?? null, expiresAt: null };
+  if (bonusActive) return { product, active: true, plan: "lifetime_bonus", expiresAt: bonusExpiry!.toISOString(), ...billing };
+  return { product, active: false, plan: row?.plan ?? null, expiresAt: null, ...billing };
 }
 
 /** All products' entitlements for a user, for account UIs and loyalty pricing. */
@@ -120,11 +132,15 @@ export async function hasAnyActiveEntitlement(userId: number | string): Promise<
 export async function upsertEntitlement(
   userId: number | string,
   product: Product,
-  { plan, expiresAt, stripeSubscriptionId, provisional }: { plan: string | null; expiresAt: Date | null; stripeSubscriptionId?: string | null; provisional?: boolean },
+  { plan, expiresAt, stripeSubscriptionId, provisional, status, trialEndsAt, cancelAtPeriodEnd }: {
+    plan: string | null; expiresAt: Date | null; stripeSubscriptionId?: string | null; provisional?: boolean;
+    /** The subscription as Stripe has it now, when the caller read it. */
+    status?: string | null; trialEndsAt?: Date | null; cancelAtPeriodEnd?: boolean;
+  },
 ): Promise<void> {
   await getPool().query(
-    `INSERT INTO entitlements (user_id, product, plan, expires_at, stripe_subscription_id, updated_at)
-     VALUES ($1, $2, $3, $4, $5, now())
+    `INSERT INTO entitlements (user_id, product, plan, expires_at, stripe_subscription_id, subscription_status, trial_ends_at, cancel_at_period_end, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $7, $8, $9, now())
      ON CONFLICT (user_id, product) DO UPDATE
         SET plan = EXCLUDED.plan,
             expires_at = CASE
@@ -134,8 +150,11 @@ export async function upsertEntitlement(
               ELSE EXCLUDED.expires_at
             END,
             stripe_subscription_id = COALESCE(EXCLUDED.stripe_subscription_id, entitlements.stripe_subscription_id),
+            subscription_status = COALESCE(EXCLUDED.subscription_status, entitlements.subscription_status),
+            trial_ends_at = CASE WHEN EXCLUDED.subscription_status IS NULL THEN entitlements.trial_ends_at ELSE EXCLUDED.trial_ends_at END,
+            cancel_at_period_end = CASE WHEN EXCLUDED.subscription_status IS NULL THEN entitlements.cancel_at_period_end ELSE EXCLUDED.cancel_at_period_end END,
             updated_at = now()`,
-    [userId, product, plan, expiresAt, stripeSubscriptionId ?? null, provisional === true],
+    [userId, product, plan, expiresAt, stripeSubscriptionId ?? null, provisional === true, status ?? null, trialEndsAt ?? null, cancelAtPeriodEnd === true],
   );
 }
 
@@ -143,11 +162,12 @@ export async function upsertEntitlement(
  *  The row is kept — history matters for support — but the expiry is now.
  *  Given a subscription, only that subscription's grant ends: a late event
  *  for an old subscription must not cut off the one that replaced it. */
-export async function revokeEntitlement(userId: number | string, product: Product, subscriptionId?: string): Promise<void> {
+export async function revokeEntitlement(userId: number | string, product: Product, subscriptionId?: string, status?: string): Promise<void> {
   await getPool().query(
-    `UPDATE entitlements SET expires_at = now(), updated_at = now()
+    `UPDATE entitlements SET expires_at = now(), updated_at = now(),
+            subscription_status = COALESCE($4, subscription_status), trial_ends_at = NULL, cancel_at_period_end = FALSE
       WHERE user_id = $1 AND product = $2
         AND ($3::text IS NULL OR stripe_subscription_id IS NULL OR stripe_subscription_id = $3)`,
-    [userId, product, subscriptionId ?? null],
+    [userId, product, subscriptionId ?? null, status ?? null],
   );
 }

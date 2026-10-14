@@ -20,6 +20,7 @@ return a clear 503 instead of crashing, so you can deploy incrementally.
 | GET    | `/api/auth/reset-password`       | —      | `?token=...` from the reset email; HTML form        |
 | POST   | `/api/auth/reset-password`       | —      | `{ token, newPassword }`, invalidates old sessions  |
 | GET    | `/api/account`                   | Bearer | `{ email, isPro, emailVerified }`                   |
+| GET    | `/api/billing/status`            | Bearer | Per product: trial/active/blocked state, `can_start_trial` (`TRIAL_ENABLED`) |
 | POST   | `/api/checkout`                  | Bearer | `{ }` → `{ url }` (Stripe Checkout URL)             |
 | POST   | `/api/stripe-webhook`            | Stripe signature | called by Stripe, not by the app         |
 | GET    | `/api/reviews`                   | —      | `{ average, count }` — no user text is ever returned |

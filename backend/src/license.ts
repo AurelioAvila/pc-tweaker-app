@@ -54,6 +54,8 @@ export type LicensePayload = {
    *  look newer than it is. */
   issuedAt: number;
   expiresAt?: number | null;
+  /** Unix seconds while a free trial runs (then expiresAt equals it), else null. */
+  trialEndsAt?: number | null;
 };
 
 export type SignedLicense = {

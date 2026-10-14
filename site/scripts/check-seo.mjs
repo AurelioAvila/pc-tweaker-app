@@ -94,11 +94,34 @@ assert.ok(app.softwareVersion, "Software version must be populated");
 assert.equal(app["@type"], "SoftwareApplication");
 // Prices are a factual claim about what a visitor will be charged. Keep them
 // pinned to the plans the pricing section and the FAQ actually state.
+// The expected prices are the ones the app charges (src/lib.ts), not a copy typed here.
+const appLib = await readFile(new URL("../../src/lib.ts", import.meta.url), "utf8");
+const charged = ["PRICE_MONTHLY", "PRICE_ANNUAL", "PRICE_LIFETIME"].map(
+  (name) => appLib.match(new RegExp(`export const ${name} = ([\\d.]+);`))?.[1],
+);
+assert.ok(charged.every(Boolean), "Pro prices not found in src/lib.ts");
 assert.deepEqual(
   app.offers.map((offer) => offer.price).sort(),
-  ["0", "59.99", "7.99", "99"].sort(),
+  ["0", ...charged].sort(),
   "SoftwareApplication offers must match the published pricing",
 );
+assert.ok(!home.includes("__PRICE_"), "Unresolved price placeholder in the homepage JSON-LD");
+
+// AI-readable summaries: present, consistent with the structured data, and with a verifiable installer record.
+const llms = await readFile(new URL("llms.txt", dist), "utf8");
+const llmsFull = await readFile(new URL("llms-full.txt", dist), "utf8");
+assert.ok(llms.startsWith("# PC Tweaker"), "llms.txt must start with the H1");
+for (const price of charged) assert.ok(llms.includes(`EUR ${price}`), `llms.txt does not state EUR ${price}`);
+assert.ok(llmsFull.includes("### What is free, and how does Pro work?"), "llms-full.txt must carry the homepage FAQ");
+for (const [key, route] of [["pc-tweaker", ""], ["uninstaller", "uninstaller/"], ["tweaky-driver", "tweaky-driver/"]]) {
+  const trust = JSON.parse(await readFile(new URL("../src/generated/release-trust.json", import.meta.url), "utf8"))[key];
+  assert.match(trust.sha256, /^[0-9a-f]{64}$/, `${key}: SHA-256 missing`);
+  assert.equal(trust.signature.status, "Valid", `${key}: signature must be Valid`);
+  assert.ok(llms.includes(trust.sha256), `llms.txt does not carry the ${key} SHA-256`);
+  const page = await readFile(new URL(`${route}index.html`, dist), "utf8");
+  assert.ok(page.includes(trust.sha256), `${route || "/"} does not show the ${key} SHA-256`);
+  assert.match(page, /Get-FileHash \.\\[A-Za-z]+/, `${route || "/"}: the verify command lost its .\\file path`);
+}
 const uninstallerApp = [...uninstaller.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)]
   .map((match) => JSON.parse(match[1]))
   .find((item) => item["@type"] === "SoftwareApplication");

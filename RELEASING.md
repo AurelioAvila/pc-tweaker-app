@@ -26,6 +26,16 @@ Official releases are built locally and published by Aurelio Avila. CI verificat
 
 Authenticode establishes publisher identity and file integrity. Tauri signatures protect updater packages. Neither is Microsoft endorsement, a performance guarantee or a promise that SmartScreen will never warn. Older releases may be unsigned; identify the version whenever making a signing claim.
 
+## Verify-download block (SHA-256 and signature on the site)
+
+The download areas of pctweaker.app show the SHA-256 and Authenticode status of the published installer, and `llms.txt` repeats them. Both come from `site/src/generated/release-trust.json`, which is written by `scripts/release-trust.mjs` from the real release asset: it re-downloads the file, refuses to continue if the hash differs from GitHub's digest or the signature is not Valid. After the release is published and copied to dl.pctweaker.app, refresh the entry of the product you released, commit the JSON and let the site deploy:
+
+```powershell
+node scripts/release-trust.mjs --repo AurelioAvila/pc-tweaker-app --key pc-tweaker --asset '^pc-tweaker-app_.*_x64-setup\.exe$' --out site/src/generated/release-trust.json --url https://dl.pctweaker.app/pc-tweaker/vX.Y.Z/pc-tweaker-app_X.Y.Z_x64-setup.exe
+```
+
+Uninstaller: `--repo AurelioAvila/pc-tweaker-uninstaller --key uninstaller --asset '^PC\.Tweaker\.Uninstaller_.*_x64-setup\.exe$'`. Tweaky Driver: `--repo AurelioAvila/Tweaky-Driver-Releases --key tweaky-driver --asset '^Tweaky-Driver-.*-x64-setup\.exe$'`. `npm run check:seo` (in `site/`) fails when a page or `llms.txt` lacks the recorded hash.
+
 ## Live WinGet badges
 
 Use `https://img.shields.io/winget/v/AurelioAvila.PCTweaker?label=WinGet&color=0078D4` wherever a current WinGet version badge is displayed. Link to the package directory without a version suffix. The repository README and GitHub profile use this live endpoint; do not replace it with a static version badge during releases. It follows catalog availability, independently of GitHub release publication or PR submission, and may lag while provider and image caches refresh. Historical release notes retain their original versions.

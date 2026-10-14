@@ -1,4 +1,5 @@
 import { UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "../constants";
+import { ReleaseTrust } from "../components/ReleaseTrust";
 import { euro, PromoCard, PromoFine, usePromo } from "../promo";
 import { TrialLine } from "../trial";
 import { promoPercent } from "../../../src/promo";
@@ -62,6 +63,7 @@ export function UninstallerPage() {
             Installer, MSI, checksums and release notes
           </a>
         </div>
+        <ReleaseTrust product="uninstaller" saveAs="PCTweakerUninstaller-Setup.exe" />
         <PromoCard product="uninstaller" plan="annual" href="#uninstaller-pro" />
       </div>
 

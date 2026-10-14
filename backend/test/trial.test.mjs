@@ -385,7 +385,7 @@ test("trial ended without payment is mailed once, with the reason; not after a p
   const id = await user();
   const sub = trialSubscription(id, { cancel_at_period_end: true });
   await handleEvent(event("customer.subscription.created", sub), effects());
-  const ended = update(sub, { status: "canceled", ended_at: sub.trial_end, cancellation_details: { reason: "cancellation_requested" } });
+  const ended = update(sub, { status: "canceled", ended_at: sub.trial_end, canceled_at: now() + DAY, cancel_at: sub.trial_end, cancellation_details: { reason: "cancellation_requested" } });
   await handleEvent(event("customer.subscription.deleted", ended), effects());
   await handleEvent(event("customer.subscription.deleted", ended), effects());
   const mails = (await receipts(id)).filter((r) => r.receipt_key === `trial_ended:${sub.id}`);
@@ -394,9 +394,12 @@ test("trial ended without payment is mailed once, with the reason; not after a p
   assert.equal(Date.parse(mails[0].payload.expiresAt), sub.trial_end * 1000);
 
   const noCard = await user();
-  const bare = trialSubscription(noCard);
+  const bare = trialSubscription(noCard, { default_payment_method: null });
   await handleEvent(event("customer.subscription.created", bare), effects());
-  await handleEvent(event("customer.subscription.deleted", update(bare, { status: "canceled", ended_at: bare.trial_end, cancellation_details: { reason: null } })), effects());
+  // What Stripe really sends (test mode, 14 Oct 2026): the same "cancellation_requested" as a customer's cancel.
+  await handleEvent(event("customer.subscription.deleted", update(bare, {
+    status: "canceled", ended_at: bare.trial_end, canceled_at: bare.trial_end, cancellation_details: { reason: "cancellation_requested" },
+  })), effects());
   assert.equal((await receipts(noCard)).find((r) => r.receipt_key === `trial_ended:${bare.id}`).payload.reason, "no_method");
 
   const converted = await user();

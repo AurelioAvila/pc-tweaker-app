@@ -901,12 +901,13 @@ async function subscriptionCard(subscription: Stripe.Subscription): Promise<{ br
  *  (a key of the copy's failureReasons) and Stripe's page to pay it. */
 async function failedCharge(subscriptionId: string): Promise<{ amount: Money | null; failure: string; payUrl: string | null }> {
   if (!stripe) throw new Error("Stripe is unavailable for the payment-failed notice");
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId, { expand: ["latest_invoice.payments"] });
-  const invoice = (typeof subscription.latest_invoice === "object" ? subscription.latest_invoice : null) as (Stripe.Invoice & {
-    payments?: { data: { payment?: { payment_intent?: string | { id: string } } }[] };
-  }) | null;
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  type PaidInvoice = Stripe.Invoice & { payments?: { data: { payment?: { payment_intent?: string | { id: string } } }[] } };
+  let invoice: PaidInvoice | null = null;
   let failure = "generic";
   try {
+    const invoiceId = typeof subscription.latest_invoice === "string" ? subscription.latest_invoice : subscription.latest_invoice?.id;
+    if (invoiceId) invoice = await stripe.invoices.retrieve(invoiceId, { expand: ["payments"] }) as PaidInvoice;
     const ref = invoice?.payments?.data?.[0]?.payment?.payment_intent;
     const id = typeof ref === "string" ? ref : ref?.id;
     if (id) {
@@ -970,10 +971,15 @@ async function queueTrialEnded(userId: string, product: Product, subscription: S
   if (endedAt > trialEnd + 2 * 3600) return;
   let plan: string | null = null;
   try { plan = subscriptionPlan(subscription); } catch { /* not printed by this message */ }
+  // Stripe reports "cancellation_requested" for both endings (tested): the
+  // customer's own cancellation shows as cancel_at / an earlier canceled_at,
+  // a trial left without a card has no payment method.
+  const asked = subscription.cancel_at_period_end === true || subscription.cancel_at != null ||
+    (subscription.canceled_at ?? trialEnd) < trialEnd || Boolean(subscription.default_payment_method);
   await queueReceipt(`trial_ended:${subscription.id}`, {
     kind: "trial_ended", userId, product, plan, subscriptionId: subscription.id, chargedLabel: null,
     expiresAt: new Date(Math.min(endedAt, trialEnd) * 1000).toISOString(),
-    reason: subscription.cancellation_details?.reason === "cancellation_requested" ? "cancelled" : "no_method",
+    reason: asked ? "cancelled" : "no_method",
   }).catch((err: { code?: string }) => {
     // A deleted account has nobody to notify; anything else must retry.
     if (err?.code !== "23503") throw err;

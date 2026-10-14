@@ -312,11 +312,66 @@ router.post("/checkout", requireAuth, checkoutLimiter, requireStripe, createChec
  * account, for the apps' plan screens. Informational like /entitlements: the
  * signed license and the checkout decide, this only describes.
  */
-export async function billingStatus(userId: number | string, products: readonly Product[], environment: NodeJS.ProcessEnv = process.env, now = Date.now()) {
+/** The recurring plans and the variable naming each one's Stripe Price. */
+const RECURRING_PLANS = [
+  { product: "pctweaker", plan: "monthly", env: "STRIPE_PRICE_MONTHLY" },
+  { product: "pctweaker", plan: "annual", env: "STRIPE_PRICE_ANNUAL" },
+  { product: "uninstaller", plan: "annual", env: "STRIPE_PRICE_UNINSTALLER_ANNUAL" },
+] as const;
+
+export type PriceView = { amount: number; currency: string; interval: string; tax_behavior: string | null };
+type PriceReader = (id: string) => Promise<Stripe.Price>;
+const priceCache = new Map<string, { until: number; value: Promise<PriceView | null> }>();
+
+/** A Price's amount as Stripe has it, cached ten minutes (one after a
+ *  failure): the apps and the site never write a price in their code. */
+export function stripePrice(id: string | undefined, read: PriceReader | null = stripe ? (price) => stripe!.prices.retrieve(price) : null, now = Date.now()): Promise<PriceView | null> {
+  if (!id || !read) return Promise.resolve(null);
+  const cached = priceCache.get(id);
+  if (cached && cached.until > now) return cached.value;
+  const entry = { until: now + 10 * 60_000, value: Promise.resolve<PriceView | null>(null) };
+  entry.value = read(id).then((price) => price.active && price.unit_amount != null && price.recurring
+    ? { amount: price.unit_amount, currency: price.currency, interval: price.recurring.interval, tax_behavior: price.tax_behavior ?? null }
+    : null).catch((err: Error) => {
+      console.error("could not read a Stripe price:", err.message);
+      entry.until = now + 60_000;
+      return null;
+    });
+  priceCache.set(id, entry);
+  return entry.value;
+}
+
+/** GET /api/billing/prices: public, for the site and the plan screens. */
+export async function publicPrices(environment: NodeJS.ProcessEnv = process.env, read?: PriceReader | null) {
+  const prices = await Promise.all(RECURRING_PLANS.map(async ({ product, plan, env }) => {
+    const price = await stripePrice(environment[env], read);
+    return price && { product, plan, ...price };
+  }));
+  return {
+    server_time: new Date().toISOString(),
+    trial_enabled: trialEnabled(environment),
+    trial_days: TRIAL_DAYS,
+    prices: prices.filter(Boolean),
+  };
+}
+
+router.get("/billing/prices", asyncRoute(async (_req: Request, res: Response) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.json(await publicPrices());
+}));
+
+export async function billingStatus(userId: number | string, products: readonly Product[], environment: NodeJS.ProcessEnv = process.env, now = Date.now(), read?: PriceReader | null) {
   const { rows } = await getPool().query("SELECT stripe_customer_id FROM users WHERE id = $1", [userId]);
   const items = [];
   for (const product of products) {
     const entitlement = await productEntitlement(userId, product);
+    // What this account would pay to renew, by plan: the Uninstaller's
+    // loyalty price follows the same server-side rule as the checkout.
+    const loyalty = product === "uninstaller" && (await productEntitlement(userId, "pctweaker")).active;
+    const prices = (await Promise.all(RECURRING_PLANS.filter((entry) => entry.product === product).map(async ({ plan, env }) => {
+      const price = await stripePrice(environment[loyalty ? "STRIPE_PRICE_UNINSTALLER_LOYALTY" : env], read);
+      return price && { plan, ...price };
+    }))).filter(Boolean);
     const perpetual = entitlement.plan === "lifetime" || entitlement.plan === "lifetime_bonus";
     const trialEnd = entitlement.trialEndsAt ? Date.parse(entitlement.trialEndsAt) : null;
     const status = entitlement.status ?? null;
@@ -333,6 +388,7 @@ export async function billingStatus(userId: number | string, products: readonly 
       cancel_at_period_end: Boolean(entitlement.active && entitlement.cancelAtPeriodEnd),
       can_start_trial: await trialEligible(userId, product, entitlement, environment),
       blocked_reason: state === "blocked" ? blockedReason(status) : "none",
+      prices,
     });
   }
   return { trial_enabled: trialEnabled(environment), trial_days: TRIAL_DAYS, portal_available: Boolean(rows[0]?.stripe_customer_id), products: items };

@@ -315,3 +315,29 @@ test("Lifetime never gets a trial and reads as active", async () => {
   assert.equal(state.can_start_trial, false);
   assert.equal(state.current_period_end, null);
 });
+
+test("prices come from Stripe, cached, with the Uninstaller's loyalty price for PC Tweaker subscribers", async () => {
+  const { publicPrices, billingStatus: status2 } = await import("../dist/routes/stripe.js");
+  const reads = [];
+  const catalogue = {
+    price_pc_monthly_fixture: { active: true, unit_amount: 799, currency: "eur", recurring: { interval: "month" }, tax_behavior: "exclusive" },
+    price_pc_annual_fixture: { active: true, unit_amount: 5999, currency: "eur", recurring: { interval: "year" }, tax_behavior: "exclusive" },
+    price_uninstaller_fixture: { active: true, unit_amount: 999, currency: "eur", recurring: { interval: "year" }, tax_behavior: "exclusive" },
+    price_uninstaller_loyalty_fixture: { active: true, unit_amount: 499, currency: "eur", recurring: { interval: "year" }, tax_behavior: "exclusive" },
+  };
+  const read = async (id) => { reads.push(id); return catalogue[id]; };
+  const listed = await publicPrices(environment, read);
+  assert.deepEqual(listed.prices.map((p) => [p.product, p.plan, p.amount, p.interval]), [
+    ["pctweaker", "monthly", 799, "month"], ["pctweaker", "annual", 5999, "year"], ["uninstaller", "annual", 999, "year"],
+  ]);
+  assert.equal(listed.trial_days, 3);
+  await publicPrices(environment, read);
+  assert.equal(reads.length, 3, "cached");
+
+  const subscriber = await user();
+  await getPool().query("UPDATE users SET is_pro = TRUE, plan = 'annual', pro_expires_at = now() + interval '30 days' WHERE id = $1", [subscriber]);
+  const [uninstaller] = (await status2(subscriber, ["uninstaller"], environment, Date.now(), read)).products;
+  assert.deepEqual(uninstaller.prices.map((p) => [p.plan, p.amount]), [["annual", 499]]);
+  const [pctweaker] = (await status2(await user(), ["pctweaker"], environment, Date.now(), read)).products;
+  assert.deepEqual(pctweaker.prices.map((p) => [p.plan, p.amount]), [["monthly", 799], ["annual", 5999]]);
+});

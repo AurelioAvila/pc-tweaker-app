@@ -15,7 +15,7 @@ const INTRO =
 const SPEED_UP = [
   "Reply to this email with anything you forgot: the app version, your Windows version, and the exact control or scan you used. One thread keeps everything together.",
   "If a setting is misbehaving, open Change history and tell us what the entry says. Every applied control is listed there with the value it set and the one it replaced, which is usually the whole diagnosis.",
-  "Screenshots help; blur anything personal first. Never include a password, a licence token or card details, and if we ever seem to ask for them, the message is not from us.",
+  "Screenshots help; blur anything personal first. Never include a password, a license token or card details, and if we ever seem to ask for them, the message is not from us.",
 ];
 const WAIT =
   "While you wait: if a change needs undoing right now, Restore All in Change history puts every recorded setting back without waiting for us.";

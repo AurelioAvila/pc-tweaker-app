@@ -70,7 +70,10 @@ const greet = (lead: string, firstName: string, tail = ".") => {
 const plain = (html: string) => html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"');
 
 export function proWelcomeSubject(product?: string | null, plan?: string | null): string {
-  if (product === "uninstaller") return `Your ${brandFor(product).name} purchase is confirmed`;
+  if (product === "uninstaller")
+    return plan === "lifetime"
+      ? `Your ${brandFor(product).name} purchase is confirmed`
+      : `Your ${brandFor(product).name} subscription is active`;
   return plan === "lifetime"
     ? "Your PC Tweaker Pro Lifetime license is active"
     : "Your PC Tweaker Pro subscription is active";
@@ -100,26 +103,37 @@ function receipt({ product, firstName, email, plan, priceLabel, renewsOn }: ProW
   };
 
   if (product === "uninstaller") {
+    const items = [
+      "Pick a program rated <strong>Safe</strong> by the Confidence Score and read its Removal Brief: the exact command, whether Windows Installer or the program's own uninstaller runs, the permissions it asks for and the reported size. Nothing runs until you confirm.",
+      "After the uninstall, the leftover scan lists the folders, shortcuts and registry keys the program left behind. With Pro you can remove them from that same screen. Files go to the Recycle Bin, so a wrong guess is recoverable until you empty it; registry values are kept in the Removal Ledger.",
+      "For a bigger clear-out, tick several programs and start a batch. Protected programs are never batchable, the related-programs check still warns before a parent takes its plugins with it, and the restore-point attempt runs before elevated removals, with the outcome recorded.",
+    ];
+    if (!lifetime)
+      items.push(
+        `<strong>Managing the plan.</strong> Plans &amp; pricing in the top bar shows the account and plan and opens Stripe's billing portal for the card, the interval or a cancellation. A cancelled plan stays Pro until ${escapeHtml(renewsOn ?? "")}. Signing in with ${who} on another PC makes it Pro there too.`,
+      );
     return {
       eyebrow: "Pro activated",
-      headline: greet("Uninstaller Pro is yours", firstName),
-      preheader: `${planLabelFor(plan)}, ${priceLabel}${renewsOn ? `, renews on ${renewsOn}` : ""}. Sign in to the Uninstaller with ${email} to use it.`,
-      intro: `Stripe confirmed the payment and Uninstaller Pro is on the account ${email}. Leftover cleanup, batch removal and the removal of broken entries are unlocked; the free features you already used stay as they are.`,
+      headline: greet("Pro is on", firstName, ". Leftovers are now yours to remove."),
+      preheader: `${planLabelFor(plan)}, ${priceLabel}${renewsOn ? `, renews on ${renewsOn}` : ", no renewal"}. Leftover cleanup, batch removal and broken entries are on.`,
+      intro: `Stripe confirmed the payment and the Uninstaller Pro license for ${email} is signed. Three things change in the app: the leftover scan can now clean what it finds, several programs can be queued and removed in one run, and entries whose own uninstaller is gone can be removed too. Everything you had on Free, including the Confidence Score and the Removal Ledger, stays exactly as it was.`,
       rows: [
-        ["Plan", `Uninstaller ${planLabelFor(plan)}`],
+        ["Plan", planLabelFor(plan)],
         ["Charged", priceLabel],
         renewsOn ? ["Renews on", renewsOn] : ["Access", "Never expires"],
-        ["Account", email],
+        ["Account", `${email} (shared with PC Tweaker)`],
       ],
-      heading: "What Pro adds",
-      items: [
-        "<strong>Leftover cleanup.</strong> After an uninstall, the files and registry keys the program left behind can be removed. Files go to the Recycle Bin, so they stay recoverable until you empty it.",
-        "<strong>Batch removal.</strong> Pick several programs and they are removed one after another, in a safe order.",
-        "<strong>Broken entries.</strong> Programs whose uninstaller is gone can be cleared from the list of installed apps.",
-      ],
-      noteHtml: `${lifetime ? "This purchase does not renew. " : ""}Pro appears the next time the Uninstaller checks your account. If it does not, open Plans &amp; pricing and refresh. Stripe sends the invoice separately, from its own address.`,
-      help,
-      why: `You received this email because ${brand.name} was bought on the account at this address.`,
+      heading: "A first clean removal with Pro",
+      items,
+      noteHtml: `${lifetime ? "This purchase does not renew. " : ""}One account, two licenses: a PC Tweaker Pro license does not unlock Uninstaller and this one does not unlock PC Tweaker; each app verifies its own. Stripe sends the invoice separately. If Uninstaller still shows Free after a few minutes, sign out and in from Plans &amp; pricing.`,
+      help: {
+        title: "Paid but still not Pro, or a removal that did not go as the Brief said?",
+        text: "Tell us the app version and the Removal Ledger entry (it exports to CSV).",
+        expectation: "We usually answer within one working day.",
+      },
+      why: lifetime
+        ? `You received this email because ${brand.name} was bought on the PC Tweaker account at this address.`
+        : "You received this email because an Uninstaller Pro subscription was started on the PC Tweaker account at this address.",
     };
   }
 
@@ -233,6 +247,31 @@ const ONE_OFF = "This was a one-off purchase, so there is no subscription left t
 const MISTAKE = "If you think this happened by mistake, reply to this email and we will look at the Stripe record with you.";
 const subscriptionPlan = (plan: string | null) => plan === "monthly" || plan === "annual";
 
+/** Uninstaller copy (kit pc-tweaker-uninstaller 02): the reversal touches
+ *  Uninstaller only, and its Free side keeps working. */
+function uninstallerReversal(firstName: string, plan: string | null, refundedLabel: string | null) {
+  const paid = refundedLabel ? `the payment of ${refundedLabel}` : "your payment";
+  return {
+    preheader: `${refundedLabel ?? "Your payment"} was reversed by your payment provider. Pro has ended; single uninstalls, the Brief and the Ledger keep working.`,
+    headline: greet("Your payment was reversed", firstName),
+    intro: `Your payment provider reversed ${paid} for PC Tweaker Uninstaller Pro, and Stripe has told us. The Pro entitlement tied to that payment has ended. Your account stays open, and so does the PC Tweaker side of it: this reversal touches Uninstaller only.`,
+    rows: [
+      ...(refundedLabel ? [["Amount reversed", refundedLabel] as [string, string]] : []),
+      ...(plan && PLAN_LABELS[plan] ? [["Plan", PLAN_LABELS[plan]] as [string, string]] : []),
+      ["Uninstaller Pro", "Ended"],
+      ["Still yours on Free", "Single uninstalls, Confidence Score, Removal Brief, leftover scan, Removal Ledger"],
+    ] as [string, string][],
+    stops:
+      "What stops: leftover cleanup, batch removal and the removal of broken entries. What does not change: anything already removed stays removed, the Removal Ledger keeps every receipt, and files you sent to the Recycle Bin are still there until you empty it.",
+    next: subscriptionPlan(plan)
+      ? "If the subscription is still listed as active in Stripe, cancel it from Plans & pricing in the top bar so it does not attempt another charge."
+      : "This was a one-off entitlement, so there is nothing left to cancel.",
+    origin:
+      "This reversal came from your bank or card issuer, not from us. If you did not ask your bank for it, reply to this email with the date and amount on your statement and we will go through the Stripe record with you.",
+    why: "You received this email because a payment for Uninstaller Pro on the PC Tweaker account at this address was reversed.",
+  };
+}
+
 export function refundSubject(product?: string | null): string {
   return `Your ${brandFor(product).name} payment was reversed`;
 }
@@ -240,6 +279,17 @@ export function refundSubject(product?: string | null): string {
 /** Sent once per fully reversed charge, after access has been removed. */
 export function refundText({ product, firstName, plan, refundedLabel }: RefundEmailInput): string {
   const brand = brandFor(product);
+  if (product === "uninstaller") {
+    const u = uninstallerReversal(firstName, plan, refundedLabel);
+    return [
+      u.headline,
+      u.intro,
+      u.rows.map(([label, value]) => `${label}: ${value}`).join("\n"),
+      u.stops,
+      u.next,
+      u.origin,
+    ].join("\n\n") + textFooter(brand.visual, u.why);
+  }
   return [
     greet("Your payment was reversed", firstName),
     "",
@@ -255,6 +305,19 @@ export function refundText({ product, firstName, plan, refundedLabel }: RefundEm
 
 export function refundHtml({ product, firstName, plan, refundedLabel }: RefundEmailInput): string {
   const brand = brandFor(product);
+  if (product === "uninstaller") {
+    const u = uninstallerReversal(firstName, plan, refundedLabel);
+    return emailShell({
+      brand: brand.visual,
+      preheader: u.preheader,
+      eyebrow: "Payment reversed",
+      headline: u.headline,
+      intro: u.intro,
+      blocks: [details(u.rows), paragraph(escapeHtml(u.stops)), paragraph(escapeHtml(u.next)), note(escapeHtml(u.origin))],
+      help: { title: "Questions about this reversal?", text: "Tell us the date and the amount on your bank statement." },
+      why: u.why,
+    });
+  }
   const rows: [string, string][] = [
     ...(refundedLabel ? [["Amount reversed", refundedLabel] as [string, string]] : []),
     ...(plan && PLAN_LABELS[plan] ? [["Plan", PLAN_LABELS[plan]] as [string, string]] : []),

@@ -80,3 +80,21 @@ test("the purchase email quotes the Uninstaller's real Pro features and the cata
   const tweaker = proWelcomeHtml({ firstName: "Ada", email: "a@example.com", plan: "annual", priceLabel: "€24.99 / year", renewsOn: "1 October 2027" });
   assert.match(tweaker, /All 81 controls are available now: the 46 you had on Free plus the 35 Pro ones/);
 });
+
+test("the Uninstaller receipt and reversal follow the kit and never mention a refund", async () => {
+  const { refundHtml, refundText, proWelcomeSubject } = await import("../dist/emails/pro-welcome.js");
+  const sub = { product: "uninstaller", firstName: "Ada", email: "a@example.com", plan: "annual", priceLabel: "€9.99 / year", renewsOn: "1 October 2027" };
+  const html = proWelcomeHtml(sub);
+  assert.match(html, /Pro is on, Ada\. Leftovers are now yours to remove\./);
+  assert.match(html, /A cancelled plan stays Pro until 1 October 2027/);
+  assert.equal(proWelcomeSubject("uninstaller", "annual"), "Your PC Tweaker Uninstaller Pro subscription is active");
+  const once = proWelcomeHtml({ ...sub, plan: "lifetime", renewsOn: null });
+  assert.doesNotMatch(once, /Renews on|cancelled plan/);
+  const reversal = { product: "uninstaller", firstName: "Ada", plan: "annual", refundedLabel: "€9.99" };
+  for (const body of [refundHtml(reversal), refundText(reversal)]) {
+    assert.match(body, /this reversal touches Uninstaller only/);
+    assert.match(body, /€9\.99/);
+    assert.doesNotMatch(body, /refund/i);
+  }
+  assert.match(refundText({ ...reversal, plan: null, refundedLabel: null }), /reversed your payment for PC Tweaker Uninstaller Pro/);
+});

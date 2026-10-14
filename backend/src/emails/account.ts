@@ -54,7 +54,7 @@ function verificationSteps(brand: EmailBrand): string[] {
     : [
         "Go back to PC Tweaker and sign in from the <strong>Account</strong> button. The app checks the account at sign-in, so there is nothing to refresh by hand.",
         "Nothing you already applied changes. Free never needed an account: the Free controls, the Scan and your Change history are exactly as you left them.",
-        "Checkout for Pro only opens once the address is confirmed. A Pro licence is signed for the account, not for the machine, so signing in on another PC is all it takes to use it there.",
+        "Checkout for Pro only opens once the address is confirmed. A Pro license is signed for the account, not for the machine, so signing in on another PC is all it takes to use it there.",
       ];
 }
 

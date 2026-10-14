@@ -1,5 +1,6 @@
 import { UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "../constants";
 import { euro, PromoCard, PromoFine, usePromo } from "../promo";
+import { TrialLine } from "../trial";
 import { promoPercent } from "../../../src/promo";
 
 /* The page a buyer actually lands on.
@@ -100,6 +101,7 @@ export function UninstallerPage() {
           )}
         </p>
         {uninstallerOffer && <PromoFine className="-mt-2 mb-4 text-[12.5px] text-[var(--fg-dim)]" />}
+        <TrialLine product="uninstaller" plan="annual" className="mb-4 leading-relaxed text-[var(--fg-dim)]" />
         <ul className="mb-5 space-y-2.5 leading-relaxed text-[var(--fg-dim)]">
           {PRO.map((item) => (
             <li key={item} className="flex gap-3">

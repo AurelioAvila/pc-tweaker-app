@@ -473,10 +473,10 @@ fn tick(
         return Ok(status);
     }
     let config = load_config(dir)?;
-    let active = config.enabled
-        && !shutting_down
-        && !SHUTTING_DOWN.load(Ordering::SeqCst)
-        && crate::require_pro(dir).is_ok();
+    let running = config.enabled && !shutting_down && !SHUTTING_DOWN.load(Ordering::SeqCst);
+    // A lapsed licence stops new priority changes; the ones already made stay
+    // until their process exits, so nothing shifts under a running game.
+    let active = running && crate::require_pro(dir).is_ok();
     let table = crate::process_guard::processes()?;
     let alive =
         |pid: u32, creation: u64| table.iter().any(|p| p.pid == pid && p.created == creation);
@@ -497,7 +497,7 @@ fn tick(
             continue;
         }
         let still_wanted = mine
-            && active
+            && running
             && alive(record.identity.pid, record.identity.creation)
             && rule_for(&record.identity.executable)
                 .is_some_and(|r| r.priority.class() == record.applied);

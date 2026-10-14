@@ -6,7 +6,7 @@ import { build } from "esbuild";
 // Exercise the actual component's effects with deterministic event/network adapters.
 const mocks = {
   react: `export const useState=initial=>h.state(initial); export const useRef=value=>h.ref(value); export const useEffect=fn=>h.effects.push(fn); export const useMemo=fn=>fn();`,
-  "react/jsx-runtime": `export const jsx=(type,props)=>({type,props});export const jsxs=jsx;`,
+  "react/jsx-runtime": `export const jsx=(type,props)=>({type,props});export const jsxs=jsx;export const Fragment="fragment";`,
   "@tauri-apps/plugin-updater": `export const check=()=>h.check();`,
   "@tauri-apps/api/event": `export const listen=(event,fn)=>{h.listeners.set(event,fn);return Promise.resolve(()=>h.listeners.delete(event))};`,
   "@tauri-apps/plugin-process": `export const relaunch=()=>Promise.resolve();`,

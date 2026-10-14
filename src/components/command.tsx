@@ -458,7 +458,8 @@ export function SessionProfiles({
               </button>
               <button
                 onClick={() => {
-                  if (!isPro && game?.requires_pro) {
+                  // Ending a running session is a restore and never needs Pro.
+                  if (!isPro && game?.requires_pro && !active) {
                     setPreview(false);
                     onRequirePro();
                     return;

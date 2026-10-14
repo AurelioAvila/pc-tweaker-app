@@ -7,6 +7,7 @@ import { format, Lang, Strings } from "../i18n";
 import { money, PRICE_ANNUAL, PRICE_LIFETIME, PRICE_MONTHLY } from "../lib";
 import { Toast } from "../types";
 import { CrownIcon } from "./icons";
+import { TRIAL_COPY } from "./trial-copy";
 
 /**
  * The app's only badge. Pro, Admin, registry hive, requirements, Soon and
@@ -165,6 +166,95 @@ export function PaywallModal({
   onClose: () => void;
   onNotify: () => void;
 }) {
+  return (
+    <ProDialog
+      closeLabel={s.paywall.notNow}
+      onClose={onClose}
+      actions={
+        <>
+          <button onClick={onNotify} className="tool-primary-action">
+            {s.paywall.unlock}
+            <span aria-hidden="true">→</span>
+          </button>
+          <button onClick={onClose} className="tool-secondary-action">
+            {s.paywall.notNow}
+          </button>
+        </>
+      }
+    >
+      <span className="pro-feature-eyebrow">{s.paywall.title}</span>
+      <h2 id="pro-feature-title">{featureName}</h2>
+      <p id="pro-feature-description">{format(s.paywall.body, { feature: featureName })}</p>
+      {/* Lifetime leads because it is what people actually buy; the
+          subscriptions follow so nobody has to open the plans to learn
+          the price of the thing they just tried to use. */}
+      <p className="pro-feature-price">
+        {format(s.paywall.priceLine, {
+          lifetime: money(PRICE_LIFETIME, lang),
+          annual: money(PRICE_ANNUAL, lang),
+          monthly: money(PRICE_MONTHLY, lang),
+        })}
+      </p>
+    </ProDialog>
+  );
+}
+
+/** The one notice shown when someone comes back after Pro stopped: a failed
+ *  payment (paused) or a trial or plan that ended. It says what still works,
+ *  because nothing they already applied is undone. */
+export function BillingNotice({
+  s,
+  lang,
+  kind,
+  onClose,
+  onPortal,
+  onPlans,
+}: {
+  s: Strings;
+  lang: Lang;
+  kind: "paused" | "trialEnded" | "ended" | "converted";
+  onClose: () => void;
+  onPortal: () => void;
+  onPlans: () => void;
+}) {
+  const t = TRIAL_COPY[lang];
+  const paused = kind === "paused";
+  return (
+    <ProDialog
+      closeLabel={s.paywall.notNow}
+      onClose={onClose}
+      actions={
+        <>
+          <button onClick={paused ? onPortal : onPlans} className="tool-primary-action">
+            {paused ? t.updatePayment : t.seePlans}
+            <span aria-hidden="true">→</span>
+          </button>
+          <button onClick={onClose} className="tool-secondary-action">
+            {s.paywall.notNow}
+          </button>
+        </>
+      }
+    >
+      <span className="pro-feature-eyebrow">{paused ? t.paymentFailed : t.ended}</span>
+      <h2 id="pro-feature-title">
+        {paused ? t.pausedTitle : kind === "trialEnded" ? t.trialEndedTitle : t.endedTitle}
+      </h2>
+      <p id="pro-feature-description">{paused ? t.pausedBody : t.endedBody}</p>
+    </ProDialog>
+  );
+}
+
+function ProDialog({
+  closeLabel,
+  onClose,
+  actions,
+  children,
+}: {
+  closeLabel: string;
+  onClose: () => void;
+  actions: ReactNode;
+  children: ReactNode;
+}) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const element = dialog.current;
@@ -202,7 +292,7 @@ export function PaywallModal({
         <span className="pro-feature-brand">
           <CrownIcon className="h-4 w-4" /> PC Tweaker Pro
         </span>
-        <button className="pro-feature-close" onClick={onClose} aria-label={s.paywall.notNow}>
+        <button className="pro-feature-close" onClick={onClose} aria-label={closeLabel}>
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
               d="m6 6 12 12M6 18 18 6"
@@ -213,30 +303,8 @@ export function PaywallModal({
           </svg>
         </button>
       </header>
-      <div className="pro-feature-content">
-        <span className="pro-feature-eyebrow">{s.paywall.title}</span>
-        <h2 id="pro-feature-title">{featureName}</h2>
-        <p id="pro-feature-description">{format(s.paywall.body, { feature: featureName })}</p>
-        {/* Lifetime leads because it is what people actually buy; the
-            subscriptions follow so nobody has to open the plans to learn
-            the price of the thing they just tried to use. */}
-        <p className="pro-feature-price">
-          {format(s.paywall.priceLine, {
-            lifetime: money(PRICE_LIFETIME, lang),
-            annual: money(PRICE_ANNUAL, lang),
-            monthly: money(PRICE_MONTHLY, lang),
-          })}
-        </p>
-      </div>
-      <footer className="pro-feature-actions">
-        <button onClick={onNotify} className="tool-primary-action">
-          {s.paywall.unlock}
-          <span aria-hidden="true">→</span>
-        </button>
-        <button onClick={onClose} className="tool-secondary-action">
-          {s.paywall.notNow}
-        </button>
-      </footer>
+      <div className="pro-feature-content">{children}</div>
+      <footer className="pro-feature-actions">{actions}</footer>
     </dialog>
   );
 }

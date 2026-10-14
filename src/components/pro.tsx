@@ -423,7 +423,8 @@ export function GamingHudCard({
   }
 
   async function toggleFps() {
-    if (!isPro) {
+    // Stopping a running capture never needs Pro.
+    if (!isPro && !measuring) {
       onRequirePro();
       return;
     }
@@ -461,7 +462,8 @@ export function GamingHudCard({
   }
 
   async function toggle() {
-    if (!isPro) {
+    // Closing an open overlay never needs Pro.
+    if (!isPro && !open) {
       onRequirePro();
       return;
     }

@@ -27,9 +27,11 @@ const sent = [];
 const log = console.log;
 console.log = (...args) => {
   const line = String(args[0] ?? "");
-  const match = line.match(/skipped email to (\S+); subject: (.*)$/);
-  if (match) sent.push({ to: match[1], subject: match[2] });
-  else log(...args);
+  const marker = "skipped email to ";
+  const at = line.indexOf(marker);
+  if (at < 0) return log(...args);
+  const [to, subject] = line.slice(at + marker.length).split("; subject: ");
+  sent.push({ to, subject });
 };
 after(() => (console.log = log));
 const settle = () => new Promise((resolve) => setTimeout(resolve, 50));

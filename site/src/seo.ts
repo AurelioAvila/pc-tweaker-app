@@ -1,4 +1,5 @@
 import { PRACTICAL_GUIDES } from "./pages/practical-guides";
+import { FIX_GUIDES } from "./pages/fix-guides";
 import { GUIDE_FAQS } from "./pages/guide-faqs";
 import { text } from "./i18n/dictionary";
 import { UNINSTALLER_DOWNLOAD_EXE } from "./constants";
@@ -8,6 +9,9 @@ export interface RouteSeo {
   readonly description: string;
   readonly canonical: string;
   readonly ogType: "website";
+  /** A 1200x630 card made at build time (scripts/og.mjs); the site-wide card otherwise. */
+  readonly image?: string;
+  readonly imageAlt?: string;
 }
 
 const ORIGIN = "https://pctweaker.app";
@@ -29,10 +33,11 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   // the title and description are written for someone deciding whether to click
   // from a result page. Where those differ, the guide carries seoTitle/
   // seoDescription and they win here — otherwise the visible copy is reused.
-  ...Object.fromEntries(Object.entries(PRACTICAL_GUIDES).map(([path, guide]) => [path, {
+  ...Object.fromEntries(Object.entries({ ...PRACTICAL_GUIDES, ...FIX_GUIDES }).map(([path, guide]) => [path, {
     title: `${guide.seoTitle ?? guide.title} | PC Tweaker`,
     description: guide.seoDescription ?? guide.intro,
     canonical: `${ORIGIN}${path}/`, ogType: "website" as const,
+    ...(path in FIX_GUIDES ? { image: `${ORIGIN}/og${path}.png`, imageAlt: guide.seoTitle ?? guide.title } : {}),
   }])),
   "/": {
     title: "PC Tweaker | Windows Tuning for Steadier Frame Times",
@@ -159,11 +164,56 @@ export const ROUTE_JSONLD: Record<string, readonly object[]> = {
   "/support": [
     faqPage(`${ORIGIN}/support/#faq`, `${ORIGIN}/support/`, text.support.selfServe),
   ],
+  // Fix guides: where they sit, what they are, and the by-hand steps they show.
+  ...Object.fromEntries(Object.entries(FIX_GUIDES).map(([path, guide]) => [path, [{
+    "@context": "https://schema.org",
+    "@graph": [
+      breadcrumbs(path, [["Fixes", "/fixes/"], [guide.seoTitle, `${path}/`]]),
+      {
+        "@type": "TechArticle",
+        "@id": `${ORIGIN}${path}/#article`,
+        headline: guide.seoTitle,
+        description: guide.seoDescription,
+        url: `${ORIGIN}${path}/`,
+        inLanguage: "en",
+        dateModified: "2026-10-15",
+        isPartOf: { "@id": `${ORIGIN}/#website` },
+        publisher: { "@id": `${ORIGIN}/#organization` },
+        about: { "@id": `${ORIGIN}/#software` },
+        citation: guide.sources.items.map((s) => s.url),
+      },
+      {
+        "@type": "HowTo",
+        "@id": `${ORIGIN}${path}/#howto`,
+        name: guide.title,
+        step: guide.steps.map((st, i) => ({
+          "@type": "HowToStep",
+          position: i + 1,
+          name: st.title,
+          text: [st.note, st.code].filter(Boolean).join(" "),
+        })),
+      },
+    ],
+  }]])),
   // Guides that render a "Common questions" section (src/pages/guide-faqs.ts).
   ...Object.fromEntries(Object.entries(GUIDE_FAQS).map(([path, items]) => [
     path, [faqPage(`${ORIGIN}${path}/#faq`, `${ORIGIN}${path}/`, items)],
   ])),
 };
+
+/** A BreadcrumbList from Home through the given trail ([name, path] pairs). */
+export function breadcrumbs(path: string, trail: readonly (readonly [string, string])[]) {
+  return {
+    "@type": "BreadcrumbList",
+    "@id": `${ORIGIN}${path}/#breadcrumbs`,
+    itemListElement: [["Home", "/"] as const, ...trail].map(([name, to], i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name,
+      item: `${ORIGIN}${to}`,
+    })),
+  };
+}
 
 export const NOT_FOUND_SEO: RouteSeo = {
   title: "Page Not Found — PC Tweaker",

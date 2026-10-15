@@ -4,7 +4,7 @@ import { riseChild, staggerParent, viewportOnce } from "../motion";
 import { DOWNLOAD_EXE } from "../constants";
 import { MOST_CHOSEN } from "../../../src/most-chosen";
 import { euro, PromoFine, PromoPrice, promoTerms, usePromo } from "../promo";
-import { TrialLine } from "../trial";
+import { TrialLine, usePriceList } from "../trial";
 
 export function AccessPricing() {
   const { free, pro, lifetime } = text.pricing;
@@ -13,6 +13,17 @@ export function AccessPricing() {
   const monthlyOffer = promo.offer("pctweaker", "monthly");
   const lifetimeOffer = promo.offer("pctweaker", "lifetime");
   const lifetimeChosen = MOST_CHOSEN.pctweaker === "lifetime";
+  // The Pro card follows the billing API once it answers (GET /api/billing/prices);
+  // until then, or if it fails, the prerendered text stays.
+  const prices = usePriceList();
+  const amount = (plan: string) => prices?.prices.find((p) => p.product === "pctweaker" && p.plan === plan)?.amount;
+  const [annual, monthly] = [amount("annual"), amount("monthly")];
+  const live = {
+    price: annual ? euro(annual) : pro.price,
+    per: annual && monthly ? `/ year · monthly option ${euro(monthly)}` : pro.per,
+    save: annual && monthly ? `SAVE ${Math.round((1 - annual / (monthly * 12)) * 100)}% VS MONTHLY` : pro.save,
+    trialDays: prices?.trialEnabled ? prices.trialDays : 0,
+  };
 
   return (
     <section id="access" className="border-t border-white/5 px-5 py-24 md:px-12">
@@ -75,18 +86,18 @@ export function AccessPricing() {
               className="font-mono-t text-accent absolute top-8 right-8 rounded-full border px-3 py-1 text-[10.5px] tracking-wider"
               style={{ borderColor: "var(--accent-glow)" }}
             >
-              {annualOffer ? "HALLOWEEN" : pro.save}
+              {annualOffer ? "HALLOWEEN" : live.save}
             </span>
             <div className="font-mono-t mb-4 text-[12px] tracking-[0.14em] text-[var(--fg-dim)]">
-              {pro.plan}
+              {pro.plan}{live.trialDays > 0 && <span className="text-accent ml-2">· {live.trialDays}-DAY TRIAL</span>}
             </div>
             <div className="font-display text-[44px] leading-none font-bold text-[var(--fg)]">
-              {annualOffer ? <PromoPrice offer={annualOffer} /> : pro.price}
+              {annualOffer ? <PromoPrice offer={annualOffer} /> : live.price}
             </div>
             <div className="mt-2 text-[13px] text-[var(--fg-dim)]">
               {annualOffer
                 ? `/ ${promoTerms(annualOffer)}${monthlyOffer ? ` · Monthly: ${euro(monthlyOffer.price)} for the first month, then ${euro(monthlyOffer.regular)}` : ""}`
-                : pro.per}
+                : live.per}
             </div>
             <TrialLine
               product="pctweaker"

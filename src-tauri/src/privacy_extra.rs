@@ -108,6 +108,9 @@ pub(crate) const TYPING_VALUES: [&str; 2] = [
     "RestrictImplicitTextCollection",
     "RestrictImplicitInkCollection",
 ];
+/// 1 means "restrict", i.e. stop collecting. Shared with `technical.rs`, whose
+/// disclosure said 0 while this module wrote 1.
+pub(crate) const TYPING_RESTRICTED: u32 = 1;
 
 #[cfg(windows)]
 pub fn apply_typing_personalization(store: &RollbackStore) -> Result<(), String> {
@@ -140,7 +143,7 @@ pub fn apply_typing_personalization(store: &RollbackStore) -> Result<(), String>
     // way round to most privacy toggles, which is worth stating plainly here
     // because writing 0 would silently turn collection back *on*.
     for name in TYPING_VALUES {
-        write_value(hive, TYPING_PATH, name, &RegValue::Dword(1))?;
+        write_value(hive, TYPING_PATH, name, &RegValue::Dword(TYPING_RESTRICTED))?;
     }
 
     Ok(())

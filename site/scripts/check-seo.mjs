@@ -2,9 +2,30 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const dist = new URL("../dist/", import.meta.url);
-const sitemap = await readFile(new URL("sitemap.xml", dist), "utf8");
-const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]));
+// Every silo listed in the sitemap index, read as one list of pages.
+const index = await readFile(new URL("sitemap-index.xml", dist), "utf8");
+const silos = [...index.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]).pathname.slice(1));
+assert.ok(silos.includes("sitemap.xml"), "sitemap-index.xml must list sitemap.xml");
+const urls = [];
+for (const silo of silos) {
+  const xml = await readFile(new URL(silo, dist), "utf8");
+  urls.push(...[...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1])));
+}
 assert.ok(urls.length > 0, "Sitemap must contain routes");
+assert.equal(new Set(urls.map(String)).size, urls.length, "A URL is listed in two sitemaps");
+
+// A built page missing from every sitemap is a page search engines are not
+// told about: run `npm run sitemap` after adding routes.
+const { readdir } = await import("node:fs/promises");
+const built = (await readdir(dist, { recursive: true }))
+  .map((f) => f.replaceAll("\\", "/"))
+  .filter((f) => f.endsWith("index.html"))
+  .map((f) => "/" + f.replace(/index\.html$/, ""));
+const listed = new Set(urls.map((u) => u.pathname));
+for (const page of built) {
+  const noindex = /name="robots" content="[^"]*noindex/.test(await readFile(new URL(`${page.slice(1)}index.html`, dist), "utf8"));
+  assert.ok(noindex || listed.has(page), `Built page is in no sitemap (run npm run sitemap): ${page}`);
+}
 
 // Search Console reported these as "Page with redirect": an internal link to
 // the bare path is a link to a 301, so the target never gets the full value of
@@ -124,6 +145,7 @@ assert.ok(
 
 const robots = await readFile(new URL("robots.txt", dist), "utf8");
 assert.match(robots, /Sitemap:\s*https:\/\/pctweaker\.app\/sitemap\.xml/, "robots.txt must point at the sitemap");
+assert.match(robots, /Sitemap:\s*https:\/\/pctweaker\.app\/sitemap-index\.xml/, "robots.txt must point at the sitemap index");
 assert.match(robots, /^\s*Allow:\s*\/$/m, "robots.txt must allow crawling");
 
 console.log(`SEO checks passed for ${urls.length} sitemap routes, robots.txt and the 404 page.`);

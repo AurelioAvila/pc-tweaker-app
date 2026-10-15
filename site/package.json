@@ -7,8 +7,9 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build && vite build --ssr src/entry-server.tsx --outDir dist-ssr && node scripts/prerender.mjs",
     "preview": "vite preview",
-    "check:seo": "node scripts/check-seo.mjs",
-    "sitemap": "node scripts/build-sitemap.mjs"
+    "check:seo": "node scripts/check-seo.mjs && node scripts/check-reference.mjs",
+    "sitemap": "node scripts/build-sitemap.mjs",
+    "check:reference": "node scripts/check-reference.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
@@ -19,6 +20,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/vite": "^4.0.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

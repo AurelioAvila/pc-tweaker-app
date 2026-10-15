@@ -7,7 +7,7 @@
        CAN live in <meta> do. frame-ancestors and HSTS can't be expressed here
        (browsers ignore them in meta) — those would need a proxy/CDN in front. -->
   <link rel="preconnect" href="https://api.pctweaker.app" crossorigin />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.pctweaker.app https://cloudflareinsights.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'inline-speculation-rules' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.pctweaker.app https://cloudflareinsights.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <title>PC Tweaker | Windows Tuning for Steadier Frame Times</title>
   <meta name="description" content="Review Windows gaming, privacy and performance settings. Inspect each change and restore supported tweaks. Download PC Tweaker Free for Windows 10/11." />
@@ -59,6 +59,18 @@
       }
     </style>
   </noscript>
+  <!-- Speculation rules, for full page loads (links the client router does
+       not handle, middle-clicks, the static Tweaky Driver page). Hovering a
+       same-site link fetches its HTML only, which runs no script and so sends
+       no analytics; a page is prerendered only on pointer-down, when the
+       visitor is already clicking. Downloads live on another host and never
+       match "/*". CSP admits this block through 'inline-speculation-rules'. -->
+  <script type="speculationrules">
+  {
+    "prefetch": [{ "where": { "and": [{ "href_matches": "/*" }, { "not": { "href_matches": "/*\\?*" } }, { "not": { "selector_matches": "[download]" } }] }, "eagerness": "moderate" }],
+    "prerender": [{ "where": { "and": [{ "href_matches": "/*" }, { "not": { "href_matches": "/*\\?*" } }, { "not": { "selector_matches": "[download]" } }] }, "eagerness": "conservative" }]
+  }
+  </script>
   <!-- Sitewide identity. This block is kept on every prerendered page so the
        publisher and the site itself resolve to one stable @id across the
        whole property, instead of the homepage being the only page search

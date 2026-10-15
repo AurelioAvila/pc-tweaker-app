@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { isReferencePath, loadReference, referenceModule } from "./reference-registry";
 
 /* ============================================================
    MINIMAL ROUTER
@@ -33,9 +34,17 @@ export function useRoute(initialPath = "/"): { path: string; navigate: (to: stri
 
   const navigate = useCallback((to: string) => {
     if (to === currentPath()) return;
-    window.history.pushState({}, "", to);
-    setPath(currentPath());
-    window.scrollTo(0, 0);
+    const go = () => {
+      window.history.pushState({}, "", to);
+      setPath(currentPath());
+      window.scrollTo(0, 0);
+    };
+    const target = to.replace(/\/+$/, "") || "/";
+    // The reference section is its own chunk; fetch it first, or fall back
+    // to a normal page load if that fails.
+    if (isReferencePath(target) && !referenceModule()) {
+      loadReference().then(go, () => window.location.assign(to));
+    } else go();
   }, []);
 
   return { path, navigate };

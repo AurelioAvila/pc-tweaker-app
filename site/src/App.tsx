@@ -24,6 +24,7 @@ import {
 import { PromoProvider } from "./promo";
 import { useRoute } from "./router";
 import { NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
+import { referenceModule } from "./reference-registry";
 
 function HomePage() {
   return (
@@ -45,7 +46,8 @@ function HomePage() {
  *  mistyped link looked like a working page instead of an error. */
 export default function App({ initialPath = "/" }: { initialPath?: string }) {
   const { path, navigate } = useRoute(initialPath);
-  const route = ROUTE_SEO[path];
+  const reference = referenceModule();
+  const route = ROUTE_SEO[path] ?? reference?.REFERENCE_SEO[path];
 
   // Client-side routing doesn't reload the document, so the tab title would
   // otherwise stay on whatever index.html shipped with.
@@ -97,7 +99,11 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       page = <AccessibilityPage />;
       break;
     default:
-      page = GUIDES[path] ? <GuidePage path={path} navigate={navigate} /> : <NotFoundPage navigate={navigate} />;
+      page = GUIDES[path] ? (
+        <GuidePage path={path} navigate={navigate} />
+      ) : (
+        reference?.referencePage(path, navigate) ?? <NotFoundPage navigate={navigate} />
+      );
   }
 
   return (

@@ -1,11 +1,12 @@
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
 const serverBundle = path.join(root, "dist-ssr", "entry-server.js");
-const { render, ROUTE_SEO, ROUTE_JSONLD, NOT_FOUND_SEO } = await import(pathToFileURL(serverBundle));
+const { render, ROUTE_SEO, ROUTE_JSONLD, NOT_FOUND_SEO, OG_CARDS } = await import(pathToFileURL(serverBundle));
+const { writeOgCards } = await import(pathToFileURL(path.join(root, "scripts", "og.mjs")));
 const template = await readFile(path.join(dist, "index.html"), "utf8");
 
 function escapeAttribute(value) {
@@ -76,6 +77,13 @@ function buildPage(route, seo, noindex = false) {
     );
   }
 
+  // Reference and fix pages carry their own 1200x630 card (scripts/og.mjs).
+  if (seo.image) {
+    html = replaceTag(html, /<meta property="og:image" content="[^"]*"\s*\/>/i, `<meta property="og:image" content="${escapeAttribute(seo.image)}" />`, "og:image");
+    html = replaceTag(html, /<meta property="og:image:alt" content="[^"]*"\s*\/>/i, `<meta property="og:image:alt" content="${escapeAttribute(seo.imageAlt ?? seo.title)}" />`, "og:image:alt");
+    html = replaceTag(html, /<meta name="twitter:image" content="[^"]*"\s*\/>/i, `<meta name="twitter:image" content="${escapeAttribute(seo.image)}" />`, "twitter:image");
+  }
+
   const twitter = {
     "twitter:title": seo.title,
     "twitter:description": seo.description,
@@ -103,8 +111,10 @@ function buildPage(route, seo, noindex = false) {
 
 for (const [route, seo] of Object.entries(ROUTE_SEO)) {
   const file = route === "/" ? path.join(dist, "index.html") : path.join(dist, route.slice(1), "index.html");
+  await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, buildPage(route, seo), "utf8");
 }
 
 await writeFile(path.join(dist, "404.html"), buildPage("/404", NOT_FOUND_SEO, true), "utf8");
+await writeOgCards(OG_CARDS, path.join(dist, "og"));
 await rm(path.join(root, "dist-ssr"), { recursive: true, force: true });

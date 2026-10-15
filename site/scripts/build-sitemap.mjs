@@ -1,25 +1,30 @@
 /**
- * Regenerates public/sitemap.xml with a <lastmod> taken from the real commit
- * date of the sources each page is built from.
+ * Regenerates the sitemaps in public/ with a <lastmod> taken from the real
+ * commit date of the sources each page is built from.
  *
- * Run it with `npm run sitemap` whenever page content changes, and commit the
- * result. It is deliberately NOT part of `npm run build`: the Pages workflow
- * checks out at depth 1, so `git log` there sees a single synthetic commit and
- * would stamp every URL with the deploy date — which is worse than a slightly
- * old date, because it tells search engines everything changed at once, every
- * time. Generating from real history locally keeps the dates honest.
+ * Run `npm run build` first, then `npm run sitemap`, and commit the result.
+ * The reference routes (/tweaks, /database, /tools) are read from the built
+ * dist/ folder, so a control added to the catalogue gets its URL here without
+ * a list to maintain; check-seo.mjs fails when a built page is in no sitemap.
+ *
+ * It is deliberately NOT part of `npm run build`: the deploy builds from an
+ * archive with no git history, where `git log` would stamp every URL with the
+ * deploy date, telling search engines everything changed at once, every time.
+ *
+ * Silos: sitemap.xml (product pages, guides and fixes), sitemap-tweaks.xml,
+ * sitemap-database.xml and sitemap-tools.xml, all listed in sitemap-index.xml.
  */
 import { execFileSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { existsSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ORIGIN = "https://pctweaker.app";
 
 // Files that, when changed, genuinely change what the page says. The shell
 // (nav, footer, theme) is deliberately left out: it touches every page, so
-// including it would move all 14 dates together on any layout tweak.
-const SHARED = [];
+// including it would move every date together on any layout tweak.
 const PAGES = {
   "/": ["src/App.tsx", "src/components", "src/i18n/dictionary.ts"],
   "/uninstaller/": ["src/pages/Uninstaller.tsx"],
@@ -41,15 +46,19 @@ const PAGES = {
   "/tweaky-driver/": ["public/tweaky-driver/index.html"],
 };
 
+const SILOS = {
+  "sitemap.xml": { prefix: "/fixes/", sources: ["src/pages/fix-guides.ts", "src/components/ReferenceBlocks.tsx"] },
+  "sitemap-tweaks.xml": { prefix: "/tweaks/", sources: ["src/generated/tweak-catalog.json", "src/reference", "src/pages/reference/pages.tsx"] },
+  "sitemap-database.xml": { prefix: "/database/", sources: ["src/reference/windows-db.ts", "src/pages/reference/pages.tsx"] },
+  "sitemap-tools.xml": { prefix: "/tools/", sources: ["src/pages/reference/tools.tsx", "src/reference"] },
+};
+
 /** Most recent author date (YYYY-MM-DD) across the given paths, or null. */
 function lastModified(paths) {
   const dates = paths
     .map((p) => {
       try {
-        return execFileSync("git", ["log", "-1", "--format=%as", "--", p], {
-          cwd: root,
-          encoding: "utf8",
-        }).trim();
+        return execFileSync("git", ["log", "-1", "--format=%as", "--", p], { cwd: root, encoding: "utf8" }).trim();
       } catch {
         return "";
       }
@@ -58,21 +67,44 @@ function lastModified(paths) {
   return dates.length ? dates.sort().at(-1) : null;
 }
 
-const body = Object.entries(PAGES)
-  .map(([route, sources]) => {
-    const lastmod = lastModified([...sources, ...SHARED]);
-    const loc = `https://pctweaker.app${route}`;
-    return lastmod
-      ? `  <url><loc>${loc}</loc><lastmod>${lastmod}</lastmod></url>`
-      : `  <url><loc>${loc}</loc></url>`;
-  })
-  .join("\n");
+/** Every built route under `prefix`, as "/a/b/". */
+function builtRoutes(prefix) {
+  const dir = path.join(root, "dist", prefix);
+  if (!existsSync(dir)) throw new Error(`dist${prefix} is missing: run npm run build first`);
+  const out = [];
+  const walk = (d) => {
+    for (const name of readdirSync(d)) {
+      const full = path.join(d, name);
+      if (statSync(full).isDirectory()) walk(full);
+      else if (name === "index.html") out.push("/" + path.relative(path.join(root, "dist"), d).replaceAll("\\", "/") + "/");
+    }
+  };
+  walk(dir);
+  return out.sort();
+}
 
-const xml = `<?xml version="1.0" encoding="UTF-8"?>
+const urlset = (entries) => `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${body}
+${entries.map(([route, lastmod]) => (lastmod ? `  <url><loc>${ORIGIN}${route}</loc><lastmod>${lastmod}</lastmod></url>` : `  <url><loc>${ORIGIN}${route}</loc></url>`)).join("\n")}
 </urlset>
 `;
 
-writeFileSync(path.join(root, "public", "sitemap.xml"), xml, "utf8");
-console.log(`Wrote ${Object.keys(PAGES).length} URLs to public/sitemap.xml`);
+const written = [];
+for (const [file, silo] of Object.entries(SILOS)) {
+  const date = lastModified(silo.sources);
+  const entries = builtRoutes(silo.prefix).map((r) => [r, date]);
+  if (file === "sitemap.xml") entries.unshift(...Object.entries(PAGES).map(([r, src]) => [r, lastModified(src)]));
+  writeFileSync(path.join(root, "public", file), urlset(entries), "utf8");
+  written.push([file, entries.length, entries.map((e) => e[1]).filter(Boolean).sort().at(-1)]);
+}
+
+writeFileSync(
+  path.join(root, "public", "sitemap-index.xml"),
+  `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${written.map(([file, , lastmod]) => `  <sitemap><loc>${ORIGIN}/${file}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}</sitemap>`).join("\n")}
+</sitemapindex>
+`,
+  "utf8",
+);
+for (const [file, count] of written) console.log(`Wrote ${count} URLs to public/${file}`);

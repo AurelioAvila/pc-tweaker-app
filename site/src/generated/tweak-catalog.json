@@ -1,0 +1,1958 @@
+[
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon",
+        "setsTo": "0 (0x0)",
+        "valueName": "RestartApps",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Turns off Windows' restartable-app reopening preference for this account. Does not disable Startup entries or close running apps. Restore to recover your previous preference.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_restart_apps",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Stop reopening apps after sign-in",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "maintenance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem",
+        "setsTo": "1 (0x1)",
+        "valueName": "LongPathsEnabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Allows long Win32 paths for applications that declare longPathAware support. Does not remove every application's path limit. Restart applications or Windows. Restoring the old limit may make existing long paths inaccessible to those apps.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "enable_long_paths",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Enable long paths for compatible apps",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": false
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+        "setsTo": "0 (0x0)",
+        "valueName": "AppsUseLightTheme",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Turns on the dark theme for apps and the system.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "dark_mode",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Dark mode",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+        "setsTo": "1 (0x1)",
+        "valueName": "Hidden",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Shows hidden files and folders in File Explorer.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "show_hidden_files",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Show hidden files",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl",
+        "setsTo": "38 (0x26)",
+        "valueName": "Win32PrioritySeparation",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Tunes Win32PrioritySeparation (0x26) so the foreground app gets short, variable CPU time slices with a 3x priority boost - the classic desktop/gaming responsiveness value.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "priority_separation",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Optimize CPU priority",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\System\\GameConfigStore",
+        "setsTo": "0 (0x0)",
+        "valueName": "GameDVR_Enabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Turns off Xbox Game Bar's background recording, which uses CPU/GPU while gaming.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_game_dvr",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable Xbox Game Bar / Game DVR",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+        "setsTo": "0 (0x0)",
+        "valueName": "AllowTelemetry",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Sets the Windows diagnostic data policy to its lowest level. Home and Pro treat that as Required diagnostic data; only Enterprise and Education turn it off completely. Scheduled tasks are not changed.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_telemetry_tasks",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Reduce diagnostic data collection",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
+        "setsTo": "0 (0x0)",
+        "valueName": "Enabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Stops apps from using your advertising ID to profile you.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "reset_advertising_id",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable advertising ID",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\LocationAndSensors",
+        "setsTo": "1 (0x1)",
+        "valueName": "DisableLocation",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Blocks location access for all apps through system policy.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_location_tracking",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable location tracking",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": false
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Search",
+        "setsTo": "0 (0x0)",
+        "valueName": "BingSearchEnabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Stops your Start menu searches from being sent to Bing.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_bing_search",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable Bing search in the Start menu",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers",
+        "setsTo": "2 (0x2)",
+        "valueName": "HwSchMode",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Requests hardware-accelerated GPU scheduling (HAGS). Requires a compatible GPU, driver and Windows version. Performance and latency can improve, worsen or remain unchanged depending on the game. Restart and verify availability in Windows Graphics settings.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "hardware_gpu_scheduling",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Hardware-accelerated GPU scheduling",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
+        "setsTo": "4294967295 (0xFFFFFFFF)",
+        "valueName": "NetworkThrottlingIndex",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Removes the cap Windows puts on network traffic while multimedia apps/games are running (MMCSS NetworkThrottlingIndex), useful against online micro-lag.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "network_throttling_index",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable multimedia network throttling",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": false
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
+        "setsTo": "0 (0x0)",
+        "valueName": "SystemResponsiveness",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Writes SystemResponsiveness=0, which Windows treats as 20%; this does not eliminate the CPU share for lower-priority tasks or prioritize every foreground app.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "system_responsiveness",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Set MMCSS background CPU reserve",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+        "setsTo": "1 (0x1)",
+        "valueName": "DisablePagingExecutive",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Windows may page parts of the kernel and driver code out to disk even when memory is plentiful, and paging them back in is a stall you feel as a stutter. This keeps them resident. Worth it on machines with RAM to spare; on a low-memory PC leave it off.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "keep_kernel_in_ram",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Keep the kernel and drivers in RAM",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "maintenance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Control Panel\\Desktop",
+        "setsTo": "\"1\"",
+        "valueName": "AutoEndTasks",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "When an application stops responding during shutdown, Windows waits and shows the \"This app is preventing shutdown\" screen until someone clicks it. This closes unresponsive apps automatically instead, so a hung program cannot leave the machine sitting powered on.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "auto_end_frozen_tasks",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Don't let a frozen app block shutdown",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": true
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\Bags\\AllFolders\\Shell",
+        "setsTo": "\"NotSpecified\"",
+        "valueName": "FolderType",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Explorer inspects a folder's contents to guess whether it is Pictures, Music or Documents, and a folder holding thousands of media files can hang for seconds while it decides. This pins every folder to the general layout so it opens at once.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "instant_folder_loading",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Open every folder instantly",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": true
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+        "setsTo": "0 (0x0)",
+        "valueName": "TaskbarAl",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Puts taskbar icons back on the left (Windows 10 style) instead of centered.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "taskbar_align_left",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Align the taskbar to the left",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+        "setsTo": "0 (0x0)",
+        "valueName": "TaskbarMn",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Removes the Chat (Microsoft Teams) icon from the taskbar.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "hide_taskbar_chat",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Hide Chat/Teams from the taskbar",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+        "setsTo": "0 (0x0)",
+        "valueName": "SubscribedContent-338388Enabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Stops Windows from showing recommended apps, ads and tips in the Start menu.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_start_suggestions",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable Start menu suggestions and recommended apps",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Search",
+        "setsTo": "0 (0x0)",
+        "valueName": "SearchboxTaskbarMode",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Removes the search box/icon from the taskbar for a cleaner bar (search still works from the Windows key).",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "hide_taskbar_search",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Hide the search box from the taskbar",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\System\\GameConfigStore",
+        "setsTo": "1 (0x1)",
+        "valueName": "GameDVR_DXGIHonorFSEWindowsCompatible",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Forces DXGI to honor true exclusive fullscreen instead of Windows' emulation, reducing stutter and input lag in many older games.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_fullscreen_optimizations_global",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable fullscreen optimizations globally",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Serialize",
+        "setsTo": "0 (0x0)",
+        "valueName": "StartupDelayInMSec",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Windows deliberately waits about 10 seconds after sign-in before launching your startup programs. This removes that wait.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_startup_delay",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Remove the startup app delay",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Control Panel\\Desktop",
+        "setsTo": "\"0\"",
+        "valueName": "MenuShowDelay",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Removes the built-in delay before menus open, which makes the whole desktop feel noticeably snappier.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "menu_show_delay",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Instant menu response",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling",
+        "setsTo": "1 (0x1)",
+        "valueName": "PowerThrottlingOff",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Stops Windows from slowing down background processes to save power - useful on laptops where throttling causes stutter during long sessions.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_power_throttling",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable CPU power throttling",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+        "setsTo": "8 (0x8)",
+        "valueName": "GPU Priority",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Writes the Games GPU Priority value, which Microsoft documents as unused. No GPU priority or frame-rate gain is expected.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "games_gpu_priority",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Set legacy Games GPU Priority value",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Privacy",
+        "setsTo": "0 (0x0)",
+        "valueName": "TailoredExperiencesWithDiagnosticDataEnabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Stops Windows from using your diagnostic data to personalize ads, tips and recommendations.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_tailored_experiences",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable tailored experiences",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+        "setsTo": "0 (0x0)",
+        "valueName": "Start_TrackProgs",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Windows records how often you launch each program to rank Start menu results. This turns that logging off.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_app_launch_tracking",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Stop tracking which apps you open",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Siuf\\Rules",
+        "setsTo": "0 (0x0)",
+        "valueName": "NumberOfSIUFInPeriod",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Prevents Windows from interrupting you with 'How likely are you to recommend...' surveys.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_feedback_requests",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Stop Windows feedback prompts",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+        "setsTo": "0 (0x0)",
+        "valueName": "AllowCortana",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Turns Cortana off through system policy, freeing the background resources it reserves.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_cortana",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable Cortana",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": false
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+        "setsTo": "0 (0x0)",
+        "valueName": "HideFileExt",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Reveals the real extension of every file. Worth turning on for safety alone: it exposes files like 'invoice.pdf.exe' that Windows otherwise hides.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "show_file_extensions",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Always show file extensions",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+        "setsTo": "0 (0x0)",
+        "valueName": "TaskbarDa",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Removes the weather/news Widgets button, which loads content in the background even when you never open it.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "hide_taskbar_widgets",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Hide Widgets from the taskbar",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+        "setsTo": "0 (0x0)",
+        "valueName": "EnableTransparency",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Turns off the blur/acrylic effects in the taskbar and menus. Small but real GPU saving, and it makes older or integrated-graphics machines feel smoother.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_transparency",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable transparency effects",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Control Panel\\Desktop\\WindowMetrics",
+        "setsTo": "\"0\"",
+        "valueName": "MinAnimate",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Removes the slide/fade animation Windows plays every time a window opens, closes or minimizes. The animation is pure waiting time — cutting it makes the desktop respond the moment you click, and frees the GPU work behind it.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_window_animations",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Instant window animations",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Control Panel\\Desktop",
+        "setsTo": "\"0\"",
+        "valueName": "DragFullWindows",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Draws an outline while you drag a window instead of repainting its whole contents every frame. Barely noticeable on a fast GPU, a clear difference on integrated graphics or an older machine.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_drag_full_windows",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Lighter window dragging",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Control Panel\\Mouse",
+        "setsTo": "\"10\"",
+        "valueName": "MouseHoverTime",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Windows waits 400 ms before reacting to the pointer resting on something - taskbar previews, tooltips, menu hovers. This drops that wait to almost nothing, so the interface follows the mouse instead of trailing it.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "mouse_hover_delay",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Instant mouse hover response",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications",
+        "setsTo": "1 (0x1)",
+        "valueName": "GlobalUserDisabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Stops Store apps from running, refreshing and polling the network while you are not using them. This is real CPU, RAM and battery spent on apps you did not open.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_background_apps",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Stop apps running in the background",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": true
+  },
+  {
+    "category": "maintenance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization",
+        "setsTo": "0 (0x0)",
+        "valueName": "DODownloadMode",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Windows uploads downloaded update files to other PCs over your connection by default. This limits Delivery Optimization to your own machine, which stops that upload eating bandwidth mid-game.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_delivery_optimization",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Stop sharing Windows updates with strangers",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+        "setsTo": "0 (0x0)",
+        "valueName": "SilentInstalledAppsEnabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Windows quietly installs \"suggested\" apps and games into your Start menu without asking, on a fresh install and again after big updates. This turns that off, so nothing lands on your machine that you didn't choose.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_suggested_apps",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Stop Windows installing apps by itself",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Control Panel\\Mouse",
+        "setsTo": "\"0\"",
+        "valueName": "MouseSpeed",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Turns off \"Enhance pointer precision\", which makes the cursor travel further when you move the mouse faster. That variable response is exactly what you don't want when aiming: the same physical flick should always cover the same distance on screen.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_mouse_acceleration",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable mouse acceleration",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Control Panel\\Accessibility\\StickyKeys",
+        "setsTo": "\"506\"",
+        "valueName": "Flags",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Tapping Shift five times normally opens the Sticky Keys dialog — which in a game means an alt-tab out of fullscreen at the worst possible moment, usually mid-fight. This disables the shortcut and its prompt; Sticky Keys itself stays available in Settings.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_sticky_keys_prompt",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Stop the Sticky Keys popup",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI",
+        "setsTo": "1 (0x1)",
+        "valueName": "DisableAIDataAnalysis",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Recall takes a screenshot of your desktop every few seconds and builds a searchable, AI-indexed history of everything you have looked at — passwords and private messages included, since it captures whatever is on screen. This sets the system policy that stops it analysing or storing anything.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_recall",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable Recall (AI screen snapshots)",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel",
+        "setsTo": "1 (0x1)",
+        "valueName": "GlobalTimerResolutionRequests",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Sets the GlobalTimerResolutionRequests registry flag to 1. This does not itself request or verify a specific timer resolution. Behavior depends on the Windows version; lower latency or higher FPS is not guaranteed. Restart required.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "global_timer_resolution",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Global timer resolution",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity",
+        "setsTo": "0 (0x0)",
+        "valueName": "Enabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Requests that Memory Integrity (HVCI) be disabled. If applied, this removes a layer of kernel protection; other VBS features may remain active. Performance impact varies by hardware and workload. Policy or UEFI lock may prevent the change. Restart and verify the status in Windows Security.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_memory_integrity",
+    "manual_only": true,
+    "min_build": null,
+    "name": "Disable Memory Integrity (VBS)",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power\\User\\PowerSchemes",
+        "setsTo": "\"8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\"",
+        "valueName": "ActivePowerScheme",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Switches to the Windows \"High performance\" power plan. Useful on desktops or when plugged in; restores the previous plan on rollback.",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "power_plan_performance",
+    "manual_only": false,
+    "min_build": null,
+    "name": "High performance (power plan)",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\System\\GameConfigStore",
+        "setsTo": "0 (0x0)",
+        "valueName": "GameDVR_Enabled",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl",
+        "setsTo": "38 (0x26)",
+        "valueName": "Win32PrioritySeparation",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power\\User\\PowerSchemes",
+        "setsTo": "\"8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\"",
+        "valueName": "ActivePowerScheme",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Preset: disables Game DVR, switches the power plan to High performance, and optimizes CPU priority (requires administrator rights).",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "turbo_gaming",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Turbo Gaming",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\<active adapter GUID>",
+        "setsTo": "\"1.1.1.1,1.0.0.1\"",
+        "valueName": "NameServer",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Switches the active network adapter to privacy-focused DNS servers (1.1.1.1), stopping your provider from logging your DNS queries. It does not hide your IP address (that needs a VPN, see below).",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "privacy_dns",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Private DNS (Cloudflare)",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": false
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Control Panel\\Mouse",
+        "setsTo": "\"0\"",
+        "valueName": "MouseSpeed",
+        "valueType": "REG_SZ"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\Control Panel\\Mouse",
+        "setsTo": "\"0\"",
+        "valueName": "MouseThreshold1",
+        "valueType": "REG_SZ"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\Control Panel\\Mouse",
+        "setsTo": "\"0\"",
+        "valueName": "MouseThreshold2",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Turns off pointer acceleration (\"Enhance pointer precision\") for true 1:1 mouse movement, with no delay added by the system.",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "reduce_input_lag",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Reduce input lag (mouse)",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power\\User\\PowerSchemes\\<active plan GUID>\\54533251-82be-4824-96c1-47b60b740d00\\be337238-0d82-4146-a960-4f3749d470c7",
+        "setsTo": "2 (0x2)",
+        "valueName": "ACSettingIndex",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power\\User\\PowerSchemes\\<active plan GUID>\\54533251-82be-4824-96c1-47b60b740d00\\be337238-0d82-4146-a960-4f3749d470c7",
+        "setsTo": "2 (0x2)",
+        "valueName": "DCSettingIndex",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power\\User\\PowerSchemes\\<active plan GUID>\\54533251-82be-4824-96c1-47b60b740d00\\893dee8e-2bef-41e0-89c6-b55d0929964c",
+        "setsTo": "100 (0x64)",
+        "valueName": "ACSettingIndex",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Sets boost mode to Aggressive on mains power and battery, and minimum processor state to 100% on mains power in the current power plan. Power use and heat may increase. CPU, firmware and thermal limits still apply; higher FPS is not guaranteed (administrator rights required).",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "turbo_boost",
+    "manual_only": false,
+    "min_build": null,
+    "name": "CPU Turbo Boost",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": false
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+        "setsTo": "8 (0x8)",
+        "valueName": "GPU Priority",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+        "setsTo": "6 (0x6)",
+        "valueName": "Priority",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+        "setsTo": "\"High\"",
+        "valueName": "Scheduling Category",
+        "valueType": "REG_SZ"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+        "setsTo": "\"High\"",
+        "valueName": "SFIO Priority",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Sets the Games task category to High for threads registered with MMCSS; High treats Priority as 2. The GPU and SFIO Priority values also written here are unused. This does not prioritize every game process (HKLM, requires administrator rights).",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "games_task_priority",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Set MMCSS Games task category",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power\\User\\PowerSchemes\\<active plan GUID>\\54533251-82be-4824-96c1-47b60b740d00\\0cc5b647-c1df-4637-891a-dec35c318583",
+        "setsTo": "100 (0x64)",
+        "valueName": "ACSettingIndex",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Stops Windows parking idle CPU cores while plugged in, so a core does not have to be woken before it can service input or a sudden burst of work. Applied to the mains profile only — on battery, parking is what it is there for. The plan's previous value is recorded and restored exactly on rollback (requires administrator rights).",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "disable_core_parking",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable core parking",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Control Panel\\Keyboard",
+        "setsTo": "\"0\"",
+        "valueName": "KeyboardDelay",
+        "valueType": "REG_SZ"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\Control Panel\\Keyboard",
+        "setsTo": "\"31\"",
+        "valueName": "KeyboardSpeed",
+        "valueType": "REG_SZ"
+      }
+    ],
+    "description": "Zeroes the delay before a held key starts repeating and maximizes its repeat rate, for a more immediate response in game.",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "reduce_keyboard_delay",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Reduce input lag (keyboard)",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\<active adapter GUID>",
+        "setsTo": "1 (0x1)",
+        "valueName": "TcpAckFrequency",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\<active adapter GUID>",
+        "setsTo": "1 (0x1)",
+        "valueName": "TCPNoDelay",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Sets TcpAckFrequency and TCPNoDelay to 1 on the adapter that carries the route to the internet. This targets TCP behavior; UDP traffic is unaffected. Windows and application support vary, so lower game latency is not guaranteed (HKLM, administrator rights required).",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "network_latency",
+    "manual_only": false,
+    "min_build": null,
+    "name": "TCP acknowledgments and packet buffering",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "gaming",
+    "changes": [],
+    "description": "Windows uses CUBIC, which speeds up until a buffer somewhere overflows - which is why your ping climbs the moment someone else in the house starts a download. BBR2 measures the line's real bandwidth and round trip instead and paces traffic to fit, so the pipe fills without the queue filling. Microsoft ships BBR2 in Windows 11; this switches the Internet template over to it, and switches back to exactly what was there before (requires administrator rights).",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "tcp_congestion_bbr",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Keep latency low when the line is busy (BBR2)",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": false
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+        "setsTo": "0 (0x0)",
+        "valueName": "EnableActivityFeed",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+        "setsTo": "0 (0x0)",
+        "valueName": "PublishUserActivities",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+        "setsTo": "0 (0x0)",
+        "valueName": "UploadUserActivities",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Stops Windows from recording, storing and sending Microsoft the history of the apps and documents you use, through system policy.",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "disable_activity_history",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable activity history (Windows Timeline)",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\InputPersonalization",
+        "setsTo": "1 (0x1)",
+        "valueName": "RestrictImplicitTextCollection",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\InputPersonalization",
+        "setsTo": "1 (0x1)",
+        "valueName": "RestrictImplicitInkCollection",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Windows builds a personal dictionary from what you type and handwrite — including in password managers, chat windows and search boxes — and syncs it to your Microsoft account to improve its suggestions. This turns off both the text and the handwriting collection.",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "disable_typing_personalization",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Stop Windows learning how you type",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": true
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\\InprocServer32",
+        "setsTo": "\"\"",
+        "valueName": "(Default)",
+        "valueType": "REG_SZ"
+      },
+      {
+        "arguments": "/f /im explorer.exe   (Explorer is restarted right after)",
+        "kind": "command",
+        "program": "taskkill"
+      }
+    ],
+    "description": "Windows 11 hides most of the right-click menu behind \"Show more options\", turning one click into two for things you do all day. This restores the complete Windows 10 menu everywhere in File Explorer and on the desktop. Explorer restarts to apply it, so open windows will flicker once.",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "classic_context_menu",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Bring back the full right-click menu",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "maintenance",
+    "changes": [
+      {
+        "action": "stopped, then set to Disabled",
+        "kind": "service",
+        "name": "WSearch"
+      }
+    ],
+    "description": "Stops and disables the Windows file indexing service, cutting background disk activity - useful on small SSDs or while gaming. File search in the Start menu gets slower until you turn it back on (requires administrator rights).",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "disable_windows_search_service",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Disable the indexing service (Windows Search)",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "arguments": "Current plan; subgroup 54533251-82be-4824-96c1-47b60b740d00; setting 36687f9e-e3a5-4dbf-b1dc-15eb381c6863; AC index 0. Battery policy unchanged. Restore writes the prior effective AC value as an explicit plan value, including when it was inherited. Refresh with PowerSetActiveScheme only if this plan remains active.",
+        "kind": "command",
+        "program": "PowerWriteACValueIndex"
+      }
+    ],
+    "description": "Sets the CPU energy-performance preference to 0 on mains power. Requires autonomous CPPC support; firmware and thermal limits still apply. Can increase power use and heat. Battery settings are unchanged. Compare your own workload before keeping this change.",
+    "enterprise_edition": false,
+    "hive": "Windows API",
+    "id": "cpu_energy_performance",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Favor CPU performance on mains power",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": false
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "arguments": "Current plan; subgroup 501a4d13-42af-4429-9fd1-a8218c268e20; setting ee12f906-d277-404b-b6da-e5fa1a576df5; AC index 0. Battery policy unchanged. Restore writes the prior effective AC value as an explicit plan value, including when it was inherited. Refresh with PowerSetActiveScheme only if this plan remains active.",
+        "kind": "command",
+        "program": "PowerWriteACValueIndex"
+      }
+    ],
+    "description": "Disables PCIe Active State Power Management in the current plan on mains power. A troubleshooting option for devices affected by link power transitions, not a guaranteed latency improvement. Can increase idle power use. Battery settings are unchanged.",
+    "enterprise_edition": false,
+    "hive": "Windows API",
+    "id": "pcie_link_power",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Keep PCIe links active on mains power",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "performance",
+    "changes": [
+      {
+        "arguments": "Current plan; subgroup 2a737441-1930-4402-8d77-b2bebba308a3; setting 48e6b7a6-50f5-4782-a5d4-53bb8f07e226; AC index 0. Battery policy unchanged. Restore writes the prior effective AC value as an explicit plan value, including when it was inherited. Refresh with PowerSetActiveScheme only if this plan remains active.",
+        "kind": "command",
+        "program": "PowerWriteACValueIndex"
+      }
+    ],
+    "description": "Temporarily disables USB selective suspend in the current plan on mains power to investigate device wake or disconnect problems. Windows recommends leaving selective suspend enabled normally. Restore after testing; idle power use may increase. Battery settings are unchanged.",
+    "enterprise_edition": false,
+    "hive": "Windows API",
+    "id": "usb_suspend_diagnostics",
+    "manual_only": false,
+    "min_build": null,
+    "name": "USB wake troubleshooting on mains power",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": false
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "arguments": "Current plan; subgroup 54533251-82be-4824-96c1-47b60b740d00; setting bae08b81-2d5e-4688-ad6a-13243356654b; AC index 2. Battery policy unchanged. Restore writes the prior effective AC value as an explicit plan value, including when it was inherited. Refresh with PowerSetActiveScheme only if this plan remains active.",
+        "kind": "command",
+        "program": "PowerWriteACValueIndex"
+      }
+    ],
+    "description": "On a CPU with different efficiency classes, asks Windows to prefer performant cores for short-running threads while plugged in. This is a scheduler preference, not a fixed affinity mask. Automatic scheduling may work better for your workload. Battery settings are unchanged.",
+    "enterprise_edition": false,
+    "hive": "Windows API",
+    "id": "hybrid_short_threads",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Prefer performance cores for short threads",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "arguments": "Current plan; subgroup 54533251-82be-4824-96c1-47b60b740d00; setting 93b8b6dc-0698-4d1c-9ee4-0644e900c85d; AC index 2. Battery policy unchanged. Restore writes the prior effective AC value as an explicit plan value, including when it was inherited. Refresh with PowerSetActiveScheme only if this plan remains active.",
+        "kind": "command",
+        "program": "PowerWriteACValueIndex"
+      }
+    ],
+    "description": "On a CPU with different efficiency classes, asks Windows to prefer performant cores for long-running threads while plugged in. Other cores remain available; this does not disable E-cores or replace Thread Director. Test throughput and responsiveness before keeping it. Battery settings are unchanged.",
+    "enterprise_edition": false,
+    "hive": "Windows API",
+    "id": "hybrid_long_threads",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Prefer performance cores for long threads",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "arguments": "Read FILTERKEYS; clear FKF_HOTKEYACTIVE only; preserve remaining flags and timings; restore the saved state.",
+        "kind": "command",
+        "program": "SystemParametersInfoW"
+      }
+    ],
+    "description": "Disables only the right-Shift shortcut for Filter Keys. Existing accessibility settings and timings are preserved.",
+    "enterprise_edition": false,
+    "hive": "Windows API",
+    "id": "disable_filter_keys_shortcut",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Prevent the Filter Keys shortcut",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "performance",
+    "changes": [],
+    "description": "Choose apps for EcoQoS while PC Tweaker is running. Foreground apps are restored; global power-throttling policy may block this feature.",
+    "enterprise_edition": false,
+    "hive": "Windows API",
+    "id": "ecoqos_rules",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Background app efficiency",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": true
+  },
+  {
+    "category": "performance",
+    "changes": [],
+    "description": "Configure a Delivery Optimization limit in KB/s. Does not limit other applications or disable Windows Update.",
+    "enterprise_edition": false,
+    "hive": "Windows API",
+    "id": "limit_do_background_download",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Windows background download limit",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "gaming",
+    "changes": [],
+    "description": "Choose supported refresh rates per game. Preview and restore keep the original resolution and desktop layout.",
+    "enterprise_edition": false,
+    "hive": "Windows API",
+    "id": "monitor_refresh_profile",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Game display refresh profiles",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": true
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI",
+        "setsTo": "1 (0x1)",
+        "valueName": "DisableClickToDo",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Sets the Windows policy that removes Click to Do, the feature that takes a screenshot of your screen and analyzes it to suggest actions. Its entry points disappear for every account on this PC. Settings will show it as managed by your organization, which is how Windows labels policies. It has an effect only on PCs where Windows offers Click to Do.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_click_to_do",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Turn off Click to Do",
+    "pro_edition": true,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge",
+        "setsTo": "0 (0x0)",
+        "valueName": "HubsSidebarEnabled",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge",
+        "setsTo": "1 (0x1)",
+        "valueName": "GenAILocalFoundationalModelSettings",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge",
+        "setsTo": "0 (0x0)",
+        "valueName": "EdgeHistoryAISearchEnabled",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge",
+        "setsTo": "0 (0x0)",
+        "valueName": "AIGenThemesEnabled",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge",
+        "setsTo": "0 (0x0)",
+        "valueName": "CopilotPageContext",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge",
+        "setsTo": "0 (0x0)",
+        "valueName": "ComposeInlineEnabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Sets Microsoft Edge policies for its AI features. Which ones take effect depends on the Edge profile: stopping Edge from downloading its on-device AI model works for every profile; hiding the sidebar and turning off AI history search and AI-generated themes work for profiles not signed in with a personal Microsoft account; turning off Copilot's access to page content and its writing help works only for work or school profiles. Edge picks them up without a restart; edge://policy lists them. Edge will show that it is managed by your organization, which is how it labels policies.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_edge_ai",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Turn off AI features in Microsoft Edge",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint",
+        "setsTo": "1 (0x1)",
+        "valueName": "DisableCocreator",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint",
+        "setsTo": "1 (0x1)",
+        "valueName": "DisableImageCreator",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint",
+        "setsTo": "1 (0x1)",
+        "valueName": "DisableGenerativeFill",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Sets the Windows policies that turn off Cocreator, Image Creator and generative fill in Paint. Everything else in Paint works as before.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_paint_ai",
+    "manual_only": false,
+    "min_build": 22621,
+    "name": "Turn off AI features in Paint",
+    "pro_edition": true,
+    "requires_admin": true,
+    "requires_pro": false
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\WindowsNotepad",
+        "setsTo": "1 (0x1)",
+        "valueName": "DisableAIFeatures",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Sets the Notepad policy that turns off its Copilot writing tools (rewrite, summarize, write). Close and reopen Notepad to see the change.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_notepad_ai",
+    "manual_only": false,
+    "min_build": 22621,
+    "name": "Turn off AI features in Notepad",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": false
+  },
+  {
+    "category": "maintenance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power",
+        "setsTo": "0 (0x0)",
+        "valueName": "HiberbootEnabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Makes Shut down a real shutdown instead of a partial hibernation. Windows starts a few seconds slower from cold, but drivers and updates load fresh every time, and dual-boot setups no longer find the Windows drive locked.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_fast_startup",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Turn off Fast Startup",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "maintenance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\StorageSense\\Parameters\\StoragePolicy",
+        "setsTo": "0 (0x0)",
+        "valueName": "01",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Stops Windows from deleting temporary files, emptying the Recycle Bin and moving OneDrive files online on its own schedule. You decide what gets cleaned and when.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_storage_sense",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Turn off Storage Sense",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\TaskbarDeveloperSettings",
+        "setsTo": "1 (0x1)",
+        "valueName": "TaskbarEndTask",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Adds End task to the right-click menu of apps on the taskbar, so a frozen app can be closed without opening Task Manager.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "taskbar_end_task",
+    "manual_only": false,
+    "min_build": 22631,
+    "name": "Add End task to the taskbar",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CDP",
+        "setsTo": "0 (0x0)",
+        "valueName": "DragTrayEnabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Stops the sharing tray (called Drop tray on newer builds) from sliding down from the top of the screen every time you drag a file, so ordinary drag and drop works without it getting in the way. The value comes from Windows community documentation, not from Microsoft; recent Windows 11 updates also offer this switch in Settings.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_drag_tray",
+    "manual_only": false,
+    "min_build": 26100,
+    "name": "Turn off the drag tray",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+        "setsTo": "1 (0x1)",
+        "valueName": "LaunchTo",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "File Explorer opens on This PC, with your drives and folders, instead of Home and its recent files.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "explorer_open_this_pc",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Open File Explorer to This PC",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "maintenance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Device Metadata",
+        "setsTo": "1 (0x1)",
+        "valueName": "PreventDeviceMetadataFromNetwork",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Stops Windows from downloading manufacturers' apps and custom icons for the devices you plug in, which is how some mouse, keyboard and motherboard utilities arrive without being asked for. Drivers still install as usual.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "block_oem_device_apps",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Stop device makers' apps from installing themselves",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+        "setsTo": "0 (0x0)",
+        "valueName": "SubscribedContent-338389Enabled",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+        "setsTo": "0 (0x0)",
+        "valueName": "SubscribedContent-310093Enabled",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+        "setsTo": "0 (0x0)",
+        "valueName": "SubscribedContent-353694Enabled",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+        "setsTo": "0 (0x0)",
+        "valueName": "SubscribedContent-353696Enabled",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+        "setsTo": "0 (0x0)",
+        "valueName": "SoftLandingEnabled",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\UserProfileEngagement",
+        "setsTo": "0 (0x0)",
+        "valueName": "ScoobeSystemSettingEnabled",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\\Windows.SystemToast.Suggested",
+        "setsTo": "0 (0x0)",
+        "valueName": "Enabled",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+        "setsTo": "0 (0x0)",
+        "valueName": "ShowSyncProviderNotifications",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+        "setsTo": "0 (0x0)",
+        "valueName": "Start_IrisRecommendations",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+        "setsTo": "0 (0x0)",
+        "valueName": "Start_AccountNotifications",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "One switch for the prompts Windows adds on its own: tips and suggestions, the welcome screen after updates, suggestions in Settings, \"finish setting up your device\", suggested notifications, Start menu recommendations and account notices, and sync provider ads in File Explorer. These are the values Windows' own Settings switches write, as documented by the Windows community; Microsoft does not document them, so a Windows update can change them.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_windows_suggestions",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Turn off Windows tips and suggestions",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": true
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Dsh",
+        "setsTo": "0 (0x0)",
+        "valueName": "AllowNewsAndInterests",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Sets the Windows policy that turns off the Widgets board itself, not just its taskbar button, so its news feed stops loading in the background. Settings will show it as managed by your organization, which is how Windows labels policies.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "disable_widgets",
+    "manual_only": false,
+    "min_build": 22000,
+    "name": "Turn off Widgets entirely",
+    "pro_edition": true,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "ui",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer",
+        "setsTo": "1 (0x1)",
+        "valueName": "HideRecommendedSection",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Sets the Windows policy that removes the Recommended section from Start, giving your pinned apps the space to themselves. Settings will show it as managed by your organization, which is how Windows labels policies.",
+    "enterprise_edition": true,
+    "hive": "HKLM",
+    "id": "hide_start_recommended",
+    "manual_only": false,
+    "min_build": 22621,
+    "name": "Remove Recommended from the Start menu",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  },
+  {
+    "category": "gaming",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+        "setsTo": "0 (0x0)",
+        "valueName": "AppCaptureEnabled",
+        "valueType": "REG_DWORD"
+      },
+      {
+        "kind": "registry",
+        "path": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+        "setsTo": "0 (0x0)",
+        "valueName": "HistoricalCaptureEnabled",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Turns off Game Bar's capture feature and its background recording, which keeps a rolling video of your last few minutes of play. Complements the Game Bar / Game DVR switch.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "disable_game_bar_captures",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Turn off Game Bar captures",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "privacy",
+    "changes": [
+      {
+        "action": "stopped, then set to Manual",
+        "kind": "service",
+        "name": "WSAIFabricSvc"
+      }
+    ],
+    "description": "Stops the Windows AI Components Host service (WSAIFabricSvc) and sets it to Manual, so it no longer starts with Windows. Windows can still start it when an app or Windows feature asks for it. Windows describes it as providing AI component services to apps and other Windows services. Only present on PCs that have it.",
+    "enterprise_edition": false,
+    "hive": "—",
+    "id": "disable_ai_fabric_service",
+    "manual_only": false,
+    "min_build": 26100,
+    "name": "Start Windows AI Components Host only when needed",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": true
+  }
+]

@@ -215,7 +215,13 @@ pub fn composite_changes(id: &str) -> Vec<TechnicalChange> {
     if id == privacy_extra::TYPING_PERSONALIZATION_ID {
         return privacy_extra::TYPING_VALUES
             .iter()
-            .map(|name| dword(format!("HKCU\\{}", privacy_extra::TYPING_PATH), *name, 0))
+            .map(|name| {
+                dword(
+                    format!("HKCU\\{}", privacy_extra::TYPING_PATH),
+                    *name,
+                    privacy_extra::TYPING_RESTRICTED,
+                )
+            })
             .collect();
     }
     if id == contextmenu::info().id {

@@ -1,6 +1,8 @@
 import { DOWNLOAD_EXE } from "../constants";
 import { useCampaignStoreLink } from "../campaign-store";
 import { PRACTICAL_GUIDES } from "./practical-guides";
+import { FIX_GUIDES } from "./fix-guides";
+import { ProBox, Steps, TechSummary, type Step } from "../components/ReferenceBlocks";
 import { GUIDE_FAQS } from "./guide-faqs";
 import { Link } from "../router";
 
@@ -34,10 +36,21 @@ interface Guide {
     readonly checked: string;
     readonly items: readonly { readonly label: string; readonly url: string }[];
   };
+  /** Fix pages: the facts in a table before the prose. */
+  readonly summary?: readonly { readonly label: string; readonly value: string }[];
+  /** Fix pages: the by-hand route, with paste-ready commands. */
+  readonly steps?: readonly Step[];
+  /** Fix pages: the same job in PC Tweaker, with links to the controls. */
+  readonly pctweaker?: {
+    readonly title: string;
+    readonly body: string;
+    readonly links: readonly { readonly to: string; readonly label: string }[];
+  };
 }
 
 export const GUIDES: Record<string, Guide> = {
   ...PRACTICAL_GUIDES,
+  ...FIX_GUIDES,
   "/windows-11-optimizer": {
     eyebrow: "WINDOWS 11 OPTIMIZATION",
     title: "Optimize Windows 11 without losing control",
@@ -379,6 +392,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
         </h1>
         <p className="mt-7 max-w-3xl text-lg leading-8 text-[var(--fg-dim)]">{guide.intro}</p>
 
+        {guide.summary && <TechSummary rows={guide.summary} />}
         {guide.image && <figure className="mt-10"><img src={guide.image} alt={guide.caption} loading="lazy" width="732" height="430" className="h-auto w-full rounded-xl" /><figcaption className="mt-3 text-sm text-[var(--fg-dim)]">{guide.caption}</figcaption></figure>}
         <div className="mt-14 space-y-8">
           {guide.sections.map((section) => (
@@ -399,6 +413,26 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
           ))}
         </div>
 
+        {guide.steps && (
+          <section className="mt-14 rounded-2xl bg-[var(--surface)] p-7 md:p-9" aria-labelledby="by-hand">
+            <h2 id="by-hand" className="font-display text-2xl font-bold text-[var(--fg)]">Do it by hand</h2>
+            <Steps steps={guide.steps} />
+          </section>
+        )}
+        {guide.pctweaker && (
+          <section className="mt-8 rounded-2xl bg-[var(--surface)] p-7 md:p-9" aria-labelledby="with-pct">
+            <h2 id="with-pct" className="font-display text-2xl font-bold text-[var(--fg)]">{guide.pctweaker.title}</h2>
+            <p className="mt-4 max-w-3xl leading-7 text-[var(--fg-dim)]">{guide.pctweaker.body}</p>
+            <ul className="mt-5 flex flex-wrap gap-2.5">
+              {guide.pctweaker.links.map((l) => (
+                <li key={l.to}>
+                  <Link to={l.to} onNavigate={navigate} className="inline-block rounded-lg border border-white/10 px-3.5 py-2 text-[13.5px] text-[var(--fg)] hover:border-white/25">{l.label}</Link>
+                </li>
+              ))}
+            </ul>
+            <ProBox campaign={"pct-fix-" + path.split("/").pop()} />
+          </section>
+        )}
         {guide.related && (
           <nav aria-label="Related guides" className="mt-14 border-t border-white/10 pt-9">
             <h2 className="font-display text-xl font-bold text-[var(--fg)]">Keep reading</h2>

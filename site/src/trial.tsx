@@ -7,7 +7,7 @@ import { TRIAL_COPY } from "../../src/components/trial-copy";
 
 /** The public price list, read after hydration: the prerendered page never
  *  claims a trial, and a failed read simply shows none. */
-function usePriceList(): PriceList | null {
+export function usePriceList(): PriceList | null {
   const [prices, setPrices] = useState<PriceList | null>(null);
   useEffect(() => {
     const controller = new AbortController();

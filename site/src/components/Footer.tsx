@@ -106,6 +106,16 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
             />
             <Col
               navigate={navigate}
+              title="REFERENCE"
+              links={[
+                { label: "Windows tweaks explained", href: "/tweaks/" },
+                { label: "Processes and services", href: "/database/" },
+                { label: "Windows fixes", href: "/fixes/" },
+                { label: "Free tools", href: "/tools/" },
+              ]}
+            />
+            <Col
+              navigate={navigate}
               title={text.footer.legal}
               links={[
                 { label: text.footer.privacy, href: "/privacy/" },

@@ -56,6 +56,14 @@ test("only the retired landing redirects; service routes remain available", { ti
   });
   assert.equal(noted.status, 200);
   assert.match(await noted.text(), /Thanks for telling us/);
+  // A trial charged nothing: the page must not say "Payment"; it names the app and speaks the account's language.
+  const trial = await (await fetch(base + "/checkout-success?session_id=cs_test_a1B2c3D4e5F6g7&product=uninstaller&trial=1&lang=it")).text();
+  assert.match(trial, /<html lang="it">/);
+  assert.match(trial, /La tua prova gratuita è iniziata/);
+  assert.match(trial, /PC Tweaker Uninstaller/);
+  assert.doesNotMatch(trial, /Pagamento completato|Payment/);
+  assert.match(await (await fetch(base + "/checkout-success")).text(), /Payment complete/);
+  assert.match(await (await fetch(base + "/checkout-cancel", { headers: { "accept-language": "de-DE,de;q=0.9" } })).text(), /Bezahlvorgang abgebrochen/);
   assert.equal((await fetch(base + "/ready")).status, 503);
   assert.equal((await fetch(base + "/", { method: "POST", redirect: "manual" })).status, 404);
   assert.equal((await fetch(base + "/missing", { redirect: "manual" })).status, 404);

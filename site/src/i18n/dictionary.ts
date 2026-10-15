@@ -623,7 +623,7 @@ export const engDictionary: Dictionary = {
       },
       {
         "value": "billing",
-        "label": "Billing / refund"
+        "label": "Billing / payment"
       },
       {
         "value": "bug",

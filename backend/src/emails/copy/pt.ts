@@ -7,6 +7,9 @@ import type { Copy } from "./index";
  */
 const named = (lead: string, n: string, end = ".") => (n ? `${lead}, ${n}${end}` : `${lead}${end}`);
 
+/** "em um PC" is Brazilian; European Portuguese contracts it to "num PC". */
+const em = (place: string) => (place.startsWith("um ") ? `n${place}` : `em ${place}`);
+
 export const pt: Copy = {
   tag: "pt",
   dateLocale: "pt-PT",
@@ -170,10 +173,10 @@ export const pt: Copy = {
 
   signIn: {
     subject: (b: string) => `Novo início de sessão na sua conta ${b}`,
-    preheader: (device: string, when: string) => `Sessão iniciada em ${device} a ${when}. Se foi o próprio, não precisa de fazer nada.`,
+    preheader: (device: string, when: string) => `Sessão iniciada ${em(device)} a ${when}. Se foi o próprio, não precisa de fazer nada.`,
     eyebrow: "Novo início de sessão",
     aPc: "um PC com Windows",
-    headline: (device: string) => `Novo início de sessão em ${device}.`,
+    headline: (device: string) => `Novo início de sessão ${em(device)}.`,
     intro: (b: string) =>
       `Foi iniciada sessão na sua conta ${b} a partir de um PC ou de uma rede que ainda não tínhamos visto nesta conta. Enviamos isto uma vez por cada PC novo, e só quando a palavra-passe está correta; uma palavra-passe errada nunca gera este e-mail.`,
     rows: { device: "PC", when: "Quando", account: "Conta" },
@@ -470,5 +473,26 @@ export const pt: Copy = {
     emailChanged: (b: string, email: string) => `A sua conta usa agora ${email}. Volte ao ${b} e inicie sessão com este endereço.`,
     emailChangeInvalid: "Esta ligação não é válida, já foi usada ou expirou. Peça a alteração novamente na aplicação.",
     emailTaken: "Esse endereço já é usado por outra conta. Nada foi alterado.",
+  },
+
+  checkout: {
+    paidTitle: "Pagamento concluído",
+    paidBody: (app: string) =>
+      `O Pro já está ativo na sua conta. Volte ao ${app}: o novo plano é aplicado automaticamente na próxima verificação da licença.`,
+    trialTitle: "A sua avaliação gratuita começou",
+    trialBody: (app: string, days: number) =>
+      `Hoje não foi cobrado nada e o Pro está ativo na sua conta durante ${days} dias. No fim da avaliação, o primeiro pagamento é cobrado automaticamente, a menos que cancele antes em Planos e preços no ${app}. Enviamos-lhe um e-mail na véspera.`,
+    cancelTitle: "Pagamento cancelado",
+    cancelBody: "Não foi cobrado nada. Pode voltar a iniciar o pagamento a partir da aplicação quando quiser.",
+    tipTitle: "Obrigado pelo seu apoio",
+    tipBody: "A sua gorjeta vai diretamente para novas funcionalidades e para as atualizações diárias do PC Tweaker. A Stripe envia-lhe o recibo por e-mail.",
+    notedTitle: "Obrigado por nos dizer",
+    notedBody: "Ajuda-nos a saber onde continuar a publicar. Volte à aplicação: o novo plano é aplicado automaticamente.",
+    ask: "Opcional: como conheceu o PC Tweaker?",
+    sources: {
+      youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", facebook: "Facebook",
+      search: "Motor de pesquisa", friend: "Um amigo", other: "Noutro sítio",
+    } as Record<string, string>,
+    close: "Pode fechar este separador.",
   },
 };

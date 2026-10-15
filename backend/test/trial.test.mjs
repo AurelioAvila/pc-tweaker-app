@@ -375,7 +375,7 @@ test("trial mail routing: paid marks the trial's first receipt, a refused or a d
   const directLog = {};
   await handleEvent(event("customer.subscription.created", plain), effects(directLog));
   assert.equal(directLog.welcomes.length, 1);
-  assert.equal(directLog.welcomes[0][6], undefined);
+  assert.deepEqual(directLog.welcomes[0][6], { subscriptionId: plain.id });
   assert.equal((await receipts(direct)).some((r) => r.receipt_key.startsWith("trial_")), false);
   await handleEvent(event("customer.subscription.deleted", update(plain, { status: "canceled", ended_at: now() })), effects());
   assert.equal((await receipts(direct)).some((r) => r.receipt_key.startsWith("trial_")), false);

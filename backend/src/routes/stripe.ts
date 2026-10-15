@@ -12,6 +12,7 @@ import {
   isSettledCheckout,
   planFromPrice,
   tipSessionParams,
+  withQuery,
 } from "../stripe-policy";
 import { sendMail } from "../mailer";
 import { bonusMail, brandFor, endingMail, proWelcomeHtml, proWelcomeSubject, proWelcomeText, refundHtml, refundSubject, refundText } from "../emails/pro-welcome";
@@ -21,7 +22,7 @@ import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
 import { promoCheckout } from "../promo";
 import { queueReceipt, type Receipt } from "../receipt-outbox";
 import { asyncRoute } from "../async-route";
-import { failureKey, trialMail, type Money, type TrialMailKind } from "../emails/trial";
+import { failureKey, trialMail, trialMoney, type Money, type TrialMailKind } from "../emails/trial";
 import {
   TRIAL_DAYS, TRIAL_MARK, TRIAL_REJECTED, blockedReason, claimTrial, grantsAccess, isOurTrial, trialEligible, trialEnabled,
 } from "../trial";
@@ -176,13 +177,22 @@ async function resolveCheckoutPrice(
 type CheckoutCreationEffects = {
   environment: NodeJS.ProcessEnv;
   now: () => number;
-  createSession: (params: Stripe.Checkout.SessionCreateParams) => Promise<{ url: string | null }>;
+  /** `idempotencyKey` makes a double click return the same Checkout page. */
+  createSession: (params: Stripe.Checkout.SessionCreateParams, idempotencyKey?: string) => Promise<{ url: string | null }>;
 };
 
 export function createCheckoutHandler(effects: CheckoutCreationEffects = {
   environment: process.env,
   now: Date.now,
-  createSession: (params) => stripe!.checkout.sessions.create(params),
+  createSession: async (params, idempotencyKey) => {
+    try {
+      return await stripe!.checkout.sessions.create(params, idempotencyKey ? { idempotencyKey } : undefined);
+    } catch (err) {
+      // Same key, different parameters (a deadline moved by a second): a new page.
+      if ((err as { type?: string }).type !== "StripeIdempotencyError") throw err;
+      return stripe!.checkout.sessions.create(params);
+    }
+  },
 }) {
   return async (req: Request, res: Response) => {
     const planKey = String(req.body?.plan || "annual") as PlanKey;
@@ -231,14 +241,16 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       let customerId: string | null = null;
       let customerEmail: string | undefined;
       let alreadyOwnsLifetime = false;
+      let locale: string | null = null;
       if (isConfigured) {
         const { rows } = await getPool().query(
-          "SELECT stripe_customer_id, email, is_pro, plan FROM users WHERE id = $1",
+          "SELECT stripe_customer_id, email, is_pro, plan, locale FROM users WHERE id = $1",
           [req.userId],
         );
         customerId = rows[0]?.stripe_customer_id || null;
         customerEmail = rows[0]?.email;
         alreadyOwnsLifetime = rows[0]?.is_pro === true && rows[0]?.plan === "lifetime";
+        locale = rows[0]?.locale ?? null;
       }
 
       const params: Stripe.Checkout.SessionCreateParams = checkoutSessionParams({
@@ -309,7 +321,14 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
           metadata: { ...params.subscription_data?.metadata, trial: TRIAL_MARK },
         };
       }
-      const session = await effects.createSession(params);
+      // The thanks page names the app, says "trial" rather than "payment"
+      // when nothing was charged, and speaks the account's language.
+      params.success_url = withQuery(params.success_url!, { product, ...(trial ? { trial: "1" } : {}), ...(locale ? { lang: locale } : {}) });
+      if (locale && params.cancel_url) params.cancel_url = withQuery(params.cancel_url, { lang: locale });
+      // Two clicks within the same minute get the same page, not two that
+      // could both be paid.
+      const session = await effects.createSession(params,
+        `checkout:${req.userId}:${product}:${planKey}:${trial ? "trial" : "now"}:${Math.floor(effects.now() / 60_000)}`);
       res.json({ url: session.url, trial, trial_days: TRIAL_DAYS });
     } catch (err) {
       console.error("checkout session creation failed:", err);
@@ -795,7 +814,7 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
       if (!sent.delivered) throw new Error("Billing mail provider did not accept the message");
     };
     if (receipt.kind === "refund") {
-      const input = { product, firstName: user.first_name || "", plan, refundedLabel: chargedLabel };
+      const input = { product, firstName: user.first_name || "", plan, refundedLabel: moneyOf(receipt) ? trialMoney(c.dateLocale, moneyOf(receipt)!) : chargedLabel };
       await deliver({ subject: refundSubject(product, c), text: refundText(input, c), html: refundHtml(input, c) });
       return;
     }
@@ -851,6 +870,10 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
       await deliver(bonusMail(user.first_name || "", formatDay(c, started), formatDay(c, expiresAt), c));
       return;
     }
+    // What was actually taken (coupon and tax included), in the reader's
+    // language. The subscription's first invoice is read at send time when the
+    // event that queued the receipt did not carry it; older rows keep their label.
+    const charged = moneyOf(receipt) ?? (receipt.subscriptionId ? await firstCharge(receipt.subscriptionId) : null);
     // No expiry means the purchase never renews, and the template says so.
     // The previous `expiresAt ?? new Date()` quietly turned that case into
     // "renews on <today>", which for a lifetime buyer is both wrong and
@@ -860,7 +883,7 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
       firstName: user.first_name || "",
       email: user.email,
       plan: plan || "monthly",
-      priceLabel: chargedLabel ?? PLAN_PRICE_LABELS[plan || "monthly"] ?? PLAN_PRICE_LABELS.monthly,
+      priceLabel: charged ? trialMoney(c.dateLocale, charged) : chargedLabel ?? PLAN_PRICE_LABELS[plan || "monthly"] ?? PLAN_PRICE_LABELS.monthly,
       renewsOn: expiresAt ? formatDay(c, expiresAt) : null,
     };
     await deliver({ subject: proWelcomeSubject(product, plan, c), text: proWelcomeText(input, c), html: proWelcomeHtml(input, c) });
@@ -877,6 +900,26 @@ async function upcomingCharge(subscriptionId: string): Promise<Money | null> {
     console.error("could not preview the first charge after a trial:", (err as Error).message);
     return null;
   }
+}
+
+/** The amount a queued receipt carries, if any. */
+function moneyOf(receipt: Receipt): Money | null {
+  return Number.isSafeInteger(receipt.amountMinor) && receipt.currency ? { minor: receipt.amountMinor!, currency: receipt.currency } : null;
+}
+
+/** What the first invoice of a subscription took, once it is paid; null
+ *  when it is not paid (yet) or does not exist. A Stripe error is thrown,
+ *  so the receipt is retried instead of quoting a list price. */
+async function firstCharge(subscriptionId: string): Promise<Money | null> {
+  if (!stripe) return null;
+  const { data } = await stripe.invoices.list({ subscription: subscriptionId, limit: 5 });
+  const first = data.find((invoice) => invoice.billing_reason === "subscription_create" && invoice.status === "paid");
+  return first ? { minor: first.amount_paid, currency: first.currency } : null;
+}
+
+/** A purchase amount for the receipt payload, from Stripe's minor units. */
+function paid(amount: number | null | undefined, currency: string | null | undefined): Partial<Receipt> {
+  return Number.isSafeInteger(amount) && currency ? { amountMinor: amount!, currency } : {};
 }
 
 /** The plan's own price, when nothing more precise is known. */
@@ -1291,7 +1334,7 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
     // Retryable cancellation precedes receipt delivery. The SQL grant is
     // already safe to replay if Stripe is temporarily unavailable here.
     await effects.stopSubscriptions(userId, customerId);
-    await effects.welcome(userId, plan, null, product, sessionCharge(session), `checkout:${session.id}`);
+    await effects.welcome(userId, plan, null, product, sessionCharge(session), `checkout:${session.id}`, paid(session.amount_total, session.currency));
   }
   effects.notifySale(userId, saleLabel, session.mode, product);
 }
@@ -1396,6 +1439,7 @@ async function handleReversal(event: Stripe.Event, effects: BillingEffects): Pro
       product: purchase.product,
       // The formatter labels one-off charges "once"; a refund is just an amount.
       chargedLabel: formatChargedAmount(refund.amount_refunded, refund.currency, null)?.replace(/ once$/, "") ?? null,
+      ...paid(refund.amount_refunded, refund.currency),
     }).catch((err: { code?: string }) => {
       // A deleted account has nobody to notify; anything else must retry.
       if (err?.code !== "23503") throw err;
@@ -1433,7 +1477,8 @@ async function syncSubscription(
     });
     await queueEnding(userId, product, subscription, expiresAt);
     if (welcome) {
-      await effects.welcome(userId, subscriptionPlan(subscription), expiresAt, product, subscriptionCharge(subscription), `subscription:${subscription.id}`);
+      await effects.welcome(userId, subscriptionPlan(subscription), expiresAt, product, subscriptionCharge(subscription), `subscription:${subscription.id}`,
+        { subscriptionId: subscription.id });
     }
     return { userId };
   }
@@ -1461,7 +1506,8 @@ async function syncSubscription(
   if (granted) await queueEnding(userId, "pctweaker", subscription, expiresAt);
   // Only on creation, not every renewal/update; a trial's receipt waits for its first charge.
   if (granted && welcome) {
-    await effects.welcome(userId, subscriptionPlan(subscription), expiresAt, "pctweaker", subscriptionCharge(subscription), `subscription:${subscription.id}`);
+    await effects.welcome(userId, subscriptionPlan(subscription), expiresAt, "pctweaker", subscriptionCharge(subscription), `subscription:${subscription.id}`,
+      { subscriptionId: subscription.id });
   }
   return granted ? { userId } : null;
 }
@@ -1516,6 +1562,16 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
           synced.userId, subscriptionPlan(current), periodEndFromSubscription(current), product,
           subscriptionCharge(current), `subscription:${current.id}`,
           { kind: "trial_paid", subscriptionId: current.id, amountMinor: invoice.amount_paid, currency: invoice.currency },
+        );
+      } else if (synced && event.type === "invoice.paid" && invoice.billing_reason === "subscription_create" && !isOurTrial(current) && grantsAccess(current)) {
+        // "Subscribe now" paid after authentication (3D Secure): the
+        // subscription was still incomplete when its "created" event arrived,
+        // so the purchase receipt is sent from its first paid invoice. Same
+        // key as the "created" path, so never twice.
+        await effects.welcome(
+          synced.userId, subscriptionPlan(current), periodEndFromSubscription(current), product,
+          subscriptionCharge(current), `subscription:${current.id}`,
+          { subscriptionId: current.id, ...paid(invoice.amount_paid, invoice.currency) },
         );
       }
       break;

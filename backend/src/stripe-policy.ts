@@ -105,6 +105,16 @@ export function formatChargedAmount(
   return `${formatted} / ${interval}`;
 }
 
+/** Appends query parameters to a Checkout return URL by plain string
+ *  concatenation: `new URL()` would percent-encode Stripe's
+ *  `{CHECKOUT_SESSION_ID}` placeholder and Stripe would stop filling it in. */
+export function withQuery(url: string, params: Record<string, string>): string {
+  const pairs = Object.entries(params).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`);
+  if (!pairs.length) return url;
+  const [head, hash] = url.split("#", 2);
+  return `${head}${head.includes("?") ? "&" : "?"}${pairs.join("&")}${hash !== undefined ? `#${hash}` : ""}`;
+}
+
 /** How many coffees one tip may cover. The ceiling exists because the field
  * is unauthenticated: without it a client could post quantity: 1e9 and Stripe
  * would happily render a five-figure total in our name. */

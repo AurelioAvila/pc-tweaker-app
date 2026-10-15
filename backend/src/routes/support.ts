@@ -40,7 +40,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   activation: "Pro activation",
   "tweak-issue": "A tweak isn't working",
   rollback: "Rollback / restore",
-  billing: "Billing / refund",
+  billing: "Billing / payment",
   bug: "Bug report",
   other: "Other",
 };

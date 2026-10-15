@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://pctweaker.app/tools/</loc></url>
-  <url><loc>https://pctweaker.app/tools/process-checker/</loc></url>
-  <url><loc>https://pctweaker.app/tools/profile-builder/</loc></url>
-  <url><loc>https://pctweaker.app/tools/timer-resolution-calculator/</loc></url>
+  <url><loc>https://pctweaker.app/tools/</loc><lastmod>2026-10-15</lastmod></url>
+  <url><loc>https://pctweaker.app/tools/process-checker/</loc><lastmod>2026-10-15</lastmod></url>
+  <url><loc>https://pctweaker.app/tools/profile-builder/</loc><lastmod>2026-10-15</lastmod></url>
+  <url><loc>https://pctweaker.app/tools/timer-resolution-calculator/</loc><lastmod>2026-10-15</lastmod></url>
 </urlset>

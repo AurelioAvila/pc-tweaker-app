@@ -260,7 +260,7 @@ export const it: Copy = {
         ...(lifetime
           ? []
           : [
-              `<strong>Gestire il piano.</strong> Piani e prezzi nella barra in alto mostra account e piano e apre il portale di fatturazione di Stripe per la carta, la periodicità o la disdetta. Un piano disdetto resta Pro fino al ${renews}. Accedendo con ${who} su un altro PC, è Pro anche lì.`,
+              `<strong>Gestire il piano.</strong> Piani e prezzi nella barra in alto mostra account e piano e apre il portale di fatturazione di Stripe per la carta o la disdetta. Un piano disdetto resta Pro fino al ${renews}. Accedendo con ${who} su un altro PC, è Pro anche lì.`,
             ]),
       ],
       note: (lifetime: boolean) =>

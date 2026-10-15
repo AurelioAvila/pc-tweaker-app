@@ -264,7 +264,7 @@ export const de: Copy = {
         ...(lifetime
           ? []
           : [
-              `<strong>Den Tarif verwalten.</strong> Tarife und Preise in der oberen Leiste zeigt Konto und Tarif und öffnet das Abrechnungsportal von Stripe für Karte, Laufzeit oder Kündigung. Ein gekündigter Tarif bleibt bis zum ${renews} Pro. Meldest du dich mit ${who} auf einem anderen PC an, ist er dort ebenfalls Pro.`,
+              `<strong>Den Tarif verwalten.</strong> Tarife und Preise in der oberen Leiste zeigt Konto und Tarif und öffnet das Abrechnungsportal von Stripe für Karte oder Kündigung. Ein gekündigter Tarif bleibt bis zum ${renews} Pro. Meldest du dich mit ${who} auf einem anderen PC an, ist er dort ebenfalls Pro.`,
             ]),
       ],
       note: (lifetime: boolean) =>

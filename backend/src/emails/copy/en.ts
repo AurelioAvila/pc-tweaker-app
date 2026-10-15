@@ -267,7 +267,7 @@ export const en = {
         ...(lifetime
           ? []
           : [
-              `<strong>Managing the plan.</strong> Plans &amp; pricing in the top bar shows the account and plan and opens Stripe's billing portal for the card, the interval or a cancellation. A cancelled plan stays Pro until ${renews}. Signing in with ${who} on another PC makes it Pro there too.`,
+              `<strong>Managing the plan.</strong> Plans &amp; pricing in the top bar shows the account and plan and opens Stripe's billing portal for the card or a cancellation. A cancelled plan stays Pro until ${renews}. Signing in with ${who} on another PC makes it Pro there too.`,
             ]),
       ],
       note: (lifetime: boolean): string =>

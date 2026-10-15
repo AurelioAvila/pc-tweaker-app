@@ -81,3 +81,12 @@ test("every shell carries a hidden preheader and declares its colour scheme", ()
   assert.match(html, /<meta name="color-scheme" content="light dark">/);
   assert.match(html, /<div style="display:none;[^"]*">Your payment of €99\.00 for PC Tweaker Pro was reversed/);
 });
+
+test("the Uninstaller receipt does not promise an interval change the portal cannot make (annual only)", async () => {
+  const { copyFor, LOCALES } = await import("../dist/emails/copy/index.js");
+  const { proWelcomeText } = await import("../dist/emails/pro-welcome.js");
+  for (const locale of LOCALES) {
+    const text = proWelcomeText({ product: "uninstaller", firstName: "Ana", email: "ana@example.com", plan: "annual", priceLabel: "9,99 €", renewsOn: "15 October 2027" }, copyFor(locale));
+    assert.doesNotMatch(text, /interval|periodicit|périodicité|Laufzeit/i, locale);
+  }
+});

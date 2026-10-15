@@ -260,7 +260,7 @@ export const fr: Copy = {
         ...(lifetime
           ? []
           : [
-              `<strong>Gérer l’offre.</strong> Offres et tarifs, dans la barre du haut, affiche le compte et l’offre et ouvre le portail de facturation Stripe pour la carte, la périodicité ou une résiliation. Une offre résiliée reste Pro jusqu’au ${renews}. En vous connectant avec ${who} sur un autre PC, il devient Pro lui aussi.`,
+              `<strong>Gérer l’offre.</strong> Offres et tarifs, dans la barre du haut, affiche le compte et l’offre et ouvre le portail de facturation Stripe pour la carte ou une résiliation. Une offre résiliée reste Pro jusqu’au ${renews}. En vous connectant avec ${who} sur un autre PC, il devient Pro lui aussi.`,
             ]),
       ],
       note: (lifetime: boolean) =>

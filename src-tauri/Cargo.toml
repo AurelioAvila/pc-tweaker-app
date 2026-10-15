@@ -1,7 +1,7 @@
 [package]
 name = "tauri-app"
 version = "1.18.4"
-description = "Real Windows tweaks with automatic one-click rollback"
+description = "Windows tuning that shows each change before it runs and restores supported settings"
 authors = ["Aurelio Avila"]
 license-file = "../LICENSE"
 edition = "2021"

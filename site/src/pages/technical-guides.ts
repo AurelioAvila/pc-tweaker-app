@@ -26,7 +26,7 @@ export const TECHNICAL_GUIDES = {
       },
       {
         "heading": "Know which background processes are excluded",
-        "body": "Intel background steering is limited to the signed-in user’s session. PC Tweaker skips Windows-directory processes, the game’s child processes, processes already carrying CPU sets and processes above normal priority. It also skips processes Windows will not let it access. Protected-game detection pauses steering rather than attempting to defeat protection. These exclusions mean that seeing some work outside the preferred cores is not, by itself, a malfunction. This feature is not an anti-cheat bypass."
+        "body": "Intel background steering is limited to the signed-in user’s session. PC Tweaker skips Windows-directory processes, the game’s child processes, processes already carrying CPU sets and processes above normal priority. It also skips processes Windows will not let it access. Protected-game detection pauses steering. These exclusions mean that seeing some work outside the preferred cores is not, by itself, a malfunction."
       },
       {
         "heading": "Restore the session and check the result",

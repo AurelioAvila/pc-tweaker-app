@@ -1,3 +1,5 @@
+import tauriConf from "../../src-tauri/tauri.conf.json";
+import { msUntil, type Promo } from "../../src/promo";
 import { PRACTICAL_GUIDES } from "./pages/practical-guides";
 import { GUIDE_FAQS } from "./pages/guide-faqs";
 import { text } from "./i18n/dictionary";
@@ -130,6 +132,34 @@ const faqPage = (
   })),
 });
 
+const homeApp = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "@id": "https://pctweaker.app/#software",
+  "name": "PC Tweaker",
+  "operatingSystem": "Windows 10, Windows 11",
+  "applicationCategory": "UtilitiesApplication",
+  "softwareVersion": tauriConf.version,
+  "softwareRequirements": "Windows 10 or Windows 11",
+  "downloadUrl": "https://dl.pctweaker.app/pc-tweaker/PCTweaker-Setup.exe",
+  "description": "Windows tuning for gaming, privacy and maintenance, with visible setting changes and restore tools for supported tweaks.",
+  "url": "https://pctweaker.app/",
+  "image": "https://pctweaker.app/og-cover-20261011.png",
+  "sameAs": [
+    "https://github.com/AurelioAvila/pc-tweaker-app",
+    "https://apps.microsoft.com/detail/9nh3c6dt1g87",
+    "https://www.majorgeeks.com/files/details/pc_tweaker.html"
+  ],
+  "author": { "@type": "Person", "name": "Aurelio Avila" },
+  "publisher": { "@id": "https://pctweaker.app/#organization" },
+  "offers": [
+    { "@type": "Offer", "price": "0", "priceCurrency": "EUR", "name": "Free", "description": "Free plan — no account required" },
+    { "@type": "Offer", "price": "7.99", "priceCurrency": "EUR", "name": "Pro monthly", "description": "Pro subscription billed monthly" },
+    { "@type": "Offer", "price": "59.99", "priceCurrency": "EUR", "name": "Pro annual", "description": "Pro subscription billed yearly" },
+    { "@type": "Offer", "price": "99", "priceCurrency": "EUR", "name": "Pro lifetime", "description": "One-time Pro purchase" }
+  ]
+};
+
 // The Uninstaller is its own product with its own prices, so its page carries
 // its own SoftwareApplication rather than borrowing PC Tweaker's from the
 // homepage. The offers mirror the plan cards on that page; check-seo.mjs pins
@@ -154,7 +184,7 @@ const uninstallerApp = {
 };
 
 export const ROUTE_JSONLD: Record<string, readonly object[]> = {
-  "/": [faqPage(`${ORIGIN}/#faq`, `${ORIGIN}/`, text.faq.items)],
+  "/": [homeApp, faqPage(`${ORIGIN}/#faq`, `${ORIGIN}/`, text.faq.items)],
   "/uninstaller": [uninstallerApp],
   "/support": [
     faqPage(`${ORIGIN}/support/#faq`, `${ORIGIN}/support/`, text.support.selfServe),
@@ -171,3 +201,48 @@ export const NOT_FOUND_SEO: RouteSeo = {
   canonical: `${ORIGIN}/404`,
   ogType: "website",
 };
+
+const OFFER_PLANS: Record<string, string> = {
+  "Pro monthly": "monthly",
+  "Pro annual": "annual",
+  "Pro lifetime": "lifetime",
+  "Uninstaller Pro annual": "annual",
+};
+
+type ApplicationOffers = {
+  "@type"?: string;
+  name?: string;
+  offers?: { name: string; price: string; description: string }[];
+};
+
+/** Regular prices remain the static fallback. The same verified promotion
+ *  used by the plan cards supplies current offers after hydration. */
+export function getRouteJsonLd(route: string, promo: Promo | null = null): readonly object[] {
+  const nodes = ROUTE_JSONLD[route] ?? [];
+  if (!promo || promo.status !== "active" || msUntil(promo, promo.startsAt, 0) > 0 || msUntil(promo, promo.endsAt, 0) <= 0)
+    return nodes;
+  return nodes.map((node) => {
+    const app = node as ApplicationOffers;
+    if (app["@type"] !== "SoftwareApplication" || !app.offers) return node;
+    const product = app.name === "PC Tweaker" ? "pctweaker"
+      : app.name === "PC Tweaker Uninstaller" ? "uninstaller" : null;
+    if (!product) return node;
+    return {
+      ...node,
+      offers: app.offers.map((base) => {
+        const offer = promo.offers.find((item) => item.product === product && item.plan === OFFER_PLANS[base.name]);
+        if (!offer) return base;
+        const period = offer.plan === "monthly" ? "month" : "year";
+        return {
+          ...base,
+          price: (offer.price / 100).toFixed(2),
+          description: offer.firstPeriodOnly
+            ? `Promotional first ${period}; then EUR ${(offer.regular / 100).toFixed(2)} per ${period}`
+            : "Promotional one-time purchase; no renewal",
+          validFrom: promo.startsAt,
+          validThrough: promo.endsAt,
+        };
+      }),
+    };
+  });
+}

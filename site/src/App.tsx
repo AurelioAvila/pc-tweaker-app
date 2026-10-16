@@ -21,7 +21,7 @@ import {
   AccessibilityPage,
   NotFoundPage,
 } from "./pages/Legal";
-import { PromoProvider } from "./promo";
+import { PromoProvider, RouteStructuredData } from "./promo";
 import { useRoute } from "./router";
 import { NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
 
@@ -102,6 +102,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
 
   return (
     <PromoProvider>
+      <RouteStructuredData path={path} />
       {/* Visually hidden until focused: the first Tab press lets keyboard and
           screen-reader users jump past the nav straight to the content. */}
       <a

@@ -26,6 +26,7 @@ function ThemeSelector() {
         {text.hero.themeLabel}: {ACCENTS[theme].label}
       </summary>
       <div className="absolute right-0 bottom-full z-30 mb-2 grid w-[268px] grid-cols-5 gap-1 rounded-xl sm:grid-cols-6 sm:w-[316px] border border-[var(--line)] bg-[var(--bg-2)] p-3" role="group" aria-label={text.hero.themeLabel}>
+        <p className="col-span-full mb-2 text-[12px] leading-relaxed text-[var(--fg-dim)]">{text.hero.themeHint}</p>
         {THEME_ORDER.map((t) => (
           <button
             key={t}

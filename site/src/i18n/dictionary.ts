@@ -40,6 +40,7 @@ export interface Dictionary {
     readonly copied: string;
     readonly badges: readonly { readonly label: string; readonly href: string }[];
     readonly themeLabel: string;
+    readonly themeHint: string;
     readonly comparePlans: string;
   };
   readonly suite: {
@@ -258,7 +259,8 @@ export const engDictionary: Dictionary = {
         "href": "https://github.com/AurelioAvila/pc-tweaker-app"
       }
     ],
-    "themeLabel": "Theme",
+    "themeLabel": "Site colours",
+    "themeHint": "Changes this website only. The app screenshot stays the same.",
     "comparePlans": "Compare Free, Pro & Lifetime"
   },
   "suite": {

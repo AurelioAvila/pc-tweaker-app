@@ -5,6 +5,7 @@ import { HeroSection } from "./components/HeroSection";
 import { PerformanceMetrics } from "./components/PerformanceMetrics";
 import { BespokeArsenal } from "./components/BespokeArsenal";
 import { EngineeringPhilosophy } from "./components/EngineeringPhilosophy";
+import { SuiteOverview } from "./components/SuiteOverview";
 import { ProtocolTimeline } from "./components/ProtocolTimeline";
 import { AccessPricing } from "./components/AccessPricing";
 import { ReviewsSection } from "./components/ReviewsSection";
@@ -25,7 +26,7 @@ import { PromoProvider, RouteStructuredData } from "./promo";
 import { useRoute } from "./router";
 import { NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
 
-function HomePage() {
+function HomePage({ navigate }: { navigate: (to: string) => void }) {
   return (
     <main id="main-content">
       <HeroSection />
@@ -33,6 +34,7 @@ function HomePage() {
       <BespokeArsenal />
       <EngineeringPhilosophy />
       <ProtocolTimeline />
+      <SuiteOverview navigate={navigate} />
       <AccessPricing />
       <ReviewsSection />
       <FaqAccordion />
@@ -79,7 +81,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       page = <UninstallerPage />;
       break;
     case "/":
-      page = <HomePage />;
+      page = <HomePage navigate={navigate} />;
       break;
     case "/support":
       page = <SupportPage navigate={navigate} />;

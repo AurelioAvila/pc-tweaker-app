@@ -6,15 +6,25 @@ import { GUIDE_FAQS } from "./pages/guide-faqs";
 import { DIRECTORY_GUIDES } from "./pages/guide-directory";
 import { text } from "./i18n/dictionary";
 import { UNINSTALLER_DOWNLOAD_EXE } from "./constants";
+import { guideBreadcrumbs } from "./pages/guide-breadcrumbs";
 
 export interface RouteSeo {
   readonly title: string;
   readonly description: string;
   readonly canonical: string;
   readonly ogType: "website" | "article";
+  readonly image?: string;
+  readonly imageAlt?: string;
 }
 
 const ORIGIN = "https://pctweaker.app";
+
+export function getRouteImage(seo: RouteSeo) {
+  return {
+    url: seo.image ?? `${ORIGIN}/og-cover-20261011.png`,
+    alt: seo.imageAlt ?? "PC Tweaker Profiles: editable Gaming, Study and Work presets",
+  };
+}
 
 // Canonicals carry the trailing slash because that is the URL that answers.
 // The build emits each route as a directory with its own index.html, and the
@@ -43,6 +53,7 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     title: `${guide.seoTitle} | PC Tweaker`,
     description: guide.seoDescription,
     canonical: `${ORIGIN}${path}/`, ogType: "article" as const,
+    ...("socialImage" in guide ? { image: `${ORIGIN}${guide.socialImage}`, imageAlt: guide.socialImageAlt } : {}),
   }])),
   "/": {
     title: "PC Tweaker | Windows Tuning for Steadier Frame Times",
@@ -219,7 +230,9 @@ export const ROUTE_JSONLD: Record<string, readonly object[]> = {
     mainEntityOfPage: `${ORIGIN}${path}/`,
     headline: guide.title,
     description: guide.seoDescription,
+    datePublished: guide.published,
     dateModified: guide.updated,
+    image: `${ORIGIN}${guide.socialImage}`,
     inLanguage: "en",
     author: { "@type": "Person", name: "Aurelio Avila", url: "https://github.com/AurelioAvila" },
     publisher: { "@id": `${ORIGIN}/#organization` },
@@ -257,7 +270,18 @@ type ApplicationOffers = {
 /** Regular prices remain the static fallback. The same verified promotion
  *  used by the plan cards supplies current offers after hydration. */
 export function getRouteJsonLd(route: string, promo: Promo | null = null): readonly object[] {
-  const nodes = ROUTE_JSONLD[route] ?? [];
+  const crumbs = guideBreadcrumbs(route);
+  const nodes = [
+    ...(ROUTE_JSONLD[route] ?? []),
+    ...(crumbs.length ? [{
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "@id": `${ORIGIN}${route}/#breadcrumb`,
+      itemListElement: crumbs.map((crumb, index) => ({
+        "@type": "ListItem", position: index + 1, name: crumb.name, item: `${ORIGIN}${crumb.path}`,
+      })),
+    }] : []),
+  ];
   if (!promo || promo.status !== "active" || msUntil(promo, promo.startsAt, 0) > 0 || msUntil(promo, promo.endsAt, 0) <= 0)
     return nodes;
   return nodes.map((node) => {

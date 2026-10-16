@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
 const serverBundle = path.join(root, "dist-ssr", "entry-server.js");
-const { render, ROUTE_SEO, getRouteJsonLd, NOT_FOUND_SEO } = await import(pathToFileURL(serverBundle));
+const { render, ROUTE_SEO, getRouteImage, getRouteJsonLd, NOT_FOUND_SEO } = await import(pathToFileURL(serverBundle));
 const template = await readFile(path.join(dist, "index.html"), "utf8");
 
 function escapeAttribute(value) {
@@ -32,6 +32,7 @@ function jsonLdScript(payload) {
 
 function buildPage(route, seo, noindex = false) {
   let html = template;
+  const image = getRouteImage(seo);
   const routeLd = noindex ? [] : getRouteJsonLd(route);
   html = replaceTag(
     html,
@@ -60,6 +61,8 @@ function buildPage(route, seo, noindex = false) {
     "og:description": seo.description,
     "og:url": seo.canonical,
     "og:type": seo.ogType,
+    "og:image": image.url,
+    "og:image:alt": image.alt,
   };
   for (const [property, value] of Object.entries(properties)) {
     html = replaceTag(
@@ -73,6 +76,8 @@ function buildPage(route, seo, noindex = false) {
   const twitter = {
     "twitter:title": seo.title,
     "twitter:description": seo.description,
+    "twitter:image": image.url,
+    "twitter:image:alt": image.alt,
   };
   for (const [name, value] of Object.entries(twitter)) {
     html = replaceTag(

@@ -1,7 +1,7 @@
 import { renderToString } from "react-dom/server";
 import App from "./App";
 import { ThemeProvider } from "./theme";
-import { getRouteJsonLd, NOT_FOUND_SEO, ROUTE_JSONLD, ROUTE_SEO } from "./seo";
+import { getRouteImage, getRouteJsonLd, NOT_FOUND_SEO, ROUTE_JSONLD, ROUTE_SEO } from "./seo";
 
 export function render(path: string): string {
   return renderToString(
@@ -11,4 +11,4 @@ export function render(path: string): string {
   );
 }
 
-export { getRouteJsonLd, NOT_FOUND_SEO, ROUTE_JSONLD, ROUTE_SEO };
+export { getRouteImage, getRouteJsonLd, NOT_FOUND_SEO, ROUTE_JSONLD, ROUTE_SEO };

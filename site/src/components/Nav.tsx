@@ -42,7 +42,7 @@ export function Nav({
           onNavigate={navigate}
           className="font-display flex min-h-11 items-center gap-2 text-[15px] whitespace-nowrap font-700 tracking-tight text-[var(--fg)] sm:gap-2.5 sm:text-[17px]"
         >
-          <img src={logoUrl} alt="" className="h-6 w-6 rounded-md" />
+          <img src={logoUrl} alt="" width="24" height="24" className="h-6 w-6 rounded-md" />
           PC Tweaker
         </Link>
         <div className="flex items-center gap-2 sm:gap-7">

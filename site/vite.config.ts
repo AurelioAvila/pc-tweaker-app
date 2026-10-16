@@ -65,9 +65,7 @@ function spaFallback(): Plugin {
  */
 const PRELOAD_FONTS = [
   /inter-latin-400-normal-.*\.woff2$/,
-  /inter-latin-600-normal-.*\.woff2$/,
   /space-grotesk-latin-700-normal-.*\.woff2$/,
-  /jetbrains-mono-latin-400-normal-.*\.woff2$/,
 ];
 
 function preloadFonts(): Plugin {

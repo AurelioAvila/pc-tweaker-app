@@ -3,6 +3,7 @@ import { useCampaignStoreLink } from "../campaign-store";
 import { PRACTICAL_GUIDES } from "./practical-guides";
 import { GUIDE_FAQS } from "./guide-faqs";
 import { Link } from "../router";
+import { GuideBreadcrumbs } from "../components/GuideBreadcrumbs";
 
 interface Guide {
   readonly eyebrow: string;
@@ -13,6 +14,7 @@ interface Guide {
   readonly intro: string;
   readonly format?: "technical";
   readonly updated?: string;
+  readonly published?: string;
   readonly image?: string;
   readonly caption?: string;
   readonly sections: readonly {
@@ -20,6 +22,11 @@ interface Guide {
     readonly body: string;
     readonly code?: string;
     readonly points?: readonly string[];
+    readonly table?: {
+      readonly caption: string;
+      readonly rows: readonly { readonly module: string; readonly subsystem: string; readonly check: string }[];
+      readonly note: string;
+    };
   }[];
   /**
    * Curated in-content links to the other topic pages. The footer already
@@ -371,16 +378,14 @@ export const GUIDES: Record<string, Guide> = {
 
 export function GuidePage({ path, navigate }: { path: string; navigate: (to: string) => void }) {
   const guide = GUIDES[path];
-  const storeLink = useCampaignStoreLink("pct-guide-" + path.slice(1));
+  const storeLink = useCampaignStoreLink("pct-guide-" + path.replace(/^\/guides\//, "").replace(/^\//, "").replace(/\//g, "-"));
   if (!guide) return null;
   const technical = guide.format === "technical";
 
   return (
     <main id="main-content" className="px-5 pt-32 pb-24 md:px-12">
       <article className="mx-auto max-w-4xl">
-        <nav aria-label="Guide navigation" className="mb-5">
-          <Link to="/guides/" onNavigate={navigate} className="inline-flex min-h-11 items-center text-sm font-medium text-accent underline underline-offset-4">All guides</Link>
-        </nav>
+        <GuideBreadcrumbs path={path} navigate={navigate} />
         {!technical && <p className="font-mono-t text-accent mb-5 text-[12px] tracking-[0.15em]">
           {guide.eyebrow}
         </p>}
@@ -392,6 +397,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
         {technical && (
           <>
             <p className="mt-5 text-sm leading-6 text-[var(--fg-dim)]">Maintained by <a href="https://github.com/AurelioAvila" className="text-accent underline underline-offset-4">Aurelio Avila</a> · Sources checked {guide.sources?.checked}.</p>
+            {guide.published && <p className="mt-1 text-sm leading-6 text-[var(--fg-dim)]">Published <time dateTime={guide.published}>{new Date(`${guide.published}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}</time>.</p>}
             <nav aria-label="On this page" className="mt-9 border-y border-[var(--line)] py-6">
               <h2 className="font-display text-lg font-semibold text-[var(--fg)]">On this page</h2>
               <ol className="mt-3 grid gap-x-8 md:grid-cols-2">
@@ -406,6 +412,26 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
             <section key={section.heading} id={`guide-section-${index + 1}`} className={technical ? "min-w-0 scroll-mt-32 border-b border-[var(--line)] pb-9" : "rounded-2xl bg-[var(--surface)] p-7 md:p-9"}>
               <h2 className="font-display text-2xl font-bold text-[var(--fg)]">{section.heading}</h2>
               <p className={`mt-4 leading-7 text-[var(--fg-dim)] ${technical ? "max-w-[70ch]" : "max-w-3xl"}`}>{section.body}</p>
+              {section.table && (
+                <>
+                  <table id={`guide-table-${index + 1}`} className="mt-7 w-full scroll-mt-32 table-fixed border-collapse text-left text-sm leading-6">
+                    <caption className="pb-4 text-left font-semibold text-[var(--fg)]">{section.table.caption}</caption>
+                    <thead>
+                      <tr className="border-b border-[var(--line-2)] text-[var(--fg)]">
+                        <th scope="col" className="w-[40%] py-3 pr-4 font-semibold sm:w-[28%]">Module</th>
+                        <th scope="col" className="py-3 font-semibold">What to check first</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {section.table.rows.map((row) => <tr key={row.module} className="border-b border-[var(--line)] align-top">
+                        <th scope="row" className="py-5 pr-4 font-normal text-[var(--fg)]"><code className="text-xs [overflow-wrap:anywhere] sm:text-sm">{row.module}</code></th>
+                        <td className="py-5 text-[var(--fg-dim)]"><p className="font-semibold text-[var(--fg)]">{row.subsystem}</p><p className="mt-2">{row.check}</p></td>
+                      </tr>)}
+                    </tbody>
+                  </table>
+                  <p className="mt-4 max-w-[70ch] text-sm leading-7 text-[var(--fg-dim)]">{section.table.note}</p>
+                </>
+              )}
               {section.code && <pre tabIndex={0} aria-label={`${section.heading}: read-only commands`} className="mt-5 max-w-full overflow-x-auto rounded-xl bg-[var(--surface)] p-5 text-[13px] leading-6 text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"><code>{section.code}</code></pre>}
               {section.points && (
                 <ul className="mt-6 grid gap-3 text-[15px] text-[var(--fg)] md:grid-cols-2">

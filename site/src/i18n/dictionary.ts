@@ -79,6 +79,7 @@ export interface Dictionary {
       readonly body: string;
       readonly pro: boolean;
       readonly span: "wide" | "tall" | "std";
+      readonly guide?: { readonly href: string; readonly label: string };
     }[];
   };
   readonly philosophy: {
@@ -362,7 +363,8 @@ export const engDictionary: Dictionary = {
         "title": "Read the sensors you have",
         "body": "Monitor available temperatures, utilization, VRAM, fan speed and power readings. Unsupported sensors are identified. Use readings during a real workload to understand heat and load together.",
         "pro": false,
-        "span": "wide"
+        "span": "wide",
+        "guide": {"href": "/guides/fix-dpc-isr-latency-windows-11/", "label": "Diagnose DPC/ISR latency"}
       },
       {
         "tag": "DRIVERS",
@@ -397,14 +399,16 @@ export const engDictionary: Dictionary = {
         "title": "Make sessions easier to manage",
         "body": "Use Game Sessions to apply a gaming preset when a supported game starts and restore its supported settings afterward. Review hardware scheduling and input options individually.",
         "pro": true,
-        "span": "std"
+        "span": "std",
+        "guide": {"href": "/guides/amd-x3d-intel-hybrid-core-steering-gaming/", "label": "Compare Game Sessions steering"}
       },
       {
         "tag": "PRIVACY",
         "title": "Choose what Windows shares",
         "body": "Review supported advertising, tracking and diagnostic settings. Availability varies by Windows edition. Check password exposure using a hash-prefix lookup; your full password is not sent.",
         "pro": true,
-        "span": "std"
+        "span": "std",
+        "guide": {"href": "/guides/windows-11-privacy-telemetry-rollback/", "label": "Review privacy and recovery"}
       },
       {
         "tag": "NETWORK",
@@ -418,7 +422,8 @@ export const engDictionary: Dictionary = {
         "title": "Test cache-aware placement",
         "body": "On supported dual-die Ryzen X3D processors, inspect the cache topology and test game placement on the cache-equipped die. Single-die chips do not need this adjustment. Compare before keeping it.",
         "pro": false,
-        "span": "std"
+        "span": "std",
+        "guide": {"href": "/guides/amd-ryzen-x3d-core-parking-windows-11/", "label": "Check X3D topology and parking"}
       },
       {
         "tag": "MAINTENANCE",

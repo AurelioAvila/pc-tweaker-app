@@ -44,6 +44,8 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
       "Review a Windows uninstall before it runs: inspect its risk score, command and permissions, then check restore-point status and the local removal receipt.",
     canonical: `${ORIGIN}/uninstaller/`,
     ogType: "website",
+    image: `${ORIGIN}/uninstaller/social-card.jpg`,
+    imageAlt: "PC Tweaker Uninstaller: review the removal risk, command and permissions, then keep the local receipt.",
   },
   // A guide's on-page H1 and intro are written for someone already reading it;
   // the title and description are written for someone deciding whether to click
@@ -188,10 +190,13 @@ const uninstallerApp = {
   "@type": "SoftwareApplication",
   "@id": `${ORIGIN}/uninstaller/#software`,
   name: "PC Tweaker Uninstaller",
+  softwareVersion: "0.13.3",
   operatingSystem: "Windows 10, Windows 11",
   applicationCategory: "UtilitiesApplication",
   downloadUrl: UNINSTALLER_DOWNLOAD_EXE,
   url: `${ORIGIN}/uninstaller/`,
+  image: `${ORIGIN}/uninstaller/social-card.jpg`,
+  sameAs: ["https://github.com/AurelioAvila/pc-tweaker-uninstaller"],
   description:
     "Windows uninstaller that shows each removal's risk score, command and permissions before it runs, then keeps a local receipt of what was removed.",
   author: { "@type": "Person", name: "Aurelio Avila", url: "https://github.com/AurelioAvila" },

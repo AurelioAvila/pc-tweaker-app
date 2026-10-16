@@ -58,6 +58,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
     for (const [selector, content] of [
       ['meta[name="description"]', seo.description],
       ['meta[property="og:title"]', seo.title],
+      ['meta[property="og:type"]', seo.ogType],
       ['meta[property="og:description"]', seo.description],
       ['meta[property="og:url"]', seo.canonical],
       ['meta[name="twitter:title"]', seo.title],

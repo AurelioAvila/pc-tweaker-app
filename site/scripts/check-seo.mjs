@@ -138,6 +138,7 @@ for (const route of ["fix-dpc-isr-latency-windows-11", "amd-ryzen-x3d-core-parki
   const html = await readFile(new URL(`guides/${route}/index.html`, dist), "utf8");
   const blocks = [...html.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map((entry) => JSON.parse(entry[1]));
   const article = blocks.find((entry) => entry["@type"] === "TechArticle");
+  assert.ok(html.includes('property="og:type" content="article"'), `Wrong Open Graph type: ${route}`);
   assert.equal(article?.url, url, `Article canonical mismatch: ${route}`);
   assert.equal(article?.mainEntityOfPage, url, `Article identity mismatch: ${route}`);
   assert.ok(!blocks.some((entry) => entry["@type"] === "SoftwareApplication"), `Product offers leaked onto an article: ${route}`);

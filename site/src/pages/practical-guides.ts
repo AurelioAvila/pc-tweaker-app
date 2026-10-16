@@ -1,4 +1,7 @@
+import { TECHNICAL_GUIDES } from "./technical-guides";
+
 export const PRACTICAL_GUIDES = {
+  ...TECHNICAL_GUIDES,
   "/uninstall-programs-completely": {
     eyebrow: "UNINSTALL GUIDE",
     title: "How to completely uninstall a program on Windows",

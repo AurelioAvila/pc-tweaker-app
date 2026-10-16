@@ -11,11 +11,14 @@ interface Guide {
   readonly seoTitle?: string;
   readonly seoDescription?: string;
   readonly intro: string;
+  readonly format?: "technical";
+  readonly updated?: string;
   readonly image?: string;
   readonly caption?: string;
   readonly sections: readonly {
     readonly heading: string;
     readonly body: string;
+    readonly code?: string;
     readonly points?: readonly string[];
   }[];
   /**
@@ -210,6 +213,8 @@ export const GUIDES: Record<string, Guide> = {
       },
     ],
     related: [
+      {"to": "/guides/fix-dpc-isr-latency-windows-11/", "label": "diagnose DPC and ISR spikes before changing settings", "note": "Reproduce a crackle or frame-time problem and inspect the driver trace."},
+      {"to": "/guides/amd-ryzen-x3d-core-parking-windows-11/", "label": "check Ryzen X3D parking and process placement", "note": "Topology, power policy and process CPU sets are different controls."},
       {
         to: "/windows-gaming-work-study-profiles/",
         label: "what the Gaming starter profile selects",
@@ -339,6 +344,7 @@ export const GUIDES: Record<string, Guide> = {
       },
     ],
     related: [
+      {"to": "/guides/windows-11-privacy-telemetry-rollback/", "label": "inspect privacy registry values and plan the rollback", "note": "Read the actual key, record its previous state and understand edition limits."},
       {
         to: "/turn-off-windows-recall/",
         label: "how to turn off Windows Recall, and keep it off",
@@ -367,24 +373,37 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
   const guide = GUIDES[path];
   const storeLink = useCampaignStoreLink("pct-guide-" + path.slice(1));
   if (!guide) return null;
+  const technical = guide.format === "technical";
 
   return (
     <main id="main-content" className="px-5 pt-32 pb-24 md:px-12">
       <article className="mx-auto max-w-4xl">
-        <p className="font-mono-t text-accent mb-5 text-[12px] tracking-[0.15em]">
+        {!technical && <p className="font-mono-t text-accent mb-5 text-[12px] tracking-[0.15em]">
           {guide.eyebrow}
-        </p>
+        </p>}
         <h1 className="font-display max-w-3xl text-4xl leading-[1.08] font-bold tracking-[-0.03em] text-[var(--fg)] md:text-6xl">
           {guide.title}
         </h1>
         <p className="mt-7 max-w-3xl text-lg leading-8 text-[var(--fg-dim)]">{guide.intro}</p>
 
+        {technical && (
+          <>
+            <p className="mt-5 text-sm leading-6 text-[var(--fg-dim)]">Maintained by <a href="https://github.com/AurelioAvila" className="text-accent underline underline-offset-4">Aurelio Avila</a> · Sources checked {guide.sources?.checked}.</p>
+            <nav aria-label="On this page" className="mt-9 border-y border-[var(--line)] py-6">
+              <h2 className="font-display text-lg font-semibold text-[var(--fg)]">On this page</h2>
+              <ol className="mt-3 grid gap-x-8 md:grid-cols-2">
+                {guide.sections.map((section, index) => <li key={section.heading}><a href={`#guide-section-${index + 1}`} className="inline-flex min-h-11 items-center py-2 text-sm leading-6 text-accent underline underline-offset-4 decoration-[var(--line-2)] hover:decoration-[var(--accent)]">{section.heading}</a></li>)}
+              </ol>
+            </nav>
+          </>
+        )}
         {guide.image && <figure className="mt-10"><img src={guide.image} alt={guide.caption} loading="lazy" width="732" height="430" className="h-auto w-full rounded-xl" /><figcaption className="mt-3 text-sm text-[var(--fg-dim)]">{guide.caption}</figcaption></figure>}
         <div className="mt-14 space-y-8">
-          {guide.sections.map((section) => (
-            <section key={section.heading} className="rounded-2xl bg-[var(--surface)] p-7 md:p-9">
+          {guide.sections.map((section, index) => (
+            <section key={section.heading} id={`guide-section-${index + 1}`} className={technical ? "min-w-0 scroll-mt-32 border-b border-[var(--line)] pb-9" : "rounded-2xl bg-[var(--surface)] p-7 md:p-9"}>
               <h2 className="font-display text-2xl font-bold text-[var(--fg)]">{section.heading}</h2>
-              <p className="mt-4 max-w-3xl leading-7 text-[var(--fg-dim)]">{section.body}</p>
+              <p className={`mt-4 leading-7 text-[var(--fg-dim)] ${technical ? "max-w-[70ch]" : "max-w-3xl"}`}>{section.body}</p>
+              {section.code && <pre tabIndex={0} aria-label={`${section.heading}: read-only commands`} className="mt-5 max-w-full overflow-x-auto rounded-xl bg-[var(--surface)] p-5 text-[13px] leading-6 text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"><code>{section.code}</code></pre>}
               {section.points && (
                 <ul className="mt-6 grid gap-3 text-[15px] text-[var(--fg)] md:grid-cols-2">
                   {section.points.map((point) => (
@@ -438,7 +457,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
             </ul>
           </nav>
         )}
-        {path in PRACTICAL_GUIDES && (
+        {path in PRACTICAL_GUIDES && !technical && (
           <nav aria-label="References" className="mt-8 flex flex-wrap gap-5 text-sm text-accent">
             <a href="https://support.microsoft.com/en-us/windows/experience/storage-filemanagement/common-file-name-extensions-in-windows">
               Microsoft: file extensions

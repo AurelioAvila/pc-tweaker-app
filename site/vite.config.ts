@@ -1,7 +1,6 @@
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import tauriConf from "../src-tauri/tauri.conf.json";
 
 /** Client-side routes that must also exist as real files. Keep in sync with
  *  the routes handled in src/router.tsx. */
@@ -57,28 +56,6 @@ function spaFallback(): Plugin {
 }
 
 /**
- * The version in the structured data, taken from where it actually lives.
- *
- * It was hand-written into index.html's JSON-LD and said 1.6.1 while the
- * published release was 1.6.5: four versions behind, on a field Google reads
- * for rich results. Nobody notices, because the site builds and deploys
- * correctly regardless — the value is wrong, not broken.
- *
- * Read from src-tauri/tauri.conf.json, which is the version the app claims to
- * be, so a version bump updates this without anyone having to remember.
- * Imported as JSON rather than read with `fs` so this project does not pull in
- * @types/node, which it avoids on purpose (see the note on spaFallback).
- */
-function appVersion(): Plugin {
-  return {
-    name: "app-version",
-    transformIndexHtml(html) {
-      return html.replace(/__APP_VERSION__/g, tauriConf.version);
-    },
-  };
-}
-
-/**
  * Start the above-the-fold fonts at the same time as the stylesheet.
  *
  * Without this the browser only discovers the .woff2 files after it has
@@ -118,7 +95,6 @@ export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     react(),
     tailwindcss(),
-    appVersion(),
     ...(isSsrBuild ? [] : [preloadFonts(), spaFallback()]),
   ],
 }));

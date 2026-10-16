@@ -5,6 +5,7 @@ import { HeroSection } from "./components/HeroSection";
 import { PerformanceMetrics } from "./components/PerformanceMetrics";
 import { BespokeArsenal } from "./components/BespokeArsenal";
 import { EngineeringPhilosophy } from "./components/EngineeringPhilosophy";
+import { SuiteOverview } from "./components/SuiteOverview";
 import { ProtocolTimeline } from "./components/ProtocolTimeline";
 import { AccessPricing } from "./components/AccessPricing";
 import { ReviewsSection } from "./components/ReviewsSection";
@@ -21,11 +22,11 @@ import {
   AccessibilityPage,
   NotFoundPage,
 } from "./pages/Legal";
-import { PromoProvider } from "./promo";
+import { PromoProvider, RouteStructuredData } from "./promo";
 import { useRoute } from "./router";
 import { NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
 
-function HomePage() {
+function HomePage({ navigate }: { navigate: (to: string) => void }) {
   return (
     <main id="main-content">
       <HeroSection />
@@ -33,6 +34,7 @@ function HomePage() {
       <BespokeArsenal />
       <EngineeringPhilosophy />
       <ProtocolTimeline />
+      <SuiteOverview navigate={navigate} />
       <AccessPricing />
       <ReviewsSection />
       <FaqAccordion />
@@ -56,6 +58,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
     for (const [selector, content] of [
       ['meta[name="description"]', seo.description],
       ['meta[property="og:title"]', seo.title],
+      ['meta[property="og:type"]', seo.ogType],
       ['meta[property="og:description"]', seo.description],
       ['meta[property="og:url"]', seo.canonical],
       ['meta[name="twitter:title"]', seo.title],
@@ -79,7 +82,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       page = <UninstallerPage />;
       break;
     case "/":
-      page = <HomePage />;
+      page = <HomePage navigate={navigate} />;
       break;
     case "/support":
       page = <SupportPage navigate={navigate} />;
@@ -102,6 +105,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
 
   return (
     <PromoProvider>
+      <RouteStructuredData path={path} />
       {/* Visually hidden until focused: the first Tab press lets keyboard and
           screen-reader users jump past the nav straight to the content. */}
       <a

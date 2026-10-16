@@ -40,6 +40,14 @@ export interface Dictionary {
     readonly copied: string;
     readonly badges: readonly { readonly label: string; readonly href: string }[];
     readonly themeLabel: string;
+    readonly themeHint: string;
+    readonly comparePlans: string;
+  };
+  readonly suite: {
+    readonly title: string;
+    readonly intro: string;
+    readonly note: string;
+    readonly products: readonly { readonly name: string; readonly task: string; readonly description: string; readonly cta: string; readonly href: string }[];
   };
   readonly metrics: {
     readonly tag: string;
@@ -251,7 +259,19 @@ export const engDictionary: Dictionary = {
         "href": "https://github.com/AurelioAvila/pc-tweaker-app"
       }
     ],
-    "themeLabel": "THEMES"
+    "themeLabel": "Themes",
+    "themeHint": "Changes this website only. The app screenshot stays the same.",
+    "comparePlans": "Compare Free, Pro & Lifetime"
+  },
+  "suite": {
+    "title": "Choose the tool for the task.",
+    "intro": "Windows settings, software removal and driver reviews belong to different workflows. Start with what you need to do.",
+    "note": "Separate applications and licences. Included benefits are listed in each plan; buying one app does not automatically unlock the whole suite.",
+    "products": [
+      { "name": "PC Tweaker", "task": "Review Windows settings", "description": "Inspect gaming, privacy and maintenance changes. Keep previous values for supported settings and compare the outcome.", "cta": "Compare PC Tweaker plans", "href": "#access" },
+      { "name": "PC Tweaker Uninstaller", "task": "Understand a removal", "description": "Review the removal score, command and permissions before uninstalling. Keep a local receipt and check recovery limits.", "cta": "Explore Uninstaller", "href": "/uninstaller/" },
+      { "name": "Tweaky Driver", "task": "Review driver offers", "description": "Inspect detected devices and installed versions. Separate download-ready offers from catalog candidates before changing a working PC.", "cta": "Explore Tweaky Driver", "href": "https://pctweaker.app/tweaky-driver/" }
+    ]
   },
   "metrics": {
     "tag": "01 / WHAT TO MEASURE",
@@ -534,7 +554,7 @@ export const engDictionary: Dictionary = {
       },
       {
         "q": "What is free, and how does Pro work?",
-        "a": "Free includes 46 controls, scan, supported restore tools, hardware monitoring and selected maintenance tools, with no account required. Pro adds 35 controls, advanced features and Game Sessions. Current subscriptions are €7.99 per month or €59.99 per year; Lifetime is €99 once. Everything in Pro, plus: exclusive access to selected future tweaks, priority support, saved-profile comparison and portable tuning reports. Lifetime also includes Uninstaller Pro for 12 months from your first sign-in to Uninstaller with the same account, including existing Lifetime owners. This bonus does not renew automatically. Upcoming exclusive tweaks are not included in the current catalog. Review the final price and renewal terms at checkout. Existing lifetime purchases retain the access promised when purchased."
+        "a": "Free includes 46 controls, scan, supported restore tools, hardware monitoring and selected maintenance tools, with no account required. Pro adds 35 controls, advanced features and Game Sessions. Regular subscriptions are €7.99 per month or €59.99 per year; Lifetime is normally €99 once. Any active offer and its renewal terms appear in the plans above. Everything in Pro, plus: exclusive access to selected future tweaks, priority support, saved-profile comparison and portable tuning reports. Lifetime also includes Uninstaller Pro for 12 months from your first sign-in to Uninstaller with the same account, including existing Lifetime owners. This bonus does not renew automatically. Upcoming exclusive tweaks are not included in the current catalog. Review the final price and renewal terms at checkout. Existing lifetime purchases retain the access promised when purchased."
       },
       {
         "q": "What leaves my PC?",

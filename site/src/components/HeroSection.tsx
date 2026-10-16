@@ -12,29 +12,41 @@ import { useCampaignStoreLink } from "../campaign-store";
 /* ---------- theme selector: one geometric dot per palette ---------- */
 function ThemeSelector() {
   const { theme, setTheme } = useTheme();
+  const disclosure = useRef<HTMLDetailsElement>(null);
+  const summary = useRef<HTMLElement>(null);
   return (
-    <div className="flex items-center gap-3">
-      <span className="font-mono-t text-[10px] tracking-[0.2em] text-[var(--fg-dim)]">
+    <details ref={disclosure} className="static shrink-0 sm:relative" onKeyDown={(event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (disclosure.current) disclosure.current.open = false;
+        summary.current?.focus();
+      }
+    }}>
+      <summary ref={summary} className="min-h-11 cursor-pointer rounded-lg border border-[var(--line)] px-3 py-3 text-[12px] text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]">
         {text.hero.themeLabel}
-      </span>
-      <div className="flex flex-wrap items-center gap-2.5">
+      </summary>
+      <div className="absolute right-0 bottom-full z-30 mb-2 grid w-[268px] grid-cols-5 gap-1 rounded-xl sm:grid-cols-6 sm:w-[316px] border border-[var(--line)] bg-[var(--bg-2)] p-3" role="group" aria-label={text.hero.themeLabel}>
+        <p className="col-span-full mb-2 text-[12px] leading-relaxed text-[var(--fg-dim)]">{text.hero.themeHint}</p>
         {THEME_ORDER.map((t) => (
           <button
             key={t}
+            type="button"
             aria-label={ACCENTS[t].label}
+            aria-pressed={theme === t}
             title={ACCENTS[t].label}
-            onClick={() => setTheme(t)}
-            className="h-3.5 w-3.5 rounded-full border transition-all duration-300"
-            style={{
-              backgroundColor: ACCENTS[t].hex,
-              borderColor: theme === t ? "var(--fg)" : "transparent",
-              transform: theme === t ? "scale(1.35)" : "scale(1)",
-              boxShadow: theme === t ? `0 0 14px ${ACCENTS[t].glow}` : "none",
+            onClick={() => {
+              setTheme(t);
+              if (disclosure.current) disclosure.current.open = false;
+              summary.current?.focus();
             }}
-          />
+            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg border border-transparent hover:border-[var(--line-2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+            style={{ borderColor: theme === t ? "var(--fg)" : undefined }}
+          >
+            <span aria-hidden="true" className="h-4 w-4 rounded-full" style={{ backgroundColor: ACCENTS[t].hex }} />
+          </button>
         ))}
       </div>
-    </div>
+    </details>
   );
 }
 
@@ -115,7 +127,6 @@ export function HeroSection() {
             <span className="bg-accent inline-block h-px w-9" />
             {text.hero.eyebrow}
           </div>
-          <ThemeSelector />
         </motion.div>
 
         {/* Copy and download on the left, the real app on the right: a visitor
@@ -134,8 +145,6 @@ export function HeroSection() {
               {text.hero.sub}
             </p>
 
-            <PromoCard />
-
             {/* CoffeeTip owns this row so the tip pill can sit beside the
                 download button while its stepper unfolds under both. */}
             <div className="mt-9">
@@ -153,16 +162,17 @@ export function HeroSection() {
                   <span className="font-mono-t text-[12px]">↓</span>
                 </motion.a>
               </CoffeeTip>
+              <a href="#access" className="mt-2 inline-flex min-h-11 items-center text-[14px] font-semibold text-[var(--fg)] underline decoration-[var(--line-2)] underline-offset-4 hover:decoration-[var(--accent)]">
+                {text.hero.comparePlans}
+              </a>
             </div>
 
-            {/* Honest friction disclosure, not hidden in an FAQ: the
-                installer isn't code-signed yet, so SmartScreen can interrupt
-                the very first click someone makes on this page. Saying so
-                up front, right where the click happens, costs us nothing and
-                is worth more than a surprise warning would. */}
+            {/* Keep publisher and recovery information close to the download. */}
             <p className="mt-3 max-w-md text-[12.5px] leading-relaxed text-[var(--fg-dim)]">
               {text.hero.safetyNote}
             </p>
+
+            <PromoCard />
 
             {/* Social traffic lands on phones, where an .exe is a dead end. */}
             <div className="md:hidden">
@@ -202,8 +212,9 @@ export function HeroSection() {
                 className="block h-auto w-full"
               />
             </div>
-            <figcaption className="font-mono-t mt-3 text-[11.5px] text-[var(--fg-dim)]">
-              {text.hero.screenshotCaption}
+            <figcaption className="relative mt-3 flex flex-wrap items-center justify-between gap-3 text-[11.5px] text-[var(--fg-dim)]">
+              <span>{text.hero.screenshotCaption}</span>
+              <ThemeSelector />
             </figcaption>
           </motion.figure>
         </div>

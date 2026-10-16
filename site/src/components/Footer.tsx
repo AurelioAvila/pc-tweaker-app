@@ -54,6 +54,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
               PC Tweaker
             </div>
             <p className="max-w-xs text-[13px] text-[var(--fg-dim)]">{text.footer.tagline}</p>
+            <p className="mt-3 text-[13px] leading-6 text-[var(--fg-dim)]">Built by <a href="https://github.com/AurelioAvila" className="text-accent underline underline-offset-4">Aurelio Avila</a>.</p>
             <NewsletterSignup />
           </div>
           <div className="flex flex-wrap gap-14">
@@ -93,6 +94,9 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
               navigate={navigate}
               title="GUIDES"
               links={[
+                { label: "DPC/ISR latency diagnosis", href: "/guides/fix-dpc-isr-latency-windows-11/" },
+                { label: "Ryzen X3D core parking", href: "/guides/amd-ryzen-x3d-core-parking-windows-11/" },
+                { label: "Privacy and rollback", href: "/guides/windows-11-privacy-telemetry-rollback/" },
                 { label: "Undo Windows tweaks", href: "/how-to-undo-windows-tweaks/" },
                 { label: "Gaming, Work and Study", href: "/windows-gaming-work-study-profiles/" },
                 { label: "System change disclosure", href: "/what-pc-tweaker-changes/" },

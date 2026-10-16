@@ -131,4 +131,19 @@ for (const [name, html] of [["homepage", home], ["Uninstaller", uninstaller]]) {
   assert.ok(!/€00\.00|−00%|0 November 0000|0d 00h 00m 00s/.test(html), `Unverified offer text in initial HTML: ${name}`);
 }
 
+// Technical pages must be real prerendered articles at their nested canonical paths.
+for (const route of ["fix-dpc-isr-latency-windows-11", "amd-ryzen-x3d-core-parking-windows-11", "windows-11-privacy-telemetry-rollback"]) {
+  const url = `https://pctweaker.app/guides/${route}/`;
+  assert.ok(urls.some((entry) => entry.href === url), `Technical guide missing from sitemap: ${route}`);
+  const html = await readFile(new URL(`guides/${route}/index.html`, dist), "utf8");
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map((entry) => JSON.parse(entry[1]));
+  const article = blocks.find((entry) => entry["@type"] === "TechArticle");
+  assert.equal(article?.url, url, `Article canonical mismatch: ${route}`);
+  assert.equal(article?.mainEntityOfPage, url, `Article identity mismatch: ${route}`);
+  assert.ok(!blocks.some((entry) => entry["@type"] === "SoftwareApplication"), `Product offers leaked onto an article: ${route}`);
+  assert.ok(html.includes('aria-label="On this page"'), `Missing guide navigation: ${route}`);
+  for (const [, id] of html.matchAll(/href="#(guide-section-\d+)"/g)) assert.ok(html.includes(`id="${id}"`), `Broken section link ${id}: ${route}`);
+  assert.ok(html.includes("read-only commands"), `Missing inspectable commands: ${route}`);
+}
+
 console.log(`SEO checks passed for ${urls.length} sitemap routes, robots.txt and the 404 page.`);

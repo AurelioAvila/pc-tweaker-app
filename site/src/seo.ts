@@ -1,5 +1,6 @@
 import tauriConf from "../../src-tauri/tauri.conf.json";
 import { msUntil, type Promo } from "../../src/promo";
+import { TECHNICAL_GUIDES } from "./pages/technical-guides";
 import { PRACTICAL_GUIDES } from "./pages/practical-guides";
 import { GUIDE_FAQS } from "./pages/guide-faqs";
 import { text } from "./i18n/dictionary";
@@ -9,7 +10,7 @@ export interface RouteSeo {
   readonly title: string;
   readonly description: string;
   readonly canonical: string;
-  readonly ogType: "website";
+  readonly ogType: "website" | "article";
 }
 
 const ORIGIN = "https://pctweaker.app";
@@ -29,12 +30,12 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   },
   // A guide's on-page H1 and intro are written for someone already reading it;
   // the title and description are written for someone deciding whether to click
-  // from a result page. Where those differ, the guide carries seoTitle/
-  // seoDescription and they win here — otherwise the visible copy is reused.
+  // from a result page. Practical guides carry their own seoTitle and
+  // seoDescription so neither has to reuse the longer on-page introduction.
   ...Object.fromEntries(Object.entries(PRACTICAL_GUIDES).map(([path, guide]) => [path, {
-    title: `${guide.seoTitle ?? guide.title} | PC Tweaker`,
-    description: guide.seoDescription ?? guide.intro,
-    canonical: `${ORIGIN}${path}/`, ogType: "website" as const,
+    title: `${guide.seoTitle} | PC Tweaker`,
+    description: guide.seoDescription,
+    canonical: `${ORIGIN}${path}/`, ogType: "article" as const,
   }])),
   "/": {
     title: "PC Tweaker | Windows Tuning for Steadier Frame Times",
@@ -150,7 +151,7 @@ const homeApp = {
     "https://apps.microsoft.com/detail/9nh3c6dt1g87",
     "https://www.majorgeeks.com/files/details/pc_tweaker.html"
   ],
-  "author": { "@type": "Person", "name": "Aurelio Avila" },
+  "author": { "@type": "Person", "name": "Aurelio Avila", "url": "https://github.com/AurelioAvila" },
   "publisher": { "@id": "https://pctweaker.app/#organization" },
   "offers": [
     { "@type": "Offer", "price": "0", "priceCurrency": "EUR", "name": "Free", "description": "Free plan — no account required" },
@@ -175,7 +176,7 @@ const uninstallerApp = {
   url: `${ORIGIN}/uninstaller/`,
   description:
     "Windows uninstaller that shows each removal's risk score, command and permissions before it runs, then keeps a local receipt of what was removed.",
-  author: { "@type": "Person", name: "Aurelio Avila" },
+  author: { "@type": "Person", name: "Aurelio Avila", url: "https://github.com/AurelioAvila" },
   publisher: { "@id": `${ORIGIN}/#organization` },
   offers: [
     { "@type": "Offer", price: "0", priceCurrency: "EUR", name: "Free", description: "Single uninstalls, risk review and the local removal ledger" },
@@ -186,6 +187,20 @@ const uninstallerApp = {
 export const ROUTE_JSONLD: Record<string, readonly object[]> = {
   "/": [homeApp, faqPage(`${ORIGIN}/#faq`, `${ORIGIN}/`, text.faq.items)],
   "/uninstaller": [uninstallerApp],
+  ...Object.fromEntries(Object.entries(TECHNICAL_GUIDES).map(([path, guide]) => [path, [{
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "@id": `${ORIGIN}${path}/#article`,
+    url: `${ORIGIN}${path}/`,
+    mainEntityOfPage: `${ORIGIN}${path}/`,
+    headline: guide.title,
+    description: guide.seoDescription,
+    dateModified: guide.updated,
+    inLanguage: "en",
+    author: { "@type": "Person", name: "Aurelio Avila", url: "https://github.com/AurelioAvila" },
+    publisher: { "@id": `${ORIGIN}/#organization` },
+    isPartOf: { "@id": `${ORIGIN}/#website` },
+  }]])),
   "/support": [
     faqPage(`${ORIGIN}/support/#faq`, `${ORIGIN}/support/`, text.support.selfServe),
   ],

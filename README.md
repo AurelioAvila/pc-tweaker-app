@@ -52,6 +52,22 @@ winget upgrade --id AurelioAvila.PCTweaker --exact
 
 Package catalogs can lag behind a release. Check the release version before installing. Windows 10/11 x64 is the current binary target; individual features depend on the Windows build, edition, drivers and available hardware. App compatibility does not extend Microsoft's support lifecycle for your operating system.
 
+## Choose the right tool
+
+| Application | Use it for | Official page |
+| --- | --- | --- |
+| PC Tweaker | Review Windows settings, collect DPC/ISR diagnostics and inspect supported process-placement controls. | [PC Tweaker](https://pctweaker.app/) |
+| PC Tweaker Uninstaller | Review an uninstall command and removal risk, then inspect leftovers and the removal receipt. | [Uninstaller](https://pctweaker.app/uninstaller/) |
+| Tweaky Driver | Review a driver package and its source before deciding whether to install it. | [Tweaky Driver](https://pctweaker.app/tweaky-driver/) |
+
+These are separate applications with their own licences. PC Tweaker Lifetime includes 12 months of Uninstaller Pro from the first Uninstaller sign-in with the same account; other offers and renewals are described on each product’s page.
+
+### Diagnose before changing a setting
+
+- [DPC/ISR latency on Windows 11](https://pctweaker.app/guides/fix-dpc-isr-latency-windows-11/): capture the failing workload, investigate driver attribution and compare one change at a time.
+- [Ryzen X3D core parking and steering](https://pctweaker.app/guides/amd-ryzen-x3d-core-parking-windows-11/): distinguish the power-plan policy from process CPU sets, and verify the reset path.
+- [Windows privacy and rollback](https://pctweaker.app/guides/windows-11-privacy-telemetry-rollback/): inspect the exact registry values, record absence as well as data, and restore supported changes.
+
 ## Closing and reopening PC Tweaker
 
 Closing the window keeps PC Tweaker running in the Windows notification area. Click its icon to reopen it, or right-click and choose **Exit PC Tweaker** to quit. To make closing the window quit instead, clear **Keep running in the background** in the icon's menu. Windows may place the icon in its hidden-icons panel.

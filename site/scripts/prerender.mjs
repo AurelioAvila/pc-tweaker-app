@@ -1,4 +1,4 @@
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -97,6 +97,7 @@ function buildPage(route, seo, noindex = false) {
 
 for (const [route, seo] of Object.entries(ROUTE_SEO)) {
   const file = route === "/" ? path.join(dist, "index.html") : path.join(dist, route.slice(1), "index.html");
+  await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, buildPage(route, seo), "utf8");
 }
 

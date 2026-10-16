@@ -55,6 +55,10 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
             </div>
             <p className="max-w-xs text-[13px] text-[var(--fg-dim)]">{text.footer.tagline}</p>
             <p className="mt-3 text-[13px] leading-6 text-[var(--fg-dim)]">Built by <a href="https://github.com/AurelioAvila" className="text-accent underline underline-offset-4">Aurelio Avila</a>.</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <a href={GH} className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line-2)] px-4 text-[13px] font-semibold text-[var(--fg)] hover:border-[var(--accent)]">{text.suite.starRepository}</a>
+              <a href="https://github.com/AurelioAvila/.github/blob/master/CODE_SIGNING.md" className="inline-flex min-h-11 items-center px-2 text-[13px] text-accent underline underline-offset-4">{text.suite.verifyRelease}</a>
+            </div>
             <NewsletterSignup />
           </div>
           <div className="flex flex-wrap gap-14">
@@ -96,6 +100,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
               links={[
                 { label: "DPC/ISR latency diagnosis", href: "/guides/fix-dpc-isr-latency-windows-11/" },
                 { label: "Ryzen X3D core parking", href: "/guides/amd-ryzen-x3d-core-parking-windows-11/" },
+                { label: "X3D & Intel Hybrid steering", href: "/guides/amd-x3d-intel-hybrid-core-steering-gaming/" },
                 { label: "Privacy and rollback", href: "/guides/windows-11-privacy-telemetry-rollback/" },
                 { label: "Undo Windows tweaks", href: "/how-to-undo-windows-tweaks/" },
                 { label: "Gaming, Work and Study", href: "/windows-gaming-work-study-profiles/" },

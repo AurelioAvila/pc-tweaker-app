@@ -17,10 +17,14 @@ export function SuiteOverview({ navigate }: { navigate: (to: string) => void }) 
                 <p className="mt-2 text-[14px] text-[var(--fg)]">{product.task}</p>
               </div>
               <p className="max-w-xl text-[14.5px] leading-relaxed text-[var(--fg-dim)]">{product.description}</p>
-              <div className="md:justify-self-end">
+              <div className="space-y-2 md:justify-self-end">
                 {product.href.startsWith("/")
                   ? <Link to={product.href} onNavigate={navigate} className={linkClass}>{product.cta}</Link>
                   : <a href={product.href} className={linkClass}>{product.cta}</a>}
+                <div className="flex flex-wrap gap-x-4">
+                  <a href={product.repository} className={linkClass}>{copy.starRepository}<span className="sr-only">: {product.name}</span></a>
+                  <a href="https://github.com/AurelioAvila/.github/blob/master/CODE_SIGNING.md" className={linkClass}>{copy.verifyRelease}<span className="sr-only">: {product.name}</span></a>
+                </div>
               </div>
             </article>
           ))}

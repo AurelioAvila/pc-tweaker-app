@@ -1,4 +1,56 @@
 export const TECHNICAL_GUIDES = {
+  "/guides/amd-x3d-intel-hybrid-core-steering-gaming": {
+    "eyebrow": "GAME SESSION SCHEDULING",
+    "format": "technical",
+    "updated": "2026-10-16",
+    "title": "Test core steering on AMD X3D and Intel Hybrid",
+    "seoTitle": "AMD X3D & Intel Hybrid Core Steering for Gaming",
+    "seoDescription": "Understand PC Tweaker Game Sessions on AMD X3D and Intel Hybrid CPUs: supported topology, CPU sets, protected-process limits and automatic restoration.",
+    "intro": "Different cores and cache layouts make CPU placement a question to test. Compare the Windows scheduler with one reversible Game Sessions change, using the same game scene and background workload.",
+    "sections": [
+      {
+        "heading": "Keep the scheduler as your baseline",
+        "body": "Start with current supported Windows, chipset and graphics drivers, and leave firmware core settings unchanged. Record the game version, power mode, temperatures and the background applications you actually use. Run the same scene several times and compare frame-time consistency as well as average FPS. Intel warns that restricting a game to P-cores does not automatically improve performance. A GPU-bound scene or a game with its own thread scheduling may show no useful difference."
+      },
+      {
+        "heading": "Understand CPU sets before changing placement",
+        "body": "PC Tweaker uses Windows process-default CPU sets for session steering. These defaults apply to threads that do not choose their own CPU sets. A restrictive affinity mask still takes precedence, so the feature does not replace a game’s existing hard-affinity choices. It does not disable cores in firmware, change their clock speed or suspend background applications. Keep other affinity tools off during the comparison so the result has one explanation."
+      },
+      {
+        "heading": "Check the detected topology, not the processor name",
+        "body": "For AMD X3D, PC Tweaker requires an asymmetric cache layout with exactly one larger L3 domain. The game is directed to that cache domain; background processes are left unchanged. A single-die or uniform-cache processor does not meet that detection rule merely because its name contains X3D. For Intel Hybrid, the game receives CPU sets in the highest reported efficiency class, while eligible background processes receive the remaining classes. Unsupported or insufficient layouts are left alone."
+      },
+      {
+        "heading": "Enable one registered game session",
+        "body": "In Game Sessions, register the actual game executable and enable core steering for the test. Activation requires Pro; turning steering off remains available for recovery. Check the detected plan before launching the game, then reproduce the baseline with the same streaming, chat or browser workload. Judge the entire session: a frame-time change is not useful if an encoder, voice call or capture becomes unreliable. Keep the ordinary scheduler configuration if repeated runs do not show a worthwhile result."
+      },
+      {
+        "heading": "Know which background processes are excluded",
+        "body": "Intel background steering is limited to the signed-in user’s session. PC Tweaker skips Windows-directory processes, the game’s child processes, processes already carrying CPU sets and processes above normal priority. It also skips processes Windows will not let it access. Protected-game detection pauses steering rather than attempting to defeat protection. These exclusions mean that seeing some work outside the preferred cores is not, by itself, a malfunction. This feature is not an anti-cheat bypass."
+      },
+      {
+        "heading": "Restore the session and check the result",
+        "body": "The previous state is journaled before a steering change. Restoration runs when the game exits, steering or the session is disabled, PC Tweaker quits, or the application next starts after a crash. Before clearing CPU sets, recovery checks the process creation identity and that its current sets still match those applied by the session. Another tool’s later changes are left alone. CPU sets also end with the process; a reboot does not make this a permanent CPU policy."
+      },
+      {
+        "heading": "Separate steering from core parking and driver latency",
+        "body": "Core parking is a power-management policy; DPC/ISR tracing measures work in interrupt routines. Neither is the same mechanism as process CPU placement. Do not change all three during one benchmark. Keep the baseline, the tested setting and the restore result together, and investigate a driver or thermal problem on its own evidence. No core layout or steering preset guarantees a particular FPS increase."
+      }
+    ],
+    "related": [
+      { "to": "/guides/amd-ryzen-x3d-core-parking-windows-11/", "label": "Ryzen X3D: core parking versus process steering", "note": "Understand the separate power policy and manual alignment controls." },
+      { "to": "/guides/fix-dpc-isr-latency-windows-11/", "label": "Diagnose DPC and ISR driver latency", "note": "Capture the symptom before treating it as a CPU placement problem." }
+    ],
+    "sources": {
+      "checked": "16 October 2026",
+      "items": [
+        { "label": "Intel: optimizing threading for gaming performance", "url": "https://www.intel.com/content/www/us/en/developer/articles/technical/optimizing-threading-for-gaming-performance.html" },
+        { "label": "Microsoft: CPU sets and process defaults", "url": "https://learn.microsoft.com/en-us/windows/win32/procthread/cpu-sets" },
+        { "label": "PC Tweaker: topology rules, exclusions and restoration", "url": "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/engine/dynamic_session.rs" },
+        { "label": "PC Tweaker: Game Sessions and recovery access", "url": "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/game_sessions.rs" }
+      ]
+    }
+  },
   "/guides/fix-dpc-isr-latency-windows-11": {
     "eyebrow": "DRIVER DIAGNOSTICS",
     "format": "technical",

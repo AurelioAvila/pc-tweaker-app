@@ -25,7 +25,7 @@ function ThemeSelector() {
       <summary ref={summary} className="min-h-11 cursor-pointer rounded-lg border border-[var(--line)] px-3 py-3 text-[12px] text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]">
         {text.hero.themeLabel}: {ACCENTS[theme].label}
       </summary>
-      <div className="absolute right-0 bottom-full z-30 mb-2 grid grid-cols-6 gap-1 rounded-xl border border-[var(--line)] bg-[var(--bg-2)] p-3" role="group" aria-label={text.hero.themeLabel}>
+      <div className="absolute right-0 bottom-full z-30 mb-2 grid grid-cols-5 gap-1 rounded-xl sm:grid-cols-6 border border-[var(--line)] bg-[var(--bg-2)] p-3" role="group" aria-label={text.hero.themeLabel}>
         {THEME_ORDER.map((t) => (
           <button
             key={t}

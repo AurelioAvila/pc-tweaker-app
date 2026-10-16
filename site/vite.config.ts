@@ -61,11 +61,11 @@ function spaFallback(): Plugin {
  * Without this the browser only discovers the .woff2 files after it has
  * downloaded and parsed the CSS, so the first line of text waits on a second
  * round trip. File names are hashed, so they are looked up in the bundle
- * instead of being written by hand. Only the weights the hero actually uses.
+ * instead of being written by hand. Variable files cover every displayed weight.
  */
 const PRELOAD_FONTS = [
-  /inter-latin-400-normal-.*\.woff2$/,
-  /space-grotesk-latin-700-normal-.*\.woff2$/,
+  /inter-latin-wght-normal-.*\.woff2$/,
+  /space-grotesk-latin-wght-normal-.*\.woff2$/,
 ];
 
 function preloadFonts(): Plugin {

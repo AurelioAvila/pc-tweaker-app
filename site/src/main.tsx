@@ -6,16 +6,8 @@ import { campaignLabels, captureEntry } from "./campaign-store";
 import { API_BASE, DOWNLOAD_EXE } from "./constants";
 // Self-hosted fonts (previously Google Fonts <link>s): keeps every visitor
 // request on our own origin — no IPs sent to Google, nothing to consent to.
-// These English pages use the Latin subsets; preserve every displayed weight.
-import "@fontsource/space-grotesk/latin-500.css";
-import "@fontsource/space-grotesk/latin-600.css";
-import "@fontsource/space-grotesk/latin-700.css";
-import "@fontsource/jetbrains-mono/latin-400.css";
-import "@fontsource/jetbrains-mono/latin-500.css";
-import "@fontsource/jetbrains-mono/latin-700.css";
-import "@fontsource/inter/latin-400.css";
-import "@fontsource/inter/latin-500.css";
-import "@fontsource/inter/latin-600.css";
+// One Latin variable file per family preserves the displayed weights.
+import "./fonts.css";
 import "./index.css";
 import faviconUrl from "./assets/favicon.png";
 

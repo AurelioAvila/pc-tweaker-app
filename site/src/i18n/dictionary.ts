@@ -21,6 +21,8 @@ export interface Dictionary {
     readonly access: string;
     readonly faq: string;
     readonly download: string;
+    readonly downloadShort: string;
+    readonly guides: string;
   };
   readonly hero: {
     readonly eyebrow: string;
@@ -225,7 +227,9 @@ export const engDictionary: Dictionary = {
     "protocol": "How it works",
     "access": "Pricing",
     "faq": "FAQ",
-    "download": "Download Free"
+    "download": "Download Free",
+    "downloadShort": "Download",
+    "guides": "Guides"
   },
   "hero": {
     "eyebrow": "WINDOWS TUNING YOU CAN INSPECT",

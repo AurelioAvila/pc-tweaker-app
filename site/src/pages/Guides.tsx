@@ -378,6 +378,9 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
   return (
     <main id="main-content" className="px-5 pt-32 pb-24 md:px-12">
       <article className="mx-auto max-w-4xl">
+        <nav aria-label="Guide navigation" className="mb-5">
+          <Link to="/guides/" onNavigate={navigate} className="inline-flex min-h-11 items-center text-sm font-medium text-accent underline underline-offset-4">All guides</Link>
+        </nav>
         {!technical && <p className="font-mono-t text-accent mb-5 text-[12px] tracking-[0.15em]">
           {guide.eyebrow}
         </p>}

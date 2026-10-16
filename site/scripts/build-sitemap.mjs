@@ -30,6 +30,7 @@ const PAGES = {
   "/accessibility/": ["src/pages/Legal.tsx"],
   "/guides/fix-dpc-isr-latency-windows-11/": ["src/pages/technical-guides.ts"],
   "/guides/amd-ryzen-x3d-core-parking-windows-11/": ["src/pages/technical-guides.ts"],
+  "/guides/amd-x3d-intel-hybrid-core-steering-gaming/": ["src/pages/technical-guides.ts"],
   "/guides/windows-11-privacy-telemetry-rollback/": ["src/pages/technical-guides.ts"],
   "/windows-11-optimizer/": ["src/pages/Guides.tsx"],
   "/gaming-performance/": ["src/pages/Guides.tsx"],

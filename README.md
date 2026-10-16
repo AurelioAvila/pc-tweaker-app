@@ -66,6 +66,7 @@ These are separate applications with their own licences. PC Tweaker Lifetime inc
 
 - [DPC/ISR latency on Windows 11](https://pctweaker.app/guides/fix-dpc-isr-latency-windows-11/): capture the failing workload, investigate driver attribution and compare one change at a time.
 - [Ryzen X3D core parking and steering](https://pctweaker.app/guides/amd-ryzen-x3d-core-parking-windows-11/): distinguish the power-plan policy from process CPU sets, and verify the reset path.
+- [AMD X3D and Intel Hybrid Game Sessions](https://pctweaker.app/guides/amd-x3d-intel-hybrid-core-steering-gaming/): check supported topology, background-process exclusions and automatic restoration before comparing frame times.
 - [Windows privacy and rollback](https://pctweaker.app/guides/windows-11-privacy-telemetry-rollback/): inspect the exact registry values, record absence as well as data, and restore supported changes.
 
 ## Closing and reopening PC Tweaker

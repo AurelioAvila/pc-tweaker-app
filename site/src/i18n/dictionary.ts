@@ -44,10 +44,12 @@ export interface Dictionary {
     readonly comparePlans: string;
   };
   readonly suite: {
+    readonly starRepository: string;
+    readonly verifyRelease: string;
     readonly title: string;
     readonly intro: string;
     readonly note: string;
-    readonly products: readonly { readonly name: string; readonly task: string; readonly description: string; readonly cta: string; readonly href: string }[];
+    readonly products: readonly { readonly name: string; readonly task: string; readonly description: string; readonly cta: string; readonly href: string; readonly repository: string }[];
   };
   readonly metrics: {
     readonly tag: string;
@@ -264,13 +266,15 @@ export const engDictionary: Dictionary = {
     "comparePlans": "Compare Free, Pro & Lifetime"
   },
   "suite": {
+    "starRepository": "Star on GitHub",
+    "verifyRelease": "Verify release",
     "title": "Choose the tool for the task.",
     "intro": "Windows settings, software removal and driver reviews belong to different workflows. Start with what you need to do.",
     "note": "Separate applications and licences. Included benefits are listed in each plan; buying one app does not automatically unlock the whole suite.",
     "products": [
-      { "name": "PC Tweaker", "task": "Review Windows settings", "description": "Inspect gaming, privacy and maintenance changes. Keep previous values for supported settings and compare the outcome.", "cta": "Compare PC Tweaker plans", "href": "#access" },
-      { "name": "PC Tweaker Uninstaller", "task": "Understand a removal", "description": "Review the removal score, command and permissions before uninstalling. Keep a local receipt and check recovery limits.", "cta": "Explore Uninstaller", "href": "/uninstaller/" },
-      { "name": "Tweaky Driver", "task": "Review driver offers", "description": "Inspect detected devices and installed versions. Separate download-ready offers from catalog candidates before changing a working PC.", "cta": "Explore Tweaky Driver", "href": "https://pctweaker.app/tweaky-driver/" }
+      { "name": "PC Tweaker", "task": "Review Windows settings", "description": "Inspect gaming, privacy and maintenance changes. Keep previous values for supported settings and compare the outcome.", "cta": "Compare PC Tweaker plans", "href": "#access", "repository": "https://github.com/AurelioAvila/pc-tweaker-app" },
+      { "name": "PC Tweaker Uninstaller", "task": "Understand a removal", "description": "Review the removal score, command and permissions before uninstalling. Keep a local receipt and check recovery limits.", "cta": "Explore Uninstaller", "href": "/uninstaller/", "repository": "https://github.com/AurelioAvila/pc-tweaker-uninstaller" },
+      { "name": "Tweaky Driver", "task": "Review driver offers", "description": "Inspect detected devices and installed versions. Separate download-ready offers from catalog candidates before changing a working PC.", "cta": "Explore Tweaky Driver", "href": "https://pctweaker.app/tweaky-driver/", "repository": "https://github.com/AurelioAvila/Tweaky-Driver-Releases" }
     ]
   },
   "metrics": {

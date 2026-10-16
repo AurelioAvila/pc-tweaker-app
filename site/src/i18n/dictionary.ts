@@ -62,12 +62,13 @@ export interface Dictionary {
       readonly unit: string;
       readonly label: string;
     }[];
-    readonly graphTitle: string;
-    readonly graphStock: string;
-    readonly graphTweaked: string;
-    readonly graphNote: string;
-    readonly fpsStock: number;
-    readonly fpsTweaked: number;
+    readonly comparisonTitle: string;
+    readonly comparisonIntro: string;
+    readonly comparisonField: string;
+    readonly comparisonRecord: string;
+    readonly comparisonRows: readonly { readonly label: string; readonly record: string }[];
+    readonly comparisonNote: string;
+    readonly comparisonLinks: readonly { readonly label: string; readonly href: string }[];
   };
   readonly arsenal: {
     readonly tag: string;
@@ -284,7 +285,7 @@ export const engDictionary: Dictionary = {
   "metrics": {
     "tag": "01 / WHAT TO MEASURE",
     "title": "Average FPS is only part of the story.",
-    "sub": "Judge a change by repeated runs: frame-time spikes, 1% lows and consistency. Results depend on your hardware, drivers and game. The chart below is a concept sketch, not a captured benchmark or a promised improvement.",
+    "sub": "Judge a change by repeated runs: frame-time spikes, 1% lows and consistency. Results depend on your hardware, drivers and game. Record the conditions and the previous setting alongside your results.",
     "stats": [
       {
         "value": 46,
@@ -307,12 +308,22 @@ export const engDictionary: Dictionary = {
         "label": "PLACE TO REVIEW & RESTORE"
       }
     ],
-    "graphTitle": "EXAMPLE COMPARISON — NOT MEASURED DATA",
-    "graphStock": "EXAMPLE A",
-    "graphTweaked": "EXAMPLE B",
-    "graphNote": "Example traces and FPS values. No measured frame-time, micro-stutter or DPC-latency improvement is claimed by this chart.",
-    "fpsStock": 330,
-    "fpsTweaked": 551
+    "comparisonTitle": "Make your next comparison useful.",
+    "comparisonIntro": "Use these notes for your baseline and your changed run. Keep conditions comparable and change one setting at a time.",
+    "comparisonField": "Check",
+    "comparisonRecord": "For both runs",
+    "comparisonRows": [
+      { "label": "Workload", "record": "Game and version, scene or benchmark, resolution and graphics settings." },
+      { "label": "System", "record": "Windows and driver versions, power mode and background activity." },
+      { "label": "Change", "record": "Setting name, previous value, new value and whether restoration is available." },
+      { "label": "Results", "record": "Repeated runs: frame times, average FPS, 1% lows and available temperatures." }
+    ],
+    "comparisonNote": "Keep a change only when its benefit repeats under comparable conditions. If it makes things worse, restore the supported setting and check the outcome. A health score describes configuration; it does not measure FPS.",
+    "comparisonLinks": [
+      { "label": "Plan a gaming comparison", "href": "/gaming-performance/" },
+      { "label": "Investigate DPC/ISR latency", "href": "/guides/fix-dpc-isr-latency-windows-11/" },
+      { "label": "Restore a Windows change", "href": "/how-to-undo-windows-tweaks/" }
+    ]
   },
   "arsenal": {
     "tag": "02 / YOUR CONTROLS",

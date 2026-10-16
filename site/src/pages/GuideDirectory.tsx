@@ -1,10 +1,12 @@
 import { Link } from "../router";
 import { GUIDE_GROUPS } from "./guide-directory";
+import { GuideBreadcrumbs } from "../components/GuideBreadcrumbs";
 
 export function GuideDirectory({ navigate }: { navigate: (to: string) => void }) {
   return (
     <main id="main-content" className="px-5 pt-32 pb-24 md:px-12">
       <div className="mx-auto max-w-5xl">
+        <GuideBreadcrumbs path="/guides" navigate={navigate} />
         <h1 className="font-display text-4xl leading-[1.08] font-bold tracking-[-0.03em] text-[var(--fg)] md:text-6xl">
           PC Tweaker guides
         </h1>

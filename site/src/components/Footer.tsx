@@ -8,6 +8,7 @@ const GH = "https://github.com/AurelioAvila/pc-tweaker-app";
 interface FootLink {
   readonly label: string;
   readonly href: string;
+  readonly reloadDocument?: boolean;
 }
 
 const LINK_CLASS =
@@ -17,10 +18,12 @@ function Col({
   title,
   links,
   navigate,
+  currentPath,
 }: {
   title: string;
   links: readonly FootLink[];
   navigate: (to: string) => void;
+  currentPath: string;
 }) {
   return (
     <div>
@@ -30,8 +33,8 @@ function Col({
       {links.map((l) =>
         // A leading "/" marks an in-site route, which routes on the client
         // instead of triggering a full reload.
-        l.href.startsWith("/") ? (
-          <Link key={l.label} to={l.href} onNavigate={navigate} className={LINK_CLASS}>
+        l.href.startsWith("/") && !l.reloadDocument ? (
+          <Link key={l.label} to={l.href} onNavigate={navigate} ariaCurrent={l.href.replace(/\/$/, "") === currentPath ? "page" : undefined} className={LINK_CLASS}>
             {l.label}
           </Link>
         ) : (
@@ -44,7 +47,7 @@ function Col({
   );
 }
 
-export function Footer({ navigate }: { navigate: (to: string) => void }) {
+export function Footer({ navigate, currentPath }: { navigate: (to: string) => void; currentPath: string }) {
   return (
     <footer className="border-t border-white/5 px-5 pt-14 pb-10 md:px-12">
       <div className="mx-auto max-w-7xl">
@@ -64,13 +67,14 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
           <div className="flex flex-wrap gap-14">
             <Col
               navigate={navigate}
+              currentPath={currentPath}
               title={text.footer.product}
               links={[
                 { label: text.footer.download, href: DOWNLOAD_EXE },
                 { label: text.footer.changelog, href: `${GH}/blob/master/CHANGELOG.md` },
                 { label: text.footer.source, href: GH },
                 { label: "PC Tweaker Uninstaller", href: "/uninstaller/" },
-                { label: "Tweaky Driver", href: "https://pctweaker.app/tweaky-driver/" },
+                { label: "Tweaky Driver", href: "/tweaky-driver/", reloadDocument: true },
                 { label: text.support.navLabel, href: "/support/" },
                 { label: text.footer.contact, href: "/support/" },
                 { label: "Facebook", href: "https://www.facebook.com/Pctweaker10" },
@@ -78,6 +82,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
             />
             <Col
               navigate={navigate}
+              currentPath={currentPath}
               title={text.footer.reviews}
               links={[
                 {
@@ -96,6 +101,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
             />
             <Col
               navigate={navigate}
+              currentPath={currentPath}
               title="GUIDES"
               links={[
                 { label: "Browse all guides", href: "/guides/" },
@@ -116,6 +122,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
             />
             <Col
               navigate={navigate}
+              currentPath={currentPath}
               title={text.footer.legal}
               links={[
                 { label: text.footer.privacy, href: "/privacy/" },

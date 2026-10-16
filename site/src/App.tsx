@@ -25,14 +25,14 @@ import {
 } from "./pages/Legal";
 import { PromoProvider, RouteStructuredData } from "./promo";
 import { useRoute } from "./router";
-import { NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
+import { getRouteImage, NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
 
 function HomePage({ navigate }: { navigate: (to: string) => void }) {
   return (
     <main id="main-content">
       <HeroSection />
       <PerformanceMetrics navigate={navigate} />
-      <BespokeArsenal />
+      <BespokeArsenal navigate={navigate} />
       <EngineeringPhilosophy />
       <ProtocolTimeline />
       <SuiteOverview navigate={navigate} />
@@ -54,6 +54,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
   // otherwise stay on whatever index.html shipped with.
   useEffect(() => {
     const seo = route ?? NOT_FOUND_SEO;
+    const image = getRouteImage(seo);
     document.title = seo.title;
     document.querySelector('link[rel="canonical"]')?.setAttribute("href", seo.canonical);
     for (const [selector, content] of [
@@ -62,8 +63,12 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       ['meta[property="og:type"]', seo.ogType],
       ['meta[property="og:description"]', seo.description],
       ['meta[property="og:url"]', seo.canonical],
+      ['meta[property="og:image"]', image.url],
+      ['meta[property="og:image:alt"]', image.alt],
       ['meta[name="twitter:title"]', seo.title],
       ['meta[name="twitter:description"]', seo.description],
+      ['meta[name="twitter:image"]', image.url],
+      ['meta[name="twitter:image:alt"]', image.alt],
     ]) {
       document.querySelector(selector)?.setAttribute("content", content);
     }
@@ -128,7 +133,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
           : {})}
       />
       {page}
-      <Footer navigate={navigate} />
+      <Footer navigate={navigate} currentPath={path} />
     </PromoProvider>
   );
 }

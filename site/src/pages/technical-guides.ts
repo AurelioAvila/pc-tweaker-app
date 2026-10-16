@@ -38,18 +38,41 @@ export const TECHNICAL_GUIDES = {
       }
     ],
     "related": [
-      { "to": "/guides/amd-ryzen-x3d-core-parking-windows-11/", "label": "Ryzen X3D: core parking versus process steering", "note": "Understand the separate power policy and manual alignment controls." },
-      { "to": "/guides/fix-dpc-isr-latency-windows-11/", "label": "Diagnose DPC and ISR driver latency", "note": "Capture the symptom before treating it as a CPU placement problem." }
+      {
+        "to": "/guides/amd-ryzen-x3d-core-parking-windows-11/",
+        "label": "Ryzen X3D: core parking versus process steering",
+        "note": "Understand the separate power policy and manual alignment controls."
+      },
+      {
+        "to": "/guides/fix-dpc-isr-latency-windows-11/",
+        "label": "Diagnose DPC and ISR driver latency",
+        "note": "Capture the symptom before treating it as a CPU placement problem."
+      }
     ],
     "sources": {
       "checked": "16 October 2026",
       "items": [
-        { "label": "Intel: optimizing threading for gaming performance", "url": "https://www.intel.com/content/www/us/en/developer/articles/technical/optimizing-threading-for-gaming-performance.html" },
-        { "label": "Microsoft: CPU sets and process defaults", "url": "https://learn.microsoft.com/en-us/windows/win32/procthread/cpu-sets" },
-        { "label": "PC Tweaker: topology rules, exclusions and restoration", "url": "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/engine/dynamic_session.rs" },
-        { "label": "PC Tweaker: Game Sessions and recovery access", "url": "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/game_sessions.rs" }
+        {
+          "label": "Intel: optimizing threading for gaming performance",
+          "url": "https://www.intel.com/content/www/us/en/developer/articles/technical/optimizing-threading-for-gaming-performance.html"
+        },
+        {
+          "label": "Microsoft: CPU sets and process defaults",
+          "url": "https://learn.microsoft.com/en-us/windows/win32/procthread/cpu-sets"
+        },
+        {
+          "label": "PC Tweaker: topology rules, exclusions and restoration",
+          "url": "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/engine/dynamic_session.rs"
+        },
+        {
+          "label": "PC Tweaker: Game Sessions and recovery access",
+          "url": "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/game_sessions.rs"
+        }
       ]
-    }
+    },
+    "published": "2026-10-16",
+    "socialImage": "/guides/og-x3d-intel-hybrid-steering-20261016.png",
+    "socialImageAlt": "PC Tweaker guide: AMD X3D / Intel Hybrid. Test core steering. Use the Windows scheduler as your baseline."
   },
   "/guides/fix-dpc-isr-latency-windows-11": {
     "eyebrow": "DRIVER DIAGNOSTICS",
@@ -70,7 +93,33 @@ export const TECHNICAL_GUIDES = {
       },
       {
         "heading": "Interpret nvlddmkm.sys and dxgkrnl.sys carefully",
-        "body": "If nvlddmkm.sys appears, start by identifying the installed NVIDIA display driver and whether the symptom began with that version. dxgkrnl.sys belongs to the Windows graphics kernel subsystem, so its appearance can involve work passing through the graphics stack. Neither filename proves that replacing a particular package will help. Keep the trace and driver version together. Do not delete either file or disable the display device to make a report look cleaner."
+        "body": "If nvlddmkm.sys appears, start by identifying the installed NVIDIA display driver and whether the symptom began with that version. dxgkrnl.sys belongs to the Windows graphics kernel subsystem, so its appearance can involve work passing through the graphics stack. Neither filename proves that replacing a particular package will help. Keep the trace and driver version together. Do not delete either file or disable the display device to make a report look cleaner.",
+        "table": {
+          "caption": "Kernel modules: start with the subsystem, then check the trace",
+          "rows": [
+            {
+              "module": "nvlddmkm.sys",
+              "subsystem": "NVIDIA display driver",
+              "check": "Record the installed GPU driver version and whether the symptom began after a package change. Match activity to the affected frame or audio interval."
+            },
+            {
+              "module": "dxgkrnl.sys",
+              "subsystem": "Windows graphics kernel",
+              "check": "Inspect the surrounding graphics-driver activity in WPA. This shared Windows component can appear while work passes through the graphics stack."
+            },
+            {
+              "module": "storport.sys",
+              "subsystem": "Windows storage port driver",
+              "check": "Compare the interval with disk I/O. Record the storage controller, its driver version and recent firmware or package changes before choosing a vendor-supported next step."
+            },
+            {
+              "module": "ndis.sys",
+              "subsystem": "Windows networking stack",
+              "check": "Record the network adapter, driver version and installed VPN or network-filter software. Compare activity around the symptom before attributing it to a single package."
+            }
+          ],
+          "note": "A module name identifies a place to investigate, not a verdict. Storage and network stacks include other drivers. Keep the timeline, workload and versions together; do not delete system files or disable protection to reduce a number."
+        }
       },
       {
         "heading": "Check the driver inventory without changing it",
@@ -100,6 +149,11 @@ export const TECHNICAL_GUIDES = {
         "to": "/how-to-undo-windows-tweaks/",
         "label": "Restore a setting after an unsuccessful experiment",
         "note": "Use the recorded previous state rather than a generic preset."
+      },
+      {
+        "to": "/gaming-performance/",
+        "label": "Plan a repeatable gaming comparison",
+        "note": "Separate driver diagnosis from power, graphics and game-setting experiments."
       }
     ],
     "sources": {
@@ -124,9 +178,20 @@ export const TECHNICAL_GUIDES = {
         {
           "label": "PC Tweaker: capture duration, attribution and diagnostic implementation",
           "url": "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/diagnostics/dpc.rs"
+        },
+        {
+          "label": "Microsoft: Storport storage port driver",
+          "url": "https://learn.microsoft.com/en-us/windows-hardware/drivers/storage/storport-driver"
+        },
+        {
+          "label": "Microsoft: NDIS driver stack and network filters",
+          "url": "https://learn.microsoft.com/en-us/windows-hardware/drivers/network/ndis-driver-stack"
         }
       ]
-    }
+    },
+    "published": "2026-10-16",
+    "socialImage": "/guides/og-dpc-isr-latency-20261016.png",
+    "socialImageAlt": "PC Tweaker guide: DPC & ISR latency. Find the driver path behind the symptom."
   },
   "/guides/amd-ryzen-x3d-core-parking-windows-11": {
     "eyebrow": "CPU SCHEDULING",
@@ -203,7 +268,10 @@ export const TECHNICAL_GUIDES = {
           "url": "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/gaming.rs"
         }
       ]
-    }
+    },
+    "published": "2026-10-16",
+    "socialImage": "/guides/og-ryzen-x3d-core-parking-20261016.png",
+    "socialImageAlt": "PC Tweaker guide: Ryzen X3D. Core parking & steering. Check the topology before changing placement."
   },
   "/guides/windows-11-privacy-telemetry-rollback": {
     "eyebrow": "PRIVACY AND RECOVERY",
@@ -277,6 +345,9 @@ export const TECHNICAL_GUIDES = {
           "url": "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/rollback.rs"
         }
       ]
-    }
+    },
+    "published": "2026-10-16",
+    "socialImage": "/guides/og-windows-privacy-rollback-20261016.png",
+    "socialImageAlt": "PC Tweaker guide: Windows 11 privacy. Keep a route back. Inspect supported settings and their recovery limits."
   }
 } as const;

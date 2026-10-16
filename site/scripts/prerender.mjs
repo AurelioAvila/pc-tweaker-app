@@ -6,7 +6,27 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
 const serverBundle = path.join(root, "dist-ssr", "entry-server.js");
 const { render, ROUTE_SEO, getRouteImage, getRouteJsonLd, NOT_FOUND_SEO } = await import(pathToFileURL(serverBundle));
-const template = await readFile(path.join(dist, "index.html"), "utf8");
+let template = await readFile(path.join(dist, "index.html"), "utf8");
+
+// Deliver the small, shared stylesheet with the prerendered document, so the
+// first paint does not wait for a separate blocking CSS request. Keep the
+// fingerprinted asset for any later chunk that needs it.
+const stylesheets = [...template.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*>/gi)];
+if (!stylesheets.length) throw new Error("Missing built stylesheet");
+for (const [tag] of stylesheets) {
+  const href = tag.match(/\bhref="([^"]+)"/)?.[1];
+  if (!href?.startsWith("/assets/") || !href.endsWith(".css") || href.includes(".."))
+    throw new Error(`Unexpected stylesheet URL: ${href}`);
+  const css = await readFile(path.join(dist, href.slice(1)), "utf8");
+  if (/<\/style/i.test(css)) throw new Error("Invalid inline stylesheet content");
+  // Vite emits root-relative asset URLs. A relative URL would resolve against
+  // the article instead of /assets/ after the stylesheet is inlined.
+  for (const [, asset] of css.matchAll(/url\(["']?([^"')]+)["']?\)/g)) {
+    if (!asset.startsWith("/") && !asset.startsWith("data:"))
+      throw new Error(`Non-root-relative CSS asset URL: ${asset}`);
+  }
+  template = template.replace(tag, () => `<style data-site-css>${css}</style>`);
+}
 
 function escapeAttribute(value) {
   return value

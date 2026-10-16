@@ -10,6 +10,7 @@ export function Nav({
   downloadHref = DOWNLOAD_EXE,
   downloadLabel,
   offerHref,
+  currentPath,
 }: {
   navigate: (to: string) => void;
   onSubpage: boolean;
@@ -18,6 +19,7 @@ export function Nav({
   downloadLabel?: string;
   /** Where the Halloween strip's button goes; the home pricing by default. */
   offerHref?: string;
+  currentPath?: string;
 }) {
   // Section anchors only resolve on the home page. From /support they need
   // the leading "/" so the browser goes home first instead of hunting for an
@@ -32,39 +34,48 @@ export function Nav({
   ];
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-[var(--bg)]/70 backdrop-blur-xl">
+    <nav aria-label="Primary navigation" className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-[var(--bg)]/70 backdrop-blur-xl">
       <PromoStrip href={offerHref ?? `${prefix}#access`} />
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 md:px-12">
         <Link
           to="/"
           onNavigate={navigate}
-          className="font-display flex items-center gap-2.5 text-[17px] whitespace-nowrap font-700 tracking-tight text-[var(--fg)]"
+          className="font-display flex min-h-11 items-center gap-2 text-[15px] whitespace-nowrap font-700 tracking-tight text-[var(--fg)] sm:gap-2.5 sm:text-[17px]"
         >
           <img src={logoUrl} alt="" className="h-6 w-6 rounded-md" />
           PC Tweaker
         </Link>
-        <div className="flex items-center gap-7">
+        <div className="flex items-center gap-2 sm:gap-7">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className="hidden text-[13.5px] font-medium whitespace-nowrap text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] lg:block"
+              className="hidden text-[13.5px] font-medium whitespace-nowrap text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] xl:block"
             >
               {l.label}
             </a>
           ))}
           <Link
+            to="/guides/"
+            onNavigate={navigate}
+            ariaCurrent={currentPath === "/guides" ? "page" : undefined}
+            className="inline-flex min-h-11 items-center text-[13.5px] font-medium whitespace-nowrap text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)]"
+          >
+            {text.nav.guides}
+          </Link>
+          <Link
             to="/support/"
             onNavigate={navigate}
-            className="hidden text-[13.5px] font-medium whitespace-nowrap text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] lg:block"
+            className="hidden text-[13.5px] font-medium whitespace-nowrap text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] xl:block"
           >
             {text.support.navLabel}
           </Link>
           <a
             href={downloadHref}
-            className="bg-accent glow-accent-sm rounded-lg px-4.5 py-2 text-[13.5px] whitespace-nowrap font-semibold text-[var(--bg)] transition-transform hover:-translate-y-px"
+            className="bg-accent glow-accent-sm inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-[13.5px] whitespace-nowrap font-semibold text-[var(--bg)] transition-transform hover:-translate-y-px sm:px-4.5"
           >
-            {downloadLabel ?? text.nav.download}
+            <span className="sm:hidden">{text.nav.downloadShort}</span>
+            <span className="hidden sm:inline">{downloadLabel ?? text.nav.download}</span>
           </a>
         </div>
       </div>

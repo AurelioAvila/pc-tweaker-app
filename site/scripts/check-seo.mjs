@@ -66,6 +66,21 @@ for (const url of urls) {
   // There is no verifiable first-party rating for this domain, so neither of
   // these may ever appear — however tempting the external review scores are.
   const raw = JSON.stringify(blocks);
+  const collection = blocks.find((block) => block["@type"] === "CollectionPage");
+  if (collection) {
+    const items = collection.mainEntity.itemListElement;
+    const main = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/)?.[1] ?? "";
+    assert.equal(collection.mainEntity.numberOfItems, items.length, `Wrong guide count: ${url}`);
+    assert.ok(items.length > 0, `Empty guide directory: ${url}`);
+    assert.equal(new Set(items.map((item) => item.url)).size, items.length, `Duplicate directory entries: ${url}`);
+    for (const [index, item] of items.entries()) {
+      const target = new URL(item.url);
+      assert.equal(item.position, index + 1, `Wrong list position: ${url}`);
+      assert.ok(urls.some((entry) => entry.href === target.href), `Directory target absent from sitemap: ${target}`);
+      assert.ok(main.includes(`href="${target.pathname}"`), `Directory target not visible in main content: ${target}`);
+      assert.ok(main.includes(item.name.replaceAll("&", "&amp;")), `Directory label not visible: ${item.name}`);
+    }
+  }
   assert.ok(!raw.includes("aggregateRating"), `Unverifiable aggregateRating: ${url}`);
   assert.ok(!/"@type":\s*"Review"/.test(raw), `Unverifiable Review markup: ${url}`);
 

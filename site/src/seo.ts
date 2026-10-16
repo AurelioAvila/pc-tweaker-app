@@ -3,6 +3,7 @@ import { msUntil, type Promo } from "../../src/promo";
 import { TECHNICAL_GUIDES } from "./pages/technical-guides";
 import { PRACTICAL_GUIDES } from "./pages/practical-guides";
 import { GUIDE_FAQS } from "./pages/guide-faqs";
+import { DIRECTORY_GUIDES } from "./pages/guide-directory";
 import { text } from "./i18n/dictionary";
 import { UNINSTALLER_DOWNLOAD_EXE } from "./constants";
 
@@ -21,6 +22,12 @@ const ORIGIN = "https://pctweaker.app";
 // pointed search engines at a redirect instead of at the page itself.
 
 export const ROUTE_SEO: Record<string, RouteSeo> = {
+  "/guides": {
+    title: "Windows Tuning and Troubleshooting Guides | PC Tweaker",
+    description: "Find PC Tweaker guides for Windows 11 tuning, DPC latency, X3D and Intel Hybrid CPUs, privacy, rollback and uninstalling programs. Start with your task.",
+    canonical: `${ORIGIN}/guides/`,
+    ogType: "website",
+  },
   "/uninstaller": {
     title: "Windows Uninstaller That Shows the Risk First | PC Tweaker",
     description:
@@ -185,6 +192,23 @@ const uninstallerApp = {
 };
 
 export const ROUTE_JSONLD: Record<string, readonly object[]> = {
+  "/guides": [{
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${ORIGIN}/guides/#collection`,
+    url: `${ORIGIN}/guides/`,
+    name: "PC Tweaker guides",
+    description: ROUTE_SEO["/guides"].description,
+    inLanguage: "en",
+    isPartOf: { "@id": `${ORIGIN}/#website` },
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: DIRECTORY_GUIDES.length,
+      itemListElement: DIRECTORY_GUIDES.map((guide, index) => ({
+        "@type": "ListItem", position: index + 1, name: guide.title, url: `${ORIGIN}${guide.path}`,
+      })),
+    },
+  }],
   "/": [homeApp, faqPage(`${ORIGIN}/#faq`, `${ORIGIN}/`, text.faq.items)],
   "/uninstaller": [uninstallerApp],
   ...Object.fromEntries(Object.entries(TECHNICAL_GUIDES).map(([path, guide]) => [path, [{

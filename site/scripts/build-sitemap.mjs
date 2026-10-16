@@ -23,6 +23,7 @@ const SHARED = [];
 const PAGES = {
   "/": ["src/App.tsx", "src/components", "src/i18n/dictionary.ts"],
   "/uninstaller/": ["src/pages/Uninstaller.tsx"],
+  "/guides/": ["src/pages/GuideDirectory.tsx", "src/pages/guide-directory.ts"],
   "/support/": ["src/pages/Support.tsx", "src/i18n/dictionary.ts"],
   "/privacy/": ["src/pages/Legal.tsx"],
   "/terms/": ["src/pages/Legal.tsx"],

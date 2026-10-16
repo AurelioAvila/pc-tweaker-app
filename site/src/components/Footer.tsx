@@ -98,6 +98,7 @@ export function Footer({ navigate }: { navigate: (to: string) => void }) {
               navigate={navigate}
               title="GUIDES"
               links={[
+                { label: "Browse all guides", href: "/guides/" },
                 { label: "DPC/ISR latency diagnosis", href: "/guides/fix-dpc-isr-latency-windows-11/" },
                 { label: "Ryzen X3D core parking", href: "/guides/amd-ryzen-x3d-core-parking-windows-11/" },
                 { label: "X3D & Intel Hybrid steering", href: "/guides/amd-x3d-intel-hybrid-core-steering-gaming/" },

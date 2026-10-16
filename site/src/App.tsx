@@ -15,6 +15,7 @@ import { TipThanks } from "./components/TipThanks";
 import { SupportPage } from "./pages/Support";
 import { UninstallerPage } from "./pages/Uninstaller";
 import { GuidePage, GUIDES } from "./pages/Guides";
+import { GuideDirectory } from "./pages/GuideDirectory";
 import {
   PrivacyPage,
   TermsPage,
@@ -78,6 +79,9 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
 
   let page: React.ReactNode;
   switch (path) {
+    case "/guides":
+      page = <GuideDirectory navigate={navigate} />;
+      break;
     case "/uninstaller":
       page = <UninstallerPage />;
       break;
@@ -118,6 +122,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       <Nav
         navigate={navigate}
         onSubpage={path !== "/"}
+        currentPath={path}
         {...(path === "/uninstaller"
           ? { downloadHref: UNINSTALLER_DOWNLOAD_EXE, downloadLabel: "Download Uninstaller", offerHref: "#uninstaller-pro" }
           : {})}

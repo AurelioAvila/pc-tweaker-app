@@ -23,7 +23,7 @@ function ThemeSelector() {
       }
     }}>
       <summary ref={summary} className="min-h-11 cursor-pointer rounded-lg border border-[var(--line)] px-3 py-3 text-[12px] text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]">
-        {text.hero.themeLabel}: {ACCENTS[theme].label}
+        {text.hero.themeLabel}
       </summary>
       <div className="absolute right-0 bottom-full z-30 mb-2 grid w-[268px] grid-cols-5 gap-1 rounded-xl sm:grid-cols-6 sm:w-[316px] border border-[var(--line)] bg-[var(--bg-2)] p-3" role="group" aria-label={text.hero.themeLabel}>
         <p className="col-span-full mb-2 text-[12px] leading-relaxed text-[var(--fg-dim)]">{text.hero.themeHint}</p>

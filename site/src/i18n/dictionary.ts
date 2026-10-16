@@ -259,7 +259,7 @@ export const engDictionary: Dictionary = {
         "href": "https://github.com/AurelioAvila/pc-tweaker-app"
       }
     ],
-    "themeLabel": "Site colours",
+    "themeLabel": "Themes",
     "themeHint": "Changes this website only. The app screenshot stays the same.",
     "comparePlans": "Compare Free, Pro & Lifetime"
   },

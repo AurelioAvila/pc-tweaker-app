@@ -31,7 +31,7 @@ function HomePage({ navigate }: { navigate: (to: string) => void }) {
   return (
     <main id="main-content">
       <HeroSection />
-      <PerformanceMetrics />
+      <PerformanceMetrics navigate={navigate} />
       <BespokeArsenal />
       <EngineeringPhilosophy />
       <ProtocolTimeline />

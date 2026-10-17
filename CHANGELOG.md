@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.18.5
+
+PC Tweaker 1.18.5 is a routine daily maintenance update.
+
 ## v1.18.4
 
 PC Tweaker 1.18.4 looks for updates on its own download server as well as on GitHub, and the tweak preview reads correctly when a single value changes.

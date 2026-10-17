@@ -84,6 +84,8 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 - **1.18.3.** Change your password and email from the account menu, account emails in the app's language, and nothing undone under a running game when Pro ends.
 - **1.18.4.** Updates are checked on dl.pctweaker.app as well as GitHub, and the change preview reads correctly when a control sets a single value.
 
+- **1.18.5.** Clarifies startup, menu, hover, background-app, update-sharing and window-display controls in all six languages. Settings and restoration behavior are unchanged.
+
 See the [changelog](CHANGELOG.md) for every release.
 
 ## What you can do

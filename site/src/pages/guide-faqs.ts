@@ -50,15 +50,15 @@ export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
   "/windows-11-optimizer": [
     {
       q: "Is it safe to use a Windows 11 optimizer?",
-      a: "It depends entirely on what the tool does and whether you can see it. A tool that applies documented settings one at a time, records the previous value and restores it on request is as safe as changing the setting yourself. A tool that runs a bundle of undisclosed changes behind one button, removes system packages or disables services in bulk is not, because nothing records what it did. PC Tweaker is built the first way; every control names the setting it writes.",
+      a: "Safety depends on the setting, your device and how you use it. PC Tweaker shows the change and saves previous values for supported tweaks, but that does not remove security, compatibility or recovery risks. Read each control's limits, keep a backup and test one relevant change at a time. Cleanup, uninstall and driver operations have separate recovery limits.",
     },
     {
       q: "Will an optimizer make my games run faster?",
-      a: "Usually not in frame rate, and anyone promising a specific gain is guessing. What the gaming controls do is remove avoidable interference: Xbox Game Bar background recording, the multimedia network throttle, mouse acceleration, the Sticky Keys shortcut that drops you out of fullscreen. That tends to show up as steadier frame times and fewer interruptions, not a higher number. A game that is limited by the GPU, the CPU or thermals stays limited by them.",
+      a: "There is no guaranteed FPS or frame-time improvement. Disabling unwanted background recording or changing an input preference can address a specific problem, but the result depends on your game, hardware, drivers and current settings. Compare repeated runs of the same scene and keep only changes with a useful, repeatable result. Mouse acceleration and shortcut preferences are not evidence of higher rendering performance.",
     },
     {
       q: "Do I need to reinstall Windows to get the changes back?",
-      a: "No. Every setting PC Tweaker applies records the value it replaced, and the restore control writes that value back. Some changes, such as hardware-accelerated GPU scheduling, keeping the kernel in memory or the long-path limit, take effect after a restart in both directions. Cleanup, uninstall and driver actions are separate operations with their own recovery limits and are not settings.",
+      a: "For supported settings with a saved previous state, start with PC Tweaker's restore control and check the result; some changes also need a restart. That route restores recorded settings, not deleted files or a full Windows installation. Cleanup, uninstall and driver actions have separate recovery limits. Use the recovery guide if the change came from another tool or Windows no longer starts normally.",
     },
     {
       q: "Is PC Tweaker free?",

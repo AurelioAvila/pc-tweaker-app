@@ -24,12 +24,17 @@ use std::path::PathBuf;
 /// can tell an old file from a corrupt one.
 const PROFILE_FORMAT: u32 = 1;
 
+/// `deny_unknown_fields`: the shape has never changed since format 1, so an
+/// extra field means the file is something else, and a future shape bumps
+/// `format` (checked before this struct is parsed).
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct TweakProfile {
     /// Format marker, not the app version — an old profile stays loadable.
     pub format: u32,
     pub name: String,
-    /// ISO-8601, for showing "saved on ..." without a second field.
+    /// Seconds since the epoch (see `now_iso`), for showing "saved on ...".
+    /// Empty only for a starter profile, which is never read from a file.
     pub created_at: String,
     /// Ids of the tweaks that were applied when this was saved.
     pub tweaks: Vec<String>,
@@ -76,8 +81,14 @@ impl ProfileStore {
     }
 }
 
-/// Every tweak id this build knows about. The allowlist an import is checked
-/// against.
+/// Every tweak id a profile can carry: the switches `list_tweaks` shows,
+/// except the three controls configured in their own panels, which
+/// `apply_tweaks` refuses by id. The allowlist an import is checked against.
+///
+/// This list once stopped growing with the catalogue, so saved profiles
+/// silently left out the 1.18.0 controls, power tuning, core parking, the
+/// TCP congestion provider and the AI Components Host. A test now compares
+/// it with the catalogue.
 fn known_tweak_ids() -> Vec<String> {
     let mut ids: Vec<String> = crate::tweaks::all_tweaks()
         .iter()
@@ -91,25 +102,71 @@ fn known_tweak_ids() -> Vec<String> {
             crate::gaming::INPUT_LAG_ID,
             crate::gaming::TURBO_BOOST_ID,
             crate::gaming::KEYBOARD_DELAY_ID,
+            crate::gaming::CORE_PARKING_ID,
             crate::game_priority::TWEAK_ID,
             crate::privacy_extra::ACTIVITY_HISTORY_ID,
             crate::privacy_extra::TYPING_PERSONALIZATION_ID,
             crate::contextmenu::TWEAK_ID,
             crate::services::WINDOWS_SEARCH_ID,
+            crate::services::AI_FABRIC_ID,
             crate::netlatency::TWEAK_ID,
+            crate::netshaper::TWEAK_ID,
             crate::dns::TWEAK_ID,
             "disable_filter_keys_shortcut",
         ]
         .iter()
         .map(|s| s.to_string()),
     );
+    ids.extend(crate::power_tuning::TWEAKS.iter().map(|t| t.id.to_string()));
+    ids.extend(crate::settings_tweaks::TWEAKS.iter().map(|t| t.id.to_string()));
     ids
 }
 
-/// Splits a candidate list into ids this build can apply and ids it can't.
-fn partition_known(ids: Vec<String>) -> (Vec<String>, Vec<String>) {
+/// The most ids a file may name. The catalogue has fewer than a hundred, so
+/// a longer list is not a profile.
+const MAX_IDS: usize = 256;
+const MAX_NAME_CHARS: usize = 40;
+const MAX_FILE_BYTES: usize = 64 * 1024;
+const NOT_A_PROFILE: &str = "this file isn't a PC Tweaker profile";
+
+/// Checks a parsed file field by field and keeps only the ids this build can
+/// apply, each once. Everything is checked before the user sees anything: a
+/// name the app could not have written, a date that is not one, or an
+/// oversized list means the file was not made by PC Tweaker.
+fn validate(parsed: TweakProfile) -> Result<LoadedProfile, String> {
+    let name = parsed.name.trim().to_string();
+    let name_ok = !name.is_empty()
+        && name.chars().count() <= MAX_NAME_CHARS
+        && !name.chars().any(char::is_control);
+    // Written by `now_iso` as seconds since the epoch. An empty date is how
+    // the starter profiles are told apart in the history, so a file cannot
+    // borrow it.
+    let date_ok = (1..=20).contains(&parsed.created_at.len())
+        && parsed.created_at.bytes().all(|b| b.is_ascii_digit());
+    if parsed.format == 0 || !name_ok || !date_ok || parsed.tweaks.len() > MAX_IDS {
+        return Err(NOT_A_PROFILE.to_string());
+    }
     let known = known_tweak_ids();
-    ids.into_iter().partition(|id| known.contains(id))
+    let (mut tweaks, mut unknown) = (Vec::new(), Vec::new());
+    for id in parsed.tweaks {
+        let list = if known.contains(&id) {
+            &mut tweaks
+        } else {
+            &mut unknown
+        };
+        if !list.contains(&id) {
+            list.push(id);
+        }
+    }
+    Ok(LoadedProfile {
+        profile: TweakProfile {
+            format: parsed.format,
+            name,
+            created_at: parsed.created_at,
+            tweaks,
+        },
+        unknown,
+    })
 }
 
 fn now_iso() -> String {
@@ -192,18 +249,21 @@ pub fn export_profile(profile: TweakProfile) -> Result<String, String> {
 /// docs on why importing must never be the same action as running.
 #[tauri::command(async)]
 pub fn import_profile(contents: String) -> Result<LoadedProfile, String> {
-    let parsed: TweakProfile = serde_json::from_str(&contents)
-        .map_err(|_| "this file isn't a PC Tweaker profile".to_string())?;
-
-    if parsed.format > PROFILE_FORMAT {
+    if contents.len() > MAX_FILE_BYTES {
+        return Err(NOT_A_PROFILE.to_string());
+    }
+    let value: serde_json::Value =
+        serde_json::from_str(&contents).map_err(|_| NOT_A_PROFILE.to_string())?;
+    // The format first, so a newer file is reported as newer rather than as
+    // not a profile because of a field this build does not know.
+    if value
+        .get("format")
+        .and_then(serde_json::Value::as_u64)
+        .is_some_and(|f| f > u64::from(PROFILE_FORMAT))
+    {
         return Err("this profile was made by a newer version of PC Tweaker".to_string());
     }
-
-    let (tweaks, unknown) = partition_known(parsed.tweaks);
-    Ok(LoadedProfile {
-        profile: TweakProfile { tweaks, ..parsed },
-        unknown,
-    })
+    validate(serde_json::from_value(value).map_err(|_| NOT_A_PROFILE.to_string())?)
 }
 
 #[cfg(test)]
@@ -271,6 +331,98 @@ mod tests {
         assert!(import_profile(future).is_err());
     }
 
+    fn file(fields: serde_json::Value) -> String {
+        let mut base = serde_json::json!({
+            "format": 1,
+            "name": "Gaming",
+            "created_at": "1700000000",
+            "tweaks": ["priority_separation"],
+        });
+        for (k, v) in fields.as_object().unwrap() {
+            base[k] = v.clone();
+        }
+        base.to_string()
+    }
+
+    #[test]
+    fn a_file_the_app_could_not_have_written_is_refused() {
+        for bad in [
+            serde_json::json!({ "format": 0 }),
+            serde_json::json!({ "name": "   " }),
+            serde_json::json!({ "name": "line\nbreak" }),
+            serde_json::json!({ "name": "x".repeat(MAX_NAME_CHARS + 1) }),
+            serde_json::json!({ "created_at": "" }),
+            serde_json::json!({ "created_at": "2026-10-15" }),
+            serde_json::json!({ "tweaks": vec!["priority_separation"; MAX_IDS + 1] }),
+            serde_json::json!({ "run": "powershell -c whatever" }),
+        ] {
+            assert!(import_profile(file(bad.clone())).is_err(), "accepted {bad}");
+        }
+        assert!(import_profile(" ".repeat(MAX_FILE_BYTES + 1)).is_err());
+        // The longest name the app's own field allows still imports.
+        let longest = serde_json::json!({ "name": "é".repeat(MAX_NAME_CHARS) });
+        assert!(import_profile(file(longest)).is_ok());
+    }
+
+    #[test]
+    fn a_repeated_id_is_kept_once_and_the_name_is_trimmed() {
+        let loaded = import_profile(file(serde_json::json!({
+            "name": "  Gaming  ",
+            "tweaks": ["priority_separation", "nope", "priority_separation", "nope"],
+        })))
+        .unwrap();
+        assert_eq!(loaded.profile.name, "Gaming");
+        assert_eq!(loaded.profile.tweaks, vec!["priority_separation"]);
+        assert_eq!(loaded.unknown, vec!["nope"]);
+    }
+
+    /// A profile carries every switch the catalogue shows, so saving one and
+    /// loading it on another PC loses nothing. The three controls set up in
+    /// their own panels are the exception: `apply_tweaks` refuses them by id.
+    #[cfg(windows)]
+    #[test]
+    fn a_profile_can_carry_every_switch_in_the_catalogue() {
+        let panel_only = ["ecoqos_rules", "limit_do_background_download", "monitor_refresh_profile"];
+        let mut expected: Vec<String> = crate::tests::all_visible_ids()
+            .into_iter()
+            .filter(|id| !panel_only.contains(&id.as_str()))
+            .collect();
+        let mut known = known_tweak_ids();
+        expected.sort();
+        known.sort();
+        assert_eq!(known, expected);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn profile_files_are_local_json_files_only() {
+        let p = TweakProfile {
+            format: PROFILE_FORMAT,
+            name: "Gaming".into(),
+            created_at: "1700000000".into(),
+            tweaks: vec!["priority_separation".into()],
+        };
+        let dir = std::env::temp_dir().join(format!("pct-profile-files-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let bat = dir.join("evil.bat");
+        assert!(write_profile_file(bat.to_string_lossy().into(), p.clone()).is_err());
+        assert!(!bat.exists());
+        assert!(write_profile_file(r"\\server\share\p.json".into(), p.clone()).is_err());
+
+        let json = dir.join("Gaming.pctweaker.json");
+        write_profile_file(json.to_string_lossy().into(), p.clone()).unwrap();
+        let loaded = read_profile_file(json.to_string_lossy().into()).unwrap();
+        assert_eq!(loaded.profile.tweaks, p.tweaks);
+
+        let txt = dir.join("p.txt");
+        fs::copy(&json, &txt).unwrap();
+        assert!(read_profile_file(txt.to_string_lossy().into()).is_err());
+        let big = dir.join("big.json");
+        fs::write(&big, " ".repeat(MAX_FILE_BYTES + 10)).unwrap();
+        assert!(read_profile_file(big.to_string_lossy().into()).is_err());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
     /// Profile names reach the filesystem, so they must not be able to walk
     /// out of the profiles directory.
     #[test]
@@ -297,29 +449,36 @@ mod tests {
 /// Writes a profile to a path the user picked in a save dialog.
 ///
 /// Deliberately not a general "write this text to that path" command: it
-/// always serializes a `TweakProfile`, so even if a renderer bug or a hostile
-/// page reached this, the worst it can produce is a profile JSON file — not an
-/// arbitrary payload at an arbitrary location.
+/// always serializes a `TweakProfile`, and only to a .json file on a local
+/// drive outside the app's own data folder (the same rule as the Debloat list
+/// and the history export). A renderer bug or a hostile page that reached
+/// this could otherwise put a name it chose inside a .bat or .cmd file: JSON
+/// escaping means nothing to cmd.exe.
 #[tauri::command(async)]
 pub fn write_profile_file(path: String, profile: TweakProfile) -> Result<(), String> {
+    let target = crate::baseline::local_file(&path, &["json"])
+        .ok_or("a profile can only be saved as a .json file on a local drive")?;
     let json = serde_json::to_string_pretty(&profile).map_err(|e| e.to_string())?;
-    fs::write(&path, json).map_err(|e| format!("could not write the file: {}", e))
+    fs::write(target, json).map_err(|e| format!("could not write the file: {}", e))
 }
 
 /// Reads and validates a profile from a path the user picked.
 ///
-/// Size-capped before parsing: a profile is a few hundred bytes, so anything
-/// large is either not a profile or is trying to make the parser work hard.
+/// A local .json file only, never a share, device or pipe, and never more
+/// than the size limit read into memory: the limit is enforced on the read
+/// itself, so a file that grows after it was measured changes nothing.
 #[tauri::command(async)]
 pub fn read_profile_file(path: String) -> Result<LoadedProfile, String> {
-    const MAX_BYTES: u64 = 256 * 1024;
-
-    let meta = fs::metadata(&path).map_err(|e| format!("could not open the file: {}", e))?;
-    if meta.len() > MAX_BYTES {
-        return Err("that file is too large to be a PC Tweaker profile".to_string());
+    use std::io::Read;
+    let target = crate::baseline::local_file(&path, &["json"])
+        .ok_or("a profile can only be read from a .json file on a local drive")?;
+    let file = fs::File::open(&target).map_err(|e| format!("could not open the file: {}", e))?;
+    if !file.metadata().map_err(|e| e.to_string())?.is_file() {
+        return Err(NOT_A_PROFILE.to_string());
     }
-
-    let contents =
-        fs::read_to_string(&path).map_err(|e| format!("could not read the file: {}", e))?;
+    let mut contents = String::new();
+    file.take(MAX_FILE_BYTES as u64 + 1)
+        .read_to_string(&mut contents)
+        .map_err(|_| NOT_A_PROFILE.to_string())?;
     import_profile(contents)
 }

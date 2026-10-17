@@ -63,28 +63,46 @@ export const PRACTICAL_GUIDES = {
   "/how-to-undo-windows-tweaks": {
     eyebrow: "RECOVERY GUIDE",
     title: "How to undo Windows tweaks",
-    // Search Console: 85 impressions at position 8.7 and no clicks. The searches
-    // around it ("how to remove tweaks from pc", "undo selected tweaks") are
-    // people with a problem after a change, so the snippet now starts there.
     seoTitle: "Undo or Remove Windows Tweaks, Restore Settings",
     seoDescription:
       "Changed a Windows setting and something broke? Undo or remove the tweak, restore the value it replaced rather than a generic default, then check it worked.",
-    intro: "Start with the setting you changed and the value it had before. A generic Windows default is not necessarily your previous configuration.",
+    intro: "Undo a Windows tweak using the tool that made it and its saved previous value. If a script changed your PC, check its own recovery options first. If Windows will not start, use Windows recovery instead of applying more tweaks.",
     sections: [
+      {
+        heading: "Choose the recovery route first",
+        body: "A setting you can restore individually and a PC that cannot start need different recovery steps. Choose the case that matches your PC before changing anything else.",
+        points: [
+          "Changed it in PC Tweaker: use the saved restore control for that supported setting, then test the same task.",
+          "Changed it yourself: restore your recorded Windows setting or use a backup you made before the change.",
+          "Used another tool or script: review its log and its documented undo or backup feature; do not copy another PC's registry values.",
+          "Windows cannot start: use Windows Recovery Environment and an existing restore point or backup. A tweak utility cannot run the recovery for you.",
+        ],
+      },
       { heading: "1. Identify the change", body: "Open the category where you applied the tweak, or review Change history. Note the tweak name and when you applied it. If the issue began after several changes, investigate them individually instead of adding another preset." },
       { heading: "2. Restore a supported setting", body: "Use the restore control for that change. Where PC Tweaker recorded an original value, restoration uses that saved state. Read the result and any restart instructions. A successful settings write does not prove that an unrelated application problem is fixed." },
       { heading: "3. Repeat the same task", body: "Reopen the application or repeat the task that behaved differently. Keep other conditions the same. If you changed file-extension visibility, check the same folder in File Explorer. Avoid restoring unrelated settings just to test one change." },
       { heading: "If you changed the setting manually", body: "Return to the Windows setting you used and restore your recorded choice. For file extensions in Windows 11, open File Explorer, choose View, then Show, then File name extensions. Windows 10 exposes File name extensions on the View tab. Registry changes require the correct previous value or an appropriate backup; do not guess a value from another PC." },
       { heading: "What restoration cannot recover", body: "Cleanup, uninstall and update operations have separate recovery limits. A tweak backup is not a backup of your files or your whole system. PC Tweaker cannot reconstruct an unknown original value from another tool. If Windows cannot start, use Windows recovery options and your existing backups." },
       { heading: "Choosing another profile does not undo the first", body: "Gaming, Study and Work starter profiles add selected changes. Switching cards is not a full configuration swap. Restore supported changes explicitly before assuming you have returned to the previous setup." },
-      { heading: "If the tweak came from a script or another tool", body: "Most 'debloat' and 'optimizer' scripts write registry values and disable services without recording what was there before, so there is nothing to restore from. Start with what the script's own documentation says it changed. For a registry value, open the key and compare it with a known-good machine of the same Windows version and edition only as a last resort, and note that a value present on one PC may legitimately be absent on another. For a disabled service, Services shows the startup type; the previous type is usually Manual or Automatic and the service's own documentation says which. For removed packages, reinstalling from the Microsoft Store or from Windows features is the only route back, and some removals survive a feature update." },
+      { heading: "If the tweak came from a script or another tool", body: "Check the tool's own documentation, change log and backups before attempting a manual repair. Some tools provide an undo function; others may not retain the previous state. PC Tweaker cannot infer values that another tool changed before it recorded a snapshot. Do not copy registry values or service startup types from a different PC: edition, policy and installed software can change the correct configuration. If a Windows setting exposes the option, restore the choice you recorded there. If you have no record, use the documented recovery path for the affected component or an existing restore point rather than guessing." },
+      { heading: "When an existing Windows restore point can help", body: "System Restore can roll back system configuration more broadly than one tweak. From Control Panel, open Recovery, then Open System Restore. Choose a point from before the problem and review Scan for affected programs before confirming. Personal files are not rolled back by System Restore, but applications, drivers and system settings can be affected. Creating a point after the problem started does not create a backup of the earlier working state. If no suitable point exists, use another recovery option appropriate to the problem." },
+      { heading: "If Windows will not start", body: "Use Windows Recovery Environment. If an appropriate restore point exists, choose Troubleshoot, then Advanced options, then System Restore. Encrypted devices may require the BitLocker recovery key. On a work or school PC, contact the administrator before recovery. System Restore, resetting Windows and restoring a whole-system image have different effects: read the selected option and its effect on files and applications before continuing. Follow Microsoft's recovery guidance linked below rather than trying additional optimizer settings." },
       { heading: "When a restart is part of the undo", body: "A setting that said 'restart required' when you applied it needs a restart to undo as well. Hardware-accelerated GPU scheduling, keeping the kernel in memory, the long-path limit and the timer-resolution flag are all read at startup, so the restore writes the value immediately but Windows keeps behaving the old way until it reboots. Sign-in and Explorer settings take effect when Explorer reloads, which signing out achieves without a full restart. Judge the result after the restart the description asks for, not before." }
     ],
     related: [
       { to: "/reversible-windows-tweaks/", label: "how a recorded previous value differs from a Windows default", note: "The distinction that decides whether an undo puts you back where you actually were." },
       { to: "/what-pc-tweaker-changes/", label: "which categories can be restored at all", note: "Cleanup, uninstall, driver and repair operations have separate recovery limits." },
       { to: "/windows-gaming-work-study-profiles/", label: "why switching starter profiles does not undo the first", note: "A common reason people think a restore failed when nothing was reversed." }
-    ]
+    ],
+    sources: {
+      checked: "17 October 2026",
+      items: [
+        { label: "Microsoft: System Restore and affected programs", url: "https://support.microsoft.com/en-us/windows/experience/backup-recovery/system-restore" },
+        { label: "Microsoft: Windows Recovery Environment", url: "https://support.microsoft.com/en-us/windows/experience/backup-recovery/windows-recovery-environment" },
+        { label: "Microsoft: file name extensions in Windows", url: "https://support.microsoft.com/en-us/windows/experience/storage-filemanagement/common-file-name-extensions-in-windows" },
+        { label: "PC Tweaker: restoring a saved registry snapshot", url: "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/tweaks.rs" },
+      ],
+    },
   },
   "/windows-gaming-work-study-profiles": {
     eyebrow: "PROFILES WALKTHROUGH",

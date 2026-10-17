@@ -80,7 +80,7 @@ export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
     },
     {
       q: "I restored the setting and the problem is still there. What now?",
-      a: "Then the setting was probably not the cause. A successful restore proves the value is back, not that it was responsible. Check whether something else changed at the same time — an update, a driver, another tool — and test one thing at a time. If Windows will not start, use Windows recovery options and your backups rather than further tweaks.",
+      a: "First check the restore result and complete any required restart. A successful settings write does not establish what caused the problem or recover separate side effects. Repeat the same task, then review other changes made around that time, such as a driver, update or another tool. If Windows will not start, use Windows recovery options and your existing backups rather than applying further tweaks.",
     },
     {
       q: "Does switching to another profile undo the previous one?",

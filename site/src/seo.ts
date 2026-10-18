@@ -196,6 +196,11 @@ const uninstallerApp = {
   downloadUrl: UNINSTALLER_DOWNLOAD_EXE,
   url: `${ORIGIN}/uninstaller/`,
   image: `${ORIGIN}/uninstaller/social-card.jpg`,
+  screenshot: ["inventory", "removal-brief", "ledger"].map((name) => ({
+    "@type": "ImageObject",
+    contentUrl: `${ORIGIN}/uninstaller/images/${name}-0.13.3.png`,
+    caption: `Uninstaller 0.13.3 interface preview with example data: ${name}`,
+  })),
   sameAs: ["https://github.com/AurelioAvila/pc-tweaker-uninstaller"],
   description:
     "Windows uninstaller that shows each removal's risk score, command and permissions before it runs, then keeps a local receipt of what was removed.",

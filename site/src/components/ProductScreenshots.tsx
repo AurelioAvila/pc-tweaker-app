@@ -7,9 +7,9 @@ export function ProductScreenshots({ title, note, items }: { title: string; note
     <p className="mb-7 leading-relaxed text-[var(--fg-dim)]">{note}</p>
     <div className="space-y-4">
       {items.map((item, index) => <details key={item.src} open={index === 0} className="rounded-xl border border-white/15">
-        <summary className="cursor-pointer rounded-xl p-4 text-lg font-semibold text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"><span className="font-mono-t mr-3 text-sm text-accent">0{index + 1}</span>{item.title}</summary>
+        <summary className="cursor-pointer rounded-xl p-4 text-lg font-semibold text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"><span className="font-mono-t mr-3 text-sm text-accent">0{index + 1}</span>{item.title}</summary>
         <figure className="px-4 pb-5">
-        <a href={item.src} target="_blank" rel="noopener" className="block rounded-xl border border-white/15 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent" aria-label={`Open full-size interface preview: ${item.title}`}>
+        <a href={item.src} target="_blank" rel="noopener" className="block rounded-xl border border-white/15 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]" aria-label={`Open full-size interface preview: ${item.title}`}>
           <img src={item.src} alt={item.alt} width="1365" height="900" loading="lazy" decoding="async" className="h-auto w-full rounded-xl" />
         </a>
         <figcaption className="pt-4">

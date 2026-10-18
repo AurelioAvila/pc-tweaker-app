@@ -2,6 +2,7 @@ import { UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "../constants";
 import { euro, PromoCard, PromoFine, usePromo } from "../promo";
 import { TrialLine } from "../trial";
 import { promoPercent } from "../../../src/promo";
+import { ProductScreenshots } from "../components/ProductScreenshots";
 
 /* The page a buyer actually lands on.
  *
@@ -72,6 +73,16 @@ export function UninstallerPage() {
         </a>
         , including where leftovers live and which ones to keep.
       </p>
+
+      <ProductScreenshots
+        title="Inside the removal workflow"
+        note="The version 0.13.3 interface, shown with example programs and a demonstration receipt. This preview cannot read installed software or run Windows commands. Its figures are examples, not measured cleanup results. Open any image to inspect the details."
+        items={[
+          { src: "/uninstaller/images/inventory-0.13.3.png", title: "Start with the reasons", alt: "Uninstaller 0.13.3 interface preview: three example programs with Safe, Review and Keep guidance", description: "Review the inventory and the reasons behind each removal band. A Keep warning deserves attention before you touch a shared runtime or system component." },
+          { src: "/uninstaller/images/removal-brief-0.13.3.png", title: "Read the command before you confirm", alt: "Example removal brief showing the command, administrator permissions, estimated size and restore-point attempt", description: "The brief separates the exact command, permissions and registry size estimate. A restore-point attempt is recorded; its availability and outcome still need checking." },
+          { src: "/uninstaller/images/ledger-0.13.3.png", title: "Keep a receipt, including what is unknown", alt: "Demonstration Removal Ledger entry with restore point skipped and no measured space recovered", description: "The ledger keeps the method and outcome together. This example deliberately has no measured freed-space value: a registry estimate is not evidence that those bytes were recovered." },
+        ]}
+      />
 
       <section className="mb-10">
         <h2 className="mb-4 text-2xl font-semibold text-[var(--fg)]">What you get without paying</h2>

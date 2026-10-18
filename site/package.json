@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build && vite build --ssr src/entry-server.tsx --outDir dist-ssr && node scripts/check-offer-seo.mjs && node scripts/prerender.mjs",
     "preview": "vite preview",
     "check:seo": "node scripts/check-seo.mjs",
-    "check:attribution": "node --test scripts/check-attribution.mjs",
+    "check:attribution": "node --test scripts/check-attribution.mjs scripts/check-suite-downloads.mjs",
     "sitemap": "node scripts/build-sitemap.mjs"
   },
   "dependencies": {

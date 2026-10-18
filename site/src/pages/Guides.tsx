@@ -172,7 +172,7 @@ export const GUIDES: Record<string, Guide> = {
     eyebrow: "GAMING PERFORMANCE",
     title: "Tune Windows for more consistent gaming performance",
     intro:
-      "Reduce avoidable background overhead, inspect system conditions and apply gaming-focused changes without surrendering the ability to roll them back.",
+      "Start with a repeatable stutter or uneven frame-time pattern. Check temperatures and background work, then review Game DVR or GPU scheduling one setting at a time. Keep a change only when repeated runs support it, and restore supported tweaks from their saved state.",
     sections: [
       {
         heading: "Consistency matters more than a synthetic promise",
@@ -241,7 +241,7 @@ export const GUIDES: Record<string, Guide> = {
     eyebrow: "REVERSIBLE TWEAKS",
     title: "Windows tweaks with a recovery path",
     intro:
-      "Optimization should not mean guessing how to undo a registry, service or system-setting change weeks later.",
+      "A reversible tweak needs the value that existed before the change. PC Tweaker records previous states for supported registry, service and system settings. Check that record and any restart requirement before applying a tweak; a generic Windows default is not your original configuration.",
     sections: [
       {
         heading: "Rollback is part of the feature",
@@ -303,7 +303,7 @@ export const GUIDES: Record<string, Guide> = {
     eyebrow: "WINDOWS PRIVACY",
     title: "Review Windows privacy settings without blind debloating",
     intro:
-      "Adjust supported privacy-related Windows behavior while keeping each action separate, understandable and reversible.",
+      "Review diagnostic data, advertising ID and Recall separately instead of running a broad debloat script. PC Tweaker identifies supported privacy controls and their permissions, and records previous values for restoration. A policy can have effects that restoring its value cannot undo, including deleted Recall snapshots.",
     sections: [
       {
         heading: "Privacy controls without destructive presets",
@@ -381,7 +381,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
   const technical = guide.format === "technical";
 
   return (
-    <main id="main-content" className="px-5 pt-32 pb-24 md:px-12">
+    <main id="main-content" className="px-5 pt-32 pb-24 md:px-12 [overflow-wrap:anywhere]">
       <article className="mx-auto max-w-4xl">
         <GuideBreadcrumbs path={path} navigate={navigate} />
         {!technical && <p className="font-mono-t text-accent mb-5 text-[12px] tracking-[0.15em]">

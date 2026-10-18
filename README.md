@@ -1,8 +1,12 @@
+# PC Tweaker — Windows Tuning, Privacy and Maintenance
+
+For Windows 10/11 users who want to inspect settings before changing them. Review each control, keep a change history and restore supported settings from their recorded previous state.
+
+[Product and free download](https://pctweaker.app/?utm_source=github&utm_medium=repository&utm_campaign=pct-readme&utm_content=entry&cid=pct-github-readme) · [Official releases](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest) · [Verify the publisher signature](https://github.com/AurelioAvila/.github/blob/master/CODE_SIGNING.md)
+
 <p align="center">
   <img src="src-tauri/icons/128x128@2x.png" width="112" alt="PC Tweaker logo">
 </p>
-
-<h1 align="center">PC Tweaker — Windows Tuning, Privacy and Maintenance</h1>
 
 <p align="center"><strong>Tune Windows with the changes in plain sight.</strong><br>Gaming, privacy and maintenance controls, with restore tools for supported settings.</p>
 

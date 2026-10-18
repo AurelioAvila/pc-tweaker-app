@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { MICROSOFT_STORE } from "./constants";
+import { pageEntryLabels } from "./entry-attribution";
 
 const CAMPAIGNS = new Set([
   "pct-instagram-profile", "pct-youtube-profile", "pct-youtube-profiles-01",
   "pct-youtube-file-extensions", "pct-youtube-keep-game-clips", "pct-youtube-work-after-gaming",
+  "pct-github-readme",
 ]);
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content"];
 let entryCampaign: string | undefined;
@@ -12,7 +14,7 @@ let entryUtm: Record<string, string> = {};
 // Retain only campaign labels from the landing URL, in memory for this page
 // session. No cookies, identifiers, storage or analytics scripts. Called once
 // from main.tsx, before client-side navigation drops the query string.
-export function captureEntry(search: string) {
+export function captureEntry(search: string, pathname = "") {
   if (entryCampaign !== undefined) return;
   const params = new URLSearchParams(search);
   const requested = params.get("cid") || "";
@@ -24,11 +26,11 @@ export function captureEntry(search: string) {
     const value = params.get(key);
     if (value && /^[A-Za-z0-9_.-]{1,80}$/.test(value)) entryUtm[key] = value;
   }
-  if (!entryUtm.utm_source) entryUtm = {};
+  if (!entryUtm.utm_source) entryUtm = pageEntryLabels(pathname);
 }
 
-/** The social post that brought this visitor, sent only with a checkout the
- *  visitor starts, so the Stripe session records which post led to it. */
+/** First entry labels, sent only with a download click or a checkout the
+ * visitor starts. Owned-content labels describe the entry page, not a search engine. */
 export function campaignLabels(): Record<string, string> {
   return { ...entryUtm };
 }

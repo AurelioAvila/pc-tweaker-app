@@ -11,15 +11,15 @@ import "./fonts.css";
 import "./index.css";
 import faviconUrl from "./assets/favicon.png";
 
-captureEntry(window.location.search);
+captureEntry(window.location.search, window.location.pathname);
 
-// A visitor who arrived from a tagged social post and clicks the installer
-// download: count it against that post's labels. The download itself is the
-// unchanged link; the beacon carries only the in-memory labels, nothing else.
+// Count installer-link clicks against the first entry page or explicit campaign.
+// This is not a completed download or installation. Preview traffic stays local.
 document.addEventListener("click", (event) => {
+  if (window.location.hostname !== "pctweaker.app") return;
   const utm = campaignLabels();
   if (utm.utm_source && (event.target as Element | null)?.closest?.(`a[href="${DOWNLOAD_EXE}"]`)) {
-    navigator.sendBeacon(`${API_BASE}/api/download?${new URLSearchParams(utm)}`);
+    try { navigator.sendBeacon(`${API_BASE}/api/download?${new URLSearchParams(utm)}`); } catch { /* The installer link works independently. */ }
   }
 });
 

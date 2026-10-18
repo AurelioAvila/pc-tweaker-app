@@ -107,23 +107,23 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     ogType: "website",
   },
   "/gaming-performance": {
-    title: "Windows Gaming Performance Tweaks | PC Tweaker",
+    title: "Windows Gaming Tweaks: Test Frame Times | PC Tweaker",
     description:
-      "Tune Windows for steadier frame times: cut avoidable background overhead, watch CPU, memory and thermals live, and reverse anything that does not help.",
+      "Investigate Windows 11 game stutter before changing settings. Review Game DVR and HwSchMode, compare repeatable frame times and restore supported tweaks.",
     canonical: `${ORIGIN}/gaming-performance/`,
     ogType: "website",
   },
   "/reversible-windows-tweaks": {
-    title: "Reversible Windows Tweaks with Rollback | PC Tweaker",
+    title: "Reversible Windows Tweaks: Saved-Value Rollback | PC Tweaker",
     description:
-      "Every supported PC Tweaker change records its previous value, so you can undo a registry, service or system setting without hunting for the original.",
+      "Restore supported registry and service tweaks from values PC Tweaker saved before each change. Check backups, restart requirements and rollback limits.",
     canonical: `${ORIGIN}/reversible-windows-tweaks/`,
     ogType: "website",
   },
   "/windows-privacy-tool": {
-    title: "Reversible Windows Privacy Tool | PC Tweaker",
+    title: "Windows Privacy Tweaker: Review and Restore | PC Tweaker",
     description:
-      "Review and adjust supported Windows privacy settings one by one, without destructive debloat scripts, bundled presets or irreversible package removal.",
+      "Review Windows 10/11 diagnostic data, advertising ID and Recall policies individually. Check permissions and restore supported settings from saved values.",
     canonical: `${ORIGIN}/windows-privacy-tool/`,
     ogType: "website",
   },

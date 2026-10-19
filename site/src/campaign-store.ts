@@ -2,10 +2,15 @@ import { useEffect, useState } from "react";
 import { MICROSOFT_STORE } from "./constants";
 import { pageEntryLabels } from "./entry-attribution";
 
+const FACEBOOK_POST_CAMPAIGNS = new Map([
+  ["native-evidence-20261019:dpc-trace", "pct-facebook-dpc-trace-20261019"],
+  ["native-evidence-20261019:saved-values", "pct-facebook-saved-values-20261019"],
+]);
 const CAMPAIGNS = new Set([
   "pct-instagram-profile", "pct-youtube-profile", "pct-youtube-profiles-01",
   "pct-youtube-file-extensions", "pct-youtube-keep-game-clips", "pct-youtube-work-after-gaming",
   "pct-github-readme",
+  "pct-facebook-profile", ...FACEBOOK_POST_CAMPAIGNS.values(),
 ]);
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content"];
 let entryCampaign: string | undefined;
@@ -21,7 +26,9 @@ export function captureEntry(search: string, pathname = "") {
   const source = params.get("utm_source");
   entryCampaign = CAMPAIGNS.has(requested) ? requested
     : source === "ig" || source === "instagram" ? "pct-instagram-profile"
-    : source === "youtube" ? "pct-youtube-profile" : "";
+    : source === "youtube" ? "pct-youtube-profile"
+    : source === "facebook" ? FACEBOOK_POST_CAMPAIGNS.get(`${params.get("utm_campaign")}:${params.get("utm_content")}`) || "pct-facebook-profile"
+    : "";
   for (const key of UTM_KEYS) {
     const value = params.get(key);
     if (value && /^[A-Za-z0-9_.-]{1,80}$/.test(value)) entryUtm[key] = value;

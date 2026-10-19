@@ -61,6 +61,7 @@ export const PRACTICAL_GUIDES = {
     }
   },
   "/how-to-undo-windows-tweaks": {
+    updated: "2026-10-19",
     eyebrow: "RECOVERY GUIDE",
     title: "How to undo Windows tweaks",
     seoTitle: "Undo or Remove Windows Tweaks, Restore Settings",
@@ -78,7 +79,17 @@ export const PRACTICAL_GUIDES = {
           "Windows cannot start: use Windows Recovery Environment and an existing restore point or backup. A tweak utility cannot run the recovery for you.",
         ],
       },
-      { heading: "1. Identify the change", body: "Open the category where you applied the tweak, or review Change history. Note the tweak name and when you applied it. If the issue began after several changes, investigate them individually instead of adding another preset." },
+      {
+        heading: "1. Identify the change",
+        body: "Open the category where you applied the tweak, or review Change history. Expand Show the changes in effect to inspect the recorded Before and After values. Note the tweak name and when you applied it. If the issue began after several changes, investigate them individually instead of adding another preset.",
+        figure: {
+          src: "/guides/recorded-before-after-20261019.png",
+          width: 1277,
+          height: 770,
+          alt: "PC Tweaker Change history expanded to show recorded Before and After registry values for supported settings",
+          caption: "PC Tweaker 1.18.5, actual app capture: Restrict supported background apps records GlobalUserDisabled under HKCU as not set before and 1 after. The visible DoDownloadMode and GameDVR_Enabled rows have identical before-and-after values, so those rows do not demonstrate a value change. This is a record of settings, not a newly performed or independently verified restore.",
+        },
+      },
       { heading: "2. Restore a supported setting", body: "Use the restore control for that change. Where PC Tweaker recorded an original value, restoration uses that saved state. Read the result and any restart instructions. A successful settings write does not prove that an unrelated application problem is fixed." },
       { heading: "3. Repeat the same task", body: "Reopen the application or repeat the task that behaved differently. Keep other conditions the same. If you changed file-extension visibility, check the same folder in File Explorer. Avoid restoring unrelated settings just to test one change." },
       { heading: "If you changed the setting manually", body: "Return to the Windows setting you used and restore your recorded choice. For file extensions in Windows 11, open File Explorer, choose View, then Show, then File name extensions. Windows 10 exposes File name extensions on the View tab. Registry changes require the correct previous value or an appropriate backup; do not guess a value from another PC." },

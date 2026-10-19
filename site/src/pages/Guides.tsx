@@ -5,6 +5,14 @@ import { GUIDE_FAQS } from "./guide-faqs";
 import { Link } from "../router";
 import { GuideBreadcrumbs } from "../components/GuideBreadcrumbs";
 
+interface GuideFigure {
+  readonly src: string;
+  readonly width: number;
+  readonly height: number;
+  readonly alt: string;
+  readonly caption: string;
+}
+
 interface Guide {
   readonly eyebrow: string;
   readonly title: string;
@@ -22,6 +30,7 @@ interface Guide {
     readonly body: string;
     readonly code?: string;
     readonly points?: readonly string[];
+    readonly figure?: GuideFigure;
     readonly table?: {
       readonly caption: string;
       readonly rows: readonly { readonly module: string; readonly subsystem: string; readonly check: string }[];
@@ -391,6 +400,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
           {guide.title}
         </h1>
         <p className="mt-7 max-w-3xl text-lg leading-8 text-[var(--fg-dim)]">{guide.intro}</p>
+        {guide.updated && (!technical || guide.updated !== guide.published) && <p className="mt-3 text-sm text-[var(--fg-dim)]">Updated <time dateTime={guide.updated}>{new Date(`${guide.updated}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}</time>.</p>}
 
         {technical && (
           <>
@@ -410,6 +420,17 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
             <section key={section.heading} id={`guide-section-${index + 1}`} className={technical ? "min-w-0 scroll-mt-32 border-b border-[var(--line)] pb-9" : "rounded-2xl bg-[var(--surface)] p-7 md:p-9"}>
               <h2 className="font-display text-2xl font-bold text-[var(--fg)]">{section.heading}</h2>
               <p className={`mt-4 leading-7 text-[var(--fg-dim)] ${technical ? "max-w-[70ch]" : "max-w-3xl"}`}>{section.body}</p>
+              {section.figure && (
+                <figure className="mt-7">
+                  <a href={section.figure.src} className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]" aria-label={`Open original screenshot: ${section.figure.alt}`}>
+                    <img src={section.figure.src} width={section.figure.width} height={section.figure.height} alt={section.figure.alt} loading="lazy" decoding="async" className="h-auto w-full rounded-xl" />
+                  </a>
+                  <figcaption className="mt-4 text-sm leading-7 text-[var(--fg-dim)]">
+                    {section.figure.caption}{" "}
+                    <a href={section.figure.src} className="inline-flex min-h-11 items-center text-accent underline underline-offset-4">Open original screenshot</a>.
+                  </figcaption>
+                </figure>
+              )}
               {section.table && (
                 <>
                   <table id={`guide-table-${index + 1}`} className="mt-7 w-full scroll-mt-32 table-fixed border-collapse text-left text-sm leading-6">

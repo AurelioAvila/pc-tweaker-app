@@ -77,7 +77,7 @@ export const TECHNICAL_GUIDES = {
   "/guides/fix-dpc-isr-latency-windows-11": {
     "eyebrow": "DRIVER DIAGNOSTICS",
     "format": "technical",
-    "updated": "2026-10-16",
+    "updated": "2026-10-19",
     "title": "Find the driver behind DPC and ISR latency",
     "seoTitle": "Diagnose DPC/ISR Latency on Windows 11",
     "seoDescription": "Trace DPC and ISR latency on Windows 11, investigate nvlddmkm.sys and dxgkrnl.sys, and compare one driver change at a time before keeping a fix.",
@@ -132,7 +132,14 @@ export const TECHNICAL_GUIDES = {
       },
       {
         "heading": "Use PC Tweaker to collect the short trace",
-        "body": "In Hardware, open DPC and interrupt latency. PC Tweaker records a 5–30 second kernel ETW capture and reports driver-attributed durations, counts and events above its reference limits. Administrator rights are needed; this diagnostic does not change settings and has no tweak to roll back. Unresolved events stay unattributed. The 100 microsecond DPC and 25 microsecond ISR reference values come from Microsoft’s driver guidance; crossing them alone does not prove an audible glitch. Use WPA for deeper timeline analysis."
+        "body": "In Hardware, open DPC and interrupt latency. PC Tweaker records a 5–30 second kernel ETW capture and reports driver-attributed durations, counts and events above its reference limits. Administrator rights are needed; this diagnostic does not change settings and has no tweak to roll back. Unresolved events stay unattributed. The 100 microsecond DPC and 25 microsecond ISR reference values come from Microsoft’s driver guidance; crossing them alone does not prove an audible glitch. Use WPA for deeper timeline analysis.",
+        "figure": {
+          "src": "/guides/dpc-isr-capture-20261019.png",
+          "width": 1276,
+          "height": 771,
+          "alt": "PC Tweaker DPC and interrupt latency results with a 10-second capture selected and a driver-attributed duration table",
+          "caption": "PC Tweaker 1.18.5, actual app capture on a Ryzen 7 7800X3D system: the selected interval is 10 seconds, the maximum DPC duration is 0.145 ms and the maximum interrupt duration is 0.058 ms. ndis.sys has the longest DPC in this sample. These observations alone do not identify a faulty driver or demonstrate an improvement in audio, input latency or FPS."
+        }
       },
       {
         "heading": "What a latency result does not promise",

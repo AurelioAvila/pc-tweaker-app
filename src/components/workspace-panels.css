@@ -254,6 +254,28 @@
   gap: 5px;
 }
 
+.workspace-import-preview {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 0 4px;
+  list-style: none;
+  font-size: 12px;
+}
+
+.workspace-import-preview li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+
+.workspace-import-preview em {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-style: normal;
+}
+
 .workspace-import-warning {
   margin-top: 10px;
   color: var(--warning);

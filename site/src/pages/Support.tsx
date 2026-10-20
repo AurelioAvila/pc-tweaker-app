@@ -5,6 +5,7 @@ import { riseChild, staggerParent, viewportOnce } from "../motion";
 import { ApiError, postSupportRequest } from "../api";
 import { Field, FormError, Select, SubmitButton, TextArea, TextInput } from "../components/Form";
 import { Link } from "../router";
+import tauriConf from "../../../src-tauri/tauri.conf.json";
 
 const t = text.support;
 
@@ -138,7 +139,7 @@ function SupportForm() {
           id="sp-system"
           value={systemInfo}
           onChange={(e) => setSystemInfo(e.target.value)}
-          placeholder="Windows 11 23H2 · RTX 4060 · PC Tweaker 1.18.4"
+          placeholder={`Windows 11 23H2 · RTX 4060 · PC Tweaker ${tauriConf.version}`}
           maxLength={500}
         />
       </Field>

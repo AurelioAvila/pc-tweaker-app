@@ -23,11 +23,11 @@ export function captureEntry(search: string, pathname = "") {
   if (entryCampaign !== undefined) return;
   const params = new URLSearchParams(search);
   const requested = params.get("cid") || "";
-  const source = params.get("utm_source");
+  const source = params.get("utm_source")?.toLowerCase();
   entryCampaign = CAMPAIGNS.has(requested) ? requested
     : source === "ig" || source === "instagram" ? "pct-instagram-profile"
     : source === "youtube" ? "pct-youtube-profile"
-    : source === "facebook" ? FACEBOOK_POST_CAMPAIGNS.get(`${params.get("utm_campaign")}:${params.get("utm_content")}`) || "pct-facebook-profile"
+    : source === "facebook" || source === "fb" ? FACEBOOK_POST_CAMPAIGNS.get(`${params.get("utm_campaign")}:${params.get("utm_content")}`) || "pct-facebook-profile"
     : "";
   for (const key of UTM_KEYS) {
     const value = params.get(key);

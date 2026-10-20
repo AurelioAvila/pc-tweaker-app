@@ -106,7 +106,7 @@ pub fn run_elevated_action(action_flag: &str, tweak_id: &str) -> Result<(), Stri
     {
         let status = runas::Command::new(exe)
             .arg(action_flag)
-            .arg(tweak_id)
+            .arg(encode_elevated_arg(tweak_id))
             .gui(true)
             .status()
             .map_err(|e| format!("elevation was cancelled or failed: {}", e))?;
@@ -125,6 +125,52 @@ pub fn run_elevated_action(action_flag: &str, tweak_id: &str) -> Result<(), Stri
     {
         let _ = exe;
         Err("elevation is not implemented on this platform yet".to_string())
+    }
+}
+
+/// Marks an argument that crossed the UAC relaunch encoded.
+const ENCODED_ARG_PREFIX: &str = "b64:";
+
+/// runas 1.x quotes any argument containing a space and doubles every
+/// backslash inside the quotes, which Windows' command-line parsing keeps
+/// literally: the scheduled task `\Vendor\Some Task` reached the helper as
+/// `\\Vendor\\Some Task`. URL-safe base64 is only letters, digits, `-` and `_`,
+/// so runas passes it through untouched.
+pub(crate) fn encode_elevated_arg(value: &str) -> String {
+    use base64::Engine as _;
+    format!(
+        "{ENCODED_ARG_PREFIX}{}",
+        base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(value)
+    )
+}
+
+/// The helper's side of `encode_elevated_arg`. A malformed payload is refused
+/// rather than guessed at. An unprefixed argument is taken as it is: an app
+/// still running from before an update relaunches the new binary that way.
+pub fn decode_elevated_arg(arg: &str) -> Result<String, String> {
+    use base64::Engine as _;
+    let Some(encoded) = arg.strip_prefix(ENCODED_ARG_PREFIX) else {
+        return Ok(arg.to_owned());
+    };
+    base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(encoded)
+        .ok()
+        .and_then(|bytes| String::from_utf8(bytes).ok())
+        .ok_or_else(|| "the elevated action received a malformed argument".to_string())
+}
+
+/// The elevated helper is this same executable, installed per user, so the
+/// folder it starts from is writable without administrator rights. Any DLL
+/// it loads by name afterwards (WMI, COM, `LoadLibrary` of a system library)
+/// must come from System32 only, never from a file planted next to the exe.
+/// Static imports are covered at link time by /DEPENDENTLOADFLAG (build.rs).
+#[cfg(windows)]
+pub fn restrict_dll_search_to_system32() {
+    use windows_sys::Win32::System::LibraryLoader::{
+        SetDefaultDllDirectories, LOAD_LIBRARY_SEARCH_SYSTEM32,
+    };
+    unsafe {
+        SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
     }
 }
 
@@ -165,12 +211,39 @@ pub(crate) fn is_link(metadata: &std::fs::Metadata) -> bool {
 
 #[cfg(test)]
 mod app_data_dir_tests {
-    use super::ensure_plain_app_data_dir;
+    use super::{decode_elevated_arg, encode_elevated_arg, ensure_plain_app_data_dir};
 
     fn temp(name: &str) -> std::path::PathBuf {
         let dir = std::env::temp_dir().join(format!("pct-elevation-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         dir
+    }
+
+    #[test]
+    fn elevated_arguments_survive_the_relaunch_encoding() {
+        for value in [
+            r"\Vendor\Some Task",
+            r"\Adobe Acrobat Update Task",
+            "C:\\Program Files\\App\\",
+            "say \"hi\" \\\"",
+            "Pianificazione è già attiva — 日本語",
+            "250:release",
+            "",
+        ] {
+            let encoded = encode_elevated_arg(value);
+            assert!(encoded
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || matches!(c, ':' | '-' | '_')));
+            assert_eq!(decode_elevated_arg(&encoded).unwrap(), value);
+        }
+    }
+
+    #[test]
+    fn malformed_encoded_arguments_are_refused() {
+        for bad in ["b64:!!!", "b64:a", "b64:/w", "b64:_w"] {
+            assert!(decode_elevated_arg(bad).is_err(), "{bad}");
+        }
+        assert_eq!(decode_elevated_arg("tcp-nagle").unwrap(), "tcp-nagle");
     }
 
     #[test]

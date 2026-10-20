@@ -113,7 +113,8 @@ export function InvitationPage() {
             <strong>6 or 12 months of Pro</strong>
             <p>
               6 months after a monthly purchase; 12 after an annual or Lifetime purchase. A separate
-              personal bonus for one PC, following verification.
+              bonus for one PC, following verification. If your friend already owns Lifetime,
+              they can gift the unused bonus once to another verified account.
             </p>
           </div>
           {valid ? (

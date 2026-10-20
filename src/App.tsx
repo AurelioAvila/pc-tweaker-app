@@ -367,6 +367,11 @@ function App() {
     return () => window.clearInterval(id);
   }, []);
 
+  const refreshAccountRef = useRef(refreshAccount);
+  useEffect(() => {
+    refreshAccountRef.current = refreshAccount;
+  });
+
   useEffect(() => {
     refreshAccount();
     // Before this version the profile photo belonged to the computer rather
@@ -375,8 +380,10 @@ function App() {
     // Doing this at sign-in instead would hand it to the next account.
     const signedInAs = readStoredEmail();
     if (signedInAs) void adoptLegacyAvatar(signedInAs);
+    // The listener outlives this render: call the latest refreshAccount so
+    // its toasts follow the current language.
     function onFocus() {
-      refreshAccount();
+      refreshAccountRef.current();
     }
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);

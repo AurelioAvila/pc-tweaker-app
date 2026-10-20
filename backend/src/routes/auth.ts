@@ -99,6 +99,19 @@ const authLimiter = rateLimit({
 });
 router.use(authLimiter);
 
+// change-password and change-email carry no `email`, so authLimiter keys them
+// on the spoofable req.ip. They re-check the account password, so a stolen
+// session must not get unlimited guesses (or unlimited bcrypt work): key on
+// the signed-in account instead. Runs after requireAuth.
+const passwordCheckLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many attempts. Please wait 15 minutes and try again." },
+  keyGenerator: (req) => `user:${req.userId}`,
+});
+
 const APP_URL =
   process.env.APP_URL ||
   (process.env.NODE_ENV === "production" ? "https://api.pctweaker.app" : "http://localhost:3000");
@@ -378,7 +391,7 @@ router.post("/resend-verification", requireAuth, async (req: Request, res: Respo
  * required: a session left open on someone else's PC must not be enough.
  * Every other session ends; this one gets a fresh token.
  */
-router.post("/change-password", requireAuth, async (req: Request, res: Response) => {
+router.post("/change-password", requireAuth, passwordCheckLimiter, async (req: Request, res: Response) => {
   const { currentPassword, newPassword, product } = req.body || {};
   if (typeof currentPassword !== "string" || !isValidPassword(newPassword)) {
     return res.status(400).json({ error: "Password must be at least 8 characters and no more than 72 UTF-8 bytes." });
@@ -411,7 +424,7 @@ router.post("/change-password", requireAuth, async (req: Request, res: Response)
  * The answer is the same whether or not that address is free, so this cannot
  * be used to find out which addresses have accounts.
  */
-router.post("/change-email", requireAuth, async (req: Request, res: Response) => {
+router.post("/change-email", requireAuth, passwordCheckLimiter, async (req: Request, res: Response) => {
   const { password, newEmail, product } = req.body || {};
   if (!isValidEmail(newEmail) || typeof password !== "string") return res.status(400).json({ error: "invalid email" });
   const target = newEmail.toLowerCase();

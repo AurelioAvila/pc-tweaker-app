@@ -1850,6 +1850,16 @@ pub fn run_drift_check_headless() -> ! {
 }
 
 pub fn run_elevated_headless(action: &str, id: &str) -> ! {
+    // First, before anything can load a DLL by name from the per-user folder.
+    elevation::restrict_dll_search_to_system32();
+    let id = match elevation::decode_elevated_arg(id) {
+        Ok(id) => id,
+        Err(e) => {
+            eprintln!("{e}");
+            std::process::exit(2);
+        }
+    };
+    let id = id.as_str();
     let dir = dirs_app_data_dir();
     // Checked before anything, including crash reporting, writes to it.
     if let Err(e) = elevation::ensure_plain_app_data_dir(&dir) {

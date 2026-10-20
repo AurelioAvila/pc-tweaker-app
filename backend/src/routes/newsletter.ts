@@ -56,6 +56,38 @@ function unsubscribeSignature(email: string): string | null {
   return crypto.createHmac("sha256", secret).update(email.toLowerCase()).digest("hex");
 }
 
+/**
+ * Same HMAC with its own prefix, so an unsubscribe link (which every list
+ * email carries) can never be replayed to put someone back on the list.
+ */
+function resubscribeSignature(email: string): string | null {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) return null;
+  return crypto.createHmac("sha256", secret).update(`resubscribe:${email.toLowerCase()}`).digest("hex");
+}
+
+function resubscribeUrl(email: string): string | null {
+  const sig = resubscribeSignature(email);
+  if (!sig) return null;
+  return `${process.env.PUBLIC_API_URL || "https://api.pctweaker.app"}/api/newsletter/resubscribe?email=${encodeURIComponent(email)}&sig=${sig}`;
+}
+
+/**
+ * One confirmation mail per address per day: the form must not become a way
+ * to fill a stranger's inbox. In memory, like the other abuse budgets.
+ */
+const RESUBSCRIBE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const resubscribeSentAt = new Map<string, number>();
+
+function mayAskToResubscribe(email: string): boolean {
+  const now = Date.now();
+  for (const [address, at] of resubscribeSentAt) if (now - at >= RESUBSCRIBE_COOLDOWN_MS) resubscribeSentAt.delete(address);
+  const key = email.toLowerCase();
+  if (resubscribeSentAt.has(key)) return false;
+  resubscribeSentAt.set(key, now);
+  return true;
+}
+
 /** Signed one-click link; also used by account emails such as checkout reminders. */
 export function unsubscribeUrl(email: string): string | null {
   const sig = unsubscribeSignature(email);
@@ -95,23 +127,49 @@ router.post("/", newsletterLimiter, asyncRoute(async (req: Request, res: Respons
     return;
   }
 
-  // Existence check + upsert instead of a single `RETURNING (xmax = 0)`:
+  // Existence check + insert instead of a single `RETURNING (xmax = 0)`:
   // pg-mem (the test database) doesn't implement xmax. The race between the
   // two queries could at worst double-send one welcome email — acceptable.
   //
-  // Re-subscribing clears unsubscribed_at: the visitor asked to be back on
-  // the list, and keeping the original row preserves the signup date.
+  // The form never clears an opt-out: anyone can type any address into it.
+  // An address that unsubscribed gets a confirmation link instead, and only
+  // opening that link puts it back on the list. The answer is the same in
+  // every case, so the form doesn't reveal who is or was subscribed.
   const existing = await getPool().query(
-    `SELECT 1 FROM newsletter_subscribers WHERE lower(email) = lower($1)`,
+    `SELECT unsubscribed_at FROM newsletter_subscribers WHERE lower(email) = lower($1)`,
     [email],
   );
   const isNew = existing.rows.length === 0;
   await getPool().query(
     `INSERT INTO newsletter_subscribers (email, source)
      VALUES ($1, $2)
-     ON CONFLICT (lower(email)) DO UPDATE SET unsubscribed_at = NULL`,
+     ON CONFLICT (lower(email)) DO NOTHING`,
     [email, source],
   );
+  const optedOut = !isNew && Boolean(existing.rows[0].unsubscribed_at);
+  const confirmLink = optedOut ? resubscribeUrl(email) : null;
+  if (confirmLink && mailIsConfigured && mayAskToResubscribe(email)) {
+    void sendMail({
+      to: email,
+      subject: "Confirm: rejoin the PC Tweaker list?",
+      html: emailShell({
+        preheader: "This address unsubscribed earlier. Nothing changes unless you confirm.",
+        eyebrow: "Confirm",
+        headline: "Rejoin the list?",
+        intro:
+          "Someone asked to add this address to the PC Tweaker list, which it left earlier. Nothing changes unless you confirm. If it wasn't you, ignore this email.",
+        blocks: [button({ label: "Yes, send me PC Tweaker news", url: confirmLink })],
+        help: { title: "Questions?", text: "Reply to ask us anything about PC Tweaker." },
+        why: "You received this email because this address was entered in the newsletter form on pctweaker.app.",
+      }),
+      text: `Rejoin the PC Tweaker list?
+
+Someone asked to add this address to the PC Tweaker list, which it left earlier. Nothing changes unless you confirm. If it wasn't you, ignore this email.
+
+Confirm here:
+${confirmLink}${textFooter()}`,
+    }).catch((err: Error) => console.error("newsletter re-subscribe email failed:", err.message));
+  }
 
   // Welcome email is best-effort and only for genuinely new addresses — a
   // repeat submit must not trigger a repeat email, or the form becomes a way
@@ -180,10 +238,10 @@ ${link}${textFooter()}`,
  * we minted work, so a third party can't unsubscribe someone by guessing
  * their address.
  */
-function signedAddress(req: Request): string | null {
+function signedAddress(req: Request, signature = unsubscribeSignature): string | null {
   const email = typeof req.query.email === "string" ? req.query.email : "";
   const sig = typeof req.query.sig === "string" ? req.query.sig : "";
-  const expected = unsubscribeSignature(email);
+  const expected = signature(email);
 
   // Compare byte lengths, not string lengths: a non-ASCII signature of the
   // right character count encodes to more bytes, and timingSafeEqual throws
@@ -239,6 +297,42 @@ router.post("/unsubscribe", asyncRoute(async (req: Request, res: Response) => {
   res.type("html").send(htmlPage(
     "You're unsubscribed",
     `<p class="success">No more PC Tweaker news or reminder emails will be sent to this address. ${STILL_SENT}</p>`,
+  ));
+}));
+
+const INVALID_RESUBSCRIBE_LINK = htmlPage(
+  "Link not valid",
+  `<p class="error">This confirmation link is incomplete. Open it again from the email.</p>`,
+);
+
+/** Like unsubscribe, the link only asks: mail scanners open every URL. */
+router.get("/resubscribe", (req: Request, res: Response) => {
+  const email = signedAddress(req, resubscribeSignature);
+  if (!email) {
+    res.status(400).type("html").send(INVALID_RESUBSCRIBE_LINK);
+    return;
+  }
+  res.type("html").send(htmlPage(
+    "Rejoin the list",
+    `<p class="lead">Send occasional PC Tweaker news to ${escapeHtml(email)} again?</p>
+     <form method="post" action="${escapeHtml(req.originalUrl)}"><button type="submit">Yes, rejoin</button></form>`,
+  ));
+});
+
+router.post("/resubscribe", asyncRoute(async (req: Request, res: Response) => {
+  const email = signedAddress(req, resubscribeSignature);
+  if (!email) {
+    res.status(400).type("html").send(INVALID_RESUBSCRIBE_LINK);
+    return;
+  }
+  if (!isConfigured) {
+    res.status(503).type("html").send(htmlPage("Try again shortly", `<p class="error">Temporarily unavailable. Please try again in a moment.</p>`));
+    return;
+  }
+  await getPool().query(`UPDATE newsletter_subscribers SET unsubscribed_at = NULL WHERE lower(email) = lower($1)`, [email]);
+  res.type("html").send(htmlPage(
+    "You're back on the list",
+    `<p class="success">PC Tweaker news will be sent to this address again. Every email has a one-click unsubscribe link.</p>`,
   ));
 }));
 

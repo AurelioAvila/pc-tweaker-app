@@ -183,7 +183,9 @@ export function ReferralPanel({
                                 : reward.state === "hold"
                                   ? "Awaiting review"
                                   : reward.state === "ready"
-                                    ? "Ready to activate on one PC"
+                                    ? reward.canGift
+                                      ? "Ready to gift to another account"
+                                      : "Ready to activate on one PC"
                                     : "Revoked"}
                       </span>
                     </div>

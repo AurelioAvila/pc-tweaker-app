@@ -22,7 +22,7 @@ The adapter retrieves the current Stripe account, completed session, first posit
 
 The database enforces one enrolment per buyer, one live quote per enrolment, and unique quote/payment/invoice/buyer/payer reward identities. Repeated payer details suppress an additional bonus without turning a successfully paid purchase into a permanently retrying webhook error. Signed-webhook receipts are persisted after successful processing; business uniqueness also protects concurrent deliveries of different event IDs. Failed deliveries remain retryable. Refund/dispute tombstones survive sale events delivered later. Revocation is terminal; a hold does not clear because an old success event reappears.
 
-An inviter without usable payer history remains under identity review. There is no public endpoint for clearing holds. Establish a documented owner review process before enabling the programme. Do not silently turn missing evidence into approval.
+An inviter without usable payer history remains under identity review. A payment method without usable payer evidence also creates a review hold, never an automatically available bonus; its placeholder is keyed to the payment, not treated as person-level deduplication. There is no public endpoint for clearing holds. Establish a documented owner review process before enabling the programme. Do not silently turn missing evidence into approval.
 
 ## Device and account enforcement
 
@@ -47,7 +47,7 @@ Email and payer deduplication values are HMACs under a dedicated server key, not
 Existing deployments remain off without explicit complete configuration:
 
 - `REFERRALS_ENABLED=true` and `REFERRALS_POLICY_VERSION=2026-10-20-v1`;
-- `REFERRALS_CHECKOUT_MODEL=direct`, only after verifying the target account uses the existing direct Checkout/automatic-tax model;
+- `REFERRALS_CHECKOUT_MODEL=managed` for the currently verified live merchant-of-record model; `direct` is supported only for an explicitly validated direct Checkout integration;
 - `REFERRALS_HASH_KEY`: dedicated random 32-byte secret, hex encoded;
 - `REFERRALS_STRIPE_ACCOUNT`: the expected account ID;
 - `REFERRALS_SIGNING_PRIVATE_KEY`: dedicated Ed25519 PKCS8 key, base64, stored only in the server secret store;
@@ -58,7 +58,9 @@ The signer must parse correctly, be Ed25519, differ from the ordinary Pro issuer
 
 `NODE_ENV=test` together with `REFERRALS_TEST_MODE=true` allows test-mode payment evidence only in isolated tests. A production test-key checkout is not production readiness. Never run financial tests against live keys or real customers. No live coupon, discount, reward, server secret, database or release has been changed by this implementation.
 
-The adapter currently requests card payment methods and preserves the application's automatic-tax parameters. Stripe Managed Payments controls those fields itself and is a different integration. The test account had Managed Payments enabled by default: the synthetic provider fixture explicitly used `managed_payments.enabled=false` for its test sessions to exercise the existing direct-checkout model. No account setting was changed, and production code does not silently switch the merchant-of-record or tax model. Verify the live model before enabling; Managed Payments support requires separate validation rather than removing tax protections to make a request pass. Omit `allow_promotion_codes` entirely when supplying `discounts`; Stripe rejects the combination even when the former is `false`.
+The live Dashboard was read on 20 October 2026: Managed Payments is active and the default, including existing payments and subscriptions. No setting was changed. In managed mode the adapter explicitly sends `managed_payments.enabled=true`, delegates tax and dynamic payment methods to Stripe, and omits the incompatible direct automatic-tax, customer-address-update and card-method parameters. In direct mode it explicitly sends `managed_payments.enabled=false` and retains automatic tax, address collection and cards. This model is saved with the immutable quote; changing configuration cannot silently switch an already-open checkout. Provider readback must match the quote's model. Omit `allow_promotion_codes` entirely when supplying `discounts`; Stripe rejects the combination even when the former is `false`.
+
+The initial synthetic provider run exercised direct Checkout with a TEST-session-only override. A separate Managed Payments run completed monthly, annual and Lifetime hosted TEST purchases with eligible synthetic products, calculated Italian tax and the verified purchase-to-reward/refund path. Their synthetic pre-tax subtotals were 359/2699/4410 cents, actual payments 438/3293/5380 cents, and bonuses 6/12/12 months. Every resulting TEST payment was refunded and every bonus revoked. Eligibility time was advanced only in the disposable local test database. These are separate evidence sets, not production purchases, live webhook delivery or proof of complete native application integration. Product tax classification and tax-inclusive/exclusive prices are not changed by the referral adapter. Supported digital-product tax codes and Managed Payments parameter rules are documented at https://docs.stripe.com/payments/managed-payments/update-checkout and https://docs.stripe.com/payments/managed-payments/eligibility.
 
 Before enabling:
 

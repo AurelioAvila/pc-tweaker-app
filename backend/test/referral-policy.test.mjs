@@ -22,6 +22,8 @@ test("referrals require an explicit, complete versioned opt-in", () => {
   };
   assert.equal(policy.referralsEnabled({}), false);
   assert.equal(policy.referralsEnabled(env), true);
+  assert.equal(policy.referralsEnabled({ ...env, REFERRALS_CHECKOUT_MODEL: "managed" }), true);
+  assert.equal(policy.referralsEnabled({ ...env, REFERRALS_CHECKOUT_MODEL: "unknown" }), false);
   for (const key of Object.keys(env))
     assert.equal(policy.referralsEnabled({ ...env, [key]: "" }), false);
   assert.equal(
@@ -34,6 +36,40 @@ test("referrals require an explicit, complete versioned opt-in", () => {
       REFERRALS_NATIVE_PUBLIC_KEY: "QisYr46g3mqEeiz1BDyEcPbRO1xO4z0lR3d5/ODppIU=",
     }),
     false,
+  );
+});
+test("managed referral checkout delegates tax and payment methods to the explicit merchant of record", async () => {
+  const { referralCheckoutParams } = await import("../dist/referral-stripe.js");
+  const original = {
+    mode: "subscription",
+    automatic_tax: { enabled: true },
+    customer_update: { address: "auto", name: "auto" },
+    payment_method_types: ["card"],
+    allow_promotion_codes: false,
+    metadata: { product: "pctweaker" },
+  };
+  const managed = referralCheckoutParams(original, "managed");
+  assert.deepEqual(managed.managed_payments, { enabled: true });
+  for (const key of [
+    "automatic_tax",
+    "customer_update",
+    "payment_method_types",
+    "allow_promotion_codes",
+  ])
+    assert.equal(Object.hasOwn(managed, key), false);
+  assert.deepEqual(original.automatic_tax, { enabled: true });
+  const direct = referralCheckoutParams(original, "direct");
+  assert.deepEqual(direct.managed_payments, { enabled: false });
+  assert.deepEqual(direct.automatic_tax, { enabled: true });
+  assert.deepEqual(direct.customer_update, { address: "auto", name: "auto" });
+  assert.throws(() => referralCheckoutParams(original, "unknown"), /unsupported_checkout_model/);
+  assert.throws(
+    () =>
+      referralCheckoutParams(
+        { ...original, shipping_address_collection: { allowed_countries: ["IT"] } },
+        "managed",
+      ),
+    /unsupported_referral_offer/,
   );
 });
 test("extra 10 percent uses integer cents after an existing offer", () => {

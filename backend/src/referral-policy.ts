@@ -16,7 +16,7 @@ export function referralsEnabled(env: NodeJS.ProcessEnv = process.env): boolean 
   return (
     env.REFERRALS_ENABLED === "true" &&
     env.REFERRALS_POLICY_VERSION === REFERRAL_VERSION &&
-    env.REFERRALS_CHECKOUT_MODEL === "direct" &&
+    ["direct", "managed"].includes(env.REFERRALS_CHECKOUT_MODEL ?? "") &&
     /^[a-f0-9]{64}$/i.test(env.REFERRALS_HASH_KEY ?? "") &&
     referralSignerReady(env) &&
     /^acct_[A-Za-z0-9]+$/.test(env.REFERRALS_STRIPE_ACCOUNT ?? "")

@@ -204,6 +204,21 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       await core.mature(id, p);
       assert.equal((await core.summary(1)).rewards[0].state, "hold");
     });
+    await t.test(
+      "an unsupported payer identity creates a review hold, never an automatic reward",
+      async () => {
+        await reset();
+        const p = { ...payment(await reserve()), payerFingerprint: null };
+        const id = await core.recordPayment(p);
+        assert.ok(id);
+        now = new Date(now.getTime() + 31 * 86400000);
+        await core.mature(id, p);
+        const reward = (await core.summary(1)).rewards[0];
+        assert.equal(reward.state, "hold");
+        assert.equal(reward.reason, "payer_identity_review");
+        await assert.rejects(core.challenge(1, id, "activate", device().pub), /unavailable/);
+      },
+    );
     await t.test("a 30-day hold cannot activate early or with stale provider facts", async () => {
       await reset();
       const p = payment(await reserve());

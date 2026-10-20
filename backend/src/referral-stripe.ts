@@ -29,6 +29,49 @@ const reference = (value: unknown): string | null =>
       ? value.id
       : null;
 
+/** Select the explicitly configured merchant/tax model, never an account default. */
+export function referralCheckoutParams(
+  params: Stripe.Checkout.SessionCreateParams,
+  model: string | undefined,
+) {
+  if (!["direct", "managed"].includes(model ?? ""))
+    throw new ReferralError("unsupported_checkout_model");
+  const saved = JSON.parse(JSON.stringify(params)) as Stripe.Checkout.SessionCreateParams & {
+    managed_payments?: { enabled: boolean };
+  };
+  saved.managed_payments = { enabled: model === "managed" };
+  delete saved.allow_promotion_codes;
+  if (model === "managed") {
+    // Managed Payments is the tax authority. These direct-Checkout options
+    // are unsupported; removing them does not disable Managed Payments tax.
+    delete saved.automatic_tax;
+    delete saved.tax_id_collection;
+    delete saved.payment_method_types;
+    delete saved.payment_method_configuration;
+    delete saved.invoice_creation;
+    if (saved.customer_update) {
+      delete saved.customer_update.address;
+      delete saved.customer_update.name;
+      if (!Object.keys(saved.customer_update).length) delete saved.customer_update;
+    }
+    if (
+      saved.subscription_data?.default_tax_rates?.length ||
+      saved.shipping_options?.length ||
+      saved.shipping_address_collection ||
+      saved.subscription_data?.application_fee_percent ||
+      saved.subscription_data?.on_behalf_of ||
+      saved.subscription_data?.transfer_data ||
+      saved.payment_intent_data?.application_fee_amount ||
+      saved.payment_intent_data?.on_behalf_of ||
+      saved.payment_intent_data?.transfer_data
+    )
+      throw new ReferralError("unsupported_referral_offer");
+  } else {
+    saved.payment_method_types = ["card"];
+  }
+  return saved;
+}
+
 export class ReferralStripe {
   constructor(
     readonly core: Referrals,
@@ -183,13 +226,15 @@ export class ReferralStripe {
       const expiresAt = new Date(
         Math.min(params.expires_at ? params.expires_at * 1000 : Infinity, createdAt + 60 * 60000),
       );
-      const immutable = {
-        ...params,
-        customer: customerId,
-        customer_email: undefined,
-        payment_method_types: ["card"],
-        expires_at: Math.floor(expiresAt.getTime() / 1000),
-      };
+      const immutable = referralCheckoutParams(
+        {
+          ...params,
+          customer: customerId,
+          customer_email: undefined,
+          expires_at: Math.floor(expiresAt.getTime() / 1000),
+        },
+        this.core.environment.REFERRALS_CHECKOUT_MODEL,
+      );
       delete immutable.customer_email;
       // Stripe rejects even `false` when discounts is present. Omission uses
       // its disabled default; this checkout has exactly the server coupon.
@@ -209,6 +254,11 @@ export class ReferralStripe {
     };
     delete saved.referralQuoteId;
     delete saved.allow_promotion_codes;
+    if (
+      (saved as { managed_payments?: { enabled: boolean } }).managed_payments?.enabled !==
+      (this.core.environment.REFERRALS_CHECKOUT_MODEL === "managed")
+    )
+      throw new ReferralError("checkout_model_changed");
     const metadata = {
       ...saved.metadata,
       referral_quote: quote.id,
@@ -304,6 +354,12 @@ export class ReferralStripe {
     const session = await this.stripe.checkout.sessions.retrieve(quote.session_id, {
       expand: ["line_items"],
     });
+    const expectedManaged =
+      (quote.params.managed_payments as { enabled?: boolean } | undefined)?.enabled === true;
+    const actualManaged =
+      (session as Stripe.Checkout.Session & { managed_payments?: { enabled?: boolean } })
+        .managed_payments?.enabled === true;
+    if (expectedManaged !== actualManaged) throw new ReferralError("checkout_model_changed");
     if (session.status === "expired") {
       await this.core.expireSession(quote.buyer_id, quote.id, session.id);
       return null;

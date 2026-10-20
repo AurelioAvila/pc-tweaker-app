@@ -445,9 +445,8 @@ export class Referrals {
         : null;
       // Missing identity evidence is not a free pass. The payment remains paid; only its bonus is withheld.
       if (
-        !payer ||
         payment.hasPriorPurchase ||
-        payment.inviterFingerprints.includes(payment.payerFingerprint!)
+        (payer && payment.inviterFingerprints.includes(payment.payerFingerprint!))
       ) {
         await this.audit(tx, quote.id, "purchase_ineligible");
         await tx.query("UPDATE referral_quotes SET state='paid' WHERE id=$1", [quote.id]);
@@ -460,7 +459,7 @@ export class Referrals {
       const state =
         blocks[0]?.state ??
         (payment.state === "paid"
-          ? payment.inviterFingerprints.length
+          ? payer && payment.inviterFingerprints.length
             ? "pending"
             : "hold"
           : payment.state);
@@ -476,16 +475,18 @@ export class Referrals {
           payment.invoiceId,
           quote.buyer_id,
           quote.inviter_id,
-          payer,
+          payer ?? this.hash("unverified-payment:" + payment.paymentId),
           REFERRAL_MONTHS[payment.plan],
           state,
           payment.paidAt,
           new Date(payment.paidAt.getTime() + HOLD_MS),
           this.now(),
           payment.reason ??
-            (state === "hold" && !payment.inviterFingerprints.length
-              ? "inviter_identity_review"
-              : null),
+            (state === "hold" && !payer
+              ? "payer_identity_review"
+              : state === "hold" && !payment.inviterFingerprints.length
+                ? "inviter_identity_review"
+                : null),
         ],
       );
       await tx.query("UPDATE referral_quotes SET state='paid' WHERE id=$1", [quote.id]);

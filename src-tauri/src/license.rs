@@ -163,7 +163,7 @@ fn verified_fresh_response(
 }
 
 fn require_pc_tweaker_product(payload: LicensePayload) -> Result<LicensePayload, VerifyError> {
-    if !is_for_pc_tweaker(&payload) {
+    if !is_for_pc_tweaker(&payload) || payload.plan.as_deref() == Some("referral_bonus") {
         return Err(VerifyError::WrongProduct);
     }
     Ok(payload)
@@ -310,6 +310,7 @@ pub fn license_status(app: tauri::AppHandle) -> Result<bool, String> {
 /// account that never paid for anything.
 #[tauri::command]
 pub fn clear_license(app: tauri::AppHandle) -> Result<(), String> {
+    crate::referral::clear(&crate::store_for_dir(&app)?)?;
     LicenseStore::new(crate::store_for_dir(&app)?)
         .delete()
         .map_err(|e| e.to_string())

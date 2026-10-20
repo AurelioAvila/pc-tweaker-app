@@ -44,6 +44,8 @@ tauri-plugin-process = "2"
 tauri-plugin-single-instance = "2"
 ed25519-dalek = "2"
 base64 = "0.22"
+sha2 = "0.10"
+getrandom = "0.2"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
@@ -77,6 +79,7 @@ windows-sys = { version = "0.59", features = [
     # NtSetSystemInformation, for the standby-list purge in the Zero-Trace
     # cleaner. Declared via LoadLibrary rather than linked, same as srclient.
     "Win32_Security",
+    "Win32_Security_Cryptography",
     "Win32_System_Memory",
     # A real-time ETW consumer, for the frame counter. See src/fps.rs â€” the
     # DXGI provider's Present events are the only way to observe a game's

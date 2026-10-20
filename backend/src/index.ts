@@ -27,6 +27,8 @@ import { lifetimeReminderEmail, startCheckoutReminderWorker } from "./checkout-r
 import { startReceiptWorker } from "./receipt-outbox";
 import { copyFor, fromAcceptLanguage, isLocale, type Copy } from "./emails/copy";
 import { TRIAL_DAYS } from "./trial";
+import { referralRoutes } from "./routes/referrals";
+import { startReferralWorker } from "./referral-stripe";
 
 const app = express();
 
@@ -301,6 +303,7 @@ app.get("/tiktokHeKend3CcpkNmGCjEs2zET0AjYqOWn71.txt", (_req: Request, res: Resp
 app.use("/api/auth", authRoutes);
 app.use("/api/account", accountRoutes);
 app.use("/api/license", licenseRoutes);
+app.use("/api/referrals", referralRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/newsletter", newsletterRoutes);
@@ -358,12 +361,14 @@ const SHUTDOWN_GRACE_MS = 10_000;
 let shuttingDown = false;
 let stopReceiptWorker = () => {};
 let stopReminderWorker = () => {};
+let stopReferralWorker = () => {};
 
 function shutdown(signal: string, server: import("http").Server): void {
   if (shuttingDown) return; // a second SIGTERM must not restart the sequence
   shuttingDown = true;
   stopReceiptWorker();
   stopReminderWorker();
+  stopReferralWorker();
   console.log(`${signal} received: refusing new connections, draining in-flight requests`);
 
   const forceExit = setTimeout(() => {
@@ -392,6 +397,7 @@ initSchema()
   })
   .finally(() => {
     if (isConfigured) stopReceiptWorker = startReceiptWorker(deliverProReceipt);
+    if (isConfigured) stopReferralWorker = startReferralWorker();
     if (isConfigured && mailIsConfigured && process.env.STRIPE_SECRET_KEY) {
       stopReminderWorker = startCheckoutReminderWorker(listExpiredCheckouts, async (to) => {
         await sendMail(lifetimeReminderEmail(to));

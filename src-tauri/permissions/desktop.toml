@@ -2,6 +2,12 @@
 identifier = "desktop-commands"
 description = "Application commands available to the main desktop window."
 permissions = [
+    "allow-referral-device",
+    "allow-referral-session",
+    "allow-referral-proof",
+    "allow-save-referral-license",
+    "allow-referral-license-status",
+    "allow-clear-referral-license",
     "allow-ecoqos-status",
     "allow-ecoqos-add-rule",
     "allow-ecoqos-remove-rule",

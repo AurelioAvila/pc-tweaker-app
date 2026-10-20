@@ -20,6 +20,8 @@ export type AuthState =
       /** Trial and subscription state per product, from /api/billing/status;
        *  absent until read, and on a backend that does not publish it yet. */
       billing?: BillingStatus;
+      /** A separately verified one-PC bonus; it never changes purchased billing. */
+      bonusActive?: boolean;
     };
 
 export type ProductPlan = {

@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { initReferralSchema } from "./referrals";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -279,6 +280,8 @@ async function initSchema(): Promise<void> {
       PRIMARY KEY (user_id, product, install_hash)
     );
   `);
+
+  await initReferralSchema(pool);
 }
 
 const isConfigured = Boolean(pool);

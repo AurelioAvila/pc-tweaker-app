@@ -10,6 +10,7 @@ const filters = [
   "rollback::tests",
   "game_sessions::tests",
   "license::tests",
+  "referral::tests",
   "lifetime_tools::tests",
   "power_tuning::tests",
   "dns::tests",

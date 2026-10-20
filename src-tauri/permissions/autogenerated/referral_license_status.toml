@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-referral-license-status"
+description = "Enables the referral_license_status command without any pre-configured scope."
+commands.allow = ["referral_license_status"]
+
+[[permission]]
+identifier = "deny-referral-license-status"
+description = "Denies the referral_license_status command without any pre-configured scope."
+commands.deny = ["referral_license_status"]

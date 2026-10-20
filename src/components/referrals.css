@@ -1,0 +1,253 @@
+.referral-dialog {
+  color-scheme: dark;
+  box-sizing: border-box;
+  width: min(800px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+  border: 1px solid var(--border-strong, #45454d);
+  border-radius: 20px;
+  padding: 32px;
+  background: var(--surface-1, #19191e);
+  color: var(--text-primary, #f4f3f6);
+  font-family: inherit;
+}
+.referral-dialog::backdrop {
+  background: #08080bbf;
+  backdrop-filter: blur(5px);
+}
+.referral-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  color: var(--text-secondary, #c2c0ca);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+.referral-top button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-strong, #55535f);
+  border-radius: 50%;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+.referral-dialog header {
+  padding: 32px 0 24px;
+}
+.referral-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--accent, #ff9c73);
+}
+.referral-dialog h2 {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 650;
+  line-height: 1.14;
+  letter-spacing: -0.04em;
+  margin: 12px 0 20px;
+}
+.referral-dialog h2 em {
+  font-style: normal;
+  color: var(--accent, #ff9c73);
+}
+.referral-dialog p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary, #c2c0ca);
+  max-width: 65ch;
+}
+.referral-benefits {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--surface-2, #242429);
+  border: 1px solid var(--border-strong, #45434c);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.referral-benefits > div {
+  padding: 24px;
+}
+.referral-benefits > div + div {
+  border-left: 1px solid var(--border-strong, #45434c);
+}
+.referral-benefits span {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary, #c2c0ca);
+}
+.referral-benefits strong {
+  display: block;
+  font-size: 30px;
+  letter-spacing: -0.04em;
+  margin: 8px 0;
+}
+.referral-benefits p {
+  margin: 0;
+}
+.referral-dialog section {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border-strong, #45434c);
+}
+.referral-dialog h3 {
+  font-size: 17px;
+  font-weight: 650;
+  margin: 0 0 8px;
+}
+.referral-link {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.referral-link input {
+  min-width: 0;
+  flex: 1;
+  padding: 12px;
+  background: var(--bg-app, #121216);
+  border: 1px solid var(--border-strong, #5c5965);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-primary, #f4f3f6);
+}
+.referral-link button,
+.referral-primary {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  padding: 12px 16px;
+  border: 1px solid var(--accent, #ff9368);
+  border-radius: 8px;
+  background: var(--accent, #ff9368);
+  color: var(--on-accent, #20120d);
+  cursor: pointer;
+}
+.referral-dialog button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.referral-dialog :focus-visible {
+  outline: 3px solid var(--focus, #ffc4a7);
+  outline-offset: 3px;
+}
+.referral-empty,
+.referral-notice {
+  padding: 20px;
+  border-radius: 10px;
+  background: var(--surface-2, #242429);
+}
+.referral-empty strong,
+.referral-notice strong {
+  font-size: 14px;
+}
+.referral-empty p,
+.referral-notice p {
+  margin: 8px 0 0;
+}
+.referral-rewards {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+}
+.referral-rewards li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border-strong, #45434c);
+}
+.referral-rewards li:first-child {
+  border-top: 0;
+}
+.referral-rewards span {
+  display: block;
+  color: var(--text-secondary, #c2c0ca);
+  font-size: 12px;
+  margin-top: 6px;
+}
+.referral-terms {
+  padding-top: 24px;
+}
+.referral-confirmation {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 20px;
+  background: var(--surface-2, #242429);
+  border: 1px solid var(--border-strong, #45434c);
+  border-radius: 10px;
+}
+.referral-gift-form label {
+  display: block;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--text-secondary, #c2c0ca);
+}
+.referral-gift-form input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-strong, #5c5965);
+  border-radius: 8px;
+  background: var(--bg-app, #121216);
+  color: var(--text-primary, #f4f3f6);
+  font: inherit;
+}
+.referral-confirmation > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-top: 16px;
+}
+.referral-cancel {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary, #c2c0ca);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 12px 0;
+}
+.referral-terms summary {
+  font-size: 13px;
+  cursor: pointer;
+}
+.referral-terms p {
+  font-size: 12px;
+}
+.referral-feedback {
+  min-height: 24px;
+  margin: 16px 0 0;
+}
+@media (max-width: 520px) {
+  .referral-dialog {
+    padding: 20px;
+    max-height: calc(100dvh - 24px);
+  }
+  .referral-dialog header {
+    padding-top: 24px;
+  }
+  .referral-benefits > div {
+    padding: 16px;
+  }
+  .referral-benefits strong {
+    font-size: clamp(18px, 5vw, 22px);
+    white-space: nowrap;
+  }
+  .referral-link {
+    flex-direction: column;
+  }
+  .referral-link button {
+    min-height: 44px;
+  }
+  .referral-rewards li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

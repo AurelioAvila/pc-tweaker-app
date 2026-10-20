@@ -2,6 +2,7 @@
 mod ipc_commands;
 
 fn main() {
+    println!("cargo:rerun-if-env-changed=PCT_REFERRAL_PUBLIC_KEY");
     println!("cargo:rerun-if-changed=src/ipc_commands.rs");
     tauri_build::try_build(
         tauri_build::Attributes::new()

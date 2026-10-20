@@ -34,11 +34,32 @@ const buckets = new Map<string, Bucket>();
  * @returns true when the caller may proceed, false when the ceiling is hit.
  */
 export function consumeGlobalBudget(name: string, maxPerHour: number): boolean {
+  return consume(buckets, name, maxPerHour);
+}
+
+const keyedBuckets = new Map<string, Bucket>();
+
+/**
+ * One caller's share of a budget: keyed on the trusted client address
+ * (client-ip.ts) or an account id. Checked before consumeGlobalBudget, so a
+ * single sender is refused long before it can use up the global ceiling and
+ * lock real visitors out; the global ceiling stays as the backstop against
+ * many addresses at once. Expired buckets are dropped once the map grows.
+ */
+export function consumeKeyedBudget(name: string, key: string, maxPerHour: number): boolean {
   const now = Date.now();
-  const bucket = buckets.get(name);
+  if (keyedBuckets.size > 10_000) {
+    for (const [id, bucket] of keyedBuckets) if (now - bucket.windowStartedAt >= WINDOW_MS) keyedBuckets.delete(id);
+  }
+  return consume(keyedBuckets, `${name}:${key}`, maxPerHour);
+}
+
+function consume(map: Map<string, Bucket>, id: string, maxPerHour: number): boolean {
+  const now = Date.now();
+  const bucket = map.get(id);
 
   if (!bucket || now - bucket.windowStartedAt >= WINDOW_MS) {
-    buckets.set(name, { windowStartedAt: now, count: 1 });
+    map.set(id, { windowStartedAt: now, count: 1 });
     return true;
   }
   if (bucket.count >= maxPerHour) return false;

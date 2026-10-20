@@ -32,7 +32,7 @@ import {
 } from "../emails/account";
 import { EMAIL_BRANDS, type EmailBrand } from "../emails/layout";
 import { copyFor, formatMoment, fromAcceptLanguage, isLocale, type Copy, type Locale } from "../emails/copy";
-import { consumeGlobalBudget } from "../public-form-guard";
+import { consumeGlobalBudget, consumeKeyedBudget } from "../public-form-guard";
 
 /** What the free tier includes, quoted in the welcome email. Kept beside the
  *  one place that sends it rather than hidden in the template, so a change to
@@ -98,6 +98,19 @@ const authLimiter = rateLimit({
   },
 });
 router.use(authLimiter);
+
+// change-password and change-email carry no `email`, so authLimiter keys them
+// on the spoofable req.ip. They re-check the account password, so a stolen
+// session must not get unlimited guesses (or unlimited bcrypt work): key on
+// the signed-in account instead. Runs after requireAuth.
+const passwordCheckLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many attempts. Please wait 15 minutes and try again." },
+  keyGenerator: (req) => `user:${req.userId}`,
+});
 
 const APP_URL =
   process.env.APP_URL ||
@@ -249,7 +262,9 @@ router.post("/register", async (req: Request, res: Response) => {
   // Each registration mails an address the caller chose. The per-email
   // limiter cannot stop one sender walking a list of victims; a global hourly
   // ceiling (far above real sign-ups) keeps our domain from becoming a relay.
-  if (!consumeGlobalBudget("register", 120)) {
+  // The per-connection share comes first, so one sender cannot use up the
+  // ceiling and lock everyone else out of signing up.
+  if (!consumeKeyedBudget("register", `ip:${req.ip}`, 10) || !consumeGlobalBudget("register", 120)) {
     return res.status(429).json({ error: "Too many sign-ups right now. Please try again later." });
   }
 
@@ -378,7 +393,7 @@ router.post("/resend-verification", requireAuth, async (req: Request, res: Respo
  * required: a session left open on someone else's PC must not be enough.
  * Every other session ends; this one gets a fresh token.
  */
-router.post("/change-password", requireAuth, async (req: Request, res: Response) => {
+router.post("/change-password", requireAuth, passwordCheckLimiter, async (req: Request, res: Response) => {
   const { currentPassword, newPassword, product } = req.body || {};
   if (typeof currentPassword !== "string" || !isValidPassword(newPassword)) {
     return res.status(400).json({ error: "Password must be at least 8 characters and no more than 72 UTF-8 bytes." });
@@ -411,7 +426,7 @@ router.post("/change-password", requireAuth, async (req: Request, res: Response)
  * The answer is the same whether or not that address is free, so this cannot
  * be used to find out which addresses have accounts.
  */
-router.post("/change-email", requireAuth, async (req: Request, res: Response) => {
+router.post("/change-email", requireAuth, passwordCheckLimiter, async (req: Request, res: Response) => {
   const { password, newEmail, product } = req.body || {};
   if (!isValidEmail(newEmail) || typeof password !== "string") return res.status(400).json({ error: "invalid email" });
   const target = newEmail.toLowerCase();
@@ -425,7 +440,9 @@ router.post("/change-email", requireAuth, async (req: Request, res: Response) =>
     if (target === user.email) return res.status(400).json({ error: "that is already the address of this account" });
     const taken = await getPool().query("SELECT 1 FROM users WHERE email = $1", [target]);
     await rememberLanguage(req, req.userId as number);
-    if (taken.rows.length || !consumeGlobalBudget("email-change-mail", 60)) return res.json(generic);
+    if (taken.rows.length || !consumeKeyedBudget("email-change-mail", `user:${req.userId}`, 5) || !consumeGlobalBudget("email-change-mail", 60)) {
+      return res.json(generic);
+    }
     const brand = brandOf(product);
     const lang = languageOf(req, user.locale);
     await invalidateActionTokens(req.userId as number, "email_change");
@@ -546,7 +563,12 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
     const result = await getPool().query("SELECT id, locale FROM users WHERE email = $1", [email.toLowerCase()]);
     // Same reasoning as registration: bound how much reset mail anyone can
     // trigger. The answer stays generic either way.
-    if (result.rowCount && result.rowCount > 0 && consumeGlobalBudget("password-reset-mail", 120)) {
+    if (
+      result.rowCount &&
+      result.rowCount > 0 &&
+      consumeKeyedBudget("password-reset-mail", `ip:${req.ip}`, 10) &&
+      consumeGlobalBudget("password-reset-mail", 120)
+    ) {
       const brand = brandOf(product);
       const userId = result.rows[0].id;
       const lang = languageOf(req, result.rows[0].locale);

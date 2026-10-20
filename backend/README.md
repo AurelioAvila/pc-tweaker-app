@@ -87,6 +87,12 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    `CHECKOUT_CANCEL_URL`, `STRIPE_PRICE_COFFEE`. See `.env.example` for what
    each one is.
 
+   Per-IP limits use the address in `X-Real-IP`, which Railway's edge
+   overwrites; `X-Forwarded-For` is passed through from the caller there and
+   cannot be trusted. Nothing to set on Railway. Behind another proxy, set
+   `CLIENT_IP_HEADER` to the header it overwrites (or `none` plus
+   `TRUST_PROXY_HOPS`); see `src/client-ip.ts`.
+
    `STRIPE_PRICE_COFFEE` is the one-off tip price. Leaving it unset is safe
    rather than broken: `/api/tip` answers 503 and both the site and the
    app hide or report the control instead of offering a dead button.

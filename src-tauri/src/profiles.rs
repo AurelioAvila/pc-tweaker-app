@@ -302,8 +302,12 @@ mod tests {
 /// arbitrary payload at an arbitrary location.
 #[tauri::command(async)]
 pub fn write_profile_file(path: String, profile: TweakProfile) -> Result<(), String> {
+    // Same guard as the other exports: a .json file on a local drive, outside
+    // the app's own data folder (never a .cmd in a Startup folder).
+    let target = crate::baseline::local_file(&path, &["json"])
+        .ok_or("the profile can only be saved as a .json file on a local drive")?;
     let json = serde_json::to_string_pretty(&profile).map_err(|e| e.to_string())?;
-    fs::write(&path, json).map_err(|e| format!("could not write the file: {}", e))
+    fs::write(target, json).map_err(|e| format!("could not write the file: {}", e))
 }
 
 /// Reads and validates a profile from a path the user picked.

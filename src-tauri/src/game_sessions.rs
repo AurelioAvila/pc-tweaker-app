@@ -55,10 +55,27 @@ fn load_config(dir: &Path) -> Config {
         .unwrap_or_default()
 }
 
+/// For read-modify-write: a file that exists but cannot be read right now
+/// (antivirus or another process holding it) is an error, not the defaults,
+/// or the next save would replace the user's game list with one entry.
+fn load_config_for_update(dir: &Path) -> Result<Config, String> {
+    match std::fs::read_to_string(config_path(dir)) {
+        Ok(s) => Ok(serde_json::from_str(&s).unwrap_or_default()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config::default()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 fn save_config(dir: &Path, config: &Config) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     let json = serde_json::to_string_pretty(config).map_err(|e| e.to_string())?;
-    std::fs::write(config_path(dir), json).map_err(|e| e.to_string())
+    // Temp file + replace, so a crash mid-write never leaves a truncated list.
+    let temp = dir.join(format!("game_sessions.json.{}.tmp", std::process::id()));
+    std::fs::write(&temp, json).map_err(|e| e.to_string())?;
+    crate::rollback::replace_file(&temp, &config_path(dir)).map_err(|e| {
+        let _ = std::fs::remove_file(&temp);
+        e.to_string()
+    })
 }
 
 /// Compare complete Windows executable paths, including extended-length paths.
@@ -132,7 +149,7 @@ pub fn set_game_sessions_enabled(app: tauri::AppHandle, enabled: bool) -> Result
     let dir = crate::store_for_dir(&app)?;
     authorize_configuration_change(enabled, || crate::require_pro(&dir))?;
     let _guard = CONFIG_LOCK.lock().map_err(|e| e.to_string())?;
-    let mut config = load_config(&dir);
+    let mut config = load_config_for_update(&dir)?;
     config.enabled = enabled;
     save_config(&dir, &config)
 }
@@ -148,7 +165,7 @@ pub fn add_game_session(app: tauri::AppHandle, path: String) -> Result<GameView,
     let key = executable_key(&path)
         .ok_or_else(|| "select an executable with the .exe extension".to_string())?;
     let _guard = CONFIG_LOCK.lock().map_err(|e| e.to_string())?;
-    let mut config = load_config(&dir);
+    let mut config = load_config_for_update(&dir)?;
     if config
         .games
         .iter()
@@ -180,7 +197,7 @@ pub fn set_core_steering(app: tauri::AppHandle, enabled: bool) -> Result<(), Str
     let dir = crate::store_for_dir(&app)?;
     authorize_configuration_change(enabled, || crate::require_pro(&dir))?;
     let _guard = CONFIG_LOCK.lock().map_err(|e| e.to_string())?;
-    let mut config = load_config(&dir);
+    let mut config = load_config_for_update(&dir)?;
     config.core_steering = enabled;
     save_config(&dir, &config)
 }
@@ -189,7 +206,7 @@ pub fn set_core_steering(app: tauri::AppHandle, enabled: bool) -> Result<(), Str
 pub fn remove_game_session(app: tauri::AppHandle, path: String) -> Result<(), String> {
     let dir = crate::store_for_dir(&app)?;
     let _guard = CONFIG_LOCK.lock().map_err(|e| e.to_string())?;
-    let mut config = load_config(&dir);
+    let mut config = load_config_for_update(&dir)?;
     let key = executable_key(&path);
     config.games.retain(|g| {
         !g.path.eq_ignore_ascii_case(&path) && !(key.is_some() && executable_key(&g.path) == key)

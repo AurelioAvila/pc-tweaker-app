@@ -22,6 +22,7 @@ import flagRoutes from "./routes/flags";
 import downloadRoutes from "./routes/downloads";
 import { router as stripeRoutes, webhookHandler, deliverProReceipt, listExpiredCheckouts, recordSelfReportedSource, SELF_REPORTED_SOURCES } from "./routes/stripe";
 import { consumeGlobalBudget } from "./public-form-guard";
+import { clientIpMiddleware, trustProxyHops } from "./client-ip";
 import { lifetimeReminderEmail, startCheckoutReminderWorker } from "./checkout-recovery";
 import { startReceiptWorker } from "./receipt-outbox";
 import { copyFor, fromAcceptLanguage, isLocale, type Copy } from "./emails/copy";
@@ -33,7 +34,10 @@ const app = express();
 // X-Forwarded-For. Without this, express-rate-limit v7 throws at request
 // time instead of silently misbehaving — which would otherwise take down
 // /api/auth/register and /api/auth/login as soon as this is deployed there.
-app.set("trust proxy", 1);
+app.set("trust proxy", trustProxyHops());
+// XFF on Railway carries whatever the caller typed; req.ip comes from the
+// header the edge overwrites instead (see client-ip.ts).
+app.use(clientIpMiddleware);
 
 app.use(helmet());
 

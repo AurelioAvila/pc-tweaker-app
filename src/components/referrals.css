@@ -1,12 +1,13 @@
 .referral-dialog {
   color-scheme: dark;
   box-sizing: border-box;
-  width: min(800px, calc(100vw - 32px));
+  margin: auto;
+  width: min(640px, calc(100vw - 32px));
   max-height: calc(100dvh - 48px);
   overflow: auto;
   border: 1px solid var(--border-strong, #45454d);
   border-radius: 20px;
-  padding: 32px;
+  padding: 24px;
   background: var(--surface-1, #19191e);
   color: var(--text-primary, #f4f3f6);
   font-family: inherit;
@@ -34,7 +35,7 @@
   cursor: pointer;
 }
 .referral-dialog header {
-  padding: 32px 0 24px;
+  padding: 16px 0 20px;
 }
 .referral-eyebrow {
   font-size: 11px;
@@ -43,17 +44,18 @@
   color: var(--accent, #ff9c73);
 }
 .referral-dialog h2 {
-  font-size: clamp(28px, 4vw, 42px);
+  font-size: clamp(26px, 4vw, 32px);
   font-weight: 650;
   line-height: 1.14;
   letter-spacing: -0.04em;
-  margin: 12px 0 20px;
+  margin: 0 0 8px;
 }
 .referral-dialog h2 em {
   font-style: normal;
   color: var(--accent, #ff9c73);
 }
 .referral-dialog p {
+  margin: 8px 0;
   font-size: 14px;
   line-height: 1.7;
   color: var(--text-secondary, #c2c0ca);
@@ -68,7 +70,7 @@
   margin-bottom: 8px;
 }
 .referral-benefits > div {
-  padding: 24px;
+  padding: 12px 16px;
 }
 .referral-benefits > div + div {
   border-left: 1px solid var(--border-strong, #45434c);
@@ -80,15 +82,16 @@
 }
 .referral-benefits strong {
   display: block;
-  font-size: 30px;
+  font-size: 24px;
+  line-height: 1.2;
   letter-spacing: -0.04em;
-  margin: 8px 0;
+  margin: 4px 0;
 }
 .referral-benefits p {
   margin: 0;
 }
 .referral-dialog section {
-  padding: 24px 0;
+  padding: 20px 0;
   border-bottom: 1px solid var(--border-strong, #45434c);
 }
 .referral-dialog h3 {
@@ -225,13 +228,59 @@
   min-height: 24px;
   margin: 16px 0 0;
 }
+.referral-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-app, #121216);
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+.referral-tabs button {
+  min-height: 40px;
+  padding: 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary, #c2c0ca);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.referral-tabs button[aria-selected="true"] {
+  background: var(--surface-2, #242429);
+  color: var(--text-primary, #f4f3f6);
+  font-weight: 650;
+}
+.referral-dialog [role="tabpanel"][hidden] {
+  display: none;
+}
+.referral-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+.referral-short-code {
+  font-family: ui-monospace, monospace;
+  font-size: clamp(19px, 4.5vw, 26px);
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  overflow-wrap: anywhere;
+}
+.referral-dialog .referral-code-help {
+  font-size: 12px;
+  margin-bottom: 0;
+}
 @media (max-width: 520px) {
   .referral-dialog {
     padding: 20px;
     max-height: calc(100dvh - 24px);
   }
   .referral-dialog header {
-    padding-top: 24px;
+    padding-top: 16px;
   }
   .referral-benefits > div {
     padding: 16px;
@@ -249,5 +298,11 @@
   .referral-rewards li {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .referral-code-row {
+    flex-wrap: wrap;
+  }
+  .referral-tabs button {
+    font-size: 12px;
   }
 }

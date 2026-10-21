@@ -665,7 +665,7 @@ export function AccountMenu({
                   onReferrals();
                 }}
               >
-                Invitations &amp; Pro bonuses <span aria-hidden="true">↗</span>
+                Invite a friend <span aria-hidden="true">↗</span>
               </button>
             )}
             <details name="account-settings" className="account-setting">

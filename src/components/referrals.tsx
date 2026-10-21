@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { readToken } from "../lib";
 import { referralRequest, activateOrRefreshBonus, type ReferralStatus } from "../referrals";
+import { normalizeInvitationCode } from "../referral-code";
 import "./referrals.css";
 
 export function ReferralPanel({
@@ -17,6 +18,7 @@ export function ReferralPanel({
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [giftId, setGiftId] = useState<string | null>(null);
   const [giftCode, setGiftCode] = useState("");
+  const [view, setView] = useState<"invite" | "bonuses" | "redeem">("invite");
   const dialog = useRef<HTMLDialogElement>(null);
   const token = readToken();
   useEffect(() => {
@@ -66,22 +68,14 @@ export function ReferralPanel({
       onCancel={onClose}
     >
       <div className="referral-top">
-        <span>PC TWEAKER · INVITATIONS</span>
+        <span>PC TWEAKER · REFERRALS</span>
         <button type="button" onClick={onClose} aria-label="Close invitations">
           ✕
         </button>
       </div>
       <header>
-        <p className="referral-eyebrow">BETTER TOGETHER</p>
-        <h2 id="referral-title">
-          Share something useful.
-          <br />
-          <em>Get more Pro time.</em>
-        </h2>
-        <p>
-          Your friend saves an extra 10% on their first eligible payment. You earn a separate Pro
-          bonus for one PC after their purchase is verified.
-        </p>
+        <h2 id="referral-title">Invite a friend.</h2>
+        <p>They save 10% extra. You earn Pro time after purchase verification.</p>
       </header>
       {!status ? (
         <p role="status">{message || "Loading your invitations…"}</p>
@@ -92,62 +86,128 @@ export function ReferralPanel({
         </div>
       ) : (
         <>
-          <div className="referral-benefits">
-            <div>
-              <span>MONTHLY PURCHASE</span>
-              <strong>6 months</strong>
-              <p>Pro for one PC</p>
-            </div>
-            <div>
-              <span>ANNUAL PURCHASE</span>
-              <strong>12 months</strong>
-              <p>Pro for one PC</p>
-            </div>
+          <div className="referral-tabs" role="tablist" aria-label="Referral options">
+            {(
+              [
+                ["invite", "Your code"],
+                ["bonuses", "Bonuses"],
+                ["redeem", "Use a code"],
+              ] as const
+            ).map(([id, label], index, tabs) => (
+              <button
+                key={id}
+                id={`referral-tab-${id}`}
+                role="tab"
+                type="button"
+                aria-selected={view === id}
+                aria-controls={`referral-panel-${id}`}
+                tabIndex={view === id ? 0 : -1}
+                onClick={() => setView(id)}
+                onKeyDown={(event) => {
+                  const next =
+                    event.key === "ArrowRight"
+                      ? (index + 1) % tabs.length
+                      : event.key === "ArrowLeft"
+                        ? (index + tabs.length - 1) % tabs.length
+                        : event.key === "Home"
+                          ? 0
+                          : event.key === "End"
+                            ? tabs.length - 1
+                            : null;
+                  if (next === null) return;
+                  event.preventDefault();
+                  setView(tabs[next][0]);
+                  document.getElementById(`referral-tab-${tabs[next][0]}`)?.focus();
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-          <section aria-labelledby="referral-link-title">
-            <h3 id="referral-link-title">Your invitation link</h3>
-            <p>
-              Share it with someone who could use PC Tweaker. They must confirm the invitation in
-              the app before paying.
-            </p>
-            {status.code ? (
-              <div className="referral-link">
-                <input
-                  aria-label="Your invitation link"
-                  readOnly
-                  value={`https://pctweaker.app/invite/?ref=${status.code}`}
-                />
+          <div
+            id="referral-panel-invite"
+            role="tabpanel"
+            aria-labelledby="referral-tab-invite"
+            hidden={view !== "invite"}
+          >
+            <div className="referral-benefits">
+              <div>
+                <span>MONTHLY PURCHASE</span>
+                <strong>6 months</strong>
+                <p>Pro for one PC</p>
+              </div>
+              <div>
+                <span>ANNUAL PURCHASE</span>
+                <strong>12 months</strong>
+                <p>Pro for one PC</p>
+              </div>
+            </div>
+            <section aria-labelledby="referral-link-title">
+              <h3 id="referral-link-title">Your invitation code</h3>
+              {status.code ? (
+                <>
+                  <div className="referral-code-row">
+                    <output className="referral-short-code" aria-label="Your invitation code">
+                      {status.code}
+                    </output>
+                    <button
+                      className="referral-primary"
+                      type="button"
+                      disabled={busy}
+                      onClick={() =>
+                        void action(async () => {
+                          await navigator.clipboard.writeText(status.code!);
+                          setMessage("Invitation code copied.");
+                        })
+                      }
+                    >
+                      Copy code
+                    </button>
+                  </div>
+                  <div className="referral-link-shortcut">
+                    <button
+                      className="referral-cancel"
+                      type="button"
+                      disabled={busy}
+                      onClick={() =>
+                        void action(async () => {
+                          await navigator.clipboard.writeText(
+                            `https://pctweaker.app/invite/?ref=${status.code}`,
+                          );
+                          setMessage("Invitation link copied.");
+                        })
+                      }
+                    >
+                      Copy invitation link ↗
+                    </button>
+                  </div>
+                  <p className="referral-code-help">
+                    Your friend enters this code in the app before paying.
+                  </p>
+                </>
+              ) : (
                 <button
+                  className="referral-primary"
                   type="button"
                   disabled={busy}
                   onClick={() =>
-                    void action(async () => {
-                      await navigator.clipboard.writeText(
-                        `https://pctweaker.app/invite/?ref=${status.code}`,
-                      );
-                      setMessage("Invitation link copied.");
+                    void action(async (value) => {
+                      await referralRequest("/code", value, {});
+                      setMessage("Your invitation code is ready.");
                     })
                   }
                 >
-                  Copy link
+                  Generate my code
                 </button>
-              </div>
-            ) : (
-              <button
-                className="referral-primary"
-                type="button"
-                disabled={busy}
-                onClick={() =>
-                  void action(async (value) => {
-                    await referralRequest("/code", value, {});
-                  })
-                }
-              >
-                Create your invitation link
-              </button>
-            )}
-          </section>
-          <section aria-labelledby="referral-rewards-title">
+              )}
+            </section>
+          </div>
+          <section
+            id="referral-panel-bonuses"
+            role="tabpanel"
+            aria-labelledby="referral-tab-bonuses"
+            hidden={view !== "bonuses"}
+          >
             <h3 id="referral-rewards-title">Your Pro bonuses</h3>
             <p>
               Each bonus covers one PC. Activation starts its duration; it does not create a paid
@@ -334,86 +394,99 @@ export function ReferralPanel({
               </ul>
             )}
           </section>
-          <section aria-labelledby="referral-claim-title">
-            <h3 id="referral-claim-title">Have an invitation?</h3>
-            {status.incoming?.expired ? (
-              <div className="referral-notice">
-                <strong>This invitation has expired.</strong>
+          <div
+            id="referral-panel-redeem"
+            role="tabpanel"
+            aria-labelledby="referral-tab-redeem"
+            hidden={view !== "redeem"}
+          >
+            <section aria-labelledby="referral-claim-title">
+              <h3 id="referral-claim-title">Have an invitation?</h3>
+              {status.incoming?.expired ? (
+                <div className="referral-notice">
+                  <strong>This invitation has expired.</strong>
+                  <p>
+                    You can still buy PC Tweaker at the regular checkout price. If you already
+                    opened a payment page, check its own price and expiry before paying.
+                  </p>
+                </div>
+              ) : status.incoming ? (
                 <p>
-                  You can still buy PC Tweaker at the regular checkout price. If you already opened
-                  a payment page, check its own price and expiry before paying.
+                  Your invitation is confirmed
+                  {status.incoming.locked
+                    ? " and locked to its checkout"
+                    : " for your first eligible paid purchase"}
+                  . Confirm the discount on the payment page before paying.
                 </p>
-              </div>
-            ) : status.incoming ? (
+              ) : (
+                <form
+                  className="referral-link"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void action(async (value) => {
+                      const normalized = normalizeInvitationCode(code);
+                      if (!normalized) throw new Error("Enter the 10-character invitation code.");
+                      await referralRequest("/claim", value, { code: normalized });
+                      setMessage("Invitation confirmed. Check the final price before paying.");
+                    });
+                  }}
+                >
+                  <input
+                    aria-label="Invitation code"
+                    placeholder="K7M4P9R2X6"
+                    value={code}
+                    onChange={(event) => setCode(event.target.value)}
+                    maxLength={22}
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    required
+                    pattern="[A-Za-z0-9]{10}|[A-Za-z0-9_-]{22}"
+                  />
+                  <button type="submit" disabled={busy}>
+                    Confirm invitation
+                  </button>
+                </form>
+              )}
+            </section>
+            <section aria-labelledby="referral-gift-title">
+              <h3 id="referral-gift-title">Received a Pro gift?</h3>
               <p>
-                Your invitation is confirmed
-                {status.incoming.locked
-                  ? " and locked to its checkout"
-                  : " for your first eligible paid purchase"}
-                . Confirm the discount on the payment page before paying.
+                Sign in with the verified email specified by the sender. Redeeming saves the bonus
+                to your account; activation starts its timer. No payment is required.
               </p>
-            ) : (
               <form
                 className="referral-link"
                 onSubmit={(event) => {
                   event.preventDefault();
                   void action(async (value) => {
-                    await referralRequest("/claim", value, { code: code.trim() });
-                    setMessage("Invitation confirmed. Check the final price before paying.");
+                    await referralRequest("/gifts/claim", value, { code: giftCode.trim() });
+                    setGiftCode("");
+                    setView("bonuses");
+                    document.getElementById("referral-tab-bonuses")?.focus();
+                    setMessage("Gift redeemed. Your bonus is ready to review.");
                   });
                 }}
               >
                 <input
-                  aria-label="Invitation code"
-                  placeholder="Paste your invitation code"
-                  value={code}
-                  onChange={(event) => setCode(event.target.value)}
-                  maxLength={22}
+                  aria-label="Gift code"
+                  placeholder="Paste your private gift code"
+                  value={giftCode}
+                  onChange={(event) => setGiftCode(event.target.value)}
+                  maxLength={43}
+                  minLength={43}
+                  pattern="[A-Za-z0-9_-]{43}"
                   autoComplete="off"
                   required
-                  pattern="[A-Za-z0-9_-]{22}"
                 />
                 <button type="submit" disabled={busy}>
-                  Confirm invitation
+                  Redeem gift
                 </button>
               </form>
-            )}
-          </section>
-          <section aria-labelledby="referral-gift-title">
-            <h3 id="referral-gift-title">Received a Pro gift?</h3>
-            <p>
-              Sign in with the verified email specified by the sender. Redeeming saves the bonus to
-              your account; activation starts its timer. No payment is required.
-            </p>
-            <form
-              className="referral-link"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void action(async (value) => {
-                  await referralRequest("/gifts/claim", value, { code: giftCode.trim() });
-                  setGiftCode("");
-                  setMessage("Gift redeemed. Check its status below before activation.");
-                });
-              }}
-            >
-              <input
-                aria-label="Gift code"
-                placeholder="Paste your private gift code"
-                value={giftCode}
-                onChange={(event) => setGiftCode(event.target.value)}
-                maxLength={43}
-                minLength={43}
-                pattern="[A-Za-z0-9_-]{43}"
-                autoComplete="off"
-                required
-              />
-              <button type="submit" disabled={busy}>
-                Redeem gift
-              </button>
-            </form>
-          </section>
+            </section>
+          </div>
           <details className="referral-terms">
-            <summary>How eligibility and verification work</summary>
+            <summary>Programme rules</summary>
             <p>
               The extra 10% applies to the first eligible positive Stripe payment, after any
               supported offer. Renewals use the ordinary plan terms. Free trials cannot be combined
@@ -439,7 +512,7 @@ export function ReferralPanel({
           </details>
         </>
       )}
-      <p className="referral-feedback" role="status" aria-live="polite">
+      <p className="referral-feedback" role="status" aria-live="polite" hidden={!message}>
         {message}
       </p>
     </dialog>

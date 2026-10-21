@@ -5,10 +5,11 @@ import {
   addCalendarMonths,
   challengePayload,
   CHALLENGE_MS,
-  CODE_PATTERN,
+  createInvitationCode,
   deviceKey,
   HOLD_MS,
   isReferralPlan,
+  normalizeInvitationCode,
   REFERRAL_MONTHS,
   REFERRAL_PLAN,
   REFERRAL_VERSION,
@@ -199,17 +200,25 @@ export class Referrals {
         userId,
       ]);
       if (disabled.rows[0]) throw new ReferralError("referral_unavailable", 403);
-      const code = randomBytes(16).toString("base64url");
-      await tx.query("INSERT INTO referral_accounts(user_id,code) VALUES($1,$2)", [userId, code]);
-      return code;
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const code = createInvitationCode();
+        const inserted = await tx.query(
+          `INSERT INTO referral_accounts(user_id,code) VALUES($1,$2)
+          ON CONFLICT(code) DO NOTHING RETURNING code`,
+          [userId, code],
+        );
+        if (inserted.rows[0]) return inserted.rows[0].code;
+      }
+      throw new ReferralError("referral_unavailable", 503);
     });
   }
 
   async codeExists(code: string): Promise<boolean> {
-    if (!this.enabled() || !CODE_PATTERN.test(code)) return false;
+    const normalized = normalizeInvitationCode(code);
+    if (!this.enabled() || !normalized) return false;
     const { rows } = await this.db.query(
       "SELECT user_id FROM referral_accounts WHERE code=$1 AND enabled=TRUE",
-      [code],
+      [normalized],
     );
     return rows.length === 1;
   }
@@ -217,13 +226,13 @@ export class Referrals {
   /** Caller must check provider history first; the account row serialises claims and checkout. */
   async claim(userId: number, code: unknown, hasPriorPurchase: boolean): Promise<void> {
     this.requireEnabled();
-    if (typeof code !== "string" || !CODE_PATTERN.test(code))
-      throw new ReferralError("invalid_invitation", 400);
+    const normalized = normalizeInvitationCode(code);
+    if (!normalized) throw new ReferralError("invalid_invitation", 400);
     await this.transaction(async (tx) => {
       const buyer = await this.user(tx, userId, true);
       const { rows: inviters } = await tx.query(
         "SELECT user_id FROM referral_accounts WHERE code=$1 AND enabled=TRUE",
-        [code],
+        [normalized],
       );
       const inviter = inviters[0]?.user_id;
       if (

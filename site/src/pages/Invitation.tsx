@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_BASE, DOWNLOAD_EXE, MICROSOFT_STORE } from "../constants";
 import "./invitation.css";
+import { normalizeInvitationCode } from "../../../src/referral-code";
 
 export const INVITATION_SEO = {
   title: "Your PC Tweaker Invitation",
@@ -21,7 +22,9 @@ export function InvitationPage() {
     const abort = new AbortController();
     const timeout = window.setTimeout(() => abort.abort(), 10000);
     async function check() {
-      const code = new URLSearchParams(window.location.search).get("ref") ?? "";
+      const code = normalizeInvitationCode(
+        new URLSearchParams(window.location.search).get("ref") ?? "",
+      );
       try {
         const config = await fetch(`${API_BASE}/api/referrals/config`, {
           cache: "no-store",
@@ -33,7 +36,7 @@ export function InvitationPage() {
           setInvitation({ state: "closed", code: "" });
           return;
         }
-        if (!/^[A-Za-z0-9_-]{22}$/.test(code)) {
+        if (!code) {
           setInvitation({ state: "invalid", code: "" });
           return;
         }
@@ -113,8 +116,8 @@ export function InvitationPage() {
             <strong>6 or 12 months of Pro</strong>
             <p>
               6 months after a monthly purchase; 12 after an annual or Lifetime purchase. A separate
-              bonus for one PC, following verification. If your friend already owns Lifetime,
-              they can gift the unused bonus once to another verified account.
+              bonus for one PC, following verification. If your friend already owns Lifetime, they
+              can gift the unused bonus once to another verified account.
             </p>
           </div>
           {valid ? (
@@ -132,9 +135,7 @@ export function InvitationPage() {
               >
                 {copied ? "Code copied" : "Copy invitation code"}
               </button>
-              <p>
-                In the app: sign in → Account → Invitations &amp; Pro bonuses → Confirm invitation.
-              </p>
+              <p>In the app: sign in → Account → Invite a friend → Use a code.</p>
             </div>
           ) : (
             <p className="invitation-note">

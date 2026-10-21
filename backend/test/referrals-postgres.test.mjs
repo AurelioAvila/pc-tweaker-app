@@ -101,6 +101,24 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
     await t.test("schema is restart-safe", async () => {
       await initReferralSchema(pool);
     });
+    await t.test("short codes are stable under concurrency, ignore case and preserve existing links", async () => {
+      await reset();
+      const codes = await Promise.all(Array.from({length:8}, () => core.ownCode(1)));
+      assert.equal(new Set(codes).size, 1);
+      assert.match(codes[0], /^[A-HJ-NP-Z2-9]{10}$/);
+      assert.match(codes[0], /[A-Z]/);
+      assert.match(codes[0], /[2-9]/);
+      assert.equal(await core.codeExists(codes[0].toLowerCase()), true);
+      await core.claim(2, codes[0].toLowerCase(), false);
+      assert.equal((await core.enrolment(2)).inviter_id, 1);
+      const existing = "AbCdEfGhIjKlMnOpQrStUv";
+      await pool.query("INSERT INTO referral_accounts(user_id,code) VALUES(3,$1)", [existing]);
+      assert.equal(await core.ownCode(3), existing);
+      assert.equal(await core.codeExists(existing), true);
+      assert.equal(await core.codeExists(existing.toLowerCase()), false);
+      await core.claim(4, existing, false);
+      assert.equal((await core.enrolment(4)).inviter_id, 3);
+    });
     await t.test("two inviters cannot bind the same customer concurrently", async () => {
       await reset();
       const codes = await Promise.all([core.ownCode(1), core.ownCode(3)]);

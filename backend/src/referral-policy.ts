@@ -1,4 +1,4 @@
-import { createHash, createPublicKey, verify } from "crypto";
+import { createHash, createPublicKey, randomInt, verify } from "crypto";
 import { referralSignerReady } from "./referral-license";
 
 export const REFERRAL_VERSION = "2026-10-20-v1";
@@ -7,7 +7,28 @@ export const REFERRAL_MONTHS = { monthly: 6, annual: 12, lifetime: 12 } as const
 export type ReferralPlan = keyof typeof REFERRAL_MONTHS;
 export const HOLD_MS = 30 * 24 * 60 * 60 * 1000;
 export const CHALLENGE_MS = 5 * 60 * 1000;
-export const CODE_PATTERN = /^[A-Za-z0-9_-]{22}$/;
+const INVITATION_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+export const CODE_PATTERN =
+  /^(?:(?=[A-Z2-9]{0,9}[A-Z])(?=[A-Z2-9]{0,9}[2-9])[A-HJ-NP-Z2-9]{10}|[A-Za-z0-9_-]{22})$/;
+
+export function normalizeInvitationCode(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const code = value.trim();
+  if (code.length === 10 && !/^[A-Za-z2-9]{10}$/.test(code)) return null;
+  // Existing invitation links remain case-sensitive; new short codes ignore case.
+  const normalized = code.length === 10 ? code.toUpperCase() : code;
+  return CODE_PATTERN.test(normalized) ? normalized : null;
+}
+
+export function createInvitationCode(): string {
+  for (;;) {
+    const code = Array.from(
+      { length: 10 },
+      () => INVITATION_ALPHABET[randomInt(INVITATION_ALPHABET.length)],
+    ).join("");
+    if (/[A-Z]/.test(code) && /[2-9]/.test(code)) return code;
+  }
+}
 export const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 

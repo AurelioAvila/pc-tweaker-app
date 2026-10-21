@@ -3,6 +3,36 @@ import assert from "node:assert/strict";
 import { generateKeyPairSync, createPublicKey, sign, verify, randomUUID } from "node:crypto";
 import policy from "../dist/referral-policy.js";
 import referralLicense from "../dist/referral-license.js";
+import { readFileSync } from "node:fs";
+import ts from "typescript";
+
+test("new invitations are ten random alphanumeric characters with both letters and numbers", () => {
+  for (let i = 0; i < 1024; i++) {
+    const code = policy.createInvitationCode();
+    assert.match(code, /^[A-HJ-NP-Z2-9]{10}$/);
+    assert.match(code, /[A-Z]/);
+    assert.match(code, /[2-9]/);
+    assert.equal(policy.normalizeInvitationCode(code.toLowerCase()), code);
+  }
+});
+
+test("app, site and backend agree on short and existing invitation codes", async () => {
+  const source = readFileSync(new URL("../../src/referral-code.ts", import.meta.url), "utf8");
+  const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText;
+  const frontend = await import("data:text/javascript;base64," + Buffer.from(output).toString("base64"));
+  const examples = new Map([
+    ["K7M4P9R2X6", "K7M4P9R2X6"],
+    [" k7m4p9r2x6 ", "K7M4P9R2X6"],
+    ["AbCdEfGhIjKlMnOpQrStUv", "AbCdEfGhIjKlMnOpQrStUv"],
+    ["ABCDEFGHIJ", null], ["2345678923", null], ["K7M4P9R2X0", null],
+    ["K7M4P9R2XI", null], ["ſ7M4P9R2X6", null], ["K7M4-P9R2X6", null], ["", null],
+  ]);
+  for (const [input, expected] of examples) {
+    assert.equal(policy.normalizeInvitationCode(input), expected);
+    assert.equal(frontend.normalizeInvitationCode(input), expected);
+  }
+  assert.equal(policy.normalizeInvitationCode(null), null);
+});
 
 test("referrals require an explicit, complete versioned opt-in", () => {
   const signer = generateKeyPairSync("ed25519");

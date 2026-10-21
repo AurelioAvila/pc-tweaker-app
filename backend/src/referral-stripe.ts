@@ -167,6 +167,7 @@ export class ReferralStripe {
       [enrolment.id],
     );
     if (used.rows[0]) return null;
+    if (await this.core.expiredWithoutCheckout(userId, enrolment.id)) return null;
     if (params.subscription_data?.trial_period_days)
       throw new ReferralError("choose_paid_plan_for_referral");
     if (

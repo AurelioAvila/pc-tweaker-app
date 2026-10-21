@@ -336,7 +336,15 @@ export function ReferralPanel({
           </section>
           <section aria-labelledby="referral-claim-title">
             <h3 id="referral-claim-title">Have an invitation?</h3>
-            {status.incoming ? (
+            {status.incoming?.expired ? (
+              <div className="referral-notice">
+                <strong>This invitation has expired.</strong>
+                <p>
+                  You can still buy PC Tweaker at the regular checkout price. If you already opened
+                  a payment page, check its own price and expiry before paying.
+                </p>
+              </div>
+            ) : status.incoming ? (
               <p>
                 Your invitation is confirmed
                 {status.incoming.locked

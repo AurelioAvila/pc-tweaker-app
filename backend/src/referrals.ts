@@ -274,6 +274,24 @@ export class Referrals {
     return rows[0] ?? null;
   }
 
+  /** An expired invitation must not prevent buying without a referral discount. */
+  async expiredWithoutCheckout(userId: number, enrolmentId: string): Promise<boolean> {
+    return this.transaction(async (tx) => {
+      // Match reserve's lock order so an in-flight referral checkout cannot be missed.
+      await this.user(tx, userId, true);
+      const { rows } = await tx.query(
+        "SELECT expires_at FROM referral_enrolments WHERE id=$1 AND buyer_id=$2 FOR UPDATE",
+        [enrolmentId, userId],
+      );
+      if (!rows[0] || new Date(rows[0].expires_at) > this.now()) return false;
+      const active = await tx.query(
+        "SELECT id FROM referral_quotes WHERE enrolment_id=$1 AND state <> 'expired' LIMIT 1",
+        [enrolmentId],
+      );
+      return active.rowCount === 0;
+    });
+  }
+
   async reserve(
     userId: number,
     plan: ReferralPlan,

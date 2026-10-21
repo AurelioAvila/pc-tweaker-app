@@ -17,7 +17,7 @@ export type ReferralStatus = {
   accountId: string;
   code: string | null;
   rewards: ReferralReward[];
-  incoming: { claimed: boolean; expiresAt: string; locked: boolean } | null;
+  incoming: { claimed: boolean; expiresAt: string; expired: boolean; locked: boolean } | null;
 };
 
 const messages: Record<string, string> = {

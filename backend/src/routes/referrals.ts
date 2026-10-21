@@ -91,7 +91,12 @@ referralRoutes.get(
       accountId: String(userId),
       code: rows[0]?.code ?? null,
       incoming: incoming
-        ? { claimed: true, expiresAt: incoming.expires_at, locked: incoming.checkout_locked }
+        ? {
+            claimed: true,
+            expiresAt: incoming.expires_at,
+            expired: new Date(incoming.expires_at) <= g.core.now(),
+            locked: incoming.checkout_locked,
+          }
         : null,
     });
   }),

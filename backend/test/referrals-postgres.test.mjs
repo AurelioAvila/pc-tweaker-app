@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { generateKeyPairSync, sign, createHash, randomBytes } from "node:crypto";
+import { setTimeout as delay } from "node:timers/promises";
 import pg from "pg";
 
 // Deliberately opt-in: never point a destructive concurrency test at the application database.
@@ -466,6 +467,130 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
         assert.equal((await core.summary(3)).rewards[0].state, "revoked");
       },
     );
+    await t.test("an expired invitation without an open checkout permits ordinary pricing", async () => {
+      await reset();
+      await core.claim(2, await core.ownCode(1), false);
+      await pool.query("UPDATE users SET stripe_customer_id='cus_test2' WHERE id=2");
+      now = new Date(now.getTime() + 31 * 86400000);
+      const pages = () => ({ async *[Symbol.asyncIterator]() {} });
+      const gateway = new ReferralStripe(core, {
+        accounts: { retrieve: async () => ({ id: "acct_test" }) },
+        invoices: { list: pages },
+        prices: {
+          retrieve: async () => ({ id: "price_test", active: true, currency: "eur", unit_amount: 799 }),
+        },
+        checkout: { sessions: { list: pages } },
+      });
+      const params = {
+        mode: "subscription",
+        metadata: { product: "pctweaker" },
+        line_items: [{ price: "price_test", quantity: 1 }],
+      };
+      const snapshot = structuredClone(params);
+      assert.equal(await gateway.checkout(2, "monthly", params), null);
+      assert.equal(
+        await gateway.checkout(2, "monthly", {
+          ...params,
+          subscription_data: { trial_period_days: 7 },
+        }),
+        null,
+      );
+      assert.deepEqual(params, snapshot);
+      assert.equal((await pool.query("SELECT * FROM referral_quotes")).rowCount, 0);
+      assert.equal((await pool.query("SELECT * FROM referral_rewards")).rowCount, 0);
+    });
+    await t.test("expiry does not bypass an open or uncertain referral checkout", async () => {
+      await reset();
+      await core.claim(2, await core.ownCode(1), false);
+      await pool.query("UPDATE users SET stripe_customer_id='cus_test2' WHERE id=2");
+      now = new Date(now.getTime() + 30 * 86400000 - 60000);
+      const quote = await reserve();
+      await core.saveSession(quote.id, "cs_test_expiry", "https://checkout.stripe.com/c/pay/expiry");
+      now = new Date(now.getTime() + 120000);
+      const pages = () => ({ async *[Symbol.asyncIterator]() {} });
+      let remoteState = "complete";
+      const gateway = new ReferralStripe(core, {
+        accounts: { retrieve: async () => ({ id: "acct_test" }) },
+        invoices: { list: pages },
+        prices: {
+          retrieve: async () => ({ id: "price_test", active: true, currency: "eur", unit_amount: 799 }),
+        },
+        checkout: {
+          sessions: {
+            list: pages,
+            retrieve: async () => ({ id: "cs_test_expiry", status: remoteState }),
+          },
+        },
+      });
+      const params = {
+        mode: "subscription",
+        metadata: { product: "pctweaker" },
+        line_items: [{ price: "price_test", quantity: 1 }],
+      };
+      assert.deepEqual(await gateway.checkout(2, "monthly", params), {
+        url: "https://checkout.stripe.com/c/pay/expiry",
+      });
+      await assert.rejects(gateway.checkout(2, "annual", params), /close_existing_checkout/);
+      now = new Date(now.getTime() + 3600000);
+      await assert.rejects(gateway.checkout(2, "monthly", params), /reconciliation_required/);
+      assert.equal((await core.quote(quote.id)).state, "open");
+      remoteState = "expired";
+      await assert.rejects(gateway.checkout(2, "monthly", params), /expired_try_again/);
+      assert.equal((await core.quote(quote.id)).state, "expired");
+      assert.equal(await gateway.checkout(2, "monthly", params), null);
+    });
+    await t.test("expiry waits for an in-flight referral reservation before ordinary checkout", async () => {
+      await reset();
+      await core.claim(2, await core.ownCode(1), false);
+      await pool.query("UPDATE users SET stripe_customer_id='cus_test2' WHERE id=2");
+      now = new Date(now.getTime() + 30 * 86400000 - 60000);
+      const quote = await reserve();
+      await core.saveSession(quote.id, "cs_test_race", "https://checkout.stripe.com/c/pay/race");
+      const saved = (await pool.query("SELECT * FROM referral_quotes WHERE id=$1", [quote.id])).rows[0];
+      await pool.query("DELETE FROM referral_quotes WHERE id=$1", [quote.id]);
+      const reservation = await pool.connect();
+      let attempt;
+      try {
+        await reservation.query("BEGIN");
+        await reservation.query("SELECT id FROM users WHERE id=2 FOR UPDATE");
+        await reservation.query("SELECT id FROM referral_enrolments WHERE buyer_id=2 FOR UPDATE");
+        // Represent a reservation validated before expiry but not yet committed.
+        await reservation.query(
+          "INSERT INTO referral_quotes SELECT * FROM jsonb_populate_record(NULL::referral_quotes,$1::jsonb)",
+          [JSON.stringify(saved)],
+        );
+        now = new Date(now.getTime() + 120000);
+        const pages = () => ({ async *[Symbol.asyncIterator]() {} });
+        const gateway = new ReferralStripe(core, {
+          accounts: { retrieve: async () => ({ id: "acct_test" }) },
+          invoices: { list: pages },
+          checkout: { sessions: { list: pages } },
+        });
+        attempt = gateway.checkout(2, "monthly", {
+          mode: "subscription",
+          metadata: { product: "pctweaker" },
+          line_items: [{ price: "price_test", quantity: 1 }],
+        }).then((result) => ({ result }), (error) => ({ error }));
+        const deadline = Date.now() + 2000;
+        let waiting = false;
+        while (!waiting && Date.now() < deadline) {
+          waiting = (await pool.query(
+            "SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock'",
+          )).rowCount > 0;
+          if (!waiting) await delay(10);
+        }
+        assert.equal(waiting, true, "checkout must wait for the existing reservation lock");
+        await reservation.query("COMMIT");
+        const outcome = await attempt;
+        assert.equal(outcome.error, undefined);
+        assert.deepEqual(outcome.result, { url: "https://checkout.stripe.com/c/pay/race" });
+        assert.equal((await pool.query("SELECT * FROM referral_quotes")).rowCount, 1);
+      } finally {
+        await reservation.query("ROLLBACK");
+        reservation.release();
+        if (attempt) await attempt;
+      }
+    });
     await t.test(
       "provider timeouts retry the same coupon and checkout without a fresh financial occurrence",
       async () => {

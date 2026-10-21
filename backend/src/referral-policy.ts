@@ -1,12 +1,35 @@
 import { createHash, createPublicKey, randomInt, verify } from "crypto";
 import { referralSignerReady } from "./referral-license";
 
-export const REFERRAL_VERSION = "2026-10-20-v1";
+// v2 (21 Oct 2026): yearly cap, dispute-window hold, no gifting, no Lifetime-holder reward.
+// A deployment still configured for v1 stays off until it opts into these rules.
+export const REFERRAL_VERSION = "2026-10-21-v2";
 export const REFERRAL_PLAN = "referral_bonus";
 export const REFERRAL_MONTHS = { monthly: 6, annual: 12, lifetime: 12 } as const;
 export type ReferralPlan = keyof typeof REFERRAL_MONTHS;
-export const HOLD_MS = 30 * 24 * 60 * 60 * 1000;
+/** Digital purchases are not refundable, so the binding window is the card-network
+ *  dispute period (commonly 120 days). A bonus matures only after it. */
+export const HOLD_DAYS = 120;
+export const HOLD_MS = HOLD_DAYS * 24 * 60 * 60 * 1000;
+/** At most this many recognised (not revoked) rewards per inviter per rolling 12 months. */
+export const INVITER_CAP = 6;
+export const CAP_WINDOW_MS = 365 * 24 * 60 * 60 * 1000;
 export const CHALLENGE_MS = 5 * 60 * 1000;
+/** A confirmed invitation applies to a purchase within this many days. */
+export const INVITATION_DAYS = 30;
+
+/** Address used only for the one-invitation-per-person hash: `+tags` are dropped
+ *  everywhere and Gmail ignores dots, so `a.b+1@gmail.com` is `ab@gmail.com`. */
+export function canonicalEmail(email: string): string {
+  const [local, domain] = email
+    .trim()
+    .toLowerCase()
+    .split(/@(?=[^@]*$)/);
+  if (!domain) return email.trim().toLowerCase();
+  const gmail = domain === "gmail.com" || domain === "googlemail.com";
+  const base = local.split("+")[0];
+  return `${gmail ? base.replaceAll(".", "") : base}@${gmail ? "gmail.com" : domain}`;
+}
 const INVITATION_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const CODE_PATTERN =
   /^(?:(?=[A-Z2-9]{0,9}[A-Z])(?=[A-Z2-9]{0,9}[2-9])[A-HJ-NP-Z2-9]{10}|[A-Za-z0-9_-]{22})$/;
@@ -57,10 +80,9 @@ export function referralQuote(base: number, offer: number, currency: string) {
     base > 100_000_000 ||
     currency !== "eur"
   )
-    throw new Error("Unsupported referral price");
+    return null;
   const referralSaving = Math.round(offer / 10);
-  if (referralSaving <= 0 || offer - referralSaving < 50)
-    throw new Error("Referral price is too small");
+  if (referralSaving <= 0 || offer - referralSaving < 50) return null;
   return {
     base,
     offer,

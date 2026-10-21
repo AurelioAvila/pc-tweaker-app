@@ -3,7 +3,7 @@ import rateLimit from "express-rate-limit";
 import { requireAuth } from "../auth";
 import { referralStripe } from "../referral-stripe";
 import { ReferralError } from "../referrals";
-import { REFERRAL_MONTHS, REFERRAL_VERSION } from "../referral-policy";
+import { HOLD_DAYS, INVITER_CAP, REFERRAL_MONTHS, REFERRAL_VERSION } from "../referral-policy";
 
 export const referralRoutes = express.Router();
 const publicLimit = rateLimit({
@@ -40,7 +40,10 @@ referralRoutes.get("/config", publicLimit, (_req, res) => {
     discountScope: "first_payment",
     rewardMonths: REFERRAL_MONTHS,
     rewardDevices: 1,
-    verificationDays: 30,
+    verificationDays: HOLD_DAYS,
+    rewardsPerYear: INVITER_CAP,
+    lifetimeInviterReward: false,
+    transferable: false,
     paidPlansOnly: true,
   });
 });
@@ -108,65 +111,24 @@ referralRoutes.post(
 referralRoutes.post(
   "/claim",
   route(async (req, res) => {
-    const g = gateway();
-    await g.account();
-    const { rows } = await g.core.db.query("SELECT stripe_customer_id FROM users WHERE id=$1", [
-      req.userId,
-    ]);
-    const prior = await g.priorPurchase(rows[0]?.stripe_customer_id ?? null);
-    await g.core.claim(req.userId as number, req.body?.code, prior);
+    await gateway().claim(req.userId as number, req.body?.code);
     return res.json({ claimed: true });
   }),
 );
-referralRoutes.post(
-  "/rewards/:id/check",
-  proofLimit,
-  route(async (req, res) => {
-    const g = gateway();
-    await g.reconcileReward(req.userId as number, String(req.params.id));
-    return res.json(await g.core.summary(req.userId as number));
-  }),
-);
-referralRoutes.post(
-  "/rewards/:id/gift",
-  proofLimit,
-  route(async (req, res) => {
-    const g = gateway();
-    const userId = req.userId as number;
-    const id = String(req.params.id);
-    await g.reconcileReward(userId, id);
-    return res.json(await g.core.createGift(userId, id, req.body?.recipientEmail));
-  }),
-);
-referralRoutes.post(
-  "/rewards/:id/gift/cancel",
-  proofLimit,
-  route(async (req, res) => {
-    await gateway().core.cancelGift(req.userId as number, String(req.params.id));
-    return res.json({ cancelled: true });
-  }),
-);
-referralRoutes.post(
-  "/gifts/claim",
-  proofLimit,
-  route(async (req, res) => {
-    const g = gateway();
-    const userId = req.userId as number;
-    const gift = await g.core.giftForRecipient(userId, req.body?.code);
-    await g.reconcileQuote(gift.quote_id);
-    return res.json(await g.core.claimGift(userId, req.body?.code));
-  }),
-);
+// Device challenge and proof read only the stored reward state (kept current by refund and
+// dispute webhooks); a licence refresh never calls the payment provider.
 referralRoutes.post(
   "/device/challenge",
   proofLimit,
   route(async (req, res) => {
-    const g = gateway();
     const userId = req.userId as number;
-    if (typeof req.body?.rewardId !== "string") throw new ReferralError("invalid_challenge", 400);
-    await g.reconcileReward(userId, req.body.rewardId);
     return res.json(
-      await g.core.challenge(userId, req.body.rewardId, req.body.purpose, req.body.publicKey),
+      await gateway().core.challenge(
+        userId,
+        req.body?.rewardId,
+        req.body?.purpose,
+        req.body?.publicKey,
+      ),
     );
   }),
 );
@@ -174,16 +136,14 @@ referralRoutes.post(
   "/device/proof",
   proofLimit,
   route(async (req, res) => {
-    const g = gateway();
-    const userId = req.userId as number;
-    const { rows } = await g.core.db.query(
-      `SELECT reward_id FROM referral_challenges WHERE id=$1 AND user_id=$2
-    AND used_at IS NULL AND expires_at > now()`,
-      [String(req.body?.challengeId ?? ""), userId],
-    );
-    if (!rows[0]) throw new ReferralError("invalid_proof", 403);
-    await g.reconcileReward(userId, rows[0].reward_id);
     const token = req.headers.authorization?.replace(/^Bearer\s+/i, "") ?? "";
-    return res.json(await g.core.prove(userId, req.body?.challengeId, req.body?.signature, token));
+    return res.json(
+      await gateway().core.prove(
+        req.userId as number,
+        req.body?.challengeId,
+        req.body?.signature,
+        token,
+      ),
+    );
   }),
 );

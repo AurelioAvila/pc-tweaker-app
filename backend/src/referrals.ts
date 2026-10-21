@@ -3,11 +3,16 @@ import type { Pool, PoolClient } from "pg";
 import { signReferralLicense } from "./referral-license";
 import {
   addCalendarMonths,
+  canonicalEmail,
+  CAP_WINDOW_MS,
   challengePayload,
   CHALLENGE_MS,
   createInvitationCode,
   deviceKey,
+  HOLD_DAYS,
   HOLD_MS,
+  INVITATION_DAYS,
+  INVITER_CAP,
   isReferralPlan,
   normalizeInvitationCode,
   REFERRAL_MONTHS,
@@ -81,20 +86,8 @@ export async function initReferralSchema(db: Pick<Pool, "query">): Promise<void>
     );
     ALTER TABLE referral_quotes ADD COLUMN IF NOT EXISTS reconcile_after TIMESTAMPTZ;
     ALTER TABLE referral_quotes ADD COLUMN IF NOT EXISTS reconcile_attempts INTEGER NOT NULL DEFAULT 0;
-    ALTER TABLE referral_rewards ADD COLUMN IF NOT EXISTS beneficiary_id INTEGER REFERENCES users(id);
-    CREATE TABLE IF NOT EXISTS referral_gifts (
-      id TEXT PRIMARY KEY, reward_id TEXT NOT NULL REFERENCES referral_rewards(id),
-      sender_id INTEGER NOT NULL REFERENCES users(id), recipient_email_hash TEXT NOT NULL,
-      code_hash TEXT NOT NULL UNIQUE, state TEXT NOT NULL CHECK(state IN ('active','cancelled','claimed')),
-      created_at TIMESTAMPTZ NOT NULL, claimed_by INTEGER REFERENCES users(id), claimed_at TIMESTAMPTZ,
-      CHECK((state='claimed' AND claimed_by IS NOT NULL AND claimed_at IS NOT NULL)
-        OR (state<>'claimed' AND claimed_by IS NULL AND claimed_at IS NULL))
-    );
-    CREATE UNIQUE INDEX IF NOT EXISTS referral_gift_once_idx ON referral_gifts(reward_id)
-      WHERE state IN ('active','claimed');
     CREATE INDEX IF NOT EXISTS referral_rewards_inviter_idx ON referral_rewards(inviter_id,paid_at DESC);
-    CREATE INDEX IF NOT EXISTS referral_rewards_beneficiary_idx ON referral_rewards(beneficiary_id,paid_at DESC)
-      WHERE beneficiary_id IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS referral_challenges_expiry_idx ON referral_challenges(expires_at);
   `);
 }
 
@@ -180,7 +173,7 @@ export class Referrals {
     if (!rows[0]?.email_verified) throw new ReferralError("verify_email_first", 403);
     return rows[0];
   }
-  private async audit(tx: Pick<PoolClient, "query">, subject: string, action: string) {
+  async audit(tx: Pick<PoolClient, "query">, subject: string, action: string) {
     await tx.query(
       "INSERT INTO referral_audit(id,subject_id,action,created_at) VALUES($1,$2,$3,$4)",
       [randomUUID(), subject, action, this.now()],
@@ -235,13 +228,9 @@ export class Referrals {
         [normalized],
       );
       const inviter = inviters[0]?.user_id;
-      if (
-        !inviter ||
-        inviter === userId ||
-        hasPriorPurchase ||
-        buyer.is_pro ||
-        buyer.stripe_subscription_id
-      ) {
+      // Current state, not history: a trial cancelled before any payment leaves a
+      // subscription id behind but is not a purchase (paid history is checked separately).
+      if (!inviter || inviter === userId || hasPriorPurchase || buyer.is_pro) {
         throw new ReferralError("invitation_not_eligible");
       }
       const { rows: previous } = await tx.query(
@@ -261,10 +250,10 @@ export class Referrals {
             id,
             userId,
             inviter,
-            this.hash("email:" + buyer.email.trim().toLowerCase()),
+            this.hash("email:" + canonicalEmail(buyer.email)),
             REFERRAL_VERSION,
             this.now(),
-            new Date(this.now().getTime() + 30 * 86400000),
+            new Date(this.now().getTime() + INVITATION_DAYS * 86400000),
           ],
         );
       } catch (error) {
@@ -317,6 +306,7 @@ export class Referrals {
     this.requireEnabled();
     const price = referralQuote(input.base, input.offer, input.currency);
     if (
+      !price ||
       !isReferralPlan(plan) ||
       !input.customerId.startsWith("cus_") ||
       !input.priceId.startsWith("price_") ||
@@ -397,13 +387,33 @@ export class Referrals {
     if (rowCount !== 1) throw new ReferralError("checkout_changed");
   }
 
-  /** Only after the provider has confirmed expiry; never release an uncertain session. */
-  async expireSession(userId: number, quoteId: string, providerSessionId: string) {
-    await this.db.query(
-      `UPDATE referral_quotes SET state='expired' WHERE id=$1 AND session_id=$2 AND state='open'
-      AND enrolment_id IN (SELECT id FROM referral_enrolments WHERE buyer_id=$3)`,
-      [quoteId, providerSessionId, userId],
+  /** Only after the provider has confirmed that no payable session exists for this quote:
+   *  a session it reports expired, or none at all (`null`) once the quote is past its expiry. */
+  async expireQuote(quoteId: string, providerSessionId: string | null, reason: string) {
+    const { rowCount } = await this.db.query(
+      `UPDATE referral_quotes SET state='expired',session_id=COALESCE(session_id,$2)
+      WHERE id=$1 AND state IN ('creating','open') AND (session_id IS NULL OR session_id=$2)`,
+      [quoteId, providerSessionId],
     );
+    if (rowCount) await this.audit(this.db, quoteId, "checkout_expired:" + reason);
+  }
+
+  /** The buyer pays the ordinary price; the reason stays in the private audit log. */
+  async ordinaryCheckout(enrolmentId: string, reason: string) {
+    await this.audit(this.db, enrolmentId, "ordinary_checkout:" + reason);
+    return null;
+  }
+
+  /** A paid or provider-inconsistent quote that cannot be verified automatically: release the
+   *  buyer (no further referral checkout) and keep any bonus under owner review. */
+  async reviewQuote(quoteId: string, code: string) {
+    await this.transaction(async (tx) => {
+      const { rowCount } = await tx.query(
+        "UPDATE referral_quotes SET state='paid' WHERE id=$1 AND state IN ('creating','open')",
+        [quoteId],
+      );
+      if (rowCount) await this.audit(tx, quoteId, "review:" + code);
+    });
   }
 
   async quote(
@@ -440,7 +450,7 @@ export class Referrals {
       );
       const quote = rows[0];
       if (!quote) return null;
-      if (
+      const matches = !(
         quote.buyer_id !== payment.buyerId ||
         quote.customer_id !== payment.customerId ||
         quote.plan !== payment.plan ||
@@ -455,17 +465,47 @@ export class Referrals {
         payment.paidAt.getTime() < Math.floor(new Date(quote.created_at).getTime() / 1000) * 1000 ||
         payment.paidAt > new Date(quote.expires_at) ||
         !/^pi_[A-Za-z0-9]+$/.test(payment.paymentId)
-      ) {
-        throw new ReferralError("payment_does_not_match_quote", 400);
+      );
+      // A successful purchase that does not match its quote (async payment after expiry, other
+      // currency, changed invoice shape) never retries forever: the buyer is released, the
+      // inviter's bonus waits for owner review, and the webhook is acknowledged.
+      if (!matches) {
+        await tx.query("UPDATE referral_quotes SET state='paid' WHERE id=$1", [quote.id]);
+        await tx.query(
+          `UPDATE referral_rewards SET state='hold',reason='payment_mismatch_review',checked_at=$2
+          WHERE quote_id=$1 AND state IN ('pending','ready')`,
+          [quote.id, this.now()],
+        );
+        await this.audit(tx, quote.id, "review:payment_does_not_match_quote");
+        if (!/^pi_[A-Za-z0-9]+$/.test(payment.paymentId)) return null;
+        const paidAt = Number.isFinite(payment.paidAt.getTime()) ? payment.paidAt : this.now();
+        await tx.query(
+          `INSERT INTO referral_rewards(id,quote_id,payment_id,invoice_id,buyer_id,inviter_id,payer_hash,
+          months,state,paid_at,eligible_at,checked_at,reason)
+          VALUES($1,$2,$3,NULL,$4,$5,$6,$7,'hold',$8,$9,$10,'payment_mismatch_review') ON CONFLICT DO NOTHING`,
+          [
+            randomUUID(),
+            quote.id,
+            payment.paymentId,
+            quote.buyer_id,
+            quote.inviter_id,
+            this.hash("unverified-payment:" + payment.paymentId),
+            REFERRAL_MONTHS[quote.plan as ReferralPlan],
+            paidAt,
+            new Date(paidAt.getTime() + HOLD_MS),
+            this.now(),
+          ],
+        );
+        return null;
       }
       const { rows: previous } = await tx.query(
         "SELECT id,payment_id FROM referral_rewards WHERE quote_id=$1",
         [quote.id],
       );
       if (previous[0]) {
-        if (previous[0].payment_id !== payment.paymentId)
-          throw new ReferralError("duplicate_purchase");
-        return previous[0].id;
+        if (previous[0].payment_id === payment.paymentId) return previous[0].id;
+        await this.audit(tx, quote.id, "review:duplicate_purchase");
+        return null;
       }
       const payer = payment.payerFingerprint
         ? this.hash("payer:" + payment.payerFingerprint)
@@ -483,13 +523,32 @@ export class Referrals {
         "SELECT state FROM referral_payment_blocks WHERE payment_id=$1",
         [payment.paymentId],
       );
-      const state =
-        blocks[0]?.state ??
-        (payment.state === "paid"
-          ? payer && payment.inviterFingerprints.length
-            ? "pending"
-            : "hold"
-          : payment.state);
+      // Serialise this inviter's awards so concurrent purchases cannot both pass the yearly cap.
+      await tx.query("SELECT pg_advisory_xact_lock(hashtext('referral-inviter:' || $1::text))", [
+        quote.inviter_id,
+      ]);
+      const { rows: inviterRows } = await tx.query(
+        `SELECT u.is_pro,u.plan,(SELECT count(*)::int FROM referral_rewards r
+          WHERE r.inviter_id=u.id AND r.state<>'revoked' AND r.paid_at > $2) AS recognised
+        FROM users u WHERE u.id=$1`,
+        [quote.inviter_id, new Date(this.now().getTime() - CAP_WINDOW_MS)],
+      );
+      const inviter = inviterRows[0];
+      // Lifetime owners still invite (the friend saves 10%) but receive nothing they could resell.
+      const ineligible =
+        inviter?.is_pro === true && inviter.plan === "lifetime"
+          ? "inviter_lifetime"
+          : (inviter?.recognised ?? 0) >= INVITER_CAP
+            ? "inviter_cap"
+            : null;
+      const state = ineligible
+        ? "revoked"
+        : (blocks[0]?.state ??
+          (payment.state === "paid"
+            ? payer && payment.inviterFingerprints.length
+              ? "pending"
+              : "hold"
+            : payment.state));
       const id = randomUUID();
       const inserted = await tx.query(
         `INSERT INTO referral_rewards(id,quote_id,payment_id,invoice_id,buyer_id,inviter_id,payer_hash,
@@ -508,7 +567,8 @@ export class Referrals {
           payment.paidAt,
           new Date(payment.paidAt.getTime() + HOLD_MS),
           this.now(),
-          payment.reason ??
+          ineligible ??
+            payment.reason ??
             (state === "hold" && !payer
               ? "payer_identity_review"
               : state === "hold" && !payment.inviterFingerprints.length
@@ -581,193 +641,58 @@ export class Referrals {
     });
   }
 
+  /** Re-opens maturity after a dispute the merchant won; the next maturity check re-reads
+   *  the charge, so a refund or another open dispute still holds or revokes it. */
+  async releaseDisputeHold(paymentId: string) {
+    await this.transaction(async (tx) => {
+      const { rowCount } = await tx.query(
+        `DELETE FROM referral_payment_blocks WHERE payment_id=$1 AND state='hold'
+        AND reason LIKE 'charge.dispute.%'`,
+        [paymentId],
+      );
+      if (!rowCount) return;
+      await tx.query(
+        `UPDATE referral_rewards SET state='pending',reason=NULL,checked_at=$2
+        WHERE payment_id=$1 AND state='hold' AND reason LIKE 'charge.dispute.%' AND activated_at IS NULL`,
+        [paymentId, this.now()],
+      );
+      await tx.query(
+        `UPDATE referral_rewards SET state='active',reason=NULL,checked_at=$2
+        WHERE payment_id=$1 AND state='hold' AND reason LIKE 'charge.dispute.%' AND activated_at IS NOT NULL`,
+        [paymentId, this.now()],
+      );
+      await this.audit(tx, paymentId, "dispute_won");
+    });
+  }
+
+  /** The inviter sees only an aggregate state of each friend's purchase: no plan, payment
+   *  date, refund or dispute. Duration and dates appear only for a bonus that is theirs to use. */
   async summary(userId: number) {
-    const user = await this.user(this.db, userId);
+    await this.user(this.db, userId);
     const { rows } = await this.db.query(
-      `SELECT r.id,r.months,r.state,r.paid_at,r.eligible_at,r.activated_at,r.expires_at,r.reason,
-      r.inviter_id,r.beneficiary_id,g.id AS gift_id,g.state AS gift_state
-      FROM referral_rewards r LEFT JOIN referral_gifts g ON g.reward_id=r.id AND g.state IN ('active','claimed')
-      WHERE r.inviter_id=$1 OR r.beneficiary_id=$1 ORDER BY r.paid_at DESC LIMIT 100`,
+      `SELECT id,months,state,expires_at,device_key_hash FROM referral_rewards
+      WHERE inviter_id=$1 ORDER BY paid_at DESC LIMIT 100`,
       [userId],
     );
     return {
       enabled: this.enabled(),
       policyVersion: REFERRAL_VERSION,
       discountPercent: 10,
-      rewards: rows.map(({ inviter_id, beneficiary_id, gift_id, gift_state, ...reward }) => ({
-        ...reward,
-        canGift:
-          user.is_pro === true &&
-          user.plan === "lifetime" &&
-          inviter_id === userId &&
-          beneficiary_id === null &&
-          reward.state === "ready" &&
-          !gift_state,
-        gift: gift_state
-          ? {
-              state: gift_state,
-              role: inviter_id === userId ? "sender" : "recipient",
-              ...(gift_state === "active" && inviter_id === userId
-                ? { code: this.giftCode(gift_id) }
-                : {}),
-            }
-          : null,
-      })),
+      verificationDays: HOLD_DAYS,
+      rewardsPerYear: INVITER_CAP,
+      invitationDays: INVITATION_DAYS,
+      rewards: rows.map((reward) => publicReward(reward)),
     };
   }
 
-  private giftCode(id: string) {
-    return Buffer.from(this.hash("gift-link:" + id), "hex").toString("base64url");
-  }
-  private giftEmail(email: unknown) {
-    if (
-      typeof email !== "string" ||
-      email.length > 254 ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
-    )
-      throw new ReferralError("invalid_gift_email", 400);
-    return this.hash("email:" + email.trim().toLowerCase());
-  }
-  private async giftReady(
-    tx: Pick<PoolClient, "query">,
-    reward:
-      | {
-          state: string;
-          activated_at: Date | null;
-          checked_at: Date;
-          payment_id: string;
-        }
-      | undefined,
-  ) {
-    if (!reward || reward.state !== "ready" || reward.activated_at)
-      throw new ReferralError("gift_unavailable", 403);
-    if (this.now().getTime() - new Date(reward.checked_at).getTime() > 60000)
-      throw new ReferralError("payment_check_required");
-    const blocked = await tx.query("SELECT 1 FROM referral_payment_blocks WHERE payment_id=$1", [
-      reward.payment_id,
+  /** Expired device challenges and old webhook receipts are not kept indefinitely. */
+  async cleanup() {
+    await this.db.query("DELETE FROM referral_challenges WHERE expires_at < $1", [
+      new Date(this.now().getTime() - 86400000),
     ]);
-    if (blocked.rowCount) throw new ReferralError("gift_unavailable", 403);
-  }
-  async createGift(userId: number, rewardId: string, email: unknown) {
-    this.requireEnabled();
-    const emailHash = this.giftEmail(email);
-    return this.transaction(async (tx) => {
-      const user = await this.user(tx, userId, true);
-      const { rows } = await tx.query("SELECT * FROM referral_rewards WHERE id=$1 FOR UPDATE", [
-        rewardId,
-      ]);
-      const reward = rows[0];
-      if (
-        !reward ||
-        reward.inviter_id !== userId ||
-        reward.beneficiary_id ||
-        !user.is_pro ||
-        user.plan !== "lifetime"
-      )
-        throw new ReferralError("gift_unavailable", 403);
-      await this.giftReady(tx, reward);
-      const buyer = await this.user(tx, reward.buyer_id);
-      if ([user.email, buyer.email].some((v) => this.giftEmail(v) === emailHash))
-        throw new ReferralError("gift_unavailable", 403);
-      const existing = await tx.query(
-        "SELECT * FROM referral_gifts WHERE reward_id=$1 AND state IN ('active','claimed') FOR UPDATE",
-        [rewardId],
-      );
-      if (existing.rows[0]) {
-        if (
-          existing.rows[0].state !== "active" ||
-          existing.rows[0].recipient_email_hash !== emailHash
-        )
-          throw new ReferralError("gift_already_sent");
-        return { code: this.giftCode(existing.rows[0].id) };
-      }
-      const id = randomUUID();
-      const code = this.giftCode(id);
-      await tx.query(
-        `INSERT INTO referral_gifts(id,reward_id,sender_id,recipient_email_hash,code_hash,state,created_at)
-        VALUES($1,$2,$3,$4,$5,'active',$6)`,
-        [id, rewardId, userId, emailHash, this.hash("gift-code:" + code), this.now()],
-      );
-      await this.audit(tx, rewardId, "gift_created");
-      return { code };
-    });
-  }
-  async cancelGift(userId: number, rewardId: string) {
-    return this.transaction(async (tx) => {
-      await this.user(tx, userId);
-      const { rows } = await tx.query("SELECT * FROM referral_rewards WHERE id=$1 FOR UPDATE", [
-        rewardId,
-      ]);
-      if (!rows[0] || rows[0].inviter_id !== userId || rows[0].beneficiary_id)
-        throw new ReferralError("gift_unavailable", 403);
-      const result = await tx.query(
-        "UPDATE referral_gifts SET state='cancelled' WHERE reward_id=$1 AND sender_id=$2 AND state='active' RETURNING id",
-        [rewardId, userId],
-      );
-      if (!result.rowCount) throw new ReferralError("gift_unavailable", 403);
-      await this.audit(tx, rewardId, "gift_cancelled");
-    });
-  }
-  /** No recipient identity or reward facts are exposed before authentication and email matching. */
-  async giftForRecipient(userId: number, code: unknown) {
-    const user = await this.user(this.db, userId);
-    if (typeof code !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(code))
-      throw new ReferralError("gift_unavailable", 403);
-    const { rows } = await this.db.query(
-      `SELECT g.*,r.quote_id FROM referral_gifts g
-      JOIN referral_rewards r ON r.id=g.reward_id WHERE g.code_hash=$1`,
-      [this.hash("gift-code:" + code)],
-    );
-    const gift = rows[0];
-    if (
-      !gift ||
-      gift.recipient_email_hash !== this.giftEmail(user.email) ||
-      (gift.state !== "active" && !(gift.state === "claimed" && gift.claimed_by === userId))
-    )
-      throw new ReferralError("gift_unavailable", 403);
-    return gift;
-  }
-  async claimGift(userId: number, code: unknown) {
-    this.requireEnabled();
-    const found = await this.giftForRecipient(userId, code);
-    return this.transaction(async (tx) => {
-      const user = await this.user(tx, userId, true);
-      const { rows } = await tx.query("SELECT * FROM referral_rewards WHERE id=$1 FOR UPDATE", [
-        found.reward_id,
-      ]);
-      const reward = rows[0];
-      const { rows: gifts } = await tx.query(
-        "SELECT * FROM referral_gifts WHERE id=$1 FOR UPDATE",
-        [found.id],
-      );
-      const gift = gifts[0];
-      if (gift?.recipient_email_hash !== this.giftEmail(user.email))
-        throw new ReferralError("gift_unavailable", 403);
-      if (
-        gift.state === "claimed" &&
-        gift.claimed_by === userId &&
-        reward.beneficiary_id === userId
-      )
-        return { claimed: true };
-      if (
-        gift.state !== "active" ||
-        reward.beneficiary_id ||
-        [reward.inviter_id, reward.buyer_id].includes(userId) ||
-        (user.is_pro && user.plan === "lifetime")
-      )
-        throw new ReferralError("gift_unavailable", 403);
-      await this.giftReady(tx, reward);
-      await tx.query("UPDATE referral_rewards SET beneficiary_id=$2 WHERE id=$1", [
-        reward.id,
-        userId,
-      ]);
-      await tx.query(
-        "UPDATE referral_gifts SET state='claimed',claimed_by=$2,claimed_at=$3 WHERE id=$1",
-        [gift.id, userId, this.now()],
-      );
-      await this.audit(tx, reward.id, "gift_claimed");
-      return { claimed: true };
-    });
+    await this.db.query("DELETE FROM referral_webhook_receipts WHERE completed_at < $1", [
+      new Date(this.now().getTime() - 90 * 86400000),
+    ]);
   }
 
   async challenge(userId: number, rewardId: unknown, purpose: unknown, publicKey: unknown) {
@@ -781,8 +706,7 @@ export class Referrals {
     const key = deviceKey(publicKey);
     await this.user(this.db, userId);
     const { rows } = await this.db.query(
-      `SELECT * FROM referral_rewards r WHERE id=$1 AND COALESCE(beneficiary_id,inviter_id)=$2
-        AND NOT EXISTS(SELECT 1 FROM referral_gifts g WHERE g.reward_id=r.id AND g.state='active')`,
+      "SELECT * FROM referral_rewards WHERE id=$1 AND inviter_id=$2",
       [rewardId, userId],
     );
     const reward = rows[0];
@@ -809,7 +733,14 @@ export class Referrals {
       VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,
       [id, userId, rewardId, purpose, key.publicKey, key.hash, payload, expiresAt],
     );
-    return { id, payload, expiresAt: expiresAt.toISOString() };
+    // Informational only: the app compares it with the PC clock before proving, so a badly
+    // set clock is explained before activation changes any state.
+    return {
+      id,
+      payload,
+      expiresAt: expiresAt.toISOString(),
+      serverTime: Math.floor(this.now().getTime() / 1000),
+    };
   }
 
   async prove(userId: number, challengeId: unknown, signature: unknown, bearerToken: string) {
@@ -830,7 +761,7 @@ export class Referrals {
       )
         throw new ReferralError("invalid_proof", 403);
       const { rows: rewards } = await tx.query(
-        "SELECT * FROM referral_rewards WHERE id=$1 AND COALESCE(beneficiary_id,inviter_id)=$2 FOR UPDATE",
+        "SELECT * FROM referral_rewards WHERE id=$1 AND inviter_id=$2 FOR UPDATE",
         [challenge.reward_id, userId],
       );
       const reward = rewards[0];
@@ -845,11 +776,6 @@ export class Referrals {
         reward.payment_id,
       ]);
       if (blocked.rows.length) throw new ReferralError("bonus_unavailable", 403);
-      const gifting = await tx.query(
-        "SELECT 1 FROM referral_gifts WHERE reward_id=$1 AND state='active'",
-        [reward.id],
-      );
-      if (gifting.rowCount) throw new ReferralError("bonus_unavailable", 403);
       if (reward.state === "ready") {
         this.requireEnabled();
         const expiry = addCalendarMonths(this.now(), reward.months);
@@ -862,9 +788,8 @@ export class Referrals {
         await this.audit(tx, reward.id, "activated");
       }
       if (new Date(reward.expires_at) <= this.now()) throw new ReferralError("bonus_expired", 403);
-      // Fresh payment reconciliation is required before both activation and every refresh.
-      if (this.now().getTime() - new Date(reward.checked_at).getTime() > 60000)
-        throw new ReferralError("payment_check_required", 409);
+      // No provider call per refresh: the state above already reflects every stored refund and
+      // dispute webhook (payment blocks), and maturity re-read the provider before 'ready'.
       await tx.query("UPDATE referral_challenges SET used_at=$2 WHERE id=$1", [
         challenge.id,
         this.now(),
@@ -886,4 +811,33 @@ export class Referrals {
       );
     });
   }
+}
+
+type RewardRow = {
+  id: string;
+  months: number;
+  state: string;
+  expires_at: Date | null;
+  device_key_hash: string | null;
+};
+/** pending = still being verified (includes owner review), active = a bonus the inviter can
+ *  use or is using, not_eligible = revoked, refunded, disputed and lost, capped or Lifetime. */
+export function publicReward(reward: RewardRow) {
+  const status =
+    reward.state === "revoked"
+      ? "not_eligible"
+      : reward.state === "ready" || reward.state === "active"
+        ? "active"
+        : "pending";
+  return {
+    id: reward.id,
+    status,
+    ...(status === "active"
+      ? {
+          months: reward.months,
+          activatedUntil: reward.state === "active" ? reward.expires_at : null,
+          deviceKeyHash: reward.state === "active" ? reward.device_key_hash : null,
+        }
+      : {}),
+  };
 }

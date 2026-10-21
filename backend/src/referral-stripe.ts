@@ -9,9 +9,25 @@ import {
 import {
   isReferralPlan,
   REFERRAL_VERSION,
+  referralQuote,
   referralsEnabled,
   type ReferralPlan,
 } from "./referral-policy";
+
+/** Below this a referral session is not attempted: Stripe's 30-minute minimum plus margin. */
+const MIN_CHECKOUT_MS = 35 * 60000;
+/** After a quote's own expiry, a lost creation response with no listed session is released. */
+const RECOVERY_GRACE_MS = 15 * 60000;
+/** Provider facts that will not change on retry; they go to owner review, not a retry loop. */
+const REVIEWABLE = new Set([
+  "payment_identity_review_required",
+  "unsupported_referral_invoice",
+  "checkout_model_changed",
+  "purchase_history_review_required",
+  "payer_identity_review_required",
+  "payment_dispute_review_required",
+  "checkout_recovery_required",
+]);
 
 type Invoice = Stripe.Invoice & {
   parent?: {
@@ -41,6 +57,15 @@ export function referralCheckoutParams(
   };
   saved.managed_payments = { enabled: model === "managed" };
   delete saved.allow_promotion_codes;
+  if (saved.customer) {
+    // Stripe accepts only one of customer / customer_creation / customer_email (verified in TEST).
+    delete saved.customer_creation;
+    delete saved.customer_email;
+    // Direct automatic tax on an existing customer without a saved address is rejected
+    // (`customer_tax_location_invalid`, verified in TEST) unless Checkout may save it.
+    if (model === "direct" && saved.automatic_tax?.enabled)
+      saved.customer_update = { ...saved.customer_update, address: "auto" };
+  }
   if (model === "managed") {
     // Managed Payments is the tax authority. These direct-Checkout options
     // are unsupported; removing them does not disable Managed Payments tax.
@@ -158,57 +183,73 @@ export class ReferralStripe {
     return current.rows[0].stripe_customer_id as string;
   }
 
-  async checkout(userId: number, plan: ReferralPlan, params: Stripe.Checkout.SessionCreateParams) {
+  /** Server-side claim. The feature switch is checked before any provider call. */
+  async claim(userId: number, code: unknown) {
+    if (!this.core.enabled()) throw new ReferralError("referral_unavailable", 503);
     await this.account();
+    const { rows } = await this.core.db.query("SELECT stripe_customer_id FROM users WHERE id=$1", [
+      userId,
+    ]);
+    await this.core.claim(
+      userId,
+      code,
+      await this.priorPurchase(rows[0]?.stripe_customer_id ?? null),
+    );
+  }
+
+  /**
+   * Returns a referral checkout URL, or null so the caller opens the ordinary checkout.
+   * Only states that could charge twice (an unsettled or paid referral session) are errors;
+   * every other reason the referral cannot apply falls back to the regular price.
+   */
+  async checkout(
+    userId: number,
+    plan: ReferralPlan,
+    params: Stripe.Checkout.SessionCreateParams,
+  ): Promise<{ url: string } | null> {
     const enrolment = await this.core.enrolment(userId);
     if (!enrolment) return null;
+    await this.account();
     const used = await this.core.db.query(
       "SELECT id FROM referral_quotes WHERE enrolment_id=$1 AND state='paid'",
       [enrolment.id],
     );
     if (used.rows[0]) return null;
     if (await this.core.expiredWithoutCheckout(userId, enrolment.id)) return null;
-    if (params.subscription_data?.trial_period_days)
-      throw new ReferralError("choose_paid_plan_for_referral");
+    const ordinary = (reason: string) => this.core.ordinaryCheckout(enrolment.id, reason);
+    if (params.subscription_data?.trial_period_days) return ordinary("trial_requested");
     if (
       params.line_items?.length !== 1 ||
       params.line_items[0].quantity !== 1 ||
       !params.line_items[0].price
     )
-      throw new ReferralError("unsupported_referral_offer");
+      return ordinary("unsupported_offer");
     const customerId = await this.customer(userId);
-    if (await this.priorPurchase(customerId)) throw new ReferralError("invitation_not_eligible");
+    if (await this.priorPurchase(customerId)) return ordinary("prior_purchase");
     // A saved quote is immutable: retries reuse the same provider parameters and idempotency key.
     const existing = await this.core.db.query(
-      `SELECT * FROM referral_quotes WHERE enrolment_id=$1 AND state IN ('creating','open')`,
+      `SELECT q.*,e.buyer_id FROM referral_quotes q JOIN referral_enrolments e ON e.id=q.enrolment_id
+      WHERE q.enrolment_id=$1 AND q.state IN ('creating','open')`,
       [enrolment.id],
     );
     let quote: ReservedQuote = existing.rows[0];
     if (quote) {
       if (quote.plan !== plan) throw new ReferralError("close_existing_checkout_first");
       if (new Date(quote.expires_at) <= this.core.now()) {
-        if (quote.session_id) {
-          const session = await this.stripe.checkout.sessions.retrieve(quote.session_id);
-          if (session.status === "expired")
-            await this.core.expireSession(userId, quote.id, session.id);
-          else if (session.status === "open") {
-            await this.stripe.checkout.sessions.expire(session.id);
-            await this.core.expireSession(userId, quote.id, session.id);
-          } else throw new ReferralError("payment_reconciliation_required");
-          throw new ReferralError("checkout_expired_try_again");
-        }
-        // The provider may have accepted a timed-out create. Never open a new occurrence after key retention.
-        throw new ReferralError("checkout_recovery_required");
+        if (!(await this.settleExpired(quote as ReservedQuote & { buyer_id: number })))
+          throw new ReferralError("checkout_recovery_required");
+        // Settled: evaluate again (a new quote, or the ordinary price if the invitation expired).
+        return this.checkout(userId, plan, params);
       }
       if (quote.checkout_url) return { url: quote.checkout_url };
     } else {
       const price = await this.stripe.prices.retrieve(params.line_items[0].price);
       if (!price.active || price.currency !== "eur" || !Number.isSafeInteger(price.unit_amount))
-        throw new ReferralError("unsupported_referral_offer");
+        return ordinary("unsupported_price");
       let offer = price.unit_amount!;
       if (params.discounts?.length) {
         if (params.discounts.length !== 1 || !params.discounts[0].coupon)
-          throw new ReferralError("unsupported_referral_offer");
+          return ordinary("unsupported_offer");
         const coupon = await this.stripe.coupons.retrieve(params.discounts[0].coupon);
         if (
           !coupon.valid ||
@@ -217,38 +258,47 @@ export class ReferralStripe {
           (coupon.applies_to?.products?.length &&
             !coupon.applies_to.products.includes(reference(price.product)!))
         )
-          throw new ReferralError("unsupported_referral_offer");
+          return ordinary("unsupported_offer");
         offer -=
           coupon.percent_off != null
             ? Math.round((offer * coupon.percent_off) / 100)
             : (coupon.amount_off ?? 0);
       }
+      if (!referralQuote(price.unit_amount!, offer, price.currency))
+        return ordinary("price_too_small");
       const createdAt = this.core.now().getTime();
       const expiresAt = new Date(
         Math.min(params.expires_at ? params.expires_at * 1000 : Infinity, createdAt + 60 * 60000),
       );
-      const immutable = referralCheckoutParams(
-        {
-          ...params,
-          customer: customerId,
-          customer_email: undefined,
-          expires_at: Math.floor(expiresAt.getTime() / 1000),
-        },
-        this.core.environment.REFERRALS_CHECKOUT_MODEL,
-      );
-      delete immutable.customer_email;
-      // Stripe rejects even `false` when discounts is present. Omission uses
-      // its disabled default; this checkout has exactly the server coupon.
-      delete immutable.allow_promotion_codes;
-      quote = await this.core.reserve(userId, plan, {
-        priceId: price.id,
-        customerId,
-        base: price.unit_amount!,
-        offer,
-        currency: price.currency,
-        params: JSON.parse(JSON.stringify(immutable)),
-        expiresAt,
-      });
+      // Stripe requires 30 minutes measured on its own clock after two more requests; an offer
+      // that ends sooner keeps its own ordinary checkout and deadline handling.
+      if (expiresAt.getTime() < createdAt + MIN_CHECKOUT_MS) return ordinary("offer_ends_too_soon");
+      let immutable: Stripe.Checkout.SessionCreateParams;
+      try {
+        immutable = referralCheckoutParams(
+          { ...params, customer: customerId, expires_at: Math.floor(expiresAt.getTime() / 1000) },
+          this.core.environment.REFERRALS_CHECKOUT_MODEL,
+        );
+      } catch (error) {
+        if ((error as ReferralError).code === "unsupported_referral_offer")
+          return ordinary("unsupported_offer");
+        throw error;
+      }
+      try {
+        quote = await this.core.reserve(userId, plan, {
+          priceId: price.id,
+          customerId,
+          base: price.unit_amount!,
+          offer,
+          currency: price.currency,
+          params: JSON.parse(JSON.stringify(immutable)),
+          expiresAt,
+        });
+      } catch (error) {
+        if ((error as ReferralError).code === "invitation_not_eligible")
+          return ordinary("not_eligible");
+        throw error;
+      }
     }
     const saved = { ...quote.params } as Stripe.Checkout.SessionCreateParams & {
       referralQuoteId?: string;
@@ -294,12 +344,76 @@ export class ReferralStripe {
       { idempotencyKey: "ref-coupon-" + quote.id },
     );
     saved.discounts = [{ coupon: coupon.id }];
-    const session = await this.stripe.checkout.sessions.create(saved, {
-      idempotencyKey: "ref-checkout-" + quote.id,
-    });
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await this.stripe.checkout.sessions.create(saved, {
+        idempotencyKey: "ref-checkout-" + quote.id,
+      });
+    } catch (error) {
+      // A validation rejection is never stored under the idempotency key, and an earlier
+      // accepted attempt with this key would have been replayed instead: no session exists.
+      if ((error as { type?: string }).type === "StripeInvalidRequestError") {
+        await this.core.expireQuote(quote.id, null, "provider_rejected");
+        return null;
+      }
+      throw error;
+    }
     if (!session.url) throw new ReferralError("checkout_unavailable", 502);
     await this.core.saveSession(quote.id, session.id, session.url);
     return { url: session.url };
+  }
+
+  /** Finds the provider session of a quote whose creation response was lost. */
+  private async recoverSession(quote: ReservedQuote & { buyer_id: number }) {
+    if (quote.session_id) return quote.session_id;
+    let count = 0;
+    const matches: Stripe.Checkout.Session[] = [];
+    for await (const candidate of this.stripe.checkout.sessions.list({
+      customer: quote.customer_id,
+      limit: 100,
+    })) {
+      if (++count > 1000) throw new ReferralError("checkout_recovery_required");
+      if (candidate.metadata?.referral_quote === quote.id) matches.push(candidate);
+    }
+    if (!matches.length) return null;
+    const recovered = matches[0];
+    if (
+      matches.length !== 1 ||
+      recovered.metadata?.referral_policy !== REFERRAL_VERSION ||
+      recovered.metadata?.product !== "pctweaker" ||
+      Number(recovered.client_reference_id) !== quote.buyer_id ||
+      reference(recovered.customer) !== quote.customer_id
+    ) {
+      throw new ReferralError("payment_identity_review_required");
+    }
+    await this.core.db.query(
+      `UPDATE referral_quotes SET session_id=$2,state='open' WHERE id=$1
+      AND state='creating' AND session_id IS NULL`,
+      [quote.id, recovered.id],
+    );
+    quote.session_id = recovered.id;
+    return recovered.id;
+  }
+
+  /**
+   * Releases an expired quote once the provider shows nothing can still be paid: its session
+   * is expired (or is expired now), or no session exists past the quote's expiry plus a grace
+   * period. Returns false while uncertain; throws if a session completed.
+   */
+  private async settleExpired(quote: ReservedQuote & { buyer_id: number }) {
+    const sessionId = await this.recoverSession(quote);
+    if (!sessionId) {
+      if (this.core.now().getTime() < new Date(quote.expires_at).getTime() + RECOVERY_GRACE_MS)
+        return false;
+      await this.core.expireQuote(quote.id, null, "no_provider_session");
+      return true;
+    }
+    const session = await this.stripe.checkout.sessions.retrieve(sessionId);
+    if (session.status === "open") await this.stripe.checkout.sessions.expire(session.id);
+    else if (session.status !== "expired")
+      throw new ReferralError("payment_reconciliation_required");
+    await this.core.expireQuote(quote.id, session.id, "provider_expired");
+    return true;
   }
 
   private async inviterCards(userId: number) {
@@ -325,34 +439,15 @@ export class ReferralStripe {
     const accountId = await this.account();
     const quote = await this.core.quote(id);
     if (!quote) return null;
-    if (!quote.session_id) {
-      let count = 0;
-      const matches: Stripe.Checkout.Session[] = [];
-      for await (const candidate of this.stripe.checkout.sessions.list({
-        customer: quote.customer_id,
-        limit: 100,
-      })) {
-        if (++count > 1000) throw new ReferralError("checkout_recovery_required");
-        if (candidate.metadata?.referral_quote === id) matches.push(candidate);
-      }
-      if (matches.length !== 1) return null;
-      const recovered = matches[0];
+    if (!(await this.recoverSession(quote))) {
       if (
-        recovered.metadata?.referral_policy !== REFERRAL_VERSION ||
-        recovered.metadata?.product !== "pctweaker" ||
-        Number(recovered.client_reference_id) !== quote.buyer_id ||
-        reference(recovered.customer) !== quote.customer_id
-      ) {
-        throw new ReferralError("payment_identity_review_required");
-      }
-      await this.core.db.query(
-        `UPDATE referral_quotes SET session_id=$2,state='open' WHERE id=$1
-        AND state='creating' AND session_id IS NULL`,
-        [id, recovered.id],
-      );
-      quote.session_id = recovered.id;
+        quote.state === "creating" &&
+        this.core.now().getTime() >= new Date(quote.expires_at).getTime() + RECOVERY_GRACE_MS
+      )
+        await this.core.expireQuote(quote.id, null, "no_provider_session");
+      return null;
     }
-    const session = await this.stripe.checkout.sessions.retrieve(quote.session_id, {
+    const session = await this.stripe.checkout.sessions.retrieve(quote.session_id!, {
       expand: ["line_items"],
     });
     const expectedManaged =
@@ -362,7 +457,7 @@ export class ReferralStripe {
         .managed_payments?.enabled === true;
     if (expectedManaged !== actualManaged) throw new ReferralError("checkout_model_changed");
     if (session.status === "expired") {
-      await this.core.expireSession(quote.buyer_id, quote.id, session.id);
+      await this.core.expireQuote(quote.id, session.id, "provider_expired");
       return null;
     }
     if (
@@ -474,7 +569,15 @@ export class ReferralStripe {
   }
 
   async reconcileQuote(id: string) {
-    const payment = await this.paymentForQuote(id);
+    let payment: VerifiedReferralPayment | null;
+    try {
+      payment = await this.paymentForQuote(id);
+    } catch (error) {
+      // Permanent inconsistencies go to owner review instead of failing every retry.
+      if (!(error instanceof ReferralError) || !REVIEWABLE.has(error.code)) throw error;
+      await this.core.reviewQuote(id, error.code);
+      return;
+    }
     if (!payment) return;
     if (payment.state !== "paid")
       await this.core.blockPayment(
@@ -484,14 +587,6 @@ export class ReferralStripe {
       );
     const rewardId = await this.core.recordPayment(payment);
     if (rewardId) await this.core.mature(rewardId, payment);
-  }
-  async reconcileReward(userId: number, rewardId: string) {
-    const { rows } = await this.core.db.query(
-      "SELECT quote_id FROM referral_rewards WHERE id=$1 AND (inviter_id=$2 OR beneficiary_id=$2)",
-      [rewardId, userId],
-    );
-    if (!rows[0]) throw new ReferralError("reward_not_found", 404);
-    await this.reconcileQuote(rows[0].quote_id);
   }
 }
 
@@ -518,10 +613,12 @@ export async function referralCheckout(
 }
 
 /** Called after signature verification, not exposed to unauthenticated JSON posts. */
-export async function referralWebhook(event: Stripe.Event) {
-  const gateway = referralStripe();
+export async function referralWebhook(
+  event: Stripe.Event,
+  gateway: ReferralStripe | null = referralStripe(),
+) {
   if (!gateway) return;
-  if (!gateway.core.enabled() && !process.env.REFERRALS_HASH_KEY) return;
+  if (!gateway.core.enabled() && !gateway.core.environment.REFERRALS_HASH_KEY) return;
   const expectedMode = !(
     gateway.core.environment.NODE_ENV === "test" &&
     gateway.core.environment.REFERRALS_TEST_MODE === "true"
@@ -548,35 +645,45 @@ export async function referralWebhook(event: Stripe.Event) {
     event.type === "checkout.session.async_payment_succeeded"
   ) {
     const session = event.data.object as Stripe.Checkout.Session;
-    if (session.metadata?.referral_quote)
-      await gateway.reconcileQuote(session.metadata.referral_quote);
+    if (!session.metadata?.referral_quote) return;
+    await gateway.reconcileQuote(session.metadata.referral_quote);
   } else if (event.type === "invoice.paid") {
     const invoice = event.data.object as Invoice;
+    // Only the first invoice can carry a referral; renewals never reach the provider here.
+    if (invoice.billing_reason !== "subscription_create") return;
     const subscriptionId = reference(
       invoice.parent?.subscription_details?.subscription ?? invoice.subscription,
     );
     if (!subscriptionId) return;
-    const subscription = await gateway.stripe.subscriptions.retrieve(subscriptionId);
-    if (subscription.metadata.referral_quote)
-      await gateway.reconcileQuote(subscription.metadata.referral_quote);
-  } else if (
-    ["charge.refunded", "charge.dispute.created", "charge.dispute.closed"].includes(event.type)
-  ) {
+    const quoteId =
+      invoice.parent?.subscription_details?.metadata?.referral_quote ??
+      (await gateway.stripe.subscriptions.retrieve(subscriptionId)).metadata.referral_quote;
+    if (!quoteId) return;
+    await gateway.reconcileQuote(quoteId);
+  } else {
     const item = event.data.object as Stripe.Charge | Stripe.Dispute;
     const paymentId = reference(item.payment_intent);
     if (!paymentId) return;
-    const expectedMode = !(
-      gateway.core.environment.NODE_ENV === "test" &&
-      gateway.core.environment.REFERRALS_TEST_MODE === "true"
+    // Refunds and disputes of other products and of non-referral purchases are ignored without
+    // a provider call. One that arrives before its referral sale is caught when that sale is
+    // recorded and again at maturity, both of which re-read the charge and its disputes.
+    const known = await gateway.core.db.query(
+      "SELECT 1 FROM referral_rewards WHERE payment_id=$1",
+      [paymentId],
     );
-    if (event.livemode !== expectedMode) return;
+    if (!known.rowCount) return;
     await gateway.account();
-    const terminal =
-      event.type === "charge.refunded"
-        ? (item as Stripe.Charge).refunded
-        : (item as Stripe.Dispute).status === "lost";
-    // Conservative holds also cover a reversal that arrives before the purchase event.
-    await gateway.core.blockPayment(paymentId, terminal ? "revoked" : "hold", event.type);
+    const status = event.type === "charge.dispute.closed" ? (item as Stripe.Dispute).status : null;
+    if (status === "won" || status === "warning_closed")
+      await gateway.core.releaseDisputeHold(paymentId);
+    else
+      await gateway.core.blockPayment(
+        paymentId,
+        (event.type === "charge.refunded" && (item as Stripe.Charge).refunded) || status === "lost"
+          ? "revoked"
+          : "hold",
+        event.type,
+      );
   }
   // Written only after all effects succeed. Concurrent deliveries are also protected by
   // payment/quote uniqueness; a failed attempt remains retryable by the provider.
@@ -588,9 +695,10 @@ export async function referralWebhook(event: Stripe.Event) {
 }
 
 export async function runReferralReconciliation(
-  gateway: ReferralStripe,
+  gateway: Pick<ReferralStripe, "core" | "reconcileQuote">,
   stopped: () => boolean = () => false,
 ) {
+  await gateway.core.cleanup();
   const { rows } = await gateway.core.db
     .query(`SELECT q.id FROM referral_quotes q LEFT JOIN referral_rewards r ON r.quote_id=q.id
     WHERE ((q.state IN ('creating','open') AND q.expires_at < now()) OR (r.state='pending' AND r.eligible_at <= now()))

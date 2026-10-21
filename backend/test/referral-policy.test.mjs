@@ -120,8 +120,38 @@ test("extra 10 percent uses integer cents after an existing offer", () => {
     [50, 50, "eur"],
     [NaN, 500, "eur"],
   ]) {
-    assert.throws(() => policy.referralQuote(...args));
+    // Not a server error: the caller falls back to the ordinary checkout price.
+    assert.equal(policy.referralQuote(...args), null);
   }
+});
+test("R5: one invitation per person ignores +tags and Gmail dots", () => {
+  for (const [input, expected] of [
+    [" Buyer+1@Example.com ", "buyer@example.com"],
+    ["j.doe+promo@googlemail.com", "jdoe@gmail.com"],
+    ["J.Doe@gmail.com", "jdoe@gmail.com"],
+    ["j.doe@example.com", "j.doe@example.com"],
+  ])
+    assert.equal(policy.canonicalEmail(input), expected);
+  assert.equal(policy.HOLD_DAYS, 120);
+  assert.equal(policy.INVITER_CAP, 6);
+});
+test("R1: a referral session on an existing customer is valid for Stripe in both models", async () => {
+  const { referralCheckoutParams } = await import("../dist/referral-stripe.js");
+  // What createCheckoutHandler sends for a Lifetime buyer without a Stripe customer yet.
+  const ordinary = {
+    mode: "payment",
+    customer: "cus_created_for_referral",
+    customer_email: "buyer@example.com",
+    customer_creation: "always",
+    automatic_tax: { enabled: true },
+  };
+  const direct = referralCheckoutParams(ordinary, "direct");
+  assert.deepEqual(direct.customer_update, { address: "auto" });
+  assert.equal(Object.hasOwn(direct, "customer_creation"), false);
+  assert.equal(Object.hasOwn(direct, "customer_email"), false);
+  const managed = referralCheckoutParams(ordinary, "managed");
+  assert.equal(Object.hasOwn(managed, "customer_creation"), false);
+  assert.equal(Object.hasOwn(managed, "customer_update"), false);
 });
 test("bonus durations clamp the end of calendar months and leap days", () => {
   assert.equal(

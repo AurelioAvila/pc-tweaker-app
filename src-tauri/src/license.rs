@@ -101,6 +101,30 @@ pub struct SignedLicenseResponse {
     pub signature: String,
 }
 
+/// What `LicenseStore` writes: the response exactly as received, plus when
+/// this PC received it. `issuedAt` is the server's clock at that moment, so
+/// the pair says how far this PC's clock is off. Files written before this
+/// field existed read as "no offset known", i.e. the old behaviour.
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StoredLicense {
+    #[serde(flatten)]
+    response: SignedLicenseResponse,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    received_at: Option<u64>,
+}
+
+/// Seconds to add to this PC's clock to read the server's, as seen when the
+/// licence arrived. Clamped to the skew allowance: a PC a day ahead keeps the
+/// last day of its trial or period, and an edited `receivedAt` can gain no
+/// more than setting the clock back a day already does.
+fn clock_offset(issued_at: u64, received_at: u64) -> i64 {
+    let skew = MAX_CLOCK_SKEW_SECS as i64;
+    (issued_at as i64)
+        .saturating_sub(received_at as i64)
+        .clamp(-skew, skew)
+}
+
 #[derive(Debug, PartialEq)]
 pub enum VerifyError {
     BadPublicKey,
@@ -156,10 +180,19 @@ fn verified_fresh_response(
     response: &SignedLicenseResponse,
     public_key_b64: &str,
 ) -> Option<LicensePayload> {
+    verified_fresh_response_received(response, public_key_b64, None)
+}
+
+fn verified_fresh_response_received(
+    response: &SignedLicenseResponse,
+    public_key_b64: &str,
+    received_at: Option<u64>,
+) -> Option<LicensePayload> {
     let verified =
         verify_with_public_key(&response.payload_json, &response.signature, public_key_b64).ok()?;
     let payload = require_pc_tweaker_product(verified).ok()?;
-    is_fresh(&payload).then_some(payload)
+    let offset = received_at.map_or(0, |received| clock_offset(payload.issued_at, received));
+    is_fresh_with_offset(&payload, offset).then_some(payload)
 }
 
 fn require_pc_tweaker_product(payload: LicensePayload) -> Result<LicensePayload, VerifyError> {
@@ -185,6 +218,12 @@ fn now_secs() -> u64 {
 /// three weeks ago proves the server said something true three weeks ago,
 /// not that it is still true now.
 fn is_fresh(payload: &LicensePayload) -> bool {
+    is_fresh_with_offset(payload, 0)
+}
+
+/// `is_fresh`, with this PC's clock moved by `offset` seconds onto the
+/// server's (see `clock_offset`).
+fn is_fresh_with_offset(payload: &LicensePayload, offset: i64) -> bool {
     // Once the process is running, moving the wall clock backwards must not
     // extend the offline window. A persisted, device-bound clock anchor is a
     // separate license-format migration; this does not claim to prevent an
@@ -193,7 +232,7 @@ fn is_fresh(payload: &LicensePayload) -> bool {
     let wall_now = now_secs();
     let (anchor_time, anchor_tick) = ANCHOR.get_or_init(|| (wall_now, Instant::now()));
     let effective_now = wall_now.max(anchor_time.saturating_add(anchor_tick.elapsed().as_secs()));
-    is_fresh_at(payload, effective_now)
+    is_fresh_at(payload, effective_now.saturating_add_signed(offset))
 }
 
 fn grace_period(payload: &LicensePayload) -> u64 {
@@ -231,7 +270,11 @@ impl LicenseStore {
         if let Some(parent) = self.file_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        let json = serde_json::to_string_pretty(response).unwrap();
+        let stored = StoredLicense {
+            response: response.clone(),
+            received_at: Some(now_secs()),
+        };
+        let json = serde_json::to_string_pretty(&stored).unwrap();
         let tmp = self
             .file_path
             .with_extension(format!("json.{}.tmp", std::process::id()));
@@ -244,6 +287,10 @@ impl LicenseStore {
     }
 
     fn load(&self) -> Option<SignedLicenseResponse> {
+        self.load_stored().map(|stored| stored.response)
+    }
+
+    fn load_stored(&self) -> Option<StoredLicense> {
         let text = std::fs::read_to_string(&self.file_path).ok()?;
         serde_json::from_str(&text).ok()
     }
@@ -274,7 +321,8 @@ impl LicenseStore {
     /// verifies the signature, product binding, and existing offline window.
     /// A plan supplied by the renderer never participates in entitlement.
     pub fn verified_fresh_payload(&self) -> Option<LicensePayload> {
-        verified_fresh_response(&self.load()?, PUBLIC_KEY_B64)
+        let stored = self.load_stored()?;
+        verified_fresh_response_received(&stored.response, PUBLIC_KEY_B64, stored.received_at)
     }
 }
 
@@ -287,7 +335,8 @@ impl LicenseStore {
 pub fn save_license(app: tauri::AppHandle, response: SignedLicenseResponse) -> Result<(), String> {
     let payload = verify_for_pc_tweaker(&response.payload_json, &response.signature)
         .map_err(|e| format!("license did not verify: {:?}", e))?;
-    if !is_fresh(&payload) {
+    // Received just now: `issuedAt` says where the server's clock is.
+    if !is_fresh_with_offset(&payload, clock_offset(payload.issued_at, now_secs())) {
         return Err("license is expired or its issue time is ahead of this PC's clock".into());
     }
     let store = LicenseStore::new(crate::store_for_dir(&app)?);
@@ -518,6 +567,69 @@ mod tests {
         store.save(&resp).unwrap();
         let loaded = store.load().unwrap();
         assert_eq!(loaded.payload_json, resp.payload_json);
+    }
+
+    #[test]
+    fn a_pc_a_day_ahead_keeps_the_last_day_of_a_trial() {
+        // Signed an hour before the trial ends; this PC's clock says a day later.
+        let issued = 1_800_000_000;
+        let payload = LicensePayload {
+            user_id: "1".into(),
+            is_pro: true,
+            plan: Some("monthly".into()),
+            product: Some(PRODUCT_ID.into()),
+            issued_at: issued,
+            expires_at: Some(issued + 3600),
+        };
+        let pc_now = issued + 24 * 60 * 60;
+        assert!(
+            !is_fresh_at(&payload, pc_now),
+            "on this PC's own clock the trial looks over"
+        );
+        let offset = clock_offset(issued, pc_now);
+        assert!(is_fresh_at(&payload, pc_now.saturating_add_signed(offset)));
+        // Half an hour later the trial still has half an hour left.
+        assert!(is_fresh_at(
+            &payload,
+            (pc_now + 1800).saturating_add_signed(offset)
+        ));
+        assert!(!is_fresh_at(
+            &payload,
+            (pc_now + 3600).saturating_add_signed(offset)
+        ));
+        // An edited cache cannot buy more than the one-day allowance.
+        assert_eq!(
+            clock_offset(issued, issued + 30 * 24 * 60 * 60),
+            -(MAX_CLOCK_SKEW_SECS as i64)
+        );
+        assert_eq!(
+            clock_offset(issued + 30 * 24 * 60 * 60, issued),
+            MAX_CLOCK_SKEW_SECS as i64
+        );
+        assert_eq!(clock_offset(issued, issued - 120), 120);
+    }
+
+    #[test]
+    fn the_store_records_when_a_licence_arrived_and_reads_older_files() {
+        let dir = temp_dir("received");
+        let store = LicenseStore::new(dir.clone());
+        let resp = SignedLicenseResponse {
+            payload_json: "{}".into(),
+            signature: "irrelevant-for-this-test".into(),
+        };
+        store.save(&resp).unwrap();
+        let stored = store.load_stored().unwrap();
+        assert!(stored
+            .received_at
+            .is_some_and(|t| t.abs_diff(now_secs()) < 60));
+        std::fs::write(
+            dir.join("license.json"),
+            r#"{"payloadJson":"{}","signature":"x"}"#,
+        )
+        .unwrap();
+        let legacy = store.load_stored().unwrap();
+        assert_eq!(legacy.received_at, None);
+        assert_eq!(legacy.response.signature, "x");
     }
 
     #[test]

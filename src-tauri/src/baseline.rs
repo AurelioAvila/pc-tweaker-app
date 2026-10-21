@@ -225,7 +225,8 @@ fn launch_ms() -> Option<f64> {
             .stdout(Stdio::null())
             .stderr(Stdio::null());
         let start = Instant::now();
-        let status = command.status()?;
+        let status =
+            crate::system_tools::output_within(command, crate::system_tools::QUICK)?.status;
         Ok(status
             .success()
             .then(|| start.elapsed().as_secs_f64() * 1000.0))

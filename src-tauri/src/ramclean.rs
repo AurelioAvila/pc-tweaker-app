@@ -77,7 +77,7 @@ pub(crate) fn run_elevated(dir: &std::path::Path) -> Result<(), String> {
     // Written beside the target and moved over it, so a link planted at the
     // result's name is replaced rather than followed by an administrator.
     let temp = dir.join(format!("{RESULT_FILE}.{}.tmp", std::process::id()));
-    std::fs::write(&temp, json).map_err(|e| e.to_string())?;
+    crate::elevation::write_no_follow(&temp, json).map_err(|e| e.to_string())?;
     crate::rollback::replace_file(&temp, &dir.join(RESULT_FILE)).map_err(|e| {
         let _ = std::fs::remove_file(&temp);
         e.to_string()

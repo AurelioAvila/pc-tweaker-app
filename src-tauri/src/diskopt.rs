@@ -27,8 +27,9 @@ mod imp {
 
         let output = crate::system_tools::run("defrag", |tool| {
             tool.args([drive, "/O", "/H"])
-                .creation_flags(CREATE_NO_WINDOW)
-                .output()
+                .creation_flags(CREATE_NO_WINDOW);
+            // An HDD defragmentation legitimately takes hours.
+            crate::system_tools::output_within(tool, crate::system_tools::LONG)
         })
         .map_err(|e| format!("could not run defrag: {}", e))?;
 

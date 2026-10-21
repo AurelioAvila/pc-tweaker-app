@@ -61,7 +61,8 @@ mod imp {
 
     fn smi(args: &[&str]) -> Option<String> {
         let out = crate::system_tools::run("nvidia-smi", |tool| {
-            tool.args(args).creation_flags(CREATE_NO_WINDOW).output()
+            tool.args(args).creation_flags(CREATE_NO_WINDOW);
+            crate::system_tools::output_within(tool, crate::system_tools::QUICK)
         })
         .ok()?;
         if !out.status.success() {
@@ -139,7 +140,8 @@ mod imp {
 
         let run = |args: &[&str]| -> Result<(), String> {
             let out = crate::system_tools::run("nvidia-smi", |tool| {
-                tool.args(args).creation_flags(CREATE_NO_WINDOW).output()
+                tool.args(args).creation_flags(CREATE_NO_WINDOW);
+                crate::system_tools::output_within(tool, crate::system_tools::QUICK)
             })
             .map_err(|e| format!("could not run nvidia-smi: {}", e))?;
             if out.status.success() {

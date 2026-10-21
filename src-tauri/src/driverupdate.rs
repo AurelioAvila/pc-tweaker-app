@@ -101,11 +101,11 @@ mod imp {
     /// service alone returns only Microsoft's own content on many machines.
     const MICROSOFT_UPDATE_SERVICE: &str = "7971f918-a847-4430-9279-4a52d1efe18d";
 
-    fn run_ps(script: &str) -> Result<String, String> {
+    fn run_ps(script: &str, timeout: std::time::Duration) -> Result<String, String> {
         let output = crate::system_tools::run("powershell", |tool| {
             tool.args(["-NoProfile", "-NonInteractive", "-Command", script])
-                .creation_flags(CREATE_NO_WINDOW)
-                .output()
+                .creation_flags(CREATE_NO_WINDOW);
+            crate::system_tools::output_within(tool, timeout)
         })
         .map_err(|e| format!("could not run PowerShell: {}", e))?;
         let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
@@ -134,7 +134,8 @@ mod imp {
             svc = MICROSOFT_UPDATE_SERVICE
         );
 
-        match run_ps(&script) {
+        // A first Windows Update search on a fresh system takes minutes.
+        match run_ps(&script, std::time::Duration::from_secs(600)) {
             Ok(raw) if !raw.is_empty() => match serde_json::from_str::<serde_json::Value>(&raw) {
                 Ok(v) => {
                     let error = v
@@ -239,7 +240,8 @@ mod imp {
             titles_b64 = titles_b64
         );
 
-        let raw = run_ps(&script)?;
+        // Downloading and installing drivers legitimately takes a long time.
+        let raw = run_ps(&script, crate::system_tools::LONG)?;
         let requested = titles
             .iter()
             .collect::<std::collections::HashSet<_>>()

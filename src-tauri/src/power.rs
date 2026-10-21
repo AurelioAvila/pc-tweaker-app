@@ -2,6 +2,9 @@ use crate::rollback::{RollbackStore, SnapshotEntry};
 
 pub const TWEAK_ID: &str = "power_plan_performance";
 pub const HIGH_PERFORMANCE_GUID: &str = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c";
+/// Balanced ships with every Windows installation and cannot be deleted from
+/// the Control Panel: the restore target when the original plan is gone.
+pub const BALANCED_GUID: &str = "381b4222-f694-41f0-9685-ff5bb260df2e";
 
 /// The power-plan operations this tweak, Turbo Gaming's plan switch and the
 /// processor settings in gaming.rs are built from. Production code reaches
@@ -14,6 +17,8 @@ pub(crate) trait PowerPlans {
     /// Makes `guid` the active scheme. Activating the scheme that is already
     /// active is how Windows applies index changes made to it.
     fn activate(&self, guid: &str) -> Result<(), String>;
+    /// Whether a plan with this GUID still exists.
+    fn plan_exists(&self, guid: &str) -> Result<bool, String>;
     /// The index one setting has in effect in `scheme`: the plan's own
     /// override, or the default it inherits when there is none.
     fn read_index(&self, scheme: &str, subgroup: &str, setting: &str, ac: bool)
@@ -53,6 +58,10 @@ impl PowerPlans for WinPowerPlans {
         // SAFETY: `scheme` lives on this frame for the whole call and is only
         // read. A null root key selects the system power policy store.
         checked(unsafe { PowerSetActiveScheme(std::ptr::null_mut(), &scheme) })
+    }
+
+    fn plan_exists(&self, guid: &str) -> Result<bool, String> {
+        crate::power_tuning::native::scheme_exists(guid)
     }
 
     fn read_index(&self, scheme: &str, subgroup: &str, setting: &str, ac: bool)
@@ -258,9 +267,27 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
             return Err("unexpected snapshot type for the power plan".to_string());
         };
 
-        activate_scheme(&previous_guid)?;
-        if !active_scheme_guid()?.eq_ignore_ascii_case(&previous_guid) {
+        // A plan deleted or recreated under another GUID (vendor tools,
+        // a Windows upgrade) can never come back: Balanced is restored rather
+        // than leaving the tweak applied and "Restore all" failing forever.
+        let target = if with_plans(|plans| plans.plan_exists(&previous_guid))? {
+            previous_guid.as_str()
+        } else {
+            BALANCED_GUID
+        };
+        activate_scheme(target)?;
+        if !active_scheme_guid()?.eq_ignore_ascii_case(target) {
             return Err("the previous power plan could not be verified".into());
+        }
+        if target != previous_guid && !cfg!(test) {
+            crate::audit::record(
+                "power-plan-fallback",
+                TWEAK_ID,
+                true,
+                Some(format!(
+                    "the original plan {previous_guid} no longer exists; Balanced was restored"
+                )),
+            );
         }
         Ok(())
     })
@@ -292,7 +319,7 @@ pub(crate) mod tests {
     use std::cell::{Cell, RefCell};
     use std::rc::Rc;
 
-    pub(crate) const BALANCED: &str = "381b4222-f694-41f0-9685-ff5bb260df2e";
+    pub(crate) const BALANCED: &str = BALANCED_GUID;
     pub(crate) const POWER_SAVER: &str = "a1841308-3541-4fab-bc81-f71556f20b4a";
     /// What a setting with no override in a fake plan reads as in effect.
     pub(crate) const INHERITED_DEFAULT: u32 = 7;
@@ -340,6 +367,10 @@ pub(crate) mod tests {
                 self.activations.set(self.activations.get() + 1);
             }
             Ok(())
+        }
+
+        fn plan_exists(&self, guid: &str) -> Result<bool, String> {
+            Ok(self.exists(guid).is_ok())
         }
 
         fn read_index(&self, scheme: &str, subgroup: &str, setting: &str, ac: bool)
@@ -486,10 +517,26 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn a_deleted_original_plan_falls_back_to_balanced_and_clears_the_journal() {
+        const CUSTOM: &str = "11111111-2222-3333-4444-555555555555";
+        let machine = machine();
+        let fixture = Fixture::new();
+        machine.recreate_plan(CUSTOM);
+        machine.switch_to(CUSTOM);
+        apply(&fixture.store).unwrap();
+        assert_eq!(journaled_plan(&fixture).as_deref(), Some(CUSTOM));
+        machine.delete_plan(CUSTOM);
+        rollback(&fixture.store).unwrap();
+        assert_eq!(machine.active(), BALANCED);
+        assert!(!fixture.store.is_applied(TWEAK_ID));
+    }
+
+    #[test]
     fn a_failed_restore_keeps_the_journal_for_a_retry() {
         let machine = machine();
         let fixture = Fixture::new();
         apply(&fixture.store).unwrap();
+        // Neither the original plan nor the Balanced fallback exists.
         machine.delete_plan(BALANCED);
         assert!(rollback(&fixture.store).is_err());
         assert!(fixture.store.is_applied(TWEAK_ID));

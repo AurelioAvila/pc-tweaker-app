@@ -62,6 +62,10 @@ impl ProfileStore {
     /// rejected, so a user naming a profile "Gaming / 2026" still gets a
     /// profile instead of an error.
     fn file_for(&self, name: &str) -> PathBuf {
+        self.dir.join(format!("{}.json", Self::stem(name)))
+    }
+
+    fn stem(name: &str) -> String {
         let safe: String = name
             .chars()
             .map(|c| {
@@ -72,7 +76,58 @@ impl ProfileStore {
                 }
             })
             .collect();
-        self.dir.join(format!("{}.json", safe.trim()))
+        safe.trim().to_string()
+    }
+
+    /// The file holding the profile with exactly this name, whatever file
+    /// name it was given. Different names can sanitize to the same file name
+    /// ("A/B" and "A_B", or "Gaming" and "gaming" on NTFS), so the stored
+    /// name, never the file name, says which profile a file is.
+    fn find(&self, name: &str) -> Option<PathBuf> {
+        let wanted = name.trim();
+        fs::read_dir(&self.dir)
+            .ok()?
+            .flatten()
+            .map(|e| e.path())
+            .filter(|p| p.extension().is_some_and(|x| x == "json"))
+            .find(|p| {
+                fs::read_to_string(p)
+                    .ok()
+                    .and_then(|text| serde_json::from_str::<TweakProfile>(&text).ok())
+                    .is_some_and(|stored| stored.name.trim() == wanted)
+            })
+    }
+
+    /// Saving a name that exists replaces that profile; a new name never
+    /// lands on another profile's file: " (2)", " (3)"... are tried instead.
+    fn save(&self, profile: &TweakProfile) -> Result<(), String> {
+        if profile.name.trim().is_empty() {
+            return Err("a profile needs a name".to_string());
+        }
+        fs::create_dir_all(&self.dir).map_err(|e| e.to_string())?;
+        let path = match self.find(&profile.name) {
+            Some(existing) => existing,
+            None => {
+                let stem = Self::stem(&profile.name);
+                (1..1000)
+                    .map(|n| match n {
+                        1 => self.file_for(&profile.name),
+                        n => self.dir.join(format!("{stem} ({n}).json")),
+                    })
+                    .find(|p| !p.exists())
+                    .ok_or("too many profiles with a similar name")?
+            }
+        };
+        let json = serde_json::to_string_pretty(profile).map_err(|e| e.to_string())?;
+        fs::write(path, json).map_err(|e| e.to_string())
+    }
+
+    /// Removes only the profile with this exact name.
+    fn delete(&self, name: &str) -> Result<(), String> {
+        match self.find(name) {
+            Some(path) => fs::remove_file(path).map_err(|e| e.to_string()),
+            None => Ok(()),
+        }
     }
 }
 
@@ -141,13 +196,7 @@ pub fn capture_profile(name: String, app: tauri::AppHandle) -> Result<TweakProfi
 
 #[tauri::command(async)]
 pub fn save_profile(profile: TweakProfile, app: tauri::AppHandle) -> Result<(), String> {
-    let profiles = ProfileStore::new(crate::store_for_dir(&app)?);
-    if profile.name.trim().is_empty() {
-        return Err("a profile needs a name".to_string());
-    }
-    fs::create_dir_all(&profiles.dir).map_err(|e| e.to_string())?;
-    let json = serde_json::to_string_pretty(&profile).map_err(|e| e.to_string())?;
-    fs::write(profiles.file_for(&profile.name), json).map_err(|e| e.to_string())
+    ProfileStore::new(crate::store_for_dir(&app)?).save(&profile)
 }
 
 #[tauri::command(async)]
@@ -172,12 +221,7 @@ pub fn list_profiles(app: tauri::AppHandle) -> Result<Vec<TweakProfile>, String>
 
 #[tauri::command(async)]
 pub fn delete_profile(name: String, app: tauri::AppHandle) -> Result<(), String> {
-    let profiles = ProfileStore::new(crate::store_for_dir(&app)?);
-    let path = profiles.file_for(&name);
-    if path.exists() {
-        fs::remove_file(path).map_err(|e| e.to_string())?;
-    }
-    Ok(())
+    ProfileStore::new(crate::store_for_dir(&app)?).delete(&name)
 }
 
 /// Serializes a profile for writing to a file the user picks.
@@ -269,6 +313,44 @@ mod tests {
         })
         .to_string();
         assert!(import_profile(future).is_err());
+    }
+
+    fn named(name: &str, tweaks: &[&str]) -> TweakProfile {
+        TweakProfile {
+            format: PROFILE_FORMAT,
+            name: name.into(),
+            created_at: "1700000000".into(),
+            tweaks: tweaks.iter().map(|t| t.to_string()).collect(),
+        }
+    }
+
+    #[test]
+    fn similar_names_never_share_a_file_and_delete_takes_only_the_named_one() {
+        let dir = std::env::temp_dir().join(format!("pct-profiles-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        let store = ProfileStore::new(dir.clone());
+        store.save(&named("A/B", &["one"])).unwrap();
+        store.save(&named("A_B", &["two"])).unwrap();
+        store.save(&named("Gaming", &["three"])).unwrap();
+        store.save(&named("gaming", &["four"])).unwrap();
+        // Saving an existing name replaces that profile, not a new file.
+        store.save(&named("A/B", &["one", "updated"])).unwrap();
+        let read = |name: &str| -> Vec<String> {
+            let path = store.find(name).expect(name);
+            serde_json::from_str::<TweakProfile>(&fs::read_to_string(path).unwrap())
+                .unwrap()
+                .tweaks
+        };
+        assert_eq!(read("A/B"), ["one", "updated"]);
+        assert_eq!(read("A_B"), ["two"]);
+        assert_eq!(read("Gaming"), ["three"]);
+        assert_eq!(read("gaming"), ["four"]);
+        assert_eq!(fs::read_dir(&store.dir).unwrap().count(), 4);
+        store.delete("A_B").unwrap();
+        assert!(store.find("A_B").is_none());
+        assert_eq!(read("A/B"), ["one", "updated"]);
+        store.delete("never saved").unwrap();
+        fs::remove_dir_all(&dir).unwrap();
     }
 
     /// Profile names reach the filesystem, so they must not be able to walk

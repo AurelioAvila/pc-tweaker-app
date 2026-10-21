@@ -67,6 +67,10 @@ windows-sys = { version = "0.59", features = [
     # name the process it is reporting on instead of guessing.
     "Win32_UI_WindowsAndMessaging",
     "Win32_UI_Shell",
+    # Orderly Explorer restart for the classic context menu (contextmenu.rs).
+    "Win32_System_RestartManager",
+    # CoInitializeEx before ShellExecuteExW in the UAC relaunch (elevation.rs).
+    "Win32_System_Com",
     # NtSetSystemInformation, for the standby-list purge in the Zero-Trace
     # cleaner. Declared via LoadLibrary rather than linked, same as srclient.
     "Win32_Security",
@@ -108,7 +112,6 @@ windows-sys = { version = "0.59", features = [
     "Win32_Storage_FileSystem",
 ] }
 is_elevated = "0.1"
-runas = "1"
 # Wmi and Variant: the TCP congestion provider through MSFT_NetTCPSetting
 # (src/netshaper.rs), and the qualifier arrays that name its values.
 windows = { version = "0.58", features = ["Management_Deployment", "Foundation_Collections", "ApplicationModel", "Win32_System_Com", "Win32_System_Wmi", "Win32_System_Variant", "Win32_UI_Shell", "Win32_Storage_FileSystem"] }

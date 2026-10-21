@@ -219,7 +219,8 @@ mod imp {
     /// denied is the one failure this screen must never have.
     fn schtasks(args: &[&str], tolerate_partial: bool) -> Result<Vec<u8>, String> {
         let output = crate::system_tools::run("schtasks", |tool| {
-            tool.args(args).creation_flags(CREATE_NO_WINDOW).output()
+            tool.args(args).creation_flags(CREATE_NO_WINDOW);
+            crate::system_tools::output_within(tool, crate::system_tools::SLOW)
         })
         .map_err(|e| format!("could not run schtasks: {}", e))?;
 

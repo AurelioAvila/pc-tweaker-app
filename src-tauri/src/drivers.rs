@@ -147,15 +147,25 @@ mod imp {
     ];
 
     fn run_ps(script: &str, scan: Option<u64>) -> Result<String, String> {
+        let deadline = std::time::Instant::now() + crate::system_tools::SLOW;
         let output = crate::system_tools::run("powershell", |tool| {
             crate::system_tools::output_unless(
                 tool.args(["-NoProfile", "-NonInteractive", "-Command", script])
                     .creation_flags(CREATE_NO_WINDOW),
-                &|| stale(scan),
+                &|| stale(scan) || std::time::Instant::now() >= deadline,
             )
         })
         .map_err(|e| format!("could not run PowerShell: {}", e))?
-        .ok_or_else(|| SCAN_CANCELLED.to_string())?;
+        .ok_or_else(|| {
+            if stale(scan) {
+                SCAN_CANCELLED.to_string()
+            } else {
+                format!(
+                    "Windows did not answer the driver query within {} s",
+                    crate::system_tools::SLOW.as_secs()
+                )
+            }
+        })?;
         if !output.status.success() {
             return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
         }

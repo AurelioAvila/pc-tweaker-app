@@ -21,8 +21,8 @@ const ORIGIN = "https://pctweaker.app";
 
 export function getRouteImage(seo: RouteSeo) {
   return {
-    url: seo.image ?? `${ORIGIN}/og-cover-20261011.png`,
-    alt: seo.imageAlt ?? "PC Tweaker Profiles: editable Gaming, Study and Work presets",
+    url: seo.image ?? `${ORIGIN}/og-pc-tweaker-b1c4973bdc.png`,
+    alt: seo.imageAlt ?? "PC Tweaker showing exactly which Windows setting a tweak changes and the value it sets",
   };
 }
 
@@ -44,8 +44,8 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
       "Review a Windows uninstall before it runs: inspect its risk score, command and permissions, then check restore-point status and the local removal receipt.",
     canonical: `${ORIGIN}/uninstaller/`,
     ogType: "website",
-    image: `${ORIGIN}/uninstaller/social-card.jpg`,
-    imageAlt: "PC Tweaker Uninstaller: review the removal risk, command and permissions, then keep the local receipt.",
+    image: `${ORIGIN}/uninstaller/og-uninstaller-90050e2eac.png`,
+    imageAlt: "PC Tweaker Uninstaller showing the exact uninstall command and permissions before anything runs",
   },
   // A guide's on-page H1 and intro are written for someone already reading it;
   // the title and description are written for someone deciding whether to click
@@ -165,7 +165,7 @@ const homeApp = {
   "downloadUrl": "https://dl.pctweaker.app/pc-tweaker/PCTweaker-Setup.exe",
   "description": "Windows tuning for gaming, privacy and maintenance, with visible setting changes and restore tools for supported tweaks.",
   "url": "https://pctweaker.app/",
-  "image": "https://pctweaker.app/og-cover-20261011.png",
+  "image": "https://pctweaker.app/og-pc-tweaker-b1c4973bdc.png",
   "sameAs": [
     "https://github.com/AurelioAvila/pc-tweaker-app",
     "https://apps.microsoft.com/detail/9nh3c6dt1g87",
@@ -195,7 +195,7 @@ const uninstallerApp = {
   applicationCategory: "UtilitiesApplication",
   downloadUrl: UNINSTALLER_DOWNLOAD_EXE,
   url: `${ORIGIN}/uninstaller/`,
-  image: `${ORIGIN}/uninstaller/social-card.jpg`,
+  image: `${ORIGIN}/uninstaller/og-uninstaller-90050e2eac.png`,
   screenshot: ["inventory", "removal-brief", "ledger"].map((name) => ({
     "@type": "ImageObject",
     contentUrl: `${ORIGIN}/uninstaller/images/${name}-0.13.3.png`,

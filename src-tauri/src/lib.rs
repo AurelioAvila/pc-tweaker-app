@@ -2515,7 +2515,8 @@ pub fn run() {
             process_guard::process_guard_status,
             process_guard::set_process_guard,
             process_guard::set_process_guard_hold,
-            is_store_install
+            is_store_install,
+            tray::set_tray_language
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

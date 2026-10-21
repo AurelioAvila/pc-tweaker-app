@@ -144,6 +144,8 @@ function App() {
     // European Portuguese only (owner decision, 11 Oct 2026): dates and
     // numbers use the pt-PT conventions, not the Brazilian ones.
     document.documentElement.lang = localeOf(lang) ?? "en";
+    // The notification-area menu speaks the window's language.
+    void invoke("set_tray_language", { language: lang }).catch(() => {});
   }, [lang]);
 
   const [auth, setAuth] = useState<AuthState>(() => {

@@ -59,5 +59,5 @@
       "caption": "Start from a Gaming, Study or Work profile and adjust it before applying"
     }
   ],
-  "releaseNotes": "PC Tweaker 1.18.7: more dependable administrator changes and restores.\n\n- Every Windows tool the app runs, and the wait for the administrator helper, now has a time limit, so nothing can leave the window waiting forever.\n- Restoring the power plan works even if the original plan was deleted: the app switches to Balanced instead of failing.\n- Explorer restarts through Windows Restart Manager, so programs that ask to finish first are respected.\n- When another administrator approves the UAC prompt, changes go to the signed-in user's settings.\n- Still 81 controls (46 Free, 35 Pro).\n\nSettings, licenses and the change history are kept."
+  "releaseNotes": "PC Tweaker 1.18.8: the notification-area menu in your language.\n\n- The menu of PC Tweaker's icon near the clock (Open, Keep running in the background, Exit) and the notice shown the first time you close the window now follow the language you chose in the app.\n- Closing the window still keeps PC Tweaker running in the notification area; nothing else changes.\n- Still 81 controls (46 Free, 35 Pro).\n\nSettings, licenses and the change history are kept."
 }

@@ -14,6 +14,7 @@ import {
 import { AuthState, ProcessGuardStatus, type ProductPlan } from "../types";
 import { CheckIcon, CrownIcon } from "./icons";
 import { TRIAL_COPY } from "./trial-copy";
+import { REFERRAL_COPY } from "./referral-copy";
 import { trialLeft, trialUsed, type BillingStatus } from "../trial";
 import { productPlanLabel } from "../plan-label";
 import { Avatar } from "./ui";
@@ -158,8 +159,8 @@ export function AuthSection({
         )}
 
         {auth.bonusActive && (
-          <p className="relative mt-3 text-xs text-ink-2" lang="en">
-            Pro bonus · active on this PC. Separate from your paid plans.
+          <p className="relative mt-3 text-xs text-ink-2">
+            {(REFERRAL_COPY[lang as Lang] ?? REFERRAL_COPY.en).bonusActive}
           </p>
         )}
         {!auth.emailVerified && (
@@ -658,14 +659,13 @@ export function AccountMenu({
             {onReferrals && auth.status === "authenticated" && (
               <button
                 className="account-support"
-                lang="en"
                 onClick={() => {
                   setOpen(false);
                   menuButton.current?.focus();
                   onReferrals();
                 }}
               >
-                Invite a friend <span aria-hidden="true">↗</span>
+                {REFERRAL_COPY[lang].menuInvite}
               </button>
             )}
             <details name="account-settings" className="account-setting">

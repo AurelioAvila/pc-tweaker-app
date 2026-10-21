@@ -73,7 +73,12 @@ import {
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
 import { ReferralPanel } from "./components/referrals";
-import { referralRequest, activateOrRefreshBonus, type ReferralStatus } from "./referrals";
+import {
+  referralRequest,
+  activateOrRefreshBonus,
+  bonusForThisPc,
+  type ReferralStatus,
+} from "./referrals";
 import { TweakIcon } from "./components/tweak-icon";
 import { TechnicalDetails, TechnicalToggle } from "./components/technical";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
@@ -360,50 +365,49 @@ function App() {
     }
   }
 
-  async function refreshReferralSession() {
+  // Bonus refresh: one challenge and one proof against stored server state, only while a bonus
+  // is active on this PC, every 5 minutes inside the 10-minute signed lease, plus on sign-in and
+  // window focus (at most once a minute). Nothing is polled while the programme is off or no
+  // bonus is active; failures with a lease still running back off up to 30 minutes.
+  const referralTimer = useRef<number | undefined>(undefined);
+  const referralFailures = useRef(0);
+  const referralLast = useRef(0);
+  async function refreshReferralSession(force = false) {
+    if (!force && Date.now() - referralLast.current < 60_000) return;
+    referralLast.current = Date.now();
+    window.clearTimeout(referralTimer.current);
     const token = readToken();
     if (!token) return;
     let active = false;
+    let next: number | null = null;
     try {
       const status = await referralRequest<ReferralStatus>("/status", token);
       if (readToken() !== token) return;
       setReferralAvailable(status.enabled);
-      const rewards = status.rewards
-        .filter(
-          (reward) =>
-            reward.state === "active" &&
-            reward.expires_at &&
-            new Date(reward.expires_at).getTime() > Date.now(),
-        )
-        .sort((a, b) => new Date(b.expires_at!).getTime() - new Date(a.expires_at!).getTime());
-      for (const reward of rewards) {
-        try {
-          active = await activateOrRefreshBonus(status, reward.id, "license", token);
-        } catch {
-          /* A reward bound to another PC cannot unlock this installation. */
-        }
-        if (active || readToken() !== token) break;
-      }
-      if (!rewards.length) await invoke("clear_referral_license");
+      const reward = await bonusForThisPc(status.rewards);
+      if (reward) {
+        active = await activateOrRefreshBonus(status, reward.id, "license", token);
+        next = 5 * 60_000;
+      } else await invoke("clear_referral_license");
+      referralFailures.current = 0;
     } catch {
-      // A brief network failure retains only the native layer's ten-minute signed lease.
+      // A failed refresh keeps only the native layer's remaining signed lease.
       active = await invoke<boolean>("referral_license_status", { token }).catch(() => false);
+      referralFailures.current += 1;
+      if (active) next = Math.min(30, 5 * 2 ** (referralFailures.current - 1)) * 60_000;
     }
     if (readToken() !== token) return;
     setAuth((current) =>
       current.status === "authenticated" ? { ...current, bonusActive: active } : current,
     );
+    if (next !== null)
+      referralTimer.current = window.setTimeout(() => void refreshReferralRef.current(true), next);
   }
   const refreshReferralRef = useRef(refreshReferralSession);
   useEffect(() => {
     refreshReferralRef.current = refreshReferralSession;
   });
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (readToken()) void refreshReferralRef.current();
-    }, 5 * 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
+  useEffect(() => () => window.clearTimeout(referralTimer.current), []);
 
   // The server can hold every runtime adjustment to other apps for everyone
   // (off by default). Read at start and hourly; an unreachable server
@@ -466,6 +470,8 @@ function App() {
   }, [billing]);
 
   function logout() {
+    window.clearTimeout(referralTimer.current);
+    referralLast.current = 0;
     setReferralOpen(false);
     setReferralAvailable(false);
     clearSession();
@@ -1091,8 +1097,10 @@ function App() {
               />
               {referralOpen && auth.status === "authenticated" && (
                 <ReferralPanel
+                  lang={lang}
+                  lifetime={auth.isPro && auth.plan === "lifetime"}
                   onClose={() => setReferralOpen(false)}
-                  onChanged={() => void refreshReferralSession()}
+                  onChanged={() => void refreshReferralSession(true)}
                 />
               )}
             </header>

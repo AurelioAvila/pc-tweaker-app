@@ -115,9 +115,9 @@ export function InvitationPage() {
             <span>YOUR FRIEND EARNS</span>
             <strong>6 or 12 months of Pro</strong>
             <p>
-              6 months after a monthly purchase; 12 after an annual or Lifetime purchase. A separate
-              bonus for one PC, following verification. If your friend already owns Lifetime, they
-              can gift the unused bonus once to another verified account.
+              6 months after a monthly purchase; 12 after an annual or Lifetime purchase. A personal,
+              non-transferable bonus for one PC, after verification, up to 6 every 12 months. If your
+              friend already owns Lifetime, you still save 10%, but they earn no bonus.
             </p>
           </div>
           {valid ? (
@@ -172,14 +172,17 @@ export function InvitationPage() {
         <summary>Eligibility, verification and bonus conditions</summary>
         <p>
           The programme is for an invited account’s first eligible PC Tweaker purchase. One
-          invitation is bound to one account; repeated payer details, self-referrals, refunds or
-          disputes can prevent or revoke a reward.
+          invitation is bound to one account and expires 30 days after you confirm it; it cannot be
+          combined with the free trial. Repeated payer details, self-referrals, refunds or disputes
+          make a purchase ineligible.
         </p>
         <p>
-          Rewards normally wait at least 30 days for verification. This operational period is not a
-          refund or dispute deadline. Unclear cases stay under review. A bonus lasts 6 or 12
-          calendar months from activation on one PC, has no automatic renewal and requires an
-          internet check at least every 10 minutes.
+          A reward becomes available 120 days after your payment, once it can no longer be
+          disputed; unclear cases stay under review. Your friend sees only whether a reward is
+          pending, available or not eligible, never your plan, payment date or payment status. A
+          bonus lasts 6 or 12 calendar months from activation on one PC, cannot be transferred or
+          given away, has no automatic renewal and is checked online about every 10 minutes while
+          the app is open.
         </p>
         <p>
           The discount applies once. A Lifetime purchase does not earn a Lifetime bonus. Existing

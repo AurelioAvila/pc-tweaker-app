@@ -12,7 +12,6 @@ const {
   getRouteJsonLd,
   NOT_FOUND_SEO,
   INVITATION_SEO,
-  GIFT_SEO,
 } = await import(pathToFileURL(serverBundle));
 let template = await readFile(path.join(dist, "index.html"), "utf8");
 
@@ -142,6 +141,4 @@ await writeFile(
   buildPage("/invite", INVITATION_SEO, true),
   "utf8",
 );
-await mkdir(path.join(dist, "gift"), { recursive: true });
-await writeFile(path.join(dist, "gift", "index.html"), buildPage("/gift", GIFT_SEO, true), "utf8");
 await rm(path.join(root, "dist-ssr"), { recursive: true, force: true });

@@ -1,43 +1,40 @@
 import { invoke } from "@tauri-apps/api/core";
 import { API_BASE_URL, readToken } from "./lib";
 
+/** What the server shows an inviter: an aggregate state, and details only for a bonus that is
+ *  theirs to use. A friend's plan, payment date and payment status are never sent. */
 export type ReferralReward = {
   id: string;
-  months: 6 | 12;
-  state: "pending" | "ready" | "active" | "hold" | "revoked";
-  eligible_at: string;
-  activated_at: string | null;
-  expires_at: string | null;
-  reason: string | null;
-  canGift: boolean;
-  gift: { state: "active" | "claimed"; role: "sender" | "recipient"; code?: string } | null;
+  status: "pending" | "active" | "not_eligible";
+  months?: 6 | 12;
+  /** Set once activated on a PC; null while the bonus is ready to activate. */
+  activatedUntil?: string | null;
+  /** SHA-256 of the device key the active bonus is bound to. */
+  deviceKeyHash?: string | null;
 };
 export type ReferralStatus = {
   enabled: boolean;
+  verificationDays: number;
+  rewardsPerYear: number;
+  invitationDays: number;
   accountId: string;
   code: string | null;
   rewards: ReferralReward[];
   incoming: { claimed: boolean; expiresAt: string; expired: boolean; locked: boolean } | null;
 };
 
-const messages: Record<string, string> = {
-  verify_email_first: "Verify your email before using invitations.",
-  referral_unavailable: "The referral programme is not available yet.",
-  invitation_not_eligible: "This invitation is not eligible for this account.",
-  invitation_already_bound: "This account already has a different invitation.",
-  invalid_invitation: "Check the invitation code and try again.",
-  bonus_unavailable:
-    "This bonus is not available on this PC. Refresh its status before trying again.",
-  payment_check_required: "A fresh payment check is required. Please try again.",
-  gift_unavailable:
-    "This gift cannot be redeemed here. Use the verified email specified by its sender, or ask them to check its status.",
-  invalid_gift_email: "Enter a valid recipient email address.",
-  gift_already_sent: "Cancel the current unclaimed gift before choosing another recipient.",
-  choose_paid_plan_for_referral:
-    "Choose a paid plan to use this invitation; it cannot be combined with a free trial.",
-};
+/** Carries the server or client reason, so the panel can say it in the user's language. */
+export class ReferralRequestError extends Error {
+  constructor(
+    readonly code: string,
+    readonly minutes?: number,
+  ) {
+    super(code);
+  }
+}
+
 export async function referralRequest<T>(route: string, token: string, body?: unknown): Promise<T> {
-  if (!token || token !== readToken()) throw new Error("Please sign in again.");
+  if (!token || token !== readToken()) throw new ReferralRequestError("sign_in_again");
   const response = await fetch(`${API_BASE_URL}/api/referrals${route}`, {
     method: body === undefined ? "GET" : "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -45,17 +42,27 @@ export async function referralRequest<T>(route: string, token: string, body?: un
     cache: "no-store",
     signal: AbortSignal.timeout(20_000),
   });
-  if (token !== readToken()) throw new Error("Your account session changed. Please try again.");
+  if (token !== readToken()) throw new ReferralRequestError("session_changed");
   if (!response.ok) {
     const data = (await response.json().catch(() => null)) as { code?: string } | null;
-    throw new Error(
-      messages[data?.code ?? ""] ??
-        (response.status === 429
-          ? "Please wait before trying again."
-          : "The referral request could not be completed. Your paid plan is unchanged."),
+    throw new ReferralRequestError(
+      response.status === 429 ? "rate_limited" : (data?.code ?? "generic"),
     );
   }
   return response.json() as Promise<T>;
+}
+
+/** The native check (referral.rs) accepts a grant from a PC clock at most one lease (10 min)
+ *  ahead of the server, or up to a day behind. Checking first, with margin, means activation
+ *  never starts on a PC that would then refuse its own bonus. */
+const CLOCK_AHEAD_LIMIT_S = 5 * 60;
+const CLOCK_BEHIND_LIMIT_S = 23 * 60 * 60;
+export function clockProblem(serverTime: number, localMs = Date.now()) {
+  const skew = Math.floor(localMs / 1000) - serverTime;
+  if (skew > CLOCK_AHEAD_LIMIT_S)
+    return new ReferralRequestError("clock_ahead", Math.ceil(skew / 60));
+  if (-skew > CLOCK_BEHIND_LIMIT_S) return new ReferralRequestError("clock_behind");
+  return null;
 }
 
 /** The server signs; the native layer verifies the issuer, device, account and session. */
@@ -65,32 +72,47 @@ export async function activateOrRefreshBonus(
   purpose: "activate" | "license",
   token: string,
 ): Promise<boolean> {
-  if (token !== readToken()) return false;
+  if (token !== readToken()) throw new ReferralRequestError("session_changed");
   await invoke("referral_session", { userId: status.accountId, token });
   const device = await invoke<{ publicKey: string }>("referral_device");
-  const challenge = await referralRequest<{ id: string; payload: string }>(
+  const challenge = await referralRequest<{ id: string; payload: string; serverTime: number }>(
     "/device/challenge",
     token,
-    {
-      rewardId,
-      purpose,
-      publicKey: device.publicKey,
-    },
+    { rewardId, purpose, publicKey: device.publicKey },
   );
+  const clock = clockProblem(challenge.serverTime);
+  if (clock) throw clock;
   const signature = await invoke<string>("referral_proof", { payload: challenge.payload });
   const response = await referralRequest<{ payloadJson: string; signature: string }>(
     "/device/proof",
     token,
-    {
-      challengeId: challenge.id,
-      signature,
-    },
+    { challengeId: challenge.id, signature },
   );
-  if (token !== readToken()) return false;
-  await invoke("save_referral_license", { response });
+  // From here the server has accepted the proof (an activation has started the bonus):
+  // a later problem must not be reported as if nothing happened.
+  if (token !== readToken()) throw new ReferralRequestError("session_changed");
+  try {
+    await invoke("save_referral_license", { response });
+  } catch {
+    throw new ReferralRequestError("not_verified");
+  }
   if (token !== readToken()) {
     await invoke("clear_referral_license");
-    return false;
+    throw new ReferralRequestError("session_changed");
   }
   return invoke<boolean>("referral_license_status", { token });
+}
+
+/** The active bonus bound to this PC's device key, if any. Bonuses bound to other PCs are not
+ *  tried, so each refresh is one challenge and one proof. */
+export async function bonusForThisPc(rewards: ReferralReward[], now = Date.now()) {
+  const active = rewards.filter(
+    (reward) =>
+      reward.status === "active" &&
+      reward.activatedUntil &&
+      new Date(reward.activatedUntil).getTime() > now,
+  );
+  if (!active.length) return null;
+  const device = await invoke<{ keyHash: string }>("referral_device");
+  return active.find((reward) => reward.deviceKeyHash === device.keyHash) ?? null;
 }

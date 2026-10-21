@@ -63,7 +63,7 @@
 }
 .referral-benefits {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   background: var(--surface-2, #242429);
   border: 1px solid var(--border-strong, #45434c);
   border-radius: 12px;
@@ -183,24 +183,6 @@
   border: 1px solid var(--border-strong, #45434c);
   border-radius: 10px;
 }
-.referral-gift-form label {
-  display: block;
-  margin-top: 16px;
-  font-size: 13px;
-  color: var(--text-secondary, #c2c0ca);
-}
-.referral-gift-form input {
-  display: block;
-  box-sizing: border-box;
-  width: 100%;
-  margin-top: 8px;
-  padding: 12px;
-  border: 1px solid var(--border-strong, #5c5965);
-  border-radius: 8px;
-  background: var(--bg-app, #121216);
-  color: var(--text-primary, #f4f3f6);
-  font: inherit;
-}
 .referral-confirmation > div {
   display: flex;
   flex-wrap: wrap;
@@ -282,8 +264,15 @@
   .referral-dialog header {
     padding-top: 16px;
   }
+  .referral-benefits {
+    grid-template-columns: 1fr;
+  }
   .referral-benefits > div {
-    padding: 16px;
+    padding: 12px 16px;
+  }
+  .referral-benefits > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--border-strong, #45434c);
   }
   .referral-benefits strong {
     font-size: clamp(18px, 5vw, 22px);

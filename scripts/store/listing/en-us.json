@@ -59,5 +59,5 @@
       "caption": "Start from a Gaming, Study or Work profile and adjust it before applying"
     }
   ],
-  "releaseNotes": "PC Tweaker 1.18.4: clearer wording in the change preview.\n\n- In \"What this changes, exactly\", a control that sets a single value now reads \"Applying this changes the value.\" instead of \"changes 1 of 1 values\".\n- Still 81 controls (46 Free, 35 Pro).\n\nSettings, licenses and the change history are kept."
+  "releaseNotes": "PC Tweaker 1.18.6: fixes for administrator changes and a safer game list.\n\n- Turning a third-party scheduled task on or off with administrator approval now works when its path contains spaces, such as \\Vendor\\Some Task.\n- The Game Sessions list is saved in a single step, so an interrupted save can no longer replace it with a single entry.\n- The administrator helper loads Windows libraries only from the System32 folder.\n- Profiles are exported only as .json files on a local drive.\n- PC Health keeps the last report on screen when a refresh fails.\n- Still 81 controls (46 Free, 35 Pro).\n\nSettings, licenses and the change history are kept."
 }

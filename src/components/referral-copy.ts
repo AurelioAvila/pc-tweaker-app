@@ -213,7 +213,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     generate: "Genera il mio codice",
     codeReady: "Il tuo codice invito è pronto.",
     lifetimeInviter:
-      "Hai il piano A vita: i tuoi amici risparmiano comunque il 10%, ma gli account a vita non ricevono bonus.",
+      "Hai il piano a vita: i tuoi amici risparmiano comunque il 10%, ma gli account con il piano a vita non ricevono bonus.",
     bonusesTitle: "I tuoi bonus Pro",
     bonusesBody:
       "Ogni bonus vale per un PC. L'attivazione avvia la sua durata e non crea mai un abbonamento a pagamento.",
@@ -255,7 +255,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesDiscount:
       "Il 10% in più si applica una sola volta, al primo acquisto a pagamento idoneo, dopo eventuali offerte compatibili. I rinnovi seguono le condizioni normali del piano. La prova gratuita non si combina con un invito.",
     rulesBonus:
-      "Un acquisto mensile fa ottenere a chi invita 6 mesi di Pro; un acquisto annuale o a vita 12. Ogni bonus vale per un PC, è personale e non trasferibile. Fino a {cap} bonus ogni 12 mesi. Chi ha il piano A vita può invitare amici ma non riceve bonus.",
+      "Un acquisto mensile fa ottenere a chi invita 6 mesi di Pro; un acquisto annuale o a vita 12. Ogni bonus vale per un PC, è personale e non trasferibile. Fino a {cap} bonus ogni 12 mesi. Chi ha il piano a vita può invitare amici, ma non riceve bonus.",
     rulesVerification:
       "Un bonus diventa disponibile {days} giorni dopo il pagamento dell'amico, quando non può più essere contestato. Rimborsi, contestazioni, dati di pagamento ripetuti e autoinviti rendono l'acquisto non idoneo. Chi invita non vede mai il piano, la data o lo stato del pagamento dell'amico.",
     rulesDevice:
@@ -313,7 +313,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     generate: "Générer mon code",
     codeReady: "Votre code d'invitation est prêt.",
     lifetimeInviter:
-      "Vous avez le forfait À vie : vos amis économisent quand même 10 %, mais les comptes À vie ne gagnent pas de bonus.",
+      "Vous avez le forfait à vie : vos amis économisent quand même 10 %, mais les comptes avec un forfait à vie ne gagnent pas de bonus.",
     bonusesTitle: "Vos bonus Pro",
     bonusesBody:
       "Chaque bonus vaut pour un PC. Son activation lance sa durée ; elle ne crée jamais d'abonnement payant.",
@@ -355,7 +355,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesDiscount:
       "Les 10 % supplémentaires s'appliquent une seule fois, à votre premier achat payant éligible, après toute offre compatible. Les renouvellements suivent les conditions normales du forfait. L'essai gratuit ne se cumule pas avec une invitation.",
     rulesBonus:
-      "Un achat mensuel rapporte 6 mois de Pro au parrain ; un achat annuel ou À vie en rapporte 12. Chaque bonus vaut pour un PC, est personnel et non transférable. Jusqu'à {cap} bonus tous les 12 mois. Les titulaires du forfait À vie peuvent inviter des amis mais ne gagnent pas de bonus.",
+      "Un achat mensuel rapporte 6 mois de Pro au parrain ; un achat annuel ou à vie en rapporte 12. Chaque bonus vaut pour un PC, est personnel et non transférable. Jusqu'à {cap} bonus tous les 12 mois. Les titulaires d'un forfait à vie peuvent inviter des amis, mais ne gagnent pas de bonus.",
     rulesVerification:
       "Un bonus devient disponible {days} jours après le paiement de l'ami, lorsqu'il ne peut plus être contesté. Les remboursements, contestations, coordonnées de paiement répétées et auto-parrainages rendent l'achat non éligible. Le parrain ne voit jamais le forfait, la date ni le statut du paiement de l'ami.",
     rulesDevice:
@@ -411,7 +411,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     generate: "Generar mi código",
     codeReady: "Tu código de invitación está listo.",
     lifetimeInviter:
-      "Tienes el plan De por vida: tus amigos siguen ahorrando un 10 %, pero las cuentas De por vida no ganan bonos.",
+      "Tienes el plan de por vida: tus amigos siguen ahorrando un 10 %, pero las cuentas con el plan de por vida no ganan bonos.",
     bonusesTitle: "Tus bonos Pro",
     bonusesBody:
       "Cada bono es para un PC. Al activarlo empieza su duración; nunca crea una suscripción de pago.",
@@ -453,7 +453,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesDiscount:
       "El 10 % adicional se aplica una sola vez, a tu primera compra de pago válida, después de cualquier oferta compatible. Las renovaciones siguen las condiciones normales del plan. La prueba gratuita no se combina con una invitación.",
     rulesBonus:
-      "Una compra mensual da a quien invita 6 meses de Pro; una compra anual o De por vida, 12. Cada bono es para un PC, personal e intransferible. Hasta {cap} bonos cada 12 meses. Los titulares del plan De por vida pueden invitar a amigos, pero no ganan bonos.",
+      "Una compra mensual da a quien invita 6 meses de Pro; una compra anual o de por vida, 12. Cada bono es para un PC, personal e intransferible. Hasta {cap} bonos cada 12 meses. Los titulares del plan de por vida pueden invitar a amigos, pero no ganan bonos.",
     rulesVerification:
       "Un bono está disponible {days} días después del pago del amigo, cuando ya no se puede abrir una disputa. Los reembolsos, disputas, datos de pago repetidos y autoinvitaciones hacen que la compra no sea válida. Quien invita nunca ve el plan, la fecha ni el estado del pago de su amigo.",
     rulesDevice:
@@ -498,7 +498,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     tabRedeem: "Code einlösen",
     perkMonthly: "MONATLICHER KAUF",
     perkAnnual: "JÄHRLICHER KAUF",
-    perkLifetime: "KAUF LEBENSLANG",
+    perkLifetime: "LEBENSLANGE LIZENZ",
     perkMonths: "{months} Monate",
     perkScope: "Pro für einen PC",
     codeTitle: "Ihr Einladungscode",
@@ -511,7 +511,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     generate: "Meinen Code erstellen",
     codeReady: "Ihr Einladungscode ist bereit.",
     lifetimeInviter:
-      "Sie haben den Tarif Lebenslang: Ihre Freunde sparen trotzdem 10 %, aber Lebenslang-Konten erhalten keine Boni.",
+      "Sie haben eine lebenslange Lizenz: Ihre Freunde sparen trotzdem 10 %, aber Konten mit lebenslanger Lizenz erhalten keine Boni.",
     bonusesTitle: "Ihre Pro-Boni",
     bonusesBody:
       "Jeder Bonus gilt für einen PC. Mit der Aktivierung beginnt seine Laufzeit; es entsteht nie ein kostenpflichtiges Abonnement.",
@@ -553,7 +553,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesDiscount:
       "Die zusätzlichen 10 % gelten einmal, für Ihren ersten berechtigten bezahlten Kauf, nach einem eventuellen kompatiblen Angebot. Verlängerungen folgen den normalen Tarifbedingungen. Die kostenlose Testphase ist nicht mit einer Einladung kombinierbar.",
     rulesBonus:
-      "Ein monatlicher Kauf bringt der einladenden Person 6 Monate Pro, ein jährlicher Kauf oder ein Kauf Lebenslang 12. Jeder Bonus gilt für einen PC, ist persönlich und nicht übertragbar. Bis zu {cap} Boni alle 12 Monate. Wer den Tarif Lebenslang besitzt, kann Freunde einladen, erhält aber keine Boni.",
+      "Ein monatlicher Kauf bringt der einladenden Person 6 Monate Pro, ein jährlicher Kauf oder der Kauf einer lebenslangen Lizenz 12. Jeder Bonus gilt für einen PC, ist persönlich und nicht übertragbar. Bis zu {cap} Boni alle 12 Monate. Wer eine lebenslange Lizenz besitzt, kann Freunde einladen, erhält aber keine Boni.",
     rulesVerification:
       "Ein Bonus wird {days} Tage nach der Zahlung des Freundes verfügbar, wenn sie nicht mehr angefochten werden kann. Rückerstattungen, Anfechtungen, wiederholte Zahlungsdaten und Selbsteinladungen machen einen Kauf nicht berechtigt. Die einladende Person sieht nie Tarif, Zahlungsdatum oder Zahlungsstatus des Freundes.",
     rulesDevice:
@@ -611,7 +611,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     generate: "Gerar o meu código",
     codeReady: "O seu código de convite está pronto.",
     lifetimeInviter:
-      "Tem o plano Vitalício: os seus amigos continuam a poupar 10%, mas as contas vitalícias não recebem bónus.",
+      "Tem o plano vitalício: os seus amigos continuam a poupar 10%, mas as contas com o plano vitalício não recebem bónus.",
     bonusesTitle: "Os seus bónus Pro",
     bonusesBody:
       "Cada bónus é válido para um PC. A ativação inicia a sua duração e nunca cria uma subscrição paga.",
@@ -653,7 +653,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesDiscount:
       "Os 10% adicionais aplicam-se uma única vez, à primeira compra paga elegível, depois de qualquer oferta compatível. As renovações seguem as condições normais do plano. A avaliação gratuita não pode ser combinada com um convite.",
     rulesBonus:
-      "Uma compra mensal dá a quem convida 6 meses de Pro; uma compra anual ou vitalícia, 12. Cada bónus é válido para um PC, é pessoal e intransmissível. Até {cap} bónus a cada 12 meses. Os titulares do plano Vitalício podem convidar amigos, mas não recebem bónus.",
+      "Uma compra mensal dá a quem convida 6 meses de Pro; uma compra anual ou vitalícia, 12. Cada bónus é válido para um PC, é pessoal e intransmissível. Até {cap} bónus a cada 12 meses. Os titulares do plano vitalício podem convidar amigos, mas não recebem bónus.",
     rulesVerification:
       "Um bónus fica disponível {days} dias após o pagamento do amigo, quando já não pode ser contestado. Reembolsos, contestações, dados de pagamento repetidos e autoconvites tornam a compra não elegível. Quem convida nunca vê o plano, a data nem o estado do pagamento do amigo.",
     rulesDevice:

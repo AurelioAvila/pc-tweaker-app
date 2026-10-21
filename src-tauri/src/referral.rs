@@ -3,7 +3,7 @@ use base64::{engine::general_purpose::STANDARD, Engine as _};
 use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
@@ -13,6 +13,11 @@ const ISSUER: &str = match option_env!("PCT_REFERRAL_PUBLIC_KEY") {
     None => "",
 };
 const LEASE_SECS: u64 = 10 * 60;
+/// How far this PC's clock may run behind the server, as for the purchased licence
+/// (`license.rs` MAX_CLOCK_SKEW_SECS). It cannot lengthen a lease: the lease is measured from
+/// when this PC received the grant. A clock running ahead is still checked against the signed
+/// issue time, which is what stops an old grant from being saved again.
+const MAX_CLOCK_BEHIND_SECS: u64 = 24 * 60 * 60;
 static DEVICE_LOCK: Mutex<()> = Mutex::new(());
 static STATE_LOCK: Mutex<()> = Mutex::new(());
 static CLOCK: std::sync::OnceLock<(u64, Instant)> = std::sync::OnceLock::new();
@@ -27,6 +32,31 @@ fn now() -> u64 {
 }
 fn hash(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
+}
+
+/// Bonus identity, session and grant stay on this PC (%LOCALAPPDATA%). A roaming profile copies
+/// %APPDATA% to other machines, where the machine-bound DPAPI layer can never be opened.
+fn local_dir(roaming: &Path) -> PathBuf {
+    local_from(
+        roaming,
+        std::env::var_os("APPDATA").map(PathBuf::from),
+        std::env::var_os("LOCALAPPDATA").map(PathBuf::from),
+    )
+}
+fn local_from(roaming: &Path, appdata: Option<PathBuf>, local: Option<PathBuf>) -> PathBuf {
+    match (roaming.parent(), roaming.file_name(), appdata, local) {
+        (Some(parent), Some(name), Some(appdata), Some(local))
+            if parent
+                .to_string_lossy()
+                .eq_ignore_ascii_case(&appdata.to_string_lossy()) =>
+        {
+            local.join(name)
+        }
+        _ => roaming.to_path_buf(),
+    }
+}
+fn store(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    Ok(local_dir(&crate::store_for_dir(app)?))
 }
 
 #[cfg(windows)]
@@ -164,7 +194,7 @@ pub struct Device {
 
 #[tauri::command]
 pub fn referral_device(app: tauri::AppHandle) -> Result<Device, String> {
-    let signing = key(&crate::store_for_dir(&app)?, true)?;
+    let signing = key(&store(&app)?, true)?;
     let bytes = signing.verifying_key().to_bytes();
     Ok(Device {
         public_key: STANDARD.encode(bytes),
@@ -191,7 +221,7 @@ pub fn referral_session(
         session_hash: hash(token.as_bytes()),
     };
     write_protected(
-        &crate::store_for_dir(&app)?.join("referral-session.dpapi"),
+        &store(&app)?.join("referral-session.dpapi"),
         &serde_json::to_vec(&session).map_err(|e| e.to_string())?,
         false,
     )
@@ -224,7 +254,7 @@ fn validate_challenge(payload: &str, session: &Session, key_hash: &str) -> bool 
 }
 #[tauri::command]
 pub fn referral_proof(app: tauri::AppHandle, payload: String) -> Result<String, String> {
-    let dir = crate::store_for_dir(&app)?;
+    let dir = store(&app)?;
     let signing = key(&dir, false)?;
     let session: Session =
         serde_json::from_slice(&read_protected(&dir.join("referral-session.dpapi"))?)
@@ -253,12 +283,21 @@ struct Bonus {
     issued_at: u64,
     expires_at: u64,
 }
+/// A grant as kept on disk, with the local time it was received.
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StoredGrant {
+    payload_json: String,
+    signature: String,
+    received_at: u64,
+}
 fn verified(
     response: &crate::license::SignedLicenseResponse,
     issuer: &str,
     session: &Session,
     key_hash: &str,
     time: u64,
+    received_at: u64,
 ) -> Option<Bonus> {
     let public: [u8; 32] = STANDARD.decode(issuer).ok()?.try_into().ok()?;
     let signature: [u8; 64] = STANDARD.decode(&response.signature).ok()?.try_into().ok()?;
@@ -270,6 +309,8 @@ fn verified(
         )
         .ok()?;
     let bonus: Bonus = serde_json::from_str(&response.payload_json).ok()?;
+    // A clock moved back since the grant was saved fails closed until the next refresh.
+    let elapsed = time.checked_sub(received_at)?;
     (bonus.schema_version == 2
         && bonus.is_pro
         && bonus.plan == "referral_bonus"
@@ -279,27 +320,34 @@ fn verified(
         && bonus.session_hash == session.session_hash
         && bonus.device_key_hash == key_hash
         && bonus.issued_at > 0
-        && bonus.issued_at <= time.saturating_add(60)
-        && time.saturating_sub(bonus.issued_at) <= LEASE_SECS
-        && time < bonus.expires_at)
+        && bonus.issued_at <= received_at.saturating_add(MAX_CLOCK_BEHIND_SECS)
+        && received_at.saturating_sub(bonus.issued_at) <= LEASE_SECS
+        && elapsed <= LEASE_SECS
+        && bonus.issued_at.saturating_add(elapsed) < bonus.expires_at)
         .then_some(bonus)
 }
 fn stored(dir: &Path) -> Option<Bonus> {
     let signing = key(dir, false).ok()?;
     let session: Session =
         serde_json::from_slice(&read_protected(&dir.join("referral-session.dpapi")).ok()?).ok()?;
-    let response =
+    let grant: StoredGrant =
         serde_json::from_slice(&read_protected(&dir.join("referral-license.dpapi")).ok()?).ok()?;
+    let response = crate::license::SignedLicenseResponse {
+        payload_json: grant.payload_json,
+        signature: grant.signature,
+    };
     verified(
         &response,
         ISSUER,
         &session,
         &hash(&signing.verifying_key().to_bytes()),
         now(),
+        grant.received_at,
     )
 }
+/// `dir` is the app data folder the purchased licence uses; bonus state lives beside it locally.
 pub fn is_active(dir: &Path) -> bool {
-    stored(dir).is_some()
+    stored(&local_dir(dir)).is_some()
 }
 
 #[tauri::command]
@@ -310,23 +358,30 @@ pub fn save_referral_license(
     let _guard = STATE_LOCK
         .lock()
         .map_err(|_| "Session storage unavailable")?;
-    let dir = crate::store_for_dir(&app)?;
+    let dir = store(&app)?;
     let signing = key(&dir, false)?;
     let session: Session =
         serde_json::from_slice(&read_protected(&dir.join("referral-session.dpapi"))?)
             .map_err(|_| "Invalid referral session")?;
+    let received_at = now();
     if verified(
         &response,
         ISSUER,
         &session,
         &hash(&signing.verifying_key().to_bytes()),
-        now(),
+        received_at,
+        received_at,
     )
     .is_none()
     {
         return Err("Bonus licence did not verify for this PC and session".into());
     }
-    let bytes = serde_json::to_vec(&response).map_err(|e| e.to_string())?;
+    let bytes = serde_json::to_vec(&StoredGrant {
+        payload_json: response.payload_json,
+        signature: response.signature,
+        received_at,
+    })
+    .map_err(|e| e.to_string())?;
     // A separate store: a bonus can never replace or extend a purchased licence.
     write_protected(&dir.join("referral-license.dpapi"), &bytes, false)?;
     // Keep all grant material protected at rest, including its account/session bindings.
@@ -334,7 +389,7 @@ pub fn save_referral_license(
 }
 #[tauri::command]
 pub fn referral_license_status(app: tauri::AppHandle, token: String) -> Result<bool, String> {
-    let dir = crate::store_for_dir(&app)?;
+    let dir = store(&app)?;
     let session: Session = match read_protected(&dir.join("referral-session.dpapi"))
         .ok()
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
@@ -342,14 +397,18 @@ pub fn referral_license_status(app: tauri::AppHandle, token: String) -> Result<b
         Some(session) => session,
         None => return Ok(false),
     };
-    Ok(session.session_hash == hash(token.as_bytes()) && is_active(&dir))
+    Ok(session.session_hash == hash(token.as_bytes()) && stored(&dir).is_some())
 }
+/// `dir` is the app data folder; earlier test builds kept these files there, so both go.
 pub fn clear(dir: &Path) -> Result<(), String> {
     let _guard = STATE_LOCK
         .lock()
         .map_err(|_| "Session storage unavailable")?;
-    for name in ["referral-session.dpapi", "referral-license.dpapi"] {
-        match std::fs::remove_file(dir.join(name)) {
+    for (folder, name) in [dir.to_path_buf(), local_dir(dir)]
+        .into_iter()
+        .flat_map(|d| ["referral-session.dpapi", "referral-license.dpapi"].map(|n| (d.clone(), n)))
+    {
+        match std::fs::remove_file(folder.join(name)) {
             Ok(()) => {}
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
             Err(e) => return Err(e.to_string()),
@@ -365,7 +424,9 @@ pub fn clear_referral_license(app: tauri::AppHandle) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn fixture() -> (
+    fn fixture_until(
+        expires: u64,
+    ) -> (
         crate::license::SignedLicenseResponse,
         String,
         Session,
@@ -379,7 +440,7 @@ mod tests {
         };
         let payload = serde_json::json!({"userId":"42","isPro":true,"plan":"referral_bonus","product":"pctweaker","schemaVersion":2,
             "grantId":"94f237d4-21ca-4403-a0c4-af70f1cd2541","deviceKeyHash":device_hash,"sessionHash":session.session_hash,
-            "issuedAt":1000,"expiresAt":100000});
+            "issuedAt":100000,"expiresAt":expires});
         let payload_json = payload.to_string();
         let signature = STANDARD.encode(issuer.sign(payload_json.as_bytes()).to_bytes());
         (
@@ -392,27 +453,106 @@ mod tests {
             device_hash,
         )
     }
+    fn fixture() -> (
+        crate::license::SignedLicenseResponse,
+        String,
+        Session,
+        String,
+    ) {
+        fixture_until(1_000_000)
+    }
     #[test]
     fn bonus_requires_device_session_signature_and_short_freshness() {
         let (response, issuer, session, device) = fixture();
-        assert!(verified(&response, &issuer, &session, &device, 1100).is_some());
-        assert!(verified(&response, &issuer, &session, &hash(b"other PC"), 1100).is_none());
+        let at = |t: u64| verified(&response, &issuer, &session, &device, t, t);
+        assert!(at(100_100).is_some());
+        assert!(verified(
+            &response,
+            &issuer,
+            &session,
+            &hash(b"other PC"),
+            100_100,
+            100_100
+        )
+        .is_none());
         let wrong = Session {
             user_id: "43".into(),
             session_hash: session.session_hash.clone(),
         };
-        assert!(verified(&response, &issuer, &wrong, &device, 1100).is_none());
+        assert!(verified(&response, &issuer, &wrong, &device, 100_100, 100_100).is_none());
         let wrong = Session {
             user_id: "42".into(),
             session_hash: hash(b"other session"),
         };
-        assert!(verified(&response, &issuer, &wrong, &device, 1100).is_none());
-        assert!(verified(&response, &issuer, &session, &device, 1601).is_none());
-        assert!(verified(&response, &issuer, &session, &device, 939).is_none());
-        assert!(verified(&response, "", &session, &device, 1100).is_none());
-        let mut tampered = response;
+        assert!(verified(&response, &issuer, &wrong, &device, 100_100, 100_100).is_none());
+        // The lease is ten minutes from receipt on this PC.
+        assert!(verified(&response, &issuer, &session, &device, 100_700, 100_100).is_some());
+        assert!(verified(&response, &issuer, &session, &device, 100_701, 100_100).is_none());
+        assert!(verified(&response, "", &session, &device, 100_100, 100_100).is_none());
+        let mut tampered = response.clone();
         tampered.payload_json = tampered.payload_json.replace("42", "43");
-        assert!(verified(&tampered, &issuer, &session, &device, 1100).is_none());
+        assert!(verified(&tampered, &issuer, &session, &device, 100_100, 100_100).is_none());
+    }
+    #[test]
+    fn clock_behind_the_server_is_tolerated_without_lengthening_the_lease() {
+        // Before: a PC 61 s behind rejected a grant the server had already activated.
+        let (response, issuer, session, device) = fixture();
+        for received in [100_000 - 61, 100_000 - 23 * 3600] {
+            assert!(verified(&response, &issuer, &session, &device, received, received).is_some());
+            let lapsed = received + LEASE_SECS + 1;
+            assert!(verified(&response, &issuer, &session, &device, lapsed, received).is_none());
+        }
+        let too_far = 100_000 - 25 * 3600;
+        assert!(verified(&response, &issuer, &session, &device, too_far, too_far).is_none());
+        // A clock set back after saving fails closed until the next refresh.
+        assert!(verified(&response, &issuer, &session, &device, 100_050, 100_100).is_none());
+    }
+    #[test]
+    fn clock_ahead_or_an_old_grant_saved_again_is_refused() {
+        let (response, issuer, session, device) = fixture();
+        assert!(verified(&response, &issuer, &session, &device, 100_600, 100_600).is_some());
+        // Eleven minutes after issue: a PC clock that far ahead, or a replayed old grant.
+        assert!(verified(&response, &issuer, &session, &device, 100_660, 100_660).is_none());
+    }
+    #[test]
+    fn the_bonus_end_follows_the_server_clock_on_a_lagging_pc() {
+        let (response, issuer, session, device) = fixture_until(100_300);
+        let received = 100_000 - 3600;
+        assert!(verified(
+            &response,
+            &issuer,
+            &session,
+            &device,
+            received + 299,
+            received
+        )
+        .is_some());
+        assert!(verified(
+            &response,
+            &issuer,
+            &session,
+            &device,
+            received + 300,
+            received
+        )
+        .is_none());
+    }
+    #[test]
+    fn bonus_state_is_kept_in_local_not_roaming_app_data() {
+        let roaming = PathBuf::from(r"C:\Users\a\AppData\Roaming\app.pctweaker");
+        assert_eq!(
+            local_from(
+                &roaming,
+                Some(PathBuf::from(r"C:\Users\a\AppData\roaming")),
+                Some(PathBuf::from(r"C:\Users\a\AppData\Local"))
+            ),
+            PathBuf::from(r"C:\Users\a\AppData\Local\app.pctweaker")
+        );
+        let elsewhere = std::env::temp_dir().join("pct-referral-test");
+        assert_eq!(
+            local_from(&elsewhere, Some(PathBuf::from(r"C:\x")), None),
+            elsewhere
+        );
     }
     #[test]
     fn device_key_only_signs_the_referral_protocol_for_the_current_account() {

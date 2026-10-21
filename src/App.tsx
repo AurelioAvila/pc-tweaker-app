@@ -1,4 +1,5 @@
 import { orderSectionTweaks } from "./feature-order";
+import { installId } from "./installId";
 import { TweakyDriverPromoCard } from "./components/tweaky-driver-promo";
 import { NetworkCheckPanel } from "./components/diagnostics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -329,8 +330,12 @@ function App() {
     const token = readToken();
     if (!token) return;
     try {
+      const install = installId();
       const res = await fetch(`${API_BASE_URL}/api/license`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(install ? { "X-Install-Id": install } : {}),
+        },
       });
       if (!res.ok) return;
       const response = (await res.json()) as { payloadJson: string; signature: string };

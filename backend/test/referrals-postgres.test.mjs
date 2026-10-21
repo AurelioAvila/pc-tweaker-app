@@ -665,13 +665,15 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
               disputed: false,
               created: paidAt,
               payment_method_details: { card: { fingerprint: "card_buyer" } },
+              // Current provider facts, changeable by a test between events.
+              ...change.charge,
             },
           }),
         },
         charges: {
           list: pagesOf([{ paid: true, payment_method_details: { card: { fingerprint: "card_inviter" } } }]),
         },
-        disputes: { list: pagesOf([]) },
+        disputes: { list: () => pagesOf(change.disputes ?? [])() },
         subscriptions: { retrieve: async () => ({ metadata: { referral_quote: q.id } }) },
       };
     };
@@ -978,6 +980,115 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       await gateway.reconcileQuote(q.id);
       assert.equal(await rewardState(), "ready");
     });
+    await t.test(
+      "Codex 1: an inviter's own address alias cannot claim their invitation",
+      async () => {
+        await reset();
+        await pool.query("UPDATE users SET email='j.doe+invite@gmail.com' WHERE id=1");
+        await pool.query("UPDATE users SET email='JDoe@googlemail.com' WHERE id=2");
+        await pool.query("UPDATE users SET email='Inviter+2@Example.com' WHERE id=3");
+        const code = await core.ownCode(1);
+        await assert.rejects(core.claim(2, code, false), /not_eligible/);
+        await pool.query("UPDATE users SET email='inviter@example.com' WHERE id=1");
+        await assert.rejects(core.claim(3, code, false), /not_eligible/);
+        await core.claim(4, code, false);
+        assert.equal((await core.enrolment(4)).inviter_id, 1);
+      },
+    );
+    await t.test(
+      "Codex 2: a won dispute does not release a bonus while a partial refund or another dispute remains",
+      async () => {
+        for (const remaining of ["partial_refund", "other_dispute"]) {
+          await reset();
+          const q = await paidQuote();
+          const change = { charge: {}, disputes: [] };
+          const gateway = new ReferralStripe(core, paidProvider(q, change));
+          await gateway.reconcileQuote(q.id);
+          now = new Date(now.getTime() + HOLD);
+          await gateway.reconcileQuote(q.id);
+          assert.equal(await rewardState(), "ready");
+          const [{ id }] = (await pool.query("SELECT id FROM referral_rewards")).rows;
+          const d = device();
+          const c = await core.challenge(1, id, "activate", d.pub);
+          await core.prove(1, c.id, d.sign(c.payload), "session-token");
+          const event = (type, object) => ({
+            id: `evt_${type}_${Object.values(object).join("_")}`,
+            type,
+            livemode: false,
+            data: { object: { payment_intent: "pi_paid1", ...object } },
+          });
+          if (remaining === "partial_refund") {
+            // Refund first, dispute second: the dispute event overwrites the stored reason.
+            change.charge = { amount_refunded: 100, refunded: false };
+            await referralWebhook(event("charge.refunded", { refunded: false }), gateway);
+            change.charge = { amount_refunded: 100, refunded: false, disputed: true };
+            change.disputes = [{ status: "needs_response" }];
+            await referralWebhook(
+              event("charge.dispute.created", { status: "needs_response" }),
+              gateway,
+            );
+            change.disputes = [{ status: "won" }];
+          } else {
+            change.charge = { disputed: true };
+            change.disputes = [{ status: "needs_response" }, { status: "needs_response" }];
+            await referralWebhook(event("charge.dispute.created", { id: "dp_a" }), gateway);
+            await referralWebhook(event("charge.dispute.created", { id: "dp_b" }), gateway);
+            change.disputes = [{ status: "won" }, { status: "needs_response" }];
+          }
+          await referralWebhook(event("charge.dispute.closed", { status: "won" }), gateway);
+          assert.equal(await rewardState(), "hold", remaining);
+          const refresh = await core.challenge(1, id, "license", d.pub).catch((error) => error);
+          if (!(refresh instanceof Error))
+            await assert.rejects(
+              core.prove(1, refresh.id, d.sign(refresh.payload), "session-token"),
+              /unavailable/,
+            );
+          // Once the provider shows nothing outstanding, the active bonus is restored.
+          change.charge = { disputed: true };
+          change.disputes = [{ status: "won" }, { status: "won" }];
+          await referralWebhook(event("charge.dispute.closed", { status: "won", n: 2 }), gateway);
+          assert.equal(await rewardState(), "active", remaining);
+          const ok = await core.challenge(1, id, "license", d.pub);
+          await core.prove(1, ok.id, d.sign(ok.payload), "session-token");
+        }
+      },
+    );
+    await t.test(
+      "Codex 3: a deterministic coupon rejection releases the quote and uses the ordinary price",
+      async () => {
+        await reset();
+        await core.claim(2, await core.ownCode(1), false);
+        await pool.query("UPDATE users SET stripe_customer_id='cus_test2' WHERE id=2");
+        const provider = checkoutProvider(async () => assert.fail("no session without a coupon"));
+        let reject = "invalid";
+        provider.coupons.create = async (params) => {
+          if (reject === "invalid")
+            throw Object.assign(new Error("Invalid coupon"), {
+              type: "StripeInvalidRequestError",
+              statusCode: 400,
+            });
+          if (reject === "network") throw new Error("Simulated connection reset");
+          return { id: params.id };
+        };
+        const gateway = new ReferralStripe(core, provider);
+        assert.equal(await gateway.checkout(2, "monthly", checkoutParams()), null);
+        assert.equal(
+          (await pool.query("SELECT state FROM referral_quotes")).rows[0].state,
+          "expired",
+        );
+        // An uncertain failure still keeps the reservation for a retry with the same keys.
+        reject = "network";
+        await assert.rejects(gateway.checkout(2, "monthly", checkoutParams()), /connection reset/);
+        assert.equal(
+          (
+            await pool.query(
+              "SELECT count(*)::int AS n FROM referral_quotes WHERE state='creating'",
+            )
+          ).rows[0].n,
+          1,
+        );
+      },
+    );
     await t.test("R12: expired device challenges are removed by the reconciliation worker", async () => {
       await reset();
       const { id } = await ready();

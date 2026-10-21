@@ -224,13 +224,21 @@ export class Referrals {
     await this.transaction(async (tx) => {
       const buyer = await this.user(tx, userId, true);
       const { rows: inviters } = await tx.query(
-        "SELECT user_id FROM referral_accounts WHERE code=$1 AND enabled=TRUE",
+        `SELECT a.user_id,u.email FROM referral_accounts a JOIN users u ON u.id=a.user_id
+        WHERE a.code=$1 AND a.enabled=TRUE`,
         [normalized],
       );
       const inviter = inviters[0]?.user_id;
       // Current state, not history: a trial cancelled before any payment leaves a
       // subscription id behind but is not a purchase (paid history is checked separately).
-      if (!inviter || inviter === userId || hasPriorPurchase || buyer.is_pro) {
+      // A second account on an alias of the inviter's own address is a self-invitation.
+      if (
+        !inviter ||
+        inviter === userId ||
+        canonicalEmail(inviters[0].email) === canonicalEmail(buyer.email) ||
+        hasPriorPurchase ||
+        buyer.is_pro
+      ) {
         throw new ReferralError("invitation_not_eligible");
       }
       const { rows: previous } = await tx.query(
@@ -450,22 +458,7 @@ export class Referrals {
       );
       const quote = rows[0];
       if (!quote) return null;
-      const matches = !(
-        quote.buyer_id !== payment.buyerId ||
-        quote.customer_id !== payment.customerId ||
-        quote.plan !== payment.plan ||
-        quote.price_id !== payment.priceId ||
-        quote.currency !== payment.currency ||
-        quote.base_minor !== payment.baseMinor ||
-        quote.discount_minor !== payment.discountMinor ||
-        payment.cashReceived < quote.subtotal_minor ||
-        !Number.isSafeInteger(payment.cashReceived) ||
-        !Number.isFinite(payment.paidAt.getTime()) ||
-        payment.paidAt > this.now() ||
-        payment.paidAt.getTime() < Math.floor(new Date(quote.created_at).getTime() / 1000) * 1000 ||
-        payment.paidAt > new Date(quote.expires_at) ||
-        !/^pi_[A-Za-z0-9]+$/.test(payment.paymentId)
-      );
+      const matches = this.quoteMatches(quote, payment);
       // A successful purchase that does not match its quote (async payment after expiry, other
       // currency, changed invoice shape) never retries forever: the buyer is released, the
       // inviter's bonus waits for owner review, and the webhook is acknowledged.
@@ -586,6 +579,28 @@ export class Referrals {
     });
   }
 
+  private quoteMatches(
+    quote: ReservedQuote & { buyer_id: number },
+    payment: VerifiedReferralPayment,
+  ): boolean {
+    return !(
+      quote.buyer_id !== payment.buyerId ||
+      quote.customer_id !== payment.customerId ||
+      quote.plan !== payment.plan ||
+      quote.price_id !== payment.priceId ||
+      quote.currency !== payment.currency ||
+      quote.base_minor !== payment.baseMinor ||
+      quote.discount_minor !== payment.discountMinor ||
+      payment.cashReceived < quote.subtotal_minor ||
+      !Number.isSafeInteger(payment.cashReceived) ||
+      !Number.isFinite(payment.paidAt.getTime()) ||
+      payment.paidAt > this.now() ||
+      payment.paidAt.getTime() < Math.floor(new Date(quote.created_at).getTime() / 1000) * 1000 ||
+      payment.paidAt > new Date(quote.expires_at) ||
+      !/^pi_[A-Za-z0-9]+$/.test(payment.paymentId)
+    );
+  }
+
   /** A durable tombstone also protects refunds that arrive before the sale event. */
   async blockPayment(paymentId: string, state: "hold" | "revoked", reason: string) {
     if (!/^pi_[A-Za-z0-9]+$/.test(paymentId)) throw new ReferralError("invalid_payment", 400);
@@ -641,27 +656,52 @@ export class Referrals {
     });
   }
 
-  /** Re-opens maturity after a dispute the merchant won; the next maturity check re-reads
-   *  the charge, so a refund or another open dispute still holds or revokes it. */
-  async releaseDisputeHold(paymentId: string) {
+  /**
+   * After a dispute closed in the merchant's favour, called only with freshly re-read provider
+   * facts showing nothing outstanding (no refund, no other open or lost dispute). The bonus
+   * returns to pending (or active, if already activated) only if the purchase would still
+   * qualify: same quote facts and usable payer evidence; otherwise it stays held for review.
+   */
+  async releaseDisputeHold(payment: VerifiedReferralPayment) {
+    if (
+      payment.state !== "paid" ||
+      payment.accountId !== this.environment.REFERRALS_STRIPE_ACCOUNT ||
+      payment.livemode !== this.expectedMode()
+    )
+      throw new ReferralError("payment_review_required");
     await this.transaction(async (tx) => {
-      const { rowCount } = await tx.query(
-        `DELETE FROM referral_payment_blocks WHERE payment_id=$1 AND state='hold'
-        AND reason LIKE 'charge.dispute.%'`,
-        [paymentId],
+      const { rows } = await tx.query(
+        "SELECT * FROM referral_rewards WHERE payment_id=$1 FOR UPDATE",
+        [payment.paymentId],
       );
-      if (!rowCount) return;
-      await tx.query(
-        `UPDATE referral_rewards SET state='pending',reason=NULL,checked_at=$2
-        WHERE payment_id=$1 AND state='hold' AND reason LIKE 'charge.dispute.%' AND activated_at IS NULL`,
-        [paymentId, this.now()],
+      const reward = rows[0];
+      if (!reward || reward.state !== "hold" || reward.quote_id !== payment.quoteId) return;
+      const { rows: quotes } = await tx.query(
+        `SELECT q.*,e.buyer_id FROM referral_quotes q JOIN referral_enrolments e
+        ON e.id=q.enrolment_id WHERE q.id=$1`,
+        [reward.quote_id],
       );
-      await tx.query(
-        `UPDATE referral_rewards SET state='active',reason=NULL,checked_at=$2
-        WHERE payment_id=$1 AND state='hold' AND reason LIKE 'charge.dispute.%' AND activated_at IS NOT NULL`,
-        [paymentId, this.now()],
-      );
-      await this.audit(tx, paymentId, "dispute_won");
+      const identity =
+        payment.payerFingerprint &&
+        payment.inviterFingerprints.length &&
+        !payment.inviterFingerprints.includes(payment.payerFingerprint) &&
+        !payment.hasPriorPurchase;
+      const review =
+        !quotes[0] || !this.quoteMatches(quotes[0], payment)
+          ? "payment_mismatch_review"
+          : !identity
+            ? "payer_identity_review"
+            : null;
+      await tx.query("DELETE FROM referral_payment_blocks WHERE payment_id=$1 AND state='hold'", [
+        payment.paymentId,
+      ]);
+      await tx.query(`UPDATE referral_rewards SET state=$2,reason=$3,checked_at=$4 WHERE id=$1`, [
+        reward.id,
+        review ? "hold" : reward.activated_at ? "active" : "pending",
+        review,
+        this.now(),
+      ]);
+      await this.audit(tx, payment.paymentId, review ? "dispute_won_" + review : "dispute_won");
     });
   }
 

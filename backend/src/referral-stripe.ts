@@ -327,22 +327,36 @@ export class ReferralStripe {
         metadata: { ...saved.payment_intent_data?.metadata, ...metadata },
       };
     // One combined, once-only coupon preserves existing first-payment offers and ordinary renewals.
-    const coupon = await this.stripe.coupons.create(
-      {
-        id: "ref_" + quote.id,
-        amount_off: quote.discount_minor,
-        currency: quote.currency,
-        duration: "once",
-        max_redemptions: 1,
-        redeem_by: Math.floor(new Date(quote.expires_at).getTime() / 1000),
-        name:
-          quote.offer_minor < quote.base_minor
-            ? "Offer + referral (extra 10%)"
-            : "Referral (10% off)",
-        metadata: { referral_quote: quote.id },
-      },
-      { idempotencyKey: "ref-coupon-" + quote.id },
-    );
+    // A validation rejection is never stored under an idempotency key, and an earlier accepted
+    // attempt with the same key would have been replayed instead. So for either request it
+    // proves that this quote has no coupon, hence no session: release it for the ordinary
+    // price. Network and server errors stay uncertain and keep the reservation for a retry.
+    const rejected = async (error: unknown) => {
+      if ((error as { type?: string }).type !== "StripeInvalidRequestError") throw error;
+      await this.core.expireQuote(quote.id, null, "provider_rejected");
+      return null;
+    };
+    let coupon: Stripe.Coupon;
+    try {
+      coupon = await this.stripe.coupons.create(
+        {
+          id: "ref_" + quote.id,
+          amount_off: quote.discount_minor,
+          currency: quote.currency,
+          duration: "once",
+          max_redemptions: 1,
+          redeem_by: Math.floor(new Date(quote.expires_at).getTime() / 1000),
+          name:
+            quote.offer_minor < quote.base_minor
+              ? "Offer + referral (extra 10%)"
+              : "Referral (10% off)",
+          metadata: { referral_quote: quote.id },
+        },
+        { idempotencyKey: "ref-coupon-" + quote.id },
+      );
+    } catch (error) {
+      return rejected(error);
+    }
     saved.discounts = [{ coupon: coupon.id }];
     let session: Stripe.Checkout.Session;
     try {
@@ -350,13 +364,7 @@ export class ReferralStripe {
         idempotencyKey: "ref-checkout-" + quote.id,
       });
     } catch (error) {
-      // A validation rejection is never stored under the idempotency key, and an earlier
-      // accepted attempt with this key would have been replayed instead: no session exists.
-      if ((error as { type?: string }).type === "StripeInvalidRequestError") {
-        await this.core.expireQuote(quote.id, null, "provider_rejected");
-        return null;
-      }
-      throw error;
+      return rejected(error);
     }
     if (!session.url) throw new ReferralError("checkout_unavailable", 502);
     await this.core.saveSession(quote.id, session.id, session.url);
@@ -568,6 +576,31 @@ export class ReferralStripe {
     };
   }
 
+  /**
+   * A dispute closed in the merchant's favour. The stored reason is not evidence (a later
+   * event may have overwritten a partial refund or another open dispute), so the payment,
+   * refunds and every dispute are read again: only a clean result releases the hold, anything
+   * else is recorded as the current block.
+   */
+  async disputeClosed(paymentId: string) {
+    const { rows } = await this.core.db.query(
+      "SELECT quote_id FROM referral_rewards WHERE payment_id=$1",
+      [paymentId],
+    );
+    if (!rows[0]) return;
+    let payment: VerifiedReferralPayment | null;
+    try {
+      payment = await this.paymentForQuote(rows[0].quote_id);
+    } catch (error) {
+      // Unverifiable now: the bonus simply stays on hold for owner review.
+      if (error instanceof ReferralError && REVIEWABLE.has(error.code)) return;
+      throw error;
+    }
+    if (!payment || payment.paymentId !== paymentId) return;
+    if (payment.state === "paid") await this.core.releaseDisputeHold(payment);
+    else await this.core.blockPayment(paymentId, payment.state, payment.reason ?? "payment_review");
+  }
+
   async reconcileQuote(id: string) {
     let payment: VerifiedReferralPayment | null;
     try {
@@ -674,8 +707,7 @@ export async function referralWebhook(
     if (!known.rowCount) return;
     await gateway.account();
     const status = event.type === "charge.dispute.closed" ? (item as Stripe.Dispute).status : null;
-    if (status === "won" || status === "warning_closed")
-      await gateway.core.releaseDisputeHold(paymentId);
+    if (status === "won" || status === "warning_closed") await gateway.disputeClosed(paymentId);
     else
       await gateway.core.blockPayment(
         paymentId,

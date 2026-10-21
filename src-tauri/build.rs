@@ -44,5 +44,12 @@ fn main() {
         // never loads into the elevated process. Every import of the shipped
         // exe is a System32 DLL or an API set; the VC runtime is static.
         println!("cargo:rustc-link-arg-bins=/DEPENDENTLOADFLAG:0x800");
+        // That flag covers the exe's own imports, not what Windows loads on
+        // their behalf: in a clean VM the elevated helper still took UMPDC.dll,
+        // which powrprof.dll pulls in, from the install folder. Delay-loading
+        // powrprof.dll resolves it on first use, after the helper's
+        // SetDefaultDllDirectories(SYSTEM32). (CRYPTBASE.DLL: see main.rs.)
+        println!("cargo:rustc-link-arg-bins=/DELAYLOAD:powrprof.dll");
+        println!("cargo:rustc-link-arg-bins=delayimp.lib");
     }
 }

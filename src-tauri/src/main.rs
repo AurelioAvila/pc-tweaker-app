@@ -1,7 +1,25 @@
 // The desktop UI must not own a console, including local preview builds.
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
+// ADVAPI32's SystemFunction036 (ring's random source, through getrandom 0.2)
+// is a forwarder into CRYPTBASE.DLL, and Windows resolves forwarders by plain
+// name, install folder first: a CRYPTBASE.DLL planted next to the exe loaded
+// into the elevated helper (seen in a clean VM). Importing CRYPTBASE.DLL
+// itself makes it an import of the exe, which /DEPENDENTLOADFLAG (build.rs)
+// maps from System32 before any forwarder is resolved. By ordinal, under a
+// name of our own: every CRYPTBASE export name is also in the ADVAPI32 import
+// libraries, so a by-name import would bind there. Never called.
+#[cfg(all(windows, target_env = "msvc"))]
+#[link(name = "cryptbase", kind = "raw-dylib")]
+extern "system" {
+    #[link_ordinal(1)]
+    fn pct_cryptbase_import();
+}
+
 fn main() {
+    // Keeps the CRYPTBASE.DLL import above in the exe.
+    #[cfg(all(windows, target_env = "msvc"))]
+    std::hint::black_box(pct_cryptbase_import as unsafe extern "system" fn());
     #[cfg(windows)]
     {
         let args: Vec<String> = std::env::args().collect();

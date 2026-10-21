@@ -87,8 +87,8 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 - **1.18.2.** Pro keeps working when the PC's clock runs behind, account errors appear in the app's language, and the account menu shows the plan each product has.
 - **1.18.3.** Change your password and email from the account menu, account emails in the app's language, and nothing undone under a running game when Pro ends.
 - **1.18.4.** Updates are checked on dl.pctweaker.app as well as GitHub, and the change preview reads correctly when a control sets a single value.
-
 - **1.18.5.** Clarifies startup, menu, hover, background-app, update-sharing and window-display controls in all six languages. Settings and restoration behavior are unchanged.
+- **1.18.6.** Administrator changes to scheduled tasks with spaces in their path work, the Game Sessions list survives an interrupted save, and the administrator helper loads Windows libraries from System32 only.
 
 See the [changelog](CHANGELOG.md) for every release.
 

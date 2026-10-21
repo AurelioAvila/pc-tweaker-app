@@ -59,5 +59,5 @@
       "caption": "Comece com um perfil Gaming, Estudo ou Trabalho e ajuste-o antes de aplicar"
     }
   ],
-  "releaseNotes": "PC Tweaker 1.18.4: pré-visualização das alterações mais clara.\n\n- Em \"O que isto altera, exatamente\", um controlo que define um único valor indica agora \"Aplicar muda o valor.\" em vez de \"muda 1 de 1 valores\".\n- Continuam a ser 81 controlos (46 Free, 35 Pro).\n\nAs definições, as licenças e o histórico de alterações são mantidos."
+  "releaseNotes": "PC Tweaker 1.18.6: correções nas alterações com permissões de administrador e uma lista de jogos mais segura.\n\n- Ativar ou desativar uma tarefa agendada de terceiros com a aprovação de administrador passa a funcionar quando o caminho tem espaços, como \\Vendor\\Some Task.\n- A lista de Game Sessions é guardada num único passo, pelo que uma gravação interrompida já não a pode reduzir a uma só entrada.\n- O assistente de administrador carrega as bibliotecas do Windows apenas a partir da pasta System32.\n- Os perfis só são exportados como ficheiros .json numa unidade local.\n- O PC Health mantém o último relatório no ecrã quando uma atualização falha.\n- Continuam a ser 81 controlos (46 Free, 35 Pro).\n\nAs definições, as licenças e o histórico de alterações são mantidos."
 }

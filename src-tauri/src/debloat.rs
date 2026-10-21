@@ -929,8 +929,8 @@ mod platform {
     // Get-AppxPackage query supplies it; no package name enters command text.
     pub fn nonremovable() -> Result<HashMap<String, bool>, String> {
         let output = crate::system_tools::run("powershell", |command| {
-            command.args(["-NoProfile", "-NonInteractive", "-Command", "$ErrorActionPreference='Stop'; @(Get-AppxPackage | Select-Object PackageFullName,NonRemovable) | ConvertTo-Json -Compress"])
-                .output()
+            command.args(["-NoProfile", "-NonInteractive", "-Command", "$ErrorActionPreference='Stop'; @(Get-AppxPackage | Select-Object PackageFullName,NonRemovable) | ConvertTo-Json -Compress"]);
+            crate::system_tools::output_within(command, crate::system_tools::SLOW)
         }).map_err(|e| format!("Query Windows removability: {e}"))?;
         if !output.status.success() {
             return Err("Windows removability query failed".into());

@@ -495,13 +495,44 @@ const PROTECTED_DIR_NAMES: &[&str] = &[
     "com.aurel.pc-tweaker-app",
 ];
 
+/// Checked on the path as given and on the path Windows actually opens:
+/// `C:\Windows.\win.ini` (Win32 drops the trailing dot), an 8.3 alias such as
+/// `C:\PROGRA~1` and a junction all reach a protected folder under another
+/// spelling. An 8.3-looking name that cannot be resolved is refused outright.
 pub(crate) fn touches_protected_dir(path: &Path) -> bool {
+    if names_protected_dir(path) {
+        return true;
+    }
+    match std::fs::canonicalize(path) {
+        Ok(real) => names_protected_dir(&real),
+        Err(_) => path
+            .components()
+            .any(|c| c.as_os_str().to_str().is_some_and(looks_like_short_name)),
+    }
+}
+
+fn names_protected_dir(path: &Path) -> bool {
     path.components().any(|c| {
         c.as_os_str()
             .to_str()
-            .map(|s| PROTECTED_DIR_NAMES.contains(&s.to_lowercase().as_str()))
+            .map(|s| {
+                // Trailing dots and spaces are dropped by Win32 path parsing.
+                let s = s.trim_end_matches(['.', ' ']).to_lowercase();
+                PROTECTED_DIR_NAMES.contains(&s.as_str())
+            })
             .unwrap_or(false)
     })
+}
+
+/// `NAME~1` or `NAME~1.EXT`: at most 8 characters, a `~` and a digit, and an
+/// extension of at most 3.
+fn looks_like_short_name(component: &str) -> bool {
+    let (base, ext) = component.rsplit_once('.').unwrap_or((component, ""));
+    base.len() <= 8
+        && ext.len() <= 3
+        && base
+            .split_once('~')
+            .is_some_and(|(_, n)| n.starts_with(|c: char| c.is_ascii_digit()))
 }
 
 /// Moves the given files to the Recycle Bin (never a permanent delete).
@@ -676,6 +707,63 @@ mod tests {
         assert_eq!(result.deleted_count, 0);
         assert_eq!(result.skipped_count, 3);
         assert_eq!(result.freed_bytes, 0);
+    }
+
+    #[test]
+    fn other_spellings_of_a_protected_folder_are_still_refused() {
+        assert!(touches_protected_dir(Path::new(r"C:\Windows.\win.ini")));
+        assert!(touches_protected_dir(Path::new(
+            r"C:\Program Files .\x.bin"
+        )));
+        // An alias that cannot be resolved is not trusted either.
+        assert!(touches_protected_dir(Path::new(
+            r"C:\nowhere-pct\EBWEBV~1\x.ldb"
+        )));
+        assert!(!touches_protected_dir(Path::new(
+            r"C:\nowhere-pct\Copy~of~report.docx"
+        )));
+
+        let dir = temp_dir("guard-spellings");
+        let real = dir.join("EBWebView");
+        fs::create_dir_all(&real).unwrap();
+        fs::write(real.join("000003.log"), b"x").unwrap();
+        // A junction to the protected folder, made without admin rights.
+        let link = dir.join("innocent");
+        let made = crate::system_tools::run("cmd", |c| {
+            crate::system_tools::output_within(
+                c.args(["/C", "mklink", "/J"]).arg(&link).arg(&real),
+                crate::system_tools::QUICK,
+            )
+        })
+        .unwrap();
+        assert!(made.status.success());
+        assert!(touches_protected_dir(&link.join("000003.log")));
+        let result = delete_files(vec![link.join("000003.log").to_string_lossy().into()]);
+        assert_eq!(result.deleted_count, 0);
+        // The 8.3 alias, where the volume generates them.
+        use std::os::windows::ffi::{OsStrExt, OsStringExt};
+        let wide: Vec<u16> = real
+            .join("000003.log")
+            .as_os_str()
+            .encode_wide()
+            .chain([0])
+            .collect();
+        let mut short = vec![0u16; 1024];
+        let n = unsafe {
+            windows_sys::Win32::Storage::FileSystem::GetShortPathNameW(
+                wide.as_ptr(),
+                short.as_mut_ptr(),
+                short.len() as u32,
+            )
+        } as usize;
+        let short = PathBuf::from(std::ffi::OsString::from_wide(&short[..n]));
+        if short.to_string_lossy().contains('~') {
+            assert!(!names_protected_dir(&short), "{}", short.display());
+            assert!(touches_protected_dir(&short), "{}", short.display());
+        }
+        assert!(real.join("000003.log").exists());
+        fs::remove_dir(&link).unwrap();
+        fs::remove_dir_all(&dir).ok();
     }
 
     #[test]

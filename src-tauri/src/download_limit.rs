@@ -108,8 +108,8 @@ fn supported_edition() -> Result<bool, String> {
 fn config() -> Result<DoConfig, String> {
     const SCRIPT: &str = "$ErrorActionPreference='Stop'; $c=Get-DOConfig -Verbose 4>$null; if ($null -eq $c) { throw 'Delivery Optimization returned no configuration' }; [pscustomobject]@{ DownBackLimitBpsProvider=[string]$c.DownBackLimitBpsProvider; DownBackLimitPctProvider=[string]$c.DownBackLimitPctProvider; SetHoursToLimitDownloadBackgroundProvider=[string]$c.SetHoursToLimitDownloadBackgroundProvider } | ConvertTo-Json -Compress";
     let output = crate::system_tools::run("powershell", |tool| {
-        tool.args(["-NoProfile", "-NonInteractive", "-Command", SCRIPT])
-            .output()
+        tool.args(["-NoProfile", "-NonInteractive", "-Command", SCRIPT]);
+        crate::system_tools::output_within(tool, crate::system_tools::QUICK)
     })
     .map_err(|e| format!("could not inspect Delivery Optimization: {e}"))?;
     if !output.status.success() {

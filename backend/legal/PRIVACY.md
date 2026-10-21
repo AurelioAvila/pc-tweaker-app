@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-10-14
+Last updated: 2026-10-21
 
 PC Tweaker is a desktop application. Windows tweaks, snapshots, rollback data,
 hardware readings and file scans are processed locally on your device. They are
@@ -39,6 +39,14 @@ The same account signs you in to PC Tweaker, PC Tweaker Uninstaller and Tweaky
 Driver. Each app keeps its own sign-in sessions and its own paid plan; a
 subscription to one app does not unlock another. Changing or resetting your
 password applies to all three and signs you out of each.
+
+When a signed-in app refreshes its licence, it also sends a random
+installation identifier that the app generated on first use. It is not derived
+from your hardware or anything else about your PC. The backend stores only a
+one-way hash of it with your account and product, to count on how many
+installations an account is used. It does not decide whether your licence
+works. An installation that has not refreshed its licence for 90 days is
+deleted, and all of them are deleted with the account.
 
 ## Information you choose to submit
 

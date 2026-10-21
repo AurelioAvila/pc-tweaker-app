@@ -77,11 +77,7 @@ pub fn append_in(dir: &Path, e: &AuditEntry) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|err| err.to_string())?;
     let path = dir.join(AUDIT_FILE);
     let line = serde_json::to_string(e).map_err(|err| err.to_string())?;
-    let mut file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&path)
-        .map_err(|err| err.to_string())?;
+    let mut file = crate::elevation::open_no_follow(&path, true).map_err(|err| err.to_string())?;
     writeln!(file, "{}", line).map_err(|err| err.to_string())?;
     drop(file);
     trim_if_needed(&path);
@@ -114,7 +110,7 @@ fn trim_if_needed(path: &Path) {
     }
     let kept = &lines[lines.len() - MAX_LINES..];
     let tmp = path.with_extension("jsonl.tmp");
-    if std::fs::write(&tmp, kept.join("\n") + "\n").is_ok() {
+    if crate::elevation::write_no_follow(&tmp, kept.join("\n") + "\n").is_ok() {
         let _ = std::fs::rename(&tmp, path);
     }
 }

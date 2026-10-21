@@ -440,8 +440,8 @@ $xml.LoadXml(@'
 
     let output = crate::system_tools::run("powershell", |tool| {
         tool.args(["-NoProfile", "-NonInteractive", "-Command", &script])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
+            .creation_flags(CREATE_NO_WINDOW);
+        crate::system_tools::output_within(tool, crate::system_tools::QUICK)
     })
     .map_err(|e| format!("could not run PowerShell: {e}"))?;
 

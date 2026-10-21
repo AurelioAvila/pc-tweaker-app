@@ -265,6 +265,20 @@ async function initSchema(): Promise<void> {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
+
+  // Installations an account refreshes its licence on (install-count.ts):
+  // the SHA-256 of a random id the app generated, never hardware data.
+  // Measurement only; rows expire 90 days after their last refresh.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS license_installs (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      product TEXT NOT NULL,
+      install_hash TEXT NOT NULL,
+      first_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
+      last_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (user_id, product, install_hash)
+    );
+  `);
 }
 
 const isConfigured = Boolean(pool);

@@ -71,8 +71,8 @@ mod imp {
                 "--query-gpu=name,temperature.gpu,utilization.gpu,memory.used,memory.total,fan.speed,power.draw,power.limit,driver_version",
                 "--format=csv,noheader,nounits",
             ])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
+            .creation_flags(CREATE_NO_WINDOW);
+            crate::system_tools::output_within(tool, crate::system_tools::QUICK)
         });
 
         // No NVIDIA GPU means no nvidia-smi on PATH, which surfaces here as a
@@ -122,8 +122,8 @@ mod imp {
                       Select-Object -ExpandProperty CurrentTemperature) -join ','";
         let output = crate::system_tools::run("powershell", |tool| {
             tool.args(["-NoProfile", "-NonInteractive", "-Command", script])
-                .creation_flags(CREATE_NO_WINDOW)
-                .output()
+                .creation_flags(CREATE_NO_WINDOW);
+            crate::system_tools::output_within(tool, crate::system_tools::QUICK)
         })
         .ok()?;
         if !output.status.success() {

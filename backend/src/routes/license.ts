@@ -4,6 +4,7 @@ import { requireAuth } from "../auth";
 import { signLicense, isConfigured as signingConfigured } from "../license";
 import { isKnownProduct, productEntitlement } from "../products";
 import { asyncRoute } from "../async-route";
+import { recordInstall } from "../install-count";
 
 const router = express.Router();
 
@@ -51,6 +52,8 @@ router.get(
         ? Math.floor(new Date(entitlement.trialEndsAt).getTime() / 1000) : null,
     });
 
+    // Counted, never enforced: the licence above is issued either way.
+    await recordInstall(req.userId as number, product, req.get("x-install-id"));
     res.json(license);
   }),
 );

@@ -1514,8 +1514,8 @@ fn drift_watch_enabled() -> bool {
 
     crate::system_tools::run("schtasks", |tool| {
         tool.args(["/query", "/tn", updatewatch::TASK_NAME])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
+            .creation_flags(CREATE_NO_WINDOW);
+        crate::system_tools::output_within(tool, crate::system_tools::QUICK)
     })
     .map(|o| o.status.success())
     .unwrap_or(false)
@@ -1588,8 +1588,8 @@ fn refresh_drift_watch_target() {
     let Ok(exe) = std::env::current_exe() else { return };
     let Ok(output) = crate::system_tools::run("schtasks", |tool| {
         tool.args(["/query", "/tn", updatewatch::TASK_NAME, "/xml"])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
+            .creation_flags(CREATE_NO_WINDOW);
+        crate::system_tools::output_within(tool, crate::system_tools::QUICK)
     }) else {
         return;
     };
@@ -1640,7 +1640,8 @@ fn configure_logon_task(task: &str, flag: &str, delay: &str, enabled: bool) -> R
 
     let refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
     let output = crate::system_tools::run("schtasks", |tool| {
-        tool.args(&refs).creation_flags(CREATE_NO_WINDOW).output()
+        tool.args(&refs).creation_flags(CREATE_NO_WINDOW);
+        crate::system_tools::output_within(tool, crate::system_tools::QUICK)
     })
     .map_err(|e| format!("could not run schtasks: {e}"))?;
 
@@ -1684,8 +1685,8 @@ fn task_registered(task: &str) -> bool {
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
     crate::system_tools::run("schtasks", |tool| {
         tool.args(["/query", "/tn", task])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
+            .creation_flags(CREATE_NO_WINDOW);
+        crate::system_tools::output_within(tool, crate::system_tools::QUICK)
     })
     .map(|o| o.status.success())
     .unwrap_or(false)
@@ -1860,12 +1861,27 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
         }
     };
     let id = id.as_str();
-    let dir = dirs_app_data_dir();
-    // Checked before anything, including crash reporting, writes to it.
-    if let Err(e) = elevation::ensure_plain_app_data_dir(&dir) {
-        eprintln!("{e}");
-        std::process::exit(1);
+    // The signed-in user's folder, even when another account approved UAC.
+    match elevation::resolve_caller() {
+        Ok(elevation::Caller::SameUser) => {}
+        Ok(elevation::Caller::OtherUser(roaming)) => {
+            let _ = CALLER_APP_DATA.set(roaming.join(env!("PCT_APP_IDENTIFIER")));
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            std::process::exit(1);
+        }
     }
+    let dir = dirs_app_data_dir();
+    // Checked and held open before anything, crash reporting included, writes
+    // to it: until this process exits the folder cannot become a junction.
+    let _held = match elevation::hold_app_data_dir(&dir) {
+        Ok(held) => held,
+        Err(e) => {
+            eprintln!("{e}");
+            std::process::exit(1);
+        }
+    };
     // This process has no window, so a panic here is silent: the user clicks
     // "apply", the UAC prompt closes, and nothing happens with no explanation
     // anywhere. Recording it is the only way that failure is ever seen.
@@ -1997,7 +2013,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             );
             result.and_then(|res| {
                 let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
-                std::fs::write(dir.join("last_cleanup_result.json"), json)
+                elevation::write_no_follow(dir.join("last_cleanup_result.json"), json)
                     .map_err(|e| e.to_string())
             })
         }
@@ -2017,7 +2033,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             });
             result.and_then(|res| {
                 let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
-                std::fs::write(dir.join("last_cleanup_result.json"), json)
+                elevation::write_no_follow(dir.join("last_cleanup_result.json"), json)
                     .map_err(|e| e.to_string())
             })
         }
@@ -2035,7 +2051,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             );
             result.and_then(|res| {
                 let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
-                std::fs::write(dir.join("last_diskopt_result.json"), json)
+                elevation::write_no_follow(dir.join("last_diskopt_result.json"), json)
                     .map_err(|e| e.to_string())
             })
         }
@@ -2047,7 +2063,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             let result = drive.and_then(|drive| {
                 securedefrag::run(&drive, |p| {
                     if let Ok(json) = serde_json::to_string(&p) {
-                        let _ = std::fs::write(&progress_path, json);
+                        let _ = elevation::write_no_follow(&progress_path, json);
                     }
                 })
             });
@@ -2059,7 +2075,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             );
             result.and_then(|res| {
                 let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
-                std::fs::write(dir.join("last_diskopt_result.json"), json)
+                elevation::write_no_follow(dir.join("last_diskopt_result.json"), json)
                     .map_err(|e| e.to_string())
             })
         }
@@ -2074,7 +2090,8 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             );
             result.and_then(|res| {
                 let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
-                std::fs::write(dir.join("last_purge_result.json"), json).map_err(|e| e.to_string())
+                elevation::write_no_follow(dir.join("last_purge_result.json"), json)
+                    .map_err(|e| e.to_string())
             })
         }
 
@@ -2089,7 +2106,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
                 }
                 sysrepair::run(job, |p| {
                     if let Ok(json) = serde_json::to_string(&p) {
-                        let _ = std::fs::write(&progress_path, json);
+                        let _ = elevation::write_no_follow(&progress_path, json);
                     }
                 })
             });
@@ -2101,7 +2118,8 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             );
             result.and_then(|res| {
                 let json = serde_json::to_string(&res).map_err(|e| e.to_string())?;
-                std::fs::write(dir.join("last_repair_result.json"), json).map_err(|e| e.to_string())
+                elevation::write_no_follow(dir.join("last_repair_result.json"), json)
+                    .map_err(|e| e.to_string())
             })
         }
 
@@ -2136,8 +2154,15 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     }
 }
 
+/// Set once by the elevated helper when another account approved the prompt.
+#[cfg(windows)]
+static CALLER_APP_DATA: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+
 #[cfg(windows)]
 pub(crate) fn dirs_app_data_dir() -> std::path::PathBuf {
+    if let Some(dir) = CALLER_APP_DATA.get() {
+        return dir.clone();
+    }
     // Mirrors Tauri's own resolution (%APPDATA%/<identifier>) without needing
     // a running AppHandle, since the elevated helper process never builds a UI.
     // The identifier is the one this build was configured with (see build.rs):

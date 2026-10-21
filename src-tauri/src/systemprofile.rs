@@ -265,8 +265,8 @@ if ($enc -ne $null -and $enc.ChassisTypes.Count -gt 0) { $chassis = [int]$enc.Ch
 
     let Ok(output) = crate::system_tools::run("powershell", |tool| {
         tool.args(["-NoProfile", "-NonInteractive", "-Command", SCRIPT])
-            .creation_flags(CREATE_NO_WINDOW)
-            .output()
+            .creation_flags(CREATE_NO_WINDOW);
+        crate::system_tools::output_within(tool, crate::system_tools::QUICK)
     }) else {
         return;
     };

@@ -19,9 +19,8 @@ mod imp {
     /// setting, so it has no place in the rollback store.
     pub fn flush() -> Result<FlushDnsResult, String> {
         let output = crate::system_tools::run("ipconfig", |tool| {
-            tool.arg("/flushdns")
-                .creation_flags(CREATE_NO_WINDOW)
-                .output()
+            tool.arg("/flushdns").creation_flags(CREATE_NO_WINDOW);
+            crate::system_tools::output_within(tool, crate::system_tools::QUICK)
         })
         .map_err(|e| format!("could not run ipconfig: {}", e))?;
 

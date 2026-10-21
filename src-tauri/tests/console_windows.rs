@@ -25,11 +25,6 @@
 
 use std::path::{Path, PathBuf};
 
-/// `runas` is the elevation path. It exists to raise a UAC prompt, which is a
-/// window the user is supposed to see, and `runas::Command` has no
-/// `creation_flags` to set in the first place.
-const EXEMPT: &str = "runas::";
-
 /// A builder chain longer than this is not a chain, it is a parse failure.
 const MAX_STATEMENT_LINES: usize = 16;
 
@@ -70,9 +65,9 @@ fn every_spawned_process_is_told_not_to_open_a_console() {
         let lines: Vec<&str> = source.lines().collect();
 
         for (index, line) in lines.iter().enumerate() {
-            if (!line.contains("Command::new") && !line.contains("crate::system_tools::run("))
-                || line.contains(EXEMPT)
-            {
+            // The UAC relaunch (elevation.rs) goes through ShellExecuteExW,
+            // not Command: its prompt is a window the user is meant to see.
+            if !line.contains("Command::new") && !line.contains("crate::system_tools::run(") {
                 continue;
             }
             sites += 1;

@@ -89,6 +89,7 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 - **1.18.4.** Updates are checked on dl.pctweaker.app as well as GitHub, and the change preview reads correctly when a control sets a single value.
 - **1.18.5.** Clarifies startup, menu, hover, background-app, update-sharing and window-display controls in all six languages. Settings and restoration behavior are unchanged.
 - **1.18.6.** Administrator changes to scheduled tasks with spaces in their path work, the Game Sessions list survives an interrupted save, and the administrator helper loads Windows libraries from System32 only.
+- **1.18.7.** Time limits on every Windows tool and on the administrator helper, power plan restores that survive a deleted plan, a polite Explorer restart, and changes that follow the signed-in user when another administrator approves UAC.
 
 See the [changelog](CHANGELOG.md) for every release.
 

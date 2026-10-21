@@ -152,4 +152,5 @@ permissions = [
     "allow-priority-rules-set-enabled",
     "allow-priority-rules-set-priority",
     "allow-is-store-install",
+    "allow-set-tray-language",
 ]

@@ -151,4 +151,5 @@ pub const APP_COMMANDS: &[&str] = &[
     "priority_rules_set_enabled",
     "priority_rules_set_priority",
     "is_store_install",
+    "set_tray_language",
 ];

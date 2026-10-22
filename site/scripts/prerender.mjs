@@ -148,7 +148,7 @@ await writeFile(path.join(dist, "404.html"), buildPage("/404", NOT_FOUND_SEO, tr
 await mkdir(path.join(dist, "invite"), { recursive: true });
 await writeFile(
   path.join(dist, "invite", "index.html"),
-  buildPage("/invite", INVITATION_SEO, true),
+  buildPage("/invite", INVITATION_SEO),
   "utf8",
 );
 await writeOgCards(OG_CARDS, path.join(dist, "og"));

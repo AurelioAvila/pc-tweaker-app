@@ -6,7 +6,7 @@ import { normalizeInvitationCode } from "../../../src/referral-code";
 export const INVITATION_SEO = {
   title: "Your PC Tweaker Invitation",
   description:
-    "Confirm your PC Tweaker invitation before your first eligible paid purchase. See the discount, bonus and verification conditions.",
+    "Got a PC Tweaker invitation? Confirm the code in the app before your first Pro purchase to save an extra 10%, and see the bonus, limits and verification rules.",
   canonical: "https://pctweaker.app/invite/",
   ogType: "website" as const,
 };

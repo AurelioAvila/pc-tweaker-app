@@ -163,6 +163,20 @@ export function AccessPricing() {
           </motion.div>
         </div>
         <PromoFine className="mt-5 text-[12.5px] text-[var(--fg-dim)]" />
+        <motion.p
+          variants={riseChild}
+          className="mt-8 max-w-3xl text-[14px] leading-relaxed text-[var(--fg-dim)]"
+        >
+          <strong className="font-semibold text-[var(--fg)]">{text.pricing.invite.title}</strong>{" "}
+          {text.pricing.invite.body}{" "}
+          <a href="/invite/" className="text-accent underline-offset-4 hover:underline">
+            {text.pricing.invite.how}
+          </a>
+          {" · "}
+          <a href="/terms/" className="text-accent underline-offset-4 hover:underline">
+            {text.pricing.invite.terms}
+          </a>
+        </motion.p>
       </motion.div>
     </section>
   );

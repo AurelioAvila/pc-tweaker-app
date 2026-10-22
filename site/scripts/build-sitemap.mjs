@@ -28,6 +28,7 @@ const ORIGIN = "https://pctweaker.app";
 const PAGES = {
   "/": ["src/App.tsx", "src/components", "src/i18n/dictionary.ts"],
   "/uninstaller/": ["src/pages/Uninstaller.tsx"],
+  "/invite/": ["src/pages/Invitation.tsx"],
   "/guides/": ["src/pages/GuideDirectory.tsx", "src/pages/guide-directory.ts"],
   "/support/": ["src/pages/Support.tsx", "src/i18n/dictionary.ts"],
   "/privacy/": ["src/pages/Legal.tsx"],

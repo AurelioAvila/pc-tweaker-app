@@ -77,14 +77,14 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       document.querySelector(selector)?.setAttribute("content", content);
     }
     const robots = document.querySelector('meta[name="robots"]');
-    if (route && !invitation) robots?.remove();
+    if (route) robots?.remove();
     else if (!robots) {
       const tag = document.createElement("meta");
       tag.name = "robots";
       tag.content = "noindex,follow";
       document.head.appendChild(tag);
     }
-  }, [route, invitation]);
+  }, [route]);
 
   let page: React.ReactNode;
   switch (path) {

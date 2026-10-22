@@ -123,6 +123,11 @@ export interface Dictionary {
       readonly badge: string;
       readonly features: readonly string[];
       readonly cta: string;
+    };    readonly invite: {
+      readonly title: string;
+      readonly body: string;
+      readonly how: string;
+      readonly terms: string;
     };
   };
   readonly faq: {
@@ -554,6 +559,12 @@ export const engDictionary: Dictionary = {
         "Compare saved profiles and export tuning reports"
       ],
       "cta": "Download & Get Lifetime"
+    },
+    "invite": {
+      "title": "Invite a friend.",
+      "body": "Your friend gets an extra 10% off their first Pro payment. When it goes through, you get Pro on one PC: 6 months for a monthly purchase, 12 months for annual or Lifetime. Your code is in the app under Account → Invite a friend.",
+      "how": "How it works",
+      "terms": "Programme terms"
     }
   },
   "faq": {

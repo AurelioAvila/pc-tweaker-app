@@ -15,7 +15,7 @@
  * sitemap-database.xml and sitemap-tools.xml, all listed in sitemap-index.xml.
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -85,7 +85,9 @@ function builtRoutes(prefix) {
     }
   };
   walk(dir);
-  return out.sort();
+  // Pages built noindex (the per-control tweak leaves) stay out of every sitemap.
+  const indexable = (route) => !/name="robots" content="[^"]*noindex/.test(readFileSync(path.join(root, "dist", route.slice(1), "index.html"), "utf8"));
+  return out.filter(indexable).sort();
 }
 
 const urlset = (entries) => `<?xml version="1.0" encoding="UTF-8"?>

@@ -62,7 +62,8 @@ function jsonLdScript(payload) {
 function buildPage(route, seo, noindex = false) {
   let html = template;
   const image = getRouteImage(seo);
-  const routeLd = noindex ? [] : getRouteJsonLd(route);
+  // 404 and the invitation carry no structured data; pages kept out of the index by choice keep theirs.
+  const routeLd = noindex && !seo.noindex ? [] : getRouteJsonLd(route);
   html = replaceTag(
     html,
     /<!--ROUTE_LD-->/,
@@ -140,7 +141,7 @@ for (const [route, seo] of Object.entries(ROUTE_SEO)) {
   const file =
     route === "/" ? path.join(dist, "index.html") : path.join(dist, route.slice(1), "index.html");
   await mkdir(path.dirname(file), { recursive: true });
-  await writeFile(file, buildPage(route, seo), "utf8");
+  await writeFile(file, buildPage(route, seo, seo.noindex === true), "utf8");
 }
 
 await writeFile(path.join(dist, "404.html"), buildPage("/404", NOT_FOUND_SEO, true), "utf8");

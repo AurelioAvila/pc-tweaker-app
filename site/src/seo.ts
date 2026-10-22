@@ -18,6 +18,8 @@ export interface RouteSeo {
   /** A 1200x630 card made at build time (scripts/og.mjs); the site-wide card otherwise. */
   readonly image?: string;
   readonly imageAlt?: string;
+  /** Built and linked, but kept out of search results and the sitemaps. */
+  readonly noindex?: boolean;
 }
 
 const ORIGIN = "https://pctweaker.app";

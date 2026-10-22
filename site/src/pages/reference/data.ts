@@ -148,7 +148,10 @@ export const REFERENCE_SEO: Record<string, RouteSeo> = {
       ),
     ]),
   ),
-  ...Object.fromEntries(TWEAKS.map((p) => [p.path, seo(p.path, brand(p.title), tweakDescription(p))])),
+  // One page per control shares most of its wording with its siblings (measured 22 Oct 2026: median 23%
+  // of the text unique), so the leaves stay noindex,follow until each carries enough of its own; the
+  // category hubs list every control and are the indexed entry points.
+  ...Object.fromEntries(TWEAKS.map((p) => [p.path, { ...seo(p.path, brand(p.title), tweakDescription(p)), noindex: true }])),
   "/database": seo(
     "/database",
     "Windows Processes and Services: What to Leave Alone",

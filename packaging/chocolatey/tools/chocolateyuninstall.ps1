@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 
-[array]$key = Get-UninstallRegistryKey -SoftwareName 'PC Tweaker*'
+# Exact name: 'PC Tweaker*' would also match the separate "PC Tweaker Uninstaller" app.
+[array]$key = Get-UninstallRegistryKey -SoftwareName 'PC Tweaker'
 if ($key.Count -eq 1) {
   $packageArgs = @{
     packageName    = $env:ChocolateyPackageName

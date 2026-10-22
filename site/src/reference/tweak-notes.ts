@@ -108,7 +108,7 @@ export const TWEAK_NOTES: Record<string, TweakNote> = {
     skip: "You expect telemetry to stop completely on Home or Pro. Microsoft documents that the lowest level on those editions is Required diagnostic data; Diagnostic data off only applies to Enterprise, Education and Server.",
     sources: [MS.diagData, MS.cspSystem],
     db: ["services/diagtrack", "services/dmwappushservice"],
-    guides: ["/windows-privacy-tool/"],
+    guides: ["/windows-privacy-tool/", "/guides/windows-11-privacy-telemetry-rollback/"],
   },
   reset_advertising_id: {
     slug: "disable-advertising-id",
@@ -448,6 +448,7 @@ export const TWEAK_NOTES: Record<string, TweakNote> = {
     helps: "A plugged-in desktop where you want to rule out parking while diagnosing short stalls.",
     skip: "Battery use is not affected, but idle power on mains rises. We publish no measured latency gain.",
     sources: [MS.coreParking, MS.powercfg],
+    guides: ["/guides/amd-ryzen-x3d-core-parking-windows-11/"],
   },
   reduce_keyboard_delay: {
     title: "Shortest Keyboard Repeat Delay in Windows",

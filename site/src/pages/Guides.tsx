@@ -373,6 +373,11 @@ export const GUIDES: Record<string, Guide> = {
     related: [
       {"to": "/guides/windows-11-privacy-telemetry-rollback/", "label": "inspect privacy registry values and plan the rollback", "note": "Read the actual key, record its previous state and understand edition limits."},
       {
+        to: "/tools/debloat-windows-11/",
+        label: "the debloat list builder, one app at a time",
+        note: "The preinstalled apps PC Tweaker can remove, what each removal costs and the Store link that brings it back.",
+      },
+      {
         to: "/turn-off-windows-recall/",
         label: "how to turn off Windows Recall, and keep it off",
         note: "The Settings switch, the machine policy PC Tweaker writes and removing the component, with what each one deletes.",

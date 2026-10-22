@@ -352,6 +352,7 @@ export const FIX_GUIDES = {
       { to: "/turn-off-windows-recall/", label: "the full Recall guide", note: "Settings switch, policy and removing the component, with what each deletes." },
       { to: "/database/services/wsaifabricsvc/", label: "the AI Components Host service entry", note: "Why Manual, not Disabled." },
       { to: "/windows-privacy-tool/", label: "the other privacy settings PC Tweaker covers", note: "Diagnostic data, advertising ID, suggestions." },
+      { to: "/tools/debloat-windows-11/", label: "removing the Copilot app and other preinstalled apps", note: "Pick apps, see what each removal costs, and keep the Store link to get it back." },
     ],
     sources: {
       checked: CHECKED,

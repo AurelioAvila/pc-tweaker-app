@@ -472,13 +472,13 @@
         "valueType": "REG_DWORD"
       }
     ],
-    "description": "Windows deliberately waits about 10 seconds after sign-in before launching your startup programs. This removes that wait.",
+    "description": "Writes StartupDelayInMSec=0 to request no startup-app delay. The effect depends on the Windows version and startup apps; it does not shorten firmware startup or app loading time. Compare sign-in under the same conditions.",
     "enterprise_edition": false,
     "hive": "HKCU",
     "id": "disable_startup_delay",
     "manual_only": false,
     "min_build": null,
-    "name": "Remove the startup app delay",
+    "name": "Adjust startup app delay",
     "pro_edition": false,
     "requires_admin": false,
     "requires_pro": false
@@ -494,13 +494,13 @@
         "valueType": "REG_SZ"
       }
     ],
-    "description": "Removes the built-in delay before menus open, which makes the whole desktop feel noticeably snappier.",
+    "description": "Sets MenuShowDelay=0 for menus that use this Windows setting. It changes menu timing, not application loading or game rendering speed. Some apps use their own menu behavior.",
     "enterprise_edition": false,
     "hive": "HKCU",
     "id": "menu_show_delay",
     "manual_only": false,
     "min_build": null,
-    "name": "Instant menu response",
+    "name": "Reduce menu display delay",
     "pro_edition": false,
     "requires_admin": false,
     "requires_pro": false
@@ -714,13 +714,13 @@
         "valueType": "REG_SZ"
       }
     ],
-    "description": "Removes the slide/fade animation Windows plays every time a window opens, closes or minimizes. The animation is pure waiting time — cutting it makes the desktop respond the moment you click, and frees the GPU work behind it.",
+    "description": "Sets MinAnimate=0 to reduce supported window animations. It changes visual transitions, not game rendering speed. The visible effect depends on Windows and the application.",
     "enterprise_edition": false,
     "hive": "HKCU",
     "id": "disable_window_animations",
     "manual_only": false,
     "min_build": null,
-    "name": "Instant window animations",
+    "name": "Reduce window animations",
     "pro_edition": false,
     "requires_admin": false,
     "requires_pro": false
@@ -736,13 +736,13 @@
         "valueType": "REG_SZ"
       }
     ],
-    "description": "Draws an outline while you drag a window instead of repainting its whole contents every frame. Barely noticeable on a fast GPU, a clear difference on integrated graphics or an older machine.",
+    "description": "Sets DragFullWindows=0 to request a window outline while dragging, where supported. This changes display behavior; any performance benefit depends on the hardware and application.",
     "enterprise_edition": false,
     "hive": "HKCU",
     "id": "disable_drag_full_windows",
     "manual_only": false,
     "min_build": null,
-    "name": "Lighter window dragging",
+    "name": "Show outlines while dragging windows",
     "pro_edition": false,
     "requires_admin": false,
     "requires_pro": false
@@ -758,13 +758,13 @@
         "valueType": "REG_SZ"
       }
     ],
-    "description": "Windows waits 400 ms before reacting to the pointer resting on something - taskbar previews, tooltips, menu hovers. This drops that wait to almost nothing, so the interface follows the mouse instead of trailing it.",
+    "description": "Sets MouseHoverTime=10 ms for controls that use this Windows setting. It does not change mouse polling or game input latency. Custom interface elements may use their own timing.",
     "enterprise_edition": false,
     "hive": "HKCU",
     "id": "mouse_hover_delay",
     "manual_only": false,
     "min_build": null,
-    "name": "Instant mouse hover response",
+    "name": "Reduce mouse hover delay",
     "pro_edition": false,
     "requires_admin": false,
     "requires_pro": false
@@ -780,13 +780,13 @@
         "valueType": "REG_DWORD"
       }
     ],
-    "description": "Stops Store apps from running, refreshing and polling the network while you are not using them. This is real CPU, RAM and battery spent on apps you did not open.",
+    "description": "Writes GlobalUserDisabled=1 for supported Windows app background activity. Behavior varies by Windows version and app; desktop apps and services may continue running. Notifications and syncing can be affected.",
     "enterprise_edition": false,
     "hive": "HKCU",
     "id": "disable_background_apps",
     "manual_only": false,
     "min_build": null,
-    "name": "Stop apps running in the background",
+    "name": "Restrict supported background apps",
     "pro_edition": false,
     "requires_admin": false,
     "requires_pro": true
@@ -802,13 +802,13 @@
         "valueType": "REG_DWORD"
       }
     ],
-    "description": "Windows uploads downloaded update files to other PCs over your connection by default. This limits Delivery Optimization to your own machine, which stops that upload eating bandwidth mid-game.",
+    "description": "Sets DODownloadMode=0 to disable Delivery Optimization peer-to-peer caching. Updates can still download over HTTP. Sharing depends on current settings and device policy; lower game latency is not guaranteed.",
     "enterprise_edition": false,
     "hive": "HKLM",
     "id": "disable_delivery_optimization",
     "manual_only": false,
     "min_build": null,
-    "name": "Stop sharing Windows updates with strangers",
+    "name": "Disable update peer sharing",
     "pro_edition": false,
     "requires_admin": true,
     "requires_pro": true

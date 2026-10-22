@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>pc-tweaker</id>
-    <version>1.18.8</version>
+    <version>1.18.9</version>
     <title>PC Tweaker</title>
     <authors>Aurelio Avila</authors>
     <owners>AurelioAvila</owners>
@@ -20,7 +20,7 @@ The official Windows installer is digitally signed by Aurelio Avila and timestam
 
 Package notes: since 1.18.8 this package runs the same signed setup as winget and the in-app updater, installed for the user who runs Chocolatey in %LocalAppData%\PC Tweaker. Earlier versions of this package used the MSI.</description>
     <summary>Windows tuning and maintenance with inspectable, restorable settings</summary>
-    <releaseNotes>https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.18.8</releaseNotes>
+    <releaseNotes>https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.18.9</releaseNotes>
     <copyright>2026 Aurelio Avila</copyright>
     <tags>pc-tweaker windows tuning optimization privacy gaming performance tweak admin</tags>
     <projectSourceUrl>https://github.com/AurelioAvila/pc-tweaker-app</projectSourceUrl>

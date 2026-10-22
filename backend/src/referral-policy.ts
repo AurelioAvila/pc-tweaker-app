@@ -1,16 +1,14 @@
 import { createHash, createPublicKey, randomInt, verify } from "crypto";
 import { referralSignerReady } from "./referral-license";
 
-// v2 (21 Oct 2026): yearly cap, dispute-window hold, no gifting, no Lifetime-holder reward.
-// A deployment still configured for v1 stays off until it opts into these rules.
-export const REFERRAL_VERSION = "2026-10-21-v2";
+// v3 (22 Oct 2026, owner decision): the bonus is available as soon as the friend's first
+// payment succeeds; a refund or dispute of that payment withdraws it, even when active.
+// Kept from v2: yearly cap, no gifting, no Lifetime-holder reward. A deployment still
+// configured for an earlier version stays off until it opts into these rules.
+export const REFERRAL_VERSION = "2026-10-22-v3";
 export const REFERRAL_PLAN = "referral_bonus";
 export const REFERRAL_MONTHS = { monthly: 6, annual: 12, lifetime: 12 } as const;
 export type ReferralPlan = keyof typeof REFERRAL_MONTHS;
-/** Digital purchases are not refundable, so the binding window is the card-network
- *  dispute period (commonly 120 days). A bonus matures only after it. */
-export const HOLD_DAYS = 120;
-export const HOLD_MS = HOLD_DAYS * 24 * 60 * 60 * 1000;
 /** At most this many recognised (not revoked) rewards per inviter per rolling 12 months. */
 export const INVITER_CAP = 6;
 export const CAP_WINDOW_MS = 365 * 24 * 60 * 60 * 1000;
@@ -29,6 +27,16 @@ export function canonicalEmail(email: string): string {
   const gmail = domain === "gmail.com" || domain === "googlemail.com";
   const base = local.split("+")[0];
   return `${gmail ? base.replaceAll(".", "") : base}@${gmail ? "gmail.com" : domain}`;
+}
+/** Large public mailbox providers, where two people sharing a domain means nothing. */
+const PUBLIC_MAIL =
+  /^(?:(?:gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|aol|icloud|me|mac|proton|protonmail|pm|gmx|web|mail|yandex|zoho|tutanota|tuta|libero|virgilio|tiscali|alice|tim|fastwebnet|email|inwind|orange|free|laposte|sfr|wanadoo|t-online|freenet|arcor|seznam|wp|o2|interia|onet|telefonica|movistar|terra|sapo|clix|netcabo|qq|163|126|naver|daum)\.[a-z.]{2,12})$/;
+/** Two different addresses on the same private domain (a catch-all on one's own domain is the
+ *  cheapest way to mint invitees) do not qualify; public mail providers are exempt. */
+export function sharesPrivateDomain(a: string, b: string): boolean {
+  const domain = (email: string) => canonicalEmail(email).split("@")[1] ?? "";
+  const left = domain(a);
+  return left !== "" && left === domain(b) && !PUBLIC_MAIL.test(left);
 }
 const INVITATION_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const CODE_PATTERN =

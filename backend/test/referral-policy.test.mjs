@@ -132,8 +132,38 @@ test("R5: one invitation per person ignores +tags and Gmail dots", () => {
     ["j.doe@example.com", "j.doe@example.com"],
   ])
     assert.equal(policy.canonicalEmail(input), expected);
-  assert.equal(policy.HOLD_DAYS, 120);
   assert.equal(policy.INVITER_CAP, 6);
+});
+test("v3: no maturity delay, and a shared private email domain is a self-invitation", () => {
+  // Owner decision of 22 October 2026: the bonus is available as soon as the payment succeeds.
+  assert.equal(policy.REFERRAL_VERSION, "2026-10-22-v3");
+  assert.equal(Object.hasOwn(policy, "HOLD_DAYS"), false);
+  for (const [a, b, expected] of [
+    ["me@mydomain.dev", "friend@mydomain.dev", true],
+    ["Me+x@MyDomain.dev", "other@mydomain.dev", true],
+    ["a@gmail.com", "b@googlemail.com", false],
+    ["a@outlook.it", "b@outlook.it", false],
+    ["a@libero.it", "b@libero.it", false],
+    ["a@company.com", "b@other.com", false],
+    ["no-at-sign", "no-at-sign", false],
+  ])
+    assert.equal(policy.sharesPrivateDomain(a, b), expected, `${a} / ${b}`);
+});
+test("codes: CSPRNG, unambiguous alphabet, no repeats or sequences in a large sample", () => {
+  const seen = new Set();
+  const counts = new Map();
+  for (let i = 0; i < 50000; i++) {
+    const code = policy.createInvitationCode();
+    assert.doesNotMatch(code, /[IO01]/);
+    seen.add(code);
+    for (const ch of code) counts.set(ch, (counts.get(ch) ?? 0) + 1);
+  }
+  // 32^10 ≈ 1.1e15 codes: a repeat in 50 000 draws would mean a broken generator.
+  assert.equal(seen.size, 50000);
+  // Every one of the 32 symbols is used, none dominates (uniform within a wide margin).
+  assert.equal(counts.size, 32);
+  const expected = (50000 * 10) / 32;
+  for (const n of counts.values()) assert.ok(Math.abs(n - expected) < expected * 0.1);
 });
 test("R1: a referral session on an existing customer is valid for Stripe in both models", async () => {
   const { referralCheckoutParams } = await import("../dist/referral-stripe.js");

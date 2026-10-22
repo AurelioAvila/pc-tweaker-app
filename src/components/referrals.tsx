@@ -106,7 +106,6 @@ export function ReferralPanel({
       setMessage(t.copyFailed);
     }
   }
-  const days = status?.verificationDays ?? 120;
   const cap = status?.rewardsPerYear ?? 6;
   return (
     <dialog
@@ -268,7 +267,7 @@ export function ReferralPanel({
                         </strong>
                         <span>
                           {reward.status === "pending"
-                            ? format(t.statusPending, { days })
+                            ? t.statusPending
                             : reward.status === "not_eligible"
                               ? t.statusNotEligible
                               : reward.activatedUntil
@@ -401,7 +400,7 @@ export function ReferralPanel({
             <summary>{t.rulesTitle}</summary>
             <p>{t.rulesDiscount}</p>
             <p>{format(t.rulesBonus, { cap })}</p>
-            <p>{format(t.rulesVerification, { days })}</p>
+            <p>{t.rulesVerification}</p>
             <p>{t.rulesDevice}</p>
           </details>
         </>

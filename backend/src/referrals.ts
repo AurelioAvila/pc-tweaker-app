@@ -9,8 +9,6 @@ import {
   CHALLENGE_MS,
   createInvitationCode,
   deviceKey,
-  HOLD_DAYS,
-  HOLD_MS,
   INVITATION_DAYS,
   INVITER_CAP,
   isReferralPlan,
@@ -20,6 +18,7 @@ import {
   REFERRAL_VERSION,
   referralsEnabled,
   referralQuote,
+  sharesPrivateDomain,
   UUID_PATTERN,
   verifyDeviceProof,
   type ReferralPlan,
@@ -138,6 +137,9 @@ export class Referrals {
     readonly now: () => Date = () => new Date(),
   ) {}
 
+  /** Replaceable only so tests can force a collision; production uses the CSPRNG generator. */
+  newCode: () => string = createInvitationCode;
+
   enabled() {
     return referralsEnabled(this.environment);
   }
@@ -180,6 +182,17 @@ export class Referrals {
     );
   }
 
+  /** Both accounts signed in from the same app installation (the id the app keeps per PC).
+   *  Network-only sign-ins are too coarse to compare and are ignored. */
+  private async sharedDevice(tx: Pick<PoolClient, "query">, inviterId: number, buyerId: number) {
+    const { rows } = await tx.query(
+      `SELECT 1 FROM sign_in_devices a JOIN sign_in_devices b ON b.fingerprint=a.fingerprint
+      WHERE a.user_id=$1 AND b.user_id=$2 AND a.kind='device' AND b.kind='device' LIMIT 1`,
+      [inviterId, buyerId],
+    );
+    return rows.length > 0;
+  }
+
   async ownCode(userId: number): Promise<string> {
     this.requireEnabled();
     return this.transaction(async (tx) => {
@@ -194,7 +207,7 @@ export class Referrals {
       ]);
       if (disabled.rows[0]) throw new ReferralError("referral_unavailable", 403);
       for (let attempt = 0; attempt < 8; attempt++) {
-        const code = createInvitationCode();
+        const code = this.newCode();
         const inserted = await tx.query(
           `INSERT INTO referral_accounts(user_id,code) VALUES($1,$2)
           ON CONFLICT(code) DO NOTHING RETURNING code`,
@@ -231,13 +244,16 @@ export class Referrals {
       const inviter = inviters[0]?.user_id;
       // Current state, not history: a trial cancelled before any payment leaves a
       // subscription id behind but is not a purchase (paid history is checked separately).
-      // A second account on an alias of the inviter's own address is a self-invitation.
+      // A second account on an alias of the inviter's own address, on the same private
+      // domain or signed in from the same app installation is a self-invitation.
       if (
         !inviter ||
         inviter === userId ||
         canonicalEmail(inviters[0].email) === canonicalEmail(buyer.email) ||
+        sharesPrivateDomain(inviters[0].email, buyer.email) ||
         hasPriorPurchase ||
-        buyer.is_pro
+        buyer.is_pro ||
+        (await this.sharedDevice(tx, inviter, userId))
       ) {
         throw new ReferralError("invitation_not_eligible");
       }
@@ -485,7 +501,7 @@ export class Referrals {
             this.hash("unverified-payment:" + payment.paymentId),
             REFERRAL_MONTHS[quote.plan as ReferralPlan],
             paidAt,
-            new Date(paidAt.getTime() + HOLD_MS),
+            paidAt,
             this.now(),
           ],
         );
@@ -528,20 +544,22 @@ export class Referrals {
       );
       const inviter = inviterRows[0];
       // Lifetime owners still invite (the friend saves 10%) but receive nothing they could resell.
+      // The buyer may have signed in on the inviter's PC after confirming the code.
       const ineligible =
         inviter?.is_pro === true && inviter.plan === "lifetime"
           ? "inviter_lifetime"
-          : (inviter?.recognised ?? 0) >= INVITER_CAP
-            ? "inviter_cap"
-            : null;
+          : (await this.sharedDevice(tx, quote.inviter_id, quote.buyer_id))
+            ? "shared_device"
+            : (inviter?.recognised ?? 0) >= INVITER_CAP
+              ? "inviter_cap"
+              : null;
+      // v3: a verified successful payment makes the bonus available at once. Refund and
+      // dispute webhooks (payment blocks) withdraw it later, even after activation. Only a
+      // payment without payer evidence (no card fingerprint to deduplicate) waits for review.
       const state = ineligible
         ? "revoked"
         : (blocks[0]?.state ??
-          (payment.state === "paid"
-            ? payer && payment.inviterFingerprints.length
-              ? "pending"
-              : "hold"
-            : payment.state));
+          (payment.state === "paid" ? (payer ? "ready" : "hold") : payment.state));
       const id = randomUUID();
       const inserted = await tx.query(
         `INSERT INTO referral_rewards(id,quote_id,payment_id,invoice_id,buyer_id,inviter_id,payer_hash,
@@ -558,15 +576,11 @@ export class Referrals {
           REFERRAL_MONTHS[payment.plan],
           state,
           payment.paidAt,
-          new Date(payment.paidAt.getTime() + HOLD_MS),
+          payment.paidAt,
           this.now(),
           ineligible ??
             payment.reason ??
-            (state === "hold" && !payer
-              ? "payer_identity_review"
-              : state === "hold" && !payment.inviterFingerprints.length
-                ? "inviter_identity_review"
-                : null),
+            (state === "hold" && !payer ? "payer_identity_review" : null),
         ],
       );
       await tx.query("UPDATE referral_quotes SET state='paid' WHERE id=$1", [quote.id]);
@@ -620,7 +634,8 @@ export class Referrals {
     });
   }
 
-  /** Called only with freshly re-read provider facts. A hold requires recorded review, not an old success event. */
+  /** Called only with freshly re-read provider facts, right after the payment is recorded. A hold
+   *  requires recorded review, not an old success event. (Before v3 this also matured bonuses.) */
   async mature(rewardId: string, payment: VerifiedReferralPayment) {
     await this.transaction(async (tx) => {
       const { rows } = await tx.query("SELECT * FROM referral_rewards WHERE id=$1 FOR UPDATE", [
@@ -659,7 +674,7 @@ export class Referrals {
   /**
    * After a dispute closed in the merchant's favour, called only with freshly re-read provider
    * facts showing nothing outstanding (no refund, no other open or lost dispute). The bonus
-   * returns to pending (or active, if already activated) only if the purchase would still
+   * returns to ready (or active, if already activated) only if the purchase would still
    * qualify: same quote facts and usable payer evidence; otherwise it stays held for review.
    */
   async releaseDisputeHold(payment: VerifiedReferralPayment) {
@@ -683,7 +698,6 @@ export class Referrals {
       );
       const identity =
         payment.payerFingerprint &&
-        payment.inviterFingerprints.length &&
         !payment.inviterFingerprints.includes(payment.payerFingerprint) &&
         !payment.hasPriorPurchase;
       const review =
@@ -697,7 +711,7 @@ export class Referrals {
       ]);
       await tx.query(`UPDATE referral_rewards SET state=$2,reason=$3,checked_at=$4 WHERE id=$1`, [
         reward.id,
-        review ? "hold" : reward.activated_at ? "active" : "pending",
+        review ? "hold" : reward.activated_at ? "active" : "ready",
         review,
         this.now(),
       ]);
@@ -718,7 +732,6 @@ export class Referrals {
       enabled: this.enabled(),
       policyVersion: REFERRAL_VERSION,
       discountPercent: 10,
-      verificationDays: HOLD_DAYS,
       rewardsPerYear: INVITER_CAP,
       invitationDays: INVITATION_DAYS,
       rewards: rows.map((reward) => publicReward(reward)),
@@ -829,7 +842,7 @@ export class Referrals {
       }
       if (new Date(reward.expires_at) <= this.now()) throw new ReferralError("bonus_expired", 403);
       // No provider call per refresh: the state above already reflects every stored refund and
-      // dispute webhook (payment blocks), and maturity re-read the provider before 'ready'.
+      // dispute webhook (payment blocks), and the payment was re-read from the provider before 'ready'.
       await tx.query("UPDATE referral_challenges SET used_at=$2 WHERE id=$1", [
         challenge.id,
         this.now(),

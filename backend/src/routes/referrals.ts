@@ -3,7 +3,7 @@ import rateLimit from "express-rate-limit";
 import { requireAuth } from "../auth";
 import { referralStripe } from "../referral-stripe";
 import { ReferralError } from "../referrals";
-import { HOLD_DAYS, INVITER_CAP, REFERRAL_MONTHS, REFERRAL_VERSION } from "../referral-policy";
+import { INVITER_CAP, REFERRAL_MONTHS, REFERRAL_VERSION } from "../referral-policy";
 
 export const referralRoutes = express.Router();
 const publicLimit = rateLimit({
@@ -40,7 +40,7 @@ referralRoutes.get("/config", publicLimit, (_req, res) => {
     discountScope: "first_payment",
     rewardMonths: REFERRAL_MONTHS,
     rewardDevices: 1,
-    verificationDays: HOLD_DAYS,
+    rewardOnPayment: true,
     rewardsPerYear: INVITER_CAP,
     lifetimeInviterReward: false,
     transferable: false,

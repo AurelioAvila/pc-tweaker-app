@@ -91,7 +91,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     eyebrow: "PC TWEAKER · INVITATIONS",
     close: "Close invitations",
     title: "Invite a friend.",
-    intro: "Your friend saves an extra 10%. You earn Pro time once their purchase is verified.",
+    intro: "Your friend saves an extra 10%. You earn Pro time as soon as they pay.",
     loading: "Loading your invitations…",
     loadFailed: "Invitations are unavailable. Verify your email and try again later.",
     closedTitle: "Invitations are not open yet.",
@@ -125,12 +125,12 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     emptyBody: "When a friend completes an eligible purchase, its status appears here.",
     rewardTitle: "Invitation bonus",
     rewardMonths: "{months} months of Pro",
-    statusPending: "Being verified · up to {days} days after the purchase",
+    statusPending: "Being checked",
     statusReady: "Ready to activate on one PC",
     statusActive: "Active on one PC until {date}",
     statusNotEligible: "Not eligible",
     pendingHelp:
-      "A bonus becomes available once the purchase can no longer be disputed. If it is still being verified after that, write to {email}.",
+      "Some purchases need a manual check before the bonus is available. If one is still being checked after 10 business days, write to {email}.",
     activate: "Activate on this PC",
     confirmLabel: "Confirm bonus activation",
     confirmTitle: "Start your {months}-month bonus on this PC?",
@@ -159,7 +159,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesBonus:
       "A monthly purchase earns the inviter 6 months of Pro; an annual or Lifetime purchase earns 12. Each bonus is for one PC, personal and not transferable. Up to {cap} bonuses every 12 months. Lifetime owners can invite friends but do not earn bonuses.",
     rulesVerification:
-      "A bonus becomes available {days} days after the friend's payment, once it can no longer be disputed. Refunds, disputes, repeated payment details and self-invitations make a purchase ineligible. The inviter never sees the friend's plan, payment date or payment status.",
+      "A bonus is available as soon as your friend's first payment succeeds. If that payment is refunded or disputed, the bonus is withdrawn, even while active. Self-invitations do not qualify: a second account, an address alias, the same PC, the same payment details or the same private email domain. You see only the status of each bonus, never your friend's payment details.",
     rulesDevice:
       "An active bonus is checked online about every 10 minutes while the app is open. Downloads alone do not qualify. A Microsoft Store download does not carry the invitation: confirm the code here before buying.",
     menuInvite: "Invite a friend",
@@ -188,8 +188,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     eyebrow: "PC TWEAKER · INVITI",
     close: "Chiudi gli inviti",
     title: "Invita un amico.",
-    intro:
-      "Il tuo amico risparmia un ulteriore 10%. Tu ottieni tempo Pro quando il suo acquisto è verificato.",
+    intro: "Il tuo amico risparmia un ulteriore 10%. Tu ottieni tempo Pro appena paga.",
     loading: "Caricamento degli inviti…",
     loadFailed: "Gli inviti non sono disponibili. Verifica la tua email e riprova più tardi.",
     closedTitle: "Gli inviti non sono ancora aperti.",
@@ -223,12 +222,12 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     emptyBody: "Quando un amico completa un acquisto idoneo, lo stato compare qui.",
     rewardTitle: "Bonus invito",
     rewardMonths: "{months} mesi di Pro",
-    statusPending: "In verifica · fino a {days} giorni dopo l'acquisto",
+    statusPending: "In verifica",
     statusReady: "Pronto da attivare su un PC",
     statusActive: "Attivo su un PC fino al {date}",
     statusNotEligible: "Non idoneo",
     pendingHelp:
-      "Un bonus diventa disponibile quando l'acquisto non può più essere contestato. Se dopo quel periodo è ancora in verifica, scrivi a {email}.",
+      "Alcuni acquisti richiedono un controllo manuale prima che il bonus sia disponibile. Se dopo 10 giorni lavorativi è ancora in verifica, scrivi a {email}.",
     activate: "Attiva su questo PC",
     confirmLabel: "Conferma l'attivazione del bonus",
     confirmTitle: "Avviare il bonus di {months} mesi su questo PC?",
@@ -257,7 +256,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesBonus:
       "Un acquisto mensile fa ottenere a chi invita 6 mesi di Pro; un acquisto annuale o a vita 12. Ogni bonus vale per un PC, è personale e non trasferibile. Fino a {cap} bonus ogni 12 mesi. Chi ha il piano a vita può invitare amici, ma non riceve bonus.",
     rulesVerification:
-      "Un bonus diventa disponibile {days} giorni dopo il pagamento dell'amico, quando non può più essere contestato. Rimborsi, contestazioni, dati di pagamento ripetuti e autoinviti rendono l'acquisto non idoneo. Chi invita non vede mai il piano, la data o lo stato del pagamento dell'amico.",
+      "Un bonus è disponibile appena il primo pagamento dell'amico va a buon fine. Se quel pagamento viene rimborsato o contestato, il bonus viene ritirato, anche se è già attivo. Gli autoinviti non contano: un secondo account, un alias del tuo indirizzo, lo stesso PC, gli stessi dati di pagamento o lo stesso dominio email privato. Vedi solo lo stato di ogni bonus, mai i dati di pagamento dell'amico.",
     rulesDevice:
       "Un bonus attivo viene verificato online circa ogni 10 minuti mentre l'app è aperta. Il solo download non conta. Un download dal Microsoft Store non trasferisce l'invito: conferma il codice qui prima di acquistare.",
     menuInvite: "Invita un amico",
@@ -288,7 +287,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     eyebrow: "PC TWEAKER · PARRAINAGE",
     close: "Fermer le parrainage",
     title: "Invitez un ami.",
-    intro: "Votre ami économise 10 % de plus. Vous gagnez du temps Pro une fois son achat vérifié.",
+    intro: "Votre ami économise 10 % de plus. Vous gagnez du temps Pro dès qu'il paie.",
     loading: "Chargement de vos invitations…",
     loadFailed: "Les invitations sont indisponibles. Vérifiez votre e-mail et réessayez plus tard.",
     closedTitle: "Les invitations ne sont pas encore ouvertes.",
@@ -323,12 +322,12 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     emptyBody: "Quand un ami finalise un achat éligible, son statut apparaît ici.",
     rewardTitle: "Bonus de parrainage",
     rewardMonths: "{months} mois de Pro",
-    statusPending: "En vérification · jusqu'à {days} jours après l'achat",
+    statusPending: "En vérification",
     statusReady: "Prêt à activer sur un PC",
     statusActive: "Actif sur un PC jusqu'au {date}",
     statusNotEligible: "Non éligible",
     pendingHelp:
-      "Un bonus devient disponible lorsque l'achat ne peut plus être contesté. S'il est encore en vérification après ce délai, écrivez à {email}.",
+      "Certains achats nécessitent une vérification manuelle avant que le bonus soit disponible. S'il est encore en vérification après 10 jours ouvrés, écrivez à {email}.",
     activate: "Activer sur ce PC",
     confirmLabel: "Confirmer l'activation du bonus",
     confirmTitle: "Lancer votre bonus de {months} mois sur ce PC ?",
@@ -357,7 +356,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesBonus:
       "Un achat mensuel rapporte 6 mois de Pro au parrain ; un achat annuel ou à vie en rapporte 12. Chaque bonus vaut pour un PC, est personnel et non transférable. Jusqu'à {cap} bonus tous les 12 mois. Les titulaires d'un forfait à vie peuvent inviter des amis, mais ne gagnent pas de bonus.",
     rulesVerification:
-      "Un bonus devient disponible {days} jours après le paiement de l'ami, lorsqu'il ne peut plus être contesté. Les remboursements, contestations, coordonnées de paiement répétées et auto-parrainages rendent l'achat non éligible. Le parrain ne voit jamais le forfait, la date ni le statut du paiement de l'ami.",
+      "Un bonus est disponible dès que le premier paiement de l'ami aboutit. Si ce paiement est remboursé ou contesté, le bonus est retiré, même s'il est déjà actif. Les auto-parrainages ne comptent pas : un second compte, un alias de votre adresse, le même PC, les mêmes coordonnées de paiement ou le même domaine e-mail privé. Vous ne voyez que le statut de chaque bonus, jamais les données de paiement de l'ami.",
     rulesDevice:
       "Un bonus actif est vérifié en ligne environ toutes les 10 minutes lorsque l'application est ouverte. Un simple téléchargement ne compte pas. Un téléchargement depuis le Microsoft Store ne transmet pas l'invitation : confirmez le code ici avant d'acheter.",
     menuInvite: "Inviter un ami",
@@ -386,7 +385,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     eyebrow: "PC TWEAKER · INVITACIONES",
     close: "Cerrar invitaciones",
     title: "Invita a un amigo.",
-    intro: "Tu amigo ahorra un 10 % adicional. Tú ganas tiempo Pro cuando se verifica su compra.",
+    intro: "Tu amigo ahorra un 10 % adicional. Tú ganas tiempo Pro en cuanto paga.",
     loading: "Cargando tus invitaciones…",
     loadFailed:
       "Las invitaciones no están disponibles. Verifica tu correo y vuelve a intentarlo más tarde.",
@@ -421,12 +420,12 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     emptyBody: "Cuando un amigo complete una compra válida, su estado aparecerá aquí.",
     rewardTitle: "Bono de invitación",
     rewardMonths: "{months} meses de Pro",
-    statusPending: "En verificación · hasta {days} días después de la compra",
+    statusPending: "En verificación",
     statusReady: "Listo para activar en un PC",
     statusActive: "Activo en un PC hasta el {date}",
     statusNotEligible: "No elegible",
     pendingHelp:
-      "Un bono está disponible cuando ya no se puede abrir una disputa sobre la compra. Si sigue en verificación después de ese plazo, escribe a {email}.",
+      "Algunas compras necesitan una revisión manual antes de que el bono esté disponible. Si sigue en verificación después de 10 días hábiles, escribe a {email}.",
     activate: "Activar en este PC",
     confirmLabel: "Confirmar la activación del bono",
     confirmTitle: "¿Iniciar tu bono de {months} meses en este PC?",
@@ -455,7 +454,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesBonus:
       "Una compra mensual da a quien invita 6 meses de Pro; una compra anual o de por vida, 12. Cada bono es para un PC, personal e intransferible. Hasta {cap} bonos cada 12 meses. Los titulares del plan de por vida pueden invitar a amigos, pero no ganan bonos.",
     rulesVerification:
-      "Un bono está disponible {days} días después del pago del amigo, cuando ya no se puede abrir una disputa. Los reembolsos, disputas, datos de pago repetidos y autoinvitaciones hacen que la compra no sea válida. Quien invita nunca ve el plan, la fecha ni el estado del pago de su amigo.",
+      "Un bono está disponible en cuanto se completa el primer pago de tu amigo. Si ese pago se reembolsa o se disputa, el bono se retira, aunque ya esté activo. Las autoinvitaciones no cuentan: una segunda cuenta, un alias de tu dirección, el mismo PC, los mismos datos de pago o el mismo dominio de correo privado. Solo ves el estado de cada bono, nunca los datos de pago de tu amigo.",
     rulesDevice:
       "Un bono activo se comprueba en línea aproximadamente cada 10 minutos mientras la aplicación está abierta. La descarga por sí sola no cuenta. Una descarga desde Microsoft Store no transfiere la invitación: confirma el código aquí antes de comprar.",
     menuInvite: "Invitar a un amigo",
@@ -484,8 +483,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     eyebrow: "PC TWEAKER · EINLADUNGEN",
     close: "Einladungen schließen",
     title: "Laden Sie einen Freund ein.",
-    intro:
-      "Ihr Freund spart zusätzlich 10 %. Sie erhalten Pro-Zeit, sobald sein Kauf bestätigt ist.",
+    intro: "Ihr Freund spart zusätzlich 10 %. Sie erhalten Pro-Zeit, sobald er bezahlt hat.",
     loading: "Einladungen werden geladen…",
     loadFailed:
       "Einladungen sind nicht verfügbar. Bestätigen Sie Ihre E-Mail-Adresse und versuchen Sie es später erneut.",
@@ -521,12 +519,12 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     emptyBody: "Wenn ein Freund einen berechtigten Kauf abschließt, erscheint sein Status hier.",
     rewardTitle: "Einladungsbonus",
     rewardMonths: "{months} Monate Pro",
-    statusPending: "Wird geprüft · bis zu {days} Tage nach dem Kauf",
+    statusPending: "Wird geprüft",
     statusReady: "Bereit zur Aktivierung auf einem PC",
     statusActive: "Aktiv auf einem PC bis {date}",
     statusNotEligible: "Nicht berechtigt",
     pendingHelp:
-      "Ein Bonus wird verfügbar, sobald der Kauf nicht mehr angefochten werden kann. Ist er danach noch in Prüfung, schreiben Sie an {email}.",
+      "Manche Käufe erfordern eine manuelle Prüfung, bevor der Bonus verfügbar ist. Ist er nach 10 Werktagen noch in Prüfung, schreiben Sie an {email}.",
     activate: "Auf diesem PC aktivieren",
     confirmLabel: "Bonusaktivierung bestätigen",
     confirmTitle: "Ihren {months}-Monats-Bonus auf diesem PC starten?",
@@ -555,7 +553,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesBonus:
       "Ein monatlicher Kauf bringt der einladenden Person 6 Monate Pro, ein jährlicher Kauf oder der Kauf einer lebenslangen Lizenz 12. Jeder Bonus gilt für einen PC, ist persönlich und nicht übertragbar. Bis zu {cap} Boni alle 12 Monate. Wer eine lebenslange Lizenz besitzt, kann Freunde einladen, erhält aber keine Boni.",
     rulesVerification:
-      "Ein Bonus wird {days} Tage nach der Zahlung des Freundes verfügbar, wenn sie nicht mehr angefochten werden kann. Rückerstattungen, Anfechtungen, wiederholte Zahlungsdaten und Selbsteinladungen machen einen Kauf nicht berechtigt. Die einladende Person sieht nie Tarif, Zahlungsdatum oder Zahlungsstatus des Freundes.",
+      "Ein Bonus ist verfügbar, sobald die erste Zahlung des Freundes erfolgreich ist. Wird diese Zahlung erstattet oder angefochten, wird der Bonus entzogen, auch wenn er bereits aktiv ist. Selbsteinladungen zählen nicht: ein zweites Konto, ein Alias Ihrer Adresse, derselbe PC, dieselben Zahlungsdaten oder dieselbe private E-Mail-Domain. Sie sehen nur den Status jedes Bonus, nie die Zahlungsdaten des Freundes.",
     rulesDevice:
       "Ein aktiver Bonus wird online etwa alle 10 Minuten geprüft, solange die App geöffnet ist. Ein Download allein zählt nicht. Ein Download aus dem Microsoft Store überträgt die Einladung nicht: Bestätigen Sie den Code hier vor dem Kauf.",
     menuInvite: "Freund einladen",
@@ -586,7 +584,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     eyebrow: "PC TWEAKER · CONVITES",
     close: "Fechar convites",
     title: "Convide um amigo.",
-    intro: "O seu amigo poupa mais 10%. Recebe tempo Pro quando a compra dele for verificada.",
+    intro: "O seu amigo poupa mais 10%. Recebe tempo Pro assim que ele pagar.",
     loading: "A carregar os seus convites…",
     loadFailed:
       "Os convites não estão disponíveis. Verifique o seu e-mail e tente novamente mais tarde.",
@@ -621,12 +619,12 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     emptyBody: "Quando um amigo concluir uma compra elegível, o estado aparece aqui.",
     rewardTitle: "Bónus de convite",
     rewardMonths: "{months} meses de Pro",
-    statusPending: "Em verificação · até {days} dias após a compra",
+    statusPending: "Em verificação",
     statusReady: "Pronto a ativar num PC",
     statusActive: "Ativo num PC até {date}",
     statusNotEligible: "Não elegível",
     pendingHelp:
-      "Um bónus fica disponível quando a compra já não pode ser contestada. Se continuar em verificação depois desse prazo, escreva para {email}.",
+      "Algumas compras precisam de uma verificação manual antes de o bónus ficar disponível. Se continuar em verificação após 10 dias úteis, escreva para {email}.",
     activate: "Ativar neste PC",
     confirmLabel: "Confirmar a ativação do bónus",
     confirmTitle: "Iniciar o seu bónus de {months} meses neste PC?",
@@ -655,7 +653,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesBonus:
       "Uma compra mensal dá a quem convida 6 meses de Pro; uma compra anual ou vitalícia, 12. Cada bónus é válido para um PC, é pessoal e intransmissível. Até {cap} bónus a cada 12 meses. Os titulares do plano vitalício podem convidar amigos, mas não recebem bónus.",
     rulesVerification:
-      "Um bónus fica disponível {days} dias após o pagamento do amigo, quando já não pode ser contestado. Reembolsos, contestações, dados de pagamento repetidos e autoconvites tornam a compra não elegível. Quem convida nunca vê o plano, a data nem o estado do pagamento do amigo.",
+      "Um bónus fica disponível assim que o primeiro pagamento do amigo é concluído. Se esse pagamento for reembolsado ou contestado, o bónus é retirado, mesmo que já esteja ativo. Os autoconvites não contam: uma segunda conta, um alias do seu endereço, o mesmo PC, os mesmos dados de pagamento ou o mesmo domínio de email privado. Vê apenas o estado de cada bónus, nunca os dados de pagamento do amigo.",
     rulesDevice:
       "Um bónus ativo é verificado online cerca de cada 10 minutos enquanto a aplicação está aberta. A transferência por si só não conta. Uma transferência a partir da Microsoft Store não transmite o convite: confirme o código aqui antes de comprar.",
     menuInvite: "Convidar um amigo",

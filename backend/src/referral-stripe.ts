@@ -699,7 +699,7 @@ export async function referralWebhook(
     if (!paymentId) return;
     // Refunds and disputes of other products and of non-referral purchases are ignored without
     // a provider call. One that arrives before its referral sale is caught when that sale is
-    // recorded and again at maturity, both of which re-read the charge and its disputes.
+    // recorded, which re-reads the charge, its refunds and its disputes.
     const known = await gateway.core.db.query(
       "SELECT 1 FROM referral_rewards WHERE payment_id=$1",
       [paymentId],
@@ -731,9 +731,15 @@ export async function runReferralReconciliation(
   stopped: () => boolean = () => false,
 ) {
   await gateway.core.cleanup();
+  // v3 makes a bonus available on payment, so one fresh provider read 15 minutes later is the
+  // backstop for a refund or dispute that arrived before the reward row existed (the webhook
+  // ignores reversals of unknown payments). It does not delay the bonus.
   const { rows } = await gateway.core.db
     .query(`SELECT q.id FROM referral_quotes q LEFT JOIN referral_rewards r ON r.quote_id=q.id
-    WHERE ((q.state IN ('creating','open') AND q.expires_at < now()) OR (r.state='pending' AND r.eligible_at <= now()))
+    WHERE ((q.state IN ('creating','open') AND q.expires_at < now())
+        OR (r.state='pending' AND r.eligible_at <= now())
+        OR (r.state IN ('ready','active') AND r.checked_at < r.paid_at + INTERVAL '15 minutes'
+          AND r.paid_at < now() - INTERVAL '15 minutes'))
       AND (q.reconcile_after IS NULL OR q.reconcile_after <= now())
     ORDER BY COALESCE(q.reconcile_after,q.expires_at),q.id LIMIT 10`);
   for (const row of rows) {

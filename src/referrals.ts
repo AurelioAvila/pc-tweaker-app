@@ -14,7 +14,6 @@ export type ReferralReward = {
 };
 export type ReferralStatus = {
   enabled: boolean;
-  verificationDays: number;
   rewardsPerYear: number;
   invitationDays: number;
   accountId: string;

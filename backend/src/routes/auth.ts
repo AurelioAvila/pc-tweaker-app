@@ -184,10 +184,11 @@ async function sendPasswordChangedNotice(userId: number, changedAt: Date, brand:
 /** A PC the app identifies itself (a random id it keeps), or else the
  *  network and browser engine: coarse on purpose, so a dynamic address does
  *  not look like a new PC every day. Stored only as a keyed hash. */
-function signInFingerprint(req: Request): string {
+function signInFingerprint(req: Request): { fingerprint: string; kind: "device" | "network" } {
   const deviceId = req.body?.deviceId;
   let source: string;
-  if (typeof deviceId === "string" && /^[A-Za-z0-9-]{16,64}$/.test(deviceId)) {
+  const kind = typeof deviceId === "string" && /^[A-Za-z0-9-]{16,64}$/.test(deviceId) ? "device" : "network";
+  if (kind === "device") {
     source = `device:${deviceId}`;
   } else {
     const ip = (req.ip ?? "").replace(/^::ffff:/, "");
@@ -195,7 +196,7 @@ function signInFingerprint(req: Request): string {
     const engine = /Edg\//.test(req.get("user-agent") ?? "") ? "edge" : "other";
     source = `network:${network}|${engine}`;
   }
-  return crypto.createHmac("sha256", process.env.JWT_SECRET ?? "").update(source).digest("hex");
+  return { fingerprint: crypto.createHmac("sha256", process.env.JWT_SECRET ?? "").update(source).digest("hex"), kind };
 }
 
 /** The computer name the app sent, made safe to print, or null. */
@@ -213,18 +214,18 @@ function deviceName(value: unknown): string | null {
  */
 // ponytail: rows are never pruned; add a cap per account if networks churn.
 async function noticeSignIn(req: Request, user: { id: number; email: string; locale: string | null }): Promise<void> {
-  const fingerprint = signInFingerprint(req);
+  const { fingerprint, kind } = signInFingerprint(req);
   const db = getPool();
   const { rows } = await db.query("SELECT fingerprint, alerted, first_seen FROM sign_in_devices WHERE user_id = $1", [user.id]);
   if (rows.some((row) => row.fingerprint === fingerprint)) {
-    await db.query("UPDATE sign_in_devices SET last_seen = now() WHERE user_id = $1 AND fingerprint = $2", [user.id, fingerprint]);
+    await db.query("UPDATE sign_in_devices SET last_seen = now(), kind = COALESCE(kind, $3) WHERE user_id = $1 AND fingerprint = $2", [user.id, fingerprint, kind]);
     return;
   }
   const recent = rows.some((row) => row.alerted && Date.now() - new Date(row.first_seen).getTime() < 6 * 60 * 60 * 1000);
   const alert = rows.length > 0 && !recent;
   await db.query(
-    "INSERT INTO sign_in_devices (user_id, fingerprint, alerted) VALUES ($1, $2, $3) ON CONFLICT (user_id, fingerprint) DO NOTHING",
-    [user.id, fingerprint, alert],
+    "INSERT INTO sign_in_devices (user_id, fingerprint, alerted, kind) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, fingerprint) DO NOTHING",
+    [user.id, fingerprint, alert, kind],
   );
   if (!alert) return;
   const c = copyFor(languageOf(req, user.locale));

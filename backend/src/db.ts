@@ -112,6 +112,9 @@ async function initSchema(): Promise<void> {
       PRIMARY KEY (user_id, fingerprint)
     );
   `);
+  // 'device' when the app sent its own installation id, 'network' for the coarse fallback.
+  // Only device rows are precise enough to say two accounts used the same PC (referrals).
+  await pool.query(`ALTER TABLE sign_in_devices ADD COLUMN IF NOT EXISTS kind TEXT;`);
 
   // Public product reviews left from the website. `email` is collected so a
   // reviewer can be contacted about a complaint but is never returned by the

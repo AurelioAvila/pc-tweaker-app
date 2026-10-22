@@ -115,9 +115,10 @@ export function InvitationPage() {
             <span>YOUR FRIEND EARNS</span>
             <strong>6 or 12 months of Pro</strong>
             <p>
-              6 months after a monthly purchase; 12 after an annual or Lifetime purchase. A personal,
-              non-transferable bonus for one PC, after verification, up to 6 every 12 months. If your
-              friend already owns Lifetime, you still save 10%, but they earn no bonus.
+              6 months after a monthly purchase; 12 after an annual or Lifetime purchase. A
+              personal, non-transferable bonus for one PC, after verification, up to 6 every 12
+              months. If your friend already owns Lifetime, you still save 10%, but they earn no
+              bonus.
             </p>
           </div>
           {valid ? (
@@ -173,14 +174,16 @@ export function InvitationPage() {
         <p>
           The programme is for an invited account’s first eligible PC Tweaker purchase. One
           invitation is bound to one account and expires 30 days after you confirm it; it cannot be
-          combined with the free trial. Repeated payer details, self-referrals, refunds or disputes
+          combined with the free trial. Repeated payer details, self-referrals (including a second
+          account used on your friend’s PC or on the same private email domain), refunds or disputes
           make a purchase ineligible.
         </p>
         <p>
-          A reward becomes available 120 days after your payment, once it can no longer be
-          disputed; unclear cases stay under review. Your friend sees only whether a reward is
-          pending, available or not eligible, never your plan, payment date or payment status. A
-          bonus lasts 6 or 12 calendar months from activation on one PC, cannot be transferred or
+          Your friend’s reward becomes available as soon as your first payment succeeds. If that
+          payment is refunded or disputed, the reward is withdrawn, even while it is in use;
+          payments that cannot be checked automatically stay under review. Your friend sees only
+          whether a reward is available, being checked or not eligible, never your payment details.
+          A bonus lasts 6 or 12 calendar months from activation on one PC, cannot be transferred or
           given away, has no automatic renewal and is checked online about every 10 minutes while
           the app is open.
         </p>

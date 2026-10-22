@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>pc-tweaker</id>
+    <version>1.18.8</version>
+    <title>PC Tweaker</title>
+    <authors>Aurelio Avila</authors>
+    <owners>AurelioAvila</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <licenseUrl>https://github.com/AurelioAvila/pc-tweaker-app/blob/HEAD/LICENSE</licenseUrl>
+    <projectUrl>https://pctweaker.app/</projectUrl>
+    <iconUrl>https://cdn.jsdelivr.net/gh/AurelioAvila/pc-tweaker-app@master/src-tauri/icons/128x128.png</iconUrl>
+    <description>PC Tweaker is a Windows 10/11 tuning and maintenance application. It brings inspectable system settings, editable profiles, hardware readings and selected cleanup tools into one interface.
+
+Review each change before applying it. Supported settings save their original values for restoration; cleanup and repair operations have different recovery limits. Performance results depend on the hardware and workload, and no universal FPS increase is promised.
+
+The free tier includes core tweaks and selected monitoring tools. Optional paid plans add advanced tools. Check the official website and checkout for current features, pricing and terms.
+
+The official Windows installer is digitally signed by Aurelio Avila and timestamped. The source repository is available for inspection under a proprietary, source-available license, not an OSI-approved open-source license.
+
+Package notes: since 1.18.8 this package runs the same signed setup as winget and the in-app updater, installed for the user who runs Chocolatey in %LocalAppData%\PC Tweaker. Earlier versions of this package used the MSI.</description>
+    <summary>Windows tuning and maintenance with inspectable, restorable settings</summary>
+    <releaseNotes>https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.18.8</releaseNotes>
+    <copyright>2026 Aurelio Avila</copyright>
+    <tags>pc-tweaker windows tuning optimization privacy gaming performance tweak admin</tags>
+    <projectSourceUrl>https://github.com/AurelioAvila/pc-tweaker-app</projectSourceUrl>
+    <packageSourceUrl>https://github.com/AurelioAvila/pc-tweaker-app/tree/master/packaging/chocolatey</packageSourceUrl>
+    <docsUrl>https://pctweaker.app/support/</docsUrl>
+    <bugTrackerUrl>https://github.com/AurelioAvila/pc-tweaker-app/issues</bugTrackerUrl>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

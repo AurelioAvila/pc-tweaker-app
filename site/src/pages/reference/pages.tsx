@@ -224,6 +224,8 @@ function guideLabel(path: string) {
     "/windows-privacy-tool/": "The Windows privacy guide",
     "/turn-off-windows-recall/": "How to turn off Windows Recall, and keep it off",
     "/gaming-performance/": "The gaming performance guide",
+    "/guides/amd-ryzen-x3d-core-parking-windows-11/": "Ryzen X3D core parking on Windows 11",
+    "/guides/windows-11-privacy-telemetry-rollback/": "Windows 11 privacy and telemetry settings, with rollback",
   };
   return known[path] ?? path;
 }

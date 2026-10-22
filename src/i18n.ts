@@ -1075,7 +1075,6 @@ export interface Strings {
     planMonthly: string;
     planBonus: string;
     planUntil: string;
-    planInactive: string;
   };
   driftWatch: {
     title: string;
@@ -2371,7 +2370,6 @@ const it: Strings = {
     planMonthly: "Mensile",
     planBonus: "Incluso con il piano a vita",
     planUntil: "fino al {date}",
-    planInactive: "Non attivo",
   },
   driftWatch: {
     title: "Sorveglia gli aggiornamenti di Windows",
@@ -4053,7 +4051,6 @@ const en: Strings = {
     planMonthly: "Monthly",
     planBonus: "Included with Lifetime",
     planUntil: "until {date}",
-    planInactive: "Not active",
   },
   driftWatch: {
     title: "Watch for Windows updates",
@@ -5759,7 +5756,6 @@ const fr: Strings = {
     planMonthly: "Mensuelle",
     planBonus: "Inclus avec l'offre à vie",
     planUntil: "jusqu'au {date}",
-    planInactive: "Non active",
   },
   driftWatch: {
     title: "Surveiller les mises à jour Windows",
@@ -7460,7 +7456,6 @@ const es: Strings = {
     planMonthly: "Mensual",
     planBonus: "Incluido con el plan de por vida",
     planUntil: "hasta el {date}",
-    planInactive: "No activo",
   },
   driftWatch: {
     title: "Vigilar las actualizaciones de Windows",
@@ -9170,7 +9165,6 @@ const de: Strings = {
     planMonthly: "Monatlich",
     planBonus: "Im Lebenslang-Tarif enthalten",
     planUntil: "bis {date}",
-    planInactive: "Nicht aktiv",
   },
   driftWatch: {
     title: "Windows-Updates überwachen",
@@ -10877,7 +10871,6 @@ const pt: Strings = {
     planMonthly: "Mensal",
     planBonus: "Incluído no plano vitalício",
     planUntil: "até {date}",
-    planInactive: "Inativo",
   },
   driftWatch: {
     title: "Vigiar as atualizações do Windows",

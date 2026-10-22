@@ -15,6 +15,7 @@ import { AuthState, ProcessGuardStatus, type ProductPlan } from "../types";
 import { CheckIcon, CrownIcon } from "./icons";
 import { TRIAL_COPY } from "./trial-copy";
 import { trialLeft, trialUsed, type BillingStatus } from "../trial";
+import { productPlanLabel } from "../plan-label";
 import { Avatar } from "./ui";
 import "./account-menu.css";
 
@@ -138,7 +139,11 @@ export function AuthSection({
                   key={p.product}
                   plan={p}
                   billing={auth.billing ?? null}
-                  label={productPlanLabel(p, s.auth, lang)}
+                  label={productPlanLabel(
+                    p,
+                    { ...s.auth, freeName: s.pricing.freeName, proName: s.pricing.proName },
+                    lang,
+                  )}
                   lang={lang}
                   now={now}
                   onManageBilling={onManageBilling}
@@ -773,7 +778,7 @@ function ProductRow({
 }: {
   plan: ProductPlan;
   billing: BillingStatus | null;
-  label: string;
+  label: { label: string; until: string | null };
   lang: string;
   now: number;
   onManageBilling?: () => void;
@@ -799,9 +804,14 @@ function ProductRow({
                 : "text-ink-3"
           }
         >
-          {trial ? t.trial : failed ? t.paymentFailed : label}
+          {trial ? t.trial : failed ? t.paymentFailed : label.label}
         </span>
       </div>
+      {!trial && !failed && label.until && (
+        <div className="account-trial">
+          <span>{label.until}</span>
+        </div>
+      )}
       {trial && left && (
         <div className="account-trial">
           <span>
@@ -838,36 +848,6 @@ function ProductRow({
       )}
     </li>
   );
-}
-
-/** "Lifetime", "Annual · until 14 Oct 2027", "Not active": one product's
- *  plan in a few words, in the app's language. */
-function productPlanLabel(
-  p: ProductPlan,
-  words: {
-    planLifetime: string;
-    planAnnual: string;
-    planMonthly: string;
-    planBonus: string;
-    planUntil: string;
-    planInactive: string;
-  },
-  lang: string,
-): string {
-  if (!p.active) return words.planInactive;
-  if (p.plan === "lifetime") return words.planLifetime;
-  const name =
-    p.plan === "lifetime_bonus"
-      ? words.planBonus
-      : p.plan === "monthly"
-        ? words.planMonthly
-        : p.plan === "annual"
-          ? words.planAnnual
-          : "Pro";
-  const end = p.expiresAt ? new Date(p.expiresAt) : null;
-  return end && Number.isFinite(end.getTime())
-    ? `${name} · ${words.planUntil.replace("{date}", end.toLocaleDateString(lang, { dateStyle: "medium" }))}`
-    : name;
 }
 
 const FIELD =

@@ -59,5 +59,5 @@
       "caption": "Comece com um perfil Gaming, Estudo ou Trabalho e ajuste-o antes de aplicar"
     }
   ],
-  "releaseNotes": "PC Tweaker 1.18.8: o menu da área de notificação no seu idioma.\n\n- O menu do ícone do PC Tweaker junto ao relógio (Abrir, Continuar em segundo plano, Sair) e o aviso mostrado na primeira vez que fecha a janela seguem agora o idioma escolhido na aplicação.\n- Ao fechar a janela, o PC Tweaker continua na área de notificação; nada mais muda.\n- Continuam a ser 81 controlos (46 Free, 35 Pro).\n\nAs definições, as licenças e o histórico de alterações são mantidos."
+  "releaseNotes": "O PC Tweaker 1.18.9 é uma atualização de manutenção de rotina com duas pequenas correções no menu da conta.\n\n- O menu da conta mostra cada plano como Grátis, Pro ou Vitalício.\n- Os campos de texto mostram um só contorno de seleção.\n- Continuam a ser 81 controlos (46 Free, 35 Pro).\n\nAs definições, as licenças e o histórico de alterações são mantidos."
 }

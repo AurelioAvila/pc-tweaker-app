@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.18.9
+
+PC Tweaker 1.18.9 is a routine daily maintenance update.
+
 ## v1.18.8
 
 PC Tweaker 1.18.8 shows the menu of its notification-area icon, and the notice shown the first time you close the window, in the language you chose in the app.

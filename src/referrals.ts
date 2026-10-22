@@ -51,6 +51,20 @@ export async function referralRequest<T>(route: string, token: string, body?: un
   return response.json() as Promise<T>;
 }
 
+/** The inviter status, or null when the programme cannot be used: a backend without the
+ *  referral routes (404), an unreachable server, an error or a malformed answer all mean
+ *  "programme off" — no menu entry, no toast and no retry beyond the normal account refresh. */
+export async function readReferralStatus(token: string): Promise<ReferralStatus | null> {
+  try {
+    const data = await referralRequest<Partial<ReferralStatus> | null>("/status", token);
+    return data && typeof data.enabled === "boolean" && Array.isArray(data.rewards)
+      ? (data as ReferralStatus)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 /** The native check (referral.rs) accepts a grant from a PC clock at most one lease (10 min)
  *  ahead of the server, or up to a day behind. Checking first, with margin, means activation
  *  never starts on a PC that would then refuse its own bonus. */

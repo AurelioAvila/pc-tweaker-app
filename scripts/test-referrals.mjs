@@ -27,7 +27,13 @@ const compiled = await build({
   format: "esm",
   plugins: [stub],
 });
-const { clockProblem, activateOrRefreshBonus, bonusForThisPc, referralRequest } = await import(
+const {
+  clockProblem,
+  activateOrRefreshBonus,
+  bonusForThisPc,
+  referralRequest,
+  readReferralStatus,
+} = await import(
   `data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString("base64")}`
 );
 
@@ -110,5 +116,40 @@ await assert.rejects(referralRequest("/status", token), { code: "rate_limited" }
 globalThis.fetch = async () =>
   new Response(JSON.stringify({ code: "invitation_not_eligible" }), { status: 409 });
 await assert.rejects(referralRequest("/claim", token, {}), { code: "invitation_not_eligible" });
+
+// A backend without the referral routes (production may lag behind the app), an unreachable
+// server or a malformed answer all read as "programme off": null, never a throw, one request.
+const offCases = [
+  ["404 from an older backend", async () => new Response("Not Found", { status: 404 })],
+  [
+    "network error",
+    async () => {
+      throw new TypeError("fetch failed");
+    },
+  ],
+  ["HTML instead of JSON", async () => new Response("<html></html>", { status: 200 })],
+  [
+    "enabled not a boolean",
+    async () => new Response(JSON.stringify({ enabled: "yes", rewards: [] })),
+  ],
+  ["rewards missing", async () => new Response(JSON.stringify({ enabled: true }))],
+  ["JSON null", async () => new Response("null")],
+  ["server error", async () => new Response("{}", { status: 503 })],
+];
+for (const [name, response] of offCases) {
+  let requests = 0;
+  globalThis.fetch = async (...args) => {
+    requests += 1;
+    return response(...args);
+  };
+  assert.equal(await readReferralStatus(token), null, name);
+  assert.equal(requests, 1, `${name}: no retry`);
+}
+globalThis.fetch = async () =>
+  new Response(JSON.stringify({ enabled: false, rewards: [], accountId: "7" }));
+assert.equal((await readReferralStatus(token)).enabled, false);
+globalThis.fetch = async () =>
+  new Response(JSON.stringify({ enabled: true, rewards: [], accountId: "7" }));
+assert.equal((await readReferralStatus(token)).enabled, true);
 
 console.log("referral client OK");

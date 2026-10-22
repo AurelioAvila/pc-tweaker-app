@@ -257,3 +257,15 @@ test("a bonus signature cannot be accepted by the ordinary legacy Pro issuer", (
   });
   assert.equal(verify(null, Buffer.from(response.payloadJson), ordinary, signature), false);
 });
+test("programme off: checkout never reaches the referral path or a referral endpoint", async () => {
+  const { referralCheckout } = await import("../dist/referral-stripe.js");
+  const saved = { ...process.env };
+  try {
+    for (const key of Object.keys(process.env)) if (key.startsWith("REFERRALS_")) delete process.env[key];
+    // No database or provider is configured here: reaching the gateway would throw.
+    for (const plan of ["monthly", "annual", "lifetime", "anything"])
+      assert.equal(await referralCheckout(2, plan, { metadata: { product: "pctweaker" } }), null);
+  } finally {
+    process.env = saved;
+  }
+});

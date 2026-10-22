@@ -73,12 +73,7 @@ import {
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
 import { ReferralPanel } from "./components/referrals";
-import {
-  referralRequest,
-  activateOrRefreshBonus,
-  bonusForThisPc,
-  type ReferralStatus,
-} from "./referrals";
+import { readReferralStatus, activateOrRefreshBonus, bonusForThisPc } from "./referrals";
 import { TweakIcon } from "./components/tweak-icon";
 import { TechnicalDetails, TechnicalToggle } from "./components/technical";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
@@ -380,10 +375,12 @@ function App() {
     if (!token) return;
     let active = false;
     let next: number | null = null;
+    const status = await readReferralStatus(token);
+    if (readToken() !== token) return;
+    // Only an explicit, well-formed "enabled" shows the menu entry; anything else is "off".
+    setReferralAvailable(status?.enabled === true);
     try {
-      const status = await referralRequest<ReferralStatus>("/status", token);
-      if (readToken() !== token) return;
-      setReferralAvailable(status.enabled);
+      if (!status) throw new Error("Referral status unavailable");
       const reward = await bonusForThisPc(status.rewards);
       if (reward) {
         active = await activateOrRefreshBonus(status, reward.id, "license", token);

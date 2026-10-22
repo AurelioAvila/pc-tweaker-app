@@ -131,7 +131,9 @@
   opacity: 0.6;
   cursor: wait;
 }
-.referral-dialog :focus-visible {
+/* Buttons, tabs and links. Text fields keep the app-wide single focus ring
+   (desktop-refresh.css): border plus 1px shadow, no second offset outline. */
+.referral-dialog :focus-visible:not(input, select, textarea) {
   outline: 3px solid var(--focus, #ffc4a7);
   outline-offset: 3px;
 }

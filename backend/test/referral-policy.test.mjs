@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { generateKeyPairSync, createPublicKey, sign, verify, randomUUID } from "node:crypto";
+import { generateKeyPairSync, createHash, createPublicKey, sign, verify, randomUUID } from "node:crypto";
 import policy from "../dist/referral-policy.js";
 import referralLicense from "../dist/referral-license.js";
 import { readFileSync } from "node:fs";
@@ -268,4 +268,37 @@ test("programme off: checkout never reaches the referral path or a referral endp
   } finally {
     process.env = saved;
   }
+});
+test("only an app build whose issuer matches this server's signer sees the programme", () => {
+  const pair = generateKeyPairSync("ed25519");
+  const raw = pair.publicKey.export({ type: "spki", format: "der" }).subarray(-32);
+  const env = { REFERRALS_NATIVE_PUBLIC_KEY: raw.toString("base64") };
+  const hash = createHash("sha256").update(raw).digest("hex");
+  assert.equal(policy.referralClientReady(hash, env), true);
+  assert.equal(policy.referralClientReady(hash.toUpperCase(), env), true);
+  // 1.18.10 and older send no header; 1.18.9 has no issuer at all.
+  assert.equal(policy.referralClientReady(undefined, env), false);
+  assert.equal(policy.referralClientReady("", env), false);
+  // A build with another issuer (a test key, a stale key) could not verify the grants.
+  const other = createHash("sha256").update(Buffer.alloc(32, 7)).digest("hex");
+  assert.equal(policy.referralClientReady(other, env), false);
+  assert.equal(policy.referralClientReady(hash + "0", env), false);
+  // A server without a configured issuer never offers the programme to anyone.
+  assert.equal(policy.referralClientReady(hash, {}), false);
+  assert.equal(policy.referralClientReady(hash, { REFERRALS_NATIVE_PUBLIC_KEY: "short" }), false);
+});
+test("every route that starts or changes referral state refuses builds that cannot verify", () => {
+  const source = readFileSync(new URL("../src/routes/referrals.ts", import.meta.url), "utf8");
+  const handler = (path) => {
+    const start = source.indexOf(`"${path}"`);
+    assert.ok(start > 0, `route ${path} exists`);
+    const next = source.indexOf("referralRoutes.", start);
+    return source.slice(start, next < 0 ? undefined : next);
+  };
+  for (const path of ["/code", "/claim", "/device/challenge", "/device/proof"])
+    assert.match(handler(path), /requireReadyClient\(req\);/, `${path} checks the client`);
+  assert.match(handler("/status"), /enabled: summary\.enabled && clientReady\(req\)/);
+  // The public page check stays independent of the app build.
+  const config = handler("/config");
+  assert.doesNotMatch(config.slice(0, config.indexOf("\n});")), /clientReady/);
 });

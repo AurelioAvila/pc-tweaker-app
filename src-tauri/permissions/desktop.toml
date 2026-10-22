@@ -2,6 +2,7 @@
 identifier = "desktop-commands"
 description = "Application commands available to the main desktop window."
 permissions = [
+    "allow-referral-issuer",
     "allow-referral-device",
     "allow-referral-session",
     "allow-referral-proof",

@@ -65,6 +65,7 @@ pub const APP_COMMANDS: &[&str] = &[
     "save_license",
     "license_status",
     "clear_license",
+    "referral_issuer",
     "referral_device",
     "referral_session",
     "referral_proof",

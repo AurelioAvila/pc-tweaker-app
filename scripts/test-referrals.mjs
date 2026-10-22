@@ -43,6 +43,7 @@ let serverTime = Math.floor(Date.now() / 1000);
 globalThis.__token = token;
 globalThis.__invoke = async (name) => {
   calls.push(name);
+  if (name === "referral_issuer") return "cd".repeat(32);
   if (name === "referral_device") return { publicKey: "pk", keyHash: "hash-b" };
   if (name === "referral_proof") return "signature";
   if (name === "referral_license_status") return true;
@@ -84,6 +85,7 @@ globalThis.fetch = async (url, init) => {
 };
 globalThis.__invoke = async (name) => {
   calls.push(name);
+  if (name === "referral_issuer") return "cd".repeat(32);
   if (name === "save_referral_license") globalThis.__token = "another-account-session-token";
   if (name === "referral_device") return { publicKey: "pk", keyHash: "hash-b" };
   if (name === "referral_proof") return "signature";
@@ -151,5 +153,45 @@ assert.equal((await readReferralStatus(token)).enabled, false);
 globalThis.fetch = async () =>
   new Response(JSON.stringify({ enabled: true, rewards: [], accountId: "7" }));
 assert.equal((await readReferralStatus(token)).enabled, true);
+
+// Server gate (1.18.11): every request carries the hash of this build's issuer key; a build
+// without one sends no header and never starts an activation.
+const fresh = async (tag) =>
+  import(
+    `data:text/javascript;base64,${Buffer.from(`${compiled.outputFiles[0].text}\n// ${tag}`).toString("base64")}`
+  );
+const issuerHash = "ab".repeat(32);
+{
+  const m = await fresh("issuer present");
+  let headers = null;
+  globalThis.__invoke = async (name) => (name === "referral_issuer" ? issuerHash : null);
+  globalThis.fetch = async (_url, init) => {
+    headers = init.headers;
+    return new Response(JSON.stringify({ enabled: true, rewards: [], accountId: "7" }));
+  };
+  await m.readReferralStatus(token);
+  assert.equal(headers["X-PCT-Referral-Issuer"], issuerHash);
+}
+{
+  const m = await fresh("no issuer");
+  const seen = [];
+  let headers = null;
+  globalThis.__invoke = async (name) => {
+    seen.push(name);
+    return null;
+  };
+  globalThis.fetch = async (url, init) => {
+    seen.push(new URL(url).pathname);
+    headers = init.headers;
+    return new Response(JSON.stringify({ enabled: false, rewards: [], accountId: "7" }));
+  };
+  await m.readReferralStatus(token);
+  assert.equal("X-PCT-Referral-Issuer" in headers, false, "no header without an issuer");
+  seen.length = 0;
+  await assert.rejects(m.activateOrRefreshBonus(status, "r1", "activate", token), {
+    code: "update_required",
+  });
+  assert.deepEqual(seen, [], "nothing is sent and no device identity is touched");
+}
 
 console.log("referral client OK");

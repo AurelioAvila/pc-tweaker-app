@@ -75,6 +75,22 @@ export function referralsEnabled(env: NodeJS.ProcessEnv = process.env): boolean 
   );
 }
 
+/** The app (1.18.11 and later) sends the SHA-256 of the bonus issuer key built into it. Only a
+ *  build whose key matches this server's signer can verify a bonus; 1.18.10 and older send
+ *  nothing (1.18.9 has no issuer at all), so for them the programme is unavailable and no bonus
+ *  can be started on a PC that would then refuse it. Not a security boundary: a forged header
+ *  only lets a modified client fail on its own. */
+export function referralClientReady(
+  sentHash: string | undefined,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  const key = env.REFERRALS_NATIVE_PUBLIC_KEY;
+  if (!key || typeof sentHash !== "string" || !/^[a-f0-9]{64}$/i.test(sentHash)) return false;
+  const bytes = Buffer.from(key, "base64");
+  if (bytes.length !== 32) return false;
+  return createHash("sha256").update(bytes).digest("hex") === sentHash.toLowerCase();
+}
+
 export function isReferralPlan(value: unknown): value is ReferralPlan {
   return typeof value === "string" && Object.hasOwn(REFERRAL_MONTHS, value);
 }

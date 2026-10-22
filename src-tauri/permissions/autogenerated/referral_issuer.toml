@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-referral-issuer"
+description = "Enables the referral_issuer command without any pre-configured scope."
+commands.allow = ["referral_issuer"]
+
+[[permission]]
+identifier = "deny-referral-issuer"
+description = "Denies the referral_issuer command without any pre-configured scope."
+commands.deny = ["referral_issuer"]

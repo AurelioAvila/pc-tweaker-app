@@ -1,6 +1,6 @@
 # PC Tweaker invitations and device-bound Pro bonuses
 
-Status: live in production since 22 October 2026 (policy `2026-10-22-v3`, client 1.18.10 and later). Programme terms: TERMS.md section 3; privacy notice: PRIVACY.md, "Invite a friend".
+Status: live in production since 22 October 2026 (policy `2026-10-22-v3`, app 1.18.11 and later). Programme terms: TERMS.md section 3; privacy notice: PRIVACY.md, "Invite a friend".
 
 ## Switch and rollback
 
@@ -12,7 +12,7 @@ railway variable delete REFERRALS_POLICY_VERSION -p c9705734-721e-4385-b40b-af25
 
 Railway redeploys the service and `GET https://api.pctweaker.app/api/referrals/config` answers `"enabled":false` once the new deployment is up. With the switch off no code can be created or confirmed, no referral quote is opened (everyone gets the ordinary checkout) and a ready bonus cannot be activated. Bonuses already active keep refreshing, because they need only the issuer keys, which stay in place, and refunds and disputes of recorded bonuses are still processed. Setting the variable back to `2026-10-22-v3` turns the programme on again.
 
-Clients: 1.18.10 and later carry the production issuer key and show Invite a friend only while the server says on. 1.18.9 reads the same switch, so it also shows the panel and can share and confirm codes, but it was built without an issuer key: activating a bonus there reports that the bonus could not be verified, although the server has already started it for that PC. After the update to 1.18.10 on the same PC (same device key) the bonus works. Older versions have no referral code at all.
+Clients: only app 1.18.11 and later, which send the hash of their built-in issuer key (see the client gate under "Configuration and release gates"), see Invite a friend while the server says on. 1.18.10 and 1.18.9 send no such hash, so for them the programme stays off and they cannot start a bonus; they see it after updating.
 
 Secrets: the issuer private key and the HMAC key exist only in the Railway variables and in a DPAPI-protected backup on the owner's PC (`my-apps/secrets-backup/pctweaker-referral-secrets.dpapi`, CurrentUser scope; the public key is next to it in plain text). The public key is compiled into the app as `PCT_REFERRAL_PUBLIC_KEY`; rotating it needs a coordinated signed app release. Keep `REFERRALS_HASH_KEY` stable.
 

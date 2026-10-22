@@ -1,0 +1,195 @@
+.invitation-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 112px 32px 96px;
+}
+.invitation-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 72px;
+  align-items: center;
+}
+.invitation-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  color: var(--accent, #ff9368);
+}
+.invitation-page h1 {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(36px, 4.5vw, 62px);
+  line-height: 1.08;
+  letter-spacing: -0.05em;
+  margin: 24px 0;
+}
+.invitation-page h1 span {
+  color: var(--accent, #ff9368);
+}
+.invitation-intro {
+  font-size: 18px;
+  line-height: 1.6;
+  max-width: 42ch;
+}
+.invitation-status {
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 16px 0;
+  color: var(--fg-dim, #bdbac5);
+}
+.invitation-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  margin: 16px 0;
+}
+.invitation-actions a:first-child,
+.invitation-code button {
+  background: #ff9368;
+  color: #20120d;
+  border-radius: 8px;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+  border: 0;
+  cursor: pointer;
+}
+.invitation-actions a:first-child span {
+  margin-left: 20px;
+}
+.invitation-actions a:last-child {
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.invitation-note {
+  font-size: 12px !important;
+  line-height: 1.6;
+  color: var(--fg-dim, #bdbac5);
+}
+.invitation-card {
+  padding: 32px;
+  background: var(--bg-2, #202025);
+  border: 1px solid var(--line-2, #48444e);
+  border-radius: 18px;
+}
+.invitation-card-label,
+.invitation-friend > span {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--fg-dim, #bdbac5);
+}
+.invitation-saving {
+  display: block;
+  font-size: 72px;
+  letter-spacing: -0.06em;
+  line-height: 1.2;
+  margin: 16px 0;
+}
+.invitation-saving small {
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: var(--accent, #ff9368);
+}
+.invitation-card p,
+.invitation-card li,
+.invitation-steps p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--fg-dim, #bdbac5);
+}
+.invitation-card li {
+  margin: 12px 0;
+  padding-left: 4px;
+}
+.invitation-card ol {
+  padding-left: 20px;
+  margin: 24px 0;
+}
+.invitation-friend {
+  border-top: 1px solid var(--line-2, #48444e);
+  margin-top: 24px;
+  padding-top: 24px;
+}
+.invitation-friend strong {
+  display: block;
+  font-size: 21px;
+  margin: 8px 0;
+}
+.invitation-code {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+.invitation-code label {
+  font-size: 12px;
+}
+.invitation-code input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  background: var(--bg, #101014);
+  color: inherit;
+  border: 1px solid var(--line-2, #48444e);
+  border-radius: 6px;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+.invitation-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  border-top: 1px solid var(--line-2, #48444e);
+  margin-top: 72px;
+  padding-top: 32px;
+}
+.invitation-steps article > span {
+  font-size: 12px;
+  color: var(--accent, #ff9368);
+}
+.invitation-steps h2 {
+  font-size: 17px;
+  margin: 16px 0 12px;
+}
+.invitation-conditions {
+  margin-top: 40px;
+  max-width: 85ch;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.invitation-conditions summary {
+  cursor: pointer;
+}
+.invitation-conditions p {
+  margin-top: 16px;
+  color: var(--fg-dim, #bdbac5);
+}
+.invitation-page :focus-visible {
+  outline: 3px solid #ffc4a7;
+  outline-offset: 4px;
+}
+@media (max-width: 760px) {
+  .invitation-page {
+    padding: 104px 20px 64px;
+  }
+  .invitation-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .invitation-card {
+    padding: 24px;
+  }
+  .invitation-steps {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-top: 40px;
+  }
+  .invitation-steps h2 {
+    margin-top: 8px;
+  }
+  .invitation-saving {
+    font-size: 60px;
+  }
+}

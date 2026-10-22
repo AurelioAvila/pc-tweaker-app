@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-save-referral-license"
+description = "Enables the save_referral_license command without any pre-configured scope."
+commands.allow = ["save_referral_license"]
+
+[[permission]]
+identifier = "deny-save-referral-license"
+description = "Denies the save_referral_license command without any pre-configured scope."
+commands.deny = ["save_referral_license"]

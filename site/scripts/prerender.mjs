@@ -5,7 +5,14 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
 const serverBundle = path.join(root, "dist-ssr", "entry-server.js");
-const { render, ROUTE_SEO, getRouteImage, getRouteJsonLd, NOT_FOUND_SEO } = await import(pathToFileURL(serverBundle));
+const {
+  render,
+  ROUTE_SEO,
+  getRouteImage,
+  getRouteJsonLd,
+  NOT_FOUND_SEO,
+  INVITATION_SEO,
+} = await import(pathToFileURL(serverBundle));
 let template = await readFile(path.join(dist, "index.html"), "utf8");
 
 // Deliver the small, shared stylesheet with the prerendered document, so the
@@ -121,10 +128,17 @@ function buildPage(route, seo, noindex = false) {
 }
 
 for (const [route, seo] of Object.entries(ROUTE_SEO)) {
-  const file = route === "/" ? path.join(dist, "index.html") : path.join(dist, route.slice(1), "index.html");
+  const file =
+    route === "/" ? path.join(dist, "index.html") : path.join(dist, route.slice(1), "index.html");
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, buildPage(route, seo), "utf8");
 }
 
 await writeFile(path.join(dist, "404.html"), buildPage("/404", NOT_FOUND_SEO, true), "utf8");
+await mkdir(path.join(dist, "invite"), { recursive: true });
+await writeFile(
+  path.join(dist, "invite", "index.html"),
+  buildPage("/invite", INVITATION_SEO, true),
+  "utf8",
+);
 await rm(path.join(root, "dist-ssr"), { recursive: true, force: true });

@@ -59,6 +59,7 @@ mod ipc_tests;
 #[path = "tests/mock_registry.rs"]
 mod mock_registry;
 mod license;
+mod referral;
 mod lifetime_tools;
 mod netcheck;
 mod netlatency;
@@ -2426,6 +2427,12 @@ pub fn run() {
             license::save_license,
             license::license_status,
             license::clear_license,
+            referral::referral_device,
+            referral::referral_session,
+            referral::referral_proof,
+            referral::save_referral_license,
+            referral::referral_license_status,
+            referral::clear_referral_license,
             list_tweaks,
             apply_tweak,
             apply_tweaks,
@@ -2926,7 +2933,8 @@ pub(crate) fn require_pro(app_data_dir: &std::path::Path) -> Result<(), String> 
     }
     #[cfg(not(feature = "test-pro"))]
     {
-        if license::LicenseStore::new(app_data_dir.to_path_buf()).is_pro_and_fresh() {
+        if license::LicenseStore::new(app_data_dir.to_path_buf()).is_pro_and_fresh()
+            || referral::is_active(app_data_dir) {
             return Ok(());
         }
         Err(format!(

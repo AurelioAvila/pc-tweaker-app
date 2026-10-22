@@ -14,6 +14,7 @@ import {
 import { AuthState, ProcessGuardStatus, type ProductPlan } from "../types";
 import { CheckIcon, CrownIcon } from "./icons";
 import { TRIAL_COPY } from "./trial-copy";
+import { REFERRAL_COPY } from "./referral-copy";
 import { trialLeft, trialUsed, type BillingStatus } from "../trial";
 import { productPlanLabel } from "../plan-label";
 import { Avatar } from "./ui";
@@ -98,7 +99,11 @@ export function AuthSection({
             aria-label={s.menu.changePhoto}
             className="group relative shrink-0 rounded-full transition-transform hover:scale-105"
           >
-            <Avatar email={auth.email} isPro={auth.isPro} photo={avatar} />
+            <Avatar
+              email={auth.email}
+              isPro={auth.isPro || auth.bonusActive === true}
+              photo={avatar}
+            />
             <span className="pointer-events-none absolute inset-[2px] grid place-items-center rounded-full bg-black/55 opacity-0 transition-opacity group-hover:opacity-100">
               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-white">
                 <path
@@ -153,6 +158,11 @@ export function AuthSection({
           </div>
         )}
 
+        {auth.bonusActive && (
+          <p className="relative mt-3 text-xs text-ink-2">
+            {(REFERRAL_COPY[lang as Lang] ?? REFERRAL_COPY.en).bonusActive}
+          </p>
+        )}
         {!auth.emailVerified && (
           <button
             onClick={() => {
@@ -396,6 +406,7 @@ export function AccountMenu({
   onUpgrade,
   onViewPlan,
   onManageBilling,
+  onReferrals,
   pushToast,
 }: {
   s: Strings;
@@ -426,9 +437,11 @@ export function AccountMenu({
    *  account is comparing, a Pro account is checking what it pays for. */
   onViewPlan: () => void;
   onManageBilling?: () => void;
+  onReferrals?: () => void;
   pushToast: (kind: "success" | "error", message: string) => void;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
   const open = openProp ?? internalOpen;
   const setOpen = (v: boolean | ((prev: boolean) => boolean)) => {
     const next = typeof v === "function" ? v(open) : v;
@@ -436,7 +449,7 @@ export function AccountMenu({
     setInternalOpen(next);
   };
   const [errReports, setErrReports] = useState(() => errorReportsEnabled());
-  const isPro = auth.status === "authenticated" && auth.isPro;
+  const isPro = auth.status === "authenticated" && (auth.isPro || auth.bonusActive === true);
 
   // Device-local profile photo, kept as a file by the Rust side; there is no
   // upload — see fileToAvatarDataUrl in lib.ts and src-tauri/src/avatar.rs.
@@ -542,6 +555,7 @@ export function AccountMenu({
           opened. Signed out there is no account to represent, so it stays a
           plain glyph. */}
       <button
+        ref={menuButton}
         onClick={() => setOpen((v) => !v)}
         className={`grid h-9 w-9 place-items-center rounded-full transition-transform hover:scale-105 ${
           auth.status === "authenticated"
@@ -642,6 +656,18 @@ export function AccountMenu({
                 {isPro ? s.menu.viewPlan : s.menu.upgradeButton} <span aria-hidden="true">↗</span>
               </button>
             </div>
+            {onReferrals && auth.status === "authenticated" && (
+              <button
+                className="account-support"
+                onClick={() => {
+                  setOpen(false);
+                  menuButton.current?.focus();
+                  onReferrals();
+                }}
+              >
+                {REFERRAL_COPY[lang].menuInvite}
+              </button>
+            )}
             <details name="account-settings" className="account-setting">
               <summary>
                 <span>{s.menu.language}</span>

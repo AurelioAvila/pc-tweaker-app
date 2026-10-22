@@ -12,3 +12,4 @@ export function render(path: string): string {
 }
 
 export { getRouteImage, getRouteJsonLd, NOT_FOUND_SEO, ROUTE_JSONLD, ROUTE_SEO };
+export { INVITATION_SEO } from "./pages/Invitation";

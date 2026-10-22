@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-referral-device"
+description = "Enables the referral_device command without any pre-configured scope."
+commands.allow = ["referral_device"]
+
+[[permission]]
+identifier = "deny-referral-device"
+description = "Denies the referral_device command without any pre-configured scope."
+commands.deny = ["referral_device"]

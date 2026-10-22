@@ -26,6 +26,7 @@ import {
 import { PromoProvider, RouteStructuredData } from "./promo";
 import { useRoute } from "./router";
 import { getRouteImage, NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
+import { InvitationPage, INVITATION_SEO } from "./pages/Invitation";
 
 function HomePage({ navigate }: { navigate: (to: string) => void }) {
   return (
@@ -48,7 +49,8 @@ function HomePage({ navigate }: { navigate: (to: string) => void }) {
  *  mistyped link looked like a working page instead of an error. */
 export default function App({ initialPath = "/" }: { initialPath?: string }) {
   const { path, navigate } = useRoute(initialPath);
-  const route = ROUTE_SEO[path];
+  const invitation = path === "/invite";
+  const route = invitation ? INVITATION_SEO : ROUTE_SEO[path];
 
   // Client-side routing doesn't reload the document, so the tab title would
   // otherwise stay on whatever index.html shipped with.
@@ -73,17 +75,20 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       document.querySelector(selector)?.setAttribute("content", content);
     }
     const robots = document.querySelector('meta[name="robots"]');
-    if (route) robots?.remove();
+    if (route && !invitation) robots?.remove();
     else if (!robots) {
       const tag = document.createElement("meta");
       tag.name = "robots";
       tag.content = "noindex,follow";
       document.head.appendChild(tag);
     }
-  }, [route]);
+  }, [route, invitation]);
 
   let page: React.ReactNode;
   switch (path) {
+    case "/invite":
+      page = <InvitationPage />;
+      break;
     case "/guides":
       page = <GuideDirectory navigate={navigate} />;
       break;
@@ -109,7 +114,11 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       page = <AccessibilityPage />;
       break;
     default:
-      page = GUIDES[path] ? <GuidePage path={path} navigate={navigate} /> : <NotFoundPage navigate={navigate} />;
+      page = GUIDES[path] ? (
+        <GuidePage path={path} navigate={navigate} />
+      ) : (
+        <NotFoundPage navigate={navigate} />
+      );
   }
 
   return (
@@ -129,7 +138,11 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
         onSubpage={path !== "/"}
         currentPath={path}
         {...(path === "/uninstaller"
-          ? { downloadHref: UNINSTALLER_DOWNLOAD_EXE, downloadLabel: "Download Uninstaller", offerHref: "#uninstaller-pro" }
+          ? {
+              downloadHref: UNINSTALLER_DOWNLOAD_EXE,
+              downloadLabel: "Download Uninstaller",
+              offerHref: "#uninstaller-pro",
+            }
           : {})}
       />
       {page}

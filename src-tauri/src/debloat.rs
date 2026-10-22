@@ -1413,6 +1413,41 @@ mod tests {
     use std::cell::{Cell, RefCell};
     use std::collections::VecDeque;
 
+    /// The removable-apps catalogue the website publishes
+    /// (site/src/generated/debloat-catalog.json) is CATALOG, serialised, so the
+    /// Debloat tool page never types a package name itself. Regenerate with
+    /// `UPDATE_PUBLIC_CATALOG=1 cargo test public_catalogue`.
+    #[test]
+    fn the_public_catalogue_of_removable_apps_matches_the_code() {
+        let entries: Vec<serde_json::Value> = CATALOG
+            .iter()
+            .map(|item| {
+                serde_json::json!({
+                    "id": item.id,
+                    "package_name": item.package_name,
+                    "publisher_id": item.publisher_id,
+                    "name": item.name,
+                    "description": item.description,
+                    "impact": item.impact,
+                    "store_url": item.store_url,
+                })
+            })
+            .collect();
+        let json = serde_json::to_string_pretty(&entries).unwrap() + "
+";
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../site/src/generated/debloat-catalog.json");
+        if std::env::var_os("UPDATE_PUBLIC_CATALOG").is_some() {
+            fs::write(&path, &json).unwrap();
+        }
+        let committed = fs::read_to_string(&path).unwrap_or_default().replace("
+", "
+");
+        assert!(
+            committed == json,
+            "site/src/generated/debloat-catalog.json is stale: run UPDATE_PUBLIC_CATALOG=1 cargo test public_catalogue"
+        );
+    }
+
     #[test]
     fn a_list_file_keeps_known_apps_once_and_refuses_anything_else() {
         let ok = br#"{"format":1,"kind":"pc-tweaker-debloat-list","apps":["solitaire","news","solitaire","C:\\x.exe","nope"]}"#;

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { WINDOWS_DB, dbPath } from "../../reference/windows-db";
 import { CATEGORY_KEYS, REFERENCE_JSONLD, REFERENCE_SEO, TWEAKS, categoryPath, ogCards } from "./data";
 import { CategoryIndex, DbDetail, DbIndex, FixesIndex, ToolsIndex, TweakDetail, TweakIndex } from "./pages";
-import { ProcessChecker, ProfileBuilder, TimerCalculator } from "./tools";
+import { DebloatBuilder, ProcessChecker, ProfileBuilder, TimerCalculator } from "./tools";
 
 export { REFERENCE_JSONLD, REFERENCE_SEO, ogCards };
 
@@ -19,6 +19,7 @@ const PAGES: Record<string, (navigate: Nav) => ReactNode> = {
   "/tools/process-checker": (n) => <ProcessChecker navigate={n} />,
   "/tools/timer-resolution-calculator": (n) => <TimerCalculator navigate={n} />,
   "/tools/profile-builder": (n) => <ProfileBuilder navigate={n} />,
+  "/tools/debloat-windows-11": (n) => <DebloatBuilder navigate={n} />,
 };
 
 /** The page for a reference route, or null when the path is not one. */

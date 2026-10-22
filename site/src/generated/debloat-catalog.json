@@ -1,0 +1,119 @@
+[
+  {
+    "description": "Microsoft's Solitaire card games.",
+    "id": "solitaire",
+    "impact": "The games and local settings leave this account; game progress may not return after reinstalling.",
+    "name": "Microsoft Solitaire Collection",
+    "package_name": "Microsoft.MicrosoftSolitaireCollection",
+    "publisher_id": "8wekyb3d8bbwe",
+    "store_url": "https://apps.microsoft.com/detail/9wzdncrfhwd2"
+  },
+  {
+    "description": "Weather forecasts from Microsoft.",
+    "id": "weather",
+    "impact": "Weather app settings and pinned views may need to be set up again.",
+    "name": "MSN Weather",
+    "package_name": "Microsoft.BingWeather",
+    "publisher_id": "8wekyb3d8bbwe",
+    "store_url": "https://apps.microsoft.com/detail/9wzdncrfj3q2"
+  },
+  {
+    "description": "Microsoft's news reader.",
+    "id": "news",
+    "impact": "Local news preferences may not return after reinstalling.",
+    "name": "Microsoft News",
+    "package_name": "Microsoft.BingNews",
+    "publisher_id": "8wekyb3d8bbwe",
+    "store_url": "https://apps.microsoft.com/detail/9wzdncrfhvfw"
+  },
+  {
+    "description": "The consumer Copilot app for Windows.",
+    "id": "copilot",
+    "impact": "The Copilot app leaves this account; this does not disable Copilot features inside Microsoft 365 apps.",
+    "name": "Microsoft Copilot",
+    "package_name": "Microsoft.Copilot",
+    "publisher_id": "8wekyb3d8bbwe",
+    "store_url": "https://apps.microsoft.com/detail/xp9cxngppj97xx"
+  },
+  {
+    "description": "Video editor included with many Windows installations.",
+    "id": "clipchamp",
+    "impact": "Back up local projects and source media first; reinstalling the app does not restore lost files.",
+    "name": "Microsoft Clipchamp",
+    "package_name": "Clipchamp.Clipchamp",
+    "publisher_id": "yxz26nhyzhsrt",
+    "store_url": "https://apps.microsoft.com/detail/9p1j8s7ccwwt"
+  },
+  {
+    "description": "Microsoft's new Outlook mail and calendar app.",
+    "id": "outlook",
+    "impact": "Mail and calendar access through this app stops until reinstalled; account settings may need setup again.",
+    "name": "Outlook for Windows",
+    "package_name": "Microsoft.OutlookForWindows",
+    "publisher_id": "8wekyb3d8bbwe",
+    "store_url": "https://apps.microsoft.com/detail/9nrx63209r7b"
+  },
+  {
+    "description": "Task lists and reminders.",
+    "id": "todo",
+    "impact": "Sync your lists first. Local unsynced tasks and account settings may be lost.",
+    "name": "Microsoft To Do",
+    "package_name": "Microsoft.Todos",
+    "publisher_id": "8wekyb3d8bbwe",
+    "store_url": "https://apps.microsoft.com/detail/9nblggh5r558"
+  },
+  {
+    "description": "Record and manage voice recordings.",
+    "id": "recorder",
+    "impact": "Export recordings before removal. Reinstalling cannot recover deleted local recordings.",
+    "name": "Sound Recorder",
+    "package_name": "Microsoft.WindowsSoundRecorder",
+    "publisher_id": "8wekyb3d8bbwe",
+    "store_url": "https://apps.microsoft.com/detail/9wzdncrfhwkn"
+  },
+  {
+    "description": "Submit Windows feedback and diagnostics.",
+    "id": "feedback",
+    "impact": "You will no longer be able to send reports through Feedback Hub until it is reinstalled.",
+    "name": "Feedback Hub",
+    "package_name": "Microsoft.WindowsFeedbackHub",
+    "publisher_id": "8wekyb3d8bbwe",
+    "store_url": "https://apps.microsoft.com/detail/9nblggh4r32n"
+  },
+  {
+    "description": "Phone notifications, calls and messages on this PC.",
+    "id": "phone",
+    "impact": "Phone integration stops on this PC. You may need to pair your phone again after reinstalling.",
+    "name": "Phone Link",
+    "package_name": "Microsoft.YourPhone",
+    "publisher_id": "8wekyb3d8bbwe",
+    "store_url": "https://apps.microsoft.com/detail/9nmpj99vjbwv"
+  },
+  {
+    "description": "Play local music and video.",
+    "id": "media",
+    "impact": "Choose another default player first. Local playlists and app settings may be lost.",
+    "name": "Windows Media Player",
+    "package_name": "Microsoft.ZuneMusic",
+    "publisher_id": "8wekyb3d8bbwe",
+    "store_url": "https://apps.microsoft.com/detail/9wzdncrfj3pt"
+  },
+  {
+    "description": "Microsoft video library and playback.",
+    "id": "movies",
+    "impact": "Access to videos through this app stops. Check purchased content and offline downloads before removal.",
+    "name": "Movies & TV",
+    "package_name": "Microsoft.ZuneVideo",
+    "publisher_id": "8wekyb3d8bbwe",
+    "store_url": "https://apps.microsoft.com/detail/9wzdncrfj3p2"
+  },
+  {
+    "description": "Microsoft 365 home and app launcher.",
+    "id": "office",
+    "impact": "Removes the hub only, not Word, Excel or your Microsoft 365 subscription. Local settings may be lost.",
+    "name": "Microsoft 365 Copilot",
+    "package_name": "Microsoft.MicrosoftOfficeHub",
+    "publisher_id": "8wekyb3d8bbwe",
+    "store_url": "https://apps.microsoft.com/detail/9wzdncrd29v9"
+  }
+]

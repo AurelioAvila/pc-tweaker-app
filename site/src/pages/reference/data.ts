@@ -64,6 +64,14 @@ export const TOOLS = [
     description:
       "Choose Windows controls from PC Tweaker's catalogue and download a profile file the app imports for review, plus a Markdown list of every change it makes.",
   },
+  {
+    path: "/tools/debloat-windows-11",
+    name: "Debloat List Builder",
+    title: "Debloat Windows 11: Choose Apps, Keep a Way Back",
+    blurb: "Pick preinstalled apps to remove, then get a list PC Tweaker loads for review, the PowerShell lines and the Store link that brings each one back.",
+    description:
+      "Choose which preinstalled Windows 11 apps to remove, see what each removal costs, and get a list PC Tweaker loads for review plus the Store links to reinstall.",
+  },
 ] as const;
 
 /* ------------------------------------------------------------------ *
@@ -269,6 +277,6 @@ export function ogCards(): { path: string; eyebrow: string; title: string; detai
     ...CATEGORY_KEYS.map((c) => ({ path: categoryPath(c), eyebrow: "WINDOWS TWEAKS", title: `${CATEGORIES[c].label} tweaks`, detail: `${TWEAKS.filter((p) => p.category === c).length} controls, each with an honest verdict` })),
     { path: "/database", eyebrow: "REFERENCE", title: "Windows processes and services", detail: `${WINDOWS_DB.length} entries: what to leave alone and why` },
     { path: "/fixes", eyebrow: "GUIDES", title: "Windows fixes", detail: "Problem first, with steps you can undo" },
-    { path: "/tools", eyebrow: "FREE TOOLS", title: "Windows tools", detail: "Checker, calculator and profile builder" },
+    { path: "/tools", eyebrow: "FREE TOOLS", title: "Windows tools", detail: "Checker, calculator, profile and debloat lists" },
   ];
 }

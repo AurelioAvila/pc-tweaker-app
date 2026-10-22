@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-10-21
+Last updated: 2026-10-22
 
 PC Tweaker is a desktop application. Windows tweaks, snapshots, rollback data,
 hardware readings and file scans are processed locally on your device. They are
@@ -88,6 +88,53 @@ After a purchase, the confirmation page asks, optionally, how you found PC
 Tweaker. If you pick an answer, only that answer (for example "youtube") is
 added to your order's record at Stripe; nothing is stored in your browser and
 skipping the question changes nothing.
+
+## Invite a friend
+
+If you take part in the Invite a friend programme described in the Terms of
+Service, our backend also processes the following:
+
+- **If you invite:** your invitation code and, for each friend who buys, a
+  bonus record (its state and length and, once you activate it, the activation
+  and end dates and the public key of the PC it is bound to). The app creates a
+  key for the bonus on that PC and keeps it protected by Windows; only its
+  public half is sent to us.
+- **If you are invited:** the code you confirmed and when, the date the
+  invitation expires, a keyed one-way hash of your email address with dots and
+  `+tags` removed (so the same mailbox cannot be invited twice), and the details
+  of your first payment that Stripe sends us: payment and invoice references,
+  amount, currency, time, and any refund or dispute. Of your card we keep only a
+  keyed one-way hash of the fingerprint Stripe calculates for it; we never see
+  the card number.
+- **Self-invitation checks:** when a code is confirmed and again when the
+  payment is recorded, we compare the two accounts' email addresses and private
+  email domains (large public providers such as Gmail or Outlook never count as
+  shared), the hashed app installation identifiers recorded when each account
+  signs in, and the card fingerprint hashes.
+
+The person who invited you sees only that a bonus exists and whether it is
+being checked, active or not eligible. They never see your email address,
+plan, amount or date of payment, card, refunds or disputes; because a bonus
+appears when you pay, its appearance does tell them that a purchase took
+place. The invitation page and the app never show an invited friend who the
+inviter is beyond the code itself.
+
+We process this data to run the programme you joined, which is necessary to
+perform our agreement with you (Article 6(1)(b) GDPR), and we run the
+self-invitation checks on the basis of our legitimate interest in preventing
+abuse of the discount and bonuses (Article 6(1)(f) GDPR). If an automatic check
+refuses an invitation or withdraws a bonus, you can ask for a person to review
+the decision at support@pctweaker.app.
+
+Device challenges used to activate or refresh a bonus are deleted one day after
+they expire, and records of processed payment notifications after 90 days.
+Invitation, bonus, payment-check and review records are kept while your account
+exists, because they stop the same purchase, person or card from earning a
+second bonus and let us handle a refund or dispute. If you ask us to delete
+your account, we delete these records or remove the link to you, except the
+keyed hashes of your email address and card fingerprint, which we keep for up
+to 24 months after your last purchase so that they keep blocking repeat
+bonuses, and anything we must keep to resolve an open dispute.
 
 ## Email
 

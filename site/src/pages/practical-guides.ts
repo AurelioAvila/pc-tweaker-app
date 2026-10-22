@@ -19,6 +19,7 @@ export const PRACTICAL_GUIDES = {
     ],
     related: [
       { to: "/uninstaller/", label: "what PC Tweaker Uninstaller shows before a removal runs", note: "The safety score, the command and the permissions, with prices for the Pro cleanup." },
+      { to: "/tools/debloat-windows-11/", label: "removing preinstalled Windows apps instead", note: "Store apps like Solitaire or Clipchamp, removed for your account with a link to reinstall." },
       { to: "/what-pc-tweaker-changes/", label: "which operations have their own recovery limits", note: "Uninstalls and cleanup are not settings; a restore point is not a file backup." },
       { to: "/how-to-undo-windows-tweaks/", label: "how to recover when a change broke something", note: "Start from the change and the value it had before, not from a generic default." }
     ],

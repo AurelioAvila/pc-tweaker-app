@@ -5,6 +5,8 @@ import { MS } from "../../reference/sources";
 import { VERDICTS } from "../../reference/tweak-notes";
 import { WINDOWS_DB, DB_VERDICTS, dbPath, type DbEntry } from "../../reference/windows-db";
 import { ProBox, SourceList, Steps } from "../../components/ReferenceBlocks";
+import { DOWNLOAD_EXE } from "../../constants";
+import { DEBLOAT_APPS, debloatListJson, debloatPowerShell } from "../../reference/debloat";
 import { Badge, Crumbs, Head, P, Panel, Shell } from "./pages";
 import { CATEGORY_KEYS, TOOLS, TWEAKS } from "./data";
 
@@ -307,6 +309,86 @@ export function ProfileBuilder({ navigate }: { navigate: Nav }) {
         <ProBox campaign="pct-tool-profile-builder" />
       </Panel>
       <SourceList checked={CHECKED} items={[{ label: "PC Tweaker source code: the profile format and import checks (profiles.rs)", url: "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/profiles.rs" }]} />
+    </Shell>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Debloat list builder
+ * ------------------------------------------------------------------ */
+
+const DEBLOAT_SRC = "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/debloat.rs";
+
+export function DebloatBuilder({ navigate }: { navigate: Nav }) {
+  const meta = tool("/tools/debloat-windows-11");
+  const [ids, setIds] = useState<string[]>([]);
+  const toggle = (id: string) => setIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+  const picked = DEBLOAT_APPS.filter((a) => ids.includes(a.id));
+  return (
+    <Shell>
+      <Crumbs navigate={navigate} trail={[["Tools", "/tools/"], [meta.name, `${meta.path}/`]]} />
+      <Head eyebrow="FREE TOOL" title={meta.title} intro="Most debloat scripts remove dozens of packages in one go and give no way back. This page starts from the other end: the preinstalled apps PC Tweaker is willing to remove, what each removal costs, and the Microsoft Store page that brings each one back." />
+      <Panel title="1. Pick the apps" id="pick">
+        <P>
+          These are the {DEBLOAT_APPS.length} apps in PC Tweaker&apos;s Debloat catalogue, the same list the app offers. Each one is a Microsoft Store app that a single account can remove and reinstall. What is not here is left out on purpose: Microsoft Edge, the Store itself, system components, and anything Windows marks as not removable.
+        </P>
+        <div className="mt-6 grid gap-2 md:grid-cols-2">
+          {DEBLOAT_APPS.map((a) => (
+            <label key={a.id} className="flex cursor-pointer items-start gap-2.5 rounded-lg px-2 py-2 hover:bg-white/5">
+              <input type="checkbox" checked={ids.includes(a.id)} onChange={() => toggle(a.id)} className="mt-1.5 accent-[var(--accent)]" />
+              <span className="text-[14px] leading-6">
+                <span className="font-semibold text-[var(--fg)]">{a.name}</span>
+                <span className="block text-[var(--fg-dim)]">{a.description} {a.impact}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </Panel>
+      <Panel title="2. Load the list in PC Tweaker" id="app">
+        <P>
+          {ids.length} selected. Download the list, then in PC Tweaker open Debloat and choose Load list. Loading only ticks the apps: before anything is removed the app checks again that each package comes from the expected publisher, that no other installed package depends on it and that Windows allows its removal, then shows a preview to confirm. Every removal is written to a journal, and each app keeps its Reinstall link. Debloat is part of the Free plan.
+        </P>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <button type="button" disabled={ids.length === 0} onClick={() => download("pc-tweaker-debloat-list.json", debloatListJson(ids), "application/json")} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--bg)] disabled:opacity-40">Download list (.json)</button>
+          <a href={DOWNLOAD_EXE} className="rounded-lg border border-white/10 px-5 py-3 text-sm font-semibold text-[var(--fg)]">Download PC Tweaker Free</a>
+        </div>
+      </Panel>
+      <Panel title="3. Or remove them by hand" id="manual">
+        <P>
+          The same removal from PowerShell, for the account you are signed in to. Nothing here needs administrator rights. Unlike the app, these lines do not check publishers or dependencies and keep no record, so read them before you run them.
+        </P>
+        <Steps
+          steps={[
+            { title: "Open PowerShell as yourself", note: "Start menu › type PowerShell › Windows PowerShell. Do not choose Run as administrator: the removal is meant for your account only." },
+            { title: "Run the lines for the apps you picked", note: ids.length ? undefined : "Pick at least one app above and its line appears here.", code: ids.length ? debloatPowerShell(ids) : undefined, shell: "PowerShell" },
+            { title: "Check what is left", code: picked.length ? picked.map((a) => `Get-AppxPackage -Name '${a.package_name}'`).join("\n") : "Get-AppxPackage | Select-Object Name, Publisher", shell: "PowerShell", note: "An empty result for an app means it is gone from this account." },
+          ]}
+        />
+        <P>
+          Other accounts on the PC keep their copy, and new accounts still receive the apps Windows provisions for them. Removing a provisioned package for every future account is a different, system-wide change that PC Tweaker does not make.
+        </P>
+      </Panel>
+      <Panel title="4. Getting an app back" id="reinstall">
+        <P>Every app in the catalogue has a Microsoft Store page. Open it while signed in to the same account and press Get or Install. Data the app kept locally, such as settings or game progress, may not return.</P>
+        <ul className="mt-5 space-y-2 text-[15px] leading-7">
+          {(picked.length ? picked : DEBLOAT_APPS).map((a) => (
+            <li key={a.id}><a href={a.store_url} className="text-accent font-medium" rel="noopener">{a.name} in Microsoft Store</a><span className="text-[var(--fg-dim)]"> ({a.package_name})</span></li>
+          ))}
+        </ul>
+      </Panel>
+      <Panel title="What removing these apps will not do" id="limits">
+        <P>
+          Removing an app you never open frees its disk space; it saves memory or processor time only if the app was running in the background, and PC Tweaker&apos;s Debloat screen shows which ones are running and how much memory they use. The other gains are fewer Start menu entries and fewer Store updates for apps you never use. For background work and services, see the <Link to="/database/" onNavigate={navigate} className="text-accent font-medium">Windows processes and services database</Link>; for settings, the <Link to="/tools/profile-builder/" onNavigate={navigate} className="text-accent font-medium">Profile Builder</Link>.
+        </P>
+      </Panel>
+      <SourceList
+        checked={CHECKED}
+        items={[
+          { label: "PC Tweaker source code: the Debloat catalogue, eligibility checks and journal (debloat.rs)", url: DEBLOAT_SRC },
+          { label: "Microsoft Learn: Remove-AppxPackage", url: "https://learn.microsoft.com/en-us/powershell/module/appx/remove-appxpackage" },
+          { label: "Microsoft Learn: Get-AppxPackage", url: "https://learn.microsoft.com/en-us/powershell/module/appx/get-appxpackage" },
+        ]}
+      />
     </Shell>
   );
 }

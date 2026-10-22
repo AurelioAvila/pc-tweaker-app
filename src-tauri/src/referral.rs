@@ -192,6 +192,19 @@ pub struct Device {
     key_hash: String,
 }
 
+/// SHA-256 (hex) of this build's bonus issuer key, or None when the build has none or it is not
+/// a valid Ed25519 key. The app sends it with every referral request and the server offers the
+/// programme only when it matches its own signer, so a build that could never verify a grant
+/// (1.18.10 and older send nothing) is never shown the programme or allowed to start a bonus.
+fn issuer_hash(issuer: &str) -> Option<String> {
+    let public: [u8; 32] = STANDARD.decode(issuer).ok()?.try_into().ok()?;
+    VerifyingKey::from_bytes(&public).ok()?;
+    Some(hash(&public))
+}
+#[tauri::command]
+pub fn referral_issuer() -> Option<String> {
+    issuer_hash(ISSUER)
+}
 #[tauri::command]
 pub fn referral_device(app: tauri::AppHandle) -> Result<Device, String> {
     let signing = key(&store(&app)?, true)?;
@@ -461,6 +474,23 @@ mod tests {
     ) {
         fixture_until(1_000_000)
     }
+    #[test]
+    fn issuer_hash_is_sent_only_for_a_real_ed25519_key() {
+        assert_eq!(
+            issuer_hash(""),
+            None,
+            "a build without an issuer sends nothing"
+        );
+        assert_eq!(issuer_hash("not base64!"), None);
+        assert_eq!(
+            issuer_hash(&STANDARD.encode([7u8; 31])),
+            None,
+            "wrong length"
+        );
+        let key = SigningKey::from_bytes(&[51; 32]).verifying_key().to_bytes();
+        assert_eq!(issuer_hash(&STANDARD.encode(key)), Some(hash(&key)));
+    }
+
     #[test]
     fn bonus_requires_device_session_signature_and_short_freshness() {
         let (response, issuer, session, device) = fixture();

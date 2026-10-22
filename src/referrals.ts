@@ -32,11 +32,25 @@ export class ReferralRequestError extends Error {
   }
 }
 
+/** SHA-256 of the bonus issuer key built into this app, or null for a build without one. Sent
+ *  with every referral request: the server offers the programme only to a build whose issuer
+ *  matches its signer, so a build that could never verify a bonus never sees the programme. */
+let issuer: Promise<string | null> | undefined;
+export function referralIssuer(): Promise<string | null> {
+  issuer ??= invoke<string | null>("referral_issuer").catch(() => null);
+  return issuer;
+}
+
 export async function referralRequest<T>(route: string, token: string, body?: unknown): Promise<T> {
   if (!token || token !== readToken()) throw new ReferralRequestError("sign_in_again");
+  const issuerHash = await referralIssuer();
   const response = await fetch(`${API_BASE_URL}/api/referrals${route}`, {
     method: body === undefined ? "GET" : "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      ...(issuerHash ? { "X-PCT-Referral-Issuer": issuerHash } : {}),
+    },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     cache: "no-store",
     signal: AbortSignal.timeout(20_000),
@@ -86,6 +100,9 @@ export async function activateOrRefreshBonus(
   token: string,
 ): Promise<boolean> {
   if (token !== readToken()) throw new ReferralRequestError("session_changed");
+  // A build without a valid issuer could never verify the grant: stop before any server state
+  // changes (the server refuses such builds too).
+  if (!(await referralIssuer())) throw new ReferralRequestError("update_required");
   await invoke("referral_session", { userId: status.accountId, token });
   const device = await invoke<{ publicKey: string }>("referral_device");
   const challenge = await referralRequest<{ id: string; payload: string; serverTime: number }>(

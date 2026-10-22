@@ -2427,6 +2427,7 @@ pub fn run() {
             license::save_license,
             license::license_status,
             license::clear_license,
+            referral::referral_issuer,
             referral::referral_device,
             referral::referral_session,
             referral::referral_proof,

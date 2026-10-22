@@ -17,6 +17,7 @@ type Copy = (typeof REFERRAL_COPY)["en"];
 const ERRORS: Record<string, keyof Copy["errors"]> = {
   verify_email_first: "verifyEmail",
   referral_unavailable: "unavailable",
+  update_required: "unavailable",
   invitation_not_eligible: "notEligible",
   invitation_already_bound: "alreadyBound",
   invalid_invitation: "invalidCode",

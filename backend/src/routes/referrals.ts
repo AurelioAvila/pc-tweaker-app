@@ -3,7 +3,12 @@ import rateLimit from "express-rate-limit";
 import { requireAuth } from "../auth";
 import { referralStripe } from "../referral-stripe";
 import { ReferralError } from "../referrals";
-import { INVITER_CAP, REFERRAL_MONTHS, REFERRAL_VERSION } from "../referral-policy";
+import {
+  INVITER_CAP,
+  REFERRAL_MONTHS,
+  REFERRAL_VERSION,
+  referralClientReady,
+} from "../referral-policy";
 
 export const referralRoutes = express.Router();
 const publicLimit = rateLimit({
@@ -68,6 +73,13 @@ function gateway() {
   if (!value) throw new ReferralError("referral_unavailable", 503);
   return value;
 }
+/** Builds that cannot verify bonus grants (see referralClientReady) get the programme as off. */
+function clientReady(req: Request) {
+  return referralClientReady(req.get("x-pct-referral-issuer"));
+}
+function requireReadyClient(req: Request) {
+  if (!clientReady(req)) throw new ReferralError("update_required", 403);
+}
 
 referralRoutes.get(
   "/codes/:code",
@@ -91,6 +103,7 @@ referralRoutes.get(
     const incoming = await g.core.enrolment(userId);
     return res.json({
       ...summary,
+      enabled: summary.enabled && clientReady(req),
       accountId: String(userId),
       code: rows[0]?.code ?? null,
       incoming: incoming
@@ -106,11 +119,15 @@ referralRoutes.get(
 );
 referralRoutes.post(
   "/code",
-  route(async (req, res) => res.json({ code: await gateway().core.ownCode(req.userId as number) })),
+  route(async (req, res) => {
+    requireReadyClient(req);
+    return res.json({ code: await gateway().core.ownCode(req.userId as number) });
+  }),
 );
 referralRoutes.post(
   "/claim",
   route(async (req, res) => {
+    requireReadyClient(req);
     await gateway().claim(req.userId as number, req.body?.code);
     return res.json({ claimed: true });
   }),
@@ -121,6 +138,7 @@ referralRoutes.post(
   "/device/challenge",
   proofLimit,
   route(async (req, res) => {
+    requireReadyClient(req);
     const userId = req.userId as number;
     return res.json(
       await gateway().core.challenge(
@@ -136,6 +154,7 @@ referralRoutes.post(
   "/device/proof",
   proofLimit,
   route(async (req, res) => {
+    requireReadyClient(req);
     const token = req.headers.authorization?.replace(/^Bearer\s+/i, "") ?? "";
     return res.json(
       await gateway().core.prove(

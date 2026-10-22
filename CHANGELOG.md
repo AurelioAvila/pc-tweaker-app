@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.18.11
+
+PC Tweaker 1.18.11 is a routine maintenance update, and the version you will need for Invite a friend, coming soon.
+
+- The catalog is unchanged: 81 controls, 46 Free and 35 Pro.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
 ## v1.18.10
 
 PC Tweaker 1.18.10 is a routine maintenance update that also gets the app ready for Invite a friend, coming soon.

@@ -2796,6 +2796,51 @@ mod tests {
         );
     }
 
+    /// The catalogue the website publishes (site/src/generated/tweak-catalog.json)
+    /// is this list, serialised: the same names, descriptions, flags and
+    /// technical disclosures the app shows, minus the per-PC state (`applied`,
+    /// `unavailable`). The site never types a registry path itself.
+    ///
+    /// Regenerate after a catalogue change with
+    /// `UPDATE_PUBLIC_CATALOG=1 cargo test public_catalogue`; otherwise this
+    /// fails as soon as the committed file and the code disagree.
+    #[cfg(windows)]
+    #[test]
+    fn the_public_catalogue_file_matches_the_code() {
+        let dir = std::env::temp_dir().join(format!("pct-public-catalogue-{}", std::process::id()));
+        let infos = tweak_infos(&RollbackStore::new(dir.clone())).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        let entries: Vec<serde_json::Value> = infos
+            .iter()
+            .map(|info| {
+                let mut v = serde_json::to_value(info).unwrap();
+                let o = v.as_object_mut().unwrap();
+                o.remove("applied");
+                o.remove("unavailable");
+                o.insert(
+                    "manual_only".into(),
+                    MANUAL_ONLY_TWEAKS.contains(&info.id.as_str()).into(),
+                );
+                v
+            })
+            .collect();
+        let json = serde_json::to_string_pretty(&entries).unwrap() + "\n";
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../site/src/generated/tweak-catalog.json");
+        if std::env::var_os("UPDATE_PUBLIC_CATALOG").is_some() {
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, &json).unwrap();
+        }
+        let committed = std::fs::read_to_string(&path)
+            .unwrap_or_default()
+            .replace("\r\n", "\n");
+        assert_eq!(entries.len(), all_visible_ids().len());
+        assert!(
+            committed == json,
+            "site/src/generated/tweak-catalog.json is stale: run UPDATE_PUBLIC_CATALOG=1 cargo test public_catalogue"
+        );
+    }
+
     #[test]
     fn a_free_tweak_is_never_blocked_by_the_license_check() {
         let ids = all_visible_ids();

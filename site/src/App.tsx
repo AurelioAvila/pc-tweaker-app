@@ -27,6 +27,7 @@ import { PromoProvider, RouteStructuredData } from "./promo";
 import { useRoute } from "./router";
 import { getRouteImage, NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
 import { InvitationPage, INVITATION_SEO } from "./pages/Invitation";
+import { referenceModule } from "./reference-registry";
 
 function HomePage({ navigate }: { navigate: (to: string) => void }) {
   return (
@@ -50,7 +51,8 @@ function HomePage({ navigate }: { navigate: (to: string) => void }) {
 export default function App({ initialPath = "/" }: { initialPath?: string }) {
   const { path, navigate } = useRoute(initialPath);
   const invitation = path === "/invite";
-  const route = invitation ? INVITATION_SEO : ROUTE_SEO[path];
+  const reference = referenceModule();
+  const route = invitation ? INVITATION_SEO : (ROUTE_SEO[path] ?? reference?.REFERENCE_SEO[path]);
 
   // Client-side routing doesn't reload the document, so the tab title would
   // otherwise stay on whatever index.html shipped with.
@@ -117,7 +119,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       page = GUIDES[path] ? (
         <GuidePage path={path} navigate={navigate} />
       ) : (
-        <NotFoundPage navigate={navigate} />
+        reference?.referencePage(path, navigate) ?? <NotFoundPage navigate={navigate} />
       );
   }
 

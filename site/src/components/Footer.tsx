@@ -123,6 +123,17 @@ export function Footer({ navigate, currentPath }: { navigate: (to: string) => vo
             <Col
               navigate={navigate}
               currentPath={currentPath}
+              title="REFERENCE"
+              links={[
+                { label: "Windows tweaks explained", href: "/tweaks/" },
+                { label: "Processes and services", href: "/database/" },
+                { label: "Windows fixes", href: "/fixes/" },
+                { label: "Free tools", href: "/tools/" },
+              ]}
+            />
+            <Col
+              navigate={navigate}
+              currentPath={currentPath}
               title={text.footer.legal}
               links={[
                 { label: text.footer.privacy, href: "/privacy/" },

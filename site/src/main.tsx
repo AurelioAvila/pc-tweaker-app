@@ -4,6 +4,7 @@ import App from "./App";
 import { ThemeProvider } from "./theme";
 import { campaignLabels, captureEntry } from "./campaign-store";
 import { API_BASE, DOWNLOAD_EXE } from "./constants";
+import { isReferencePath, loadReference } from "./reference-registry";
 // Self-hosted fonts (previously Google Fonts <link>s): keeps every visitor
 // request on our own origin — no IPs sent to Google, nothing to consent to.
 // One Latin variable file per family preserves the displayed weights.
@@ -40,8 +41,12 @@ const app = (
   </StrictMode>
 );
 
-if (rootEl.hasChildNodes()) {
-  hydrateRoot(rootEl, app);
-} else {
-  createRoot(rootEl).render(app);
+function start() {
+  if (rootEl!.hasChildNodes()) hydrateRoot(rootEl!, app);
+  else createRoot(rootEl!).render(app);
 }
+
+// A reference page was rendered from a separate chunk on the server: load it
+// before hydrating, so the first client render matches the HTML.
+if (isReferencePath(window.location.pathname.replace(/\/+$/, "") || "/")) loadReference().then(start, start);
+else start();

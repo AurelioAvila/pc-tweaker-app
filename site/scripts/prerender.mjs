@@ -12,7 +12,9 @@ const {
   getRouteJsonLd,
   NOT_FOUND_SEO,
   INVITATION_SEO,
+  OG_CARDS,
 } = await import(pathToFileURL(serverBundle));
+const { writeOgCards } = await import(pathToFileURL(path.join(root, "scripts", "og.mjs")));
 let template = await readFile(path.join(dist, "index.html"), "utf8");
 
 // Deliver the small, shared stylesheet with the prerendered document, so the
@@ -60,7 +62,8 @@ function jsonLdScript(payload) {
 function buildPage(route, seo, noindex = false) {
   let html = template;
   const image = getRouteImage(seo);
-  const routeLd = noindex ? [] : getRouteJsonLd(route);
+  // 404 and the invitation carry no structured data; pages kept out of the index by choice keep theirs.
+  const routeLd = noindex && !seo.noindex ? [] : getRouteJsonLd(route);
   html = replaceTag(
     html,
     /<!--ROUTE_LD-->/,
@@ -100,6 +103,13 @@ function buildPage(route, seo, noindex = false) {
     );
   }
 
+  // Reference and fix pages carry their own 1200x630 card (scripts/og.mjs).
+  if (seo.image) {
+    html = replaceTag(html, /<meta property="og:image" content="[^"]*"\s*\/>/i, `<meta property="og:image" content="${escapeAttribute(seo.image)}" />`, "og:image");
+    html = replaceTag(html, /<meta property="og:image:alt" content="[^"]*"\s*\/>/i, `<meta property="og:image:alt" content="${escapeAttribute(seo.imageAlt ?? seo.title)}" />`, "og:image:alt");
+    html = replaceTag(html, /<meta name="twitter:image" content="[^"]*"\s*\/>/i, `<meta name="twitter:image" content="${escapeAttribute(seo.image)}" />`, "twitter:image");
+  }
+
   const twitter = {
     "twitter:title": seo.title,
     "twitter:description": seo.description,
@@ -131,7 +141,7 @@ for (const [route, seo] of Object.entries(ROUTE_SEO)) {
   const file =
     route === "/" ? path.join(dist, "index.html") : path.join(dist, route.slice(1), "index.html");
   await mkdir(path.dirname(file), { recursive: true });
-  await writeFile(file, buildPage(route, seo), "utf8");
+  await writeFile(file, buildPage(route, seo, seo.noindex === true), "utf8");
 }
 
 await writeFile(path.join(dist, "404.html"), buildPage("/404", NOT_FOUND_SEO, true), "utf8");
@@ -141,4 +151,5 @@ await writeFile(
   buildPage("/invite", INVITATION_SEO, true),
   "utf8",
 );
+await writeOgCards(OG_CARDS, path.join(dist, "og"));
 await rm(path.join(root, "dist-ssr"), { recursive: true, force: true });

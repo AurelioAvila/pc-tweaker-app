@@ -155,6 +155,7 @@ export const PRACTICAL_GUIDES = {
       { heading: "Inspect the implementation", body: "The source is publicly available at github.com/AurelioAvila/pc-tweaker-app under a proprietary licence. The tweak catalogue and Windows implementations live in src-tauri/src, where each entry records its hive, key path, value name and whether it requires administrator rights. Review the source for the exact release you installed when checking an action." }
     ],
     related: [
+      { to: "/tweaks/", label: "every control, one page each", note: "The exact registry value or service, a manual method, an undo step and a verdict for each of them." },
       { to: "/reversible-windows-tweaks/", label: "which of these changes can be undone", note: "Setting rollback, change history and the operations that fall outside both." },
       { to: "/windows-privacy-tool/", label: "the privacy keys in detail", note: "Including what reducing Windows diagnostic data does and does not achieve." },
       { to: "/windows-11-optimizer/", label: "how to decide which changes are worth making", note: "Measuring first, and where tuning sits relative to updates, drivers and cooling." }

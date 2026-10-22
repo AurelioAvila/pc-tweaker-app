@@ -99,7 +99,8 @@ export function InvitationPage() {
             <a href={MICROSOFT_STORE}>Get it from Microsoft Store</a>
           </div>
           <p className="invitation-note">
-            Windows 10/11. Downloading does not activate an invitation or start a paid subscription.
+            Windows 10/11. Invitations need PC Tweaker 1.18.11 or later. Downloading does not activate an
+            invitation or start a paid subscription.
           </p>
         </header>
         <aside className="invitation-card">

@@ -231,11 +231,7 @@ pub fn append_in(dir: &Path, report: &CrashReport) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     let path = dir.join(CRASH_FILE);
     let line = serde_json::to_string(report).map_err(|e| e.to_string())?;
-    let mut file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&path)
-        .map_err(|e| e.to_string())?;
+    let mut file = crate::elevation::open_no_follow(&path, true).map_err(|e| e.to_string())?;
     writeln!(file, "{}", line).map_err(|e| e.to_string())?;
     drop(file);
     trim_if_needed(&path);
@@ -283,7 +279,7 @@ fn trim_if_needed(path: &Path) {
     }
     let kept = &lines[lines.len() - MAX_LINES..];
     let tmp = path.with_extension("jsonl.tmp");
-    if std::fs::write(&tmp, kept.join("\n") + "\n").is_ok() {
+    if crate::elevation::write_no_follow(&tmp, kept.join("\n") + "\n").is_ok() {
         let _ = std::fs::rename(&tmp, path);
     }
 }

@@ -2,6 +2,7 @@
 mod ipc_commands;
 
 fn main() {
+    println!("cargo:rerun-if-env-changed=PCT_REFERRAL_PUBLIC_KEY");
     println!("cargo:rerun-if-changed=src/ipc_commands.rs");
     tauri_build::try_build(
         tauri_build::Attributes::new()
@@ -38,5 +39,18 @@ fn main() {
         println!("cargo:rustc-link-arg=/MANIFEST:EMBED");
         println!("cargo:rustc-link-arg=/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'");
         println!("cargo:rustc-link-arg-bins=/MANIFEST:NO");
+        // The app installs per user and relaunches itself elevated, so its
+        // own folder is writable without admin rights. Resolve the exe's
+        // static imports from System32 only, so a DLL planted next to it
+        // never loads into the elevated process. Every import of the shipped
+        // exe is a System32 DLL or an API set; the VC runtime is static.
+        println!("cargo:rustc-link-arg-bins=/DEPENDENTLOADFLAG:0x800");
+        // That flag covers the exe's own imports, not what Windows loads on
+        // their behalf: in a clean VM the elevated helper still took UMPDC.dll,
+        // which powrprof.dll pulls in, from the install folder. Delay-loading
+        // powrprof.dll resolves it on first use, after the helper's
+        // SetDefaultDllDirectories(SYSTEM32). (CRYPTBASE.DLL: see main.rs.)
+        println!("cargo:rustc-link-arg-bins=/DELAYLOAD:powrprof.dll");
+        println!("cargo:rustc-link-arg-bins=delayimp.lib");
     }
 }

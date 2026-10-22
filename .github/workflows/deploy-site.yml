@@ -1,4 +1,4 @@
-name: Deploy site
+name: Site checks
 
 on:
   push:
@@ -7,31 +7,32 @@ on:
       - "site/**"
       - ".github/workflows/deploy-site.yml"
       # The site's structured-data version is read from here at build time
-      # (see vite.config.ts's __APP_VERSION__ substitution). Without this, a
-      # release that bumps the version but never touches site/ leaves the
-      # deployed site announcing a stale one, as happened for 1.7.0 and 1.7.1.
+      # (see the shared SoftwareApplication data in site/src/seo.ts). Without this, a
+      # release version changes must also pass the site's checks.
       - "src-tauri/tauri.conf.json"
       # The legal pages render the root PRIVACY.md and TERMS.md (Legal.tsx imports them
-      # with ?raw), so editing either must republish the site.
+      # with ?raw), so editing either must also pass site checks.
       - "PRIVACY.md"
       - "TERMS.md"
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "site/**"
+      - ".github/workflows/deploy-site.yml"
+      - "src-tauri/tauri.conf.json"
+      - "PRIVACY.md"
+      - "TERMS.md"
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: site-checks-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  checks:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     defaults:
       run:
         working-directory: site
@@ -47,9 +48,6 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run check:seo
-      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
-      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
-        with:
-          path: site/dist
-      - id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+      - run: npm run check:attribution
+      # Public artifacts use the local publisher-signed deployment flow.
+      # A CI rebuild must never replace that artifact with unsigned output.

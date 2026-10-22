@@ -21,6 +21,8 @@ export interface Dictionary {
     readonly access: string;
     readonly faq: string;
     readonly download: string;
+    readonly downloadShort: string;
+    readonly guides: string;
   };
   readonly hero: {
     readonly eyebrow: string;
@@ -40,6 +42,16 @@ export interface Dictionary {
     readonly copied: string;
     readonly badges: readonly { readonly label: string; readonly href: string }[];
     readonly themeLabel: string;
+    readonly themeHint: string;
+    readonly comparePlans: string;
+  };
+  readonly suite: {
+    readonly starRepository: string;
+    readonly verifyRelease: string;
+    readonly title: string;
+    readonly intro: string;
+    readonly note: string;
+    readonly products: readonly { readonly name: string; readonly task: string; readonly description: string; readonly cta: string; readonly href: string; readonly repository: string }[];
   };
   readonly metrics: {
     readonly tag: string;
@@ -50,12 +62,13 @@ export interface Dictionary {
       readonly unit: string;
       readonly label: string;
     }[];
-    readonly graphTitle: string;
-    readonly graphStock: string;
-    readonly graphTweaked: string;
-    readonly graphNote: string;
-    readonly fpsStock: number;
-    readonly fpsTweaked: number;
+    readonly comparisonTitle: string;
+    readonly comparisonIntro: string;
+    readonly comparisonField: string;
+    readonly comparisonRecord: string;
+    readonly comparisonRows: readonly { readonly label: string; readonly record: string }[];
+    readonly comparisonNote: string;
+    readonly comparisonLinks: readonly { readonly label: string; readonly href: string }[];
   };
   readonly arsenal: {
     readonly tag: string;
@@ -66,6 +79,7 @@ export interface Dictionary {
       readonly body: string;
       readonly pro: boolean;
       readonly span: "wide" | "tall" | "std";
+      readonly guide?: { readonly href: string; readonly label: string };
     }[];
   };
   readonly philosophy: {
@@ -215,7 +229,9 @@ export const engDictionary: Dictionary = {
     "protocol": "How it works",
     "access": "Pricing",
     "faq": "FAQ",
-    "download": "Download Free"
+    "download": "Download Free",
+    "downloadShort": "Download",
+    "guides": "Guides"
   },
   "hero": {
     "eyebrow": "WINDOWS TUNING YOU CAN INSPECT",
@@ -251,12 +267,26 @@ export const engDictionary: Dictionary = {
         "href": "https://github.com/AurelioAvila/pc-tweaker-app"
       }
     ],
-    "themeLabel": "THEMES"
+    "themeLabel": "Themes",
+    "themeHint": "Changes this website only. The app screenshot stays the same.",
+    "comparePlans": "Compare Free, Pro & Lifetime"
+  },
+  "suite": {
+    "starRepository": "Star on GitHub",
+    "verifyRelease": "Verify release",
+    "title": "Choose the tool for the task.",
+    "intro": "Windows settings, software removal and driver reviews belong to different workflows. Start with what you need to do.",
+    "note": "Separate applications and licences. Included benefits are listed in each plan; buying one app does not automatically unlock the whole suite.",
+    "products": [
+      { "name": "PC Tweaker", "task": "Review Windows settings", "description": "Inspect gaming, privacy and maintenance changes. Keep previous values for supported settings and compare the outcome.", "cta": "Compare PC Tweaker plans", "href": "#access", "repository": "https://github.com/AurelioAvila/pc-tweaker-app" },
+      { "name": "PC Tweaker Uninstaller", "task": "Understand a removal", "description": "Review the removal score, command and permissions before uninstalling. Keep a local receipt and check recovery limits.", "cta": "Explore Uninstaller", "href": "/uninstaller/", "repository": "https://github.com/AurelioAvila/pc-tweaker-uninstaller" },
+      { "name": "Tweaky Driver", "task": "Review driver offers", "description": "Inspect detected devices and installed versions. Separate download-ready offers from catalog candidates before changing a working PC.", "cta": "Explore Tweaky Driver", "href": "https://pctweaker.app/tweaky-driver/", "repository": "https://github.com/AurelioAvila/Tweaky-Driver-Releases" }
+    ]
   },
   "metrics": {
     "tag": "01 / WHAT TO MEASURE",
     "title": "Average FPS is only part of the story.",
-    "sub": "Judge a change by repeated runs: frame-time spikes, 1% lows and consistency. Results depend on your hardware, drivers and game. The chart below is a concept sketch, not a captured benchmark or a promised improvement.",
+    "sub": "Judge a change by repeated runs: frame-time spikes, 1% lows and consistency. Results depend on your hardware, drivers and game. Record the conditions and the previous setting alongside your results.",
     "stats": [
       {
         "value": 46,
@@ -279,12 +309,22 @@ export const engDictionary: Dictionary = {
         "label": "PLACE TO REVIEW & RESTORE"
       }
     ],
-    "graphTitle": "EXAMPLE COMPARISON — NOT MEASURED DATA",
-    "graphStock": "EXAMPLE A",
-    "graphTweaked": "EXAMPLE B",
-    "graphNote": "Example traces and FPS values. No measured frame-time, micro-stutter or DPC-latency improvement is claimed by this chart.",
-    "fpsStock": 330,
-    "fpsTweaked": 551
+    "comparisonTitle": "Make your next comparison useful.",
+    "comparisonIntro": "Use these notes for your baseline and your changed run. Keep conditions comparable and change one setting at a time.",
+    "comparisonField": "Check",
+    "comparisonRecord": "For both runs",
+    "comparisonRows": [
+      { "label": "Workload", "record": "Game and version, scene or benchmark, resolution and graphics settings." },
+      { "label": "System", "record": "Windows and driver versions, power mode and background activity." },
+      { "label": "Change", "record": "Setting name, previous value, new value and whether restoration is available." },
+      { "label": "Results", "record": "Repeated runs: frame times, average FPS, 1% lows and available temperatures." }
+    ],
+    "comparisonNote": "Keep a change only when its benefit repeats under comparable conditions. If it makes things worse, restore the supported setting and check the outcome. A health score describes configuration; it does not measure FPS.",
+    "comparisonLinks": [
+      { "label": "Plan a gaming comparison", "href": "/gaming-performance/" },
+      { "label": "Investigate DPC/ISR latency", "href": "/guides/fix-dpc-isr-latency-windows-11/" },
+      { "label": "Restore a Windows change", "href": "/how-to-undo-windows-tweaks/" }
+    ]
   },
   "arsenal": {
     "tag": "02 / YOUR CONTROLS",
@@ -323,7 +363,8 @@ export const engDictionary: Dictionary = {
         "title": "Read the sensors you have",
         "body": "Monitor available temperatures, utilization, VRAM, fan speed and power readings. Unsupported sensors are identified. Use readings during a real workload to understand heat and load together.",
         "pro": false,
-        "span": "wide"
+        "span": "wide",
+        "guide": {"href": "/guides/fix-dpc-isr-latency-windows-11/", "label": "Diagnose DPC/ISR latency"}
       },
       {
         "tag": "DRIVERS",
@@ -358,14 +399,16 @@ export const engDictionary: Dictionary = {
         "title": "Make sessions easier to manage",
         "body": "Use Game Sessions to apply a gaming preset when a supported game starts and restore its supported settings afterward. Review hardware scheduling and input options individually.",
         "pro": true,
-        "span": "std"
+        "span": "std",
+        "guide": {"href": "/guides/amd-x3d-intel-hybrid-core-steering-gaming/", "label": "Compare Game Sessions steering"}
       },
       {
         "tag": "PRIVACY",
         "title": "Choose what Windows shares",
         "body": "Review supported advertising, tracking and diagnostic settings. Availability varies by Windows edition. Check password exposure using a hash-prefix lookup; your full password is not sent.",
         "pro": true,
-        "span": "std"
+        "span": "std",
+        "guide": {"href": "/guides/windows-11-privacy-telemetry-rollback/", "label": "Review privacy and recovery"}
       },
       {
         "tag": "NETWORK",
@@ -379,7 +422,8 @@ export const engDictionary: Dictionary = {
         "title": "Test cache-aware placement",
         "body": "On supported dual-die Ryzen X3D processors, inspect the cache topology and test game placement on the cache-equipped die. Single-die chips do not need this adjustment. Compare before keeping it.",
         "pro": false,
-        "span": "std"
+        "span": "std",
+        "guide": {"href": "/guides/amd-ryzen-x3d-core-parking-windows-11/", "label": "Check X3D topology and parking"}
       },
       {
         "tag": "MAINTENANCE",
@@ -534,7 +578,7 @@ export const engDictionary: Dictionary = {
       },
       {
         "q": "What is free, and how does Pro work?",
-        "a": "Free includes 46 controls, scan, supported restore tools, hardware monitoring and selected maintenance tools, with no account required. Pro adds 35 controls, advanced features and Game Sessions. Current subscriptions are €7.99 per month or €59.99 per year; Lifetime is €99 once. Everything in Pro, plus: exclusive access to selected future tweaks, priority support, saved-profile comparison and portable tuning reports. Lifetime also includes Uninstaller Pro for 12 months from your first sign-in to Uninstaller with the same account, including existing Lifetime owners. This bonus does not renew automatically. Upcoming exclusive tweaks are not included in the current catalog. Review the final price and renewal terms at checkout. Existing lifetime purchases retain the access promised when purchased."
+        "a": "Free includes 46 controls, scan, supported restore tools, hardware monitoring and selected maintenance tools, with no account required. Pro adds 35 controls, advanced features and Game Sessions. Regular subscriptions are €7.99 per month or €59.99 per year; Lifetime is normally €99 once. Any active offer and its renewal terms appear in the plans above. Everything in Pro, plus: exclusive access to selected future tweaks, priority support, saved-profile comparison and portable tuning reports. Lifetime also includes Uninstaller Pro for 12 months from your first sign-in to Uninstaller with the same account, including existing Lifetime owners. This bonus does not renew automatically. Upcoming exclusive tweaks are not included in the current catalog. Review the final price and renewal terms at checkout. Existing lifetime purchases retain the access promised when purchased."
       },
       {
         "q": "What leaves my PC?",

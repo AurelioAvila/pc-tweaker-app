@@ -267,7 +267,7 @@ export const pt: Copy = {
         ...(lifetime
           ? []
           : [
-              `<strong>Gerir o plano.</strong> Planos e preços, na barra superior, mostra a conta e o plano e abre o portal de faturação do Stripe para o cartão, a periodicidade ou o cancelamento. Um plano cancelado mantém o Pro até ${renews}. Ao iniciar sessão com ${who} noutro PC, também fica com o Pro.`,
+              `<strong>Gerir o plano.</strong> Planos e preços, na barra superior, mostra a conta e o plano e abre o portal de faturação do Stripe para o cartão ou o cancelamento. Um plano cancelado mantém o Pro até ${renews}. Ao iniciar sessão com ${who} noutro PC, também fica com o Pro.`,
             ]),
       ],
       note: (lifetime: boolean) =>

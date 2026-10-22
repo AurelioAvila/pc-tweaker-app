@@ -1,0 +1,168 @@
+import { createHash, createPublicKey, randomInt, verify } from "crypto";
+import { referralSignerReady } from "./referral-license";
+
+// v3 (22 Oct 2026, owner decision): the bonus is available as soon as the friend's first
+// payment succeeds; a refund or dispute of that payment withdraws it, even when active.
+// Kept from v2: yearly cap, no gifting, no Lifetime-holder reward. A deployment still
+// configured for an earlier version stays off until it opts into these rules.
+export const REFERRAL_VERSION = "2026-10-22-v3";
+export const REFERRAL_PLAN = "referral_bonus";
+export const REFERRAL_MONTHS = { monthly: 6, annual: 12, lifetime: 12 } as const;
+export type ReferralPlan = keyof typeof REFERRAL_MONTHS;
+/** At most this many recognised (not revoked) rewards per inviter per rolling 12 months. */
+export const INVITER_CAP = 6;
+export const CAP_WINDOW_MS = 365 * 24 * 60 * 60 * 1000;
+export const CHALLENGE_MS = 5 * 60 * 1000;
+/** A confirmed invitation applies to a purchase within this many days. */
+export const INVITATION_DAYS = 30;
+
+/** Address used only for the one-invitation-per-person hash: `+tags` are dropped
+ *  everywhere and Gmail ignores dots, so `a.b+1@gmail.com` is `ab@gmail.com`. */
+export function canonicalEmail(email: string): string {
+  const [local, domain] = email
+    .trim()
+    .toLowerCase()
+    .split(/@(?=[^@]*$)/);
+  if (!domain) return email.trim().toLowerCase();
+  const gmail = domain === "gmail.com" || domain === "googlemail.com";
+  const base = local.split("+")[0];
+  return `${gmail ? base.replaceAll(".", "") : base}@${gmail ? "gmail.com" : domain}`;
+}
+/** Large public mailbox providers, where two people sharing a domain means nothing. */
+const PUBLIC_MAIL =
+  /^(?:(?:gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|aol|icloud|me|mac|proton|protonmail|pm|gmx|web|mail|yandex|zoho|tutanota|tuta|libero|virgilio|tiscali|alice|tim|fastwebnet|email|inwind|orange|free|laposte|sfr|wanadoo|t-online|freenet|arcor|seznam|wp|o2|interia|onet|telefonica|movistar|terra|sapo|clix|netcabo|qq|163|126|naver|daum)\.[a-z.]{2,12})$/;
+/** Two different addresses on the same private domain (a catch-all on one's own domain is the
+ *  cheapest way to mint invitees) do not qualify; public mail providers are exempt. */
+export function sharesPrivateDomain(a: string, b: string): boolean {
+  const domain = (email: string) => canonicalEmail(email).split("@")[1] ?? "";
+  const left = domain(a);
+  return left !== "" && left === domain(b) && !PUBLIC_MAIL.test(left);
+}
+const INVITATION_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+export const CODE_PATTERN =
+  /^(?:(?=[A-Z2-9]{0,9}[A-Z])(?=[A-Z2-9]{0,9}[2-9])[A-HJ-NP-Z2-9]{10}|[A-Za-z0-9_-]{22})$/;
+
+export function normalizeInvitationCode(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const code = value.trim();
+  if (code.length === 10 && !/^[A-Za-z2-9]{10}$/.test(code)) return null;
+  // Existing invitation links remain case-sensitive; new short codes ignore case.
+  const normalized = code.length === 10 ? code.toUpperCase() : code;
+  return CODE_PATTERN.test(normalized) ? normalized : null;
+}
+
+export function createInvitationCode(): string {
+  for (;;) {
+    const code = Array.from(
+      { length: 10 },
+      () => INVITATION_ALPHABET[randomInt(INVITATION_ALPHABET.length)],
+    ).join("");
+    if (/[A-Z]/.test(code) && /[2-9]/.test(code)) return code;
+  }
+}
+export const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** Disabled unless the entire policy and the production adapters are ready. */
+export function referralsEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return (
+    env.REFERRALS_ENABLED === "true" &&
+    env.REFERRALS_POLICY_VERSION === REFERRAL_VERSION &&
+    ["direct", "managed"].includes(env.REFERRALS_CHECKOUT_MODEL ?? "") &&
+    /^[a-f0-9]{64}$/i.test(env.REFERRALS_HASH_KEY ?? "") &&
+    referralSignerReady(env) &&
+    /^acct_[A-Za-z0-9]+$/.test(env.REFERRALS_STRIPE_ACCOUNT ?? "")
+  );
+}
+
+export function isReferralPlan(value: unknown): value is ReferralPlan {
+  return typeof value === "string" && Object.hasOwn(REFERRAL_MONTHS, value);
+}
+
+export function referralQuote(base: number, offer: number, currency: string) {
+  if (
+    !Number.isSafeInteger(base) ||
+    !Number.isSafeInteger(offer) ||
+    offer <= 0 ||
+    offer > base ||
+    base > 100_000_000 ||
+    currency !== "eur"
+  )
+    return null;
+  const referralSaving = Math.round(offer / 10);
+  if (referralSaving <= 0 || offer - referralSaving < 50) return null;
+  return {
+    base,
+    offer,
+    referralSaving,
+    totalDiscount: base - offer + referralSaving,
+    subtotal: offer - referralSaving,
+    currency,
+  };
+}
+
+/** Calendar months, clamped at month end; activation on 31 August is not 3 March. */
+export function addCalendarMonths(date: Date, months: number): Date {
+  if (![6, 12].includes(months) || !Number.isFinite(date.getTime()))
+    throw new Error("Invalid bonus duration");
+  const result = new Date(date);
+  const day = result.getUTCDate();
+  result.setUTCDate(1);
+  result.setUTCMonth(result.getUTCMonth() + months);
+  const last = new Date(
+    Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  result.setUTCDate(Math.min(day, last));
+  return result;
+}
+
+export function deviceKey(publicKey: unknown): { publicKey: string; hash: string } {
+  if (typeof publicKey !== "string" || !/^[A-Za-z0-9+/]{43}=$/.test(publicKey))
+    throw new Error("Invalid device key");
+  const bytes = Buffer.from(publicKey, "base64");
+  if (bytes.length !== 32 || bytes.toString("base64") !== publicKey)
+    throw new Error("Invalid device key");
+  return { publicKey, hash: createHash("sha256").update(bytes).digest("hex") };
+}
+
+export function challengePayload(
+  userId: number,
+  purpose: "activate" | "license",
+  grantId: string,
+  challengeId: string,
+  nonce: string,
+  keyHash: string,
+): string {
+  if (
+    !Number.isSafeInteger(userId) ||
+    userId <= 0 ||
+    !UUID_PATTERN.test(grantId) ||
+    !UUID_PATTERN.test(challengeId) ||
+    !/^[A-Za-z0-9_-]{43}$/.test(nonce) ||
+    !/^[a-f0-9]{64}$/.test(keyHash)
+  ) {
+    throw new Error("Invalid device challenge");
+  }
+  return ["pctweaker:referral:v1", userId, purpose, grantId, challengeId, nonce, keyHash].join(
+    "\n",
+  );
+}
+
+export function verifyDeviceProof(publicKey: string, payload: string, signature: unknown): boolean {
+  if (typeof signature !== "string" || !/^[A-Za-z0-9+/]{86}==$/.test(signature)) return false;
+  try {
+    const key = deviceKey(publicKey);
+    const spki = Buffer.concat([
+      Buffer.from("302a300506032b6570032100", "hex"),
+      Buffer.from(key.publicKey, "base64"),
+    ]);
+    return verify(
+      null,
+      Buffer.from(payload),
+      createPublicKey({ key: spki, format: "der", type: "spki" }),
+      Buffer.from(signature, "base64"),
+    );
+  } catch {
+    return false;
+  }
+}

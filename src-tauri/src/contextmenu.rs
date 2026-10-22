@@ -139,30 +139,123 @@ pub fn rollback(store: &RollbackStore) -> Result<(), String> {
 /// committed and correct at that point, and it will take effect at the next
 /// sign-in regardless. Failing the whole tweak over a cosmetic refresh would
 /// leave the user with a scary message about a change that actually landed.
+///
+/// The restart is orderly: Restart Manager asks every Explorer window to
+/// close, as an installer does, so a File Explorer copy in progress can
+/// refuse. A refusal is respected (the menu then changes at the next
+/// sign-in). Only an Explorer that neither closes nor refuses before the
+/// deadline is ended by force, as the last resort.
 #[cfg(windows)]
 fn restart_explorer() {
-    use std::os::windows::process::CommandExt;
-    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-
     // Unit tests drive apply and rollback against the in-memory registry;
-    // they must never kill the desktop of whoever runs them.
+    // they must never close the desktop of whoever runs them.
     if cfg!(test) {
         return;
     }
-
-    let killed = crate::system_tools::run("taskkill", |tool| {
-        tool.args(["/f", "/im", "explorer.exe"])
-            .creation_flags(CREATE_NO_WINDOW)
-            .status()
+    let Ok(explorer) = crate::system_tools::run("explorer.exe", |tool| {
+        Ok(std::path::PathBuf::from(tool.get_program()))
+    }) else {
+        return;
+    };
+    let (sender, receiver) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        let _ = sender.send(restart_manager::restart(&explorer));
     });
-
-    if killed.is_ok() {
-        // Windows normally relaunches Explorer on its own; starting it
-        // explicitly covers the configurations where it doesn't, and a second
-        // instance is not spawned if one is already back up.
-        let _ = crate::system_tools::run("explorer.exe", |tool| {
-            tool.creation_flags(CREATE_NO_WINDOW).spawn()
+    let outcome = receiver
+        .recv_timeout(std::time::Duration::from_secs(30))
+        .unwrap_or(restart_manager::Outcome::TimedOut);
+    if after_orderly_restart(outcome) == Fallback::Force {
+        use std::os::windows::process::CommandExt;
+        let _ = crate::system_tools::run("taskkill", |tool| {
+            tool.args(["/f", "/im", "explorer.exe"])
+                .creation_flags(0x0800_0000);
+            crate::system_tools::output_within(tool, crate::system_tools::QUICK)
         });
+    }
+    // Restart Manager relaunches what it closed; a forced end is relaunched
+    // by Windows. Start the shell only when, after both, there is none.
+    for _ in 0..20 {
+        // SAFETY: no arguments; a null return only means "no shell window".
+        if !unsafe { windows_sys::Win32::UI::WindowsAndMessaging::GetShellWindow() }.is_null() {
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(250));
+    }
+    use std::os::windows::process::CommandExt;
+    let _ = crate::system_tools::run("explorer.exe", |tool| {
+        tool.creation_flags(0x0800_0000).spawn()
+    });
+}
+
+#[derive(Debug, PartialEq)]
+enum Fallback {
+    None,
+    Force,
+}
+
+/// A refusal is the user's open work speaking: never overridden. Only no
+/// answer at all (or a Restart Manager that could not even start) leads to
+/// the forced end.
+fn after_orderly_restart(outcome: restart_manager::Outcome) -> Fallback {
+    match outcome {
+        restart_manager::Outcome::Restarted | restart_manager::Outcome::Refused => Fallback::None,
+        restart_manager::Outcome::TimedOut | restart_manager::Outcome::Failed => Fallback::Force,
+    }
+}
+
+mod restart_manager {
+    #[derive(Debug, PartialEq)]
+    pub enum Outcome {
+        Restarted,
+        /// An Explorer window vetoed closing (a copy in progress, a dialog).
+        Refused,
+        TimedOut,
+        Failed,
+    }
+
+    #[cfg(windows)]
+    pub fn restart(executable: &std::path::Path) -> Outcome {
+        use std::os::windows::ffi::OsStrExt;
+        use windows_sys::Win32::System::RestartManager::{
+            RmEndSession, RmRegisterResources, RmRestart, RmShutdown, RmStartSession,
+            CCH_RM_SESSION_KEY,
+        };
+        const ERROR_FAIL_SHUTDOWN: u32 = 351;
+        let path: Vec<u16> = executable.as_os_str().encode_wide().chain([0]).collect();
+        let mut key = [0u16; CCH_RM_SESSION_KEY as usize + 1];
+        let mut session = 0u32;
+        // SAFETY: every pointer is to a live, NUL-terminated buffer of the
+        // size the API documents, and the session is always ended.
+        unsafe {
+            if RmStartSession(&mut session, 0, key.as_mut_ptr()) != 0 {
+                return Outcome::Failed;
+            }
+            let files = [path.as_ptr()];
+            let outcome = if RmRegisterResources(
+                session,
+                1,
+                files.as_ptr(),
+                0,
+                std::ptr::null(),
+                0,
+                std::ptr::null(),
+            ) != 0
+            {
+                Outcome::Failed
+            } else {
+                // 0: ask, never force. Windows that refuse keep running.
+                let shutdown = RmShutdown(session, 0, None);
+                // Relaunch whatever did close, refused or not.
+                RmRestart(session, 0, None);
+                match shutdown {
+                    0 => Outcome::Restarted,
+                    ERROR_FAIL_SHUTDOWN => Outcome::Refused,
+                    _ => Outcome::Failed,
+                }
+            };
+            RmEndSession(session);
+            outcome
+        }
     }
 }
 
@@ -187,6 +280,15 @@ mod tests {
     /// InprocServer32 key with it, or rollback would leave the override
     /// half-present. Cheap to assert, and the kind of typo that would only
     /// surface as "the classic menu came back on its own" months later.
+    #[test]
+    fn a_refusing_explorer_is_never_forced_and_a_silent_one_is() {
+        use restart_manager::Outcome;
+        assert_eq!(after_orderly_restart(Outcome::Restarted), Fallback::None);
+        assert_eq!(after_orderly_restart(Outcome::Refused), Fallback::None);
+        assert_eq!(after_orderly_restart(Outcome::TimedOut), Fallback::Force);
+        assert_eq!(after_orderly_restart(Outcome::Failed), Fallback::Force);
+    }
+
     #[test]
     fn the_inproc_key_lives_under_the_clsid_key_that_rollback_deletes() {
         assert!(

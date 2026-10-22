@@ -1,31 +1,9 @@
 import { motion } from "framer-motion";
 import { text } from "../i18n/dictionary";
-import { EASE, riseChild, staggerParent, viewportOnce } from "../motion";
+import { Link } from "../router";
+import { riseChild, staggerParent, viewportOnce } from "../motion";
 
-/* ---------- deterministic pseudo-random frame-time traces ---------- */
-function buildTrace(jitter: number, base: number, seed: number): string {
-  const pts: string[] = [];
-  let s = seed;
-  const rand = () => {
-    /* xorshift — deterministic, so SSR/rerenders never disagree */
-    s ^= s << 13;
-    s ^= s >>> 17;
-    s ^= s << 5;
-    return ((s >>> 0) % 1000) / 1000;
-  };
-  for (let i = 0; i <= 60; i++) {
-    const x = (i / 60) * 560;
-    const spike = rand() < 0.12 ? rand() * jitter * 1.8 : 0;
-    const y = base + (rand() - 0.5) * jitter + spike;
-    pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
-  }
-  return pts.join(" ");
-}
-
-const STOCK_TRACE = buildTrace(34, 60, 42);
-const TWEAKED_TRACE = buildTrace(6, 118, 1337);
-
-export function PerformanceMetrics() {
+export function PerformanceMetrics({ navigate }: { navigate: (to: string) => void }) {
   return (
     <section id="results" className="border-t border-white/5 px-5 py-24 md:px-12">
       <motion.div
@@ -77,69 +55,35 @@ export function PerformanceMetrics() {
           ))}
         </motion.div>
 
-        {/* frame-time telemetry graph */}
+        {/* Comparison notes stay useful without implying a measured result. */}
         <motion.div
           variants={riseChild}
-          className="mt-14 overflow-hidden rounded-2xl border border-white/5 bg-[var(--bg-2)] p-7 md:p-9"
+          className="mt-14 min-w-0 rounded-2xl bg-[var(--bg-2)] p-5 md:p-9"
         >
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <span className="font-mono-t text-[11px] tracking-[0.16em] text-[var(--fg-dim)]">
-              {text.metrics.graphTitle}
-            </span>
-            <div className="font-mono-t flex gap-6 text-[11px] tracking-wider">
-              <span className="flex items-center gap-2 text-[var(--fg-dim)]">
-                <span className="inline-block h-0.5 w-6 bg-[var(--line)]" />{" "}
-                {text.metrics.graphStock} · {text.metrics.fpsStock} FPS
-              </span>
-              <span className="text-accent flex items-center gap-2">
-                <span className="bg-accent inline-block h-0.5 w-6" /> {text.metrics.graphTweaked} ·{" "}
-                {text.metrics.fpsTweaked} FPS
-              </span>
-            </div>
-          </div>
-
-          <svg
-            viewBox="0 0 560 160"
-            className="w-full"
-            role="img"
-            aria-label="Example frame-time traces, not measured benchmark data"
-          >
-            {[0, 40, 80, 120, 160].map((y) => (
-              <line
-                key={y}
-                x1="0"
-                y1={y}
-                x2="560"
-                y2={y}
-                stroke="rgba(255,255,255,0.04)"
-                strokeWidth="1"
-              />
+          <h3 id="comparison-title" className="font-display scroll-mt-32 text-2xl leading-tight font-semibold text-[var(--fg)]">{text.metrics.comparisonTitle}</h3>
+          <p className="mt-3 max-w-[70ch] text-[15px] leading-7 text-[var(--fg-dim)]">{text.metrics.comparisonIntro}</p>
+          <table aria-labelledby="comparison-title" className="mt-7 w-full table-fixed border-collapse text-left text-sm leading-6">
+            <thead>
+              <tr className="border-b border-[var(--line-2)] text-[var(--fg)]">
+                <th scope="col" className="w-[35%] py-3 pr-3 font-semibold md:w-1/4">{text.metrics.comparisonField}</th>
+                <th scope="col" className="py-3 font-semibold">{text.metrics.comparisonRecord}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {text.metrics.comparisonRows.map((row) => (
+                <tr key={row.label} className="border-b border-[var(--line)] align-top">
+                  <th scope="row" className="py-4 pr-3 font-medium text-[var(--fg)]">{row.label}</th>
+                  <td className="py-4 text-[var(--fg-dim)]">{row.record}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-6 max-w-[75ch] text-sm leading-7 text-[var(--fg-dim)]">{text.metrics.comparisonNote}</p>
+          <nav aria-label="Comparison and recovery guides" className="mt-5 flex flex-wrap gap-x-7 gap-y-2">
+            {text.metrics.comparisonLinks.map((link) => (
+              <Link key={link.href} to={link.href} onNavigate={navigate} className="inline-flex min-h-11 items-center py-2 text-sm font-semibold text-accent underline decoration-[var(--line-2)] underline-offset-4 hover:decoration-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]">{link.label}</Link>
             ))}
-            <motion.polyline
-              points={STOCK_TRACE}
-              fill="none"
-              stroke="var(--line)"
-              strokeWidth="1.6"
-              initial={{ pathLength: 0 }}
-              whileInView={{ pathLength: 1 }}
-              viewport={{ once: true, amount: 0.5 }}
-              transition={{ duration: 1.6, ease: EASE }}
-            />
-            <motion.polyline
-              points={TWEAKED_TRACE}
-              fill="none"
-              stroke="var(--accent)"
-              strokeWidth="2"
-              initial={{ pathLength: 0 }}
-              whileInView={{ pathLength: 1 }}
-              viewport={{ once: true, amount: 0.5 }}
-              transition={{ duration: 1.6, ease: EASE, delay: 0.35 }}
-            />
-          </svg>
-
-          <div className="font-mono-t mt-5 text-[11.5px] text-[var(--fg-dim)]">
-            {text.metrics.graphNote}
-          </div>
+          </nav>
         </motion.div>
       </motion.div>
     </section>

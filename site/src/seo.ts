@@ -1,14 +1,20 @@
+import tauriConf from "../../src-tauri/tauri.conf.json";
+import { referenceModule } from "./reference-registry";
+import { msUntil, type Promo } from "../../src/promo";
+import { TECHNICAL_GUIDES } from "./pages/technical-guides";
 import { PRACTICAL_GUIDES } from "./pages/practical-guides";
 import { FIX_GUIDES } from "./pages/fix-guides";
 import { GUIDE_FAQS } from "./pages/guide-faqs";
+import { DIRECTORY_GUIDES } from "./pages/guide-directory";
 import { text } from "./i18n/dictionary";
 import { UNINSTALLER_DOWNLOAD_EXE } from "./constants";
+import { guideBreadcrumbs } from "./pages/guide-breadcrumbs";
 
 export interface RouteSeo {
   readonly title: string;
   readonly description: string;
   readonly canonical: string;
-  readonly ogType: "website";
+  readonly ogType: "website" | "article";
   /** A 1200x630 card made at build time (scripts/og.mjs); the site-wide card otherwise. */
   readonly image?: string;
   readonly imageAlt?: string;
@@ -16,28 +22,44 @@ export interface RouteSeo {
 
 const ORIGIN = "https://pctweaker.app";
 
+export function getRouteImage(seo: RouteSeo) {
+  return {
+    url: seo.image ?? `${ORIGIN}/og-pc-tweaker-b1c4973bdc.png`,
+    alt: seo.imageAlt ?? "PC Tweaker showing exactly which Windows setting a tweak changes and the value it sets",
+  };
+}
+
 // Canonicals carry the trailing slash because that is the URL that answers.
 // The build emits each route as a directory with its own index.html, and the
 // host 301s "/support" to "/support/" — so a canonical without the slash
 // pointed search engines at a redirect instead of at the page itself.
 
 export const ROUTE_SEO: Record<string, RouteSeo> = {
+  "/guides": {
+    title: "Windows Tuning and Troubleshooting Guides | PC Tweaker",
+    description: "Find PC Tweaker guides for Windows 11 tuning, DPC latency, X3D and Intel Hybrid CPUs, privacy, rollback and uninstalling programs. Start with your task.",
+    canonical: `${ORIGIN}/guides/`,
+    ogType: "website",
+  },
   "/uninstaller": {
     title: "Windows Uninstaller That Shows the Risk First | PC Tweaker",
     description:
       "Review a Windows uninstall before it runs: inspect its risk score, command and permissions, then check restore-point status and the local removal receipt.",
     canonical: `${ORIGIN}/uninstaller/`,
     ogType: "website",
+    image: `${ORIGIN}/uninstaller/og-uninstaller-90050e2eac.png`,
+    imageAlt: "PC Tweaker Uninstaller showing the exact uninstall command and permissions before anything runs",
   },
   // A guide's on-page H1 and intro are written for someone already reading it;
   // the title and description are written for someone deciding whether to click
-  // from a result page. Where those differ, the guide carries seoTitle/
-  // seoDescription and they win here — otherwise the visible copy is reused.
+  // from a result page. Guides carry their own seoTitle and seoDescription
+  // so neither has to reuse the longer on-page introduction.
   ...Object.fromEntries(Object.entries({ ...PRACTICAL_GUIDES, ...FIX_GUIDES }).map(([path, guide]) => [path, {
-    title: `${guide.seoTitle ?? guide.title} | PC Tweaker`,
-    description: guide.seoDescription ?? guide.intro,
-    canonical: `${ORIGIN}${path}/`, ogType: "website" as const,
-    ...(path in FIX_GUIDES ? { image: `${ORIGIN}/og${path}.png`, imageAlt: guide.seoTitle ?? guide.title } : {}),
+    title: `${guide.seoTitle} | PC Tweaker`,
+    description: guide.seoDescription,
+    canonical: `${ORIGIN}${path}/`, ogType: "article" as const,
+    ...(path in FIX_GUIDES ? { image: `${ORIGIN}/og${path}.png`, imageAlt: guide.seoTitle }
+      : "socialImage" in guide ? { image: `${ORIGIN}${guide.socialImage}`, imageAlt: guide.socialImageAlt } : {}),
   }])),
   "/": {
     title: "PC Tweaker | Windows Tuning for Steadier Frame Times",
@@ -89,23 +111,23 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     ogType: "website",
   },
   "/gaming-performance": {
-    title: "Windows Gaming Performance Tweaks | PC Tweaker",
+    title: "Windows Gaming Tweaks: Test Frame Times | PC Tweaker",
     description:
-      "Tune Windows for steadier frame times: cut avoidable background overhead, watch CPU, memory and thermals live, and reverse anything that does not help.",
+      "Investigate Windows 11 game stutter before changing settings. Review Game DVR and HwSchMode, compare repeatable frame times and restore supported tweaks.",
     canonical: `${ORIGIN}/gaming-performance/`,
     ogType: "website",
   },
   "/reversible-windows-tweaks": {
-    title: "Reversible Windows Tweaks with Rollback | PC Tweaker",
+    title: "Reversible Windows Tweaks: Saved-Value Rollback | PC Tweaker",
     description:
-      "Every supported PC Tweaker change records its previous value, so you can undo a registry, service or system setting without hunting for the original.",
+      "Restore supported registry and service tweaks from values PC Tweaker saved before each change. Check backups, restart requirements and rollback limits.",
     canonical: `${ORIGIN}/reversible-windows-tweaks/`,
     ogType: "website",
   },
   "/windows-privacy-tool": {
-    title: "Reversible Windows Privacy Tool | PC Tweaker",
+    title: "Windows Privacy Tweaker: Review and Restore | PC Tweaker",
     description:
-      "Review and adjust supported Windows privacy settings one by one, without destructive debloat scripts, bundled presets or irreversible package removal.",
+      "Review Windows 10/11 diagnostic data, advertising ID and Recall policies individually. Check permissions and restore supported settings from saved values.",
     canonical: `${ORIGIN}/windows-privacy-tool/`,
     ogType: "website",
   },
@@ -135,6 +157,34 @@ const faqPage = (
   })),
 });
 
+const homeApp = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "@id": "https://pctweaker.app/#software",
+  "name": "PC Tweaker",
+  "operatingSystem": "Windows 10, Windows 11",
+  "applicationCategory": "UtilitiesApplication",
+  "softwareVersion": tauriConf.version,
+  "softwareRequirements": "Windows 10 or Windows 11",
+  "downloadUrl": "https://dl.pctweaker.app/pc-tweaker/PCTweaker-Setup.exe",
+  "description": "Windows tuning for gaming, privacy and maintenance, with visible setting changes and restore tools for supported tweaks.",
+  "url": "https://pctweaker.app/",
+  "image": "https://pctweaker.app/og-pc-tweaker-b1c4973bdc.png",
+  "sameAs": [
+    "https://github.com/AurelioAvila/pc-tweaker-app",
+    "https://apps.microsoft.com/detail/9nh3c6dt1g87",
+    "https://www.majorgeeks.com/files/details/pc_tweaker.html"
+  ],
+  "author": { "@type": "Person", "name": "Aurelio Avila", "url": "https://github.com/AurelioAvila" },
+  "publisher": { "@id": "https://pctweaker.app/#organization" },
+  "offers": [
+    { "@type": "Offer", "price": "0", "priceCurrency": "EUR", "name": "Free", "description": "Free plan — no account required" },
+    { "@type": "Offer", "price": "7.99", "priceCurrency": "EUR", "name": "Pro monthly", "description": "Pro subscription billed monthly" },
+    { "@type": "Offer", "price": "59.99", "priceCurrency": "EUR", "name": "Pro annual", "description": "Pro subscription billed yearly" },
+    { "@type": "Offer", "price": "99", "priceCurrency": "EUR", "name": "Pro lifetime", "description": "One-time Pro purchase" }
+  ]
+};
+
 // The Uninstaller is its own product with its own prices, so its page carries
 // its own SoftwareApplication rather than borrowing PC Tweaker's from the
 // homepage. The offers mirror the plan cards on that page; check-seo.mjs pins
@@ -144,13 +194,21 @@ const uninstallerApp = {
   "@type": "SoftwareApplication",
   "@id": `${ORIGIN}/uninstaller/#software`,
   name: "PC Tweaker Uninstaller",
+  softwareVersion: "0.13.3",
   operatingSystem: "Windows 10, Windows 11",
   applicationCategory: "UtilitiesApplication",
   downloadUrl: UNINSTALLER_DOWNLOAD_EXE,
   url: `${ORIGIN}/uninstaller/`,
+  image: `${ORIGIN}/uninstaller/og-uninstaller-90050e2eac.png`,
+  screenshot: ["inventory", "removal-brief", "ledger"].map((name) => ({
+    "@type": "ImageObject",
+    contentUrl: `${ORIGIN}/uninstaller/images/${name}-0.13.3.png`,
+    caption: `Uninstaller 0.13.3 interface preview with example data: ${name}`,
+  })),
+  sameAs: ["https://github.com/AurelioAvila/pc-tweaker-uninstaller"],
   description:
     "Windows uninstaller that shows each removal's risk score, command and permissions before it runs, then keeps a local receipt of what was removed.",
-  author: { "@type": "Person", name: "Aurelio Avila" },
+  author: { "@type": "Person", name: "Aurelio Avila", url: "https://github.com/AurelioAvila" },
   publisher: { "@id": `${ORIGIN}/#organization` },
   offers: [
     { "@type": "Offer", price: "0", priceCurrency: "EUR", name: "Free", description: "Single uninstalls, risk review and the local removal ledger" },
@@ -159,8 +217,41 @@ const uninstallerApp = {
 };
 
 export const ROUTE_JSONLD: Record<string, readonly object[]> = {
-  "/": [faqPage(`${ORIGIN}/#faq`, `${ORIGIN}/`, text.faq.items)],
+  "/guides": [{
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${ORIGIN}/guides/#collection`,
+    url: `${ORIGIN}/guides/`,
+    name: "PC Tweaker guides",
+    description: ROUTE_SEO["/guides"].description,
+    inLanguage: "en",
+    isPartOf: { "@id": `${ORIGIN}/#website` },
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: DIRECTORY_GUIDES.length,
+      itemListElement: DIRECTORY_GUIDES.map((guide, index) => ({
+        "@type": "ListItem", position: index + 1, name: guide.title, url: `${ORIGIN}${guide.path}`,
+      })),
+    },
+  }],
+  "/": [homeApp, faqPage(`${ORIGIN}/#faq`, `${ORIGIN}/`, text.faq.items)],
   "/uninstaller": [uninstallerApp],
+  ...Object.fromEntries(Object.entries(TECHNICAL_GUIDES).map(([path, guide]) => [path, [{
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "@id": `${ORIGIN}${path}/#article`,
+    url: `${ORIGIN}${path}/`,
+    mainEntityOfPage: `${ORIGIN}${path}/`,
+    headline: guide.title,
+    description: guide.seoDescription,
+    datePublished: guide.published,
+    dateModified: guide.updated,
+    image: `${ORIGIN}${guide.socialImage}`,
+    inLanguage: "en",
+    author: { "@type": "Person", name: "Aurelio Avila", url: "https://github.com/AurelioAvila" },
+    publisher: { "@id": `${ORIGIN}/#organization` },
+    isPartOf: { "@id": `${ORIGIN}/#website` },
+  }]])),
   "/support": [
     faqPage(`${ORIGIN}/support/#faq`, `${ORIGIN}/support/`, text.support.selfServe),
   ],
@@ -221,3 +312,60 @@ export const NOT_FOUND_SEO: RouteSeo = {
   canonical: `${ORIGIN}/404`,
   ogType: "website",
 };
+
+const OFFER_PLANS: Record<string, string> = {
+  "Pro monthly": "monthly",
+  "Pro annual": "annual",
+  "Pro lifetime": "lifetime",
+  "Uninstaller Pro annual": "annual",
+};
+
+type ApplicationOffers = {
+  "@type"?: string;
+  name?: string;
+  offers?: { name: string; price: string; description: string }[];
+};
+
+/** Regular prices remain the static fallback. The same verified promotion
+ *  used by the plan cards supplies current offers after hydration. */
+export function getRouteJsonLd(route: string, promo: Promo | null = null): readonly object[] {
+  const crumbs = guideBreadcrumbs(route);
+  const nodes = [
+    // Reference pages live in a separate chunk, loaded before one of them renders (reference-registry.ts).
+    ...(ROUTE_JSONLD[route] ?? referenceModule()?.REFERENCE_JSONLD[route] ?? []),
+    ...(crumbs.length ? [{
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "@id": `${ORIGIN}${route}/#breadcrumb`,
+      itemListElement: crumbs.map((crumb, index) => ({
+        "@type": "ListItem", position: index + 1, name: crumb.name, item: `${ORIGIN}${crumb.path}`,
+      })),
+    }] : []),
+  ];
+  if (!promo || promo.status !== "active" || msUntil(promo, promo.startsAt, 0) > 0 || msUntil(promo, promo.endsAt, 0) <= 0)
+    return nodes;
+  return nodes.map((node) => {
+    const app = node as ApplicationOffers;
+    if (app["@type"] !== "SoftwareApplication" || !app.offers) return node;
+    const product = app.name === "PC Tweaker" ? "pctweaker"
+      : app.name === "PC Tweaker Uninstaller" ? "uninstaller" : null;
+    if (!product) return node;
+    return {
+      ...node,
+      offers: app.offers.map((base) => {
+        const offer = promo.offers.find((item) => item.product === product && item.plan === OFFER_PLANS[base.name]);
+        if (!offer) return base;
+        const period = offer.plan === "monthly" ? "month" : "year";
+        return {
+          ...base,
+          price: (offer.price / 100).toFixed(2),
+          description: offer.firstPeriodOnly
+            ? `Promotional first ${period}; then EUR ${(offer.regular / 100).toFixed(2)} per ${period}`
+            : "Promotional one-time purchase; no renewal",
+          validFrom: promo.startsAt,
+          validThrough: promo.endsAt,
+        };
+      }),
+    };
+  });
+}

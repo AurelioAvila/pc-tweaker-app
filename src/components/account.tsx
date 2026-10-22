@@ -14,7 +14,9 @@ import {
 import { AuthState, ProcessGuardStatus, type ProductPlan } from "../types";
 import { CheckIcon, CrownIcon } from "./icons";
 import { TRIAL_COPY } from "./trial-copy";
+import { REFERRAL_COPY } from "./referral-copy";
 import { trialLeft, trialUsed, type BillingStatus } from "../trial";
+import { productPlanLabel } from "../plan-label";
 import { Avatar } from "./ui";
 import "./account-menu.css";
 
@@ -97,7 +99,11 @@ export function AuthSection({
             aria-label={s.menu.changePhoto}
             className="group relative shrink-0 rounded-full transition-transform hover:scale-105"
           >
-            <Avatar email={auth.email} isPro={auth.isPro} photo={avatar} />
+            <Avatar
+              email={auth.email}
+              isPro={auth.isPro || auth.bonusActive === true}
+              photo={avatar}
+            />
             <span className="pointer-events-none absolute inset-[2px] grid place-items-center rounded-full bg-black/55 opacity-0 transition-opacity group-hover:opacity-100">
               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-white">
                 <path
@@ -138,7 +144,11 @@ export function AuthSection({
                   key={p.product}
                   plan={p}
                   billing={auth.billing ?? null}
-                  label={productPlanLabel(p, s.auth, lang)}
+                  label={productPlanLabel(
+                    p,
+                    { ...s.auth, freeName: s.pricing.freeName, proName: s.pricing.proName },
+                    lang,
+                  )}
                   lang={lang}
                   now={now}
                   onManageBilling={onManageBilling}
@@ -148,6 +158,11 @@ export function AuthSection({
           </div>
         )}
 
+        {auth.bonusActive && (
+          <p className="relative mt-3 text-xs text-ink-2">
+            {(REFERRAL_COPY[lang as Lang] ?? REFERRAL_COPY.en).bonusActive}
+          </p>
+        )}
         {!auth.emailVerified && (
           <button
             onClick={() => {
@@ -391,6 +406,7 @@ export function AccountMenu({
   onUpgrade,
   onViewPlan,
   onManageBilling,
+  onReferrals,
   pushToast,
 }: {
   s: Strings;
@@ -421,9 +437,11 @@ export function AccountMenu({
    *  account is comparing, a Pro account is checking what it pays for. */
   onViewPlan: () => void;
   onManageBilling?: () => void;
+  onReferrals?: () => void;
   pushToast: (kind: "success" | "error", message: string) => void;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
   const open = openProp ?? internalOpen;
   const setOpen = (v: boolean | ((prev: boolean) => boolean)) => {
     const next = typeof v === "function" ? v(open) : v;
@@ -431,7 +449,7 @@ export function AccountMenu({
     setInternalOpen(next);
   };
   const [errReports, setErrReports] = useState(() => errorReportsEnabled());
-  const isPro = auth.status === "authenticated" && auth.isPro;
+  const isPro = auth.status === "authenticated" && (auth.isPro || auth.bonusActive === true);
 
   // Device-local profile photo, kept as a file by the Rust side; there is no
   // upload — see fileToAvatarDataUrl in lib.ts and src-tauri/src/avatar.rs.
@@ -537,6 +555,7 @@ export function AccountMenu({
           opened. Signed out there is no account to represent, so it stays a
           plain glyph. */}
       <button
+        ref={menuButton}
         onClick={() => setOpen((v) => !v)}
         className={`grid h-9 w-9 place-items-center rounded-full transition-transform hover:scale-105 ${
           auth.status === "authenticated"
@@ -637,6 +656,18 @@ export function AccountMenu({
                 {isPro ? s.menu.viewPlan : s.menu.upgradeButton} <span aria-hidden="true">↗</span>
               </button>
             </div>
+            {onReferrals && auth.status === "authenticated" && (
+              <button
+                className="account-support"
+                onClick={() => {
+                  setOpen(false);
+                  menuButton.current?.focus();
+                  onReferrals();
+                }}
+              >
+                {REFERRAL_COPY[lang].menuInvite}
+              </button>
+            )}
             <details name="account-settings" className="account-setting">
               <summary>
                 <span>{s.menu.language}</span>
@@ -773,7 +804,7 @@ function ProductRow({
 }: {
   plan: ProductPlan;
   billing: BillingStatus | null;
-  label: string;
+  label: { label: string; until: string | null };
   lang: string;
   now: number;
   onManageBilling?: () => void;
@@ -799,9 +830,14 @@ function ProductRow({
                 : "text-ink-3"
           }
         >
-          {trial ? t.trial : failed ? t.paymentFailed : label}
+          {trial ? t.trial : failed ? t.paymentFailed : label.label}
         </span>
       </div>
+      {!trial && !failed && label.until && (
+        <div className="account-trial">
+          <span>{label.until}</span>
+        </div>
+      )}
       {trial && left && (
         <div className="account-trial">
           <span>
@@ -838,36 +874,6 @@ function ProductRow({
       )}
     </li>
   );
-}
-
-/** "Lifetime", "Annual · until 14 Oct 2027", "Not active": one product's
- *  plan in a few words, in the app's language. */
-function productPlanLabel(
-  p: ProductPlan,
-  words: {
-    planLifetime: string;
-    planAnnual: string;
-    planMonthly: string;
-    planBonus: string;
-    planUntil: string;
-    planInactive: string;
-  },
-  lang: string,
-): string {
-  if (!p.active) return words.planInactive;
-  if (p.plan === "lifetime") return words.planLifetime;
-  const name =
-    p.plan === "lifetime_bonus"
-      ? words.planBonus
-      : p.plan === "monthly"
-        ? words.planMonthly
-        : p.plan === "annual"
-          ? words.planAnnual
-          : "Pro";
-  const end = p.expiresAt ? new Date(p.expiresAt) : null;
-  return end && Number.isFinite(end.getTime())
-    ? `${name} · ${words.planUntil.replace("{date}", end.toLocaleDateString(lang, { dateStyle: "medium" }))}`
-    : name;
 }
 
 const FIELD =

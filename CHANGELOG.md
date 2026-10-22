@@ -1,5 +1,56 @@
 # Changelog
 
+## v1.18.9
+
+PC Tweaker 1.18.9 is a routine maintenance update with two small fixes to the account menu.
+
+- The account menu names each product's plan the way the pricing screen does: Free without a purchase, Pro with its monthly or annual period, or Lifetime.
+- Text fields, the sign-in form included, show a single focus ring instead of two.
+- The catalog is unchanged: 81 controls, 46 Free and 35 Pro.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
+## v1.18.8
+
+PC Tweaker 1.18.8 shows the menu of its notification-area icon, and the notice shown the first time you close the window, in the language you chose in the app.
+
+- The icon's menu (Open PC Tweaker, Keep running in the background, Exit PC Tweaker) and the first-close notice are in English, Italian, French, Spanish, German or European Portuguese, following the language chosen in the app. Before, they were always in English.
+- The same notification-area behaviour now also comes to PC Tweaker Uninstaller, Tweaky Driver, Redaxa and Redexa Social, with the same wording.
+- Closing the window still keeps PC Tweaker running in the notification area; settings, licences and the catalog are unchanged: 81 controls, 46 Free and 35 Pro.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
+## v1.18.7
+
+PC Tweaker 1.18.7 makes administrator changes and restores more dependable: no task can hang the app, a deleted power plan no longer blocks a restore, and Explorer restarts politely.
+
+- Every Windows tool PC Tweaker runs now has a time limit, and so does the wait for the administrator helper, so a stuck tool can no longer leave the window waiting forever.
+- Restoring the power plan works even if the original plan was deleted: PC Tweaker switches to Balanced instead of failing, and clears the settings it had saved for the deleted plan.
+- Explorer is restarted through Windows Restart Manager, so a program that asks to finish first is respected; Explorer is closed by force only if it does not stop in time.
+- When another administrator approves the UAC prompt, changes and restore records go to the signed-in user's settings instead of that administrator's.
+- Profiles whose names differ only in case or punctuation are saved to separate files, and deleting a profile removes only that profile.
+- Signed-in apps now send a random installation identifier with licence refreshes, so the account service can count how many installations an account uses. It is not tied to your hardware and never decides whether your licence works. The privacy policy explains it.
+- The catalog is unchanged: 81 controls, 46 Free and 35 Pro.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
+## v1.18.6
+
+PC Tweaker 1.18.6 fixes administrator changes to scheduled tasks whose names contain spaces, keeps your Game Sessions list safe when a save is interrupted, and tightens how the administrator helper loads Windows libraries.
+
+- Turning a third-party scheduled task on or off with administrator approval now works when its path contains spaces, such as `\Vendor\Some Task`. The path used to reach the administrator step with doubled backslashes, so Windows could not find the task.
+- The Game Sessions list is saved in a single step. An interrupted save, or a file briefly held by antivirus software, can no longer replace your list of games with a single entry.
+- The administrator helper loads Windows libraries only from the System32 folder, never from the folder PC Tweaker is installed in.
+- Profiles are exported only as .json files on a local drive, the same rule the other exports follow.
+- PC Health keeps the last report on screen when a refresh fails, and the account messages shown when you return to the window follow the language you picked.
+- The catalog is unchanged: 81 controls, 46 Free and 35 Pro.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
+## v1.18.5
+
+PC Tweaker 1.18.5 is a routine daily maintenance update.
+
 ## v1.18.4
 
 PC Tweaker 1.18.4 looks for updates on its own download server as well as on GitHub, and the tweak preview reads correctly when a single value changes.

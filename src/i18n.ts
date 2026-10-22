@@ -1075,7 +1075,6 @@ export interface Strings {
     planMonthly: string;
     planBonus: string;
     planUntil: string;
-    planInactive: string;
   };
   driftWatch: {
     title: string;
@@ -2371,7 +2370,6 @@ const it: Strings = {
     planMonthly: "Mensile",
     planBonus: "Incluso con il piano a vita",
     planUntil: "fino al {date}",
-    planInactive: "Non attivo",
   },
   driftWatch: {
     title: "Sorveglia gli aggiornamenti di Windows",
@@ -2564,14 +2562,14 @@ const it: Strings = {
         "Su CPU con classi di efficienza differenti, chiede a Windows di preferire i core prestanti per i thread lunghi con alimentazione di rete. Gli altri core restano disponibili: non disattiva gli E-core. Confronta produttività e reattività. Non modifica la batteria.",
     },
     disable_startup_delay: {
-      name: "Rimuovi il ritardo dei programmi all'avvio",
+      name: "Regola il ritardo delle app all’avvio",
       description:
-        "Windows aspetta di proposito circa 10 secondi dopo l'accesso prima di lanciare i programmi all'avvio. Questa opzione elimina quell'attesa.",
+        "Scrive StartupDelayInMSec=0 per richiedere l’avvio delle app senza ritardo. L’effetto dipende dalla versione di Windows e dalle app: non riduce l’avvio del firmware o il caricamento dei programmi. Confronta l’accesso nelle stesse condizioni.",
     },
     menu_show_delay: {
-      name: "Risposta immediata dei menu",
+      name: "Riduci il ritardo di apertura dei menu",
       description:
-        "Elimina il ritardo con cui si aprono i menu: tutto il desktop risulta subito più reattivo.",
+        "Imposta MenuShowDelay=0 per i menu che usano questa impostazione di Windows. Cambia i tempi dei menu, non il caricamento delle app o il rendering dei giochi. Alcune app gestiscono i menu in modo autonomo.",
     },
     disable_power_throttling: {
       name: "Disattiva il risparmio energetico della CPU",
@@ -2619,29 +2617,29 @@ const it: Strings = {
         "Imposta TcpAckFrequency e TCPNoDelay a 1 sull'adattatore che porta la route verso Internet. Riguarda il comportamento TCP; il traffico UDP resta invariato. Il supporto dipende da Windows e dalle applicazioni, quindi una minore latenza nei giochi non è garantita.",
     },
     disable_window_animations: {
-      name: "Animazioni finestre istantanee",
+      name: "Riduci le animazioni delle finestre",
       description:
-        "Elimina l'animazione di apertura, chiusura e riduzione a icona delle finestre. Quell'animazione è puro tempo di attesa: toglierla fa rispondere il desktop nell'istante in cui clicchi e libera il lavoro GPU dietro di essa.",
+        "Imposta MinAnimate=0 per ridurre le animazioni delle finestre supportate. Cambia le transizioni visive, non la velocità di rendering dei giochi. L’effetto visibile dipende da Windows e dall’applicazione.",
     },
     disable_drag_full_windows: {
-      name: "Trascinamento finestre più leggero",
+      name: "Mostra i contorni durante il trascinamento",
       description:
-        "Mentre trascini una finestra ne disegna solo il contorno invece di ridisegnarne tutto il contenuto a ogni fotogramma. Quasi impercettibile su una GPU veloce, differenza netta su grafica integrata o su un PC datato.",
+        "Imposta DragFullWindows=0 per richiedere il contorno della finestra durante il trascinamento, dove supportato. Cambia il comportamento visivo; gli eventuali benefici prestazionali dipendono da hardware e applicazione.",
     },
     mouse_hover_delay: {
-      name: "Risposta immediata al passaggio del mouse",
+      name: "Riduci il tempo di attesa al passaggio del mouse",
       description:
-        "Windows aspetta 400 ms prima di reagire al puntatore fermo su un elemento: anteprime della barra, suggerimenti, menu. Questo riduce l'attesa quasi a zero, così l'interfaccia segue il mouse invece di inseguirlo.",
+        "Imposta MouseHoverTime=10 ms per i controlli che usano questa impostazione di Windows. Non cambia la frequenza di polling del mouse o la latenza dei comandi nei giochi. Gli elementi personalizzati possono usare tempi propri.",
     },
     disable_background_apps: {
-      name: "Blocca le app in background",
+      name: "Limita le app in background supportate",
       description:
-        "Impedisce alle app dello Store di girare, aggiornarsi e interrogare la rete mentre non le stai usando. Sono CPU, RAM e batteria reali spese per app che non hai aperto.",
+        "Scrive GlobalUserDisabled=1 per l’attività in background delle app Windows supportate. Il comportamento varia per versione di Windows e app; programmi desktop e servizi possono continuare a funzionare. Notifiche e sincronizzazione possono risentirne.",
     },
     disable_delivery_optimization: {
-      name: "Smetti di condividere gli aggiornamenti Windows",
+      name: "Disattiva la condivisione peer degli aggiornamenti",
       description:
-        "Per impostazione predefinita Windows carica i file di aggiornamento scaricati verso altri PC usando la tua connessione. Questo limita Delivery Optimization al tuo solo computer, così quell'upload non ti mangia banda mentre giochi.",
+        "Imposta DODownloadMode=0 per disattivare la cache peer-to-peer di Delivery Optimization. Gli aggiornamenti possono ancora essere scaricati via HTTP. La condivisione dipende dalle impostazioni e dai criteri del dispositivo; una minore latenza nei giochi non è garantita.",
     },
     disable_copilot: {
       name: "Criterio Copilot legacy (solo ripristino)",
@@ -4053,7 +4051,6 @@ const en: Strings = {
     planMonthly: "Monthly",
     planBonus: "Included with Lifetime",
     planUntil: "until {date}",
-    planInactive: "Not active",
   },
   driftWatch: {
     title: "Watch for Windows updates",
@@ -4245,14 +4242,14 @@ const en: Strings = {
         "On a CPU with different efficiency classes, asks Windows to prefer performant cores for long-running threads while plugged in. Other cores remain available; E-cores are not disabled. Compare throughput and responsiveness. Battery settings stay unchanged.",
     },
     disable_startup_delay: {
-      name: "Remove the startup app delay",
+      name: "Adjust startup app delay",
       description:
-        "Windows deliberately waits about 10 seconds after sign-in before launching your startup programs. This removes that wait.",
+        "Writes StartupDelayInMSec=0 to request no startup-app delay. The effect depends on the Windows version and startup apps; it does not shorten firmware startup or app loading time. Compare sign-in under the same conditions.",
     },
     menu_show_delay: {
-      name: "Instant menu response",
+      name: "Reduce menu display delay",
       description:
-        "Removes the built-in delay before menus open, which makes the whole desktop feel noticeably snappier.",
+        "Sets MenuShowDelay=0 for menus that use this Windows setting. It changes menu timing, not application loading or game rendering speed. Some apps use their own menu behavior.",
     },
     disable_power_throttling: {
       name: "Disable CPU power throttling",
@@ -4300,29 +4297,29 @@ const en: Strings = {
         "Sets TcpAckFrequency and TCPNoDelay to 1 on the adapter that carries the route to the internet. This targets TCP behavior; UDP traffic is unaffected. Windows and application support vary, so lower game latency is not guaranteed.",
     },
     disable_window_animations: {
-      name: "Instant window animations",
+      name: "Reduce window animations",
       description:
-        "Removes the slide/fade animation Windows plays every time a window opens, closes or minimizes. The animation is pure waiting time - cutting it makes the desktop respond the moment you click, and frees the GPU work behind it.",
+        "Sets MinAnimate=0 to reduce supported window animations. It changes visual transitions, not game rendering speed. The visible effect depends on Windows and the application.",
     },
     disable_drag_full_windows: {
-      name: "Lighter window dragging",
+      name: "Show outlines while dragging windows",
       description:
-        "Draws an outline while you drag a window instead of repainting its whole contents every frame. Barely noticeable on a fast GPU, a clear difference on integrated graphics or an older machine.",
+        "Sets DragFullWindows=0 to request a window outline while dragging, where supported. This changes display behavior; any performance benefit depends on the hardware and application.",
     },
     mouse_hover_delay: {
-      name: "Instant mouse hover response",
+      name: "Reduce mouse hover delay",
       description:
-        "Windows waits 400 ms before reacting to the pointer resting on something - taskbar previews, tooltips, menu hovers. This drops that wait to almost nothing, so the interface follows the mouse instead of trailing it.",
+        "Sets MouseHoverTime=10 ms for controls that use this Windows setting. It does not change mouse polling or game input latency. Custom interface elements may use their own timing.",
     },
     disable_background_apps: {
-      name: "Stop apps running in the background",
+      name: "Restrict supported background apps",
       description:
-        "Stops Store apps from running, refreshing and polling the network while you are not using them. This is real CPU, RAM and battery spent on apps you did not open.",
+        "Writes GlobalUserDisabled=1 for supported Windows app background activity. Behavior varies by Windows version and app; desktop apps and services may continue running. Notifications and syncing can be affected.",
     },
     disable_delivery_optimization: {
-      name: "Stop sharing Windows updates with strangers",
+      name: "Disable update peer sharing",
       description:
-        "Windows uploads downloaded update files to other PCs over your connection by default. This limits Delivery Optimization to your own machine, which stops that upload eating bandwidth mid-game.",
+        "Sets DODownloadMode=0 to disable Delivery Optimization peer-to-peer caching. Updates can still download over HTTP. Sharing depends on current settings and device policy; lower game latency is not guaranteed.",
     },
     disable_copilot: {
       name: "Legacy Copilot policy (restore only)",
@@ -5759,7 +5756,6 @@ const fr: Strings = {
     planMonthly: "Mensuelle",
     planBonus: "Inclus avec l'offre à vie",
     planUntil: "jusqu'au {date}",
-    planInactive: "Non active",
   },
   driftWatch: {
     title: "Surveiller les mises à jour Windows",
@@ -5951,14 +5947,14 @@ const fr: Strings = {
         "Sur un processeur avec plusieurs classes d'efficacité, demande à Windows de préférer les cœurs performants pour les threads longs sur secteur. Les autres cœurs restent disponibles ; les E-cores ne sont pas désactivés. Comparez le débit et la réactivité. La batterie reste inchangée.",
     },
     disable_startup_delay: {
-      name: "Supprimer le délai des programmes au démarrage",
+      name: "Régler le délai des applications au démarrage",
       description:
-        "Windows attend volontairement environ 10 secondes après la connexion avant de lancer vos programmes de démarrage. Cette option supprime cette attente.",
+        "Écrit StartupDelayInMSec=0 pour demander le lancement des applications sans délai. L’effet dépend de la version de Windows et des applications ; il ne raccourcit ni le démarrage du micrologiciel ni le chargement des logiciels. Comparez dans les mêmes conditions.",
     },
     menu_show_delay: {
-      name: "Réponse instantanée des menus",
+      name: "Réduire le délai d’affichage des menus",
       description:
-        "Supprime le délai d'ouverture des menus, ce qui rend tout le bureau nettement plus réactif.",
+        "Définit MenuShowDelay=0 pour les menus utilisant ce réglage Windows. Cela modifie leur délai d’affichage, pas le chargement des applications ni le rendu des jeux. Certaines applications gèrent leurs propres menus.",
     },
     disable_power_throttling: {
       name: "Désactiver la limitation d'énergie du processeur",
@@ -6006,29 +6002,29 @@ const fr: Strings = {
         "Définit TcpAckFrequency et TCPNoDelay sur 1 sur l'adaptateur qui porte la route vers Internet. Cela concerne TCP ; le trafic UDP reste inchangé. La prise en charge dépend de Windows et des applications : une latence plus faible dans les jeux n'est pas garantie.",
     },
     disable_window_animations: {
-      name: "Animations de fenetres instantanees",
+      name: "Réduire les animations des fenêtres",
       description:
-        "Supprime l'animation jouée à chaque ouverture, fermeture ou réduction d'une fenêtre. Cette animation n'est que du temps d'attente : la retirer fait répondre le bureau à l'instant du clic et libère le travail GPU correspondant.",
+        "Définit MinAnimate=0 pour réduire les animations des fenêtres compatibles. Cela change les transitions visuelles, pas la vitesse de rendu des jeux. L’effet visible dépend de Windows et de l’application.",
     },
     disable_drag_full_windows: {
-      name: "Deplacement de fenetres allege",
+      name: "Afficher les contours lors du déplacement des fenêtres",
       description:
-        "Dessine un contour pendant que vous deplacez une fenetre au lieu de redessiner tout son contenu a chaque image. A peine perceptible sur un GPU rapide, nettement visible sur un circuit graphique integre ou une machine ancienne.",
+        "Définit DragFullWindows=0 pour demander un contour pendant le déplacement d’une fenêtre, lorsque cette option est prise en charge. Cela modifie l’affichage ; le bénéfice éventuel dépend du matériel et de l’application.",
     },
     mouse_hover_delay: {
-      name: "Reaction immediate au survol de la souris",
+      name: "Réduire le délai de survol de la souris",
       description:
-        "Windows attend 400 ms avant de reagir au pointeur pose sur un element : apercus de la barre des taches, info-bulles, survol des menus. Ce delai tombe presque a zero, l'interface suit la souris au lieu de la suivre en retard.",
+        "Définit MouseHoverTime=10 ms pour les éléments utilisant ce réglage Windows. Cela ne change ni la fréquence d’interrogation de la souris ni la latence des commandes dans les jeux. Les interfaces personnalisées peuvent utiliser leurs propres délais.",
     },
     disable_background_apps: {
-      name: "Arreter les applications en arriere-plan",
+      name: "Limiter les applications en arrière-plan compatibles",
       description:
-        "Empêche les applications du Store de s'exécuter, de s'actualiser et d'interroger le réseau pendant que vous ne les utilisez pas. C'est du processeur, de la mémoire et de la batterie dépensés pour des applications que vous n'avez pas ouvertes.",
+        "Écrit GlobalUserDisabled=1 pour l’activité en arrière-plan des applications Windows compatibles. Le comportement varie selon Windows et l’application ; les logiciels de bureau et services peuvent continuer à fonctionner. Les notifications et la synchronisation peuvent être affectées.",
     },
     disable_delivery_optimization: {
-      name: "Ne plus partager les mises a jour Windows",
+      name: "Désactiver le partage pair à pair des mises à jour",
       description:
-        "Par defaut, Windows envoie les fichiers de mise a jour telecharges vers d'autres PC via votre connexion. Ceci limite Delivery Optimization a votre seule machine, pour que cet envoi ne consomme plus votre bande passante en pleine partie.",
+        "Définit DODownloadMode=0 pour désactiver le cache pair à pair de Delivery Optimization. Les mises à jour peuvent toujours être téléchargées via HTTP. Le partage dépend des réglages et des stratégies de l’appareil ; une baisse de latence en jeu n’est pas garantie.",
     },
     disable_copilot: {
       name: "Ancienne stratégie Copilot (restauration uniquement)",
@@ -7460,7 +7456,6 @@ const es: Strings = {
     planMonthly: "Mensual",
     planBonus: "Incluido con el plan de por vida",
     planUntil: "hasta el {date}",
-    planInactive: "No activo",
   },
   driftWatch: {
     title: "Vigilar las actualizaciones de Windows",
@@ -7653,14 +7648,14 @@ const es: Strings = {
         "En CPU con distintas clases de eficiencia, pide a Windows que prefiera núcleos de rendimiento para hilos largos con alimentación externa. Los demás núcleos siguen disponibles; no desactiva los E-cores. Compara rendimiento y respuesta. No cambia la batería.",
     },
     disable_startup_delay: {
-      name: "Eliminar el retraso de los programas al inicio",
+      name: "Ajustar el retraso de las aplicaciones al iniciar",
       description:
-        "Windows espera a propósito unos 10 segundos tras iniciar sesión antes de abrir tus programas de inicio. Esta opción elimina esa espera.",
+        "Escribe StartupDelayInMSec=0 para solicitar el inicio de aplicaciones sin retraso. El efecto depende de la versión de Windows y de las aplicaciones; no acorta el arranque del firmware ni la carga de programas. Compara el inicio de sesión en las mismas condiciones.",
     },
     menu_show_delay: {
-      name: "Respuesta instantánea de los menús",
+      name: "Reducir el retraso de los menús",
       description:
-        "Elimina el retraso con el que se abren los menús, lo que hace que todo el escritorio se sienta más ágil.",
+        "Establece MenuShowDelay=0 para los menús que usan este ajuste de Windows. Cambia su tiempo de apertura, no la carga de aplicaciones ni el renderizado de juegos. Algunas aplicaciones gestionan sus propios menús.",
     },
     disable_power_throttling: {
       name: "Desactivar la limitación de energía de la CPU",
@@ -7708,29 +7703,29 @@ const es: Strings = {
         "Establece TcpAckFrequency y TCPNoDelay en 1 en el adaptador que lleva la ruta hacia Internet. Afecta al comportamiento TCP; el tráfico UDP no cambia. La compatibilidad depende de Windows y las aplicaciones, por lo que no se garantiza una menor latencia en juegos.",
     },
     disable_window_animations: {
-      name: "Animaciones de ventana instantaneas",
+      name: "Reducir las animaciones de ventanas",
       description:
-        "Elimina la animacion que Windows reproduce al abrir, cerrar o minimizar una ventana. Esa animacion es puro tiempo de espera: quitarla hace que el escritorio responda en el instante del clic y libera el trabajo de GPU asociado.",
+        "Establece MinAnimate=0 para reducir las animaciones de ventanas compatibles. Cambia las transiciones visuales, no la velocidad de renderizado de juegos. El efecto visible depende de Windows y de la aplicación.",
     },
     disable_drag_full_windows: {
-      name: "Arrastre de ventanas mas ligero",
+      name: "Mostrar contornos al arrastrar ventanas",
       description:
-        "Dibuja solo el contorno mientras arrastras una ventana en lugar de repintar todo su contenido en cada fotograma. Apenas se nota en una GPU rapida, se nota claramente en graficos integrados o en un equipo antiguo.",
+        "Establece DragFullWindows=0 para solicitar el contorno de la ventana al arrastrarla, donde sea compatible. Cambia el comportamiento visual; cualquier mejora de rendimiento depende del hardware y de la aplicación.",
     },
     mouse_hover_delay: {
-      name: "Respuesta inmediata al pasar el raton",
+      name: "Reducir el tiempo de espera al pasar el ratón",
       description:
-        "Windows espera 400 ms antes de reaccionar al puntero detenido sobre algo: vistas previas de la barra de tareas, descripciones emergentes, menus. Esto reduce la espera casi a cero, asi la interfaz sigue al raton en vez de ir por detras.",
+        "Establece MouseHoverTime=10 ms para los controles que usan este ajuste de Windows. No cambia la frecuencia de sondeo del ratón ni la latencia de entrada en juegos. Los elementos personalizados pueden usar sus propios tiempos.",
     },
     disable_background_apps: {
-      name: "Detener las apps en segundo plano",
+      name: "Limitar aplicaciones en segundo plano compatibles",
       description:
-        "Impide que las aplicaciones de la Store se ejecuten, se actualicen y consulten la red mientras no las usas. Es CPU, RAM y bateria reales gastadas en aplicaciones que no has abierto.",
+        "Escribe GlobalUserDisabled=1 para la actividad en segundo plano de aplicaciones Windows compatibles. El comportamiento varía según Windows y la aplicación; los programas de escritorio y servicios pueden seguir funcionando. Puede afectar a notificaciones y sincronización.",
     },
     disable_delivery_optimization: {
-      name: "Dejar de compartir las actualizaciones de Windows",
+      name: "Desactivar el intercambio de actualizaciones entre equipos",
       description:
-        "De forma predeterminada Windows sube los archivos de actualizacion descargados a otros PC usando tu conexion. Esto limita Delivery Optimization a tu propio equipo, para que esa subida no consuma ancho de banda mientras juegas.",
+        "Establece DODownloadMode=0 para desactivar la caché entre pares de Delivery Optimization. Las actualizaciones pueden seguir descargándose por HTTP. El intercambio depende de los ajustes y directivas del dispositivo; no se garantiza una menor latencia en juegos.",
     },
     disable_copilot: {
       name: "Directiva antigua de Copilot (solo restauración)",
@@ -9170,7 +9165,6 @@ const de: Strings = {
     planMonthly: "Monatlich",
     planBonus: "Im Lebenslang-Tarif enthalten",
     planUntil: "bis {date}",
-    planInactive: "Nicht aktiv",
   },
   driftWatch: {
     title: "Windows-Updates überwachen",
@@ -9365,14 +9359,14 @@ const de: Strings = {
         "Bittet Windows auf CPUs mit unterschiedlichen Effizienzklassen, im Netzbetrieb Leistungskerne für lange Threads zu bevorzugen. Andere Kerne bleiben verfügbar; E-Kerne werden nicht deaktiviert. Durchsatz und Reaktionsfähigkeit vergleichen. Der Akkubetrieb bleibt unverändert.",
     },
     disable_startup_delay: {
-      name: "Verzögerung der Autostart-Programme entfernen",
+      name: "Verzögerung der Autostart-Apps anpassen",
       description:
-        "Windows wartet nach der Anmeldung absichtlich etwa 10 Sekunden, bevor Autostart-Programme gestartet werden. Diese Option entfernt die Wartezeit.",
+        "Schreibt StartupDelayInMSec=0, um einen App-Start ohne Verzögerung anzufordern. Die Wirkung hängt von Windows-Version und Apps ab; Firmware-Start und Ladezeit der Programme werden dadurch nicht verkürzt. Vergleiche die Anmeldung unter gleichen Bedingungen.",
     },
     menu_show_delay: {
-      name: "Sofortige Menüreaktion",
+      name: "Verzögerung der Menüanzeige verringern",
       description:
-        "Entfernt die Verzögerung beim Öffnen von Menüs, wodurch sich der gesamte Desktop spürbar flotter anfühlt.",
+        "Setzt MenuShowDelay=0 für Menüs, die diese Windows-Einstellung verwenden. Das ändert ihre Anzeigeverzögerung, nicht das Laden von Apps oder die Bildberechnung in Spielen. Manche Apps steuern ihre Menüs selbst.",
     },
     disable_power_throttling: {
       name: "CPU-Energiedrosselung deaktivieren",
@@ -9420,29 +9414,29 @@ const de: Strings = {
         "Setzt TcpAckFrequency und TCPNoDelay für den Adapter, über den die Route ins Internet läuft, auf 1. Dies betrifft TCP; UDP-Verkehr bleibt unverändert. Die Unterstützung hängt von Windows und den Anwendungen ab. Eine niedrigere Latenz in Spielen ist nicht garantiert.",
     },
     disable_window_animations: {
-      name: "Sofortige Fensteranimationen",
+      name: "Fensteranimationen reduzieren",
       description:
-        "Entfernt die Animation, die Windows bei jedem Oeffnen, Schliessen oder Minimieren eines Fensters abspielt. Diese Animation ist reine Wartezeit: Ohne sie reagiert der Desktop im Moment des Klicks, und die dahinterliegende GPU-Arbeit entfaellt.",
+        "Setzt MinAnimate=0, um unterstützte Fensteranimationen zu reduzieren. Das ändert visuelle Übergänge, nicht die Bildberechnung in Spielen. Die sichtbare Wirkung hängt von Windows und der Anwendung ab.",
     },
     disable_drag_full_windows: {
-      name: "Leichteres Verschieben von Fenstern",
+      name: "Beim Ziehen von Fenstern Umrisse anzeigen",
       description:
-        "Zeichnet beim Verschieben eines Fensters nur dessen Umriss, statt den gesamten Inhalt in jedem Einzelbild neu zu zeichnen. Auf einer schnellen GPU kaum spuerbar, auf integrierter Grafik oder einem aelteren Rechner deutlich.",
+        "Setzt DragFullWindows=0, um beim Ziehen einen Fensterumriss anzufordern, soweit unterstützt. Das ändert die Darstellung; ein möglicher Leistungsvorteil hängt von Hardware und Anwendung ab.",
     },
     mouse_hover_delay: {
-      name: "Sofortige Reaktion beim Ueberfahren mit der Maus",
+      name: "Wartezeit beim Verweilen des Mauszeigers verringern",
       description:
-        "Windows wartet 400 ms, bevor es auf den ruhenden Mauszeiger reagiert - Taskleistenvorschauen, QuickInfos, Menues. Diese Wartezeit sinkt auf nahezu null, die Oberflaeche folgt der Maus, statt ihr hinterherzuhinken.",
+        "Setzt MouseHoverTime=10 ms für Bedienelemente, die diese Windows-Einstellung verwenden. Das ändert weder die Abfragerate der Maus noch die Eingabelatenz in Spielen. Eigene Oberflächenelemente können andere Wartezeiten verwenden.",
     },
     disable_background_apps: {
-      name: "Apps im Hintergrund stoppen",
+      name: "Unterstützte Hintergrund-Apps einschränken",
       description:
-        "Verhindert, dass Store-Apps laufen, sich aktualisieren und das Netzwerk abfragen, waehrend Sie sie nicht nutzen. Das sind echte CPU-, RAM- und Akkuressourcen fuer Apps, die Sie nie geoeffnet haben.",
+        "Schreibt GlobalUserDisabled=1 für die Hintergrundaktivität unterstützter Windows-Apps. Das Verhalten hängt von Windows-Version und App ab; Desktop-Apps und Dienste können weiterlaufen. Benachrichtigungen und Synchronisierung können beeinträchtigt werden.",
     },
     disable_delivery_optimization: {
-      name: "Windows-Updates nicht mehr mit Fremden teilen",
+      name: "Peer-Freigabe von Updates deaktivieren",
       description:
-        "Windows laedt heruntergeladene Updatedateien standardmaessig ueber Ihre Verbindung zu anderen PCs hoch. Dies beschraenkt die Uebermittlungsoptimierung auf Ihren eigenen Rechner, damit dieser Upload nicht mitten im Spiel Bandbreite frisst.",
+        "Setzt DODownloadMode=0, um den Peer-to-Peer-Cache von Delivery Optimization zu deaktivieren. Updates können weiterhin über HTTP geladen werden. Die Freigabe hängt von Einstellungen und Geräterichtlinien ab; eine geringere Spiellatenz ist nicht garantiert.",
     },
     disable_copilot: {
       name: "Alte Copilot-Richtlinie (nur Wiederherstellung)",
@@ -10877,7 +10871,6 @@ const pt: Strings = {
     planMonthly: "Mensal",
     planBonus: "Incluído no plano vitalício",
     planUntil: "até {date}",
-    planInactive: "Inativo",
   },
   driftWatch: {
     title: "Vigiar as atualizações do Windows",
@@ -11069,14 +11062,14 @@ const pt: Strings = {
         "Em CPUs com diferentes classes de eficiência, solicita ao Windows que prefira núcleos de desempenho para threads longas na tomada. Os outros núcleos continuam disponíveis; não desativa os E-cores. Compare rendimento e resposta. Não altera a bateria.",
     },
     disable_startup_delay: {
-      name: "Remover o atraso das aplicações no arranque",
+      name: "Ajustar o atraso das aplicações no arranque",
       description:
-        "O Windows espera propositadamente cerca de 10 segundos após o início de sessão antes de abrir os seus programas de arranque. Isto remove essa espera.",
+        "Escreve StartupDelayInMSec=0 para pedir o início das aplicações sem atraso. O efeito depende da versão do Windows e das aplicações; não reduz o arranque do firmware nem o carregamento dos programas. Compare o início de sessão nas mesmas condições.",
     },
     menu_show_delay: {
-      name: "Resposta instantânea dos menus",
+      name: "Reduzir o atraso de apresentação dos menus",
       description:
-        "Remove o atraso integrado antes de os menus abrirem, o que torna toda a área de trabalho visivelmente mais ágil.",
+        "Define MenuShowDelay=0 para os menus que usam esta definição do Windows. Altera o tempo de apresentação, não o carregamento das aplicações nem a renderização dos jogos. Algumas aplicações gerem os próprios menus.",
     },
     disable_power_throttling: {
       name: "Desativar limitação de energia da CPU",
@@ -11124,29 +11117,29 @@ const pt: Strings = {
         "Define TcpAckFrequency e TCPNoDelay como 1 no adaptador que leva a rota para a Internet. Isto afeta o comportamento TCP; o tráfego UDP não muda. O suporte depende do Windows e das aplicações, pelo que não há garantia de menor latência nos jogos.",
     },
     disable_window_animations: {
-      name: "Animações de janela instantâneas",
+      name: "Reduzir as animações das janelas",
       description:
-        "Remove a animação de deslizar/desvanecer que o Windows mostra sempre que uma janela abre, fecha ou minimiza. A animação é tempo de espera puro - removê-la faz a área de trabalho responder no instante do clique e liberta o trabalho da GPU por trás dela.",
+        "Define MinAnimate=0 para reduzir as animações de janelas compatíveis. Altera as transições visuais, não a velocidade de renderização dos jogos. O efeito visível depende do Windows e da aplicação.",
     },
     disable_drag_full_windows: {
-      name: "Arrastamento de janelas mais leve",
+      name: "Mostrar contornos ao arrastar janelas",
       description:
-        "Desenha um contorno enquanto arrasta uma janela em vez de redesenhar todo o seu conteúdo a cada fotograma. Quase impercetível numa GPU rápida, uma diferença clara em gráficos integrados ou máquinas mais antigas.",
+        "Define DragFullWindows=0 para pedir o contorno da janela durante o arrastamento, quando suportado. Altera o comportamento visual; qualquer benefício de desempenho depende do hardware e da aplicação.",
     },
     mouse_hover_delay: {
-      name: "Resposta instantânea ao passar o rato",
+      name: "Reduzir a espera ao manter o rato sobre um elemento",
       description:
-        "O Windows espera 400 ms antes de reagir ao ponteiro parado sobre algo - pré-visualizações da barra de tarefas, descrições, menus. Isto reduz essa espera a quase nada, para que a interface acompanhe o rato em vez de ficar atrás dele.",
+        "Define MouseHoverTime=10 ms para os controlos que usam esta definição do Windows. Não altera a frequência de consulta do rato nem a latência dos comandos nos jogos. Os elementos personalizados podem usar tempos próprios.",
     },
     disable_background_apps: {
-      name: "Impedir aplicações de correr em segundo plano",
+      name: "Limitar aplicações em segundo plano compatíveis",
       description:
-        "Impede que as aplicações da Store corram, se atualizem e consultem a rede enquanto não as está a usar. Isso é CPU, RAM e bateria gastos a sério em aplicações que não abriu.",
+        "Escreve GlobalUserDisabled=1 para a atividade em segundo plano de aplicações Windows compatíveis. O comportamento varia com o Windows e a aplicação; os programas de ambiente de trabalho e serviços podem continuar ativos. As notificações e a sincronização podem ser afetadas.",
     },
     disable_delivery_optimization: {
-      name: "Deixar de partilhar atualizações do Windows com desconhecidos",
+      name: "Desativar a partilha de atualizações entre pares",
       description:
-        "Por predefinição, o Windows envia ficheiros de atualização já transferidos para outros PCs através da sua ligação. Isto limita a Otimização da Entrega à sua própria máquina, o que impede esse envio de consumir largura de banda a meio de um jogo.",
+        "Define DODownloadMode=0 para desativar a cache entre pares do Delivery Optimization. As atualizações podem continuar a ser transferidas por HTTP. A partilha depende das definições e políticas do dispositivo; não é garantida uma menor latência nos jogos.",
     },
     disable_copilot: {
       name: "Política antiga do Copilot (apenas restauro)",

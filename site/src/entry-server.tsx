@@ -1,7 +1,7 @@
 import { renderToString } from "react-dom/server";
 import App from "./App";
 import { ThemeProvider } from "./theme";
-import { NOT_FOUND_SEO, ROUTE_JSONLD as BASE_JSONLD, ROUTE_SEO as BASE_SEO } from "./seo";
+import { getRouteImage, getRouteJsonLd, NOT_FOUND_SEO, ROUTE_JSONLD as BASE_JSONLD, ROUTE_SEO as BASE_SEO } from "./seo";
 import * as Reference from "./pages/reference";
 import { setReferenceModule } from "./reference-registry";
 
@@ -20,4 +20,5 @@ export function render(path: string): string {
   );
 }
 
-export { NOT_FOUND_SEO, OG_CARDS, ROUTE_JSONLD, ROUTE_SEO };
+export { getRouteImage, getRouteJsonLd, NOT_FOUND_SEO, OG_CARDS, ROUTE_JSONLD, ROUTE_SEO };
+export { INVITATION_SEO } from "./pages/Invitation";

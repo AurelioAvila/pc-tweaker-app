@@ -154,9 +154,66 @@ pub(crate) fn output_unless(
     }))
 }
 
+/// The default ceiling for a native tool that answers a query or applies a
+/// setting. A healthy system answers in a second or two; a broken WMI
+/// repository or a hung driver never does, and the UI must not wait forever.
+pub(crate) const QUICK: std::time::Duration = std::time::Duration::from_secs(30);
+/// Enumerations that are slow on a healthy but busy system (every Appx
+/// package, every scheduled task, a Windows Update search).
+pub(crate) const SLOW: std::time::Duration = std::time::Duration::from_secs(120);
+
+/// Jobs that legitimately run for hours (an HDD defragmentation, driver
+/// downloads and installs): bounded, so nothing waits forever, but generous.
+pub(crate) const LONG: std::time::Duration = std::time::Duration::from_secs(6 * 3600);
+
+/// `Command::output` with a deadline: a child still running after `timeout`
+/// is killed and the call fails with `TimedOut`, naming the tool. Long jobs
+/// that stream progress (secure defrag, SFC, DISM) are spawned and watched by
+/// their own loops instead.
+pub(crate) fn output_within(
+    command: &mut Command,
+    timeout: std::time::Duration,
+) -> io::Result<std::process::Output> {
+    let deadline = std::time::Instant::now() + timeout;
+    let name = std::path::Path::new(command.get_program())
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    output_unless(command, &|| std::time::Instant::now() >= deadline)?.ok_or_else(|| {
+        io::Error::new(
+            io::ErrorKind::TimedOut,
+            format!("{name} did not respond within {} s", timeout.as_secs()),
+        )
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn a_tool_that_hangs_is_killed_at_its_deadline() {
+        let started = std::time::Instant::now();
+        let error = run("powershell", |c| {
+            output_within(
+                c.args([
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    "Start-Sleep 30",
+                ]),
+                std::time::Duration::from_secs(1),
+            )
+        })
+        .unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::TimedOut);
+        assert!(error.to_string().contains("powershell.exe"), "{error}");
+        assert!(started.elapsed() < std::time::Duration::from_secs(5));
+        let ok = run("cmd", |c| {
+            output_within(c.args(["/C", "echo", "in-time"]), QUICK)
+        })
+        .unwrap();
+        assert_eq!(String::from_utf8_lossy(&ok.stdout).trim(), "in-time");
+    }
     #[test]
     fn rejects_arbitrary_programs_and_paths() {
         for name in [

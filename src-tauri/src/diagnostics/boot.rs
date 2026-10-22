@@ -118,8 +118,8 @@ fn read_log() -> Result<Vec<BootRecord>, String> {
             "/c:100",
             "/rd:true",
             "/f:xml",
-        ])
-        .output()
+        ]);
+        crate::system_tools::output_within(tool, crate::system_tools::QUICK)
     })
     .map_err(|e| format!("could not run wevtutil: {e}"))?;
     if !output.status.success() {
@@ -140,7 +140,8 @@ pub fn run_elevated(app_data_dir: &Path) -> i32 {
         .map_err(|e| e.to_string())
         .and_then(|json| {
             std::fs::create_dir_all(app_data_dir).map_err(|e| e.to_string())?;
-            std::fs::write(app_data_dir.join(RESULT_FILE), json).map_err(|e| e.to_string())
+            crate::elevation::write_no_follow(&app_data_dir.join(RESULT_FILE), json)
+                .map_err(|e| e.to_string())
         });
     if written.is_err() {
         return 1;

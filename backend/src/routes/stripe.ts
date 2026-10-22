@@ -22,6 +22,8 @@ import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
 import { promoCheckout } from "../promo";
 import { queueReceipt, type Receipt } from "../receipt-outbox";
 import { asyncRoute } from "../async-route";
+import { referralCheckout, referralWebhook } from "../referral-stripe";
+import { ReferralError } from "../referrals";
 import { failureKey, trialMail, trialMoney, type Money, type TrialMailKind } from "../emails/trial";
 import {
   TRIAL_DAYS, TRIAL_MARK, TRIAL_REJECTED, blockedReason, claimTrial, grantsAccess, isOurTrial, trialEligible, trialEnabled,
@@ -327,10 +329,13 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       if (locale && params.cancel_url) params.cancel_url = withQuery(params.cancel_url, { lang: locale });
       // Two clicks within the same minute get the same page, not two that
       // could both be paid.
+      const referred = await referralCheckout(req.userId as number, planKey, params);
+      if (referred) return res.json(referred);
       const session = await effects.createSession(params,
         `checkout:${req.userId}:${product}:${planKey}:${trial ? "trial" : "now"}:${Math.floor(effects.now() / 60_000)}`);
       res.json({ url: session.url, trial, trial_days: TRIAL_DAYS });
     } catch (err) {
+      if (err instanceof ReferralError) return res.status(err.status).json({error:err.message,code:err.code});
       console.error("checkout session creation failed:", err);
       res.status(500).json({ error: "could not start checkout" });
     }
@@ -529,6 +534,7 @@ async function webhookHandler(req: Request, res: Response): Promise<void> {
 
   try {
     await handleEvent(event);
+    await referralWebhook(event);
   } catch (err) {
     // Fail loudly so Stripe retries. This used to answer 200 regardless, to
     // avoid a buggy handler being replayed forever — but Stripe gives up on

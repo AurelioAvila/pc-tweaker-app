@@ -7,28 +7,20 @@ import { API_BASE, DOWNLOAD_EXE } from "./constants";
 import { isReferencePath, loadReference } from "./reference-registry";
 // Self-hosted fonts (previously Google Fonts <link>s): keeps every visitor
 // request on our own origin — no IPs sent to Google, nothing to consent to.
-// Weights match what the old fonts.googleapis.com URL loaded.
-import "@fontsource/space-grotesk/500.css";
-import "@fontsource/space-grotesk/600.css";
-import "@fontsource/space-grotesk/700.css";
-import "@fontsource/jetbrains-mono/400.css";
-import "@fontsource/jetbrains-mono/500.css";
-import "@fontsource/jetbrains-mono/700.css";
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/500.css";
-import "@fontsource/inter/600.css";
+// One Latin variable file per family preserves the displayed weights.
+import "./fonts.css";
 import "./index.css";
 import faviconUrl from "./assets/favicon.png";
 
-captureEntry(window.location.search);
+captureEntry(window.location.search, window.location.pathname);
 
-// A visitor who arrived from a tagged social post and clicks the installer
-// download: count it against that post's labels. The download itself is the
-// unchanged link; the beacon carries only the in-memory labels, nothing else.
+// Count installer-link clicks against the first entry page or explicit campaign.
+// This is not a completed download or installation. Preview traffic stays local.
 document.addEventListener("click", (event) => {
+  if (window.location.hostname !== "pctweaker.app") return;
   const utm = campaignLabels();
   if (utm.utm_source && (event.target as Element | null)?.closest?.(`a[href="${DOWNLOAD_EXE}"]`)) {
-    navigator.sendBeacon(`${API_BASE}/api/download?${new URLSearchParams(utm)}`);
+    try { navigator.sendBeacon(`${API_BASE}/api/download?${new URLSearchParams(utm)}`); } catch { /* The installer link works independently. */ }
   }
 });
 

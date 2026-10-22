@@ -5,6 +5,7 @@ import { HeroSection } from "./components/HeroSection";
 import { PerformanceMetrics } from "./components/PerformanceMetrics";
 import { BespokeArsenal } from "./components/BespokeArsenal";
 import { EngineeringPhilosophy } from "./components/EngineeringPhilosophy";
+import { SuiteOverview } from "./components/SuiteOverview";
 import { ProtocolTimeline } from "./components/ProtocolTimeline";
 import { AccessPricing } from "./components/AccessPricing";
 import { ReviewsSection } from "./components/ReviewsSection";
@@ -14,6 +15,7 @@ import { TipThanks } from "./components/TipThanks";
 import { SupportPage } from "./pages/Support";
 import { UninstallerPage } from "./pages/Uninstaller";
 import { GuidePage, GUIDES } from "./pages/Guides";
+import { GuideDirectory } from "./pages/GuideDirectory";
 import {
   PrivacyPage,
   TermsPage,
@@ -21,19 +23,21 @@ import {
   AccessibilityPage,
   NotFoundPage,
 } from "./pages/Legal";
-import { PromoProvider } from "./promo";
+import { PromoProvider, RouteStructuredData } from "./promo";
 import { useRoute } from "./router";
-import { NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
+import { getRouteImage, NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
+import { InvitationPage, INVITATION_SEO } from "./pages/Invitation";
 import { referenceModule } from "./reference-registry";
 
-function HomePage() {
+function HomePage({ navigate }: { navigate: (to: string) => void }) {
   return (
     <main id="main-content">
       <HeroSection />
-      <PerformanceMetrics />
-      <BespokeArsenal />
+      <PerformanceMetrics navigate={navigate} />
+      <BespokeArsenal navigate={navigate} />
       <EngineeringPhilosophy />
       <ProtocolTimeline />
+      <SuiteOverview navigate={navigate} />
       <AccessPricing />
       <ReviewsSection />
       <FaqAccordion />
@@ -46,42 +50,55 @@ function HomePage() {
  *  mistyped link looked like a working page instead of an error. */
 export default function App({ initialPath = "/" }: { initialPath?: string }) {
   const { path, navigate } = useRoute(initialPath);
+  const invitation = path === "/invite";
   const reference = referenceModule();
-  const route = ROUTE_SEO[path] ?? reference?.REFERENCE_SEO[path];
+  const route = invitation ? INVITATION_SEO : (ROUTE_SEO[path] ?? reference?.REFERENCE_SEO[path]);
 
   // Client-side routing doesn't reload the document, so the tab title would
   // otherwise stay on whatever index.html shipped with.
   useEffect(() => {
     const seo = route ?? NOT_FOUND_SEO;
+    const image = getRouteImage(seo);
     document.title = seo.title;
     document.querySelector('link[rel="canonical"]')?.setAttribute("href", seo.canonical);
     for (const [selector, content] of [
       ['meta[name="description"]', seo.description],
       ['meta[property="og:title"]', seo.title],
+      ['meta[property="og:type"]', seo.ogType],
       ['meta[property="og:description"]', seo.description],
       ['meta[property="og:url"]', seo.canonical],
+      ['meta[property="og:image"]', image.url],
+      ['meta[property="og:image:alt"]', image.alt],
       ['meta[name="twitter:title"]', seo.title],
       ['meta[name="twitter:description"]', seo.description],
+      ['meta[name="twitter:image"]', image.url],
+      ['meta[name="twitter:image:alt"]', image.alt],
     ]) {
       document.querySelector(selector)?.setAttribute("content", content);
     }
     const robots = document.querySelector('meta[name="robots"]');
-    if (route) robots?.remove();
+    if (route && !invitation) robots?.remove();
     else if (!robots) {
       const tag = document.createElement("meta");
       tag.name = "robots";
       tag.content = "noindex,follow";
       document.head.appendChild(tag);
     }
-  }, [route]);
+  }, [route, invitation]);
 
   let page: React.ReactNode;
   switch (path) {
+    case "/invite":
+      page = <InvitationPage />;
+      break;
+    case "/guides":
+      page = <GuideDirectory navigate={navigate} />;
+      break;
     case "/uninstaller":
       page = <UninstallerPage />;
       break;
     case "/":
-      page = <HomePage />;
+      page = <HomePage navigate={navigate} />;
       break;
     case "/support":
       page = <SupportPage navigate={navigate} />;
@@ -108,6 +125,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
 
   return (
     <PromoProvider>
+      <RouteStructuredData path={path} />
       {/* Visually hidden until focused: the first Tab press lets keyboard and
           screen-reader users jump past the nav straight to the content. */}
       <a
@@ -120,12 +138,17 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       <Nav
         navigate={navigate}
         onSubpage={path !== "/"}
+        currentPath={path}
         {...(path === "/uninstaller"
-          ? { downloadHref: UNINSTALLER_DOWNLOAD_EXE, downloadLabel: "Download Uninstaller", offerHref: "#uninstaller-pro" }
+          ? {
+              downloadHref: UNINSTALLER_DOWNLOAD_EXE,
+              downloadLabel: "Download Uninstaller",
+              offerHref: "#uninstaller-pro",
+            }
           : {})}
       />
       {page}
-      <Footer navigate={navigate} />
+      <Footer navigate={navigate} currentPath={path} />
     </PromoProvider>
   );
 }

@@ -42,6 +42,10 @@ pub(crate) trait PowerBackend {
     fn read_value(&self, scheme: &str, t: &PowerTweak) -> Result<u32, String>;
     fn write_value(&self, scheme: &str, t: &PowerTweak, value: u32) -> Result<(), String>;
     fn refresh_if_active(&self, scheme: &str) -> Result<(), String>;
+    /// Whether the plan a snapshot was taken in still exists.
+    fn scheme_exists(&self, _scheme: &str) -> Result<bool, String> {
+        Ok(true)
+    }
 }
 
 pub(crate) fn apply_with(
@@ -83,6 +87,21 @@ pub(crate) fn restore_with(
         else {
             return Err("Unexpected power snapshot".into());
         };
+        // The setting lived inside its plan: a deleted plan took it along,
+        // so there is nothing left to restore (and a plan is never recreated).
+        if !api.scheme_exists(&scheme_guid)? {
+            if !cfg!(test) {
+                crate::audit::record(
+                    "power-setting-plan-gone",
+                    t.id,
+                    true,
+                    Some(format!(
+                        "the plan {scheme_guid} no longer exists; nothing to restore"
+                    )),
+                );
+            }
+            return Ok(());
+        }
         api.write_value(&scheme_guid, t, original_value)?;
         if api.read_value(&scheme_guid, t)? != original_value {
             return Err(
@@ -146,6 +165,17 @@ pub(crate) mod native {
             let g = *ptr;
             LocalFree(ptr.cast());
             Ok(guid_string(&g))
+        }
+    }
+    /// A plan exists while Windows keeps its key; read-only.
+    pub(crate) fn scheme_exists(scheme: &str) -> Result<bool, String> {
+        guid(scheme)?;
+        match RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey(format!(
+            r"SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\{scheme}"
+        )) {
+            Ok(_) => Ok(true),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(false),
+            Err(e) => Err(format!("could not inspect the power plan: {e}")),
         }
     }
     pub(crate) fn checked(code: u32) -> Result<(), String> {
@@ -224,6 +254,9 @@ pub(crate) mod native {
                 return Err("Windows did not retain the requested power policy".into());
             }
             Ok(())
+        }
+        fn scheme_exists(&self, scheme: &str) -> Result<bool, String> {
+            scheme_exists(scheme)
         }
         fn refresh_if_active(&self, scheme: &str) -> Result<(), String> {
             if self.active()?.eq_ignore_ascii_case(scheme) {
@@ -320,6 +353,7 @@ mod tests {
         value: Cell<u32>,
         fail_write: Cell<bool>,
         unsupported: bool,
+        plan_gone: Cell<bool>,
     }
     const PLAN: &str = "381b4222-f694-41f0-9685-ff5bb260df2e";
     impl PowerBackend for Fake {
@@ -347,6 +381,9 @@ mod tests {
         fn refresh_if_active(&self, _: &str) -> Result<(), String> {
             Ok(())
         }
+        fn scheme_exists(&self, _: &str) -> Result<bool, String> {
+            Ok(!self.plan_gone.get())
+        }
     }
     fn fixture() -> (std::path::PathBuf, RollbackStore, Fake) {
         static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
@@ -362,6 +399,7 @@ mod tests {
                 value: Cell::new(50),
                 fail_write: Cell::new(false),
                 unsupported: false,
+                plan_gone: Cell::new(false),
             },
         )
     }
@@ -374,6 +412,16 @@ mod tests {
         restore_with(&s, t, &a).unwrap();
         assert_eq!(a.value.get(), 50);
         assert!(!s.is_applied(t.id));
+        std::fs::remove_dir_all(d).unwrap();
+    }
+    #[test]
+    fn a_setting_whose_plan_was_deleted_is_cleared_without_writing() {
+        let (d, s, a) = fixture();
+        apply_with(&s, &TWEAKS[0], &a).unwrap();
+        a.plan_gone.set(true);
+        a.fail_write.set(true); // a write attempt would fail the restore
+        restore_with(&s, &TWEAKS[0], &a).unwrap();
+        assert!(!s.is_applied(TWEAKS[0].id));
         std::fs::remove_dir_all(d).unwrap();
     }
     #[test]

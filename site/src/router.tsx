@@ -60,16 +60,19 @@ export function Link({
   className,
   children,
   onNavigate,
+  ariaCurrent,
 }: {
   to: string;
   className?: string;
   children: React.ReactNode;
   onNavigate: (to: string) => void;
+  ariaCurrent?: "page";
 }) {
   return (
     <a
       href={to}
       className={className}
+      aria-current={ariaCurrent}
       onClick={(e) => {
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
         e.preventDefault();

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-referral-session"
+description = "Enables the referral_session command without any pre-configured scope."
+commands.allow = ["referral_session"]
+
+[[permission]]
+identifier = "deny-referral-session"
+description = "Denies the referral_session command without any pre-configured scope."
+commands.deny = ["referral_session"]

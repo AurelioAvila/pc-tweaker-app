@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "1.18.4"
+version = "1.18.9"
 description = "Real Windows tweaks with automatic one-click rollback"
 authors = ["Aurelio Avila"]
 license-file = "../LICENSE"
@@ -35,12 +35,17 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 trash = "5"
 sysinfo = "0.32"
-tauri-plugin-updater = "2"
+# Without the default "zip" feature: updates are the signed NSIS installer
+# itself, never an archive, so the zip extractor (RUSTSEC-2026-0367/0368/0369)
+# is left out of the shipped binary. TLS and proxy handling stay as default.
+tauri-plugin-updater = { version = "2", default-features = false, features = ["rustls-tls", "system-proxy"] }
 semver = "1"
 tauri-plugin-process = "2"
 tauri-plugin-single-instance = "2"
 ed25519-dalek = "2"
 base64 = "0.22"
+sha2 = "0.10"
+getrandom = "0.2"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
@@ -67,9 +72,14 @@ windows-sys = { version = "0.59", features = [
     # name the process it is reporting on instead of guessing.
     "Win32_UI_WindowsAndMessaging",
     "Win32_UI_Shell",
+    # Orderly Explorer restart for the classic context menu (contextmenu.rs).
+    "Win32_System_RestartManager",
+    # CoInitializeEx before ShellExecuteExW in the UAC relaunch (elevation.rs).
+    "Win32_System_Com",
     # NtSetSystemInformation, for the standby-list purge in the Zero-Trace
     # cleaner. Declared via LoadLibrary rather than linked, same as srclient.
     "Win32_Security",
+    "Win32_Security_Cryptography",
     "Win32_System_Memory",
     # A real-time ETW consumer, for the frame counter. See src/fps.rs â€” the
     # DXGI provider's Present events are the only way to observe a game's
@@ -108,7 +118,6 @@ windows-sys = { version = "0.59", features = [
     "Win32_Storage_FileSystem",
 ] }
 is_elevated = "0.1"
-runas = "1"
 # Wmi and Variant: the TCP congestion provider through MSFT_NetTCPSetting
 # (src/netshaper.rs), and the qualifier arrays that name its values.
 windows = { version = "0.58", features = ["Management_Deployment", "Foundation_Collections", "ApplicationModel", "Win32_System_Com", "Win32_System_Wmi", "Win32_System_Variant", "Win32_UI_Shell", "Win32_Storage_FileSystem"] }

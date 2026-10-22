@@ -5,6 +5,15 @@ import { FIX_GUIDES } from "./fix-guides";
 import { ProBox, Steps, TechSummary, type Step } from "../components/ReferenceBlocks";
 import { GUIDE_FAQS } from "./guide-faqs";
 import { Link } from "../router";
+import { GuideBreadcrumbs } from "../components/GuideBreadcrumbs";
+
+interface GuideFigure {
+  readonly src: string;
+  readonly width: number;
+  readonly height: number;
+  readonly alt: string;
+  readonly caption: string;
+}
 
 interface Guide {
   readonly eyebrow: string;
@@ -13,12 +22,22 @@ interface Guide {
   readonly seoTitle?: string;
   readonly seoDescription?: string;
   readonly intro: string;
+  readonly format?: "technical";
+  readonly updated?: string;
+  readonly published?: string;
   readonly image?: string;
   readonly caption?: string;
   readonly sections: readonly {
     readonly heading: string;
     readonly body: string;
+    readonly code?: string;
     readonly points?: readonly string[];
+    readonly figure?: GuideFigure;
+    readonly table?: {
+      readonly caption: string;
+      readonly rows: readonly { readonly module: string; readonly subsystem: string; readonly check: string }[];
+      readonly note: string;
+    };
   }[];
   /**
    * Curated in-content links to the other topic pages. The footer already
@@ -55,15 +74,15 @@ export const GUIDES: Record<string, Guide> = {
     eyebrow: "WINDOWS 11 OPTIMIZATION",
     title: "Optimize Windows 11 without losing control",
     intro:
-      "PC Tweaker applies documented, reversible Windows adjustments while preserving a clear record of what changed and how to restore it.",
+      "Find what is slowing your Windows 11 PC, review the relevant settings and compare one change at a time. PC Tweaker shows what supported tweaks change and records their previous values for restoration.",
     sections: [
       {
-        heading: "A safer alternative to one-click optimization",
+        heading: "Review the change and its recovery path",
         body:
-          "Generic optimizers often combine unrelated changes behind a single button. PC Tweaker keeps adjustments visible, categorized and individually reversible so you can improve the system without treating Windows as a black box.",
+          "Read the setting, permission requirement and trade-off before applying a tweak. PC Tweaker groups controls by task and saves the previous state of supported settings. That record helps you restore a change; it does not make every setting suitable for every PC or replace a backup.",
         points: [
           "Review each optimization before applying it",
-          "Restore supported changes through automatic rollback",
+          "Restore supported changes from their saved previous state",
           "Use live hardware information to make informed decisions",
           "Keep privacy, maintenance and performance controls separate",
         ],
@@ -76,17 +95,12 @@ export const GUIDES: Record<string, Guide> = {
       {
         heading: "Start from a reading, not from a preset",
         body:
-          "Open Scan before changing anything and write down what the machine does while idle: processor and memory use, free disk space, uptime and how many tweaks are already active. That number is the only thing you can compare against later. A disk sitting at 90 percent full is a storage problem no registry value will solve, and memory at half capacity has headroom that a RAM-clearing tool will not improve. Change one setting, repeat the same task, then compare against the reading you started from.",
+          "Start with the task that feels slow: signing in, opening an app or a repeatable game scene. Record Windows and driver versions, power mode, free storage and CPU, memory and disk activity during that task. An idle reading or a count of active tweaks cannot measure workload performance. For a game, repeat the same scene and record frame times as well as average FPS. Keep the test conditions consistent, change one relevant setting and repeat the measurement.",
       },
-      // The next four sections answer what "windows 11 optimizer" searchers
-      // actually want to know: what such a tool changes, which changes are
-      // worth having, and in what order. Every control named here is read
-      // from the app's own catalogue (src-tauri/src/tweaks.rs), including the
-      // caveats; nothing is claimed that the catalogue does not.
       {
         heading: "What a Windows 11 optimizer can actually change",
         body:
-          "Strip away the marketing and an optimizer is a list of Windows settings. PC Tweaker's list is grouped the way you will meet it in the app. Performance: the roughly ten-second delay Windows adds before launching startup programs, the delay before menus open, the 400 ms the interface waits before reacting to a resting pointer, the open-and-close window animations, and Store apps that keep running, refreshing and polling the network when you are not using them. Gaming: Xbox Game Bar background recording, the network throttle Windows applies while multimedia runs, the Sticky Keys shortcut that drops you out of a fullscreen game, mouse acceleration, fullscreen optimizations and hardware-accelerated GPU scheduling. Privacy: diagnostic data level, the advertising ID, Bing results in Start, tailored experiences, app-launch tracking, feedback prompts, suggested apps and the Recall screenshot policy. Interface: file extensions, Widgets, the Chat button, the taskbar search box and alignment, transparency, and Explorer's folder-type guessing. Maintenance: Delivery Optimization uploads, the long-path limit and the screen that lets a frozen app block shutdown.",
+          "PC Tweaker includes controls for startup, menu and hover timing, visual effects and supported background-app settings. Its gaming controls include background recording, mouse acceleration, accessibility shortcuts, fullscreen behavior and hardware-accelerated GPU scheduling. Privacy controls cover supported diagnostic, advertising and Recall policies. Interface and maintenance controls include file extensions, taskbar options and Delivery Optimization peer sharing. Availability and effect depend on the Windows build, edition, app and device policy. A registry value being written is not proof that every Windows component uses it.",
         points: [
           "Performance: startup, menu and hover delays, animations, background Store apps",
           "Gaming: Game Bar recording, network throttle, Sticky Keys, mouse acceleration",
@@ -95,20 +109,20 @@ export const GUIDES: Record<string, Guide> = {
         ],
       },
       {
-        heading: "The changes that are worth having, and why",
+        heading: "Match the setting to a symptom",
         body:
-          "The ones you can feel are the delays. Windows deliberately waits about ten seconds after sign-in before starting your startup apps, holds menus for a moment before opening them, and waits 400 ms before reacting to the pointer resting on a taskbar button or a tooltip; removing those three makes the desktop respond when you click rather than shortly after. Window animations are pure waiting time with GPU work behind them, which matters most on integrated graphics. Store apps running in the background are real CPU, memory and battery spent on apps you did not open. Delivery Optimization uploads your downloaded updates to other people's PCs by default, which is the upstream bandwidth you notice mid-game; limiting it to your own machine stops that. Always showing file extensions is worth turning on for safety alone, because it exposes a file named invoice.pdf.exe for what it is. None of these adds speed to the hardware. They remove work the hardware was doing for nothing.",
+          "For slow sign-in, first review which apps launch automatically. Menu and hover controls change particular interface timings; they do not reduce every click delay or make a game render faster. Reducing visual effects can change responsiveness, while restricting supported background apps can affect notifications and syncing. Check actual CPU, disk or network activity before deciding those apps are the cause. Delivery Optimization can share update files with peers when configured to do so; peer sharing is optional and does not always include internet PCs. PC Tweaker requests DODownloadMode=0, which disables peer-to-peer downloads while updates still use HTTP sources. Check Windows settings and your device policy before changing it. Showing file extensions helps you inspect a filename; it is not a performance improvement or proof that a file is safe.",
         points: [
-          "Startup, menu and hover delays: the difference you feel first",
-          "Background Store apps: CPU, memory and battery you were not using",
-          "Delivery Optimization: stop uploading updates to strangers",
-          "File extensions: a safety setting, not a performance one",
+          "Slow sign-in: review startup apps before changing timing values",
+          "Background activity: identify the process and check notification needs",
+          "Update traffic: inspect peer-sharing settings and network activity",
+          "File extensions: inspect the full name before opening a file",
         ],
       },
       {
         heading: "The changes the app refuses to oversell",
         body:
-          "Several settings that other optimizers sell as performance gains are listed in PC Tweaker with their limits spelled out, because the limits are documented. The MMCSS background reserve is written as 0, which Windows treats as 20%; it does not hand every foreground app the whole CPU. The legacy Games GPU Priority value is one Microsoft documents as unused, and the app says so: no gain is expected from it. The global timer resolution flag does not itself request or verify a timer resolution, and its effect depends on the Windows version. Disabling Memory Integrity removes a layer of kernel protection in exchange for a performance change that varies by hardware, and a policy or UEFI lock may prevent it anyway. Hardware-accelerated GPU scheduling can improve, worsen or leave latency unchanged depending on the game. Reducing diagnostic data requests the lowest level Windows allows and is not an off switch. If you want those settings, apply them knowing what they are.",
+          "Read the limits alongside each control. The MMCSS background reserve is written as 0, which Windows treats as 20%; it does not hand every foreground app the whole CPU. The legacy Games GPU Priority value is one Microsoft documents as unused, and the app says so: no gain is expected from it. The global timer resolution flag does not itself request or verify a timer resolution, and its effect depends on the Windows version. Disabling Memory Integrity removes a layer of kernel protection in exchange for a performance change that varies by hardware, and a policy or UEFI lock may prevent it anyway. Hardware-accelerated GPU scheduling can improve, worsen or leave latency unchanged depending on the game. Reducing diagnostic data requests the lowest level Windows allows and is not an off switch. Leave a setting unchanged when you have no specific reason to test it.",
         points: [
           "MMCSS reserve 0 means 20%, not zero",
           "Games GPU Priority: documented as unused, no gain expected",
@@ -117,9 +131,9 @@ export const GUIDES: Record<string, Guide> = {
         ],
       },
       {
-        heading: "The order that gets results on Windows 11",
+        heading: "A practical order for troubleshooting Windows 11",
         body:
-          "Tweaks are the last few percent, so do the big things first. Install pending updates in Settings, Windows Update, and restart. Check Settings, System, Storage: a drive near full slows everything and no setting fixes it. Review Settings, Apps, Startup and switch off what you do not need at sign-in; that is where most slow boots live. On a laptop, check the power mode and whether clock speeds fall under load, which is cooling, not configuration. Then run the Scan to record the baseline, apply the delay and background-app controls first because they are the ones you will notice, and leave the gaming and privacy settings until you have a specific reason for each. Change one thing, repeat the same task, compare with the reading you started from.",
+          "Check pending Windows updates and restart when required. Review Settings, System, Storage for low free space, and Settings, Apps, Startup for apps you do not need at sign-in. Use Task Manager during the slow task to find sustained CPU, memory or disk load. On a laptop, record whether it is plugged in and which power mode is active; lower clocks can reflect power limits, load or temperature, so clock speed alone does not diagnose overheating. Then choose a control relevant to the symptom, read its limits and test it against your baseline. Restore supported settings if results worsen or the change causes unwanted behavior.",
         points: [
           "Updates and restart before anything else",
           "Free disk space and startup apps in Settings",
@@ -141,7 +155,7 @@ export const GUIDES: Record<string, Guide> = {
       {
         heading: "What tuning cannot do for you",
         body:
-          "Windows Update still delivers your drivers, security updates still have to be installed, and thermal, storage and memory limits still cap what the hardware will do. Trimming avoidable background work can make a system feel more responsive; it cannot add processor cores, cool a laptop that is throttling, or repair a failing disk. Treat tweaks as the last few percent, applied after updates, drivers, free space and cooling are already in order.",
+          "Windows Update and the device manufacturer's guidance still matter for drivers and security maintenance. Configuration changes cannot add processor cores, repair a failing disk or guarantee a cooler laptop. Some systems benefit from reducing unnecessary background activity; others need a driver fix, more storage or hardware repair. There is no fixed percentage of performance that a tweak will recover. Keep a change only when it helps your workload without unacceptable trade-offs.",
       },
     ],
     related: [
@@ -162,11 +176,14 @@ export const GUIDES: Record<string, Guide> = {
       },
     ],
     sources: {
-      checked: "5 October 2026",
+      checked: "17 October 2026",
       items: [
-        { label: "Microsoft: Multimedia Class Scheduler Service (SystemResponsiveness, NetworkThrottlingIndex)", url: "https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service" },
+        { label: "Microsoft: Multimedia Class Scheduler Service (SystemResponsiveness and GPU Priority)", url: "https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service" },
         { label: "Microsoft: configure Windows diagnostic data (AllowTelemetry levels)", url: "https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization" },
         { label: "Microsoft: Delivery Optimization for Windows updates", url: "https://learn.microsoft.com/en-us/windows/deployment/do/waas-delivery-optimization" },
+        { label: "Microsoft: Delivery Optimization download modes", url: "https://learn.microsoft.com/en-us/windows/deployment/do/waas-delivery-optimization-reference" },
+        { label: "Microsoft: troubleshoot Windows performance", url: "https://support.microsoft.com/en-us/windows/experience/performance-optimization/tips-to-improve-pc-performance-in-windows" },
+        { label: "Microsoft: menu and mouse-hover system parameters", url: "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfoa" },
         { label: "Microsoft: manage Recall", url: "https://learn.microsoft.com/en-us/windows/client-management/manage-recall" },
         { label: "Microsoft: startup apps in Windows", url: "https://support.microsoft.com/en-us/windows/add-an-app-to-run-automatically-at-startup-in-windows-10-150da165-dcd9-7230-517b-cf3c295d89dd" },
         { label: "PC Tweaker: the tweak catalogue in the source", url: "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/tweaks.rs" },
@@ -177,7 +194,7 @@ export const GUIDES: Record<string, Guide> = {
     eyebrow: "GAMING PERFORMANCE",
     title: "Tune Windows for more consistent gaming performance",
     intro:
-      "Reduce avoidable background overhead, inspect system conditions and apply gaming-focused changes without surrendering the ability to roll them back.",
+      "Start with a repeatable stutter or uneven frame-time pattern. Check temperatures and background work, then review Game DVR or GPU scheduling one setting at a time. Keep a change only when repeated runs support it, and restore supported tweaks from their saved state.",
     sections: [
       {
         heading: "Consistency matters more than a synthetic promise",
@@ -223,6 +240,8 @@ export const GUIDES: Record<string, Guide> = {
       },
     ],
     related: [
+      {"to": "/guides/fix-dpc-isr-latency-windows-11/", "label": "diagnose DPC and ISR spikes before changing settings", "note": "Reproduce a crackle or frame-time problem and inspect the driver trace."},
+      {"to": "/guides/amd-ryzen-x3d-core-parking-windows-11/", "label": "check Ryzen X3D parking and process placement", "note": "Topology, power policy and process CPU sets are different controls."},
       {
         to: "/windows-gaming-work-study-profiles/",
         label: "what the Gaming starter profile selects",
@@ -244,7 +263,7 @@ export const GUIDES: Record<string, Guide> = {
     eyebrow: "REVERSIBLE TWEAKS",
     title: "Windows tweaks with a recovery path",
     intro:
-      "Optimization should not mean guessing how to undo a registry, service or system-setting change weeks later.",
+      "A reversible tweak needs the value that existed before the change. PC Tweaker records previous states for supported registry, service and system settings. Check that record and any restart requirement before applying a tweak; a generic Windows default is not your original configuration.",
     sections: [
       {
         heading: "Rollback is part of the feature",
@@ -306,7 +325,7 @@ export const GUIDES: Record<string, Guide> = {
     eyebrow: "WINDOWS PRIVACY",
     title: "Review Windows privacy settings without blind debloating",
     intro:
-      "Adjust supported privacy-related Windows behavior while keeping each action separate, understandable and reversible.",
+      "Review diagnostic data, advertising ID and Recall separately instead of running a broad debloat script. PC Tweaker identifies supported privacy controls and their permissions, and records previous values for restoration. A policy can have effects that restoring its value cannot undo, including deleted Recall snapshots.",
     sections: [
       {
         heading: "Privacy controls without destructive presets",
@@ -352,6 +371,7 @@ export const GUIDES: Record<string, Guide> = {
       },
     ],
     related: [
+      {"to": "/guides/windows-11-privacy-telemetry-rollback/", "label": "inspect privacy registry values and plan the rollback", "note": "Read the actual key, record its previous state and understand edition limits."},
       {
         to: "/turn-off-windows-recall/",
         label: "how to turn off Windows Recall, and keep it off",
@@ -378,27 +398,74 @@ export const GUIDES: Record<string, Guide> = {
 
 export function GuidePage({ path, navigate }: { path: string; navigate: (to: string) => void }) {
   const guide = GUIDES[path];
-  const storeLink = useCampaignStoreLink("pct-guide-" + path.slice(1));
+  const storeLink = useCampaignStoreLink("pct-guide-" + path.replace(/^\/guides\//, "").replace(/^\//, "").replace(/\//g, "-"));
   if (!guide) return null;
+  const technical = guide.format === "technical";
 
   return (
-    <main id="main-content" className="px-5 pt-32 pb-24 md:px-12">
+    <main id="main-content" className="px-5 pt-32 pb-24 md:px-12 [overflow-wrap:anywhere]">
       <article className="mx-auto max-w-4xl">
-        <p className="font-mono-t text-accent mb-5 text-[12px] tracking-[0.15em]">
+        <GuideBreadcrumbs path={path} navigate={navigate} />
+        {!technical && <p className="font-mono-t text-accent mb-5 text-[12px] tracking-[0.15em]">
           {guide.eyebrow}
-        </p>
+        </p>}
         <h1 className="font-display max-w-3xl text-4xl leading-[1.08] font-bold tracking-[-0.03em] text-[var(--fg)] md:text-6xl">
           {guide.title}
         </h1>
         <p className="mt-7 max-w-3xl text-lg leading-8 text-[var(--fg-dim)]">{guide.intro}</p>
+        {guide.updated && (!technical || guide.updated !== guide.published) && <p className="mt-3 text-sm text-[var(--fg-dim)]">Updated <time dateTime={guide.updated}>{new Date(`${guide.updated}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}</time>.</p>}
 
         {guide.summary && <TechSummary rows={guide.summary} />}
+        {technical && (
+          <>
+            <p className="mt-5 text-sm leading-6 text-[var(--fg-dim)]">Maintained by <a href="https://github.com/AurelioAvila" className="text-accent underline underline-offset-4">Aurelio Avila</a> · Sources checked {guide.sources?.checked}.</p>
+            {guide.published && <p className="mt-1 text-sm leading-6 text-[var(--fg-dim)]">Published <time dateTime={guide.published}>{new Date(`${guide.published}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}</time>.</p>}
+            <nav aria-label="On this page" className="mt-9 border-y border-[var(--line)] py-6">
+              <h2 className="font-display text-lg font-semibold text-[var(--fg)]">On this page</h2>
+              <ol className="mt-3 grid gap-x-8 md:grid-cols-2">
+                {guide.sections.map((section, index) => <li key={section.heading}><a href={`#guide-section-${index + 1}`} className="inline-flex min-h-11 items-center py-2 text-sm leading-6 text-accent underline underline-offset-4 decoration-[var(--line-2)] hover:decoration-[var(--accent)]">{section.heading}</a></li>)}
+              </ol>
+            </nav>
+          </>
+        )}
         {guide.image && <figure className="mt-10"><img src={guide.image} alt={guide.caption} loading="lazy" width="732" height="430" className="h-auto w-full rounded-xl" /><figcaption className="mt-3 text-sm text-[var(--fg-dim)]">{guide.caption}</figcaption></figure>}
         <div className="mt-14 space-y-8">
-          {guide.sections.map((section) => (
-            <section key={section.heading} className="rounded-2xl bg-[var(--surface)] p-7 md:p-9">
+          {guide.sections.map((section, index) => (
+            <section key={section.heading} id={`guide-section-${index + 1}`} className={technical ? "min-w-0 scroll-mt-32 border-b border-[var(--line)] pb-9" : "rounded-2xl bg-[var(--surface)] p-7 md:p-9"}>
               <h2 className="font-display text-2xl font-bold text-[var(--fg)]">{section.heading}</h2>
-              <p className="mt-4 max-w-3xl leading-7 text-[var(--fg-dim)]">{section.body}</p>
+              <p className={`mt-4 leading-7 text-[var(--fg-dim)] ${technical ? "max-w-[70ch]" : "max-w-3xl"}`}>{section.body}</p>
+              {section.figure && (
+                <figure className="mt-7">
+                  <a href={section.figure.src} className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]" aria-label={`Open original screenshot: ${section.figure.alt}`}>
+                    <img src={section.figure.src} width={section.figure.width} height={section.figure.height} alt={section.figure.alt} loading="lazy" decoding="async" className="h-auto w-full rounded-xl" />
+                  </a>
+                  <figcaption className="mt-4 text-sm leading-7 text-[var(--fg-dim)]">
+                    {section.figure.caption}{" "}
+                    <a href={section.figure.src} className="inline-flex min-h-11 items-center text-accent underline underline-offset-4">Open original screenshot</a>.
+                  </figcaption>
+                </figure>
+              )}
+              {section.table && (
+                <>
+                  <table id={`guide-table-${index + 1}`} className="mt-7 w-full scroll-mt-32 table-fixed border-collapse text-left text-sm leading-6">
+                    <caption className="pb-4 text-left font-semibold text-[var(--fg)]">{section.table.caption}</caption>
+                    <thead>
+                      <tr className="border-b border-[var(--line-2)] text-[var(--fg)]">
+                        <th scope="col" className="w-[40%] py-3 pr-4 font-semibold sm:w-[28%]">Module</th>
+                        <th scope="col" className="py-3 font-semibold">What to check first</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {section.table.rows.map((row) => <tr key={row.module} className="border-b border-[var(--line)] align-top">
+                        <th scope="row" className="py-5 pr-4 font-normal text-[var(--fg)]"><code className="text-xs [overflow-wrap:anywhere] sm:text-sm">{row.module}</code></th>
+                        <td className="py-5 text-[var(--fg-dim)]"><p className="font-semibold text-[var(--fg)]">{row.subsystem}</p><p className="mt-2">{row.check}</p></td>
+                      </tr>)}
+                    </tbody>
+                  </table>
+                  <p className="mt-4 max-w-[70ch] text-sm leading-7 text-[var(--fg-dim)]">{section.table.note}</p>
+                </>
+              )}
+              {section.code && <pre tabIndex={0} aria-label={`${section.heading}: read-only commands`} className="mt-5 max-w-full overflow-x-auto rounded-xl bg-[var(--surface)] p-5 text-[13px] leading-6 text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"><code>{section.code}</code></pre>}
               {section.points && (
                 <ul className="mt-6 grid gap-3 text-[15px] text-[var(--fg)] md:grid-cols-2">
                   {section.points.map((point) => (
@@ -472,7 +539,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
             </ul>
           </nav>
         )}
-        {path in PRACTICAL_GUIDES && (
+        {path in PRACTICAL_GUIDES && !technical && (
           <nav aria-label="References" className="mt-8 flex flex-wrap gap-5 text-sm text-accent">
             <a href="https://support.microsoft.com/en-us/windows/experience/storage-filemanagement/common-file-name-extensions-in-windows">
               Microsoft: file extensions

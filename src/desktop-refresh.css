@@ -534,16 +534,21 @@
   }
 }
 
-/* Bordered fields get one focus ring: the border turns to the focus colour and
-   a 1px shadow thickens it. The offset outline drawn on top of the border was
-   a second, concentric line. !important wins over the per-screen outline rules.
-   Tailwind-styled fields (outline-none) and checkable inputs are left alone. */
+/* Every text field gets one focus ring: the border turns to the focus colour
+   and a 1px shadow thickens it to 2px. The offset outline drawn outside the
+   border was a second, concentric line. That includes Tailwind-styled fields:
+   their `outline-none` sits in the utilities layer, so the unlayered
+   :focus-visible outline rules above won over it and the login form showed
+   two rings. !important wins over the per-screen outline rules. The outline
+   stays, transparent, so Windows contrast themes (which drop box-shadow and
+   recolour borders) still draw a visible ring. Checkable inputs keep theirs. */
 :is(
-    input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
-    select,
-    textarea
-  ):not([class*="outline-none"]):focus-visible {
-  outline: none !important;
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
+  select,
+  textarea
+):focus-visible {
+  outline: 2px solid transparent !important;
+  outline-offset: 0 !important;
   border-color: var(--focus) !important;
   box-shadow: 0 0 0 1px var(--focus) !important;
 }

@@ -398,6 +398,9 @@ export function HealthPanel({
   categoryLabels: Record<string, string>;
 }) {
   const [report, setReport] = useState<HealthReport | null>(null);
+  // compute() is memoised once, so it reads the latest report through a ref:
+  // a failed refresh must keep the report already on screen.
+  const reportRef = useRef<HealthReport | null>(null);
   const [comparison, setComparison] = useState<HealthComparison | null>(null);
   const [history, setHistory] = useState<HealthSnapshot[]>([]);
   const [whyOpen, setWhyOpen] = useState(false);
@@ -451,6 +454,7 @@ export function HealthPanel({
         window.setTimeout(() => {
           window.clearInterval(ticker);
           setStageIndex(4);
+          reportRef.current = r.report;
           setReport(r.report);
           setComparison(r.comparison);
           setPhase("done");
@@ -464,9 +468,8 @@ export function HealthPanel({
       .catch((e: unknown) => {
         window.clearInterval(ticker);
         setError(typeof e === "string" ? e : "Health report failed.");
-        setPhase(report ? "done" : "idle");
+        setPhase(reportRef.current ? "done" : "idle");
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

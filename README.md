@@ -1,8 +1,12 @@
+# PC Tweaker — Windows Tuning, Privacy and Maintenance
+
+For Windows 10/11 users who want to inspect settings before changing them. Review each control, keep a change history and restore supported settings from their recorded previous state.
+
+[Product and free download](https://pctweaker.app/?utm_source=github&utm_medium=repository&utm_campaign=pct-readme&utm_content=entry&cid=pct-github-readme) · [Official releases](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest) · [Verify the publisher signature](https://github.com/AurelioAvila/.github/blob/master/CODE_SIGNING.md)
+
 <p align="center">
   <img src="src-tauri/icons/128x128@2x.png" width="112" alt="PC Tweaker logo">
 </p>
-
-<h1 align="center">PC Tweaker — Windows Tuning, Privacy and Maintenance</h1>
 
 <p align="center"><strong>Tune Windows with the changes in plain sight.</strong><br>Gaming, privacy and maintenance controls, with restore tools for supported settings.</p>
 
@@ -52,6 +56,23 @@ winget upgrade --id AurelioAvila.PCTweaker --exact
 
 Package catalogs can lag behind a release. Check the release version before installing. Windows 10/11 x64 is the current binary target; individual features depend on the Windows build, edition, drivers and available hardware. App compatibility does not extend Microsoft's support lifecycle for your operating system.
 
+## Choose the right tool
+
+| Application | Use it for | Official page |
+| --- | --- | --- |
+| PC Tweaker | Review Windows settings, collect DPC/ISR diagnostics and inspect supported process-placement controls. | [PC Tweaker](https://pctweaker.app/) |
+| PC Tweaker Uninstaller | Review an uninstall command and removal risk, then inspect leftovers and the removal receipt. | [Uninstaller](https://pctweaker.app/uninstaller/) |
+| Tweaky Driver | Review a driver package and its source before deciding whether to install it. | [Tweaky Driver](https://pctweaker.app/tweaky-driver/) |
+
+These are separate applications with their own licences. PC Tweaker Lifetime includes 12 months of Uninstaller Pro from the first Uninstaller sign-in with the same account; other offers and renewals are described on each product’s page.
+
+### Diagnose before changing a setting
+
+- [DPC/ISR latency on Windows 11](https://pctweaker.app/guides/fix-dpc-isr-latency-windows-11/): capture the failing workload, investigate driver attribution and compare one change at a time.
+- [Ryzen X3D core parking and steering](https://pctweaker.app/guides/amd-ryzen-x3d-core-parking-windows-11/): distinguish the power-plan policy from process CPU sets, and verify the reset path.
+- [AMD X3D and Intel Hybrid Game Sessions](https://pctweaker.app/guides/amd-x3d-intel-hybrid-core-steering-gaming/): check supported topology, background-process exclusions and automatic restoration before comparing frame times.
+- [Windows privacy and rollback](https://pctweaker.app/guides/windows-11-privacy-telemetry-rollback/): inspect the exact registry values, record absence as well as data, and restore supported changes.
+
 ## Closing and reopening PC Tweaker
 
 Closing the window keeps PC Tweaker running in the Windows notification area. Click its icon to reopen it, or right-click and choose **Exit PC Tweaker** to quit. To make closing the window quit instead, clear **Keep running in the background** in the icon's menu. Windows may place the icon in its hidden-icons panel.
@@ -66,6 +87,11 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 - **1.18.2.** Pro keeps working when the PC's clock runs behind, account errors appear in the app's language, and the account menu shows the plan each product has.
 - **1.18.3.** Change your password and email from the account menu, account emails in the app's language, and nothing undone under a running game when Pro ends.
 - **1.18.4.** Updates are checked on dl.pctweaker.app as well as GitHub, and the change preview reads correctly when a control sets a single value.
+- **1.18.5.** Clarifies startup, menu, hover, background-app, update-sharing and window-display controls in all six languages. Settings and restoration behavior are unchanged.
+- **1.18.6.** Administrator changes to scheduled tasks with spaces in their path work, the Game Sessions list survives an interrupted save, and the administrator helper loads Windows libraries from System32 only.
+- **1.18.7.** Time limits on every Windows tool and on the administrator helper, power plan restores that survive a deleted plan, a polite Explorer restart, and changes that follow the signed-in user when another administrator approves UAC.
+- **1.18.8.** The notification-area menu and the first-close notice follow the language chosen in the app.
+- **1.18.9.** Routine maintenance; the account menu names each plan Free, Pro or Lifetime, and text fields show a single focus ring.
 
 See the [changelog](CHANGELOG.md) for every release.
 

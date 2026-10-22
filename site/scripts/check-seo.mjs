@@ -87,6 +87,21 @@ for (const url of urls) {
   // There is no verifiable first-party rating for this domain, so neither of
   // these may ever appear — however tempting the external review scores are.
   const raw = JSON.stringify(blocks);
+  const collection = blocks.find((block) => block["@type"] === "CollectionPage");
+  if (collection) {
+    const items = collection.mainEntity.itemListElement;
+    const main = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/)?.[1] ?? "";
+    assert.equal(collection.mainEntity.numberOfItems, items.length, `Wrong guide count: ${url}`);
+    assert.ok(items.length > 0, `Empty guide directory: ${url}`);
+    assert.equal(new Set(items.map((item) => item.url)).size, items.length, `Duplicate directory entries: ${url}`);
+    for (const [index, item] of items.entries()) {
+      const target = new URL(item.url);
+      assert.equal(item.position, index + 1, `Wrong list position: ${url}`);
+      assert.ok(urls.some((entry) => entry.href === target.href), `Directory target absent from sitemap: ${target}`);
+      assert.ok(main.includes(`href="${target.pathname}"`), `Directory target not visible in main content: ${target}`);
+      assert.ok(main.includes(item.name.replaceAll("&", "&amp;")), `Directory label not visible: ${item.name}`);
+    }
+  }
   assert.ok(!raw.includes("aggregateRating"), `Unverifiable aggregateRating: ${url}`);
   assert.ok(!/"@type":\s*"Review"/.test(raw), `Unverifiable Review markup: ${url}`);
 
@@ -108,9 +123,10 @@ assert.ok(!uninstaller.includes("a restore point taken first"), "Metadata must n
 for (const [value, label] of [[46, "CONTROLS INCLUDED FREE"], [81, "CONTROLS IN THIS RELEASE"], [1, "PLACE TO REVIEW &amp; RESTORE"]]) {
   assert.match(home, new RegExp(`<span>${value}</span>[\\s\\S]{0,500}${label}`), `Stat must render its real value in the initial HTML: ${label}`);
 }
-const app = JSON.parse(
-  home.match(/<script type="application\/ld\+json" data-ld="app">([\s\S]*?)<\/script>/)[1],
-);
+const app = [...home.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)]
+  .map((match) => JSON.parse(match[1]))
+  .find((item) => item["@type"] === "SoftwareApplication");
+assert.ok(app, "Homepage must carry its own SoftwareApplication");
 assert.ok(app.softwareVersion, "Software version must be populated");
 assert.equal(app["@type"], "SoftwareApplication");
 // Prices are a factual claim about what a visitor will be charged. Keep them
@@ -133,7 +149,7 @@ assert.deepEqual(
 assert.ok(uninstaller.includes("€9.99 per year"), "Uninstaller Pro price on the page changed; update its offers");
 assert.ok(!home.includes("Free plan — 35 tweaks"), "Stale Free plan count");
 assert.ok(home.includes("/uninstaller/"), "Uninstaller must have an internal link");
-assert.ok(home.match(/<script type="application\/ld\+json">[\s\S]*?FAQPage/), "Homepage FAQ must be marked up");
+assert.ok(home.match(/<script type="application\/ld\+json"[^>]*>[\s\S]*?FAQPage/), "Homepage FAQ must be marked up");
 
 const missing = await readFile(new URL("404.html", dist), "utf8");
 assert.ok(missing.includes('content="noindex,follow"'), "404 must be noindex");
@@ -147,5 +163,25 @@ const robots = await readFile(new URL("robots.txt", dist), "utf8");
 assert.match(robots, /Sitemap:\s*https:\/\/pctweaker\.app\/sitemap\.xml/, "robots.txt must point at the sitemap");
 assert.match(robots, /Sitemap:\s*https:\/\/pctweaker\.app\/sitemap-index\.xml/, "robots.txt must point at the sitemap index");
 assert.match(robots, /^\s*Allow:\s*\/$/m, "robots.txt must allow crawling");
+
+for (const [name, html] of [["homepage", home], ["Uninstaller", uninstaller]]) {
+  assert.ok(!/€00\.00|−00%|0 November 0000|0d 00h 00m 00s/.test(html), `Unverified offer text in initial HTML: ${name}`);
+}
+
+// Technical pages must be real prerendered articles at their nested canonical paths.
+for (const route of ["fix-dpc-isr-latency-windows-11", "amd-ryzen-x3d-core-parking-windows-11", "windows-11-privacy-telemetry-rollback"]) {
+  const url = `https://pctweaker.app/guides/${route}/`;
+  assert.ok(urls.some((entry) => entry.href === url), `Technical guide missing from sitemap: ${route}`);
+  const html = await readFile(new URL(`guides/${route}/index.html`, dist), "utf8");
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map((entry) => JSON.parse(entry[1]));
+  const article = blocks.find((entry) => entry["@type"] === "TechArticle");
+  assert.ok(html.includes('property="og:type" content="article"'), `Wrong Open Graph type: ${route}`);
+  assert.equal(article?.url, url, `Article canonical mismatch: ${route}`);
+  assert.equal(article?.mainEntityOfPage, url, `Article identity mismatch: ${route}`);
+  assert.ok(!blocks.some((entry) => entry["@type"] === "SoftwareApplication"), `Product offers leaked onto an article: ${route}`);
+  assert.ok(html.includes('aria-label="On this page"'), `Missing guide navigation: ${route}`);
+  for (const [, id] of html.matchAll(/href="#(guide-section-\d+)"/g)) assert.ok(html.includes(`id="${id}"`), `Broken section link ${id}: ${route}`);
+  assert.ok(html.includes("read-only commands"), `Missing inspectable commands: ${route}`);
+}
 
 console.log(`SEO checks passed for ${urls.length} sitemap routes, robots.txt and the 404 page.`);

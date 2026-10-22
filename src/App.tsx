@@ -1,4 +1,5 @@
 import { orderSectionTweaks } from "./feature-order";
+import { installId } from "./installId";
 import { TweakyDriverPromoCard } from "./components/tweaky-driver-promo";
 import { NetworkCheckPanel } from "./components/diagnostics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -71,6 +72,8 @@ import {
   UninstallerPromoCard,
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
+import { ReferralPanel } from "./components/referrals";
+import { readReferralStatus, activateOrRefreshBonus, bonusForThisPc } from "./referrals";
 import { TweakIcon } from "./components/tweak-icon";
 import { TechnicalDetails, TechnicalToggle } from "./components/technical";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
@@ -143,6 +146,8 @@ function App() {
     // European Portuguese only (owner decision, 11 Oct 2026): dates and
     // numbers use the pt-PT conventions, not the Brazilian ones.
     document.documentElement.lang = localeOf(lang) ?? "en";
+    // The notification-area menu speaks the window's language.
+    void invoke("set_tray_language", { language: lang }).catch(() => {});
   }, [lang]);
 
   const [auth, setAuth] = useState<AuthState>(() => {
@@ -163,7 +168,10 @@ function App() {
       : { status: "anonymous" };
   });
 
-  const isProUnlocked = auth.status === "authenticated" && auth.isPro;
+  const isProUnlocked =
+    auth.status === "authenticated" && (auth.isPro || auth.bonusActive === true);
+  const [referralOpen, setReferralOpen] = useState(false);
+  const [referralAvailable, setReferralAvailable] = useState(false);
   const billing = auth.status === "authenticated" ? auth.billing : undefined;
   const [billingNotice, setBillingNotice] = useState<BillingChange | null>(null);
   // Public plan prices and the trial switch: the plans print a renewal price
@@ -217,6 +225,7 @@ function App() {
         pushToast("error", s.toasts.accountRefreshFailed);
         return;
       }
+      if (readToken() !== token) return;
       adoptRenewedToken(res);
       const data = (await res.json()) as {
         email: string;
@@ -239,8 +248,12 @@ function App() {
       // Fire-and-forget: refreshLicense() has its own error handling and
       // must never block the UI's account status on a signing hiccup.
       void refreshLicense();
-      void refreshProducts(token);
-      void refreshBilling(token, data.email);
+      void refreshReferralSession();
+      const refreshedToken = readToken();
+      if (refreshedToken) {
+        void refreshProducts(refreshedToken);
+        void refreshBilling(refreshedToken, data.email);
+      }
       const pending = pendingPlan.current;
       if (pending && (data.isPro || pending.until < Date.now())) {
         pendingPlan.current = null;
@@ -329,8 +342,12 @@ function App() {
     const token = readToken();
     if (!token) return;
     try {
+      const install = installId();
       const res = await fetch(`${API_BASE_URL}/api/license`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(install ? { "X-Install-Id": install } : {}),
+        },
       });
       if (!res.ok) return;
       const response = (await res.json()) as { payloadJson: string; signature: string };
@@ -342,6 +359,52 @@ function App() {
       // and a real subscriber should never see noise from it.
     }
   }
+
+  // Bonus refresh: one challenge and one proof against stored server state, only while a bonus
+  // is active on this PC, every 5 minutes inside the 10-minute signed lease, plus on sign-in and
+  // window focus (at most once a minute). Nothing is polled while the programme is off or no
+  // bonus is active; failures with a lease still running back off up to 30 minutes.
+  const referralTimer = useRef<number | undefined>(undefined);
+  const referralFailures = useRef(0);
+  const referralLast = useRef(0);
+  async function refreshReferralSession(force = false) {
+    if (!force && Date.now() - referralLast.current < 60_000) return;
+    referralLast.current = Date.now();
+    window.clearTimeout(referralTimer.current);
+    const token = readToken();
+    if (!token) return;
+    let active = false;
+    let next: number | null = null;
+    const status = await readReferralStatus(token);
+    if (readToken() !== token) return;
+    // Only an explicit, well-formed "enabled" shows the menu entry; anything else is "off".
+    setReferralAvailable(status?.enabled === true);
+    try {
+      if (!status) throw new Error("Referral status unavailable");
+      const reward = await bonusForThisPc(status.rewards);
+      if (reward) {
+        active = await activateOrRefreshBonus(status, reward.id, "license", token);
+        next = 5 * 60_000;
+      } else await invoke("clear_referral_license");
+      referralFailures.current = 0;
+    } catch {
+      // A failed refresh keeps only the native layer's remaining signed lease.
+      active = await invoke<boolean>("referral_license_status", { token }).catch(() => false);
+      referralFailures.current += 1;
+      if (active) next = Math.min(30, 5 * 2 ** (referralFailures.current - 1)) * 60_000;
+    }
+    if (readToken() !== token) return;
+    setAuth((current) =>
+      current.status === "authenticated" ? { ...current, bonusActive: active } : current,
+    );
+    if (next !== null)
+      referralTimer.current = window.setTimeout(() => void refreshReferralRef.current(true), next);
+  }
+  const refreshReferralRef = useRef(refreshReferralSession);
+  useEffect(() => {
+    refreshReferralRef.current = refreshReferralSession;
+  });
+  useEffect(() => () => window.clearTimeout(referralTimer.current), []);
 
   // The server can hold every runtime adjustment to other apps for everyone
   // (off by default). Read at start and hourly; an unreachable server
@@ -367,6 +430,11 @@ function App() {
     return () => window.clearInterval(id);
   }, []);
 
+  const refreshAccountRef = useRef(refreshAccount);
+  useEffect(() => {
+    refreshAccountRef.current = refreshAccount;
+  });
+
   useEffect(() => {
     refreshAccount();
     // Before this version the profile photo belonged to the computer rather
@@ -375,8 +443,10 @@ function App() {
     // Doing this at sign-in instead would hand it to the next account.
     const signedInAs = readStoredEmail();
     if (signedInAs) void adoptLegacyAvatar(signedInAs);
+    // The listener outlives this render: call the latest refreshAccount so
+    // its toasts follow the current language.
     function onFocus() {
-      refreshAccount();
+      refreshAccountRef.current();
     }
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
@@ -397,6 +467,10 @@ function App() {
   }, [billing]);
 
   function logout() {
+    window.clearTimeout(referralTimer.current);
+    referralLast.current = 0;
+    setReferralOpen(false);
+    setReferralAvailable(false);
     clearSession();
     setAuth({ status: "anonymous" });
     // Without this, a still-fresh cached Pro license would keep unlocking
@@ -461,6 +535,9 @@ function App() {
     });
     if (!res.ok) throw accountFailure(res.status);
     const data = (await res.json()) as { token: string; verificationEmailSent?: boolean };
+    // A new login must not inherit a previous account's signed caches, even if
+    // an earlier asynchronous logout was interrupted.
+    await invoke("clear_license");
     // "Remember me" decides *where* the session lives, not just whether we
     // prefill an address: sessionStorage is cleared when the app closes, so
     // unticking it genuinely means "don't keep me signed in on this machine"
@@ -997,6 +1074,7 @@ function App() {
                 theme={theme}
                 setTheme={setTheme}
                 auth={auth}
+                onReferrals={referralAvailable ? () => setReferralOpen(true) : undefined}
                 open={accountMenuOpen}
                 onOpenChange={setAccountMenuOpen}
                 onAuthenticate={authenticate}
@@ -1014,6 +1092,14 @@ function App() {
                 }
                 pushToast={pushToast}
               />
+              {referralOpen && auth.status === "authenticated" && (
+                <ReferralPanel
+                  lang={lang}
+                  lifetime={auth.isPro && auth.plan === "lifetime"}
+                  onClose={() => setReferralOpen(false)}
+                  onChanged={() => void refreshReferralSession(true)}
+                />
+              )}
             </header>
 
             <div hidden={!showScan} className="workspace-view workspace-scan-view">

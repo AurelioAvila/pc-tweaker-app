@@ -65,6 +65,12 @@ pub const APP_COMMANDS: &[&str] = &[
     "save_license",
     "license_status",
     "clear_license",
+    "referral_device",
+    "referral_session",
+    "referral_proof",
+    "save_referral_license",
+    "referral_license_status",
+    "clear_referral_license",
     "list_tweaks",
     "apply_tweak",
     "apply_tweaks",
@@ -151,4 +157,5 @@ pub const APP_COMMANDS: &[&str] = &[
     "priority_rules_set_enabled",
     "priority_rules_set_priority",
     "is_store_install",
+    "set_tray_language",
 ];

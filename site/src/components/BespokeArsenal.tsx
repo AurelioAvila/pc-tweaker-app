@@ -2,6 +2,7 @@ import type { MouseEvent } from "react";
 import { motion } from "framer-motion";
 import { text } from "../i18n/dictionary";
 import { riseChild, staggerParent, viewportOnce } from "../motion";
+import { Link } from "../router";
 
 const SPAN_CLASS: Record<"wide" | "tall" | "std", string> = {
   wide: "md:col-span-4",
@@ -16,7 +17,7 @@ function onCardMove(e: MouseEvent<HTMLDivElement>) {
   el.style.setProperty("--my", `${e.clientY - r.top}px`);
 }
 
-export function BespokeArsenal() {
+export function BespokeArsenal({ navigate }: { navigate: (to: string) => void }) {
   return (
     <section id="arsenal" className="border-t border-white/5 px-5 py-24 md:px-12">
       <motion.div
@@ -60,6 +61,7 @@ export function BespokeArsenal() {
                 {c.title}
               </h3>
               <p className="text-[13.8px] leading-relaxed text-[var(--fg-dim)]">{c.body}</p>
+              {c.guide && <Link to={c.guide.href} onNavigate={navigate} className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-accent underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]">{c.guide.label}</Link>}
             </motion.div>
           ))}
         </div>

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { API_BASE } from "./constants";
+import { getRouteJsonLd } from "./seo";
 import { HalloweenCard, HalloweenStrip } from "../../src/components/halloween-offer";
 // Shared with the desktop app, so both read the server's offer the same way.
 import { msUntil, parsePromo, previewPromo, promoPercent, PROMO_LAYOUT_UNTIL, type Promo, type PromoOffer } from "../../src/promo";
@@ -171,7 +172,7 @@ export function PromoStrip({ href }: { href: string }) {
   if (!promo && reserve)
     return (
       <Reserved>
-        <HalloweenStrip label={c.strip(50)} shortLabel={c.stripShort(50)} endsIn={c.endsIn} units={c.units} remaining={0} cta={c.cta} href={href} closeLabel={c.close} storageKey="pct-hw-strip:reserved" />
+        <div style={{ height: 40 }} />
       </Reserved>
     );
   if (!promo) return null;
@@ -189,7 +190,7 @@ export function PromoCard({ product = "pctweaker", plan = "lifetime", href = "#a
   if (!promo && reserve)
     return (
       <Reserved>
-        <HalloweenCard tag={c.tag} plan={plan === "lifetime" ? c.lifetime : c.firstYear("€0.00")} was="€00.00" now="€00.00" pct="−00%" note={c.ends("0 November 0000, 00:00 CET")} cta={c.cta} href={href} />
+        <HalloweenCard tag=" " plan=" " was="" now=" " pct="" note=" " cta="" href={href} />
       </Reserved>
     );
   if (!promo || !o) return null;
@@ -218,4 +219,23 @@ export function PromoFine({ className = "" }: { className?: string }) {
       {c.fine}
     </p>
   );
+}
+
+/** Keep route identity and prices current during client-side navigation,
+ *  promotion expiry and offer refreshes, without an extra network request. */
+export function RouteStructuredData({ path }: { path: string }) {
+  const { promo } = usePromo();
+  useEffect(() => {
+    document.querySelectorAll('script[data-ld="route"]').forEach((node) => node.remove());
+    const scripts = getRouteJsonLd(path, promo).map((payload) => {
+      const script = document.createElement("script");
+      script.type = "application/ld+json";
+      script.dataset.ld = "route";
+      script.textContent = JSON.stringify(payload);
+      document.head.appendChild(script);
+      return script;
+    });
+    return () => scripts.forEach((script) => script.remove());
+  }, [path, promo]);
+  return null;
 }

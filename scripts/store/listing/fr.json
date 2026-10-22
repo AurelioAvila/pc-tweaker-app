@@ -59,5 +59,5 @@
       "caption": "Partez d'un profil Jeu, Études ou Travail et ajustez-le avant de l'appliquer"
     }
   ],
-  "releaseNotes": "PC Tweaker 1.18.4 : un aperçu des modifications plus clair.\n\n- Dans « Ce que cela modifie, exactement », un réglage qui ne définit qu'une seule valeur indique désormais « L'appliquer modifie la valeur. » au lieu de « modifie 1 valeurs sur 1 ».\n- Toujours 81 réglages (46 Free, 35 Pro).\n\nRéglages, licences et historique des modifications sont conservés."
+  "releaseNotes": "PC Tweaker 1.18.9 est une mise à jour de maintenance courante avec deux petites corrections du menu du compte.\n\n- Le menu du compte affiche chaque offre comme Free, Pro ou À vie.\n- Les champs de texte n'affichent plus qu'un seul contour de sélection.\n- Toujours 81 réglages (46 Free, 35 Pro).\n\nRéglages, licences et historique des modifications sont conservés."
 }

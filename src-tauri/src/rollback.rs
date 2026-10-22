@@ -253,13 +253,28 @@ impl RollbackStore {
             .ok_or("invalid rollback store path")?;
         fs::create_dir_all(parent)
             .map_err(|e| format!("could not create rollback directory: {e}"))?;
-        let lock = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(false)
+        let mut options = OpenOptions::new();
+        options.read(true).write(true).create(true).truncate(false);
+        #[cfg(windows)]
+        {
+            // A link planted at the lock's name is opened, and refused, as
+            // itself: the elevated helper must not create the file it names.
+            use std::os::windows::fs::OpenOptionsExt;
+            options.custom_flags(
+                windows_sys::Win32::Storage::FileSystem::FILE_FLAG_OPEN_REPARSE_POINT,
+            );
+        }
+        let lock = options
             .open(self.file_path.with_extension("lock"))
             .map_err(|e| format!("could not open rollback lock: {e}"))?;
+        if lock
+            .metadata()
+            .map_or(true, |m| crate::elevation::is_link(&m) || !m.is_file())
+        {
+            return Err(
+                "the rollback lock is a link to another location; nothing was changed".into(),
+            );
+        }
         let deadline = Instant::now() + Duration::from_secs(15);
         loop {
             match lock.try_lock() {

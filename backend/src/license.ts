@@ -56,6 +56,11 @@ export type LicensePayload = {
   expiresAt?: number | null;
   /** Unix seconds while a free trial runs (then expiresAt equals it), else null. */
   trialEndsAt?: number | null;
+  /** Version 2 bonus grants are never flattened into account-wide Pro. */
+  schemaVersion?: 2;
+  grantId?: string;
+  deviceKeyHash?: string;
+  sessionHash?: string;
 };
 
 export type SignedLicense = {

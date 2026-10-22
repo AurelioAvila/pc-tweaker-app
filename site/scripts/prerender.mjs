@@ -5,9 +5,37 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
 const serverBundle = path.join(root, "dist-ssr", "entry-server.js");
-const { render, ROUTE_SEO, ROUTE_JSONLD, NOT_FOUND_SEO, OG_CARDS } = await import(pathToFileURL(serverBundle));
+const {
+  render,
+  ROUTE_SEO,
+  getRouteImage,
+  getRouteJsonLd,
+  NOT_FOUND_SEO,
+  INVITATION_SEO,
+  OG_CARDS,
+} = await import(pathToFileURL(serverBundle));
 const { writeOgCards } = await import(pathToFileURL(path.join(root, "scripts", "og.mjs")));
-const template = await readFile(path.join(dist, "index.html"), "utf8");
+let template = await readFile(path.join(dist, "index.html"), "utf8");
+
+// Deliver the small, shared stylesheet with the prerendered document, so the
+// first paint does not wait for a separate blocking CSS request. Keep the
+// fingerprinted asset for any later chunk that needs it.
+const stylesheets = [...template.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*>/gi)];
+if (!stylesheets.length) throw new Error("Missing built stylesheet");
+for (const [tag] of stylesheets) {
+  const href = tag.match(/\bhref="([^"]+)"/)?.[1];
+  if (!href?.startsWith("/assets/") || !href.endsWith(".css") || href.includes(".."))
+    throw new Error(`Unexpected stylesheet URL: ${href}`);
+  const css = await readFile(path.join(dist, href.slice(1)), "utf8");
+  if (/<\/style/i.test(css)) throw new Error("Invalid inline stylesheet content");
+  // Vite emits root-relative asset URLs. A relative URL would resolve against
+  // the article instead of /assets/ after the stylesheet is inlined.
+  for (const [, asset] of css.matchAll(/url\(["']?([^"')]+)["']?\)/g)) {
+    if (!asset.startsWith("/") && !asset.startsWith("data:"))
+      throw new Error(`Non-root-relative CSS asset URL: ${asset}`);
+  }
+  template = template.replace(tag, () => `<style data-site-css>${css}</style>`);
+}
 
 function escapeAttribute(value) {
   return value
@@ -28,18 +56,13 @@ function replaceTag(html, pattern, replacement, label) {
 // the sequence "</script>" impossible to form.
 function jsonLdScript(payload) {
   const json = JSON.stringify(payload, null, 2).replaceAll("<", "\\u003c");
-  return `<script type="application/ld+json">\n${json}\n  </script>`;
+  return `<script type="application/ld+json" data-ld="route">\n${json}\n  </script>`;
 }
 
 function buildPage(route, seo, noindex = false) {
   let html = template;
-  // The SoftwareApplication block describes the product and belongs on the
-  // page that is about the product. The sitewide Organization/WebSite graph
-  // above it stays on every page so the whole property resolves to one entity.
-  if (route !== "/") {
-    html = html.replace(/\s*<script type="application\/ld\+json" data-ld="app">[\s\S]*?<\/script>/i, "");
-  }
-  const routeLd = (!noindex && ROUTE_JSONLD[route]) || [];
+  const image = getRouteImage(seo);
+  const routeLd = noindex ? [] : getRouteJsonLd(route);
   html = replaceTag(
     html,
     /<!--ROUTE_LD-->/,
@@ -67,6 +90,8 @@ function buildPage(route, seo, noindex = false) {
     "og:description": seo.description,
     "og:url": seo.canonical,
     "og:type": seo.ogType,
+    "og:image": image.url,
+    "og:image:alt": image.alt,
   };
   for (const [property, value] of Object.entries(properties)) {
     html = replaceTag(
@@ -87,6 +112,8 @@ function buildPage(route, seo, noindex = false) {
   const twitter = {
     "twitter:title": seo.title,
     "twitter:description": seo.description,
+    "twitter:image": image.url,
+    "twitter:image:alt": image.alt,
   };
   for (const [name, value] of Object.entries(twitter)) {
     html = replaceTag(
@@ -110,11 +137,18 @@ function buildPage(route, seo, noindex = false) {
 }
 
 for (const [route, seo] of Object.entries(ROUTE_SEO)) {
-  const file = route === "/" ? path.join(dist, "index.html") : path.join(dist, route.slice(1), "index.html");
+  const file =
+    route === "/" ? path.join(dist, "index.html") : path.join(dist, route.slice(1), "index.html");
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, buildPage(route, seo), "utf8");
 }
 
 await writeFile(path.join(dist, "404.html"), buildPage("/404", NOT_FOUND_SEO, true), "utf8");
+await mkdir(path.join(dist, "invite"), { recursive: true });
+await writeFile(
+  path.join(dist, "invite", "index.html"),
+  buildPage("/invite", INVITATION_SEO, true),
+  "utf8",
+);
 await writeOgCards(OG_CARDS, path.join(dist, "og"));
 await rm(path.join(root, "dist-ssr"), { recursive: true, force: true });

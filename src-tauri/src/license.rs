@@ -159,7 +159,8 @@ fn verified_fresh_response(
     let verified =
         verify_with_public_key(&response.payload_json, &response.signature, public_key_b64).ok()?;
     let payload = require_pc_tweaker_product(verified).ok()?;
-    is_fresh(&payload).then_some(payload)
+    (is_fresh(&payload) && bound_to(&response.payload_json, device_hash().as_deref()))
+        .then_some(payload)
 }
 
 fn require_pc_tweaker_product(payload: LicensePayload) -> Result<LicensePayload, VerifyError> {
@@ -209,6 +210,70 @@ fn is_fresh_at(payload: &LicensePayload, now: u64) -> bool {
         && payload.issued_at <= now.saturating_add(MAX_CLOCK_SKEW_SECS)
         && now.saturating_sub(payload.issued_at) <= grace_period(payload)
         && payload.expires_at.is_none_or(|expiry| now < expiry)
+}
+
+/// SHA-256 of `pc-tweaker-licence:` and this Windows installation's
+/// MachineGuid (lower case). Sent with every licence request; the backend
+/// signs it into the licence, so a `license.json` copied to another PC
+/// unlocks nothing there. The same value in PC Tweaker and the Uninstaller:
+/// it names the PC, not the product. None where the registry cannot be read.
+pub(crate) fn device_hash() -> Option<String> {
+    static HASH: OnceLock<Option<String>> = OnceLock::new();
+    HASH.get_or_init(|| machine_guid().map(|guid| hash_guid(&guid)))
+        .clone()
+}
+
+fn hash_guid(guid: &str) -> String {
+    use sha2::{Digest, Sha256};
+    format!(
+        "{:x}",
+        Sha256::digest(format!(
+            "pc-tweaker-licence:{}",
+            guid.trim().to_ascii_lowercase()
+        ))
+    )
+}
+
+#[cfg(windows)]
+fn machine_guid() -> Option<String> {
+    use winreg::enums::{HKEY_LOCAL_MACHINE, KEY_READ, KEY_WOW64_64KEY};
+    let key = winreg::RegKey::predef(HKEY_LOCAL_MACHINE)
+        .open_subkey_with_flags(
+            r"SOFTWARE\Microsoft\Cryptography",
+            KEY_READ | KEY_WOW64_64KEY,
+        )
+        .ok()?;
+    let guid: String = key.get_value("MachineGuid").ok()?;
+    (!guid.trim().is_empty()).then_some(guid)
+}
+#[cfg(not(windows))]
+fn machine_guid() -> Option<String> {
+    None
+}
+
+/// A licence without `deviceHash` (issued before the backend bound licences
+/// to a PC) stays valid until it expires as before; one with it must name
+/// this PC. Read from the exact signed bytes, after the signature check.
+fn bound_to(payload_json: &str, this_pc: Option<&str>) -> bool {
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Binding {
+        #[serde(default)]
+        device_hash: Option<String>,
+    }
+    match serde_json::from_str::<Binding>(payload_json) {
+        Ok(Binding { device_hash: None }) => true,
+        Ok(Binding {
+            device_hash: Some(hash),
+        }) => this_pc == Some(hash.as_str()),
+        Err(_) => false,
+    }
+}
+
+/// For the licence request header: this PC's hash, or nothing.
+#[tauri::command]
+pub fn license_device_hash() -> Option<String> {
+    device_hash()
 }
 
 /// Persists the raw, still-signed response to the app data directory so it
@@ -289,6 +354,9 @@ pub fn save_license(app: tauri::AppHandle, response: SignedLicenseResponse) -> R
         .map_err(|e| format!("license did not verify: {:?}", e))?;
     if !is_fresh(&payload) {
         return Err("license is expired or its issue time is ahead of this PC's clock".into());
+    }
+    if !bound_to(&response.payload_json, device_hash().as_deref()) {
+        return Err("license was issued to another PC".into());
     }
     let store = LicenseStore::new(crate::store_for_dir(&app)?);
     store.save(&response).map_err(|e| e.to_string())
@@ -666,5 +734,41 @@ mod tests {
         let store = LicenseStore::new(dir.clone());
         std::fs::write(dir.join("license.json"), "not json at all").unwrap();
         assert!(!store.is_pro_and_fresh());
+    }
+
+    #[test]
+    fn a_licence_bound_to_another_pc_unlocks_nothing_here() {
+        let here = hash_guid("1B4E28BA-2FA1-11D2-883F-0016D3CCA427");
+        assert_eq!(here, hash_guid(" 1b4e28ba-2fa1-11d2-883f-0016d3cca427 "));
+        assert_eq!(here.len(), 64);
+        let payload = |hash: Option<&str>| {
+            let mut value = serde_json::json!({"userId":"42","isPro":true,"plan":"lifetime","product":"pctweaker","issuedAt":1});
+            if let Some(hash) = hash {
+                value["deviceHash"] = serde_json::Value::String(hash.into());
+            }
+            value.to_string()
+        };
+        assert!(bound_to(&payload(Some(&here)), Some(&here)));
+        assert!(
+            !bound_to(&payload(Some(&hash_guid("another-pc"))), Some(&here)),
+            "a copied licence.json"
+        );
+        assert!(
+            !bound_to(&payload(Some(&here)), None),
+            "a PC whose identity cannot be read"
+        );
+        assert!(
+            bound_to(&payload(None), Some(&here)),
+            "licences from before binding stay valid until they expire"
+        );
+        assert!(!bound_to("not json", Some(&here)));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn this_pc_has_a_stable_licence_identity() {
+        let first = device_hash();
+        assert!(first.as_deref().is_some_and(|h| h.len() == 64));
+        assert_eq!(first, device_hash());
     }
 }

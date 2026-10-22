@@ -157,12 +157,16 @@ export function PaywallModal({
   s,
   lang,
   featureName,
+  trialDays,
   onClose,
   onNotify,
 }: {
   s: Strings;
   lang: Lang;
   featureName: string;
+  /** Set when this account (or, signed out, the public switch) can start the
+   *  free trial: the hook leads with it instead of only the prices. */
+  trialDays?: number | null;
   onClose: () => void;
   onNotify: () => void;
 }) {
@@ -173,7 +177,9 @@ export function PaywallModal({
       actions={
         <>
           <button onClick={onNotify} className="tool-primary-action">
-            {s.paywall.unlock}
+            {trialDays
+              ? format(TRIAL_COPY[lang].start, { days: String(trialDays) })
+              : s.paywall.unlock}
             <span aria-hidden="true">→</span>
           </button>
           <button onClick={onClose} className="tool-secondary-action">

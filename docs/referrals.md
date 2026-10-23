@@ -1,6 +1,20 @@
 # PC Tweaker invitations and device-bound Pro bonuses
 
-Status: implementation under test; disabled by default. This document does not announce a live programme.
+Status: live in production since 22 October 2026 (policy `2026-10-22-v3`, app 1.18.11 and later). Programme terms: TERMS.md section 3; privacy notice: PRIVACY.md, "Invite a friend".
+
+## Switch and rollback
+
+The programme is on only while every variable listed under "Configuration and release gates" is set on the Railway service `pc-tweaker-app` (production). To switch it off, delete one of them; use the policy version:
+
+```
+railway variable delete REFERRALS_POLICY_VERSION -p c9705734-721e-4385-b40b-af25d27e1509 -e production -s pc-tweaker-app
+```
+
+Railway redeploys the service and `GET https://api.pctweaker.app/api/referrals/config` answers `"enabled":false` once the new deployment is up. With the switch off no code can be created or confirmed, no referral quote is opened (everyone gets the ordinary checkout) and a ready bonus cannot be activated. Bonuses already active keep refreshing, because they need only the issuer keys, which stay in place, and refunds and disputes of recorded bonuses are still processed. Setting the variable back to `2026-10-22-v3` turns the programme on again.
+
+Clients: only app 1.18.11 and later, which send the hash of their built-in issuer key (see the client gate under "Configuration and release gates"), see Invite a friend while the server says on. 1.18.10 and 1.18.9 send no such hash, so for them the programme stays off and they cannot start a bonus; they see it after updating.
+
+Secrets: the issuer private key and the HMAC key exist only in the Railway variables and in a DPAPI-protected backup on the owner's PC (`my-apps/secrets-backup/pctweaker-referral-secrets.dpapi`, CurrentUser scope; the public key is next to it in plain text). The public key is compiled into the app as `PCT_REFERRAL_PUBLIC_KEY`; rotating it needs a coordinated signed app release. Keep `REFERRALS_HASH_KEY` stable.
 
 ## Commercial policy (policy version `2026-10-22-v3`)
 
@@ -82,7 +96,7 @@ Revocation cannot instantly remove a response already cached offline; the residu
 
 ## Invitation handoff and privacy
 
-The static landing page is `/invite/?ref=<random-code>`, prerendered with `noindex,follow`, a code-free canonical, and excluded from the sitemap. It checks programme availability and code validity without exposing the inviter's identity. Downloads always use the existing official distribution endpoints.
+The static landing page is `/invite/?ref=<random-code>`, prerendered with a code-free canonical; since the launch it is indexable and listed in the sitemap. It checks programme availability and code validity without exposing the inviter's identity. Downloads always use the existing official distribution endpoints.
 
 New public invitation codes contain ten characters from a 32-symbol alphabet, always with both a letter and a digit. Cryptographic uniform sampling excludes I, O, 0 and 1; short codes ignore case. Database uniqueness handles collisions with bounded retries under the account lock. Existing 22-character links remain valid and case-sensitive. This shorter public attribution code is not a payment or licence credential. The app opens Account → Invite a friend, with separate tabs for sharing, bonuses and entering a code. The panel, the account menu entry and every referral error are translated into English, Italian, French, Spanish, German and European Portuguese (`src/components/referral-copy.ts`, checked by `npm run check:i18n`); the website invitation page is English, like the rest of the site.
 

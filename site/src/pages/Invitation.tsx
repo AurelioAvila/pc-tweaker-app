@@ -6,7 +6,7 @@ import { normalizeInvitationCode } from "../../../src/referral-code";
 export const INVITATION_SEO = {
   title: "Your PC Tweaker Invitation",
   description:
-    "Confirm your PC Tweaker invitation before your first eligible paid purchase. See the discount, bonus and verification conditions.",
+    "Got a PC Tweaker invitation? Confirm the code in the app before your first Pro purchase to save an extra 10%, and see the bonus, limits and verification rules.",
   canonical: "https://pctweaker.app/invite/",
   ogType: "website" as const,
 };
@@ -99,7 +99,8 @@ export function InvitationPage() {
             <a href={MICROSOFT_STORE}>Get it from Microsoft Store</a>
           </div>
           <p className="invitation-note">
-            Windows 10/11. Downloading does not activate an invitation or start a paid subscription.
+            Windows 10/11. Invitations need PC Tweaker 1.18.11 or later. Downloading does not activate an
+            invitation or start a paid subscription.
           </p>
         </header>
         <aside className="invitation-card">

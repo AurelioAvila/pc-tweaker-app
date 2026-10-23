@@ -56,14 +56,15 @@ returns and does not store it; the app then accepts that licence only on the
 PC it was issued to, so a copied licence file unlocks nothing elsewhere. It
 does not limit how many PCs you use with your account.
 
-Tweaky Driver counts the Free plan's monthly downloads on the account service,
-so they need a free account with a verified email address. Each download
-reserves a unit against your account and against a one-way SHA-256 hash of
-your Windows installation ID, combined with a different fixed label. The
-service stores that hash with your account id, the month and the number of
-units, so that signing up again or reinstalling on the same PC does not renew
-the month. These records hold no readable ID and are kept after an account is
-deleted, for the same reason.
+Tweaky Driver's Free plan is one complete scan every 10 days, counted by the
+Tweaky Driver service, so it needs a free account with a verified email
+address. Each free scan is recorded against your account and against a
+one-way SHA-256 hash of your Windows installation ID, combined with a
+different fixed label: the service stores that hash with your account id and
+the time the scan started and completed, so that signing up again or
+reinstalling on the same PC does not unlock the next scan early. These records
+hold no readable ID and are kept after an account is deleted, for the same
+reason.
 
 ## Information you choose to submit
 

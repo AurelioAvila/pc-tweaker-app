@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.18.14
+
+PC Tweaker 1.18.14 is a routine maintenance update.
+
+Windows binaries and installers are digitally signed by Aurelio Avila and timestamped; automatic updates carry a separate updater signature.
+
 ## v1.18.13
 
 PC Tweaker 1.18.13 puts the 3-day free trial in plain sight.

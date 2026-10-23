@@ -289,6 +289,9 @@
   border-radius: 12px;
   margin-top: 12px;
 }
+.scan-locked-trial {
+  margin-bottom: 4px;
+}
 .scan-locked-row {
   display: flex;
   align-items: center;

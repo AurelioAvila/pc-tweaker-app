@@ -59,5 +59,5 @@
       "caption": "Partez d'un profil Jeu, Études ou Travail et ajustez-le avant de l'appliquer"
     }
   ],
-  "releaseNotes": "PC Tweaker 1.18.12 rend l'essai gratuit de 3 jours facile à trouver et corrige les libellés des offres.\n\n- Offres et tarifs propose « Commencer l'essai gratuit de 3 jours » quand votre compte peut encore en profiter, affiche les jours restants pendant l'essai et l'indique clairement une fois qu'il a été utilisé.\n- Les offres inférieures à la vôtre indiquent désormais « Inclus dans votre offre ».\n- Un fichier de licence copié depuis un autre PC ne débloque plus Pro ; la connexion sur chaque PC fonctionne comme avant.\n- Toujours 81 réglages (46 Free, 35 Pro).\n\nRéglages, licences et historique des modifications sont conservés."
+  "releaseNotes": "PC Tweaker 1.18.13 met l'essai gratuit de 3 jours bien en vue.\n\n- La barre de titre propose « Commencer l'essai gratuit de 3 jours » sur chaque écran tant que votre compte peut encore en profiter, et affiche les jours restants pendant l'essai.\n- Après une analyse, les recommandations Pro proposent le même essai gratuit.\n- Dans les fenêtres basses, jusqu'à la taille minimale, tout le menu reste visible dans toutes les langues.\n- Toujours 81 réglages (46 Free, 35 Pro).\n\nRéglages, licences et historique des modifications sont conservés."
 }

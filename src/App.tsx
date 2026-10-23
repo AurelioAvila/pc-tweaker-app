@@ -54,7 +54,7 @@ import {
   nextTrialEnd,
   parseBillingStatus,
   parsePriceList,
-  trialOffer,
+  trialEntry,
   type BillingChange,
   type PriceList,
 } from "./trial";
@@ -96,7 +96,7 @@ import { ProfilesPanel } from "./components/profiles";
 import { PricingPanel } from "./components/pricing";
 import { PRICING_COPY } from "./components/pricing-copy";
 import { GamingHudCard, ZeroTraceCard } from "./components/pro";
-import { TitleBar } from "./components/titlebar";
+import { TitleBar, titleTrial } from "./components/titlebar";
 import { CATEGORY_STYLE } from "./categories";
 import { OverviewPanel } from "./components/overview";
 import { WorkspaceSidebar } from "./components/workspace-sidebar";
@@ -961,6 +961,16 @@ function App() {
   ).length;
   // What the pricing page can honestly promise a Free user.
   const freeTweakCount = catalogTweaks.filter((t) => !t.requires_pro).length;
+  // The free trial in the main window and at locked points (owner, 23 Oct
+  // 2026): one rule everywhere, never shown to a paying account.
+  const trial = trialEntry(
+    "pctweaker",
+    auth.status === "authenticated",
+    isProUnlocked,
+    prices,
+    billing,
+  );
+  const trialDays = trial?.kind === "offer" ? trial.days : null;
 
   const currentLabel = CATEGORIES.find((c) => c.key === filter)?.label ?? "";
 
@@ -983,6 +993,8 @@ function App() {
         totalCount={catalogTweaks.length}
         cpuPct={latestPulse ? latestPulse.cpu : null}
         ramPct={ramPct}
+        trial={titleTrial(lang, trial, Date.now())}
+        onOpenPlans={() => setFilter("pricing")}
       />
 
       <main className="flex min-h-0 flex-1">
@@ -1116,6 +1128,7 @@ function App() {
                     onFixed={refresh}
                     pushToast={pushToast}
                     onNavigate={setFilter}
+                    trialDays={trialDays}
                     onBusyChange={(busy) => {
                       scanApplying.current = busy;
                     }}
@@ -1652,7 +1665,7 @@ function App() {
           lang={lang}
           featureName={paywallFeature}
           // The plans then offer the trial on monthly and yearly.
-          trialDays={trialOffer("pctweaker", "monthly", prices, billing ?? null)?.days ?? null}
+          trialDays={trialDays}
           onClose={() => setPaywallFeature(null)}
           // Send them to the plans instead of straight to a checkout for a
           // plan they never picked — they should see monthly vs yearly first.

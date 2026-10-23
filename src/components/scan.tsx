@@ -26,6 +26,7 @@ import {
 import { CheckIcon } from "./icons";
 import { Badge } from "./ui";
 import { SCAN_COPY } from "./scan-copy";
+import { TRIAL_COPY } from "./trial-copy";
 import "./scan-workspace.css";
 import { TechnicalDetails } from "./technical";
 
@@ -72,6 +73,7 @@ export function ScanPanel({
   pushToast,
   onNavigate,
   onBusyChange,
+  trialDays = null,
 }: {
   s: Strings;
   lang: Lang;
@@ -80,6 +82,9 @@ export function ScanPanel({
   pushToast: (kind: Toast["kind"], message: string) => void;
   onNavigate: (section: Section) => void;
   onBusyChange?: (busy: boolean) => void;
+  /** Set while this person may start the free trial: the Pro
+   *  recommendations then lead with it (it opens Plans & pricing). */
+  trialDays?: number | null;
 }) {
   const c = SCAN_COPY[lang];
   const [report, setReport] = useState<ScanReport | null>(() =>
@@ -767,6 +772,17 @@ export function ScanPanel({
                 <div className="scan-locked-results">
                   <h4>{c.proRecommendations}</h4>
                   <p>{c.proRecommendationsBody}</p>
+                  {trialDays ? (
+                    <button
+                      type="button"
+                      className="scan-primary scan-locked-trial"
+                      onClick={() => onNavigate("pricing")}
+                      disabled={applying}
+                    >
+                      {format(TRIAL_COPY[lang].start, { days: trialDays })}
+                      <span aria-hidden="true">→</span>
+                    </button>
+                  ) : null}
                   {lockedFixes.map((t) => (
                     <div key={t.id} className="scan-locked-row">
                       <span>{textFor(s.tweaks, t.id, t.name, t.description).name}</span>

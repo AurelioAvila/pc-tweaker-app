@@ -91,6 +91,7 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 - **1.18.6.** Administrator changes to scheduled tasks with spaces in their path work, the Game Sessions list survives an interrupted save, and the administrator helper loads Windows libraries from System32 only.
 - **1.18.7.** Time limits on every Windows tool and on the administrator helper, power plan restores that survive a deleted plan, a polite Explorer restart, and changes that follow the signed-in user when another administrator approves UAC.
 - **1.18.8.** The notification-area menu and the first-close notice follow the language chosen in the app.
+- **1.18.13.** The 3-day free trial in the title bar on every screen, with the days left while it runs, and on the scan's Pro recommendations; the whole menu fits short windows in every language.
 - **1.18.12.** The 3-day free trial is easy to find on Plans & pricing, lower plans read "Included in your plan", and a copied licence file no longer unlocks Pro on another PC.
 - **1.18.11.** Routine maintenance; the version Invite a friend will need.
 - **1.18.10.** Routine maintenance; gets the app ready for Invite a friend, coming soon.

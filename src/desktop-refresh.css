@@ -171,7 +171,7 @@
 @media (max-height: 820px) {
   .desktop-refresh .workspace-sidebar .nav-item {
     min-height: 30px;
-    margin-block: 1px;
+    margin-block: 0;
     padding-block: 5px;
   }
 
@@ -191,6 +191,24 @@
 
   .desktop-refresh .workspace-nav-group > .type-label {
     margin-bottom: 3px;
+  }
+}
+
+/* Between 681 and 720px rows tighten once more, so every entry still fits in
+   all six languages at the same type size. */
+@media (max-height: 720px) {
+  .desktop-refresh .workspace-navigation {
+    padding-bottom: 4px;
+  }
+
+  .desktop-refresh .workspace-nav-group {
+    margin-bottom: 7px;
+  }
+
+  .desktop-refresh .workspace-sidebar .nav-item,
+  .desktop-refresh .workspace-primary .nav-item {
+    min-height: 28px;
+    padding-block: 4px;
   }
 }
 
@@ -392,6 +410,42 @@
   box-shadow: 0 0 0 2px color-mix(in oklab, currentColor 12%, transparent);
 }
 
+/* The free trial in the title bar (owner, 23 Oct 2026): the accent pill while
+   this person may start it, a tinted one while it runs. Never a drag handle. */
+.desktop-refresh > .titlebar .titlebar-trial {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 11px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+.desktop-refresh > .titlebar .titlebar-trial:hover {
+  background: color-mix(in oklab, var(--accent) 88%, var(--on-accent));
+}
+
+.desktop-refresh > .titlebar .titlebar-trial.is-running {
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--bg-raised));
+  background: color-mix(in oklab, var(--accent) 12%, var(--bg-raised));
+  color: var(--text-primary);
+}
+
+.desktop-refresh > .titlebar .titlebar-trial.is-running > svg {
+  color: var(--accent);
+}
+
+.desktop-refresh > .titlebar .titlebar-trial.is-running:hover {
+  background: color-mix(in oklab, var(--accent) 18%, var(--bg-raised));
+}
 .desktop-refresh
   :where(button, a, input, select, textarea, [role="switch"], [tabindex]):focus-visible {
   outline: 2px solid var(--focus);
@@ -437,37 +491,45 @@
   }
 }
 
-/* At the minimum window height, density changes only in the rail. Labels keep
-   their readable type size; the navigation absorbs overflow, not the footer. */
-@media (max-height: 650px) {
+/* Short windows down to the minimum height (600px; a 1080p screen at 150%
+   leaves 672px, a 1366x768 one at 125% even less): density changes only in
+   the rail. Labels keep their readable type size, rows keep a 26px target,
+   and every entry plus the footer stay on screen in all six languages. The
+   navigation still scrolls on its own, footer pinned, if text ever grows. */
+@media (max-height: 680px) {
   .desktop-refresh .workspace-sidebar {
-    padding-top: 11px;
-    padding-bottom: 9px;
-  }
-
-  .desktop-refresh .workspace-primary {
-    margin-bottom: 9px;
+    padding-top: 10px;
     padding-bottom: 8px;
   }
 
+  .desktop-refresh .workspace-primary {
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+  }
+
   .desktop-refresh .workspace-nav-group {
-    margin-bottom: 9px;
+    margin-bottom: 5px;
   }
 
-  .desktop-refresh .workspace-sidebar .nav-item {
-    min-height: 32px;
-    padding-block: 5px;
+  .desktop-refresh .workspace-nav-group > .type-label {
+    margin-bottom: 1px;
   }
 
+  .desktop-refresh .workspace-sidebar .nav-item,
   .desktop-refresh .workspace-primary .nav-item {
-    min-height: 36px;
-    padding-block: 7px;
+    min-height: 26px;
+    padding-block: 3px;
   }
 
   .desktop-refresh .workspace-commercial {
-    gap: 3px;
-    margin-top: 5px;
-    padding-top: 8px;
+    gap: 2px;
+    margin-top: 4px;
+    padding-top: 6px;
+  }
+
+  .desktop-refresh .workspace-commercial > button {
+    min-height: 30px;
+    padding-block: 5px;
   }
 
   .desktop-refresh .workspace-content {

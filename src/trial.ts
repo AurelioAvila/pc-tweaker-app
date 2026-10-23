@@ -146,6 +146,29 @@ export function trialOffer(
   return open && length ? { days: length, amount } : null;
 }
 
+/** The free trial's entry in the main window and at locked points, one rule
+ *  everywhere (owner, 23 Oct 2026): a running trial shows when it ends;
+ *  otherwise the trial is offered while this person may start it — signed
+ *  out, by the public switch; signed in, only once the account's own answer
+ *  has arrived, so a paying account never sees it, not even while the app
+ *  starts. Display only: checkout still asks the server. */
+export function trialEntry(
+  product: BillingProduct,
+  signedIn: boolean,
+  isPro: boolean,
+  prices: PriceList | null,
+  billing: BillingStatus | null | undefined,
+): { kind: "offer"; days: number } | { kind: "running"; endsAt: number } | null {
+  const mine = billing?.products.find((p) => p.product === product);
+  if (mine?.state === "trialing" && mine.trialEndsAt !== null)
+    return { kind: "running", endsAt: mine.trialEndsAt };
+  if (isPro || (signedIn && !billing)) return null;
+  const status = signedIn ? (billing ?? null) : null;
+  const offer =
+    trialOffer(product, "annual", prices, status) ?? trialOffer(product, "monthly", prices, status);
+  return offer ? { kind: "offer", days: offer.days } : null;
+}
+
 /** True when this account has used its trial for the product and the server
  *  is offering trials: the plans then say why there is no trial button. */
 export function trialUsed(product: BillingProduct, status: BillingStatus | null): boolean {

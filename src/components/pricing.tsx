@@ -6,7 +6,7 @@ import { MOST_CHOSEN, type SoldPlan } from "../most-chosen";
 import { promoPercent, PROMO_LAYOUT_UNTIL } from "../promo";
 import { HalloweenOfferBanner } from "./halloween-offer";
 import { CheckIcon, CrownIcon, LayersIcon, SparkIcon } from "./icons";
-import { PLAN_STATE_COPY, PRICING_COPY } from "./pricing-copy";
+import { PLAN_STATE_COPY, PRICING_COPY, trialBadgeText } from "./pricing-copy";
 import { TRIAL_COPY } from "./trial-copy";
 import { trialLeft, trialOffer, trialUsed, type BillingStatus, type PriceList } from "../trial";
 import { useLifetimeOffer } from "./use-lifetime-offer";
@@ -98,21 +98,7 @@ export function PricingPanel({
   // Lifetime is the top tier; any other active plan (monthly, annual, a bonus
   // or a grant) holds Pro, so Free below it is included in it.
   const holdsPro = isPro && !ownsLifetime;
-  const trialDaysLeft =
-    left && mine?.trialEndsAt
-      ? Math.max(0, Math.ceil((mine.trialEndsAt - now) / 86_400_000))
-      : null;
-  const trialBadge =
-    trialDaysLeft === null
-      ? null
-      : format(ps.trialBadge, {
-          left:
-            trialDaysLeft === 0
-              ? ps.endsToday
-              : trialDaysLeft === 1
-                ? ps.oneDayLeft
-                : format(ps.daysLeft, { days: trialDaysLeft }),
-        });
+  const trialBadge = left && mine?.trialEndsAt ? trialBadgeText(lang, mine.trialEndsAt, now) : null;
   const promoOffers = promo.active ? (promo.promo?.offers ?? []) : [];
   const showPromo = !ownsLifetime && promoOffers.length > 0;
   // Until the server answers, an invisible copy of the panel holds its exact

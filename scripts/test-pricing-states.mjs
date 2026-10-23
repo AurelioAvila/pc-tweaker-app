@@ -17,7 +17,9 @@ const bundle = await build({
       export { PLAN_STATE_COPY, PRICING_COPY } from './src/components/pricing-copy';
       export { TRIAL_COPY } from './src/components/trial-copy';
       export { STRINGS } from './src/i18n';
-      export { parseBillingStatus, parsePriceList } from './src/trial';
+      export { parseBillingStatus, parsePriceList, trialEntry } from './src/trial';
+      export { TitleTrialButton, titleTrial } from './src/components/titlebar';
+      export { PaywallModal } from './src/components/ui';
       export { createElement } from 'react';
       export { renderToStaticMarkup } from 'react-dom/server';`,
     resolveDir: root,
@@ -38,7 +40,7 @@ const out = new URL("../node_modules/.cache/test-pricing-states.mjs", import.met
 fs.mkdirSync(new URL(".", out), { recursive: true });
 fs.writeFileSync(out, bundle.outputFiles[0].text);
 const m = await import(pathToFileURL(fileURLToPath(out)).href);
-const { PricingPanel, PLAN_STATE_COPY, PRICING_COPY, TRIAL_COPY, STRINGS, parseBillingStatus, parsePriceList, createElement, renderToStaticMarkup } = m;
+const { PricingPanel, PLAN_STATE_COPY, PRICING_COPY, TRIAL_COPY, STRINGS, parseBillingStatus, parsePriceList, trialEntry, TitleTrialButton, titleTrial, PaywallModal, createElement, renderToStaticMarkup } = m;
 
 const now = Date.now();
 const prices = parsePriceList({ trial_enabled: true, trial_days: 3, prices: [
@@ -120,3 +122,49 @@ for (const lang of Object.keys(PLAN_STATE_COPY)) {
   assert.ok(html.includes(t.updatePayment) && band(html) !== "offer", `${lang} paused`);
 }
 console.log(`Pricing states: signed out, eligible, used, trial, monthly, annual, Lifetime, grant, paused in ${Object.keys(PLAN_STATE_COPY).length} languages passed.`);
+
+// The main window and the locked points (owner, 23 Oct 2026): the title bar offers the trial
+// to signed-out and eligible free accounts and counts a running one down, on every screen; it
+// shows nothing to everyone else. The Pro dialog at every locked feature leads with the same
+// trial. One rule (trialEntry) for both; a paying account never sees the trial, not even
+// while its account is still loading.
+const html = (el) => renderToStaticMarkup(el).replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
+const states = {
+  "signed out": { signedIn: false, isPro: false, billing: null, want: "offer" },
+  "free, loading": { signedIn: true, isPro: false, billing: undefined, want: null },
+  free: { signedIn: true, isPro: false, billing: status({ state: "none", can_start_trial: true }), want: "offer" },
+  "trial used": { signedIn: true, isPro: false, billing: status({ state: "none", can_start_trial: false }), want: null },
+  "trial refused": { signedIn: true, isPro: false, billing: status({ state: "blocked", blocked_reason: "trial_already_used" }), want: null },
+  "trial active": { signedIn: true, isPro: true, billing: status({ state: "trialing", plan: "monthly", trial_ends_at: new Date(now + 68 * 3600_000).toISOString() }), want: "running" },
+  "trial, last day": { signedIn: true, isPro: true, billing: status({ state: "trialing", plan: "annual", trial_ends_at: new Date(now + 5 * 3600_000).toISOString() }), want: "running" },
+  monthly: { signedIn: true, isPro: true, billing: status({ state: "active", plan: "monthly", can_start_trial: true }), want: null },
+  annual: { signedIn: true, isPro: true, billing: status({ state: "active", plan: "annual", can_start_trial: true }), want: null },
+  lifetime: { signedIn: true, isPro: true, billing: status({ state: "none", can_start_trial: true }), want: null },
+  // PC Tweaker sells no Business plan; Pro from a grant or a referral bonus is the other paid state.
+  "grant or bonus": { signedIn: true, isPro: true, billing: status({ state: "none", can_start_trial: true }), want: null },
+  paused: { signedIn: true, isPro: false, billing: status({ state: "blocked", blocked_reason: "payment_failed" }), want: null },
+  "trials off": { signedIn: true, isPro: false, billing: parseBillingStatus({ trial_enabled: false, trial_days: 3, products: [{ product: "pctweaker", state: "none", can_start_trial: false }] }), want: null },
+};
+for (const lang of Object.keys(PLAN_STATE_COPY)) {
+  const s = STRINGS[lang], ps = PLAN_STATE_COPY[lang], t = TRIAL_COPY[lang];
+  const start = t.start.replace("{days}", 3);
+  for (const [name, st] of Object.entries(states)) {
+    const entry = trialEntry("pctweaker", st.signedIn, st.isPro, prices, st.billing);
+    assert.equal(entry?.kind ?? null, st.want, `${lang} ${name}: entry`);
+    const row = html(createElement(TitleTrialButton, { trial: titleTrial(lang, entry, now), onOpen() {} }));
+    const modal = html(createElement(PaywallModal, { s, lang, featureName: "Zero-Trace", trialDays: entry?.kind === "offer" ? entry.days : null, onClose() {}, onNotify() {} }));
+    if (st.want === "offer") {
+      assert.ok(row.includes("titlebar-trial is-offer") && row.includes(`<span>${start}</span>`), `${lang} ${name}: title bar offers the trial`);
+      assert.ok(modal.includes(start) && !modal.includes(s.paywall.unlock), `${lang} ${name}: locked point leads with the trial`);
+    } else if (st.want === "running") {
+      const left = name === "trial active" ? ps.daysLeft.replace("{days}", 3) : ps.oneDayLeft;
+      assert.ok(row.includes("titlebar-trial is-running") && row.includes(ps.trialBadge.replace("{left}", left)), `${lang} ${name}: title bar counts the trial down: ${row}`);
+      assert.ok(!row.includes(start) && !modal.includes(start), `${lang} ${name}: no second trial`);
+    } else {
+      assert.equal(row, "", `${lang} ${name}: no trial in the title bar`);
+      assert.ok(!modal.includes(start) && modal.includes(s.paywall.unlock), `${lang} ${name}: locked point without a trial`);
+    }
+  }
+  assert.equal(titleTrial(lang, { kind: "running", endsAt: now - 1 }, now).label, ps.trialBadge.replace("{left}", ps.endsToday), `${lang} ends today`);
+}
+console.log(`Main window and locked points: ${Object.keys(states).length} plan states in ${Object.keys(PLAN_STATE_COPY).length} languages passed.`);

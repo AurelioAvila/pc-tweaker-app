@@ -59,5 +59,5 @@
       "caption": "Start from a Gaming, Study or Work profile and adjust it before applying"
     }
   ],
-  "releaseNotes": "PC Tweaker 1.18.12 makes the 3-day free trial easy to find and fixes the plan labels.\n\n- Plans & pricing offers \"Start your 3-day free trial\" when your account can still start one, counts down the days while it runs and says so once it has been used.\n- Plans below the one you hold now read \"Included in your plan\".\n- A licence file copied from another PC no longer unlocks Pro; signing in on each PC works as before.\n- Still 81 controls (46 Free, 35 Pro).\n\nSettings, licenses and the change history are kept."
+  "releaseNotes": "PC Tweaker 1.18.13 puts the 3-day free trial in plain sight.\n\n- The title bar offers \"Start 3-day free trial\" on every screen while your account can still start one, and shows the days left while it runs.\n- After a scan, the Pro recommendations offer the same free trial.\n- On short windows, down to the smallest size, the whole menu stays on screen in every language.\n- Still 81 controls (46 Free, 35 Pro).\n\nSettings, licenses and the change history are kept."
 }

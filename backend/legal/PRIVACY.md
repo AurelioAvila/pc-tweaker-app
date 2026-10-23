@@ -48,6 +48,24 @@ installations an account is used. It does not decide whether your licence
 works. An installation that has not refreshed its licence for 90 days is
 deleted, and all of them are deleted with the account.
 
+Current versions of PC Tweaker and PC Tweaker Uninstaller send, with a licence request,
+a one-way SHA-256 hash of your Windows installation ID (the MachineGuid value
+Windows creates at setup), combined with a fixed product label. The ID itself
+never leaves your PC. The backend writes the hash into the signed licence it
+returns and does not store it; the app then accepts that licence only on the
+PC it was issued to, so a copied licence file unlocks nothing elsewhere. It
+does not limit how many PCs you use with your account.
+
+Tweaky Driver's Free plan is one complete scan every 10 days, counted by the
+Tweaky Driver service, so it needs a free account with a verified email
+address. Each free scan is recorded against your account and against a
+one-way SHA-256 hash of your Windows installation ID, combined with a
+different fixed label: the service stores that hash with your account id and
+the time the scan started and completed, so that signing up again or
+reinstalling on the same PC does not unlock the next scan early. These records
+hold no readable ID and are kept after an account is deleted, for the same
+reason.
+
 ## Information you choose to submit
 
 - A support request includes your name, email address, subject, message and any

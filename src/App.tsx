@@ -54,6 +54,7 @@ import {
   nextTrialEnd,
   parseBillingStatus,
   parsePriceList,
+  trialOffer,
   type BillingChange,
   type PriceList,
 } from "./trial";
@@ -343,10 +344,13 @@ function App() {
     if (!token) return;
     try {
       const install = installId();
+      // The backend signs this PC's hash into the licence (license.rs).
+      const device = await invoke<string | null>("license_device_hash").catch(() => null);
       const res = await fetch(`${API_BASE_URL}/api/license`, {
         headers: {
           Authorization: `Bearer ${token}`,
           ...(install ? { "X-Install-Id": install } : {}),
+          ...(device ? { "X-Device-Hash": device } : {}),
         },
       });
       if (!res.ok) return;
@@ -1647,6 +1651,8 @@ function App() {
           s={s}
           lang={lang}
           featureName={paywallFeature}
+          // The plans then offer the trial on monthly and yearly.
+          trialDays={trialOffer("pctweaker", "monthly", prices, billing ?? null)?.days ?? null}
           onClose={() => setPaywallFeature(null)}
           // Send them to the plans instead of straight to a checkout for a
           // plan they never picked — they should see monthly vs yearly first.

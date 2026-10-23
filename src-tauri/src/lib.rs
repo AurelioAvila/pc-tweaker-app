@@ -2426,6 +2426,7 @@ pub fn run() {
             lifetime_tools::save_lifetime_report,
             license::save_license,
             license::license_status,
+            license::license_device_hash,
             license::clear_license,
             referral::referral_issuer,
             referral::referral_device,

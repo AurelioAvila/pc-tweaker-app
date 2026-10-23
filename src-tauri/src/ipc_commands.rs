@@ -64,6 +64,7 @@ pub const APP_COMMANDS: &[&str] = &[
     "save_lifetime_report",
     "save_license",
     "license_status",
+    "license_device_hash",
     "clear_license",
     "referral_issuer",
     "referral_device",

@@ -56,6 +56,11 @@ export type LicensePayload = {
   expiresAt?: number | null;
   /** Unix seconds while a free trial runs (then expiresAt equals it), else null. */
   trialEndsAt?: number | null;
+  /** SHA-256 the desktop app computes from this PC's Windows installation
+   *  (MachineGuid), echoed from the X-Device-Hash request header. Apps that
+   *  know it refuse a licence carrying another PC's hash, so a licence file
+   *  copied to another PC unlocks nothing there. Absent for older apps. */
+  deviceHash?: string;
   /** Version 2 bonus grants are never flattened into account-wide Pro. */
   schemaVersion?: 2;
   grantId?: string;
@@ -79,6 +84,12 @@ export type SignedLicense = {
   /** Base64 Ed25519 signature over `payloadJson`'s UTF-8 bytes, verbatim. */
   signature: string;
 };
+
+/** The X-Device-Hash header when it is a SHA-256 in lower-case hex, else
+ *  nothing: a malformed value is never signed into a licence. */
+export function deviceHashFrom(header: unknown): { deviceHash: string } | Record<string, never> {
+  return typeof header === "string" && /^[0-9a-f]{64}$/.test(header) ? { deviceHash: header } : {};
+}
 
 export function signLicense(payload: LicensePayload): SignedLicense {
   const key = loadPrivateKey();

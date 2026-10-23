@@ -59,5 +59,5 @@
       "caption": "Parti da un profilo Gaming, Studio o Lavoro e adattalo prima di applicarlo"
     }
   ],
-  "releaseNotes": "PC Tweaker 1.18.11 è un aggiornamento di manutenzione ordinaria ed è la versione che servirà per Invita un amico, in arrivo a breve.\n\n- Sempre 81 controlli (46 Free, 35 Pro).\n\nImpostazioni, licenze e cronologia delle modifiche restano."
+  "releaseNotes": "PC Tweaker 1.18.12 rende la prova gratuita di 3 giorni facile da trovare e corregge le etichette dei piani.\n\n- Piani e prezzi propone \"Inizia la prova gratuita di 3 giorni\" quando il tuo account può ancora iniziarla, conta i giorni che restano mentre è attiva e lo dice chiaramente quando è già stata usata.\n- I piani inferiori a quello che hai ora indicano \"Incluso nel tuo piano\".\n- Un file di licenza copiato da un altro PC non sblocca più Pro; l'accesso su ogni PC funziona come prima.\n- Sempre 81 controlli (46 Free, 35 Pro).\n\nImpostazioni, licenze e cronologia delle modifiche restano."
 }

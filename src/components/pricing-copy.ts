@@ -467,3 +467,86 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     previewCheckout: "O checkout está desativado nesta pré-visualização da campanha.",
   },
 };
+
+/** Plan-state lines on the pricing screen: tiers below the one held, the
+ *  trial while it runs, and the band that offers it. */
+export const PLAN_STATE_COPY: Record<
+  Lang,
+  {
+    includedInPlan: string;
+    trialBadge: string;
+    daysLeft: string;
+    oneDayLeft: string;
+    endsToday: string;
+    bannerTitle: string;
+    bannerBody: string;
+    bannerButton: string;
+  }
+> = {
+  en: {
+    includedInPlan: "Included in your plan",
+    trialBadge: "Trial — {left}",
+    daysLeft: "{days} days left",
+    oneDayLeft: "1 day left",
+    endsToday: "ends today",
+    bannerTitle: "Try every Pro tool free for {days} days",
+    bannerBody:
+      "Full Pro on this PC. A card is needed to start, and nothing is charged if you cancel before the {days} days are up. One free trial per account.",
+    bannerButton: "Start your {days}-day free trial",
+  },
+  it: {
+    includedInPlan: "Incluso nel tuo piano",
+    trialBadge: "Prova — {left}",
+    daysLeft: "{days} giorni rimasti",
+    oneDayLeft: "1 giorno rimasto",
+    endsToday: "termina oggi",
+    bannerTitle: "Prova gratis tutti gli strumenti Pro per {days} giorni",
+    bannerBody:
+      "Pro completo su questo PC. Per iniziare serve una carta; se annulli prima che finiscano i {days} giorni non paghi nulla. Una sola prova gratuita per account.",
+    bannerButton: "Inizia la prova gratuita di {days} giorni",
+  },
+  fr: {
+    includedInPlan: "Inclus dans votre offre",
+    trialBadge: "Essai — {left}",
+    daysLeft: "{days} jours restants",
+    oneDayLeft: "1 jour restant",
+    endsToday: "se termine aujourd'hui",
+    bannerTitle: "Essayez tous les outils Pro gratuitement pendant {days} jours",
+    bannerBody:
+      "Pro complet sur ce PC. Une carte est nécessaire pour commencer ; annulez avant la fin des {days} jours et rien n'est prélevé. Un seul essai gratuit par compte.",
+    bannerButton: "Commencer l'essai gratuit de {days} jours",
+  },
+  es: {
+    includedInPlan: "Incluido en tu plan",
+    trialBadge: "Prueba — {left}",
+    daysLeft: "quedan {days} días",
+    oneDayLeft: "queda 1 día",
+    endsToday: "termina hoy",
+    bannerTitle: "Prueba gratis todas las herramientas Pro durante {days} días",
+    bannerBody:
+      "Pro completo en este PC. Para empezar se necesita una tarjeta; si cancelas antes de que pasen los {days} días, no pagas nada. Una sola prueba gratuita por cuenta.",
+    bannerButton: "Empezar la prueba gratuita de {days} días",
+  },
+  de: {
+    includedInPlan: "In Ihrem Tarif enthalten",
+    trialBadge: "Testphase — {left}",
+    daysLeft: "noch {days} Tage",
+    oneDayLeft: "noch 1 Tag",
+    endsToday: "endet heute",
+    bannerTitle: "Alle Pro-Werkzeuge {days} Tage kostenlos testen",
+    bannerBody:
+      "Vollständiges Pro auf diesem PC. Zum Start ist eine Karte nötig; wenn Sie vor Ablauf der {days} Tage kündigen, wird nichts abgebucht. Eine kostenlose Testphase pro Konto.",
+    bannerButton: "{days} Tage kostenlos testen",
+  },
+  pt: {
+    includedInPlan: "Incluído no seu plano",
+    trialBadge: "Avaliação — {left}",
+    daysLeft: "faltam {days} dias",
+    oneDayLeft: "falta 1 dia",
+    endsToday: "termina hoje",
+    bannerTitle: "Experimente todas as ferramentas Pro grátis durante {days} dias",
+    bannerBody:
+      "Pro completo neste PC. Para começar é necessário um cartão; se cancelar antes do fim dos {days} dias, não paga nada. Uma única avaliação gratuita por conta.",
+    bannerButton: "Iniciar a avaliação gratuita de {days} dias",
+  },
+};

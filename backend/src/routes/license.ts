@@ -54,6 +54,8 @@ router.get(
       ...deviceHashFrom(req.get("x-device-hash")),
     }, keyVersion);
 
+    // No user or install id: only how many apps still need key 1 before it is removed.
+    console.log(`license key=${keyVersion} product=${product} pro=${entitlement.active}`);
     // Counted, never enforced: the licence above is issued either way.
     await recordInstall(req.userId as number, product, req.get("x-install-id"));
     res.json(license);

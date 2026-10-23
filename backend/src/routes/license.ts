@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { isConfigured as dbConfigured } from "../db";
 import { requireAuth } from "../auth";
-import { deviceHashFrom, signLicense, isConfigured as signingConfigured } from "../license";
+import { deviceHashFrom, keyConfigured, signLicense, signingKeyVersionFrom } from "../license";
 import { isKnownProduct, productEntitlement } from "../products";
 import { asyncRoute } from "../async-route";
 import { recordInstall } from "../install-count";
@@ -16,7 +16,7 @@ const router = express.Router();
  * Resolution goes through `productEntitlement`, which for pctweaker applies
  * the same lapsed-period logic as before (a missed cancellation webhook must
  * not keep granting access) and for newer products reads the entitlements
- * table with fail-closed semantics.
+ * table with fail-closed semantics. `?sig=2` asks for the rotated signing key.
  */
 router.get(
   "/",
@@ -26,10 +26,11 @@ router.get(
       res.status(503).json({ error: "database not configured (DATABASE_URL missing)" });
       return;
     }
-    if (!signingConfigured) {
+    const keyVersion = signingKeyVersionFrom(req.query.sig);
+    if (!keyConfigured(keyVersion)) {
       // Fails closed: an unconfigured signer must not silently hand out an
       // unsigned "trust me" response that the client would have no way to
-      // verify anyway.
+      // verify anyway, nor fall back to a key the asking app does not trust.
       res.status(503).json({ error: "license signing is not configured on the server" });
       return;
     }
@@ -51,7 +52,7 @@ router.get(
       trialEndsAt: entitlement.active && entitlement.status === "trialing" && entitlement.trialEndsAt
         ? Math.floor(new Date(entitlement.trialEndsAt).getTime() / 1000) : null,
       ...deviceHashFrom(req.get("x-device-hash")),
-    });
+    }, keyVersion);
 
     // Counted, never enforced: the licence above is issued either way.
     await recordInstall(req.userId as number, product, req.get("x-install-id"));

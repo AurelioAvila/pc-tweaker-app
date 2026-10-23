@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { format, Strings } from "../i18n";
+import { format, type Lang, Strings } from "../i18n";
+import type { trialEntry } from "../trial";
+import { CrownIcon, GemIcon } from "./icons";
+import { trialBadgeText } from "./pricing-copy";
+import { TRIAL_COPY } from "./trial-copy";
 
 /**
  * The window's own title bar.
@@ -67,14 +71,48 @@ function Meter({ label, pct }: { label: string; pct: number }) {
   );
 }
 
+/** The free trial in the main window (owner, 23 Oct 2026): offered ("Start
+ *  3-day free trial") or counted down ("Trial — 2 days left"); null for paying
+ *  accounts and for anyone who cannot start one. It sits in the title bar, on
+ *  every screen, where a translated label never pushes the menu out of view. */
+export type TitleTrial = { kind: "offer" | "running"; label: string } | null;
+
+export function titleTrial(
+  lang: Lang,
+  entry: ReturnType<typeof trialEntry>,
+  now: number,
+): TitleTrial {
+  if (!entry) return null;
+  return entry.kind === "offer"
+    ? { kind: "offer", label: format(TRIAL_COPY[lang].start, { days: entry.days }) }
+    : { kind: "running", label: trialBadgeText(lang, entry.endsAt, now) };
+}
+
+/** Opens Plans & pricing, where the trial states its price, first charge and
+ *  how to cancel before anything opens Stripe. */
+export function TitleTrialButton({ trial, onOpen }: { trial: TitleTrial; onOpen: () => void }) {
+  if (!trial) return null;
+  const Icon = trial.kind === "offer" ? GemIcon : CrownIcon;
+  return (
+    <button type="button" onClick={onOpen} className={`titlebar-trial is-${trial.kind}`}>
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      <span>{trial.label}</span>
+    </button>
+  );
+}
+
 export function TitleBar({
   s,
   appliedCount,
   totalCount,
   cpuPct,
   ramPct,
+  trial = null,
+  onOpenPlans,
 }: {
   s: Strings;
+  trial?: TitleTrial;
+  onOpenPlans?: () => void;
   appliedCount: number;
   totalCount: number;
   /** `null` until the first sample lands — an unmeasured meter shows nothing
@@ -136,6 +174,7 @@ export function TitleBar({
         </span>
 
         <div data-tauri-drag-region className="ml-auto flex items-center gap-4 pr-3">
+          <TitleTrialButton trial={trial} onOpen={() => onOpenPlans?.()} />
           {cpuPct !== null && <Meter label={s.titlebar.cpu} pct={cpuPct} />}
           {ramPct !== null && <Meter label={s.titlebar.ram} pct={ramPct} />}
         </div>

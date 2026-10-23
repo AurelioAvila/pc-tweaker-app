@@ -1,4 +1,14 @@
-import type { Lang } from "../i18n";
+import { format, type Lang } from "../i18n";
+
+/** "Trial — 2 days left", "Trial — 1 day left" or "Trial — ends today": a
+ *  running trial's badge, the same on Plans & pricing and in the sidebar. */
+export function trialBadgeText(lang: Lang, endsAt: number, now: number): string {
+  const ps = PLAN_STATE_COPY[lang];
+  const days = Math.max(0, Math.ceil((endsAt - now) / 86_400_000));
+  return format(ps.trialBadge, {
+    left: days === 0 ? ps.endsToday : days === 1 ? ps.oneDayLeft : format(ps.daysLeft, { days }),
+  });
+}
 
 type PricingCopy = {
   title: string;

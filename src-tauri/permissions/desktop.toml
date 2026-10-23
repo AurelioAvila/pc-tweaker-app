@@ -74,6 +74,7 @@ permissions = [
     "allow-save-lifetime-report",
     "allow-save-license",
     "allow-license-status",
+    "allow-license-device-hash",
     "allow-clear-license",
     "allow-list-tweaks",
     "allow-apply-tweak",

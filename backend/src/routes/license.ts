@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { isConfigured as dbConfigured } from "../db";
 import { requireAuth } from "../auth";
-import { signLicense, isConfigured as signingConfigured } from "../license";
+import { deviceHashFrom, signLicense, isConfigured as signingConfigured } from "../license";
 import { isKnownProduct, productEntitlement } from "../products";
 import { asyncRoute } from "../async-route";
 import { recordInstall } from "../install-count";
@@ -50,6 +50,7 @@ router.get(
       expiresAt: entitlement.expiresAt ? Math.floor(new Date(entitlement.expiresAt).getTime() / 1000) : null,
       trialEndsAt: entitlement.active && entitlement.status === "trialing" && entitlement.trialEndsAt
         ? Math.floor(new Date(entitlement.trialEndsAt).getTime() / 1000) : null,
+      ...deviceHashFrom(req.get("x-device-hash")),
     });
 
     // Counted, never enforced: the licence above is issued either way.

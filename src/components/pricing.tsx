@@ -6,7 +6,7 @@ import { MOST_CHOSEN, type SoldPlan } from "../most-chosen";
 import { promoPercent, PROMO_LAYOUT_UNTIL } from "../promo";
 import { HalloweenOfferBanner } from "./halloween-offer";
 import { CheckIcon, CrownIcon, LayersIcon, SparkIcon } from "./icons";
-import { PRICING_COPY } from "./pricing-copy";
+import { PLAN_STATE_COPY, PRICING_COPY } from "./pricing-copy";
 import { TRIAL_COPY } from "./trial-copy";
 import { trialLeft, trialOffer, trialUsed, type BillingStatus, type PriceList } from "../trial";
 import { useLifetimeOffer } from "./use-lifetime-offer";
@@ -44,6 +44,7 @@ export function PricingPanel({
 }) {
   const copy = PRICING_COPY[lang];
   const t = TRIAL_COPY[lang];
+  const ps = PLAN_STATE_COPY[lang];
   // Half-minute steps keep the first-charge date and the trial countdown current.
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -94,6 +95,24 @@ export function PricingPanel({
     isPro && mine?.state === "trialing" && mine.trialEndsAt
       ? trialLeft(mine.trialEndsAt, billing?.trialDays ?? 3, now)
       : null;
+  // Lifetime is the top tier; any other active plan (monthly, annual, a bonus
+  // or a grant) holds Pro, so Free below it is included in it.
+  const holdsPro = isPro && !ownsLifetime;
+  const trialDaysLeft =
+    left && mine?.trialEndsAt
+      ? Math.max(0, Math.ceil((mine.trialEndsAt - now) / 86_400_000))
+      : null;
+  const trialBadge =
+    trialDaysLeft === null
+      ? null
+      : format(ps.trialBadge, {
+          left:
+            trialDaysLeft === 0
+              ? ps.endsToday
+              : trialDaysLeft === 1
+                ? ps.oneDayLeft
+                : format(ps.daysLeft, { days: trialDaysLeft }),
+        });
   const promoOffers = promo.active ? (promo.promo?.offers ?? []) : [];
   const showPromo = !ownsLifetime && promoOffers.length > 0;
   // Until the server answers, an invisible copy of the panel holds its exact
@@ -217,6 +236,38 @@ export function PricingPanel({
           headingId="pricing-promo-title"
         />
       )}
+      {(trial || trialSpent || trialBadge) && (
+        <aside
+          className="pricing-trial-band"
+          data-state={trialBadge ? "running" : trial ? "offer" : "used"}
+          aria-labelledby="pricing-trial-band-title"
+        >
+          <div>
+            <h2 id="pricing-trial-band-title">
+              {trialBadge ?? (trial ? format(ps.bannerTitle, { days: trial.days }) : t.trialUsed)}
+            </h2>
+            <p>
+              {trialBadge && mine?.trialEndsAt
+                ? format(mine.cancelAtPeriodEnd ? t.noCharge : t.firstCharge, {
+                    date: longDate(mine.trialEndsAt),
+                  })
+                : trial
+                  ? format(ps.bannerBody, { days: trial.days })
+                  : t.used}
+            </p>
+          </div>
+          {trial && !trialBadge && (
+            <button
+              className="pricing-button pricing-button-trial"
+              disabled={busy !== null || previewing}
+              aria-busy={busy === period && busyTrial === true}
+              onClick={() => void act(period, true)}
+            >
+              {format(ps.bannerButton, { days: trial.days })}
+            </button>
+          )}
+        </aside>
+      )}
       <div className="pricing-plans">
         <article className="pricing-plan">
           <div className="pricing-plan-name">
@@ -230,7 +281,7 @@ export function PricingPanel({
           <p className="pricing-price-note">{s.pricing.freePriceNote}</p>
           <div className="pricing-plan-footer">
             <span className="pricing-plan-status">
-              {isPro ? s.pricing.included : s.pricing.freeCta}
+              {isPro ? ps.includedInPlan : s.pricing.freeCta}
             </span>
           </div>
           <ul className="pricing-highlights">
@@ -252,9 +303,7 @@ export function PricingPanel({
           )}
           <div className="pricing-plan-name">
             <h2>{s.pricing.proName}</h2>
-            {isPro && heldPlan === period && (
-              <span className="pricing-current">{left ? t.trial : copy.current}</span>
-            )}
+            {holdsPro && <span className="pricing-current">{trialBadge ?? copy.current}</span>}
           </div>
           <p className="pricing-plan-description">{copy.pro}</p>
           <div
@@ -329,7 +378,7 @@ export function PricingPanel({
               </button>
             ) : ownsLifetime || !hasBilling ? (
               <span className="pricing-plan-status">
-                {ownsLifetime ? s.pricing.lifetimeOwned : s.pricing.proActiveNoBilling}
+                {ownsLifetime ? ps.includedInPlan : s.pricing.proActiveNoBilling}
               </span>
             ) : (
               <button

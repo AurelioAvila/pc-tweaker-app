@@ -59,5 +59,5 @@
       "caption": "Start from a Gaming, Study or Work profile and adjust it before applying"
     }
   ],
-  "releaseNotes": "PC Tweaker 1.18.11 is a routine maintenance update, and the version you will need for Invite a friend, coming soon.\n\n- Still 81 controls (46 Free, 35 Pro).\n\nSettings, licenses and the change history are kept."
+  "releaseNotes": "PC Tweaker 1.18.12 makes the 3-day free trial easy to find and fixes the plan labels.\n\n- Plans & pricing offers \"Start your 3-day free trial\" when your account can still start one, counts down the days while it runs and says so once it has been used.\n- Plans below the one you hold now read \"Included in your plan\".\n- A licence file copied from another PC no longer unlocks Pro; signing in on each PC works as before.\n- Still 81 controls (46 Free, 35 Pro).\n\nSettings, licenses and the change history are kept."
 }

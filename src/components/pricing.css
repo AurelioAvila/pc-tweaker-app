@@ -101,6 +101,40 @@
   flex: 1;
   min-width: 0;
 }
+/* The free trial, offered, running or used: one band above the plans. */
+.pricing-trial-band {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 45%, var(--border-subtle));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--app-accent) 8%, var(--surface-1));
+}
+.pricing-trial-band > div {
+  flex: 1;
+  min-width: 220px;
+}
+.pricing-trial-band h2 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+.pricing-trial-band p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+.pricing-trial-band[data-state="used"] {
+  border-color: var(--border-subtle);
+  background: var(--surface-1);
+}
+.pricing-trial-band .pricing-button {
+  width: auto;
+}
 .pricing-campaign h2 {
   margin: 0;
   font-size: 12.5px;

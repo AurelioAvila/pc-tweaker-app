@@ -21,16 +21,30 @@ import { createPrivateKey, sign } from "crypto";
  * implicates the other.
  */
 
-const PRIVATE_KEY_B64 = process.env.LICENSE_SIGNING_PRIVATE_KEY;
+/** Key 1 signs for every app released before the 23 Oct 2026 rotation; key 2
+ *  only for apps that ask for it (`?sig=2`) and embed its public half. Once
+ *  no supported release trusts key 1, its variable is removed. */
+const privateKeyB64 = (version: SigningKeyVersion) =>
+  version === 2 ? process.env.LICENSE_SIGNING_PRIVATE_KEY_V2 : process.env.LICENSE_SIGNING_PRIVATE_KEY;
 
-export const isConfigured = Boolean(PRIVATE_KEY_B64);
+export type SigningKeyVersion = 1 | 2;
 
-function loadPrivateKey() {
-  if (!PRIVATE_KEY_B64) {
-    throw new Error("LICENSE_SIGNING_PRIVATE_KEY is not configured on the server");
+export function keyConfigured(version: SigningKeyVersion): boolean {
+  return Boolean(privateKeyB64(version));
+}
+
+/** `?sig=2` asks for key 2; anything else (deployed apps send nothing) is key 1. */
+export function signingKeyVersionFrom(query: unknown): SigningKeyVersion {
+  return query === "2" ? 2 : 1;
+}
+
+function loadPrivateKey(version: SigningKeyVersion) {
+  const keyB64 = privateKeyB64(version);
+  if (!keyB64) {
+    throw new Error(`license signing key ${version} is not configured on the server`);
   }
   return createPrivateKey({
-    key: Buffer.from(PRIVATE_KEY_B64, "base64"),
+    key: Buffer.from(keyB64, "base64"),
     format: "der",
     type: "pkcs8",
   });
@@ -91,8 +105,8 @@ export function deviceHashFrom(header: unknown): { deviceHash: string } | Record
   return typeof header === "string" && /^[0-9a-f]{64}$/.test(header) ? { deviceHash: header } : {};
 }
 
-export function signLicense(payload: LicensePayload): SignedLicense {
-  const key = loadPrivateKey();
+export function signLicense(payload: LicensePayload, version: SigningKeyVersion = 1): SignedLicense {
+  const key = loadPrivateKey(version);
   const payloadJson = JSON.stringify(payload);
   const bytes = Buffer.from(payloadJson, "utf8");
   // `null` as the algorithm parameter is Ed25519's own calling convention in

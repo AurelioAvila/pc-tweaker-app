@@ -15,7 +15,7 @@ function issuerKey(environment: NodeJS.ProcessEnv) {
     .subarray(-32)
     .toString("base64");
   if (
-    publicKey === "QisYr46g3mqEeiz1BDyEcPbRO1xO4z0lR3d5/ODppIU=" ||
+    ["QisYr46g3mqEeiz1BDyEcPbRO1xO4z0lR3d5/ODppIU=", "0Cy9wfSUsS/47MQrkgWjlaphga0Rqoho2RPCWMNUSro="].includes(publicKey) ||
     publicKey !== environment.REFERRALS_NATIVE_PUBLIC_KEY
   ) {
     throw new Error("Referral signer must be distinct and match the native bonus issuer");

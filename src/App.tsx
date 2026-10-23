@@ -346,7 +346,8 @@ function App() {
       const install = installId();
       // The backend signs this PC's hash into the licence (license.rs).
       const device = await invoke<string | null>("license_device_hash").catch(() => null);
-      const res = await fetch(`${API_BASE_URL}/api/license`, {
+      // sig=2: the rotated signing key, the only one license.rs trusts.
+      const res = await fetch(`${API_BASE_URL}/api/license?sig=2`, {
         headers: {
           Authorization: `Bearer ${token}`,
           ...(install ? { "X-Install-Id": install } : {}),

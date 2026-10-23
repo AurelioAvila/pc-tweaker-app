@@ -40,8 +40,9 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 /// Public half of a key pair dedicated to license signing — separate from
 /// the Tauri updater's signing key, so a compromise of one never implicates
 /// the other. Safe to embed: it is only useful for *verifying* signatures,
-/// never for producing them.
-const PUBLIC_KEY_B64: &str = "QisYr46g3mqEeiz1BDyEcPbRO1xO4z0lR3d5/ODppIU=";
+/// never for producing them. Key 2 since the 23 Oct 2026 rotation: the app asks
+/// the server for it with `?sig=2` and no longer trusts key 1.
+const PUBLIC_KEY_B64: &str = "0Cy9wfSUsS/47MQrkgWjlaphga0Rqoho2RPCWMNUSro=";
 
 /// A signed entitlement is valid only for the product that requested it.
 /// Keeping this check in the Rust enforcement path prevents an entitlement
@@ -408,7 +409,19 @@ mod tests {
     /// half of the key pair embedded above — not a value invented on the
     /// Rust side. This is what actually proves the two implementations agree
     /// on wire format, rather than each independently testing itself.
-    const REAL_NODE_SIGNED_RESPONSE: &str = r#"{"payloadJson":"{\"userId\":\"42\",\"isPro\":true,\"plan\":\"monthly\",\"issuedAt\":1787042906}","signature":"czs+MUbA9IByR9UJ4DKFOqafgAKrI40xo+enb7YjzsDrZqMyLwcjmC6DS2DnEpb0itunOk8ZvreUarvFIk+pCg=="}"#;
+    const REAL_NODE_SIGNED_RESPONSE: &str = r#"{"payloadJson":"{\"userId\":\"42\",\"isPro\":true,\"plan\":\"monthly\",\"issuedAt\":1787042906}","signature":"C9p1XHnjIifxtm1SOJbpoGq0/yMfy87+Y7Y0Xjt7bUiL5FMpigmJm0T+x9z2SDql3VSU2NbK6mWXf2Z7dmkDAw=="}"#;
+
+    /// The same payload signed by the retired key 1 (before the 23 Oct 2026 rotation).
+    const KEY1_SIGNED_RESPONSE: &str = r#"{"payloadJson":"{\"userId\":\"42\",\"isPro\":true,\"plan\":\"monthly\",\"issuedAt\":1787042906}","signature":"czs+MUbA9IByR9UJ4DKFOqafgAKrI40xo+enb7YjzsDrZqMyLwcjmC6DS2DnEpb0itunOk8ZvreUarvFIk+pCg=="}"#;
+
+    #[test]
+    fn a_licence_signed_by_the_retired_key_1_is_rejected() {
+        let resp: SignedLicenseResponse = serde_json::from_str(KEY1_SIGNED_RESPONSE).unwrap();
+        assert_eq!(
+            verify(&resp.payload_json, &resp.signature),
+            Err(VerifyError::SignatureInvalid)
+        );
+    }
 
     #[test]
     fn a_legacy_pc_tweaker_payload_without_product_remains_compatible() {

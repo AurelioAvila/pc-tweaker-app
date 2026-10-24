@@ -80,9 +80,11 @@ export const UNINSTALLER_GUIDES = {
       body:
         "A clean run of the tool should leave little. Older versions (ASUS names 1.4.1 and 2.1.9) installed separate entries that ASUS lists as Armoury Crate Service or Armoury Crate Lite Service, ASUS Framework Service, Aura Service and ROG Live Service, and parts of Armoury Crate come from the Microsoft Store. These read-only PowerShell commands show whether anything with those names is still registered or on disk. A service with ASUS in its name is not necessarily Armoury Crate's.",
       code: [
-        "Get-Service -DisplayName '*Armoury*', '*ASUS*', '*Aura*', '*ROG Live*' | Format-Table Name, DisplayName, Status",
+        "Get-Service -DisplayName '*Armoury*', '*ASUS*', '*Aura*', '*ROG Live*' |",
+        "  Format-Table Name, DisplayName, Status",
         "Get-AppxPackage -Name '*Armoury*' | Format-Table Name, Version",
-        "Get-ChildItem $env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:ProgramData, $env:LOCALAPPDATA -Directory -Filter '*Armoury*' -ErrorAction SilentlyContinue",
+        "Get-ChildItem $env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:ProgramData, $env:LOCALAPPDATA `",
+        "  -Directory -Filter '*Armoury*' -ErrorAction SilentlyContinue",
       ].join("\n"),
       act: [
         "An Armoury Crate entry still in Installed apps after the tool and a restart: run the tool again before removing anything by hand.",
@@ -105,7 +107,7 @@ export const UNINSTALLER_GUIDES = {
     ],
     related: [
       { to: "/uninstall-programs-completely/", label: "how to completely uninstall any Windows program", note: "The general order: registered uninstaller first, then leftovers, then what to keep." },
-      { to: "/uninstaller/guides/riot-vanguard/", label: "removing Riot Vanguard and checking its driver", note: "Another program with a service that starts before you sign in." },
+      { to: "/uninstaller/guides/mcafee-webadvisor/", label: "removing McAfee and WebAdvisor", note: "Another vendor whose removal tool is the fallback when the normal route fails." },
       { to: "/uninstaller/", label: "what PC Tweaker Uninstaller shows before a removal runs", note: "The rating, the command and the permissions, before anything changes." },
     ],
     sources: {
@@ -237,7 +239,9 @@ export const UNINSTALLER_GUIDES = {
       code: [
         "Test-Path \"$env:ProgramFiles\\McAfee\", \"$env:ProgramData\\McAfee\", \"$env:LOCALAPPDATA\\McAfee\"",
         "Get-Service -DisplayName '*McAfee*' | Format-Table Name, DisplayName, Status",
-        "Get-ScheduledTask | Where-Object { $_.TaskName -match 'McAfee' -or $_.TaskPath -match 'McAfee' } | Format-Table TaskPath, TaskName, State",
+        "Get-ScheduledTask |",
+        "  Where-Object { $_.TaskName -match 'McAfee' -or $_.TaskPath -match 'McAfee' } |",
+        "  Format-Table TaskPath, TaskName, State",
       ].join("\n"),
       act: [
         "A WebAdvisor extension still listed in a browser: remove it from that browser's extensions page.",
@@ -311,7 +315,8 @@ export const UNINSTALLER_GUIDES = {
         "There is nothing to clean up here. Removing files from the Runtime's folder by hand breaks every WebView2 app at once, and Microsoft's updater manages the version folders. The Runtime is shared: one installation serves every app that uses the Evergreen Runtime on the PC. These read-only commands show what is there.",
       code: [
         "Get-ChildItem \"${env:ProgramFiles(x86)}\\Microsoft\\EdgeWebView\\Application\" -Directory | Format-Table Name",
-        "Get-ItemProperty 'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Microsoft EdgeWebView' | Format-List DisplayName, DisplayVersion, NoRemove, SystemComponent",
+        "Get-ItemProperty 'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Microsoft EdgeWebView' |",
+        "  Format-List DisplayName, DisplayVersion, NoRemove, SystemComponent",
       ].join("\n"),
       act: [
         "An app you no longer want: uninstall that app. That removes the program that used the Runtime, not the Runtime itself.",

@@ -42,13 +42,19 @@ const isReference = (f) => /^(tweaks|database|tools|fixes)\//.test(f);
 
 const BANNED = [
   [/anti[\s-]?cheat/i, "anti-cheat"],
-  [/\b(vanguard|battleye|ricochet|easy\s?anti)/i, "anti-cheat product names"],
+  [/\b(battleye|ricochet|easy\s?anti)/i, "anti-cheat product names"],
   [/illustrat(ive|ed|ion)/i, "illustrative"],
   [/pt[-_]br\b|brazil/i, "Brazilian Portuguese"],
 ];
+// One exception, asked for by the owner on 24 October 2026: the neutral removal
+// guide for Riot Vanguard, and only the places that list, render or attribute it
+// (the JS bundle carries every guide's text). Any other page naming Vanguard still
+// fails, and "anti-cheat" stays banned on that guide as everywhere else.
+const VANGUARD_ALLOWED = /^(uninstaller\/guides\/riot-vanguard\/index\.html|uninstaller\/index\.html|guides\/index\.html|sitemap\.xml|suite-downloads\.js|assets\/[^/]+\.js)$/;
 for (const f of textFiles) {
   const text = await read(new URL(f, dist));
   for (const [re, what] of BANNED) assert.ok(!re.test(text), `${f} contains a banned term (${what}): ${text.match(re)?.[0]}`);
+  assert.ok(!/\bvanguard/i.test(text) || VANGUARD_ALLOWED.test(f), `${f} names Vanguard outside its removal guide`);
 }
 
 const PRICE = /€\s?\d|\d[\d.,]*\s?€|\bEUR\s?\d/;

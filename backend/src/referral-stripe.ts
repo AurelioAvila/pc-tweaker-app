@@ -234,11 +234,14 @@ export class ReferralStripe {
     );
     let quote: ReservedQuote = existing.rows[0];
     if (quote) {
-      if (quote.plan !== plan) throw new ReferralError("close_existing_checkout_first");
-      if (new Date(quote.expires_at) <= this.core.now()) {
+      // Another plan, or past its expiry: close this quote's session at Stripe first (a session
+      // already paid throws), then evaluate again: a new quote, or the ordinary price if the
+      // invitation expired meanwhile.
+      if (quote.plan !== plan || new Date(quote.expires_at) <= this.core.now()) {
         if (!(await this.settleExpired(quote as ReservedQuote & { buyer_id: number })))
-          throw new ReferralError("checkout_recovery_required");
-        // Settled: evaluate again (a new quote, or the ordinary price if the invitation expired).
+          throw new ReferralError(
+            quote.plan !== plan ? "close_existing_checkout_first" : "checkout_recovery_required",
+          );
         return this.checkout(userId, plan, params);
       }
       if (quote.checkout_url) return { url: quote.checkout_url };
@@ -404,9 +407,10 @@ export class ReferralStripe {
   }
 
   /**
-   * Releases an expired quote once the provider shows nothing can still be paid: its session
-   * is expired (or is expired now), or no session exists past the quote's expiry plus a grace
-   * period. Returns false while uncertain; throws if a session completed.
+   * Releases a quote once the provider shows nothing can still be paid: its session is expired
+   * (or is expired now, also before the quote's own expiry when the buyer picks another plan),
+   * or no session exists past the quote's expiry plus a grace period. Returns false while
+   * uncertain; throws if a session completed.
    */
   private async settleExpired(quote: ReservedQuote & { buyer_id: number }) {
     const sessionId = await this.recoverSession(quote);
@@ -431,13 +435,30 @@ export class ReferralStripe {
     if (!rows[0]?.stripe_customer_id) return [];
     const fingerprints = new Set<string>();
     let count = 0;
+    // Any charge, paid or not, and every card saved on the customer: an inviter who is in a
+    // trial or whose payment failed has a card here but no paid charge.
     for await (const charge of this.stripe.charges.list({
       customer: rows[0].stripe_customer_id,
       limit: 100,
     })) {
       if (++count > 1000) throw new ReferralError("payer_identity_review_required");
       const fingerprint = charge.payment_method_details?.card?.fingerprint;
-      if (charge.paid && fingerprint) fingerprints.add(fingerprint);
+      if (fingerprint) fingerprints.add(fingerprint);
+    }
+    try {
+      for await (const method of this.stripe.paymentMethods.list({
+        customer: rows[0].stripe_customer_id,
+        type: "card",
+        limit: 100,
+      })) {
+        if (++count > 2000) throw new ReferralError("payer_identity_review_required");
+        if (method.card?.fingerprint) fingerprints.add(method.card.fingerprint);
+      }
+    } catch (error) {
+      // A key without Payment Methods read must not stop every referral sale: the charges above
+      // still count, and the log says what is missing.
+      if ((error as { type?: string }).type !== "StripePermissionError") throw error;
+      console.error("referral: saved cards unreadable (Stripe key lacks Payment Methods read)");
     }
     return [...fingerprints];
   }
@@ -696,26 +717,28 @@ export async function referralWebhook(
   } else {
     const item = event.data.object as Stripe.Charge | Stripe.Dispute;
     const paymentId = reference(item.payment_intent);
-    if (!paymentId) return;
-    // Refunds and disputes of other products and of non-referral purchases are ignored without
-    // a provider call. One that arrives before its referral sale is caught when that sale is
-    // recorded, which re-reads the charge, its refunds and its disputes.
+    if (!paymentId || !/^pi_[A-Za-z0-9]+$/.test(paymentId)) return;
+    const status = event.type === "charge.dispute.closed" ? (item as Stripe.Dispute).status : null;
+    const block =
+      (event.type === "charge.refunded" && (item as Stripe.Charge).refunded) || status === "lost"
+        ? "revoked"
+        : "hold";
     const known = await gateway.core.db.query(
       "SELECT 1 FROM referral_rewards WHERE payment_id=$1",
       [paymentId],
     );
-    if (!known.rowCount) return;
-    await gateway.account();
-    const status = event.type === "charge.dispute.closed" ? (item as Stripe.Dispute).status : null;
-    if (status === "won" || status === "warning_closed") await gateway.disputeClosed(paymentId);
-    else
-      await gateway.core.blockPayment(
-        paymentId,
-        (event.type === "charge.refunded" && (item as Stripe.Charge).refunded) || status === "lost"
-          ? "revoked"
-          : "hold",
-        event.type,
-      );
+    if (!known.rowCount) {
+      // No reward for this payment yet: another product, an ordinary purchase, or a referral sale
+      // still being recorded (its payment read as paid a moment ago). The reversal is kept as a
+      // block, without a provider call, so that sale is recorded as blocked; unmatched blocks are
+      // pruned after 90 days (Referrals.cleanup). A closed dispute adds nothing to keep.
+      if (status === null || status === "lost")
+        await gateway.core.blockPayment(paymentId, block, event.type);
+    } else {
+      await gateway.account();
+      if (status === "won" || status === "warning_closed") await gateway.disputeClosed(paymentId);
+      else await gateway.core.blockPayment(paymentId, block, event.type);
+    }
   }
   // Written only after all effects succeed. Concurrent deliveries are also protected by
   // payment/quote uniqueness; a failed attempt remains retryable by the provider.
@@ -731,21 +754,28 @@ export async function runReferralReconciliation(
   stopped: () => boolean = () => false,
 ) {
   await gateway.core.cleanup();
-  // v3 makes a bonus available on payment, so one fresh provider read 15 minutes later is the
-  // backstop for a refund or dispute that arrived before the reward row existed (the webhook
-  // ignores reversals of unknown payments). It does not delay the bonus.
+  // v3 makes a bonus available on payment, so one fresh provider read 15 minutes after the reward
+  // was recorded is the backstop for a reversal the webhooks missed (reversals that arrive before
+  // the reward are kept as blocks). Once per reward, also for a sale recorded late. It does not
+  // delay the bonus.
   const { rows } = await gateway.core.db
-    .query(`SELECT q.id FROM referral_quotes q LEFT JOIN referral_rewards r ON r.quote_id=q.id
+    .query(`SELECT q.id,(r.state IN ('ready','active') AND NOT r.post_sale_checked) AS post_sale
+    FROM referral_quotes q LEFT JOIN referral_rewards r ON r.quote_id=q.id
     WHERE ((q.state IN ('creating','open') AND q.expires_at < now())
         OR (r.state='pending' AND r.eligible_at <= now())
-        OR (r.state IN ('ready','active') AND r.checked_at < r.paid_at + INTERVAL '15 minutes'
-          AND r.paid_at < now() - INTERVAL '15 minutes'))
+        OR (r.state IN ('ready','active') AND NOT r.post_sale_checked
+          AND r.checked_at < now() - INTERVAL '15 minutes'))
       AND (q.reconcile_after IS NULL OR q.reconcile_after <= now())
     ORDER BY COALESCE(q.reconcile_after,q.expires_at),q.id LIMIT 10`);
   for (const row of rows) {
     if (stopped()) break;
     try {
       await gateway.reconcileQuote(row.id);
+      if (row.post_sale)
+        await gateway.core.db.query(
+          "UPDATE referral_rewards SET post_sale_checked=TRUE WHERE quote_id=$1",
+          [row.id],
+        );
     } catch (error) {
       console.error("referral reconciliation incomplete:", (error as Error).name);
     } finally {

@@ -5,6 +5,8 @@ import { deviceHashFrom, keyConfigured, signLicense, signingKeyVersionFrom } fro
 import { isKnownProduct, productEntitlement } from "../products";
 import { asyncRoute } from "../async-route";
 import { recordInstall } from "../install-count";
+import { trialAllowsDevice } from "../trial";
+import { referralStripe } from "../referral-stripe";
 
 const router = express.Router();
 
@@ -42,22 +44,30 @@ router.get(
     }
 
     const entitlement = await productEntitlement(req.userId as number, product, product === "uninstaller");
+    const device = deviceHashFrom(req.get("x-device-hash"));
+    // One of our trials runs on one PC (trial.ts trialAllowsDevice); paid plans, Lifetime and
+    // the Lifetime bonus have no PC limit, whatever status an old subscription left behind.
+    const trialOnly = entitlement.status === "trialing" && !["lifetime", "lifetime_bonus"].includes(entitlement.plan ?? "");
+    const active = entitlement.active && (!trialOnly
+      || await trialAllowsDevice(req.userId as number, product, device.deviceHash));
     const license = signLicense({
       userId: String(req.userId),
-      isPro: entitlement.active,
+      isPro: active,
       plan: entitlement.plan,
       product,
       issuedAt: Math.floor(Date.now() / 1000),
       expiresAt: entitlement.expiresAt ? Math.floor(new Date(entitlement.expiresAt).getTime() / 1000) : null,
-      trialEndsAt: entitlement.active && entitlement.status === "trialing" && entitlement.trialEndsAt
+      trialEndsAt: active && entitlement.status === "trialing" && entitlement.trialEndsAt
         ? Math.floor(new Date(entitlement.trialEndsAt).getTime() / 1000) : null,
-      ...deviceHashFrom(req.get("x-device-hash")),
+      ...device,
     }, keyVersion);
 
     // No user or install id: only how many apps still need key 1 before it is removed.
-    console.log(`license key=${keyVersion} product=${product} pro=${entitlement.active}`);
+    console.log(`license key=${keyVersion} product=${product} pro=${active}`);
     // Counted, never enforced: the licence above is issued either way.
     await recordInstall(req.userId as number, product, req.get("x-install-id"));
+    // Invite a friend only: which PCs a participating account uses, for the same-PC check.
+    if (device.deviceHash) await referralStripe()?.core.recordMachine(req.userId as number, device.deviceHash).catch(() => false);
     res.json(license);
   }),
 );

@@ -24,6 +24,9 @@ import {
   type ReferralPlan,
 } from "./referral-policy";
 
+/** How far Stripe's payment time may run ahead of this server's clock. */
+const PAID_AT_SKEW_MS = 5 * 60000;
+
 export class ReferralError extends Error {
   constructor(
     public code: string,
@@ -83,6 +86,14 @@ export async function initReferralSchema(db: Pick<Pool, "query">): Promise<void>
     CREATE TABLE IF NOT EXISTS referral_webhook_receipts (
       event_id TEXT PRIMARY KEY, event_type TEXT NOT NULL, completed_at TIMESTAMPTZ NOT NULL
     );
+    -- 24 Oct 2026, additive. Rollback: DROP TABLE referral_machines;
+    -- ALTER TABLE referral_rewards DROP COLUMN post_sale_checked (older code reads neither).
+    CREATE TABLE IF NOT EXISTS referral_machines (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, machine_hash TEXT NOT NULL,
+      last_seen TIMESTAMPTZ NOT NULL, PRIMARY KEY(user_id, machine_hash)
+    );
+    CREATE INDEX IF NOT EXISTS referral_machines_hash_idx ON referral_machines(machine_hash);
+    ALTER TABLE referral_rewards ADD COLUMN IF NOT EXISTS post_sale_checked BOOLEAN NOT NULL DEFAULT FALSE;
     ALTER TABLE referral_quotes ADD COLUMN IF NOT EXISTS reconcile_after TIMESTAMPTZ;
     ALTER TABLE referral_quotes ADD COLUMN IF NOT EXISTS reconcile_attempts INTEGER NOT NULL DEFAULT 0;
     CREATE INDEX IF NOT EXISTS referral_rewards_inviter_idx ON referral_rewards(inviter_id,paid_at DESC);
@@ -191,6 +202,76 @@ export class Referrals {
       [inviterId, buyerId],
     );
     return rows.length > 0;
+  }
+
+  /** Both accounts asked for a licence on the same Windows installation (the MachineGuid hash
+   *  licences are bound to). It survives reinstalling and clearing the app's data, unlike the
+   *  installation id, but two people sharing one PC also match: a hold for review, not a refusal. */
+  private async sharedMachine(tx: Pick<PoolClient, "query">, inviterId: number, buyerId: number) {
+    const { rows } = await tx.query(
+      `SELECT 1 FROM referral_machines a JOIN referral_machines b ON b.machine_hash=a.machine_hash
+      WHERE a.user_id=$1 AND b.user_id=$2 LIMIT 1`,
+      [inviterId, buyerId],
+    );
+    return rows.length > 0;
+  }
+
+  /** Called on each licence refresh with the app's PC hash; kept only for accounts that take
+   *  part in the programme (an invitation code or an accepted invitation), keyed, for 12 months. */
+  async recordMachine(userId: number, deviceHash: string): Promise<boolean> {
+    if (!/^[0-9a-f]{64}$/.test(deviceHash) || !Number.isSafeInteger(userId)) return false;
+    const { rowCount } = await this.db.query(
+      `INSERT INTO referral_machines(user_id,machine_hash,last_seen)
+      SELECT $1,$2,$3 WHERE EXISTS(SELECT 1 FROM referral_accounts WHERE user_id=$1)
+        OR EXISTS(SELECT 1 FROM referral_enrolments WHERE buyer_id=$1)
+      ON CONFLICT(user_id,machine_hash) DO UPDATE SET last_seen=EXCLUDED.last_seen`,
+      [userId, this.hash("machine:" + deviceHash), this.now()],
+    );
+    return (rowCount ?? 0) > 0;
+  }
+
+  /** The reward rules that do not depend on the payment itself, under the inviter lock taken by
+   *  the caller: a refusal (Lifetime inviter, same app installation, yearly cap) or a review
+   *  (same PC). `rewardId` is a reward already counted towards the cap. */
+  private async eligibility(
+    tx: Pick<PoolClient, "query">,
+    inviterId: number,
+    buyerId: number,
+    rewardId: string | null = null,
+  ) {
+    const { rows } = await tx.query(
+      `SELECT u.is_pro,u.plan,(SELECT count(*)::int FROM referral_rewards r
+        WHERE r.inviter_id=u.id AND r.state<>'revoked' AND r.paid_at > $2 AND r.id IS DISTINCT FROM $3) AS recognised
+      FROM users u WHERE u.id=$1`,
+      [inviterId, new Date(this.now().getTime() - CAP_WINDOW_MS), rewardId],
+    );
+    const inviter = rows[0];
+    // Lifetime owners still invite (the friend saves 10%) but receive nothing they could resell.
+    // The buyer may have signed in on the inviter's PC after confirming the code.
+    const refused =
+      inviter?.is_pro === true && inviter.plan === "lifetime"
+        ? "inviter_lifetime"
+        : (await this.sharedDevice(tx, inviterId, buyerId))
+          ? "shared_device"
+          : (inviter?.recognised ?? 0) >= INVITER_CAP
+            ? "inviter_cap"
+            : null;
+    const review =
+      !refused && (await this.sharedMachine(tx, inviterId, buyerId)) ? "shared_pc_review" : null;
+    return { refused, review };
+  }
+  /** Recording a sale and recording its refund or dispute are serialised per payment, so a
+   *  reversal can never land between the block check and the reward insert. */
+  private lockPayment(tx: Pick<PoolClient, "query">, paymentId: string) {
+    return tx.query("SELECT pg_advisory_xact_lock(hashtext('referral-payment:' || $1::text))", [
+      paymentId,
+    ]);
+  }
+  /** Serialise this inviter's awards so concurrent purchases cannot both pass the yearly cap. */
+  private lockInviter(tx: Pick<PoolClient, "query">, inviterId: number) {
+    return tx.query("SELECT pg_advisory_xact_lock(hashtext('referral-inviter:' || $1::text))", [
+      inviterId,
+    ]);
   }
 
   async ownCode(userId: number): Promise<string> {
@@ -528,38 +609,27 @@ export class Referrals {
         await tx.query("UPDATE referral_quotes SET state='paid' WHERE id=$1", [quote.id]);
         return null;
       }
+      await this.lockPayment(tx, payment.paymentId);
+      // A refund or dispute recorded before the sale, even one that arrived while this payment
+      // was being read from Stripe, is a block row by now.
       const { rows: blocks } = await tx.query(
         "SELECT state FROM referral_payment_blocks WHERE payment_id=$1",
         [payment.paymentId],
       );
-      // Serialise this inviter's awards so concurrent purchases cannot both pass the yearly cap.
-      await tx.query("SELECT pg_advisory_xact_lock(hashtext('referral-inviter:' || $1::text))", [
+      await this.lockInviter(tx, quote.inviter_id);
+      const { refused: ineligible, review } = await this.eligibility(
+        tx,
         quote.inviter_id,
-      ]);
-      const { rows: inviterRows } = await tx.query(
-        `SELECT u.is_pro,u.plan,(SELECT count(*)::int FROM referral_rewards r
-          WHERE r.inviter_id=u.id AND r.state<>'revoked' AND r.paid_at > $2) AS recognised
-        FROM users u WHERE u.id=$1`,
-        [quote.inviter_id, new Date(this.now().getTime() - CAP_WINDOW_MS)],
+        quote.buyer_id,
       );
-      const inviter = inviterRows[0];
-      // Lifetime owners still invite (the friend saves 10%) but receive nothing they could resell.
-      // The buyer may have signed in on the inviter's PC after confirming the code.
-      const ineligible =
-        inviter?.is_pro === true && inviter.plan === "lifetime"
-          ? "inviter_lifetime"
-          : (await this.sharedDevice(tx, quote.inviter_id, quote.buyer_id))
-            ? "shared_device"
-            : (inviter?.recognised ?? 0) >= INVITER_CAP
-              ? "inviter_cap"
-              : null;
       // v3: a verified successful payment makes the bonus available at once. Refund and
       // dispute webhooks (payment blocks) withdraw it later, even after activation. Only a
-      // payment without payer evidence (no card fingerprint to deduplicate) waits for review.
+      // payment without payer evidence (no card fingerprint to deduplicate), or one whose two
+      // accounts used the same PC, waits for review.
       const state = ineligible
         ? "revoked"
         : (blocks[0]?.state ??
-          (payment.state === "paid" ? (payer ? "ready" : "hold") : payment.state));
+          (payment.state === "paid" ? (payer && !review ? "ready" : "hold") : payment.state));
       const id = randomUUID();
       const inserted = await tx.query(
         `INSERT INTO referral_rewards(id,quote_id,payment_id,invoice_id,buyer_id,inviter_id,payer_hash,
@@ -580,7 +650,7 @@ export class Referrals {
           this.now(),
           ineligible ??
             payment.reason ??
-            (state === "hold" && !payer ? "payer_identity_review" : null),
+            (state === "hold" ? (!payer ? "payer_identity_review" : review) : null),
         ],
       );
       await tx.query("UPDATE referral_quotes SET state='paid' WHERE id=$1", [quote.id]);
@@ -608,9 +678,11 @@ export class Referrals {
       payment.cashReceived < quote.subtotal_minor ||
       !Number.isSafeInteger(payment.cashReceived) ||
       !Number.isFinite(payment.paidAt.getTime()) ||
-      payment.paidAt > this.now() ||
+      // Stripe's clock and ours differ by seconds, so a sale recorded at once can look a moment
+      // ahead. No bound at the quote's expiry: Stripe completes no session after it, while an
+      // asynchronous payment of a session completed in time can succeed days later.
+      payment.paidAt.getTime() > this.now().getTime() + PAID_AT_SKEW_MS ||
       payment.paidAt.getTime() < Math.floor(new Date(quote.created_at).getTime() / 1000) * 1000 ||
-      payment.paidAt > new Date(quote.expires_at) ||
       !/^pi_[A-Za-z0-9]+$/.test(payment.paymentId)
     );
   }
@@ -619,6 +691,7 @@ export class Referrals {
   async blockPayment(paymentId: string, state: "hold" | "revoked", reason: string) {
     if (!/^pi_[A-Za-z0-9]+$/.test(paymentId)) throw new ReferralError("invalid_payment", 400);
     await this.transaction(async (tx) => {
+      await this.lockPayment(tx, paymentId);
       await tx.query(
         `INSERT INTO referral_payment_blocks(payment_id,state,reason,checked_at) VALUES($1,$2,$3,$4)
         ON CONFLICT(payment_id) DO UPDATE SET state=CASE WHEN referral_payment_blocks.state='revoked' THEN 'revoked' ELSE EXCLUDED.state END,
@@ -700,19 +773,22 @@ export class Referrals {
         payment.payerFingerprint &&
         !payment.inviterFingerprints.includes(payment.payerFingerprint) &&
         !payment.hasPriorPurchase;
+      // The same rules as when a sale is recorded: a hold must not release a bonus they refuse.
+      await this.lockInviter(tx, reward.inviter_id);
+      const rules = await this.eligibility(tx, reward.inviter_id, reward.buyer_id, reward.id);
       const review =
         !quotes[0] || !this.quoteMatches(quotes[0], payment)
           ? "payment_mismatch_review"
           : !identity
             ? "payer_identity_review"
-            : null;
+            : rules.review;
       await tx.query("DELETE FROM referral_payment_blocks WHERE payment_id=$1 AND state='hold'", [
         payment.paymentId,
       ]);
       await tx.query(`UPDATE referral_rewards SET state=$2,reason=$3,checked_at=$4 WHERE id=$1`, [
         reward.id,
-        review ? "hold" : reward.activated_at ? "active" : "ready",
-        review,
+        rules.refused ? "revoked" : review ? "hold" : reward.activated_at ? "active" : "ready",
+        rules.refused ?? review,
         this.now(),
       ]);
       await this.audit(tx, payment.paymentId, review ? "dispute_won_" + review : "dispute_won");
@@ -745,6 +821,16 @@ export class Referrals {
     ]);
     await this.db.query("DELETE FROM referral_webhook_receipts WHERE completed_at < $1", [
       new Date(this.now().getTime() - 90 * 86400000),
+    ]);
+    // A refund or dispute of a payment that never became a referral sale (other products,
+    // ordinary purchases) is kept only while a late sale record could still need it.
+    await this.db.query(
+      `DELETE FROM referral_payment_blocks b WHERE b.checked_at < $1
+      AND NOT EXISTS(SELECT 1 FROM referral_rewards r WHERE r.payment_id=b.payment_id)`,
+      [new Date(this.now().getTime() - 90 * 86400000)],
+    );
+    await this.db.query("DELETE FROM referral_machines WHERE last_seen < $1", [
+      new Date(this.now().getTime() - CAP_WINDOW_MS),
     ]);
   }
 

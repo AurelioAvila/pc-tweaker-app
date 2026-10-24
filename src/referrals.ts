@@ -133,6 +133,15 @@ export async function activateOrRefreshBonus(
   return invoke<boolean>("referral_license_status", { token });
 }
 
+/** The server refused to refresh this PC's bonus because it was revoked, put on hold for review
+ *  or has ended: its local lease is dropped at once instead of running out. */
+export function bonusWithdrawn(error: unknown): boolean {
+  return (
+    error instanceof ReferralRequestError &&
+    (error.code === "bonus_unavailable" || error.code === "bonus_expired")
+  );
+}
+
 /** The active bonus bound to this PC's device key, if any. Bonuses bound to other PCs are not
  *  tried, so each refresh is one challenge and one proof. */
 export async function bonusForThisPc(rewards: ReferralReward[], now = Date.now()) {

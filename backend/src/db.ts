@@ -255,6 +255,14 @@ async function initSchema(): Promise<void> {
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS trial_claims_email_idx ON trial_claims (product, email_hash);`);
   // NULL fingerprints never collide with each other in a unique index.
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS trial_claims_card_idx ON trial_claims (product, card_fingerprint);`);
+  // 24 Oct 2026, additive: the card as a keyed hash (raw fingerprints move here and are
+  // cleared, trial.ts maintainTrialClaims) and the PC the trial ran on, also keyed.
+  // Rollback: DROP INDEX trial_claims_device_idx, trial_claims_card_hash_idx; DROP COLUMN
+  // device_hash, card_hash (older code reads neither; migrated cards are not restored).
+  await pool.query(`ALTER TABLE trial_claims ADD COLUMN IF NOT EXISTS card_hash TEXT;`);
+  await pool.query(`ALTER TABLE trial_claims ADD COLUMN IF NOT EXISTS device_hash TEXT;`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS trial_claims_card_hash_idx ON trial_claims (product, card_hash);`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS trial_claims_device_idx ON trial_claims (product, device_hash);`);
 
   // One row per website download click that arrived from a tagged social
   // post (routes/downloads.ts). Campaign labels and a timestamp only: no IP,

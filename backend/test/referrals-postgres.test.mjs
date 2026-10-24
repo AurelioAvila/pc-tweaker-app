@@ -275,11 +275,11 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
           { baseMinor: 800 },
           { discountMinor: 79 },
           { customerId: "cus_wrong" },
-          { paidAt: new Date("2026-10-20T14:00:00Z") },
+          // More than Stripe's few seconds of clock difference ahead of this server.
+          { paidAt: new Date("2026-10-20T12:10:00Z") },
         ]) {
           await reset();
           const q = await reserve();
-          if (changed.paidAt) now = new Date("2026-10-20T15:00:00Z");
           assert.equal(await core.recordPayment({ ...payment(q), ...changed }), null);
           assert.equal((await core.quote(q.id)).state, "paid");
           const rows = (await pool.query("SELECT id,state,reason FROM referral_rewards")).rows;
@@ -505,7 +505,8 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       assert.deepEqual(await gateway.checkout(2, "monthly", params), {
         url: "https://checkout.stripe.com/c/pay/expiry",
       });
-      await assert.rejects(gateway.checkout(2, "annual", params), /close_existing_checkout/);
+      // A paid session cannot be swapped for another plan.
+      await assert.rejects(gateway.checkout(2, "annual", params), /reconciliation_required/);
       now = new Date(now.getTime() + 3600000);
       await assert.rejects(gateway.checkout(2, "monthly", params), /reconciliation_required/);
       assert.equal((await core.quote(quote.id)).state, "open");
@@ -755,8 +756,14 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
           }),
         },
         charges: {
-          list: pagesOf([{ paid: true, payment_method_details: { card: { fingerprint: "card_inviter" } } }]),
+          list: () =>
+            pagesOf(
+              change.inviterCharges ?? [
+                { paid: true, payment_method_details: { card: { fingerprint: "card_inviter" } } },
+              ],
+            )(),
         },
+        paymentMethods: { list: () => pagesOf(change.inviterMethods ?? [])() },
         disputes: { list: () => pagesOf(change.disputes ?? [])() },
         subscriptions: { retrieve: async () => ({ metadata: { referral_quote: q.id } }) },
       };
@@ -1073,21 +1080,21 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
         const gateway = new ReferralStripe(core, paidProvider(q, change));
         await gateway.reconcileQuote(q.id);
         assert.equal(await rewardState(), "ready");
-        // Refunded at once; its webhook arrived before the reward row and was ignored (R13).
+        // Refunded at once, and its webhook never reached us.
         change.charge = { refunded: true, amount_refunded: 719 };
+        // Argon 5: a sale recorded two hours after the payment (webhook retries, reconciliation)
+        // used to be skipped, since its record was already past paid_at + 15 minutes.
         await pool.query(
-          "UPDATE referral_rewards SET paid_at=now()-INTERVAL '5 minutes',checked_at=now()-INTERVAL '5 minutes'",
+          "UPDATE referral_rewards SET paid_at=now()-INTERVAL '2 hours',checked_at=now()-INTERVAL '5 minutes'",
         );
         await runReferralReconciliation(gateway);
         assert.equal(await rewardState(), "ready", "no re-read before 15 minutes");
-        await pool.query(
-          "UPDATE referral_rewards SET paid_at=now()-INTERVAL '20 minutes',checked_at=now()-INTERVAL '19 minutes'",
-        );
+        await pool.query("UPDATE referral_rewards SET checked_at=now()-INTERVAL '19 minutes'");
         await runReferralReconciliation(gateway);
         assert.equal(await rewardState(), "revoked");
-        // One re-read only: a bonus checked after the window is not polled again.
+        // One re-read only: a bonus already re-read is not polled again.
         await pool.query("UPDATE referral_quotes SET reconcile_after=NULL");
-        await pool.query("UPDATE referral_rewards SET state='ready',checked_at=paid_at+INTERVAL '16 minutes'");
+        await pool.query("UPDATE referral_rewards SET state='ready',checked_at=now()-INTERVAL '1 hour'");
         const calls = [];
         await runReferralReconciliation(new ReferralStripe(core, counted(paidProvider(q), calls)));
         assert.deepEqual(calls, []);
@@ -1236,7 +1243,16 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
           gateway,
         );
         assert.deepEqual(calls, []);
+        // Codex 4: kept as a block in case it is a referral sale still being recorded; pruned
+        // after 90 days when no sale ever matches it.
+        assert.deepEqual(
+          (await pool.query("SELECT payment_id,state FROM referral_payment_blocks")).rows,
+          [{ payment_id: "pi_uninstaller", state: "revoked" }],
+        );
+        now = new Date(now.getTime() + 91 * 86400000);
+        await core.cleanup();
         assert.equal((await pool.query("SELECT * FROM referral_payment_blocks")).rowCount, 0);
+        now = new Date("2026-10-20T12:00:00Z");
         // A refund of a referral purchase is still recorded and revokes its bonus.
         const { p } = await ready();
         await referralWebhook(
@@ -1250,6 +1266,172 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
         );
         assert.deepEqual(calls, ["accounts.retrieve"]);
         assert.equal(await rewardState(), "revoked");
+      },
+    );
+    await t.test(
+      "Codex 4 / Argon 5: a refund that arrives while the sale is being recorded withdraws the bonus at once",
+      async () => {
+        await reset();
+        const q = await paidQuote();
+        const change = { charge: {}, disputes: [] };
+        const provider = paidProvider(q, change);
+        // The payment is read as paid; before the reward row exists, the refund webhook lands.
+        const read = provider.paymentIntents.retrieve;
+        provider.paymentIntents.retrieve = async (...args) => {
+          const intent = await read(...args);
+          await referralWebhook(
+            {
+              id: "evt_refund_race",
+              type: "charge.refunded",
+              livemode: false,
+              data: { object: { payment_intent: "pi_paid1", refunded: true } },
+            },
+            new ReferralStripe(core, paidProvider(q)),
+          );
+          return intent;
+        };
+        await new ReferralStripe(core, provider).reconcileQuote(q.id);
+        assert.equal(await rewardState(), "revoked", "never ready, not even for 15 minutes");
+        const [{ id }] = (await pool.query("SELECT id FROM referral_rewards")).rows;
+        await assert.rejects(core.challenge(1, id, "activate", device().pub), /unavailable/);
+        // A dispute opened in the same window holds it for review instead.
+        await reset();
+        const q2 = await paidQuote();
+        await referralWebhook(
+          {
+            id: "evt_dispute_early",
+            type: "charge.dispute.created",
+            livemode: false,
+            data: { object: { payment_intent: "pi_paid1", status: "needs_response" } },
+          },
+          new ReferralStripe(core, paidProvider(q2)),
+        );
+        await new ReferralStripe(core, paidProvider(q2)).reconcileQuote(q2.id);
+        assert.equal(await rewardState(), "hold");
+      },
+    );
+    await t.test(
+      "Argon 4: Stripe's clock a moment ahead, or an asynchronous payment after the quote expired, is a normal sale",
+      async () => {
+        for (const paidAt of [
+          new Date("2026-10-20T12:00:03Z"),
+          new Date("2026-10-23T09:00:00Z"),
+        ]) {
+          await reset();
+          const q = await reserve();
+          if (paidAt.getDate() === 23) now = new Date("2026-10-23T09:00:05Z");
+          const id = await core.recordPayment({ ...payment(q), paidAt });
+          assert.ok(id);
+          assert.equal(await rewardState(), "ready", paidAt.toISOString());
+        }
+      },
+    );
+    await t.test(
+      "Argon 2: an inviter's own card pays for the friend even if it never paid for anything itself",
+      async () => {
+        for (const change of [
+          // In a trial: the card is saved on the customer, no paid charge.
+          { inviterCharges: [], inviterMethods: [{ card: { fingerprint: "card_buyer" } }] },
+          // A failed charge with that card.
+          {
+            inviterCharges: [{ paid: false, payment_method_details: { card: { fingerprint: "card_buyer" } } }],
+          },
+        ]) {
+          await reset();
+          const q = await paidQuote();
+          await new ReferralStripe(core, paidProvider(q, change)).reconcileQuote(q.id);
+          assert.equal((await pool.query("SELECT * FROM referral_rewards")).rowCount, 0);
+          assert.equal(
+            (await pool.query("SELECT 1 FROM referral_audit WHERE action='purchase_ineligible'")).rowCount,
+            1,
+          );
+        }
+      },
+    );
+    await t.test(
+      "Codex 2: two accounts on one PC (licence PC id) are held for review; other PCs are not",
+      async () => {
+        await reset();
+        const pc = (n) => n.toString(16).padStart(64, "0");
+        await core.ownCode(1);
+        // Only programme participants are recorded: 3 has neither a code nor an invitation.
+        assert.equal(await core.recordMachine(1, pc(1)), true);
+        assert.equal(await core.recordMachine(3, pc(1)), false);
+        assert.equal(await core.recordMachine(1, "not-a-hash"), false);
+        const stored = (await pool.query("SELECT machine_hash FROM referral_machines")).rows;
+        assert.equal(stored.length, 1);
+        assert.notEqual(stored[0].machine_hash, pc(1), "kept only as a keyed hash");
+        // The friend claims elsewhere (a new install id), then uses the inviter's PC before paying.
+        const q = await reserve();
+        assert.equal(await core.recordMachine(2, pc(1)), true);
+        const id = await core.recordPayment(payment(q));
+        assert.deepEqual((await pool.query("SELECT state,reason FROM referral_rewards")).rows[0], {
+          state: "hold",
+          reason: "shared_pc_review",
+        });
+        assert.deepEqual((await core.summary(1)).rewards, [{ id, status: "pending" }]);
+        // Argon 6: a dispute won later does not release that hold.
+        await core.blockPayment(payment(q).paymentId, "hold", "charge.dispute.created");
+        await core.releaseDisputeHold(payment(q));
+        assert.deepEqual((await pool.query("SELECT state,reason FROM referral_rewards")).rows[0], {
+          state: "hold",
+          reason: "shared_pc_review",
+        });
+        // A friend on another PC gets the bonus at once.
+        await reset();
+        await core.ownCode(1);
+        await core.recordMachine(1, pc(1));
+        const q2 = await reserve();
+        await core.recordMachine(2, pc(2));
+        await core.recordPayment(payment(q2));
+        assert.equal(await rewardState(), "ready");
+        // Twelve months without a licence refresh: the PC record is gone.
+        now = new Date(now.getTime() + 366 * 86400000);
+        await core.cleanup();
+        assert.equal((await pool.query("SELECT * FROM referral_machines")).rowCount, 0);
+      },
+    );
+    await t.test("Argon 6: a won dispute re-checks the reward rules it was held under", async () => {
+      await reset();
+      const p = payment(await reserve());
+      await core.blockPayment(p.paymentId, "hold", "charge.dispute.created");
+      await core.recordPayment(p);
+      assert.equal(await rewardState(), "hold");
+      // While held, the inviter bought Lifetime: the dispute is won, the bonus is not released.
+      await pool.query("UPDATE users SET is_pro=true,plan='lifetime' WHERE id=1");
+      await core.releaseDisputeHold(p);
+      assert.deepEqual((await pool.query("SELECT state,reason FROM referral_rewards")).rows[0], {
+        state: "revoked",
+        reason: "inviter_lifetime",
+      });
+    });
+    await t.test(
+      "Argon 7: switching plan closes the open referral checkout and opens one for the new plan",
+      async () => {
+        await reset();
+        await core.claim(2, await core.ownCode(1), false);
+        await pool.query("UPDATE users SET stripe_customer_id='cus_test2' WHERE id=2");
+        const sessions = new Map();
+        const expired = [];
+        const provider = checkoutProvider(async (params) => {
+          const id = "cs_test_" + params.metadata.referral_quote.replaceAll("-", "");
+          sessions.set(id, { id, status: "open" });
+          return { id, url: "https://checkout.stripe.com/c/pay/" + id };
+        });
+        provider.checkout.sessions.retrieve = async (id) => sessions.get(id);
+        provider.checkout.sessions.expire = async (id) => {
+          expired.push(id);
+          sessions.get(id).status = "expired";
+          return sessions.get(id);
+        };
+        const gateway = new ReferralStripe(core, provider);
+        const monthly = await gateway.checkout(2, "monthly", checkoutParams());
+        const annual = await gateway.checkout(2, "annual", checkoutParams({ metadata: { product: "pctweaker", userId: "2", plan: "annual" } }));
+        assert.ok(annual?.url);
+        assert.notEqual(annual.url, monthly.url);
+        assert.deepEqual(expired, [monthly.url.split("/").pop()], "the monthly page can no longer be paid");
+        const quotes = (await pool.query("SELECT plan,state FROM referral_quotes ORDER BY created_at,plan")).rows;
+        assert.deepEqual(quotes.map((x) => `${x.plan}:${x.state}`).sort(), ["annual:open", "monthly:expired"]);
       },
     );
   } finally {

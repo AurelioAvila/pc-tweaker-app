@@ -33,6 +33,8 @@ const {
   bonusForThisPc,
   referralRequest,
   readReferralStatus,
+  bonusWithdrawn,
+  ReferralRequestError,
 } = await import(
   `data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString("base64")}`
 );
@@ -193,5 +195,13 @@ const issuerHash = "ab".repeat(32);
   });
   assert.deepEqual(seen, [], "nothing is sent and no device identity is touched");
 }
+
+// Argon 1: a bonus the server withdrew or ended loses its local lease at once; network and
+// other failures keep the remaining lease.
+assert.equal(bonusWithdrawn(new ReferralRequestError("bonus_unavailable")), true);
+assert.equal(bonusWithdrawn(new ReferralRequestError("bonus_expired")), true);
+assert.equal(bonusWithdrawn(new ReferralRequestError("rate_limited")), false);
+assert.equal(bonusWithdrawn(new ReferralRequestError("generic")), false);
+assert.equal(bonusWithdrawn(new TypeError("Failed to fetch")), false);
 
 console.log("referral client OK");

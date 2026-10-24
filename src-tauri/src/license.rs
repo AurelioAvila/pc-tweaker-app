@@ -34,7 +34,7 @@ use base64::{engine::general_purpose::STANDARD, Engine as _};
 use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 /// Public half of a key pair dedicated to license signing — separate from
@@ -153,15 +153,23 @@ fn verify_for_pc_tweaker(
     require_pc_tweaker_product(verify(payload_json, signature_b64)?)
 }
 
-fn verified_fresh_response(
+/// Signature, product and PC binding; freshness is up to the caller.
+fn verified_response(
     response: &SignedLicenseResponse,
     public_key_b64: &str,
 ) -> Option<LicensePayload> {
     let verified =
         verify_with_public_key(&response.payload_json, &response.signature, public_key_b64).ok()?;
     let payload = require_pc_tweaker_product(verified).ok()?;
-    (is_fresh(&payload) && bound_to(&response.payload_json, device_hash().as_deref()))
-        .then_some(payload)
+    bound_to(&response.payload_json, device_hash().as_deref()).then_some(payload)
+}
+
+fn verified_fresh_response(
+    response: &SignedLicenseResponse,
+    public_key_b64: &str,
+) -> Option<LicensePayload> {
+    let payload = verified_response(response, public_key_b64)?;
+    is_fresh(&payload).then_some(payload)
 }
 
 fn require_pc_tweaker_product(payload: LicensePayload) -> Result<LicensePayload, VerifyError> {
@@ -187,16 +195,73 @@ fn now_secs() -> u64 {
 /// three weeks ago proves the server said something true three weeks ago,
 /// not that it is still true now.
 fn is_fresh(payload: &LicensePayload) -> bool {
-    // Once the process is running, moving the wall clock backwards must not
-    // extend the offline window. A persisted, device-bound clock anchor is a
-    // separate license-format migration; this does not claim to prevent an
-    // administrator from tampering with time across restarts.
+    // A signed issue time is the server's clock: real time is at least that. Only
+    // within the skew a slow PC is allowed, so a server clock that ran ahead can
+    // never push this PC's time forward by more than that.
+    if payload.issued_at <= clock_now().saturating_add(MAX_CLOCK_SKEW_SECS) {
+        observe_server_time(payload.issued_at);
+    }
+    is_fresh_at(payload, clock_now())
+}
+
+/// This PC's clock, never earlier than (a) the clock at start plus the time the
+/// process has run, so moving it back while the app is open cannot stretch the
+/// offline window, and (b) the server time this PC has proof of (see
+/// `observe_server_time`), which a restart cannot undo either.
+fn clock_now() -> u64 {
     static ANCHOR: OnceLock<(u64, Instant)> = OnceLock::new();
     let wall_now = now_secs();
     let (anchor_time, anchor_tick) = ANCHOR.get_or_init(|| (wall_now, Instant::now()));
-    let effective_now = wall_now.max(anchor_time.saturating_add(anchor_tick.elapsed().as_secs()));
-    is_fresh_at(payload, effective_now)
+    wall_now
+        .max(anchor_time.saturating_add(anchor_tick.elapsed().as_secs()))
+        .max(trusted_now())
 }
+
+/// Server time this process has proof of: the newest signed `issued_at` it
+/// verified, or the floor saved with the cached licence (`seenAt`), plus the
+/// time the app has run since (monotonic). It is never ahead of real time, so a
+/// PC whose clock runs behind is never locked out by it, and it only grows.
+static TRUSTED: Mutex<Option<(u64, Instant)>> = Mutex::new(None);
+
+fn trusted_now() -> u64 {
+    TRUSTED
+        .lock()
+        .ok()
+        .and_then(|guard| *guard)
+        .map_or(0, |(time, tick)| {
+            time.saturating_add(tick.elapsed().as_secs())
+        })
+}
+
+fn observe_server_time(time: u64) {
+    if let Ok(mut guard) = TRUSTED.lock() {
+        let current = guard.map_or(0, |(base, tick)| {
+            base.saturating_add(tick.elapsed().as_secs())
+        });
+        if time > current {
+            *guard = Some((time, Instant::now()));
+        }
+    }
+}
+
+/// The last moment a licence can be fresh offline. A floor read back from disk
+/// is capped here: an edited or damaged `seenAt` can end this licence early,
+/// never the next one the server signs.
+fn offline_window_end(payload: &LicensePayload) -> u64 {
+    payload.issued_at.saturating_add(grace_period(payload))
+}
+
+/// Freshness of a cached licence after a restart: the time this PC had already
+/// proved when the licence was last checked (`seen_at`) counts even if the
+/// clock has been moved back since. Rolling Windows time back to before a
+/// subscription's end therefore stops working once the app has seen that end.
+fn fresh_after_restart(payload: &LicensePayload, seen_at: Option<u64>, now: u64) -> bool {
+    let floor = seen_at.map_or(0, |seen| seen.min(offline_window_end(payload)));
+    is_fresh_at(payload, now.max(floor))
+}
+
+/// How often a still-running app writes its proven time back to `license.json`.
+const FLOOR_WRITE_SECS: u64 = 60;
 
 fn grace_period(payload: &LicensePayload) -> u64 {
     if payload.is_pro && payload.plan.as_deref() == Some("lifetime") {
@@ -252,9 +317,12 @@ fn machine_guid() -> Option<String> {
     None
 }
 
-/// A licence without `deviceHash` (issued before the backend bound licences
-/// to a PC) stays valid until it expires as before; one with it must name
-/// this PC. Read from the exact signed bytes, after the signature check.
+/// A licence carrying `deviceHash` must name this PC. One without it is
+/// accepted only on a PC whose identity cannot be read: the server issues such
+/// a licence to any request without a valid X-Device-Hash, so on a PC that has
+/// an identity it would be a licence fetched for no PC in particular, which a
+/// copied `license.json` must not be able to use. Read from the exact signed
+/// bytes, after the signature check.
 fn bound_to(payload_json: &str, this_pc: Option<&str>) -> bool {
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
@@ -263,7 +331,7 @@ fn bound_to(payload_json: &str, this_pc: Option<&str>) -> bool {
         device_hash: Option<String>,
     }
     match serde_json::from_str::<Binding>(payload_json) {
-        Ok(Binding { device_hash: None }) => true,
+        Ok(Binding { device_hash: None }) => this_pc.is_none(),
         Ok(Binding {
             device_hash: Some(hash),
         }) => this_pc == Some(hash.as_str()),
@@ -286,6 +354,21 @@ pub struct LicenseStore {
     file_path: PathBuf,
 }
 
+/// `license.json`: the signed response, verbatim, plus `seenAt`, the server
+/// time this PC had proof of when the licence was last checked (see
+/// `fresh_after_restart`). Older releases read the same file and ignore it.
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CachedLicense {
+    #[serde(flatten)]
+    response: SignedLicenseResponse,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    seen_at: Option<u64>,
+}
+
+/// One writer at a time: the floor is written back from read paths too.
+static STORE_WRITE: Mutex<()> = Mutex::new(());
+
 impl LicenseStore {
     pub fn new(app_data_dir: PathBuf) -> Self {
         LicenseStore {
@@ -294,10 +377,21 @@ impl LicenseStore {
     }
 
     pub fn save(&self, response: &SignedLicenseResponse) -> std::io::Result<()> {
+        self.write(response, trusted_now())
+    }
+
+    fn write(&self, response: &SignedLicenseResponse, seen_at: u64) -> std::io::Result<()> {
+        let _guard = STORE_WRITE
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         if let Some(parent) = self.file_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        let json = serde_json::to_string_pretty(response).unwrap();
+        let cached = CachedLicense {
+            response: response.clone(),
+            seen_at: (seen_at > 0).then_some(seen_at),
+        };
+        let json = serde_json::to_string_pretty(&cached).unwrap();
         let tmp = self
             .file_path
             .with_extension(format!("json.{}.tmp", std::process::id()));
@@ -310,6 +404,10 @@ impl LicenseStore {
     }
 
     fn load(&self) -> Option<SignedLicenseResponse> {
+        self.load_cached().map(|cached| cached.response)
+    }
+
+    fn load_cached(&self) -> Option<CachedLicense> {
         let text = std::fs::read_to_string(&self.file_path).ok()?;
         serde_json::from_str(&text).ok()
     }
@@ -340,7 +438,20 @@ impl LicenseStore {
     /// verifies the signature, product binding, and existing offline window.
     /// A plan supplied by the renderer never participates in entitlement.
     pub fn verified_fresh_payload(&self) -> Option<LicensePayload> {
-        verified_fresh_response(&self.load()?, PUBLIC_KEY_B64)
+        let cached = self.load_cached()?;
+        let payload = verified_response(&cached.response, PUBLIC_KEY_B64)?;
+        if let Some(seen) = cached.seen_at {
+            observe_server_time(seen.min(offline_window_end(&payload)));
+        }
+        let fresh =
+            is_fresh(&payload) && fresh_after_restart(&payload, cached.seen_at, clock_now());
+        // Keep the proven time on disk while the app runs, so a restart with
+        // the clock moved back starts from it.
+        let proven = trusted_now();
+        if proven >= cached.seen_at.unwrap_or(0).saturating_add(FLOOR_WRITE_SECS) {
+            let _ = self.write(&cached.response, proven);
+        }
+        fresh.then_some(payload)
     }
 }
 
@@ -432,7 +543,11 @@ mod tests {
 
     fn sign_test_payload(payload: &LicensePayload) -> (String, String, String) {
         let signing_key = SigningKey::from_bytes(&[7_u8; 32]);
-        let payload_json = serde_json::to_string(payload).unwrap();
+        let mut value = serde_json::to_value(payload).unwrap();
+        if let Some(hash) = device_hash() {
+            value["deviceHash"] = serde_json::Value::String(hash);
+        }
+        let payload_json = value.to_string();
         let signature = signing_key.sign(payload_json.as_bytes());
         (
             payload_json,
@@ -770,11 +885,78 @@ mod tests {
             !bound_to(&payload(Some(&here)), None),
             "a PC whose identity cannot be read"
         );
+        // Codex 1 / Argon 3: the server signs a licence without deviceHash for any
+        // request that omits X-Device-Hash; on a PC with an identity it unlocks nothing.
         assert!(
-            bound_to(&payload(None), Some(&here)),
-            "licences from before binding stay valid until they expire"
+            !bound_to(&payload(None), Some(&here)),
+            "an unbound licence on a PC that has an identity"
+        );
+        assert!(
+            bound_to(&payload(None), None),
+            "a PC whose identity cannot be read keeps the unbound licence it was issued"
         );
         assert!(!bound_to("not json", Some(&here)));
+    }
+
+    /// Codex 5: rolling Windows time back across a restart must not revive a
+    /// licence the app has already seen expire.
+    #[test]
+    fn a_clock_moved_back_across_a_restart_does_not_extend_a_cached_licence() {
+        let issued = 1_800_000_000;
+        let payload = LicensePayload {
+            user_id: "rollback".into(),
+            is_pro: true,
+            plan: Some("monthly".into()),
+            product: Some(PRODUCT_ID.into()),
+            issued_at: issued,
+            expires_at: Some(issued + 3600),
+        };
+        // The app ran past the subscription's end and saved that time (seenAt).
+        let seen = issued + 7200;
+        let rolled_back = issued + 60;
+        assert!(
+            is_fresh_at(&payload, rolled_back),
+            "the freshness check alone believes the moved-back clock"
+        );
+        assert!(!fresh_after_restart(&payload, Some(seen), rolled_back));
+        // Not locked out: a PC two hours behind the server, before the end.
+        assert!(fresh_after_restart(
+            &payload,
+            Some(issued),
+            issued - 2 * 3600
+        ));
+        assert!(fresh_after_restart(&payload, None, issued + 59));
+        // A damaged or edited seenAt is capped at this licence's own window.
+        let lifetime = LicensePayload {
+            plan: Some("lifetime".into()),
+            expires_at: None,
+            ..payload.clone()
+        };
+        assert!(fresh_after_restart(&lifetime, Some(u64::MAX), issued));
+        assert!(!fresh_after_restart(&payload, Some(u64::MAX), issued));
+    }
+
+    #[test]
+    fn the_cache_keeps_its_proven_time_and_reads_files_from_older_releases() {
+        let dir = temp_dir("seen-at");
+        let store = LicenseStore::new(dir.clone());
+        let response = SignedLicenseResponse {
+            payload_json: "{}".into(),
+            signature: "fixture".into(),
+        };
+        store.write(&response, 1_800_000_123).unwrap();
+        let text = std::fs::read_to_string(dir.join("license.json")).unwrap();
+        assert!(text.contains("\"seenAt\": 1800000123"), "{text}");
+        assert_eq!(store.load_cached().unwrap().seen_at, Some(1_800_000_123));
+        // A file written by 1.18.15 (no seenAt) still loads.
+        std::fs::write(
+            dir.join("license.json"),
+            r#"{"payloadJson":"{}","signature":"fixture"}"#,
+        )
+        .unwrap();
+        let old = store.load_cached().unwrap();
+        assert_eq!(old.seen_at, None);
+        assert_eq!(old.response.payload_json, "{}");
     }
 
     #[cfg(windows)]

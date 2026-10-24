@@ -5,6 +5,8 @@ process.env.DATABASE_URL = "pgmem";
 delete process.env.STRIPE_SECRET_KEY;
 delete process.env.RESEND_API_KEY;
 delete process.env.TRIAL_ENABLED;
+// Card fingerprints and PC ids are stored only as HMACs under this key (fixture value).
+process.env.TRIAL_HASH_KEY = "11".repeat(32);
 process.env.STRIPE_PRICE_MONTHLY = "price_pc_monthly_fixture";
 process.env.STRIPE_PRICE_ANNUAL = "price_pc_annual_fixture";
 process.env.STRIPE_PRICE_LIFETIME = "price_pc_lifetime_fixture";
@@ -13,7 +15,7 @@ process.env.STRIPE_PRICE_UNINSTALLER_LOYALTY = "price_uninstaller_loyalty_fixtur
 
 const { getPool, initSchema } = await import("../dist/db.js");
 const { handleEvent, createCheckoutHandler, billingStatus } = await import("../dist/routes/stripe.js");
-const { normalizeEmail, grantsAccess, emailHash } = await import("../dist/trial.js");
+const { normalizeEmail, grantsAccess, emailHash, trialHash, trialAllowsDevice, maintainTrialClaims } = await import("../dist/trial.js");
 const { productEntitlement } = await import("../dist/products.js");
 const { PROMO } = await import("../dist/promo.js");
 await initSchema();
@@ -77,8 +79,8 @@ async function receipts(userId) {
   const { rows } = await getPool().query("SELECT receipt_key, payload, next_attempt_at FROM billing_receipts WHERE user_id = $1", [userId]);
   return rows;
 }
-async function status(userId, product = "pctweaker", environment = { TRIAL_ENABLED: "true" }) {
-  return (await billingStatus(userId, [product], environment)).products[0];
+async function status(userId, product = "pctweaker", environment = { TRIAL_ENABLED: "true", TRIAL_HASH_KEY: process.env.TRIAL_HASH_KEY }, device) {
+  return (await billingStatus(userId, [product], environment, Date.now(), undefined, device)).products[0];
 }
 
 test("emails normalise the way abuse would vary them", () => {
@@ -100,6 +102,7 @@ test("only active and trialing keep Pro; past_due keeps its old grace only off-t
 
 const environment = {
   TRIAL_ENABLED: "true",
+  TRIAL_HASH_KEY: process.env.TRIAL_HASH_KEY,
   STRIPE_SECRET_KEY: "sk_test_synthetic_fixture_only",
   STRIPE_PRICE_MONTHLY: "price_pc_monthly_fixture",
   STRIPE_PRICE_ANNUAL: "price_pc_annual_fixture",
@@ -108,12 +111,12 @@ const environment = {
   STRIPE_PRICE_UNINSTALLER_LOYALTY: "price_uninstaller_loyalty_fixture",
   STRIPE_COUPON_HALLOWEEN_MONTHLY: "coupon_monthly",
 };
-async function checkout(userId, body, env = environment, at = Date.parse("2026-11-20T10:00:00Z"), expected = 200) {
+async function checkout(userId, body, env = environment, at = Date.parse("2026-11-20T10:00:00Z"), expected = 200, device) {
   const calls = [];
   const handler = createCheckoutHandler({ environment: env, now: () => at,
     async createSession(params) { calls.push(params); return { url: "https://checkout.stripe.com/c/pay/cs_test_fixture" }; } });
   const res = { statusCode: 200, status(v) { this.statusCode = v; return this; }, json(v) { this.body = v; return this; } };
-  await handler({ userId: Number(userId), body }, res);
+  await handler({ userId: Number(userId), body, get: (name) => (name === "x-device-hash" ? device : undefined) }, res);
   assert.equal(res.statusCode, expected, JSON.stringify(res.body));
   return { params: calls[0], body: res.body };
 }
@@ -433,4 +436,122 @@ test("a blocked notice says whether it is the trial's first charge or a renewal"
   const notice = (await receipts(legacy)).find((r) => r.receipt_key.startsWith(`ending:payment_failed:${old.id}:`));
   assert.equal(notice.payload.blocked, true);
   assert.equal(notice.payload.trial, undefined, "a renewal, worded as one");
+});
+
+// ---------------------------------------------------------------- one trial per PC (24 Oct 2026)
+
+const pc = (n) => n.toString(16).padStart(64, "0");
+
+test("a PC that had the trial is refused up front, and a trial bought there anyway is cancelled before any charge", async () => {
+  const first = await user();
+  const started = await checkout(first, { plan: "monthly", start_trial: true }, environment, undefined, 200, pc(1));
+  const device = started.params.subscription_data.metadata.trial_device;
+  assert.equal(device, trialHash("device", pc(1)), "the checkout carries the PC, keyed");
+  assert.notEqual(device, pc(1), "never the raw PC hash");
+  await handleEvent(event("customer.subscription.created", trialSubscription(first, {
+    metadata: { userId: first, product: "pctweaker", plan: "monthly", trial: "3d", trial_device: device },
+  })), effects());
+
+  // A new account, new email and new card on the same PC.
+  const second = await user();
+  assert.equal((await status(second, "pctweaker", undefined, pc(1))).can_start_trial, false);
+  assert.equal((await status(second, "pctweaker", undefined, pc(2))).can_start_trial, true, "another PC still can");
+  assert.equal((await checkout(second, { plan: "monthly", start_trial: true }, environment, undefined, 409, pc(1))).body.code, "trial_unavailable");
+  // A subscription that names the same PC (a forged request, or two checkouts at once) is cancelled.
+  const log = {};
+  const sneaky = trialSubscription(second, {
+    metadata: { userId: second, product: "pctweaker", plan: "monthly", trial: "3d", trial_device: device },
+  });
+  await handleEvent(event("customer.subscription.created", sneaky), effects(log, { [sneaky.id]: "fp_new_card" }));
+  assert.deepEqual(log.cancelled, [sneaky.id]);
+  assert.equal((await productEntitlement(second, "pctweaker")).active, false);
+  assert.equal((await status(second)).blocked_reason, "trial_already_used");
+});
+
+test("during a trial, Pro follows the trial's PC; a PC id forged at checkout unlocks nothing on the real PC", async () => {
+  const real = pc(10);
+  // An earlier trial on this PC, bound when its app first asked for a licence.
+  const earlier = await user();
+  await handleEvent(event("customer.subscription.created", trialSubscription(earlier)), effects());
+  assert.equal(await trialAllowsDevice(earlier, "pctweaker", real), true, "first PC to ask holds the trial");
+  assert.equal(await trialAllowsDevice(earlier, "pctweaker", pc(11)), false, "other PCs do not");
+  assert.equal(await trialAllowsDevice(earlier, "pctweaker", null), false, "nor an app that hides its PC once bound");
+
+  // Same PC, new account and card, checkout sent with a made-up PC id.
+  const abuser = await user();
+  const forged = trialHash("device", pc(99));
+  await handleEvent(event("customer.subscription.created", trialSubscription(abuser, {
+    metadata: { userId: abuser, product: "pctweaker", plan: "monthly", trial: "3d", trial_device: forged },
+  })), effects({}, {}));
+  assert.equal(await trialAllowsDevice(abuser, "pctweaker", real), false, "the licence on the real PC is not Pro");
+
+  // Same PC, checkout from an older app without the PC id: refused once the app asks with it...
+  const older = await user();
+  await handleEvent(event("customer.subscription.created", trialSubscription(older)), effects());
+  assert.equal(await trialAllowsDevice(older, "pctweaker", real), false);
+  // ...while an app that sends no PC id at all keeps the unbound trial, as before.
+  assert.equal(await trialAllowsDevice(older, "pctweaker", null), true);
+  // An account without a trial of ours is never limited here.
+  assert.equal(await trialAllowsDevice(await user(), "pctweaker", real), true);
+});
+
+test("two trials racing for one PC: the unique index lets one win", async () => {
+  const a = await user();
+  const b = await user();
+  const device = trialHash("device", pc(20));
+  const subA = trialSubscription(a, { metadata: { userId: a, product: "pctweaker", plan: "monthly", trial: "3d", trial_device: device } });
+  const subB = trialSubscription(b, { metadata: { userId: b, product: "pctweaker", plan: "monthly", trial: "3d", trial_device: device } });
+  const log = {};
+  await Promise.all([
+    handleEvent(event("customer.subscription.created", subA), effects(log)),
+    handleEvent(event("customer.subscription.created", subB), effects(log)),
+  ]);
+  assert.equal(log.cancelled.length, 1);
+  const { rows } = await getPool().query("SELECT count(*)::int AS n FROM trial_claims WHERE product = 'pctweaker' AND device_hash = $1", [device]);
+  assert.equal(rows[0].n, 1);
+});
+
+test("card fingerprints are stored as keyed hashes, old raw ones are migrated, and card and PC hashes expire", async () => {
+  const owner = await user();
+  const sub = trialSubscription(owner);
+  await handleEvent(event("customer.subscription.created", sub), effects({}, { [sub.id]: "fp_raw_card" }));
+  let { rows } = await getPool().query("SELECT card_fingerprint, card_hash FROM trial_claims WHERE subscription_id = $1", [sub.id]);
+  assert.equal(rows[0].card_fingerprint, null, "the Stripe fingerprint itself is not kept");
+  assert.equal(rows[0].card_hash, trialHash("card", "fp_raw_card"));
+  assert.notEqual(rows[0].card_hash, "fp_raw_card");
+  const other = await user();
+  const copy = trialSubscription(other);
+  const log = {};
+  await handleEvent(event("customer.subscription.created", copy), effects(log, { [copy.id]: "fp_raw_card" }));
+  assert.deepEqual(log.cancelled, [copy.id], "the same card is still refused");
+
+  // A claim written by the previous release (raw fingerprint) and one past its retention.
+  const legacy = await user();
+  await getPool().query(
+    "INSERT INTO trial_claims (product, user_id, email_hash, card_fingerprint, subscription_id) VALUES ('pctweaker', $1, $2, 'fp_legacy', 'sub_legacy')",
+    [legacy, emailHash(`legacy-${legacy}@example.com`)],
+  );
+  const old = await user();
+  await getPool().query(
+    "INSERT INTO trial_claims (product, user_id, email_hash, card_hash, device_hash, subscription_id, created_at) VALUES ('pctweaker', $1, $2, 'h_card', 'h_pc', 'sub_old', $3)",
+    [old, emailHash(`old-${old}@example.com`), new Date(Date.now() - 25 * 31 * DAY * 1000)],
+  );
+  await maintainTrialClaims();
+  ({ rows } = await getPool().query("SELECT card_fingerprint, card_hash FROM trial_claims WHERE subscription_id = 'sub_legacy'"));
+  assert.deepEqual(rows[0], { card_fingerprint: null, card_hash: trialHash("card", "fp_legacy") });
+  ({ rows } = await getPool().query("SELECT card_hash, device_hash, email_hash FROM trial_claims WHERE subscription_id = 'sub_old'"));
+  assert.equal(rows[0].card_hash, null);
+  assert.equal(rows[0].device_hash, null);
+  assert.ok(rows[0].email_hash, "the account and email part of an old claim stays");
+  const late = trialSubscription(await user());
+  const lateLog = {};
+  await handleEvent(event("customer.subscription.created", late), effects(lateLog, { [late.id]: "fp_legacy" }));
+  assert.deepEqual(lateLog.cancelled, [late.id], "a migrated card still blocks a second trial");
+});
+
+test("without the hash key no trial is offered or claimed", async () => {
+  const id = await user();
+  const { TRIAL_HASH_KEY: _, ...noKey } = environment;
+  assert.equal((await status(id, "pctweaker", { TRIAL_ENABLED: "true" })).can_start_trial, false);
+  assert.equal((await checkout(id, { plan: "monthly", start_trial: true }, noKey, undefined, 409)).body.code, "trial_unavailable");
 });

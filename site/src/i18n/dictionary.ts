@@ -606,7 +606,7 @@ export const engDictionary: Dictionary = {
     "title": "See what other users found.",
     "outOf": "out of 5",
     "basedOn": "based on {count} site ratings",
-    "note": "Rated 5/5 by users on Softpedia (79 votes) and MajorGeeks (110 votes). Softpedia also awarded PC Tweaker 4.5/5 in its editorial review. Checked September 9, 2026. These external scores are separate from the site ratings above. Written feedback submitted here goes privately to support.",
+    "note": "Rated 5/5 by users on Softpedia and MajorGeeks. Softpedia also awarded PC Tweaker 4.5/5 in its editorial review. Checked October 24, 2026. These external scores are separate from the site ratings above. Written feedback submitted here goes privately to support.",
     "writeCta": "Share Your Experience",
     "formTitle": "How did PC Tweaker work for you?",
     "formName": "Name",

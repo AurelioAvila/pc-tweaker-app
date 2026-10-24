@@ -36,15 +36,22 @@ export class ReferralError extends Error {
   }
 }
 
+/** Foreign keys to users and what deleting an account does to them (24 Oct 2026): the account's
+ *  own rows go, the other party's rows stay with the erased side set to NULL. */
+const USER_FOREIGN_KEYS = `('referral_accounts','user_id','CASCADE'),('referral_challenges','user_id','CASCADE'),
+  ('referral_enrolments','buyer_id','SET NULL'),('referral_enrolments','inviter_id','SET NULL'),
+  ('referral_rewards','buyer_id','SET NULL'),('referral_rewards','inviter_id','SET NULL')`;
+
 export async function initReferralSchema(db: Pick<Pool, "query">): Promise<void> {
+  // One query string runs as one transaction: the migration at the end applies whole or not at all.
   await db.query(`
     CREATE TABLE IF NOT EXISTS referral_accounts (
-      user_id INTEGER PRIMARY KEY REFERENCES users(id), code TEXT NOT NULL UNIQUE,
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, code TEXT NOT NULL UNIQUE,
       enabled BOOLEAN NOT NULL DEFAULT TRUE, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
     CREATE TABLE IF NOT EXISTS referral_enrolments (
-      id TEXT PRIMARY KEY, buyer_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
-      inviter_id INTEGER NOT NULL REFERENCES users(id), buyer_email_hash TEXT NOT NULL UNIQUE,
+      id TEXT PRIMARY KEY, buyer_id INTEGER UNIQUE REFERENCES users(id) ON DELETE SET NULL,
+      inviter_id INTEGER REFERENCES users(id) ON DELETE SET NULL, buyer_email_hash TEXT NOT NULL UNIQUE,
       policy_version TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL, expires_at TIMESTAMPTZ NOT NULL,
       checkout_locked BOOLEAN NOT NULL DEFAULT FALSE, CHECK (buyer_id <> inviter_id)
     );
@@ -62,8 +69,8 @@ export async function initReferralSchema(db: Pick<Pool, "query">): Promise<void>
       WHERE state IN ('creating','open','paid');
     CREATE TABLE IF NOT EXISTS referral_rewards (
       id TEXT PRIMARY KEY, quote_id TEXT NOT NULL UNIQUE REFERENCES referral_quotes(id),
-      payment_id TEXT NOT NULL UNIQUE, invoice_id TEXT UNIQUE, buyer_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
-      inviter_id INTEGER NOT NULL REFERENCES users(id), payer_hash TEXT NOT NULL UNIQUE,
+      payment_id TEXT NOT NULL UNIQUE, invoice_id TEXT UNIQUE, buyer_id INTEGER UNIQUE REFERENCES users(id) ON DELETE SET NULL,
+      inviter_id INTEGER REFERENCES users(id) ON DELETE SET NULL, payer_hash TEXT NOT NULL UNIQUE,
       months INTEGER NOT NULL CHECK(months IN (6,12)), state TEXT NOT NULL
         CHECK(state IN ('pending','ready','active','hold','revoked')),
       paid_at TIMESTAMPTZ NOT NULL, eligible_at TIMESTAMPTZ NOT NULL, checked_at TIMESTAMPTZ NOT NULL,
@@ -76,7 +83,7 @@ export async function initReferralSchema(db: Pick<Pool, "query">): Promise<void>
       reason TEXT NOT NULL, checked_at TIMESTAMPTZ NOT NULL
     );
     CREATE TABLE IF NOT EXISTS referral_challenges (
-      id TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), reward_id TEXT NOT NULL REFERENCES referral_rewards(id),
+      id TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, reward_id TEXT NOT NULL REFERENCES referral_rewards(id),
       purpose TEXT NOT NULL CHECK(purpose IN ('activate','license')), public_key TEXT NOT NULL,
       key_hash TEXT NOT NULL, payload TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL, used_at TIMESTAMPTZ
     );
@@ -98,7 +105,99 @@ export async function initReferralSchema(db: Pick<Pool, "query">): Promise<void>
     ALTER TABLE referral_quotes ADD COLUMN IF NOT EXISTS reconcile_attempts INTEGER NOT NULL DEFAULT 0;
     CREATE INDEX IF NOT EXISTS referral_rewards_inviter_idx ON referral_rewards(inviter_id,paid_at DESC);
     CREATE INDEX IF NOT EXISTS referral_challenges_expiry_idx ON referral_challenges(expires_at);
+    -- 24 Oct 2026, account erasure: tables created before had these keys without ON DELETE, so
+    -- deleting an account that took part failed (23503). Each key still on another rule is
+    -- dropped and added again under its own name; once converted this finds nothing.
+    -- Rollback: not needed to run older code, which works with either rule.
+    DO $$
+    DECLARE fk record;
+    BEGIN
+      FOR fk IN
+        SELECT c.conname, c.conrelid::regclass AS tbl, w.col, w.rule
+        FROM (VALUES ${USER_FOREIGN_KEYS}) AS w(tbl, col, rule)
+        JOIN pg_attribute a ON a.attrelid = w.tbl::regclass AND a.attname = w.col
+        JOIN pg_constraint c ON c.conrelid = a.attrelid AND c.contype = 'f'
+          AND c.confrelid = 'users'::regclass AND c.conkey = ARRAY[a.attnum]
+        WHERE c.confdeltype::text <> CASE w.rule WHEN 'CASCADE' THEN 'c' ELSE 'n' END
+          OR (w.rule = 'SET NULL' AND a.attnotnull)
+      LOOP
+        IF fk.rule = 'SET NULL' THEN
+          EXECUTE format('ALTER TABLE %s ALTER COLUMN %I DROP NOT NULL', fk.tbl, fk.col);
+        END IF;
+        EXECUTE format('ALTER TABLE %s DROP CONSTRAINT %I, ADD CONSTRAINT %I FOREIGN KEY (%I) REFERENCES users(id) ON DELETE %s',
+          fk.tbl, fk.conname, fk.conname, fk.col, fk.rule);
+        RAISE NOTICE 'referral schema: % % now ON DELETE %', fk.tbl, fk.col, fk.rule;
+      END LOOP;
+    END $$;
   `);
+}
+
+/** Kept unlinked after an erasure, then replaced (Referrals.cleanup), per PRIVACY.md. */
+export const ERASED_HASH_MONTHS = 24;
+
+/**
+ * The referral side of an account erasure, inside the caller's transaction and before the users
+ * row is deleted (its foreign keys then remove the invitation code, device challenges and PC
+ * hashes, and set the remaining links to NULL). The other party keeps what is theirs: a bonus
+ * earned from the erased buyer's purchase stays valid; bonuses the erased inviter earned are
+ * withdrawn and a friend's unused invitation from them ends. Kept without the link: the keyed
+ * email and card hashes and the payment reference, so the same person or card cannot earn a
+ * bonus again and a refund or dispute still withdraws the inviter's bonus.
+ */
+export async function eraseUserReferralData(tx: Pick<PoolClient, "query">, userId: number, now: Date) {
+  // A checkout not yet settled with Stripe (still payable, or an asynchronous payment of a session
+  // completed in time) would complete for an account that no longer exists. The reconciliation
+  // worker settles it within about an hour of its expiry.
+  const open = await tx.query(
+    `SELECT 1 FROM referral_quotes q JOIN referral_enrolments e ON e.id=q.enrolment_id
+    WHERE e.buyer_id=$1 AND q.state IN ('creating','open')`,
+    [userId],
+  );
+  if (open.rowCount) throw new ReferralError("open_referral_checkout");
+  // As the invited friend: unpaid checkouts and an invitation never used to buy, with their audit.
+  const quotes = await tx.query(
+    `DELETE FROM referral_quotes q USING referral_enrolments e
+    WHERE e.id=q.enrolment_id AND e.buyer_id=$1 AND q.state<>'paid' RETURNING q.id`,
+    [userId],
+  );
+  const invitations = await tx.query(
+    `DELETE FROM referral_enrolments e WHERE e.buyer_id=$1
+    AND NOT EXISTS(SELECT 1 FROM referral_quotes q WHERE q.enrolment_id=e.id) RETURNING e.id`,
+    [userId],
+  );
+  await tx.query("DELETE FROM referral_audit WHERE subject_id = ANY($1::text[])", [
+    [...quotes.rows, ...invitations.rows].map((row) => row.id),
+  ]);
+  // The paid checkout stays as the record behind the inviter's bonus, without the Stripe
+  // customer, session or parameters. Nothing can be re-verified against an erased buyer, so a
+  // bonus still waiting for verification goes to owner review.
+  await tx.query(
+    `UPDATE referral_quotes q SET customer_id='erased',session_id=NULL,checkout_url=NULL,params='{}'
+    FROM referral_enrolments e WHERE e.id=q.enrolment_id AND e.buyer_id=$1`,
+    [userId],
+  );
+  await tx.query("UPDATE referral_enrolments SET buyer_id=NULL WHERE buyer_id=$1", [userId]);
+  await tx.query(
+    `UPDATE referral_rewards SET buyer_id=NULL,invoice_id=NULL,post_sale_checked=TRUE,
+    reason=CASE WHEN state='pending' THEN 'buyer_erased_review' ELSE reason END,
+    state=CASE WHEN state='pending' THEN 'hold' ELSE state END WHERE buyer_id=$1`,
+    [userId],
+  );
+  // As the inviter.
+  const bonuses = await tx.query(
+    `UPDATE referral_rewards SET inviter_id=NULL,state='revoked',reason='account_erased',checked_at=$2,
+    device_public_key=NULL,device_key_hash=NULL,activated_at=NULL,expires_at=NULL WHERE inviter_id=$1`,
+    [userId, now],
+  );
+  await tx.query(
+    "UPDATE referral_enrolments SET inviter_id=NULL,expires_at=LEAST(expires_at,$2) WHERE inviter_id=$1",
+    [userId, now],
+  );
+  return {
+    referralCheckoutsDeleted: quotes.rowCount ?? 0,
+    referralInvitationsDeleted: invitations.rowCount ?? 0,
+    referralBonusesWithdrawn: bonuses.rowCount ?? 0,
+  };
 }
 
 export type VerifiedReferralPayment = {
@@ -235,10 +334,12 @@ export class Referrals {
    *  (same PC). `rewardId` is a reward already counted towards the cap. */
   private async eligibility(
     tx: Pick<PoolClient, "query">,
-    inviterId: number,
+    inviterId: number | null,
     buyerId: number,
     rewardId: string | null = null,
   ) {
+    // The inviter's account was erased: a sale through their old invitation earns nobody a bonus.
+    if (inviterId === null) return { refused: "inviter_erased", review: null };
     const { rows } = await tx.query(
       `SELECT u.is_pro,u.plan,(SELECT count(*)::int FROM referral_rewards r
         WHERE r.inviter_id=u.id AND r.state<>'revoked' AND r.paid_at > $2 AND r.id IS DISTINCT FROM $3) AS recognised
@@ -814,7 +915,7 @@ export class Referrals {
     };
   }
 
-  /** Expired device challenges and old webhook receipts are not kept indefinitely. */
+  /** Retention (PRIVACY.md, Invite a friend): run by the reconciliation worker every minute. */
   async cleanup() {
     await this.db.query("DELETE FROM referral_challenges WHERE expires_at < $1", [
       new Date(this.now().getTime() - 86400000),
@@ -832,6 +933,34 @@ export class Referrals {
     await this.db.query("DELETE FROM referral_machines WHERE last_seen < $1", [
       new Date(this.now().getTime() - CAP_WINDOW_MS),
     ]);
+    // A referral checkout that was never paid: 30 days after it expired. An invitation that
+    // expired without a purchase: 90 days after. Their audit rows go with them.
+    for (const [sql, days] of [
+      [`DELETE FROM referral_quotes q WHERE q.state='expired' AND q.expires_at < $1
+        AND NOT EXISTS(SELECT 1 FROM referral_rewards r WHERE r.quote_id=q.id)`, 30],
+      [`DELETE FROM referral_enrolments e WHERE e.expires_at < $1
+        AND NOT EXISTS(SELECT 1 FROM referral_quotes q WHERE q.enrolment_id=e.id)`, 90],
+    ] as const) {
+      await this.db.query(
+        `WITH gone AS (${sql} RETURNING id) DELETE FROM referral_audit WHERE subject_id IN (SELECT id FROM gone)`,
+        [new Date(this.now().getTime() - days * 86400000)],
+      );
+    }
+    // After an erasure the email and card hashes and the payment reference are kept unlinked for
+    // 24 months after the purchase, then replaced; the audit log is kept 24 months for everyone.
+    const cutoff = new Date(this.now());
+    cutoff.setUTCMonth(cutoff.getUTCMonth() - ERASED_HASH_MONTHS);
+    await this.db.query(
+      `UPDATE referral_rewards SET payer_hash='erased:'||id,payment_id='erased:'||id
+      WHERE buyer_id IS NULL AND paid_at < $1 AND payment_id NOT LIKE 'erased:%'`,
+      [cutoff],
+    );
+    await this.db.query(
+      `UPDATE referral_enrolments SET buyer_email_hash='erased:'||id
+      WHERE buyer_id IS NULL AND created_at < $1 AND buyer_email_hash NOT LIKE 'erased:%'`,
+      [cutoff],
+    );
+    await this.db.query("DELETE FROM referral_audit WHERE created_at < $1", [cutoff]);
   }
 
   async challenge(userId: number, rewardId: unknown, purpose: unknown, publicKey: unknown) {

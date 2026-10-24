@@ -18,6 +18,9 @@ if (connectionString === "pgmem") {
   const { newDb } = require("pg-mem");
   const mem = newDb();
   mem.public.registerFunction({ name: "now", implementation: () => new Date() });
+  // pg-mem has no PL/pgSQL. Its tables are always created from the current definitions, so
+  // the DO-block migrations for older databases have nothing to do there.
+  mem.registerLanguage("plpgsql", () => () => undefined);
   const { Pool: MemPool } = mem.adapters.createPg();
   pool = new MemPool();
 } else if (connectionString) {
@@ -292,7 +295,16 @@ async function initSchema(): Promise<void> {
     );
   `);
 
-  await initReferralSchema(pool);
+  // Its migration reports each foreign key it converts as a NOTICE: shown in the deploy log.
+  const client = await pool.connect();
+  client.on("notice", (notice) => {
+    if (notice.message?.startsWith("referral schema:")) console.log(notice.message);
+  });
+  try {
+    await initReferralSchema(client);
+  } finally {
+    client.release();
+  }
 }
 
 const isConfigured = Boolean(pool);

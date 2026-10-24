@@ -73,7 +73,7 @@ export function grantsAccess(subscription: SubscriptionLike, environment: NodeJS
 }
 
 /** Stripe statuses of a subscription that still exists and could bill. */
-const LIVE_STATUSES = new Set(["active", "trialing", "past_due", "unpaid", "incomplete", "paused"]);
+export const LIVE_STATUSES = new Set(["active", "trialing", "past_due", "unpaid", "incomplete", "paused"]);
 
 export type BlockedReason = "none" | "payment_failed" | "canceled" | "trial_already_used";
 

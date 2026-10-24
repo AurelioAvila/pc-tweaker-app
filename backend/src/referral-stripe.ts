@@ -467,7 +467,9 @@ export class ReferralStripe {
   async paymentForQuote(id: string): Promise<VerifiedReferralPayment | null> {
     const accountId = await this.account();
     const quote = await this.core.quote(id);
-    if (!quote) return null;
+    // An erased buyer's purchase cannot be matched to anyone any more (eraseUserReferralData):
+    // refunds and disputes still reach its bonus through the payment reference.
+    if (!quote || quote.buyer_id === null) return null;
     if (!(await this.recoverSession(quote))) {
       if (
         quote.state === "creating" &&

@@ -108,6 +108,15 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    `{"published": false}` and the `x-admin-token` header;
    `GET /api/reviews/pending` lists what you have already excluded.
 
+   The same token executes a verified account-deletion request (PRIVACY.md,
+   "Your choices and rights"): `POST /api/admin/erase-account` with
+   `{"email": "..."}` is a dry run that only reports counts; add
+   `"erase": true` to delete (`src/account-erasure.ts`). It answers 409
+   `active_subscription` until the subscription is cancelled in Stripe, and
+   409 `open_referral_checkout` while a referral checkout is not settled yet
+   (the worker settles it within about an hour of its expiry). Trial claims and the unlinked referral hashes are kept
+   on purpose; the support mailbox and Stripe records are outside it.
+
    `RESEND_API_KEY` is required for the support form to work at all — with no
    mail provider configured it refuses submissions with a 503 rather than
    accepting a message it cannot deliver.

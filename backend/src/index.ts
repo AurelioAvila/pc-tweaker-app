@@ -20,6 +20,7 @@ import supportRoutes from "./routes/support";
 import offerRoutes from "./routes/offers";
 import flagRoutes from "./routes/flags";
 import downloadRoutes from "./routes/downloads";
+import adminRoutes from "./routes/admin";
 import { router as stripeRoutes, webhookHandler, deliverProReceipt, listExpiredCheckouts, recordSelfReportedSource, SELF_REPORTED_SOURCES } from "./routes/stripe";
 import { consumeGlobalBudget } from "./public-form-guard";
 import { clientIpMiddleware, trustProxyHops } from "./client-ip";
@@ -312,6 +313,7 @@ app.use("/api/error-reports", errorReportRoutes);
 app.use("/api/offers", offerRoutes);
 app.use("/api/flags", flagRoutes);
 app.use("/api/download", downloadRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api", stripeRoutes);
 // Unknown routes answer in the same JSON shape as every other error, not
 // with Express's default HTML page.

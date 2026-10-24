@@ -20,6 +20,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
   const { Referrals, initReferralSchema } = await import("../dist/referrals.js");
   const { createInvitationCode } = await import("../dist/referral-policy.js");
   const { ReferralStripe, runReferralReconciliation, referralWebhook } = await import("../dist/referral-stripe.js");
+  const { eraseAccount } = await import("../dist/account-erasure.js");
   const pool = new pg.Pool({ connectionString: url, ssl: false, max: 20 });
   const env = {
     NODE_ENV: "test",
@@ -45,7 +46,8 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
     now = new Date("2026-10-20T12:00:00Z");
     env.REFERRALS_ENABLED = "true";
     await pool.query("TRUNCATE users CASCADE");
-    await pool.query("TRUNCATE referral_audit,referral_payment_blocks,referral_webhook_receipts");
+    await pool.query(`TRUNCATE referral_audit,referral_payment_blocks,referral_webhook_receipts,
+      checkout_reminders,trial_claims,newsletter_subscribers,reviews`);
     await pool.query(`INSERT INTO users(id,email,email_verified) VALUES
       (1,'inviter@example.com',true),(2,'buyer@example.net',true),
       (3,'other@example.org',true),(4,'second@second.example',true),(5,'unverified@unverified.example',false)`);
@@ -103,6 +105,15 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
     await pool.query(`CREATE TABLE IF NOT EXISTS sign_in_devices(user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       fingerprint TEXT NOT NULL,alerted BOOLEAN NOT NULL DEFAULT FALSE,first_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
       last_seen TIMESTAMPTZ NOT NULL DEFAULT now(),kind TEXT,PRIMARY KEY(user_id,fingerprint))`);
+    // The other tables an account erasure touches, as in db.ts.
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status TEXT;
+      CREATE TABLE IF NOT EXISTS entitlements(user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        product TEXT NOT NULL,expires_at TIMESTAMPTZ,stripe_subscription_id TEXT,subscription_status TEXT,PRIMARY KEY(user_id,product));
+      CREATE TABLE IF NOT EXISTS checkout_reminders(user_id INTEGER PRIMARY KEY,session_id TEXT NOT NULL,sent_at TIMESTAMPTZ NOT NULL);
+      CREATE TABLE IF NOT EXISTS trial_claims(product TEXT NOT NULL,user_id INTEGER NOT NULL,email_hash TEXT NOT NULL,
+        card_hash TEXT,device_hash TEXT,subscription_id TEXT NOT NULL UNIQUE,PRIMARY KEY(product,user_id));
+      CREATE TABLE IF NOT EXISTS newsletter_subscribers(id SERIAL PRIMARY KEY,email TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS reviews(id SERIAL PRIMARY KEY,email TEXT,rating SMALLINT NOT NULL)`);
     await initReferralSchema(pool);
     await t.test("schema is restart-safe", async () => {
       await initReferralSchema(pool);
@@ -1432,6 +1443,232 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
         assert.deepEqual(expired, [monthly.url.split("/").pop()], "the monthly page can no longer be paid");
         const quotes = (await pool.query("SELECT plan,state FROM referral_quotes ORDER BY created_at,plan")).rows;
         assert.deepEqual(quotes.map((x) => `${x.plan}:${x.state}`).sort(), ["annual:open", "monthly:expired"]);
+      },
+    );
+    const erase = (email) => eraseAccount(pool, email, { erase: true, now: new Date(now) });
+    const rows = async (sql) => (await pool.query(sql)).rows;
+    await t.test(
+      "erasure migration: keys made before 24 Oct without ON DELETE are converted once; deleting a user then works",
+      async () => {
+        await reset();
+        const userKeys = `SELECT c.conname,c.conrelid::regclass::text||'.'||a.attname AS key,c.confdeltype::text AS rule,
+          a.attnotnull FROM pg_constraint c JOIN pg_attribute a ON a.attrelid=c.conrelid AND a.attnum=c.conkey[1]
+          WHERE c.contype='f' AND c.confrelid='users'::regclass AND c.conrelid::regclass::text LIKE 'referral%' ORDER BY 2`;
+        // The definitions live databases still have: no ON DELETE, NOT NULL, and one key under another name.
+        for (const { conname, key } of await rows(userKeys)) {
+          const [table, column] = key.split(".");
+          if (table === "referral_machines") continue;
+          const name = key === "referral_rewards.inviter_id" ? "legacy_inviter_fk" : conname;
+          await pool.query(`ALTER TABLE ${table} DROP CONSTRAINT ${conname},
+            ADD CONSTRAINT ${name} FOREIGN KEY (${column}) REFERENCES users(id)`);
+          await pool.query(`ALTER TABLE ${table} ALTER COLUMN ${column} SET NOT NULL`);
+        }
+        assert.equal((await rows(userKeys)).filter((k) => k.rule === "a").length, 6);
+        const client = await pool.connect();
+        const converted = [];
+        client.on("notice", (n) => n.message.startsWith("referral schema:") && converted.push(n.message));
+        try {
+          await initReferralSchema(client);
+          assert.equal(converted.length, 6);
+          await initReferralSchema(client);
+          assert.equal(converted.length, 6, "a restart finds nothing left to convert");
+        } finally {
+          client.release();
+        }
+        assert.deepEqual(
+          (await rows(userKeys)).map((k) => `${k.key} ${k.rule} ${k.attnotnull ? "not null" : "null"}`),
+          [
+            "referral_accounts.user_id c not null",
+            "referral_challenges.user_id c not null",
+            "referral_enrolments.buyer_id n null",
+            "referral_enrolments.inviter_id n null",
+            "referral_machines.user_id c not null",
+            "referral_rewards.buyer_id n null",
+            "referral_rewards.inviter_id n null",
+          ],
+        );
+        assert.ok((await rows(userKeys)).some((k) => k.conname === "legacy_inviter_fk"), "kept its own name");
+        // An inviter with a code, a bonus, a device challenge and a PC hash; a friend who paid.
+        const { id } = await ready();
+        await core.challenge(1, id, "activate", device().pub);
+        await core.recordMachine(1, "1".repeat(64));
+        await pool.query("DELETE FROM users WHERE id IN (1,2)");
+        assert.deepEqual(await rows("SELECT buyer_id,inviter_id FROM referral_rewards"), [
+          { buyer_id: null, inviter_id: null },
+        ]);
+        for (const table of ["referral_accounts", "referral_challenges", "referral_machines"])
+          assert.equal((await rows(`SELECT 1 FROM ${table}`)).length, 0, table);
+      },
+    );
+    await t.test(
+      "erasing a friend who claimed and paid keeps the inviter's bonus valid and every reuse blocked",
+      async () => {
+        await reset();
+        const { id, p } = await ready();
+        const d = device();
+        const c = await core.challenge(1, id, "activate", d.pub);
+        await core.prove(1, c.id, d.sign(c.payload), "session-token");
+        await core.recordMachine(2, "2".repeat(64));
+        await pool.query(`INSERT INTO sign_in_devices(user_id,fingerprint,kind) VALUES(2,'pc-2','device');
+          INSERT INTO checkout_reminders VALUES(2,'cs_test_reminder',now());
+          INSERT INTO entitlements(user_id,product) VALUES(2,'uninstaller');
+          INSERT INTO trial_claims VALUES('pctweaker',2,'email-hash','card-hash','pc-hash','sub_trial_2');
+          INSERT INTO newsletter_subscribers(email) VALUES('Buyer@Example.net');
+          INSERT INTO reviews(email,rating) VALUES('buyer@example.net',5)`);
+        assert.deepEqual(await erase("  BUYER@example.net "), {
+          erased: true,
+          accountFound: true,
+          userId: 2,
+          counts: {
+            referralCheckoutsDeleted: 0,
+            referralInvitationsDeleted: 0,
+            referralBonusesWithdrawn: 0,
+            checkoutReminders: 1,
+            accounts: 1,
+            newsletter: 1,
+            ratings: 1,
+          },
+        });
+        for (const table of ["users WHERE id=2", "sign_in_devices", "referral_machines", "entitlements"])
+          assert.equal((await rows(`SELECT 1 FROM ${table}`)).length, 0, table);
+        // Kept without the link: the trial claim, the email and card hashes, the payment reference.
+        assert.equal((await rows("SELECT 1 FROM trial_claims")).length, 1);
+        const [enrolment] = await rows("SELECT buyer_id,inviter_id,buyer_email_hash FROM referral_enrolments");
+        assert.deepEqual([enrolment.buyer_id, enrolment.inviter_id], [null, 1]);
+        assert.match(enrolment.buyer_email_hash, /^[0-9a-f]{64}$/);
+        assert.deepEqual(await rows("SELECT customer_id,session_id,checkout_url,params FROM referral_quotes"), [
+          { customer_id: "erased", session_id: null, checkout_url: null, params: {} },
+        ]);
+        assert.deepEqual(await rows("SELECT buyer_id,inviter_id,state,payment_id,invoice_id FROM referral_rewards"), [
+          { buyer_id: null, inviter_id: 1, state: "active", payment_id: p.paymentId, invoice_id: null },
+        ]);
+        // The inviter's bonus keeps refreshing on its PC.
+        const refresh = await core.challenge(1, id, "license", d.pub);
+        assert.ok(await core.prove(1, refresh.id, d.sign(refresh.payload), "session-token"));
+        // The same mailbox on a new account cannot be invited again...
+        await pool.query("INSERT INTO users(id,email,email_verified) VALUES(6,'buyer@example.net',true)");
+        await assert.rejects(core.claim(6, await core.ownCode(3), false), /not_eligible/);
+        // ...and the same card earns no second bonus through another friend.
+        const q4 = await reserve(4, 3);
+        const second = { ...payment(q4), buyerId: 4, customerId: "cus_test4", paymentId: "pi_second", invoiceId: "in_second" };
+        assert.equal(await core.recordPayment(second), null);
+        assert.equal((await rows("SELECT 1 FROM referral_rewards")).length, 1);
+        // Nothing is re-read from Stripe for an erased buyer (no customer or session is left).
+        const calls = [];
+        const gateway = new ReferralStripe(
+          core,
+          counted({ accounts: { retrieve: async () => ({ id: "acct_test" }) } }, calls),
+        );
+        await gateway.disputeClosed(p.paymentId);
+        await gateway.reconcileQuote((await rows("SELECT id FROM referral_quotes WHERE customer_id='erased'"))[0].id);
+        assert.deepEqual(calls, ["accounts.retrieve", "accounts.retrieve"]);
+        assert.equal(await rewardState(), "active");
+        // A refund after the erasure still withdraws the inviter's bonus.
+        await core.blockPayment(p.paymentId, "revoked", "charge.refunded");
+        assert.equal(await rewardState(), "revoked");
+      },
+    );
+    await t.test(
+      "erasing an inviter withdraws only their bonuses; friends keep their purchase and their binding",
+      async () => {
+        await reset();
+        const code = await core.ownCode(1);
+        const { id } = await ready();
+        const d = device();
+        const c = await core.challenge(1, id, "activate", d.pub);
+        await core.prove(1, c.id, d.sign(c.payload), "session-token");
+        await core.challenge(1, id, "license", d.pub);
+        const open = await reserve(4, 1); // another friend is at the checkout
+        assert.equal((await erase("inviter@example.com")).counts.referralBonusesWithdrawn, 1);
+        assert.equal(await core.codeExists(code), false);
+        assert.equal((await rows("SELECT 1 FROM referral_challenges")).length, 0);
+        assert.deepEqual(
+          await rows(`SELECT inviter_id,buyer_id,state,reason,device_public_key,device_key_hash,activated_at,
+            expires_at FROM referral_rewards`),
+          [{ inviter_id: null, buyer_id: 2, state: "revoked", reason: "account_erased", device_public_key: null,
+            device_key_hash: null, activated_at: null, expires_at: null }],
+        );
+        // Friend 2 stays bound to that purchase and cannot be invited again.
+        await assert.rejects(core.claim(2, await core.ownCode(3), false), /already_bound/);
+        // Friend 4's invitation has ended; the checkout already open keeps its price but earns
+        // nobody a bonus.
+        const [ended] = await rows("SELECT inviter_id,expires_at FROM referral_enrolments WHERE buyer_id=4");
+        assert.equal(ended.inviter_id, null);
+        assert.ok(new Date(ended.expires_at) <= now);
+        await core.recordPayment({ ...payment(open), buyerId: 4, customerId: "cus_test4",
+          payerFingerprint: "card_four", paymentId: "pi_four", invoiceId: "in_four" });
+        assert.deepEqual(await rows("SELECT state,reason FROM referral_rewards WHERE buyer_id=4"), [
+          { state: "revoked", reason: "inviter_erased" },
+        ]);
+      },
+    );
+    await t.test(
+      "erasure waits for an open referral checkout and a live subscription; a dry run changes nothing",
+      async () => {
+        await reset();
+        const q = await reserve();
+        await assert.rejects(erase("buyer@example.net"), /open_referral_checkout/);
+        // Past its expiry but not settled yet: still waits.
+        now = new Date(new Date(q.expires_at).getTime() + 60000);
+        await assert.rejects(erase("buyer@example.net"), /open_referral_checkout/);
+        await core.expireQuote(q.id, null, "no_provider_session");
+        const dry = await eraseAccount(pool, "buyer@example.net", { now: new Date(now) });
+        assert.deepEqual(
+          [dry.erased, dry.counts.referralCheckoutsDeleted, dry.counts.referralInvitationsDeleted, dry.counts.accounts],
+          [false, 1, 1, 1],
+        );
+        assert.equal((await rows("SELECT 1 FROM users WHERE id=2")).length, 1);
+        assert.equal((await rows("SELECT 1 FROM referral_quotes")).length, 1);
+        await pool.query("UPDATE users SET subscription_status='past_due' WHERE id=3");
+        await assert.rejects(erase("other@example.org"), /active_subscription/);
+        await pool.query(`UPDATE users SET subscription_status='canceled' WHERE id=3;
+          INSERT INTO entitlements VALUES(3,'uninstaller',NULL,'sub_u','trialing')`);
+        await assert.rejects(erase("other@example.org"), /active_subscription/);
+        await pool.query("UPDATE entitlements SET subscription_status='canceled'");
+        assert.equal((await erase("other@example.org")).counts.accounts, 1);
+        // No account: the address's newsletter subscription and ratings still go.
+        await pool.query("INSERT INTO newsletter_subscribers(email) VALUES('nobody@example.com')");
+        assert.deepEqual(await erase("nobody@example.com"), {
+          erased: true,
+          accountFound: false,
+          userId: null,
+          counts: { newsletter: 1, ratings: 0 },
+        });
+      },
+    );
+    await t.test(
+      "retention: unpaid checkouts after 30 days, unused invitations after 90, erased hashes and the audit log after 24 months",
+      async () => {
+        await reset();
+        const start = now.getTime();
+        const at = async (days) => {
+          now = new Date(start + days * 86400000);
+          await core.cleanup();
+        };
+        const unpaid = await reserve(4, 3);
+        await core.expireQuote(unpaid.id, null, "no_provider_session");
+        const { id } = await ready();
+        await erase("buyer@example.net");
+        const left = async (sql) => (await rows(sql)).length;
+        await at(29);
+        assert.equal(await left(`SELECT 1 FROM referral_quotes WHERE id='${unpaid.id}'`), 1);
+        await at(31);
+        assert.equal(await left(`SELECT 1 FROM referral_quotes WHERE id='${unpaid.id}'`), 0);
+        assert.equal(await left(`SELECT 1 FROM referral_audit WHERE subject_id='${unpaid.id}'`), 0);
+        assert.equal(await left("SELECT 1 FROM referral_enrolments WHERE buyer_id=4"), 1);
+        await at(30 + 91); // the invitation expired on day 30
+        assert.equal(await left("SELECT 1 FROM referral_enrolments WHERE buyer_id=4"), 0);
+        // The erased friend's purchase keeps its hashes until 24 months after it.
+        assert.equal(await left("SELECT 1 FROM referral_rewards WHERE payer_hash LIKE 'erased:%'"), 0);
+        assert.ok(await left("SELECT 1 FROM referral_audit"));
+        await at(740);
+        assert.deepEqual(await rows("SELECT id,state,payer_hash,payment_id FROM referral_rewards"), [
+          { id, state: "ready", payer_hash: "erased:" + id, payment_id: "erased:" + id },
+        ]);
+        assert.deepEqual(await rows("SELECT buyer_email_hash FROM referral_enrolments"), [
+          { buyer_email_hash: "erased:" + (await rows("SELECT id FROM referral_enrolments"))[0].id },
+        ]);
+        assert.equal(await left("SELECT 1 FROM referral_audit"), 0);
       },
     );
   } finally {

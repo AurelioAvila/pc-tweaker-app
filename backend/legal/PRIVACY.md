@@ -172,14 +172,26 @@ Device challenges used to activate or refresh a bonus are deleted one day after
 they expire, and records of processed payment notifications after 90 days. A
 refund or dispute notice for a payment that never becomes an invitation
 purchase is kept for 90 days, then deleted. A PC identifier hash is deleted 12
-months after the account last refreshed its licence on that PC.
-Invitation, bonus, payment-check and review records are kept while your account
-exists, because they stop the same purchase, person or card from earning a
-second bonus and let us handle a refund or dispute. If you ask us to delete
-your account, we delete these records or remove the link to you, except the
-keyed hashes of your email address and card fingerprint, which we keep for up
-to 24 months after your last purchase so that they keep blocking repeat
-bonuses, and anything we must keep to resolve an open dispute.
+months after the account last refreshed its licence on that PC. A checkout
+opened with an invitation and never paid, with the details prepared for Stripe,
+is deleted 30 days after it expired, and an invitation that expired without a
+purchase 90 days after it expired; from then on the same email address can be
+invited again. The log of these checks (what happened to an invitation,
+checkout or bonus, and when) is deleted after 24 months.
+Invitation, bonus and payment-check records of a purchase are kept while your
+account exists, because they stop the same purchase, person or card from
+earning a second bonus and let us handle a refund or dispute.
+
+If you ask us to delete your account, we delete your invitation code, the PC
+keys of your bonuses, the PC identifier hashes recorded for the programme, any
+invitation you did not use and any checkout you did not pay. Bonuses you earned as an inviter end. If you
+bought through an invitation, the bonus your friend earned stays theirs, and we
+keep, with no link to you or your account, the keyed hashes of your email
+address and card fingerprint, so that they keep blocking repeat bonuses, and
+the payment reference, so that a refund or dispute can still withdraw that
+bonus. We replace them with random values 24 months after the purchase. If the
+person who invited you deletes their account, your invitation ends; a checkout
+you had already opened keeps its discount.
 
 ## Email
 
@@ -227,6 +239,14 @@ and request access, correction or deletion of your personal data. Email
 support@pctweaker.app or use the private support form at
 https://pctweaker.app/support. Do not publish personal information in a public
 GitHub issue.
+
+When we delete an account, everything stored with it goes in one step: your
+profile and password hash, sign-in and installation records, licences, plans
+and bonus grants, pending emails and action tokens, together with any
+newsletter subscription and ratings sent from the same email address. An active
+subscription is cancelled in Stripe first. What we keep after that is described
+under "Free trial" and "Invite a friend". Stripe keeps its own records of your
+payments for as long as the law requires.
 
 Some payment or security records may need to be retained where required by law
 or to resolve an active dispute. Identity verification may be required before a

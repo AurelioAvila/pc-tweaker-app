@@ -1,5 +1,5 @@
 {
-    "version": "1.18.16",
+    "version": "1.18.17",
     "description": "Windows tuning for performance, gaming and privacy, with recorded changes and restore tools for supported settings.",
     "homepage": "https://pctweaker.app/",
     "license": {
@@ -9,8 +9,8 @@
     "notes": "PC Tweaker installs to %LocalAppData%\\PC Tweaker and can update itself from inside the app.",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.18.16/pc-tweaker-app_1.18.16_x64-setup.exe#/setup.exe",
-            "hash": "d87a62cc4e624496f2f0bb07dbce5e34f96a52aefd09ec1953138a23912fecae"
+            "url": "https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.18.17/pc-tweaker-app_1.18.17_x64-setup.exe#/setup.exe",
+            "hash": "b162562d0ae4f11ba469fa6da05bf9a0eb3b1ae43eb7b83b5573c672f3c48878"
         }
     },
     "installer": {

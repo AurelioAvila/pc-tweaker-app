@@ -121,6 +121,14 @@ it, the first PC that asks for a licence during the trial. During the trial,
 Pro works on that PC. We never store the card fingerprint or the PC identifier
 itself.
 
+The 3-day free trial of Tweaky Driver Pro keeps the same records, with the
+same retention, in the Tweaky Driver service. Its PC identifier is the hash
+described above for Tweaky Driver's Free plan: the app sends it when it checks
+your plan, opens a checkout or checks Pro on that PC, and the service stores it
+only as a keyed one-way hash, with the trial. During the trial, Pro works on
+the PC the trial was started on. If the app cannot read the Windows
+installation ID, it sends no identifier and no trial can start on that PC.
+
 These records allow one free trial per product for each account, email
 address, card and PC, so they are kept after an account is deleted. The card
 and PC hashes are cleared 24 months after the trial started; the record that

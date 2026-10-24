@@ -43,7 +43,7 @@ const restorePoint = (specific: string) => ({
 });
 
 const RECEIPT_NOTE =
-  "Before an elevated removal it asks Windows for a restore point and records the outcome in the Removal Ledger. Because of the 24-hour rule above, a receipt that says the restore point was created can refer to an earlier point, so check the date in System Restore before you rely on it.";
+  "Before an elevated removal it asks Windows for a restore point and records the outcome in the Removal Ledger. Because of the 24-hour rule above, Windows sometimes keeps an earlier point instead of making a new one. From version 0.13.8 the receipt says created only when it has verified a new point, and otherwise says that Windows reused the one from a given date; earlier versions could report created in that case.";
 
 export const UNINSTALLER_GUIDES = {
   "/uninstaller/guides/armoury-crate": {

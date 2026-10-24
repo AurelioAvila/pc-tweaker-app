@@ -12,8 +12,8 @@ For Windows 10/11 users who want to inspect settings before changing them. Revie
 
 <p align="center">
   <a href="#reviews-and-distribution"><img src="https://img.shields.io/badge/Total_downloads-120k%2B-2E7D32?style=for-the-badge" alt="120,000+ total downloads across distribution channels"></a>
-  <a href="https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"><img src="https://img.shields.io/badge/Softpedia-5%2F5%20%7C%2092%20votes-0078D4?style=for-the-badge" alt="Softpedia user rating: 5 out of 5 from 92 votes"></a>
-  <a href="https://www.majorgeeks.com/files/details/pc_tweaker.html"><img src="https://img.shields.io/badge/MajorGeeks-5%2F5%20%7C%20129%20votes-C48B28?style=for-the-badge" alt="MajorGeeks user rating: 5 out of 5 from 129 votes"></a>
+  <a href="https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml"><img src="https://img.shields.io/badge/Softpedia-5%2F5%20user%20rating-0078D4?style=for-the-badge" alt="Softpedia user rating: 5 out of 5"></a>
+  <a href="https://www.majorgeeks.com/files/details/pc_tweaker.html"><img src="https://img.shields.io/badge/MajorGeeks-5%2F5%20user%20rating-C48B28?style=for-the-badge" alt="MajorGeeks user rating: 5 out of 5"></a>
 </p>
 
 <p align="center">
@@ -203,10 +203,10 @@ A valid signature does not guarantee the absence of SmartScreen prompts. Microso
 
 **120,000+ total downloads** estimated across the Microsoft Store, WinGet and dozens of download sites, as of October 2026. Most of that total is the Microsoft Store, which publishes no public figure; the live GitHub badge covers GitHub release assets only, a small share of it.
 
-User ratings checked October 7, 2026. Existing feedback remains available at its original source:
+User ratings checked October 24, 2026. Existing feedback remains available at its original source:
 
-- [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml): user rating **5.0/5 from 92 votes**; editorial review **4.5/5**.
-- [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html): user rating **5/5 from 129 votes**; listing and reader reviews.
+- [Softpedia](https://www.softpedia.com/get/Tweak/System-Tweak/Avila-PC-Tweaker.shtml): user rating **5.0/5**; editorial review **4.5/5**.
+- [MajorGeeks](https://www.majorgeeks.com/files/details/pc_tweaker.html): user rating **5/5**; listing and reader reviews.
 
 The GitHub download badge counts release-asset requests, including assets used for updates. It does not count unique people, unique installations or every distribution channel. Third-party listings may describe older releases; this repository's [LICENSE](LICENSE) is the authoritative source for licensing terms.
 
@@ -276,3 +276,9 @@ Lifetime includes everything in Pro, plus exclusive access to selected future tw
 
 PC Tweaker Lifetime includes Uninstaller Pro for 12 months from the first sign-in to Uninstaller with the same account, including existing Lifetime owners. No automatic renewal. Standalone Uninstaller licenses remain separate.
 
+## More tools by Aurelio Avila
+
+- [Redaxa](https://redaxa.getcertsprint.com/): Sensitive-data checks and redaction for AI prompts, plus local repository secret reviews on Windows.
+- [Redexa Social](https://redexa.getcertsprint.com/): Private YouTube analytics for Windows, kept in a database on your PC.
+- [Glarion](https://glarion.app/): Verified website security checks and white-label reports for digital agencies.
+- [Frame Witness](https://framewitness.pages.dev/): Windows photo and video recovery with source offsets, SHA-256 hashes and dated findings.

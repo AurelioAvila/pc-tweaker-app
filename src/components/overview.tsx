@@ -240,6 +240,7 @@ function HistoryLabel({ entry, s, fallback }: { entry: AuditEntry; s: Strings; f
     "disk-optimize": s.ledger.actions.diskOptimize,
     "startup-change": s.ledger.actions.startupChange,
     "restore-point": s.ledger.actions.restorePoint,
+    "restore-point-reused": s.ledger.actions.restorePointReused,
   };
   return <>{labels[entry.action] ?? fallback}</>;
 }

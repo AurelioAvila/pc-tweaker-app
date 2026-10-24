@@ -79,6 +79,7 @@ export interface Strings {
       diskOptimize: string;
       startupChange: string;
       restorePoint: string;
+      restorePointReused: string;
       processGuard: string;
       coreSteering: string;
       ramTrim: string;
@@ -1229,6 +1230,7 @@ const it: Strings = {
       diskOptimize: "Ottimizzazione disco",
       startupChange: "Modifica avvio",
       restorePoint: "Punto di ripristino",
+      restorePointReused: "Punto di ripristino riutilizzato (nessuno nuovo)",
     },
   },
   tabs: {
@@ -1371,7 +1373,7 @@ const it: Strings = {
     description:
       "Controlla se i file di sistema e l'archivio componenti di Windows sono integri e, se non lo sono, li ripara dai server Microsoft. Sono gli stessi strumenti DISM e SFC che il supporto Microsoft fa eseguire, senza riga di comando.",
     adminNote:
-      "Serve l'autorizzazione da amministratore: Windows la chiede una volta sola e viene creato un punto di ripristino prima di ogni modifica.",
+      "Serve l'autorizzazione da amministratore: Windows la chiede una volta sola e, prima di ogni modifica, gli viene chiesto un punto di ripristino (ne crea al massimo uno al giorno; la cronologia indica se ne ha creato uno nuovo).",
     timeNote:
       "Una riparazione completa può richiedere 20 minuti o più. Puoi continuare a usare il PC: basta non spegnerlo.",
     checkButton: "Verifica integrità",
@@ -1591,7 +1593,7 @@ const it: Strings = {
     analysisTitle: "Rapporto di analisi",
     doneDefrag: "Deframmentazione completata.",
     doneRetrim: "Retrim completato.",
-    note: "Prima dell’operazione viene creato un punto di ripristino. La percentuale arriva da Windows stesso, non da un timer.",
+    note: "Prima dell’operazione viene chiesto a Windows un punto di ripristino (ne crea al massimo uno al giorno). La percentuale arriva da Windows stesso, non da un timer.",
   },
   zeroTrace: {
     title: "Zero-Trace Cleaner",
@@ -1997,7 +1999,7 @@ const it: Strings = {
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
     description:
-      "Rimuovi interi programmi in sicurezza: punto di ripristino automatico, comando verificato e report onesto. Della stessa famiglia di PC Tweaker.",
+      "Rimuovi interi programmi in sicurezza: punto di ripristino richiesto prima di ogni rimozione, comando verificato e report onesto. Della stessa famiglia di PC Tweaker.",
     button: "Scarica",
     confirmTitle: "Scaricare il disinstallatore?",
     confirmBody:
@@ -2930,6 +2932,7 @@ const en: Strings = {
       diskOptimize: "Disk optimization",
       startupChange: "Startup change",
       restorePoint: "Restore point",
+      restorePointReused: "Restore point reused (none created)",
     },
   },
   tabs: {
@@ -3071,7 +3074,7 @@ const en: Strings = {
     description:
       "Checks whether Windows' own system files and component store are intact, and repairs them from Microsoft's servers when they are not. The same DISM and SFC tools Microsoft support asks people to run, without the command line.",
     adminNote:
-      "Runs as administrator: Windows asks once, and a restore point is taken before anything changes.",
+      "Runs as administrator: Windows asks once, and before anything changes it is asked for a restore point (it makes at most one a day; the history shows whether a new one was made).",
     timeNote:
       "A full repair can take 20 minutes or more. You can keep using the PC — just don't shut it down.",
     checkButton: "Check integrity",
@@ -3288,7 +3291,7 @@ const en: Strings = {
     analysisTitle: "Analysis report",
     doneDefrag: "Defragmentation complete.",
     doneRetrim: "Retrim complete.",
-    note: "A System Restore point is taken first. The percentage comes from Windows itself, not from a timer.",
+    note: "Windows is asked for a System Restore point first (it makes at most one a day). The percentage comes from Windows itself, not from a timer.",
   },
   zeroTrace: {
     title: "Zero-Trace Cleaner",
@@ -3683,7 +3686,7 @@ const en: Strings = {
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
     description:
-      "Remove entire programs safely: automatic restore point, verified command, honest report. From the same family as PC Tweaker.",
+      "Remove entire programs safely: a restore point requested before each removal, verified command, honest report. From the same family as PC Tweaker.",
     button: "Download",
     confirmTitle: "Download the Uninstaller?",
     confirmBody:
@@ -4608,6 +4611,7 @@ const fr: Strings = {
       diskOptimize: "Optimisation du disque",
       startupChange: "Modification du démarrage",
       restorePoint: "Point de restauration",
+      restorePointReused: "Point de restauration réutilisé (aucun nouveau)",
     },
   },
   tabs: {
@@ -4750,7 +4754,7 @@ const fr: Strings = {
     description:
       "Vérifie que les fichiers système et le magasin de composants de Windows sont intacts et, si ce n'est pas le cas, les répare depuis les serveurs de Microsoft. Ce sont les outils DISM et SFC que le support Microsoft fait exécuter, sans ligne de commande.",
     adminNote:
-      "Nécessite les droits administrateur : Windows les demande une seule fois, et un point de restauration est créé avant toute modification.",
+      "Nécessite les droits administrateur : Windows les demande une seule fois, et un point de restauration lui est demandé avant toute modification (il n'en crée qu'un par jour au maximum ; l'historique indique si un nouveau point a été créé).",
     timeNote:
       "Une réparation complète peut prendre 20 minutes ou plus. Vous pouvez continuer à utiliser le PC : il suffit de ne pas l'éteindre.",
     checkButton: "Vérifier l'intégrité",
@@ -4970,7 +4974,7 @@ const fr: Strings = {
     analysisTitle: "Rapport d’analyse",
     doneDefrag: "Défragmentation terminée.",
     doneRetrim: "Retrim terminé.",
-    note: "Un point de restauration est créé avant. Le pourcentage vient de Windows lui-même, pas d’un minuteur.",
+    note: "Un point de restauration est d’abord demandé à Windows (il n’en crée qu’un par jour au maximum). Le pourcentage vient de Windows lui-même, pas d’un minuteur.",
   },
   zeroTrace: {
     title: "Zero-Trace Cleaner",
@@ -5381,7 +5385,7 @@ const fr: Strings = {
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
     description:
-      "Supprimez des programmes entiers en toute sécurité : point de restauration automatique, commande vérifiée, rapport honnête. De la même famille que PC Tweaker.",
+      "Supprimez des programmes entiers en toute sécurité : point de restauration demandé avant chaque désinstallation, commande vérifiée, rapport honnête. De la même famille que PC Tweaker.",
     button: "Télécharger",
     confirmTitle: "Télécharger le désinstalleur ?",
     confirmBody:
@@ -6316,6 +6320,7 @@ const es: Strings = {
       diskOptimize: "Optimización del disco",
       startupChange: "Cambio de inicio",
       restorePoint: "Punto de restauración",
+      restorePointReused: "Punto de restauración reutilizado (ninguno nuevo)",
     },
   },
   tabs: {
@@ -6458,7 +6463,7 @@ const es: Strings = {
     description:
       "Comprueba si los archivos de sistema y el almacén de componentes de Windows están intactos y, si no lo están, los repara desde los servidores de Microsoft. Son las mismas herramientas DISM y SFC que pide ejecutar el soporte de Microsoft, sin línea de comandos.",
     adminNote:
-      "Requiere permisos de administrador: Windows los pide una sola vez y se crea un punto de restauración antes de cualquier cambio.",
+      "Requiere permisos de administrador: Windows los pide una sola vez y, antes de cualquier cambio, se le pide un punto de restauración (crea como máximo uno al día; el historial indica si creó uno nuevo).",
     timeNote:
       "Una reparación completa puede tardar 20 minutos o más. Puedes seguir usando el PC: solo no lo apagues.",
     checkButton: "Comprobar integridad",
@@ -6677,7 +6682,7 @@ const es: Strings = {
     analysisTitle: "Informe de análisis",
     doneDefrag: "Desfragmentación completada.",
     doneRetrim: "Retrim completado.",
-    note: "Antes se crea un punto de restauración. El porcentaje viene de Windows, no de un temporizador.",
+    note: "Antes se pide a Windows un punto de restauración (crea como máximo uno al día). El porcentaje viene de Windows, no de un temporizador.",
   },
   zeroTrace: {
     title: "Zero-Trace Cleaner",
@@ -7082,7 +7087,7 @@ const es: Strings = {
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
     description:
-      "Elimina programas enteros de forma segura: punto de restauracion automatico, comando verificado, informe honesto. De la misma familia que PC Tweaker.",
+      "Elimina programas enteros de forma segura: punto de restauración solicitado antes de cada desinstalación, comando verificado, informe honesto. De la misma familia que PC Tweaker.",
     button: "Descargar",
     confirmTitle: "¿Descargar el desinstalador?",
     confirmBody:
@@ -8018,6 +8023,7 @@ const de: Strings = {
       diskOptimize: "Datenträgeroptimierung",
       startupChange: "Autostart-Änderung",
       restorePoint: "Wiederherstellungspunkt",
+      restorePointReused: "Wiederherstellungspunkt wiederverwendet (kein neuer)",
     },
   },
   tabs: {
@@ -8160,7 +8166,7 @@ const de: Strings = {
     description:
       "Prüft, ob die Systemdateien und der Komponentenspeicher von Windows unbeschädigt sind, und repariert sie andernfalls über die Server von Microsoft. Es sind dieselben Werkzeuge DISM und SFC, die der Microsoft-Support ausführen lässt — nur ohne Eingabeaufforderung.",
     adminNote:
-      "Läuft mit Administratorrechten: Windows fragt einmal nach, und vor jeder Änderung wird ein Wiederherstellungspunkt angelegt.",
+      "Läuft mit Administratorrechten: Windows fragt einmal nach, und vor jeder Änderung wird Windows um einen Wiederherstellungspunkt gebeten (höchstens einer pro Tag; der Verlauf zeigt, ob ein neuer erstellt wurde).",
     timeNote:
       "Eine vollständige Reparatur kann 20 Minuten oder länger dauern. Sie können den PC weiter benutzen — nur nicht ausschalten.",
     checkButton: "Integrität prüfen",
@@ -8380,7 +8386,7 @@ const de: Strings = {
     analysisTitle: "Analysebericht",
     doneDefrag: "Defragmentierung abgeschlossen.",
     doneRetrim: "Retrim abgeschlossen.",
-    note: "Zuvor wird ein Wiederherstellungspunkt erstellt. Der Prozentwert kommt von Windows selbst, nicht von einem Timer.",
+    note: "Zuvor wird Windows um einen Wiederherstellungspunkt gebeten (höchstens einer pro Tag). Der Prozentwert kommt von Windows selbst, nicht von einem Timer.",
   },
   zeroTrace: {
     title: "Zero-Trace Cleaner",
@@ -8787,7 +8793,7 @@ const de: Strings = {
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
     description:
-      "Entferne ganze Programme sicher: automatischer Wiederherstellungspunkt, gepruefter Befehl, ehrlicher Bericht. Aus derselben Familie wie PC Tweaker.",
+      "Entferne ganze Programme sicher: Wiederherstellungspunkt vor jeder Deinstallation angefordert, geprüfter Befehl, ehrlicher Bericht. Aus derselben Familie wie PC Tweaker.",
     button: "Herunterladen",
     confirmTitle: "Uninstaller herunterladen?",
     confirmBody:
@@ -9727,6 +9733,7 @@ const pt: Strings = {
       diskOptimize: "Otimização de disco",
       startupChange: "Alteração no arranque",
       restorePoint: "Ponto de restauro",
+      restorePointReused: "Ponto de restauro reutilizado (nenhum novo)",
     },
   },
   tabs: {
@@ -9870,7 +9877,7 @@ const pt: Strings = {
     description:
       "Verifica se os ficheiros de sistema e o arquivo de componentes do Windows estão intactos e, quando não estão, repara-os a partir dos servidores da Microsoft. São as mesmas ferramentas DISM e SFC que o suporte da Microsoft manda executar, sem linha de comandos.",
     adminNote:
-      "Precisa de permissões de administrador: o Windows pede-as uma única vez e é criado um ponto de restauro antes de qualquer alteração.",
+      "Precisa de permissões de administrador: o Windows pede-as uma única vez e, antes de qualquer alteração, é-lhe pedido um ponto de restauro (cria no máximo um por dia; o histórico indica se foi criado um novo).",
     timeNote:
       "Uma reparação completa pode demorar 20 minutos ou mais. Pode continuar a usar o PC — basta não o desligar.",
     checkButton: "Verificar integridade",
@@ -10090,7 +10097,7 @@ const pt: Strings = {
     analysisTitle: "Relatório de análise",
     doneDefrag: "Desfragmentação concluída.",
     doneRetrim: "Retrim concluído.",
-    note: "É criado antes um ponto de restauro. A percentagem vem do próprio Windows, não de um temporizador.",
+    note: "Antes, é pedido ao Windows um ponto de restauro (cria no máximo um por dia). A percentagem vem do próprio Windows, não de um temporizador.",
   },
   zeroTrace: {
     title: "Zero-Trace Cleaner",
@@ -10497,7 +10504,7 @@ const pt: Strings = {
   uninstallerPromo: {
     title: "PC Tweaker Uninstaller",
     description:
-      "Remova programas inteiros em segurança: ponto de restauro automático, comando verificado, relatório honesto. Da mesma família do PC Tweaker.",
+      "Remova programas inteiros em segurança: ponto de restauro pedido antes de cada remoção, comando verificado, relatório honesto. Da mesma família do PC Tweaker.",
     button: "Transferir",
     confirmTitle: "Transferir o desinstalador?",
     confirmBody:

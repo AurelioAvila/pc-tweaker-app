@@ -916,4 +916,31 @@ mod tests {
         invalid["was_running"] = serde_json::json!("unknown");
         assert!(serde_json::from_value::<SnapshotEntry>(invalid).is_err());
     }
+
+    /// Services Windows needs to boot, sign in, reach the network, stay
+    /// secure and updated, play sound or run Store apps. No service tweak may
+    /// ever stop one or change its start type; adding one to
+    /// `SERVICE_TWEAKS` fails the build here.
+    const NEVER_TOUCHED: [&str; 41] = [
+        "RpcSs", "RpcEptMapper", "DcomLaunch", "BrokerInfrastructure", "LSM",
+        "SamSs", "EventLog", "PlugPlay", "Power", "ProfSvc", "Schedule", "Winmgmt",
+        "gpsvc", "CryptSvc", "KeyIso", "VaultSvc", "Appinfo", "UserManager",
+        "BFE", "mpssvc", "WinDefend", "WdNisSvc", "SecurityHealthService",
+        "wscsvc", "wuauserv", "UsoSvc", "TrustedInstaller", "BITS", "msiserver",
+        "Dhcp", "Dnscache", "nsi", "NlaSvc", "netprofm", "AudioSrv",
+        "AudioEndpointBuilder", "AppXSvc", "StateRepository",
+        "CoreMessagingRegistrar", "SystemEventsBroker", "TimeBrokerSvc",
+    ];
+
+    #[test]
+    fn no_service_tweak_touches_a_service_windows_needs() {
+        for tweak in &SERVICE_TWEAKS {
+            assert!(
+                !NEVER_TOUCHED.iter().any(|s| s.eq_ignore_ascii_case(tweak.service)),
+                "{} changes {}, which must never be stopped or reconfigured",
+                tweak.id,
+                tweak.service
+            );
+        }
+    }
 }

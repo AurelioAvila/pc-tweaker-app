@@ -41,6 +41,7 @@ const ACTION_KEYS: Record<string, keyof Strings["ledger"]["actions"]> = {
   "disk-optimize": "diskOptimize",
   "startup-change": "startupChange",
   "restore-point": "restorePoint",
+  "restore-point-reused": "restorePointReused",
   "process-guard": "processGuard",
   "core-steering": "coreSteering",
   "ram-trim": "ramTrim",
@@ -156,6 +157,7 @@ export function ChangeHistory({
   const nameOf = useCallback(
     (item: HistoryItem): string => {
       if (item.action === "restore-point") return s.ledger.actions.restorePoint;
+      if (item.action === "restore-point-reused") return s.ledger.actions.restorePointReused;
       if (item.kind === "tweak") return tweakName(item.target);
       if (item.kind === "debloat") return item.target;
       if (item.action === "process-guard")

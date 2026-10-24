@@ -54,6 +54,8 @@ function actionLabel(s: Strings, action: string): string {
       return s.scan.dashActDiskOptimize;
     case "restore-point":
       return s.scan.dashActRestorePoint;
+    case "restore-point-reused":
+      return s.ledger.actions.restorePointReused;
     default:
       return action;
   }

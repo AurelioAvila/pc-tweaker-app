@@ -139,11 +139,11 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
         navigate={navigate}
         onSubpage={path !== "/"}
         currentPath={path}
-        {...(path === "/uninstaller"
+        {...(path === "/uninstaller" || path.startsWith("/uninstaller/guides/")
           ? {
               downloadHref: UNINSTALLER_DOWNLOAD_EXE,
               downloadLabel: "Download Uninstaller",
-              offerHref: "#uninstaller-pro",
+              offerHref: path === "/uninstaller" ? "#uninstaller-pro" : "/uninstaller/#uninstaller-pro",
             }
           : {})}
       />

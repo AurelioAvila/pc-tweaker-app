@@ -48,6 +48,10 @@ const PAGES = {
   "/what-pc-tweaker-changes/": ["src/pages/practical-guides.ts"],
   "/turn-off-windows-recall/": ["src/pages/practical-guides.ts", "src/pages/guide-faqs.ts"],
   "/uninstall-programs-completely/": ["src/pages/practical-guides.ts", "src/pages/guide-faqs.ts"],
+  "/uninstaller/guides/armoury-crate/": ["src/pages/uninstaller-guides.ts"],
+  "/uninstaller/guides/mcafee-webadvisor/": ["src/pages/uninstaller-guides.ts"],
+  "/uninstaller/guides/microsoft-edge-webview2/": ["src/pages/uninstaller-guides.ts"],
+  "/uninstaller/guides/onedrive/": ["src/pages/uninstaller-guides.ts"],
   // Static page shipped as-is from public/; not part of the React prerender.
   "/tweaky-driver/": ["public/tweaky-driver/index.html"],
 };

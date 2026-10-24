@@ -114,8 +114,11 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    `"erase": true` to delete (`src/account-erasure.ts`). It answers 409
    `active_subscription` until the subscription is cancelled in Stripe, and
    409 `open_referral_checkout` while a referral checkout is not settled yet
-   (the worker settles it within about an hour of its expiry). Trial claims and the unlinked referral hashes are kept
-   on purpose; the support mailbox and Stripe records are outside it.
+   (the worker settles it within about an hour of its expiry). Tweaky Driver's
+   sessions, tokens and plan for the shared account (`dc_*`, same database)
+   go too, and its live subscription also answers 409. Trial claims, Tweaky
+   Driver's free scans and the unlinked referral hashes are kept on purpose;
+   the support mailbox and Stripe records are outside it.
 
    `RESEND_API_KEY` is required for the support form to work at all — with no
    mail provider configured it refuses submissions with a 503 rather than

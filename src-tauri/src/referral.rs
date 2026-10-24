@@ -160,22 +160,39 @@ fn key(dir: &Path, create: bool) -> Result<SigningKey, String> {
         .lock()
         .map_err(|_| "Identity storage unavailable")?;
     let file = dir.join("referral-device.dpapi");
-    if !file.try_exists().map_err(|e| e.to_string())? {
-        if !create {
-            return Err("Referral device identity is missing".into());
+    let readable = || {
+        read_protected(&file)
+            .ok()
+            .and_then(|bytes| <[u8; 32]>::try_from(bytes).ok())
+    };
+    if file.try_exists().map_err(|e| e.to_string())? {
+        if let Some(seed) = readable() {
+            return Ok(SigningKey::from_bytes(&seed));
         }
-        let mut seed = [0u8; 32];
-        getrandom::getrandom(&mut seed).map_err(|_| "Random generator unavailable")?;
-        // Publish a complete protected file without overwriting an identity created by another process.
-        if let Err(error) = write_protected(&file, &seed, true) {
-            if !file.try_exists().unwrap_or(false) {
-                return Err(error);
-            }
+        if !create {
+            return Err("Corrupt referral device identity".into());
+        }
+        // Windows can no longer open it (an administrator reset this user's password, which
+        // loses the DPAPI master key) or it is damaged. A bonus bound to it cannot be refreshed
+        // either way; without a new identity this PC could never activate one again. The old
+        // file is set aside, not deleted, in case Windows can open it again later.
+        std::fs::rename(
+            &file,
+            file.with_extension(format!("dpapi.unreadable-{}", now())),
+        )
+        .map_err(|e| e.to_string())?;
+    } else if !create {
+        return Err("Referral device identity is missing".into());
+    }
+    let mut seed = [0u8; 32];
+    getrandom::getrandom(&mut seed).map_err(|_| "Random generator unavailable")?;
+    // Publish a complete protected file without overwriting an identity created by another process.
+    if let Err(error) = write_protected(&file, &seed, true) {
+        if !file.try_exists().unwrap_or(false) {
+            return Err(error);
         }
     }
-    let seed: [u8; 32] = read_protected(&file)?
-        .try_into()
-        .map_err(|_| "Corrupt referral device identity")?;
+    let seed = readable().ok_or("Corrupt referral device identity")?;
     Ok(SigningKey::from_bytes(&seed))
 }
 
@@ -296,13 +313,24 @@ struct Bonus {
     issued_at: u64,
     expires_at: u64,
 }
-/// A grant as kept on disk, with the local time it was received.
+/// A grant as kept on disk, with the local time it was received and the latest local time it
+/// was checked at (`seen_at`, kept across restarts: see `grant_time`).
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct StoredGrant {
     payload_json: String,
     signature: String,
     received_at: u64,
+    #[serde(default)]
+    seen_at: u64,
+}
+/// How often a running app writes the time a grant was checked at back to disk.
+const SEEN_WRITE_SECS: u64 = 30;
+/// The time a stored grant is judged at: this PC's clock, never earlier than the last check
+/// saved with the grant. Moving the clock back and restarting the app cannot give a lease
+/// back the minutes it has already run; a new grant (every refresh) starts its own count.
+fn grant_time(now: u64, grant: &StoredGrant) -> u64 {
+    now.max(grant.seen_at)
 }
 fn verified(
     response: &crate::license::SignedLicenseResponse,
@@ -340,23 +368,35 @@ fn verified(
         .then_some(bonus)
 }
 fn stored(dir: &Path) -> Option<Bonus> {
+    // Also serialises the write-back below with a new grant being saved.
+    let _guard = STATE_LOCK.lock().ok()?;
     let signing = key(dir, false).ok()?;
     let session: Session =
         serde_json::from_slice(&read_protected(&dir.join("referral-session.dpapi")).ok()?).ok()?;
-    let grant: StoredGrant =
-        serde_json::from_slice(&read_protected(&dir.join("referral-license.dpapi")).ok()?).ok()?;
+    let file = dir.join("referral-license.dpapi");
+    let grant: StoredGrant = serde_json::from_slice(&read_protected(&file).ok()?).ok()?;
+    let time = grant_time(now(), &grant);
     let response = crate::license::SignedLicenseResponse {
-        payload_json: grant.payload_json,
-        signature: grant.signature,
+        payload_json: grant.payload_json.clone(),
+        signature: grant.signature.clone(),
     };
-    verified(
+    let bonus = verified(
         &response,
         ISSUER,
         &session,
         &hash(&signing.verifying_key().to_bytes()),
-        now(),
+        time,
         grant.received_at,
-    )
+    )?;
+    if time >= grant.seen_at.saturating_add(SEEN_WRITE_SECS) {
+        if let Ok(bytes) = serde_json::to_vec(&StoredGrant {
+            seen_at: time,
+            ..grant
+        }) {
+            let _ = write_protected(&file, &bytes, false);
+        }
+    }
+    Some(bonus)
 }
 /// `dir` is the app data folder the purchased licence uses; bonus state lives beside it locally.
 pub fn is_active(dir: &Path) -> bool {
@@ -393,6 +433,7 @@ pub fn save_referral_license(
         payload_json: response.payload_json,
         signature: response.signature,
         received_at,
+        seen_at: received_at,
     })
     .map_err(|e| e.to_string())?;
     // A separate store: a bonus can never replace or extend a purchased licence.
@@ -537,6 +578,28 @@ mod tests {
         // A clock set back after saving fails closed until the next refresh.
         assert!(verified(&response, &issuer, &session, &device, 100_050, 100_100).is_none());
     }
+    /// Argon 1: the lease used to restart its count whenever the app restarted with the clock
+    /// set back to just after the grant was received, so it never ran out offline.
+    #[test]
+    fn a_clock_moved_back_across_a_restart_does_not_give_the_lease_back() {
+        let (response, issuer, session, device) = fixture();
+        let grant = StoredGrant {
+            payload_json: response.payload_json.clone(),
+            signature: response.signature.clone(),
+            received_at: 100_100,
+            // A previous run checked it until its lease had run out.
+            seen_at: 100_100 + LEASE_SECS + 60,
+        };
+        let rolled_back = 100_110;
+        let check = |time| verified(&response, &issuer, &session, &device, time, 100_100);
+        assert!(check(rolled_back).is_some(), "the moved-back clock alone");
+        assert!(check(grant_time(rolled_back, &grant)).is_none());
+        // A grant saved by 1.18.15 has no seenAt: judged by the clock, as before.
+        let old: StoredGrant =
+            serde_json::from_str(r#"{"payloadJson":"{}","signature":"x","receivedAt":100100}"#)
+                .unwrap();
+        assert_eq!(grant_time(100_200, &old), 100_200);
+    }
     #[test]
     fn clock_ahead_or_an_old_grant_saved_again_is_refused() {
         let (response, issuer, session, device) = fixture();
@@ -611,7 +674,7 @@ mod tests {
     }
     #[cfg(windows)]
     #[test]
-    fn protected_identity_survives_reloads_and_corruption_fails_closed() {
+    fn protected_identity_survives_reloads_and_an_unreadable_one_is_replaced() {
         let dir = std::env::temp_dir().join(format!(
             "pct-referral-native-test-{}-{}",
             std::process::id(),
@@ -620,7 +683,19 @@ mod tests {
         let first = key(&dir, true).unwrap().verifying_key();
         assert_eq!(first, key(&dir, false).unwrap().verifying_key());
         std::fs::write(dir.join("referral-device.dpapi"), b"corrupt").unwrap();
-        assert!(key(&dir, true).is_err());
+        // Reading never replaces an identity; only creating one (activation) does.
+        assert!(key(&dir, false).is_err());
+        // Argon 8b: an identity Windows cannot open is set aside and replaced, so this PC can
+        // still activate a bonus.
+        let second = key(&dir, true).unwrap().verifying_key();
+        assert_ne!(first, second);
+        assert_eq!(second, key(&dir, false).unwrap().verifying_key());
+        let aside = std::fs::read_dir(&dir)
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .filter(|e| e.file_name().to_string_lossy().contains("unreadable"))
+            .count();
+        assert_eq!(aside, 1, "the unreadable file is kept");
         std::fs::remove_dir_all(dir).unwrap();
     }
 }

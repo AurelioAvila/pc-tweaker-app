@@ -22,11 +22,12 @@ import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
 import { promoCheckout } from "../promo";
 import { queueReceipt, type Receipt } from "../receipt-outbox";
 import { asyncRoute } from "../async-route";
+import { deviceHashFrom } from "../license";
 import { referralCheckout, referralWebhook } from "../referral-stripe";
 import { ReferralError } from "../referrals";
 import { failureKey, trialMail, trialMoney, type Money, type TrialMailKind } from "../emails/trial";
 import {
-  TRIAL_DAYS, TRIAL_MARK, TRIAL_REJECTED, blockedReason, claimTrial, grantsAccess, isOurTrial, trialEligible, trialEnabled,
+  TRIAL_DAYS, TRIAL_MARK, TRIAL_REJECTED, blockedReason, claimTrial, grantsAccess, isOurTrial, trialEligible, trialEnabled, trialHash,
 } from "../trial";
 
 const router = express.Router();
@@ -305,8 +306,10 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       // only, never Lifetime, and only for an account that has not had this
       // product's trial (re-checked when Stripe creates the subscription).
       const trial = startTrial === true;
+      // The PC the app is running on (the hash its licences are bound to), keyed.
+      const device = trialHash("device", deviceHashFrom(req.get?.("x-device-hash")).deviceHash, effects.environment);
       if (trial && !(plan.mode === "subscription" && await trialEligible(
-        req.userId as number, product, await productEntitlement(req.userId as number, product), effects.environment,
+        req.userId as number, product, await productEntitlement(req.userId as number, product), effects.environment, device,
       ))) {
         return res.status(409).json({
           error: "The free trial is not available for this account. Subscribe directly instead.",
@@ -320,7 +323,7 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
           ...params.subscription_data,
           trial_period_days: TRIAL_DAYS,
           trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
-          metadata: { ...params.subscription_data?.metadata, trial: TRIAL_MARK },
+          metadata: { ...params.subscription_data?.metadata, trial: TRIAL_MARK, ...(device ? { trial_device: device } : {}) },
         };
       }
       // The thanks page names the app, says "trial" rather than "payment"
@@ -396,7 +399,8 @@ router.get("/billing/prices", asyncRoute(async (_req: Request, res: Response) =>
   res.json(await publicPrices());
 }));
 
-export async function billingStatus(userId: number | string, products: readonly Product[], environment: NodeJS.ProcessEnv = process.env, now = Date.now(), read?: PriceReader | null) {
+export async function billingStatus(userId: number | string, products: readonly Product[], environment: NodeJS.ProcessEnv = process.env, now = Date.now(), read?: PriceReader | null, deviceHeader?: string) {
+  const device = trialHash("device", deviceHashFrom(deviceHeader).deviceHash, environment);
   const { rows } = await getPool().query("SELECT stripe_customer_id FROM users WHERE id = $1", [userId]);
   const items = [];
   for (const product of products) {
@@ -422,7 +426,7 @@ export async function billingStatus(userId: number | string, products: readonly 
       trial_ends_at: state === "trialing" ? entitlement.trialEndsAt : null,
       current_period_end: entitlement.active && !perpetual ? entitlement.expiresAt ?? null : null,
       cancel_at_period_end: Boolean(entitlement.active && entitlement.cancelAtPeriodEnd),
-      can_start_trial: await trialEligible(userId, product, entitlement, environment),
+      can_start_trial: await trialEligible(userId, product, entitlement, environment, device),
       blocked_reason: state === "blocked" ? blockedReason(status) : "none",
       prices,
     });
@@ -440,7 +444,7 @@ router.get("/billing/status", requireAuth, asyncRoute(async (req: Request, res: 
     res.status(400).json({ error: "unknown product" });
     return;
   }
-  res.json(await billingStatus(req.userId as number, requested ? [requested as Product] : PRODUCTS));
+  res.json(await billingStatus(req.userId as number, requested ? [requested as Product] : PRODUCTS, process.env, Date.now(), undefined, req.get("x-device-hash")));
 }));
 
 // A one-off tip. Deliberately outside the account system: no login, no
@@ -1066,6 +1070,7 @@ async function admitTrial(userId: string, product: Product, subscription: Stripe
   try { plan = subscriptionPlan(subscription); } catch { /* the mail omits the plan row */ }
   const claimed = await claimTrial({
     product, userId, subscriptionId: subscription.id, fingerprint: await effects.cardFingerprint(subscription),
+    device: subscription.metadata?.trial_device ?? null,
   });
   if (!claimed) {
     await effects.cancelSubscription(subscription.id);

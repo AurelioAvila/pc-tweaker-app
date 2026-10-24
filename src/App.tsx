@@ -74,7 +74,12 @@ import {
 } from "./components/maintenance";
 import { AccountMenu } from "./components/account";
 import { ReferralPanel } from "./components/referrals";
-import { readReferralStatus, activateOrRefreshBonus, bonusForThisPc } from "./referrals";
+import {
+  readReferralStatus,
+  activateOrRefreshBonus,
+  bonusForThisPc,
+  bonusWithdrawn,
+} from "./referrals";
 import { TweakIcon } from "./components/tweak-icon";
 import { TechnicalDetails, TechnicalToggle } from "./components/technical";
 import { GameSessionsPanel, TurboBoostPanel } from "./components/gaming";
@@ -115,6 +120,13 @@ class CheckoutError extends Error {
   ) {
     super(message);
   }
+}
+
+/** This PC's licence identity (license.rs device_hash) as a request header, or nothing on a
+ *  PC whose identity cannot be read. */
+async function deviceHeader(): Promise<Record<string, string>> {
+  const device = await invoke<string | null>("license_device_hash").catch(() => null);
+  return device ? { "X-Device-Hash": device } : {};
 }
 
 function App() {
@@ -303,7 +315,8 @@ function App() {
   async function refreshBilling(token: string, email: string) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/billing/status`, {
-        headers: { Authorization: `Bearer ${token}` },
+        // The PC id: a PC that already had the free trial is not offered it again.
+        headers: { Authorization: `Bearer ${token}`, ...(await deviceHeader()) },
       });
       if (!res.ok) return;
       const billing = parseBillingStatus(await res.json());
@@ -344,14 +357,13 @@ function App() {
     if (!token) return;
     try {
       const install = installId();
-      // The backend signs this PC's hash into the licence (license.rs).
-      const device = await invoke<string | null>("license_device_hash").catch(() => null);
-      // sig=2: the rotated signing key, the only one license.rs trusts.
+      // sig=2: the rotated signing key, the only one license.rs trusts. The backend
+      // signs this PC's hash into the licence (license.rs).
       const res = await fetch(`${API_BASE_URL}/api/license?sig=2`, {
         headers: {
           Authorization: `Bearer ${token}`,
           ...(install ? { "X-Install-Id": install } : {}),
-          ...(device ? { "X-Device-Hash": device } : {}),
+          ...(await deviceHeader()),
         },
       });
       if (!res.ok) return;
@@ -392,8 +404,10 @@ function App() {
         next = 5 * 60_000;
       } else await invoke("clear_referral_license");
       referralFailures.current = 0;
-    } catch {
-      // A failed refresh keeps only the native layer's remaining signed lease.
+    } catch (error) {
+      // The server withdrew or ended this bonus: drop its lease now instead of letting it run.
+      if (bonusWithdrawn(error)) await invoke("clear_referral_license").catch(() => {});
+      // Any other failed refresh keeps only the native layer's remaining signed lease.
       active = await invoke<boolean>("referral_license_status", { token }).catch(() => false);
       referralFailures.current += 1;
       if (active) next = Math.min(30, 5 * 2 ** (referralFailures.current - 1)) * 60_000;
@@ -635,7 +649,12 @@ function App() {
     }
     const res = await fetch(`${API_BASE_URL}/api/checkout`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      // The PC id: the free trial is once per PC as well as per account (backend trial.ts).
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        ...(await deviceHeader()),
+      },
       body: JSON.stringify(startTrial === undefined ? { plan } : { plan, start_trial: startTrial }),
     });
     if (!res.ok) {

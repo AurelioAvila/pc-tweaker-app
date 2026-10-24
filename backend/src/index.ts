@@ -26,7 +26,7 @@ import { clientIpMiddleware, trustProxyHops } from "./client-ip";
 import { lifetimeReminderEmail, startCheckoutReminderWorker } from "./checkout-recovery";
 import { startReceiptWorker } from "./receipt-outbox";
 import { copyFor, fromAcceptLanguage, isLocale, type Copy } from "./emails/copy";
-import { TRIAL_DAYS } from "./trial";
+import { TRIAL_DAYS, maintainTrialClaims } from "./trial";
 import { referralRoutes } from "./routes/referrals";
 import { startReferralWorker } from "./referral-stripe";
 
@@ -392,10 +392,15 @@ function shutdown(signal: string, server: import("http").Server): void {
 }
 
 initSchema()
+  .then(() => (isConfigured ? maintainTrialClaims() : undefined))
   .catch((err) => {
     console.error("failed to initialize database schema:", err);
   })
   .finally(() => {
+    if (isConfigured) {
+      // Daily: claims past their retention lose their card and PC hashes.
+      setInterval(() => void maintainTrialClaims().catch((err) => console.error("trial claim retention failed:", err)), 86_400_000).unref();
+    }
     if (isConfigured) stopReceiptWorker = startReceiptWorker(deliverProReceipt);
     if (isConfigured) stopReferralWorker = startReferralWorker();
     if (isConfigured && mailIsConfigured && process.env.STRIPE_SECRET_KEY) {

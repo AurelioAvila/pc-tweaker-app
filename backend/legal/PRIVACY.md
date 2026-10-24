@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-10-22
+Last updated: 2026-10-24
 
 PC Tweaker is a desktop application. Windows tweaks, snapshots, rollback data,
 hardware readings and file scans are processed locally on your device. They are
@@ -52,9 +52,11 @@ Current versions of PC Tweaker and PC Tweaker Uninstaller send, with a licence r
 a one-way SHA-256 hash of your Windows installation ID (the MachineGuid value
 Windows creates at setup), combined with a fixed product label. The ID itself
 never leaves your PC. The backend writes the hash into the signed licence it
-returns and does not store it; the app then accepts that licence only on the
-PC it was issued to, so a copied licence file unlocks nothing elsewhere. It
-does not limit how many PCs you use with your account.
+returns; the app then accepts that licence only on the PC it was issued to, so
+a copied licence file unlocks nothing elsewhere. It does not limit how many PCs
+you use with your account. The backend does not store the hash, except as a
+keyed one-way hash in the two cases described under "Free trial" and "Invite a
+friend" below.
 
 Tweaky Driver's Free plan is one complete scan every 10 days, counted by the
 Tweaky Driver service, so it needs a free account with a verified email
@@ -107,6 +109,25 @@ Tweaker. If you pick an answer, only that answer (for example "youtube") is
 added to your order's record at Stripe; nothing is stored in your browser and
 skipping the question changes nothing.
 
+## Free trial
+
+When you start the 3-day free trial of PC Tweaker Pro or PC Tweaker
+Uninstaller Pro, we record that your account used it, together with a one-way
+hash of your email address in a normalised form (lower case, without a
+`+tag`, and for Gmail without dots), a keyed one-way hash of the fingerprint
+Stripe calculates for your card, and a keyed one-way hash of the PC identifier
+described above: the PC the trial was started on or, if the app did not send
+it, the first PC that asks for a licence during the trial. During the trial,
+Pro works on that PC. We never store the card fingerprint or the PC identifier
+itself.
+
+These records allow one free trial per product for each account, email
+address, card and PC, so they are kept after an account is deleted. The card
+and PC hashes are cleared 24 months after the trial started; the record that
+the account and email address used the trial is kept. We process this data on
+the basis of our legitimate interest in preventing abuse of the free trial
+(Article 6(1)(f) GDPR).
+
 ## Invite a friend
 
 If you take part in the Invite a friend programme described in the Terms of
@@ -128,7 +149,10 @@ Service, our backend also processes the following:
   payment is recorded, we compare the two accounts' email addresses and private
   email domains (large public providers such as Gmail or Outlook never count as
   shared), the hashed app installation identifiers recorded when each account
-  signs in, and the card fingerprint hashes.
+  signs in, keyed one-way hashes of the PC identifier described above,
+  recorded when each account taking part refreshes its licence, and the card
+  fingerprint hashes. When both accounts used the same PC, the bonus waits for
+  a person to review it instead of being available at once.
 
 The person who invited you sees only that a bonus exists and whether it is
 being checked, active or not eligible. They never see your email address,
@@ -145,7 +169,10 @@ refuses an invitation or withdraws a bonus, you can ask for a person to review
 the decision at support@pctweaker.app.
 
 Device challenges used to activate or refresh a bonus are deleted one day after
-they expire, and records of processed payment notifications after 90 days.
+they expire, and records of processed payment notifications after 90 days. A
+refund or dispute notice for a payment that never becomes an invitation
+purchase is kept for 90 days, then deleted. A PC identifier hash is deleted 12
+months after the account last refreshed its licence on that PC.
 Invitation, bonus, payment-check and review records are kept while your account
 exists, because they stop the same purchase, person or card from earning a
 second bonus and let us handle a refund or dispute. If you ask us to delete

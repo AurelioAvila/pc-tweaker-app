@@ -501,7 +501,7 @@ export const PLAN_STATE_COPY: Record<
     endsToday: "ends today",
     bannerTitle: "Try every Pro tool free for {days} days",
     bannerBody:
-      "Full Pro on this PC. A card is needed to start, and nothing is charged if you cancel before the {days} days are up. One free trial per account.",
+      "Full Pro on this PC. A card is needed to start, and nothing is charged if you cancel before the {days} days are up. One free trial per account and per PC.",
     bannerButton: "Start your {days}-day free trial",
   },
   it: {
@@ -512,7 +512,7 @@ export const PLAN_STATE_COPY: Record<
     endsToday: "termina oggi",
     bannerTitle: "Prova gratis tutti gli strumenti Pro per {days} giorni",
     bannerBody:
-      "Pro completo su questo PC. Per iniziare serve una carta; se annulli prima che finiscano i {days} giorni non paghi nulla. Una sola prova gratuita per account.",
+      "Pro completo su questo PC. Per iniziare serve una carta; se annulli prima che finiscano i {days} giorni non paghi nulla. Una sola prova gratuita per account e per PC.",
     bannerButton: "Inizia la prova gratuita di {days} giorni",
   },
   fr: {
@@ -523,7 +523,7 @@ export const PLAN_STATE_COPY: Record<
     endsToday: "se termine aujourd'hui",
     bannerTitle: "Essayez tous les outils Pro gratuitement pendant {days} jours",
     bannerBody:
-      "Pro complet sur ce PC. Une carte est nécessaire pour commencer ; annulez avant la fin des {days} jours et rien n'est prélevé. Un seul essai gratuit par compte.",
+      "Pro complet sur ce PC. Une carte est nécessaire pour commencer ; annulez avant la fin des {days} jours et rien n'est prélevé. Un seul essai gratuit par compte et par PC.",
     bannerButton: "Commencer l'essai gratuit de {days} jours",
   },
   es: {
@@ -534,7 +534,7 @@ export const PLAN_STATE_COPY: Record<
     endsToday: "termina hoy",
     bannerTitle: "Prueba gratis todas las herramientas Pro durante {days} días",
     bannerBody:
-      "Pro completo en este PC. Para empezar se necesita una tarjeta; si cancelas antes de que pasen los {days} días, no pagas nada. Una sola prueba gratuita por cuenta.",
+      "Pro completo en este PC. Para empezar se necesita una tarjeta; si cancelas antes de que pasen los {days} días, no pagas nada. Una sola prueba gratuita por cuenta y por PC.",
     bannerButton: "Empezar la prueba gratuita de {days} días",
   },
   de: {
@@ -545,7 +545,7 @@ export const PLAN_STATE_COPY: Record<
     endsToday: "endet heute",
     bannerTitle: "Alle Pro-Werkzeuge {days} Tage kostenlos testen",
     bannerBody:
-      "Vollständiges Pro auf diesem PC. Zum Start ist eine Karte nötig; wenn Sie vor Ablauf der {days} Tage kündigen, wird nichts abgebucht. Eine kostenlose Testphase pro Konto.",
+      "Vollständiges Pro auf diesem PC. Zum Start ist eine Karte nötig; wenn Sie vor Ablauf der {days} Tage kündigen, wird nichts abgebucht. Eine kostenlose Testphase pro Konto und pro PC.",
     bannerButton: "{days} Tage kostenlos testen",
   },
   pt: {
@@ -556,7 +556,7 @@ export const PLAN_STATE_COPY: Record<
     endsToday: "termina hoje",
     bannerTitle: "Experimente todas as ferramentas Pro grátis durante {days} dias",
     bannerBody:
-      "Pro completo neste PC. Para começar é necessário um cartão; se cancelar antes do fim dos {days} dias, não paga nada. Uma única avaliação gratuita por conta.",
+      "Pro completo neste PC. Para começar é necessário um cartão; se cancelar antes do fim dos {days} dias, não paga nada. Uma única avaliação gratuita por conta e por PC.",
     bannerButton: "Iniciar a avaliação gratuita de {days} dias",
   },
 };

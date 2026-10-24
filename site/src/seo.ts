@@ -4,6 +4,7 @@ import { msUntil, type Promo } from "../../src/promo";
 import { TECHNICAL_GUIDES } from "./pages/technical-guides";
 import { PRACTICAL_GUIDES } from "./pages/practical-guides";
 import { FIX_GUIDES } from "./pages/fix-guides";
+import { UNINSTALLER_GUIDES } from "./pages/uninstaller-guides";
 import { GUIDE_FAQS } from "./pages/guide-faqs";
 import { DIRECTORY_GUIDES } from "./pages/guide-directory";
 import { text } from "./i18n/dictionary";
@@ -23,6 +24,8 @@ export interface RouteSeo {
 }
 
 const ORIGIN = "https://pctweaker.app";
+const UNINSTALLER_OG = `${ORIGIN}/uninstaller/og-uninstaller-a9f627cc79.png`;
+const UNINSTALLER_OG_ALT = "PC Tweaker Uninstaller listing installed apps with a removal confidence label for each, shown with example programs";
 
 export function getRouteImage(seo: RouteSeo) {
   return {
@@ -49,8 +52,8 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
       "Review a Windows uninstall before it runs: inspect its risk score, command and permissions, then check restore-point status and the local removal receipt.",
     canonical: `${ORIGIN}/uninstaller/`,
     ogType: "website",
-    image: `${ORIGIN}/uninstaller/og-uninstaller-a9f627cc79.png`,
-    imageAlt: "PC Tweaker Uninstaller listing installed apps with a removal confidence label for each, shown with example programs",
+    image: UNINSTALLER_OG,
+    imageAlt: UNINSTALLER_OG_ALT,
   },
   // A guide's on-page H1 and intro are written for someone already reading it;
   // the title and description are written for someone deciding whether to click
@@ -62,6 +65,13 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     canonical: `${ORIGIN}${path}/`, ogType: "article" as const,
     ...(path in FIX_GUIDES ? { image: `${ORIGIN}/og${path}.png`, imageAlt: guide.seoTitle }
       : "socialImage" in guide ? { image: `${ORIGIN}${guide.socialImage}`, imageAlt: guide.socialImageAlt } : {}),
+  }])),
+  // Removal guides reuse the Uninstaller's own 1200x630 card.
+  ...Object.fromEntries(Object.entries(UNINSTALLER_GUIDES).map(([path, guide]) => [path, {
+    title: `${guide.seoTitle} | PC Tweaker`,
+    description: guide.seoDescription,
+    canonical: `${ORIGIN}${path}/`, ogType: "article" as const,
+    image: UNINSTALLER_OG, imageAlt: UNINSTALLER_OG_ALT,
   }])),
   "/": {
     title: "PC Tweaker | Windows Tuning for Steadier Frame Times",
@@ -287,6 +297,26 @@ export const ROUTE_JSONLD: Record<string, readonly object[]> = {
         })),
       },
     ],
+  }]])),
+  // Removal guides: the article and what it is about. The BreadcrumbList comes
+  // from the guide directory (getRouteJsonLd), like every other listed guide.
+  ...Object.fromEntries(Object.entries(UNINSTALLER_GUIDES).map(([path, guide]) => [path, [{
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "@id": `${ORIGIN}${path}/#article`,
+    url: `${ORIGIN}${path}/`,
+    mainEntityOfPage: `${ORIGIN}${path}/`,
+    headline: guide.title,
+    description: guide.seoDescription,
+    datePublished: guide.published,
+    dateModified: guide.updated,
+    image: UNINSTALLER_OG,
+    inLanguage: "en",
+    author: { "@type": "Person", name: "Aurelio Avila", url: "https://github.com/AurelioAvila" },
+    publisher: { "@id": `${ORIGIN}/#organization` },
+    isPartOf: { "@id": `${ORIGIN}/#website` },
+    about: { "@id": `${ORIGIN}/uninstaller/#software` },
+    citation: guide.sources.items.map((s) => s.url),
   }]])),
   // Guides that render a "Common questions" section (src/pages/guide-faqs.ts).
   ...Object.fromEntries(Object.entries(GUIDE_FAQS).map(([path, items]) => [

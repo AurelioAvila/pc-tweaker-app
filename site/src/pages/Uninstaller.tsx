@@ -32,6 +32,14 @@ const PRO = [
   "Remove broken entries: programs whose own uninstaller no longer exists, taken off the installed list",
 ];
 
+const REMOVAL_GUIDES = [
+  ["/uninstaller/guides/armoury-crate/", "Uninstall ASUS Armoury Crate completely"],
+  ["/uninstaller/guides/riot-vanguard/", "Uninstall Riot Vanguard and check its driver is gone"],
+  ["/uninstaller/guides/mcafee-webadvisor/", "Remove McAfee, WebAdvisor and leftover tasks"],
+  ["/uninstaller/guides/onedrive/", "Uninstall OneDrive on Windows 11 without losing files"],
+  ["/uninstaller/guides/microsoft-edge-webview2/", "Can I uninstall WebView2? Why to keep it"],
+] as const;
+
 export function UninstallerPage() {
   const promo = usePromo();
   const uninstallerOffer = promo.offer("uninstaller", "annual");
@@ -66,13 +74,23 @@ export function UninstallerPage() {
         <PromoCard product="uninstaller" plan="annual" href="#uninstaller-pro" />
       </div>
 
-      <p className="mb-12 text-[var(--fg-dim)]">
+      <p className="mb-6 text-[var(--fg-dim)]">
         New to this? Read{" "}
         <a href="/uninstall-programs-completely/" className="text-[var(--fg)] underline underline-offset-4">
           how to completely uninstall a program on Windows
         </a>
         , including where leftovers live and which ones to keep.
       </p>
+      <nav aria-labelledby="removal-guides" className="mb-12">
+        <h2 id="removal-guides" className="mb-3 text-lg font-semibold text-[var(--fg)]">Removal guides for programs people ask about</h2>
+        <ul className="space-y-1.5 text-[var(--fg-dim)]">
+          {REMOVAL_GUIDES.map(([href, label]) => (
+            <li key={href}>
+              <a href={href} className="inline-flex min-h-11 items-center text-[var(--fg)] underline underline-offset-4">{label}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
       <ProductScreenshots
         title="Inside the removal workflow"

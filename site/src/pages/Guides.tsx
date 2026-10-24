@@ -1,7 +1,8 @@
-import { DOWNLOAD_EXE } from "../constants";
+import { DOWNLOAD_EXE, UNINSTALLER_DOWNLOAD_EXE } from "../constants";
 import { useCampaignStoreLink } from "../campaign-store";
 import { PRACTICAL_GUIDES } from "./practical-guides";
 import { FIX_GUIDES } from "./fix-guides";
+import { UNINSTALLER_GUIDES, type Leftovers, type RemovalCheck } from "./uninstaller-guides";
 import { ProBox, Steps, TechSummary, type Step } from "../components/ReferenceBlocks";
 import { GUIDE_FAQS } from "./guide-faqs";
 import { Link } from "../router";
@@ -65,11 +66,18 @@ interface Guide {
     readonly body: string;
     readonly links: readonly { readonly to: string; readonly label: string }[];
   };
+  /** Removal guides: the at-a-glance table, the vendor's route, then the leftovers. */
+  readonly checks?: readonly RemovalCheck[];
+  readonly method?: { readonly heading: string; readonly intro: string; readonly steps: readonly Step[] };
+  readonly leftovers?: Leftovers;
+  /** Which product the closing call to action offers. */
+  readonly product?: "uninstaller";
 }
 
 export const GUIDES: Record<string, Guide> = {
   ...PRACTICAL_GUIDES,
   ...FIX_GUIDES,
+  ...UNINSTALLER_GUIDES,
   "/windows-11-optimizer": {
     eyebrow: "WINDOWS 11 OPTIMIZATION",
     title: "Optimize Windows 11 without losing control",
@@ -421,6 +429,55 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
         {guide.updated && (!technical || guide.updated !== guide.published) && <p className="mt-3 text-sm text-[var(--fg-dim)]">Updated <time dateTime={guide.updated}>{new Date(`${guide.updated}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}</time>.</p>}
 
         {guide.summary && <TechSummary rows={guide.summary} />}
+        {guide.checks && (
+          <section aria-labelledby="at-a-glance" className="mt-10 rounded-2xl border border-white/10 bg-[var(--bg-2)] p-5 md:p-7">
+            <h2 id="at-a-glance" className="font-mono-t text-accent text-[12px] tracking-[0.15em]">AT A GLANCE</h2>
+            <table className="mt-4 w-full table-fixed border-collapse text-left text-[13.5px] leading-6 md:text-[14px]">
+              <thead>
+                <tr className="border-b border-[var(--line-2)] text-[var(--fg)]">
+                  <th scope="col" className="w-[38%] py-2.5 pr-3 font-semibold">Check</th>
+                  <th scope="col" className="py-2.5 pr-3 font-semibold">What it means</th>
+                  <th scope="col" className="w-[27%] py-2.5 font-semibold">Reversible?</th>
+                </tr>
+              </thead>
+              <tbody>
+                {guide.checks.map((row) => (
+                  <tr key={row.check} className="border-b border-white/5 align-top last:border-0">
+                    <th scope="row" className="py-3 pr-3 font-medium text-[var(--fg)]">{row.check}</th>
+                    <td className="py-3 pr-3 text-[var(--fg-dim)]">{row.meaning}</td>
+                    <td className="py-3 text-[var(--fg-dim)]">{row.reversible}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+        {guide.method && (
+          <section aria-labelledby="official-way" className="mt-10 rounded-2xl bg-[var(--surface)] p-7 md:p-9">
+            <h2 id="official-way" className="font-display text-2xl font-bold text-[var(--fg)]">{guide.method.heading}</h2>
+            <p className="mt-4 max-w-3xl leading-7 text-[var(--fg-dim)]">{guide.method.intro}</p>
+            <Steps steps={guide.method.steps} />
+          </section>
+        )}
+        {guide.leftovers && (
+          <section aria-labelledby="leftovers" className="mt-8 rounded-2xl bg-[var(--surface)] p-7 md:p-9">
+            <h2 id="leftovers" className="font-display text-2xl font-bold text-[var(--fg)]">{guide.leftovers.heading}</h2>
+            <p className="mt-4 max-w-3xl leading-7 text-[var(--fg-dim)]">{guide.leftovers.body}</p>
+            <pre tabIndex={0} aria-label={`${guide.leftovers.heading}: read-only commands`} className="mt-5 max-w-full overflow-x-auto rounded-xl bg-black/40 p-5 text-[13px] leading-6 text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"><code>{guide.leftovers.code}</code></pre>
+            <div className="mt-7 grid gap-6 md:grid-cols-2">
+              {([["Usually safe to act on", guide.leftovers.act], ["Your data and settings: keep", guide.leftovers.keep]] as const).map(([label, items]) => (
+                <div key={label} className="min-w-0">
+                  <h3 className="text-[15.5px] font-semibold text-[var(--fg)]">{label}</h3>
+                  <ul className="mt-3 space-y-2.5 text-[14.5px] leading-7 text-[var(--fg-dim)]">
+                    {items.map((item) => (
+                      <li key={item} className="flex gap-3"><span aria-hidden="true" className="text-accent">—</span><span>{item}</span></li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
         {technical && (
           <>
             <p className="mt-5 text-sm leading-6 text-[var(--fg-dim)]">Maintained by <a href="https://github.com/AurelioAvila" className="text-accent underline underline-offset-4">Aurelio Avila</a> · Sources checked {guide.sources?.checked}.</p>
@@ -554,6 +611,24 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
             </a>
           </nav>
         )}
+        {guide.product === "uninstaller" ? (
+          <section className="mt-12 flex flex-wrap items-center justify-between gap-6 border-t border-white/10 pt-9">
+            <div>
+              <h2 className="font-display text-xl font-bold text-[var(--fg)]">Try PC Tweaker Uninstaller</h2>
+              <p className="mt-2 text-[14px] text-[var(--fg-dim)]">
+                Single uninstalls are free, for Windows 10 and Windows 11.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/uninstaller/" onNavigate={navigate} className="rounded-lg border border-white/10 px-5 py-3 text-sm font-semibold text-[var(--fg)]">
+                What it shows before a removal
+              </Link>
+              <a href={UNINSTALLER_DOWNLOAD_EXE} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--bg)]">
+                Download PC Tweaker Uninstaller
+              </a>
+            </div>
+          </section>
+        ) : (
         <section className="mt-12 flex flex-wrap items-center justify-between gap-6 border-t border-white/10 pt-9">
           <div>
             <h2 className="font-display text-xl font-bold text-[var(--fg)]">Try PC Tweaker</h2>
@@ -571,6 +646,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
             </a>
           </div>
         </section>
+        )}
       </article>
     </main>
   );

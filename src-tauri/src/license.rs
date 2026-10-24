@@ -164,6 +164,7 @@ fn verified_response(
     bound_to(&response.payload_json, device_hash().as_deref()).then_some(payload)
 }
 
+#[cfg(test)]
 fn verified_fresh_response(
     response: &SignedLicenseResponse,
     public_key_b64: &str,
@@ -403,6 +404,7 @@ impl LicenseStore {
         result
     }
 
+    #[cfg(test)]
     fn load(&self) -> Option<SignedLicenseResponse> {
         self.load_cached().map(|cached| cached.response)
     }

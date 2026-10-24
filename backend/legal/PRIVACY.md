@@ -248,13 +248,14 @@ support@pctweaker.app or use the private support form at
 https://pctweaker.app/support. Do not publish personal information in a public
 GitHub issue.
 
-When we delete an account, everything stored with it goes in one step: your
-profile and password hash, sign-in and installation records, licences, plans
-and bonus grants, pending emails and action tokens, together with any
-newsletter subscription and ratings sent from the same email address. An active
-subscription is cancelled in Stripe first. What we keep after that is described
-under "Free trial" and "Invite a friend". Stripe keeps its own records of your
-payments for as long as the law requires.
+When we delete an account, everything stored with it for the three apps goes in
+one step: your profile and password hash, sign-in sessions and installation
+records, licences, plans, activated PCs and bonus grants, pending emails and
+action tokens, together with any newsletter subscription and ratings sent from
+the same email address. An active subscription to any of the apps is cancelled
+in Stripe first. What we keep after that is described above for Tweaky
+Driver's free scans and under "Free trial" and "Invite a friend". Stripe keeps
+its own records of your payments for as long as the law requires.
 
 Some payment or security records may need to be retained where required by law
 or to resolve an active dispute. Identity verification may be required before a

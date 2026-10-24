@@ -6,10 +6,11 @@ import { LIVE_STATUSES } from "./trial";
  * Executes a verified deletion request (operator only, routes/admin.ts), in one transaction:
  * the referral side first (eraseUserReferralData), then the account row, whose foreign keys
  * delete licences and bonus grants, installation and sign-in records, receipts and action
- * tokens with it. The newsletter subscription and ratings sent from the same address go too,
- * with or without an account. Kept on purpose (PRIVACY.md): trial claims, which have no link to
- * the account table so that one trial per email, card and PC still holds, and the unlinked
- * referral hashes. Without `erase` it reports the counts and rolls everything back.
+ * tokens with it, and Tweaky Driver's sessions, tokens and plan for the shared account. The
+ * newsletter subscription and ratings sent from the same address go too, with or without an
+ * account. Kept on purpose (PRIVACY.md): trial claims and Tweaky Driver's free scans, which have
+ * no link to the account table so that one trial or free scan per email, card and PC still
+ * holds, and the unlinked referral hashes. Without `erase` it reports and rolls everything back.
  */
 export async function eraseAccount(
   db: Pool,
@@ -33,7 +34,25 @@ export async function eraseAccount(
             AND (expires_at IS NULL OR expires_at > $3)))`,
         [userId, [...LIVE_STATUSES], now],
       );
-      if (live.rowCount) throw new ReferralError("active_subscription");
+      // Tweaky Driver signs in with this account; its service keeps sign-in sessions, action tokens
+      // and its plan (Stripe customer, subscription, activated PCs) in the same database, in dc_*
+      // tables without a foreign key. Its free scans and trial claims are kept, like trial_claims.
+      const { rows: [tweaky] } = await tx.query(
+        "SELECT to_regclass('public.dc_sessions') AS sessions, to_regclass('public.dc_billing_accounts') AS billing",
+      );
+      const tweakyLive =
+        tweaky.billing &&
+        (await tx.query(
+          `SELECT 1 FROM dc_billing_accounts WHERE store_scope='pc-tweaker-shared' AND user_id=$1
+          AND (subscription->>'status' = ANY($2) OR subscription->>'access' = 'true')`,
+          [userId, [...LIVE_STATUSES]],
+        )).rowCount;
+      if (live.rowCount || tweakyLive) throw new ReferralError("active_subscription");
+      if (tweaky.sessions && tweaky.billing)
+        for (const [name, table] of [["tweakySessions", "dc_sessions"], ["tweakyActions", "dc_actions"], ["tweakyPlans", "dc_billing_accounts"]])
+          counts[name] =
+            (await tx.query(`DELETE FROM ${table} WHERE store_scope='pc-tweaker-shared' AND user_id=$1`, [userId]))
+              .rowCount ?? 0;
       Object.assign(counts, await eraseUserReferralData(tx, userId, now));
       counts.checkoutReminders =
         (await tx.query("DELETE FROM checkout_reminders WHERE user_id=$1", [userId])).rowCount ?? 0;

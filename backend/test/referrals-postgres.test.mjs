@@ -47,7 +47,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
     env.REFERRALS_ENABLED = "true";
     await pool.query("TRUNCATE users CASCADE");
     await pool.query(`TRUNCATE referral_audit,referral_payment_blocks,referral_webhook_receipts,
-      checkout_reminders,trial_claims,newsletter_subscribers,reviews`);
+      checkout_reminders,trial_claims,newsletter_subscribers,reviews,dc_sessions,dc_actions,dc_billing_accounts`);
     await pool.query(`INSERT INTO users(id,email,email_verified) VALUES
       (1,'inviter@example.com',true),(2,'buyer@example.net',true),
       (3,'other@example.org',true),(4,'second@second.example',true),(5,'unverified@unverified.example',false)`);
@@ -113,7 +113,13 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       CREATE TABLE IF NOT EXISTS trial_claims(product TEXT NOT NULL,user_id INTEGER NOT NULL,email_hash TEXT NOT NULL,
         card_hash TEXT,device_hash TEXT,subscription_id TEXT NOT NULL UNIQUE,PRIMARY KEY(product,user_id));
       CREATE TABLE IF NOT EXISTS newsletter_subscribers(id SERIAL PRIMARY KEY,email TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS reviews(id SERIAL PRIMARY KEY,email TEXT,rating SMALLINT NOT NULL)`);
+      CREATE TABLE IF NOT EXISTS reviews(id SERIAL PRIMARY KEY,email TEXT,rating SMALLINT NOT NULL);
+      CREATE TABLE IF NOT EXISTS dc_sessions(token_hash TEXT PRIMARY KEY,store_scope TEXT NOT NULL,user_id BIGINT NOT NULL);
+      CREATE TABLE IF NOT EXISTS dc_actions(token_hash TEXT PRIMARY KEY,store_scope TEXT NOT NULL,user_id BIGINT NOT NULL,
+        email_at_issue TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS dc_billing_accounts(billing_mode TEXT NOT NULL,store_scope TEXT NOT NULL,user_id BIGINT NOT NULL,
+        customer_id TEXT,subscription JSONB NOT NULL DEFAULT '{"status":"none","access":false}',
+        PRIMARY KEY(billing_mode,store_scope,user_id))`);
     await initReferralSchema(pool);
     await t.test("schema is restart-safe", async () => {
       await initReferralSchema(pool);
@@ -1514,12 +1520,18 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
           INSERT INTO entitlements(user_id,product) VALUES(2,'uninstaller');
           INSERT INTO trial_claims VALUES('pctweaker',2,'email-hash','card-hash','pc-hash','sub_trial_2');
           INSERT INTO newsletter_subscribers(email) VALUES('Buyer@Example.net');
-          INSERT INTO reviews(email,rating) VALUES('buyer@example.net',5)`);
+          INSERT INTO reviews(email,rating) VALUES('buyer@example.net',5);
+          INSERT INTO dc_sessions VALUES('s1','pc-tweaker-shared',2),('s2','separate',2);
+          INSERT INTO dc_actions VALUES('a1','pc-tweaker-shared',2,'buyer@example.net');
+          INSERT INTO dc_billing_accounts(billing_mode,store_scope,user_id,customer_id) VALUES('live','pc-tweaker-shared',2,'cus_tweaky')`);
         assert.deepEqual(await erase("  BUYER@example.net "), {
           erased: true,
           accountFound: true,
           userId: 2,
           counts: {
+            tweakySessions: 1,
+            tweakyActions: 1,
+            tweakyPlans: 1,
             referralCheckoutsDeleted: 0,
             referralInvitationsDeleted: 0,
             referralBonusesWithdrawn: 0,
@@ -1531,6 +1543,8 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
         });
         for (const table of ["users WHERE id=2", "sign_in_devices", "referral_machines", "entitlements"])
           assert.equal((await rows(`SELECT 1 FROM ${table}`)).length, 0, table);
+        // Another store's user 2 (Tweaky Driver's own account table) is not this account.
+        assert.deepEqual(await rows("SELECT token_hash FROM dc_sessions"), [{ token_hash: "s2" }]);
         // Kept without the link: the trial claim, the email and card hashes, the payment reference.
         assert.equal((await rows("SELECT 1 FROM trial_claims")).length, 1);
         const [enrolment] = await rows("SELECT buyer_id,inviter_id,buyer_email_hash FROM referral_enrolments");
@@ -1624,8 +1638,15 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
         await pool.query(`UPDATE users SET subscription_status='canceled' WHERE id=3;
           INSERT INTO entitlements VALUES(3,'uninstaller',NULL,'sub_u','trialing')`);
         await assert.rejects(erase("other@example.org"), /active_subscription/);
-        await pool.query("UPDATE entitlements SET subscription_status='canceled'");
-        assert.equal((await erase("other@example.org")).counts.accounts, 1);
+        await pool.query(`UPDATE entitlements SET subscription_status='canceled';
+          INSERT INTO dc_billing_accounts(billing_mode,store_scope,user_id,subscription)
+            VALUES('live','pc-tweaker-shared',3,'{"status":"trialing","access":true}')`);
+        await assert.rejects(erase("other@example.org"), /active_subscription/, "a Tweaky Driver subscription too");
+        await pool.query(`UPDATE dc_billing_accounts SET subscription='{"status":"canceled","access":false}'`);
+        assert.deepEqual(
+          [(await erase("other@example.org")).counts.accounts, (await rows("SELECT 1 FROM dc_billing_accounts")).length],
+          [1, 0],
+        );
         // No account: the address's newsletter subscription and ratings still go.
         await pool.query("INSERT INTO newsletter_subscribers(email) VALUES('nobody@example.com')");
         assert.deepEqual(await erase("nobody@example.com"), {

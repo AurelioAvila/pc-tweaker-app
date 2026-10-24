@@ -59,5 +59,5 @@
       "caption": "Partez d'un profil Jeu, Études ou Travail et ajustez-le avant de l'appliquer"
     }
   ],
-  "releaseNotes": "PC Tweaker 1.18.16 est une mise à jour de maintenance qui renforce la sécurité."
+  "releaseNotes": "PC Tweaker 1.18.17 consigne honnêtement les points de restauration : quand Windows réutilise un point récent au lieu d’en créer un nouveau, l’historique l’indique."
 }

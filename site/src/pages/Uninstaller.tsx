@@ -34,7 +34,6 @@ const PRO = [
 
 const REMOVAL_GUIDES = [
   ["/uninstaller/guides/armoury-crate/", "Uninstall ASUS Armoury Crate completely"],
-  ["/uninstaller/guides/riot-vanguard/", "Uninstall Riot Vanguard and check its driver is gone"],
   ["/uninstaller/guides/mcafee-webadvisor/", "Remove McAfee, WebAdvisor and leftover tasks"],
   ["/uninstaller/guides/onedrive/", "Uninstall OneDrive on Windows 11 without losing files"],
   ["/uninstaller/guides/microsoft-edge-webview2/", "Can I uninstall WebView2? Why to keep it"],

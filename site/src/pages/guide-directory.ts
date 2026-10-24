@@ -39,7 +39,6 @@ export const GUIDE_GROUPS = [
     guides: [
       { path: "/uninstall-programs-completely/", title: "Uninstall a Windows program and review leftovers", note: "Use the registered uninstaller first, then inspect cleanup and recovery limits." },
       { path: "/uninstaller/guides/armoury-crate/", title: "Uninstall ASUS Armoury Crate completely", note: "Use ASUS's Uninstall Tool, stop the BIOS offering it again, then check what is left." },
-      { path: "/uninstaller/guides/riot-vanguard/", title: "Uninstall Riot Vanguard and check its driver", note: "Remove it the way Riot documents, restart, then confirm vgk and vgc are gone." },
       { path: "/uninstaller/guides/mcafee-webadvisor/", title: "Remove McAfee and WebAdvisor", note: "Standard removal, McAfee's MCPR tool if that fails, and the folders and tasks to check." },
       { path: "/uninstaller/guides/onedrive/", title: "Uninstall OneDrive without losing files", note: "Make files local and stop folder backup before you unlink and remove the app." },
       { path: "/uninstaller/guides/microsoft-edge-webview2/", title: "Keep Microsoft Edge WebView2 Runtime", note: "Why it should stay, what breaks without it and how to reinstall it." },

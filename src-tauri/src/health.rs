@@ -490,6 +490,13 @@ mod tests {
             assert!(right.factors.iter().all(|f| f.id != "gaming_gpu_prio" && f.id != "perf_responsiveness"));
         }
     }
+    #[test]
+    fn restore_state_comes_from_the_disable_sr_policy_only() {
+        assert_eq!(restore_enabled(Some(1)), Some(false));
+        assert_eq!(restore_enabled(Some(0)), None);
+        assert_eq!(restore_enabled(None), None);
+    }
+
     fn base() -> HealthInputs {
         HealthInputs::default()
     }
@@ -659,14 +666,18 @@ fn security_probes(inputs: &mut HealthInputs) {
                 .map(|v| v != "Off")
                 .unwrap_or(true)
         });
-    // System Restore: RPSessionInterval >= 1 when protection is on for the
-    // system drive; the config key missing reads as unknown, not off.
-    inputs.restore_points_enabled = read_dword(
+    inputs.restore_points_enabled = restore_enabled(read_dword(
         HKEY_LOCAL_MACHINE,
-        r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore",
-        "RPSessionInterval",
-    )
-    .map(|v| v >= 1);
+        r"SOFTWARE\Policies\Microsoft\Windows NT\SystemRestore",
+        "DisableSR",
+    ));
+}
+
+/// `Some(false)` only when the `DisableSR` policy turns System Restore off.
+/// `RPSessionInterval` is a scheduling setting, not an on/off switch, so it
+/// is not read; without the policy the state is honestly unknown.
+fn restore_enabled(disable_sr: Option<u32>) -> Option<bool> {
+    (disable_sr == Some(1)).then_some(false)
 }
 
 /// A measurement plus its place in this machine's history: the report itself,

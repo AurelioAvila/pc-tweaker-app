@@ -24,12 +24,12 @@ export interface RouteSeo {
 }
 
 const ORIGIN = "https://pctweaker.app";
-const UNINSTALLER_OG = `${ORIGIN}/uninstaller/og-uninstaller-a9f627cc79.png`;
+const UNINSTALLER_OG = `${ORIGIN}/uninstaller/og-uninstaller-444b8b0af1.png`;
 const UNINSTALLER_OG_ALT = "PC Tweaker Uninstaller listing installed apps with a removal confidence label for each, shown with example programs";
 
 export function getRouteImage(seo: RouteSeo) {
   return {
-    url: seo.image ?? `${ORIGIN}/og-pc-tweaker-429591f13e.png`,
+    url: seo.image ?? `${ORIGIN}/og-pc-tweaker-ab95357c77.png`,
     alt: seo.imageAlt ?? "PC Tweaker main window: the sidebar sections, the system check and the free trial in the title bar",
   };
 }
@@ -181,7 +181,7 @@ const homeApp = {
   "downloadUrl": "https://dl.pctweaker.app/pc-tweaker/PCTweaker-Setup.exe",
   "description": "Windows tuning for gaming, privacy and maintenance, with visible setting changes and restore tools for supported tweaks.",
   "url": "https://pctweaker.app/",
-  "image": "https://pctweaker.app/og-pc-tweaker-429591f13e.png",
+  "image": "https://pctweaker.app/og-pc-tweaker-ab95357c77.png",
   "sameAs": [
     "https://github.com/AurelioAvila/pc-tweaker-app",
     "https://apps.microsoft.com/detail/9nh3c6dt1g87",
@@ -211,7 +211,7 @@ const uninstallerApp = {
   applicationCategory: "UtilitiesApplication",
   downloadUrl: UNINSTALLER_DOWNLOAD_EXE,
   url: `${ORIGIN}/uninstaller/`,
-  image: `${ORIGIN}/uninstaller/og-uninstaller-a9f627cc79.png`,
+  image: `${ORIGIN}/uninstaller/og-uninstaller-444b8b0af1.png`,
   screenshot: ["inventory", "removal-brief", "ledger"].map((name) => ({
     "@type": "ImageObject",
     contentUrl: `${ORIGIN}/uninstaller/images/${name}-0.13.3.png`,

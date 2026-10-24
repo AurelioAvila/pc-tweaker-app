@@ -175,8 +175,8 @@ export const REFERENCE_SEO: Record<string, RouteSeo> = {
   ),
   "/tools": seo(
     "/tools",
-    "Free Windows Tools: Checker, Calculator, Profiles",
-    "Three free browser tools: look up a Windows process or service, calculate timer and latency figures from public formulas, and plan a PC Tweaker profile.",
+    "Free Windows Tools: Checker, Debloat, Calculator, Profiles",
+    "Four free browser tools: look up a process or service, build a Windows 11 debloat list, calculate timer and latency figures, and plan a PC Tweaker profile.",
   ),
   ...Object.fromEntries(TOOLS.map((tool) => [tool.path, seo(tool.path, brand(tool.title), tool.description)])),
 };

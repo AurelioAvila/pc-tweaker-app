@@ -7,7 +7,7 @@
   const entryPages = new Map([
     ['/', 'home'], ['/uninstaller/', 'uninstaller'], ['/tweaky-driver/', 'tweaky-driver'],
     ['/uninstall-programs-completely/', 'uninstall-programs-completely'],
-    ...['armoury-crate', 'mcafee-webadvisor', 'microsoft-edge-webview2', 'onedrive']
+    ...['armoury-crate', 'riot-vanguard', 'mcafee-webadvisor', 'microsoft-edge-webview2', 'onedrive']
       .map(slug => [`/uninstaller/guides/${slug}/`, `uninstaller-guide-${slug}`]),
   ]);
   const labels = new URLSearchParams();

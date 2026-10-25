@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.18.18
+
+Routine maintenance update.
+
 ## v1.18.17
 
 PC Tweaker 1.18.17 records System Restore points honestly.

@@ -206,7 +206,7 @@ export class ReferralStripe {
     userId: number,
     plan: ReferralPlan,
     params: Stripe.Checkout.SessionCreateParams,
-  ): Promise<{ url: string } | null> {
+  ): Promise<{ url: string; sessionId: string } | null> {
     const enrolment = await this.core.enrolment(userId);
     if (!enrolment) return null;
     await this.account();
@@ -244,7 +244,7 @@ export class ReferralStripe {
           );
         return this.checkout(userId, plan, params);
       }
-      if (quote.checkout_url) return { url: quote.checkout_url };
+      if (quote.checkout_url && quote.session_id) return { url: quote.checkout_url, sessionId: quote.session_id };
     } else {
       const price = await this.stripe.prices.retrieve(params.line_items[0].price);
       if (!price.active || price.currency !== "eur" || !Number.isSafeInteger(price.unit_amount))
@@ -371,7 +371,7 @@ export class ReferralStripe {
     }
     if (!session.url) throw new ReferralError("checkout_unavailable", 502);
     await this.core.saveSession(quote.id, session.id, session.url);
-    return { url: session.url };
+    return { url: session.url, sessionId: session.id };
   }
 
   /** Finds the provider session of a quote whose creation response was lost. */
@@ -656,6 +656,26 @@ export function referralStripe(): ReferralStripe | null {
     }),
   ));
 }
+/** Called only after the provider has confirmed the exact session expired
+ * without payment. Fail closed on an unknown or already-paid referral quote. */
+export async function closeExpiredReferral(userId: number, session: Stripe.Checkout.Session): Promise<void> {
+  const quoteId = session.metadata?.referral_quote;
+  if (!quoteId) return;
+  const gateway = referralStripe();
+  if (!gateway) throw new ReferralError("referral_unavailable", 503);
+  return closeExpiredReferralUsing(gateway, userId, session);
+}
+export async function closeExpiredReferralUsing(gateway: Pick<ReferralStripe, "core">, userId: number, session: Stripe.Checkout.Session): Promise<void> {
+  const quoteId = session.metadata?.referral_quote;
+  if (!quoteId) return;
+  const quote = await gateway.core.quote(quoteId);
+  if (!quote || Number(quote.buyer_id) !== userId || quote.session_id !== session.id) throw new ReferralError("checkout_recovery_required", 409);
+  if (quote.state === "expired") return;
+  if (quote.state !== "open") throw new ReferralError("checkout_recovery_required", 409);
+  await gateway.core.expireQuote(quoteId, session.id, "provider_expired");
+  if ((await gateway.core.quote(quoteId))?.state !== "expired") throw new ReferralError("checkout_recovery_required", 409);
+}
+
 export async function referralCheckout(
   userId: number,
   plan: unknown,

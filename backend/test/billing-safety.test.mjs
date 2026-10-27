@@ -92,6 +92,89 @@ test("an old recurring checkout cannot downgrade a lifetime purchase", async () 
   assert.equal(result.pro_expires_at, null);
 });
 
+test("a replayed Lifetime checkout cannot restore access after its refund", async () => {
+  const id = await user();
+  const purchase = checkout(id, "lifetime");
+  const fx = effects({ async loadCheckoutForPayment() { return purchase; } });
+  await handleEvent(event("checkout.session.completed", purchase), fx);
+  await handleEvent(event("charge.refunded", { id:"ch_refund_replay", refunded:true, amount:9900, amount_refunded:9900, currency:"eur", payment_intent:"pi_refund_replay" }), fx);
+  assert.equal((await row(id)).is_pro, false);
+  await handleEvent(event("checkout.session.completed", purchase), fx);
+  assert.equal((await row(id)).is_pro, false, "late replay must not restore a refunded purchase");
+});
+
+test("a refund received before its Lifetime checkout prevents a late grant", async () => {
+ const id=await user(); const purchase=checkout(id,"lifetime");
+ const fx=effects({async loadCheckoutForPayment(){return purchase}});
+ await handleEvent(event("charge.refunded",{id:"ch_early",refunded:true,amount:9900,amount_refunded:9900,currency:"eur",payment_intent:"pi_early"}),fx);
+ await handleEvent(event("checkout.session.completed",purchase),fx);
+ assert.equal((await row(id)).is_pro,false);
+});
+
+test("a delayed refund for an earlier Lifetime purchase cannot revoke a later one", async () => {
+  const id=await user();
+  const older=checkout(id,"lifetime",{id:"cs_older"});
+  const newer=checkout(id,"lifetime",{id:"cs_newer"});
+  const fx=effects({async loadCheckoutForPayment(){return older}});
+  const refund=event("charge.refunded",{id:"ch_older",refunded:true,amount:9900,amount_refunded:9900,currency:"eur",payment_intent:"pi_older"});
+  await handleEvent(event("checkout.session.completed",older),fx);
+  await handleEvent(refund,fx);
+  await handleEvent(event("checkout.session.completed",newer),fx);
+  await handleEvent(refund,fx);
+  await handleEvent(event("checkout.session.completed",older),fx);
+  const account=await row(id);
+  assert.equal(account.is_pro,true);
+  assert.equal(account.lifetime_checkout_id,"cs_newer");
+});
+
+test("refunding one of two paid Lifetime purchases preserves the other despite reordered events", async () => {
+ const id=await user(); const a=checkout(id,"lifetime",{id:`cs_a_${id}`}); const b=checkout(id,"lifetime",{id:`cs_b_${id}`});
+ let chosen=a; const fx=effects({async loadCheckoutForPayment(){return chosen}});
+ const refund=()=>event("charge.refunded",{id:`ch_${chosen.id}`,refunded:true,amount:9900,amount_refunded:9900,currency:"eur",payment_intent:`pi_${chosen.id}`});
+ await handleEvent(event("checkout.session.completed",b),fx);
+ await handleEvent(event("checkout.session.completed",a),fx);
+ await handleEvent(refund(),fx);
+ assert.equal((await row(id)).is_pro,true,"purchase B remains paid");
+ chosen=b; await handleEvent(refund(),fx);
+ assert.equal((await row(id)).is_pro,false,"both purchases are now refunded");
+ await handleEvent(event("checkout.session.completed",a),fx);
+ await handleEvent(event("checkout.session.completed",b),fx);
+ assert.equal((await row(id)).is_pro,false,"late replays cannot restore either purchase");
+});
+
+test("refunding a Lifetime upgrade restores the verified still-active subscription",async()=>{
+ const id=await user(); const previous=subscription(id,{id:`sub_prior_${id}`});
+ await grantPro(id,{customerId:`cus_fixture_${id}`,plan:'monthly',expiresAt:new Date(periodEnd*1000),subscriptionId:previous.id,subscriptionCreatedAt:new Date(created*1000),status:'active'});
+ const purchase=checkout(id,'lifetime',{id:`cs_upgrade_${id}`});
+ const fx=effects({async loadCheckoutForPayment(){return purchase},async loadSubscription(){return previous}});
+ await handleEvent(event('checkout.session.completed',purchase),fx);
+ assert.equal((await row(id)).lifetime_prior_subscription_id,previous.id);
+ await handleEvent(event('charge.refunded',{id:`ch_upgrade_${id}`,refunded:true,amount:9900,amount_refunded:9900,currency:'eur',payment_intent:`pi_upgrade_${id}`}),fx);
+ const account=await row(id);assert.equal(account.is_pro,true);assert.equal(account.plan,'monthly');assert.equal(account.stripe_subscription_id,previous.id);
+});
+test("refunded upgrade never restores an expired or mismatched prior subscription",async()=>{
+ for(const kind of ['canceled','wrong-user']) {
+  const id=await user(); const previous=subscription(id,{id:`sub_${kind}_${id}`});
+  await grantPro(id,{customerId:`cus_fixture_${id}`,plan:'monthly',expiresAt:new Date(periodEnd*1000),subscriptionId:previous.id,subscriptionCreatedAt:new Date(created*1000),status:'active'});
+  const purchase=checkout(id,'lifetime',{id:`cs_${kind}_${id}`});
+  const fx=effects({async loadCheckoutForPayment(){return purchase},async loadSubscription(){return kind==='canceled'?{...previous,status:'canceled'}:{...previous,metadata:{...previous.metadata,userId:'other'}}}});
+  await handleEvent(event('checkout.session.completed',purchase),fx);
+  const refund=event('charge.refunded',{id:`ch_${kind}_${id}`,refunded:true,amount:9900,amount_refunded:9900,currency:'eur',payment_intent:`pi_${kind}_${id}`});
+  if(kind==='wrong-user') await assert.rejects(handleEvent(refund,fx),/identity requires review/); else await handleEvent(refund,fx);
+  assert.equal((await row(id)).is_pro,false);
+ }
+});
+test("refund restoration retries safely if Stripe is temporarily unavailable",async()=>{
+ const id=await user();const previous=subscription(id,{id:`sub_retry_${id}`});
+ await grantPro(id,{customerId:`cus_fixture_${id}`,plan:'monthly',expiresAt:new Date(periodEnd*1000),subscriptionId:previous.id,subscriptionCreatedAt:new Date(created*1000),status:'active'});
+ const purchase=checkout(id,'lifetime',{id:`cs_retry_${id}`});let unavailable=true;
+ const fx=effects({async loadCheckoutForPayment(){return purchase},async loadSubscription(){if(unavailable)throw Error('Stripe unavailable');return previous}});
+ await handleEvent(event('checkout.session.completed',purchase),fx);
+ const refund=event('charge.refunded',{id:`ch_retry_upgrade_${id}`,refunded:true,amount:9900,amount_refunded:9900,currency:'eur',payment_intent:`pi_retry_upgrade_${id}`});
+ await assert.rejects(handleEvent(refund,fx),/Stripe unavailable/);assert.equal((await row(id)).is_pro,false);
+ unavailable=false;await handleEvent(refund,fx);const account=await row(id);assert.equal(account.is_pro,true);assert.equal(account.plan,'monthly');
+});
+
 test("subscription updates and deletion preserve lifetime independently of event order", async () => {
   const id = await user();
   await grantPro(id, { customerId: `cus_fixture_${id}`, plan: "lifetime", expiresAt: null });
@@ -337,6 +420,7 @@ test("recurring checkout requires a matching subscription identity and valid pro
 });
 
 const lifetimeSession = (userId) => ({
+  id: `cs_lifetime_${userId}`,
   mode: "payment",
   client_reference_id: userId,
   metadata: { userId, product: "pctweaker", plan: "lifetime" },

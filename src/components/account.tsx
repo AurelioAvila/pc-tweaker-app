@@ -588,7 +588,11 @@ export function AccountMenu({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="account-panel animate-card absolute right-0 z-50 mt-2 max-h-[calc(100vh-9rem)] overflow-y-auto overflow-x-hidden">
-            <details name="account-settings" className="account-setting account-identity">
+            <details
+              name="account-settings"
+              className="account-setting account-identity"
+              open={auth.status !== "authenticated" || !auth.emailVerified}
+            >
               <summary>
                 <span>
                   {s.menu.account}

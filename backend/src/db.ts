@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { initReferralSchema } from "./referrals";
+import { initWebCheckoutReservations } from "./web-checkout-reservations";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -64,6 +65,18 @@ async function initSchema(): Promise<void> {
   // must not replace or revoke the subscription currently granting access.
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_created_at TIMESTAMPTZ;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS lifetime_checkout_id TEXT;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS lifetime_prior_subscription_id TEXT;`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS billing_lifetime_reversals (
+    checkout_id TEXT PRIMARY KEY,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS billing_lifetime_purchases (
+    checkout_id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS billing_lifetime_purchases_user_idx ON billing_lifetime_purchases(user_id)`);
   await migrateLegacyProGrants(pool);
   await pool.query(`CREATE TABLE IF NOT EXISTS lifetime_uninstaller_bonus (
     user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -294,6 +307,8 @@ async function initSchema(): Promise<void> {
       PRIMARY KEY (user_id, product, install_hash)
     );
   `);
+
+  if (process.env.CHECKOUT_GUARD_ENABLED === "1") await initWebCheckoutReservations(pool);
 
   // Its migration reports each foreign key it converts as a NOTICE: shown in the deploy log.
   const client = await pool.connect();

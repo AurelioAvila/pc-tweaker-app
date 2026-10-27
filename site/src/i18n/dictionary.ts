@@ -101,6 +101,7 @@ export interface Dictionary {
   readonly pricing: {
     readonly tag: string;
     readonly title: string;
+    readonly purchaseGuide: string;
     readonly free: {
       readonly plan: string;
       readonly price: string;
@@ -516,6 +517,7 @@ export const engDictionary: Dictionary = {
   "pricing": {
     "tag": "05 / PLANS",
     "title": "Start with control. Upgrade for convenience.",
+    "purchaseGuide": "Already installed? Open PC Tweaker, choose Plans & pricing, then select Get Lifetime or Go Pro. Sign in or create an account when prompted; checkout opens in your browser. There is no need to reinstall.",
     "free": {
       "plan": "FREE",
       "price": "€0",
@@ -543,7 +545,7 @@ export const engDictionary: Dictionary = {
         "Advanced file and drive tools",
         "Account-based Pro activation"
       ],
-      "cta": "Download & Explore Pro"
+      "cta": "Download PC Tweaker"
     },
     "lifetime": {
       "plan": "LIFETIME",
@@ -558,7 +560,7 @@ export const engDictionary: Dictionary = {
         "12 months of Uninstaller Pro from your first sign-in",
         "Compare saved profiles and export tuning reports"
       ],
-      "cta": "Download & Get Lifetime"
+      "cta": "Download PC Tweaker"
     },
     "invite": {
       "title": "Invite a friend.",

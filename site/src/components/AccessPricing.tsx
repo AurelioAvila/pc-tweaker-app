@@ -1,4 +1,6 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
+import { WebPurchase } from "./WebPurchase";
 import { text } from "../i18n/dictionary";
 import { riseChild, staggerParent, viewportOnce } from "../motion";
 import { DOWNLOAD_EXE } from "../constants";
@@ -8,6 +10,13 @@ import { TrialLine, usePriceList } from "../trial";
 
 export function AccessPricing() {
   const { free, pro, lifetime } = text.pricing;
+  const [purchase, setPurchase] = useState<"annual" | "monthly" | "lifetime" | null>(null);
+  const choosePurchase = (plan: "annual" | "monthly" | "lifetime") => {
+    setPurchase(plan);
+    document.getElementById("purchase-options")?.scrollIntoView({ block: "start" });
+  };
+  const webPreview = import.meta.env.DEV && import.meta.env.VITE_WEB_PURCHASE_PREVIEW === "1";
+  const webEnabled = import.meta.env.VITE_WEB_PURCHASE_ENABLED === "1" && !webPreview;
   const promo = usePromo();
   const annualOffer = promo.offer("pctweaker", "annual");
   const monthlyOffer = promo.offer("pctweaker", "monthly");
@@ -47,6 +56,12 @@ export function AccessPricing() {
         >
           {text.pricing.title}
         </motion.h2>
+        <motion.p
+          variants={riseChild}
+          className="mt-4 max-w-3xl text-[14px] leading-relaxed text-[var(--fg-dim)]"
+        >
+          {webEnabled ? "Choose a plan below to purchase online, or open Plans & pricing in the app." : text.pricing.purchaseGuide}
+        </motion.p>
 
         {/* Free and Pro are quiet; Lifetime, the plan most buyers choose, carries
             the accent. */}
@@ -112,12 +127,14 @@ export function AccessPricing() {
                 </li>
               ))}
             </ul>
-            <a
-              href={DOWNLOAD_EXE}
-              className="block rounded-xl border border-white/20 py-3.5 text-center text-[14.5px] font-semibold text-[var(--fg)] transition-colors hover:border-white/40"
-            >
-              {pro.cta}
-            </a>
+            {(webEnabled || webPreview) ? (
+              <button type="button" onClick={() => choosePurchase("annual")} className="block rounded-xl border border-white/20 py-3.5 text-center text-[14.5px] font-semibold text-[var(--fg)] transition-colors hover:border-white/40">
+                {webPreview ? "Preview annual" : "Choose annual"}
+              </button>
+            ) : (
+              <a href={DOWNLOAD_EXE} className="block rounded-xl border border-white/20 py-3.5 text-center text-[14.5px] font-semibold text-[var(--fg)] transition-colors hover:border-white/40">{pro.cta}</a>
+            )}
+            {webEnabled && live.trialDays > 0 && <p className="mt-3 text-center text-xs leading-relaxed text-[var(--fg-dim)]">Web purchase starts immediately. The free trial is available in the app.</p>}
           </motion.div>
 
           <motion.div
@@ -154,14 +171,34 @@ export function AccessPricing() {
                 </li>
               ))}
             </ul>
-            <a
-              href={DOWNLOAD_EXE}
-              className="bg-accent block rounded-xl border border-transparent py-3.5 text-center text-[14.5px] font-bold text-[var(--bg)] transition-transform hover:-translate-y-0.5"
-            >
-              {lifetime.cta}
-            </a>
+            {(webEnabled || webPreview) ? (
+              <button type="button" onClick={() => choosePurchase("lifetime")} className="bg-accent block rounded-xl border border-transparent py-3.5 text-center text-[14.5px] font-bold text-[var(--bg)] transition-transform hover:-translate-y-0.5">
+                {webPreview ? "Preview Lifetime" : "Choose Lifetime"}
+              </button>
+            ) : (
+              <a href={DOWNLOAD_EXE} className="bg-accent block rounded-xl border border-transparent py-3.5 text-center text-[14.5px] font-bold text-[var(--bg)] transition-transform hover:-translate-y-0.5">{lifetime.cta}</a>
+            )}
           </motion.div>
         </div>
+        {(webPreview || webEnabled) && (
+          <div id="purchase-options" className="mt-8 scroll-mt-28" aria-label={webPreview ? "Purchase preview" : "Purchase options"}>
+            <p className="mb-4 text-sm text-[var(--fg-dim)]">{webPreview ? "Preview only: no payment or account is created." : "Choose your plan to purchase online."}</p>
+            <div className="flex flex-wrap gap-3" role="group" aria-label={webPreview ? "Choose a plan to preview" : "Choose a plan"}>
+              {(["monthly", "annual", "lifetime"] as const).map((plan) => (
+                <button
+                  key={plan}
+                  type="button"
+                  aria-pressed={purchase === plan}
+                  onClick={() => setPurchase(plan)}
+                  className={`rounded-xl px-5 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${purchase === plan ? "bg-accent text-[var(--bg)]" : "border border-white/20 text-[var(--fg)] hover:border-white/40"}`}
+                >
+                  {webPreview ? "Preview" : "Buy"} {plan === "lifetime" ? "Lifetime" : plan}
+                </button>
+              ))}
+            </div>
+            {purchase && <WebPurchase key={purchase} plan={purchase} demo={webPreview} onClose={() => setPurchase(null)} />}
+          </div>
+        )}
         <PromoFine className="mt-5 text-[12.5px] text-[var(--fg-dim)]" />
         <motion.p
           variants={riseChild}

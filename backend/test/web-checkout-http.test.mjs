@@ -1,0 +1,27 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import express from 'express';
+import rateLimit from 'express-rate-limit';
+process.env.DATABASE_URL='pgmem';process.env.JWT_SECRET='synthetic-integration-secret';delete process.env.STRIPE_SECRET_KEY;
+const {initSchema,getPool}=await import('../dist/db.js');
+const {hashPassword,requireAuth}=await import('../dist/auth.js');
+const authRoutes=(await import('../dist/routes/auth.js')).default.default;
+const accountRoutes=(await import('../dist/routes/account.js')).default.default;
+const {createCheckoutHandler,createGuardedCheckout}=await import('../dist/routes/stripe.js');
+await initSchema();
+const {rows:[{id}]}=await getPool().query("INSERT INTO users (email,password_hash,email_verified) VALUES ($1,$2,TRUE) RETURNING id",['web-flow@example.test',await hashPassword('fixture-password')]);
+let reservation, session, creations=0;
+const reservations={async reserve(user_id,product,plan){if(reservation)return {created:false,reservation:{...reservation}};reservation={user_id,product,plan,reservation_id:'test-reservation',state:'creating',session_id:null};return {created:true,reservation:{...reservation}}},async attach(_id,sessionId){reservation.state='open';reservation.session_id=sessionId;return true},async complete(){return true},async releaseVerifiedExpired(){return true}};
+const sessions={async create(params){creations++;session={id:'cs_test_local',url:'https://checkout.stripe.com/c/pay/fixture',status:'open',payment_status:'unpaid',metadata:params.metadata,line_items:params.line_items};return session},async retrieve(){return session},list(){return (async function*(){if(session)yield session})()}};
+const guardedCreate=createGuardedCheckout({reservations,sessions,getEntitlement:async()=>({product:'pctweaker',active:false,plan:null}),referral:async()=>null});
+const handler=createCheckoutHandler({environment:{STRIPE_SECRET_KEY:'fixture',STRIPE_PRICE_LIFETIME:'regular_fixture',STRIPE_PRICE_LIFETIME_PROMO:'promo_fixture'},now:()=>Date.parse('2026-10-27T12:00:00Z'),async createSession(){throw Error('must not bypass guard')},guardedCreate});
+const app=express();app.use(rateLimit({windowMs:60_000,limit:100}));app.use(express.json());app.use('/api/auth',authRoutes);app.use('/api/account',accountRoutes);app.post('/api/web-checkout',requireAuth,handler);
+const server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));const base=`http://127.0.0.1:${server.address().port}`;
+test('verified account logs in and retries guarded checkout without a second provider session',async()=>{
+ const login=await fetch(base+'/api/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:'web-flow@example.test',password:'fixture-password'})});assert.equal(login.status,200);const {token}=await login.json();
+ const account=await fetch(base+'/api/account',{headers:{authorization:`Bearer ${token}`}});assert.equal((await account.json()).emailVerified,true);
+ const request=()=>fetch(base+'/api/web-checkout',{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token}`},body:JSON.stringify({plan:'lifetime',price:'forged-price'})});
+ const first=await request(),second=await request();assert.equal(first.status,200);assert.equal(second.status,200);assert.equal((await first.json()).url,(await second.json()).url);assert.equal(creations,1);assert.equal(session.line_items[0].price,'promo_fixture');assert.equal(session.metadata.userId,String(id));
+});
+test('web checkout requires a valid account token',async()=>{const r=await fetch(base+'/api/web-checkout',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({plan:'lifetime'})});assert.equal(r.status,401);assert.equal(creations,1)});
+test.after(()=>new Promise(resolve=>server.close(resolve)));

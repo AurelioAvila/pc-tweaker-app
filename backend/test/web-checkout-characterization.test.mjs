@@ -1,0 +1,21 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+process.env.DATABASE_URL = "pgmem";
+delete process.env.STRIPE_SECRET_KEY;
+delete process.env.RESEND_API_KEY;
+const { initSchema, getPool } = await import("../dist/db.js");
+const { createCheckoutHandler } = await import("../dist/routes/stripe.js");
+await initSchema();
+test("characterize separate checkout keys across a minute and between plans", async () => {
+ const { rows: [{ id }] } = await getPool().query("INSERT INTO users (email, password_hash, email_verified) VALUES ('checkout-race@example.test', 'fixture', TRUE) RETURNING id");
+ let clock = Date.parse("2026-12-01T10:00:59Z");
+ const keys = [];
+ const handler = createCheckoutHandler({ environment: { STRIPE_PRICE_MONTHLY: "monthly_fixture", STRIPE_PRICE_ANNUAL: "annual_fixture" }, now: () => clock, async createSession(_params, key) { keys.push(key); return { url: "https://checkout.stripe.com/c/pay/fixture" }; } });
+ const res = () => ({ statusCode: 200, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } });
+ const a = res(); await handler({ userId: id, body: { plan: "monthly" } }, a);
+ clock += 2000;
+ const b = res(); await handler({ userId: id, body: { plan: "monthly" } }, b);
+ const c = res(); await handler({ userId: id, body: { plan: "annual" } }, c);
+ assert.deepEqual([a.statusCode, b.statusCode, c.statusCode], [200, 200, 200]);
+ assert.equal(new Set(keys).size, 3, "distinct keys can create separately payable Stripe sessions");
+});

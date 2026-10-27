@@ -23,7 +23,15 @@ import { promoCheckout } from "../promo";
 import { queueReceipt, type Receipt } from "../receipt-outbox";
 import { asyncRoute } from "../async-route";
 import { deviceHashFrom } from "../license";
-import { referralCheckout, referralWebhook } from "../referral-stripe";
+import { referralCheckout, referralWebhook, closeExpiredReferral } from "../referral-stripe";
+import { GuardedCheckoutError, guardedCheckout, cancelGuardedCheckout } from "../guarded-checkout";
+import { stripeGuardedProvider } from "../stripe-guarded-provider";
+import { WebCheckoutReservations } from "../web-checkout-reservations";
+import { canRetireCanceledPayment, canRetireCompletedCheckout } from "../completed-checkout-reconciliation";
+import { checkoutTerms } from "../checkout-terms";
+import { checkoutMaintenance } from "../checkout-maintenance";
+import { assertNoUnsettledSubscription, SubscriptionCheckoutGuardError } from "../subscription-checkout-guard";
+import { expireUnreservedSession, unreservedPayableSessions } from "../unreserved-checkout-sessions";
 import { ReferralError } from "../referrals";
 import { failureKey, trialMail, trialMoney, type Money, type TrialMailKind } from "../emails/trial";
 import {
@@ -31,6 +39,8 @@ import {
 } from "../trial";
 
 const router = express.Router();
+// Evaluated once at startup: web and desktop use the same guard setting.
+const CHECKOUT_GUARD_ENABLED = process.env.CHECKOUT_GUARD_ENABLED === "1";
 
 // Checkout is behind requireAuth, so this isn't guarding against anonymous
 // abuse — it's here so an authenticated account (or a leaked token) can't be
@@ -181,12 +191,159 @@ type CheckoutCreationEffects = {
   environment: NodeJS.ProcessEnv;
   now: () => number;
   /** `idempotencyKey` makes a double click return the same Checkout page. */
-  createSession: (params: Stripe.Checkout.SessionCreateParams, idempotencyKey?: string) => Promise<{ url: string | null }>;
+  createSession: (params: Stripe.Checkout.SessionCreateParams, idempotencyKey?: string) => Promise<{ url: string | null; id?: string }>;
+  /** Cutover bridge for the unguarded path: an open guarded reservation of this account (from an instance that
+   * already runs with the guard) blocks a legacy session; it is checked before and again after creation. */
+  guardedReservationOpen?: (userId: number, product: Product) => Promise<boolean>;
+  expireOwnSession?: (userId: number, sessionId: string) => Promise<boolean>;
+  /** Experimental injection for isolated integration tests; not wired to production. */
+  guardedCreate?: (input: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean }) => Promise<{ url: string }>;
 };
 
+/** Wiring shared by the opt-in runtime path and isolated tests. */
+export function createGuardedCheckout(deps: {
+  reservations: WebCheckoutReservations;
+  sessions: Parameters<typeof stripeGuardedProvider>[0];
+  getEntitlement: typeof productEntitlement;
+  referral: typeof referralCheckout;
+  closeReferral: typeof closeExpiredReferral;
+  checkSubscriptions: (customerId: string, product: Product, upgradeUserId?: string) => Promise<void>;
+  retireCompleted?: (userId: number, product: Product, customerId: string | null, upgrading: boolean) => Promise<void>;
+  /** Sessions of this account created outside the guard (legacy code, or an old instance mid-deploy) that can still charge it. */
+  openUnreserved?: (userId: number, product: Product) => Promise<Array<{ id: string; status?: string | null }>>;
+  /** Closes one of them while Stripe still reports it open and unpaid; false when that cannot be confirmed. */
+  expireUnreserved?: (userId: number, sessionId: string) => Promise<boolean>;
+}) {
+  return async ({ userId, product, plan, trial, params, replaceDifferentTerms = false }: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean }) => {
+    const entitlement = await deps.getEntitlement(userId, product);
+    const upgrading = entitlement.active && product === "pctweaker" && plan === "lifetime" &&
+      (entitlement.plan === "monthly" || entitlement.plan === "annual");
+    if (entitlement.active && !upgrading) throw new GuardedCheckoutError("already_has_access");
+    if (upgrading && typeof params.customer !== "string") throw new GuardedCheckoutError("subscription_review_required");
+    if (typeof params.customer === "string") {
+      try { await deps.checkSubscriptions(params.customer, product, upgrading ? String(userId) : undefined); }
+      catch (error) { if (error instanceof SubscriptionCheckoutGuardError) throw new GuardedCheckoutError(error.code); throw error; }
+    }
+    if (deps.retireCompleted) {
+      try { await deps.retireCompleted(userId, product, typeof params.customer === "string" ? params.customer : null, upgrading); }
+      catch (error) { if (error instanceof SubscriptionCheckoutGuardError) throw new GuardedCheckoutError(error.code); throw error; }
+    }
+    // A session opened outside the guard must never be payable next to a guarded one. The app closes the
+    // account's own unpaid one (the customer is starting a new purchase); the website asks first.
+    let unreservedSessionOpen: (() => Promise<boolean>) | undefined;
+    if (deps.openUnreserved) {
+      const openUnreserved = deps.openUnreserved;
+      for (const session of await openUnreserved(userId, product)) {
+        // Completed with a delayed payment still settling: it may yet be charged, so nothing new is opened.
+        if (session.status === "complete") throw new GuardedCheckoutError("payment_processing");
+        if (!replaceDifferentTerms || !deps.expireUnreserved) throw new GuardedCheckoutError("other_checkout_pending");
+        if (!await deps.expireUnreserved(userId, session.id)) throw new GuardedCheckoutError("checkout_recovery_required");
+      }
+      unreservedSessionOpen = async () => (await openUnreserved(userId, product)).length > 0;
+    }
+    const provider = stripeGuardedProvider(deps.sessions, params, 5000,
+      tagged => deps.referral(userId, plan, tagged), deps.closeReferral);
+    // A trial and an immediate payment have different terms even for the same
+    // plan; reusing the other session would misrepresent the requested offer.
+    return guardedCheckout(deps.reservations, provider, userId, product, checkoutTerms(plan, trial, params), replaceDifferentTerms, { unreservedSessionOpen });
+  };
+}
+
+type RetireStripe = {
+  checkout: { sessions: { retrieve(id: string): Promise<Stripe.Checkout.Session> } };
+  subscriptions: { list(params: Stripe.SubscriptionListParams): AsyncIterable<Stripe.Subscription>; retrieve(id: string): Promise<Stripe.Subscription> };
+  paymentIntents: { retrieve(id: string): Promise<Stripe.PaymentIntent>; cancel(id: string): Promise<Stripe.PaymentIntent> };
+};
+/** Retires a completed reservation only when Stripe proves nothing more can be charged for it, so the account
+ * can check out again: an ended subscription, a cancelled unpaid payment, or a reversed Lifetime purchase. */
+export async function retireCompletedCheckout(deps: { stripe: RetireStripe; reservations: WebCheckoutReservations; lifetimeReversed: (checkoutId: string) => Promise<boolean> },
+  userId: number, product: Product, customerId: string | null, upgrading: boolean): Promise<void> {
+  const reservation = await deps.reservations.find(userId, product);
+  if (!reservation || reservation.state === "creating" || !reservation.session_id) return;
+  const session = await deps.stripe.checkout.sessions.retrieve(reservation.session_id);
+  if (!customerId) {
+    const sessionCustomer = typeof session.customer === "string" ? session.customer : session.customer?.id;
+    if (!sessionCustomer || session.id !== reservation.session_id || session.client_reference_id !== String(userId) ||
+        session.metadata?.userId !== String(userId) || session.metadata?.product !== product ||
+        session.metadata?.reservation_id !== reservation.reservation_id) return;
+    await assertNoUnsettledSubscription(deps.stripe.subscriptions.list({ customer: sessionCustomer, status: "all", limit: 100 }), product,
+      (metadata, ids) => billingProductFromEvidence(metadata, ids, priceProducts()));
+    customerId = sessionCustomer;
+  }
+  if (session.mode === "payment" && session.payment_status === "paid") {
+    // A Lifetime purchase that was fully refunded or lost in a dispute (recorded by the webhook) no longer
+    // holds the account: without this the customer could never buy again.
+    if (!await deps.lifetimeReversed(reservation.session_id) || session.id !== reservation.session_id || session.client_reference_id !== String(userId) ||
+        session.metadata?.reservation_id !== reservation.reservation_id) return;
+    if (!await deps.reservations.complete(reservation.reservation_id, reservation.session_id)) return;
+    await deps.reservations.releaseReconciledCompleted(reservation.reservation_id, reservation.session_id);
+    return;
+  }
+  if (session.mode === "payment" && session.payment_status === "unpaid") {
+    const paymentId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
+    if (!paymentId) return;
+    let payment = await deps.stripe.paymentIntents.retrieve(paymentId);
+    // A delayed payment that failed leaves its PaymentIntent waiting for a new method (Stripe docs:
+    // async_payment_failed -> requires_payment_method). Nothing can pay it through this completed
+    // Checkout, so it is cancelled, which makes the "no later charge" condition below provable.
+    if (payment.status === "requires_payment_method" && session.status === "complete" && payment.amount_received === 0 &&
+        session.id === reservation.session_id && session.client_reference_id === String(userId) &&
+        session.metadata?.reservation_id === reservation.reservation_id && !session.metadata?.referral_quote) {
+      payment = await deps.stripe.paymentIntents.cancel(paymentId);
+    }
+    if (!canRetireCanceledPayment({ userId, product, customerId, reservationId: reservation.reservation_id,
+      sessionId: reservation.session_id, session, payment })) return;
+    if (!await deps.reservations.complete(reservation.reservation_id, reservation.session_id)) return;
+    await deps.reservations.releaseReconciledCompleted(reservation.reservation_id, reservation.session_id);
+    return;
+  }
+  const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
+  if (!subscriptionId) return;
+  const subscription = await deps.stripe.subscriptions.retrieve(subscriptionId);
+  if (!canRetireCompletedCheckout({ userId, product, customerId, reservationId: reservation.reservation_id,
+    sessionId: reservation.session_id, session, subscription, allowActiveUpgrade: upgrading, identifyProduct: () => subscriptionProduct(subscription) })) return;
+  if (!await deps.reservations.complete(reservation.reservation_id, reservation.session_id)) return;
+  await deps.reservations.releaseReconciledCompleted(reservation.reservation_id, reservation.session_id);
+}
 export function createCheckoutHandler(effects: CheckoutCreationEffects = {
   environment: process.env,
   now: Date.now,
+  // Disabled unless explicitly configured. A pre-launch audit of existing
+  // unreserved sessions and referral flows is required before activation.
+  ...(CHECKOUT_GUARD_ENABLED ? {
+    guardedCreate: async (input: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean }) => {
+      if (!stripe) throw new Error("Stripe is unavailable");
+      return createGuardedCheckout({
+        reservations: new WebCheckoutReservations(getPool()),
+        sessions: stripe.checkout.sessions,
+        getEntitlement: productEntitlement,
+        referral: referralCheckout,
+        closeReferral: closeExpiredReferral,
+        openUnreserved: async (userId, product) => {
+          if (!stripe) throw new Error("Stripe is unavailable");
+          const sessions = stripe.checkout.sessions;
+          return unreservedPayableSessions(params => sessions.list(params), userId, product);
+        },
+        expireUnreserved: async (userId, sessionId) => {
+          if (!stripe) throw new Error("Stripe is unavailable");
+          return expireUnreservedSession(stripe.checkout.sessions, userId, sessionId,
+            session => closeExpiredReferral(userId, session as Stripe.Checkout.Session));
+        },
+        checkSubscriptions: async (customerId, product, upgradeUserId) => {
+          if (!stripe) throw new Error("Stripe is unavailable");
+          const subscriptions = stripe.subscriptions.list({ customer: customerId, status: "all", limit: 100 });
+          await assertNoUnsettledSubscription(subscriptions, product,
+            (metadata, ids) => billingProductFromEvidence(metadata, ids, priceProducts()), 1000, upgradeUserId);
+        },
+        retireCompleted: (userId, product, customerId, upgrading) => {
+          if (!stripe) throw new Error("Stripe is unavailable");
+          return retireCompletedCheckout({ stripe: stripe as unknown as RetireStripe, reservations: new WebCheckoutReservations(getPool()),
+            lifetimeReversed: async checkoutId => Boolean((await getPool().query("SELECT 1 FROM billing_lifetime_reversals WHERE checkout_id = $1", [checkoutId])).rowCount) },
+            userId, product, customerId, upgrading);
+        },
+      })(input);
+    },
+  } : {}),
   createSession: async (params, idempotencyKey) => {
     try {
       return await stripe!.checkout.sessions.create(params, idempotencyKey ? { idempotencyKey } : undefined);
@@ -196,7 +353,25 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       return stripe!.checkout.sessions.create(params);
     }
   },
-}) {
+  guardedReservationOpen: async (userId, product) => {
+    // The table exists only once an instance has started with the guard on.
+    const { rows } = await getPool().query("SELECT to_regclass('public.web_checkout_reservations') AS name");
+    if (!rows[0]?.name) return false;
+    // A guarded session is created right after its reservation and Stripe keeps it open for at most 24 hours,
+    // so an older reservation (paid, expired or abandoned) can no longer be payable: after a rollback to the
+    // unguarded path it must not block the account indefinitely.
+    const open = await getPool().query(
+      `SELECT 1 FROM web_checkout_reservations WHERE user_id = $1 AND product = $2 AND state IN ('creating', 'open')
+         AND created_at > now() - interval '25 hours' LIMIT 1`,
+      [userId, product]);
+    return Boolean(open.rowCount);
+  },
+  expireOwnSession: async (userId, sessionId) => {
+    if (!stripe) throw new Error("Stripe is unavailable");
+    return expireUnreservedSession(stripe.checkout.sessions, userId, sessionId,
+      session => closeExpiredReferral(userId, session as Stripe.Checkout.Session));
+  },
+}, { replaceDifferentTerms = false }: { replaceDifferentTerms?: boolean } = {}) {
   return async (req: Request, res: Response) => {
     const planKey = String(req.body?.plan || "annual") as PlanKey;
     const product = req.body?.product ?? "pctweaker";
@@ -330,21 +505,67 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       // when nothing was charged, and speaks the account's language.
       params.success_url = withQuery(params.success_url!, { product, ...(trial ? { trial: "1" } : {}), ...(locale ? { lang: locale } : {}) });
       if (locale && params.cancel_url) params.cancel_url = withQuery(params.cancel_url, { lang: locale });
+      // Present when CHECKOUT_GUARD_ENABLED=1 at startup (referral sessions included); otherwise the
+      // unguarded path below, which still yields to any guarded reservation (the cutover bridge).
+      if (effects.guardedCreate) {
+        const result = await effects.guardedCreate({ userId: req.userId as number, product, plan: planKey, trial, params, replaceDifferentTerms });
+        return res.json({ url: result.url, trial, trial_days: TRIAL_DAYS });
+      }
       // Two clicks within the same minute get the same page, not two that
       // could both be paid.
-      const referred = await referralCheckout(req.userId as number, planKey, params);
-      if (referred) return res.json(referred);
-      const session = await effects.createSession(params,
+      const userId = req.userId as number;
+      if (effects.guardedReservationOpen && await effects.guardedReservationOpen(userId, product))
+        throw new GuardedCheckoutError("other_checkout_pending");
+      const referred = await referralCheckout(userId, planKey, params);
+      const session = referred ? { url: referred.url, id: referred.sessionId } : await effects.createSession(params,
         `checkout:${req.userId}:${product}:${planKey}:${trial ? "trial" : "now"}:${Math.floor(effects.now() / 60_000)}`);
+      // Checked again after creation: a guarded instance that reserved meanwhile has either seen this
+      // session in its own post-creation check or is seen here, so the two are never payable together.
+      if (effects.guardedReservationOpen && await effects.guardedReservationOpen(userId, product)) {
+        if (!session.id || !effects.expireOwnSession || !await effects.expireOwnSession(userId, session.id))
+          throw new GuardedCheckoutError("checkout_recovery_required");
+        throw new GuardedCheckoutError("other_checkout_pending");
+      }
+      if (referred) return res.json({ url: referred.url });
       res.json({ url: session.url, trial, trial_days: TRIAL_DAYS });
     } catch (err) {
       if (err instanceof ReferralError) return res.status(err.status).json({error:err.message,code:err.code});
+      if (err instanceof GuardedCheckoutError) {
+        const messages: Record<string, string> = {
+          already_has_access: "This account already has access. Contact support for help changing plans.",
+          existing_subscription: "This account already has a subscription that may renew. Manage it or contact support before buying another.",
+          subscription_review_required: "We could not verify your existing subscription. Please contact support before trying again.",
+          other_checkout_pending: "You already have an open checkout for a different plan. Complete or close it before trying again.",
+          checkout_recovery_required: "We are checking your previous checkout. Please try again shortly or contact support.",
+          payment_processing: "Your payment may still be processing. Please do not pay again; contact support if access does not appear.",
+          checkout_expired_retry: "Your previous checkout expired. Please try again to review the current price.",
+          provider_mismatch: "We could not verify the checkout. Please contact support.",
+        };
+        return res.status(409).json({ error: messages[err.code] ?? "We could not verify the checkout. Please contact support.", code: err.code });
+      }
       console.error("checkout session creation failed:", err);
       res.status(500).json({ error: "could not start checkout" });
     }
   };
 }
-router.post("/checkout", requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler());
+router.post("/checkout", checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler(undefined, { replaceDifferentTerms: true }));
+// The website cannot create a checkout unless the shared server guard is on.
+if (CHECKOUT_GUARD_ENABLED) {
+  router.post("/web-checkout", checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler());
+  router.post("/web-checkout/cancel", requireAuth, checkoutLimiter, requireStripe, async (req, res) => {
+    if (!stripe || !isConfigured) return res.status(503).json({ error: "Checkout is temporarily unavailable." });
+    try {
+      // Client cannot name a session; this account's reservation identifies it.
+      const provider = stripeGuardedProvider(stripe.checkout.sessions, {}, 5000, undefined, closeExpiredReferral);
+      await cancelGuardedCheckout(new WebCheckoutReservations(getPool()), provider, req.userId as number, "pctweaker");
+      return res.json({ ok: true });
+    } catch (error) {
+      if (error instanceof GuardedCheckoutError) return res.status(409).json({ code: error.code, error: error.code === "payment_processing" ? "Your payment may be processing. Please do not pay again." : "We could not close the previous checkout. Please try again later or contact support." });
+      console.error("checkout cancellation failed:", error instanceof Error ? error.name : "unknown");
+      return res.status(503).json({ error: "We could not close the previous checkout. Please try again later or contact support." });
+    }
+  });
+}
 
 /**
  * GET /api/billing/status: what each product's Pro looks like for this
@@ -562,12 +783,13 @@ async function webhookHandler(req: Request, res: Response): Promise<void> {
  */
 async function grantPro(
   userId: string,
-  { customerId, plan, expiresAt, provisional, subscriptionId, subscriptionCreatedAt, status, trialEndsAt, cancelAtPeriodEnd }: {
+  { customerId, plan, expiresAt, provisional, subscriptionId, subscriptionCreatedAt, status, trialEndsAt, cancelAtPeriodEnd, checkoutId }: {
     customerId: string | null; plan?: string | null; expiresAt?: Date | null; provisional?: boolean;
     subscriptionId?: string; subscriptionCreatedAt?: Date;
     /** The subscription as Stripe has it now (absent for Lifetime). */
-    status?: string | null; trialEndsAt?: Date | null; cancelAtPeriodEnd?: boolean;
+    status?: string | null; trialEndsAt?: Date | null; cancelAtPeriodEnd?: boolean; checkoutId?: string;
   },
+  db: Pick<ReturnType<typeof getPool>, "query"> = getPool(),
 ): Promise<boolean> {
   if (plan !== "lifetime" && (!expiresAt || !Number.isFinite(expiresAt.getTime()))) {
     throw new Error("A recurring Pro grant requires a valid expiry");
@@ -575,12 +797,13 @@ async function grantPro(
   if (subscriptionId && (!subscriptionCreatedAt || !Number.isFinite(subscriptionCreatedAt.getTime()))) {
     throw new Error("A subscription binding requires a valid creation time");
   }
-  const result = await getPool().query(
+  const result = await db.query(
     `UPDATE users
         SET is_pro = TRUE,
             plan = COALESCE($2, plan),
             stripe_customer_id = COALESCE($3, stripe_customer_id),
             legacy_pro_grant = FALSE,
+            lifetime_prior_subscription_id = CASE WHEN $2 = 'lifetime' AND COALESCE(plan, '') <> 'lifetime' AND stripe_subscription_id IS NOT NULL THEN stripe_subscription_id ELSE lifetime_prior_subscription_id END,
             stripe_subscription_id = CASE WHEN $2 = 'lifetime' THEN NULL ELSE COALESCE($6, stripe_subscription_id) END,
             stripe_subscription_created_at = CASE WHEN $2 = 'lifetime' THEN NULL ELSE COALESCE($7::timestamptz, stripe_subscription_created_at) END,
             pro_expires_at = CASE
@@ -590,7 +813,8 @@ async function grantPro(
             END,
             subscription_status = CASE WHEN $2 = 'lifetime' THEN NULL ELSE COALESCE($8, subscription_status) END,
             trial_ends_at = CASE WHEN $2 = 'lifetime' THEN NULL WHEN $8::text IS NULL THEN trial_ends_at ELSE $9::timestamptz END,
-            cancel_at_period_end = CASE WHEN $2 = 'lifetime' THEN FALSE WHEN $8::text IS NULL THEN cancel_at_period_end ELSE $10::boolean END
+            cancel_at_period_end = CASE WHEN $2 = 'lifetime' THEN FALSE WHEN $8::text IS NULL THEN cancel_at_period_end ELSE $10::boolean END,
+            lifetime_checkout_id = CASE WHEN $2 = 'lifetime' THEN COALESCE($11, lifetime_checkout_id) ELSE lifetime_checkout_id END
       WHERE id = $1
         AND ($2 = 'lifetime' OR NOT (is_pro = TRUE AND COALESCE(plan, '') = 'lifetime'))
         AND ($2 = 'lifetime' OR stripe_subscription_id IS NULL
@@ -598,9 +822,28 @@ async function grantPro(
              OR ($6::text IS NOT NULL AND stripe_subscription_created_at < $7::timestamptz))
       RETURNING id`,
     [userId, plan || null, customerId || null, expiresAt ?? null, provisional === true, subscriptionId ?? null, subscriptionCreatedAt ?? null,
-      status ?? null, trialEndsAt ?? null, cancelAtPeriodEnd === true],
+      status ?? null, trialEndsAt ?? null, cancelAtPeriodEnd === true, checkoutId ?? null],
   );
   return result.rows.length > 0;
+}
+
+/** Serialize a Lifetime grant with refunds of that exact Checkout Session. */
+async function grantLifetimeCheckout(userId: string, customerId: string | null, checkoutId: string): Promise<boolean> {
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    const owner = await client.query("SELECT id FROM users WHERE id=$1 FOR UPDATE", [userId]);
+    if (!owner.rows[0]) { await client.query("ROLLBACK"); return false; }
+    const reversed = await client.query("SELECT 1 FROM billing_lifetime_reversals WHERE checkout_id=$1", [checkoutId]);
+    if (reversed.rows[0]) { await client.query("COMMIT"); return false; }
+    await client.query("INSERT INTO billing_lifetime_purchases(checkout_id,user_id) VALUES($1,$2) ON CONFLICT(checkout_id) DO NOTHING", [checkoutId, userId]);
+    const purchase = await client.query("SELECT user_id FROM billing_lifetime_purchases WHERE checkout_id=$1", [checkoutId]);
+    if (String(purchase.rows[0]?.user_id) !== String(userId)) throw new Error("Lifetime checkout belongs to a different account");
+    const granted = await grantPro(userId, { customerId, plan: "lifetime", expiresAt: null, checkoutId }, client);
+    await client.query("COMMIT");
+    return granted;
+  } catch (error) { await client.query("ROLLBACK"); throw error; }
+  finally { client.release(); }
 }
 
 /** Subscription revocation must never revoke a separately purchased lifetime grant.
@@ -1339,7 +1582,9 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
     source = { ...subscriptionSource(current), ...billingFields(current) };
     plan = subscriptionPlan(current);
   }
-  const granted = await grantPro(userId, { customerId, plan, expiresAt, ...source });
+  const granted = session.mode === "payment"
+    ? await grantLifetimeCheckout(userId, customerId, session.id)
+    : await grantPro(userId, { customerId, plan, expiresAt, ...source });
   if (!granted) return;
   if (session.mode === "payment") {
     // Retryable cancellation precedes receipt delivery. The SQL grant is
@@ -1350,7 +1595,7 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
   effects.notifySale(userId, saleLabel, session.mode, product);
 }
 
-type ReversedPurchase = { userId: string; product: Product; plan: string | null; subscriptionId: string | null };
+type ReversedPurchase = { userId: string; product: Product; plan: string | null; subscriptionId: string | null; checkoutId?: string };
 
 /** What a payment bought: the Lifetime checkout, or a subscription invoice.
  *  Tips and unrelated payments on the shared account resolve to null. */
@@ -1364,7 +1609,7 @@ async function findPurchase(paymentIntentId: string, effects: BillingEffects): P
     // refund is still matched if a promo Price variable is ever removed.
     const lifetimeCheckout = session.metadata?.product === "pctweaker" && session.metadata?.plan === "lifetime";
     if (!userId || !(lifetimeCheckout || priceIds.some((id) => lifetimePrices.includes(id)))) return null;
-    return { userId, product: "pctweaker", plan: "lifetime", subscriptionId: null };
+    return { userId, product: "pctweaker", plan: "lifetime", subscriptionId: null, checkoutId: session.id };
   }
   if (session) return null;
   const subscription = await effects.loadSubscriptionForPayment(paymentIntentId);
@@ -1379,14 +1624,31 @@ async function findPurchase(paymentIntentId: string, effects: BillingEffects): P
 /** Ends the access this purchase granted, and only that access: a refunded
  *  subscription never touches Lifetime, nor a newer subscription's grant.
  *  Returns whether anything was still active. */
-async function revokePurchase({ userId, product, plan, subscriptionId }: ReversedPurchase): Promise<boolean> {
+async function revokePurchase({ userId, product, plan, subscriptionId, checkoutId }: ReversedPurchase): Promise<boolean> {
   if (plan === "lifetime") {
-    const { rowCount } = await getPool().query(
-      `UPDATE users SET is_pro = FALSE, plan = NULL, pro_expires_at = NULL
-        WHERE id = $1 AND plan = 'lifetime'`,
-      [userId],
-    );
-    return Boolean(rowCount);
+    if (!checkoutId) throw new Error("Lifetime reversal is missing its checkout identity");
+    const client = await getPool().connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT id FROM users WHERE id=$1 FOR UPDATE", [userId]);
+      await client.query("INSERT INTO billing_lifetime_reversals(checkout_id) VALUES($1) ON CONFLICT(checkout_id) DO NOTHING", [checkoutId]);
+      const surviving = await client.query(`SELECT p.checkout_id FROM billing_lifetime_purchases p
+        LEFT JOIN billing_lifetime_reversals r ON r.checkout_id=p.checkout_id
+        WHERE p.user_id=$1 AND r.checkout_id IS NULL
+        ORDER BY p.recorded_at DESC,p.checkout_id DESC LIMIT 1`, [userId]);
+      if (surviving.rows[0]) {
+        await client.query(`UPDATE users SET lifetime_checkout_id=$3 WHERE id=$1 AND plan='lifetime'
+          AND (lifetime_checkout_id IS NULL OR lifetime_checkout_id=$2)`, [userId, checkoutId, surviving.rows[0].checkout_id]);
+        await client.query("COMMIT");
+        return false;
+      }
+      const { rowCount } = await client.query(
+        `UPDATE users SET is_pro = FALSE, plan = NULL, pro_expires_at = NULL, lifetime_checkout_id = NULL
+          WHERE id = $1 AND plan = 'lifetime' AND (lifetime_checkout_id IS NULL OR lifetime_checkout_id = $2)`, [userId, checkoutId]);
+      await client.query("COMMIT");
+      return Boolean(rowCount);
+    } catch (error) { await client.query("ROLLBACK"); throw error; }
+    finally { client.release(); }
   }
   if (product === "pctweaker") {
     const { rowCount } = await getPool().query(
@@ -1439,7 +1701,8 @@ async function handleReversal(event: Stripe.Event, effects: BillingEffects): Pro
     return;
   }
   const revoked = await revokePurchase(purchase);
-  console.log(`${event.type} on ${chargeId}: ${purchase.product} ${purchase.plan ?? ""} for user ${purchase.userId} ${revoked ? "revoked" : "was already inactive"}`);
+  if (purchase.plan === "lifetime") await restorePriorSubscription(purchase.userId, effects);
+  console.log(`${event.type} on ${chargeId}: ${purchase.product} ${purchase.plan ?? ""} for user ${purchase.userId} ${revoked ? "revoked" : "access unchanged"}`);
   if (revoked) effects.alertReversal(purchase.userId, event.type, paymentIntentId, purchase.product);
   if (refund) {
     await effects.queueRefundNotice(`refund:${refund.id}`, {
@@ -1456,6 +1719,25 @@ async function handleReversal(event: Stripe.Event, effects: BillingEffects): Pro
       if (err?.code !== "23503") throw err;
     });
   }
+}
+
+/** A Lifetime refund must not discard time already purchased on the earlier
+ * subscription. Read Stripe now; never revive an expired or mismatched plan. */
+async function restorePriorSubscription(userId: string, effects: BillingEffects): Promise<void> {
+  const { rows } = await getPool().query(
+    "SELECT lifetime_prior_subscription_id, stripe_customer_id, is_pro, plan FROM users WHERE id=$1", [userId]);
+  const row = rows[0];
+  if (!row?.lifetime_prior_subscription_id || !row.stripe_customer_id || (row.is_pro && row.plan === "lifetime")) return;
+  const subscription = await effects.loadSubscription(row.lifetime_prior_subscription_id);
+  const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id;
+  if (subscription.id !== row.lifetime_prior_subscription_id || customerId !== row.stripe_customer_id ||
+      subscription.metadata?.userId !== String(userId) || subscriptionProduct(subscription) !== "pctweaker") {
+    throw new Error("Prior subscription identity requires review");
+  }
+  if (!grantsAccess(subscription)) return;
+  const expiresAt = periodEndFromSubscription(subscription);
+  if (!expiresAt || expiresAt.getTime() <= Date.now()) return;
+  await syncSubscription(subscription, "pctweaker", false, effects);
 }
 
 /**

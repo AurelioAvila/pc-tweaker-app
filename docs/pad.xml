@@ -34,9 +34,9 @@
   </Company_Info>
   <Program_Info>
     <Program_Name>PC Tweaker</Program_Name>
-    <Program_Version>1.18.19</Program_Version>
+    <Program_Version>1.18.20</Program_Version>
     <Program_Release_Month>10</Program_Release_Month>
-    <Program_Release_Day>26</Program_Release_Day>
+    <Program_Release_Day>27</Program_Release_Day>
     <Program_Release_Year>2026</Program_Release_Year>
     <Program_Cost_Dollars></Program_Cost_Dollars>
     <Program_Cost_Other_Code></Program_Cost_Other_Code>
@@ -47,9 +47,9 @@
     <Program_OS_Support>WinOther</Program_OS_Support>
     <Program_Language>English</Program_Language>
     <File_Info>
-      <File_Size_Bytes>6257208</File_Size_Bytes>
-      <File_Size_K>6110.55</File_Size_K>
-      <File_Size_MB>5.97</File_Size_MB>
+      <File_Size_Bytes>6253728</File_Size_Bytes>
+      <File_Size_K>6107.16</File_Size_K>
+      <File_Size_MB>5.96</File_Size_MB>
     </File_Info>
     <Expire_Info>
       <Has_Expire_Info>N</Has_Expire_Info>
@@ -84,7 +84,7 @@
       <Application_XML_File_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/pad.xml</Application_XML_File_URL>
     </Application_URLs>
     <Download_URLs>
-      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.18.19/pc-tweaker-app_1.18.19_x64-setup.exe</Primary_Download_URL>
+      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.18.20/pc-tweaker-app_1.18.20_x64-setup.exe</Primary_Download_URL>
       <Secondary_Download_URL></Secondary_Download_URL>
       <Additional_Download_URL_1></Additional_Download_URL_1>
       <Additional_Download_URL_2></Additional_Download_URL_2>

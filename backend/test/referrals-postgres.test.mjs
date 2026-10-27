@@ -521,6 +521,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       };
       assert.deepEqual(await gateway.checkout(2, "monthly", params), {
         url: "https://checkout.stripe.com/c/pay/expiry",
+        sessionId: "cs_test_expiry",
       });
       // A paid session cannot be swapped for another plan.
       await assert.rejects(gateway.checkout(2, "annual", params), /reconciliation_required/);
@@ -575,7 +576,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
         await reservation.query("COMMIT");
         const outcome = await attempt;
         assert.equal(outcome.error, undefined);
-        assert.deepEqual(outcome.result, { url: "https://checkout.stripe.com/c/pay/race" });
+        assert.deepEqual(outcome.result, { url: "https://checkout.stripe.com/c/pay/race", sessionId: "cs_test_race" });
         assert.equal((await pool.query("SELECT * FROM referral_quotes")).rowCount, 1);
       } finally {
         await reservation.query("ROLLBACK");
@@ -840,6 +841,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
         reject = false;
         assert.deepEqual(await gateway.checkout(2, "monthly", checkoutParams()), {
           url: "https://checkout.stripe.com/c/pay/second",
+          sessionId: "cs_test_second",
         });
         assert.equal(
           (await pool.query("SELECT * FROM referral_quotes WHERE state='open'")).rowCount,
@@ -1099,7 +1101,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
         assert.equal(await rewardState(), "ready");
         // Refunded at once, and its webhook never reached us.
         change.charge = { refunded: true, amount_refunded: 719 };
-        // Argon 5: a sale recorded two hours after the payment (webhook retries, reconciliation)
+        // a sale recorded two hours after the payment (webhook retries, reconciliation)
         // used to be skipped, since its record was already past paid_at + 15 minutes.
         await pool.query(
           "UPDATE referral_rewards SET paid_at=now()-INTERVAL '2 hours',checked_at=now()-INTERVAL '5 minutes'",
@@ -1118,7 +1120,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       },
     );
     await t.test(
-      "Codex 1: an inviter's own address alias cannot claim their invitation",
+      "an inviter's own address alias cannot claim their invitation",
       async () => {
         await reset();
         await pool.query("UPDATE users SET email='j.doe+invite@gmail.com' WHERE id=1");
@@ -1133,7 +1135,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       },
     );
     await t.test(
-      "Codex 2: a won dispute does not release a bonus while a partial refund or another dispute remains",
+      "a won dispute does not release a bonus while a partial refund or another dispute remains",
       async () => {
         for (const remaining of ["partial_refund", "other_dispute"]) {
           await reset();
@@ -1189,7 +1191,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       },
     );
     await t.test(
-      "Codex 3: a deterministic coupon rejection releases the quote and uses the ordinary price",
+      "a deterministic coupon rejection releases the quote and uses the ordinary price",
       async () => {
         await reset();
         await core.claim(2, await core.ownCode(1), false);
@@ -1260,7 +1262,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
           gateway,
         );
         assert.deepEqual(calls, []);
-        // Codex 4: kept as a block in case it is a referral sale still being recorded; pruned
+        // kept as a block in case it is a referral sale still being recorded; pruned
         // after 90 days when no sale ever matches it.
         assert.deepEqual(
           (await pool.query("SELECT payment_id,state FROM referral_payment_blocks")).rows,
@@ -1286,7 +1288,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       },
     );
     await t.test(
-      "Codex 4 / Argon 5: a refund that arrives while the sale is being recorded withdraws the bonus at once",
+      "a refund that arrives while the sale is being recorded withdraws the bonus at once",
       async () => {
         await reset();
         const q = await paidQuote();
@@ -1328,7 +1330,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       },
     );
     await t.test(
-      "Argon 4: Stripe's clock a moment ahead, or an asynchronous payment after the quote expired, is a normal sale",
+      "Stripe's clock a moment ahead, or an asynchronous payment after the quote expired, is a normal sale",
       async () => {
         for (const paidAt of [
           new Date("2026-10-20T12:00:03Z"),
@@ -1344,7 +1346,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       },
     );
     await t.test(
-      "Argon 2: an inviter's own card pays for the friend even if it never paid for anything itself",
+      "an inviter's own card pays for the friend even if it never paid for anything itself",
       async () => {
         for (const change of [
           // In a trial: the card is saved on the customer, no paid charge.
@@ -1366,7 +1368,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       },
     );
     await t.test(
-      "Codex 2: two accounts on one PC (licence PC id) are held for review; other PCs are not",
+      "two accounts on one PC (licence PC id) are held for review; other PCs are not",
       async () => {
         await reset();
         const pc = (n) => n.toString(16).padStart(64, "0");
@@ -1387,7 +1389,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
           reason: "shared_pc_review",
         });
         assert.deepEqual((await core.summary(1)).rewards, [{ id, status: "pending" }]);
-        // Argon 6: a dispute won later does not release that hold.
+        // a dispute won later does not release that hold.
         await core.blockPayment(payment(q).paymentId, "hold", "charge.dispute.created");
         await core.releaseDisputeHold(payment(q));
         assert.deepEqual((await pool.query("SELECT state,reason FROM referral_rewards")).rows[0], {
@@ -1408,7 +1410,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
         assert.equal((await pool.query("SELECT * FROM referral_machines")).rowCount, 0);
       },
     );
-    await t.test("Argon 6: a won dispute re-checks the reward rules it was held under", async () => {
+    await t.test("a won dispute re-checks the reward rules it was held under", async () => {
       await reset();
       const p = payment(await reserve());
       await core.blockPayment(p.paymentId, "hold", "charge.dispute.created");
@@ -1423,7 +1425,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       });
     });
     await t.test(
-      "Argon 7: switching plan closes the open referral checkout and opens one for the new plan",
+      "switching plan closes the open referral checkout and opens one for the new plan",
       async () => {
         await reset();
         await core.claim(2, await core.ownCode(1), false);
@@ -1453,6 +1455,60 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
     );
     const erase = (email) => eraseAccount(pool, email, { erase: true, now: new Date(now) });
     const rows = async (sql) => (await pool.query(sql)).rows;
+    await t.test("referral claim waits until the existing ordinary checkout is closed",async()=>{
+      await reset();const {initWebCheckoutReservations,WebCheckoutReservations}=await import('../dist/web-checkout-reservations.js');await initWebCheckoutReservations(pool);
+      const repo=new WebCheckoutReservations(pool);const code=await core.ownCode(1);
+      const {reservation}=await repo.reserve(2,'pctweaker','annual');await repo.attach(reservation.reservation_id,'cs_referral_claim');
+      await assert.rejects(core.claim(2,code,false),e=>e.code==='close_existing_checkout_first');
+      assert.equal(await core.enrolment(2),null);
+      await repo.releaseVerifiedExpired(reservation.reservation_id,'cs_referral_claim');
+      await core.claim(2,code,false);assert.ok(await core.enrolment(2));
+    });
+    await t.test("concurrent referral claim cannot attach after checkout reservation",async()=>{
+      const {initWebCheckoutReservations,WebCheckoutReservations}=await import('../dist/web-checkout-reservations.js');await initWebCheckoutReservations(pool);
+      const repo=new WebCheckoutReservations(pool);
+      for(let i=0;i<12;i++){
+        await reset();const code=await core.ownCode(1);
+        const [claim,reservation]=await Promise.allSettled([core.claim(2,code,false),repo.reserve(2,'pctweaker','annual')]);
+        assert.equal(reservation.status,'fulfilled');
+        if(claim.status==='rejected'){assert.equal(claim.reason.code,'close_existing_checkout_first');assert.equal(await core.enrolment(2),null)}
+        else assert.ok(await core.enrolment(2));
+      }
+    });
+    await t.test("account erasure refuses an unresolved ordinary checkout", async () => {
+      await reset();
+      const { initWebCheckoutReservations, WebCheckoutReservations } = await import("../dist/web-checkout-reservations.js");
+      await initWebCheckoutReservations(pool);
+      const reservations = new WebCheckoutReservations(pool);
+      const { reservation } = await reservations.reserve(2, "pctweaker", "annual");
+      await reservations.attach(reservation.reservation_id, "cs_test_erasure_open");
+      await assert.rejects(erase("buyer@example.net"), (error) => error.code === "checkout_reconciliation_required");
+      assert.equal((await pool.query("SELECT 1 FROM users WHERE id=2")).rowCount, 1);
+      assert.equal((await reservations.find(2, "pctweaker"))?.state, "open");
+      await reservations.releaseVerifiedExpired(reservation.reservation_id, "cs_test_erasure_open");
+      assert.equal((await erase("buyer@example.net")).erased, true);
+    });
+    await t.test("concurrent account erasure and checkout reservation do not orphan a checkout", async () => {
+      const { initWebCheckoutReservations, WebCheckoutReservations } = await import("../dist/web-checkout-reservations.js");
+      await initWebCheckoutReservations(pool);
+      const reservations = new WebCheckoutReservations(pool);
+      for (let i = 0; i < 20; i++) {
+        await reset();
+        const [deleted, reserved] = await Promise.allSettled([erase("buyer@example.net"), reservations.reserve(2, "pctweaker", "annual")]);
+        const user = await pool.query("SELECT 1 FROM users WHERE id=2");
+        const checkout = await reservations.find(2, "pctweaker");
+        if (deleted.status === "fulfilled") {
+          assert.equal(reserved.status, "rejected");
+          assert.equal(user.rowCount, 0);
+          assert.equal(checkout, null);
+        } else {
+          assert.equal(deleted.reason.code, "checkout_reconciliation_required");
+          assert.equal(reserved.status, "fulfilled");
+          assert.equal(user.rowCount, 1);
+          assert.ok(checkout);
+        }
+      }
+    });
     await t.test(
       "erasure migration: keys made before 24 Oct without ON DELETE are converted once; deleting a user then works",
       async () => {
@@ -1692,7 +1748,42 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
         assert.equal(await left("SELECT 1 FROM referral_audit"), 0);
       },
     );
+    await t.test("shared checkout guard preserves the referral discount and reuses its session", async () => {
+      const { initWebCheckoutReservations, WebCheckoutReservations } = await import("../dist/web-checkout-reservations.js");
+      const { stripeGuardedProvider } = await import("../dist/stripe-guarded-provider.js");
+      const { guardedCheckout, cancelGuardedCheckout } = await import("../dist/guarded-checkout.js");
+      const { closeExpiredReferralUsing } = await import("../dist/referral-stripe.js");
+      await initWebCheckoutReservations(pool);
+      await reset();
+      await core.claim(2, await core.ownCode(1), false);
+      await pool.query("UPDATE users SET stripe_customer_id='cus_test2' WHERE id=2");
+      let created=0, saved; const all=[];
+      const pages=()=>({async *[Symbol.asyncIterator]() {}});
+      const sessions={
+        async create(params) { created++; saved={id:`cs_test_guardedreferral${created}`,url:`https://checkout.stripe.com/c/pay/referral${created}`,status:"open",payment_status:"unpaid",metadata:params.metadata,discounts:params.discounts};all.push(saved);return saved; },
+        async retrieve(id) { return all.find(item=>item.id===id); },
+        async expire(id) { const item=all.find(value=>value.id===id);item.status="expired";return item; },
+        list() { return {async *[Symbol.asyncIterator]() {yield* all;}}; },
+      };
+      const raw={accounts:{retrieve:async()=>({id:"acct_test"})},invoices:{list:pages},prices:{retrieve:async()=>({id:"price_test",active:true,currency:"eur",unit_amount:799})},coupons:{create:async(params)=>({id:params.id})},checkout:{sessions}};
+      const gateway=new ReferralStripe(core,raw);
+      const params={mode:"subscription",client_reference_id:"2",metadata:{product:"pctweaker",userId:"2",plan:"monthly"},subscription_data:{metadata:{product:"pctweaker"}},line_items:[{price:"price_test",quantity:1}],success_url:"https://pctweaker.app/",cancel_url:"https://pctweaker.app/"};
+      const provider=stripeGuardedProvider(sessions,params,5000,tagged=>gateway.checkout(2,"monthly",tagged),(userId,session)=>closeExpiredReferralUsing(gateway,userId,session));
+      const repo=new WebCheckoutReservations(pool);
+      const first=await guardedCheckout(repo,provider,2,"pctweaker","monthly");
+      const second=await guardedCheckout(repo,provider,2,"pctweaker","monthly");
+      assert.deepEqual(first,second);assert.equal(created,1);assert.equal(saved.discounts.length,1);assert.ok(saved.metadata.referral_quote);assert.ok(saved.metadata.reservation_id);
+      assert.equal((await pool.query("SELECT * FROM referral_quotes")).rowCount,1);
+      const previousQuote=saved.metadata.referral_quote;
+      await cancelGuardedCheckout(repo,provider,2,"pctweaker");
+      assert.equal((await pool.query("SELECT state FROM referral_quotes WHERE id=$1",[previousQuote])).rows[0].state,"expired");
+      const annualParams={...params,metadata:{...params.metadata,plan:"annual"}};
+      const annualProvider=stripeGuardedProvider(sessions,annualParams,5000,tagged=>gateway.checkout(2,"annual",tagged),(userId,session)=>closeExpiredReferralUsing(gateway,userId,session));
+      await guardedCheckout(repo,annualProvider,2,"pctweaker","annual");
+      assert.equal(created,2);assert.notEqual(saved.metadata.referral_quote,previousQuote);assert.equal(saved.discounts.length,1);
+    });
   } finally {
     await pool.end();
   }
 });
+

@@ -25,6 +25,20 @@ export async function eraseAccount(
     const userId: number | null = rows[0]?.id ?? null;
     const counts: Record<string, number> = {};
     if (userId !== null) {
+      // The user row is locked above. Inserting a new reservation needs a
+      // foreign-key lock on that row, so creation cannot race this check and
+      // subsequent deletion. The table is optional when the guard is disabled.
+      const reservationTable = await tx.query("SELECT to_regclass('public.web_checkout_reservations') AS name, to_regclass('public.billing_lifetime_purchases') AS purchases");
+      if (reservationTable.rows[0]?.name) {
+        if (reservationTable.rows[0]?.purchases) {
+          // A signed and processed Lifetime purchase is no longer payable.
+          // Both the ledger write and erasure acquire the same user row lock.
+          await tx.query(`DELETE FROM web_checkout_reservations WHERE user_id=$1 AND session_id IN
+            (SELECT checkout_id FROM billing_lifetime_purchases WHERE user_id=$1)`, [userId]);
+        }
+        const pending = await tx.query("SELECT 1 FROM web_checkout_reservations WHERE user_id=$1 LIMIT 1", [userId]);
+        if (pending.rowCount) throw new ReferralError("checkout_reconciliation_required");
+      }
       // Stripe would keep charging a subscription whose account is gone: it is cancelled there first.
       const live = await tx.query(
         `SELECT 1 FROM users WHERE id=$1 AND (subscription_status = ANY($2)

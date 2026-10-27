@@ -447,6 +447,14 @@ export class Referrals {
         if (previous[0].inviter_id !== inviter) throw new ReferralError("invitation_already_bound");
         return;
       }
+      // Do not attach an invitation after an ordinary checkout has already
+      // fixed its price. The buyer row lock also serializes a concurrent
+      // reservation insert through its foreign key to users.
+      const guardTable = await tx.query("SELECT to_regclass('public.web_checkout_reservations') AS name");
+      if (guardTable.rows[0]?.name) {
+        const checkout = await tx.query("SELECT 1 FROM web_checkout_reservations WHERE user_id=$1 AND product='pctweaker' LIMIT 1", [userId]);
+        if (checkout.rowCount) throw new ReferralError("close_existing_checkout_first");
+      }
       const id = randomUUID();
       try {
         await tx.query(

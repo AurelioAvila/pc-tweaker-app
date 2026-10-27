@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 process.env.DATABASE_URL='pgmem';process.env.JWT_SECRET='synthetic-integration-secret';delete process.env.STRIPE_SECRET_KEY;
 const {initSchema,getPool}=await import('../dist/db.js');
 const {hashPassword,requireAuth}=await import('../dist/auth.js');
@@ -14,7 +15,7 @@ const reservations={async reserve(user_id,product,plan){if(reservation)return {c
 const sessions={async create(params){creations++;session={id:'cs_test_local',url:'https://checkout.stripe.com/c/pay/fixture',status:'open',payment_status:'unpaid',metadata:params.metadata,line_items:params.line_items};return session},async retrieve(){return session},list(){return (async function*(){if(session)yield session})()}};
 const guardedCreate=createGuardedCheckout({reservations,sessions,getEntitlement:async()=>({product:'pctweaker',active:false,plan:null}),referral:async()=>null});
 const handler=createCheckoutHandler({environment:{STRIPE_SECRET_KEY:'fixture',STRIPE_PRICE_LIFETIME:'regular_fixture',STRIPE_PRICE_LIFETIME_PROMO:'promo_fixture'},now:()=>Date.parse('2026-10-27T12:00:00Z'),async createSession(){throw Error('must not bypass guard')},guardedCreate});
-const app=express();app.use(express.json());app.use('/api/auth',authRoutes);app.use('/api/account',accountRoutes);app.post('/api/web-checkout',requireAuth,handler);
+const app=express();app.use(rateLimit({windowMs:60_000,limit:100}));app.use(express.json());app.use('/api/auth',authRoutes);app.use('/api/account',accountRoutes);app.post('/api/web-checkout',requireAuth,handler);
 const server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));const base=`http://127.0.0.1:${server.address().port}`;
 test('verified account logs in and retries guarded checkout without a second provider session',async()=>{
  const login=await fetch(base+'/api/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:'web-flow@example.test',password:'fixture-password'})});assert.equal(login.status,200);const {token}=await login.json();

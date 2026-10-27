@@ -47,6 +47,12 @@ export function AccessPricing() {
         >
           {text.pricing.title}
         </motion.h2>
+        <motion.p
+          variants={riseChild}
+          className="mt-4 max-w-3xl text-[14px] leading-relaxed text-[var(--fg-dim)]"
+        >
+          {text.pricing.purchaseGuide}
+        </motion.p>
 
         {/* Free and Pro are quiet; Lifetime, the plan most buyers choose, carries
             the accent. */}

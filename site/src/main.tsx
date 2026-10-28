@@ -24,6 +24,15 @@ document.addEventListener("click", (event) => {
   }
 });
 
+// Cards and links passing under a still cursor lit up and faded one after another while the
+// page scrolled (a light flicker): hover effects pause until the scroll stops.
+let scrollEnd = 0;
+window.addEventListener("scroll", () => {
+  document.documentElement.classList.add("is-scrolling");
+  window.clearTimeout(scrollEnd);
+  scrollEnd = window.setTimeout(() => document.documentElement.classList.remove("is-scrolling"), 150);
+}, { passive: true });
+
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("#root not found");
 

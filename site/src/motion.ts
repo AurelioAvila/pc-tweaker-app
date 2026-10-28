@@ -13,7 +13,8 @@ export const riseChild: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.9, ease: EASE } },
 };
 
-/* Reveal as soon as a section's top enters the screen. A fraction of the
-   section's height never triggers on sections taller than a few screens,
-   which left them blank on shorter displays. */
-export const viewportOnce = { once: true, amount: "some", margin: "0px 0px -12% 0px" } as const;
+/* Reveal a section just before its top reaches the screen, so scrolling meets
+   content already there instead of blank space fading in (it read as a flicker).
+   A fraction of the section's height never triggers on sections taller than a
+   few screens, which left them blank on shorter displays. */
+export const viewportOnce = { once: true, amount: "some", margin: "0px 0px 15% 0px" } as const;

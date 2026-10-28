@@ -33,7 +33,12 @@ export function useRoute(initialPath = "/"): { path: string; navigate: (to: stri
   }, []);
 
   const navigate = useCallback((to: string) => {
-    if (to === currentPath()) return;
+    // Same page (the logo on /#access, say): back to its top, without the hash.
+    if (to === currentPath()) {
+      if (window.location.hash) window.history.pushState({}, "", to);
+      window.scrollTo(0, 0);
+      return;
+    }
     const go = () => {
       window.history.pushState({}, "", to);
       setPath(currentPath());

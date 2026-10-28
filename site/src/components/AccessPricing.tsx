@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { WebPurchase } from "./WebPurchase";
 import { text } from "../i18n/dictionary";
 import { riseChild, staggerParent, viewportOnce } from "../motion";
@@ -10,13 +10,25 @@ import { TrialLine, usePriceList } from "../trial";
 
 export function AccessPricing() {
   const { free, pro, lifetime } = text.pricing;
-  const [purchase, setPurchase] = useState<"annual" | "monthly" | "lifetime" | null>(null);
+  const [purchase, setPurchase] = useState<"annual" | "monthly" | "lifetime" | "account" | null>(null);
   const choosePurchase = (plan: "annual" | "monthly" | "lifetime") => {
     setPurchase(plan);
     document.getElementById("purchase-options")?.scrollIntoView({ block: "start" });
   };
   const webPreview = import.meta.env.DEV && import.meta.env.VITE_WEB_PURCHASE_PREVIEW === "1";
   const webEnabled = import.meta.env.VITE_WEB_PURCHASE_ENABLED === "1" && !webPreview;
+  // pctweaker.app/#signup (the Sign up link in the navigation) opens the account panel.
+  useEffect(() => {
+    if (!(webPreview || webEnabled)) return;
+    const open = () => {
+      if (window.location.hash !== "#signup") return;
+      setPurchase("account");
+      requestAnimationFrame(() => document.getElementById("purchase-options")?.scrollIntoView({ block: "start" }));
+    };
+    open();
+    window.addEventListener("hashchange", open);
+    return () => window.removeEventListener("hashchange", open);
+  }, [webPreview, webEnabled]);
   const promo = usePromo();
   const annualOffer = promo.offer("pctweaker", "annual");
   const monthlyOffer = promo.offer("pctweaker", "monthly");
@@ -195,8 +207,16 @@ export function AccessPricing() {
                   {webPreview ? "Preview" : "Buy"} {plan === "lifetime" ? "Lifetime" : plan}
                 </button>
               ))}
+              <button
+                type="button"
+                aria-pressed={purchase === "account"}
+                onClick={() => setPurchase("account")}
+                className={`rounded-xl px-5 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${purchase === "account" ? "bg-accent text-[var(--bg)]" : "border border-white/20 text-[var(--fg)] hover:border-white/40"}`}
+              >
+                Create a free account
+              </button>
             </div>
-            {purchase && <WebPurchase key={purchase} plan={purchase} demo={webPreview} onClose={() => setPurchase(null)} />}
+            {purchase && <WebPurchase key={purchase} plan={purchase === "account" ? null : purchase} demo={webPreview} onClose={() => setPurchase(null)} onChoosePlan={() => { setPurchase(null); document.getElementById("access")?.scrollIntoView({ block: "start" }); }} />}
           </div>
         )}
         <PromoFine className="mt-5 text-[12.5px] text-[var(--fg-dim)]" />

@@ -219,23 +219,25 @@ export function AccessPricing() {
         {(webPreview || webEnabled) && (
           <div id="purchase-options" className="mt-8 scroll-mt-28" aria-label={webPreview ? "Purchase preview" : "Purchase options"}>
             <p className="mb-4 text-sm text-[var(--fg-dim)]">{webPreview ? "Preview only: no payment or account is created." : "Choose your plan to purchase online."}</p>
-            <div className="flex flex-wrap gap-3" role="group" aria-label={webPreview ? "Choose a plan to preview" : "Choose a plan"}>
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:gap-3" role="group" aria-label={webPreview ? "Choose a plan to preview" : "Choose a plan"}>
               {(["monthly", "annual", "lifetime"] as const).map((plan) => (
                 <button
                   key={plan}
                   type="button"
                   aria-pressed={purchase === plan}
                   onClick={() => setPurchase(plan)}
-                  className={`rounded-xl px-5 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${purchase === plan ? "bg-accent text-[var(--bg)]" : "border border-white/20 text-[var(--fg)] hover:border-white/40"}`}
+                  className={`rounded-xl px-2 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:px-5 focus-visible:outline-[var(--accent)] ${purchase === plan ? "bg-accent text-[var(--bg)]" : "border border-white/20 text-[var(--fg)] hover:border-white/40"}`}
                 >
-                  {webPreview ? "Preview" : "Buy"} {plan === "lifetime" ? "Lifetime" : plan}
+                  {/* Phones: three equal buttons, the verb only from sm up. */}
+                  <span className="hidden sm:inline">{webPreview ? "Preview" : "Buy"} </span>
+                  {plan === "lifetime" ? "Lifetime" : plan === "annual" ? "Annual" : "Monthly"}
                 </button>
               ))}
               <button
                 type="button"
                 aria-pressed={purchase === "account"}
                 onClick={() => setPurchase("account")}
-                className={`rounded-xl px-5 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${purchase === "account" ? "bg-accent text-[var(--bg)]" : "border border-white/20 text-[var(--fg)] hover:border-white/40"}`}
+                className={`col-span-3 rounded-xl px-5 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${purchase === "account" ? "bg-accent text-[var(--bg)]" : "border border-white/20 text-[var(--fg)] hover:border-white/40"}`}
               >
                 Create a free account
               </button>

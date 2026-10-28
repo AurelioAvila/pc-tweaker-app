@@ -84,7 +84,7 @@ export const FIX_GUIDES = {
     title: "Hardware-accelerated GPU scheduling: on, off, or test it?",
     seoTitle: "Hardware-Accelerated GPU Scheduling: On or Off?",
     seoDescription:
-      "HAGS moves GPU scheduling onto the graphics card. Microsoft ships it off by default and results vary by game: how to switch it, test it fairly and undo it.",
+      "HAGS moves GPU scheduling onto the graphics card. Whether it is on depends on your GPU, driver and Windows setup: how to check it, test it fairly and undo it.",
     intro:
       "Hardware-accelerated GPU scheduling (HAGS) hands most of the work of scheduling GPU jobs to a scheduler on the graphics card instead of the CPU. Microsoft introduced it in the Windows 10 May 2020 update as an option that is off by default and needs a supporting GPU and driver. Whether it helps depends on the game, the GPU and the driver, so the honest answer is to test it.",
     summary: [

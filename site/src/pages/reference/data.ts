@@ -109,9 +109,33 @@ function tweakDescription(p: TweakPage): string {
   return fit(bases.flatMap((b) => TAILS.map((t) => b + t)), p.t.id);
 }
 
+/** The page's own answer, first: searches for a process name ask what it is and whether to touch it. */
+const DB_ADVICE: Record<DbEntry["verdict"], string> = {
+  leave: "Leave it alone",
+  depends: "Whether to stop it depends on what you use",
+  "manual-ok": "It is safe to set to Manual",
+};
+
 function dbDescription(e: DbEntry): string {
   const what = e.kind === "process" ? "process" : "service";
+  const advice = DB_ADVICE[e.verdict];
+  const dir = e.path.slice(0, e.path.lastIndexOf("\\"));
+  const signed = e.signer?.startsWith("Microsoft") ? ", signed by Microsoft" : "";
+  const answers =
+    e.kind === "process"
+      ? [
+          `${e.name} is the ${e.displayName}. ${advice}. The genuine file is in ${dir}${signed}: how to check yours.`,
+          `${e.name} is the ${e.displayName}. ${advice}. The genuine file is in ${dir}${signed}: how to check the copy on your PC.`,
+          `${e.name} is the ${e.displayName}. ${advice}: what it does, where the genuine file lives and how to check yours.`,
+        ]
+      : [
+          `${e.name} is the ${e.displayName} service. ${advice}: what it does, what PC Tweaker changes and how to check it.`,
+          `${e.name} is the ${e.displayName} service. ${advice}: what it does, what PC Tweaker changes and how to check it on your PC.`,
+        ];
   const bases = [
+    ...answers,
+    `${e.name}: ${advice.charAt(0).toLowerCase()}${advice.slice(1)}. What this Windows ${what} does, what PC Tweaker changes and how to check it on your PC.`,
+    `${e.name}: ${advice.charAt(0).toLowerCase()}${advice.slice(1)}. What this Windows ${what} does and how to check it on your own PC.`,
     `${e.name} (${e.displayName}): what this Windows ${what} does, whether to leave it alone, and how to check it yourself.`,
     `${e.name} is the ${e.displayName} ${what}: what it does, whether to touch it, and how to check it yourself.`,
     `${e.name}: what this Windows ${what} does, whether to touch it, and how to check it on your own PC.`,

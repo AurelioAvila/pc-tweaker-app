@@ -179,11 +179,12 @@ export function HeroSection() {
               <NewsletterSignup source="site-mobile" copy={text.sendToPc} />
             </div>
 
-            <div className="mt-6 max-w-md">
+            {/* winget is a Windows command: no use on a phone, where the send-to-PC form takes its place. */}
+            <div className="mt-6 hidden max-w-md md:block">
               <WingetTerminal />
             </div>
 
-            <div className="mt-9 flex flex-wrap gap-5">
+            <div className="mt-9 grid grid-cols-2 gap-x-4 gap-y-3 md:flex md:flex-wrap md:gap-5">
               {text.hero.badges.map((b) => (
                 <a
                   key={b.label}

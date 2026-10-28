@@ -86,6 +86,10 @@ p {
 }
 
 /* card cursor-follow backlight */
+.is-scrolling body {
+  pointer-events: none;
+}
+
 .card-glow {
   position: relative;
   overflow: hidden;

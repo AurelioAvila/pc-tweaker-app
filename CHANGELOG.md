@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.18.23
+
+Every language has been reviewed end to end: clearer, more accurate wording in Italian, French, Spanish, German and Portuguese (Portugal), and PC Health now explains each part of your score in your language.
+
 ## v1.18.22
 
 Settings that are already in place on your PC now show an "Already set" label, even when Windows or another tool changed them, and a scan no longer suggests them.

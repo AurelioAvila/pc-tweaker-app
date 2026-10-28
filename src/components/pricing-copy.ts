@@ -211,7 +211,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     firstMonth: "Premier mois, puis {price}/mois",
     firstYear: "Première année, puis {price}/an",
     promoTerms:
-      "Offre d'Halloween : pour les abonnements, la réduction ne porte que sur le premier mois ou la première année ; les renouvellements se font au prix normal. Si vous ouvrez le paiement dans les 30 dernières minutes de l'offre, vous disposez encore de 30 minutes pour le finaliser au prix de l'offre.",
+      "Offre d'Halloween : pour les abonnements, la réduction ne porte que sur le premier mois ou la première année ; les renouvellements se font au prix normal. Si vous ouvrez le paiement dans les 30 dernières minutes de l'offre, vous disposez encore de 30 minutes pour le finaliser au prix de l'offre.",
     title: "Votre PC. Votre choix.",
     intro:
       "Commencez par l'essentiel. Ajoutez les outils avancés. Ou choisissez Pro en un seul paiement.",
@@ -221,7 +221,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     previewBuild:
       "Vous utilisez une version de développement, pas un programme d'installation signé.",
     free: "Comprenez votre PC et choisissez vos premiers réglages.",
-    pro: "Outils avancés de réglage, de confidentialité et de jeu.",
+    pro: "Outils avancés de réglage, de confidentialité et de sessions de jeu.",
     lifetime:
       "Tous les outils Pro, sans renouvellement. Deux outils supplémentaires pour vos configurations.",
     renewal: "Renouvellement jusqu'à résiliation. Gérez-le depuis votre compte.",
@@ -244,25 +244,25 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
       "Comparez deux profils enregistrés. Consultez les réglages communs et les différences avant de choisir.",
     reportDetail:
       "Consultez et exportez un rapport Markdown de vos réglages enregistrés, avec une comparaison facultative. Vous choisissez ce que vous partagez.",
-    newExtras: "Deux raisons de plus de choisir l'offre à vie",
-    openTools: "Ouvrir les outils à vie",
+    newExtras: "Deux raisons de plus de choisir Lifetime",
+    openTools: "Ouvrir les outils Lifetime",
     notBenchmark:
       "Ces outils documentent les réglages. Ils ne mesurent ni ne promettent de gains de performances.",
-    campaign: "L'offre à vie actuelle se termine dans",
+    campaign: "L'offre Lifetime actuelle se termine dans",
     rare: "Offre rare. Ce n'est pas une remise récurrente.",
     earlyAccess: "Nouvelles fonctions en avant-première",
     mayChange:
-      "Les prix et la disponibilité peuvent changer après cette échéance. Vos droits à vie déjà acquis sont conservés.",
+      "Les prix et la disponibilité peuvent changer après cette échéance. Votre accès Lifetime déjà acquis reste le vôtre.",
     ends: "Fin de l'offre",
     hours: "heures",
     minutes: "minutes",
     seconds: "secondes",
     preview: "Aperçu de campagne · non actif",
-    unavailable: "Disponibilité de l'offre à vie non vérifiée. Actualisez avant d'acheter.",
+    unavailable: "Disponibilité de Lifetime non vérifiée. Actualisez avant d'acheter.",
     retry: "Vérifier à nouveau",
-    expired: "Cette offre à vie est terminée.",
-    scheduled: "La prochaine offre à vie n'a pas encore commencé.",
-    checking: "Vérification de l'offre à vie…",
+    expired: "Cette offre Lifetime est terminée.",
+    scheduled: "La prochaine offre Lifetime n'a pas encore commencé.",
+    checking: "Vérification de la disponibilité de Lifetime…",
     checkout: "Le prix final, les taxes et les conditions de paiement sont indiqués au paiement.",
     terms: "Des conditions claires avant de choisir",
     twoYears: "Au tarif annuel actuel, deux ans de Pro coûtent {price}.",
@@ -283,20 +283,20 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
       "Oferta de Halloween: en las suscripciones, el descuento solo cubre el primer mes o el primer año; las renovaciones se cobran al precio habitual. Si inicias el pago en los últimos 30 minutos de la oferta, aún tienes 30 minutos para completarlo al precio de la oferta.",
     title: "Tu PC. Tú decides.",
     intro: "Empieza por lo esencial. Añade herramientas avanzadas. O elige Pro con un solo pago.",
-    signed: "Versiones de Windows con firma digital",
+    signed: "Versiones para Windows con firma de código",
     signature:
-      "La firma digital ya está disponible. Los instaladores firmados por Aurelio Avila permiten a Windows verificar el editor y la integridad. Las descargas anteriores pueden no estar firmadas. SmartScreen aún puede mostrar avisos.",
+      "La firma de código ya está en marcha. Los instaladores de las versiones publicadas, firmados por Aurelio Avila, permiten a Windows verificar el editor y la integridad del archivo. Las descargas anteriores pueden no estar firmadas. SmartScreen aún puede mostrar avisos.",
     previewBuild: "Estás usando una versión de desarrollo, no un instalador firmado.",
     free: "Conoce tu PC y elige tus primeros ajustes.",
     pro: "Herramientas avanzadas de ajustes, privacidad y sesiones de juego.",
     lifetime:
-      "Todas las herramientas Pro, sin renovaciones. Dos herramientas adicionales para tus configuraciones.",
-    renewal: "Se renueva hasta que lo canceles. Gestión desde tu cuenta.",
+      "Todas las herramientas Pro, sin cuotas recurrentes. Dos herramientas adicionales para tu flujo de ajustes.",
+    renewal: "Se renueva hasta que lo canceles. Gestiónalo desde tu cuenta.",
     perpetual: "Un pago. Sin renovación de suscripción.",
     mostChosen: "El más elegido",
     compare: "Elige según lo que uses",
     capability: "Qué incluye",
-    essentials: "Ajustes esenciales y monitorización en vivo",
+    essentials: "Ajustes esenciales y monitor en tiempo real",
     advanced: "Herramientas Pro avanzadas",
     sessions: "Sesiones de juego automáticas",
     restores: "Restauración de ajustes compatibles",
@@ -304,7 +304,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     profiles: "Comparación de perfiles guardados",
     reports: "Informes de ajustes exportables",
     futureTweaks: "Acceso exclusivo a futuros ajustes seleccionados",
-    prioritySupport: "Asistencia prioritaria",
+    prioritySupport: "Soporte prioritario",
     uninstallerBonus:
       "12 meses de Uninstaller Pro desde tu primer inicio de sesión. Sin renovación automática.",
     profileDetail:
@@ -319,7 +319,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     rare: "Oferta poco frecuente. No es un descuento recurrente.",
     earlyAccess: "Nuevas funciones en vista previa",
     mayChange:
-      "Los precios y la disponibilidad podrían cambiar después de esta fecha. Conservas tu acceso Lifetime adquirido.",
+      "Los precios y la disponibilidad podrían cambiar después de esta fecha. El acceso Lifetime que ya tengas sigue siendo tuyo.",
     ends: "Fin de la oferta",
     hours: "horas",
     minutes: "minutos",
@@ -330,12 +330,13 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     expired: "Esta oferta Lifetime ha terminado.",
     scheduled: "La próxima oferta Lifetime aún no ha empezado.",
     checking: "Comprobando disponibilidad de Lifetime…",
-    checkout: "El precio final, los impuestos y las condiciones de pago se muestran al pagar.",
+    checkout:
+      "El precio final, los impuestos aplicables y las condiciones de pago se muestran al pagar.",
     terms: "Condiciones claras antes de elegir",
     twoYears: "Al precio anual actual, dos años de Pro cuestan {price}.",
     current: "Plan actual",
     afterCancel:
-      "Las restauraciones compatibles siguen disponibles al caducar Pro. La limpieza y la reparación tienen sus propios límites.",
+      "Las restauraciones compatibles siguen disponibles cuando Pro caduca. La limpieza y la reparación tienen sus propios límites de recuperación.",
     previewCheckout: "El pago está desactivado en esta vista previa de campaña.",
   },
   de: {
@@ -350,22 +351,22 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
       "Halloween-Angebot: Bei Abos gilt der Rabatt nur für den ersten Monat bzw. das erste Jahr; Verlängerungen erfolgen zum regulären Preis. Wenn du den Checkout in den letzten 30 Minuten des Angebots öffnest, hast du noch 30 Minuten Zeit, ihn zum Angebotspreis abzuschließen.",
     title: "Dein PC. Deine Entscheidung.",
     intro:
-      "Beginne mit dem Wesentlichen. Ergänze erweiterte Werkzeuge. Oder wähle Pro mit einer einzigen Zahlung.",
+      "Beginne mit dem Wesentlichen. Ergänze erweiterte Tools. Oder sichere dir Pro mit einer einzigen Zahlung.",
     signed: "Digital signierte Windows-Versionen",
     signature:
       "Die Codesignierung ist eingerichtet. Von Aurelio Avila signierte Installationsdateien ermöglichen Windows, Herausgeber und Integrität zu prüfen. Ältere Downloads können unsigniert sein. SmartScreen kann weiterhin warnen.",
     previewBuild: "Du verwendest eine Entwicklungsversion, kein signiertes Installationspaket.",
     free: "Verstehe deinen PC und wähle deine ersten Änderungen.",
-    pro: "Erweiterte Werkzeuge für Tuning, Datenschutz und Spielsitzungen.",
+    pro: "Erweiterte Tools für Tuning, Datenschutz und Spielsitzungen.",
     lifetime:
-      "Alle Pro-Werkzeuge ohne laufendes Abo. Zwei zusätzliche Werkzeuge für deine Konfigurationen.",
+      "Alle Pro-Tools ohne laufendes Abo. Zwei zusätzliche Tools für deinen Tuning-Workflow.",
     renewal: "Verlängert sich bis zur Kündigung. Verwaltung über dein Konto.",
     perpetual: "Eine Zahlung. Keine Aboverlängerung.",
     mostChosen: "Am häufigsten gewählt",
     compare: "Wähle nach deinem Bedarf",
     capability: "Enthaltene Funktionen",
     essentials: "Grundlegende Tweaks und Live-Monitoring",
-    advanced: "Erweiterte Pro-Werkzeuge",
+    advanced: "Erweiterte Pro-Tools",
     sessions: "Automatische Spielsitzungen",
     restores: "Unterstützte Einstellungen wiederherstellen",
     updates: "Pro-Updates",
@@ -380,12 +381,12 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     reportDetail:
       "Prüfe und exportiere einen Markdown-Bericht deiner erfassten Einstellungen mit optionalem Profilvergleich. Du entscheidest, was du teilst.",
     newExtras: "Zwei weitere Gründe für Lifetime",
-    openTools: "Lifetime-Werkzeuge öffnen",
+    openTools: "Lifetime-Tools öffnen",
     notBenchmark:
-      "Diese Werkzeuge dokumentieren Einstellungen. Sie messen oder versprechen keine Leistungsgewinne.",
+      "Diese Tools dokumentieren Einstellungen. Sie messen oder versprechen keine Leistungsgewinne.",
     campaign: "Das aktuelle Lifetime-Angebot endet in",
     rare: "Selten angeboten. Kein wiederkehrender Rabatt.",
-    earlyAccess: "Neue Funktionen als Vorschau",
+    earlyAccess: "Neue Funktionen in früher Vorschau",
     mayChange:
       "Preise und Verfügbarkeit können sich danach ändern. Bereits erworbener Lifetime-Zugang bleibt bestehen.",
     ends: "Angebotsende",
@@ -418,7 +419,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
       "Oferta de Halloween: nas subscrições, o desconto aplica-se apenas ao primeiro mês ou ao primeiro ano; as renovações são feitas ao preço normal. Se iniciar o pagamento nos últimos 30 minutos da oferta, ainda tem 30 minutos para o concluir ao preço da oferta.",
     title: "O seu PC. A sua escolha.",
     intro:
-      "Comece pelo essencial. Adicione ferramentas avançadas. Ou escolha Pro com um único pagamento.",
+      "Comece pelo essencial. Adicione ferramentas avançadas. Ou fique com o Pro para sempre, com um único pagamento.",
     signed: "Versões Windows assinadas digitalmente",
     signature:
       "A assinatura digital já está disponível. Os instaladores assinados por Aurelio Avila permitem ao Windows verificar o editor e a integridade. As transferências anteriores podem não estar assinadas. O SmartScreen ainda pode apresentar avisos.",
@@ -426,7 +427,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     free: "Conheça o seu PC e escolha os primeiros ajustes.",
     pro: "Ferramentas avançadas de ajustes, privacidade e sessões de jogo.",
     lifetime:
-      "Todas as ferramentas Pro, sem renovações. Duas ferramentas adicionais para as suas configurações.",
+      "Todas as ferramentas Pro, sem cobranças recorrentes. Duas ferramentas adicionais para o seu trabalho de otimização.",
     renewal: "Renova até ao cancelamento. Gestão através da sua conta.",
     perpetual: "Um pagamento. Sem renovação de subscrição.",
     mostChosen: "Mais escolhido",
@@ -447,7 +448,7 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
       "Compare dois perfis guardados. Consulte as definições comuns e as diferenças antes de escolher.",
     reportDetail:
       "Pré-visualize e exporte um relatório Markdown das definições registadas, com uma comparação opcional. Decide o que partilha.",
-    newExtras: "Mais dois motivos para escolher Lifetime",
+    newExtras: "Mais dois motivos para ter o Lifetime",
     openTools: "Abrir ferramentas Lifetime",
     notBenchmark:
       "Estas ferramentas documentam definições. Não medem nem prometem ganhos de desempenho.",
@@ -462,18 +463,18 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     seconds: "segundos",
     preview: "Pré-visualização da campanha · inativa",
     unavailable:
-      "Não foi possível verificar a disponibilidade de Lifetime. Atualize antes de comprar.",
+      "Não foi possível verificar a disponibilidade do Lifetime. Atualize antes de comprar.",
     retry: "Verificar novamente",
     expired: "Esta oferta Lifetime terminou.",
     scheduled: "A próxima oferta Lifetime ainda não começou.",
-    checking: "A verificar a disponibilidade de Lifetime…",
+    checking: "A verificar a disponibilidade do Lifetime…",
     checkout:
       "O preço final, os impostos e as condições de pagamento são apresentados no checkout.",
     terms: "Condições claras antes de escolher",
     twoYears: "Ao preço anual atual, dois anos de Pro custam {price}.",
     current: "Plano atual",
     afterCancel:
-      "Os restauros suportados continuam disponíveis após o fim de Pro. A limpeza e a reparação têm limites próprios.",
+      "Os restauros suportados continuam disponíveis após o fim do Pro. A limpeza e a reparação têm limites de recuperação próprios.",
     previewCheckout: "O checkout está desativado nesta pré-visualização da campanha.",
   },
 };
@@ -523,7 +524,7 @@ export const PLAN_STATE_COPY: Record<
     endsToday: "se termine aujourd'hui",
     bannerTitle: "Essayez tous les outils Pro gratuitement pendant {days} jours",
     bannerBody:
-      "Pro complet sur ce PC. Une carte est nécessaire pour commencer ; annulez avant la fin des {days} jours et rien n'est prélevé. Un seul essai gratuit par compte et par PC.",
+      "Pro complet sur ce PC. Une carte est nécessaire pour commencer ; annulez avant la fin des {days} jours et rien n'est prélevé. Un seul essai gratuit par compte et par PC.",
     bannerButton: "Commencer l'essai gratuit de {days} jours",
   },
   es: {
@@ -538,14 +539,14 @@ export const PLAN_STATE_COPY: Record<
     bannerButton: "Empezar la prueba gratuita de {days} días",
   },
   de: {
-    includedInPlan: "In Ihrem Tarif enthalten",
-    trialBadge: "Testphase — {left}",
+    includedInPlan: "In deinem Tarif enthalten",
+    trialBadge: "Testphase – {left}",
     daysLeft: "noch {days} Tage",
     oneDayLeft: "noch 1 Tag",
     endsToday: "endet heute",
-    bannerTitle: "Alle Pro-Werkzeuge {days} Tage kostenlos testen",
+    bannerTitle: "Alle Pro-Tools {days} Tage kostenlos testen",
     bannerBody:
-      "Vollständiges Pro auf diesem PC. Zum Start ist eine Karte nötig; wenn Sie vor Ablauf der {days} Tage kündigen, wird nichts abgebucht. Eine kostenlose Testphase pro Konto und pro PC.",
+      "Vollständiges Pro auf diesem PC. Zum Start ist eine Karte nötig; wenn du vor Ablauf der {days} Tage kündigst, wird nichts abgebucht. Eine kostenlose Testphase pro Konto und pro PC.",
     bannerButton: "{days} Tage kostenlos testen",
   },
   pt: {

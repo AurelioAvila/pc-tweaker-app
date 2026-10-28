@@ -14,7 +14,7 @@
 //! Nothing is weighted in secret: the factor list IS the explanation the
 //! "Why 84?" view renders.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
 #[derive(Serialize, Clone, Debug)]
@@ -26,8 +26,37 @@ pub struct HealthFactor {
     pub label: &'static str,
     pub earned: u32,
     pub max: u32,
-    /// The concrete fact this factor was scored from.
+    /// The concrete fact this factor was scored from, in English.
     pub evidence: String,
+    /// The same fact as a key plus the number or name it quotes, so the UI
+    /// can say it in the user's language.
+    pub parts: EvidenceParts,
+}
+
+/// An evidence sentence the UI can translate. Every live factor has a key;
+/// snapshots stored before this existed read back with none and show their
+/// stored English.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct EvidenceParts {
+    #[serde(default)]
+    pub key: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub number: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+}
+
+/// English evidence plus its translatable parts.
+fn ev(key: &str, number: Option<f64>, text: String) -> (String, EvidenceParts) {
+    (
+        text,
+        EvidenceParts {
+            key: Some(key.to_string()),
+            number,
+            name: None,
+        },
+    )
 }
 
 
@@ -71,7 +100,7 @@ fn factor(
     label: &'static str,
     earned: u32,
     max: u32,
-    evidence: String,
+    (evidence, parts): (String, EvidenceParts),
 ) -> HealthFactor {
     HealthFactor {
         id,
@@ -79,6 +108,7 @@ fn factor(
         earned: earned.min(max),
         max,
         evidence,
+        parts,
     }
 }
 
@@ -96,9 +126,9 @@ fn applied_factor(
         if on { points } else { 0 },
         points,
         if on {
-            "applied".into()
+            ev("applied", None, "applied".into())
         } else {
-            "not applied".into()
+            ev("not_applied", None, "not applied".into())
         },
     )
 }
@@ -119,18 +149,41 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
         // anything looser would silently mis-score OEM plans.
         let plan_name = inputs.power_plan.as_deref();
         let (plan_pts, plan_ev) = match (plan_name, inputs.is_laptop) {
-            (Some(p @ ("High performance" | "Ultimate performance")), _) => (30, p.to_string()),
+            (Some(p @ "High performance"), _) => (30, ev("plan_high", None, p.to_string())),
+            (Some(p @ "Ultimate performance"), _) => {
+                (30, ev("plan_ultimate", None, p.to_string()))
+            }
             (Some(p @ "Balanced"), Some(true)) => (
                 24,
-                format!("{p} — a fair choice on battery-powered hardware"),
+                ev(
+                    "plan_balanced_battery",
+                    None,
+                    format!("{p} — a fair choice on battery-powered hardware"),
+                ),
             ),
             (Some(p @ "Balanced"), _) => (
                 18,
-                format!("{p} — High performance unlocks more on a desktop"),
+                ev(
+                    "plan_balanced_desktop",
+                    None,
+                    format!("{p} — High performance unlocks more on a desktop"),
+                ),
             ),
-            (Some(p @ "Power saver"), _) => (5, format!("{p} — actively limits performance")),
-            (Some(p), _) => (15, format!("{p} (custom plan — unrated)")),
-            (None, _) => (15, "custom or unknown power plan — unrated".into()),
+            (Some(p @ "Power saver"), _) => (
+                5,
+                ev("plan_saver", None, format!("{p} — actively limits performance")),
+            ),
+            // The plan's own name, as the user or the manufacturer wrote it.
+            (Some(p), _) => {
+                let (text, mut parts) =
+                    ev("plan_custom", None, format!("{p} (custom plan — unrated)"));
+                parts.name = Some(p.to_string());
+                (15, (text, parts))
+            }
+            (None, _) => (
+                15,
+                ev("plan_unknown", None, "custom or unknown power plan — unrated".into()),
+            ),
         };
         categories.push(category(
             "performance",
@@ -207,13 +260,24 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
     // ---- Responsiveness ----------------------------------------------------
     {
         let (up_pts, up_ev) = match inputs.uptime_days {
-            Some(d) if d <= 7.0 => (20, format!("uptime {d:.1} days")),
+            Some(d) if d <= 7.0 => (20, ev("uptime_ok", Some(d), format!("uptime {d:.1} days"))),
             Some(d) if d <= 21.0 => (
                 10,
-                format!("uptime {d:.1} days — a restart refreshes memory and updates"),
+                ev(
+                    "uptime_refresh",
+                    Some(d),
+                    format!("uptime {d:.1} days — a restart refreshes memory and updates"),
+                ),
             ),
-            Some(d) => (0, format!("uptime {d:.1} days — restart recommended")),
-            None => (10, "uptime unknown".into()),
+            Some(d) => (
+                0,
+                ev(
+                    "uptime_restart",
+                    Some(d),
+                    format!("uptime {d:.1} days — restart recommended"),
+                ),
+            ),
+            None => (10, ev("uptime_unknown", None, "uptime unknown".into())),
         };
         categories.push(category(
             "responsiveness",
@@ -254,26 +318,38 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
     // ---- Memory ------------------------------------------------------------
     {
         let (ram_pts, ram_ev) = match inputs.ram_total_gb {
-            Some(gb) if gb >= 31.0 => (40, format!("{gb:.0} GB installed")),
-            Some(gb) if gb >= 15.0 => (32, format!("{gb:.0} GB installed")),
+            Some(gb) if gb >= 31.0 => (40, ev("ram_ok", Some(gb), format!("{gb:.0} GB installed"))),
+            Some(gb) if gb >= 15.0 => (32, ev("ram_ok", Some(gb), format!("{gb:.0} GB installed"))),
             Some(gb) if gb >= 7.0 => (
                 20,
-                format!("{gb:.0} GB installed — 16 GB is today's comfortable floor"),
+                ev(
+                    "ram_low",
+                    Some(gb),
+                    format!("{gb:.0} GB installed — 16 GB is today's comfortable floor"),
+                ),
             ),
             Some(gb) => (
                 8,
-                format!("{gb:.0} GB installed — upgrading RAM would help more than any tweak"),
+                ev(
+                    "ram_very_low",
+                    Some(gb),
+                    format!("{gb:.0} GB installed — upgrading RAM would help more than any tweak"),
+                ),
             ),
-            None => (20, "RAM size unknown".into()),
+            None => (20, ev("ram_unknown", None, "RAM size unknown".into())),
         };
         let (use_pts, use_ev) = match inputs.memory_used_pct {
-            Some(p) if p < 60.0 => (40, format!("{p:.0}% in use right now")),
-            Some(p) if p < 80.0 => (25, format!("{p:.0}% in use right now")),
+            Some(p) if p < 60.0 => (40, ev("memory_use", Some(p), format!("{p:.0}% in use right now"))),
+            Some(p) if p < 80.0 => (25, ev("memory_use", Some(p), format!("{p:.0}% in use right now"))),
             Some(p) => (
                 10,
-                format!("{p:.0}% in use right now — close heavy apps or add RAM"),
+                ev(
+                    "memory_use_high",
+                    Some(p),
+                    format!("{p:.0}% in use right now — close heavy apps or add RAM"),
+                ),
             ),
-            None => (20, "current usage unknown".into()),
+            None => (20, ev("memory_use_unknown", None, "current usage unknown".into())),
         };
         categories.push(category(
             "memory",
@@ -300,22 +376,30 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
     // ---- Storage -----------------------------------------------------------
     {
         let (kind_pts, kind_ev) = match inputs.disk_kind {
-            Some("nvme") => (40, "system disk: NVMe".into()),
-            Some("ssd") => (35, "system disk: SSD".into()),
+            Some("nvme") => (40, ev("disk_nvme", None, "system disk: NVMe".into())),
+            Some("ssd") => (35, ev("disk_ssd", None, "system disk: SSD".into())),
             Some("hdd") => (
                 10,
-                "system disk: spinning HDD — an SSD is the single biggest upgrade".into(),
+                ev(
+                    "disk_hdd",
+                    None,
+                    "system disk: spinning HDD — an SSD is the single biggest upgrade".into(),
+                ),
             ),
-            _ => (20, "system disk type unknown".into()),
+            _ => (20, ev("disk_unknown", None, "system disk type unknown".into())),
         };
         let (free_pts, free_ev) = match inputs.free_disk_pct {
-            Some(p) if p >= 25.0 => (60, format!("{p:.0}% free on the system disk")),
-            Some(p) if p >= 10.0 => (35, format!("{p:.0}% free on the system disk")),
+            Some(p) if p >= 25.0 => (60, ev("disk_free", Some(p), format!("{p:.0}% free on the system disk"))),
+            Some(p) if p >= 10.0 => (35, ev("disk_free", Some(p), format!("{p:.0}% free on the system disk"))),
             Some(p) => (
                 10,
-                format!("{p:.0}% free — Windows slows down below 10% free"),
+                ev(
+                    "disk_free_low",
+                    Some(p),
+                    format!("{p:.0}% free — Windows slows down below 10% free"),
+                ),
             ),
-            None => (30, "free space unknown".into()),
+            None => (30, ev("disk_free_unknown", None, "free space unknown".into())),
         };
         categories.push(category(
             "storage",
@@ -335,14 +419,25 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
     // ---- Startup -----------------------------------------------------------
     {
         let (pts, ev) = match inputs.startup_enabled {
-            Some(n) if n <= 5 => (100, format!("{n} apps start with Windows")),
-            Some(n) if n <= 10 => (70, format!("{n} apps start with Windows")),
+            Some(n) if n <= 5 => (100, ev("startup_apps", Some(n as f64), format!("{n} apps start with Windows"))),
+            Some(n) if n <= 10 => (70, ev("startup_apps", Some(n as f64), format!("{n} apps start with Windows"))),
             Some(n) if n <= 15 => (
                 40,
-                format!("{n} apps start with Windows — each one delays login"),
+                ev(
+                    "startup_apps_slow",
+                    Some(n as f64),
+                    format!("{n} apps start with Windows — each one delays login"),
+                ),
             ),
-            Some(n) => (15, format!("{n} apps start with Windows — trim this list")),
-            None => (50, "startup list unavailable".into()),
+            Some(n) => (
+                15,
+                ev(
+                    "startup_apps_trim",
+                    Some(n as f64),
+                    format!("{n} apps start with Windows — trim this list"),
+                ),
+            ),
+            None => (50, ev("startup_unknown", None, "startup list unavailable".into())),
         };
         categories.push(category(
             "startup",
@@ -353,17 +448,30 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
     // ---- Maintenance -------------------------------------------------------
     {
         let (rp_pts, rp_ev) = match inputs.restore_points_enabled {
-            Some(true) => (50, "System Restore is on — changes stay reversible".into()),
-            Some(false) => (0, "System Restore is off — nothing to roll back to".into()),
-            None => (25, "System Restore state unknown".into()),
+            Some(true) => (
+                50,
+                ev("restore_on", None, "System Restore is on — changes stay reversible".into()),
+            ),
+            Some(false) => (
+                0,
+                ev("restore_off", None, "System Restore is off — nothing to roll back to".into()),
+            ),
+            None => (25, ev("restore_unknown", None, "System Restore state unknown".into())),
         };
         let (up_pts, up_ev) = match inputs.uptime_days {
-            Some(d) if d <= 14.0 => (50, format!("last restart {d:.1} days ago")),
+            Some(d) if d <= 14.0 => (
+                50,
+                ev("last_restart", Some(d), format!("last restart {d:.1} days ago")),
+            ),
             Some(d) => (
                 20,
-                format!("last restart {d:.1} days ago — updates may be waiting"),
+                ev(
+                    "last_restart_old",
+                    Some(d),
+                    format!("last restart {d:.1} days ago — updates may be waiting"),
+                ),
             ),
-            None => (25, "uptime unknown".into()),
+            None => (25, ev("uptime_unknown", None, "uptime unknown".into())),
         };
         categories.push(category(
             "maintenance",
@@ -434,22 +542,35 @@ pub fn score(inputs: &HealthInputs) -> HealthReport {
     // ---- Security ----------------------------------------------------------
     {
         let (def_pts, def_ev) = match inputs.defender_realtime {
-            Some(true) => (40, "Defender real-time protection is on".into()),
-            Some(false) => (0, "Defender real-time protection is OFF".into()),
+            Some(true) => (
+                40,
+                ev("defender_on", None, "Defender real-time protection is on".into()),
+            ),
+            Some(false) => (
+                0,
+                ev("defender_off", None, "Defender real-time protection is OFF".into()),
+            ),
             None => (
                 20,
-                "Defender state unreadable (third-party AV may be active)".into(),
+                ev(
+                    "defender_unknown",
+                    None,
+                    "Defender state unreadable (third-party AV may be active)".into(),
+                ),
             ),
         };
         let (uac_pts, uac_ev) = match inputs.uac_enabled {
-            Some(true) => (30, "UAC is on".into()),
-            Some(false) => (0, "UAC is disabled — every app runs unchecked".into()),
-            None => (15, "UAC state unknown".into()),
+            Some(true) => (30, ev("uac_on", None, "UAC is on".into())),
+            Some(false) => (
+                0,
+                ev("uac_off", None, "UAC is disabled — every app runs unchecked".into()),
+            ),
+            None => (15, ev("uac_unknown", None, "UAC state unknown".into())),
         };
         let (ss_pts, ss_ev) = match inputs.smartscreen_enabled {
-            Some(true) => (30, "SmartScreen is on".into()),
-            Some(false) => (5, "SmartScreen is off".into()),
-            None => (15, "SmartScreen state unknown".into()),
+            Some(true) => (30, ev("smartscreen_on", None, "SmartScreen is on".into())),
+            Some(false) => (5, ev("smartscreen_off", None, "SmartScreen is off".into())),
+            None => (15, ev("smartscreen_unknown", None, "SmartScreen state unknown".into())),
         };
         categories.push(category(
             "security",
@@ -523,6 +644,7 @@ mod tests {
             assert!(cat.score <= 100, "{} out of range", cat.id);
             for f in &cat.factors {
                 assert!(!f.evidence.is_empty(), "{} has no evidence", f.id);
+                assert!(f.parts.key.is_some(), "{} has no evidence key", f.id);
                 assert!(f.earned <= f.max, "{} earned > max", f.id);
             }
         }

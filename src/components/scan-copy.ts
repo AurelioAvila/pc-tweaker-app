@@ -132,7 +132,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     title: "Scopri cosa richiede attenzione.",
     intro:
       "Controlla impostazioni, spazio, avvio, memoria, segnali di sicurezza e date dei driver. Esamina i dati prima di intervenire.",
-    start: "Analizza questo PC",
+    start: "Scansiona questo PC",
     running: "Lettura del sistema",
     presenting: "Preparazione dei risultati",
     discovering: "Ricerca delle categorie di dispositivi",
@@ -156,16 +156,16 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     partialTitle: "Scansione parziale",
     partialBody: "{done} di {total} controlli completati. Non controllati: {missing}.",
     olderNote: "Alcuni di questi risultati sono stati letti alle {time}, prima della pausa.",
-    complete: "Analisi completata",
-    results: "Risultati dell’analisi",
+    complete: "Scansione completata",
+    results: "Risultati della scansione",
     hideResults: "Nascondi risultati",
     showResults: "Mostra risultati",
-    partial: "Alcuni controlli non sono riusciti",
+    partial: "Alcuni controlli non sono stati completati",
     scope: "Cosa controlliamo",
     newDetails: [
       "Attività di terze parti avviate all’accesso o all’accensione.",
       "App facoltative installate; scegli tu se rimuoverle.",
-      "Rileva i conflitti che impediscono alle regole di funzionare.",
+      "Rileva i conflitti che impediscono alle tue regole per le app di funzionare.",
     ],
     sources: "controlli completati",
     recommendations: "Modifiche consigliate",
@@ -178,20 +178,20 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     review: "Da esaminare",
     empty: "Nessuna modifica supportata da applicare.",
     emptyBody:
-      "Nessuna impostazione consigliata per l'hardware e ancora inattiva è applicabile automaticamente da questo account. Esamina i risultati e le opzioni elencati separatamente.",
+      "Questo account non può applicare automaticamente nessuna impostazione consigliata per l'hardware ancora inattiva. Esamina i risultati e le impostazioni facoltative elencati a parte.",
     ready: "Un report chiaro. Ogni scelta è tua.",
     readyBody:
-      "L'analisi non applica tweak, elimina file o installa driver. Distingue le correzioni supportate dagli elementi che richiedono una tua decisione.",
+      "La scansione non applica tweak, non elimina file e non installa driver. I risultati distinguono le correzioni supportate dagli elementi che richiedono una tua decisione.",
     selected: "selezionati",
     apply: "Applica selezionati",
     confirm: "Esamina le modifiche",
     confirmBody:
-      "Verranno cambiate solo le impostazioni selezionate. Correggi tutto non modifica file, programmi di avvio, driver o protezioni. Puoi ripristinare le impostazioni supportate dalla cronologia.",
+      "Verranno cambiate solo le impostazioni selezionate qui sotto. Correggi tutto non modifica file, programmi di avvio, driver o impostazioni di sicurezza. Le impostazioni supportate si possono ripristinare dalla Cronologia modifiche.",
     cancel: "Annulla",
     verified: "Applicazione verificata",
     failed: "Non applicati o non verificati",
     skipped: "Non più idonei",
-    retry: "Ripeti l'analisi prima di riprovare.",
+    retry: "Ripeti la scansione prima di riprovare.",
     verifying: "Applicazione e verifica…",
     admin: "Approvazione amministratore",
     noReview: "Nessun elemento da esaminare nei controlli completati.",
@@ -205,7 +205,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Spazio libero",
       "Programmi di avvio",
       "Utilizzo memoria",
-      "Riavvio pendente",
+      "Riavvio in sospeso",
       "Segnali di sicurezza",
       "Date dei driver",
       "Attività pianificate all’avvio",
@@ -223,22 +223,22 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       ],
       efficiency: [
         "Le regole in background non possono agire",
-        "Il power throttling globale è disabilitato. Esamina l’impostazione in conflitto in Performance prima di usare le regole di efficienza.",
+        "La limitazione energetica (power throttling) di Windows è disattivata a livello globale. Esamina l’impostazione in conflitto in Prestazioni prima di usare le regole di efficienza.",
       ],
       storage: [
         "Poco spazio libero",
-        "Meno del 15% è libero. Esamina file e opzioni di pulizia prima di eliminare qualcosa. I dati indicano lo spazio libero.",
+        "Meno del 15% è libero. Esamina file e opzioni di pulizia prima di eliminare qualcosa. I valori qui sotto indicano lo spazio libero.",
       ],
       startup: [
         "Esamina i programmi di avvio",
         "Questi elementi sono abilitati. Mantieni quelli utili: la loro presenza non indica necessariamente un avvio lento.",
       ],
       memory: [
-        "Memoria molto utilizzata durante l'analisi",
-        "Controlla prima i programmi aperti. Un solo dato non prova un problema; la pulizia può rallentare temporaneamente le app.",
+        "Memoria molto utilizzata durante la scansione",
+        "Controlla prima i programmi aperti. Una sola lettura non prova un problema di memoria; la pulizia può rallentare temporaneamente le app.",
       ],
       restart: [
-        "Windows segnala un riavvio pendente",
+        "Windows segnala un riavvio in sospeso",
         "Salva il lavoro e riavvia quando preferisci. PC Tweaker non riavvierà il computer.",
       ],
       security: [
@@ -275,28 +275,28 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     stop: "Arrêter",
     finish: "Terminer",
     paused: "En pause",
-    pausedLine: "En pause : {done} contrôles sur {total} terminés",
+    pausedLine: "En pause : {done} contrôles sur {total} terminés",
     pausedHint:
       "Reprendre ne lit que ce qui manque encore. Fermer PC Tweaker abandonne une analyse en pause.",
     partialTitle: "Analyse partielle",
-    partialBody: "{done} contrôles sur {total} terminés. Non vérifiés : {missing}.",
+    partialBody: "{done} contrôles sur {total} terminés. Non vérifiés : {missing}.",
     olderNote: "Certains de ces résultats ont été lus à {time}, avant la pause.",
     complete: "Analyse terminée",
     results: "Résultats de l’analyse",
     hideResults: "Masquer les résultats",
     showResults: "Afficher les résultats",
-    partial: "Certains contrôles ont échoué",
+    partial: "Certains contrôles n'ont pas pu aboutir",
     scope: "Points contrôlés",
     newDetails: [
       "Tâches tierces lancées à la connexion ou au démarrage.",
-      "Applications facultatives installées ; vous décidez des suppressions.",
+      "Applications facultatives installées ; vous décidez des suppressions.",
       "Détecte les conflits qui empêchent vos règles de fonctionner.",
     ],
     sources: "contrôles terminés",
     recommendations: "Modifications recommandées",
     optional: "Améliorations facultatives",
     optionalBody:
-      "Ces réglages inactifs dépendent de votre usage du PC. Examinez leurs effets individuellement : ce ne sont pas des erreurs et ils sont exclus de Tout corriger.",
+      "Ces réglages inactifs dépendent de votre usage du PC. Examinez leurs effets individuellement : ce ne sont pas des erreurs et ils sont exclus de Tout corriger.",
     proRecommendations: "Recommandations disponibles avec Pro",
     proRecommendationsBody:
       "Ces réglages correspondent aux conseils matériels mais nécessitent Pro. Si vous êtes déjà abonné, connectez-vous à votre compte.",
@@ -315,10 +315,10 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     cancel: "Annuler",
     verified: "Application vérifiée",
     failed: "Non appliqués ou non vérifiés",
-    skipped: "Ne sont plus admissibles",
+    skipped: "Plus éligibles",
     retry: "Relancez l'analyse avant de réessayer.",
     verifying: "Application et vérification…",
-    admin: "Autorisation administrateur",
+    admin: "Autorisation d'administrateur",
     noReview: "Aucun point à examiner parmi les contrôles terminés.",
     unavailable: "Un contrôle indisponible reste inconnu, pas réussi.",
     manual: "Examiner",
@@ -329,7 +329,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Profil système",
       "Espace libre",
       "Programmes de démarrage",
-      "Utilisation mémoire",
+      "Utilisation de la mémoire",
       "Redémarrage requis",
       "Protections",
       "Dates des pilotes",
@@ -340,27 +340,27 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     observations: {
       tasks: [
         "Examiner les tâches de démarrage",
-        "Ces tâches tierces sont activées à la connexion ou au démarrage. Vérifiez leur rôle avant de les désactiver.",
+        "Ces tâches tierces activées s'exécutent à la connexion ou au démarrage. Vérifiez leur rôle avant de les désactiver.",
       ],
       apps: [
         "Examiner les applications facultatives",
-        "Ces applications sont installées et peuvent être supprimées pour ce compte. Gardez celles que vous utilisez ; des données locales peuvent être perdues.",
+        "Ces applications sont installées et peuvent être supprimées pour ce compte. Gardez celles que vous utilisez ; des données locales peuvent être perdues.",
       ],
       efficiency: [
         "Les règles ne peuvent pas agir",
-        "La limitation énergétique globale est désactivée. Examinez le réglage en conflit dans Performance avant d’utiliser les règles.",
+        "La limitation de l’alimentation globale est désactivée. Examinez le réglage en conflit dans Performances avant d’utiliser les règles.",
       ],
       storage: [
         "Peu d'espace libre",
-        "Moins de 15 % d'espace libre. Examinez les fichiers avant toute suppression. Les chiffres indiquent l'espace libre.",
+        "Moins de 15 % d'espace libre. Examinez les fichiers avant toute suppression. Les chiffres indiquent l'espace libre.",
       ],
       startup: [
         "Examiner les programmes de démarrage",
-        "Ces programmes sont activés. Gardez ceux qui vous sont utiles ; leur présence ne prouve pas un démarrage lent.",
+        "Ces programmes sont activés. Gardez ceux qui vous sont utiles ; leur présence ne prouve pas un démarrage lent.",
       ],
       memory: [
-        "Utilisation mémoire élevée lors de l'analyse",
-        "Vérifiez les applications ouvertes. Une seule mesure ne prouve pas un problème ; le nettoyage peut ralentir temporairement les applications.",
+        "Utilisation de la mémoire élevée lors de l'analyse",
+        "Vérifiez les applications ouvertes. Une seule mesure ne prouve pas un problème ; le nettoyage peut ralentir temporairement les applications.",
       ],
       restart: [
         "Windows demande un redémarrage",
@@ -368,7 +368,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       ],
       security: [
         "Une protection Windows semble désactivée",
-        "Vérifiez Sécurité Windows ou les réglages UAC. Les PC gérés et les antivirus tiers peuvent nécessiter une autre configuration.",
+        "Vérifiez la protection dans Sécurité Windows ou les réglages du contrôle de compte d'utilisateur (UAC). Les PC gérés et les logiciels de sécurité tiers peuvent nécessiter une autre configuration.",
       ],
       drivers: [
         "Examiner la date de ce pilote",
@@ -381,7 +381,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     eyebrow: "REVISIÓN DEL SISTEMA",
     title: "Descubre qué necesita atención.",
     intro:
-      "Revisa ajustes, almacenamiento, inicio, memoria, protecciones y fechas de controladores antes de hacer cambios.",
+      "Comprueba los ajustes, el almacenamiento, el inicio, la memoria, las señales de seguridad y las fechas de los controladores de este PC. Revisa las pruebas antes de hacer un cambio.",
     start: "Analizar este PC",
     running: "Leyendo el sistema",
     presenting: "Preparando los resultados",
@@ -415,20 +415,20 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     newDetails: [
       "Tareas de terceros que se ejecutan al iniciar sesión o arrancar.",
       "Aplicaciones opcionales instaladas; tú decides si eliminarlas.",
-      "Detecta conflictos que impiden que tus reglas funcionen.",
+      "Detecta conflictos que impiden que tus reglas de aplicaciones funcionen.",
     ],
     sources: "comprobaciones completas",
     recommendations: "Cambios recomendados",
     optional: "Mejoras opcionales",
     optionalBody:
-      "Estos ajustes inactivos dependen de cómo utilizas el PC. Revisa sus efectos individualmente: no son errores ni se incluyen en Corregir todo.",
+      "Estos ajustes inactivos dependen de cómo usas el PC. Revisa sus ventajas e inconvenientes uno por uno: no son fallos ni se incluyen en Corregir todo.",
     proRecommendations: "Recomendaciones disponibles con Pro",
     proRecommendationsBody:
       "Estos ajustes coinciden con los consejos de hardware, pero requieren Pro. Si ya tienes una suscripción, inicia sesión en tu cuenta.",
     review: "Para revisar",
     empty: "No hay cambios compatibles que aplicar.",
     emptyBody:
-      "Esta cuenta no puede aplicar automáticamente ningún ajuste recomendado para el hardware que siga inactivo. Revisa los resultados y las opciones por separado.",
+      "Esta cuenta no puede aplicar automáticamente ningún ajuste recomendado para el hardware que siga sin aplicar. Revisa los hallazgos y los ajustes opcionales que se muestran aparte.",
     ready: "Un informe claro. Tú eliges cada cambio.",
     readyBody:
       "El análisis no aplica ajustes, elimina archivos ni instala controladores. Separa correcciones compatibles de elementos que requieren tu decisión.",
@@ -436,16 +436,16 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     apply: "Aplicar selección",
     confirm: "Revisar cambios",
     confirmBody:
-      "Solo se cambiarán los ajustes seleccionados. No se modifican archivos, programas de inicio, controladores ni protecciones. Puedes restaurar los ajustes compatibles desde el historial.",
+      "Solo se cambiarán los ajustes seleccionados a continuación. Corregir todo no modifica archivos, aplicaciones de inicio, controladores ni ajustes de seguridad. Los ajustes compatibles se pueden restaurar desde el historial de cambios.",
     cancel: "Cancelar",
-    verified: "Aplicación verificada",
+    verified: "Aplicado y verificado",
     failed: "No aplicados o no verificados",
     skipped: "Ya no cumplen los requisitos",
     retry: "Vuelve a analizar antes de reintentar.",
     verifying: "Aplicando y verificando…",
     admin: "Permiso de administrador",
     noReview: "No hay elementos para revisar en las comprobaciones completas.",
-    unavailable: "Una comprobación no disponible es desconocida, no superada.",
+    unavailable: "Las comprobaciones no disponibles cuentan como desconocidas, no como superadas.",
     manual: "Revisar",
     probes: [
       "Ajustes de Windows",
@@ -456,7 +456,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Programas de inicio",
       "Uso de memoria",
       "Reinicio pendiente",
-      "Protecciones",
+      "Señales de seguridad",
       "Fechas de controladores",
       "Tareas de inicio programadas",
       "Aplicaciones opcionales de Windows",
@@ -465,27 +465,27 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     observations: {
       tasks: [
         "Revisar las tareas de inicio",
-        "Estas tareas de terceros están activas al iniciar sesión o arrancar. Revisa su función antes de desactivarlas.",
+        "Estas tareas de terceros activadas se ejecutan al iniciar sesión o al arrancar. Revisa su función antes de desactivarlas.",
       ],
       apps: [
         "Revisar las aplicaciones opcionales",
         "Estas aplicaciones están instaladas y se pueden eliminar para esta cuenta. Conserva las que uses; podrías perder datos locales.",
       ],
       efficiency: [
-        "Las reglas no pueden actuar",
-        "La limitación energética global está desactivada. Revisa el ajuste en conflicto en Rendimiento antes de usar las reglas.",
+        "Las reglas en segundo plano no pueden surtir efecto",
+        "La limitación de energía global está desactivada. Revisa el ajuste en conflicto en Rendimiento antes de usar las reglas de eficiencia.",
       ],
       storage: [
         "Poco espacio libre",
-        "Queda menos del 15 %. Revisa archivos y opciones de limpieza antes de borrar. Las cifras indican espacio libre.",
+        "Queda menos del 15 % libre. Revisa los archivos y las opciones de limpieza antes de borrar nada. Las cifras de abajo indican el espacio libre.",
       ],
       startup: [
-        "Revisa los programas de inicio",
-        "Estos programas están habilitados. Conserva los que necesitas; su presencia no demuestra un inicio lento.",
+        "Revisar los programas que se inician con Windows",
+        "Estas entradas están activadas. Conserva las que necesites; su mera presencia no significa que el inicio sea lento.",
       ],
       memory: [
         "Uso elevado de memoria durante el análisis",
-        "Revisa primero las aplicaciones abiertas. Una sola lectura no demuestra un problema; limpiar puede ralentizar temporalmente las apps.",
+        "Revisa primero tu carga de trabajo. Una sola lectura no demuestra un problema de memoria; la limpieza puede ralentizar temporalmente las aplicaciones.",
       ],
       restart: [
         "Windows indica un reinicio pendiente",
@@ -493,10 +493,10 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       ],
       security: [
         "Una protección de Windows parece desactivada",
-        "Revisa Seguridad de Windows o UAC. Los equipos administrados y antivirus de terceros pueden requerir otra configuración.",
+        "Revisa esa protección en Seguridad de Windows o en la configuración del UAC. Los equipos administrados y el software de seguridad de terceros pueden requerir otra configuración.",
       ],
       drivers: [
-        "Revisa la fecha de este controlador",
+        "Revisar la fecha de este controlador",
         "La fecha indicada tiene al menos dos años. Esto no demuestra que esté obsoleto ni que exista una actualización compatible.",
       ],
     },
@@ -523,7 +523,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     pause: "Pausieren",
     resume: "Fortsetzen",
     stop: "Stoppen",
-    finish: "Beenden",
+    finish: "Prüfung beenden",
     paused: "Pausiert",
     pausedLine: "Pausiert: {done} von {total} Prüfungen erledigt",
     pausedHint:
@@ -535,7 +535,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     results: "Prüfergebnisse",
     hideResults: "Ergebnisse ausblenden",
     showResults: "Ergebnisse anzeigen",
-    partial: "Einige Prüfungen sind fehlgeschlagen",
+    partial: "Einige Prüfungen konnten nicht abgeschlossen werden",
     scope: "Prüfumfang",
     newDetails: [
       "Drittanbieter-Aufgaben bei Anmeldung oder Systemstart.",
@@ -546,8 +546,8 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     recommendations: "Empfohlene Änderungen",
     optional: "Optionale Verbesserungen",
     optionalBody:
-      "Diese inaktiven Einstellungen hängen von der PC-Nutzung ab. Prüfe die Auswirkungen einzeln: Sie sind keine Fehler und werden nicht mit Alle beheben angewendet.",
-    proRecommendations: "Empfehlungen für Pro",
+      "Diese inaktiven Einstellungen hängen davon ab, wie du deinen PC nutzt. Prüfe die Auswirkungen einzeln: Sie sind keine Fehler und werden nicht mit „Alle beheben“ angewendet.",
+    proRecommendations: "Empfehlungen mit Pro verfügbar",
     proRecommendationsBody:
       "Diese Einstellungen entsprechen den Hardware-Empfehlungen, erfordern aber Pro. Melde dich an, wenn du bereits ein Abonnement hast.",
     review: "Bitte prüfen",
@@ -556,12 +556,12 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Dieses Konto kann keine noch inaktive Hardware-Empfehlung automatisch anwenden. Prüfe die separat aufgeführten Ergebnisse und Optionen.",
     ready: "Ein klarer Bericht. Du entscheidest.",
     readyBody:
-      "Die Prüfung ändert keine Einstellungen, löscht keine Dateien und installiert keine Treiber. Unterstützte Korrekturen und manuelle Prüfungen werden getrennt angezeigt.",
+      "Die Prüfung wendet keine Tweaks an, löscht keine Dateien und installiert keine Treiber. Unterstützte Korrekturen und Punkte, die deine Entscheidung brauchen, werden getrennt angezeigt.",
     selected: "ausgewählt",
     apply: "Auswahl anwenden",
     confirm: "Änderungen prüfen",
     confirmBody:
-      "Nur ausgewählte Einstellungen werden geändert. Dateien, Autostart-Programme, Treiber und Schutzfunktionen bleiben unverändert. Unterstützte Einstellungen lassen sich im Änderungsverlauf wiederherstellen.",
+      "Nur die unten ausgewählten Einstellungen werden geändert. Dateien, Autostart-Programme, Treiber und Sicherheitseinstellungen werden von „Alle beheben“ nicht geändert. Unterstützte Einstellungen lassen sich im Änderungsverlauf wiederherstellen.",
     cancel: "Abbrechen",
     verified: "Anwendung bestätigt",
     failed: "Nicht angewendet oder nicht bestätigt",
@@ -594,11 +594,11 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       ],
       apps: [
         "Optionale Windows-Apps prüfen",
-        "Diese Apps sind für dieses Konto installiert und entfernbar. Behalte benötigte Apps; lokale Daten können verloren gehen.",
+        "Diese Apps sind für dieses Konto installiert und entfernbar. Behalte, was du nutzt; beim Entfernen können lokale App-Daten gelöscht werden.",
       ],
       efficiency: [
         "Hintergrundregeln können nicht wirken",
-        "Die globale Energiebegrenzung ist deaktiviert. Prüfe die widersprüchliche Einstellung unter Leistung vor der Verwendung der Regeln.",
+        "Die globale Energiedrosselung ist deaktiviert. Prüfe die widersprüchliche Einstellung unter Leistung, bevor du Effizienzregeln verwendest.",
       ],
       storage: [
         "Wenig freier Speicherplatz",
@@ -618,7 +618,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       ],
       security: [
         "Ein Windows-Schutz scheint deaktiviert",
-        "Prüfe Windows-Sicherheit oder UAC. Verwaltete Geräte und andere Antivirenprogramme können eine andere Konfiguration erfordern.",
+        "Prüfe den Schutz in Windows-Sicherheit oder in den UAC-Einstellungen. Verwaltete Geräte und Sicherheitssoftware von Drittanbietern können eine andere Konfiguration erfordern.",
       ],
       drivers: [
         "Datum dieses Treibers prüfen",
@@ -631,7 +631,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     eyebrow: "VERIFICAÇÃO DO SISTEMA",
     title: "Descubra o que precisa de atenção.",
     intro:
-      "Verifique definições, armazenamento, arranque, memória, proteções e datas dos drivers antes de fazer alterações.",
+      "Verifique as definições, o armazenamento, o arranque, a memória, as proteções e as datas dos drivers deste PC. Reveja as provas antes de fazer uma alteração.",
     start: "Analisar este PC",
     running: "A ler o sistema",
     presenting: "A preparar os resultados",
@@ -648,7 +648,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     pause: "Pausar",
     resume: "Retomar",
     stop: "Parar",
-    finish: "Terminar",
+    finish: "Terminar análise",
     paused: "Em pausa",
     pausedLine: "Em pausa: {done} de {total} verificações concluídas",
     pausedHint: "Retomar lê apenas o que falta. Fechar o PC Tweaker descarta uma análise em pausa.",
@@ -659,25 +659,25 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     results: "Resultados da análise",
     hideResults: "Ocultar resultados",
     showResults: "Mostrar resultados",
-    partial: "Algumas verificações falharam",
+    partial: "Algumas verificações não puderam terminar",
     scope: "O que verificamos",
     newDetails: [
       "Tarefas de terceiros executadas no início de sessão ou arranque.",
       "Aplicações opcionais instaladas; a remoção é uma escolha sua.",
-      "Deteta conflitos que impedem as regras de funcionar.",
+      "Deteta conflitos que impedem as suas regras de aplicações de funcionar.",
     ],
     sources: "verificações concluídas",
     recommendations: "Alterações recomendadas",
     optional: "Melhorias opcionais",
     optionalBody:
-      "Estas definições inativas dependem da utilização do PC. Analise os efeitos individualmente: não são erros e não entram em Corrigir tudo.",
-    proRecommendations: "Recomendações disponíveis com Pro",
+      "Estas definições inativas dependem da forma como usa o PC. Pondere os prós e contras de cada uma: não são falhas e não entram em Corrigir tudo.",
+    proRecommendations: "Recomendações disponíveis com o Pro",
     proRecommendationsBody:
-      "Estas definições correspondem às recomendações de hardware, mas exigem Pro. Se já tem uma subscrição, inicie sessão na sua conta.",
+      "Estas definições correspondem às recomendações de hardware, mas exigem o Pro. Se já tem uma subscrição, inicie sessão na sua conta.",
     review: "Para rever",
     empty: "Nenhuma alteração compatível para aplicar.",
     emptyBody:
-      "Esta conta não pode aplicar automaticamente nenhuma definição recomendada para o hardware que ainda esteja inativa. Analise os resultados e as opções em separado.",
+      "Esta conta não pode aplicar automaticamente nenhuma definição recomendada para o hardware que ainda esteja inativa. Reveja os resultados e as definições opcionais listadas em separado.",
     ready: "Um relatório claro. Cada alteração é escolha sua.",
     readyBody:
       "A análise não altera definições, não elimina ficheiros nem instala drivers. As correções compatíveis ficam separadas dos itens que precisam da sua decisão.",
@@ -685,7 +685,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     apply: "Aplicar seleção",
     confirm: "Rever alterações",
     confirmBody:
-      "Apenas as definições selecionadas serão alteradas. Ficheiros, programas de arranque, drivers e proteções não serão modificados. Restaure as definições compatíveis a partir do histórico.",
+      "Apenas as definições selecionadas abaixo serão alteradas. Ficheiros, aplicações de arranque, drivers e definições de segurança não são alterados por Corrigir tudo. As definições compatíveis podem ser restauradas a partir do Histórico de alterações.",
     cancel: "Cancelar",
     verified: "Aplicação verificada",
     failed: "Não aplicados ou não verificados",
@@ -694,7 +694,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     verifying: "A aplicar e a verificar…",
     admin: "Permissão de administrador",
     noReview: "Nenhum item para rever nas verificações concluídas.",
-    unavailable: "Verificações indisponíveis permanecem desconhecidas, não aprovadas.",
+    unavailable: "As verificações indisponíveis ficam como desconhecidas, não como aprovadas.",
     manual: "Rever",
     probes: [
       "Definições do Windows",
@@ -721,15 +721,15 @@ export const SCAN_COPY: Record<Lang, Copy> = {
         "Estas aplicações estão instaladas e podem ser removidas nesta conta. Mantenha as que utiliza; a remoção pode apagar dados locais.",
       ],
       efficiency: [
-        "As regras não podem atuar",
+        "As regras em segundo plano não podem atuar",
         "A limitação energética global está desativada. Reveja a definição em conflito em Desempenho antes de utilizar as regras.",
       ],
       storage: [
         "Pouco espaço livre",
-        "Menos de 15 % está livre. Reveja os ficheiros e as opções de limpeza antes de eliminar. Os valores indicam espaço livre.",
+        "Menos de 15% está livre. Reveja os ficheiros e as opções de limpeza antes de eliminar o que quer que seja. Os valores abaixo indicam o espaço livre.",
       ],
       startup: [
-        "Reveja os programas de arranque",
+        "Rever os programas que arrancam com o Windows",
         "Estes programas estão ativados. Mantenha os que utiliza; a sua presença não comprova um arranque lento.",
       ],
       memory: [
@@ -742,10 +742,10 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       ],
       security: [
         "Uma proteção do Windows parece desativada",
-        "Verifique a Segurança do Windows ou o UAC. Dispositivos geridos e antivírus de terceiros podem precisar de outra configuração.",
+        "Verifique a proteção na Segurança do Windows ou nas definições do UAC. Os dispositivos geridos e o software de segurança de terceiros podem precisar de outra configuração.",
       ],
       drivers: [
-        "Reveja a data deste driver",
+        "Rever a data deste driver",
         "A data indicada tem pelo menos dois anos. Isso não comprova que o driver esteja desatualizado nem que exista uma atualização compatível.",
       ],
     },

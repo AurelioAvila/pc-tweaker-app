@@ -156,7 +156,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     scanning: "Controllo delle app installate…",
     scan: "Ripeti scansione",
     scanError: "Impossibile leggere l’elenco delle app. La selezione non è cambiata.",
-    empty: "Nessuna app rimovibile di questo elenco selezionato è installata per l’account.",
+    empty: "Nessuna app rimovibile di questo elenco curato è installata per l’account.",
     noMatch: "Nessuna app corrisponde alla ricerca.",
     search: "Cerca tra le app installate",
     selected: "selezionate",
@@ -170,16 +170,16 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     filterLabel: "Filtra le app",
     details: "Dettagli",
     elevatedTitle: "La rimozione richiede una sessione normale",
-    publisherMismatch: "Publisher o firma non corrispondono all’app Microsoft verificata.",
+    publisherMismatch: "Editore o firma non corrispondono all’app Microsoft verificata.",
     protectedPackage: "Windows identifica questo pacchetto come condiviso o protetto.",
     dependency: "Un’altra app installata dipende da questo pacchetto.",
     nonRemovable: "Windows indica che questo pacchetto non è rimovibile.",
     unverifiedRemovability: "Windows non ha potuto verificare se il pacchetto è rimovibile.",
     requiresStandardUser:
-      "Riapri PC Tweaker normalmente, senza Esegui come amministratore, per rimuovere app dal tuo account.",
+      "Riapri PC Tweaker normalmente, senza «Esegui come amministratore», per rimuovere app dal tuo account.",
     currentUser: "Solo utente Windows corrente",
     scope:
-      "Cambia solo questo account. Le app degli altri utenti e i pacchetti predisposti per nuovi account restano invariati.",
+      "Riguarda solo questo account. Le app degli altri utenti e i pacchetti predisposti per i nuovi account restano invariati.",
     protectedTitle: "I componenti essenziali di Windows sono protetti",
     protected:
       "Store, App Installer, framework, shell, componenti di sicurezza, WebView2 e servizi gaming sono esclusi. OneDrive e la rimozione globale richiedono procedure separate.",
@@ -226,7 +226,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     weather: "Previsioni e viste meteo fissate potrebbero richiedere una nuova configurazione.",
     news: "L’app News e le sue preferenze locali potrebbero andare perse.",
     copilot:
-      "Rimuove l’app Copilot consumer da questo account. Non cambia le policy di Windows Copilot o altre funzioni AI.",
+      "Rimuove l’app Copilot consumer da questo account. Non cambia i criteri di Windows Copilot né altre funzioni IA.",
     clipchamp:
       "Editor video. Salva progetti e file multimediali locali prima della rimozione: la reinstallazione potrebbe non recuperarli.",
     outlook:
@@ -236,7 +236,8 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     tierCaution: "Valuta prima",
     tierHintRecommended: "Usata di rado, e non si perde nulla di personale.",
     tierHintSafe: "Non si perde nulla di personale, ma molti la usano.",
-    tierHintCaution: "Con lei se ne vanno dati locali, associazioni o un ruolo predefinito.",
+    tierHintCaution:
+      "Insieme all'app se ne vanno dati locali, associazioni o un ruolo predefinito.",
     statSpace: "Spazio che potresti liberare",
     upTo: "fino a {size}",
     sizeUnknown: "Dimensione sconosciuta",
@@ -278,7 +279,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     noStartupTask: "Nessuna attività di avvio",
     notRunning: "Non in esecuzione",
     unknownActivity: "Non registrata",
-    presetLabel: "Riempi la selezione",
+    presetLabel: "Selezione rapida",
     presetMinimal: "Minima",
     presetBalanced: "Bilanciata",
     presetAggressive: "Aggressiva",
@@ -303,7 +304,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     scanning: "Recherche des applications installées…",
     scan: "Relancer l’analyse",
     scanError: "Impossible de lire la liste des applications. Votre sélection n’a pas changé.",
-    empty: "Aucune application amovible de cette sélection n’est installée pour ce compte.",
+    empty: "Aucune application supprimable de cette sélection n’est installée pour ce compte.",
     noMatch: "Aucune application ne correspond à la recherche.",
     search: "Rechercher des applications installées",
     selected: "sélectionnées",
@@ -324,13 +325,13 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     nonRemovable: "Windows indique que ce package ne peut pas être supprimé.",
     unverifiedRemovability: "Windows n’a pas pu vérifier si ce package peut être supprimé.",
     requiresStandardUser:
-      "Rouvrez PC Tweaker normalement, sans Exécuter en tant qu’administrateur, pour supprimer des applications de votre compte.",
+      "Rouvrez PC Tweaker normalement, sans « Exécuter en tant qu’administrateur », pour supprimer des applications de votre compte.",
     currentUser: "Utilisateur Windows actuel uniquement",
     scope:
       "Seul ce compte est concerné. Les applications des autres utilisateurs et les packages prévus pour les nouveaux comptes restent inchangés.",
     protectedTitle: "Les composants essentiels de Windows sont protégés",
     protected:
-      "Store, App Installer, infrastructures, shell, sécurité, WebView2 et services de jeu sont exclus. OneDrive et la suppression globale exigent des procédures distinctes.",
+      "Store, App Installer, frameworks, shell, composants de sécurité, WebView2 et services de jeu sont exclus. OneDrive et la suppression pour tout le système exigent des procédures distinctes.",
     choose: "Choisir les applications",
     preview: "Vérifier la suppression",
     previewTitle: "Vérifier les packages exacts",
@@ -343,7 +344,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     resultTitle: "Résultats de la suppression",
     resultNote:
       "Chaque résultat vérifie l’identité exacte du package. Son absence confirmée ne prouve pas quel processus l’a supprimé. Si l’état est inconnu, relancez l’analyse avant de décider.",
-    removed: "Absente (vérifié)",
+    removed: "Non installée (vérifié)",
     failed: "Échec",
     unknown: "État inconnu",
     pending: "Vérification en attente",
@@ -354,11 +355,11 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     privacyTitle: "Utiliser les contrôles Windows existants",
     privacyText:
       "Suggestions et confidentialité restent dans leurs catégories et utilisent la même restauration des valeurs sauvegardées. Leur disponibilité et leurs effets varient selon la version et l’édition de Windows.",
-    openPrivacy: "Ouvrir la confidentialité",
+    openPrivacy: "Ouvrir les réglages de confidentialité",
     openProfiles: "Ouvrir les profils",
     openRollback: "Ouvrir l’historique des modifications",
     privacyNote:
-      "Supprimer une application ne désactive pas les suggestions ni les paramètres de confidentialité. Restaurer un paramètre ne réinstalle pas une application.",
+      "Supprimer une application ne désactive pas les suggestions ni les réglages de confidentialité de Windows. Restaurer un réglage ne réinstalle pas une application.",
     historyEmpty: "Aucune suppression enregistrée.",
     loadingHistory: "Chargement de l’historique des suppressions…",
     historyError: "Impossible de lire l’historique des suppressions.",
@@ -370,14 +371,14 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
       "Une réinstallation depuis le Store peut restaurer l’application, sans garantir sa version, son provisionnement, ses paramètres ou ses données d’origine. La disponibilité peut varier.",
     dateUnknown: "Date indisponible",
     solitaire:
-      "Jeux occasionnels. Les paramètres ou progrès locaux peuvent être perdus ; les progrès synchronisés dépendent du compte Microsoft.",
+      "Jeux occasionnels. Les paramètres ou progrès locaux peuvent être perdus ; les progrès synchronisés dépendent du compte Microsoft.",
     weather:
       "Les prévisions et vues météo épinglées peuvent nécessiter une nouvelle configuration.",
     news: "L’application News et ses préférences locales peuvent être perdues.",
     copilot:
       "Supprime l’application Copilot grand public de ce compte. Les stratégies Windows Copilot et les autres fonctions d’IA ne changent pas.",
     clipchamp:
-      "Éditeur vidéo. Sauvegardez les projets et médias locaux avant la suppression ; une réinstallation peut ne pas les restaurer.",
+      "Éditeur vidéo. Sauvegardez les projets et médias locaux avant la suppression ; une réinstallation peut ne pas les restaurer.",
     outlook:
       "Application de messagerie et calendrier. Il peut falloir reconfigurer les comptes et paramètres.",
     tierRecommended: "Recommandée",
@@ -397,13 +398,13 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     selectionSummary: "{count} sélectionnées · jusqu'à {size}",
     selectionNone: "Sélectionnez les applications à supprimer",
     whatYouLose: "Ce que vous perdez",
-    progress: "Suppression {done} sur {total}…",
+    progress: "Suppression de {done} sur {total}…",
     waiting: "En attente",
     reinstall: "Réinstaller depuis le Store",
     lockedBadge: "Non supprimable",
     spaceNote:
-      "Windows garde les fichiers d'une application tant qu'un autre compte l'utilise : c'est donc le maximum que la suppression peut libérer.",
-    confirmTitle: "Supprimer {count} applications ?",
+      "Windows garde les fichiers d'une application tant qu'un autre compte l'utilise : c'est donc le maximum que la suppression peut libérer.",
+    confirmTitle: "Supprimer {count} applications ?",
     confirmSpace: "Jusqu'à {size} de fichiers et données d'applications",
     appFiles: "Fichiers de l'application",
     appData: "Vos données",
@@ -415,7 +416,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     summaryDone: "{removed} supprimées · {failed} en échec",
     lastActivity: "Données modifiées pour la dernière fois le {date}",
     lastActivityHint:
-      "Date à laquelle l'application a modifié pour la dernière fois un fichier de son dossier de données. Les mises à jour en arrière-plan comptent aussi et certaines applications gardent leurs données ailleurs : c'est un indice, pas une preuve d'utilisation.",
+      "Date à laquelle l'application a modifié pour la dernière fois un fichier de son dossier de données. Les mises à jour en arrière-plan comptent aussi et certaines applications gardent leurs données ailleurs : c'est un indice, pas une preuve d'utilisation.",
     idleDays: "Aucune modification de ses données depuis {days} jours",
     noActivitySince: "Aucune modification de ses données depuis le {date}",
     startsWithWindows: "Démarre avec Windows",
@@ -432,7 +433,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     presetBalanced: "Équilibrée",
     presetAggressive: "Agressive",
     presetMinimalHint:
-      "Seulement les applications recommandées : peu utilisées, sans rien perdre de personnel.",
+      "Seulement les applications recommandées : peu utilisées, sans rien perdre de personnel.",
     presetBalancedHint: "Les applications recommandées et celles qu'on peut supprimer sans risque.",
     presetAggressiveHint:
       "Toutes les applications qu'on peut supprimer ici, y compris celles qui gardent des données locales. Vérifiez-les une par une dans l'aperçu.",
@@ -447,14 +448,15 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
   },
   es: {
     title: "Debloat con control",
-    intro: "Elige las aplicaciones Windows opcionales que quieres quitar de esta cuenta.",
-    apps: "Aplicaciones Windows",
+    intro: "Elige las aplicaciones opcionales de Windows que quieres quitar de esta cuenta.",
+    apps: "Aplicaciones de Windows",
     suggestions: "Sugerencias y privacidad",
     history: "Historial y recuperación",
     scanning: "Comprobando aplicaciones instaladas…",
     scan: "Volver a analizar",
     scanError: "No se pudo leer la lista de aplicaciones. La selección no cambió.",
-    empty: "No hay aplicaciones extraíbles de esta lista seleccionada instaladas para esta cuenta.",
+    empty:
+      "Ninguna aplicación de esta lista seleccionada que se pueda quitar está instalada para esta cuenta.",
     noMatch: "No hay aplicaciones que coincidan con la búsqueda.",
     search: "Buscar aplicaciones instaladas",
     selected: "seleccionadas",
@@ -467,20 +469,20 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     all: "Todas",
     filterLabel: "Filtrar aplicaciones",
     details: "Detalles",
-    elevatedTitle: "Para quitar apps se necesita una sesión normal",
+    elevatedTitle: "Para quitar aplicaciones se necesita una sesión normal",
     publisherMismatch: "El editor o la firma no coinciden con la aplicación Microsoft verificada.",
     protectedPackage: "Windows identifica este paquete como compartido o protegido.",
     dependency: "Otra aplicación instalada depende de este paquete.",
-    nonRemovable: "Windows indica que este paquete no se puede eliminar.",
-    unverifiedRemovability: "Windows no pudo verificar si se puede eliminar este paquete.",
+    nonRemovable: "Windows indica que este paquete no se puede quitar.",
+    unverifiedRemovability: "Windows no pudo verificar si este paquete se puede quitar.",
     requiresStandardUser:
-      "Vuelve a abrir PC Tweaker normalmente, sin Ejecutar como administrador, para eliminar aplicaciones de tu cuenta.",
+      "Vuelve a abrir PC Tweaker normalmente, sin Ejecutar como administrador, para quitar aplicaciones de tu cuenta.",
     currentUser: "Solo el usuario actual de Windows",
     scope:
       "Solo afecta a esta cuenta. Las aplicaciones de otros usuarios y los paquetes preparados para cuentas nuevas siguen igual.",
     protectedTitle: "Los componentes esenciales de Windows están protegidos",
     protected:
-      "Store, App Installer, marcos, shell, seguridad, WebView2 y servicios de juego están excluidos. OneDrive y la eliminación global requieren procesos aparte.",
+      "Store, App Installer, marcos, shell, componentes de seguridad, WebView2 y servicios de juegos están excluidos. OneDrive y la eliminación para todo el sistema requieren procesos aparte.",
     choose: "Elegir aplicaciones",
     preview: "Revisar eliminación",
     previewTitle: "Revisar paquetes exactos",
@@ -488,7 +490,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
       "Estas aplicaciones se eliminarán para el usuario actual de Windows. Podrían perderse ajustes o datos locales. Cierra las aplicaciones antes de continuar.",
     identity: "Identidad del paquete",
     cancel: "Cancelar",
-    remove: "Eliminar aplicaciones seleccionadas",
+    remove: "Quitar las aplicaciones seleccionadas",
     removing: "Eliminando y verificando…",
     resultTitle: "Resultados de la eliminación",
     resultNote:
@@ -508,7 +510,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     openProfiles: "Abrir perfiles",
     openRollback: "Abrir historial de cambios",
     privacyNote:
-      "Eliminar una aplicación no desactiva sugerencias ni ajustes de privacidad. Revertir ajustes no reinstala aplicaciones.",
+      "Quitar una aplicación no desactiva las sugerencias ni los ajustes de privacidad. Revertir ajustes no reinstala aplicaciones.",
     historyEmpty: "Aún no hay eliminaciones registradas.",
     loadingHistory: "Cargando el historial de eliminaciones…",
     historyError: "No se pudo leer el historial de eliminaciones.",
@@ -520,10 +522,10 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
       "Reinstalar desde Store puede recuperar la aplicación, pero no garantiza versión, aprovisionamiento, ajustes ni datos locales originales. La disponibilidad puede variar.",
     dateUnknown: "Fecha no disponible",
     solitaire:
-      "Juegos casuales. Pueden perderse ajustes o progreso locales; el progreso sincronizado depende de la cuenta Microsoft.",
+      "Juegos casuales. Al quitarla pueden perderse ajustes o progreso locales; el progreso sincronizado depende de tu cuenta Microsoft.",
     weather:
-      "Las previsiones y vistas del tiempo ancladas pueden necesitar configuración de nuevo.",
-    news: "La aplicación News y sus preferencias locales pueden perderse.",
+      "Puede que tengas que volver a configurar las previsiones y las vistas del tiempo ancladas.",
+    news: "La aplicación Noticias (Microsoft News) y sus preferencias locales pueden perderse.",
     copilot:
       "Elimina la aplicación Copilot de consumo de esta cuenta. No cambia las directivas de Windows Copilot ni otras funciones de IA.",
     clipchamp:
@@ -531,33 +533,34 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     outlook:
       "Aplicación de correo y calendario. Puede que debas configurar de nuevo cuentas y ajustes.",
     tierRecommended: "Recomendada",
-    tierSafe: "Segura de quitar",
+    tierSafe: "Se puede quitar sin riesgo",
     tierCaution: "Revisa antes",
     tierHintRecommended: "Se usa poco y no se pierde nada personal.",
     tierHintSafe: "No se pierde nada personal, pero mucha gente la usa.",
-    tierHintCaution: "Con ella se van datos locales, vinculaciones o una función predeterminada.",
+    tierHintCaution:
+      "Al quitarla se pierden datos locales, emparejamientos o un rol predeterminado.",
     statSpace: "Espacio que podrías liberar",
     upTo: "hasta {size}",
     sizeUnknown: "Tamaño desconocido",
     sortSize: "Tamaño",
     sortTier: "Recomendación",
-    showLocked: "Mostrar las apps que no se pueden quitar",
-    removeCount: "Quitar {count} apps",
-    removeOne: "Quitar 1 app",
+    showLocked: "Mostrar las aplicaciones que no se pueden quitar",
+    removeCount: "Quitar {count} aplicaciones",
+    removeOne: "Quitar 1 aplicación",
     selectionSummary: "{count} seleccionadas · hasta {size}",
-    selectionNone: "Selecciona las apps que quieres quitar",
+    selectionNone: "Selecciona las aplicaciones que quieres quitar",
     whatYouLose: "Qué pierdes",
     progress: "Quitando {done} de {total}…",
     waiting: "En espera",
     reinstall: "Reinstalar desde Store",
     lockedBadge: "No se puede quitar",
     spaceNote:
-      "Windows conserva los archivos de una app mientras otra cuenta la use, así que esto es lo máximo que puede liberar quitarla.",
-    confirmTitle: "¿Quitar {count} apps?",
-    confirmSpace: "Hasta {size} entre archivos y datos de apps",
-    appFiles: "Archivos de la app",
+      "Windows conserva los archivos de una aplicación mientras otra cuenta la use, así que esto es lo máximo que puede liberar quitarla.",
+    confirmTitle: "¿Quitar {count} aplicaciones?",
+    confirmSpace: "Hasta {size} entre archivos y datos de aplicaciones",
+    appFiles: "Archivos de la aplicación",
     appData: "Tus datos",
-    emptyFilter: "Ninguna app coincide con estos filtros.",
+    emptyFilter: "Ninguna aplicación coincide con estos filtros.",
     clearFilters: "Borrar filtros",
     installedOn: "Instalada o actualizada el {date}",
     selectGroup: "Seleccionar todas",
@@ -596,7 +599,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
   },
   de: {
     title: "Debloat mit Kontrolle",
-    intro: "Wählen Sie optionale Windows-Apps, die aus diesem Konto entfernt werden sollen.",
+    intro: "Wähle optionale Windows-Apps, die aus diesem Konto entfernt werden sollen.",
     apps: "Windows-Apps",
     suggestions: "Vorschläge und Datenschutz",
     history: "Verlauf und Wiederherstellung",
@@ -625,7 +628,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     nonRemovable: "Windows kennzeichnet dieses Paket als nicht entfernbar.",
     unverifiedRemovability: "Windows konnte nicht prüfen, ob dieses Paket entfernt werden kann.",
     requiresStandardUser:
-      "Starten Sie PC Tweaker normal, ohne Als Administrator ausführen, um Apps für Ihr Konto zu entfernen.",
+      "Starte PC Tweaker normal, ohne „Als Administrator ausführen“, um Apps für dein Konto zu entfernen.",
     currentUser: "Nur aktueller Windows-Benutzer",
     scope:
       "Nur dieses Konto ist betroffen. Apps anderer Benutzer und für neue Konten bereitgestellte Pakete bleiben unverändert.",
@@ -636,22 +639,22 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     preview: "Entfernen prüfen",
     previewTitle: "Genaue Pakete prüfen",
     previewIntro:
-      "Diese Apps werden für den aktuellen Windows-Benutzer entfernt. Einstellungen oder lokale Daten können verloren gehen. Schließen Sie die Apps zuerst.",
+      "Diese Apps werden für den aktuellen Windows-Benutzer entfernt. Einstellungen oder lokale Daten können verloren gehen. Schließe die Apps zuerst.",
     identity: "Paketidentität",
     cancel: "Abbrechen",
     remove: "Ausgewählte Apps entfernen",
     removing: "Entfernen und Prüfen…",
     resultTitle: "Ergebnisse",
     resultNote:
-      "Jedes Ergebnis prüft die genaue Paketidentität. Die bestätigte Abwesenheit belegt nicht, welcher Prozess es entfernt hat. Bei unbekanntem Status prüfen Sie erneut, bevor Sie entscheiden.",
+      "Jedes Ergebnis prüft die genaue Paketidentität. Die bestätigte Abwesenheit belegt nicht, welcher Prozess es entfernt hat. Bei unbekanntem Status prüfe erneut, bevor du entscheidest.",
     removed: "Nicht installiert (bestätigt)",
     failed: "Fehlgeschlagen",
     unknown: "Status unbekannt",
     pending: "Prüfung ausstehend",
     removalError:
-      "Die Entfernungsanfrage ist fehlgeschlagen. Prüfen Sie den Verlauf und suchen Sie erneut, bevor Sie manuell wiederholen.",
+      "Die Entfernungsanfrage ist fehlgeschlagen. Prüfe den Verlauf und starte die Prüfung erneut, bevor du es manuell versuchst.",
     refreshError:
-      "Entfernung abgeschlossen, aber die Liste konnte nicht aktualisiert werden. Prüfen Sie den Status erneut.",
+      "Entfernung abgeschlossen, aber die App-Liste konnte nicht aktualisiert werden. Prüfe erneut, um den aktuellen Status zu bestätigen.",
     privacyTitle: "Vorhandene Windows-Einstellungen verwenden",
     privacyText:
       "Vorschläge und Datenschutz bleiben in ihren Kategorien und nutzen dieselbe Wiederherstellung gespeicherter Werte. Verfügbarkeit und Wirkung hängen von Windows-Version und Edition ab.",
@@ -678,7 +681,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     copilot:
       "Entfernt die Copilot-App für Privatnutzer aus diesem Konto. Windows-Copilot-Richtlinien und andere KI-Funktionen bleiben unverändert.",
     clipchamp:
-      "Videoeditor. Sichern Sie lokale Projekte und Medien vor dem Entfernen; eine Neuinstallation stellt sie möglicherweise nicht wieder her.",
+      "Videoeditor. Sichere lokale Projekte und Medien vor dem Entfernen; eine Neuinstallation stellt sie möglicherweise nicht wieder her.",
     outlook:
       "Mail- und Kalender-App. Konten und App-Einstellungen müssen eventuell neu eingerichtet werden.",
     tierRecommended: "Empfohlen",
@@ -698,7 +701,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     selectionSummary: "{count} ausgewählt · bis zu {size}",
     selectionNone: "Wähle die Apps aus, die du entfernen willst",
     whatYouLose: "Was du verlierst",
-    progress: "Entferne {done} von {total}…",
+    progress: "{done} von {total} werden entfernt…",
     waiting: "Wartet",
     reinstall: "Aus dem Store neu installieren",
     lockedBadge: "Nicht entfernbar",
@@ -754,7 +757,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     scanning: "A verificar aplicações instaladas…",
     scan: "Analisar novamente",
     scanError: "Não foi possível ler a lista de aplicações. A seleção não foi alterada.",
-    empty: "Não há aplicações removíveis desta lista selecionada instaladas nesta conta.",
+    empty: "Nenhuma aplicação removível desta lista selecionada está instalada nesta conta.",
     noMatch: "Nenhuma aplicação corresponde à pesquisa.",
     search: "Pesquisar aplicações instaladas",
     selected: "selecionadas",
@@ -802,7 +805,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
       "O pedido de remoção falhou. Consulte o histórico e analise novamente antes de repetir manualmente.",
     refreshError:
       "A remoção terminou, mas a lista não pôde ser atualizada. Analise novamente para verificar o estado.",
-    privacyTitle: "Use os controlos Windows existentes",
+    privacyTitle: "Use os controlos existentes do Windows",
     privacyText:
       "Sugestões e privacidade permanecem nas categorias existentes e usam o mesmo restauro dos valores guardados. A disponibilidade e os efeitos variam com a versão e edição do Windows.",
     openPrivacy: "Abrir privacidade",
@@ -815,8 +818,8 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     historyError: "Não foi possível ler o histórico de remoções.",
     reloadHistory: "Recarregar histórico",
     recovery: "Abrir página da Microsoft Store",
-    recoveryError: "Não foi possível abrir a ligação Store verificada.",
-    recoveryNone: "Não há página Store verificada para esta aplicação.",
+    recoveryError: "Não foi possível abrir a ligação verificada da Store.",
+    recoveryNone: "Não há nenhuma página verificada da Store para esta aplicação.",
     recoveryNote:
       "Reinstalar pela Store pode recuperar a aplicação, mas não garante a versão, o aprovisionamento, as definições ou os dados locais originais. A disponibilidade pode variar.",
     dateUnknown: "Data indisponível",
@@ -831,7 +834,7 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     outlook:
       "Aplicação de correio e calendário. Contas e definições podem precisar de nova configuração.",
     tierRecommended: "Recomendada",
-    tierSafe: "Segura de remover",
+    tierSafe: "Remoção segura",
     tierCaution: "Verifique antes",
     tierHintRecommended: "Pouco usada, e nada pessoal se perde.",
     tierHintSafe: "Nada pessoal se perde, mas muita gente a usa.",
@@ -841,23 +844,23 @@ export const DEBLOAT_COPY: Record<Lang, Copy> = {
     sizeUnknown: "Tamanho desconhecido",
     sortSize: "Tamanho",
     sortTier: "Recomendação",
-    showLocked: "Mostrar apps que não podem ser removidas",
-    removeCount: "Remover {count} apps",
-    removeOne: "Remover 1 app",
+    showLocked: "Mostrar aplicações que não podem ser removidas",
+    removeCount: "Remover {count} aplicações",
+    removeOne: "Remover 1 aplicação",
     selectionSummary: "{count} selecionadas · até {size}",
-    selectionNone: "Selecione as apps que quer remover",
+    selectionNone: "Selecione as aplicações que quer remover",
     whatYouLose: "O que perde",
     progress: "A remover {done} de {total}…",
     waiting: "Em espera",
     reinstall: "Reinstalar a partir da Store",
     lockedBadge: "Não removível",
     spaceNote:
-      "O Windows mantém os ficheiros de uma app enquanto outra conta a usar, por isso este é o máximo que a remoção pode libertar.",
-    confirmTitle: "Remover {count} apps?",
-    confirmSpace: "Até {size} entre ficheiros e dados de apps",
-    appFiles: "Ficheiros da app",
+      "O Windows mantém os ficheiros de uma aplicação enquanto outra conta ainda a usar, por isso este é o máximo que a remoção pode libertar.",
+    confirmTitle: "Remover {count} aplicações?",
+    confirmSpace: "Até {size} entre ficheiros e dados de aplicações",
+    appFiles: "Ficheiros da aplicação",
     appData: "Os seus dados",
-    emptyFilter: "Nenhuma app corresponde a estes filtros.",
+    emptyFilter: "Nenhuma aplicação corresponde a estes filtros.",
     clearFilters: "Limpar filtros",
     installedOn: "Instalada ou atualizada em {date}",
     selectGroup: "Selecionar todas",
@@ -968,19 +971,19 @@ export const LIBRARY_COPY: Record<Lang, typeof libraryEn> = {
     selectedOnly: "Solo selezionate",
   },
   fr: {
-    eyebrow: "BIBLIOTHÈQUE D’APPS WINDOWS",
+    eyebrow: "BIBLIOTHÈQUE D’APPLICATIONS WINDOWS",
     title: "Gardez ce qui vous sert.",
     intro:
-      "Examinez les apps facultatives et les conséquences de leur suppression. Rien n’est présélectionné.",
-    catalogue: "Apps du catalogue",
-    categories: "Catégories d’apps",
+      "Examinez les applications facultatives, comprenez ce que vous perdez et ne supprimez que ce que vous choisissez. Rien n’est présélectionné.",
+    catalogue: "Applications du catalogue",
+    categories: "Catégories d’applications",
     media: "Médias et jeux",
     productivity: "Productivité",
     connections: "Courrier et téléphone",
     windows: "Extras Windows",
-    showAbsent: "Inclure les apps non installées",
+    showAbsent: "Inclure les applications non installées",
     notInstalled: "Non installée",
-    selectVisible: "Sélectionner les apps supprimables affichées",
+    selectVisible: "Sélectionner les applications supprimables affichées",
     clear: "Effacer la sélection",
     sort: "Trier par",
     name: "Nom",
@@ -988,19 +991,19 @@ export const LIBRARY_COPY: Record<Lang, typeof libraryEn> = {
     selectedOnly: "Sélection uniquement",
   },
   es: {
-    eyebrow: "BIBLIOTECA DE APPS DE WINDOWS",
-    title: "Espacio para lo que usas.",
+    eyebrow: "BIBLIOTECA DE APLICACIONES DE WINDOWS",
+    title: "Haz sitio para lo que usas.",
     intro:
-      "Revisa las apps opcionales y qué perderías al quitarlas. Tú eliges: no hay nada preseleccionado.",
-    catalogue: "Apps del catálogo",
-    categories: "Categorías de apps",
+      "Revisa las aplicaciones opcionales, entiende qué pierdes y quita solo lo que elijas. No hay nada preseleccionado.",
+    catalogue: "Aplicaciones del catálogo",
+    categories: "Categorías de aplicaciones",
     media: "Multimedia y juegos",
     productivity: "Productividad",
     connections: "Correo y teléfono",
     windows: "Extras de Windows",
-    showAbsent: "Incluir apps no instaladas",
+    showAbsent: "Incluir aplicaciones no instaladas",
     notInstalled: "No instalada",
-    selectVisible: "Seleccionar las extraíbles visibles",
+    selectVisible: "Seleccionar las visibles que se pueden quitar",
     clear: "Borrar selección",
     sort: "Ordenar por",
     name: "Nombre",
@@ -1028,17 +1031,17 @@ export const LIBRARY_COPY: Record<Lang, typeof libraryEn> = {
     selectedOnly: "Nur ausgewählte",
   },
   pt: {
-    eyebrow: "BIBLIOTECA DE APPS WINDOWS",
+    eyebrow: "BIBLIOTECA DE APLICAÇÕES WINDOWS",
     title: "Espaço para o que utiliza.",
     intro:
-      "Reveja as apps opcionais e as consequências da remoção. A escolha é sua: nada é pré-selecionado.",
-    catalogue: "Apps no catálogo",
-    categories: "Categorias de apps",
+      "Reveja as aplicações opcionais, perceba o que perde e remova apenas o que escolher. Nada é selecionado por si.",
+    catalogue: "Aplicações no catálogo",
+    categories: "Categorias de aplicações",
     media: "Multimédia e jogos",
     productivity: "Produtividade",
     connections: "Correio e telefone",
     windows: "Extras do Windows",
-    showAbsent: "Incluir apps não instaladas",
+    showAbsent: "Incluir aplicações não instaladas",
     notInstalled: "Não instalada",
     selectVisible: "Selecionar as removíveis visíveis",
     clear: "Limpar seleção",
@@ -1067,7 +1070,7 @@ export const EXTRA_IMPACTS: Record<Lang, Record<string, string>> = {
       "Esporta prima le registrazioni. Reinstallare non recupera le registrazioni locali eliminate.",
     feedback: "Non potrai inviare segnalazioni tramite Hub di Feedback finché non lo reinstalli.",
     phone:
-      "L’integrazione con il telefono si interrompe. Dopo la reinstallazione potrebbe servire un nuovo abbinamento.",
+      "L’integrazione con il telefono si interrompe su questo PC. Dopo la reinstallazione potrebbe servire associare di nuovo il telefono.",
     media:
       "Scegli prima un altro lettore predefinito. Playlist e impostazioni locali potrebbero andare perse.",
     movies:
@@ -1076,32 +1079,33 @@ export const EXTRA_IMPACTS: Record<Lang, Record<string, string>> = {
       "Rimuove l’hub, non Word, Excel o l’abbonamento Microsoft 365. Le impostazioni locali potrebbero andare perse.",
   },
   fr: {
-    todo: "Synchronisez vos listes. Les tâches non synchronisées et les réglages locaux peuvent être perdus.",
+    todo: "Synchronisez d’abord vos listes. Les tâches locales non synchronisées et les réglages du compte peuvent être perdus.",
     recorder:
-      "Exportez vos enregistrements. Une réinstallation ne récupère pas les enregistrements locaux supprimés.",
-    feedback: "L’envoi de rapports via le Hub de commentaires nécessite sa réinstallation.",
+      "Exportez vos enregistrements avant la suppression. Une réinstallation ne récupère pas les enregistrements locaux supprimés.",
+    feedback:
+      "Impossible d’envoyer des rapports via le Hub de commentaires tant qu’il n’est pas réinstallé.",
     phone:
-      "La liaison avec le téléphone s’arrête. Un nouvel appairage peut être nécessaire après réinstallation.",
+      "La liaison avec le téléphone s’arrête sur ce PC. Un nouvel appairage peut être nécessaire après réinstallation.",
     media:
-      "Choisissez un autre lecteur par défaut. Les playlists et réglages locaux peuvent être perdus.",
+      "Choisissez d’abord un autre lecteur par défaut. Les playlists et réglages locaux peuvent être perdus.",
     movies:
-      "La lecture dans cette app s’arrête. Vérifiez vos achats et téléchargements hors ligne.",
+      "La lecture dans cette application s’arrête. Vérifiez d’abord vos achats et téléchargements hors ligne.",
     office:
       "Supprime le hub, pas Word, Excel ni votre abonnement Microsoft 365. Les réglages locaux peuvent être perdus.",
   },
   es: {
-    todo: "Sincroniza las listas primero. Las tareas sin sincronizar y los ajustes locales pueden perderse.",
+    todo: "Sincroniza tus listas primero. Las tareas locales sin sincronizar y los ajustes de la cuenta pueden perderse.",
     recorder:
-      "Exporta las grabaciones antes. Reinstalar no recupera las grabaciones locales eliminadas.",
+      "Exporta las grabaciones antes de quitarla. Reinstalar no recupera las grabaciones locales eliminadas.",
     feedback: "No podrás enviar informes con el Centro de opiniones hasta reinstalarlo.",
     phone:
-      "Se detiene la integración del teléfono. Puede ser necesario volver a emparejarlo tras reinstalar.",
+      "La integración con el teléfono se detiene en este PC. Puede que tengas que volver a emparejarlo tras reinstalar.",
     media:
-      "Elige otro reproductor predeterminado. Las listas y los ajustes locales pueden perderse.",
+      "Elige primero otro reproductor predeterminado. Las listas de reproducción locales y los ajustes de la aplicación pueden perderse.",
     movies:
-      "Se detiene la reproducción en esta app. Revisa antes tus compras y descargas sin conexión.",
+      "La reproducción con esta aplicación se detiene. Revisa antes tus compras y descargas sin conexión.",
     office:
-      "Quita el centro, no Word, Excel ni tu suscripción a Microsoft 365. Los ajustes locales pueden perderse.",
+      "Quita la aplicación central de Office, no Word, Excel ni tu suscripción a Microsoft 365. Los ajustes locales pueden perderse.",
   },
   de: {
     todo: "Listen zuerst synchronisieren. Nicht synchronisierte Aufgaben und lokale Einstellungen können verloren gehen.",
@@ -1124,9 +1128,9 @@ export const EXTRA_IMPACTS: Record<Lang, Record<string, string>> = {
     phone:
       "A integração com o telefone termina neste PC. Poderá ser necessário emparelhar novamente após reinstalar.",
     media:
-      "Escolha outro leitor predefinido. Listas de reprodução e definições locais podem perder-se.",
+      "Escolha primeiro outro leitor predefinido. As listas de reprodução e as definições locais podem perder-se.",
     movies:
-      "A reprodução nesta app termina. Verifique primeiro as compras e as transferências offline.",
+      "A reprodução através desta aplicação termina. Verifique primeiro as compras e as transferências offline.",
     office:
       "Remove o hub, não o Word, o Excel nem a subscrição Microsoft 365. As definições locais podem perder-se.",
   },

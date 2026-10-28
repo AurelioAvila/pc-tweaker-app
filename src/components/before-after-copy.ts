@@ -245,7 +245,7 @@ const it: Copy = {
     "Mediana di almeno 7 esecuzioni per test a tempo; una variazione è indicata solo con p < 0,01 e almeno il 5%. Misurato su questo PC; non è stato caricato nulla.",
   bootTitle: "Tempo di avvio",
   bootHelp:
-    "I tempi di avvio che Windows registra da sé, da quando Windows inizia a caricarsi al desktop utilizzabile. Per leggerli servono i permessi di amministratore. Si confrontano fino a 10 riavvii per parte; una variazione conta con p < 0,05, almeno 4 riavvii per parte, 1 secondo e il 5%.",
+    "I tempi di avvio che Windows registra da sé, da quando Windows inizia a caricarsi al desktop utilizzabile. Per leggerli servono i diritti di amministratore. Si confrontano fino a 10 riavvii per parte; una variazione conta con p < 0,05, almeno 4 riavvii per parte, 1 secondo e il 5%.",
   bootRead: "Leggi i tempi di avvio",
   bootReading: "Lettura in corso…",
   bootNone: "Windows non ha registrato tempi di avvio su questo PC.",
@@ -319,7 +319,7 @@ const fr: Copy = {
   running: "Mesure en cours, environ 10 secondes. N'utilisez pas le PC avant la fin.",
   emptyIntro:
     "Lancez-la avant de modifier quoi que ce soit. Elle dure environ 10 secondes et ne change rien sur votre PC.",
-  beforeTaken: "Mesure de l'avant : {time}",
+  beforeTaken: "Mesure de l'avant : {time}",
   nextHint:
     "Appliquez maintenant les réglages voulus. Si l'un d'eux demande un redémarrage, redémarrez d'abord. Puis mesurez l'après.",
   changesBetween: "Modifié entre les deux mesures",
@@ -345,30 +345,30 @@ const fr: Copy = {
   worseHint:
     "Une mise à jour, l'indexation ou une application ouverte peuvent influencer une mesure isolée. Mesurez à nouveau pour vérifier.",
   noisy:
-    "Les exécutions ont beaucoup varié (plus de ±20 %), ce qui signifie en général que le PC était occupé. Mesurez à nouveau avec les autres applications fermées pour une comparaison plus nette.",
+    "Les exécutions ont beaucoup varié (plus de ±20 %), ce qui signifie en général que le PC était occupé. Mesurez à nouveau avec les autres applications fermées pour une comparaison plus nette.",
   restartNote:
-    "Windows a redémarré entre les deux mesures. Un redémarrage à lui seul réduit la mémoire utilisée et le nombre de processus et modifie les temps de lancement ; une partie de la différence peut donc venir du redémarrage. Pour une comparaison équitable, redémarrez aussi avant de mesurer l'avant.",
-  spread: "±{pct} % de variation habituelle",
+    "Windows a redémarré entre les deux mesures. Un redémarrage à lui seul réduit la mémoire utilisée et le nombre de processus et modifie les temps de lancement ; une partie de la différence peut donc venir du redémarrage. Pour une comparaison équitable, redémarrez aussi avant de mesurer l'avant.",
+  spread: "±{pct} % de variation habituelle",
   medianOf: "médiane de {count}",
   reading: "lecture unique",
   confirmed: "Confirmé dans {count} mesures sur {total}",
   measuredAt: "{before} → {after}",
   save: "Enregistrer en image",
   saved: "Rapport enregistré.",
-  failed: "La mesure n'a pas pu aboutir : {error}",
+  failed: "La mesure n'a pas pu aboutir : {error}",
   method: "Comment c'est mesuré",
   methodBody: [
-    "Chaque test chronométré est exécuté au moins 7 fois et la valeur centrale (la médiane) est affichée. « ±x % de variation habituelle » signifie que la moitié des exécutions est restée à cette distance de la médiane.",
-    "Un test chronométré n'est considéré comme modifié que si les deux séries sont nettement séparées (test exact des rangs, p < 0,01), si les médianes diffèrent d'au moins 5 % et si les deux vont dans le même sens.",
-    "Les processus, les applications au démarrage, la mémoire utilisée et l'espace libre sont lus une fois. Un changement ne compte qu'au-delà d'un seuil : 3 processus ou 3 %, 250 Mo ou 5 % de la mémoire utilisée (la valeur la plus élevée), 100 Mo d'espace libre ; pour les applications au démarrage, tout changement compte.",
+    "Chaque test chronométré est exécuté au moins 7 fois et la valeur centrale (la médiane) est affichée. « ±x % de variation habituelle » signifie que la moitié des exécutions est restée à cette distance de la médiane.",
+    "Un test chronométré n'est considéré comme modifié que si les deux séries sont nettement séparées (test exact des rangs, p < 0,01), si les médianes diffèrent d'au moins 5 % et si les deux vont dans le même sens.",
+    "Les processus, les applications au démarrage, la mémoire utilisée et l'espace libre sont lus une fois. Un changement ne compte qu'au-delà d'un seuil : 3 processus ou 3 %, 250 Mo ou 5 % de la mémoire utilisée (la valeur la plus élevée), 100 Mo d'espace libre ; pour les applications au démarrage, tout changement compte.",
     "Les résultats ne sont comparés qu'avec ce PC et y restent. Rien n'est envoyé.",
   ],
   reportTitle: "PC Tweaker · Avant / après",
   reportFooter:
-    "Médiane d'au moins 7 exécutions par test chronométré ; un changement n'est signalé qu'avec p < 0,01 et au moins 5 %. Mesuré sur ce PC ; rien n'a été envoyé.",
+    "Médiane d'au moins 7 exécutions par test chronométré ; un changement n'est signalé qu'avec p < 0,01 et au moins 5 %. Mesuré sur ce PC ; rien n'a été envoyé.",
   bootTitle: "Temps de démarrage",
   bootHelp:
-    "Les temps de démarrage que Windows enregistre lui-même, du début du chargement de Windows au bureau utilisable. Leur lecture demande les droits d'administrateur. Jusqu'à 10 redémarrages de chaque côté sont comparés ; un changement compte avec p < 0,05, au moins 4 redémarrages de chaque côté, 1 seconde et 5 %.",
+    "Les temps de démarrage que Windows enregistre lui-même, du début du chargement de Windows au bureau utilisable. Leur lecture demande les droits d'administrateur. Jusqu'à 10 redémarrages de chaque côté sont comparés ; un changement compte avec p < 0,05, au moins 4 redémarrages de chaque côté, 1 seconde et 5 %.",
   bootRead: "Lire les temps de démarrage",
   bootReading: "Lecture…",
   bootNone: "Windows n'a enregistré aucun temps de démarrage sur ce PC.",
@@ -383,7 +383,7 @@ const fr: Copy = {
     },
     cpu: {
       name: "Débit du processeur",
-      help: "Le même calcul fixe, 7 exécutions de 0,3 seconde. Affiché par rapport à la mesure de l'avant ; plus haut, c'est mieux.",
+      help: "Le même calcul fixe, 7 exécutions de 0,3 seconde. Affiché par rapport à la mesure de l'avant ; plus haut, c'est mieux.",
       impact: "de travail en plus par seconde pour le processeur",
     },
     launch_ms: {
@@ -418,7 +418,7 @@ const fr: Copy = {
     },
     memory_used_mb: {
       name: "Mémoire utilisée",
-      help: "Mémoire utilisée au début de la mesure. Elle dépend des applications ouvertes : comparez avec les mêmes applications ouvertes.",
+      help: "Mémoire utilisée au début de la mesure. Elle dépend des applications ouvertes : comparez avec les mêmes applications ouvertes.",
       impact: "de mémoire utilisée en moins",
     },
     disk_free_mb: {
@@ -502,7 +502,7 @@ const es: Copy = {
     boot_ms: {
       name: "Tiempo de arranque",
       help: "Desde que Windows empieza a cargarse hasta un escritorio utilizable, según el registro de Windows. Mediana de hasta 10 reinicios a cada lado.",
-      impact: "de arranque más rápido",
+      impact: "menos de tiempo de arranque",
     },
     cpu: {
       name: "Rendimiento del procesador",
@@ -726,7 +726,7 @@ const pt: Copy = {
   measuredAt: "{before} → {after}",
   save: "Guardar como imagem",
   saved: "Relatório guardado.",
-  failed: "A medição não terminou: {error}",
+  failed: "A medição não pôde terminar: {error}",
   method: "Como é medido",
   methodBody: [
     "Cada teste cronometrado é executado pelo menos 7 vezes e é mostrado o valor central (a mediana). «±x% de variação habitual» significa que metade das execuções ficou a essa distância da mediana ou menos.",
@@ -739,7 +739,7 @@ const pt: Copy = {
     "Mediana de pelo menos 7 execuções por teste cronometrado; uma alteração só é indicada com p < 0,01 e pelo menos 5%. Medido neste PC; nada foi enviado.",
   bootTitle: "Tempo de arranque",
   bootHelp:
-    "Os tempos de arranque que o próprio Windows regista, desde que o Windows começa a carregar até o ambiente de trabalho ficar utilizável. Para os ler são precisas permissões de administrador. Comparam-se até 10 reinícios de cada lado; uma alteração conta com p < 0,05, pelo menos 4 reinícios de cada lado, 1 segundo e 5%.",
+    "Os tempos de arranque que o próprio Windows regista, desde que o Windows começa a carregar até o ambiente de trabalho ficar utilizável. Para os ler são precisos privilégios de administrador. Comparam-se até 10 reinícios de cada lado; uma alteração conta com p < 0,05, pelo menos 4 reinícios de cada lado, 1 segundo e 5%.",
   bootRead: "Ler os tempos de arranque",
   bootReading: "A ler…",
   bootNone: "O Windows não registou tempos de arranque neste PC.",
@@ -780,12 +780,12 @@ const pt: Copy = {
     processes: {
       name: "Processos em execução",
       help: "Processos em execução no início da medição. Menos processos significam normalmente menos trabalho em segundo plano.",
-      impact: "processos em execução a menos",
+      impact: "menos processos em execução",
     },
     startup_apps: {
       name: "Aplicações no arranque do Windows",
       help: "Entradas de arranque ativas. Menos entradas significam menos coisas para carregar ao iniciar sessão.",
-      impact: "aplicações de arranque a menos",
+      impact: "menos aplicações a arrancar com o Windows",
     },
     memory_used_mb: {
       name: "Memória em utilização",

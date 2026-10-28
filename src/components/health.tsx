@@ -19,8 +19,17 @@ import { Badge, type BadgeKind } from "./ui";
 // an untranslated one.
 import { useCallback, useEffect, useRef, useState, type ReactElement } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import type { Lang } from "../i18n";
+import { factorEvidence, factorLabel, type EvidenceParts } from "./health-copy";
 
-type HealthFactor = { id: string; label: string; earned: number; max: number; evidence: string };
+type HealthFactor = {
+  id: string;
+  label: string;
+  earned: number;
+  max: number;
+  evidence: string;
+  parts?: EvidenceParts;
+};
 type HealthCategory = { id: string; score: number; factors: HealthFactor[] };
 type HealthReport = { overall: number; categories: HealthCategory[] };
 /** One factor that actually moved points. Evidence is quoted on both sides so
@@ -30,6 +39,8 @@ type FactorChange = {
   delta: number;
   evidenceBefore: string;
   evidenceAfter: string;
+  partsBefore?: EvidenceParts;
+  partsAfter?: EvidenceParts;
 };
 type CategoryChange = {
   id: string;
@@ -375,6 +386,7 @@ export function HealthPanel({
   verdicts,
   change,
   categoryLabels,
+  lang,
 }: {
   title: string;
   subtitle: string;
@@ -396,6 +408,7 @@ export function HealthPanel({
     trend: string;
   };
   categoryLabels: Record<string, string>;
+  lang: Lang;
 }) {
   const [report, setReport] = useState<HealthReport | null>(null);
   // compute() is memoised once, so it reads the latest report through a ref:
@@ -409,18 +422,18 @@ export function HealthPanel({
   const [stageIndex, setStageIndex] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
 
-  /** The live report is the only place a factor's English label exists — the
-   *  stored history keeps ids so an old snapshot never carries a label that
-   *  drifted from today's scoring logic. */
+  /** The stored history keeps ids, so an old snapshot never carries a label
+   *  that drifted from today's scoring logic; the live report supplies the
+   *  English fallback for an id this build cannot translate. */
   const labelFor = useCallback(
     (factorId: string): string => {
       for (const cat of report?.categories ?? []) {
         const hit = cat.factors.find((f) => f.id === factorId);
-        if (hit) return hit.label;
+        if (hit) return factorLabel(lang, hit.id, hit.label);
       }
-      return factorId;
+      return factorLabel(lang, factorId, factorId);
     },
-    [report],
+    [report, lang],
   );
 
   const verdictFor = useCallback(
@@ -629,8 +642,10 @@ export function HealthPanel({
                             className="grid grid-cols-[minmax(0,1fr)_72px_44px] items-center gap-3 py-1.5 text-[11px]"
                           >
                             <span className="min-w-0 text-ink-2">
-                              {f.label}
-                              <span className="ml-1.5 text-ink-3">· {f.evidence}</span>
+                              {factorLabel(lang, f.id, f.label)}
+                              <span className="ml-1.5 text-ink-3">
+                                · {factorEvidence(lang, f.parts, f.evidence)}
+                              </span>
                             </span>
                             <span className="h-1 overflow-hidden rounded-full bg-line">
                               <span
@@ -727,9 +742,13 @@ export function HealthPanel({
                           <li key={r.id} className="text-[10.5px] leading-relaxed text-ink-3">
                             <span className="text-ink-2">{labelFor(r.id)}</span>
                             <span className="mx-1.5 text-line-2">·</span>
-                            <span className="text-ink-3">{r.evidenceBefore}</span>
+                            <span className="text-ink-3">
+                              {factorEvidence(lang, r.partsBefore, r.evidenceBefore)}
+                            </span>
                             <span className="mx-1 text-ink-3">→</span>
-                            <span className="text-ink-2">{r.evidenceAfter}</span>
+                            <span className="text-ink-2">
+                              {factorEvidence(lang, r.partsAfter, r.evidenceAfter)}
+                            </span>
                           </li>
                         ))}
                       </ul>

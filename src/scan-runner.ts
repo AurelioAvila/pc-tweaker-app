@@ -10,6 +10,8 @@ import type {
   EcoQosState,
 } from "./types";
 import type { HealthResult } from "./components/health";
+import { factorEvidence, factorLabel } from "./components/health-copy";
+import type { Lang } from "./i18n";
 import type { DebloatApp } from "./components/debloat";
 import { CONFIGURABLE_TWEAK_IDS } from "./catalog";
 type Call = <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
@@ -220,14 +222,18 @@ export async function collectScan(
 }
 export type ScanReport = ReturnType<typeof scanReport>;
 
-export function unknownSecuritySignals(report: ScanReport): string[] {
+export function unknownSecuritySignals(report: ScanReport, lang: Lang = "en"): string[] {
   if (!report.health) return [];
   const factors = report.health.report.categories.find((c) => c.id === "security")?.factors ?? [];
   return ["sec_defender", "sec_uac", "sec_smartscreen"].flatMap((id) => {
     const factor = factors.find((f) => f.id === id);
     if (!factor) return [id];
     const known = id === "sec_defender" ? [0, 40] : id === "sec_uac" ? [0, 30] : [5, 30];
-    return known.includes(factor.earned) ? [] : [`${factor.label}: ${factor.evidence}`];
+    return known.includes(factor.earned)
+      ? []
+      : [
+          `${factorLabel(lang, factor.id, factor.label)}${lang === "fr" ? " : " : ": "}${factorEvidence(lang, factor.parts, factor.evidence)}`,
+        ];
   });
 }
 

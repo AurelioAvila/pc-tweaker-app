@@ -1216,6 +1216,7 @@ function App() {
 
                 {showHealth && (
                   <HealthPanel
+                    lang={lang}
                     title={s.healthPanel.title}
                     subtitle={s.healthPanel.subtitle}
                     refreshLabel={s.healthPanel.refresh}

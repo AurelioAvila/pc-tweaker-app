@@ -70,6 +70,8 @@ const DEFENDER = { label: "Microsoft Learn: Microsoft Defender Antivirus compati
 const WEBVIEW = { label: "Microsoft Learn: Distribute your app and the WebView2 Runtime", url: "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution" };
 const WEBVIEW_PROCESS = { label: "Microsoft Learn: Process model for WebView2 apps", url: "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/process-model" };
 const WMI = { label: "Microsoft Learn: Provider Hosting and Security (Wmiprvse.exe)", url: "https://learn.microsoft.com/en-us/windows/win32/wmisdk/provider-hosting-and-security" };
+const COM_SURROGATE = { label: "Microsoft Learn: Run a DLL-based COM object outside the application process (dllhost.exe)", url: "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/development/run-dll-based-com-object" };
+const DLL_SURROGATES = { label: "Microsoft Learn: DLL Surrogates", url: "https://learn.microsoft.com/en-us/windows/win32/com/dll-surrogates" };
 const PCT_SERVICES = { label: "PC Tweaker source code: src-tauri/src/services.rs", url: "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/services.rs" };
 const PCT_RULES = { label: "PC Tweaker source code: src-tauri/src/process_rules.rs (programs it refuses)", url: "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri/src/process_rules.rs" };
 
@@ -168,6 +170,49 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     why: "Many instances are normal: every console program gets one, including ones that run without a visible window.",
     pcTweaker: REFUSED,
     sources: [CONSOLE, BUGCHECK_EF, PCT_RULES],
+  },
+  // 28 Oct 2026: wininit, services and LogonUI are the critical processes Microsoft names under bug check 0xEF that had no page.
+  // Their display names are the file descriptions of the signed binaries (Get-Item ... VersionInfo, build 26300); the purpose
+  // claims stop at what Microsoft documents.
+  {
+    kind: "process", slug: "wininit-exe", name: "wininit.exe", displayName: "Windows Start-Up Application",
+    path: `${SYS32}\\wininit.exe`, signer: MSWIN,
+    purpose: "The Windows Start-Up Application, as its file description reads. Microsoft names wininit.exe among the built-in critical system processes and refers to Windows Internals for the details of protected critical code such as wininit.",
+    verdict: "leave",
+    why: "A built-in critical process: if it terminates, Windows stops with bug check 0xEF (CRITICAL_PROCESS_DIED).",
+    pcTweaker: REFUSED,
+    related: ["processes/services-exe", "processes/lsass-exe", "processes/smss-exe"],
+    sources: [BUGCHECK_EF, PCT_RULES],
+  },
+  {
+    kind: "process", slug: "services-exe", name: "services.exe", displayName: "Services and Controller app",
+    path: `${SYS32}\\services.exe`, signer: MSWIN,
+    purpose: "The Services and Controller app, as its file description reads. Windows services are started, stopped and tracked through the service control manager, which Microsoft describes as starting at boot and keeping the database of installed services; Microsoft names services.exe among the built-in critical processes.",
+    verdict: "leave",
+    why: "A built-in critical process: if it terminates, Windows stops with bug check 0xEF. To judge a busy service, look at the service itself in Task Manager's Services tab, not at services.exe.",
+    pcTweaker: `${REFUSED} The app changes services only through its two service controls.`,
+    related: ["processes/svchost-exe", "processes/wininit-exe"],
+    sources: [{ label: "Microsoft Learn: Service control manager", url: "https://learn.microsoft.com/en-us/windows/win32/services/service-control-manager" }, BUGCHECK_EF, PCT_RULES],
+  },
+  {
+    kind: "process", slug: "logonui-exe", name: "LogonUI.exe", displayName: "Windows Logon User Interface Host",
+    path: `${SYS32}\\LogonUI.exe`, signer: MSWIN,
+    purpose: "The Windows Logon User Interface Host, as its file description reads. Interactive sign-in itself is performed by Winlogon, which Microsoft documents together with the credential providers that customise it. Microsoft names logonui.exe among the built-in critical system processes.",
+    verdict: "leave",
+    why: "A built-in critical process: its termination stops Windows with bug check 0xEF (CRITICAL_PROCESS_DIED).",
+    pcTweaker: REFUSED,
+    related: ["processes/winlogon-exe", "processes/lsass-exe"],
+    sources: [WINLOGON, BUGCHECK_EF, PCT_RULES],
+  },
+  {
+    kind: "process", slug: "dllhost-exe", name: "dllhost.exe", displayName: "COM Surrogate",
+    path: `${SYS32}\\dllhost.exe`, signer: MSWIN,
+    purpose: "The default surrogate process of COM. Windows components and apps can load a DLL-based COM object into it instead of their own process, which isolates faults and lets one server answer several clients. Microsoft documents dllhost.exe as the default surrogate that the DCOM service control manager starts.",
+    verdict: "leave",
+    why: "Several instances are normal: each one hosts COM objects for an app or a Windows feature, and COM ends the process itself once nothing uses those objects. Ending one by hand stops the objects it hosts, so the feature that asked for them can fail.",
+    pcTweaker: REFUSED,
+    related: ["services/rpcss", "processes/explorer-exe"],
+    sources: [COM_SURROGATE, DLL_SURROGATES, PCT_RULES],
   },
   {
     kind: "process", slug: "searchindexer-exe", name: "SearchIndexer.exe", displayName: "Microsoft Windows Search Indexer",

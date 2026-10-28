@@ -68,7 +68,6 @@ function effects(log) {
     async loadSubscriptionForPayment() { return null; },
     async stopSubscriptions() {},
     async welcome(...args) { log.welcomes.push(args); },
-    notifySale() {},
     alertReversal() {},
     async queueRefundNotice() {},
     async cardFingerprint() { return null; },

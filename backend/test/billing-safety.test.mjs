@@ -69,7 +69,6 @@ function effects(overrides = {}) {
     },
     async stopSubscriptions() {},
     async welcome() {},
-    notifySale() {},
     async loadCheckoutForPayment() { return null; },
     async loadSubscriptionForPayment() { return null; },
     alertReversal() {},

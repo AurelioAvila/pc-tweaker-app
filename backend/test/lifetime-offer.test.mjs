@@ -260,7 +260,6 @@ test("a paid pre-deadline session is honored even when settlement arrives after 
     async loadSubscription() { throw new Error("Unexpected external call"); },
     async stopSubscriptions() {},
     async welcome() {},
-    notifySale() {},
   });
   const entitlement = await productEntitlement(userId, "pctweaker");
   assert.equal(entitlement.active, true);

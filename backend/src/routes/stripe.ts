@@ -21,6 +21,7 @@ import { SUPPORT_INBOX, SUPPORT_REPLY_TO } from "../support-inbox";
 import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
 import { promoCheckout } from "../promo";
 import { queueReceipt, type Receipt } from "../receipt-outbox";
+import { queueOwnerNotice } from "../owner-sales";
 import { asyncRoute } from "../async-route";
 import { deviceHashFrom } from "../license";
 import { referralCheckout, referralWebhook, closeExpiredReferral } from "../referral-stripe";
@@ -760,6 +761,8 @@ async function webhookHandler(req: Request, res: Response): Promise<void> {
   try {
     await handleEvent(event);
     await referralWebhook(event);
+    // Every product's sales, after the event is recorded; never fails the webhook.
+    await queueOwnerNotice(event, stripe);
   } catch (err) {
     // Fail loudly so Stripe retries. This used to answer 200 regardless, to
     // avoid a buggy handler being replayed forever — but Stripe gives up on
@@ -1355,43 +1358,6 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-/**
- * Tells the shop owner a sale happened.
- *
- * Nothing did this before: the customer got a welcome email and the owner got
- * nothing, so the only sale notification was whatever Stripe's dashboard was
- * configured to send. Reuses SUPPORT_INBOX, the address reviews and support
- * messages already go to.
- *
- * Best-effort and never awaited into the webhook's own result: a mail server
- * having a bad minute must not make Stripe retry a payment that was already
- * recorded correctly. It is logged loudly instead, because a sale nobody was
- * told about is the kind of thing worth finding in a log later.
- */
-function notifyOwnerOfSale(
-  userId: string,
-  plan: string | null | undefined,
-  mode: string | null,
-  product: string = "pctweaker",
-): void {
-  void (async () => {
-    const { rows } = await getPool().query("SELECT email FROM users WHERE id = $1", [userId]);
-    const email = rows[0]?.email ?? "(unknown address)";
-    const planName = plan ?? "unknown plan";
-    const kind = mode === "subscription" ? "subscription" : "one-off purchase";
-    await sendMail({
-      to: SUPPORT_INBOX,
-      subject: `New ${brandFor(product).name} sale — ${planName}`,
-      html: `<p>Someone just bought ${escapeHtml(brandFor(product).name)}.</p>
-             <p><strong>Plan:</strong> ${escapeHtml(planName)} (${escapeHtml(kind)})<br>
-                <strong>Account:</strong> ${escapeHtml(email)}</p>
-             <p>Stripe has the payment; this is only the heads-up.</p>`,
-    });
-  })().catch((err: Error) =>
-    console.error("SALE NOTIFICATION LOST — could not tell the owner:", err.message),
-  );
-}
-
 /// Subscription events don't carry our user id directly, so resolve it from
 /// whatever the event does give us: the metadata we attached at checkout
 /// first, then the Stripe customer id we stored.
@@ -1420,7 +1386,6 @@ type BillingEffects = {
   loadSubscription: (id: string) => Promise<Stripe.Subscription>;
   stopSubscriptions: (userId: string, customerId: string | null) => Promise<void>;
   welcome: typeof sendProWelcomeEmail;
-  notifySale: typeof notifyOwnerOfSale;
   /** The card fingerprint behind a subscription, where Stripe exposes one. */
   cardFingerprint: (subscription: Stripe.Subscription) => Promise<string | null>;
   /** Ends a subscription immediately, without charging (a refused trial). */
@@ -1490,7 +1455,6 @@ const billingEffects: BillingEffects = {
     }
   },
   welcome: sendProWelcomeEmail,
-  notifySale: notifyOwnerOfSale,
   async cardFingerprint(subscription) {
     if (!stripe) throw new Error("Stripe is unavailable for trial verification");
     const ref = subscription.default_payment_method;
@@ -1553,12 +1517,10 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
     throw new Error(`Checkout ${session.id} has an invalid creation time`);
   }
   const trial = session.metadata?.trial === TRIAL_MARK;
-  const saleLabel = trial ? `${plan} (${TRIAL_DAYS}-day free trial)` : plan;
   if (product !== "pctweaker") {
     // A trial is granted only by the subscription events, which check the
     // trial claim first: a provisional grant here could outlive a refusal.
     if (!trial) await upsertEntitlement(userId, product, { plan: plan!, expiresAt, provisional: true });
-    effects.notifySale(userId, saleLabel, session.mode, product);
     return;
   }
 
@@ -1592,7 +1554,6 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
     await effects.stopSubscriptions(userId, customerId);
     await effects.welcome(userId, plan, null, product, sessionCharge(session), `checkout:${session.id}`, paid(session.amount_total, session.currency));
   }
-  effects.notifySale(userId, saleLabel, session.mode, product);
 }
 
 type ReversedPurchase = { userId: string; product: Product; plan: string | null; subscriptionId: string | null; checkoutId?: string };

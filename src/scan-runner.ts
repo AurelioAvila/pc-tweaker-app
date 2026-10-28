@@ -242,6 +242,7 @@ export function recommendedTweaks(report: ScanReport, isPro: boolean): TweakInfo
       allowed.has(t.id) &&
       advised.has(t.id) &&
       !t.applied &&
+      !t.already_set &&
       (isPro || !t.requires_pro) &&
       t.id !== "turbo_boost" &&
       !CONFIGURABLE_TWEAK_IDS.has(t.id),
@@ -259,6 +260,7 @@ export function optionalScanTweaks(report: ScanReport): TweakInfo[] {
       allowed.has(t.id) &&
       neutral.has(t.id) &&
       !t.applied &&
+      !t.already_set &&
       t.id !== "turbo_boost" &&
       !CONFIGURABLE_TWEAK_IDS.has(t.id),
   );

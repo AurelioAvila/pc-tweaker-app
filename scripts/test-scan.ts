@@ -107,6 +107,8 @@ test("fixes require supported hardware advice and respect tiers and dedicated co
     tweak("ecoqos_rules"),
     tweak("turbo_boost"),
     tweak("done", { applied: true }),
+    // Set by Windows or another tool: nothing to fix, never part of Fix all.
+    tweak("elsewhere", { already_set: true }),
   ];
   const r = report({
     tweaks,

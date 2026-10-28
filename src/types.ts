@@ -55,6 +55,9 @@ export type TweakInfo = {
   requires_admin: boolean;
   requires_pro: boolean;
   applied: boolean;
+  /** Not applied by PC Tweaker, but its values are already in place on this
+   *  PC (Windows, another tool or the user set them). Read live. */
+  already_set?: boolean;
   /** Everything this tweak actually does, for the "Technical details"
    *  disclosure. Empty when the mechanism cannot be stated precisely - the
    *  app shows no panel rather than a plausible-looking guess. */

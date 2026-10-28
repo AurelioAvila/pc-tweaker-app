@@ -186,3 +186,9 @@ test("the Uninstaller loyalty price is not discounted again", async () => {
   assert.equal(params.line_items[0].price, "price_uninstaller_loyalty_fixture");
   assert.equal(params.discounts, undefined);
 });
+
+test("the offer's last second is 23:59:59 on 6 November in Rome, after the switch to winter time", () => {
+  const rome = (ms) => new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Rome", dateStyle: "short", timeStyle: "medium" }).format(ms);
+  assert.equal(rome(END - 1000), "06/11/2026, 23:59:59");
+  assert.equal(rome(END), "07/11/2026, 00:00:00");
+});

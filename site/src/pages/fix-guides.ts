@@ -101,6 +101,11 @@ export const FIX_GUIDES = {
           "Without HAGS, Windows' graphics kernel schedules GPU work from the CPU. With it, a dedicated scheduling processor on the GPU takes over most of that job, which can reduce scheduling overhead. Microsoft's DirectX team describes it as addressing the submission overhead and latency of CPU-side scheduling, while Windows keeps control of which applications get priority. It is not presented as a switch that guarantees higher frame rates.",
       },
       {
+        heading: "When the answer is settled: DLSS Frame Generation",
+        body:
+          "One case needs no test. NVIDIA's developer documentation lists Windows hardware-accelerated GPU scheduling as a requirement for DLSS Frame Generation, together with a GeForce RTX 40 Series GPU and Windows 10 version 2004 or later. If you use Frame Generation, keep HAGS on. For every other game, test it as below.",
+      },
+      {
         heading: "How to test it fairly",
         body:
           "Pick one game and one repeatable scene, such as a built-in benchmark or the same route. Record average frame rate and, more usefully, frame-time consistency with the same capture tool each time. Run three times with HAGS off, restart, run three times with it on. Keep the setting that wins in the games you actually play, and repeat after a major driver update.",
@@ -131,11 +136,13 @@ export const FIX_GUIDES = {
       { to: "/tweaks/gaming/hardware-accelerated-gpu-scheduling/", label: "the HAGS control's reference page", note: "The exact value, scope and restore behaviour." },
       { to: "/gaming-performance/", label: "the gaming performance guide", note: "Which Windows settings are worth testing, and how." },
       { to: "/database/processes/dwm-exe/", label: "dwm.exe and what its GPU use means", note: "The process that composes the desktop." },
+      { to: "/how-to-undo-windows-tweaks/", label: "how to undo Windows tweaks", note: "Put a changed setting back, with or without PC Tweaker." },
     ],
     sources: {
-      checked: CHECKED,
+      checked: "28 October 2026",
       items: [
         { label: "DirectX Developer Blog: Hardware Accelerated GPU Scheduling", url: "https://devblogs.microsoft.com/directx/hardware-accelerated-gpu-scheduling/" },
+        { label: "NVIDIA Streamline SDK: DLSS Frame Generation requirements (FAQ)", url: "https://developer.nvidia.com/rtx/streamline/get-started" },
         { label: "PC Tweaker source code: the hardware_gpu_scheduling entry (tweaks.rs)", url: `${SRC}/tweaks.rs` },
       ],
     },

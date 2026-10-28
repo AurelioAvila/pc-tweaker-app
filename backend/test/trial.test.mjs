@@ -64,7 +64,6 @@ function effects(log = {}, cards = {}) {
     async loadSubscriptionForPayment() { return null; },
     async stopSubscriptions() {},
     async welcome(...args) { log.welcomes.push(args); },
-    notifySale(...args) { log.sale = args; },
     alertReversal() {},
     async queueRefundNotice() {},
     async cardFingerprint(subscription) { return cards[subscription.id] ?? null; },
@@ -297,7 +296,6 @@ test("the trial is per product: the Uninstaller trial is separate and granted on
     subscription: sub.id, payment_status: "no_payment_required", metadata: { userId: id, product: "uninstaller", plan: "annual", trial: "3d" },
   }), effects(log));
   assert.equal((await productEntitlement(id, "uninstaller")).active, false, "no provisional grant for a trial");
-  assert.match(log.sale[1], /3-day free trial/);
   await handleEvent(event("customer.subscription.created", sub), effects());
   const state = await status(id, "uninstaller");
   assert.equal(state.state, "trialing");

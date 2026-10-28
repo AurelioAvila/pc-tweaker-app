@@ -96,6 +96,17 @@ async function initSchema(): Promise<void> {
     );
   `);
 
+  // The owner's sale notices (owner-sales.ts), for every product on the Stripe account.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS owner_notices (
+      notice_key TEXT PRIMARY KEY,
+      payload JSONB NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      delivered_at TIMESTAMPTZ
+    );
+  `);
+
   await pool.query(
     `CREATE UNIQUE INDEX IF NOT EXISTS users_stripe_customer_id_idx ON users (stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;`,
   );

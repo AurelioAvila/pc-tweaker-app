@@ -26,6 +26,7 @@ import { consumeGlobalBudget } from "./public-form-guard";
 import { clientIpMiddleware, trustProxyHops } from "./client-ip";
 import { lifetimeReminderEmail, startCheckoutReminderWorker } from "./checkout-recovery";
 import { startReceiptWorker } from "./receipt-outbox";
+import { startOwnerNoticeWorker } from "./owner-sales";
 import { copyFor, fromAcceptLanguage, isLocale, type Copy } from "./emails/copy";
 import { TRIAL_DAYS, maintainTrialClaims } from "./trial";
 import { referralRoutes } from "./routes/referrals";
@@ -404,6 +405,7 @@ initSchema()
       setInterval(() => void maintainTrialClaims().catch((err) => console.error("trial claim retention failed:", err)), 86_400_000).unref();
     }
     if (isConfigured) stopReceiptWorker = startReceiptWorker(deliverProReceipt);
+    if (isConfigured) startOwnerNoticeWorker();
     if (isConfigured) stopReferralWorker = startReferralWorker();
     if (isConfigured && mailIsConfigured && process.env.STRIPE_SECRET_KEY) {
       stopReminderWorker = startCheckoutReminderWorker(listExpiredCheckouts, async (to) => {

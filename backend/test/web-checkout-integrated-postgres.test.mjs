@@ -27,7 +27,7 @@ else {
    const userId=String(u.id); const session={id:`cs_refund_${u.id}`,created:Math.floor(Date.now()/1000),client_reference_id:userId,customer:`cus_${u.id}`,mode:'payment',payment_status:'paid',metadata:{userId,product:'pctweaker',plan:'lifetime'}};
    const paid={id:`evt_paid_${u.id}`,type:'checkout.session.completed',data:{object:session}};
    const refund={id:`evt_refund_${u.id}`,type:'charge.refunded',data:{object:{id:`ch_${u.id}`,refunded:true,amount:9900,amount_refunded:9900,currency:'eur',payment_intent:`pi_${u.id}`}}};
-   const fx={async loadCheckoutForPayment(){return session},async stopSubscriptions(){},async welcome(){},notifySale(){},alertReversal(){},async queueRefundNotice(){}};
+   const fx={async loadCheckoutForPayment(){return session},async stopSubscriptions(){},async welcome(){},alertReversal(){},async queueRefundNotice(){}};
    await Promise.all([handleEvent(paid,fx),handleEvent(refund,fx)]);
    await handleEvent(paid,fx);
    const {rows:[account]}=await getPool().query('SELECT is_pro FROM users WHERE id=$1',[u.id]);
@@ -38,7 +38,7 @@ else {
   const {rows:[u]}=await getPool().query("INSERT INTO users (email,password_hash,email_verified) VALUES ($1,'x',TRUE) RETURNING id",[`two-purchases-${Date.now()}@example.test`]);
   const userId=String(u.id); const session=id=>({id,created:Math.floor(Date.now()/1000),client_reference_id:userId,customer:`cus_${u.id}`,mode:'payment',payment_status:'paid',metadata:{userId,product:'pctweaker',plan:'lifetime'}});
   const first=session(`cs_first_${u.id}`),second=session(`cs_second_${u.id}`);
-  const fx={async loadCheckoutForPayment(){return first},async stopSubscriptions(){},async welcome(){},notifySale(){},alertReversal(){},async queueRefundNotice(){}};
+  const fx={async loadCheckoutForPayment(){return first},async stopSubscriptions(){},async welcome(){},alertReversal(){},async queueRefundNotice(){}};
   const paid=s=>({type:'checkout.session.completed',data:{object:s}});
   const refund={type:'charge.refunded',data:{object:{id:`ch_first_${u.id}`,refunded:true,amount:9900,amount_refunded:9900,currency:'eur',payment_intent:`pi_first_${u.id}`}}};
   await handleEvent(paid(second),fx);await handleEvent(paid(first),fx);
@@ -54,7 +54,7 @@ else {
   const repo=new WebCheckoutReservations(getPool());const {reservation}=await repo.reserve(u.id,'pctweaker','lifetime');
   const sessionId=`cs_erasure_${u.id}`;await repo.attach(reservation.reservation_id,sessionId);
   const session={id:sessionId,created:Math.floor(Date.now()/1000),client_reference_id:String(u.id),customer:`cus_erasure_${u.id}`,mode:'payment',payment_status:'paid',metadata:{userId:String(u.id),product:'pctweaker',plan:'lifetime'}};
-  await handleEvent({type:'checkout.session.completed',data:{object:session}},{async stopSubscriptions(){},async welcome(){},notifySale(){}});
+  await handleEvent({type:'checkout.session.completed',data:{object:session}},{async stopSubscriptions(){},async welcome(){}});
   const preview=await eraseAccount(getPool(),email);assert.equal(preview.erased,false);assert.ok(await repo.find(u.id,'pctweaker'));
   const result=await eraseAccount(getPool(),email,{erase:true});assert.equal(result.erased,true);assert.equal(await repo.find(u.id,'pctweaker'),null);
  });

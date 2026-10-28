@@ -61,3 +61,14 @@ test("double clicks do not start simultaneous requests", async () => {
 });
 
 test("closing checkout requires a signed-in account and surfaces uncertain failures",async()=>{const {flow}=fixture({cancelCheckout:async()=>{throw Error("provider uncertain")}});await assert.rejects(flow.cancelCheckout(),/sign in/);await flow.signIn("test@example.test","dummy");await assert.rejects(flow.cancelCheckout(),/provider uncertain/)});
+test("sign up from the site without a plan: register, verify, then ready or already Pro, never an upgrade", async () => {
+  let verified = false;
+  const { flow, calls } = fixture({ account: async () => ({ ...baseAccount, emailVerified: verified }) });
+  const result = await flow.register({ email: "new@example.test", password: "dummy-password", firstName: "A", lastName: "B", dateOfBirth: "1990-01-01" });
+  assert.deepEqual(result, { status: "verify-email", verificationEmailSent: true });
+  verified = true;
+  assert.equal(await flow.refresh(), "ready");
+  assert.equal(calls.length, 0);
+  const pro = fixture({ account: async () => ({ ...baseAccount, isPro: true, plan: "annual" }) });
+  assert.equal(await pro.flow.signIn("pro@example.test", "dummy"), "already-pro");
+});

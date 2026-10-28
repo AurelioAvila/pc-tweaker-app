@@ -59,7 +59,7 @@ export function Nav({
             to="/guides/"
             onNavigate={navigate}
             ariaCurrent={currentPath === "/guides" ? "page" : undefined}
-            className="inline-flex min-h-11 items-center text-[13.5px] font-medium whitespace-nowrap text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)]"
+            className="hidden min-h-11 min-[430px]:inline-flex items-center text-[13.5px] font-medium whitespace-nowrap text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)]"
           >
             {text.nav.guides}
           </Link>
@@ -70,6 +70,14 @@ export function Nav({
           >
             {text.support.navLabel}
           </Link>
+          {import.meta.env.VITE_WEB_PURCHASE_ENABLED === "1" && (
+            <a
+              href={`${prefix}#signup`}
+              className="inline-flex min-h-11 items-center rounded-lg border border-white/15 px-3 py-2 text-[13.5px] font-semibold whitespace-nowrap text-[var(--fg)] transition-colors hover:border-white/40 sm:px-4"
+            >
+              Sign up
+            </a>
+          )}
           <a
             href={downloadHref}
             className="bg-accent glow-accent-sm inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-[13.5px] whitespace-nowrap font-semibold text-[var(--bg)] transition-transform hover:-translate-y-px sm:px-4.5"

@@ -1469,6 +1469,11 @@ function App() {
                               )}
                               {t.requires_admin && <Badge kind="admin">{s.badges.admin}</Badge>}
                               {t.requires_pro && <Badge kind="pro">{s.badges.pro}</Badge>}
+                              {t.already_set && !t.applied && (
+                                <Badge kind="ok" title={s.badges.alreadySetHint}>
+                                  {s.badges.alreadySet}
+                                </Badge>
+                              )}
                               {(t.min_build || t.pro_edition || t.enterprise_edition) && (
                                 <Badge kind="muted">
                                   {[

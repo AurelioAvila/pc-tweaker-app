@@ -439,7 +439,7 @@ export interface Strings {
     error: string; // uses {message}
     checkFailed: string; // uses {message}
   };
-  badges: { admin: string; pro: string; soon: string };
+  badges: { admin: string; pro: string; soon: string; alreadySet: string; alreadySetHint: string };
   emptyCategory: string;
   gameSessions: {
     title: string;
@@ -1650,7 +1650,14 @@ const it: Strings = {
     error: "Aggiornamento non riuscito: {message}",
     checkFailed: "Controllo aggiornamenti non riuscito: {message}",
   },
-  badges: { admin: "Admin", pro: "PRO", soon: "IN ARRIVO" },
+  badges: {
+    admin: "Admin",
+    pro: "PRO",
+    soon: "IN ARRIVO",
+    alreadySet: "Già impostato",
+    alreadySetHint:
+      "Questa impostazione è già attiva su questo PC (l'ha impostata Windows, un altro programma o tu).",
+  },
   emptyCategory: "Nessun tweak disponibile in questa categoria — presto in arrivo.",
   gameSessions: {
     title: "Game Sessions",
@@ -3348,7 +3355,14 @@ const en: Strings = {
     error: "Update failed: {message}",
     checkFailed: "Update check failed: {message}",
   },
-  badges: { admin: "Admin", pro: "PRO", soon: "COMING SOON" },
+  badges: {
+    admin: "Admin",
+    pro: "PRO",
+    soon: "COMING SOON",
+    alreadySet: "Already set",
+    alreadySetHint:
+      "This setting is already in place on this PC (set by Windows, another tool or you).",
+  },
   emptyCategory: "No tweaks available in this category yet — more coming soon.",
   gameSessions: {
     title: "Game Sessions",
@@ -5033,7 +5047,14 @@ const fr: Strings = {
     error: "Échec de la mise à jour : {message}",
     checkFailed: "Échec de la vérification des mises à jour : {message}",
   },
-  badges: { admin: "Admin", pro: "PRO", soon: "BIENTÔT" },
+  badges: {
+    admin: "Admin",
+    pro: "PRO",
+    soon: "BIENTÔT",
+    alreadySet: "Déjà réglé",
+    alreadySetHint:
+      "Ce réglage est déjà en place sur ce PC (défini par Windows, un autre outil ou vous-même).",
+  },
   emptyCategory: "Aucune optimisation disponible dans cette catégorie pour l'instant — à venir.",
   gameSessions: {
     title: "Game Sessions",
@@ -6738,7 +6759,14 @@ const es: Strings = {
     error: "Error al actualizar: {message}",
     checkFailed: "Error al comprobar actualizaciones: {message}",
   },
-  badges: { admin: "Admin", pro: "PRO", soon: "PRÓXIMAMENTE" },
+  badges: {
+    admin: "Admin",
+    pro: "PRO",
+    soon: "PRÓXIMAMENTE",
+    alreadySet: "Ya configurado",
+    alreadySetHint:
+      "Este ajuste ya está aplicado en este PC (lo configuró Windows, otra herramienta o tú).",
+  },
   emptyCategory: "Todavía no hay ajustes disponibles en esta categoría — próximamente.",
   gameSessions: {
     title: "Game Sessions",
@@ -8444,7 +8472,14 @@ const de: Strings = {
     error: "Update fehlgeschlagen: {message}",
     checkFailed: "Update-Prüfung fehlgeschlagen: {message}",
   },
-  badges: { admin: "Admin", pro: "PRO", soon: "DEMNÄCHST" },
+  badges: {
+    admin: "Admin",
+    pro: "PRO",
+    soon: "DEMNÄCHST",
+    alreadySet: "Bereits gesetzt",
+    alreadySetHint:
+      "Diese Einstellung ist auf diesem PC bereits aktiv (gesetzt von Windows, einem anderen Tool oder dir).",
+  },
   emptyCategory: "In dieser Kategorie sind noch keine Optimierungen verfügbar — bald verfügbar.",
   gameSessions: {
     title: "Game Sessions",
@@ -10153,7 +10188,14 @@ const pt: Strings = {
     error: "A atualização falhou: {message}",
     checkFailed: "Não foi possível procurar atualizações: {message}",
   },
-  badges: { admin: "Admin", pro: "PRO", soon: "EM BREVE" },
+  badges: {
+    admin: "Admin",
+    pro: "PRO",
+    soon: "EM BREVE",
+    alreadySet: "Já definido",
+    alreadySetHint:
+      "Esta definição já está ativa neste PC (definida pelo Windows, por outra ferramenta ou por si).",
+  },
   emptyCategory: "Ainda não há ajustes disponíveis nesta categoria — mais em breve.",
   gameSessions: {
     title: "Sessões de jogo",

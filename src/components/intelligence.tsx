@@ -36,7 +36,13 @@ export function pickTopRecommendation(
   advice: Record<string, TweakAdvice>,
 ): TweakInfo | null {
   const candidates = tweaks
-    .filter((t) => scanIds.has(t.id) && !t.applied && advice[t.id]?.verdict === "recommended")
+    .filter(
+      (t) =>
+        scanIds.has(t.id) &&
+        !t.applied &&
+        !t.already_set &&
+        advice[t.id]?.verdict === "recommended",
+    )
     .sort((a, b) => {
       const ar = advice[a.id]?.reason_key ? 0 : 1;
       const br = advice[b.id]?.reason_key ? 0 : 1;

@@ -140,6 +140,10 @@ pub struct TweakInfo {
     requires_admin: bool,
     requires_pro: bool,
     applied: bool,
+    /// Not applied by PC Tweaker, but every value it writes is already in
+    /// place on this PC (Windows, another tool or the user set it). Read
+    /// live, never guessed: composite tweaks leave it false.
+    already_set: bool,
     /// Everything this tweak actually does to Windows, in the order it does
     /// it - the registry values it writes, the commands it runs, the services
     /// it touches. Shown behind a "Technical details" disclosure so anyone can
@@ -257,18 +261,19 @@ fn discard_legacy_avatar(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/// Whether the tweak's value is in place right now; None when unreadable.
 /// "Active" means in effect now, not merely recorded. A value Windows or the
 /// user put back used to stay "on" (and its starter profile "already
 /// applied") while Change history reported it reverted, leaving no way to
 /// re-apply it there. Re-applying keeps the oldest snapshot, so the original
 /// value stays restorable. An unreadable value keeps the recorded state.
-fn in_effect(t: &tweaks::RegistryTweak, recorded: bool) -> bool {
+fn set_now(t: &tweaks::RegistryTweak) -> Option<bool> {
     #[cfg(windows)]
-    return recorded && !matches!(t.read_current(), Ok(v) if v.as_ref() != Some(&t.on_value));
+    return t.read_current().ok().map(|v| v.as_ref() == Some(&t.on_value));
     #[cfg(not(windows))]
     {
         let _ = t;
-        recorded
+        None
     }
 }
 
@@ -289,8 +294,10 @@ fn tweak_infos(store: &RollbackStore) -> Result<Vec<TweakInfo>, String> {
     let mut list: Vec<TweakInfo> = tweaks::all_tweaks()
         .into_iter()
         .filter(|t| t.id != "disable_copilot" || applied_ids.contains(t.id))
-        .map(|t| TweakInfo {
-            applied: in_effect(&t, applied_ids.contains(t.id)),
+        .map(|t| (applied_ids.contains(t.id), set_now(&t), t))
+        .map(|(recorded, now, t)| TweakInfo {
+            applied: recorded && now != Some(false),
+            already_set: !recorded && now == Some(true),
             id: t.id.to_string(),
             name: t.name.to_string(),
             description: t.description.to_string(),
@@ -510,9 +517,10 @@ fn tweak_infos(store: &RollbackStore) -> Result<Vec<TweakInfo>, String> {
     for t in &settings_tweaks::TWEAKS {
         let recorded = applied_ids.contains(t.id);
         #[cfg(windows)]
-        let applied = recorded && settings_tweaks::in_effect(t).unwrap_or(true);
+        let now = settings_tweaks::in_effect(t);
         #[cfg(not(windows))]
-        let applied = recorded;
+        let now: Option<bool> = None;
+        let applied = recorded && now != Some(false);
         list.push(TweakInfo {
             id: t.id.into(),
             name: t.name.into(),
@@ -522,6 +530,7 @@ fn tweak_infos(store: &RollbackStore) -> Result<Vec<TweakInfo>, String> {
             requires_admin: t.requires_admin(),
             requires_pro: t.requires_pro,
             applied,
+            already_set: !recorded && now == Some(true),
             changes: settings_tweaks::changes(t),
             min_build: (t.min_build > 0).then_some(t.min_build),
             pro_edition: t.edition == settings_tweaks::Edition::ProOrHigher,
@@ -2833,7 +2842,9 @@ mod tests {
             .map(|info| {
                 let mut v = serde_json::to_value(info).unwrap();
                 let o = v.as_object_mut().unwrap();
+                // Live state of the PC running the test, not part of the catalogue.
                 o.remove("applied");
+                o.remove("already_set");
                 o.remove("unavailable");
                 o.insert(
                     "manual_only".into(),

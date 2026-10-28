@@ -37,6 +37,8 @@ const flat = Object.fromEntries(LOCALES.map((l) => [l, flatten(STRINGS[l])]));
 // at all. Matching English here is correct, not a missing translation.
 const SAME_ON_PURPOSE = new Set([
   "CPU",
+  "SmartScreen",
+  "Lifetime",
   "RAM",
   "Pro",
   "Free",
@@ -147,6 +149,14 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // German uses "Apps" too (the English source wrongly said "Anwendungen" until 1.18.23).
+  "de:appCache.catApps",
+  // "Laptop" is the everyday German word (the review chose it over "Notebook").
+  "de:scan.formLaptop",
+  // French and English share the word; Windows calls the section "Maintenance" in French too.
+  "fr:tabs.maintenance",
+  // pt-PT says "driver" (Microsoft pt-PT); "controlador" is kept for the SSD controller.
+  "pt:latencyTrace.colDriver",
   "it:componentDebloat.no",
   "es:componentDebloat.no",
   "de:componentDebloat.presetMinimal",

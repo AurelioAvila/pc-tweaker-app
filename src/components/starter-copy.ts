@@ -66,9 +66,9 @@ export const STARTER_COPY: Record<Lang, Copy> = {
       "Meno suggerimenti di Windows, sondaggi e distrazioni nella barra delle applicazioni.",
     workBody: "Estensioni visibili, menu immediati e nessuna attesa per le app all’avvio.",
     gamingNote:
-      "Disattiva la registrazione Game DVR. L’accelerazione del mouse cambia anche sul desktop; i giochi con input diretto possono ignorarla. L’opzione Tasti permanenti disattiva la sua scorciatoia.",
+      "Disattiva la registrazione Game DVR. Le modifiche all’accelerazione del mouse valgono anche sul desktop; i giochi che usano il raw input possono ignorarle. L’opzione facoltativa Tasti permanenti disattiva solo la sua scorciatoia da tastiera.",
     studyNote:
-      "I widget scompaiono dalla barra. Non silenzia i messaggi e non blocca i siti. Alcune modifiche possono richiedere di uscire e rientrare nell’account Windows.",
+      "I Widget scompaiono dalla barra delle applicazioni. Non silenzia i messaggi e non blocca i siti. Alcune modifiche possono richiedere di uscire e rientrare nell’account Windows.",
     workNote:
       "I menu si aprono senza attesa. Le app possono avviarsi insieme dopo l’accesso. Le estensioni diventano visibili; i file nascosti sono facoltativi. La modifica ai menu si vede dopo essere usciti e rientrati nell’account.",
     apply: "Applica selezionati",
@@ -76,7 +76,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     active: "Già applicato",
     optional: "Facoltativo",
     notice:
-      "Aggiunge i tweak selezionati e conserva le altre impostazioni. Ripristina le singole modifiche dalla categoria o dalla cronologia. Non sostituisce integralmente il profilo precedente.",
+      "Aggiunge i tweak selezionati; le altre impostazioni restano come sono. Ripristina le singole modifiche dalla loro categoria o dalla Cronologia modifiche. Non è una modalità esclusiva che sostituisce tutto il resto.",
     empty: "Seleziona una modifica da applicare.",
     ready: "Tutti i tweak selezionati sono già applicati.",
     missing: "Alcune opzioni non sono disponibili in questa versione.",
@@ -87,7 +87,7 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     ...en,
     heading: "Un profil pour votre journée",
     intro: "Choisissez un profil, ajustez les options et appliquez-les en un clic.",
-    gaming: "Jeu",
+    gaming: "Gaming",
     study: "Études",
     work: "Travail",
     laptop: "Portable",
@@ -99,28 +99,29 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     streamingBody:
       "Enregistrement Game DVR désactivé et moins de fenêtres Windows susceptibles d’apparaître en direct.",
     laptopNote:
-      "Les animations et la transparence sont désactivées : Windows paraît plus sobre ; les changements apparaissent après une déconnexion puis une reconnexion. Une éventuelle économie de batterie dépend du portable et n’est pas mesurée ici ; les réglages d’alimentation ne changent pas.",
+      "Les animations et la transparence sont désactivées : Windows paraît plus sobre ; les changements apparaissent après une déconnexion puis une reconnexion. Une éventuelle économie de batterie dépend du portable et n’est pas mesurée ici ; les réglages d’alimentation ne changent pas.",
     quietNote:
-      "Il s’agit des fenêtres surgissantes, pas du bruit des ventilateurs : ventilateurs et alimentation ne changent pas. Les notifications de vos applications continuent de fonctionner.",
+      "Il s’agit des fenêtres surgissantes, pas du bruit des ventilateurs : ventilateurs et alimentation ne changent pas. Les notifications de vos applications continuent de fonctionner.",
     streamingNote:
-      "L’enregistrement en arrière-plan de la Game Bar s’arrête : enregistrez avec votre logiciel de streaming. Les sondages Windows et la fenêtre des touches rémanentes n’apparaissent plus par-dessus le jeu.",
-    gamingBody: "Un pointeur Windows constant et le contrôle de l’enregistrement Game DVR.",
-    studyBody: "Moins de suggestions Windows, de sondages et de distractions.",
+      "L’enregistrement en arrière-plan de la Game Bar s’arrête : enregistrez avec votre logiciel de streaming. Les sondages Windows et la fenêtre des touches rémanentes n’apparaissent plus par-dessus le jeu.",
+    gamingBody: "Un déplacement du pointeur constant et le contrôle de l’enregistrement Game DVR.",
+    studyBody:
+      "Moins de suggestions Windows, de sondages et de distractions dans la barre des tâches.",
     workBody: "Extensions visibles, menus immédiats et applications sans délai au démarrage.",
     gamingNote:
-      "Désactive Game DVR. La souris change aussi sur le bureau ; les jeux avec entrée brute peuvent ignorer ce réglage. L’option Touches rémanentes désactive son raccourci.",
+      "La capture Game DVR est désactivée. Le changement d’accélération de la souris s’applique aussi au bureau ; les jeux en entrée brute peuvent l’ignorer. L’option Touches rémanentes désactive son raccourci clavier.",
     studyNote:
-      "Masque les widgets de la barre. Ne coupe pas les messages et ne bloque pas les sites. Certaines modifications peuvent nécessiter une déconnexion.",
+      "Les Widgets disparaissent de la barre des tâches. Cela ne coupe pas les messages et ne bloque pas les sites web. Certaines modifications peuvent nécessiter une déconnexion pour apparaître.",
     workNote:
-      "Les menus s’ouvrent sans délai. Les applications peuvent démarrer ensemble. Les extensions sont visibles ; les fichiers cachés sont facultatifs. Le changement des menus apparaît après une déconnexion puis une reconnexion.",
+      "Les menus s’ouvrent sans leur délai habituel. Les applications au démarrage peuvent se lancer toutes en même temps après la connexion. Les extensions de fichiers deviennent visibles ; les fichiers cachés sont facultatifs. Le changement des menus apparaît après une déconnexion puis une reconnexion.",
     apply: "Appliquer la sélection",
     applying: "Application…",
     active: "Déjà appliqué",
     optional: "Facultatif",
     notice:
       "Ajoute les réglages sélectionnés et conserve les autres. Restaurez-les depuis leur catégorie ou l’historique. Ce n’est pas un changement de mode exclusif.",
-    empty: "Sélectionnez un réglage.",
-    ready: "Tous les réglages sélectionnés sont appliqués.",
+    empty: "Sélectionnez un réglage à appliquer.",
+    ready: "Tous les réglages sélectionnés sont déjà appliqués.",
     missing: "Certaines options sont indisponibles dans cette version.",
     free: "Inclus dans Free",
     notHere: "Non disponible sur ce PC",
@@ -144,25 +145,25 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     laptopNote:
       "Se desactivan las animaciones y la transparencia, así que Windows se ve más sobrio; los cambios se ven después de cerrar sesión y volver a entrar. Si esto ahorra batería depende del portátil y aquí no se mide; la configuración de energía no cambia.",
     quietNote:
-      "Se trata de ventanas emergentes, no del ruido de los ventiladores: los ventiladores y la energía no cambian. Las notificaciones de tus aplicaciones siguen funcionando.",
+      "Se trata de ventanas emergentes, no del ruido de los ventiladores: los ajustes de ventiladores y energía no cambian. Las notificaciones de tus aplicaciones siguen funcionando.",
     streamingNote:
-      "La grabación en segundo plano de la Game Bar se detiene: graba con tu aplicación de streaming. Las encuestas de Windows y la ventana de Teclas especiales ya no aparecen sobre el juego.",
+      "La grabación en segundo plano de Game Bar se detiene: graba con tu aplicación de streaming. Las encuestas de opinión de Windows y la ventana de Teclas especiales ya no aparecen sobre el juego.",
     gamingBody: "Movimiento constante del puntero y control de la grabación Game DVR.",
-    studyBody: "Menos sugerencias de Windows, encuestas y distracciones.",
+    studyBody: "Menos sugerencias de Windows, encuestas y distracciones en la barra de tareas.",
     workBody: "Extensiones visibles, menús inmediatos y aplicaciones sin demora al iniciar.",
     gamingNote:
-      "Desactiva Game DVR. El ratón también cambia en el escritorio; los juegos con entrada directa pueden ignorarlo. La opción Teclas especiales desactiva su atajo.",
+      "Se desactiva la captura de Game DVR. Los cambios en la aceleración del ratón también afectan al escritorio; los juegos que usan entrada sin procesar pueden ignorarlos. El ajuste opcional de Teclas especiales desactiva su atajo de teclado.",
     studyNote:
-      "Oculta los widgets de la barra. No silencia mensajes ni bloquea sitios. Algunos cambios pueden requerir cerrar sesión.",
+      "Los Widgets desaparecen de la barra de tareas. No silencia mensajes ni bloquea sitios web. Algunos cambios pueden requerir cerrar sesión para verse.",
     workNote:
-      "Los menús se abren sin demora. Las aplicaciones pueden iniciarse juntas. Las extensiones quedan visibles; los archivos ocultos son opcionales. El cambio en los menús se ve después de cerrar sesión y volver a entrar.",
+      "Los menús se abren sin su demora habitual. Las aplicaciones de inicio pueden abrirse todas a la vez tras iniciar sesión. Las extensiones de archivo quedan visibles; los archivos ocultos son opcionales. El cambio en los menús se ve después de cerrar sesión y volver a entrar.",
     apply: "Aplicar selección",
     applying: "Aplicando…",
     active: "Ya aplicado",
     optional: "Opcional",
     notice:
-      "Añade los ajustes seleccionados y conserva los demás. Restáuralos desde su categoría o el historial. No sustituye todo el modo anterior.",
-    empty: "Selecciona un cambio.",
+      "Añade los ajustes seleccionados. Los demás ajustes no cambian. Restaura cambios individuales desde su categoría o desde el historial de cambios. No es un cambio de modo excluyente.",
+    empty: "Selecciona un cambio para aplicarlo.",
     ready: "Todos los ajustes seleccionados están aplicados.",
     missing: "Algunas opciones no están disponibles en esta versión.",
     free: "Incluido en Free",
@@ -190,22 +191,23 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     streamingNote:
       "Die Hintergrundaufnahme der Game Bar stoppt, nimm also mit deiner Streaming-App auf. Windows-Umfragen und der Hinweis der Einrastfunktion erscheinen nicht mehr über dem Spiel.",
     gamingBody: "Gleichmäßige Windows-Zeigerbewegung und Kontrolle über Game-DVR-Aufnahmen.",
-    studyBody: "Weniger Windows-Vorschläge, Umfragen und Ablenkungen.",
-    workBody: "Sichtbare Dateiendungen, direkte Menüs und Autostart ohne Verzögerung.",
+    studyBody: "Weniger Windows-Vorschläge, Umfragen und Ablenkungen in der Taskleiste.",
+    workBody:
+      "Sichtbare Dateiendungen, schneller öffnende Menüs und Autostart-Apps ohne Verzögerung.",
     gamingNote:
-      "Deaktiviert Game DVR. Die Maus ändert sich auch auf dem Desktop; Spiele mit Raw Input können dies ignorieren. Die optionale Einrastfunktion-Einstellung deaktiviert deren Tastenkürzel.",
+      "Deaktiviert die Game-DVR-Aufnahme. Die Änderung der Mausbeschleunigung wirkt auch auf dem Desktop; Spiele mit Raw Input können sie ignorieren. Die optionale Einrastfunktion-Einstellung deaktiviert deren Tastenkürzel.",
     studyNote:
-      "Blendet Widgets in der Taskleiste aus. Schaltet Nachrichten nicht stumm und blockiert keine Websites. Einige Änderungen erfordern eine erneute Anmeldung.",
+      "Widgets verschwinden aus der Taskleiste. Das schaltet Nachrichten nicht stumm und blockiert keine Websites. Einige Änderungen werden erst nach einer Abmeldung sichtbar.",
     workNote:
-      "Menüs öffnen ohne Verzögerung. Autostart-Apps können gleichzeitig starten. Dateiendungen werden sichtbar; versteckte Dateien sind optional. Die Menüänderung wird nach Ab- und erneuter Anmeldung sichtbar.",
+      "Menüs öffnen sich ohne die übliche Verzögerung. Autostart-Apps können nach der Anmeldung gleichzeitig starten. Dateiendungen werden sichtbar; versteckte Dateien sind optional. Die Menüänderung wird nach Ab- und erneuter Anmeldung sichtbar.",
     apply: "Auswahl anwenden",
     applying: "Wird angewendet…",
     active: "Bereits angewendet",
     optional: "Optional",
     notice:
-      "Aktiviert die gewählten Einstellungen und behält andere bei. Einzelne Änderungen lassen sich in der Kategorie oder im Verlauf zurücksetzen. Kein exklusiver Moduswechsel.",
+      "Aktiviert die gewählten Tweaks. Andere Einstellungen bleiben, wie sie sind. Einzelne Änderungen lassen sich in ihrer Kategorie oder im Änderungsverlauf zurücksetzen. Kein exklusiver Moduswechsel.",
     empty: "Wähle eine Änderung.",
-    ready: "Alle gewählten Einstellungen sind bereits aktiv.",
+    ready: "Alle gewählten Tweaks sind bereits aktiv.",
     missing: "Einige Optionen fehlen in dieser Version.",
     free: "In Free enthalten",
     notHere: "Auf diesem PC nicht verfügbar",
@@ -214,14 +216,14 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     ...en,
     heading: "Um perfil para o seu dia",
     intro: "Escolha um perfil, ajuste as opções e aplique com um clique.",
-    gaming: "Gaming",
+    gaming: "Jogos",
     study: "Estudo",
     work: "Trabalho",
     laptop: "Portátil",
     quiet: "Sem interrupções",
     streaming: "Streaming",
     gamingBody: "Movimento consistente do ponteiro e controlo da gravação Game DVR.",
-    studyBody: "Menos sugestões do Windows, questionários e distrações.",
+    studyBody: "Menos sugestões do Windows, questionários e distrações na barra de tarefas.",
     workBody: "Extensões visíveis, menus imediatos e aplicações sem atraso no arranque.",
     laptopBody:
       "Menos efeitos visuais e nenhuma aplicação a reabrir sozinha depois de iniciar sessão.",
@@ -229,11 +231,11 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     streamingBody:
       "Gravação Game DVR desativada e menos janelas do Windows que possam aparecer na transmissão.",
     gamingNote:
-      "Desativa o Game DVR. O rato também muda no ambiente de trabalho; jogos com entrada direta podem ignorar o ajuste. A opção das Teclas Fixas desativa o respetivo atalho.",
+      "A captura do Game DVR é desativada. A alteração da aceleração do rato também afeta o ambiente de trabalho; os jogos que usam raw input podem ignorá-la. A opção das Teclas Fixas desativa o respetivo atalho.",
     studyNote:
-      "Oculta os widgets da barra. Não silencia mensagens nem bloqueia sites. Algumas alterações podem exigir terminar a sessão.",
+      "Os widgets desaparecem da barra de tarefas. Não silencia mensagens nem bloqueia sites. Algumas alterações podem exigir terminar a sessão para aparecerem.",
     workNote:
-      "Os menus abrem sem atraso. As aplicações podem iniciar em conjunto. As extensões ficam visíveis; ficheiros ocultos são opcionais. A alteração dos menus nota-se depois de terminar a sessão e voltar a entrar.",
+      "Os menus abrem sem o atraso habitual. As aplicações de arranque podem iniciar todas ao mesmo tempo depois de iniciar sessão. As extensões de ficheiro ficam visíveis; os ficheiros ocultos são opcionais. A alteração dos menus nota-se depois de terminar a sessão e voltar a entrar.",
     laptopNote:
       "As animações e a transparência são desativadas, por isso o Windows fica com um aspeto mais simples; as alterações notam-se depois de terminar a sessão e voltar a entrar. Se isto poupa bateria depende do portátil e não é medido aqui; as definições de energia não mudam.",
     quietNote:
@@ -245,11 +247,11 @@ export const STARTER_COPY: Record<Lang, Copy> = {
     active: "Já aplicado",
     optional: "Opcional",
     notice:
-      "Adiciona os ajustes selecionados e mantém os restantes. Restaure alterações na categoria ou no histórico. Não substitui integralmente o modo anterior.",
-    empty: "Selecione uma alteração.",
+      "Adiciona os ajustes selecionados. As outras definições ficam como estão. Restaure alterações individuais na respetiva categoria ou no Histórico de alterações. Não se trata de um modo exclusivo.",
+    empty: "Selecione uma alteração para aplicar.",
     ready: "Todos os ajustes selecionados já estão aplicados.",
     missing: "Algumas opções não estão disponíveis nesta versão.",
-    free: "Incluído em Free",
+    free: "Incluído no Free",
     notHere: "Não disponível neste PC",
   },
 };

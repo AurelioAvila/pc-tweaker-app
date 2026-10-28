@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { factorLabel } from "./health-copy";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { format, type Lang, type Strings, localeOf } from "../i18n";
@@ -151,7 +152,7 @@ export function ScanPanel({
     report && !isPro ? recommendedTweaks(report, true).filter((t) => t.requires_pro) : [];
   const optional = report ? optionalScanTweaks(report) : [];
   const observations = report ? scanObservations(report) : [];
-  const unknownSecurity = report ? unknownSecuritySignals(report) : [];
+  const unknownSecurity = report ? unknownSecuritySignals(report, lang) : [];
   const selectedFixes = fixes.filter((t) => selected.includes(t.id));
   const reviewFixes = fixes.filter((t) => reviewIds?.includes(t.id));
   const complete = Object.values(probes).filter((p) => p === "complete").length;
@@ -816,7 +817,13 @@ export function ScanPanel({
                       <div>
                         <h4>{c.observations[o.kind][0]}</h4>
                         <p>{c.observations[o.kind][1]}</p>
-                        {o.evidence && <p className="scan-evidence">{o.evidence}</p>}
+                        {o.evidence && (
+                          <p className="scan-evidence">
+                            {o.kind === "security"
+                              ? factorLabel(lang, o.id, o.evidence)
+                              : o.evidence}
+                          </p>
+                        )}
                       </div>
                       <button
                         className="scan-secondary"

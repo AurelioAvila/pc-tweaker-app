@@ -188,7 +188,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     eyebrow: "PC TWEAKER · INVITI",
     close: "Chiudi gli inviti",
     title: "Invita un amico.",
-    intro: "Il tuo amico risparmia un ulteriore 10%. Tu ottieni tempo Pro appena paga.",
+    intro: "Il tuo amico risparmia un ulteriore 10%. Tu ricevi un periodo di Pro appena paga.",
     loading: "Caricamento degli inviti…",
     loadFailed: "Gli inviti non sono disponibili. Verifica la tua email e riprova più tardi.",
     closedTitle: "Gli inviti non sono ancora aperti.",
@@ -199,7 +199,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     tabRedeem: "Usa un codice",
     perkMonthly: "ACQUISTO MENSILE",
     perkAnnual: "ACQUISTO ANNUALE",
-    perkLifetime: "ACQUISTO A VITA",
+    perkLifetime: "ACQUISTO LIFETIME",
     perkMonths: "{months} mesi",
     perkScope: "Pro per un PC",
     codeTitle: "Il tuo codice invito",
@@ -212,7 +212,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     generate: "Genera il mio codice",
     codeReady: "Il tuo codice invito è pronto.",
     lifetimeInviter:
-      "Hai il piano a vita: i tuoi amici risparmiano comunque il 10%, ma gli account con il piano a vita non ricevono bonus.",
+      "Hai Lifetime: i tuoi amici risparmiano comunque il 10%, ma gli account Lifetime non ricevono bonus.",
     bonusesTitle: "I tuoi bonus Pro",
     bonusesBody:
       "Ogni bonus vale per un PC. L'attivazione avvia la sua durata e non crea mai un abbonamento a pagamento.",
@@ -254,7 +254,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesDiscount:
       "Il 10% in più si applica una sola volta, al primo acquisto a pagamento idoneo, dopo eventuali offerte compatibili. I rinnovi seguono le condizioni normali del piano. La prova gratuita non si combina con un invito.",
     rulesBonus:
-      "Un acquisto mensile fa ottenere a chi invita 6 mesi di Pro; un acquisto annuale o a vita 12. Ogni bonus vale per un PC, è personale e non trasferibile. Fino a {cap} bonus ogni 12 mesi. Chi ha il piano a vita può invitare amici, ma non riceve bonus.",
+      "Un acquisto mensile fa ottenere a chi invita 6 mesi di Pro; un acquisto annuale o Lifetime ne fa ottenere 12. Ogni bonus vale per un PC, è personale e non trasferibile. Fino a {cap} bonus ogni 12 mesi. Chi ha Lifetime può invitare amici, ma non riceve bonus.",
     rulesVerification:
       "Un bonus è disponibile appena il primo pagamento dell'amico va a buon fine. Se quel pagamento viene rimborsato o contestato, il bonus viene ritirato, anche se è già attivo. Gli autoinviti non contano: un secondo account, un alias del tuo indirizzo, lo stesso PC, gli stessi dati di pagamento o lo stesso dominio email privato. Vedi solo lo stato di ogni bonus, mai i dati di pagamento dell'amico.",
     rulesDevice:
@@ -287,19 +287,19 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     eyebrow: "PC TWEAKER · PARRAINAGE",
     close: "Fermer le parrainage",
     title: "Invitez un ami.",
-    intro: "Votre ami économise 10 % de plus. Vous gagnez du temps Pro dès qu'il paie.",
+    intro: "Votre ami économise 10 % de plus. Vous gagnez du temps Pro dès qu'il paie.",
     loading: "Chargement de vos invitations…",
     loadFailed: "Les invitations sont indisponibles. Vérifiez votre e-mail et réessayez plus tard.",
     closedTitle: "Les invitations ne sont pas encore ouvertes.",
     closedBody:
-      "Votre forfait actuel ne change pas. Le programme apparaîtra ici dès qu'il sera prêt.",
+      "Votre offre actuelle ne change pas. Le programme apparaîtra ici dès qu'il sera prêt.",
     tabsLabel: "Options d'invitation",
     tabInvite: "Votre code",
     tabBonuses: "Bonus",
     tabRedeem: "Utiliser un code",
     perkMonthly: "ACHAT MENSUEL",
     perkAnnual: "ACHAT ANNUEL",
-    perkLifetime: "ACHAT À VIE",
+    perkLifetime: "ACHAT LIFETIME",
     perkMonths: "{months} mois",
     perkScope: "Pro pour un PC",
     codeTitle: "Votre code d'invitation",
@@ -312,12 +312,12 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     generate: "Générer mon code",
     codeReady: "Votre code d'invitation est prêt.",
     lifetimeInviter:
-      "Vous avez le forfait à vie : vos amis économisent quand même 10 %, mais les comptes avec un forfait à vie ne gagnent pas de bonus.",
+      "Vous avez Lifetime : vos amis économisent quand même 10 %, mais les comptes Lifetime ne gagnent pas de bonus.",
     bonusesTitle: "Vos bonus Pro",
     bonusesBody:
-      "Chaque bonus vaut pour un PC. Son activation lance sa durée ; elle ne crée jamais d'abonnement payant.",
+      "Chaque bonus vaut pour un PC. Son activation lance sa durée ; elle ne crée jamais d'abonnement payant.",
     bonusesLimits:
-      "Jusqu'à {cap} bonus tous les 12 mois. Les bonus sont personnels : ils ne peuvent être ni transférés, ni vendus, ni offerts.",
+      "Jusqu'à {cap} bonus tous les 12 mois. Les bonus sont personnels : ils ne peuvent être ni transférés, ni vendus, ni offerts.",
     emptyTitle: "Aucun bonus pour l'instant.",
     emptyBody: "Quand un ami finalise un achat éligible, son statut apparaît ici.",
     rewardTitle: "Bonus de parrainage",
@@ -330,13 +330,13 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
       "Certains achats nécessitent une vérification manuelle avant que le bonus soit disponible. S'il est encore en vérification après 10 jours ouvrés, écrivez à {email}.",
     activate: "Activer sur ce PC",
     confirmLabel: "Confirmer l'activation du bonus",
-    confirmTitle: "Lancer votre bonus de {months} mois sur ce PC ?",
+    confirmTitle: "Lancer votre bonus de {months} mois sur ce PC ?",
     confirmBody:
-      "La période commence maintenant. Le bonus reste sur ce PC et ne peut pas être déplacé automatiquement. Si vous payez déjà Pro, les deux périodes courent en même temps : vous préférerez peut-être le garder pour plus tard.",
+      "La période commence maintenant. Le bonus reste sur ce PC et ne peut pas être déplacé automatiquement. Si vous payez déjà Pro, les deux périodes courent en même temps : vous préférerez peut-être le garder pour plus tard.",
     confirmActivate: "Confirmer l'activation",
     keepForLater: "Le garder pour plus tard",
     activated: "Bonus activé sur ce PC.",
-    claimTitle: "Vous avez une invitation ?",
+    claimTitle: "Vous avez une invitation ?",
     expiredTitle: "Cette invitation a expiré.",
     expiredBody:
       "Vous pouvez toujours acheter PC Tweaker au prix normal. Si une page de paiement est déjà ouverte, vérifiez son prix et son expiration avant de payer.",
@@ -345,22 +345,22 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     confirmedLocked:
       "Votre invitation est confirmée et liée à la page de paiement que vous avez ouverte. Vérifiez la réduction avant de payer.",
     claimWarning:
-      "Avant de confirmer : l'invitation reste liée à ce compte, expire {days} jours après la confirmation, ne s'applique qu'à votre premier achat payant et ne se cumule pas avec l'essai gratuit.",
+      "Avant de confirmer : l'invitation reste liée à ce compte, expire {days} jours après la confirmation, ne s'applique qu'à votre premier achat payant et ne se cumule pas avec l'essai gratuit.",
     codeLabel: "Code d'invitation",
     claimButton: "Confirmer l'invitation",
     codeInvalid: "Saisissez le code d'invitation à 10 caractères.",
     claimed: "Invitation confirmée. Vérifiez le prix final avant de payer.",
     rulesTitle: "Règles du programme",
     rulesDiscount:
-      "Les 10 % supplémentaires s'appliquent une seule fois, à votre premier achat payant éligible, après toute offre compatible. Les renouvellements suivent les conditions normales du forfait. L'essai gratuit ne se cumule pas avec une invitation.",
+      "Les 10 % supplémentaires s'appliquent une seule fois, à votre premier achat payant éligible, après toute promotion compatible. Les renouvellements suivent les conditions normales de l'offre. L'essai gratuit ne se cumule pas avec une invitation.",
     rulesBonus:
-      "Un achat mensuel rapporte 6 mois de Pro au parrain ; un achat annuel ou à vie en rapporte 12. Chaque bonus vaut pour un PC, est personnel et non transférable. Jusqu'à {cap} bonus tous les 12 mois. Les titulaires d'un forfait à vie peuvent inviter des amis, mais ne gagnent pas de bonus.",
+      "Un achat mensuel rapporte 6 mois de Pro au parrain ; un achat annuel ou Lifetime en rapporte 12. Chaque bonus vaut pour un PC, est personnel et non transférable. Jusqu'à {cap} bonus tous les 12 mois. Les titulaires de Lifetime peuvent inviter des amis, mais ne gagnent pas de bonus.",
     rulesVerification:
-      "Un bonus est disponible dès que le premier paiement de l'ami aboutit. Si ce paiement est remboursé ou contesté, le bonus est retiré, même s'il est déjà actif. Les auto-parrainages ne comptent pas : un second compte, un alias de votre adresse, le même PC, les mêmes coordonnées de paiement ou le même domaine e-mail privé. Vous ne voyez que le statut de chaque bonus, jamais les données de paiement de l'ami.",
+      "Un bonus est disponible dès que le premier paiement de l'ami aboutit. Si ce paiement est remboursé ou contesté, le bonus est retiré, même s'il est déjà actif. Les auto-parrainages ne comptent pas : un second compte, un alias de votre adresse, le même PC, les mêmes coordonnées de paiement ou le même domaine e-mail privé. Vous ne voyez que le statut de chaque bonus, jamais les données de paiement de l'ami.",
     rulesDevice:
-      "Un bonus actif est vérifié en ligne environ toutes les 10 minutes lorsque l'application est ouverte. Un simple téléchargement ne compte pas. Un téléchargement depuis le Microsoft Store ne transmet pas l'invitation : confirmez le code ici avant d'acheter.",
+      "Un bonus actif est vérifié en ligne environ toutes les 10 minutes lorsque l'application est ouverte. Un simple téléchargement ne compte pas. Un téléchargement depuis le Microsoft Store ne transmet pas l'invitation : confirmez le code ici avant d'acheter.",
     menuInvite: "Inviter un ami",
-    bonusActive: "Bonus Pro · actif sur ce PC. Distinct de vos forfaits payants.",
+    bonusActive: "Bonus Pro · actif sur ce PC. Distinct de vos offres payantes.",
     errors: {
       verifyEmail: "Vérifiez votre e-mail avant d'utiliser les invitations.",
       unavailable: "Le programme de parrainage n'est pas encore disponible.",
@@ -370,15 +370,15 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
       bonusUnavailable: "Ce bonus n'est pas disponible sur ce PC.",
       bonusExpired: "Ce bonus est terminé.",
       clockAhead:
-        "L'horloge de votre PC avance de {minutes} minutes. Activez « Régler l'heure automatiquement » dans les Paramètres Windows, puis réessayez. Le bonus n'a pas été lancé.",
+        "L'horloge de votre PC avance de {minutes} minutes. Activez « Régler l'heure automatiquement » dans les Paramètres Windows, puis réessayez. Le bonus n'a pas été lancé.",
       clockBehind:
-        "L'horloge de votre PC retarde de plus d'un jour. Activez « Régler l'heure automatiquement » dans les Paramètres Windows, puis réessayez. Le bonus n'a pas été lancé.",
+        "L'horloge de votre PC retarde de plus d'un jour. Activez « Régler l'heure automatiquement » dans les Paramètres Windows, puis réessayez. Le bonus n'a pas été lancé.",
       sessionChanged:
         "Votre connexion a changé pendant l'activation. Rouvrez ce panneau pour vérifier le bonus.",
       signInAgain: "Veuillez vous reconnecter.",
       rateLimited: "Veuillez patienter quelques minutes avant de réessayer.",
       notVerified: "Le bonus n'a pas pu être vérifié sur ce PC. Réessayez dans quelques minutes.",
-      generic: "La demande n'a pas pu aboutir. Votre forfait payant ne change pas.",
+      generic: "La demande n'a pas pu aboutir. Votre offre payante ne change pas.",
     },
   },
   es: {
@@ -397,7 +397,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     tabRedeem: "Usar un código",
     perkMonthly: "COMPRA MENSUAL",
     perkAnnual: "COMPRA ANUAL",
-    perkLifetime: "COMPRA DE POR VIDA",
+    perkLifetime: "COMPRA LIFETIME",
     perkMonths: "{months} meses",
     perkScope: "Pro para un PC",
     codeTitle: "Tu código de invitación",
@@ -410,7 +410,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     generate: "Generar mi código",
     codeReady: "Tu código de invitación está listo.",
     lifetimeInviter:
-      "Tienes el plan de por vida: tus amigos siguen ahorrando un 10 %, pero las cuentas con el plan de por vida no ganan bonos.",
+      "Tienes Lifetime: tus amigos siguen ahorrando un 10 %, pero las cuentas Lifetime no ganan bonos.",
     bonusesTitle: "Tus bonos Pro",
     bonusesBody:
       "Cada bono es para un PC. Al activarlo empieza su duración; nunca crea una suscripción de pago.",
@@ -452,7 +452,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesDiscount:
       "El 10 % adicional se aplica una sola vez, a tu primera compra de pago válida, después de cualquier oferta compatible. Las renovaciones siguen las condiciones normales del plan. La prueba gratuita no se combina con una invitación.",
     rulesBonus:
-      "Una compra mensual da a quien invita 6 meses de Pro; una compra anual o de por vida, 12. Cada bono es para un PC, personal e intransferible. Hasta {cap} bonos cada 12 meses. Los titulares del plan de por vida pueden invitar a amigos, pero no ganan bonos.",
+      "Una compra mensual da a quien invita 6 meses de Pro; una compra anual o Lifetime, 12. Cada bono es para un PC, personal e intransferible. Hasta {cap} bonos cada 12 meses. Los titulares de Lifetime pueden invitar a amigos, pero no ganan bonos.",
     rulesVerification:
       "Un bono está disponible en cuanto se completa el primer pago de tu amigo. Si ese pago se reembolsa o se disputa, el bono se retira, aunque ya esté activo. Las autoinvitaciones no cuentan: una segunda cuenta, un alias de tu dirección, el mismo PC, los mismos datos de pago o el mismo dominio de correo privado. Solo ves el estado de cada bono, nunca los datos de pago de tu amigo.",
     rulesDevice:
@@ -482,35 +482,35 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
   de: {
     eyebrow: "PC TWEAKER · EINLADUNGEN",
     close: "Einladungen schließen",
-    title: "Laden Sie einen Freund ein.",
-    intro: "Ihr Freund spart zusätzlich 10 %. Sie erhalten Pro-Zeit, sobald er bezahlt hat.",
+    title: "Lade einen Freund ein.",
+    intro: "Dein Freund spart zusätzlich 10 %. Du erhältst Pro-Zeit, sobald er bezahlt hat.",
     loading: "Einladungen werden geladen…",
     loadFailed:
-      "Einladungen sind nicht verfügbar. Bestätigen Sie Ihre E-Mail-Adresse und versuchen Sie es später erneut.",
+      "Einladungen sind nicht verfügbar. Bestätige deine E-Mail-Adresse und versuch es später erneut.",
     closedTitle: "Einladungen sind noch nicht geöffnet.",
     closedBody:
-      "Ihr aktueller Tarif bleibt unverändert. Das Programm erscheint hier, sobald es bereit ist.",
+      "Dein aktueller Tarif bleibt unverändert. Das Programm erscheint hier, sobald es bereit ist.",
     tabsLabel: "Einladungsoptionen",
-    tabInvite: "Ihr Code",
+    tabInvite: "Dein Code",
     tabBonuses: "Boni",
     tabRedeem: "Code einlösen",
     perkMonthly: "MONATLICHER KAUF",
     perkAnnual: "JÄHRLICHER KAUF",
-    perkLifetime: "LEBENSLANGE LIZENZ",
+    perkLifetime: "LIFETIME-KAUF",
     perkMonths: "{months} Monate",
     perkScope: "Pro für einen PC",
-    codeTitle: "Ihr Einladungscode",
+    codeTitle: "Dein Einladungscode",
     copyCode: "Code kopieren",
     copyLink: "Einladungslink kopieren",
     codeCopied: "Einladungscode kopiert.",
     linkCopied: "Einladungslink kopiert.",
-    copyFailed: "Kopieren nicht möglich. Markieren Sie den Code und kopieren Sie ihn manuell.",
-    codeHelp: "Ihr Freund gibt diesen Code vor dem Bezahlen in der App ein.",
+    copyFailed: "Kopieren nicht möglich. Markiere den Code und kopiere ihn manuell.",
+    codeHelp: "Dein Freund gibt diesen Code vor dem Bezahlen in der App ein.",
     generate: "Meinen Code erstellen",
-    codeReady: "Ihr Einladungscode ist bereit.",
+    codeReady: "Dein Einladungscode ist bereit.",
     lifetimeInviter:
-      "Sie haben eine lebenslange Lizenz: Ihre Freunde sparen trotzdem 10 %, aber Konten mit lebenslanger Lizenz erhalten keine Boni.",
-    bonusesTitle: "Ihre Pro-Boni",
+      "Du hast Lifetime: Deine Freunde sparen trotzdem 10 %, aber Lifetime-Konten erhalten keine Boni.",
+    bonusesTitle: "Deine Pro-Boni",
     bonusesBody:
       "Jeder Bonus gilt für einen PC. Mit der Aktivierung beginnt seine Laufzeit; es entsteht nie ein kostenpflichtiges Abonnement.",
     bonusesLimits:
@@ -524,60 +524,60 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     statusActive: "Aktiv auf einem PC bis {date}",
     statusNotEligible: "Nicht berechtigt",
     pendingHelp:
-      "Manche Käufe erfordern eine manuelle Prüfung, bevor der Bonus verfügbar ist. Ist er nach 10 Werktagen noch in Prüfung, schreiben Sie an {email}.",
+      "Manche Käufe erfordern eine manuelle Prüfung, bevor der Bonus verfügbar ist. Ist er nach 10 Werktagen noch in Prüfung, schreib an {email}.",
     activate: "Auf diesem PC aktivieren",
     confirmLabel: "Bonusaktivierung bestätigen",
-    confirmTitle: "Ihren {months}-Monats-Bonus auf diesem PC starten?",
+    confirmTitle: "Deinen {months}-Monats-Bonus auf diesem PC starten?",
     confirmBody:
-      "Die Laufzeit beginnt jetzt. Der Bonus bleibt auf diesem PC und kann nicht automatisch übertragen werden. Wenn Sie bereits für Pro bezahlen, laufen beide Zeiträume gleichzeitig – vielleicht heben Sie ihn lieber für später auf.",
+      "Die Laufzeit beginnt jetzt. Der Bonus bleibt auf diesem PC und kann nicht automatisch übertragen werden. Wenn du bereits für Pro bezahlst, laufen beide Zeiträume gleichzeitig – vielleicht hebst du ihn lieber für später auf.",
     confirmActivate: "Aktivierung bestätigen",
     keepForLater: "Für später aufheben",
     activated: "Bonus auf diesem PC aktiviert.",
-    claimTitle: "Haben Sie eine Einladung?",
+    claimTitle: "Hast du eine Einladung?",
     expiredTitle: "Diese Einladung ist abgelaufen.",
     expiredBody:
-      "Sie können PC Tweaker weiterhin zum regulären Preis kaufen. Wenn bereits eine Zahlungsseite geöffnet ist, prüfen Sie vor dem Bezahlen Preis und Ablaufzeit.",
+      "Du kannst PC Tweaker weiterhin zum regulären Preis kaufen. Wenn bereits eine Zahlungsseite geöffnet ist, prüfe vor dem Bezahlen Preis und Ablaufzeit.",
     confirmedOpen:
-      "Ihre Einladung ist für Ihren ersten bezahlten Kauf bestätigt. Prüfen Sie den Rabatt auf der Zahlungsseite, bevor Sie bezahlen.",
+      "Deine Einladung ist für deinen ersten bezahlten Kauf bestätigt. Prüfe den Rabatt auf der Zahlungsseite, bevor du bezahlst.",
     confirmedLocked:
-      "Ihre Einladung ist bestätigt und mit der geöffneten Zahlungsseite verknüpft. Prüfen Sie den Rabatt, bevor Sie bezahlen.",
+      "Deine Einladung ist bestätigt und mit der geöffneten Zahlungsseite verknüpft. Prüfe den Rabatt, bevor du bezahlst.",
     claimWarning:
-      "Vor dem Bestätigen: Die Einladung bleibt mit diesem Konto verknüpft, läuft {days} Tage nach der Bestätigung ab, gilt nur für Ihren ersten bezahlten Kauf und ist nicht mit der kostenlosen Testphase kombinierbar.",
+      "Vor dem Bestätigen: Die Einladung bleibt mit diesem Konto verknüpft, läuft {days} Tage nach der Bestätigung ab, gilt nur für deinen ersten bezahlten Kauf und ist nicht mit der kostenlosen Testphase kombinierbar.",
     codeLabel: "Einladungscode",
     claimButton: "Einladung bestätigen",
-    codeInvalid: "Geben Sie den 10-stelligen Einladungscode ein.",
-    claimed: "Einladung bestätigt. Prüfen Sie den Endpreis, bevor Sie bezahlen.",
+    codeInvalid: "Gib den 10-stelligen Einladungscode ein.",
+    claimed: "Einladung bestätigt. Prüfe den Endpreis, bevor du bezahlst.",
     rulesTitle: "Programmregeln",
     rulesDiscount:
-      "Die zusätzlichen 10 % gelten einmal, für Ihren ersten berechtigten bezahlten Kauf, nach einem eventuellen kompatiblen Angebot. Verlängerungen folgen den normalen Tarifbedingungen. Die kostenlose Testphase ist nicht mit einer Einladung kombinierbar.",
+      "Die zusätzlichen 10 % gelten einmal, für deinen ersten berechtigten bezahlten Kauf, nach einem eventuellen kompatiblen Angebot. Verlängerungen folgen den normalen Tarifbedingungen. Die kostenlose Testphase ist nicht mit einer Einladung kombinierbar.",
     rulesBonus:
-      "Ein monatlicher Kauf bringt der einladenden Person 6 Monate Pro, ein jährlicher Kauf oder der Kauf einer lebenslangen Lizenz 12. Jeder Bonus gilt für einen PC, ist persönlich und nicht übertragbar. Bis zu {cap} Boni alle 12 Monate. Wer eine lebenslange Lizenz besitzt, kann Freunde einladen, erhält aber keine Boni.",
+      "Ein monatlicher Kauf bringt der einladenden Person 6 Monate Pro, ein jährlicher Kauf oder ein Lifetime-Kauf 12. Jeder Bonus gilt für einen PC, ist persönlich und nicht übertragbar. Bis zu {cap} Boni alle 12 Monate. Wer Lifetime besitzt, kann Freunde einladen, erhält aber keine Boni.",
     rulesVerification:
-      "Ein Bonus ist verfügbar, sobald die erste Zahlung des Freundes erfolgreich ist. Wird diese Zahlung erstattet oder angefochten, wird der Bonus entzogen, auch wenn er bereits aktiv ist. Selbsteinladungen zählen nicht: ein zweites Konto, ein Alias Ihrer Adresse, derselbe PC, dieselben Zahlungsdaten oder dieselbe private E-Mail-Domain. Sie sehen nur den Status jedes Bonus, nie die Zahlungsdaten des Freundes.",
+      "Ein Bonus ist verfügbar, sobald die erste Zahlung deines Freundes erfolgreich ist. Wird diese Zahlung erstattet oder angefochten, wird der Bonus entzogen, auch wenn er bereits aktiv ist. Selbsteinladungen zählen nicht: ein zweites Konto, ein Alias deiner Adresse, derselbe PC, dieselben Zahlungsdaten oder dieselbe private E-Mail-Domain. Du siehst nur den Status jedes Bonus, nie die Zahlungsdaten deines Freundes.",
     rulesDevice:
-      "Ein aktiver Bonus wird online etwa alle 10 Minuten geprüft, solange die App geöffnet ist. Ein Download allein zählt nicht. Ein Download aus dem Microsoft Store überträgt die Einladung nicht: Bestätigen Sie den Code hier vor dem Kauf.",
+      "Ein aktiver Bonus wird online etwa alle 10 Minuten geprüft, solange die App geöffnet ist. Ein Download allein zählt nicht. Ein Download aus dem Microsoft Store überträgt die Einladung nicht: Bestätige den Code hier vor dem Kauf.",
     menuInvite: "Freund einladen",
-    bonusActive: "Pro-Bonus · auf diesem PC aktiv. Getrennt von Ihren bezahlten Tarifen.",
+    bonusActive: "Pro-Bonus · auf diesem PC aktiv. Getrennt von deinen bezahlten Tarifen.",
     errors: {
-      verifyEmail: "Bestätigen Sie Ihre E-Mail-Adresse, bevor Sie Einladungen nutzen.",
+      verifyEmail: "Bestätige deine E-Mail-Adresse, bevor du Einladungen nutzt.",
       unavailable: "Das Einladungsprogramm ist noch nicht verfügbar.",
       notEligible: "Diese Einladung gilt nicht für dieses Konto.",
       alreadyBound: "Dieses Konto hat bereits eine andere Einladung.",
-      invalidCode: "Prüfen Sie den Einladungscode und versuchen Sie es erneut.",
+      invalidCode: "Prüfe den Einladungscode und versuch es erneut.",
       bonusUnavailable: "Dieser Bonus ist auf diesem PC nicht verfügbar.",
       bonusExpired: "Dieser Bonus ist abgelaufen.",
       clockAhead:
-        "Die Uhr Ihres PCs geht {minutes} Minuten vor. Aktivieren Sie „Uhrzeit automatisch festlegen“ in den Windows-Einstellungen und versuchen Sie es erneut. Der Bonus wurde nicht gestartet.",
+        "Die Uhr deines PCs geht {minutes} Minuten vor. Aktiviere „Uhrzeit automatisch festlegen“ in den Windows-Einstellungen und versuch es erneut. Der Bonus wurde nicht gestartet.",
       clockBehind:
-        "Die Uhr Ihres PCs geht mehr als einen Tag nach. Aktivieren Sie „Uhrzeit automatisch festlegen“ in den Windows-Einstellungen und versuchen Sie es erneut. Der Bonus wurde nicht gestartet.",
+        "Die Uhr deines PCs geht mehr als einen Tag nach. Aktiviere „Uhrzeit automatisch festlegen“ in den Windows-Einstellungen und versuch es erneut. Der Bonus wurde nicht gestartet.",
       sessionChanged:
-        "Ihre Anmeldung hat sich während der Aktivierung geändert. Öffnen Sie dieses Fenster erneut, um den Bonus zu prüfen.",
-      signInAgain: "Bitte melden Sie sich erneut an.",
-      rateLimited: "Bitte warten Sie einige Minuten, bevor Sie es erneut versuchen.",
+        "Deine Anmeldung hat sich während der Aktivierung geändert. Öffne dieses Fenster erneut, um den Bonus zu prüfen.",
+      signInAgain: "Bitte melde dich erneut an.",
+      rateLimited: "Bitte warte einige Minuten, bevor du es erneut versuchst.",
       notVerified:
-        "Der Bonus konnte auf diesem PC nicht geprüft werden. Versuchen Sie es in einigen Minuten erneut.",
+        "Der Bonus konnte auf diesem PC nicht geprüft werden. Versuch es in einigen Minuten erneut.",
       generic:
-        "Die Anfrage konnte nicht abgeschlossen werden. Ihr bezahlter Tarif bleibt unverändert.",
+        "Die Anfrage konnte nicht abgeschlossen werden. Dein bezahlter Tarif bleibt unverändert.",
     },
   },
   pt: {
@@ -596,7 +596,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     tabRedeem: "Usar um código",
     perkMonthly: "COMPRA MENSAL",
     perkAnnual: "COMPRA ANUAL",
-    perkLifetime: "COMPRA VITALÍCIA",
+    perkLifetime: "COMPRA LIFETIME",
     perkMonths: "{months} meses",
     perkScope: "Pro para um PC",
     codeTitle: "O seu código de convite",
@@ -609,7 +609,7 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     generate: "Gerar o meu código",
     codeReady: "O seu código de convite está pronto.",
     lifetimeInviter:
-      "Tem o plano vitalício: os seus amigos continuam a poupar 10%, mas as contas com o plano vitalício não recebem bónus.",
+      "Tem o Lifetime: os seus amigos continuam a poupar 10%, mas as contas Lifetime não recebem bónus.",
     bonusesTitle: "Os seus bónus Pro",
     bonusesBody:
       "Cada bónus é válido para um PC. A ativação inicia a sua duração e nunca cria uma subscrição paga.",
@@ -651,9 +651,9 @@ export const REFERRAL_COPY: Record<Lang, ReferralCopy> = {
     rulesDiscount:
       "Os 10% adicionais aplicam-se uma única vez, à primeira compra paga elegível, depois de qualquer oferta compatível. As renovações seguem as condições normais do plano. A avaliação gratuita não pode ser combinada com um convite.",
     rulesBonus:
-      "Uma compra mensal dá a quem convida 6 meses de Pro; uma compra anual ou vitalícia, 12. Cada bónus é válido para um PC, é pessoal e intransmissível. Até {cap} bónus a cada 12 meses. Os titulares do plano vitalício podem convidar amigos, mas não recebem bónus.",
+      "Uma compra mensal dá a quem convida 6 meses de Pro; uma compra anual ou Lifetime, 12. Cada bónus é válido para um PC, é pessoal e intransmissível. Até {cap} bónus a cada 12 meses. Os titulares do Lifetime podem convidar amigos, mas não recebem bónus.",
     rulesVerification:
-      "Um bónus fica disponível assim que o primeiro pagamento do amigo é concluído. Se esse pagamento for reembolsado ou contestado, o bónus é retirado, mesmo que já esteja ativo. Os autoconvites não contam: uma segunda conta, um alias do seu endereço, o mesmo PC, os mesmos dados de pagamento ou o mesmo domínio de email privado. Vê apenas o estado de cada bónus, nunca os dados de pagamento do amigo.",
+      "Um bónus fica disponível assim que o primeiro pagamento do amigo é concluído. Se esse pagamento for reembolsado ou contestado, o bónus é retirado, mesmo que já esteja ativo. Os autoconvites não contam: uma segunda conta, um alias do seu endereço, o mesmo PC, os mesmos dados de pagamento ou o mesmo domínio de e-mail privado. Vê apenas o estado de cada bónus, nunca os dados de pagamento do amigo.",
     rulesDevice:
       "Um bónus ativo é verificado online cerca de cada 10 minutos enquanto a aplicação está aberta. A transferência por si só não conta. Uma transferência a partir da Microsoft Store não transmite o convite: confirme o código aqui antes de comprar.",
     menuInvite: "Convidar um amigo",

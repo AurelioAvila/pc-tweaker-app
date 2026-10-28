@@ -17,7 +17,7 @@
 //!   refuses to ship;
 //! - nothing here leaves the machine.
 
-use crate::health::HealthReport;
+use crate::health::{EvidenceParts, HealthReport};
 use serde::{Deserialize, Serialize};
 
 /// A stored factor. Ids are owned `String`s rather than the `&'static str`
@@ -31,6 +31,9 @@ pub struct SnapshotFactor {
     pub earned: u32,
     pub max: u32,
     pub evidence: String,
+    /// Absent in snapshots stored before evidence was translatable.
+    #[serde(default)]
+    pub parts: EvidenceParts,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -69,6 +72,7 @@ impl HealthSnapshot {
                             earned: f.earned,
                             max: f.max,
                             evidence: f.evidence.clone(),
+                            parts: f.parts.clone(),
                         })
                         .collect(),
                 })
@@ -85,6 +89,8 @@ pub struct FactorChange {
     pub delta: i32,
     pub evidence_before: String,
     pub evidence_after: String,
+    pub parts_before: EvidenceParts,
+    pub parts_after: EvidenceParts,
 }
 
 /// One category that genuinely moved, with the factors responsible.
@@ -152,6 +158,8 @@ pub fn compare(previous: &HealthSnapshot, current: &HealthSnapshot) -> HealthCom
                 delta: f.earned as i32 - fb.earned as i32,
                 evidence_before: fb.evidence.clone(),
                 evidence_after: f.evidence.clone(),
+                parts_before: fb.parts.clone(),
+                parts_after: f.parts.clone(),
             });
         }
         reasons.sort_by_key(|r| -r.delta.abs());
@@ -246,7 +254,17 @@ mod tests {
             earned,
             max: 100,
             evidence: evidence.into(),
+            parts: Default::default(),
         }
+    }
+
+    #[test]
+    fn snapshots_stored_before_translatable_evidence_still_read() {
+        let old = r#"{"ts":1,"overall":80,"categories":[{"id":"startup","score":70,"factors":[{"id":"start_count","earned":70,"max":100,"evidence":"8 apps start with Windows"}]}]}"#;
+        let snap: HealthSnapshot = serde_json::from_str(old).unwrap();
+        let f = &snap.categories[0].factors[0];
+        assert_eq!(f.evidence, "8 apps start with Windows");
+        assert_eq!(f.parts.key, None);
     }
 
     fn snap(ts: u64, overall: u32, cats: Vec<SnapshotCategory>) -> HealthSnapshot {

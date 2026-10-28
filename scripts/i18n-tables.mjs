@@ -10,18 +10,20 @@ export async function loadTranslations() {
         import { SCAN_COPY } from './src/components/scan-copy';
         import { ADVANCED_COPY } from './src/components/advanced-copy';
         import { DEBLOAT_COPY, LIBRARY_COPY, EXTRA_IMPACTS } from './src/components/debloat-copy';
-        import { PRICING_COPY } from './src/components/pricing-copy';
+        import { PRICING_COPY, PLAN_STATE_COPY } from './src/components/pricing-copy';
         import { STARTER_COPY } from './src/components/starter-copy';
         import { BEFORE_AFTER_COPY } from './src/components/before-after-copy';
         import { HISTORY_COPY } from './src/components/history-copy';
         import { TRIAL_COPY } from './src/components/trial-copy';
         import { REFERRAL_COPY } from './src/components/referral-copy';
+        import { HEALTH_COPY } from './src/components/health-copy';
         const tables = { componentScan: SCAN_COPY, componentAdvanced: ADVANCED_COPY,
           componentDebloat: DEBLOAT_COPY, componentLibrary: LIBRARY_COPY,
           componentImpacts: EXTRA_IMPACTS, componentPricing: PRICING_COPY,
           componentStarter: STARTER_COPY, componentBeforeAfter: BEFORE_AFTER_COPY,
           componentHistory: HISTORY_COPY, componentTrial: TRIAL_COPY,
-          componentReferrals: REFERRAL_COPY };
+          componentReferrals: REFERRAL_COPY, componentHealth: HEALTH_COPY,
+          componentPlanState: PLAN_STATE_COPY };
         export const translations = Object.fromEntries(Object.entries(STRINGS).map(([lang, strings]) =>
           [lang, { ...strings, ...Object.fromEntries(Object.entries(tables).map(([key, table]) => [key, table[lang]])) }]));
       `,
@@ -33,5 +35,9 @@ export async function loadTranslations() {
     format: "esm",
     platform: "neutral",
   });
-  return (await import("data:text/javascript;base64," + Buffer.from(result.outputFiles[0].text).toString("base64"))).translations;
+  return (
+    await import(
+      "data:text/javascript;base64," + Buffer.from(result.outputFiles[0].text).toString("base64")
+    )
+  ).translations;
 }

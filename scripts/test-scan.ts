@@ -297,7 +297,15 @@ test("unknown security signals are not reported as passed or disabled", () => {
       },
     },
   });
-  assert.deepEqual(unknownSecuritySignals(r), ["Defender: Unreadable", "SmartScreen: Unknown"]);
+  // Known ids are named in the user's language; evidence without a key keeps its English.
+  assert.deepEqual(unknownSecuritySignals(r), [
+    "Real-time antivirus: Unreadable",
+    "SmartScreen: Unknown",
+  ]);
+  assert.deepEqual(unknownSecuritySignals(r, "fr"), [
+    "Antivirus en temps réel : Unreadable",
+    "SmartScreen : Unknown",
+  ]);
   assert.deepEqual(scanObservations(r), []);
 });
 

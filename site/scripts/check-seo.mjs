@@ -136,6 +136,11 @@ assert.deepEqual(
   ["0", "59.99", "7.99", "99"].sort(),
   "SoftwareApplication offers must match the published pricing",
 );
+// The app's own prices are the source of truth: a change there must not leave
+// the markup above stating the old ones.
+const lib = await readFile(new URL("../../src/lib.ts", import.meta.url), "utf8");
+const appPrices = ["MONTHLY", "ANNUAL", "LIFETIME"].map((plan) => lib.match(new RegExp(`PRICE_${plan} = ([\\d.]+);`))?.[1]);
+assert.deepEqual(appPrices, ["7.99", "59.99", "99"], "src/lib.ts prices changed: update the site's offers and this check");
 const uninstallerApp = [...uninstaller.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)]
   .map((match) => JSON.parse(match[1]))
   .find((item) => item["@type"] === "SoftwareApplication");

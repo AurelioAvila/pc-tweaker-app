@@ -20,14 +20,38 @@ export function AccessPricing() {
   // pctweaker.app/#signup (the Sign up link in the navigation) opens the account panel.
   useEffect(() => {
     if (!(webPreview || webEnabled)) return;
+    let stop = () => {};
+    const land = () => document.getElementById("purchase-options")?.scrollIntoView({ block: "start" });
     const open = () => {
       if (window.location.hash !== "#signup") return;
       setPurchase("account");
-      requestAnimationFrame(() => document.getElementById("purchase-options")?.scrollIntoView({ block: "start" }));
+      stop();
+      // The sections above keep changing height for a moment after the first paint (images,
+      // fonts, prerendered blocks; on a phone the panel ended 1,300 px off): land on the panel
+      // again whenever the page resizes, for 3 seconds or until the visitor scrolls.
+      // The browser also resets the position when the page finishes loading.
+      const watch = new ResizeObserver(() => land());
+      watch.observe(document.body);
+      const timers = [400, 1200, 2500].map((ms) => window.setTimeout(land, ms));
+      const end = window.setTimeout(() => stop(), 3000);
+      const events = ["wheel", "touchstart", "keydown"] as const;
+      window.addEventListener("load", land);
+      stop = () => {
+        watch.disconnect();
+        timers.forEach(clearTimeout);
+        window.clearTimeout(end);
+        window.removeEventListener("load", land);
+        events.forEach((e) => window.removeEventListener(e, stop));
+      };
+      events.forEach((e) => window.addEventListener(e, stop, { passive: true }));
+      requestAnimationFrame(land);
     };
     open();
     window.addEventListener("hashchange", open);
-    return () => window.removeEventListener("hashchange", open);
+    return () => {
+      stop();
+      window.removeEventListener("hashchange", open);
+    };
   }, [webPreview, webEnabled]);
   const promo = usePromo();
   const annualOffer = promo.offer("pctweaker", "annual");

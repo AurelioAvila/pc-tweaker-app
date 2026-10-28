@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import type Stripe from "stripe";
 import { getPool } from "./db";
 import { sendMail } from "./mailer";
@@ -22,7 +23,7 @@ import { SUPPORT_INBOX } from "./support-inbox";
 
 type Fact = [label: string, value: string | null | undefined, href?: string];
 export type OwnerNotice = { subject: string; text: string; html: string };
-type Lookup = Pick<Stripe, "checkout" | "subscriptions" | "invoices"> | null;
+type Lookup = Partial<Pick<Stripe, "checkout" | "subscriptions" | "invoices" | "paymentIntents">> | null;
 
 type BasilInvoice = Stripe.Invoice & {
   parent?: { subscription_details?: { subscription?: string | { id: string }; metadata?: Record<string, string> } };
@@ -46,6 +47,32 @@ export function romeTime(unixSeconds: number | null | undefined): string | null 
 export function productName(lineDescription: string | null | undefined): string | null {
   if (!lineDescription) return null;
   return lineDescription.replace(/^\s*\d+\s*×\s*/, "").replace(/\s*\(at [^)]*\)\s*$/, "").trim() || null;
+}
+
+/** The order's support reference, e.g. "ORD-7Q4K-9M2X", the same in every notice
+ * about one order: derived from the subscription (its trial, every charge, its
+ * refunds) or, for a one-off purchase, from its payment. Searching the mailbox
+ * for it finds the whole history; it is also what to quote in support replies. */
+export function orderId(root: string): string {
+  const alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"; // Crockford base32: no I, L, O, U
+  const bytes = createHash("sha256").update(root).digest();
+  let code = "";
+  for (let i = 0; i < 8; i++) code += alphabet[bytes[i] % 32];
+  return `ORD-${code.slice(0, 4)}-${code.slice(4)}`;
+}
+
+/** The subscription a payment belongs to, if any. Since API 2025-03-31.basil a
+ * payment does not name its invoice; the customer's invoices list their payments. */
+async function subscriptionOfPayment(paymentIntentId: string | null, stripe: Lookup): Promise<string | null> {
+  if (!paymentIntentId || !stripe?.paymentIntents || !stripe.invoices) return null;
+  const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  const customer = idOf(intent.customer as string | { id: string } | null);
+  if (!customer) return null;
+  // ponytail: newest 100 invoices only, like loadSubscriptionForPayment.
+  const { data } = await stripe.invoices.list({ customer, limit: 100, expand: ["data.payments"] });
+  type Paid = BasilInvoice & { payments?: { data: { payment?: { payment_intent?: string | { id: string } } }[] } };
+  const invoice = (data as Paid[]).find((inv) => inv.payments?.data?.some((p) => idOf(p.payment?.payment_intent ?? null) === paymentIntentId));
+  return idOf(invoice?.parent?.subscription_details?.subscription ?? null);
 }
 
 /** "PC Tweaker Uninstaller annual"; the plan is left out when the name already says it. */
@@ -91,7 +118,7 @@ export async function invoiceNotice(invoice: BasilInvoice, livemode: boolean, st
   const details = invoice.parent?.subscription_details;
   const subscriptionId = idOf(details?.subscription ?? null);
   let firstAfterTrial = false;
-  if (invoice.billing_reason === "subscription_cycle" && subscriptionId && stripe) {
+  if (invoice.billing_reason === "subscription_cycle" && subscriptionId && stripe?.subscriptions) {
     const sub = await stripe.subscriptions.retrieve(subscriptionId);
     // The first cycle invoice of a trialled subscription starts where the trial ended.
     firstAfterTrial = !!sub.trial_end && Math.abs((line?.period?.start ?? 0) - sub.trial_end) < 86_400;
@@ -102,10 +129,12 @@ export async function invoiceNotice(invoice: BasilInvoice, livemode: boolean, st
   const plan = details?.metadata?.plan ?? null;
   const reference = invoice.number ?? invoice.id;
   const customerId = idOf(invoice.customer as string | { id: string } | null);
+  const order = orderId(subscriptionId ?? invoice.id);
   return render(
-    `${amount} · ${titled(product, plan)} — ${reason} (${reference})`,
+    `${amount} · ${titled(product, plan)} — ${reason} · ${order}`,
     `${reason}: ${amount} for ${product}.`,
     [
+      ["Order ID", order],
       ["Product", product],
       ["Plan", plan ? `${plan}${line?.description ? ` · ${line.description}` : ""}` : line?.description],
       ["Amount paid", tax ? `${amount} (tax ${money(tax, invoice.currency)})` : amount],
@@ -129,7 +158,7 @@ export async function checkoutNotice(session: Stripe.Checkout.Session, livemode:
   // A paid subscription Checkout is announced by its first invoice instead.
   if (!trial && !paidOnce) return null;
   let items: { description?: string | null; quantity?: number | null }[] = session.line_items?.data ?? [];
-  if (!items.length && stripe) items = (await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 })).data;
+  if (!items.length && stripe?.checkout) items = (await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 })).data;
   const product = items.map((i) => `${i.quantity && i.quantity > 1 ? `${i.quantity} × ` : ""}${i.description ?? "item"}`).join(", ")
     || session.metadata?.product || "Unknown product";
   const plan = session.metadata?.plan ?? null;
@@ -139,9 +168,10 @@ export async function checkoutNotice(session: Stripe.Checkout.Session, livemode:
   const subscriptionId = idOf(session.subscription as string | { id: string } | null);
   const invoiceId = idOf(session.invoice as string | { id: string } | null);
   let invoiceNumber: string | null = null;
-  if (invoiceId && stripe) invoiceNumber = (await stripe.invoices.retrieve(invoiceId)).number ?? null;
+  if (invoiceId && stripe?.invoices) invoiceNumber = (await stripe.invoices.retrieve(invoiceId)).number ?? null;
   let firstCharge: string | null = null;
-  if (trial && subscriptionId && stripe) firstCharge = romeTime((await stripe.subscriptions.retrieve(subscriptionId)).trial_end);
+  if (trial && subscriptionId && stripe?.subscriptions) firstCharge = romeTime((await stripe.subscriptions.retrieve(subscriptionId)).trial_end);
+  const order = orderId(subscriptionId ?? paymentId ?? session.id);
   const shared: Fact[] = [
     ["Product", product],
     ["Plan", plan],
@@ -153,9 +183,10 @@ export async function checkoutNotice(session: Stripe.Checkout.Session, livemode:
   ];
   if (trial) {
     return render(
-      `Trial started · ${titled(product, plan)} (no charge yet)`,
+      `Trial started · ${titled(product, plan)} (no charge yet) · ${order}`,
       `A free trial of ${product} started. Nothing has been charged yet.`,
       [
+        ["Order ID", order],
         ["Reason", "Free trial started"],
         ["First charge", firstCharge ? `${firstCharge}, unless cancelled before` : null],
         ["Started at", romeTime(session.created)],
@@ -165,11 +196,11 @@ export async function checkoutNotice(session: Stripe.Checkout.Session, livemode:
     );
   }
   const amount = money(session.amount_total!, session.currency ?? "eur");
-  const reference = invoiceNumber ?? paymentId ?? session.id;
   return render(
-    `${amount} · ${titled(product, plan)} — One-off purchase (${reference})`,
+    `${amount} · ${titled(product, plan)} — One-off purchase · ${order}`,
     `One-off purchase: ${amount} for ${product}.`,
     [
+      ["Order ID", order],
       ["Amount paid", amount],
       ["Reason", "One-off purchase"],
       ["Invoice", invoiceNumber, invoiceId ? dashboard(livemode, `invoices/${invoiceId}`) : undefined],
@@ -180,15 +211,17 @@ export async function checkoutNotice(session: Stripe.Checkout.Session, livemode:
   );
 }
 
-export function refundNotice(charge: Stripe.Charge, livemode: boolean): OwnerNotice | null {
+export async function refundNotice(charge: Stripe.Charge, livemode: boolean, stripe: Lookup): Promise<OwnerNotice | null> {
   if (!charge.amount_refunded) return null;
   const amount = money(charge.amount_refunded, charge.currency);
   const paymentId = idOf(charge.payment_intent as string | { id: string } | null);
+  const order = orderId((await subscriptionOfPayment(paymentId, stripe)) ?? paymentId ?? charge.id);
   const what = charge.description ?? "a payment";
   return render(
-    `Refund ${amount} — ${what} (${charge.receipt_number ?? charge.id})`,
+    `Refund ${amount} — ${what} · ${order}`,
     `${amount} was refunded${charge.refunded ? " (in full)" : ""}.`,
     [
+      ["Order ID", order],
       ["Refunded", `${amount} of ${money(charge.amount, charge.currency)}`],
       ["Payment", what],
       ["Customer", [charge.billing_details?.name, charge.billing_details?.email].filter(Boolean).join(" · ") || null],
@@ -199,13 +232,15 @@ export function refundNotice(charge: Stripe.Charge, livemode: boolean): OwnerNot
   );
 }
 
-export function disputeNotice(dispute: Stripe.Dispute, livemode: boolean): OwnerNotice {
+export async function disputeNotice(dispute: Stripe.Dispute, livemode: boolean, stripe: Lookup): Promise<OwnerNotice> {
   const amount = money(dispute.amount, dispute.currency);
   const paymentId = idOf(dispute.payment_intent as string | { id: string } | null);
+  const order = orderId((await subscriptionOfPayment(paymentId, stripe)) ?? paymentId ?? dispute.id);
   return render(
-    `Dispute ${amount} — ${dispute.reason} (${dispute.id})`,
+    `Dispute ${amount} — ${dispute.reason} · ${order}`,
     `A customer disputed ${amount}. Evidence is due by ${romeTime(dispute.evidence_details?.due_by) ?? "the date in Stripe"}.`,
     [
+      ["Order ID", order],
       ["Amount", amount],
       ["Reason", dispute.reason],
       ["Status", dispute.status],
@@ -235,12 +270,12 @@ export async function ownerNoticeFor(event: Stripe.Event, stripe: Lookup): Promi
     case "charge.refunded": {
       const charge = object as Stripe.Charge;
       key = `refund:${charge.id}:${charge.amount_refunded}`;
-      notice = refundNotice(charge, event.livemode);
+      notice = await refundNotice(charge, event.livemode, stripe);
       break;
     }
     case "charge.dispute.created":
       key = `dispute:${object.id}`;
-      notice = disputeNotice(object as Stripe.Dispute, event.livemode);
+      notice = await disputeNotice(object as Stripe.Dispute, event.livemode, stripe);
       break;
   }
   return notice ? { key, notice } : null;

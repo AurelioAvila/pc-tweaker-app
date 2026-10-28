@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.18.22
+
+Settings that are already in place on your PC now show an "Already set" label, even when Windows or another tool changed them, and a scan no longer suggests them.
+
 ## v1.18.21
 
 Routine maintenance update.

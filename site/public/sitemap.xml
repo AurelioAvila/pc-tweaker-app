@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://pctweaker.app/</loc><lastmod>2026-10-24</lastmod></url>
+  <url><loc>https://pctweaker.app/</loc><lastmod>2026-10-28</lastmod></url>
   <url><loc>https://pctweaker.app/uninstaller/</loc><lastmod>2026-10-24</lastmod></url>
   <url><loc>https://pctweaker.app/invite/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://pctweaker.app/guides/</loc><lastmod>2026-10-24</lastmod></url>
-  <url><loc>https://pctweaker.app/support/</loc><lastmod>2026-10-24</lastmod></url>
+  <url><loc>https://pctweaker.app/support/</loc><lastmod>2026-10-28</lastmod></url>
   <url><loc>https://pctweaker.app/privacy/</loc><lastmod>2026-10-11</lastmod></url>
   <url><loc>https://pctweaker.app/terms/</loc><lastmod>2026-10-11</lastmod></url>
   <url><loc>https://pctweaker.app/cookies/</loc><lastmod>2026-10-11</lastmod></url>
@@ -26,12 +26,12 @@
   <url><loc>https://pctweaker.app/uninstaller/guides/mcafee-webadvisor/</loc><lastmod>2026-10-24</lastmod></url>
   <url><loc>https://pctweaker.app/uninstaller/guides/microsoft-edge-webview2/</loc><lastmod>2026-10-24</lastmod></url>
   <url><loc>https://pctweaker.app/uninstaller/guides/onedrive/</loc><lastmod>2026-10-24</lastmod></url>
-  <url><loc>https://pctweaker.app/tweaky-driver/</loc><lastmod>2026-10-24</lastmod></url>
-  <url><loc>https://pctweaker.app/fixes/</loc><lastmod>2026-10-22</lastmod></url>
-  <url><loc>https://pctweaker.app/fixes/dpc-latency-audio-crackling/</loc><lastmod>2026-10-22</lastmod></url>
-  <url><loc>https://pctweaker.app/fixes/enable-long-paths/</loc><lastmod>2026-10-22</lastmod></url>
-  <url><loc>https://pctweaker.app/fixes/filter-keys-sticky-keys-shortcut/</loc><lastmod>2026-10-22</lastmod></url>
-  <url><loc>https://pctweaker.app/fixes/hardware-accelerated-gpu-scheduling/</loc><lastmod>2026-10-22</lastmod></url>
-  <url><loc>https://pctweaker.app/fixes/turn-off-windows-11-ai-features/</loc><lastmod>2026-10-22</lastmod></url>
-  <url><loc>https://pctweaker.app/fixes/windows-update-using-bandwidth/</loc><lastmod>2026-10-22</lastmod></url>
+  <url><loc>https://pctweaker.app/tweaky-driver/</loc><lastmod>2026-10-27</lastmod></url>
+  <url><loc>https://pctweaker.app/fixes/</loc><lastmod>2026-10-28</lastmod></url>
+  <url><loc>https://pctweaker.app/fixes/dpc-latency-audio-crackling/</loc><lastmod>2026-10-28</lastmod></url>
+  <url><loc>https://pctweaker.app/fixes/enable-long-paths/</loc><lastmod>2026-10-28</lastmod></url>
+  <url><loc>https://pctweaker.app/fixes/filter-keys-sticky-keys-shortcut/</loc><lastmod>2026-10-28</lastmod></url>
+  <url><loc>https://pctweaker.app/fixes/hardware-accelerated-gpu-scheduling/</loc><lastmod>2026-10-28</lastmod></url>
+  <url><loc>https://pctweaker.app/fixes/turn-off-windows-11-ai-features/</loc><lastmod>2026-10-28</lastmod></url>
+  <url><loc>https://pctweaker.app/fixes/windows-update-using-bandwidth/</loc><lastmod>2026-10-28</lastmod></url>
 </urlset>

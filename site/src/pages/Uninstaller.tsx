@@ -147,8 +147,8 @@ export function UninstallerPage() {
         </p>
         <p className="leading-relaxed text-[var(--fg-dim)]">
           Open Plans &amp; pricing in the app&apos;s top bar: sign in or create your free suite
-          account there, then choose Go Pro. One account covers both applications. Taxes and the
-          final renewal terms are shown at checkout.
+          account there, then choose Go Pro. One account covers PC Tweaker, PC Tweaker Uninstaller
+          and Tweaky Driver. Taxes and the final renewal terms are shown at checkout.
         </p>
       </section>
 

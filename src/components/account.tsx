@@ -303,6 +303,7 @@ export function AuthSection({
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">
         {s.menu.account}
       </p>
+      <p className="mb-2 text-xs text-ink-3">{s.auth.familyAccount}</p>
       <form onSubmit={submit} className="flex flex-col gap-2">
         {mode === "register" && (
           <>

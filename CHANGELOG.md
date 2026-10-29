@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.18.24
+
+Routine maintenance update.
+
 ## v1.18.23
 
 Every language has been reviewed end to end: clearer, more accurate wording in Italian, French, Spanish, German and Portuguese (Portugal), and PC Health now explains each part of your score in your language.

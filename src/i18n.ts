@@ -1065,6 +1065,7 @@ export interface Strings {
     verificationSent: string;
     errorCredentials: string;
     errorAlreadyRegistered: string;
+    familyAccount: string;
     errorRateLimited: string;
     errorInvalid: string;
     errorServer: string;
@@ -2367,6 +2368,8 @@ const it: Strings = {
     errorCredentials: "Email o password non corretti.",
     errorAlreadyRegistered:
       "Questa email ha già un account, magari creato in PC Tweaker Uninstaller o Tweaky Driver. Accedi con quello oppure reimposta la password.",
+    familyAccount:
+      "Un solo account per PC Tweaker, PC Tweaker Uninstaller e Tweaky Driver. Ne hai già uno creato in PC Tweaker Uninstaller o Tweaky Driver? Accedi qui con quello.",
     errorRateLimited: "Troppi tentativi. Attendi 15 minuti e riprova.",
     errorInvalid: "Controlla i dati inseriti e riprova.",
     errorServer: "Il servizio account non risponde in questo momento. Riprova tra qualche minuto.",
@@ -4056,6 +4059,8 @@ const en: Strings = {
     errorCredentials: "The email or password is incorrect.",
     errorAlreadyRegistered:
       "This email already has an account, perhaps from PC Tweaker Uninstaller or Tweaky Driver. Sign in with it, or reset the password.",
+    familyAccount:
+      "One account for PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver. Already have one from PC Tweaker Uninstaller or Tweaky Driver? Sign in with it here.",
     errorRateLimited: "Too many attempts. Wait 15 minutes and try again.",
     errorInvalid: "Check the details you entered and try again.",
     errorServer: "The account service is not responding right now. Try again in a few minutes.",
@@ -5771,6 +5776,8 @@ const fr: Strings = {
     errorCredentials: "L'e-mail ou le mot de passe est incorrect.",
     errorAlreadyRegistered:
       "Cet e-mail a déjà un compte, peut-être créé dans PC Tweaker Uninstaller ou Tweaky Driver. Connectez-vous avec celui-ci ou réinitialisez le mot de passe.",
+    familyAccount:
+      "Un seul compte pour PC Tweaker, PC Tweaker Uninstaller et Tweaky Driver. Vous en avez déjà un, créé dans PC Tweaker Uninstaller ou Tweaky Driver ? Connectez-vous ici avec celui-ci.",
     errorRateLimited: "Trop de tentatives. Patientez 15 minutes, puis réessayez.",
     errorInvalid: "Vérifiez les informations saisies, puis réessayez.",
     errorServer:
@@ -7479,6 +7486,8 @@ const es: Strings = {
     errorCredentials: "El correo o la contraseña no son correctos.",
     errorAlreadyRegistered:
       "Este correo ya tiene una cuenta, quizá creada en PC Tweaker Uninstaller o Tweaky Driver. Inicia sesión con ella o restablece la contraseña.",
+    familyAccount:
+      "Una sola cuenta para PC Tweaker, PC Tweaker Uninstaller y Tweaky Driver. ¿Ya tienes una de PC Tweaker Uninstaller o Tweaky Driver? Inicia sesión aquí con ella.",
     errorRateLimited: "Demasiados intentos. Espera 15 minutos y vuelve a intentarlo.",
     errorInvalid: "Revisa los datos introducidos y vuelve a intentarlo.",
     errorServer:
@@ -9194,6 +9203,8 @@ const de: Strings = {
     errorCredentials: "E-Mail-Adresse oder Passwort ist falsch.",
     errorAlreadyRegistered:
       "Für diese E-Mail-Adresse gibt es bereits ein Konto, vielleicht aus PC Tweaker Uninstaller oder Tweaky Driver. Damit anmelden oder das Passwort zurücksetzen.",
+    familyAccount:
+      "Ein Konto für PC Tweaker, PC Tweaker Uninstaller und Tweaky Driver. Du hast schon eins aus PC Tweaker Uninstaller oder Tweaky Driver? Dann melde dich hier damit an.",
     errorRateLimited: "Zu viele Versuche. Bitte 15 Minuten warten und erneut versuchen.",
     errorInvalid: "Bitte die Eingaben prüfen und erneut versuchen.",
     errorServer:
@@ -10909,6 +10920,8 @@ const pt: Strings = {
     errorCredentials: "O e-mail ou a palavra-passe estão incorretos.",
     errorAlreadyRegistered:
       "Este e-mail já tem uma conta, talvez criada no PC Tweaker Uninstaller ou no Tweaky Driver. Inicie sessão com ela ou reponha a palavra-passe.",
+    familyAccount:
+      "Uma só conta para o PC Tweaker, o PC Tweaker Uninstaller e o Tweaky Driver. Já tem uma criada no PC Tweaker Uninstaller ou no Tweaky Driver? Inicie sessão aqui com ela.",
     errorRateLimited: "Demasiadas tentativas. Aguarde 15 minutos e tente novamente.",
     errorInvalid: "Verifique os dados introduzidos e tente novamente.",
     errorServer:

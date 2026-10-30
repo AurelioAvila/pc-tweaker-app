@@ -594,6 +594,10 @@ export const engDictionary: Dictionary = {
         "a": "Free includes 46 controls, scan, supported restore tools, hardware monitoring and selected maintenance tools, with no account required. Pro adds 35 controls, advanced features and Game Sessions. Regular subscriptions are €7.99 per month or €59.99 per year; Lifetime is normally €99 once. Any active offer and its renewal terms appear in the plans above. Everything in Pro, plus: exclusive access to selected future tweaks, priority support, saved-profile comparison and portable tuning reports. Lifetime also includes Uninstaller Pro for 12 months from your first sign-in to Uninstaller with the same account, including existing Lifetime owners. This bonus does not renew automatically. Upcoming exclusive tweaks are not included in the current catalog. Review the final price and renewal terms at checkout. Existing lifetime purchases retain the access promised when purchased."
       },
       {
+        "q": "Do I need a separate account for PC Tweaker Uninstaller or Tweaky Driver?",
+        "a": "No. One free account works in PC Tweaker, PC Tweaker Uninstaller and Tweaky Driver. Create it in any of the three, or sign in with the one you already have. Plans and licenses stay with each product: Pro in one app does not unlock Pro in the others, apart from the Uninstaller Pro bonus included with PC Tweaker Lifetime."
+      },
+      {
         "q": "What leaves my PC?",
         "a": "Applying local settings is separate from online services. Account, license, update, payment, support and optional breach-check requests contact their respective services. The app also reads one on/off service setting once an hour; that request carries no account or PC details. The breach check sends a hash prefix, not your complete password. Read the Privacy Policy for details. Private feedback is not reused as a public testimonial without permission."
       },

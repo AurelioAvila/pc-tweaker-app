@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.18.25
+
+Routine maintenance update.
+
 ## v1.18.24
 
 Routine maintenance update.

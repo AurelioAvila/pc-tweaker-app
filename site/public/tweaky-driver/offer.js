@@ -95,6 +95,7 @@
     const parts = [Math.floor(s / 86400), Math.floor((s % 86400) / 3600), Math.floor((s % 3600) / 60), s % 60];
     const text = `Ends in ${parts[0]} days, ${parts[1]} hours, ${parts[2]} minutes`;
     if (strip) {
+      strip.querySelector("[data-strip-prefix]").textContent = "Ends in ";
       strip.querySelector("[data-strip-clock]").textContent =
         `${parts[0]}d ${String(parts[1]).padStart(2, "0")}h ${String(parts[2]).padStart(2, "0")}m ${String(parts[3]).padStart(2, "0")}s`;
       strip.querySelector("#halloween-strip-timer").setAttribute("aria-label", text);

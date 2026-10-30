@@ -161,6 +161,11 @@ export const TECHNICAL_GUIDES = {
         "to": "/gaming-performance/",
         "label": "Plan a repeatable gaming comparison",
         "note": "Separate driver diagnosis from power, graphics and game-setting experiments."
+      },
+      {
+        "to": "/tweaky-driver/",
+        "label": "Check the installed driver version before you change it",
+        "note": "Tweaky Driver lists each device's driver version and the updates available, with the package source, so you can review one driver change at a time."
       }
     ],
     "sources": {

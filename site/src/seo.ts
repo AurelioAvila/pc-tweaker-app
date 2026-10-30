@@ -47,9 +47,9 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     ogType: "website",
   },
   "/uninstaller": {
-    title: "Windows Uninstaller That Shows the Risk First | PC Tweaker",
+    title: "Remove Windows Apps and Leftovers | PC Tweaker Uninstaller",
     description:
-      "Review a Windows uninstall before it runs: inspect its risk score, command and permissions, then check restore-point status and the local removal receipt.",
+      "Uninstall Windows programs and Store apps after you review the risk score, command and permissions. Single uninstalls are free; Pro cleans the leftovers.",
     canonical: `${ORIGIN}/uninstaller/`,
     ogType: "website",
     image: UNINSTALLER_OG,
@@ -74,7 +74,7 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     image: UNINSTALLER_OG, imageAlt: UNINSTALLER_OG_ALT,
   }])),
   "/": {
-    title: "PC Tweaker | Windows Tuning for Steadier Frame Times",
+    title: "PC Tweaker | Free Windows Tweaker for Gaming and Privacy",
     description:
       "Review Windows gaming, privacy and performance settings. Inspect each change and restore supported tweaks. Download PC Tweaker Free for Windows 10/11.",
     canonical: `${ORIGIN}/`,
@@ -116,9 +116,9 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     ogType: "website",
   },
   "/windows-11-optimizer": {
-    title: "Windows 11 Tweaker and Optimizer You Can Undo | PC Tweaker",
+    title: "Free Windows 11 Tweaker and Optimizer with Undo | PC Tweaker",
     description:
-      "Tweak and optimize Windows 11 with documented performance, privacy and maintenance changes: review each one first, apply it on its own, and roll it back.",
+      "A free Windows 11 optimizer for documented performance, privacy and maintenance tweaks: review each one first, apply it on its own and restore it later.",
     canonical: `${ORIGIN}/windows-11-optimizer/`,
     ogType: "website",
   },

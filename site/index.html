@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- GitHub Pages can't set response headers, so the security policies that
-       CAN live in <meta> do. frame-ancestors and HSTS can't be expressed here
-       (browsers ignore them in meta) — those would need a proxy/CDN in front. -->
+  <!-- The site is served as static assets by a Cloudflare Worker; HSTS and
+       X-Frame-Options come from Cloudflare response headers. The policies a
+       meta tag can carry stay in this head so every page keeps them. -->
   <link rel="preconnect" href="https://api.pctweaker.app" crossorigin />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'inline-speculation-rules' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.pctweaker.app https://cloudflareinsights.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
-  <title>PC Tweaker | Windows Tuning for Steadier Frame Times</title>
+  <title>PC Tweaker | Free Windows Tweaker for Gaming and Privacy</title>
   <meta name="description" content="Review Windows gaming, privacy and performance settings. Inspect each change and restore supported tweaks. Download PC Tweaker Free for Windows 10/11." />
   <link rel="canonical" href="https://pctweaker.app/" />
-  <meta property="og:title" content="PC Tweaker | Windows Tuning for Steadier Frame Times" />
+  <meta property="og:title" content="PC Tweaker | Free Windows Tweaker for Gaming and Privacy" />
   <meta property="og:description" content="Review Windows gaming, privacy and performance settings. Inspect each change and restore supported tweaks. Download PC Tweaker Free for Windows 10/11." />
   <meta property="og:url" content="https://pctweaker.app" />
   <meta property="og:type" content="website" />
@@ -29,7 +29,7 @@
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="PC Tweaker main window: the sidebar sections, the system check and the free trial in the title bar" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="PC Tweaker | Windows Tuning for Steadier Frame Times" />
+  <meta name="twitter:title" content="PC Tweaker | Free Windows Tweaker for Gaming and Privacy" />
   <meta name="twitter:description" content="Review Windows gaming, privacy and performance settings. Inspect each change and restore supported tweaks. Download PC Tweaker Free for Windows 10/11." />
   <meta name="twitter:image" content="https://pctweaker.app/og-pc-tweaker-ab95357c77.png" />
   <meta name="twitter:image:alt" content="PC Tweaker main window: the sidebar sections, the system check and the free trial in the title bar" />

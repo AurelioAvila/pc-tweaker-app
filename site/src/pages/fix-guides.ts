@@ -67,6 +67,7 @@ export const FIX_GUIDES = {
       { to: "/database/processes/audiodg-exe/", label: "audiodg.exe, the process that runs the audio engine", note: "Why its CPU use usually comes from driver-added effects." },
       { to: "/database/services/audiosrv/", label: "the Windows Audio service", note: "What happens if it is stopped, and why it is not the cause of crackling." },
       { to: "/tools/timer-resolution-calculator/", label: "the timer and buffer latency calculator", note: "The arithmetic behind buffer sizes, polling rates and timer periods." },
+      { to: "/tweaky-driver/", label: "checking the driver the trace points at", note: "Tweaky Driver shows the installed version and any available update for that device, with the package source, before you install anything." },
     ],
     sources: {
       checked: CHECKED,
@@ -360,6 +361,7 @@ export const FIX_GUIDES = {
       { to: "/database/services/wsaifabricsvc/", label: "the AI Components Host service entry", note: "Why Manual, not Disabled." },
       { to: "/windows-privacy-tool/", label: "the other privacy settings PC Tweaker covers", note: "Diagnostic data, advertising ID, suggestions." },
       { to: "/tools/debloat-windows-11/", label: "removing the Copilot app and other preinstalled apps", note: "Pick apps, see what each removal costs, and keep the Store link to get it back." },
+      { to: "https://redaxa.getcertsprint.com/", label: "keeping secrets out of the AI chats you still use", note: "Redaxa finds and redacts personal data and keys in a prompt before you share it." },
     ],
     sources: {
       checked: CHECKED,

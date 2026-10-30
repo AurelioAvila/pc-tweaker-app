@@ -70,6 +70,9 @@ export function UninstallerPage() {
             Installer, MSI, checksums and release notes
           </a>
         </div>
+        <p className="mt-3 text-[14px] leading-relaxed text-[var(--fg-dim)]">
+          Free: single uninstalls. <a href="#uninstaller-pro" className="text-[var(--fg)] underline underline-offset-4">Pro</a>: €9.99/year, or €4.99/year with a PC Tweaker plan.
+        </p>
         <PromoCard product="uninstaller" plan="annual" href="#uninstaller-pro" />
       </div>
 

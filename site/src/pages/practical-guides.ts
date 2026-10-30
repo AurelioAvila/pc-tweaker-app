@@ -65,9 +65,9 @@ export const PRACTICAL_GUIDES = {
     updated: "2026-10-19",
     eyebrow: "RECOVERY GUIDE",
     title: "How to undo Windows tweaks",
-    seoTitle: "How to Remove or Undo Tweaks on a Windows PC",
+    seoTitle: "How to Undo Windows Tweaks and Registry Changes",
     seoDescription:
-      "Remove or undo tweaks on a Windows PC: find what changed, restore the value it replaced rather than a generic default, and know when to use Windows recovery.",
+      "Undo a Windows tweak, script or registry change: find what changed, put back the value it replaced instead of a default, and know when System Restore helps.",
     intro: "Undo a Windows tweak using the tool that made it and its saved previous value. If a script changed your PC, check its own recovery options first. If Windows will not start, use Windows recovery instead of applying more tweaks.",
     sections: [
       {

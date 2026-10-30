@@ -568,9 +568,14 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
             <ul className="mt-5 space-y-3 text-[15px] leading-7 text-[var(--fg-dim)]">
               {guide.related.map((item) => (
                 <li key={item.to}>
-                  <Link to={item.to} onNavigate={navigate} className="text-accent font-medium">
-                    {item.label}
-                  </Link>
+                  {/* /tweaky-driver/ is a static page and Redaxa another site: both need a full page load. */}
+                  {item.to.startsWith("/") && !item.to.startsWith("/tweaky-driver/") ? (
+                    <Link to={item.to} onNavigate={navigate} className="text-accent font-medium">
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <a href={item.to} className="text-accent font-medium">{item.label}</a>
+                  )}
                   {" — "}
                   {item.note}
                 </li>

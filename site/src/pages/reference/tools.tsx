@@ -378,7 +378,7 @@ export function DebloatBuilder({ navigate }: { navigate: Nav }) {
       </Panel>
       <Panel title="What removing these apps will not do" id="limits">
         <P>
-          Removing an app you never open frees its disk space; it saves memory or processor time only if the app was running in the background, and PC Tweaker&apos;s Debloat screen shows which ones are running and how much memory they use. The other gains are fewer Start menu entries and fewer Store updates for apps you never use. For background work and services, see the <Link to="/database/" onNavigate={navigate} className="text-accent font-medium">Windows processes and services database</Link>; for settings, the <Link to="/tools/profile-builder/" onNavigate={navigate} className="text-accent font-medium">Profile Builder</Link>.
+          Removing an app you never open frees its disk space; it saves memory or processor time only if the app was running in the background, and PC Tweaker&apos;s Debloat screen shows which ones are running and how much memory they use. The other gains are fewer Start menu entries and fewer Store updates for apps you never use. For background work and services, see the <Link to="/database/" onNavigate={navigate} className="text-accent font-medium">Windows processes and services database</Link>; for settings, the <Link to="/tools/profile-builder/" onNavigate={navigate} className="text-accent font-medium">Profile Builder</Link>. Desktop programs that came with the PC, such as vendor utilities or a trial antivirus, are not Store apps: <Link to="/uninstaller/" onNavigate={navigate} className="text-accent font-medium">PC Tweaker Uninstaller</Link> removes those and shows what each one leaves behind.
         </P>
       </Panel>
       <SourceList

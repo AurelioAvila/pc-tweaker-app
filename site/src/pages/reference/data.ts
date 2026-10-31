@@ -109,39 +109,63 @@ function tweakDescription(p: TweakPage): string {
   return fit(bases.flatMap((b) => TAILS.map((t) => b + t)), p.t.id);
 }
 
-/** The page's own answer, first: searches for a process name ask what it is and whether to touch it. */
-const DB_ADVICE: Record<DbEntry["verdict"], string> = {
-  leave: "Leave it alone",
-  depends: "Whether to stop it depends on what you use",
-  "manual-ok": "It is safe to set to Manual",
-};
+/** Searchers type the file name and ask whether it is safe or can go; the title says what it is and answers the first. */
+function dbTitle(e: DbEntry): string {
+  const ask = e.kind === "process" ? "Is It Safe?" : "Can You Disable It?";
+  const what = "What It Is and ";
+  const plain = e.displayName.includes("(");
+  const ok = [
+    ...(plain ? [] : [`${e.name}: ${what}${ask} (${e.displayName})`, `${e.name} (${e.displayName}): ${ask}`, `${e.name} (${e.displayName}): ${e.kind === "process" ? "Safe?" : "Disable It?"}`]),
+    `${e.name}: ${what}${ask}`,
+    `${e.name}: ${ask}`,
+  ].find((t) => t.length <= 60);
+  if (!ok) throw new Error(`No title of 60 characters or fewer for ${e.slug}`);
+  return ok;
+}
+
+const dbDir = (e: DbEntry) => e.path.slice(0, e.path.lastIndexOf("\\"));
 
 function dbDescription(e: DbEntry): string {
   const what = e.kind === "process" ? "process" : "service";
-  const advice = DB_ADVICE[e.verdict];
-  const dir = e.path.slice(0, e.path.lastIndexOf("\\"));
+  const svc = /service$/i.test(e.displayName) ? e.displayName : `${e.displayName} service`;
+  const dir = dbDir(e);
   const signed = e.signer?.startsWith("Microsoft") ? ", signed by Microsoft" : "";
-  const answers =
+  const bases =
     e.kind === "process"
       ? [
-          `${e.name} is the ${e.displayName}. ${advice}. The genuine file is in ${dir}${signed}: how to check yours.`,
-          `${e.name} is the ${e.displayName}. ${advice}. The genuine file is in ${dir}${signed}: how to check the copy on your PC.`,
-          `${e.name} is the ${e.displayName}. ${advice}: what it does, where the genuine file lives and how to check yours.`,
+          `${e.name} is the ${e.displayName}. ${e.answer} The genuine file is in ${dir}${signed}: how to check yours.`,
+          `${e.name} is the ${e.displayName}. ${e.answer} The genuine file is in ${dir}${signed}.`,
+          `${e.name}. ${e.answer} The genuine file is in ${dir}${signed}. How to check yours.`,
+          `${e.name} (${e.displayName}). ${e.answer} Where the genuine file lives and how to check it.`,
+          `${e.name} is the ${e.displayName}. ${e.answer} What it does and how to check the file on your PC.`,
         ]
       : [
-          `${e.name} is the ${e.displayName} service. ${advice}: what it does, what PC Tweaker changes and how to check it.`,
-          `${e.name} is the ${e.displayName} service. ${advice}: what it does, what PC Tweaker changes and how to check it on your PC.`,
+          `${e.name} is the ${svc}. ${e.answer} What it does, what PC Tweaker changes and how to check it.`,
+          `${e.name} is the ${svc}. ${e.answer} What it does and how to check it on your PC.`,
+          `${e.name}. ${e.answer} What this Windows ${what} does, what PC Tweaker changes and how to check it.`,
+          `${e.name}. ${e.answer} What this Windows ${what} does and how to check it on your own PC.`,
         ];
-  const bases = [
-    ...answers,
-    `${e.name}: ${advice.charAt(0).toLowerCase()}${advice.slice(1)}. What this Windows ${what} does, what PC Tweaker changes and how to check it on your PC.`,
-    `${e.name}: ${advice.charAt(0).toLowerCase()}${advice.slice(1)}. What this Windows ${what} does and how to check it on your own PC.`,
-    `${e.name} (${e.displayName}): what this Windows ${what} does, whether to leave it alone, and how to check it yourself.`,
-    `${e.name} is the ${e.displayName} ${what}: what it does, whether to touch it, and how to check it yourself.`,
-    `${e.name}: what this Windows ${what} does, whether to touch it, and how to check it on your own PC.`,
-    `What ${e.name} does, whether to touch it and how to check it.`,
-  ];
   return fit(bases.flatMap((b) => TAILS.map((t) => b + t)), e.slug);
+}
+
+/** Questions the page already answers in its own text; the same list renders on the page and in the FAQPage markup. */
+export function dbFaq(e: DbEntry): { q: string; a: string }[] {
+  const dir = dbDir(e);
+  const safe =
+    e.kind === "process"
+      ? {
+          q: `Is ${e.name} safe, or could it be a virus?`,
+          a: `The genuine file is in ${dir}${e.signer ? ` and is signed by ${e.signer}` : ""}. A program can borrow a familiar name, so check where your copy runs from and who signed it with the commands in “Check it yourself”. A file with this name anywhere else, or with another signer, deserves a closer look.`,
+        }
+      : {
+          q: `What does the ${e.name} service do?`,
+          a: `${e.purpose} It runs ${e.path}${e.binary ? ` (${e.binary})` : ""}${e.account ? ` as ${e.account}` : ""}.`,
+        };
+  const end = {
+    q: `Can I ${e.kind === "process" ? "end" : "disable"} ${e.name}?`,
+    a: `${DB_VERDICTS[e.verdict].label}. ${e.why}`,
+  };
+  return [safe, end, ...(e.busy ? [e.busy] : [])];
 }
 
 const ogFor = (path: string) => `${ORIGIN}/og${path}.png`;
@@ -190,7 +214,7 @@ export const REFERENCE_SEO: Record<string, RouteSeo> = {
     "What common Windows processes and services do, which ones to leave alone, which you can set to Manual, and how to check a file and its signature yourself.",
   ),
   ...Object.fromEntries(
-    WINDOWS_DB.map((e) => [dbPath(e), seo(dbPath(e), brand(`${e.name}: ${e.displayName}`.length <= 60 ? `${e.name}: ${e.displayName}` : `${e.name}: What It Is and Whether to ${e.kind === "service" ? "Disable" : "End"} It`), dbDescription(e))]),
+    WINDOWS_DB.map((e) => [dbPath(e), seo(dbPath(e), dbTitle(e), dbDescription(e))]),
   ),
   "/fixes": seo(
     "/fixes",
@@ -262,10 +286,20 @@ export const REFERENCE_JSONLD: Record<string, readonly object[]> = {
   ...Object.fromEntries(
     WINDOWS_DB.map((e) => [
       dbPath(e),
-      graph(
-        breadcrumbs(dbPath(e), [DB_CRUMB, [e.name, `${dbPath(e)}/`]]),
-        article(dbPath(e), e.sources.map((s) => s.url)),
-      ),
+      [
+        ...graph(
+          breadcrumbs(dbPath(e), [DB_CRUMB, [e.name, `${dbPath(e)}/`]]),
+          article(dbPath(e), e.sources.map((s) => s.url)),
+        ),
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "@id": `${ORIGIN}${dbPath(e)}/#faq`,
+          url: `${ORIGIN}${dbPath(e)}/`,
+          isPartOf: { "@id": `${ORIGIN}/#website` },
+          mainEntity: dbFaq(e).map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+        },
+      ],
     ]),
   ),
   "/fixes": graph(breadcrumbs("/fixes", [["Fixes", "/fixes/"]]), page("/fixes", "CollectionPage")),

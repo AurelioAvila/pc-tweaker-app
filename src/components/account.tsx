@@ -792,7 +792,7 @@ export function AccountMenu({
             </details>
             <button
               className="account-support"
-              onClick={() => void openUrl("https://pctweaker.app/support")}
+              onClick={() => void openUrl("https://pctweaker.app/support/")}
             >
               {s.menu.reportIssue}
               <span aria-hidden="true">↗</span>

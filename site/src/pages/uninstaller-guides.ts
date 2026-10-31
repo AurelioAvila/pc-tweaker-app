@@ -50,9 +50,9 @@ export const UNINSTALLER_GUIDES = {
     product: "uninstaller" as const,
     eyebrow: "REMOVAL GUIDE · ASUS ARMOURY CRATE",
     title: "How to completely uninstall ASUS Armoury Crate",
-    seoTitle: "Completely Uninstall ASUS Armoury Crate",
+    seoTitle: "Armoury Crate Uninstall Tool: Remove It Fully",
     seoDescription:
-      "Remove Armoury Crate with ASUS's own Uninstall Tool, stop the BIOS offering to reinstall it, then check for services, Store apps and folders it can leave.",
+      "Use ASUS's Armoury Crate Uninstall Tool to remove Armoury Crate, stop the BIOS offering to reinstall it, then check for leftover services, apps and folders.",
     intro:
       "Use ASUS's Armoury Crate Uninstall Tool rather than a single entry in Installed apps. Armoury Crate is several programs and services, ASUS's tool removes them together, and ROG advises against removing it through Windows' Add or Remove Programs because an improper uninstall can cause problems. Restart afterwards, run the tool a second time if it reports a failure, and on ASUS motherboards switch off the BIOS option that offers to download it again. On ROG laptops ASUS does not recommend removing it for good, because the laptop will not perform optimally without it.",
     published: DATE,

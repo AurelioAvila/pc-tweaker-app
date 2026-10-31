@@ -5,7 +5,7 @@ import { VERDICTS } from "../../reference/tweak-notes";
 import { WINDOWS_DB, DB_VERDICTS, dbBySlug, dbPath, type DbEntry } from "../../reference/windows-db";
 import { FIX_GUIDES } from "../fix-guides";
 import { ProBox, SourceList, Steps, TechSummary, type Step } from "../../components/ReferenceBlocks";
-import { CATEGORY_KEYS, TOOLS, TWEAKS, categoryPath, tweakById, type CategoryKey, type TweakPage } from "./data";
+import { CATEGORY_KEYS, TOOLS, TWEAKS, categoryPath, dbFaq, tweakById, type CategoryKey, type TweakPage } from "./data";
 
 type Nav = (to: string) => void;
 
@@ -419,6 +419,16 @@ export function DbDetail({ e, navigate }: { e: DbEntry; navigate: Nav }) {
       <Panel title="Check it yourself" id="check">
         <Steps steps={checkSteps(e)} />
       </Panel>
+
+      <section className="mt-14 border-t border-white/10 pt-9" aria-labelledby="faq">
+        <h2 id="faq" className="font-display text-2xl font-bold text-[var(--fg)]">Common questions</h2>
+        {dbFaq(e).map((f) => (
+          <div key={f.q} className="mt-5">
+            <h3 className="text-[17px] font-semibold text-[var(--fg)]">{f.q}</h3>
+            <P>{f.a}</P>
+          </div>
+        ))}
+      </section>
 
       {(related.length > 0 || e.guides) && (
         <nav aria-label="Related" className="mt-14 border-t border-white/10 pt-9">

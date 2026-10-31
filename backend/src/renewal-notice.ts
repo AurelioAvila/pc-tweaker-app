@@ -315,7 +315,7 @@ export function renewalCancelRoute(stripe: () => RenewalStripe | null) {
         }
       }
     } catch (err) {
-      console.error(`renewal cancel link for ${s}: portal not opened:`, (err as Error).message);
+      console.error("renewal cancel link: portal not opened for %s: %s", String(s), (err as Error).message);
       res.status(502).send("Stripe's billing page could not be opened just now. Try again in a minute, or reply to the renewal email and we will cancel the subscription for you.");
     }
   };

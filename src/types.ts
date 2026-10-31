@@ -31,6 +31,20 @@ export type ProductPlan = {
   expiresAt?: string | null;
 };
 
+/** One installation in GET /api/account/devices: no identifier, only what
+ *  the account menu shows. */
+export type AccountDevice = {
+  product: string;
+  /** Windows edition and processor, when that PC's app version sent them. */
+  label: string | null;
+  /** Whether the last licence that PC fetched was Pro; null when not recorded yet. */
+  pro: boolean | null;
+  firstSeen: string;
+  lastSeen: string;
+  /** This installation. */
+  current: boolean;
+};
+
 export type Category = "performance" | "privacy" | "ui" | "maintenance" | "gaming";
 
 /** Navigable sections: the tweak categories plus the two standalone screens. */

@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { factorLabel } from "./health-copy";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { homeDir } from "@tauri-apps/api/path";
 import { format, type Lang, type Strings, localeOf } from "../i18n";
-import { textFor } from "../lib";
-import type { ScanProgress, Section, Toast } from "../types";
+import { cachedAppVersion, textFor } from "../lib";
+import { diagnosisText } from "../diagnosis";
+import type { AuditEntry, ScanProgress, Section, Toast } from "../types";
 import {
   applyScanSelection,
   LAST_SCAN_KEY,
@@ -327,6 +329,32 @@ export function ScanPanel({
     }
   }
 
+  /** The report and recent changes as plain text for a support email; the
+   *  person decides where it goes. */
+  async function copyDiagnosis() {
+    if (!report) return;
+    const [history, home] = await Promise.all([
+      invoke<AuditEntry[]>("list_audit_log").catch(() => []),
+      // The user name to take out of any error text.
+      homeDir().catch(() => null),
+    ]);
+    const text = diagnosisText({
+      home,
+      appVersion: cachedAppVersion,
+      lang,
+      isPro,
+      report,
+      outcome,
+      history,
+    });
+    try {
+      await navigator.clipboard.writeText(text);
+      pushToast("success", c.diagnosisCopied);
+    } catch {
+      pushToast("error", c.diagnosisCopyFailed);
+    }
+  }
+
   async function apply() {
     if (operation.current || !report || !reviewFixes.length) return;
     const ids = reviewFixes.map((t) => t.id);
@@ -470,6 +498,20 @@ export function ScanPanel({
                   {c.finish}
                 </button>
               </div>
+            )}
+            {report && !reading && !paused && (
+              <button
+                type="button"
+                className="scan-secondary scan-copy-diagnosis"
+                onClick={() => void copyDiagnosis()}
+                disabled={applying}
+              >
+                <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <rect x="5" y="5" width="8" height="9" rx="1.5" stroke="currentColor" />
+                  <path d="M3.5 10.5V3.5A1.5 1.5 0 0 1 5 2h5.5" stroke="currentColor" />
+                </svg>
+                {c.copyDiagnosis}
+              </button>
             )}
             <span className="scan-last" hidden={reading || paused}>
               {lastScan

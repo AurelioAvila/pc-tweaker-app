@@ -69,6 +69,9 @@ const en = {
   noReview: "No review items found in the completed checks.",
   unavailable: "Unavailable checks remain unknown, not passed.",
   manual: "Review",
+  copyDiagnosis: "Copy diagnosis",
+  diagnosisCopied: "Diagnosis copied. Paste it into your email to support.",
+  diagnosisCopyFailed: "The diagnosis could not be copied. Try again.",
   probes: [
     "Windows settings",
     "Supported changes",
@@ -197,6 +200,9 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     noReview: "Nessun elemento da esaminare nei controlli completati.",
     unavailable: "I controlli non disponibili restano sconosciuti, non superati.",
     manual: "Esamina",
+    copyDiagnosis: "Copia diagnosi",
+    diagnosisCopied: "Diagnosi copiata. Incollala nell'email all'assistenza.",
+    diagnosisCopyFailed: "Non è stato possibile copiare la diagnosi. Riprova.",
     probes: [
       "Impostazioni Windows",
       "Modifiche supportate",
@@ -322,6 +328,9 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     noReview: "Aucun point à examiner parmi les contrôles terminés.",
     unavailable: "Un contrôle indisponible reste inconnu, pas réussi.",
     manual: "Examiner",
+    copyDiagnosis: "Copier le diagnostic",
+    diagnosisCopied: "Diagnostic copié. Collez-le dans votre e-mail à l'assistance.",
+    diagnosisCopyFailed: "Impossible de copier le diagnostic. Réessayez.",
     probes: [
       "Réglages Windows",
       "Modifications prises en charge",
@@ -447,6 +456,9 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     noReview: "No hay elementos para revisar en las comprobaciones completas.",
     unavailable: "Las comprobaciones no disponibles cuentan como desconocidas, no como superadas.",
     manual: "Revisar",
+    copyDiagnosis: "Copiar diagnóstico",
+    diagnosisCopied: "Diagnóstico copiado. Pégalo en tu correo al soporte.",
+    diagnosisCopyFailed: "No se ha podido copiar el diagnóstico. Inténtalo de nuevo.",
     probes: [
       "Ajustes de Windows",
       "Cambios compatibles",
@@ -572,6 +584,9 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     noReview: "Keine weiteren Hinweise aus den abgeschlossenen Prüfungen.",
     unavailable: "Nicht verfügbare Prüfungen bleiben unbekannt, nicht bestanden.",
     manual: "Prüfen",
+    copyDiagnosis: "Diagnose kopieren",
+    diagnosisCopied: "Diagnose kopiert. Füge sie in deine E-Mail an den Support ein.",
+    diagnosisCopyFailed: "Die Diagnose konnte nicht kopiert werden. Versuche es erneut.",
     probes: [
       "Windows-Einstellungen",
       "Unterstützte Änderungen",
@@ -696,6 +711,9 @@ export const SCAN_COPY: Record<Lang, Copy> = {
     noReview: "Nenhum item para rever nas verificações concluídas.",
     unavailable: "As verificações indisponíveis ficam como desconhecidas, não como aprovadas.",
     manual: "Rever",
+    copyDiagnosis: "Copiar diagnóstico",
+    diagnosisCopied: "Diagnóstico copiado. Cole-o no seu e-mail para o suporte.",
+    diagnosisCopyFailed: "Não foi possível copiar o diagnóstico. Tente novamente.",
     probes: [
       "Definições do Windows",
       "Alterações compatíveis",

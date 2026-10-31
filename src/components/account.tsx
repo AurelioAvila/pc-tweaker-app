@@ -11,7 +11,7 @@ import {
   removeAvatar,
   writeAvatar,
 } from "../lib";
-import { AuthState, ProcessGuardStatus, type ProductPlan } from "../types";
+import { AuthState, ProcessGuardStatus, type AccountDevice, type ProductPlan } from "../types";
 import { CheckIcon, CrownIcon } from "./icons";
 import { TRIAL_COPY } from "./trial-copy";
 import { REFERRAL_COPY } from "./referral-copy";
@@ -416,6 +416,7 @@ export function AccountMenu({
   onForgotPassword,
   onChangePassword,
   onChangeEmail,
+  onLoadDevices,
   onUpgrade,
   onViewPlan,
   onManageBilling,
@@ -445,6 +446,8 @@ export function AccountMenu({
   onForgotPassword: (email: string) => Promise<void>;
   onChangePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   onChangeEmail: (password: string, newEmail: string) => Promise<void>;
+  /** The account's PCs from the server, this one marked; omitted = no list. */
+  onLoadDevices?: () => Promise<AccountDevice[]>;
   onUpgrade: () => void;
   /** Opens the plans screen. Same destination for both tiers: a Free
    *  account is comparing, a Pro account is checking what it pays for. */
@@ -657,6 +660,9 @@ export function AccountMenu({
                   />
                 </div>
               </details>
+            )}
+            {auth.status === "authenticated" && onLoadDevices && (
+              <AccountDevices s={s} lang={lang} load={onLoadDevices} />
             )}
             <div className="account-plan-row">
               <span>
@@ -890,6 +896,89 @@ function ProductRow({
         </div>
       )}
     </li>
+  );
+}
+
+/** The PCs that used this account, read from the server each time the
+ *  section opens. Read-only: the account has no PC limit to free. */
+function AccountDevices({
+  s,
+  lang,
+  load,
+}: {
+  s: Strings;
+  lang: Lang;
+  load: () => Promise<AccountDevice[]>;
+}) {
+  const [state, setState] = useState<
+    { kind: "idle" | "loading" | "failed" } | { kind: "ready"; devices: AccountDevice[] }
+  >({ kind: "idle" });
+  const request = useRef(0);
+  function refresh() {
+    const id = ++request.current;
+    setState({ kind: "loading" });
+    load().then(
+      (devices) => id === request.current && setState({ kind: "ready", devices }),
+      () => id === request.current && setState({ kind: "failed" }),
+    );
+  }
+  const when = (iso: string) =>
+    new Date(iso).toLocaleString(localeOf(lang) ?? lang, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  return (
+    <details
+      name="account-settings"
+      className="account-setting"
+      onToggle={(e) => {
+        if (e.currentTarget.open) refresh();
+      }}
+    >
+      <summary>
+        <span>{s.auth.devicesTitle}</span>
+        {state.kind === "ready" && state.devices.length > 0 && (
+          <span className="account-current">{state.devices.length}</span>
+        )}
+        <span className="account-chevron" aria-hidden="true">
+          ›
+        </span>
+      </summary>
+      <div className="account-setting-body account-devices" aria-busy={state.kind === "loading"}>
+        {state.kind === "loading" && <p className="text-xs text-ink-3">{s.auth.working}</p>}
+        {state.kind === "failed" && (
+          <p role="alert" className="text-xs text-danger">
+            {s.auth.devicesUnavailable}
+          </p>
+        )}
+        {state.kind === "ready" &&
+          (state.devices.length ? (
+            <ul>
+              {state.devices.map((d, i) => (
+                <li key={`${d.firstSeen}-${i}`}>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="min-w-0 break-words text-ink">
+                      {d.label ?? s.auth.devicesUnnamed}
+                    </span>
+                    {d.pro !== null && (
+                      <span className={d.pro ? "font-semibold text-ok" : "text-ink-3"}>
+                        {d.pro ? s.pricing.proName : s.pricing.freeName}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-ink-3">
+                    {d.current && <strong className="text-ink-2">{s.auth.devicesThisPc} · </strong>}
+                    {format(s.auth.devicesLastUsed, { date: when(d.lastSeen) })}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-ink-3">{s.auth.devicesEmpty}</p>
+          ))}
+        <p className="account-devices-note">{s.auth.devicesNote}</p>
+      </div>
+    </details>
   );
 }
 

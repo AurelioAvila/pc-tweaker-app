@@ -312,6 +312,18 @@
   flex-wrap: wrap;
   justify-content: space-between;
 }
+/* Beside "Scan again", leaving the last-scan time on the right. The two
+   buttons share one line, so "Scan again" no longer wraps at 120px. */
+.scan-hero[data-complete="true"] .scan-launch-label {
+  max-width: none;
+}
+.scan-copy-diagnosis {
+  margin-right: auto;
+}
+.scan-copy-diagnosis svg {
+  width: 14px;
+  height: 14px;
+}
 .scan-hero[data-complete="true"] .scan-hero-copy > h2,
 .scan-hero[data-complete="true"] .scan-intro,
 .scan-hero[data-complete="true"] .scan-hero-copy > .scan-eyebrow {

@@ -1,5 +1,7 @@
 import { orderSectionTweaks } from "./feature-order";
 import { installId } from "./installId";
+import { retryAfterSeconds, waitPhrase } from "./retry-after";
+import { pcLabel } from "./device-label";
 import { TweakyDriverPromoCard } from "./components/tweaky-driver-promo";
 import { NetworkCheckPanel } from "./components/diagnostics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -31,8 +33,10 @@ import {
   CleanupInfo,
   CleanupResult,
   Section,
+  SystemStats,
   Toast,
   TweakInfo,
+  type AccountDevice,
   type ProductPlan,
 } from "./types";
 import {
@@ -120,6 +124,26 @@ class CheckoutError extends Error {
   ) {
     super(message);
   }
+}
+
+/** How the account's PC list names this PC (Windows edition and processor), read once per
+ *  run from the same cheap call the dashboard makes; percent-encoded for the header. */
+let pcLabelHeader: Promise<Record<string, string>> | null = null;
+function deviceLabelHeader(): Promise<Record<string, string>> {
+  if (pcLabelHeader) return pcLabelHeader;
+  const header = invoke<SystemStats>("system_stats").then(
+    (stats): Record<string, string> => {
+      const label = pcLabel(stats.os_name, stats.cpu_name);
+      return label ? { "X-Device-Label": encodeURIComponent(label) } : {};
+    },
+    () => {
+      // Try again on the next refresh rather than never naming this PC.
+      pcLabelHeader = null;
+      return {};
+    },
+  );
+  pcLabelHeader = header;
+  return header;
 }
 
 /** This PC's licence identity (license.rs device_hash) as a request header, or nothing on a
@@ -364,6 +388,7 @@ function App() {
           Authorization: `Bearer ${token}`,
           ...(install ? { "X-Install-Id": install } : {}),
           ...(await deviceHeader()),
+          ...(await deviceLabelHeader()),
         },
       });
       if (!res.ok) return;
@@ -504,18 +529,23 @@ function App() {
 
   /** A message in the app's language for a failed account request. The
    *  server's own error text is English and was shown verbatim, including a
-   *  bare "HTTP 429" when the rate limiter answered. */
-  function accountFailure(status: number): Error {
+   *  bare "HTTP 429" when the rate limiter answered. A 429 says how long to
+   *  wait when the server sent Retry-After, else the fixed 15 minutes. */
+  function accountFailure(res: Response): Error {
+    const status = res.status;
+    const wait = status === 429 ? retryAfterSeconds(res.headers.get("Retry-After")) : null;
     return new Error(
       status === 401
         ? s.auth.errorCredentials
         : status === 409
           ? s.auth.errorAlreadyRegistered
-          : status === 429
-            ? s.auth.errorRateLimited
-            : status >= 500
-              ? s.auth.errorServer
-              : s.auth.errorInvalid,
+          : wait !== null
+            ? format(s.auth.errorRateLimitedIn, { when: waitPhrase(wait, localeOf(lang) ?? "en") })
+            : status === 429
+              ? s.auth.errorRateLimited
+              : status >= 500
+                ? s.auth.errorServer
+                : s.auth.errorInvalid,
     );
   }
 
@@ -574,7 +604,7 @@ function App() {
         deviceId: installationId(),
       }),
     });
-    if (!res.ok) throw accountFailure(res.status);
+    if (!res.ok) throw accountFailure(res);
     const data = (await res.json()) as { token: string; verificationEmailSent?: boolean };
     // A new login must not inherit a previous account's signed caches, even if
     // an earlier asynchronous logout was interrupted.
@@ -598,6 +628,22 @@ function App() {
     await refreshAccount();
   }
 
+  /** The PCs this account used PC Tweaker on in the last 90 days, this one marked. */
+  async function loadDevices(): Promise<AccountDevice[]> {
+    const token = readToken();
+    if (!API_BASE_URL || !token) throw new Error(s.auth.devicesUnavailable);
+    const install = installId();
+    const res = await accountFetch(`${API_BASE_URL}/api/account/devices`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(install ? { "X-Install-Id": install } : {}),
+      },
+    });
+    if (!res.ok) throw accountFailure(res);
+    const data = (await res.json()) as { devices?: AccountDevice[] };
+    return (data.devices ?? []).filter((d) => d.product === "pctweaker");
+  }
+
   async function resendVerification() {
     if (!API_BASE_URL) throw new Error(s.auth.backendNotConfigured);
     const token = readToken();
@@ -607,7 +653,7 @@ function App() {
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ locale: lang }),
     });
-    if (!res.ok) throw accountFailure(res.status);
+    if (!res.ok) throw accountFailure(res);
   }
 
   async function forgotPassword(email: string) {
@@ -617,7 +663,7 @@ function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, locale: lang }),
     });
-    if (!res.ok) throw accountFailure(res.status);
+    if (!res.ok) throw accountFailure(res);
   }
 
   /** Needs the current password; this session continues with the token the
@@ -633,7 +679,7 @@ function App() {
       body: JSON.stringify({ currentPassword, newPassword, locale: lang }),
     });
     if (res.status === 401) throw new Error(s.auth.errorCurrentPassword);
-    if (!res.ok) throw accountFailure(res.status);
+    if (!res.ok) throw accountFailure(res);
     const data = (await res.json()) as { token: string };
     storeSession(data.token, email, localStorage.getItem(TOKEN_KEY) !== null);
   }
@@ -649,7 +695,7 @@ function App() {
       body: JSON.stringify({ password, newEmail, locale: lang }),
     });
     if (res.status === 401) throw new Error(s.auth.errorCurrentPassword);
-    if (!res.ok) throw accountFailure(res.status);
+    if (!res.ok) throw accountFailure(res);
   }
 
   // Opens real Stripe Checkout in the system browser (Checkout can't run
@@ -1141,6 +1187,7 @@ function App() {
                 onForgotPassword={forgotPassword}
                 onChangePassword={changePassword}
                 onChangeEmail={changeEmail}
+                onLoadDevices={loadDevices}
                 onUpgrade={() => setPaywallFeature(s.menu.planPro)}
                 onViewPlan={() => setFilter("pricing")}
                 onManageBilling={() =>

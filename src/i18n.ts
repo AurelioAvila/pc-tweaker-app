@@ -1084,6 +1084,14 @@ export interface Strings {
     planMonthly: string;
     planBonus: string;
     planUntil: string;
+    errorRateLimitedIn: string;
+    devicesTitle: string;
+    devicesThisPc: string;
+    devicesUnnamed: string;
+    devicesLastUsed: string;
+    devicesEmpty: string;
+    devicesUnavailable: string;
+    devicesNote: string;
   };
   driftWatch: {
     title: string;
@@ -2403,6 +2411,15 @@ const it: Strings = {
     planMonthly: "Mensile",
     planBonus: "Incluso con Lifetime",
     planUntil: "fino al {date}",
+    errorRateLimitedIn: "Troppi tentativi. Riprova {when}.",
+    devicesTitle: "I tuoi PC",
+    devicesThisPc: "Questo PC",
+    devicesUnnamed: "PC Windows",
+    devicesLastUsed: "Ultimo utilizzo: {date}",
+    devicesEmpty: "Nessun PC ha usato questo account negli ultimi 90 giorni.",
+    devicesUnavailable: "Non è stato possibile caricare i tuoi PC. Riprova più tardi.",
+    devicesNote:
+      "Un PC esce dall'elenco 90 giorni dopo l'ultimo utilizzo. Per impedire a un PC di usare il tuo account, esci su quel PC oppure cambia la password: tutti gli altri PC vengono disconnessi.",
   },
   driftWatch: {
     title: "Sorveglia gli aggiornamenti di Windows",
@@ -4107,6 +4124,15 @@ const en: Strings = {
     planMonthly: "Monthly",
     planBonus: "Included with Lifetime",
     planUntil: "until {date}",
+    errorRateLimitedIn: "Too many attempts. Try again {when}.",
+    devicesTitle: "Your PCs",
+    devicesThisPc: "This PC",
+    devicesUnnamed: "Windows PC",
+    devicesLastUsed: "Last used {date}",
+    devicesEmpty: "No PC has used this account in the last 90 days.",
+    devicesUnavailable: "Your PCs could not be loaded. Try again later.",
+    devicesNote:
+      "A PC leaves this list 90 days after it was last used. To stop a PC using your account, sign out there, or change your password: every other PC is signed out.",
   },
   driftWatch: {
     title: "Watch for Windows updates",
@@ -5838,6 +5864,15 @@ const fr: Strings = {
     planMonthly: "Mensuelle",
     planBonus: "Inclus avec Lifetime",
     planUntil: "jusqu'au {date}",
+    errorRateLimitedIn: "Trop de tentatives. Réessayez {when}.",
+    devicesTitle: "Vos PC",
+    devicesThisPc: "Ce PC",
+    devicesUnnamed: "PC Windows",
+    devicesLastUsed: "Dernière utilisation : {date}",
+    devicesEmpty: "Aucun PC n'a utilisé ce compte au cours des 90 derniers jours.",
+    devicesUnavailable: "Impossible de charger vos PC. Réessayez plus tard.",
+    devicesNote:
+      "Un PC quitte cette liste 90 jours après sa dernière utilisation. Pour qu'un PC n'utilise plus votre compte, déconnectez-vous sur ce PC ou changez votre mot de passe : tous les autres PC sont déconnectés.",
   },
   driftWatch: {
     title: "Surveiller les mises à jour Windows",
@@ -7561,6 +7596,15 @@ const es: Strings = {
     planMonthly: "Mensual",
     planBonus: "Incluido con Lifetime",
     planUntil: "hasta el {date}",
+    errorRateLimitedIn: "Demasiados intentos. Vuelve a intentarlo {when}.",
+    devicesTitle: "Tus PC",
+    devicesThisPc: "Este PC",
+    devicesUnnamed: "PC con Windows",
+    devicesLastUsed: "Último uso: {date}",
+    devicesEmpty: "Ningún PC ha usado esta cuenta en los últimos 90 días.",
+    devicesUnavailable: "No se han podido cargar tus PC. Inténtalo más tarde.",
+    devicesNote:
+      "Un PC sale de esta lista 90 días después de su último uso. Para que un PC deje de usar tu cuenta, cierra sesión en él o cambia la contraseña: se cerrará la sesión en todos los demás PC.",
   },
   driftWatch: {
     title: "Vigilar las actualizaciones de Windows",
@@ -9291,6 +9335,15 @@ const de: Strings = {
     planMonthly: "Monatlich",
     planBonus: "In Lifetime enthalten",
     planUntil: "bis {date}",
+    errorRateLimitedIn: "Zu viele Versuche. Bitte versuche es {when} erneut.",
+    devicesTitle: "Deine PCs",
+    devicesThisPc: "Dieser PC",
+    devicesUnnamed: "Windows-PC",
+    devicesLastUsed: "Zuletzt verwendet: {date}",
+    devicesEmpty: "In den letzten 90 Tagen hat kein PC dieses Konto verwendet.",
+    devicesUnavailable: "Deine PCs konnten nicht geladen werden. Versuche es später erneut.",
+    devicesNote:
+      "Ein PC verschwindet 90 Tage nach der letzten Nutzung aus dieser Liste. Damit ein PC dein Konto nicht mehr verwendet, melde dich dort ab oder ändere dein Passwort – dann werden alle anderen PCs abgemeldet.",
   },
   driftWatch: {
     title: "Windows-Updates überwachen",
@@ -11021,6 +11074,15 @@ const pt: Strings = {
     planMonthly: "Mensal",
     planBonus: "Incluído no Lifetime",
     planUntil: "até {date}",
+    errorRateLimitedIn: "Demasiadas tentativas. Tente novamente {when}.",
+    devicesTitle: "Os seus PCs",
+    devicesThisPc: "Este PC",
+    devicesUnnamed: "PC com Windows",
+    devicesLastUsed: "Última utilização: {date}",
+    devicesEmpty: "Nenhum PC utilizou esta conta nos últimos 90 dias.",
+    devicesUnavailable: "Não foi possível carregar os seus PCs. Tente novamente mais tarde.",
+    devicesNote:
+      "Um PC sai desta lista 90 dias após a última utilização. Para que um PC deixe de utilizar a sua conta, termine a sessão nesse PC ou altere a palavra-passe: a sessão termina em todos os outros PCs.",
   },
   driftWatch: {
     title: "Vigiar as atualizações do Windows",

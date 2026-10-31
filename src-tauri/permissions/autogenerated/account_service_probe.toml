@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-account-service-probe"
+description = "Enables the account_service_probe command without any pre-configured scope."
+commands.allow = ["account_service_probe"]
+
+[[permission]]
+identifier = "deny-account-service-probe"
+description = "Denies the account_service_probe command without any pre-configured scope."
+commands.deny = ["account_service_probe"]

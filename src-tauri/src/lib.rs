@@ -1,3 +1,4 @@
+mod account_probe;
 mod process_guard;
 mod appcache;
 mod update_identity;
@@ -2453,6 +2454,7 @@ pub fn run() {
             license::license_status,
             license::license_device_hash,
             license::clear_license,
+            account_probe::account_service_probe,
             referral::referral_issuer,
             referral::referral_device,
             referral::referral_session,

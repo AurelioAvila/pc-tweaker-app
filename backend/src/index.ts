@@ -55,17 +55,10 @@ app.use("/api", (_req: Request, res: Response, next: express.NextFunction) => {
   next();
 });
 
-// A generous service-wide ceiling protects every route, including cheap
-// reads and static legal pages that do not warrant a dedicated limiter.
-// Sensitive write endpoints keep their stricter route-specific limits.
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 1_200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Too many requests. Please try again later." },
-}));
-
+// CORS comes before every limiter: a 429 (or any other early answer) without
+// Access-Control-Allow-Origin reaches the app as an opaque network failure,
+// so a customer was told to check an internet connection that worked.
+//
 // Allow-list the origins our own clients run from instead of falling back to
 // "any origin". No cookies are involved — auth is a bearer header — so a
 // wide-open CORS was never exploitable for session theft, but there is no
@@ -95,6 +88,17 @@ const firstPartyOrigins = [
 const extraOrigins = (process.env.CORS_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
 const allowedOrigins = [...new Set([...firstPartyOrigins, ...extraOrigins])];
 app.use(cors({ origin: allowedOrigins, exposedHeaders: ["X-Session-Token"] }));
+
+// A generous service-wide ceiling protects every route, including cheap
+// reads and static legal pages that do not warrant a dedicated limiter.
+// Sensitive write endpoints keep their stricter route-specific limits.
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 1_200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please try again later." },
+}));
 
 // Stripe needs the raw, unparsed body to verify the webhook signature, so
 // this route is registered before the global express.json() middleware.

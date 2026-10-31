@@ -410,6 +410,8 @@ router.post("/change-password", requireAuth, passwordCheckLimiter, async (req: R
       [passwordHash, req.userId],
     );
     await invalidatePasswordResets(req.userId as number);
+    // A pending move to another address was asked for with the old password.
+    await invalidateActionTokens(req.userId as number, "email_change");
     await rememberLanguage(req, req.userId as number);
     void sendPasswordChangedNotice(req.userId as number, new Date(), brandOf(product), isLocale(req.body?.locale) ? req.body.locale : undefined).catch(
       (err) => console.error("failed to send the password changed notice:", err),
@@ -686,6 +688,10 @@ router.post("/reset-password", async (req: Request, res: Response) => {
     // change the password again for up to an hour. The one that was used
     // just proved control of the account; the rest are now stale.
     await invalidatePasswordResets(userId);
+    // Same for a pending move to another address: if the reset follows a
+    // compromise, a link already in someone else's inbox must not still
+    // hand them the account.
+    await invalidateActionTokens(userId, "email_change");
 
     // Best-effort, like the welcome: the password has already changed by now,
     // and failing the request would tell the user their reset did not work

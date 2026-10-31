@@ -74,9 +74,11 @@ export function createPurchaseClient(base: string, transport: Transport = fetch)
     async devices(token: string): Promise<AccountPc[]> {
       const result = await request<{ devices?: unknown }>("/api/account/devices", "GET", undefined, token);
       if (!Array.isArray(result.devices)) throw new PurchaseError("We could not read your PCs. Please try again.");
-      return result.devices.filter((d): d is AccountPc => !!d && typeof d === "object"
-        && typeof (d as AccountPc).product === "string" && typeof (d as AccountPc).lastSeen === "string"
-        && ((d as AccountPc).label === null || typeof (d as AccountPc).label === "string"));
+      return result.devices.filter((d): d is AccountPc => {
+        const pc = (d && typeof d === "object" ? d : {}) as Partial<AccountPc>;
+        return typeof pc.product === "string" && typeof pc.firstSeen === "string" && typeof pc.lastSeen === "string"
+          && (pc.label === null || typeof pc.label === "string") && (pc.pro === null || typeof pc.pro === "boolean");
+      });
     },
     async portal(token: string) {
       const result = await request<{ url?: unknown }>("/api/portal", "POST", { returnTo: "account" }, token);

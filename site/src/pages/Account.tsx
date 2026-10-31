@@ -17,7 +17,8 @@ import { API_BASE, DOWNLOAD_EXE } from "../constants";
 
 const SESSION_KEY = "pctweaker-account-session";
 const PRODUCTS: Record<string, string> = { pctweaker: "PC Tweaker", uninstaller: "PC Tweaker Uninstaller" };
-type Loaded = { account: Account; products: ProductStatus[]; pcs: AccountPc[] | null };
+/** null = that part could not be read now; the rest of the page still shows. */
+type Loaded = { account: Account; products: ProductStatus[] | null; pcs: AccountPc[] | null };
 
 function stored(): string | null {
   try {
@@ -83,8 +84,9 @@ export function AccountPage() {
     setMessage("");
     try {
       const account = await client.account(next);
+      // A busy or failing read must not throw away a sign-in that worked.
       const [products, pcs] = await Promise.all([
-        client.products(next),
+        client.products(next).catch(() => null),
         client.devices(next).catch(() => null),
       ]);
       keep(next);
@@ -245,8 +247,11 @@ export function AccountPage() {
               <h2 id="plans-heading" className="text-xl font-bold text-[var(--fg)]">
                 Plans
               </h2>
+              {data.products === null && (
+                <p className="mt-4 text-sm text-amber-300">Your plans could not be loaded. Try again later.</p>
+              )}
               <ul className="mt-4 divide-y divide-white/10">
-                {data.products.map((p) => {
+                {(data.products ?? []).map((p) => {
                   const plan = planText(p);
                   return (
                     <li key={p.product} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3">

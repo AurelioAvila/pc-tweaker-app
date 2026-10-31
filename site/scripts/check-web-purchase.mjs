@@ -60,6 +60,7 @@ test("the account page reads plans and PCs with the bearer token and no cookie",
     return reply({ devices: [
       { product: "pctweaker", label: "Windows 11 Pro · AMD Ryzen 7", pro: true, firstSeen: "2026-09-01T00:00:00Z", lastSeen: "2026-10-31T00:00:00Z", current: false },
       { product: "pctweaker", label: 42, lastSeen: "x" },
+      { product: "pctweaker", label: "no plan field", firstSeen: "2026-09-01T00:00:00Z", lastSeen: "2026-10-31T00:00:00Z" },
     ] });
   });
   assert.deepEqual(await client.products("t"), [{ product: "pctweaker", state: "active", plan: "annual", trialEndsAt: null, periodEnd: "2027-09-02T10:00:00.000Z", cancelAtPeriodEnd: false, blockedReason: "none" }]);

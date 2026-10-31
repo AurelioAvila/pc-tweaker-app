@@ -1,0 +1,1 @@
+New Copy diagnosis button on the scan screen, for support requests. Your account menu now lists the PCs signed in with your account. When the service asks you to slow down, the message says how long to wait.

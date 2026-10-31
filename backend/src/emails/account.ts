@@ -36,7 +36,7 @@ import {
 const firstWord = (value: string) => (value || "").trim().split(/\s+/)[0] ?? "";
 const isUninstaller = (brand: EmailBrand) => brand === EMAIL_BRANDS.uninstaller;
 const numbered = (title: string, items: string[]) => [`${title}:`, ...items.map((item, i) => `${i + 1}. ${plainText(item)}`)];
-const SUPPORT_PAGE = "https://pctweaker.app/support";
+const SUPPORT_PAGE = "https://pctweaker.app/support/";
 const UNDO_GUIDE = "https://pctweaker.app/how-to-undo-windows-tweaks/";
 
 // ---------------------------------------------------------------- confirm

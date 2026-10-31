@@ -517,7 +517,7 @@ footer a{color:var(--m)}
 <body><div class="card">
 <div class="brand"><div class="mark" aria-hidden="true">${initial}</div><span>${escapeHtml(brand.name)}</span></div>
 <h2>${title}</h2>${bodyHtml}
-<footer>${escapeHtml(c.shell.family)} <a href="https://pctweaker.app/support">${escapeHtml(c.shell.support)}</a> · <a href="https://pctweaker.app/privacy">${escapeHtml(c.shell.privacy)}</a></footer>
+<footer>${escapeHtml(c.shell.family)} <a href="https://pctweaker.app/support/">${escapeHtml(c.shell.support)}</a> · <a href="https://pctweaker.app/privacy/">${escapeHtml(c.shell.privacy)}</a></footer>
 </div></body></html>`;
 }
 

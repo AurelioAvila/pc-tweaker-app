@@ -76,7 +76,7 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/": {
     title: "PC Tweaker | Free Windows Tweaker for Gaming and Privacy",
     description:
-      "Review Windows gaming, privacy and performance settings. Inspect each change and restore supported tweaks. Download PC Tweaker Free for Windows 10/11.",
+      "PC Tweaker is a free Windows tweaker for gaming, privacy and performance. Review each setting before it changes and restore supported tweaks on Windows 10/11.",
     canonical: `${ORIGIN}/`,
     ogType: "website",
   },

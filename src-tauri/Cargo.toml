@@ -40,6 +40,10 @@ sysinfo = "0.32"
 # is left out of the shipped binary. TLS and proxy handling stay as default.
 tauri-plugin-updater = { version = "2", default-features = false, features = ["rustls-tls", "system-proxy"] }
 semver = "1"
+# The updater's own reqwest and rustls (already in the binary), for the sign-in
+# screen's reason when the account service cannot be reached (account_probe.rs).
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "system-proxy"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
 tauri-plugin-process = "2"
 tauri-plugin-single-instance = "2"
 ed25519-dalek = "2"

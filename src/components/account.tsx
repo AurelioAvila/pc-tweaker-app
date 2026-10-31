@@ -178,7 +178,11 @@ export function AuthSection({
           </button>
         )}
         {info && <p className="mt-2 text-xs text-emerald-400">{info}</p>}
-        {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+        {error && (
+          <p role="alert" className="mt-2 text-xs text-red-400">
+            {error}
+          </p>
+        )}
         {avatar && (
           <button
             onClick={onRemovePhoto}
@@ -232,7 +236,11 @@ export function AuthSection({
             className="rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-[var(--app-accent)]"
           />
           {info && <p className="text-xs text-emerald-400">{info}</p>}
-          {error && <p className="text-xs text-red-400">{error}</p>}
+          {error && (
+            <p role="alert" className="text-xs text-red-400">
+              {error}
+            </p>
+          )}
           <button
             type="submit"
             disabled={working}
@@ -354,7 +362,11 @@ export function AuthSection({
             {s.auth.rememberMe}
           </label>
         )}
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && (
+          <p role="alert" className="text-xs text-red-400">
+            {error}
+          </p>
+        )}
         <button
           type="submit"
           disabled={working}

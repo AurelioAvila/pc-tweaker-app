@@ -1070,6 +1070,13 @@ export interface Strings {
     errorInvalid: string;
     errorServer: string;
     errorNetwork: string;
+    errorOffline: string;
+    errorTimeout: string;
+    errorDns: string;
+    errorClock: string;
+    errorTls: string;
+    errorBlocked: string;
+    errorFiltered: string;
     passwordTooLong: string;
     plansTitle: string;
     planLifetime: string;
@@ -2375,6 +2382,19 @@ const it: Strings = {
     errorServer: "Il servizio account non risponde in questo momento. Riprova tra qualche minuto.",
     errorNetwork:
       "Impossibile raggiungere il servizio account. Controlla la connessione a Internet e riprova.",
+    errorOffline: "Questo PC è offline. Connettiti a Internet e riprova.",
+    errorTimeout:
+      "api.pctweaker.app ha impiegato troppo a rispondere. Può dipendere da una connessione lenta, una VPN o un proxy. Riprova tra poco.",
+    errorDns:
+      "Questo PC non trova api.pctweaker.app. Controlla le impostazioni DNS oppure consenti l'indirizzo nel blocco annunci o nel filtro del router, poi riprova.",
+    errorClock:
+      "La connessione sicura è stata rifiutata perché data o ora di questo PC sono sbagliate. Attiva l'impostazione automatica dell'ora nelle Impostazioni di Windows, poi riprova.",
+    errorTls:
+      "La connessione sicura ad api.pctweaker.app è stata alterata lungo il percorso, di solito dalla scansione HTTPS di un antivirus o da un proxy. Consenti lì api.pctweaker.app, poi riprova.",
+    errorBlocked:
+      "La connessione ad api.pctweaker.app è stata bloccata su questo PC o in rete. Consenti PC Tweaker e api.pctweaker.app nel firewall, nell'antivirus o nella VPN, poi riprova.",
+    errorFiltered:
+      "Il servizio account è attivo, ma la sua risposta non è arrivata a PC Tweaker. Riprova; se succede ancora, consenti api.pctweaker.app nella protezione web dell'antivirus, nel firewall o nella VPN.",
     passwordTooLong:
       "La password può essere lunga al massimo 72 byte: lettere accentate ed emoji ne occupano più di uno.",
     plansTitle: "Piani di questo account",
@@ -4066,6 +4086,19 @@ const en: Strings = {
     errorServer: "The account service is not responding right now. Try again in a few minutes.",
     errorNetwork:
       "Could not reach the account service. Check your internet connection and try again.",
+    errorOffline: "This PC is offline. Connect to the internet and try again.",
+    errorTimeout:
+      "api.pctweaker.app took too long to answer. A slow connection, VPN or proxy can cause this. Try again in a moment.",
+    errorDns:
+      "This PC can't find api.pctweaker.app. Check the DNS settings, or allow the address in your ad blocker or router filter, then try again.",
+    errorClock:
+      'The secure connection was refused because the date or time on this PC is wrong. Turn on "Set time automatically" in Windows Settings, then try again.',
+    errorTls:
+      "The secure connection to api.pctweaker.app was altered along the way, usually by an antivirus's HTTPS scanning or a proxy. Allow api.pctweaker.app there, then try again.",
+    errorBlocked:
+      "The connection to api.pctweaker.app was blocked on this PC or network. Allow PC Tweaker and api.pctweaker.app in your firewall, antivirus or VPN, then try again.",
+    errorFiltered:
+      "The account service is up, but its reply didn't reach PC Tweaker. Try again; if it keeps happening, allow api.pctweaker.app in your antivirus's web protection, firewall or VPN.",
     passwordTooLong:
       "The password can be at most 72 bytes long: accented letters and emoji count as more than one.",
     plansTitle: "Plans on this account",
@@ -5784,6 +5817,19 @@ const fr: Strings = {
       "Le service de compte ne répond pas pour le moment. Réessayez dans quelques minutes.",
     errorNetwork:
       "Impossible de joindre le service de compte. Vérifiez votre connexion internet, puis réessayez.",
+    errorOffline: "Ce PC est hors ligne. Connectez-vous à internet, puis réessayez.",
+    errorTimeout:
+      "api.pctweaker.app a mis trop de temps à répondre. Une connexion lente, un VPN ou un proxy peut en être la cause. Réessayez dans un instant.",
+    errorDns:
+      "Ce PC ne trouve pas api.pctweaker.app. Vérifiez les paramètres DNS ou autorisez l'adresse dans votre bloqueur de publicités ou le filtre de votre box, puis réessayez.",
+    errorClock:
+      "La connexion sécurisée a été refusée, car la date ou l'heure de ce PC est incorrecte. Activez le réglage automatique de l'heure dans les Paramètres Windows, puis réessayez.",
+    errorTls:
+      "La connexion sécurisée à api.pctweaker.app a été modifiée en chemin, le plus souvent par l'analyse HTTPS d'un antivirus ou par un proxy. Autorisez-y api.pctweaker.app, puis réessayez.",
+    errorBlocked:
+      "La connexion à api.pctweaker.app a été bloquée sur ce PC ou sur le réseau. Autorisez PC Tweaker et api.pctweaker.app dans votre pare-feu, votre antivirus ou votre VPN, puis réessayez.",
+    errorFiltered:
+      "Le service de compte fonctionne, mais sa réponse n'est pas parvenue à PC Tweaker. Réessayez ; si le problème persiste, autorisez api.pctweaker.app dans la protection web de votre antivirus, votre pare-feu ou votre VPN.",
     passwordTooLong:
       "Le mot de passe peut compter au maximum 72 octets : les lettres accentuées et les emoji en occupent plus d'un.",
     plansTitle: "Offres de ce compte",
@@ -7494,6 +7540,19 @@ const es: Strings = {
       "El servicio de cuentas no responde en este momento. Inténtalo de nuevo en unos minutos.",
     errorNetwork:
       "No se pudo conectar con el servicio de cuentas. Comprueba tu conexión a internet y vuelve a intentarlo.",
+    errorOffline: "Este PC no tiene conexión. Conéctate a internet y vuelve a intentarlo.",
+    errorTimeout:
+      "api.pctweaker.app ha tardado demasiado en responder. Puede deberse a una conexión lenta, una VPN o un proxy. Vuelve a intentarlo en un momento.",
+    errorDns:
+      "Este PC no encuentra api.pctweaker.app. Revisa la configuración DNS o permite la dirección en tu bloqueador de anuncios o en el filtro del router y vuelve a intentarlo.",
+    errorClock:
+      "Se ha rechazado la conexión segura porque la fecha o la hora de este PC no son correctas. Activa el ajuste automático de la hora en Configuración de Windows y vuelve a intentarlo.",
+    errorTls:
+      "La conexión segura con api.pctweaker.app se ha alterado por el camino, normalmente por el análisis HTTPS de un antivirus o por un proxy. Permite ahí api.pctweaker.app y vuelve a intentarlo.",
+    errorBlocked:
+      "La conexión con api.pctweaker.app se ha bloqueado en este PC o en la red. Permite PC Tweaker y api.pctweaker.app en tu firewall, antivirus o VPN y vuelve a intentarlo.",
+    errorFiltered:
+      "El servicio de cuentas funciona, pero su respuesta no ha llegado a PC Tweaker. Vuelve a intentarlo; si sigue pasando, permite api.pctweaker.app en la protección web de tu antivirus, en el firewall o en la VPN.",
     passwordTooLong:
       "La contraseña puede tener como máximo 72 bytes: las letras con tilde y los emoji ocupan más de uno.",
     plansTitle: "Planes de esta cuenta",
@@ -9211,6 +9270,19 @@ const de: Strings = {
       "Der Kontodienst antwortet gerade nicht. Bitte in einigen Minuten erneut versuchen.",
     errorNetwork:
       "Der Kontodienst ist nicht erreichbar. Bitte die Internetverbindung prüfen und erneut versuchen.",
+    errorOffline: "Dieser PC ist offline. Verbinde dich mit dem Internet und versuche es erneut.",
+    errorTimeout:
+      "api.pctweaker.app hat zu lange nicht geantwortet. Das kann an einer langsamen Verbindung, einem VPN oder einem Proxy liegen. Versuche es gleich noch einmal.",
+    errorDns:
+      "Dieser PC findet api.pctweaker.app nicht. Prüfe die DNS-Einstellungen oder erlaube die Adresse in deinem Werbeblocker oder Router-Filter und versuche es dann erneut.",
+    errorClock:
+      "Die sichere Verbindung wurde abgelehnt, weil Datum oder Uhrzeit auf diesem PC falsch sind. Aktiviere in den Windows-Einstellungen die automatische Uhrzeit und versuche es dann erneut.",
+    errorTls:
+      "Die sichere Verbindung zu api.pctweaker.app wurde unterwegs verändert – meist durch die HTTPS-Prüfung eines Virenscanners oder durch einen Proxy. Erlaube api.pctweaker.app dort und versuche es dann erneut.",
+    errorBlocked:
+      "Die Verbindung zu api.pctweaker.app wurde auf diesem PC oder im Netzwerk blockiert. Erlaube PC Tweaker und api.pctweaker.app in deiner Firewall, deinem Virenscanner oder VPN und versuche es dann erneut.",
+    errorFiltered:
+      "Der Kontodienst läuft, aber seine Antwort ist nicht bei PC Tweaker angekommen. Versuche es erneut; passiert das weiterhin, erlaube api.pctweaker.app im Webschutz deines Virenscanners, in der Firewall oder im VPN.",
     passwordTooLong:
       "Das Passwort darf höchstens 72 Byte lang sein: Umlaute, Akzente und Emojis zählen mehr als ein Byte.",
     plansTitle: "Tarife dieses Kontos",
@@ -10928,6 +11000,19 @@ const pt: Strings = {
       "O serviço de contas não está a responder neste momento. Tente novamente dentro de alguns minutos.",
     errorNetwork:
       "Não foi possível contactar o serviço de contas. Verifique a ligação à Internet e tente novamente.",
+    errorOffline: "Este PC está sem ligação. Ligue-se à Internet e tente novamente.",
+    errorTimeout:
+      "O api.pctweaker.app demorou demasiado a responder. Uma ligação lenta, uma VPN ou um proxy podem ser a causa. Tente novamente daqui a pouco.",
+    errorDns:
+      "Este PC não encontra o api.pctweaker.app. Verifique as definições de DNS ou permita o endereço no bloqueador de anúncios ou no filtro do router e tente novamente.",
+    errorClock:
+      "A ligação segura foi recusada porque a data ou a hora deste PC estão erradas. Ative o acerto automático da hora nas Definições do Windows e tente novamente.",
+    errorTls:
+      "A ligação segura ao api.pctweaker.app foi alterada pelo caminho, normalmente pela análise HTTPS de um antivírus ou por um proxy. Permita aí o api.pctweaker.app e tente novamente.",
+    errorBlocked:
+      "A ligação ao api.pctweaker.app foi bloqueada neste PC ou na rede. Permita o PC Tweaker e o api.pctweaker.app na firewall, no antivírus ou na VPN e tente novamente.",
+    errorFiltered:
+      "O serviço de contas está a funcionar, mas a resposta não chegou ao PC Tweaker. Tente novamente; se continuar a acontecer, permita o api.pctweaker.app na proteção web do antivírus, na firewall ou na VPN.",
     passwordTooLong:
       "A palavra-passe pode ter no máximo 72 bytes: as letras acentuadas e os emojis ocupam mais do que um.",
     plansTitle: "Planos desta conta",

@@ -520,13 +520,35 @@ function App() {
   }
 
   /** fetch() for the account routes: an unreachable server is a translated
-   *  message too, not the browser's "Failed to fetch". */
+   *  message too, not the browser's "Failed to fetch". WebView2 gives every
+   *  network failure that same text, so the native side tries the service
+   *  once more and names the reason (account_probe.rs): "check your internet
+   *  connection" was all a customer whose internet worked could be told. */
   async function accountFetch(url: string, init: RequestInit): Promise<Response> {
+    let failure: unknown;
     try {
-      return await fetch(url, init);
-    } catch {
-      throw new Error(s.auth.errorNetwork);
+      return await fetch(url, { ...init, signal: AbortSignal.timeout(30_000) });
+    } catch (err) {
+      failure = err;
     }
+    throw new Error(await networkFailure(failure));
+  }
+
+  async function networkFailure(err: unknown): Promise<string> {
+    if (!navigator.onLine) return s.auth.errorOffline;
+    if (err instanceof DOMException && err.name === "TimeoutError") return s.auth.errorTimeout;
+    const reason = await invoke<string>("account_service_probe").catch(() => "unknown");
+    const messages: Record<string, string> = {
+      reachable: s.auth.errorFiltered,
+      blocked: s.auth.errorBlocked,
+      rate_limited: s.auth.errorRateLimited,
+      server: s.auth.errorServer,
+      timeout: s.auth.errorTimeout,
+      dns: s.auth.errorDns,
+      clock: s.auth.errorClock,
+      tls: s.auth.errorTls,
+    };
+    return messages[reason] ?? s.auth.errorNetwork;
   }
 
   async function authenticate(

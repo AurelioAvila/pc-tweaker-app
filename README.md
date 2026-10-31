@@ -91,6 +91,7 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 - **1.18.6.** Administrator changes to scheduled tasks with spaces in their path work, the Game Sessions list survives an interrupted save, and the administrator helper loads Windows libraries from System32 only.
 - **1.18.7.** Time limits on every Windows tool and on the administrator helper, power plan restores that survive a deleted plan, a polite Explorer restart, and changes that follow the signed-in user when another administrator approves UAC.
 - **1.18.8.** The notification-area menu and the first-close notice follow the language chosen in the app.
+- **1.18.26.** Routine maintenance update.
 - **1.18.25.** Routine maintenance update.
 - **1.18.24.** Routine maintenance update.
 - **1.18.23.** Every language has been reviewed end to end: clearer, more accurate wording in Italian, French, Spanish, German and Portuguese (Portugal), and PC Health now explains each part of your score in your language.

@@ -76,6 +76,7 @@ export function Footer({ navigate, currentPath }: { navigate: (to: string) => vo
                 { label: "PC Tweaker Uninstaller", href: "/uninstaller/" },
                 { label: "Tweaky Driver", href: "/tweaky-driver/", reloadDocument: true },
                 { label: text.support.navLabel, href: "/support/" },
+                { label: "Your account", href: "/account/" },
                 { label: text.footer.contact, href: "/support/" },
                 { label: "Facebook", href: "https://www.facebook.com/Pctweaker10" },
               ]}

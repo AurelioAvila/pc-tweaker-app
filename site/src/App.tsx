@@ -14,6 +14,7 @@ import { FaqAccordion } from "./components/FaqAccordion";
 import { Footer } from "./components/Footer";
 import { TipThanks } from "./components/TipThanks";
 import { SupportPage } from "./pages/Support";
+import { AccountPage } from "./pages/Account";
 import { UninstallerPage } from "./pages/Uninstaller";
 import { GuidePage, GUIDES } from "./pages/Guides";
 import { GuideDirectory } from "./pages/GuideDirectory";
@@ -26,7 +27,7 @@ import {
 } from "./pages/Legal";
 import { PromoProvider, RouteStructuredData } from "./promo";
 import { useRoute } from "./router";
-import { getRouteImage, NOT_FOUND_SEO, ROUTE_SEO } from "./seo";
+import { getRouteImage, NOT_FOUND_SEO, ROUTE_SEO, type RouteSeo } from "./seo";
 import { InvitationPage, INVITATION_SEO } from "./pages/Invitation";
 import { referenceModule } from "./reference-registry";
 
@@ -53,7 +54,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
   const { path, navigate } = useRoute(initialPath);
   const invitation = path === "/invite";
   const reference = referenceModule();
-  const route = invitation ? INVITATION_SEO : (ROUTE_SEO[path] ?? reference?.REFERENCE_SEO[path]);
+  const route: RouteSeo | undefined = invitation ? INVITATION_SEO : (ROUTE_SEO[path] ?? reference?.REFERENCE_SEO[path]);
 
   // Client-side routing doesn't reload the document, so the tab title would
   // otherwise stay on whatever index.html shipped with.
@@ -77,8 +78,9 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
     ]) {
       document.querySelector(selector)?.setAttribute("content", content);
     }
+    // Prerendered noindex pages (the account page, reference leaves) keep the tag.
     const robots = document.querySelector('meta[name="robots"]');
-    if (route) robots?.remove();
+    if (route && !route.noindex) robots?.remove();
     else if (!robots) {
       const tag = document.createElement("meta");
       tag.name = "robots";
@@ -103,6 +105,9 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       break;
     case "/support":
       page = <SupportPage navigate={navigate} />;
+      break;
+    case "/account":
+      page = <AccountPage />;
       break;
     case "/privacy":
       page = <PrivacyPage />;

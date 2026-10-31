@@ -87,6 +87,15 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     canonical: `${ORIGIN}/support/`,
     ogType: "website",
   },
+  // Signed-in account page: built and linked, never indexed or listed.
+  "/account": {
+    title: "Your PC Tweaker Account",
+    description:
+      "Sign in to see your PC Tweaker and Uninstaller plans, the PCs that use your account and your billing. The same account you use in the apps.",
+    canonical: `${ORIGIN}/account/`,
+    ogType: "website",
+    noindex: true,
+  },
   "/privacy": {
     title: "PC Tweaker Privacy Policy — What Data Is Collected",
     description:

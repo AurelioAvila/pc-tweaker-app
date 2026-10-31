@@ -49,5 +49,6 @@ jobs:
       - run: npm run build
       - run: npm run check:seo
       - run: npm run check:attribution
+      - run: npm run check:account
       # Public artifacts use the local publisher-signed deployment flow.
       # A CI rebuild must never replace that artifact with unsigned output.

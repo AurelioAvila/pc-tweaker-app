@@ -22,6 +22,7 @@ import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
 import { promoCheckout } from "../promo";
 import { queueReceipt, type Receipt } from "../receipt-outbox";
 import { queueOwnerNotice } from "../owner-sales";
+import { queueCaRenewalNotice, renewalCancelRoute } from "../renewal-notice";
 import { asyncRoute } from "../async-route";
 import { deviceHashFrom } from "../license";
 import { referralCheckout, referralWebhook, closeExpiredReferral } from "../referral-stripe";
@@ -731,6 +732,9 @@ router.post("/portal", requireAuth, requireStripe, async (req: Request, res: Res
   }
 });
 
+// The California renewal notice's cancellation link (renewal-notice.ts).
+router.get("/billing/renewal/cancel", renewalCancelRoute(() => stripe));
+
 // Mounted with express.raw() in index.ts — Stripe's signature check needs
 // the exact raw request body, not the JSON-parsed one.
 async function webhookHandler(req: Request, res: Response): Promise<void> {
@@ -767,6 +771,9 @@ async function webhookHandler(req: Request, res: Response): Promise<void> {
     await referralWebhook(event);
     // Every product's sales, after the event is recorded; never fails the webhook.
     await queueOwnerNotice(event, stripe);
+    // invoice.upcoming of a California annual plan: the renewal notice the law
+    // asks for. Throws when Stripe cannot be read, so Stripe sends it again.
+    await queueCaRenewalNotice(event, stripe);
   } catch (err) {
     // Fail loudly so Stripe retries. This used to answer 200 regardless, to
     // avoid a buggy handler being replayed forever — but Stripe gives up on

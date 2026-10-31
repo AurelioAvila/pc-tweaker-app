@@ -62,10 +62,12 @@ type MailInput = {
   headers?: Record<string, string>;
   /** Stable per message (receipt key, token) so a retry can never mail twice; random when absent. */
   idempotencyKey?: string;
+  /** Another display name on a verified address, e.g. "Redaxa <noreply@pctweaker.app>"; MAIL_FROM when absent. */
+  from?: string;
 };
 
 async function sendViaRelay(mail: MailInput): Promise<void> {
-  const result = await sendEmail({ ...mail, from: MAIL_FROM ?? "" } satisfies Mail, { timeoutMs: 15_000 });
+  const result = await sendEmail({ ...mail, from: mail.from || MAIL_FROM || "" } satisfies Mail, { timeoutMs: 15_000 });
   if (!result.ok) {
     // Only blame the recipient when the first provider refused the address
     // itself (a 4xx other than 401/403/429). Credentials, quota and outages
@@ -83,14 +85,14 @@ async function sendViaRelay(mail: MailInput): Promise<void> {
  * bodies to logs because they can contain password-reset tokens or personal
  * support content.
  */
-async function sendMail({ to, subject, html, text, replyTo = "support@pctweaker.app", headers, idempotencyKey }: MailInput): Promise<{ delivered: boolean }> {
+async function sendMail({ to, subject, html, text, replyTo = "support@pctweaker.app", headers, idempotencyKey, from }: MailInput): Promise<{ delivered: boolean }> {
   if (useRelay || sinkOn) {
-    await sendViaRelay({ to, subject, html, text, replyTo, headers, idempotencyKey });
+    await sendViaRelay({ to, subject, html, text, replyTo, headers, idempotencyKey, from });
     return { delivered: true };
   }
   if (transporter) {
     await transporter.sendMail({
-      from: MAIL_FROM,
+      from: from || MAIL_FROM,
       to,
       subject,
       html,

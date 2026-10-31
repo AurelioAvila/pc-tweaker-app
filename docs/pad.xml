@@ -34,7 +34,7 @@
   </Company_Info>
   <Program_Info>
     <Program_Name>PC Tweaker</Program_Name>
-    <Program_Version>1.18.26</Program_Version>
+    <Program_Version>1.18.27</Program_Version>
     <Program_Release_Month>10</Program_Release_Month>
     <Program_Release_Day>31</Program_Release_Day>
     <Program_Release_Year>2026</Program_Release_Year>
@@ -47,8 +47,8 @@
     <Program_OS_Support>WinOther</Program_OS_Support>
     <Program_Language>English</Program_Language>
     <File_Info>
-      <File_Size_Bytes>6267264</File_Size_Bytes>
-      <File_Size_K>6120.38</File_Size_K>
+      <File_Size_Bytes>6267744</File_Size_Bytes>
+      <File_Size_K>6120.84</File_Size_K>
       <File_Size_MB>5.98</File_Size_MB>
     </File_Info>
     <Expire_Info>
@@ -60,7 +60,7 @@
       <Expire_Day></Expire_Day>
       <Expire_Year></Expire_Year>
     </Expire_Info>
-    <Program_Change_Info>Routine maintenance update.</Program_Change_Info>
+    <Program_Change_Info>New Copy diagnosis button on the scan screen, for support requests. Your account menu now lists the PCs signed in with your account. When the service asks you to slow down, the message says how long to wait.</Program_Change_Info>
     <Program_Category_Class>System Utilities::System Maintenance</Program_Category_Class>
     <Program_Specific_Category></Program_Specific_Category>
     <Program_System_Requirements>Windows 10/11 x64; internet for accounts, updates and supported online features.</Program_System_Requirements>
@@ -84,7 +84,7 @@
       <Application_XML_File_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/pad.xml</Application_XML_File_URL>
     </Application_URLs>
     <Download_URLs>
-      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.18.26/pc-tweaker-app_1.18.26_x64-setup.exe</Primary_Download_URL>
+      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.18.27/pc-tweaker-app_1.18.27_x64-setup.exe</Primary_Download_URL>
       <Secondary_Download_URL></Secondary_Download_URL>
       <Additional_Download_URL_1></Additional_Download_URL_1>
       <Additional_Download_URL_2></Additional_Download_URL_2>

@@ -24,8 +24,9 @@ export function deviceLabel(header: unknown): string | null {
   } catch {
     return null;
   }
-  label = label.replace(/\s+/g, " ").trim().slice(0, 80).trim();
-  return label && !/[\u0000-\u001f\u007f-\u009f<>]/.test(label) ? label : null;
+  label = Array.from(label.replace(/\s+/g, " ").trim()).slice(0, 80).join("").trim();
+  // Control, zero-width and bidirectional-override characters could disguise a label.
+  return label && !/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁦-⁩﻿<>]/.test(label) ? label : null;
 }
 
 /**

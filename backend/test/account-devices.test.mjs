@@ -101,7 +101,14 @@ test("labels are decoded, trimmed and refused when unsafe", () => {
   assert.equal(deviceLabel(encodeURIComponent("  Windows 11   Pro · Ryzen  ")), "Windows 11 Pro · Ryzen");
   assert.equal(deviceLabel("Windows%2011"), "Windows 11");
   assert.equal(deviceLabel(encodeURIComponent("x".repeat(120))), "x".repeat(80));
-  for (const bad of [undefined, "", "   ", 42, "%E0%A4%A", encodeURIComponent("<img src=x>"), encodeURIComponent("a\u0000b"), "y".repeat(401)]) {
+  // A byte-order mark counts as white space and is trimmed away.
+  assert.equal(deviceLabel(encodeURIComponent("﻿Windows")), "Windows");
+  // Cut by code point: an emoji at the limit stays whole.
+  assert.equal(deviceLabel(encodeURIComponent(`${"w".repeat(79)}😀😀`)), `${"w".repeat(79)}😀`);
+  for (const bad of [
+    undefined, "", "   ", 42, "%E0%A4%A", encodeURIComponent("<img src=x>"), encodeURIComponent("a\u0000b"),
+    encodeURIComponent("Windows ‮orP 11"), encodeURIComponent("a​b"), "y".repeat(401),
+  ]) {
     assert.equal(deviceLabel(bad), null, String(bad));
   }
 });

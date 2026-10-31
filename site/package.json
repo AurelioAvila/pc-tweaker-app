@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "check:seo": "node scripts/check-seo.mjs && node scripts/check-reference.mjs",
     "check:attribution": "node --test scripts/check-attribution.mjs scripts/check-suite-downloads.mjs",
+    "check:account": "node --test scripts/check-web-purchase.mjs scripts/check-web-purchase-flow.mjs",
     "sitemap": "node scripts/build-sitemap.mjs",
     "check:reference": "node scripts/check-reference.mjs"
   },

@@ -159,4 +159,37 @@ for (const forbidden of ["aurel", "person@example.com", "@", "0123456789abcdef01
 }
 assert.equal(m.redact("C:\\Users\\Ana María\\Desktop"), "C:\\Users\\<user>\\Desktop");
 
+// Error text in every shape Rust and Windows produce: escaped ({:?}/JSON),
+// forward slashes, \Device paths, DOMAIN\user, SIDs, quoted names, hex after "_".
+const home = "C:\\Users\\aurel";
+const probes = [
+  ['"C:\\\\Users\\\\aurel\\\\AppData\\\\x.json"', home],
+  ["C:/Users/aurel/AppData/x.json", home],
+  ["\\Device\\HarddiskVolume3\\Users\\aurel\\x.exe", home],
+  ["Access denied for DESKTOP-7Q2K9LM\\aurel", home],
+  ["Access denied for DESKTOP-7Q2K9LM\\AUREL.", home],
+  ["HKEY_USERS\\S-1-5-21-1004336348-1177238915-682003330-1001\\Software", home],
+  ["key_0123456789abcdef0123456789abcdef01", home],
+  ["C:\\Users\\O'Brien\\x and C:\\Users\\O'Brien is denied", "C:\\Users\\O'Brien"],
+  ["C:\\Users\\aurel is denied.", home],
+  ['"C:\\\\Users\\\\someone\\\\x" C:/Users/someone/y \\Device\\HarddiskVolume1\\Users\\someone\\z', null],
+  ["C:\\Users\\Ana María\\Desktop and C:\\Users\\Ana María is here", "C:\\Users\\Ana María"],
+];
+for (const [raw, profile] of probes) {
+  const out = m.redact(raw, profile);
+  for (const secret of ["aurel", "AUREL", "someone", "Brien", "María", "1004336348", "0123456789abcdef0123"])
+    assert.ok(!out.includes(secret), `${secret} left in ${JSON.stringify(out)} (from ${JSON.stringify(raw)})`);
+}
+assert.equal(m.redact("C:\\Users\\aurel is denied.", home), "C:\\Users\\<user> is denied.");
+assert.equal(m.redact("Disable Game DVR [game_dvr]", home), "Disable Game DVR [game_dvr]");
+assert.equal(m.redact("PC Tweaker", "C:\\Users\\PC"), "PC Tweaker");
+// The diagnosis passes the profile folder through.
+assert.ok(
+  !m
+    .diagnosisText({ appVersion: "1", lang: "en", isPro: true, report, outcome: { fixed: [], failed: [], skipped: [], errors: ["DESKTOP-1\\aurel denied"] }, home, now })
+    .includes("aurel"),
+);
+// A label cut at 80 characters never splits an emoji, so encodeURIComponent cannot throw.
+assert.doesNotThrow(() => encodeURIComponent(m.pcLabel("W".repeat(76), "😀😀")));
+
 console.log("account extras OK");

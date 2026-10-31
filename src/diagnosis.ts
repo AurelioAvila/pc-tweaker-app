@@ -23,6 +23,8 @@ export type DiagnosisInput = {
   outcome?: { fixed: string[]; failed: string[]; skipped: string[]; errors: string[] } | null;
   /** list_audit_log, newest first. */
   history?: AuditEntry[];
+  /** This Windows user's profile folder, for redact(). */
+  home?: string | null;
   now?: number;
 };
 
@@ -39,14 +41,33 @@ const HISTORY_LINES = 20;
 const utc = (ms: number) => `${new Date(ms).toISOString().slice(0, 16).replace("T", " ")} UTC`;
 
 /** Drops what a pasted report must not carry even when an error message
- *  happens to contain it: Windows user folders, email addresses, GUIDs and
- *  long hex identifiers. */
-export function redact(text: string): string {
-  return text
-    .replace(/([A-Za-z]:\\(?:Users|Documents and Settings)\\)[^\\\r\n"']+/gi, "$1<user>")
+ *  happens to contain it. `home` is this Windows user's profile folder
+ *  (C:\Users\name): its last part, the user name, is replaced wherever it
+ *  appears, whatever the separators or quoting (as crash.rs scrub_with does).
+ *  Then, without relying on it: any other user folder (\, \\ or /, drive or
+ *  \Device path), Windows account SIDs, email addresses, GUIDs and long hex
+ *  identifiers. Over-redacting is accepted; leaking is not. */
+export function redact(text: string, home?: string | null): string {
+  let out = text;
+  const user =
+    home
+      ?.split(/[\\/]+/)
+      .filter(Boolean)
+      .pop() ?? "";
+  // Very short names ("PC", "Al") would blank ordinary words; the folder rules below still apply.
+  if (user.length >= 3 && !/^[A-Za-z]:$/.test(user)) {
+    const name = user.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    out = out.replace(new RegExp(`(?<![\\p{L}\\p{N}])${name}(?![\\p{L}\\p{N}])`, "giu"), "<user>");
+  }
+  return out
+    .replace(
+      /((?:\\{1,2}|\/)(?:Users|Documents and Settings)(?:\\{1,2}|\/))(?!<user>)[^\\/\r\n"`]+/gi,
+      "$1<user>",
+    )
+    .replace(/\bS-1-5-21(?:-\d+){2,4}\b/g, "<sid>")
     .replace(/[^\s@<>"']+@[^\s@<>"']+\.[A-Za-z]{2,}/g, "<email>")
     .replace(/\{?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}?/gi, "<id>")
-    .replace(/\b[0-9a-f]{32,}\b/gi, "<id>");
+    .replace(/(?<![0-9a-f])[0-9a-f]{32,}(?![0-9a-f])/gi, "<id>");
 }
 
 export function diagnosisText(input: DiagnosisInput): string {
@@ -128,5 +149,5 @@ export function diagnosisText(input: DiagnosisInput): string {
   section(`Changes in the last ${HISTORY_DAYS} days, newest first`, changes);
   if (!changes.length) lines.push("", `Changes in the last ${HISTORY_DAYS} days: none`);
 
-  return redact(lines.join("\n")) + "\n";
+  return redact(lines.join("\n"), input.home) + "\n";
 }

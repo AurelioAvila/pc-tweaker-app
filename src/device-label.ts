@@ -11,6 +11,7 @@ export function pcLabel(
     .replace(/\s+/g, " ")
     .trim();
   const parts = [(os ?? "").replace(/\s+/g, " ").trim(), tidyCpu === "CPU" ? "" : tidyCpu];
-  const label = parts.filter(Boolean).join(" · ").slice(0, 80);
+  // By code point, so a cut never leaves half a surrogate pair (encodeURIComponent would throw).
+  const label = Array.from(parts.filter(Boolean).join(" · ")).slice(0, 80).join("");
   return label || null;
 }

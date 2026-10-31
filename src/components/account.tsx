@@ -911,7 +911,9 @@ function AccountDevices({
   load: () => Promise<AccountDevice[]>;
 }) {
   const [state, setState] = useState<
-    { kind: "idle" | "loading" | "failed" } | { kind: "ready"; devices: AccountDevice[] }
+    | { kind: "idle" | "loading" }
+    | { kind: "failed"; text: string }
+    | { kind: "ready"; devices: AccountDevice[] }
   >({ kind: "idle" });
   const request = useRef(0);
   function refresh() {
@@ -919,7 +921,12 @@ function AccountDevices({
     setState({ kind: "loading" });
     load().then(
       (devices) => id === request.current && setState({ kind: "ready", devices }),
-      () => id === request.current && setState({ kind: "failed" }),
+      (err) =>
+        id === request.current &&
+        setState({
+          kind: "failed",
+          text: err instanceof Error ? err.message : s.auth.devicesUnavailable,
+        }),
     );
   }
   const when = (iso: string) =>
@@ -948,7 +955,7 @@ function AccountDevices({
         {state.kind === "loading" && <p className="text-xs text-ink-3">{s.auth.working}</p>}
         {state.kind === "failed" && (
           <p role="alert" className="text-xs text-danger">
-            {s.auth.devicesUnavailable}
+            {state.text}
           </p>
         )}
         {state.kind === "ready" &&

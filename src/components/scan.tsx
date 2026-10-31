@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { factorLabel } from "./health-copy";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { homeDir } from "@tauri-apps/api/path";
 import { format, type Lang, type Strings, localeOf } from "../i18n";
 import { cachedAppVersion, textFor } from "../lib";
 import { diagnosisText } from "../diagnosis";
@@ -332,8 +333,13 @@ export function ScanPanel({
    *  person decides where it goes. */
   async function copyDiagnosis() {
     if (!report) return;
-    const history = await invoke<AuditEntry[]>("list_audit_log").catch(() => []);
+    const [history, home] = await Promise.all([
+      invoke<AuditEntry[]>("list_audit_log").catch(() => []),
+      // The user name to take out of any error text.
+      homeDir().catch(() => null),
+    ]);
     const text = diagnosisText({
+      home,
       appVersion: cachedAppVersion,
       lang,
       isPro,

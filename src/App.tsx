@@ -130,20 +130,22 @@ class CheckoutError extends Error {
  *  run from the same cheap call the dashboard makes; percent-encoded for the header. */
 let pcLabelHeader: Promise<Record<string, string>> | null = null;
 function deviceLabelHeader(): Promise<Record<string, string>> {
-  if (pcLabelHeader) return pcLabelHeader;
-  const header = invoke<SystemStats>("system_stats").then(
-    (stats): Record<string, string> => {
+  if (!pcLabelHeader) {
+    const header = invoke<SystemStats>("system_stats").then((stats): Record<string, string> => {
       const label = pcLabel(stats.os_name, stats.cpu_name);
       return label ? { "X-Device-Label": encodeURIComponent(label) } : {};
-    },
-    () => {
+    });
+    pcLabelHeader = header.catch(() => {
       // Try again on the next refresh rather than never naming this PC.
       pcLabelHeader = null;
       return {};
-    },
-  );
-  pcLabelHeader = header;
-  return header;
+    });
+  }
+  // The licence never waits on the label: a refresh without it keeps the known one.
+  return Promise.race([
+    pcLabelHeader,
+    new Promise<Record<string, string>>((resolve) => window.setTimeout(() => resolve({}), 1000)),
+  ]);
 }
 
 /** This PC's licence identity (license.rs device_hash) as a request header, or nothing on a
@@ -639,7 +641,9 @@ function App() {
         ...(install ? { "X-Install-Id": install } : {}),
       },
     });
-    if (!res.ok) throw accountFailure(res);
+    // A 429 says how long to wait; anything else (an older backend's 404 too) is "unavailable".
+    if (!res.ok)
+      throw res.status === 429 ? accountFailure(res) : new Error(s.auth.devicesUnavailable);
     const data = (await res.json()) as { devices?: AccountDevice[] };
     return (data.devices ?? []).filter((d) => d.product === "pctweaker");
   }

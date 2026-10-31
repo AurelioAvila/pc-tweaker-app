@@ -87,11 +87,14 @@ const firstPartyOrigins = [
 // API by omission.
 const extraOrigins = (process.env.CORS_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
 const allowedOrigins = [...new Set([...firstPartyOrigins, ...extraOrigins])];
-app.use(cors({ origin: allowedOrigins, exposedHeaders: ["X-Session-Token"] }));
+// Retry-After is not a CORS-safelisted response header: without exposing it
+// the apps and the site cannot read how long a 429 asks them to wait.
+app.use(cors({ origin: allowedOrigins, exposedHeaders: ["X-Session-Token", "Retry-After"] }));
 
 // A generous service-wide ceiling protects every route, including cheap
 // reads and static legal pages that do not warrant a dedicated limiter.
 // Sensitive write endpoints keep their stricter route-specific limits.
+// standardHeaders also makes every 429 carry Retry-After, in seconds.
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 1_200,

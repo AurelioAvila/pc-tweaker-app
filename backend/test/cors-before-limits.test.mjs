@@ -23,4 +23,9 @@ test("the service-wide limiter answers the app with CORS headers", async (t) => 
   }
   assert.equal(last.status, 429);
   assert.equal(last.headers.get("access-control-allow-origin"), origin);
+  // How long to wait, in whole seconds within the 15-minute window, and
+  // readable by the app's script (not a CORS-safelisted header).
+  const wait = Number(last.headers.get("retry-after"));
+  assert.ok(Number.isInteger(wait) && wait > 0 && wait <= 900, `Retry-After: ${last.headers.get("retry-after")}`);
+  assert.match(last.headers.get("access-control-expose-headers") ?? "", /(^|,\s*)Retry-After(\s*,|$)/i);
 });

@@ -4,7 +4,7 @@ import { requireAuth } from "../auth";
 import { deviceHashFrom, keyConfigured, signLicense, signingKeyVersionFrom } from "../license";
 import { isKnownProduct, productEntitlement } from "../products";
 import { asyncRoute } from "../async-route";
-import { recordInstall } from "../install-count";
+import { deviceLabel, recordInstall } from "../install-count";
 import { trialAllowsDevice } from "../trial";
 import { referralStripe } from "../referral-stripe";
 
@@ -64,8 +64,11 @@ router.get(
 
     // No user or install id: only how many apps still need key 1 before it is removed.
     console.log(`license key=${keyVersion} product=${product} pro=${active}`);
-    // Counted, never enforced: the licence above is issued either way.
-    await recordInstall(req.userId as number, product, req.get("x-install-id"));
+    // Counted and listed for the account, never enforced: the licence above is issued either way.
+    await recordInstall(req.userId as number, product, req.get("x-install-id"), {
+      label: deviceLabel(req.get("x-device-label")),
+      pro: active,
+    });
     // Invite a friend only: which PCs a participating account uses, for the same-PC check.
     if (device.deviceHash) await referralStripe()?.core.recordMachine(req.userId as number, device.deviceHash).catch(() => false);
     res.json(license);

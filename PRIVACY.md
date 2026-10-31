@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-10-24
+Last updated: 2026-10-31
 
 PC Tweaker is a desktop application. Windows tweaks, snapshots, rollback data,
 hardware readings and file scans are processed locally on your device. They are
@@ -44,9 +44,16 @@ When a signed-in app refreshes its licence, it also sends a random
 installation identifier that the app generated on first use. It is not derived
 from your hardware or anything else about your PC. The backend stores only a
 one-way hash of it with your account and product, to count on how many
-installations an account is used. It does not decide whether your licence
-works. An installation that has not refreshed its licence for 90 days is
-deleted, and all of them are deleted with the account.
+installations an account is used and to list your PCs for you. Current
+versions also send a short description of the PC, so you can tell your PCs
+apart in that list: the Windows edition and the processor model, as Windows
+reports them (for example "Windows 11 Pro · AMD Ryzen 7 5800X3D"). It holds no
+computer name, user name or serial number. The backend stores it with the
+hashed identifier, together with whether that installation's last licence was
+Pro and when it was first and last used. You see this list, and only your own,
+in the app's account menu and at https://pctweaker.app/account/. It does not
+decide whether your licence works. An installation that has not refreshed its
+licence for 90 days is deleted, and all of them are deleted with the account.
 
 Current versions of PC Tweaker and PC Tweaker Uninstaller send, with a licence request,
 a one-way SHA-256 hash of your Windows installation ID (the MachineGuid value

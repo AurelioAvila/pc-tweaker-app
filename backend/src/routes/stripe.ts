@@ -718,7 +718,11 @@ router.post("/portal", requireAuth, requireStripe, async (req: Request, res: Res
   try {
     const session = await stripe!.billingPortal.sessions.create({
       customer: customerId,
-      return_url: process.env.APP_URL || "https://pctweaker.app",
+      // The website's account page asks to come back to itself; a fixed
+      // choice, never a caller-supplied URL.
+      return_url: req.body?.returnTo === "account"
+        ? "https://pctweaker.app/account/"
+        : process.env.APP_URL || "https://pctweaker.app",
     });
     res.json({ url: session.url });
   } catch (err) {

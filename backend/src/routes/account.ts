@@ -2,6 +2,7 @@ import express from "express";
 import { getPool, isConfigured } from "../db";
 import { requireAuth } from "../auth";
 import { isEntitled } from "../entitlement";
+import { listInstalls } from "../install-count";
 
 const router = express.Router();
 
@@ -37,6 +38,24 @@ router.get("/", requireAuth, async (req, res) => {
   } catch (err) {
     console.error("account lookup failed:", err);
     res.status(500).json({ error: "account lookup failed" });
+  }
+});
+
+/**
+ * GET /api/account/devices: the PCs this account used in the last 90 days,
+ * per app, for the account view in the apps and on pctweaker.app/account.
+ * Scoped to the signed-in account by its token alone; no identifier or hash
+ * is returned. The app sends X-Install-Id so its own row says "current".
+ */
+router.get("/devices", requireAuth, async (req, res) => {
+  if (!isConfigured) {
+    return res.status(503).json({ error: "database not configured (DATABASE_URL missing)" });
+  }
+  try {
+    res.json({ devices: await listInstalls(req.userId as number, req.get("x-install-id")) });
+  } catch (err) {
+    console.error("device list failed:", err);
+    res.status(500).json({ error: "device list failed" });
   }
 });
 

@@ -318,6 +318,12 @@ async function initSchema(): Promise<void> {
       PRIMARY KEY (user_id, product, install_hash)
     );
   `);
+  // 31 Oct 2026, additive: what the account's PC list shows for each installation (the
+  // Windows edition and processor the app reports, and whether its last licence was Pro).
+  // Rollback: ALTER TABLE license_installs DROP COLUMN device_label, DROP COLUMN pro;
+  // (older code reads neither).
+  await pool.query(`ALTER TABLE license_installs ADD COLUMN IF NOT EXISTS device_label TEXT;`);
+  await pool.query(`ALTER TABLE license_installs ADD COLUMN IF NOT EXISTS pro BOOLEAN;`);
 
   if (process.env.CHECKOUT_GUARD_ENABLED === "1") await initWebCheckoutReservations(pool);
 

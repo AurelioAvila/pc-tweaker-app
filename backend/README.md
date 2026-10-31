@@ -23,6 +23,7 @@ return a clear 503 instead of crashing, so you can deploy incrementally.
 | GET    | `/api/billing/status`            | Bearer | Per product: trial/active/blocked state, `can_start_trial` (`TRIAL_ENABLED`) |
 | POST   | `/api/checkout`                  | Bearer | `{ }` → `{ url }` (Stripe Checkout URL)             |
 | POST   | `/api/stripe-webhook`            | Stripe signature | called by Stripe, not by the app         |
+| GET    | `/api/billing/renewal/cancel`    | signed link | California renewal notice: opens Stripe's portal at the cancel step |
 | GET    | `/api/reviews`                   | —      | `{ average, count }` — no user text is ever returned |
 | POST   | `/api/reviews`                   | —      | `{ rating }` required; `name`/`email`/`body` optional and private |
 | PATCH  | `/api/reviews/:id`               | `x-admin-token` | `{ published }` — include/exclude a score from the average |
@@ -144,8 +145,12 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    belongs on this server.
 3. Dashboard → Developers → Webhooks → add endpoint
    `https://api.pctweaker.app/api/stripe-webhook`, subscribe to
-   `checkout.session.completed`, copy the signing secret (`whsec_...`) into
-   `STRIPE_WEBHOOK_SECRET`.
+   `checkout.session.completed` (and the rest of the live endpoint's list,
+   including `invoice.upcoming` for the California renewal notice), copy the
+   signing secret (`whsec_...`) into `STRIPE_WEBHOOK_SECRET`. Settings →
+   Billing → Subscriptions and emails: "Upcoming renewal events" 30 days
+   (California wants the notice 15 to 45 days before), Stripe's own upcoming
+   renewal emails off (`src/renewal-notice.ts`).
 4. Test with card `4242 4242 4242 4242`, any future date, any CVC, while
    using the `sk_test_...`/`whsec_test...` (test mode) keys. Switch to live
    keys only once you've verified the whole flow end to end.

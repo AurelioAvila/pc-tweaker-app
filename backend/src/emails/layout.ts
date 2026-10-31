@@ -46,7 +46,11 @@ export type EmailBrand = {
   supportEmail: string;
   /** 96 px PNG served from the website, shown at 40 px. */
   logoUrl: string;
+  /** Footer "Support" link; the family's support page when absent. */
+  supportUrl?: string;
 };
+
+const FAMILY_SUPPORT = "https://pctweaker.app/support/";
 
 const GRAPHITE = {
   bg: "#0a0a0d",
@@ -253,8 +257,8 @@ export function textFooter(brand: EmailBrand = EMAIL_BRANDS.pctweaker, why = "",
     "--",
     ...(why ? [why] : []),
     `${brand.name} · ${brand.siteUrl}`,
-    s.family,
-    `${s.support}: https://pctweaker.app/support/ · ${s.privacy}: ${brand.privacyUrl} · ${s.terms}: ${brand.termsUrl}`,
+    ...(s.family ? [s.family] : []),
+    `${s.support}: ${brand.supportUrl ?? FAMILY_SUPPORT} · ${s.privacy}: ${brand.privacyUrl} · ${s.terms}: ${brand.termsUrl}`,
   ].join("\n");
 }
 
@@ -284,7 +288,7 @@ export function emailShell({
 <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
 <title>${escapeHtml(headline)} · ${escapeHtml(b.name)}</title>
 <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
-<!--[if !mso]><!--><link href="https://fonts.googleapis.com/css2?${b.googleFonts}&display=swap" rel="stylesheet"><!--<![endif]-->
+${b.googleFonts ? `<!--[if !mso]><!--><link href="https://fonts.googleapis.com/css2?${b.googleFonts}&display=swap" rel="stylesheet"><!--<![endif]-->` : ""}
 <style>
   body,table,td,p,a,li{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
   table,td{mso-table-lspace:0;mso-table-rspace:0;border-collapse:collapse}
@@ -346,8 +350,8 @@ ${blocks.map((block) => `        ${block(b, c)}`).join("\n")}
   </td></tr>
   <tr><td align="center" style="padding:20px 8px 0;">
     <p class="muted" style="margin:0 0 6px;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">${escapeHtml(why)}${whyHtml ? ` ${whyHtml}` : ""}</p>
-    <p class="muted" style="margin:0 0 6px;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">${escapeHtml(s.family)}</p>
-    <p class="muted" style="margin:0;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">${escapeHtml(b.name)} &middot; <a href="${escapeHtml(b.siteUrl)}" class="link" style="color:${b.muted};">${escapeHtml(b.siteLabel)}</a> &middot; <a href="https://pctweaker.app/support/" class="link" style="color:${b.muted};">${escapeHtml(s.support)}</a> &middot; <a href="${escapeHtml(b.privacyUrl)}" class="link" style="color:${b.muted};">${escapeHtml(s.privacy)}</a> &middot; <a href="${escapeHtml(b.termsUrl)}" class="link" style="color:${b.muted};">${escapeHtml(s.terms)}</a></p>
+    ${s.family ? `<p class="muted" style="margin:0 0 6px;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">${escapeHtml(s.family)}</p>` : ""}
+    <p class="muted" style="margin:0;${font(b)}font-size:12px;line-height:18px;color:${b.muted};">${escapeHtml(b.name)} &middot; <a href="${escapeHtml(b.siteUrl)}" class="link" style="color:${b.muted};">${escapeHtml(b.siteLabel)}</a> &middot; <a href="${escapeHtml(b.supportUrl ?? FAMILY_SUPPORT)}" class="link" style="color:${b.muted};">${escapeHtml(s.support)}</a> &middot; <a href="${escapeHtml(b.privacyUrl)}" class="link" style="color:${b.muted};">${escapeHtml(s.privacy)}</a> &middot; <a href="${escapeHtml(b.termsUrl)}" class="link" style="color:${b.muted};">${escapeHtml(s.terms)}</a></p>
   </td></tr>
 </table>
 <!--[if mso]></td></tr></table><![endif]-->

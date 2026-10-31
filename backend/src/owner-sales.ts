@@ -23,6 +23,9 @@ import { SUPPORT_INBOX } from "./support-inbox";
 
 type Fact = [label: string, value: string | null | undefined, href?: string];
 export type OwnerNotice = { subject: string; text: string; html: string };
+/** What the outbox delivers: the owner's notices, and customer notices (the
+ * California renewal notice) that name their own recipient and sender. */
+export type QueuedMail = OwnerNotice & { to?: string; from?: string; replyTo?: string; idempotencyKey?: string };
 type Lookup = Partial<Pick<Stripe, "checkout" | "subscriptions" | "invoices" | "paymentIntents">> | null;
 
 type BasilInvoice = Stripe.Invoice & {
@@ -292,20 +295,26 @@ export async function queueOwnerNotice(event: Stripe.Event, stripe: Lookup): Pro
       return ownerNoticeFor(event, null);
     });
     if (!found) return;
-    await getPool().query(
-      `INSERT INTO owner_notices (notice_key, payload, next_attempt_at) VALUES ($1, $2, $3) ON CONFLICT (notice_key) DO NOTHING`,
-      [found.key, JSON.stringify(found.notice), new Date()],
-    );
+    await queueMail(found.key, found.notice);
   } catch (err) {
     console.error("SALE NOTICE LOST — could not queue the owner's notice:", (err as Error).message);
   }
+}
+
+/** Queues one message under a once-only key; true when this call queued it. */
+export async function queueMail(key: string, mail: QueuedMail): Promise<boolean> {
+  const { rowCount } = await getPool().query(
+    `INSERT INTO owner_notices (notice_key, payload, next_attempt_at) VALUES ($1, $2, $3) ON CONFLICT (notice_key) DO NOTHING`,
+    [key, JSON.stringify(mail), new Date()],
+  );
+  return (rowCount ?? 0) > 0;
 }
 
 /** Sends due notices; a failure is retried with backoff, never lost. Each row
  * is claimed by pushing next_attempt_at forward, so two API instances never
  * send the same one twice. */
 export async function deliverOwnerNotices(
-  send: (n: OwnerNotice) => Promise<void> = async (n) => { await sendMail({ to: SUPPORT_INBOX, ...n }); },
+  send: (n: QueuedMail) => Promise<void> = async (n) => { await sendMail({ ...n, to: n.to ?? SUPPORT_INBOX }); },
   now = new Date(),
 ): Promise<number> {
   const db = getPool();
@@ -323,7 +332,7 @@ export async function deliverOwnerNotices(
     if (!claimed.rows.length) continue;
     const { payload, attempts } = claimed.rows[0];
     try {
-      await send(payload as OwnerNotice);
+      await send(payload as QueuedMail);
       await db.query(`UPDATE owner_notices SET delivered_at = $2 WHERE notice_key = $1`, [notice_key, new Date()]);
       delivered++;
     } catch (err) {

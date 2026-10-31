@@ -217,7 +217,7 @@ export function AccessPricing() {
           </motion.div>
         </div>
         {(webPreview || webEnabled) && (
-          <div id="purchase-options" className="mt-8 scroll-mt-28" aria-label={webPreview ? "Purchase preview" : "Purchase options"}>
+          <div id="purchase-options" className="mt-8 scroll-mt-36" aria-label={webPreview ? "Purchase preview" : "Purchase options"}>
             <p className="mb-4 text-sm text-[var(--fg-dim)]">{webPreview ? "Preview only: no payment or account is created." : "Choose your plan to purchase online."}</p>
             <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:gap-3" role="group" aria-label={webPreview ? "Choose a plan to preview" : "Choose a plan"}>
               {(["monthly", "annual", "lifetime"] as const).map((plan) => (

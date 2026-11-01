@@ -1,7 +1,7 @@
 {
   "name": "pc-tweaker-app",
   "private": true,
-  "version": "1.18.27",
+  "version": "1.18.28",
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {

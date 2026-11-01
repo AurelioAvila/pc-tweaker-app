@@ -248,7 +248,7 @@ export function AuthSection({
           <button
             type="submit"
             disabled={working}
-            className="rounded-lg bg-[var(--app-accent)] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-60"
+            className="rounded-lg bg-[var(--app-accent)] px-3 py-1.5 text-sm font-semibold text-on-accent disabled:opacity-60"
           >
             {working ? s.auth.working : s.auth.forgotPasswordButton}
           </button>
@@ -374,7 +374,7 @@ export function AuthSection({
         <button
           type="submit"
           disabled={working}
-          className="rounded-lg bg-[var(--app-accent)] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-60"
+          className="rounded-lg bg-[var(--app-accent)] px-3 py-1.5 text-sm font-semibold text-on-accent disabled:opacity-60"
         >
           {working ? s.auth.working : mode === "login" ? s.auth.loginButton : s.auth.registerButton}
         </button>

@@ -1,6 +1,6 @@
 // Plans & pricing rendered for every plan state (owner report 23 Oct 2026):
 // tiers below the one held say "Included in your plan", the held one says
-// "Current plan" (or "Trial — N days left") with its manage action, higher
+// "Your plan" (or "Trial — N days left") with its manage action, higher
 // ones offer the upgrade, and the small print under the plans offers,
 // reports or explains the trial, never to a paying account. Six languages.
 // Run with: node scripts/test-pricing-states.mjs
@@ -71,7 +71,7 @@ for (const lang of Object.keys(PLAN_STATE_COPY)) {
   assert.equal(band(html), "offer", `${lang} signed out`);
   assert.ok(k.pro.includes(t.start.replace("{days}", 3)), `${lang} trial button on Pro`);
   assert.ok(html.includes(ps.bannerTitle.replace("{days}", 3)), `${lang} trial terms under the plans`);
-  assert.ok(k.free.includes(c.current) && !k.pro.includes(c.current), `${lang} free current`);
+  assert.ok(k.free.includes(s.proCurrent) && !k.pro.includes(s.proCurrent), `${lang} free current`);
   assert.ok(!html.includes(ps.includedInPlan), `${lang} nothing below Free`);
 
   // Signed in, eligible.
@@ -100,9 +100,13 @@ for (const lang of Object.keys(PLAN_STATE_COPY)) {
     k = cards(html);
     assert.equal(band(html), null, `${lang} ${plan}: no trial for a paying account`);
     assert.ok(k.free.includes(ps.includedInPlan), `${lang} ${plan} free included`);
-    assert.equal(count(c.current, k.pro), 1, `${lang} ${plan} Pro current`);
+    assert.equal(count(s.proCurrent, k.pro), 1, `${lang} ${plan} Pro current`);
     assert.ok(k.pro.includes(s.manageBilling), `${lang} ${plan} manage`);
-    assert.ok(k.lifetime.includes(s.switchToLifetime) && !k.lifetime.includes(c.current), `${lang} ${plan} upgrade`);
+    assert.ok(k.lifetime.includes(s.switchToLifetime) && !k.lifetime.includes(s.proCurrent), `${lang} ${plan} upgrade`);
+    // Their own plan, not the new-customer offer: no struck price, no period switch,
+    // the renewal line (the subscription itself is read later, in the browser).
+    assert.ok(!k.pro.includes("pricing-price-before") && k.pro.includes(c.renewal), `${lang} ${plan} own price`);
+    assert.ok(!html.includes('class="pricing-period"'), `${lang} ${plan}: no Monthly/Yearly switch`);
   }
 
   // Lifetime: both lower tiers included, Lifetime current with its tools.
@@ -110,12 +114,13 @@ for (const lang of Object.keys(PLAN_STATE_COPY)) {
   k = cards(html);
   assert.equal(band(html), null, `${lang} lifetime`);
   assert.ok(k.free.includes(ps.includedInPlan) && k.pro.includes(ps.includedInPlan), `${lang} lifetime includes Free and Pro`);
-  assert.ok(!k.pro.includes(c.current) && k.lifetime.includes(c.current) && k.lifetime.includes(c.openTools), `${lang} lifetime current`);
+  assert.ok(!k.pro.includes(s.proCurrent) && k.lifetime.includes(s.proCurrent) && k.lifetime.includes(c.openTools), `${lang} lifetime current`);
+  assert.ok(k.lifetime.includes(ps.paid) && !k.lifetime.includes("pricing-price-before"), `${lang} lifetime paid, no offer`);
 
   // Pro from a grant or a referral bonus, without a subscription: Pro current, Free included.
   html = render(lang, { isPro: true, heldPlan: "lifetime_bonus", hasBilling: false });
   k = cards(html);
-  assert.ok(k.free.includes(ps.includedInPlan) && k.pro.includes(c.current) && k.pro.includes(s.proActiveNoBilling), `${lang} grant`);
+  assert.ok(k.free.includes(ps.includedInPlan) && k.pro.includes(s.proCurrent) && k.pro.includes(s.proActiveNoBilling), `${lang} grant`);
   assert.equal(band(html), null, `${lang} grant: no trial`);
 
   // Payment failed: no trial offered, the card can be fixed.

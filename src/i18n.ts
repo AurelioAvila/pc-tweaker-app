@@ -8088,7 +8088,7 @@ const es: Strings = {
 
 const de: Strings = {
   coffee: {
-    nav: "Spendier mir einen Kaffee",
+    nav: "Kaffee spendieren",
     cta: "Nächstes Release finanzieren",
     fewer: "Ein Kaffee weniger",
     more: "Ein Kaffee mehr",

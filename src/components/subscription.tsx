@@ -60,6 +60,10 @@ async function request(
   return data;
 }
 
+/** One product's subscription, for the Plans page's "Your plan" card. Throws when it
+ *  cannot be read; the caller then keeps its fallback. */
+export const readSubscription = (product: Product) => request(`?product=${product}`);
+
 type Loaded = { subs: Subscription[] } | { failure: Failure };
 
 /** PC Tweaker's own state is required; a family product that cannot be read is left out. */

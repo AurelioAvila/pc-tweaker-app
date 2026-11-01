@@ -80,6 +80,9 @@ jobs:
       - name: Design tokens (no new raw palette classes)
         run: npm run check:design-tokens
 
+      - name: Text on the accent clears WCAG AA in every theme
+        run: npm run check:on-accent
+
       - name: Starter profiles selection and catalog validation
         run: node scripts/test-starter-presets.mjs
 

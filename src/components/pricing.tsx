@@ -11,6 +11,8 @@ import { trialLeft, trialOffer, trialUsed, type BillingStatus, type PriceList } 
 import { useLifetimeOffer } from "./use-lifetime-offer";
 import { CryptoLifetimeOption } from "./crypto-pay";
 import { usePromo } from "./use-promo";
+import { readSubscription, type Subscription } from "./subscription";
+import { SUBSCRIPTION_COPY } from "./subscription-copy";
 import "./pricing.css";
 
 /** "5 d 9 h 15 min" in the app's language, for the slim offer strip. */
@@ -114,6 +116,31 @@ export function PricingPanel({
   // or a grant) holds Pro, so Free below it is included in it.
   const holdsPro = isPro && !ownsLifetime;
   const trialBadge = left && mine?.trialEndsAt ? trialBadgeText(lang, mine.trialEndsAt, now) : null;
+  // Someone who already holds a plan sees what they pay, not the new-customer
+  // offer: the subscription as Stripe bills it (GET /api/billing/subscription),
+  // and until it arrives, the list price of the plan they hold. Display only.
+  const [ownSub, setOwnSub] = useState<Subscription | null>(null);
+  useEffect(() => {
+    if (!holdsPro || !hasBilling) return;
+    let current = true;
+    readSubscription("pctweaker")
+      .then((sub) => current && setOwnSub(sub))
+      .catch(() => {});
+    return () => {
+      current = false;
+    };
+  }, [holdsPro, hasBilling]);
+  const ownMonthly = (ownSub?.interval ?? (heldPlan === "monthly" ? "month" : "year")) === "month";
+  const ownAmount =
+    ownSub?.amount != null ? ownSub.amount / 100 : listed(ownMonthly ? "monthly" : "annual");
+  const ownEnd = ownSub?.current_period_end ? Date.parse(ownSub.current_period_end) : NaN;
+  const sc = SUBSCRIPTION_COPY[lang];
+  const ownNote = Number.isFinite(ownEnd)
+    ? `${ownSub?.cancel_at_period_end ? sc.accessUntil : sc.renewsOn} ${longDate(ownEnd)}`
+    : copy.renewal;
+  // New-customer offers never decorate a plan the account already holds or outranks.
+  const proDeal = isPro ? null : proOffer;
+  const lifetimeDeal = ownsLifetime ? null : lifetimeOffer;
   const promoOffers = promo.active ? (promo.promo?.offers ?? []) : [];
   const showPromo = !ownsLifetime && promoOffers.length > 0;
   // Until the server answers, an invisible copy of the panel holds its exact
@@ -230,24 +257,28 @@ export function PricingPanel({
             </span>
           </aside>
         )}
-      <div
-        className="pricing-period"
-        role="group"
-        aria-label={`${s.pricing.monthly} / ${s.pricing.annual}`}
-      >
-        <button aria-pressed={!annual} onClick={() => setPeriod("monthly")}>
-          {s.pricing.monthly}
-        </button>
-        <button aria-pressed={annual} onClick={() => setPeriod("annual")}>
-          {s.pricing.annual}
-          {!proOffer && save > 0 && <span className="pricing-period-save">−{save}%</span>}
-        </button>
-      </div>
+      {/* Monthly / Yearly only changes the Pro card, which an account that already
+          holds a plan sees as that plan: nothing to switch there. */}
+      {!isPro && (
+        <div
+          className="pricing-period"
+          role="group"
+          aria-label={`${s.pricing.monthly} / ${s.pricing.annual}`}
+        >
+          <button aria-pressed={!annual} onClick={() => setPeriod("monthly")}>
+            {s.pricing.monthly}
+          </button>
+          <button aria-pressed={annual} onClick={() => setPeriod("annual")}>
+            {s.pricing.annual}
+            {!proOffer && save > 0 && <span className="pricing-period-save">−{save}%</span>}
+          </button>
+        </div>
+      )}
       <div className="pricing-plans">
         <article className="pricing-plan">
           <div className="pricing-plan-name">
             <h2>{s.pricing.freeName}</h2>
-            {!isPro && <span className="pricing-current">{copy.current}</span>}
+            {!isPro && <span className="pricing-current">{s.pricing.proCurrent}</span>}
           </div>
           <p className="pricing-plan-description">{copy.free}</p>
           <div className="pricing-price">
@@ -278,26 +309,42 @@ export function PricingPanel({
           )}
           <div className="pricing-plan-name">
             <h2>{s.pricing.proName}</h2>
-            {holdsPro && <span className="pricing-current">{trialBadge ?? copy.current}</span>}
+            {holdsPro && (
+              <span className="pricing-current">{trialBadge ?? s.pricing.proCurrent}</span>
+            )}
           </div>
           <p className="pricing-plan-description">{copy.pro}</p>
-          <div className="pricing-price">
-            {proOffer && (
-              <s className="pricing-price-before">{money(proOffer.reference / 100, lang)}</s>
-            )}
-            {proOffer && <span className="pricing-discount">−{promoPercent(proOffer)}%</span>}
-            <strong>{money(proOffer ? proOffer.price / 100 : listed(period), lang)}</strong>
-            <span>{annual ? s.pricing.perYear : s.pricing.perMonth}</span>
-          </div>
-          <p className="pricing-price-note">
-            {proOffer
-              ? format(annual ? copy.firstYear : copy.firstMonth, {
-                  price: money(proOffer.regular / 100, lang),
-                })
-              : annual
-                ? format(s.pricing.saveBadge, { percent: save })
-                : format(s.pricing.annualNudge, { price: money(listed("annual") / 12, lang) })}
-          </p>
+          {holdsPro ? (
+            <>
+              <div className="pricing-price">
+                <strong>{money(ownAmount, lang)}</strong>
+                <span>{ownMonthly ? s.pricing.perMonth : s.pricing.perYear}</span>
+              </div>
+              <p className="pricing-price-note">{ownNote}</p>
+            </>
+          ) : (
+            <>
+              <div className="pricing-price">
+                {proDeal && (
+                  <s className="pricing-price-before">{money(proDeal.reference / 100, lang)}</s>
+                )}
+                {proDeal && <span className="pricing-discount">−{promoPercent(proDeal)}%</span>}
+                <strong>{money(proDeal ? proDeal.price / 100 : listed(period), lang)}</strong>
+                <span>{annual ? s.pricing.perYear : s.pricing.perMonth}</span>
+              </div>
+              <p className="pricing-price-note">
+                {proDeal
+                  ? format(annual ? copy.firstYear : copy.firstMonth, {
+                      price: money(proDeal.regular / 100, lang),
+                    })
+                  : annual
+                    ? format(s.pricing.saveBadge, { percent: save })
+                    : format(s.pricing.annualNudge, {
+                        price: money(listed("annual") / 12, lang),
+                      })}
+              </p>
+            </>
+          )}
           <div className="pricing-plan-footer">
             {!isPro && paymentFailed ? (
               <button
@@ -398,20 +445,23 @@ export function PricingPanel({
               <CrownIcon className="h-4 w-4" />
               {s.pricing.lifetimeName}
             </h2>
-            {ownsLifetime && <span className="pricing-current">{copy.current}</span>}
+            {ownsLifetime && <span className="pricing-current">{s.pricing.proCurrent}</span>}
           </div>
           <p className="pricing-plan-description">{copy.lifetime}</p>
           <div className="pricing-price">
-            {lifetimeOffer && (
-              <s className="pricing-price-before">{money(lifetimeOffer.reference / 100, lang)}</s>
+            {lifetimeDeal && (
+              <s className="pricing-price-before">{money(lifetimeDeal.reference / 100, lang)}</s>
             )}
-            {lifetimeOffer && (
-              <span className="pricing-discount">−{promoPercent(lifetimeOffer)}%</span>
+            {lifetimeDeal && (
+              <span className="pricing-discount">−{promoPercent(lifetimeDeal)}%</span>
             )}
+            {/* What an owner paid is not on record here, so no figure: "Paid". */}
             <strong>
-              {money(lifetimeOffer ? lifetimeOffer.price / 100 : PRICE_LIFETIME, lang)}
+              {ownsLifetime
+                ? ps.paid
+                : money(lifetimeDeal ? lifetimeDeal.price / 100 : PRICE_LIFETIME, lang)}
             </strong>
-            <span>{s.pricing.once}</span>
+            {!ownsLifetime && <span>{s.pricing.once}</span>}
           </div>
           <p className="pricing-price-note">{copy.perpetual}</p>
           <div className="pricing-plan-footer">

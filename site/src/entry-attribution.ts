@@ -4,7 +4,7 @@ const ENTRY_PATHS = new Set([
   "/", "/windows-11-optimizer", "/gaming-performance", "/reversible-windows-tweaks",
   "/windows-privacy-tool", "/how-to-undo-windows-tweaks", "/what-pc-tweaker-changes",
   "/windows-gaming-work-study-profiles", "/turn-off-windows-recall",
-  "/uninstall-programs-completely", "/guides",
+  "/uninstall-programs-completely", "/will-my-games-work-on-linux", "/guides",
   "/guides/fix-dpc-isr-latency-windows-11",
   "/guides/amd-ryzen-x3d-core-parking-windows-11",
   "/guides/amd-x3d-intel-hybrid-core-steering-gaming",

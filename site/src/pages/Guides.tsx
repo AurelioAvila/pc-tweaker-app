@@ -2,11 +2,14 @@ import { DOWNLOAD_EXE, UNINSTALLER_DOWNLOAD_EXE } from "../constants";
 import { useCampaignStoreLink } from "../campaign-store";
 import { PRACTICAL_GUIDES } from "./practical-guides";
 import { FIX_GUIDES } from "./fix-guides";
+import { LINUX_GUIDES } from "./linux-guide";
 import { UNINSTALLER_GUIDES, type Leftovers, type RemovalCheck } from "./uninstaller-guides";
 import { ProBox, Steps, TechSummary, type Step } from "../components/ReferenceBlocks";
 import { GUIDE_FAQS } from "./guide-faqs";
 import { Link } from "../router";
 import { GuideBreadcrumbs } from "../components/GuideBreadcrumbs";
+import { NewsletterSignup } from "../components/NewsletterSignup";
+import { text } from "../i18n/dictionary";
 
 interface GuideFigure {
   readonly src: string;
@@ -72,12 +75,22 @@ interface Guide {
   readonly leftovers?: Leftovers;
   /** Which product the closing call to action offers. */
   readonly product?: "uninstaller";
+  /** Sign-up for something not built yet: the shared list, tagged with its own source. */
+  readonly waitlist?: {
+    readonly heading: string;
+    readonly body: string;
+    readonly source: string;
+    readonly pitch: string;
+    readonly button: string;
+    readonly thanks: string;
+  };
 }
 
 export const GUIDES: Record<string, Guide> = {
   ...PRACTICAL_GUIDES,
   ...FIX_GUIDES,
   ...UNINSTALLER_GUIDES,
+  ...LINUX_GUIDES,
   "/windows-11-optimizer": {
     eyebrow: "WINDOWS 11 OPTIMIZATION",
     title: "Optimize Windows 11 without losing control",
@@ -560,6 +573,17 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
               ))}
             </ul>
             <ProBox campaign={"pct-fix-" + path.split("/").pop()} />
+          </section>
+        )}
+        {guide.waitlist && (
+          <section className="mt-14 rounded-2xl border border-[var(--line-2)] bg-[var(--surface)] p-7 md:p-9" aria-labelledby="waitlist">
+            <p className="font-mono-t text-accent text-[12px] tracking-[0.15em]">COMING TO PC TWEAKER</p>
+            <h2 id="waitlist" className="font-display mt-3 max-w-3xl text-2xl font-bold text-[var(--fg)]">{guide.waitlist.heading}</h2>
+            <p className="mt-4 max-w-3xl leading-7 text-[var(--fg-dim)]">{guide.waitlist.body}</p>
+            <NewsletterSignup
+              source={guide.waitlist.source}
+              copy={{ ...text.newsletter, pitch: guide.waitlist.pitch, button: guide.waitlist.button, thanks: guide.waitlist.thanks }}
+            />
           </section>
         )}
         {guide.related && (

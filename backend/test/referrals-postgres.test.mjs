@@ -47,7 +47,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
     env.REFERRALS_ENABLED = "true";
     await pool.query("TRUNCATE users CASCADE");
     await pool.query(`TRUNCATE referral_audit,referral_payment_blocks,referral_webhook_receipts,
-      checkout_reminders,trial_claims,newsletter_subscribers,reviews,dc_sessions,dc_actions,dc_billing_accounts`);
+      checkout_reminders,trial_claims,newsletter_subscribers,newsletter_waitlists,reviews,dc_sessions,dc_actions,dc_billing_accounts`);
     await pool.query(`INSERT INTO users(id,email,email_verified) VALUES
       (1,'inviter@example.com',true),(2,'buyer@example.net',true),
       (3,'other@example.org',true),(4,'second@second.example',true),(5,'unverified@unverified.example',false)`);
@@ -113,6 +113,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
       CREATE TABLE IF NOT EXISTS trial_claims(product TEXT NOT NULL,user_id INTEGER NOT NULL,email_hash TEXT NOT NULL,
         card_hash TEXT,device_hash TEXT,subscription_id TEXT NOT NULL UNIQUE,PRIMARY KEY(product,user_id));
       CREATE TABLE IF NOT EXISTS newsletter_subscribers(id SERIAL PRIMARY KEY,email TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS newsletter_waitlists(email TEXT NOT NULL,waitlist TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS reviews(id SERIAL PRIMARY KEY,email TEXT,rating SMALLINT NOT NULL);
       CREATE TABLE IF NOT EXISTS dc_sessions(token_hash TEXT PRIMARY KEY,store_scope TEXT NOT NULL,user_id BIGINT NOT NULL);
       CREATE TABLE IF NOT EXISTS dc_actions(token_hash TEXT PRIMARY KEY,store_scope TEXT NOT NULL,user_id BIGINT NOT NULL,
@@ -1576,6 +1577,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
           INSERT INTO entitlements(user_id,product) VALUES(2,'uninstaller');
           INSERT INTO trial_claims VALUES('pctweaker',2,'email-hash','card-hash','pc-hash','sub_trial_2');
           INSERT INTO newsletter_subscribers(email) VALUES('Buyer@Example.net');
+          INSERT INTO newsletter_waitlists(email,waitlist) VALUES('Buyer@Example.net','linux-check');
           INSERT INTO reviews(email,rating) VALUES('buyer@example.net',5);
           INSERT INTO dc_sessions VALUES('s1','pc-tweaker-shared',2),('s2','separate',2);
           INSERT INTO dc_actions VALUES('a1','pc-tweaker-shared',2,'buyer@example.net');
@@ -1594,6 +1596,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
             checkoutReminders: 1,
             accounts: 1,
             newsletter: 1,
+            waitlists: 1,
             ratings: 1,
           },
         });
@@ -1709,7 +1712,7 @@ test("PostgreSQL referral transactions and adversarial races", { skip: !url }, a
           erased: true,
           accountFound: false,
           userId: null,
-          counts: { newsletter: 1, ratings: 0 },
+          counts: { newsletter: 1, waitlists: 0, ratings: 0 },
         });
       },
     );

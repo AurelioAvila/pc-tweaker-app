@@ -4,6 +4,7 @@ import { msUntil, type Promo } from "../../src/promo";
 import { TECHNICAL_GUIDES } from "./pages/technical-guides";
 import { PRACTICAL_GUIDES } from "./pages/practical-guides";
 import { FIX_GUIDES } from "./pages/fix-guides";
+import { LINUX_GUIDES } from "./pages/linux-guide";
 import { UNINSTALLER_GUIDES } from "./pages/uninstaller-guides";
 import { GUIDE_FAQS } from "./pages/guide-faqs";
 import { DIRECTORY_GUIDES } from "./pages/guide-directory";
@@ -59,7 +60,7 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   // the title and description are written for someone deciding whether to click
   // from a result page. Guides carry their own seoTitle and seoDescription
   // so neither has to reuse the longer on-page introduction.
-  ...Object.fromEntries(Object.entries({ ...PRACTICAL_GUIDES, ...FIX_GUIDES }).map(([path, guide]) => [path, {
+  ...Object.fromEntries(Object.entries({ ...PRACTICAL_GUIDES, ...FIX_GUIDES, ...LINUX_GUIDES }).map(([path, guide]) => [path, {
     title: `${guide.seoTitle} | PC Tweaker`,
     description: guide.seoDescription,
     canonical: `${ORIGIN}${path}/`, ogType: "article" as const,

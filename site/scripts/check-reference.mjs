@@ -46,9 +46,23 @@ const BANNED = [
   [/illustrat(ive|ed|ion)/i, "illustrative"],
   [/pt[-_]br\b|brazil/i, "Brazilian Portuguese"],
 ];
+// One exception, decided by the owner on 1 November 2026: the Linux checklist
+// (src/pages/linux-guide.ts) tells players to check a game's anti-cheat status
+// before switching. Only the strings written in that file may say
+// "anti-cheat", wherever the build puts them; product names stay banned there
+// too, and every other page is checked as before.
+const linuxStrings = [...(await read(new URL("src/pages/linux-guide.ts", site))).matchAll(/"(?:[^"\\]|\\.)*"/g)]
+  .map((m) => JSON.parse(m[0]))
+  .filter((s) => BANNED[0][0].test(s))
+  .flatMap((s) => [s, s.replaceAll("&", "&amp;").replaceAll("'", "&#x27;").replaceAll('"', "&quot;")]);
+assert.ok(linuxStrings.length > 0, "linux-guide.ts no longer mentions anti-cheat: drop this exception");
+const withoutLinuxGuide = (text) => linuxStrings.reduce((t, s) => t.replaceAll(s, ""), text);
 for (const f of textFiles) {
   const text = await read(new URL(f, dist));
-  for (const [re, what] of BANNED) assert.ok(!re.test(text), `${f} contains a banned term (${what}): ${text.match(re)?.[0]}`);
+  for (const [re, what] of BANNED) {
+    const checked = re === BANNED[0][0] ? withoutLinuxGuide(text) : text;
+    assert.ok(!re.test(checked), `${f} contains a banned term (${what}): ${checked.match(re)?.[0]}`);
+  }
 }
 
 const PRICE = /€\s?\d|\d[\d.,]*\s?€|\bEUR\s?\d/;

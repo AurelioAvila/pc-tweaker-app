@@ -26,6 +26,7 @@ const post = (body, token) =>
 
 test("without the admin token the route does not exist", async () => {
   await getPool().query("INSERT INTO newsletter_subscribers(email) VALUES('a@example.com')");
+  await getPool().query("INSERT INTO newsletter_waitlists(email, waitlist) VALUES('a@example.com', 'linux-check')");
   assert.equal((await post({ email: "a@example.com", erase: true })).status, 404);
   assert.equal((await post({ email: "a@example.com", erase: true }, "x".repeat(32))).status, 404);
   assert.equal((await getPool().query("SELECT 1 FROM newsletter_subscribers")).rows.length, 1);
@@ -42,7 +43,7 @@ test("with the token: a dry run unless erase is true", async () => {
     erased: false,
     accountFound: false,
     userId: null,
-    counts: { newsletter: 1, ratings: 0 },
+    counts: { newsletter: 1, waitlists: 1, ratings: 0 },
   });
   assert.equal((await (await post({ email: "a@example.com", erase: true }, token)).json()).erased, true);
 });

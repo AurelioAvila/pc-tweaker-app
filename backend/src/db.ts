@@ -212,6 +212,21 @@ async function initSchema(): Promise<void> {
     `CREATE UNIQUE INDEX IF NOT EXISTS newsletter_subscribers_email_idx ON newsletter_subscribers (lower(email));`,
   );
 
+  // Waitlists joined through the newsletter form ("linux-check", "redaxa-linux").
+  // Apart from `source` because an address already on the list keeps its
+  // original source, and a waitlist must still count it and be able to reach
+  // it. Mail it only through newsletter_subscribers, skipping opted-out rows.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS newsletter_waitlists (
+      email TEXT NOT NULL,
+      waitlist TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS newsletter_waitlists_email_idx ON newsletter_waitlists (lower(email), waitlist);`,
+  );
+
   // One row per account: when the last abandoned-Lifetime reminder went out.
   // Keyed on the user so the 30-day cooldown is a single atomic upsert.
   await pool.query(`

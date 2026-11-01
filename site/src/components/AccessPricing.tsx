@@ -21,14 +21,18 @@ export function AccessPricing() {
   };
   const webPreview = import.meta.env.DEV && import.meta.env.VITE_WEB_PURCHASE_PREVIEW === "1";
   const webEnabled = import.meta.env.VITE_WEB_PURCHASE_ENABLED === "1" && !webPreview;
-  // pctweaker.app/#signup (the Sign up link in the navigation) opens the account panel.
+  // pctweaker.app/#signup (the Sign up link in the navigation) opens the account panel;
+  // #buy-monthly, #buy-annual and #buy-lifetime (the "Resume checkout" link in the
+  // failed-payment email and on the cancel page) open the purchase panel on that plan.
   useEffect(() => {
     if (!(webPreview || webEnabled)) return;
     let stop = () => {};
     const land = () => document.getElementById("purchase-options")?.scrollIntoView({ block: "start" });
     const open = () => {
-      if (window.location.hash !== "#signup") return;
-      setPurchase("account");
+      const hash = window.location.hash;
+      const plan = /^#buy-(monthly|annual|lifetime)$/.exec(hash)?.[1] as "monthly" | "annual" | "lifetime" | undefined;
+      if (hash !== "#signup" && !plan) return;
+      setPurchase(plan ?? "account");
       stop();
       // The sections above keep changing height for a moment after the first paint (images,
       // fonts, prerendered blocks; on a phone the panel ended 1,300 px off): land on the panel
@@ -264,7 +268,8 @@ export function AccessPricing() {
             {purchase && <WebPurchase key={purchase} plan={purchase === "account" ? null : purchase === "lifetime-crypto" ? "lifetime" : purchase} cryptoUsd={purchase === "lifetime-crypto" ? prices?.crypto?.lifetimeUsd ?? null : null} demo={webPreview} onClose={() => setPurchase(null)} onChoosePlan={() => { setPurchase(null); document.getElementById("access")?.scrollIntoView({ block: "start" }); }} />}
           </div>
         )}
-        <PromoFine className="mt-5 text-[12.5px] text-[var(--fg-dim)]" />
+        <p className="mt-5 text-[12.5px] text-[var(--fg-dim)]">{text.pricing.payWith}</p>
+        <PromoFine className="mt-2 text-[12.5px] text-[var(--fg-dim)]" />
         <motion.p
           variants={riseChild}
           className="mt-8 max-w-3xl text-[14px] leading-relaxed text-[var(--fg-dim)]"

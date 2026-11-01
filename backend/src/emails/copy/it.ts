@@ -410,6 +410,22 @@ export const it: Copy = {
     unsubscribe: "Non ricevere più email come questa.",
   },
 
+  /** A Checkout payment that was declined or blocked (checkout-recovery.ts). */
+  paymentFailed: {
+    subject: (p: string) => `Il pagamento di ${p} non è andato a buon fine`,
+    preheader: "Non è stato addebitato nulla. Di solito un'altra carta, Apple Pay, Google Pay o Link funziona.",
+    eyebrow: "Pagamento non completato",
+    headline: (n: string) => named("Il pagamento non è andato a buon fine", n),
+    intro: (p: string) => `Hai avviato un pagamento per ${p} Pro e la transazione è stata rifiutata prima di qualsiasi addebito. Il tuo account è esattamente com'era.`,
+    retry:
+      "Riprova con un'altra carta, Apple Pay, Google Pay o Link. A volte l'emittente della carta o i controlli antifrode automatici di Stripe rifiutano una carta anche quando tutti i dati sono corretti, spesso se è prepagata o emessa all'estero; un'altra carta o un portafoglio digitale di solito funziona.",
+    button: "Riprendi il pagamento",
+    app: "Puoi anche aprire Piani e prezzi nell'app e scegliere lo stesso piano.",
+    helpTitle: "Continua a non funzionare?",
+    helpText: "Rispondi a questa email: una persona vera ti aiuta a completare l'acquisto.",
+    why: "Ricevi questa email perché il pagamento di un acquisto avviato dall'account collegato a questo indirizzo non è andato a buon fine. Al massimo un messaggio come questo al giorno.",
+  },
+
   supportAck: {
     subject: "Abbiamo ricevuto la tua richiesta di assistenza PC Tweaker",
     preheader: "Il tuo messaggio è in coda. Rispondi a questa email per aggiungere un dettaglio o uno screenshot.",
@@ -476,7 +492,8 @@ export const it: Copy = {
     trialBody: (app: string, days: number) =>
       `Oggi non ti è stato addebitato nulla e Pro è attivo sul tuo account per ${days} giorni. Alla fine della prova il primo pagamento viene addebitato automaticamente, a meno che tu non disdica prima da Piani e prezzi in ${app}. Ti scriviamo il giorno prima.`,
     cancelTitle: "Pagamento annullato",
-    cancelBody: "Non è stato addebitato nulla. Puoi riaprire il pagamento dall'app quando vuoi.",
+    cancelBody: "Non è stato addebitato nulla. Se il pagamento non è andato a buon fine, riprova con un'altra carta, Apple Pay, Google Pay o Link. Puoi anche riaprire il pagamento dall'app.",
+    retry: "Riprova",
     tipTitle: "Grazie per il tuo supporto",
     tipBody: "La tua mancia va direttamente in nuove funzioni e negli aggiornamenti quotidiani di PC Tweaker. Stripe ti invierà la ricevuta via email.",
     notedTitle: "Grazie per avercelo detto",

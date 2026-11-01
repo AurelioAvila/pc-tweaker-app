@@ -410,6 +410,22 @@ export const fr: Copy = {
     unsubscribe: "Ne plus recevoir ce type d’e-mail.",
   },
 
+  /** A Checkout payment that was declined or blocked (checkout-recovery.ts). */
+  paymentFailed: {
+    subject: (p: string) => `Votre paiement ${p} n’a pas abouti`,
+    preheader: "Rien n’a été débité. Une autre carte, Apple Pay, Google Pay ou Link fonctionne en général.",
+    eyebrow: "Paiement non finalisé",
+    headline: (n: string) => named("Votre paiement n’a pas abouti", n),
+    intro: (p: string) => `Vous avez lancé un paiement pour ${p} Pro et il a été refusé avant tout débit. Votre compte est exactement comme avant.`,
+    retry:
+      "Réessayez avec une autre carte, Apple Pay, Google Pay ou Link. L’émetteur de la carte ou les contrôles antifraude automatiques de Stripe refusent parfois une carte même lorsque toutes les informations sont exactes, souvent une carte prépayée ou émise à l’étranger ; une autre carte ou un portefeuille numérique passe en général.",
+    button: "Reprendre le paiement",
+    app: "Vous pouvez aussi ouvrir Offres et tarifs dans l’application et choisir la même offre.",
+    helpTitle: "Toujours refusé ?",
+    helpText: "Répondez à cet e-mail : une vraie personne vous aide à finaliser l’achat.",
+    why: "Vous recevez cet e-mail parce que le paiement d’un achat lancé depuis le compte associé à cette adresse n’a pas abouti. Au plus un message de ce type par jour.",
+  },
+
   supportAck: {
     subject: "Nous avons bien reçu votre demande d’assistance PC Tweaker",
     preheader: "Votre message est dans la file. Répondez à cet e-mail pour ajouter un détail ou une capture d’écran.",
@@ -476,7 +492,8 @@ export const fr: Copy = {
     trialBody: (app: string, days: number) =>
       `Rien n’a été débité aujourd’hui et Pro est actif sur votre compte pendant ${days} jours. À la fin de l’essai, le premier paiement est prélevé automatiquement, sauf si vous résiliez avant depuis Offres et tarifs dans ${app}. Nous vous écrivons la veille.`,
     cancelTitle: "Paiement annulé",
-    cancelBody: "Aucun montant n’a été débité. Vous pouvez relancer le paiement depuis l’application quand vous le souhaitez.",
+    cancelBody: "Aucun montant n’a été débité. Si votre paiement n’a pas abouti, réessayez avec une autre carte, Apple Pay, Google Pay ou Link. Vous pouvez aussi relancer le paiement depuis l’application.",
+    retry: "Réessayer",
     tipTitle: "Merci pour votre soutien",
     tipBody: "Votre pourboire finance directement les nouvelles fonctions et les mises à jour quotidiennes de PC Tweaker. Stripe vous enverra le reçu par e-mail.",
     notedTitle: "Merci de nous l’avoir dit",

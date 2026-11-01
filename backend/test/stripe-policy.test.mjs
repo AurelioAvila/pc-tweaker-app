@@ -232,3 +232,16 @@ test("social campaign labels reach session metadata, nothing else does", () => {
   assert.deepEqual(utmMetadata({ utm_source: "a b", utm_term: "x" }), {});
   assert.deepEqual(utmMetadata("youtube"), {});
 });
+
+test("every Checkout asks for the full billing address, plans and tips alike", () => {
+  // More for the card issuer and Stripe's fraud screening to check than the
+  // country alone, which is all Managed Payments collects outside the US.
+  for (const mode of ["payment", "subscription"]) {
+    const params = checkoutSessionParams({
+      priceId: "price_x", mode, userId: "42", planKey: mode === "payment" ? "lifetime" : "annual", product: "pctweaker",
+      customerId: null, customerEmail: "buyer@example.com", successUrl: "https://pctweaker.app/success", cancelUrl: "https://pctweaker.app/cancel",
+    });
+    assert.equal(params.billing_address_collection, "required", mode);
+  }
+  assert.equal(tipSessionParams("price_coffee", "https://pctweaker.app").billing_address_collection, "required");
+});

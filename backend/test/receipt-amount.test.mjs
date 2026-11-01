@@ -134,7 +134,7 @@ test("checkout: language and product reach the thanks page; a double click reuse
   await handler({ userId: Number(id), body: { plan: "monthly" } }, res());
   assert.equal(calls.length, 2);
   assert.equal(calls[0].params.success_url, "https://api.test/checkout-success?session_id={CHECKOUT_SESSION_ID}&product=pctweaker&lang=es");
-  assert.equal(calls[0].params.cancel_url, "https://api.test/checkout-cancel?lang=es");
+  assert.equal(calls[0].params.cancel_url, "https://api.test/checkout-cancel?product=pctweaker&plan=monthly&lang=es");
   assert.ok(calls[0].key);
   assert.equal(calls[0].key, calls[1].key, "same minute, same choice: same Checkout page");
 });

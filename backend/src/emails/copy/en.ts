@@ -418,6 +418,22 @@ export const en = {
     unsubscribe: "Unsubscribe from emails like this.",
   },
 
+  /** A Checkout payment that was declined or blocked (checkout-recovery.ts). */
+  paymentFailed: {
+    subject: (p: string): string => `Your ${p} payment didn't go through`,
+    preheader: "Nothing was charged. Another card, Apple Pay, Google Pay or Link usually works.",
+    eyebrow: "Payment not completed",
+    headline: (n: string): string => named("Your payment didn't go through", n),
+    intro: (p: string): string => `You started a checkout for ${p} Pro and the payment was declined before anything was charged. Your account is exactly as it was.`,
+    retry:
+      "Try again with another card, Apple Pay, Google Pay or Link. A card issuer or Stripe's automatic fraud checks sometimes refuse a card even when every detail is right, often a prepaid card or one issued abroad; a different card or a wallet usually goes through.",
+    button: "Resume checkout",
+    app: "You can also open Plans & pricing in the app and choose the same plan.",
+    helpTitle: "Still not going through?",
+    helpText: "Reply to this email and a real person will help you finish the purchase.",
+    why: "You received this email because a payment for a checkout started from the account at this address did not go through. At most one message like this a day.",
+  },
+
   supportAck: {
     subject: "We received your PC Tweaker support request",
     preheader: "Your message is in the queue. Reply to this email to add a detail or a screenshot.",
@@ -485,7 +501,8 @@ export const en = {
     trialBody: (app: string, days: number): string =>
       `Nothing was charged today, and Pro is on your account for ${days} days. When the trial ends, the first payment is taken automatically unless you cancel before then from Plans & pricing in ${app}. We email you the day before.`,
     cancelTitle: "Checkout cancelled",
-    cancelBody: "No charge was made. You can restart checkout from the app whenever you're ready.",
+    cancelBody: "No charge was made. If your payment didn't go through, try again with another card, Apple Pay, Google Pay or Link. You can also restart checkout from the app.",
+    retry: "Try again",
     tipTitle: "Thank you for your support",
     tipBody: "Your tip goes straight into new features and daily updates for PC Tweaker. Stripe will email your receipt.",
     notedTitle: "Thanks for telling us",

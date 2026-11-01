@@ -21,6 +21,10 @@
   --fg-dim: #9ca3af; /* supporting text */
   --line: #2a2d33; /* hairline */
   --line-2: #3f434b; /* emphasized hairline */
+
+  /* Text and icons on an accent fill (buttons, badges, selection). Every accent
+     in theme.tsx is chosen so this reads at 4.5:1 or better (WCAG AA). */
+  --on-accent: var(--bg);
 }
 
 html {
@@ -51,7 +55,7 @@ p {
 
 ::selection {
   background: var(--accent);
-  color: var(--bg);
+  color: var(--on-accent);
 }
 /* Ctrl+A or a drag across a screenshot should not paint it solid accent. */
 img::selection,

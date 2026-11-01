@@ -96,7 +96,7 @@ export function ProBox({ campaign }: { campaign: string }) {
         {" "}If a payment fails or a plan ends, Pro tools lock; changes already applied stay as they are and Restore still undoes them.
       </p>
       <div className="mt-5 flex flex-wrap gap-3">
-        <a href={DOWNLOAD_EXE} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--bg)]">Download PC Tweaker Free</a>
+        <a href={DOWNLOAD_EXE} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--on-accent)]">Download PC Tweaker Free</a>
         <a href={storeLink} className="rounded-lg border border-white/10 px-5 py-3 text-sm font-semibold text-[var(--fg)]">Get it from Microsoft Store</a>
       </div>
     </aside>

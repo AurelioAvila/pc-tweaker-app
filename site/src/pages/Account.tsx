@@ -191,7 +191,7 @@ export function AccountPage() {
                 Password
                 <input name="password" type="password" required autoComplete="current-password" className={input} />
               </label>
-              <button disabled={busy} type="submit" className="bg-accent min-h-11 w-full rounded-xl px-5 py-4 font-bold text-[var(--bg)] disabled:opacity-60">
+              <button disabled={busy} type="submit" className="bg-accent min-h-11 w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)] disabled:opacity-60">
                 {busy ? "Signing in…" : "Sign in"}
               </button>
               <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-[var(--fg-dim)]">
@@ -284,7 +284,7 @@ export function AccountPage() {
                   className="mt-4 flex items-center gap-4 rounded-xl border p-4 transition-colors hover:bg-[var(--accent-soft)]"
                   style={{ borderColor: "var(--accent-glow)" }}
                 >
-                  <span className="bg-accent shrink-0 -rotate-3 rounded-lg px-2.5 py-1 text-lg font-extrabold text-[var(--bg)]">
+                  <span className="bg-accent shrink-0 -rotate-3 rounded-lg px-2.5 py-1 text-lg font-extrabold text-[var(--on-accent)]">
                     −{promoPercent(lifetimeOffer)}%
                   </span>
                   <span className="min-w-0 flex-1">
@@ -305,7 +305,7 @@ export function AccountPage() {
                   <button
                     type="button"
                     disabled={busy}
-                    className="bg-accent mt-4 min-h-11 rounded-xl px-5 py-3 font-bold text-[var(--bg)] disabled:opacity-60"
+                    className="bg-accent mt-4 min-h-11 rounded-xl px-5 py-3 font-bold text-[var(--on-accent)] disabled:opacity-60"
                     onClick={() => void act(async () => window.location.assign(await client.portal(token)))}
                   >
                     Manage billing and invoices

@@ -59,7 +59,7 @@ export function UninstallerPage() {
         <div className="flex flex-wrap items-center gap-4">
           <a
             href={UNINSTALLER_DOWNLOAD_EXE}
-            className="inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-[var(--bg)]"
+            className="inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-[var(--on-accent)]"
           >
             Download for Windows — free
           </a>

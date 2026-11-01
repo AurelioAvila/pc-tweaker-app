@@ -156,7 +156,7 @@ export function HeroSection() {
                   onMouseLeave={onLeave}
                   whileTap={{ scale: 0.97 }}
                   transition={{ duration: 0.6, ease: EASE }}
-                  className="bg-accent glow-accent inline-flex items-center gap-2.5 rounded-xl px-8 py-4 text-[15px] font-bold text-[var(--bg)] transition-transform duration-300 will-change-transform"
+                  className="bg-accent glow-accent inline-flex items-center gap-2.5 rounded-xl px-8 py-4 text-[15px] font-bold text-[var(--on-accent)] transition-transform duration-300 will-change-transform"
                 >
                   {text.hero.cta}
                   <span className="font-mono-t text-[12px]">↓</span>
@@ -184,7 +184,7 @@ export function HeroSection() {
               <WingetTerminal />
             </div>
 
-            <div className="mt-9 grid grid-cols-2 gap-x-4 gap-y-3 md:flex md:flex-wrap md:gap-5">
+            <div className="mt-9 grid max-w-md grid-cols-2 gap-x-6 gap-y-3">
               {text.hero.badges.map((b) => (
                 <a
                   key={b.label}

@@ -81,7 +81,7 @@ export function Nav({
           )}
           <a
             href={downloadHref}
-            className="bg-accent glow-accent-sm inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-[13.5px] whitespace-nowrap font-semibold text-[var(--bg)] transition-transform hover:-translate-y-px sm:px-4.5"
+            className="bg-accent glow-accent-sm inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-[13.5px] whitespace-nowrap font-semibold text-[var(--on-accent)] transition-transform hover:-translate-y-px sm:px-4.5"
           >
             <span className="sm:hidden">{text.nav.downloadShort}</span>
             <span className="hidden sm:inline">{downloadLabel ?? text.nav.download}</span>

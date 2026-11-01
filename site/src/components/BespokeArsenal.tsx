@@ -50,7 +50,7 @@ export function BespokeArsenal({ navigate }: { navigate: (to: string) => void })
               className={`card-glow group relative rounded-2xl border border-white/5 bg-[var(--bg-2)]/80 p-8 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:border-white/15 ${SPAN_CLASS[c.span]}`}
             >
               {c.pro && (
-                <span className="bg-accent font-mono-t absolute top-6 right-6 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-[0.1em] text-[var(--bg)]">
+                <span className="bg-accent font-mono-t absolute top-6 right-6 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-[0.1em] text-[var(--on-accent)]">
                   PRO
                 </span>
               )}

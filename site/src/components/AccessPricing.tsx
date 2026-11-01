@@ -204,7 +204,7 @@ export function AccessPricing() {
             {lifetimeChosen && (
               <span
                 id="most-chosen"
-                className="font-mono-t bg-accent absolute -top-3.5 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-[0.14em] whitespace-nowrap text-[var(--bg)]"
+                className="font-mono-t bg-accent absolute -top-3.5 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-[0.14em] whitespace-nowrap text-[var(--on-accent)]"
                 style={{ boxShadow: "0 0 0 4px var(--bg), 0 8px 22px -8px var(--accent)" }}
               >
                 <span aria-hidden="true">✦</span>
@@ -228,11 +228,11 @@ export function AccessPricing() {
               ))}
             </ul>
             {(webEnabled || webPreview) ? (
-              <button type="button" onClick={() => choosePurchase("lifetime")} className="bg-accent block rounded-xl border border-transparent py-3.5 md:row-start-5 text-center text-[14.5px] font-bold text-[var(--bg)] transition-transform hover:-translate-y-0.5">
+              <button type="button" onClick={() => choosePurchase("lifetime")} className="bg-accent block rounded-xl border border-transparent py-3.5 md:row-start-5 text-center text-[14.5px] font-bold text-[var(--on-accent)] transition-transform hover:-translate-y-0.5">
                 {webPreview ? "Preview Lifetime" : "Choose Lifetime"}
               </button>
             ) : (
-              <a href={DOWNLOAD_EXE} className="bg-accent block rounded-xl border border-transparent py-3.5 md:row-start-5 text-center text-[14.5px] font-bold text-[var(--bg)] transition-transform hover:-translate-y-0.5">{lifetime.cta}</a>
+              <a href={DOWNLOAD_EXE} className="bg-accent block rounded-xl border border-transparent py-3.5 md:row-start-5 text-center text-[14.5px] font-bold text-[var(--on-accent)] transition-transform hover:-translate-y-0.5">{lifetime.cta}</a>
             )}
             {(webEnabled || webPreview) && prices?.crypto?.lifetimeUsd && (
               <CryptoLifetimeChoice usdCents={prices.crypto.lifetimeUsd} onChoose={() => choosePurchase("lifetime-crypto")} />
@@ -249,7 +249,7 @@ export function AccessPricing() {
                   type="button"
                   aria-pressed={purchase === plan}
                   onClick={() => setPurchase(plan)}
-                  className={`rounded-xl border px-2 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:px-5 focus-visible:outline-[var(--accent)] ${purchase === plan ? "bg-accent border-transparent text-[var(--bg)]" : "border-white/20 text-[var(--fg)] hover:border-white/40"}`}
+                  className={`rounded-xl border px-2 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:px-5 focus-visible:outline-[var(--accent)] ${purchase === plan ? "bg-accent border-transparent text-[var(--on-accent)]" : "border-white/20 text-[var(--fg)] hover:border-white/40"}`}
                 >
                   {/* Phones: three equal buttons, the verb only from sm up. */}
                   <span className="hidden sm:inline">{webPreview ? "Preview" : "Buy"} </span>
@@ -260,7 +260,7 @@ export function AccessPricing() {
                 type="button"
                 aria-pressed={purchase === "account"}
                 onClick={() => setPurchase("account")}
-                className={`col-span-3 rounded-xl border px-5 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${purchase === "account" ? "bg-accent border-transparent text-[var(--bg)]" : "border-white/20 text-[var(--fg)] hover:border-white/40"}`}
+                className={`col-span-3 rounded-xl border px-5 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${purchase === "account" ? "bg-accent border-transparent text-[var(--on-accent)]" : "border-white/20 text-[var(--fg)] hover:border-white/40"}`}
               >
                 Create a free account
               </button>

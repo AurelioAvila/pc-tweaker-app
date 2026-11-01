@@ -192,9 +192,9 @@ export const ACCENTS: Record<AccentTheme, AccentSpec> = {
     line2: "#2e4b4d",
   },
   indigo: {
-    hex: "#6366f1",
-    glow: "rgba(99,102,241,0.32)",
-    soft: "rgba(99,102,241,0.08)",
+    hex: "#7275f3",
+    glow: "rgba(114,117,243,0.32)",
+    soft: "rgba(114,117,243,0.08)",
     label: "INDIGO",
     bg: "#0c0d20",
     bg2: "#14162e",

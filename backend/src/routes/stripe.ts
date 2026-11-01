@@ -32,6 +32,7 @@ import { queueReceipt, type Receipt } from "../receipt-outbox";
 import { queueOwnerNotice } from "../owner-sales";
 import { queueCaRenewalNotice, renewalCancelRoute } from "../renewal-notice";
 import { asyncRoute } from "../async-route";
+import { subscriptionRouter } from "../subscription-manage";
 import { deviceHashFrom } from "../license";
 import { referralCheckout, referralWebhook, closeExpiredReferral } from "../referral-stripe";
 import { GuardedCheckoutError, guardedCheckout, cancelGuardedCheckout } from "../guarded-checkout";
@@ -925,6 +926,9 @@ router.post("/portal", requireAuth, requireStripe, async (req: Request, res: Res
     res.status(500).json({ error: "could not open billing portal" });
   }
 });
+
+// In-app "Manage subscription": read, cancel at period end, resume (subscription-manage.ts).
+router.use("/billing/subscription", subscriptionRouter(() => stripe?.subscriptions ?? null));
 
 // The California renewal notice's cancellation link (renewal-notice.ts).
 router.get("/billing/renewal/cancel", renewalCancelRoute(() => stripe));

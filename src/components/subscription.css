@@ -259,6 +259,11 @@
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
+/* The card carries the keyboard ring; a second one on the radio itself drew
+   two rings round one choice. */
+.sub-reason input:focus-visible {
+  outline: none;
+}
 .sub-comment {
   display: grid;
   gap: 5px;

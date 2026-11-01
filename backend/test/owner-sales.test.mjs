@@ -59,6 +59,9 @@ test("one-off checkouts of any product are told once, trials as trials, paid sub
   assert.equal(paid.notice.subject, `€39.99 · PC Tweaker Pro Lifetime — One-off purchase · ${orderId("pi_life")}`);
   const again = await ownerNoticeFor(event("checkout.session.async_payment_succeeded", lifetime), null);
   assert.equal(again.key, paid.key, "a delayed payment shares the key");
+  // The invoice Checkout creates for the same purchase fires invoice.paid too: no second email.
+  const { parent, ...oneOffInvoice } = uninstallerInvoice;
+  assert.equal(await ownerNoticeFor(event("invoice.paid", { ...oneOffInvoice, billing_reason: "manual" }), null), null);
 
   // Havenly, CertSprint, Frame Witness: other products' Checkouts on the same account.
   const shop = { ...lifetime, id: "cs_shop", metadata: { orderId: "HV-1042" }, line_items: undefined };

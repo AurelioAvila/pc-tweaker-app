@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { format, Lang, Strings, localeOf } from "../i18n";
 import { money, PRICE_ANNUAL, PRICE_LIFETIME, PRICE_MONTHLY, ProPlan } from "../lib";
-import { offerClock } from "../lifetime-offer";
 import { MOST_CHOSEN, type SoldPlan } from "../most-chosen";
-import { promoPercent, PROMO_LAYOUT_UNTIL } from "../promo";
-import { HalloweenOfferBanner } from "./halloween-offer";
+import { promoClock, promoPercent, PROMO_LAYOUT_UNTIL } from "../promo";
+import { HALLOWEEN_MARK_EMBER } from "../halloween-decor";
 import { CheckIcon, CrownIcon, LayersIcon, SparkIcon } from "./icons";
 import { PLAN_STATE_COPY, PRICING_COPY, trialBadgeText } from "./pricing-copy";
 import { TRIAL_COPY } from "./trial-copy";
@@ -13,6 +12,21 @@ import { useLifetimeOffer } from "./use-lifetime-offer";
 import { CryptoLifetimeOption } from "./crypto-pay";
 import { usePromo } from "./use-promo";
 import "./pricing.css";
+
+/** "5 d 9 h 15 min" in the app's language, for the slim offer strip. */
+function compactClock(ms: number, lang: Lang): string {
+  const [d, h, m] = promoClock(ms).map(Number);
+  const Duration = (
+    Intl as unknown as {
+      DurationFormat?: new (locale?: string, options?: object) => { format(d: object): string };
+    }
+  ).DurationFormat;
+  if (Duration)
+    return new Duration(localeOf(lang), { style: "narrow" }).format(
+      d ? { days: d, hours: h, minutes: m } : { hours: h, minutes: m },
+    );
+  return `${d ? `${d}d ` : ""}${h}h ${String(m).padStart(2, "0")}m`;
+}
 
 export function PricingPanel({
   s,
@@ -106,32 +120,20 @@ export function PricingPanel({
   // place, so the plans never jump when the real one arrives.
   const reservePromo = !ownsLifetime && !showPromo && promo.reserve;
   const promoEnd = showPromo ? promo.promo?.endsAt : new Date(PROMO_LAYOUT_UNTIL).toISOString();
-  const promoDate = (iso: string | undefined, offsetMs = 0, timeStyle?: "short") =>
+  // "6 Nov, 23:59 CET": the last minute of the offer, in this PC's time zone.
+  const stripDate = (iso: string | undefined) =>
     iso
-      ? new Intl.DateTimeFormat(localeOf(lang), { dateStyle: "long", timeStyle }).format(
-          new Date(Date.parse(iso) + offsetMs),
-        )
+      ? new Intl.DateTimeFormat(localeOf(lang), {
+          day: "numeric",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZoneName: "short",
+        }).format(new Date(Date.parse(iso) - 60_000))
       : "";
-  // The offer's name and deadline sit on the discounted card itself, next to the price.
-  const promoTag = showPromo ? (
-    <span className="pricing-promo-tag">
-      <strong>{copy.promoTitle}</strong>
-      <span>
-        {copy.ends}:{" "}
-        <time dateTime={promoEnd}>
-          {promoEnd
-            ? new Intl.DateTimeFormat(localeOf(lang), {
-                day: "numeric",
-                month: "short",
-                hour: "2-digit",
-                minute: "2-digit",
-              }).format(new Date(Date.parse(promoEnd) - 60_000))
-            : ""}
-        </time>
-      </span>
-    </span>
-  ) : null;
-  const clock = offerClock(campaign.remaining);
+  // The strip's discount: the smallest of this product's, so it never claims more.
+  const own = promoOffers.filter((offer) => offer.product === "pctweaker");
+  const headline = own.length ? Math.min(...own.map(promoPercent)) : 0;
   const activeCampaign =
     campaign.offer?.status === "active" && !campaign.expired && campaign.available;
   const deadline = campaign.offer?.endsAt;
@@ -185,95 +187,62 @@ export function PricingPanel({
   return (
     <section className="pricing-workspace" aria-labelledby="pricing-heading">
       <header className="pricing-heading">
-        <p className="pricing-eyebrow">{s.tabs.pricing}</p>
         <h1 id="pricing-heading">{copy.title}</h1>
         <p>{copy.intro}</p>
       </header>
-      <details className="pricing-trust">
-        <summary>
-          <span aria-hidden="true">
-            <CheckIcon className="h-4 w-4" />
+      {(showPromo || reservePromo) && (
+        <aside
+          className="pricing-strip"
+          aria-hidden={reservePromo || undefined}
+          aria-label={reservePromo ? undefined : copy.promoTitle}
+        >
+          <span
+            className="pricing-strip-mark"
+            aria-hidden="true"
+            dangerouslySetInnerHTML={{ __html: HALLOWEEN_MARK_EMBER }}
+          />
+          <strong className="pricing-strip-name">{copy.promoTitle}</strong>
+          {headline > 0 && <span className="pricing-strip-badge">−{headline}%</span>}
+          {promo.preview && <span className="pricing-preview">{copy.preview}</span>}
+          <span className="pricing-strip-ends">
+            {copy.ends}: <time dateTime={promoEnd}>{stripDate(promoEnd)}</time>
           </span>
-          {copy.signed}
-          <span className="pricing-publisher">Aurelio Avila</span>
-        </summary>
-        <p>{copy.signature}</p>
-        {import.meta.env.DEV && <p>{copy.previewBuild}</p>}
-      </details>
-      {(!ownsLifetime || campaign.preview) && activeCampaign && !lifetimeOffer && (
-        <aside className="pricing-campaign" aria-label={copy.campaign}>
-          <div className="pricing-campaign-copy">
+          <span className="pricing-strip-clock" role="timer" aria-live="off">
+            <span className="pricing-strip-label">{copy.endsIn} </span>
+            <b>{compactClock(showPromo ? promo.remaining : 0, lang)}</b>
+          </span>
+        </aside>
+      )}
+      {!showPromo &&
+        !reservePromo &&
+        (!ownsLifetime || campaign.preview) &&
+        activeCampaign &&
+        !lifetimeOffer && (
+          <aside className="pricing-strip pricing-strip-quiet" aria-label={copy.campaign}>
             {campaign.preview && <span className="pricing-preview">{copy.preview}</span>}
-            <h2>{copy.campaign}</h2>
-            <p>{copy.rare}</p>
-            <span className="pricing-deadline">
+            <strong className="pricing-strip-name">{s.pricing.lifetimeName}</strong>
+            <span className="pricing-strip-ends">
               {copy.ends}: <time dateTime={deadline ?? undefined}>{deadlineText}</time>
             </span>
-          </div>
-          <div
-            className="pricing-clock"
-            role="timer"
-            aria-live="off"
-            aria-label={`${clock[0]} ${copy.hours}, ${clock[1]} ${copy.minutes}, ${clock[2]} ${copy.seconds}`}
-          >
-            {clock.map((value, index) => (
-              <div key={index}>
-                <strong>{value}</strong>
-                <span>{[copy.hours, copy.minutes, copy.seconds][index]}</span>
-              </div>
-            ))}
-          </div>
-        </aside>
-      )}
-      {(showPromo || reservePromo) && (
-        <HalloweenOfferBanner
-          kicker={copy.promoTitle}
-          badge={promo.preview && <span className="pricing-preview">{copy.preview}</span>}
-          heading={
-            <>
-              {copy.ends}: <time dateTime={promoEnd}>{promoDate(promoEnd, -60_000, "short")}</time>
-            </>
-          }
-          fine={copy.promoReferenceShort}
-          endsIn={copy.endsIn}
-          units={[copy.days, copy.hours, copy.minutes, copy.seconds]}
-          remaining={showPromo ? promo.remaining : 0}
-          reserved={reservePromo}
-          headingId="pricing-promo-title"
-        />
-      )}
-      {(trial || trialSpent || trialBadge) && (
-        <aside
-          className="pricing-trial-band"
-          data-state={trialBadge ? "running" : trial ? "offer" : "used"}
-          aria-labelledby="pricing-trial-band-title"
-        >
-          <div>
-            <h2 id="pricing-trial-band-title">
-              {trialBadge ?? (trial ? format(ps.bannerTitle, { days: trial.days }) : t.trialUsed)}
-            </h2>
-            <p>
-              {trialBadge && mine?.trialEndsAt
-                ? format(mine.cancelAtPeriodEnd ? t.noCharge : t.firstCharge, {
-                    date: longDate(mine.trialEndsAt),
-                  })
-                : trial
-                  ? format(ps.bannerBody, { days: trial.days })
-                  : t.used}
-            </p>
-          </div>
-          {trial && !trialBadge && (
-            <button
-              className="pricing-button pricing-button-trial"
-              disabled={busy !== null || previewing}
-              aria-busy={busy === period && busyTrial === true}
-              onClick={() => void act(period, true)}
-            >
-              {format(ps.bannerButton, { days: trial.days })}
-            </button>
-          )}
-        </aside>
-      )}
+            <span className="pricing-strip-clock" role="timer" aria-live="off">
+              <span className="pricing-strip-label">{copy.endsIn} </span>
+              <b>{compactClock(campaign.remaining * 1000, lang)}</b>
+            </span>
+          </aside>
+        )}
+      <div
+        className="pricing-period"
+        role="group"
+        aria-label={`${s.pricing.monthly} / ${s.pricing.annual}`}
+      >
+        <button aria-pressed={!annual} onClick={() => setPeriod("monthly")}>
+          {s.pricing.monthly}
+        </button>
+        <button aria-pressed={annual} onClick={() => setPeriod("annual")}>
+          {s.pricing.annual}
+          {!proOffer && save > 0 && <span className="pricing-period-save">−{save}%</span>}
+        </button>
+      </div>
       <div className="pricing-plans">
         <article className="pricing-plan">
           <div className="pricing-plan-name">
@@ -312,26 +281,13 @@ export function PricingPanel({
             {holdsPro && <span className="pricing-current">{trialBadge ?? copy.current}</span>}
           </div>
           <p className="pricing-plan-description">{copy.pro}</p>
-          <div
-            className="pricing-period"
-            role="group"
-            aria-label={`${s.pricing.monthly} / ${s.pricing.annual}`}
-          >
-            <button aria-pressed={!annual} onClick={() => setPeriod("monthly")}>
-              {s.pricing.monthly}
-            </button>
-            <button aria-pressed={annual} onClick={() => setPeriod("annual")}>
-              {s.pricing.annual}
-            </button>
-          </div>
           <div className="pricing-price">
-            {proOffer && promoTag}
             {proOffer && (
               <s className="pricing-price-before">{money(proOffer.reference / 100, lang)}</s>
             )}
+            {proOffer && <span className="pricing-discount">−{promoPercent(proOffer)}%</span>}
             <strong>{money(proOffer ? proOffer.price / 100 : listed(period), lang)}</strong>
             <span>{annual ? s.pricing.perYear : s.pricing.perMonth}</span>
-            {proOffer && <span className="pricing-discount">−{promoPercent(proOffer)}%</span>}
           </div>
           <p className="pricing-price-note">
             {proOffer
@@ -353,7 +309,7 @@ export function PricingPanel({
                 {busy === "manage" ? "…" : t.updatePayment}
               </button>
             ) : !isPro && trial ? (
-              <div className="pricing-choice">
+              <>
                 <button
                   className="pricing-button pricing-button-trial"
                   disabled={busy !== null || previewing}
@@ -366,14 +322,14 @@ export function PricingPanel({
                     : format(t.start, { days: trial.days })}
                 </button>
                 <button
-                  className="pricing-button pricing-button-secondary"
+                  className="pricing-link"
                   disabled={busy !== null || previewing}
                   aria-busy={busy === period && busyTrial === false}
                   onClick={() => void act(period, false)}
                 >
                   {busy === period && busyTrial === false ? "…" : t.subscribeNow}
                 </button>
-              </div>
+              </>
             ) : !isPro ? (
               <button
                 className="pricing-button pricing-button-secondary"
@@ -398,8 +354,8 @@ export function PricingPanel({
               </button>
             )}
           </div>
-          {(trialLine || trialSpent || paymentFailed || left) && (
-            <div className="pricing-trial" id="pricing-trial-line" role="status">
+          {(paymentFailed || left) && (
+            <div className="pricing-trial" role="status">
               {left && mine?.trialEndsAt ? (
                 <>
                   <p className="pricing-trial-left">
@@ -412,27 +368,11 @@ export function PricingPanel({
                   <span className="pricing-trial-bar" aria-hidden="true">
                     <i style={{ width: `${Math.round(left.used * 100)}%` }} />
                   </span>
-                  <p>
-                    {format(mine.cancelAtPeriodEnd ? t.noCharge : t.firstCharge, {
-                      date: longDate(mine.trialEndsAt),
-                    })}
-                  </p>
                 </>
-              ) : paymentFailed ? (
+              ) : (
                 <p className="pricing-trial-alert">
                   {t.paymentFailed}. {t.paymentFailedHint}
                 </p>
-              ) : trial ? (
-                <>
-                  <p>{trialLine}</p>
-                  <p className="pricing-trial-alt">
-                    {format(t.subscribeNowNote, {
-                      price: money((proOffer ? proOffer.price : trial.amount) / 100, lang),
-                    })}
-                  </p>
-                </>
-              ) : (
-                <p>{t.used}</p>
               )}
             </div>
           )}
@@ -461,19 +401,17 @@ export function PricingPanel({
             {ownsLifetime && <span className="pricing-current">{copy.current}</span>}
           </div>
           <p className="pricing-plan-description">{copy.lifetime}</p>
-          <span className="pricing-payment-label">{s.pricing.oneTimeBadge}</span>
           <div className="pricing-price">
-            {lifetimeOffer && promoTag}
             {lifetimeOffer && (
               <s className="pricing-price-before">{money(lifetimeOffer.reference / 100, lang)}</s>
+            )}
+            {lifetimeOffer && (
+              <span className="pricing-discount">−{promoPercent(lifetimeOffer)}%</span>
             )}
             <strong>
               {money(lifetimeOffer ? lifetimeOffer.price / 100 : PRICE_LIFETIME, lang)}
             </strong>
             <span>{s.pricing.once}</span>
-            {lifetimeOffer && (
-              <span className="pricing-discount">−{promoPercent(lifetimeOffer)}%</span>
-            )}
           </div>
           <p className="pricing-price-note">{copy.perpetual}</p>
           <div className="pricing-plan-footer">
@@ -519,25 +457,61 @@ export function PricingPanel({
           </ul>
         </article>
       </div>
-      {!ownsLifetime && (
-        <div className="pricing-offer-status" role="status">
-          {previewing
-            ? copy.previewCheckout
-            : campaign.loading
-              ? copy.checking
-              : campaign.expired
-                ? copy.expired
-                : campaign.offer?.status === "scheduled"
-                  ? copy.scheduled
-                  : !campaign.available
-                    ? copy.unavailable
-                    : null}
-          {!previewing && (campaign.failed || (!campaign.available && !campaign.loading)) && (
-            <button onClick={campaign.refresh}>{copy.retry}</button>
-          )}
-        </div>
-      )}
-      <p className="pricing-checkout-note">{copy.checkout}</p>
+      {/* Small print under the plans: the trial's terms, offer status and the
+          checkout and signing notes, so the cards lead the screen. */}
+      <div
+        className="pricing-fine"
+        data-trial={trialBadge ? "running" : trial ? "offer" : trialSpent ? "used" : undefined}
+      >
+        {trialBadge && mine?.trialEndsAt ? (
+          <p id="pricing-trial-line">
+            {format(mine.cancelAtPeriodEnd ? t.noCharge : t.firstCharge, {
+              date: longDate(mine.trialEndsAt),
+            })}
+          </p>
+        ) : trial ? (
+          <p id="pricing-trial-line">
+            <strong>{format(ps.bannerTitle, { days: trial.days })}.</strong>{" "}
+            {format(ps.bannerBody, { days: trial.days })} {trialLine}{" "}
+            {format(t.subscribeNowNote, {
+              price: money((proOffer ? proOffer.price : trial.amount) / 100, lang),
+            })}
+          </p>
+        ) : trialSpent ? (
+          <p>
+            <strong>{t.trialUsed}.</strong> {t.used}
+          </p>
+        ) : null}
+        {showPromo && <p>{copy.promoReferenceShort}</p>}
+        {!ownsLifetime && (
+          <p className="pricing-offer-status" role="status">
+            {previewing
+              ? copy.previewCheckout
+              : campaign.loading
+                ? copy.checking
+                : campaign.expired
+                  ? copy.expired
+                  : campaign.offer?.status === "scheduled"
+                    ? copy.scheduled
+                    : !campaign.available
+                      ? copy.unavailable
+                      : null}
+            {!previewing && (campaign.failed || (!campaign.available && !campaign.loading)) && (
+              <button onClick={campaign.refresh}>{copy.retry}</button>
+            )}
+          </p>
+        )}
+        <p>{copy.checkout}</p>
+        <details className="pricing-trust">
+          <summary>
+            <CheckIcon className="h-3.5 w-3.5" />
+            {copy.signed}
+            <span className="pricing-publisher">Aurelio Avila</span>
+          </summary>
+          <p>{copy.signature}</p>
+          {import.meta.env.DEV && <p>{copy.previewBuild}</p>}
+        </details>
+      </div>
       <section className="pricing-comparison" aria-labelledby="pricing-compare-heading">
         <h2 id="pricing-compare-heading">{copy.compare}</h2>
         <table>

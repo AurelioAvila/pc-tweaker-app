@@ -321,3 +321,34 @@ export function HistoryIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+/** Plans & pricing, the same price tag in every app of the family
+ *  (_stato-agenti/pro-ux-20261101/SPEC-ICONS.md). */
+export function TagIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M3 4.5v6.4a1.5 1.5 0 0 0 .44 1.06l8.6 8.6a1.5 1.5 0 0 0 2.12 0l6.4-6.4a1.5 1.5 0 0 0 0-2.12l-8.6-8.6A1.5 1.5 0 0 0 10.9 3H4.5A1.5 1.5 0 0 0 3 4.5ZM7.5 7.5h.01"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** Support: a life buoy, the same in every app of the family. */
+export function LifebuoyIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

@@ -3,7 +3,7 @@ import type { Strings } from "../i18n";
 import type { Section } from "../types";
 import { NAV_ACCENT } from "../categories";
 import { CoffeeCard } from "./coffee";
-import { CrownIcon, GemIcon } from "./icons";
+import { LifebuoyIcon, TagIcon } from "./icons";
 
 type NavigationItem = { key: Section; label: string; icon: ReactNode };
 
@@ -15,6 +15,7 @@ export function WorkspaceSidebar({
   showHistory,
   onNavigate,
   onTip,
+  onSupport,
   coffeeCryptoUsd = null,
 }: {
   s: Strings;
@@ -24,6 +25,8 @@ export function WorkspaceSidebar({
   showHistory: boolean;
   onNavigate: (section: Section) => void;
   onTip: (quantity: number, crypto?: boolean) => Promise<void>;
+  /** Opens the support page in the browser. */
+  onSupport: () => void;
   /** One coffee in US cents when crypto is on (GET /api/billing/prices), else null. */
   coffeeCryptoUsd?: number | null;
 }) {
@@ -83,12 +86,19 @@ export function WorkspaceSidebar({
         >
           {/* One entry for plans: a second "Upgrade to Pro" row led to the
               same screen and pushed Startup and Maintenance out of view. */}
-          {isPro ? (
-            <CrownIcon className="h-[18px] w-[18px] shrink-0 text-accent" />
-          ) : (
-            <GemIcon className="h-[18px] w-[18px] shrink-0 text-accent" />
-          )}
+          <TagIcon className="h-[18px] w-[18px] shrink-0 text-accent" />
           <span>{isPro ? s.menu.planPro : s.tabs.pricing}</span>
+        </button>
+        <button
+          type="button"
+          onClick={onSupport}
+          className="workspace-support-link nav-item group flex w-full items-center gap-2.5 rounded-[8px] px-3 py-[7px] text-left text-[13px] text-ink-3 hover:text-ink-2"
+        >
+          <LifebuoyIcon className="h-[18px] w-[18px] shrink-0 text-ink-3 group-hover:text-ink-2" />
+          <span className="truncate">{s.menu.support}</span>
+          <span aria-hidden="true" className="ml-auto text-[11px]">
+            ↗
+          </span>
         </button>
         <CoffeeCard
           s={s}

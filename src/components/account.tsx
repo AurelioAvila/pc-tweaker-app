@@ -18,6 +18,7 @@ import { REFERRAL_COPY } from "./referral-copy";
 import { trialLeft, trialUsed, type BillingStatus } from "../trial";
 import { productPlanLabel } from "../plan-label";
 import { Avatar } from "./ui";
+import { SUBSCRIPTION_COPY } from "./subscription-copy";
 import "./account-menu.css";
 
 export function AuthSection({
@@ -420,6 +421,7 @@ export function AccountMenu({
   onUpgrade,
   onViewPlan,
   onManageBilling,
+  onManageSubscription,
   onReferrals,
   pushToast,
 }: {
@@ -453,6 +455,8 @@ export function AccountMenu({
    *  account is comparing, a Pro account is checking what it pays for. */
   onViewPlan: () => void;
   onManageBilling?: () => void;
+  /** Opens the in-app subscription panel (signed in only). */
+  onManageSubscription?: () => void;
   onReferrals?: () => void;
   pushToast: (kind: "success" | "error", message: string) => void;
 }) {
@@ -679,6 +683,17 @@ export function AccountMenu({
                 {isPro ? s.menu.viewPlan : s.menu.upgradeButton} <span aria-hidden="true">↗</span>
               </button>
             </div>
+            {onManageSubscription && auth.status === "authenticated" && (
+              <button
+                className="account-support"
+                onClick={() => {
+                  setOpen(false);
+                  onManageSubscription();
+                }}
+              >
+                {SUBSCRIPTION_COPY[lang].menu}
+              </button>
+            )}
             {onReferrals && auth.status === "authenticated" && (
               <button
                 className="account-support"

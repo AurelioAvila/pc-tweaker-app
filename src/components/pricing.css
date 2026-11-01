@@ -27,7 +27,7 @@
 }
 .pricing-heading {
   max-width: 650px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 .pricing-eyebrow {
   margin: 0 0 9px;
@@ -39,43 +39,34 @@
 }
 .pricing-heading h1 {
   margin: 0;
-  font-size: clamp(24px, 3.2vw, 32px);
+  font-size: clamp(21px, 2.6vw, 26px);
   font-weight: 680;
   line-height: 1.1;
   letter-spacing: -0.045em;
 }
 .pricing-heading > p:last-child {
-  margin-top: 8px;
-  max-width: 59ch;
+  margin-top: 4px;
   color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.65;
-}
-.pricing-trust {
-  border-block: 1px solid var(--border-subtle);
-  padding-block: 9px;
-  margin-bottom: 16px;
-  font-size: 11px;
-  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 .pricing-trust summary {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   cursor: pointer;
+  list-style: none;
 }
-.pricing-trust summary > span:first-child {
+.pricing-trust summary svg {
   color: var(--app-accent);
 }
 .pricing-publisher {
-  margin-left: auto;
   color: var(--text-muted);
 }
 .pricing-trust p {
-  margin-top: 10px;
+  margin-top: 6px;
   max-width: 80ch;
-  line-height: 1.6;
 }
 .pricing-trust summary::after,
 .pricing-terms summary::after {
@@ -87,72 +78,6 @@
 .pricing-terms[open] summary::after {
   content: "−";
 }
-.pricing-campaign {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 15px;
-  margin-bottom: 15px;
-  border: 1px solid color-mix(in srgb, var(--app-accent) 38%, var(--border-subtle));
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--app-accent) 6%, var(--surface-1));
-}
-.pricing-campaign-copy {
-  flex: 1;
-  min-width: 0;
-}
-/* The free trial, offered, running or used: one band above the plans. */
-.pricing-trial-band {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-  padding: 12px 15px;
-  margin-bottom: 15px;
-  border: 1px solid color-mix(in srgb, var(--app-accent) 45%, var(--border-subtle));
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--app-accent) 8%, var(--surface-1));
-}
-.pricing-trial-band > div {
-  flex: 1;
-  min-width: 220px;
-}
-.pricing-trial-band h2 {
-  margin: 0;
-  font-size: 12.5px;
-  font-weight: 650;
-}
-.pricing-trial-band p {
-  margin: 4px 0 0;
-  color: var(--text-secondary);
-  font-size: 10.5px;
-  line-height: 1.5;
-}
-.pricing-trial-band[data-state="used"] {
-  border-color: var(--border-subtle);
-  background: var(--surface-1);
-}
-.pricing-trial-band .pricing-button {
-  width: auto;
-}
-.pricing-campaign h2 {
-  margin: 0;
-  font-size: 12.5px;
-  font-weight: 650;
-}
-.pricing-campaign p {
-  margin: 4px 0 3px;
-  color: var(--text-secondary);
-  font-size: 10.5px;
-  line-height: 1.5;
-  max-width: 50ch;
-}
-.pricing-deadline {
-  display: block;
-  font-size: 10px;
-  color: var(--text-muted);
-  line-height: 1.6;
-}
 .pricing-preview {
   display: block;
   width: fit-content;
@@ -163,42 +88,120 @@
   border: 1px dashed var(--border-strong);
   border-radius: 4px;
 }
-.pricing-clock {
+/* The offer in one line above the plans: name, a bold discount, the
+   deadline and a small countdown. */
+.pricing-strip {
   display: flex;
-  gap: 7px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-height: 42px;
+  padding: 6px 14px 6px 10px;
+  margin-bottom: 14px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 55%, var(--border-subtle));
+  border-radius: 11px;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--app-accent) 22%, transparent),
+      color-mix(in srgb, var(--app-accent) 6%, transparent) 70%
+    ),
+    var(--surface-1);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.pricing-strip[aria-hidden="true"] {
+  visibility: hidden;
+}
+.pricing-strip-mark {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
 }
-.pricing-clock > div {
-  text-align: center;
-  min-width: 33px;
+.pricing-strip-mark svg {
+  width: 100%;
+  height: 100%;
 }
-.pricing-clock strong {
-  display: block;
-  font-size: 19px;
-  font-weight: 600;
-  letter-spacing: -0.035em;
+.pricing-strip-name {
+  color: var(--text-primary);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.pricing-strip-badge {
+  padding: 2px 9px;
+  border-radius: 7px;
+  color: var(--on-accent, #17091e);
+  background: var(--app-accent);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  box-shadow: 0 6px 16px -8px var(--app-accent);
+}
+.pricing-strip-clock {
+  margin-left: auto;
   font-variant-numeric: tabular-nums;
-  line-height: 1.1;
+  white-space: nowrap;
 }
-.pricing-clock span {
-  display: block;
-  margin-top: 2px;
-  font-size: 8.5px;
-  color: var(--text-muted);
+.pricing-strip-clock b {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.pricing-strip-quiet {
+  border-color: var(--border-subtle);
+  background: var(--surface-1);
+}
+/* Monthly or yearly, for the whole row of plans. */
+.pricing-workspace > .pricing-period {
+  display: flex;
+  width: fit-content;
+  margin: 0 auto 4px;
+  border-radius: 9px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  gap: 2px;
+}
+.pricing-period button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.pricing-period button[aria-pressed="true"] {
+  background: var(--bg-raised);
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px #0003;
+}
+.pricing-period-save {
+  font-size: 10.5px;
+  font-weight: 750;
+  color: var(--app-accent);
 }
 .pricing-plans {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 11px;
   align-items: stretch;
-  /* Room for the ribbon that sits across the Lifetime card's top edge. */
-  padding-top: 11px;
+  /* Room for the ribbon that sits across the recommended card's top edge. */
+  padding-top: 16px;
 }
 .pricing-plan {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 19px 16px 16px;
+  padding: 16px 15px 14px;
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   background: var(--surface-1);
@@ -275,53 +278,19 @@
 }
 .pricing-current {
   display: inline-block;
-  font-size: 9px;
-  padding: 3px 6px;
-  border-radius: 4px;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 650;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 45%, var(--border-subtle));
+  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+  color: var(--text-primary);
 }
 .pricing-plan-description {
-  margin: 10px 0 14px;
+  margin: 6px 0 12px;
   color: var(--text-secondary);
   font-size: 11px;
-  line-height: 1.65;
-  min-height: 54px;
-}
-.pricing-period {
-  display: flex;
-  min-height: 30px;
-  border-radius: 6px;
-  padding: 2px;
-  margin-bottom: 17px;
-  background: var(--surface-2);
-  gap: 2px;
-}
-.pricing-period button {
-  flex: 1;
-  min-width: 0;
-  padding: 5px 6px;
-  font-size: 10px;
-  border-radius: 4px;
-  color: var(--text-secondary);
-  transition:
-    background 0.15s,
-    color 0.15s;
-}
-.pricing-period button[aria-pressed="true"] {
-  background: var(--bg-raised);
-  color: var(--text-primary);
-  box-shadow: 0 1px 3px #0002;
-}
-.pricing-payment-label {
-  display: flex;
-  min-height: 30px;
-  align-items: center;
-  color: var(--app-accent);
-  font-size: 9px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  margin-bottom: 17px;
+  line-height: 1.6;
 }
 .pricing-price {
   display: flex;
@@ -332,7 +301,7 @@
 }
 /* The price is the hero of each card: the largest, heaviest text in it. */
 .pricing-price strong {
-  font-size: clamp(34px, 5.4cqw, 50px);
+  font-size: clamp(28px, 5.4cqw, 50px);
   font-weight: 760;
   line-height: 1;
   letter-spacing: -0.05em;
@@ -368,11 +337,9 @@
   box-shadow: 0 6px 16px -8px var(--app-accent);
   transform: rotate(-3deg);
 }
-/* With an offer the price reads in three lines: the offer and its deadline,
-   the struck price with the discount badge, then the price paid. */
-.pricing-price > .pricing-promo-tag {
-  order: -3;
-}
+/* With an offer the price reads in two lines: the struck price with the
+   discount badge (the offer itself is named in the strip above), then the
+   price paid. */
 .pricing-price > :is(.pricing-price-before, .pricing-discount) {
   order: -2;
 }
@@ -381,31 +348,11 @@
   order: -1;
   flex-basis: 100%;
 }
-/* The offer's name and deadline, on the card, right above the price. */
-.pricing-workspace .pricing-price > .pricing-promo-tag {
-  flex-basis: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 8px;
-  margin-bottom: 6px;
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-.pricing-promo-tag strong {
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  line-height: 1.3;
-  text-transform: uppercase;
-  color: var(--app-accent);
-}
 .pricing-price-note {
   font-size: 11px;
   line-height: 1.6;
   color: var(--text-muted);
-  margin: 9px 0 12px;
-  min-height: 32px;
+  margin: 7px 0 12px;
 }
 .pricing-highlights {
   padding: 14px 0 0;
@@ -447,7 +394,22 @@
 /* The action sits right under the price, so it is visible without scrolling
    in the default 1000x700 window; the feature list follows it. */
 .pricing-plan-footer {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+}
+/* The second way in under a card's one button ("Subscribe now"). */
+.pricing-link {
+  display: block;
+  margin: 7px auto 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+.pricing-link:hover:not(:disabled) {
+  color: var(--text-primary);
+  text-decoration-color: var(--app-accent);
 }
 .pricing-button {
   display: flex;
@@ -513,12 +475,22 @@
   line-height: 1.4;
   color: var(--text-secondary);
 }
-.pricing-checkout-note,
-.pricing-offer-status {
+/* Small print under the plans. */
+.pricing-fine {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 10.5px;
   line-height: 1.6;
-  margin-top: 12px;
+}
+.pricing-fine p {
+  margin: 0;
+  max-width: 100ch;
+}
+.pricing-fine strong {
+  color: var(--text-secondary);
+  font-weight: 650;
 }
 .pricing-offer-status:empty {
   display: none;
@@ -662,10 +634,10 @@
    period or payment label, price, note, action), so the prices and the
    buttons line up whatever each card holds above them. Below the action, Pro
    keeps its trial terms next to its buttons and the feature lists follow. */
-@container (min-width: 601px) {
+@container (min-width: 521px) {
   .pricing-plan {
     display: grid;
-    grid-row: span 8;
+    grid-row: span 7;
     grid-template-rows: subgrid;
     row-gap: 0;
   }
@@ -678,11 +650,8 @@
   .pricing-plan > .pricing-plan-description {
     grid-row: 2;
   }
-  .pricing-plan > :is(.pricing-period, .pricing-payment-label) {
-    grid-row: 3;
-  }
   .pricing-plan > .pricing-price {
-    grid-row: 4;
+    grid-row: 3;
     align-self: end;
   }
   /* The recommended plan stands a step above the others. */
@@ -690,23 +659,43 @@
     transform: translateY(-6px);
   }
   .pricing-plan > .pricing-price-note {
-    grid-row: 5;
+    grid-row: 4;
   }
   .pricing-plan > .pricing-plan-footer {
-    grid-row: 6;
+    grid-row: 5;
   }
   .pricing-plan > .pricing-trial {
-    grid-row: 7;
+    grid-row: 6;
   }
   .pricing-plan > .pricing-highlights {
-    grid-row: 7 / span 2;
+    grid-row: 6 / span 2;
     align-self: start;
   }
   .pricing-plan > .pricing-trial ~ .pricing-highlights {
-    grid-row: 8;
+    grid-row: 7;
   }
 }
-@container (max-width: 600px) {
+/* The smallest window (820x600) still shows the three plans side by side. */
+@container (min-width: 521px) and (max-width: 700px) {
+  .pricing-plans {
+    gap: 9px;
+  }
+  .pricing-plan {
+    padding: 14px 11px 12px;
+  }
+  .pricing-strip-label {
+    display: none;
+  }
+  .pricing-ribbon {
+    padding: 4px 9px;
+    font-size: 9px;
+    letter-spacing: 0.03em;
+  }
+  .pricing-ribbon svg {
+    display: none;
+  }
+}
+@container (max-width: 520px) {
   .pricing-plans {
     grid-template-columns: 1fr;
     /* Stacked, the pill hangs 13px above its card: keep it off the card above. */
@@ -736,12 +725,6 @@
   .pricing-plan:first-child .pricing-price {
     margin-top: 0;
   }
-  .pricing-period,
-  .pricing-payment-label {
-    grid-column: 2;
-    grid-row: 1;
-    margin-bottom: 14px;
-  }
   .pricing-price-note {
     grid-column: 2;
     grid-row: 3;
@@ -761,22 +744,8 @@
   .pricing-plan-footer {
     grid-column: 1 / -1;
   }
-  .pricing-campaign {
-    padding: 11px 13px;
-    gap: 11px;
-  }
-  .pricing-clock strong {
-    font-size: 17px;
-  }
-  .pricing-clock > div {
-    min-width: 29px;
-  }
 }
 @container (max-width: 410px) {
-  .pricing-campaign {
-    flex-direction: column;
-    align-items: flex-start;
-  }
   .pricing-extra-grid {
     grid-template-columns: 1fr;
   }
@@ -785,9 +754,6 @@
   .pricing-workspace * {
     transition: none !important;
   }
-}
-.pricing-workspace .hw-offer {
-  margin-bottom: 12px;
 }
 
 /* Free trial: an accent outline, so it reads as the way in without competing

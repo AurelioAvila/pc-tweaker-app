@@ -40,7 +40,7 @@ import {
   type ProductPlan,
 } from "./types";
 import {
-  GemIcon,
+  TagIcon,
   HistoryIcon,
   LayersIcon,
   MagnifierIcon,
@@ -103,6 +103,7 @@ import { usePulseSamples } from "./components/command";
 import { ScheduledTaskManager, StartupManager } from "./components/startup";
 import { ProfilesPanel } from "./components/profiles";
 import { PricingPanel } from "./components/pricing";
+import { SubscriptionPanel } from "./components/subscription";
 import { PRICING_COPY } from "./components/pricing-copy";
 import { GamingHudCard, ZeroTraceCard } from "./components/pro";
 import { TitleBar, titleTrial } from "./components/titlebar";
@@ -808,7 +809,7 @@ function App() {
     { key: "maintenance", label: s.tabs.maintenance, icon: CATEGORY_STYLE.maintenance.icon },
     { key: "profiles", label: s.tabs.profiles, icon: <LayersIcon className="h-[18px] w-[18px]" /> },
     { key: "ledger", label: s.tabs.ledger, icon: <HistoryIcon className="h-[18px] w-[18px]" /> },
-    { key: "pricing", label: s.tabs.pricing, icon: <GemIcon className="h-[18px] w-[18px]" /> },
+    { key: "pricing", label: s.tabs.pricing, icon: <TagIcon className="h-[18px] w-[18px]" /> },
   ];
 
   const [tweaks, setTweaks] = useState<TweakInfo[]>([]);
@@ -841,6 +842,7 @@ function App() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [paywallFeature, setPaywallFeature] = useState<string | null>(null);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [subscriptionOpen, setSubscriptionOpen] = useState(false);
   /** Id of the tweak whose exact registry write is currently disclosed. */
   const [inspecting, setInspecting] = useState<string | null>(null);
   const [confirmCleanup, setConfirmCleanup] = useState<CleanupInfo | null>(null);
@@ -1109,6 +1111,7 @@ function App() {
           isPro={isProUnlocked}
           showHistory={FEATURE_INTELLIGENCE}
           onNavigate={setFilter}
+          onSupport={() => void openUrl("https://pctweaker.app/support/")}
           coffeeCryptoUsd={prices?.crypto?.coffeeUsd ?? null}
           onTip={async (quantity, crypto) => {
             try {
@@ -1193,6 +1196,7 @@ function App() {
                 setTheme={setTheme}
                 auth={auth}
                 onReferrals={referralAvailable ? () => setReferralOpen(true) : undefined}
+                onManageSubscription={() => setSubscriptionOpen(true)}
                 open={accountMenuOpen}
                 onOpenChange={setAccountMenuOpen}
                 onAuthenticate={authenticate}
@@ -1211,6 +1215,19 @@ function App() {
                 }
                 pushToast={pushToast}
               />
+              {subscriptionOpen && auth.status === "authenticated" && (
+                <SubscriptionPanel
+                  lang={lang}
+                  onClose={() => setSubscriptionOpen(false)}
+                  onSeePlans={() => setFilter("pricing")}
+                  onManageBilling={() =>
+                    openBillingPortal().catch((e) =>
+                      pushToast("error", String(e instanceof Error ? e.message : e)),
+                    )
+                  }
+                  onChanged={() => void refreshAccount()}
+                />
+              )}
               {referralOpen && auth.status === "authenticated" && (
                 <ReferralPanel
                   lang={lang}

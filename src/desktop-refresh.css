@@ -167,17 +167,17 @@
 
 /* The default 1000x700 window could not show the whole menu: Startup and
    Maintenance sat below a scroll nobody noticed. Short windows get tighter
-   rows (still 30px targets); taller ones keep the roomier spacing. */
+   rows (still 28px targets); taller ones keep the roomier spacing. */
 @media (max-height: 820px) {
   .desktop-refresh .workspace-sidebar .nav-item {
-    min-height: 30px;
+    min-height: 28px;
     margin-block: 0;
-    padding-block: 5px;
+    padding-block: 4px;
   }
 
   .desktop-refresh .workspace-primary .nav-item {
-    min-height: 32px;
-    padding-block: 6px;
+    min-height: 30px;
+    padding-block: 5px;
   }
 
   .desktop-refresh .workspace-primary {
@@ -207,8 +207,8 @@
 
   .desktop-refresh .workspace-sidebar .nav-item,
   .desktop-refresh .workspace-primary .nav-item {
-    min-height: 28px;
-    padding-block: 4px;
+    min-height: 26px;
+    padding-block: 3px;
   }
 }
 
@@ -253,6 +253,21 @@
 
 .desktop-refresh .workspace-commercial .workspace-plan-link:hover {
   border-color: color-mix(in oklab, var(--accent) 45%, var(--bg-raised));
+  background: var(--surface-hover);
+}
+
+/* Support is a plain row: no frame, so Plans & pricing stays the one boxed
+   entry and the coffee below stays the quietest. Same height as a menu row. */
+.desktop-refresh .workspace-commercial > .workspace-support-link {
+  min-height: 0;
+  padding-block: 5px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.desktop-refresh .workspace-commercial > .workspace-support-link:hover {
   background: var(--surface-hover);
 }
 
@@ -493,7 +508,7 @@
 
 /* Short windows down to the minimum height (600px; a 1080p screen at 150%
    leaves 672px, a 1366x768 one at 125% even less): density changes only in
-   the rail. Labels keep their readable type size, rows keep a 26px target,
+   the rail. Labels keep their readable type size, rows keep a 24px target,
    and every entry plus the footer stay on screen in all six languages. The
    navigation still scrolls on its own, footer pinned, if text ever grows. */
 @media (max-height: 680px) {
@@ -517,8 +532,8 @@
 
   .desktop-refresh .workspace-sidebar .nav-item,
   .desktop-refresh .workspace-primary .nav-item {
-    min-height: 26px;
-    padding-block: 3px;
+    min-height: 24px;
+    padding-block: 2px;
   }
 
   .desktop-refresh .workspace-commercial {

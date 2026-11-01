@@ -21,10 +21,11 @@ import offerRoutes from "./routes/offers";
 import flagRoutes from "./routes/flags";
 import downloadRoutes from "./routes/downloads";
 import adminRoutes from "./routes/admin";
-import { router as stripeRoutes, webhookHandler, deliverProReceipt, listExpiredCheckouts, recordSelfReportedSource, SELF_REPORTED_SOURCES } from "./routes/stripe";
+import { router as stripeRoutes, webhookHandler, deliverProReceipt, listExpiredCheckouts, listFailedCheckouts, recordSelfReportedSource, SELF_REPORTED_SOURCES } from "./routes/stripe";
 import { consumeGlobalBudget } from "./public-form-guard";
 import { clientIpMiddleware, trustProxyHops } from "./client-ip";
-import { lifetimeReminderEmail, startCheckoutReminderWorker } from "./checkout-recovery";
+import { SUPPORT_REPLY_TO } from "./support-inbox";
+import { lifetimeReminderEmail, paymentFailedEmail, startCheckoutReminderWorker, startFailedPaymentWorker, resumeCheckoutUrl } from "./checkout-recovery";
 import { startReceiptWorker } from "./receipt-outbox";
 import { startOwnerNoticeWorker } from "./owner-sales";
 import { copyFor, fromAcceptLanguage, isLocale, type Copy } from "./emails/copy";
@@ -231,7 +232,7 @@ function resultCopy(req: Request): Copy {
   return copyFor(isLocale(asked) ? asked : fromAcceptLanguage(req.get("accept-language")));
 }
 
-function checkoutResultPage(kind: ResultKind, c: Copy, { sessionId, product, trial }: { sessionId?: string; product?: unknown; trial?: boolean } = {}): string {
+function checkoutResultPage(kind: ResultKind, c: Copy, { sessionId, product, trial, plan }: { sessionId?: string; product?: unknown; trial?: boolean; plan?: unknown } = {}): string {
   const x = c.checkout;
   const isSuccess = kind !== "cancel";
   // The app the buyer goes back to: the Uninstaller only when its checkout said so.
@@ -278,6 +279,9 @@ function checkoutResultPage(kind: ResultKind, c: Copy, { sessionId, product, tri
   .opts button { font:inherit; font-size:13.5px; color:#e7e4f0; background:#1b1828; border:1px solid #2e2a42;
     border-radius:999px; padding:7px 14px; cursor:pointer; }
   .opts button:hover, .opts button:focus-visible { border-color:#8b5cf6; outline:none; }
+  .retry { display:inline-block; margin:0 0 24px; padding:11px 22px; border-radius:10px; font-weight:600; font-size:14.5px;
+    color:#0a0912; background:linear-gradient(135deg,#8b5cf6,#d946ef); text-decoration:none; }
+  .retry:focus-visible { outline:2px solid #e7e4f0; outline-offset:3px; }
 </style>
 </head>
 <body>
@@ -285,6 +289,7 @@ function checkoutResultPage(kind: ResultKind, c: Copy, { sessionId, product, tri
   <div class="badge" aria-hidden="true">${isSuccess ? "&#10003;" : "&#10005;"}</div>
   <h1>${escapeHtml(title)}</h1>
   <p>${escapeHtml(body)}</p>
+  ${kind === "cancel" ? `<a class="retry" href="${escapeHtml(resumeCheckoutUrl(product, plan))}">${escapeHtml(x.retry)}</a>` : ""}
   ${question}
   <p style="color:#8b87a0; font-size:13px; margin:0;">${escapeHtml(x.close)}</p>
 </div>
@@ -306,7 +311,7 @@ app.post("/checkout-success", async (req: Request, res: Response) => {
   res.type("html").send(checkoutResultPage("noted", resultCopy(req)));
 });
 app.get("/checkout-cancel", (req: Request, res: Response) => {
-  res.type("html").send(checkoutResultPage("cancel", resultCopy(req)));
+  res.type("html").send(checkoutResultPage("cancel", resultCopy(req), { product: req.query.product, plan: req.query.plan }));
 });
 app.get("/tip-thanks", (req: Request, res: Response) => {
   res.type("html").send(checkoutResultPage("tip", resultCopy(req)));
@@ -387,6 +392,7 @@ const SHUTDOWN_GRACE_MS = 10_000;
 let shuttingDown = false;
 let stopReceiptWorker = () => {};
 let stopReminderWorker = () => {};
+let stopFailedPaymentWorker = () => {};
 let stopReferralWorker = () => {};
 
 function shutdown(signal: string, server: import("http").Server): void {
@@ -394,6 +400,7 @@ function shutdown(signal: string, server: import("http").Server): void {
   shuttingDown = true;
   stopReceiptWorker();
   stopReminderWorker();
+  stopFailedPaymentWorker();
   stopReferralWorker();
   console.log(`${signal} received: refusing new connections, draining in-flight requests`);
 
@@ -433,6 +440,10 @@ initSchema()
     if (isConfigured && mailIsConfigured && process.env.STRIPE_SECRET_KEY) {
       stopReminderWorker = startCheckoutReminderWorker(listExpiredCheckouts, async (to) => {
         await sendMail(lifetimeReminderEmail(to));
+      });
+      stopFailedPaymentWorker = startFailedPaymentWorker(listFailedCheckouts, async (to) => {
+        const sent = await sendMail({ replyTo: SUPPORT_REPLY_TO, ...paymentFailedEmail(to) });
+        if (!sent.delivered) throw new Error("not delivered");
       });
     }
     const server = app.listen(port, () => {

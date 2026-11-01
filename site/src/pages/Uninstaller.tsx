@@ -187,6 +187,7 @@ export function UninstallerPage() {
           account there, then choose Go Pro. One account covers PC Tweaker, PC Tweaker Uninstaller
           and Tweaky Driver. Taxes and the final renewal terms are shown at checkout.
         </p>
+        <p className="mt-3 text-[12.5px] text-[var(--fg-dim)]">Pay with card, Apple Pay, Google Pay or Link.</p>
       </section>
 
       <section className="mb-10">

@@ -43,6 +43,7 @@ import { checkoutMaintenance } from "../checkout-maintenance";
 import { assertNoUnsettledSubscription, SubscriptionCheckoutGuardError } from "../subscription-checkout-guard";
 import { expireUnreservedSession, unreservedPayableSessions } from "../unreserved-checkout-sessions";
 import { ReferralError } from "../referrals";
+import { checkoutOfFailedPayment, failedCheckout, type FailedCheckout } from "../checkout-recovery";
 import { failureKey, trialMail, trialMoney, type Money, type TrialMailKind } from "../emails/trial";
 import {
   TRIAL_DAYS, TRIAL_MARK, TRIAL_REJECTED, blockedReason, claimTrial, grantsAccess, isOurTrial, trialEligible, trialEnabled, trialHash,
@@ -137,6 +138,21 @@ export async function listExpiredCheckouts(sinceSeconds: number) {
     });
   }
   return sessions;
+}
+
+/** Failed-payment notice input: Checkout payments refused (declined, or
+ * blocked by Stripe's fraud screening) since `sinceSeconds`, one per session,
+ * the latest refusal first. Read from the Events API: no webhook endpoint
+ * subscribes to payment_intent.payment_failed, and its settings stay as they are. */
+export async function listFailedCheckouts(sinceSeconds: number): Promise<FailedCheckout[]> {
+  if (!stripe) return [];
+  const list = (params: Record<string, unknown>) => stripe!.checkout.sessions.list(params as Stripe.Checkout.SessionListParams);
+  const found = new Map<string, FailedCheckout>();
+  for await (const event of stripe.events.list({ type: "payment_intent.payment_failed", created: { gte: sinceSeconds }, limit: 100 })) {
+    const session = await checkoutOfFailedPayment(list, event.data.object as Stripe.PaymentIntent);
+    if (session && !found.has(session.id)) found.set(session.id, failedCheckout(session, event.created));
+  }
+  return [...found.values()];
 }
 
 function requireStripe(req: Request, res: Response, next: NextFunction) {
@@ -536,7 +552,8 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       // The thanks page names the app, says "trial" rather than "payment"
       // when nothing was charged, and speaks the account's language.
       params.success_url = withQuery(params.success_url!, { product, ...(trial ? { trial: "1" } : {}), ...(locale ? { lang: locale } : {}) });
-      if (locale && params.cancel_url) params.cancel_url = withQuery(params.cancel_url, { lang: locale });
+      // The cancel page offers "Try again" on the same plan (checkout-recovery.ts, resumeCheckoutUrl).
+      if (params.cancel_url) params.cancel_url = withQuery(params.cancel_url, { product, plan: planKey, ...(locale ? { lang: locale } : {}) });
       // Present when CHECKOUT_GUARD_ENABLED=1 at startup (referral sessions included); otherwise the
       // unguarded path below, which still yields to any guarded reservation (the cutover bridge).
       if (effects.guardedCreate) {

@@ -64,6 +64,11 @@ test("only the retired landing redirects; service routes remain available", { ti
   assert.doesNotMatch(trial, /Pagamento completato|Payment/);
   assert.match(await (await fetch(base + "/checkout-success")).text(), /Payment complete/);
   assert.match(await (await fetch(base + "/checkout-cancel", { headers: { "accept-language": "de-DE,de;q=0.9" } })).text(), /Bezahlvorgang abgebrochen/);
+  const cancel = await (await fetch(base + "/checkout-cancel?product=pctweaker&plan=lifetime&lang=en")).text();
+  assert.match(cancel, /another card, Apple Pay, Google Pay or Link/);
+  assert.match(cancel, /<a class="retry" href="https:\/\/pctweaker\.app\/#buy-lifetime">Try again<\/a>/);
+  assert.match(await (await fetch(base + "/checkout-cancel?product=uninstaller&plan=annual")).text(), /href="https:\/\/pctweaker\.app\/uninstaller\/#uninstaller-pro"/);
+  assert.match(await (await fetch(base + "/checkout-cancel?plan=%22%3E%3Cx")).text(), /href="https:\/\/pctweaker\.app\/#access"/);
   assert.equal((await fetch(base + "/ready")).status, 503);
   assert.equal((await fetch(base + "/", { method: "POST", redirect: "manual" })).status, 404);
   assert.equal((await fetch(base + "/missing", { redirect: "manual" })).status, 404);

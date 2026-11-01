@@ -414,6 +414,22 @@ export const de: Copy = {
     unsubscribe: "Keine solchen E-Mails mehr erhalten.",
   },
 
+  /** A Checkout payment that was declined or blocked (checkout-recovery.ts). */
+  paymentFailed: {
+    subject: (p: string) => `Deine Zahlung für ${p} ist nicht durchgegangen`,
+    preheader: "Es wurde nichts abgebucht. Eine andere Karte, Apple Pay, Google Pay oder Link funktioniert meist.",
+    eyebrow: "Zahlung nicht abgeschlossen",
+    headline: (n: string) => named("Deine Zahlung ist nicht durchgegangen", n),
+    intro: (p: string) => `Du hast einen Kauf von ${p} Pro begonnen, und die Zahlung wurde abgelehnt, bevor etwas abgebucht wurde. Dein Konto ist genau wie vorher.`,
+    retry:
+      "Versuche es mit einer anderen Karte, Apple Pay, Google Pay oder Link. Kartenaussteller und die automatische Betrugsprüfung von Stripe lehnen manchmal eine Karte ab, obwohl alle Angaben stimmen, oft eine Prepaid-Karte oder eine im Ausland ausgegebene Karte; eine andere Karte oder eine digitale Geldbörse geht meist durch.",
+    button: "Kauf fortsetzen",
+    app: "Du kannst auch Tarife & Preise in der App öffnen und denselben Tarif wählen.",
+    helpTitle: "Klappt es immer noch nicht?",
+    helpText: "Antworte auf diese E-Mail, und ein echter Mensch hilft dir, den Kauf abzuschließen.",
+    why: "Du erhältst diese E-Mail, weil die Zahlung für einen Kauf, der vom Konto zu dieser Adresse begonnen wurde, nicht durchgegangen ist. Höchstens eine solche Nachricht pro Tag.",
+  },
+
   supportAck: {
     subject: "Wir haben deine PC Tweaker-Supportanfrage erhalten",
     preheader: "Deine Nachricht ist in der Warteschlange. Antworte auf diese E-Mail, um ein Detail oder einen Screenshot zu ergänzen.",
@@ -480,7 +496,8 @@ export const de: Copy = {
     trialBody: (app: string, days: number) =>
       `Heute wurde nichts abgebucht, und Pro ist ${days} Tage lang in deinem Konto aktiv. Am Ende der Testphase wird die erste Zahlung automatisch abgebucht, außer du kündigst vorher unter Tarife und Preise in ${app}. Wir schreiben dir am Tag davor.`,
     cancelTitle: "Bezahlvorgang abgebrochen",
-    cancelBody: "Es wurde nichts abgebucht. Du kannst den Bezahlvorgang jederzeit erneut aus der App starten.",
+    cancelBody: "Es wurde nichts abgebucht. Wenn deine Zahlung nicht durchgegangen ist, versuche es mit einer anderen Karte, Apple Pay, Google Pay oder Link. Du kannst den Bezahlvorgang auch aus der App neu starten.",
+    retry: "Erneut versuchen",
     tipTitle: "Danke für deine Unterstützung",
     tipBody: "Dein Trinkgeld fließt direkt in neue Funktionen und die täglichen Updates von PC Tweaker. Stripe schickt dir die Quittung per E-Mail.",
     notedTitle: "Danke für deine Antwort",

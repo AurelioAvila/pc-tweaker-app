@@ -9,6 +9,17 @@
   const less = root.querySelector('[data-coffee="-1"]');
   const more = root.querySelector('[data-coffee="1"]');
   const max = 10; // the launcher clamps to this too
+  // Paying in USDC: shown only while the API offers it (crypto.available), at
+  // one coffee's price in US cents for the visitor's country.
+  const cryptoLink = root.querySelector("[data-coffee-crypto]");
+  let cryptoCents = 0;
+  const usd = (cents) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+  const showCrypto = () => {
+    if (!cryptoCents) return;
+    cryptoLink.textContent = `or pay ≈ ${usd(n * cryptoCents)} in crypto (USDC)`;
+    cryptoLink.href = `https://api.pctweaker.app/api/tip/start?product=tweaky&quantity=${n}&method=crypto`;
+    cryptoLink.hidden = false;
+  };
   let n = 1;
   const set = (value) => {
     n = Math.min(max, Math.max(1, value));
@@ -19,10 +30,21 @@
     less.disabled = n <= 1;
     more.disabled = n >= max;
     link.href = `https://api.pctweaker.app/api/tip/start?product=tweaky&quantity=${n}`;
+    showCrypto();
   };
   less.addEventListener("click", () => set(n - 1));
   more.addEventListener("click", () => set(n + 1));
   root.querySelector(".coffee-step").hidden = false;
+  fetch("https://api.pctweaker.app/api/billing/prices", { credentials: "omit", signal: AbortSignal.timeout(8000) })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((prices) => {
+      const cents = prices && prices.crypto && prices.crypto.available === true && prices.crypto.coffee && prices.crypto.coffee.usd;
+      if (cryptoLink && Number.isInteger(cents) && cents > 0) {
+        cryptoCents = cents;
+        showCrypto();
+      }
+    })
+    .catch(() => {}); // no answer: card only, as before
 
   // Back from Stripe: thank on success, say nothing on cancel, then drop the query.
   const params = new URLSearchParams(location.search);

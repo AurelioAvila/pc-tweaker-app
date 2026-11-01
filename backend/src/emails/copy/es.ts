@@ -410,6 +410,22 @@ export const es: Copy = {
     unsubscribe: "No recibir más correos como este.",
   },
 
+  /** A Checkout payment that was declined or blocked (checkout-recovery.ts). */
+  paymentFailed: {
+    subject: (p: string) => `Tu pago de ${p} no se completó`,
+    preheader: "No se ha cobrado nada. Otra tarjeta, Apple Pay, Google Pay o Link suele funcionar.",
+    eyebrow: "Pago sin completar",
+    headline: (n: string) => named("Tu pago no se completó", n),
+    intro: (p: string) => `Iniciaste un pago de ${p} Pro y se rechazó antes de cobrar nada. Tu cuenta está exactamente como estaba.`,
+    retry:
+      "Vuelve a intentarlo con otra tarjeta, Apple Pay, Google Pay o Link. A veces el emisor de la tarjeta o los controles antifraude automáticos de Stripe rechazan una tarjeta aunque todos los datos sean correctos, a menudo si es de prepago o se emitió en el extranjero; otra tarjeta o un monedero digital suele funcionar.",
+    button: "Retomar el pago",
+    app: "También puedes abrir Planes y precios en la aplicación y elegir el mismo plan.",
+    helpTitle: "¿Sigue sin funcionar?",
+    helpText: "Responde a este correo y una persona de verdad te ayudará a completar la compra.",
+    why: "Recibes este correo porque el pago de una compra iniciada desde la cuenta asociada a esta dirección no se completó. Como máximo un mensaje como este al día.",
+  },
+
   supportAck: {
     subject: "Hemos recibido tu solicitud de soporte de PC Tweaker",
     preheader: "Tu mensaje está en la cola. Responde a este correo para añadir un detalle o una captura.",
@@ -476,7 +492,8 @@ export const es: Copy = {
     trialBody: (app: string, days: number) =>
       `Hoy no se te ha cobrado nada y Pro está activo en tu cuenta durante ${days} días. Al terminar la prueba, el primer pago se cobra automáticamente, salvo que canceles antes desde Planes y precios en ${app}. Te escribimos el día anterior.`,
     cancelTitle: "Pago cancelado",
-    cancelBody: "No se ha cobrado nada. Puedes volver a iniciar el pago desde la aplicación cuando quieras.",
+    cancelBody: "No se ha cobrado nada. Si tu pago no se completó, vuelve a intentarlo con otra tarjeta, Apple Pay, Google Pay o Link. También puedes volver a iniciar el pago desde la aplicación.",
+    retry: "Reintentar",
     tipTitle: "Gracias por tu apoyo",
     tipBody: "Tu propina se destina directamente a nuevas funciones y a las actualizaciones diarias de PC Tweaker. Stripe te enviará el recibo por correo.",
     notedTitle: "Gracias por contárnoslo",

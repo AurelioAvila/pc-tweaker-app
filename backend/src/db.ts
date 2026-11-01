@@ -237,6 +237,19 @@ async function initSchema(): Promise<void> {
     );
   `);
 
+  // When the last "your payment didn't go through" email went out, per
+  // account, product and plan (checkout-recovery.ts). Erased with the account.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS checkout_failure_notices (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      product TEXT NOT NULL,
+      plan TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      sent_at TIMESTAMPTZ NOT NULL,
+      PRIMARY KEY (user_id, product, plan)
+    );
+  `);
+
   // Anonymous, opt-in error reports from the desktop apps (see
   // routes/error-reports.ts). No user reference on purpose: the report pipe
   // is anonymous by design, and a foreign key would tempt someone to join it

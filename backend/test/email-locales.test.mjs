@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 const { LOCALES, copyFor, fromAcceptLanguage } = await import("../dist/emails/copy/index.js");
 const account = await import("../dist/emails/account.js");
 const pro = await import("../dist/emails/pro-welcome.js");
-const { lifetimeReminderEmail } = await import("../dist/checkout-recovery.js");
+const { lifetimeReminderEmail, paymentFailedEmail } = await import("../dist/checkout-recovery.js");
 const { supportAckEmail } = await import("../dist/emails/support-ack.js");
 const { EMAIL_BRANDS } = await import("../dist/emails/layout.js");
 
@@ -37,6 +37,8 @@ function all(c) {
     bonus: pro.bonusMail("Ada", "14 October 2026", "14 October 2027", c),
     reminder: { ...lifetimeReminderEmail({ email: "ada@example.com", firstName: "Ada", unsubscribeUrl: "https://u.example/x" }, c) },
     ack: supportAckEmail("Ada Lovelace", "ada@example.com", c),
+    failed: paymentFailedEmail({ email: "ada@example.com", firstName: "<b>Ada</b>", locale: null, product: "pctweaker", plan: "annual" }, c),
+    failedU: paymentFailedEmail({ email: "ada@example.com", firstName: "Ada", locale: null, product: "uninstaller", plan: "annual" }, c),
   };
 }
 const visible = (html) => html.replace(/<style[\s\S]*?<\/style>|<!--[\s\S]*?-->|<!doctype html>|<[^>]+>/gi, " ");

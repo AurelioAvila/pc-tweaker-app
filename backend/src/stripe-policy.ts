@@ -183,6 +183,10 @@ export function checkoutSessionParams({
     success_url: successUrl,
     cancel_url: cancelUrl,
     client_reference_id: userId,
+    // The full billing address, not only the country Managed Payments asks
+    // for outside the US: the card issuer and Stripe's fraud screening get a
+    // street and postcode to check. Accepted with Managed Payments.
+    billing_address_collection: "required" as const,
     // Asked for explicitly rather than inherited from a dashboard default,
     // because that default is not the same in both modes: live subscription
     // sessions come back with automatic tax on, while a payment-mode session
@@ -273,6 +277,8 @@ export function tipSessionParams(priceId: string, appUrl: string, quantity: unkn
     cancel_url: home ? withQuery(home, { tip: "cancel" }) : `${api}/checkout-cancel`,
     automatic_tax: { enabled: true },
     customer_creation: "always" as const,
+    // As for plans (checkoutSessionParams): more for the fraud screening to check.
+    billing_address_collection: "required" as const,
   };
 }
 

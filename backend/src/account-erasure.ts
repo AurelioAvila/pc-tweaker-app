@@ -75,6 +75,8 @@ export async function eraseAccount(
     counts.newsletter =
       (await tx.query("DELETE FROM newsletter_subscribers WHERE lower(email)=$1", [address]))
         .rowCount ?? 0;
+    counts.waitlists =
+      (await tx.query("DELETE FROM newsletter_waitlists WHERE lower(email)=$1", [address])).rowCount ?? 0;
     counts.ratings =
       (await tx.query("DELETE FROM reviews WHERE lower(email)=$1", [address])).rowCount ?? 0;
     await tx.query(erase ? "COMMIT" : "ROLLBACK");

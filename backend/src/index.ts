@@ -103,6 +103,8 @@ const tipOrigins = [
   "https://www.getcertsprint.com",
 ];
 app.use("/api/tip", cors({ origin: tipOrigins, exposedHeaders: ["Retry-After"] }));
+// The shared mailing list: Redaxa's site posts its Linux waitlist form here.
+app.use("/api/newsletter", cors({ origin: [...allowedOrigins, "https://redaxa.getcertsprint.com"], exposedHeaders: ["Retry-After"] }));
 app.use(cors({ origin: allowedOrigins, exposedHeaders: ["X-Session-Token", "Retry-After"] }));
 
 // A generous service-wide ceiling protects every route, including cheap

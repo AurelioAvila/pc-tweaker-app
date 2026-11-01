@@ -20,7 +20,58 @@ const router = express.Router();
 const GLOBAL_NEWSLETTER_PER_HOUR = 120;
 
 /** Where a signup came from ("site-footer" today; other products later). */
-const SOURCES = new Set(["site-footer", "site-hero", "site-mobile", "app"]);
+const SOURCES = new Set(["site-footer", "site-hero", "site-mobile", "app", "linux-check", "redaxa-linux"]);
+
+/**
+ * The welcome a new address gets, by source. Waitlist sources are also
+ * recorded in newsletter_waitlists (an address already on the list keeps its
+ * original source), and their welcome says what was joined and when we write.
+ */
+type Welcome = {
+  subject: string;
+  preheader: string;
+  eyebrow: string;
+  headline: string;
+  intro: string;
+  button: { label: string; url: string };
+  help: { title: string; text: string };
+  why: string;
+};
+const LIST_WELCOME: Welcome = {
+  subject: "You're on the PC Tweaker list",
+  preheader: "Occasional news about releases and new tools. No daily emails, and you can leave in one click.",
+  eyebrow: "Subscribed",
+  headline: "You're on the list.",
+  intro:
+    "You'll get occasional emails about new PC Tweaker releases, new tweaks and new tools from the same developer. No spam and no daily drip.",
+  button: { label: "Open PC Tweaker", url: "https://pctweaker.app" },
+  help: { title: "Something you want to see?", text: "Tell us which tweak or tool you would like next." },
+  why: "You received this email because this address joined the PC Tweaker list.",
+};
+const WAITLISTS: Record<string, Welcome> = {
+  "linux-check": {
+    subject: "You're on the “Ready for Linux?” waitlist",
+    preheader: "We'll email you when the free check is ready in PC Tweaker. You can leave in one click.",
+    eyebrow: "Waitlist",
+    headline: "You're on the waitlist.",
+    intro:
+      "We'll email you when the free “Ready for Linux?” check is ready in PC Tweaker. Until then you'll only get occasional news about PC Tweaker and other tools from the same developer. No spam and no daily drip.",
+    button: { label: "Read the Linux checklist", url: "https://pctweaker.app/will-my-games-work-on-linux/" },
+    help: { title: "Which games matter most?", text: "Reply with the games you would check first." },
+    why: "You received this email because this address joined the “Ready for Linux?” waitlist on pctweaker.app.",
+  },
+  "redaxa-linux": {
+    subject: "You're on the Redaxa for Linux waitlist",
+    preheader: "We'll email you when Redaxa for Linux is ready to download. You can leave in one click.",
+    eyebrow: "Waitlist",
+    headline: "You're on the waitlist.",
+    intro:
+      "We'll email you when Redaxa for Linux is ready to download. Redaxa and PC Tweaker are made by the same developer and share one mailing list, so you may also get occasional news about our other tools. No spam and no daily drip.",
+    button: { label: "Open Redaxa", url: "https://redaxa.getcertsprint.com/" },
+    help: { title: "Which distribution do you use?", text: "Reply and tell us, so the first builds cover it." },
+    why: "You received this email because this address joined the Redaxa for Linux waitlist on redaxa.getcertsprint.com.",
+  },
+};
 
 /**
  * Phone visitors can't run a Windows installer, so the mobile hero offers to
@@ -146,6 +197,14 @@ router.post("/", newsletterLimiter, asyncRoute(async (req: Request, res: Respons
      ON CONFLICT (lower(email)) DO NOTHING`,
     [email, source],
   );
+  if (source in WAITLISTS) {
+    await getPool().query(
+      `INSERT INTO newsletter_waitlists (email, waitlist)
+       VALUES ($1, $2)
+       ON CONFLICT (lower(email), waitlist) DO NOTHING`,
+      [email, source],
+    );
+  }
   const optedOut = !isNew && Boolean(existing.rows[0].unsubscribed_at);
   const confirmLink = optedOut ? resubscribeUrl(email) : null;
   if (confirmLink && mailIsConfigured && mayAskToResubscribe(email)) {
@@ -204,26 +263,28 @@ Didn't ask for this? Unsubscribe with one click, no sign-in needed:
 ${link}${textFooter()}`,
     }).catch((err: Error) => console.error("send-to-pc email failed:", err.message));
   } else if (isNew && mailIsConfigured && link) {
+    const w = WAITLISTS[source] ?? LIST_WELCOME;
     void sendMail({
       to: email,
-      subject: "You're on the PC Tweaker list",
+      subject: w.subject,
       headers: listUnsubscribeHeaders(link),
       html: emailShell({
-        preheader: "Occasional news about releases and new tools. No daily emails, and you can leave in one click.",
-        eyebrow: "Subscribed",
-        headline: "You're on the list.",
-        intro:
-          "You'll get occasional emails about new PC Tweaker releases, new tweaks and new tools from the same developer. No spam and no daily drip.",
+        preheader: w.preheader,
+        eyebrow: w.eyebrow,
+        headline: w.headline,
+        intro: w.intro,
         blocks: [
-          button({ label: "Open PC Tweaker", url: "https://pctweaker.app" }),
+          button(w.button),
           smallPrint(`Didn't sign up, or changed your mind? ${mutedLink(link, "Unsubscribe with one click")}, no sign-in needed.`),
         ],
-        help: { title: "Something you want to see?", text: "Tell us which tweak or tool you would like next." },
-        why: "You received this email because this address joined the PC Tweaker list.",
+        help: w.help,
+        why: w.why,
       }),
-      text: `You're on the PC Tweaker list.
+      text: `${w.headline}
 
-You'll get occasional emails about new PC Tweaker releases, new tweaks and new tools from the same developer. No spam and no daily drip.
+${w.intro}
+
+${w.button.label}: ${w.button.url}
 
 Didn't sign up, or changed your mind? Unsubscribe with one click, no sign-in needed:
 ${link}${textFooter()}`,

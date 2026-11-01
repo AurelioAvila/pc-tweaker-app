@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-10-31
+Last updated: 2026-11-01
 
 PC Tweaker is a desktop application. Windows tweaks, snapshots, rollback data,
 hardware readings and file scans are processed locally on your device. They are
@@ -87,6 +87,10 @@ reason.
   ratings; the address is deleted 90 days after the rating, the hash is kept.
 - A newsletter subscription stores your email address, signup source and
   unsubscribe status. Every newsletter message must provide an unsubscribe path.
+  If you join a waitlist (such as the "Ready for Linux?" check on pctweaker.app
+  or Redaxa for Linux on redaxa.getcertsprint.com), we also store which
+  waitlist you joined and when, so we can tell you once it is ready. Both forms
+  use the same list.
 - Optional anonymous error reporting is **off by default**. If you enable it in
   the desktop app, a report can contain the product name, app version, a short
   context label and the error message already shown to you. It does not include

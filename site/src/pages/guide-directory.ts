@@ -12,6 +12,14 @@ export const GUIDE_GROUPS = [
     ],
   },
   {
+    id: "linux",
+    title: "Moving to Linux",
+    description: "Check your games and hardware from Windows before you switch.",
+    guides: [
+      { path: "/will-my-games-work-on-linux/", title: "Check whether your games will work on Linux", note: "Game ratings, graphics, Wi-Fi, Secure Boot and space for a dual boot." },
+    ],
+  },
+  {
     id: "changes-recovery",
     title: "Windows changes and recovery",
     description: "Inspect the operation and the way back before applying it.",

@@ -5,12 +5,15 @@
  * is visible in the prerendered HTML, so nothing may be listed that the page
  * does not show.
  */
+import { LINUX_FAQS } from "./linux-guide";
+
 export interface GuideFaq {
   readonly q: string;
   readonly a: string;
 }
 
 export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
+  "/will-my-games-work-on-linux": LINUX_FAQS,
   "/uninstall-programs-completely": [
     {
       q: "Is it safe to delete a program's folder instead of uninstalling it?",

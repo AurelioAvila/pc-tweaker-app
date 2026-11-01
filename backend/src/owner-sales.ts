@@ -120,6 +120,9 @@ export async function invoiceNotice(invoice: BasilInvoice, livemode: boolean, st
   const product = productName(line?.description) ?? "Unknown product";
   const details = invoice.parent?.subscription_details;
   const subscriptionId = idOf(details?.subscription ?? null);
+  // An invoice without a subscription belongs to a one-off Checkout, already told
+  // (invoice number included) by checkoutNotice: one sale, one email.
+  if (!subscriptionId) return null;
   let firstAfterTrial = false;
   if (invoice.billing_reason === "subscription_cycle" && subscriptionId && stripe?.subscriptions) {
     const sub = await stripe.subscriptions.retrieve(subscriptionId);

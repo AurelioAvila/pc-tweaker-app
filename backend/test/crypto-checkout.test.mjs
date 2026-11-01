@@ -10,7 +10,8 @@ process.env.EMAIL_SINK = "1";
 delete process.env.STRIPE_SECRET_KEY;
 delete process.env.CRYPTO_CHECKOUT_ENABLED;
 
-const { cryptoEnabled, cryptoSessionParams, usableRate, usdFromEur, checkoutSessionParams, tipSessionParams } = await import("../dist/stripe-policy.js");
+const { cryptoEnabled, cryptoSessionParams, usableRate, usdFromEur, checkoutSessionParams, tipSessionParams, cardParityTotal, CARD_TOTAL_UPLIFT_PERCENT } = await import("../dist/stripe-policy.js");
+const { requestCountry, fromCloudflare } = await import("../dist/buyer-country.js");
 const { createCheckoutHandler, cryptoRate, cryptoQuote, publicCrypto, publicPrices, tipCheckout, handleEvent } = await import("../dist/routes/stripe.js");
 const { ownerNoticeFor } = await import("../dist/owner-sales.js");
 const { checkoutTerms } = await import("../dist/checkout-terms.js");
@@ -52,13 +53,14 @@ async function user({ verified = true, lifetime = false } = {}) {
 }
 const response = () => ({ statusCode: 200, status(v) { this.statusCode = v; return this; }, json(v) { this.body = v; return this; } });
 
-async function checkout({ environment = on, now = AFTER_PROMO, body = { plan: "lifetime" }, crypto = true, userId, quote } = {}) {
+async function checkout({ environment = on, now = AFTER_PROMO, body = { plan: "lifetime" }, crypto = true, userId, quote, country = null, asked } = {}) {
   const calls = [];
   const handler = createCheckoutHandler({
     environment,
     now: () => now,
     async createSession(params, key) { calls.push({ params, key }); return { url: "https://checkout.stripe.com/c/pay/cs_fixture", id: "cs_fixture" }; },
-    cryptoQuote: quote ?? ((id) => cryptoQuote(id, environment, read, fx(1.1))),
+    cryptoQuote: quote ?? ((id, c) => cryptoQuote(id, environment, read, fx(1.1), c)),
+    async buyerCountry(customerId) { asked?.push(customerId); return country; },
   }, { replaceDifferentTerms: true, crypto });
   const res = response();
   await handler({ userId: userId ?? await user(), body }, res);
@@ -86,7 +88,7 @@ test("rates: sane bounds, nearest cent, Stripe's quote first, the configured rat
 
 test("a quote is only for a live euro one-off Price", async () => {
   const q = await cryptoQuote("price_lifetime_fixture", {}, read, fx(1.1));
-  assert.deepEqual(q, { usdMinor: 10890, eurMinor: 9900, product: "prod_lifetime", rate: { usdPerEur: 1.1, source: "stripe_fx" } });
+  assert.deepEqual(q, { usdMinor: 10890, eurMinor: 9900, cardTotalEurMinor: 9900, country: null, product: "prod_lifetime", rate: { usdPerEur: 1.1, source: "stripe_fx" } });
   assert.equal((await cryptoQuote("price_coffee_fixture", {}, read, fx(1.1))).product, "prod_coffee", "expanded product");
   assert.equal(await cryptoQuote("price_monthly_fixture", {}, read, fx(1.1)), null, "subscriptions are not sold in crypto");
   assert.equal(await cryptoQuote("price_usd_fixture", {}, read, fx(1.1)), null, "only euro Prices are converted");
@@ -110,7 +112,7 @@ test("crypto params: USDC only, outside Managed Payments, same product, card par
   assert.equal(crypto.customer_update, undefined);
   assert.equal(crypto.customer, "cus_fixture");
   assert.equal(crypto.client_reference_id, "7");
-  assert.deepEqual(crypto.metadata, { userId: "7", plan: "lifetime", product: "pctweaker", pay_with: "crypto" });
+  assert.deepEqual(crypto.metadata, { userId: "7", plan: "lifetime", product: "pctweaker", pay_with: "crypto", price_country: "none" });
   assert.equal(crypto.payment_intent_data.metadata.pay_with, "crypto");
   assert.notEqual(checkoutTerms("lifetime", false, card), checkoutTerms("lifetime", false, crypto), "a card reservation is never reused for crypto");
   assert.throws(() => cryptoSessionParams({ mode: "subscription", line_items: [{ price: "p", quantity: 1 }] }, { usdMinor: 1, product: "x" }));
@@ -170,7 +172,8 @@ test("the guarded path skips the referral checkout for crypto", async () => {
   const handler = createCheckoutHandler({
     environment: on, now: () => AFTER_PROMO,
     async createSession() { throw new Error("guarded path expected"); },
-    cryptoQuote: (id) => cryptoQuote(id, on, read, fx(1.1)),
+    cryptoQuote: (id, c) => cryptoQuote(id, on, read, fx(1.1), c),
+    async buyerCountry() { return null; },
     async guardedCreate(input) { seen.push(input); if (!input.crypto) referralAsked = true; return { url: "https://checkout.stripe.com/c/pay/cs_guarded" }; },
   }, { crypto: true });
   const res = response();
@@ -184,7 +187,7 @@ test("the guarded path skips the referral checkout for crypto", async () => {
 test("prices endpoint: USD amounts for Lifetime (promo included) and one coffee", async () => {
   const crypto = await publicCrypto(on, read, fx(1.16), DURING_PROMO);
   assert.deepEqual(crypto, {
-    available: true, currency: "usd", token: "USDC", usd_per_eur: 1.16, rate_source: "stripe_fx",
+    available: true, currency: "usd", token: "USDC", usd_per_eur: 1.16, rate_source: "stripe_fx", country: null,
     lifetime: { usd: 4639, eur: 3999 }, coffee: { usd: 116, eur: 100 },
   });
   assert.equal((await publicCrypto(on, read, fx(1.16), AFTER_PROMO)).lifetime.usd, 11484);
@@ -192,7 +195,7 @@ test("prices endpoint: USD amounts for Lifetime (promo included) and one coffee"
 });
 
 test("tips: method=crypto is the same coffees in USD; unknown methods are refused", async () => {
-  const quote = (id) => cryptoQuote(id, on, read, fx(1.16));
+  const quote = (id, c) => cryptoQuote(id, on, read, fx(1.16), c);
   const { params } = await tipCheckout({ method: "crypto", quantity: 3, product: "glarion" }, on, quote);
   assert.deepEqual(params.line_items, [{
     price_data: { currency: "usd", unit_amount: 116, product: "prod_coffee" }, quantity: 3,
@@ -200,7 +203,7 @@ test("tips: method=crypto is the same coffees in USD; unknown methods are refuse
   }]);
   assert.deepEqual(params.payment_method_types, ["crypto"]);
   assert.deepEqual(params.managed_payments, { enabled: false });
-  assert.deepEqual(params.metadata, { tip_product: "glarion", pay_with: "crypto" });
+  assert.deepEqual(params.metadata, { tip_product: "glarion", pay_with: "crypto", price_country: "none" });
   assert.equal(params.client_reference_id, undefined, "a tip never names an account");
   assert.equal(params.success_url, "https://glarion.app/?tip=thanks");
   for (const method of ["bitcoin", "CRYPTO", 1, ["crypto"]]) assert.equal((await tipCheckout({ method }, on, quote)).status, 400, String(method));
@@ -269,4 +272,75 @@ test("HTTP: the crypto routes exist only with the switch on", async (t) => {
   const guarded = await fetch(`${onApi}/checkout/crypto`, { method: "POST", headers: json, body: "{}" });
   assert.notEqual(guarded.status, 404);
   assert.notEqual(guarded.status, 200);
+});
+
+test("price parity: the card buyer's total for their country, rounded like Stripe", () => {
+  // Totals of live card sessions on this account (Lifetime at €39.99 net, €89.99 net for FR).
+  for (const [country, net, total] of [["DE", 3999, 4759], ["AT", 3999, 4799], ["BE", 3999, 4839], ["FI", 3999, 5019], ["CH", 3999, 4323], ["FR", 8999, 10799], ["DE", 9900, 11781]]) {
+    assert.equal(cardParityTotal(net, country), total, country);
+  }
+  assert.equal(cardParityTotal(3999, "IT"), 4879);
+  for (const country of ["US", "CA", "ZZ", "", null, undefined]) assert.equal(cardParityTotal(3999, country), 3999, String(country));
+  const eu = ["AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK"];
+  assert.equal(eu.length, 27);
+  for (const country of eu) assert.ok(CARD_TOTAL_UPLIFT_PERCENT[country] >= 17, country);
+});
+
+test("price parity at checkout: Italy +22%, Germany +19%, US and unknown net, never sent by the client", async () => {
+  const asked = [];
+  const italy = await checkout({ country: "IT", asked });
+  assert.equal(italy.res.statusCode, 200, JSON.stringify(italy.res.body));
+  // €99 + 22% = €120.78, at 1.1 USD/EUR
+  assert.equal(italy.calls[0].params.line_items[0].price_data.unit_amount, 13286);
+  assert.equal(italy.calls[0].params.metadata.price_country, "IT");
+  assert.deepEqual(asked, [null], "a new buyer has no customer id: the request's country decides");
+  const germany = await checkout({ country: "DE" });
+  assert.equal(germany.calls[0].params.line_items[0].price_data.unit_amount, 12959); // €117.81
+  const promoItaly = await checkout({ country: "IT", now: DURING_PROMO });
+  assert.equal(promoItaly.calls[0].params.line_items[0].price_data.unit_amount, 5367); // €48.79
+  for (const country of ["US", null]) {
+    const net = await checkout({ country });
+    assert.equal(net.calls[0].params.line_items[0].price_data.unit_amount, 10890, String(country));
+    assert.equal(net.calls[0].params.metadata.price_country, country ?? "none");
+  }
+  // A country in the body is ignored: only the server decides.
+  const claimed = await checkout({ country: "IT", body: { plan: "lifetime", country: "US" } });
+  assert.equal(claimed.calls[0].params.line_items[0].price_data.unit_amount, 13286);
+  // Switch off: nothing priced, nothing created.
+  const off = await checkout({ environment: base, country: "IT" });
+  assert.equal(off.res.statusCode, 404);
+  assert.equal(off.calls.length, 0);
+});
+
+test("price parity for tips and for the prices endpoint", async () => {
+  const quote = (id, c) => cryptoQuote(id, on, read, fx(1.16), c);
+  const tip = await tipCheckout({ method: "crypto", quantity: 2 }, on, quote, "IT");
+  assert.equal(tip.params.line_items[0].price_data.unit_amount, 142); // €1.22 each
+  assert.equal(tip.params.metadata.price_country, "IT");
+  assert.equal((await tipCheckout({ method: "crypto" }, on, quote, "US")).params.line_items[0].price_data.unit_amount, 116);
+  assert.equal((await tipCheckout({ method: "crypto" }, base, quote, "IT")).status, 503, "switch off");
+  const card = await tipCheckout({ quantity: 2 }, on, quote, "IT");
+  assert.equal(card.params.line_items[0].price, "price_coffee_fixture", "card tips are untouched: Link adds the tax itself");
+
+  const de = await publicCrypto(on, read, fx(1.16), DURING_PROMO, "DE");
+  assert.equal(de.country, "DE");
+  assert.deepEqual(de.lifetime, { usd: 5520, eur: 4759 }); // the German card total, €47.59
+  assert.deepEqual(de.coffee, { usd: 138, eur: 119 });
+  assert.deepEqual((await publicPrices(base, read, async () => { throw new Error("must not be asked"); }, "DE")).crypto, { available: false });
+});
+
+test("the request's country is trusted only when Cloudflare delivered the request", () => {
+  const req = (headers, remoteAddress) => ({ get: (name) => headers[name.toLowerCase()], socket: { remoteAddress } });
+  const railway = { RAILWAY_ENVIRONMENT_ID: "fixture" };
+  assert.equal(requestCountry(req({ "cf-ipcountry": "it", "x-real-ip": "162.158.10.20" }), railway), "IT");
+  assert.equal(requestCountry(req({ "cf-ipcountry": "DE", "x-real-ip": "2606:4700:10::1" }), railway), "DE");
+  assert.equal(requestCountry(req({ "cf-ipcountry": "IT", "x-real-ip": "203.0.113.9" }), railway), null, "direct to Railway: forged header ignored");
+  assert.equal(requestCountry(req({ "cf-ipcountry": "IT" }), railway), null);
+  assert.equal(requestCountry(req({ "x-real-ip": "162.158.10.20" }), railway), null);
+  for (const value of ["XX", "T1", "ITA", "1"]) assert.equal(requestCountry(req({ "cf-ipcountry": value, "x-real-ip": "162.158.10.20" }), railway), null, value);
+  // Off Railway the socket peer is the proxy.
+  assert.equal(requestCountry(req({ "cf-ipcountry": "FR" }, "::ffff:104.16.0.1"), {}), "FR");
+  assert.equal(requestCountry(req({ "cf-ipcountry": "FR" }, "127.0.0.1"), {}), null);
+  assert.equal(requestCountry({}, railway), null);
+  assert.equal(fromCloudflare("not an ip"), false);
 });

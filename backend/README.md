@@ -108,7 +108,12 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    and `/api/web-checkout/crypto` answer 404, `/api/tip` with
    `method: "crypto"` answers 503 and `/api/billing/prices` reports
    `crypto: { available: false }`, so no client shows the option. On: the
-   same euro Price as the card sale is charged in USD, converted at Stripe's
+   buyer pays the same total as a card buyer from their country (the net euro
+   Price plus the uplift Link adds on a card sale there, table
+   `CARD_TOTAL_UPLIFT_PERCENT` in `src/stripe-policy.ts`; unknown country:
+   net), country from the customer's last Checkout or address, else
+   Cloudflare's CF-IPCountry when the request came from a Cloudflare address
+   (`src/buyer-country.ts`). That total is charged in USD, converted at Stripe's
    FX Quotes `base_rate` (no FX fee passed on), or at `CRYPTO_USD_PER_EUR`
    (e.g. `1.0850`, refreshed by hand) when the account has no access to that
    preview API; without either rate crypto stays unavailable. Crypto sessions

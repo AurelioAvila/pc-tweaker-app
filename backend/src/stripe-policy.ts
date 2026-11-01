@@ -319,7 +319,7 @@ export function usdFromEur(eurMinor: number, usdPerEur: number): number {
  */
 export function cryptoSessionParams(
   params: Record<string, any>,
-  { usdMinor, product }: { usdMinor: number; product: string },
+  { usdMinor, product, country = null }: { usdMinor: number; product: string; country?: string | null },
 ) {
   if (params.mode !== "payment" || params.line_items?.length !== 1) throw new Error("crypto checkout needs exactly one one-off line");
   const [item] = params.line_items;
@@ -332,8 +332,54 @@ export function cryptoSessionParams(
   params.managed_payments = { enabled: false };
   delete params.automatic_tax;
   delete params.customer_update;
-  // Read by the owner's sale notice and the receipt: how it was paid.
-  params.metadata = { ...params.metadata, pay_with: "crypto" };
-  params.payment_intent_data = { ...params.payment_intent_data, metadata: { ...params.payment_intent_data?.metadata, pay_with: "crypto" } };
+  // Read by the owner's sale notice: how it was paid, and the country whose
+  // card total it was priced at ("none": the net price).
+  const tag = { pay_with: "crypto", price_country: country ?? "none" };
+  params.metadata = { ...params.metadata, ...tag };
+  params.payment_intent_data = { ...params.payment_intent_data, metadata: { ...params.payment_intent_data?.metadata, ...tag } };
   return params;
+}
+
+/**
+ * Price parity for crypto (owner decision of 1/11/2026): a crypto buyer pays
+ * the same total a card buyer from the same country pays. Our Prices are net
+ * and, on a card sale, Link (Managed Payments, merchant of record) adds the
+ * buyer's VAT/GST on top. A crypto sale is ours, outside Managed Payments, and
+ * nothing is remitted on it, so this uplift is part of our price, never shown
+ * or labelled as a tax. Percent added to the net price, by ISO country.
+ *
+ * Standard rates for electronically supplied services, checked 2026-11-01
+ * against the member states' tax authorities (Wikipedia "European Union value
+ * added tax" table) and against live card sessions on this account, which
+ * charged exactly these rates for AT, BE, DE, FI, FR and CH. Recent changes:
+ * FI 25.5 since 1/9/2024, SK 23 since 1/1/2025, EE 24 since 1/7/2025,
+ * RO 21 since 1/8/2025.
+ *
+ * Outside the EU only countries where Managed Payments collects (Stripe docs
+ * "Tax compliance with Managed Payments", 2026-11-01) at one national rate.
+ * Left out on purpose, so net: the US and Canada (state/province rates; US card
+ * sales here showed 0-8%), and every country whose rate for foreign digital
+ * suppliers is not one clear figure. ponytail: a static table; add a country
+ * when a card sale from it shows the rate (session total_details), and update
+ * a rate when a country changes it.
+ */
+export const CARD_TOTAL_UPLIFT_PERCENT: Readonly<Record<string, number>> = {
+  // EU-27
+  AT: 20, BE: 21, BG: 20, CY: 19, CZ: 21, DE: 19, DK: 25, EE: 24, ES: 21, FI: 25.5,
+  FR: 20, GR: 24, HR: 25, HU: 27, IE: 23, IT: 22, LT: 21, LU: 17, LV: 21, MT: 18,
+  NL: 21, PL: 23, PT: 23, RO: 21, SE: 25, SI: 22, SK: 23,
+  // Outside the EU, collected by Managed Payments at one national rate
+  GB: 20, NO: 25, CH: 8.1, LI: 8.1, IS: 24, AU: 10, NZ: 15, JP: 10, SG: 9, KR: 10,
+};
+
+/** A two-letter country we can price for, or null (unknown means net). */
+export function parityCountry(raw: unknown): string | null {
+  return typeof raw === "string" && /^[A-Za-z]{2}$/.test(raw.trim()) ? raw.trim().toUpperCase() : null;
+}
+
+/** The card buyer's total for a net amount, rounded like Stripe rounds a
+ * line's tax (to the cent). Unknown or untaxed country: the net amount. */
+export function cardParityTotal(netMinor: number, country: string | null | undefined): number {
+  const percent = (country && CARD_TOTAL_UPLIFT_PERCENT[country]) || 0;
+  return netMinor + Math.round((netMinor * percent) / 100);
 }

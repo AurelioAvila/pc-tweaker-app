@@ -5,7 +5,9 @@ import { getPool, isConfigured } from "../db";
 import { requireAuth } from "../auth";
 import { periodEndFromSubscription } from "../entitlement";
 import { PRODUCTS, isKnownProduct, productEntitlement, upsertEntitlement, revokeEntitlement, type Product } from "../products";
+import { requestCountry } from "../buyer-country";
 import {
+  cardParityTotal,
   checkoutSessionParams,
   billingProductFromEvidence,
   cryptoEnabled,
@@ -15,6 +17,7 @@ import {
   planFromPrice,
   tipProduct,
   tipSessionParams,
+  parityCountry,
   usableRate,
   usdFromEur,
   withQuery,
@@ -206,7 +209,9 @@ type CheckoutCreationEffects = {
   /** Experimental injection for isolated integration tests; not wired to production. */
   guardedCreate?: (input: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean; crypto?: boolean }) => Promise<{ url: string }>;
   /** The USD amount for a euro Price when paying in crypto; defaults to Stripe (cryptoQuote below). */
-  cryptoQuote?: (priceId: string) => Promise<CryptoQuote | null>;
+  cryptoQuote?: (priceId: string, country: string | null) => Promise<CryptoQuote | null>;
+  /** The buyer's country for crypto price parity; defaults to buyerCountry below. */
+  buyerCountry?: (customerId: string | null, req: Request) => Promise<string | null>;
 };
 
 /** Wiring shared by the opt-in runtime path and isolated tests. */
@@ -496,7 +501,9 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       }
       // Same Price as the card sale above (promo included), in USD at today's rate.
       if (crypto) {
-        const quote = await (effects.cryptoQuote ?? ((id: string) => cryptoQuote(id, effects.environment)))(String(params.line_items?.[0]?.price));
+        // The total a card buyer from this country would pay (price parity), never less.
+        const country = await (effects.buyerCountry ?? buyerCountry)(customerId, req);
+        const quote = await (effects.cryptoQuote ?? ((id: string, c: string | null) => cryptoQuote(id, effects.environment, undefined, undefined, c)))(String(params.line_items?.[0]?.price), country);
         if (!quote) {
           return res.status(503).json({ error: "Paying in crypto is temporarily unavailable. You can pay by card instead.", code: "crypto_unavailable" });
         }
@@ -678,28 +685,62 @@ export async function cryptoRate(environment: NodeJS.ProcessEnv = process.env, f
 /** What a euro one-off Price costs in USD today, and the Stripe product it
  * belongs to. Null (crypto unavailable) for anything not a live euro one-off
  * Price, or without a rate. */
-export type CryptoQuote = { usdMinor: number; eurMinor: number; product: string; rate: CryptoRate };
+export type CryptoQuote = {
+  usdMinor: number;
+  /** The euro Price (net) and what a card buyer from `country` pays for it. */
+  eurMinor: number;
+  cardTotalEurMinor: number;
+  country: string | null;
+  product: string;
+  rate: CryptoRate;
+};
 export async function cryptoQuote(
   priceId: string | undefined,
   environment: NodeJS.ProcessEnv = process.env,
   read: PriceReader | null = stripe ? (price) => stripe!.prices.retrieve(price) : null,
   fx?: () => Promise<number | null>,
+  country: string | null = null,
 ): Promise<CryptoQuote | null> {
   if (!priceId || !read) return null;
   const [price, rate] = await Promise.all([cachedPrice(priceId, read, Date.now()), cryptoRate(environment, fx)]);
   const product = typeof price?.product === "string" ? price.product : price?.product?.id;
   if (!price?.active || price.unit_amount == null || price.currency !== "eur" || price.recurring || !product || !rate) return null;
-  return { usdMinor: usdFromEur(price.unit_amount, rate.usdPerEur), eurMinor: price.unit_amount, product, rate };
+  const cardTotalEurMinor = cardParityTotal(price.unit_amount, country);
+  return { usdMinor: usdFromEur(cardTotalEurMinor, rate.usdPerEur), eurMinor: price.unit_amount, cardTotalEurMinor, country, product, rate };
 }
 
-/** The `crypto` block of GET /api/billing/prices. Amounts in US cents, the
- * Lifetime one at the price a card buyer pays right now (promotion included). */
-export async function publicCrypto(environment: NodeJS.ProcessEnv = process.env, read?: PriceReader | null, fx?: () => Promise<number | null>, now = Date.now()) {
+/**
+ * The buyer's country for crypto price parity, as close as we can get to the
+ * one Link charges a card sale for: the address on this customer's last
+ * completed Checkout (what Link used then), else the customer's own address,
+ * else Cloudflare's country for the request (buyer-country.ts). Never a value
+ * the client sends. Null: the net price.
+ */
+async function buyerCountry(customerId: string | null, req: Request): Promise<string | null> {
+  if (customerId && stripe) {
+    try {
+      const { data } = await stripe.checkout.sessions.list({ customer: customerId, status: "complete", limit: 10 });
+      const checkout = parityCountry(data.find((s) => s.customer_details?.address?.country)?.customer_details?.address?.country);
+      if (checkout) return checkout;
+      const customer = await stripe.customers.retrieve(customerId);
+      const own = "deleted" in customer && customer.deleted ? null : parityCountry((customer as Stripe.Customer).address?.country);
+      if (own) return own;
+    } catch (err) {
+      console.error("could not read the buyer's billing country, using the request's:", (err as Error).message);
+    }
+  }
+  return requestCountry(req);
+}
+
+/** The `crypto` block of GET /api/billing/prices: what a card buyer from the
+ * visitor's country pays right now (promotion included), in US cents (`usd`)
+ * and euro cents (`eur`). */
+export async function publicCrypto(environment: NodeJS.ProcessEnv = process.env, read?: PriceReader | null, fx?: () => Promise<number | null>, now = Date.now(), country: string | null = null) {
   if (!cryptoEnabled(environment)) return { available: false as const };
   const lifetimeId = promoCheckout(environment, now, "STRIPE_PRICE_LIFETIME")?.price ?? environment.STRIPE_PRICE_LIFETIME;
   const [lifetime, coffee] = await Promise.all([
-    cryptoQuote(lifetimeId, environment, read, fx),
-    cryptoQuote(environment.STRIPE_PRICE_COFFEE, environment, read, fx),
+    cryptoQuote(lifetimeId, environment, read, fx, country),
+    cryptoQuote(environment.STRIPE_PRICE_COFFEE, environment, read, fx, country),
   ]);
   const rate = lifetime?.rate ?? coffee?.rate;
   if (!rate) return { available: false as const };
@@ -709,13 +750,14 @@ export async function publicCrypto(environment: NodeJS.ProcessEnv = process.env,
     token: "USDC",
     usd_per_eur: rate.usdPerEur,
     rate_source: rate.source,
-    lifetime: lifetime ? { usd: lifetime.usdMinor, eur: lifetime.eurMinor } : null,
-    coffee: coffee ? { usd: coffee.usdMinor, eur: coffee.eurMinor } : null,
+    country,
+    lifetime: lifetime ? { usd: lifetime.usdMinor, eur: lifetime.cardTotalEurMinor } : null,
+    coffee: coffee ? { usd: coffee.usdMinor, eur: coffee.cardTotalEurMinor } : null,
   };
 }
 
 /** GET /api/billing/prices: public, for the site and the plan screens. */
-export async function publicPrices(environment: NodeJS.ProcessEnv = process.env, read?: PriceReader | null, fx?: () => Promise<number | null>) {
+export async function publicPrices(environment: NodeJS.ProcessEnv = process.env, read?: PriceReader | null, fx?: () => Promise<number | null>, country: string | null = null) {
   const prices = await Promise.all(RECURRING_PLANS.map(async ({ product, plan, env }) => {
     const price = await stripePrice(environment[env], read);
     return price && { product, plan, ...price };
@@ -725,13 +767,13 @@ export async function publicPrices(environment: NodeJS.ProcessEnv = process.env,
     trial_enabled: trialEnabled(environment),
     trial_days: TRIAL_DAYS,
     prices: prices.filter(Boolean),
-    crypto: await publicCrypto(environment, read, fx),
+    crypto: await publicCrypto(environment, read, fx, Date.now(), country),
   };
 }
 
-router.get("/billing/prices", asyncRoute(async (_req: Request, res: Response) => {
+router.get("/billing/prices", asyncRoute(async (req: Request, res: Response) => {
   res.setHeader("Cache-Control", "no-store");
-  res.json(await publicPrices());
+  res.json(await publicPrices(process.env, undefined, undefined, cryptoEnabled(process.env) ? requestCountry(req) : null));
 }));
 
 export async function billingStatus(userId: number | string, products: readonly Product[], environment: NodeJS.ProcessEnv = process.env, now = Date.now(), read?: PriceReader | null, deviceHeader?: string) {
@@ -792,7 +834,11 @@ router.get("/billing/status", requireAuth, asyncRoute(async (req: Request, res: 
 export async function tipCheckout(
   source: Record<string, unknown> | undefined,
   environment: NodeJS.ProcessEnv = process.env,
-  quote: (priceId: string) => Promise<CryptoQuote | null> = (id) => cryptoQuote(id, environment),
+  quote: (priceId: string, country: string | null) => Promise<CryptoQuote | null> = (id, c) => cryptoQuote(id, environment, undefined, undefined, c),
+  // Card tips get VAT added by Managed Payments like Lifetime (coffee product
+  // txcd_10000000, account default tax behaviour exclusive), so crypto tips
+  // follow the same price parity. From the request only: a tip has no account.
+  country: string | null = null,
 ): Promise<{ status: number; error: string } | { params: Stripe.Checkout.SessionCreateParams }> {
   const product = tipProduct(source?.product);
   if (!product) return { status: 400, error: "unknown product" };
@@ -802,13 +848,13 @@ export async function tipCheckout(
   if (!priceId) return { status: 503, error: "STRIPE_PRICE_COFFEE is not configured" };
   const params = tipSessionParams(priceId, environment.APP_URL || "https://pctweaker.app", source?.quantity, source?.utm, product);
   if (method === "card") return { params };
-  const usd = cryptoEnabled(environment) ? await quote(priceId) : null;
+  const usd = cryptoEnabled(environment) ? await quote(priceId, country) : null;
   if (!usd) return { status: 503, error: "crypto payments are not available" };
   return { params: cryptoSessionParams(params, usd) as Stripe.Checkout.SessionCreateParams };
 }
 
-async function tipCheckoutUrl(source: Record<string, unknown> | undefined): Promise<{ status: number; error?: string; url?: string }> {
-  const prepared = await tipCheckout(source);
+async function tipCheckoutUrl(source: Record<string, unknown> | undefined, req: Request): Promise<{ status: number; error?: string; url?: string }> {
+  const prepared = await tipCheckout(source, process.env, undefined, source?.method === "crypto" ? requestCountry(req) : null);
   if ("error" in prepared) return prepared;
   try {
     const session = await stripe!.checkout.sessions.create(prepared.params);
@@ -820,7 +866,7 @@ async function tipCheckoutUrl(source: Record<string, unknown> | undefined): Prom
 }
 
 router.post("/tip", checkoutLimiter, tipLimiter, requireStripe, async (req: Request, res: Response) => {
-  const { status, error, url } = await tipCheckoutUrl(req.body);
+  const { status, error, url } = await tipCheckoutUrl(req.body, req);
   res.status(status).json(error ? { error } : { url });
 });
 
@@ -833,7 +879,7 @@ router.get("/tip/start", (req: Request, res: Response, next: NextFunction) => {
   res.setHeader("X-Robots-Tag", "noindex, nofollow");
   next();
 }, checkoutLimiter, tipLimiter, requireStripe, async (req: Request, res: Response) => {
-  const { status, error, url } = await tipCheckoutUrl({ product: req.query.product, quantity: req.query.quantity, method: req.query.method });
+  const { status, error, url } = await tipCheckoutUrl({ product: req.query.product, quantity: req.query.quantity, method: req.query.method }, req);
   if (error) return res.status(status).type("text").send(error);
   res.redirect(303, url!);
 });

@@ -34,7 +34,7 @@
   </Company_Info>
   <Program_Info>
     <Program_Name>PC Tweaker</Program_Name>
-    <Program_Version>1.18.28</Program_Version>
+    <Program_Version>1.18.29</Program_Version>
     <Program_Release_Month>11</Program_Release_Month>
     <Program_Release_Day>1</Program_Release_Day>
     <Program_Release_Year>2026</Program_Release_Year>
@@ -47,9 +47,9 @@
     <Program_OS_Support>WinOther</Program_OS_Support>
     <Program_Language>English</Program_Language>
     <File_Info>
-      <File_Size_Bytes>6270920</File_Size_Bytes>
-      <File_Size_K>6123.95</File_Size_K>
-      <File_Size_MB>5.98</File_Size_MB>
+      <File_Size_Bytes>6279480</File_Size_Bytes>
+      <File_Size_K>6132.30</File_Size_K>
+      <File_Size_MB>5.99</File_Size_MB>
     </File_Info>
     <Expire_Info>
       <Has_Expire_Info>N</Has_Expire_Info>
@@ -60,7 +60,7 @@
       <Expire_Day></Expire_Day>
       <Expire_Year></Expire_Year>
     </Expire_Info>
-    <Program_Change_Info>Routine maintenance update.</Program_Change_Info>
+    <Program_Change_Info>Plans &amp; pricing now opens straight on the plans, with a slim offer bar and clearer prices. A new Support entry sits in the sidebar. Manage your subscription from the account menu: see your plan, price, renewal date and card, cancel at the end of the paid period (with an optional reason) or resume it. Subscribers now see their own plan and price. Interface polish: text you do not need to copy no longer gets selected, better contrast on buttons, cleaner focus rings and several small layout fixes.</Program_Change_Info>
     <Program_Category_Class>System Utilities::System Maintenance</Program_Category_Class>
     <Program_Specific_Category></Program_Specific_Category>
     <Program_System_Requirements>Windows 10/11 x64; internet for accounts, updates and supported online features.</Program_System_Requirements>
@@ -84,7 +84,7 @@
       <Application_XML_File_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/pad.xml</Application_XML_File_URL>
     </Application_URLs>
     <Download_URLs>
-      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.18.28/pc-tweaker-app_1.18.28_x64-setup.exe</Primary_Download_URL>
+      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.18.29/pc-tweaker-app_1.18.29_x64-setup.exe</Primary_Download_URL>
       <Secondary_Download_URL></Secondary_Download_URL>
       <Additional_Download_URL_1></Additional_Download_URL_1>
       <Additional_Download_URL_2></Additional_Download_URL_2>

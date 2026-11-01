@@ -93,6 +93,7 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 - **1.18.6.** Administrator changes to scheduled tasks with spaces in their path work, the Game Sessions list survives an interrupted save, and the administrator helper loads Windows libraries from System32 only.
 - **1.18.7.** Time limits on every Windows tool and on the administrator helper, power plan restores that survive a deleted plan, a polite Explorer restart, and changes that follow the signed-in user when another administrator approves UAC.
 - **1.18.8.** The notification-area menu and the first-close notice follow the language chosen in the app.
+- **1.18.29.** Plans & pricing now opens straight on the plans, with a slim offer bar and clearer prices. A new Support entry sits in the sidebar. Manage your subscription from the account menu: see your plan, price, renewal date and card, cancel at the end of the paid period (with an optional reason) or resume it. Subscribers now see their own plan and price. Interface polish: text you do not need to copy no longer gets selected, better contrast on buttons, cleaner focus rings and several small layout fixes.
 - **1.18.28.** Routine maintenance update.
 - **1.18.27.** New Copy diagnosis button on the scan screen, for support requests. Your account menu now lists the PCs signed in with your account. When the service asks you to slow down, the message says how long to wait.
 - **1.18.26.** Routine maintenance update.

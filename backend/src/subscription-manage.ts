@@ -7,6 +7,7 @@ import { asyncRoute } from "./async-route";
 import { periodEndFromSubscription } from "./entitlement";
 import { productEntitlement } from "./products";
 import { productFromMetadata } from "./stripe-policy";
+import { cancellationNotice, queueMail } from "./owner-sales";
 
 /**
  * "Manage subscription" inside the apps of the PC Tweaker family:
@@ -153,6 +154,7 @@ export async function findSubscription(
  *  the subscription is already in changes nothing at Stripe. */
 export async function manageSubscription(
   db: Db, api: SubscriptionsApi, userId: string, product: ManagedProduct, action: "get" | "cancel" | "resume", mode = billingMode(),
+  feedback: CancelFeedback = { reason: null, comment: null },
 ): Promise<SubscriptionView> {
   const found = await findSubscription(db, api, userId, product, mode);
   if ("view" in found) {
@@ -162,7 +164,15 @@ export async function manageSubscription(
   let sub = found.sub;
   const ending = sub.cancel_at_period_end === true || sub.cancel_at != null;
   if (action === "cancel" && !ending) {
-    sub = await api.update(sub.id, { cancel_at_period_end: true, expand: EXPAND });
+    const details: Stripe.SubscriptionUpdateParams.CancellationDetails = {};
+    if (feedback.reason) details.feedback = feedback.reason;
+    if (feedback.comment) details.comment = feedback.comment;
+    sub = await api.update(sub.id, {
+      cancel_at_period_end: true,
+      ...(feedback.reason || feedback.comment ? { cancellation_details: details } : {}),
+      expand: [...EXPAND, "customer"],
+    });
+    await queueCancellationNotice(db, userId, product, sub, feedback);
   } else if (action === "resume" && ending) {
     sub = await api.update(sub.id, sub.cancel_at_period_end ? { cancel_at_period_end: false, expand: EXPAND } : { cancel_at: "", expand: EXPAND });
   }
@@ -173,9 +183,63 @@ export async function manageSubscription(
     } else if (product === "uninstaller") {
       await db.query("UPDATE entitlements SET cancel_at_period_end = $3 WHERE user_id = $1 AND product = $2 AND stripe_subscription_id = $4", [userId, product, sub.cancel_at_period_end === true, sub.id]);
     }
-    console.log(`subscription ${action}: user ${userId} ${product} ${sub.id} cancel_at_period_end=${sub.cancel_at_period_end === true} (was ${ending})`);
+    console.log(`subscription ${action}: user ${userId} ${product} ${sub.id} cancel_at_period_end=${sub.cancel_at_period_end === true} (was ${ending})${action === "cancel" && !ending && feedback.reason ? ` reason=${feedback.reason}` : ""}`);
   }
   return viewOf(product, sub);
+}
+
+/** Why the customer is leaving: Stripe's own `cancellation_details.feedback`
+ * codes, with the label the owner's notice shows. Optional; never required to cancel. */
+export const CANCEL_REASONS = {
+  too_expensive: "Too expensive",
+  unused: "I don't use it enough",
+  missing_features: "Missing a feature I need",
+  switched_service: "Switching to another tool",
+  low_quality: "Technical problems / bugs",
+  too_complex: "Too complicated to use",
+  customer_service: "Problems with support",
+  other: "Other",
+} as const;
+export type CancelReason = keyof typeof CANCEL_REASONS;
+export type CancelFeedback = { reason: CancelReason | null; comment: string | null };
+export const COMMENT_MAX = 500;
+
+/** `{ reason, comment }` from the request body: both optional; an unknown reason
+ * or a comment over 500 characters is refused (400), never silently dropped. */
+export function parseCancelFeedback(body: unknown): CancelFeedback {
+  const { reason, comment } = (body ?? {}) as { reason?: unknown; comment?: unknown };
+  if (reason != null && reason !== "" && !(typeof reason === "string" && Object.hasOwn(CANCEL_REASONS, reason))) {
+    throw new SubscriptionError(400, "invalid_reason");
+  }
+  if (comment != null && typeof comment !== "string") throw new SubscriptionError(400, "invalid_comment");
+  // Control characters out (line breaks kept), then trimmed.
+  const text = (comment ?? "").replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/g, "").trim();
+  if ([...text].length > COMMENT_MAX) throw new SubscriptionError(400, "comment_too_long");
+  return { reason: reason ? (reason as CancelReason) : null, comment: text || null };
+}
+
+const PRODUCT_NAMES: Record<ManagedProduct, string> = { pctweaker: "PC Tweaker Pro", uninstaller: "PC Tweaker Uninstaller", tweaky: "Tweaky Driver" };
+
+/** One owner notice per cancellation, queued in the owner-sales outbox. Never
+ * throws: the cancellation already happened at Stripe. */
+async function queueCancellationNotice(db: Db, userId: string, product: ManagedProduct, sub: Stripe.Subscription, feedback: CancelFeedback) {
+  try {
+    const view = viewOf(product, sub);
+    const customer = typeof sub.customer === "object" && sub.customer && !("deleted" in sub.customer && sub.customer.deleted) ? sub.customer as Stripe.Customer : null;
+    const { rows: [user] } = await db.query("SELECT email FROM users WHERE id = $1", [userId]);
+    const periodEnd = periodEndFromSubscription(sub);
+    const endsAt = sub.cancel_at ?? (periodEnd ? Math.floor(periodEnd.getTime() / 1000) : null);
+    // canceled_at is the time of this cancel request: cancel, resume, cancel again = two notices.
+    await queueMail(`cancel:${sub.id}:${sub.canceled_at ?? endsAt}`, cancellationNotice({
+      product: PRODUCT_NAMES[product], plan: view.plan, amount: view.amount, currency: view.currency, interval: view.interval,
+      subscriptionId: sub.id, customerId: customer?.id ?? (typeof sub.customer === "string" ? sub.customer : null),
+      livemode: sub.livemode === true, email: user?.email ?? customer?.email ?? null,
+      country: customer?.address?.country ?? null, endsAt,
+      reason: feedback.reason ? CANCEL_REASONS[feedback.reason] : null, comment: feedback.comment,
+    }));
+  } catch (err) {
+    console.error(`CANCELLATION NOTICE LOST for ${sub.id}:`, (err as Error).message);
+  }
 }
 
 const isManaged = (value: unknown): value is ManagedProduct => typeof value === "string" && (MANAGED_PRODUCTS as readonly string[]).includes(value);
@@ -190,10 +254,16 @@ export function subscriptionRouter(api: () => SubscriptionsApi | null): express.
     res.setHeader("Cache-Control", "no-store");
     const product = action === "get" ? req.query.product : req.body?.product;
     if (!isManaged(product)) return void res.status(400).json({ error: "unknown_product" });
+    let feedback: CancelFeedback | undefined;
+    try {
+      if (action === "cancel") feedback = parseCancelFeedback(req.body);
+    } catch (err) {
+      return void res.status(400).json({ error: (err as SubscriptionError).code });
+    }
     const stripe = api();
     if (!isConfigured || !stripe) return void res.status(503).json({ error: "billing_unavailable" });
     try {
-      res.json(await manageSubscription(getPool(), stripe, String(req.userId), product, action));
+      res.json(await manageSubscription(getPool(), stripe, String(req.userId), product, action, undefined, feedback));
     } catch (err) {
       if (err instanceof SubscriptionError) return void res.status(err.status).json({ error: err.code });
       console.error(`subscription ${action} failed for user ${req.userId} ${product}:`, (err as Error).message);

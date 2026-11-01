@@ -34,9 +34,14 @@ const fake = {
     if ("cancel_at_period_end" in params) {
       sub.cancel_at_period_end = params.cancel_at_period_end;
       sub.cancel_at = params.cancel_at_period_end ? periodEnd : null;
+      // Like Stripe: canceled_at is the time of the latest cancel request.
+      if (params.cancel_at_period_end) sub.canceled_at = now + updates.length;
     }
     if (params.cancel_at === "") sub.cancel_at = null;
-    return structuredClone(sub);
+    if (params.cancellation_details) sub.cancellation_details = params.cancellation_details;
+    const out = structuredClone(sub);
+    if (params.expand?.includes("customer")) out.customer = { id: sub.customer, object: "customer", email: "stripe@example.com", address: { country: "PT" } };
+    return out;
   },
   async list({ customer }) {
     return { data: [...subs.values()].filter((sub) => sub.customer === customer).map((sub) => structuredClone(sub)), has_more: false };
@@ -191,4 +196,87 @@ test("a subscription set to cancel keeps Pro until the paid period ends", async 
   assert.equal(entitlement.active, true);
   assert.equal(entitlement.cancelAtPeriodEnd, true);
   assert.equal(entitlement.expiresAt, new Date(periodEnd * 1000).toISOString());
+});
+
+const notices = async (subId) => (await getPool().query("SELECT notice_key, payload FROM owner_notices WHERE notice_key LIKE $1 ORDER BY notice_key", [`cancel:${subId}:%`])).rows;
+async function subscriber(id) {
+  const u = await user({ stripe_customer_id: `cus_${id}` });
+  sub(`sub_${id}`, `cus_${id}`, { userId: u, product: "pctweaker", plan: "monthly" });
+  await getPool().query("UPDATE users SET stripe_subscription_id = $2 WHERE id = $1", [u, `sub_${id}`]);
+  return u;
+}
+
+test("cancellation reasons: each of Stripe's codes is stored and named in the owner's notice", async () => {
+  const labels = {
+    too_expensive: "Too expensive", unused: "I don't use it enough", missing_features: "Missing a feature I need",
+    switched_service: "Switching to another tool", low_quality: "Technical problems / bugs", too_complex: "Too complicated to use",
+    customer_service: "Problems with support", other: "Other",
+  };
+  for (const [reason, label] of Object.entries(labels)) {
+    const u = await subscriber(`reason_${reason}`);
+    const res = await call(u, "/cancel", { product: "pctweaker", reason });
+    assert.equal(res.status, 200, reason);
+    assert.equal((await res.json()).cancel_at_period_end, true);
+    assert.deepEqual(subs.get(`sub_reason_${reason}`).cancellation_details, { feedback: reason });
+    const [notice] = await notices(`sub_reason_${reason}`);
+    assert.ok(notice.payload.text.includes(`Reason: ${label}`), notice.payload.text);
+  }
+});
+
+test("Other with a comment: trimmed, control characters out, subject and facts for the owner", async () => {
+  const u = await subscriber("other_comment");
+  const email = (await getPool().query("SELECT email FROM users WHERE id = $1", [u])).rows[0].email;
+  await call(u, "/cancel", { product: "pctweaker", reason: "other", comment: "  I only needed it\u0007 once.\r\nThanks!\u0000  " });
+  assert.deepEqual(subs.get("sub_other_comment").cancellation_details, { feedback: "other", comment: "I only needed it once.\nThanks!" });
+  const [{ payload }] = await notices("sub_other_comment");
+  const ends = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Rome", dateStyle: "medium" }).format(new Date(periodEnd * 1000));
+  const { orderId } = await import("../dist/owner-sales.js");
+  assert.equal(payload.subject, `Cancellation scheduled · PC Tweaker Pro — Monthly · ends ${ends} · ${orderId("sub_other_comment")}`);
+  for (const fact of ["Product: PC Tweaker Pro", "Plan: Monthly · €7.99 / month", `Customer: ${email}`, "Country: PT",
+    `Access until: ${ends}`, "Reason: Other", "Comment: I only needed it once.\nThanks!", "https://dashboard.stripe.com/test/subscriptions/sub_other_comment"]) {
+    assert.ok(payload.text.includes(fact), `missing "${fact}" in\n${payload.text}`);
+  }
+  // A 500-character comment is accepted.
+  const v = await subscriber("comment_500");
+  assert.equal((await call(v, "/cancel", { product: "pctweaker", reason: "unused", comment: "é".repeat(500) })).status, 200);
+});
+
+test("refused before Stripe: comment over 500 characters, unknown reason, a non-text comment", async () => {
+  const u = await subscriber("refused");
+  updates.length = 0;
+  for (const [body, error] of [
+    [{ reason: "other", comment: "x".repeat(501) }, "comment_too_long"],
+    [{ reason: "fraud" }, "invalid_reason"],
+    [{ reason: "__proto__" }, "invalid_reason"],
+    [{ reason: 3 }, "invalid_reason"],
+    [{ reason: "unused", comment: { text: "hi" } }, "invalid_comment"],
+  ]) {
+    const res = await call(u, "/cancel", { product: "pctweaker", ...body });
+    assert.equal(res.status, 400, JSON.stringify(body));
+    assert.deepEqual(await res.json(), { error });
+  }
+  assert.equal(updates.length, 0);
+  assert.equal(subs.get("sub_refused").cancel_at_period_end, false);
+  assert.equal((await notices("sub_refused")).length, 0);
+});
+
+test("no reason: cancels as before, nothing sent as cancellation_details, notice says Not given", async () => {
+  const u = await subscriber("no_reason");
+  updates.length = 0;
+  assert.equal((await call(u, "/cancel", { product: "pctweaker", reason: null, comment: "   " })).status, 200);
+  assert.equal("cancellation_details" in updates[0].params, false);
+  const [{ payload }] = await notices("sub_no_reason");
+  assert.ok(payload.text.includes("Reason: Not given") && !payload.text.includes("Comment:"));
+});
+
+test("one owner notice per cancellation: twice is one, resume sends none, cancel again is a new one", async () => {
+  const u = await subscriber("idem");
+  await call(u, "/cancel", { product: "pctweaker", reason: "too_expensive" });
+  await call(u, "/cancel", { product: "pctweaker", reason: "unused" });
+  assert.equal((await notices("sub_idem")).length, 1);
+  assert.deepEqual(subs.get("sub_idem").cancellation_details, { feedback: "too_expensive" }, "an already-ending subscription is not rewritten");
+  await call(u, "/resume", { product: "pctweaker" });
+  assert.equal((await notices("sub_idem")).length, 1, "resuming sends nothing");
+  await call(u, "/cancel", { product: "pctweaker" });
+  assert.equal((await notices("sub_idem")).length, 2);
 });

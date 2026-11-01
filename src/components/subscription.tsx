@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { format, localeOf, type Lang } from "../i18n";
 import { API_BASE_URL, readToken } from "../lib";
-import { SUBSCRIPTION_COPY } from "./subscription-copy";
+import { CANCEL_REASONS, SUBSCRIPTION_COPY, type CancelReason } from "./subscription-copy";
 import "./subscription.css";
 
 /** One product's subscription, as GET /api/billing/subscription returns it. */
@@ -36,7 +36,10 @@ class RequestError extends Error {
   }
 }
 
-async function request(path: string, body?: { product: Product }): Promise<Subscription> {
+async function request(
+  path: string,
+  body?: { product: Product; reason?: CancelReason; comment?: string },
+): Promise<Subscription> {
   const token = readToken();
   if (!token) throw new RequestError("auth");
   let res: Response;
@@ -99,7 +102,10 @@ export function SubscriptionPanel({
   const dialog = useRef<HTMLDialogElement>(null);
   const [subs, setSubs] = useState<Subscription[] | null>(null);
   const [failure, setFailure] = useState<Failure | null>(null);
-  const [confirming, setConfirming] = useState<Product | null>(null);
+  // Cancelling is two steps: an optional reason, then the confirmation.
+  const [confirming, setConfirming] = useState<{ product: Product; step: 1 | 2 } | null>(null);
+  const [reason, setReason] = useState<CancelReason | null>(null);
+  const [comment, setComment] = useState("");
   const [busy, setBusy] = useState<Product | null>(null);
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -146,7 +152,11 @@ export function SubscriptionPanel({
     setBusy(sub.product);
     setNotice(null);
     try {
-      const next = await request(`/${action}`, { product: sub.product });
+      const feedback =
+        action === "cancel" && reason
+          ? { reason, ...(comment.trim() ? { comment: comment.trim() } : {}) }
+          : {};
+      const next = await request(`/${action}`, { product: sub.product, ...feedback });
       setSubs((all) => all?.map((s) => (s.product === next.product ? next : s)) ?? null);
       setConfirming(null);
       setNotice({
@@ -236,8 +246,68 @@ export function SubscriptionPanel({
           </dl>
         )}
         {note && <p className="sub-note">{note}</p>}
-        {confirming === sub.product ? (
+        {confirming?.product === sub.product && confirming.step === 1 ? (
+          <fieldset className="sub-confirm sub-reasons" aria-describedby={`${titleId}-hint`}>
+            <legend>
+              <span className="sub-step">{format(c.step, { n: "1" })}</span>
+              <strong>{c.reasonTitle}</strong>
+            </legend>
+            <p id={`${titleId}-hint`}>{c.reasonHint}</p>
+            <div className="sub-reason-list">
+              {CANCEL_REASONS.map((code, i) => (
+                <label key={code} className="sub-reason">
+                  <input
+                    type="radio"
+                    name={`${titleId}-reason`}
+                    value={code}
+                    checked={reason === code}
+                    autoFocus={i === 0}
+                    onChange={() => setReason(code)}
+                  />
+                  <span>{c.reasons[code]}</span>
+                </label>
+              ))}
+            </div>
+            {reason && (
+              <label className="sub-comment">
+                <span>{reason === "other" ? c.otherLabel : c.commentLabel}</span>
+                <textarea
+                  rows={2}
+                  maxLength={500}
+                  value={comment}
+                  placeholder={c.commentPlaceholder}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+                <small aria-hidden="true">{comment.length}/500</small>
+              </label>
+            )}
+            <div className="sub-actions">
+              <button type="button" className="sub-button" onClick={() => setConfirming(null)}>
+                {c.keep}
+              </button>
+              <button
+                type="button"
+                className="sub-button sub-button-quiet"
+                onClick={() => {
+                  setReason(null);
+                  setComment("");
+                  setConfirming({ product: sub.product, step: 2 });
+                }}
+              >
+                {c.skip}
+              </button>
+              <button
+                type="button"
+                className="sub-button sub-button-primary"
+                onClick={() => setConfirming({ product: sub.product, step: 2 })}
+              >
+                {c.next}
+              </button>
+            </div>
+          </fieldset>
+        ) : confirming?.product === sub.product ? (
           <div className="sub-confirm" role="group" aria-labelledby={`${titleId}-confirm`}>
+            <span className="sub-step">{format(c.step, { n: "2" })}</span>
             <strong id={`${titleId}-confirm`}>{c.confirmTitle}</strong>
             <p>
               {format(sub.status === "trialing" ? c.confirmTrialBody : c.confirmBody, {
@@ -250,7 +320,15 @@ export function SubscriptionPanel({
             <div className="sub-actions">
               <button
                 type="button"
-                className="sub-button"
+                className="sub-link"
+                disabled={busy !== null}
+                onClick={() => setConfirming({ product: sub.product, step: 1 })}
+              >
+                <span aria-hidden="true">←</span> {c.back}
+              </button>
+              <button
+                type="button"
+                className="sub-button sub-push"
                 autoFocus
                 disabled={busy !== null}
                 onClick={() => setConfirming(null)}
@@ -306,7 +384,9 @@ export function SubscriptionPanel({
                   disabled={busy !== null}
                   onClick={() => {
                     setNotice(null);
-                    setConfirming(sub.product);
+                    setReason(null);
+                    setComment("");
+                    setConfirming({ product: sub.product, step: 1 });
                   }}
                 >
                   {c.cancel}

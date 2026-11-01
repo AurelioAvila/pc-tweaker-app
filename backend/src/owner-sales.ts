@@ -270,6 +270,35 @@ export async function disputeNotice(dispute: Stripe.Dispute, livemode: boolean, 
   );
 }
 
+/** A customer stopped renewal from the app's "Manage subscription" panel
+ * (subscription-manage.ts). Nothing moved; the paid period runs to its end. */
+export function cancellationNotice(c: {
+  product: string; plan: string | null; amount: number | null; currency: string | null; interval: string | null;
+  subscriptionId: string; customerId: string | null; livemode: boolean; email: string | null; country: string | null;
+  endsAt: number | null; reason: string | null; comment: string | null;
+}): OwnerNotice {
+  const order = orderId(c.subscriptionId);
+  const plan = c.plan ? c.plan[0].toUpperCase() + c.plan.slice(1) : null;
+  const ends = c.endsAt ? new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Rome", dateStyle: "medium" }).format(new Date(c.endsAt * 1000)) : null;
+  const price = c.amount != null && c.currency ? `${money(c.amount, c.currency)}${c.interval ? ` / ${c.interval}` : ""}` : null;
+  return render(
+    [`Cancellation scheduled · ${c.product}${plan ? ` — ${plan}` : ""}`, ends && `ends ${ends}`, order].filter(Boolean).join(" · "),
+    `${c.email ?? "A customer"} cancelled ${c.product} in the app. It won't renew; access continues until ${ends ?? "the end of the paid period"}.`,
+    [
+      ["Order ID", order],
+      ["Product", c.product],
+      ["Plan", [plan, price].filter(Boolean).join(" · ") || null],
+      ["Customer", c.email],
+      ["Country", c.country],
+      ["Access until", ends],
+      ["Reason", c.reason ?? "Not given"],
+      ["Comment", c.comment],
+      ["Stripe subscription", c.subscriptionId, dashboard(c.livemode, `subscriptions/${c.subscriptionId}`)],
+      ["Stripe customer", c.customerId, c.customerId ? dashboard(c.livemode, `customers/${c.customerId}`) : undefined],
+    ],
+  );
+}
+
 /** The notice an event deserves and its once-only key, or null. */
 export async function ownerNoticeFor(event: Stripe.Event, stripe: Lookup): Promise<{ key: string; notice: OwnerNotice } | null> {
   const object = event.data.object as { id: string };

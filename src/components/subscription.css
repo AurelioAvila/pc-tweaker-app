@@ -200,6 +200,112 @@
 .sub-confirm .sub-actions {
   margin-top: 12px;
 }
+.sub-step {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+/* Step 1: the optional reason. Neutral, not the danger tint of the confirmation. */
+.sub-reasons {
+  min-width: 0;
+  margin-inline: 0;
+  border-color: var(--border-subtle);
+  background: var(--surface-1);
+}
+.sub-reasons legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+}
+.sub-reasons legend + p {
+  clear: both;
+}
+.sub-reason-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+}
+.sub-reason {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 12.5px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+.sub-reason:hover {
+  border-color: var(--border-strong);
+}
+.sub-reason:has(input:checked) {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 10%, var(--surface-2));
+}
+.sub-reason input {
+  flex-shrink: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.sub-reason:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.sub-comment {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.sub-comment textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  resize: vertical;
+}
+.sub-comment textarea::placeholder {
+  color: var(--text-muted);
+}
+.sub-comment textarea:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+.sub-comment small {
+  justify-self: end;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.sub-reasons .sub-button-quiet {
+  margin-left: auto;
+}
+.sub-reasons .sub-button-quiet:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+.sub-push {
+  margin-left: auto;
+}
 .sub-family {
   margin: 16px 0 8px;
   color: var(--text-muted);

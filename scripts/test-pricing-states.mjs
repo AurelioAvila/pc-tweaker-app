@@ -1,8 +1,8 @@
 // Plans & pricing rendered for every plan state (owner report 23 Oct 2026):
 // tiers below the one held say "Included in your plan", the held one says
 // "Current plan" (or "Trial — N days left") with its manage action, higher
-// ones offer the upgrade, and the free trial band offers, reports or
-// explains the trial, never to a paying account. Six languages.
+// ones offer the upgrade, and the small print under the plans offers,
+// reports or explains the trial, never to a paying account. Six languages.
 // Run with: node scripts/test-pricing-states.mjs
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -58,18 +58,19 @@ const cards = (html) => {
   assert.equal(parts.length, 3, "Free, Pro and Lifetime cards");
   return { free: parts[0], pro: parts[1], lifetime: parts[2] };
 };
-const band = (html) => html.match(/<aside class="pricing-trial-band" data-state="(\w+)"/)?.[1] ?? null;
+const band = (html) => html.match(/<div class="pricing-fine" data-trial="(\w+)"/)?.[1] ?? null;
 const count = (text, part) => part.split(text).length - 1;
 
 for (const lang of Object.keys(PLAN_STATE_COPY)) {
   const ps = PLAN_STATE_COPY[lang], c = PRICING_COPY[lang], t = TRIAL_COPY[lang], s = STRINGS[lang].pricing;
   const days = (n) => ps.trialBadge.replace("{left}", ps.daysLeft.replace("{days}", n));
 
-  // Signed out: Free is current, the trial band and the Pro card offer the trial.
+  // Signed out: Free is current, the Pro card offers the trial and the small print explains it.
   let html = render(lang, {});
   let k = cards(html);
   assert.equal(band(html), "offer", `${lang} signed out`);
-  assert.ok(html.includes(ps.bannerButton.replace("{days}", 3)), `${lang} band button`);
+  assert.ok(k.pro.includes(t.start.replace("{days}", 3)), `${lang} trial button on Pro`);
+  assert.ok(html.includes(ps.bannerTitle.replace("{days}", 3)), `${lang} trial terms under the plans`);
   assert.ok(k.free.includes(c.current) && !k.pro.includes(c.current), `${lang} free current`);
   assert.ok(!html.includes(ps.includedInPlan), `${lang} nothing below Free`);
 
@@ -81,7 +82,7 @@ for (const lang of Object.keys(PLAN_STATE_COPY)) {
   html = render(lang, { billing: status({ state: "none", can_start_trial: false }) });
   assert.equal(band(html), "used", `${lang} used`);
   assert.ok(html.includes(t.trialUsed) && html.includes(t.used), `${lang} used copy`);
-  assert.ok(!html.includes(ps.bannerButton.replace("{days}", 3)), `${lang} no trial button once used`);
+  assert.ok(!html.includes(t.start.replace("{days}", 3)), `${lang} no trial button once used`);
 
   // Trial running (2 days 20 hours left): Pro is current with the countdown, Free included.
   const trialing = status({ state: "trialing", plan: "monthly", trial_ends_at: new Date(now + 68 * 3600_000).toISOString(), can_start_trial: false });

@@ -1,0 +1,256 @@
+/* Manage subscription: a modal dialog in the app's tokens. */
+.sub-dialog {
+  box-sizing: border-box;
+  margin: auto;
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  padding: 20px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-family: inherit;
+  box-shadow: 0 30px 80px -30px rgb(0 0 0 / 70%);
+}
+.sub-dialog::backdrop {
+  background: var(--overlay);
+  backdrop-filter: blur(4px);
+}
+.sub-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.sub-top h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 680;
+  letter-spacing: -0.03em;
+}
+.sub-top p {
+  margin: 3px 0 0;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+}
+.sub-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  color: var(--text-secondary);
+}
+.sub-close:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+.sub-card {
+  padding: 14px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 13px;
+  background: var(--surface-2);
+}
+.sub-card + .sub-card {
+  margin-top: 8px;
+}
+.sub-card header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+}
+.sub-card h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+.sub-status {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  border: 1px solid currentColor;
+}
+.sub-status[data-tone="ok"] {
+  color: var(--success);
+}
+.sub-status[data-tone="warn"] {
+  color: var(--warning);
+}
+.sub-status[data-tone="bad"] {
+  color: var(--danger);
+}
+.sub-status[data-tone="muted"] {
+  color: var(--text-muted);
+}
+.sub-card dl {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12.5px;
+}
+.sub-card dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sub-card dt {
+  color: var(--text-secondary);
+}
+.sub-card dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.sub-note {
+  margin: 10px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.sub-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 14px;
+}
+.sub-button {
+  min-height: 34px;
+  padding: 7px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+.sub-button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.sub-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.sub-button-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.sub-button-primary:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
+.sub-button-quiet {
+  margin-left: auto;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-secondary);
+}
+.sub-button-quiet:hover:not(:disabled) {
+  color: var(--danger);
+  background: color-mix(in oklab, var(--danger) 10%, transparent);
+}
+.sub-button-danger {
+  border-color: color-mix(in oklab, var(--danger) 70%, transparent);
+  background: color-mix(in oklab, var(--danger) 16%, var(--surface-1));
+  color: var(--text-primary);
+}
+.sub-button-danger:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--danger) 26%, var(--surface-1));
+}
+.sub-link {
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+.sub-link:hover {
+  color: var(--text-primary);
+  text-decoration-color: var(--accent);
+}
+.sub-confirm {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in oklab, var(--danger) 45%, var(--border-subtle));
+  border-radius: 11px;
+  background: color-mix(in oklab, var(--danger) 7%, var(--surface-1));
+}
+.sub-confirm strong {
+  font-size: 13.5px;
+}
+.sub-confirm p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.sub-confirm .sub-actions {
+  margin-top: 12px;
+}
+.sub-family {
+  margin: 16px 0 8px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.sub-state {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.sub-state p {
+  margin: 0;
+}
+.sub-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: sub-spin 0.8s linear infinite;
+}
+@keyframes sub-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.sub-notice {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--danger);
+}
+.sub-notice:empty {
+  display: none;
+}
+.sub-notice[data-ok="true"] {
+  color: var(--success);
+}
+.sub-dialog :is(button):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sub-spinner {
+    animation-duration: 2.4s;
+  }
+}

@@ -56,7 +56,7 @@ export function NewsletterSignup({
         <button
           type="submit"
           disabled={state === "pending"}
-          className="bg-accent shrink-0 cursor-pointer rounded-xl px-4 py-2.5 text-[13.5px] font-bold text-[var(--bg)] transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+          className="bg-accent shrink-0 cursor-pointer rounded-xl px-4 py-2.5 text-[13.5px] font-bold text-[var(--on-accent)] transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
         >
           {state === "pending" ? "…" : copy.button}
         </button>

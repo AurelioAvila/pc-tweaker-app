@@ -192,7 +192,7 @@ export function NotFoundPage({ navigate }: { navigate: (to: string) => void }) {
       <Link
         to="/"
         onNavigate={navigate}
-        className="bg-accent glow-accent-sm inline-block rounded-xl px-7 py-3.5 text-[14.5px] font-bold text-[var(--bg)]"
+        className="bg-accent glow-accent-sm inline-block rounded-xl px-7 py-3.5 text-[14.5px] font-bold text-[var(--on-accent)]"
       >
         Back to the homepage
       </Link>

@@ -137,7 +137,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
           screen-reader users jump past the nav straight to the content. */}
       <a
         href="#main-content"
-        className="bg-accent sr-only z-[100] rounded-xl px-5 py-3 text-[14px] font-bold text-[var(--bg)] focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        className="bg-accent sr-only z-[100] rounded-xl px-5 py-3 text-[14px] font-bold text-[var(--on-accent)] focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
       >
         Skip to content
       </a>

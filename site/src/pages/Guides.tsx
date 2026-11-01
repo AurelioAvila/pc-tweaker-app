@@ -652,7 +652,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
               <Link to="/uninstaller/" onNavigate={navigate} className="rounded-lg border border-white/10 px-5 py-3 text-sm font-semibold text-[var(--fg)]">
                 What it shows before a removal
               </Link>
-              <a href={UNINSTALLER_DOWNLOAD_EXE} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--bg)]">
+              <a href={UNINSTALLER_DOWNLOAD_EXE} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--on-accent)]">
                 Download PC Tweaker Uninstaller
               </a>
             </div>
@@ -670,7 +670,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
               Explore all features
             </Link>
             <a href={storeLink} className="rounded-lg border border-white/10 px-5 py-3 text-sm font-semibold text-[var(--fg)]">Get it from Microsoft Store</a>
-            <a href={DOWNLOAD_EXE} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--bg)]">
+            <a href={DOWNLOAD_EXE} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--on-accent)]">
               Download PC Tweaker
             </a>
           </div>

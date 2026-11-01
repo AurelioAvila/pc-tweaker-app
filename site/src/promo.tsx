@@ -83,7 +83,7 @@ export function PromoPrice({ offer, className }: { offer: PromoOffer; className?
     <span className={`block ${className ?? ""}`}>
       <span className="mb-3 flex items-center gap-3 font-sans text-[20px] leading-none">
         <s className="font-semibold text-[var(--fg-dim)] decoration-2">{euro(offer.reference)}</s>
-        <span className="bg-accent -rotate-3 rounded-lg px-2.5 py-1.5 text-[19px] font-extrabold tracking-tight text-[var(--bg)] shadow-[0_8px_22px_-8px_var(--accent)]">
+        <span className="bg-accent -rotate-3 rounded-lg px-2.5 py-1.5 text-[19px] font-extrabold tracking-tight text-[var(--on-accent)] shadow-[0_8px_22px_-8px_var(--accent)]">
           −{promoPercent(offer)}%
         </span>
       </span>

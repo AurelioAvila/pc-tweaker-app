@@ -301,7 +301,7 @@ export function ProfileBuilder({ navigate }: { navigate: Nav }) {
           {ids.length} selected{pro ? `, ${pro} of them Pro: on the Free plan those stay locked when you apply the profile` : ""}.
         </P>
         <div className="mt-5 flex flex-wrap gap-3">
-          <button type="button" disabled={ids.length === 0} onClick={() => download(file, profileJson(name, ids), "application/json")} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--bg)] disabled:opacity-40">Download profile (.json)</button>
+          <button type="button" disabled={ids.length === 0} onClick={() => download(file, profileJson(name, ids), "application/json")} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--on-accent)] disabled:opacity-40">Download profile (.json)</button>
           <button type="button" disabled={ids.length === 0} onClick={() => download(file.replace(/\.json$/, ".md"), profileMarkdown(name, ids), "text/markdown")} className="rounded-lg border border-white/10 px-5 py-3 text-sm font-semibold text-[var(--fg)] disabled:opacity-40">Download checklist (.md)</button>
         </div>
         {ids.length > 0 && <pre className="mt-5 max-h-64 overflow-auto rounded-xl bg-black/40 p-4 text-[12.5px] text-[var(--fg)]"><code>{profileJson(name, ids)}</code></pre>}
@@ -349,7 +349,7 @@ export function DebloatBuilder({ navigate }: { navigate: Nav }) {
           {ids.length} selected. Download the list, then in PC Tweaker open Debloat and choose Load list. Loading only ticks the apps: before anything is removed the app checks again that each package comes from the expected publisher, that no other installed package depends on it and that Windows allows its removal, then shows a preview to confirm. Every removal is written to a journal, and each app keeps its Reinstall link. Debloat is part of the Free plan.
         </P>
         <div className="mt-5 flex flex-wrap gap-3">
-          <button type="button" disabled={ids.length === 0} onClick={() => download("pc-tweaker-debloat-list.json", debloatListJson(ids), "application/json")} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--bg)] disabled:opacity-40">Download list (.json)</button>
+          <button type="button" disabled={ids.length === 0} onClick={() => download("pc-tweaker-debloat-list.json", debloatListJson(ids), "application/json")} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--on-accent)] disabled:opacity-40">Download list (.json)</button>
           <a href={DOWNLOAD_EXE} className="rounded-lg border border-white/10 px-5 py-3 text-sm font-semibold text-[var(--fg)]">Download PC Tweaker Free</a>
         </div>
       </Panel>

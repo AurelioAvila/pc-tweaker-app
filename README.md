@@ -72,6 +72,8 @@ These are separate applications with their own licences. PC Tweaker Lifetime inc
 - [Ryzen X3D core parking and steering](https://pctweaker.app/guides/amd-ryzen-x3d-core-parking-windows-11/): distinguish the power-plan policy from process CPU sets, and verify the reset path.
 - [AMD X3D and Intel Hybrid Game Sessions](https://pctweaker.app/guides/amd-x3d-intel-hybrid-core-steering-gaming/): check supported topology, background-process exclusions and automatic restoration before comparing frame times.
 - [Windows privacy and rollback](https://pctweaker.app/guides/windows-11-privacy-telemetry-rollback/): inspect the exact registry values, record absence as well as data, and restore supported changes.
+- [Windows processes and services](https://pctweaker.app/database/): what each common process or service does, how to check its file and signature on your own PC, and which ones to leave alone, with Microsoft sources.
+- [Windows tweaks explained](https://pctweaker.app/tweaks/): every control in the app, with the exact value it sets, the manual steps and how to undo it.
 
 ## Closing and reopening PC Tweaker
 

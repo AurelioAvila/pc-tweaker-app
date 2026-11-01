@@ -328,6 +328,7 @@ export const TWEAK_NOTES: Record<string, TweakNote> = {
     verdict: "trade-off",
     helps: "You do not rely on Store apps to sync, notify or refresh while closed.",
     skip: "You do: mail, calendar or messaging Store apps then only update while open. Desktop programs are not affected.",
+    db: ["processes/backgroundtaskhost-exe"],
   },
   disable_delivery_optimization: {
     title: "Stop Delivery Optimization Uploading Updates",
@@ -515,7 +516,7 @@ export const TWEAK_NOTES: Record<string, TweakNote> = {
     helps: "A small or slow disk, and you rarely search for files from Start or File Explorer.",
     skip: "You search for files or mail: without the index Windows searches the slow way, and programs that rely on the index lose instant search.",
     sources: [MS.searchPerf, MS.serverServices],
-    db: ["services/wsearch", "processes/searchindexer-exe"],
+    db: ["services/wsearch", "processes/searchindexer-exe", "processes/searchprotocolhost-exe", "processes/searchfilterhost-exe"],
   },
   cpu_energy_performance: {
     title: "CPU Energy Performance Preference (EPP) to 0",

@@ -297,6 +297,8 @@ export const FIX_GUIDES = {
     related: [
       { to: "/database/services/dosvc/", label: "the Delivery Optimization service", note: "What it does and why disabling it is the wrong lever." },
       { to: "/database/services/wuauserv/", label: "the Windows Update service", note: "What stops working if it is disabled." },
+      { to: "/database/services/usosvc/", label: "the Update Orchestrator Service", note: "Why Microsoft says not to disable it." },
+      { to: "/database/processes/tiworker-exe/", label: "TiWorker.exe, the Windows Modules Installer Worker", note: "Why it is busy during and after updates." },
     ],
     sources: {
       checked: CHECKED,

@@ -97,6 +97,10 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    `STRIPE_PRICE_COFFEE` is the one-off tip price. Leaving it unset is safe
    rather than broken: `/api/tip` answers 503 and both the site and the
    app hide or report the control instead of offering a dead button.
+   The tip serves every product on the Stripe account: `POST /api/tip`
+   `{ quantity, product }` returns `{ url }`, and `GET /api/tip/start?product=&quantity=`
+   redirects (303) to Checkout. Product ids and return pages are the
+   allow-list `TIP_PRODUCTS` in `src/stripe-policy.ts`.
 
    For the website's support form and reviews section, also set:
    `SUPPORT_EMAIL` (where support requests are delivered — defaults to the

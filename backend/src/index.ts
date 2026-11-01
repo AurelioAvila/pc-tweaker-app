@@ -89,6 +89,20 @@ const extraOrigins = (process.env.CORS_ORIGINS || "").split(",").map((s) => s.tr
 const allowedOrigins = [...new Set([...firstPartyOrigins, ...extraOrigins])];
 // Retry-After is not a CORS-safelisted response header: without exposing it
 // the apps and the site cannot read how long a 429 asks them to wait.
+// The coffee tip is shared by every product on the Stripe account, so its
+// POST also answers our other products' sites. Only that route: their pages
+// have no reason to read anything else this API returns.
+const tipOrigins = [
+  ...allowedOrigins,
+  "https://redaxa.getcertsprint.com",
+  "https://redexa.getcertsprint.com",
+  "https://framewitness.pages.dev",
+  "https://glarion.app",
+  "https://www.glarion.app",
+  "https://getcertsprint.com",
+  "https://www.getcertsprint.com",
+];
+app.use("/api/tip", cors({ origin: tipOrigins, exposedHeaders: ["Retry-After"] }));
 app.use(cors({ origin: allowedOrigins, exposedHeaders: ["X-Session-Token", "Retry-After"] }));
 
 // A generous service-wide ceiling protects every route, including cheap

@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { getPool } from "./db";
 import { sendMail } from "./mailer";
 import { SUPPORT_INBOX } from "./support-inbox";
+import { TIP_PRODUCTS, tipProduct } from "./stripe-policy";
 
 /**
  * The owner's notice for every money movement on the Stripe account, for every
@@ -165,8 +166,15 @@ export async function checkoutNotice(session: Stripe.Checkout.Session, livemode:
   if (!trial && !paidOnce) return null;
   let items: { description?: string | null; quantity?: number | null }[] = session.line_items?.data ?? [];
   if (!items.length && stripe?.checkout) items = (await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 })).data;
-  const product = items.map((i) => `${i.quantity && i.quantity > 1 ? `${i.quantity} × ` : ""}${i.description ?? "item"}`).join(", ")
-    || session.metadata?.product || "Unknown product";
+  // A tip's line item is the shared "Buy me a coffee" price; the product it
+  // supports is only in its metadata (stripe-policy.ts TIP_PRODUCTS).
+  const tipId = session.metadata?.tip_product ? tipProduct(session.metadata.tip_product) : null;
+  const tipFor = tipId ? TIP_PRODUCTS[tipId].name : null;
+  const coffees = items.reduce((n, i) => n + (i.quantity ?? 1), 0);
+  const product = tipFor
+    ? `${coffees > 1 ? `${coffees} × ` : ""}Coffee for ${tipFor}`
+    : items.map((i) => `${i.quantity && i.quantity > 1 ? `${i.quantity} × ` : ""}${i.description ?? "item"}`).join(", ")
+      || session.metadata?.product || "Unknown product";
   const plan = session.metadata?.plan ?? null;
   const customer = session.customer_details;
   const customerId = idOf(session.customer as string | { id: string } | null);
@@ -202,13 +210,14 @@ export async function checkoutNotice(session: Stripe.Checkout.Session, livemode:
     );
   }
   const amount = money(session.amount_total!, session.currency ?? "eur");
+  const reason = tipFor ? "Tip" : "One-off purchase";
   return render(
-    `${amount} · ${titled(product, plan)} — One-off purchase · ${order}`,
-    `One-off purchase: ${amount} for ${product}.`,
+    `${amount} · ${titled(product, plan)} — ${reason} · ${order}`,
+    `${reason}: ${amount} for ${product}.`,
     [
       ["Order ID", order],
       ["Amount paid", amount],
-      ["Reason", "One-off purchase"],
+      ["Reason", reason],
       ["Invoice", invoiceNumber, invoiceId ? dashboard(livemode, `invoices/${invoiceId}`) : undefined],
       ["Paid at", romeTime(session.created)],
       ["Stripe payment", paymentId, paymentId ? dashboard(livemode, `payments/${paymentId}`) : undefined],

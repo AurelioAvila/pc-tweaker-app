@@ -70,6 +70,16 @@ test("one-off checkouts of any product are told once, trials as trials, paid sub
   assert.match(order.notice.subject, /^€39\.99 · 2 × Pet grooming glove — One-off purchase/);
   assert.ok(order.notice.text.includes("Metadata orderId: HV-1042"));
 
+  // A coffee: the shared "Buy me a coffee" Price, the product only in metadata.
+  const tip = { ...lifetime, id: "cs_tip", amount_total: 300, payment_intent: "pi_tip", metadata: { tip_product: "redaxa" },
+    line_items: { data: [{ description: "Buy me a coffee", quantity: 3 }] } };
+  const coffee = await ownerNoticeFor(event("checkout.session.completed", tip), null);
+  assert.equal(coffee.notice.subject, `€3.00 · 3 × Coffee for Redaxa — Tip · ${orderId("pi_tip")}`);
+  assert.ok(coffee.notice.text.includes("Reason: Tip"));
+  const single = await ownerNoticeFor(event("checkout.session.completed", { ...tip, amount_total: 100,
+    line_items: { data: [{ description: "Buy me a coffee", quantity: 1 }] } }), null);
+  assert.match(single.notice.subject, /^€1\.00 · Coffee for Redaxa — Tip · ORD-/);
+
   const trial = { ...lifetime, id: "cs_trial", mode: "subscription", amount_total: 0, payment_status: "no_payment_required",
     subscription: "sub_t", metadata: { product: "uninstaller", plan: "annual" } };
   const started = await ownerNoticeFor(event("checkout.session.completed", trial), { ...stripeWithTrialEnd(1793222400), checkout: lister.checkout });

@@ -105,6 +105,8 @@ const tipOrigins = [
 app.use("/api/tip", cors({ origin: tipOrigins, exposedHeaders: ["Retry-After"] }));
 // The shared mailing list: Redaxa's site posts its Linux waitlist form here.
 app.use("/api/newsletter", cors({ origin: [...allowedOrigins, "https://redaxa.getcertsprint.com"], exposedHeaders: ["Retry-After"] }));
+// Redaxa's site reads the public price list (the crypto coffee price) from here. GET only.
+app.use("/api/billing/prices", cors({ origin: [...allowedOrigins, "https://redaxa.getcertsprint.com"], methods: ["GET"], exposedHeaders: ["Retry-After"] }));
 app.use(cors({ origin: allowedOrigins, exposedHeaders: ["X-Session-Token", "Retry-After"] }));
 
 // A generous service-wide ceiling protects every route, including cheap

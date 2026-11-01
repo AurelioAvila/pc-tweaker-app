@@ -41,8 +41,10 @@ import {
 } from "./types";
 import {
   TagIcon,
+  GridIcon,
   HistoryIcon,
   LayersIcon,
+  TrashIcon,
   MagnifierIcon,
   RadarIcon,
   RocketIcon,
@@ -791,7 +793,7 @@ function App() {
     {
       key: "overview",
       label: s.tabs.overview,
-      icon: <HeartPulseIcon className="h-[18px] w-[18px]" />,
+      icon: <GridIcon className="h-[18px] w-[18px]" />,
     },
     { key: "scan", label: s.tabs.scan, icon: <RadarIcon className="h-[18px] w-[18px]" /> },
     { key: "health", label: s.tabs.health, icon: <HeartPulseIcon className="h-[18px] w-[18px]" /> },
@@ -804,7 +806,7 @@ function App() {
     { key: "gaming", label: s.tabs.gaming, icon: CATEGORY_STYLE.gaming.icon },
     { key: "privacy", label: s.tabs.privacy, icon: CATEGORY_STYLE.privacy.icon },
     { key: "startup", label: s.tabs.startup, icon: <RocketIcon className="h-[18px] w-[18px]" /> },
-    { key: "debloat", label: "Debloat", icon: <LayersIcon className="h-[18px] w-[18px]" /> },
+    { key: "debloat", label: "Debloat", icon: <TrashIcon className="h-[18px] w-[18px]" /> },
     { key: "ui", label: s.tabs.ui, icon: CATEGORY_STYLE.ui.icon },
     { key: "maintenance", label: s.tabs.maintenance, icon: CATEGORY_STYLE.maintenance.icon },
     { key: "profiles", label: s.tabs.profiles, icon: <LayersIcon className="h-[18px] w-[18px]" /> },
@@ -1133,9 +1135,9 @@ function App() {
               {/* The pricing screen leads with its own hero title, so
                 the section heading would just be a duplicate above it. */}
               <div className="min-w-0">
-                {!showPricing && filter !== "debloat" && (
-                  <h1 className="type-page page-title">{currentLabel}</h1>
-                )}
+                {/* Debloat names itself too: without the title its header row
+                    was an empty band with a rule under it. */}
+                {!showPricing && <h1 className="type-page page-title">{currentLabel}</h1>}
                 {/* Overview and Startup provide their own counts. */}
                 {!showOverview &&
                   !showScan &&

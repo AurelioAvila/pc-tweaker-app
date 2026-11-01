@@ -488,6 +488,8 @@ export const PLAN_STATE_COPY: Record<
   Lang,
   {
     includedInPlan: string;
+    /** In place of the price on the Lifetime card its owner sees. */
+    paid: string;
     trialBadge: string;
     daysLeft: string;
     oneDayLeft: string;
@@ -499,6 +501,7 @@ export const PLAN_STATE_COPY: Record<
 > = {
   en: {
     includedInPlan: "Included in your plan",
+    paid: "Paid",
     trialBadge: "Trial — {left}",
     daysLeft: "{days} days left",
     oneDayLeft: "1 day left",
@@ -510,6 +513,7 @@ export const PLAN_STATE_COPY: Record<
   },
   it: {
     includedInPlan: "Incluso nel tuo piano",
+    paid: "Pagato",
     trialBadge: "Prova — {left}",
     daysLeft: "{days} giorni rimasti",
     oneDayLeft: "1 giorno rimasto",
@@ -521,6 +525,7 @@ export const PLAN_STATE_COPY: Record<
   },
   fr: {
     includedInPlan: "Inclus dans votre offre",
+    paid: "Payé",
     trialBadge: "Essai — {left}",
     daysLeft: "{days} jours restants",
     oneDayLeft: "1 jour restant",
@@ -532,6 +537,7 @@ export const PLAN_STATE_COPY: Record<
   },
   es: {
     includedInPlan: "Incluido en tu plan",
+    paid: "Pagado",
     trialBadge: "Prueba — {left}",
     daysLeft: "quedan {days} días",
     oneDayLeft: "queda 1 día",
@@ -543,6 +549,7 @@ export const PLAN_STATE_COPY: Record<
   },
   de: {
     includedInPlan: "In deinem Tarif enthalten",
+    paid: "Bezahlt",
     trialBadge: "Testphase – {left}",
     daysLeft: "noch {days} Tage",
     oneDayLeft: "noch 1 Tag",
@@ -554,6 +561,7 @@ export const PLAN_STATE_COPY: Record<
   },
   pt: {
     includedInPlan: "Incluído no seu plano",
+    paid: "Pago",
     trialBadge: "Avaliação — {left}",
     daysLeft: "faltam {days} dias",
     oneDayLeft: "falta 1 dia",

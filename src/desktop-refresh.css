@@ -462,7 +462,7 @@
   background: color-mix(in oklab, var(--accent) 18%, var(--bg-raised));
 }
 .desktop-refresh
-  :where(button, a, input, select, textarea, [role="switch"], [tabindex]):focus-visible {
+  :where(button, a, input, select, textarea, summary, [role="switch"], [tabindex]):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }

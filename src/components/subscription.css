@@ -161,6 +161,12 @@
   color: var(--danger);
   background: color-mix(in oklab, var(--danger) 10%, transparent);
 }
+/* "Cancel subscription" ends on the same line as the values above it; the
+   hover fill still keeps 6px from the card edge. */
+.sub-card > .sub-actions > .sub-button-quiet {
+  margin-right: -10px;
+  padding-inline: 10px;
+}
 .sub-button-danger {
   border-color: color-mix(in oklab, var(--danger) 70%, transparent);
   background: color-mix(in oklab, var(--danger) 16%, var(--surface-1));
@@ -258,6 +264,11 @@
 .sub-reason:has(input:focus-visible) {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+/* The card carries the keyboard ring; a second one on the radio itself drew
+   two rings round one choice. */
+.sub-reason input:focus-visible {
+  outline: none;
 }
 .sub-comment {
   display: grid;

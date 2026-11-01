@@ -175,11 +175,13 @@
   height: 64px;
   border-bottom: 1px solid var(--border-subtle);
 }
-/* Clips the sliding chart only, so the tooltip and labels can sit outside. */
+/* Clips the sliding chart only, so the tooltip and labels can sit outside.
+   Only the sides are cut (for the one-second glide): above and below stay
+   open, so a peak at 100% keeps its whole dot and label. */
 .live-clip {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  clip-path: inset(-40px 0 -12px 0);
 }
 /* The chart is drawn once per reading and slid by the compositor, so the
    one-second glide costs no repaint. */
@@ -532,6 +534,23 @@
   font-variant-numeric: tabular-nums;
   transform: translateX(-50%);
   white-space: nowrap;
+}
+/* At either end the dot and its halo sit just inside the side clip (a few
+   pixels from the exact point) instead of being cut in half. */
+.live-peak[data-edge="end"] {
+  margin-left: -10px;
+}
+.live-peak[data-edge="start"] {
+  margin-left: 3px;
+}
+.live-peak[data-edge="end"] small {
+  right: -3px;
+  left: auto;
+  transform: none;
+}
+.live-peak[data-edge="start"] small {
+  left: -3px;
+  transform: none;
 }
 .live-axis-x {
   display: flex;

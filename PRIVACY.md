@@ -212,6 +212,16 @@ bonus. We replace them with random values 24 months after the purchase. If the
 person who invited you deletes their account, your invitation ends; a checkout
 you had already opened keeps its discount.
 
+## Telegram
+
+If you choose "Unlock with Telegram" in the app, our Telegram bot links your
+account to your numeric Telegram user id and asks Telegram whether that id is a
+member of our channel. We keep the link, the one-time request (valid ten
+minutes), the bonus it gave and, if someone invited you through the bot, who
+invited you. We do not receive your phone number or your messages, and the
+bot only writes to you when you start it. You can stop the bot at any time in
+Telegram; deleting your account removes the link to it.
+
 ## Email
 
 Transactional email is delivered through our configured email provider. The

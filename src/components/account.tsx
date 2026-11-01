@@ -15,6 +15,8 @@ import { AuthState, ProcessGuardStatus, type AccountDevice, type ProductPlan } f
 import { CheckIcon, CrownIcon } from "./icons";
 import { TRIAL_COPY } from "./trial-copy";
 import { REFERRAL_COPY } from "./referral-copy";
+import { TELEGRAM_COPY } from "./telegram-copy";
+import { telegramAvailable, unlockWithTelegram } from "../telegram";
 import { trialLeft, trialUsed, type BillingStatus } from "../trial";
 import { productPlanLabel } from "../plan-label";
 import { Avatar } from "./ui";
@@ -473,6 +475,30 @@ export function AccountMenu({
   };
   const [errReports, setErrReports] = useState(() => errorReportsEnabled());
   const isPro = auth.status === "authenticated" && (auth.isPro || auth.bonusActive === true);
+  // "Unlock with Telegram" (backend src/telegram.ts): shown only while the server has the bot on.
+  const [telegramOn, setTelegramOn] = useState(false);
+  const [telegramBusy, setTelegramBusy] = useState(false);
+  useEffect(() => {
+    if (!open || auth.status !== "authenticated") return;
+    let alive = true;
+    void telegramAvailable().then((on) => alive && setTelegramOn(on));
+    return () => {
+      alive = false;
+    };
+  }, [open, auth.status]);
+  async function startTelegram() {
+    const t = TELEGRAM_COPY[lang];
+    setTelegramBusy(true);
+    try {
+      const result = await unlockWithTelegram(() => pushToast("success", t.notMember));
+      pushToast(
+        result === "granted" || result === "linked" || result === "already" ? "success" : "error",
+        t[result],
+      );
+    } finally {
+      setTelegramBusy(false);
+    }
+  }
 
   // Device-local profile photo, kept as a file by the Rust side; there is no
   // upload — see fileToAvatarDataUrl in lib.ts and src-tauri/src/avatar.rs.
@@ -707,6 +733,16 @@ export function AccountMenu({
                 }}
               >
                 {REFERRAL_COPY[lang].menuInvite}
+              </button>
+            )}
+            {telegramOn && auth.status === "authenticated" && (
+              <button
+                className="account-support"
+                disabled={telegramBusy}
+                aria-busy={telegramBusy}
+                onClick={() => void startTelegram()}
+              >
+                {telegramBusy ? TELEGRAM_COPY[lang].waiting : TELEGRAM_COPY[lang].menu}
               </button>
             )}
             <details name="account-settings" className="account-setting">

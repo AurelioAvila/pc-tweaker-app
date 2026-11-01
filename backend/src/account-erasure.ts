@@ -70,6 +70,11 @@ export async function eraseAccount(
       Object.assign(counts, await eraseUserReferralData(tx, userId, now));
       counts.checkoutReminders =
         (await tx.query("DELETE FROM checkout_reminders WHERE user_id=$1", [userId])).rowCount ?? 0;
+      // Telegram (PRIVACY.md): the link and pending requests go; the bonus rows stay, like trial claims,
+      // so a new account cannot take the same bonus again.
+      counts.telegramLinks =
+        (await tx.query("UPDATE telegram_users SET user_id=NULL WHERE user_id=$1", [userId])).rowCount ?? 0;
+      await tx.query("DELETE FROM telegram_intents WHERE user_id=$1", [userId]);
       counts.accounts = (await tx.query("DELETE FROM users WHERE id=$1", [userId])).rowCount ?? 0;
     }
     counts.newsletter =

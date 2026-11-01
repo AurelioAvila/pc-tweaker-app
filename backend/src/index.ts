@@ -31,6 +31,7 @@ import { startOwnerNoticeWorker } from "./owner-sales";
 import { copyFor, fromAcceptLanguage, isLocale, type Copy } from "./emails/copy";
 import { TRIAL_DAYS, maintainTrialClaims } from "./trial";
 import { referralRoutes } from "./routes/referrals";
+import { telegramRoutes } from "./routes/telegram";
 import { startReferralWorker } from "./referral-stripe";
 
 const app = express();
@@ -336,6 +337,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/account", accountRoutes);
 app.use("/api/license", licenseRoutes);
 app.use("/api/referrals", referralRoutes);
+app.use("/api/telegram", telegramRoutes());
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/newsletter", newsletterRoutes);

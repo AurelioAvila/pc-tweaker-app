@@ -2,8 +2,10 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://pctweaker.app/database/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/audiodg-exe/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/processes/backgroundtaskhost-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/conhost-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/csrss-exe/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/processes/ctfmon-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/dllhost-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/dwm-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/explorer-exe/</loc><lastmod>2026-11-01</lastmod></url>
@@ -11,28 +13,56 @@
   <url><loc>https://pctweaker.app/database/processes/lsaiso-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/lsass-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/msedgewebview2-exe/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/processes/msiexec-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/msmpeng-exe/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/processes/rundll32-exe/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/processes/searchfilterhost-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/searchindexer-exe/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/processes/searchprotocolhost-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/services-exe/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/processes/smartscreen-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/smss-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/spoolsv-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/svchost-exe/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/processes/tiworker-exe/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/processes/unsecapp-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/wininit-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/winlogon-exe/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/processes/wmiprvse-exe/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/processes/wudfhost-exe/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/appxsvc/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/audiosrv/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/bits/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/cdpsvc/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/clipsvc/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/cryptsvc/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/diagtrack/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/dmwappushservice/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/dosvc/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/dps/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/eventlog/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/fontcache/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/iphlpsvc/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/lfsvc/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/mapsbroker/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/pcasvc/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/rpcss/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/schedule/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/spooler/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/sppsvc/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/ssdpsrv/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/stisvc/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/sysmain/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/themes/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/trkwks/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/trustedinstaller/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/usosvc/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/wbiosrvc/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/wersvc/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/windefend/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/winmgmt/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/wmiapsrv/</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://pctweaker.app/database/services/wpnservice/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/wsaifabricsvc/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/wsearch/</loc><lastmod>2026-11-01</lastmod></url>
   <url><loc>https://pctweaker.app/database/services/wuauserv/</loc><lastmod>2026-11-01</lastmod></url>

@@ -22,6 +22,8 @@ test("only a verified free account can create a checkout", async () => {
   assert.equal(await flow.signIn("test@example.test", "dummy"), "ready");
   await flow.checkout("lifetime");
   assert.deepEqual(calls, [["token", "lifetime"]]);
+  await flow.checkout("lifetime", true);
+  assert.deepEqual(calls.at(-1), ["token", "lifetime", true]);
 });
 test("only recurring Pro accounts can choose Lifetime upgrade", async () => {
  const apiFor=plan=>({signIn:async()=>"token",account:async()=>({...baseAccount,isPro:true,plan}),checkout:async()=>"https://checkout.stripe.com/c/pay/test"});

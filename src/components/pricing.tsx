@@ -10,6 +10,7 @@ import { PLAN_STATE_COPY, PRICING_COPY, trialBadgeText } from "./pricing-copy";
 import { TRIAL_COPY } from "./trial-copy";
 import { trialLeft, trialOffer, trialUsed, type BillingStatus, type PriceList } from "../trial";
 import { useLifetimeOffer } from "./use-lifetime-offer";
+import { CryptoLifetimeOption } from "./crypto-pay";
 import { usePromo } from "./use-promo";
 import "./pricing.css";
 
@@ -37,8 +38,8 @@ export function PricingPanel({
   billing?: BillingStatus | null;
   freeTweakCount: number;
   /** `startTrial` is set only when a trial is on offer: true for the
-   *  trial button, false for "Subscribe now". */
-  onChoosePro: (plan: ProPlan, startTrial?: boolean) => void | Promise<void>;
+   *  trial button, false for "Subscribe now". `crypto`: Lifetime in USDC. */
+  onChoosePro: (plan: ProPlan, startTrial?: boolean, crypto?: boolean) => void | Promise<void>;
   onManageBilling: () => void | Promise<void>;
   onOpenLifetimeTools: () => void;
 }) {
@@ -53,7 +54,7 @@ export function PricingPanel({
   }, []);
   const [selectedPeriod, setPeriod] = useState<"monthly" | "annual" | null>(null);
   const period = selectedPeriod ?? (heldPlan === "monthly" ? "monthly" : "annual");
-  const [busy, setBusy] = useState<ProPlan | "manage" | null>(null);
+  const [busy, setBusy] = useState<ProPlan | "manage" | "crypto" | null>(null);
   const [busyTrial, setBusyTrial] = useState<boolean | undefined>(undefined);
   const actionPending = useRef(false);
   const campaign = useLifetimeOffer();
@@ -140,7 +141,7 @@ export function PricingPanel({
       )
     : "";
 
-  async function act(plan: ProPlan | "manage", startTrial?: boolean) {
+  async function act(plan: ProPlan | "manage", startTrial?: boolean, crypto = false) {
     if (
       actionPending.current ||
       (plan !== "manage" && previewing) ||
@@ -148,10 +149,10 @@ export function PricingPanel({
     )
       return;
     actionPending.current = true;
-    setBusy(plan);
+    setBusy(crypto ? "crypto" : plan);
     setBusyTrial(startTrial);
     try {
-      await (plan === "manage" ? onManageBilling() : onChoosePro(plan, startTrial));
+      await (plan === "manage" ? onManageBilling() : onChoosePro(plan, startTrial, crypto));
     } finally {
       actionPending.current = false;
       setBusy(null);
@@ -496,6 +497,15 @@ export function PricingPanel({
                     ? s.pricing.switchToLifetime
                     : s.pricing.lifetimeCta}
               </button>
+            )}
+            {!ownsLifetime && prices?.crypto?.lifetimeUsd && (
+              <CryptoLifetimeOption
+                lang={lang}
+                usdCents={prices.crypto.lifetimeUsd}
+                disabled={busy !== null || !campaign.available || previewing}
+                busy={busy === "crypto"}
+                onPay={() => void act("lifetime", undefined, true)}
+              />
             )}
           </div>
           <ul className="pricing-highlights">

@@ -102,6 +102,20 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    redirects (303) to Checkout. Product ids and return pages are the
    allow-list `TIP_PRODUCTS` in `src/stripe-policy.ts`.
 
+   Crypto (Stripe's "Stablecoins and Crypto" method, USDC) for Lifetime and
+   tips stays off until `CRYPTO_CHECKOUT_ENABLED=1`, which is set only after
+   Stripe has approved the method on the account. Off: `/api/checkout/crypto`
+   and `/api/web-checkout/crypto` answer 404, `/api/tip` with
+   `method: "crypto"` answers 503 and `/api/billing/prices` reports
+   `crypto: { available: false }`, so no client shows the option. On: the
+   same euro Price as the card sale is charged in USD, converted at Stripe's
+   FX Quotes `base_rate` (no FX fee passed on), or at `CRYPTO_USD_PER_EUR`
+   (e.g. `1.0850`, refreshed by hand) when the account has no access to that
+   preview API; without either rate crypto stays unavailable. Crypto sessions
+   run outside Managed Payments (`managed_payments.enabled=false`, crypto as
+   the only method, no automatic tax): sold directly, not through Link. Card
+   sessions are unchanged. See `cryptoSessionParams` in `src/stripe-policy.ts`.
+
    For the website's support form and reviews section, also set:
    `SUPPORT_EMAIL` (where support requests are delivered — defaults to the
    product alias support@pctweaker.app; it is never exposed to any client) and `ADMIN_TOKEN`

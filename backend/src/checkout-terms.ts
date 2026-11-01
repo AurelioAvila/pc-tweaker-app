@@ -12,6 +12,11 @@ export function checkoutTerms(plan: string, trial: boolean, params: Stripe.Check
     campaign: params.metadata?.lifetime_campaign_id ?? null,
     campaignEnds: params.metadata?.lifetime_campaign_ends_at ?? null,
     automaticTax: params.automatic_tax?.enabled ?? null,
+    // Only crypto sessions set these, so every card reservation keeps its existing hash.
+    ...(params.payment_method_types ? {
+      methods: params.payment_method_types,
+      amounts: (params.line_items ?? []).map(item => item.price_data ? [item.price_data.currency, item.price_data.unit_amount ?? null] : null),
+    } : {}),
   };
   return `${plan}:${createHash("sha256").update(JSON.stringify(terms)).digest("hex")}`;
 }

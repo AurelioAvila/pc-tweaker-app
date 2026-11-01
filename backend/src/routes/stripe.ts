@@ -8,11 +8,15 @@ import { PRODUCTS, isKnownProduct, productEntitlement, upsertEntitlement, revoke
 import {
   checkoutSessionParams,
   billingProductFromEvidence,
+  cryptoEnabled,
+  cryptoSessionParams,
   formatChargedAmount,
   isSettledCheckout,
   planFromPrice,
   tipProduct,
   tipSessionParams,
+  usableRate,
+  usdFromEur,
   withQuery,
 } from "../stripe-policy";
 import { sendMail } from "../mailer";
@@ -200,7 +204,9 @@ type CheckoutCreationEffects = {
   guardedReservationOpen?: (userId: number, product: Product) => Promise<boolean>;
   expireOwnSession?: (userId: number, sessionId: string) => Promise<boolean>;
   /** Experimental injection for isolated integration tests; not wired to production. */
-  guardedCreate?: (input: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean }) => Promise<{ url: string }>;
+  guardedCreate?: (input: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean; crypto?: boolean }) => Promise<{ url: string }>;
+  /** The USD amount for a euro Price when paying in crypto; defaults to Stripe (cryptoQuote below). */
+  cryptoQuote?: (priceId: string) => Promise<CryptoQuote | null>;
 };
 
 /** Wiring shared by the opt-in runtime path and isolated tests. */
@@ -217,7 +223,7 @@ export function createGuardedCheckout(deps: {
   /** Closes one of them while Stripe still reports it open and unpaid; false when that cannot be confirmed. */
   expireUnreserved?: (userId: number, sessionId: string) => Promise<boolean>;
 }) {
-  return async ({ userId, product, plan, trial, params, replaceDifferentTerms = false }: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean }) => {
+  return async ({ userId, product, plan, trial, params, replaceDifferentTerms = false, crypto = false }: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean; crypto?: boolean }) => {
     const entitlement = await deps.getEntitlement(userId, product);
     const upgrading = entitlement.active && product === "pctweaker" && plan === "lifetime" &&
       (entitlement.plan === "monthly" || entitlement.plan === "annual");
@@ -244,8 +250,9 @@ export function createGuardedCheckout(deps: {
       }
       unreservedSessionOpen = async () => (await openUnreserved(userId, product)).length > 0;
     }
+    // A referral checkout is a card checkout under Managed Payments: never for a crypto sale.
     const provider = stripeGuardedProvider(deps.sessions, params, 5000,
-      tagged => deps.referral(userId, plan, tagged), deps.closeReferral);
+      crypto ? undefined : tagged => deps.referral(userId, plan, tagged), deps.closeReferral);
     // A trial and an immediate payment have different terms even for the same
     // plan; reusing the other session would misrepresent the requested offer.
     return guardedCheckout(deps.reservations, provider, userId, product, checkoutTerms(plan, trial, params), replaceDifferentTerms, { unreservedSessionOpen });
@@ -314,7 +321,7 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
   // Disabled unless explicitly configured. A pre-launch audit of existing
   // unreserved sessions and referral flows is required before activation.
   ...(CHECKOUT_GUARD_ENABLED ? {
-    guardedCreate: async (input: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean }) => {
+    guardedCreate: async (input: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean; crypto?: boolean }) => {
       if (!stripe) throw new Error("Stripe is unavailable");
       return createGuardedCheckout({
         reservations: new WebCheckoutReservations(getPool()),
@@ -374,9 +381,10 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
     return expireUnreservedSession(stripe.checkout.sessions, userId, sessionId,
       session => closeExpiredReferral(userId, session as Stripe.Checkout.Session));
   },
-}, { replaceDifferentTerms = false }: { replaceDifferentTerms?: boolean } = {}) {
+}, { replaceDifferentTerms = false, crypto = false }: { replaceDifferentTerms?: boolean; crypto?: boolean } = {}) {
   return async (req: Request, res: Response) => {
-    const planKey = String(req.body?.plan || "annual") as PlanKey;
+    // Crypto sells Lifetime only: a subscription cannot renew from a wallet here.
+    const planKey = String(req.body?.plan || (crypto ? "lifetime" : "annual")) as PlanKey;
     const product = req.body?.product ?? "pctweaker";
     // The customer's choice: "Start 3-day trial" (true) or "Subscribe now"
     // (false or absent, which is also what apps without the trial send).
@@ -390,6 +398,12 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
     // for the same reason as before. The product goes through an allowlist.
     if (!isKnownProduct(product)) {
       return res.status(400).json({ error: "unknown product" });
+    }
+    if (crypto) {
+      if (!cryptoEnabled(effects.environment)) return res.status(404).json({ error: "not found" });
+      if (product !== "pctweaker" || planKey !== "lifetime" || startTrial === true) {
+        return res.status(400).json({ error: "Crypto is accepted for Lifetime only." });
+      }
     }
     if (!isConfigured) {
       return res.status(503).json({ error: "database not configured" });
@@ -434,7 +448,7 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
         locale = rows[0]?.locale ?? null;
       }
 
-      const params: Stripe.Checkout.SessionCreateParams = checkoutSessionParams({
+      let params: Stripe.Checkout.SessionCreateParams = checkoutSessionParams({
         priceId,
         mode: plan.mode,
         userId: String(req.userId),
@@ -480,6 +494,14 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
           params.subscription_data = { ...params.subscription_data, metadata: { ...params.subscription_data.metadata, promo_id: promo.id } };
         }
       }
+      // Same Price as the card sale above (promo included), in USD at today's rate.
+      if (crypto) {
+        const quote = await (effects.cryptoQuote ?? ((id: string) => cryptoQuote(id, effects.environment)))(String(params.line_items?.[0]?.price));
+        if (!quote) {
+          return res.status(503).json({ error: "Paying in crypto is temporarily unavailable. You can pay by card instead.", code: "crypto_unavailable" });
+        }
+        params = cryptoSessionParams(params as unknown as Record<string, any>, quote) as Stripe.Checkout.SessionCreateParams;
+      }
       // Asked for by the customer, granted by the server: subscription plans
       // only, never Lifetime, and only for an account that has not had this
       // product's trial (re-checked when Stripe creates the subscription).
@@ -511,7 +533,7 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       // Present when CHECKOUT_GUARD_ENABLED=1 at startup (referral sessions included); otherwise the
       // unguarded path below, which still yields to any guarded reservation (the cutover bridge).
       if (effects.guardedCreate) {
-        const result = await effects.guardedCreate({ userId: req.userId as number, product, plan: planKey, trial, params, replaceDifferentTerms });
+        const result = await effects.guardedCreate({ userId: req.userId as number, product, plan: planKey, trial, params, replaceDifferentTerms, crypto });
         return res.json({ url: result.url, trial, trial_days: TRIAL_DAYS });
       }
       // Two clicks within the same minute get the same page, not two that
@@ -519,9 +541,9 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       const userId = req.userId as number;
       if (effects.guardedReservationOpen && await effects.guardedReservationOpen(userId, product))
         throw new GuardedCheckoutError("other_checkout_pending");
-      const referred = await referralCheckout(userId, planKey, params);
+      const referred = crypto ? null : await referralCheckout(userId, planKey, params);
       const session = referred ? { url: referred.url, id: referred.sessionId } : await effects.createSession(params,
-        `checkout:${req.userId}:${product}:${planKey}:${trial ? "trial" : "now"}:${Math.floor(effects.now() / 60_000)}`);
+        `checkout:${req.userId}:${product}:${planKey}:${trial ? "trial" : "now"}${crypto ? ":crypto" : ""}:${Math.floor(effects.now() / 60_000)}`);
       // Checked again after creation: a guarded instance that reserved meanwhile has either seen this
       // session in its own post-creation check or is seen here, so the two are never payable together.
       if (effects.guardedReservationOpen && await effects.guardedReservationOpen(userId, product)) {
@@ -552,9 +574,14 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
   };
 }
 router.post("/checkout", checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler(undefined, { replaceDifferentTerms: true }));
+// Lifetime in USDC: the same guards as above, behind CRYPTO_CHECKOUT_ENABLED (404 when off).
+const cryptoGate = (_req: Request, res: Response, next: NextFunction) =>
+  cryptoEnabled(process.env) ? next() : res.status(404).json({ error: "not found" });
+router.post("/checkout/crypto", cryptoGate, checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler(undefined, { replaceDifferentTerms: true, crypto: true }));
 // The website cannot create a checkout unless the shared server guard is on.
 if (CHECKOUT_GUARD_ENABLED) {
   router.post("/web-checkout", checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler());
+  router.post("/web-checkout/crypto", cryptoGate, checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler(undefined, { crypto: true }));
   router.post("/web-checkout/cancel", requireAuth, checkoutLimiter, requireStripe, async (req, res) => {
     if (!stripe || !isConfigured) return res.status(503).json({ error: "Checkout is temporarily unavailable." });
     try {
@@ -584,28 +611,111 @@ const RECURRING_PLANS = [
 
 export type PriceView = { amount: number; currency: string; interval: string; tax_behavior: string | null };
 type PriceReader = (id: string) => Promise<Stripe.Price>;
-const priceCache = new Map<string, { until: number; value: Promise<PriceView | null> }>();
+const priceCache = new Map<string, { until: number; value: Promise<Stripe.Price | null> }>();
+
+/** A Price as Stripe has it, cached ten minutes (one after a failure). */
+function cachedPrice(id: string, read: PriceReader, now: number): Promise<Stripe.Price | null> {
+  const cached = priceCache.get(id);
+  if (cached && cached.until > now) return cached.value;
+  const entry = { until: now + 10 * 60_000, value: Promise.resolve<Stripe.Price | null>(null) };
+  entry.value = read(id).catch((err: Error) => {
+    console.error("could not read a Stripe price:", err.message);
+    entry.until = now + 60_000;
+    return null;
+  });
+  priceCache.set(id, entry);
+  return entry.value;
+}
 
 /** A Price's amount as Stripe has it, cached ten minutes (one after a
  *  failure): the apps and the site never write a price in their code. */
 export function stripePrice(id: string | undefined, read: PriceReader | null = stripe ? (price) => stripe!.prices.retrieve(price) : null, now = Date.now()): Promise<PriceView | null> {
   if (!id || !read) return Promise.resolve(null);
-  const cached = priceCache.get(id);
-  if (cached && cached.until > now) return cached.value;
-  const entry = { until: now + 10 * 60_000, value: Promise.resolve<PriceView | null>(null) };
-  entry.value = read(id).then((price) => price.active && price.unit_amount != null && price.recurring
+  return cachedPrice(id, read, now).then((price) => price?.active && price.unit_amount != null && price.recurring
     ? { amount: price.unit_amount, currency: price.currency, interval: price.recurring.interval, tax_behavior: price.tax_behavior ?? null }
-    : null).catch((err: Error) => {
-      console.error("could not read a Stripe price:", err.message);
-      entry.until = now + 60_000;
-      return null;
-    });
-  priceCache.set(id, entry);
-  return entry.value;
+    : null);
+}
+
+/**
+ * The EUR -> USD rate for crypto sales. First Stripe's own: the FX Quotes API
+ * (a preview API, hence its own Stripe-Version), with lock_duration "none",
+ * which is free and only informational. Its `base_rate` is the rate before
+ * Stripe's FX fee, so the buyer pays the euro price and the fee stays with the
+ * seller: no surcharge for paying in crypto. If the account has no access to
+ * that API, CRYPTO_USD_PER_EUR (e.g. "1.0850", refreshed by hand) is used;
+ * with neither, crypto is unavailable. Cached ten minutes either way.
+ */
+export type CryptoRate = { usdPerEur: number; source: "stripe_fx" | "config" };
+const FX_QUOTES_VERSION = "2026-09-30.preview";
+let fxCache: { until: number; value: Promise<number | null> } | null = null;
+function stripeFxRate(now = Date.now()): Promise<number | null> {
+  if (!stripeSecretKey) return Promise.resolve(null);
+  if (fxCache && fxCache.until > now) return fxCache.value;
+  const value = fetch("https://api.stripe.com/v1/fx_quotes", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${stripeSecretKey}`, "Stripe-Version": FX_QUOTES_VERSION, "Content-Type": "application/x-www-form-urlencoded" },
+    body: "to_currency=usd&from_currencies[]=eur&lock_duration=none",
+    signal: AbortSignal.timeout(5000),
+  }).then(async (res) => {
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const quote = (await res.json()) as { rates?: { eur?: { rate_details?: { base_rate?: unknown } } } };
+    return usableRate(quote.rates?.eur?.rate_details?.base_rate);
+  }).catch((err: Error) => {
+    console.error("no Stripe FX quote for crypto, falling back to CRYPTO_USD_PER_EUR:", err.message);
+    return null;
+  });
+  fxCache = { until: now + 10 * 60_000, value };
+  return value;
+}
+
+export async function cryptoRate(environment: NodeJS.ProcessEnv = process.env, fx: () => Promise<number | null> = stripeFxRate): Promise<CryptoRate | null> {
+  const quoted = usableRate(await fx().catch(() => null));
+  if (quoted) return { usdPerEur: quoted, source: "stripe_fx" };
+  const fixed = usableRate(environment.CRYPTO_USD_PER_EUR);
+  return fixed ? { usdPerEur: fixed, source: "config" } : null;
+}
+
+/** What a euro one-off Price costs in USD today, and the Stripe product it
+ * belongs to. Null (crypto unavailable) for anything not a live euro one-off
+ * Price, or without a rate. */
+export type CryptoQuote = { usdMinor: number; eurMinor: number; product: string; rate: CryptoRate };
+export async function cryptoQuote(
+  priceId: string | undefined,
+  environment: NodeJS.ProcessEnv = process.env,
+  read: PriceReader | null = stripe ? (price) => stripe!.prices.retrieve(price) : null,
+  fx?: () => Promise<number | null>,
+): Promise<CryptoQuote | null> {
+  if (!priceId || !read) return null;
+  const [price, rate] = await Promise.all([cachedPrice(priceId, read, Date.now()), cryptoRate(environment, fx)]);
+  const product = typeof price?.product === "string" ? price.product : price?.product?.id;
+  if (!price?.active || price.unit_amount == null || price.currency !== "eur" || price.recurring || !product || !rate) return null;
+  return { usdMinor: usdFromEur(price.unit_amount, rate.usdPerEur), eurMinor: price.unit_amount, product, rate };
+}
+
+/** The `crypto` block of GET /api/billing/prices. Amounts in US cents, the
+ * Lifetime one at the price a card buyer pays right now (promotion included). */
+export async function publicCrypto(environment: NodeJS.ProcessEnv = process.env, read?: PriceReader | null, fx?: () => Promise<number | null>, now = Date.now()) {
+  if (!cryptoEnabled(environment)) return { available: false as const };
+  const lifetimeId = promoCheckout(environment, now, "STRIPE_PRICE_LIFETIME")?.price ?? environment.STRIPE_PRICE_LIFETIME;
+  const [lifetime, coffee] = await Promise.all([
+    cryptoQuote(lifetimeId, environment, read, fx),
+    cryptoQuote(environment.STRIPE_PRICE_COFFEE, environment, read, fx),
+  ]);
+  const rate = lifetime?.rate ?? coffee?.rate;
+  if (!rate) return { available: false as const };
+  return {
+    available: true as const,
+    currency: "usd",
+    token: "USDC",
+    usd_per_eur: rate.usdPerEur,
+    rate_source: rate.source,
+    lifetime: lifetime ? { usd: lifetime.usdMinor, eur: lifetime.eurMinor } : null,
+    coffee: coffee ? { usd: coffee.usdMinor, eur: coffee.eurMinor } : null,
+  };
 }
 
 /** GET /api/billing/prices: public, for the site and the plan screens. */
-export async function publicPrices(environment: NodeJS.ProcessEnv = process.env, read?: PriceReader | null) {
+export async function publicPrices(environment: NodeJS.ProcessEnv = process.env, read?: PriceReader | null, fx?: () => Promise<number | null>) {
   const prices = await Promise.all(RECURRING_PLANS.map(async ({ product, plan, env }) => {
     const price = await stripePrice(environment[env], read);
     return price && { product, plan, ...price };
@@ -615,6 +725,7 @@ export async function publicPrices(environment: NodeJS.ProcessEnv = process.env,
     trial_enabled: trialEnabled(environment),
     trial_days: TRIAL_DAYS,
     prices: prices.filter(Boolean),
+    crypto: await publicCrypto(environment, read, fx),
   };
 }
 
@@ -676,15 +787,31 @@ router.get("/billing/status", requireAuth, asyncRoute(async (req: Request, res: 
 // say thanks shouldn't need an account first, and there is nothing for that
 // payment to unlock. Shared by every product on the Stripe account: `product`
 // picks the name in the owner's notice and the site the tipper returns to.
-async function tipCheckoutUrl(source: Record<string, unknown> | undefined): Promise<{ status: number; error?: string; url?: string }> {
+// `method`: absent (or "card") is the card tip as before; "crypto" is the same
+// coffees in USDC (stripe-policy.ts cryptoSessionParams); anything else is 400.
+export async function tipCheckout(
+  source: Record<string, unknown> | undefined,
+  environment: NodeJS.ProcessEnv = process.env,
+  quote: (priceId: string) => Promise<CryptoQuote | null> = (id) => cryptoQuote(id, environment),
+): Promise<{ status: number; error: string } | { params: Stripe.Checkout.SessionCreateParams }> {
   const product = tipProduct(source?.product);
   if (!product) return { status: 400, error: "unknown product" };
-  const priceId = process.env.STRIPE_PRICE_COFFEE;
+  const method = source?.method === undefined || source.method === "" ? "card" : source.method;
+  if (method !== "card" && method !== "crypto") return { status: 400, error: "unknown method" };
+  const priceId = environment.STRIPE_PRICE_COFFEE;
   if (!priceId) return { status: 503, error: "STRIPE_PRICE_COFFEE is not configured" };
+  const params = tipSessionParams(priceId, environment.APP_URL || "https://pctweaker.app", source?.quantity, source?.utm, product);
+  if (method === "card") return { params };
+  const usd = cryptoEnabled(environment) ? await quote(priceId) : null;
+  if (!usd) return { status: 503, error: "crypto payments are not available" };
+  return { params: cryptoSessionParams(params, usd) as Stripe.Checkout.SessionCreateParams };
+}
+
+async function tipCheckoutUrl(source: Record<string, unknown> | undefined): Promise<{ status: number; error?: string; url?: string }> {
+  const prepared = await tipCheckout(source);
+  if ("error" in prepared) return prepared;
   try {
-    const session = await stripe!.checkout.sessions.create(
-      tipSessionParams(priceId, process.env.APP_URL || "https://pctweaker.app", source?.quantity, source?.utm, product),
-    );
+    const session = await stripe!.checkout.sessions.create(prepared.params);
     return session.url ? { status: 200, url: session.url } : { status: 500, error: "could not open checkout" };
   } catch (err) {
     console.error("tip checkout session creation failed:", err);
@@ -698,15 +825,15 @@ router.post("/tip", checkoutLimiter, tipLimiter, requireStripe, async (req: Requ
 });
 
 // The same, as a plain link for apps that can only open the system browser
-// and for sites on origins this API does not allow. Only `product` and
-// `quantity` are read: no caller-supplied URL can ever reach Checkout.
+// and for sites on origins this API does not allow. Only `product`,
+// `quantity` and `method` are read: no caller-supplied URL can ever reach Checkout.
 router.get("/tip/start", (req: Request, res: Response, next: NextFunction) => {
   // Express routes HEAD here too; a link checker must not mint sessions.
   if (req.method === "HEAD") return res.status(204).end();
   res.setHeader("X-Robots-Tag", "noindex, nofollow");
   next();
 }, checkoutLimiter, tipLimiter, requireStripe, async (req: Request, res: Response) => {
-  const { status, error, url } = await tipCheckoutUrl({ product: req.query.product, quantity: req.query.quantity });
+  const { status, error, url } = await tipCheckoutUrl({ product: req.query.product, quantity: req.query.quantity, method: req.query.method });
   if (error) return res.status(status).type("text").send(error);
   res.redirect(303, url!);
 });

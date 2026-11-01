@@ -210,7 +210,10 @@ export async function checkoutNotice(session: Stripe.Checkout.Session, livemode:
     );
   }
   const amount = money(session.amount_total!, session.currency ?? "eur");
-  const reason = tipFor ? "Tip" : "One-off purchase";
+  // USDC sessions run outside Managed Payments (stripe-policy.ts cryptoSessionParams):
+  // sold directly, not through Link, so Link collected no tax on them.
+  const crypto = session.metadata?.pay_with === "crypto";
+  const reason = `${tipFor ? "Tip" : "One-off purchase"}${crypto ? ", paid in crypto" : ""}`;
   return render(
     `${amount} · ${titled(product, plan)} — ${reason} · ${order}`,
     `${reason}: ${amount} for ${product}.`,
@@ -218,6 +221,7 @@ export async function checkoutNotice(session: Stripe.Checkout.Session, livemode:
       ["Order ID", order],
       ["Amount paid", amount],
       ["Reason", reason],
+      ["Payment method", crypto ? "Crypto (USDC) via Stripe, outside Managed Payments: sold directly, not through Link, no tax collected" : null],
       ["Invoice", invoiceNumber, invoiceId ? dashboard(livemode, `invoices/${invoiceId}`) : undefined],
       ["Paid at", romeTime(session.created)],
       ["Stripe payment", paymentId, paymentId ? dashboard(livemode, `payments/${paymentId}`) : undefined],

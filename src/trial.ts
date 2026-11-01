@@ -37,7 +37,21 @@ export type PriceList = {
   trialEnabled: boolean;
   trialDays: number;
   prices: (Price & { product: string })[];
+  /** US cents for paying in USDC, or null while crypto is off (the default). */
+  crypto: { lifetimeUsd: number | null; coffeeUsd: number | null } | null;
 };
+
+/** Only a well-formed "available" block turns the crypto option on. */
+function cryptoPrices(value: unknown): PriceList["crypto"] {
+  const v = value as Record<string, { usd?: unknown } | null> | null;
+  if (!v || typeof v !== "object" || (v as { available?: unknown }).available !== true) return null;
+  const usd = (entry: { usd?: unknown } | null | undefined) =>
+    entry && Number.isInteger(entry.usd) && (entry.usd as number) > 0
+      ? (entry.usd as number)
+      : null;
+  const crypto = { lifetimeUsd: usd(v.lifetime), coffeeUsd: usd(v.coffee) };
+  return crypto.lifetimeUsd || crypto.coffeeUsd ? crypto : null;
+}
 
 const STATES: EntitlementState[] = ["none", "trialing", "active", "blocked"];
 const REASONS: BlockedReason[] = ["none", "payment_failed", "canceled", "trial_already_used"];
@@ -116,6 +130,7 @@ export function parsePriceList(value: unknown): PriceList | null {
     prices: priceEntries(v.prices).flatMap((p) =>
       p.product ? [{ ...p, product: p.product }] : [],
     ),
+    crypto: cryptoPrices(v.crypto),
   };
 }
 

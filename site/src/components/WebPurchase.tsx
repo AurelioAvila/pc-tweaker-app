@@ -3,9 +3,12 @@ import { createPurchaseFlow, type PurchaseStatus } from "../web-purchase-flow";
 import { createPurchaseClient, PurchaseError } from "../web-purchase-client";
 import { API_BASE, DOWNLOAD_EXE } from "../constants";
 import { euro, usePromo } from "../promo";
+import { CRYPTO_COPY, usd } from "../../../src/components/crypto-copy";
 type Plan = "monthly" | "annual" | "lifetime";
 // plan null: the account alone (sign up from the site), with the app download and the plans as next steps.
-export function WebPurchase({ plan, onClose, demo, onChoosePlan }: { plan: Plan | null; onClose: () => void; demo: boolean; onChoosePlan?: () => void }) {
+// cryptoUsd: Lifetime paid in USDC, at this many US cents (from GET /api/billing/prices).
+export function WebPurchase({ plan, onClose, demo, onChoosePlan, cryptoUsd = null }: { plan: Plan | null; onClose: () => void; demo: boolean; onChoosePlan?: () => void; cryptoUsd?: number | null }) {
+  const crypto = plan === "lifetime" && cryptoUsd !== null;
   const [mode, setMode] = useState<"login" | "register">(plan ? "login" : "register");
   const [status, setStatus] = useState<PurchaseStatus>("signed-out");
   const [message, setMessage] = useState("");
@@ -32,7 +35,7 @@ export function WebPurchase({ plan, onClose, demo, onChoosePlan }: { plan: Plan 
   });
   useEffect(() => () => fixture.flow.reset(), [fixture]);
   const promotion = usePromo().offer("pctweaker", plan ?? "annual");
-  const label = plan === "lifetime" ? "Lifetime" : plan === "annual" ? "Pro annual" : "Pro monthly";
+  const label = crypto ? "Lifetime, paid in crypto" : plan === "lifetime" ? "Lifetime" : plan === "annual" ? "Pro annual" : "Pro monthly";
   const terms = plan === "lifetime" ? "One payment. No renewal." : plan === "annual" ? "First year, then renews yearly." : "First month, then renews monthly.";
   const input = "mt-2 w-full rounded-lg border border-white/20 bg-[var(--bg)] px-4 py-3 text-[var(--fg)] outline-offset-2 focus:outline focus:outline-2 focus:outline-[var(--accent)]";
   function showError(error: unknown) {
@@ -71,7 +74,7 @@ export function WebPurchase({ plan, onClose, demo, onChoosePlan }: { plan: Plan 
   async function checkoutPreview() {
     if (!plan) return;
     setBusy(true); setMessage(""); setCanCancel(false);
-    try { const url = await fixture.flow.checkout(plan); if (demo) setMessage("Preview complete. No checkout page was created and no payment was made."); else window.location.assign(url); }
+    try { const url = await fixture.flow.checkout(plan, crypto); if (demo) setMessage("Preview complete. No checkout page was created and no payment was made."); else window.location.assign(url); }
     catch (err) { showError(err); if (!(err instanceof PurchaseError && err.status === 401)) setCanCancel(err instanceof PurchaseError && err.code === "other_checkout_pending"); }
     finally { setBusy(false); }
   }
@@ -99,8 +102,8 @@ export function WebPurchase({ plan, onClose, demo, onChoosePlan }: { plan: Plan 
       <p className="mt-3 text-sm leading-relaxed text-[var(--fg-dim)] sm:mt-5">One account for the app, your plan and your purchases. Creating it costs nothing and needs no payment details.</p>
       <div className="mt-6 space-y-3 border-t border-white/10 pt-5 text-sm sm:mt-9 sm:space-y-4 sm:pt-6 leading-relaxed text-[var(--fg-dim)]"><p><strong className="text-[var(--fg)]">1. Create your account.</strong><span className="hidden sm:inline"><br />Use an email address you can confirm.</span></p><p><strong className="text-[var(--fg)]">2. Confirm your email.</strong><span className="hidden sm:inline"><br />Open the link we send you.</span></p><p><strong className="text-[var(--fg)]">3. Sign in to the app.</strong><span className="hidden sm:inline"><br />Start the free trial there, or choose a plan here whenever you want.</span></p></div></div>
     : <div className="border-b border-white/10 p-5 sm:p-10 lg:border-r lg:border-b-0"><p className="text-sm font-semibold text-[var(--accent)]">Your selected plan</p><h3 id="purchase-heading" className="mt-2 text-2xl font-bold text-[var(--fg)] sm:mt-3 sm:text-3xl">{label}</h3>
-      {promotion ? <p className="mt-5 text-3xl font-bold text-[var(--fg)]">{euro(promotion.price)} <span className="text-base font-normal text-[var(--fg-dim)] line-through">{euro(promotion.reference)}</span></p> : <p className="mt-5 text-sm text-[var(--fg-dim)]">Review the current price at checkout.</p>}
-      <p className="mt-2 text-sm leading-relaxed text-[var(--fg-dim)]">{terms} {promotion && plan !== "lifetime" && `Then ${euro(promotion.regular)} per ${plan === "annual" ? "year" : "month"}.`} Prices exclude VAT.</p>
+      {crypto ? <><p className="mt-5 text-3xl font-bold text-[var(--fg)]">≈ {usd(cryptoUsd ?? 0, "en-US")} <span className="text-base font-normal text-[var(--fg-dim)]">in USDC</span></p><p className="mt-2 text-sm leading-relaxed text-[var(--fg-dim)]">{terms} {CRYPTO_COPY.en.lifetimeNote}</p></> : <>{promotion ? <p className="mt-5 text-3xl font-bold text-[var(--fg)]">{euro(promotion.price)} <span className="text-base font-normal text-[var(--fg-dim)] line-through">{euro(promotion.reference)}</span></p> : <p className="mt-5 text-sm text-[var(--fg-dim)]">Review the current price at checkout.</p>}
+      <p className="mt-2 text-sm leading-relaxed text-[var(--fg-dim)]">{terms} {promotion && plan !== "lifetime" && `Then ${euro(promotion.regular)} per ${plan === "annual" ? "year" : "month"}.`} Prices exclude VAT.</p></>}
       <div className="mt-6 space-y-3 border-t border-white/10 pt-5 text-sm sm:mt-9 sm:space-y-4 sm:pt-6 leading-relaxed text-[var(--fg-dim)]"><p><strong className="text-[var(--fg)]">1. Sign in or create an account.</strong><br />Your purchase is linked to your PC Tweaker account.</p><p><strong className="text-[var(--fg)]">2. Confirm the final price at checkout.</strong><br />Your payment details are entered on Stripe’s secure page.</p><p><strong className="text-[var(--fg)]">3. Open the app and sign in.</strong><br />Your account is used to activate access after payment.</p></div></div>}
     <div className="p-5 sm:p-10"><div className="flex items-start justify-between gap-4"><div><h4 className="text-xl font-bold sm:text-2xl text-[var(--fg)]">{status === "upgrade" ? "Ready to upgrade" : status === "ready" ? "Account verified" : status === "verify-email" ? "Confirm your email" : mode === "login" ? "Welcome back" : "Create your account"}</h4><p className="mt-2 text-sm leading-relaxed text-[var(--fg-dim)]">{status === "upgrade" || status === "ready" || status === "already-pro" ? (demo ? "Demonstration account." : "Signed in to your PC Tweaker account.") : status === "verify-email" ? "Your account is not active until you open the link we sent you." : mode === "login" ? "Use the account you use in PC Tweaker." : "Use an email address you can verify."}</p></div><button type="button" onClick={onClose} className="text-sm text-[var(--fg-dim)] underline underline-offset-4">Close</button></div>
       {status === "signed-out" && <div className="mt-7 flex gap-6 border-b border-white/10" role="group" aria-label="Account options"><button type="button" aria-pressed={mode === "login"} onClick={() => { setMode("login"); setMessage(""); }} className={`pb-3 text-sm font-semibold ${mode === "login" ? "border-b-2 border-[var(--accent)] text-[var(--fg)]" : "text-[var(--fg-dim)]"}`}>Sign in</button><button type="button" aria-pressed={mode === "register"} onClick={() => { setMode("register"); setMessage(""); }} className={`pb-3 text-sm font-semibold ${mode === "register" ? "border-b-2 border-[var(--accent)] text-[var(--fg)]" : "text-[var(--fg-dim)]"}`}>Create account</button></div>}

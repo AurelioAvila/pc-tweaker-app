@@ -275,3 +275,65 @@ export function tipSessionParams(priceId: string, appUrl: string, quantity: unkn
     customer_creation: "always" as const,
   };
 }
+
+/**
+ * Crypto: Stripe's own "Stablecoins and Crypto" payment method (USDC), for
+ * Lifetime and for tips. Off unless CRYPTO_CHECKOUT_ENABLED=1, which is set
+ * only once Stripe has approved the method on the account.
+ *
+ * Owner decisions of 1/11/2026: the same price as by card, never a discount
+ * or a surcharge for the method (Consiglio di Stato 2733/2026). Stripe
+ * charges crypto only in USD, so the euro Price is converted at the rate in
+ * `cryptoRate` (routes/stripe.ts) and rounded to the nearest cent.
+ */
+export function cryptoEnabled(environment: NodeJS.ProcessEnv): boolean {
+  return environment.CRYPTO_CHECKOUT_ENABLED === "1";
+}
+
+/** A USD-per-EUR rate worth trusting, or null: a garbled config value or a
+ * malformed quote must close crypto, never sell Lifetime for $0.04. */
+export function usableRate(raw: unknown): number | null {
+  const n = typeof raw === "number" ? raw : typeof raw === "string" && raw.trim() ? Number(raw) : NaN;
+  return Number.isFinite(n) && n >= 0.5 && n <= 2 ? n : null;
+}
+
+/** Euro cents to US cents, nearest cent: neither side of the rounding is a fee. */
+export function usdFromEur(eurMinor: number, usdPerEur: number): number {
+  return Math.round(eurMinor * usdPerEur);
+}
+
+/**
+ * The same sale as `params`, paid in USDC. Changes `params` in place.
+ *
+ * - Crypto only (`payment_method_types`): this session must never offer a
+ *   card, because a card sale outside Managed Payments would lose Link as
+ *   merchant of record.
+ * - `managed_payments: { enabled: false }`: Managed Payments does not support
+ *   crypto, and the account default is on. Card sessions never pass this
+ *   field, so they keep the default exactly as before.
+ * - No automatic tax: outside Managed Payments it collects nothing without a
+ *   tax registration while looking as if it did (CertSprint's billing.js
+ *   reached the same conclusion on this account).
+ * - One USD line priced inline (`price_data`), on the same Stripe product as
+ *   the euro Price, so the dashboard still groups the sale with its product.
+ */
+export function cryptoSessionParams(
+  params: Record<string, any>,
+  { usdMinor, product }: { usdMinor: number; product: string },
+) {
+  if (params.mode !== "payment" || params.line_items?.length !== 1) throw new Error("crypto checkout needs exactly one one-off line");
+  const [item] = params.line_items;
+  params.line_items = [{
+    price_data: { currency: "usd", unit_amount: usdMinor, product },
+    quantity: item.quantity ?? 1,
+    ...(item.adjustable_quantity ? { adjustable_quantity: item.adjustable_quantity } : {}),
+  }];
+  params.payment_method_types = ["crypto"];
+  params.managed_payments = { enabled: false };
+  delete params.automatic_tax;
+  delete params.customer_update;
+  // Read by the owner's sale notice and the receipt: how it was paid.
+  params.metadata = { ...params.metadata, pay_with: "crypto" };
+  params.payment_intent_data = { ...params.payment_intent_data, metadata: { ...params.payment_intent_data?.metadata, pay_with: "crypto" } };
+  return params;
+}

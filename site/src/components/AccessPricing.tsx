@@ -7,14 +7,15 @@ import { DOWNLOAD_EXE } from "../constants";
 import { MOST_CHOSEN } from "../../../src/most-chosen";
 import { euro, PromoDeadline, PromoFine, PromoPrice, promoTerms, usePromo } from "../promo";
 import { TrialLine, usePriceList } from "../trial";
+import { CryptoLifetimeChoice } from "./CryptoLifetime";
 
 /** One card shell: a column on phones, the shared subgrid from md up. */
 const planCard = "flex flex-col rounded-2xl border p-7 sm:p-9 md:row-span-7 md:grid md:grid-rows-subgrid md:gap-y-0";
 
 export function AccessPricing() {
   const { free, pro, lifetime } = text.pricing;
-  const [purchase, setPurchase] = useState<"annual" | "monthly" | "lifetime" | "account" | null>(null);
-  const choosePurchase = (plan: "annual" | "monthly" | "lifetime") => {
+  const [purchase, setPurchase] = useState<"annual" | "monthly" | "lifetime" | "lifetime-crypto" | "account" | null>(null);
+  const choosePurchase = (plan: "annual" | "monthly" | "lifetime" | "lifetime-crypto") => {
     setPurchase(plan);
     document.getElementById("purchase-options")?.scrollIntoView({ block: "start" });
   };
@@ -229,6 +230,9 @@ export function AccessPricing() {
             ) : (
               <a href={DOWNLOAD_EXE} className="bg-accent block rounded-xl border border-transparent py-3.5 md:row-start-5 text-center text-[14.5px] font-bold text-[var(--bg)] transition-transform hover:-translate-y-0.5">{lifetime.cta}</a>
             )}
+            {(webEnabled || webPreview) && prices?.crypto?.lifetimeUsd && (
+              <CryptoLifetimeChoice usdCents={prices.crypto.lifetimeUsd} onChoose={() => choosePurchase("lifetime-crypto")} />
+            )}
           </motion.div>
         </div>
         {(webPreview || webEnabled) && (
@@ -257,7 +261,7 @@ export function AccessPricing() {
                 Create a free account
               </button>
             </div>
-            {purchase && <WebPurchase key={purchase} plan={purchase === "account" ? null : purchase} demo={webPreview} onClose={() => setPurchase(null)} onChoosePlan={() => { setPurchase(null); document.getElementById("access")?.scrollIntoView({ block: "start" }); }} />}
+            {purchase && <WebPurchase key={purchase} plan={purchase === "account" ? null : purchase === "lifetime-crypto" ? "lifetime" : purchase} cryptoUsd={purchase === "lifetime-crypto" ? prices?.crypto?.lifetimeUsd ?? null : null} demo={webPreview} onClose={() => setPurchase(null)} onChoosePlan={() => { setPurchase(null); document.getElementById("access")?.scrollIntoView({ block: "start" }); }} />}
           </div>
         )}
         <PromoFine className="mt-5 text-[12.5px] text-[var(--fg-dim)]" />

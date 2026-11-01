@@ -125,7 +125,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     expired: "This Lifetime offer has ended.",
     scheduled: "The next Lifetime offer has not started yet.",
     checking: "Checking Lifetime availability…",
-    checkout: "Final price, applicable taxes and payment terms are shown at checkout. Pay with card, Apple Pay, Google Pay or Link.",
+    checkout:
+      "Final price, applicable taxes and payment terms are shown at checkout. Pay with card, Apple Pay, Google Pay or Link.",
     terms: "Clear terms, before you choose",
     twoYears: "At today's annual price, two years of Pro cost {price}.",
     current: "Current plan",
@@ -263,7 +264,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     expired: "Cette offre Lifetime est terminée.",
     scheduled: "La prochaine offre Lifetime n'a pas encore commencé.",
     checking: "Vérification de la disponibilité de Lifetime…",
-    checkout: "Le prix final, les taxes et les conditions de paiement sont indiqués au paiement. Payez par carte, Apple Pay, Google Pay ou Link.",
+    checkout:
+      "Le prix final, les taxes et les conditions de paiement sont indiqués au paiement. Payez par carte, Apple Pay, Google Pay ou Link.",
     terms: "Des conditions claires avant de choisir",
     twoYears: "Au tarif annuel actuel, deux ans de Pro coûtent {price}.",
     current: "Offre actuelle",
@@ -399,7 +401,8 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     expired: "Dieses Lifetime-Angebot ist beendet.",
     scheduled: "Das nächste Lifetime-Angebot hat noch nicht begonnen.",
     checking: "Lifetime-Verfügbarkeit wird geprüft…",
-    checkout: "Endpreis, Steuern und Zahlungsbedingungen werden beim Bezahlen angezeigt. Bezahle mit Karte, Apple Pay, Google Pay oder Link.",
+    checkout:
+      "Endpreis, Steuern und Zahlungsbedingungen werden beim Bezahlen angezeigt. Bezahle mit Karte, Apple Pay, Google Pay oder Link.",
     terms: "Klare Bedingungen vor deiner Wahl",
     twoYears: "Zum heutigen Jahrespreis kosten zwei Jahre Pro {price}.",
     current: "Aktueller Tarif",

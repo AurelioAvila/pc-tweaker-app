@@ -1,7 +1,21 @@
 import type { Lang } from "../i18n";
 
+/** Why a customer cancels: Stripe's own `cancellation_details.feedback` codes,
+ *  in the order the dialog lists them. Optional; "Skip" sends none. */
+export const CANCEL_REASONS = [
+  "too_expensive",
+  "unused",
+  "missing_features",
+  "switched_service",
+  "low_quality",
+  "too_complex",
+  "customer_service",
+  "other",
+] as const;
+export type CancelReason = (typeof CANCEL_REASONS)[number];
+
 /** "Manage subscription" (account menu → dialog). German follows the app's
- *  "Sie"; Portuguese is European Portuguese. */
+ *  "du"; Portuguese is European Portuguese. */
 type SubscriptionCopy = {
   menu: string;
   title: string;
@@ -48,6 +62,16 @@ type SubscriptionCopy = {
   resumed: string;
   actionFailed: string;
   family: string;
+  step: string;
+  reasonTitle: string;
+  reasonHint: string;
+  reasons: Record<CancelReason, string>;
+  commentLabel: string;
+  otherLabel: string;
+  commentPlaceholder: string;
+  skip: string;
+  next: string;
+  back: string;
 };
 
 export const SUBSCRIPTION_COPY: Record<Lang, SubscriptionCopy> = {
@@ -97,6 +121,25 @@ export const SUBSCRIPTION_COPY: Record<Lang, SubscriptionCopy> = {
     resumed: "Done. Your subscription renews on {date}.",
     actionFailed: "That didn't work. Nothing was changed; please try again.",
     family: "Also on this account",
+    step: "Step {n} of 2",
+    reasonTitle: "Before you go — what's the main reason?",
+    reasonHint: "Optional. It helps us improve.",
+    reasons: {
+      too_expensive: "Too expensive",
+      unused: "I don't use it enough",
+      missing_features: "Missing a feature I need",
+      switched_service: "Switching to another tool",
+      low_quality: "Technical problems / bugs",
+      too_complex: "Too complicated to use",
+      customer_service: "Problems with support",
+      other: "Other",
+    },
+    commentLabel: "Anything we could do better?",
+    otherLabel: "What's the reason?",
+    commentPlaceholder: "Tell us more (optional)",
+    skip: "Skip",
+    next: "Continue",
+    back: "Back",
   },
   it: {
     menu: "Gestisci abbonamento",
@@ -145,6 +188,25 @@ export const SUBSCRIPTION_COPY: Record<Lang, SubscriptionCopy> = {
     resumed: "Fatto. L'abbonamento si rinnova il {date}.",
     actionFailed: "Non ha funzionato. Non è cambiato nulla; riprova.",
     family: "Anche su questo account",
+    step: "Passo {n} di 2",
+    reasonTitle: "Prima di andare: qual è il motivo principale?",
+    reasonHint: "Facoltativo. Ci aiuta a migliorare.",
+    reasons: {
+      too_expensive: "Troppo caro",
+      unused: "Non lo uso abbastanza",
+      missing_features: "Manca una funzione che mi serve",
+      switched_service: "Passo a un altro strumento",
+      low_quality: "Problemi tecnici o bug",
+      too_complex: "Troppo complicato da usare",
+      customer_service: "Problemi con l'assistenza",
+      other: "Altro",
+    },
+    commentLabel: "C'è qualcosa che potremmo fare meglio?",
+    otherLabel: "Qual è il motivo?",
+    commentPlaceholder: "Raccontaci di più (facoltativo)",
+    skip: "Salta",
+    next: "Continua",
+    back: "Indietro",
   },
   fr: {
     menu: "Gérer l’abonnement",
@@ -193,6 +255,25 @@ export const SUBSCRIPTION_COPY: Record<Lang, SubscriptionCopy> = {
     resumed: "C’est fait. Votre abonnement se renouvelle le {date}.",
     actionFailed: "Cela n’a pas fonctionné. Rien n’a été modifié ; réessayez.",
     family: "Aussi sur ce compte",
+    step: "Étape {n} sur 2",
+    reasonTitle: "Avant de partir : quelle est la raison principale ?",
+    reasonHint: "Facultatif. Cela nous aide à nous améliorer.",
+    reasons: {
+      too_expensive: "Trop cher",
+      unused: "Je ne l’utilise pas assez",
+      missing_features: "Il manque une fonction dont j’ai besoin",
+      switched_service: "Je passe à un autre outil",
+      low_quality: "Problèmes techniques ou bugs",
+      too_complex: "Trop compliqué à utiliser",
+      customer_service: "Problèmes avec le support",
+      other: "Autre",
+    },
+    commentLabel: "Que pourrions-nous améliorer ?",
+    otherLabel: "Quelle est la raison ?",
+    commentPlaceholder: "Dites-nous-en plus (facultatif)",
+    skip: "Passer",
+    next: "Continuer",
+    back: "Retour",
   },
   es: {
     menu: "Gestionar suscripción",
@@ -241,16 +322,35 @@ export const SUBSCRIPTION_COPY: Record<Lang, SubscriptionCopy> = {
     resumed: "Hecho. Tu suscripción se renueva el {date}.",
     actionFailed: "No ha funcionado. No se ha cambiado nada; vuelve a intentarlo.",
     family: "También en esta cuenta",
+    step: "Paso {n} de 2",
+    reasonTitle: "Antes de irte: ¿cuál es el motivo principal?",
+    reasonHint: "Opcional. Nos ayuda a mejorar.",
+    reasons: {
+      too_expensive: "Demasiado caro",
+      unused: "No lo uso lo suficiente",
+      missing_features: "Falta una función que necesito",
+      switched_service: "Me cambio a otra herramienta",
+      low_quality: "Problemas técnicos o errores",
+      too_complex: "Demasiado complicado de usar",
+      customer_service: "Problemas con el soporte",
+      other: "Otro",
+    },
+    commentLabel: "¿Hay algo que podamos mejorar?",
+    otherLabel: "¿Cuál es el motivo?",
+    commentPlaceholder: "Cuéntanos más (opcional)",
+    skip: "Omitir",
+    next: "Continuar",
+    back: "Atrás",
   },
   de: {
     menu: "Abo verwalten",
     title: "Abo verwalten",
     intro: "Wofür dieses Konto bezahlt und wann.",
     close: "Schließen",
-    loading: "Ihr Abo wird geladen…",
-    failed: "Ihr Abo konnte nicht geladen werden.",
-    offline: "Sie sind offline. Verbinden Sie sich mit dem Internet und versuchen Sie es erneut.",
-    signIn: "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an, um Ihr Abo zu verwalten.",
+    loading: "Dein Abo wird geladen…",
+    failed: "Dein Abo konnte nicht geladen werden.",
+    offline: "Du bist offline. Verbinde dich mit dem Internet und versuche es erneut.",
+    signIn: "Deine Sitzung ist abgelaufen. Melde dich erneut an, um dein Abo zu verwalten.",
     retry: "Erneut versuchen",
     active: "Aktiv",
     trialing: "Kostenlose Testphase",
@@ -271,25 +371,44 @@ export const SUBSCRIPTION_COPY: Record<Lang, SubscriptionCopy> = {
     paymentMethod: "Zahlungsmethode",
     card: "{brand} mit Endziffern {last4}",
     lifetimeNote: "Einmal bezahlt. Es gibt nichts zu verlängern oder zu kündigen.",
-    includedNote: "In Ihrem Konto enthalten. Es gibt nichts zu verlängern oder zu kündigen.",
-    freeNote: "Sie nutzen den Free-Plan. Auf diesem Konto ist kein Abo aktiv.",
+    includedNote: "In deinem Konto enthalten. Es gibt nichts zu verlängern oder zu kündigen.",
+    freeNote: "Du nutzt den Free-Tarif. Auf diesem Konto ist kein Abo aktiv.",
     pastDueNote:
-      "Die letzte Zahlung ist nicht durchgegangen. Aktualisieren Sie Ihre Zahlungsmethode, um Pro zu behalten.",
-    endingNote: "Sie werden nicht erneut belastet.",
+      "Die letzte Zahlung ist nicht durchgegangen. Aktualisiere deine Zahlungsmethode, um Pro zu behalten.",
+    endingNote: "Du wirst nicht erneut belastet.",
     seePlans: "Pläne ansehen",
     cancel: "Abo kündigen",
     resume: "Abo fortsetzen",
     portal: "Zahlungsmethode und Rechnungen",
     confirmTitle: "Abo kündigen?",
-    confirmBody: "Sie behalten {plan} bis {date}. Sie werden nicht erneut belastet.",
-    confirmTrialBody: "Ihre kostenlose Testphase läuft bis {date} weiter. Es wird nichts belastet.",
+    confirmBody: "Du behältst {plan} bis {date}. Du wirst nicht erneut belastet.",
+    confirmTrialBody:
+      "Deine kostenlose Testphase läuft bis {date} weiter. Es wird nichts belastet.",
     keep: "Abo behalten",
     confirmCancel: "Abo kündigen",
     cancelled: "Erledigt. {plan} bleibt bis {date} aktiv.",
-    resumed: "Erledigt. Ihr Abo verlängert sich am {date}.",
-    actionFailed:
-      "Das hat nicht geklappt. Es wurde nichts geändert; bitte versuchen Sie es erneut.",
+    resumed: "Erledigt. Dein Abo verlängert sich am {date}.",
+    actionFailed: "Das hat nicht geklappt. Es wurde nichts geändert; bitte versuche es erneut.",
     family: "Ebenfalls auf diesem Konto",
+    step: "Schritt {n} von 2",
+    reasonTitle: "Bevor du gehst: Was ist der Hauptgrund?",
+    reasonHint: "Optional. Das hilft uns, besser zu werden.",
+    reasons: {
+      too_expensive: "Zu teuer",
+      unused: "Ich nutze es zu selten",
+      missing_features: "Mir fehlt eine Funktion",
+      switched_service: "Ich wechsle zu einem anderen Tool",
+      low_quality: "Technische Probleme oder Fehler",
+      too_complex: "Zu kompliziert in der Bedienung",
+      customer_service: "Probleme mit dem Support",
+      other: "Anderer Grund",
+    },
+    commentLabel: "Was könnten wir besser machen?",
+    otherLabel: "Was ist der Grund?",
+    commentPlaceholder: "Erzähl uns mehr (optional)",
+    skip: "Überspringen",
+    next: "Weiter",
+    back: "Zurück",
   },
   pt: {
     menu: "Gerir subscrição",
@@ -338,5 +457,24 @@ export const SUBSCRIPTION_COPY: Record<Lang, SubscriptionCopy> = {
     resumed: "Feito. A sua subscrição renova a {date}.",
     actionFailed: "Não funcionou. Nada foi alterado; tente novamente.",
     family: "Também nesta conta",
+    step: "Passo {n} de 2",
+    reasonTitle: "Antes de sair: qual é o motivo principal?",
+    reasonHint: "Opcional. Ajuda-nos a melhorar.",
+    reasons: {
+      too_expensive: "Demasiado caro",
+      unused: "Não o uso o suficiente",
+      missing_features: "Falta uma funcionalidade de que preciso",
+      switched_service: "Vou mudar para outra ferramenta",
+      low_quality: "Problemas técnicos ou erros",
+      too_complex: "Demasiado complicado de usar",
+      customer_service: "Problemas com o apoio ao cliente",
+      other: "Outro",
+    },
+    commentLabel: "Há algo que possamos fazer melhor?",
+    otherLabel: "Qual é o motivo?",
+    commentPlaceholder: "Conte-nos mais (opcional)",
+    skip: "Saltar",
+    next: "Continuar",
+    back: "Voltar",
   },
 };

@@ -533,6 +533,15 @@
   transform: translateX(-50%);
   white-space: nowrap;
 }
+.live-peak[data-edge="end"] small {
+  right: -3px;
+  left: auto;
+  transform: none;
+}
+.live-peak[data-edge="start"] small {
+  left: -3px;
+  transform: none;
+}
 .live-axis-x {
   display: flex;
   justify-content: space-between;

@@ -230,12 +230,62 @@ body,
   background-color: var(--bg-app);
 }
 
+/* Every theme is dark: native radios, checkboxes, selects, the textarea grip
+   and date fields render in their dark form instead of white discs. */
+:root {
+  color-scheme: dark;
+}
+
 body {
   font-family: var(--font-app);
   color: var(--text-primary);
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Selection ------------------------------------------------------------ */
+/* An app, not a document: navigation, buttons, headings and cards do not
+   highlight on drag or double-click. What people copy stays selectable:
+   fields, commands, registry paths, logs, table values, errors, and anything
+   marked `.selectable` (account email, referral code). main.tsx limits
+   Ctrl+A to the field or block that has focus. */
+body {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+:is(
+  input,
+  textarea,
+  [contenteditable="true"],
+  pre,
+  code,
+  kbd,
+  samp,
+  output,
+  dd,
+  td,
+  [role="alert"],
+  .selectable
+) {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+:is(button, summary, label, [role="button"], [role="tab"], [role="switch"]) {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+img,
+svg {
+  -webkit-user-drag: none;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent) 38%, transparent);
+  color: var(--text-primary);
 }
 
 /* Tailwind v4 ships `cursor: default` on buttons in its preflight, where v3
@@ -353,7 +403,7 @@ body {
 /* Keyboard navigation is a first-class input: one visible, handsome ring,
    everywhere, only on :focus-visible so mouse users never see noise. */
 
-:where(button, a, input, select, textarea, [role="switch"], [tabindex]):focus-visible {
+:where(button, a, input, select, textarea, summary, [role="switch"], [tabindex]):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }

@@ -208,6 +208,8 @@ export function Spark({
           {top && top.value > 0 && (
             <span
               className="live-peak"
+              // Near either end the centred label ran past the chart and was cut.
+              data-edge={x(top.index) > 85 ? "end" : x(top.index) < 15 ? "start" : undefined}
               style={{ left: `${x(top.index)}%`, bottom: `${Math.min(1, top.value / max) * 100}%` }}
             >
               <small>{format(s.live.peak, { value: formatValue(top.value) })}</small>

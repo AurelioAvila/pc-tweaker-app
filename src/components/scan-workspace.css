@@ -1002,3 +1002,14 @@
     transition: none;
   }
 }
+
+/* The scope list sits at the foot of the clipped hero card: an inset ring
+   keeps all four sides visible. */
+.scan-scope summary {
+  margin-inline: -12px;
+  padding-inline: 12px;
+}
+.scan-scope summary:focus-visible {
+  outline-offset: -4px;
+  border-radius: 12px;
+}

@@ -118,7 +118,10 @@ export function AuthSection({
             </span>
           </button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-semibold text-ink" title={auth.email}>
+            <p
+              className="selectable truncate text-[13px] font-semibold text-ink"
+              title={auth.email}
+            >
               {auth.email}
             </p>
             {auth.emailVerified ? (

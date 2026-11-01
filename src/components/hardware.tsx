@@ -657,7 +657,7 @@ export function ThermalsPanel({
         return (
           <div key={gpu.name} className="tool-panel tool-thermal-card">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
+              <div className="selectable min-w-0">
                 <p className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-accent">
                   {s.hardware.gpuLabel}
                 </p>
@@ -810,7 +810,8 @@ function ageLabel(days: number, s: Strings): string {
 function DriverRow({ entry, s }: { entry: DriverEntry; s: Strings }) {
   return (
     <div className="tool-driver-row">
-      <div className="min-w-0 flex-1">
+      {/* Device names and versions are what people paste into a search. */}
+      <div className="selectable min-w-0 flex-1">
         <p className="truncate text-[13.5px] font-semibold text-ink" title={entry.device}>
           {entry.device}
         </p>

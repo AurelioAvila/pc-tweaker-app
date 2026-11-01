@@ -246,6 +246,29 @@ export function RadarIcon({ className }: { className?: string }) {
   );
 }
 
+/** Four tiles for Overview: the whole PC on one board. Its own glyph, so the
+ *  sidebar never shows PC Health's pulse twice. */
+export function GridIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect
+        x="4"
+        y="4"
+        width="7"
+        height="7"
+        rx="1.8"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        fill="currentColor"
+        fillOpacity="0.15"
+      />
+      <rect x="13" y="4" width="7" height="7" rx="1.8" stroke="currentColor" strokeWidth="1.6" />
+      <rect x="4" y="13" width="7" height="7" rx="1.8" stroke="currentColor" strokeWidth="1.6" />
+      <rect x="13" y="13" width="7" height="7" rx="1.8" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+}
+
 /** Stacked sheets for Profiles: saved configurations layered on each other. */
 export function LayersIcon({ className }: { className?: string }) {
   return (

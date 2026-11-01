@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.18.29
+
+Plans & pricing now opens straight on the plans, with a slim offer bar and clearer prices. A new Support entry sits in the sidebar. Manage your subscription from the account menu: see your plan, price, renewal date and card, cancel at the end of the paid period (with an optional reason) or resume it. Subscribers now see their own plan and price. Interface polish: text you do not need to copy no longer gets selected, better contrast on buttons, cleaner focus rings and several small layout fixes.
+
 ## v1.18.28
 
 Routine maintenance update.

@@ -237,9 +237,14 @@ function App() {
   // unconfirmed inbox. Without it they had to find the pricing panel again
   // and click a third time; now checkout reopens on its own once the account
   // can pay. Expires so a stale click never opens Stripe hours later.
-  const pendingPlan = useRef<{ plan: ProPlan; startTrial?: boolean; until: number } | null>(null);
-  function rememberPlan(plan: ProPlan, startTrial?: boolean) {
-    pendingPlan.current = { plan, startTrial, until: Date.now() + 60 * 60 * 1000 };
+  const pendingPlan = useRef<{
+    plan: ProPlan;
+    startTrial?: boolean;
+    crypto?: boolean;
+    until: number;
+  } | null>(null);
+  function rememberPlan(plan: ProPlan, startTrial?: boolean, crypto?: boolean) {
+    pendingPlan.current = { plan, startTrial, crypto, until: Date.now() + 60 * 60 * 1000 };
   }
 
   // Re-reads Pro status from the backend. Called on mount (if already logged
@@ -298,7 +303,7 @@ function App() {
         pendingPlan.current = null;
       } else if (pending && data.emailVerified) {
         pendingPlan.current = null;
-        startCheckout(pending.plan, pending.startTrial).catch((e) =>
+        startCheckout(pending.plan, pending.startTrial, pending.crypto).catch((e) =>
           pushToast("error", String(e instanceof Error ? e.message : e)),
         );
       }
@@ -708,7 +713,9 @@ function App() {
   // to charge anything.
   /** `startTrial` (trial button vs "Subscribe now") is sent only when a
    *  trial is on offer; the server still decides whether one applies. */
-  async function startCheckout(plan: ProPlan = "annual", startTrial?: boolean) {
+  /** `crypto`: Lifetime paid in USDC (POST /api/checkout/crypto), offered only
+   *  while the price list says crypto is available. */
+  async function startCheckout(plan: ProPlan = "annual", startTrial?: boolean, crypto = false) {
     if (import.meta.env.DEV && import.meta.env.VITE_LIFETIME_PREVIEW_ENDS_AT) {
       throw new Error(PRICING_COPY[lang].previewCheckout);
     }
@@ -719,7 +726,7 @@ function App() {
     if (!token) {
       throw new Error(s.auth.loginRequiredForCheckout);
     }
-    const res = await fetch(`${API_BASE_URL}/api/checkout`, {
+    const res = await fetch(`${API_BASE_URL}/api/checkout${crypto ? "/crypto" : ""}`, {
       method: "POST",
       // The PC id: the free trial is once per PC as well as per account (backend trial.ts).
       headers: {
@@ -727,7 +734,9 @@ function App() {
         "Content-Type": "application/json",
         ...(await deviceHeader()),
       },
-      body: JSON.stringify(startTrial === undefined ? { plan } : { plan, start_trial: startTrial }),
+      body: JSON.stringify(
+        startTrial === undefined || crypto ? { plan } : { plan, start_trial: startTrial },
+      ),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}) as { error?: string; code?: string });
@@ -740,14 +749,14 @@ function App() {
   // A one-off tip. No login required — it isn't tied to an account and
   // unlocks nothing, so there's nothing to gate behind sign-in. The count is
   // sent, but the backend clamps it; this side is convenience, not the limit.
-  async function buyCoffee(quantity: number) {
+  async function buyCoffee(quantity: number, crypto = false) {
     if (!API_BASE_URL) {
       throw new Error(s.auth.backendNotConfigured);
     }
     const res = await fetch(`${API_BASE_URL}/api/tip`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quantity }),
+      body: JSON.stringify(crypto ? { quantity, method: "crypto" } : { quantity }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}) as { error?: string });
@@ -1100,9 +1109,10 @@ function App() {
           isPro={isProUnlocked}
           showHistory={FEATURE_INTELLIGENCE}
           onNavigate={setFilter}
-          onTip={async (quantity) => {
+          coffeeCryptoUsd={prices?.crypto?.coffeeUsd ?? null}
+          onTip={async (quantity, crypto) => {
             try {
-              await buyCoffee(quantity);
+              await buyCoffee(quantity, crypto);
             } catch (e) {
               pushToast("error", String(e instanceof Error ? e.message : e));
             }
@@ -1394,7 +1404,7 @@ function App() {
                     billing={billing ?? null}
                     freeTweakCount={freeTweakCount}
                     onOpenLifetimeTools={() => setFilter("profiles")}
-                    onChoosePro={async (plan, startTrial) => {
+                    onChoosePro={async (plan, startTrial, crypto) => {
                       // A visitor without an account is exactly who this button is
                       // for, and it used to answer them with a red toast and
                       // nowhere to go: startCheckout throws without a token and
@@ -1402,20 +1412,20 @@ function App() {
                       // had the right shape — say what is missing and open the
                       // place where it is fixed.
                       if (auth.status !== "authenticated") {
-                        rememberPlan(plan, startTrial);
+                        rememberPlan(plan, startTrial, crypto);
                         pushToast("error", s.auth.loginRequiredForCheckout);
                         setAccountMenuOpen(true);
                         return;
                       }
                       try {
-                        await startCheckout(plan, startTrial);
+                        await startCheckout(plan, startTrial, crypto);
                       } catch (e) {
                         // Checkout needs a confirmed inbox. Same shape as above: say
                         // what is missing and open the menu with the resend button.
                         // The server decides, since emailVerified starts false
                         // until refreshAccount() answers.
                         if (e instanceof CheckoutError && e.code === "email_unverified") {
-                          rememberPlan(plan, startTrial);
+                          rememberPlan(plan, startTrial, crypto);
                           pushToast("error", s.auth.verifyEmailForCheckout);
                           setAccountMenuOpen(true);
                           return;

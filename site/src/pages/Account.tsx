@@ -9,6 +9,8 @@ import {
 import { API_BASE, DOWNLOAD_EXE } from "../constants";
 import { euro, PromoDeadline, usePromo } from "../promo";
 import { promoPercent } from "../../../src/promo";
+import { CryptoLifetimeChoice } from "../components/CryptoLifetime";
+import { usePriceList } from "../trial";
 
 /* The signed-in account page: plans, the PCs that use the account, billing.
    Same bearer-token sign-in as the apps and the website checkout, never a
@@ -58,6 +60,8 @@ export function AccountPage() {
   const [client] = useState(() => createPurchaseClient(API_BASE));
   // A live offer only, read from the server like the plans section; none, nothing shows.
   const lifetimeOffer = usePromo().offer("pctweaker", "lifetime");
+  // Lifetime in USDC, offered only while the server reports crypto available.
+  const cryptoLifetime = usePriceList()?.crypto?.lifetimeUsd ?? null;
   const [token, setToken] = useState<string | null>(null);
   const [data, setData] = useState<Loaded | null>(null);
   // Until the stored session has been tried, show neither the form nor the account.
@@ -312,6 +316,16 @@ export function AccountPage() {
                   No payments on this account yet. <a href="/#access" className="text-[var(--fg)] underline underline-offset-4">See the plans</a> or{" "}
                   <a href={DOWNLOAD_EXE} className="text-[var(--fg)] underline underline-offset-4">download PC Tweaker</a> and start the free trial there.
                 </p>
+              )}
+              {cryptoLifetime && data.products && !data.products.some((p) => p.product === "pctweaker" && p.state === "active" && p.plan === "lifetime") && (
+                <div className="mt-6 border-t border-white/10 pt-6">
+                  <p className="text-sm leading-relaxed text-[var(--fg-dim)]">PC Tweaker Lifetime: one payment, no renewal.</p>
+                  <CryptoLifetimeChoice
+                    usdCents={cryptoLifetime}
+                    disabled={busy}
+                    onChoose={() => void act(async () => window.location.assign(await client.checkout(token, "lifetime", true)))}
+                  />
+                </div>
               )}
             </section>
 

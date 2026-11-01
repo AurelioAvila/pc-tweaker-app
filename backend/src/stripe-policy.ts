@@ -275,3 +275,111 @@ export function tipSessionParams(priceId: string, appUrl: string, quantity: unkn
     customer_creation: "always" as const,
   };
 }
+
+/**
+ * Crypto: Stripe's own "Stablecoins and Crypto" payment method (USDC), for
+ * Lifetime and for tips. Off unless CRYPTO_CHECKOUT_ENABLED=1, which is set
+ * only once Stripe has approved the method on the account.
+ *
+ * Owner decisions of 1/11/2026: the same price as by card, never a discount
+ * or a surcharge for the method (Consiglio di Stato 2733/2026). Stripe
+ * charges crypto only in USD, so the euro Price is converted at the rate in
+ * `cryptoRate` (routes/stripe.ts) and rounded to the nearest cent.
+ */
+export function cryptoEnabled(environment: NodeJS.ProcessEnv): boolean {
+  return environment.CRYPTO_CHECKOUT_ENABLED === "1";
+}
+
+/** A USD-per-EUR rate worth trusting, or null: a garbled config value or a
+ * malformed quote must close crypto, never sell Lifetime for $0.04. */
+export function usableRate(raw: unknown): number | null {
+  const n = typeof raw === "number" ? raw : typeof raw === "string" && raw.trim() ? Number(raw) : NaN;
+  return Number.isFinite(n) && n >= 0.5 && n <= 2 ? n : null;
+}
+
+/** Euro cents to US cents, nearest cent: neither side of the rounding is a fee. */
+export function usdFromEur(eurMinor: number, usdPerEur: number): number {
+  return Math.round(eurMinor * usdPerEur);
+}
+
+/**
+ * The same sale as `params`, paid in USDC. Changes `params` in place.
+ *
+ * - Crypto only (`payment_method_types`): this session must never offer a
+ *   card, because a card sale outside Managed Payments would lose Link as
+ *   merchant of record.
+ * - `managed_payments: { enabled: false }`: Managed Payments does not support
+ *   crypto, and the account default is on. Card sessions never pass this
+ *   field, so they keep the default exactly as before.
+ * - No automatic tax: outside Managed Payments it collects nothing without a
+ *   tax registration while looking as if it did (CertSprint's billing.js
+ *   reached the same conclusion on this account).
+ * - One USD line priced inline (`price_data`), on the same Stripe product as
+ *   the euro Price, so the dashboard still groups the sale with its product.
+ */
+export function cryptoSessionParams(
+  params: Record<string, any>,
+  { usdMinor, product, country = null }: { usdMinor: number; product: string; country?: string | null },
+) {
+  if (params.mode !== "payment" || params.line_items?.length !== 1) throw new Error("crypto checkout needs exactly one one-off line");
+  const [item] = params.line_items;
+  params.line_items = [{
+    price_data: { currency: "usd", unit_amount: usdMinor, product },
+    quantity: item.quantity ?? 1,
+    ...(item.adjustable_quantity ? { adjustable_quantity: item.adjustable_quantity } : {}),
+  }];
+  params.payment_method_types = ["crypto"];
+  params.managed_payments = { enabled: false };
+  delete params.automatic_tax;
+  delete params.customer_update;
+  // Read by the owner's sale notice: how it was paid, and the country whose
+  // card total it was priced at ("none": the net price).
+  const tag = { pay_with: "crypto", price_country: country ?? "none" };
+  params.metadata = { ...params.metadata, ...tag };
+  params.payment_intent_data = { ...params.payment_intent_data, metadata: { ...params.payment_intent_data?.metadata, ...tag } };
+  return params;
+}
+
+/**
+ * Price parity for crypto (owner decision of 1/11/2026): a crypto buyer pays
+ * the same total a card buyer from the same country pays. Our Prices are net
+ * and, on a card sale, Link (Managed Payments, merchant of record) adds the
+ * buyer's VAT/GST on top. A crypto sale is ours, outside Managed Payments, and
+ * nothing is remitted on it, so this uplift is part of our price, never shown
+ * or labelled as a tax. Percent added to the net price, by ISO country.
+ *
+ * Standard rates for electronically supplied services, checked 2026-11-01
+ * against the member states' tax authorities (Wikipedia "European Union value
+ * added tax" table) and against live card sessions on this account, which
+ * charged exactly these rates for AT, BE, DE, FI, FR and CH. Recent changes:
+ * FI 25.5 since 1/9/2024, SK 23 since 1/1/2025, EE 24 since 1/7/2025,
+ * RO 21 since 1/8/2025.
+ *
+ * Outside the EU only countries where Managed Payments collects (Stripe docs
+ * "Tax compliance with Managed Payments", 2026-11-01) at one national rate.
+ * Left out on purpose, so net: the US and Canada (state/province rates; US card
+ * sales here showed 0-8%), and every country whose rate for foreign digital
+ * suppliers is not one clear figure. ponytail: a static table; add a country
+ * when a card sale from it shows the rate (session total_details), and update
+ * a rate when a country changes it.
+ */
+export const CARD_TOTAL_UPLIFT_PERCENT: Readonly<Record<string, number>> = {
+  // EU-27
+  AT: 20, BE: 21, BG: 20, CY: 19, CZ: 21, DE: 19, DK: 25, EE: 24, ES: 21, FI: 25.5,
+  FR: 20, GR: 24, HR: 25, HU: 27, IE: 23, IT: 22, LT: 21, LU: 17, LV: 21, MT: 18,
+  NL: 21, PL: 23, PT: 23, RO: 21, SE: 25, SI: 22, SK: 23,
+  // Outside the EU, collected by Managed Payments at one national rate
+  GB: 20, NO: 25, CH: 8.1, LI: 8.1, IS: 24, AU: 10, NZ: 15, JP: 10, SG: 9, KR: 10,
+};
+
+/** A two-letter country we can price for, or null (unknown means net). */
+export function parityCountry(raw: unknown): string | null {
+  return typeof raw === "string" && /^[A-Za-z]{2}$/.test(raw.trim()) ? raw.trim().toUpperCase() : null;
+}
+
+/** The card buyer's total for a net amount, rounded like Stripe rounds a
+ * line's tax (to the cent). Unknown or untaxed country: the net amount. */
+export function cardParityTotal(netMinor: number, country: string | null | undefined): number {
+  const percent = (country && CARD_TOTAL_UPLIFT_PERCENT[country]) || 0;
+  return netMinor + Math.round((netMinor * percent) / 100);
+}

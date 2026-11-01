@@ -39,6 +39,16 @@ test("rejects incomplete account responses instead of assuming the customer is f
   const client = createPurchaseClient("https://api.example.test", async () => reply({ email: "a@example.test" }));
   await assert.rejects(client.account("token"), /could not verify your account status/);
 });
+test("crypto checkout: Lifetime only, on its own route, no trial field", async () => {
+  let call;
+  const client = createPurchaseClient("https://api.example.test", async (url, init) => { call = { url, ...init }; return reply({ url: "https://checkout.stripe.com/c/pay/cs_test_crypto" }); });
+  assert.equal(await client.checkout("fixture-token", "lifetime", true), "https://checkout.stripe.com/c/pay/cs_test_crypto");
+  assert.equal(call.url, "https://api.example.test/api/web-checkout/crypto");
+  assert.deepEqual(JSON.parse(call.body), { product: "pctweaker", plan: "lifetime" });
+  call = undefined;
+  await assert.rejects(client.checkout("token", "annual", true), /valid plan/);
+  assert.equal(call, undefined);
+});
 test("rejects an unrecognized plan before making any request", async () => {
   const client = createPurchaseClient("https://api.example.test", async () => { throw new Error("must not be called"); });
   await assert.rejects(client.checkout("token", "invalid"), /valid plan/);

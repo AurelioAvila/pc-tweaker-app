@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Strings } from "../i18n";
+import { localeOf, STRINGS, Strings, type Lang } from "../i18n";
+import { cryptoCoffeeLabel } from "./crypto-copy";
 
 /** Matches TIP_MAX_QUANTITY on the backend, which clamps to it anyway — this
  *  copy only stops the stepper from offering a number that would be clamped. */
@@ -15,7 +16,16 @@ const MAX_COFFEES = 10;
  * permanent controls in the rail would cost attention nobody came here to
  * spend. The motion lives in .coffee-* in App.css.
  */
-export function CoffeeCard({ s, onTip }: { s: Strings; onTip: (quantity: number) => void }) {
+export function CoffeeCard({
+  s,
+  onTip,
+  cryptoUsd = null,
+}: {
+  s: Strings;
+  onTip: (quantity: number, crypto?: boolean) => void;
+  /** One coffee in US cents while crypto is on, else null (no crypto choice). */
+  cryptoUsd?: number | null;
+}) {
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(1);
 
@@ -92,11 +102,25 @@ export function CoffeeCard({ s, onTip }: { s: Strings; onTip: (quantity: number)
           >
             {s.coffee.cta}
           </button>
+          {cryptoUsd ? (
+            <button
+              type="button"
+              disabled={!open}
+              onClick={() => onTip(count, true)}
+              className="text-ink-3 hover:text-ink mx-1 mb-1 block w-[calc(100%-0.5rem)] cursor-pointer rounded-[6px] px-1 py-[3px] text-center text-[10.5px] underline-offset-2 transition-colors duration-150 hover:underline"
+            >
+              {cryptoCoffeeLabel(langOf(s), count, cryptoUsd, localeOf(langOf(s)))}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>
   );
 }
+
+/** The language whose strings these are, without threading another prop. */
+const langOf = (s: Strings): Lang =>
+  (Object.keys(STRINGS) as Lang[]).find((l) => STRINGS[l] === s) ?? "en";
 
 function ChevronDown({ className }: { className?: string }) {
   return (

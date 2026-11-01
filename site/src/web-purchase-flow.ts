@@ -5,7 +5,7 @@ type PurchaseApi = {
   register(input: { email: string; password: string; firstName: string; lastName: string; dateOfBirth: string }): Promise<{ token: string; verificationEmailSent: boolean }>;
   account(token: string): Promise<Account>;
   resendVerification(token: string): Promise<{ ok: boolean }>;
-  checkout(token: string, plan: WebPlan): Promise<string>;
+  checkout(token: string, plan: WebPlan, crypto?: boolean): Promise<string>;
   cancelCheckout(token: string): Promise<{ ok: boolean }>;
 };
 export type PurchaseStatus = "signed-out" | "verify-email" | "already-pro" | "upgrade" | "ready";
@@ -43,11 +43,11 @@ export function createPurchaseFlow(api: PurchaseApi, selectedPlan?: WebPlan) {
     async refresh() { return exclusive(version => read(version)); },
     async resend() { return exclusive(async version => { const result = await api.resendVerification(requireToken()); current(version); return result; }); },
     async cancelCheckout() { return exclusive(async version => { const result = await api.cancelCheckout(requireToken()); current(version); if (result.ok !== true) throw new Error("Could not close the previous checkout."); return result; }); },
-    async checkout(plan: WebPlan) {
+    async checkout(plan: WebPlan, crypto = false) {
       return exclusive(async version => {
         const status = await read(version);
         if ((status !== "ready" && !(status === "upgrade" && plan === "lifetime")) || !account) throw new Error(status === "verify-email" ? "Verify your email before continuing." : "This account already has Pro. Contact support for help changing plans.");
-        const result = await api.checkout(requireToken(), plan); current(version); return result;
+        const result = crypto ? await api.checkout(requireToken(), plan, true) : await api.checkout(requireToken(), plan); current(version); return result;
       });
     },
   };

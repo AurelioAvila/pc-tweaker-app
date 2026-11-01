@@ -15,6 +15,7 @@ export function WorkspaceSidebar({
   showHistory,
   onNavigate,
   onTip,
+  coffeeCryptoUsd = null,
 }: {
   s: Strings;
   items: NavigationItem[];
@@ -22,7 +23,9 @@ export function WorkspaceSidebar({
   isPro: boolean;
   showHistory: boolean;
   onNavigate: (section: Section) => void;
-  onTip: (quantity: number) => Promise<void>;
+  onTip: (quantity: number, crypto?: boolean) => Promise<void>;
+  /** One coffee in US cents when crypto is on (GET /api/billing/prices), else null. */
+  coffeeCryptoUsd?: number | null;
 }) {
   const groups: { label: string; keys: Section[]; primary?: boolean }[] = [
     {
@@ -87,7 +90,11 @@ export function WorkspaceSidebar({
           )}
           <span>{isPro ? s.menu.planPro : s.tabs.pricing}</span>
         </button>
-        <CoffeeCard s={s} onTip={(quantity) => void onTip(quantity)} />
+        <CoffeeCard
+          s={s}
+          cryptoUsd={coffeeCryptoUsd}
+          onTip={(quantity, crypto) => void onTip(quantity, crypto)}
+        />
       </div>
     </aside>
   );

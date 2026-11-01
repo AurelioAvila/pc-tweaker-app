@@ -1,0 +1,21 @@
+/* Paying Lifetime in USDC: a quiet second choice under the Lifetime button,
+   with the dollar price as its strongest text. */
+.crypto-pay {
+  margin-top: 8px;
+}
+.crypto-pay-button {
+  gap: 8px;
+}
+.crypto-pay-price {
+  font-size: 13px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.crypto-pay-note {
+  margin-top: 6px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}

@@ -2,6 +2,8 @@ import { useState } from "react";
 import cupMark from "../assets/coffee-mark.webp";
 import { buyCoffee } from "../api";
 import { text } from "../i18n/dictionary";
+import { usePriceList } from "../trial";
+import { cryptoCoffeeLabel } from "../../../src/components/crypto-copy";
 
 /** Matches TIP_MAX_QUANTITY on the backend, which clamps to it regardless —
  *  this copy only keeps the stepper from offering a number that gets clamped. */
@@ -26,6 +28,16 @@ const MAX_COFFEES = 10;
 export function CoffeeTip({ children }: { children: React.ReactNode }) {
   const [count, setCount] = useState(1);
   const [state, setState] = useState<"idle" | "pending" | "error">("idle");
+  // One coffee in US cents while the server offers crypto; otherwise no crypto choice.
+  const cryptoUsd = usePriceList()?.crypto?.coffeeUsd ?? null;
+  const tip = (crypto: boolean) => {
+    setState("pending");
+    buyCoffee(count, crypto)
+      .then(({ url }) => {
+        window.location.href = url;
+      })
+      .catch(() => setState("error"));
+  };
 
   return (
     // scroll-mt clears the fixed nav when someone arrives via /#tip.
@@ -64,14 +76,7 @@ export function CoffeeTip({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             disabled={state === "pending"}
-            onClick={() => {
-              setState("pending");
-              buyCoffee(count)
-                .then(({ url }) => {
-                  window.location.href = url;
-                })
-                .catch(() => setState("error"));
-            }}
+            onClick={() => tip(false)}
             className="coffee-pill inline-flex cursor-pointer items-center gap-2 rounded-r-xl px-4 py-3 text-[13.5px] font-semibold text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] disabled:opacity-60"
           >
             <img
@@ -95,6 +100,16 @@ export function CoffeeTip({ children }: { children: React.ReactNode }) {
       >
         {state === "error" ? text.coffee.unavailable : text.coffee.caption}
       </p>
+      {cryptoUsd && (
+        <button
+          type="button"
+          disabled={state === "pending"}
+          onClick={() => tip(true)}
+          className="mt-1.5 cursor-pointer text-[12.5px] text-[var(--fg-dim)] underline decoration-white/25 underline-offset-4 transition-colors hover:text-[var(--fg)] disabled:opacity-60"
+        >
+          {cryptoCoffeeLabel("en", count, cryptoUsd, "en-US")}
+        </button>
+      )}
     </div>
   );
 }

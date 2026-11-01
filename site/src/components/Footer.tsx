@@ -128,6 +128,10 @@ export function Footer({ navigate, currentPath }: { navigate: (to: string) => vo
               links={[
                 { label: "Windows tweaks explained", href: "/tweaks/" },
                 { label: "Processes and services", href: "/database/" },
+                { label: "msedgewebview2.exe", href: "/database/processes/msedgewebview2-exe/" },
+                { label: "svchost.exe", href: "/database/processes/svchost-exe/" },
+                { label: "TiWorker.exe", href: "/database/processes/tiworker-exe/" },
+                { label: "Windows Update service", href: "/database/services/wuauserv/" },
                 { label: "Windows fixes", href: "/fixes/" },
                 { label: "Free tools", href: "/tools/" },
               ]}

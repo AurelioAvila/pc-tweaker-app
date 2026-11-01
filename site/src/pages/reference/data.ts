@@ -259,6 +259,9 @@ const article = (path: string, citations: readonly string[], about?: object) => 
   citation: [...new Set(citations)],
 });
 
+/** "1 November 2026" -> "2026-11-01". */
+const isoDay = (d: string) => new Date(`${d} 12:00 UTC`).toISOString().slice(0, 10);
+
 const TWEAKS_CRUMB = ["Windows tweaks", "/tweaks/"] as const;
 const DB_CRUMB = ["Windows database", "/database/"] as const;
 
@@ -289,7 +292,7 @@ export const REFERENCE_JSONLD: Record<string, readonly object[]> = {
       [
         ...graph(
           breadcrumbs(dbPath(e), [DB_CRUMB, [e.name, `${dbPath(e)}/`]]),
-          article(dbPath(e), e.sources.map((s) => s.url)),
+          { ...article(dbPath(e), e.sources.map((s) => s.url)), ...(e.checked ? { dateModified: isoDay(e.checked) } : {}) },
         ),
         {
           "@context": "https://schema.org",

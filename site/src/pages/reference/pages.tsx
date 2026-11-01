@@ -325,6 +325,23 @@ function DbRow({ e, navigate }: { e: DbEntry; navigate: Nav }) {
   );
 }
 
+/** The entries a page names as related, topped up with entries of the same kind so every page links to at least four others. */
+export function dbRelated(e: DbEntry, min = 4): DbEntry[] {
+  const named = (e.related ?? []).map(dbBySlug).filter((x): x is DbEntry => !!x);
+  const seen = new Set([e.slug, ...named.map((x) => x.slug)]);
+  const at = WINDOWS_DB.indexOf(e);
+  // ponytail: neighbours in the list, not topic matching; good enough while the list is hand-ordered by theme.
+  const rest = [...WINDOWS_DB.slice(at + 1), ...WINDOWS_DB.slice(0, at)].filter((x) => x.kind === e.kind && !seen.has(x.slug));
+  return [...named, ...rest.slice(0, Math.max(0, min - named.length))];
+}
+
+/** The entries people look up most, from Search Console impressions (28 days to 29 Oct 2026) and autocomplete demand. */
+const DB_POPULAR = [
+  "processes/msedgewebview2-exe", "processes/conhost-exe", "processes/smss-exe", "processes/spoolsv-exe", "processes/lsaiso-exe",
+  "processes/lsass-exe", "processes/svchost-exe", "processes/tiworker-exe", "processes/ctfmon-exe", "processes/rundll32-exe",
+  "services/wsaifabricsvc", "services/dmwappushservice", "services/dosvc", "services/wuauserv", "services/sysmain", "services/usosvc",
+];
+
 export function DbIndex({ navigate }: { navigate: Nav }) {
   const [q, setQ] = useState("");
   const list = (kind: DbEntry["kind"]) => WINDOWS_DB.filter((e) => e.kind === kind && matches(q, e.name, e.displayName, e.slug));
@@ -337,6 +354,16 @@ export function DbIndex({ navigate }: { navigate: Nav }) {
         intro="What common Windows processes and services do, according to Microsoft's documentation, which ones to leave alone and which can safely start only when needed. Every entry shows how to check the file and its signature on your own PC, and what PC Tweaker does, or refuses to do, with it."
       />
       <SearchBox value={q} onChange={setQ} label="FIND A PROCESS OR SERVICE" />
+      {!q && (
+        <nav aria-labelledby="db-popular" className="mt-10">
+          <h2 id="db-popular" className="font-display text-xl font-bold text-[var(--fg)]">Most looked up</h2>
+          <ul className="mt-4 flex flex-wrap gap-2.5">
+            {DB_POPULAR.map(dbBySlug).filter((x): x is DbEntry => !!x).map((x) => (
+              <li key={x.slug}><Link to={`${dbPath(x)}/`} onNavigate={navigate} className="font-mono-t inline-block rounded-lg border border-white/10 px-3 py-1.5 text-[13.5px] text-[var(--fg)] hover:border-white/25">{x.name}</Link></li>
+            ))}
+          </ul>
+        </nav>
+      )}
       {(["process", "service"] as const).map((kind) => {
         const items = list(kind);
         return items.length ? (
@@ -377,7 +404,7 @@ export function checkSteps(e: DbEntry): Step[] {
 export function DbDetail({ e, navigate }: { e: DbEntry; navigate: Nav }) {
   const v = DB_VERDICTS[e.verdict];
   const tweaks = (e.tweaks ?? []).map(tweakById).filter((x): x is TweakPage => !!x);
-  const related = (e.related ?? []).map(dbBySlug).filter((x): x is DbEntry => !!x);
+  const related = dbRelated(e);
   return (
     <Shell>
       <Crumbs navigate={navigate} trail={[["Windows database", "/database/"], [e.name, `${dbPath(e)}/`]]} />
@@ -394,7 +421,7 @@ export function DbDetail({ e, navigate }: { e: DbEntry; navigate: Nav }) {
           ...(e.serverGuidance ? [{ label: "Microsoft, Windows Server 2016 guidance", value: e.serverGuidance }] : []),
         ]}
       />
-      <p className="mt-3 text-[13px] text-[var(--fg-dim)]">Paths, signer and service account observed on Windows 11 build 26300 on {CHECKED}. Run the commands below to check your own PC.</p>
+      <p className="mt-3 text-[13px] text-[var(--fg-dim)]">Paths, signer and service account observed on Windows 11 build 26300 on {e.checked ?? CHECKED}. Run the commands below to check your own PC.</p>
 
       <section className="mt-8 rounded-2xl border border-white/10 p-7 md:p-9" aria-labelledby="verdict">
         <div className="flex flex-wrap items-center gap-3">
@@ -432,14 +459,14 @@ export function DbDetail({ e, navigate }: { e: DbEntry; navigate: Nav }) {
 
       {(related.length > 0 || e.guides) && (
         <nav aria-label="Related" className="mt-14 border-t border-white/10 pt-9">
-          <h2 className="font-display text-xl font-bold text-[var(--fg)]">Related</h2>
+          <h2 className="font-display text-xl font-bold text-[var(--fg)]">{e.kind === "process" ? "Related processes and services" : "Related services and processes"}</h2>
           <ul className="mt-5 space-y-2.5 text-[15px] leading-7 text-[var(--fg-dim)]">
             {(e.guides ?? []).map((g) => <li key={g}><Link to={g} onNavigate={navigate} className="text-accent font-medium">{guideLabel(g)}</Link></li>)}
             {related.map((r) => <li key={r.slug}><Link to={`${dbPath(r)}/`} onNavigate={navigate} className="text-accent font-medium">{r.name}</Link>{` — ${r.displayName}`}</li>)}
           </ul>
         </nav>
       )}
-      <SourceList checked={CHECKED} items={e.sources} />
+      <SourceList checked={e.checked ?? CHECKED} items={e.sources} />
     </Shell>
   );
 }

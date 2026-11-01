@@ -45,13 +45,15 @@
     prices.querySelector(`[data-ref="${plan}"]`).textContent = euro(o.reference);
     prices.querySelector(`[data-price="${plan}"]`).textContent = euro(o.price);
     prices.querySelector(`[data-then="${plan}"]`).textContent = euro(o.regular);
-    prices.querySelector(`[data-off="${plan}"]`).textContent = `${off(o)}% off`;
+    prices.querySelector(`[data-off="${plan}"]`).textContent = `−${off(o)}%`;
+    prices.querySelector(`[data-off-sr="${plan}"]`).textContent = `${off(o)}% off`;
   };
   fill("monthly", monthly);
   fill("annual", annual);
   const until = new Intl.DateTimeFormat("en-GB", {
     day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Rome",
   }).format(Date.parse(promo.endsAt) - 60000); // the last minute on sale
+  prices.querySelector("[data-until]").textContent = `Ends ${until}, Rome time`;
 
   // Top strip and headline card: the same real numbers, shown where visitors land.
   const pct = Math.min(off(monthly), off(annual));

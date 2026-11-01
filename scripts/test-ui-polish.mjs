@@ -72,11 +72,20 @@ assert.match(mainSource, /<PageBoundary[^>]*scope="app"[^>]*>\s*<App \/>/, "the 
     /\bfaceit\b/i,
     /\bban(s|ned|ning)?\b/i,
   ];
+  // One exception, decided by the owner on 1 November 2026: the Linux
+  // checklist tells players to check a game's anti-cheat status before
+  // switching. Only the generic term, only in that file; vendor names and
+  // ban talk stay forbidden there too (site/scripts/check-reference.mjs
+  // holds the same exception for the built pages).
+  const linuxGuide = "site/src/pages/linux-guide.ts";
   for (const file of publicText) {
     const text = fs.readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
-    for (const word of forbidden)
+    for (const word of forbidden) {
+      if (file === linuxGuide && word === forbidden[0]) continue;
       assert.doesNotMatch(text, word, `${file}: public text mentions ${word.source}`);
+    }
   }
+  assert.ok(publicText.includes(linuxGuide), `${linuxGuide} moved: update the exception above`);
   assert.ok(publicText.length > 100, "the public text files were found");
 }
 const { outputFiles } = await build({

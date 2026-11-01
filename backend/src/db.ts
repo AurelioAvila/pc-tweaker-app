@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { initReferralSchema } from "./referrals";
+import { initTelegramSchema } from "./telegram";
 import { initWebCheckoutReservations } from "./web-checkout-reservations";
 
 const connectionString = process.env.DATABASE_URL;
@@ -354,6 +355,7 @@ async function initSchema(): Promise<void> {
   await pool.query(`ALTER TABLE license_installs ADD COLUMN IF NOT EXISTS pro BOOLEAN;`);
 
   if (process.env.CHECKOUT_GUARD_ENABLED === "1") await initWebCheckoutReservations(pool);
+  await initTelegramSchema(pool);
 
   // Its migration reports each foreign key it converts as a NOTICE: shown in the deploy log.
   const client = await pool.connect();

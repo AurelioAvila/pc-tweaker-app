@@ -179,7 +179,7 @@ export function AccessPricing() {
             </ul>
             {(webEnabled || webPreview) ? (
               <button type="button" onClick={() => choosePurchase("annual")} className="block rounded-xl border border-white/20 py-3.5 md:row-start-5 text-center text-[14.5px] font-semibold text-[var(--fg)] transition-colors hover:border-white/40">
-                {webPreview ? "Preview annual" : "Choose annual"}
+                {webPreview ? "Preview Annual" : "Choose Annual"}
               </button>
             ) : (
               <a href={DOWNLOAD_EXE} className="block rounded-xl border border-white/20 py-3.5 md:row-start-5 text-center text-[14.5px] font-semibold text-[var(--fg)] transition-colors hover:border-white/40">{pro.cta}</a>
@@ -249,7 +249,7 @@ export function AccessPricing() {
                   type="button"
                   aria-pressed={purchase === plan}
                   onClick={() => setPurchase(plan)}
-                  className={`rounded-xl px-2 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:px-5 focus-visible:outline-[var(--accent)] ${purchase === plan ? "bg-accent text-[var(--bg)]" : "border border-white/20 text-[var(--fg)] hover:border-white/40"}`}
+                  className={`rounded-xl border px-2 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:px-5 focus-visible:outline-[var(--accent)] ${purchase === plan ? "bg-accent border-transparent text-[var(--bg)]" : "border-white/20 text-[var(--fg)] hover:border-white/40"}`}
                 >
                   {/* Phones: three equal buttons, the verb only from sm up. */}
                   <span className="hidden sm:inline">{webPreview ? "Preview" : "Buy"} </span>
@@ -260,7 +260,7 @@ export function AccessPricing() {
                 type="button"
                 aria-pressed={purchase === "account"}
                 onClick={() => setPurchase("account")}
-                className={`col-span-3 rounded-xl px-5 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${purchase === "account" ? "bg-accent text-[var(--bg)]" : "border border-white/20 text-[var(--fg)] hover:border-white/40"}`}
+                className={`col-span-3 rounded-xl border px-5 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${purchase === "account" ? "bg-accent border-transparent text-[var(--bg)]" : "border-white/20 text-[var(--fg)] hover:border-white/40"}`}
               >
                 Create a free account
               </button>

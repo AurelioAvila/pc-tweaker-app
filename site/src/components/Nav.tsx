@@ -58,7 +58,7 @@ export function Nav({
           <Link
             to="/guides/"
             onNavigate={navigate}
-            ariaCurrent={currentPath === "/guides" ? "page" : undefined}
+            ariaCurrent={currentPath === "/guides" || currentPath?.startsWith("/guides/") ? "page" : undefined}
             className="hidden min-h-11 min-[430px]:inline-flex items-center text-[13.5px] font-medium whitespace-nowrap text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)]"
           >
             {text.nav.guides}
@@ -66,6 +66,7 @@ export function Nav({
           <Link
             to="/support/"
             onNavigate={navigate}
+            ariaCurrent={currentPath === "/support" ? "page" : undefined}
             className="hidden text-[13.5px] font-medium whitespace-nowrap text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] xl:block"
           >
             {text.support.navLabel}

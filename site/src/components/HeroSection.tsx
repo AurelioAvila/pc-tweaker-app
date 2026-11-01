@@ -40,7 +40,7 @@ function ThemeSelector() {
               summary.current?.focus();
             }}
             className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg border border-transparent hover:border-[var(--line-2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
-            style={{ borderColor: theme === t ? "var(--fg)" : undefined }}
+            style={theme === t ? { borderColor: "var(--fg)", backgroundColor: "rgba(255, 255, 255, 0.08)", boxShadow: "inset 0 0 0 1px var(--fg)" } : undefined}
           >
             <span aria-hidden="true" className="h-4 w-4 rounded-full" style={{ backgroundColor: ACCENTS[t].hex }} />
           </button>

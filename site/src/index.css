@@ -53,6 +53,35 @@ p {
   background: var(--accent);
   color: var(--bg);
 }
+/* Ctrl+A or a drag across a screenshot should not paint it solid accent. */
+img::selection,
+svg::selection,
+picture::selection,
+video::selection {
+  background: transparent;
+}
+
+/* Controls are not text: a double-click or a drag across the header, a button,
+   a toggle or a button-styled link must not leave its label highlighted.
+   Content (prices, commands, codes) stays selectable. */
+nav[aria-label="Primary navigation"],
+button,
+summary,
+[role="tab"],
+a.rounded-lg,
+a.rounded-xl,
+a.hw-strip-cta,
+a.hw-card-cta {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Current page in the top bar: brighter label with an accent underline. */
+nav[aria-label="Primary navigation"] a[aria-current="page"] {
+  color: var(--fg);
+  text-decoration: underline 2px var(--accent);
+  text-underline-offset: 8px;
+}
 
 /* type utilities */
 .font-display {

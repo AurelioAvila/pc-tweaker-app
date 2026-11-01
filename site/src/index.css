@@ -181,3 +181,9 @@ p {
     animation-duration: 0.01ms;
   }
 }
+
+/* Plans: every card action shows where the keyboard is. */
+#access :is(a, button):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}

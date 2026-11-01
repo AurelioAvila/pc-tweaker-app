@@ -111,6 +111,25 @@ export function PricingPanel({
           new Date(Date.parse(iso) + offsetMs),
         )
       : "";
+  // The offer's name and deadline sit on the discounted card itself, next to the price.
+  const promoTag = showPromo ? (
+    <span className="pricing-promo-tag">
+      <strong>{copy.promoTitle}</strong>
+      <span>
+        {copy.ends}:{" "}
+        <time dateTime={promoEnd}>
+          {promoEnd
+            ? new Intl.DateTimeFormat(localeOf(lang), {
+                day: "numeric",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              }).format(new Date(Date.parse(promoEnd) - 60_000))
+            : ""}
+        </time>
+      </span>
+    </span>
+  ) : null;
   const clock = offerClock(campaign.remaining);
   const activeCampaign =
     campaign.offer?.status === "active" && !campaign.expired && campaign.available;
@@ -305,12 +324,13 @@ export function PricingPanel({
             </button>
           </div>
           <div className="pricing-price">
+            {proOffer && promoTag}
             {proOffer && (
               <s className="pricing-price-before">{money(proOffer.reference / 100, lang)}</s>
             )}
             <strong>{money(proOffer ? proOffer.price / 100 : listed(period), lang)}</strong>
             <span>{annual ? s.pricing.perYear : s.pricing.perMonth}</span>
-            {proOffer && <span className="pricing-discount">-{promoPercent(proOffer)}%</span>}
+            {proOffer && <span className="pricing-discount">−{promoPercent(proOffer)}%</span>}
           </div>
           <p className="pricing-price-note">
             {proOffer
@@ -442,6 +462,7 @@ export function PricingPanel({
           <p className="pricing-plan-description">{copy.lifetime}</p>
           <span className="pricing-payment-label">{s.pricing.oneTimeBadge}</span>
           <div className="pricing-price">
+            {lifetimeOffer && promoTag}
             {lifetimeOffer && (
               <s className="pricing-price-before">{money(lifetimeOffer.reference / 100, lang)}</s>
             )}
@@ -450,7 +471,7 @@ export function PricingPanel({
             </strong>
             <span>{s.pricing.once}</span>
             {lifetimeOffer && (
-              <span className="pricing-discount">-{promoPercent(lifetimeOffer)}%</span>
+              <span className="pricing-discount">−{promoPercent(lifetimeOffer)}%</span>
             )}
           </div>
           <p className="pricing-price-note">{copy.perpetual}</p>

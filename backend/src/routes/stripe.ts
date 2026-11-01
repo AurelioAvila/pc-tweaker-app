@@ -11,6 +11,7 @@ import {
   formatChargedAmount,
   isSettledCheckout,
   planFromPrice,
+  tipProduct,
   tipSessionParams,
   withQuery,
 } from "../stripe-policy";
@@ -673,21 +674,41 @@ router.get("/billing/status", requireAuth, asyncRoute(async (req: Request, res: 
 // A one-off tip. Deliberately outside the account system: no login, no
 // entitlement, nothing granted on the webhook side — someone paying €1 to
 // say thanks shouldn't need an account first, and there is nothing for that
-// payment to unlock.
-router.post("/tip", checkoutLimiter, tipLimiter, requireStripe, async (req: Request, res: Response) => {
+// payment to unlock. Shared by every product on the Stripe account: `product`
+// picks the name in the owner's notice and the site the tipper returns to.
+async function tipCheckoutUrl(source: Record<string, unknown> | undefined): Promise<{ status: number; error?: string; url?: string }> {
+  const product = tipProduct(source?.product);
+  if (!product) return { status: 400, error: "unknown product" };
   const priceId = process.env.STRIPE_PRICE_COFFEE;
-  if (!priceId) {
-    return res.status(503).json({ error: "STRIPE_PRICE_COFFEE is not configured" });
-  }
+  if (!priceId) return { status: 503, error: "STRIPE_PRICE_COFFEE is not configured" };
   try {
     const session = await stripe!.checkout.sessions.create(
-      tipSessionParams(priceId, process.env.APP_URL || "https://pctweaker.app", req.body?.quantity, req.body?.utm),
+      tipSessionParams(priceId, process.env.APP_URL || "https://pctweaker.app", source?.quantity, source?.utm, product),
     );
-    res.json({ url: session.url });
+    return session.url ? { status: 200, url: session.url } : { status: 500, error: "could not open checkout" };
   } catch (err) {
     console.error("tip checkout session creation failed:", err);
-    res.status(500).json({ error: "could not open checkout" });
+    return { status: 500, error: "could not open checkout" };
   }
+}
+
+router.post("/tip", checkoutLimiter, tipLimiter, requireStripe, async (req: Request, res: Response) => {
+  const { status, error, url } = await tipCheckoutUrl(req.body);
+  res.status(status).json(error ? { error } : { url });
+});
+
+// The same, as a plain link for apps that can only open the system browser
+// and for sites on origins this API does not allow. Only `product` and
+// `quantity` are read: no caller-supplied URL can ever reach Checkout.
+router.get("/tip/start", (req: Request, res: Response, next: NextFunction) => {
+  // Express routes HEAD here too; a link checker must not mint sessions.
+  if (req.method === "HEAD") return res.status(204).end();
+  res.setHeader("X-Robots-Tag", "noindex, nofollow");
+  next();
+}, checkoutLimiter, tipLimiter, requireStripe, async (req: Request, res: Response) => {
+  const { status, error, url } = await tipCheckoutUrl({ product: req.query.product, quantity: req.query.quantity });
+  if (error) return res.status(status).type("text").send(error);
+  res.redirect(303, url!);
 });
 
 // Opens Stripe's own hosted billing portal for the logged-in user: cancel,

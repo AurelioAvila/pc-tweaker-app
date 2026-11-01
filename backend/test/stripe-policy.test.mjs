@@ -7,6 +7,8 @@ const {
   isSettledCheckout,
   planFromPrice,
   productFromMetadata,
+  tipProduct,
+  TIP_PRODUCTS,
   tipQuantity,
   tipSessionParams,
   TIP_MAX_QUANTITY,
@@ -148,8 +150,32 @@ test("a tip carries no identity, so the webhook can never grant it access", () =
   // Adding either to a tip session would turn a €1 thank-you into a licence.
   const params = tipSessionParams("price_coffee", "https://pctweaker.app");
   assert.equal(params.client_reference_id, undefined);
-  assert.equal(params.metadata, undefined);
+  assert.deepEqual(params.metadata, { tip_product: "pctweaker" });
+  assert.equal(params.metadata.userId, undefined);
+  assert.equal(params.metadata.product, undefined, "metadata.product is what the webhook grants by");
   assert.equal(params.mode, "payment");
+});
+
+test("a tip names one of our products, or none at all, never anything else", () => {
+  assert.equal(tipProduct(undefined), "pctweaker");
+  assert.equal(tipProduct(""), "pctweaker");
+  assert.equal(tipProduct("redaxa"), "redaxa");
+  for (const bad of ["Redaxa", "toString", "__proto__", "https://evil.example", ["redaxa"], 1]) assert.equal(tipProduct(bad), null);
+  assert.deepEqual(Object.keys(TIP_PRODUCTS).sort(),
+    ["certsprint", "framewitness", "glarion", "pctweaker", "redaxa", "redexa", "tweaky", "uninstaller"]);
+});
+
+test("each product's tipper goes back to that product's own site", () => {
+  const params = tipSessionParams("price_coffee", "https://api.pctweaker.app", 2, undefined, "redaxa");
+  assert.equal(params.success_url, "https://redaxa.getcertsprint.com/?tip=thanks");
+  assert.equal(params.cancel_url, "https://redaxa.getcertsprint.com/?tip=cancel");
+  assert.deepEqual(params.metadata, { tip_product: "redaxa" });
+  assert.equal(params.line_items[0].quantity, 2);
+  assert.equal(params.line_items[0].price, "price_coffee", "one shared Price for every product");
+  for (const [id, { home }] of Object.entries(TIP_PRODUCTS)) {
+    const { success_url } = tipSessionParams("p", "https://api.pctweaker.app", 1, undefined, id);
+    assert.ok(success_url.startsWith(home ?? "https://api.pctweaker.app/tip-thanks"), `${id}: ${success_url}`);
+  }
 });
 
 test("the tipper is sent back to a page that says thank you", () => {
@@ -196,7 +222,7 @@ test("a quantity that is not a usable number falls back to one coffee", () => {
 test("social campaign labels reach session metadata, nothing else does", () => {
   const utm = { utm_source: "youtube", utm_medium: "social", utm_campaign: "pctweaker_shorts", utm_content: "pc-x-v1", email: "a@b.c" };
   const tip = tipSessionParams("price_coffee", "https://pctweaker.app", 1, utm);
-  assert.deepEqual(tip.metadata, { utm_source: "youtube", utm_medium: "social", utm_campaign: "pctweaker_shorts", utm_content: "pc-x-v1" });
+  assert.deepEqual(tip.metadata, { tip_product: "pctweaker", utm_source: "youtube", utm_medium: "social", utm_campaign: "pctweaker_shorts", utm_content: "pc-x-v1" });
   assert.equal(tip.client_reference_id, undefined);
   const checkout = checkoutSessionParams({
     priceId: "p", mode: "payment", userId: "7", planKey: "lifetime", product: "pctweaker",

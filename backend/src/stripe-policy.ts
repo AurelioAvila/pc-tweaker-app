@@ -227,13 +227,38 @@ export function utmMetadata(raw: unknown): Record<string, string> {
   return out;
 }
 
-export function tipSessionParams(priceId: string, appUrl: string, quantity: unknown = 1, utm?: unknown) {
+/** The products a coffee can be for: one shared Price, one Stripe account,
+ * and each tipper sent back to the site they came from. `home: null` is PC
+ * Tweaker, whose thank-you page is served by this API (`${APP_URL}/tip-thanks`).
+ * An allow-list on purpose: the return URLs are ours, never the caller's. */
+export const TIP_PRODUCTS = {
+  pctweaker: { name: "PC Tweaker", home: null },
+  tweaky: { name: "Tweaky Driver", home: "https://pctweaker.app/tweaky-driver/" },
+  uninstaller: { name: "PC Tweaker Uninstaller", home: "https://pctweaker.app/uninstaller/" },
+  redaxa: { name: "Redaxa", home: "https://redaxa.getcertsprint.com/" },
+  redexa: { name: "Redexa Social", home: "https://redexa.getcertsprint.com/" },
+  framewitness: { name: "Frame Witness", home: "https://framewitness.pages.dev/" },
+  glarion: { name: "Glarion", home: "https://glarion.app/" },
+  certsprint: { name: "CertSprint", home: "https://getcertsprint.com/" },
+} as const;
+export type TipProduct = keyof typeof TIP_PRODUCTS;
+
+/** The product a tip is for: absent or empty means PC Tweaker, anything
+ * outside the allow-list is null (the route answers 400). */
+export function tipProduct(raw: unknown): TipProduct | null {
+  if (raw === undefined || raw === null || raw === "") return "pctweaker";
+  return typeof raw === "string" && Object.prototype.hasOwnProperty.call(TIP_PRODUCTS, raw) ? (raw as TipProduct) : null;
+}
+
+export function tipSessionParams(priceId: string, appUrl: string, quantity: unknown = 1, utm?: unknown, product: TipProduct = "pctweaker") {
   const qty = tipQuantity(quantity);
-  // Campaign labels only, never an identity (see the webhook test on tips).
-  const campaign = utmMetadata(utm);
+  const { home } = TIP_PRODUCTS[product];
+  const api = appUrl.replace(/\/$/, "");
+  // Campaign labels and the product name only, never an identity (see the
+  // webhook test on tips). `tip_product` is what the owner's sale notice reads.
   return {
     mode: "payment" as const,
-    ...(Object.keys(campaign).length ? { metadata: campaign } : {}),
+    metadata: { tip_product: product, ...utmMetadata(utm) },
     // The caller picks the count, and Checkout still shows its own stepper so
     // it can be changed on Stripe's page without coming back here.
     line_items: [
@@ -243,8 +268,9 @@ export function tipSessionParams(priceId: string, appUrl: string, quantity: unkn
         adjustable_quantity: { enabled: true, minimum: 1, maximum: TIP_MAX_QUANTITY },
       },
     ],
-    success_url: `${appUrl.replace(/\/$/, "")}/tip-thanks`,
-    cancel_url: `${appUrl.replace(/\/$/, "")}/checkout-cancel`,
+    // No custom_text "Thanks for supporting …": Managed Payments rejects it.
+    success_url: home ? withQuery(home, { tip: "thanks" }) : `${api}/tip-thanks`,
+    cancel_url: home ? withQuery(home, { tip: "cancel" }) : `${api}/checkout-cancel`,
     automatic_tax: { enabled: true },
     customer_creation: "always" as const,
   };

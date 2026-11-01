@@ -460,8 +460,8 @@ test("a full refund or a lost dispute of the Lifetime payment revokes Lifetime, 
 
   const tipper = await user();
   await grantPro(tipper, { customerId: `cus_t_${tipper}`, plan: "lifetime", expiresAt: null });
-  // A real tip carries no account and no product metadata (see tipSessionParams).
-  const tip = { mode: "payment", metadata: {}, line_items: { data: [{ price: { id: "price_tip_fixture" } }] } };
+  // A real tip carries no account and only tip_product metadata (see tipSessionParams).
+  const tip = { mode: "payment", metadata: { tip_product: "pctweaker" }, line_items: { data: [{ price: { id: "price_tip_fixture" } }] } };
   await handleEvent(event("charge.refunded", charge("ch_tip")), fx(tip));
   await handleEvent(event("charge.refunded", charge("ch_none")), fx(null));
   assert.equal((await row(tipper)).is_pro, true, "a refunded tip or unrelated payment keeps Lifetime");

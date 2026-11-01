@@ -118,18 +118,52 @@ export function UninstallerPage() {
         </ul>
       </section>
 
-      <section id="uninstaller-pro" className="mb-10 scroll-mt-28 rounded-2xl border border-white/10 p-6">
-        <h2 className="mb-2 text-2xl font-semibold text-[var(--fg)]">Uninstaller Pro</h2>
-        <p className="mb-4 text-lg font-semibold text-accent">
-          {uninstallerOffer ? (
-            <>
-              <s className="mr-2 font-medium text-[var(--fg-dim)]">{euro(uninstallerOffer.reference)}</s>
-              {euro(uninstallerOffer.price)} for the first year ({promoPercent(uninstallerOffer)}% off), then{" "}
-              {euro(uninstallerOffer.regular)} per year
-            </>
-          ) : (
-            "€9.99 per year"
+      {/* The price is the hero of this card, and a live offer (only ever from
+          the promo API, never invented) is a big warm badge with its name and
+          deadline beside the price. Owner, 1/11/2026. */}
+      <section
+        id="uninstaller-pro"
+        className="mb-10 scroll-mt-28 rounded-2xl border border-[color-mix(in_srgb,var(--accent)_60%,transparent)] bg-[radial-gradient(120%_80%_at_100%_0%,var(--accent-soft),transparent_70%),var(--bg-2)] p-6 shadow-[0_24px_60px_-20px_var(--accent-glow)] md:p-8"
+      >
+        <h2 className="mb-4 text-2xl font-semibold text-[var(--fg)]">Uninstaller Pro</h2>
+        <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+          {uninstallerOffer && (
+            <s className="text-xl font-medium text-[var(--fg-dim)] decoration-2">
+              <span className="sr-only">Was </span>
+              {euro(uninstallerOffer.reference)}
+            </s>
           )}
+          <strong className="font-display text-5xl leading-none font-extrabold tracking-tight text-[var(--fg)] md:text-6xl">
+            {uninstallerOffer && <span className="sr-only">Now </span>}
+            {uninstallerOffer ? euro(uninstallerOffer.price) : "€9.99"}
+          </strong>
+          <span className="text-base font-semibold text-[var(--fg)] opacity-85">
+            {uninstallerOffer ? "first year" : "per year"}
+          </span>
+          {uninstallerOffer && (
+            <span className="font-display rounded-xl sm:ml-auto bg-linear-to-br from-[#ff7a3d] to-[#ffb23d] px-3.5 py-1 text-2xl font-extrabold whitespace-nowrap text-[#1c0a02] shadow-[0_6px_18px_-6px_#ff7a3d] md:text-3xl">
+              −{promoPercent(uninstallerOffer)}%
+            </span>
+          )}
+        </div>
+        {uninstallerOffer && promo.promo && (
+          <p className="mb-1 text-[14px] font-semibold text-[#ffb98f]">
+            Halloween offer · ends{" "}
+            <time dateTime={promo.promo.endsAt}>
+              {new Intl.DateTimeFormat("en-GB", {
+                day: "numeric",
+                month: "long",
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZoneName: "short",
+              }).format(new Date(Date.parse(promo.promo.endsAt) - 60_000))}
+            </time>
+          </p>
+        )}
+        <p className="mb-5 text-[15px] text-[var(--fg-dim)]">
+          {uninstallerOffer
+            ? `Then ${euro(uninstallerOffer.regular)} per year. Renews until you cancel.`
+            : "Billed €9.99 per year. Renews until you cancel."}
         </p>
         {uninstallerOffer && <PromoFine className="-mt-2 mb-4 text-[12.5px] text-[var(--fg-dim)]" />}
         <TrialLine product="uninstaller" plan="annual" className="mb-4 leading-relaxed text-[var(--fg-dim)]" />

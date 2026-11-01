@@ -76,13 +76,37 @@ export function usePromo(): PromoState {
 export const euro = (cents: number) =>
   new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 2, minimumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100);
 
-/** Struck lowest-30-day price, promotional price and the real percentage. */
+/** Struck lowest-30-day price with the real percentage as a solid badge, then
+ *  the promotional price on its own line, as the card's largest text. */
 export function PromoPrice({ offer, className }: { offer: PromoOffer; className?: string }) {
   return (
+    <span className={`block ${className ?? ""}`}>
+      <span className="mb-3 flex items-center gap-3 font-sans text-[20px] leading-none">
+        <s className="font-semibold text-[var(--fg-dim)] decoration-2">{euro(offer.reference)}</s>
+        <span className="bg-accent -rotate-3 rounded-lg px-2.5 py-1.5 text-[19px] font-extrabold tracking-tight text-[var(--bg)] shadow-[0_8px_22px_-8px_var(--accent)]">
+          −{promoPercent(offer)}%
+        </span>
+      </span>
+      <span className="block">{euro(offer.price)}</span>
+    </span>
+  );
+}
+
+/** "Halloween offer · ends 6 Nov, 23:59 CET", in the visitor's own time zone. */
+export function PromoDeadline({ className }: { className?: string }) {
+  const { promo } = usePromo();
+  const copy = useCopy();
+  if (!promo) return null;
+  const end = new Intl.DateTimeFormat(copy.locale, {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(new Date(Date.parse(promo.endsAt) - 60_000));
+  return (
     <span className={className}>
-      <s className="mr-3 align-middle text-[0.45em] font-medium text-[var(--fg-dim)]">{euro(offer.reference)}</s>
-      {euro(offer.price)}
-      <span className="font-mono-t text-accent ml-3 align-middle text-[0.3em] tracking-wider">−{promoPercent(offer)}%</span>
+      <strong className="text-accent font-bold">{copy.kicker}</strong> · {copy.ends(end)}
     </span>
   );
 }

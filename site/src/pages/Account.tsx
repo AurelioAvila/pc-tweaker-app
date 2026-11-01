@@ -7,6 +7,8 @@ import {
   type ProductStatus,
 } from "../web-purchase-client";
 import { API_BASE, DOWNLOAD_EXE } from "../constants";
+import { euro, PromoDeadline, usePromo } from "../promo";
+import { promoPercent } from "../../../src/promo";
 
 /* The signed-in account page: plans, the PCs that use the account, billing.
    Same bearer-token sign-in as the apps and the website checkout, never a
@@ -54,6 +56,8 @@ function planText(p: ProductStatus): { name: string; detail: string; tone: "ok" 
 
 export function AccountPage() {
   const [client] = useState(() => createPurchaseClient(API_BASE));
+  // A live offer only, read from the server like the plans section; none, nothing shows.
+  const lifetimeOffer = usePromo().offer("pctweaker", "lifetime");
   const [token, setToken] = useState<string | null>(null);
   const [data, setData] = useState<Loaded | null>(null);
   // Until the stored session has been tried, show neither the form nor the account.
@@ -254,22 +258,41 @@ export function AccountPage() {
                 {(data.products ?? []).map((p) => {
                   const plan = planText(p);
                   return (
-                    <li key={p.product} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3">
-                      <span className="text-[var(--fg)]">{PRODUCTS[p.product] ?? p.product}</span>
-                      <span className="text-right">
-                        <span className={`font-semibold ${plan.tone === "ok" ? "text-emerald-400" : plan.tone === "warn" ? "text-amber-300" : "text-[var(--fg-dim)]"}`}>
+                    <li key={p.product} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-4">
+                      <span className="font-semibold text-[var(--fg)]">{PRODUCTS[p.product] ?? p.product}</span>
+                      <span className="flex flex-col items-end gap-1 text-right">
+                        <span className={`rounded-full border px-3 py-1 text-[13px] font-semibold ${plan.tone === "ok" ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" : plan.tone === "warn" ? "border-amber-300/30 bg-amber-300/10 text-amber-200" : "border-white/15 text-[var(--fg-dim)]"}`}>
                           {plan.name}
                         </span>
-                        {plan.detail && <span className="block text-sm text-[var(--fg-dim)]">{plan.detail}</span>}
+                        {plan.detail && <span className="text-sm text-[var(--fg-dim)]">{plan.detail}</span>}
                       </span>
                     </li>
                   );
                 })}
-                <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3">
-                  <span className="text-[var(--fg)]">Tweaky Driver</span>
+                <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-4">
+                  <span className="font-semibold text-[var(--fg)]">Tweaky Driver</span>
                   <span className="text-sm text-[var(--fg-dim)]">Shown in the Tweaky Driver app</span>
                 </li>
               </ul>
+              {lifetimeOffer && !data.products?.some((p) => p.product === "pctweaker" && p.state === "active" && p.plan === "lifetime") && (
+                <a
+                  href="/#access"
+                  className="mt-4 flex items-center gap-4 rounded-xl border p-4 transition-colors hover:bg-[var(--accent-soft)]"
+                  style={{ borderColor: "var(--accent-glow)" }}
+                >
+                  <span className="bg-accent shrink-0 -rotate-3 rounded-lg px-2.5 py-1 text-lg font-extrabold text-[var(--bg)]">
+                    −{promoPercent(lifetimeOffer)}%
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold text-[var(--fg)]">
+                      PC Tweaker Lifetime for {euro(lifetimeOffer.price)}{" "}
+                      <s className="font-normal text-[var(--fg-dim)]">{euro(lifetimeOffer.reference)}</s>
+                    </span>
+                    <PromoDeadline className="block text-sm text-[var(--fg-dim)]" />
+                    <span className="text-accent mt-1 block text-sm font-semibold">See the plans →</span>
+                  </span>
+                </a>
+              )}
               {data.account.hasBilling ? (
                 <div className="mt-6 border-t border-white/10 pt-6">
                   <p className="text-sm leading-relaxed text-[var(--fg-dim)]">

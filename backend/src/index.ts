@@ -352,7 +352,13 @@ app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: "Not found" });
 });
 
-app.use((err: Error, _req: Request, res: Response, _next: express.NextFunction) => {
+app.use((err: Error & { status?: number; expose?: boolean; type?: string }, _req: Request, res: Response, _next: express.NextFunction) => {
+  // express.json() rejects a malformed, oversized or wrongly encoded body with
+  // a client error it marks safe to expose: answer that, never a 500.
+  if (err.expose && err.status && err.status >= 400 && err.status < 500) {
+    res.status(err.status).json({ error: err.type === "entity.parse.failed" ? "invalid JSON body" : err.message });
+    return;
+  }
   console.error("unhandled error:", err);
   res.status(500).json({ error: "internal server error" });
 });

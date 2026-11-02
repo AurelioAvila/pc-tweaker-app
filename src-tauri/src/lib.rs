@@ -94,6 +94,7 @@ mod technical;
 mod thermals;
 mod turbo;
 mod tweaks;
+mod update_alert;
 mod updatewatch;
 mod window_state;
 mod x3d;
@@ -1086,7 +1087,7 @@ fn apply_tweak(app: tauri::AppHandle, id: String) -> Result<(), String> {
         }
         // Already elevated (Run as administrator, or UAC turned off): the
         // helper is skipped, so its restore point is taken here instead.
-        restore_point_before_change();
+        let _ = restore_point_before_change();
     }
     let dir = store_for_dir(&app)?;
     let store = RollbackStore::new(dir.clone());
@@ -1180,7 +1181,7 @@ fn apply_tweaks(
 
     if !needs_admin.is_empty() {
         if elevation::is_elevated() {
-            restore_point_before_change();
+            let _ = restore_point_before_change();
             for id in &needs_admin {
                 if let Err(e) = apply_by_id(&store, &dir, id) {
                     failures.push(format!("{}: {}", id, e));
@@ -1249,6 +1250,80 @@ fn apply_tweaks(
     _ids: Vec<String>,
     _source: Option<String>,
 ) -> Result<Vec<String>, String> {
+    Err("tweaks are currently only supported on Windows".to_string())
+}
+
+/// What Safe optimize did: the restore point it asked for first, and the
+/// tweaks that could not be applied.
+#[derive(Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SafeApplyResult {
+    restore_point: restore_point::RestorePointOutcome,
+    failures: Vec<String>,
+}
+
+const SAFE_APPLY_RESULT: &str = "last_safe_apply_result.json";
+
+/// Safe optimize: a restore point first, then the batch. Making a restore
+/// point needs administrator rights, so this always asks once, even when
+/// every tweak in the batch is a per-user one; that one prompt also applies
+/// the batch's administrator part. Declining it changes nothing (the error
+/// says so). The window decides which tweaks are safe (src/components/
+/// safe-optimize.tsx); this applies them the way `apply_tweaks` does, minus
+/// the ones already on.
+#[cfg(windows)]
+#[tauri::command(async)]
+fn safe_apply(app: tauri::AppHandle, ids: Vec<String>) -> Result<SafeApplyResult, String> {
+    let dir = store_for_dir(&app)?;
+    let store = RollbackStore::new(dir.clone());
+    let applied = store.applied_ids().unwrap_or_default();
+    let ids: Vec<String> = ids.into_iter().filter(|id| !applied.contains(id)).collect();
+    record_origin(Some("safe-optimize".into()), &ids);
+    let (needs_admin, direct) = split_by_elevation(bulk_applicable(ids));
+
+    let mut result = if elevation::is_elevated() {
+        let restore_point = restore_point_before_change();
+        let mut failures = Vec::new();
+        for id in &needs_admin {
+            if let Err(e) = apply_by_id(&store, &dir, id) {
+                failures.push(format!("{}: {}", id, e));
+            }
+        }
+        SafeApplyResult {
+            restore_point,
+            failures,
+        }
+    } else {
+        let path = dir.join(SAFE_APPLY_RESULT);
+        let _ = std::fs::remove_file(&path);
+        let batch = if needs_admin.is_empty() {
+            "-".to_string()
+        } else {
+            needs_admin.join(",")
+        };
+        let outcome = elevation::run_elevated_action("--elevated-safe-apply", &batch);
+        let read = std::fs::read_to_string(&path)
+            .ok()
+            .and_then(|json| serde_json::from_str::<SafeApplyResult>(&json).ok());
+        let _ = std::fs::remove_file(&path);
+        match (outcome, read) {
+            (_, Some(result)) => result,
+            // Declined or failed before anything ran: nothing was changed.
+            (Err(e), None) => return Err(e),
+            (Ok(()), None) => return Err("the elevated helper left no result".into()),
+        }
+    };
+    for id in &direct {
+        if let Err(e) = apply_by_id(&store, &dir, id) {
+            result.failures.push(format!("{}: {}", id, e));
+        }
+    }
+    Ok(result)
+}
+
+#[cfg(not(windows))]
+#[tauri::command(async)]
+fn safe_apply(_app: tauri::AppHandle, _ids: Vec<String>) -> Result<SafeApplyResult, String> {
     Err("tweaks are currently only supported on Windows".to_string())
 }
 
@@ -1805,35 +1880,15 @@ pub fn run_scheduled_temp_cleanup_headless() -> ! {
     std::process::exit(0)
 }
 
-/// The scheduled half of the update watchdog.
-///
-/// Runs the same comparison `check_update_drift` does, with no window and no
-/// Tauri app, and exits. If anything the user applied is no longer in effect
-/// it says so with a toast; if nothing moved it says nothing at all, which is
-/// the behaviour that keeps the notification worth reading.
-///
-/// Exit code 0 either way. This is a watchdog, not a test: a Windows update
-/// undoing tweaks is the expected case it exists to report, not a failure of
-/// this process.
+/// Every tweak the update watch can read back, with what the rollback store
+/// says and what the system says. Only the registry tweaks and the
+/// multi-value settings: those can be read back and compared without touching
+/// anything. The composite tweaks (power plans, services, network) each answer
+/// "am I on" their own way, and guessing a shared shape for them would report
+/// drift that is not there.
 #[cfg(windows)]
-pub fn run_drift_check_headless() -> ! {
-    let dir = dirs_app_data_dir();
-    crash::install(dir.clone(), crash::PROCESS_ELEVATED);
-
-    let store = RollbackStore::new(dir.clone());
-    let applied_ids = match store.applied_ids() {
-        Ok(ids) => ids,
-        Err(error) => {
-            eprintln!("could not read restore state: {}", error);
-            std::process::exit(1);
-        }
-    };
-    let Some(current) = updatewatch::current_patch_level() else {
-        std::process::exit(0);
-    };
-    let previous = updatewatch::read_state(&dir).last_seen;
-
-    let states: Vec<updatewatch::TweakState> = tweaks::all_tweaks()
+fn drift_states(applied_ids: &std::collections::HashSet<String>) -> Vec<updatewatch::TweakState> {
+    let mut states: Vec<updatewatch::TweakState> = tweaks::all_tweaks()
         .iter()
         .filter(|t| !MANUAL_ONLY_TWEAKS.contains(&t.id))
         .map(|t| {
@@ -1841,6 +1896,8 @@ pub fn run_drift_check_headless() -> ! {
             let live_matches = if recorded_applied {
                 match t.read_current() {
                     Ok(Some(value)) => Some(value == t.on_value),
+                    // The value is gone entirely, which for a tweak that
+                    // writes one is as reverted as a wrong value.
                     Ok(None) => Some(false),
                     Err(_) => None,
                 }
@@ -1854,27 +1911,108 @@ pub fn run_drift_check_headless() -> ! {
             }
         })
         .collect();
+    states.extend(settings_drift_states(applied_ids));
+    states
+}
 
-    let mut states = states;
-    states.extend(settings_drift_states(&applied_ids));
-    let report = updatewatch::build_report(previous, current.clone(), &states);
-    let _ = updatewatch::write_state(
-        &dir,
-        &updatewatch::WatchState {
-            last_seen: Some(current),
-        },
-    );
+/// The one drift check every caller runs: the window on open, the History
+/// card, the free sign-in task and the Pro alert task. Reads the patch level
+/// and the live values, never changes a setting, and stores what it saw
+/// after the comparison, so a failure above leaves the previous state intact
+/// rather than swallowing an update nobody was told about.
+#[cfg(windows)]
+fn drift_check(
+    dir: &std::path::Path,
+) -> Result<(updatewatch::DriftReport, updatewatch::WatchState), String> {
+    let applied_ids = RollbackStore::new(dir.to_path_buf()).applied_ids()?;
+    let current = updatewatch::current_patch_level()
+        .ok_or_else(|| "could not read the Windows patch level".to_string())?;
+    let state = updatewatch::read_state(dir);
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs());
+    let (report, next) = updatewatch::check(&state, current, &drift_states(&applied_ids), now);
+    let _ = updatewatch::write_state(dir, &next);
+    Ok((report, next))
+}
 
-    if !report.reverted.is_empty() {
+/// Records that a notification named these settings, so the same drift is
+/// announced once.
+#[cfg(windows)]
+fn remember_notified(
+    dir: &std::path::Path,
+    mut state: updatewatch::WatchState,
+    reverted: &[String],
+) {
+    state.notified = reverted.to_vec();
+    let _ = updatewatch::write_state(dir, &state);
+}
+
+/// The free half of the update watchdog: the opt-in task at sign-in.
+///
+/// Runs the same check the window does, with no window and no Tauri app, and
+/// exits. If a setting the user applied is no longer in effect it says so
+/// once with a notification; if nothing moved it says nothing at all, which
+/// is the behaviour that keeps the notification worth reading. When the Pro
+/// alert is on, an update's drift is left to it (its notification can open
+/// the app on the alert).
+///
+/// Exit code 0 either way. This is a watchdog, not a test: a Windows update
+/// undoing tweaks is the expected case it exists to report, not a failure of
+/// this process.
+#[cfg(windows)]
+pub fn run_drift_check_headless() -> ! {
+    let dir = dirs_app_data_dir();
+    crash::install(dir.clone(), crash::PROCESS_ELEVATED);
+    let (report, state) = match drift_check(&dir) {
+        Ok(result) => result,
+        Err(error) => {
+            eprintln!("{error}");
+            std::process::exit(0);
+        }
+    };
+    let pro_handles_it = report.alert && update_alert::wanted(&dir);
+    if !pro_handles_it && updatewatch::should_notify(&state.notified, &report.reverted) {
         audit::record(
             "update-drift",
             "scheduled",
             true,
             Some(format!("{} tweak(s) reverted", report.reverted.len())),
         );
-        let _ = updatewatch::notify(report.reverted.len());
+        let _ = update_alert::notify_drift(&dir, report.reverted.len(), report.windows_updated);
+        remember_notified(&dir, state, &report.reverted);
     }
+    std::process::exit(0)
+}
 
+/// The Pro half: the task that wakes on Windows Update's "installed" event
+/// and at sign-in (update_alert.rs). Removes itself when Pro has ended or the
+/// alert was switched off, and otherwise says something only when an update
+/// left settings changed that no notification has named yet. Never applies
+/// anything: the notification's Restore opens the app on its alert.
+#[cfg(windows)]
+pub fn run_update_alert_headless() -> ! {
+    let dir = dirs_app_data_dir();
+    crash::install(dir.clone(), crash::PROCESS_ELEVATED);
+    if !update_alert::wanted(&dir) {
+        let _ = update_alert::reconcile(&dir);
+        std::process::exit(0);
+    }
+    if let Ok((report, state)) = drift_check(&dir) {
+        if report.alert && updatewatch::should_notify(&state.notified, &report.reverted) {
+            audit::record(
+                "update-alert",
+                "notified",
+                true,
+                Some(format!(
+                    "{} setting(s) changed after an update",
+                    report.reverted.len()
+                )),
+            );
+            let _ = update_alert::notify_alert(&dir, report.reverted.len());
+            remember_notified(&dir, state, &report.reverted);
+        }
+    }
     std::process::exit(0)
 }
 
@@ -1885,11 +2023,11 @@ pub fn run_drift_check_headless() -> ! {
 /// either way, so "was I protected?" always has an answer: a new point only
 /// when one was verified, a reused one under its own key, and a disabled
 /// System Restore as a failed restore point.
-fn restore_point_before_change() {
+fn restore_point_before_change() -> restore_point::RestorePointOutcome {
     use restore_point::RestorePointOutcome as Outcome;
     let outcome = restore_point::create_restore_point();
     let detail = Some(outcome.detail());
-    match outcome {
+    match &outcome {
         Outcome::Created { .. } => audit::record("restore-point", "system", true, None),
         // Windows accepted the request and kept an existing point: its own
         // key, so nothing counts it as a restore point this change made.
@@ -1899,6 +2037,7 @@ fn restore_point_before_change() {
         }
         Outcome::Skipped { .. } => {}
     }
+    outcome
 }
 
 pub fn run_elevated_headless(action: &str, id: &str) -> ! {
@@ -1963,7 +2102,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
     }
     let store = RollbackStore::new(dir.clone());
 
-    restore_point_before_change();
+    let restore_point = restore_point_before_change();
 
     let result: Result<(), String> = match action {
         "--elevated-download-limit" => require_pro(&dir).and_then(|_| {
@@ -2174,8 +2313,35 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             result
         }
 
-        scanfix::ELEVATED_FLAG => scanfix::run_elevated(&dir, id),
+        scanfix::ELEVATED_FLAG => scanfix::run_elevated(&dir, id, restore_point),
         scanfix::RESTORE_FLAG => scanfix::run_elevated_restore(&dir, id),
+
+        // Safe optimize: the restore point above came first; report it, then
+        // apply the batch's administrator part. The window applies the rest
+        // once this returns, so nothing changes before the restore point.
+        "--elevated-safe-apply" => {
+            let batch = bulk_applicable(
+                id.split(',')
+                    .filter(|s| !s.is_empty() && *s != "-")
+                    .map(str::to_owned)
+                    .collect(),
+            );
+            let mut failures = Vec::new();
+            for one in &batch {
+                if let Err(e) = apply_by_id(&store, &dir, one) {
+                    failures.push(format!("{}: {}", one, e));
+                }
+            }
+            serde_json::to_string(&SafeApplyResult {
+                restore_point,
+                failures,
+            })
+            .map_err(|e| e.to_string())
+            .and_then(|json| {
+                elevation::write_no_follow(dir.join(SAFE_APPLY_RESULT), json)
+                    .map_err(|e| e.to_string())
+            })
+        }
 
         "--elevated-drift-watch" => match id {
             "enable" => configure_drift_watch(true),
@@ -2292,57 +2458,15 @@ fn list_audit_log(app: tauri::AppHandle) -> Result<Vec<audit::AuditEntry>, Strin
 #[cfg(windows)]
 #[tauri::command(async)]
 fn check_update_drift(app: tauri::AppHandle) -> Result<updatewatch::DriftReport, String> {
+    drift_check(&store_for_dir(&app)?).map(|(report, _)| report)
+}
+
+/// "Not now" in the alert, or its settings were put back: the window stops
+/// asking about this update. The History card keeps listing what drifted.
+#[tauri::command(async)]
+fn dismiss_update_alert(app: tauri::AppHandle) -> Result<(), String> {
     let dir = store_for_dir(&app)?;
-    let store = RollbackStore::new(dir.clone());
-    let applied_ids = store.applied_ids()?;
-
-    let current = updatewatch::current_patch_level()
-        .ok_or_else(|| "could not read the Windows patch level".to_string())?;
-    let previous = updatewatch::read_state(&dir).last_seen;
-
-    // Only the registry tweaks: those are the ones whose live state can be
-    // read back and compared without touching anything. The composite tweaks
-    // (power plans, services, network) each answer "am I on" their own way,
-    // and guessing a shared shape for them would report drift that is not
-    // there.
-    let states: Vec<updatewatch::TweakState> = tweaks::all_tweaks()
-        .into_iter()
-        .filter(|t| !MANUAL_ONLY_TWEAKS.contains(&t.id))
-        .map(|t| {
-            let recorded_applied = applied_ids.contains(t.id);
-            let live_matches = if recorded_applied {
-                match t.read_current() {
-                    Ok(Some(value)) => Some(value == t.on_value),
-                    // The value is gone entirely, which for a tweak that
-                    // writes one is as reverted as a wrong value.
-                    Ok(None) => Some(false),
-                    Err(_) => None,
-                }
-            } else {
-                None
-            };
-            updatewatch::TweakState {
-                id: t.id.to_string(),
-                recorded_applied,
-                live_matches,
-            }
-        })
-        .collect();
-
-    let mut states = states;
-    states.extend(settings_drift_states(&applied_ids));
-    let report = updatewatch::build_report(previous, current, &states);
-
-    // Recorded after the comparison, so a failure above leaves the previous
-    // baseline intact rather than swallowing an update nobody was told about.
-    let _ = updatewatch::write_state(
-        &dir,
-        &updatewatch::WatchState {
-            last_seen: Some(current),
-        },
-    );
-
-    Ok(report)
+    updatewatch::write_state(&dir, &updatewatch::dismiss(&updatewatch::read_state(&dir)))
 }
 
 #[cfg(not(windows))]
@@ -2406,6 +2530,10 @@ pub fn run() {
             process_rules::start(app.handle().clone());
             #[cfg(windows)]
             std::thread::spawn(refresh_drift_watch_target);
+            // Pro's Windows Update alert: on while Pro is, off when it ends.
+            if let Ok(dir) = store_for_dir(app.handle()) {
+                update_alert::reconcile_in_background(dir);
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -2514,6 +2642,10 @@ pub fn run() {
             debloat::write_debloat_list,
             debloat::read_debloat_list,
             check_update_drift,
+            dismiss_update_alert,
+            update_alert::update_alert_status,
+            update_alert::set_update_alert,
+            safe_apply,
             list_crash_reports,
             clear_crash_reports,
             sysmon::system_stats,

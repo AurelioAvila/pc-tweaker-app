@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { localeOf, type Lang, type Strings } from "../i18n";
 import type { AuditEntry, Section, TweakInfo } from "../types";
@@ -265,12 +265,15 @@ export function OverviewPanel({
   tweaks,
   samples,
   onNavigate,
+  safeOptimize,
 }: {
   s: Strings;
   lang: Lang;
   tweaks: TweakInfo[];
   samples: PulseSample[];
   onNavigate: (section: Section) => void;
+  /** The Safe optimize card, between the readings and the next steps. */
+  safeOptimize?: ReactNode;
 }) {
   const copy = COPY[lang];
   const [history, setHistory] = useState<HistoryState>({ status: "loading" });
@@ -378,6 +381,8 @@ export function OverviewPanel({
           </button>
         </div>
       </section>
+
+      {safeOptimize}
 
       <section className="overview-next" aria-labelledby="overview-next-heading">
         <h2 className="overview-section-title" id="overview-next-heading">

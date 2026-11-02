@@ -528,10 +528,15 @@ export type ValueChange = {
  *  `reverted` says which applied tweaks no longer match the system. The app
  *  never claims the first caused the second. */
 export type DriftReport = {
+  /** A Windows update the user has not answered yet (updatewatch.rs). */
   windowsUpdated: boolean;
   previousPatch: string | null;
   currentPatch: string;
   reverted: string[];
+  /** When that update was first seen, Unix seconds. */
+  updatedAt?: number | null;
+  /** The window should ask about it now (the post-update alert). */
+  alert?: boolean;
 };
 
 /** A recorded panic (src-tauri/src/crash.rs). Written by both the app and
@@ -901,7 +906,17 @@ export type ScanFixPlan = {
 export type ScanFreed = { id: string; freed_bytes: number; deleted: number; skipped: number };
 
 /** Mirrors `scanfix::ScanFixResult`: what every part measured. */
+/** Mirrors `RestorePointOutcome` in restore_point.rs (`skipped` also when the
+ *  user chose to continue without one). Times are Unix seconds. */
+export type RestoreStatus = {
+  kind: "created" | "reused" | "unverified" | "failed" | "skipped";
+  at?: number;
+  reason?: string;
+};
+
 export type ScanFixResult = {
+  /** The restore point taken before the administrator part, when there was one. */
+  restore_point?: RestoreStatus | null;
   tweak_errors: string[];
   cleanups: ScanFreed[];
   app_caches: ScanFreed | null;

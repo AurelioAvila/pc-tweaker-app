@@ -2,13 +2,14 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openFolderDialog, save as saveFileDialog } from "@tauri-apps/plugin-dialog";
 import { format, Lang, Strings } from "../i18n";
-import { formatEpochDate, friendlyError } from "../lib";
+import { formatEpochDate, friendlyError, textFor } from "../lib";
 import { MANUAL_ONLY_TWEAK_IDS } from "../catalog";
 import { FolderIcon, LayersIcon } from "./icons";
 import { LoadedProfile, Toast, TweakInfo, TweakProfile } from "../types";
 import "./workspace-panels.css";
 import { LifetimeTools } from "./lifetime-tools";
 import { StarterProfiles } from "./starter-profiles";
+import { runWithProof } from "./proof-card";
 
 /**
  * Saved configurations: capture what's applied, put it back later, or hand it
@@ -196,29 +197,43 @@ export function ProfilesPanel({
     // Switches that apply only on their own are left out of every profile.
     const ids = profile.tweaks.filter((id) => !MANUAL_ONLY_TWEAK_IDS.has(id));
     const wasApplied = new Set(tweaks.filter((t) => t.applied).map((t) => t.id));
+    const nameOf = (id: string) => {
+      const t = tweaks.find((x) => x.id === id);
+      return t ? textFor(s.tweaks, t.id, t.name, t.description).name : id;
+    };
     try {
-      // Named in the history: a starter profile has no creation date.
-      const source = `${profile.created_at ? "profile" : "starter"}:${profile.name}`;
-      const failures = await invoke<string[]>("apply_tweaks", { ids, source });
-      // Counted from what is in effect now, not from the failure list: a
-      // cancelled administrator prompt reports one failure for the whole
-      // elevated part, and a control this PC does not support is skipped
-      // without one.
-      const after = await invoke<TweakInfo[]>("list_tweaks");
-      await onChanged();
-      failures.forEach((f) =>
-        pushToast(
-          "error",
-          f.includes("PRO_REQUIRED: ") ? s.toasts.licenseNeedsRefresh : friendlyError(f, s),
-        ),
+      // Measured before and after, then shown on the proof card.
+      await runWithProof(
+        "profile",
+        async () => {
+          // Named in the history: a starter profile has no creation date.
+          const source = `${profile.created_at ? "profile" : "starter"}:${profile.name}`;
+          const failures = await invoke<string[]>("apply_tweaks", { ids, source });
+          // Counted from what is in effect now, not from the failure list: a
+          // cancelled administrator prompt reports one failure for the whole
+          // elevated part, and a control this PC does not support is skipped
+          // without one.
+          const after = await invoke<TweakInfo[]>("list_tweaks");
+          await onChanged();
+          failures.forEach((f) =>
+            pushToast(
+              "error",
+              f.includes("PRO_REQUIRED: ") ? s.toasts.licenseNeedsRefresh : friendlyError(f, s),
+            ),
+          );
+          // Only what this apply turned on: tweaks that were already on are not
+          // counted again.
+          const done = ids.filter(
+            (id) => !wasApplied.has(id) && after.some((t) => t.id === id && t.applied),
+          );
+          const pending = ids.filter((id) => !wasApplied.has(id));
+          return { changed: done.map(nameOf), failures: pending.length - done.length };
+        },
+        {
+          name: profile.name,
+          admin: ids.some((id) => tweaks.find((t) => t.id === id)?.requires_admin),
+        },
       );
-      // Only what this apply turned on: tweaks that were already on are not
-      // counted again.
-      const done = ids.filter(
-        (id) => !wasApplied.has(id) && after.some((t) => t.id === id && t.applied),
-      );
-      if (done.length > 0)
-        pushToast("success", format(s.profiles.appliedToast, { count: done.length }));
     } catch (e) {
       pushToast("error", String(e));
     } finally {

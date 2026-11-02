@@ -180,6 +180,11 @@ const en: Copy = {
       help: "Space available on the drive Windows is installed on.",
       impact: "more free space",
     },
+    timer_ms: {
+      name: "Timer resolution",
+      help: "How finely Windows schedules timers right now. Games, browsers and music players ask for a finer tick while they run. Read once; a change counts from 0.1 ms.",
+      impact: "finer timer resolution",
+    },
   },
 };
 
@@ -301,6 +306,11 @@ const it: Copy = {
       name: "Spazio libero sull'unità di sistema",
       help: "Spazio disponibile sull'unità in cui è installato Windows.",
       impact: "di spazio libero in più",
+    },
+    timer_ms: {
+      name: "Risoluzione del timer",
+      help: "Quanto finemente Windows pianifica i timer in questo momento. Giochi, browser e lettori musicali chiedono un intervallo più fine mentre sono aperti. Letta una volta; una variazione conta da 0,1 ms.",
+      impact: "risoluzione del timer più fine",
     },
   },
 };
@@ -426,6 +436,11 @@ const fr: Copy = {
       help: "Espace disponible sur le lecteur où Windows est installé.",
       impact: "d'espace libre en plus",
     },
+    timer_ms: {
+      name: "Résolution du minuteur",
+      help: "La finesse avec laquelle Windows planifie les minuteurs en ce moment. Jeux, navigateurs et lecteurs de musique demandent un intervalle plus fin quand ils tournent. Lue une fois\u00a0; un changement compte à partir de 0,1\u00a0ms.",
+      impact: "résolution du minuteur plus fine",
+    },
   },
 };
 
@@ -548,6 +563,11 @@ const es: Copy = {
       name: "Espacio libre en la unidad del sistema",
       help: "Espacio disponible en la unidad donde está instalado Windows.",
       impact: "más de espacio libre",
+    },
+    timer_ms: {
+      name: "Resolución del temporizador",
+      help: "Con qué precisión programa Windows los temporizadores ahora mismo. Juegos, navegadores y reproductores de música piden un intervalo más fino mientras están abiertos. Se lee una vez; un cambio cuenta a partir de 0,1 ms.",
+      impact: "resolución del temporizador más fina",
     },
   },
 };
@@ -674,6 +694,11 @@ const de: Copy = {
       help: "Verfügbarer Platz auf dem Laufwerk, auf dem Windows installiert ist.",
       impact: "mehr freier Speicherplatz",
     },
+    timer_ms: {
+      name: "Timer-Auflösung",
+      help: "Wie fein Windows Timer gerade plant. Spiele, Browser und Musikplayer fordern ein feineres Intervall an, solange sie laufen. Einmal gelesen; eine Änderung zählt ab 0,1 ms.",
+      impact: "feinere Timer-Auflösung",
+    },
   },
 };
 
@@ -796,6 +821,11 @@ const pt: Copy = {
       name: "Espaço livre na unidade do sistema",
       help: "Espaço disponível na unidade onde o Windows está instalado.",
       impact: "mais espaço livre",
+    },
+    timer_ms: {
+      name: "Resolução do temporizador",
+      help: "A precisão com que o Windows agenda os temporizadores neste momento. Jogos, browsers e leitores de música pedem um intervalo mais fino enquanto estão abertos. Lida uma vez; uma alteração conta a partir de 0,1 ms.",
+      impact: "resolução do temporizador mais fina",
     },
   },
 };

@@ -18,13 +18,14 @@ export async function loadTranslations() {
         import { TRIAL_COPY } from './src/components/trial-copy';
         import { REFERRAL_COPY } from './src/components/referral-copy';
         import { HEALTH_COPY } from './src/components/health-copy';
+        import { PROOF_COPY } from './src/components/proof-copy';
         const tables = { componentScan: SCAN_COPY, componentScan2: SCAN2_COPY, componentAdvanced: ADVANCED_COPY,
           componentDebloat: DEBLOAT_COPY, componentLibrary: LIBRARY_COPY,
           componentImpacts: EXTRA_IMPACTS, componentPricing: PRICING_COPY,
           componentStarter: STARTER_COPY, componentBeforeAfter: BEFORE_AFTER_COPY,
           componentHistory: HISTORY_COPY, componentTrial: TRIAL_COPY,
           componentReferrals: REFERRAL_COPY, componentHealth: HEALTH_COPY,
-          componentPlanState: PLAN_STATE_COPY };
+          componentPlanState: PLAN_STATE_COPY, componentProof: PROOF_COPY };
         export const translations = Object.fromEntries(Object.entries(STRINGS).map(([lang, strings]) =>
           [lang, { ...strings, ...Object.fromEntries(Object.entries(tables).map(([key, table]) => [key, table[lang]])) }]));
       `,

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
@@ -35,7 +35,8 @@ import {
   type ScanSession,
 } from "../scan-runner";
 import { fixAllKeys, fixPlan, locked, scanItems, type ScanItem } from "../scan-items";
-import { emitFixDone, runBeforeFix } from "../fix-events";
+import { runWithProof, useProofBusy } from "./proof-card";
+import { SafeOptimizeCard } from "./safe-optimize";
 import { CheckIcon } from "./icons";
 import { Badge } from "./ui";
 import { SCAN_COPY } from "./scan-copy";
@@ -87,7 +88,8 @@ export function ScanPanel({
   onNavigate,
   onBusyChange,
   trialDays = null,
-  extraActions,
+  tweaks,
+  onRequirePro,
 }: {
   s: Strings;
   lang: Lang;
@@ -99,8 +101,10 @@ export function ScanPanel({
   /** Set while this person may start the free trial: the Pro
    *  recommendations then lead with it (it opens Plans & pricing). */
   trialDays?: number | null;
-  /** Rendered beside Fix all and Custom (e.g. a "Safe optimize" button). */
-  extraActions?: ReactNode;
+  /** The catalogue as the app holds it, for the Safe optimize card. */
+  tweaks: TweakInfo[];
+  /** Safe optimize's Pro items: opens the paywall. */
+  onRequirePro: () => void;
 }) {
   const c = SCAN_COPY[lang];
   const c2 = SCAN2_COPY[lang];
@@ -134,6 +138,7 @@ export function ScanPanel({
     heldScan ? stepTimesOf(heldScan.session) : {},
   );
   const operation = useRef(false);
+  const proofBusy = useProofBusy();
   const abort = useRef<AbortController | null>(null);
   /** Why the running scan was aborted: kept for a resume, or ended. */
   const intent = useRef<"pause" | "stop" | null>(null);
@@ -391,12 +396,13 @@ export function ScanPanel({
   }
 
   async function apply() {
-    if (operation.current || !report || !reviewItems.length) return;
+    if (operation.current || proofBusy || !report || !reviewItems.length) return;
     const plan = fixPlan(
       items,
       reviewItems.map((i) => i.key),
       isPro,
     );
+    const admin = reviewItems.some((i) => i.admin);
     operation.current = true;
     onBusyChange?.(true);
     setApplying(true);
@@ -404,43 +410,51 @@ export function ScanPanel({
     setRestored(null);
     setError("");
     try {
-      await runBeforeFix({ tweaks: plan.tweaks, ...plan.extras }, "scan");
-      const result = await applyScanSelection(invoke, report, isPro, plan.tweaks, plan.extras);
-      let booster = false;
-      if (plan.booster) {
-        try {
-          await invoke("apply_tweak", { id: "smart_ram_booster" });
-          booster = true;
-        } catch (e) {
-          result.errors.push(String(e));
-        }
-      }
-      const tweaks = booster
-        ? await invoke<TweakInfo[]>("list_tweaks").catch(() => result.tweaks)
-        : result.tweaks;
-      setOutcome({ ...result, booster });
-      // Unknown final states cannot be offered for a second blind application.
-      const next = await reread(
-        { ...report, advice: result.advice, ids: result.ids },
-        tweaks ?? null,
+      // Measured before and after, then the proof card (proof-card.tsx).
+      await runWithProof(
+        "scan",
+        async () => {
+          const result = await applyScanSelection(invoke, report, isPro, plan.tweaks, plan.extras);
+          let booster = false;
+          if (plan.booster) {
+            try {
+              await invoke("apply_tweak", { id: "smart_ram_booster" });
+              booster = true;
+            } catch (e) {
+              result.errors.push(String(e));
+            }
+          }
+          const tweaks = booster
+            ? await invoke<TweakInfo[]>("list_tweaks").catch(() => result.tweaks)
+            : result.tweaks;
+          const done: FixOutcome = { ...result, booster };
+          setOutcome(done);
+          // Unknown final states cannot be offered for a second blind application.
+          const next = await reread(
+            { ...report, advice: result.advice, ids: result.ids },
+            tweaks ?? null,
+          );
+          setReport(next);
+          setSelected(new Set(fixAllKeys(scanItems(next), isPro)));
+          setCustom(false);
+          if (result.fixed.length)
+            pushToast("success", format(s.scan.fixedToast, { count: result.fixed.length }));
+          try {
+            await onFixed();
+          } catch (e) {
+            setError(String(e));
+          }
+          const changed = changedNames(s, lang, done);
+          // Nothing changed: the outcome panel already says why, no card.
+          if (!changed.length) return null;
+          return {
+            changed,
+            failures: result.failed.length + (result.measured?.errors.length ?? 0),
+            restorePoint: result.measured?.restore_point ?? null,
+          };
+        },
+        { admin },
       );
-      setReport(next);
-      setSelected(new Set(fixAllKeys(scanItems(next), isPro)));
-      setCustom(false);
-      if (result.fixed.length)
-        pushToast("success", format(s.scan.fixedToast, { count: result.fixed.length }));
-      emitFixDone({
-        source: "scan",
-        fixed: result.fixed,
-        failed: result.failed,
-        measured: result.measured,
-        errors: result.errors,
-      });
-      try {
-        await onFixed();
-      } catch (e) {
-        setError(String(e));
-      }
       window.requestAnimationFrame(() => {
         outcomePanel.current?.focus({ preventScroll: true });
         outcomePanel.current?.scrollIntoView({ block: "nearest", behavior: "auto" });
@@ -513,7 +527,7 @@ export function ScanPanel({
             <button
               className="scan-primary scan-launch"
               onClick={() => void scan()}
-              disabled={reading || applying || paused}
+              disabled={reading || applying || paused || proofBusy}
               aria-label={
                 reading
                   ? presenting
@@ -688,9 +702,8 @@ export function ScanPanel({
                 isPro={isPro}
                 custom={custom}
                 fixCount={custom ? ticked.length : fixAll.length}
-                busy={applying || reading}
+                busy={applying || reading || proofBusy}
                 trialDays={trialDays}
-                extraActions={extraActions}
                 onFix={() => setReviewKeys(custom ? ticked.map((i) => i.key) : fixAll)}
                 onCustom={(on) => {
                   setCustom(on);
@@ -839,6 +852,23 @@ export function ScanPanel({
           />
         </div>
       )}
+      {/* After the idle note before a scan, after the categories once there
+          are results: the one-click alternative to choosing items. */}
+      {!reading && !paused && (
+        <SafeOptimizeCard
+          s={s}
+          lang={lang}
+          tweaks={tweaks}
+          isPro={isPro}
+          onChanged={async () => {
+            await onFixed();
+            const fresh = await invoke<TweakInfo[]>("list_tweaks").catch(() => null);
+            if (fresh) setReport((r) => (r ? { ...r, tweaks: fresh } : r));
+          }}
+          onRequirePro={onRequirePro}
+          pushToast={pushToast}
+        />
+      )}
 
       <dialog
         ref={dialog}
@@ -907,6 +937,33 @@ function itemName(s: Strings, lang: Lang, item: ScanItem): string {
   }
 }
 
+/** What a fix measured besides the settings: one line per part. */
+function measuredLines(lang: Lang, outcome: FixOutcome): string[] {
+  const c2 = SCAN2_COPY[lang];
+  const m = outcome.measured;
+  const recycled = (m?.cleanups ?? []).reduce((sum, f) => sum + f.freed_bytes, 0);
+  const freedMb = m?.purge ? Math.max(0, m.purge.free_after_mb - m.purge.free_before_mb) : null;
+  return [
+    m?.cleanups.length && format(c2.doneFreed, { size: formatBytes(recycled) }),
+    m?.app_caches && format(c2.doneCaches, { size: formatBytes(m.app_caches.freed_bytes) }),
+    m?.registry?.removed && format(c2.doneRegistry, { count: formatNumber(m.registry.removed) }),
+    freedMb !== null && format(c2.doneMemory, { size: formatBytes(freedMb * 1024 * 1024) }),
+    outcome.booster && c2.doneBooster,
+  ].filter(Boolean) as string[];
+}
+
+/** What the proof card lists as changed: each setting by name, then the
+ *  measured parts. */
+function changedNames(s: Strings, lang: Lang, outcome: FixOutcome): string[] {
+  return [
+    ...outcome.fixed.map((id) => {
+      const t = outcome.tweaks?.find((x) => x.id === id);
+      return textFor(s.tweaks, id, t?.name ?? id, t?.description ?? "").name;
+    }),
+    ...measuredLines(lang, outcome),
+  ];
+}
+
 /** What the fix measured, part by part. */
 function FixOutcomePanel({
   panel,
@@ -926,17 +983,12 @@ function FixOutcomePanel({
   const c = SCAN_COPY[lang];
   const c2 = SCAN2_COPY[lang];
   const m = outcome.measured;
-  const recycled = (m?.cleanups ?? []).reduce((sum, f) => sum + f.freed_bytes, 0);
-  const freedMb = m?.purge ? Math.max(0, m.purge.free_after_mb - m.purge.free_before_mb) : null;
   const lines = [
-    outcome.fixed.length > 0 &&
-      format(c2.doneSettings, { count: formatNumber(outcome.fixed.length) }),
-    m?.cleanups.length && format(c2.doneFreed, { size: formatBytes(recycled) }),
-    m?.app_caches && format(c2.doneCaches, { size: formatBytes(m.app_caches.freed_bytes) }),
-    m?.registry?.removed && format(c2.doneRegistry, { count: formatNumber(m.registry.removed) }),
-    freedMb !== null && format(c2.doneMemory, { size: formatBytes(freedMb * 1024 * 1024) }),
-    outcome.booster && c2.doneBooster,
-  ].filter(Boolean) as string[];
+    ...(outcome.fixed.length > 0
+      ? [format(c2.doneSettings, { count: formatNumber(outcome.fixed.length) })]
+      : []),
+    ...measuredLines(lang, outcome),
+  ];
   const problems = outcome.failed.length + outcome.errors.length;
   const stamp = m?.registry?.removed ? m.registry.stamp : "";
   return (

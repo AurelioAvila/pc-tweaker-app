@@ -472,8 +472,14 @@ pub fn save_license(app: tauri::AppHandle, response: SignedLicenseResponse) -> R
     if !bound_to(&response.payload_json, device_hash().as_deref()) {
         return Err("license was issued to another PC".into());
     }
-    let store = LicenseStore::new(crate::store_for_dir(&app)?);
-    store.save(&response).map_err(|e| e.to_string())
+    let dir = crate::store_for_dir(&app)?;
+    LicenseStore::new(dir.clone())
+        .save(&response)
+        .map_err(|e| e.to_string())?;
+    // Pro's Windows Update alert follows the licence (on with Pro, off when
+    // it ends). Cheap when nothing changed; never waits on Task Scheduler.
+    crate::update_alert::reconcile_in_background(dir);
+    Ok(())
 }
 
 /// Read-only status for the UI: whether a verified, still-fresh Pro license
@@ -492,10 +498,13 @@ pub fn license_status(app: tauri::AppHandle) -> Result<bool, String> {
 /// account that never paid for anything.
 #[tauri::command]
 pub fn clear_license(app: tauri::AppHandle) -> Result<(), String> {
-    crate::referral::clear(&crate::store_for_dir(&app)?)?;
-    LicenseStore::new(crate::store_for_dir(&app)?)
+    let dir = crate::store_for_dir(&app)?;
+    crate::referral::clear(&dir)?;
+    LicenseStore::new(dir.clone())
         .delete()
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    crate::update_alert::reconcile_in_background(dir);
+    Ok(())
 }
 
 #[cfg(test)]

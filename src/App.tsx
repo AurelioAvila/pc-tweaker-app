@@ -109,10 +109,14 @@ import { ProfilesPanel } from "./components/profiles";
 import { PricingPanel } from "./components/pricing";
 import { SubscriptionPanel } from "./components/subscription";
 import { PRICING_COPY } from "./components/pricing-copy";
+import { PROOF_COPY } from "./components/proof-copy";
 import { GamingHudCard, ZeroTraceCard } from "./components/pro";
 import { TitleBar, titleTrial } from "./components/titlebar";
 import { CATEGORY_STYLE } from "./categories";
 import { OverviewPanel } from "./components/overview";
+import { ProofCardHost } from "./components/proof-card";
+import { SafeOptimizeCard } from "./components/safe-optimize";
+import { UpdateAlertDialog, UpdateAlertToggle } from "./components/update-alert";
 import { WorkspaceSidebar } from "./components/workspace-sidebar";
 import { DebloatPanel } from "./components/debloat";
 import { AdvancedControlCard } from "./components/advanced-controls";
@@ -1256,6 +1260,8 @@ function App() {
                     onBusyChange={(busy) => {
                       scanApplying.current = busy;
                     }}
+                    tweaks={tweaks}
+                    onRequirePro={() => setPaywallFeature(PROOF_COPY[lang].safeTitle)}
                   />
                   <TweakyDriverPromoCard s={s} />
                 </div>
@@ -1271,6 +1277,17 @@ function App() {
                     tweaks={tweaks}
                     samples={pulseSamples}
                     onNavigate={setFilter}
+                    safeOptimize={
+                      <SafeOptimizeCard
+                        s={s}
+                        lang={lang}
+                        tweaks={tweaks}
+                        isPro={isProUnlocked}
+                        onChanged={refresh}
+                        onRequirePro={() => setPaywallFeature(PROOF_COPY[lang].safeTitle)}
+                        pushToast={pushToast}
+                      />
+                    }
                   />
                 )}
 
@@ -1363,6 +1380,13 @@ function App() {
                   user can act on right now, and it renders nothing when
                   nothing drifted. */}
                     <DriftWatchToggle s={s} pushToast={pushToast} />
+                    <UpdateAlertToggle
+                      s={s}
+                      lang={lang}
+                      isPro={isProUnlocked}
+                      onRequirePro={() => setPaywallFeature(PROOF_COPY[lang].alertToggleTitle)}
+                      pushToast={pushToast}
+                    />
                     <UpdateDriftCard
                       s={s}
                       tweaks={tweaks}
@@ -1798,6 +1822,18 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* One proof card for every one-shot change (Safe optimize, profiles,
+          the Scan's Fix all) and the post-update alert, over any screen. */}
+      <ProofCardHost s={s} lang={lang} pushToast={pushToast} />
+      <UpdateAlertDialog
+        s={s}
+        lang={lang}
+        tweaks={tweaks}
+        isPro={isProUnlocked}
+        onChanged={refresh}
+        pushToast={pushToast}
+      />
 
       {paywallFeature && (
         <PaywallModal

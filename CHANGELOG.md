@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.19.0
+
+PC Tweaker 1.19.0 rebuilds the Scan: 19 checks across Performance, Junk files, Startup, Privacy, Registry, Memory, Hardware and Latency, a headline that says how much space your PC is wasting (measured, not guessed), Fix all or Custom, and Pro items that show what they would free on your PC before you unlock them. New: a read-only hardware audit (RAM below its rated XMP/EXPO speed, SSD or graphics card on a slower PCIe link, Resizable BAR off, each with how to fix it), latency findings (interrupts piling up on CPU 0, DPC spikes), a registry cleaner (orphaned entries only, backup first, one-click restore), a Smart RAM booster, one-click Safe optimize, a restore point before any change, a Proof of change card with real before/after numbers you can save as PNG, and an alert when a Windows update changes your settings. 82 controls. New: PC Tweaker for Business.
+
 ## v1.18.29
 
 Plans & pricing now opens straight on the plans, with a slim offer bar and clearer prices. A new Support entry sits in the sidebar. Manage your subscription from the account menu: see your plan, price, renewal date and card, cancel at the end of the paid period (with an optional reason) or resume it. Subscribers now see their own plan and price. Interface polish: text you do not need to copy no longer gets selected, better contrast on buttons, cleaner focus rings and several small layout fixes.

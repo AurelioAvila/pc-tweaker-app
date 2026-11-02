@@ -88,9 +88,8 @@ export function newScanSession(now = Date.now()): ScanSession {
   return { id: `scan-${now}-${Math.random().toString(36).slice(2, 8)}`, startedAt: now, steps: {} };
 }
 
-/** The share of the scan ring each check takes, by how long it usually runs
- *  (they add up to 100). The driver inventory is the long one and also moves
- *  inside its share, one device class at a time ("driver-scan-progress"). */
+/** How much work each check usually is (they add up to 100): half of its
+ *  share of the scan ring (`scanShare`). The driver inventory is the long one. */
 export const SCAN_WEIGHT: Record<ScanProbe, number> = {
   list_tweaks: 2,
   scan_relevant_ids: 2,
@@ -112,57 +111,50 @@ export const SCAN_WEIGHT: Record<ScanProbe, number> = {
   hardware_audit: 5,
   interrupt_sample: 6,
 };
-/** The driver inventory's share never fills on device classes alone: the
- *  last part is the audit's own answer. */
-const DRIVER_CAP = 0.92;
+/**
+ * Presentation pacing: the scan ring takes at least this long from start to
+ * 100 %. The reads themselves run as fast as the PC allows (usually a few
+ * seconds); the ring then walks through them, never ticking a check before
+ * it has really finished, giving each one a minimum time on screen
+ * (`scanDwellMs`). A check that is slower than its time keeps the ring
+ * waiting on it. Owner's decision for 1.19: a scan that ends in a few
+ * seconds does not read as a thorough one.
+ */
+export const SCAN_MIN_MS = 60_000;
+
+/** Each check's slice of the ring and of SCAN_MIN_MS, in percent: half
+ *  shared evenly, half by how much work it is (SCAN_WEIGHT). Sums to 100. */
+export function scanShare(probe: ScanProbe): number {
+  return 50 / SCAN_PROBES.length + SCAN_WEIGHT[probe] / 2;
+}
+
+/** The minimum time a check stays the current one on the ring. */
+export function scanDwellMs(probe: ScanProbe): number {
+  return (SCAN_MIN_MS * scanShare(probe)) / 100;
+}
 
 /**
- * Where the scan ring heads now, 0-100. Every milestone is real: a check
- * counts once the ring has ticked it off (`ticked`), a finished check held on
- * screen before it ticks (`held`) counts in full, and the driver inventory
- * counts the device classes read so far. Between milestones the ring creeps
- * towards the end of the check still running (`current`) without reaching
- * it; paused, it does not creep. 100 only once every check is ticked and the
- * scan has returned (`finished`); never 99 % waiting on nothing.
+ * Where the scan ring heads now, 0-100. The checks already ticked off count
+ * in full. The current one (`head`) fills its slice over its time on screen
+ * (`headMs` of `scanDwellMs`) when it has finished (`headDone`); while it is
+ * still reading it fills more slowly and never past 92 % of its slice, so a
+ * check is never shown done before it is. 100 only once every check is
+ * ticked and the scan has returned (`finished`), and never 99 % waiting on
+ * nothing.
  */
 export function scanRingTarget(o: {
   ticked: readonly ScanProbe[];
-  held: ScanProbe | null;
-  current: ScanProbe | null;
-  driver: { done: number; total: number } | null;
-  /** Since the last milestone. */
-  sinceMs: number;
+  head: ScanProbe | null;
+  headDone: boolean;
+  headMs: number;
   finished: boolean;
-  paused: boolean;
 }): number {
-  if (o.finished && !o.held) return 100;
-  let at = o.ticked.reduce((sum, p) => sum + SCAN_WEIGHT[p], 0);
-  const classes =
-    o.driver &&
-    o.driver.total > 0 &&
-    !o.ticked.includes("driver_audit") &&
-    o.held !== "driver_audit"
-      ? o.driver
-      : null;
-  if (classes) at += SCAN_WEIGHT.driver_audit * Math.min(DRIVER_CAP, classes.done / classes.total);
-  if (o.held) return Math.min(99, at + SCAN_WEIGHT[o.held]);
-  if (o.paused || !o.current) return Math.min(99, at);
-  // The inventory creeps towards its next device class, any other check
-  // towards its own end.
-  const span =
-    o.current === "driver_audit" && classes
-      ? SCAN_WEIGHT.driver_audit / classes.total
-      : SCAN_WEIGHT[o.current];
-  const creep = span * 0.8 * (1 - Math.exp(-o.sinceMs / (900 + 600 * span)));
-  return Math.min(99, at + creep);
-}
-
-/** How long a finished check stays on screen before it ticks: long enough
- *  to read, shorter when several are waiting so the list never trails the
- *  scan by more than a moment. */
-export function scanHoldMs(waiting: number, reduced = false): number {
-  if (reduced) return 200;
-  return Math.round(Math.min(450, Math.max(220, 1600 / Math.max(1, waiting))));
+  if (o.finished && !o.head) return 100;
+  const at = o.ticked.reduce((sum, p) => sum + scanShare(p), 0);
+  if (!o.head) return Math.min(99, at);
+  const x = Math.max(0, o.headMs) / scanDwellMs(o.head);
+  const fill = o.headDone ? Math.min(1, x) : 0.92 * (1 - Math.exp(-x));
+  return Math.min(99, at + scanShare(o.head) * fill);
 }
 
 export function finishedSteps(session: ScanSession): number {

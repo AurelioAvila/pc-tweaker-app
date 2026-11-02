@@ -5,7 +5,9 @@
 // flow can be reviewed in a browser. Never part of a production build.
 import catalog from "../../site/src/generated/tweak-catalog.json";
 import type {
+  AuditEntry,
   CacheGroup,
+  GameEntry,
   DriftReport,
   DriveInfo,
   DriverAudit,
@@ -25,9 +27,9 @@ import type {
   TweakInfo,
 } from "../types";
 import type { HealthResult } from "../components/health";
-import type { DebloatApp } from "../components/debloat";
+import type { DebloatRecord } from "../components/debloat";
 import type { BeforeAfter, MetricChange } from "../components/before-after";
-import type { LiveSample } from "../live-metrics";
+import { APPS, GAMES, auditEntry, initialAudit, liveReadings, pageAnswer } from "./pages";
 
 type Emit = (event: string, payload: unknown) => void;
 type Args = Record<string, unknown> | undefined;
@@ -66,10 +68,15 @@ const NEUTRAL = new Set([
   "show_file_extensions",
   "classic_context_menu",
 ]);
-const ALREADY_SET = new Set(["dark_mode", "hide_taskbar_chat", "disable_cortana"]);
+const ALREADY_SET = new Set(["hide_taskbar_chat", "disable_cortana"]);
 
 type Pc = {
   applied: Set<string>;
+  /** Change history, newest first, like the app's audit log. */
+  audit: AuditEntry[];
+  removals: DebloatRecord[];
+  on: Set<string>;
+  games: GameEntry[];
   cleaned: Set<string>;
   cachesCleared: boolean;
   registryRemoved: Set<string>;
@@ -256,26 +263,6 @@ function stats(): SystemStats {
   };
 }
 
-function live(): LiveSample {
-  const cpu = 8 + Math.random() * 14;
-  return {
-    cpu,
-    cores: Array.from({ length: 16 }, () => Math.max(1, cpu + (Math.random() - 0.5) * 18)),
-    cpu_mhz: 4500 + Math.random() * 600,
-    ram_total: 32 * GB,
-    ram_used: 11.4 * GB,
-    ram_cached: 7.2 * GB,
-    disk_read_bps: Math.random() * 4e6,
-    disk_write_bps: Math.random() * 2e6,
-    net_down_bps: Math.random() * 9e5,
-    net_up_bps: Math.random() * 2e5,
-    rated_mhz: 4500,
-    busiest_mhz: 5300,
-    peak_mhz: 5400,
-    min_state_pct: 5,
-  };
-}
-
 const PROFILE: SystemProfile = {
   windows_version: "Windows 11 Pro",
   windows_build: "26100",
@@ -333,21 +320,6 @@ const TASKS: ScheduledTaskEntry[] = [
     requires_admin: true,
   },
 ];
-const APPS: DebloatApp[] = [
-  ["Microsoft.BingNews", "News"],
-  ["Microsoft.GetHelp", "Get Help"],
-  ["Clipchamp.Clipchamp", "Clipchamp"],
-].map(([catalogId, name]) => ({
-  catalogId,
-  name,
-  description: "",
-  impact: "low",
-  packageFullName: `${catalogId}_1.0.0.0_x64__8wekyb3d8bbwe`,
-  installed: true,
-  removable: true,
-  reason: null,
-  storeUrl: null,
-}));
 const ECO: EcoQosState = {
   enabled: false,
   engine_running: false,
@@ -520,6 +492,10 @@ function change(id: string, before: number, after: number): MetricChange {
 export function demoBackend(emit: Emit, pro: boolean) {
   const pc: Pc = {
     applied: new Set(),
+    audit: [],
+    removals: [],
+    on: new Set(),
+    games: GAMES.slice(),
     cleaned: new Set(),
     cachesCleared: false,
     registryRemoved: new Set(),
@@ -527,7 +503,35 @@ export function demoBackend(emit: Emit, pro: boolean) {
     lastChange: 0,
     health: 64,
   };
+  pc.audit = initialAudit(tweaks(pc));
+  pc.applied = new Set(["dark_mode", "show_file_extensions"]);
+  const live = liveReadings();
   const step = (payload: Record<string, unknown>) => emit("fix-progress", payload);
+  /** Applies (or undoes) settings and writes them to the change history,
+   *  under one origin marker like the app's batches. */
+  function record(ids: string[], applied: boolean, origin?: string) {
+    const all = tweaks(pc);
+    for (const id of ids) {
+      if (applied) pc.applied.add(id);
+      else pc.applied.delete(id);
+      pc.audit.unshift(
+        auditEntry(
+          all.find((t) => t.id === id),
+          id,
+          applied,
+        ),
+      );
+    }
+    if (origin && ids.length)
+      pc.audit.unshift({
+        ts: Math.floor(Date.now() / 1000),
+        action: "origin",
+        target: origin,
+        elevated: false,
+        success: true,
+        detail: ids.join(","),
+      });
+  }
   let auditCancelled = false;
   // The scan's reads take their scan-length time; the same reads after a fix
   // (the report refreshing, the proof's health score) answer quickly.
@@ -603,7 +607,7 @@ export function demoBackend(emit: Emit, pro: boolean) {
     if (userJunk.length) await run("junk", 1200, { bytes: bytes(userJunk) * 0.97 });
     if (plan.app_caches.length) await run("caches", 850, { bytes: cacheBytes });
     if (userReg.length) await run("registry", 400, { count: userReg.length });
-    plan.tweaks.forEach((id) => pc.applied.add(id));
+    record(plan.tweaks, true, "scan");
     plan.cleanups.forEach((id) => pc.cleaned.add(id));
     plan.registry.forEach((id) => pc.registryRemoved.add(id));
     if (plan.app_caches.length) pc.cachesCleared = true;
@@ -646,7 +650,7 @@ export function demoBackend(emit: Emit, pro: boolean) {
     const rp = await restorePoint();
     if (admin.length) await run("system_settings", 600, { count: admin.length });
     if (user.length) await run("settings", 600, { count: user.length });
-    ids.forEach((id) => pc.applied.add(id));
+    record(ids, true, "safe-optimize");
     pc.lastChange = ids.length;
     pc.health = Math.min(93, pc.health + 3);
     return { restorePoint: rp, failures: [] };
@@ -724,11 +728,11 @@ export function demoBackend(emit: Emit, pro: boolean) {
         await sleep(vary(2100));
         return TASKS;
       case "list_debloat_apps":
-        await sleep(vary(3300));
-        return APPS;
+        await read(3300);
+        return APPS.filter((x) => !pc.removals.some((r) => r.catalogId === x.catalogId));
       case "ecoqos_status":
-        await sleep(vary(1000));
-        return ECO;
+        await read(1000);
+        return { ...ECO, enabled: pc.on.has("ecoqos"), engine_running: pc.on.has("ecoqos") };
       case "junk_summary":
         await read(4200);
         return JUNK.map((j) =>
@@ -758,15 +762,20 @@ export function demoBackend(emit: Emit, pro: boolean) {
         return safeApply((a.ids as string[]) ?? []);
       case "apply_tweak":
         await sleep(vary(350));
-        pc.applied.add(String(a.id));
+        record([String(a.id)], true);
         return null;
       case "apply_tweaks":
         await sleep(vary(600));
-        ((a.ids as string[]) ?? []).forEach((id) => pc.applied.add(id));
+        record((a.ids as string[]) ?? [], true, a.source ? String(a.source) : undefined);
         return [];
       case "rollback_tweak":
-        pc.applied.delete(String(a.id));
+        await sleep(vary(300));
+        record([String(a.id)], false);
         return null;
+      case "rollback_tweaks":
+        await sleep(vary(500));
+        record((a.ids as string[]) ?? [], false);
+        return [];
       case "run_baseline":
         return baseline(a.role);
       case "registry_restore":
@@ -774,12 +783,6 @@ export function demoBackend(emit: Emit, pro: boolean) {
         pc.registryRemoved.clear();
         return { restored: REGISTRY.items.length, skipped: 0 };
       // The rest of the window.
-      case "live_sample":
-        return live();
-      case "is_store_install":
-      case "referral_license_status":
-      case "hud_is_compact":
-        return false;
       case "check_update_drift":
         return {
           windowsUpdated: false,
@@ -796,8 +799,20 @@ export function demoBackend(emit: Emit, pro: boolean) {
         return "PC Tweaker";
       case "plugin:dialog|save":
         return "C:\\Users\\Demo\\Pictures\\pc-tweaker-proof.png";
-      default:
+      default: {
+        const page = pageAnswer(cmd, a, {
+          pro,
+          tweaks: () => tweaks(pc),
+          applied: pc.applied,
+          audit: pc.audit,
+          removals: pc.removals,
+          live,
+          on: pc.on,
+          games: pc.games,
+        });
+        if (page !== undefined) return page;
         return cmd.startsWith("list_") ? [] : null;
+      }
     }
   };
 }

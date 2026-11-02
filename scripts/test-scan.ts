@@ -463,74 +463,60 @@ test("pausing during the last read resumes with just that read", async () => {
   assert.deepEqual(resumed, ["ecoqos_status"]);
 });
 
-test("scan ring: weighted real milestones, never 100 before the scan returns, never stuck", async () => {
-  const { SCAN_WEIGHT, scanRingTarget, scanHoldMs } = await import("../src/scan-runner");
+test("scan ring: at least SCAN_MIN_MS, never a check done early, never 100 before the scan returns", async () => {
+  const { SCAN_WEIGHT, SCAN_MIN_MS, scanShare, scanDwellMs, scanRingTarget } =
+    await import("../src/scan-runner");
   assert.deepEqual(
     Object.keys(SCAN_WEIGHT).sort(),
     [...SCAN_PROBES].sort(),
     "every check weighted",
   );
+  const sum = (f: (p: (typeof SCAN_PROBES)[number]) => number) =>
+    SCAN_PROBES.reduce((total, p) => total + f(p), 0);
   assert.equal(
-    Object.values(SCAN_WEIGHT).reduce((a, b) => a + b, 0),
+    sum((p) => SCAN_WEIGHT[p]),
     100,
   );
-  const base = {
-    held: null,
-    current: null,
-    driver: null,
-    sinceMs: 0,
-    finished: false,
-    paused: false,
-  };
-  assert.equal(scanRingTarget({ ...base, ticked: [] }), 0);
-  // A check held on screen counts in full; the ring creeps but never reaches
-  // the end of the check still running.
-  assert.equal(scanRingTarget({ ...base, ticked: ["list_tweaks"], held: "system_stats" }), 3);
-  const creep = (ms: number) =>
-    scanRingTarget({ ...base, ticked: ["list_tweaks"], current: "junk_summary", sinceMs: ms });
-  assert.ok(creep(1000) > 2 && creep(1000) < creep(5000));
-  assert.ok(creep(10 * 60_000) < 2 + SCAN_WEIGHT.junk_summary);
-  assert.equal(
-    scanRingTarget({
-      ...base,
-      ticked: ["list_tweaks"],
-      current: "junk_summary",
-      sinceMs: 9000,
-      paused: true,
-    }),
-    2,
-    "paused: no creep",
-  );
-  // Device classes move the inventory's share, never to its end.
-  const classes = (done: number) =>
-    scanRingTarget({ ...base, ticked: [], driver: { done, total: 10 } });
-  assert.equal(classes(5), SCAN_WEIGHT.driver_audit / 2);
-  assert.ok(classes(10) < SCAN_WEIGHT.driver_audit);
-  assert.equal(scanRingTarget({ ...base, ticked: [], driver: { done: 1, total: 0 } }), 0);
-  // Every check ticked: 99 until the scan returns, then 100 at once.
+  assert.ok(Math.abs(sum(scanShare) - 100) < 1e-9, "the slices fill the ring");
+  assert.ok(Math.abs(sum(scanDwellMs) - SCAN_MIN_MS) < 1e-6, "the times add up to the minimum");
+  assert.ok(SCAN_MIN_MS >= 60_000);
+  assert.ok(scanDwellMs("driver_audit") > scanDwellMs("system_stats"), "weighted");
+  assert.ok(scanDwellMs("system_stats") >= 1500, "every check readable");
+
+  const head = "junk_summary" as const;
+  const t = (headMs: number, headDone: boolean, ticked = [] as (typeof SCAN_PROBES)[number][]) =>
+    scanRingTarget({ ticked, head, headDone, headMs, finished: false });
+  const slice = scanShare(head);
+  // A finished check fills its slice over its time on screen, exactly.
+  assert.equal(t(0, true), 0);
+  assert.ok(Math.abs(t(scanDwellMs(head) / 2, true) - slice / 2) < 1e-9);
+  assert.ok(Math.abs(t(scanDwellMs(head), true) - slice) < 1e-9);
+  assert.ok(Math.abs(t(10 * scanDwellMs(head), true) - slice) < 1e-9, "never past its slice");
+  // A check still reading never reaches the end of its slice, however long.
+  assert.ok(t(10 * 60_000, false) < slice * 0.93);
+  let last = 0;
+  for (let ms = 0; ms <= 30_000; ms += 500) {
+    assert.ok(t(ms, false) <= t(ms, true), "reading is never ahead of finished");
+    assert.ok(t(ms, false) >= last, "monotonic while reading");
+    last = t(ms, false);
+  }
+  // Ticked checks count in full; 99 until the scan returns, then 100.
+  assert.ok(Math.abs(t(0, true, ["list_tweaks"]) - scanShare("list_tweaks")) < 1e-9);
   const all = [...SCAN_PROBES];
-  assert.equal(scanRingTarget({ ...base, ticked: all }), 99);
-  assert.equal(scanRingTarget({ ...base, ticked: all, finished: true }), 100);
+  const done = { ticked: all, head: null, headDone: false, headMs: 0 };
+  assert.equal(scanRingTarget({ ...done, finished: false }), 99);
+  assert.equal(scanRingTarget({ ...done, finished: true }), 100);
   assert.equal(
     scanRingTarget({
-      ...base,
       ticked: all.slice(0, -1),
-      held: all[all.length - 1],
+      head: all[all.length - 1],
+      headDone: true,
+      headMs: 1e9,
       finished: true,
     }),
     99,
-    "the last check is still being shown",
+    "the last check is still on screen",
   );
-  // Milestones in any finishing order only ever add.
-  let last = 0;
-  for (let i = 1; i <= all.length; i++) {
-    const t = scanRingTarget({ ...base, ticked: all.slice(0, i), finished: i === all.length });
-    assert.ok(t >= last);
-    last = t;
-  }
-  assert.equal(scanHoldMs(1), 450);
-  assert.ok(scanHoldMs(8) < scanHoldMs(2) && scanHoldMs(50) >= 220);
-  assert.equal(scanHoldMs(3, true), 200);
 });
 
 test("a pause waits for the backend audit before anything can resume or discard it", async () => {

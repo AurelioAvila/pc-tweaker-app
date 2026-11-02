@@ -33,6 +33,23 @@ export function ema(previous: number | null, next: number, alpha = 0.3): number 
 
 /** Seconds of history kept: five minutes. The charts show the last minute or
  *  all five. */
+/**
+ * How far the processor runs above its base clock right now, 0-100: 0 at or
+ * below the rated clock, 100 at the fastest single-core speed measured since
+ * the app started (`peak_mhz`, which the 3-second test also raises). The
+ * Turbo Boost dial shows it while boost is on. Null without the readings or
+ * before any real headroom above base has been measured.
+ */
+export function boostLevel(
+  sample: Pick<LiveSample, "cpu_mhz" | "rated_mhz" | "peak_mhz">,
+): number | null {
+  const { cpu_mhz: now, rated_mhz: base, peak_mhz: peak } = sample;
+  if (now == null || base == null || peak == null || base <= 0) return null;
+  const headroom = peak - base;
+  if (headroom < base * 0.02) return null;
+  return Math.max(0, Math.min(100, ((now - base) / headroom) * 100));
+}
+
 export const HISTORY = 300;
 export const WINDOW_SHORT = 60;
 

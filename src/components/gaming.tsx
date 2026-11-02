@@ -25,7 +25,7 @@ import {
   useReducedMotion,
   type ResourceUsers,
 } from "./live-dashboard";
-import { ema, push } from "../live-metrics";
+import { boostLevel, ema, push } from "../live-metrics";
 import type { LiveSample } from "../live-metrics";
 
 export function GameSessionsPanel({
@@ -426,6 +426,9 @@ export function TurboBoostPanel({
   // really doing, without a jump on every one-second blip. The charts below
   // keep the raw per-second readings.
   const [load, setLoad] = useState<number | null>(null);
+  // With boost on, the needle shows how far the measured speed is above the
+  // base clock instead (boostLevel), smoothed the same way.
+  const [boost, setBoost] = useState<number | null>(null);
   const [sample, setSample] = useState<LiveSample | null>(null);
   const [users, setUsers] = useState<ResourceUsers | null>(null);
   const [loads, setLoads] = useState<number[]>([]);
@@ -479,6 +482,8 @@ export function TurboBoostPanel({
           if (cancelled) return;
           const value = Number.isFinite(next.cpu) ? Math.max(0, Math.min(100, next.cpu)) : null;
           setLoad((prev) => (value === null ? null : ema(prev, value)));
+          const level = boostLevel(next);
+          setBoost((prev) => (level === null ? null : ema(prev, level)));
           setSample(next);
           if (value !== null) setLoads((v) => push(v, value));
           setSpeeds((v) => push(v, next.cpu_mhz));
@@ -548,6 +553,10 @@ export function TurboBoostPanel({
     }
   }
 
+  // Off, the dial is CPU load (idle reads low); on, it is the speed above the
+  // base clock that boost unlocks. Both are measured every second.
+  const showBoost = applied && boost !== null;
+  const dial = showBoost ? boost : load;
   // The state, never a verdict: a short test cannot say whether boost helps a
   // real workload, so the numbers in the table below speak for themselves.
   const readout = busy ? stage : applied ? s.turboBoost.active : s.turboBoost.inactive;
@@ -588,7 +597,7 @@ export function TurboBoostPanel({
             {applied && !busy && (
               <span className="absolute h-32 w-32 rounded-full bg-orange-500/15 blur-2xl" />
             )}
-            <TurboGauge value={(load ?? 0) / 100} engaged={applied || busy} glide={!reduced} />
+            <TurboGauge value={(dial ?? 0) / 100} engaged={applied || busy} glide={!reduced} />
           </div>
 
           {/* The readout used to sit inside the dial's open bottom, the way a rev
@@ -605,21 +614,23 @@ export function TurboBoostPanel({
               }`}
               style={{ fontSize: 26 }}
             >
-              {load === null ? "—" : Math.round(load)}
+              {dial === null ? "—" : Math.round(dial)}
               <span className="text-[13px]">%</span>
             </span>
-            {/* Labelled, because an unlabelled figure under a dial called Turbo
-            Boost reads as the feature's own output — and this one is live CPU
-            load, which the tweak does not change and should not. Naming it is
-            what stops an idle 2% looking like a failure. Set beside the number
+            {/* Labelled, because the figure means two things: off, live CPU
+            load, which the tweak does not change and should not (naming it is
+            what stops an idle 2% looking like a failure); on, the measured
+            speed above the base clock, which is what boost unlocks. Set beside the number
             rather than under it: the card already stacks the state readout and
             the measured facts below this, and a fourth centred row made the whole
             lower half read as a list of unrelated captions. */}
             <span className="type-label text-ink-3 text-[9px] tracking-[0.18em]">
-              {s.turboBoost.loadLabel}
+              {showBoost ? s.turboBoost.boostLabel : s.turboBoost.loadLabel}
             </span>
           </div>
-          <p className="tool-boost-cadence">{s.turboBoost.loadCadence}</p>
+          <p className="tool-boost-cadence">
+            {showBoost ? s.turboBoost.boostCadence : s.turboBoost.loadCadence}
+          </p>
           {/* How much of the load is the app itself, so a reading at rest says
           what is really keeping the processor busy. Both numbers come from the
           same process table over the same few seconds; the dial is a separate,

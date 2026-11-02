@@ -512,6 +512,10 @@ export interface Strings {
     /** The real steps the Rust side performs, shown as it works through them. */
     loadLabel: string;
     loadCadence: string;
+    /** Under the dial while Turbo Boost is on: the needle then shows how far
+     *  the measured speed is above the base clock (live-metrics boostLevel). */
+    boostLabel: string;
+    boostCadence: string;
     ownLoad: string; // uses {own} {rest}: the app's own CPU share and everything else's
     stageReading: string;
     stageRaising: string;
@@ -1765,6 +1769,9 @@ const it: Strings = {
     inactive: "Turbo non attivo",
     loadLabel: "CARICO CPU",
     loadCadence: "Misurato ogni secondo, smussato su circa 3 secondi",
+    boostLabel: "BOOST IN USO",
+    boostCadence:
+      "Velocità oltre il clock base, rispetto alla più alta raggiunta da questo PC in questa sessione. Misurata ogni secondo.",
     ownLoad: "Negli ultimi secondi: PC Tweaker stesso {own}% · tutto il resto {rest}%",
     stageReading: "Lettura del piano di alimentazione",
     stageRaising: "Aumento del limite di boost",
@@ -3494,6 +3501,9 @@ const en: Strings = {
     inactive: "Turbo not active",
     loadLabel: "CPU LOAD",
     loadCadence: "Measured every second, smoothed over about 3 seconds",
+    boostLabel: "BOOST IN USE",
+    boostCadence:
+      "Speed above the base clock, out of the fastest this PC has reached this session. Measured every second.",
     ownLoad: "Over the last few seconds: PC Tweaker itself {own}% · everything else {rest}%",
     stageReading: "Reading the power plan",
     stageRaising: "Raising the boost ceiling",
@@ -5222,6 +5232,9 @@ const fr: Strings = {
     inactive: "Turbo inactif",
     loadLabel: "CHARGE CPU",
     loadCadence: "Mesurée chaque seconde, lissée sur environ 3 secondes",
+    boostLabel: "BOOST UTILISÉ",
+    boostCadence:
+      "Vitesse au-dessus de l’horloge de base, rapportée à la plus haute atteinte par ce PC pendant cette session. Mesurée chaque seconde.",
     ownLoad: "Ces dernières secondes : PC Tweaker lui-même {own} % · tout le reste {rest} %",
     stageReading: "Lecture du mode de gestion de l'alimentation",
     stageRaising: "Augmentation de la limite de boost",
@@ -6965,6 +6978,9 @@ const es: Strings = {
     inactive: "Turbo no activo",
     loadLabel: "CARGA CPU",
     loadCadence: "Medida cada segundo, suavizada en unos 3 segundos",
+    boostLabel: "BOOST EN USO",
+    boostCadence:
+      "Velocidad por encima del reloj base, respecto a la más alta que este PC ha alcanzado en esta sesión. Medida cada segundo.",
     ownLoad: "En los últimos segundos: el propio PC Tweaker {own} % · todo lo demás {rest} %",
     stageReading: "Leyendo el plan de energía",
     stageRaising: "Elevando el límite de boost",
@@ -8703,6 +8719,9 @@ const de: Strings = {
     inactive: "Turbo nicht aktiv",
     loadLabel: "CPU-LAST",
     loadCadence: "Jede Sekunde gemessen, über etwa 3 Sekunden geglättet",
+    boostLabel: "BOOST GENUTZT",
+    boostCadence:
+      "Takt über dem Basistakt, bezogen auf den höchsten Takt, den dieser PC in dieser Sitzung erreicht hat. Jede Sekunde gemessen.",
     ownLoad: "In den letzten Sekunden: PC Tweaker selbst {own} % · alles andere {rest} %",
     stageReading: "Energiesparplan wird gelesen",
     stageRaising: "Boost-Grenze wird angehoben",
@@ -10450,6 +10469,9 @@ const pt: Strings = {
     inactive: "Turbo inativo",
     loadLabel: "CARGA DA CPU",
     loadCadence: "Medida a cada segundo, suavizada em cerca de 3 segundos",
+    boostLabel: "BOOST EM USO",
+    boostCadence:
+      "Velocidade acima do relógio base, face à mais alta que este PC atingiu nesta sessão. Medida a cada segundo.",
     ownLoad: "Nos últimos segundos: o próprio PC Tweaker {own}% · tudo o resto {rest}%",
     stageReading: "A ler o esquema de energia",
     stageRaising: "A elevar o limite de boost",

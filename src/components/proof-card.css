@@ -23,102 +23,12 @@
   outline: none;
 }
 .proof-dialog:has(.proof-progress) {
-  width: min(520px, calc(100vw - 32px));
+  width: min(680px, calc(100vw - 32px));
 }
 
-/* ---- Progress ---------------------------------------------------------- */
+/* ---- Progress: the ring (fix-progress.css) ------------------------------ */
 .proof-progress {
-  display: grid;
-  justify-items: center;
-  gap: 6px;
-  padding: 34px 28px 30px;
-  text-align: center;
-}
-.proof-progress h2 {
-  margin: 10px 0 0;
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-.proof-source {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--text-muted);
-}
-.proof-orbit {
-  position: relative;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  border: 2px solid var(--border-strong);
-  border-top-color: var(--accent);
-  animation: proof-spin 1.1s linear infinite;
-}
-.proof-orbit::after {
-  content: "";
-  position: absolute;
-  inset: 13px;
-  border-radius: 50%;
-  background: var(--accent-soft);
-}
-@keyframes proof-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .proof-orbit {
-    animation: none;
-  }
-}
-.proof-steps {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 22px;
-  margin: 18px 0 4px;
-  padding: 0;
-  list-style: none;
-  font-size: 12.5px;
-  color: var(--text-muted);
-}
-.proof-steps li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.proof-step-dot {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 1px solid var(--border-strong);
-  font-size: 11px;
-  font-weight: 700;
-}
-.proof-steps li[data-state="done"] {
-  color: var(--text-secondary);
-}
-.proof-steps li[data-state="done"] .proof-step-dot {
-  border-color: transparent;
-  background: color-mix(in srgb, var(--success) 18%, transparent);
-  color: var(--success);
-}
-.proof-steps li[data-state="current"] {
-  color: var(--text-primary);
-  font-weight: 600;
-}
-.proof-steps li[data-state="current"] .proof-step-dot {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.proof-hint {
-  max-width: 420px;
-  margin: 8px 0 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--text-secondary);
+  padding: 26px 28px 24px;
 }
 
 /* ---- Result ------------------------------------------------------------ */

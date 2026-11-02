@@ -1274,15 +1274,35 @@ const SAFE_APPLY_RESULT: &str = "last_safe_apply_result.json";
 #[cfg(windows)]
 #[tauri::command(async)]
 fn safe_apply(app: tauri::AppHandle, ids: Vec<String>) -> Result<SafeApplyResult, String> {
+    use scanfix::Step;
+    use tauri::Emitter;
+    // The steps for the progress ring, as the Scan's fix reports them.
+    let report = |step: Step| {
+        let _ = app.emit(scanfix::PROGRESS_EVENT, step);
+    };
     let dir = store_for_dir(&app)?;
     let store = RollbackStore::new(dir.clone());
     let applied = store.applied_ids().unwrap_or_default();
     let ids: Vec<String> = ids.into_iter().filter(|id| !applied.contains(id)).collect();
     record_origin(Some("safe-optimize".into()), &ids);
     let (needs_admin, direct) = split_by_elevation(bulk_applicable(ids));
+    let mut plan = vec!["restore_point"];
+    if !needs_admin.is_empty() {
+        plan.push("system_settings");
+    }
+    if !direct.is_empty() {
+        plan.push("settings");
+    }
+    report(Step::plan(&plan));
+    report(Step::start("restore_point"));
 
     let mut result = if elevation::is_elevated() {
         let restore_point = restore_point_before_change();
+        report(Step {
+            restore_point: Some(restore_point.clone()),
+            failed: matches!(restore_point, restore_point::RestorePointOutcome::Failed { .. }),
+            ..Step::done("restore_point")
+        });
         let mut failures = Vec::new();
         for id in &needs_admin {
             if let Err(e) = apply_by_id(&store, &dir, id) {
@@ -1307,16 +1327,45 @@ fn safe_apply(app: tauri::AppHandle, ids: Vec<String>) -> Result<SafeApplyResult
             .and_then(|json| serde_json::from_str::<SafeApplyResult>(&json).ok());
         let _ = std::fs::remove_file(&path);
         match (outcome, read) {
-            (_, Some(result)) => result,
+            (_, Some(result)) => {
+                report(Step {
+                    restore_point: Some(result.restore_point.clone()),
+                    failed: matches!(
+                        result.restore_point,
+                        restore_point::RestorePointOutcome::Failed { .. }
+                    ),
+                    ..Step::done("restore_point")
+                });
+                result
+            }
             // Declined or failed before anything ran: nothing was changed.
             (Err(e), None) => return Err(e),
             (Ok(()), None) => return Err("the elevated helper left no result".into()),
         }
     };
-    for id in &direct {
-        if let Err(e) = apply_by_id(&store, &dir, id) {
-            result.failures.push(format!("{}: {}", id, e));
+    if !needs_admin.is_empty() {
+        // Applied by the helper right after its restore point.
+        report(Step::start("system_settings"));
+        report(Step {
+            count: Some(needs_admin.len().saturating_sub(result.failures.len()) as u64),
+            failed: !result.failures.is_empty(),
+            ..Step::done("system_settings")
+        });
+    }
+    if !direct.is_empty() {
+        report(Step::start("settings"));
+        let before = result.failures.len();
+        for id in &direct {
+            if let Err(e) = apply_by_id(&store, &dir, id) {
+                result.failures.push(format!("{}: {}", id, e));
+            }
         }
+        let failed = result.failures.len() - before;
+        report(Step {
+            count: Some((direct.len() - failed) as u64),
+            failed: failed > 0,
+            ..Step::done("settings")
+        });
     }
     Ok(result)
 }

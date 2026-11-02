@@ -625,3 +625,36 @@ test("plenty of free memory is not a finding; missing reads produce no items", (
     ["latency:dpc"],
   );
 });
+
+import { applyStepEvent, bands, closeWork, creep, initialSteps } from "../src/fix-steps";
+
+test("fix progress: the backend plan replaces the generic step, measurements stay at the ends", () => {
+  let steps = applyStepEvent(initialSteps(), { step: "measure_before", done: true });
+  steps = applyStepEvent(steps, { plan: ["restore_point", "system_junk", "settings", "nope"] });
+  assert.deepEqual(
+    steps.map((s) => `${s.id}:${s.state}`),
+    ["measure_before:done", "restore_point:todo", "system_junk:todo", "settings:todo", "measure_after:todo"],
+  );
+  steps = applyStepEvent(steps, { step: "system_junk", done: true, bytes: 2048 });
+  steps = applyStepEvent(steps, { step: "booster" });
+  assert.deepEqual(
+    steps.map((s) => s.id).slice(-2),
+    ["booster", "measure_after"],
+  );
+  assert.equal(steps.find((s) => s.id === "system_junk")?.bytes, 2048);
+  const closed = closeWork(steps);
+  assert.ok(closed.filter((s) => s.id !== "measure_after").every((s) => s.state === "done"));
+  assert.equal(closed.at(-1)?.state, "todo");
+});
+
+test("fix progress: bands cover 0-100 in order and a running step never reaches its end", () => {
+  const steps = applyStepEvent(initialSteps(), { plan: ["restore_point", "settings", "junk"] });
+  const b = bands(steps);
+  assert.deepEqual(b[0], [0, 15]);
+  assert.deepEqual(b.at(-1), [85, 100]);
+  for (let i = 1; i < b.length; i++) assert.ok(Math.abs(b[i][0] - b[i - 1][1]) < 1e-9);
+  assert.ok(creep(b[1], 10 * 60_000, "restore_point") < b[1][1]);
+  assert.ok(creep(b[1], 2_000, "restore_point") > b[1][0]);
+  const noAfter = bands(steps.filter((s) => s.id !== "measure_after"));
+  assert.equal(noAfter.at(-1)?.[1], 100);
+});

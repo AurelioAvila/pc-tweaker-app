@@ -8,7 +8,8 @@ import { friendlyError, textFor } from "../lib";
 import type { RestoreStatus, Toast, TweakInfo } from "../types";
 import { Badge } from "./ui";
 import { PROOF_COPY } from "./proof-copy";
-import { runWithProof, useProofBusy } from "./proof-card";
+import { runWithProof, useProofBusy, useProofRun } from "./proof-card";
+import { FixProgress } from "./fix-progress";
 import "./safe-optimize.css";
 
 /**
@@ -97,6 +98,7 @@ export function SafeOptimizeCard({
 }) {
   const c = PROOF_COPY[lang];
   const busy = useProofBusy();
+  const running = useProofRun()?.source === "safe";
   const titleId = useId();
   const [declined, setDeclined] = useState(false);
   const plan = safePlan(tweaks, isPro);
@@ -145,6 +147,8 @@ export function SafeOptimizeCard({
   }
 
   const allSet = plan.ready.length === 0;
+  // While it runs, the card is the progress ring.
+  if (running) return <FixProgress lang={lang} inline />;
 
   return (
     <section className="safe-card" aria-labelledby={titleId} data-state={allSet ? "done" : "ready"}>

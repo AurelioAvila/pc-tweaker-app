@@ -34,7 +34,7 @@ import {
   type ScanReport,
   type ScanSession,
 } from "../scan-runner";
-import { fixAllKeys, fixPlan, locked, scanItems, type ScanItem } from "../scan-items";
+import { fixAllKeys, fixPlan, fixSteps, locked, scanItems, type ScanItem } from "../scan-items";
 import { runWithProof, useProofBusy, useProofRun } from "./proof-card";
 import { FixProgress } from "./fix-progress";
 import { SafeOptimizeCard } from "./safe-optimize";
@@ -400,11 +400,8 @@ export function ScanPanel({
 
   async function apply() {
     if (operation.current || proofBusy || !report || !reviewItems.length) return;
-    const plan = fixPlan(
-      items,
-      reviewItems.map((i) => i.key),
-      isPro,
-    );
+    const keys = reviewItems.map((i) => i.key);
+    const plan = fixPlan(items, keys, isPro);
     const admin = reviewItems.some((i) => i.admin);
     operation.current = true;
     onBusyChange?.(true);
@@ -458,7 +455,7 @@ export function ScanPanel({
             restorePoint: result.measured?.restore_point ?? null,
           };
         },
-        { admin },
+        { admin, plan: fixSteps(items, keys, isPro) },
       );
       window.requestAnimationFrame(() => {
         outcomePanel.current?.focus({ preventScroll: true });

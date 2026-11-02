@@ -532,15 +532,54 @@ const busyReport = () => {
     ids: ["perf_free", "perf_pro", "privacy_free"],
     advice: ["perf_free", "perf_pro", "privacy_free"].map((id) => ({ id, verdict: "recommended" })),
     junk: [
-      { id: "temp_cleanup", files: 1284, bytes: 2.3e9, accessible: true, requires_admin: false, requires_pro: false },
-      { id: "winupdate_cache_cleanup", files: 3, bytes: 5e8, accessible: true, requires_admin: true, requires_pro: true },
-      { id: "unreadable", files: 0, bytes: 9e9, accessible: false, requires_admin: false, requires_pro: false },
+      {
+        id: "temp_cleanup",
+        files: 1284,
+        bytes: 2.3e9,
+        accessible: true,
+        requires_admin: false,
+        requires_pro: false,
+      },
+      {
+        id: "winupdate_cache_cleanup",
+        files: 3,
+        bytes: 5e8,
+        accessible: true,
+        requires_admin: true,
+        requires_pro: true,
+      },
+      {
+        id: "unreadable",
+        files: 0,
+        bytes: 9e9,
+        accessible: false,
+        requires_admin: false,
+        requires_pro: false,
+      },
     ],
-    caches: [{ id: "shader_dx", category: "shaders", name: "DX", bytes: 4e8, files: 10, blocked_by: "" }],
+    caches: [
+      { id: "shader_dx", category: "shaders", name: "DX", bytes: 4e8, files: 10, blocked_by: "" },
+    ],
     registry: {
       items: [
-        { id: "r1", class: "uninstall", hive: "HKLM", key: "k", value: null, label: "Gone", missing: "C:/x" },
-        { id: "r2", class: "mui_cache", hive: "HKCU", key: "k", value: "v", label: "Gone", missing: "C:/y" },
+        {
+          id: "r1",
+          class: "uninstall",
+          hive: "HKLM",
+          key: "k",
+          value: null,
+          label: "Gone",
+          missing: "C:/x",
+        },
+        {
+          id: "r2",
+          class: "mui_cache",
+          hive: "HKCU",
+          key: "k",
+          value: "v",
+          label: "Gone",
+          missing: "C:/y",
+        },
       ],
     },
     memory: {
@@ -555,18 +594,49 @@ const busyReport = () => {
       last_skip: null,
     },
     hardware: {
-      memory: { configured_mts: 2133, rated_mts: 3600, rated_source: "part_number", part_number: "F4-3600C16", generation: "DDR4", modules: 2, below_rated: true },
-      links: [{ kind: "gpu", name: "GPU", current_gen: 1, max_gen: 4, current_width: 16, max_width: 16, below_max: false }],
+      memory: {
+        configured_mts: 2133,
+        rated_mts: 3600,
+        rated_source: "part_number",
+        part_number: "F4-3600C16",
+        generation: "DDR4",
+        modules: 2,
+        below_rated: true,
+      },
+      links: [
+        {
+          kind: "gpu",
+          name: "GPU",
+          current_gen: 1,
+          max_gen: 4,
+          current_width: 16,
+          max_width: 16,
+          below_max: false,
+        },
+      ],
       rebar: [{ gpu: "GTX", state: "not_supported", largest_window_mb: 256 }],
     },
-    latency: { seconds: 1.5, cpus: 16, interrupts_per_sec: 9000, dpcs_per_sec: 900, cpu0_interrupt_share: 0.5, cpu0_dpc_share: 0.7, concentrated: true },
+    latency: {
+      seconds: 1.5,
+      cpus: 16,
+      interrupts_per_sec: 9000,
+      dpcs_per_sec: 900,
+      cpu0_interrupt_share: 0.5,
+      cpu0_dpc_share: 0.7,
+      concentrated: true,
+    },
   });
 };
 
 test("Scan 2.0 puts every finding in its category with measured totals", () => {
   const items = scanItems(busyReport());
   const cats = (category: string) => items.filter((i) => i.category === category).map((i) => i.key);
-  assert.deepEqual(cats("performance"), ["tweak:perf_free", "tweak:perf_pro", "review:startup"].filter((k) => items.some((i) => i.key === k)));
+  assert.deepEqual(
+    cats("performance"),
+    ["tweak:perf_free", "tweak:perf_pro", "review:startup"].filter((k) =>
+      items.some((i) => i.key === k),
+    ),
+  );
   assert.deepEqual(cats("privacy"), ["tweak:privacy_free"]);
   assert.deepEqual(cats("junk"), ["junk:temp_cleanup", "junk:winupdate_cache_cleanup", "caches"]);
   assert.deepEqual(cats("registry"), ["registry:uninstall", "registry:mui_cache"]);
@@ -586,14 +656,28 @@ test("Scan 2.0 puts every finding in its category with measured totals", () => {
 
 test("Fix all never includes Pro items for Free, review rows or the booster", () => {
   const items = scanItems(busyReport());
-  assert.deepEqual(fixAllKeys(items, false), ["tweak:perf_free", "junk:temp_cleanup", "tweak:privacy_free"].sort((a, b) => items.findIndex((i) => i.key === a) - items.findIndex((i) => i.key === b)));
+  assert.deepEqual(
+    fixAllKeys(items, false),
+    ["tweak:perf_free", "junk:temp_cleanup", "tweak:privacy_free"].sort(
+      (a, b) => items.findIndex((i) => i.key === a) - items.findIndex((i) => i.key === b),
+    ),
+  );
   const pro = fixAllKeys(items, true);
   assert.ok(pro.includes("purge") && pro.includes("registry:mui_cache") && pro.includes("caches"));
   assert.ok(!pro.includes("booster"), "a background switch is a choice, not a fix");
   // Forged keys for locked or review items are dropped from the native plan.
-  const free = fixPlan(items, ["tweak:perf_pro", "purge", "registry:uninstall", "hw:ram", "booster", "junk:temp_cleanup"], false);
+  const free = fixPlan(
+    items,
+    ["tweak:perf_pro", "purge", "registry:uninstall", "hw:ram", "booster", "junk:temp_cleanup"],
+    false,
+  );
   assert.deepEqual(free.tweaks, []);
-  assert.deepEqual(free.extras, { cleanups: ["temp_cleanup"], app_caches: [], registry: [], purge: false });
+  assert.deepEqual(free.extras, {
+    cleanups: ["temp_cleanup"],
+    app_caches: [],
+    registry: [],
+    purge: false,
+  });
   assert.equal(free.booster, false);
   const all = fixPlan(items, [...pro, "booster"], true);
   assert.deepEqual(all.tweaks.sort(), ["perf_free", "perf_pro", "privacy_free"]);
@@ -633,14 +717,23 @@ test("fix progress: the backend plan replaces the generic step, measurements sta
   steps = applyStepEvent(steps, { plan: ["restore_point", "system_junk", "settings", "nope"] });
   assert.deepEqual(
     steps.map((s) => `${s.id}:${s.state}`),
-    ["measure_before:done", "restore_point:todo", "system_junk:todo", "settings:todo", "measure_after:todo"],
+    [
+      "measure_before:done",
+      "restore_point:todo",
+      "system_junk:todo",
+      "settings:todo",
+      "measure_after:todo",
+    ],
   );
   steps = applyStepEvent(steps, { step: "system_junk", done: true, bytes: 2048 });
   steps = applyStepEvent(steps, { step: "booster" });
+  // A later plan keeps the window's own step at the end.
+  const replanned = applyStepEvent(steps, { plan: ["settings"] });
   assert.deepEqual(
-    steps.map((s) => s.id).slice(-2),
-    ["booster", "measure_after"],
+    replanned.map((s) => s.id),
+    ["measure_before", "system_junk", "settings", "booster", "measure_after"],
   );
+  assert.deepEqual(steps.map((s) => s.id).slice(-2), ["booster", "measure_after"]);
   assert.equal(steps.find((s) => s.id === "system_junk")?.bytes, 2048);
   const closed = closeWork(steps);
   assert.ok(closed.filter((s) => s.id !== "measure_after").every((s) => s.state === "done"));

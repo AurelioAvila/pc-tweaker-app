@@ -139,7 +139,16 @@ export function SafeOptimizeCard({
             restorePoint,
           };
         },
-        { admin: true },
+        {
+          admin: true,
+          plan: withRestorePoint
+            ? [
+                "restore_point",
+                ...(attempted.some((t) => t.requires_admin) ? (["system_settings"] as const) : []),
+                ...(attempted.some((t) => !t.requires_admin) ? (["settings"] as const) : []),
+              ]
+            : ["settings"],
+        },
       );
     } catch (e) {
       pushToast("error", friendlyError(e, s));

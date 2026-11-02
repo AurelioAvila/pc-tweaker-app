@@ -31,6 +31,7 @@ import {
   closeWork,
   initialSteps,
   type FixStep,
+  type FixStepId,
   type StepEvent,
 } from "../fix-steps";
 import "./proof-card.css";
@@ -191,13 +192,13 @@ export type TrackStep = (event: StepEvent) => void;
 export async function runWithProof(
   source: ProofSource,
   apply: (track: TrackStep) => Promise<ProofOutcome | null>,
-  options: { name?: string; admin?: boolean } = {},
+  options: { name?: string; admin?: boolean; plan?: FixStepId[] } = {},
 ): Promise<ProofOutcome | null> {
   if (current && current.phase !== "done" && current.phase !== "error") {
     throw new Error("a measurement is already running");
   }
   const base = { source, name: options.name, admin: options.admin ?? false };
-  let steps = initialSteps();
+  let steps = initialSteps(options.plan);
   const show = (phase: Running["phase"]) => set({ ...base, phase, steps });
   const track: TrackStep = (event) => {
     steps = applyStepEvent(steps, event);
@@ -216,7 +217,9 @@ export async function runWithProof(
   }
 
   steps = applyStepEvent(steps, { step: "measure_before", done: true, failed: !!measureError });
-  steps = applyStepEvent(steps, { step: "settings" });
+  // The first work step runs until the backend says otherwise.
+  const first = steps.find((st) => st.id !== "measure_before");
+  if (first && first.id !== "measure_after") steps = applyStepEvent(steps, { step: first.id });
   show("apply");
   const unlisten = await listen<StepEvent>("fix-progress", (e) => track(e.payload)).catch(
     () => () => undefined,

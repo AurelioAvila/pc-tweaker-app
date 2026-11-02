@@ -46,15 +46,18 @@ export type StepEvent = {
 const isStep = (id: string | undefined): id is FixStepId =>
   !!id && (FIX_STEP_IDS as readonly string[]).includes(id);
 
-/** The steps before anything is known about the work: measure, one generic
- *  "applying settings" step, measure again. */
-export function initialSteps(): FixStep[] {
+/** Measure, the work the caller expects (one generic "applying settings"
+ *  step when it does not say), measure again. */
+export function initialSteps(work: FixStepId[] = ["settings"]): FixStep[] {
   return [
     { id: "measure_before", state: "active" },
-    { id: "settings", state: "todo" },
+    ...work.map((id): FixStep => ({ id, state: "todo" })),
     { id: "measure_after", state: "todo" },
   ];
 }
+
+/** Run by the window after the backend's work (the Scan's booster switch). */
+const WINDOW_STEPS = new Set<FixStepId>(["booster"]);
 
 /** Applies one event. A plan replaces the work between the two measurements
  *  (steps already finished stay); a step the plan did not list is inserted
@@ -68,7 +71,11 @@ export function applyStepEvent(steps: FixStep[], ev: StepEvent): FixStep[] {
     const fresh = planned
       .filter((id) => !kept.some((s) => s.id === id))
       .map((id): FixStep => ({ id, state: "todo" }));
-    return [...head, ...kept, ...fresh, ...tail];
+    // Steps the window runs itself after the backend's work stay listed.
+    const own = steps.filter(
+      (s) => WINDOW_STEPS.has(s.id) && !kept.includes(s) && !planned.includes(s.id),
+    );
+    return [...head, ...kept, ...fresh, ...own, ...tail];
   }
   if (!isStep(ev.step)) return steps;
   const id = ev.step;

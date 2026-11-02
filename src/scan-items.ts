@@ -19,6 +19,7 @@ import {
   type ScanObservation,
   type ScanReport,
 } from "./scan-runner";
+import type { FixStepId } from "./fix-steps";
 
 export const SCAN_CATEGORIES = [
   "performance",
@@ -302,6 +303,36 @@ export function fixPlan(
     else if (item.type === "purge") extras.purge = true;
   }
   return { tweaks, extras, booster };
+}
+
+/** The steps a fix of these items will run, in the backend's order
+ *  (scanfix.rs `fix_parts`: the administrator part first), so the progress
+ *  ring lists them from the start; the backend's own plan replaces them. */
+export function fixSteps(items: ScanItem[], keys: Iterable<string>, isPro: boolean): FixStepId[] {
+  const wanted = new Set(keys);
+  const chosen = items.filter((i) => wanted.has(i.key) && i.fixable && !locked(i, isPro));
+  const has = (test: (i: ScanItem) => boolean) => chosen.some(test);
+  const system: [FixStepId, boolean][] = [
+    ["system_settings", has((i) => i.type === "tweak" && i.tweak.requires_admin)],
+    ["system_junk", has((i) => i.type === "junk" && i.target.requires_admin)],
+    [
+      "system_registry",
+      has((i) => i.type === "registry" && i.entries.some((e) => e.hive === "HKLM")),
+    ],
+    ["memory", has((i) => i.type === "purge")],
+  ];
+  const user: [FixStepId, boolean][] = [
+    ["settings", has((i) => i.type === "tweak" && !i.tweak.requires_admin)],
+    ["junk", has((i) => i.type === "junk" && !i.target.requires_admin)],
+    ["caches", has((i) => i.type === "caches")],
+    ["registry", has((i) => i.type === "registry" && i.entries.some((e) => e.hive === "HKCU"))],
+    ["booster", has((i) => i.type === "booster")],
+  ];
+  const elevated = system.some(([, on]) => on);
+  return [
+    ...(elevated ? (["restore_point"] as FixStepId[]) : []),
+    ...[...system, ...user].filter(([, on]) => on).map(([id]) => id),
+  ];
 }
 
 /** Measured totals for the headline and the Pro line. */

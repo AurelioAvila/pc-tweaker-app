@@ -1,3 +1,5 @@
+// First: the browser demo's fake backend, dev server and demo build only.
+import "./demo/boot";
 import React from "react";
 import ReactDOM from "react-dom/client";
 // The app's single type family (self-hosted; no network fonts). The declared

@@ -8,7 +8,7 @@
 // step stays on screen for a short moment so the list reads in order. The
 // last step done, it fills to 100 %, turns into a check, and tells the proof
 // card it may open (`proofRevealed`).
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { format, type Lang } from "../i18n";
 import { formatBytes, formatNumber, uiLocale } from "../lib";
 import { bands, creep, type FixStep } from "../fix-steps";
@@ -24,11 +24,12 @@ const HOLD_REDUCED_MS = 200;
 const SUCCESS_MS = 900;
 const SUCCESS_REDUCED_MS = 250;
 
-function useReducedMotion(): boolean {
-  const query = "(prefers-reduced-motion: reduce)";
-  const [reduced, setReduced] = useState(() => window.matchMedia?.(query).matches ?? false);
+const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
+
+export function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(() => window.matchMedia?.(REDUCED_QUERY).matches ?? false);
   useEffect(() => {
-    const media = window.matchMedia?.(query);
+    const media = window.matchMedia?.(REDUCED_QUERY);
     if (!media) return;
     const change = () => setReduced(media.matches);
     media.addEventListener("change", change);
@@ -65,11 +66,79 @@ function resultOf(step: FixStep, c: Copy): string {
   return step.failed ? c.incomplete : "";
 }
 
-function CheckMark({ className }: { className?: string }) {
+export function CheckMark({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 16 16" aria-hidden="true">
       <path d="m3.5 8.5 3 3 6-7" pathLength={1} />
     </svg>
+  );
+}
+
+/** Puts a ring that just replaced the button which started it where the
+ *  eyes and the keyboard are: focus on it, and scrolled to the middle when
+ *  it opened below the fold (Safe optimize under the Scan's results). */
+export function bringIntoView(el: HTMLElement | null, block: ScrollLogicalPosition = "center") {
+  if (!el) return;
+  el.focus({ preventScroll: true });
+  const reduced = window.matchMedia?.(REDUCED_QUERY).matches ?? false;
+  el.scrollIntoView({ block, behavior: reduced ? "auto" : "smooth" });
+}
+
+/** The dial itself: the ring, the percentage and the check that replaces it.
+ *  The caller writes the arc offset and the number every frame through
+ *  `arc` and `number`; the rest follows `valueNow`, in coarse steps. */
+export function ProgressDial({
+  arc,
+  number,
+  label,
+  valueNow,
+  valueText,
+}: {
+  arc: RefObject<SVGCircleElement | null>;
+  number: RefObject<HTMLSpanElement | null>;
+  label: string;
+  valueNow: number;
+  valueText: string;
+}) {
+  const gradientId = `${useId()}-arc`;
+  return (
+    <div
+      className="fixp-dial"
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={valueNow}
+      aria-valuetext={valueText}
+    >
+      <svg className="fixp-ring" viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" className="fixp-stop-a" />
+            <stop offset="100%" className="fixp-stop-b" />
+          </linearGradient>
+        </defs>
+        <circle className="fixp-track" cx="100" cy="100" r="88" />
+        <circle
+          ref={arc}
+          className="fixp-arc"
+          cx="100"
+          cy="100"
+          r="88"
+          pathLength={100}
+          strokeDasharray="100"
+          strokeDashoffset="100"
+          stroke={`url(#${gradientId})`}
+        />
+      </svg>
+      <span className="fixp-percent" aria-hidden="true">
+        <span ref={number} className="fixp-number">
+          0
+        </span>
+        <small>%</small>
+      </span>
+      <CheckMark className="fixp-check" />
+    </div>
   );
 }
 
@@ -92,7 +161,6 @@ export function FixProgress({
   const reduced = useReducedMotion();
   const ownId = useId();
   const headingId = titleId ?? ownId;
-  const gradientId = `${ownId}-arc`;
   const box = useRef<HTMLElement>(null);
   const arc = useRef<SVGCircleElement>(null);
   const number = useRef<HTMLSpanElement>(null);
@@ -104,11 +172,13 @@ export function FixProgress({
    *  percentage in tens, for assistive technology. */
   const [view, setView] = useState({ shown: 0, coarse: 0, success: false });
 
+  // Registered before paint, so the proof dialog (proof-card.tsx) never
+  // opens for a frame over a ring that is shown in place.
+  useLayoutEffect(() => (inline ? registerInlineProgress() : undefined), [inline]);
   useEffect(() => {
-    if (!inline) return;
-    // The button that started the fix is gone: keep the keyboard here.
-    box.current?.focus({ preventScroll: true });
-    return registerInlineProgress();
+    // The button that started the fix is gone: keep the keyboard here, and
+    // the ring on screen (it can open below the fold).
+    if (inline) bringIntoView(box.current);
   }, [inline]);
 
   useEffect(() => {
@@ -134,12 +204,16 @@ export function FixProgress({
         since = now;
       }
       let target: number;
+      // 100 only once the proof is finishing: the card is then ready to
+      // open when the check has shown (a 100 reached earlier would tell it
+      // before it listens, and it would wait for its timeout).
       if (shown >= steps.length)
-        target = r.phase === "finishing" ? 100 : (band[band.length - 1]?.[1] ?? 100);
+        target = r.phase === "finishing" ? 100 : Math.min(99, band[band.length - 1]?.[1] ?? 99);
       else if (steps[shown].state === "done") target = band[shown][1];
       else target = creep(band[shown], now - since, steps[shown].id);
-      // Smooth, never backwards.
-      const ease = reduced ? 1 : 1 - Math.exp(-(now - last) / 240);
+      // Smooth, never backwards; the last stretch to 100 % (every step
+      // ticked, "All done" on screen) fills briskly instead of trailing.
+      const ease = reduced ? 1 : 1 - Math.exp(-(now - last) / (target === 100 ? 120 : 240));
       percent = Math.max(percent, percent + (target - percent) * ease);
       if (target === 100 && percent > 99.5) percent = 100;
       last = now;
@@ -197,46 +271,13 @@ export function FixProgress({
       aria-busy={!view.success}
     >
       <div className="fixp-body">
-        <div
-          className="fixp-dial"
-          role="progressbar"
-          aria-label={c.progress}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={view.success ? 100 : view.coarse}
-          aria-valuetext={format(c.live, {
-            percent: view.success ? 100 : view.coarse,
-            step: label,
-          })}
-        >
-          <svg className="fixp-ring" viewBox="0 0 200 200" aria-hidden="true">
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" className="fixp-stop-a" />
-                <stop offset="100%" className="fixp-stop-b" />
-              </linearGradient>
-            </defs>
-            <circle className="fixp-track" cx="100" cy="100" r="88" />
-            <circle
-              ref={arc}
-              className="fixp-arc"
-              cx="100"
-              cy="100"
-              r="88"
-              pathLength={100}
-              strokeDasharray="100"
-              strokeDashoffset="100"
-              stroke={`url(#${gradientId})`}
-            />
-          </svg>
-          <span className="fixp-percent" aria-hidden="true">
-            <span ref={number} className="fixp-number">
-              0
-            </span>
-            <small>%</small>
-          </span>
-          <CheckMark className="fixp-check" />
-        </div>
+        <ProgressDial
+          arc={arc}
+          number={number}
+          label={c.progress}
+          valueNow={view.success ? 100 : view.coarse}
+          valueText={format(c.live, { percent: view.success ? 100 : view.coarse, step: label })}
+        />
         <div className="fixp-side">
           <h2 className="fixp-title" id={headingId}>
             {title}

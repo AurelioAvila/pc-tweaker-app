@@ -24,7 +24,6 @@ import {
   readLastScan,
   newScanSession,
   runScanSession,
-  scanProgress,
   scanReport,
   settled,
   SCAN_PROBES,
@@ -37,6 +36,7 @@ import {
 import { fixAllKeys, fixPlan, fixSteps, locked, scanItems, type ScanItem } from "../scan-items";
 import { runWithProof, useProofBusy, useProofRun } from "./proof-card";
 import { FixProgress } from "./fix-progress";
+import { ScanRing } from "./scan-ring";
 import { SafeOptimizeCard } from "./safe-optimize";
 import { CheckIcon } from "./icons";
 import { Badge } from "./ui";
@@ -71,6 +71,13 @@ let heldScan: { session: ScanSession; driver: ScanProgress | null; elapsed: numb
 function probesOf(session: ScanSession): Partial<Record<ScanProbe, ProbeStatus>> {
   return Object.fromEntries(
     SCAN_PROBES.flatMap((p) => (session.steps[p] ? [[p, session.steps[p].state]] : [])),
+  );
+}
+
+/** The finished checks of a session in the order they finished. */
+function finishedOrder(session: ScanSession): ScanProbe[] {
+  return SCAN_PROBES.filter((p) => session.steps[p]).sort(
+    (a, b) => (session.steps[a]?.at ?? 0) - (session.steps[b]?.at ?? 0),
   );
 }
 
@@ -115,9 +122,16 @@ export function ScanPanel({
   const [lastScan, setLastScan] = useState(() => readLastScan(localStorage.getItem(LAST_SCAN_KEY)));
   const [reading, setReading] = useState(false);
   const [presenting, setPresenting] = useState(false);
-  const [progress, setProgress] = useState(() =>
-    heldScan ? Math.floor(scanProgress(heldScan.session.steps, heldScan.driver)) : 0,
+  /** Finished checks in the order they finished, and how many of them the
+   *  ring has ticked off (scan-ring.tsx). */
+  const [order, setOrder] = useState<ScanProbe[]>(() =>
+    heldScan ? finishedOrder(heldScan.session) : [],
   );
+  const [tickedChecks, setTickedChecks] = useState(() =>
+    heldScan ? finishedOrder(heldScan.session).length : 0,
+  );
+  const revealRing = useRef<(() => void) | null>(null);
+  const runControls = useRef<HTMLDivElement>(null);
   const [driverProgress, setDriverProgress] = useState<ScanProgress | null>(
     () => heldScan?.driver ?? null,
   );
@@ -163,22 +177,41 @@ export function ScanPanel({
     };
   }, []);
   useEffect(() => {
+    // Pause swaps for Resume (and back): keep the keyboard on the controls.
+    if ((reading || paused) && !document.activeElement?.closest("button, [tabindex]"))
+      runControls.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
+  }, [reading, paused]);
+  useEffect(() => {
     if (reviewKeys !== null) dialog.current?.showModal();
     else dialog.current?.close();
   }, [reviewKeys]);
-  useEffect(() => {
-    if (report && !paused) {
+  /** A report that just opened takes the keyboard and the view. Only then:
+   *  a report refreshed by a fix (Safe optimize below it, a booster switch)
+   *  must not pull the page away from what the user is watching. */
+  function revealResults() {
+    window.requestAnimationFrame(() => {
       results.current?.focus({ preventScroll: true });
       results.current?.scrollIntoView({ block: "nearest", behavior: "auto" });
-    }
-  }, [report, paused]);
+    });
+  }
 
   const items = report ? scanItems(report) : [];
   const fixAll = fixAllKeys(items, isPro);
   const ticked = items.filter((i) => selected.has(i.key) && i.fixable && !locked(i, isPro));
   const reviewItems = items.filter((i) => reviewKeys?.includes(i.key));
   const unknownSecurity = report ? unknownSecuritySignals(report, lang) : [];
-  const complete = Object.values(probes).filter((p) => p === "complete").length;
+  // While the ring runs, the scope list follows what it has ticked off.
+  const running = reading || paused;
+  const complete = running
+    ? tickedChecks
+    : Object.values(probes).filter((p) => p === "complete").length;
+  const shownState = (probe: ScanProbe): ProbeStatus | "idle" => {
+    const state = probes[probe];
+    if (!state) return "idle";
+    if (!running) return state;
+    const at = order.indexOf(probe);
+    return at >= 0 && at < tickedChecks ? state : "reading";
+  };
 
   /** Stops the reads in flight. `pause` keeps everything finished for a
    *  resume; `stop` ends the scan and shows what it had. Read-only either way. */
@@ -202,6 +235,7 @@ export function ScanPanel({
     setReport(partial);
     setSelected(new Set(fixAllKeys(scanItems(partial), isPro)));
     remember(partial);
+    revealResults();
   }
 
   function remember(next: ScanReport) {
@@ -231,6 +265,7 @@ export function ScanPanel({
     let driver: ScanProgress | null = held?.driver ?? null;
     const elapsedBefore = held?.elapsed ?? 0;
     const startedAt = performance.now();
+    const finished = finishedOrder(session);
     setPaused(false);
     setPresenting(false);
     setReading(true);
@@ -240,42 +275,27 @@ export function ScanPanel({
     setCustom(false);
     setError("");
     if (!held) {
-      setProgress(0);
+      setOrder([]);
+      setTickedChecks(0);
       setDriverProgress(null);
       setElapsed(0);
       setProbes({});
       setStepTimes({});
     }
-    let target = scanProgress(session.steps, driver);
-    let displayed = target;
-    let lastFrame = startedAt;
     let seconds = elapsedBefore;
     const states: Partial<Record<ScanProbe, ProbeStatus>> = probesOf(session);
     let off: UnlistenFn | undefined;
-    let finishAnimation!: () => void;
-    const animationFinished = new Promise<void>((resolve) => {
-      finishAnimation = resolve;
+    // The ring says when it has shown 100 % and its check (scan-ring.tsx); a
+    // ring that cannot (the window hidden, no frames) does not hold the
+    // results back for long.
+    const revealed = new Promise<void>((resolve) => {
+      revealRing.current = resolve;
+      window.setTimeout(resolve, 15_000);
     });
-    const updateTarget = () => {
-      // Keep 100% reserved for the complete report, not the final progress event.
-      target = Math.max(target, scanProgress(session.steps, driver));
-    };
-    const animation = window.setInterval(() => {
-      if (!alive.current) {
-        window.clearInterval(animation);
-        finishAnimation();
-        return;
-      }
-      const now = performance.now();
-      // Ease towards completed work; no minimum duration or scripted stage pauses.
-      displayed += (target - displayed) * (1 - Math.exp(-(now - lastFrame) / 180));
-      if (target - displayed < 0.1) displayed = target;
-      lastFrame = now;
-      seconds = elapsedBefore + Math.floor((now - startedAt) / 1000);
-      setProgress(Math.floor(displayed));
-      setElapsed(seconds);
-      if (displayed >= 100) finishAnimation();
-    }, 32);
+    const clock = window.setInterval(() => {
+      seconds = elapsedBefore + Math.floor((performance.now() - startedAt) / 1000);
+      if (alive.current) setElapsed(seconds);
+    }, 1000);
     try {
       // Register before invoking the audit so the first device-class event is retained.
       off = await listen<ScanProgress>("driver-scan-progress", ({ payload }) => {
@@ -291,15 +311,15 @@ export function ScanPanel({
           return;
         driver = payload;
         setDriverProgress(payload);
-        updateTarget();
       }).catch(() => undefined);
       const done = await runScanSession(
         invoke,
         session,
         (probe, state) => {
           states[probe] = state;
+          if (state !== "reading" && !finished.includes(probe)) finished.push(probe);
           if (!alive.current) return;
-          updateTarget();
+          setOrder([...finished]);
           setProbes((current) => ({ ...current, [probe]: state }));
           const at = session.steps[probe]?.at;
           if (at) setStepTimes((current) => ({ ...current, [probe]: at }));
@@ -317,7 +337,6 @@ export function ScanPanel({
           await stopAudit(session);
           if (alive.current) {
             setPaused(true);
-            setProgress(Math.floor(scanProgress(session.steps, driver)));
             setProbes(probesOf(session));
             setReport(scanReport(session));
             setSelected(new Set());
@@ -326,22 +345,21 @@ export function ScanPanel({
         return;
       }
       if (!alive.current) return;
+      // Every check is read: the ring completes, then the results open.
       setPresenting(true);
-      target = 100;
-      await animationFinished;
+      await revealed;
       if (!alive.current) return;
-      window.clearInterval(animation);
-      setProgress(100);
       const next = scanReport(session);
       setReport(next);
       setSelected(new Set(fixAllKeys(scanItems(next), isPro)));
       remember(next);
+      revealResults();
     } catch (e) {
       if (alive.current) setError(String(e));
     } finally {
       off?.();
-      window.clearInterval(animation);
-      finishAnimation();
+      window.clearInterval(clock);
+      revealRing.current = null;
       if (abort.current === controller) abort.current = null;
       operation.current = false;
       if (alive.current) {
@@ -528,43 +546,91 @@ export function ScanPanel({
         data-presenting={presenting}
         data-complete={!!report && !paused}
       >
-        <div className="scan-hero-copy">
-          <p className="scan-eyebrow">{c.eyebrow}</p>
-          <h2>{c.title}</h2>
-          <p className="scan-intro">{c.intro}</p>
-          <div className="scan-hero-actions">
-            <button
-              className="scan-primary scan-launch"
-              onClick={() => void scan()}
-              disabled={reading || applying || paused || proofBusy}
-              aria-label={
-                reading
-                  ? presenting
-                    ? c.presenting
-                    : c.running
-                  : report
-                    ? s.scan.scanAgain
-                    : c.start
-              }
-            >
-              <svg className="scan-launch-ring" viewBox="0 0 180 180" aria-hidden="true">
-                <circle cx="90" cy="90" r="88" />
-                <circle
-                  className="scan-launch-progress"
-                  cx="90"
-                  cy="90"
-                  r="88"
-                  pathLength="100"
-                  strokeDasharray="100"
-                  strokeDashoffset={reading || paused ? 100 - progress : 0}
-                />
-              </svg>
-              {reading || paused ? (
-                <span className="scan-launch-percent" aria-hidden="true">
-                  {progress}
-                  <small>%</small>
-                </span>
-              ) : (
+        {reading || paused ? (
+          <ScanRing
+            lang={lang}
+            order={order}
+            states={probes}
+            driver={driverProgress}
+            finished={presenting}
+            paused={paused}
+            elapsed={elapsed}
+            unavailable={s.scan.unavailable}
+            onTicked={setTickedChecks}
+            onRevealed={() => revealRing.current?.()}
+            controls={
+              <div ref={runControls} className="contents">
+                {!paused && (
+                  <div className="scan-run-controls">
+                    <button
+                      type="button"
+                      className="scan-secondary"
+                      onClick={() => halt("pause")}
+                      disabled={halting}
+                    >
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <rect x="4" y="3.5" width="2.6" height="9" rx="1" fill="currentColor" />
+                        <rect x="9.4" y="3.5" width="2.6" height="9" rx="1" fill="currentColor" />
+                      </svg>
+                      {c.pause}
+                    </button>
+                    <button
+                      type="button"
+                      className="scan-secondary"
+                      onClick={() => halt("stop")}
+                      disabled={halting}
+                    >
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <rect x="4" y="4" width="8" height="8" rx="1.5" fill="currentColor" />
+                      </svg>
+                      {c.stop}
+                    </button>
+                  </div>
+                )}
+                {paused && (
+                  <div className="scan-run-controls">
+                    <button type="button" className="scan-primary" onClick={() => void scan(true)}>
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M5 3.5v9l7.5-4.5Z" fill="currentColor" />
+                      </svg>
+                      {c.resume}
+                    </button>
+                    <button
+                      type="button"
+                      className="scan-secondary"
+                      onClick={() => heldScan && end(heldScan.session)}
+                    >
+                      {c.finish}
+                    </button>
+                  </div>
+                )}
+              </div>
+            }
+          />
+        ) : (
+          <div className="scan-hero-copy">
+            <p className="scan-eyebrow">{c.eyebrow}</p>
+            <h2>{c.title}</h2>
+            <p className="scan-intro">{c.intro}</p>
+            <div className="scan-hero-actions">
+              <button
+                className="scan-primary scan-launch"
+                onClick={() => void scan()}
+                disabled={reading || applying || paused || proofBusy}
+                aria-label={report ? s.scan.scanAgain : c.start}
+              >
+                <svg className="scan-launch-ring" viewBox="0 0 180 180" aria-hidden="true">
+                  <circle cx="90" cy="90" r="88" />
+                  <circle
+                    className="scan-launch-progress"
+                    cx="90"
+                    cy="90"
+                    r="88"
+                    pathLength="100"
+                    strokeDasharray="100"
+                    strokeDashoffset={0}
+                  />
+                </svg>
                 <span className="scan-launch-symbol" aria-hidden="true">
                   <svg viewBox="0 0 32 32" fill="none">
                     <circle cx="13.5" cy="13.5" r="8.5" stroke="currentColor" strokeWidth="1.8" />
@@ -576,153 +642,53 @@ export function ScanPanel({
                     />
                   </svg>
                 </span>
-              )}
-              <span className="scan-launch-label">
-                {paused
-                  ? c.paused
-                  : reading
-                    ? presenting
-                      ? c.finishing
-                      : c.scanning
-                    : report
-                      ? s.scan.scanAgain
-                      : c.start}
-              </span>
-            </button>
-            {reading && !presenting && (
-              <div className="scan-run-controls">
-                <button
-                  type="button"
-                  className="scan-secondary"
-                  onClick={() => halt("pause")}
-                  disabled={halting}
-                >
-                  <svg viewBox="0 0 16 16" aria-hidden="true">
-                    <rect x="4" y="3.5" width="2.6" height="9" rx="1" fill="currentColor" />
-                    <rect x="9.4" y="3.5" width="2.6" height="9" rx="1" fill="currentColor" />
-                  </svg>
-                  {c.pause}
-                </button>
-                <button
-                  type="button"
-                  className="scan-secondary"
-                  onClick={() => halt("stop")}
-                  disabled={halting}
-                >
-                  <svg viewBox="0 0 16 16" aria-hidden="true">
-                    <rect x="4" y="4" width="8" height="8" rx="1.5" fill="currentColor" />
-                  </svg>
-                  {c.stop}
-                </button>
-              </div>
-            )}
-            {paused && (
-              <div className="scan-run-controls">
-                <button type="button" className="scan-primary" onClick={() => void scan(true)}>
-                  <svg viewBox="0 0 16 16" aria-hidden="true">
-                    <path d="M5 3.5v9l7.5-4.5Z" fill="currentColor" />
-                  </svg>
-                  {c.resume}
-                </button>
-                <button
-                  type="button"
-                  className="scan-secondary"
-                  onClick={() => heldScan && end(heldScan.session)}
-                >
-                  {c.finish}
-                </button>
-              </div>
-            )}
-            {report && !reading && !paused && (
-              <button
-                type="button"
-                className="scan-secondary scan-copy-diagnosis"
-                onClick={() => void copyDiagnosis()}
-                disabled={applying}
-              >
-                <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <rect x="5" y="5" width="8" height="9" rx="1.5" stroke="currentColor" />
-                  <path d="M3.5 10.5V3.5A1.5 1.5 0 0 1 5 2h5.5" stroke="currentColor" />
-                </svg>
-                {c.copyDiagnosis}
+                <span className="scan-launch-label">{report ? s.scan.scanAgain : c.start}</span>
               </button>
-            )}
-            <span className="scan-last" hidden={reading || paused}>
-              {lastScan
-                ? format(s.scan.lastScan, {
-                    time: new Date(lastScan.at).toLocaleString(localeOf(lang)),
-                  })
-                : s.scan.neverScanned}
-              {lastScan?.partial && <small className="block">{c.partial}</small>}
-            </span>
-          </div>
-          {reading && (
-            <div className="scan-progress-block" role="status">
-              <div className="scan-live-stage">
-                <span className="scan-spinner" aria-hidden="true" />
-                {presenting
-                  ? c.presenting
-                  : (c.probes[SCAN_PROBES.findIndex((probe) => probes[probe] === "reading")] ??
-                    c.running)}
-              </div>
-              {!presenting && probes.driver_audit === "reading" && (
-                <div className="scan-driver-detail">
-                  <span>{driverProgress?.class || c.discovering}</span>
-                  <span>
-                    {driverProgress
-                      ? `${driverProgress.done} / ${driverProgress.total} ${c.deviceClasses}`
-                      : c.waitingWindows}
-                  </span>
-                </div>
+              {report && (
+                <button
+                  type="button"
+                  className="scan-secondary scan-copy-diagnosis"
+                  onClick={() => void copyDiagnosis()}
+                  disabled={applying}
+                >
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <rect x="5" y="5" width="8" height="9" rx="1.5" stroke="currentColor" />
+                    <path d="M3.5 10.5V3.5A1.5 1.5 0 0 1 5 2h5.5" stroke="currentColor" />
+                  </svg>
+                  {c.copyDiagnosis}
+                </button>
               )}
-              <div className="scan-progress-caption">
-                <span>
-                  {complete} / {SCAN_PROBES.length} {c.sources}
-                </span>
-                <span>
-                  {c.elapsed} {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
-                </span>
-              </div>
-              <progress className="sr-only" max="100" value={progress} aria-label={c.running} />
+              <span className="scan-last">
+                {lastScan
+                  ? format(s.scan.lastScan, {
+                      time: new Date(lastScan.at).toLocaleString(localeOf(lang)),
+                    })
+                  : s.scan.neverScanned}
+                {lastScan?.partial && <small className="block">{c.partial}</small>}
+              </span>
             </div>
-          )}
-          {paused && (
-            <div className="scan-progress-block" role="status">
-              <div className="scan-live-stage">
-                {format(c.pausedLine, { done: complete, total: SCAN_PROBES.length })}
+            {report && (
+              <div ref={results} tabIndex={-1} className="scan2-focus">
+                <ScanSummary
+                  lang={lang}
+                  report={report}
+                  items={items}
+                  isPro={isPro}
+                  custom={custom}
+                  fixCount={custom ? ticked.length : fixAll.length}
+                  busy={applying || reading || proofBusy}
+                  trialDays={trialDays}
+                  onFix={() => setReviewKeys(custom ? ticked.map((i) => i.key) : fixAll)}
+                  onCustom={(on) => {
+                    setCustom(on);
+                    if (!on) setSelected(new Set(fixAll));
+                  }}
+                  onUnlock={() => onNavigate("pricing")}
+                />
               </div>
-              <p className="scan-paused-hint">{c.pausedHint}</p>
-              <div className="scan-progress-caption">
-                <span>
-                  {complete} / {SCAN_PROBES.length} {c.sources}
-                </span>
-                <span>
-                  {c.elapsed} {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
-                </span>
-              </div>
-            </div>
-          )}
-          {report && !paused && (
-            <div ref={results} tabIndex={-1} className="scan2-focus">
-              <ScanSummary
-                lang={lang}
-                report={report}
-                items={items}
-                isPro={isPro}
-                custom={custom}
-                fixCount={custom ? ticked.length : fixAll.length}
-                busy={applying || reading || proofBusy}
-                trialDays={trialDays}
-                onFix={() => setReviewKeys(custom ? ticked.map((i) => i.key) : fixAll)}
-                onCustom={(on) => {
-                  setCustom(on);
-                  if (!on) setSelected(new Set(fixAll));
-                }}
-                onUnlock={() => onNavigate("pricing")}
-              />
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
         <aside className="scan-scope">
           <details open={paused || undefined}>
             <summary>
@@ -745,11 +711,11 @@ export function ScanPanel({
             </summary>
             <ol>
               {SCAN_PROBES.map((probe, i) => (
-                <li key={probe} data-state={probes[probe] || "idle"}>
+                <li key={probe} data-state={shownState(probe)}>
                   <span className="scan-probe-mark" aria-hidden="true">
-                    {probes[probe] === "complete" ? (
+                    {shownState(probe) === "complete" ? (
                       <CheckIcon className="h-3 w-3" />
-                    ) : probes[probe] === "unavailable" ? (
+                    ) : shownState(probe) === "unavailable" ? (
                       "!"
                     ) : (
                       String(i + 1).padStart(2, "0")
@@ -762,7 +728,7 @@ export function ScanPanel({
                     </span>
                     {i >= FIRST_NEW_PROBE && <small>{c.newDetails[i - FIRST_NEW_PROBE]}</small>}
                   </span>
-                  {probes[probe] === "unavailable" && (
+                  {shownState(probe) === "unavailable" && (
                     <Badge kind="warn">{s.scan.unavailable}</Badge>
                   )}
                   {(paused || !!report?.skipped.length) && stepTimes[probe] && (

@@ -19,7 +19,7 @@
   padding: 32px;
   min-width: 0;
 }
-.scan-hero-copy > :is(.scan-eyebrow, h2, .scan-intro, .scan-progress-block, .scan-result-counts) {
+.scan-hero-copy > :is(.scan-eyebrow, h2, .scan-intro, .scan-result-counts) {
   grid-column: 2;
 }
 .scan-eyebrow {
@@ -52,46 +52,6 @@
   flex-direction: column;
   align-items: center;
   gap: 16px;
-}
-.scan-hero[data-scanning="true"] .scan-hero-actions {
-  justify-content: center;
-  padding-top: 0;
-}
-.scan-hero[data-scanning="true"] .scan-launch {
-  width: 196px;
-  height: 196px;
-}
-.scan-hero[data-scanning="true"] .scan-launch-percent {
-  font-size: 54px;
-}
-.scan-hero[data-scanning="true"] .scan-progress-block {
-  text-align: left;
-}
-.scan-hero[data-scanning="true"] .scan-live-stage {
-  justify-content: flex-start;
-  margin-bottom: 10px;
-  font-size: 17px;
-  font-weight: 600;
-}
-.scan-driver-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  min-height: 49px;
-  margin-bottom: 18px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.scan-driver-detail > :first-child {
-  color: var(--text-secondary);
-  font-family: ui-monospace, monospace;
-  font-size: 13px;
-}
-.scan-progress-block progress.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  clip-path: inset(50%);
 }
 .scan-primary,
 .scan-secondary {
@@ -148,12 +108,6 @@
 .scan-run-controls svg {
   width: 12px;
   height: 12px;
-}
-.scan-paused-hint {
-  margin: 0 0 14px;
-  color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.6;
 }
 .scan-probe-time {
   margin-left: auto;
@@ -399,33 +353,6 @@
 .scan-scope li[data-state="unavailable"] {
   color: #f6c66c;
   flex-wrap: wrap;
-}
-.scan-progress-block {
-  margin-top: 30px;
-}
-.scan-progress-caption {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-bottom: 10px;
-}
-.scan-progress-block progress {
-  appearance: none;
-  width: 100%;
-  height: 4px;
-  display: block;
-  border: 0;
-  border-radius: 3px;
-  overflow: hidden;
-  background: var(--surface-2);
-}
-.scan-progress-block progress::-webkit-progress-bar {
-  background: var(--surface-2);
-}
-.scan-progress-block progress::-webkit-progress-value {
-  background: var(--accent);
-  transition: width 180ms;
 }
 .scan-result-counts {
   display: flex;
@@ -884,29 +811,6 @@
 .scan-launch .scan-launch-symbol {
   color: var(--accent);
 }
-.scan-hero[data-scanning="true"] .scan-launch-label {
-  position: absolute;
-  top: 67%;
-  font-size: 12px;
-  color: var(--text-secondary);
-  letter-spacing: 0.015em;
-}
-.scan-launch-percent {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 44px;
-  line-height: 1;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.04em;
-}
-.scan-launch-percent small {
-  font-size: 22px;
-  margin-left: 3px;
-  color: var(--text-muted);
-}
 .scan-primary.scan-launch:hover:not(:disabled) {
   background: radial-gradient(
     circle at 50% 25%,
@@ -932,38 +836,8 @@
   overflow: visible;
 }
 
-.scan-hero[data-scanning="true"] .scan-launch {
-  opacity: 1;
-  cursor: progress;
-  background: radial-gradient(
-    circle at 35% 18%,
-    color-mix(in srgb, var(--accent) 13%, var(--surface-2)),
-    var(--surface-1) 80%
-  );
-  color: var(--text-primary);
-  box-shadow: 0 8px 28px color-mix(in srgb, var(--accent) 9%, transparent);
-}
 .scan-result-counts {
   animation: scan-reveal 400ms ease-out both;
-}
-.scan-hero[data-scanning="true"] .scan-launch-symbol {
-  color: var(--accent);
-}
-.scan-live-stage {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  margin-bottom: 18px;
-  color: var(--text-primary);
-}
-.scan-progress-block progress {
-  height: 7px;
-  border-radius: 8px;
-}
-.scan-progress-block progress::-webkit-progress-value {
-  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 55%, white));
-  transition: width 350ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .scan-scope li[data-state="reading"] {
   color: var(--text-primary);
@@ -993,15 +867,12 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .scan-hero[data-scanning="true"] .scan-launch-ring,
-  .scan-hero[data-scanning="true"] .scan-launch-symbol,
   .scan-result-counts,
   .scan-scope li[data-state="reading"] .scan-probe-mark {
     animation: none;
   }
   .scan-launch,
-  .scan-launch-progress,
-  .scan-progress-block progress::-webkit-progress-value {
+  .scan-launch-progress {
     transition: none;
   }
 }
@@ -1603,4 +1474,100 @@
 .scan2-threshold select:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+
+/* The scan's progress ring (scan-ring.tsx): the Fix all instrument
+   (fix-progress.css) inside the hero card, with the checks sliding through a
+   five-row window as they tick off. */
+.scan-ring {
+  --scan-ring-row: 30px;
+  padding: 30px 32px 28px;
+}
+/* The hero's own heading style must not reach the ring's small title. */
+.scan-hero .scan-ring .fixp-title {
+  max-width: none;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  line-height: normal;
+  text-wrap: wrap;
+}
+.scan-ring .fixp-current {
+  margin-bottom: 6px;
+}
+.scan-ring-detail {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.scan-ring-detail > :first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scan-ring-detail > :last-child {
+  flex: none;
+}
+.scan-ring-window {
+  --fade-top: 0px;
+  --fade-bottom: 0px;
+  height: calc(var(--scan-ring-row) * 5);
+  overflow: hidden;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--fade-top),
+    #000 calc(100% - var(--fade-bottom)),
+    transparent 100%
+  );
+}
+.scan-ring-window[data-above] {
+  --fade-top: 26px;
+}
+.scan-ring-window[data-below] {
+  --fade-bottom: 26px;
+}
+.scan-ring-window .fixp-steps {
+  gap: 0;
+  transition: transform 320ms var(--ease-standard);
+}
+.scan-ring-window .fixp-steps li {
+  height: var(--scan-ring-row);
+  min-height: 0;
+}
+.scan-ring-window .fixp-step {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scan-ring .fixp-hint {
+  margin-top: 10px;
+}
+.scan-ring-controls {
+  margin-top: 16px;
+}
+.scan-ring-controls .scan-run-controls {
+  justify-content: flex-start;
+}
+.scan-ring-controls[data-done] {
+  visibility: hidden;
+}
+.scan-ring[data-state="paused"] .fixp-arc {
+  stroke: var(--text-muted);
+  filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scan-ring-window .fixp-steps {
+    transition: none;
+  }
+}
+@media (max-width: 850px) {
+  .scan-ring {
+    padding: 22px;
+  }
 }

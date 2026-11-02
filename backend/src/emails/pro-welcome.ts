@@ -27,9 +27,9 @@ import {
 
 /** Catalogue counts quoted below. scripts/check-public-counts.mjs fails the
  *  build when they differ from the catalogue the app ships. */
-const TOTAL_CONTROLS = 81;
+const TOTAL_CONTROLS = 82;
 const FREE_CONTROLS = 46;
-const PRO_CONTROLS = 35;
+const PRO_CONTROLS = 36;
 export const CATALOGUE = { total: TOTAL_CONTROLS, free: FREE_CONTROLS, pro: PRO_CONTROLS };
 
 export type ProductBrand = {

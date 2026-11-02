@@ -584,6 +584,19 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
             requires_admin: true,
             requires_pro: true,
         },
+        // PC Tweaker's own switch, read by the booster thread (ramboost.rs).
+        RegistryTweak {
+            id: crate::ramboost::TWEAK_ID,
+            name: "Smart RAM booster",
+            description: "Releases Windows' standby memory cache when free memory drops below your threshold (1 GB by default), at most once every 5 minutes and never while a full-screen game is in front. Works while PC Tweaker runs as administrator; every release is measured.",
+            category: Category::Maintenance,
+            hive: Hive::Hkcu,
+            key_path: crate::ramboost::KEY_PATH,
+            value_name: crate::ramboost::VALUE_NAME,
+            on_value: RegValue::Dword(1),
+            requires_admin: false,
+            requires_pro: true,
+        },
     ]
 }
 

@@ -1,37 +1,47 @@
-import { useEffect, useRef, useState } from "react";
-import { factorLabel } from "./health-copy";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
 import { format, type Lang, type Strings, localeOf } from "../i18n";
-import { cachedAppVersion, textFor } from "../lib";
+import { cachedAppVersion, formatBytes, formatNumber, textFor } from "../lib";
 import { diagnosisText } from "../diagnosis";
-import type { AuditEntry, ScanProgress, Section, Toast } from "../types";
+import type {
+  AuditEntry,
+  CacheGroup,
+  JunkTarget,
+  RamBoostStatus,
+  RegistryRestoreResult,
+  RegistryScan,
+  ScanProgress,
+  Section,
+  Toast,
+  TweakInfo,
+} from "../types";
 import {
   applyScanSelection,
+  FIRST_NEW_PROBE,
   LAST_SCAN_KEY,
   readLastScan,
   newScanSession,
-  recommendedTweaks,
-  optionalScanTweaks,
   runScanSession,
   scanProgress,
   scanReport,
   settled,
   SCAN_PROBES,
-  scanObservations,
   unknownSecuritySignals,
   type ProbeStatus,
   type ScanProbe,
   type ScanReport,
   type ScanSession,
 } from "../scan-runner";
+import { fixAllKeys, fixPlan, locked, scanItems, type ScanItem } from "../scan-items";
+import { emitFixDone, runBeforeFix } from "../fix-events";
 import { CheckIcon } from "./icons";
 import { Badge } from "./ui";
 import { SCAN_COPY } from "./scan-copy";
-import { TRIAL_COPY } from "./trial-copy";
+import { SCAN2_COPY } from "./scan2-copy";
+import { ScanCategoryList, ScanSummary } from "./scan-results";
 import "./scan-workspace.css";
-import { TechnicalDetails } from "./technical";
 
 /** Waits for the backend driver audit to stop, re-sending the cancel every
  *  half second (an audit can start after the first cancel arrived, while it
@@ -77,6 +87,7 @@ export function ScanPanel({
   onNavigate,
   onBusyChange,
   trialDays = null,
+  extraActions,
 }: {
   s: Strings;
   lang: Lang;
@@ -88,8 +99,11 @@ export function ScanPanel({
   /** Set while this person may start the free trial: the Pro
    *  recommendations then lead with it (it opens Plans & pricing). */
   trialDays?: number | null;
+  /** Rendered beside Fix all and Custom (e.g. a "Safe optimize" button). */
+  extraActions?: ReactNode;
 }) {
   const c = SCAN_COPY[lang];
+  const c2 = SCAN2_COPY[lang];
   const [report, setReport] = useState<ScanReport | null>(() =>
     heldScan ? scanReport(heldScan.session) : null,
   );
@@ -106,12 +120,13 @@ export function ScanPanel({
   const [probes, setProbes] = useState<Partial<Record<ScanProbe, ProbeStatus>>>(() =>
     heldScan ? probesOf(heldScan.session) : {},
   );
-  const [selected, setSelected] = useState<string[]>([]);
-  const [reviewIds, setReviewIds] = useState<string[] | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [custom, setCustom] = useState(false);
+  const [reviewKeys, setReviewKeys] = useState<string[] | null>(null);
   const [applying, setApplying] = useState(false);
-  const [outcome, setOutcome] = useState<Awaited<ReturnType<typeof applyScanSelection>> | null>(
-    null,
-  );
+  const [outcome, setOutcome] = useState<FixOutcome | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  const [restored, setRestored] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [paused, setPaused] = useState(() => heldScan !== null);
   const [halting, setHalting] = useState(false);
@@ -124,7 +139,8 @@ export function ScanPanel({
   const intent = useRef<"pause" | "stop" | null>(null);
   const alive = useRef(true);
   const dialog = useRef<HTMLDialogElement>(null);
-  const results = useRef<HTMLDetailsElement>(null);
+  const results = useRef<HTMLDivElement>(null);
+  const outcomePanel = useRef<HTMLDivElement>(null);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -139,24 +155,21 @@ export function ScanPanel({
     };
   }, []);
   useEffect(() => {
-    if (reviewIds !== null) dialog.current?.showModal();
+    if (reviewKeys !== null) dialog.current?.showModal();
     else dialog.current?.close();
-  }, [reviewIds]);
+  }, [reviewKeys]);
   useEffect(() => {
     if (report && !paused) {
       results.current?.focus({ preventScroll: true });
-      results.current?.scrollIntoView({ block: "start", behavior: "auto" });
+      results.current?.scrollIntoView({ block: "nearest", behavior: "auto" });
     }
   }, [report, paused]);
 
-  const fixes = report ? recommendedTweaks(report, isPro) : [];
-  const lockedFixes =
-    report && !isPro ? recommendedTweaks(report, true).filter((t) => t.requires_pro) : [];
-  const optional = report ? optionalScanTweaks(report) : [];
-  const observations = report ? scanObservations(report) : [];
+  const items = report ? scanItems(report) : [];
+  const fixAll = fixAllKeys(items, isPro);
+  const ticked = items.filter((i) => selected.has(i.key) && i.fixable && !locked(i, isPro));
+  const reviewItems = items.filter((i) => reviewKeys?.includes(i.key));
   const unknownSecurity = report ? unknownSecuritySignals(report, lang) : [];
-  const selectedFixes = fixes.filter((t) => selected.includes(t.id));
-  const reviewFixes = fixes.filter((t) => reviewIds?.includes(t.id));
   const complete = Object.values(probes).filter((p) => p === "complete").length;
 
   /** Stops the reads in flight. `pause` keeps everything finished for a
@@ -179,7 +192,7 @@ export function ScanPanel({
     const partial = scanReport(session);
     setPaused(false);
     setReport(partial);
-    setSelected(recommendedTweaks(partial, isPro).map((t) => t.id));
+    setSelected(new Set(fixAllKeys(scanItems(partial), isPro)));
     remember(partial);
   }
 
@@ -215,6 +228,8 @@ export function ScanPanel({
     setReading(true);
     setReport(null);
     setOutcome(null);
+    setRestored(null);
+    setCustom(false);
     setError("");
     if (!held) {
       setProgress(0);
@@ -297,7 +312,7 @@ export function ScanPanel({
             setProgress(Math.floor(scanProgress(session.steps, driver)));
             setProbes(probesOf(session));
             setReport(scanReport(session));
-            setSelected([]);
+            setSelected(new Set());
           }
         }
         return;
@@ -311,7 +326,7 @@ export function ScanPanel({
       setProgress(100);
       const next = scanReport(session);
       setReport(next);
-      setSelected(recommendedTweaks(next, isPro).map((t) => t.id));
+      setSelected(new Set(fixAllKeys(scanItems(next), isPro)));
       remember(next);
     } catch (e) {
       if (alive.current) setError(String(e));
@@ -355,28 +370,81 @@ export function ScanPanel({
     }
   }
 
+  /** Re-reads what a fix changes, so the categories show the PC as it is now. */
+  async function reread(base: ScanReport, tweaks: TweakInfo[] | null): Promise<ScanReport> {
+    const [junk, caches, registry, memory] = await Promise.allSettled([
+      invoke<JunkTarget[]>("junk_summary"),
+      invoke<CacheGroup[]>("scan_app_caches"),
+      invoke<RegistryScan>("registry_scan"),
+      invoke<RamBoostStatus>("ram_boost_status"),
+    ]);
+    const kept = <T,>(r: PromiseSettledResult<T>, old: T) =>
+      r.status === "fulfilled" ? r.value : old;
+    return {
+      ...base,
+      tweaks: tweaks ?? base.tweaks,
+      junk: kept(junk, base.junk),
+      caches: kept(caches, base.caches),
+      registry: kept(registry, base.registry),
+      memory: kept(memory, base.memory),
+    };
+  }
+
   async function apply() {
-    if (operation.current || !report || !reviewFixes.length) return;
-    const ids = reviewFixes.map((t) => t.id);
+    if (operation.current || !report || !reviewItems.length) return;
+    const plan = fixPlan(
+      items,
+      reviewItems.map((i) => i.key),
+      isPro,
+    );
     operation.current = true;
     onBusyChange?.(true);
     setApplying(true);
-    setReviewIds(null);
+    setReviewKeys(null);
+    setRestored(null);
     setError("");
     try {
-      const result = await applyScanSelection(invoke, report, isPro, ids);
-      setOutcome(result);
+      await runBeforeFix({ tweaks: plan.tweaks, ...plan.extras }, "scan");
+      const result = await applyScanSelection(invoke, report, isPro, plan.tweaks, plan.extras);
+      let booster = false;
+      if (plan.booster) {
+        try {
+          await invoke("apply_tweak", { id: "smart_ram_booster" });
+          booster = true;
+        } catch (e) {
+          result.errors.push(String(e));
+        }
+      }
+      const tweaks = booster
+        ? await invoke<TweakInfo[]>("list_tweaks").catch(() => result.tweaks)
+        : result.tweaks;
+      setOutcome({ ...result, booster });
       // Unknown final states cannot be offered for a second blind application.
-      setReport({ ...report, tweaks: result.tweaks, advice: result.advice, ids: result.ids });
-      setSelected([]);
+      const next = await reread(
+        { ...report, advice: result.advice, ids: result.ids },
+        tweaks ?? null,
+      );
+      setReport(next);
+      setSelected(new Set(fixAllKeys(scanItems(next), isPro)));
+      setCustom(false);
       if (result.fixed.length)
         pushToast("success", format(s.scan.fixedToast, { count: result.fixed.length }));
+      emitFixDone({
+        source: "scan",
+        fixed: result.fixed,
+        failed: result.failed,
+        measured: result.measured,
+        errors: result.errors,
+      });
       try {
         await onFixed();
       } catch (e) {
         setError(String(e));
       }
-      results.current?.focus();
+      window.requestAnimationFrame(() => {
+        outcomePanel.current?.focus({ preventScroll: true });
+        outcomePanel.current?.scrollIntoView({ block: "nearest", behavior: "auto" });
+      });
     } catch (e) {
       setError(String(e));
     } finally {
@@ -384,6 +452,49 @@ export function ScanPanel({
       setApplying(false);
       onBusyChange?.(false);
     }
+  }
+
+  /** The Smart RAM booster's own switch, from its row. */
+  async function turnOn(id: string) {
+    if (operation.current || !report) return;
+    operation.current = true;
+    setApplying(true);
+    try {
+      await invoke("apply_tweak", { id });
+      const tweaks = await invoke<TweakInfo[]>("list_tweaks").catch(() => report.tweaks);
+      setReport(await reread(report, tweaks));
+      await onFixed().catch(() => undefined);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      operation.current = false;
+      setApplying(false);
+    }
+  }
+
+  async function restoreRegistry(stamp: string) {
+    if (operation.current || !report) return;
+    operation.current = true;
+    setRestoring(true);
+    try {
+      const result = await invoke<RegistryRestoreResult>("registry_restore", { stamp });
+      setRestored(result.restored);
+      setReport(await reread(report, null));
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      operation.current = false;
+      setRestoring(false);
+    }
+  }
+
+  function toggle(key: string, on: boolean) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (on) next.add(key);
+      else next.delete(key);
+      return next;
+    });
   }
 
   return (
@@ -569,22 +680,24 @@ export function ScanPanel({
             </div>
           )}
           {report && !paused && (
-            <div className="scan-result-counts" aria-live="polite">
-              <div>
-                <strong>{fixes.length + lockedFixes.length}</strong>
-                <span>{c.recommendations}</span>
-              </div>
-              <div>
-                <strong>{observations.length + optional.length}</strong>
-                <span>{c.review}</span>
-              </div>
-              <div>
-                <strong>
-                  {complete}
-                  <small> / {SCAN_PROBES.length}</small>
-                </strong>
-                <span>{c.sources}</span>
-              </div>
+            <div ref={results} tabIndex={-1} className="scan2-focus">
+              <ScanSummary
+                lang={lang}
+                report={report}
+                items={items}
+                isPro={isPro}
+                custom={custom}
+                fixCount={custom ? ticked.length : fixAll.length}
+                busy={applying || reading}
+                trialDays={trialDays}
+                extraActions={extraActions}
+                onFix={() => setReviewKeys(custom ? ticked.map((i) => i.key) : fixAll)}
+                onCustom={(on) => {
+                  setCustom(on);
+                  if (!on) setSelected(new Set(fixAll));
+                }}
+                onUnlock={() => onNavigate("pricing")}
+              />
             </div>
           )}
         </div>
@@ -623,9 +736,9 @@ export function ScanPanel({
                   <span className="scan-probe-copy">
                     <span className="scan-probe-name">
                       {c.probes[i]}
-                      {i >= 10 && <Badge kind="accent">{c.newBadge}</Badge>}
+                      {i >= FIRST_NEW_PROBE && <Badge kind="accent">{c.newBadge}</Badge>}
                     </span>
-                    {i >= 10 && <small>{c.newDetails[i - 10]}</small>}
+                    {i >= FIRST_NEW_PROBE && <small>{c.newDetails[i - FIRST_NEW_PROBE]}</small>}
                   </span>
                   {probes[probe] === "unavailable" && (
                     <Badge kind="warn">{s.scan.unavailable}</Badge>
@@ -678,28 +791,18 @@ export function ScanPanel({
       {applying && (
         <p className="scan-working" role="status">
           <span className="scan-spinner" aria-hidden="true" />
-          {c.verifying}
+          {c2.working}
         </p>
       )}
       {outcome && (
-        <div className="scan-outcome" role="status">
-          <strong>
-            {c.verified}: {outcome.fixed.length}
-          </strong>
-          <span>
-            {c.failed}: {outcome.failed.length} · {c.skipped}: {outcome.skipped.length}
-          </span>
-          {(outcome.failed.length > 0 || outcome.errors.length > 0) && (
-            <>
-              <p>{c.retry}</p>
-              <ul>
-                {outcome.errors.map((e, i) => (
-                  <li key={i}>{e}</li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
+        <FixOutcomePanel
+          panel={outcomePanel}
+          lang={lang}
+          outcome={outcome}
+          restoring={restoring}
+          restored={restored}
+          onRestore={(stamp) => void restoreRegistry(stamp)}
+        />
       )}
 
       {!report && !reading && (
@@ -719,234 +822,54 @@ export function ScanPanel({
         </div>
       )}
       {report && (
-        <details className="scan-report" ref={results} tabIndex={-1} open>
-          <summary className="scan-report-summary">
-            <span>{c.results}</span>
-            <span className="scan-report-toggle">
-              <span className="scan-report-hide">{c.hideResults}</span>
-              <span className="scan-report-show">{c.showResults}</span>
-              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="m4 6 4 4 4-4" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-            </span>
-          </summary>
-          <div className="scan-results" data-has-fixes={fixes.length > 0}>
-            <div className="scan-auto-results">
-              <div className="scan-section-heading">
-                <div>
-                  <p className="scan-eyebrow">
-                    {report.partial || unknownSecurity.length ? c.partial : c.complete}
-                  </p>
-                  <h3>{c.recommendations}</h3>
-                </div>
-                {fixes.length > 0 && (
-                  <div className="scan-result-actions">
-                    <button
-                      className="scan-secondary"
-                      disabled={applying || paused || !selectedFixes.length}
-                      onClick={() => setReviewIds(selectedFixes.map((t) => t.id))}
-                    >
-                      {c.apply} ({selectedFixes.length})
-                    </button>
-                    <button
-                      className="scan-primary"
-                      disabled={applying || paused || !fixes.length}
-                      onClick={() => setReviewIds(fixes.map((t) => t.id))}
-                    >
-                      {s.scan.fixAll} ({fixes.length})
-                    </button>
-                  </div>
-                )}
-              </div>
-              {fixes.length ? (
-                <ul className="scan-findings">
-                  {fixes.map((t) => {
-                    const text = textFor(s.tweaks, t.id, t.name, t.description);
-                    const reason = report.advice?.find((a) => a.id === t.id)?.reason_key;
-                    return (
-                      <li key={t.id} className="scan-finding">
-                        <input
-                          type="checkbox"
-                          aria-label={text.name}
-                          checked={selected.includes(t.id)}
-                          disabled={applying}
-                          onChange={(e) =>
-                            setSelected((previous) =>
-                              e.target.checked
-                                ? [...previous, t.id]
-                                : previous.filter((id) => id !== t.id),
-                            )
-                          }
-                        />
-                        <div>
-                          <div className="scan-finding-title">
-                            <h4>{text.name}</h4>
-                            {t.requires_admin && <Badge kind="admin">{s.badges.admin}</Badge>}
-                          </div>
-                          <p>{text.description}</p>
-                          {reason && (
-                            <p className="scan-reason">
-                              {(s.scan.reasons as Record<string, string>)[reason]}
-                            </p>
-                          )}
-                          {t.changes.length > 0 && (
-                            <details className="scan-technical">
-                              <summary>{s.transparency.title}</summary>
-                              <TechnicalDetails changes={t.changes} s={s} />
-                            </details>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <div className="scan-empty">
-                  <CheckIcon className="h-5 w-5" />
-                  <div>
-                    <h4>{report.tweaks && report.advice && report.ids ? c.empty : c.partial}</h4>
-                    <p>
-                      {report.tweaks && report.advice && report.ids ? c.emptyBody : c.unavailable}
-                    </p>
-                  </div>
-                </div>
-              )}
-              {lockedFixes.length > 0 && (
-                <div className="scan-locked-results">
-                  <h4>{c.proRecommendations}</h4>
-                  <p>{c.proRecommendationsBody}</p>
-                  {trialDays ? (
-                    <button
-                      type="button"
-                      className="scan-primary scan-locked-trial"
-                      onClick={() => onNavigate("pricing")}
-                      disabled={applying}
-                    >
-                      {format(TRIAL_COPY[lang].start, { days: trialDays })}
-                      <span aria-hidden="true">→</span>
-                    </button>
-                  ) : null}
-                  {lockedFixes.map((t) => (
-                    <div key={t.id} className="scan-locked-row">
-                      <span>{textFor(s.tweaks, t.id, t.name, t.description).name}</span>
-                      <button
-                        className="scan-secondary"
-                        onClick={() => onNavigate(t.category)}
-                        disabled={applying}
-                      >
-                        {c.manual} · Pro ↗
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="scan-review-results">
-              <div className="scan-section-heading">
-                <h3>{c.review}</h3>
-                <Badge>{observations.length}</Badge>
-              </div>
-              {observations.length ? (
-                <ul className="scan-findings">
-                  {observations.map((o) => (
-                    <li key={o.id} className="scan-finding scan-manual">
-                      <span
-                        className={`scan-observation-mark ${o.warning ? "is-warning" : ""}`}
-                        aria-hidden="true"
-                      >
-                        {o.warning ? "!" : "i"}
-                      </span>
-                      <div>
-                        <h4>{c.observations[o.kind][0]}</h4>
-                        <p>{c.observations[o.kind][1]}</p>
-                        {o.evidence && (
-                          <p className="scan-evidence">
-                            {o.kind === "security"
-                              ? factorLabel(lang, o.id, o.evidence)
-                              : o.evidence}
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        className="scan-secondary"
-                        disabled={applying}
-                        onClick={() => onNavigate(o.section)}
-                      >
-                        {c.manual} <span aria-hidden="true">↗</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="scan-empty-note">{c.noReview}</p>
-              )}
-            </div>
-            {optional.length > 0 && (
-              <div className="scan-optional-results">
-                <div className="scan-section-heading">
-                  <h3>{c.optional}</h3>
-                  <Badge>{optional.length}</Badge>
-                </div>
-                <p className="scan-optional-intro">{c.optionalBody}</p>
-                <ul className="scan-findings">
-                  {optional.map((t) => {
-                    const text = textFor(s.tweaks, t.id, t.name, t.description);
-                    return (
-                      <li key={t.id} className="scan-finding scan-manual">
-                        <div>
-                          <h4>
-                            {text.name}
-                            {t.requires_pro && <Badge kind="pro">{s.badges.pro}</Badge>}
-                          </h4>
-                          <p>{text.description}</p>
-                        </div>
-                        <button
-                          className="scan-secondary"
-                          disabled={applying}
-                          onClick={() => onNavigate(t.category)}
-                        >
-                          {c.manual} ↗
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            )}
-          </div>
-        </details>
+        <div className="scan2-results" aria-label={c.results}>
+          <ScanCategoryList
+            s={s}
+            lang={lang}
+            report={report}
+            items={items}
+            isPro={isPro}
+            custom={custom}
+            selected={selected}
+            busy={applying || paused}
+            onToggle={toggle}
+            onNavigate={onNavigate}
+            onUnlock={() => onNavigate("pricing")}
+            onTurnOn={(id) => void turnOn(id)}
+          />
+        </div>
       )}
 
       <dialog
         ref={dialog}
         className="scan-review-dialog"
-        onCancel={() => setReviewIds(null)}
-        onClose={() => setReviewIds(null)}
+        onCancel={() => setReviewKeys(null)}
+        onClose={() => setReviewKeys(null)}
         aria-labelledby="scan-review-title"
       >
-        <h2 id="scan-review-title">{c.confirm}</h2>
-        <p>{c.confirmBody}</p>
+        <h2 id="scan-review-title">
+          {format(c2.confirmTitle, { count: formatNumber(reviewItems.length) })}
+        </h2>
+        <p>{c2.confirmBody}</p>
         <ul>
-          {reviewFixes.map((t) => (
-            <li key={t.id}>
+          {reviewItems.map((item) => (
+            <li key={item.key}>
               <CheckIcon className="h-4 w-4" />
-              <span>
-                {textFor(s.tweaks, t.id, t.name, t.description).name}
-                {t.requires_admin && <small>{c.admin}</small>}
-              </span>
+              <span>{itemName(s, lang, item)}</span>
             </li>
           ))}
         </ul>
+        {reviewItems.some((i) => i.admin) && <p className="scan2-dialog-note">{c2.confirmAdmin}</p>}
         <div className="scan-dialog-actions">
-          <button className="scan-secondary" onClick={() => setReviewIds(null)} autoFocus>
+          <button className="scan-secondary" onClick={() => setReviewKeys(null)} autoFocus>
             {c.cancel}
           </button>
           <button
             className="scan-primary"
-            disabled={!reviewFixes.length}
+            disabled={!reviewItems.length}
             onClick={() => void apply()}
           >
-            {c.apply} ({reviewFixes.length})
+            {c2.confirm}
           </button>
         </div>
       </dialog>
@@ -959,4 +882,103 @@ const STALE_AFTER_MS = 5 * 60_000;
 
 function clock(at: number): string {
   return new Date(at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
+
+type FixOutcome = Awaited<ReturnType<typeof applyScanSelection>> & { booster: boolean };
+
+/** A short name for an item, for the confirmation list. */
+function itemName(s: Strings, lang: Lang, item: ScanItem): string {
+  const c2 = SCAN2_COPY[lang];
+  switch (item.type) {
+    case "tweak":
+      return textFor(s.tweaks, item.tweak.id, item.tweak.name, item.tweak.description).name;
+    case "booster":
+      return c2.boosterTitle;
+    case "junk":
+      return `${c2.junk[item.target.id]?.[0] ?? item.target.id} · ${formatBytes(item.target.bytes)}`;
+    case "caches":
+      return `${c2.cachesTitle} · ${formatBytes(item.bytes)}`;
+    case "registry":
+      return `${c2.registry[item.cls][0]} · ${formatNumber(item.entries.length)}`;
+    case "purge":
+      return c2.purgeTitle;
+    default:
+      return "";
+  }
+}
+
+/** What the fix measured, part by part. */
+function FixOutcomePanel({
+  panel,
+  lang,
+  outcome,
+  restoring,
+  restored,
+  onRestore,
+}: {
+  panel: RefObject<HTMLDivElement | null>;
+  lang: Lang;
+  outcome: FixOutcome;
+  restoring: boolean;
+  restored: number | null;
+  onRestore: (stamp: string) => void;
+}) {
+  const c = SCAN_COPY[lang];
+  const c2 = SCAN2_COPY[lang];
+  const m = outcome.measured;
+  const recycled = (m?.cleanups ?? []).reduce((sum, f) => sum + f.freed_bytes, 0);
+  const freedMb = m?.purge ? Math.max(0, m.purge.free_after_mb - m.purge.free_before_mb) : null;
+  const lines = [
+    outcome.fixed.length > 0 &&
+      format(c2.doneSettings, { count: formatNumber(outcome.fixed.length) }),
+    m?.cleanups.length && format(c2.doneFreed, { size: formatBytes(recycled) }),
+    m?.app_caches && format(c2.doneCaches, { size: formatBytes(m.app_caches.freed_bytes) }),
+    m?.registry?.removed && format(c2.doneRegistry, { count: formatNumber(m.registry.removed) }),
+    freedMb !== null && format(c2.doneMemory, { size: formatBytes(freedMb * 1024 * 1024) }),
+    outcome.booster && c2.doneBooster,
+  ].filter(Boolean) as string[];
+  const problems = outcome.failed.length + outcome.errors.length;
+  const stamp = m?.registry?.removed ? m.registry.stamp : "";
+  return (
+    <div className="scan-outcome scan2-outcome" role="status" ref={panel} tabIndex={-1}>
+      <strong>{lines.length ? c2.doneTitle : c2.doneNothing}</strong>
+      {lines.length > 0 && (
+        <ul className="selectable">
+          {lines.map((line) => (
+            <li key={line}>
+              <CheckIcon className="h-3.5 w-3.5" />
+              {line}
+            </li>
+          ))}
+        </ul>
+      )}
+      {problems > 0 && (
+        <>
+          <p>
+            {format(c2.doneProblems, { count: formatNumber(problems) })} · {c.retry}
+          </p>
+          <ul className="scan2-errors selectable">
+            {outcome.errors.map((e, i) => (
+              <li key={i}>{e}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {stamp && (
+        <div className="scan2-outcome-actions">
+          <button
+            type="button"
+            className="scan-secondary"
+            onClick={() => onRestore(stamp)}
+            disabled={restoring}
+          >
+            {restoring ? c2.restoringRegistry : c2.restoreRegistry}
+          </button>
+          {restored !== null && (
+            <span>{format(c2.restoredRegistry, { count: formatNumber(restored) })}</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }

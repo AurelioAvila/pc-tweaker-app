@@ -793,3 +793,119 @@ export type CoreSteeringStatus = {
   /** Processes the running session has steered, the game included. */
   steeredProcesses: number;
 };
+
+/* ---- Scan 2.0 (1.19) ---------------------------------------------------- */
+
+/** Mirrors `cleanup::JunkTarget`, from `junk_summary`. */
+export type JunkTarget = {
+  id: string;
+  files: number;
+  bytes: number;
+  /** False when the folder could not be read: the counts are unknown. */
+  accessible: boolean;
+  requires_admin: boolean;
+  requires_pro: boolean;
+};
+
+export type RegistryClass = "uninstall" | "app_paths" | "mui_cache" | "shared_dlls" | "startup_run";
+
+/** Mirrors `regclean::Item`. */
+export type RegistryItem = {
+  id: string;
+  class: RegistryClass;
+  hive: "HKCU" | "HKLM";
+  key: string;
+  /** The value removed, or null when the whole key is. */
+  value: string | null;
+  label: string;
+  /** The missing file that makes the entry an orphan; "" for an empty startup command. */
+  missing: string;
+};
+
+export type RegistryScan = { items: RegistryItem[] };
+export type RegistryBackup = { stamp: string; items: number };
+export type RegistryCleanResult = { removed: number; skipped: number; stamp: string };
+export type RegistryRestoreResult = { restored: number; skipped: number };
+
+/** Mirrors `ramboost::MemoryLists`: the memory manager's own lists, in MB. */
+export type MemoryLists = { free_mb: number; standby_mb: number; modified_mb: number };
+
+export type RamBoost = {
+  at: number;
+  free_before_mb: number;
+  free_after_mb: number;
+  automatic: boolean;
+};
+
+/** Mirrors `ramboost::BoostStatus`, from `ram_boost_status`. */
+export type RamBoostStatus = {
+  enabled: boolean;
+  threshold_mb: number;
+  /** Automatic boosts can run: PC Tweaker is elevated. */
+  can_run: boolean;
+  lists: MemoryLists | null;
+  total_mb: number;
+  last: RamBoost | null;
+  session_count: number;
+  session_freed_mb: number;
+  last_skip: string | null;
+};
+
+/** Mirrors `hwaudit::HardwareAudit`, from `hardware_audit`. */
+export type HardwareAudit = {
+  memory: {
+    configured_mts: number;
+    rated_mts: number;
+    rated_source: "module" | "part_number";
+    part_number: string;
+    generation: string | null;
+    modules: number;
+    below_rated: boolean;
+  } | null;
+  links: {
+    kind: "nvme" | "gpu";
+    name: string;
+    current_gen: number;
+    max_gen: number;
+    current_width: number;
+    max_width: number;
+    below_max: boolean;
+  }[];
+  rebar: {
+    gpu: string;
+    state: "on" | "off" | "not_supported" | "unknown";
+    largest_window_mb: number;
+  }[];
+};
+
+/** Mirrors `diagnostics::interrupts::InterruptSample`. */
+export type InterruptSample = {
+  seconds: number;
+  cpus: number;
+  interrupts_per_sec: number;
+  dpcs_per_sec: number;
+  cpu0_interrupt_share: number;
+  cpu0_dpc_share: number;
+  concentrated: boolean;
+};
+
+/** Mirrors `scanfix::ScanFixPlan`. */
+export type ScanFixPlan = {
+  tweaks: string[];
+  cleanups: string[];
+  app_caches: string[];
+  registry: string[];
+  purge: boolean;
+};
+
+export type ScanFreed = { id: string; freed_bytes: number; deleted: number; skipped: number };
+
+/** Mirrors `scanfix::ScanFixResult`: what every part measured. */
+export type ScanFixResult = {
+  tweak_errors: string[];
+  cleanups: ScanFreed[];
+  app_caches: ScanFreed | null;
+  registry: RegistryCleanResult | null;
+  purge: PurgeResult | null;
+  errors: string[];
+};

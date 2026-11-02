@@ -78,7 +78,7 @@ test("the purchase email quotes the Uninstaller's real Pro features and the cata
   assert.match(uninstaller, /Leftover cleanup/);
   assert.doesNotMatch(uninstaller, /Deep scan/, "the leftover scan is free, not a Pro feature");
   const tweaker = proWelcomeHtml({ firstName: "Ada", email: "a@example.com", plan: "annual", priceLabel: "€24.99 / year", renewsOn: "1 October 2027" });
-  assert.match(tweaker, /All 81 controls are available now: the 46 you had on Free plus the 35 Pro ones/);
+  assert.match(tweaker, /All 82 controls are available now: the 46 you had on Free plus the 36 Pro ones/);
 });
 
 test("the Uninstaller receipt and reversal follow the kit and never mention a refund", async () => {

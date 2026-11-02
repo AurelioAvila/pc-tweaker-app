@@ -13,6 +13,7 @@ mod debloat;
 mod diagnostics {
     pub mod boot;
     pub mod dpc;
+    pub mod interrupts;
     pub mod network_verify;
 }
 #[cfg(windows)]
@@ -71,8 +72,12 @@ mod power_tuning;
 mod privacy_extra;
 mod process_rules;
 mod profiles;
+mod hwaudit;
+mod ramboost;
 mod ramclean;
 mod recommend;
+mod regclean;
+mod scanfix;
 mod restore_point;
 mod rollback;
 mod scheduledtasks;
@@ -1359,6 +1364,12 @@ fn run_cleanup(app: tauri::AppHandle, id: String) -> Result<CleanupResult, Strin
 
 /// Read-only dry run for the cleanup confirmation dialog: exactly what
 /// `run_cleanup` would move, with sizes. Takes no action.
+/// Every cleanup target counted, for the Scan. Read-only.
+#[tauri::command(async)]
+fn junk_summary() -> Vec<cleanup::JunkTarget> {
+    cleanup::junk_summary()
+}
+
 #[tauri::command(async)]
 fn preview_cleanup(id: String) -> Result<cleanup::CleanupPreview, String> {
     cleanup::preview_cleanup(&id)
@@ -2163,6 +2174,9 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             result
         }
 
+        scanfix::ELEVATED_FLAG => scanfix::run_elevated(&dir, id),
+        scanfix::RESTORE_FLAG => scanfix::run_elevated_restore(&dir, id),
+
         "--elevated-drift-watch" => match id {
             "enable" => configure_drift_watch(true),
             "disable" => configure_drift_watch(false),
@@ -2387,6 +2401,8 @@ pub fn run() {
             debloat::reconcile_on_startup(app.handle());
             game_sessions::spawn_watcher(app.handle().clone());
             ecoqos::start(app.handle().clone());
+            #[cfg(windows)]
+            ramboost::start(app.handle().clone());
             process_rules::start(app.handle().clone());
             #[cfg(windows)]
             std::thread::spawn(refresh_drift_watch_target);
@@ -2415,6 +2431,15 @@ pub fn run() {
             hud::hud_snapshot,
             secure_defrag,
             purge_standby_memory,
+            junk_summary,
+            scanfix::scan_fix,
+            scanfix::registry_scan,
+            scanfix::registry_backups,
+            scanfix::registry_restore,
+            ramboost::ram_boost_status,
+            ramboost::set_ram_boost_threshold,
+            hwaudit::hardware_audit,
+            diagnostics::interrupts::interrupt_sample,
             shred_files,
             open_hud_overlay,
             set_hud_click_through,
@@ -2776,7 +2801,7 @@ mod tests {
     }
 
     #[test]
-    fn the_catalogue_is_eighty_one_tweaks_thirty_five_of_them_pro() {
+    fn the_catalogue_is_eighty_two_tweaks_thirty_six_of_them_pro() {
         let registry: Vec<_> = tweaks::all_tweaks().into_iter().filter(|t| t.id != "disable_copilot").collect();
         let registry_pro = registry.iter().filter(|t| t.requires_pro).count();
 
@@ -2812,8 +2837,8 @@ mod tests {
             + power_tuning::TWEAKS.iter().filter(|t| t.pro).count()
             + settings.iter().filter(|t| t.requires_pro).count();
 
-        assert_eq!(total, 81, "the catalogue no longer has 81 tweaks");
-        assert_eq!(pro, 35, "the Pro count moved");
+        assert_eq!(total, 82, "the catalogue no longer has 82 tweaks");
+        assert_eq!(pro, 36, "the Pro count moved");
         assert_eq!(total - pro, 46, "the free count moved");
 
         // The composite list must stay in step with what list_tweaks builds,

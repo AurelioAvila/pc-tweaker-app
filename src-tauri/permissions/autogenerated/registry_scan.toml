@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-registry-scan"
+description = "Enables the registry_scan command without any pre-configured scope."
+commands.allow = ["registry_scan"]
+
+[[permission]]
+identifier = "deny-registry-scan"
+description = "Denies the registry_scan command without any pre-configured scope."
+commands.deny = ["registry_scan"]

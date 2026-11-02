@@ -212,10 +212,18 @@ test("Fix all revalidates eligibility, applies once and verifies actual state in
       }
       if (cmd === "scan_relevant_ids") return ["ok", "fails"] as T;
       if (cmd === "advise_tweaks") return r.advice as T;
-      if (cmd === "apply_tweaks") {
+      if (cmd === "scan_fix") {
         writes++;
-        submitted = args?.ids as string[];
-        return ["fails: denied"] as T;
+        const plan = args?.plan as { tweaks: string[] };
+        submitted = plan.tweaks;
+        return {
+          tweak_errors: ["fails: denied"],
+          cleanups: [],
+          app_caches: null,
+          registry: null,
+          purge: null,
+          errors: [],
+        } as T;
       }
       throw Error(cmd);
     },
@@ -239,7 +247,7 @@ test("failed eligibility read never writes; failed verification never reports su
   await assert.rejects(
     applyScanSelection(
       async <T>(cmd: string) => {
-        if (cmd === "apply_tweaks") writes++;
+        if (cmd === "scan_fix") writes++;
         throw Error("read failure");
       },
       r,
@@ -257,7 +265,15 @@ test("failed eligibility read never writes; failed verification never reports su
       }
       if (cmd === "scan_relevant_ids") return r.ids as T;
       if (cmd === "advise_tweaks") return r.advice as T;
-      if (cmd === "apply_tweaks") return [] as T;
+      if (cmd === "scan_fix")
+        return {
+          tweak_errors: [],
+          cleanups: [],
+          app_caches: null,
+          registry: null,
+          purge: null,
+          errors: [],
+        } as T;
       throw Error(cmd);
     },
     r,
@@ -492,4 +508,140 @@ test("a pause waits for the backend audit before anything can resume or discard 
   await waiting;
   await runScanSession(reads, session, () => undefined);
   assert.deepEqual(order, ["first audit saved its place", "settled", "resumed audit started"]);
+});
+
+// ---- Scan 2.0 (1.19): categories, Fix all / Custom, measured totals ----
+import {
+  fixAllKeys,
+  fixPlan,
+  lockedTotals,
+  scanItems,
+  scanTotals,
+  BOOSTER_ID,
+} from "../src/scan-items";
+import { emitFixDone, onBeforeFix, onFixDone, runBeforeFix } from "../src/fix-events";
+
+const busyReport = () => {
+  const ts = [
+    tweak("perf_free"),
+    tweak("perf_pro", { requires_pro: true, requires_admin: true }),
+    tweak("privacy_free", { category: "privacy" }),
+    tweak(BOOSTER_ID, { requires_pro: true, category: "maintenance" }),
+  ];
+  return report({
+    tweaks: ts,
+    ids: ["perf_free", "perf_pro", "privacy_free"],
+    advice: ["perf_free", "perf_pro", "privacy_free"].map((id) => ({ id, verdict: "recommended" })),
+    junk: [
+      { id: "temp_cleanup", files: 1284, bytes: 2.3e9, accessible: true, requires_admin: false, requires_pro: false },
+      { id: "winupdate_cache_cleanup", files: 3, bytes: 5e8, accessible: true, requires_admin: true, requires_pro: true },
+      { id: "unreadable", files: 0, bytes: 9e9, accessible: false, requires_admin: false, requires_pro: false },
+    ],
+    caches: [{ id: "shader_dx", category: "shaders", name: "DX", bytes: 4e8, files: 10, blocked_by: "" }],
+    registry: {
+      items: [
+        { id: "r1", class: "uninstall", hive: "HKLM", key: "k", value: null, label: "Gone", missing: "C:/x" },
+        { id: "r2", class: "mui_cache", hive: "HKCU", key: "k", value: "v", label: "Gone", missing: "C:/y" },
+      ],
+    },
+    memory: {
+      enabled: false,
+      threshold_mb: 1024,
+      can_run: false,
+      lists: { free_mb: 300, standby_mb: 6000, modified_mb: 0 },
+      total_mb: 16000,
+      last: null,
+      session_count: 0,
+      session_freed_mb: 0,
+      last_skip: null,
+    },
+    hardware: {
+      memory: { configured_mts: 2133, rated_mts: 3600, rated_source: "part_number", part_number: "F4-3600C16", generation: "DDR4", modules: 2, below_rated: true },
+      links: [{ kind: "gpu", name: "GPU", current_gen: 1, max_gen: 4, current_width: 16, max_width: 16, below_max: false }],
+      rebar: [{ gpu: "GTX", state: "not_supported", largest_window_mb: 256 }],
+    },
+    latency: { seconds: 1.5, cpus: 16, interrupts_per_sec: 9000, dpcs_per_sec: 900, cpu0_interrupt_share: 0.5, cpu0_dpc_share: 0.7, concentrated: true },
+  });
+};
+
+test("Scan 2.0 puts every finding in its category with measured totals", () => {
+  const items = scanItems(busyReport());
+  const cats = (category: string) => items.filter((i) => i.category === category).map((i) => i.key);
+  assert.deepEqual(cats("performance"), ["tweak:perf_free", "tweak:perf_pro", "review:startup"].filter((k) => items.some((i) => i.key === k)));
+  assert.deepEqual(cats("privacy"), ["tweak:privacy_free"]);
+  assert.deepEqual(cats("junk"), ["junk:temp_cleanup", "junk:winupdate_cache_cleanup", "caches"]);
+  assert.deepEqual(cats("registry"), ["registry:uninstall", "registry:mui_cache"]);
+  assert.deepEqual(cats("memory"), ["purge", "booster"]);
+  // A GPU that cannot use Resizable BAR is not a finding at all.
+  assert.deepEqual(cats("hardware"), ["hw:ram", "hw:link:0"]);
+  assert.deepEqual(cats("latency"), ["latency:interrupts", "latency:dpc"]);
+  const t = scanTotals(items);
+  // The unreadable folder counts nothing; privacy is never "slowing you down".
+  assert.equal(t.junkBytes, 2.3e9 + 5e8 + 4e8);
+  assert.equal(t.junkFiles, 1284 + 3 + 10);
+  assert.equal(t.settings, 2);
+  assert.equal(t.privacy, 1);
+  assert.equal(t.registry, 2);
+  assert.equal(t.standbyMb, 6000);
+});
+
+test("Fix all never includes Pro items for Free, review rows or the booster", () => {
+  const items = scanItems(busyReport());
+  assert.deepEqual(fixAllKeys(items, false), ["tweak:perf_free", "junk:temp_cleanup", "tweak:privacy_free"].sort((a, b) => items.findIndex((i) => i.key === a) - items.findIndex((i) => i.key === b)));
+  const pro = fixAllKeys(items, true);
+  assert.ok(pro.includes("purge") && pro.includes("registry:mui_cache") && pro.includes("caches"));
+  assert.ok(!pro.includes("booster"), "a background switch is a choice, not a fix");
+  // Forged keys for locked or review items are dropped from the native plan.
+  const free = fixPlan(items, ["tweak:perf_pro", "purge", "registry:uninstall", "hw:ram", "booster", "junk:temp_cleanup"], false);
+  assert.deepEqual(free.tweaks, []);
+  assert.deepEqual(free.extras, { cleanups: ["temp_cleanup"], app_caches: [], registry: [], purge: false });
+  assert.equal(free.booster, false);
+  const all = fixPlan(items, [...pro, "booster"], true);
+  assert.deepEqual(all.tweaks.sort(), ["perf_free", "perf_pro", "privacy_free"]);
+  assert.deepEqual(all.extras.registry, ["r1", "r2"]);
+  assert.deepEqual(all.extras.app_caches, ["shader_dx"]);
+  assert.equal(all.extras.purge, true);
+  assert.equal(all.booster, true);
+});
+
+test("the Pro line states only what is locked, measured", () => {
+  const items = scanItems(busyReport());
+  const locked = lockedTotals(items, false);
+  assert.equal(locked.junkBytes, 5e8 + 4e8);
+  assert.equal(locked.registry, 2);
+  assert.equal(locked.standbyMb, 6000);
+  assert.equal(locked.settings, 1);
+  assert.deepEqual(lockedTotals(items, true).junkBytes, 0);
+});
+
+test("plenty of free memory is not a finding; missing reads produce no items", () => {
+  const r = busyReport();
+  r.memory = { ...r.memory!, lists: { free_mb: 9000, standby_mb: 6000, modified_mb: 0 } };
+  const purge = scanItems(r).find((i) => i.key === "purge");
+  assert.equal(purge?.recommended, false);
+  assert.equal(purge?.issue, false);
+  const empty = scanItems(report());
+  assert.deepEqual(
+    empty.map((i) => i.key),
+    ["latency:dpc"],
+  );
+});
+
+test("fix hooks: before hooks are awaited (and time-boxed), done hooks see the summary", async () => {
+  const seen: string[] = [];
+  const offBefore = onBeforeFix(async (plan) => {
+    await new Promise((r) => setTimeout(r, 5));
+    seen.push(`before:${plan.tweaks.join(",")}`);
+  });
+  const offBroken = onBeforeFix(() => {
+    throw Error("a broken listener");
+  });
+  const offDone = onFixDone((s) => seen.push(`done:${s.fixed.length}`));
+  await runBeforeFix({ tweaks: ["a"], cleanups: [], app_caches: [], registry: [], purge: false }, "scan");
+  emitFixDone({ source: "scan", fixed: ["a"], failed: [], measured: null, errors: [] });
+  offBefore();
+  offBroken();
+  offDone();
+  emitFixDone({ source: "scan", fixed: [], failed: [], measured: null, errors: [] });
+  assert.deepEqual(seen, ["before:a", "done:1"]);
 });

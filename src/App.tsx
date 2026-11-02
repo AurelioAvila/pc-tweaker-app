@@ -97,6 +97,8 @@ import { SystemRepairCard } from "./components/repair";
 import { LiveDashboard } from "./components/live-dashboard";
 import { PageBoundary } from "./components/page-boundary";
 import { AppCacheCard, CookieCleanerCard } from "./components/cleaners";
+import { RegistryCleanerCard } from "./components/registry-cleaner";
+import { SCAN2_COPY } from "./components/scan2-copy";
 import { HardwarePanel } from "./components/hardware";
 import { RamCleaner, SystemMonitor, useScheduledRamClean } from "./components/monitor";
 import { CrashReportsCard, DriftWatchToggle, UpdateDriftCard } from "./components/intelligence";
@@ -1690,6 +1692,16 @@ function App() {
                       s={s}
                       isPro={isProUnlocked}
                       onRequirePro={() => setPaywallFeature(s.appCache.title)}
+                      onToast={pushToast}
+                    />
+                  )}
+
+                  {showCleanup && (
+                    <RegistryCleanerCard
+                      s={s}
+                      lang={lang}
+                      isPro={isProUnlocked}
+                      onRequirePro={() => setPaywallFeature(SCAN2_COPY[lang].rcTitle)}
                       onToast={pushToast}
                     />
                   )}

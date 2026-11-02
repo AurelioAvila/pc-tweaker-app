@@ -2731,6 +2731,11 @@ const it: Strings = {
       description:
         "Richiede la disattivazione di Integrità della memoria (HVCI). Se applicata, rimuove un livello di protezione del kernel; altre funzioni VBS possono restare attive. L'impatto sulle prestazioni dipende da hardware e carico di lavoro. Criteri di sistema o blocco UEFI possono impedire la modifica. Riavvia e verifica lo stato in Sicurezza di Windows.",
     },
+    smart_ram_booster: {
+      name: "Booster RAM intelligente",
+      description:
+        "Rilascia la cache in standby di Windows quando la memoria libera scende sotto la tua soglia (1 GB predefinito), al massimo una volta ogni 5 minuti e mai mentre in primo piano c'è un gioco a schermo intero. Funziona mentre PC Tweaker è aperto come amministratore; ogni rilascio viene misurato.",
+    },
     disable_typing_personalization: {
       name: "Impedisci a Windows di studiare come scrivi",
       description:
@@ -4442,6 +4447,11 @@ const en: Strings = {
       name: "Disable Memory Integrity (VBS)",
       description:
         "Requests that Memory Integrity (HVCI) be disabled. If applied, this removes a layer of kernel protection; other VBS features may remain active. Performance impact varies by hardware and workload. Policy or UEFI lock may prevent the change. Restart and verify the status in Windows Security.",
+    },
+    smart_ram_booster: {
+      name: "Smart RAM booster",
+      description:
+        "Releases Windows' standby memory cache when free memory drops below your threshold (1 GB by default), at most once every 5 minutes and never while a full-screen game is in front. Works while PC Tweaker runs as administrator; every release is measured.",
     },
     disable_typing_personalization: {
       name: "Stop Windows learning how you type",
@@ -6183,6 +6193,11 @@ const fr: Strings = {
       description:
         "Demande la désactivation de l'intégrité de la mémoire (HVCI). Si elle est appliquée, une couche de protection du noyau est supprimée ; d'autres fonctions VBS peuvent rester actives. L'effet sur les performances dépend du matériel et de la charge de travail. Une stratégie système ou un verrouillage UEFI peut empêcher la modification. Redémarrez et vérifiez l'état dans Sécurité Windows.",
     },
+    smart_ram_booster: {
+      name: "Booster de RAM intelligent",
+      description:
+        "Libère le cache mémoire en attente de Windows quand la mémoire libre passe sous votre seuil (1 Go par défaut), au plus une fois toutes les 5 minutes et jamais pendant qu'un jeu en plein écran est au premier plan. Fonctionne quand PC Tweaker est ouvert en tant qu'administrateur ; chaque libération est mesurée.",
+    },
     disable_typing_personalization: {
       name: "Empêcher Windows d'apprendre votre façon d'écrire",
       description:
@@ -7915,6 +7930,11 @@ const es: Strings = {
       name: "Desactivar Integridad de memoria (VBS)",
       description:
         "Solicita desactivar Integridad de memoria (HVCI). Si se aplica, elimina una capa de protección del kernel; otras funciones VBS pueden seguir activas. El efecto en el rendimiento depende del hardware y la carga de trabajo. Las directivas del sistema o el bloqueo UEFI pueden impedir el cambio. Reinicia y comprueba el estado en Seguridad de Windows.",
+    },
+    smart_ram_booster: {
+      name: "Potenciador de RAM inteligente",
+      description:
+        "Libera la caché de memoria en espera de Windows cuando la memoria libre baja de tu umbral (1 GB por defecto), como mucho una vez cada 5 minutos y nunca mientras haya un juego a pantalla completa en primer plano. Funciona mientras PC Tweaker se ejecuta como administrador; cada liberación se mide.",
     },
     disable_typing_personalization: {
       name: "Impedir que Windows aprenda cómo escribes",
@@ -9657,6 +9677,11 @@ const de: Strings = {
       description:
         "Fordert die Deaktivierung der Speicherintegrität (HVCI) an. Wird sie umgesetzt, entfällt eine Schutzschicht des Kernels; andere VBS-Funktionen können aktiv bleiben. Die Auswirkungen auf die Leistung hängen von Hardware und Arbeitslast ab. Systemrichtlinien oder eine UEFI-Sperre können die Änderung verhindern. Starte neu und prüfe den Status in Windows-Sicherheit.",
     },
+    smart_ram_booster: {
+      name: "Intelligenter RAM-Booster",
+      description:
+        "Gibt den Standby-Speichercache von Windows frei, wenn der freie Speicher unter deine Schwelle fällt (standardmäßig 1 GB) – höchstens einmal alle 5 Minuten und nie, solange ein Vollbildspiel im Vordergrund ist. Funktioniert, solange PC Tweaker als Administrator läuft; jede Freigabe wird gemessen.",
+    },
     disable_typing_personalization: {
       name: "Verhindern, dass Windows deinen Schreibstil lernt",
       description:
@@ -11392,6 +11417,11 @@ const pt: Strings = {
       name: "Desativar a Integridade da Memória (VBS)",
       description:
         "Solicita a desativação da Integridade da Memória (HVCI). Se aplicada, remove uma camada de proteção do kernel; outras funcionalidades VBS podem continuar ativas. O efeito no desempenho depende do hardware e da carga de trabalho. Políticas do sistema ou um bloqueio UEFI podem impedir a alteração. Reinicie e verifique o estado na Segurança do Windows.",
+    },
+    smart_ram_booster: {
+      name: "Otimizador de RAM inteligente",
+      description:
+        "Liberta a cache de memória em espera do Windows quando a memória livre desce abaixo do limiar definido (1 GB por predefinição), no máximo uma vez a cada 5 minutos e nunca com um jogo em ecrã inteiro em primeiro plano. Funciona enquanto o PC Tweaker é executado como administrador; cada libertação é medida.",
     },
     disable_typing_personalization: {
       name: "Impedir o Windows de aprender como escreve",

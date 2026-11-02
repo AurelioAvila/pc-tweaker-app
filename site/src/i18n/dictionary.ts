@@ -302,7 +302,7 @@ export const engDictionary: Dictionary = {
         "label": "CONTROLS INCLUDED FREE"
       },
       {
-        "value": 81,
+        "value": 82,
         "unit": "",
         "label": "CONTROLS IN THIS RELEASE"
       },
@@ -540,7 +540,7 @@ export const engDictionary: Dictionary = {
       "per": "/ year · monthly option €7.99",
       "save": "SAVE 37% VS MONTHLY",
       "features": [
-        "All 81 controls (46 Free, 35 Pro) in this release",
+        "All 82 controls (46 Free, 36 Pro) in this release",
         "Turbo Gaming and Game Sessions",
         "Guided Windows repair with DISM and SFC",
         "Selective cookie cleanup",
@@ -594,7 +594,7 @@ export const engDictionary: Dictionary = {
       },
       {
         "q": "What is free, and how does Pro work?",
-        "a": "Free includes 46 controls, scan, supported restore tools, hardware monitoring and selected maintenance tools, with no account required. Pro adds 35 controls, advanced features and Game Sessions. Regular subscriptions are €7.99 per month or €59.99 per year; Lifetime is normally €99 once. Any active offer and its renewal terms appear in the plans above. Everything in Pro, plus: exclusive access to selected future tweaks, priority support, saved-profile comparison and portable tuning reports. Lifetime also includes Uninstaller Pro for 12 months from your first sign-in to Uninstaller with the same account, including existing Lifetime owners. This bonus does not renew automatically. Upcoming exclusive tweaks are not included in the current catalog. Review the final price and renewal terms at checkout. Existing lifetime purchases retain the access promised when purchased."
+        "a": "Free includes 46 controls, scan, supported restore tools, hardware monitoring and selected maintenance tools, with no account required. Pro adds 36 controls, advanced features and Game Sessions. Regular subscriptions are €7.99 per month or €59.99 per year; Lifetime is normally €99 once. Any active offer and its renewal terms appear in the plans above. Everything in Pro, plus: exclusive access to selected future tweaks, priority support, saved-profile comparison and portable tuning reports. Lifetime also includes Uninstaller Pro for 12 months from your first sign-in to Uninstaller with the same account, including existing Lifetime owners. This bonus does not renew automatically. Upcoming exclusive tweaks are not included in the current catalog. Review the final price and renewal terms at checkout. Existing lifetime purchases retain the access promised when purchased."
       },
       {
         "q": "Do I need a separate account for PC Tweaker Uninstaller or Tweaky Driver?",

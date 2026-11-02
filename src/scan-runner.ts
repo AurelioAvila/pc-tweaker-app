@@ -8,6 +8,14 @@ import type {
   TweakInfo,
   ScheduledTaskEntry,
   EcoQosState,
+  CacheGroup,
+  HardwareAudit,
+  InterruptSample,
+  JunkTarget,
+  RamBoostStatus,
+  RegistryScan,
+  ScanFixPlan,
+  ScanFixResult,
 } from "./types";
 import type { HealthResult } from "./components/health";
 import { factorEvidence, factorLabel } from "./components/health-copy";
@@ -30,7 +38,15 @@ export const SCAN_PROBES = [
   "list_scheduled_tasks",
   "list_debloat_apps",
   "ecoqos_status",
+  "junk_summary",
+  "scan_app_caches",
+  "registry_scan",
+  "ram_boost_status",
+  "hardware_audit",
+  "interrupt_sample",
 ] as const;
+/** Index of the first check added in 1.19 (marked "New" in the scope list). */
+export const FIRST_NEW_PROBE = SCAN_PROBES.indexOf("junk_summary");
 export type ScanProbe = (typeof SCAN_PROBES)[number];
 export type ProbeStatus = "reading" | "complete" | "unavailable";
 
@@ -163,6 +179,12 @@ export async function runScanSession(
       probe<ScheduledTaskEntry[]>("list_scheduled_tasks"),
       probe<DebloatApp[]>("list_debloat_apps"),
       probe<EcoQosState>("ecoqos_status"),
+      probe<JunkTarget[]>("junk_summary"),
+      probe<CacheGroup[]>("scan_app_caches"),
+      probe<RegistryScan>("registry_scan"),
+      probe<RamBoostStatus>("ram_boost_status"),
+      probe<HardwareAudit>("hardware_audit"),
+      probe<InterruptSample>("interrupt_sample"),
     ]);
   } catch (e) {
     if (e instanceof ScanCancelled || signal?.aborted) return false;
@@ -192,6 +214,12 @@ export function scanReport(session: ScanSession, at = Date.now()) {
     tasks: value<ScheduledTaskEntry[]>("list_scheduled_tasks"),
     apps: value<DebloatApp[]>("list_debloat_apps"),
     eco: value<EcoQosState>("ecoqos_status"),
+    junk: value<JunkTarget[]>("junk_summary"),
+    caches: value<CacheGroup[]>("scan_app_caches"),
+    registry: value<RegistryScan>("registry_scan"),
+    memory: value<RamBoostStatus>("ram_boost_status"),
+    hardware: value<HardwareAudit>("hardware_audit"),
+    latency: value<InterruptSample>("interrupt_sample"),
     unavailable,
     skipped,
     partial: unavailable.length > 0 || skipped.length > 0,
@@ -272,11 +300,20 @@ export function optionalScanTweaks(report: ScanReport): TweakInfo[] {
   );
 }
 
+/** The non-setting parts of a Scan fix. */
+export type ScanExtras = Omit<ScanFixPlan, "tweaks">;
+export const NO_EXTRAS: ScanExtras = { cleanups: [], app_caches: [], registry: [], purge: false };
+const hasExtras = (e: ScanExtras) =>
+  e.cleanups.length > 0 || e.app_caches.length > 0 || e.registry.length > 0 || e.purge;
+
+/** Applies a Scan selection in one native call (`scan_fix`, one
+ *  administrator prompt at most): the eligible settings plus `extras`. */
 export async function applyScanSelection(
   call: Call,
   report: ScanReport,
   isPro: boolean,
   selected: string[],
+  extras: ScanExtras = NO_EXTRAS,
 ) {
   // Re-read eligibility before any write. A failed read aborts the batch.
   const [tweaks, ids] = await Promise.all([
@@ -292,9 +329,11 @@ export async function applyScanSelection(
   const apply = requested.filter((id) => eligible.has(id));
   const skipped = requested.filter((id) => !eligible.has(id));
   let errors: string[] = [];
-  if (apply.length) {
+  let measured: ScanFixResult | null = null;
+  if (apply.length || hasExtras(extras)) {
     try {
-      errors = await call<string[]>("apply_tweaks", { ids: apply, source: "scan" });
+      measured = await call<ScanFixResult>("scan_fix", { plan: { tweaks: apply, ...extras } });
+      errors = [...measured.tweak_errors, ...measured.errors];
     } catch (error) {
       errors = [String(error)];
     }
@@ -307,7 +346,7 @@ export async function applyScanSelection(
   }
   const fixed = apply.filter((id) => verified?.some((t) => t.id === id && t.applied));
   const failed = apply.filter((id) => !fixed.includes(id));
-  return { fixed, failed, skipped, errors, tweaks: verified, advice, ids };
+  return { fixed, failed, skipped, errors, tweaks: verified, advice, ids, measured };
 }
 export type ScanObservation = {
   id: string;

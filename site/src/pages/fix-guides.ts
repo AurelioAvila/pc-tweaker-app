@@ -10,6 +10,7 @@ const SRC = "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-taur
 
 export const FIX_GUIDES = {
   "/fixes/dpc-latency-audio-crackling": {
+    updated: "2026-11-02",
     eyebrow: "FIX · AUDIO AND LATENCY",
     title: "Audio crackling on Windows: find the driver behind it",
     seoTitle: "Fix Audio Crackling and DPC Latency on Windows",
@@ -60,12 +61,13 @@ export const FIX_GUIDES = {
     pctweaker: {
       title: "The same measurement in PC Tweaker",
       body:
-        "On the Hardware screen, the DPC and interrupt latency panel records for 5 to 30 seconds and lists each driver's longest DPC and ISR, how many ran past Microsoft's limits, and the total time. It reads the kernel's own events, changes nothing and is part of the free plan; Windows asks for administrator approval once because a kernel trace needs it.",
+        "On the Hardware screen, the DPC and interrupt latency panel records for 5 to 30 seconds and lists each driver's longest DPC and ISR, how many ran past Microsoft's limits, and the total time. It reads the kernel's own events, changes nothing and is part of the free plan; Windows asks for administrator approval once because a kernel trace needs it. Since 1.19 the Scan also takes a short timed sample of how many interrupts and DPCs CPU 0 handled compared with your other processors, and flags it when they pile up there. That is a measurement only: PC Tweaker does not move interrupts, and the fix is still the driver the trace names.",
       links: [{ to: "/tweaks/performance/usb-suspend-diagnostics/", label: "USB wake troubleshooting on mains power" }, { to: "/tweaks/performance/pcie-link-power/", label: "Keep PCIe links active on mains power" }],
     },
     related: [
       { to: "/database/processes/audiodg-exe/", label: "audiodg.exe, the process that runs the audio engine", note: "Why its CPU use usually comes from driver-added effects." },
       { to: "/database/services/audiosrv/", label: "the Windows Audio service", note: "What happens if it is stopped, and why it is not the cause of crackling." },
+      { to: "/fixes/check-pcie-link-speed-nvme-gpu/", label: "check the PCIe link of your devices", note: "A device on a narrower link than it supports is another thing the Scan can read." },
       { to: "/tools/timer-resolution-calculator/", label: "the timer and buffer latency calculator", note: "The arithmetic behind buffer sizes, polling rates and timer periods." },
       { to: "/tweaky-driver/", label: "checking the driver the trace points at", note: "Tweaky Driver shows the installed version and any available update for that device, with the package source, before you install anything." },
     ],
@@ -137,6 +139,7 @@ export const FIX_GUIDES = {
       { to: "/tweaks/gaming/hardware-accelerated-gpu-scheduling/", label: "the HAGS control's reference page", note: "The exact value, scope and restore behaviour." },
       { to: "/gaming-performance/", label: "the gaming performance guide", note: "Which Windows settings are worth testing, and how." },
       { to: "/database/processes/dwm-exe/", label: "dwm.exe and what its GPU use means", note: "The process that composes the desktop." },
+      { to: "/fixes/check-resizable-bar-enabled/", label: "check whether Resizable BAR is on", note: "A related graphics setting that lives in the BIOS." },
       { to: "/how-to-undo-windows-tweaks/", label: "how to undo Windows tweaks", note: "Put a changed setting back, with or without PC Tweaker." },
     ],
     sources: {
@@ -373,6 +376,346 @@ export const FIX_GUIDES = {
         { label: "Microsoft Learn: Microsoft Edge browser policy documentation", url: "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies" },
         { label: "PC Tweaker source code: the AI Components Host control (services.rs)", url: `${SRC}/services.rs` },
         { label: "PC Tweaker source code: the app removal catalogue (debloat.rs)", url: `${SRC}/debloat.rs` },
+      ],
+    },
+  },  "/fixes/check-ram-running-at-xmp-expo-speed": {
+    eyebrow: "FIX · MEMORY",
+    title: "RAM running slower than its rated speed? Check XMP and EXPO",
+    seoTitle: "Check If Your RAM Runs at XMP or EXPO Speed",
+    seoDescription:
+      "New memory often runs at a slower default speed until XMP or EXPO is switched on in the BIOS. How to read the running speed in Windows, compare it and fix it.",
+    updated: "2026-11-02",
+    intro:
+      "Memory sold as DDR5-6000 or DDR4-3600 does not necessarily run at that speed out of the box. Boards start a kit at a standard JEDEC speed and apply the faster profile stored on the module (Intel calls it XMP, AMD calls it EXPO) only once you enable it in the BIOS. Windows can tell you what the modules run at now, so the check takes a minute.",
+    summary: [
+      { label: "Speed running now", value: "ConfiguredClockSpeed (Win32_PhysicalMemory)" },
+      { label: "Speed in the module data", value: "Speed (often the base rating, not the XMP/EXPO one)" },
+      { label: "Where the rated speed is printed", value: "Kit label and part number" },
+      { label: "Where you fix it", value: "BIOS/UEFI, memory section (XMP, EXPO or DOCP)" },
+      { label: "Changes to your PC from the check", value: "None" },
+    ],
+    sections: [
+      {
+        heading: "Why a kit runs below its label",
+        body:
+          "JEDEC publishes the standard speeds that compatible boards support: its DDR4 standard tops out at 3200 MT/s and DDR5 starts at 4800 MT/s. Kits sold above those figures carry an extra profile in the module. Intel states that XMP modules first boot with the default JEDEC settings, and that the XMP profile is then selected in the BIOS. AMD's equivalent is EXPO, and some board makers label the AMD option DOCP. Until the profile is switched on, a DDR5-6000 kit can run at a much lower speed.",
+      },
+      {
+        heading: "Read the speed it runs at",
+        body:
+          "Task Manager, Performance, Memory has a Speed line. For the module details, ask Windows for the physical memory records. Two fields matter: ConfiguredClockSpeed is the speed the module is configured to run at, and Speed is the speed recorded in the module's own data. Microsoft documents both as coming from the SMBIOS memory device structure. On DDR4 and DDR5 the values are data rates in MT/s, so 3200 means DDR4-3200, not a 3.2 GHz clock, whatever the field name suggests.",
+      },
+      {
+        heading: "Compare it with the rated speed",
+        body:
+          "The Speed field is not a reliable rating for an XMP or EXPO kit, because on many modules it holds the base speed rather than the profile. On a test PC with a DDR5-6000 kit and the profile on, Speed read 5600 and ConfiguredClockSpeed read 6000. The rated figure is the one on the kit's label or box, usually repeated in the part number (a number such as 6000 or 3600, then the first timing, for example C36 or C16) and in the profile list in the BIOS. If ConfiguredClockSpeed is clearly below that figure, the profile is off.",
+      },
+      {
+        heading: "Switch the profile on",
+        body:
+          "Restart and open the BIOS/UEFI setup (usually Del or F2 while the PC starts). In the memory or overclocking section, choose XMP on Intel boards, or EXPO or DOCP on AMD boards, and select the first profile. Save, restart and read the speed again in Windows. If the PC fails to boot or becomes unstable, turn the profile off: not every board and processor can run every kit at its rating, and a BIOS update from the board maker is the usual first step.",
+        points: [
+          "The setting lives in the BIOS; Windows cannot change it",
+          "Update the BIOS from the board maker if the profile does not hold",
+          "A faster memory speed is not a promise of a higher frame rate; test with your own games",
+        ],
+      },
+    ],
+    steps: [
+      { title: "List each module's running speed and its recorded speed", code: "Get-CimInstance Win32_PhysicalMemory | Select-Object BankLabel, PartNumber, Speed, ConfiguredClockSpeed | Format-Table -AutoSize", shell: "PowerShell" as const, note: "No administrator rights needed. Read-only." },
+      { title: "Read the generation", code: "Get-CimInstance Win32_PhysicalMemory | Select-Object -First 1 SMBIOSMemoryType", shell: "PowerShell" as const, note: "26 means DDR4 and 34 means DDR5." },
+      { title: "Compare with the label", note: "Take the speed printed on the kit or in its part number and compare it with ConfiguredClockSpeed. A gap of a few hundred MT/s or more means the profile is not active." },
+      { title: "Turn the profile on in the BIOS", note: "Memory or overclocking section: XMP (Intel), EXPO or DOCP (AMD), first profile. Save and restart, then run the first command again." },
+    ],
+    pctweaker: {
+      title: "The same check in PC Tweaker",
+      body:
+        "The Scan's hardware audit reads the same records and reports \"RAM runs below its rated speed\" when the configured speed is at least 200 MT/s under the rating. It takes the rating from the module data and, for the kit makers that print it in the part number, from the part number, and it says which one it used. It is read-only: PC Tweaker never changes BIOS settings, it shows the steps above.",
+      links: [{ to: "/tweaks/maintenance/smart-ram-booster/", label: "Smart RAM booster (a different job: standby memory)" }],
+    },
+    related: [
+      { to: "/fixes/check-pcie-link-speed-nvme-gpu/", label: "check the PCIe link speed of your SSD and graphics card", note: "The other hardware setting that quietly costs speed." },
+      { to: "/fixes/check-resizable-bar-enabled/", label: "check whether Resizable BAR is on", note: "Another BIOS setting Windows can only read." },
+      { to: "/gaming-performance/", label: "the gaming performance guide", note: "How to test a change fairly before you keep it." },
+    ],
+    sources: {
+      checked: "2 November 2026",
+      items: [
+        { label: "Microsoft Learn: Win32_PhysicalMemory class (Speed, ConfiguredClockSpeed)", url: "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-physicalmemory" },
+        { label: "Intel: Extreme Memory Profile (XMP)", url: "https://www.intel.com/content/www/us/en/gaming/extreme-memory-profile-xmp.html" },
+        { label: "AMD: EXPO memory technology", url: "https://www.amd.com/en/products/processors/technologies/expo.html" },
+        { label: "JEDEC: DDR5 SDRAM standard (JESD79-5)", url: "https://www.jedec.org/standards-documents/docs/jesd79-5" },
+        { label: "PC Tweaker source code: the hardware audit (hwaudit.rs)", url: `${SRC}/hwaudit.rs` },
+      ],
+    },
+  },
+  "/fixes/check-pcie-link-speed-nvme-gpu": {
+    eyebrow: "FIX · HARDWARE",
+    title: "Is your NVMe SSD or graphics card on a slower PCIe link?",
+    seoTitle: "Check PCIe Link Speed of an NVMe SSD or GPU",
+    seoDescription:
+      "A drive or graphics card can connect with fewer lanes or an older PCIe generation than it supports. Read the current and maximum link in Windows, then fix it.",
+    updated: "2026-11-02",
+    intro:
+      "PCI Express devices negotiate a link with the motherboard: a generation (the speed of each lane) and a width (the number of lanes). A fast NVMe SSD in a slot wired for fewer lanes, or a graphics card that landed at x8 instead of x16, still works but at a lower ceiling. Windows stores both the current and the maximum link of each device, so you can read them without extra software.",
+    summary: [
+      { label: "Properties to read", value: "DEVPKEY_PciDevice_CurrentLinkSpeed, MaxLinkSpeed, CurrentLinkWidth, MaxLinkWidth" },
+      { label: "Speed values", value: "1 = 2.5 GT/s, 2 = 5, 3 = 8, 4 = 16, 5 = 32 GT/s (PCIe generations 1 to 5)" },
+      { label: "Graphics cards", value: "Judge the width; the speed drops when idle by design" },
+      { label: "NVMe drives", value: "Judge both width and speed" },
+      { label: "Admin rights", value: "Not for reading" },
+    ],
+    sections: [
+      {
+        heading: "Generation and width: what the numbers mean",
+        body:
+          "A lane runs at 2.5 GT/s in generation 1, 5 GT/s in generation 2, 8 GT/s in generation 3, 16 GT/s in generation 4 and 32 GT/s in generation 5. From generation 3 the data is encoded at 128 bits per 130, so one lane carries about 0.98 GB/s in generation 3 and about 1.97 GB/s in generation 4, in each direction. Multiply by the width: generation 4 x4, the usual NVMe link, has roughly 7.9 GB/s available, and generation 3 x4 roughly 3.9 GB/s. These are the ceilings of the link, calculated from the transfer rate, not what a given SSD reaches.",
+      },
+      {
+        heading: "Why a link ends up lower",
+        body:
+          "A motherboard can wire an M.2 slot for fewer lanes or an older generation than the drive supports, or share lanes between slots so that filling one narrows another. The motherboard manual lists which slots do what. A graphics card can fall to x8 when a second device takes lanes, when it is not in the top full-length slot, or when a riser cable or a poor contact limits the link.",
+      },
+      {
+        heading: "A low speed at idle is normal for a graphics card",
+        body:
+          "Graphics cards lower their link speed when nothing demanding is running, to save power. On a test PC with a generation 3 x16 graphics card, the current speed read 1 (2.5 GT/s) on the idle desktop against a maximum of 3, with the full x16 width. For a graphics card, check the width, and read the speed while a game or a graphics test is running; GPU-Z has a render test for exactly this. NVMe drives keep their negotiated link, so for them both width and speed are meaningful at any time.",
+      },
+      {
+        heading: "Fixing a narrow or slow link",
+        body:
+          "For a graphics card, make sure it sits in the top full-length slot, check in the manual which other slots or M.2 drives share its lanes, and reseat the card. With a riser cable, confirm it supports the full width. For an SSD, move it to the M.2 slot the manual says is wired to the processor (often the one nearest to it) if that slot has the faster link, and update the BIOS from the board maker. Leave any BIOS option that sets the slot generation on Auto unless the manual says otherwise.",
+      },
+    ],
+    steps: [
+      { title: "Read the graphics card's link", code: "$g = Get-PnpDevice -Class Display -PresentOnly | Select-Object -First 1\nGet-PnpDeviceProperty -InstanceId $g.InstanceId -KeyName DEVPKEY_PciDevice_CurrentLinkSpeed, DEVPKEY_PciDevice_MaxLinkSpeed, DEVPKEY_PciDevice_CurrentLinkWidth, DEVPKEY_PciDevice_MaxLinkWidth | Select-Object KeyName, Data", shell: "PowerShell" as const, note: "Read-only. Run it once at idle and once while a game or a GPU test runs, and compare the width first." },
+      { title: "Find the NVMe controller", code: "Get-PnpDevice -PresentOnly | Where-Object { $_.FriendlyName -match 'NVM Express' } | Select-Object FriendlyName, InstanceId", shell: "PowerShell" as const, note: "Use the InstanceId of the controller (it starts with PCI\\) in place of $g.InstanceId in the first command." },
+      { title: "Read the result", note: "Speed: 1 = 2.5 GT/s, 2 = 5 GT/s, 3 = 8 GT/s, 4 = 16 GT/s, 5 = 32 GT/s. Width is the number of lanes. A current width below the maximum (for example 8 against 16), or an NVMe drive whose current speed is below its maximum, means the link is below what the device supports." },
+    ],
+    pctweaker: {
+      title: "The same check in PC Tweaker",
+      body:
+        "The Scan's hardware audit reads these four properties for every NVMe controller and graphics card. For an SSD it flags a lower width or speed; for a graphics card it flags only a narrower width, because of the idle behaviour above. Each finding names the device and lists the steps to fix it. It is read-only and changes nothing.",
+      links: [{ to: "/tweaks/performance/pcie-link-power/", label: "Keep PCIe links active on mains power (a separate power setting)" }],
+    },
+    related: [
+      { to: "/fixes/check-ram-running-at-xmp-expo-speed/", label: "check whether your RAM runs at its rated speed", note: "The most common BIOS setting that is left off." },
+      { to: "/fixes/check-resizable-bar-enabled/", label: "check whether Resizable BAR is on", note: "A PCIe feature that also depends on the BIOS." },
+      { to: "/fixes/hardware-accelerated-gpu-scheduling/", label: "hardware-accelerated GPU scheduling", note: "A Windows graphics setting to test once the hardware is right." },
+    ],
+    sources: {
+      checked: "2 November 2026",
+      items: [
+        { label: "Microsoft Learn: NDIS_PCI_DEVICE_CUSTOM_PROPERTIES (current and maximum link speed and width)", url: "https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntddndis/ns-ntddndis-_ndis_pci_device_custom_properties" },
+        { label: "Microsoft Learn: Get-PnpDeviceProperty", url: "https://learn.microsoft.com/en-us/powershell/module/pnpdevice/get-pnpdeviceproperty" },
+        { label: "TechPowerUp GPU-Z (bus interface and render test)", url: "https://www.techpowerup.com/gpuz/" },
+        { label: "PC Tweaker source code: the hardware audit (hwaudit.rs)", url: `${SRC}/hwaudit.rs` },
+      ],
+    },
+  },
+  "/fixes/check-resizable-bar-enabled": {
+    eyebrow: "FIX · GRAPHICS",
+    title: "Is Resizable BAR on? How to check, and how to turn it on",
+    seoTitle: "How to Check If Resizable BAR Is Enabled",
+    seoDescription:
+      "Resizable BAR lets the CPU use the graphics card's memory more efficiently. Check it in the NVIDIA Control Panel or GPU-Z, then enable it in the BIOS.",
+    updated: "2026-11-02",
+    intro:
+      "Resizable BAR is an optional PCI Express feature that lets the processor access the graphics card's memory more efficiently. It needs support in the graphics card, the motherboard BIOS and the driver, and the BIOS option is usually off until you turn it on. Some games gain from it and others do not, so the point of checking is to know your setup, not to chase a number.",
+    summary: [
+      { label: "Needs", value: "Supported GPU and driver, CPU and chipset support, BIOS option enabled" },
+      { label: "Check on NVIDIA", value: "NVIDIA Control Panel, System Information, Resizable BAR" },
+      { label: "Check on any card", value: "GPU-Z, Resizable BAR field" },
+      { label: "BIOS options", value: "Above 4G Decoding, then Re-Size BAR Support" },
+      { label: "Windows boot mode", value: "UEFI (not CSM/Legacy)" },
+    ],
+    sections: [
+      {
+        heading: "What it does",
+        body:
+          "NVIDIA describes Resizable BAR as an optional PCI Express interface technology that lets assets be requested as needed and sent in full, so the CPU can access the frame buffer more efficiently. Without it the processor reaches the card's memory through a small window, 256 MB on most systems. Games use it differently, so the effect ranges from none to noticeable.",
+      },
+      {
+        heading: "Check it on an NVIDIA card",
+        body:
+          "Open the NVIDIA Control Panel, choose System Information at the bottom left and look for Resizable BAR on the right. NVIDIA's guidance says a Yes means you are set; if it says no, enable Resizable BAR in the motherboard BIOS and reboot. If the line is missing, your driver version may no longer list it, and GPU-Z reports the state for any vendor's card.",
+      },
+      {
+        heading: "Check it on any card with GPU-Z",
+        body:
+          "GPU-Z shows a Resizable BAR field on its Graphics Card tab for NVIDIA, AMD and Intel cards and reads Enabled or Disabled. AMD markets the feature as Smart Access Memory and lists the supported processors, motherboards and cards on its page; check that list before you spend time in the BIOS.",
+      },
+      {
+        heading: "Turn it on in the BIOS",
+        body:
+          "Update the motherboard BIOS first, because support often arrived in a later release. Then, in the BIOS/UEFI, enable Above 4G Decoding, and after it Re-Size BAR Support; the exact names differ between makers and sit under Advanced or PCIe settings. Windows must start in UEFI mode, so the CSM/Legacy option has to be off. NVIDIA noted that some GeForce RTX 30 cards needed a graphics card BIOS (VBIOS) update from the card maker, and that laptop support depends on the manufacturer's model.",
+        points: [
+          "Enable Above 4G Decoding before Re-Size BAR Support",
+          "Turn CSM/Legacy off; Windows needs to boot in UEFI mode",
+          "Update the motherboard BIOS and the graphics driver first",
+          "Test your own games with it on and off; do not expect a fixed gain",
+        ],
+      },
+    ],
+    steps: [
+      { title: "NVIDIA: open System Information", note: "NVIDIA Control Panel, then System Information (bottom left). Read the Resizable BAR line on the right." },
+      { title: "Any card: open GPU-Z", note: "On the Graphics Card tab, read the Resizable BAR field. It says Enabled or Disabled." },
+      { title: "Check that Windows starts in UEFI mode", note: "Press Win+R, run msinfo32 and read BIOS Mode on the System Summary page. It must say UEFI." },
+      { title: "Enable it in the BIOS", note: "Turn on Above 4G Decoding, then Re-Size BAR Support, with CSM off. Save, restart and read the state again." },
+    ],
+    pctweaker: {
+      title: "The same check in PC Tweaker",
+      body:
+        "The Scan's hardware audit reads the largest memory window Windows has given the graphics card. The classic 256 MB window means the feature is off; anything larger means it is on. It is only judged for cards that can use the feature at all (NVIDIA RTX 30 and newer, AMD RX 6000 and newer, Intel Arc); for the others it reports not applicable, and it says \"could not be read\" when Windows does not expose the value. Read-only: it never changes BIOS settings.",
+      links: [{ to: "/tweaks/gaming/hardware-accelerated-gpu-scheduling/", label: "Hardware-accelerated GPU scheduling (a Windows setting)" }],
+    },
+    related: [
+      { to: "/fixes/check-pcie-link-speed-nvme-gpu/", label: "check the PCIe link of your graphics card", note: "A narrow link limits the card before Resizable BAR matters." },
+      { to: "/fixes/check-ram-running-at-xmp-expo-speed/", label: "check whether your RAM runs at its rated speed", note: "The other BIOS setting worth ten minutes." },
+      { to: "/fixes/hardware-accelerated-gpu-scheduling/", label: "hardware-accelerated GPU scheduling: on, off, or test it?", note: "How to test a graphics setting fairly." },
+    ],
+    sources: {
+      checked: "2 November 2026",
+      items: [
+        { label: "NVIDIA: GeForce RTX 30 Series Resizable BAR support (requirements and how to verify)", url: "https://www.nvidia.com/en-us/geforce/news/geforce-rtx-30-series-resizable-bar-support/" },
+        { label: "AMD: Smart Access Memory", url: "https://www.amd.com/en/technologies/smart-access-memory" },
+        { label: "TechPowerUp GPU-Z", url: "https://www.techpowerup.com/gpuz/" },
+        { label: "PC Tweaker source code: the hardware audit (hwaudit.rs)", url: `${SRC}/hwaudit.rs` },
+      ],
+    },
+  },
+  "/fixes/clear-standby-memory-windows-11": {
+    eyebrow: "FIX · MEMORY",
+    title: "Clear standby memory on Windows 11: what it is, and when it helps",
+    seoTitle: "Clear Standby Memory on Windows 11: Worth It?",
+    seoDescription:
+      "Standby memory is cache Windows can reuse at once, so clearing it rarely speeds anything up. How to read it, empty it with RAMMap, and when it makes sense.",
+    updated: "2026-11-02",
+    intro:
+      "Task Manager shows a large Cached figure, Resource Monitor shows most of your RAM as Standby, and a search suggests emptying it. Standby memory is not wasted memory: it holds data Windows already read, kept so it can be reused without going back to the disk. Emptying it returns the RAM immediately but makes Windows read that data again. It is a tool for a specific case, not a routine.",
+    summary: [
+      { label: "What standby memory is", value: "Cached pages that can be reused at once" },
+      { label: "Counts as Available", value: "Yes: Available is the sum of free, zeroed and standby pages" },
+      { label: "Empty it once by hand", value: "RAMMap (Sysinternals), Empty, Empty Standby List" },
+      { label: "Admin rights", value: "Yes" },
+      { label: "Cost of emptying", value: "Cached files are read from disk again" },
+    ],
+    sections: [
+      {
+        heading: "What standby memory is",
+        body:
+          "Windows keeps lists of physical pages: in use, modified (changed, waiting to be written), standby and free. Standby pages have left a program's working set but still hold valid data, so Windows can recall them without going to disk, or hand them to a program that asks for memory. That is why the Available memory counter is the sum of the zeroed, free and standby lists. A full standby list means the cache is doing its job.",
+      },
+      {
+        heading: "When emptying it is worth trying",
+        body:
+          "A low Free figure with a high Standby figure is normal, because Windows gives standby pages to programs that need them. The narrow case is a workload that hitches exactly when Free memory runs out and Windows has to repurpose cached pages, where you want to compare with and without a release. Even then, test it: after a purge the files the cache held are read from disk again, so general use can feel slower for a while. We know of no published measurement showing that clearing standby memory improves performance on a typical PC, and this guide does not claim one.",
+      },
+      {
+        heading: "See your own numbers first",
+        body:
+          "Resource Monitor, Memory tab, splits the memory bar into Hardware Reserved, In Use, Modified, Standby and Free. The PowerShell command below reads the same lists in MB. If Available is several GB there is nothing to gain from a purge. If Available is small and Standby is small too, programs are holding the memory, a purge will not help, and closing programs will.",
+      },
+      {
+        heading: "Empty it once, by hand",
+        body:
+          "Windows has no setting for this. Microsoft's Sysinternals RAMMap can empty the lists on demand: run it as administrator and choose Empty, then Empty Standby List. It is a one-off: nothing persists, and Windows refills the cache as files are read. Automatic tools exist, but the same trade-off applies, so keep any threshold well below your normal Free figure rather than purging constantly.",
+      },
+    ],
+    steps: [
+      { title: "Read free, standby and available memory", code: "Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory | Select-Object AvailableMBytes, @{n='FreeMB';e={[int]($_.FreeAndZeroPageListBytes/1MB)}}, @{n='StandbyMB';e={[int](($_.StandbyCacheCoreBytes+$_.StandbyCacheNormalPriorityBytes+$_.StandbyCacheReserveBytes)/1MB)}}, @{n='ModifiedMB';e={[int]($_.ModifiedPageListBytes/1MB)}}", shell: "PowerShell" as const, note: "Read-only. Standby is the sum of its three priority groups." },
+      { title: "Decide", note: "If AvailableMBytes is large, stop: Windows hands out the standby memory when a program asks for it." },
+      { title: "Empty the standby list once (only to test)", note: "Download RAMMap from Microsoft, run it as administrator, then choose Empty, Empty Standby List. Compare Free and Standby afterwards. The cache refills as you work." },
+    ],
+    pctweaker: {
+      title: "With PC Tweaker",
+      body:
+        "The Scan shows free memory next to the standby cache and offers a one-off release when free memory is short while a large cache is held; when releasing is not needed it says so. The Smart RAM booster (Pro) automates the narrow case: it releases the standby cache only when free memory drops below your threshold (1 GB by default), at most once every 5 minutes, never while a full-screen game is in front, and while PC Tweaker is open as administrator. Every release is measured and shown, so you see what it returned instead of guessing.",
+      links: [{ to: "/tweaks/maintenance/smart-ram-booster/", label: "Smart RAM booster" }],
+    },
+    related: [
+      { to: "/tweaks/maintenance/smart-ram-booster/", label: "the Smart RAM booster's reference page", note: "The exact rule, the manual equivalent and the verdict." },
+      { to: "/fixes/check-ram-running-at-xmp-expo-speed/", label: "check whether your RAM runs at its rated speed", note: "Often a bigger memory question than any cache purge." },
+      { to: "/how-to-undo-windows-tweaks/", label: "how to undo Windows tweaks", note: "Put a changed setting back, with or without PC Tweaker." },
+    ],
+    sources: {
+      checked: "2 November 2026",
+      items: [
+        { label: "Microsoft Learn (archive): Low Available RAM (free, zero and standby lists)", url: "https://learn.microsoft.com/en-us/archive/blogs/perfguide/low-available-ram" },
+        { label: "Microsoft Learn: GetNumaAvailableMemoryNodeEx (Available Bytes includes standby pages)", url: "https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getnumaavailablememorynodeex" },
+        { label: "Microsoft Learn: RAMMap (Sysinternals)", url: "https://learn.microsoft.com/en-us/sysinternals/downloads/rammap" },
+        { label: "PC Tweaker source code: the Smart RAM booster (ramboost.rs)", url: `${SRC}/ramboost.rs` },
+      ],
+    },
+  },
+  "/fixes/is-registry-cleaner-safe-windows-11": {
+    eyebrow: "FIX · REGISTRY",
+    title: "Is a registry cleaner safe on Windows 11? What to know first",
+    seoTitle: "Is a Registry Cleaner Safe on Windows 11?",
+    seoDescription:
+      "Microsoft does not support registry cleaners and none is shown to speed up Windows. What is reasonable to remove, how to back up first and how to restore.",
+    updated: "2026-11-02",
+    intro:
+      "Registry cleaners promise a faster, healthier PC by deleting entries they call invalid. Microsoft's support policy is that it does not support the use of registry cleaning utilities, and that is a fair summary of the risk: a tool that removes entries it only suspects are unused can break a program, a driver or a file association. Most of the registry is not worth cleaning, and the small part that is can be handled with a backup and a way back.",
+    summary: [
+      { label: "Microsoft's position", value: "Registry cleaning utilities are not supported (KB 2563254)" },
+      { label: "Speed gain", value: "None measured; do not expect one" },
+      { label: "Always before cleaning", value: "A full backup and a restore point" },
+      { label: "Reasonable to remove", value: "Entries whose target file is provably gone" },
+      { label: "Not safe to remove", value: "Anything a tool only guesses is unused" },
+    ],
+    sections: [
+      {
+        heading: "What a registry cleaner does",
+        body:
+          "Windows and programs store settings in the registry, and uninstalling something sometimes leaves entries behind. A cleaner scans for keys and values that look unused and deletes them. The risk is in \"look unused\": COM registrations, drivers, shell extensions and file associations are referenced indirectly, and an entry that points at a file on an unplugged drive or a network share is unavailable, not abandoned. Microsoft says it does not support registry cleaners, which is why the usual advice is to leave a PC that works alone.",
+      },
+      {
+        heading: "Will it make Windows faster?",
+        body:
+          "Leftover entries are tiny, and we know of no published measurement showing that removing them speeds up Windows. If a program is slow or startup takes long, look at startup items, services, drivers and the disk first. Treat a cleaner as housekeeping, not as a speed tool.",
+      },
+      {
+        heading: "What is reasonable to remove",
+        body:
+          "An entry is reasonable to remove when you can prove it has no purpose: the file it exists to point at is gone, from a fixed internal drive that is present right now. Typical cases are the uninstall entry of a program whose uninstaller and folder are both gone, an App Paths entry for an executable that no longer exists, a startup entry whose command points at a missing file, and a shared DLL count for a file that no longer exists. If you cannot show that, leave the entry alone.",
+        points: [
+          "Back up before every clean, and create a restore point as well",
+          "Never clean entries that point at removable or network drives",
+          "Avoid tools that \"fix errors\" or \"optimize\" the whole registry",
+          "Do not clean to fix a problem you have not diagnosed",
+        ],
+      },
+      {
+        heading: "Back up and restore by hand",
+        body:
+          "Export the branch you are about to edit to a .reg file and keep a System Restore point. If you remove something by mistake, importing the .reg file puts the entries back. System Protection must be on for the system drive (System Properties, System Protection) for restore points to be created.",
+      },
+    ],
+    steps: [
+      { title: "Create a restore point", code: "Checkpoint-Computer -Description \"Before registry cleanup\" -RestorePointType MODIFY_SETTINGS", shell: "PowerShell" as const, note: "Run in an administrator PowerShell. Windows creates a restore point only if none was created in the past 24 hours." },
+      { title: "Back up the branch you will edit", code: "reg export \"HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\" \"%USERPROFILE%\\Desktop\\uninstall-backup.reg\"", shell: "cmd" as const, note: "Do the same for any other branch. The file is plain text you can open in Notepad." },
+      { title: "Restore it if something broke", code: "reg import \"%USERPROFILE%\\Desktop\\uninstall-backup.reg\"", shell: "cmd" as const, note: "Run in an administrator Command Prompt. It re-creates the exported keys and values." },
+    ],
+    pctweaker: {
+      title: "How PC Tweaker's registry cleaner differs",
+      body:
+        "PC Tweaker does not walk the whole registry. It knows five kinds of entry and nothing else: uninstall entries, App Paths, cached program names, shared DLL counts and startup entries. An entry counts as orphaned only when the file it points at is missing from a fixed drive that is connected now, so a path on a USB disk or a network share is never treated as proof, and machine-wide startup entries (HKLM Run) are left out on purpose. Every clean writes a full backup first (a restore file plus a standard .reg file you can open), nothing is deleted if the backup cannot be written, and one click restores it. Finding leftovers is free; cleaning is Pro. The app says it plainly: cleaning tidies the registry, it does not make Windows measurably faster.",
+      links: [{ to: "/uninstall-programs-completely/", label: "Uninstall programs completely, and review leftovers" }],
+    },
+    related: [
+      { to: "/uninstall-programs-completely/", label: "how to uninstall a program and review what it leaves", note: "The registered uninstaller first, then the leftovers." },
+      { to: "/how-to-undo-windows-tweaks/", label: "how to undo Windows tweaks", note: "Recover the recorded previous value rather than guessing a default." },
+      { to: "/what-pc-tweaker-changes/", label: "what PC Tweaker changes", note: "Settings, permissions and operations, with their recovery limits." },
+    ],
+    sources: {
+      checked: "2 November 2026",
+      items: [
+        { label: "Microsoft Support: Microsoft support policy for the use of registry cleaning utilities (KB 2563254)", url: "https://support.microsoft.com/kb/2563254" },
+        { label: "Microsoft Learn: reg export", url: "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/reg-export" },
+        { label: "Microsoft Learn: reg import", url: "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/reg-import" },
+        { label: "Microsoft Learn: Checkpoint-Computer", url: "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/checkpoint-computer" },
+        { label: "PC Tweaker source code: the registry cleaner (regclean.rs)", url: `${SRC}/regclean.rs` },
       ],
     },
   },

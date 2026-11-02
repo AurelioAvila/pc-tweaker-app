@@ -18,6 +18,7 @@ export const PRACTICAL_GUIDES = {
       { heading: "If the uninstaller is missing or fails", body: "A program whose uninstaller no longer exists leaves an entry Windows cannot act on. Reinstalling the same version over the top usually restores the uninstaller, after which the normal route works. A failing uninstaller is a case for the troubleshooter above, not for deleting the folder: the registration, services and file associations stay behind and are harder to clean afterwards than the folder was. Keep the receipt either way: the Removal Ledger records what was removed, by which method, with what result and how much space it actually freed, so you can see later whether a problem started with a removal." }
     ],
     related: [
+      { to: "/fixes/is-registry-cleaner-safe-windows-11/", label: "whether to clean registry leftovers at all", note: "Microsoft's position, and what is provably safe to remove." },
       { to: "/uninstaller/", label: "what PC Tweaker Uninstaller shows before a removal runs", note: "The safety score, the command and the permissions, with prices for the Pro cleanup." },
       { to: "/tools/debloat-windows-11/", label: "removing preinstalled Windows apps instead", note: "Store apps like Solitaire or Clipchamp, removed for your account with a link to reinstall." },
       { to: "/what-pc-tweaker-changes/", label: "which operations have their own recovery limits", note: "Uninstalls and cleanup are not settings; a restore point is not a file backup." },

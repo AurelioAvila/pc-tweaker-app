@@ -181,6 +181,16 @@ export const GUIDES: Record<string, Guide> = {
     ],
     related: [
       {
+        to: "/fixes/check-ram-running-at-xmp-expo-speed/",
+        label: "checking that your RAM runs at its rated speed",
+        note: "A BIOS setting that is often left off, and that Windows can read.",
+      },
+      {
+        to: "/fixes/is-registry-cleaner-safe-windows-11/",
+        label: "whether a registry cleaner is worth running",
+        note: "Microsoft's position, and what is provably safe to remove.",
+      },
+      {
         to: "/what-pc-tweaker-changes/",
         label: "the full list of what PC Tweaker changes on your system",
         note: "The exact registry locations, permission levels and recovery path behind each category.",
@@ -261,6 +271,16 @@ export const GUIDES: Record<string, Guide> = {
       },
     ],
     related: [
+      {
+        to: "/fixes/check-resizable-bar-enabled/",
+        label: "checking whether Resizable BAR is on",
+        note: "How to read it in Windows and what to enable in the BIOS.",
+      },
+      {
+        to: "/fixes/check-pcie-link-speed-nvme-gpu/",
+        label: "checking the PCIe link of your graphics card and SSD",
+        note: "Current and maximum generation and width, read from Windows.",
+      },
       {"to": "/guides/fix-dpc-isr-latency-windows-11/", "label": "diagnose DPC and ISR spikes before changing settings", "note": "Reproduce a crackle or frame-time problem and inspect the driver trace."},
       {"to": "/guides/amd-ryzen-x3d-core-parking-windows-11/", "label": "check Ryzen X3D parking and process placement", "note": "Topology, power policy and process CPU sets are different controls."},
       {

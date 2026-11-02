@@ -64,10 +64,37 @@ impl PatchLevel {
 }
 
 /// What the last check saw, so the next one can tell whether anything moved.
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+/// Every field after `last_seen` arrived in 1.19; older files read as none.
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct WatchState {
     pub last_seen: Option<PatchLevel>,
+    /// A patch-level change the user has not dealt with yet: what the app
+    /// may call "after a Windows update". Kept across checks, because the
+    /// scheduled task usually sees the update first and the window opens
+    /// later.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pending: Option<PendingUpdate>,
+    /// The reverted ids the last notification named, so the same drift is
+    /// announced once, not at every check.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub notified: Vec<String>,
 }
+
+/// One unacknowledged patch-level change. Times are Unix seconds.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PendingUpdate {
+    pub from: PatchLevel,
+    pub to: PatchLevel,
+    pub at: u64,
+    /// "Not now" in the alert: the History card still lists the settings,
+    /// the window stops asking until the next update.
+    #[serde(default)]
+    pub dismissed: bool,
+}
+
+/// An update that reverted nothing within this long is not blamed for a
+/// change that appears later.
+pub const PENDING_FOR_S: u64 = 7 * 24 * 3600;
 
 /// One tweak's two answers: what the user asked for, and what the system says.
 #[derive(Clone, Debug, PartialEq)]
@@ -87,14 +114,21 @@ pub struct TweakState {
 #[derive(Serialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct DriftReport {
-    /// Whether the patch level moved since the last check. `false` on the
-    /// very first run, when there is nothing to compare against.
+    /// Whether the patch level moved since the last check (`build_report`),
+    /// or, from `check`, since a change the user has not dealt with yet.
+    /// `false` on the very first run, when there is nothing to compare
+    /// against.
     pub windows_updated: bool,
     /// `None` on the first run.
     pub previous_patch: Option<String>,
     pub current_patch: String,
     /// Ids recorded as applied whose live value no longer matches.
     pub reverted: Vec<String>,
+    /// When the update was first seen, Unix seconds (`check` only).
+    pub updated_at: Option<u64>,
+    /// The window should ask about these now: an update the user has not
+    /// answered and settings it left changed.
+    pub alert: bool,
 }
 
 /// Which tweaks stopped being in effect.
@@ -134,7 +168,75 @@ pub fn build_report(
         previous_patch: previous.map(|p| p.label()),
         current_patch: current.label(),
         reverted: reverted_ids(states),
+        updated_at: None,
+        alert: false,
     }
+}
+
+/// One check: the report and the state to store after it. Pure.
+///
+/// A patch-level change opens a pending update; it stays open while it is
+/// unanswered, and closes once nothing it could be blamed for is left and a
+/// week has passed. "After a Windows update" is a statement about time,
+/// never a claim about cause: see the module notes.
+pub fn check(
+    state: &WatchState,
+    current: PatchLevel,
+    states: &[TweakState],
+    now: u64,
+) -> (DriftReport, WatchState) {
+    let mut report = build_report(state.last_seen, current, states);
+    let mut pending = state.pending;
+    if report.windows_updated {
+        pending = Some(PendingUpdate {
+            // Two updates in a row before anyone looked: still one alert,
+            // from the level the user last saw.
+            from: pending.map_or_else(|| state.last_seen.unwrap_or(current), |p| p.from),
+            to: current,
+            at: now,
+            dismissed: false,
+        });
+    } else if report.reverted.is_empty()
+        && pending.is_some_and(|p| now.saturating_sub(p.at) >= PENDING_FOR_S)
+    {
+        pending = None;
+    }
+    if let Some(p) = pending {
+        report.windows_updated = true;
+        report.previous_patch = Some(p.from.label());
+        report.updated_at = Some(p.at);
+        report.alert = !p.dismissed && !report.reverted.is_empty();
+    }
+    // Forget what was announced once it is back in effect, so it is
+    // announced again if it drifts again.
+    let notified = state
+        .notified
+        .iter()
+        .filter(|id| report.reverted.contains(id))
+        .cloned()
+        .collect();
+    let next = WatchState {
+        last_seen: Some(current),
+        pending,
+        notified,
+    };
+    (report, next)
+}
+
+/// Whether a notification would tell the user something new: a reverted
+/// setting the last one did not name.
+pub fn should_notify(notified: &[String], reverted: &[String]) -> bool {
+    reverted.iter().any(|id| !notified.contains(id))
+}
+
+/// "Not now", or the settings were put back: the window stops asking about
+/// this update. A later update opens a new one.
+pub fn dismiss(state: &WatchState) -> WatchState {
+    let mut next = state.clone();
+    if let Some(p) = next.pending.as_mut() {
+        p.dismissed = true;
+    }
+    next
 }
 
 fn state_path(dir: &Path) -> PathBuf {
@@ -325,19 +427,122 @@ mod tests {
     #[test]
     fn the_state_survives_a_round_trip() {
         let dir = temp_dir("roundtrip");
-        let level = PatchLevel {
-            build: 26200,
-            ubr: 9168,
+        let state = WatchState {
+            last_seen: Some(NEW),
+            pending: Some(PendingUpdate {
+                from: OLD,
+                to: NEW,
+                at: T,
+                dismissed: true,
+            }),
+            notified: vec!["dark_mode".into()],
         };
-        write_state(
-            &dir,
-            &WatchState {
-                last_seen: Some(level),
-            },
+        write_state(&dir, &state).unwrap();
+        assert_eq!(read_state(&dir), state);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn a_state_file_from_before_1_19_still_reads() {
+        let dir = temp_dir("legacy");
+        std::fs::write(
+            state_path(&dir),
+            r#"{"last_seen":{"build":26200,"ubr":9168}}"#,
         )
         .unwrap();
-        assert_eq!(read_state(&dir).last_seen, Some(level));
+        let state = read_state(&dir);
+        assert_eq!(state.last_seen, Some(NEW));
+        assert!(state.pending.is_none() && state.notified.is_empty());
         std::fs::remove_dir_all(&dir).ok();
+    }
+
+    const OLD: PatchLevel = PatchLevel {
+        build: 26200,
+        ubr: 9100,
+    };
+    const NEW: PatchLevel = PatchLevel {
+        build: 26200,
+        ubr: 9168,
+    };
+    const T: u64 = 1_800_000_000;
+
+    fn seen(level: PatchLevel) -> WatchState {
+        WatchState {
+            last_seen: Some(level),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn an_update_that_reverted_settings_alerts_until_it_is_answered() {
+        let reverted = vec![state("dark_mode", true, Some(false))];
+        let (report, next) = check(&seen(OLD), NEW, &reverted, T);
+        assert!(report.alert && report.windows_updated);
+        assert_eq!(report.previous_patch.as_deref(), Some("26200.9100"));
+        assert_eq!(report.updated_at, Some(T));
+        // The window opens an hour later: the task already stored the new
+        // level, and the alert is still due.
+        let (later, next) = check(&next, NEW, &reverted, T + 3600);
+        assert!(later.alert && later.windows_updated);
+        assert_eq!(later.previous_patch.as_deref(), Some("26200.9100"));
+        // "Not now": no more asking; the History card keeps its wording.
+        let (after, _) = check(&dismiss(&next), NEW, &reverted, T + 7200);
+        assert!(!after.alert && after.windows_updated);
+        assert_eq!(after.reverted, vec!["dark_mode".to_string()]);
+    }
+
+    #[test]
+    fn drift_without_an_update_never_raises_the_alert() {
+        let reverted = vec![state("dark_mode", true, Some(false))];
+        let (report, next) = check(&seen(NEW), NEW, &reverted, T);
+        assert!(!report.alert && !report.windows_updated);
+        assert!(next.pending.is_none());
+        // The very first check has nothing to compare against either.
+        let (first, _) = check(&WatchState::default(), NEW, &reverted, T);
+        assert!(!first.alert && !first.windows_updated);
+    }
+
+    #[test]
+    fn an_update_with_nothing_reverted_waits_a_week_then_is_forgotten() {
+        let fine = vec![state("dark_mode", true, Some(true))];
+        let (report, next) = check(&seen(OLD), NEW, &fine, T);
+        assert!(!report.alert && report.windows_updated);
+        // Settings put back after the first sign-in still count as the update's.
+        let drifted = vec![state("dark_mode", true, Some(false))];
+        let (soon, _) = check(&next, NEW, &drifted, T + 3600);
+        assert!(soon.alert);
+        let (week, gone) = check(&next, NEW, &fine, T + PENDING_FOR_S);
+        assert!(!week.windows_updated && gone.pending.is_none());
+    }
+
+    #[test]
+    fn two_updates_before_anyone_looked_are_one_alert_from_the_first_level() {
+        let reverted = vec![state("dark_mode", true, Some(false))];
+        let (_, next) = check(&seen(OLD), NEW, &reverted, T);
+        let newer = PatchLevel {
+            build: 26200,
+            ubr: 9200,
+        };
+        let (report, next) = check(&next, newer, &reverted, T + 60);
+        assert_eq!(report.previous_patch.as_deref(), Some("26200.9100"));
+        assert_eq!(report.current_patch, "26200.9200");
+        assert!(report.alert && !next.pending.unwrap().dismissed);
+    }
+
+    #[test]
+    fn the_same_drift_is_notified_once_and_again_only_when_it_returns() {
+        let reverted = vec!["a".to_string(), "b".to_string()];
+        assert!(should_notify(&[], &reverted));
+        assert!(!should_notify(&reverted, &reverted));
+        assert!(!should_notify(&reverted, &["a".to_string()]));
+        assert!(should_notify(&["a".to_string()], &reverted));
+        assert!(!should_notify(&[], &[]));
+        // Settings back in effect leave the list, so a later drift is news again.
+        let mut s = seen(NEW);
+        s.notified = reverted.clone();
+        let states = [state("a", true, Some(true)), state("b", true, Some(false))];
+        let (_, next) = check(&s, NEW, &states, T);
+        assert_eq!(next.notified, vec!["b".to_string()]);
     }
 
     #[test]
@@ -377,82 +582,4 @@ mod task_name_tests {
     fn scheduled_task_does_not_depend_on_a_preexisting_folder() {
         assert!(!TASK_NAME.contains(['\\', '/']));
     }
-}
-
-/// Tells the user their work was undone, without the app being open.
-///
-/// This is the whole point of the watchdog. The detection below has always
-/// worked; it only ever ran when somebody happened to open the app and
-/// navigate to the Ledger tab, which is the one moment they are least likely
-/// to need telling. Windows itself documents that a feature update keeps
-/// "recognized" registry entries and discards the rest, so the loss is
-/// expected behaviour that nobody is notified about.
-///
-/// A PowerShell toast rather than a Tauri plugin because this runs from the
-/// headless `--check-drift` process, which never builds a Tauri app and so
-/// has no plugin to call. Failure is deliberately silent: a watchdog that
-/// pops an error because it could not pop a notification is worse than one
-/// that stays quiet until next launch, when the drift card says the same
-/// thing.
-#[cfg(windows)]
-pub fn notify(reverted_count: usize) -> Result<(), String> {
-    use std::os::windows::process::CommandExt;
-    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-
-    let body = if reverted_count == 1 {
-        "A Windows update reverted 1 tweak. Open PC Tweaker to re-apply it.".to_string()
-    } else {
-        format!(
-            "A Windows update reverted {reverted_count} tweaks. Open PC Tweaker to re-apply them."
-        )
-    };
-
-    // The AppID has to be one Windows already knows, or the toast is dropped
-    // with no error at all - which is how this nearly shipped broken. It
-    // looked for a Start Menu shortcut named "PC Tweaker.lnk" while the
-    // installer writes "pc-tweaker-app.lnk", so every notification would have
-    // borrowed Windows PowerShell's identity and arrived as PowerShell
-    // talking about tweaks.
-    //
-    // Both real identities are asked for by name, Store package first, then
-    // the desktop bundle. If neither is registered - a portable copy, or a
-    // dev build - nothing is sent, and the drift card says the same thing
-    // next time the app opens. A notification wearing somebody else's name is
-    // worse than one that never arrived.
-    let script = format!(
-        r#"
-$ErrorActionPreference = 'Stop'
-[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] > $null
-[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom, ContentType=WindowsRuntime] > $null
-$known = @(Get-StartApps | Select-Object -ExpandProperty AppID)
-$appId = $null
-foreach ($c in @('AurelioAvila.PCTweaker_27nraqq9g21x0!App', 'com.aurel.pc-tweaker-app')) {{
-  if ($known -contains $c) {{ $appId = $c; break }}
-}}
-if (-not $appId) {{ exit 3 }}
-$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
-$xml.LoadXml(@'
-<toast><visual><binding template="ToastGeneric"><text>PC Tweaker</text><text>{body}</text></binding></visual></toast>
-'@)
-[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($appId).Show([Windows.UI.Notifications.ToastNotification]::new($xml))
-"#
-    );
-
-    let output = crate::system_tools::run("powershell", |tool| {
-        tool.args(["-NoProfile", "-NonInteractive", "-Command", &script])
-            .creation_flags(CREATE_NO_WINDOW);
-        crate::system_tools::output_within(tool, crate::system_tools::QUICK)
-    })
-    .map_err(|e| format!("could not run PowerShell: {e}"))?;
-
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).trim().to_string())
-    }
-}
-
-#[cfg(not(windows))]
-pub fn notify(_reverted_count: usize) -> Result<(), String> {
-    Err("notifications are Windows-only".to_string())
 }

@@ -166,6 +166,10 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
 /// Called by the window at start and whenever the language changes.
 #[tauri::command]
 pub fn set_tray_language(app: tauri::AppHandle, language: String) {
+    // The update notifications are shown with no window open: they read it here.
+    if let Ok(dir) = app.path().app_data_dir() {
+        crate::update_alert::save_language(&dir, &language);
+    }
     let Some(state) = app.try_state::<BackgroundState>() else {
         return;
     };

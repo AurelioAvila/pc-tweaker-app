@@ -1,0 +1,188 @@
+/* Safe optimize: one card, the button is the hero, the list is a click away. */
+.safe-card {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px 16px;
+  margin-bottom: 18px;
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border-subtle));
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 140% at 0% 0%, var(--accent-soft), transparent 55%), var(--surface-1);
+}
+.safe-card[data-state="done"] {
+  border-color: var(--border-subtle);
+  background: var(--surface-1);
+}
+.safe-emblem {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.safe-emblem svg {
+  width: 22px;
+  height: 22px;
+}
+.safe-card[data-state="done"] .safe-emblem {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+}
+.safe-copy {
+  min-width: 0;
+}
+.safe-eyebrow {
+  margin: 0 0 2px;
+  font-size: 10.5px;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.safe-card[data-state="done"] .safe-eyebrow {
+  color: var(--text-muted);
+}
+.safe-copy h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+.safe-body {
+  margin: 4px 0 0;
+  max-width: 60ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.safe-review {
+  grid-column: 2 / -1;
+  margin-top: 6px;
+}
+.safe-review summary {
+  width: fit-content;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.safe-review summary:hover {
+  color: var(--text-primary);
+}
+.safe-review ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px 22px;
+  margin: 12px 0 2px;
+  padding: 0;
+  list-style: none;
+}
+.safe-review li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.safe-mark {
+  color: var(--text-muted);
+  text-align: center;
+}
+.safe-review li[data-done="true"] .safe-mark {
+  color: var(--success);
+}
+.safe-item {
+  display: grid;
+  align-content: start;
+  gap: 1px;
+}
+.safe-item strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.safe-item strong .badge {
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+.safe-item > span {
+  color: var(--text-muted);
+}
+.safe-review li[data-done="true"] .safe-item strong {
+  color: var(--text-secondary);
+}
+.safe-action {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  padding-top: 14px;
+}
+.safe-action .tool-primary-action {
+  gap: 8px;
+  white-space: nowrap;
+}
+.safe-action .tool-primary-action svg {
+  width: 16px;
+  height: 16px;
+}
+.safe-pro {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.safe-pro:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+.safe-undo {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+.safe-declined {
+  grid-column: 2 / -1;
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, var(--border-subtle));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--warning) 7%, var(--surface-1));
+}
+.safe-declined p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+.safe-declined div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Narrow content area (820 px window, long translations): the action moves
+   under the text. */
+@container (max-width: 600px) {
+  .safe-action {
+    grid-column: 2 / -1;
+    grid-auto-flow: column;
+    justify-content: start;
+    align-items: center;
+    padding-top: 10px;
+  }
+}

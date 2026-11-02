@@ -58,3 +58,22 @@ Var PctLegacyDesktop
     ${EndIf}
   ${EndIf}
 !macroend
+
+; Uninstall (not an update): remove what the app registered for the signed-in user outside its
+; folder: its scheduled tasks (Pro's Windows Update alert, the update watch, the weekly temp
+; cleanup) and the alert's URL scheme. Names match update_alert.rs, updatewatch.rs and lib.rs.
+!macro PCT_DELETE_TASK NAME
+  nsExec::Exec 'schtasks.exe /delete /f /tn "${NAME}"'
+  Pop $0
+!macroend
+
+!macro NSIS_HOOK_PREUNINSTALL
+  ${If} $UpdateMode <> 1
+    Push $0
+    !insertmacro PCT_DELETE_TASK "PC Tweaker Windows Update alert"
+    !insertmacro PCT_DELETE_TASK "PC Tweaker Update drift watch"
+    !insertmacro PCT_DELETE_TASK "PC Tweaker Temp Cleanup"
+    Pop $0
+    DeleteRegKey HKCU "Software\Classes\pctweaker-alert"
+  ${EndIf}
+!macroend

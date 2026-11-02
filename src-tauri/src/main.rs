@@ -32,7 +32,7 @@ fn main() {
         // relaunches fell straight through to `run()` and started a second,
         // full GUI running as administrator instead of performing the action
         // headlessly and exiting. Anything added there has to be added here.
-        const ELEVATED_ACTIONS: [&str; 24] = [
+        const ELEVATED_ACTIONS: [&str; 25] = [
             "--elevated-download-limit",
             "--elevated-download-restore",
             "--elevated-session-apply",
@@ -57,6 +57,7 @@ fn main() {
             "--elevated-boot-times",
             "--elevated-scan-fix",
             "--elevated-regrestore",
+            "--elevated-safe-apply",
         ];
         // VM verification builds only (Cargo feature "test-pro", debug profile).
         #[cfg(feature = "test-pro")]
@@ -70,6 +71,10 @@ fn main() {
         // The scheduled watchdog: one argument, no id, no window, no GUI.
         if args.len() == 2 && args[1] == "--check-drift" {
             tauri_app_lib::run_drift_check_headless();
+        }
+        // The Pro Windows Update alert's task (update_alert.rs).
+        if args.len() == 2 && args[1] == "--update-alert" {
+            tauri_app_lib::run_update_alert_headless();
         }
         if args.len() == 2 && args[1] == "--scheduled-temp-cleanup" {
             tauri_app_lib::run_scheduled_temp_cleanup_headless();

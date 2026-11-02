@@ -1,0 +1,367 @@
+/* The proof card and its progress: one modal in the app's tokens. Improvements
+   are green, everything else neutral; nothing here is red. */
+.proof-dialog {
+  box-sizing: border-box;
+  margin: auto;
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  padding: 0;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-family: inherit;
+  box-shadow: 0 30px 80px -30px rgb(0 0 0 / 70%);
+}
+.proof-dialog::backdrop {
+  background: var(--overlay);
+  backdrop-filter: blur(4px);
+}
+.proof-dialog:focus-visible {
+  outline: none;
+}
+.proof-dialog:has(.proof-progress) {
+  width: min(520px, calc(100vw - 32px));
+}
+
+/* ---- Progress ---------------------------------------------------------- */
+.proof-progress {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 34px 28px 30px;
+  text-align: center;
+}
+.proof-progress h2 {
+  margin: 10px 0 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.proof-source {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.proof-orbit {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent);
+  animation: proof-spin 1.1s linear infinite;
+}
+.proof-orbit::after {
+  content: "";
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+}
+@keyframes proof-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .proof-orbit {
+    animation: none;
+  }
+}
+.proof-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 22px;
+  margin: 18px 0 4px;
+  padding: 0;
+  list-style: none;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.proof-steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.proof-step-dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  font-size: 11px;
+  font-weight: 700;
+}
+.proof-steps li[data-state="done"] {
+  color: var(--text-secondary);
+}
+.proof-steps li[data-state="done"] .proof-step-dot {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--success) 18%, transparent);
+  color: var(--success);
+}
+.proof-steps li[data-state="current"] {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.proof-steps li[data-state="current"] .proof-step-dot {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.proof-hint {
+  max-width: 420px;
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* ---- Result ------------------------------------------------------------ */
+.proof-result {
+  display: grid;
+  gap: 14px;
+  padding: 20px 22px 18px;
+}
+.proof-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.proof-eyebrow {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.proof-top h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.proof-when {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.proof-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.proof-close:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+.proof-hero {
+  padding: 16px 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+.proof-hero[data-tone="better"] {
+  border-color: color-mix(in srgb, var(--success) 30%, var(--border-subtle));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--success) 10%, var(--surface-2)),
+    var(--surface-2) 65%
+  );
+}
+.proof-hero h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.proof-hero p {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.proof-hero h3 + p {
+  margin-top: 6px;
+}
+.proof-hero > p:first-child {
+  margin: 0;
+}
+.proof-impact {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.proof-impact li {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+}
+.proof-impact strong {
+  font-size: 32px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--success);
+}
+.proof-impact span {
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.proof-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.proof-note[data-tone="ok"] {
+  color: var(--success);
+  font-weight: 600;
+}
+.proof-note[data-tone="warn"] {
+  color: var(--warning);
+}
+.proof-note svg {
+  flex: none;
+}
+
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.proof-measured {
+  display: grid;
+  gap: 8px;
+}
+.proof-tile {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+.proof-tile[data-verdict="better"] {
+  border-color: color-mix(in srgb, var(--success) 28%, var(--border-subtle));
+}
+.proof-tile-name {
+  max-width: 100%;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-muted);
+}
+.proof-tile-values {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.proof-tile-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+.proof-tile-head .badge {
+  flex: none;
+  margin-top: -1px;
+}
+.proof-tile-values strong {
+  font-size: 15px;
+  font-weight: 750;
+  color: var(--text-primary);
+}
+.proof-tile[data-verdict="better"] .proof-tile-values strong {
+  color: var(--success);
+}
+
+.proof-changed {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 10px;
+}
+.proof-changed summary {
+  width: fit-content;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.proof-changed summary:hover {
+  color: var(--text-primary);
+}
+.proof-changed ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.proof-changed li {
+  padding: 3px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  user-select: text;
+}
+.proof-small {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+/* Always in reach: the card scrolls under the buttons on a small window. */
+.proof-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0 -22px -18px;
+  padding: 12px 22px 16px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-1);
+}
+
+@media (max-width: 700px) {
+  .proof-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

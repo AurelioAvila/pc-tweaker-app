@@ -125,6 +125,10 @@ fn spec(id: &str) -> Option<Spec> {
         "startup_apps" => reading(false, 0.0, 1.0),
         "memory_used_mb" => reading(false, 0.05, 250.0),
         "disk_free_mb" => reading(true, 0.0, 100.0),
+        // The tick Windows runs at right now. Apps (browsers, games, music
+        // players) ask for a finer one while they run, so only a step of a
+        // tenth of a millisecond or more counts.
+        "timer_ms" => reading(false, 0.0, 0.1),
         _ => return None,
     })
 }
@@ -240,7 +244,28 @@ fn launch_ms() -> Option<f64> {
     None
 }
 
-/// Processes, startup apps, memory in use and free space, read before any
+/// The timer resolution Windows is using right now, in milliseconds
+/// (`NtQueryTimerResolution`, 100 ns units). Read only: nothing here asks for
+/// a different one.
+#[cfg(windows)]
+fn timer_resolution_ms() -> Option<f64> {
+    #[link(name = "ntdll")]
+    extern "system" {
+        fn NtQueryTimerResolution(maximum: *mut u32, minimum: *mut u32, current: *mut u32) -> i32;
+    }
+    let (mut maximum, mut minimum, mut current) = (0u32, 0u32, 0u32);
+    // SAFETY: three u32 out-parameters that live for the call.
+    let status = unsafe { NtQueryTimerResolution(&mut maximum, &mut minimum, &mut current) };
+    (status >= 0 && current > 0).then(|| f64::from(current) / 10_000.0)
+}
+
+#[cfg(not(windows))]
+fn timer_resolution_ms() -> Option<f64> {
+    None
+}
+
+/// Processes, startup apps, memory in use, free space and the timer
+/// resolution, read before any
 /// timed test runs so the tests' own allocations and processes are not in
 /// them.
 fn readings() -> Vec<Metric> {
@@ -271,6 +296,7 @@ fn readings() -> Vec<Metric> {
     );
     let system_drive = std::env::var("SystemDrive").unwrap_or_else(|_| "C:".to_string());
     let disks = sysinfo::Disks::new_with_refreshed_list();
+    push("timer_ms", timer_resolution_ms());
     push(
         "disk_free_mb",
         disks
@@ -830,6 +856,14 @@ mod tests {
         assert!(rank_sum_test(&[], &[1.0]).is_none());
     }
 
+    #[cfg(windows)]
+    #[test]
+    fn the_timer_resolution_reads_as_a_plausible_tick() {
+        // Windows runs between 0.5 ms and 15.625 ms on every shipped build.
+        let ms = timer_resolution_ms().expect("NtQueryTimerResolution answers");
+        assert!((0.05..=20.0).contains(&ms), "{ms} ms");
+    }
+
     #[test]
     fn noise_is_no_significant_change() {
         let before = [100.0, 104.0, 98.0, 101.0, 103.0, 97.0, 102.0];
@@ -894,6 +928,16 @@ mod tests {
         assert_eq!(
             judge("disk_free_mb", &[50_000.0], &[52_400.0]).unwrap().0,
             Verdict::Better
+        );
+        // A finer tick is the lower number; a hair's difference is not one.
+        assert_eq!(
+            judge("timer_ms", &[15.625], &[1.0]).unwrap().0,
+            Verdict::Better
+        );
+        assert_eq!(judge("timer_ms", &[1.0], &[1.05]).unwrap().0, Verdict::Same);
+        assert_eq!(
+            judge("timer_ms", &[0.5], &[15.625]).unwrap().0,
+            Verdict::Worse
         );
         assert!(judge("unknown", &[1.0], &[2.0]).is_none());
     }

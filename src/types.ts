@@ -528,10 +528,15 @@ export type ValueChange = {
  *  `reverted` says which applied tweaks no longer match the system. The app
  *  never claims the first caused the second. */
 export type DriftReport = {
+  /** A Windows update the user has not answered yet (updatewatch.rs). */
   windowsUpdated: boolean;
   previousPatch: string | null;
   currentPatch: string;
   reverted: string[];
+  /** When that update was first seen, Unix seconds. */
+  updatedAt?: number | null;
+  /** The window should ask about it now (the post-update alert). */
+  alert?: boolean;
 };
 
 /** A recorded panic (src-tauri/src/crash.rs). Written by both the app and

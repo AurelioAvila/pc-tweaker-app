@@ -62,6 +62,7 @@ export const METRIC_ORDER = [
   "processes",
   "startup_apps",
   "memory_used_mb",
+  "timer_ms",
   "disk_free_mb",
 ];
 const HIGHER_IS_BETTER = new Set(["cpu", "disk_free_mb"]);
@@ -129,6 +130,8 @@ export function formatDelta(change: MetricChange): string {
       return `${d > 0 ? "+" : "−"}${size(Math.abs(d))}`;
     case "boot_ms":
       return `${d > 0 ? "+" : "−"}${formatNumber(Math.abs(d) / 1000, 1)} s`;
+    case "timer_ms":
+      return `${d > 0 ? "+" : "−"}${ms(Math.abs(d))}`;
     default:
       return percent((change.changePct ?? 0) / 100, true).replace("-", "−");
   }

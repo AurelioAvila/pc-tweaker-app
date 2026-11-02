@@ -13,7 +13,7 @@
     <State_Province></State_Province>
     <Zip_Postal_Code></Zip_Postal_Code>
     <Country>Netherlands</Country>
-    <Company_WebSite_URL>https://getcertsprint.com/</Company_WebSite_URL>
+    <Company_WebSite_URL>https://pctweaker.app/</Company_WebSite_URL>
     <Contact_Info>
       <Author_First_Name>Aurelio</Author_First_Name>
       <Author_Last_Name>Avila</Author_Last_Name>
@@ -60,26 +60,26 @@
       <Expire_Day></Expire_Day>
       <Expire_Year></Expire_Year>
     </Expire_Info>
-    <Program_Change_Info>PC Tweaker 1.19.0 rebuilds the Scan: 19 checks across Performance, Junk files, Startup, Privacy, Registry, Memory, Hardware and Latency, a headline that says how much space your PC is wasting (measured, not guessed), Fix all or Custom, and Pro items that show what they would free on your PC before you unlock them. New: a read-only hardware audit (RAM below its rated XMP/EXPO speed, SSD or graphics card on a slower PCIe link, Resizable BAR off, each with how to fix it), latency findings (interrupts piling up on CPU 0, DPC spikes), a registry cleaner (orphaned entries only, backup first, one-click restore), a Smart RAM booster, one-click Safe optimize, a restore point before any change, a Proof of change card with real before/after numbers you can save as PNG, and an alert when a Windows update changes your settings. 82 controls. New: PC Tweaker for Business.</Program_Change_Info>
+    <Program_Change_Info>Scan 2.0 adds 19 checks across eight categories, read-only hardware findings and latency diagnostics. Review findings and choose individual fixes. Safe optimize lists proposed settings and requests a System Restore point. Proof of change compares measurements after supported actions, including an unchanged result. Registry discovery is free; Pro cleanup saves a .reg backup. Smart RAM booster is Pro. The catalog includes 46 Free and 36 Pro controls. Findings depend on Windows, hardware and drivers; no fixed performance gain is promised.</Program_Change_Info>
     <Program_Category_Class>System Utilities::System Maintenance</Program_Category_Class>
     <Program_Specific_Category></Program_Specific_Category>
     <Program_System_Requirements>Windows 10/11 x64; internet for accounts, updates and supported online features.</Program_System_Requirements>
   </Program_Info>
   <Program_Descriptions>
     <English>
-      <Keywords>Windows tuning,Windows privacy,PC maintenance,gaming settings,restore settings,PC Tweaker,Aurelio Avila</Keywords>
-      <Char_Desc_45>Windows tuning, privacy and maintenance.</Char_Desc_45>
-      <Char_Desc_80>Review Windows tuning, privacy and maintenance settings before applying changes.</Char_Desc_80>
-      <Char_Desc_250>Review Windows tuning, privacy and maintenance settings before applying changes. By Aurelio Avila. Current signed Windows download; free and paid access are documented officially.</Char_Desc_250>
-      <Char_Desc_450>Review Windows tuning, privacy and maintenance settings before applying changes. By Aurelio Avila. Review limitations and access requirements on the official product page. Windows downloads are publisher-signed and timestamped; signing is not a safety guarantee. Screenshots show the app and may reflect an earlier release.</Char_Desc_450>
-      <Char_Desc_2000>PC Tweaker by Aurelio Avila brings Windows tuning, privacy settings and maintenance tools into one desktop app. Review the effect and trade-offs before applying a setting. Restore controls cover supported settings; cleanup, repair and driver operations have different recovery limits. Core tools are free without an account; advanced Pro tools are paid. No universal FPS or performance gain is promised. Official Windows binaries are signed and timestamped. Code signing identifies the publisher and detects changes; it does not guarantee security or eliminate SmartScreen warnings.</Char_Desc_2000>
+      <Keywords>Windows tuning,hardware audit,PC maintenance,privacy,startup,Scan 2.0,PC Tweaker,Aurelio Avila</Keywords>
+      <Char_Desc_45>Scan Windows. Review changes. Keep control.</Char_Desc_45>
+      <Char_Desc_80>19 Windows checks. Review findings. Choose your changes. Free plus optional Pro.</Char_Desc_80>
+      <Char_Desc_250>Inspect Windows with 19 checks across eight categories. Review findings, choose individual fixes and compare supported before-and-after measurements. Free tools need no account; advanced Pro is optional. Windows 10/11 x64.</Char_Desc_250>
+      <Char_Desc_450>PC Tweaker combines Windows tuning, hardware monitoring and maintenance. Scan 2.0 runs 19 checks across eight categories; review the findings before making changes. Includes 46 Free and 36 Pro controls. Free tools need no account. Findings depend on Windows, hardware and drivers. The 1.19.0 interface preview uses clearly labeled sample data, not real-PC results.</Char_Desc_450>
+      <Char_Desc_2000>PC Tweaker by Aurelio Avila helps you inspect Windows changes before applying them. Scan 2.0 runs 19 checks across performance, junk files, startup, privacy, registry, memory, hardware and latency. Review findings and choose individual fixes. The read-only hardware audit can report RAM speed, PCIe link and Resizable BAR findings when Windows exposes the data; it does not change firmware. Safe optimize lists proposed settings and requests a System Restore point. After supported optimization actions, Proof of change compares measurements and can report no measurable difference. The catalog includes 46 Free and 36 Pro controls. Free tools need no account. Pro adds advanced workflows, including Game Sessions, registry cleanup and Smart RAM booster. Registry discovery is free; Pro cleanup targets limited orphaned entries and saves a .reg backup. Registry cleaning is housekeeping, not a promised speed upgrade. Restore controls cover supported settings; restoring a setting does not recover deleted caches or replace a system backup. Windows 10/11 x64; features and findings vary by Windows, drivers and hardware. No universal FPS or performance gain is promised. Official Windows binaries are publisher-signed and timestamped; signing does not guarantee security or eliminate SmartScreen warnings. The linked 1.19.0 interface preview is captured from the official browser demo with a visible sample-data disclosure. Its readings are illustrative, not measurements from a real PC.</Char_Desc_2000>
     </English>
   </Program_Descriptions>
   <Web_Info>
     <Application_URLs>
       <Application_Info_URL>https://pctweaker.app/</Application_Info_URL>
       <Application_Order_URL></Application_Order_URL>
-      <Application_Screenshot_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/screenshots/pc-tweaker-1.16-overview.png</Application_Screenshot_URL>
+      <Application_Screenshot_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/screenshots/pc-tweaker-1.19-interface-sample-data.jpg</Application_Screenshot_URL>
       <Application_Icon_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/src-tauri/icons/32x32.png</Application_Icon_URL>
       <Application_XML_File_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/pad.xml</Application_XML_File_URL>
     </Application_URLs>

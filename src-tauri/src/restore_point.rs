@@ -248,6 +248,17 @@ mod imp {
         assert_eq!(std::mem::offset_of!(StateMgrStatus, sequence_number), 4);
     }
 
+    /// `SystemRestorePointCreationFrequency` (minutes, a policy value), in
+    /// seconds; 24 hours when it is absent, as Windows does.
+    pub fn frequency_seconds() -> u64 {
+        winreg::RegKey::predef(winreg::enums::HKEY_LOCAL_MACHINE)
+            .open_subkey(r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore")
+            .and_then(|key| key.get_value::<u32, _>("SystemRestorePointCreationFrequency"))
+            .map_or(super::DEFAULT_FREQUENCY_S, |minutes| {
+                u64::from(minutes) * 60
+            })
+    }
+
     /// Asks Windows for a point. `Ok` only means Windows accepted the
     /// request; whether a point was made is read back separately.
     pub fn request() -> Result<(), String> {
@@ -471,7 +482,13 @@ pub fn create_restore_point() -> RestorePointOutcome {
         let started = now();
         let request = imp::request();
         let after = match &request {
-            Ok(()) => imp::newest(),
+            Ok(()) => settle(
+                &before,
+                started,
+                imp::frequency_seconds(),
+                imp::newest,
+                || std::thread::sleep(SETTLE_STEP),
+            ),
             Err(_) => Ok(None),
         };
         verdict(before, request, after, started, now())
@@ -484,9 +501,98 @@ pub fn create_restore_point() -> RestorePointOutcome {
     }
 }
 
+/// How long to keep reading when Windows should have made a point but does
+/// not list it yet. On a clean Windows 11 VM (2 Nov 2026) the new point was
+/// missing from the first read after the request, so the app said "no
+/// restore point" and "reused" for points that existed (made during the
+/// request, which itself took about 30 s there).
+const SETTLE_TRIES: u32 = 30;
+#[cfg(windows)]
+const SETTLE_STEP: std::time::Duration = std::time::Duration::from_secs(1);
+/// `SystemRestorePointCreationFrequency` when the policy value is absent.
+const DEFAULT_FREQUENCY_S: u64 = 24 * 60 * 60;
+
+/// Reads the newest point again while a new one is expected and not listed
+/// yet. One is expected when no point is newer than Windows' creation
+/// frequency; inside that window Windows makes none, so nothing is awaited
+/// and a reused point costs no extra time.
+fn settle(
+    before: &Result<Option<Newest>, String>,
+    started: u64,
+    frequency_s: u64,
+    mut read: impl FnMut() -> Result<Option<Newest>, String>,
+    mut wait: impl FnMut(),
+) -> Result<Option<Newest>, String> {
+    let expected = match before {
+        Ok(None) => true,
+        Ok(Some(b)) => started.saturating_sub(b.created_at) >= frequency_s,
+        Err(_) => false,
+    };
+    let mut after = read();
+    for _ in 0..SETTLE_TRIES {
+        let newer = match (&after, before) {
+            (Ok(Some(a)), Ok(Some(b))) => a.sequence > b.sequence,
+            (Ok(Some(_)), Ok(None)) => true,
+            _ => false,
+        };
+        if !expected || newer || after.is_err() {
+            break;
+        }
+        wait();
+        after = read();
+    }
+    after
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_point_listed_late_is_waited_for_only_when_one_is_expected() {
+        let start = WU + 86_460;
+        // No point yet: the new one shows up on the third read.
+        let mut reads = vec![Ok(None), Ok(None), point(1, start + 2)].into_iter();
+        let mut waits = 0;
+        let after = settle(
+            &Ok(None),
+            start,
+            DEFAULT_FREQUENCY_S,
+            || reads.next().unwrap(),
+            || waits += 1,
+        );
+        assert_eq!(after, point(1, start + 2));
+        assert_eq!(waits, 2);
+        assert_eq!(
+            verdict(Ok(None), Ok(()), after, start, start + 5),
+            RestorePointOutcome::Created { at: start + 2 }
+        );
+        // The newest point is older than the frequency: a new one is awaited.
+        let mut reads = vec![point(166, WU), point(167, start + 3)].into_iter();
+        let after = settle(
+            &point(166, WU),
+            start,
+            DEFAULT_FREQUENCY_S,
+            || reads.next().unwrap(),
+            || {},
+        );
+        assert_eq!(after, point(167, start + 3));
+        // Inside the frequency Windows makes none: one read, no wait.
+        let recent = start - 600;
+        let mut waits = 0;
+        let after = settle(
+            &point(166, recent),
+            start,
+            DEFAULT_FREQUENCY_S,
+            || point(166, recent),
+            || waits += 1,
+        );
+        assert_eq!((after, waits), (point(166, recent), 0));
+        // Expected but never listed: bounded, then the verdict says so.
+        let mut waits = 0;
+        let after = settle(&Ok(None), start, 0, || Ok(None), || waits += 1);
+        assert_eq!((after, waits), (Ok(None), SETTLE_TRIES));
+    }
 
     /// 2026-10-23 18:28:41 UTC: a Windows Update point recorded on the
     /// development PC on 24 Oct 2026.

@@ -88,6 +88,13 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     canonical: `${ORIGIN}/support/`,
     ogType: "website",
   },
+  "/business": {
+    title: "PC Tweaker for Business — Licence and Volume Pricing",
+    description:
+      "Commercial licence, volume pricing, invoicing and priority support for IT teams, offices, internet cafés and MSPs. Silent winget install. Ask for a quote.",
+    canonical: `${ORIGIN}/business/`,
+    ogType: "website",
+  },
   // Signed-in account page: built and linked, never indexed or listed.
   "/account": {
     title: "Your PC Tweaker Account",

@@ -1,0 +1,323 @@
+/* The progress ring of a fix: one instrument, driven by real steps. The ring
+   and the number are updated per frame from fix-progress.tsx; everything else
+   changes only when a step does. */
+.fixp {
+  container-type: inline-size;
+  color: var(--text-primary);
+}
+.fixp[data-inline] {
+  padding: 26px 28px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-subtle));
+  border-radius: 18px;
+  background:
+    radial-gradient(90% 120% at 0% 0%, var(--accent-soft), transparent 60%), var(--surface-1);
+  animation: fixp-in 260ms var(--ease-standard) both;
+}
+.fixp-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 18px 34px;
+}
+/* ---- The dial ----------------------------------------------------------- */
+.fixp-dial {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 196px;
+  height: 196px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 20%,
+    color-mix(in srgb, var(--accent) 16%, var(--surface-2)),
+    var(--surface-1) 78%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 4%),
+    0 18px 40px -12px color-mix(in srgb, var(--accent) 28%, transparent);
+  transition:
+    box-shadow 400ms var(--ease-standard),
+    transform 400ms var(--ease-standard);
+}
+.fixp-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+.fixp-track {
+  stroke: color-mix(in srgb, var(--text-primary) 9%, transparent);
+  stroke-width: 9;
+}
+.fixp-arc {
+  stroke-width: 9;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 45%, transparent));
+  transition: stroke 400ms var(--ease-standard);
+}
+.fixp-stop-a {
+  stop-color: var(--accent);
+}
+.fixp-stop-b {
+  stop-color: color-mix(in oklab, var(--accent) 55%, white);
+}
+.fixp-percent {
+  display: flex;
+  align-items: baseline;
+  font-size: 50px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+  transition:
+    opacity 220ms var(--ease-standard),
+    transform 220ms var(--ease-standard);
+}
+.fixp-percent small {
+  margin-left: 3px;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: 0;
+  color: var(--text-muted);
+}
+.fixp-check {
+  position: absolute;
+  width: 74px;
+  height: 74px;
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+}
+
+/* Done: the ring turns green, the number gives way to a check. */
+.fixp[data-state="success"] .fixp-arc {
+  stroke: var(--success);
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--success) 50%, transparent));
+}
+.fixp[data-state="success"] .fixp-dial {
+  transform: scale(1.03);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 4%),
+    0 18px 44px -10px color-mix(in srgb, var(--success) 34%, transparent);
+}
+.fixp[data-state="success"] .fixp-percent {
+  opacity: 0;
+  transform: scale(0.82);
+}
+.fixp[data-state="success"] .fixp-check {
+  opacity: 1;
+  stroke-dashoffset: 0;
+  transition:
+    opacity 120ms linear 120ms,
+    stroke-dashoffset 460ms var(--ease-standard) 120ms;
+}
+
+/* ---- The steps ---------------------------------------------------------- */
+.fixp-side {
+  min-width: 0;
+}
+.fixp-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.fixp[data-state="success"] .fixp-title {
+  color: var(--success);
+}
+.fixp-current {
+  margin: 4px 0 14px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  min-height: 1.25em;
+}
+.fixp-steps {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fixp-steps li {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  transition:
+    color 200ms var(--ease-standard),
+    background-color 200ms var(--ease-standard);
+}
+.fixp-steps li[data-state="active"] {
+  color: var(--text-primary);
+  font-weight: 600;
+  background: var(--accent-soft);
+}
+.fixp-steps li[data-state="done"],
+.fixp-steps li[data-state="failed"] {
+  color: var(--text-secondary);
+}
+.fixp-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  font-size: 11px;
+  font-weight: 800;
+}
+.fixp-mark svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.fixp-steps li[data-state="active"] .fixp-mark {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  border-top-color: var(--accent);
+  animation: fixp-spin 800ms linear infinite;
+}
+.fixp-steps li[data-state="done"] .fixp-mark {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--success) 18%, transparent);
+  color: var(--success);
+  animation: fixp-pop 260ms var(--ease-standard);
+}
+.fixp-steps li[data-state="failed"] .fixp-mark {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--warning) 18%, transparent);
+  color: var(--warning);
+}
+.fixp-step {
+  min-width: 0;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+}
+.fixp-result {
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  white-space: nowrap;
+  animation: fixp-in 240ms var(--ease-standard) both;
+}
+.fixp-steps li[data-state="failed"] .fixp-result {
+  color: var(--warning);
+}
+.fixp-hint {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+@keyframes fixp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes fixp-pop {
+  from {
+    transform: scale(0.6);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes fixp-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* No spinning, no movement: steps and the check simply appear. */
+@media (prefers-reduced-motion: reduce) {
+  .fixp[data-inline],
+  .fixp-result,
+  .fixp-steps li[data-state="done"] .fixp-mark {
+    animation: none;
+  }
+  .fixp-steps li[data-state="active"] .fixp-mark {
+    animation: none;
+    border-color: var(--accent);
+  }
+  .fixp-dial,
+  .fixp-arc,
+  .fixp-percent,
+  .fixp-steps li {
+    transition: none;
+  }
+  .fixp[data-state="success"] .fixp-dial {
+    transform: none;
+  }
+  .fixp[data-state="success"] .fixp-check {
+    transition: opacity 120ms linear;
+    stroke-dashoffset: 0;
+  }
+}
+.fixp:focus {
+  outline: none;
+}
+.fixp[data-inline] {
+  margin-bottom: 18px;
+}
+
+/* Narrow windows (820 px): a smaller dial keeps the list beside it. */
+@container (max-width: 580px) {
+  .fixp-body {
+    gap: 14px 22px;
+  }
+  .fixp-dial {
+    width: 156px;
+    height: 156px;
+  }
+  .fixp-percent {
+    font-size: 40px;
+  }
+  .fixp-check {
+    width: 60px;
+    height: 60px;
+  }
+  .fixp-current {
+    font-size: 17px;
+  }
+}
+@container (max-width: 430px) {
+  .fixp-body {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+  .fixp-side {
+    width: 100%;
+  }
+  .fixp-title,
+  .fixp-current {
+    text-align: center;
+  }
+}

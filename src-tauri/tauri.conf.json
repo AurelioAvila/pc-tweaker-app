@@ -54,7 +54,9 @@
         "installerHooks": "./windows/installer-hooks.nsh"
       },
       "wix": {
-        "upgradeCode": "8D2CADB9-D0FC-51AC-989D-06B9BDCE5614"
+        "upgradeCode": "8D2CADB9-D0FC-51AC-989D-06B9BDCE5614",
+        "fragmentPaths": ["./windows/uninstall-cleanup.wxs"],
+        "componentGroupRefs": ["PctUninstallCleanup"]
       }
     }
   }

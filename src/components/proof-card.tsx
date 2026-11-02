@@ -9,6 +9,7 @@
 // and nothing personal (no user, PC or profile name).
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { getVersion } from "@tauri-apps/api/app";
 import { save as saveFileDialog } from "@tauri-apps/plugin-dialog";
 import { format, type Lang, type Strings } from "../i18n";
@@ -24,6 +25,15 @@ import {
   type MetricChange,
 } from "./before-after";
 import { PROOF_COPY } from "./proof-copy";
+import { FixProgress } from "./fix-progress";
+import {
+  applyStepEvent,
+  closeWork,
+  initialSteps,
+  type FixStep,
+  type FixStepId,
+  type StepEvent,
+} from "../fix-steps";
 import "./proof-card.css";
 
 export type ProofSource = "safe" | "scan" | "profile";
@@ -36,11 +46,14 @@ export type ProofOutcome = {
   restorePoint?: RestoreStatus | null;
 };
 
-type Running = {
-  phase: "before" | "apply" | "after";
+export type Running = {
+  /** `finishing`: the work and the measurements are done, the ring is
+   *  completing (fix-progress.tsx) before the card opens. */
+  phase: "before" | "apply" | "after" | "finishing";
   source: ProofSource;
   name?: string;
   admin: boolean;
+  steps: FixStep[];
 };
 type Done = {
   phase: "done";
@@ -73,6 +86,37 @@ function closeProof() {
   set(null);
   opener?.focus();
   opener = null;
+}
+
+/** The running fix, for the progress ring; null otherwise. */
+export function useProofRun(): Running | null {
+  const state = useSyncExternalStore(subscribe, snapshot);
+  return state && state.phase !== "done" && state.phase !== "error" ? state : null;
+}
+
+// Screens that show the ring in place (the Scan, the Safe optimize card)
+// register here; the dialog shows it only when none is on screen.
+let inlineViews = 0;
+const inlineListeners = new Set<() => void>();
+function subscribeInline(listener: () => void) {
+  inlineListeners.add(listener);
+  return () => inlineListeners.delete(listener);
+}
+export function registerInlineProgress(): () => void {
+  inlineViews++;
+  inlineListeners.forEach((l) => l());
+  return () => {
+    inlineViews--;
+    inlineListeners.forEach((l) => l());
+  };
+}
+
+// The ring calls `proofRevealed` once it has shown 100 % and the check; the
+// card opens then (or after REVEAL_TIMEOUT_MS if no ring is on screen).
+let revealed: (() => void) | null = null;
+const REVEAL_TIMEOUT_MS = 15_000;
+export function proofRevealed() {
+  revealed?.();
 }
 
 /** True while a proof is measuring or applying: callers disable their buttons. */
@@ -124,29 +168,44 @@ const ORDER = [
   "disk_free_mb",
 ];
 
+/** Reports a step the window runs itself (e.g. the Scan's booster switch),
+ *  in the same shape as the backend's "fix-progress" events. */
+export type TrackStep = (event: StepEvent) => void;
+
 /**
  * Measures, runs `apply`, measures again and opens the card. `apply` returns
  * what it changed, or null when it changed nothing and has already told the
  * user why (the card then closes without a result). Throws only for "a proof
  * is already running".
  *
+ * Progress: the ring shows "measure before", the work, "measure after". The
+ * work's steps come from the backend's "fix-progress" events while `apply`
+ * runs (scan_fix, safe_apply); without them it is one "applying settings"
+ * step. Steps the window runs itself go through `track`.
+ *
  * Wiring for any screen (the Scan's Fix all included):
- *   await runWithProof("scan", async () => {
+ *   await runWithProof("scan", async (track) => {
  *     const failures = await invoke<string[]>("apply_tweaks", { ids, source: "scan" });
  *     return { changed: names, failures: failures.length };
  *   });
  */
 export async function runWithProof(
   source: ProofSource,
-  apply: () => Promise<ProofOutcome | null>,
-  options: { name?: string; admin?: boolean } = {},
+  apply: (track: TrackStep) => Promise<ProofOutcome | null>,
+  options: { name?: string; admin?: boolean; plan?: FixStepId[] } = {},
 ): Promise<ProofOutcome | null> {
   if (current && current.phase !== "done" && current.phase !== "error") {
     throw new Error("a measurement is already running");
   }
   const base = { source, name: options.name, admin: options.admin ?? false };
+  let steps = initialSteps(options.plan);
+  const show = (phase: Running["phase"]) => set({ ...base, phase, steps });
+  const track: TrackStep = (event) => {
+    steps = applyStepEvent(steps, event);
+    show("apply");
+  };
   opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  set({ ...base, phase: "before" });
+  show("before");
   let healthBefore: number | null = null;
   let measureError: string | null = null;
   try {
@@ -157,22 +216,33 @@ export async function runWithProof(
     measureError = String(e);
   }
 
-  set({ ...base, phase: "apply" });
+  steps = applyStepEvent(steps, { step: "measure_before", done: true, failed: !!measureError });
+  // The first work step runs until the backend says otherwise.
+  const first = steps.find((st) => st.id !== "measure_before");
+  if (first && first.id !== "measure_after") steps = applyStepEvent(steps, { step: first.id });
+  show("apply");
+  const unlisten = await listen<StepEvent>("fix-progress", (e) => track(e.payload)).catch(
+    () => () => undefined,
+  );
   let outcome: ProofOutcome | null;
   try {
-    outcome = await apply();
+    outcome = await apply(track);
   } catch (e) {
     set({ source, name: options.name, phase: "error", error: String(e) });
     return null;
+  } finally {
+    unlisten();
   }
   if (!outcome) {
     closeProof();
     return null;
   }
 
+  steps = closeWork(steps);
   let changes: MetricChange[] | null = null;
   if (!measureError && outcome.changed.length > 0) {
-    set({ ...base, phase: "after" });
+    steps = applyStepEvent(steps, { step: "measure_after" });
+    show("after");
     try {
       const healthAfter = await healthScore();
       const result = await invoke<BeforeAfter>("run_baseline", { role: "after" });
@@ -183,7 +253,23 @@ export async function runWithProof(
     } catch (e) {
       measureError = String(e);
     }
+    steps = applyStepEvent(steps, { step: "measure_after", done: true, failed: !changes });
+  } else {
+    // Nothing to compare: no second measurement, and the ring says so by
+    // not listing it.
+    steps = steps.filter((st) => st.id !== "measure_after");
   }
+
+  // The ring completes (100 %, the check), then the card opens.
+  await new Promise<void>((resolve) => {
+    const timer = window.setTimeout(resolve, REVEAL_TIMEOUT_MS);
+    revealed = () => {
+      window.clearTimeout(timer);
+      resolve();
+    };
+    show("finishing");
+  });
+  revealed = null;
   set({
     source,
     name: options.name,
@@ -508,10 +594,13 @@ export function ProofCardHost({
   pushToast: (kind: Toast["kind"], message: string) => void;
 }) {
   const state = useSyncExternalStore(subscribe, snapshot);
+  const inline = useSyncExternalStore(subscribeInline, () => inlineViews);
   if (!state) return null;
+  const running = state.phase !== "done" && state.phase !== "error";
+  // The Scan and the Safe optimize card show the ring in place.
+  if (running && inline > 0) return null;
   const c = PROOF_COPY[lang];
   const ba = BEFORE_AFTER_COPY[lang];
-  const running = state.phase !== "done" && state.phase !== "error";
   const close = closeProof;
 
   const save = async () => {
@@ -545,32 +634,8 @@ export function ProofCardHost({
       }}
     >
       {running && (
-        <div className="proof-progress" role="status">
-          <span className="proof-orbit" aria-hidden="true" />
-          <h2 id="proof-title">{c.measuring}</h2>
-          <p className="proof-source">{sourceLabel(state, c)}</p>
-          <ol className="proof-steps">
-            {(["before", "apply", "after"] as const).map((phase, i) => {
-              const at = ["before", "apply", "after"].indexOf(state.phase);
-              const step = i < at ? "done" : i === at ? "current" : "todo";
-              const label = [c.stepBefore, c.stepApply, c.stepAfter][i];
-              return (
-                <li
-                  key={phase}
-                  data-state={step}
-                  aria-current={step === "current" ? "step" : undefined}
-                >
-                  <span className="proof-step-dot" aria-hidden="true">
-                    {step === "done" ? "✓" : i + 1}
-                  </span>
-                  {label}
-                </li>
-              );
-            })}
-          </ol>
-          <p className="proof-hint">
-            {state.phase === "apply" && state.admin ? c.adminHint : c.idle}
-          </p>
+        <div className="proof-progress">
+          <FixProgress lang={lang} titleId="proof-title" />
         </div>
       )}
 

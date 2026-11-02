@@ -4,11 +4,7 @@ import type { Lang } from "../i18n";
  *  Every number these screens show is measured on the user's PC; the words
  *  around it never promise more than the measurement says. */
 type Copy = {
-  measuring: string;
   idle: string;
-  stepBefore: string;
-  stepApply: string;
-  stepAfter: string;
   adminHint: string;
   title: string;
   sourceSafe: string;
@@ -64,11 +60,7 @@ type Copy = {
 };
 
 const en: Copy = {
-  measuring: "Measuring your PC",
   idle: "Leave the PC idle for about half a minute: the same tests run before and after the change.",
-  stepBefore: "Measure before",
-  stepApply: "Apply changes",
-  stepAfter: "Measure after",
   adminHint: "If Windows asks for administrator permission, choose Yes to continue.",
   title: "Proof of change",
   sourceSafe: "Safe optimize",
@@ -151,11 +143,7 @@ const en: Copy = {
 };
 
 const it: Copy = {
-  measuring: "Misurazione del PC in corso",
   idle: "Lascia il PC inattivo per circa mezzo minuto: gli stessi test girano prima e dopo la modifica.",
-  stepBefore: "Misura il prima",
-  stepApply: "Applica le modifiche",
-  stepAfter: "Misura il dopo",
   adminHint: "Se Windows chiede l'autorizzazione da amministratore, scegli Sì per continuare.",
   title: "Risultato misurato",
   sourceSafe: "Ottimizzazione sicura",
@@ -242,11 +230,7 @@ const it: Copy = {
 };
 
 const fr: Copy = {
-  measuring: "Mesure de votre PC",
   idle: "Laissez le PC au repos environ une demi-minute : les mêmes tests sont lancés avant et après la modification.",
-  stepBefore: "Mesurer avant",
-  stepApply: "Appliquer les modifications",
-  stepAfter: "Mesurer après",
   adminHint: "Si Windows demande l'autorisation d'administrateur, choisissez Oui pour continuer.",
   title: "Résultat mesuré",
   sourceSafe: "Optimisation sûre",
@@ -333,11 +317,7 @@ const fr: Copy = {
 };
 
 const es: Copy = {
-  measuring: "Midiendo tu PC",
   idle: "Deja el PC sin usar durante medio minuto: las mismas pruebas se ejecutan antes y después del cambio.",
-  stepBefore: "Medir antes",
-  stepApply: "Aplicar cambios",
-  stepAfter: "Medir después",
   adminHint: "Si Windows pide permiso de administrador, elige Sí para continuar.",
   title: "Resultado medido",
   sourceSafe: "Optimización segura",
@@ -423,11 +403,7 @@ const es: Copy = {
 };
 
 const de: Copy = {
-  measuring: "Dein PC wird gemessen",
   idle: "Lass den PC etwa eine halbe Minute ruhen – dieselben Tests laufen vor und nach der Änderung.",
-  stepBefore: "Vorher messen",
-  stepApply: "Änderungen anwenden",
-  stepAfter: "Nachher messen",
   adminHint: "Wenn Windows nach Administratorrechten fragt, wähle Ja, um fortzufahren.",
   title: "Gemessenes Ergebnis",
   sourceSafe: "Sicher optimieren",
@@ -513,11 +489,7 @@ const de: Copy = {
 };
 
 const pt: Copy = {
-  measuring: "A medir o seu PC",
   idle: "Deixe o PC em repouso durante cerca de meio minuto: os mesmos testes correm antes e depois da alteração.",
-  stepBefore: "Medir antes",
-  stepApply: "Aplicar alterações",
-  stepAfter: "Medir depois",
   adminHint: "Se o Windows pedir permissão de administrador, escolha Sim para continuar.",
   title: "Resultado medido",
   sourceSafe: "Otimização segura",

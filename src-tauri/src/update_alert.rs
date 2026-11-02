@@ -9,7 +9,8 @@
 //! The task exists only while Pro is active and the user has not switched the
 //! alert off. The app reconciles that on start and whenever the licence
 //! changes, the task removes itself when it finds Pro gone, and the installer
-//! removes it on uninstall (windows/installer-hooks.nsh).
+//! removes it on uninstall (windows/installer-hooks.nsh for the setup,
+//! windows/uninstall-cleanup.wxs for the MSI).
 
 use std::path::{Path, PathBuf};
 
@@ -616,6 +617,27 @@ mod tests {
             r#"DeleteRegKey HKCU "Software\Classes\{PROTOCOL}""#
         )));
         assert!(hooks.contains("${If} $UpdateMode <> 1"));
+        // The MSI does the same through its WiX fragment, linked from tauri.conf.json.
+        let wix = include_str!("../windows/uninstall-cleanup.wxs");
+        for name in [
+            TASK_NAME,
+            crate::updatewatch::TASK_NAME,
+            crate::TEMP_CLEANUP_TASK,
+        ] {
+            assert!(
+                wix.contains(&format!("/TN &quot;{name}&quot;")),
+                "{name}"
+            );
+        }
+        assert!(wix.contains(&format!(
+            r#"Key="Software\Classes\{PROTOCOL}" Action="removeOnUninstall""#
+        )));
+        assert_eq!(wix.matches("REMOVE~=\"ALL\" AND NOT UPGRADINGPRODUCTCODE").count(), 3);
+        let conf: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let msi = &conf["bundle"]["windows"]["wix"];
+        assert_eq!(msi["fragmentPaths"][0], "./windows/uninstall-cleanup.wxs");
+        assert_eq!(msi["componentGroupRefs"][0], "PctUninstallCleanup");
     }
 
     #[test]

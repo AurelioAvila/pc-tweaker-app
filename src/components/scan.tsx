@@ -34,8 +34,9 @@ import {
   type ScanReport,
   type ScanSession,
 } from "../scan-runner";
-import { fixAllKeys, fixPlan, locked, scanItems, type ScanItem } from "../scan-items";
-import { runWithProof, useProofBusy } from "./proof-card";
+import { fixAllKeys, fixPlan, fixSteps, locked, scanItems, type ScanItem } from "../scan-items";
+import { runWithProof, useProofBusy, useProofRun } from "./proof-card";
+import { FixProgress } from "./fix-progress";
 import { SafeOptimizeCard } from "./safe-optimize";
 import { CheckIcon } from "./icons";
 import { Badge } from "./ui";
@@ -139,6 +140,8 @@ export function ScanPanel({
   );
   const operation = useRef(false);
   const proofBusy = useProofBusy();
+  // While Fix all runs, the Scan becomes its progress ring.
+  const fixing = useProofRun()?.source === "scan";
   const abort = useRef<AbortController | null>(null);
   /** Why the running scan was aborted: kept for a resume, or ended. */
   const intent = useRef<"pause" | "stop" | null>(null);
@@ -397,11 +400,8 @@ export function ScanPanel({
 
   async function apply() {
     if (operation.current || proofBusy || !report || !reviewItems.length) return;
-    const plan = fixPlan(
-      items,
-      reviewItems.map((i) => i.key),
-      isPro,
-    );
+    const keys = reviewItems.map((i) => i.key);
+    const plan = fixPlan(items, keys, isPro);
     const admin = reviewItems.some((i) => i.admin);
     operation.current = true;
     onBusyChange?.(true);
@@ -413,16 +413,18 @@ export function ScanPanel({
       // Measured before and after, then the proof card (proof-card.tsx).
       await runWithProof(
         "scan",
-        async () => {
+        async (track) => {
           const result = await applyScanSelection(invoke, report, isPro, plan.tweaks, plan.extras);
           let booster = false;
           if (plan.booster) {
+            track({ step: "booster" });
             try {
               await invoke("apply_tweak", { id: "smart_ram_booster" });
               booster = true;
             } catch (e) {
               result.errors.push(String(e));
             }
+            track({ step: "booster", done: true, failed: !booster });
           }
           const tweaks = booster
             ? await invoke<TweakInfo[]>("list_tweaks").catch(() => result.tweaks)
@@ -453,7 +455,7 @@ export function ScanPanel({
             restorePoint: result.measured?.restore_point ?? null,
           };
         },
-        { admin },
+        { admin, plan: fixSteps(items, keys, isPro) },
       );
       window.requestAnimationFrame(() => {
         outcomePanel.current?.focus({ preventScroll: true });
@@ -510,6 +512,13 @@ export function ScanPanel({
       return next;
     });
   }
+
+  if (fixing)
+    return (
+      <section className="scan-workspace" aria-busy="true">
+        <FixProgress lang={lang} inline />
+      </section>
+    );
 
   return (
     <section className="scan-workspace" aria-busy={reading || applying}>

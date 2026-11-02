@@ -793,3 +793,45 @@ test("fix progress: bands cover 0-100 in order and a running step never reaches 
   const noAfter = bands(steps.filter((s) => s.id !== "measure_after"));
   assert.equal(noAfter.at(-1)?.[1], 100);
 });
+
+test("scope list results: measured, an issue only where there is something to look at", async () => {
+  const { probeResult, REPORT_KEY } = await import("../src/scan-runner");
+  assert.deepEqual(Object.keys(REPORT_KEY).sort(), [...SCAN_PROBES].sort());
+  assert.equal(probeResult("junk_summary", null), null);
+  assert.deepEqual(probeResult("reboot_pending", false), { kind: "ok", issue: false });
+  assert.deepEqual(probeResult("reboot_pending", true), { kind: "found", count: 1, issue: true });
+  assert.deepEqual(probeResult("registry_scan", { items: [] }), { kind: "ok", issue: false });
+  assert.deepEqual(
+    probeResult("junk_summary", [
+      {
+        id: "a",
+        files: 1,
+        bytes: 100,
+        accessible: true,
+        requires_admin: false,
+        requires_pro: false,
+      },
+      {
+        id: "b",
+        files: 1,
+        bytes: 900,
+        accessible: false,
+        requires_admin: false,
+        requires_pro: false,
+      },
+    ]),
+    { kind: "bytes", bytes: 100, issue: true },
+    "unreadable folders are not counted",
+  );
+  const startup = probeResult("list_startup_items", [{ enabled: true }, { enabled: false }]);
+  assert.deepEqual(
+    startup,
+    { kind: "found", count: 1, issue: false },
+    "startup apps are not faults",
+  );
+  assert.deepEqual(probeResult("system_stats", { ram_used: 90, ram_total: 100 }), {
+    kind: "percent",
+    percent: 90,
+    issue: true,
+  });
+});

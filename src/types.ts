@@ -906,7 +906,17 @@ export type ScanFixPlan = {
 export type ScanFreed = { id: string; freed_bytes: number; deleted: number; skipped: number };
 
 /** Mirrors `scanfix::ScanFixResult`: what every part measured. */
+/** Mirrors `RestorePointOutcome` in restore_point.rs (`skipped` also when the
+ *  user chose to continue without one). Times are Unix seconds. */
+export type RestoreStatus = {
+  kind: "created" | "reused" | "unverified" | "failed" | "skipped";
+  at?: number;
+  reason?: string;
+};
+
 export type ScanFixResult = {
+  /** The restore point taken before the administrator part, when there was one. */
+  restore_point?: RestoreStatus | null;
   tweak_errors: string[];
   cleanups: ScanFreed[];
   app_caches: ScanFreed | null;

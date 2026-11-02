@@ -13,7 +13,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { save as saveFileDialog } from "@tauri-apps/plugin-dialog";
 import { format, type Lang, type Strings } from "../i18n";
 import { formatNumber, friendlyError, uiLocale } from "../lib";
-import type { Toast } from "../types";
+import type { RestoreStatus, Toast } from "../types";
 import { Badge, type BadgeKind } from "./ui";
 import { BEFORE_AFTER_COPY } from "./before-after-copy";
 import {
@@ -27,14 +27,6 @@ import { PROOF_COPY } from "./proof-copy";
 import "./proof-card.css";
 
 export type ProofSource = "safe" | "scan" | "profile";
-
-/** Mirrors `RestorePointOutcome` in restore_point.rs (`skipped` also when the
- *  user chose to continue without one). Times are Unix seconds. */
-export type RestoreStatus = {
-  kind: "created" | "reused" | "unverified" | "failed" | "skipped";
-  at?: number;
-  reason?: string;
-};
 
 /** What the action reports back: the names of what it changed (shown on the
  *  card), how many it could not apply, and its restore point if it made one. */

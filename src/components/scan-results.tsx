@@ -91,7 +91,6 @@ export function ScanSummary({
   fixCount,
   busy,
   trialDays,
-  extraActions,
   onFix,
   onCustom,
   onUnlock,
@@ -105,7 +104,6 @@ export function ScanSummary({
   fixCount: number;
   busy: boolean;
   trialDays: number | null;
-  extraActions?: ReactNode;
   onFix: () => void;
   onCustom: (on: boolean) => void;
   onUnlock: () => void;
@@ -228,7 +226,6 @@ export function ScanSummary({
             {custom ? c.customDone : c.custom}
           </button>
         )}
-        {extraActions}
         {custom && <p className="scan2-hint">{c.customHint}</p>}
       </div>
       {!isPro && proGains.length > 0 && (

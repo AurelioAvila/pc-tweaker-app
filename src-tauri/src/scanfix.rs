@@ -49,6 +49,9 @@ pub struct Freed {
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct ScanFixResult {
+    /// The restore point taken before the administrator part, when there was one.
+    #[serde(default)]
+    pub restore_point: Option<crate::restore_point::RestorePointOutcome>,
     pub tweak_errors: Vec<String>,
     pub cleanups: Vec<Freed>,
     pub app_caches: Option<Freed>,
@@ -59,6 +62,7 @@ pub struct ScanFixResult {
 
 impl ScanFixResult {
     fn merge(&mut self, other: ScanFixResult) {
+        self.restore_point = self.restore_point.take().or(other.restore_point);
         self.tweak_errors.extend(other.tweak_errors);
         self.cleanups.extend(other.cleanups);
         self.app_caches = self.app_caches.take().or(other.app_caches);
@@ -208,15 +212,21 @@ fn run_elevated_part(dir: &Path, plan: ElevatedPlan) -> ScanFixResult {
     result
 }
 
-/// `--elevated-scan-fix <json>`: exit code and result file for the app.
+/// `--elevated-scan-fix <json>`: exit code and result file for the app. The
+/// helper took `restore_point` before anything else.
 #[cfg(windows)]
-pub fn run_elevated(dir: &Path, payload: &str) -> Result<(), String> {
+pub fn run_elevated(
+    dir: &Path,
+    payload: &str,
+    restore_point: crate::restore_point::RestorePointOutcome,
+) -> Result<(), String> {
     let plan: ElevatedPlan =
         serde_json::from_str(payload).map_err(|_| "invalid scan fix payload".to_string())?;
     if !plan.registry.is_empty() && !regclean::valid_stamp(&plan.stamp) {
         return Err("invalid backup id".into());
     }
-    let result = run_elevated_part(dir, plan);
+    let mut result = run_elevated_part(dir, plan);
+    result.restore_point = Some(restore_point);
     let json = serde_json::to_string(&result).map_err(|e| e.to_string())?;
     crate::elevation::write_no_follow(dir.join(RESULT_FILE), json).map_err(|e| e.to_string())
 }
@@ -345,7 +355,7 @@ fn fix_parts(dir: &Path, plan: ScanFixPlan) -> ScanFixResult {
         return result;
     }
     if crate::elevation::is_elevated() {
-        crate::restore_point_before_change();
+        result.restore_point = Some(crate::restore_point_before_change());
         result.merge(run_elevated_part(dir, elevated));
         return result;
     }

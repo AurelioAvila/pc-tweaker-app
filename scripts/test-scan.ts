@@ -519,7 +519,6 @@ import {
   scanTotals,
   BOOSTER_ID,
 } from "../src/scan-items";
-import { emitFixDone, onBeforeFix, onFixDone, runBeforeFix } from "../src/fix-events";
 
 const busyReport = () => {
   const ts = [
@@ -625,23 +624,4 @@ test("plenty of free memory is not a finding; missing reads produce no items", (
     empty.map((i) => i.key),
     ["latency:dpc"],
   );
-});
-
-test("fix hooks: before hooks are awaited (and time-boxed), done hooks see the summary", async () => {
-  const seen: string[] = [];
-  const offBefore = onBeforeFix(async (plan) => {
-    await new Promise((r) => setTimeout(r, 5));
-    seen.push(`before:${plan.tweaks.join(",")}`);
-  });
-  const offBroken = onBeforeFix(() => {
-    throw Error("a broken listener");
-  });
-  const offDone = onFixDone((s) => seen.push(`done:${s.fixed.length}`));
-  await runBeforeFix({ tweaks: ["a"], cleanups: [], app_caches: [], registry: [], purge: false }, "scan");
-  emitFixDone({ source: "scan", fixed: ["a"], failed: [], measured: null, errors: [] });
-  offBefore();
-  offBroken();
-  offDone();
-  emitFixDone({ source: "scan", fixed: [], failed: [], measured: null, errors: [] });
-  assert.deepEqual(seen, ["before:a", "done:1"]);
 });

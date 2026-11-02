@@ -5,10 +5,10 @@ import { invoke } from "@tauri-apps/api/core";
 import type { Lang, Strings } from "../i18n";
 import { format } from "../i18n";
 import { friendlyError, textFor } from "../lib";
-import type { Toast, TweakInfo } from "../types";
+import type { RestoreStatus, Toast, TweakInfo } from "../types";
 import { Badge } from "./ui";
 import { PROOF_COPY } from "./proof-copy";
-import { runWithProof, useProofBusy, type RestoreStatus } from "./proof-card";
+import { runWithProof, useProofBusy } from "./proof-card";
 import "./safe-optimize.css";
 
 /**

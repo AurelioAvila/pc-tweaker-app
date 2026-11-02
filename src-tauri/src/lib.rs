@@ -2313,7 +2313,7 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             result
         }
 
-        scanfix::ELEVATED_FLAG => scanfix::run_elevated(&dir, id),
+        scanfix::ELEVATED_FLAG => scanfix::run_elevated(&dir, id, restore_point),
         scanfix::RESTORE_FLAG => scanfix::run_elevated_restore(&dir, id),
 
         // Safe optimize: the restore point above came first; report it, then

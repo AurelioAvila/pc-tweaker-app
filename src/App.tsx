@@ -1260,15 +1260,8 @@ function App() {
                     onBusyChange={(busy) => {
                       scanApplying.current = busy;
                     }}
-                  />
-                  <SafeOptimizeCard
-                    s={s}
-                    lang={lang}
                     tweaks={tweaks}
-                    isPro={isProUnlocked}
-                    onChanged={refresh}
                     onRequirePro={() => setPaywallFeature(PROOF_COPY[lang].safeTitle)}
-                    pushToast={pushToast}
                   />
                   <TweakyDriverPromoCard s={s} />
                 </div>

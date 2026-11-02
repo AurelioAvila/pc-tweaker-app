@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-interrupt-sample"
+description = "Enables the interrupt_sample command without any pre-configured scope."
+commands.allow = ["interrupt_sample"]
+
+[[permission]]
+identifier = "deny-interrupt-sample"
+description = "Denies the interrupt_sample command without any pre-configured scope."
+commands.deny = ["interrupt_sample"]

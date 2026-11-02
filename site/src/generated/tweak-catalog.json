@@ -946,6 +946,28 @@
     "requires_pro": true
   },
   {
+    "category": "maintenance",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Software\\PC Tweaker\\Memory",
+        "setsTo": "1 (0x1)",
+        "valueName": "SmartBooster",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Releases Windows' standby memory cache when free memory drops below your threshold (1 GB by default), at most once every 5 minutes and never while a full-screen game is in front. Works while PC Tweaker runs as administrator; every release is measured.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "smart_ram_booster",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Smart RAM booster",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": true
+  },
+  {
     "category": "performance",
     "changes": [
       {

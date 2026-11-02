@@ -100,6 +100,55 @@ fn dir_size(path: &Path) -> u64 {
         .sum()
 }
 
+/// Bytes and files under `path`, links not followed.
+fn dir_stats(path: &Path) -> (u64, u64) {
+    let Ok(entries) = std::fs::read_dir(path) else {
+        return (0, 0);
+    };
+    entries
+        .filter_map(|e| e.ok())
+        .fold((0, 0), |(bytes, files), e| match e.metadata() {
+            Ok(m) if m.is_dir() => {
+                let (b, f) = dir_stats(&e.path());
+                (bytes + b, files + f)
+            }
+            Ok(m) => (bytes + m.len(), files + 1),
+            Err(_) => (bytes, files),
+        })
+}
+
+/// One cleanup target as the Scan counts it: what a clean would move.
+#[derive(Serialize, Clone, Debug)]
+pub struct JunkTarget {
+    pub id: &'static str,
+    pub files: u64,
+    pub bytes: u64,
+    /// False when the folder could not be read; the counts are then unknown.
+    pub accessible: bool,
+    pub requires_admin: bool,
+    pub requires_pro: bool,
+}
+
+/// Every cleanup target, counted. Read-only.
+pub fn junk_summary() -> Vec<JunkTarget> {
+    cleanup_targets()
+        .into_iter()
+        .map(|t| {
+            let dir = target_dir(t.id);
+            let accessible = dir.as_deref().is_some_and(|d| std::fs::read_dir(d).is_ok());
+            let (bytes, files) = dir.filter(|_| accessible).map_or((0, 0), |d| dir_stats(&d));
+            JunkTarget {
+                id: t.id,
+                files,
+                bytes,
+                accessible,
+                requires_admin: t.requires_admin,
+                requires_pro: t.requires_pro,
+            }
+        })
+        .collect()
+}
+
 /// One row of a cleanup preview: what would be moved to the Recycle Bin.
 /// Names only, never full paths — the target directory is fixed per id and
 /// shown once by the UI, so rows stay readable and log-safe.

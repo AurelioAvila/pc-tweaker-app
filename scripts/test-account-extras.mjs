@@ -112,6 +112,23 @@ session.steps = {
   list_startup_items: done([{ name: "Steam", enabled: true, command: "C:\\Users\\aurel\\steam.exe" }]),
   reboot_pending: done(true),
   health_report: { state: "unavailable", at, value: null },
+  // Scan 2.0: the diagnosis keeps counts and states, never these paths.
+  junk_summary: done([
+    { id: "temp_cleanup", files: 120, bytes: 2 * 1024 ** 3, accessible: true, requires_admin: false, requires_pro: false },
+  ]),
+  registry_scan: done({
+    items: [
+      { id: "a", class: "uninstall", hive: "HKCU", key: "k", value: null, label: "Chat", missing: "C:\\Users\\aurel\\AppData\\Local\\Chat\\Update.exe" },
+      { id: "b", class: "mui_cache", hive: "HKCU", key: "k", value: "C:\\Users\\aurel\\x.exe.FriendlyAppName", label: "X", missing: "C:\\Users\\aurel\\x.exe" },
+    ],
+  }),
+  ram_boost_status: done({ enabled: false, threshold_mb: 1024, can_run: false, lists: { free_mb: 412, standby_mb: 8240, modified_mb: 10 }, total_mb: 32000, last: null, session_count: 0, session_freed_mb: 0, last_skip: null }),
+  hardware_audit: done({
+    memory: { configured_mts: 2133, rated_mts: 3600, rated_source: "part_number", part_number: "F4-3600C16", generation: "DDR4", modules: 2, below_rated: true },
+    links: [{ kind: "nvme", name: "SSD", current_gen: 3, max_gen: 4, current_width: 4, max_width: 4, below_max: true }],
+    rebar: [{ gpu: "RTX", state: "off", largest_window_mb: 256 }],
+  }),
+  interrupt_sample: done({ seconds: 1.5, cpus: 16, interrupts_per_sec: 9000, dpcs_per_sec: 900, cpu0_interrupt_share: 0.46, cpu0_dpc_share: 0.71, concentrated: true }),
 };
 const report = m.scanReport(session, at);
 const text = m.diagnosisText({
@@ -151,6 +168,11 @@ for (const expected of [
   "2026-10-31 11:59 UTC reverted Disable Game DVR [game_dvr]",
   "applied Disable Game DVR [game_dvr] (failed)",
   "C:\\Users\\<user>",
+  "Junk: 2.00 GB in 120 files",
+  "Registry leftovers: 2 (uninstall 1, mui_cache 1)",
+  "Memory: 412 MB free, 8240 MB standby, booster off",
+  "Hardware audit: RAM 2133 of 3600 MT/s; nvme PCIe 3x4 of 4x4 (below); Resizable BAR off",
+  "Interrupts: CPU 0 took 46% of interrupts and 71% of DPCs over 16 CPUs",
 ]) {
   assert.ok(text.includes(expected), `missing: ${expected}\n---\n${text}`);
 }

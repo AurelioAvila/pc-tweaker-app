@@ -385,7 +385,13 @@ pub fn purge_standby_memory() -> Result<PurgeResult, String> {
     imp::purge_standby(before, free_ram_mb)
 }
 
+/// Free memory as the memory manager counts it: free and zeroed pages.
+/// "Available" memory already includes the standby cache, so it barely moves
+/// when that cache is purged; the free lists are what the purge changes.
 fn free_ram_mb() -> u64 {
+    if let Some(lists) = crate::ramboost::memory_lists() {
+        return lists.free_mb;
+    }
     use sysinfo::System;
     let mut sys = System::new();
     sys.refresh_memory();

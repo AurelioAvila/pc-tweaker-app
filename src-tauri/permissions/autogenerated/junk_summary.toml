@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-junk-summary"
+description = "Enables the junk_summary command without any pre-configured scope."
+commands.allow = ["junk_summary"]
+
+[[permission]]
+identifier = "deny-junk-summary"
+description = "Denies the junk_summary command without any pre-configured scope."
+commands.deny = ["junk_summary"]

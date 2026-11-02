@@ -10,6 +10,7 @@ import {
   scanObservations,
   type ScanReport,
 } from "./scan-runner";
+import { REGISTRY_CLASSES, scanItems, scanTotals } from "./scan-items";
 import { SCAN_COPY } from "./components/scan-copy";
 import type { AuditEntry } from "./types";
 
@@ -103,6 +104,43 @@ export function diagnosisText(input: DiagnosisInput): string {
     ...report.skipped.map((probe) => `${EN.probes[SCAN_PROBES.indexOf(probe)]} (not run)`),
   ];
   if (missing.length) lines.push(`Not read: ${missing.join(", ")}`);
+
+  // Scan 2.0 measurements: counts and states only, never a path or a name.
+  const totals = scanTotals(scanItems(report));
+  if (report.junk || report.caches)
+    lines.push(
+      `Junk: ${(totals.junkBytes / 1024 ** 3).toFixed(2)} GB in ${totals.junkFiles} files`,
+    );
+  if (report.registry) {
+    const by = REGISTRY_CLASSES.map(
+      (cls) => [cls, report.registry!.items.filter((i) => i.class === cls).length] as const,
+    ).filter(([, n]) => n > 0);
+    lines.push(
+      `Registry leftovers: ${totals.registry}${by.length ? ` (${by.map(([c, n]) => `${c} ${n}`).join(", ")})` : ""}`,
+    );
+  }
+  const memory = report.memory;
+  if (memory?.lists)
+    lines.push(
+      `Memory: ${memory.lists.free_mb} MB free, ${memory.lists.standby_mb} MB standby, booster ${memory.enabled ? "on" : "off"}`,
+    );
+  const hw = report.hardware;
+  if (hw) {
+    const parts = [
+      hw.memory && `RAM ${hw.memory.configured_mts} of ${hw.memory.rated_mts} MT/s`,
+      ...hw.links.map(
+        (l) =>
+          `${l.kind} PCIe ${l.current_gen}x${l.current_width} of ${l.max_gen}x${l.max_width}${l.below_max ? " (below)" : ""}`,
+      ),
+      ...hw.rebar.map((r) => `Resizable BAR ${r.state}`),
+    ].filter(Boolean);
+    if (parts.length) lines.push(`Hardware audit: ${parts.join("; ")}`);
+  }
+  const irq = report.latency;
+  if (irq)
+    lines.push(
+      `Interrupts: CPU 0 took ${Math.round(irq.cpu0_interrupt_share * 100)}% of interrupts and ${Math.round(irq.cpu0_dpc_share * 100)}% of DPCs over ${irq.cpus} CPUs`,
+    );
 
   const fixes = recommendedTweaks(report, isPro);
   const locked = isPro ? [] : recommendedTweaks(report, true).filter((t) => t.requires_pro);

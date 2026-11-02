@@ -117,6 +117,10 @@ pub fn advise(id: &str, profile: &SystemProfile) -> TweakAdvice {
             _ => (Verdict::Neutral, None),
         },
 
+        // Privacy findings: tracking and promotion switches that cost the
+        // user nothing to turn off, whatever the hardware.
+        id if is_privacy_finding(id) => (Verdict::Recommended, None),
+
         // Everything else: no hardware-derived opinion. Deliberately not a
         // catch-all "Recommended" — see the module docs.
         _ => (Verdict::Neutral, None),
@@ -201,6 +205,26 @@ pub fn is_scan_relevant(id: &str) -> bool {
     )
 }
 
+/// The privacy switches the Scan reports under its own Privacy category
+/// (1.19). Never counted as performance findings: the Scan shows them apart,
+/// and its "settings slowing you down" count leaves them out. Only switches
+/// whose "off" costs no feature people rely on: advertising ID, tailored
+/// experiences, feedback prompts, suggestions and promotions, and the
+/// diagnostic data level. Location, search, Cortana, activity history and the
+/// like change how Windows behaves and stay a choice in the Privacy section.
+pub fn is_privacy_finding(id: &str) -> bool {
+    matches!(
+        id,
+        "reset_advertising_id"
+            | "disable_tailored_experiences"
+            | "disable_feedback_requests"
+            | "disable_start_suggestions"
+            | "disable_suggested_apps"
+            | "disable_windows_suggestions"
+            | "disable_telemetry_tasks"
+    )
+}
+
 /// Advice for every id the caller asks about, in the same order.
 #[tauri::command(async)]
 pub async fn advise_tweaks(
@@ -218,7 +242,7 @@ pub fn scan_relevant_ids() -> Vec<String> {
     let mut ids: Vec<String> = crate::tweaks::all_tweaks()
         .iter()
         .map(|t| t.id.to_string())
-        .filter(|id| is_scan_relevant(id))
+        .filter(|id| is_scan_relevant(id) || is_privacy_finding(id))
         .collect();
     // The non-registry tweaks live outside `all_tweaks`, so add the ones the
     // allowlist names explicitly.
@@ -226,8 +250,9 @@ pub fn scan_relevant_ids() -> Vec<String> {
         crate::power::TWEAK_ID,
         crate::netlatency::TWEAK_ID,
         crate::services::WINDOWS_SEARCH_ID,
+        "disable_windows_suggestions",
     ] {
-        if is_scan_relevant(id) {
+        if is_scan_relevant(id) || is_privacy_finding(id) {
             ids.push(id.to_string());
         }
     }
@@ -239,7 +264,7 @@ mod tests {
     use super::*;
     use crate::systemprofile::SystemProfile;
 
-    fn profile() -> SystemProfile {
+    pub(super) fn profile() -> SystemProfile {
         SystemProfile {
             windows_version: Some("Windows 11 24H2".into()),
             windows_build: Some("26100.1742".into()),
@@ -469,6 +494,29 @@ mod scan_scope_tests {
         }
     }
 
+    /// Privacy findings are recommended everywhere, listed by the Scan, and
+    /// never mistaken for performance work.
+    #[test]
+    fn privacy_findings_are_reported_apart_from_performance() {
+        let ids = scan_relevant_ids();
+        for id in [
+            "reset_advertising_id",
+            "disable_tailored_experiences",
+            "disable_feedback_requests",
+            "disable_start_suggestions",
+            "disable_suggested_apps",
+            "disable_windows_suggestions",
+            "disable_telemetry_tasks",
+        ] {
+            assert!(is_privacy_finding(id) && !is_scan_relevant(id), "{id}");
+            assert!(ids.iter().any(|i| i == id), "{id} missing from the scan");
+            assert_eq!(advise(id, &super::tests::profile()).verdict, Verdict::Recommended, "{id}");
+        }
+        for id in ["disable_location_tracking", "disable_bing_search", "disable_cortana", "disable_activity_history"] {
+            assert!(!is_privacy_finding(id), "{id} changes how Windows behaves");
+        }
+    }
+
     /// Every allowlisted id must actually exist, or the Scan would silently
     /// look for a tweak that was renamed or removed.
     #[test]
@@ -477,6 +525,7 @@ mod scan_scope_tests {
         assert!(!ids.is_empty(), "the scan allowlist resolved to nothing");
         for id in &ids {
             let known = crate::tweaks::find_tweak(id).is_some()
+                || crate::settings_tweaks::find(id).is_some()
                 || matches!(
                     id.as_str(),
                     "power_plan_performance" | "network_latency" | "disable_windows_search_service"

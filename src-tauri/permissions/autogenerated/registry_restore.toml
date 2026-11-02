@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-registry-restore"
+description = "Enables the registry_restore command without any pre-configured scope."
+commands.allow = ["registry_restore"]
+
+[[permission]]
+identifier = "deny-registry-restore"
+description = "Denies the registry_restore command without any pre-configured scope."
+commands.deny = ["registry_restore"]

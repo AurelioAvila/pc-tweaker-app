@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-ram-boost-threshold"
+description = "Enables the set_ram_boost_threshold command without any pre-configured scope."
+commands.allow = ["set_ram_boost_threshold"]
+
+[[permission]]
+identifier = "deny-set-ram-boost-threshold"
+description = "Denies the set_ram_boost_threshold command without any pre-configured scope."
+commands.deny = ["set_ram_boost_threshold"]

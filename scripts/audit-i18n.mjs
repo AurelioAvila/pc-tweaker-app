@@ -149,6 +149,13 @@ for (const [key, value] of Object.entries(flat.es ?? {})) {
  * Adding a line here is a deliberate statement that a human looked at it.
  */
 const REVIEWED_AS_CORRECT = new Set([
+  // Scan 2.0 (1.19): the same word in these languages.
+  "de:componentScan2.categories.registry",
+  "it:componentScan2.categories.hardware",
+  "es:componentScan2.categories.hardware",
+  "de:componentScan2.categories.hardware",
+  "pt:componentScan2.categories.hardware",
+  "de:componentScan2.optional",
   // German uses "Apps" too (the English source wrongly said "Anwendungen" until 1.18.23).
   "de:appCache.catApps",
   // "Laptop" is the everyday German word (the review chose it over "Notebook").

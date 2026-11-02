@@ -588,6 +588,20 @@ export const TWEAK_NOTES: Record<string, TweakNote> = {
     },
     related: ["disable_power_throttling"],
   },
+  smart_ram_booster: {
+    title: "Smart RAM Booster: Release Standby Memory Below a Threshold",
+    lead: "A PC Tweaker switch, not a Windows setting. While PC Tweaker runs as administrator, it releases Windows' standby memory cache when free memory drops below your threshold (1 GB by default), at most once every 5 minutes and never while a full-screen game is in front. Each release is measured and recorded.",
+    verdict: "situational",
+    helps: "A program you run warns about low free memory while Windows holds a large standby cache, and you want to compare with and without the release.",
+    skip: "Windows already hands standby memory to programs that ask for it; after a release, the files it held are read from disk again. We publish no measurement of a gain.",
+    manual: {
+      intro: "Windows has no built-in switch for this. The one-off equivalent is the Empty Standby List command in Microsoft's Sysinternals RAMMap.",
+      steps: [
+        { title: "Release the standby list once", note: "Run RAMMap as administrator, then choose Empty, Empty Standby List. Nothing persists: Windows refills the cache as files are read." },
+      ],
+    },
+    related: ["keep_kernel_in_ram"],
+  },
   limit_do_background_download: {
     title: "Limit Windows Update Background Download Speed",
     lead: "Sets a Delivery Optimization limit, in KB/s, on background downloads (the DOMaxBackgroundDownloadBandwidth policy). Other programs and Windows Update itself keep working.",

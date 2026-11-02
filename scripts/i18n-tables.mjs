@@ -8,6 +8,7 @@ export async function loadTranslations() {
       contents: `
         import { STRINGS } from './src/i18n';
         import { SCAN_COPY } from './src/components/scan-copy';
+        import { SCAN2_COPY } from './src/components/scan2-copy';
         import { ADVANCED_COPY } from './src/components/advanced-copy';
         import { DEBLOAT_COPY, LIBRARY_COPY, EXTRA_IMPACTS } from './src/components/debloat-copy';
         import { PRICING_COPY, PLAN_STATE_COPY } from './src/components/pricing-copy';
@@ -17,7 +18,7 @@ export async function loadTranslations() {
         import { TRIAL_COPY } from './src/components/trial-copy';
         import { REFERRAL_COPY } from './src/components/referral-copy';
         import { HEALTH_COPY } from './src/components/health-copy';
-        const tables = { componentScan: SCAN_COPY, componentAdvanced: ADVANCED_COPY,
+        const tables = { componentScan: SCAN_COPY, componentScan2: SCAN2_COPY, componentAdvanced: ADVANCED_COPY,
           componentDebloat: DEBLOAT_COPY, componentLibrary: LIBRARY_COPY,
           componentImpacts: EXTRA_IMPACTS, componentPricing: PRICING_COPY,
           componentStarter: STARTER_COPY, componentBeforeAfter: BEFORE_AFTER_COPY,

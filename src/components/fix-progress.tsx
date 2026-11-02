@@ -204,8 +204,11 @@ export function FixProgress({
         since = now;
       }
       let target: number;
+      // 100 only once the proof is finishing: the card is then ready to
+      // open when the check has shown (a 100 reached earlier would tell it
+      // before it listens, and it would wait for its timeout).
       if (shown >= steps.length)
-        target = r.phase === "finishing" ? 100 : (band[band.length - 1]?.[1] ?? 100);
+        target = r.phase === "finishing" ? 100 : Math.min(99, band[band.length - 1]?.[1] ?? 99);
       else if (steps[shown].state === "done") target = band[shown][1];
       else target = creep(band[shown], now - since, steps[shown].id);
       // Smooth, never backwards; the last stretch to 100 % (every step

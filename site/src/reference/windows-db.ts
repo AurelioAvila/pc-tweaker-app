@@ -73,6 +73,7 @@ const DWM = { label: "Microsoft Learn: Desktop Window Manager", url: "https://le
 const SVCHOST = { label: "Microsoft Learn: Service host grouping in Windows 10", url: "https://learn.microsoft.com/en-us/windows/application-management/svchost-service-refactoring" };
 const EXPLORER = { label: "Microsoft Support: File Explorer in Windows", url: "https://support.microsoft.com/en-us/windows/experience/fileexplorer/file-explorer-in-windows" };
 const DEFENDER = { label: "Microsoft Learn: Microsoft Defender Antivirus compatibility with other security products", url: "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility" };
+const DEFENDER_PERF = { label: "Microsoft Learn: Troubleshoot Microsoft Defender Antivirus performance issues (MsMpEng.exe)", url: "https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-performance-issues" };
 const WEBVIEW = { label: "Microsoft Learn: Distribute your app and the WebView2 Runtime", url: "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution" };
 const WEBVIEW_PROCESS = { label: "Microsoft Learn: Process model for WebView2 apps", url: "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/process-model" };
 const WMI = { label: "Microsoft Learn: Provider Hosting and Security (Wmiprvse.exe)", url: "https://learn.microsoft.com/en-us/windows/win32/wmisdk/provider-hosting-and-security" };
@@ -280,17 +281,19 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     path: "C:\\ProgramData\\Microsoft\\Windows Defender\\Platform\\<version>\\MsMpEng.exe", signer: MSWIN,
     purpose: "The Microsoft Defender Antivirus engine, run by the WinDefend service.",
     answer: "It is Defender's engine, so do not disable it.",
+    busy: { q: "Why is MsMpEng.exe (Antimalware Service Executable) using so much CPU?", a: "It scans files as programs start and runs scheduled scans, and Microsoft names two common causes of higher CPU use: a program that is not digitally signed triggers a real-time scan each time it launches, and complex file formats cost more to scan. For scheduled scans, Microsoft documents a CPU limit per scan (50 by default, which can be lowered to 20 or 30), a low-priority option and a rule that they start only when the PC is idle. Adjust those instead of turning Defender off." },
     verdict: "leave",
     why: "Microsoft warns that disabling, stopping or modifying the Defender services and processes, MsMpEng included, can cause severe instability and leave the PC vulnerable. Use Windows Security settings, such as scheduled scan times or exclusions you can justify, instead.",
     pcTweaker: REFUSED,
     related: ["services/windefend", "processes/smartscreen-exe"],
-    sources: [DEFENDER, PCT_RULES],
+    sources: [DEFENDER, DEFENDER_PERF, PCT_RULES],
   },
   {
     kind: "process", slug: "msedgewebview2-exe", name: "msedgewebview2.exe", displayName: "Microsoft Edge WebView2 Runtime",
     path: "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\<version>\\msedgewebview2.exe", signer: "Microsoft Corporation",
     purpose: "The WebView2 Runtime that desktop apps use to show web-based interfaces. It uses the same multi-process model as Microsoft Edge, so one app can start several of these processes.",
-    answer: "Each app that uses WebView2 starts its own copies.",
+    answer: "Many copies are normal: one set per app.",
+    busy: { q: "Why are there so many msedgewebview2.exe processes?", a: "The WebView2 Runtime uses the same process model as Microsoft Edge. One group holds a single browser process, one or more renderer processes and helpers such as the GPU and audio service processes, and the count changes as the app uses WebView2 features. Each app, or each user data folder an app uses, gets its own group, so several apps mean several groups. To find which app owns a group, close your apps one at a time and watch which copies disappear." },
     verdict: "leave",
     why: "Each app that uses WebView2 starts its own group of processes. Ending them closes or breaks the window of the app that owns them.",
     pcTweaker: "PC Tweaker's own window is built on WebView2, so you will see msedgewebview2.exe processes while the app is open. They close with it.",

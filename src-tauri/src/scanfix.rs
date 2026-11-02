@@ -481,7 +481,11 @@ fn run_helper(
         (launched, forwarder.join().unwrap_or_default())
     });
     let _ = std::fs::remove_file(&progress);
-    for step in steps.iter().filter(|s| !finished.iter().any(|f| f == *s)) {
+    // The restore point included: no line at all means the prompt was declined.
+    for step in std::iter::once("restore_point")
+        .chain(steps.iter().copied())
+        .filter(|s| !finished.iter().any(|f| f == s))
+    {
         report(Step {
             failed: true,
             ..Step::done(step)

@@ -303,6 +303,124 @@ export async function collectScan(
 }
 export type ScanReport = ReturnType<typeof scanReport>;
 
+/** Where each check's answer sits in a ScanReport. */
+export const REPORT_KEY = {
+  list_tweaks: "tweaks",
+  scan_relevant_ids: "ids",
+  advise_tweaks: "advice",
+  system_profile: "profile",
+  list_drives_cmd: "drives",
+  list_startup_items: "startup",
+  system_stats: "stats",
+  reboot_pending: "reboot",
+  health_report: "health",
+  driver_audit: "drivers",
+  list_scheduled_tasks: "tasks",
+  list_debloat_apps: "apps",
+  ecoqos_status: "eco",
+  junk_summary: "junk",
+  scan_app_caches: "caches",
+  registry_scan: "registry",
+  ram_boost_status: "memory",
+  hardware_audit: "hardware",
+  interrupt_sample: "latency",
+} as const satisfies Record<ScanProbe, keyof ScanReport>;
+
+/** A finished check's one-line result for the scope list: what it read and
+ *  whether that is something to look at (`issue`). Measured values only. */
+export type ProbeResult =
+  | { kind: "ok"; issue: false }
+  | { kind: "found" | "checked"; count: number; issue: boolean }
+  | { kind: "bytes"; bytes: number; issue: boolean }
+  | { kind: "percent"; percent: number; issue: boolean };
+
+const OK: ProbeResult = { kind: "ok", issue: false };
+const found = (count: number, issue = count > 0): ProbeResult =>
+  count > 0 ? { kind: "found", count, issue } : OK;
+const checked = (count: number): ProbeResult => ({ kind: "checked", count, issue: false });
+
+/** The result of one check from its answer; null when there is none. */
+export function probeResult(probe: ScanProbe, value: unknown): ProbeResult | null {
+  if (value === null || value === undefined) return null;
+  const list = <T>() => (Array.isArray(value) ? (value as T[]) : []);
+  switch (probe) {
+    case "list_tweaks":
+    case "scan_relevant_ids":
+    case "advise_tweaks":
+      return checked(list().length);
+    case "system_profile":
+      return OK;
+    case "list_drives_cmd": {
+      const drives = list<DriveInfo>();
+      const low = drives.filter((d) => d.total_bytes > 0 && d.free_bytes / d.total_bytes < 0.15);
+      return low.length ? found(low.length) : checked(drives.length);
+    }
+    case "list_startup_items":
+      return found(list<StartupEntry>().filter((x) => x.enabled).length, false);
+    case "system_stats": {
+      const st = value as SystemStats;
+      if (!(st.ram_total > 0)) return null;
+      const percent = Math.round((st.ram_used / st.ram_total) * 100);
+      return { kind: "percent", percent, issue: percent >= 85 };
+    }
+    case "reboot_pending":
+      return value === true ? found(1) : OK;
+    case "health_report": {
+      // This row is "Security signals": the protections found switched off.
+      const factors =
+        (value as HealthResult).report?.categories.find((c) => c.id === "security")?.factors ?? [];
+      return found(
+        factors.filter(
+          (f) =>
+            ((f.id === "sec_defender" || f.id === "sec_uac") && f.earned === 0) ||
+            (f.id === "sec_smartscreen" && f.earned === 5),
+        ).length,
+      );
+    }
+    case "driver_audit":
+      return found((value as DriverAudit).entries.filter((d) => d.age_days >= 730).length);
+    case "list_scheduled_tasks":
+      return found(list<ScheduledTaskEntry>().filter((t) => t.enabled).length, false);
+    case "list_debloat_apps":
+      return found(list<DebloatApp>().filter((a) => a.installed && a.removable).length, false);
+    case "ecoqos_status": {
+      const eco = value as EcoQosState;
+      return eco.blocked_global && eco.enabled ? found(1) : OK;
+    }
+    case "junk_summary": {
+      const bytes = list<JunkTarget>()
+        .filter((j) => j.accessible)
+        .reduce((sum, j) => sum + j.bytes, 0);
+      return { kind: "bytes", bytes, issue: bytes > 0 };
+    }
+    case "scan_app_caches": {
+      const bytes = list<CacheGroup>().reduce((sum, g) => sum + g.bytes, 0);
+      return { kind: "bytes", bytes, issue: bytes > 0 };
+    }
+    case "registry_scan":
+      return found((value as RegistryScan).items.length);
+    case "ram_boost_status": {
+      const m = value as RamBoostStatus;
+      if (!m.lists) return null;
+      return {
+        kind: "bytes",
+        bytes: m.lists.standby_mb * 1024 * 1024,
+        issue: m.lists.free_mb < (m.threshold_mb || 1024),
+      };
+    }
+    case "hardware_audit": {
+      const h = value as HardwareAudit;
+      return found(
+        (h.memory?.below_rated ? 1 : 0) +
+          h.links.filter((l) => l.below_max).length +
+          h.rebar.filter((r) => r.state === "off").length,
+      );
+    }
+    case "interrupt_sample":
+      return (value as InterruptSample).concentrated ? found(1) : OK;
+  }
+}
+
 export function unknownSecuritySignals(report: ScanReport, lang: Lang = "en"): string[] {
   if (!report.health) return [];
   const factors = report.health.report.categories.find((c) => c.id === "security")?.factors ?? [];

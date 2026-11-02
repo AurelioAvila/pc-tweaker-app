@@ -19,10 +19,10 @@ import type {
 } from "../types";
 import {
   applyScanSelection,
-  FIRST_NEW_PROBE,
   LAST_SCAN_KEY,
   readLastScan,
   newScanSession,
+  REPORT_KEY,
   runScanSession,
   scanReport,
   settled,
@@ -37,9 +37,9 @@ import { fixAllKeys, fixPlan, fixSteps, locked, scanItems, type ScanItem } from 
 import { runWithProof, useProofBusy, useProofRun } from "./proof-card";
 import { FixProgress } from "./fix-progress";
 import { ScanRing } from "./scan-ring";
+import { ScanScope } from "./scan-scope";
 import { SafeOptimizeCard } from "./safe-optimize";
 import { CheckIcon } from "./icons";
-import { Badge } from "./ui";
 import { SCAN_COPY } from "./scan-copy";
 import { SCAN2_COPY } from "./scan2-copy";
 import { ScanCategoryList, ScanSummary } from "./scan-results";
@@ -81,9 +81,9 @@ function finishedOrder(session: ScanSession): ScanProbe[] {
   );
 }
 
-function stepTimesOf(session: ScanSession): Partial<Record<ScanProbe, number>> {
+function stepValuesOf(session: ScanSession): Partial<Record<ScanProbe, unknown>> {
   return Object.fromEntries(
-    SCAN_PROBES.flatMap((p) => (session.steps[p] ? [[p, session.steps[p].at]] : [])),
+    SCAN_PROBES.flatMap((p) => (session.steps[p] ? [[p, session.steps[p].value]] : [])),
   );
 }
 
@@ -154,8 +154,9 @@ export function ScanPanel({
   const [error, setError] = useState("");
   const [paused, setPaused] = useState(() => heldScan !== null);
   const [halting, setHalting] = useState(false);
-  const [stepTimes, setStepTimes] = useState<Partial<Record<ScanProbe, number>>>(() =>
-    heldScan ? stepTimesOf(heldScan.session) : {},
+  /** Each finished check's answer while a scan runs (the scope list's results). */
+  const [stepValues, setStepValues] = useState<Partial<Record<ScanProbe, unknown>>>(() =>
+    heldScan ? stepValuesOf(heldScan.session) : {},
   );
   const operation = useRef(false);
   const proofBusy = useProofBusy();
@@ -211,12 +212,20 @@ export function ScanPanel({
   const complete = running
     ? tickedChecks
     : Object.values(probes).filter((p) => p === "complete").length;
+  // The check the ring is on reads as running; the others as done once the
+  // ring has ticked them, waiting before.
+  const ringHead = running
+    ? [...order, ...SCAN_PROBES.filter((p) => !order.includes(p) && probes[p] === "reading")][
+        tickedChecks
+      ]
+    : undefined;
   const shownState = (probe: ScanProbe): ProbeStatus | "idle" => {
     const state = probes[probe];
     if (!state) return "idle";
     if (!running) return state;
     const at = order.indexOf(probe);
-    return at >= 0 && at < tickedChecks ? state : "reading";
+    if (at >= 0 && at < tickedChecks) return state;
+    return probe === ringHead && !paused ? "reading" : "idle";
   };
 
   /** Stops the reads in flight. `pause` keeps everything finished for a
@@ -285,7 +294,7 @@ export function ScanPanel({
       setDriverProgress(null);
       setElapsed(0);
       setProbes({});
-      setStepTimes({});
+      setStepValues({});
     }
     let seconds = elapsedBefore;
     const states: Partial<Record<ScanProbe, ProbeStatus>> = probesOf(session);
@@ -326,8 +335,8 @@ export function ScanPanel({
           if (!alive.current) return;
           setOrder([...finished]);
           setProbes((current) => ({ ...current, [probe]: state }));
-          const at = session.steps[probe]?.at;
-          if (at) setStepTimes((current) => ({ ...current, [probe]: at }));
+          const step = session.steps[probe];
+          if (step) setStepValues((current) => ({ ...current, [probe]: step.value }));
         },
         controller.signal,
       );
@@ -710,56 +719,14 @@ export function ScanPanel({
             )}
           </div>
         )}
-        <aside className="scan-scope">
-          <details open={paused || undefined}>
-            <summary>
-              <span className="scan-scope-title">
-                <span>{c.scope}</span>
-                <small>{c.scopeHint}</small>
-              </span>
-              <span className="scan-scope-count">
-                {(reading || paused) && (
-                  <span className="scan-scope-meter" aria-hidden="true">
-                    <span style={{ width: `${(complete / SCAN_PROBES.length) * 100}%` }} />
-                  </span>
-                )}
-                <Badge>
-                  {reading || paused
-                    ? format(c.scopeProgress, { done: complete, total: SCAN_PROBES.length })
-                    : format(c.scopeCount, { count: SCAN_PROBES.length })}
-                </Badge>
-              </span>
-            </summary>
-            <ol>
-              {SCAN_PROBES.map((probe, i) => (
-                <li key={probe} data-state={shownState(probe)}>
-                  <span className="scan-probe-mark" aria-hidden="true">
-                    {shownState(probe) === "complete" ? (
-                      <CheckIcon className="h-3 w-3" />
-                    ) : shownState(probe) === "unavailable" ? (
-                      "!"
-                    ) : (
-                      String(i + 1).padStart(2, "0")
-                    )}
-                  </span>
-                  <span className="scan-probe-copy">
-                    <span className="scan-probe-name">
-                      {c.probes[i]}
-                      {i >= FIRST_NEW_PROBE && <Badge kind="accent">{c.newBadge}</Badge>}
-                    </span>
-                    {i >= FIRST_NEW_PROBE && <small>{c.newDetails[i - FIRST_NEW_PROBE]}</small>}
-                  </span>
-                  {shownState(probe) === "unavailable" && (
-                    <Badge kind="warn">{s.scan.unavailable}</Badge>
-                  )}
-                  {(paused || !!report?.skipped.length) && stepTimes[probe] && (
-                    <time className="scan-probe-time">{clock(stepTimes[probe])}</time>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </details>
-        </aside>
+        <ScanScope
+          lang={lang}
+          unavailable={s.scan.unavailable}
+          states={shownState}
+          valueOf={(probe) => (report && !running ? report[REPORT_KEY[probe]] : stepValues[probe])}
+          progress={running ? complete : null}
+          open={paused}
+        />
       </div>
 
       {report && report.skipped.length > 0 && (

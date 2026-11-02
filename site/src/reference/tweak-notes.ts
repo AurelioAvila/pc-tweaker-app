@@ -532,6 +532,7 @@ export const TWEAK_NOTES: Record<string, TweakNote> = {
     helps: "Troubleshooting a device that misbehaves on link power transitions while plugged in.",
     skip: "As a general tweak: idle power rises and nothing is gained when nothing is wrong.",
     sources: [MS.aspm, MS.powercfg],
+    guides: ["/fixes/check-pcie-link-speed-nvme-gpu/"],
   },
   usb_suspend_diagnostics: {
     title: "Turn Off USB Selective Suspend (Troubleshooting)",
@@ -601,6 +602,7 @@ export const TWEAK_NOTES: Record<string, TweakNote> = {
       ],
     },
     related: ["keep_kernel_in_ram"],
+    guides: ["/fixes/clear-standby-memory-windows-11/"],
   },
   limit_do_background_download: {
     title: "Limit Windows Update Background Download Speed",

@@ -1554,6 +1554,9 @@
 .scan-ring-controls .scan-run-controls {
   justify-content: flex-start;
 }
+.scan-ring-controls[data-done] {
+  visibility: hidden;
+}
 .scan-ring[data-state="paused"] .fixp-arc {
   stroke: var(--text-muted);
   filter: none;

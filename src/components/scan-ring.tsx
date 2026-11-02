@@ -243,7 +243,11 @@ export function ScanRing({
             </ol>
           </div>
           {paused && <p className="fixp-hint">{c.pausedHint}</p>}
-          {!view.success && !finished && <div className="scan-ring-controls">{controls}</div>}
+          {/* Kept in place once the scan has returned, so the card does not
+              jump shorter during its last moment. */}
+          <div className="scan-ring-controls" data-done={finished || view.success || undefined}>
+            {controls}
+          </div>
         </div>
       </div>
       {/* Read out at every quarter, on pause and at the end; not at each of

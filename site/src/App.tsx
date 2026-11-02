@@ -14,6 +14,7 @@ import { FaqAccordion } from "./components/FaqAccordion";
 import { Footer } from "./components/Footer";
 import { TipThanks } from "./components/TipThanks";
 import { SupportPage } from "./pages/Support";
+import { BusinessPage } from "./pages/Business";
 import { AccountPage } from "./pages/Account";
 import { UninstallerPage } from "./pages/Uninstaller";
 import { GuidePage, GUIDES } from "./pages/Guides";
@@ -105,6 +106,9 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       break;
     case "/support":
       page = <SupportPage navigate={navigate} />;
+      break;
+    case "/business":
+      page = <BusinessPage navigate={navigate} />;
       break;
     case "/account":
       page = <AccountPage />;

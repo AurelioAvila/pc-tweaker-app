@@ -31,6 +31,7 @@ const PAGES = {
   "/invite/": ["src/pages/Invitation.tsx"],
   "/guides/": ["src/pages/GuideDirectory.tsx", "src/pages/guide-directory.ts"],
   "/support/": ["src/pages/Support.tsx", "src/i18n/dictionary.ts"],
+  "/business/": ["src/pages/Business.tsx"],
   "/privacy/": ["src/pages/Legal.tsx"],
   "/terms/": ["src/pages/Legal.tsx"],
   "/cookies/": ["src/pages/Legal.tsx"],

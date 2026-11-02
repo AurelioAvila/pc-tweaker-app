@@ -71,6 +71,14 @@ export function Nav({
           >
             {text.support.navLabel}
           </Link>
+          <Link
+            to="/business/"
+            onNavigate={navigate}
+            ariaCurrent={currentPath === "/business" ? "page" : undefined}
+            className="hidden text-[13.5px] font-medium whitespace-nowrap text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] xl:block"
+          >
+            Business
+          </Link>
           {import.meta.env.VITE_WEB_PURCHASE_ENABLED === "1" && (
             <a
               href={`${prefix}#signup`}

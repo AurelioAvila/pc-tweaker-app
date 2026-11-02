@@ -50,6 +50,19 @@ export function buyCoffee(quantity: number, crypto = false): Promise<{ url: stri
   return request("/api/tip", { method: "POST", body: JSON.stringify({ quantity, utm: campaignLabels(), ...(crypto ? { method: "crypto" } : {}) }) });
 }
 
+/** "PC Tweaker for Business" quote request; relayed to the support inbox. */
+export function postBusinessInquiry(input: {
+  company: string;
+  name: string;
+  email: string;
+  pcs: number;
+  message: string;
+  consent: boolean;
+  website: string;
+}): Promise<{ ok: true }> {
+  return request("/api/business-inquiry", { method: "POST", body: JSON.stringify(input) });
+}
+
 /** Only `rating` is required; the rest are optional and stay private. */
 export function postReview(input: {
   name: string;

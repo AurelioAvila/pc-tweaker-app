@@ -8,7 +8,7 @@ For Windows 10/11 users who want to inspect settings before changing them. Revie
   <img src="src-tauri/icons/128x128@2x.png" width="112" alt="PC Tweaker logo">
 </p>
 
-<p align="center"><strong>Tune Windows with the changes in plain sight.</strong><br>Gaming, privacy and maintenance controls, with restore tools for supported settings.</p>
+<p align="center"><strong>Scan. Inspect. Choose what changes.</strong><br>Scan 2.0 findings, a read-only hardware audit and before-and-after checks for supported actions.</p>
 
 <p align="center">
   <a href="#reviews-and-distribution"><img src="https://img.shields.io/badge/Total_downloads-120k%2B-2E7D32?style=for-the-badge" alt="120,000+ total downloads across distribution channels"></a>
@@ -27,9 +27,26 @@ For Windows 10/11 users who want to inspect settings before changing them. Revie
 
 **[Download Free for Windows](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/PCTweaker-Setup.exe)** · **[Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87)** · [Chocolatey](https://community.chocolatey.org/packages/pc-tweaker) · [Website](https://pctweaker.app/) · [Support](https://pctweaker.app/support/) · [Release notes](CHANGELOG.md)
 
-<p align="center"><a href="#whats-new-in-118">What's new</a> · <a href="#what-you-can-do">Features</a> · <a href="#what-changes-on-your-system">What changes</a> · <a href="#free-and-pro">Free and Pro</a> · <a href="#download-integrity-and-code-signing">Code signing</a> · <a href="#build-from-source">Build from source</a></p>
+<p align="center"><a href="#whats-new-in-119">What's new in 1.19</a> · <a href="#what-you-can-do">Features</a> · <a href="#what-changes-on-your-system">What changes</a> · <a href="#free-and-pro">Free and Pro</a> · <a href="#download-integrity-and-code-signing">Code signing</a> · <a href="#build-from-source">Build from source</a></p>
 
-<p align="center"><img src="docs/screenshots/pc-tweaker-1.16-overview.png" alt="PC Tweaker 1.16 Overview in the default Graphite Ember theme, showing live CPU, memory and applied settings" width="85%"></p>
+<p align="center"><img src="docs/screenshots/pc-tweaker-1.19-scan-results-sample-data.jpg" alt="PC Tweaker 1.19.0 Scan 2.0 results in the official browser demo, with a visible Interface preview — sample data label; readings are synthetic" width="100%"></p>
+
+*PC Tweaker 1.19.0 interface preview from the official browser demo. Readings are synthetic sample data, not measurements from a real PC. [Capture details and hashes](docs/screenshots/README.md).*
+
+<details>
+<summary>Explore the Scan 2.0 start screen and read-only hardware audit</summary>
+
+### Review the scan before making a change
+
+<img src="docs/screenshots/pc-tweaker-1.19-scan-start-sample-data.jpg" alt="PC Tweaker 1.19.0 Scan 2.0 start screen in the official browser demo; interface preview with sample data" width="100%">
+
+### Inspect hardware findings
+
+<img src="docs/screenshots/pc-tweaker-1.19-hardware-audit-sample-data.jpg" alt="PC Tweaker 1.19.0 read-only hardware audit interface showing synthetic RAM, PCIe and Resizable BAR findings; sample data, no firmware changes" width="100%">
+
+These browser-demo captures illustrate the interface. They do not show real-PC scan results or measured performance gains. The hardware audit reads available information; it does not change firmware.
+
+</details>
 
 **Start with one task:** review a setting, read its trade-offs, apply it if appropriate, and use its restore control when supported. Free includes core tools without an account. See [what changes on your system](#what-changes-on-your-system) before tuning.
 
@@ -79,6 +96,15 @@ These are separate applications with their own licences. PC Tweaker Lifetime inc
 
 Closing the window keeps PC Tweaker running in the Windows notification area. Click its icon to reopen it, or right-click and choose **Exit PC Tweaker** to quit. To make closing the window quit instead, clear **Keep running in the background** in the icon's menu. Windows may place the icon in its hidden-icons panel.
 
+## What's new in 1.19
+
+- **Scan 2.0, with the findings in view.** Review 19 checks across performance, junk files, startup, privacy, registry, memory, hardware and latency. Choose individual supported fixes after inspecting the results.
+- **A read-only hardware audit.** Inspect RAM speed, PCIe link and Resizable BAR findings when Windows exposes the information, with guidance on what to check next. Firmware settings remain under your control.
+- **Proof of change for supported actions.** Compare before-and-after measurements and save the result as a PNG. The comparison can report no measurable difference; a configuration score is not an FPS benchmark.
+- **Clear Free and Pro boundaries.** The catalog has 82 controls: 46 Free and 36 Pro. Registry discovery is free; registry cleanup is Pro and saves a `.reg` backup. See [Free and Pro](#free-and-pro) for plans and [what changes on your system](#what-changes-on-your-system) for recovery limits.
+
+See the [1.19.0 release notes](https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.19.0) for the full update. The official browser-demo previews above use synthetic data; native results depend on your PC.
+
 ## What's new in 1.18
 
 - **Every value before it is written.** Each control has a "What this changes, exactly" panel with the value as it is now and as it will be set. If an application fails partway, the values already written are restored at once.
@@ -93,7 +119,6 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 - **1.18.6.** Administrator changes to scheduled tasks with spaces in their path work, the Game Sessions list survives an interrupted save, and the administrator helper loads Windows libraries from System32 only.
 - **1.18.7.** Time limits on every Windows tool and on the administrator helper, power plan restores that survive a deleted plan, a polite Explorer restart, and changes that follow the signed-in user when another administrator approves UAC.
 - **1.18.8.** The notification-area menu and the first-close notice follow the language chosen in the app.
-- **1.19.0.** PC Tweaker 1.19.0 rebuilds the Scan: 19 checks across Performance, Junk files, Startup, Privacy, Registry, Memory, Hardware and Latency, a headline that says how much space your PC is wasting (measured, not guessed), Fix all or Custom, and Pro items that show what they would free on your PC before you unlock them. New: a read-only hardware audit (RAM below its rated XMP/EXPO speed, SSD or graphics card on a slower PCIe link, Resizable BAR off, each with how to fix it), latency findings (interrupts piling up on CPU 0, DPC spikes), a registry cleaner (orphaned entries only, backup first, one-click restore), a Smart RAM booster, one-click Safe optimize, a restore point before any change, a Proof of change card with real before/after numbers you can save as PNG, and an alert when a Windows update changes your settings. 82 controls. New: PC Tweaker for Business.
 - **1.18.29.** Plans & pricing now opens straight on the plans, with a slim offer bar and clearer prices. A new Support entry sits in the sidebar. Manage your subscription from the account menu: see your plan, price, renewal date and card, cancel at the end of the paid period (with an optional reason) or resume it. Subscribers now see their own plan and price. Interface polish: text you do not need to copy no longer gets selected, better contrast on buttons, cleaner focus rings and several small layout fixes.
 - **1.18.28.** Routine maintenance update.
 - **1.18.27.** New Copy diagnosis button on the scan screen, for support requests. Your account menu now lists the PCs signed in with your account. When the service asks you to slow down, the message says how long to wait.

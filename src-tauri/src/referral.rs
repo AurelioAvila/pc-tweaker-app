@@ -439,6 +439,10 @@ pub fn save_referral_license(
     // A separate store: a bonus can never replace or extend a purchased licence.
     write_protected(&dir.join("referral-license.dpapi"), &bytes, false)?;
     // Keep all grant material protected at rest, including its account/session bindings.
+    // The bonus is Pro from now on: Pro's Windows Update alert follows it at
+    // once, as it does a purchased licence (license.rs `save_license`). The
+    // check waits for this lock, so it sees the grant just written.
+    crate::update_alert::reconcile_in_background(crate::store_for_dir(&app)?);
     Ok(())
 }
 #[tauri::command]
@@ -472,7 +476,10 @@ pub fn clear(dir: &Path) -> Result<(), String> {
 }
 #[tauri::command]
 pub fn clear_referral_license(app: tauri::AppHandle) -> Result<(), String> {
-    clear(&crate::store_for_dir(&app)?)
+    let dir = crate::store_for_dir(&app)?;
+    clear(&dir)?;
+    crate::update_alert::reconcile_in_background(dir);
+    Ok(())
 }
 
 #[cfg(test)]

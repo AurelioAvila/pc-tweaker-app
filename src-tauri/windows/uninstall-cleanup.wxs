@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSI uninstall (not an update): removes what PC Tweaker registered outside its folder, as
+  NSIS_HOOK_PREUNINSTALL does in installer-hooks.nsh: its three scheduled tasks (Pro's Windows
+  Update alert, the update watch, the weekly temp cleanup) and the alert's URL scheme. Task names
+  match update_alert.rs, updatewatch.rs and lib.rs; a Rust test keeps them in step.
+
+  The tasks are deleted by deferred actions running as LocalSystem, which can delete any task in
+  the root folder whoever registered it, before the files go. A missing task is fine
+  (Return="ignore"). A major upgrade (UPGRADINGPRODUCTCODE set) keeps them, like NSIS update mode.
+  The URL scheme is per user: the component below removes it from the uninstalling user's
+  registry, the same hive NSIS cleans.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <!-- Referenced from tauri.conf.json (componentGroupRefs), which links this whole fragment. -->
+    <ComponentGroup Id="PctUninstallCleanup">
+      <ComponentRef Id="PctAlertSchemeCleanup" />
+    </ComponentGroup>
+    <DirectoryRef Id="TARGETDIR">
+      <Component Id="PctAlertSchemeCleanup" Guid="5B4B0B1E-7E0C-4D2B-9C55-2F3A6C1E8D41">
+        <RegistryValue Root="HKCU" Key="Software\Aurelio Avila\PC Tweaker" Name="UninstallCleanup"
+          Type="integer" Value="1" KeyPath="yes" />
+        <RemoveRegistryKey Root="HKCU" Key="Software\Classes\pctweaker-alert" Action="removeOnUninstall" />
+      </Component>
+    </DirectoryRef>
+
+    <CustomAction Id="PctDeleteTaskUpdateAlert" Directory="TARGETDIR" Execute="deferred" Impersonate="no"
+      Return="ignore" ExeCommand="&quot;[SystemFolder]schtasks.exe&quot; /Delete /F /TN &quot;PC Tweaker Windows Update alert&quot;" />
+    <CustomAction Id="PctDeleteTaskDriftWatch" Directory="TARGETDIR" Execute="deferred" Impersonate="no"
+      Return="ignore" ExeCommand="&quot;[SystemFolder]schtasks.exe&quot; /Delete /F /TN &quot;PC Tweaker Update drift watch&quot;" />
+    <CustomAction Id="PctDeleteTaskTempCleanup" Directory="TARGETDIR" Execute="deferred" Impersonate="no"
+      Return="ignore" ExeCommand="&quot;[SystemFolder]schtasks.exe&quot; /Delete /F /TN &quot;PC Tweaker Temp Cleanup&quot;" />
+
+    <InstallExecuteSequence>
+      <Custom Action="PctDeleteTaskUpdateAlert" Before="RemoveFiles">REMOVE~="ALL" AND NOT UPGRADINGPRODUCTCODE</Custom>
+      <Custom Action="PctDeleteTaskDriftWatch" After="PctDeleteTaskUpdateAlert">REMOVE~="ALL" AND NOT UPGRADINGPRODUCTCODE</Custom>
+      <Custom Action="PctDeleteTaskTempCleanup" After="PctDeleteTaskDriftWatch">REMOVE~="ALL" AND NOT UPGRADINGPRODUCTCODE</Custom>
+    </InstallExecuteSequence>
+  </Fragment>
+</Wix>

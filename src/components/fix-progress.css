@@ -19,40 +19,6 @@
   align-items: center;
   gap: 18px 34px;
 }
-/* Narrow windows (820 px): a smaller dial keeps the list beside it. */
-@container (max-width: 580px) {
-  .fixp-body {
-    gap: 14px 22px;
-  }
-  .fixp-dial {
-    width: 156px;
-    height: 156px;
-  }
-  .fixp-percent {
-    font-size: 40px;
-  }
-  .fixp-check {
-    width: 60px;
-    height: 60px;
-  }
-  .fixp-current {
-    font-size: 17px;
-  }
-}
-@container (max-width: 430px) {
-  .fixp-body {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
-  }
-  .fixp-side {
-    width: 100%;
-  }
-  .fixp-title,
-  .fixp-current {
-    text-align: center;
-  }
-}
-
 /* ---- The dial ----------------------------------------------------------- */
 .fixp-dial {
   position: relative;
@@ -244,9 +210,9 @@
   color: var(--warning);
 }
 .fixp-step {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  line-height: 1.3;
+  overflow-wrap: break-word;
 }
 .fixp-result {
   font-size: 12.5px;
@@ -320,4 +286,38 @@
 }
 .fixp[data-inline] {
   margin-bottom: 18px;
+}
+
+/* Narrow windows (820 px): a smaller dial keeps the list beside it. */
+@container (max-width: 580px) {
+  .fixp-body {
+    gap: 14px 22px;
+  }
+  .fixp-dial {
+    width: 156px;
+    height: 156px;
+  }
+  .fixp-percent {
+    font-size: 40px;
+  }
+  .fixp-check {
+    width: 60px;
+    height: 60px;
+  }
+  .fixp-current {
+    font-size: 17px;
+  }
+}
+@container (max-width: 430px) {
+  .fixp-body {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+  .fixp-side {
+    width: 100%;
+  }
+  .fixp-title,
+  .fixp-current {
+    text-align: center;
+  }
 }

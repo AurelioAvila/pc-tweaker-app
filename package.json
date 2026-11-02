@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:demo": "vite build --mode demo",
     "preview": "vite preview",
     "tauri": "tauri",
     "check:i18n": "node scripts/check-i18n.mjs",

@@ -88,20 +88,81 @@ export function newScanSession(now = Date.now()): ScanSession {
   return { id: `scan-${now}-${Math.random().toString(36).slice(2, 8)}`, startedAt: now, steps: {} };
 }
 
-/** Weighted progress of a scan, 0-99 (100 is kept for the finished report).
- *  The driver inventory is the long phase: 60% of the work, the other reads
- *  40%, and within it the device classes read so far. */
-export function scanProgress(
-  steps: ScanSession["steps"],
-  driver: { done: number; total: number } | null,
-): number {
-  const checks = SCAN_PROBES.filter((p) => p !== "driver_audit" && steps[p]).length;
-  const drivers = steps.driver_audit
-    ? 1
-    : driver && driver.total > 0
-      ? driver.done / driver.total
-      : 0;
-  return Math.min(99, (checks / (SCAN_PROBES.length - 1)) * 40 + drivers * 60);
+/** The share of the scan ring each check takes, by how long it usually runs
+ *  (they add up to 100). The driver inventory is the long one and also moves
+ *  inside its share, one device class at a time ("driver-scan-progress"). */
+export const SCAN_WEIGHT: Record<ScanProbe, number> = {
+  list_tweaks: 2,
+  scan_relevant_ids: 2,
+  advise_tweaks: 3,
+  system_profile: 4,
+  list_drives_cmd: 2,
+  list_startup_items: 3,
+  system_stats: 1,
+  reboot_pending: 1,
+  health_report: 8,
+  driver_audit: 30,
+  list_scheduled_tasks: 4,
+  list_debloat_apps: 7,
+  ecoqos_status: 1,
+  junk_summary: 8,
+  scan_app_caches: 6,
+  registry_scan: 5,
+  ram_boost_status: 2,
+  hardware_audit: 5,
+  interrupt_sample: 6,
+};
+/** The driver inventory's share never fills on device classes alone: the
+ *  last part is the audit's own answer. */
+const DRIVER_CAP = 0.92;
+
+/**
+ * Where the scan ring heads now, 0-100. Every milestone is real: a check
+ * counts once the ring has ticked it off (`ticked`), a finished check held on
+ * screen before it ticks (`held`) counts in full, and the driver inventory
+ * counts the device classes read so far. Between milestones the ring creeps
+ * towards the end of the check still running (`current`) without reaching
+ * it; paused, it does not creep. 100 only once every check is ticked and the
+ * scan has returned (`finished`); never 99 % waiting on nothing.
+ */
+export function scanRingTarget(o: {
+  ticked: readonly ScanProbe[];
+  held: ScanProbe | null;
+  current: ScanProbe | null;
+  driver: { done: number; total: number } | null;
+  /** Since the last milestone. */
+  sinceMs: number;
+  finished: boolean;
+  paused: boolean;
+}): number {
+  if (o.finished && !o.held) return 100;
+  let at = o.ticked.reduce((sum, p) => sum + SCAN_WEIGHT[p], 0);
+  const classes =
+    o.driver &&
+    o.driver.total > 0 &&
+    !o.ticked.includes("driver_audit") &&
+    o.held !== "driver_audit"
+      ? o.driver
+      : null;
+  if (classes) at += SCAN_WEIGHT.driver_audit * Math.min(DRIVER_CAP, classes.done / classes.total);
+  if (o.held) return Math.min(99, at + SCAN_WEIGHT[o.held]);
+  if (o.paused || !o.current) return Math.min(99, at);
+  // The inventory creeps towards its next device class, any other check
+  // towards its own end.
+  const span =
+    o.current === "driver_audit" && classes
+      ? SCAN_WEIGHT.driver_audit / classes.total
+      : SCAN_WEIGHT[o.current];
+  const creep = span * 0.8 * (1 - Math.exp(-o.sinceMs / (900 + 600 * span)));
+  return Math.min(99, at + creep);
+}
+
+/** How long a finished check stays on screen before it ticks: long enough
+ *  to read, shorter when several are waiting so the list never trails the
+ *  scan by more than a moment. */
+export function scanHoldMs(waiting: number, reduced = false): number {
+  if (reduced) return 200;
+  return Math.round(Math.min(450, Math.max(220, 1600 / Math.max(1, waiting))));
 }
 
 export function finishedSteps(session: ScanSession): number {

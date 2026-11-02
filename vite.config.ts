@@ -7,21 +7,28 @@ import tailwindcss from "@tailwindcss/vite";
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig(async ({ mode }) => ({
   plugins: [react(), tailwindcss()],
+
+  // `npm run build:demo`: the browser demo (src/demo/boot.ts) as a static
+  // folder that opens from any path, the main window only.
+  ...(mode === "demo" ? { base: "./" } : {}),
 
   // Two entry points: the app window and the transparent in-game HUD, which
   // is a separate Tauri window and therefore a separate document. Without
   // this, `overlay.html` is not emitted by the production build and the HUD
   // window opens blank in the shipped app while working fine in dev.
-  build: {
-    rollupOptions: {
-      input: {
-        main: "index.html",
-        overlay: "overlay.html",
-      },
-    },
-  },
+  build:
+    mode === "demo"
+      ? { outDir: "dist-demo", rollupOptions: { input: { main: "index.html" } } }
+      : {
+          rollupOptions: {
+            input: {
+              main: "index.html",
+              overlay: "overlay.html",
+            },
+          },
+        },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

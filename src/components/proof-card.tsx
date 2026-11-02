@@ -623,7 +623,13 @@ export function ProofCardHost({
   return (
     <dialog
       ref={(node) => {
-        if (node && !node.open) node.showModal();
+        // A frame later: a ring that registers in place this same commit
+        // (registerInlineProgress) has removed the dialog by then, and an
+        // opened-then-removed modal would take the focus with it.
+        if (node && !node.open)
+          requestAnimationFrame(() => {
+            if (node.isConnected && !node.open) node.showModal();
+          });
       }}
       className="proof-dialog"
       aria-labelledby="proof-title"

@@ -463,18 +463,74 @@ test("pausing during the last read resumes with just that read", async () => {
   assert.deepEqual(resumed, ["ecoqos_status"]);
 });
 
-test("scan progress weighs the driver inventory and never reaches 100 before the report", async () => {
-  const { scanProgress } = await import("../src/scan-runner");
-  const step = { state: "complete" as const, at: 0, value: null };
-  assert.equal(scanProgress({}, null), 0);
-  assert.equal(Math.round(scanProgress({}, { done: 5, total: 10 })), 30);
-  assert.equal(scanProgress({}, { done: 1, total: 0 }), 0, "an empty class list is not progress");
-  const all = Object.fromEntries(SCAN_PROBES.map((p) => [p, step]));
-  assert.equal(scanProgress(all, null), 99);
-  const noDrivers = Object.fromEntries(
-    SCAN_PROBES.filter((p) => p !== "driver_audit").map((p) => [p, step]),
+test("scan ring: weighted real milestones, never 100 before the scan returns, never stuck", async () => {
+  const { SCAN_WEIGHT, scanRingTarget, scanHoldMs } = await import("../src/scan-runner");
+  assert.deepEqual(
+    Object.keys(SCAN_WEIGHT).sort(),
+    [...SCAN_PROBES].sort(),
+    "every check weighted",
   );
-  assert.equal(Math.round(scanProgress(noDrivers, null)), 40);
+  assert.equal(
+    Object.values(SCAN_WEIGHT).reduce((a, b) => a + b, 0),
+    100,
+  );
+  const base = {
+    held: null,
+    current: null,
+    driver: null,
+    sinceMs: 0,
+    finished: false,
+    paused: false,
+  };
+  assert.equal(scanRingTarget({ ...base, ticked: [] }), 0);
+  // A check held on screen counts in full; the ring creeps but never reaches
+  // the end of the check still running.
+  assert.equal(scanRingTarget({ ...base, ticked: ["list_tweaks"], held: "system_stats" }), 3);
+  const creep = (ms: number) =>
+    scanRingTarget({ ...base, ticked: ["list_tweaks"], current: "junk_summary", sinceMs: ms });
+  assert.ok(creep(1000) > 2 && creep(1000) < creep(5000));
+  assert.ok(creep(10 * 60_000) < 2 + SCAN_WEIGHT.junk_summary);
+  assert.equal(
+    scanRingTarget({
+      ...base,
+      ticked: ["list_tweaks"],
+      current: "junk_summary",
+      sinceMs: 9000,
+      paused: true,
+    }),
+    2,
+    "paused: no creep",
+  );
+  // Device classes move the inventory's share, never to its end.
+  const classes = (done: number) =>
+    scanRingTarget({ ...base, ticked: [], driver: { done, total: 10 } });
+  assert.equal(classes(5), SCAN_WEIGHT.driver_audit / 2);
+  assert.ok(classes(10) < SCAN_WEIGHT.driver_audit);
+  assert.equal(scanRingTarget({ ...base, ticked: [], driver: { done: 1, total: 0 } }), 0);
+  // Every check ticked: 99 until the scan returns, then 100 at once.
+  const all = [...SCAN_PROBES];
+  assert.equal(scanRingTarget({ ...base, ticked: all }), 99);
+  assert.equal(scanRingTarget({ ...base, ticked: all, finished: true }), 100);
+  assert.equal(
+    scanRingTarget({
+      ...base,
+      ticked: all.slice(0, -1),
+      held: all[all.length - 1],
+      finished: true,
+    }),
+    99,
+    "the last check is still being shown",
+  );
+  // Milestones in any finishing order only ever add.
+  let last = 0;
+  for (let i = 1; i <= all.length; i++) {
+    const t = scanRingTarget({ ...base, ticked: all.slice(0, i), finished: i === all.length });
+    assert.ok(t >= last);
+    last = t;
+  }
+  assert.equal(scanHoldMs(1), 450);
+  assert.ok(scanHoldMs(8) < scanHoldMs(2) && scanHoldMs(50) >= 220);
+  assert.equal(scanHoldMs(3, true), 200);
 });
 
 test("a pause waits for the backend audit before anything can resume or discard it", async () => {

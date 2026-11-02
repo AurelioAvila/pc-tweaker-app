@@ -452,7 +452,7 @@ export const FIX_GUIDES = {
   "/fixes/check-pcie-link-speed-nvme-gpu": {
     eyebrow: "FIX · HARDWARE",
     title: "Is your NVMe SSD or graphics card on a slower PCIe link?",
-    seoTitle: "Check PCIe Link Speed for NVMe SSD and GPU (x16)",
+    seoTitle: "Check PCIe Link Speed of an NVMe SSD or GPU",
     seoDescription:
       "A drive or graphics card can connect with fewer lanes or an older PCIe generation than it supports. Read the current and maximum link in Windows, then fix it.",
     updated: "2026-11-02",
@@ -518,7 +518,7 @@ export const FIX_GUIDES = {
     title: "Is Resizable BAR on? How to check, and how to turn it on",
     seoTitle: "How to Check If Resizable BAR Is Enabled",
     seoDescription:
-      "Resizable BAR lets the CPU address the graphics card's memory more efficiently. How to check it in the NVIDIA Control Panel or GPU-Z, and what to enable in the BIOS.",
+      "Resizable BAR lets the CPU use the graphics card's memory more efficiently. Check it in the NVIDIA Control Panel or GPU-Z, then enable it in the BIOS.",
     updated: "2026-11-02",
     intro:
       "Resizable BAR is an optional PCI Express feature that lets the processor access the graphics card's memory more efficiently. It needs support in the graphics card, the motherboard BIOS and the driver, and the BIOS option is usually off until you turn it on. Some games gain from it and others do not, so the point of checking is to know your setup, not to chase a number.",
@@ -587,7 +587,7 @@ export const FIX_GUIDES = {
   "/fixes/clear-standby-memory-windows-11": {
     eyebrow: "FIX · MEMORY",
     title: "Clear standby memory on Windows 11: what it is, and when it helps",
-    seoTitle: "Clear Standby Memory on Windows 11: Does It Help?",
+    seoTitle: "Clear Standby Memory on Windows 11: Worth It?",
     seoDescription:
       "Standby memory is cache Windows can reuse at once, so clearing it rarely speeds anything up. How to read it, empty it with RAMMap, and when it makes sense.",
     updated: "2026-11-02",
@@ -653,7 +653,7 @@ export const FIX_GUIDES = {
     title: "Is a registry cleaner safe on Windows 11? What to know first",
     seoTitle: "Is a Registry Cleaner Safe on Windows 11?",
     seoDescription:
-      "Microsoft does not support registry cleaners, and cleaning is not shown to speed Windows up. What is reasonable to remove, how to back up first, and how to restore.",
+      "Microsoft does not support registry cleaners and none is shown to speed up Windows. What is reasonable to remove, how to back up first and how to restore.",
     updated: "2026-11-02",
     intro:
       "Registry cleaners promise a faster, healthier PC by deleting entries they call invalid. Microsoft's support policy is that it does not support the use of registry cleaning utilities, and that is a fair summary of the risk: a tool that removes entries it only suspects are unused can break a program, a driver or a file association. Most of the registry is not worth cleaning, and the small part that is can be handled with a backup and a way back.",

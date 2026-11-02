@@ -2,6 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  boostLevel,
   ema,
   insights,
   peakOf,
@@ -169,4 +170,21 @@ test("a declined administrator prompt reads as a plain sentence in every languag
     friendlyError("the elevated action exited with code Some(1)", STRINGS.en),
     "the elevated action exited with code Some(1)",
   );
+});
+
+test("boost level: speed above base out of the measured headroom, never invented", () => {
+  const at = (
+    cpu_mhz: number | null,
+    peak_mhz: number | null = 5000,
+    rated_mhz: number | null = 4200,
+  ) => boostLevel({ cpu_mhz, rated_mhz, peak_mhz });
+  assert.equal(at(3000), 0, "below base is no boost");
+  assert.equal(at(4200), 0);
+  assert.equal(at(4600), 50);
+  assert.equal(at(5000), 100);
+  assert.equal(at(5200), 100, "clamped");
+  assert.equal(at(null), null);
+  assert.equal(at(4600, null), null);
+  assert.equal(at(4600, 5000, null), null);
+  assert.equal(at(4250, 4250), null, "no measured headroom yet");
 });

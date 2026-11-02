@@ -23,6 +23,7 @@ import {
   readStoredEmail,
   readToken,
   adoptRenewedToken,
+  reportError,
   storeSession,
   TOKEN_KEY,
   storedRamAutoMinutes,

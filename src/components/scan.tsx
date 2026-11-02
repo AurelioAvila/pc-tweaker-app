@@ -130,7 +130,12 @@ export function ScanPanel({
   const [tickedChecks, setTickedChecks] = useState(() =>
     heldScan ? finishedOrder(heldScan.session).length : 0,
   );
+  /** Opens the results once the ring has shown 100 % (scan-ring.tsx). */
   const revealRing = useRef<(() => void) | null>(null);
+  /** Paused while the ring is still walking through a scan that has read
+   *  everything (SCAN_MIN_MS): nothing is reading, the ring and the clock
+   *  just stand still. */
+  const walkHeld = useRef(false);
   const runControls = useRef<HTMLDivElement>(null);
   const [driverProgress, setDriverProgress] = useState<ScanProgress | null>(
     () => heldScan?.driver ?? null,
@@ -167,6 +172,7 @@ export function ScanPanel({
     alive.current = true;
     return () => {
       alive.current = false;
+      revealRing.current?.();
       // The panel stays mounted while the user visits other pages, so this
       // only runs when the app itself goes away; a running scan is paused.
       if (abort.current && !abort.current.signal.aborted) {
@@ -264,7 +270,6 @@ export function ScanPanel({
     const session = held?.session ?? newScanSession();
     let driver: ScanProgress | null = held?.driver ?? null;
     const elapsedBefore = held?.elapsed ?? 0;
-    const startedAt = performance.now();
     const finished = finishedOrder(session);
     setPaused(false);
     setPresenting(false);
@@ -285,15 +290,15 @@ export function ScanPanel({
     let seconds = elapsedBefore;
     const states: Partial<Record<ScanProbe, ProbeStatus>> = probesOf(session);
     let off: UnlistenFn | undefined;
-    // The ring says when it has shown 100 % and its check (scan-ring.tsx); a
-    // ring that cannot (the window hidden, no frames) does not hold the
-    // results back for long.
+    // The ring says when it has shown 100 % and its check (scan-ring.tsx), or
+    // Stop / End scan say so while it walks through finished checks.
     const revealed = new Promise<void>((resolve) => {
       revealRing.current = resolve;
-      window.setTimeout(resolve, 15_000);
     });
+    walkHeld.current = false;
     const clock = window.setInterval(() => {
-      seconds = elapsedBefore + Math.floor((performance.now() - startedAt) / 1000);
+      if (walkHeld.current) return;
+      seconds += 1;
       if (alive.current) setElapsed(seconds);
     }, 1000);
     try {
@@ -349,6 +354,8 @@ export function ScanPanel({
       setPresenting(true);
       await revealed;
       if (!alive.current) return;
+      walkHeld.current = false;
+      setPaused(false);
       const next = scanReport(session);
       setReport(next);
       setSelected(new Set(fixAllKeys(scanItems(next), isPro)));
@@ -565,7 +572,11 @@ export function ScanPanel({
                     <button
                       type="button"
                       className="scan-secondary"
-                      onClick={() => halt("pause")}
+                      onClick={() => {
+                        if (!presenting) return halt("pause");
+                        walkHeld.current = true;
+                        setPaused(true);
+                      }}
                       disabled={halting}
                     >
                       <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -577,7 +588,7 @@ export function ScanPanel({
                     <button
                       type="button"
                       className="scan-secondary"
-                      onClick={() => halt("stop")}
+                      onClick={() => (presenting ? revealRing.current?.() : halt("stop"))}
                       disabled={halting}
                     >
                       <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -589,7 +600,15 @@ export function ScanPanel({
                 )}
                 {paused && (
                   <div className="scan-run-controls">
-                    <button type="button" className="scan-primary" onClick={() => void scan(true)}>
+                    <button
+                      type="button"
+                      className="scan-primary"
+                      onClick={() => {
+                        if (!presenting) return void scan(true);
+                        walkHeld.current = false;
+                        setPaused(false);
+                      }}
+                    >
                       <svg viewBox="0 0 16 16" aria-hidden="true">
                         <path d="M5 3.5v9l7.5-4.5Z" fill="currentColor" />
                       </svg>
@@ -598,7 +617,9 @@ export function ScanPanel({
                     <button
                       type="button"
                       className="scan-secondary"
-                      onClick={() => heldScan && end(heldScan.session)}
+                      onClick={() =>
+                        presenting ? revealRing.current?.() : heldScan && end(heldScan.session)
+                      }
                     >
                       {c.finish}
                     </button>

@@ -89,6 +89,31 @@ function installDemo(plan: Plan) {
     const url = new URL(input instanceof Request ? input.url : String(input), location.href);
     if (url.origin === location.origin) return realFetch(input, init);
     if (url.host === API_HOST) {
+      // Signing in or up works with any address; the account stays what the
+      // Free / Pro switch says.
+      if (url.pathname === "/api/auth/login" || url.pathname === "/api/auth/register")
+        return json(200, { token: "demo-token", verificationEmailSent: false });
+      if (url.pathname.startsWith("/api/auth/")) return json(200, { ok: true });
+      if (url.pathname.startsWith("/api/billing/subscription")) {
+        const product = url.searchParams.get("product") ?? "pctweaker";
+        const mine = pro && product === "pctweaker";
+        return json(200, {
+          product,
+          plan: mine ? "annual" : null,
+          interval: mine ? "year" : null,
+          amount: mine ? 5999 : null,
+          currency: "eur",
+          status: mine ? "active" : "none",
+          trial_end: null,
+          current_period_end: mine ? new Date(Date.now() + 240 * 86_400_000).toISOString() : null,
+          cancel_at_period_end: false,
+          cancel_at: null,
+          payment_method: mine ? { brand: "visa", last4: "4242" } : null,
+          lifetime: false,
+          can_cancel: mine,
+          can_resume: false,
+        });
+      }
       switch (url.pathname) {
         case "/api/billing/prices":
           return json(200, {
@@ -101,18 +126,50 @@ function installDemo(plan: Plan) {
             ],
           });
         case "/api/account":
-          return pro
-            ? json(200, {
-                email: "demo@pctweaker.app",
-                isPro: true,
-                emailVerified: true,
-                plan: "annual",
-                hasBilling: true,
-              })
-            : json(401, {});
+          return json(200, {
+            email: "demo@pctweaker.app",
+            isPro: pro,
+            emailVerified: true,
+            plan: pro ? "annual" : null,
+            hasBilling: pro,
+          });
         case "/api/entitlements":
           return json(200, {
             products: pro ? [{ product: "pctweaker", active: true, plan: "annual" }] : [],
+          });
+        case "/api/billing/status": {
+          const year = new Date(Date.now() + 240 * 86_400_000).toISOString();
+          return json(200, {
+            products: [
+              pro
+                ? {
+                    product: "pctweaker",
+                    state: "active",
+                    plan: "annual",
+                    current_period_end: year,
+                  }
+                : { product: "pctweaker", state: "none", can_start_trial: true },
+            ],
+          });
+        }
+        // Checkout, billing portal, tips: a link the demo's opener ignores.
+        case "/api/checkout":
+        case "/api/checkout/crypto":
+        case "/api/portal":
+        case "/api/tip":
+          return json(200, { url: "https://pctweaker.app/" });
+        case "/api/account/devices":
+          return json(200, {
+            devices: [
+              {
+                product: "pctweaker",
+                label: "Windows 11 Pro · AMD Ryzen 7 7700X",
+                pro,
+                firstSeen: "2026-09-14T18:20:00Z",
+                lastSeen: new Date().toISOString(),
+                current: true,
+              },
+            ],
           });
       }
       return json(404, {});

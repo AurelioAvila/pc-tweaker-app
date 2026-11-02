@@ -1,14 +1,15 @@
 // The Scan's progress ring: the Fix all ring (fix-progress.tsx), driven by the
 // scan's own checks. The checks run side by side and finish in any order, so
-// the list ticks them off in the order they really finished, each one held on
-// screen long enough to read (scanHoldMs). The percentage only moves between
-// real milestones (scanRingTarget); once the scan has returned and the last
-// check is ticked it fills to 100, turns into a check, then the results open.
+// the list ticks them off in the order they really finished. Each one stays
+// the current check for its share of SCAN_MIN_MS (scanDwellMs) and is never
+// ticked before it has really finished; the percentage fills its slice over
+// that time (scanRingTarget). Once the scan has returned and the last check
+// is ticked it reaches 100, turns into a check, then the results open.
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { format, type Lang } from "../i18n";
 import {
   SCAN_PROBES,
-  scanHoldMs,
+  scanDwellMs,
   scanRingTarget,
   type ProbeStatus,
   type ScanProbe,
@@ -23,6 +24,20 @@ const SUCCESS_MS = 750;
 const SUCCESS_REDUCED_MS = 250;
 /** Rows of the list on screen; the rest slides through. */
 const ROWS = 5;
+
+/** Finished checks in the order they finished, then the ones still reading,
+ *  then the ones not started. */
+function rowsOf(
+  order: readonly ScanProbe[],
+  states: Partial<Record<ScanProbe, ProbeStatus>>,
+): ScanProbe[] {
+  const rest = SCAN_PROBES.filter((p) => !order.includes(p));
+  return [
+    ...order,
+    ...rest.filter((p) => states[p] === "reading"),
+    ...rest.filter((p) => states[p] !== "reading"),
+  ];
+}
 
 export function ScanRing({
   lang,
@@ -80,9 +95,8 @@ export function ScanRing({
     const successMs = reduced ? SUCCESS_REDUCED_MS : SUCCESS_MS;
     let frame = 0;
     let last = performance.now();
-    let milestone = last;
-    let heldAt: number | null = null;
-    let classes = -1;
+    /** When the current check became the current one. */
+    let headStart = last;
     let successAt: number | null = null;
     let told = false;
     let reported = { shown: -1, coarse: -1, success: false };
@@ -90,30 +104,24 @@ export function ScanRing({
     const tick = (now: number) => {
       const r = latest.current;
       const state = loop.current;
-      if (state.shown < r.order.length) {
-        heldAt ??= now;
-        if (now - heldAt >= scanHoldMs(r.order.length - state.shown, reduced)) {
-          state.shown++;
-          milestone = now;
-          heldAt = state.shown < r.order.length ? now : null;
-        }
+      // Paused, the walk through the checks stands still.
+      if (r.paused) headStart += now - last;
+      const rows = rowsOf(r.order, r.states);
+      let head: ScanProbe | null = rows[state.shown] ?? null;
+      if (head && state.shown < r.order.length && now - headStart >= scanDwellMs(head)) {
+        const due = headStart + scanDwellMs(head);
+        state.shown++;
+        // On time, the next check starts where this one's time ended; late
+        // (it was still reading, or the window was hidden), from now.
+        headStart = now - due < 250 ? due : now;
+        head = rows[state.shown] ?? null;
       }
-      if (r.driver && r.driver.done !== classes) {
-        classes = r.driver.done;
-        milestone = now;
-      }
-      const held = state.shown < r.order.length ? r.order[state.shown] : null;
-      const current = held
-        ? null
-        : (SCAN_PROBES.find((p) => r.states[p] === "reading" && !r.order.includes(p)) ?? null);
       const target = scanRingTarget({
         ticked: r.order.slice(0, state.shown),
-        held,
-        current,
-        driver: r.driver,
-        sinceMs: now - milestone,
+        head,
+        headDone: state.shown < r.order.length,
+        headMs: now - headStart,
         finished: r.finished,
-        paused: r.paused,
       });
       // Smooth, never backwards, never past the target.
       const ease = reduced ? 1 : 1 - Math.exp(-(now - last) / (target === 100 ? 120 : 240));
@@ -151,14 +159,7 @@ export function ScanRing({
     return () => cancelAnimationFrame(frame);
   }, [reduced]);
 
-  // Finished checks in the order they finished, then the ones still reading,
-  // then the ones not started.
-  const rest = SCAN_PROBES.filter((p) => !order.includes(p));
-  const rows = [
-    ...order,
-    ...rest.filter((p) => states[p] === "reading"),
-    ...rest.filter((p) => states[p] !== "reading"),
-  ];
+  const rows = rowsOf(order, states);
   const shown = Math.min(view.shown, rows.length);
   const active = view.success ? null : (rows[shown] ?? null);
   const name = (p: ScanProbe) => c.probes[SCAN_PROBES.indexOf(p)];
@@ -243,9 +244,10 @@ export function ScanRing({
             </ol>
           </div>
           {paused && <p className="fixp-hint">{c.pausedHint}</p>}
-          {/* Kept in place once the scan has returned, so the card does not
-              jump shorter during its last moment. */}
-          <div className="scan-ring-controls" data-done={finished || view.success || undefined}>
+          {/* Usable until 100 %: the reads may be over while the ring still
+              walks through them (Pause holds it, Stop opens the results).
+              Kept in place after, so the card does not jump shorter. */}
+          <div className="scan-ring-controls" data-done={view.success || undefined}>
             {controls}
           </div>
         </div>

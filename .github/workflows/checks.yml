@@ -1,24 +1,137 @@
-name: Npackd package verification
+name: Checks
+
+# Runs on every push and PR, not just releases: the point is to catch a
+# regression the moment it lands, while the change is still fresh, rather
+# than discovering it when tagging a release.
 on:
+  push:
+    branches: ["**"]
+  pull_request:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Reviewed public release tag
-        required: true
+        description: "Optional draft release tag for installer verification"
+        required: false
         type: string
+
+# Least privilege (2026-08-08 security audit): this workflow only runs
+# checks/tests, it never writes to the repo. Safe to run on pull_request
+# (not pull_request_target) from forks since it never touches secrets and
+# the token below has no write access even if it did.
 permissions:
   contents: read
+
 jobs:
-  npackd:
+  checks:
+    if: ${{ !inputs.release_tag }}
     runs-on: windows-latest
-    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
-      - name: Verify the signed Npackd package in isolation
-        shell: pwsh
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: Release verification regression tests
+        run: node --test scripts/release-verification.test.mjs
+
+      - name: Updater startup and tray lifecycle
+        run: npm run test:updater
+
+      - name: Scan eligibility and UI regressions
+        run: |
+          node scripts/test-scan.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/test-account-extras.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/test-live-metrics.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/test-debloat-model.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/test-feature-order.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/test-ui-polish.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Translations (keys + placeholders across all languages)
+        run: npm run check:i18n
+
+      - name: Translation quality (nothing silently left in English)
+        run: npm run check:i18n-quality
+
+      - name: Public texts state the shipped catalog (README, site, Store listing)
+        run: npm run check:public-counts
+
+      - name: Design tokens (no new raw palette classes)
+        run: npm run check:design-tokens
+
+      - name: Text on the accent clears WCAG AA in every theme
+        run: npm run check:on-accent
+
+      - name: Starter profiles selection and catalog validation
+        run: node scripts/test-starter-presets.mjs
+
+      - name: Free trial state tests
+        run: node scripts/test-trial.mjs
+
+      - name: The Pro unlock of VM test builds stays out of release configuration
+        run: node scripts/check-no-test-pro.mjs --self-test
+
+      - name: Rust unit tests
+        run: npm run check:rust
+
+      # Hosted Windows runners are administrators, so a real kernel trace
+      # session can start there. The live network test stays out: Azure
+      # blocks outbound ICMP.
+      - name: Live DPC capture
+        # --exact plus the count check: a renamed test must fail this step,
+        # not turn it into a green run of zero tests.
+        run: |
+          cargo test --manifest-path src-tauri/Cargo.toml --lib diagnostics::dpc::tests::live_capture_sees_interrupts_and_names_their_drivers -- --ignored --exact --nocapture 2>&1 | Tee-Object -Variable log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not ($log -match 'test result: ok\. 1 passed')) { Write-Error 'the live DPC test did not run'; exit 1 }
+
+      - name: Native power policies on a disposable inactive plan
+        run: cargo test --manifest-path src-tauri/Cargo.toml --lib power_tuning::tests::inactive_windows_plan_roundtrip -- --ignored --nocapture
+
+      - name: Backend unit tests
+        working-directory: backend
+        run: npm ci && npm test
+
+  installers:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag }}
+    # GitHub exposes draft releases only to callers with repository write
+    # access. Scope this permission to the manually dispatched installer job;
+    # ordinary push and pull-request checks remain read-only.
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        format: [nsis, msi]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Verify signed installers and upgrade from 1.15.2
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.release_tag }}
-        run: ./packaging/npackd/verify-package.ps1
+          INSTALLER_FORMAT: ${{ matrix.format }}
+        run: ./scripts/verify-installers.ps1

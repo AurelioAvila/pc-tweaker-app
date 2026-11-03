@@ -71,6 +71,7 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       ['meta[property="og:description"]', seo.description],
       ['meta[property="og:url"]', seo.canonical],
       ['meta[property="og:image"]', image.url],
+      ['meta[property="og:image:type"]', image.type],
       ['meta[property="og:image:alt"]', image.alt],
       ['meta[name="twitter:title"]', seo.title],
       ['meta[name="twitter:description"]', seo.description],

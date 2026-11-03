@@ -206,9 +206,9 @@ export function HeroSection() {
           <motion.figure variants={riseChild} className="md:col-span-6 md:self-start md:pt-3">
             <div className="ring-accent-soft overflow-hidden rounded-2xl border border-white/10 bg-[var(--bg-2)] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.75)]">
               <img
-                src="/images/app-overview-20261011.webp"
-                width={1264}
-                height={800}
+                src="/images/pc-tweaker-1.19-overview-sample-data.jpg"
+                width={1280}
+                height={839}
                 alt={text.hero.screenshotAlt}
                 className="block h-auto w-full"
               />

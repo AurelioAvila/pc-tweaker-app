@@ -44,38 +44,67 @@ export function UninstallerPage() {
   const promo = usePromo();
   const uninstallerOffer = promo.offer("uninstaller", "annual");
   return (
-    <main id="main-content" className="mx-auto max-w-3xl px-5 pt-36 pb-24 md:px-8">
-      <p className="font-mono-t mb-5 text-sm tracking-widest text-accent">PC TWEAKER SUITE</p>
-      <h1 className="font-display mb-6 text-4xl font-bold text-[var(--fg)] md:text-5xl">
-        See what an uninstall will do, before it does it
-      </h1>
-      <p className="mb-8 text-lg leading-relaxed text-[var(--fg-dim)]">
-        PC Tweaker Uninstaller is a Windows application that reads every installed program,
-        scores how risky removing it is and shows you the exact command and permissions it
-        will use. Before elevated removals, it attempts to create a Windows restore point,
-        then records the outcome and what actually happened. Single uninstalls are free, for good.
-      </p>
+    <main id="main-content">
+      {/* Copy on the left, the real app on the right, framed like the PC Tweaker hero so the family reads as one. */}
+      <header className="px-5 pt-36 pb-16 md:px-12">
+        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-12 lg:items-start">
+          <div className="lg:col-span-6">
+            <p className="font-mono-t mb-5 text-sm tracking-widest text-accent">PC TWEAKER SUITE</p>
+            <h1 className="font-display mb-6 text-4xl font-bold text-[var(--fg)] md:text-5xl">
+              See what an uninstall will do, before it does it
+            </h1>
+            <p className="mb-8 max-w-xl text-lg leading-relaxed text-[var(--fg-dim)]">
+              PC Tweaker Uninstaller is a Windows application that reads every installed program,
+              scores how risky removing it is and shows you the exact command and permissions it
+              will use. Before elevated removals, it attempts to create a Windows restore point,
+              then records the outcome and what actually happened. Single uninstalls are free, for good.
+            </p>
 
-      <div className="mb-12">
-        <div className="flex flex-wrap items-center gap-4">
-          <a
-            href={UNINSTALLER_DOWNLOAD_EXE}
-            className="inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-[var(--on-accent)]"
-          >
-            Download for Windows — free
-          </a>
-          <a
-            href={UNINSTALLER_RELEASES}
-            className="text-[14px] font-medium text-[var(--fg-dim)] underline-offset-4 hover:text-[var(--fg)] hover:underline"
-          >
-            Installer, MSI, checksums and release notes
-          </a>
+            <div>
+              <div className="flex flex-wrap items-center gap-4">
+                <a
+                  href={UNINSTALLER_DOWNLOAD_EXE}
+                  className="inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-[var(--on-accent)]"
+                >
+                  Download for Windows — free
+                </a>
+                <a
+                  href={UNINSTALLER_RELEASES}
+                  className="text-[14px] font-medium text-[var(--fg-dim)] underline-offset-4 hover:text-[var(--fg)] hover:underline"
+                >
+                  Installer, MSI, checksums and release notes
+                </a>
+              </div>
+              <p className="mt-3 text-[14px] leading-relaxed text-[var(--fg-dim)]">
+                Free: single uninstalls. <a href="#uninstaller-pro" className="text-[var(--fg)] underline underline-offset-4">Pro</a>: €9.99/year, or €4.99/year with a PC Tweaker plan.
+              </p>
+              <PromoCard product="uninstaller" plan="annual" href="#uninstaller-pro" />
+            </div>
+          </div>
+          <figure className="lg:col-span-6 lg:pt-3">
+            <div className="ring-accent-soft overflow-hidden rounded-2xl border border-white/10 bg-[var(--bg-2)] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.75)]">
+              <picture>
+                <source type="image/avif" srcSet="/uninstaller/images/inventory-0.14.0-760.avif 760w, /uninstaller/images/inventory-0.14.0-1265.avif 1265w" sizes="(min-width: 1024px) 50vw, 100vw" />
+                <source type="image/webp" srcSet="/uninstaller/images/inventory-0.14.0-760.webp 760w, /uninstaller/images/inventory-0.14.0-1265.webp 1265w" sizes="(min-width: 1024px) 50vw, 100vw" />
+                <img
+                  src="/uninstaller/images/inventory-0.14.0.jpg"
+                  width={1265}
+                  height={829}
+                  alt="PC Tweaker Uninstaller 0.14.0 showing the installed apps list with a safety verdict for each program, using clearly marked sample data"
+                  className="block h-auto w-full"
+                  decoding="async"
+                  {...({ fetchpriority: "high" } as object)}
+                />
+              </picture>
+            </div>
+            <figcaption className="mt-3 text-[11.5px] text-[var(--fg-dim)]">
+              PC Tweaker Uninstaller 0.14.0, sample data.
+            </figcaption>
+          </figure>
         </div>
-        <p className="mt-3 text-[14px] leading-relaxed text-[var(--fg-dim)]">
-          Free: single uninstalls. <a href="#uninstaller-pro" className="text-[var(--fg)] underline underline-offset-4">Pro</a>: €9.99/year, or €4.99/year with a PC Tweaker plan.
-        </p>
-        <PromoCard product="uninstaller" plan="annual" href="#uninstaller-pro" />
-      </div>
+      </header>
+
+      <div className="mx-auto max-w-3xl px-5 pb-24 md:px-8">
 
       <p className="mb-6 text-[var(--fg-dim)]">
         New to this? Read{" "}
@@ -226,6 +255,7 @@ export function UninstallerPage() {
           Lifetime includes the 12-month bonus described above.
         </p>
       </section>
+      </div>
     </main>
   );
 }

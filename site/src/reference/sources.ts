@@ -28,6 +28,7 @@ export const MS = {
   coreParking: { label: "Microsoft Learn: CPMinCores power setting", url: "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-core-parking-cpmincores" },
   aspm: { label: "Microsoft Learn: PCI Express Link State Power Management setting", url: "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/pci-express-settings-link-state-power-management" },
   usbSuspend: { label: "Microsoft Learn: USB selective suspend", url: "https://learn.microsoft.com/en-us/windows-hardware/drivers/usbcon/usb-selective-suspend" },
+  ducking: { label: "Microsoft Learn: Default Ducking Experience (stream attenuation)", url: "https://learn.microsoft.com/en-us/windows/win32/coreaudio/stream-attenuation" },
   shortSched: { label: "Microsoft Learn: ShortSchedulingPolicy power setting", url: "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configuration-for-hetero-power-scheduling-shortschedulingpolicy" },
   sched: { label: "Microsoft Learn: SchedulingPolicy power setting", url: "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configuration-for-hetero-power-scheduling-schedulingpolicy" },
   tcpAck: { label: "Microsoft Learn: Registry entry for controlling TCP ACK behavior (TcpAckFrequency)", url: "https://learn.microsoft.com/en-us/troubleshoot/windows-server/networking/registry-entry-control-tcp-acknowledgment-behavior" },

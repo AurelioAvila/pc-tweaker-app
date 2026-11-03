@@ -166,6 +166,7 @@ impl Tally {
         for ((kind, routine), stat) in &self.routines {
             let name = name_of(*routine);
             let entry = per_driver.entry(name.clone()).or_insert_with(|| DriverLatency {
+                area: driver_area(name.as_deref()),
                 driver: name,
                 ..DriverLatency::default()
             });
@@ -180,6 +181,9 @@ impl Tally {
             total.max_us = total.max_us.max(self.us(stat.max_ticks));
         }
         let mut drivers: Vec<DriverLatency> = per_driver.into_values().collect();
+        for d in &mut drivers {
+            d.audible = d.dpc.max_us.max(d.isr.max_us) >= AUDIBLE_RISK_US;
+        }
         drivers.sort_by(|a, b| b.severity().total_cmp(&a.severity()));
         let first = self.first_qpc.unwrap_or(0);
         let [dpc, isr] = totals;
@@ -264,6 +268,105 @@ pub struct DriverLatency {
     pub driver: Option<String>,
     pub dpc: RoutineTotals,
     pub isr: RoutineTotals,
+    /// What kind of hardware the driver serves, from `driver_area`. Absent
+    /// in reports saved by builds before 1.20.
+    #[serde(default)]
+    pub area: Area,
+    /// Its longest routine reached `AUDIBLE_RISK_US`.
+    #[serde(default)]
+    pub audible: bool,
+}
+
+/// The hardware a driver serves, for the Audio page's crackle check: the
+/// advice for a slow GPU driver is not the advice for a slow Wi-Fi one.
+/// Mirrors `DriverArea` in src/types.ts.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum Area {
+    Audio,
+    Graphics,
+    Network,
+    Storage,
+    Usb,
+    Bluetooth,
+    Platform,
+    /// A Windows framework or the kernel: the driver really responsible is
+    /// behind it, and the copy never blames Windows itself.
+    Ambiguous,
+    #[default]
+    Other,
+}
+
+/// "Above this, the delay may be audible". Microsoft's limits (100 us DPC,
+/// 25 us ISR) say when a driver misbehaves; whether a stall is heard depends
+/// on the audio buffer, typically 10 ms in shared mode.
+// ponytail: a fixed heuristic, not a measurement of this PC's buffer; replace
+// with IAudioClient::GetDevicePeriod of the default device if users report
+// crackles below it.
+pub const AUDIBLE_RISK_US: f64 = 1000.0;
+
+/// Which area a driver file belongs to (AUDIO-SPEC 5). Exact names first,
+/// then vendor prefixes; case-insensitive. `None` is a routine that matched
+/// no loaded driver.
+pub fn driver_area(driver: Option<&str>) -> Area {
+    const EXACT: [(&str, Area); 31] = [
+        ("hdaudbus.sys", Area::Audio),
+        ("hdaudio.sys", Area::Audio),
+        ("portcls.sys", Area::Audio),
+        ("ks.sys", Area::Audio),
+        ("usbaudio.sys", Area::Audio),
+        ("usbaudio2.sys", Area::Audio),
+        ("btha2dp.sys", Area::Audio),
+        ("acx01000.sys", Area::Audio),
+        ("nvlddmkm.sys", Area::Graphics),
+        ("amdkmdag.sys", Area::Graphics),
+        ("dxgkrnl.sys", Area::Graphics),
+        ("dxgmms2.sys", Area::Graphics),
+        ("ndis.sys", Area::Network),
+        ("tcpip.sys", Area::Network),
+        ("rt640x64.sys", Area::Network),
+        ("storport.sys", Area::Storage),
+        ("stornvme.sys", Area::Storage),
+        ("storahci.sys", Area::Storage),
+        ("usbxhci.sys", Area::Usb),
+        ("ucx01000.sys", Area::Usb),
+        ("usbhub3.sys", Area::Usb),
+        ("bthusb.sys", Area::Bluetooth),
+        ("bthport.sys", Area::Bluetooth),
+        ("acpi.sys", Area::Platform),
+        ("amdppm.sys", Area::Platform),
+        ("intelppm.sys", Area::Platform),
+        ("wdf01000.sys", Area::Ambiguous),
+        ("ntoskrnl.exe", Area::Ambiguous),
+        ("hal.dll", Area::Ambiguous),
+        ("ntkrnlmp.exe", Area::Ambiguous),
+        ("ntkrnlpa.exe", Area::Ambiguous),
+    ];
+    const PREFIX: [(&str, Area); 13] = [
+        ("rtkvhd", Area::Audio),
+        ("nvhda", Area::Audio),
+        ("atihd", Area::Audio),
+        ("intcaud", Area::Audio),
+        ("chdrt", Area::Audio),
+        ("cmudax", Area::Audio),
+        ("igdkmd", Area::Graphics),
+        ("netwtw", Area::Network),
+        ("athw", Area::Network),
+        ("mwl", Area::Network),
+        ("qcwlan", Area::Network),
+        ("iastor", Area::Storage),
+        // Intel wired (e1d68x64.sys, e1i68x64.sys...): checked last, being
+        // the shortest prefix.
+        ("e1", Area::Network),
+    ];
+    let Some(name) = driver.map(str::to_ascii_lowercase) else {
+        return Area::Ambiguous;
+    };
+    EXACT
+        .iter()
+        .find(|(n, _)| *n == name)
+        .or_else(|| PREFIX.iter().find(|(p, _)| name.starts_with(p)))
+        .map_or(Area::Other, |(_, area)| *area)
 }
 
 impl DriverLatency {
@@ -777,6 +880,43 @@ pub(crate) mod native {
 mod tests {
     use super::*;
 
+    #[test]
+    fn drivers_map_to_their_area_case_insensitively() {
+        let cases = [
+            (Some("nvlddmkm.sys"), Area::Graphics),
+            (Some("NVLDDMKM.SYS"), Area::Graphics),
+            (Some("igdkmd64.sys"), Area::Graphics),
+            (Some("HDAudBus.sys"), Area::Audio),
+            (Some("bthA2dp.sys"), Area::Audio),
+            (Some("RTKVHD64.sys"), Area::Audio),
+            (Some("nvhda64v.sys"), Area::Audio),
+            (Some("Netwtw10.sys"), Area::Network),
+            (Some("e1d68x64.sys"), Area::Network),
+            (Some("tcpip.sys"), Area::Network),
+            (Some("stornvme.sys"), Area::Storage),
+            (Some("iaStorAC.sys"), Area::Storage),
+            (Some("USBXHCI.SYS"), Area::Usb),
+            (Some("bthusb.sys"), Area::Bluetooth),
+            (Some("ACPI.sys"), Area::Platform),
+            (Some("intelppm.sys"), Area::Platform),
+            (Some("Wdf01000.sys"), Area::Ambiguous),
+            (Some("ntoskrnl.exe"), Area::Ambiguous),
+            (None, Area::Ambiguous),
+            (Some("somevendor.sys"), Area::Other),
+            (Some(""), Area::Other),
+            // A prefix only matches at the start of the name.
+            (Some("xnvhda.sys"), Area::Other),
+        ];
+        for (driver, area) in cases {
+            assert_eq!(driver_area(driver), area, "{driver:?}");
+        }
+    }
+
+    #[test]
+    fn the_audible_threshold_sits_above_microsofts_limits() {
+        assert!(AUDIBLE_RISK_US > DPC_LIMIT_US && AUDIBLE_RISK_US > ISR_LIMIT_US);
+    }
+
     const HZ: i64 = 10_000_000; // 0.1 us per tick
 
     fn us(v: f64) -> i64 {
@@ -922,6 +1062,8 @@ mod tests {
         assert_eq!(json["dpc"]["kind"], "dpc");
         assert!(json["isr"]["limitUs"].is_number() && json["isr"]["overLimit"].is_number());
         assert_eq!(json["drivers"][0]["driver"], "ndis.sys");
+        assert_eq!(json["drivers"][0]["area"], "network");
+        assert_eq!(json["drivers"][0]["audible"], false);
         assert!(json["drivers"][0]["isr"]["maxUs"].is_number());
         assert!(json["worst"][0]["durationUs"].is_number() && json["worst"][0]["atMs"].is_number());
         // The helper envelope capture_via_helper parses.

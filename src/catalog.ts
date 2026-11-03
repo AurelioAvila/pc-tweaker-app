@@ -5,8 +5,10 @@ export const CONFIGURABLE_TWEAK_IDS = new Set([
   "monitor_refresh_profile",
 ]);
 
-// Kept in the list only so existing snapshots can still be restored.
-export const isCurrentCatalogTweak = (id: string) => id !== "disable_copilot";
+// Kept in the list only so existing snapshots can still be restored. Per-device
+// audio changes (`audio_idle:<device>`, `audio_power:<device>`) are listed only
+// while applied and are not catalogue entries either.
+export const isCurrentCatalogTweak = (id: string) => id !== "disable_copilot" && !id.includes(":");
 
 // Applied only from their own switch, never in a batch, a profile or an
 // update re-apply. Mirrors MANUAL_ONLY_TWEAKS in src-tauri/src/lib.rs, which

@@ -57,6 +57,14 @@ const SAME_ON_PURPOSE = new Set([
   "Game Sessions",
   "SCAN",
   "OK",
+  // Audio (1.20): the same word, a product name or a measured-value format.
+  "Audio",
+  "Bluetooth",
+  "USB",
+  "stereo",
+  "mono",
+  "Equalizer APO",
+  "{driver}: DPC {dpc} µs · ISR {isr} µs",
 ]);
 
 function looksIntentional(value) {

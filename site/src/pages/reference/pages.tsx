@@ -288,6 +288,7 @@ const CATEGORY_INTROS: Record<CategoryKey, string> = {
   privacy: "Diagnostic data, advertising, suggestions and AI features. Most are per-account switches; the ones that are machine-wide policies say so, and the verdicts note what each one does not cover.",
   ui: "Taskbar, Start, File Explorer and theme preferences. These are about how Windows looks and behaves, not speed.",
   maintenance: "Updates, file paths, search indexing, startup and storage. Several trade convenience for control; the verdicts spell out the cost.",
+  audio: "What Windows does to your sound during calls and with Bluetooth headphones. Call ducking is a per-account setting and Bluetooth absolute volume a machine-wide one; each page gives the exact value written and what it does not change.",
 };
 
 export function CategoryIndex({ c, navigate }: { c: CategoryKey; navigate: Nav }) {

@@ -5,6 +5,7 @@
 // flow can be reviewed in a browser. Never part of a production build.
 import catalog from "../../site/src/generated/tweak-catalog.json";
 import type {
+  AudioStatus,
   AuditEntry,
   CacheGroup,
   GameEntry,
@@ -69,6 +70,83 @@ const NEUTRAL = new Set([
   "classic_context_menu",
 ]);
 const ALREADY_SET = new Set(["hide_taskbar_chat", "disable_cortana"]);
+
+/** A pretend PC's audio (audio.rs `audio_status`): an HDMI output that sleeps
+ *  after 4 s, a USB microphone Windows may power down and left at 6%, a
+ *  Bluetooth headset in call mode, Equalizer APO installed but not active. */
+const AUDIO_IDLE_ID =
+  "audio_idle:HDAUDIO\\FUNC_01&VEN_10DE&DEV_0084&SUBSYS_10DE0000&REV_1001\\5&1A2B3C4D&0&0001";
+const AUDIO_POWER_ID = "audio_power:USB\\VID_1234&PID_5678\\0000000000001";
+function audioStatus(applied: Set<string>): AudioStatus {
+  const speakers = "{0.0.0.00000000}.{6a1c2f3e-9b8d-4c7a-8e21-3f5d7b9c0a14}";
+  const headset = "{0.0.0.00000000}.{b4e7c901-2d3f-4a6b-9c8e-71f0a2d4c6e8}";
+  const mic = "{0.0.1.00000000}.{3d9f8e7c-6b5a-4c3d-8e2f-1a0b9c8d7e6f}";
+  return {
+    endpoints: [
+      {
+        id: speakers,
+        name: "Speakers (High Definition Audio)",
+        flow: "render",
+        default: true,
+        comms: false,
+        kind: "speakers",
+        bus: "internal",
+        format: { rate: 48_000, bits: 24, channels: 2, float: false },
+        effectsOff: false,
+        spatial: false,
+        eq: "none",
+      },
+      {
+        id: headset,
+        name: "Headset (Wireless Headphones Hands-Free)",
+        flow: "render",
+        default: false,
+        comms: true,
+        kind: "headset",
+        bus: "bluetooth",
+        format: { rate: 16_000, bits: 16, channels: 1, float: false },
+        effectsOff: true,
+        spatial: null,
+        eq: "none",
+      },
+      {
+        id: mic,
+        name: "Microphone (USB Microphone)",
+        flow: "capture",
+        default: true,
+        comms: true,
+        kind: "microphone",
+        bus: "usb",
+        format: { rate: 44_100, bits: 16, channels: 2, float: false },
+        effectsOff: false,
+        spatial: null,
+        eq: "none",
+      },
+    ],
+    callMode: [{ device: "Wireless Headphones", process: "Discord.exe" }],
+    mic: { name: "Microphone (USB Microphone)", muted: false, level: 6 },
+    idle: [
+      {
+        id: AUDIO_IDLE_ID,
+        name: "NVIDIA High Definition Audio",
+        seconds: applied.has(AUDIO_IDLE_ID) ? 0 : 4,
+        applied: applied.has(AUDIO_IDLE_ID),
+      },
+    ],
+    usbPower: [
+      {
+        id: AUDIO_POWER_ID,
+        name: "USB Microphone",
+        mayPowerDown: !applied.has(AUDIO_POWER_ID),
+        applied: applied.has(AUDIO_POWER_ID),
+      },
+    ],
+    bluetooth: true,
+    modernStandby: false,
+    ducking: applied.has("audio_ducking_off") ? 3 : null,
+    eapo: { installed: true, version: "1.4.2", selector: true, stale: 1 },
+  };
+}
 
 type Pc = {
   applied: Set<string>;
@@ -190,22 +268,41 @@ const REGISTRY: RegistryScan = {
 };
 
 function tweaks(pc: Pc): TweakInfo[] {
-  return catalog.map((t) => ({
-    id: t.id,
-    name: t.name,
-    description: t.description,
-    category: t.category as TweakInfo["category"],
-    hive: t.hive,
-    requires_admin: t.requires_admin,
-    requires_pro: t.requires_pro,
-    changes: t.changes as TweakInfo["changes"],
-    min_build: t.min_build,
-    pro_edition: t.pro_edition,
-    enterprise_edition: t.enterprise_edition,
-    applied: pc.applied.has(t.id),
-    already_set: ALREADY_SET.has(t.id),
-    unavailable: null,
-  }));
+  return catalog
+    .map((t): TweakInfo => ({
+      id: t.id,
+      name: t.name,
+      description: t.description,
+      category: t.category as TweakInfo["category"],
+      hive: t.hive,
+      requires_admin: t.requires_admin,
+      requires_pro: t.requires_pro,
+      changes: t.changes as TweakInfo["changes"],
+      min_build: t.min_build,
+      pro_edition: t.pro_edition,
+      enterprise_edition: t.enterprise_edition,
+      applied: pc.applied.has(t.id),
+      already_set: ALREADY_SET.has(t.id),
+      unavailable: null,
+    }))
+    .concat(
+      // Applied per-device audio changes are listed like lib.rs `tweak_infos` does.
+      [...pc.applied]
+        .filter((id) => id.startsWith("audio_idle:") || id.startsWith("audio_power:"))
+        .map((id): TweakInfo => ({
+          id,
+          name: id.startsWith("audio_idle:")
+            ? "Keep NVIDIA High Definition Audio awake on mains power"
+            : "Stop Windows powering down USB Microphone",
+          description: "",
+          category: "audio",
+          hive: "\u2014",
+          requires_admin: true,
+          requires_pro: true,
+          changes: [],
+          applied: true,
+        })),
+    );
 }
 
 function advice(ids: string[]): TweakAdvice[] {
@@ -570,7 +667,9 @@ export function demoBackend(emit: Emit, pro: boolean) {
 
   async function scanFix(plan: ScanFixPlan): Promise<ScanFixResult> {
     const byId = new Map(catalog.map((t) => [t.id, t]));
-    const adminTweaks = plan.tweaks.filter((id) => byId.get(id)?.requires_admin);
+    const adminTweaks = plan.tweaks.filter(
+      (id) => byId.get(id)?.requires_admin || id.includes(":"),
+    );
     const userTweaks = plan.tweaks.filter((id) => !adminTweaks.includes(id));
     const sysJunk = plan.cleanups.filter((id) => JUNK.find((j) => j.id === id)?.requires_admin);
     const userJunk = plan.cleanups.filter((id) => !sysJunk.includes(id));
@@ -755,6 +854,15 @@ export function demoBackend(emit: Emit, pro: boolean) {
       case "interrupt_sample":
         await sleep(vary(5900));
         return LATENCY;
+      case "audio_status":
+        await sleep(vary(400));
+        return audioStatus(pc.applied);
+      case "restart_audio_device":
+        await sleep(vary(1200));
+        return null;
+      case "open_sound_settings":
+      case "open_eapo_device_selector":
+        return null;
       // Fixes.
       case "scan_fix":
         return scanFix(a.plan as ScanFixPlan);

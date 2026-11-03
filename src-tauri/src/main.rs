@@ -32,7 +32,8 @@ fn main() {
         // relaunches fell straight through to `run()` and started a second,
         // full GUI running as administrator instead of performing the action
         // headlessly and exiting. Anything added there has to be added here.
-        const ELEVATED_ACTIONS: [&str; 25] = [
+        const ELEVATED_ACTIONS: [&str; 26] = [
+            "--elevated-audio-restart",
             "--elevated-download-limit",
             "--elevated-download-restore",
             "--elevated-session-apply",

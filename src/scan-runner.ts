@@ -1,4 +1,5 @@
 import type {
+  AudioStatus,
   DriverAudit,
   DriveInfo,
   StartupEntry,
@@ -44,6 +45,7 @@ export const SCAN_PROBES = [
   "ram_boost_status",
   "hardware_audit",
   "interrupt_sample",
+  "audio_status",
 ] as const;
 /** Index of the first check added in 1.19 (marked "New" in the scope list). */
 export const FIRST_NEW_PROBE = SCAN_PROBES.indexOf("junk_summary");
@@ -100,7 +102,7 @@ export const SCAN_WEIGHT: Record<ScanProbe, number> = {
   system_stats: 1,
   reboot_pending: 1,
   health_report: 8,
-  driver_audit: 30,
+  driver_audit: 28,
   list_scheduled_tasks: 4,
   list_debloat_apps: 7,
   ecoqos_status: 1,
@@ -110,6 +112,7 @@ export const SCAN_WEIGHT: Record<ScanProbe, number> = {
   ram_boost_status: 2,
   hardware_audit: 5,
   interrupt_sample: 6,
+  audio_status: 2,
 };
 /**
  * Presentation pacing: the scan ring takes at least this long from start to
@@ -238,6 +241,7 @@ export async function runScanSession(
       probe<RamBoostStatus>("ram_boost_status"),
       probe<HardwareAudit>("hardware_audit"),
       probe<InterruptSample>("interrupt_sample"),
+      probe<AudioStatus>("audio_status"),
     ]);
   } catch (e) {
     if (e instanceof ScanCancelled || signal?.aborted) return false;
@@ -273,6 +277,7 @@ export function scanReport(session: ScanSession, at = Date.now()) {
     memory: value<RamBoostStatus>("ram_boost_status"),
     hardware: value<HardwareAudit>("hardware_audit"),
     latency: value<InterruptSample>("interrupt_sample"),
+    audio: value<AudioStatus>("audio_status"),
     unavailable,
     skipped,
     partial: unavailable.length > 0 || skipped.length > 0,
@@ -324,6 +329,7 @@ export const REPORT_KEY = {
   ram_boost_status: "memory",
   hardware_audit: "hardware",
   interrupt_sample: "latency",
+  audio_status: "audio",
 } as const satisfies Record<ScanProbe, keyof ScanReport>;
 
 /** A finished check's one-line result for the scope list: what it read and
@@ -418,8 +424,36 @@ export function probeResult(probe: ScanProbe, value: unknown): ProbeResult | nul
     }
     case "interrupt_sample":
       return (value as InterruptSample).concentrated ? found(1) : OK;
+    case "audio_status": {
+      const a = audioIssues(value as AudioStatus);
+      return found(
+        a.callMode.length + Number(a.ducking) + a.idle.length + a.power.length + Number(!!a.eapo),
+      );
+    }
   }
 }
+
+/** The Audio findings that are something to fix or look at (AUDIO-SPEC 5);
+ *  scan-items.ts turns each into an item. Device overview, effects off, the
+ *  microphone level and Bluetooth volume are notes, never counted. */
+export function audioIssues(a: AudioStatus) {
+  const output = a.endpoints.find((e) => e.flow === "render" && e.default) ?? null;
+  return {
+    callMode: a.callMode,
+    /** T1 not in place: Windows lowers (or mutes) other sounds during calls. */
+    ducking: a.ducking !== 3,
+    idle: a.idle.filter((t) => !t.applied && t.seconds > 0),
+    /** Opt-in only on Modern Standby PCs (Microsoft: battery drain). */
+    power: a.modernStandby ? [] : a.usbPower.filter((p) => p.mayPowerDown && !p.applied),
+    /** Installed, but not running on the default output. */
+    eapo: a.eapo.installed && output?.eq === "none" ? output : null,
+  };
+}
+
+/** Audio fixes come from the audio read, not from the hardware advice; the
+ *  backend re-checks each one (Pro, administrator, still a candidate). */
+export const isAudioFix = (id: string) =>
+  id === "audio_ducking_off" || id.startsWith("audio_idle:") || id.startsWith("audio_power:");
 
 export function unknownSecuritySignals(report: ScanReport, lang: Lang = "en"): string[] {
   if (!report.health) return [];
@@ -496,8 +530,14 @@ export async function applyScanSelection(
     recommendedTweaks({ ...report, tweaks, ids, advice }, isPro).map((t) => t.id),
   );
   const originallyOffered = new Set(recommendedTweaks(report, isPro).map((t) => t.id));
-  const requested = [...new Set(selected)].filter((id) => originallyOffered.has(id));
-  const apply = requested.filter((id) => eligible.has(id));
+  const requested = [...new Set(selected)].filter(
+    (id) => originallyOffered.has(id) || isAudioFix(id),
+  );
+  const apply = requested.filter(
+    (id) =>
+      eligible.has(id) ||
+      (isAudioFix(id) && !tweaks.some((t) => t.id === id && (t.applied || t.already_set))),
+  );
   const skipped = requested.filter((id) => !eligible.has(id));
   let errors: string[] = [];
   let measured: ScanFixResult | null = null;

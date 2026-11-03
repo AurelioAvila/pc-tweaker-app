@@ -29,6 +29,7 @@ export const NAV_ACCENT: Record<string, string> = {
   ui: "text-fuchsia-300",
   startup: "text-violet-300",
   maintenance: "text-sky-300",
+  audio: "text-lime-300",
   profiles: "text-indigo-300",
   ledger: "text-blue-300",
   pricing: "text-yellow-300",
@@ -193,6 +194,40 @@ export const CATEGORY_STYLE: Record<
         />
         <circle cx="15.3" cy="10.1" r="0.95" fill="currentColor" />
         <circle cx="17.5" cy="12.1" r="0.95" fill="currentColor" opacity="0.55" />
+      </svg>
+    ),
+  },
+  audio: {
+    // Plate hue. Kept separate from `glyph` because the module paints
+    // itself with this and the icon has to stay legible on top of it.
+    tint: "#84cc16",
+    ring: "from-lime-400/30 to-green-500/10",
+    glyph: "text-[#0f1a04]",
+    chip: "bg-lime-400/15 text-lime-300 ring-1 ring-lime-400/30",
+    // A speaker with two sound waves: what Windows does with your sound.
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+        <path
+          d="M4.5 9.3h3l4.3-3.6v12.6l-4.3-3.6h-3a1 1 0 0 1-1-1V10.3a1 1 0 0 1 1-1Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+          fill="currentColor"
+          fillOpacity="0.12"
+        />
+        <path
+          d="M15.2 9.2a4 4 0 0 1 0 5.6"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+        <path
+          d="M17.8 6.6a7.6 7.6 0 0 1 0 10.8"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          opacity="0.5"
+        />
       </svg>
     ),
   },

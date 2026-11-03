@@ -120,11 +120,15 @@ windows-sys = { version = "0.59", features = [
     "Wdk_System_SystemInformation",
     "Win32_System_WindowsProgramming",
     "Win32_Storage_FileSystem",
+    # cfgmgr32 devnode walks and the SetupAPI device restart (src/audio.rs).
+    "Win32_Devices_DeviceAndDriverInstallation",
 ] }
 is_elevated = "0.1"
 # Wmi and Variant: the TCP congestion provider through MSFT_NetTCPSetting
 # (src/netshaper.rs), and the qualifier arrays that name its values.
-windows = { version = "0.58", features = ["Management_Deployment", "Foundation_Collections", "ApplicationModel", "Win32_System_Com", "Win32_System_Wmi", "Win32_System_Variant", "Win32_UI_Shell", "Win32_Storage_FileSystem"] }
+# Media_Audio, its Endpoints and PropertiesSystem: the Core Audio endpoint
+# APIs behind the Audio section (src/audio.rs).
+windows = { version = "0.58", features = ["Management_Deployment", "Foundation_Collections", "ApplicationModel", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_System_Wmi", "Win32_System_Variant", "Win32_UI_Shell", "Win32_UI_Shell_PropertiesSystem", "Win32_Storage_FileSystem", "Win32_Media_Audio", "Win32_Media_Audio_Endpoints"] }
 
 # `tauri dev` recognizes a feature literally named "devtools" on the
 # consuming crate and enables it automatically for dev builds; `tauri build`

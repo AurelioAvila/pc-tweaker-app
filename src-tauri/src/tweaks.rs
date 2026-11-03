@@ -8,6 +8,7 @@ pub enum Category {
     Ui,
     Maintenance,
     Gaming,
+    Audio,
 }
 
 #[derive(Serialize, Clone, Copy, Debug, PartialEq, Eq)]
@@ -62,6 +63,9 @@ pub struct RegistryTweak {
 /// (see `textFor` in App.tsx), and English is the app's primary language. They
 /// used to be Italian, which meant a missing translation surfaced as an
 /// Italian row inside an otherwise English list.
+pub const AUDIO_DUCKING_ID: &str = "audio_ducking_off";
+pub const BT_ABSOLUTE_VOLUME_ID: &str = "bt_absolute_volume_off";
+
 pub fn all_tweaks() -> Vec<RegistryTweak> {
     vec![
         RegistryTweak {
@@ -583,6 +587,35 @@ pub fn all_tweaks() -> Vec<RegistryTweak> {
             on_value: RegValue::Dword(0),
             requires_admin: true,
             requires_pro: true,
+        },
+        // T1 (audio.rs, AUDIO-SPEC 4): the Communications tab of mmsys.cpl.
+        // Absent = Windows lowers other sounds by 80% during calls; 3 = "Do
+        // nothing". The value mapping is the undocumented store of a
+        // documented setting.
+        RegistryTweak {
+            id: AUDIO_DUCKING_ID,
+            name: "Don't lower my game during calls",
+            description: "Sets \"When Windows detects communications activity\" to \"Do nothing\". By default Windows lowers every other sound by 80% while a call app uses the microphone. Apps with their own volume ducking, such as Discord, keep theirs. Applies from your next call.",
+            category: Category::Audio,
+            hive: Hive::Hkcu,
+            key_path: r"Software\Microsoft\Multimedia\Audio",
+            value_name: "UserDuckingPreference",
+            on_value: RegValue::Dword(3),
+            requires_admin: false,
+            requires_pro: false,
+        },
+        // T2: an opt-in fix, never part of a Scan "Fix all" (audio.rs).
+        RegistryTweak {
+            id: BT_ABSOLUTE_VOLUME_ID,
+            name: "Fix Bluetooth volume control",
+            description: "Turns off Bluetooth Absolute Volume, so the Windows volume and your headphones' own volume work separately. Can help when Bluetooth volume does not respond, stays too low or jumps. Applies to every Bluetooth audio device; reconnect the device or restart Windows afterwards.",
+            category: Category::Audio,
+            hive: Hive::Hklm,
+            key_path: r"SYSTEM\CurrentControlSet\Control\Bluetooth\Audio\AVRCP\CT",
+            value_name: "DisableAbsoluteVolume",
+            on_value: RegValue::Dword(1),
+            requires_admin: true,
+            requires_pro: false,
         },
         // PC Tweaker's own switch, read by the booster thread (ramboost.rs).
         RegistryTweak {

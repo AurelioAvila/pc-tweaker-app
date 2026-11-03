@@ -144,6 +144,22 @@ pub enum SnapshotEntry {
         creation: u64,
         cpu_sets: Vec<u32>,
     },
+    /// A REG_BINARY value, kept byte for byte: the PortCls idle timer of one
+    /// audio device (audio.rs, T3). `Registry` only knows DWORD and string
+    /// values. `None` means the value did not exist, so rollback deletes it.
+    RegistryBinary {
+        hive: String,
+        path: String,
+        name: String,
+        original: Option<Vec<u8>>,
+    },
+    /// The Device Manager "Allow the computer to turn off this device to save
+    /// power" switch of one device, as WMI `MSPower_DeviceEnable` reports it
+    /// (audio.rs, T4). `instance_name` is the device instance id plus `_0`.
+    DevicePowerEnable {
+        instance_name: String,
+        original: bool,
+    },
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
@@ -491,7 +507,11 @@ const SESSION_OWNED: [&str; 2] = [
 /// Snapshot files are user-writable input, including when an elevated helper
 /// consumes them. Only targets compiled into this build may be restored.
 pub(crate) fn validate_snapshot(id: &str, entry: &SnapshotEntry) -> Result<(), String> {
-    let allowed = if let Some(tweak) = crate::power_tuning::find(id) {
+    let allowed = if let Some(device) = id.strip_prefix(crate::audio::IDLE_PREFIX) {
+        crate::audio::valid_idle_snapshot(device, entry)
+    } else if let Some(device) = id.strip_prefix(crate::audio::POWER_PREFIX) {
+        crate::audio::valid_power_snapshot(device, entry)
+    } else if let Some(tweak) = crate::power_tuning::find(id) {
         crate::power_tuning::valid_snapshot(tweak, entry)
     } else if let Some(tweak) = crate::settings_tweaks::find(id) {
         crate::settings_tweaks::valid_snapshot(tweak, entry)
@@ -686,6 +706,12 @@ fn snapshot_targets(entry: &SnapshotEntry) -> Vec<String> {
         SnapshotEntry::ProcessCpuSets { pid, creation, .. } => {
             vec![format!("cpusets:{pid}:{creation}")]
         }
+        SnapshotEntry::RegistryBinary { hive, path, name, .. } => {
+            vec![format!("reg:{hive}:{path}:{name}").to_ascii_lowercase()]
+        }
+        SnapshotEntry::DevicePowerEnable { instance_name, .. } => {
+            vec![format!("devpower:{instance_name}").to_ascii_lowercase()]
+        }
     };
     targets.sort();
     targets
@@ -719,6 +745,82 @@ mod tests {
             let _ = fs::remove_dir_all(&self.0);
         }
     }
+    const AUDIO_DEVICE: &str = r"HDAUDIO\FUNC_01&VEN_10DE&DEV_0099&SUBSYS_14583FC8&REV_1001\5&11B5B86D&0&0001";
+    const IDLE_PATH: &str = r"SYSTEM\CurrentControlSet\Control\Class\{4d36e96c-e325-11ce-bfc1-08002be10318}\0003\PowerSettings";
+
+    fn idle_entry(original: Option<Vec<u8>>) -> SnapshotEntry {
+        SnapshotEntry::RegistryBinary {
+            hive: "HKLM".into(),
+            path: IDLE_PATH.into(),
+            name: "PerformanceIdleTime".into(),
+            original,
+        }
+    }
+
+    #[test]
+    fn audio_snapshots_round_trip_through_the_journal_byte_for_byte() {
+        let dir = TempDir::new();
+        let idle_id = format!("{}{AUDIO_DEVICE}", crate::audio::IDLE_PREFIX);
+        let usb = r"USB\VID_3554&PID_F510&MI_00\9&30dc13b6&0&0000";
+        let power_id = format!("{}{usb}", crate::audio::POWER_PREFIX);
+        {
+            let store = dir.store();
+            let mut t = store.transaction().unwrap();
+            t.save_entry(&idle_id, idle_entry(Some(vec![4, 0, 0, 0]))).unwrap();
+            t.save_entry(
+                &power_id,
+                SnapshotEntry::DevicePowerEnable { instance_name: format!("{usb}_0"), original: true },
+            )
+            .unwrap();
+        }
+        // A fresh store reads the file back: the exact bytes and flag survive.
+        let store = dir.store();
+        let t = store.transaction().unwrap();
+        assert!(matches!(t.entry(&idle_id), Some(SnapshotEntry::RegistryBinary { original: Some(b), .. }) if b == [4, 0, 0, 0]));
+        assert!(matches!(t.entry(&power_id), Some(SnapshotEntry::DevicePowerEnable { original: true, .. })));
+        // An absent original is recorded as such (rollback deletes the value).
+        assert!(validate_snapshot(&idle_id, &idle_entry(None)).is_ok());
+    }
+
+    #[test]
+    fn audio_snapshots_with_another_type_or_target_are_refused() {
+        let idle_id = format!("{}{AUDIO_DEVICE}", crate::audio::IDLE_PREFIX);
+        let power_id = format!("{}{AUDIO_DEVICE}", crate::audio::POWER_PREFIX);
+        let refused = [
+            (idle_id.clone(), idle_entry(Some(vec![4, 0, 0]))),
+            (idle_id.clone(), SnapshotEntry::RegistryBinary {
+                hive: "HKLM".into(),
+                path: IDLE_PATH.replace("e96c", "e972"),
+                name: "PerformanceIdleTime".into(),
+                original: None,
+            }),
+            (idle_id.clone(), SnapshotEntry::RegistryBinary {
+                hive: "HKLM".into(),
+                path: IDLE_PATH.into(),
+                name: "ConservationIdleTime".into(),
+                original: None,
+            }),
+            (idle_id.clone(), SnapshotEntry::RegistryBinary {
+                hive: "HKCU".into(),
+                path: IDLE_PATH.into(),
+                name: "PerformanceIdleTime".into(),
+                original: None,
+            }),
+            (idle_id.clone(), SnapshotEntry::DevicePowerEnable { instance_name: format!("{AUDIO_DEVICE}_0"), original: true }),
+            (power_id.clone(), idle_entry(None)),
+            (power_id.clone(), SnapshotEntry::DevicePowerEnable { instance_name: r"USB\ROOT_HUB30\5&1&0&0_0".into(), original: true }),
+            (format!("{}USB", crate::audio::IDLE_PREFIX), idle_entry(None)),
+            (format!("{}{AUDIO_DEVICE},x", crate::audio::IDLE_PREFIX), idle_entry(None)),
+        ];
+        for (id, entry) in refused {
+            assert!(validate_snapshot(&id, &entry).is_err(), "{id}: {entry:?}");
+        }
+        assert!(validate_snapshot(&power_id, &SnapshotEntry::DevicePowerEnable {
+            instance_name: format!("{}_0", AUDIO_DEVICE.to_ascii_lowercase()),
+            original: false,
+        }).is_ok());
+    }
+
     fn sample(index: usize, value: u32) -> (String, SnapshotEntry) {
         let tweak = crate::tweaks::all_tweaks().remove(index);
         let hive = match tweak.hive {

@@ -103,6 +103,7 @@ export interface Strings {
     ui: string;
     maintenance: string;
     gaming: string;
+    audio: string;
     startup: string;
     profiles: string;
     pricing: string;
@@ -1267,6 +1268,7 @@ const it: Strings = {
     ui: "Interfaccia",
     maintenance: "Manutenzione",
     gaming: "Gaming",
+    audio: "Audio",
     startup: "Avvio",
     profiles: "Profili",
     pricing: "Piani e prezzi",
@@ -2771,6 +2773,16 @@ const it: Strings = {
       description:
         "Regola Win32PrioritySeparation (0x26) in modo che l'app in primo piano riceva quanti di CPU brevi e variabili con un aumento di priorità 3x — il classico valore per la reattività desktop/gaming.",
     },
+    audio_ducking_off: {
+      name: "Non abbassare il gioco durante le chiamate",
+      description:
+        "Imposta «Quando Windows rileva attività di comunicazione» su «Non fare nulla». Per impostazione predefinita Windows abbassa dell'80% tutti gli altri suoni mentre un'app di chiamata usa il microfono. Le app con una propria riduzione del volume, come Discord, mantengono la loro. Vale dalla prossima chiamata.",
+    },
+    bt_absolute_volume_off: {
+      name: "Correggi il controllo del volume Bluetooth",
+      description:
+        "Disattiva il volume assoluto Bluetooth, così il volume di Windows e quello delle cuffie funzionano separatamente. Può aiutare quando il volume Bluetooth non risponde, resta troppo basso o salta. Vale per tutti i dispositivi audio Bluetooth; dopo, ricollega il dispositivo o riavvia Windows.",
+    },
     disable_game_dvr: {
       name: "Disattiva Xbox Game Bar / Game DVR",
       description:
@@ -3009,6 +3021,7 @@ const en: Strings = {
     ui: "UI",
     maintenance: "Maintenance",
     gaming: "Gaming",
+    audio: "Audio",
     startup: "Startup",
     profiles: "Profiles",
     pricing: "Plans & pricing",
@@ -4491,6 +4504,16 @@ const en: Strings = {
       description:
         "Tunes Win32PrioritySeparation (0x26) so the foreground app gets short, variable CPU time slices with a 3x priority boost — the classic desktop/gaming responsiveness value.",
     },
+    audio_ducking_off: {
+      name: "Don't lower my game during calls",
+      description:
+        "Sets “When Windows detects communications activity” to “Do nothing”. By default Windows lowers every other sound by 80% while a call app uses the microphone. Apps with their own volume ducking, such as Discord, keep theirs. Applies from your next call.",
+    },
+    bt_absolute_volume_off: {
+      name: "Fix Bluetooth volume control",
+      description:
+        "Turns off Bluetooth Absolute Volume, so the Windows volume and your headphones' own volume work separately. Can help when Bluetooth volume does not respond, stays too low or jumps. Applies to every Bluetooth audio device; reconnect the device or restart Windows afterwards.",
+    },
     disable_game_dvr: {
       name: "Disable Xbox Game Bar / Game DVR",
       description:
@@ -4727,6 +4750,7 @@ const fr: Strings = {
     ui: "Interface",
     maintenance: "Maintenance",
     gaming: "Gaming",
+    audio: "Audio",
     startup: "Démarrage",
     profiles: "Profils",
     pricing: "Offres et tarifs",
@@ -6239,6 +6263,16 @@ const fr: Strings = {
       description:
         "Ajuste Win32PrioritySeparation (0x26) pour donner à l'application au premier plan des quanta CPU courts et variables avec une priorité 3x — la valeur classique de réactivité bureau/jeu.",
     },
+    audio_ducking_off: {
+      name: "Ne pas baisser le son du jeu pendant les appels",
+      description:
+        "Règle « Lorsque Windows détecte une activité de communication » sur « Ne rien faire ». Par défaut, Windows baisse de 80 % tous les autres sons pendant qu'une application d'appel utilise le micro. Les applications qui baissent elles-mêmes le volume, comme Discord, gardent leur réglage. S'applique dès votre prochain appel.",
+    },
+    bt_absolute_volume_off: {
+      name: "Corriger le contrôle du volume Bluetooth",
+      description:
+        "Désactive le volume absolu Bluetooth : le volume de Windows et celui de votre casque fonctionnent alors séparément. Peut aider quand le volume Bluetooth ne réagit pas, reste trop bas ou fait des sauts. S'applique à tous les appareils audio Bluetooth ; reconnectez ensuite l'appareil ou redémarrez Windows.",
+    },
     disable_game_dvr: {
       name: "Désactiver Xbox Game Bar / Game DVR",
       description:
@@ -6478,6 +6512,7 @@ const es: Strings = {
     ui: "Interfaz",
     maintenance: "Mantenimiento",
     gaming: "Gaming",
+    audio: "Audio",
     startup: "Inicio",
     profiles: "Perfiles",
     pricing: "Planes y precios",
@@ -7980,6 +8015,16 @@ const es: Strings = {
       description:
         "Ajusta Win32PrioritySeparation (0x26) para que la aplicación en primer plano reciba intervalos de CPU cortos y variables con un aumento de prioridad de 3x: el valor clásico de capacidad de respuesta para escritorio y juegos.",
     },
+    audio_ducking_off: {
+      name: "No bajar el sonido del juego en las llamadas",
+      description:
+        "Pone «Cuando Windows detecte actividad de comunicación» en «No hacer nada». De forma predeterminada, Windows baja un 80 % todos los demás sonidos mientras una app de llamadas usa el micrófono. Las apps que bajan el volumen por su cuenta, como Discord, mantienen su ajuste. Se aplica desde tu próxima llamada.",
+    },
+    bt_absolute_volume_off: {
+      name: "Arreglar el control de volumen Bluetooth",
+      description:
+        "Desactiva el volumen absoluto de Bluetooth, para que el volumen de Windows y el de tus auriculares funcionen por separado. Puede ayudar cuando el volumen Bluetooth no responde, se queda demasiado bajo o da saltos. Se aplica a todos los dispositivos de audio Bluetooth; después, vuelve a conectar el dispositivo o reinicia Windows.",
+    },
     disable_game_dvr: {
       name: "Desactivar Xbox Game Bar / Game DVR",
       description:
@@ -8220,6 +8265,7 @@ const de: Strings = {
     ui: "Oberfläche",
     maintenance: "Wartung",
     gaming: "Gaming",
+    audio: "Audio",
     startup: "Autostart",
     profiles: "Profile",
     pricing: "Tarife & Preise",
@@ -9729,6 +9775,16 @@ const de: Strings = {
       description:
         "Stellt Win32PrioritySeparation (0x26) so ein, dass die Vordergrund-App kurze, variable CPU-Zeitscheiben mit dreifacher Priorität erhält – der klassische Wert für Desktop-/Gaming-Reaktionsschnelligkeit.",
     },
+    audio_ducking_off: {
+      name: "Spiel bei Anrufen nicht leiser stellen",
+      description:
+        "Setzt „Wenn Windows Kommunikationsaktivitäten erkennt“ auf „Nichts unternehmen“. Standardmäßig senkt Windows alle anderen Töne um 80 %, während eine Anruf-App das Mikrofon nutzt. Apps mit eigener Lautstärkeabsenkung wie Discord behalten ihre. Gilt ab deinem nächsten Anruf.",
+    },
+    bt_absolute_volume_off: {
+      name: "Bluetooth-Lautstärkeregelung reparieren",
+      description:
+        "Schaltet die absolute Bluetooth-Lautstärke aus, sodass die Windows-Lautstärke und die deines Kopfhörers getrennt arbeiten. Kann helfen, wenn die Bluetooth-Lautstärke nicht reagiert, zu leise bleibt oder springt. Gilt für alle Bluetooth-Audiogeräte; verbinde das Gerät danach neu oder starte Windows neu.",
+    },
     disable_game_dvr: {
       name: "Xbox Game Bar / Game DVR deaktivieren",
       description:
@@ -9968,6 +10024,7 @@ const pt: Strings = {
     ui: "Interface",
     maintenance: "Manutenção",
     gaming: "Jogos",
+    audio: "Áudio",
     startup: "Arranque",
     profiles: "Perfis",
     pricing: "Planos e preços",
@@ -11472,6 +11529,16 @@ const pt: Strings = {
       name: "Otimizar a prioridade da CPU",
       description:
         "Ajusta o Win32PrioritySeparation (0x26) para que a aplicação em primeiro plano receba fatias de tempo de CPU curtas e variáveis com um aumento de prioridade de 3x — o valor clássico de capacidade de resposta para computadores de secretária e jogos.",
+    },
+    audio_ducking_off: {
+      name: "Não reduzir o som do jogo durante as chamadas",
+      description:
+        "Define «Quando o Windows deteta atividade de comunicação» como «Não fazer nada». Por predefinição, o Windows reduz em 80% todos os outros sons enquanto uma aplicação de chamadas usa o microfone. As aplicações com a sua própria redução de volume, como o Discord, mantêm a delas. Aplica-se a partir da próxima chamada.",
+    },
+    bt_absolute_volume_off: {
+      name: "Corrigir o controlo de volume Bluetooth",
+      description:
+        "Desativa o volume absoluto Bluetooth, para que o volume do Windows e o dos auscultadores funcionem em separado. Pode ajudar quando o volume Bluetooth não responde, fica demasiado baixo ou dá saltos. Aplica-se a todos os dispositivos de áudio Bluetooth; depois, volte a ligar o dispositivo ou reinicie o Windows.",
     },
     disable_game_dvr: {
       name: "Desativar Xbox Game Bar / Game DVR",

@@ -1,7 +1,8 @@
 // Shared non-visual helpers: config, session, error reporting, formatting.
 import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
-import { format, Lang, Strings, localeOf } from "./i18n";
+import { format, Lang, Strings, STRINGS, localeOf } from "./i18n";
+import { AUDIO_COPY } from "./components/audio-copy";
 import { DriverAudit } from "./types";
 
 // The first-party Cloudflare hostname is the stable production endpoint.
@@ -78,7 +79,33 @@ export function textFor(
   fallbackName: string,
   fallbackDescription: string,
 ): { name: string; description: string } {
-  return dict[id] ?? { name: fallbackName, description: fallbackDescription };
+  return (
+    dict[id] ?? {
+      name: audioDeviceName(dict, id, fallbackName) ?? fallbackName,
+      description: fallbackDescription,
+    }
+  );
+}
+
+/** T3/T4 per-device audio fixes: the backend names them in English (lib.rs
+ *  `tweak_infos`, the same text as AUDIO_COPY.en), so the update alert, the
+ *  history and Restore all show them in the dictionary's language. */
+function audioDeviceName(
+  dict: Record<string, { name: string; description: string }>,
+  id: string,
+  english: string,
+): string | null {
+  const key = id.startsWith("audio_idle:")
+    ? "idleName"
+    : id.startsWith("audio_power:")
+      ? "powerName"
+      : null;
+  if (!key) return null;
+  const lang = (Object.keys(STRINGS) as Lang[]).find((l) => STRINGS[l].tweaks === dict);
+  const [head, tail] = AUDIO_COPY.en[key].split("{device}");
+  if (!lang || !english.startsWith(head) || !english.endsWith(tail)) return null;
+  const device = english.slice(head.length, english.length - tail.length);
+  return format(AUDIO_COPY[lang][key], { device });
 }
 
 export const LARGE_FILE_THRESHOLD_BYTES = 100 * 1024 * 1024;

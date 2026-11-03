@@ -38,7 +38,7 @@ import { consumeGlobalBudget, consumeKeyedBudget } from "../public-form-guard";
  *  one place that sends it rather than hidden in the template, so a change to
  *  what is free is a change here. scripts/check-public-counts.mjs fails the
  *  build when it differs from the catalogue the app ships. */
-const FREE_TWEAK_COUNT = 46;
+const FREE_TWEAK_COUNT = 48;
 
 /** The account is shared by the family; mail is branded for the app that
  *  asked. Only a known product changes anything, so a forged value costs

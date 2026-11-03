@@ -2,6 +2,9 @@
 // the Scan (with what it would free, measured on this PC) or a finding to
 // review. Pure, so the rules are tested without a window (scripts/test-scan.ts).
 import type {
+  AudioEndpoint,
+  AudioIdleTimer,
+  AudioUsbPower,
   CacheGroup,
   HardwareAudit,
   InterruptSample,
@@ -11,6 +14,7 @@ import type {
   TweakInfo,
 } from "./types";
 import {
+  audioIssues,
   NO_EXTRAS,
   optionalScanTweaks,
   recommendedTweaks,
@@ -30,6 +34,7 @@ export const SCAN_CATEGORIES = [
   "memory",
   "hardware",
   "latency",
+  "audio",
 ] as const;
 export type ScanCategory = (typeof SCAN_CATEGORIES)[number];
 
@@ -76,7 +81,26 @@ export type ScanItem = Base &
     | { type: "rebar"; rebar: HardwareAudit["rebar"][number] }
     | { type: "interrupts"; sample: InterruptSample }
     | { type: "dpc" }
+    | { type: "audio"; finding: AudioFinding; fix: string | null }
   );
+
+/** One Audio finding (AUDIO-SPEC 5, A2-A9 and T2). `fix` is the tweak id the
+ *  Scan applies for it, when it has one. */
+export type AudioFinding =
+  | { kind: "devices"; output: AudioEndpoint | null; input: AudioEndpoint | null }
+  | { kind: "callMode"; device: string; process: string }
+  | { kind: "ducking"; value: number | null }
+  | { kind: "idle"; timer: AudioIdleTimer }
+  | { kind: "power"; device: AudioUsbPower; modernStandby: boolean }
+  | { kind: "eapo"; endpoint: AudioEndpoint; stale: number; selector: boolean }
+  | { kind: "effectsOff"; endpoint: AudioEndpoint }
+  | { kind: "mic"; endpoint: AudioEndpoint | null; muted: boolean; level: number; name: string }
+  | { kind: "bluetooth" };
+
+export const AUDIO_DUCKING_ID = "audio_ducking_off";
+export const BT_VOLUME_ID = "bt_absolute_volume_off";
+/** A default microphone below this level is worth a note (A9). */
+export const LOW_MIC_LEVEL = 10;
 
 const OBSERVATION_CATEGORY: Record<ScanObservation["kind"], ScanCategory> = {
   storage: "junk",
@@ -257,6 +281,8 @@ export function scanItems(report: ScanReport): ScanItem[] {
     });
   items.push({ ...flags({ key: "latency:dpc", category: "latency" }), type: "dpc" });
 
+  items.push(...audioItems(report));
+
   for (const observation of scanObservations(report))
     items.push({
       ...flags({
@@ -270,6 +296,72 @@ export function scanItems(report: ScanReport): ScanItem[] {
 
   const order = (c: ScanCategory) => SCAN_CATEGORIES.indexOf(c);
   return items.sort((a, b) => order(a.category) - order(b.category));
+}
+
+/** The Audio category. Fixable items carry the tweak they apply; notes (the
+ *  devices, effects off, the microphone, Bluetooth volume) are never counted
+ *  and never in Fix all. */
+function audioItems(report: ScanReport): ScanItem[] {
+  const a = report.audio;
+  if (!a) return [];
+  const items: ScanItem[] = [];
+  const add = (
+    key: string,
+    finding: AudioFinding,
+    over: Partial<Base> = {},
+    fix: string | null = null,
+  ) =>
+    items.push({
+      ...flags({ key: `audio:${key}`, category: "audio", ...over }),
+      type: "audio",
+      finding,
+      fix,
+    });
+  const issues = audioIssues(a);
+  const render = a.endpoints.find((e) => e.flow === "render" && e.default) ?? null;
+  const capture = a.endpoints.find((e) => e.flow === "capture" && e.default) ?? null;
+
+  add("devices", { kind: "devices", output: render, input: capture });
+  for (const [i, c] of issues.callMode.entries())
+    add(`call:${i}`, { kind: "callMode", device: c.device, process: c.process }, { issue: true });
+  const ducking = report.tweaks?.find((t) => t.id === AUDIO_DUCKING_ID);
+  if (issues.ducking && !ducking?.applied && !ducking?.already_set)
+    add(
+      "ducking",
+      { kind: "ducking", value: a.ducking },
+      { fixable: !!ducking, recommended: !!ducking, issue: true },
+      ducking ? AUDIO_DUCKING_ID : null,
+    );
+  for (const timer of issues.idle)
+    add(
+      `idle:${timer.id}`,
+      { kind: "idle", timer },
+      { fixable: true, recommended: true, pro: true, admin: true, issue: true },
+      timer.id,
+    );
+  for (const device of a.usbPower.filter((p) => p.mayPowerDown && !p.applied)) {
+    const fixable = !a.modernStandby;
+    add(
+      `power:${device.id}`,
+      { kind: "power", device, modernStandby: a.modernStandby },
+      { fixable, recommended: fixable, pro: true, admin: true, issue: fixable },
+      fixable ? device.id : null,
+    );
+  }
+  if (issues.eapo)
+    add(
+      "eapo",
+      { kind: "eapo", endpoint: issues.eapo, stale: a.eapo.stale, selector: a.eapo.selector },
+      { issue: true },
+    );
+  // A8: upgraded to "Equalizer APO is bypassed" when it is set up there.
+  for (const e of [render, capture])
+    if (e?.effectsOff) add(`effects:${e.id}`, { kind: "effectsOff", endpoint: e });
+  if (a.mic && (a.mic.muted || a.mic.level < LOW_MIC_LEVEL))
+    add("mic", { kind: "mic", endpoint: capture, ...a.mic });
+  const bt = report.tweaks?.find((t) => t.id === BT_VOLUME_ID);
+  if (a.bluetooth && bt && !bt.applied) add("bluetooth", { kind: "bluetooth" });
+  return items;
 }
 
 /** Locked for this account: needs Pro it does not have. */
@@ -297,6 +389,7 @@ export function fixPlan(
     // on its own (`apply_tweak`), never through the Scan's eligibility gate.
     if (item.type === "booster") booster = true;
     else if (item.type === "tweak") tweaks.push(item.tweak.id);
+    else if (item.type === "audio" && item.fix) tweaks.push(item.fix);
     else if (item.type === "junk") extras.cleanups.push(item.target.id);
     else if (item.type === "caches") extras.app_caches.push(...item.groups.map((g) => g.id));
     else if (item.type === "registry") extras.registry.push(...item.entries.map((e) => e.id));
@@ -313,7 +406,10 @@ export function fixSteps(items: ScanItem[], keys: Iterable<string>, isPro: boole
   const chosen = items.filter((i) => wanted.has(i.key) && i.fixable && !locked(i, isPro));
   const has = (test: (i: ScanItem) => boolean) => chosen.some(test);
   const system: [FixStepId, boolean][] = [
-    ["system_settings", has((i) => i.type === "tweak" && i.tweak.requires_admin)],
+    [
+      "system_settings",
+      has((i) => (i.type === "tweak" && i.tweak.requires_admin) || (i.type === "audio" && i.admin)),
+    ],
     ["system_junk", has((i) => i.type === "junk" && i.target.requires_admin)],
     [
       "system_registry",
@@ -322,7 +418,12 @@ export function fixSteps(items: ScanItem[], keys: Iterable<string>, isPro: boole
     ["memory", has((i) => i.type === "purge")],
   ];
   const user: [FixStepId, boolean][] = [
-    ["settings", has((i) => i.type === "tweak" && !i.tweak.requires_admin)],
+    [
+      "settings",
+      has(
+        (i) => (i.type === "tweak" && !i.tweak.requires_admin) || (i.type === "audio" && !i.admin),
+      ),
+    ],
     ["junk", has((i) => i.type === "junk" && !i.target.requires_admin)],
     ["caches", has((i) => i.type === "caches")],
     ["registry", has((i) => i.type === "registry" && i.entries.some((e) => e.hive === "HKCU"))],
@@ -346,6 +447,8 @@ export type ScanTotals = {
   standbyMb: number;
   freeMb: number | null;
   hardware: number;
+  /** Audio fixes (T1, T3, T4). */
+  audio: number;
   issues: number;
 };
 
@@ -359,6 +462,7 @@ export function scanTotals(items: ScanItem[], only: (i: ScanItem) => boolean = (
     standbyMb: 0,
     freeMb: null,
     hardware: 0,
+    audio: 0,
     issues: 0,
   };
   for (const item of items.filter(only)) {
@@ -378,6 +482,7 @@ export function scanTotals(items: ScanItem[], only: (i: ScanItem) => boolean = (
       t.standbyMb = item.standbyMb;
       t.freeMb = item.freeMb;
     } else if (item.category === "hardware" && item.issue) t.hardware++;
+    else if (item.type === "audio" && item.fixable) t.audio++;
   }
   return t;
 }

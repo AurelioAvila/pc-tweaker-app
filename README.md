@@ -101,14 +101,14 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 - **Scan 2.0, with the findings in view.** Review 19 checks across performance, junk files, startup, privacy, registry, memory, hardware and latency. Choose individual supported fixes after inspecting the results.
 - **A read-only hardware audit.** Inspect RAM speed, PCIe link and Resizable BAR findings when Windows exposes the information, with guidance on what to check next. Firmware settings remain under your control.
 - **Proof of change for supported actions.** Compare before-and-after measurements and save the result as a PNG. The comparison can report no measurable difference; a configuration score is not an FPS benchmark.
-- **Clear Free and Pro boundaries.** The catalog has 82 controls: 46 Free and 36 Pro. Registry discovery is free; registry cleanup is Pro and saves a `.reg` backup. See [Free and Pro](#free-and-pro) for plans and [what changes on your system](#what-changes-on-your-system) for recovery limits.
+- **Clear Free and Pro boundaries.** The catalog has 84 controls: 48 Free and 36 Pro. Registry discovery is free; registry cleanup is Pro and saves a `.reg` backup. See [Free and Pro](#free-and-pro) for plans and [what changes on your system](#what-changes-on-your-system) for recovery limits.
 
 See the [1.19.0 release notes](https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.19.0) for the full update. The official browser-demo previews above use synthetic data; native results depend on your PC.
 
 ## What's new in 1.18
 
 - **Every value before it is written.** Each control has a "What this changes, exactly" panel with the value as it is now and as it will be set. If an application fails partway, the values already written are restored at once.
-- **Windows AI controls.** The catalog has 82 controls, 46 Free and 36 Pro, including Click to Do, the Windows AI Fabric service and the AI features in Microsoft Edge, Paint and Notepad.
+- **Windows AI controls.** The catalog has 84 controls, 48 Free and 36 Pro, including Click to Do, the Windows AI Fabric service and the AI features in Microsoft Edge, Paint and Notepad.
 - **A measured Before & After.** PC Health runs each timed test at least 7 times and reports a difference only when the two series are clearly apart.
 - **Change history by session.** Registry values before and after each change, with undo for one change, a whole session or everything still in effect, plus filters and export.
 - **Re-apply after Windows updates.** A check at sign-in lists only the tweaks a cumulative update put back, one checkbox each. Nothing is re-applied on its own.
@@ -163,7 +163,7 @@ Read the effect and trade-offs before applying a setting. A disabled tweak is no
 
 ### Native power controls
 
-The catalog contains **82 controls: 46 Free and 36 Pro**. The five power-policy controls change only mains-power policy in the selected Windows plan. They record the original plan and value before writing, verify the result, and leave battery policy unchanged.
+The catalog contains **84 controls: 48 Free and 36 Pro**. The five power-policy controls change only mains-power policy in the selected Windows plan. They record the original plan and value before writing, verify the result, and leave battery policy unchanged.
 
 | Control | Access | Purpose and limits |
 | --- | --- | --- |

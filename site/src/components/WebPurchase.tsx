@@ -1,9 +1,11 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createPurchaseFlow, type PurchaseStatus } from "../web-purchase-flow";
 import { createPurchaseClient, PurchaseError } from "../web-purchase-client";
 import { API_BASE, DOWNLOAD_EXE } from "../constants";
 import { euro, usePromo } from "../promo";
 import { usd } from "../../../src/components/crypto-copy";
+import { PurchaseConsent } from "./PurchaseConsent";
+import { PURCHASE_TERMS_VERSION } from "../purchase-terms";
 type Plan = "monthly" | "annual" | "lifetime";
 // plan null: the account alone (sign up from the site), with the app download and the plans as next steps.
 // cryptoUsd: Lifetime paid in USDC, at this many US cents (from GET /api/billing/prices).
@@ -14,6 +16,10 @@ export function WebPurchase({ plan, onClose, demo, onChoosePlan, cryptoUsd = nul
   const [message, setMessage] = useState("");
   const [canCancel, setCanCancel] = useState(false);
   const [busy, setBusy] = useState(false);
+  // The Terms box: Stripe's page is reached only once it is ticked (the API checks too).
+  const [agreed, setAgreed] = useState(false);
+  const [consentError, setConsentError] = useState(false);
+  const consentBox = useRef<HTMLInputElement>(null);
   // The preview uses only an in-memory fixture. The live client is reachable
   // only through the explicitly enabled, guarded website checkout route.
   const [fixture] = useState(() => {
@@ -74,10 +80,16 @@ export function WebPurchase({ plan, onClose, demo, onChoosePlan, cryptoUsd = nul
   async function checkoutPreview() {
     if (!plan) return;
     setBusy(true); setMessage(""); setCanCancel(false);
-    try { const url = await fixture.flow.checkout(plan, crypto); if (demo) setMessage("Preview complete. No checkout page was created and no payment was made."); else window.location.assign(url); }
+    try { const url = await fixture.flow.checkout(plan, crypto, PURCHASE_TERMS_VERSION.pctweaker); if (demo) setMessage("Preview complete. No checkout page was created and no payment was made."); else window.location.assign(url); }
     catch (err) { showError(err); if (!(err instanceof PurchaseError && err.status === 401)) setCanCancel(err instanceof PurchaseError && err.code === "other_checkout_pending"); }
     finally { setBusy(false); }
   }
+  function continueToCheckout() {
+    if (!agreed) { setConsentError(true); consentBox.current?.focus(); return; }
+    void checkoutPreview();
+  }
+  const consent = <PurchaseConsent ref={consentBox} checked={agreed} error={consentError} subscription={plan !== "lifetime"} termsHref="/terms/"
+    onChange={(checked) => { setAgreed(checked); if (checked) setConsentError(false); }} />;
   async function cancelPrevious() {
     setBusy(true); setMessage("");
     try { await fixture.flow.cancelCheckout(); setCanCancel(false); setMessage("Previous checkout closed. You can continue with this plan."); }
@@ -113,8 +125,8 @@ export function WebPurchase({ plan, onClose, demo, onChoosePlan, cryptoUsd = nul
       <button disabled={busy} type="submit" className="bg-accent w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)]">{mode === "login" ? (plan ? "Continue to checkout" : "Sign in") : plan ? "Create account and continue" : "Create account"}</button>{demo && <p className="text-xs leading-relaxed text-[var(--fg-dim)]">Demonstration only. Do not enter real credentials. No data is sent and no purchase is made. To preview an existing subscriber, use subscriber@example.test with any demo password.</p>}</form>}
       {status === "verify-email" && <div className="mt-6 space-y-4 text-sm text-[var(--fg-dim)]"><p>Check your inbox and confirm your email before continuing. {demo && "In this preview no message is sent."}</p><button disabled={busy} type="button" onClick={() => void verifyPreview()} className="bg-accent w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)]">{demo ? "Simulate email verification" : "I verified my email"}</button>{!demo && <button disabled={busy} type="button" onClick={() => void resend()} className="underline underline-offset-4">Send another verification email</button>}</div>}
       {!plan && (status === "ready" || status === "already-pro" || status === "upgrade") && <div className="mt-6 space-y-4 text-sm text-[var(--fg-dim)]"><p>{status === "ready" ? "Your account is ready. Download PC Tweaker and sign in with this email to start your free trial." : "This account already has Pro. Download PC Tweaker and sign in with this email."}</p><a href={DOWNLOAD_EXE} className="bg-accent block w-full rounded-xl px-5 py-4 text-center font-bold text-[var(--on-accent)]">Download PC Tweaker</a>{status === "ready" && onChoosePlan && <button type="button" onClick={onChoosePlan} className="w-full rounded-xl border border-white/20 px-5 py-4 font-semibold text-[var(--fg)] hover:border-white/40">See the plans</button>}</div>}
-      {plan && status === "ready" && <div className="mt-6 space-y-4 text-sm text-[var(--fg-dim)]"><p>{demo ? "Preview account verified." : "Email verified."} Review the final price and terms on the secure checkout page.</p><button disabled={busy} type="button" onClick={() => void checkoutPreview()} className="bg-accent w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)]">{demo ? "Simulate checkout" : "Continue to secure checkout"}</button></div>}
-      {plan && status === "upgrade" && <div className="mt-6 space-y-4 text-sm text-[var(--fg-dim)]"><p>Your subscription will be set to stop renewing after your Lifetime payment is confirmed. Review the final price on the secure checkout page.</p><button disabled={busy} type="button" onClick={() => void checkoutPreview()} className="bg-accent w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)]">{demo ? "Simulate checkout" : "Continue to secure checkout"}</button></div>}
+      {plan && status === "ready" && <div className="mt-6 space-y-4 text-sm text-[var(--fg-dim)]"><p>{demo ? "Preview account verified." : "Email verified."} Review the final price and terms on the secure checkout page.</p>{consent}<button disabled={busy} type="button" onClick={continueToCheckout} className="bg-accent w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)]">{demo ? "Simulate checkout" : "Continue to secure checkout"}</button></div>}
+      {plan && status === "upgrade" && <div className="mt-6 space-y-4 text-sm text-[var(--fg-dim)]"><p>Your subscription will be set to stop renewing after your Lifetime payment is confirmed. Review the final price on the secure checkout page.</p>{consent}<button disabled={busy} type="button" onClick={continueToCheckout} className="bg-accent w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)]">{demo ? "Simulate checkout" : "Continue to secure checkout"}</button></div>}
       {plan && status === "already-pro" && <p className="mt-6 text-sm text-[var(--fg-dim)]">This account already has Pro. Contact support for help changing plans.</p>}
       {canCancel && <button disabled={busy} type="button" onClick={() => void cancelPrevious()} className="mt-4 text-sm text-[var(--fg)] underline underline-offset-4">Close previous checkout</button>}
       {message && <p role="status" className="mt-4 rounded-lg border border-white/15 p-4 text-sm text-[var(--fg)]">{message}</p>}</div>

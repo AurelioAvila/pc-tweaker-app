@@ -191,6 +191,7 @@ export const pt: Copy = {
   },
 
   receipt: {
+    consented: "Antes de pagar, aceitou os Termos e pediu acesso imediato a este conteúdo digital, reconhecendo que o direito de livre resolução de 14 dias termina assim que o acesso começa.",
     subject: (u: boolean, lifetime: boolean) =>
       u
         ? lifetime

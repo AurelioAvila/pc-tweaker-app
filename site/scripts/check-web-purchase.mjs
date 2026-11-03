@@ -13,6 +13,20 @@ test("checkout sends an allowed plan only; it does not submit price or trial", a
   assert.deepEqual(JSON.parse(call.body), { product: "pctweaker", plan: "lifetime", start_trial: false });
   assert.equal(call.headers.Authorization, "Bearer fixture-token");
   assert.equal(call.credentials, "omit");
+  await client.checkout("fixture-token", "annual", false, "2026-11-01");
+  assert.deepEqual(JSON.parse(call.body), { product: "pctweaker", plan: "annual", start_trial: false, consent: { accepted: true, terms_version: "2026-11-01" } });
+});
+test("the consent page sends the signed link and the ticked box, never an account token", async () => {
+  let call;
+  const client = createPurchaseClient("https://api.example.test", async (url, init) => { call = { url, ...init }; return reply({ url: "https://checkout.stripe.com/c/pay/cs_test_confirm" }); });
+  assert.equal(await client.confirmCheckout("signed.link.value", "2026-11-01"), "https://checkout.stripe.com/c/pay/cs_test_confirm");
+  assert.equal(call.url, "https://api.example.test/api/checkout/confirm");
+  assert.deepEqual(JSON.parse(call.body), { token: "signed.link.value", accepted: true, terms_version: "2026-11-01" });
+  assert.equal(call.headers.Authorization, undefined);
+  for (const url of ["https://pctweaker.app/checkout/confirm/", "https://checkout.stripe.com.attacker.test/"]) {
+    const bad = createPurchaseClient("https://api.example.test", async () => reply({ url }));
+    await assert.rejects(bad.confirmCheckout("link", "2026-11-01"), /checkout link was invalid/);
+  }
 });
 test("rejects redirect URLs outside the expected HTTPS Stripe host", async () => {
   for (const url of ["https://checkout.stripe.com.attacker.test/", "http://checkout.stripe.com/", "https://checkout.stripe.com:444/", "https://user@checkout.stripe.com/", "javascript:alert(1)", null]) {

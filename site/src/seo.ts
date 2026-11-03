@@ -106,6 +106,15 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     ogType: "website",
     noindex: true,
   },
+  // The Terms box an app's purchase passes through before Stripe: never indexed or listed.
+  "/checkout/confirm": {
+    title: "Confirm Your Purchase | PC Tweaker",
+    description:
+      "Agree to the Terms before the secure checkout opens for a purchase started in PC Tweaker or PC Tweaker Uninstaller. Nothing is charged on this page.",
+    canonical: `${ORIGIN}/checkout/confirm/`,
+    ogType: "website",
+    noindex: true,
+  },
   "/privacy": {
     title: "PC Tweaker Privacy Policy — What Data Is Collected",
     description:

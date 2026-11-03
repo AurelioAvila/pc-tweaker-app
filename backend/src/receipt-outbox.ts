@@ -25,6 +25,8 @@ export type Receipt = {
   amountMinor?: number;
   currency?: string;
   subscriptionId?: string;
+  /** The purchase carried a checkout_consents id: the receipt confirms the Terms box. */
+  consented?: boolean;
   /** "bonus": when the year started. */
   startedAt?: string;
 };

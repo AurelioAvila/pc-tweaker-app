@@ -184,6 +184,7 @@ export const it: Copy = {
   },
 
   receipt: {
+    consented: "Prima del pagamento hai accettato i Termini e chiesto di accedere subito a questo contenuto digitale, sapendo che il diritto di recesso di 14 giorni termina quando inizia l'accesso.",
     subject: (u: boolean, lifetime: boolean) =>
       u
         ? lifetime

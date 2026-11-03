@@ -283,7 +283,7 @@ router.post("/register", async (req: Request, res: Response) => {
 
     const passwordHash = await hashPassword(password);
     const result = await pool.query(
-      "INSERT INTO users (email, password_hash, first_name, last_name, date_of_birth, locale) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, token_version",
+      "INSERT INTO users (email, password_hash, first_name, last_name, date_of_birth, locale, last_login_at) VALUES ($1, $2, $3, $4, $5, $6, now()) RETURNING id, token_version",
       [email.toLowerCase(), passwordHash, String(firstName).trim(), String(lastName).trim(), dateOfBirth, lang],
     );
     const { id, token_version } = result.rows[0];
@@ -339,6 +339,8 @@ router.post("/login", async (req: Request, res: Response) => {
     }
     const token = signToken(user.id, user.token_version);
     await rememberLanguage(req, user.id).catch(() => undefined);
+    // Proof of use for payment disputes (PRIVACY.md); best-effort like the language.
+    await getPool().query("UPDATE users SET last_login_at = now() WHERE id = $1", [user.id]).catch(() => undefined);
     // Best-effort: an alert that cannot be sent must not block the sign-in.
     void noticeSignIn(req, user).catch((err) => console.error("sign-in notice failed:", err));
     res.json({ token });
@@ -543,7 +545,7 @@ router.get("/verify-email", async (req: Request, res: Response) => {
     if (!userId) {
       return res.status(400).send(page(g.expiredTitle, `<p class=error>${escapeHtml(g.verifyExpired)}</p>`));
     }
-    await getPool().query("UPDATE users SET email_verified = TRUE WHERE id = $1", [userId]);
+    await getPool().query("UPDATE users SET email_verified = TRUE, email_verified_at = now() WHERE id = $1", [userId]);
     // The welcome waits until here rather than going out at registration,
     // where it would have arrived alongside the message asking the person to
     // confirm — two at once makes the one that needs acting on easier to
@@ -772,7 +774,7 @@ router.post("/confirm-email-change", async (req: Request, res: Response) => {
       // The unique index decides a race with a registration for the same
       // address. Every session ends: the old address no longer signs in.
       await getPool().query(
-        "UPDATE users SET email = $1, email_verified = TRUE, token_version = token_version + 1 WHERE id = $2",
+        "UPDATE users SET email = $1, email_verified = TRUE, email_verified_at = now(), token_version = token_version + 1 WHERE id = $2",
         [change.email, change.userId],
       );
     } catch (err: any) {

@@ -35,6 +35,10 @@ import { queueCaRenewalNotice, renewalCancelRoute } from "../renewal-notice";
 import { asyncRoute } from "../async-route";
 import { subscriptionRouter } from "../subscription-manage";
 import { deviceHashFrom } from "../license";
+import {
+  PURCHASE_TERMS_VERSION, buyerIp, consentPageUrl, consentRequired, linkConsentSession, readConsentIntent, recordConsent,
+  sessionIdFromUrl, signConsentIntent, userAgentFamily,
+} from "../purchase-evidence";
 import { referralCheckout, referralWebhook, closeExpiredReferral } from "../referral-stripe";
 import { GuardedCheckoutError, guardedCheckout, cancelGuardedCheckout } from "../guarded-checkout";
 import { stripeGuardedProvider } from "../stripe-guarded-provider";
@@ -412,7 +416,11 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
     return expireUnreservedSession(stripe.checkout.sessions, userId, sessionId,
       session => closeExpiredReferral(userId, session as Stripe.Checkout.Session));
   },
-}, { replaceDifferentTerms = false, crypto = false }: { replaceDifferentTerms?: boolean; crypto?: boolean } = {}) {
+}, { replaceDifferentTerms = false, crypto = false, consentPage = false }: {
+  replaceDifferentTerms?: boolean; crypto?: boolean;
+  /** An app route: with the Terms box required, an app that can open our page is sent there first. */
+  consentPage?: boolean;
+} = {}) {
   return async (req: Request, res: Response) => {
     // Crypto sells Lifetime only: a subscription cannot renew from a wallet here.
     const planKey = String(req.body?.plan || (crypto ? "lifetime" : "annual")) as PlanKey;
@@ -468,11 +476,13 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       let customerEmail: string | undefined;
       let alreadyOwnsLifetime = false;
       let locale: string | null = null;
+      let tokenVersion = 0;
       if (isConfigured) {
         const { rows } = await getPool().query(
-          "SELECT stripe_customer_id, email, is_pro, plan, locale FROM users WHERE id = $1",
+          "SELECT stripe_customer_id, email, is_pro, plan, locale, token_version FROM users WHERE id = $1",
           [req.userId],
         );
+        tokenVersion = rows[0]?.token_version ?? 0;
         customerId = rows[0]?.stripe_customer_id || null;
         customerEmail = rows[0]?.email;
         alreadyOwnsLifetime = rows[0]?.is_pro === true && rows[0]?.plan === "lifetime";
@@ -566,10 +576,49 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       params.success_url = withQuery(params.success_url!, { product, ...(trial ? { trial: "1" } : {}), ...(locale ? { lang: locale } : {}) });
       // The cancel page offers "Try again" on the same plan (checkout-recovery.ts, resumeCheckoutUrl).
       if (params.cancel_url) params.cancel_url = withQuery(params.cancel_url, { product, plan: planKey, ...(locale ? { lang: locale } : {}) });
+      // The Terms box (owner decision 3 Nov 2026; purchase-evidence.ts). Managed Payments refuses
+      // Stripe's own consent fields, so the box is on our page: its consent is recorded here and
+      // named on the session. With CHECKOUT_CONSENT_REQUIRED=1 no session is created without one.
+      const consent = req.body?.consent;
+      let consentId: string | null = null;
+      if (consent !== undefined) {
+        const version = PURCHASE_TERMS_VERSION[product];
+        if (!consent || consent.accepted !== true || typeof consent.terms_version !== "string") {
+          return res.status(400).json({ error: "Tick the box to continue.", code: "consent_required" });
+        }
+        if (consent.terms_version !== version) {
+          return res.status(409).json({ error: "The Terms have changed since this page was opened. Reload it to read them.", code: "terms_changed" });
+        }
+        consentId = await recordConsent({
+          userId: req.userId as number, product, plan: planKey, termsVersion: version,
+          ip: buyerIp(req), userAgentFamily: userAgentFamily(req.get?.("user-agent")),
+        });
+        const tag = { consent_id: consentId, terms_version: version };
+        params.metadata = { ...params.metadata, ...tag };
+        if (params.subscription_data) params.subscription_data = { ...params.subscription_data, metadata: { ...params.subscription_data.metadata, ...tag } };
+        if (params.payment_intent_data) params.payment_intent_data = { ...params.payment_intent_data, metadata: { ...params.payment_intent_data.metadata, ...tag } };
+      } else if (consentRequired(effects.environment)) {
+        if (!consentPage) return res.status(400).json({ error: "Tick the box to continue.", code: "consent_required" });
+        // Every PC Tweaker version opens the URL it is given, so it goes to our page, which comes back
+        // through /checkout/confirm. Uninstaller versions released before the box open only Stripe's
+        // own pages (is_stripe_page), so until they send consent_page they go on without it.
+        if (product === "pctweaker" || req.body?.consent_page === true) {
+          const deviceHeader = req.get?.("x-device-hash");
+          const token = signConsentIntent({
+            uid: req.userId as number, tv: tokenVersion, product, plan: planKey,
+            ...(startTrial !== undefined ? { trial: startTrial } : {}),
+            ...(crypto ? { crypto: true } : {}),
+            ...(deviceHeader && deviceHashFrom(deviceHeader).deviceHash ? { device: deviceHeader } : {}),
+            ...(locale ? { lang: locale } : {}),
+          }, effects.environment.JWT_SECRET);
+          return res.json({ url: consentPageUrl(token), trial, trial_days: TRIAL_DAYS });
+        }
+      }
       // Present when CHECKOUT_GUARD_ENABLED=1 at startup (referral sessions included); otherwise the
       // unguarded path below, which still yields to any guarded reservation (the cutover bridge).
       if (effects.guardedCreate) {
         const result = await effects.guardedCreate({ userId: req.userId as number, product, plan: planKey, trial, params, replaceDifferentTerms, crypto });
+        if (consentId) await linkConsentSession(consentId, sessionIdFromUrl(result.url));
         return res.json({ url: result.url, trial, trial_days: TRIAL_DAYS });
       }
       // Two clicks within the same minute get the same page, not two that
@@ -587,6 +636,7 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
           throw new GuardedCheckoutError("checkout_recovery_required");
         throw new GuardedCheckoutError("other_checkout_pending");
       }
+      if (consentId) await linkConsentSession(consentId, session.id ?? sessionIdFromUrl(session.url));
       if (referred) return res.json({ url: referred.url });
       res.json({ url: session.url, trial, trial_days: TRIAL_DAYS });
     } catch (err) {
@@ -609,11 +659,40 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
     }
   };
 }
-router.post("/checkout", checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler(undefined, { replaceDifferentTerms: true }));
+router.post("/checkout", checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler(undefined, { replaceDifferentTerms: true, consentPage: true }));
 // Lifetime in USDC: the same guards as above, behind CRYPTO_CHECKOUT_ENABLED (404 when off).
 const cryptoGate = (_req: Request, res: Response, next: NextFunction) =>
   cryptoEnabled(process.env) ? next() : res.status(404).json({ error: "not found" });
-router.post("/checkout/crypto", cryptoGate, checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler(undefined, { replaceDifferentTerms: true, crypto: true }));
+router.post("/checkout/crypto", cryptoGate, checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler(undefined, { replaceDifferentTerms: true, crypto: true, consentPage: true }));
+
+/**
+ * POST /api/checkout/confirm { token, accepted, terms_version }: the consent page
+ * (pctweaker.app/checkout/confirm/) once the box is ticked. The signed link the app opened stands in
+ * for the session token (two hours, void after "sign out everywhere"), and the purchase continues as
+ * the app asked for it, through the same handler and limits as /checkout.
+ */
+const LINK_EXPIRED = { error: "This link has expired. Start the purchase again from the app.", code: "link_expired" };
+export async function consentIntentAuth(req: Request, res: Response, next: NextFunction) {
+  const intent = readConsentIntent(req.body?.token);
+  if (!intent || !isKnownProduct(intent.product)) return res.status(401).json(LINK_EXPIRED);
+  if (!isConfigured) return res.status(503).json({ error: "database not configured" });
+  const { rows: [user] } = await getPool().query("SELECT token_version FROM users WHERE id = $1", [intent.uid]);
+  if (!user || user.token_version !== intent.tv) return res.status(401).json(LINK_EXPIRED);
+  req.userId = intent.uid;
+  req.body = {
+    product: intent.product, plan: intent.plan,
+    ...(intent.trial !== undefined ? { start_trial: intent.trial } : {}),
+    consent: { accepted: req.body?.accepted === true, terms_version: req.body?.terms_version },
+  };
+  if (intent.device) req.headers["x-device-hash"] = intent.device;
+  res.locals.crypto = intent.crypto === true;
+  next();
+}
+const confirmCard = createCheckoutHandler(undefined, { replaceDifferentTerms: true });
+const confirmCrypto = createCheckoutHandler(undefined, { replaceDifferentTerms: true, crypto: true });
+router.post("/checkout/confirm", checkoutMaintenance, asyncRoute(consentIntentAuth), checkoutLimiter, requireStripe,
+  (req: Request, res: Response, next: NextFunction) => (res.locals.crypto ? cryptoGate(req, res, next) : next()),
+  asyncRoute((req: Request, res: Response) => (res.locals.crypto ? confirmCrypto : confirmCard)(req, res)));
 // The website cannot create a checkout unless the shared server guard is on.
 if (CHECKOUT_GUARD_ENABLED) {
   router.post("/web-checkout", checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler());
@@ -1378,6 +1457,7 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
       plan: plan || "monthly",
       priceLabel: charged ? trialMoney(c.dateLocale, charged) : chargedLabel ?? PLAN_PRICE_LABELS[plan || "monthly"] ?? PLAN_PRICE_LABELS.monthly,
       renewsOn: expiresAt ? formatDay(c, expiresAt) : null,
+      consented: receipt.consented === true,
     };
     await deliver({ subject: proWelcomeSubject(product, plan, c), text: proWelcomeText(input, c), html: proWelcomeHtml(input, c) });
 }
@@ -1408,6 +1488,11 @@ async function firstCharge(subscriptionId: string): Promise<Money | null> {
   const { data } = await stripe.invoices.list({ subscription: subscriptionId, limit: 5 });
   const first = data.find((invoice) => invoice.billing_reason === "subscription_create" && invoice.status === "paid");
   return first ? { minor: first.amount_paid, currency: first.currency } : null;
+}
+
+/** A purchase started from our Terms box carries its consent id (purchase-evidence.ts). */
+function consentedBy(metadata: Stripe.Metadata | null | undefined): Partial<Receipt> {
+  return metadata?.consent_id ? { consented: true } : {};
 }
 
 /** A purchase amount for the receipt payload, from Stripe's minor units. */
@@ -1789,7 +1874,7 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
     // Retryable cancellation precedes receipt delivery. The SQL grant is
     // already safe to replay if Stripe is temporarily unavailable here.
     await effects.stopSubscriptions(userId, customerId);
-    await effects.welcome(userId, plan, null, product, sessionCharge(session), `checkout:${session.id}`, paid(session.amount_total, session.currency));
+    await effects.welcome(userId, plan, null, product, sessionCharge(session), `checkout:${session.id}`, { ...paid(session.amount_total, session.currency), ...consentedBy(session.metadata) });
   }
 }
 
@@ -1969,7 +2054,7 @@ async function syncSubscription(
     await queueEnding(userId, product, subscription, expiresAt);
     if (welcome) {
       await effects.welcome(userId, subscriptionPlan(subscription), expiresAt, product, subscriptionCharge(subscription), `subscription:${subscription.id}`,
-        { subscriptionId: subscription.id });
+        { subscriptionId: subscription.id, ...consentedBy(subscription.metadata) });
     }
     return { userId };
   }
@@ -1998,7 +2083,7 @@ async function syncSubscription(
   // Only on creation, not every renewal/update; a trial's receipt waits for its first charge.
   if (granted && welcome) {
     await effects.welcome(userId, subscriptionPlan(subscription), expiresAt, "pctweaker", subscriptionCharge(subscription), `subscription:${subscription.id}`,
-      { subscriptionId: subscription.id });
+      { subscriptionId: subscription.id, ...consentedBy(subscription.metadata) });
   }
   return granted ? { userId } : null;
 }
@@ -2062,7 +2147,7 @@ async function handleEvent(event: Stripe.Event, effects: BillingEffects = billin
         await effects.welcome(
           synced.userId, subscriptionPlan(current), periodEndFromSubscription(current), product,
           subscriptionCharge(current), `subscription:${current.id}`,
-          { subscriptionId: current.id, ...paid(invoice.amount_paid, invoice.currency) },
+          { subscriptionId: current.id, ...paid(invoice.amount_paid, invoice.currency), ...consentedBy(current.metadata) },
         );
       }
       break;

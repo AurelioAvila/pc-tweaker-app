@@ -31,7 +31,7 @@ import { AUDIO_COPY } from "./audio-copy";
 import { Badge, Toggle } from "./ui";
 import { ToolHeader, ToolStatus } from "./tool-section";
 import "./audio.css";
-import { TweakIcon } from "./tweak-icon";
+import { DISPLAY_AUDIO_CODEC, TweakIcon } from "./tweak-icon";
 
 type Copy = (typeof AUDIO_COPY)["en"];
 
@@ -292,12 +292,7 @@ function findings(c: Copy, a: AudioStatus, onError: (m: string) => void) {
       key: "eapo",
       tone: "warn",
       title: format(c.eapoInactiveTitle, { name: render.name }),
-      body: [
-        c.eapoInactiveBody,
-        a.eapo.stale > 0 ? format(c.eapoStale, { count: formatNumber(a.eapo.stale) }) : "",
-      ]
-        .filter(Boolean)
-        .join(" "),
+      body: c.eapoInactiveBody,
       action: a.eapo.selector ? <DeviceSelectorButton c={c} onError={onError} /> : undefined,
     });
   for (const e of [render, capture])
@@ -322,33 +317,83 @@ function findings(c: Copy, a: AudioStatus, onError: (m: string) => void) {
   return rows;
 }
 
-/** One figure of the page's summary: every number comes from `audio_status`
- *  or the tweak list, nothing is estimated. */
+/** Scrolls a section's heading into view and moves focus there, so a
+ *  keyboard or screen-reader user lands where the eye does. */
+function jumpTo(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  el.focus({ preventScroll: true });
+}
+
+const CHECK_GLYPH = (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-[22px] w-[22px]"
+    aria-hidden="true"
+  >
+    <path d="m5 12.5 4.5 4.5L19 7.5" />
+  </svg>
+);
+
+/** One figure of the page's summary, and the way to its section: every
+ *  number comes from `audio_status` or the tweak list, nothing is estimated.
+ *  `clear` swaps the number for a check when there is nothing to show. */
 function Stat({
   label,
   value,
   of,
   tone,
+  clear,
+  target,
 }: {
   label: string;
   value: number;
   of?: number;
   tone?: "ok" | "warn";
+  clear?: boolean;
+  target: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-col-reverse gap-1 px-4 py-3">
-      <dt className="type-label !text-ink-3 [overflow-wrap:anywhere]">{label}</dt>
-      <dd
-        className={`text-[22px] font-semibold leading-none tracking-[-0.02em] tabular-nums ${
-          tone === "warn" ? "text-warn" : tone === "ok" ? "text-ok" : "text-ink"
-        }`}
+    <li className="min-w-0">
+      <button
+        type="button"
+        className="audio-stat"
+        // The two lines are separate boxes; spell the name out for readers.
+        aria-label={
+          clear
+            ? label
+            : `${label}: ${formatNumber(value)}${of === undefined ? "" : `/${formatNumber(of)}`}`
+        }
+        onClick={() => jumpTo(target)}
       >
-        {formatNumber(value)}
-        {of !== undefined && (
-          <span className="text-ink-3 ml-0.5 text-[13px] font-medium">/{formatNumber(of)}</span>
-        )}
-      </dd>
-    </div>
+        <span className="audio-stat-label type-label [overflow-wrap:anywhere]">{label}</span>
+        <span
+          className={`flex h-[22px] items-center text-[22px] font-semibold leading-none tracking-[-0.02em] tabular-nums ${
+            tone === "warn" ? "text-warn" : tone === "ok" ? "text-ok" : "text-ink"
+          }`}
+        >
+          {clear ? (
+            CHECK_GLYPH
+          ) : (
+            <>
+              {formatNumber(value)}
+              {of !== undefined && (
+                <span className="text-ink-3 ml-0.5 self-end text-[13px] font-medium">
+                  /{formatNumber(of)}
+                </span>
+              )}
+            </>
+          )}
+        </span>
+      </button>
+    </li>
   );
 }
 
@@ -411,16 +456,27 @@ export function AudioPanel({
     <>
       <section className="tool-panel audio-hero">
         {header}
-        <dl className="border-line divide-line mb-5 grid grid-cols-3 divide-x rounded-xl border">
-          <Stat label={c.statDevices} value={shown.length} />
-          <Stat
-            label={c.statFindings}
-            value={found.length}
-            tone={found.some((r) => r.tone === "warn") ? "warn" : found.length ? undefined : "ok"}
-          />
-          <Stat label={c.statFixes} value={fixes.on} of={fixes.total} />
-        </dl>
-        <h3 className="type-label !text-ink-2 mb-2.5">{c.devicesTitle}</h3>
+        <ul className="audio-stats border-line divide-line mb-5 grid grid-cols-3 divide-x rounded-xl border">
+          <Stat label={c.statDevices} value={shown.length} target="audio-devices-title" />
+          {found.length ? (
+            <Stat
+              label={c.statFindings}
+              value={found.length}
+              tone={found.some((r) => r.tone === "warn") ? "warn" : undefined}
+              target="audio-findings-title"
+            />
+          ) : (
+            <Stat label={c.statClear} value={0} tone="ok" clear target="audio-findings-title" />
+          )}
+          <Stat label={c.statFixes} value={fixes.on} of={fixes.total} target="audio-fixes-title" />
+        </ul>
+        <h3
+          id="audio-devices-title"
+          tabIndex={-1}
+          className="audio-anchor type-label !text-ink-2 mb-2.5"
+        >
+          {c.devicesTitle}
+        </h3>
         {shown.length ? (
           <div className="grid gap-3 min-[900px]:grid-cols-2">
             {shown.map((e) => (
@@ -435,7 +491,11 @@ export function AudioPanel({
       </section>
 
       <section className="audio-findings mb-6" aria-labelledby="audio-findings-title">
-        <h2 id="audio-findings-title" className="type-section mb-2.5 text-ink">
+        <h2
+          id="audio-findings-title"
+          tabIndex={-1}
+          className="audio-anchor type-section mb-2.5 text-ink"
+        >
           {c.findingsTitle}
         </h2>
         {found.length ? (
@@ -473,7 +533,9 @@ export function AudioPanel({
         )}
       </section>
 
-      <h2 className="type-section text-ink">{c.fixesTitle}</h2>
+      <h2 id="audio-fixes-title" tabIndex={-1} className="audio-anchor type-section text-ink">
+        {c.fixesTitle}
+      </h2>
       <p className="mb-3 mt-0.5 text-[12px] text-ink-3">{c.fixesLead}</p>
     </>
   );
@@ -497,6 +559,8 @@ function deviceTweak(id: string, name: string, applied: boolean): TweakInfo {
 function DeviceFixRow({
   s,
   title,
+  label,
+  device,
   body,
   note,
   warning,
@@ -506,18 +570,21 @@ function DeviceFixRow({
   extra,
 }: {
   s: Strings;
+  /** Short heading; `label` (with the device's name) names the switch. */
   title: string;
+  label: string;
+  device: string;
   body: string;
   note?: string;
   warning?: string;
   tweak: TweakInfo;
   busy: boolean;
   onToggle: (t: TweakInfo) => void;
-  /** Gets the title's id, for a button that needs the device's name. */
-  extra?: (titleId: string) => ReactNode;
+  /** Gets the device line's id, for a button that needs the device's name. */
+  extra?: (deviceId: string) => ReactNode;
 }) {
   const style = CATEGORY_STYLE.audio;
-  const titleId = useId();
+  const deviceId = useId();
   return (
     <li className="animate-card section-tweak panel panel-hover group relative overflow-hidden p-4">
       <div className="relative flex items-center gap-4">
@@ -528,16 +595,22 @@ function DeviceFixRow({
           <TweakIcon id={tweak.id} fallback={style.icon} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2
-              id={titleId}
-              className="min-w-0 text-[15px] font-semibold tracking-[-0.01em] text-ink [overflow-wrap:anywhere]"
-            >
+          {/* The badges wrap as one group, never one left alone on a line. */}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+            <h2 className="min-w-0 text-[15px] font-semibold tracking-[-0.01em] text-ink [overflow-wrap:anywhere]">
               {title}
             </h2>
-            <Badge kind="admin">{s.badges.admin}</Badge>
-            <Badge kind="pro">{s.badges.pro}</Badge>
+            <span className="inline-flex shrink-0 items-center gap-2">
+              <Badge kind="admin">{s.badges.admin}</Badge>
+              <Badge kind="pro">{s.badges.pro}</Badge>
+            </span>
           </div>
+          <p
+            id={deviceId}
+            className="type-data mt-1 text-[12px] font-medium text-ink-2 [overflow-wrap:anywhere]"
+          >
+            {device}
+          </p>
           <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.55] text-ink-3">{body}</p>
           {warning && (
             <p className="mt-1.5 max-w-[52ch] text-[12px] leading-[1.5] text-warn">{warning}</p>
@@ -545,10 +618,10 @@ function DeviceFixRow({
           {note && (
             <p className="mt-1.5 max-w-[52ch] text-[12px] leading-[1.5] text-ink-3">{note}</p>
           )}
-          {extra?.(titleId)}
+          {extra?.(deviceId)}
         </div>
         <Toggle
-          label={title}
+          label={label}
           busyLabel={tweak.applied ? s.restore.running : s.profiles.applying}
           checked={tweak.applied}
           busy={busy}
@@ -617,26 +690,28 @@ export function AudioExtras({
   return (
     <>
       {status.idle.map((t) => {
-        const title = format(c.idleName, { device: t.name });
+        const label = format(c.idleName, { device: t.name });
         return (
           <DeviceFixRow
             key={t.id}
             s={s}
-            title={title}
+            title={DISPLAY_AUDIO_CODEC.test(t.id) ? c.idleHdmi : c.idleChip}
+            label={label}
+            device={t.name}
             body={
               t.applied ? c.idleApplied : format(c.idleBody, { seconds: formatNumber(t.seconds) })
             }
             note={isPro || t.applied ? c.idleRestartNote : undefined}
-            tweak={deviceTweak(t.id, title, t.applied)}
+            tweak={deviceTweak(t.id, label, t.applied)}
             busy={busyId === t.id}
             onToggle={onToggle}
             extra={
               isPro || t.applied
-                ? (titleId) => (
+                ? (deviceId) => (
                     <button
                       type="button"
                       className="tool-secondary-action audio-inline-action mt-1.5"
-                      aria-describedby={titleId}
+                      aria-describedby={deviceId}
                       disabled={restarting !== null}
                       aria-busy={restarting === t.id}
                       onClick={() => void restart(t.id, t.name)}
@@ -655,15 +730,17 @@ export function AudioExtras({
         );
       })}
       {power.map((p) => {
-        const title = format(c.powerName, { device: p.name });
+        const label = format(c.powerName, { device: p.name });
         return (
           <DeviceFixRow
             key={p.id}
             s={s}
-            title={title}
+            title={c.powerShort}
+            label={label}
+            device={p.name}
             body={p.applied ? c.powerApplied : c.powerBody}
             warning={status.modernStandby ? c.modernStandby : undefined}
-            tweak={deviceTweak(p.id, title, p.applied)}
+            tweak={deviceTweak(p.id, label, p.applied)}
             busy={busyId === p.id}
             onToggle={onToggle}
           />

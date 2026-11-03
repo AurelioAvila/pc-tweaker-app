@@ -441,8 +441,12 @@ svg {
   }
 }
 
+/* `backwards`, not `both`: a finished card keeps no transform, so it is not
+   left on its own compositor layer, which a scroll jump could paint stale
+   (blank or over the content above) for a frame. The last keyframe equals
+   the card's own style, so nothing visible changes. */
 .animate-card {
-  animation: fade-in-up var(--dur-slow) var(--ease-standard) both;
+  animation: fade-in-up var(--dur-slow) var(--ease-standard) backwards;
 }
 
 .animate-toast {
@@ -523,6 +527,7 @@ svg {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;

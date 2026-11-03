@@ -1604,44 +1604,49 @@ function App() {
                               <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-ink">
                                 {text.name}
                               </h2>
-                              {/* The (i) is the door to the exact system change.
+                              {/* One group: the badges wrap together, never one alone. */}
+                              <span className="inline-flex flex-wrap items-center gap-2">
+                                {/* The (i) is the door to the exact system change.
                             A description can be argued with; a registry path
                             can be checked in regedit, so it is one click away
                             rather than buried in a FAQ. */}
-                              {t.changes.length > 0 ? (
-                                <TechnicalToggle
-                                  open={inspecting === t.id}
-                                  label={s.transparency.title}
-                                  hive={t.hive}
-                                  onClick={() => {
-                                    setInspecting(inspecting === t.id ? null : t.id);
-                                  }}
-                                />
-                              ) : (
-                                t.hive !== "—" && <Badge>{t.hive}</Badge>
-                              )}
-                              {t.requires_admin && <Badge kind="admin">{s.badges.admin}</Badge>}
-                              {t.requires_pro && <Badge kind="pro">{s.badges.pro}</Badge>}
-                              {t.already_set && !t.applied && (
-                                <Badge kind="ok" title={s.badges.alreadySetHint}>
-                                  {s.badges.alreadySet}
-                                </Badge>
-                              )}
-                              {(t.min_build || t.pro_edition || t.enterprise_edition) && (
-                                <Badge kind="muted">
-                                  {[
-                                    t.min_build
-                                      ? format(s.requirements.minBuild, {
-                                          version: buildName(t.min_build),
-                                        })
-                                      : null,
-                                    t.pro_edition ? s.requirements.proEdition : null,
-                                    t.enterprise_edition ? s.requirements.enterpriseEdition : null,
-                                  ]
-                                    .filter(Boolean)
-                                    .join(" · ")}
-                                </Badge>
-                              )}
+                                {t.changes.length > 0 ? (
+                                  <TechnicalToggle
+                                    open={inspecting === t.id}
+                                    label={s.transparency.title}
+                                    hive={t.hive}
+                                    onClick={() => {
+                                      setInspecting(inspecting === t.id ? null : t.id);
+                                    }}
+                                  />
+                                ) : (
+                                  t.hive !== "—" && <Badge>{t.hive}</Badge>
+                                )}
+                                {t.requires_admin && <Badge kind="admin">{s.badges.admin}</Badge>}
+                                {t.requires_pro && <Badge kind="pro">{s.badges.pro}</Badge>}
+                                {t.already_set && !t.applied && (
+                                  <Badge kind="ok" title={s.badges.alreadySetHint}>
+                                    {s.badges.alreadySet}
+                                  </Badge>
+                                )}
+                                {(t.min_build || t.pro_edition || t.enterprise_edition) && (
+                                  <Badge kind="muted">
+                                    {[
+                                      t.min_build
+                                        ? format(s.requirements.minBuild, {
+                                            version: buildName(t.min_build),
+                                          })
+                                        : null,
+                                      t.pro_edition ? s.requirements.proEdition : null,
+                                      t.enterprise_edition
+                                        ? s.requirements.enterpriseEdition
+                                        : null,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" · ")}
+                                  </Badge>
+                                )}
+                              </span>
                             </div>
                             <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.55] text-ink-3">
                               {text.description}

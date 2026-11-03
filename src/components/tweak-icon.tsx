@@ -1,5 +1,10 @@
 import { useId, type ReactNode } from "react";
 
+/** An HD Audio function (T3 `audio_idle:` id) whose codec vendor is NVIDIA,
+ *  AMD or Intel is the GPU's HDMI/DisplayPort audio; any other vendor
+ *  (Realtek, Conexant, ...) is the PC's own sound chip. */
+export const DISPLAY_AUDIO_CODEC = /VEN_(10DE|1002|8086)/i;
+
 // Match stable tweak identifiers, never translated display names.
 export function TweakIcon({ id, fallback }: { id: string; fallback: ReactNode }) {
   const gradientId = useId();
@@ -25,10 +30,7 @@ export function TweakIcon({ id, fallback }: { id: string; fallback: ReactNode })
       </>
     );
   } else if (id.startsWith("audio_idle:")) {
-    // The HD Audio function's codec vendor says what the device is: NVIDIA,
-    // AMD and Intel codecs are the GPU's HDMI/DisplayPort audio; the others
-    // (Realtek, Conexant, ...) are the PC's own sound chip.
-    if (/VEN_(10DE|1002|8086)/i.test(id)) {
+    if (DISPLAY_AUDIO_CODEC.test(id)) {
       tone = "violet";
       drawing = (
         <>

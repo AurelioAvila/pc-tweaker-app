@@ -10,6 +10,8 @@ type AudioCopy = {
   heroTitle: string;
   statDevices: string;
   statFindings: string;
+  /** The "to review" tile when there is nothing to review. */
+  statClear: string;
   statFixes: string;
   crackleWait: string;
   cracklePeak: string;
@@ -56,6 +58,10 @@ type AudioCopy = {
   fixesTitle: string;
   fixesLead: string;
   idleName: string;
+  /** Short card titles; the device's full name is the card's first line. */
+  idleHdmi: string;
+  idleChip: string;
+  powerShort: string;
   idleBody: string;
   idleApplied: string;
   idleRestartNote: string;
@@ -110,6 +116,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     heroTitle: "Sound on this PC",
     statDevices: "Devices in use",
     statFindings: "To review",
+    statClear: "All clear",
     statFixes: "Fixes on",
     crackleWait:
       "Measuring for 10 seconds. Use the PC as you normally do; if you hear crackles, play some sound now.",
@@ -156,13 +163,17 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     eapoBypassedBody:
       "Equalizer APO is set up on this device, but Windows has effects turned off for it, so the equalizer does not run.",
     eapoInactiveTitle: "Equalizer APO is installed but not active on {name}",
-    eapoInactiveBody: "You turn it on for a device in its own Device Selector.",
+    eapoInactiveBody:
+      "It only works on devices you tick in its Device Selector, and a driver or Windows update can give a device a new ID.",
     eapoStale:
       "Old setups for devices that no longer exist: {count}. A driver or Windows update can give a device a new ID; turn Equalizer APO on for it again in the Device Selector.",
     openSelector: "Open Equalizer APO Device Selector",
     fixesTitle: "Fixes",
     fixesLead: "Each change is recorded and can be restored with one click.",
     idleName: "Keep {device} awake on mains power",
+    idleHdmi: "Keep HDMI audio awake",
+    idleChip: "Keep the sound chip awake",
+    powerShort: "Keep USB audio powered",
     idleBody:
       "Windows switches this device off after {seconds} s of silence on mains power. Can help if the start of a sound is cut off or you hear a pop when sound starts. The battery timer is unchanged.",
     idleApplied: "Stays awake on mains power. The battery timer is unchanged.",
@@ -240,6 +251,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     heroTitle: "L'audio di questo PC",
     statDevices: "Dispositivi in uso",
     statFindings: "Da controllare",
+    statClear: "Tutto a posto",
     statFixes: "Correzioni attive",
     crackleWait:
       "Misurazione di 10 secondi in corso. Usa il PC come sempre; se senti crepitii, fai partire un suono adesso.",
@@ -286,13 +298,17 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     eapoBypassedBody:
       "Equalizer APO è configurato su questo dispositivo, ma Windows ha gli effetti disattivati, quindi l'equalizzatore non funziona.",
     eapoInactiveTitle: "Equalizer APO è installato ma non attivo su {name}",
-    eapoInactiveBody: "Lo attivi per un dispositivo dal suo Device Selector.",
+    eapoInactiveBody:
+      "Funziona solo sui dispositivi che spunti nel suo Device Selector, e un aggiornamento dei driver o di Windows può dare a un dispositivo un nuovo ID.",
     eapoStale:
       "Configurazioni rimaste da dispositivi che non esistono più: {count}. Un aggiornamento dei driver o di Windows può dare al dispositivo un nuovo ID: riattiva Equalizer APO dal Device Selector.",
     openSelector: "Apri il Device Selector di Equalizer APO",
     fixesTitle: "Correzioni",
     fixesLead: "Ogni modifica viene registrata e si ripristina con un clic.",
     idleName: "Tieni attivo {device} con l'alimentazione da rete",
+    idleHdmi: "Tieni attivo l'audio HDMI",
+    idleChip: "Tieni attivo il chip audio",
+    powerShort: "Tieni acceso l'audio USB",
     idleBody:
       "Con l'alimentazione da rete Windows spegne questo dispositivo dopo {seconds} s di silenzio. Può aiutare se l'inizio di un suono viene tagliato o senti uno schiocco quando parte l'audio. Il timer a batteria non cambia.",
     idleApplied: "Resta attivo con l'alimentazione da rete. Il timer a batteria non cambia.",
@@ -375,6 +391,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     heroTitle: "Le son de ce PC",
     statDevices: "Appareils utilisés",
     statFindings: "À vérifier",
+    statClear: "Rien à signaler",
     statFixes: "Correctifs actifs",
     crackleWait:
       "Mesure en cours pendant 10 secondes. Utilisez le PC comme d'habitude ; si vous entendez des grésillements, lancez un son maintenant.",
@@ -421,13 +438,17 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     eapoBypassedBody:
       "Equalizer APO est configuré sur cet appareil, mais Windows y a désactivé les effets : l'égaliseur ne s'exécute donc pas.",
     eapoInactiveTitle: "Equalizer APO est installé mais inactif sur {name}",
-    eapoInactiveBody: "Vous l'activez pour un appareil dans son propre Device Selector.",
+    eapoInactiveBody:
+      "Il ne fonctionne que sur les appareils cochés dans son Device Selector, et une mise à jour de pilote ou de Windows peut attribuer un nouvel identifiant à un appareil.",
     eapoStale:
       "Anciennes configurations d'appareils qui n'existent plus : {count}. Une mise à jour du pilote ou de Windows peut donner un nouvel identifiant à l'appareil ; réactivez Equalizer APO dans le Device Selector.",
     openSelector: "Ouvrir le Device Selector d'Equalizer APO",
     fixesTitle: "Corrections",
     fixesLead: "Chaque modification est enregistrée et se restaure en un clic.",
     idleName: "Garder {device} actif sur secteur",
+    idleHdmi: "Garder l'audio HDMI actif",
+    idleChip: "Garder la puce audio active",
+    powerShort: "Garder l'audio USB alimenté",
     idleBody:
       "Sur secteur, Windows éteint cet appareil après {seconds} s de silence. Peut aider si le début d'un son est coupé ou si vous entendez un claquement quand le son démarre. Le minuteur sur batterie ne change pas.",
     idleApplied: "Reste actif sur secteur. Le minuteur sur batterie ne change pas.",
@@ -515,6 +536,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     heroTitle: "El sonido de este PC",
     statDevices: "Dispositivos en uso",
     statFindings: "Por revisar",
+    statClear: "Todo en orden",
     statFixes: "Correcciones activas",
     crackleWait:
       "Midiendo durante 10 segundos. Usa el PC como siempre; si oyes chasquidos, reproduce algún sonido ahora.",
@@ -561,13 +583,17 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     eapoBypassedBody:
       "Equalizer APO está configurado en este dispositivo, pero Windows tiene los efectos desactivados, así que el ecualizador no se ejecuta.",
     eapoInactiveTitle: "Equalizer APO está instalado pero no activo en {name}",
-    eapoInactiveBody: "Se activa para cada dispositivo desde su propio Device Selector.",
+    eapoInactiveBody:
+      "Solo funciona en los dispositivos que marcas en su Device Selector, y una actualización de controladores o de Windows puede dar a un dispositivo un ID nuevo.",
     eapoStale:
       "Configuraciones antiguas de dispositivos que ya no existen: {count}. Una actualización del controlador o de Windows puede dar al dispositivo un nuevo identificador; vuelve a activar Equalizer APO en el Device Selector.",
     openSelector: "Abrir el Device Selector de Equalizer APO",
     fixesTitle: "Correcciones",
     fixesLead: "Cada cambio queda registrado y se restaura con un clic.",
     idleName: "Mantener {device} activo con corriente",
+    idleHdmi: "Mantener activo el audio HDMI",
+    idleChip: "Mantener activo el chip de sonido",
+    powerShort: "Mantener encendido el audio USB",
     idleBody:
       "Conectado a la corriente, Windows apaga este dispositivo tras {seconds} s de silencio. Puede ayudar si el inicio de un sonido se corta o oyes un chasquido cuando empieza el audio. El temporizador con batería no cambia.",
     idleApplied: "Sigue activo con corriente. El temporizador con batería no cambia.",
@@ -652,6 +678,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     heroTitle: "Sound auf diesem PC",
     statDevices: "Genutzte Geräte",
     statFindings: "Zu prüfen",
+    statClear: "Alles in Ordnung",
     statFixes: "Aktive Korrekturen",
     crackleWait:
       "Misst 10 Sekunden lang. Nutze den PC wie gewohnt – wenn du Knacken hörst, spiel jetzt etwas ab.",
@@ -698,13 +725,17 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     eapoBypassedBody:
       "Equalizer APO ist auf diesem Gerät eingerichtet, aber Windows hat die Effekte dafür ausgeschaltet, deshalb läuft der Equalizer nicht.",
     eapoInactiveTitle: "Equalizer APO ist installiert, aber auf {name} nicht aktiv",
-    eapoInactiveBody: "Du schaltest es für ein Gerät in seinem eigenen Device Selector ein.",
+    eapoInactiveBody:
+      "Es wirkt nur auf Geräten, die du in seinem Device Selector anhakst, und ein Treiber- oder Windows-Update kann einem Gerät eine neue ID geben.",
     eapoStale:
       "Alte Einrichtungen für Geräte, die es nicht mehr gibt: {count}. Ein Treiber- oder Windows-Update kann einem Gerät eine neue ID geben; schalte Equalizer APO im Device Selector wieder ein.",
     openSelector: "Device Selector von Equalizer APO öffnen",
     fixesTitle: "Korrekturen",
     fixesLead: "Jede Änderung wird aufgezeichnet und lässt sich mit einem Klick zurücksetzen.",
     idleName: "{device} im Netzbetrieb wach halten",
+    idleHdmi: "HDMI-Audio wach halten",
+    idleChip: "Soundchip wach halten",
+    powerShort: "USB-Audio eingeschaltet lassen",
     idleBody:
       "Im Netzbetrieb schaltet Windows dieses Gerät nach {seconds} s Stille ab. Kann helfen, wenn der Anfang eines Tons abgeschnitten wird oder es beim Start der Wiedergabe knackt. Der Akku-Timer bleibt unverändert.",
     idleApplied: "Bleibt im Netzbetrieb wach. Der Akku-Timer bleibt unverändert.",
@@ -789,6 +820,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     heroTitle: "O som deste PC",
     statDevices: "Dispositivos em uso",
     statFindings: "A rever",
+    statClear: "Tudo em ordem",
     statFixes: "Correções ativas",
     crackleWait:
       "A medir durante 10 segundos. Use o PC como habitualmente; se ouvir estalidos, reproduza algum som agora.",
@@ -835,13 +867,17 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     eapoBypassedBody:
       "O Equalizer APO está configurado neste dispositivo, mas o Windows tem os efeitos desativados, por isso o equalizador não funciona.",
     eapoInactiveTitle: "O Equalizer APO está instalado mas não ativo em {name}",
-    eapoInactiveBody: "Ativa-o para cada dispositivo no próprio Device Selector.",
+    eapoInactiveBody:
+      "Só funciona nos dispositivos que assinalar no respetivo Device Selector, e uma atualização de controladores ou do Windows pode dar um novo ID a um dispositivo.",
     eapoStale:
       "Configurações antigas de dispositivos que já não existem: {count}. Uma atualização do driver ou do Windows pode dar ao dispositivo um novo identificador; volte a ativar o Equalizer APO no Device Selector.",
     openSelector: "Abrir o Device Selector do Equalizer APO",
     fixesTitle: "Correções",
     fixesLead: "Cada alteração fica guardada e pode ser reposta com um clique.",
     idleName: "Manter {device} ativo com corrente",
+    idleHdmi: "Manter o áudio HDMI ativo",
+    idleChip: "Manter o chip de som ativo",
+    powerShort: "Manter o áudio USB ligado",
     idleBody:
       "Ligado à corrente, o Windows desliga este dispositivo após {seconds} s de silêncio. Pode ajudar se o início de um som for cortado ou se ouvir um estalido quando o som começa. O temporizador com bateria não muda.",
     idleApplied: "Fica ativo com corrente. O temporizador com bateria não muda.",

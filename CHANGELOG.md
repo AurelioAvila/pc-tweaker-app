@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.20.0
+
+PC Tweaker 1.20.0 adds an Audio section. See every sound device in use with its real format (Hz, bits, channels), effects, spatial sound and Equalizer APO status, plus findings that explain what is wrong: a Bluetooth headset stuck in call mode, a muted or very quiet microphone, Equalizer APO installed but not active. New fixes: "Don't lower my game during calls" (Windows lowers every other sound by 80% while a call app uses the mic) and "Fix Bluetooth volume control". Pro: keep HDMI audio or the sound chip awake so the start of a sound is not cut off, keep USB audio powered, and restart an audio device in one click. Check for crackles runs a 10-second driver latency trace against Microsoft's limits. Every change is recorded and can be restored with one click. The Scan gets an Audio category. 84 controls.
+
 ## v1.19.0
 
 PC Tweaker 1.19.0 rebuilds the Scan: 19 checks across Performance, Junk files, Startup, Privacy, Registry, Memory, Hardware and Latency, a headline that says how much space your PC is wasting (measured, not guessed), Fix all or Custom, and Pro items that show what they would free on your PC before you unlock them. New: a read-only hardware audit (RAM below its rated XMP/EXPO speed, SSD or graphics card on a slower PCIe link, Resizable BAR off, each with how to fix it), latency findings (interrupts piling up on CPU 0, DPC spikes), a registry cleaner (orphaned entries only, backup first, one-click restore), a Smart RAM booster, one-click Safe optimize, a restore point before any change, a Proof of change card with real before/after numbers you can save as PNG, and an alert when a Windows update changes your settings. 82 controls. New: PC Tweaker for Business.

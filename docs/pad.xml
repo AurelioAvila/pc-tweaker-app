@@ -34,9 +34,9 @@
   </Company_Info>
   <Program_Info>
     <Program_Name>PC Tweaker</Program_Name>
-    <Program_Version>1.19.0</Program_Version>
+    <Program_Version>1.20.0</Program_Version>
     <Program_Release_Month>11</Program_Release_Month>
-    <Program_Release_Day>2</Program_Release_Day>
+    <Program_Release_Day>3</Program_Release_Day>
     <Program_Release_Year>2026</Program_Release_Year>
     <Program_Cost_Dollars></Program_Cost_Dollars>
     <Program_Cost_Other_Code></Program_Cost_Other_Code>
@@ -47,9 +47,9 @@
     <Program_OS_Support>WinOther</Program_OS_Support>
     <Program_Language>English</Program_Language>
     <File_Info>
-      <File_Size_Bytes>6451992</File_Size_Bytes>
-      <File_Size_K>6300.77</File_Size_K>
-      <File_Size_MB>6.15</File_Size_MB>
+      <File_Size_Bytes>6547072</File_Size_Bytes>
+      <File_Size_K>6393.62</File_Size_K>
+      <File_Size_MB>6.24</File_Size_MB>
     </File_Info>
     <Expire_Info>
       <Has_Expire_Info>N</Has_Expire_Info>
@@ -60,7 +60,7 @@
       <Expire_Day></Expire_Day>
       <Expire_Year></Expire_Year>
     </Expire_Info>
-    <Program_Change_Info>Scan 2.0 adds 19 checks across eight categories, read-only hardware findings and latency diagnostics. Review findings and choose individual fixes. Safe optimize lists proposed settings and requests a System Restore point. Proof of change compares measurements after supported actions, including an unchanged result. Registry discovery is free; Pro cleanup saves a .reg backup. Smart RAM booster is Pro. The catalog includes 46 Free and 36 Pro controls. Findings depend on Windows, hardware and drivers; no fixed performance gain is promised.</Program_Change_Info>
+    <Program_Change_Info>PC Tweaker 1.20.0 adds an Audio section. See every sound device in use with its real format (Hz, bits, channels), effects, spatial sound and Equalizer APO status, plus findings that explain what is wrong: a Bluetooth headset stuck in call mode, a muted or very quiet microphone, Equalizer APO installed but not active. New fixes: &quot;Don&apos;t lower my game during calls&quot; (Windows lowers every other sound by 80% while a call app uses the mic) and &quot;Fix Bluetooth volume control&quot;. Pro: keep HDMI audio or the sound chip awake so the start of a sound is not cut off, keep USB audio powered, and restart an audio device in one click. Check for crackles runs a 10-second driver latency trace against Microsoft&apos;s limits. Every change is recorded and can be restored with one click. The Scan gets an Audio category. 84 controls.</Program_Change_Info>
     <Program_Category_Class>System Utilities::System Maintenance</Program_Category_Class>
     <Program_Specific_Category></Program_Specific_Category>
     <Program_System_Requirements>Windows 10/11 x64; internet for accounts, updates and supported online features.</Program_System_Requirements>
@@ -84,7 +84,7 @@
       <Application_XML_File_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/pad.xml</Application_XML_File_URL>
     </Application_URLs>
     <Download_URLs>
-      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.19.0/pc-tweaker-app_1.19.0_x64-setup.exe</Primary_Download_URL>
+      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.20.0/pc-tweaker-app_1.20.0_x64-setup.exe</Primary_Download_URL>
       <Secondary_Download_URL></Secondary_Download_URL>
       <Additional_Download_URL_1></Additional_Download_URL_1>
       <Additional_Download_URL_2></Additional_Download_URL_2>

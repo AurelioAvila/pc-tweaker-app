@@ -1,61 +1,44 @@
 import { forwardRef, useId } from "react";
 
-/* The Terms box before Stripe (owner decision 3 Nov 2026). Managed Payments refuses
+/* The Terms box before Stripe (owner decisions of 3 and 4 Nov 2026: one line, the Terms and
+   immediate access ending the withdrawal right, nothing below it). Managed Payments refuses
    Stripe's own consent fields, so the box is ours; the API records the tick
    (backend/src/purchase-evidence.ts) and creates no checkout without it. */
 
 export type ConsentLang = "en" | "de" | "it" | "fr" | "es" | "pt";
 export const CONSENT_LANGS: readonly ConsentLang[] = ["en", "de", "it", "fr", "es", "pt"];
 
-type ConsentCopy = { before: string; terms: string; after: string; renew: string; error: string; cta: string };
+type ConsentCopy = { before: string; terms: string; after: string; error: string; cta: string };
 export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
   en: {
-    before: "I agree to the ",
-    terms: "Terms",
-    after: ". I ask for immediate access to this digital content and understand that I lose my 14-day right of withdrawal once access starts. Purchases are not refundable, except where Link’s buyer terms or the law require a refund.",
-    renew: " Subscriptions renew automatically until you cancel.",
-    error: "Tick the box to continue.",
-    cta: "Continue to secure checkout",
+    before: "I agree to the ", terms: "Terms",
+    after: " and want access now, ending my 14-day right of withdrawal.",
+    error: "Tick the box to continue.", cta: "Continue to secure checkout",
   },
   de: {
-    before: "Ich stimme den ",
-    terms: "Nutzungsbedingungen",
-    after: " zu. Ich verlange ausdrücklich, dass der Zugang zu diesen digitalen Inhalten sofort beginnt, und mir ist bekannt, dass ich damit mein 14-tägiges Widerrufsrecht verliere. Käufe werden nicht erstattet, außer wenn die Käuferbedingungen von Link oder das Gesetz eine Erstattung vorsehen.",
-    renew: " Abos verlängern sich automatisch bis zur Kündigung.",
-    error: "Setz das Häkchen, um fortzufahren.",
-    cta: "Weiter zur sicheren Kasse",
+    before: "Ich stimme den ", terms: "Nutzungsbedingungen",
+    after: " zu und möchte sofort Zugang – damit endet mein 14-tägiges Widerrufsrecht.",
+    error: "Setz das Häkchen, um fortzufahren.", cta: "Weiter zur sicheren Kasse",
   },
   it: {
-    before: "Accetto i ",
-    terms: "Termini",
-    after: ". Chiedo di accedere subito a questo contenuto digitale e so che, una volta iniziato l’accesso, perdo il diritto di recesso di 14 giorni. Gli acquisti non sono rimborsabili, salvo quando lo prevedono i termini per gli acquirenti di Link o la legge.",
-    renew: " Gli abbonamenti si rinnovano automaticamente finché non li disdici.",
-    error: "Spunta la casella per continuare.",
-    cta: "Continua al pagamento sicuro",
+    before: "Accetto i ", terms: "Termini",
+    after: " e voglio l’accesso subito, rinunciando al diritto di recesso di 14 giorni.",
+    error: "Spunta la casella per continuare.", cta: "Continua al pagamento sicuro",
   },
   fr: {
-    before: "J’accepte les ",
-    terms: "Conditions d’utilisation",
-    after: ". Je demande l’accès immédiat à ce contenu numérique et je reconnais perdre mon droit de rétractation de 14 jours dès que l’accès commence. Les achats ne sont pas remboursables, sauf lorsque les conditions acheteurs de Link ou la loi imposent un remboursement.",
-    renew: " Les abonnements se renouvellent automatiquement jusqu’à leur résiliation.",
-    error: "Cochez la case pour continuer.",
-    cta: "Continuer vers le paiement sécurisé",
+    before: "J’accepte les ", terms: "Conditions d’utilisation",
+    after: " et je veux un accès immédiat, ce qui met fin à mon droit de rétractation de 14 jours.",
+    error: "Cochez la case pour continuer.", cta: "Continuer vers le paiement sécurisé",
   },
   es: {
-    before: "Acepto los ",
-    terms: "Términos",
-    after: ". Solicito el acceso inmediato a este contenido digital y entiendo que pierdo mi derecho de desistimiento de 14 días en cuanto empieza el acceso. Las compras no son reembolsables, salvo cuando las condiciones para compradores de Link o la ley exijan un reembolso.",
-    renew: " Las suscripciones se renuevan automáticamente hasta que las canceles.",
-    error: "Marca la casilla para continuar.",
-    cta: "Continuar al pago seguro",
+    before: "Acepto los ", terms: "Términos",
+    after: " y quiero acceder ahora, por lo que pierdo mi derecho de desistimiento de 14 días.",
+    error: "Marca la casilla para continuar.", cta: "Continuar al pago seguro",
   },
   pt: {
-    before: "Aceito os ",
-    terms: "Termos",
-    after: ". Peço o acesso imediato a este conteúdo digital e compreendo que perco o meu direito de livre resolução de 14 dias assim que o acesso começa. As compras não são reembolsáveis, exceto quando os termos para compradores do Link ou a lei exigirem um reembolso.",
-    renew: " As subscrições renovam-se automaticamente até serem canceladas.",
-    error: "Assinale a caixa para continuar.",
-    cta: "Continuar para o pagamento seguro",
+    before: "Aceito os ", terms: "Termos",
+    after: " e quero acesso imediato, o que põe fim ao meu direito de livre resolução de 14 dias.",
+    error: "Assinale a caixa para continuar.", cta: "Continuar para o pagamento seguro",
   },
 };
 
@@ -65,10 +48,9 @@ export const PurchaseConsent = forwardRef<HTMLInputElement, {
   checked: boolean;
   onChange: (checked: boolean) => void;
   error: boolean;
-  subscription: boolean;
   termsHref: string;
   lang?: ConsentLang;
-}>(function PurchaseConsent({ checked, onChange, error, subscription, termsHref, lang = "en" }, ref) {
+}>(function PurchaseConsent({ checked, onChange, error, termsHref, lang = "en" }, ref) {
   const copy = CONSENT_COPY[lang];
   const errorId = useId();
   return (
@@ -96,7 +78,6 @@ export const PurchaseConsent = forwardRef<HTMLInputElement, {
             {copy.terms}
           </a>
           {copy.after}
-          {subscription && copy.renew}
         </span>
       </label>
       {error && (

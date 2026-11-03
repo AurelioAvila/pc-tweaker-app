@@ -88,7 +88,7 @@ export function WebPurchase({ plan, onClose, demo, onChoosePlan, cryptoUsd = nul
     if (!agreed) { setConsentError(true); consentBox.current?.focus(); return; }
     void checkoutPreview();
   }
-  const consent = <PurchaseConsent ref={consentBox} checked={agreed} error={consentError} subscription={plan !== "lifetime"} termsHref="/terms/"
+  const consent = <PurchaseConsent ref={consentBox} checked={agreed} error={consentError} termsHref="/terms/"
     onChange={(checked) => { setAgreed(checked); if (checked) setConsentError(false); }} />;
   async function cancelPrevious() {
     setBusy(true); setMessage("");

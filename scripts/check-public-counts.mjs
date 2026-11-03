@@ -14,7 +14,11 @@ const listings = fs
   .readdirSync(new URL("../scripts/store/listing/", import.meta.url))
   .filter((f) => f.endsWith(".json"))
   .map((f) => `scripts/store/listing/${f}`);
-const files = ["README.md", "site/src/i18n/dictionary.ts", "site/src/pages/practical-guides.ts", ...listings];
+const legal = [
+  "TERMS.md",
+  ...fs.readdirSync(new URL("../backend/legal/", import.meta.url)).filter((f) => f.endsWith(".md")).map((f) => `backend/legal/${f}`),
+];
+const files = ["README.md", ...legal, "site/src/i18n/dictionary.ts", "site/src/pages/practical-guides.ts", ...listings];
 
 // A number right before a catalog noun, in the six languages the texts use.
 const NOUN = String.raw`(?:Windows[ -])?(?:Free |Pro )?(?:controls?|tweaks?|settings|controlli|impostazioni|réglages|contrôles|ajustes|controles|controlos|Einstellungen)`;

@@ -10,7 +10,7 @@ PC Tweaker is a Windows desktop app for system settings, maintenance and current
 
 ## 2. Free and Pro tiers
 
-- 39 controls are free to use, forever, with no account required.
+- 48 controls are free to use, forever, with no account required.
 - Pro unlocks the advanced tweaks and presets, either as a subscription (monthly or annual) that renews automatically until cancelled, or as a one-time Lifetime purchase that does not expire.
 - Purchases are sold through Link, Stripe's merchant of record, which collects any applicable tax, sends the receipt and handles payment support. Link's own buyer terms apply to the transaction.
 - Where offered, Lifetime and tips can also be paid in USDC, a US-dollar stablecoin, through Stripe's crypto payment method. A crypto payment costs the same total a card payment from your country costs, charged in US dollars and converted from euros at the exchange rate in effect when checkout opens (Stripe's page shows the exact amount before you pay), and is made to us directly rather than through Link, so Link's buyer terms do not apply to it. It does not use or earn the Invite a friend discount or bonus. Any refund that is due is returned in stablecoin to the wallet that paid.

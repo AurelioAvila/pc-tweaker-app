@@ -745,6 +745,7 @@ export const TWEAK_NOTES: Record<string, TweakNote> = {
     helps: "Your game or music gets quieter whenever Discord, Teams or another call app opens the microphone, and you want it to stay at full volume.",
     skip: "You like other sounds dropping during calls. Apps with their own ducking, such as Discord, keep doing it. Microsoft documents the setting and its 80% default; the value written (3, Do nothing) is the one the Communications tab stores, as recorded by the Windows community.",
     sources: [MS.ducking],
+    guides: ["/fixes/windows-lowers-game-volume-during-calls/"],
     related: ["bt_absolute_volume_off"],
   },
   bt_absolute_volume_off: {
@@ -752,6 +753,7 @@ export const TWEAK_NOTES: Record<string, TweakNote> = {
     verdict: "trade-off",
     helps: "Bluetooth headphones or speakers whose volume does not respond, stays too low or jumps when you change it in Windows.",
     skip: "Your Bluetooth volume works. It applies to every Bluetooth device, and Windows and the headset then keep two separate volumes. Microsoft retired the support article that gave this workaround; the value is documented by the Windows community, so a Windows update can change it.",
+    guides: ["/fixes/bluetooth-headphones-volume-too-low-windows-11/", "/fixes/bluetooth-headphones-bad-sound-when-mic-is-on/"],
     related: ["audio_ducking_off"],
   },
 };

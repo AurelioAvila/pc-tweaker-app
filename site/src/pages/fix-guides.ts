@@ -66,6 +66,9 @@ export const FIX_GUIDES = {
     },
     related: [
       { to: "/tweaks/audio/", label: "the Audio tweaks in PC Tweaker", note: "Every sound device with its real format, plus fixes for call ducking and Bluetooth volume; the Audio section also has a 10-second Check for crackles." },
+      { to: "/fixes/hdmi-audio-cuts-off-start-of-sound-windows-11/", label: "HDMI or USB audio that cuts off the start of sounds", note: "Another audio problem Windows power saving can cause, with the timer to read." },
+      { to: "/fixes/bluetooth-headphones-volume-too-low-windows-11/", label: "Bluetooth headphones that are too quiet", note: "Absolute Volume, and how to turn it off." },
+      { to: "/fixes/equalizer-apo-not-working-windows-11/", label: "Equalizer APO not working", note: "Four checks if your system-wide equalizer has no effect." },
       { to: "/database/processes/audiodg-exe/", label: "audiodg.exe, the process that runs the audio engine", note: "Why its CPU use usually comes from driver-added effects." },
       { to: "/database/services/audiosrv/", label: "the Windows Audio service", note: "What happens if it is stopped, and why it is not the cause of crackling." },
       { to: "/fixes/check-pcie-link-speed-nvme-gpu/", label: "check the PCIe link of your devices", note: "A device on a narrower link than it supports is another thing the Scan can read." },
@@ -717,6 +720,324 @@ export const FIX_GUIDES = {
         { label: "Microsoft Learn: reg import", url: "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/reg-import" },
         { label: "Microsoft Learn: Checkpoint-Computer", url: "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/checkpoint-computer" },
         { label: "PC Tweaker source code: the registry cleaner (regclean.rs)", url: `${SRC}/regclean.rs` },
+      ],
+    },
+  },
+  "/fixes/bluetooth-headphones-volume-too-low-windows-11": {
+    updated: "2026-11-03",
+    eyebrow: "FIX · AUDIO AND BLUETOOTH",
+    title: "Bluetooth headphones too quiet or volume not working on Windows 11",
+    seoTitle: "Bluetooth Volume Too Low on Windows 11: Fix",
+    seoDescription:
+      "Bluetooth headphones too quiet, or the volume slider jumps or does nothing? Update first, then turn off Absolute Volume with one registry value you can undo.",
+    intro:
+      "Bluetooth headphones that stay quiet at full volume, a Windows slider that jumps from silent to loud, or volume keys that do nothing are often the same fault: Absolute Volume, a Bluetooth feature that hands the Windows volume slider straight to the headset. Some headsets implement it badly. The fix is to update first and, if that does not help, turn Absolute Volume off for the PC.",
+    summary: [
+      { label: "What it is", value: "Bluetooth Absolute Volume: the Windows slider sets the headset's own volume" },
+      { label: "Registry value", value: "DisableAbsoluteVolume = 1 (DWORD) under HKLM\\SYSTEM\\CurrentControlSet\\Control\\Bluetooth\\Audio\\AVRCP\\CT" },
+      { label: "Scope", value: "Every Bluetooth audio device on this PC" },
+      { label: "After the change", value: "Reconnect the device or restart Windows; Windows and the headset then keep two separate volumes" },
+      { label: "Admin rights", value: "Yes" },
+      { label: "PC Tweaker plan", value: "Free" },
+    ],
+    sections: [
+      {
+        heading: "Try the harmless things first",
+        body:
+          "Install pending Windows updates and the Bluetooth and audio drivers from your PC maker, restart, then remove the headphones in Settings, Bluetooth & devices and pair them again. Check the headset's own volume as well: if it sits at a low step, the Windows slider cannot make it louder. Turn off any volume limiter in the headset's companion app.",
+      },
+      {
+        heading: "Why turning Absolute Volume off helps",
+        body:
+          "With Absolute Volume, the volume you set in Windows is sent to the headset as its own volume. When a headset or its firmware handles that badly, the sound stays too low, the steps are too coarse or the level jumps. With the feature off, Windows lowers the signal it sends and the headset keeps its own level. The trade-off is that there are now two volumes: keep the Windows slider fairly high and adjust the headset, because both being low can make the sound weak.",
+        points: [
+          "It applies to every Bluetooth audio device on the PC, not only the one that misbehaves",
+          "It does not change anything for wired or USB audio",
+          "Reconnect the headset or restart Windows afterwards",
+          "Set the value back to 0 or delete it to return to the default",
+        ],
+      },
+      {
+        heading: "What this does not fix",
+        body:
+          "If the sound is thin or muffled only while an app uses the headset's microphone, that is a different cause: Windows has switched the headset to its call profile. See the call-mode guide linked below. Crackling is a driver timing problem, not a volume one.",
+      },
+    ],
+    steps: [
+      { title: "Read the current setting", code: "reg query \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\Bluetooth\\Audio\\AVRCP\\CT\" /v DisableAbsoluteVolume", shell: "cmd" as const, note: "An error saying the value was not found means Absolute Volume is on, which is the Windows default." },
+      { title: "Turn Absolute Volume off", code: "reg add \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\Bluetooth\\Audio\\AVRCP\\CT\" /v DisableAbsoluteVolume /t REG_DWORD /d 1 /f", shell: "cmd" as const, note: "Run it in an administrator Command Prompt, then disconnect and reconnect the headphones or restart Windows. Back up the registry first if you want a copy." },
+      { title: "Undo it", code: "reg add \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\Bluetooth\\Audio\\AVRCP\\CT\" /v DisableAbsoluteVolume /t REG_DWORD /d 0 /f", shell: "cmd" as const, note: "Value 0 behaves like the value being absent. Reconnect the headphones again." },
+    ],
+    pctweaker: {
+      title: "The same change in PC Tweaker",
+      body:
+        "The free control \"Fix Bluetooth volume control\" in the Audio category writes the same value (it needs administrator rights), saves what was there before and puts exactly that back when you restore it. It is never part of Fix all, because it affects every Bluetooth device, and the Scan only mentions it as a hint. The Audio page also shows when a Bluetooth headset has been switched to call mode, the other usual cause of poor Bluetooth sound.",
+      links: [{ to: "/tweaks/audio/bt-absolute-volume-off/", label: "Fix Bluetooth volume control" }],
+    },
+    related: [
+      { to: "/fixes/bluetooth-headphones-bad-sound-when-mic-is-on/", label: "Bluetooth headphones sound bad when the microphone is on", note: "The call-profile switch that makes music sound thin while an app listens." },
+      { to: "/fixes/windows-lowers-game-volume-during-calls/", label: "Windows lowering your game volume during calls", note: "A separate setting that also makes sound quieter, on purpose." },
+      { to: "/fixes/dpc-latency-audio-crackling/", label: "audio crackling and dropouts", note: "When the problem is pops rather than volume." },
+      { to: "/database/services/audiosrv/", label: "the Windows Audio service", note: "What it does, and why restarting it is not the same as changing the Bluetooth setting." },
+    ],
+    sources: {
+      checked: "3 November 2026",
+      items: [
+        { label: "Microsoft Q&A: a Microsoft Community Support answer giving the DisableAbsoluteVolume value", url: "https://learn.microsoft.com/en-us/answers/a/7613696" },
+        { label: "PC Tweaker source code: the control and its limits (tweaks.rs)", url: `${SRC}/tweaks.rs` },
+        { label: "PC Tweaker source code: the Audio page's reading of your devices (audio.rs)", url: `${SRC}/audio.rs` },
+      ],
+    },
+  },
+  "/fixes/windows-lowers-game-volume-during-calls": {
+    updated: "2026-11-03",
+    eyebrow: "FIX · AUDIO AND CALLS",
+    title: "Stop Windows lowering your game or music volume during calls",
+    seoTitle: "Stop Windows Lowering Game Volume During Calls",
+    seoDescription:
+      "Game or music drops when Discord or Teams opens the mic? Set Windows' Communications option to Do nothing and check the app's own attenuation. Easy to undo.",
+    intro:
+      "You join a voice chat and your game gets quieter, or your music almost disappears while someone talks. Two separate features can do it: Windows' own communications ducking, which lowers every other sound by 80% by default while a call app uses the microphone, and the call app's own attenuation. Turn off Windows' option first, then check the app.",
+    summary: [
+      { label: "Windows default", value: "Lower other sounds by 80% while communications activity is detected" },
+      { label: "Setting", value: "Sound, Communications tab: \"When Windows detects communications activity\"" },
+      { label: "Fix", value: "Choose \"Do nothing\"" },
+      { label: "Applies", value: "From your next call, for your account" },
+      { label: "Admin rights", value: "No" },
+      { label: "PC Tweaker plan", value: "Free" },
+    ],
+    sections: [
+      {
+        heading: "Turn it off in Windows",
+        body:
+          "Open Settings, System, Sound, then More sound settings (or press Win+R and run mmsys.cpl). On the Communications tab, set \"When Windows detects communications activity\" to \"Do nothing\" and press OK. Microsoft describes the default as attenuating other audio streams by 80% while a communication stream is open, and the same tab lets you mute them instead or change the level.",
+        points: [
+          "It takes effect from your next call, not mid-call",
+          "It is stored per user, so other accounts on the PC keep their own choice",
+          "Your headset volume and Windows volume are not touched",
+        ],
+      },
+      {
+        heading: "Then check the call app",
+        body:
+          "Discord has its own attenuation (User Settings, Voice & Video, Attenuation) that lowers other apps while people speak, and Windows cannot switch it off. Teams, Zoom and game launchers have similar options. If the volume still drops after the Windows change, the app is doing it.",
+      },
+      {
+        heading: "When a game is treated as a call",
+        body:
+          "Some games open a voice-chat stream that Windows classes as communications, so the rest of your sound ducks even without a call app. Players report this with flight simulators and with games that have built-in voice chat. The Windows setting above stops the effect in that case too. The trade-off is that other apps are no longer lowered when a real call starts.",
+      },
+    ],
+    steps: [
+      { title: "Open the Sound dialog", code: "control mmsys.cpl", shell: "cmd" as const, note: "Go to the Communications tab, choose \"Do nothing\" and press OK." },
+      { title: "Check what Windows has stored", code: "reg query \"HKCU\\Software\\Microsoft\\Multimedia\\Audio\" /v UserDuckingPreference", shell: "cmd" as const, note: "No value means the Windows default (lower by 80%). 3 means \"Do nothing\". The number is the way the Communications tab stores its choice; Microsoft documents the setting, not the value." },
+    ],
+    pctweaker: {
+      title: "The same change in PC Tweaker",
+      body:
+        "The free control \"Don't lower my game during calls\" in the Audio category sets that option to \"Do nothing\" for your account, needs no administrator rights and is restored from the value it saved. The Scan shows how Windows is set up on your PC (\"Windows lowers other sounds by 80% during calls\") and links to the control. Apps with their own ducking, such as Discord, keep theirs.",
+      links: [{ to: "/tweaks/audio/audio-ducking-off/", label: "Don't lower my game during calls" }],
+    },
+    related: [
+      { to: "/fixes/bluetooth-headphones-bad-sound-when-mic-is-on/", label: "Bluetooth headphones sounding thin during calls", note: "Another thing that changes when an app opens the microphone." },
+      { to: "/fixes/bluetooth-headphones-volume-too-low-windows-11/", label: "Bluetooth volume too low", note: "When quiet sound has nothing to do with calls." },
+      { to: "/database/processes/audiodg-exe/", label: "audiodg.exe", note: "The Windows audio engine, where the ducking is applied." },
+    ],
+    sources: {
+      checked: "3 November 2026",
+      items: [
+        { label: "Microsoft Learn: Default Ducking Experience (80% default and the Communications tab options)", url: "https://learn.microsoft.com/en-us/windows/win32/coreaudio/stream-attenuation" },
+        { label: "Microsoft Learn: Using the communication device", url: "https://learn.microsoft.com/en-us/windows/win32/coreaudio/using-the-communication-device" },
+        { label: "PC Tweaker source code: the control (tweaks.rs)", url: `${SRC}/tweaks.rs` },
+      ],
+    },
+  },
+  "/fixes/hdmi-audio-cuts-off-start-of-sound-windows-11": {
+    updated: "2026-11-03",
+    eyebrow: "FIX · AUDIO AND POWER",
+    title: "HDMI or USB audio cuts off the start of sounds on Windows",
+    seoTitle: "HDMI Audio Cutting Off the Start of Sounds",
+    seoDescription:
+      "The first second of a sound is missing after silence? Some audio drivers power the device down when idle. Read the timer, set it to 0 on mains power, undo it.",
+    intro:
+      "A notification chime that starts half a second late, the first word of a video missing, a pop when sound begins: on HDMI, DisplayPort and some USB audio devices this happens after a short silence. If the driver has an idle timer, Windows switches the audio device off after that silence and has to wake it when sound arrives. This guide shows how to read the timer and, on mains power, stop it.",
+    summary: [
+      { label: "Symptom", value: "The start of a sound is cut off, or pops, after some seconds of silence" },
+      { label: "Cause (when it applies)", value: "The driver's inactivity timer powers the device down" },
+      { label: "Value", value: "PerformanceIdleTime (seconds, on mains power) in the driver key's PowerSettings" },
+      { label: "Fix", value: "Set it to 0 so the device stays awake on mains power" },
+      { label: "Battery", value: "ConservationIdleTime, the battery timer, is left alone" },
+      { label: "Admin rights", value: "Yes" },
+      { label: "PC Tweaker plan", value: "Pro" },
+    ],
+    sections: [
+      {
+        heading: "How the idle timer works",
+        body:
+          "Windows' audio port driver (PortCls) starts a timer whenever the device is idle. When it runs out, the device is put into a low-power state and woken again on the next access. Microsoft documents the values: PerformanceIdleTime for mains power and ConservationIdleTime for battery, both in seconds, plus IdlePowerState. The default is 0, which means no timer, so a device only has one when its driver's INF file sets it.",
+      },
+      {
+        heading: "Not every cut-off is this",
+        body:
+          "Many HDMI and DisplayPort devices start late for other reasons: the TV or receiver wakes its own audio path, a graphics driver does not keep the audio stream alive, or an AV receiver mutes briefly on a new stream. Only a timer you can read in the registry is something Windows controls. If the value is 0 or missing for your device, this fix does nothing and the cause is in the driver or the display.",
+        points: [
+          "Value above 0 on your device: the timer is a plausible cause, worth a test",
+          "Value 0 or missing: look at the graphics driver, the TV or receiver, and its own energy settings",
+          "Test by playing sound after a few seconds of silence; if the gap is gone, the idle state was the cause",
+        ],
+      },
+      {
+        heading: "USB audio devices",
+        body:
+          "A USB headset or DAC that drops out or reconnects after silence is often switched off by Windows' USB power saving. In Device Manager, open the USB device, then the Power Management tab, and clear \"Allow the computer to turn off this device to save power\" (the tab only shows for some devices). On PCs that use Modern Standby, Microsoft advises against changing this, because it can drain the battery significantly.",
+      },
+    ],
+    steps: [
+      { title: "List the timers on this PC", code: "Get-ChildItem 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e96c-e325-11ce-bfc1-08002be10318}' -ErrorAction SilentlyContinue | ForEach-Object {\n  $p = Join-Path $_.PSPath 'PowerSettings'\n  if (Test-Path $p) {\n    $raw = (Get-ItemProperty $p).PerformanceIdleTime\n    $s = if ($raw -is [byte[]]) { [BitConverter]::ToUInt32($raw, 0) } else { $raw }\n    [pscustomobject]@{ Key = $_.PSChildName; Device = (Get-ItemProperty $_.PSPath).DriverDesc; IdleSecondsOnMains = $s }\n  }\n} | Format-Table -AutoSize", shell: "PowerShell" as const, note: "Read-only. A row with a number above 0 is a device that switches off after that many seconds of silence on mains power. Write the Key and the number down: that is your way back." },
+      { title: "Keep that device awake on mains power", code: "Set-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e96c-e325-11ce-bfc1-08002be10318}\\0003\\PowerSettings' -Name PerformanceIdleTime -Value ([byte[]](0,0,0,0)) -Type Binary", shell: "PowerShell" as const, note: "Replace 0003 with your Key and run it as administrator. The value is four bytes, so keep it a binary value. Restart Windows, or disable and enable the device in Device Manager, for it to take effect." },
+      { title: "Put it back", note: "Write your original number back as four little-endian bytes: 4 seconds is (4,0,0,0), 10 is (10,0,0,0), 300 is (44,1,0,0). A driver reinstall can recreate the value." },
+    ],
+    pctweaker: {
+      title: "The same fix in PC Tweaker",
+      body:
+        "The Audio page lists a device only when its driver really sets a timer above 0, for example \"Keep HDMI audio awake\", with the number of seconds it switches off after. A Pro fix sets PerformanceIdleTime to 0 after saving the exact bytes that were there, leaves the battery timer and the idle power state alone, and refuses any device that is not a current candidate. Restoring writes the saved bytes back. It needs administrator rights, and a button restarts the audio device so the change applies without restarting Windows. For USB audio, a second Pro fix switches off Windows' permission to power the device down, with the Modern Standby warning shown on PCs that use it.",
+      links: [{ to: "/tweaks/audio/", label: "Audio controls" }],
+    },
+    related: [
+      { to: "/fixes/dpc-latency-audio-crackling/", label: "audio crackling and dropouts", note: "When the sound is distorted rather than late." },
+      { to: "/fixes/check-pcie-link-speed-nvme-gpu/", label: "checking the PCIe link of your graphics card", note: "HDMI audio comes from the graphics card, so its driver and link matter too." },
+      { to: "/database/services/audiosrv/", label: "the Windows Audio service", note: "The service that wakes the device when sound starts." },
+      { to: "/tweaky-driver/", label: "checking the graphics or audio driver", note: "Shows the installed version and available updates with the package source." },
+    ],
+    sources: {
+      checked: "3 November 2026",
+      items: [
+        { label: "Microsoft Learn: Audio Device Class Inactivity Timer Implementation (PerformanceIdleTime, ConservationIdleTime, defaults)", url: "https://learn.microsoft.com/en-us/windows-hardware/drivers/audio/audio-device-class-inactivity-timer-implementation" },
+        { label: "PC Tweaker source code: the idle-timer fix and its checks (audio.rs)", url: `${SRC}/audio.rs` },
+      ],
+    },
+  },
+  "/fixes/equalizer-apo-not-working-windows-11": {
+    updated: "2026-11-03",
+    eyebrow: "FIX · AUDIO AND EQUALIZER",
+    title: "Equalizer APO not working on Windows 11: what to check",
+    seoTitle: "Equalizer APO Not Working on Windows 11: Fixes",
+    seoDescription:
+      "Equalizer APO installed but nothing changes? Check the device is ticked, Windows effects are on, and no driver update gave the device a new ID. Step by step.",
+    intro:
+      "Equalizer APO is a free, open-source system-wide equalizer. When it stops doing anything, the cause is nearly always one of four things: the device was never selected, Windows has audio effects turned off for it, a driver or Windows update gave the device a new ID, or the app plays around the Windows audio engine. This guide checks them in order of how often they are the answer.",
+    summary: [
+      { label: "Check 1", value: "The playback device is ticked in Equalizer APO's Device Selector (Configurator)" },
+      { label: "Check 2", value: "Audio enhancements are on for that device in Windows" },
+      { label: "Check 3", value: "A driver or Windows update has not created a new device ID" },
+      { label: "Check 4", value: "The app does not bypass the audio engine (exclusive mode, hardware OpenAL)" },
+      { label: "Restart", value: "Needed after installing or changing devices" },
+      { label: "Software", value: "Equalizer APO is third-party; PC Tweaker only reads its state" },
+    ],
+    sections: [
+      {
+        heading: "1. Is this device selected?",
+        body:
+          "Equalizer APO installs itself only on the devices you tick in its Device Selector (called the Configurator in older versions and in its documentation). Run DeviceSelector.exe or Configurator.exe from the installation folder, tick the playback device you actually use (and the capture device if you want to process the microphone), then restart Windows. The setup asks for that restart because the audio service has to reload.",
+      },
+      {
+        heading: "2. Are audio effects switched on?",
+        body:
+          "Equalizer APO runs as an audio effect, so with effects off for a device it does nothing there. In Settings, System, Sound, open the device and check its audio enhancements; on older versions use the Sound control panel, the device's Properties, and look for \"Disable all enhancements\" or \"Enable audio enhancements\". Windows also turns effects off by itself when an effect keeps failing to load.",
+      },
+      {
+        heading: "3. Did the device get a new ID?",
+        body:
+          "A driver or Windows update can give an audio device a new endpoint ID. Equalizer APO's record for the old ID then points at nothing, and the new device is not selected. Open the Device Selector, tick the device again and restart. Leftover records for devices that no longer exist are harmless.",
+      },
+      {
+        heading: "4. Does the app bypass the engine?",
+        body:
+          "Equalizer APO processes sound in the shared Windows audio engine. An app that takes the device in exclusive mode, or a game using the vendor's hardware-accelerated OpenAL, talks to the driver directly, so the equalizer never sees it. Turn off exclusive mode in that app's output settings, or in the device's Advanced tab, and test again.",
+      },
+      {
+        heading: "Still nothing?",
+        body:
+          "In the Device Selector, the troubleshooting options let you clear the \"Use original APO\" boxes, which helps when a driver's own effects conflict. Errors are written to EqualizerAPO.log in the LocalService profile's Temp folder; read it from an administrator Command Prompt.",
+      },
+    ],
+    steps: [
+      { title: "Open the Device Selector", code: "\"C:\\Program Files\\EqualizerAPO\\DeviceSelector.exe\"", shell: "cmd" as const, note: "Older versions ship Configurator.exe in the same folder. Tick the playback device in use, then restart Windows." },
+      { title: "Read the log", code: "type \"C:\\Windows\\ServiceProfiles\\LocalService\\AppData\\Local\\Temp\\EqualizerAPO.log\"", shell: "cmd" as const, note: "Run it in an administrator Command Prompt." },
+    ],
+    pctweaker: {
+      title: "What PC Tweaker's Audio page shows",
+      body:
+        "If Equalizer APO is installed, the Audio page shows its version and, for each device, whether it is active, bypassed (it is set up but Windows effects are off) or not active. A device counts as active only when both halves Equalizer APO itself checks are present: its effect registered on the endpoint and its own record for that endpoint. The page also counts records left behind by devices that no longer exist, and a button opens your installed Device Selector, which asks for administrator rights itself. PC Tweaker does not download, install or configure Equalizer APO and is not affiliated with it.",
+      links: [{ to: "/tweaks/audio/", label: "Audio controls" }],
+    },
+    related: [
+      { to: "/fixes/dpc-latency-audio-crackling/", label: "audio crackling", note: "If the equalizer works but the sound pops under load." },
+      { to: "/database/processes/audiodg-exe/", label: "audiodg.exe", note: "The process where the equalizer runs." },
+      { to: "/database/services/audiosrv/", label: "the Windows Audio service", note: "Why a restart is needed after changing devices." },
+    ],
+    sources: {
+      checked: "3 November 2026",
+      items: [
+        { label: "Equalizer APO documentation (installation, troubleshooting options, log file, OpenAL note)", url: "https://sourceforge.net/p/equalizerapo/wiki/Documentation/" },
+        { label: "Equalizer APO project page", url: "https://sourceforge.net/projects/equalizerapo/" },
+        { label: "PC Tweaker source code: Equalizer APO health check (audio_eq.rs)", url: `${SRC}/audio_eq.rs` },
+      ],
+    },
+  },
+  "/fixes/bluetooth-headphones-bad-sound-when-mic-is-on": {
+    updated: "2026-11-03",
+    eyebrow: "FIX · AUDIO AND BLUETOOTH",
+    title: "Bluetooth headphones sound bad when an app uses the microphone",
+    seoTitle: "Bluetooth Headphones Sound Bad When Mic Is On",
+    seoDescription:
+      "Music turns thin and tinny when Discord or Teams opens your headset mic? Windows switched to the call profile. See which app, and how to get stereo back.",
+    intro:
+      "Your Bluetooth headphones sound fine until a call or game chat starts, then everything turns thin, mono and low in volume. That is not a fault: a classic Bluetooth headset can play high-quality stereo or carry a microphone, not both at once. When an app opens the headset's microphone, Windows switches to the call profile, and the sound drops to call quality until the microphone is released.",
+    summary: [
+      { label: "Cause", value: "An app opened the headset's microphone, so Windows uses the call (hands-free) profile" },
+      { label: "Symptom", value: "Mono, tinny, quieter playback while the microphone is in use" },
+      { label: "Main fix", value: "Use another microphone in that app" },
+      { label: "Changes to your PC", value: "None: it is a choice in the app" },
+      { label: "Admin rights", value: "No" },
+    ],
+    sections: [
+      {
+        heading: "Find which app has the microphone",
+        body:
+          "In Settings, Privacy & security, Microphone, Windows lists the apps that have used the microphone and when. Apps that listen in the background, such as voice chat, a meeting app left open or a game launcher, are the usual cause. Close it or take away its microphone access and the headset returns to stereo.",
+      },
+      {
+        heading: "Use another microphone",
+        body:
+          "Keep the headphones for playback and choose a different input in the call app: the PC's built-in microphone, a webcam or a USB microphone. In Discord this is User Settings, Voice & Video, Input Device; in Teams and Zoom it is the audio settings. Set the default input in Settings, System, Sound, Input as well, so apps that use the default do not pick the headset.",
+      },
+      {
+        heading: "If you need the headset microphone",
+        body:
+          "Then the call quality is the price of the profile, and you can only improve the volume, not the fidelity. Newer headsets and PCs that support Bluetooth LE Audio can do better, but that depends on both devices and their drivers. Update the Bluetooth driver from your PC maker first.",
+      },
+    ],
+    steps: [
+      { title: "See who uses the microphone", note: "Settings, Privacy & security, Microphone: the list shows each app's last access." },
+      { title: "Choose another input", note: "Settings, System, Sound, Input: pick the built-in or USB microphone as default, then choose the same input inside the call app." },
+    ],
+    pctweaker: {
+      title: "How PC Tweaker shows it",
+      body:
+        "The Audio page checks every Bluetooth microphone that is in use. When a program has one open, it reports that the headset is in call mode, names the program, and explains that playback has dropped to call quality. A button then opens Windows' Sound settings so you can choose another input. PC Tweaker never changes the microphone or the profile on its own, and the page also tells you if your default microphone is muted or very low.",
+      links: [{ to: "/tweaks/audio/", label: "Audio controls" }],
+    },
+    related: [
+      { to: "/fixes/bluetooth-headphones-volume-too-low-windows-11/", label: "Bluetooth volume too low or jumping", note: "The other common Bluetooth audio fault, caused by Absolute Volume." },
+      { to: "/fixes/windows-lowers-game-volume-during-calls/", label: "Windows lowering game volume during calls", note: "Another effect of an app opening the microphone." },
+      { to: "/fixes/dpc-latency-audio-crackling/", label: "audio crackling", note: "If the sound pops instead of thinning." },
+    ],
+    sources: {
+      checked: "3 November 2026",
+      items: [
+        { label: "Microsoft Q&A: the sound is bad while using the microphone", url: "https://learn.microsoft.com/en-us/answers/questions/3946429/the-sound-is-bad-while-using-the-microphone" },
+        { label: "PC Tweaker source code: call-mode detection (audio.rs)", url: `${SRC}/audio.rs` },
       ],
     },
   },

@@ -12,7 +12,7 @@ import {
   consumeEmailChange,
   invalidateActionTokens,
 } from "../tokens";
-import { sendMail, MailError } from "../mailer";
+import { sendMail, MailError, brandFrom } from "../mailer";
 import {
   accountWelcomeText,
   passwordChangedText,
@@ -130,6 +130,7 @@ async function sendVerificationEmail(userId: number, email: string, brand: Email
   const c = copyFor(lang);
   const { delivered } = await sendMail({
     to: email,
+    from: brandFrom(brand.name),
     subject: verificationSubject(brand, c),
     html: verificationHtml(rows[0]?.first_name ?? "", link, brand, c),
     text: verificationText(link, brand, c),
@@ -150,6 +151,7 @@ async function sendAccountWelcome(userId: number, brand: EmailBrand, lang: Local
   const c = copyFor(lang);
   await sendMail({
     to: user.email,
+    from: brandFrom(brand.name),
     subject: accountWelcomeSubject(brand, c),
     html: accountWelcomeHtml(user.first_name ?? "", FREE_TWEAK_COUNT, brand, c),
     text: accountWelcomeText(FREE_TWEAK_COUNT, brand, c),
@@ -173,6 +175,7 @@ async function sendPasswordChangedNotice(userId: number, changedAt: Date, brand:
   const when = formatMoment(c, changedAt);
   await sendMail({
     to: user.email,
+    from: brandFrom(brand.name),
     subject: passwordChangedSubject(brand, c),
     html: passwordChangedHtml(user.first_name ?? "", when, brand, c),
     text: passwordChangedText(when, brand, c),
@@ -229,8 +232,9 @@ async function noticeSignIn(req: Request, user: { id: number; email: string; loc
   );
   if (!alert) return;
   const c = copyFor(languageOf(req, user.locale));
-  const mail = newSignInMail(user.email, deviceName(req.body?.deviceName), formatMoment(c, new Date()), brandOf(req.body?.product), c);
-  await sendMail({ to: user.email, ...mail });
+  const brand = brandOf(req.body?.product);
+  const mail = newSignInMail(user.email, deviceName(req.body?.deviceName), formatMoment(c, new Date()), brand, c);
+  await sendMail({ to: user.email, from: brandFrom(brand.name), ...mail });
 }
 
 /** Names reach every email we send; nobody's first or last name is longer. */
@@ -452,7 +456,7 @@ router.post("/change-email", requireAuth, passwordCheckLimiter, async (req: Requ
     const token = await createActionToken(req.userId as number, "email_change", DAY_MS, target);
     const link = `${API()}/api/auth/confirm-email-change?token=${token}${productQuery(brand)}&lang=${lang}`;
     const mail = emailChangeMail(user.first_name ?? "", link, brand, copyFor(lang));
-    await sendMail({ to: target, ...mail });
+    await sendMail({ to: target, from: brandFrom(brand.name), ...mail });
     res.json(generic);
   } catch (err) {
     console.error("change-email failed:", err);
@@ -580,6 +584,7 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
       const link = `${API()}/api/auth/reset-password?token=${token}${productQuery(brand)}&lang=${lang}`;
       await sendMail({
         to: email.toLowerCase(),
+        from: brandFrom(brand.name),
         subject: passwordResetSubject(brand, c),
         html: passwordResetHtml(link, brand, c),
         text: passwordResetText(link, brand, c),
@@ -778,7 +783,7 @@ router.post("/confirm-email-change", async (req: Request, res: Response) => {
     await invalidateActionTokens(change.userId, "email_change");
     const cOld = copyFor(previous.locale ?? lang);
     const notice = emailChangedNotice(previous.first_name ?? "", change.email, formatMoment(cOld, new Date()), brand, cOld);
-    void sendMail({ to: previous.email, ...notice }).catch((err) => console.error("failed to send the email changed notice:", err));
+    void sendMail({ to: previous.email, from: brandFrom(brand.name), ...notice }).catch((err) => console.error("failed to send the email changed notice:", err));
     page(g.emailChangedTitle, `<p class="success">${escapeHtml(g.emailChanged(brand.name, change.email))}</p><p class="hint">${escapeHtml(g.closeHint)}</p>`);
   } catch (err) {
     console.error("confirm-email-change failed:", err);

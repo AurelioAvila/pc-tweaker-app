@@ -1050,6 +1050,7 @@ export interface Strings {
     registerDetailsRequired: string;
     loginRequiredForCheckout: string;
     verifyEmailForCheckout: string;
+    checkoutErrors: Record<string, string>;
     checkInboxAfterSignup: string;
     forgotPasswordLink: string;
     forgotPasswordButton: string;
@@ -2368,6 +2369,25 @@ const it: Strings = {
     loginRequiredForCheckout: "Accedi o registrati prima di sbloccare Pro.",
     verifyEmailForCheckout:
       "Conferma la tua email prima di sbloccare Pro: apri il link che ti abbiamo inviato o richiedine uno nuovo qui.",
+    checkoutErrors: {
+      rate_limited: "Troppi tentativi. Attendi qualche minuto e riprova.",
+      trial_unavailable:
+        "La prova gratuita non è disponibile per questo account. Abbonati direttamente.",
+      crypto_unavailable:
+        "Il pagamento in cripto non è disponibile al momento. Riprova più tardi o paga con carta.",
+      already_has_access:
+        "Questo account ha già accesso. Contatta l'assistenza per cambiare piano.",
+      existing_subscription:
+        "Questo account ha già un abbonamento che potrebbe rinnovarsi. Gestiscilo o contatta l'assistenza prima di acquistarne un altro.",
+      other_checkout_pending:
+        "Hai già un pagamento aperto per un altro piano. Completalo o chiudilo prima di riprovare.",
+      checkout_recovery_required:
+        "Stiamo verificando il tuo pagamento precedente. Riprova tra poco o contatta l'assistenza.",
+      payment_processing:
+        "Il tuo pagamento potrebbe essere ancora in elaborazione. Non pagare di nuovo; contatta l'assistenza se l'accesso non compare.",
+      checkout_expired_retry:
+        "Il pagamento precedente è scaduto. Riprova per vedere il prezzo attuale.",
+    },
     checkInboxAfterSignup:
       "Ti abbiamo inviato un link di conferma a {email}. Controlla anche lo spam: dopo la conferma il pagamento Pro si apre da solo.",
     forgotPasswordLink: "Password dimenticata?",
@@ -4102,6 +4122,25 @@ const en: Strings = {
     loginRequiredForCheckout: "Log in or sign up before unlocking Pro.",
     verifyEmailForCheckout:
       "Confirm your email before unlocking Pro: open the link we sent you, or request a new one here.",
+    checkoutErrors: {
+      rate_limited: "Too many attempts. Please wait a few minutes and try again.",
+      trial_unavailable:
+        "The free trial is not available for this account. Subscribe directly instead.",
+      crypto_unavailable:
+        "Crypto payment is not available right now. Try again later or pay by card.",
+      already_has_access:
+        "This account already has access. Contact support for help changing plans.",
+      existing_subscription:
+        "This account already has a subscription that may renew. Manage it or contact support before buying another.",
+      other_checkout_pending:
+        "You already have an open checkout for a different plan. Complete or close it before trying again.",
+      checkout_recovery_required:
+        "We are checking your previous checkout. Please try again shortly or contact support.",
+      payment_processing:
+        "Your payment may still be processing. Please do not pay again; contact support if access does not appear.",
+      checkout_expired_retry:
+        "Your previous checkout expired. Please try again to review the current price.",
+    },
     checkInboxAfterSignup:
       "We sent a confirmation link to {email}. Check your spam folder too. Once you confirm, Pro checkout opens on its own.",
     forgotPasswordLink: "Forgot password?",
@@ -5858,6 +5897,24 @@ const fr: Strings = {
     loginRequiredForCheckout: "Connectez-vous ou inscrivez-vous avant de débloquer Pro.",
     verifyEmailForCheckout:
       "Confirmez votre e-mail avant de débloquer Pro : ouvrez le lien envoyé ou demandez-en un nouveau ici.",
+    checkoutErrors: {
+      rate_limited: "Trop de tentatives. Patientez quelques minutes, puis réessayez.",
+      trial_unavailable:
+        "L'essai gratuit n'est pas disponible pour ce compte. Abonnez-vous directement.",
+      crypto_unavailable:
+        "Le paiement en cryptomonnaie n'est pas disponible pour le moment. Réessayez plus tard ou payez par carte.",
+      already_has_access: "Ce compte a déjà accès. Contactez l'assistance pour changer d'offre.",
+      existing_subscription:
+        "Ce compte a déjà un abonnement susceptible de se renouveler. Gérez-le ou contactez l'assistance avant d'en acheter un autre.",
+      other_checkout_pending:
+        "Un paiement est déjà ouvert pour une autre offre. Terminez-le ou fermez-le avant de réessayer.",
+      checkout_recovery_required:
+        "Nous vérifions votre paiement précédent. Réessayez dans un instant ou contactez l'assistance.",
+      payment_processing:
+        "Votre paiement est peut-être encore en cours de traitement. Ne payez pas une seconde fois ; contactez l'assistance si l'accès n'apparaît pas.",
+      checkout_expired_retry:
+        "Votre paiement précédent a expiré. Réessayez pour voir le prix actuel.",
+    },
     checkInboxAfterSignup:
       "Nous avons envoyé un lien de confirmation à {email}. Vérifiez aussi vos spams : après confirmation, le paiement Pro s'ouvre tout seul.",
     forgotPasswordLink: "Mot de passe oublié ?",
@@ -7608,6 +7665,24 @@ const es: Strings = {
     loginRequiredForCheckout: "Inicia sesión o regístrate antes de desbloquear Pro.",
     verifyEmailForCheckout:
       "Confirma tu correo antes de desbloquear Pro: abre el enlace que te enviamos o solicita uno nuevo aquí.",
+    checkoutErrors: {
+      rate_limited: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+      trial_unavailable:
+        "La prueba gratuita no está disponible para esta cuenta. Suscríbete directamente.",
+      crypto_unavailable:
+        "El pago con criptomonedas no está disponible ahora. Inténtalo más tarde o paga con tarjeta.",
+      already_has_access: "Esta cuenta ya tiene acceso. Contacta con soporte para cambiar de plan.",
+      existing_subscription:
+        "Esta cuenta ya tiene una suscripción que puede renovarse. Gestiónala o contacta con soporte antes de comprar otra.",
+      other_checkout_pending:
+        "Ya tienes un pago abierto para otro plan. Complétalo o ciérralo antes de volver a intentarlo.",
+      checkout_recovery_required:
+        "Estamos comprobando tu pago anterior. Inténtalo de nuevo en breve o contacta con soporte.",
+      payment_processing:
+        "Es posible que tu pago aún se esté procesando. No pagues otra vez; contacta con soporte si el acceso no aparece.",
+      checkout_expired_retry:
+        "Tu pago anterior caducó. Inténtalo de nuevo para ver el precio actual.",
+    },
     checkInboxAfterSignup:
       "Te enviamos un enlace de confirmación a {email}. Revisa también la carpeta de spam: al confirmar, el pago de Pro se abre solo.",
     forgotPasswordLink: "¿Olvidaste la contraseña?",
@@ -9367,6 +9442,25 @@ const de: Strings = {
     loginRequiredForCheckout: "Vor dem Freischalten von Pro anmelden oder registrieren.",
     verifyEmailForCheckout:
       "Bestätige vor dem Freischalten von Pro deine E-Mail: Öffne den gesendeten Link oder fordere hier einen neuen an.",
+    checkoutErrors: {
+      rate_limited: "Zu viele Versuche. Warte ein paar Minuten und versuche es erneut.",
+      trial_unavailable:
+        "Die kostenlose Testphase ist für dieses Konto nicht verfügbar. Schließe direkt ein Abo ab.",
+      crypto_unavailable:
+        "Die Zahlung mit Kryptowährung ist gerade nicht verfügbar. Versuche es später erneut oder zahle per Karte.",
+      already_has_access:
+        "Dieses Konto hat bereits Zugriff. Wende dich an den Support, um den Tarif zu wechseln.",
+      existing_subscription:
+        "Dieses Konto hat bereits ein Abo, das sich verlängern kann. Verwalte es oder wende dich an den Support, bevor du ein weiteres kaufst.",
+      other_checkout_pending:
+        "Du hast bereits eine offene Bezahlung für einen anderen Tarif. Schließe sie ab oder brich sie ab, bevor du es erneut versuchst.",
+      checkout_recovery_required:
+        "Wir prüfen deine vorherige Bezahlung. Versuche es gleich noch einmal oder wende dich an den Support.",
+      payment_processing:
+        "Deine Zahlung wird möglicherweise noch verarbeitet. Zahle bitte nicht erneut; wende dich an den Support, falls der Zugriff nicht erscheint.",
+      checkout_expired_retry:
+        "Deine vorherige Bezahlung ist abgelaufen. Versuche es erneut, um den aktuellen Preis zu sehen.",
+    },
     checkInboxAfterSignup:
       "Wir haben einen Bestätigungslink an {email} gesendet. Sieh auch im Spam nach: Nach der Bestätigung öffnet sich die Pro-Zahlung von selbst.",
     forgotPasswordLink: "Passwort vergessen?",
@@ -11124,6 +11218,24 @@ const pt: Strings = {
     loginRequiredForCheckout: "Inicie sessão ou registe-se antes de desbloquear o Pro.",
     verifyEmailForCheckout:
       "Confirme o seu e-mail antes de desbloquear o Pro: abra a ligação que enviámos ou peça uma nova aqui.",
+    checkoutErrors: {
+      rate_limited: "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.",
+      trial_unavailable:
+        "O teste gratuito não está disponível para esta conta. Subscreva diretamente.",
+      crypto_unavailable:
+        "O pagamento em criptomoedas não está disponível neste momento. Tente mais tarde ou pague com cartão.",
+      already_has_access: "Esta conta já tem acesso. Contacte o apoio para mudar de plano.",
+      existing_subscription:
+        "Esta conta já tem uma subscrição que pode renovar-se. Faça a gestão da subscrição ou contacte o apoio antes de comprar outra.",
+      other_checkout_pending:
+        "Já tem um pagamento aberto para outro plano. Conclua-o ou feche-o antes de tentar novamente.",
+      checkout_recovery_required:
+        "Estamos a verificar o seu pagamento anterior. Tente novamente em breve ou contacte o apoio.",
+      payment_processing:
+        "O seu pagamento pode ainda estar a ser processado. Não pague outra vez; contacte o apoio se o acesso não aparecer.",
+      checkout_expired_retry:
+        "O pagamento anterior expirou. Tente novamente para ver o preço atual.",
+    },
     checkInboxAfterSignup:
       "Enviámos uma ligação de confirmação para {email}. Verifique também o spam: depois da confirmação, o pagamento do Pro abre sozinho.",
     forgotPasswordLink: "Esqueceu-se da palavra-passe?",

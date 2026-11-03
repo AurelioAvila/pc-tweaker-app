@@ -111,4 +111,10 @@ async function sendMail({ to, subject, html, text, replyTo = "support@pctweaker.
   return { delivered: false };
 }
 
-export { sendMail, isConfigured, MailError };
+/** "Brand <noreply@...>" on the verified sender address, so a mail branded for an app is also sent under its name. */
+function brandFrom(brandName: string): string | undefined {
+  const addr = (MAIL_FROM ?? "").match(/<([^>]+)>/)?.[1] ?? (MAIL_FROM ?? "").trim();
+  return addr.includes("@") ? `${brandName} <${addr}>` : undefined;
+}
+
+export { sendMail, isConfigured, MailError, brandFrom };

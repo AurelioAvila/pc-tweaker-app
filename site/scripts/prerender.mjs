@@ -92,6 +92,7 @@ function buildPage(route, seo, noindex = false) {
     "og:url": seo.canonical,
     "og:type": seo.ogType,
     "og:image": image.url,
+    "og:image:type": image.type,
     "og:image:alt": image.alt,
   };
   for (const [property, value] of Object.entries(properties)) {

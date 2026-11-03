@@ -29,9 +29,11 @@ const UNINSTALLER_OG = `${ORIGIN}/uninstaller/og-uninstaller-444b8b0af1.png`;
 const UNINSTALLER_OG_ALT = "PC Tweaker Uninstaller listing installed apps with a removal confidence label for each, shown with example programs";
 
 export function getRouteImage(seo: RouteSeo) {
+  const url = seo.image ?? `${ORIGIN}/og-pc-tweaker-631e9b9eed.jpg`;
   return {
-    url: seo.image ?? `${ORIGIN}/og-pc-tweaker-ab95357c77.png`,
-    alt: seo.imageAlt ?? "PC Tweaker main window: the sidebar sections, the system check and the free trial in the title bar",
+    url,
+    type: /\.jpe?g$/i.test(url) ? "image/jpeg" : "image/png",
+    alt: seo.imageAlt ?? "Before you tweak, see the evidence: PC Tweaker Scan interface preview with visibly labelled sample data",
   };
 }
 
@@ -198,7 +200,7 @@ const homeApp = {
   "downloadUrl": "https://dl.pctweaker.app/pc-tweaker/PCTweaker-Setup.exe",
   "description": "Windows tuning for gaming, privacy and maintenance, with visible setting changes and restore tools for supported tweaks.",
   "url": "https://pctweaker.app/",
-  "image": "https://pctweaker.app/og-pc-tweaker-ab95357c77.png",
+  "image": "https://pctweaker.app/og-pc-tweaker-631e9b9eed.jpg",
   "sameAs": [
     "https://github.com/AurelioAvila/pc-tweaker-app",
     "https://apps.microsoft.com/detail/9nh3c6dt1g87",

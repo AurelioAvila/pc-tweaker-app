@@ -11,6 +11,7 @@ const PAGES = ["tweaky-driver/index.html"];
 const FONTS = [
   { family: "Inter", re: /^inter-latin-wght-normal-.*\.woff2$/, weight: "100 900" },
   { family: "Space Grotesk", re: /^space-grotesk-latin-wght-normal-.*\.woff2$/, weight: "300 700" },
+  { family: "JetBrains Mono", re: /^jetbrains-mono-latin-wght-normal-.*\.woff2$/, weight: "100 800", preload: false },
 ];
 
 const files = await readdir(path.join(dist, "assets"));
@@ -19,6 +20,7 @@ const missing = found.filter((f) => !f.file).map((f) => f.family);
 if (missing.length) throw new Error(`Built font files not found: ${missing.join(", ")}`);
 
 const links = found
+  .filter((f) => f.preload !== false)
   .map((f) => `<link rel="preload" as="font" type="font/woff2" href="/assets/${f.file}" crossorigin>`)
   .join("");
 const faces = found

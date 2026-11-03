@@ -7,7 +7,7 @@ export const INSTALL_RETENTION_DAYS = 90;
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function installHash(header: unknown): string | null {
+export function installHash(header: unknown): string | null {
   return typeof header === "string" && UUID_V4.test(header)
     ? createHash("sha256").update(header.toLowerCase()).digest("hex")
     : null;

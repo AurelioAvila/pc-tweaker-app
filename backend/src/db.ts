@@ -354,6 +354,38 @@ async function initSchema(): Promise<void> {
   await pool.query(`ALTER TABLE license_installs ADD COLUMN IF NOT EXISTS device_label TEXT;`);
   await pool.query(`ALTER TABLE license_installs ADD COLUMN IF NOT EXISTS pro BOOLEAN;`);
 
+  // 3 Nov 2026, additive: evidence for payment disputes (purchase-evidence.ts, PRIVACY.md
+  // "Purchase confirmation and proof of use"). No foreign key on purpose: the rows outlive
+  // an erased account until the 13-month purge. Older code reads none of it.
+  // Rollback: DROP TABLE checkout_consents, license_events;
+  //           ALTER TABLE users DROP COLUMN email_verified_at, DROP COLUMN last_login_at;
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS checkout_consents (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      product TEXT NOT NULL,
+      plan TEXT NOT NULL,
+      terms_version TEXT NOT NULL,
+      accepted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      ip TEXT,
+      user_agent_family TEXT,
+      checkout_session_id TEXT
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS checkout_consents_user ON checkout_consents (user_id, accepted_at);`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS license_events (
+      user_id INTEGER NOT NULL,
+      product TEXT NOT NULL,
+      install_hash TEXT,
+      at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      country TEXT
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS license_events_user ON license_events (user_id, product, at);`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;`);
+
   if (process.env.CHECKOUT_GUARD_ENABLED === "1") await initWebCheckoutReservations(pool);
   await initTelegramSchema(pool);
 

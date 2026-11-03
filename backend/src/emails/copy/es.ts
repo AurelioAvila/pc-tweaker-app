@@ -184,6 +184,7 @@ export const es: Copy = {
   },
 
   receipt: {
+    consented: "Antes de pagar, aceptaste los Términos y pediste acceso inmediato a este contenido digital, sabiendo que tu derecho de desistimiento de 14 días termina en cuanto empieza el acceso.",
     subject: (u: boolean, lifetime: boolean) =>
       u
         ? lifetime

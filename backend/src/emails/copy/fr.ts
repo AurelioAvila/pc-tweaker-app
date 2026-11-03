@@ -184,6 +184,7 @@ export const fr: Copy = {
   },
 
   receipt: {
+    consented: "Avant le paiement, vous avez accepté les Conditions d’utilisation et demandé l’accès immédiat à ce contenu numérique, en reconnaissant perdre votre droit de rétractation de 14 jours dès le début de l’accès.",
     subject: (u: boolean, lifetime: boolean) =>
       u
         ? lifetime

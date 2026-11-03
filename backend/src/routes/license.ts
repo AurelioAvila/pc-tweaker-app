@@ -4,7 +4,9 @@ import { requireAuth } from "../auth";
 import { deviceHashFrom, keyConfigured, signLicense, signingKeyVersionFrom } from "../license";
 import { isKnownProduct, productEntitlement } from "../products";
 import { asyncRoute } from "../async-route";
-import { deviceLabel, recordInstall } from "../install-count";
+import { deviceLabel, installHash, recordInstall } from "../install-count";
+import { recordLicenseEvent } from "../purchase-evidence";
+import { requestCountry } from "../buyer-country";
 import { trialAllowsDevice } from "../trial";
 import { referralStripe } from "../referral-stripe";
 
@@ -69,6 +71,8 @@ router.get(
       label: deviceLabel(req.get("x-device-label")),
       pro: active,
     });
+    // Proof of use for payment disputes (PRIVACY.md): one dated row per installation and day, country from Cloudflare only.
+    await recordLicenseEvent(req.userId as number, product, installHash(req.get("x-install-id")), requestCountry(req));
     // Invite a friend only: which PCs a participating account uses, for the same-PC check.
     if (device.deviceHash) await referralStripe()?.core.recordMachine(req.userId as number, device.deviceHash).catch(() => false);
     res.json(license);

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { PurchaseConsent } from "../components/PurchaseConsent";
+import { PURCHASE_TERMS_VERSION } from "../purchase-terms";
 import {
   createPurchaseClient,
   PurchaseError,
@@ -58,6 +60,10 @@ function planText(p: ProductStatus): { name: string; detail: string; tone: "ok" 
 
 export function AccountPage() {
   const [client] = useState(() => createPurchaseClient(API_BASE));
+  // The Terms box before the crypto Lifetime checkout (the card plans go through the plans section).
+  const [agreed, setAgreed] = useState(false);
+  const [consentError, setConsentError] = useState(false);
+  const consentBox = useRef<HTMLInputElement>(null);
   // A live offer only, read from the server like the plans section; none, nothing shows.
   const lifetimeOffer = usePromo().offer("pctweaker", "lifetime");
   // Lifetime in USDC, offered only while the server reports crypto available.
@@ -320,10 +326,30 @@ export function AccountPage() {
               {cryptoLifetime && data.products && !data.products.some((p) => p.product === "pctweaker" && p.state === "active" && p.plan === "lifetime") && (
                 <div className="mt-6 border-t border-white/10 pt-6">
                   <p className="text-sm leading-relaxed text-[var(--fg-dim)]">PC Tweaker Lifetime: one payment, no renewal.</p>
+                  <div className="mt-4">
+                    <PurchaseConsent
+                      ref={consentBox}
+                      checked={agreed}
+                      error={consentError}
+                      subscription={false}
+                      termsHref="/terms/"
+                      onChange={(checked) => {
+                        setAgreed(checked);
+                        if (checked) setConsentError(false);
+                      }}
+                    />
+                  </div>
                   <CryptoLifetimeChoice
                     usdCents={cryptoLifetime}
                     disabled={busy}
-                    onChoose={() => void act(async () => window.location.assign(await client.checkout(token, "lifetime", true)))}
+                    onChoose={() => {
+                      if (!agreed) {
+                        setConsentError(true);
+                        consentBox.current?.focus();
+                        return;
+                      }
+                      void act(async () => window.location.assign(await client.checkout(token, "lifetime", true, PURCHASE_TERMS_VERSION.pctweaker)));
+                    }}
                   />
                 </div>
               )}

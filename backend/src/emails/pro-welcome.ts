@@ -56,6 +56,8 @@ export type ProWelcomeEmailInput = {
    *  which never renews: the card then says so instead of quoting a date
    *  that would simply be untrue. */
   renewsOn: string | null;
+  /** The buyer ticked the Terms box before Stripe (checkout_consents): the receipt says so. */
+  consented?: boolean;
 };
 
 export function brandFor(product: string | null | undefined): ProductBrand {
@@ -176,12 +178,17 @@ function render(m: Mail, brand: EmailBrand, c: Copy) {
   };
 }
 
+function receiptMail(input: ProWelcomeEmailInput, c: Copy): Mail {
+  const m = receipt(input, c);
+  return input.consented ? { ...m, noteHtml: `${m.noteHtml} ${escapeHtml(c.receipt.consented)}` } : m;
+}
+
 export function proWelcomeText(input: ProWelcomeEmailInput, c: Copy = en): string {
-  return render(receipt(input, c), brandFor(input.product).visual, c).text;
+  return render(receiptMail(input, c), brandFor(input.product).visual, c).text;
 }
 
 export function proWelcomeHtml(input: ProWelcomeEmailInput, c: Copy = en): string {
-  return render(receipt(input, c), brandFor(input.product).visual, c).html;
+  return render(receiptMail(input, c), brandFor(input.product).visual, c).html;
 }
 
 // ---------------------------------------------------------------- reversal

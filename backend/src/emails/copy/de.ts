@@ -188,6 +188,7 @@ export const de: Copy = {
   },
 
   receipt: {
+    consented: "Vor der Zahlung hast du den Nutzungsbedingungen zugestimmt und ausdrücklich verlangt, dass der Zugang zu diesen digitalen Inhalten sofort beginnt; dir war bekannt, dass dein 14-tägiges Widerrufsrecht damit erlischt.",
     subject: (u: boolean, lifetime: boolean) =>
       u
         ? lifetime

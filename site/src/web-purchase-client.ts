@@ -92,16 +92,26 @@ export function createPurchaseClient(base: string, transport: Transport = fetch)
     resendVerification(token: string) { return request<{ ok: boolean }>("/api/auth/resend-verification", "POST", { product: "pctweaker" }, token); },
     forgotPassword(email: string) { return request<{ ok: boolean }>("/api/auth/forgot-password", "POST", { email, product: "pctweaker" }); },
     cancelCheckout(token: string) { return request<{ ok: boolean }>("/api/web-checkout/cancel", "POST", {}, token); },
-    /** `crypto`: Lifetime paid in USDC (only offered while the price list says crypto is available). */
-    async checkout(token: string, plan: WebPlan, crypto = false) {
+    /** `crypto`: Lifetime paid in USDC (only offered while the price list says crypto is available).
+     *  `termsVersion`: the Terms the ticked purchase box showed (purchase-terms.ts); the API records it. */
+    async checkout(token: string, plan: WebPlan, crypto = false, termsVersion?: string) {
       if (!["monthly", "annual", "lifetime"].includes(plan) || (crypto && plan !== "lifetime")) throw new PurchaseError("Please choose a valid plan.");
-      const result = crypto
-        ? await request<{ url?: unknown }>("/api/web-checkout/crypto", "POST", { product: "pctweaker", plan }, token)
-        : await request<{ url?: unknown }>("/api/web-checkout", "POST", { product: "pctweaker", plan, start_trial: false }, token);
-      let url: URL;
-      try { url = new URL(typeof result.url === "string" ? result.url : ""); } catch { throw new PurchaseError("The checkout link was invalid. Please contact support."); }
-      if (url.protocol !== "https:" || url.hostname !== "checkout.stripe.com" || url.username || url.password || url.port) throw new PurchaseError("The checkout link was invalid. Please contact support.");
-      return url.href;
+      const consent = termsVersion ? { consent: { accepted: true, terms_version: termsVersion } } : {};
+      return stripeCheckout(crypto
+        ? await request<{ url?: unknown }>("/api/web-checkout/crypto", "POST", { product: "pctweaker", plan, ...consent }, token)
+        : await request<{ url?: unknown }>("/api/web-checkout", "POST", { product: "pctweaker", plan, start_trial: false, ...consent }, token));
+    },
+    /** The consent page: the signed link the app opened, plus the ticked box. No account token: the link is the authority. */
+    async confirmCheckout(link: string, termsVersion: string) {
+      return stripeCheckout(await request<{ url?: unknown }>("/api/checkout/confirm", "POST", { token: link, accepted: true, terms_version: termsVersion }));
     },
   };
+}
+
+/** Only Stripe's own HTTPS checkout host is ever opened. */
+function stripeCheckout(result: { url?: unknown }): string {
+  let url: URL;
+  try { url = new URL(typeof result.url === "string" ? result.url : ""); } catch { throw new PurchaseError("The checkout link was invalid. Please contact support."); }
+  if (url.protocol !== "https:" || url.hostname !== "checkout.stripe.com" || url.username || url.password || url.port) throw new PurchaseError("The checkout link was invalid. Please contact support.");
+  return url.href;
 }

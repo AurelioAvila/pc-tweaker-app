@@ -191,6 +191,8 @@ export const en = {
   },
 
   receipt: {
+    /** Under the purchase receipt when the buyer ticked the box before Stripe (checkout_consents). */
+    consented: "Before paying, you agreed to the Terms and asked for immediate access to this digital content, accepting that your 14-day right of withdrawal ends once access starts.",
     subject: (u: boolean, lifetime: boolean): string =>
       u
         ? lifetime

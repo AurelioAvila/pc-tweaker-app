@@ -31,6 +31,7 @@ import { startReceiptWorker } from "./receipt-outbox";
 import { startOwnerNoticeWorker } from "./owner-sales";
 import { copyFor, fromAcceptLanguage, isLocale, type Copy } from "./emails/copy";
 import { TRIAL_DAYS, maintainTrialClaims } from "./trial";
+import { purgeOldEvidence } from "./purchase-evidence";
 import { referralRoutes } from "./routes/referrals";
 import { telegramRoutes } from "./routes/telegram";
 import { startReferralWorker } from "./referral-stripe";
@@ -438,6 +439,7 @@ function shutdown(signal: string, server: import("http").Server): void {
 
 initSchema()
   .then(() => (isConfigured ? maintainTrialClaims() : undefined))
+  .then(() => (isConfigured ? purgeOldEvidence() : undefined))
   .catch((err) => {
     console.error("failed to initialize database schema:", err);
   })
@@ -445,6 +447,8 @@ initSchema()
     if (isConfigured) {
       // Daily: claims past their retention lose their card and PC hashes.
       setInterval(() => void maintainTrialClaims().catch((err) => console.error("trial claim retention failed:", err)), 86_400_000).unref();
+      // Daily: purchase confirmations and licence events older than 13 months go (PRIVACY.md).
+      setInterval(() => void purgeOldEvidence().catch((err) => console.error("evidence retention failed:", err)), 86_400_000).unref();
     }
     if (isConfigured) stopReceiptWorker = startReceiptWorker(deliverProReceipt);
     if (isConfigured) startOwnerNoticeWorker();

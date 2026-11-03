@@ -17,6 +17,7 @@ import { TipThanks } from "./components/TipThanks";
 import { SupportPage } from "./pages/Support";
 import { BusinessPage } from "./pages/Business";
 import { AccountPage } from "./pages/Account";
+import { ConfirmPurchasePage } from "./pages/ConfirmPurchase";
 import { UninstallerPage } from "./pages/Uninstaller";
 import { GuidePage, GUIDES } from "./pages/Guides";
 import { GuideDirectory } from "./pages/GuideDirectory";
@@ -115,6 +116,9 @@ export default function App({ initialPath = "/" }: { initialPath?: string }) {
       break;
     case "/account":
       page = <AccountPage />;
+      break;
+    case "/checkout/confirm":
+      page = <ConfirmPurchasePage />;
       break;
     case "/privacy":
       page = <PrivacyPage />;

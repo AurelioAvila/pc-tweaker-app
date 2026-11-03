@@ -50,6 +50,7 @@ export const PRACTICAL_GUIDES = {
       { heading: "If you want Recall back", body: "Use the restore control on the Disable Recall tweak and PC Tweaker writes back the recorded previous value, removing the policy if the key was absent before. If you removed the component, reinstall it with Enable-WindowsOptionalFeature -Online -FeatureName \"Recall\" from an elevated PowerShell, restart, then opt in again under Recall & snapshots. Deleted snapshots do not come back: Microsoft says they are removed when the policy is applied, and a restore writes a registry value, not a snapshot store." }
     ],
     related: [
+      { to: "/fixes/turn-off-windows-11-ai-features/", label: "the other Windows 11 AI features you can switch off", note: "Click to Do, Copilot and AI components each have their own setting and limits." },
       { to: "/windows-privacy-tool/", label: "the other privacy settings PC Tweaker can change", note: "Diagnostic data, advertising ID, suggestions and feedback requests, each with its own control." },
       { to: "/how-to-undo-windows-tweaks/", label: "how the restore control puts back the recorded value", note: "Why a removed policy key is restored as absent, not as a Windows default." },
       { to: "/what-pc-tweaker-changes/", label: "which keys are machine-wide and need administrator rights", note: "The Recall policy is one of them." }

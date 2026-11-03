@@ -191,6 +191,26 @@ export const GUIDES: Record<string, Guide> = {
         note: "Microsoft's position, and what is provably safe to remove.",
       },
       {
+        to: "/fixes/clear-standby-memory-windows-11/",
+        label: "whether clearing standby memory helps",
+        note: "What the Cached and Standby figures mean, and when emptying them makes sense.",
+      },
+      {
+        to: "/fixes/windows-update-using-bandwidth/",
+        label: "stopping Windows Update using your bandwidth",
+        note: "Delivery Optimization limits, and what turning it down changes.",
+      },
+      {
+        to: "/fixes/turn-off-windows-11-ai-features/",
+        label: "turning off Windows 11 AI features",
+        note: "Which AI components can be switched off, and what each setting leaves in place.",
+      },
+      {
+        to: "/fixes/bluetooth-headphones-volume-too-low-windows-11/",
+        label: "fixing Bluetooth headphones that are too quiet",
+        note: "Bluetooth Absolute Volume, one of the new Audio controls.",
+      },
+      {
         to: "/what-pc-tweaker-changes/",
         label: "the full list of what PC Tweaker changes on your system",
         note: "The exact registry locations, permission levels and recovery path behind each category.",
@@ -271,6 +291,26 @@ export const GUIDES: Record<string, Guide> = {
       },
     ],
     related: [
+      {
+        to: "/fixes/filter-keys-sticky-keys-shortcut/",
+        label: "stopping Sticky Keys and Filter Keys popups",
+        note: "Two accessibility shortcuts that interrupt games, switched off without losing the features.",
+      },
+      {
+        to: "/fixes/windows-lowers-game-volume-during-calls/",
+        label: "keeping game volume steady during voice chat",
+        note: "Windows lowers other sounds by 80% when a call app opens the microphone, unless you change it.",
+      },
+      {
+        to: "/fixes/enable-long-paths/",
+        label: "enabling long file paths for game mods and tools",
+        note: "Removes the 260-character path limit for apps that opt in.",
+      },
+      {
+        to: "/will-my-games-work-on-linux/",
+        label: "checking whether your games would work on Linux",
+        note: "A read-only check from Windows, if you are weighing a switch.",
+      },
       {
         to: "/fixes/check-resizable-bar-enabled/",
         label: "checking whether Resizable BAR is on",

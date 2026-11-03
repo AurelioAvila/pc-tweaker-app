@@ -25,8 +25,8 @@ export interface RouteSeo {
 }
 
 const ORIGIN = "https://pctweaker.app";
-const UNINSTALLER_OG = `${ORIGIN}/uninstaller/og-uninstaller-444b8b0af1.png`;
-const UNINSTALLER_OG_ALT = "PC Tweaker Uninstaller listing installed apps with a removal confidence label for each, shown with example programs";
+const UNINSTALLER_OG = `${ORIGIN}/uninstaller/og-uninstaller-1b942607d7.jpg`;
+const UNINSTALLER_OG_ALT = "PC Tweaker Uninstaller: before you uninstall, see the plan. Current interface preview with clearly labelled sample data.";
 
 export function getRouteImage(seo: RouteSeo) {
   const url = seo.image ?? `${ORIGIN}/og-pc-tweaker-631e9b9eed.jpg`;
@@ -225,16 +225,16 @@ const uninstallerApp = {
   "@type": "SoftwareApplication",
   "@id": `${ORIGIN}/uninstaller/#software`,
   name: "PC Tweaker Uninstaller",
-  softwareVersion: "0.13.3",
+  softwareVersion: "0.14.0",
   operatingSystem: "Windows 10, Windows 11",
   applicationCategory: "UtilitiesApplication",
   downloadUrl: UNINSTALLER_DOWNLOAD_EXE,
   url: `${ORIGIN}/uninstaller/`,
-  image: `${ORIGIN}/uninstaller/og-uninstaller-444b8b0af1.png`,
+  image: `${ORIGIN}/uninstaller/og-uninstaller-1b942607d7.jpg`,
   screenshot: ["inventory", "removal-brief", "ledger"].map((name) => ({
     "@type": "ImageObject",
-    contentUrl: `${ORIGIN}/uninstaller/images/${name}-0.13.3.png`,
-    caption: `Uninstaller 0.13.3 interface preview with example data: ${name}`,
+    contentUrl: `${ORIGIN}/uninstaller/images/${name}-0.14.0.jpg`,
+    caption: `Uninstaller 0.14.0 frontend preview with fictional sample data: ${name}`,
   })),
   sameAs: ["https://github.com/AurelioAvila/pc-tweaker-uninstaller"],
   description:

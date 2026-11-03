@@ -255,9 +255,10 @@ test("the receipt confirms the box in every language, only when it was ticked", 
   assert.ok(proWelcomeHtml({ ...input, consented: true }).includes("14-day right of withdrawal"));
 });
 
-test("the box's Terms version is the published Terms' date, and the site shows the same", () => {
+test("the box version names this box and the Terms it links, and the site sends the same", () => {
+  // Version 2026-11-04 links the PC Tweaker Terms of 2026-11-01 (purchase-evidence.ts).
   const terms = fs.readFileSync(new URL("../../TERMS.md", import.meta.url), "utf8");
-  assert.equal(/Last updated: (\d{4}-\d{2}-\d{2})/.exec(terms)?.[1], evidence.PURCHASE_TERMS_VERSION.pctweaker, "TERMS.md changed: bump PURCHASE_TERMS_VERSION here and in the site");
+  assert.equal(/Last updated: (\d{4}-\d{2}-\d{2})/.exec(terms)?.[1], "2026-11-01", "TERMS.md changed: give the box a new PURCHASE_TERMS_VERSION here and in the site");
   const site = fs.readFileSync(new URL("../../site/src/purchase-terms.ts", import.meta.url), "utf8");
   for (const [product, version] of Object.entries(evidence.PURCHASE_TERMS_VERSION)) {
     assert.match(site, new RegExp(`${product}: "${version}"`), product);

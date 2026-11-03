@@ -331,7 +331,6 @@ export function AccountPage() {
                       ref={consentBox}
                       checked={agreed}
                       error={consentError}
-                      subscription={false}
                       termsHref="/terms/"
                       onChange={(checked) => {
                         setAgreed(checked);

@@ -166,7 +166,6 @@ export function ConfirmPurchasePage() {
                 lang={lang}
                 checked={agreed}
                 error={consentError}
-                subscription={intent.plan !== "lifetime"}
                 termsHref={TERMS_HREF[intent.product]}
                 onChange={(checked) => {
                   setAgreed(checked);

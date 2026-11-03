@@ -137,7 +137,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     eapoInactiveTitle: "Equalizer APO is installed but not active on {name}",
     eapoInactiveBody: "You turn it on for a device in its own Device Selector.",
     eapoStale:
-      "Registrations left by devices that no longer exist: {count}. A driver or Windows update gives a device a new id.",
+      "Old setups for devices that no longer exist: {count}. A driver or Windows update can give a device a new ID; turn Equalizer APO on for it again in the Device Selector.",
     openSelector: "Open Equalizer APO Device Selector",
     fixesTitle: "Fixes",
     fixesLead: "Each change is recorded and can be restored with one click.",
@@ -256,7 +256,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     eapoInactiveTitle: "Equalizer APO è installato ma non attivo su {name}",
     eapoInactiveBody: "Lo attivi per un dispositivo dal suo Device Selector.",
     eapoStale:
-      "Registrazioni lasciate da dispositivi che non esistono più: {count}. Un aggiornamento dei driver o di Windows assegna al dispositivo un nuovo ID.",
+      "Configurazioni rimaste da dispositivi che non esistono più: {count}. Un aggiornamento dei driver o di Windows può dare al dispositivo un nuovo ID: riattiva Equalizer APO dal Device Selector.",
     openSelector: "Apri il Device Selector di Equalizer APO",
     fixesTitle: "Correzioni",
     fixesLead: "Ogni modifica viene registrata e si ripristina con un clic.",
@@ -380,7 +380,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     eapoInactiveTitle: "Equalizer APO est installé mais inactif sur {name}",
     eapoInactiveBody: "Vous l'activez pour un appareil dans son propre Device Selector.",
     eapoStale:
-      "Enregistrements laissés par des appareils qui n'existent plus : {count}. Une mise à jour du pilote ou de Windows donne un nouvel identifiant à l'appareil.",
+      "Anciennes configurations d'appareils qui n'existent plus : {count}. Une mise à jour du pilote ou de Windows peut donner un nouvel identifiant à l'appareil ; réactivez Equalizer APO dans le Device Selector.",
     openSelector: "Ouvrir le Device Selector d'Equalizer APO",
     fixesTitle: "Corrections",
     fixesLead: "Chaque modification est enregistrée et se restaure en un clic.",
@@ -509,7 +509,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     eapoInactiveTitle: "Equalizer APO está instalado pero no activo en {name}",
     eapoInactiveBody: "Se activa para cada dispositivo desde su propio Device Selector.",
     eapoStale:
-      "Registros dejados por dispositivos que ya no existen: {count}. Una actualización del controlador o de Windows da al dispositivo un nuevo identificador.",
+      "Configuraciones antiguas de dispositivos que ya no existen: {count}. Una actualización del controlador o de Windows puede dar al dispositivo un nuevo identificador; vuelve a activar Equalizer APO en el Device Selector.",
     openSelector: "Abrir el Device Selector de Equalizer APO",
     fixesTitle: "Correcciones",
     fixesLead: "Cada cambio queda registrado y se restaura con un clic.",
@@ -635,7 +635,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     eapoInactiveTitle: "Equalizer APO ist installiert, aber auf {name} nicht aktiv",
     eapoInactiveBody: "Du schaltest es für ein Gerät in seinem eigenen Device Selector ein.",
     eapoStale:
-      "Registrierungen von Geräten, die es nicht mehr gibt: {count}. Ein Treiber- oder Windows-Update gibt einem Gerät eine neue ID.",
+      "Alte Einrichtungen für Geräte, die es nicht mehr gibt: {count}. Ein Treiber- oder Windows-Update kann einem Gerät eine neue ID geben; schalte Equalizer APO im Device Selector wieder ein.",
     openSelector: "Device Selector von Equalizer APO öffnen",
     fixesTitle: "Korrekturen",
     fixesLead: "Jede Änderung wird aufgezeichnet und lässt sich mit einem Klick zurücksetzen.",
@@ -761,7 +761,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     eapoInactiveTitle: "O Equalizer APO está instalado mas não ativo em {name}",
     eapoInactiveBody: "Ativa-o para cada dispositivo no próprio Device Selector.",
     eapoStale:
-      "Entradas deixadas por dispositivos que já não existem: {count}. Uma atualização do driver ou do Windows dá ao dispositivo um novo identificador.",
+      "Configurações antigas de dispositivos que já não existem: {count}. Uma atualização do driver ou do Windows pode dar ao dispositivo um novo identificador; volte a ativar o Equalizer APO no Device Selector.",
     openSelector: "Abrir o Device Selector do Equalizer APO",
     fixesTitle: "Correções",
     fixesLead: "Cada alteração fica guardada e pode ser reposta com um clique.",

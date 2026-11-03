@@ -63,6 +63,23 @@ export function Footer({ navigate, currentPath }: { navigate: (to: string) => vo
               <a href="https://github.com/AurelioAvila/.github/blob/master/CODE_SIGNING.md" className="inline-flex min-h-11 items-center px-2 text-[13px] text-accent underline underline-offset-4">{text.suite.verifyRelease}</a>
             </div>
             <NewsletterSignup />
+            <a
+              href="https://postyourstartup.co/startup/pc-tweaker?ref=badge"
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              aria-label="View PC Tweaker's directory listing on PostYourStartup (opens in a new tab)"
+              className="mt-5 inline-flex rounded-[10px] transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"
+            >
+              <img
+                src="/images/postyourstartup-badge-dark.svg"
+                alt="PC Tweaker on PostYourStartup"
+                width={212}
+                height={55}
+                loading="lazy"
+                decoding="async"
+                className="block h-[55px] w-[212px] max-w-full"
+              />
+            </a>
           </div>
           <div className="flex flex-wrap gap-14">
             <Col

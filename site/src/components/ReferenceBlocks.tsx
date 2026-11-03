@@ -7,7 +7,7 @@ import { usePriceList } from "../trial";
 /** The facts of a page, as a table, before the prose. */
 export function TechSummary({ rows, title = "Technical summary" }: { rows: readonly { label: string; value: string }[]; title?: string }) {
   return (
-    <aside aria-label={title} className="mt-10 rounded-2xl border border-white/10 bg-[var(--bg-2)] p-6 md:p-7">
+    <section aria-label={title} className="mt-10 rounded-2xl border border-white/10 bg-[var(--bg-2)] p-6 md:p-7">
       <h2 className="font-mono-t text-accent text-[12px] tracking-[0.15em]">{title.toUpperCase()}</h2>
       <table className="mt-4 w-full border-collapse text-left text-[14px]">
         <tbody>
@@ -19,7 +19,7 @@ export function TechSummary({ rows, title = "Technical summary" }: { rows: reado
           ))}
         </tbody>
       </table>
-    </aside>
+    </section>
   );
 }
 
@@ -55,7 +55,7 @@ export function Steps({ steps, start = 1 }: { steps: readonly Step[]; start?: nu
             {s.note && <p className="mt-1.5 text-[14.5px] leading-7 text-[var(--fg-dim)]">{s.note}</p>}
             {s.code && (
               <div className="relative mt-3">
-                <pre className="overflow-x-auto rounded-xl bg-black/40 p-4 pr-16 text-[13px] leading-6 text-[var(--fg)]"><code>{s.code}</code></pre>
+                <pre tabIndex={0} aria-label={s.title} className={`focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] overflow-x-auto rounded-xl bg-black/40 p-4 pr-16 ${s.shell ? "pb-8" : ""} text-[13px] leading-6 text-[var(--fg)]`}><code>{s.code}</code></pre>
                 {s.shell && <span className="font-mono-t absolute bottom-2 right-3 text-[10.5px] text-[var(--fg-dim)]">{s.shell}</span>}
                 <CopyButton text={s.code} />
               </div>
@@ -80,7 +80,7 @@ export function ProBox({ campaign }: { campaign: string }) {
   const plans = monthly ? `${euro(monthly.amount)} a month${annual ? ` or ${euro(annual.amount)} a year` : ""}` : "";
   const trial = prices?.trialEnabled && prices.trialDays > 0 ? prices.trialDays : 0;
   return (
-    <aside aria-label="PC Tweaker" className="mt-8 rounded-2xl border p-6 md:p-7" style={{ borderColor: "var(--accent-glow)", background: "linear-gradient(160deg, var(--bg-2) 70%, var(--accent-soft))" }}>
+    <section aria-label="PC Tweaker" className="mt-8 rounded-2xl border p-6 md:p-7" style={{ borderColor: "var(--accent-glow)", background: "linear-gradient(160deg, var(--bg-2) 70%, var(--accent-soft))" }}>
       <h2 className="font-display text-xl font-bold text-[var(--fg)]">Rather not edit the registry by hand?</h2>
       <p className="mt-3 text-[15px] leading-7 text-[var(--fg-dim)]">
         PC Tweaker shows the exact change before it runs, records the value it replaces and puts it back with Restore.
@@ -99,7 +99,7 @@ export function ProBox({ campaign }: { campaign: string }) {
         <a href={DOWNLOAD_EXE} className="bg-accent rounded-lg px-5 py-3 text-sm font-semibold text-[var(--on-accent)]">Download PC Tweaker Free</a>
         <a href={storeLink} className="rounded-lg border border-white/10 px-5 py-3 text-sm font-semibold text-[var(--fg)]">Get it from Microsoft Store</a>
       </div>
-    </aside>
+    </section>
   );
 }
 

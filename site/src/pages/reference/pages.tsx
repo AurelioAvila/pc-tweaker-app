@@ -56,7 +56,7 @@ function Head({ eyebrow, title, intro }: { eyebrow: string; title: string; intro
 
 function Panel({ title, id, children }: { title: string; id: string; children: ReactNode }) {
   return (
-    <section className="mt-8 rounded-2xl bg-[var(--surface)] p-7 md:p-9" aria-labelledby={id}>
+    <section className="mt-8 rounded-2xl border border-white/10 bg-[var(--surface)] p-7 md:p-9" aria-labelledby={id}>
       <h2 id={id} className="font-display text-2xl font-bold text-[var(--fg)]">{title}</h2>
       {children}
     </section>
@@ -500,7 +500,7 @@ export function ToolsIndex({ navigate }: { navigate: Nav }) {
       <Head eyebrow="FREE TOOLS" title="Small Windows tools that run in your browser" intro="Nothing to install and nothing sent anywhere: each tool runs on this page, with data taken from the same reference pages." />
       <ul className="mt-10 grid gap-5 md:grid-cols-3">
         {TOOLS.map((tool) => (
-          <li key={tool.path} className="rounded-2xl bg-[var(--surface)] p-6">
+          <li key={tool.path} className="rounded-2xl border border-white/10 bg-[var(--surface)] p-6">
             <Link to={`${tool.path}/`} onNavigate={navigate} className="font-display text-lg font-bold text-[var(--fg)] hover:text-[var(--accent)]">{tool.name}</Link>
             <p className="mt-2 text-[14px] leading-6 text-[var(--fg-dim)]">{tool.blurb}</p>
           </li>

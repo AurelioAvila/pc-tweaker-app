@@ -850,9 +850,12 @@ mod win {
                 return Err("unexpected snapshot type for an audio idle timer".into());
             };
             // A driver reinstall removes the key with everything in it:
-            // nothing of ours is left to undo.
-            if hklm().open_subkey_with_flags(&path, KEY_QUERY_VALUE).is_err() {
-                return Ok(());
+            // nothing of ours is left to undo. Any other error (access
+            // denied, ...) keeps the snapshot so the user can retry.
+            match hklm().open_subkey_with_flags(&path, KEY_QUERY_VALUE) {
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+                Err(e) => return Err(format!("could not open the audio driver settings: {e}")),
+                Ok(_) => {}
             }
             write_binary(&path, original.as_deref())
         })

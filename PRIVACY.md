@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-11-01
+Last updated: 2026-11-03
 
 PC Tweaker is a desktop application. Windows tweaks, snapshots, rollback data,
 hardware readings and file scans are processed locally on your device. They are
@@ -30,7 +30,9 @@ such as a Pro subscription. When you register, our backend stores:
 
 - Your **first name**, **last name**, **date of birth** and **email address**
 - Your password as a **bcrypt hash**; the plain password is never stored
-- Email-verification status and hashed, short-lived action tokens
+- Email-verification status, the time you confirmed your email address, and
+  hashed, short-lived action tokens
+- The time you last signed in with your password
 - Subscription status, plan, expiry and the Stripe customer reference needed to
   maintain or cancel the entitlement
 - A session-revocation version used to invalidate existing sign-ins
@@ -119,6 +121,45 @@ After a purchase, the confirmation page asks, optionally, how you found PC
 Tweaker. If you pick an answer, only that answer (for example "youtube") is
 added to your order's record at Stripe; nothing is stored in your browser and
 skipping the question changes nothing.
+
+## Purchase confirmation and proof of use
+
+Before the payment page for PC Tweaker, PC Tweaker Uninstaller or Tweaky
+Driver opens, you tick a box on our page to accept the Terms and to ask for
+immediate access to the digital content, which means you lose the 14-day right
+of withdrawal once access starts. When you confirm, we store with your account:
+
+- the IP address the confirmation came from;
+- the version of the Terms you accepted;
+- the time you confirmed, the product and the plan;
+- the browser family (for example "Chrome" or "Edge"), not the full browser
+  identification string;
+- the reference of the Stripe checkout session that opens next.
+
+The version of the Terms and a reference to this record are also added to the
+checkout session at Stripe. We use these records to prove that you gave this
+consent and to defend payment disputes (chargebacks) and prevent fraud. The
+legal basis is our legal obligation to be able to show the consent required
+for immediately supplied digital content (Article 6(1)(c) GDPR) and our
+legitimate interest in defending payment disputes and preventing fraud
+(Article 6(1)(f) GDPR).
+
+To show that a purchase was actually used, we also keep a dated usage record.
+When a signed-in copy of PC Tweaker or PC Tweaker Uninstaller refreshes its
+licence, we add an entry with your account, the product, the hashed
+installation identifier described under "Account data" and the time, at most
+one per installation per day. When Tweaky Driver checks Pro on an activated
+PC, the Tweaky Driver service records the time of the latest check with that
+activation. Each of these records also holds the country the request came
+from, but only when our network provider Cloudflare supplies it with the
+request; otherwise it is left empty. No IP address is stored with them. The
+purpose and legal basis are the same as above (Article 6(1)(f) GDPR).
+
+Both kinds of record are deleted after 13 months. If you delete your account
+sooner, the purchase confirmations and the PC Tweaker and PC Tweaker
+Uninstaller usage entries are still kept until those 13 months have passed,
+because a payment can be disputed after an account is gone. The Tweaky Driver
+usage record is part of the PC's activation and is deleted with it.
 
 ## Free trial
 
@@ -275,7 +316,8 @@ records, licences, plans, activated PCs and bonus grants, pending emails and
 action tokens, together with any newsletter subscription and ratings sent from
 the same email address. An active subscription to any of the apps is cancelled
 in Stripe first. What we keep after that is described above for Tweaky
-Driver's free scans and under "Free trial" and "Invite a friend". Stripe keeps
+Driver's free scans and under "Purchase confirmation and proof of use", "Free
+trial" and "Invite a friend". Stripe keeps
 its own records of your payments for as long as the law requires.
 
 Some payment or security records may need to be retained where required by law

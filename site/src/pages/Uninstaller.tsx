@@ -33,6 +33,7 @@ const PRO = [
 ];
 
 const REMOVAL_GUIDES = [
+  ["/fixes/remove-program-leftovers-windows-11/", "Remove program leftovers: files, registry, services and tasks"],
   ["/uninstaller/guides/armoury-crate/", "Uninstall ASUS Armoury Crate completely"],
   ["/uninstaller/guides/mcafee-webadvisor/", "Remove McAfee, WebAdvisor and leftover tasks"],
   ["/uninstaller/guides/onedrive/", "Uninstall OneDrive on Windows 11 without losing files"],

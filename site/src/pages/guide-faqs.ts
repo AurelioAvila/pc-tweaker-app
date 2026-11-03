@@ -25,7 +25,7 @@ export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
     },
     {
       q: "Can leftover cleanup be undone?",
-      a: "Files and folders are moved to the Recycle Bin, so yes, from Windows itself. Per-user registry keys are deleted outright and are flagged as the one irreversible step before you confirm. Machine-wide registry keys are reported but never removed.",
+      a: "Files and folders are moved to the Recycle Bin, so yes, from Windows itself. Per-user registry keys cannot go to the Recycle Bin: each is first saved to a .reg file in the app's data folder, and the key is kept if that export fails. It is still flagged as the one step Windows cannot undo for you. Machine-wide registry keys are reported but never removed.",
     },
     {
       q: "Is PC Tweaker Uninstaller free?",

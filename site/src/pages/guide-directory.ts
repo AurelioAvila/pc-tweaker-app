@@ -7,6 +7,7 @@ export const GUIDE_GROUPS = [
       { path: "/guides/fix-dpc-isr-latency-windows-11/", title: "Diagnose DPC and ISR latency", note: "Investigate audio crackles and driver activity with a trace." },
       { path: "/guides/amd-x3d-intel-hybrid-core-steering-gaming/", title: "Check X3D and Intel Hybrid core steering", note: "Separate process placement from power policy and core parking." },
       { path: "/guides/amd-ryzen-x3d-core-parking-windows-11/", title: "Understand Ryzen X3D core parking", note: "Check your CPU topology before changing parking or placement." },
+      { path: "/fixes/check-for-driver-updates-windows-11/", title: "Check for driver updates without a driver updater", note: "Windows Update, Device Manager, PowerShell and your PC maker, with a restore point first." },
       { path: "/gaming-performance/", title: "Compare gaming performance", note: "Use repeated workloads and frame times to judge a change." },
       { path: "/windows-gaming-work-study-profiles/", title: "Choose Gaming, Work or Study settings", note: "Review a preset for the task and understand its restore limits." },
     ],
@@ -46,6 +47,7 @@ export const GUIDE_GROUPS = [
     description: "Review the uninstall command and what may remain afterward.",
     guides: [
       { path: "/uninstall-programs-completely/", title: "Uninstall a Windows program and review leftovers", note: "Use the registered uninstaller first, then inspect cleanup and recovery limits." },
+      { path: "/fixes/remove-program-leftovers-windows-11/", title: "Remove program leftovers: files, registry, services and tasks", note: "Read-only checks first, a backup before every deletion, and what the Uninstaller covers." },
       { path: "/uninstaller/guides/armoury-crate/", title: "Uninstall ASUS Armoury Crate completely", note: "Use ASUS's Uninstall Tool, stop the BIOS offering it again, then check what is left." },
       { path: "/uninstaller/guides/mcafee-webadvisor/", title: "Remove McAfee and WebAdvisor", note: "Standard removal, McAfee's MCPR tool if that fails, and the folders and tasks to check." },
       { path: "/uninstaller/guides/onedrive/", title: "Uninstall OneDrive without losing files", note: "Make files local and stop folder backup before you unlink and remove the app." },

@@ -1,3 +1,13 @@
+# PC Tweaker 1.20.0 PNG gallery
+
+These 1280 x 839 PNGs are the current official browser-demo captures taken on 3 November 2026 from the 1.20.0 preview build, in Pro view. Format conversion preserves every decoded RGB pixel of the reviewed captures. Each retains its visible **PC TWEAKER 1.20.0 - INTERFACE PREVIEW — SAMPLE DATA** footer. The devices, readings, scan results and change-history entries are synthetic. These are interface previews, not native Windows measurements, customer results or performance benchmarks. No Windows setting, driver or firmware was changed to create them. Preserve the disclosure when displaying or resizing them.
+
+| File | View | SHA-256 |
+| --- | --- | --- |
+| [pc-tweaker-1.20-audio-sample-data.png](pc-tweaker-1.20-audio-sample-data.png) | Audio diagnostics | `b0d3b61ec068181af209b48f1a527fa207f8612473c29fd67cd82eaea1cda9a8` |
+| [pc-tweaker-1.20-scan-results-sample-data.png](pc-tweaker-1.20-scan-results-sample-data.png) | Scan results before selecting changes | `6ba989bc69bb6cf8f24a82d6d48da4d10ce4962b3770d203ba8a571a51e2d9ff` |
+| [pc-tweaker-1.20-change-history-sample-data.png](pc-tweaker-1.20-change-history-sample-data.png) | Supported change history | `cac158843638926f650507bdf7ee2e70c88c2d056fc14a985b893e960fab5d3e` |
+
 # PC Tweaker 1.20.0 Audio preview
 
 `pc-tweaker-1.20-audio-sample-data.jpg` is a 1280 x 839 Brave capture of the Audio section in the official browser demo (the 1.20.0 preview build, Pro view) taken on 3 November 2026. The footer bar reading **INTERFACE PREVIEW — SAMPLE DATA** was added at capture time. The devices, findings and readings are synthetic; the image is not a native Windows capture, a real-PC scan or evidence of a measured result. No Windows setting, driver or firmware was changed to create it. Preserve the disclosure when displaying or resizing it.

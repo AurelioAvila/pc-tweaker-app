@@ -124,10 +124,11 @@ skipping the question changes nothing.
 
 ## Purchase confirmation and proof of use
 
-Before the payment page for PC Tweaker, PC Tweaker Uninstaller or Tweaky
-Driver opens, you tick a box on our page to accept the Terms and to ask for
-immediate access to the digital content, which means you lose the 14-day right
-of withdrawal once access starts. When you confirm, we store with your account:
+Where our page asks you to tick a box before the payment page opens (PC
+Tweaker today; PC Tweaker Uninstaller and Tweaky Driver from the app versions
+that show it), you accept the Terms and ask for immediate access to the digital
+content, which means you lose the 14-day right of withdrawal once access
+starts. When you confirm, we store with your account:
 
 - the IP address the confirmation came from;
 - the version of the Terms you accepted;

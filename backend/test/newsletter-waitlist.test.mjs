@@ -4,6 +4,7 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { freePort } from "./free-port.mjs";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -79,7 +80,7 @@ test("an unknown source is recorded as the footer and joins no waitlist", async 
 
 // Redaxa's site may post to the list, and only to the list.
 test("Redaxa's origin is allowed on /api/newsletter only", async (t) => {
-  const port = 30_000 + Math.floor(Math.random() * 20_000);
+  const port = await freePort();
   const env = { ...process.env, PORT: String(port) };
   for (const key of ["DATABASE_URL", "STRIPE_SECRET_KEY", "RAILWAY_ENVIRONMENT_ID", "CLIENT_IP_HEADER", "CORS_ORIGINS"]) delete env[key];
   const child = spawn(process.execPath, ["dist/index.js"], { cwd: process.cwd(), env, stdio: ["ignore", "pipe", "pipe"] });

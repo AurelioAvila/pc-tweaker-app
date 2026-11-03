@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { freePort } from "./free-port.mjs";
 
 // Crypto (Stripe "Stablecoins and Crypto", USDC) for Lifetime and tips, behind
 // CRYPTO_CHECKOUT_ENABLED. Nothing here reaches Stripe: every price, rate and
@@ -246,7 +247,7 @@ test("a paid crypto session grants Lifetime through the card path, once", async 
 
 test("HTTP: the crypto routes exist only with the switch on", async (t) => {
   async function serve(extra) {
-    const port = 30_000 + Math.floor(Math.random() * 20_000);
+    const port = await freePort();
     const env = { ...process.env, PORT: String(port), STRIPE_SECRET_KEY: "sk_test_never_called", ...extra };
     for (const key of ["DATABASE_URL", "RAILWAY_ENVIRONMENT_ID", "CLIENT_IP_HEADER", "CORS_ORIGINS", "CHECKOUT_GUARD_ENABLED", "STRIPE_PRICE_LIFETIME"]) delete env[key];
     if (!extra.CRYPTO_CHECKOUT_ENABLED) delete env.CRYPTO_CHECKOUT_ENABLED;

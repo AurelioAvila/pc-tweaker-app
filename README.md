@@ -27,7 +27,7 @@ For Windows 10/11 users who want to inspect settings before changing them. Revie
 
 **[Download Free for Windows](https://github.com/AurelioAvila/pc-tweaker-app/releases/latest/download/PCTweaker-Setup.exe)** · **[Microsoft Store](https://apps.microsoft.com/detail/9nh3c6dt1g87)** · [Chocolatey](https://community.chocolatey.org/packages/pc-tweaker) · [Website](https://pctweaker.app/) · [Support](https://pctweaker.app/support/) · [Release notes](CHANGELOG.md)
 
-<p align="center"><a href="#whats-new-in-119">What's new in 1.19</a> · <a href="#what-you-can-do">Features</a> · <a href="#what-changes-on-your-system">What changes</a> · <a href="#free-and-pro">Free and Pro</a> · <a href="#download-integrity-and-code-signing">Code signing</a> · <a href="#build-from-source">Build from source</a></p>
+<p align="center"><a href="#whats-new-in-120">What's new in 1.20</a> · <a href="#what-you-can-do">Features</a> · <a href="#what-changes-on-your-system">What changes</a> · <a href="#free-and-pro">Free and Pro</a> · <a href="#download-integrity-and-code-signing">Code signing</a> · <a href="#build-from-source">Build from source</a></p>
 
 <p align="center"><img src="docs/screenshots/pc-tweaker-1.19-scan-results-sample-data.jpg" alt="PC Tweaker 1.19.0 Scan 2.0 results in the official browser demo, with a visible Interface preview — sample data label; readings are synthetic" width="100%"></p>
 
@@ -95,6 +95,14 @@ These are separate applications with their own licences. PC Tweaker Lifetime inc
 ## Closing and reopening PC Tweaker
 
 Closing the window keeps PC Tweaker running in the Windows notification area. Click its icon to reopen it, or right-click and choose **Exit PC Tweaker** to quit. To make closing the window quit instead, clear **Keep running in the background** in the icon's menu. Windows may place the icon in its hidden-icons panel.
+
+## What's new in 1.20
+
+- **An Audio section.** See every sound device in use with its real format, effects, spatial sound and Equalizer APO status, with findings that explain what is wrong: a Bluetooth headset stuck in call mode, a muted or very quiet microphone, Equalizer APO installed but not active.
+- **Fixes for common sound problems.** "Don't lower my game during calls" stops Windows lowering every other sound by 80% while a call app uses the microphone, and "Fix Bluetooth volume control" helps when Bluetooth volume does not respond or jumps. Pro keeps HDMI audio, the sound chip or USB audio from switching off after silence, and restarts an audio device in one click. Every change can be restored with one click.
+- **Check for crackles.** A 10-second driver latency trace against Microsoft's limits (100 µs per DPC, 25 µs per interrupt), grouped by area. It asks for administrator approval and changes nothing.
+
+See the [1.20.0 release notes](https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.20.0) for the full update.
 
 ## What's new in 1.19
 

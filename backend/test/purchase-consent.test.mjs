@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import jwt from "jsonwebtoken";
 
 // The Terms box before Stripe and the dispute evidence (owner decision 3 Nov 2026).
@@ -157,6 +158,7 @@ test("app -> our page -> confirm over HTTP: refused unticked, Stripe with the ti
     async createSession(params) { calls.push(params); return { url: "https://checkout.stripe.com/c/pay/cs_test_http#x", id: "cs_test_http" }; },
   };
   const app = express();
+  app.use(rateLimit({ windowMs: 60_000, limit: 100 }));
   app.use(express.json());
   app.use("/api/auth", authRoutes);
   app.post("/api/checkout", requireAuth, createCheckoutHandler(effects, { replaceDifferentTerms: true, consentPage: true }));

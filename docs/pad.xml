@@ -60,7 +60,7 @@
       <Expire_Day></Expire_Day>
       <Expire_Year></Expire_Year>
     </Expire_Info>
-    <Program_Change_Info>PC Tweaker 1.20.0 adds an Audio section. See every sound device in use with its real format (Hz, bits, channels), effects, spatial sound and Equalizer APO status, plus findings that explain what is wrong: a Bluetooth headset stuck in call mode, a muted or very quiet microphone, Equalizer APO installed but not active. New fixes: &quot;Don&apos;t lower my game during calls&quot; (Windows lowers every other sound by 80% while a call app uses the mic) and &quot;Fix Bluetooth volume control&quot;. Pro: keep HDMI audio or the sound chip awake so the start of a sound is not cut off, keep USB audio powered, and restart an audio device in one click. Check for crackles runs a 10-second driver latency trace against Microsoft&apos;s limits. Every change is recorded and can be restored with one click. The Scan gets an Audio category. 84 controls.</Program_Change_Info>
+    <Program_Change_Info>PC Tweaker 1.20.0 adds an Audio section for playback and recording device formats, Bluetooth call-mode findings, muted or quiet microphones, sound effects and Equalizer APO status. A read-only 10-second DPC/ISR trace helps identify drivers worth investigating and requires administrator permission; a finding does not prove the cause of an audio problem. Scan 2.0 includes audio findings. This release has 48 Free controls and 36 optional Pro controls. Change history and restore cover supported settings; restoration does not recover permanently deleted caches or replace a full system backup.</Program_Change_Info>
     <Program_Category_Class>System Utilities::System Maintenance</Program_Category_Class>
     <Program_Specific_Category></Program_Specific_Category>
     <Program_System_Requirements>Windows 10/11 x64; internet for accounts, updates and supported online features.</Program_System_Requirements>
@@ -68,18 +68,26 @@
   <Program_Descriptions>
     <English>
       <Keywords>Windows tuning,hardware audit,PC maintenance,privacy,startup,Scan 2.0,PC Tweaker,Aurelio Avila</Keywords>
-      <Char_Desc_45>Scan Windows. Review changes. Keep control.</Char_Desc_45>
-      <Char_Desc_80>19 Windows checks. Review findings. Choose your changes. Free plus optional Pro.</Char_Desc_80>
-      <Char_Desc_250>Inspect Windows with 19 checks across eight categories. Review findings, choose individual fixes and compare supported before-and-after measurements. Free tools need no account; advanced Pro is optional. Windows 10/11 x64.</Char_Desc_250>
-      <Char_Desc_450>PC Tweaker combines Windows tuning, hardware monitoring and maintenance. Scan 2.0 runs 19 checks across eight categories; review the findings before making changes. Includes 46 Free and 36 Pro controls. Free tools need no account. Findings depend on Windows, hardware and drivers. The 1.19.0 interface preview uses clearly labeled sample data, not real-PC results.</Char_Desc_450>
-      <Char_Desc_2000>PC Tweaker by Aurelio Avila helps you inspect Windows changes before applying them. Scan 2.0 runs 19 checks across performance, junk files, startup, privacy, registry, memory, hardware and latency. Review findings and choose individual fixes. The read-only hardware audit can report RAM speed, PCIe link and Resizable BAR findings when Windows exposes the data; it does not change firmware. Safe optimize lists proposed settings and requests a System Restore point. After supported optimization actions, Proof of change compares measurements and can report no measurable difference. The catalog includes 46 Free and 36 Pro controls. Free tools need no account. Pro adds advanced workflows, including Game Sessions, registry cleanup and Smart RAM booster. Registry discovery is free; Pro cleanup targets limited orphaned entries and saves a .reg backup. Registry cleaning is housekeeping, not a promised speed upgrade. Restore controls cover supported settings; restoring a setting does not recover deleted caches or replace a system backup. Windows 10/11 x64; features and findings vary by Windows, drivers and hardware. No universal FPS or performance gain is promised. Official Windows binaries are publisher-signed and timestamped; signing does not guarantee security or eliminate SmartScreen warnings. The linked 1.19.0 interface preview is captured from the official browser demo with a visible sample-data disclosure. Its readings are illustrative, not measurements from a real PC.</Char_Desc_2000>
+      <Char_Desc_45>See Windows clearly before you change it.</Char_Desc_45>
+      <Char_Desc_80>Audio diagnostics and Windows tuning you can inspect. Free plus optional Pro.</Char_Desc_80>
+      <Char_Desc_250>Review audio devices, Scan 2.0 findings and supported Windows tweaks before making changes. Includes 48 Free controls without an account and 36 optional Pro controls. Compare supported results and restore saved settings. Windows 10/11 x64.</Char_Desc_250>
+      <Char_Desc_450>PC Tweaker combines Windows tuning, audio diagnostics and hardware monitoring. Review device formats, Bluetooth call-mode findings and Scan 2.0 results before choosing changes. Includes 48 Free controls without an account and 36 optional Pro controls. Restore covers supported settings. The 1.20.0 Audio interface preview uses clearly labeled sample data, not real-PC measurements.</Char_Desc_450>
+      <Char_Desc_2000>PC Tweaker by Aurelio Avila combines Windows tuning, audio diagnostics, hardware monitoring and maintenance for Windows 10/11 x64. Inspect a supported setting before applying it, review its previous state and choose individual changes. This release includes 48 Free controls without an account and 36 optional Pro controls.
+
+New in 1.20.0, the Audio section shows playback and recording devices and the formats Windows uses. Review Bluetooth call-mode findings, muted or quiet microphones, sound effects and Equalizer APO status. A read-only 10-second DPC/ISR trace helps identify drivers worth investigating. It requires administrator permission; a latency finding does not prove the cause of an audio problem.
+
+Scan 2.0 presents configuration and maintenance findings before you select fixes. The read-only hardware audit can report RAM speed, PCIe link and Resizable BAR findings when Windows exposes the data; it does not change firmware. For supported optimization actions, Proof of change compares before-and-after measurements and can report no measurable difference. A configuration score is not an FPS benchmark.
+
+Optional Pro adds advanced workflows, including Game Sessions and registry cleanup. Registry discovery is free; Pro cleanup saves a .reg backup. Registry cleaning is housekeeping, not a promised speed upgrade. Change history and restore cover supported settings. Restoring a setting does not recover permanently deleted caches or replace a full system backup. Some actions require administrator permission or a restart. Results depend on Windows, drivers, hardware and workload.
+
+Official Windows binaries are publisher-signed and timestamped; signing does not eliminate SmartScreen warnings. The linked 1.20.0 Audio interface preview visibly identifies synthetic sample data. It is an interface example, not real-PC measurements or evidence of a performance gain.</Char_Desc_2000>
     </English>
   </Program_Descriptions>
   <Web_Info>
     <Application_URLs>
       <Application_Info_URL>https://pctweaker.app/</Application_Info_URL>
       <Application_Order_URL></Application_Order_URL>
-      <Application_Screenshot_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/screenshots/pc-tweaker-1.19-interface-sample-data.jpg</Application_Screenshot_URL>
+      <Application_Screenshot_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/screenshots/pc-tweaker-1.20-audio-sample-data.jpg</Application_Screenshot_URL>
       <Application_Icon_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/src-tauri/icons/32x32.png</Application_Icon_URL>
       <Application_XML_File_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/pad.xml</Application_XML_File_URL>
     </Application_URLs>

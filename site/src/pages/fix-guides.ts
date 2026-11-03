@@ -1041,4 +1041,163 @@ export const FIX_GUIDES = {
       ],
     },
   },
+  "/fixes/check-for-driver-updates-windows-11": {
+    updated: "2026-11-03",
+    eyebrow: "FIX · DRIVERS",
+    title: "Check for driver updates on Windows 11 without a driver updater",
+    seoTitle: "Check for Driver Updates on Windows 11, Safely",
+    seoDescription:
+      "Find real driver updates with Windows Update, Device Manager and your PC maker. Read versions in PowerShell, keep a way back, and see what a checker adds.",
+    intro:
+      "Most PCs do not need every driver updated, and a newer version or an older date is not a reason by itself. Update a driver when something is wrong, such as a device with an error, a graphics problem in a new game, or a fix the maker documents. This guide shows how to read what you have, where genuine updates come from, and how to keep a way back. Then it explains what Tweaky Driver adds on top.",
+    summary: [
+      { label: "Safest first stop", value: "Settings, Windows Update, Advanced options, Optional updates, Driver updates" },
+      { label: "Read your drivers", value: "Device Manager, or Get-CimInstance Win32_PnPSignedDriver in PowerShell (read-only)" },
+      { label: "Find devices with errors", value: "Get-PnpDevice -PresentOnly, filtered on Status" },
+      { label: "Best source for graphics, chipset, Wi-Fi", value: "The PC, motherboard or chip maker's page for your exact model" },
+      { label: "Way back", value: "Restore point, and Roll Back Driver in the device's Properties" },
+      { label: "Tweaky Driver", value: "Inventory and diagnostics free; the same full scan every 10 days on Free, unlimited on Pro" },
+    ],
+    sections: [
+      {
+        heading: "Start from a symptom, not a version number",
+        body:
+          "A driver date says when the package was built, not whether it is wrong for you. Windows' own inbox drivers often carry a date of 21 June 2006 and are correct. Update when a device shows an error, a game or app needs a newer graphics driver, a maker's note names a fix for your problem, or a security advisory covers it. If everything works, a new driver is a risk with no benefit.",
+      },
+      {
+        heading: "Where genuine updates come from",
+        body:
+          "Windows Update lists driver updates the maker has published for your hardware under Optional updates. Your PC or motherboard maker's support page, for the exact model, is the source for chipset, audio, LAN and Wi-Fi drivers on a branded PC. For graphics, the chip maker (NVIDIA, AMD or Intel) publishes its own packages. Avoid sites that charge for drivers and repackaged driver packs: manufacturers publish drivers free.",
+        points: [
+          "Match the exact model, Windows version and 64-bit (x64) build",
+          "Prefer the PC maker's package over a generic chip-maker one on laptops",
+          "Read the release notes: some packages replace several drivers or need a restart",
+          "Do not install firmware or BIOS updates because a checker listed them; follow the maker's own instructions",
+        ],
+      },
+      {
+        heading: "Make a way back before you install",
+        body:
+          "Create a restore point first. Windows normally creates one automatically at most once every 24 hours, so a manual request shortly after another one can be skipped. If a new driver misbehaves, open the device in Device Manager, go to the Driver tab and choose Roll Back Driver; the button only works when Windows kept the previous driver. A restore point is not a file backup.",
+      },
+      {
+        heading: "What a driver checker can and cannot know",
+        body:
+          "A checker can read your hardware IDs and installed versions and compare them with what the sources publish. It cannot know whether a newer package fixes your problem, and no checker covers every device: coverage depends on what manufacturers publish. Treat any tool that claims to update everything, or to speed up your PC, with suspicion.",
+      },
+    ],
+    steps: [
+      { title: "List installed drivers with their version, date and maker", code: "Get-CimInstance Win32_PnPSignedDriver | Where-Object DeviceName | Sort-Object DeviceName | Select-Object DeviceName, DriverVersion, DriverDate, Manufacturer, InfName | Format-Table -AutoSize", shell: "PowerShell" as const, note: "Read-only. Add | Out-GridView or | Export-Csv to keep a copy before you change anything." },
+      { title: "Show devices Windows reports as having a problem", code: "Get-PnpDevice -PresentOnly | Where-Object { $_.Status -ne 'OK' } | Select-Object Class, FriendlyName, Status, InstanceId | Format-Table -AutoSize", shell: "PowerShell" as const, note: "Some entries are harmless, such as emulated or disconnected devices. A device you use and rely on that shows Error is the one to look into." },
+      { title: "List the third-party driver packages in the driver store", code: "pnputil /enum-drivers", shell: "cmd" as const, note: "Run it in an administrator Command Prompt. It shows each package's published name, original INF, provider, version and date." },
+      { title: "Check Windows Update's driver offers", note: "Settings, Windows Update, Check for updates, then Advanced options, Optional updates, Driver updates. Tick only the ones that match a problem you have." },
+      { title: "Create a restore point, then install", code: "Checkpoint-Computer -Description \"Before driver update\" -RestorePointType MODIFY_SETTINGS", shell: "PowerShell" as const, note: "Run it in an administrator PowerShell. System Protection must be on for the system drive; if Windows created a point in the last 24 hours, it may skip yours." },
+    ],
+    pctweaker: {
+      title: "What Tweaky Driver does",
+      body:
+        "Tweaky Driver is a separate Windows app in the PC Tweaker suite. This is what its code and documentation state, and nothing more. It reads the device inventory (hardware IDs, installed versions, driver provider, INF and signature details, Windows problem codes) into one searchable list; missing metadata stays \"unknown\" and an old date is not treated as obsolete. A scan then looks for offers from Windows Update through the configured service, matched on connected device IDs and excluding firmware, and, in the full scan, from the Microsoft Update Catalog and from specific manufacturer feeds for hardware they recognize: NVIDIA desktop graphics cards, Intel's Driver & Support Assistant catalog, AMD chipset and graphics for named platforms and MSI motherboards. A catalog search hit is shown as a candidate, not as proof that it applies to your PC, and some packages are download-only. Before anything runs you review the source, versions, size and licence terms in a single-use plan, and downloads and installs are separate steps. Recovery preparation includes OEM INF exports, hash checks and a new Windows restore point where Windows allows one; drivers built into Windows rely on System Restore, and automatic restoration is not offered for most devices, so Roll Back Driver in Device Manager remains your way back. Scheduled scans are opt-in and never download or install on their own. The scan page reports how many devices have a package from an official source, how many have none, and how many could not be checked, because coverage depends on what manufacturers publish. The Free plan includes the same full scan once every 10 days; Pro removes that limit.",
+      links: [{ to: "/tweaky-driver/", label: "Tweaky Driver: check Windows drivers and review each update" }],
+    },
+    related: [
+      { to: "/fixes/dpc-latency-audio-crackling/", label: "finding the driver behind audio crackling", note: "Measure first, then update the one driver the trace names." },
+      { to: "/fixes/check-pcie-link-speed-nvme-gpu/", label: "checking the PCIe link of your graphics card", note: "A graphics problem is not always a driver problem." },
+      { to: "/fixes/hdmi-audio-cuts-off-start-of-sound-windows-11/", label: "HDMI audio that cuts off the start of sounds", note: "A power-saving setting that a driver update does not always change." },
+      { to: "/fixes/is-registry-cleaner-safe-windows-11/", label: "whether a registry cleaner is worth running", note: "The other tool category that promises more than it can show." },
+    ],
+    sources: {
+      checked: "3 November 2026",
+      items: [
+        { label: "Microsoft Learn: Get-CimInstance (Win32_PnPSignedDriver)", url: "https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/get-ciminstance" },
+        { label: "Microsoft Learn: PnPUtil command syntax", url: "https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/pnputil-command-syntax" },
+        { label: "Microsoft Learn: Checkpoint-Computer (one automatic restore point per 24 hours)", url: "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/checkpoint-computer" },
+        { label: "Tweaky Driver source: Free plan scan limit (free_quota.rs)", url: "https://github.com/AurelioAvila/Tweaky-Driver/blob/master/src-tauri/src/free_quota.rs" },
+        { label: "Tweaky Driver source: Intel offers, download-only (intel_updates.rs)", url: "https://github.com/AurelioAvila/Tweaky-Driver/blob/master/src-tauri/src/intel_updates.rs" },
+        { label: "Tweaky Driver source: Microsoft Update Catalog discovery (hardware_catalog.rs)", url: "https://github.com/AurelioAvila/Tweaky-Driver/blob/master/src-tauri/src/hardware_catalog.rs" },
+        { label: "Tweaky Driver README: capabilities and limits", url: "https://github.com/AurelioAvila/Tweaky-Driver/blob/master/README.md" },
+      ],
+    },
+  },
+  "/fixes/remove-program-leftovers-windows-11": {
+    updated: "2026-11-03",
+    eyebrow: "FIX · UNINSTALL",
+    product: "uninstaller" as const,
+    title: "Remove program leftovers on Windows 11: files, registry, services and tasks",
+    seoTitle: "Remove Program Leftovers on Windows 11 by Hand",
+    seoDescription:
+      "What an uninstall leaves behind: folders, registry keys, services and scheduled tasks. Read-only checks, backups first, and what the Uninstaller covers.",
+    intro:
+      "After you uninstall a program, Windows only runs the program's own uninstaller. Whatever that leaves is yours to find: data folders, shortcuts, registry keys, a service that still starts with Windows, a scheduled task that keeps looking for an update. This guide covers all four places, with read-only checks first and a backup before any change, and says exactly which of them PC Tweaker Uninstaller looks at.",
+    summary: [
+      { label: "Run first", value: "The program's own uninstaller, then restart" },
+      { label: "Files", value: "%AppData%, %LocalAppData%, %ProgramData%, the install folder, Start Menu and Desktop shortcuts" },
+      { label: "Registry", value: "HKCU\\Software\\<name> (per user); HKLM\\Software\\<name> (machine-wide, handle with care)" },
+      { label: "Services and tasks", value: "Win32_Service and Get-ScheduledTask, filtered on the program's name" },
+      { label: "Backup before deleting", value: "reg export for keys, Export-ScheduledTask for tasks, Recycle Bin for files" },
+      { label: "Uninstaller finds and cleans", value: "Folders, shortcuts and per-user keys matched by exact name; services and tasks are not touched" },
+    ],
+    sections: [
+      {
+        heading: "Files: look by the program's name, not the vendor's",
+        body:
+          "Open %AppData%, %LocalAppData% and %ProgramData% (type each into the Explorer address bar) and look for a folder with the program's name. Check the old install folder under Program Files and the user's Start Menu and Desktop for shortcuts. Do not delete a vendor folder such as JetBrains or Logitech: it holds every product from that vendor, including ones still installed. Delete through Explorer so the Recycle Bin keeps a copy.",
+      },
+      {
+        heading: "Registry: a few keys, with a backup",
+        body:
+          "A program's own settings usually sit in HKEY_CURRENT_USER\\Software\\<name>, and sometimes in HKEY_LOCAL_MACHINE\\SOFTWARE\\<name>. A machine-wide key can belong to a driver, a shared runtime or another edition of the same product, so check what it contains before deleting it. Export the key to a .reg file first: double-clicking the file brings it back. Also look at the Run key under HKCU or HKLM, \\Software\\Microsoft\\Windows\\CurrentVersion\\Run, for a startup entry that still points at a missing file.",
+        points: [
+          "Delete a key only when its name is the program's and its files are gone",
+          "Never use a bulk \"registry cleaner\" for this: see the guide linked below",
+          "A stale entry under Uninstall only makes the program show in Installed apps; remove that single key",
+        ],
+      },
+      {
+        heading: "Services: one that still starts with Windows",
+        body:
+          "A leftover service shows up in services.msc or in the list below with a path to a file that no longer exists. Note its name, stop it, then delete it with sc.exe from an administrator prompt. Only remove a service whose path clearly belongs to the program you removed, and never a Windows or driver service you do not recognize.",
+      },
+      {
+        heading: "Scheduled tasks: updaters and helpers",
+        body:
+          "Many programs register a task that checks for updates or starts a helper at logon. Open Task Scheduler or use the list below, export the task to XML so you can import it again, then unregister it. A task under \\Microsoft\\Windows\\ belongs to Windows: leave it alone.",
+      },
+      {
+        heading: "When this is not worth doing",
+        body:
+          "A settings folder is what makes a reinstall pick up where you left off, and a licence file in ProgramData may be what the vendor's activation check reads. If you may reinstall, keep them. Folders are usually small; the reason to clean is a program you will not use again, a service or task that still runs, or a conflict with a newer version.",
+      },
+    ],
+    steps: [
+      { title: "Find folders named after the program", code: "$name = 'ProgramName'\n$env:APPDATA, $env:LOCALAPPDATA, $env:ProgramData | ForEach-Object { Get-ChildItem $_ -Directory -Filter \"*$name*\" -ErrorAction SilentlyContinue } | Select-Object FullName, LastWriteTime", shell: "PowerShell" as const, note: "Read-only. Replace ProgramName and keep this window open: the next steps reuse $name. Open each hit in Explorer and decide; delete through Explorer to use the Recycle Bin." },
+      { title: "Find services that mention the program", code: "Get-CimInstance Win32_Service | Where-Object { $_.Name -like \"*$name*\" -or $_.PathName -like \"*$name*\" } | Select-Object Name, State, StartMode, PathName | Format-Table -AutoSize", shell: "PowerShell" as const, note: "Read-only. A service whose PathName points at a file that no longer exists is a leftover." },
+      { title: "Remove a leftover service", code: "sc.exe stop ServiceName\nsc.exe delete ServiceName", shell: "cmd" as const, note: "Run in an administrator Command Prompt, with the name from the previous step. Restart Windows afterwards if it reports the service is marked for deletion." },
+      { title: "Find scheduled tasks that mention the program", code: "Get-ScheduledTask | Where-Object { $_.TaskName -like \"*$name*\" -or $_.TaskPath -like \"*$name*\" } | Select-Object TaskPath, TaskName, State | Format-Table -AutoSize", shell: "PowerShell" as const, note: "Read-only." },
+      { title: "Export, then remove a leftover task", code: "Export-ScheduledTask -TaskName 'TaskName' -TaskPath '\\Vendor\\' | Out-File \"$env:USERPROFILE\\Desktop\\TaskName.xml\"\nUnregister-ScheduledTask -TaskName 'TaskName' -TaskPath '\\Vendor\\' -Confirm:$false", shell: "PowerShell" as const, note: "Run in an administrator PowerShell with the TaskName and TaskPath you found. Register-ScheduledTask -Xml (Get-Content file.xml -Raw) -TaskName 'TaskName' brings it back." },
+      { title: "Back up, then delete a per-user registry key", code: "reg export \"HKCU\\Software\\ProgramName\" \"%USERPROFILE%\\Desktop\\ProgramName.reg\"\nreg delete \"HKCU\\Software\\ProgramName\" /f", shell: "cmd" as const, note: "Run the second line only after the first succeeded. Double-click the .reg file to restore the key." },
+    ],
+    pctweaker: {
+      title: "What PC Tweaker Uninstaller finds and what it does not",
+      body:
+        "These are the rules in the Uninstaller's source (version 0.14.0). Right after the app itself removes a program, it reads the name and install folder it recorded from the registry before the removal. It then offers the install folder if nothing else registered with Windows still lives in or under it and it is not a protected Windows folder, and folders under %AppData%, %LocalAppData%, %ProgramData% and %LocalAppData%\\Programs, Start Menu and Desktop shortcuts, and per-user and machine-wide keys under Software, only when the item's name equals the program's name after the version is stripped. The name must be at least four characters and not a generic word such as \"data\" or \"software\", and vendor folders are never matched. Machine-wide keys under HKEY_LOCAL_MACHINE are reported and never deleted. Scanning is free; cleaning needs Uninstaller Pro, takes up to 64 items at a time, moves files and folders to the Recycle Bin, and refuses an item Windows would delete permanently. A per-user registry key is first exported to a .reg file in the app's data folder and is kept if that export fails, but it is the one step the Recycle Bin cannot undo. The leftover scan does not look for services, scheduled tasks, drivers or startup entries, and it only covers programs the app removed in that session, so those parts stay manual, as above.",
+      links: [{ to: "/uninstaller/", label: "PC Tweaker Uninstaller: review a removal before it runs" }],
+    },
+    related: [
+      { to: "/uninstall-programs-completely/", label: "uninstalling a program completely, from the start", note: "The order of steps, and what to keep on purpose." },
+      { to: "/fixes/is-registry-cleaner-safe-windows-11/", label: "whether a registry cleaner is worth running", note: "Microsoft's position, and what is provably safe to remove." },
+      { to: "/uninstaller/guides/onedrive/", label: "uninstalling OneDrive without losing files", note: "A removal where what you keep matters more than what you clean." },
+      { to: "/uninstaller/guides/mcafee-webadvisor/", label: "removing McAfee and WebAdvisor", note: "A program that leaves services, tasks and folders behind." },
+    ],
+    sources: {
+      checked: "3 November 2026",
+      items: [
+        { label: "Microsoft Learn: Get-ScheduledTask", url: "https://learn.microsoft.com/en-us/powershell/module/scheduledtasks/get-scheduledtask" },
+        { label: "Microsoft Learn: Unregister-ScheduledTask", url: "https://learn.microsoft.com/en-us/powershell/module/scheduledtasks/unregister-scheduledtask" },
+        { label: "Microsoft Learn: sc delete", url: "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/sc-delete" },
+        { label: "Microsoft Learn: reg export", url: "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/reg-export" },
+        { label: "Microsoft Support: uninstall or remove apps and programs in Windows", url: "https://support.microsoft.com/en-us/windows/uninstall-or-remove-apps-and-programs-in-windows-4b55f974-2cc6-2d2b-d092-5905080eaf98" },
+        { label: "PC Tweaker Uninstaller source: the leftover rules (residue.rs)", url: "https://github.com/AurelioAvila/pc-tweaker-uninstaller/blob/master/src-tauri/src/residue.rs" },
+      ],
+    },
+  },
 };

@@ -822,8 +822,11 @@ mod win {
     pub fn apply_idle(store: &RollbackStore, id: &str) -> Result<(), String> {
         let device = require_device(id, IDLE_PREFIX)?;
         crate::tweaks::windows_impl::refuse_in_unit_tests().map_err(|e| e.to_string())?;
-        let target = idle_target(&device)
-            .ok_or("this audio device is no longer present; nothing was changed")?;
+        let target = idle_target(&device).ok_or(if cm::locate(&device).is_some() {
+            "this device has no audio idle timer; nothing was changed"
+        } else {
+            "this audio device is no longer present; nothing was changed"
+        })?;
         let bytes = target
             .bytes
             .clone()

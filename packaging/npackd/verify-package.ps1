@@ -2,17 +2,24 @@ $ErrorActionPreference = 'Stop'
 if ($env:GITHUB_ACTIONS -ne 'true' -or -not $env:RUNNER_TEMP) {
     throw 'Native package execution is restricted to the disposable CI runner.'
 }
-if ($env:RELEASE_TAG -ne 'v1.19.0') { throw 'This package check is pinned to the reviewed 1.19.0 release.' }
-$expectedHash = 'd7a5e6f6418501fd815b739066e507f9e1690a2d5771e0ee8962a2da94add370'
+$reviewedReleases = @{
+    'v1.19.0' = 'd7a5e6f6418501fd815b739066e507f9e1690a2d5771e0ee8962a2da94add370'
+    'v1.20.0' = '84edd3545ee92c50696f02416a676e71e584617f09930b79089755007ddb63dc'
+}
+if (-not $reviewedReleases.ContainsKey($env:RELEASE_TAG)) {
+    throw 'This package check requires an explicitly reviewed public release and pinned hash.'
+}
+$version = $env:RELEASE_TAG.Substring(1)
+$expectedHash = $reviewedReleases[$env:RELEASE_TAG]
 $packageSource = Join-Path $PSScriptRoot 'pc-tweaker64'
 $work = Join-Path $env:RUNNER_TEMP 'Npackd PC Tweaker verification'
-$package = Join-Path $work 'PC Tweaker 1.19.0'
+$package = Join-Path $work ('PC Tweaker ' + $version)
 $other = Join-Path $work 'Other package directory'
 New-Item -ItemType Directory -Path (Join-Path $package '.Npackd'), (Join-Path $other '.Npackd') -Force | Out-Null
 foreach ($directory in @($package, $other)) {
     Copy-Item -LiteralPath (Join-Path $packageSource 'Install.bat'), (Join-Path $packageSource 'Uninstall.bat'), (Join-Path $packageSource 'Guard.ps1') -Destination (Join-Path $directory '.Npackd')
 }
-$assetName = 'pc-tweaker-app_1.19.0_x64-setup.exe'
+$assetName = 'pc-tweaker-app_' + $version + '_x64-setup.exe'
 gh release download $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --pattern $assetName --dir $package
 if ($LASTEXITCODE -ne 0) { throw 'Signed release download failed.' }
 $installer = Join-Path $package $assetName
@@ -41,7 +48,7 @@ $main = Join-Path $package 'PC Tweaker.exe'
 $uninstaller = Join-Path $package 'uninstall.exe'
 Assert-Signed $main
 Assert-Signed $uninstaller
-if ((Get-Item -LiteralPath $main).VersionInfo.ProductVersion -notlike '1.19.0*') { throw 'Installed payload has the wrong version.' }
+if ((Get-Item -LiteralPath $main).VersionInfo.ProductVersion -notlike ($version + '*')) { throw 'Installed payload has the wrong version.' }
 $mainHash = (Get-FileHash -LiteralPath $main -Algorithm SHA256).Hash
 $dataDirectory = Join-Path $env:APPDATA 'com.aurel.pc-tweaker-app'
 New-Item -ItemType Directory -Path $dataDirectory -Force | Out-Null
@@ -65,7 +72,7 @@ foreach ($name in @('Install.bat', 'Uninstall.bat', 'Guard.ps1')) {
     $scriptHashes[$name] = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($normalized))).ToLowerInvariant()
 }
 $result = [ordered]@{
-    version = '1.19.0'
+    version = $version
     installer_sha256 = $expectedHash
     os = (Get-CimInstance Win32_OperatingSystem).Caption
     architecture = [Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()

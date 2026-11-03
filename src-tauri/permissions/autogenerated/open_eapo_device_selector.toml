@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-open-eapo-device-selector"
+description = "Enables the open_eapo_device_selector command without any pre-configured scope."
+commands.allow = ["open_eapo_device_selector"]
+
+[[permission]]
+identifier = "deny-open-eapo-device-selector"
+description = "Denies the open_eapo_device_selector command without any pre-configured scope."
+commands.deny = ["open_eapo_device_selector"]

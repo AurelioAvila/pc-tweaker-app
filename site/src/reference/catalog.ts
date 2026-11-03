@@ -24,7 +24,7 @@ export interface CatalogTweak {
   readonly id: string;
   readonly name: string;
   readonly description: string;
-  readonly category: "performance" | "privacy" | "ui" | "maintenance" | "gaming";
+  readonly category: "performance" | "privacy" | "ui" | "maintenance" | "gaming" | "audio";
   readonly hive: string;
   readonly requires_admin: boolean;
   readonly requires_pro: boolean;
@@ -47,6 +47,7 @@ const GH = "https://github.com/AurelioAvila/pc-tweaker-app/blob/master/src-tauri
 export const CATEGORIES = {
   performance: { slug: "performance", label: "Performance", app: "Performance" },
   gaming: { slug: "gaming", label: "Gaming", app: "Gaming" },
+  audio: { slug: "audio", label: "Audio", app: "Audio" },
   privacy: { slug: "privacy", label: "Privacy", app: "Privacy" },
   ui: { slug: "interface", label: "Interface", app: "UI" },
   maintenance: { slug: "maintenance", label: "Maintenance", app: "Maintenance" },

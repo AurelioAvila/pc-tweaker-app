@@ -835,3 +835,107 @@ test("scope list results: measured, an issue only where there is something to lo
     issue: true,
   });
 });
+
+test("Audio: notes never count or reach Fix all; per-device fixes are Pro only", async () => {
+  const { probeResult } = await import("../src/scan-runner");
+  const out = "{0.0.0.00000000}.{6a1c2f3e-9b8d-4c7a-8e21-3f5d7b9c0a14}";
+  const mic = "{0.0.1.00000000}.{3d9f8e7c-6b5a-4c3d-8e2f-1a0b9c8d7e6f}";
+  const endpoint = (id: string, flow: "render" | "capture") => ({
+    id,
+    name: id,
+    flow,
+    default: true,
+    comms: true,
+    kind: flow === "render" ? "speakers" : "microphone",
+    bus: "usb",
+    format: { rate: 48_000, bits: 24, channels: 2, float: false },
+    effectsOff: true,
+    spatial: null,
+    eq: "none",
+  });
+  const audio = {
+    endpoints: [endpoint(out, "render"), endpoint(mic, "capture")],
+    callMode: [{ device: "Headset", process: "Discord.exe" }],
+    mic: { name: "Mic", muted: false, level: 6 },
+    idle: [
+      { id: "audio_idle:HDAUDIO/A", name: "HDMI", seconds: 4, applied: false },
+      { id: "audio_idle:HDAUDIO/B", name: "Off", seconds: 0, applied: false },
+    ],
+    usbPower: [{ id: "audio_power:USB/M", name: "Mic", mayPowerDown: true, applied: false }],
+    bluetooth: true,
+    modernStandby: false,
+    ducking: null,
+    eapo: { installed: true, version: "1.4.2", selector: true, stale: 1 },
+  };
+  const tweaks = [
+    tweak("audio_ducking_off", { category: "audio" }),
+    tweak("bt_absolute_volume_off", { category: "audio", requires_admin: true }),
+  ];
+  const r = report({ tweaks, audio });
+  const items = scanItems(r).filter((i) => i.category === "audio");
+  const keys = (pred: (i: (typeof items)[number]) => boolean) =>
+    items.filter(pred).map((i) => i.key);
+  const idle = "audio:idle:audio_idle:HDAUDIO/A";
+  const power = "audio:power:audio_power:USB/M";
+  assert.deepEqual(
+    keys(() => true),
+    [
+      "audio:devices",
+      "audio:call:0",
+      "audio:ducking",
+      idle,
+      power,
+      "audio:eapo",
+      `audio:effects:${out}`,
+      `audio:effects:${mic}`,
+      "audio:mic",
+      "audio:bluetooth",
+    ],
+  );
+  // A2, A8, A9 and T2 are notes: not issues, never in Fix all.
+  assert.deepEqual(
+    keys((i) => i.issue),
+    ["audio:call:0", "audio:ducking", idle, power, "audio:eapo"],
+  );
+  const free = fixAllKeys(items, false);
+  assert.deepEqual(free, ["audio:ducking"]);
+  assert.deepEqual(fixAllKeys(items, true), ["audio:ducking", idle, power]);
+  assert.deepEqual(fixPlan(items, fixAllKeys(items, true), true).tweaks, [
+    "audio_ducking_off",
+    "audio_idle:HDAUDIO/A",
+    "audio_power:USB/M",
+  ]);
+  // A locked key never reaches the plan, whatever the selection says.
+  assert.deepEqual(fixPlan(items, [idle, power], false).tweaks, []);
+  assert.equal(scanTotals(items).audio, 3);
+  assert.deepEqual(probeResult("audio_status", audio), { kind: "found", count: 5, issue: true });
+
+  // Modern Standby: the USB power fix is opt-in in the Audio page, not a Scan fix.
+  const standby = scanItems(report({ tweaks, audio: { ...audio, modernStandby: true } }));
+  const p = standby.find((i) => i.key === power)!;
+  assert.equal(p.fixable || p.issue || p.recommended, false);
+  assert.ok(!fixAllKeys(standby, true).includes(power));
+
+  // Everything in place: only the device overview remains, nothing to fix.
+  const done = scanItems(
+    report({
+      tweaks: [
+        tweak("audio_ducking_off", { category: "audio", applied: true }),
+        tweak("bt_absolute_volume_off", { category: "audio", applied: true }),
+      ],
+      audio: {
+        ...audio,
+        endpoints: [{ ...endpoint(out, "render"), effectsOff: false, eq: "peq" }],
+        callMode: [],
+        mic: { name: "Mic", muted: false, level: 80 },
+        idle: [{ ...audio.idle[0], seconds: 0, applied: true }],
+        usbPower: [{ ...audio.usbPower[0], mayPowerDown: false, applied: true }],
+        ducking: 3,
+      },
+    }),
+  ).filter((i) => i.category === "audio");
+  assert.deepEqual(
+    done.map((i) => i.key),
+    ["audio:devices"],
+  );
+});

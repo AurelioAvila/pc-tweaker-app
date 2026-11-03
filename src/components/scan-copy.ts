@@ -42,6 +42,7 @@ const en = {
     "Free memory and the standby cache, as Windows counts them.",
     "RAM speed against its rating, PCIe links, Resizable BAR. Read-only.",
     "How hardware interrupts spread across your processors.",
+    "Output and microphone, call mode, power saving and effects. Read-only.",
   ],
   sources: "completed checks",
   recommendations: "Recommended changes",
@@ -81,6 +82,7 @@ const en = {
     "Memory and standby cache",
     "Hardware audit",
     "Interrupt balance",
+    "Audio devices",
   ],
   observations: {
     tasks: [
@@ -168,6 +170,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Memoria libera e cache in standby, contate come le conta Windows.",
       "Velocità della RAM rispetto alla nominale, collegamenti PCIe, Resizable BAR. Sola lettura.",
       "Come si distribuiscono gli interrupt hardware tra i processori.",
+      "Uscita e microfono, modalità chiamata, risparmio energetico ed effetti. Sola lettura.",
     ],
     sources: "controlli completati",
     recommendations: "Modifiche consigliate",
@@ -207,6 +210,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Memoria e cache in standby",
       "Controllo hardware",
       "Distribuzione degli interrupt",
+      "Dispositivi audio",
     ],
     observations: {
       tasks: [
@@ -291,6 +295,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Mémoire libre et cache en attente, comptés comme Windows les compte.",
       "Vitesse de la RAM par rapport à sa valeur nominale, liaisons PCIe, Resizable BAR. Lecture seule.",
       "Répartition des interruptions matérielles entre vos processeurs.",
+      "Sortie et micro, mode appel, économie d'énergie et effets. Lecture seule.",
     ],
     sources: "contrôles terminés",
     recommendations: "Modifications recommandées",
@@ -330,6 +335,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Mémoire et cache en attente",
       "Audit matériel",
       "Répartition des interruptions",
+      "Appareils audio",
     ],
     observations: {
       tasks: [
@@ -414,6 +420,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Memoria libre y caché en espera, tal como las cuenta Windows.",
       "Velocidad de la RAM frente a la nominal, enlaces PCIe, Resizable BAR. Solo lectura.",
       "Cómo se reparten las interrupciones de hardware entre tus procesadores.",
+      "Salida y micrófono, modo llamada, ahorro de energía y efectos. Solo lectura.",
     ],
     sources: "comprobaciones completas",
     recommendations: "Cambios recomendados",
@@ -453,6 +460,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Memoria y caché en espera",
       "Auditoría de hardware",
       "Reparto de interrupciones",
+      "Dispositivos de audio",
     ],
     observations: {
       tasks: [
@@ -537,6 +545,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Freier Speicher und Standby-Cache, so wie Windows sie zählt.",
       "RAM-Geschwindigkeit im Vergleich zur Nenngeschwindigkeit, PCIe-Anbindungen, Resizable BAR. Nur lesend.",
       "Wie sich Hardware-Interrupts auf deine Prozessoren verteilen.",
+      "Ausgabe und Mikrofon, Anrufmodus, Energiesparen und Effekte. Nur lesend.",
     ],
     sources: "abgeschlossene Prüfungen",
     recommendations: "Empfohlene Änderungen",
@@ -576,6 +585,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Speicher und Standby-Cache",
       "Hardware-Prüfung",
       "Verteilung der Interrupts",
+      "Audiogeräte",
     ],
     observations: {
       tasks: [
@@ -659,6 +669,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Memória livre e cache em espera, tal como o Windows as conta.",
       "Velocidade da RAM face à nominal, ligações PCIe, Resizable BAR. Só leitura.",
       "Como as interrupções de hardware se distribuem pelos processadores.",
+      "Saída e microfone, modo de chamada, poupança de energia e efeitos. Só leitura.",
     ],
     sources: "verificações concluídas",
     recommendations: "Alterações recomendadas",
@@ -698,6 +709,7 @@ export const SCAN_COPY: Record<Lang, Copy> = {
       "Memória e cache em espera",
       "Auditoria de hardware",
       "Distribuição de interrupções",
+      "Dispositivos de áudio",
     ],
     observations: {
       tasks: [

@@ -284,23 +284,43 @@ const thermal = (): ThermalReport => ({
   gpu_source: "NVIDIA NVML",
 });
 
+// Microsoft's limits (dpc.rs): DPC 100 µs, ISR 25 µs.
 const DPC: DpcReport = {
   seconds: 10,
-  dpc: { kind: "dpc", count: 48_210, maxUs: 412, overLimit: 3, limitUs: 1000 },
-  isr: { kind: "isr", count: 21_840, maxUs: 96, overLimit: 0, limitUs: 1000 },
+  dpc: { kind: "dpc", count: 48_210, maxUs: 1180, overLimit: 9, limitUs: 100 },
+  isr: { kind: "isr", count: 21_840, maxUs: 41, overLimit: 2, limitUs: 25 },
   drivers: [
     {
+      driver: "rtkvhd64.sys",
+      dpc: { count: 3120, maxUs: 1180, totalUs: 96_000, overLimit: 2 },
+      isr: { count: 3100, maxUs: 18, totalUs: 21_000, overLimit: 0 },
+      area: "audio",
+      audible: true,
+    },
+    {
       driver: "nvlddmkm.sys",
-      dpc: { count: 9120, maxUs: 412, totalUs: 410_000, overLimit: 0 },
-      isr: { count: 9100, maxUs: 41, totalUs: 120_000, overLimit: 0 },
+      dpc: { count: 9120, maxUs: 412, totalUs: 410_000, overLimit: 4 },
+      isr: { count: 9100, maxUs: 41, totalUs: 120_000, overLimit: 2 },
+      area: "graphics",
+      audible: false,
     },
     {
       driver: "ndis.sys",
-      dpc: { count: 14_200, maxUs: 188, totalUs: 260_000, overLimit: 0 },
+      dpc: { count: 14_200, maxUs: 188, totalUs: 260_000, overLimit: 3 },
       isr: { count: 0, maxUs: 0, totalUs: 0, overLimit: 0 },
+      area: "network",
+      audible: false,
+    },
+    {
+      driver: "Wdf01000.sys",
+      dpc: { count: 6400, maxUs: 62, totalUs: 70_000, overLimit: 0 },
+      isr: { count: 0, maxUs: 0, totalUs: 0, overLimit: 0 },
+      area: "ambiguous",
+      audible: false,
     },
   ],
   worst: [
+    { kind: "dpc", driver: "rtkvhd64.sys", durationUs: 1180, atMs: 2410 },
     { kind: "dpc", driver: "nvlddmkm.sys", durationUs: 412, atMs: 3120 },
     { kind: "dpc", driver: "ndis.sys", durationUs: 188, atMs: 6420 },
   ],
@@ -651,7 +671,8 @@ export function pageAnswer(
     case "flush_dns_cache":
       return { success: true, detail: "The DNS resolver cache was flushed." };
     case "trace_dpc_latency":
-      return DPC;
+      // As long as the real capture, so the running state can be reviewed.
+      return new Promise((done) => setTimeout(() => done(DPC), 1000 * Number(a.seconds ?? 10)));
     case "preview_tweak": {
       const t = ctx.tweaks().find((x) => x.id === a.id);
       if (!t) return null;

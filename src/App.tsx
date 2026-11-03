@@ -122,6 +122,7 @@ import { WorkspaceSidebar } from "./components/workspace-sidebar";
 import { DebloatPanel } from "./components/debloat";
 import { AdvancedControlCard } from "./components/advanced-controls";
 import { CONFIGURABLE_TWEAK_IDS, buildName, isCurrentCatalogTweak } from "./catalog";
+import { AudioExtras, AudioPanel, useAudioStatus } from "./components/audio";
 import "./App.css";
 import "./desktop-refresh.css";
 import "./family-polish.css";
@@ -811,6 +812,7 @@ function App() {
     },
     { key: "performance", label: s.tabs.performance, icon: CATEGORY_STYLE.performance.icon },
     { key: "gaming", label: s.tabs.gaming, icon: CATEGORY_STYLE.gaming.icon },
+    { key: "audio", label: s.tabs.audio, icon: CATEGORY_STYLE.audio.icon },
     { key: "privacy", label: s.tabs.privacy, icon: CATEGORY_STYLE.privacy.icon },
     { key: "startup", label: s.tabs.startup, icon: <RocketIcon className="h-[18px] w-[18px]" /> },
     { key: "debloat", label: "Debloat", icon: <TrashIcon className="h-[18px] w-[18px]" /> },
@@ -1016,6 +1018,9 @@ function App() {
   }
 
   const searching = query.trim().length > 0;
+  const showAudio = filter === "audio" && !searching;
+  // Read again after every toggle (it refreshes `tweaks`), so a fix shows.
+  const audio = useAudioStatus(showAudio, tweaks);
 
   const visibleTweaks = useMemo(() => {
     // Turbo Boost is deliberately excluded: it has its own dedicated card on
@@ -1047,10 +1052,17 @@ function App() {
     )
       return [];
 
-    const inCategory = base.filter((t) => t.category === filter);
+    const inCategory = base.filter(
+      (t) =>
+        t.category === filter &&
+        // Per-device audio fixes have their own rows (AudioExtras), and the
+        // Bluetooth fix only shows where Windows knows a Bluetooth device.
+        !t.id.includes(":") &&
+        (t.id !== "bt_absolute_volume_off" || t.applied || !!audio.status?.bluetooth),
+    );
 
     return orderSectionTweaks(inCategory, filter);
-  }, [tweaks, filter, query, searching, s]);
+  }, [tweaks, filter, query, searching, s, audio.status]);
 
   const showCleanup = filter === "maintenance" && !searching;
   const showPrivacyExtras = filter === "privacy" && !searching;
@@ -1502,6 +1514,17 @@ function App() {
                   </>
                 )}
 
+                {showAudio && (
+                  <AudioPanel
+                    lang={lang}
+                    status={audio.status}
+                    error={audio.error}
+                    rows={visibleTweaks}
+                    onRetry={audio.reload}
+                    pushToast={pushToast}
+                  />
+                )}
+
                 {showGamingExtras && (
                   <>
                     <TurboBoostPanel
@@ -1581,44 +1604,49 @@ function App() {
                               <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-ink">
                                 {text.name}
                               </h2>
-                              {/* The (i) is the door to the exact system change.
+                              {/* One group: the badges wrap together, never one alone. */}
+                              <span className="inline-flex flex-wrap items-center gap-2">
+                                {/* The (i) is the door to the exact system change.
                             A description can be argued with; a registry path
                             can be checked in regedit, so it is one click away
                             rather than buried in a FAQ. */}
-                              {t.changes.length > 0 ? (
-                                <TechnicalToggle
-                                  open={inspecting === t.id}
-                                  label={s.transparency.title}
-                                  hive={t.hive}
-                                  onClick={() => {
-                                    setInspecting(inspecting === t.id ? null : t.id);
-                                  }}
-                                />
-                              ) : (
-                                t.hive !== "—" && <Badge>{t.hive}</Badge>
-                              )}
-                              {t.requires_admin && <Badge kind="admin">{s.badges.admin}</Badge>}
-                              {t.requires_pro && <Badge kind="pro">{s.badges.pro}</Badge>}
-                              {t.already_set && !t.applied && (
-                                <Badge kind="ok" title={s.badges.alreadySetHint}>
-                                  {s.badges.alreadySet}
-                                </Badge>
-                              )}
-                              {(t.min_build || t.pro_edition || t.enterprise_edition) && (
-                                <Badge kind="muted">
-                                  {[
-                                    t.min_build
-                                      ? format(s.requirements.minBuild, {
-                                          version: buildName(t.min_build),
-                                        })
-                                      : null,
-                                    t.pro_edition ? s.requirements.proEdition : null,
-                                    t.enterprise_edition ? s.requirements.enterpriseEdition : null,
-                                  ]
-                                    .filter(Boolean)
-                                    .join(" · ")}
-                                </Badge>
-                              )}
+                                {t.changes.length > 0 ? (
+                                  <TechnicalToggle
+                                    open={inspecting === t.id}
+                                    label={s.transparency.title}
+                                    hive={t.hive}
+                                    onClick={() => {
+                                      setInspecting(inspecting === t.id ? null : t.id);
+                                    }}
+                                  />
+                                ) : (
+                                  t.hive !== "—" && <Badge>{t.hive}</Badge>
+                                )}
+                                {t.requires_admin && <Badge kind="admin">{s.badges.admin}</Badge>}
+                                {t.requires_pro && <Badge kind="pro">{s.badges.pro}</Badge>}
+                                {t.already_set && !t.applied && (
+                                  <Badge kind="ok" title={s.badges.alreadySetHint}>
+                                    {s.badges.alreadySet}
+                                  </Badge>
+                                )}
+                                {(t.min_build || t.pro_edition || t.enterprise_edition) && (
+                                  <Badge kind="muted">
+                                    {[
+                                      t.min_build
+                                        ? format(s.requirements.minBuild, {
+                                            version: buildName(t.min_build),
+                                          })
+                                        : null,
+                                      t.pro_edition ? s.requirements.proEdition : null,
+                                      t.enterprise_edition
+                                        ? s.requirements.enterpriseEdition
+                                        : null,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" · ")}
+                                  </Badge>
+                                )}
+                              </span>
                             </div>
                             <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.55] text-ink-3">
                               {text.description}
@@ -1661,6 +1689,18 @@ function App() {
                       <X3dPanel s={s} pushToast={pushToast} />
                       <NetworkCheckPanel s={s} tweaks={tweaks} />
                     </li>
+                  )}
+
+                  {showAudio && (
+                    <AudioExtras
+                      s={s}
+                      lang={lang}
+                      status={audio.status}
+                      isPro={isProUnlocked}
+                      busyId={busyId}
+                      onToggle={(t) => void toggle(t)}
+                      pushToast={pushToast}
+                    />
                   )}
 
                   {showPrivacyExtras && (

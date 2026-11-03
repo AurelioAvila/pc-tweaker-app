@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-restart-audio-device"
+description = "Enables the restart_audio_device command without any pre-configured scope."
+commands.allow = ["restart_audio_device"]
+
+[[permission]]
+identifier = "deny-restart-audio-device"
+description = "Denies the restart_audio_device command without any pre-configured scope."
+commands.deny = ["restart_audio_device"]

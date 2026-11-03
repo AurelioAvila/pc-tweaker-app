@@ -946,6 +946,50 @@
     "requires_pro": true
   },
   {
+    "category": "audio",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKCU\\Software\\Microsoft\\Multimedia\\Audio",
+        "setsTo": "3 (0x3)",
+        "valueName": "UserDuckingPreference",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Sets \"When Windows detects communications activity\" to \"Do nothing\". By default Windows lowers every other sound by 80% while a call app uses the microphone. Apps with their own volume ducking, such as Discord, keep theirs. Applies from your next call.",
+    "enterprise_edition": false,
+    "hive": "HKCU",
+    "id": "audio_ducking_off",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Don't lower my game during calls",
+    "pro_edition": false,
+    "requires_admin": false,
+    "requires_pro": false
+  },
+  {
+    "category": "audio",
+    "changes": [
+      {
+        "kind": "registry",
+        "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Bluetooth\\Audio\\AVRCP\\CT",
+        "setsTo": "1 (0x1)",
+        "valueName": "DisableAbsoluteVolume",
+        "valueType": "REG_DWORD"
+      }
+    ],
+    "description": "Turns off Bluetooth Absolute Volume, so the Windows volume and your headphones' own volume work separately. Can help when Bluetooth volume does not respond, stays too low or jumps. Applies to every Bluetooth audio device; reconnect the device or restart Windows afterwards.",
+    "enterprise_edition": false,
+    "hive": "HKLM",
+    "id": "bt_absolute_volume_off",
+    "manual_only": false,
+    "min_build": null,
+    "name": "Fix Bluetooth volume control",
+    "pro_edition": false,
+    "requires_admin": true,
+    "requires_pro": false
+  },
+  {
     "category": "maintenance",
     "changes": [
       {

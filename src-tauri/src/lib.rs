@@ -2,6 +2,8 @@ mod account_probe;
 mod process_guard;
 mod appcache;
 mod update_identity;
+mod audio;
+mod audio_eq;
 mod audit;
 mod avatar;
 pub mod baseline;
@@ -194,6 +196,7 @@ fn category_str(c: &Category) -> &'static str {
         Category::Ui => "ui",
         Category::Maintenance => "maintenance",
         Category::Gaming => "gaming",
+        Category::Audio => "audio",
     }
 }
 
@@ -565,6 +568,38 @@ fn tweak_infos(store: &RollbackStore) -> Result<Vec<TweakInfo>, String> {
         ..Default::default()
     });
 
+    // Per-device audio changes (T3/T4) that are applied: listed so Restore
+    // all, the history and the update alert see them. The Audio page offers
+    // the ones not applied yet.
+    let mut audio_ids: Vec<&String> = applied_ids
+        .iter()
+        .filter(|id| id.starts_with(audio::IDLE_PREFIX) || id.starts_with(audio::POWER_PREFIX))
+        .collect();
+    audio_ids.sort();
+    for id in audio_ids {
+        let device = audio::device_name(id).unwrap_or_else(|| "Audio device".into());
+        let idle = id.starts_with(audio::IDLE_PREFIX);
+        list.push(TweakInfo {
+            applied: true,
+            id: id.clone(),
+            name: if idle {
+                format!("Keep {device} awake on mains power")
+            } else {
+                format!("Stop Windows powering down {device}")
+            },
+            description: if idle {
+                "Sets this audio device's idle timer on mains power to 0, so Windows no longer powers it down after a few seconds of silence. The battery timer is unchanged.".into()
+            } else {
+                "Clears \"Allow the computer to turn off this device to save power\" for this USB audio device in Device Manager.".into()
+            },
+            category: category_str(&Category::Audio).to_string(),
+            hive: "\u{2014}".to_string(),
+            requires_admin: true,
+            requires_pro: true,
+            ..Default::default()
+        });
+    }
+
     // One pass, not twelve call sites: anything that arrived with no
     // disclosure asks `technical` for its composite one. A tweak whose
     // mechanism we cannot state precisely keeps an empty list and shows no
@@ -759,6 +794,10 @@ pub const PRO_REQUIRED_PREFIX: &str = "PRO_REQUIRED: ";
 #[cfg(windows)]
 fn requires_pro_for(id: &str) -> bool {
     if ["ecoqos_rules","limit_do_background_download","monitor_refresh_profile"].contains(&id) { return true; }
+    // T3 and T4, per device (audio.rs).
+    if id.starts_with(audio::IDLE_PREFIX) || id.starts_with(audio::POWER_PREFIX) {
+        return true;
+    }
     if let Some(tweak) = power_tuning::find(id) {
         return tweak.pro;
     }
@@ -942,6 +981,12 @@ fn apply_by_id_inner(
     if id == TASKBAR_WIDGETS_ID && services::user_choice_protected() {
         return Err(TASKBAR_WIDGETS_PROTECTED.into());
     }
+    if id.starts_with(audio::IDLE_PREFIX) {
+        return audio::apply_idle(store, id);
+    }
+    if id.starts_with(audio::POWER_PREFIX) {
+        return audio::apply_power(store, id);
+    }
     if [everyday::DISABLE_RESTART_APPS_ID,everyday::ENABLE_LONG_PATHS_ID,everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID].contains(&id) {
         return everyday::apply(id,store);
     }
@@ -1010,6 +1055,12 @@ fn rollback_by_id(store: &RollbackStore, id: &str) -> Result<(), String> {
 
 #[cfg(windows)]
 fn rollback_by_id_inner(store: &RollbackStore, id: &str) -> Result<(), String> {
+    if id.starts_with(audio::IDLE_PREFIX) {
+        return audio::rollback_idle(store, id);
+    }
+    if id.starts_with(audio::POWER_PREFIX) {
+        return audio::rollback_power(store, id);
+    }
     if [everyday::DISABLE_RESTART_APPS_ID,everyday::ENABLE_LONG_PATHS_ID,everyday::DISABLE_FILTER_KEYS_SHORTCUT_ID].contains(&id) {
         return everyday::rollback(id,store);
     }
@@ -1049,6 +1100,9 @@ fn rollback_by_id_inner(store: &RollbackStore, id: &str) -> Result<(), String> {
 #[cfg(windows)]
 fn requires_admin_for(id: &str) -> bool {
     if id == download_limit::TWEAK_ID { return true; }
+    if id.starts_with(audio::IDLE_PREFIX) || id.starts_with(audio::POWER_PREFIX) {
+        return true;
+    }
     if power_tuning::find(id).is_some() {
         return true;
     }
@@ -1124,6 +1178,9 @@ pub(crate) fn bulk_applicable(ids: Vec<String>) -> Vec<String> {
 fn fits_this_pc(id: &str) -> bool {
     settings_tweaks::find(id).is_none_or(|t| settings_tweaks::available_here(t).is_ok())
         && !(id == TASKBAR_WIDGETS_ID && services::user_choice_protected())
+        // Microsoft advises against it on Modern Standby PCs (battery drain):
+        // there it is applied only through its own switch.
+        && !(id.starts_with(audio::POWER_PREFIX) && audio::modern_standby())
 }
 
 #[cfg(not(windows))]
@@ -1961,6 +2018,18 @@ fn drift_states(applied_ids: &std::collections::HashSet<String>) -> Vec<updatewa
         })
         .collect();
     states.extend(settings_drift_states(applied_ids));
+    // T3/T4: a driver update rewrites the idle timer; Windows may turn the
+    // power switch back on.
+    states.extend(
+        applied_ids
+            .iter()
+            .filter(|id| id.starts_with(audio::IDLE_PREFIX) || id.starts_with(audio::POWER_PREFIX))
+            .map(|id| updatewatch::TweakState {
+                id: id.clone(),
+                recorded_applied: true,
+                live_matches: audio::still_applied(id),
+            }),
+    );
     states
 }
 
@@ -2136,6 +2205,16 @@ pub fn run_elevated_headless(action: &str, id: &str) -> ! {
             diagnostics::boot::run_elevated(&dir)
         } else {
             2
+        });
+    }
+    // Restarting an audio device changes no setting either.
+    if action == audio::RESTART_FLAG {
+        std::process::exit(match audio::restart_device(id) {
+            Ok(()) => 0,
+            Err(e) => {
+                eprintln!("{e}");
+                1
+            }
         });
     }
     // A RAM trim changes no setting, so it needs no restore point either.
@@ -2616,6 +2695,10 @@ pub fn run() {
             ramboost::ram_boost_status,
             ramboost::set_ram_boost_threshold,
             hwaudit::hardware_audit,
+            audio::audio_status,
+            audio::restart_audio_device,
+            audio::open_sound_settings,
+            audio_eq::open_eapo_device_selector,
             diagnostics::interrupts::interrupt_sample,
             shred_files,
             open_hud_overlay,
@@ -2982,7 +3065,7 @@ mod tests {
     }
 
     #[test]
-    fn the_catalogue_is_eighty_two_tweaks_thirty_six_of_them_pro() {
+    fn the_catalogue_is_eighty_four_tweaks_thirty_six_of_them_pro() {
         let registry: Vec<_> = tweaks::all_tweaks().into_iter().filter(|t| t.id != "disable_copilot").collect();
         let registry_pro = registry.iter().filter(|t| t.requires_pro).count();
 
@@ -3018,9 +3101,9 @@ mod tests {
             + power_tuning::TWEAKS.iter().filter(|t| t.pro).count()
             + settings.iter().filter(|t| t.requires_pro).count();
 
-        assert_eq!(total, 82, "the catalogue no longer has 82 tweaks");
+        assert_eq!(total, 84, "the catalogue no longer has 84 tweaks");
         assert_eq!(pro, 36, "the Pro count moved");
-        assert_eq!(total - pro, 46, "the free count moved");
+        assert_eq!(total - pro, 48, "the free count moved");
 
         // The composite list must stay in step with what list_tweaks builds,
         // otherwise the totals above would quietly stop covering everything.
@@ -3102,6 +3185,29 @@ mod tests {
             !dir.exists(),
             "policy checks must not create a system journal"
         );
+    }
+
+    /// T3 and T4 are Pro and admin in every path: the funnel refuses them
+    /// for a Free user before anything is read or written.
+    #[test]
+    fn per_device_audio_fixes_are_pro_and_admin() {
+        let dir = std::env::temp_dir().join(format!("pct-audio-pro-{}", std::process::id()));
+        for id in [
+            format!(r"{}HDAUDIO\FUNC_01&VEN_10DE\5&1&0&0001", audio::IDLE_PREFIX),
+            format!(r"{}USB\VID_3554&PID_F510&MI_00\9&3&0&0000", audio::POWER_PREFIX),
+        ] {
+            assert!(requires_pro_for(&id) && requires_admin_for(&id), "{id}");
+            let err = require_tweak_entitlement(&dir, &id).unwrap_err();
+            assert!(err.starts_with(PRO_REQUIRED_PREFIX), "{err}");
+            let store = RollbackStore::new(dir.clone());
+            let err = apply_by_id_inner(&store, &dir, &id).unwrap_err();
+            assert!(err.starts_with(PRO_REQUIRED_PREFIX), "{err}");
+        }
+        // T1 and T2 stay free.
+        assert!(!requires_pro_for(tweaks::AUDIO_DUCKING_ID));
+        assert!(!requires_pro_for(tweaks::BT_ABSOLUTE_VOLUME_ID));
+        assert!(requires_admin_for(tweaks::BT_ABSOLUTE_VOLUME_ID));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

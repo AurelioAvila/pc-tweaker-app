@@ -183,6 +183,7 @@ function seo(path: string, title: string, description: string, image = true): Ro
 const CATEGORY_DESCRIPTIONS: Record<CategoryKey, string> = {
   performance: "Windows performance settings explained one by one: delays, animations, background work and power, each with the exact change, manual steps and an undo.",
   gaming: "Windows gaming settings checked against Microsoft's documentation: what each changes, how to set and undo it by hand, and which ones have no measured benefit.",
+  audio: "Windows audio settings explained one by one: call ducking and Bluetooth volume, each with the exact registry value, how to set it by hand and how to undo it.",
   privacy: "Windows privacy settings and policies, one page each: diagnostic data, ads, suggestions and AI features, with the exact value, manual steps and how to undo.",
   ui: "Windows 11 interface settings for the taskbar, Start, File Explorer and theme, each with the exact registry value, how to set it by hand and how to undo it.",
   maintenance: "Windows maintenance settings for updates, long paths, search indexing, startup and storage: the exact change, the trade-off and how to undo it by hand.",

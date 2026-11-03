@@ -17,6 +17,8 @@ import {
 } from "../scan-items";
 import type { ScanReport } from "../scan-runner";
 import { factorLabel } from "./health-copy";
+import { AUDIO_COPY } from "./audio-copy";
+import { DeviceSelectorButton, SoundSettingsButton, duckingTitle, formatLine } from "./audio";
 import { SCAN_COPY } from "./scan-copy";
 import { SCAN2_COPY, type Scan2Copy } from "./scan2-copy";
 import { TRIAL_COPY } from "./trial-copy";
@@ -63,6 +65,9 @@ const ICON: Record<ScanCategory, ReactNode> = {
     <path d="M6 6h8v8H6zM8.5 3v3M11.5 3v3M8.5 14v3M11.5 14v3M3 8.5h3M3 11.5h3M14 8.5h3M14 11.5h3" />
   ),
   latency: <path d="M2.5 10h3l2-4.5 3 9 2-4.5h5" />,
+  audio: (
+    <path d="M3.5 8h2.6L10 5v10l-3.9-3H3.5a.8.8 0 0 1-.8-.8V8.8a.8.8 0 0 1 .8-.8ZM13 7.6a3.4 3.4 0 0 1 0 4.8M15.3 5.4a6.5 6.5 0 0 1 0 9.2" />
+  ),
 };
 
 function CategoryIcon({ category }: { category: ScanCategory }) {
@@ -133,7 +138,9 @@ export function ScanSummary({
     { key: "standby", value: gains.standbyMb > 0 && mb(gains.standbyMb), label: c.proStatStandby },
     {
       key: "settings",
-      value: gains.settings + gains.privacy > 0 && formatNumber(gains.settings + gains.privacy),
+      value:
+        gains.settings + gains.privacy + gains.audio > 0 &&
+        formatNumber(gains.settings + gains.privacy + gains.audio),
       label: c.proStatSettings,
     },
   ].filter((g) => g.value);
@@ -266,6 +273,7 @@ export function ScanCategoryList({
   onNavigate,
   onUnlock,
   onTurnOn,
+  onError,
 }: {
   s: Strings;
   lang: Lang;
@@ -279,6 +287,8 @@ export function ScanCategoryList({
   onNavigate: (section: Section) => void;
   onUnlock: () => void;
   onTurnOn: (id: string) => void;
+  /** A Windows settings page that would not open. */
+  onError: (message: string) => void;
 }) {
   const c = SCAN2_COPY[lang];
   const checked: Partial<Record<ScanCategory, boolean>> = {
@@ -290,6 +300,7 @@ export function ScanCategoryList({
     memory: !!report.memory,
     hardware: !!report.hardware || !!report.drivers,
     latency: true,
+    audio: !!report.audio,
   };
   return (
     <div className="scan2-categories">
@@ -337,6 +348,7 @@ export function ScanCategoryList({
                     onNavigate={onNavigate}
                     onUnlock={onUnlock}
                     onTurnOn={onTurnOn}
+                    onError={onError}
                   />
                 ))}
               </ul>
@@ -393,6 +405,7 @@ function ItemRow({
   onNavigate,
   onUnlock,
   onTurnOn,
+  onError,
 }: {
   s: Strings;
   lang: Lang;
@@ -406,11 +419,12 @@ function ItemRow({
   onNavigate: (section: Section) => void;
   onUnlock: () => void;
   onTurnOn: (id: string) => void;
+  onError: (message: string) => void;
 }) {
   // Only something the Scan could apply is locked; an optional or review row
   // stays a review row whatever the plan.
   const isLocked = locked(item, isPro) && item.fixable;
-  const text = describe(s, lang, c, item, onNavigate, onTurnOn, busy, isLocked);
+  const text = describe(s, lang, c, item, onNavigate, onTurnOn, busy, isLocked, onError);
   const id = `scan2-${item.key.replace(/[^a-z0-9]/gi, "-")}`;
   const mark = isLocked ? "locked" : item.issue ? "issue" : text.stateLabel ? "ok" : "note";
   return (
@@ -502,6 +516,7 @@ function describe(
   onTurnOn: (id: string) => void,
   busy: boolean,
   isLocked: boolean,
+  onError: (message: string) => void,
 ): RowText {
   const scan = SCAN_COPY[lang];
   switch (item.type) {
@@ -687,6 +702,131 @@ function describe(
     }
     case "dpc":
       return { title: c.dpcTitle, body: c.dpcBody, more: <DpcMeasure c={c} busy={busy} /> };
+    case "audio":
+      return describeAudio(s, lang, c, item.finding, onNavigate, busy, onError);
+  }
+}
+
+/** The class of every row's own button (wraps under the text when narrow). */
+const ROW_ACTION = "scan-secondary scan2-row-action";
+
+/** The Audio category's rows (AUDIO-SPEC 5): measured values only. */
+function describeAudio(
+  s: Strings,
+  lang: Lang,
+  c: Scan2Copy,
+  f: Extract<ScanItem, { type: "audio" }>["finding"],
+  onNavigate: (section: Section) => void,
+  busy: boolean,
+  onError: (message: string) => void,
+): RowText {
+  const a = AUDIO_COPY[lang];
+  const review = reviewButton(a.openAudio, "audio", onNavigate, busy);
+  switch (f.kind) {
+    case "devices": {
+      const name = (e: typeof f.output) =>
+        e ? (e.format ? `${e.name}, ${formatLine(a, e.format)}` : e.name) : a.none;
+      return {
+        title: a.scanDevicesTitle,
+        body: format(a.scanDevicesBody, { output: name(f.output), input: name(f.input) }),
+        action: review,
+      };
+    }
+    case "callMode":
+      return {
+        title: format(a.callModeTitle, { device: f.device }),
+        body: format(a.callModeBody, { process: f.process }),
+        action: (
+          <SoundSettingsButton
+            label={a.soundSettings}
+            disabled={busy}
+            className={ROW_ACTION}
+            onError={onError}
+          />
+        ),
+      };
+    case "ducking":
+      return {
+        title: duckingTitle(a, f.value),
+        body: a.duckingBody,
+        // The same door to the exact registry value as every other tweak row.
+        more:
+          f.changes.length > 0 ? (
+            <details className="scan2-more">
+              <summary>{s.transparency.title}</summary>
+              <TechnicalDetails changes={f.changes} s={s} />
+            </details>
+          ) : undefined,
+      };
+    case "idle": {
+      const values = { device: f.timer.name, seconds: formatNumber(f.timer.seconds) };
+      return {
+        title: format(a.scanIdleTitle, values),
+        body: format(a.idleBody, { seconds: values.seconds }),
+        lockedGain: format(a.scanIdleLocked, values),
+      };
+    }
+    case "power":
+      return {
+        title: format(a.scanPowerTitle, { device: f.device.name }),
+        body: a.powerBody,
+        evidence: f.modernStandby ? a.modernStandby : undefined,
+        lockedGain: format(a.scanPowerLocked, { device: f.device.name }),
+        action: f.modernStandby ? review : undefined,
+      };
+    case "eapo":
+      return {
+        title: format(a.eapoInactiveTitle, { name: f.endpoint.name }),
+        body: [
+          a.eapoInactiveBody,
+          f.stale > 0 ? format(a.eapoStale, { count: formatNumber(f.stale) }) : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+        evidence: a.eapoAbout,
+        action: f.selector ? (
+          <DeviceSelectorButton c={a} disabled={busy} className={ROW_ACTION} onError={onError} />
+        ) : (
+          review
+        ),
+      };
+    case "effectsOff": {
+      const eq = f.endpoint.eq !== "none";
+      return {
+        title: format(eq ? a.eapoBypassedTitle : a.effectsOffTitle, { name: f.endpoint.name }),
+        body: eq ? a.eapoBypassedBody : a.effectsOffBody,
+        action: (
+          <SoundSettingsButton
+            label={a.deviceSettings}
+            endpoint={f.endpoint.id}
+            disabled={busy}
+            className={ROW_ACTION}
+            onError={onError}
+          />
+        ),
+      };
+    }
+    case "mic":
+      return {
+        title: f.muted ? a.micMuted : format(a.micLow, { level: formatNumber(f.level) }),
+        body: format(a.micBody, { name: f.name }),
+        action: (
+          <SoundSettingsButton
+            label={a.deviceSettings}
+            endpoint={f.endpoint?.id}
+            disabled={busy}
+            className={ROW_ACTION}
+            onError={onError}
+          />
+        ),
+      };
+    case "bluetooth":
+      return {
+        title: a.scanBtTitle,
+        body: a.scanBtBody,
+        badges: <Badge>{c.optional}</Badge>,
+        action: review,
+      };
   }
 }
 

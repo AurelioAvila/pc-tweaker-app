@@ -167,7 +167,7 @@ pub fn rollback(_store: &RollbackStore) -> Result<(), String> {
 /// the connection asks for the English locale so the names always match the
 /// ones snapshots store.
 #[cfg(windows)]
-mod wmi {
+pub(crate) mod wmi {
     use super::TcpTemplates;
     use windows::core::{w, IUnknown, Param, BSTR, HRESULT, PCWSTR, VARIANT};
     use windows::Win32::System::Com::{
@@ -269,10 +269,10 @@ mod wmi {
     /// single-threaded apartment keeps it (RPC_E_CHANGED_MODE): COM works
     /// there too, and that initialisation is not ours to undo. S_FALSE means
     /// already initialised in this mode, which still needs balancing.
-    struct Com(bool);
+    pub(crate) struct Com(bool);
 
     impl Com {
-        fn init() -> Result<Self, String> {
+        pub(crate) fn init() -> Result<Self, String> {
             // SAFETY: no reserved pointer; balanced in Drop when it succeeded.
             let hr = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) };
             if hr == RPC_E_CHANGED_MODE {
@@ -294,7 +294,7 @@ mod wmi {
     }
 
     /// Fields drop in order: the services proxy is released before COM.
-    struct Session {
+    pub(crate) struct Session {
         services: IWbemServices,
         _com: Com,
     }
@@ -322,6 +322,11 @@ mod wmi {
 
     impl Session {
         fn open() -> Result<Self, String> {
+            Self::connect(r"ROOT\StandardCimv2")
+        }
+
+        /// A session on `namespace`, English qualifiers.
+        pub(crate) fn connect(namespace: &str) -> Result<Self, String> {
             let com = Com::init()?;
             // SAFETY: COM is initialised on this thread for as long as `com`
             // lives, and the locator is released before it.
@@ -329,7 +334,7 @@ mod wmi {
                 let locator: IWbemLocator =
                     CoCreateInstance(&WbemLocator, None, CLSCTX_INPROC_SERVER).map_err(failed)?;
                 locator.ConnectServer(
-                    &BSTR::from(r"ROOT\StandardCimv2"),
+                    &BSTR::from(namespace),
                     &BSTR::new(),
                     &BSTR::new(),
                     &BSTR::from("MS_409"),
@@ -344,6 +349,64 @@ mod wmi {
                 services,
                 _com: com,
             })
+        }
+
+        /// Every row a constant WQL query returns.
+        pub(crate) fn rows(&self, query: &str) -> Result<Vec<IWbemClassObject>, String> {
+            // SAFETY: both BSTRs outlive the call.
+            let rows: IEnumWbemClassObject = unsafe {
+                self.services.ExecQuery(
+                    &BSTR::from("WQL"),
+                    &BSTR::from(query),
+                    WBEM_GENERIC_FLAG_TYPE(
+                        WBEM_FLAG_FORWARD_ONLY.0 | WBEM_FLAG_RETURN_IMMEDIATELY.0,
+                    ),
+                    None,
+                )
+            }
+            .map_err(failed)?;
+            impersonate(&rows)?;
+            let mut out = Vec::new();
+            loop {
+                let mut row = [None];
+                let mut returned = 0u32;
+                // SAFETY: room for the one object asked for; `returned` is a
+                // live out-parameter.
+                unsafe { rows.Next(TIMEOUT_MS, &mut row, &mut returned) }
+                    .ok()
+                    .map_err(failed)?;
+                match row {
+                    [Some(object)] if returned == 1 => out.push(object),
+                    _ => break,
+                }
+                if out.len() > 4096 {
+                    break;
+                }
+            }
+            Ok(out)
+        }
+
+        /// Sets one boolean property on the single row `query` returns.
+        pub(crate) fn update_bool(&self, query: &str, property: &str, value: bool) -> Result<(), String> {
+            let rows = self.rows(query)?;
+            let [instance] = rows.as_slice() else {
+                return Err(format!("expected one WMI instance, found {}", rows.len()));
+            };
+            let name: Vec<u16> = property.encode_utf16().chain(Some(0)).collect();
+            // SAFETY: `instance` is live; `name` and the VARIANT outlive the calls.
+            unsafe {
+                instance
+                    .Put(PCWSTR(name.as_ptr()), 0, &VARIANT::from(value), 0)
+                    .map_err(failed)?;
+                self.services
+                    .PutInstance(
+                        instance,
+                        WBEM_GENERIC_FLAG_TYPE(WBEM_FLAG_UPDATE_ONLY.0),
+                        None,
+                        None,
+                    )
+                    .map_err(failed)
+            }
         }
 
         fn class(&self, flags: WBEM_GENERIC_FLAG_TYPE) -> Result<IWbemClassObject, String> {

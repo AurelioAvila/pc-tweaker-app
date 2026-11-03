@@ -6,6 +6,7 @@ import { format, type Lang, type Strings, localeOf } from "../i18n";
 import { cachedAppVersion, formatBytes, formatNumber, textFor } from "../lib";
 import { diagnosisText } from "../diagnosis";
 import type {
+  AudioStatus,
   AuditEntry,
   CacheGroup,
   JunkTarget,
@@ -33,7 +34,15 @@ import {
   type ScanReport,
   type ScanSession,
 } from "../scan-runner";
-import { fixAllKeys, fixPlan, fixSteps, locked, scanItems, type ScanItem } from "../scan-items";
+import {
+  AUDIO_DUCKING_ID,
+  fixAllKeys,
+  fixPlan,
+  fixSteps,
+  locked,
+  scanItems,
+  type ScanItem,
+} from "../scan-items";
 import { runWithProof, useProofBusy, useProofRun } from "./proof-card";
 import { FixProgress } from "./fix-progress";
 import { ScanRing } from "./scan-ring";
@@ -42,6 +51,7 @@ import { SafeOptimizeCard } from "./safe-optimize";
 import { CheckIcon } from "./icons";
 import { SCAN_COPY } from "./scan-copy";
 import { SCAN2_COPY } from "./scan2-copy";
+import { AUDIO_COPY } from "./audio-copy";
 import { ScanCategoryList, ScanSummary } from "./scan-results";
 import "./scan-workspace.css";
 
@@ -414,11 +424,12 @@ export function ScanPanel({
 
   /** Re-reads what a fix changes, so the categories show the PC as it is now. */
   async function reread(base: ScanReport, tweaks: TweakInfo[] | null): Promise<ScanReport> {
-    const [junk, caches, registry, memory] = await Promise.allSettled([
+    const [junk, caches, registry, memory, audio] = await Promise.allSettled([
       invoke<JunkTarget[]>("junk_summary"),
       invoke<CacheGroup[]>("scan_app_caches"),
       invoke<RegistryScan>("registry_scan"),
       invoke<RamBoostStatus>("ram_boost_status"),
+      invoke<AudioStatus>("audio_status"),
     ]);
     const kept = <T,>(r: PromiseSettledResult<T>, old: T) =>
       r.status === "fulfilled" ? r.value : old;
@@ -429,6 +440,7 @@ export function ScanPanel({
       caches: kept(caches, base.caches),
       registry: kept(registry, base.registry),
       memory: kept(memory, base.memory),
+      audio: kept(audio, base.audio),
     };
   }
 
@@ -812,6 +824,7 @@ export function ScanPanel({
             onNavigate={onNavigate}
             onUnlock={() => onNavigate("pricing")}
             onTurnOn={(id) => void turnOn(id)}
+            onError={setError}
           />
         </div>
       )}
@@ -895,6 +908,17 @@ function itemName(s: Strings, lang: Lang, item: ScanItem): string {
       return `${c2.registry[item.cls][0]} · ${formatNumber(item.entries.length)}`;
     case "purge":
       return c2.purgeTitle;
+    case "audio": {
+      const a = AUDIO_COPY[lang];
+      const f = item.finding;
+      return f.kind === "ducking"
+        ? textFor(s.tweaks, AUDIO_DUCKING_ID, a.fixesTitle, "").name
+        : f.kind === "idle"
+          ? format(a.idleName, { device: f.timer.name })
+          : f.kind === "power"
+            ? format(a.powerName, { device: f.device.name })
+            : "";
+    }
     default:
       return "";
   }

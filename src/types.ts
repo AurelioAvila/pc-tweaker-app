@@ -45,7 +45,7 @@ export type AccountDevice = {
   current: boolean;
 };
 
-export type Category = "performance" | "privacy" | "ui" | "maintenance" | "gaming";
+export type Category = "performance" | "privacy" | "ui" | "maintenance" | "gaming" | "audio";
 
 /** Navigable sections: the tweak categories plus the two standalone screens. */
 export type Section =
@@ -690,7 +690,23 @@ export type DriverLatency = {
   driver: string | null;
   dpc: RoutineTotals;
   isr: RoutineTotals;
+  /** Mirrors Rust `dpc::Area`; absent in reports saved before 1.20. */
+  area?: DriverArea;
+  /** Its longest routine reached 1 ms (Rust `dpc::AUDIBLE_RISK_US`). */
+  audible?: boolean;
 };
+
+/** The hardware a driver serves (Rust `dpc::driver_area`). */
+export type DriverArea =
+  | "audio"
+  | "graphics"
+  | "network"
+  | "storage"
+  | "usb"
+  | "bluetooth"
+  | "platform"
+  | "ambiguous"
+  | "other";
 
 /** Mirrors Rust `dpc::Spike`: one of the longest routines of the capture. */
 export type LatencySpike = {
@@ -923,4 +939,57 @@ export type ScanFixResult = {
   registry: RegistryCleanResult | null;
   purge: PurgeResult | null;
   errors: string[];
+};
+
+/* ------------- Audio (1.20): mirrors audio.rs, from `audio_status` ------------- */
+
+export type AudioFlow = "render" | "capture";
+export type AudioKind =
+  "speakers" | "headphones" | "headset" | "microphone" | "hdmi" | "spdif" | "line" | "other";
+export type AudioBus = "bluetooth" | "usb" | "internal" | "other";
+
+/** The engine's shared-mode format (`PKEY_AudioEngine_DeviceFormat`). */
+export type AudioFormat = { rate: number; bits: number; channels: number; float: boolean };
+
+export type AudioEndpoint = {
+  /** The endpoint id, for the `ms-settings:sound-properties` deep link. */
+  id: string;
+  name: string;
+  flow: AudioFlow;
+  /** The default device (console role). */
+  default: boolean;
+  /** The default communications device. */
+  comms: boolean;
+  kind: AudioKind;
+  bus: AudioBus;
+  format: AudioFormat | null;
+  /** Windows has effects turned off on the device; null when unreadable. */
+  effectsOff: boolean | null;
+  /** Spatial sound on (render only); null when Windows did not say. */
+  spatial: boolean | null;
+  /** Equalizer APO on this endpoint. */
+  eq: "none" | "active" | "bypassed";
+};
+
+/** T3 candidate, or an applied one. `id` is `audio_idle:<device>`. */
+export type AudioIdleTimer = { id: string; name: string; seconds: number; applied: boolean };
+/** T4 candidate, or an applied one. `id` is `audio_power:<device>`. */
+export type AudioUsbPower = { id: string; name: string; mayPowerDown: boolean; applied: boolean };
+
+export type AudioStatus = {
+  endpoints: AudioEndpoint[];
+  /** A3: a Bluetooth headset in call mode because an app uses its microphone. */
+  callMode: { device: string; process: string }[];
+  /** A9: the default microphone; level 0-100. */
+  mic: { name: string; muted: boolean; level: number } | null;
+  idle: AudioIdleTimer[];
+  usbPower: AudioUsbPower[];
+  /** Any Bluetooth audio device known to Windows (T2 is offered then). */
+  bluetooth: boolean;
+  /** Modern Standby PC: T4 stays opt-in, with Microsoft's battery warning. */
+  modernStandby: boolean;
+  /** T1's `UserDuckingPreference`; null is the Windows default (80%). */
+  ducking: number | null;
+  /** Equalizer APO (third-party), read-only. */
+  eapo: { installed: boolean; version: string | null; selector: boolean; stale: number };
 };

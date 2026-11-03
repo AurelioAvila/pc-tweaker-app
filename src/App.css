@@ -441,8 +441,12 @@ svg {
   }
 }
 
+/* `backwards`, not `both`: a finished card keeps no transform, so it is not
+   left on its own compositor layer, which a scroll jump could paint stale
+   (blank or over the content above) for a frame. The last keyframe equals
+   the card's own style, so nothing visible changes. */
 .animate-card {
-  animation: fade-in-up var(--dur-slow) var(--ease-standard) both;
+  animation: fade-in-up var(--dur-slow) var(--ease-standard) backwards;
 }
 
 .animate-toast {
@@ -523,6 +527,7 @@ svg {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
@@ -990,6 +995,10 @@ input[type="radio"] {
 }
 .icon-module:has([data-tone="rose"]) {
   --symbol-color: #fb7aa0;
+}
+/* The Audio category's own hue (CATEGORY_STYLE.audio). */
+.icon-module:has([data-tone="lime"]) {
+  --symbol-color: #84cc16;
 }
 /* Used by the avatar only. The tweak modules carried one of these too and it
    read as a defect rather than as status — one indicator per row is enough,

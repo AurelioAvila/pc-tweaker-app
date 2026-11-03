@@ -16,7 +16,8 @@ import {
   sparkPoints,
   verdict,
 } from "../src/live-metrics";
-import { friendlyError } from "../src/lib";
+import { friendlyError, textFor } from "../src/lib";
+import { readFileSync } from "node:fs";
 import { STRINGS } from "../src/i18n";
 
 test("the history keeps the newest readings and never grows past its length", () => {
@@ -187,4 +188,31 @@ test("boost level: speed above base out of the measured headroom, never invented
   assert.equal(at(4600, null), null);
   assert.equal(at(4600, 5000, null), null);
   assert.equal(at(4250, 4250), null, "no measured headroom yet");
+});
+
+test("per-device audio fixes read in the UI language, with the device name kept", () => {
+  // The backend's English names (lib.rs `tweak_infos`) must match AUDIO_COPY.en.
+  const rust = readFileSync(new URL("../src-tauri/src/lib.rs", import.meta.url), "utf8");
+  assert.ok(rust.includes('format!("Keep {device} awake on mains power")'));
+  assert.ok(rust.includes('format!("Stop Windows powering down {device}")'));
+  const idle = "audio_idle:HDAUDIO/FUNC_01";
+  const power = "audio_power:USB/VID_1234";
+  const name = (lang: "it" | "de" | "en", id: string, english: string) =>
+    textFor(STRINGS[lang].tweaks, id, english, "").name;
+  assert.equal(
+    name("it", idle, "Keep NVIDIA High Definition Audio awake on mains power"),
+    "Tieni attivo NVIDIA High Definition Audio con l'alimentazione da rete",
+  );
+  assert.ok(name("de", power, "Stop Windows powering down USB Mic").includes("USB Mic"));
+  assert.notEqual(
+    name("de", power, "Stop Windows powering down USB Mic"),
+    "Stop Windows powering down USB Mic",
+  );
+  assert.equal(
+    name("en", power, "Stop Windows powering down USB Mic"),
+    "Stop Windows powering down USB Mic",
+  );
+  // An unexpected backend name is shown as it is, never mangled.
+  assert.equal(name("it", idle, "Something else"), "Something else");
+  assert.equal(textFor(STRINGS.it.tweaks, "x", "Fallback", "d").name, "Fallback");
 });

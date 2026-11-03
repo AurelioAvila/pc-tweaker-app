@@ -57,3 +57,18 @@ export function TrialLine({
     </p>
   );
 }
+
+/** A bold "Try Pro free for N days" pill for the price row, shown only while the
+ *  public price list says the server offers a trial (never claimed otherwise). */
+export function TrialBadge({ product, plan }: { product: BillingProduct; plan: "monthly" | "annual" }) {
+  const prices = usePriceList();
+  const trial = trialOffer(product, plan, prices, null);
+  if (!trial) return null;
+  return (
+    <p className="mb-3">
+      <span className="font-display inline-block rounded-xl border border-[color-mix(in_srgb,var(--accent)_70%,transparent)] bg-[var(--accent-soft)] px-3.5 py-1.5 text-lg font-extrabold text-[var(--fg)] md:text-xl">
+        Try Pro free for {trial.days} days
+      </span>
+    </p>
+  );
+}

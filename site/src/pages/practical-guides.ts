@@ -4,6 +4,7 @@ export const PRACTICAL_GUIDES = {
   ...TECHNICAL_GUIDES,
   "/uninstall-programs-completely": {
     eyebrow: "UNINSTALL GUIDE",
+    product: "uninstaller" as const,
     title: "How to completely uninstall a program on Windows",
     seoTitle: "Completely Uninstall a Program on Windows",
     seoDescription:

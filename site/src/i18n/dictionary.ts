@@ -82,6 +82,19 @@ export interface Dictionary {
       readonly guide?: { readonly href: string; readonly label: string };
     }[];
   };
+  readonly audio: {
+    readonly tag: string;
+    readonly title: string;
+    readonly sub: string;
+    readonly cards: readonly {
+      readonly tag: string;
+      readonly title: string;
+      readonly body: string;
+      readonly pro: boolean;
+      readonly span: 2 | 3;
+    }[];
+    readonly links: readonly { readonly label: string; readonly href: string }[];
+  };
   readonly philosophy: {
     readonly tag: string;
     readonly lines: readonly {
@@ -250,8 +263,8 @@ export const engDictionary: Dictionary = {
     "sub": " Review Windows settings for gaming, privacy and everyday use. See what each tweak changes, save its previous state and restore supported settings when you need to. Start free. No account required.",
     "cta": "Download Free for Windows",
     "safetyNote": "PC Tweaker installers are code-signed. Our signed Windows installers identify Aurelio Avila as the publisher. Older downloads may be unsigned; check the file's Digital Signatures tab. SmartScreen may still show a warning for a new release.",
-    "screenshotAlt": "PC Tweaker 1.19 Overview interface preview with sample processor and memory readings, applied settings and suggested next steps.",
-    "screenshotCaption": "PC Tweaker 1.19 interface preview · Sample data.",
+    "screenshotAlt": "PC Tweaker 1.20 Audio section interface preview with sample data: three sound devices with their formats and findings, including a Bluetooth headset in call mode.",
+    "screenshotCaption": "PC Tweaker 1.20 Audio interface preview · Sample data.",
     "terminalTitle": "Install with Windows Package Manager",
     "terminalCmd": "winget install --id AurelioAvila.PCTweaker --exact",
     "terminalHint": "# install the official PC Tweaker package",
@@ -447,6 +460,52 @@ export const engDictionary: Dictionary = {
         "pro": false,
         "span": "std"
       }
+    ]
+  },
+  "audio": {
+    "tag": "NEW IN 1.20 / SOUND",
+    "title": "See what Windows does with your sound.",
+    "sub": "The Audio section lists every sound device with the format Windows really uses, then points out what gets in the way. Each change is recorded and can be restored with one click.",
+    "cards": [
+      {
+        "tag": "YOUR DEVICES",
+        "title": "Every device, its real format",
+        "body": "Each output and microphone with its connection, sample rate, bit depth and channels, whether effects and spatial sound are on, and whether Equalizer APO, the free third-party equalizer, is active or bypassed.",
+        "pro": false,
+        "span": 2
+      },
+      {
+        "tag": "FINDINGS",
+        "title": "Spot what drags your sound down",
+        "body": "A Bluetooth headset stuck in call mode because an app is using its microphone. A default microphone that is muted or very quiet. PC Tweaker explains each finding and never changes your microphone on its own.",
+        "pro": false,
+        "span": 2
+      },
+      {
+        "tag": "FREE FIXES",
+        "title": "Two common annoyances",
+        "body": "“Don't lower my game during calls”: by default Windows lowers every other sound by 80% while a call app uses the microphone. “Fix Bluetooth volume control” turns off Absolute Volume when Bluetooth volume does not respond, stays too low or jumps.",
+        "pro": false,
+        "span": 2
+      },
+      {
+        "tag": "PER-DEVICE FIXES",
+        "title": "Stop a device switching off",
+        "body": "Keep HDMI audio or the sound chip awake on mains power, keep USB audio powered, or restart an audio device. Can help when the start of a sound is cut off, you hear a pop, or a device drops out after silence.",
+        "pro": true,
+        "span": 3
+      },
+      {
+        "tag": "CHECK FOR CRACKLES",
+        "title": "A 10-second driver latency check",
+        "body": "Measures how long each driver keeps the processor busy, against Microsoft's limits (DPC 100 µs, ISR 25 µs), grouped by the hardware it serves. A driver past the limit is a suspect, not proven; the check needs administrator approval.",
+        "pro": false,
+        "span": 3
+      }
+    ],
+    "links": [
+      { "label": "Audio tweaks and what they change", "href": "/tweaks/audio/" },
+      { "label": "Audio crackling: find the driver behind it", "href": "/fixes/dpc-latency-audio-crackling/" }
     ]
   },
   "philosophy": {

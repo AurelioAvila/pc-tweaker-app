@@ -1,6 +1,6 @@
 import { UNINSTALLER_DOWNLOAD_EXE, UNINSTALLER_RELEASES } from "../constants";
 import { euro, PromoCard, PromoFine, usePromo } from "../promo";
-import { TrialLine } from "../trial";
+import { TrialBadge, TrialLine } from "../trial";
 import { promoPercent } from "../../../src/promo";
 import { ProductScreenshots } from "../components/ProductScreenshots";
 
@@ -146,6 +146,7 @@ export function UninstallerPage() {
             </span>
           )}
         </div>
+        <TrialBadge product="uninstaller" plan="annual" />
         {uninstallerOffer && promo.promo && (
           <p className="mb-1 text-[14px] font-semibold text-[#ffb98f]">
             Halloween offer · ends{" "}

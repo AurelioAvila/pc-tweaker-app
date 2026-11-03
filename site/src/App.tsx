@@ -5,6 +5,7 @@ import { UNINSTALLER_DOWNLOAD_EXE } from "./constants";
 import { HeroSection } from "./components/HeroSection";
 import { PerformanceMetrics } from "./components/PerformanceMetrics";
 import { BespokeArsenal } from "./components/BespokeArsenal";
+import { AudioSpotlight } from "./components/AudioSpotlight";
 import { EngineeringPhilosophy } from "./components/EngineeringPhilosophy";
 import { SuiteOverview } from "./components/SuiteOverview";
 import { ProtocolTimeline } from "./components/ProtocolTimeline";
@@ -38,6 +39,7 @@ function HomePage({ navigate }: { navigate: (to: string) => void }) {
       <HeroSection />
       <PerformanceMetrics navigate={navigate} />
       <BespokeArsenal navigate={navigate} />
+      <AudioSpotlight navigate={navigate} />
       <EngineeringPhilosophy />
       <ProtocolTimeline />
       <SuiteOverview navigate={navigate} />

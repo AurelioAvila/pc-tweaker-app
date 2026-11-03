@@ -171,7 +171,7 @@ export function AccountPage() {
         )}
 
         {starting ? (
-          <p className="mt-10 text-sm text-[var(--fg-dim)]" role="status">
+          <p className="mt-10 min-h-[30rem] text-sm text-[var(--fg-dim)]" role="status">
             Loading your account…
           </p>
         ) : !data || !token ? (

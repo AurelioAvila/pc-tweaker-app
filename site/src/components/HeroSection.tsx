@@ -110,7 +110,7 @@ export function HeroSection() {
   };
 
   return (
-    <header className="overflow-hidden px-5 pt-28 pb-24 md:px-12">
+    <header className="overflow-hidden px-5 pt-32 pb-24 md:px-12">
       <motion.div
         className="mx-auto max-w-7xl"
         variants={staggerParent}
@@ -184,7 +184,7 @@ export function HeroSection() {
               <WingetTerminal />
             </div>
 
-            <div className="mt-9 grid max-w-md grid-cols-2 gap-x-6 gap-y-3">
+            <div className="mt-9 grid max-w-md grid-cols-2 max-[430px]:grid-cols-1 gap-x-6 gap-y-3">
               {text.hero.badges.map((b) => (
                 <a
                   key={b.label}

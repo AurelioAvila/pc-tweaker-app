@@ -526,14 +526,14 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
           </section>
         )}
         {guide.method && (
-          <section aria-labelledby="official-way" className="mt-10 rounded-2xl bg-[var(--surface)] p-7 md:p-9">
+          <section aria-labelledby="official-way" className="mt-10 rounded-2xl border border-white/10 bg-[var(--surface)] p-7 md:p-9">
             <h2 id="official-way" className="font-display text-2xl font-bold text-[var(--fg)]">{guide.method.heading}</h2>
             <p className="mt-4 max-w-3xl leading-7 text-[var(--fg-dim)]">{guide.method.intro}</p>
             <Steps steps={guide.method.steps} />
           </section>
         )}
         {guide.leftovers && (
-          <section aria-labelledby="leftovers" className="mt-8 rounded-2xl bg-[var(--surface)] p-7 md:p-9">
+          <section aria-labelledby="leftovers" className="mt-8 rounded-2xl border border-white/10 bg-[var(--surface)] p-7 md:p-9">
             <h2 id="leftovers" className="font-display text-2xl font-bold text-[var(--fg)]">{guide.leftovers.heading}</h2>
             <p className="mt-4 max-w-3xl leading-7 text-[var(--fg-dim)]">{guide.leftovers.body}</p>
             <pre tabIndex={0} aria-label={`${guide.leftovers.heading}: read-only commands`} className="mt-5 max-w-full overflow-x-auto rounded-xl bg-black/40 p-5 text-[13px] leading-6 text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"><code>{guide.leftovers.code}</code></pre>
@@ -566,7 +566,7 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
         {guide.image && <figure className="mt-10"><img src={guide.image} alt={guide.caption} loading="lazy" width="732" height="430" className="h-auto w-full rounded-xl" /><figcaption className="mt-3 text-sm text-[var(--fg-dim)]">{guide.caption}</figcaption></figure>}
         <div className="mt-14 space-y-8">
           {guide.sections.map((section, index) => (
-            <section key={section.heading} id={`guide-section-${index + 1}`} className={technical ? "min-w-0 scroll-mt-32 border-b border-[var(--line)] pb-9" : "rounded-2xl bg-[var(--surface)] p-7 md:p-9"}>
+            <section key={section.heading} id={`guide-section-${index + 1}`} className={technical ? "min-w-0 scroll-mt-32 border-b border-[var(--line)] pb-9" : "rounded-2xl border border-white/10 bg-[var(--surface)] p-7 md:p-9"}>
               <h2 className="font-display text-2xl font-bold text-[var(--fg)]">{section.heading}</h2>
               <p className={`mt-4 leading-7 text-[var(--fg-dim)] ${technical ? "max-w-[70ch]" : "max-w-3xl"}`}>{section.body}</p>
               {section.figure && (
@@ -616,13 +616,13 @@ export function GuidePage({ path, navigate }: { path: string; navigate: (to: str
         </div>
 
         {guide.steps && (
-          <section className="mt-14 rounded-2xl bg-[var(--surface)] p-7 md:p-9" aria-labelledby="by-hand">
+          <section className="mt-14 rounded-2xl border border-white/10 bg-[var(--surface)] p-7 md:p-9" aria-labelledby="by-hand">
             <h2 id="by-hand" className="font-display text-2xl font-bold text-[var(--fg)]">Do it by hand</h2>
             <Steps steps={guide.steps} />
           </section>
         )}
         {guide.pctweaker && (
-          <section className="mt-8 rounded-2xl bg-[var(--surface)] p-7 md:p-9" aria-labelledby="with-pct">
+          <section className="mt-8 rounded-2xl border border-white/10 bg-[var(--surface)] p-7 md:p-9" aria-labelledby="with-pct">
             <h2 id="with-pct" className="font-display text-2xl font-bold text-[var(--fg)]">{guide.pctweaker.title}</h2>
             <p className="mt-4 max-w-3xl leading-7 text-[var(--fg-dim)]">{guide.pctweaker.body}</p>
             <ul className="mt-5 flex flex-wrap gap-2.5">

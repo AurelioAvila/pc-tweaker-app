@@ -17,6 +17,7 @@
      single layout or spacing value changing. theme.tsx overwrites them. */
   --bg: #0a0a0d; /* page */
   --bg-2: #121217; /* raised card / panel */
+  --surface: var(--bg-2); /* card fill for guide sections and code blocks; it was never defined, so they rendered transparent */
   --fg: #f3f4f6; /* primary text */
   --fg-dim: #9ca3af; /* supporting text */
   --line: #2a2d33; /* hairline */

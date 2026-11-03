@@ -56,6 +56,7 @@ const PAGES = {
   "/uninstaller/guides/onedrive/": ["src/pages/uninstaller-guides.ts"],
   // Static page shipped as-is from public/; not part of the React prerender.
   "/tweaky-driver/": ["public/tweaky-driver/index.html"],
+  "/tweaky-driver/terms/": ["public/tweaky-driver/terms/index.html"],
 };
 
 const SILOS = {

@@ -1,3 +1,9 @@
+# PC Tweaker 1.20.0 Audio preview
+
+`pc-tweaker-1.20-audio-sample-data.jpg` is a 1280 x 839 Brave capture of the Audio section in the official browser demo (the 1.20.0 preview build, Pro view) taken on 3 November 2026. The footer bar reading **INTERFACE PREVIEW — SAMPLE DATA** was added at capture time. The devices, findings and readings are synthetic; the image is not a native Windows capture, a real-PC scan or evidence of a measured result. No Windows setting, driver or firmware was changed to create it. Preserve the disclosure when displaying or resizing it.
+
+SHA-256: `c0dff9eeffdd04ca8f173d38cbd584c30dcd3f843d374d3abefe8c95193badf0`
+
 # PC Tweaker 1.19.0 interface previews
 
 These three 1280 × 720 JPEGs show the existing official browser demo built from source commit `202b1a02e7241f51f5f750bf63038f7d075e3b97` on 2 November 2026. The interface identifies itself as version 1.19.0. Each image retains the visible **INTERFACE PREVIEW — SAMPLE DATA** footer.

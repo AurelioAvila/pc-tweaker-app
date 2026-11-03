@@ -62,9 +62,10 @@ export const FIX_GUIDES = {
       title: "The same measurement in PC Tweaker",
       body:
         "On the Hardware screen, the DPC and interrupt latency panel records for 5 to 30 seconds and lists each driver's longest DPC and ISR, how many ran past Microsoft's limits, and the total time. It reads the kernel's own events, changes nothing and is part of the free plan; Windows asks for administrator approval once because a kernel trace needs it. Since 1.19 the Scan also takes a short timed sample of how many interrupts and DPCs CPU 0 handled compared with your other processors, and flags it when they pile up there. That is a measurement only: PC Tweaker does not move interrupts, and the fix is still the driver the trace names.",
-      links: [{ to: "/tweaks/performance/usb-suspend-diagnostics/", label: "USB wake troubleshooting on mains power" }, { to: "/tweaks/performance/pcie-link-power/", label: "Keep PCIe links active on mains power" }],
+      links: [{ to: "/tweaks/audio/", label: "Audio in PC Tweaker 1.20: your sound devices, fixes and a 10-second Check for crackles" }, { to: "/tweaks/performance/usb-suspend-diagnostics/", label: "USB wake troubleshooting on mains power" }, { to: "/tweaks/performance/pcie-link-power/", label: "Keep PCIe links active on mains power" }],
     },
     related: [
+      { to: "/tweaks/audio/", label: "the Audio tweaks in PC Tweaker", note: "Every sound device with its real format, plus fixes for call ducking and Bluetooth volume; the Audio section also has a 10-second Check for crackles." },
       { to: "/database/processes/audiodg-exe/", label: "audiodg.exe, the process that runs the audio engine", note: "Why its CPU use usually comes from driver-added effects." },
       { to: "/database/services/audiosrv/", label: "the Windows Audio service", note: "What happens if it is stopped, and why it is not the cause of crackling." },
       { to: "/fixes/check-pcie-link-speed-nvme-gpu/", label: "check the PCIe link of your devices", note: "A device on a narrower link than it supports is another thing the Scan can read." },

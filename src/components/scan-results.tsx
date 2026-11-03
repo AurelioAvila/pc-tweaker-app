@@ -703,7 +703,7 @@ function describe(
     case "dpc":
       return { title: c.dpcTitle, body: c.dpcBody, more: <DpcMeasure c={c} busy={busy} /> };
     case "audio":
-      return describeAudio(lang, c, item.finding, onNavigate, busy, onError);
+      return describeAudio(s, lang, c, item.finding, onNavigate, busy, onError);
   }
 }
 
@@ -712,6 +712,7 @@ const ROW_ACTION = "scan-secondary scan2-row-action";
 
 /** The Audio category's rows (AUDIO-SPEC 5): measured values only. */
 function describeAudio(
+  s: Strings,
   lang: Lang,
   c: Scan2Copy,
   f: Extract<ScanItem, { type: "audio" }>["finding"],
@@ -724,7 +725,7 @@ function describeAudio(
   switch (f.kind) {
     case "devices": {
       const name = (e: typeof f.output) =>
-        e ? (e.format ? `${e.name} (${formatLine(a, e.format)})` : e.name) : a.none;
+        e ? (e.format ? `${e.name}, ${formatLine(a, e.format)}` : e.name) : a.none;
       return {
         title: a.scanDevicesTitle,
         body: format(a.scanDevicesBody, { output: name(f.output), input: name(f.input) }),
@@ -745,7 +746,18 @@ function describeAudio(
         ),
       };
     case "ducking":
-      return { title: duckingTitle(a, f.value), body: a.duckingBody };
+      return {
+        title: duckingTitle(a, f.value),
+        body: a.duckingBody,
+        // The same door to the exact registry value as every other tweak row.
+        more:
+          f.changes.length > 0 ? (
+            <details className="scan2-more">
+              <summary>{s.transparency.title}</summary>
+              <TechnicalDetails changes={f.changes} s={s} />
+            </details>
+          ) : undefined,
+      };
     case "idle": {
       const values = { device: f.timer.name, seconds: formatNumber(f.timer.seconds) };
       return {

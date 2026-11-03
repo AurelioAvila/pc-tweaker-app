@@ -89,7 +89,7 @@ export type ScanItem = Base &
 export type AudioFinding =
   | { kind: "devices"; output: AudioEndpoint | null; input: AudioEndpoint | null }
   | { kind: "callMode"; device: string; process: string }
-  | { kind: "ducking"; value: number | null }
+  | { kind: "ducking"; value: number | null; changes: TweakInfo["changes"] }
   | { kind: "idle"; timer: AudioIdleTimer }
   | { kind: "power"; device: AudioUsbPower; modernStandby: boolean }
   | { kind: "eapo"; endpoint: AudioEndpoint; stale: number; selector: boolean }
@@ -328,7 +328,7 @@ function audioItems(report: ScanReport): ScanItem[] {
   if (issues.ducking && !ducking?.applied && !ducking?.already_set)
     add(
       "ducking",
-      { kind: "ducking", value: a.ducking },
+      { kind: "ducking", value: a.ducking, changes: ducking?.changes ?? [] },
       { fixable: !!ducking, recommended: !!ducking, issue: true },
       ducking ? AUDIO_DUCKING_ID : null,
     );

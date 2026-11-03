@@ -29,6 +29,8 @@ import type {
 import { LOW_MIC_LEVEL } from "../scan-items";
 import { AUDIO_COPY } from "./audio-copy";
 import { Badge, Toggle } from "./ui";
+import { ToolHeader, ToolStatus } from "./tool-section";
+import "./audio.css";
 import { TweakIcon } from "./tweak-icon";
 
 type Copy = (typeof AUDIO_COPY)["en"];
@@ -81,11 +83,14 @@ export function SoundSettingsButton({
   disabled,
   describedBy,
   className = "tool-secondary-action shrink-0",
+  iconOnly = false,
   onError,
 }: {
   label: string;
   endpoint?: string;
   disabled?: boolean;
+  /** A square button with the label as its name and tooltip (device cards). */
+  iconOnly?: boolean;
   /** The device's name, so several identical buttons stay distinct. */
   describedBy?: string;
   /** The Scan's rows use their own action style. */
@@ -98,13 +103,34 @@ export function SoundSettingsButton({
       className={className}
       disabled={disabled}
       aria-describedby={describedBy}
+      aria-label={iconOnly ? label : undefined}
+      title={iconOnly ? label : undefined}
       onClick={() =>
         void invoke("open_sound_settings", { endpoint: endpoint ?? null }).catch((e: unknown) =>
           onError(String(e)),
         )
       }
     >
-      {label} <span aria-hidden="true">↗</span>
+      {iconOnly ? (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+          aria-hidden="true"
+        >
+          <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+          <circle cx="15" cy="7" r="2" />
+          <circle cx="9" cy="17" r="2" />
+        </svg>
+      ) : (
+        <>
+          {label} <span aria-hidden="true">↗</span>
+        </>
+      )}
     </button>
   );
 }
@@ -196,9 +222,9 @@ function DeviceCard({
     (r): r is string => !!r,
   );
   return (
-    <div className="audio-device border-line bg-surface-2 flex min-w-0 flex-col gap-2 rounded-xl border p-3">
+    <div className="audio-device border-line flex min-w-0 flex-col gap-2.5 rounded-xl border p-3.5">
       <div className="flex items-start gap-3">
-        <span className="bg-surface-1 border-line text-accent grid h-9 w-9 shrink-0 place-items-center rounded-lg border">
+        <span className="bg-surface-2 border-line text-accent grid h-9 w-9 shrink-0 place-items-center rounded-lg border">
           <DeviceGlyph endpoint={endpoint} />
         </span>
         <div className="min-w-0 flex-1">
@@ -206,37 +232,37 @@ function DeviceCard({
             {endpoint.flow === "render" ? c.output : c.input}
             {roles.length > 0 && ` · ${roles.join(" · ")}`}
           </p>
+          {/* Two lines, then an ellipsis: Bluetooth hands-free names run long
+              and the part that tells two headsets apart is often at the end. */}
           <p
             id={nameId}
-            className="selectable truncate text-[13.5px] font-semibold text-ink"
+            className="selectable mt-0.5 line-clamp-2 text-[13.5px] font-semibold leading-snug text-ink [overflow-wrap:anywhere]"
             title={endpoint.name}
           >
             {endpoint.name}
           </p>
-          <p className="type-data text-[11.5px] text-ink-3">
+          <p className="type-data mt-0.5 text-[11.5px] text-ink-3">
             {[c.bus[endpoint.bus], endpoint.format && formatLine(c, endpoint.format)]
               .filter(Boolean)
               .join(" · ")}
           </p>
         </div>
-      </div>
-      {facts.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {facts.map((f) => (
-            <Badge key={f} kind="muted">
-              {f}
-            </Badge>
-          ))}
-        </div>
-      )}
-      <div className="mt-auto">
         <SoundSettingsButton
           label={c.deviceSettings}
           endpoint={endpoint.id}
           describedBy={nameId}
+          iconOnly
+          className="audio-icon-action"
           onError={onError}
         />
       </div>
+      {facts.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pl-12">
+          {facts.map((f) => (
+            <Badge key={f}>{f}</Badge>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -296,38 +322,82 @@ function findings(c: Copy, a: AudioStatus, onError: (m: string) => void) {
   return rows;
 }
 
+/** One figure of the page's summary: every number comes from `audio_status`
+ *  or the tweak list, nothing is estimated. */
+function Stat({
+  label,
+  value,
+  of,
+  tone,
+}: {
+  label: string;
+  value: number;
+  of?: number;
+  tone?: "ok" | "warn";
+}) {
+  return (
+    <div className="flex min-w-0 flex-col-reverse gap-1 px-4 py-3">
+      <dt className="type-label !text-ink-3 [overflow-wrap:anywhere]">{label}</dt>
+      <dd
+        className={`text-[22px] font-semibold leading-none tracking-[-0.02em] tabular-nums ${
+          tone === "warn" ? "text-warn" : tone === "ok" ? "text-ok" : "text-ink"
+        }`}
+      >
+        {formatNumber(value)}
+        {of !== undefined && (
+          <span className="text-ink-3 ml-0.5 text-[13px] font-medium">/{formatNumber(of)}</span>
+        )}
+      </dd>
+    </div>
+  );
+}
+
+/** The fixes this page lists: T1/T2 (`rows`, App's audio rows) plus the
+ *  per-device T3/T4 rows AudioExtras draws. */
+function fixCounts(rows: TweakInfo[], a: AudioStatus) {
+  const device = [...a.idle, ...a.usbPower.filter((p) => p.mayPowerDown || p.applied)];
+  return {
+    on: rows.filter((t) => t.applied).length + device.filter((d) => d.applied).length,
+    total: rows.length + device.length,
+  };
+}
+
 export function AudioPanel({
   lang,
   status,
   error,
+  rows,
   onRetry,
   pushToast,
 }: {
   lang: Lang;
   status: AudioStatus | null;
   error: boolean;
+  /** The catalogue's audio rows shown on the page (T1, T2). */
+  rows: TweakInfo[];
   onRetry: () => void;
   pushToast: (kind: Toast["kind"], message: string) => void;
 }) {
   const c = AUDIO_COPY[lang];
   const onError = (message: string) => pushToast("error", message);
+  const header = (
+    <ToolHeader icon={CATEGORY_STYLE.audio.icon} title={c.heroTitle} description={c.subtitle} />
+  );
   if (!status)
     return (
-      <section className="audio-panel mb-4" aria-busy={!error}>
-        <p className="mb-4 max-w-2xl text-[13px] leading-relaxed text-ink-3">{c.subtitle}</p>
+      <section className="tool-panel audio-hero" aria-busy={!error}>
+        {header}
         {error ? (
-          <div className="border-line flex items-center justify-between gap-3 rounded-xl border border-dashed p-4">
-            <p className="text-[12.5px] text-ink-3" role="alert">
-              {c.readError}
-            </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <ToolStatus tone="error">{c.readError}</ToolStatus>
             <button type="button" className="tool-secondary-action" onClick={onRetry}>
               {c.retry}
             </button>
           </div>
         ) : (
           <div className="audio-skeleton grid gap-3 min-[900px]:grid-cols-2" aria-hidden="true">
-            <div className="bg-surface-2 border-line h-[132px] rounded-xl border" />
-            <div className="bg-surface-2 border-line h-[132px] rounded-xl border" />
+            <div className="bg-surface-2 border-line h-[128px] rounded-xl border" />
+            <div className="bg-surface-2 border-line h-[128px] rounded-xl border" />
           </div>
         )}
       </section>
@@ -335,58 +405,77 @@ export function AudioPanel({
 
   // The defaults, plus a communications device only when it is another one.
   const shown = status.endpoints.filter((e) => e.default || e.comms);
-  const rows = findings(c, status, onError);
+  const found = findings(c, status, onError);
+  const fixes = fixCounts(rows, status);
   return (
-    <section className="audio-panel mb-4">
-      <p className="mb-5 max-w-2xl text-[13px] leading-relaxed text-ink-3">{c.subtitle}</p>
+    <>
+      <section className="tool-panel audio-hero">
+        {header}
+        <dl className="border-line divide-line mb-5 grid grid-cols-3 divide-x rounded-xl border">
+          <Stat label={c.statDevices} value={shown.length} />
+          <Stat
+            label={c.statFindings}
+            value={found.length}
+            tone={found.some((r) => r.tone === "warn") ? "warn" : found.length ? undefined : "ok"}
+          />
+          <Stat label={c.statFixes} value={fixes.on} of={fixes.total} />
+        </dl>
+        <h3 className="type-label !text-ink-2 mb-2.5">{c.devicesTitle}</h3>
+        {shown.length ? (
+          <div className="grid gap-3 min-[900px]:grid-cols-2">
+            {shown.map((e) => (
+              <DeviceCard key={e.id} c={c} endpoint={e} onError={onError} />
+            ))}
+          </div>
+        ) : (
+          <p className="border-line rounded-xl border border-dashed p-4 text-[12.5px] text-ink-3">
+            {c.noDevices}
+          </p>
+        )}
+      </section>
 
-      <h2 className="type-section mb-2.5 text-ink">{c.devicesTitle}</h2>
-      {shown.length ? (
-        <div className="grid gap-3 min-[900px]:grid-cols-2">
-          {shown.map((e) => (
-            <DeviceCard key={e.id} c={c} endpoint={e} onError={onError} />
-          ))}
-        </div>
-      ) : (
-        <p className="border-line rounded-xl border border-dashed p-4 text-[12.5px] text-ink-3">
-          {c.noDevices}
-        </p>
-      )}
-
-      <h2 className="type-section mb-2.5 mt-6 text-ink">{c.findingsTitle}</h2>
-      {rows.length ? (
-        <ul className="flex flex-col gap-2">
-          {rows.map((r) => (
-            <li
-              key={r.key}
-              className="audio-finding border-line bg-surface-1 flex flex-wrap items-start gap-3 rounded-xl border p-3"
-              data-tone={r.tone}
-            >
-              <span
-                className={`mt-px grid h-5 w-5 shrink-0 place-items-center rounded-full text-[11px] font-bold ${
-                  r.tone === "warn" ? "bg-warn/15 text-warn" : "bg-surface-2 text-ink-3"
+      <section className="audio-findings mb-6" aria-labelledby="audio-findings-title">
+        <h2 id="audio-findings-title" className="type-section mb-2.5 text-ink">
+          {c.findingsTitle}
+        </h2>
+        {found.length ? (
+          <ul className="flex flex-col gap-2">
+            {found.map((r) => (
+              <li
+                key={r.key}
+                className={`audio-finding bg-surface-1 flex flex-wrap items-start gap-x-3 gap-y-2 rounded-xl border p-3.5 ${
+                  r.tone === "warn" ? "border-warn/30" : "border-line"
                 }`}
-                aria-hidden="true"
+                data-tone={r.tone}
               >
-                {r.tone === "warn" ? "!" : "i"}
-              </span>
-              <div className="min-w-[12rem] flex-1">
-                <h3 className="text-[13px] font-semibold text-ink">{r.title}</h3>
-                <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-3">{r.body}</p>
-              </div>
-              {r.action}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="border-line rounded-xl border border-dashed p-4 text-[12.5px] text-ink-3">
-          {c.noFindings}
-        </p>
-      )}
+                <span
+                  className={`mt-px grid h-5 w-5 shrink-0 place-items-center rounded-full text-[11px] font-bold ${
+                    r.tone === "warn" ? "bg-warn/15 text-warn" : "bg-surface-2 text-ink-3"
+                  }`}
+                  aria-hidden="true"
+                >
+                  {r.tone === "warn" ? "!" : "i"}
+                </span>
+                <div className="min-w-[12rem] flex-1">
+                  <h3 className="text-[13px] font-semibold leading-snug text-ink [overflow-wrap:anywhere]">
+                    {r.title}
+                  </h3>
+                  <p className="mt-1 max-w-[60ch] text-[12.5px] leading-relaxed text-ink-3">
+                    {r.body}
+                  </p>
+                </div>
+                {r.action}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <ToolStatus tone="active">{c.noFindings}</ToolStatus>
+        )}
+      </section>
 
-      <h2 className="type-section mt-6 text-ink">{c.fixesTitle}</h2>
-      <p className="mt-0.5 text-[12px] text-ink-3">{c.fixesLead}</p>
-    </section>
+      <h2 className="type-section text-ink">{c.fixesTitle}</h2>
+      <p className="mb-3 mt-0.5 text-[12px] text-ink-3">{c.fixesLead}</p>
+    </>
   );
 }
 
@@ -436,7 +525,7 @@ function DeviceFixRow({
           className="icon-module grid shrink-0 place-items-center"
           style={{ "--module-tint": style.tint } as CSSProperties}
         >
-          <TweakIcon id="audio" fallback={style.icon} />
+          <TweakIcon id={tweak.id} fallback={style.icon} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -471,12 +560,28 @@ function DeviceFixRow({
   );
 }
 
+const RESTART_GLYPH = (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-4 w-4"
+    aria-hidden="true"
+  >
+    <path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" />
+  </svg>
+);
+
 /** Rows that follow T1 and T2 in the list: the per-device fixes, the crackle
  *  check and Equalizer APO. */
 export function AudioExtras({
   s,
   lang,
   status,
+  isPro,
   busyId,
   onToggle,
   pushToast,
@@ -484,6 +589,8 @@ export function AudioExtras({
   s: Strings;
   lang: Lang;
   status: AudioStatus | null;
+  /** Free: T3's restart button is hidden; it only finishes a Pro change. */
+  isPro: boolean;
   busyId: string | null;
   onToggle: (t: TweakInfo) => void;
   pushToast: (kind: Toast["kind"], message: string) => void;
@@ -519,22 +626,31 @@ export function AudioExtras({
             body={
               t.applied ? c.idleApplied : format(c.idleBody, { seconds: formatNumber(t.seconds) })
             }
-            note={c.idleRestartNote}
+            note={isPro || t.applied ? c.idleRestartNote : undefined}
             tweak={deviceTweak(t.id, title, t.applied)}
             busy={busyId === t.id}
             onToggle={onToggle}
-            extra={(titleId) => (
-              <button
-                type="button"
-                className="tool-secondary-action mt-2.5"
-                aria-describedby={titleId}
-                disabled={restarting !== null}
-                aria-busy={restarting === t.id}
-                onClick={() => void restart(t.id, t.name)}
-              >
-                {restarting === t.id ? c.restarting : c.restartDevice}
-              </button>
-            )}
+            extra={
+              isPro || t.applied
+                ? (titleId) => (
+                    <button
+                      type="button"
+                      className="tool-secondary-action audio-inline-action mt-1.5"
+                      aria-describedby={titleId}
+                      disabled={restarting !== null}
+                      aria-busy={restarting === t.id}
+                      onClick={() => void restart(t.id, t.name)}
+                    >
+                      {restarting === t.id ? (
+                        <span className="tool-status-spinner" aria-hidden="true" />
+                      ) : (
+                        RESTART_GLYPH
+                      )}
+                      {restarting === t.id ? c.restarting : c.restartDevice}
+                    </button>
+                  )
+                : undefined
+            }
           />
         );
       })}
@@ -560,28 +676,33 @@ export function AudioExtras({
       )}
 
       <li>
-        <CrackleCheck c={c} />
+        <CrackleCheck c={c} s={s} />
       </li>
 
       {status.eapo.installed && (
         <li>
-          <section className="tool-panel tool-card animate-card border-line bg-surface-1 rounded-2xl border p-5 !mb-0">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <h2 className="type-section text-ink">{c.eapoTitle}</h2>
-                <p className="mt-1 max-w-2xl text-[12.5px] leading-relaxed text-ink-3">
-                  {c.eapoAbout}
-                </p>
-              </div>
-              <Badge kind="ok">
-                {status.eapo.version
-                  ? format(c.eapoVersion, { version: status.eapo.version })
-                  : c.eapoInstalled}
-              </Badge>
-            </div>
-            <ul className="type-data border-line mt-3 flex flex-col gap-1 border-t pt-3 text-[12px] text-ink-2">
+          <section className="tool-panel animate-card !mb-0">
+            <ToolHeader
+              icon={EQ_GLYPH}
+              title={c.eapoTitle}
+              description={c.eapoAbout}
+              actions={
+                <Badge kind="ok">
+                  {status.eapo.version
+                    ? format(c.eapoVersion, { version: status.eapo.version })
+                    : c.eapoInstalled}
+                </Badge>
+              }
+            />
+            <ul className="type-data flex flex-col gap-1.5 text-[12px] text-ink-2">
               {render && (
-                <li>
+                <li className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                      render.eq === "active" ? "bg-ok" : "bg-warn"
+                    }`}
+                    aria-hidden="true"
+                  />
                   {format(c.eapoOnDevice, {
                     name: render.name,
                     state:
@@ -594,17 +715,23 @@ export function AudioExtras({
                 </li>
               )}
               {status.eapo.stale > 0 && (
-                <li>{format(c.eapoStale, { count: formatNumber(status.eapo.stale) })}</li>
+                <li className="pl-3.5 text-ink-3">
+                  {format(c.eapoStale, { count: formatNumber(status.eapo.stale) })}
+                </li>
               )}
             </ul>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div className="border-line mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-2">
               {status.eapo.selector ? (
                 <>
-                  <DeviceSelectorButton c={c} onError={onError} />
+                  <DeviceSelectorButton
+                    c={c}
+                    className="tool-secondary-action audio-inline-action"
+                    onError={onError}
+                  />
                   <p className="text-[11.5px] text-ink-3">{c.eapoSelectorNote}</p>
                 </>
               ) : (
-                <p className="text-[11.5px] text-ink-3">{c.eapoSelectorMissing}</p>
+                <p className="py-2 text-[11.5px] text-ink-3">{c.eapoSelectorMissing}</p>
               )}
             </div>
           </section>
@@ -613,6 +740,36 @@ export function AudioExtras({
     </>
   );
 }
+
+const EQ_GLYPH = (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.7"
+    strokeLinecap="round"
+    className="h-5 w-5"
+    aria-hidden="true"
+  >
+    <path d="M6 4v16M12 4v16M18 4v16" opacity=".35" />
+    <path d="M4 15h4M10 8h4M16 12h4" />
+  </svg>
+);
+
+const WAVE_GLYPH = (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.7"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-5 w-5"
+    aria-hidden="true"
+  >
+    <path d="M2.5 12h3l2-5 3 11 2.5-8 1.8 4H21.5" />
+  </svg>
+);
 
 const AREA_ORDER: DriverArea[] = [
   "audio",
@@ -626,19 +783,71 @@ const AREA_ORDER: DriverArea[] = [
   "other",
 ];
 
+/** A driver's longest routine against Microsoft's limit. Every bar of one
+ *  report shares the scale (`scale` times the limit fills the track), so the
+ *  bars compare; the tick marks the limit itself. */
+function LimitBar({
+  c,
+  kind,
+  maxUs,
+  limitUs,
+  scale,
+  audible,
+}: {
+  c: Copy;
+  kind: string;
+  maxUs: number;
+  limitUs: number;
+  scale: number;
+  audible: boolean;
+}) {
+  const over = maxUs > limitUs;
+  const fill = over ? (audible ? "bg-danger" : "bg-warn") : "bg-ok";
+  const value = format(c.micro, { value: formatNumber(Math.round(maxUs)) });
+  return (
+    <div className="grid grid-cols-[2.25rem_minmax(0,1fr)_4.75rem] items-center gap-2.5">
+      {/* The bar is a picture; this is what it says. */}
+      <span className="sr-only">
+        {`${kind} ${value}. `}
+        {format(c.crackleLimit, { value: format(c.micro, { value: formatNumber(limitUs) }) })}
+      </span>
+      <span className="type-data text-[10.5px] text-ink-3" aria-hidden="true">
+        {kind}
+      </span>
+      <span className="bg-surface-hover relative h-1.5 rounded-full" aria-hidden="true">
+        <span
+          className={`absolute inset-y-0 left-0 rounded-full ${fill}`}
+          style={{ width: `${Math.max(2, Math.min(100, (maxUs / limitUs / scale) * 100))}%` }}
+        />
+        <span
+          className="bg-ink-2 absolute -top-1 h-3.5 w-px"
+          style={{ left: `${(1 / scale) * 100}%` }}
+        />
+      </span>
+      <span
+        className={`type-data text-right text-[11.5px] tabular-nums ${over ? "text-ink" : "text-ink-3"}`}
+        aria-hidden="true"
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 /** The 10-second DPC/ISR trace (diagnostics/dpc.rs), grouped by the hardware
  *  each driver serves. Never claims a driver causes anything. */
-function CrackleCheck({ c }: { c: Copy }) {
+function CrackleCheck({ c, s }: { c: Copy; s: Strings }) {
   const [state, setState] = useState<"idle" | "running" | "done" | "error">("idle");
   const [report, setReport] = useState<DpcReport | null>(null);
   const [error, setError] = useState("");
   const alive = useRef(true);
-  useEffect(
-    () => () => {
+  // Set on every mount: React's development double mount runs the cleanup once.
+  useEffect(() => {
+    alive.current = true;
+    return () => {
       alive.current = false;
-    },
-    [],
-  );
+    };
+  }, []);
 
   async function measure() {
     setState("running");
@@ -650,79 +859,140 @@ function CrackleCheck({ c }: { c: Copy }) {
       setState("done");
     } catch (e) {
       if (!alive.current) return;
-      setError(String(e));
+      setError(friendlyError(e, s));
       setState("error");
     }
   }
 
   const over = (d: DriverLatency) =>
     !!report && (d.dpc.maxUs > report.dpc.limitUs || d.isr.maxUs > report.isr.limitUs);
-  const flagged = report?.drivers.filter(over) ?? [];
+  const ratio = (d: DriverLatency) =>
+    report
+      ? Math.max(
+          d.dpc.count > 0 ? d.dpc.maxUs / report.dpc.limitUs : 0,
+          d.isr.count > 0 ? d.isr.maxUs / report.isr.limitUs : 0,
+        )
+      : 0;
+  const flagged = (report?.drivers.filter(over) ?? []).sort((a, b) => ratio(b) - ratio(a));
   const groups = AREA_ORDER.map((area) => ({
     area,
     drivers: flagged.filter((d) => (d.area ?? "other") === area),
   })).filter((g) => g.drivers.length > 0);
+  // Room past the worst bar, and the limit tick never sits at the very edge.
+  const scale = Math.max(2, ...flagged.map(ratio)) * 1.05;
+  const audible = flagged.some((d) => d.audible);
+  const running = state === "running";
 
   return (
     <section
-      className="tool-panel tool-card animate-card border-line bg-surface-1 rounded-2xl border p-5 !mb-0"
-      aria-live="polite"
+      className="tool-panel audio-crackle animate-card !mb-0"
+      aria-busy={running}
+      data-idle={state === "idle"}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <h2 className="type-section text-ink">{c.crackleTitle}</h2>
-          <p className="mt-1 max-w-2xl text-[12.5px] leading-relaxed text-ink-3">{c.crackleBody}</p>
-        </div>
-        <button
-          type="button"
-          className="tool-primary-action shrink-0"
-          onClick={() => void measure()}
-          disabled={state === "running"}
-          aria-busy={state === "running"}
-        >
-          {state === "running" ? c.crackleRunning : c.crackleRun}
-        </button>
-      </div>
-      {error && (
-        <p className="mt-3 text-[12px] text-warn" role="alert">
-          {error}
-        </p>
-      )}
-      {report && (
-        <div className="border-line mt-4 border-t pt-3">
-          <p className="text-[13px] font-semibold text-ink">
-            {flagged.length
-              ? format(c.crackleOver, { count: formatNumber(flagged.length) })
-              : c.crackleOk}
-          </p>
-          {groups.map((g) => (
-            <div key={g.area} className="mt-3">
-              <p className="type-label !text-ink-2">{c.areas[g.area][0]}</p>
-              <ul className="mt-1 flex flex-col gap-1">
-                {g.drivers.map((d) => (
-                  <li
-                    key={d.driver ?? "unattributed"}
-                    className="type-data selectable flex flex-wrap items-center gap-2 text-[12px] text-ink-2"
+      <ToolHeader
+        icon={WAVE_GLYPH}
+        title={c.crackleTitle}
+        description={c.crackleBody}
+        actions={
+          <button
+            type="button"
+            className="tool-primary-action"
+            onClick={() => void measure()}
+            disabled={running}
+          >
+            {running ? c.crackleRunning : c.crackleRun}
+          </button>
+        }
+      />
+      <div aria-live="polite">
+        {running && <ToolStatus busy>{c.crackleWait}</ToolStatus>}
+        {!running && error && <ToolStatus tone="error">{error}</ToolStatus>}
+        {!running && report && (
+          <>
+            <ToolStatus tone={audible ? "error" : flagged.length ? "neutral" : "active"}>
+              {flagged.length
+                ? format(c.crackleOver, { count: formatNumber(flagged.length) })
+                : c.crackleOk}
+            </ToolStatus>
+            <dl className="border-line divide-line mt-3 grid grid-cols-2 divide-x rounded-xl border">
+              {[report.dpc, report.isr].map((t) => (
+                <div key={t.kind} className="flex min-w-0 flex-col-reverse gap-1 px-4 py-3">
+                  <dt className="text-[11px] leading-snug text-ink-3">
+                    <span className="type-label !text-ink-3 block">
+                      {format(c.cracklePeak, { kind: t.kind.toUpperCase() })}
+                    </span>
+                    <span className="block">
+                      {format(c.crackleLimit, {
+                        value: format(c.micro, { value: formatNumber(t.limitUs) }),
+                      })}
+                    </span>
+                    <span className="block">
+                      {format(c.crackleTimesOver, { count: formatNumber(t.overLimit) })}
+                    </span>
+                  </dt>
+                  <dd
+                    className={`text-[20px] font-semibold leading-none tabular-nums ${
+                      t.maxUs > t.limitUs ? "text-warn" : "text-ok"
+                    }`}
                   >
-                    {format(c.crackleDriver, {
-                      driver: d.driver ?? c.unattributed,
-                      dpc: formatNumber(Math.round(d.dpc.maxUs)),
-                      isr: formatNumber(Math.round(d.isr.maxUs)),
-                    })}
-                    {d.audible && <Badge kind="warn">{c.crackleAudible}</Badge>}
-                  </li>
+                    {format(c.micro, { value: formatNumber(Math.round(t.maxUs)) })}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            {groups.length > 0 && (
+              <>
+                <p className="mt-4 text-[11.5px] leading-relaxed text-ink-3">{c.crackleLegend}</p>
+                {groups.map((g) => (
+                  <div key={g.area} className="border-line mt-3 border-t pt-3">
+                    <h3 className="type-label !text-ink-2">{c.areas[g.area][0]}</h3>
+                    <ul className="mt-2 flex flex-col gap-3">
+                      {g.drivers.map((d) => (
+                        <li key={d.driver ?? "unattributed"}>
+                          <p className="mb-1.5 flex flex-wrap items-center gap-2">
+                            <span className="type-data selectable text-[12px] font-semibold text-ink [overflow-wrap:anywhere]">
+                              {d.driver ?? c.unattributed}
+                            </span>
+                            {d.audible && <Badge kind="warn">{c.crackleAudible}</Badge>}
+                          </p>
+                          <div className="flex flex-col gap-1.5">
+                            {d.dpc.count > 0 && (
+                              <LimitBar
+                                c={c}
+                                kind="DPC"
+                                maxUs={d.dpc.maxUs}
+                                limitUs={report.dpc.limitUs}
+                                scale={scale}
+                                audible={!!d.audible}
+                              />
+                            )}
+                            {d.isr.count > 0 && (
+                              <LimitBar
+                                c={c}
+                                kind="ISR"
+                                maxUs={d.isr.maxUs}
+                                limitUs={report.isr.limitUs}
+                                scale={scale}
+                                audible={!!d.audible}
+                              />
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-2 text-[12px] leading-relaxed text-ink-3">
+                      {c.areas[g.area][1]}
+                    </p>
+                  </div>
                 ))}
-              </ul>
-              <p className="mt-1 text-[12px] leading-relaxed text-ink-3">{c.areas[g.area][1]}</p>
-            </div>
-          ))}
-          {flagged.length > 0 && (
-            <p className="mt-3 max-w-2xl text-[11.5px] leading-relaxed text-ink-3">
-              {c.crackleNote}
-            </p>
-          )}
-        </div>
-      )}
+                <p className="border-line mt-3 border-t pt-3 text-[11.5px] leading-relaxed text-ink-3">
+                  {c.crackleNote}
+                </p>
+              </>
+            )}
+          </>
+        )}
+      </div>
     </section>
   );
 }

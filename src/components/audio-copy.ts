@@ -7,6 +7,16 @@ import type { AudioBus, DriverArea } from "../types";
  *  named as third-party. */
 type AudioCopy = {
   subtitle: string;
+  heroTitle: string;
+  statDevices: string;
+  statFindings: string;
+  statFixes: string;
+  crackleWait: string;
+  cracklePeak: string;
+  crackleLimit: string;
+  crackleTimesOver: string;
+  crackleLegend: string;
+  micro: string;
   devicesTitle: string;
   output: string;
   input: string;
@@ -63,7 +73,6 @@ type AudioCopy = {
   crackleRunning: string;
   crackleOk: string;
   crackleOver: string;
-  crackleDriver: string;
   crackleAudible: string;
   crackleNote: string;
   unattributed: string;
@@ -98,6 +107,18 @@ type AudioCopy = {
 export const AUDIO_COPY: Record<Lang, AudioCopy> = {
   en: {
     subtitle: "See what Windows does with your sound and fix what gets in the way.",
+    heroTitle: "Sound on this PC",
+    statDevices: "Devices in use",
+    statFindings: "To review",
+    statFixes: "Fixes on",
+    crackleWait:
+      "Measuring for 10 seconds. Use the PC as you normally do; if you hear crackles, play some sound now.",
+    cracklePeak: "{kind} peak",
+    crackleLimit: "Microsoft's limit: {value}",
+    crackleTimesOver: "Times exceeded: {count}",
+    crackleLegend:
+      "Each bar is a driver's longest routine during the check; the tick marks Microsoft's limit.",
+    micro: "{value} µs",
     devicesTitle: "Your devices",
     output: "Output",
     input: "Microphone",
@@ -163,7 +184,6 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     crackleRunning: "Measuring for 10 s…",
     crackleOk: "No driver ran longer than Microsoft's limits during the check.",
     crackleOver: "Drivers that ran longer than Microsoft's limits: {count}",
-    crackleDriver: "{driver}: DPC {dpc} µs · ISR {isr} µs",
     crackleAudible: "May be audible",
     crackleNote:
       "Running past the limit makes a driver a suspect, not the proven source: test by updating it, or by disabling the device it serves, then check again.",
@@ -199,7 +219,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     readError: "Your audio devices could not be read.",
     retry: "Try again",
     scanDevicesTitle: "Your audio devices",
-    scanDevicesBody: "Output: {output} · Microphone: {input}",
+    scanDevicesBody: "Output: {output}. Microphone: {input}.",
     none: "none",
     duckingMute: "Windows mutes other sounds during calls",
     duckingPercent: "Windows lowers other sounds by {percent}% during calls",
@@ -217,6 +237,18 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
   },
   it: {
     subtitle: "Scopri cosa fa Windows con il tuo audio e correggi ciò che ti ostacola.",
+    heroTitle: "L'audio di questo PC",
+    statDevices: "Dispositivi in uso",
+    statFindings: "Da controllare",
+    statFixes: "Correzioni attive",
+    crackleWait:
+      "Misurazione di 10 secondi in corso. Usa il PC come sempre; se senti crepitii, fai partire un suono adesso.",
+    cracklePeak: "Picco {kind}",
+    crackleLimit: "Limite di Microsoft: {value}",
+    crackleTimesOver: "Superamenti: {count}",
+    crackleLegend:
+      "Ogni barra è la routine più lunga di un driver durante il controllo; la tacca segna il limite di Microsoft.",
+    micro: "{value} µs",
     devicesTitle: "I tuoi dispositivi",
     output: "Uscita",
     input: "Microfono",
@@ -284,7 +316,6 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     crackleRunning: "Misurazione per 10 s…",
     crackleOk: "Durante il controllo nessun driver ha superato i limiti di Microsoft.",
     crackleOver: "Driver che hanno superato i limiti di Microsoft: {count}",
-    crackleDriver: "{driver}: DPC {dpc} µs · ISR {isr} µs",
     crackleAudible: "Potrebbe sentirsi",
     crackleNote:
       "Superare il limite rende un driver sospetto, non la causa provata: prova ad aggiornarlo o a disattivare il dispositivo che serve, poi ripeti il controllo.",
@@ -323,7 +354,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     readError: "Non è stato possibile leggere i dispositivi audio.",
     retry: "Riprova",
     scanDevicesTitle: "I tuoi dispositivi audio",
-    scanDevicesBody: "Uscita: {output} · Microfono: {input}",
+    scanDevicesBody: "Uscita: {output}. Microfono: {input}.",
     none: "nessuno",
     duckingMute: "Windows silenzia gli altri suoni durante le chiamate",
     duckingPercent: "Windows abbassa gli altri suoni del {percent}% durante le chiamate",
@@ -341,6 +372,18 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
   },
   fr: {
     subtitle: "Voyez ce que Windows fait de votre son et corrigez ce qui vous gêne.",
+    heroTitle: "Le son de ce PC",
+    statDevices: "Appareils utilisés",
+    statFindings: "À vérifier",
+    statFixes: "Correctifs actifs",
+    crackleWait:
+      "Mesure en cours pendant 10 secondes. Utilisez le PC comme d'habitude ; si vous entendez des grésillements, lancez un son maintenant.",
+    cracklePeak: "Pic {kind}",
+    crackleLimit: "Limite de Microsoft : {value}",
+    crackleTimesOver: "Dépassements : {count}",
+    crackleLegend:
+      "Chaque barre montre la routine la plus longue d'un pilote pendant la mesure ; le repère indique la limite de Microsoft.",
+    micro: "{value} µs",
     devicesTitle: "Vos appareils",
     output: "Sortie",
     input: "Micro",
@@ -407,7 +450,6 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     crackleRunning: "Mesure pendant 10 s…",
     crackleOk: "Aucun pilote n'a dépassé les limites de Microsoft pendant la mesure.",
     crackleOver: "Pilotes ayant dépassé les limites de Microsoft : {count}",
-    crackleDriver: "{driver} : DPC {dpc} µs · ISR {isr} µs",
     crackleAudible: "Peut s'entendre",
     crackleNote:
       "Dépasser la limite fait d'un pilote un suspect, pas la source prouvée : testez en le mettant à jour ou en désactivant l'appareil qu'il dessert, puis mesurez de nouveau.",
@@ -452,7 +494,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     readError: "Impossible de lire vos appareils audio.",
     retry: "Réessayer",
     scanDevicesTitle: "Vos appareils audio",
-    scanDevicesBody: "Sortie : {output} · Micro : {input}",
+    scanDevicesBody: "Sortie : {output}. Micro : {input}.",
     none: "aucun",
     duckingMute: "Windows coupe les autres sons pendant les appels",
     duckingPercent: "Windows baisse les autres sons de {percent} % pendant les appels",
@@ -470,6 +512,18 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
   },
   es: {
     subtitle: "Mira lo que hace Windows con tu sonido y corrige lo que te estorba.",
+    heroTitle: "El sonido de este PC",
+    statDevices: "Dispositivos en uso",
+    statFindings: "Por revisar",
+    statFixes: "Correcciones activas",
+    crackleWait:
+      "Midiendo durante 10 segundos. Usa el PC como siempre; si oyes chasquidos, reproduce algún sonido ahora.",
+    cracklePeak: "Pico {kind}",
+    crackleLimit: "Límite de Microsoft: {value}",
+    crackleTimesOver: "Veces superado: {count}",
+    crackleLegend:
+      "Cada barra es la rutina más larga de un controlador durante la medición; la marca indica el límite de Microsoft.",
+    micro: "{value} µs",
     devicesTitle: "Tus dispositivos",
     output: "Salida",
     input: "Micrófono",
@@ -536,7 +590,6 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     crackleRunning: "Midiendo durante 10 s…",
     crackleOk: "Ningún controlador superó los límites de Microsoft durante la medición.",
     crackleOver: "Controladores que superaron los límites de Microsoft: {count}",
-    crackleDriver: "{driver}: DPC {dpc} µs · ISR {isr} µs",
     crackleAudible: "Puede oírse",
     crackleNote:
       "Superar el límite convierte a un controlador en sospechoso, no en la causa probada: pruébalo actualizándolo o desactivando el dispositivo al que sirve, y vuelve a medir.",
@@ -578,7 +631,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     readError: "No se han podido leer tus dispositivos de audio.",
     retry: "Reintentar",
     scanDevicesTitle: "Tus dispositivos de audio",
-    scanDevicesBody: "Salida: {output} · Micrófono: {input}",
+    scanDevicesBody: "Salida: {output}. Micrófono: {input}.",
     none: "ninguno",
     duckingMute: "Windows silencia los demás sonidos durante las llamadas",
     duckingPercent: "Windows baja un {percent} % los demás sonidos durante las llamadas",
@@ -596,6 +649,18 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
   },
   de: {
     subtitle: "Sieh, was Windows mit deinem Ton macht, und behebe, was stört.",
+    heroTitle: "Sound auf diesem PC",
+    statDevices: "Genutzte Geräte",
+    statFindings: "Zu prüfen",
+    statFixes: "Aktive Korrekturen",
+    crackleWait:
+      "Misst 10 Sekunden lang. Nutze den PC wie gewohnt – wenn du Knacken hörst, spiel jetzt etwas ab.",
+    cracklePeak: "{kind}-Spitze",
+    crackleLimit: "Microsofts Grenze: {value}",
+    crackleTimesOver: "Überschreitungen: {count}",
+    crackleLegend:
+      "Jeder Balken zeigt die längste Routine eines Treibers während der Messung, die Markierung Microsofts Grenze.",
+    micro: "{value} µs",
     devicesTitle: "Deine Geräte",
     output: "Ausgabe",
     input: "Mikrofon",
@@ -662,7 +727,6 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     crackleRunning: "Misst 10 s …",
     crackleOk: "Kein Treiber hat während der Messung Microsofts Grenzen überschritten.",
     crackleOver: "Treiber über Microsofts Grenzen: {count}",
-    crackleDriver: "{driver}: DPC {dpc} µs · ISR {isr} µs",
     crackleAudible: "Kann hörbar sein",
     crackleNote:
       "Wer die Grenze überschreitet, ist verdächtig, aber nicht als Ursache bewiesen: Teste, indem du den Treiber aktualisierst oder das Gerät deaktivierst, das er bedient, und miss dann erneut.",
@@ -704,7 +768,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     readError: "Deine Audiogeräte konnten nicht gelesen werden.",
     retry: "Erneut versuchen",
     scanDevicesTitle: "Deine Audiogeräte",
-    scanDevicesBody: "Ausgabe: {output} · Mikrofon: {input}",
+    scanDevicesBody: "Ausgabe: {output}. Mikrofon: {input}.",
     none: "keins",
     duckingMute: "Windows schaltet andere Töne bei Anrufen stumm",
     duckingPercent: "Windows senkt andere Töne bei Anrufen um {percent} %",
@@ -722,6 +786,18 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
   },
   pt: {
     subtitle: "Veja o que o Windows faz com o som e corrija o que atrapalha.",
+    heroTitle: "O som deste PC",
+    statDevices: "Dispositivos em uso",
+    statFindings: "A rever",
+    statFixes: "Correções ativas",
+    crackleWait:
+      "A medir durante 10 segundos. Use o PC como habitualmente; se ouvir estalidos, reproduza algum som agora.",
+    cracklePeak: "Pico {kind}",
+    crackleLimit: "Limite da Microsoft: {value}",
+    crackleTimesOver: "Vezes excedido: {count}",
+    crackleLegend:
+      "Cada barra é a rotina mais longa de um driver durante a medição; a marca indica o limite da Microsoft.",
+    micro: "{value} µs",
     devicesTitle: "Os seus dispositivos",
     output: "Saída",
     input: "Microfone",
@@ -788,7 +864,6 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     crackleRunning: "A medir durante 10 s…",
     crackleOk: "Nenhum driver excedeu os limites da Microsoft durante a medição.",
     crackleOver: "Drivers que excederam os limites da Microsoft: {count}",
-    crackleDriver: "{driver}: DPC {dpc} µs · ISR {isr} µs",
     crackleAudible: "Pode ouvir-se",
     crackleNote:
       "Exceder o limite torna um driver suspeito, não a causa comprovada: teste atualizando-o ou desativando o dispositivo que serve, e volte a medir.",
@@ -827,7 +902,7 @@ export const AUDIO_COPY: Record<Lang, AudioCopy> = {
     readError: "Não foi possível ler os dispositivos de áudio.",
     retry: "Tentar novamente",
     scanDevicesTitle: "Os seus dispositivos de áudio",
-    scanDevicesBody: "Saída: {output} · Microfone: {input}",
+    scanDevicesBody: "Saída: {output}. Microfone: {input}.",
     none: "nenhum",
     duckingMute: "O Windows silencia os outros sons durante as chamadas",
     duckingPercent: "O Windows reduz os outros sons em {percent}% durante as chamadas",

@@ -1519,6 +1519,7 @@ function App() {
                     lang={lang}
                     status={audio.status}
                     error={audio.error}
+                    rows={visibleTweaks}
                     onRetry={audio.reload}
                     pushToast={pushToast}
                   />
@@ -1690,6 +1691,7 @@ function App() {
                       s={s}
                       lang={lang}
                       status={audio.status}
+                      isPro={isProUnlocked}
                       busyId={busyId}
                       onToggle={(t) => void toggle(t)}
                       pushToast={pushToast}

@@ -1,0 +1,38 @@
+/* Audio page (audio.tsx). Ghost actions inside a card line their label up
+   with the text above them instead of the button's padding. */
+.audio-inline-action {
+  min-height: 32px;
+  margin-inline-start: -10px;
+  padding-inline: 10px;
+}
+/* Device cards: Windows' page for the device, as a square tool button. */
+.audio-icon-action {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  background: var(--surface-1);
+  transition:
+    border-color 150ms,
+    color 150ms,
+    background-color 150ms;
+}
+.audio-icon-action:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+.audio-icon-action:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
+}
+/* Before the first check the header is the whole card: no rule under it. */
+.audio-crackle[data-idle="true"] .tool-header {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}

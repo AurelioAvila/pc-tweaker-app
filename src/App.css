@@ -991,6 +991,10 @@ input[type="radio"] {
 .icon-module:has([data-tone="rose"]) {
   --symbol-color: #fb7aa0;
 }
+/* The Audio category's own hue (CATEGORY_STYLE.audio). */
+.icon-module:has([data-tone="lime"]) {
+  --symbol-color: #84cc16;
+}
 /* Used by the avatar only. The tweak modules carried one of these too and it
    read as a defect rather than as status — one indicator per row is enough,
    and the module's own backlight already separates Pro from free. */

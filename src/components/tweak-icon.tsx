@@ -5,7 +5,63 @@ export function TweakIcon({ id, fallback }: { id: string; fallback: ReactNode })
   const gradientId = useId();
   let drawing: ReactNode;
   let tone: string;
-  if (/mouse|input_lag/.test(id)) {
+  // Audio (1.20) first: the per-device ids carry words ("idle", "power")
+  // that the generic rows below would claim.
+  if (id.startsWith("audio_ducking")) {
+    // A call, and three level bars that stay full: nothing gets lowered.
+    tone = "lime";
+    drawing = (
+      <>
+        <path d="M20.5 16v2.6a1.8 1.8 0 0 1-2 1.8 17 17 0 0 1-7.4-2.6 16.7 16.7 0 0 1-5.2-5.2 17 17 0 0 1-2.6-7.4A1.8 1.8 0 0 1 5.1 3.3h2.6a1.8 1.8 0 0 1 1.8 1.5c.1.9.3 1.7.6 2.5a1.8 1.8 0 0 1-.4 1.9L8.6 10.3a14 14 0 0 0 5.2 5.2l1.1-1.1a1.8 1.8 0 0 1 1.9-.4c.8.3 1.6.5 2.5.6a1.8 1.8 0 0 1 1.5 1.8Z" />
+        <path className="symbol-keys" d="M14.5 3.5v5m3-5v5m3-5v5" strokeWidth="1.8" />
+      </>
+    );
+  } else if (/^bt_|bluetooth/.test(id)) {
+    tone = "sky";
+    drawing = (
+      <>
+        <rect x="5" y="2" width="14" height="20" rx="7" />
+        <path className="symbol-highlight" d="m8.5 8.5 7 7-3.5 3.5v-14l3.5 3.5-7 7" />
+      </>
+    );
+  } else if (id.startsWith("audio_idle:")) {
+    // The HD Audio function's codec vendor says what the device is: NVIDIA,
+    // AMD and Intel codecs are the GPU's HDMI/DisplayPort audio; the others
+    // (Realtek, Conexant, ...) are the PC's own sound chip.
+    if (/VEN_(10DE|1002|8086)/i.test(id)) {
+      tone = "violet";
+      drawing = (
+        <>
+          <rect x="3" y="4" width="18" height="12" rx="2" />
+          <path d="M9 20h6M12 16v4" />
+          <path d="M7.5 8.6h1.6l2.2-1.8v6.4l-2.2-1.8H7.5Z" />
+          <path
+            className="symbol-keys"
+            d="M13.6 8.4a2.4 2.4 0 0 1 0 3.2M15.8 6.9a4.8 4.8 0 0 1 0 6.2"
+          />
+        </>
+      );
+    } else {
+      tone = "lime";
+      drawing = (
+        <>
+          <path d="M3 9.4h2.8L10 6v12l-4.2-3.4H3a.8.8 0 0 1-.8-.8V10.2a.8.8 0 0 1 .8-.8Z" />
+          <circle cx="17" cy="12" r="4.6" />
+          <path className="symbol-highlight" d="M17 9.6V12l1.6 1.1" />
+        </>
+      );
+    }
+  } else if (id.startsWith("audio_power:")) {
+    // A USB plug: the device Windows may switch off.
+    tone = "cyan";
+    drawing = (
+      <>
+        <path d="M6 10h12v4a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-4Z" />
+        <path d="M8 10V3h8v7M12 17v4" />
+        <path className="symbol-keys" d="M10.5 6h.5m2 0h.5" strokeWidth="2" />
+      </>
+    );
+  } else if (/mouse|input_lag/.test(id)) {
     tone = "cyan";
     drawing = (
       <>

@@ -671,7 +671,8 @@ export function pageAnswer(
     case "flush_dns_cache":
       return { success: true, detail: "The DNS resolver cache was flushed." };
     case "trace_dpc_latency":
-      return DPC;
+      // As long as the real capture, so the running state can be reviewed.
+      return new Promise((done) => setTimeout(() => done(DPC), 1000 * Number(a.seconds ?? 10)));
     case "preview_tweak": {
       const t = ctx.tweaks().find((x) => x.id === a.id);
       if (!t) return null;

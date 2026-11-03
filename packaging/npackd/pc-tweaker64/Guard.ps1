@@ -37,7 +37,12 @@ try {
         $expected = [IO.Path]::GetFullPath((Get-Location).Path).TrimEnd([IO.Path]::DirectorySeparatorChar)
         foreach ($registration in $registrations) {
             if ([string]::IsNullOrWhiteSpace($registration.Directory)) { exit 12 }
-            $actual = [IO.Path]::GetFullPath($registration.Directory).TrimEnd([IO.Path]::DirectorySeparatorChar)
+            $directory = $registration.Directory
+            # The installer writes InstallLocation surrounded by double quotes.
+            if ($directory.Length -ge 2 -and $directory[0] -eq '"' -and $directory[$directory.Length - 1] -eq '"') {
+                $directory = $directory.Substring(1, $directory.Length - 2)
+            }
+            $actual = [IO.Path]::GetFullPath($directory).TrimEnd([IO.Path]::DirectorySeparatorChar)
             if (-not [string]::Equals($actual, $expected, [StringComparison]::OrdinalIgnoreCase)) {
                 Write-Output 'The registered installation does not belong to this package directory.'
                 exit 12

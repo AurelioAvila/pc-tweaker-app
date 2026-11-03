@@ -26,10 +26,13 @@ function Assert-Signed([string]$Path) {
     }
 }
 function Run-PackageScript([string]$Directory, [string]$Name, [int]$ExpectedExit) {
-    $process = Start-Process -FilePath $env:ComSpec -WorkingDirectory $Directory -ArgumentList @('/d', '/c', ('.Npackd\' + $Name + '.bat')) -WindowStyle Hidden -Wait -PassThru
+    $log = Join-Path $work ([Guid]::NewGuid().ToString('N'))
+    $process = Start-Process -FilePath $env:ComSpec -WorkingDirectory $Directory -ArgumentList @('/d', '/c', ('.Npackd\' + $Name + '.bat')) -WindowStyle Hidden -Wait -PassThru -RedirectStandardOutput ($log + '.out.txt') -RedirectStandardError ($log + '.err.txt')
     if ($process.ExitCode -ne $ExpectedExit) {
+        Get-Content -LiteralPath ($log + '.out.txt'), ($log + '.err.txt')
         throw ('Unexpected package result for ' + $Name + ': ' + $process.ExitCode + ', expected ' + $ExpectedExit)
     }
+    Write-Output ('PASS: ' + $Name + ' returned ' + $ExpectedExit)
 }
 Assert-Signed $installer
 $env:NPACKD_PACKAGE_BINARY = $installer

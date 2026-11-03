@@ -62,6 +62,8 @@ const LIFETIME_GRACE_PERIOD_SECS: u64 = 30 * 24 * 60 * 60;
 /// of PCs whose clock had drifted further or whose time zone was set by hand;
 /// a day matches the account service's allowance. It cannot extend the
 /// offline window: freshness is still measured from the signed `issued_at`.
+/// It also bounds the clock offset measured when a licence arrives
+/// (`clock_offset`).
 const MAX_CLOCK_SKEW_SECS: u64 = 24 * 60 * 60;
 
 /// Field names must match `backend/src/license.ts`'s `LicensePayload` type
@@ -170,7 +172,7 @@ fn verified_fresh_response(
     public_key_b64: &str,
 ) -> Option<LicensePayload> {
     let payload = verified_response(response, public_key_b64)?;
-    is_fresh(&payload).then_some(payload)
+    is_fresh(&payload, 0).then_some(payload)
 }
 
 fn require_pc_tweaker_product(payload: LicensePayload) -> Result<LicensePayload, VerifyError> {
@@ -194,28 +196,53 @@ fn now_secs() -> u64 {
 /// A payload that has passed signature verification *and* is still inside
 /// its grace period. This distinction matters: a validly signed license from
 /// three weeks ago proves the server said something true three weeks ago,
-/// not that it is still true now.
-fn is_fresh(payload: &LicensePayload) -> bool {
+/// not that it is still true now. `offset` is the one measured when this
+/// licence arrived.
+fn is_fresh(payload: &LicensePayload, offset: i64) -> bool {
     // A signed issue time is the server's clock: real time is at least that. Only
     // within the skew a slow PC is allowed, so a server clock that ran ahead can
     // never push this PC's time forward by more than that.
-    if payload.issued_at <= clock_now().saturating_add(MAX_CLOCK_SKEW_SECS) {
+    if payload.issued_at <= clock_now(offset).saturating_add(MAX_CLOCK_SKEW_SECS) {
         observe_server_time(payload.issued_at);
     }
-    is_fresh_at(payload, clock_now())
+    is_fresh_at(payload, clock_now(offset))
 }
 
-/// This PC's clock, never earlier than (a) the clock at start plus the time the
+/// This PC's clock, never earlier than the clock at start plus the time the
 /// process has run, so moving it back while the app is open cannot stretch the
-/// offline window, and (b) the server time this PC has proof of (see
-/// `observe_server_time`), which a restart cannot undo either.
-fn clock_now() -> u64 {
+/// offline window. Still this PC's time, not the server's.
+fn wall_now() -> u64 {
     static ANCHOR: OnceLock<(u64, Instant)> = OnceLock::new();
     let wall_now = now_secs();
     let (anchor_time, anchor_tick) = ANCHOR.get_or_init(|| (wall_now, Instant::now()));
-    wall_now
-        .max(anchor_time.saturating_add(anchor_tick.elapsed().as_secs()))
-        .max(trusted_now())
+    wall_now.max(anchor_time.saturating_add(anchor_tick.elapsed().as_secs()))
+}
+
+/// The server's clock as far as this PC can tell: its own clock moved by the
+/// licence's `offset` (`clock_offset`), never earlier than the server time it
+/// has proof of (see `observe_server_time`), which a restart cannot undo
+/// either. Every freshness check reads this.
+fn clock_now(offset: i64) -> u64 {
+    server_now(wall_now(), offset, trusted_now())
+}
+
+/// Only this PC's clock takes the offset; the floor is server time already. A
+/// floor raised from this PC's own clock would put a PC a day ahead back a day
+/// ahead, so nothing but signed server times ever raises it.
+fn server_now(wall: u64, offset: i64, floor: u64) -> u64 {
+    wall.saturating_add_signed(offset).max(floor)
+}
+
+/// Seconds to add to this PC's clock to read the server's: a licence's signed
+/// `issued_at` minus this PC's clock when it arrived. A PC whose clock runs a
+/// day ahead (a time zone set by hand) otherwise read the last day of a trial
+/// or billing period as over, and `save_license` refused the fresh licence.
+/// Bounded by the skew allowance: `receivedAt` is not signed, so an edited one,
+/// or an old licence saved again, moves the clock by a day at most, never a
+/// licence by a month.
+fn clock_offset(issued_at: u64, received_at: u64) -> i64 {
+    let skew = i128::from(MAX_CLOCK_SKEW_SECS);
+    (i128::from(issued_at) - i128::from(received_at)).clamp(-skew, skew) as i64
 }
 
 /// Server time this process has proof of: the newest signed `issued_at` it
@@ -357,7 +384,9 @@ pub struct LicenseStore {
 
 /// `license.json`: the signed response, verbatim, plus `seenAt`, the server
 /// time this PC had proof of when the licence was last checked (see
-/// `fresh_after_restart`). Older releases read the same file and ignore it.
+/// `fresh_after_restart`), and `receivedAt`, this PC's clock when the licence
+/// arrived (see `clock_offset`). Older releases read the same file and ignore
+/// both; files they wrote lack them and read as they always did.
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CachedLicense {
@@ -365,6 +394,17 @@ struct CachedLicense {
     response: SignedLicenseResponse,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     seen_at: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    received_at: Option<u64>,
+}
+
+impl CachedLicense {
+    /// The offset measured when this licence arrived; none (0) for a file
+    /// written before `receivedAt` existed.
+    fn offset(&self, payload: &LicensePayload) -> i64 {
+        self.received_at
+            .map_or(0, |received| clock_offset(payload.issued_at, received))
+    }
 }
 
 /// One writer at a time: the floor is written back from read paths too.
@@ -378,21 +418,22 @@ impl LicenseStore {
     }
 
     pub fn save(&self, response: &SignedLicenseResponse) -> std::io::Result<()> {
-        self.write(response, trusted_now())
+        let seen_at = trusted_now();
+        self.write(&CachedLicense {
+            response: response.clone(),
+            seen_at: (seen_at > 0).then_some(seen_at),
+            received_at: Some(now_secs()),
+        })
     }
 
-    fn write(&self, response: &SignedLicenseResponse, seen_at: u64) -> std::io::Result<()> {
+    fn write(&self, cached: &CachedLicense) -> std::io::Result<()> {
         let _guard = STORE_WRITE
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner());
         if let Some(parent) = self.file_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        let cached = CachedLicense {
-            response: response.clone(),
-            seen_at: (seen_at > 0).then_some(seen_at),
-        };
-        let json = serde_json::to_string_pretty(&cached).unwrap();
+        let json = serde_json::to_string_pretty(cached).unwrap();
         let tmp = self
             .file_path
             .with_extension(format!("json.{}.tmp", std::process::id()));
@@ -445,13 +486,17 @@ impl LicenseStore {
         if let Some(seen) = cached.seen_at {
             observe_server_time(seen.min(offline_window_end(&payload)));
         }
-        let fresh =
-            is_fresh(&payload) && fresh_after_restart(&payload, cached.seen_at, clock_now());
+        let offset = cached.offset(&payload);
+        let fresh = is_fresh(&payload, offset)
+            && fresh_after_restart(&payload, cached.seen_at, clock_now(offset));
         // Keep the proven time on disk while the app runs, so a restart with
-        // the clock moved back starts from it.
+        // the clock moved back starts from it. Server time only: `trusted_now`.
         let proven = trusted_now();
         if proven >= cached.seen_at.unwrap_or(0).saturating_add(FLOOR_WRITE_SECS) {
-            let _ = self.write(&cached.response, proven);
+            let _ = self.write(&CachedLicense {
+                seen_at: Some(proven),
+                ..cached
+            });
         }
         fresh.then_some(payload)
     }
@@ -466,7 +511,9 @@ impl LicenseStore {
 pub fn save_license(app: tauri::AppHandle, response: SignedLicenseResponse) -> Result<(), String> {
     let payload = verify_for_pc_tweaker(&response.payload_json, &response.signature)
         .map_err(|e| format!("license did not verify: {:?}", e))?;
-    if !is_fresh(&payload) {
+    // Judged on the server's clock as this very response gives it, so a PC a
+    // day ahead does not refuse the licence for the last day of a plan.
+    if !is_fresh(&payload, clock_offset(payload.issued_at, now_secs())) {
         return Err("license is expired or its issue time is ahead of this PC's clock".into());
     }
     if !bound_to(&response.payload_json, device_hash().as_deref()) {
@@ -716,7 +763,7 @@ mod tests {
         // itself is already proven against real Node output above.
         let json = serde_json::to_string(&payload).unwrap();
         let _ = json; // documents intent; not signed here, see note above
-        assert!(is_fresh(&payload));
+        assert!(is_fresh(&payload, 0));
         // Round-trip the store itself with an (unsigned-for-this-test)
         // response shape to confirm save/load/file-format plumbing works.
         let resp = SignedLicenseResponse {
@@ -738,7 +785,7 @@ mod tests {
             issued_at: now_secs().saturating_sub(GRACE_PERIOD_SECS + 3600),
             expires_at: None,
         };
-        assert!(!is_fresh(&stale));
+        assert!(!is_fresh(&stale, 0));
     }
 
     #[test]
@@ -948,26 +995,221 @@ mod tests {
     }
 
     #[test]
-    fn the_cache_keeps_its_proven_time_and_reads_files_from_older_releases() {
+    fn the_cache_keeps_its_proven_time_and_when_the_licence_arrived() {
         let dir = temp_dir("seen-at");
         let store = LicenseStore::new(dir.clone());
         let response = SignedLicenseResponse {
             payload_json: "{}".into(),
             signature: "fixture".into(),
         };
-        store.write(&response, 1_800_000_123).unwrap();
+        store
+            .write(&CachedLicense {
+                response: response.clone(),
+                seen_at: Some(1_800_000_123),
+                received_at: Some(1_800_000_000),
+            })
+            .unwrap();
         let text = std::fs::read_to_string(dir.join("license.json")).unwrap();
         assert!(text.contains("\"seenAt\": 1800000123"), "{text}");
-        assert_eq!(store.load_cached().unwrap().seen_at, Some(1_800_000_123));
-        // A file written by 1.18.15 (no seenAt) still loads.
-        std::fs::write(
-            dir.join("license.json"),
-            r#"{"payloadJson":"{}","signature":"fixture"}"#,
-        )
-        .unwrap();
-        let old = store.load_cached().unwrap();
-        assert_eq!(old.seen_at, None);
-        assert_eq!(old.response.payload_json, "{}");
+        assert!(text.contains("\"receivedAt\": 1800000000"), "{text}");
+        let loaded = store.load_cached().unwrap();
+        assert_eq!(loaded.seen_at, Some(1_800_000_123));
+        assert_eq!(loaded.received_at, Some(1_800_000_000));
+        // A licence saved now records this PC's clock as it arrived.
+        store.save(&response).unwrap();
+        let saved = store.load_cached().unwrap();
+        assert!(saved
+            .received_at
+            .is_some_and(|at| at.abs_diff(now_secs()) < 60));
+    }
+
+    /// An upgrade neither takes Pro away nor gives an old cache more time: a
+    /// file without `receivedAt` gets no offset, which is this PC's clock and
+    /// the same floor, exactly as before. Its next licence brings the offset.
+    #[test]
+    fn upgrading_from_each_older_cache_shape() {
+        let dir = temp_dir("shapes");
+        let store = LicenseStore::new(dir.clone());
+        let resp: SignedLicenseResponse = serde_json::from_str(REAL_NODE_SIGNED_RESPONSE).unwrap();
+        let payload = verify(&resp.payload_json, &resp.signature).unwrap();
+        let file = |extra: serde_json::Value| {
+            let mut value: serde_json::Value =
+                serde_json::from_str(REAL_NODE_SIGNED_RESPONSE).unwrap();
+            value
+                .as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            std::fs::write(dir.join("license.json"), value.to_string()).unwrap();
+            let cached = store.load_cached().unwrap();
+            assert_eq!(cached.response.payload_json, resp.payload_json);
+            (cached.seen_at, cached.received_at, cached.offset(&payload))
+        };
+        // 1.18.15 and earlier: the signed response alone.
+        assert_eq!(file(serde_json::json!({})), (None, None, 0));
+        // 1.18.16 to 1.20.0: plus seenAt.
+        assert_eq!(
+            file(serde_json::json!({ "seenAt": 1_787_100_000_u64 })),
+            (Some(1_787_100_000), None, 0)
+        );
+        // The build of #175, never released: receivedAt alone.
+        let received = payload.issued_at + 3600;
+        assert_eq!(
+            file(serde_json::json!({ "receivedAt": received })),
+            (None, Some(received), -3600)
+        );
+    }
+
+    /// The floor holds server time only: reading a clock corrected a day
+    /// forward, and checking a licence on it, must not lift the floor with it.
+    #[test]
+    fn reading_the_corrected_clock_never_raises_the_floor() {
+        let payload = LicensePayload {
+            issued_at: now_secs(),
+            expires_at: None,
+            ..last_two_days()
+        };
+        let ahead = MAX_CLOCK_SKEW_SECS as i64;
+        assert!(clock_now(ahead) + 5 >= now_secs() + MAX_CLOCK_SKEW_SECS);
+        assert!(is_fresh(&payload, ahead));
+        // No test shows this process a server time past the real one.
+        assert!(trusted_now() <= now_secs() + 60);
+    }
+
+    const DAY: u64 = 24 * 60 * 60;
+    /// The server's clock when the licence below was signed.
+    const SIGNED: u64 = 1_800_000_000;
+
+    /// A plan in its last two days, signed at `SIGNED`.
+    fn last_two_days() -> LicensePayload {
+        LicensePayload {
+            user_id: "clock".into(),
+            is_pro: true,
+            plan: Some("monthly".into()),
+            product: Some(PRODUCT_ID.into()),
+            issued_at: SIGNED,
+            expires_at: Some(SIGNED + 2 * DAY),
+        }
+    }
+
+    /// One check on fixed clocks: this PC reads `wall` now and read `received`
+    /// when the licence arrived; `floor` is the server time already proven (the
+    /// signed issue time plus the time the app has run, or `seenAt`).
+    fn pro_on(payload: &LicensePayload, wall: u64, received: u64, floor: u64) -> bool {
+        let offset = clock_offset(payload.issued_at, received);
+        is_fresh_at(payload, server_now(wall, offset, floor))
+    }
+
+    /// QA 15 Oct 2026: with the PC clock a day ahead, the last day of the trial
+    /// or a billing period read as Free while the server said Pro.
+    #[test]
+    fn a_pc_a_day_ahead_keeps_pro_for_the_whole_licence() {
+        let payload = last_two_days();
+        let received = SIGNED + DAY;
+        // The floor (server time) stays under the corrected clock all along.
+        for run in [0, DAY, 2 * DAY - 1] {
+            assert!(
+                pro_on(&payload, received + run, received, SIGNED + run),
+                "{run}"
+            );
+        }
+        assert!(!pro_on(
+            &payload,
+            received + 2 * DAY,
+            received,
+            SIGNED + 2 * DAY
+        ));
+        // Before: this PC's own clock ended the plan a day early.
+        assert!(!is_fresh_at(&payload, received + DAY));
+    }
+
+    #[test]
+    fn a_pc_a_day_behind_keeps_pro_for_the_whole_licence_and_no_longer() {
+        let payload = last_two_days();
+        let received = SIGNED - DAY;
+        for run in [0, DAY, 2 * DAY - 1] {
+            assert!(
+                pro_on(&payload, received + run, received, SIGNED + run),
+                "{run}"
+            );
+        }
+        // Offline after a restart, the floor from an earlier run: the plan
+        // still ends on time, where this PC's own clock gave it a day more.
+        assert!(!pro_on(&payload, received + 2 * DAY, received, SIGNED));
+        assert!(is_fresh_at(&payload, received + 2 * DAY));
+    }
+
+    #[test]
+    fn a_clock_set_back_after_receipt_still_expires_on_schedule() {
+        let payload = last_two_days();
+        let end = SIGNED + 2 * DAY;
+        for received in [SIGNED - DAY, SIGNED, SIGNED + DAY] {
+            let offset = clock_offset(SIGNED, received);
+            // At the end of the plan, this PC's clock moved back a day and a half.
+            let set_back = received + DAY / 2;
+            assert!(
+                is_fresh_at(&payload, server_now(set_back, offset, 0)),
+                "the moved-back clock alone would keep Pro"
+            );
+            // While the app runs, the floor has reached the end...
+            assert!(!pro_on(&payload, set_back, received, end));
+            // ...and after a restart, seenAt has.
+            assert!(!fresh_after_restart(
+                &payload,
+                Some(end),
+                server_now(set_back, offset, end)
+            ));
+        }
+    }
+
+    #[test]
+    fn a_clock_pushed_forward_after_receipt_gains_nothing() {
+        let payload = last_two_days();
+        // Five days forward a day in: the plan ends early on this PC, never late...
+        assert!(!pro_on(&payload, SIGNED + 6 * DAY, SIGNED, SIGNED + DAY));
+        // ...and the floor did not follow the clock, so setting it right gives
+        // Pro back until the signed end, and not past it.
+        assert!(pro_on(&payload, SIGNED + DAY, SIGNED, SIGNED + DAY));
+        assert!(!pro_on(
+            &payload,
+            SIGNED + 2 * DAY,
+            SIGNED,
+            SIGNED + 2 * DAY
+        ));
+    }
+
+    #[test]
+    fn a_restart_with_seen_at_and_an_offset_gives_the_right_verdict() {
+        let payload = last_two_days();
+        let received = SIGNED + DAY;
+        let offset = clock_offset(SIGNED, received);
+        let after_restart = |wall: u64, seen: u64| {
+            let floor = seen.min(offline_window_end(&payload));
+            fresh_after_restart(&payload, Some(seen), server_now(wall, offset, floor))
+        };
+        // A day in, last seen an hour earlier: still Pro.
+        assert!(after_restart(received + DAY, SIGNED + DAY - 3600));
+        // The app saw the end, then the clock went back a day: over.
+        assert!(!after_restart(received + DAY, SIGNED + 2 * DAY));
+        // Past the end on the corrected clock, whatever seenAt says.
+        assert!(!after_restart(received + 2 * DAY, SIGNED));
+    }
+
+    /// `receivedAt` is not signed: an offset out of range is bounded to the
+    /// skew allowance, so an edited file buys a day at most, never a month.
+    #[test]
+    fn an_out_of_range_offset_is_bounded_to_a_day() {
+        let skew = MAX_CLOCK_SKEW_SECS as i64;
+        assert_eq!(clock_offset(SIGNED, SIGNED + 30 * DAY), -skew);
+        assert_eq!(clock_offset(SIGNED, 0), skew);
+        assert_eq!(clock_offset(SIGNED, u64::MAX), -skew);
+        assert_eq!(clock_offset(u64::MAX, 0), skew);
+        // A receivedAt edited to a month ahead, offline, seenAt removed: the
+        // plan runs at most a day past its signed end.
+        let payload = last_two_days();
+        let edited = SIGNED + 30 * DAY;
+        assert!(pro_on(&payload, SIGNED + 3 * DAY - 1, edited, SIGNED));
+        assert!(!pro_on(&payload, SIGNED + 3 * DAY, edited, SIGNED));
+        assert!(!pro_on(&payload, SIGNED + 30 * DAY, edited, SIGNED));
     }
 
     #[cfg(windows)]

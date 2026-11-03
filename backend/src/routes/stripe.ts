@@ -23,8 +23,9 @@ import {
   withQuery,
 } from "../stripe-policy";
 import { sendMail } from "../mailer";
+import { consumeGlobalBudget } from "../public-form-guard";
 import { bonusMail, brandFor, endingMail, proWelcomeHtml, proWelcomeSubject, proWelcomeText, refundHtml, refundSubject, refundText } from "../emails/pro-welcome";
-import { copyFor, formatDay } from "../emails/copy";
+import { copyFor, formatDay, isLocale } from "../emails/copy";
 import { SUPPORT_INBOX, SUPPORT_REPLY_TO } from "../support-inbox";
 import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
 import { promoCheckout } from "../promo";
@@ -59,6 +60,7 @@ const CHECKOUT_GUARD_ENABLED = process.env.CHECKOUT_GUARD_ENABLED === "1";
 // used to hammer Stripe's session-creation API in a loop. Keyed on the user
 // id rather than IP for the same reason the auth limiter keys on email: it's
 // the thing that can't be rotated for free.
+const RATE_LIMITED = { error: "Too many attempts. Please wait a few minutes and try again.", code: "rate_limited" };
 const checkoutLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,
@@ -67,18 +69,25 @@ const checkoutLimiter = rateLimit({
   // /tip is unauthenticated, so req.userId is undefined there — without
   // the fallback every anonymous tipper would share a single bucket.
   keyGenerator: (req: Request) => (req.userId ? `user:${req.userId}` : `ip:${req.ip}`),
+  // JSON with a stable code, so the app shows its own translated message, not "HTTP 429".
+  message: RATE_LIMITED,
 });
 
-// /tip needs no account and req.ip can be spoofed behind the proxy, so a
-// per-IP limit alone does not stop someone minting Checkout pages to test
-// stolen cards. Real tips are rare: one shared bucket caps the total.
+// /tip needs no account, so one caller must not be able to lock every tipper
+// out: each address has its own bucket (req.ip follows the trusted-proxy
+// setup in index.ts), and a global ceiling stays as the backstop against
+// many addresses minting Checkout pages to test stolen cards.
 const tipLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  limit: 20,
+  limit: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: () => "tip",
+  message: RATE_LIMITED,
+  keyGenerator: (req: Request) => `ip:${req.ip}`,
 });
+const tipGlobalCeiling = (_req: Request, res: Response, next: NextFunction) =>
+  consumeGlobalBudget("tip", 60) ? next() : res.status(429).json(RATE_LIMITED);
+const tipLimits = [tipLimiter, tipGlobalCeiling];
 
 /** How long checkout alone buys, until the subscription event confirms the
  * real billing period. Generous enough to absorb a slow or retried webhook,
@@ -552,6 +561,8 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       }
       // The thanks page names the app, says "trial" rather than "payment"
       // when nothing was charged, and speaks the account's language.
+      // Stripe's page speaks the account's language (our codes are Stripe's own, pt being Portuguese); otherwise it follows the browser.
+      params.locale = locale && isLocale(locale) ? locale : "auto";
       params.success_url = withQuery(params.success_url!, { product, ...(trial ? { trial: "1" } : {}), ...(locale ? { lang: locale } : {}) });
       // The cancel page offers "Try again" on the same plan (checkout-recovery.ts, resumeCheckoutUrl).
       if (params.cancel_url) params.cancel_url = withQuery(params.cancel_url, { product, plan: planKey, ...(locale ? { lang: locale } : {}) });
@@ -883,7 +894,7 @@ async function tipCheckoutUrl(source: Record<string, unknown> | undefined, req: 
   }
 }
 
-router.post("/tip", checkoutLimiter, tipLimiter, requireStripe, async (req: Request, res: Response) => {
+router.post("/tip", checkoutLimiter, tipLimits, requireStripe, async (req: Request, res: Response) => {
   const { status, error, url } = await tipCheckoutUrl(req.body, req);
   res.status(status).json(error ? { error } : { url });
 });
@@ -896,7 +907,7 @@ router.get("/tip/start", (req: Request, res: Response, next: NextFunction) => {
   if (req.method === "HEAD") return res.status(204).end();
   res.setHeader("X-Robots-Tag", "noindex, nofollow");
   next();
-}, checkoutLimiter, tipLimiter, requireStripe, async (req: Request, res: Response) => {
+}, checkoutLimiter, tipLimits, requireStripe, async (req: Request, res: Response) => {
   const { status, error, url } = await tipCheckoutUrl({ product: req.query.product, quantity: req.query.quantity, method: req.query.method }, req);
   if (error) return res.status(status).type("text").send(error);
   res.redirect(303, url!);

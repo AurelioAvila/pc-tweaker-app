@@ -770,8 +770,8 @@ function App() {
       body: JSON.stringify(crypto ? { quantity, method: "crypto" } : { quantity }),
     });
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}) as { error?: string });
-      throw new Error(body.error || `HTTP ${res.status}`);
+      const body = await res.json().catch(() => ({}) as { error?: string; code?: string });
+      throw new CheckoutError(body.error || `HTTP ${res.status}`, body.code);
     }
     const data = (await res.json()) as { url: string };
     await openUrl(data.url);
@@ -790,11 +790,20 @@ function App() {
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     });
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}) as { error?: string });
-      throw new Error(body.error || `HTTP ${res.status}`);
+      const body = await res.json().catch(() => ({}) as { error?: string; code?: string });
+      throw new CheckoutError(body.error || `HTTP ${res.status}`, body.code);
     }
     const data = (await res.json()) as { url: string };
     await openUrl(data.url);
+  }
+
+  // The server's English text is only the fallback: a code it knows is shown in the app's language.
+  function checkoutErrorText(e: unknown): string {
+    if (e instanceof CheckoutError && e.code) {
+      const known = (s.auth.checkoutErrors as Record<string, string>)[e.code];
+      if (known) return known;
+    }
+    return String(e instanceof Error ? e.message : e);
   }
 
   const CATEGORIES: { key: Section; label: string; icon: React.ReactElement }[] = [
@@ -1138,7 +1147,7 @@ function App() {
             try {
               await buyCoffee(quantity, crypto);
             } catch (e) {
-              pushToast("error", String(e instanceof Error ? e.message : e));
+              pushToast("error", checkoutErrorText(e));
             }
           }}
         />
@@ -1488,14 +1497,14 @@ function App() {
                           setAccountMenuOpen(true);
                           return;
                         }
-                        pushToast("error", String(e instanceof Error ? e.message : e));
+                        pushToast("error", checkoutErrorText(e));
                       }
                     }}
                     onManageBilling={async () => {
                       try {
                         await openBillingPortal();
                       } catch (e) {
-                        pushToast("error", String(e instanceof Error ? e.message : e));
+                        pushToast("error", checkoutErrorText(e));
                       }
                     }}
                   />

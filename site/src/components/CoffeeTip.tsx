@@ -59,15 +59,18 @@ export function CoffeeTip({ children }: { children: React.ReactNode }) {
           >
             −
           </StepperButton>
-          {/* aria-live so the new count is announced, not only the button that
-              changed it. The key remounts the span, replaying the pop
-              animation on every press. */}
+          {/* aria-live so the new count and its total are announced, not only
+              the button that changed it. The key remounts the span, replaying
+              the pop animation on every press. The total sits under the count
+              rather than beside it so the control stays one line on a 360 px
+              phone. */}
           <span
             key={count}
             aria-live="polite"
-            className="coffee-count font-mono-t min-w-[96px] text-center text-[14px] font-bold whitespace-nowrap"
+            className="coffee-count font-mono-t flex min-w-[46px] flex-col items-center text-center leading-tight"
           >
-            {count} ☕ · {euro(count * COFFEE_CENTS)}
+            <span className="text-[14px] font-bold">{count} ☕</span>
+            <span className="text-[11px] font-semibold text-[var(--fg-dim)]">{euro(count * COFFEE_CENTS)}</span>
           </span>
           <StepperButton
             label={text.coffee.more}

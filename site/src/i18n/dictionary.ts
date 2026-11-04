@@ -229,6 +229,7 @@ export interface Dictionary {
   };
   readonly coffee: {
     readonly pill: string;
+    readonly pillShort: string;
     readonly caption: string;
     readonly fewer: string;
     readonly more: string;
@@ -239,7 +240,8 @@ export interface Dictionary {
 export const engDictionary: Dictionary = {
   "coffee": {
     "pill": "Support PC Tweaker",
-    "caption": "Optional one-time tip. Your download is free.",
+    "pillShort": "Support",
+    "caption": "Optional one-time tip, €1 per coffee. Your download is free. Stripe may show the amount in your local currency.",
     "fewer": "One fewer coffee",
     "more": "One more coffee",
     "unavailable": "Tipping is temporarily unavailable. You can still download PC Tweaker."

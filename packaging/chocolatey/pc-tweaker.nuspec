@@ -10,19 +10,29 @@
     <licenseUrl>https://github.com/AurelioAvila/pc-tweaker-app/blob/HEAD/LICENSE</licenseUrl>
     <projectUrl>https://pctweaker.app/</projectUrl>
     <iconUrl>https://cdn.jsdelivr.net/gh/AurelioAvila/pc-tweaker-app@master/src-tauri/icons/128x128.png</iconUrl>
-    <description>PC Tweaker is a Windows 10/11 tuning and maintenance application. It brings inspectable system settings, editable profiles, hardware readings and selected cleanup tools into one interface.
+    <description>See the finding. Review the change.
 
-Review each change before applying it. Supported settings save their original values for restoration; cleanup and repair operations have different recovery limits. Performance results depend on the hardware and workload, and no universal FPS increase is promised.
+PC Tweaker brings Windows tuning, audio diagnostics, privacy and maintenance into one review workflow for Windows 10/11 x64. Inspect findings and supported settings before deciding what to apply.
 
-The free tier includes core tweaks and selected monitoring tools. Optional paid plans add advanced tools. Check the official website and checkout for current features, pricing and terms.
+What you can inspect:
+- Scan findings across performance, junk files, startup, privacy, registry, memory, hardware, latency and audio.
+- Audio device formats, effects, spatial sound and Equalizer APO status, with findings such as a Bluetooth headset in call mode or a muted microphone. The app does not change microphone volume on its own.
+- Read-only hardware information and driver DPC/ISR traces for investigating a specific workload.
+- Change history with previous values and restoration for supported settings.
 
-The official Windows installer is digitally signed by Aurelio Avila and timestamped. The source repository is available for inspection under a proprietary, source-available license, not an OSI-approved open-source license.
+The current catalog has 84 controls: 48 Free and 36 Pro. Free requires no account or card. Optional paid plans add advanced tools; check the official site and checkout for current prices and terms. Feature availability depends on Windows, hardware and drivers. A finding does not guarantee that a change will improve performance.
 
-Package notes: since 1.18.8 this package runs the same signed setup as winget and the in-app updater, installed for the user who runs Chocolatey in %LocalAppData%\PC Tweaker. Earlier versions of this package used the MSI.</description>
-    <summary>Windows tuning and maintenance with inspectable, restorable settings</summary>
-    <releaseNotes>https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.20.1</releaseNotes>
+Review each control's trade-offs. Restoration covers supported settings; permanently deleted files, repairs and driver operations have separate recovery limits. An FPS increase or lower latency is not guaranteed.
+
+View the current 1.20-series interface previews and capture details: https://github.com/AurelioAvila/pc-tweaker-app/blob/master/docs/screenshots/README.md . These are Pro-view browser-demo captures with synthetic data, not native Windows measurements or customer results.
+
+This package downloads the official 1.20.1 x64 installer with a fixed SHA-256. It is publisher-signed by Aurelio Avila with a trusted timestamp. SmartScreen may still display a reputation warning. Installation is for the user running Chocolatey, in %LocalAppData%\PC Tweaker; earlier package versions used MSI. No tweak or driver operation is requested by this package.
+
+PC Tweaker is proprietary/freemium. Viewable source is not an OSI-approved open-source license.</description>
+    <summary>Windows tuning and audio diagnostics with recorded changes</summary>
+    <releaseNotes>1.20.1: checkout and billing error messages follow the app language. A PC clock running ahead no longer ends Pro up to a day early. Full release notes: https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.20.1</releaseNotes>
     <copyright>2026 Aurelio Avila</copyright>
-    <tags>pc-tweaker windows tuning optimization privacy gaming performance tweak admin</tags>
+    <tags>pc-tweaker windows windows-10 windows-11 audio-diagnostics dpc-latency hardware-monitoring tuning privacy gaming maintenance admin</tags>
     <projectSourceUrl>https://github.com/AurelioAvila/pc-tweaker-app</projectSourceUrl>
     <packageSourceUrl>https://github.com/AurelioAvila/pc-tweaker-app/tree/master/packaging/chocolatey</packageSourceUrl>
     <docsUrl>https://pctweaker.app/support/</docsUrl>

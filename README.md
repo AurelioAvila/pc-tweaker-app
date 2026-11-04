@@ -29,22 +29,24 @@ For Windows 10/11 users who want to inspect settings before changing them. Revie
 
 <p align="center"><a href="#whats-new-in-120">What's new in 1.20</a> · <a href="#what-you-can-do">Features</a> · <a href="#what-changes-on-your-system">What changes</a> · <a href="#free-and-pro">Free and Pro</a> · <a href="#download-integrity-and-code-signing">Code signing</a> · <a href="#build-from-source">Build from source</a></p>
 
-<p align="center"><img src="docs/screenshots/pc-tweaker-1.19-scan-results-sample-data.jpg" alt="PC Tweaker 1.19.0 Scan 2.0 results in the official browser demo, with a visible Interface preview — sample data label; readings are synthetic" width="100%"></p>
+<p align="center"><img src="docs/screenshots/pc-tweaker-1.20-scan-results-sample-data.png" alt="PC Tweaker 1.20.0 Scan results in the official browser demo, showing 20 checks before selecting changes; visible interface preview and sample-data disclosure" width="100%"></p>
 
-*PC Tweaker 1.19.0 interface preview from the official browser demo. Readings are synthetic sample data, not measurements from a real PC. [Capture details and hashes](docs/screenshots/README.md).*
+*PC Tweaker 1.20.0 interface preview, Pro view. Findings, readings and history entries are synthetic sample data, not measurements from a real PC. [Capture details and SHA-256 hashes](docs/screenshots/README.md).*
 
 <details>
-<summary>Explore the Scan 2.0 start screen and read-only hardware audit</summary>
+<summary>Explore Audio diagnostics and recorded changes in 1.20</summary>
 
-### Review the scan before making a change
+### See what Windows is doing with your sound
 
-<img src="docs/screenshots/pc-tweaker-1.19-scan-start-sample-data.jpg" alt="PC Tweaker 1.19.0 Scan 2.0 start screen in the official browser demo; interface preview with sample data" width="100%">
+<img src="docs/screenshots/pc-tweaker-1.20-audio-sample-data.png" alt="PC Tweaker 1.20.0 Audio interface with synthetic speaker, Bluetooth headset and microphone findings; Pro-view browser demo with visible sample-data disclosure" width="100%">
 
-### Inspect hardware findings
+Inspect device formats and findings before choosing a supported action. These devices and readings are examples, not a diagnosis of your PC.
 
-<img src="docs/screenshots/pc-tweaker-1.19-hardware-audit-sample-data.jpg" alt="PC Tweaker 1.19.0 read-only hardware audit interface showing synthetic RAM, PCIe and Resizable BAR findings; sample data, no firmware changes" width="100%">
+### Review the values behind a supported change
 
-These browser-demo captures illustrate the interface. They do not show real-PC scan results or measured performance gains. The hardware audit reads available information; it does not change firmware.
+<img src="docs/screenshots/pc-tweaker-1.20-change-history-sample-data.png" alt="PC Tweaker 1.20.0 Change history showing synthetic before-and-after registry values and recorded changes; Pro-view browser demo with visible sample-data disclosure" width="100%">
+
+This example shows the history interface, not evidence of a real system change. Restore controls apply to supported settings; cleanup and repair have separate recovery limits.
 
 </details>
 
@@ -102,6 +104,8 @@ Closing the window keeps PC Tweaker running in the Windows notification area. Cl
 - **Fixes for common sound problems.** "Don't lower my game during calls" stops Windows lowering every other sound by 80% while a call app uses the microphone, and "Fix Bluetooth volume control" helps when Bluetooth volume does not respond or jumps. Pro keeps HDMI audio, the sound chip or USB audio from switching off after silence, and restarts an audio device in one click. Every change can be restored with one click.
 - **Check for crackles.** A 10-second driver latency trace against Microsoft's limits (100 µs per DPC, 25 µs per interrupt), grouped by area. It asks for administrator approval and changes nothing.
 
+- **Clear Free and Pro boundaries.** The catalog has 84 controls: 48 Free and 36 Pro. Registry discovery is free; registry cleanup is Pro and saves a `.reg` backup. See [Free and Pro](#free-and-pro) for plans and [what changes on your system](#what-changes-on-your-system) for recovery limits.
+
 See the [1.20.0 release notes](https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.20.0) for the full update.
 
 ## What's new in 1.19
@@ -109,7 +113,6 @@ See the [1.20.0 release notes](https://github.com/AurelioAvila/pc-tweaker-app/re
 - **Scan 2.0, with the findings in view.** Review 19 checks across performance, junk files, startup, privacy, registry, memory, hardware and latency. Choose individual supported fixes after inspecting the results.
 - **A read-only hardware audit.** Inspect RAM speed, PCIe link and Resizable BAR findings when Windows exposes the information, with guidance on what to check next. Firmware settings remain under your control.
 - **Proof of change for supported actions.** Compare before-and-after measurements and save the result as a PNG. The comparison can report no measurable difference; a configuration score is not an FPS benchmark.
-- **Clear Free and Pro boundaries.** The catalog has 84 controls: 48 Free and 36 Pro. Registry discovery is free; registry cleanup is Pro and saves a `.reg` backup. See [Free and Pro](#free-and-pro) for plans and [what changes on your system](#what-changes-on-your-system) for recovery limits.
 
 See the [1.19.0 release notes](https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.19.0) for the full update. The official browser-demo previews above use synthetic data; native results depend on your PC.
 

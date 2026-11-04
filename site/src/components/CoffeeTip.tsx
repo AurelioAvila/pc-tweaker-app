@@ -3,11 +3,17 @@ import cupMark from "../assets/coffee-mark.webp";
 import { buyCoffee } from "../api";
 import { text } from "../i18n/dictionary";
 import { usePriceList } from "../trial";
+import { euro } from "../promo";
 import { cryptoCoffeeLabel } from "../../../src/components/crypto-copy";
 
 /** Matches TIP_MAX_QUANTITY on the backend, which clamps to it regardless —
  *  this copy only keeps the stepper from offering a number that gets clamped. */
 const MAX_COFFEES = 10;
+
+/** The coffee Price on Stripe (STRIPE_PRICE_COFFEE) in cents, net like every
+ *  price on the site. Shown beside the count so nobody meets the total for the
+ *  first time on Checkout, which may show it converted to their own currency. */
+const COFFEE_CENTS = 100;
 
 /**
  * The tip control, sitting beside the hero download button: outlined rather
@@ -59,9 +65,9 @@ export function CoffeeTip({ children }: { children: React.ReactNode }) {
           <span
             key={count}
             aria-live="polite"
-            className="coffee-count font-mono-t min-w-[42px] text-center text-[14px] font-bold"
+            className="coffee-count font-mono-t min-w-[96px] text-center text-[14px] font-bold whitespace-nowrap"
           >
-            {count} ☕
+            {count} ☕ · {euro(count * COFFEE_CENTS)}
           </span>
           <StepperButton
             label={text.coffee.more}

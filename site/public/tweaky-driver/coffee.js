@@ -23,7 +23,7 @@
   let n = 1;
   const set = (value) => {
     n = Math.min(max, Math.max(1, value));
-    count.textContent = `${n} ☕`;
+    count.textContent = `${n} ☕ · €${n}`; // €1 a coffee, as the note says
     count.classList.remove("pop");
     void count.offsetWidth; // restart the pop
     count.classList.add("pop");

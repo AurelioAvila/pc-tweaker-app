@@ -195,6 +195,12 @@ test("Checkout keeps its own stepper, within bounds", () => {
   });
 });
 
+test("a card tip leaves Adaptive Pricing alone: Managed Payments refuses to turn it off", () => {
+  // Stripe: "adaptive_pricing[enabled] must be `true` when Managed Payments is
+  // enabled". Passing false would turn every card tip into a 500.
+  assert.equal("adaptive_pricing" in tipSessionParams("price_coffee", "https://pctweaker.app"), false);
+});
+
 test("the caller's coffee count is carried through", () => {
   assert.equal(tipSessionParams("p", "https://x", 4).line_items[0].quantity, 4);
 });

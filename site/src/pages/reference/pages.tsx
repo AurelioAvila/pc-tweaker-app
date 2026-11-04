@@ -377,6 +377,9 @@ export function DbIndex({ navigate }: { navigate: Nav }) {
       <p className="mt-12 text-[14px] text-[var(--fg-dim)]">
         Not listed? The <Link to="/tools/process-checker/" onNavigate={navigate} className="text-accent">safety checker</Link> shows how to check any process yourself. Entries are added only when every statement on the page can be sourced.
       </p>
+      <p className="mt-3 text-[14px] text-[var(--fg-dim)]">
+        Studying Windows for CompTIA A+? <a href="https://getcertsprint.com/certifications/a-plus" className="text-accent">CertSprint has A+ practice questions</a>.
+      </p>
     </Shell>
   );
 }

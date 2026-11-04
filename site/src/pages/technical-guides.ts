@@ -335,6 +335,11 @@ export const TECHNICAL_GUIDES = {
         "to": "/how-to-undo-windows-tweaks/",
         "label": "Restore a supported tweak step by step",
         "note": "Use the stored original state and check the result after any required restart."
+      },
+      {
+        "to": "https://redaxa.getcertsprint.com/",
+        "label": "Keep personal data and keys out of AI chat prompts",
+        "note": "Redaxa finds and redacts them in a prompt before you share it, a different leak from Windows telemetry."
       }
     ],
     "sources": {

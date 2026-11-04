@@ -1,5 +1,4 @@
 import { useState } from "react";
-import cupMark from "../assets/coffee-mark.webp";
 import { buyCoffee } from "../api";
 import { text } from "../i18n/dictionary";
 import { usePriceList } from "../trial";
@@ -48,7 +47,7 @@ export function CoffeeTip({ children }: { children: React.ReactNode }) {
   return (
     // scroll-mt clears the fixed nav when someone arrives via /#tip.
     <div id="tip" className="scroll-mt-28">
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3 min-[420px]:gap-4">
         {children}
 
         <div className="flex items-center rounded-xl border border-white/15 transition-colors focus-within:border-[var(--accent)]/50 hover:border-[var(--accent)]/40">
@@ -60,17 +59,15 @@ export function CoffeeTip({ children }: { children: React.ReactNode }) {
             −
           </StepperButton>
           {/* aria-live so the new count and its total are announced, not only
-              the button that changed it. The key remounts the span, replaying
-              the pop animation on every press. The total sits under the count
-              rather than beside it so the control stays one line on a 360 px
-              phone. */}
+              the button that changed it. Count and total share one line in a
+              fixed-width slot with tabular figures, so 9 -> 10 does not move
+              the buttons. The key remounts the span, replaying the pop. */}
           <span
             key={count}
             aria-live="polite"
-            className="coffee-count font-mono-t flex min-w-[46px] flex-col items-center text-center leading-tight"
+            className="coffee-count font-mono-t w-[80px] shrink-0 text-center text-[13px] font-bold whitespace-nowrap tabular-nums"
           >
-            <span className="text-[14px] font-bold">{count} ☕</span>
-            <span className="text-[11px] font-semibold text-[var(--fg-dim)]">{euro(count * COFFEE_CENTS)}</span>
+            {count} ☕ · {euro(count * COFFEE_CENTS)}
           </span>
           <StepperButton
             label={text.coffee.more}
@@ -86,18 +83,17 @@ export function CoffeeTip({ children }: { children: React.ReactNode }) {
             type="button"
             disabled={state === "pending"}
             onClick={() => tip(false)}
-            className="coffee-pill inline-flex cursor-pointer items-center gap-2 rounded-r-xl px-4 py-3 text-[13.5px] font-semibold text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] disabled:opacity-60"
+            aria-label={text.coffee.pill}
+            className="coffee-pill inline-flex cursor-pointer items-center rounded-r-xl px-3 py-3 min-[420px]:px-3.5 text-[13.5px] font-semibold text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] disabled:opacity-60"
           >
-            <img
-              src={cupMark}
-              alt=""
-              // Decorative: the label beside it already says what this is.
-              aria-hidden="true"
-              width={96}
-              height={112}
-              className="coffee-mark h-[24px] w-auto shrink-0"
-            />
-            {state === "pending" ? "…" : text.coffee.pill}
+            {state === "pending" ? (
+              "…"
+            ) : (
+              <>
+                <span className="min-[420px]:hidden">{text.coffee.pillShort}</span>
+                <span className="hidden min-[420px]:inline">{text.coffee.pill}</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -140,7 +136,7 @@ function StepperButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="h-11 w-8 shrink-0 cursor-pointer text-[15px] leading-none text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] disabled:cursor-default disabled:opacity-30"
+      className="h-11 w-7 shrink-0 min-[420px]:w-8 cursor-pointer text-[15px] leading-none text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)] disabled:cursor-default disabled:opacity-30"
     >
       {children}
     </button>

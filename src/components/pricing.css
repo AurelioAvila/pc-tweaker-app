@@ -475,6 +475,51 @@
   line-height: 1.4;
   color: var(--text-secondary);
 }
+/* The 7-day pass: one slim row under the plans, quieter than any of them. */
+.pricing-pass {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(150px, 200px);
+  align-items: center;
+  gap: 8px 18px;
+  margin-top: 12px;
+  padding: 12px 15px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--surface-1);
+}
+.pricing-pass .pricing-plan-name {
+  min-height: 0;
+}
+.pricing-pass .pricing-plan-name h2 {
+  font-size: 14px;
+}
+.pricing-pass-copy p {
+  margin: 3px 0 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.pricing-pass .pricing-pass-price {
+  grid-column: auto;
+  grid-row: auto;
+  margin: 0;
+}
+.pricing-pass .pricing-pass-price strong {
+  font-size: 24px;
+  letter-spacing: -0.03em;
+}
+.pricing-pass .pricing-button {
+  min-height: 36px;
+}
+@container (max-width: 520px) {
+  .pricing-pass {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 14px 16px;
+  }
+  .pricing-pass .pricing-button {
+    grid-column: 1 / -1;
+  }
+}
 /* Small print under the plans. */
 .pricing-fine {
   display: grid;

@@ -10,6 +10,7 @@
 
 import { en } from "./copy/en";
 import type { Copy } from "./copy";
+import { PASS_PLAN } from "../pass";
 import {
   EMAIL_BRANDS,
   button,
@@ -70,6 +71,7 @@ const listed = (rows: [string, string][]) => rows.map(([label, value]) => `${lab
 const numbered = (title: string, items: string[]) => [`${title}:`, ...items.map((item, i) => `${i + 1}. ${plainText(item)}`)];
 
 export function proWelcomeSubject(product?: string | null, plan?: string | null, c: Copy = en): string {
+  if (product !== "uninstaller" && plan === PASS_PLAN) return c.receipt.pass.subject;
   return c.receipt.subject(product === "uninstaller", plan === "lifetime");
 }
 
@@ -113,6 +115,30 @@ function receipt({ product, firstName, email, plan, priceLabel, renewsOn }: ProW
       button: r.buttonUn,
       help: { title: r.un.help.title, text: escapeHtml(r.un.help.text), expectation: r.un.help.expectation },
       why: r.un.why(lifetime),
+    };
+  }
+
+  // The 7-day pass (pass.ts): one payment, no renewal; renewsOn carries the
+  // moment its access ends, already formatted.
+  if (plan === PASS_PLAN) {
+    return {
+      eyebrow: r.pass.eyebrow,
+      headline: r.pass.headline(name),
+      preheader: r.pass.preheader(priceLabel, renewsOn ?? ""),
+      intro: r.pass.intro(email, TOTAL_CONTROLS),
+      rows: [
+        [rows.plan, planLabel(c, plan)],
+        [rows.charged, priceLabel],
+        [r.pass.untilLabel, renewsOn ?? ""],
+        [rows.renewal, rows.renewalNone],
+        [rows.account, email],
+      ],
+      heading: r.pass.stepsTitle,
+      items: r.pass.stepsHtml(who),
+      noteHtml: escapeHtml(r.pass.note),
+      button: r.buttonPct,
+      help,
+      why: r.pass.why,
     };
   }
 

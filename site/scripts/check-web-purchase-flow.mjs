@@ -74,3 +74,17 @@ test("sign up from the site without a plan: register, verify, then ready or alre
   const pro = fixture({ account: async () => ({ ...baseAccount, isPro: true, plan: "annual" }) });
   assert.equal(await pro.flow.signIn("pro@example.test", "dummy"), "already-pro");
 });
+test("a 7-day pass holds no plan: its holder can add a pass or buy any plan; a plan holder gets no pass", async () => {
+  for (const plan of ["pass_7d", "annual", "lifetime"]) {
+    const { flow, calls } = fixture({ account: async () => ({ ...baseAccount, isPro: true, plan: "pass_7d" }) });
+    assert.equal(await flow.signIn("test@example.test", "dummy"), "ready");
+    await flow.checkout(plan, false, "2026-11-04.2");
+    assert.deepEqual(calls, [["token", plan, false, "2026-11-04.2"]]);
+  }
+  for (const held of ["monthly", "lifetime"]) {
+    const { flow, calls } = fixture({ account: async () => ({ ...baseAccount, isPro: true, plan: held }) });
+    await flow.signIn("test@example.test", "dummy");
+    await assert.rejects(flow.checkout("pass_7d"));
+    assert.equal(calls.length, 0);
+  }
+});

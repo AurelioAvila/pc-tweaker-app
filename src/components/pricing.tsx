@@ -77,6 +77,9 @@ export function PricingPanel({
   const promo = usePromo();
   const previewing = campaign.preview || promo.preview;
   const ownsLifetime = isPro && heldPlan === "lifetime";
+  // A 7-day pass unlocks Pro but holds no plan: the plans stay on offer to it.
+  const onPass = isPro && heldPlan === "pass_7d";
+  const planHeld = isPro && !onPass;
   const annual = period === "annual";
   const mostChosen = (plan: SoldPlan) => MOST_CHOSEN.pctweaker === plan;
   const proOffer = promo.offer("pctweaker", period);
@@ -87,6 +90,12 @@ export function PricingPanel({
     (plan === "annual" ? PRICE_ANNUAL : PRICE_MONTHLY);
   const save = Math.round((1 - listed("annual") / (listed("monthly") * 12)) * 100);
   const mine = billing?.products.find((p) => p.product === "pctweaker") ?? null;
+  const pass = prices?.pass ?? null;
+  const passEnd = onPass && mine?.plan === "pass_7d" ? mine.periodEnd : null;
+  const passMoment = (ms: number) =>
+    new Intl.DateTimeFormat(localeOf(lang), { dateStyle: "long", timeStyle: "short" }).format(
+      new Date(ms),
+    );
   const trial = isPro ? null : trialOffer("pctweaker", period, prices, billing, proOffer?.regular);
   const trialSpent = !isPro && trialUsed("pctweaker", billing);
   const paymentFailed = mine?.state === "blocked" && mine.blockedReason === "payment_failed";
@@ -114,7 +123,7 @@ export function PricingPanel({
       : null;
   // Lifetime is the top tier; any other active plan (monthly, annual, a bonus
   // or a grant) holds Pro, so Free below it is included in it.
-  const holdsPro = isPro && !ownsLifetime;
+  const holdsPro = planHeld && !ownsLifetime;
   const trialBadge = left && mine?.trialEndsAt ? trialBadgeText(lang, mine.trialEndsAt, now) : null;
   // Someone who already holds a plan sees what they pay, not the new-customer
   // offer: the subscription as Stripe bills it (GET /api/billing/subscription),
@@ -139,7 +148,7 @@ export function PricingPanel({
     ? `${ownSub?.cancel_at_period_end ? sc.accessUntil : sc.renewsOn} ${longDate(ownEnd)}`
     : copy.renewal;
   // New-customer offers never decorate a plan the account already holds or outranks.
-  const proDeal = isPro ? null : proOffer;
+  const proDeal = planHeld ? null : proOffer;
   const lifetimeDeal = ownsLifetime ? null : lifetimeOffer;
   const promoOffers = promo.active ? (promo.promo?.offers ?? []) : [];
   const showPromo = !ownsLifetime && promoOffers.length > 0;
@@ -259,7 +268,7 @@ export function PricingPanel({
         )}
       {/* Monthly / Yearly only changes the Pro card, which an account that already
           holds a plan sees as that plan: nothing to switch there. */}
-      {!isPro && (
+      {!planHeld && (
         <div
           className="pricing-period"
           role="group"
@@ -346,7 +355,7 @@ export function PricingPanel({
             </>
           )}
           <div className="pricing-plan-footer">
-            {!isPro && paymentFailed ? (
+            {!planHeld && paymentFailed ? (
               <button
                 className="pricing-button pricing-button-secondary"
                 disabled={busy !== null}
@@ -355,7 +364,7 @@ export function PricingPanel({
               >
                 {busy === "manage" ? "…" : t.updatePayment}
               </button>
-            ) : !isPro && trial ? (
+            ) : !planHeld && trial ? (
               <>
                 <button
                   className="pricing-button pricing-button-trial"
@@ -377,7 +386,7 @@ export function PricingPanel({
                   {busy === period && busyTrial === false ? "…" : t.subscribeNow}
                 </button>
               </>
-            ) : !isPro ? (
+            ) : !planHeld ? (
               <button
                 className="pricing-button pricing-button-secondary"
                 disabled={busy !== null || previewing}
@@ -481,7 +490,7 @@ export function PricingPanel({
               >
                 {busy === "lifetime"
                   ? "…"
-                  : isPro && hasBilling
+                  : planHeld && hasBilling
                     ? s.pricing.switchToLifetime
                     : s.pricing.lifetimeCta}
               </button>
@@ -507,6 +516,37 @@ export function PricingPanel({
           </ul>
         </article>
       </div>
+      {/* The 7-day pass: one payment, no renewal, only while the server sells it.
+          Secondary to the plans, and never offered over a plan or Lifetime. */}
+      {pass && !planHeld && (
+        <aside className="pricing-pass" aria-labelledby="pricing-pass-name">
+          <div className="pricing-pass-copy">
+            <div className="pricing-plan-name">
+              <h2 id="pricing-pass-name">{format(copy.passName, { days: pass.days })}</h2>
+              {onPass && <span className="pricing-current">{s.pricing.proCurrent}</span>}
+            </div>
+            <p>
+              {passEnd
+                ? format(copy.passActive, { date: passMoment(passEnd) })
+                : format(copy.passNote, { days: pass.days })}
+            </p>
+          </div>
+          <div className="pricing-price pricing-pass-price">
+            <strong>{money(pass.amount / 100, lang)}</strong>
+            <span>{s.pricing.once}</span>
+          </div>
+          <button
+            className="pricing-button pricing-button-secondary"
+            disabled={busy !== null || previewing}
+            aria-busy={busy === "pass_7d"}
+            onClick={() => void act("pass_7d")}
+          >
+            {busy === "pass_7d"
+              ? "…"
+              : format(onPass ? copy.passAdd : copy.passCta, { days: pass.days })}
+          </button>
+        </aside>
+      )}
       {/* Small print under the plans: the trial's terms, offer status and the
           checkout and signing notes, so the cards lead the screen. */}
       <div
@@ -634,6 +674,7 @@ export function PricingPanel({
         </p>
         <p>{format(copy.twoYears, { price: money(listed("annual") * 2, lang) })}</p>
         <p>{copy.afterCancel}</p>
+        {pass && <p>{format(copy.passTerms, { days: pass.days })}</p>}
         {promoOffers.length > 0 && <p>{copy.promoTerms}</p>}
         {activeCampaign && <p>{copy.mayChange}</p>}
       </details>

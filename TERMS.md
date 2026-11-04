@@ -1,6 +1,6 @@
 # Terms of Service
 
-Last updated: 2026-11-01
+Last updated: 2026-11-04
 
 Welcome to PC Tweaker ("we", "us", "our"), run by Aurelio Avila. By downloading, installing, or using PC Tweaker, you agree to these Terms of Service.
 
@@ -11,7 +11,7 @@ PC Tweaker is a Windows desktop app for system settings, maintenance and current
 ## 2. Free and Pro tiers
 
 - 48 controls are free to use, forever, with no account required.
-- Pro unlocks the advanced tweaks and presets, either as a subscription (monthly or annual) that renews automatically until cancelled, or as a one-time Lifetime purchase that does not expire.
+- Pro unlocks the advanced tweaks and presets, either as a subscription (monthly or annual) that renews automatically until cancelled, as a one-time Lifetime purchase that does not expire, or, where offered, as a one-time 7-day pass that ends 7 days after payment and does not renew (a pass bought while another is running adds its 7 days after the current ones).
 - Purchases are sold through Link, Stripe's merchant of record, which collects any applicable tax, sends the receipt and handles payment support. Link's own buyer terms apply to the transaction.
 - Where offered, Lifetime and tips can also be paid in USDC, a US-dollar stablecoin, through Stripe's crypto payment method. A crypto payment costs the same total a card payment from your country costs, charged in US dollars and converted from euros at the exchange rate in effect when checkout opens (Stripe's page shows the exact amount before you pay), and is made to us directly rather than through Link, so Link's buyer terms do not apply to it. It does not use or earn the Invite a friend discount or bonus. Any refund that is due is returned in stablecoin to the wallet that paid.
 - You can cancel anytime; Pro access continues until the end of the current billing period, then reverts to the Free tier — cancelling does not undo tweaks already applied, it only locks further use of Pro-only tweaks and presets.

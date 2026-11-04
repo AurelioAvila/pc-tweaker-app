@@ -11,7 +11,7 @@ import { CONSENT_COPY, CONSENT_LANGS, PurchaseConsent, type ConsentLang } from "
    trial and account come from the signed link, never from this page. */
 
 type Product = keyof typeof PURCHASE_TERMS_VERSION;
-type Plan = "monthly" | "annual" | "lifetime";
+type Plan = "monthly" | "annual" | "lifetime" | "pass_7d";
 type Intent = { link: string; product: Product; plan: Plan; trial: boolean; crypto: boolean; lang: ConsentLang };
 
 const TERMS_HREF: Record<Product, string> = {
@@ -26,7 +26,7 @@ const PAGE: Record<ConsentLang, {
 }> = {
   en: {
     heading: "Before you pay",
-    plans: { monthly: "Pro monthly", annual: "Pro annual", lifetime: "Lifetime" },
+    plans: { monthly: "Pro monthly", annual: "Pro annual", lifetime: "Lifetime", pass_7d: "Pro 7-day pass, one payment, no renewal" },
     trial: "with the 3-day free trial", crypto: "paid in USDC",
     note: "Nothing is charged on this page. Stripe’s secure page shows the final price before you pay.",
     opening: "Opening the secure checkout…",
@@ -37,7 +37,7 @@ const PAGE: Record<ConsentLang, {
   },
   de: {
     heading: "Bevor du bezahlst",
-    plans: { monthly: "Pro monatlich", annual: "Pro jährlich", lifetime: "Lifetime" },
+    plans: { monthly: "Pro monatlich", annual: "Pro jährlich", lifetime: "Lifetime", pass_7d: "Pro 7-Tage-Pass, eine Zahlung, keine Verlängerung" },
     trial: "mit der 3-tägigen kostenlosen Testphase", crypto: "bezahlt in USDC",
     note: "Auf dieser Seite wird nichts berechnet. Den Endpreis siehst du auf der sicheren Seite von Stripe, bevor du bezahlst.",
     opening: "Die sichere Kasse wird geöffnet …",
@@ -48,7 +48,7 @@ const PAGE: Record<ConsentLang, {
   },
   it: {
     heading: "Prima di pagare",
-    plans: { monthly: "Pro mensile", annual: "Pro annuale", lifetime: "Lifetime" },
+    plans: { monthly: "Pro mensile", annual: "Pro annuale", lifetime: "Lifetime", pass_7d: "Pass Pro 7 giorni, un solo pagamento, nessun rinnovo" },
     trial: "con la prova gratuita di 3 giorni", crypto: "pagato in USDC",
     note: "Questa pagina non addebita nulla. La pagina sicura di Stripe mostra il prezzo finale prima del pagamento.",
     opening: "Apertura del pagamento sicuro…",
@@ -59,7 +59,7 @@ const PAGE: Record<ConsentLang, {
   },
   fr: {
     heading: "Avant de payer",
-    plans: { monthly: "Pro mensuel", annual: "Pro annuel", lifetime: "Lifetime" },
+    plans: { monthly: "Pro mensuel", annual: "Pro annuel", lifetime: "Lifetime", pass_7d: "Pass Pro 7 jours, un seul paiement, sans renouvellement" },
     trial: "avec l’essai gratuit de 3 jours", crypto: "payé en USDC",
     note: "Rien n’est débité sur cette page. La page sécurisée de Stripe affiche le prix final avant le paiement.",
     opening: "Ouverture du paiement sécurisé…",
@@ -70,7 +70,7 @@ const PAGE: Record<ConsentLang, {
   },
   es: {
     heading: "Antes de pagar",
-    plans: { monthly: "Pro mensual", annual: "Pro anual", lifetime: "Lifetime" },
+    plans: { monthly: "Pro mensual", annual: "Pro anual", lifetime: "Lifetime", pass_7d: "Pase Pro de 7 días, un solo pago, sin renovación" },
     trial: "con la prueba gratuita de 3 días", crypto: "pagado en USDC",
     note: "En esta página no se cobra nada. La página segura de Stripe muestra el precio final antes de pagar.",
     opening: "Abriendo el pago seguro…",
@@ -81,7 +81,7 @@ const PAGE: Record<ConsentLang, {
   },
   pt: {
     heading: "Antes de pagar",
-    plans: { monthly: "Pro mensal", annual: "Pro anual", lifetime: "Lifetime" },
+    plans: { monthly: "Pro mensal", annual: "Pro anual", lifetime: "Lifetime", pass_7d: "Passe Pro de 7 dias, um único pagamento, sem renovação" },
     trial: "com o período de avaliação gratuito de 3 dias", crypto: "pago em USDC",
     note: "Nesta página não é cobrado nada. A página segura do Stripe mostra o preço final antes de pagar.",
     opening: "A abrir o pagamento seguro…",
@@ -100,7 +100,7 @@ function readIntent(hash: string): Intent | null {
   try {
     const part = link.split(".")[1] ?? "";
     const p = JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(part.length / 4) * 4, "=")));
-    if (!(p.product in PURCHASE_TERMS_VERSION) || !["monthly", "annual", "lifetime"].includes(p.plan)) return null;
+    if (!(p.product in PURCHASE_TERMS_VERSION) || !["monthly", "annual", "lifetime", "pass_7d"].includes(p.plan)) return null;
     const browser = (typeof navigator === "undefined" ? "en" : navigator.language.slice(0, 2)) as ConsentLang;
     const lang = CONSENT_LANGS.includes(p.lang) ? p.lang : CONSENT_LANGS.includes(browser) ? browser : "en";
     return { link, product: p.product, plan: p.plan, trial: p.trial === true, crypto: p.crypto === true, lang };
@@ -156,7 +156,7 @@ export function ConfirmPurchasePage() {
             <h1 id="confirm-heading" className="font-display mt-2 text-2xl font-bold tracking-tight text-[var(--fg)] sm:text-3xl">{t.heading}</h1>
             <p className="mt-4 text-lg font-semibold text-[var(--fg)]">
               {t.plans[intent.plan]}
-              {intent.trial && intent.plan !== "lifetime" ? `, ${t.trial}` : ""}
+              {intent.trial && intent.plan !== "lifetime" && intent.plan !== "pass_7d" ? `, ${t.trial}` : ""}
               {intent.crypto ? `, ${t.crypto}` : ""}
             </p>
             <p className="mt-2 text-sm leading-relaxed text-[var(--fg-dim)]">{t.note}</p>

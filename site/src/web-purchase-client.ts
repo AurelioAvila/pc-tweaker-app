@@ -1,6 +1,7 @@
 /** Account and checkout operations for the website. Bearer tokens only, never cookies
  *  (credentials: "omit"); the caller decides where a token lives. */
-export type WebPlan = "monthly" | "annual" | "lifetime";
+/** `pass_7d`: the 7-day pass, one payment for 7 days of Pro (offered only while the API sells it). */
+export type WebPlan = "monthly" | "annual" | "lifetime" | "pass_7d";
 export type Account = { email: string; emailVerified: boolean; isPro: boolean; plan: string | null; hasBilling: boolean };
 /** One product in GET /api/billing/status, reduced to what the account page shows. */
 export type ProductStatus = {
@@ -95,7 +96,7 @@ export function createPurchaseClient(base: string, transport: Transport = fetch)
     /** `crypto`: Lifetime paid in USDC (only offered while the price list says crypto is available).
      *  `termsVersion`: the Terms the ticked purchase box showed (purchase-terms.ts); the API records it. */
     async checkout(token: string, plan: WebPlan, crypto = false, termsVersion?: string) {
-      if (!["monthly", "annual", "lifetime"].includes(plan) || (crypto && plan !== "lifetime")) throw new PurchaseError("Please choose a valid plan.");
+      if (!["monthly", "annual", "lifetime", "pass_7d"].includes(plan) || (crypto && plan !== "lifetime")) throw new PurchaseError("Please choose a valid plan.");
       const consent = termsVersion ? { consent: { accepted: true, terms_version: termsVersion } } : {};
       return stripeCheckout(crypto
         ? await request<{ url?: unknown }>("/api/web-checkout/crypto", "POST", { product: "pctweaker", plan, ...consent }, token)

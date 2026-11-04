@@ -229,7 +229,8 @@ export function ramIntervalLabel(minutes: number, s: Strings): string {
 /** The plans checkout accepts. Mirrors the backend's own map in
  *  `backend/src/routes/stripe.ts`, which routes lifetime to a one-time
  *  payment rather than a subscription. */
-export type ProPlan = "monthly" | "annual" | "lifetime";
+/** `pass_7d`: the 7-day pass, one payment for 7 days of Pro (shown only while the server sells it). */
+export type ProPlan = "monthly" | "annual" | "lifetime" | "pass_7d";
 
 export const PRICE_MONTHLY = 7.99;
 

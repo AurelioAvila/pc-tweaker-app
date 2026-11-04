@@ -39,7 +39,24 @@ export type PriceList = {
   prices: (Price & { product: string })[];
   /** US cents for paying in USDC, or null while crypto is off (the default). */
   crypto: { lifetimeUsd: number | null; coffeeUsd: number | null } | null;
+  /** The 7-day pass (euro cents, one payment), or null while the server has it off. */
+  pass?: { amount: number; days: number } | null;
 };
+
+/** Only a well-formed one-off euro price turns the 7-day pass on. */
+function passPrice(value: unknown): PriceList["pass"] {
+  const v = value as Record<string, unknown> | null;
+  return v &&
+    typeof v === "object" &&
+    v.plan === "pass_7d" &&
+    v.currency === "eur" &&
+    Number.isInteger(v.amount) &&
+    (v.amount as number) > 0 &&
+    Number.isInteger(v.days) &&
+    (v.days as number) > 0
+    ? { amount: v.amount as number, days: v.days as number }
+    : null;
+}
 
 /** Only a well-formed "available" block turns the crypto option on. */
 function cryptoPrices(value: unknown): PriceList["crypto"] {
@@ -131,6 +148,7 @@ export function parsePriceList(value: unknown): PriceList | null {
       p.product ? [{ ...p, product: p.product }] : [],
     ),
     crypto: cryptoPrices(v.crypto),
+    pass: passPrice(v.pass),
   };
 }
 

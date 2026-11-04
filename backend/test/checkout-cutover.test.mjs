@@ -179,6 +179,16 @@ test("a refunded Lifetime purchase stops holding the account, an unrefunded one 
   }
 });
 
+test("a paid 7-day pass frees the account once the webhook recorded it, so the next pass or a plan can be bought", async () => {
+  const pass = lifetimeSession({ id: "cs_pass", metadata: { userId: "7", product: "pctweaker", plan: "pass_7d", reservation_id: "res" } });
+  for (const recorded of [true, false]) {
+    const f = retireFixture(pass, { id: "pi_life", status: "succeeded", customer: "cus_7", amount_received: 499 });
+    await retireCompletedCheckout({ stripe: f.stripe, reservations: f.reservations, lifetimeReversed: async () => { throw Error("not a Lifetime"); },
+      passRecorded: async (id) => recorded && id === "cs_pass" }, 7, "pctweaker", "cus_7", false);
+    assert.equal(f.row() === null, recorded);
+  }
+});
+
 test("a failed delayed payment is cancelled and released; one still processing is left alone", async () => {
   const unpaid = lifetimeSession({ payment_status: "unpaid" });
   let f = retireFixture(unpaid, { id: "pi_life", status: "requires_payment_method", customer: "cus_7", amount_received: 0 });

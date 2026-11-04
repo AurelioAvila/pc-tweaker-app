@@ -1,7 +1,7 @@
 import express from "express";
 import { getPool, isConfigured } from "../db";
 import { requireAuth } from "../auth";
-import { isEntitled } from "../entitlement";
+import { productEntitlement } from "../products";
 import { listInstalls } from "../install-count";
 
 const router = express.Router();
@@ -28,11 +28,13 @@ router.get("/", requireAuth, async (req, res) => {
     // which have no Stripe customer and so could only ever be answered with
     // an error. The customer id itself stays on the server; the client only
     // needs to know whether one exists.
+    // productEntitlement adds what the users row alone does not hold: a 7-day pass.
+    const pro = await productEntitlement(req.userId as number, "pctweaker");
     res.json({
       email: row.email,
-      isPro: isEntitled(row),
+      isPro: pro.active,
       emailVerified: row.email_verified,
-      plan: row.plan ?? null,
+      plan: pro.active ? pro.plan : row.plan ?? null,
       hasBilling: Boolean(row.stripe_customer_id),
     });
   } catch (err) {

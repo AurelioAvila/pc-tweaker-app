@@ -66,6 +66,12 @@ type PricingCopy = {
   firstMonth: string;
   firstYear: string;
   promoTerms: string;
+  passName: string;
+  passNote: string;
+  passActive: string;
+  passCta: string;
+  passAdd: string;
+  passTerms: string;
 };
 
 export const PRICING_COPY: Record<Lang, PricingCopy> = {
@@ -79,6 +85,13 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     firstYear: "First year, then {price}/year",
     promoTerms:
       "Halloween offer: for subscriptions, the discount covers the first month or year only; renewals are at the regular price. If you open checkout in the last 30 minutes of the offer, you still have 30 minutes to complete it at the offer price.",
+    passName: "{days}-day pass",
+    passNote: "One payment, no renewal. Pro for {days} days.",
+    passActive: "Pro until {date}.",
+    passCta: "Buy the pass",
+    passAdd: "Add {days} days",
+    passTerms:
+      "{days}-day pass: Pro for {days} days from payment, one payment, no renewal. Another pass adds its {days} days after the current ones.",
     title: "Your PC. Your terms.",
     intro: "Start with the essentials. Add advanced tools. Or make Pro yours with one payment.",
     signed: "Code-signed Windows releases",
@@ -144,6 +157,13 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     firstYear: "Primo anno, poi {price}/anno",
     promoTerms:
       "Offerta di Halloween: per gli abbonamenti lo sconto vale solo per il primo mese o il primo anno; i rinnovi sono al prezzo normale. Se avvii il pagamento negli ultimi 30 minuti dell'offerta, hai ancora 30 minuti per completarlo al prezzo scontato.",
+    passName: "Pass {days} giorni",
+    passNote: "Un solo pagamento, nessun rinnovo. Pro per {days} giorni.",
+    passActive: "Scadenza del pass: {date}.",
+    passCta: "Acquista il pass",
+    passAdd: "Aggiungi {days} giorni",
+    passTerms:
+      "Pass {days} giorni: Pro per {days} giorni dal pagamento, un solo pagamento, nessun rinnovo. Un altro pass aggiunge i suoi {days} giorni dopo quelli in corso.",
     title: "Il tuo PC. Alle tue condizioni.",
     intro:
       "Parti dagli strumenti essenziali. Aggiungi quelli avanzati. Oppure scegli Pro con un solo pagamento.",
@@ -213,6 +233,13 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     firstYear: "Première année, puis {price}/an",
     promoTerms:
       "Offre d'Halloween : pour les abonnements, la réduction ne porte que sur le premier mois ou la première année ; les renouvellements se font au prix normal. Si vous ouvrez le paiement dans les 30 dernières minutes de l'offre, vous disposez encore de 30 minutes pour le finaliser au prix de l'offre.",
+    passName: "Pass {days} jours",
+    passNote: "Un seul paiement, sans renouvellement. Pro pendant {days} jours.",
+    passActive: "Pro jusqu’au {date}.",
+    passCta: "Acheter le pass",
+    passAdd: "Ajouter {days} jours",
+    passTerms:
+      "Pass {days} jours : Pro pendant {days} jours à partir du paiement, un seul paiement, sans renouvellement. Un autre pass ajoute ses {days} jours après ceux en cours.",
     title: "Votre PC. Votre choix.",
     intro:
       "Commencez par l'essentiel. Ajoutez les outils avancés. Ou choisissez Pro en un seul paiement.",
@@ -283,6 +310,13 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     firstYear: "Primer año, luego {price}/año",
     promoTerms:
       "Oferta de Halloween: en las suscripciones, el descuento solo cubre el primer mes o el primer año; las renovaciones se cobran al precio habitual. Si inicias el pago en los últimos 30 minutos de la oferta, aún tienes 30 minutos para completarlo al precio de la oferta.",
+    passName: "Pase de {days} días",
+    passNote: "Un solo pago, sin renovación. Pro durante {days} días.",
+    passActive: "Pro hasta el {date}.",
+    passCta: "Comprar el pase",
+    passAdd: "Añadir {days} días",
+    passTerms:
+      "Pase de {days} días: Pro durante {days} días desde el pago, un solo pago, sin renovación. Otro pase suma sus {days} días después de los actuales.",
     title: "Tu PC. Tú decides.",
     intro: "Empieza por lo esencial. Añade herramientas avanzadas. O elige Pro con un solo pago.",
     signed: "Versiones para Windows con firma de código",
@@ -351,6 +385,13 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     firstYear: "Erstes Jahr, danach {price}/Jahr",
     promoTerms:
       "Halloween-Angebot: Bei Abos gilt der Rabatt nur für den ersten Monat bzw. das erste Jahr; Verlängerungen erfolgen zum regulären Preis. Wenn du den Checkout in den letzten 30 Minuten des Angebots öffnest, hast du noch 30 Minuten Zeit, ihn zum Angebotspreis abzuschließen.",
+    passName: "{days}-Tage-Pass",
+    passNote: "Eine Zahlung, keine Verlängerung. Pro für {days} Tage.",
+    passActive: "Pro bis zum {date}.",
+    passCta: "Pass kaufen",
+    passAdd: "{days} Tage hinzufügen",
+    passTerms:
+      "{days}-Tage-Pass: Pro für {days} Tage ab der Zahlung, eine Zahlung, keine Verlängerung. Ein weiterer Pass hängt seine {days} Tage an die laufenden an.",
     title: "Dein PC. Deine Entscheidung.",
     intro:
       "Beginne mit dem Wesentlichen. Ergänze erweiterte Tools. Oder sichere dir Pro mit einer einzigen Zahlung.",
@@ -420,6 +461,13 @@ export const PRICING_COPY: Record<Lang, PricingCopy> = {
     firstYear: "Primeiro ano, depois {price}/ano",
     promoTerms:
       "Oferta de Halloween: nas subscrições, o desconto aplica-se apenas ao primeiro mês ou ao primeiro ano; as renovações são feitas ao preço normal. Se iniciar o pagamento nos últimos 30 minutos da oferta, ainda tem 30 minutos para o concluir ao preço da oferta.",
+    passName: "Passe de {days} dias",
+    passNote: "Um único pagamento, sem renovação. Pro durante {days} dias.",
+    passActive: "Pro até {date}.",
+    passCta: "Comprar o passe",
+    passAdd: "Adicionar {days} dias",
+    passTerms:
+      "Passe de {days} dias: Pro durante {days} dias a partir do pagamento, um único pagamento, sem renovação. Outro passe acrescenta os seus {days} dias depois dos atuais.",
     title: "O seu PC. A sua escolha.",
     intro:
       "Comece pelo essencial. Adicione ferramentas avançadas. Ou fique com o Pro para sempre, com um único pagamento.",

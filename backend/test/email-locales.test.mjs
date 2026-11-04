@@ -29,6 +29,7 @@ function all(c) {
     signIn: account.newSignInMail("ada@example.com", null, "14 Oct 2026 08:30 UTC", U, c),
     sub: mail(pro.proWelcomeSubject("pctweaker", "annual", c), pro.proWelcomeHtml({ ...sale, plan: "annual" }, c), pro.proWelcomeText({ ...sale, plan: "annual" }, c)),
     life: mail(pro.proWelcomeSubject("pctweaker", "lifetime", c), pro.proWelcomeHtml({ ...sale, plan: "lifetime", renewsOn: null }, c), pro.proWelcomeText({ ...sale, plan: "lifetime", renewsOn: null }, c)),
+    pass: mail(pro.proWelcomeSubject("pctweaker", "pass_7d", c), pro.proWelcomeHtml({ ...sale, plan: "pass_7d", priceLabel: "€4.99", renewsOn: "11 November 2026 at 10:30 UTC" }, c), pro.proWelcomeText({ ...sale, plan: "pass_7d", priceLabel: "€4.99", renewsOn: "11 November 2026 at 10:30 UTC" }, c)),
     un: mail(pro.proWelcomeSubject("uninstaller", "annual", c), pro.proWelcomeHtml({ ...sale, product: "uninstaller", plan: "annual" }, c), pro.proWelcomeText({ ...sale, product: "uninstaller", plan: "annual" }, c)),
     rev: mail(pro.refundSubject("pctweaker", c), pro.refundHtml({ firstName: "Ada", plan: "annual", refundedLabel: "€59.99" }, c), pro.refundText({ firstName: "Ada", plan: "annual", refundedLabel: "€59.99" }, c)),
     revU: mail(pro.refundSubject("uninstaller", c), pro.refundHtml({ product: "uninstaller", firstName: "Ada", plan: null, refundedLabel: null }, c), pro.refundText({ product: "uninstaller", firstName: "Ada", plan: null, refundedLabel: null }, c)),

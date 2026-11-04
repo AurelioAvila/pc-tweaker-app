@@ -126,6 +126,28 @@ for (const lang of Object.keys(PLAN_STATE_COPY)) {
   // Payment failed: no trial offered, the card can be fixed.
   html = render(lang, { billing: status({ state: "blocked", blocked_reason: "payment_failed", can_start_trial: false }) });
   assert.ok(html.includes(t.updatePayment) && band(html) !== "offer", `${lang} paused`);
+
+  // The 7-day pass (owner, 4 Nov 2026): a slim card under the plans only while the server
+  // sells it, never over a plan or Lifetime; a pass holder keeps the plans on offer and adds days.
+  const withPass = parsePriceList({ trial_enabled: true, trial_days: 3, prices: [
+    { product: "pctweaker", plan: "monthly", amount: 499 },
+    { product: "pctweaker", plan: "annual", amount: 2999 },
+  ], pass: { plan: "pass_7d", days: 7, amount: 499, currency: "eur" } });
+  const seven = (text) => text.replace(/\{days\}/g, 7);
+  assert.ok(!render(lang, {}).includes('class="pricing-pass"'), `${lang} no pass while the server has it off`);
+  html = render(lang, { prices: withPass });
+  assert.ok(html.includes('class="pricing-pass"') && html.includes(seven(c.passName)) && html.includes(seven(c.passCta)), `${lang} pass offered`);
+  assert.ok(html.includes(seven(c.passNote)) && html.includes(seven(c.passTerms)), `${lang} one payment, no renewal`);
+  for (const heldPlan of ["monthly", "lifetime"]) {
+    html = render(lang, { isPro: true, heldPlan, hasBilling: true, prices: withPass });
+    assert.ok(!html.includes('class="pricing-pass"'), `${lang} no pass over ${heldPlan}`);
+  }
+  html = render(lang, { isPro: true, heldPlan: "pass_7d", hasBilling: true, prices: withPass,
+    billing: status({ state: "active", plan: "pass_7d", current_period_end: new Date(now + 5 * 86_400_000).toISOString(), can_start_trial: false }) });
+  k = cards(html);
+  assert.ok(html.includes(seven(c.passAdd)) && !html.includes(seven(c.passNote)), `${lang} pass holder sees its end and can add days`);
+  assert.ok(!k.pro.includes(s.proCurrent) && !k.pro.includes(s.manageBilling) && k.lifetime.includes(s.lifetimeCta), `${lang} plans still on offer to a pass holder`);
+  assert.ok(html.includes('class="pricing-period"') && band(html) === null, `${lang} pass holder: period switch, no trial`);
 }
 console.log(`Pricing states: signed out, eligible, used, trial, monthly, annual, Lifetime, grant, paused in ${Object.keys(PLAN_STATE_COPY).length} languages passed.`);
 

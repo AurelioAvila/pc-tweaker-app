@@ -23,11 +23,18 @@ export const EVIDENCE_RETENTION_MONTHS = 13;
  *  - "2026-11-04" (owner, 4 Nov 2026): one line, "I agree to the Terms and want access now,
  *    ending my 14-day right of withdrawal.", linking the PC Tweaker
  *    Terms of 2026-11-01 or the Uninstaller Terms of 2026-11-03.
+ *  - pctweaker "2026-11-04.2" (4 Nov 2026): the same line, linking the PC Tweaker Terms of
+ *    2026-11-04, which add the 7-day pass.
  *  New wording or new linked Terms: a new value here and in the other file (a backend test compares them). */
 export const PURCHASE_TERMS_VERSION: Record<string, string> = {
-  pctweaker: "2026-11-04",
+  pctweaker: "2026-11-04.2",
   uninstaller: "2026-11-04",
 };
+
+/** The value before, still accepted for what those Terms already covered (not the pass)
+ *  while pages opened before the site update are about: the row records what was ticked.
+ *  Remove once the site sends the new value everywhere. */
+export const PREVIOUS_TERMS_VERSION: Record<string, string> = { pctweaker: "2026-11-04" };
 
 /** Where an app-started checkout goes first when the box is required. */
 export const CONSENT_PAGE = "https://pctweaker.app/checkout/confirm/";

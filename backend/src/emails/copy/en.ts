@@ -29,7 +29,7 @@ export const en = {
     unsubscribe: "Unsubscribe",
   },
 
-  plans: { monthly: "Pro, Monthly", annual: "Pro, Annual", lifetime: "Pro, Lifetime" } as Record<string, string>,
+  plans: { monthly: "Pro, Monthly", annual: "Pro, Annual", lifetime: "Pro, Lifetime", pass_7d: "Pro, 7-day pass" } as Record<string, string>,
 
   verify: {
     subject: (b: string): string => `Confirm your email for ${b}`,
@@ -238,6 +238,23 @@ export const en = {
       ],
       note: "Stripe sends the invoice and payment receipt separately, from its own address; keep that one for your records. If the app still says Free after a few minutes, sign out and in once: the license is fetched again at sign-in.",
       why: "You received this email because a PC Tweaker Pro subscription was started on the account at this address.",
+    },
+    pass: {
+      subject: "Your PC Tweaker Pro 7-day pass is active",
+      eyebrow: "7-day pass",
+      headline: (n: string): string => named("Pro is on for the next 7 days", n),
+      preheader: (price: string, until: string): string => `One payment of ${price}, no renewal. Pro until ${until}.`,
+      intro: (email: string, total: number): string =>
+        `Stripe confirmed the payment and the license for ${email} is signed. All ${total} controls, Game Sessions and the Turbo Gaming preset included, are available now and until the time below. Nothing renews and nothing more is charged.`,
+      untilLabel: "Pro until",
+      stepsTitle: "Good to know",
+      stepsHtml: (who: string): string[] => [
+        "<strong>When the 7 days are over.</strong> The app returns to Free on its own. Controls you applied stay as they are; only the Pro controls lock again.",
+        "<strong>Need more time?</strong> Buy another pass in Plans &amp; pricing and its 7 days are added after the current ones. A subscription or Lifetime can be bought at any time as well.",
+        `<strong>A second PC.</strong> Install PC Tweaker there and sign in with ${who}: it is Pro there too until the pass ends.`,
+      ],
+      note: "Stripe sends the invoice separately, from its own address; keep that one for your records. If the app still says Free after a few minutes, sign out and in once: the license is fetched again at sign-in.",
+      why: "You received this email because a PC Tweaker Pro 7-day pass was bought on the account at this address.",
     },
     lifetime: {
       headline: (n: string): string => named("Pro, for good. Thank you", n),

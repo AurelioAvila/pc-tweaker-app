@@ -43,6 +43,8 @@ export interface DbEntry {
   readonly answer: string;
   /** A "why is it busy" question, only where the page already explains it. */
   readonly busy?: { readonly q: string; readonly a: string };
+  /** More questions the page answers, each from a cited source. */
+  readonly more?: readonly { readonly q: string; readonly a: string }[];
   readonly why: string;
   readonly pcTweaker: string;
   /** Catalogue ids of related PC Tweaker controls. */
@@ -105,6 +107,7 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     purpose: "Composes everything you see. Since Windows Vista, windows no longer draw straight to the screen: their drawing goes to off-screen surfaces in video memory, and the Desktop Window Manager combines them into the desktop image on your display.",
     answer: "It draws your desktop, so leave it running.",
     busy: { q: "Why is dwm.exe using so much GPU or memory?", a: "Its use reflects what it has to draw. When it looks wrong, update the graphics driver first." },
+    more: [{ q: "Why does dwm.exe use video memory?", a: "Microsoft describes desktop composition this way: windows no longer draw straight to the screen, their drawing is redirected to off-screen surfaces in video memory, and the Desktop Window Manager renders those surfaces into the desktop image. Its video memory use therefore follows what is open and displayed." }],
     verdict: "leave",
     why: "It is the desktop itself. Its GPU and memory use reflect what it has to draw; when that looks wrong, the graphics driver is the first thing to update.",
     pcTweaker: `${REFUSED} The transparency and animation controls change what it draws, not the process.`,
@@ -187,6 +190,7 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     purpose: "The session manager. During startup the kernel hands control to it; it initialises the system session and loads the drivers that are not marked to start with the boot loader.",
     answer: "A critical process: ending it stops Windows.",
     verdict: "leave",
+    more: [{ q: "What does smss.exe do when Windows starts?", a: "Microsoft's startup documentation says the kernel passes control to the session manager process (Smss.exe). It initialises the system session, then loads and starts the devices and drivers that are not marked BOOT_START." }],
     why: "A built-in critical process listed by Microsoft under bug check 0xEF.",
     pcTweaker: REFUSED,
     related: ["processes/csrss-exe", "processes/winlogon-exe"],
@@ -294,6 +298,11 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     purpose: "The WebView2 Runtime that desktop apps use to show web-based interfaces. It uses the same multi-process model as Microsoft Edge, so one app can start several of these processes.",
     answer: "Many copies are normal: one set per app.",
     busy: { q: "Why are there so many msedgewebview2.exe processes?", a: "The WebView2 Runtime uses the same process model as Microsoft Edge. One group holds a single browser process, one or more renderer processes and helpers such as the GPU and audio service processes, and the count changes as the app uses WebView2 features. Each app, or each user data folder an app uses, gets its own group, so several apps mean several groups. To find which app owns a group, close your apps one at a time and watch which copies disappear." },
+    more: [
+      { q: "Is msedgewebview2.exe the same as Microsoft Edge, and can I uninstall it?", a: "No. It is the WebView2 Runtime, a separate component that apps use to show web content. Microsoft does not let production apps depend on the Edge browser, and says the Evergreen Runtime is included as part of Windows 11. All apps that use the Evergreen Runtime share one copy, so removing it can stop those apps from showing their windows." },
+      { q: "Is a msedgewebview2.exe outside Program Files (x86) suspicious?", a: "Not by itself. Apps that use the Fixed Version mode ship their own copy of the runtime in their own folder. Check who signed the file and which app started it, using the commands in “Check it yourself”." },
+      { q: "Does the WebView2 Runtime update itself?", a: "The Evergreen Runtime downloads new versions automatically. An app picks up the new version when it restarts, so an app that never closes keeps using the previous one." },
+    ],
     verdict: "leave",
     why: "Each app that uses WebView2 starts its own group of processes. Ending them closes or breaks the window of the app that owns them.",
     pcTweaker: "PC Tweaker's own window is built on WebView2, so you will see msedgewebview2.exe processes while the app is open. They close with it.",

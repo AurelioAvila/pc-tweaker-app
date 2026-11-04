@@ -77,9 +77,9 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
     image: UNINSTALLER_OG, imageAlt: UNINSTALLER_OG_ALT,
   }])),
   "/": {
-    title: "PC Tweaker | Free Windows Tweaker for Gaming and Privacy",
+    title: "PC Tweaker | Free Windows Tweaker with Undo, Windows 10/11",
     description:
-      "PC Tweaker is a free Windows tweaker for gaming, privacy and performance. Review each setting before it changes and restore supported tweaks on Windows 10/11.",
+      "Free Windows tweaker for gaming, privacy and speed. See what each tweak changes before you apply it, and undo supported tweaks. For Windows 10 and 11.",
     canonical: `${ORIGIN}/`,
     ogType: "website",
   },

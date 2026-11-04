@@ -109,8 +109,25 @@ function tweakDescription(p: TweakPage): string {
   return fit(bases.flatMap((b) => TAILS.map((t) => b + t)), p.t.id);
 }
 
+/** CTR experiment, 4 Nov 2026 (baseline in _stato-agenti/seo-round-20261104/EXPERIMENT-CTR.md): sharper snippets for the three pages with many impressions and almost no clicks. Facts unchanged. */
+const SNIPPET_TEST: Record<string, { title: string; description: string }> = {
+  "msedgewebview2-exe": {
+    title: "Is msedgewebview2.exe safe? What it does and when to worry",
+    description: "Yes, msedgewebview2.exe is normally safe: it is the Microsoft Edge WebView2 Runtime, and many copies are normal. How to check that your copy is genuine.",
+  },
+  "smss-exe": {
+    title: "Is smss.exe safe? What it does and why you can't end it",
+    description: "smss.exe is the Windows Session Manager, a critical process: ending it stops Windows. The genuine file is in System32 and signed by Microsoft. How to check.",
+  },
+  "dwm-exe": {
+    title: "Is dwm.exe safe? What it does and why GPU and RAM vary",
+    description: "dwm.exe is the Desktop Window Manager that draws your desktop, so leave it running. Why its GPU and memory use changes, and how to check the file is genuine.",
+  },
+};
+
 /** Searchers type the file name and ask whether it is safe or can go; the title says what it is and answers the first. */
 function dbTitle(e: DbEntry): string {
+  if (SNIPPET_TEST[e.slug]) return SNIPPET_TEST[e.slug].title;
   const ask = e.kind === "process" ? "Is It Safe?" : "Can You Disable It?";
   const what = "What It Is and ";
   const plain = e.displayName.includes("(");
@@ -126,6 +143,7 @@ function dbTitle(e: DbEntry): string {
 const dbDir = (e: DbEntry) => e.path.slice(0, e.path.lastIndexOf("\\"));
 
 function dbDescription(e: DbEntry): string {
+  if (SNIPPET_TEST[e.slug]) return SNIPPET_TEST[e.slug].description;
   const what = e.kind === "process" ? "process" : "service";
   const svc = /service$/i.test(e.displayName) ? e.displayName : `${e.displayName} service`;
   const dir = dbDir(e);
@@ -165,7 +183,7 @@ export function dbFaq(e: DbEntry): { q: string; a: string }[] {
     q: `Can I ${e.kind === "process" ? "end" : "disable"} ${e.name}?`,
     a: `${DB_VERDICTS[e.verdict].label}. ${e.why}`,
   };
-  return [safe, end, ...(e.busy ? [e.busy] : [])];
+  return [safe, end, ...(e.busy ? [e.busy] : []), ...(e.more ?? [])];
 }
 
 const ogFor = (path: string) => `${ORIGIN}/og${path}.png`;

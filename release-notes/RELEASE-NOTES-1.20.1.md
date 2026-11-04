@@ -1,0 +1,1 @@
+Checkout and billing error messages now appear in the app's language. If your PC's clock runs ahead, Pro now lasts until the real end of your trial or billing period instead of stopping up to a day early.

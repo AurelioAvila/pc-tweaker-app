@@ -59,5 +59,5 @@
       "caption": "Partez d'un profil Jeu, Études ou Travail et ajustez-le avant de l'appliquer"
     }
   ],
-  "releaseNotes": "Nouvelle section Audio : chaque périphérique audio utilisé avec son format réel, les effets, le son spatial et l'état d'Equalizer APO, et des constats qui expliquent ce qui ne va pas (casque Bluetooth bloqué en mode appel, micro coupé ou très faible, Equalizer APO installé mais inactif).\nNe pas baisser le son du jeu pendant les appels : par défaut, Windows baisse tous les autres sons de 80 % quand une app d'appel utilise le micro.\nCorriger le contrôle du volume Bluetooth : pour un volume qui ne répond pas, reste trop bas ou saute.\nPro : garder l'audio HDMI ou la puce audio actifs pour que le début d'un son ne soit pas coupé, garder l'audio USB alimenté, redémarrer un périphérique audio en un clic.\nRechercher les grésillements : une mesure de 10 secondes de la latence des pilotes, comparée aux limites de Microsoft.\nChaque modification est enregistrée et se restaure en un clic. L'Analyse gagne une catégorie Audio. 84 réglages."
+  "releaseNotes": "Les messages d'erreur de paiement et de facturation s'affichent désormais dans la langue de l'application. Si l'horloge de votre PC avance, Pro reste actif jusqu'à la fin réelle de votre essai ou de votre période de facturation, au lieu de s'arrêter jusqu'à un jour plus tôt."
 }

@@ -8,7 +8,7 @@ For Windows 10/11 users who want to inspect settings before changing them. Revie
   <img src="src-tauri/icons/128x128@2x.png" width="112" alt="PC Tweaker logo">
 </p>
 
-<p align="center"><strong>Scan. Inspect. Choose what changes.</strong><br>Scan 2.0 findings, a read-only hardware audit and before-and-after checks for supported actions.</p>
+<p align="center"><strong>Scan. Inspect. Choose what changes.</strong><br>Audio diagnostics, Scan 2.0 findings and a read-only hardware audit before you choose supported changes.</p>
 
 <p align="center">
   <a href="#reviews-and-distribution"><img src="https://img.shields.io/badge/Total_downloads-120k%2B-2E7D32?style=for-the-badge" alt="120,000+ total downloads across distribution channels"></a>
@@ -29,18 +29,18 @@ For Windows 10/11 users who want to inspect settings before changing them. Revie
 
 <p align="center"><a href="#whats-new-in-120">What's new in 1.20</a> · <a href="#what-you-can-do">Features</a> · <a href="#what-changes-on-your-system">What changes</a> · <a href="#free-and-pro">Free and Pro</a> · <a href="#download-integrity-and-code-signing">Code signing</a> · <a href="#build-from-source">Build from source</a></p>
 
-<p align="center"><img src="docs/screenshots/pc-tweaker-1.20-scan-results-sample-data.png" alt="PC Tweaker 1.20.0 Scan results in the official browser demo, showing 20 checks before selecting changes; visible interface preview and sample-data disclosure" width="100%"></p>
+<p align="center"><img src="docs/screenshots/pc-tweaker-1.20-audio-sample-data.png" alt="PC Tweaker 1.20.0 Audio interface with synthetic speaker, Bluetooth headset and microphone findings; Pro-view browser demo with visible sample-data disclosure" width="100%"></p>
 
 *PC Tweaker 1.20.0 interface preview, Pro view. Findings, readings and history entries are synthetic sample data, not measurements from a real PC. [Capture details and SHA-256 hashes](docs/screenshots/README.md).*
 
 <details>
-<summary>Explore Audio diagnostics and recorded changes in 1.20</summary>
+<summary>Explore Scan 2.0 and recorded changes in 1.20</summary>
 
-### See what Windows is doing with your sound
+### Review the findings before choosing fixes
 
-<img src="docs/screenshots/pc-tweaker-1.20-audio-sample-data.png" alt="PC Tweaker 1.20.0 Audio interface with synthetic speaker, Bluetooth headset and microphone findings; Pro-view browser demo with visible sample-data disclosure" width="100%">
+<img src="docs/screenshots/pc-tweaker-1.20-scan-results-sample-data.png" alt="PC Tweaker 1.20.0 Scan results in the official browser demo, showing 20 checks before selecting changes; visible interface preview and sample-data disclosure" width="100%">
 
-Inspect device formats and findings before choosing a supported action. These devices and readings are examples, not a diagnosis of your PC.
+Review individual Scan 2.0 findings before selecting supported fixes. The 20 checks shown are examples, not measurements or a diagnosis of your PC.
 
 ### Review the values behind a supported change
 

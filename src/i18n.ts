@@ -2370,6 +2370,8 @@ const it: Strings = {
     verifyEmailForCheckout:
       "Conferma la tua email prima di sbloccare Pro: apri il link che ti abbiamo inviato o richiedine uno nuovo qui.",
     checkoutErrors: {
+      pass_unavailable:
+        "Il pass di 7 giorni non è disponibile al momento. Puoi scegliere un abbonamento o Lifetime.",
       rate_limited: "Troppi tentativi. Attendi qualche minuto e riprova.",
       trial_unavailable:
         "La prova gratuita non è disponibile per questo account. Abbonati direttamente.",
@@ -4123,6 +4125,8 @@ const en: Strings = {
     verifyEmailForCheckout:
       "Confirm your email before unlocking Pro: open the link we sent you, or request a new one here.",
     checkoutErrors: {
+      pass_unavailable:
+        "The 7-day pass is not available right now. You can choose a subscription or Lifetime.",
       rate_limited: "Too many attempts. Please wait a few minutes and try again.",
       trial_unavailable:
         "The free trial is not available for this account. Subscribe directly instead.",
@@ -5898,6 +5902,8 @@ const fr: Strings = {
     verifyEmailForCheckout:
       "Confirmez votre e-mail avant de débloquer Pro : ouvrez le lien envoyé ou demandez-en un nouveau ici.",
     checkoutErrors: {
+      pass_unavailable:
+        "Le pass 7 jours n'est pas disponible pour le moment. Vous pouvez choisir un abonnement ou Lifetime.",
       rate_limited: "Trop de tentatives. Patientez quelques minutes, puis réessayez.",
       trial_unavailable:
         "L'essai gratuit n'est pas disponible pour ce compte. Abonnez-vous directement.",
@@ -7666,6 +7672,8 @@ const es: Strings = {
     verifyEmailForCheckout:
       "Confirma tu correo antes de desbloquear Pro: abre el enlace que te enviamos o solicita uno nuevo aquí.",
     checkoutErrors: {
+      pass_unavailable:
+        "El pase de 7 días no está disponible ahora mismo. Puedes elegir una suscripción o Lifetime.",
       rate_limited: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
       trial_unavailable:
         "La prueba gratuita no está disponible para esta cuenta. Suscríbete directamente.",
@@ -9443,6 +9451,8 @@ const de: Strings = {
     verifyEmailForCheckout:
       "Bestätige vor dem Freischalten von Pro deine E-Mail: Öffne den gesendeten Link oder fordere hier einen neuen an.",
     checkoutErrors: {
+      pass_unavailable:
+        "Der 7-Tage-Pass ist gerade nicht verfügbar. Du kannst ein Abo oder Lifetime wählen.",
       rate_limited: "Zu viele Versuche. Warte ein paar Minuten und versuche es erneut.",
       trial_unavailable:
         "Die kostenlose Testphase ist für dieses Konto nicht verfügbar. Schließe direkt ein Abo ab.",
@@ -11219,6 +11229,8 @@ const pt: Strings = {
     verifyEmailForCheckout:
       "Confirme o seu e-mail antes de desbloquear o Pro: abra a ligação que enviámos ou peça uma nova aqui.",
     checkoutErrors: {
+      pass_unavailable:
+        "O passe de 7 dias não está disponível de momento. Pode escolher uma subscrição ou o Lifetime.",
       rate_limited: "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.",
       trial_unavailable:
         "O teste gratuito não está disponível para esta conta. Subscreva diretamente.",

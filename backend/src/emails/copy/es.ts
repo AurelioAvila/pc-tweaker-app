@@ -22,7 +22,7 @@ export const es: Copy = {
     unsubscribe: "Darse de baja",
   },
 
-  plans: { monthly: "Pro, mensual", annual: "Pro, anual", lifetime: "Pro, de por vida" },
+  plans: { monthly: "Pro, mensual", annual: "Pro, anual", lifetime: "Pro, de por vida", pass_7d: "Pro, pase de 7 días" },
 
   verify: {
     subject: (b: string) => `Confirma tu correo para ${b}`,
@@ -230,6 +230,23 @@ export const es: Copy = {
       ],
       note: "Stripe envía la factura y el recibo del pago por separado, desde su propia dirección; guárdalos para tus registros. Si la aplicación sigue mostrando Free tras unos minutos, cierra sesión y vuelve a entrar: la licencia se lee de nuevo al iniciar sesión.",
       why: "Recibes este correo porque se inició una suscripción a PC Tweaker Pro en la cuenta asociada a esta dirección.",
+    },
+    pass: {
+      subject: "Tu pase de 7 días de PC Tweaker Pro está activo",
+      eyebrow: "Pase de 7 días",
+      headline: (n: string) => named("Pro está activo durante los próximos 7 días", n),
+      preheader: (price: string, until: string) => `Un solo pago de ${price}, sin renovación. Pro hasta el ${until}.`,
+      intro: (email: string, total: number) =>
+        `Stripe confirmó el pago y la licencia de ${email} está firmada. Los ${total} ajustes, Game Sessions y el perfil Turbo Gaming incluidos, están disponibles ya y hasta el momento indicado abajo. No se renueva y no se cobra nada más.`,
+      untilLabel: "Pro hasta el",
+      stepsTitle: "Conviene saber",
+      stepsHtml: (who: string) => [
+        "<strong>Cuando terminen los 7 días.</strong> La aplicación vuelve a Free por sí sola. Los ajustes que aplicaste se quedan como están; solo se vuelven a bloquear los ajustes Pro.",
+        "<strong>¿Necesitas más tiempo?</strong> Compra otro pase en Planes y precios: sus 7 días se suman después de los actuales. También puedes comprar una suscripción o Lifetime en cualquier momento.",
+        `<strong>Un segundo PC.</strong> Instala allí PC Tweaker e inicia sesión con ${who}: también es Pro allí hasta que termine el pase.`,
+      ],
+      note: "Stripe envía la factura por separado, desde su propia dirección; guárdala para tus registros. Si la aplicación sigue mostrando Free tras unos minutos, cierra sesión y vuelve a entrar: la licencia se lee de nuevo al iniciar sesión.",
+      why: "Recibes este correo porque se compró un pase de 7 días de PC Tweaker Pro en la cuenta asociada a esta dirección.",
     },
     lifetime: {
       headline: (n: string) => named("Pro, para siempre. Gracias", n),

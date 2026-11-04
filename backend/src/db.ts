@@ -78,6 +78,19 @@ async function initSchema(): Promise<void> {
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT now()
   )`);
   await pool.query(`CREATE INDEX IF NOT EXISTS billing_lifetime_purchases_user_idx ON billing_lifetime_purchases(user_id)`);
+  // The 7-day pass (pass.ts): one row per paid pass Checkout, and the end of
+  // the access the account's passes add up to. Kept apart from is_pro/plan so
+  // no subscription or Lifetime event can shorten or revoke a pass, nor a
+  // pass a subscription.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pass_expires_at TIMESTAMPTZ;`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS billing_pass_purchases (
+    checkout_id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    days INTEGER NOT NULL,
+    granted_at TIMESTAMPTZ,
+    reversed_at TIMESTAMPTZ
+  )`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS billing_pass_purchases_user_idx ON billing_pass_purchases(user_id)`);
   await migrateLegacyProGrants(pool);
   await pool.query(`CREATE TABLE IF NOT EXISTS lifetime_uninstaller_bonus (
     user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,

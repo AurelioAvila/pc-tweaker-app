@@ -175,7 +175,8 @@ export async function checkoutNotice(session: Stripe.Checkout.Session, livemode:
     ? `${coffees > 1 ? `${coffees} × ` : ""}Coffee for ${tipFor}`
     : items.map((i) => `${i.quantity && i.quantity > 1 ? `${i.quantity} × ` : ""}${i.description ?? "item"}`).join(", ")
       || session.metadata?.product || "Unknown product";
-  const plan = session.metadata?.plan ?? null;
+  // The 7-day pass (pass.ts) reads as words, not as its key.
+  const plan = session.metadata?.plan === "pass_7d" ? "7-day pass" : session.metadata?.plan ?? null;
   const customer = session.customer_details;
   const customerId = idOf(session.customer as string | { id: string } | null);
   const paymentId = idOf(session.payment_intent as string | { id: string } | null);

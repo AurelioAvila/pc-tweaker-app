@@ -3,7 +3,7 @@ import express, { Request, Response } from "express";
 import { asyncRoute } from "../async-route";
 import { requireAuth, isValidEmail } from "../auth";
 import { getPool, isConfigured } from "../db";
-import { allEntitlements } from "../products";
+import { allEntitlements, loyaltyEntitlement } from "../products";
 import { consumeGlobalBudget } from "../public-form-guard";
 
 const router = express.Router();
@@ -88,7 +88,7 @@ router.get(
       return;
     }
     const entitlements = await allEntitlements(rows[0].id);
-    const active = entitlements.filter((entitlement) => entitlement.active);
+    const active = entitlements.filter(loyaltyEntitlement);
     res.json({ anyActive: active.length > 0, products: active.map((entitlement) => entitlement.product) });
   }),
 );

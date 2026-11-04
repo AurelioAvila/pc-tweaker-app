@@ -11,6 +11,8 @@ type PurchaseApi = {
 export type PurchaseStatus = "signed-out" | "verify-email" | "already-pro" | "upgrade" | "ready";
 export function purchaseStatus(account: Account, selectedPlan?: WebPlan): PurchaseStatus {
   if (!account.emailVerified) return "verify-email";
+  // A 7-day pass holds no plan: another pass adds its days, and any plan or Lifetime can follow it.
+  if (account.isPro && account.plan === "pass_7d") return "ready";
   if (account.isPro && selectedPlan === "lifetime" && (account.plan === "monthly" || account.plan === "annual")) return "upgrade";
   if (account.isPro) return "already-pro";
   return "ready";

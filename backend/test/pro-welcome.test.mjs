@@ -35,6 +35,19 @@ test("a subscription still quotes its renewal date", () => {
   assert.doesNotMatch(html, /Never expires/);
 });
 
+test("the 7-day pass receipt names the pass, its end and no renewal", async () => {
+  const { proWelcomeSubject, proWelcomeText } = await import("../dist/emails/pro-welcome.js");
+  const input = { firstName: "Sam", email: "sam@example.com", plan: "pass_7d", priceLabel: "€4.99", renewsOn: "11 November 2026 at 10:30 UTC" };
+  assert.equal(proWelcomeSubject("pctweaker", "pass_7d"), "Your PC Tweaker Pro 7-day pass is active");
+  for (const body of [proWelcomeHtml(input), proWelcomeText(input)]) {
+    assert.match(body, /Pro, 7-day pass/);
+    assert.match(body, /Pro until/);
+    assert.match(body, /11 November 2026 at 10:30 UTC/);
+    assert.match(body, /None\. Nothing is charged again\./);
+    assert.doesNotMatch(body, /Renews on|Never expires|Lifetime license/);
+  }
+});
+
 // The account address is chosen by the user and interpolated into HTML.
 test("the recipient address is escaped, not injected", () => {
   const html = proWelcomeHtml({

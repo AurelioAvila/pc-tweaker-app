@@ -4,7 +4,7 @@ import Stripe from "stripe";
 import { getPool, isConfigured } from "../db";
 import { requireAuth } from "../auth";
 import { periodEndFromSubscription } from "../entitlement";
-import { PRODUCTS, isKnownProduct, productEntitlement, upsertEntitlement, revokeEntitlement, type Product } from "../products";
+import { PRODUCTS, isKnownProduct, loyaltyEntitlement, productEntitlement, upsertEntitlement, revokeEntitlement, type Product } from "../products";
 import { requestCountry } from "../buyer-country";
 import {
   cardParityTotal,
@@ -25,7 +25,7 @@ import {
 import { sendMail } from "../mailer";
 import { consumeGlobalBudget } from "../public-form-guard";
 import { bonusMail, brandFor, endingMail, proWelcomeHtml, proWelcomeSubject, proWelcomeText, refundHtml, refundSubject, refundText } from "../emails/pro-welcome";
-import { copyFor, formatDay, isLocale } from "../emails/copy";
+import { copyFor, formatDay, formatMoment, isLocale } from "../emails/copy";
 import { SUPPORT_INBOX, SUPPORT_REPLY_TO } from "../support-inbox";
 import { lifetimeOffer, lifetimeCheckoutDecision } from "../lifetime-offer";
 import { promoCheckout } from "../promo";
@@ -36,7 +36,7 @@ import { asyncRoute } from "../async-route";
 import { subscriptionRouter } from "../subscription-manage";
 import { deviceHashFrom } from "../license";
 import {
-  PURCHASE_TERMS_VERSION, buyerIp, consentPageUrl, consentRequired, linkConsentSession, readConsentIntent, recordConsent,
+  PREVIOUS_TERMS_VERSION, PURCHASE_TERMS_VERSION, buyerIp, consentPageUrl, consentRequired, linkConsentSession, readConsentIntent, recordConsent,
   sessionIdFromUrl, signConsentIntent, userAgentFamily,
 } from "../purchase-evidence";
 import { referralCheckout, referralWebhook, closeExpiredReferral } from "../referral-stripe";
@@ -50,6 +50,7 @@ import { assertNoUnsettledSubscription, SubscriptionCheckoutGuardError } from ".
 import { expireUnreservedSession, unreservedPayableSessions } from "../unreserved-checkout-sessions";
 import { ReferralError } from "../referrals";
 import { checkoutOfFailedPayment, failedCheckout, type FailedCheckout } from "../checkout-recovery";
+import { PASS_DAYS, PASS_PLAN, grantPass, passEnabled, passRecorded, reversePass } from "../pass";
 import { failureKey, trialMail, trialMoney, type Money, type TrialMailKind } from "../emails/trial";
 import {
   TRIAL_DAYS, TRIAL_MARK, TRIAL_REJECTED, blockedReason, claimTrial, grantsAccess, isOurTrial, trialEligible, trialEnabled, trialHash,
@@ -176,7 +177,7 @@ function requireStripe(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-type PlanKey = "monthly" | "annual" | "lifetime";
+type PlanKey = "monthly" | "annual" | "lifetime" | typeof PASS_PLAN;
 type PlanDef = { env: string; mode: "subscription" | "payment" };
 
 // Pro is sold monthly, yearly at a discount, or once and for good. Each is a
@@ -193,6 +194,8 @@ const PLANS: Record<PlanKey, PlanDef> = {
   monthly: { env: "STRIPE_PRICE_MONTHLY", mode: "subscription" },
   annual: { env: "STRIPE_PRICE_ANNUAL", mode: "subscription" },
   lifetime: { env: "STRIPE_PRICE_LIFETIME", mode: "payment" },
+  // The 7-day pass (pass.ts): one payment, no renewal, sold behind PASS_7D_ENABLED.
+  [PASS_PLAN]: { env: "STRIPE_PRICE_PASS_7D", mode: "payment" },
 };
 
 /**
@@ -219,7 +222,7 @@ async function resolveCheckoutPrice(
   if (planKey !== "annual") return { error: "the Uninstaller is sold as an annual plan", status: 400 };
   const pctweaker = await productEntitlement(userId, "pctweaker");
   return {
-    envName: pctweaker.active ? "STRIPE_PRICE_UNINSTALLER_LOYALTY" : "STRIPE_PRICE_UNINSTALLER_ANNUAL",
+    envName: loyaltyEntitlement(pctweaker) ? "STRIPE_PRICE_UNINSTALLER_LOYALTY" : "STRIPE_PRICE_UNINSTALLER_ANNUAL",
     mode: "subscription",
   };
 }
@@ -262,7 +265,10 @@ export function createGuardedCheckout(deps: {
     const entitlement = await deps.getEntitlement(userId, product);
     const upgrading = entitlement.active && product === "pctweaker" && plan === "lifetime" &&
       (entitlement.plan === "monthly" || entitlement.plan === "annual");
-    if (entitlement.active && !upgrading) throw new GuardedCheckoutError("already_has_access");
+    // A running 7-day pass blocks nothing: another pass adds its days, and a
+    // plan or Lifetime takes over while the pass days wait underneath.
+    const onPass = entitlement.active && entitlement.plan === PASS_PLAN;
+    if (entitlement.active && !upgrading && !onPass) throw new GuardedCheckoutError("already_has_access");
     if (upgrading && typeof params.customer !== "string") throw new GuardedCheckoutError("subscription_review_required");
     if (typeof params.customer === "string") {
       try { await deps.checkSubscriptions(params.customer, product, upgrading ? String(userId) : undefined); }
@@ -285,9 +291,10 @@ export function createGuardedCheckout(deps: {
       }
       unreservedSessionOpen = async () => (await openUnreserved(userId, product)).length > 0;
     }
-    // A referral checkout is a card checkout under Managed Payments: never for a crypto sale.
+    // A referral checkout is a card checkout under Managed Payments: never for a crypto sale,
+    // and never for the 7-day pass, which is not a referral plan.
     const provider = stripeGuardedProvider(deps.sessions, params, 5000,
-      crypto ? undefined : tagged => deps.referral(userId, plan, tagged), deps.closeReferral);
+      crypto || plan === PASS_PLAN ? undefined : tagged => deps.referral(userId, plan, tagged), deps.closeReferral);
     // A trial and an immediate payment have different terms even for the same
     // plan; reusing the other session would misrepresent the requested offer.
     return guardedCheckout(deps.reservations, provider, userId, product, checkoutTerms(plan, trial, params), replaceDifferentTerms, { unreservedSessionOpen });
@@ -301,7 +308,9 @@ type RetireStripe = {
 };
 /** Retires a completed reservation only when Stripe proves nothing more can be charged for it, so the account
  * can check out again: an ended subscription, a cancelled unpaid payment, or a reversed Lifetime purchase. */
-export async function retireCompletedCheckout(deps: { stripe: RetireStripe; reservations: WebCheckoutReservations; lifetimeReversed: (checkoutId: string) => Promise<boolean> },
+export async function retireCompletedCheckout(deps: { stripe: RetireStripe; reservations: WebCheckoutReservations; lifetimeReversed: (checkoutId: string) => Promise<boolean>;
+  /** A paid 7-day pass the webhook has granted (or reversed): nothing more can be charged for it. */
+  passRecorded?: (checkoutId: string) => Promise<boolean> },
   userId: number, product: Product, customerId: string | null, upgrading: boolean): Promise<void> {
   const reservation = await deps.reservations.find(userId, product);
   if (!reservation || reservation.state === "creating" || !reservation.session_id) return;
@@ -317,8 +326,12 @@ export async function retireCompletedCheckout(deps: { stripe: RetireStripe; rese
   }
   if (session.mode === "payment" && session.payment_status === "paid") {
     // A Lifetime purchase that was fully refunded or lost in a dispute (recorded by the webhook) no longer
-    // holds the account: without this the customer could never buy again.
-    if (!await deps.lifetimeReversed(reservation.session_id) || session.id !== reservation.session_id || session.client_reference_id !== String(userId) ||
+    // holds the account: without this the customer could never buy again. A 7-day pass is done once the
+    // webhook has recorded it, so the next pass or a plan can be bought.
+    const settled = session.metadata?.plan === PASS_PLAN
+      ? Boolean(deps.passRecorded && await deps.passRecorded(reservation.session_id))
+      : await deps.lifetimeReversed(reservation.session_id);
+    if (!settled || session.id !== reservation.session_id || session.client_reference_id !== String(userId) ||
         session.metadata?.reservation_id !== reservation.reservation_id) return;
     if (!await deps.reservations.complete(reservation.reservation_id, reservation.session_id)) return;
     await deps.reservations.releaseReconciledCompleted(reservation.reservation_id, reservation.session_id);
@@ -383,7 +396,8 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
         retireCompleted: (userId, product, customerId, upgrading) => {
           if (!stripe) throw new Error("Stripe is unavailable");
           return retireCompletedCheckout({ stripe: stripe as unknown as RetireStripe, reservations: new WebCheckoutReservations(getPool()),
-            lifetimeReversed: async checkoutId => Boolean((await getPool().query("SELECT 1 FROM billing_lifetime_reversals WHERE checkout_id = $1", [checkoutId])).rowCount) },
+            lifetimeReversed: async checkoutId => Boolean((await getPool().query("SELECT 1 FROM billing_lifetime_reversals WHERE checkout_id = $1", [checkoutId])).rowCount),
+            passRecorded },
             userId, product, customerId, upgrading);
         },
       })(input);
@@ -438,6 +452,12 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
     if (!isKnownProduct(product)) {
       return res.status(400).json({ error: "unknown product" });
     }
+    // The 7-day pass: PC Tweaker only, paid at once by card, and only while it is switched on.
+    const pass = planKey === PASS_PLAN;
+    if (pass && !crypto) {
+      if (!passEnabled(effects.environment)) return res.status(404).json({ error: "The 7-day pass is not available.", code: "pass_unavailable" });
+      if (product !== "pctweaker" || startTrial === true) return res.status(400).json({ error: "The 7-day pass is a single payment for PC Tweaker." });
+    }
     if (crypto) {
       if (!cryptoEnabled(effects.environment)) return res.status(404).json({ error: "not found" });
       if (product !== "pctweaker" || planKey !== "lifetime" || startTrial === true) {
@@ -469,6 +489,13 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
     const plan: PlanDef = { env: resolved.envName, mode: resolved.mode };
 
     try {
+      if (pass) {
+        // Never sold on top of a subscription, a trial or Lifetime: it would add nothing they do not have.
+        const current = await productEntitlement(req.userId as number, "pctweaker");
+        if (current.active && current.plan !== PASS_PLAN) {
+          return res.status(409).json({ error: "This account already has Pro. The 7-day pass adds nothing to it.", code: "already_has_access" });
+        }
+      }
       // Reuse the customer we already know about, so a user who resubscribes
       // doesn't end up as two unrelated customers in Stripe (which would break
       // the cancellation lookup below).
@@ -582,10 +609,11 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       const consent = req.body?.consent;
       let consentId: string | null = null;
       if (consent !== undefined) {
-        const version = PURCHASE_TERMS_VERSION[product];
         if (!consent || consent.accepted !== true || typeof consent.terms_version !== "string") {
           return res.status(400).json({ error: "Tick the box to continue.", code: "consent_required" });
         }
+        // The box before the pass Terms still covers everything but the pass (purchase-evidence.ts).
+        const version = !pass && consent.terms_version === PREVIOUS_TERMS_VERSION[product] ? consent.terms_version : PURCHASE_TERMS_VERSION[product];
         if (consent.terms_version !== version) {
           return res.status(409).json({ error: "The Terms have changed since this page was opened. Reload it to read them.", code: "terms_changed" });
         }
@@ -626,7 +654,7 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       const userId = req.userId as number;
       if (effects.guardedReservationOpen && await effects.guardedReservationOpen(userId, product))
         throw new GuardedCheckoutError("other_checkout_pending");
-      const referred = crypto ? null : await referralCheckout(userId, planKey, params);
+      const referred = crypto || pass ? null : await referralCheckout(userId, planKey, params);
       const session = referred ? { url: referred.url, id: referred.sessionId } : await effects.createSession(params,
         `checkout:${req.userId}:${product}:${planKey}:${trial ? "trial" : "now"}${crypto ? ":crypto" : ""}:${Math.floor(effects.now() / 60_000)}`);
       // Checked again after creation: a guarded instance that reserved meanwhile has either seen this
@@ -864,6 +892,17 @@ export async function publicCrypto(environment: NodeJS.ProcessEnv = process.env,
   };
 }
 
+/** The `pass` block of GET /api/billing/prices: the 7-day pass's price as
+ *  Stripe has it, or null while it is switched off or its Price cannot be read
+ *  (the site and the app then show no pass at all). */
+export async function publicPass(environment: NodeJS.ProcessEnv = process.env, read: PriceReader | null = stripe ? (price) => stripe!.prices.retrieve(price) : null, now = Date.now()) {
+  if (!passEnabled(environment) || !read) return null;
+  const price = await cachedPrice(environment.STRIPE_PRICE_PASS_7D!, read, now);
+  return price?.active && price.unit_amount != null && !price.recurring && price.currency === "eur"
+    ? { plan: PASS_PLAN, days: PASS_DAYS, amount: price.unit_amount, currency: price.currency, tax_behavior: price.tax_behavior ?? null }
+    : null;
+}
+
 /** GET /api/billing/prices: public, for the site and the plan screens. */
 export async function publicPrices(environment: NodeJS.ProcessEnv = process.env, read?: PriceReader | null, fx?: () => Promise<number | null>, country: string | null = null) {
   const prices = await Promise.all(RECURRING_PLANS.map(async ({ product, plan, env }) => {
@@ -876,6 +915,7 @@ export async function publicPrices(environment: NodeJS.ProcessEnv = process.env,
     trial_days: TRIAL_DAYS,
     prices: prices.filter(Boolean),
     crypto: await publicCrypto(environment, read, fx, Date.now(), country),
+    pass: await publicPass(environment, read),
   };
 }
 
@@ -892,7 +932,7 @@ export async function billingStatus(userId: number | string, products: readonly 
     const entitlement = await productEntitlement(userId, product);
     // What this account would pay to renew, by plan: the Uninstaller's
     // loyalty price follows the same server-side rule as the checkout.
-    const loyalty = product === "uninstaller" && (await productEntitlement(userId, "pctweaker")).active;
+    const loyalty = product === "uninstaller" && loyaltyEntitlement(await productEntitlement(userId, "pctweaker"));
     const prices = (await Promise.all(RECURRING_PLANS.filter((entry) => entry.product === product).map(async ({ plan, env }) => {
       const price = await stripePrice(environment[loyalty ? "STRIPE_PRICE_UNINSTALLER_LOYALTY" : env], read);
       return price && { plan, ...price };
@@ -1196,6 +1236,7 @@ function priceProducts(): Record<string, Product> {
     [process.env.STRIPE_PRICE_ANNUAL, "pctweaker"],
     [process.env.STRIPE_PRICE_LIFETIME, "pctweaker"],
     [process.env.STRIPE_PRICE_LIFETIME_PROMO, "pctweaker"],
+    [process.env.STRIPE_PRICE_PASS_7D, "pctweaker"],
     [process.env.STRIPE_PRICE_ID, "pctweaker"],
     [process.env.STRIPE_PRICE_UNINSTALLER_ANNUAL, "uninstaller"],
     [process.env.STRIPE_PRICE_UNINSTALLER_LOYALTY, "uninstaller"],
@@ -1338,6 +1379,7 @@ const PLAN_PRICE_LABELS: Record<string, string> = {
   monthly: "€7.99 / month",
   annual: "€59.99 / year",
   lifetime: "€99 once",
+  [PASS_PLAN]: "€4.99 once",
 };
 
 /** Durable receipt scheduling; the provider is called by the retry worker. */
@@ -1456,7 +1498,8 @@ export async function deliverProReceipt(receipt: Receipt): Promise<void> {
       email: user.email,
       plan: plan || "monthly",
       priceLabel: charged ? trialMoney(c.dateLocale, charged) : chargedLabel ?? PLAN_PRICE_LABELS[plan || "monthly"] ?? PLAN_PRICE_LABELS.monthly,
-      renewsOn: expiresAt ? formatDay(c, expiresAt) : null,
+      // A pass ends at a moment, not on a day: say when, to the minute (UTC).
+      renewsOn: expiresAt ? (plan === PASS_PLAN ? formatMoment(c, expiresAt) : formatDay(c, expiresAt)) : null,
       consented: receipt.consented === true,
     };
     await deliver({ subject: proWelcomeSubject(product, plan, c), text: proWelcomeText(input, c), html: proWelcomeHtml(input, c) });
@@ -1821,10 +1864,21 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session, effects: 
     monthly: process.env.STRIPE_PRICE_MONTHLY,
     annual: process.env.STRIPE_PRICE_ANNUAL,
     lifetime: process.env.STRIPE_PRICE_LIFETIME,
+    [PASS_PLAN]: process.env.STRIPE_PRICE_PASS_7D,
   })).find(Boolean);
   const legacyLifetime = session.mode === "payment" && product === "pctweaker" &&
     priceIds.some((id) => Boolean(process.env.STRIPE_PRICE_ID) && id === process.env.STRIPE_PRICE_ID);
   let plan = pricePlan ?? (legacyLifetime ? "lifetime" : session.metadata?.plan);
+  if (session.mode === "payment" && product === "pctweaker" && plan === PASS_PLAN) {
+    // Granted whatever PASS_7D_ENABLED says now: the switch stops sales, never a paid pass.
+    // Once per Checkout (pass.ts), so Stripe's retries and the async-payment event are safe.
+    const until = await grantPass(String(userId), session.id);
+    if (until) {
+      await effects.welcome(String(userId), PASS_PLAN, until, product, sessionCharge(session), `checkout:${session.id}`,
+        { ...paid(session.amount_total, session.currency), ...consentedBy(session.metadata) });
+    }
+    return;
+  }
   if (session.mode === "payment" && (product !== "pctweaker" || plan !== "lifetime")) {
     throw new Error(`Checkout ${session.id} has no recognized one-time entitlement`);
   }
@@ -1885,9 +1939,13 @@ type ReversedPurchase = { userId: string; product: Product; plan: string | null;
 async function findPurchase(paymentIntentId: string, effects: BillingEffects): Promise<ReversedPurchase | null> {
   const session = await effects.loadCheckoutForPayment(paymentIntentId);
   if (session?.mode === "payment") {
-    const lifetimePrices = [...lifetimePriceIds(), process.env.STRIPE_PRICE_ID].filter(Boolean);
-    const priceIds = session.line_items?.data?.flatMap((item) => item.price ? [item.price.id] : []) ?? [];
     const userId = session.client_reference_id || session.metadata?.userId;
+    const priceIds = session.line_items?.data?.flatMap((item) => item.price ? [item.price.id] : []) ?? [];
+    if (userId && ((session.metadata?.product === "pctweaker" && session.metadata?.plan === PASS_PLAN) ||
+        (process.env.STRIPE_PRICE_PASS_7D && priceIds.includes(process.env.STRIPE_PRICE_PASS_7D)))) {
+      return { userId, product: "pctweaker", plan: PASS_PLAN, subscriptionId: null, checkoutId: session.id };
+    }
+    const lifetimePrices = [...lifetimePriceIds(), process.env.STRIPE_PRICE_ID].filter(Boolean);
     // Our own Lifetime checkouts also carry product/plan metadata, so a
     // refund is still matched if a promo Price variable is ever removed.
     const lifetimeCheckout = session.metadata?.product === "pctweaker" && session.metadata?.plan === "lifetime";
@@ -1908,6 +1966,10 @@ async function findPurchase(paymentIntentId: string, effects: BillingEffects): P
  *  subscription never touches Lifetime, nor a newer subscription's grant.
  *  Returns whether anything was still active. */
 async function revokePurchase({ userId, product, plan, subscriptionId, checkoutId }: ReversedPurchase): Promise<boolean> {
+  if (plan === PASS_PLAN) {
+    if (!checkoutId) throw new Error("Pass reversal is missing its checkout identity");
+    return reversePass(userId, checkoutId);
+  }
   if (plan === "lifetime") {
     if (!checkoutId) throw new Error("Lifetime reversal is missing its checkout identity");
     const client = await getPool().connect();

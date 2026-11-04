@@ -63,6 +63,15 @@ test("one-off checkouts of any product are told once, trials as trials, paid sub
   const { parent, ...oneOffInvoice } = uninstallerInvoice;
   assert.equal(await ownerNoticeFor(event("invoice.paid", { ...oneOffInvoice, billing_reason: "manual" }), null), null);
 
+  // The 7-day pass: named in words, never as its "pass_7d" key.
+  const pass = { ...lifetime, id: "cs_pass", amount_total: 499, payment_intent: "pi_pass", metadata: { product: "pctweaker", plan: "pass_7d" },
+    line_items: { data: [{ description: "PC Tweaker Pro — 7-day pass", quantity: 1 }] } };
+  const passNotice = await ownerNoticeFor(event("checkout.session.completed", pass), null);
+  assert.equal(passNotice.notice.subject, `€4.99 · PC Tweaker Pro — 7-day pass — One-off purchase · ${orderId("pi_pass")}`);
+  assert.ok(passNotice.notice.text.includes("Plan: 7-day pass"));
+  const unnamed = await ownerNoticeFor(event("checkout.session.completed", { ...pass, line_items: { data: [{ description: "PC Tweaker Pro", quantity: 1 }] } }), null);
+  assert.match(unnamed.notice.subject, /^€4\.99 · PC Tweaker Pro 7-day pass — One-off purchase/);
+
   // Havenly, CertSprint, Frame Witness: other products' Checkouts on the same account.
   const shop = { ...lifetime, id: "cs_shop", metadata: { orderId: "HV-1042" }, line_items: undefined };
   const lister = { checkout: { sessions: { listLineItems: async () => ({ data: [{ description: "Pet grooming glove", quantity: 2 }] }) } } };

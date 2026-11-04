@@ -1,6 +1,7 @@
 import { getPool } from "./db";
 import { isEntitled, PERPETUAL_PLANS } from "./entitlement";
 import { queueReceipt } from "./receipt-outbox";
+import { PASS_PLAN } from "./pass";
 
 /**
  * The ecosystem's product catalogue, and the data access for the per-product
@@ -58,10 +59,17 @@ export function isProductRowEntitled(row: EntitlementTableRow | null | undefined
 export async function productEntitlement(userId: number | string, product: Product, activateBonus = false): Promise<ProductEntitlement> {
   if (product === "pctweaker") {
     const { rows } = await getPool().query(
-      "SELECT is_pro, plan, pro_expires_at, legacy_pro_grant, subscription_status, trial_ends_at, cancel_at_period_end FROM users WHERE id = $1",
+      "SELECT is_pro, plan, pro_expires_at, legacy_pro_grant, subscription_status, trial_ends_at, cancel_at_period_end, pass_expires_at FROM users WHERE id = $1",
       [userId],
     );
     const row = rows[0];
+    // A subscription, a trial or Lifetime is the plan while it grants access;
+    // a 7-day pass (pass.ts) only when nothing else does, and its days stay
+    // put underneath until then.
+    const pass = row?.pass_expires_at ? new Date(row.pass_expires_at) : null;
+    if (!isEntitled(row) && pass && pass.getTime() > Date.now()) {
+      return { product, active: true, plan: PASS_PLAN, expiresAt: pass.toISOString(), status: null, trialEndsAt: null, cancelAtPeriodEnd: false };
+    }
     return {
       product, active: isEntitled(row), plan: row?.plan ?? null,
       expiresAt: row?.plan && PERPETUAL_PLANS.has(row.plan) ? null
@@ -115,10 +123,16 @@ export async function allEntitlements(userId: number | string): Promise<ProductE
 }
 
 /** True when the user holds at least one active entitlement on any product —
- *  the ecosystem's definition of "existing customer" for loyalty pricing. */
+ *  the ecosystem's definition of "existing customer" for loyalty pricing. A
+ *  7-day pass is not one: €4.99 must not buy a lasting loyalty price. */
 export async function hasAnyActiveEntitlement(userId: number | string): Promise<boolean> {
   const all = await allEntitlements(userId);
-  return all.some((entitlement) => entitlement.active);
+  return all.some(loyaltyEntitlement);
+}
+
+/** An entitlement that earns loyalty prices: active, and not a 7-day pass. */
+export function loyaltyEntitlement(entitlement: ProductEntitlement): boolean {
+  return entitlement.active && entitlement.plan !== PASS_PLAN;
 }
 
 /** Grants or refreshes a non-pctweaker product entitlement (webhook path).

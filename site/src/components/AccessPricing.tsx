@@ -14,8 +14,8 @@ const planCard = "flex flex-col rounded-2xl border p-7 sm:p-9 md:row-span-7 md:g
 
 export function AccessPricing() {
   const { free, pro, lifetime } = text.pricing;
-  const [purchase, setPurchase] = useState<"annual" | "monthly" | "lifetime" | "lifetime-crypto" | "account" | null>(null);
-  const choosePurchase = (plan: "annual" | "monthly" | "lifetime" | "lifetime-crypto") => {
+  const [purchase, setPurchase] = useState<"annual" | "monthly" | "lifetime" | "lifetime-crypto" | "pass_7d" | "account" | null>(null);
+  const choosePurchase = (plan: "annual" | "monthly" | "lifetime" | "lifetime-crypto" | "pass_7d") => {
     setPurchase(plan);
     document.getElementById("purchase-options")?.scrollIntoView({ block: "start" });
   };
@@ -71,6 +71,8 @@ export function AccessPricing() {
   const prices = usePriceList();
   const amount = (plan: string) => prices?.prices.find((p) => p.product === "pctweaker" && p.plan === plan)?.amount;
   const [annual, monthly] = [amount("annual"), amount("monthly")];
+  // The 7-day pass: shown only while the API sells it (its price block is null otherwise).
+  const pass = prices?.pass ?? null;
   const live = {
     price: annual ? euro(annual) : pro.price,
     per: annual && monthly ? `/ year · monthly option ${euro(monthly)}` : pro.per,
@@ -239,6 +241,26 @@ export function AccessPricing() {
             )}
           </motion.div>
         </div>
+        {pass && (
+          <section className="mt-6 flex flex-col gap-4 rounded-2xl border border-white/10 bg-[var(--bg-2)] px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8" aria-labelledby="pass-heading">
+            <div>
+              <h3 id="pass-heading" className="font-mono-t text-[12px] tracking-[0.14em] text-[var(--fg-dim)]">{pass.days}-DAY PASS</h3>
+              <p className="mt-1.5 text-[14px] leading-relaxed text-[var(--fg-dim)]">One payment, no renewal. Pro for {pass.days} days, then the app returns to Free on its own.</p>
+            </div>
+            <div className="flex items-center gap-5">
+              <p className="font-display text-[28px] leading-none font-extrabold tracking-tight whitespace-nowrap text-[var(--fg)]">
+                {euro(pass.amount)} <span className="font-sans text-[13px] font-normal tracking-normal text-[var(--fg-dim)]">once</span>
+              </p>
+              {(webEnabled || webPreview) ? (
+                <button type="button" onClick={() => choosePurchase("pass_7d")} className="rounded-xl border border-white/20 px-5 py-3 text-[14px] font-semibold whitespace-nowrap text-[var(--fg)] transition-colors hover:border-white/40">
+                  {webPreview ? "Preview pass" : "Choose the pass"}
+                </button>
+              ) : (
+                <a href={DOWNLOAD_EXE} className="rounded-xl border border-white/20 px-5 py-3 text-[14px] font-semibold whitespace-nowrap text-[var(--fg)] transition-colors hover:border-white/40">Get it in the app</a>
+              )}
+            </div>
+          </section>
+        )}
         {(webPreview || webEnabled) && (
           <div id="purchase-options" className="mt-8 scroll-mt-36" aria-label={webPreview ? "Purchase preview" : "Purchase options"}>
             <p className="mb-4 text-sm text-[var(--fg-dim)]">{webPreview ? "Preview only: no payment or account is created." : "Choose your plan to purchase online."}</p>
@@ -256,6 +278,17 @@ export function AccessPricing() {
                   {plan === "lifetime" ? "Lifetime" : plan === "annual" ? "Annual" : "Monthly"}
                 </button>
               ))}
+              {pass && (
+                <button
+                  type="button"
+                  aria-pressed={purchase === "pass_7d"}
+                  onClick={() => setPurchase("pass_7d")}
+                  className={`col-span-3 rounded-xl border px-5 py-3 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${purchase === "pass_7d" ? "bg-accent border-transparent text-[var(--on-accent)]" : "border-white/20 text-[var(--fg)] hover:border-white/40"}`}
+                >
+                  <span className="hidden sm:inline">{webPreview ? "Preview" : "Buy"} </span>
+                  {pass.days}-day pass
+                </button>
+              )}
               <button
                 type="button"
                 aria-pressed={purchase === "account"}
@@ -265,7 +298,7 @@ export function AccessPricing() {
                 Create a free account
               </button>
             </div>
-            {purchase && <WebPurchase key={purchase} plan={purchase === "account" ? null : purchase === "lifetime-crypto" ? "lifetime" : purchase} cryptoUsd={purchase === "lifetime-crypto" ? prices?.crypto?.lifetimeUsd ?? null : null} demo={webPreview} onClose={() => setPurchase(null)} onChoosePlan={() => { setPurchase(null); document.getElementById("access")?.scrollIntoView({ block: "start" }); }} />}
+            {purchase && <WebPurchase key={purchase} plan={purchase === "account" ? null : purchase === "lifetime-crypto" ? "lifetime" : purchase} cryptoUsd={purchase === "lifetime-crypto" ? prices?.crypto?.lifetimeUsd ?? null : null} pass={pass} demo={webPreview} onClose={() => setPurchase(null)} onChoosePlan={() => { setPurchase(null); document.getElementById("access")?.scrollIntoView({ block: "start" }); }} />}
           </div>
         )}
         <p className="mt-5 text-[12.5px] text-[var(--fg-dim)]">{text.pricing.payWith}</p>

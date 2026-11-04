@@ -59,5 +59,5 @@
       "caption": "Start from a Gaming, Study or Work profile and adjust it before applying"
     }
   ],
-  "releaseNotes": "New Audio section: every sound device in use with its real format, effects, spatial sound and Equalizer APO status, plus findings that explain what is wrong (Bluetooth headset stuck in call mode, muted or very quiet microphone, Equalizer APO installed but not active).\nDon't lower my game during calls: by default Windows lowers every other sound by 80% while a call app uses the microphone.\nFix Bluetooth volume control: for volume that does not respond, stays too low or jumps.\nPro: keep HDMI audio or the sound chip awake so the start of a sound is not cut off, keep USB audio powered, restart an audio device in one click.\nCheck for crackles: a 10-second driver latency trace against Microsoft's limits.\nEvery change is recorded and can be restored with one click. The Scan gets an Audio category. 84 controls."
+  "releaseNotes": "Checkout and billing error messages now appear in the app's language. If your PC's clock runs ahead, Pro now lasts until the real end of your trial or billing period instead of stopping up to a day early."
 }

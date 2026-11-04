@@ -59,5 +59,5 @@
       "caption": "Empieza con un perfil Gaming, Estudio o Trabajo y ajústalo antes de aplicarlo"
     }
   ],
-  "releaseNotes": "Nueva sección Audio: cada dispositivo de sonido en uso con su formato real, efectos, sonido espacial y estado de Equalizer APO, y avisos que explican qué falla (auriculares Bluetooth atascados en modo llamada, micrófono silenciado o muy bajo, Equalizer APO instalado pero inactivo).\nNo bajar el sonido del juego en las llamadas: por defecto, Windows baja un 80% todos los demás sonidos mientras una app de llamadas usa el micrófono.\nArreglar el control de volumen Bluetooth: para un volumen que no responde, se queda muy bajo o salta.\nPro: mantener activo el audio HDMI o el chip de sonido para que no se corte el inicio de un sonido, mantener encendido el audio USB, reiniciar un dispositivo de audio con un clic.\nBuscar chasquidos: una medición de 10 segundos de la latencia de los controladores frente a los límites de Microsoft.\nCada cambio queda registrado y se restaura con un clic. El Análisis suma una categoría Audio. 84 controles."
+  "releaseNotes": "Los mensajes de error del pago y la facturación ahora aparecen en el idioma de la aplicación. Si el reloj de tu PC va adelantado, Pro dura ahora hasta el final real de tu prueba o de tu periodo de facturación, en lugar de terminar hasta un día antes."
 }

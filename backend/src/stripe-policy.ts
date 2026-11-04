@@ -273,6 +273,10 @@ export function tipSessionParams(priceId: string, appUrl: string, quantity: unkn
       },
     ],
     // No custom_text "Thanks for supporting …": Managed Payments rejects it.
+    // No adaptive_pricing either: Managed Payments keeps it on and answers
+    // adaptive_pricing[enabled]=false with a 400 (checked 2026-11-04), so a
+    // visitor abroad sees €1 converted on Stripe's page (≈ 5 lei in Romania).
+    // The steppers show the euro total beside the count instead.
     success_url: home ? withQuery(home, { tip: "thanks" }) : `${api}/tip-thanks`,
     cancel_url: home ? withQuery(home, { tip: "cancel" }) : `${api}/checkout-cancel`,
     automatic_tax: { enabled: true },

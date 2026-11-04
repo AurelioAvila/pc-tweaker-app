@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { localeOf, STRINGS, Strings, type Lang } from "../i18n";
+import { money } from "../lib";
 import { cryptoCoffeeLabel } from "./crypto-copy";
 
 /** Matches TIP_MAX_QUANTITY on the backend, which clamps to it anyway — this
  *  copy only stops the stepper from offering a number that would be clamped. */
 const MAX_COFFEES = 10;
+
+/** The coffee Price on Stripe (STRIPE_PRICE_COFFEE), net like every price we show.
+ *  Shown beside the count so nobody meets the total for the first time on
+ *  Checkout, which may show it converted to their own currency. */
+const COFFEE_EUR = 1;
 
 /**
  * The tip entry in the sidebar rail. At rest it is one line, the same size and
@@ -84,7 +90,7 @@ export function CoffeeCard({
               aria-live="polite"
               className="coffee-count type-data text-ink text-[12px] font-semibold"
             >
-              {count} ☕
+              {count} ☕ · {money(count * COFFEE_EUR, langOf(s))}
             </span>
             <StepperButton
               label={s.coffee.more}

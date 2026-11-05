@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>pc-tweaker</id>
-    <version>1.20.1</version>
+    <version>1.20.2</version>
     <title>PC Tweaker</title>
     <authors>Aurelio Avila</authors>
     <owners>AurelioAvila</owners>
@@ -30,7 +30,7 @@ This package downloads the official 1.20.1 x64 installer with a fixed SHA-256. I
 
 PC Tweaker is proprietary/freemium. Viewable source is not an OSI-approved open-source license.</description>
     <summary>Windows tuning and audio diagnostics with recorded changes</summary>
-    <releaseNotes>1.20.1: checkout and billing error messages follow the app language. A PC clock running ahead no longer ends Pro up to a day early. Full release notes: https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.20.1</releaseNotes>
+    <releaseNotes>1.20.1: checkout and billing error messages follow the app language. A PC clock running ahead no longer ends Pro up to a day early. Full release notes: https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.20.2</releaseNotes>
     <copyright>2026 Aurelio Avila</copyright>
     <tags>pc-tweaker windows windows-10 windows-11 audio-diagnostics dpc-latency hardware-monitoring tuning privacy gaming maintenance admin</tags>
     <projectSourceUrl>https://github.com/AurelioAvila/pc-tweaker-app</projectSourceUrl>

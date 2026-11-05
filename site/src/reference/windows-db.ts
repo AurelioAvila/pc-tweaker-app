@@ -162,7 +162,7 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     more: [
       {
         q: "How do I check whether Credential Guard is running?",
-        a: "Microsoft's guidance is not to rely on seeing LsaIso.exe in Task Manager. Open System Information (msinfo32.exe), select System Summary and look for Credential Guard next to “Virtualization-based Security Services Running”. From an elevated PowerShell, (Get-CimInstance -ClassName Win32_DeviceGuard -Namespace root\Microsoft\Windows\DeviceGuard).SecurityServicesRunning returns 1 when it is running and 0 when it is not. Event Viewer (Windows Logs, System, source WinInit) records event 13 when LsaIso.exe starts and protects LSA credentials.",
+        a: "Microsoft's guidance is not to rely on seeing LsaIso.exe in Task Manager. Open System Information (msinfo32.exe), select System Summary and look for Credential Guard next to “Virtualization-based Security Services Running”. From an elevated PowerShell, query the Win32_DeviceGuard class in the root\\Microsoft\\Windows\\DeviceGuard namespace with Get-CimInstance and read its SecurityServicesRunning value: it returns 1 when it is running and 0 when it is not. Event Viewer (Windows Logs, System, source WinInit) records event 13 when LsaIso.exe starts and protects LSA credentials.",
       },
       {
         q: "Is Credential Guard on by default in Windows 11?",

@@ -25,11 +25,11 @@ export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
     },
     {
       q: "Can leftover cleanup be undone?",
-      a: "Files and folders are moved to the Recycle Bin, so yes, from Windows itself. Per-user registry keys cannot go to the Recycle Bin: each is first saved to a .reg file in the app's data folder, and the key is kept if that export fails. It is still flagged as the one step Windows cannot undo for you. Machine-wide registry keys are reported but never removed.",
+      a: "Yes, from the Removal Ledger, and Undo is always free. Files and folders come back from the Recycle Bin, and registry keys and startup entries come back exactly as they were, from a byte-for-byte backup taken before they were deleted. Anything created again in the meantime is left as it is, never overwritten. The last 10 cleanups can be undone.",
     },
     {
       q: "Is PC Tweaker Uninstaller free?",
-      a: "Single uninstalls, the safety score, the removal brief, the restore-point attempt, the leftover scan and the Removal Ledger are free with no account. Cleaning the leftovers the scan finds and batch removal are Pro, at 9.99 euro per year.",
+      a: "Single uninstalls, the safety score, the removal brief, the restore-point attempt, the leftover scan, cleaning leftover files and folders, Undo and the Removal Ledger are free with no account. Cleaning leftover registry keys and startup entries and batch removal are Pro, at 9.99 euro per year.",
     },
   ],
   "/turn-off-windows-recall": [

@@ -12,7 +12,7 @@ import { ProductScreenshots } from "../components/ProductScreenshots";
  * that cannot convert anybody who has not already installed. Every number and
  * every capability below is taken from the shipping code, not from ambition:
  * prices checked against the live Stripe products, the free/Pro line from the
- * app's Pro gates (leftover cleaning, batch removal, broken entries), the
+ * app's Pro gates (registry and startup leftover cleaning, batch removal, broken entries), the
  * receipt fields from src-tauri/src/ledger.rs, the restore point from
  * src-tauri/src/restore_point.rs. The disclosure that used to be the whole
  * page is still here, below the fold, where disclosure belongs. */
@@ -23,11 +23,12 @@ const FREE = [
   "The removal brief: the exact command that will run and the permissions it will ask for, before it runs",
   "A leftover scan right after every uninstall, so you see what the program left behind",
   "A restore-point attempt before elevated removals, with the outcome recorded in the receipt",
+  "Clean the leftover files and folders the scan finds, sent to the Recycle Bin, and undo any cleanup from the Removal Ledger",
   "The Removal Ledger: a local receipt of what was removed, by what method, with what result and how much space was actually freed",
 ];
 
 const PRO = [
-  "Clean the leftovers the free scan finds — the files, folders and registry keys the program's own uninstaller left behind",
+  "Clean leftover registry keys and startup entries, each backed up byte for byte first, including the keys of all users under HKEY_LOCAL_MACHINE",
   "Batch removal: queue several programs and let them run in sequence instead of babysitting one dialog at a time",
   "Remove broken entries: programs whose own uninstaller no longer exists, taken off the installed list",
 ];

@@ -98,4 +98,40 @@ export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
       a: "No. Gaming, Work and Study are starter selections that add changes; choosing another one does not remove what the first applied. Restore the individual changes you no longer want before assuming the system is back to where it was.",
     },
   ],
+  "/fixes/hardware-accelerated-gpu-scheduling": [
+    {
+      q: "Does hardware-accelerated GPU scheduling increase FPS?",
+      a: "Not as a rule. When Microsoft introduced it, the DirectX team said users should not notice any significant changes: it cuts the overhead of scheduling GPU work, it is not a frame-rate switch. Results differ by game, GPU and driver, so measure one repeatable scene with it off and on, and keep the setting that wins.",
+    },
+    {
+      q: "What happens if I turn HAGS off?",
+      a: "After a restart, Windows goes back to scheduling GPU work from the CPU, as it did before the feature existed, and games and apps keep working. The one documented loss is DLSS Frame Generation: NVIDIA lists hardware-accelerated GPU scheduling as a requirement, so keep it on if you use Frame Generation.",
+    },
+    {
+      q: "Is HAGS on by default?",
+      a: "Microsoft introduced it as an opt-in option that was off by default. Check your own PC rather than assuming: look in Settings, System, Display, Graphics, or run the reg query command on this page. A HwSchMode value of 2 means it is on; if the value is absent, Windows is using its default.",
+    },
+    {
+      q: "Why is the hardware-accelerated GPU scheduling option missing?",
+      a: "Settings only shows it when both the graphics card and its driver support the feature. Microsoft's announcement names recent GPUs with the necessary hardware and a WDDM 2.7 or newer driver. Update the graphics driver from the GPU maker first; writing the registry value on an unsupported system does not make the feature available.",
+    },
+  ],
+  "/uninstaller/guides/armoury-crate": [
+    {
+      q: "Is it bad to uninstall Armoury Crate?",
+      a: "Removing it is supported: ASUS publishes the Armoury Crate Uninstall Tool for exactly this. The exception is ROG laptops, where ASUS does not recommend removing it for good because the laptop will not perform optimally without it. If you use Aura Sync or Aura Creator, keep Aura Service and ROG Live Service, which is ASUS's own note for older versions.",
+    },
+    {
+      q: "Why does Armoury Crate keep coming back after I uninstall it?",
+      a: "ASUS documents two triggers. ASUS motherboards have a BIOS option, Download & Install ARMOURY CRATE app, that is enabled by default and offers the download at boot: set it to Disabled under Tool, ASUS Armoury Crate in Advanced Mode. Supported ROG keyboards and mice can also prompt a download when Armoury Crate is missing; answer No to keep it uninstalled.",
+    },
+    {
+      q: "What if the Armoury Crate Uninstall Tool fails?",
+      a: "Restart when prompted and run the tool again; ASUS says the second run should succeed. If it fails again, find the log in the tool's folder, named ACUTLog_ followed by the date and time, and send it to ASUS customer service. Leave the remaining entries alone until then rather than removing them by hand.",
+    },
+    {
+      q: "Can I uninstall Armoury Crate from Installed apps instead?",
+      a: "ROG advises against it. Armoury Crate is several programs and services, a single entry in Installed apps removes only part of it, and ROG warns that an improper uninstall can cause problems. Use ASUS's Uninstall Tool, which removes them together, then restart.",
+    },
+  ],
 };

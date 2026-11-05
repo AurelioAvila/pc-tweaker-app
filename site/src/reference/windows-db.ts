@@ -95,10 +95,18 @@ const RUNDLL32 = { label: "Microsoft Learn: rundll32 command reference", url: "h
 const MSIEXEC = { label: "Microsoft Learn: msiexec command reference", url: "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/msiexec" };
 const SMARTSCREEN = { label: "Microsoft Learn: Microsoft Defender SmartScreen overview", url: "https://learn.microsoft.com/en-us/windows/security/operating-system-security/virus-and-threat-protection/microsoft-defender-smartscreen/" };
 const WINSXS = { label: "Microsoft Learn: Clean up the WinSxS folder (StartComponentCleanup)", url: "https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/clean-up-the-winsxs-folder" };
+const WMI_CPU = { label: "Microsoft Learn: Troubleshoot WMI high CPU usage issues (WMI-Activity log, client process ID)", url: "https://learn.microsoft.com/en-us/troubleshoot/windows-server/system-management-components/troubleshoot-wmi-high-cpu-issues" };
+const SPOOLER_HELP = { label: "Microsoft Learn: Printing issues caused by the Print Spooler service (restart to clear stuck jobs, drivers)", url: "https://learn.microsoft.com/en-us/troubleshoot/windows-server/printing/print-spooler-service-not-running" };
+const WIN32_PROCESS = { label: "Microsoft Learn: Win32_Process class (ParentProcessId)", url: "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-process" };
+const RUNTIME_BROKER = { label: "Microsoft Support: Runtime Broker is using too much memory", url: "https://support.microsoft.com/en-us/windows/runtime-broker-is-using-too-much-memory-ca6ed4e3-2a36-964c-4d2e-8c93980d8a98" };
+const DEFENDER_CORE = { label: "Microsoft Learn: Microsoft Defender Core service overview (MpDefenderCoreService.exe)", url: "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-core-service-overview" };
 const NOV1 = "1 November 2026";
+const NOV5 = "5 November 2026";
 
 const SYS32 = "C:\\Windows\\System32";
 const MSWIN = "Microsoft Windows";
+/** Defender's platform binaries (MsMpEng.exe, MpDefenderCoreService.exe) carry this certificate, not MSWIN; checked 5 Nov 2026. */
+const MSWINPUB = "Microsoft Windows Publisher";
 
 export const WINDOWS_DB: readonly DbEntry[] = [
   /* ---------------------------- processes ---------------------------- */
@@ -148,8 +156,29 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     verdict: "leave",
     why: "Credentials pass through it. A program asking to read its memory is a warning sign, not a tweak.",
     pcTweaker: REFUSED,
+    // 5 Nov 2026: the questions searchers ask next ("Should I turn on LSA protection?", "LSA vs LSASS"), answered from
+    // Microsoft's LSA protection page; the WinInit event and the PowerShell line were checked on build 26300.
+    more: [
+      {
+        q: "Should I turn on Local Security Authority protection?",
+        a: "Microsoft calls it a vital security feature: it stops processes that are not protected from reading the memory of lsass.exe or injecting code into it, which protects the credentials the LSA stores. The trade-off is compatibility. Plug-ins and drivers that load into the LSA, such as smart card drivers, cryptographic plug-ins and password filters, must be signed by Microsoft, or they stop loading. Windows 11 version 22H2 and later turns it on automatically only on new installations that are joined to a work domain (Active Directory, Microsoft Entra or hybrid) and can run memory integrity (HVCI).",
+      },
+      {
+        q: "How do I turn LSA protection on or off?",
+        a: "Microsoft documents the RunAsPPL value under HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Lsa: 2 turns it on without a UEFI lock (enforced on Windows 11 version 22H2 and later), 1 turns it on with the setting locked in the firmware, and 0, or deleting the value, turns it off. The same choice is in the Local Group Policy Editor under Computer Configuration, Administrative Templates, System, Local Security Authority. Either way, it takes effect after a restart. A setting locked in the firmware needs Microsoft's LSA Protected Process Opt-out tool to remove.",
+      },
+      {
+        q: "How do I check that LSA protection is on?",
+        a: "Open Event Viewer, Windows Logs, System, and look for WinInit event 12 from the last start: “LSASS.exe was started as a protected process with level: 4”. In PowerShell, Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Windows-Wininit'; Id=12} -MaxEvents 1 shows the latest one.",
+      },
+      {
+        q: "What is the difference between LSA and lsass.exe?",
+        a: "The Local Security Authority (LSA) is the part of Windows that validates local and remote sign-ins and enforces local security policies; lsass.exe is the process it runs in, the Local Security Authority Server Service (LSASS). With Credential Guard on, the LSA also talks to LsaIso.exe, the isolated LSA process that keeps secrets in virtualization-based security, out of reach of the rest of Windows.",
+      },
+    ],
     related: ["processes/lsaiso-exe", "processes/winlogon-exe"],
-    sources: [LSA, PCT_RULES],
+    sources: [LSA, CREDGUARD, PCT_RULES],
+    checked: NOV5,
   },
   {
     kind: "process", slug: "lsaiso-exe", name: "LsaIso.exe", displayName: "Credential Guard and VBS key isolation",
@@ -209,12 +238,19 @@ export const WINDOWS_DB: readonly DbEntry[] = [
   {
     kind: "process", slug: "conhost-exe", name: "conhost.exe", displayName: "Console Window Host",
     path: `${SYS32}\\conhost.exe`, signer: MSWIN,
-    purpose: "The Windows Console Host: the server for the console APIs and the classic window for command-line programs. Microsoft also lists it among the built-in critical system processes.",
+    purpose: "The Windows Console Host: the server for the console APIs and the classic window for command-line programs. Its code used to live in csrss.exe and was split out for security and isolation. Microsoft also lists it among the built-in critical system processes.",
     answer: "Many copies are normal: every console program gets one.",
+    // 5 Nov 2026: the top results for "console window host" answer "why so many?"; the count and the parent-process check were observed on build 26300.
+    busy: {
+      q: "Why are there so many Console Window Host (conhost.exe) processes?",
+      a: "Each console program gets its own copy, including command-line tools that other programs start in the background without a window, such as scripts, helpers and developer tools. Dozens can be normal: on the Windows 11 PC used for this page, 38 were running at once. To see which program a copy belongs to, list the copies with their parent process in PowerShell: Get-CimInstance Win32_Process -Filter \"Name='conhost.exe'\" | Select-Object ProcessId, ParentProcessId. Then find that parent ID in the PID column of Task Manager's Details tab. A copy whose parent you do not recognise, or whose file is not in System32, is the one worth a closer look.",
+    },
     verdict: "leave",
     why: "Many instances are normal: every console program gets one, including ones that run without a visible window.",
     pcTweaker: REFUSED,
-    sources: [CONSOLE, BUGCHECK_EF, PCT_RULES],
+    related: ["processes/csrss-exe"],
+    sources: [CONSOLE, WIN32_PROCESS, BUGCHECK_EF, PCT_RULES],
+    checked: NOV5,
   },
   // 28 Oct 2026: wininit, services and LogonUI are the critical processes Microsoft names under bug check 0xEF that had no page.
   // Their display names are the file descriptions of the signed binaries (Get-Item ... VersionInfo, build 26300); the purpose
@@ -287,12 +323,12 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     why: "Audio effects that sound drivers add run inside it, so when it uses a lot of CPU those are the first thing to check: turn off audio enhancements for the device or update the audio driver. Ending the process just cuts the sound.",
     pcTweaker: `${REFUSED} For crackling audio, PC Tweaker's driver latency trace measures which driver delays the system; see the guide below.`,
     related: ["services/audiosrv"],
-    guides: ["/fixes/dpc-latency-audio-crackling/"],
+    guides: ["/fixes/dpc-latency-audio-crackling/", "/fixes/equalizer-apo-not-working-windows-11/"],
     sources: [MS.audioMeasures, PCT_RULES],
   },
   {
     kind: "process", slug: "msmpeng-exe", name: "MsMpEng.exe", displayName: "Antimalware Service Executable",
-    path: "C:\\ProgramData\\Microsoft\\Windows Defender\\Platform\\<version>\\MsMpEng.exe", signer: MSWIN,
+    path: "C:\\ProgramData\\Microsoft\\Windows Defender\\Platform\\<version>\\MsMpEng.exe", signer: MSWINPUB, checked: NOV5,
     purpose: "The Microsoft Defender Antivirus engine, run by the WinDefend service.",
     answer: "It is Defender's engine, so do not disable it.",
     busy: { q: "Why is MsMpEng.exe (Antimalware Service Executable) using so much CPU?", a: "It scans files as programs start and runs scheduled scans, and Microsoft names two common causes of higher CPU use: a program that is not digitally signed triggers a real-time scan each time it launches, and complex file formats cost more to scan. For scheduled scans, Microsoft documents a CPU limit per scan (50 by default, which can be lowered to 20 or 30), a low-priority option and a rule that they start only when the PC is idle. Adjust those instead of turning Defender off." },
@@ -309,8 +345,27 @@ export const WINDOWS_DB: readonly DbEntry[] = [
         a: "Microsoft lists three checks: the Windows Security app (Virus & threat protection, Manage providers), the Details tab of Task Manager where MsMpEng.exe should appear, and PowerShell, where Get-MpComputerStatus | select AMRunningMode returns Normal, Passive or EDR Block Mode when antivirus protection is on.",
       },
     ],
-    related: ["services/windefend", "processes/smartscreen-exe"],
+    related: ["processes/mpdefendercoreservice-exe", "services/windefend", "processes/smartscreen-exe"],
     sources: [DEFENDER, DEFENDER_PERF, PCT_RULES],
+  },
+  // 5 Nov 2026: searched ("mpdefendercoreservice.exe", "... antimalware core service") with no page; Microsoft documents it.
+  // Path, signer and service account observed on build 26300 (Defender platform 4.18.26100.4).
+  {
+    kind: "process", slug: "mpdefendercoreservice-exe", name: "MpDefenderCoreService.exe", displayName: "Antimalware Core Service",
+    path: "C:\\ProgramData\\Microsoft\\Windows Defender\\Platform\\<version>\\MpDefenderCoreService.exe", signer: MSWINPUB, checked: NOV5,
+    purpose: "The Microsoft Defender Core service (MdCoreSvc), which Microsoft added to Microsoft Defender Antivirus to help with its stability and performance. It ships with Defender, so it is present wherever Defender Antivirus is. Task Manager shows it as Antimalware Core Service on the Processes tab, MpDefenderCoreService.exe on the Details tab and Microsoft Defender Core Service on the Services tab.",
+    answer: "It is part of Microsoft Defender Antivirus: leave it on.",
+    verdict: "leave",
+    why: "Microsoft highly recommends keeping it at its default settings, running and reporting, and warns more generally that disabling, stopping or modifying Defender's services and processes can cause severe instability and leave the PC vulnerable. Change Defender through Windows Security instead.",
+    pcTweaker: REFUSED,
+    more: [
+      {
+        q: "Does MpDefenderCoreService.exe send data to Microsoft?",
+        a: "Yes, by design. Microsoft documents that it collects telemetry from Microsoft Defender Antivirus and other Defender software, and that it uses Microsoft's Experimentation and Configuration Service (ECS) to deliver urgent fixes and configuration. In PowerShell as administrator, Set-MpPreference -DisableCoreServiceTelemetry $true turns the telemetry off and Set-MpPreference -DisableCoreServiceECSIntegration $true turns ECS off; Group Policy has the same two settings. Microsoft warns that without the telemetry it may be slower to notice problems such as slow performance and false positives, and that without ECS fixes arrive only through regular security intelligence and platform updates.",
+      },
+    ],
+    related: ["processes/msmpeng-exe", "services/windefend"],
+    sources: [DEFENDER_CORE, DEFENDER, PCT_RULES],
   },
   {
     kind: "process", slug: "msedgewebview2-exe", name: "msedgewebview2.exe", displayName: "Microsoft Edge WebView2 Runtime",
@@ -338,19 +393,43 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     verdict: "leave",
     why: "Sustained CPU use here means some program keeps querying WMI. Find that program rather than the host.",
     pcTweaker: `${REFUSED} PC Tweaker reads some hardware and network information through WMI, which appears here while it does.`,
+    // 5 Nov 2026: how to find the program behind the CPU use, from Microsoft's WMI high-CPU guide; the WMI-Activity log was checked on build 26300.
+    more: [
+      {
+        q: "How do I find which program keeps WMI Provider Host busy?",
+        a: "Microsoft's troubleshooting guide works back from the busy copy. Note its PID in the Details tab of Task Manager. In Event Viewer, under Applications and Services Logs, Microsoft, Windows, WMI-Activity, event 5857 in the Operational log names each provider a WmiPrvSE.exe copy loaded, with that copy's process ID and the provider's DLL. To see who sends the queries, choose View, Show Analytic and Debug Logs, and enable the Trace log under WMI-Activity while the CPU use happens: each query is logged with a ClientProcessId, the PID of the program asking. Look that PID up in Task Manager, then disable the Trace log again, because Microsoft notes it adds logging.",
+      },
+      {
+        q: "What happens if I end WmiPrvSE.exe?",
+        a: "The queries stop for a moment, then come back. WMI loads its providers into a WmiPrvSE.exe copy whenever a program asks for them, and Microsoft's guide notes that when a problem returns, the same provider can be running in a new WmiPrvSE.exe instance. Find the program that keeps asking instead.",
+      },
+    ],
     related: ["services/winmgmt", "processes/unsecapp-exe"],
-    sources: [WMI, PCT_RULES],
+    sources: [WMI, WMI_CPU, PCT_RULES],
+    checked: NOV5,
   },
   {
     kind: "process", slug: "spoolsv-exe", name: "spoolsv.exe", displayName: "Spooler SubSystem App",
     path: `${SYS32}\\spoolsv.exe`, signer: MSWIN,
     purpose: "The executable of the Print Spooler service, which spools print jobs and handles interaction with printers.",
     answer: "It runs printing; needed to print, optional on a PC that never does.",
+    // 5 Nov 2026: "spooler subsystem app" searchers ask about CPU use and whether to disable it; answered from Microsoft's printing troubleshooting page.
+    busy: {
+      q: "Why is Spooler SubSystem App (spoolsv.exe) using so much CPU?",
+      a: "Microsoft does not name a single cause, but its printing guide gives two fixes that cover the common cases. Restart the Print Spooler service to clear stuck print jobs: in PowerShell as administrator, Restart-Service -Name spooler, or in an administrator Command Prompt, net stop spooler and then net start spooler. Then update the printer's driver: the service loads components from printer makers, and Microsoft notes that outdated drivers and print components can make it stop responding. If the CPU use only comes back with one printer installed, that printer's driver is the one to update or remove.",
+    },
     verdict: "depends",
     why: "Without it you cannot print or see your printers. If the PC never prints, the service can be set to Manual or Disabled; see the service entry.",
     pcTweaker: REFUSED,
+    more: [
+      {
+        q: "Is it safe to disable the Print Spooler?",
+        a: "Only on a PC that never prints. Without the service you cannot print, including to PDF printers, or see your printers. Microsoft notes that disabling it can be part of security mitigations, for example through a Group Policy for domain controllers, and its Windows Server guidance rates it OK to disable on servers that are not print servers. To do it, set the Print Spooler service to Disabled in Services; to undo it, set it back to Automatic and start it.",
+      },
+    ],
     related: ["services/spooler"],
-    sources: [MS.serverServices, PCT_RULES],
+    sources: [MS.serverServices, SPOOLER_HELP, PCT_RULES],
+    checked: NOV5,
   },
 
   /* ----------------------------- services ----------------------------- */
@@ -412,7 +491,7 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     why: "On Manual it no longer starts with Windows, yet Windows can still start it when an app or feature asks. Disabled has been reported to leave taskbar and tray icons missing, which is why Manual is the setting to use.",
     pcTweaker: "The Pro control \"Start Windows AI Components Host only when needed\" stops it and sets it to Manual, and restores the previous start type and running state on undo. It is offered only on PCs that have the service.",
     tweaks: ["disable_ai_fabric_service", "disable_recall", "disable_click_to_do"],
-    guides: ["/turn-off-windows-recall/"],
+    guides: ["/fixes/turn-off-windows-11-ai-features/", "/turn-off-windows-recall/"],
     sources: [PCT_SERVICES],
   },
   {
@@ -461,7 +540,7 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     verdict: "leave",
     why: "Microsoft warns that disabling, stopping or modifying it can cause severe instability and leave the PC vulnerable. When another antivirus is installed, Microsoft documents that Defender switches to disabled mode automatically.",
     pcTweaker: UNTOUCHED,
-    related: ["processes/msmpeng-exe", "processes/smartscreen-exe"],
+    related: ["processes/msmpeng-exe", "processes/mpdefendercoreservice-exe", "processes/smartscreen-exe"],
     sources: [DEFENDER, MS.serverServices],
   },
   {
@@ -638,8 +717,25 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     why: "Ending it stops that app's background task until Windows runs it again. If you do not need Store apps to sync or notify while closed, turn off their background activity; desktop programs are not affected.",
     pcTweaker: "PC Tweaker never changes this process. Its \"Restrict supported background apps\" control sets GlobalUserDisabled for your account, which stops Store apps from running in the background, and undo removes the value.",
     tweaks: ["disable_background_apps"],
-    related: ["processes/dllhost-exe", "services/wpnservice"],
+    related: ["processes/runtimebroker-exe", "processes/dllhost-exe", "services/wpnservice"],
     sources: [BG_TASKS, PCT_RULES],
+  },
+  // 5 Nov 2026: one of the most searched Windows processes with no page here; Microsoft Support documents it. Path, signer,
+  // the four running copies and their parent (svchost.exe) observed on build 26300.
+  {
+    kind: "process", slug: "runtimebroker-exe", name: "RuntimeBroker.exe", displayName: "Runtime Broker",
+    path: `${SYS32}\\RuntimeBroker.exe`, signer: MSWIN, checked: NOV5,
+    purpose: "Microsoft describes Runtime Broker as a Windows process that helps manage permissions on your PC for apps from Microsoft Store. It normally uses only a few megabytes of memory.",
+    answer: "It manages permissions for Store apps; heavy use points to an app.",
+    busy: {
+      q: "Why is Runtime Broker using so much memory?",
+      a: "Microsoft says it should use only a few megabytes, and that a faulty app can make it use up to a gigabyte of RAM or more. If it takes more than 15% of your memory in Task Manager, Microsoft suggests an app on your PC may be the cause. Its fix is to select Runtime Broker in Task Manager, choose End task, and restart the PC. If the problem returns, the Store app you started using most recently is the first one to check.",
+    },
+    verdict: "leave",
+    why: "Store apps rely on it for their permissions, so leave it running. Several copies are normal: four were running on the PC used for this page, each started by svchost.exe. Ending a copy that uses too much memory, then restarting, is Microsoft's own fix; disabling it is not.",
+    pcTweaker: REFUSED,
+    related: ["processes/backgroundtaskhost-exe", "processes/dllhost-exe"],
+    sources: [RUNTIME_BROKER, PCT_RULES],
   },
   {
     kind: "process", slug: "unsecapp-exe", name: "unsecapp.exe", displayName: "Sink to receive asynchronous callbacks for WMI client application",

@@ -346,11 +346,11 @@ export const ROUTE_JSONLD: Record<string, readonly object[]> = {
     about: { "@id": `${ORIGIN}/uninstaller/#software` },
     citation: guide.sources.items.map((s) => s.url),
   }]])),
-  // Guides that render a "Common questions" section (src/pages/guide-faqs.ts).
-  ...Object.fromEntries(Object.entries(GUIDE_FAQS).map(([path, items]) => [
-    path, [faqPage(`${ORIGIN}${path}/#faq`, `${ORIGIN}${path}/`, items)],
-  ])),
 };
+// Guides that render a "Common questions" section (src/pages/guide-faqs.ts).
+// Appended, so a fix or removal guide keeps its TechArticle/HowTo markup.
+for (const [path, items] of Object.entries(GUIDE_FAQS))
+  ROUTE_JSONLD[path] = [...(ROUTE_JSONLD[path] ?? []), faqPage(`${ORIGIN}${path}/#faq`, `${ORIGIN}${path}/`, items)];
 
 /** A BreadcrumbList from Home through the given trail ([name, path] pairs). */
 export function breadcrumbs(path: string, trail: readonly (readonly [string, string])[]) {

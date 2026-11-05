@@ -52,7 +52,7 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/uninstaller": {
     title: "Remove Windows Apps and Leftovers | PC Tweaker Uninstaller",
     description:
-      "Uninstall Windows programs and Store apps after you review the risk score, command and permissions. Uninstalls and leftover files are free; Pro cleans registry leftovers.",
+      "Uninstall Windows programs and Store apps after reviewing the risk and command. Single uninstalls and leftover files are free; Pro cleans registry leftovers.",
     canonical: `${ORIGIN}/uninstaller/`,
     ogType: "website",
     image: UNINSTALLER_OG,

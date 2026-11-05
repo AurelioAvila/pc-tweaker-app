@@ -91,7 +91,7 @@ export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
     },
     {
       q: "How do I back up a registry key before I change it?",
-      a: "Export it first. In a Command Prompt, reg export \"HKCU\Software\ExampleKey\" \"%USERPROFILE%\Desktop\before.reg\" saves that key to a file, using your own key path. To put it back, double-click the .reg file or run reg import with its path, then restart if the setting needs it. Export only the key you are about to edit, and keep the file until you are sure the change is fine.",
+      a: "Export it first. In a Command Prompt, reg export \"HKCU\\Software\\ExampleKey\" \"%USERPROFILE%\\Desktop\\before.reg\" saves that key to a file, using your own key path. To put it back, double-click the .reg file or run reg import with its path, then restart if the setting needs it. Export only the key you are about to edit, and keep the file until you are sure the change is fine.",
     },
     {
       q: "Does switching to another profile undo the previous one?",

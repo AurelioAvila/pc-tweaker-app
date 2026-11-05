@@ -26,11 +26,11 @@ Review each control's trade-offs. Restoration covers supported settings; permane
 
 View the current 1.20-series interface previews and capture details: https://github.com/AurelioAvila/pc-tweaker-app/blob/master/docs/screenshots/README.md . These are Pro-view browser-demo captures with synthetic data, not native Windows measurements or customer results.
 
-This package downloads the official 1.20.1 x64 installer with a fixed SHA-256. It is publisher-signed by Aurelio Avila with a trusted timestamp. SmartScreen may still display a reputation warning. Installation is for the user running Chocolatey, in %LocalAppData%\PC Tweaker; earlier package versions used MSI. No tweak or driver operation is requested by this package.
+This package downloads the official 1.20.2 x64 installer with a fixed SHA-256. It is publisher-signed by Aurelio Avila with a trusted timestamp. SmartScreen may still display a reputation warning. Installation is for the user running Chocolatey, in %LocalAppData%\PC Tweaker; earlier package versions used MSI. No tweak or driver operation is requested by this package.
 
 PC Tweaker is proprietary/freemium. Viewable source is not an OSI-approved open-source license.</description>
     <summary>Windows tuning and audio diagnostics with recorded changes</summary>
-    <releaseNotes>1.20.1: checkout and billing error messages follow the app language. A PC clock running ahead no longer ends Pro up to a day early. Full release notes: https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.20.2</releaseNotes>
+    <releaseNotes>1.20.2: Buy me a coffee shows the euro total next to the coffee count. Adds an optional 7-day Pro pass with one payment, no subscription and no renewal; check the app for availability and terms. Full release notes: https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.20.2</releaseNotes>
     <copyright>2026 Aurelio Avila</copyright>
     <tags>pc-tweaker windows windows-10 windows-11 audio-diagnostics dpc-latency hardware-monitoring tuning privacy gaming maintenance admin</tags>
     <projectSourceUrl>https://github.com/AurelioAvila/pc-tweaker-app</projectSourceUrl>

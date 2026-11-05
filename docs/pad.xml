@@ -34,9 +34,9 @@
   </Company_Info>
   <Program_Info>
     <Program_Name>PC Tweaker</Program_Name>
-    <Program_Version>1.20.1</Program_Version>
+    <Program_Version>1.20.2</Program_Version>
     <Program_Release_Month>11</Program_Release_Month>
-    <Program_Release_Day>4</Program_Release_Day>
+    <Program_Release_Day>5</Program_Release_Day>
     <Program_Release_Year>2026</Program_Release_Year>
     <Program_Cost_Dollars></Program_Cost_Dollars>
     <Program_Cost_Other_Code></Program_Cost_Other_Code>
@@ -47,8 +47,8 @@
     <Program_OS_Support>WinOther</Program_OS_Support>
     <Program_Language>English</Program_Language>
     <File_Info>
-      <File_Size_Bytes>6521024</File_Size_Bytes>
-      <File_Size_K>6368.19</File_Size_K>
+      <File_Size_Bytes>6522936</File_Size_Bytes>
+      <File_Size_K>6370.05</File_Size_K>
       <File_Size_MB>6.22</File_Size_MB>
     </File_Info>
     <Expire_Info>
@@ -60,7 +60,7 @@
       <Expire_Day></Expire_Day>
       <Expire_Year></Expire_Year>
     </Expire_Info>
-    <Program_Change_Info>Checkout and billing error messages now appear in the app&apos;s language. If your PC&apos;s clock runs ahead, Pro now lasts until the real end of your trial or billing period instead of stopping up to a day early.</Program_Change_Info>
+    <Program_Change_Info>Buy me a coffee now shows the euro total next to the number of coffees. New: a 7-day Pro pass, one payment with no subscription and no renewal.</Program_Change_Info>
     <Program_Category_Class>System Utilities::System Maintenance</Program_Category_Class>
     <Program_Specific_Category></Program_Specific_Category>
     <Program_System_Requirements>Windows 10/11 x64; internet for accounts, updates and supported online features.</Program_System_Requirements>
@@ -92,7 +92,7 @@ Official Windows binaries are publisher-signed and timestamped; signing does not
       <Application_XML_File_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/pad.xml</Application_XML_File_URL>
     </Application_URLs>
     <Download_URLs>
-      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.20.1/pc-tweaker-app_1.20.1_x64-setup.exe</Primary_Download_URL>
+      <Primary_Download_URL>https://github.com/AurelioAvila/pc-tweaker-app/releases/download/v1.20.2/pc-tweaker-app_1.20.2_x64-setup.exe</Primary_Download_URL>
       <Secondary_Download_URL></Secondary_Download_URL>
       <Additional_Download_URL_1></Additional_Download_URL_1>
       <Additional_Download_URL_2></Additional_Download_URL_2>

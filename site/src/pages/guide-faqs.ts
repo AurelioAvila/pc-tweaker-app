@@ -86,6 +86,14 @@ export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
       a: "First check the restore result and complete any required restart. A successful settings write does not establish what caused the problem or recover separate side effects. Repeat the same task, then review other changes made around that time, such as a driver, update or another tool. If Windows will not start, use Windows recovery options and your existing backups rather than applying further tweaks.",
     },
     {
+      q: "Can System Restore undo a registry change?",
+      a: "Sometimes. Microsoft describes a restore point as a snapshot of system files, installed applications, the Windows registry and system settings, so rolling back to a point made before the change can undo it. It only works if a restore point from before the change exists, and it is not a backup of your documents. A restore point also rolls back everything else that changed since then, so for one known setting, restoring that value is the smaller step.",
+    },
+    {
+      q: "How do I back up a registry key before I change it?",
+      a: "Export it first. In a Command Prompt, reg export \"HKCU\Software\ExampleKey\" \"%USERPROFILE%\Desktop\before.reg\" saves that key to a file, using your own key path. To put it back, double-click the .reg file or run reg import with its path, then restart if the setting needs it. Export only the key you are about to edit, and keep the file until you are sure the change is fine.",
+    },
+    {
       q: "Does switching to another profile undo the previous one?",
       a: "No. Gaming, Work and Study are starter selections that add changes; choosing another one does not remove what the first applied. Restore the individual changes you no longer want before assuming the system is back to where it was.",
     },

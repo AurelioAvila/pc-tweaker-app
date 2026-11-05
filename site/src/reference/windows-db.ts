@@ -69,6 +69,7 @@ const BOOT = { label: "Microsoft Learn: Windows startup issues troubleshooting (
 const CSRSS = { label: "Microsoft Learn: Debugging CSRSS", url: "https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/debugging-csrss" };
 const LSA = { label: "Microsoft Learn: Configure added LSA protection", url: "https://learn.microsoft.com/en-us/windows-server/security/credentials-protection-and-management/configuring-additional-lsa-protection" };
 const CREDGUARD = { label: "Microsoft Learn: How Credential Guard works", url: "https://learn.microsoft.com/en-us/windows/security/identity-protection/credential-guard/how-it-works" };
+const CREDGUARD_CFG = { label: "Microsoft Learn: Configure Credential Guard", url: "https://learn.microsoft.com/en-us/windows/security/identity-protection/credential-guard/configure" };
 const WINLOGON = { label: "Microsoft Learn: Winlogon and credential providers", url: "https://learn.microsoft.com/en-us/windows/win32/secauthn/winlogon-and-credential-providers" };
 const CONSOLE = { label: "Microsoft Learn: Windows console definitions (conhost.exe)", url: "https://learn.microsoft.com/en-us/windows/console/definitions" };
 const DWM = { label: "Microsoft Learn: Desktop Window Manager", url: "https://learn.microsoft.com/en-us/windows/win32/dwm/dwm-overview" };
@@ -158,9 +159,18 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     verdict: "leave",
     why: "It only runs when virtualization-based protection of credentials is active, and that is the protection it provides.",
     pcTweaker: `${REFUSED} The Memory Integrity control concerns a different VBS feature and does not turn off Credential Guard.`,
-    tweaks: ["disable_memory_integrity"],
+    more: [
+      {
+        q: "How do I check whether Credential Guard is running?",
+        a: "Microsoft's guidance is not to rely on seeing LsaIso.exe in Task Manager. Open System Information (msinfo32.exe), select System Summary and look for Credential Guard next to “Virtualization-based Security Services Running”. From an elevated PowerShell, (Get-CimInstance -ClassName Win32_DeviceGuard -Namespace root\Microsoft\Windows\DeviceGuard).SecurityServicesRunning returns 1 when it is running and 0 when it is not. Event Viewer (Windows Logs, System, source WinInit) records event 13 when LsaIso.exe starts and protects LSA credentials.",
+      },
+      {
+        q: "Is Credential Guard on by default in Windows 11?",
+        a: "Microsoft documents that starting in Windows 11 22H2 and Windows Server 2025, Credential Guard is enabled by default on devices that meet its requirements, so LsaIso.exe can appear without you ever turning anything on. A device where it was explicitly turned off before that update stays off. If you have to turn it off, Microsoft describes Group Policy, MDM and registry methods that need a restart, and a separate procedure with physical presence when it was enabled with a UEFI lock; it is a security protection, so do that only for a reason you can name.",
+      },
+    ],
     related: ["processes/lsass-exe"],
-    sources: [CREDGUARD, PCT_RULES],
+    sources: [CREDGUARD, CREDGUARD_CFG, PCT_RULES],
   },
   {
     kind: "process", slug: "csrss-exe", name: "csrss.exe", displayName: "Client Server Runtime Process",
@@ -289,6 +299,16 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     verdict: "leave",
     why: "Microsoft warns that disabling, stopping or modifying the Defender services and processes, MsMpEng included, can cause severe instability and leave the PC vulnerable. Use Windows Security settings, such as scheduled scan times or exclusions you can justify, instead.",
     pcTweaker: REFUSED,
+    more: [
+      {
+        q: "Why is MsMpEng.exe running when I use another antivirus?",
+        a: "Microsoft documents that on Windows 10 and 11, installing a non-Microsoft antivirus normally puts Microsoft Defender Antivirus in disabled mode automatically. One exception it names: on Windows 11 with Smart App Control on, Defender can go into passive mode instead, so the process stays. If the Windows Security Center service (wscsvc) is disabled, Defender cannot see the other product and stays active, which Microsoft says can cause conflicts and slow the PC. Check Windows Security, Virus & threat protection, Manage providers, to see which antivirus is in charge.",
+      },
+      {
+        q: "How can I confirm that Microsoft Defender Antivirus is running?",
+        a: "Microsoft lists three checks: the Windows Security app (Virus & threat protection, Manage providers), the Details tab of Task Manager where MsMpEng.exe should appear, and PowerShell, where Get-MpComputerStatus | select AMRunningMode returns Normal, Passive or EDR Block Mode when antivirus protection is on.",
+      },
+    ],
     related: ["services/windefend", "processes/smartscreen-exe"],
     sources: [DEFENDER, DEFENDER_PERF, PCT_RULES],
   },

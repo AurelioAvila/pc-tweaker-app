@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.20.2
+
+Buy me a coffee now shows the euro total next to the number of coffees. New: a 7-day Pro pass, one payment with no subscription and no renewal.
+
 ## v1.20.1
 
 Checkout and billing error messages now appear in the app's language. If your PC's clock runs ahead, Pro now lasts until the real end of your trial or billing period instead of stopping up to a day early.

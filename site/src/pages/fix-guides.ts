@@ -90,6 +90,7 @@ export const FIX_GUIDES = {
     eyebrow: "FIX · GRAPHICS",
     title: "Hardware-accelerated GPU scheduling: on, off, or test it?",
     seoTitle: "Hardware-Accelerated GPU Scheduling: On or Off?",
+    updated: "2026-11-05",
     seoDescription:
       "HAGS moves GPU scheduling onto the graphics card. Whether it is on depends on your GPU, driver and Windows setup: how to check it, test it fairly and undo it.",
     intro:
@@ -147,7 +148,7 @@ export const FIX_GUIDES = {
       { to: "/how-to-undo-windows-tweaks/", label: "how to undo Windows tweaks", note: "Put a changed setting back, with or without PC Tweaker." },
     ],
     sources: {
-      checked: "28 October 2026",
+      checked: "5 November 2026",
       items: [
         { label: "DirectX Developer Blog: Hardware Accelerated GPU Scheduling", url: "https://devblogs.microsoft.com/directx/hardware-accelerated-gpu-scheduling/" },
         { label: "NVIDIA Streamline SDK: DLSS Frame Generation requirements (FAQ)", url: "https://developer.nvidia.com/rtx/streamline/get-started" },

@@ -137,6 +137,9 @@ export function Footer({ navigate, currentPath }: { navigate: (to: string) => vo
                 { label: "Windows privacy", href: "/windows-privacy-tool/" },
                 { label: "Turn off Recall", href: "/turn-off-windows-recall/" },
                 { label: "Uninstall completely", href: "/uninstall-programs-completely/" },
+                { label: "Uninstall Armoury Crate", href: "/uninstaller/guides/armoury-crate/" },
+                { label: "GPU scheduling: on or off?", href: "/fixes/hardware-accelerated-gpu-scheduling/" },
+                { label: "Turn off Windows 11 AI features", href: "/fixes/turn-off-windows-11-ai-features/" },
               ]}
             />
             <Col
@@ -149,6 +152,11 @@ export function Footer({ navigate, currentPath }: { navigate: (to: string) => vo
                 { label: "msedgewebview2.exe", href: "/database/processes/msedgewebview2-exe/" },
                 { label: "svchost.exe", href: "/database/processes/svchost-exe/" },
                 { label: "TiWorker.exe", href: "/database/processes/tiworker-exe/" },
+                { label: "conhost.exe", href: "/database/processes/conhost-exe/" },
+                { label: "spoolsv.exe", href: "/database/processes/spoolsv-exe/" },
+                { label: "WmiPrvSE.exe", href: "/database/processes/wmiprvse-exe/" },
+                { label: "lsass.exe", href: "/database/processes/lsass-exe/" },
+                { label: "Credential Guard (LsaIso.exe)", href: "/database/processes/lsaiso-exe/" },
                 { label: "Windows Update service", href: "/database/services/wuauserv/" },
                 { label: "Windows fixes", href: "/fixes/" },
                 { label: "Free tools", href: "/tools/" },

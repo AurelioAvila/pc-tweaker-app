@@ -185,6 +185,7 @@ export const UNINSTALLER_GUIDES = {
     related: [
       { to: "/uninstall-programs-completely/", label: "how to completely uninstall any Windows program", note: "The general order, and what to do when an uninstaller fails." },
       { to: "/uninstaller/guides/onedrive/", label: "uninstalling OneDrive without losing files", note: "When the data matters more than the app." },
+      { to: "/uninstaller/guides/armoury-crate/", label: "uninstalling ASUS Armoury Crate", note: "Another vendor suite with its own removal tool, plus a BIOS option that offers it again." },
       { to: "/uninstaller/", label: "what PC Tweaker Uninstaller shows before a removal runs", note: "The rating, the command and the permissions, before anything changes." },
     ],
     sources: {
@@ -259,6 +260,7 @@ export const UNINSTALLER_GUIDES = {
     related: [
       { to: "/uninstall-programs-completely/", label: "what to leave alone when you uninstall programs", note: "Shared runtimes, settings folders and licence files." },
       { to: "/uninstaller/guides/onedrive/", label: "uninstalling OneDrive without losing files", note: "A Microsoft component you can remove, with the steps that keep your data." },
+      { to: "/uninstaller/guides/armoury-crate/", label: "uninstalling ASUS Armoury Crate", note: "Several programs and services that the vendor's own tool removes together." },
       { to: "/uninstaller/", label: "how PC Tweaker Uninstaller rates shared runtimes", note: "Safe, Review and Keep, with the reasons for each." },
     ],
     sources: {
@@ -334,6 +336,7 @@ export const UNINSTALLER_GUIDES = {
     ],
     related: [
       { to: "/uninstaller/guides/microsoft-edge-webview2/", label: "why Microsoft Edge WebView2 Runtime should stay", note: "The Microsoft component to keep, and what breaks without it." },
+      { to: "/uninstaller/guides/armoury-crate/", label: "uninstalling ASUS Armoury Crate", note: "A vendor suite removed with its own tool, then checked for leftovers." },
       { to: "/uninstall-programs-completely/", label: "how to completely uninstall any Windows program", note: "Where leftovers live, and which ones to keep." },
       { to: "/uninstaller/", label: "what PC Tweaker Uninstaller shows before a removal runs", note: "The rating, the command and the permissions, before anything changes." },
     ],

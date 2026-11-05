@@ -22,7 +22,7 @@ export function Badge({ label, tone }: { label: string; tone: string }) {
 
 function Shell({ children }: { children: ReactNode }) {
   return (
-    <main id="main-content" className="px-5 pt-32 pb-24 md:px-12">
+    <main id="main-content" className="px-5 pt-32 pb-24 md:px-12 [overflow-wrap:anywhere]">
       <article className="mx-auto max-w-4xl">{children}</article>
     </main>
   );
@@ -336,11 +336,12 @@ export function dbRelated(e: DbEntry, min = 4): DbEntry[] {
   return [...named, ...rest.slice(0, Math.max(0, min - named.length))];
 }
 
-/** The entries people look up most, from Search Console impressions (28 days to 29 Oct 2026) and autocomplete demand. */
+/** The entries people look up most, from Search Console impressions (28 days to 3 Nov 2026) and autocomplete demand. */
 const DB_POPULAR = [
   "processes/msedgewebview2-exe", "processes/conhost-exe", "processes/smss-exe", "processes/spoolsv-exe", "processes/lsaiso-exe",
-  "processes/lsass-exe", "processes/svchost-exe", "processes/tiworker-exe", "processes/ctfmon-exe", "processes/rundll32-exe",
-  "services/wsaifabricsvc", "services/dmwappushservice", "services/dosvc", "services/wuauserv", "services/sysmain", "services/usosvc",
+  "processes/wmiprvse-exe", "processes/lsass-exe", "processes/audiodg-exe", "processes/winlogon-exe", "processes/msmpeng-exe",
+  "processes/runtimebroker-exe", "processes/svchost-exe", "processes/tiworker-exe", "processes/ctfmon-exe", "processes/rundll32-exe",
+  "services/wsaifabricsvc", "services/dosvc", "services/rpcss", "services/dmwappushservice", "services/wuauserv", "services/sysmain", "services/usosvc",
 ];
 
 export function DbIndex({ navigate }: { navigate: Nav }) {

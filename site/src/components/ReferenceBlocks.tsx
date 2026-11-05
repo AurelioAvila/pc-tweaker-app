@@ -55,7 +55,7 @@ export function Steps({ steps, start = 1 }: { steps: readonly Step[]; start?: nu
             {s.note && <p className="mt-1.5 text-[14.5px] leading-7 text-[var(--fg-dim)]">{s.note}</p>}
             {s.code && (
               <div className="relative mt-3">
-                <pre tabIndex={0} aria-label={s.title} className={`focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] overflow-x-auto rounded-xl bg-black/40 p-4 pr-16 ${s.shell ? "pb-8" : ""} text-[13px] leading-6 text-[var(--fg)]`}><code>{s.code}</code></pre>
+                <pre tabIndex={0} aria-label={s.title} className={`focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] overflow-x-auto rounded-xl bg-black/40 p-4 pt-11 ${s.shell ? "pb-8" : ""} text-[13px] leading-6 text-[var(--fg)]`}><code>{s.code}</code></pre>
                 {s.shell && <span className="font-mono-t absolute bottom-2 right-3 text-[10.5px] text-[var(--fg-dim)]">{s.shell}</span>}
                 <CopyButton text={s.code} />
               </div>

@@ -50,7 +50,7 @@ export const UNINSTALLER_GUIDES = {
     product: "uninstaller" as const,
     eyebrow: "REMOVAL GUIDE · ASUS ARMOURY CRATE",
     title: "How to completely uninstall ASUS Armoury Crate",
-    seoTitle: "Armoury Crate Uninstall Tool: Remove It Fully",
+    seoTitle: "How to Uninstall Armoury Crate Completely",
     seoDescription:
       "Use ASUS's Armoury Crate Uninstall Tool to remove Armoury Crate, stop the BIOS offering to reinstall it, then check for leftover services, apps and folders.",
     intro:

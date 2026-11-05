@@ -5,6 +5,7 @@ on:
     branches: [master]
     paths:
       - "site/**"
+      - "docs/pad.xml"
       - ".github/workflows/deploy-site.yml"
       # The site's structured-data version is read from here at build time
       # (see the shared SoftwareApplication data in site/src/seo.ts). Without this, a
@@ -18,6 +19,7 @@ on:
   pull_request:
     paths:
       - "site/**"
+      - "docs/pad.xml"
       - ".github/workflows/deploy-site.yml"
       - "src-tauri/tauri.conf.json"
       - "PRIVACY.md"

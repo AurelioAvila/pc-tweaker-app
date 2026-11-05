@@ -22,7 +22,7 @@ export function Badge({ label, tone }: { label: string; tone: string }) {
 
 function Shell({ children }: { children: ReactNode }) {
   return (
-    <main id="main-content" className="px-5 pt-32 pb-24 md:px-12">
+    <main id="main-content" className="px-5 pt-32 pb-24 md:px-12 [overflow-wrap:anywhere]">
       <article className="mx-auto max-w-4xl">{children}</article>
     </main>
   );

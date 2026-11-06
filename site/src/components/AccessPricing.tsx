@@ -5,6 +5,7 @@ import { text } from "../i18n/dictionary";
 import { riseChild, staggerParent, viewportOnce } from "../motion";
 import { DOWNLOAD_EXE } from "../constants";
 import { MOST_CHOSEN } from "../../../src/most-chosen";
+import { PaypalText } from "../../../src/components/paypal-mark";
 import { euro, PromoDeadline, PromoFine, PromoPrice, promoTerms, usePromo } from "../promo";
 import { TrialLine, usePriceList } from "../trial";
 import { CryptoLifetimeChoice } from "./CryptoLifetime";
@@ -306,7 +307,7 @@ export function AccessPricing() {
             {purchase && <WebPurchase key={purchase} plan={purchase === "account" ? null : purchase === "lifetime-crypto" ? "lifetime" : purchase} cryptoUsd={purchase === "lifetime-crypto" ? prices?.crypto?.lifetimeUsd ?? null : null} paypal={purchase !== "account" && purchase !== "lifetime-crypto" && Boolean(paypal?.[purchase])} pass={pass} demo={webPreview} onClose={() => setPurchase(null)} onChoosePlan={() => { setPurchase(null); document.getElementById("access")?.scrollIntoView({ block: "start" }); }} />}
           </div>
         )}
-        <p className="mt-5 text-[12.5px] text-[var(--fg-dim)]">{(webEnabled || webPreview) && paypal ? text.pricing.payWithPaypal : text.pricing.payWith}</p>
+        <p className="mt-5 text-[12.5px] text-[var(--fg-dim)]">{(webEnabled || webPreview) && paypal ? <PaypalText text={text.pricing.payWithPaypal} height="1.2em" /> : text.pricing.payWith}</p>
         <PromoFine className="mt-2 text-[12.5px] text-[var(--fg-dim)]" />
         <motion.p
           variants={riseChild}

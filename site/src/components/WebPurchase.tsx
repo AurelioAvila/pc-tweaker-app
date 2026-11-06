@@ -5,6 +5,7 @@ import { API_BASE, DOWNLOAD_EXE } from "../constants";
 import { euro, usePromo } from "../promo";
 import { usd } from "../../../src/components/crypto-copy";
 import { PAYPAL_COPY } from "../../../src/components/paypal-copy";
+import { PaypalButton } from "./PaypalButton";
 import type { PayMethod } from "../../../src/trial";
 import { PurchaseConsent } from "./PurchaseConsent";
 import { PURCHASE_TERMS_VERSION } from "../purchase-terms";
@@ -21,6 +22,8 @@ export function WebPurchase({ plan, onClose, demo, onChoosePlan, cryptoUsd = nul
   const [message, setMessage] = useState("");
   const [canCancel, setCanCancel] = useState(false);
   const [busy, setBusy] = useState(false);
+  // The method whose checkout is being created, until the browser leaves for Stripe.
+  const [paying, setPaying] = useState<PayMethod | null>(null);
   // The Terms box: Stripe's page is reached only once it is ticked (the API checks too).
   const [agreed, setAgreed] = useState(false);
   const [consentError, setConsentError] = useState(false);
@@ -85,9 +88,9 @@ export function WebPurchase({ plan, onClose, demo, onChoosePlan, cryptoUsd = nul
   }
   async function checkoutPreview(method: PayMethod) {
     if (!plan) return;
-    setBusy(true); setMessage(""); setCanCancel(false);
-    try { const url = await fixture.flow.checkout(plan, method, PURCHASE_TERMS_VERSION.pctweaker); if (demo) setMessage("Preview complete. No checkout page was created and no payment was made."); else window.location.assign(url); }
-    catch (err) { showError(err); if (!(err instanceof PurchaseError && err.status === 401)) setCanCancel(err instanceof PurchaseError && err.code === "other_checkout_pending"); }
+    setBusy(true); setPaying(method); setMessage(""); setCanCancel(false);
+    try { const url = await fixture.flow.checkout(plan, method, PURCHASE_TERMS_VERSION.pctweaker); if (demo) { setPaying(null); setMessage("Preview complete. No checkout page was created and no payment was made."); } else window.location.assign(url); }
+    catch (err) { setPaying(null); showError(err); if (!(err instanceof PurchaseError && err.status === 401)) setCanCancel(err instanceof PurchaseError && err.code === "other_checkout_pending"); }
     finally { setBusy(false); }
   }
   function continueToCheckout(method: PayMethod = crypto ? "crypto" : "card") {
@@ -95,7 +98,9 @@ export function WebPurchase({ plan, onClose, demo, onChoosePlan, cryptoUsd = nul
     void checkoutPreview(method);
   }
   // The same box covers both buttons; PayPal opens Stripe's page with PayPal as the only method.
-  const paypalChoice = withPaypal && <div><button disabled={busy} type="button" onClick={() => continueToCheckout("paypal")} aria-describedby="paypal-note" className="w-full rounded-xl border border-white/20 px-5 py-4 font-semibold text-[var(--fg)] transition-colors hover:border-white/40 active:border-white/60 disabled:opacity-60">{demo ? "Simulate PayPal checkout" : PAYPAL_COPY.en.pay}</button><p id="paypal-note" className="mt-2 text-xs leading-relaxed text-[var(--fg-dim)]">{PAYPAL_COPY.en.fine}</p></div>;
+  // PayPal's black button with its white logo, as tall as the card button above it.
+  const paypalLabel = demo ? "Simulate PayPal checkout" : PAYPAL_COPY.en.pay;
+  const paypalChoice = withPaypal && <div><PaypalButton label={paypalLabel} busy={paying === "paypal"} disabled={busy || paying !== null} onClick={() => continueToCheckout("paypal")} aria-describedby="paypal-note" /><p id="paypal-note" className="mt-2 text-xs leading-relaxed text-[var(--fg-dim)]">{PAYPAL_COPY.en.fine}</p></div>;
   const consent = <PurchaseConsent ref={consentBox} checked={agreed} error={consentError} termsHref="/terms/"
     onChange={(checked) => { setAgreed(checked); if (checked) setConsentError(false); }} />;
   async function cancelPrevious() {

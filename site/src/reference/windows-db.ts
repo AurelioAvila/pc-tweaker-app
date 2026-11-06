@@ -100,12 +100,27 @@ const SPOOLER_HELP = { label: "Microsoft Learn: Printing issues caused by the Pr
 const WIN32_PROCESS = { label: "Microsoft Learn: Win32_Process class (ParentProcessId)", url: "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-process" };
 const RUNTIME_BROKER = { label: "Microsoft Support: Runtime Broker is using too much memory", url: "https://support.microsoft.com/en-us/windows/runtime-broker-is-using-too-much-memory-ca6ed4e3-2a36-964c-4d2e-8c93980d8a98" };
 const DEFENDER_CORE = { label: "Microsoft Learn: Microsoft Defender Core service overview (MpDefenderCoreService.exe)", url: "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-core-service-overview" };
+const AUDIO_ARCH = { label: "Microsoft Learn: Windows audio architecture (audiodg.exe, the audio engine and APOs)", url: "https://learn.microsoft.com/en-us/windows-hardware/drivers/audio/windows-audio-architecture" };
+const SOUND_FIX = { label: "Microsoft Support: Fix sound or audio problems in Windows (audio enhancements, rolling back the driver)", url: "https://support.microsoft.com/en-us/windows/hardware/audio/fix-sound-or-audio-problems-in-windows" };
+const DO_SUPPORT = { label: "Microsoft Support: Delivery Optimization in Windows (settings, bandwidth limits, activity monitor)", url: "https://support.microsoft.com/en-us/windows/deployment/updates-lifecycle/delivery-optimization-in-windows" };
+const WIN_CREDS = { label: "Microsoft Learn: Credentials processes in Windows authentication (Winlogon, Logon UI, LSA)", url: "https://learn.microsoft.com/en-us/windows-server/security/windows-authentication/credentials-processes-in-windows-authentication" };
+const SAS = { label: "Microsoft Learn: Security glossary, secure attention sequence (Ctrl+Alt+Del)", url: "https://learn.microsoft.com/en-us/windows/win32/secgloss/s-gly" };
+const ARSO = { label: "Microsoft Learn: Winlogon automatic restart sign-on (ARSO)", url: "https://learn.microsoft.com/en-us/windows-server/security/windows-authentication/winlogon-automatic-restart-sign-on-arso" };
+const INTUNE_SYNC = { label: "Microsoft Learn: Windows devices that can't sync with Intune (dmwappushservice disabled)", url: "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-management/cannot-sync-windows-10-devices" };
+const PAUSE_UPDATES = { label: "Microsoft Support: Pause updates in Windows", url: "https://support.microsoft.com/en-us/windows/deployment/updates-lifecycle/pause-updates-in-windows" };
+const XBOX_SIGNIN = { label: "Microsoft Learn: Troubleshooting sign-in and sandbox errors (Xbox Live Auth Manager)", url: "https://learn.microsoft.com/en-us/gaming/gdk/docs/services/develop/troubleshooting/live-troubleshoot-sandboxes" };
+const MSI_ERRORS = { label: "Microsoft Learn: MsiExec.exe and InstMsi.exe error messages (1602, 1603, 1618, 3010)", url: "https://learn.microsoft.com/en-us/windows/win32/msi/error-codes" };
+const LOCATION = { label: "Microsoft Support: Windows location service and privacy", url: "https://support.microsoft.com/en-us/windows/privacy/windows-location-service-and-privacy" };
+const DIAG_PRIVACY = { label: "Microsoft Support: Diagnostics, feedback, and privacy in Windows (Diagnostic Data Viewer, deleting data)", url: "https://support.microsoft.com/en-us/windows/privacy/diagnostics-feedback-and-privacy-in-windows" };
+const START_MENU = { label: "Microsoft Learn: Troubleshoot Start menu errors (StartMenuExperienceHost)", url: "https://learn.microsoft.com/en-us/troubleshoot/windows-client/shell-experience/troubleshoot-start-menu-errors" };
+const DEFENDER_WIN = { label: "Microsoft Learn: Microsoft Defender Antivirus in Windows (NisSrv.exe and its Task Manager names)", url: "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-windows" };
 const NOV1 = "1 November 2026";
 const NOV5 = "5 November 2026";
+const NOV6 = "6 November 2026";
 
 const SYS32 = "C:\\Windows\\System32";
 const MSWIN = "Microsoft Windows";
-/** Defender's platform binaries (MsMpEng.exe, MpDefenderCoreService.exe) carry this certificate, not MSWIN; checked 5 Nov 2026. */
+/** Defender's platform binaries (MsMpEng.exe, MpDefenderCoreService.exe, NisSrv.exe) carry this certificate, not MSWIN; checked 5 and 6 Nov 2026. */
 const MSWINPUB = "Microsoft Windows Publisher";
 
 export const WINDOWS_DB: readonly DbEntry[] = [
@@ -133,6 +148,7 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     why: "Ending it makes the taskbar and desktop disappear until it restarts. Restarting it on purpose is safe and is the usual way to apply shell changes.",
     pcTweaker: "The classic right-click menu control restarts explorer.exe once to apply its change, and says so in its technical details. Nothing else in the catalogue touches the process.",
     tweaks: ["classic_context_menu", "explorer_open_this_pc", "show_file_extensions"],
+    related: ["processes/startmenuexperiencehost-exe"],
     sources: [EXPLORER],
   },
   {
@@ -214,14 +230,25 @@ export const WINDOWS_DB: readonly DbEntry[] = [
   },
   {
     kind: "process", slug: "winlogon-exe", name: "winlogon.exe", displayName: "Windows Logon Application",
-    path: `${SYS32}\\winlogon.exe`, signer: MSWIN,
+    path: `${SYS32}\\winlogon.exe`, signer: MSWIN, checked: NOV6,
     purpose: "Winlogon manages interactive sign-in; Microsoft documents how it works with the credential providers that draw the sign-in screen.",
     answer: "A critical process: ending it stops Windows.",
     verdict: "leave",
     why: "A built-in critical process: Microsoft documents that its termination stops Windows with bug check 0xEF.",
     pcTweaker: REFUSED,
-    related: ["processes/csrss-exe", "processes/lsass-exe"],
-    sources: [WINLOGON, BUGCHECK_EF, PCT_RULES],
+    // 6 Nov 2026: searchers ask what it does and why Windows signed them in on its own; one copy, in the user's session, observed on build 26300.
+    more: [
+      {
+        q: "What does winlogon.exe do?",
+        a: "It handles the secure part of signing in. Microsoft documents that Winlogon starts the sign-in screen (Logon UI) when it receives the secure attention sequence, Ctrl+Alt+Del by default, and passes the credentials you enter there to the Local Security Authority (lsass.exe), which checks them. The credential providers behind the sign-in screen also handle unlocking the PC and changing your password. On the PC used for this page one copy was running, in the signed-in user's session.",
+      },
+      {
+        q: "Why did Windows sign me in by itself after an update restart?",
+        a: "That is automatic restart sign-on (ARSO). When Windows Update restarts the PC with nobody at it, Windows can use the credentials that the Local Security Authority keeps in encrypted memory to sign the last user back in, then lock the session straight away, so that lock screen apps such as mail and calendar run again. Microsoft documents that Winlogon starts the lock while LSA manages the credentials. Administrators control it with the Group Policy setting \"Sign-in last interactive user automatically after a system-initiated restart\".",
+      },
+    ],
+    related: ["processes/csrss-exe", "processes/lsass-exe", "processes/logonui-exe"],
+    sources: [WINLOGON, WIN_CREDS, SAS, ARSO, BUGCHECK_EF, PCT_RULES],
   },
   {
     kind: "process", slug: "smss-exe", name: "smss.exe", displayName: "Windows Session Manager",
@@ -315,16 +342,31 @@ export const WINDOWS_DB: readonly DbEntry[] = [
   },
   {
     kind: "process", slug: "audiodg-exe", name: "audiodg.exe", displayName: "Windows Audio Device Graph Isolation",
-    path: `${SYS32}\\audiodg.exe`, signer: MSWIN,
+    path: `${SYS32}\\audiodg.exe`, signer: MSWIN, checked: NOV6,
     purpose: "The helper process the Windows audio service (Audiosrv) launches to run the audio engine, including the audio processing objects that sound drivers add. If one of those crashes, audio stops but Windows does not.",
     answer: "High CPU use usually points to audio effects or the driver.",
     busy: { q: "Why is audiodg.exe using so much CPU?", a: "Audio effects that sound drivers add run inside it, so check those first: turn off audio enhancements for the device or update the audio driver." },
     verdict: "leave",
     why: "Audio effects that sound drivers add run inside it, so when it uses a lot of CPU those are the first thing to check: turn off audio enhancements for the device or update the audio driver. Ending the process just cuts the sound.",
     pcTweaker: `${REFUSED} For crackling audio, PC Tweaker's driver latency trace measures which driver delays the system; see the guide below.`,
+    // 6 Nov 2026: parent (the svchost.exe hosting Audiosrv) observed on build 26300.
+    more: [
+      {
+        q: "What does audiodg.exe do?",
+        a: "It runs the Windows audio engine. Microsoft's audio architecture documentation describes audiodg.exe (Audio Device Graph) as the process that loads the audio engine, which mixes and processes the sound of your apps and loads the audio processing objects (APOs), hardware-specific plugins that process the signal. The Windows Audio service starts it: on the PC used for this page its parent was the svchost.exe that hosts Audiosrv.",
+      },
+      {
+        q: "How do I turn off audio enhancements?",
+        a: "Per device, in Settings. Microsoft's sound troubleshooting steps: open Settings, then Sound, select the device you play through under Output, scroll to Advanced settings and set Audio enhancements to Off. If the trouble started after an update, roll back the audio driver instead: in Device Manager, expand Sound, video and game controllers, open your device's Properties and select Roll Back Driver on the Driver tab.",
+      },
+      {
+        q: "What happens if audiodg.exe crashes?",
+        a: "All sound on the PC stops until the audio engine restarts, but Windows keeps running. Microsoft documents that when an audio processing object hits an exception, or a watchdog finds a call stuck, the audio engine crashes and audio is lost system-wide until it restarts. If it keeps happening, the effects and the driver are the first suspects: turn audio enhancements off, then update or roll back the audio driver.",
+      },
+    ],
     related: ["services/audiosrv"],
-    guides: ["/fixes/dpc-latency-audio-crackling/", "/fixes/equalizer-apo-not-working-windows-11/"],
-    sources: [MS.audioMeasures, PCT_RULES],
+    guides: ["/fixes/dpc-latency-audio-crackling/", "/fixes/equalizer-apo-not-working-windows-11/", "/fixes/check-for-driver-updates-windows-11/"],
+    sources: [AUDIO_ARCH, MS.audioMeasures, SOUND_FIX, PCT_RULES],
   },
   {
     kind: "process", slug: "msmpeng-exe", name: "MsMpEng.exe", displayName: "Antimalware Service Executable",
@@ -345,7 +387,7 @@ export const WINDOWS_DB: readonly DbEntry[] = [
         a: "Microsoft lists three checks: the Windows Security app (Virus & threat protection, Manage providers), the Details tab of Task Manager where MsMpEng.exe should appear, and PowerShell, where Get-MpComputerStatus | select AMRunningMode returns Normal, Passive or EDR Block Mode when antivirus protection is on.",
       },
     ],
-    related: ["processes/mpdefendercoreservice-exe", "services/windefend", "processes/smartscreen-exe"],
+    related: ["processes/mpdefendercoreservice-exe", "processes/nissrv-exe", "services/windefend", "processes/smartscreen-exe"],
     sources: [DEFENDER, DEFENDER_PERF, PCT_RULES],
   },
   // 5 Nov 2026: searched ("mpdefendercoreservice.exe", "... antimalware core service") with no page; Microsoft documents it.
@@ -443,8 +485,24 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     pcTweaker: "PC Tweaker does not stop or disable DiagTrack. Its \"Reduce diagnostic data collection\" control sets the AllowTelemetry policy to the lowest level your edition allows instead.",
     serverGuidance: "No guidance",
     tweaks: ["disable_telemetry_tasks"],
-    related: ["services/dmwappushservice", "services/dps"],
-    sources: [MS.serverServices, MS.diagData],
+    more: [
+      {
+        q: "Can I turn off Windows diagnostic data completely?",
+        a: "Not on Windows Home or Pro, where Required diagnostic data is the lowest level. Microsoft documents a Diagnostic data off setting only for Windows Server, Enterprise and Education, and notes that with it off, information about Windows Update failures isn't sent either. On other editions you choose between Required and Optional in Settings > Privacy & security > Diagnostics & feedback.",
+      },
+      {
+        q: "How can I see or delete the diagnostic data Windows sends?",
+        a: "Both are in Settings > Privacy & security > Diagnostics & feedback. Turn on View diagnostic data and select Open Diagnostic Data Viewer to see events as they are collected; it shows only what is collected while it runs, not your history. To delete, select Delete under Delete diagnostic data. Microsoft notes that this does not remove data associated with your Microsoft account, which you manage in the Microsoft privacy dashboard, and does not stop data from being sent.",
+      },
+      {
+        q: "Does DiagTrack send crash reports?",
+        a: "No, crash reports go through a separate component. Microsoft documents that diagnostic data events and diagnostic logs are managed by the Connected User Experiences and Telemetry component, the service on this page, while crash reporting and crash dumps are managed by Windows Error Reporting.",
+      },
+    ],
+    related: ["services/dmwappushservice", "services/wersvc", "services/dps"],
+    guides: ["/guides/windows-11-privacy-telemetry-rollback/", "/windows-privacy-tool/"],
+    sources: [MS.serverServices, MS.diagData, DIAG_PRIVACY],
+    checked: NOV6,
   },
   {
     kind: "service", slug: "dmwappushservice", name: "dmwappushservice", displayName: "Device Management Wireless Application Protocol (WAP) Push message Routing Service",
@@ -455,8 +513,15 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     why: "Microsoft notes that client devices need it for Intune, mobile device management and similar technologies. A home PC that no organisation manages can leave it on Manual; a work PC should keep it as configured.",
     pcTweaker: UNTOUCHED,
     serverGuidance: "OK to disable (not needed on Server; required on client devices for Intune and MDM)",
+    more: [
+      {
+        q: "What happens if I disable dmwappushservice?",
+        a: "A PC managed with Intune stops syncing, and no error says why. Microsoft documents that when this service is disabled, for example by a script, the device can no longer sync with Intune, a manual sync does not start and nothing is written to the event logs; the fix is to set its startup type back to Automatic. Its services guide also lists it as required on client devices for mobile device management and the Unified Write Filter. On the PC used for this page it was set to Manual and not running.",
+      },
+    ],
     related: ["services/diagtrack"],
-    sources: [MS.serverServices],
+    sources: [MS.serverServices, INTUNE_SYNC],
+    checked: NOV6,
   },
   {
     kind: "service", slug: "sysmain", name: "SysMain", displayName: "SysMain (formerly Superfetch)",
@@ -504,21 +569,50 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     why: "Windows Update and the Store use it. To stop uploads or cap bandwidth, use the Delivery Optimization policies rather than disabling the service.",
     pcTweaker: "PC Tweaker does not stop the service. One control sets the download mode policy to HTTP only, with no peering; another caps background download speed.",
     tweaks: ["disable_delivery_optimization", "limit_do_background_download"],
+    // 6 Nov 2026: "should I turn it off" is the top question; start type and account observed on build 26300.
+    more: [
+      {
+        q: "Should I turn off Delivery Optimization?",
+        a: "You can turn off its sharing, but that does not stop updates. In Settings > Windows Update > Advanced options > Delivery Optimization, set Allow downloads from other devices to Off: Microsoft notes this doesn't disable updating, it only makes the PC download its updates directly from Microsoft instead of from other PCs. If the switch is unavailable, your organisation manages the PC and requires it. Microsoft's FAQ adds that disabling Delivery Optimization doesn't stop content from downloading; to pause updates, use the Windows Update settings.",
+      },
+      {
+        q: "How do I limit the bandwidth Delivery Optimization uses?",
+        a: "Set limits on the same Delivery Optimization page in Settings. You can cap downloads as an absolute speed in Mbps or as a percentage of measured bandwidth, separately for background and foreground downloads, cap uploads to other PCs on the internet, and set a monthly upload limit between 1 and 500 GB. Without limits, Microsoft's FAQ says it aims to use no more than 45% of the available bandwidth for background downloads and 90% for downloads you start. The limits apply to automatic update downloads, not to updates or apps you download yourself. Activity monitor, on the same page, shows this month's downloads by source and what your PC uploaded.",
+      },
+      {
+        q: "Can I delete the Delivery Optimization cache?",
+        a: "Yes. Windows clears it automatically, removing files after a short time or when they take up too much space, and you can empty it yourself: open Disk Cleanup, tick Delivery Optimization Files, select OK, then Delete Files.",
+      },
+    ],
     related: ["services/wuauserv", "services/bits"],
     guides: ["/fixes/windows-update-using-bandwidth/"],
-    sources: [MS.doFaq, MS.doRef],
+    sources: [MS.doFaq, DO_SUPPORT, MS.doRef],
+    checked: NOV6,
   },
   {
     kind: "service", slug: "wuauserv", name: "wuauserv", displayName: "Windows Update",
     path: `${SYS32}\\svchost.exe`, binary: "svchost.exe -k netsvcs -p", account: "LocalSystem",
     purpose: "Detects, downloads and installs updates for Windows and other programs.",
     answer: "Disabling it stops Windows Update; pause updates in Settings instead.",
+    // 6 Nov 2026: searchers ask how to stop it for good and why it is busy; start type and state observed on build 26300.
+    busy: {
+      q: "Why is Windows Update (wuauserv) using so much CPU, disk or network?",
+      a: "It is checking for, downloading or installing updates. The downloads go through Delivery Optimization, whose bandwidth you can cap in Settings, and the installation work shows up as TiWorker.exe. Let it finish: on the PC used for this page the service was set to Manual and stopped while no update was in progress.",
+    },
+    more: [
+      {
+        q: "How do I stop Windows Update permanently?",
+        a: "The option Windows gives you is a pause of up to 35 days at a time. In Settings > Windows Update, choose a date under Pause updates; you can extend the pause later, again up to 35 days from that day, and updates resume on their own when it ends. Microsoft notes that pausing doesn't permanently turn off automatic updates, and that updates in progress when you pause are cancelled. Disabling the wuauserv service is not the answer either: Microsoft documents that it stops Windows Update for you and for every program that uses the Windows Update Agent API.",
+      },
+    ],
     verdict: "leave",
     why: "Microsoft notes that disabling it stops Windows Update and the Windows Update Agent API for every program. Use pause and active hours in Settings instead.",
     pcTweaker: UNTOUCHED,
     serverGuidance: "No guidance",
     related: ["services/bits", "services/dosvc", "services/usosvc", "services/trustedinstaller", "processes/tiworker-exe"],
-    sources: [MS.serverServices],
+    guides: ["/fixes/windows-update-using-bandwidth/"],
+    sources: [MS.serverServices, PAUSE_UPDATES, DO_SUPPORT],
+    checked: NOV6,
   },
   {
     kind: "service", slug: "bits", name: "BITS", displayName: "Background Intelligent Transfer Service",
@@ -540,7 +634,7 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     verdict: "leave",
     why: "Microsoft warns that disabling, stopping or modifying it can cause severe instability and leave the PC vulnerable. When another antivirus is installed, Microsoft documents that Defender switches to disabled mode automatically.",
     pcTweaker: UNTOUCHED,
-    related: ["processes/msmpeng-exe", "processes/mpdefendercoreservice-exe", "processes/smartscreen-exe"],
+    related: ["processes/msmpeng-exe", "processes/mpdefendercoreservice-exe", "processes/nissrv-exe", "processes/smartscreen-exe"],
     sources: [DEFENDER, MS.serverServices],
   },
   {
@@ -565,8 +659,20 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     pcTweaker: "PC Tweaker does not change Xbox services. Its Game Bar controls change Game Bar recording settings, not these services.",
     serverGuidance: "Should be disabled (on Windows Server)",
     tweaks: ["disable_game_dvr", "disable_game_bar_captures"],
+    // 6 Nov 2026: start type and the XblGameSave dependency observed on build 26300.
+    more: [
+      {
+        q: "What stops working if I disable Xbox Live Auth Manager?",
+        a: "Signing in to Xbox services from games and apps, and what relies on it. Microsoft's services guide warns that some applications may not work correctly with it stopped, and on the PC used for this page Xbox Live Game Save (XblGameSave), which syncs cloud saves, depended on it. Set to Manual, as it was there, it starts only when a game or app asks for it.",
+      },
+      {
+        q: "Xbox sign-in fails in a PC game. Could this service be the cause?",
+        a: "It can be. Microsoft's game development documentation names a background service needed for sign-in, such as Xbox Live Auth Manager or Gaming Services, getting into a bad state as one cause of sign-in failures, and says restarting the PC can clear such temporary problems. Also check in Services that its startup type is not Disabled.",
+      },
+    ],
     related: ["services/xblgamesave"],
-    sources: [MS.serverServices],
+    sources: [MS.serverServices, XBOX_SIGNIN],
+    checked: NOV6,
   },
   {
     kind: "service", slug: "xblgamesave", name: "XblGameSave", displayName: "Xbox Live Game Save",
@@ -590,7 +696,25 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     pcTweaker: "PC Tweaker does not stop the service. Its \"Disable location tracking\" control sets the policy that turns location off for every app.",
     serverGuidance: "OK to disable (breaks apps that rely on it)",
     tweaks: ["disable_location_tracking"],
-    sources: [MS.serverServices, MS.connections],
+    // 6 Nov 2026: the service running while location was off for the device and the user observed on build 26300.
+    more: [
+      {
+        q: "How do I turn off location in Windows 11?",
+        a: "In Settings > Privacy & security > Location. Location services, which only an administrator sees, turns location off for the whole PC; Let apps access your location turns it off for your account, and you can also switch it off app by app. With location services off, Windows and apps have no access to the device's location. Microsoft notes two things to weigh: features such as automatic time zone and Find my device rely on it, and some third-party apps and services can still work out your location in other ways, such as from your IP address.",
+      },
+      {
+        q: "How do I see which app is using my location?",
+        a: "Look for the location icon in the notification area of the taskbar. Windows shows it while an app uses your location through the Windows location service, and hovering over it names the app. The Location page in Settings also shows when apps last accessed your location.",
+      },
+      {
+        q: "Why is the Geolocation Service running when location is off?",
+        a: "The service can run without handing a location to any app. On the PC used for this page, lfsvc was running while location services were turned off in Settings, and Microsoft documents that with that setting off, Windows and apps have no access to the device's location.",
+      },
+    ],
+    related: ["services/mapsbroker"],
+    guides: ["/windows-privacy-tool/"],
+    sources: [MS.serverServices, LOCATION, MS.connections],
+    checked: NOV6,
   },
   {
     kind: "service", slug: "wersvc", name: "WerSvc", displayName: "Windows Error Reporting Service",
@@ -635,7 +759,20 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     why: "Microsoft strongly recommends leaving it running; programs that use COM or DCOM stop working without it.",
     pcTweaker: UNTOUCHED,
     serverGuidance: "No guidance (Microsoft highly recommends leaving it running)",
+    // 6 Nov 2026: dependent services counted from DependOnService in the registry; shared process, CanStop and dependencies observed on build 26300.
+    more: [
+      {
+        q: "What happens if the RPC service is disabled?",
+        a: "Everything that depends on it fails. Microsoft notes that programs using COM or DCOM stop working without it, and on the PC used for this page 168 services listed RpcSs as a dependency, among them Windows Update, Windows Audio, Print Spooler, Windows Search and Microsoft Defender Antivirus. Windows does not even let you stop it while it runs: there, Get-Service RpcSs reported CanStop as False.",
+      },
+      {
+        q: "What is the difference between RpcSs and the RPC Endpoint Mapper?",
+        a: "They work as a pair. Microsoft describes the RPC Endpoint Mapper (RpcEptMapper) as resolving RPC interface identifiers to transport endpoints, and warns that programs using RPC stop functioning properly if it is stopped or disabled; RpcSs is the service control manager for COM and DCOM servers. On the PC used for this page both ran in the same svchost.exe process, and RpcSs depended on RpcEptMapper and the DCOM Server Process Launcher (DcomLaunch).",
+      },
+    ],
+    related: ["processes/svchost-exe", "processes/dllhost-exe", "services/wuauserv", "services/audiosrv"],
     sources: [MS.serverServices],
+    checked: NOV6,
   },
   {
     kind: "service", slug: "audiosrv", name: "Audiosrv", displayName: "Windows Audio",
@@ -737,6 +874,52 @@ export const WINDOWS_DB: readonly DbEntry[] = [
     related: ["processes/backgroundtaskhost-exe", "processes/dllhost-exe"],
     sources: [RUNTIME_BROKER, PCT_RULES],
   },
+  // 6 Nov 2026: much searched ("startmenuexperiencehost.exe", "... not running", "... missing") with no page here; Microsoft Learn documents it.
+  // Path, signer, file description, the single copy in session 1 and its parent svchost.exe (DcomLaunch, BrokerInfrastructure) observed on build 26300.
+  {
+    kind: "process", slug: "startmenuexperiencehost-exe", name: "StartMenuExperienceHost.exe", displayName: "Windows Start Experience Host",
+    path: "C:\\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\\StartMenuExperienceHost.exe", signer: MSWIN, checked: NOV6,
+    purpose: "The process that displays the Start menu. Microsoft's Start menu troubleshooting guide calls it the process responsible for displaying Start and says every signed-in user should have one in their session. It belongs to the Start menu's own app package, Microsoft.Windows.StartMenuExperienceHost; on Windows 10 version 1809 and earlier, Start lived in a different package.",
+    answer: "It shows the Start menu: one copy per user.",
+    verdict: "leave",
+    why: "It is the Start menu itself, so stopping it gains nothing. When Start does not open or keeps crashing, Microsoft's troubleshooting steps below check whether it runs for your account and register its package again. On the PC used for this page one copy was running, in the signed-in user's session, started by svchost.exe.",
+    pcTweaker: REFUSED,
+    more: [
+      {
+        q: "The Start menu won't open. How do I check StartMenuExperienceHost.exe?",
+        a: "Check that it runs for your account. From an elevated PowerShell prompt, Microsoft's guide uses Get-Process StartMenuExperienceHost -IncludeUserName; each signed-in user should have one copy. If yours is missing, check from a normal, non-elevated PowerShell window that the Start package is registered for you: Get-AppxPackage -Name Microsoft.Windows.StartMenuExperienceHost. If it runs but keeps crashing, the Application event log records the crashes as events 1000 and 1001.",
+      },
+      {
+        q: "How do I register the Start menu again?",
+        a: "Run Microsoft's command from a non-elevated PowerShell prompt, so the package is registered for you rather than for the administrator: Add-AppxPackage -Path \"C:\\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\\AppxManifest.xml\" -Register -DisableDevelopmentMode. It works only while the package still exists on the PC; Get-AppxPackage *StartMenu* -AllUsers, from an elevated prompt, shows whether it does. If Start is not installed for any user, Microsoft says there is no supported way to install it on its own, and the quickest fix is to return to a known good state: roll back the update, reset the PC or restore a backup.",
+      },
+      {
+        q: "Why does the Start menu stop responding?",
+        a: "One cause Microsoft documents is the Background Tasks Infrastructure Service (BrokerInfrastructure) not running. Its guide says this service must be running for a stable Start menu, is set to start automatically and cannot be stopped while Windows runs. On the PC used for this page it ran in the same svchost.exe that started StartMenuExperienceHost.exe.",
+      },
+    ],
+    related: ["processes/explorer-exe", "processes/runtimebroker-exe", "processes/backgroundtaskhost-exe"],
+    sources: [START_MENU, PCT_RULES],
+  },
+  // 6 Nov 2026: searched ("nissrv.exe", "microsoft network realtime inspection service") with no page here; Microsoft Learn documents it.
+  // Path, signer, file description and the WdNisSvc service (account, start type, WdNisDrv dependency) observed on build 26300 (Defender platform 4.18.26100.4).
+  {
+    kind: "process", slug: "nissrv-exe", name: "NisSrv.exe", displayName: "Microsoft Network Realtime Inspection Service",
+    path: "C:\\ProgramData\\Microsoft\\Windows Defender\\Platform\\<version>\\NisSrv.exe", signer: MSWINPUB, checked: NOV6,
+    purpose: "The network inspection part of Microsoft Defender Antivirus. It runs as the Microsoft Defender Antivirus Network Inspection Service (WdNisSvc), which Microsoft describes as helping guard against intrusion attempts that target known and newly discovered vulnerabilities in network protocols.",
+    answer: "Defender's network inspection: leave it running.",
+    verdict: "leave",
+    why: "Microsoft warns that disabling, stopping or modifying Defender's services and processes can cause severe instability and leave the PC vulnerable, and in general recommends against disabling Microsoft Defender Antivirus. Change Defender through Windows Security instead.",
+    pcTweaker: REFUSED,
+    more: [
+      {
+        q: "What is Microsoft Network Realtime Inspection Service in Task Manager?",
+        a: "It is NisSrv.exe, part of Microsoft Defender Antivirus. Microsoft documents the three names it goes by: Microsoft Network Realtime Inspection Service on Task Manager's Processes tab, NisSrv.exe on the Details tab and Microsoft Defender Antivirus Network Inspection Service on the Services tab. On the PC used for this page that service, WdNisSvc, ran as LocalService with its startup type set to Manual, and depended on Defender's network inspection driver, WdNisDrv.",
+      },
+    ],
+    related: ["processes/msmpeng-exe", "processes/mpdefendercoreservice-exe", "services/windefend"],
+    sources: [DEFENDER_WIN, MS.serverServices, DEFENDER, PCT_RULES],
+  },
   {
     kind: "process", slug: "unsecapp-exe", name: "unsecapp.exe", displayName: "Sink to receive asynchronous callbacks for WMI client application",
     path: `${SYS32}\\wbem\\unsecapp.exe`, signer: MSWIN, checked: NOV1,
@@ -762,16 +945,31 @@ export const WINDOWS_DB: readonly DbEntry[] = [
   },
   {
     kind: "process", slug: "msiexec-exe", name: "msiexec.exe", displayName: "Windows Installer",
-    path: `${SYS32}\\msiexec.exe`, signer: MSWIN, checked: NOV1,
+    path: `${SYS32}\\msiexec.exe`, signer: MSWIN, checked: NOV6,
     purpose: "Windows Installer. Microsoft documents msiexec as the way to install, modify and perform other operations on Windows Installer (.msi) packages, whether a setup program or the command line starts it.",
     answer: "It installs, repairs or removes a program; let it finish.",
     busy: { q: "Why is msiexec.exe running when I am not installing anything?", a: "A setup, update, repair or uninstall is using Windows Installer, sometimes started by a program's own updater. Its command line shows the package. Let it finish: ending it midway can leave that program half installed." },
     verdict: "leave",
     why: "Ending it in the middle of an installation or removal can leave the program partly installed until you run its setup again. When the job is done, the process exits.",
     pcTweaker: REFUSED,
+    // 6 Nov 2026: the msiserver service's binary, account and start type observed on build 26300.
+    more: [
+      {
+        q: "What does \"Another installation is already in progress\" (error 1618) mean?",
+        a: "Windows Installer is still busy with another installation. Microsoft lists this as error 1618, ERROR_INSTALL_ALREADY_RUNNING: let that installation finish before you start yours. A program's own updater can be the other installation, so look for another msiexec.exe in Task Manager and check its command line.",
+      },
+      {
+        q: "What do msiexec error codes 1602, 1603 and 3010 mean?",
+        a: "In Microsoft's list of Windows Installer messages, 1602 means the user cancelled the installation, 1603 means a fatal error occurred during installation, and 3010 means the installation succeeded but a restart is needed to complete it.",
+      },
+      {
+        q: "Can I disable the Windows Installer service?",
+        a: "Only if you never install, repair or remove a program that uses Windows Installer. The Windows Installer service (msiserver) runs msiexec.exe and, as Microsoft describes it, adds, modifies and removes applications packaged as .msi and .msp files; if it is disabled, services that depend on it cannot start either. On the PC used for this page it ran as LocalSystem with its startup type set to Manual, so it starts only when an installation needs it.",
+      },
+    ],
     related: ["services/trustedinstaller", "processes/rundll32-exe"],
-    guides: ["/uninstall-programs-completely/"],
-    sources: [MSIEXEC, PCT_RULES],
+    guides: ["/uninstall-programs-completely/", "/fixes/remove-program-leftovers-windows-11/"],
+    sources: [MSIEXEC, MSI_ERRORS, MS.serverServices, PCT_RULES],
   },
   {
     kind: "process", slug: "smartscreen-exe", name: "smartscreen.exe", displayName: "Microsoft Defender SmartScreen",

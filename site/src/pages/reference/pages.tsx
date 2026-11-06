@@ -340,7 +340,8 @@ export function dbRelated(e: DbEntry, min = 4): DbEntry[] {
 const DB_POPULAR = [
   "processes/msedgewebview2-exe", "processes/conhost-exe", "processes/smss-exe", "processes/spoolsv-exe", "processes/lsaiso-exe",
   "processes/wmiprvse-exe", "processes/lsass-exe", "processes/audiodg-exe", "processes/winlogon-exe", "processes/msmpeng-exe",
-  "processes/runtimebroker-exe", "processes/svchost-exe", "processes/tiworker-exe", "processes/ctfmon-exe", "processes/rundll32-exe",
+  "processes/runtimebroker-exe", "processes/startmenuexperiencehost-exe", "processes/nissrv-exe", "processes/svchost-exe", "processes/tiworker-exe",
+  "processes/ctfmon-exe", "processes/rundll32-exe",
   "services/wsaifabricsvc", "services/dosvc", "services/rpcss", "services/dmwappushservice", "services/wuauserv", "services/sysmain", "services/usosvc",
 ];
 

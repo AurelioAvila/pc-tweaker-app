@@ -8,6 +8,8 @@ export const GUIDE_GROUPS = [
       { path: "/guides/amd-x3d-intel-hybrid-core-steering-gaming/", title: "Check X3D and Intel Hybrid core steering", note: "Separate process placement from power policy and core parking." },
       { path: "/guides/amd-ryzen-x3d-core-parking-windows-11/", title: "Understand Ryzen X3D core parking", note: "Check your CPU topology before changing parking or placement." },
       { path: "/fixes/check-for-driver-updates-windows-11/", title: "Check for driver updates without a driver updater", note: "Windows Update, Device Manager, PowerShell and your PC maker, with a restore point first." },
+      { path: "/fixes/disable-mouse-acceleration-windows-11/", title: "Turn off mouse acceleration", note: "Enhance pointer precision off for consistent aim, and which games ignore it." },
+      { path: "/fixes/memory-integrity-gaming-windows-11/", title: "Memory integrity and gaming", note: "The protection you give up, the processors where it costs more, and how to switch it back." },
       { path: "/gaming-performance/", title: "Compare gaming performance", note: "Use repeated workloads and frame times to judge a change." },
       { path: "/windows-gaming-work-study-profiles/", title: "Choose Gaming, Work or Study settings", note: "Review a preset for the task and understand its restore limits." },
     ],

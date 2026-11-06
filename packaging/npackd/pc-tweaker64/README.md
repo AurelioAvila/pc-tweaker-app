@@ -1,12 +1,14 @@
 # PC Tweaker Npackd package
 
-This package references the publisher-signed PC Tweaker NSIS installers. The current candidate is 1.20.0, with its versioned download URL and SHA-256 pinned in `1.20.0.xml`. The reviewed 1.19.0 package remains in `1.19.0.xml` for version history. The install, removal and guard scripts are unchanged between these versions.
+This package references the publisher-signed PC Tweaker NSIS installers. The current candidate is 1.20.3, with its versioned download URL and SHA-256 pinned in `1.20.3.xml`. The 1.19.0 and 1.20.0 packages remain for version history. The install, removal and guard scripts are unchanged between these versions.
 
 The install script checks registered PC Tweaker and legacy `pc-tweaker-app` installations before starting the installer. An existing installation causes it to stop without replacing that installation. An earlier installation must be removed before installing this package; side-by-side installation and automatic takeover are not supported.
 
 The removal script requires the registered installation directory to match the package directory. It uses the publisher's `uninstall.exe` and preserves nonzero error results. Registry inspection errors stop the operation. No registry values or execution-policy settings are changed by the guard.
 
 ## Verification
+
+[The 1.20.3 native package verification](https://github.com/AurelioAvila/pc-tweaker-app/actions/runs/42302485126) passed on Microsoft Windows Server 2025 Datacenter x64. It verified the pinned final installer, payload and uninstaller signatures and timestamps; installation, existing-install rejection, mismatched-directory rejection, removal and preservation of the synthetic AppData marker passed. No application startup, hardware scan, real entitlement or customer data was used. The Npackd GUI/CLI orchestration and Windows 10/11 client behavior were not exercised.
 
 [The 1.20.0 native package verification](https://github.com/AurelioAvila/pc-tweaker-app/actions/runs/41735334917) passed on Microsoft Windows Server 2025 Datacenter x64. It downloaded the exact public 1.20.0 installer, checked its pinned SHA-256 and verified the publisher signatures and timestamps of the installer, installed payload and uninstaller. Installation, existing-install rejection, mismatched-directory rejection, removal and preservation of the synthetic AppData marker all passed. No application startup, hardware scan, real entitlement or customer data was used. The Npackd GUI/CLI orchestration and Windows 10/11 client behavior were not exercised by this test.
 

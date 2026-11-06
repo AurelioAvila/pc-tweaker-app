@@ -5,6 +5,7 @@ if ($env:GITHUB_ACTIONS -ne 'true' -or -not $env:RUNNER_TEMP) {
 $reviewedReleases = @{
     'v1.19.0' = 'd7a5e6f6418501fd815b739066e507f9e1690a2d5771e0ee8962a2da94add370'
     'v1.20.0' = '84edd3545ee92c50696f02416a676e71e584617f09930b79089755007ddb63dc'
+    'v1.20.3' = '059b8c6990d5cedb9f8b073f6f573a39d77e9fbc6bcc2b9c62d5ef81fa0d44ef'
 }
 if (-not $reviewedReleases.ContainsKey($env:RELEASE_TAG)) {
     throw 'This package check requires an explicitly reviewed public release and pinned hash.'

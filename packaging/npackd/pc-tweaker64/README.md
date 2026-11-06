@@ -8,7 +8,7 @@ The removal script requires the registered installation directory to match the p
 
 ## Verification
 
-Native package verification of 1.20.3 is pending. The earlier version results below do not establish installation or removal results for this candidate.
+[The 1.20.3 native package verification](https://github.com/AurelioAvila/pc-tweaker-app/actions/runs/42302485126) passed on Microsoft Windows Server 2025 Datacenter x64. It verified the pinned final installer, payload and uninstaller signatures and timestamps; installation, existing-install rejection, mismatched-directory rejection, removal and preservation of the synthetic AppData marker passed. No application startup, hardware scan, real entitlement or customer data was used. The Npackd GUI/CLI orchestration and Windows 10/11 client behavior were not exercised.
 
 [The 1.20.0 native package verification](https://github.com/AurelioAvila/pc-tweaker-app/actions/runs/41735334917) passed on Microsoft Windows Server 2025 Datacenter x64. It downloaded the exact public 1.20.0 installer, checked its pinned SHA-256 and verified the publisher signatures and timestamps of the installer, installed payload and uninstaller. Installation, existing-install rejection, mismatched-directory rejection, removal and preservation of the synthetic AppData marker all passed. No application startup, hardware scan, real entitlement or customer data was used. The Npackd GUI/CLI orchestration and Windows 10/11 client behavior were not exercised by this test.
 

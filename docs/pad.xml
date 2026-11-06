@@ -71,7 +71,7 @@
       <Char_Desc_45>See Windows clearly before you change it.</Char_Desc_45>
       <Char_Desc_80>Audio diagnostics and Windows tuning you can inspect. Free plus optional Pro.</Char_Desc_80>
       <Char_Desc_250>Review audio devices, Scan 2.0 findings and supported Windows tweaks before making changes. Includes 48 Free controls without an account and 36 optional Pro controls. Compare supported results and restore saved settings. Windows 10/11 x64.</Char_Desc_250>
-      <Char_Desc_450>PC Tweaker combines Windows tuning, audio diagnostics and hardware monitoring. Review device formats, Bluetooth call-mode findings and Scan 2.0 results before choosing changes. Includes 48 Free controls without an account and 36 optional Pro controls. Restore covers supported settings. The 1.20.0 Audio interface preview uses clearly labeled sample data, not real-PC measurements.</Char_Desc_450>
+      <Char_Desc_450>PC Tweaker combines Windows tuning, audio diagnostics and hardware monitoring. Review device formats, Bluetooth call-mode findings and Scan 2.0 results before choosing changes. Includes 48 Free controls without an account and 36 optional Pro controls. Restore covers supported settings. The 1.20.3 Audio interface preview visibly labels fictional sample data, not real-PC measurements.</Char_Desc_450>
       <Char_Desc_2000>PC Tweaker by Aurelio Avila combines Windows tuning, audio diagnostics, hardware monitoring and maintenance for Windows 10/11 x64. Inspect a supported setting before applying it, review its previous state and choose individual changes. This release includes 48 Free controls without an account and 36 optional Pro controls.
 
 New in 1.20.0, the Audio section shows playback and recording devices and the formats Windows uses. Review Bluetooth call-mode findings, muted or quiet microphones, sound effects and Equalizer APO status. A read-only 10-second DPC/ISR trace helps identify drivers worth investigating. It requires administrator permission; a latency finding does not prove the cause of an audio problem.
@@ -80,14 +80,14 @@ Scan 2.0 presents configuration and maintenance findings before you select fixes
 
 Optional Pro adds advanced workflows, including Game Sessions and registry cleanup. Registry discovery is free; Pro cleanup saves a .reg backup. Registry cleaning is housekeeping, not a promised speed upgrade. Change history and restore cover supported settings. Restoring a setting does not recover permanently deleted caches or replace a full system backup. Some actions require administrator permission or a restart. Results depend on Windows, drivers, hardware and workload.
 
-Official Windows binaries are publisher-signed and timestamped; signing does not eliminate SmartScreen warnings. The linked 1.20.0 Audio interface preview visibly identifies synthetic sample data. It is an interface example, not real-PC measurements or evidence of a performance gain.</Char_Desc_2000>
+Official Windows binaries are publisher-signed and timestamped; signing does not eliminate SmartScreen warnings. The linked 1.20.3 Audio interface preview visibly identifies fictional sample data. It is an interface example, not real-PC measurements or evidence of a performance gain.</Char_Desc_2000>
     </English>
   </Program_Descriptions>
   <Web_Info>
     <Application_URLs>
       <Application_Info_URL>https://pctweaker.app/</Application_Info_URL>
       <Application_Order_URL></Application_Order_URL>
-      <Application_Screenshot_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/screenshots/pc-tweaker-1.20-audio-sample-data.jpg</Application_Screenshot_URL>
+      <Application_Screenshot_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/screenshots/pc-tweaker-1.20.3-audio-sample-data.png</Application_Screenshot_URL>
       <Application_Icon_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/src-tauri/icons/32x32.png</Application_Icon_URL>
       <Application_XML_File_URL>https://raw.githubusercontent.com/AurelioAvila/pc-tweaker-app/master/docs/pad.xml</Application_XML_File_URL>
     </Application_URLs>

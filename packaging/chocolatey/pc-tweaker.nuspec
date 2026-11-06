@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>pc-tweaker</id>
-    <version>1.20.2</version>
+    <version>1.20.3</version>
     <title>PC Tweaker</title>
     <authors>Aurelio Avila</authors>
     <owners>AurelioAvila</owners>
@@ -30,7 +30,7 @@ This package downloads the official 1.20.2 x64 installer with a fixed SHA-256. I
 
 PC Tweaker is proprietary/freemium. Viewable source is not an OSI-approved open-source license.</description>
     <summary>Windows tuning and audio diagnostics with recorded changes</summary>
-    <releaseNotes>1.20.2: Buy me a coffee shows the euro total next to the coffee count. Adds an optional 7-day Pro pass with one payment, no subscription and no renewal; check the app for availability and terms. Full release notes: https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.20.2</releaseNotes>
+    <releaseNotes>1.20.2: Buy me a coffee shows the euro total next to the coffee count. Adds an optional 7-day Pro pass with one payment, no subscription and no renewal; check the app for availability and terms. Full release notes: https://github.com/AurelioAvila/pc-tweaker-app/releases/tag/v1.20.3</releaseNotes>
     <copyright>2026 Aurelio Avila</copyright>
     <tags>pc-tweaker windows windows-10 windows-11 audio-diagnostics dpc-latency hardware-monitoring tuning privacy gaming maintenance admin</tags>
     <projectSourceUrl>https://github.com/AurelioAvila/pc-tweaker-app</projectSourceUrl>

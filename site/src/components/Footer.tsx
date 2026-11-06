@@ -138,6 +138,9 @@ export function Footer({ navigate, currentPath }: { navigate: (to: string) => vo
                 { label: "Turn off Recall", href: "/turn-off-windows-recall/" },
                 { label: "Uninstall completely", href: "/uninstall-programs-completely/" },
                 { label: "Uninstall Armoury Crate", href: "/uninstaller/guides/armoury-crate/" },
+                { label: "Uninstall Norton 360", href: "/uninstaller/guides/norton-360/" },
+                { label: "Can I uninstall WebView2?", href: "/uninstaller/guides/microsoft-edge-webview2/" },
+                { label: "Stop Filter Keys popups", href: "/fixes/filter-keys-sticky-keys-shortcut/" },
                 { label: "GPU scheduling: on or off?", href: "/fixes/hardware-accelerated-gpu-scheduling/" },
                 { label: "Turn off Windows 11 AI features", href: "/fixes/turn-off-windows-11-ai-features/" },
               ]}

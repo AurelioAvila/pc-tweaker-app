@@ -50,6 +50,7 @@ export const GUIDE_GROUPS = [
       { path: "/fixes/remove-program-leftovers-windows-11/", title: "Remove program leftovers: files, registry, services and tasks", note: "Read-only checks first, a backup before every deletion, and what the Uninstaller covers." },
       { path: "/uninstaller/guides/armoury-crate/", title: "Uninstall ASUS Armoury Crate completely", note: "Use ASUS's Uninstall Tool, stop the BIOS offering it again, then check what is left." },
       { path: "/uninstaller/guides/mcafee-webadvisor/", title: "Remove McAfee and WebAdvisor", note: "Standard removal, McAfee's MCPR tool if that fails, and the folders and tasks to check." },
+      { path: "/uninstaller/guides/norton-360/", title: "Uninstall Norton 360 completely", note: "Programs and Features first, Norton's Remover if that fails, then the apps and subscription it leaves." },
       { path: "/uninstaller/guides/onedrive/", title: "Uninstall OneDrive without losing files", note: "Make files local and stop folder backup before you unlink and remove the app." },
       { path: "/uninstaller/guides/microsoft-edge-webview2/", title: "Keep Microsoft Edge WebView2 Runtime", note: "Why it should stay, what breaks without it and how to reinstall it." },
     ],

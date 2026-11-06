@@ -56,7 +56,7 @@ export const UNINSTALLER_GUIDES = {
     intro:
       "Use ASUS's Armoury Crate Uninstall Tool rather than a single entry in Installed apps. Armoury Crate is several programs and services, ASUS's tool removes them together, and ROG advises against removing it through Windows' Add or Remove Programs because an improper uninstall can cause problems. Restart afterwards, run the tool a second time if it reports a failure, and on ASUS motherboards switch off the BIOS option that offers to download it again. On ROG laptops ASUS does not recommend removing it for good, because the laptop will not perform optimally without it.",
     published: DATE,
-    updated: DATE,
+    updated: "2026-11-06",
     checks: [
       { check: "Armoury Crate Uninstall Tool finished, then a restart", meaning: "ASUS's supported way to remove the Armoury Crate apps and services together", reversible: "Yes: reinstall Armoury Crate from ASUS's support site" },
       { check: "BIOS: Tool, ASUS Armoury Crate, Download & Install ARMOURY CRATE app set to Disabled", meaning: "The motherboard stops offering to download Armoury Crate at boot", reversible: "Yes: set it back to Enabled" },
@@ -101,7 +101,7 @@ export const UNINSTALLER_GUIDES = {
       {
         heading: "How PC Tweaker Uninstaller helps",
         body:
-          "It lists the Armoury Crate entries it can read, classic desktop programs and Microsoft Store apps in one list, and for each one says how many other programs from the same publisher are installed, so you see the whole ASUS set before touching one entry. Its brief shows the exact command each entry registered and whether it needs administrator rights. Entries whose names mark them as drivers or chipset packages are rated Keep. It does not replace ASUS's tool: it runs each entry's own uninstaller, one at a time or queued with Pro batch removal. Its leftover scan only matches folders and per-user registry keys named exactly after the program, so a shared ASUS folder is never offered, and it does not inspect services, drivers or scheduled tasks. " +
+          "It lists the Armoury Crate entries it can read, classic desktop programs and Microsoft Store apps in one list, and for each one says how many other programs from the same publisher are installed, so you see the whole ASUS set before touching one entry. Its brief shows the exact command each entry registered and whether it needs administrator rights. Entries whose names mark them as drivers or chipset packages are rated Keep. It does not replace ASUS's tool: it runs each entry's own uninstaller, one at a time or queued with Pro batch removal. Its leftover scan matches folders, shortcuts and registry keys only when they are named exactly after the program, so a shared ASUS folder is never offered, and it does not inspect services, drivers or scheduled tasks. Cleaning leftover files and folders is free; cleaning registry keys and startup entries is Pro. " +
           RECEIPT_NOTE,
       },
     ],
@@ -134,7 +134,7 @@ export const UNINSTALLER_GUIDES = {
     intro:
       "Uninstall the McAfee app the normal Windows way and restart. WebAdvisor is a standalone app that McAfee says can stay installed after LiveSafe or Total Protection is removed, so uninstall it as well. If the normal route fails, McAfee's own Consumer Product Removal tool (MCPR) is the supported fallback. If McAfee folders remain afterwards, McAfee asks you not to delete them by hand. Uninstalling also does not cancel a paid McAfee subscription.",
     published: DATE,
-    updated: DATE,
+    updated: "2026-11-06",
     checks: [
       { check: "The McAfee app is gone from Installed apps after a restart", meaning: "The standard removal finished", reversible: "Yes: reinstall from your McAfee account" },
       { check: "McAfee WebAdvisor is gone from Installed apps", meaning: "The standalone WebAdvisor app is removed too", reversible: "Yes, reinstallable" },
@@ -178,22 +178,25 @@ export const UNINSTALLER_GUIDES = {
       {
         heading: "How PC Tweaker Uninstaller helps",
         body:
-          "It lists the McAfee app and McAfee WebAdvisor as separate entries and says how many other programs from the same publisher are installed, which is how a WebAdvisor left behind shows up. Before anything runs, the brief shows the command each entry registered, and the Removal Ledger records the method and the result. Its leftover scan matches only folders named exactly after the program, so a shared McAfee folder under ProgramData is not offered; given McAfee's instruction, that is the right outcome. It does not list services or scheduled tasks, and it does not replace MCPR when the registered uninstaller fails. " +
+          "It lists the McAfee app and McAfee WebAdvisor as separate entries and says how many other programs from the same publisher are installed, which is how a WebAdvisor left behind shows up. Before anything runs, the brief shows the command each entry registered, and the Removal Ledger records the method and the result. Its leftover scan matches folders, shortcuts and registry keys only when they are named exactly after the program, and pre-selects only items inside the install folder Windows recorded; anything matched by name alone is shown but never pre-selected. If one of the three McAfee folders above appears in its list, leave it unticked, as McAfee asks. It does not list services or scheduled tasks, and it does not replace MCPR when the registered uninstaller fails. Cleaning leftover files and folders is free; cleaning registry keys and startup entries is Pro. " +
           RECEIPT_NOTE,
       },
     ],
     related: [
       { to: "/uninstall-programs-completely/", label: "how to completely uninstall any Windows program", note: "The general order, and what to do when an uninstaller fails." },
       { to: "/uninstaller/guides/onedrive/", label: "uninstalling OneDrive without losing files", note: "When the data matters more than the app." },
+      { to: "/uninstaller/guides/norton-360/", label: "uninstalling Norton 360 completely", note: "Another antivirus with its own removal tool, and apps that stay installed after it." },
+      { to: "/database/processes/msmpeng-exe/", label: "MsMpEng.exe, the Microsoft Defender Antivirus engine", note: "The process that should be running again once McAfee is gone." },
       { to: "/uninstaller/guides/armoury-crate/", label: "uninstalling ASUS Armoury Crate", note: "Another vendor suite with its own removal tool, plus a BIOS option that offers it again." },
       { to: "/uninstaller/", label: "what PC Tweaker Uninstaller shows before a removal runs", note: "The rating, the command and the permissions, before anything changes." },
     ],
     sources: {
-      checked: CHECKED,
+      checked: "6 November 2026 (McAfee's standard removal article on 24 October 2026)",
       items: [
         { label: "McAfee Support: uninstall McAfee from a Windows PC (standard removal, leftover folders)", url: "https://www.mcafee.com/support/s/article/000001616?language=en_US" },
         { label: "McAfee Support: uninstall McAfee from a Windows PC using the MCPR tool", url: "https://www.mcafee.com/support/s/article/000002766?language=en_US" },
         { label: "McAfee Support: uninstall McAfee WebAdvisor from a Windows PC", url: "https://www.mcafee.com/support/s/article/000001669?language=en_US" },
+        { label: "Microsoft Learn: Microsoft Defender Antivirus compatibility with other security products (turns back on when another antivirus is uninstalled)", url: "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility" },
         { label: "Microsoft Learn: Get-ScheduledTask", url: "https://learn.microsoft.com/en-us/powershell/module/scheduledtasks/get-scheduledtask" },
         { label: "Microsoft Learn: Disable-ScheduledTask", url: "https://learn.microsoft.com/en-us/powershell/module/scheduledtasks/disable-scheduledtask" },
         SYSTEM_PROTECTION,
@@ -213,7 +216,7 @@ export const UNINSTALLER_GUIDES = {
     intro:
       "Keep it. The Microsoft Edge WebView2 Runtime is not a second browser: it is the shared web engine that apps built on WebView2 draw their interface with, and Microsoft preinstalls it on every Windows 11 device as part of the operating system. Apps that depend on it stop working without it, and Microsoft tells app developers to install the Runtime when it is missing, so the next setup of such an app may simply put it back. Most of its disk use is shared with Edge: on eligible systems Microsoft hard-links the two when they are on the same version.",
     published: DATE,
-    updated: DATE,
+    updated: "2026-11-06",
     checks: [
       { check: "Microsoft Edge WebView2 Runtime, publisher Microsoft Corporation", meaning: "The shared Evergreen Runtime that WebView2 apps use", reversible: "Keep it" },
       { check: "No Uninstall button, or the entry is hidden in Control Panel", meaning: "On the Windows 11 PC this guide was checked on, its uninstall entry carries NoRemove = 1 and SystemComponent = 1", reversible: "Intended by Microsoft" },
@@ -264,10 +267,11 @@ export const UNINSTALLER_GUIDES = {
       { to: "/uninstaller/", label: "how PC Tweaker Uninstaller rates shared runtimes", note: "Safe, Review and Keep, with the reasons for each." },
     ],
     sources: {
-      checked: CHECKED,
+      checked: "6 November 2026",
       items: [
         { label: "Microsoft Learn: Evergreen vs. Fixed Version of the WebView2 Runtime (preinstalled on Windows 11)", url: "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/evergreen-vs-fixed-version" },
         { label: "Microsoft Learn: distribute your app and the WebView2 Runtime (detection keys, per-machine installs, updates)", url: "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution" },
+        { label: "Microsoft Learn: process model for WebView2 apps (browser, renderer and helper processes)", url: "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/process-model" },
         { label: "Microsoft Edge Developer: download the WebView2 Runtime", url: "https://developer.microsoft.com/microsoft-edge/webview2/" },
         { label: "Microsoft Learn: ARPSYSTEMCOMPONENT property", url: "https://learn.microsoft.com/en-us/windows/win32/msi/arpsystemcomponent" },
         { label: "Microsoft Learn: ARPNOREMOVE property", url: "https://learn.microsoft.com/en-us/windows/win32/msi/arpnoremove" },
@@ -348,6 +352,93 @@ export const UNINSTALLER_GUIDES = {
         { label: "Microsoft Support: back up your folders with OneDrive (stopping folder backup)", url: "https://support.microsoft.com/en-us/office/back-up-your-folders-with-onedrive-d61a7930-a6fb-4b95-b28a-6552e77c3057" },
         { label: "Microsoft Learn: install the OneDrive sync app per-machine (per-user and per-machine locations)", url: "https://learn.microsoft.com/en-us/sharepoint/per-machine-installation" },
         { label: "Microsoft Support: uninstall or remove apps and programs in Windows", url: "https://support.microsoft.com/en-us/windows/uninstall-or-remove-apps-and-programs-in-windows-4b55f974-2cc6-2d2b-d092-5905080eaf98" },
+        SYSTEM_PROTECTION,
+        RESTORE_API,
+        RESIDUE,
+      ],
+    },
+  },
+
+  "/uninstaller/guides/norton-360": {
+    product: "uninstaller" as const,
+    eyebrow: "REMOVAL GUIDE · NORTON 360",
+    title: "How to uninstall Norton 360 completely on Windows",
+    seoTitle: "How to Uninstall Norton 360 Completely",
+    seoDescription:
+      "Uninstall Norton 360 from Programs and Features, run Norton's Remover tool if that fails, remove Private Browser separately and turn off automatic renewal.",
+    intro:
+      "Uninstall Norton 360 from Programs and Features and restart, as Norton documents. If that fails or shows errors, Norton's own Norton 360 Remover is the supported fallback. Two Norton apps have entries of their own: the Remover does not uninstall Norton Private Browser, and Norton VPN is listed separately. Uninstalling does not cancel the subscription either, so turn off automatic renewal in your Norton account. Norton recommends keeping its app installed; if you remove it, check afterwards that Microsoft Defender Antivirus or another antivirus is protecting the PC.",
+    published: "2026-11-06",
+    updated: "2026-11-06",
+    checks: [
+      { check: "Norton 360 is gone from Programs and Features after a restart", meaning: "The standard uninstall finished", reversible: "Yes: sign in to your Norton account and install it again" },
+      { check: "The Norton 360 Remover finished and the PC restarted", meaning: "Norton's fallback tool removed what the standard route could not", reversible: "Yes: choose Reinstall in the Remover, or install from your account" },
+      { check: "No Norton Private Browser entry in Programs and Features", meaning: "The browser the Remover leaves in place is gone too, if you wanted it gone", reversible: "Untick Also delete your browsing data to keep bookmarks and passwords" },
+      { check: "Windows Security, Virus & threat protection, Manage providers shows an antivirus that is on", meaning: "Something still protects the PC after Norton is removed", reversible: "Read-only check" },
+      { check: "Automatic renewal off in your Norton account", meaning: "Uninstalling does not cancel the subscription", reversible: "Managed in the account, or in the store or with the partner you bought it from" },
+    ],
+    method: {
+      heading: "The official way: Programs and Features, then the Remover if needed",
+      intro:
+        "Norton documents two routes. Try the standard one first; the Norton 360 Remover is for when it fails or shows errors. There is no Norton 360 package in winget's community repository (checked 6 November 2026).",
+      steps: [
+        { title: "Close Norton, then open Programs and Features", code: "appwiz.cpl", shell: "cmd" as const, note: "Close the Norton app first. Press Windows+R, type appwiz.cpl and press Enter." },
+        { title: "Uninstall Norton 360 and restart", note: "Select Norton 360, choose Remove/Uninstall and select Yes when Windows asks for permission. Follow Norton's prompts with Next, then restart the PC when it asks." },
+        { title: "If it fails or shows errors: the Norton 360 Remover", note: "Download the Remover from Norton's support article, press Ctrl+J in your browser to open your downloads and run Norton_360_remover. Choose Remove to uninstall only, or Reinstall to get the latest version back, then select Uninstall and Restart Now. If the Remover itself reports errors, select Reboot to run it in Safe Mode." },
+        { title: "Remove Norton Private Browser separately", note: "Norton states that the Remover does not uninstall Private Browser and that its Remove and Reinstall tool cannot be used for it. In Programs and Features, select Norton Private Browser, then Remove/Uninstall, select Yes and then Uninstall. Its uninstaller deletes your bookmarks, passwords and history unless you untick Also delete your browsing data." },
+        { title: "Norton VPN, only if you want it gone", note: "Norton VPN has its own entry in Programs and Features, with Uninstall/Change. Norton advises against removing it, and does not say whether it goes with Norton 360, so check the list after the restart." },
+      ] satisfies readonly Step[],
+    },
+    leftovers: {
+      heading: "What can stay behind, and what to check",
+      body:
+        "Norton's removal articles do not list leftover folders, services or scheduled tasks, so this guide does not name any. These read-only PowerShell commands show whether any program, service or scheduled task with Norton in its name is still registered, and whether Microsoft Defender Antivirus is running: Microsoft documents that AMRunningMode shows Normal, Passive or EDR Block Mode when it is enabled. On the PC this guide was checked on, which has no other antivirus, it read Normal. A name match is a lead, not proof.",
+      code: [
+        "Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',",
+        "  'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' |",
+        "  Where-Object DisplayName -match 'Norton' | Format-Table DisplayName, DisplayVersion",
+        "Get-Service -DisplayName '*Norton*' | Format-Table Name, DisplayName, Status",
+        "Get-ScheduledTask |",
+        "  Where-Object { $_.TaskName -match 'Norton' -or $_.TaskPath -match 'Norton' } |",
+        "  Format-Table TaskPath, TaskName, State",
+        "Get-MpComputerStatus | Select-Object AMRunningMode",
+      ].join("\n"),
+      act: [
+        "Norton 360 still in Programs and Features after the uninstall and a restart: run the Norton 360 Remover rather than deleting files by hand.",
+        "A service or scheduled task with Norton in its name after the Remover and a restart, when you kept no other Norton app: note its name and ask Norton support before changing it.",
+        "No antivirus shown as on under Manage providers: turn Microsoft Defender Antivirus on in Windows Security, or install the antivirus you chose instead.",
+      ],
+      keep: [
+        "Microsoft Defender Antivirus, its WinDefend service and MsMpEng.exe: they are what protects the PC once Norton is gone.",
+        "Norton VPN or Norton Private Browser, if you still use them: they are separate apps with their own entries.",
+        "Your Norton account and subscription: uninstalling does not touch them. Turn off automatic renewal if you do not want to renew; a purchase made in the Apple App Store, Google Play or the Microsoft Store is managed there, and one billed by a partner with that partner.",
+      ],
+    },
+    sections: [
+      restorePoint("For Norton, a restore point is no substitute for the Norton 360 Remover when the standard uninstall fails: Norton's documented fallback is the tool, followed by a restart."),
+      {
+        heading: "How PC Tweaker Uninstaller helps",
+        body:
+          "It lists each Norton app that Windows registers as its own entry, such as Norton 360, Norton Private Browser and Norton VPN, and says how many other programs from the same publisher are installed, which is how an app the Remover leaves in place shows up. Before anything runs, the brief shows the exact command each entry registered and whether it needs administrator rights, and the Removal Ledger records the method and the result. Its leftover scan matches folders, shortcuts and registry keys only when they are named exactly after the program, and pre-selects only items inside the install folder Windows recorded; anything matched by name alone is shown but never pre-selected. It does not list services or scheduled tasks, and it does not replace the Norton 360 Remover when the registered uninstaller fails. Cleaning leftover files and folders is free; cleaning registry keys and startup entries is Pro. " +
+          RECEIPT_NOTE,
+      },
+    ],
+    related: [
+      { to: "/uninstaller/guides/mcafee-webadvisor/", label: "removing McAfee and WebAdvisor", note: "Another antivirus with its own removal tool, and an add-on app that can stay installed after it." },
+      { to: "/database/processes/msmpeng-exe/", label: "MsMpEng.exe, the Microsoft Defender Antivirus engine", note: "The process that should be running again once Norton is gone." },
+      { to: "/uninstall-programs-completely/", label: "how to completely uninstall any Windows program", note: "The general order, and what to do when an uninstaller fails." },
+      { to: "/uninstaller/", label: "what PC Tweaker Uninstaller shows before a removal runs", note: "The rating, the command and the permissions, before anything changes." },
+    ],
+    sources: {
+      checked: "6 November 2026",
+      items: [
+        { label: "Norton Support: uninstall your Norton device security product on Windows", url: "https://support.norton.com/sp/en/us/home/current/solutions/v15972972" },
+        { label: "Norton Support: download and run the Norton 360 Remover tool for Windows", url: "https://support.norton.com/sp/en/us/home/current/solutions/v20240301142500636" },
+        { label: "Norton Support: uninstalling does not cancel the subscription (automatic renewal, store and partner purchases)", url: "https://support.norton.com/sp/en/us/home/current/solutions/v20230131151010158" },
+        { label: "Norton Support: Norton Private Browser FAQ (uninstall and browsing data)", url: "https://support.norton.com/sp/en/us/home/current/solutions/v2023031322263778" },
+        { label: "Norton Support: Norton VPN on Windows (its own Programs and Features entry)", url: "https://support.norton.com/sp/en/us/home/current/solutions/v118353872" },
+        { label: "Microsoft Learn: Microsoft Defender Antivirus compatibility with other security products (Manage providers, AMRunningMode)", url: "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility" },
+        { label: "Microsoft Learn: Get-ScheduledTask", url: "https://learn.microsoft.com/en-us/powershell/module/scheduledtasks/get-scheduledtask" },
         SYSTEM_PROTECTION,
         RESTORE_API,
         RESIDUE,

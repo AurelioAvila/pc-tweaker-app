@@ -1,3 +1,19 @@
+# PC Tweaker 1.20.3 — 1366 × 768 interface previews
+
+Captured on **6 November 2026** from the published frontend tag `v1.20.3`, commit `e14444f47c65e43d9f89627988108b12bf59076f`, using the existing browser-demo adapter in Pro view. The demo-only version reply was aligned with this source version; a persistent disclosure footer was added for the captures. No desktop feature or production binary was changed.
+
+Each image visibly states **PC TWEAKER 1.20.3 · INTERFACE PREVIEW · FICTIONAL SAMPLE DATA · PRO VIEW**. Devices, readings, scan findings, configuration scores and recorded values are fictional. These images show the current interface; they are not native Windows measurements, customer results, benchmarks or evidence of an improvement. Audio features shown were introduced in 1.20.0; 1.20.3 is routine maintenance.
+
+The original capture resolution is **1366 × 768**. The browser's JPEG output was converted to PNG while preserving every decoded RGB pixel, without resizing or upscaling. The demo adapter blocks external requests and handles the simulated commands locally. No Windows setting, file, cache, application, driver or firmware was changed to create these captures. Preserve the disclosure when displaying or resizing them.
+
+| File | View | SHA-256 |
+| --- | --- | --- |
+| [pc-tweaker-1.20.3-audio-sample-data.png](pc-tweaker-1.20.3-audio-sample-data.png) | Audio | `1243e54827c54b2207e9bffaee6a7f5a7144b98fc57c6c551b00714ca51b98e0` |
+| [pc-tweaker-1.20.3-scan-results-sample-data.png](pc-tweaker-1.20.3-scan-results-sample-data.png) | Scan | `28f2abf16960aa5f093efe6febef44ebebbb675352d87479272823e2bced26ef` |
+| [pc-tweaker-1.20.3-change-history-sample-data.png](pc-tweaker-1.20.3-change-history-sample-data.png) | History | `4e3e1766f2679c33fc5626246aa58f511690ae7c4d3a17cd9613d304d587f7fa` |
+
+Earlier galleries below and their image files remain available as historical references.
+
 # PC Tweaker 1.20.0 PNG gallery
 
 These 1280 x 839 PNGs are the current official browser-demo captures taken on 3 November 2026 from the 1.20.0 preview build, in Pro view. Format conversion preserves every decoded RGB pixel of the reviewed captures. Each retains its visible **PC TWEAKER 1.20.0 - INTERFACE PREVIEW — SAMPLE DATA** footer. The devices, readings, scan results and change-history entries are synthetic. These are interface previews, not native Windows measurements, customer results or performance benchmarks. No Windows setting, driver or firmware was changed to create them. Preserve the disclosure when displaying or resizing them.

@@ -29,24 +29,24 @@ For Windows 10/11 users who want to inspect settings before changing them. Revie
 
 <p align="center"><a href="#whats-new-in-120">What's new in 1.20</a> · <a href="#what-you-can-do">Features</a> · <a href="#what-changes-on-your-system">What changes</a> · <a href="#free-and-pro">Free and Pro</a> · <a href="#download-integrity-and-code-signing">Code signing</a> · <a href="#build-from-source">Build from source</a></p>
 
-<p align="center"><img src="docs/screenshots/pc-tweaker-1.20-audio-sample-data.png" alt="PC Tweaker 1.20.0 Audio interface with synthetic speaker, Bluetooth headset and microphone findings; Pro-view browser demo with visible sample-data disclosure" width="100%"></p>
+<p align="center"><img src="docs/screenshots/pc-tweaker-1.20.3-audio-sample-data.png" alt="PC Tweaker 1.20.3 Audio findings for Bluetooth call mode, Equalizer APO and microphone level; fictional sample data, Pro-view interface preview" width="100%"></p>
 
-*PC Tweaker 1.20.0 interface preview, Pro view. Findings, readings and history entries are synthetic sample data, not measurements from a real PC. [Capture details and SHA-256 hashes](docs/screenshots/README.md).*
+*PC Tweaker 1.20.3 interface previews, captured on 6 November 2026 at 1366 × 768. Pro view; all findings, readings and history entries are fictional sample data, not measurements from a real PC. [Capture details and SHA-256 hashes](docs/screenshots/README.md).*
 
 <details>
-<summary>Explore Scan 2.0 and recorded changes in 1.20</summary>
+<summary>Inspect Scan findings and the values behind supported changes</summary>
 
 ### Review the findings before choosing fixes
 
-<img src="docs/screenshots/pc-tweaker-1.20-scan-results-sample-data.png" alt="PC Tweaker 1.20.0 Scan results in the official browser demo, showing 20 checks before selecting changes; visible interface preview and sample-data disclosure" width="100%">
+<img src="docs/screenshots/pc-tweaker-1.20.3-scan-results-sample-data.png" alt="PC Tweaker 1.20.3 Scan results after 20 checks, before selecting fixes; fictional sample data, Pro-view interface preview" width="100%">
 
-Review individual Scan 2.0 findings before selecting supported fixes. The 20 checks shown are examples, not measurements or a diagnosis of your PC.
+Review individual Scan findings before selecting supported fixes. The 20 checks shown use fictional sample data; they are not a diagnosis of your PC or a performance benchmark.
 
-### Review the values behind a supported change
+### See the previous value, then choose your next step
 
-<img src="docs/screenshots/pc-tweaker-1.20-change-history-sample-data.png" alt="PC Tweaker 1.20.0 Change history showing synthetic before-and-after registry values and recorded changes; Pro-view browser demo with visible sample-data disclosure" width="100%">
+<img src="docs/screenshots/pc-tweaker-1.20.3-change-history-sample-data.png" alt="PC Tweaker 1.20.3 Change history with supported registry values before and after a change; fictional sample data, Pro-view interface preview" width="100%">
 
-This example shows the history interface, not evidence of a real system change. Restore controls apply to supported settings; cleanup and repair have separate recovery limits.
+The example shows recorded values for supported settings. Restoring a setting does not recover permanently deleted files or reinstall removed apps; cleanup and repair have separate recovery limits.
 
 </details>
 

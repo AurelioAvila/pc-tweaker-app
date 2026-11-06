@@ -212,6 +212,7 @@ export const FIX_GUIDES = {
     },
   },
   "/fixes/filter-keys-sticky-keys-shortcut": {
+    updated: "2026-11-06",
     eyebrow: "FIX · KEYBOARD",
     title: "Stop Sticky Keys and Filter Keys popping up in games",
     seoTitle: "Stop Sticky Keys and Filter Keys Popups",
@@ -249,10 +250,13 @@ export const FIX_GUIDES = {
     },
     related: [
       { to: "/windows-gaming-work-study-profiles/", label: "the Gaming profile", note: "The Sticky Keys control is one of its options, unticked until you choose it." },
+      { to: "/fixes/windows-lowers-game-volume-during-calls/", label: "Windows turning the game down during calls", note: "Another Windows default that gets in the way mid-game, and the one setting that stops it." },
     ],
     sources: {
-      checked: CHECKED,
+      checked: "6 November 2026",
       items: [
+        { label: "Microsoft Support: make your keyboard and other input devices easier to use (Filter keys)", url: "https://support.microsoft.com/en-us/windows/make-your-mouse-keyboard-and-other-input-devices-easier-to-use-10733da7-fa82-88be-0672-f123d4b3dcfe" },
+        { label: "Microsoft Support: Windows keyboard shortcuts for accessibility (right Shift for eight seconds)", url: "https://support.microsoft.com/en-us/windows/windows-keyboard-shortcuts-for-accessibility-021bcb62-45c8-e4ef-1e4f-41b8c1fc87fd" },
         { label: "Microsoft Learn: STICKYKEYS structure", url: "https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-stickykeys" },
         { label: "Microsoft Learn: FILTERKEYS structure", url: "https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-filterkeys" },
         { label: "PC Tweaker source code: the Filter Keys control (everyday.rs)", url: `${SRC}/everyday.rs` },
@@ -260,6 +264,7 @@ export const FIX_GUIDES = {
     },
   },
   "/fixes/windows-update-using-bandwidth": {
+    updated: "2026-11-06",
     eyebrow: "FIX · NETWORK",
     title: "Windows Update eating your bandwidth: limit it, keep updating",
     seoTitle: "Stop Windows Update Hogging Your Bandwidth",
@@ -309,7 +314,7 @@ export const FIX_GUIDES = {
       { to: "/database/processes/tiworker-exe/", label: "TiWorker.exe, the Windows Modules Installer Worker", note: "Why it is busy during and after updates." },
     ],
     sources: {
-      checked: CHECKED,
+      checked: "6 November 2026",
       items: [
         { label: "Microsoft Learn: DeliveryOptimization Policy CSP", url: "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-deliveryoptimization" },
         { label: "Microsoft Learn: Delivery Optimization reference", url: "https://learn.microsoft.com/en-us/windows/deployment/do/waas-delivery-optimization-reference" },
@@ -319,6 +324,7 @@ export const FIX_GUIDES = {
     },
   },
   "/fixes/turn-off-windows-11-ai-features": {
+    updated: "2026-11-06",
     eyebrow: "FIX · PRIVACY",
     title: "Turn off the Windows 11 AI features you do not use",
     seoTitle: "Turn Off Windows 11 AI Features You Don't Use",
@@ -374,10 +380,11 @@ export const FIX_GUIDES = {
       { to: "https://redaxa.getcertsprint.com/", label: "keeping secrets out of the AI chats you still use", note: "Redaxa finds and redacts personal data and keys in a prompt before you share it." },
     ],
     sources: {
-      checked: CHECKED,
+      checked: "6 November 2026",
       items: [
         { label: "Microsoft Learn: Manage Recall", url: "https://learn.microsoft.com/en-us/windows/client-management/manage-recall" },
-        { label: "Microsoft Learn: WindowsAI Policy CSP", url: "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsai" },
+        { label: "Microsoft Learn: WindowsAI Policy CSP (Click to Do, Copilot and Paint policies)", url: "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-windowsai" },
+        { label: "Microsoft Learn: manage Notepad (DisableAIFeatures)", url: "https://learn.microsoft.com/en-us/windows/client-management/manage-notepad" },
         { label: "Microsoft Learn: Microsoft Edge browser policy documentation", url: "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies" },
         { label: "PC Tweaker source code: the AI Components Host control (services.rs)", url: `${SRC}/services.rs` },
         { label: "PC Tweaker source code: the app removal catalogue (debloat.rs)", url: `${SRC}/debloat.rs` },
@@ -1188,6 +1195,7 @@ export const FIX_GUIDES = {
       { to: "/fixes/is-registry-cleaner-safe-windows-11/", label: "whether a registry cleaner is worth running", note: "Microsoft's position, and what is provably safe to remove." },
       { to: "/uninstaller/guides/onedrive/", label: "uninstalling OneDrive without losing files", note: "A removal where what you keep matters more than what you clean." },
       { to: "/uninstaller/guides/mcafee-webadvisor/", label: "removing McAfee and WebAdvisor", note: "A program that leaves services, tasks and folders behind." },
+      { to: "/uninstaller/guides/norton-360/", label: "uninstalling Norton 360 completely", note: "The Remover tool, the apps it leaves, and the subscription that keeps running." },
     ],
     sources: {
       checked: "3 November 2026",

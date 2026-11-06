@@ -52,6 +52,7 @@ const PAGES = {
   "/will-my-games-work-on-linux/": ["src/pages/linux-guide.ts"],
   "/uninstaller/guides/armoury-crate/": ["src/pages/uninstaller-guides.ts"],
   "/uninstaller/guides/mcafee-webadvisor/": ["src/pages/uninstaller-guides.ts"],
+  "/uninstaller/guides/norton-360/": ["src/pages/uninstaller-guides.ts"],
   "/uninstaller/guides/microsoft-edge-webview2/": ["src/pages/uninstaller-guides.ts"],
   "/uninstaller/guides/onedrive/": ["src/pages/uninstaller-guides.ts"],
   // Static page shipped as-is from public/; not part of the React prerender.

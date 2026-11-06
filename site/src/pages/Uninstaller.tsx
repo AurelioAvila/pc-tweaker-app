@@ -37,6 +37,7 @@ const REMOVAL_GUIDES = [
   ["/fixes/remove-program-leftovers-windows-11/", "Remove program leftovers: files, registry, services and tasks"],
   ["/uninstaller/guides/armoury-crate/", "Uninstall ASUS Armoury Crate completely"],
   ["/uninstaller/guides/mcafee-webadvisor/", "Remove McAfee, WebAdvisor and leftover tasks"],
+  ["/uninstaller/guides/norton-360/", "How to uninstall Norton 360 completely"],
   ["/uninstaller/guides/onedrive/", "Uninstall OneDrive on Windows 11 without losing files"],
   ["/uninstaller/guides/microsoft-edge-webview2/", "Can I uninstall WebView2? Why to keep it"],
 ] as const;

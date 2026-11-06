@@ -49,6 +49,14 @@ export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
       q: "Does disabling Recall turn off Copilot or Click to Do?",
       a: "No. Copilot and Click to Do have their own settings and policies. The Recall policy only stops screen snapshots from being saved and indexed.",
     },
+    {
+      q: "Which PCs can run Recall?",
+      a: "Only Copilot+ PCs. Microsoft lists the requirements as a Copilot+ PC that meets the Secured-core standard, a 40 TOPS NPU, 16 GB of RAM, 8 logical processors and 256 GB of storage with at least 50 GB free to turn Recall on, plus Device Encryption or BitLocker and Windows Hello Enhanced Sign-in Security with at least one biometric sign-in. On any other PC there is no Recall to turn off.",
+    },
+    {
+      q: "How much disk space does Recall use?",
+      a: "By default, Microsoft allocates 25 GB to Recall on a 256 GB drive, 75 GB on a 512 GB drive and 150 GB on a drive of 1 TB or more. When that space is full, the oldest snapshots are deleted first, and Recall pauses saving snapshots when the drive has less than 25 GB free. Snapshots are stored and encrypted locally on the PC.",
+    },
   ],
   "/windows-11-optimizer": [
     {
@@ -132,6 +140,140 @@ export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
     {
       q: "Can I uninstall Armoury Crate from Installed apps instead?",
       a: "ROG advises against it. Armoury Crate is several programs and services, a single entry in Installed apps removes only part of it, and ROG warns that an improper uninstall can cause problems. Use ASUS's Uninstall Tool, which removes them together, then restart.",
+    },
+  ],
+  "/uninstaller/guides/microsoft-edge-webview2": [
+    {
+      q: "Can I uninstall Microsoft Edge WebView2 Runtime?",
+      a: "Not from Settings, and you should keep it. Microsoft preinstalls the Evergreen WebView2 Runtime on every Windows 11 device as part of the operating system, apps built on WebView2 cannot show their interface without it, and Windows hides its Uninstall button: on the PC this guide was checked on, its entry carried NoRemove = 1 and SystemComponent = 1. If it does go missing, the next app that needs it may simply install it again.",
+    },
+    {
+      q: "Is Microsoft Edge WebView2 Runtime a virus?",
+      a: "No. It is a Microsoft component that ships with Windows 11. The genuine program file sits in C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\<version>\\msedgewebview2.exe and carries a valid Microsoft Corporation signature, which is what Get-AuthenticodeSignature reported on the PC this guide was checked on. A file with that name in another folder, or without a valid Microsoft signature, deserves a closer look.",
+    },
+    {
+      q: "Why is Microsoft Edge WebView2 running in the background?",
+      a: "Because an app that uses it is open, and that app is often part of Windows itself. On the PC this guide was checked on, Windows Search (SearchHost.exe) and PC Tweaker were the two apps running it. To see which apps run it on yours, paste this into PowerShell; it needs no administrator rights and changes nothing: Get-CimInstance Win32_Process -Filter \"Name='msedgewebview2.exe'\" | Where-Object CommandLine -NotMatch '--type=' | ForEach-Object { (Get-Process -Id $_.ParentProcessId -ErrorAction SilentlyContinue).Name }",
+    },
+    {
+      q: "Why does WebView2 have so many processes?",
+      a: "Each app that uses it runs its own group of processes. Microsoft documents that a WebView2 process group has one browser process, one or more renderer processes and helpers such as the GPU and audio processes, and that apps using different user data folders get separate groups. The PC this guide was checked on had 12 of them for two apps. Every process in a group is tied to the browser process its app started, so the count drops as you close those apps.",
+    },
+    {
+      q: "Is WebView2 part of Microsoft Edge?",
+      a: "It is built from Edge but installed separately. Microsoft describes the Runtime as modified Microsoft Edge binaries, fine-tuned and tested for WebView2 apps, and it never appears as a browser, a Start menu entry or a desktop shortcut. On eligible systems Microsoft hard-links the files of Edge and the Runtime when both are on the same version, so the shared files are not stored twice.",
+    },
+  ],
+  "/uninstaller/guides/mcafee-webadvisor": [
+    {
+      q: "Why can't I uninstall McAfee?",
+      a: "When the normal uninstall fails, McAfee's documented fallback is its Consumer Product Removal tool, MCPR. Download a fresh copy before each use, which McAfee asks for so that newer McAfee products are recognised. Run MCPR.exe, accept the licence, type the case-sensitive validation characters and wait: McAfee says it can take 20 minutes or more. When it shows Removal Complete, restart the PC. MCPR does not remove McAfee PC Optimizer, which you uninstall the standard way.",
+    },
+    {
+      q: "Is it safe to uninstall McAfee?",
+      a: "Yes, as long as the PC is still protected afterwards. On Windows 10 and 11, Microsoft Defender Antivirus turns itself off while another antivirus is active, and Microsoft documents that it can turn back on automatically once that product is uninstalled or expires. After the restart, open Windows Security, Virus & threat protection, and under Who's protecting me? select Manage providers to check that an antivirus is on. If McAfee came preinstalled and you never activated it, McAfee notes you may need to buy a subscription to reinstall it later.",
+    },
+    {
+      q: "Does uninstalling McAfee cancel my subscription?",
+      a: "No. Removing the app leaves your McAfee account and subscription as they are. If you do not want to renew, turn off auto-renewal in your McAfee account.",
+    },
+    {
+      q: "How do I stop McAfee WebAdvisor after uninstalling McAfee?",
+      a: "Uninstall WebAdvisor as well: McAfee describes it as a standalone app that can stay installed after LiveSafe or Total Protection is removed. In Settings, Apps, Installed apps, open the three-dot menu next to McAfee WebAdvisor, choose Uninstall, confirm, choose to just uninstall it, select Done and restart. If its extension is still listed in a browser, remove it from that browser's extensions page.",
+    },
+    {
+      q: "Can I delete the McAfee folders that are left behind?",
+      a: "No. If C:\\Program Files\\McAfee, C:\\ProgramData\\McAfee or the McAfee folder under your AppData\\Local is still there after MCPR and a restart, McAfee's instruction is not to delete, move, rename or modify it. Note which folders remain and contact McAfee customer service.",
+    },
+  ],
+  "/uninstaller/guides/norton-360": [
+    {
+      q: "Does uninstalling Norton cancel my subscription?",
+      a: "No. Norton states that uninstalling the app does not automatically cancel the subscription. Turn off automatic renewal on your Norton account page. If you bought it through the Apple App Store, Google Play or the Microsoft Store, change it in that store; if a partner such as your internet provider bills you, change it with that partner. Some Norton trials become a paid subscription unless you cancel them before they end.",
+    },
+    {
+      q: "Is it safe to uninstall Norton 360?",
+      a: "Yes, as long as something still protects the PC, although Norton itself recommends keeping its app installed. On Windows 10 and 11, Microsoft Defender Antivirus turns itself off while another antivirus is active, and Microsoft documents that it can turn back on automatically once that product is uninstalled or expires. After the restart, open Windows Security, Virus & threat protection, and under Who's protecting me? select Manage providers to check that an antivirus is on.",
+    },
+    {
+      q: "Why won't Norton uninstall?",
+      a: "When the uninstall from Programs and Features fails or shows errors, Norton's answer is the Norton 360 Remover. Download it from Norton's support article, run it, choose Remove to uninstall only or Reinstall to get the latest version back, confirm with Uninstall and click Restart Now. If the Remover itself reports errors, click Reboot: the PC restarts in Safe Mode, where you run the tool again.",
+    },
+    {
+      q: "Does the Norton 360 Remover remove Norton Private Browser and Norton VPN?",
+      a: "Not Private Browser: Norton states that the Remover does not uninstall it and that its Remove and Reinstall tool cannot be used for it, so remove it from Programs and Features. Its uninstaller deletes your bookmarks, passwords and history unless you untick Also delete your browsing data. Norton VPN has its own entry there as well, and Norton does not say whether it goes with Norton 360, so check the list after the restart.",
+    },
+  ],
+  "/fixes/filter-keys-sticky-keys-shortcut": [
+    {
+      q: "What is Filter Keys?",
+      a: "An accessibility feature that sets the keyboard's sensitivity so it ignores brief or repeated keystrokes, in Microsoft's words. Underneath are three settings Microsoft documents: how long a key must be held before it is accepted (SlowKeys), how long after release a second press of the same key is ignored (BounceKeys), and the repeat rate (RepeatKeys).",
+    },
+    {
+      q: "How do I turn off Filter Keys?",
+      a: "Press Windows+U, or open Start, Settings, Accessibility, then select Keyboard and switch Filter keys off. Holding the right Shift key for eight seconds also switches it off, because that one shortcut turns Filter Keys both on and off. To stop it coming back, select Filter keys on the same page and turn off Keyboard shortcut for Filter keys; the feature itself stays available.",
+    },
+    {
+      q: "Why did Filter Keys turn on by itself?",
+      a: "Most likely because the right Shift key was held down for eight seconds, which is Windows' shortcut for turning Filter Keys on and off. In a game that uses Shift to sprint or crouch, that is easy to do by accident. Turning off only the shortcut, as this page shows, stops it happening again without removing the feature.",
+    },
+    {
+      q: "Why does my keyboard stop typing when Filter Keys is on?",
+      a: "Because Filter Keys can make Windows wait before it accepts a key. With the settings Windows held on the PC this guide was checked on, read through the documented SPI_GETFILTERKEYS call, a key had to be held for 1,000 milliseconds before it was accepted, so ordinary typing produced nothing. Switch Filter Keys off and the keyboard responds normally again.",
+    },
+  ],
+  "/fixes/turn-off-windows-11-ai-features": [
+    {
+      q: "Can I turn off all AI features in Windows 11 at once?",
+      a: "No. There is no single switch: Microsoft documents a separate setting or policy for each feature, which is why this page lists them one by one. Recall snapshots and Click to Do have their own WindowsAI policies, the Copilot app is uninstalled like any other app, Paint and Notepad have their own policies and Edge has its own set. Turning one off leaves the others as they are.",
+    },
+    {
+      q: "How do I turn off Copilot in Windows 11?",
+      a: "Uninstall the Copilot app from Settings, Apps, Installed apps; you can install it again later. The older Turn off Windows Copilot policy (TurnOffWindowsCopilot) is deprecated, and Microsoft notes that it is not for the new Copilot experience. Organisations on Windows 11 24H2 and later also have a RemoveMicrosoftCopilotApp policy, which removes the app only when Microsoft 365 Copilot is installed too, the user did not install the app and it has not been opened for 28 days.",
+    },
+    {
+      q: "How do I turn off the AI features in Paint?",
+      a: "Set Microsoft's three Paint policies to 1: DisableCocreator, DisableImageCreator and DisableGenerativeFill, under HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint. Microsoft lists them for Windows 11 Pro, Enterprise and Education, from version 22H2 build 22621.4870 and version 24H2 build 26100.3360. Each one only turns off that feature; delete the three values to undo it.",
+    },
+    {
+      q: "How do I turn off Copilot in Notepad?",
+      a: "Set the DisableAIFeatures value to 1 under HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\WindowsNotepad. That is the registry form Microsoft documents for its DisableAIFeaturesInNotepad policy, on Windows 11 version 22H2 or later with Notepad 11.2503.16.0 or later, and it applies to every user on the PC. Delete the value to get the features back.",
+    },
+  ],
+  "/guides/fix-dpc-isr-latency-windows-11": [
+    {
+      q: "What is DPC and ISR latency?",
+      a: "It is the time drivers spend in two kinds of kernel routine. When a device raises an interrupt, its driver's interrupt service routine (ISR) runs at once and must finish quickly, so it queues a deferred procedure call (DPC) to complete the work shortly afterwards at a lower priority level. Microsoft documents that while a DPC routine runs on a processor, no thread can run on that processor, which is why long ones can hold up audio and game threads.",
+    },
+    {
+      q: "What is a good DPC latency?",
+      a: "Microsoft's guidance to driver writers is that a DPC should not run longer than 100 microseconds and an ISR not longer than 25 microseconds. Those are limits per routine, not a score for the whole PC: a trace that crosses them once is a lead to investigate, not proof of an audible glitch. What matters is whether the long routines line up with the moment the problem happens.",
+    },
+    {
+      q: "What causes high DPC latency?",
+      a: "A driver whose DPC or ISR routines run too long. Microsoft tells driver writers to keep DPCs brief and hand longer work to worker threads, so a long routine points at a specific driver, and a trace attributes the time to its module, such as a graphics, storage or network driver. The useful next step is to identify that driver and test another version of it against the same workload, not to apply a general tweak.",
+    },
+    {
+      q: "Can DPC latency cause audio crackling or stutter in games?",
+      a: "It can. Microsoft documents that while a DPC runs on a processor, every thread on that processor waits, and asks driver writers to keep each DPC under about 100 microseconds so that system responsiveness does not suffer. When a delayed thread is the one feeding the audio device or preparing a frame, that can be heard as a crackle or seen as an uneven frame time. A latency trace is not an FPS benchmark, so measure the symptom and the trace together before changing anything.",
+    },
+  ],
+  "/fixes/windows-update-using-bandwidth": [
+    {
+      q: "How much bandwidth does Windows Update use?",
+      a: "By default, Delivery Optimization, which downloads Windows updates, aims to use no more than 45% of the available bandwidth for a background download and 90% for a download you started yourself, and it measures again every few minutes to adjust to congestion. You can set lower limits in Settings, Windows Update, Advanced options, Delivery Optimization, Advanced options, or with the policy on this page.",
+    },
+    {
+      q: "Does turning off Delivery Optimization stop Windows updates?",
+      a: "No. Microsoft states that disabling Delivery Optimization does not prevent content from downloading: download mode 0 only switches off peer-to-peer sharing, and updates keep arriving over HTTP. To stop updates for a while, pause them in Settings, Windows Update. Avoid download mode 100 (Bypass): Microsoft has deprecated it in Windows 11, and it can make some downloads fail with error 0x80d03002.",
+    },
+    {
+      q: "Is it safe to delete Delivery Optimization files?",
+      a: "Yes. They are cached download files, and Windows clears the cache by itself after a short time or when it takes up too much space. To free the space now, open Disk Cleanup, tick Delivery Optimization Files, select OK and then Delete Files.",
+    },
+    {
+      q: "Why is Windows using bandwidth when I'm not updating anything?",
+      a: "Because Delivery Optimization also downloads for other Microsoft apps and services, such as the Microsoft Store and Microsoft Edge, and they can download in the background. Microsoft notes that closing an app does not necessarily stop its download. Check the apps running in the background, and if your PC is uploading to other PCs, turn off Allow downloads from other devices.",
     },
   ],
 };

@@ -77,7 +77,7 @@ export const TECHNICAL_GUIDES = {
   "/guides/fix-dpc-isr-latency-windows-11": {
     "eyebrow": "DRIVER DIAGNOSTICS",
     "format": "technical",
-    "updated": "2026-10-19",
+    "updated": "2026-11-06",
     "title": "Find the driver behind DPC and ISR latency",
     "seoTitle": "Diagnose DPC/ISR Latency on Windows 11",
     "seoDescription": "Trace DPC and ISR latency on Windows 11, investigate nvlddmkm.sys and dxgkrnl.sys, and compare one driver change at a time before keeping a fix.",
@@ -163,13 +163,23 @@ export const TECHNICAL_GUIDES = {
         "note": "Separate driver diagnosis from power, graphics and game-setting experiments."
       },
       {
+        "to": "/fixes/dpc-latency-audio-crackling/",
+        "label": "Fix audio crackling once the trace names a driver",
+        "note": "Update, roll back or disable the driver the trace points at, then measure again."
+      },
+      {
+        "to": "/database/processes/audiodg-exe/",
+        "label": "audiodg.exe, the process that runs the audio engine",
+        "note": "Why its CPU use usually comes from effects that sound drivers add."
+      },
+      {
         "to": "/tweaky-driver/",
         "label": "Check the installed driver version before you change it",
         "note": "Tweaky Driver lists each device's driver version and the updates available, with the package source, so you can review one driver change at a time."
       }
     ],
     "sources": {
-      "checked": "16 October 2026",
+      "checked": "6 November 2026",
       "items": [
         {
           "label": "Microsoft: CPU analysis and DPC/ISR timelines in WPA",
@@ -178,6 +188,14 @@ export const TECHNICAL_GUIDES = {
         {
           "label": "Microsoft: Windows Performance Recorder",
           "url": "https://learn.microsoft.com/en-us/windows-hardware/test/wpt/windows-performance-recorder"
+        },
+        {
+          "label": "Microsoft: introduction to DPC objects (DPCs are queued from ISRs and run later at a lower IRQL)",
+          "url": "https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/introduction-to-dpc-objects"
+        },
+        {
+          "label": "Microsoft: guidelines for writing DPC routines (no thread runs on that processor; 100 microseconds)",
+          "url": "https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/guidelines-for-writing-dpc-routines"
         },
         {
           "label": "Microsoft: DPC/ISR duration reference values",

@@ -15,7 +15,7 @@
   <url><loc>https://pctweaker.app/guides/amd-x3d-intel-hybrid-core-steering-gaming/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/guides/windows-11-privacy-telemetry-rollback/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/windows-11-optimizer/</loc><lastmod>2026-11-04</lastmod></url>
-  <url><loc>https://pctweaker.app/gaming-performance/</loc><lastmod>2026-11-04</lastmod></url>
+  <url><loc>https://pctweaker.app/gaming-performance/</loc><lastmod>2026-11-06</lastmod></url>
   <url><loc>https://pctweaker.app/reversible-windows-tweaks/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/windows-privacy-tool/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/how-to-undo-windows-tweaks/</loc><lastmod>2026-11-05</lastmod></url>
@@ -30,7 +30,7 @@
   <url><loc>https://pctweaker.app/uninstaller/guides/microsoft-edge-webview2/</loc><lastmod>2026-11-06</lastmod></url>
   <url><loc>https://pctweaker.app/uninstaller/guides/onedrive/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/tweaky-driver/</loc><lastmod>2026-11-04</lastmod></url>
-  <url><loc>https://pctweaker.app/fixes/</loc><lastmod>2026-11-04</lastmod></url>
+  <url><loc>https://pctweaker.app/fixes/</loc><lastmod>2026-11-06</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/bluetooth-headphones-bad-sound-when-mic-is-on/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/bluetooth-headphones-volume-too-low-windows-11/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/check-for-driver-updates-windows-11/</loc><lastmod>2026-11-04</lastmod></url>
@@ -38,13 +38,15 @@
   <url><loc>https://pctweaker.app/fixes/check-ram-running-at-xmp-expo-speed/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/check-resizable-bar-enabled/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/clear-standby-memory-windows-11/</loc><lastmod>2026-11-04</lastmod></url>
+  <url><loc>https://pctweaker.app/fixes/disable-mouse-acceleration-windows-11/</loc><lastmod>2026-11-06</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/dpc-latency-audio-crackling/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/enable-long-paths/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/equalizer-apo-not-working-windows-11/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/filter-keys-sticky-keys-shortcut/</loc><lastmod>2026-11-06</lastmod></url>
-  <url><loc>https://pctweaker.app/fixes/hardware-accelerated-gpu-scheduling/</loc><lastmod>2026-11-05</lastmod></url>
+  <url><loc>https://pctweaker.app/fixes/hardware-accelerated-gpu-scheduling/</loc><lastmod>2026-11-06</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/hdmi-audio-cuts-off-start-of-sound-windows-11/</loc><lastmod>2026-11-04</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/is-registry-cleaner-safe-windows-11/</loc><lastmod>2026-11-04</lastmod></url>
+  <url><loc>https://pctweaker.app/fixes/memory-integrity-gaming-windows-11/</loc><lastmod>2026-11-06</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/remove-program-leftovers-windows-11/</loc><lastmod>2026-11-06</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/turn-off-windows-11-ai-features/</loc><lastmod>2026-11-06</lastmod></url>
   <url><loc>https://pctweaker.app/fixes/windows-lowers-game-volume-during-calls/</loc><lastmod>2026-11-04</lastmod></url>

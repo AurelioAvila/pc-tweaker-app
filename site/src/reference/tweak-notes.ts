@@ -355,6 +355,7 @@ export const TWEAK_NOTES: Record<string, TweakNote> = {
     skip: "You use a touchpad or a large screen and rely on acceleration to cross it. Set by hand, it takes effect after you sign out and back in.",
     sources: [MS.spi],
     related: ["reduce_input_lag"],
+    guides: ["/fixes/disable-mouse-acceleration-windows-11/"],
   },
   disable_sticky_keys_prompt: {
     title: "Turn Off the Sticky Keys Shortcut",
@@ -390,6 +391,7 @@ export const TWEAK_NOTES: Record<string, TweakNote> = {
     helps: "A driver or program you need is incompatible with Memory Integrity and you accept the lower protection.",
     skip: "You want it for speed alone. It removes a kernel protection Microsoft recommends; a policy or UEFI lock can prevent the change, and it needs a restart. PC Tweaker never applies it as part of a profile or batch.",
     sources: [MS.hvci, MS.hvciOem],
+    guides: ["/fixes/memory-integrity-gaming-windows-11/"],
   },
   power_plan_performance: {
     slug: "high-performance-power-plan",
@@ -424,6 +426,7 @@ export const TWEAK_NOTES: Record<string, TweakNote> = {
     skip: "You already turned off Enhance pointer precision; the thresholds only matter while acceleration is on. Set by hand, it takes effect after you sign out and back in.",
     sources: [MS.spi],
     related: ["disable_mouse_acceleration"],
+    guides: ["/fixes/disable-mouse-acceleration-windows-11/"],
   },
   turbo_boost: {
     title: "Set Processor Boost Mode to Aggressive",

@@ -11,6 +11,15 @@ interface FootLink {
   readonly reloadDocument?: boolean;
 }
 
+// Our other products: brand names linking to their home pages.
+const ALSO_BY = [
+  { name: "CertSprint", href: "https://getcertsprint.com/", what: "IT certification practice tests" },
+  { name: "Redaxa", href: "https://redaxa.getcertsprint.com/", what: "keeps secrets out of AI prompts" },
+  { name: "Glarion", href: "https://glarion.app/", what: "website security reports for agencies" },
+  { name: "Frame Witness", href: "https://framewitness.pages.dev/", what: "forensic photo and video recovery" },
+  { name: "Redexa Social", href: "https://redexa.getcertsprint.com/", what: "YouTube analytics for Windows" },
+] as const;
+
 const LINK_CLASS =
   "mb-2.5 block text-[13.5px] text-[var(--fg-dim)] transition-colors hover:text-[var(--fg)]";
 
@@ -179,7 +188,20 @@ export function Footer({ navigate, currentPath }: { navigate: (to: string) => vo
             />
           </div>
         </div>
-        <div className="font-mono-t mt-12 flex flex-wrap justify-between gap-3 border-t border-white/5 pt-6 text-[12px] text-[var(--fg-dim)]">
+        <nav aria-label="From the same developer" className="mt-12 text-[12.5px] leading-6 text-[var(--fg-dim)]">
+          <ul className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+            <li>From the same developer:</li>
+            {ALSO_BY.map((p) => (
+              <li key={p.name}>
+                <a href={p.href} className="text-[var(--fg)] underline decoration-white/25 underline-offset-4 transition-colors hover:decoration-current">
+                  {p.name}
+                </a>{" "}
+                {p.what}
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className="font-mono-t mt-6 flex flex-wrap justify-between gap-3 border-t border-white/5 pt-6 text-[12px] text-[var(--fg-dim)]">
           <span>{text.footer.copyright}</span>
           <span className="text-accent">{text.footer.motto}</span>
         </div>

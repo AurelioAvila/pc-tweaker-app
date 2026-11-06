@@ -277,7 +277,7 @@ export const GUIDES: Record<string, Guide> = {
       {
         heading: "What the gaming tweaks actually touch",
         body:
-          "Disabling Game DVR sets GameDVR_Enabled to 0 under HKEY_CURRENT_USER\\System\\GameConfigStore, which stops Xbox Game Bar's background recording and the processor and graphics time it was consuming. It needs no administrator rights, and if you save clips with Windows capture you should leave it alone: this is a trade, not a free upgrade. Disabling mouse acceleration sets MouseSpeed, with MouseThreshold1 and MouseThreshold2, under HKEY_CURRENT_USER\\Control Panel\\Mouse, so the same physical flick always covers the same distance on screen. That one affects the Windows desktop too, and games reading raw input directly will ignore it either way.",
+          "Disabling Game DVR sets GameDVR_Enabled to 0 under HKEY_CURRENT_USER\\System\\GameConfigStore, which stops Xbox Game Bar's background recording and the processor and graphics time it was consuming. It needs no administrator rights, and if you save clips with Windows capture you should leave it alone: this is a trade, not a free upgrade. Disabling mouse acceleration sets MouseSpeed to 0 under HKEY_CURRENT_USER\\Control Panel\\Mouse, which is Enhance pointer precision switched off, so the same physical flick always covers the same distance on screen; Reduce input lag (mouse) also sets MouseThreshold1 and MouseThreshold2 to 0. Both affect the Windows desktop too, and games reading raw input directly ignore them either way.",
       },
       {
         heading: "Hardware-accelerated GPU scheduling is genuinely uncertain",
@@ -291,6 +291,16 @@ export const GUIDES: Record<string, Guide> = {
       },
     ],
     related: [
+      {
+        to: "/fixes/disable-mouse-acceleration-windows-11/",
+        label: "turning off mouse acceleration (Enhance pointer precision)",
+        note: "Consistent aim on the desktop, and why games using raw input ignore it.",
+      },
+      {
+        to: "/fixes/memory-integrity-gaming-windows-11/",
+        label: "memory integrity and gaming",
+        note: "What turning Core isolation off costs in protection, and how to measure whether it helps.",
+      },
       {
         to: "/fixes/filter-keys-sticky-keys-shortcut/",
         label: "stopping Sticky Keys and Filter Keys popups",

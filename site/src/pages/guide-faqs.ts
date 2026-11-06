@@ -276,4 +276,40 @@ export const GUIDE_FAQS: Record<string, readonly GuideFaq[]> = {
       a: "Because Delivery Optimization also downloads for other Microsoft apps and services, such as the Microsoft Store and Microsoft Edge, and they can download in the background. Microsoft notes that closing an app does not necessarily stop its download. Check the apps running in the background, and if your PC is uploading to other PCs, turn off Allow downloads from other devices.",
     },
   ],
+  "/fixes/memory-integrity-gaming-windows-11": [
+    {
+      q: "Does turning off memory integrity improve gaming performance?",
+      a: "It can on some PCs, but Microsoft publishes no figure for games. Its documentation says memory integrity works better on Intel Kaby Lake and newer and AMD Zen 2 and newer processors, while older processors emulate the features it needs and see a bigger impact on performance. Measure one repeatable scene with it on and off, restarting in between, before you give up the protection.",
+    },
+    {
+      q: "Is it safe to turn off memory integrity?",
+      a: "It is a security trade-off, not a free speed-up. Microsoft describes memory integrity as making it difficult for malicious programs to use low-level drivers to hijack your PC, and turning it off removes that layer for everything you run. Microsoft's own case for turning it off is a driver you need that cannot load: look for an updated driver first, and turn memory integrity back on when you no longer need it off.",
+    },
+    {
+      q: "Why can't I turn memory integrity on?",
+      a: "Microsoft documents two common causes: an incompatible driver, and hardware virtualization switched off in the UEFI or BIOS. For a driver, its advice is to ask the device maker for a compatible version, or remove the device or app that uses the incompatible one. For virtualization, turn it on in the firmware settings and try again.",
+    },
+    {
+      q: "Why is the memory integrity switch greyed out?",
+      a: "Because memory integrity is being managed outside Windows Security. Microsoft documents that it can be turned on through Group Policy, Intune or App Control, and that an administrator can grey out the switch, which then shows \"This setting is managed by your administrator\". Change it where it was set, or ask whoever manages the PC.",
+    },
+  ],
+  "/fixes/disable-mouse-acceleration-windows-11": [
+    {
+      q: "Should I turn off Enhance pointer precision for gaming?",
+      a: "For aiming, turning it off gives you consistent movement: the same hand movement always covers the same distance on screen. Microsoft presents the setting as making the pointer more accurate when the mouse moves slowly, so you may prefer it on for the desktop or a touchpad. Games that read raw mouse input ignore it either way.",
+    },
+    {
+      q: "Does Enhance pointer precision affect games that use raw input?",
+      a: "No. Microsoft's guidance for game developers explains that raw input (WM_INPUT) comes straight from the HID stack with no pointer acceleration applied, while the Windows pointer messages (WM_MOUSEMOVE) have it applied. It still affects the desktop, menus and games that move the Windows pointer.",
+    },
+    {
+      q: "What does Enhance pointer precision do?",
+      a: "It turns on Windows' pointer acceleration, so the pointer moves further when you move the mouse quickly than when you move it the same distance slowly. Microsoft describes it as making the pointer more accurate when the mouse is moving slowly. Turn it off in Settings, Bluetooth & devices, Mouse.",
+    },
+    {
+      q: "Is mouse acceleration the same as pointer speed?",
+      a: "No. Pointer speed is the separate slider in the same Settings page, a value from 1 to 20 with 10 as the default, while acceleration changes the distance depending on how fast you move. Microsoft documents that Windows applies acceleration first and then scales the result by the pointer speed, so you can turn acceleration off and keep any speed you like.",
+    },
+  ],
 };

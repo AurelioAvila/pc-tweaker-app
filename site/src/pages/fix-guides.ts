@@ -145,6 +145,7 @@ export const FIX_GUIDES = {
       { to: "/gaming-performance/", label: "the gaming performance guide", note: "Which Windows settings are worth testing, and how." },
       { to: "/database/processes/dwm-exe/", label: "dwm.exe and what its GPU use means", note: "The process that composes the desktop." },
       { to: "/fixes/check-resizable-bar-enabled/", label: "check whether Resizable BAR is on", note: "A related graphics setting that lives in the BIOS." },
+      { to: "/fixes/memory-integrity-gaming-windows-11/", label: "memory integrity and gaming", note: "A security setting to measure the same way before turning it off." },
       { to: "/how-to-undo-windows-tweaks/", label: "how to undo Windows tweaks", note: "Put a changed setting back, with or without PC Tweaker." },
     ],
     sources: {
@@ -153,6 +154,147 @@ export const FIX_GUIDES = {
         { label: "DirectX Developer Blog: Hardware Accelerated GPU Scheduling", url: "https://devblogs.microsoft.com/directx/hardware-accelerated-gpu-scheduling/" },
         { label: "NVIDIA Streamline SDK: DLSS Frame Generation requirements (FAQ)", url: "https://developer.nvidia.com/rtx/streamline/get-started" },
         { label: "PC Tweaker source code: the hardware_gpu_scheduling entry (tweaks.rs)", url: `${SRC}/tweaks.rs` },
+      ],
+    },
+  },
+  "/fixes/memory-integrity-gaming-windows-11": {
+    eyebrow: "FIX · SECURITY AND GAMING",
+    title: "Memory integrity and gaming: should you turn it off?",
+    seoTitle: "Turn Off Memory Integrity for Gaming? The Risks",
+    updated: "2026-11-06",
+    seoDescription:
+      "Memory integrity, in Core isolation, stops malicious drivers taking over Windows. What turning it off costs, when it can help a game, and how to switch it back.",
+    intro:
+      "Memory integrity, also called hypervisor-protected code integrity (HVCI), is the switch under Core isolation in Windows Security. It checks kernel-mode code inside an isolated virtual environment, which makes it hard for malicious programs to use low-level drivers to take over the PC. Turning it off can free processor time, and Microsoft names older processors as the ones where its performance impact is bigger. But it removes that protection for everything you run, not only for games. Measure before you decide, and keep it on if you see no difference.",
+    summary: [
+      { label: "Where it lives", value: "Windows Security, Device security, Core isolation details" },
+      { label: "Registry value PC Tweaker writes", value: "HKLM\\...\\HypervisorEnforcedCodeIntegrity Enabled = 0" },
+      { label: "Needs", value: "Administrator rights, then a restart" },
+      { label: "What you give up", value: "A kernel protection against malicious drivers" },
+      { label: "PC Tweaker plan", value: "Pro, only from its own switch (Windows Security is free)" },
+    ],
+    sections: [
+      {
+        heading: "What memory integrity protects",
+        body:
+          "Microsoft describes memory integrity as a feature that makes it difficult for malicious programs to use low-level drivers to hijack your PC. It runs Windows' kernel-mode code integrity checks inside an environment isolated by hardware virtualization, where an attacker cannot easily tamper with them, and it restricts kernel memory allocations that could be used to compromise the system. It needs hardware virtualization switched on in the UEFI or BIOS. Microsoft also notes that the vulnerable driver blocklist is on whenever memory integrity, Smart App Control or Windows S mode is on.",
+      },
+      {
+        heading: "What it costs in games",
+        body:
+          "Microsoft does not publish a figure for games, and neither do we. What it does document is where the cost is higher: memory integrity works better on Intel Kaby Lake and later processors with Mode-Based Execution Control and on AMD Zen 2 and later processors with Guest Mode Execute Trap, while older processors emulate those features and see a bigger impact on performance. So test it on your own PC the same way as any other setting: one game, one repeatable scene, three runs with it on, restart, three runs with it off, and judge frame times rather than a single average.",
+        points: [
+          "Same game, scene, settings and capture tool",
+          "Restart after every change of the switch",
+          "Keep it on if the difference is within run-to-run noise",
+          "Turn it back on when you stop needing it off",
+        ],
+      },
+      {
+        heading: "When turning it off is the documented answer",
+        body:
+          "Microsoft's own case for turning memory integrity off is a driver you need that it prevents from loading. Its advice is to look for an updated driver first, and only if that does not work to turn memory integrity off and restart. It adds a warning: on a Secured-core PC, turning memory integrity off takes the device out of a Secured-core state. If a driver blocks memory integrity from turning on, Microsoft's advice is the reverse: ask the device maker for a compatible driver, or remove the device or app that uses the incompatible one.",
+      },
+      {
+        heading: "If the switch is greyed out or will not stay off",
+        body:
+          "If the switch is greyed out with \"This setting is managed by your administrator\", memory integrity is managed outside Windows Security: Microsoft documents that it can be turned on through Group Policy, Intune or App Control, and that an administrator can grey out the switch. Change it where it was set, or ask whoever manages the PC. If it was turned on with UEFI lock, Microsoft notes that you need access to the UEFI menu to turn off Secure Boot before memory integrity can be turned off. From Windows 11 version 22H2, Windows Security also shows a warning while memory integrity is off; that is expected, not a fault.",
+      },
+    ],
+    steps: [
+      { title: "Check whether it is running (read-only, PowerShell as administrator)", code: "(Get-CimInstance -ClassName Win32_DeviceGuard -Namespace root\\Microsoft\\Windows\\DeviceGuard).SecurityServicesRunning", shell: "PowerShell" as const, note: "Microsoft documents that 2 in this list means memory integrity is running. On the PC this guide was checked on (Ryzen 7 7800X3D, Windows 11 build 26300) the list included 2." },
+      { title: "Turn it off in Windows Security", note: "Open Windows Security, select Device security, then Core isolation details, and switch Memory integrity off. Restart the PC: the change only takes effect after a restart." },
+      { title: "Read the registry value (read-only)", code: "reg query \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity\" /v Enabled", shell: "cmd" as const, note: "In Microsoft's documented registry commands, 1 turns memory integrity on and 0 turns it off, followed by a restart." },
+      { title: "Turn it back on", note: "Switch Memory integrity on again in the same place and restart. If Windows reports an incompatible driver, check with the device maker for an updated one." },
+    ],
+    pctweaker: {
+      title: "With PC Tweaker",
+      body:
+        "The Disable Memory Integrity (VBS) control in the Gaming category is Pro and needs administrator rights. It writes Enabled = 0 under HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity, shows that change under Technical details before it runs, and records the previous value so Restore puts it back. It is never applied as part of a profile, a batch or a re-apply after an update, only from its own switch. A policy or a UEFI lock can still keep memory integrity on, so restart and check Windows Security afterwards.",
+      links: [{ to: "/tweaks/gaming/disable-memory-integrity/", label: "Disable Memory Integrity (VBS)" }],
+    },
+    related: [
+      { to: "/tweaks/gaming/disable-memory-integrity/", label: "the Memory Integrity control's reference page", note: "The exact value, the scope and why it is never part of a profile." },
+      { to: "/fixes/hardware-accelerated-gpu-scheduling/", label: "hardware-accelerated GPU scheduling", note: "Another setting to test with the same method rather than assume." },
+      { to: "/fixes/disable-mouse-acceleration-windows-11/", label: "turning off mouse acceleration", note: "A gaming setting that changes aim, not frame rate." },
+      { to: "/gaming-performance/", label: "the gaming performance guide", note: "Which Windows settings are worth testing, and how." },
+      { to: "/how-to-undo-windows-tweaks/", label: "how to undo Windows tweaks", note: "Put a changed setting back, with or without PC Tweaker." },
+    ],
+    sources: {
+      checked: "6 November 2026",
+      items: [
+        { label: "Microsoft Support: Device Security in the Windows Security app (core isolation, memory integrity, incompatible drivers)", url: "https://support.microsoft.com/en-us/windows/security/windows-security/device-security-in-the-windows-security-app" },
+        { label: "Microsoft Support: a driver can't load on this device (turning memory integrity off, Secured-core)", url: "https://support.microsoft.com/en-us/windows/hardware/drivers/a-driver-can-t-load-on-this-device" },
+        { label: "Microsoft Learn: Enable memory integrity (processors, registry values, UEFI lock, Win32_DeviceGuard)", url: "https://learn.microsoft.com/en-us/windows/security/hardware-security/enable-virtualization-based-protection-of-code-integrity" },
+        { label: "PC Tweaker source code: the disable_memory_integrity entry (tweaks.rs)", url: `${SRC}/tweaks.rs` },
+        { label: "PC Tweaker source code: controls applied only from their own switch (lib.rs)", url: `${SRC}/lib.rs` },
+      ],
+    },
+  },
+  "/fixes/disable-mouse-acceleration-windows-11": {
+    eyebrow: "FIX · MOUSE",
+    title: "Turn off mouse acceleration (Enhance pointer precision) in Windows 11",
+    seoTitle: "Turn Off Mouse Acceleration in Windows 11",
+    updated: "2026-11-06",
+    seoDescription:
+      "Enhance pointer precision is Windows' mouse acceleration. Turn it off in Settings for consistent aim, see which games ignore it, and switch it back on.",
+    intro:
+      "Enhance pointer precision is Windows' pointer acceleration: the pointer travels further when you move the mouse quickly than when you move it the same distance slowly. Microsoft presents it as making the pointer more accurate at slow speeds. For aiming, many players want the same hand movement to cover the same distance every time, so they switch it off. It only changes the Windows pointer: a game that reads raw mouse input never sees it.",
+    summary: [
+      { label: "Where it lives", value: "Settings, Bluetooth & devices, Mouse" },
+      { label: "Registry values PC Tweaker writes", value: "HKCU\\Control Panel\\Mouse MouseSpeed = 0 (thresholds 0 too, optional)" },
+      { label: "Scope", value: "The signed-in account" },
+      { label: "Admin rights", value: "No" },
+      { label: "PC Tweaker plan", value: "Free" },
+    ],
+    sections: [
+      {
+        heading: "Turn it off in Settings",
+        body:
+          "Open Settings, Bluetooth & devices, Mouse, and switch Enhance pointer precision off. Where that page does not show the switch, select Additional mouse settings under Related settings, open the Pointer Options tab and clear Enhance pointer precision under Motion, then select OK. Turning the same switch on, or ticking the box again, undoes it.",
+      },
+      {
+        heading: "Which games it affects",
+        body:
+          "Microsoft's guidance for game developers explains the difference. Mouse movement delivered as WM_MOUSEMOVE has Windows' pointer acceleration, which it also calls ballistics, already applied. Movement read through raw input (WM_INPUT) comes straight from the HID stack with no ballistics applied. So a game that reads raw input is not affected by this setting either way, while menus, the desktop and games that move the Windows pointer are.",
+      },
+      {
+        heading: "Pointer speed is a separate setting",
+        body:
+          "The Mouse pointer speed slider is not acceleration. Microsoft documents it as a value from 1 to 20, with 10 as the default, and describes Windows applying acceleration first and then scaling the result by that speed. Turning acceleration off leaves the speed where it was, so fast movements will cover less distance than before; adjust the slider or your in-game sensitivity rather than turning acceleration back on.",
+      },
+      {
+        heading: "What the stored values mean",
+        body:
+          "Windows keeps the acceleration as two threshold values and an acceleration level, which apps read and set with SystemParametersInfo (SPI_GETMOUSE and SPI_SETMOUSE). Microsoft's mouse_event documentation describes the rule: when a movement is longer than the first threshold and the acceleration level is not zero, Windows doubles the distance. With the level at 0 that never happens. On the PC this guide was checked on, with acceleration off, SPI_GETMOUSE returned 0, 0, 0.",
+      },
+    ],
+    steps: [
+      { title: "Check the current values (read-only)", code: "Get-ItemProperty 'HKCU:\\Control Panel\\Mouse' |\n  Format-List MouseSpeed, MouseThreshold1, MouseThreshold2, MouseSensitivity", shell: "PowerShell" as const, note: "On the PC this guide was checked on, with acceleration off, MouseSpeed and both thresholds read 0, and MouseSensitivity, the pointer speed, read 10." },
+      { title: "Switch it off", note: "Settings, Bluetooth & devices, Mouse: turn Enhance pointer precision off. Or Additional mouse settings, Pointer Options, clear Enhance pointer precision, OK." },
+      { title: "Switch it back on", note: "Turn the same switch on, or tick the box again." },
+    ],
+    pctweaker: {
+      title: "With PC Tweaker",
+      body:
+        "Two free controls in the Gaming category do this without administrator rights. Disable mouse acceleration writes MouseSpeed = 0 under HKEY_CURRENT_USER\\Control Panel\\Mouse; Reduce input lag (mouse) also sets MouseThreshold1 and MouseThreshold2 to 0. Both record the previous values before writing, so Restore puts them back. Because they write the stored registry values rather than changing the live setting, the change applies after you sign out and back in.",
+      links: [{ to: "/tweaks/gaming/disable-mouse-acceleration/", label: "Disable mouse acceleration" }, { to: "/tweaks/gaming/reduce-input-lag/", label: "Reduce input lag (mouse)" }],
+    },
+    related: [
+      { to: "/tweaks/gaming/disable-mouse-acceleration/", label: "the mouse acceleration control's reference page", note: "The exact value it writes and how Restore works." },
+      { to: "/fixes/filter-keys-sticky-keys-shortcut/", label: "stopping Sticky Keys and Filter Keys popups", note: "Two keyboard shortcuts that interrupt games." },
+      { to: "/fixes/memory-integrity-gaming-windows-11/", label: "memory integrity and gaming", note: "A security trade-off to measure, not to assume." },
+      { to: "/gaming-performance/", label: "the gaming performance guide", note: "Which Windows settings are worth testing, and how." },
+    ],
+    sources: {
+      checked: "6 November 2026",
+      items: [
+        { label: "Microsoft Support: change mouse settings (Enhance pointer precision)", url: "https://support.microsoft.com/en-us/windows/hardware/input-devices/change-mouse-settings" },
+        { label: "Microsoft Learn: taking advantage of high-definition mouse movement (ballistics and raw input)", url: "https://learn.microsoft.com/en-us/windows/win32/dxtecharts/taking-advantage-of-high-dpi-mouse-movement" },
+        { label: "Microsoft Learn: mouse_event (thresholds, acceleration level and speed)", url: "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-mouse_event" },
+        { label: "Microsoft Learn: SystemParametersInfoW (SPI_GETMOUSE, SPI_SETMOUSE, SPI_GETMOUSESPEED)", url: "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfow" },
+        { label: "PC Tweaker source code: the disable_mouse_acceleration entry (tweaks.rs)", url: `${SRC}/tweaks.rs` },
+        { label: "PC Tweaker source code: Reduce input lag (mouse) (gaming.rs)", url: `${SRC}/gaming.rs` },
       ],
     },
   },
@@ -251,6 +393,7 @@ export const FIX_GUIDES = {
     related: [
       { to: "/windows-gaming-work-study-profiles/", label: "the Gaming profile", note: "The Sticky Keys control is one of its options, unticked until you choose it." },
       { to: "/fixes/windows-lowers-game-volume-during-calls/", label: "Windows turning the game down during calls", note: "Another Windows default that gets in the way mid-game, and the one setting that stops it." },
+      { to: "/fixes/disable-mouse-acceleration-windows-11/", label: "turning off mouse acceleration", note: "Enhance pointer precision off for consistent aim." },
     ],
     sources: {
       checked: "6 November 2026",

@@ -16,6 +16,7 @@ const bundle = await build({
       export { PricingPanel } from './src/components/pricing';
       export { PLAN_STATE_COPY, PRICING_COPY } from './src/components/pricing-copy';
       export { TRIAL_COPY } from './src/components/trial-copy';
+      export { PAYPAL_COPY } from './src/components/paypal-copy';
       export { STRINGS } from './src/i18n';
       export { parseBillingStatus, parsePriceList, trialEntry } from './src/trial';
       export { TitleTrialButton, titleTrial } from './src/components/titlebar';
@@ -40,7 +41,7 @@ const out = new URL("../node_modules/.cache/test-pricing-states.mjs", import.met
 fs.mkdirSync(new URL(".", out), { recursive: true });
 fs.writeFileSync(out, bundle.outputFiles[0].text);
 const m = await import(pathToFileURL(fileURLToPath(out)).href);
-const { PricingPanel, PLAN_STATE_COPY, PRICING_COPY, TRIAL_COPY, STRINGS, parseBillingStatus, parsePriceList, trialEntry, TitleTrialButton, titleTrial, PaywallModal, createElement, renderToStaticMarkup } = m;
+const { PricingPanel, PLAN_STATE_COPY, PRICING_COPY, TRIAL_COPY, PAYPAL_COPY, STRINGS, parseBillingStatus, parsePriceList, trialEntry, TitleTrialButton, titleTrial, PaywallModal, createElement, renderToStaticMarkup } = m;
 
 const now = Date.now();
 const prices = parsePriceList({ trial_enabled: true, trial_days: 3, prices: [
@@ -148,6 +149,29 @@ for (const lang of Object.keys(PLAN_STATE_COPY)) {
   assert.ok(html.includes(seven(c.passAdd)) && !html.includes(seven(c.passNote)), `${lang} pass holder sees its end and can add days`);
   assert.ok(!k.pro.includes(s.proCurrent) && !k.pro.includes(s.manageBilling) && k.lifetime.includes(s.lifetimeCta), `${lang} plans still on offer to a pass holder`);
   assert.ok(html.includes('class="pricing-period"') && band(html) === null, `${lang} pass holder: period switch, no trial`);
+
+  // PayPal (owner, 6 Nov 2026): a quiet link under each plan the server sells with PayPal, never otherwise.
+  const pay = PAYPAL_COPY[lang].pay;
+  const paypalLinks = (text) => text.split(`>${pay}<`).length - 1;
+  html = render(lang, { prices: withPass });
+  assert.ok(paypalLinks(html) === 0 && !html.includes(PAYPAL_COPY[lang].fine), `${lang} no PayPal while the server has it off`);
+  const withPaypal = parsePriceList({ trial_enabled: true, trial_days: 3, prices: [
+    { product: "pctweaker", plan: "monthly", amount: 499 },
+    { product: "pctweaker", plan: "annual", amount: 2999 },
+  ], pass: { plan: "pass_7d", days: 7, amount: 499, currency: "eur" },
+    paypal: { available: true, currency: "eur", country: "IT", plans: { monthly: 609, annual: 3659, lifetime: 12078, pass_7d: 609 } } });
+  html = render(lang, { prices: withPaypal });
+  k = cards(html);
+  const lifetimeCard = (text) => cards(text).lifetime.split("</article>")[0];
+  assert.ok(paypalLinks(k.pro) === 1 && paypalLinks(lifetimeCard(html)) === 1 && paypalLinks(html) === 3, `${lang} PayPal under Pro, Lifetime and the pass`);
+  assert.ok(html.includes(PAYPAL_COPY[lang].fine), `${lang} the small print says what PayPal costs and who sells`);
+  html = render(lang, { prices: { ...withPaypal, paypal: { lifetime: 12078 } } });
+  assert.ok(paypalLinks(lifetimeCard(html)) === 1 && paypalLinks(html) === 1, `${lang} PayPal only where the server sells it`);
+  html = render(lang, { isPro: true, heldPlan: "annual", hasBilling: true, prices: withPaypal });
+  k = cards(html);
+  assert.ok(paypalLinks(k.pro) === 0 && paypalLinks(lifetimeCard(html)) === 1, `${lang} a subscriber can still move to Lifetime with PayPal, not buy Pro again`);
+  html = render(lang, { isPro: true, heldPlan: "lifetime", hasBilling: true, prices: withPaypal });
+  assert.equal(paypalLinks(html), 0, `${lang} nothing to buy with PayPal over Lifetime`);
 }
 console.log(`Pricing states: signed out, eligible, used, trial, monthly, annual, Lifetime, grant, paused in ${Object.keys(PLAN_STATE_COPY).length} languages passed.`);
 

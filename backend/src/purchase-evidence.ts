@@ -25,16 +25,18 @@ export const EVIDENCE_RETENTION_MONTHS = 13;
  *    Terms of 2026-11-01 or the Uninstaller Terms of 2026-11-03.
  *  - pctweaker "2026-11-04.2" (4 Nov 2026): the same line, linking the PC Tweaker Terms of
  *    2026-11-04, which add the 7-day pass.
+ *  - pctweaker "2026-11-06" (6 Nov 2026): the same line, linking the PC Tweaker Terms of
+ *    2026-11-06, which add paying with PayPal.
  *  New wording or new linked Terms: a new value here and in the other file (a backend test compares them). */
 export const PURCHASE_TERMS_VERSION: Record<string, string> = {
-  pctweaker: "2026-11-04.2",
+  pctweaker: "2026-11-06",
   uninstaller: "2026-11-04",
 };
 
-/** The value before, still accepted for what those Terms already covered (not the pass)
+/** The value before, still accepted for what those Terms already covered (not PayPal)
  *  while pages opened before the site update are about: the row records what was ticked.
  *  Remove once the site sends the new value everywhere. */
-export const PREVIOUS_TERMS_VERSION: Record<string, string> = { pctweaker: "2026-11-04" };
+export const PREVIOUS_TERMS_VERSION: Record<string, string> = { pctweaker: "2026-11-04.2" };
 
 /** Where an app-started checkout goes first when the box is required. */
 export const CONSENT_PAGE = "https://pctweaker.app/checkout/confirm/";
@@ -55,6 +57,7 @@ export type ConsentIntent = {
   /** The app's "Start 3-day trial" / "Subscribe now" choice, when it sent one. */
   trial?: boolean;
   crypto?: boolean;
+  paypal?: boolean;
   /** X-Device-Hash of the PC the app runs on (trial once per PC). */
   device?: string;
   /** The account's language, for the page. */
@@ -80,6 +83,7 @@ export function readConsentIntent(token: unknown, secret = process.env.JWT_SECRE
       uid: p.uid, tv: p.tv, product: p.product, plan: p.plan,
       ...(p.trial !== undefined ? { trial: p.trial } : {}),
       ...(p.crypto === true ? { crypto: true } : {}),
+      ...(p.paypal === true ? { paypal: true } : {}),
       ...(typeof p.device === "string" ? { device: p.device } : {}),
       ...(typeof p.lang === "string" ? { lang: p.lang } : {}),
     };

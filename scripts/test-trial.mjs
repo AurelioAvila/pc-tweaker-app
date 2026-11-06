@@ -68,6 +68,12 @@ assert.deepEqual(trialOffer("pctweaker", "monthly", null, status([row()]), 799),
 // A malformed price is dropped rather than printed.
 assert.equal(parsePriceList({ prices: [{ product: "pctweaker", plan: "monthly", amount: 7.99 }] }).prices.length, 0);
 assert.equal(parsePriceList({ currency: "usd", prices: [] }), null);
+// PayPal: plan by plan, only from a well-formed euro block the server marks available.
+assert.equal(parsePriceList({ prices: [] }).paypal, null);
+assert.equal(parsePriceList({ prices: [], paypal: { available: false } }).paypal, null);
+assert.deepEqual(parsePriceList({ prices: [], paypal: { available: true, currency: "eur", country: "IT", plans: { monthly: 975, annual: null, lifetime: 12078, pass_7d: 6.09, weekly: 100 } } }).paypal, { monthly: 975, lifetime: 12078 });
+assert.equal(parsePriceList({ prices: [], paypal: { available: true, currency: "usd", plans: { monthly: 975 } } }).paypal, null);
+assert.equal(parsePriceList({ prices: [], paypal: { available: true, currency: "eur", plans: { monthly: null } } }).paypal, null);
 
 // "Already used" only when the server is offering trials and this account cannot have one.
 assert.equal(trialUsed("pctweaker", status([row({ can_start_trial: false })])), true);

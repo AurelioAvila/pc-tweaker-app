@@ -41,7 +41,39 @@ export type PriceList = {
   crypto: { lifetimeUsd: number | null; coffeeUsd: number | null } | null;
   /** The 7-day pass (euro cents, one payment), or null while the server has it off. */
   pass?: { amount: number; days: number } | null;
+  /** The plans PayPal can sell right now, each with the euro cents it charges (the
+   *  card total for the visitor's country); null while PayPal is off (the default). */
+  paypal?: Partial<Record<PaypalPlan, number>> | null;
 };
+
+/** How a purchase is paid: by card (Link), in USDC, or with PayPal. */
+export type PayMethod = "card" | "crypto" | "paypal";
+export type PaypalPlan = "monthly" | "annual" | "lifetime" | "pass_7d";
+const PAYPAL_PLANS: PaypalPlan[] = ["monthly", "annual", "lifetime", "pass_7d"];
+
+/** Only a well-formed "available" euro block turns PayPal on, plan by plan. */
+function paypalPlans(value: unknown): PriceList["paypal"] {
+  const v = value as {
+    available?: unknown;
+    currency?: unknown;
+    plans?: Record<string, unknown>;
+  } | null;
+  if (
+    !v ||
+    typeof v !== "object" ||
+    v.available !== true ||
+    v.currency !== "eur" ||
+    !v.plans ||
+    typeof v.plans !== "object"
+  )
+    return null;
+  const plans: Partial<Record<PaypalPlan, number>> = {};
+  for (const plan of PAYPAL_PLANS) {
+    const amount = v.plans[plan];
+    if (Number.isInteger(amount) && (amount as number) > 0) plans[plan] = amount as number;
+  }
+  return Object.keys(plans).length ? plans : null;
+}
 
 /** Only a well-formed one-off euro price turns the 7-day pass on. */
 function passPrice(value: unknown): PriceList["pass"] {
@@ -149,6 +181,7 @@ export function parsePriceList(value: unknown): PriceList | null {
     ),
     crypto: cryptoPrices(v.crypto),
     pass: passPrice(v.pass),
+    paypal: paypalPlans(v.paypal),
   };
 }
 

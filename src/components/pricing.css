@@ -516,7 +516,7 @@
     grid-template-columns: minmax(0, 1fr) auto;
     padding: 14px 16px;
   }
-  .pricing-pass .pricing-button {
+  .pricing-pass .pricing-pass-actions {
     grid-column: 1 / -1;
   }
 }

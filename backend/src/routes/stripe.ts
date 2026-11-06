@@ -12,6 +12,8 @@ import {
   billingProductFromEvidence,
   cryptoEnabled,
   cryptoSessionParams,
+  paypalEnabled,
+  paypalSessionParams,
   formatChargedAmount,
   isSettledCheckout,
   planFromPrice,
@@ -240,10 +242,12 @@ type CheckoutCreationEffects = {
   guardedReservationOpen?: (userId: number, product: Product) => Promise<boolean>;
   expireOwnSession?: (userId: number, sessionId: string) => Promise<boolean>;
   /** Experimental injection for isolated integration tests; not wired to production. */
-  guardedCreate?: (input: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean; crypto?: boolean }) => Promise<{ url: string }>;
+  guardedCreate?: (input: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean; crypto?: boolean; paypal?: boolean }) => Promise<{ url: string }>;
   /** The USD amount for a euro Price when paying in crypto; defaults to Stripe (cryptoQuote below). */
   cryptoQuote?: (priceId: string, country: string | null) => Promise<CryptoQuote | null>;
-  /** The buyer's country for crypto price parity; defaults to buyerCountry below. */
+  /** The card buyer's total for a euro Price when paying with PayPal; defaults to Stripe (parityQuote below). */
+  paypalQuote?: (priceId: string, country: string | null) => Promise<ParityQuote | null>;
+  /** The buyer's country for crypto and PayPal price parity; defaults to buyerCountry below. */
   buyerCountry?: (customerId: string | null, req: Request) => Promise<string | null>;
 };
 
@@ -261,7 +265,7 @@ export function createGuardedCheckout(deps: {
   /** Closes one of them while Stripe still reports it open and unpaid; false when that cannot be confirmed. */
   expireUnreserved?: (userId: number, sessionId: string) => Promise<boolean>;
 }) {
-  return async ({ userId, product, plan, trial, params, replaceDifferentTerms = false, crypto = false }: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean; crypto?: boolean }) => {
+  return async ({ userId, product, plan, trial, params, replaceDifferentTerms = false, crypto = false, paypal = false }: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean; crypto?: boolean; paypal?: boolean }) => {
     const entitlement = await deps.getEntitlement(userId, product);
     const upgrading = entitlement.active && product === "pctweaker" && plan === "lifetime" &&
       (entitlement.plan === "monthly" || entitlement.plan === "annual");
@@ -291,10 +295,10 @@ export function createGuardedCheckout(deps: {
       }
       unreservedSessionOpen = async () => (await openUnreserved(userId, product)).length > 0;
     }
-    // A referral checkout is a card checkout under Managed Payments: never for a crypto sale,
-    // and never for the 7-day pass, which is not a referral plan.
+    // A referral checkout is a card checkout under Managed Payments: never for a crypto or
+    // PayPal sale, and never for the 7-day pass, which is not a referral plan.
     const provider = stripeGuardedProvider(deps.sessions, params, 5000,
-      crypto || plan === PASS_PLAN ? undefined : tagged => deps.referral(userId, plan, tagged), deps.closeReferral);
+      crypto || paypal || plan === PASS_PLAN ? undefined : tagged => deps.referral(userId, plan, tagged), deps.closeReferral);
     // A trial and an immediate payment have different terms even for the same
     // plan; reusing the other session would misrepresent the requested offer.
     return guardedCheckout(deps.reservations, provider, userId, product, checkoutTerms(plan, trial, params), replaceDifferentTerms, { unreservedSessionOpen });
@@ -369,7 +373,7 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
   // Disabled unless explicitly configured. A pre-launch audit of existing
   // unreserved sessions and referral flows is required before activation.
   ...(CHECKOUT_GUARD_ENABLED ? {
-    guardedCreate: async (input: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean; crypto?: boolean }) => {
+    guardedCreate: async (input: { userId: number; product: Product; plan: PlanKey; trial: boolean; params: Stripe.Checkout.SessionCreateParams; replaceDifferentTerms?: boolean; crypto?: boolean; paypal?: boolean }) => {
       if (!stripe) throw new Error("Stripe is unavailable");
       return createGuardedCheckout({
         reservations: new WebCheckoutReservations(getPool()),
@@ -430,8 +434,8 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
     return expireUnreservedSession(stripe.checkout.sessions, userId, sessionId,
       session => closeExpiredReferral(userId, session as Stripe.Checkout.Session));
   },
-}, { replaceDifferentTerms = false, crypto = false, consentPage = false }: {
-  replaceDifferentTerms?: boolean; crypto?: boolean;
+}, { replaceDifferentTerms = false, crypto = false, paypal = false, consentPage = false }: {
+  replaceDifferentTerms?: boolean; crypto?: boolean; paypal?: boolean;
   /** An app route: with the Terms box required, an app that can open our page is sent there first. */
   consentPage?: boolean;
 } = {}) {
@@ -462,6 +466,13 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       if (!cryptoEnabled(effects.environment)) return res.status(404).json({ error: "not found" });
       if (product !== "pctweaker" || planKey !== "lifetime" || startTrial === true) {
         return res.status(400).json({ error: "Crypto is accepted for Lifetime only." });
+      }
+    }
+    // PayPal sells every PC Tweaker plan, Lifetime and the pass; the free trial stays a card offer.
+    if (paypal) {
+      if (!paypalEnabled(effects.environment)) return res.status(404).json({ error: "not found" });
+      if (product !== "pctweaker" || startTrial === true) {
+        return res.status(400).json({ error: "PayPal is accepted for PC Tweaker purchases paid now, without the free trial." });
       }
     }
     if (!isConfigured) {
@@ -572,6 +583,18 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
         }
         params = cryptoSessionParams(params as unknown as Record<string, any>, quote) as Stripe.Checkout.SessionCreateParams;
       }
+      // Same Price as the card sale above, at the card buyer's total for their country.
+      if (paypal) {
+        const unavailable = { error: "Paying with PayPal is not available for this purchase right now. You can pay by card instead.", code: "paypal_unavailable" };
+        // An amount-off promotion coupon cannot keep the card total on a gross price: card only while it runs.
+        if (params.discounts?.length) return res.status(409).json(unavailable);
+        const country = await (effects.buyerCountry ?? buyerCountry)(customerId, req);
+        const quote = await (effects.paypalQuote ?? ((id: string, c: string | null) => parityQuote(id, undefined, c)))(String(params.line_items?.[0]?.price), country);
+        if (!quote || Boolean(quote.recurring) !== (plan.mode === "subscription")) return res.status(503).json(unavailable);
+        params = paypalSessionParams(params as unknown as Record<string, any>, {
+          unitMinor: quote.cardTotalEurMinor, product: quote.product, recurring: quote.recurring, country, receiptEmail: customerEmail,
+        }) as Stripe.Checkout.SessionCreateParams;
+      }
       // Asked for by the customer, granted by the server: subscription plans
       // only, never Lifetime, and only for an account that has not had this
       // product's trial (re-checked when Stripe creates the subscription).
@@ -612,8 +635,8 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
         if (!consent || consent.accepted !== true || typeof consent.terms_version !== "string") {
           return res.status(400).json({ error: "Tick the box to continue.", code: "consent_required" });
         }
-        // The box before the pass Terms still covers everything but the pass (purchase-evidence.ts).
-        const version = !pass && consent.terms_version === PREVIOUS_TERMS_VERSION[product] ? consent.terms_version : PURCHASE_TERMS_VERSION[product];
+        // The box before the PayPal Terms still covers everything but PayPal (purchase-evidence.ts).
+        const version = !paypal && consent.terms_version === PREVIOUS_TERMS_VERSION[product] ? consent.terms_version : PURCHASE_TERMS_VERSION[product];
         if (consent.terms_version !== version) {
           return res.status(409).json({ error: "The Terms have changed since this page was opened. Reload it to read them.", code: "terms_changed" });
         }
@@ -636,6 +659,7 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
             uid: req.userId as number, tv: tokenVersion, product, plan: planKey,
             ...(startTrial !== undefined ? { trial: startTrial } : {}),
             ...(crypto ? { crypto: true } : {}),
+            ...(paypal ? { paypal: true } : {}),
             ...(deviceHeader && deviceHashFrom(deviceHeader).deviceHash ? { device: deviceHeader } : {}),
             ...(locale ? { lang: locale } : {}),
           }, effects.environment.JWT_SECRET);
@@ -645,7 +669,7 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       // Present when CHECKOUT_GUARD_ENABLED=1 at startup (referral sessions included); otherwise the
       // unguarded path below, which still yields to any guarded reservation (the cutover bridge).
       if (effects.guardedCreate) {
-        const result = await effects.guardedCreate({ userId: req.userId as number, product, plan: planKey, trial, params, replaceDifferentTerms, crypto });
+        const result = await effects.guardedCreate({ userId: req.userId as number, product, plan: planKey, trial, params, replaceDifferentTerms, crypto, paypal });
         if (consentId) await linkConsentSession(consentId, sessionIdFromUrl(result.url));
         return res.json({ url: result.url, trial, trial_days: TRIAL_DAYS });
       }
@@ -654,9 +678,9 @@ export function createCheckoutHandler(effects: CheckoutCreationEffects = {
       const userId = req.userId as number;
       if (effects.guardedReservationOpen && await effects.guardedReservationOpen(userId, product))
         throw new GuardedCheckoutError("other_checkout_pending");
-      const referred = crypto || pass ? null : await referralCheckout(userId, planKey, params);
+      const referred = crypto || paypal || pass ? null : await referralCheckout(userId, planKey, params);
       const session = referred ? { url: referred.url, id: referred.sessionId } : await effects.createSession(params,
-        `checkout:${req.userId}:${product}:${planKey}:${trial ? "trial" : "now"}${crypto ? ":crypto" : ""}:${Math.floor(effects.now() / 60_000)}`);
+        `checkout:${req.userId}:${product}:${planKey}:${trial ? "trial" : "now"}${crypto ? ":crypto" : paypal ? ":paypal" : ""}:${Math.floor(effects.now() / 60_000)}`);
       // Checked again after creation: a guarded instance that reserved meanwhile has either seen this
       // session in its own post-creation check or is seen here, so the two are never payable together.
       if (effects.guardedReservationOpen && await effects.guardedReservationOpen(userId, product)) {
@@ -692,6 +716,10 @@ router.post("/checkout", checkoutMaintenance, requireAuth, checkoutLimiter, requ
 const cryptoGate = (_req: Request, res: Response, next: NextFunction) =>
   cryptoEnabled(process.env) ? next() : res.status(404).json({ error: "not found" });
 router.post("/checkout/crypto", cryptoGate, checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler(undefined, { replaceDifferentTerms: true, crypto: true, consentPage: true }));
+// The same purchases with PayPal, behind PAYPAL_CHECKOUT_ENABLED (404 when off).
+const paypalGate = (_req: Request, res: Response, next: NextFunction) =>
+  paypalEnabled(process.env) ? next() : res.status(404).json({ error: "not found" });
+router.post("/checkout/paypal", paypalGate, checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler(undefined, { replaceDifferentTerms: true, paypal: true, consentPage: true }));
 
 /**
  * POST /api/checkout/confirm { token, accepted, terms_version }: the consent page
@@ -714,17 +742,20 @@ export async function consentIntentAuth(req: Request, res: Response, next: NextF
   };
   if (intent.device) req.headers["x-device-hash"] = intent.device;
   res.locals.crypto = intent.crypto === true;
+  res.locals.paypal = intent.paypal === true;
   next();
 }
 const confirmCard = createCheckoutHandler(undefined, { replaceDifferentTerms: true });
 const confirmCrypto = createCheckoutHandler(undefined, { replaceDifferentTerms: true, crypto: true });
+const confirmPaypal = createCheckoutHandler(undefined, { replaceDifferentTerms: true, paypal: true });
 router.post("/checkout/confirm", checkoutMaintenance, asyncRoute(consentIntentAuth), checkoutLimiter, requireStripe,
-  (req: Request, res: Response, next: NextFunction) => (res.locals.crypto ? cryptoGate(req, res, next) : next()),
-  asyncRoute((req: Request, res: Response) => (res.locals.crypto ? confirmCrypto : confirmCard)(req, res)));
+  (req: Request, res: Response, next: NextFunction) => (res.locals.crypto ? cryptoGate(req, res, next) : res.locals.paypal ? paypalGate(req, res, next) : next()),
+  asyncRoute((req: Request, res: Response) => (res.locals.crypto ? confirmCrypto : res.locals.paypal ? confirmPaypal : confirmCard)(req, res)));
 // The website cannot create a checkout unless the shared server guard is on.
 if (CHECKOUT_GUARD_ENABLED) {
   router.post("/web-checkout", checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler());
   router.post("/web-checkout/crypto", cryptoGate, checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler(undefined, { crypto: true }));
+  router.post("/web-checkout/paypal", paypalGate, checkoutMaintenance, requireAuth, checkoutLimiter, requireStripe, createCheckoutHandler(undefined, { paypal: true }));
   router.post("/web-checkout/cancel", requireAuth, checkoutLimiter, requireStripe, async (req, res) => {
     if (!stripe || !isConfigured) return res.status(503).json({ error: "Checkout is temporarily unavailable." });
     try {
@@ -837,12 +868,36 @@ export async function cryptoQuote(
   fx?: () => Promise<number | null>,
   country: string | null = null,
 ): Promise<CryptoQuote | null> {
+  const [quote, rate] = await Promise.all([parityQuote(priceId, read, country), cryptoRate(environment, fx)]);
+  if (!quote || quote.recurring || !rate) return null;
+  const { recurring: _oneOff, ...parity } = quote;
+  return { usdMinor: usdFromEur(parity.cardTotalEurMinor, rate.usdPerEur), ...parity, rate };
+}
+
+/** A live euro Price (net) and what a card buyer from `country` pays for it
+ * (price parity, stripe-policy.ts), with the Stripe product it belongs to and
+ * its interval when it renews. Null when the Price cannot be read or is not a
+ * live euro Price: that method is then unavailable. */
+export type ParityQuote = {
+  eurMinor: number;
+  cardTotalEurMinor: number;
+  country: string | null;
+  product: string;
+  recurring: { interval: string; interval_count: number } | null;
+};
+export async function parityQuote(
+  priceId: string | undefined,
+  read: PriceReader | null = stripe ? (price) => stripe!.prices.retrieve(price) : null,
+  country: string | null = null,
+): Promise<ParityQuote | null> {
   if (!priceId || !read) return null;
-  const [price, rate] = await Promise.all([cachedPrice(priceId, read, Date.now()), cryptoRate(environment, fx)]);
+  const price = await cachedPrice(priceId, read, Date.now());
   const product = typeof price?.product === "string" ? price.product : price?.product?.id;
-  if (!price?.active || price.unit_amount == null || price.currency !== "eur" || price.recurring || !product || !rate) return null;
-  const cardTotalEurMinor = cardParityTotal(price.unit_amount, country);
-  return { usdMinor: usdFromEur(cardTotalEurMinor, rate.usdPerEur), eurMinor: price.unit_amount, cardTotalEurMinor, country, product, rate };
+  if (!price?.active || price.unit_amount == null || price.currency !== "eur" || !product) return null;
+  return {
+    eurMinor: price.unit_amount, cardTotalEurMinor: cardParityTotal(price.unit_amount, country), country, product,
+    recurring: price.recurring ? { interval: price.recurring.interval, interval_count: price.recurring.interval_count } : null,
+  };
 }
 
 /**
@@ -903,6 +958,24 @@ export async function publicPass(environment: NodeJS.ProcessEnv = process.env, r
     : null;
 }
 
+/** The `paypal` block of GET /api/billing/prices: per PC Tweaker plan, what a
+ *  PayPal buyer from the visitor's country pays (the card total, euro cents),
+ *  or null where PayPal cannot sell it right now: an amount-off promotion
+ *  coupon running on it, an unreadable Price, or the pass switched off. */
+export async function publicPaypal(environment: NodeJS.ProcessEnv = process.env, read?: PriceReader | null, now = Date.now(), country: string | null = null) {
+  if (!paypalEnabled(environment)) return { available: false as const };
+  const quote = async (envName: string) => {
+    const promo = promoCheckout(environment, now, envName);
+    if (promo?.coupon) return null;
+    return (await parityQuote(promo?.price ?? environment[envName], read, country))?.cardTotalEurMinor ?? null;
+  };
+  const [monthly, annual, lifetime, pass] = await Promise.all([
+    quote("STRIPE_PRICE_MONTHLY"), quote("STRIPE_PRICE_ANNUAL"), quote("STRIPE_PRICE_LIFETIME"),
+    passEnabled(environment) ? quote("STRIPE_PRICE_PASS_7D") : null,
+  ]);
+  return { available: true as const, currency: "eur", country, plans: { monthly, annual, lifetime, [PASS_PLAN]: pass } };
+}
+
 /** GET /api/billing/prices: public, for the site and the plan screens. */
 export async function publicPrices(environment: NodeJS.ProcessEnv = process.env, read?: PriceReader | null, fx?: () => Promise<number | null>, country: string | null = null) {
   const prices = await Promise.all(RECURRING_PLANS.map(async ({ product, plan, env }) => {
@@ -916,12 +989,13 @@ export async function publicPrices(environment: NodeJS.ProcessEnv = process.env,
     prices: prices.filter(Boolean),
     crypto: await publicCrypto(environment, read, fx, Date.now(), country),
     pass: await publicPass(environment, read),
+    paypal: await publicPaypal(environment, read, Date.now(), country),
   };
 }
 
 router.get("/billing/prices", asyncRoute(async (req: Request, res: Response) => {
   res.setHeader("Cache-Control", "no-store");
-  res.json(await publicPrices(process.env, undefined, undefined, cryptoEnabled(process.env) ? requestCountry(req) : null));
+  res.json(await publicPrices(process.env, undefined, undefined, cryptoEnabled(process.env) || paypalEnabled(process.env) ? requestCountry(req) : null));
 }));
 
 export async function billingStatus(userId: number | string, products: readonly Product[], environment: NodeJS.ProcessEnv = process.env, now = Date.now(), read?: PriceReader | null, deviceHeader?: string) {

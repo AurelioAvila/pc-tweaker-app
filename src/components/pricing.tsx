@@ -7,9 +7,17 @@ import { HALLOWEEN_MARK_EMBER } from "../halloween-decor";
 import { CheckIcon, CrownIcon, LayersIcon, SparkIcon } from "./icons";
 import { PLAN_STATE_COPY, PRICING_COPY, trialBadgeText } from "./pricing-copy";
 import { TRIAL_COPY } from "./trial-copy";
-import { trialLeft, trialOffer, trialUsed, type BillingStatus, type PriceList } from "../trial";
+import {
+  trialLeft,
+  trialOffer,
+  trialUsed,
+  type BillingStatus,
+  type PayMethod,
+  type PriceList,
+} from "../trial";
 import { useLifetimeOffer } from "./use-lifetime-offer";
 import { CryptoLifetimeOption } from "./crypto-pay";
+import { PAYPAL_COPY } from "./paypal-copy";
 import { usePromo } from "./use-promo";
 import { readSubscription, type Subscription } from "./subscription";
 import { SUBSCRIPTION_COPY } from "./subscription-copy";
@@ -28,6 +36,31 @@ function compactClock(ms: number, lang: Lang): string {
       d ? { days: d, hours: h, minutes: m } : { hours: h, minutes: m },
     );
   return `${d ? `${d}d ` : ""}${h}h ${String(m).padStart(2, "0")}m`;
+}
+
+/** "Pay with PayPal": a quiet link under a plan the server sells with PayPal. */
+function PaypalLink({
+  label,
+  busy,
+  disabled,
+  onPay,
+}: {
+  label: string;
+  busy: boolean;
+  disabled: boolean;
+  onPay: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="pricing-link"
+      disabled={disabled}
+      aria-busy={busy}
+      onClick={onPay}
+    >
+      {busy ? "…" : label}
+    </button>
+  );
 }
 
 export function PricingPanel({
@@ -54,8 +87,9 @@ export function PricingPanel({
   billing?: BillingStatus | null;
   freeTweakCount: number;
   /** `startTrial` is set only when a trial is on offer: true for the
-   *  trial button, false for "Subscribe now". `crypto`: Lifetime in USDC. */
-  onChoosePro: (plan: ProPlan, startTrial?: boolean, crypto?: boolean) => void | Promise<void>;
+   *  trial button, false for "Subscribe now". `method`: card (the default), USDC
+   *  (Lifetime) or PayPal (the plans the price list offers it for). */
+  onChoosePro: (plan: ProPlan, startTrial?: boolean, method?: PayMethod) => void | Promise<void>;
   onManageBilling: () => void | Promise<void>;
   onOpenLifetimeTools: () => void;
 }) {
@@ -70,7 +104,8 @@ export function PricingPanel({
   }, []);
   const [selectedPeriod, setPeriod] = useState<"monthly" | "annual" | null>(null);
   const period = selectedPeriod ?? (heldPlan === "monthly" ? "monthly" : "annual");
-  const [busy, setBusy] = useState<ProPlan | "manage" | "crypto" | null>(null);
+  // A plan, "manage", "crypto" or `paypal-${plan}`: which control shows the wait.
+  const [busy, setBusy] = useState<string | null>(null);
   const [busyTrial, setBusyTrial] = useState<boolean | undefined>(undefined);
   const actionPending = useRef(false);
   const campaign = useLifetimeOffer();
@@ -91,6 +126,8 @@ export function PricingPanel({
   const save = Math.round((1 - listed("annual") / (listed("monthly") * 12)) * 100);
   const mine = billing?.products.find((p) => p.product === "pctweaker") ?? null;
   const pass = prices?.pass ?? null;
+  // PayPal, plan by plan, only while the server sells it (PAYPAL_CHECKOUT_ENABLED).
+  const paypal = prices?.paypal ?? null;
   const passEnd = onPass && mine?.plan === "pass_7d" ? mine.periodEnd : null;
   const passMoment = (ms: number) =>
     new Intl.DateTimeFormat(localeOf(lang), { dateStyle: "long", timeStyle: "short" }).format(
@@ -179,7 +216,7 @@ export function PricingPanel({
       )
     : "";
 
-  async function act(plan: ProPlan | "manage", startTrial?: boolean, crypto = false) {
+  async function act(plan: ProPlan | "manage", startTrial?: boolean, method: PayMethod = "card") {
     if (
       actionPending.current ||
       (plan !== "manage" && previewing) ||
@@ -187,10 +224,10 @@ export function PricingPanel({
     )
       return;
     actionPending.current = true;
-    setBusy(crypto ? "crypto" : plan);
+    setBusy(method === "card" ? plan : method === "crypto" ? "crypto" : `paypal-${plan}`);
     setBusyTrial(startTrial);
     try {
-      await (plan === "manage" ? onManageBilling() : onChoosePro(plan, startTrial, crypto));
+      await (plan === "manage" ? onManageBilling() : onChoosePro(plan, startTrial, method));
     } finally {
       actionPending.current = false;
       setBusy(null);
@@ -409,6 +446,14 @@ export function PricingPanel({
                 {busy === "manage" ? "…" : s.pricing.manageBilling}
               </button>
             )}
+            {!planHeld && !paymentFailed && paypal?.[period] && (
+              <PaypalLink
+                label={PAYPAL_COPY[lang].pay}
+                busy={busy === `paypal-${period}`}
+                disabled={busy !== null || previewing}
+                onPay={() => void act(period, undefined, "paypal")}
+              />
+            )}
           </div>
           {(paymentFailed || left) && (
             <div className="pricing-trial" role="status">
@@ -501,7 +546,15 @@ export function PricingPanel({
                 usdCents={prices.crypto.lifetimeUsd}
                 disabled={busy !== null || !campaign.available || previewing}
                 busy={busy === "crypto"}
-                onPay={() => void act("lifetime", undefined, true)}
+                onPay={() => void act("lifetime", undefined, "crypto")}
+              />
+            )}
+            {!ownsLifetime && paypal?.lifetime && (
+              <PaypalLink
+                label={PAYPAL_COPY[lang].pay}
+                busy={busy === "paypal-lifetime"}
+                disabled={busy !== null || !campaign.available || previewing}
+                onPay={() => void act("lifetime", undefined, "paypal")}
               />
             )}
           </div>
@@ -535,16 +588,26 @@ export function PricingPanel({
             <strong>{money(pass.amount / 100, lang)}</strong>
             <span>{s.pricing.once}</span>
           </div>
-          <button
-            className="pricing-button pricing-button-secondary"
-            disabled={busy !== null || previewing}
-            aria-busy={busy === "pass_7d"}
-            onClick={() => void act("pass_7d")}
-          >
-            {busy === "pass_7d"
-              ? "…"
-              : format(onPass ? copy.passAdd : copy.passCta, { days: pass.days })}
-          </button>
+          <div className="pricing-pass-actions">
+            <button
+              className="pricing-button pricing-button-secondary"
+              disabled={busy !== null || previewing}
+              aria-busy={busy === "pass_7d"}
+              onClick={() => void act("pass_7d")}
+            >
+              {busy === "pass_7d"
+                ? "…"
+                : format(onPass ? copy.passAdd : copy.passCta, { days: pass.days })}
+            </button>
+            {paypal?.pass_7d && (
+              <PaypalLink
+                label={PAYPAL_COPY[lang].pay}
+                busy={busy === "paypal-pass_7d"}
+                disabled={busy !== null || previewing}
+                onPay={() => void act("pass_7d", undefined, "paypal")}
+              />
+            )}
+          </div>
         </aside>
       )}
       {/* Small print under the plans: the trial's terms, offer status and the
@@ -592,6 +655,7 @@ export function PricingPanel({
           </p>
         )}
         <p>{copy.checkout}</p>
+        {paypal && <p>{PAYPAL_COPY[lang].fine}</p>}
         <details className="pricing-trust">
           <summary>
             <CheckIcon className="h-3.5 w-3.5" />

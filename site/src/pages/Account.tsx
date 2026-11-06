@@ -347,7 +347,7 @@ export function AccountPage() {
                         consentBox.current?.focus();
                         return;
                       }
-                      void act(async () => window.location.assign(await client.checkout(token, "lifetime", true, PURCHASE_TERMS_VERSION.pctweaker)));
+                      void act(async () => window.location.assign(await client.checkout(token, "lifetime", "crypto", PURCHASE_TERMS_VERSION.pctweaker)));
                     }}
                   />
                 </div>

@@ -117,6 +117,8 @@ export interface Dictionary {
     readonly purchaseGuide: string;
     /** The payment methods Checkout actually offers (Managed Payments: card, Apple Pay, Google Pay, Link). */
     readonly payWith: string;
+    /** The same, while the price list offers PayPal (PAYPAL_CHECKOUT_ENABLED on the API). */
+    readonly payWithPaypal: string;
     readonly free: {
       readonly plan: string;
       readonly price: string;
@@ -581,6 +583,7 @@ export const engDictionary: Dictionary = {
     "tag": "05 / PLANS",
     "title": "Start with control. Upgrade for convenience.",
     "payWith": "Pay with card, Apple Pay, Google Pay or Link.",
+    "payWithPaypal": "Pay with card, Apple Pay, Google Pay, Link or PayPal.",
     "purchaseGuide": "Already installed? Open PC Tweaker, choose Plans & pricing, then select Get Lifetime or Go Pro. Sign in or create an account when prompted; checkout opens in your browser. There is no need to reinstall.",
     "free": {
       "plan": "FREE",

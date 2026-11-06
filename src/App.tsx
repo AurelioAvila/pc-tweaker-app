@@ -63,6 +63,7 @@ import {
   parsePriceList,
   trialEntry,
   type BillingChange,
+  type PayMethod,
   type PriceList,
 } from "./trial";
 import {
@@ -251,11 +252,11 @@ function App() {
   const pendingPlan = useRef<{
     plan: ProPlan;
     startTrial?: boolean;
-    crypto?: boolean;
+    method?: PayMethod;
     until: number;
   } | null>(null);
-  function rememberPlan(plan: ProPlan, startTrial?: boolean, crypto?: boolean) {
-    pendingPlan.current = { plan, startTrial, crypto, until: Date.now() + 60 * 60 * 1000 };
+  function rememberPlan(plan: ProPlan, startTrial?: boolean, method?: PayMethod) {
+    pendingPlan.current = { plan, startTrial, method, until: Date.now() + 60 * 60 * 1000 };
   }
 
   // Re-reads Pro status from the backend. Called on mount (if already logged
@@ -314,7 +315,7 @@ function App() {
         pendingPlan.current = null;
       } else if (pending && data.emailVerified) {
         pendingPlan.current = null;
-        startCheckout(pending.plan, pending.startTrial, pending.crypto).catch((e) =>
+        startCheckout(pending.plan, pending.startTrial, pending.method).catch((e) =>
           pushToast("error", String(e instanceof Error ? e.message : e)),
         );
       }
@@ -724,9 +725,14 @@ function App() {
   // to charge anything.
   /** `startTrial` (trial button vs "Subscribe now") is sent only when a
    *  trial is on offer; the server still decides whether one applies. */
-  /** `crypto`: Lifetime paid in USDC (POST /api/checkout/crypto), offered only
-   *  while the price list says crypto is available. */
-  async function startCheckout(plan: ProPlan = "annual", startTrial?: boolean, crypto = false) {
+  /** `method`: "crypto" is Lifetime paid in USDC (POST /api/checkout/crypto), "paypal" a
+   *  plan paid with PayPal (POST /api/checkout/paypal), each offered only while the
+   *  price list says so. */
+  async function startCheckout(
+    plan: ProPlan = "annual",
+    startTrial?: boolean,
+    method: PayMethod = "card",
+  ) {
     if (import.meta.env.DEV && import.meta.env.VITE_LIFETIME_PREVIEW_ENDS_AT) {
       throw new Error(PRICING_COPY[lang].previewCheckout);
     }
@@ -737,18 +743,23 @@ function App() {
     if (!token) {
       throw new Error(s.auth.loginRequiredForCheckout);
     }
-    const res = await fetch(`${API_BASE_URL}/api/checkout${crypto ? "/crypto" : ""}`, {
-      method: "POST",
-      // The PC id: the free trial is once per PC as well as per account (backend trial.ts).
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        ...(await deviceHeader()),
+    const res = await fetch(
+      `${API_BASE_URL}/api/checkout${method === "card" ? "" : `/${method}`}`,
+      {
+        method: "POST",
+        // The PC id: the free trial is once per PC as well as per account (backend trial.ts).
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          ...(await deviceHeader()),
+        },
+        body: JSON.stringify(
+          startTrial === undefined || method !== "card"
+            ? { plan }
+            : { plan, start_trial: startTrial },
+        ),
       },
-      body: JSON.stringify(
-        startTrial === undefined || crypto ? { plan } : { plan, start_trial: startTrial },
-      ),
-    });
+    );
     if (!res.ok) {
       const body = await res.json().catch(() => ({}) as { error?: string; code?: string });
       throw new CheckoutError(body.error || `HTTP ${res.status}`, body.code);
@@ -1471,7 +1482,7 @@ function App() {
                     billing={billing ?? null}
                     freeTweakCount={freeTweakCount}
                     onOpenLifetimeTools={() => setFilter("profiles")}
-                    onChoosePro={async (plan, startTrial, crypto) => {
+                    onChoosePro={async (plan, startTrial, method) => {
                       // A visitor without an account is exactly who this button is
                       // for, and it used to answer them with a red toast and
                       // nowhere to go: startCheckout throws without a token and
@@ -1479,20 +1490,20 @@ function App() {
                       // had the right shape — say what is missing and open the
                       // place where it is fixed.
                       if (auth.status !== "authenticated") {
-                        rememberPlan(plan, startTrial, crypto);
+                        rememberPlan(plan, startTrial, method);
                         pushToast("error", s.auth.loginRequiredForCheckout);
                         setAccountMenuOpen(true);
                         return;
                       }
                       try {
-                        await startCheckout(plan, startTrial, crypto);
+                        await startCheckout(plan, startTrial, method);
                       } catch (e) {
                         // Checkout needs a confirmed inbox. Same shape as above: say
                         // what is missing and open the menu with the resend button.
                         // The server decides, since emailVerified starts false
                         // until refreshAccount() answers.
                         if (e instanceof CheckoutError && e.code === "email_unverified") {
-                          rememberPlan(plan, startTrial, crypto);
+                          rememberPlan(plan, startTrial, method);
                           pushToast("error", s.auth.verifyEmailForCheckout);
                           setAccountMenuOpen(true);
                           return;

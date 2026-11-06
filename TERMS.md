@@ -1,6 +1,6 @@
 # Terms of Service
 
-Last updated: 2026-11-04
+Last updated: 2026-11-06
 
 Welcome to PC Tweaker ("we", "us", "our"), run by Aurelio Avila. By downloading, installing, or using PC Tweaker, you agree to these Terms of Service.
 
@@ -14,6 +14,7 @@ PC Tweaker is a Windows desktop app for system settings, maintenance and current
 - Pro unlocks the advanced tweaks and presets, either as a subscription (monthly or annual) that renews automatically until cancelled, as a one-time Lifetime purchase that does not expire, or, where offered, as a one-time 7-day pass that ends 7 days after payment and does not renew (a pass bought while another is running adds its 7 days after the current ones).
 - Purchases are sold through Link, Stripe's merchant of record, which collects any applicable tax, sends the receipt and handles payment support. Link's own buyer terms apply to the transaction.
 - Where offered, Lifetime and tips can also be paid in USDC, a US-dollar stablecoin, through Stripe's crypto payment method. A crypto payment costs the same total a card payment from your country costs, charged in US dollars and converted from euros at the exchange rate in effect when checkout opens (Stripe's page shows the exact amount before you pay), and is made to us directly rather than through Link, so Link's buyer terms do not apply to it. It does not use or earn the Invite a friend discount or bonus. Any refund that is due is returned in stablecoin to the wallet that paid.
+- Where offered, subscriptions, Lifetime and the 7-day pass can also be paid with PayPal through Stripe. A PayPal payment costs the same total a card payment from your country costs, charged in euros (Stripe's page shows the exact amount before you pay; a subscription renews at that same total from your PayPal account until cancelled), and is made to us directly rather than through Link, so Link's buyer terms do not apply to it and Stripe emails the receipt on our behalf. It does not include the free trial and does not use or earn the Invite a friend discount or bonus. Any refund that is due goes back to the PayPal account that paid.
 - You can cancel anytime; Pro access continues until the end of the current billing period, then reverts to the Free tier — cancelling does not undo tweaks already applied, it only locks further use of Pro-only tweaks and presets.
 - Prices are listed in the app and may change; changes do not affect the price of an active subscription until its next renewal.
 - Time-limited offers show their end date. A struck-through price is the lowest price charged in the 30 days before the offer began. For subscriptions, an offer discounts only the first billing period; renewals are at the regular price. If you open checkout in the last 30 minutes of an offer, you still have 30 minutes to complete it at the offer price.

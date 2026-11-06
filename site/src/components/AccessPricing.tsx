@@ -73,6 +73,11 @@ export function AccessPricing() {
   const [annual, monthly] = [amount("annual"), amount("monthly")];
   // The 7-day pass: shown only while the API sells it (its price block is null otherwise).
   const pass = prices?.pass ?? null;
+  // PayPal, plan by plan, only while the API sells it (null otherwise). The local preview
+  // (VITE_PAYPAL_PREVIEW=1, dev only) shows it for every plan without asking the API.
+  const paypal = import.meta.env.DEV && import.meta.env.VITE_PAYPAL_PREVIEW === "1"
+    ? { monthly: 1, annual: 1, lifetime: 1, pass_7d: 1 }
+    : prices?.paypal ?? null;
   const live = {
     price: annual ? euro(annual) : pro.price,
     per: annual && monthly ? `/ year · monthly option ${euro(monthly)}` : pro.per,
@@ -298,10 +303,10 @@ export function AccessPricing() {
                 Create a free account
               </button>
             </div>
-            {purchase && <WebPurchase key={purchase} plan={purchase === "account" ? null : purchase === "lifetime-crypto" ? "lifetime" : purchase} cryptoUsd={purchase === "lifetime-crypto" ? prices?.crypto?.lifetimeUsd ?? null : null} pass={pass} demo={webPreview} onClose={() => setPurchase(null)} onChoosePlan={() => { setPurchase(null); document.getElementById("access")?.scrollIntoView({ block: "start" }); }} />}
+            {purchase && <WebPurchase key={purchase} plan={purchase === "account" ? null : purchase === "lifetime-crypto" ? "lifetime" : purchase} cryptoUsd={purchase === "lifetime-crypto" ? prices?.crypto?.lifetimeUsd ?? null : null} paypal={purchase !== "account" && purchase !== "lifetime-crypto" && Boolean(paypal?.[purchase])} pass={pass} demo={webPreview} onClose={() => setPurchase(null)} onChoosePlan={() => { setPurchase(null); document.getElementById("access")?.scrollIntoView({ block: "start" }); }} />}
           </div>
         )}
-        <p className="mt-5 text-[12.5px] text-[var(--fg-dim)]">{text.pricing.payWith}</p>
+        <p className="mt-5 text-[12.5px] text-[var(--fg-dim)]">{(webEnabled || webPreview) && paypal ? text.pricing.payWithPaypal : text.pricing.payWith}</p>
         <PromoFine className="mt-2 text-[12.5px] text-[var(--fg-dim)]" />
         <motion.p
           variants={riseChild}

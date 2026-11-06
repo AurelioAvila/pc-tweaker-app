@@ -121,6 +121,20 @@ Never use `pgmem` outside of local testing — data doesn't persist across resta
    the only method, no automatic tax): sold directly, not through Link. Card
    sessions are unchanged. See `cryptoSessionParams` in `src/stripe-policy.ts`.
 
+   PayPal (through Stripe) for the PC Tweaker plans, Lifetime and the 7-day
+   pass stays off until `PAYPAL_CHECKOUT_ENABLED=1`. Off: `/api/checkout/paypal`
+   and `/api/web-checkout/paypal` answer 404 and `/api/billing/prices`
+   reports `paypal: { available: false }`. On: the same price parity as
+   crypto, charged in euros (a subscription renews at that total), PayPal as
+   the only method, outside Managed Payments and without automatic tax, so
+   these sales are ours rather than Link's. No free trial, no Invite a friend,
+   and no subscription while an amount-off promotion coupon applies to it
+   (`paypal_unavailable`). One-off sales get a Stripe invoice and a receipt to
+   the account's address; subscription invoices follow the dashboard's
+   "Successful payments" customer email setting. `/api/billing/prices`
+   lists, per plan, the total PayPal would charge or `null`. See
+   `paypalSessionParams` in `src/stripe-policy.ts`.
+
    For the website's support form and reviews section, also set:
    `SUPPORT_EMAIL` (where support requests are delivered — defaults to the
    product alias support@pctweaker.app; it is never exposed to any client) and `ADMIN_TOKEN`

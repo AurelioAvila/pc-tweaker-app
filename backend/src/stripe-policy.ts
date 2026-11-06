@@ -338,20 +338,80 @@ export function cryptoSessionParams(
     quantity: item.quantity ?? 1,
     ...(item.adjustable_quantity ? { adjustable_quantity: item.adjustable_quantity } : {}),
   }];
-  params.payment_method_types = ["crypto"];
-  params.managed_payments = { enabled: false };
-  delete params.automatic_tax;
-  delete params.customer_update;
-  // Read by the owner's sale notice: how it was paid, and the country whose
-  // card total it was priced at ("none": the net price).
-  const tag = { pay_with: "crypto", price_country: country ?? "none" };
-  params.metadata = { ...params.metadata, ...tag };
+  const tag = outsideManagedPayments(params, "crypto", country);
   params.payment_intent_data = { ...params.payment_intent_data, metadata: { ...params.payment_intent_data?.metadata, ...tag } };
   return params;
 }
 
+/** What crypto and PayPal sessions share: that one method only, outside
+ * Managed Payments, no automatic tax (see cryptoSessionParams), and the tag
+ * the owner's sale notice reads: how it was paid, and the country whose card
+ * total it was priced at ("none": the net price). Returns the tag. */
+function outsideManagedPayments(params: Record<string, any>, method: "crypto" | "paypal", country: string | null) {
+  params.payment_method_types = [method];
+  params.managed_payments = { enabled: false };
+  delete params.automatic_tax;
+  delete params.customer_update;
+  const tag = { pay_with: method, price_country: country ?? "none" };
+  params.metadata = { ...params.metadata, ...tag };
+  return tag;
+}
+
 /**
- * Price parity for crypto (owner decision of 1/11/2026): a crypto buyer pays
+ * PayPal (owner decision of 6/11/2026): PayPal through Stripe for the PC
+ * Tweaker plans, Lifetime and the 7-day pass. Managed Payments does not offer
+ * PayPal, so like crypto these sales are ours, outside Link, at the same total
+ * a card buyer from the same country pays. Off unless PAYPAL_CHECKOUT_ENABLED=1.
+ */
+export function paypalEnabled(environment: NodeJS.ProcessEnv): boolean {
+  return environment.PAYPAL_CHECKOUT_ENABLED === "1";
+}
+
+/**
+ * The same sale as `params`, paid with PayPal. Changes `params` in place.
+ *
+ * - One euro line priced inline at the card buyer's total (`unitMinor`), on
+ *   the same Stripe product; a subscription keeps its interval, so it renews
+ *   at that total from the saved PayPal account.
+ * - A one-off sale gets an invoice (`invoice_creation`) and its receipt is
+ *   sent to the account's address (`receipt_email`), whatever the dashboard's
+ *   receipt setting: outside Managed Payments, Link sends nothing.
+ *   Subscription invoices are emailed by Stripe's "Successful payments"
+ *   customer email setting.
+ */
+export function paypalSessionParams(
+  params: Record<string, any>,
+  { unitMinor, product, recurring = null, country = null, receiptEmail }: {
+    unitMinor: number; product: string; country?: string | null; receiptEmail?: string;
+    recurring?: { interval: string; interval_count?: number } | null;
+  },
+) {
+  const subscription = params.mode === "subscription";
+  if (params.line_items?.length !== 1 || subscription !== Boolean(recurring)) throw new Error("paypal checkout needs one line whose price matches the mode");
+  params.line_items = [{
+    price_data: {
+      currency: "eur", unit_amount: unitMinor, product,
+      ...(recurring ? { recurring: { interval: recurring.interval, interval_count: recurring.interval_count ?? 1 } } : {}),
+    },
+    quantity: params.line_items[0].quantity ?? 1,
+  }];
+  const tag = outsideManagedPayments(params, "paypal", country);
+  if (subscription) {
+    params.subscription_data = { ...params.subscription_data, metadata: { ...params.subscription_data?.metadata, ...tag } };
+  } else {
+    params.invoice_creation = { enabled: true };
+    params.payment_intent_data = {
+      ...params.payment_intent_data,
+      metadata: { ...params.payment_intent_data?.metadata, ...tag },
+      ...(receiptEmail ? { receipt_email: receiptEmail } : {}),
+    };
+  }
+  return params;
+}
+
+/**
+ * Price parity for crypto (owner decision of 1/11/2026; PayPal since
+ * 6/11/2026): a crypto or PayPal buyer pays
  * the same total a card buyer from the same country pays. Our Prices are net
  * and, on a card sale, Link (Managed Payments, merchant of record) adds the
  * buyer's VAT/GST on top. A crypto sale is ours, outside Managed Payments, and

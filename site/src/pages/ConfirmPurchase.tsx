@@ -3,6 +3,7 @@ import { API_BASE } from "../constants";
 import { createPurchaseClient, PurchaseError } from "../web-purchase-client";
 import { PURCHASE_TERMS_VERSION } from "../purchase-terms";
 import { CONSENT_COPY, CONSENT_LANGS, PurchaseConsent, type ConsentLang } from "../components/PurchaseConsent";
+import { PAYPAL_COPY } from "../../../src/components/paypal-copy";
 
 /* /checkout/confirm/: the Terms box for a purchase started in an app. The app opens
    this page with a signed link in the fragment (#t=..., never sent to a server or in
@@ -12,7 +13,7 @@ import { CONSENT_COPY, CONSENT_LANGS, PurchaseConsent, type ConsentLang } from "
 
 type Product = keyof typeof PURCHASE_TERMS_VERSION;
 type Plan = "monthly" | "annual" | "lifetime" | "pass_7d";
-type Intent = { link: string; product: Product; plan: Plan; trial: boolean; crypto: boolean; lang: ConsentLang };
+type Intent = { link: string; product: Product; plan: Plan; trial: boolean; crypto: boolean; paypal: boolean; lang: ConsentLang };
 
 const TERMS_HREF: Record<Product, string> = {
   pctweaker: "/terms/",
@@ -103,7 +104,7 @@ function readIntent(hash: string): Intent | null {
     if (!(p.product in PURCHASE_TERMS_VERSION) || !["monthly", "annual", "lifetime", "pass_7d"].includes(p.plan)) return null;
     const browser = (typeof navigator === "undefined" ? "en" : navigator.language.slice(0, 2)) as ConsentLang;
     const lang = CONSENT_LANGS.includes(p.lang) ? p.lang : CONSENT_LANGS.includes(browser) ? browser : "en";
-    return { link, product: p.product, plan: p.plan, trial: p.trial === true, crypto: p.crypto === true, lang };
+    return { link, product: p.product, plan: p.plan, trial: p.trial === true, crypto: p.crypto === true, paypal: p.paypal === true, lang };
   } catch {
     return null;
   }
@@ -158,6 +159,7 @@ export function ConfirmPurchasePage() {
               {t.plans[intent.plan]}
               {intent.trial && intent.plan !== "lifetime" && intent.plan !== "pass_7d" ? `, ${t.trial}` : ""}
               {intent.crypto ? `, ${t.crypto}` : ""}
+              {intent.paypal ? `, ${PAYPAL_COPY[lang].paid}` : ""}
             </p>
             <p className="mt-2 text-sm leading-relaxed text-[var(--fg-dim)]">{t.note}</p>
             <div className="mt-6">

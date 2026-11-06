@@ -1,3 +1,4 @@
+import type { PayMethod } from "../../src/trial";
 /** Account and checkout operations for the website. Bearer tokens only, never cookies
  *  (credentials: "omit"); the caller decides where a token lives. */
 /** `pass_7d`: the 7-day pass, one payment for 7 days of Pro (offered only while the API sells it). */
@@ -93,14 +94,15 @@ export function createPurchaseClient(base: string, transport: Transport = fetch)
     resendVerification(token: string) { return request<{ ok: boolean }>("/api/auth/resend-verification", "POST", { product: "pctweaker" }, token); },
     forgotPassword(email: string) { return request<{ ok: boolean }>("/api/auth/forgot-password", "POST", { email, product: "pctweaker" }); },
     cancelCheckout(token: string) { return request<{ ok: boolean }>("/api/web-checkout/cancel", "POST", {}, token); },
-    /** `crypto`: Lifetime paid in USDC (only offered while the price list says crypto is available).
-     *  `termsVersion`: the Terms the ticked purchase box showed (purchase-terms.ts); the API records it. */
-    async checkout(token: string, plan: WebPlan, crypto = false, termsVersion?: string) {
-      if (!["monthly", "annual", "lifetime", "pass_7d"].includes(plan) || (crypto && plan !== "lifetime")) throw new PurchaseError("Please choose a valid plan.");
+    /** `method`: "crypto" is Lifetime paid in USDC, "paypal" any plan paid with PayPal (each only
+     *  offered while the price list says so). `termsVersion`: the Terms the ticked purchase box
+     *  showed (purchase-terms.ts); the API records it. */
+    async checkout(token: string, plan: WebPlan, method: PayMethod = "card", termsVersion?: string) {
+      if (!["monthly", "annual", "lifetime", "pass_7d"].includes(plan) || !["card", "crypto", "paypal"].includes(method) || (method === "crypto" && plan !== "lifetime")) throw new PurchaseError("Please choose a valid plan.");
       const consent = termsVersion ? { consent: { accepted: true, terms_version: termsVersion } } : {};
-      return stripeCheckout(crypto
-        ? await request<{ url?: unknown }>("/api/web-checkout/crypto", "POST", { product: "pctweaker", plan, ...consent }, token)
-        : await request<{ url?: unknown }>("/api/web-checkout", "POST", { product: "pctweaker", plan, start_trial: false, ...consent }, token));
+      return stripeCheckout(method === "card"
+        ? await request<{ url?: unknown }>("/api/web-checkout", "POST", { product: "pctweaker", plan, start_trial: false, ...consent }, token)
+        : await request<{ url?: unknown }>(`/api/web-checkout/${method}`, "POST", { product: "pctweaker", plan, ...consent }, token));
     },
     /** The consent page: the signed link the app opened, plus the ticked box. No account token: the link is the authority. */
     async confirmCheckout(link: string, termsVersion: string) {

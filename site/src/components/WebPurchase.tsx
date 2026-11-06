@@ -4,14 +4,18 @@ import { createPurchaseClient, PurchaseError } from "../web-purchase-client";
 import { API_BASE, DOWNLOAD_EXE } from "../constants";
 import { euro, usePromo } from "../promo";
 import { usd } from "../../../src/components/crypto-copy";
+import { PAYPAL_COPY } from "../../../src/components/paypal-copy";
+import type { PayMethod } from "../../../src/trial";
 import { PurchaseConsent } from "./PurchaseConsent";
 import { PURCHASE_TERMS_VERSION } from "../purchase-terms";
 type Plan = "monthly" | "annual" | "lifetime" | "pass_7d";
 // plan null: the account alone (sign up from the site), with the app download and the plans as next steps.
 // cryptoUsd: Lifetime paid in USDC, at this many US cents (from GET /api/billing/prices).
 // pass: the 7-day pass's price and length, from the same list.
-export function WebPurchase({ plan, onClose, demo, onChoosePlan, cryptoUsd = null, pass = null }: { plan: Plan | null; onClose: () => void; demo: boolean; onChoosePlan?: () => void; cryptoUsd?: number | null; pass?: { amount: number; days: number } | null }) {
+// paypal: the same list sells this plan with PayPal too (a second button next to the card one).
+export function WebPurchase({ plan, onClose, demo, onChoosePlan, cryptoUsd = null, pass = null, paypal = false }: { plan: Plan | null; onClose: () => void; demo: boolean; onChoosePlan?: () => void; cryptoUsd?: number | null; pass?: { amount: number; days: number } | null; paypal?: boolean }) {
   const crypto = plan === "lifetime" && cryptoUsd !== null;
+  const withPaypal = paypal && plan !== null && !crypto;
   const [mode, setMode] = useState<"login" | "register">(plan ? "login" : "register");
   const [status, setStatus] = useState<PurchaseStatus>("signed-out");
   const [message, setMessage] = useState("");
@@ -79,17 +83,19 @@ export function WebPurchase({ plan, onClose, demo, onChoosePlan, cryptoUsd = nul
     catch (err) { showError(err); }
     finally { setBusy(false); }
   }
-  async function checkoutPreview() {
+  async function checkoutPreview(method: PayMethod) {
     if (!plan) return;
     setBusy(true); setMessage(""); setCanCancel(false);
-    try { const url = await fixture.flow.checkout(plan, crypto, PURCHASE_TERMS_VERSION.pctweaker); if (demo) setMessage("Preview complete. No checkout page was created and no payment was made."); else window.location.assign(url); }
+    try { const url = await fixture.flow.checkout(plan, method, PURCHASE_TERMS_VERSION.pctweaker); if (demo) setMessage("Preview complete. No checkout page was created and no payment was made."); else window.location.assign(url); }
     catch (err) { showError(err); if (!(err instanceof PurchaseError && err.status === 401)) setCanCancel(err instanceof PurchaseError && err.code === "other_checkout_pending"); }
     finally { setBusy(false); }
   }
-  function continueToCheckout() {
+  function continueToCheckout(method: PayMethod = crypto ? "crypto" : "card") {
     if (!agreed) { setConsentError(true); consentBox.current?.focus(); return; }
-    void checkoutPreview();
+    void checkoutPreview(method);
   }
+  // The same box covers both buttons; PayPal opens Stripe's page with PayPal as the only method.
+  const paypalChoice = withPaypal && <div><button disabled={busy} type="button" onClick={() => continueToCheckout("paypal")} aria-describedby="paypal-note" className="w-full rounded-xl border border-white/20 px-5 py-4 font-semibold text-[var(--fg)] transition-colors hover:border-white/40 active:border-white/60 disabled:opacity-60">{demo ? "Simulate PayPal checkout" : PAYPAL_COPY.en.pay}</button><p id="paypal-note" className="mt-2 text-xs leading-relaxed text-[var(--fg-dim)]">{PAYPAL_COPY.en.fine}</p></div>;
   const consent = <PurchaseConsent ref={consentBox} checked={agreed} error={consentError} termsHref="/terms/"
     onChange={(checked) => { setAgreed(checked); if (checked) setConsentError(false); }} />;
   async function cancelPrevious() {
@@ -127,8 +133,8 @@ export function WebPurchase({ plan, onClose, demo, onChoosePlan, cryptoUsd = nul
       <button disabled={busy} type="submit" className="bg-accent w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)]">{mode === "login" ? (plan ? "Continue to checkout" : "Sign in") : plan ? "Create account and continue" : "Create account"}</button>{demo && <p className="text-xs leading-relaxed text-[var(--fg-dim)]">Demonstration only. Do not enter real credentials. No data is sent and no purchase is made. To preview an existing subscriber, use subscriber@example.test with any demo password.</p>}</form>}
       {status === "verify-email" && <div className="mt-6 space-y-4 text-sm text-[var(--fg-dim)]"><p>Check your inbox and confirm your email before continuing. {demo && "In this preview no message is sent."}</p><button disabled={busy} type="button" onClick={() => void verifyPreview()} className="bg-accent w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)]">{demo ? "Simulate email verification" : "I verified my email"}</button>{!demo && <button disabled={busy} type="button" onClick={() => void resend()} className="underline underline-offset-4">Send another verification email</button>}</div>}
       {!plan && (status === "ready" || status === "already-pro" || status === "upgrade") && <div className="mt-6 space-y-4 text-sm text-[var(--fg-dim)]"><p>{status === "ready" ? "Your account is ready. Download PC Tweaker and sign in with this email to start your free trial." : "This account already has Pro. Download PC Tweaker and sign in with this email."}</p><a href={DOWNLOAD_EXE} className="bg-accent block w-full rounded-xl px-5 py-4 text-center font-bold text-[var(--on-accent)]">Download PC Tweaker</a>{status === "ready" && onChoosePlan && <button type="button" onClick={onChoosePlan} className="w-full rounded-xl border border-white/20 px-5 py-4 font-semibold text-[var(--fg)] hover:border-white/40">See the plans</button>}</div>}
-      {plan && status === "ready" && <div className="mt-6 space-y-4 text-sm text-[var(--fg-dim)]"><p>{demo ? "Preview account verified." : "Email verified."} Review the final price and terms on the secure checkout page.</p>{consent}<button disabled={busy} type="button" onClick={continueToCheckout} className="bg-accent w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)]">{demo ? "Simulate checkout" : "Continue to secure checkout"}</button></div>}
-      {plan && status === "upgrade" && <div className="mt-6 space-y-4 text-sm text-[var(--fg-dim)]"><p>Your subscription will be set to stop renewing after your Lifetime payment is confirmed. Review the final price on the secure checkout page.</p>{consent}<button disabled={busy} type="button" onClick={continueToCheckout} className="bg-accent w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)]">{demo ? "Simulate checkout" : "Continue to secure checkout"}</button></div>}
+      {plan && status === "ready" && <div className="mt-6 space-y-4 text-sm text-[var(--fg-dim)]"><p>{demo ? "Preview account verified." : "Email verified."} Review the final price and terms on the secure checkout page.</p>{consent}<button disabled={busy} type="button" onClick={() => continueToCheckout()} className="bg-accent w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)]">{demo ? "Simulate checkout" : "Continue to secure checkout"}</button>{paypalChoice}</div>}
+      {plan && status === "upgrade" && <div className="mt-6 space-y-4 text-sm text-[var(--fg-dim)]"><p>Your subscription will be set to stop renewing after your Lifetime payment is confirmed. Review the final price on the secure checkout page.</p>{consent}<button disabled={busy} type="button" onClick={() => continueToCheckout()} className="bg-accent w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)]">{demo ? "Simulate checkout" : "Continue to secure checkout"}</button>{paypalChoice}</div>}
       {plan && status === "already-pro" && <p className="mt-6 text-sm text-[var(--fg-dim)]">This account already has Pro. Contact support for help changing plans.</p>}
       {canCancel && <button disabled={busy} type="button" onClick={() => void cancelPrevious()} className="mt-4 text-sm text-[var(--fg)] underline underline-offset-4">Close previous checkout</button>}
       {message && <p role="status" className="mt-4 rounded-lg border border-white/15 p-4 text-sm text-[var(--fg)]">{message}</p>}</div>

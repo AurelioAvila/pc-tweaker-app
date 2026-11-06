@@ -155,6 +155,7 @@ function installDemo(plan: Plan) {
         // Checkout, billing portal, tips: a link the demo's opener ignores.
         case "/api/checkout":
         case "/api/checkout/crypto":
+        case "/api/checkout/paypal":
         case "/api/portal":
         case "/api/tip":
           return json(200, { url: "https://pctweaker.app/" });

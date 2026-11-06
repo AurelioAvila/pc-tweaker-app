@@ -14,7 +14,7 @@ export function TechSummary({ rows, title = "Technical summary" }: { rows: reado
           {rows.map((r) => (
             <tr key={r.label} className="border-t border-white/5 align-top">
               <th scope="row" className="w-[38%] py-2.5 pr-4 font-medium text-[var(--fg-dim)]">{r.label}</th>
-              <td className="py-2.5 break-words text-[var(--fg)] [overflow-wrap:anywhere]">{r.value}</td>
+              <td className="py-2.5 text-[var(--fg)] [overflow-wrap:anywhere]">{r.value}</td>
             </tr>
           ))}
         </tbody>

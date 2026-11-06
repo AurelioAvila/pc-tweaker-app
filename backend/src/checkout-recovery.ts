@@ -139,8 +139,8 @@ export type FailedCheckout = {
   product?: string;
   /** A coffee: never followed up. */
   tip: boolean;
-  /** Paid in USDC: the card advice in the email would not fit. */
-  crypto: boolean;
+  /** Paid in USDC or with PayPal: the card advice in the email would not fit. */
+  otherMethod: boolean;
   /** The latest refusal in this session. */
   failedAt: Date;
 };
@@ -183,7 +183,7 @@ export async function noticeFailedCheckouts(
   const cutoff = new Date(now.getTime() - NOTICE_COOLDOWN_MS);
   let sent = 0;
   for (const f of failures) {
-    if (f.tip || f.crypto || f.status === "complete") continue;
+    if (f.tip || f.otherMethod || f.status === "complete") continue;
     if (!f.userId || !/^\d+$/.test(f.userId) || !isKnownProduct(f.product) || !f.plan || !PLANS.has(f.plan)) continue;
     const age = now.getTime() - f.failedAt.getTime();
     if (age < SETTLE_MS || age > FAILURE_WINDOW_MS) continue;
@@ -297,7 +297,7 @@ export function failedCheckout(session: SessionLike, failedAtSeconds: number): F
     plan: session.metadata?.plan,
     product: session.metadata?.product,
     tip: Boolean(session.metadata?.tip_product),
-    crypto: session.metadata?.pay_with === "crypto",
+    otherMethod: session.metadata?.pay_with === "crypto" || session.metadata?.pay_with === "paypal",
     failedAt: new Date(failedAtSeconds * 1000),
   };
 }

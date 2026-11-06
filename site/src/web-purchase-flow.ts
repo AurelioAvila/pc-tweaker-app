@@ -1,11 +1,12 @@
 import type { Account, WebPlan } from "./web-purchase-client";
+import type { PayMethod } from "../../src/trial";
 
 type PurchaseApi = {
   signIn(email: string, password: string): Promise<string>;
   register(input: { email: string; password: string; firstName: string; lastName: string; dateOfBirth: string }): Promise<{ token: string; verificationEmailSent: boolean }>;
   account(token: string): Promise<Account>;
   resendVerification(token: string): Promise<{ ok: boolean }>;
-  checkout(token: string, plan: WebPlan, crypto?: boolean, termsVersion?: string): Promise<string>;
+  checkout(token: string, plan: WebPlan, method?: PayMethod, termsVersion?: string): Promise<string>;
   cancelCheckout(token: string): Promise<{ ok: boolean }>;
 };
 export type PurchaseStatus = "signed-out" | "verify-email" | "already-pro" | "upgrade" | "ready";
@@ -46,11 +47,11 @@ export function createPurchaseFlow(api: PurchaseApi, selectedPlan?: WebPlan) {
     async resend() { return exclusive(async version => { const result = await api.resendVerification(requireToken()); current(version); return result; }); },
     async cancelCheckout() { return exclusive(async version => { const result = await api.cancelCheckout(requireToken()); current(version); if (result.ok !== true) throw new Error("Could not close the previous checkout."); return result; }); },
     /** `termsVersion`: the Terms of the purchase box the customer ticked. */
-    async checkout(plan: WebPlan, crypto = false, termsVersion?: string) {
+    async checkout(plan: WebPlan, method: PayMethod = "card", termsVersion?: string) {
       return exclusive(async version => {
         const status = await read(version);
         if ((status !== "ready" && !(status === "upgrade" && plan === "lifetime")) || !account) throw new Error(status === "verify-email" ? "Verify your email before continuing." : "This account already has Pro. Contact support for help changing plans.");
-        const result = await api.checkout(requireToken(), plan, crypto, termsVersion); current(version); return result;
+        const result = await api.checkout(requireToken(), plan, method, termsVersion); current(version); return result;
       });
     },
   };

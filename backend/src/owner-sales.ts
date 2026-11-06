@@ -107,6 +107,15 @@ export function render(subject: string, intro: string, facts: Fact[]): OwnerNoti
   return { subject, text, html: `<p>${esc(intro)}</p><table style="border-collapse:collapse;font:14px/1.4 sans-serif">${rows}</table>` };
 }
 
+/** Sales outside Managed Payments (stripe-policy.ts outsideManagedPayments): sold
+ * directly, not through Link, so Link collected no tax on them. Null: a card sale. */
+export function paidOutsideLink(payWith: string | undefined) {
+  const outside = ", outside Managed Payments: sold directly, not through Link, no tax collected";
+  if (payWith === "crypto") return { reason: ", paid in crypto", method: `Crypto (USDC) via Stripe${outside}` };
+  if (payWith === "paypal") return { reason: ", paid with PayPal", method: `PayPal via Stripe${outside}` };
+  return null;
+}
+
 /** Why a subscription invoice was paid, in words. */
 export function invoiceReason(reason: string | null | undefined, firstAfterTrial: boolean): string {
   if (reason === "subscription_create") return "New subscription";
@@ -130,7 +139,8 @@ export async function invoiceNotice(invoice: BasilInvoice, livemode: boolean, st
     // The first cycle invoice of a trialled subscription starts where the trial ended.
     firstAfterTrial = !!sub.trial_end && Math.abs((line?.period?.start ?? 0) - sub.trial_end) < 86_400;
   }
-  const reason = invoiceReason(invoice.billing_reason, firstAfterTrial);
+  const paid = paidOutsideLink(details?.metadata?.pay_with);
+  const reason = `${invoiceReason(invoice.billing_reason, firstAfterTrial)}${paid?.reason ?? ""}`;
   const amount = money(invoice.amount_paid, invoice.currency);
   const tax = (invoice.total_taxes ?? []).reduce((sum, t) => sum + (t.amount ?? 0), 0);
   const plan = details?.metadata?.plan ?? null;
@@ -146,6 +156,7 @@ export async function invoiceNotice(invoice: BasilInvoice, livemode: boolean, st
       ["Plan", plan ? `${plan}${line?.description ? ` · ${line.description}` : ""}` : line?.description],
       ["Amount paid", tax ? `${amount} (tax ${money(tax, invoice.currency)})` : amount],
       ["Reason", reason],
+      ["Payment method", paid?.method],
       ["Invoice", reference, invoice.hosted_invoice_url ?? undefined],
       ["Customer", [invoice.customer_name, invoice.customer_email].filter(Boolean).join(" · ") || null],
       ["Country", invoice.customer_address?.country],
@@ -211,10 +222,8 @@ export async function checkoutNotice(session: Stripe.Checkout.Session, livemode:
     );
   }
   const amount = money(session.amount_total!, session.currency ?? "eur");
-  // USDC sessions run outside Managed Payments (stripe-policy.ts cryptoSessionParams):
-  // sold directly, not through Link, so Link collected no tax on them.
-  const crypto = session.metadata?.pay_with === "crypto";
-  const reason = `${tipFor ? "Tip" : "One-off purchase"}${crypto ? ", paid in crypto" : ""}`;
+  const paid = paidOutsideLink(session.metadata?.pay_with);
+  const reason = `${tipFor ? "Tip" : "One-off purchase"}${paid?.reason ?? ""}`;
   return render(
     `${amount} · ${titled(product, plan)} — ${reason} · ${order}`,
     `${reason}: ${amount} for ${product}.`,
@@ -222,7 +231,7 @@ export async function checkoutNotice(session: Stripe.Checkout.Session, livemode:
       ["Order ID", order],
       ["Amount paid", amount],
       ["Reason", reason],
-      ["Payment method", crypto ? "Crypto (USDC) via Stripe, outside Managed Payments: sold directly, not through Link, no tax collected" : null],
+      ["Payment method", paid?.method],
       ["Invoice", invoiceNumber, invoiceId ? dashboard(livemode, `invoices/${invoiceId}`) : undefined],
       ["Paid at", romeTime(session.created)],
       ["Stripe payment", paymentId, paymentId ? dashboard(livemode, `payments/${paymentId}`) : undefined],

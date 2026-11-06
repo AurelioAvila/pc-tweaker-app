@@ -2377,6 +2377,8 @@ const it: Strings = {
         "La prova gratuita non è disponibile per questo account. Abbonati direttamente.",
       crypto_unavailable:
         "Il pagamento in cripto non è disponibile al momento. Riprova più tardi o paga con carta.",
+      paypal_unavailable:
+        "PayPal non è disponibile per questo acquisto al momento. Puoi pagare con carta.",
       already_has_access:
         "Questo account ha già accesso. Contatta l'assistenza per cambiare piano.",
       existing_subscription:
@@ -4132,6 +4134,8 @@ const en: Strings = {
         "The free trial is not available for this account. Subscribe directly instead.",
       crypto_unavailable:
         "Crypto payment is not available right now. Try again later or pay by card.",
+      paypal_unavailable:
+        "PayPal is not available for this purchase right now. You can pay by card instead.",
       already_has_access:
         "This account already has access. Contact support for help changing plans.",
       existing_subscription:
@@ -5909,6 +5913,8 @@ const fr: Strings = {
         "L'essai gratuit n'est pas disponible pour ce compte. Abonnez-vous directement.",
       crypto_unavailable:
         "Le paiement en cryptomonnaie n'est pas disponible pour le moment. Réessayez plus tard ou payez par carte.",
+      paypal_unavailable:
+        "PayPal n'est pas disponible pour cet achat pour le moment. Vous pouvez payer par carte.",
       already_has_access: "Ce compte a déjà accès. Contactez l'assistance pour changer d'offre.",
       existing_subscription:
         "Ce compte a déjà un abonnement susceptible de se renouveler. Gérez-le ou contactez l'assistance avant d'en acheter un autre.",
@@ -7679,6 +7685,8 @@ const es: Strings = {
         "La prueba gratuita no está disponible para esta cuenta. Suscríbete directamente.",
       crypto_unavailable:
         "El pago con criptomonedas no está disponible ahora. Inténtalo más tarde o paga con tarjeta.",
+      paypal_unavailable:
+        "PayPal no está disponible para esta compra ahora mismo. Puedes pagar con tarjeta.",
       already_has_access: "Esta cuenta ya tiene acceso. Contacta con soporte para cambiar de plan.",
       existing_subscription:
         "Esta cuenta ya tiene una suscripción que puede renovarse. Gestiónala o contacta con soporte antes de comprar otra.",
@@ -9458,6 +9466,8 @@ const de: Strings = {
         "Die kostenlose Testphase ist für dieses Konto nicht verfügbar. Schließe direkt ein Abo ab.",
       crypto_unavailable:
         "Die Zahlung mit Kryptowährung ist gerade nicht verfügbar. Versuche es später erneut oder zahle per Karte.",
+      paypal_unavailable:
+        "PayPal ist für diesen Kauf gerade nicht verfügbar. Du kannst per Karte bezahlen.",
       already_has_access:
         "Dieses Konto hat bereits Zugriff. Wende dich an den Support, um den Tarif zu wechseln.",
       existing_subscription:
@@ -11236,6 +11246,8 @@ const pt: Strings = {
         "O teste gratuito não está disponível para esta conta. Subscreva diretamente.",
       crypto_unavailable:
         "O pagamento em criptomoedas não está disponível neste momento. Tente mais tarde ou pague com cartão.",
+      paypal_unavailable:
+        "O PayPal não está disponível para esta compra neste momento. Pode pagar com cartão.",
       already_has_access: "Esta conta já tem acesso. Contacte o apoio para mudar de plano.",
       existing_subscription:
         "Esta conta já tem uma subscrição que pode renovar-se. Faça a gestão da subscrição ou contacte o apoio antes de comprar outra.",

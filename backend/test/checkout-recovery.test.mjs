@@ -66,7 +66,7 @@ test("the email escapes the name, promises nothing new and carries the unsubscri
 // A refused payment: an hour ago, in an open Checkout for PC Tweaker annual.
 const NOW = new Date("2026-11-01T12:00:00Z");
 const refused = (sessionId, userId, over = {}) => ({
-  sessionId, status: "open", userId, plan: "annual", product: "pctweaker", tip: false, crypto: false,
+  sessionId, status: "open", userId, plan: "annual", product: "pctweaker", tip: false, otherMethod: false,
   failedAt: new Date(NOW.getTime() - 60 * 60 * 1000), ...over,
 });
 
@@ -92,7 +92,7 @@ test("no failed-payment email for tips, crypto, completed or anonymous sessions,
   let count = 0;
   const failures = [
     refused("cs_t", null, { tip: true }), refused("cs_t2", id, { tip: true }),
-    refused("cs_c", id, { crypto: true, plan: "lifetime" }),
+    refused("cs_c", id, { otherMethod: true, plan: "lifetime" }),
     refused("cs_done", id, { status: "complete" }),
     refused("cs_anon", null), refused("cs_bad", "12abc"),
     refused("cs_plan", id, { plan: "weekly" }), refused("cs_prod", id, { product: "glarion" }),
@@ -124,6 +124,8 @@ test("a refused payment is traced to its Checkout session; renewals are not", as
   assert.equal(calls.filter((p) => p.customer).length, 1, "renewals never look up sessions by customer");
   const f = failedCheckout({ ...lifetime, metadata: { tip_product: "redaxa" } }, 1_761_998_400);
   assert.equal(f.tip, true);
+  assert.equal(failedCheckout({ ...lifetime, metadata: { plan: "annual", product: "pctweaker", pay_with: "paypal" } }, 1).otherMethod, true, "PayPal gets no card advice");
+  assert.equal(failedCheckout(lifetime, 1).otherMethod, false);
   assert.equal(f.failedAt.toISOString(), "2025-11-01T12:00:00.000Z");
 });
 

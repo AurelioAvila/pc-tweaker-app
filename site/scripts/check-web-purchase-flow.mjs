@@ -21,9 +21,11 @@ test("only a verified free account can create a checkout", async () => {
   const { flow, calls } = fixture();
   assert.equal(await flow.signIn("test@example.test", "dummy"), "ready");
   await flow.checkout("lifetime");
-  assert.deepEqual(calls, [["token", "lifetime", false, undefined]]);
-  await flow.checkout("lifetime", true, "2026-11-04");
-  assert.deepEqual(calls.at(-1), ["token", "lifetime", true, "2026-11-04"], "the ticked Terms version reaches the API");
+  assert.deepEqual(calls, [["token", "lifetime", "card", undefined]]);
+  await flow.checkout("lifetime", "crypto", "2026-11-04");
+  assert.deepEqual(calls.at(-1), ["token", "lifetime", "crypto", "2026-11-04"], "the ticked Terms version reaches the API");
+  await flow.checkout("annual", "paypal", "2026-11-06");
+  assert.deepEqual(calls.at(-1), ["token", "annual", "paypal", "2026-11-06"], "the payment method reaches the API");
 });
 test("only recurring Pro accounts can choose Lifetime upgrade", async () => {
  const apiFor=plan=>({signIn:async()=>"token",account:async()=>({...baseAccount,isPro:true,plan}),checkout:async()=>"https://checkout.stripe.com/c/pay/test"});
@@ -78,8 +80,8 @@ test("a 7-day pass holds no plan: its holder can add a pass or buy any plan; a p
   for (const plan of ["pass_7d", "annual", "lifetime"]) {
     const { flow, calls } = fixture({ account: async () => ({ ...baseAccount, isPro: true, plan: "pass_7d" }) });
     assert.equal(await flow.signIn("test@example.test", "dummy"), "ready");
-    await flow.checkout(plan, false, "2026-11-04.2");
-    assert.deepEqual(calls, [["token", plan, false, "2026-11-04.2"]]);
+    await flow.checkout(plan, "card", "2026-11-04.2");
+    assert.deepEqual(calls, [["token", plan, "card", "2026-11-04.2"]]);
   }
   for (const held of ["monthly", "lifetime"]) {
     const { flow, calls } = fixture({ account: async () => ({ ...baseAccount, isPro: true, plan: held }) });

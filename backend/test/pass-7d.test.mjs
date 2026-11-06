@@ -272,15 +272,18 @@ test("switched on: a one-off payment for PC Tweaker, never on top of a plan or L
   assert.equal(upgrade.res.statusCode, 200, "or buy a plan");
 });
 
-test("the Terms box: the pass needs the Terms that name it; other plans still accept the box before them", async () => {
+test("the Terms box: the pass takes the current box, and the one before it (whose Terms already name the pass)", async () => {
   const required = { ...on, CHECKOUT_CONSENT_REQUIRED: "1" };
   const current = evidence.PURCHASE_TERMS_VERSION.pctweaker;
   const previous = evidence.PREVIOUS_TERMS_VERSION.pctweaker;
   assert.notEqual(current, previous);
   const stale = await checkout(required, { plan: "pass_7d", consent: { accepted: true, terms_version: previous } });
-  assert.equal(stale.res.statusCode, 409);
-  assert.equal(stale.res.body.code, "terms_changed");
-  assert.equal(stale.calls.length, 0);
+  assert.equal(stale.res.statusCode, 200);
+  assert.equal(stale.calls[0].params.metadata.terms_version, previous);
+  const outdated = await checkout(required, { plan: "pass_7d", consent: { accepted: true, terms_version: "2026-11-04" } });
+  assert.equal(outdated.res.statusCode, 409, "the box before the pass Terms is no longer accepted");
+  assert.equal(outdated.res.body.code, "terms_changed");
+  assert.equal(outdated.calls.length, 0);
   const ticked = await checkout(required, { plan: "pass_7d", consent: { accepted: true, terms_version: current } });
   assert.equal(ticked.res.statusCode, 200);
   assert.equal(ticked.calls[0].params.metadata.terms_version, current);

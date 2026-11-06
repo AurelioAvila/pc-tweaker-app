@@ -13,16 +13,16 @@ test("checkout sends an allowed plan only; it does not submit price or trial", a
   assert.deepEqual(JSON.parse(call.body), { product: "pctweaker", plan: "lifetime", start_trial: false });
   assert.equal(call.headers.Authorization, "Bearer fixture-token");
   assert.equal(call.credentials, "omit");
-  await client.checkout("fixture-token", "annual", false, "2026-11-04.2");
+  await client.checkout("fixture-token", "annual", "card", "2026-11-04.2");
   assert.deepEqual(JSON.parse(call.body), { product: "pctweaker", plan: "annual", start_trial: false, consent: { accepted: true, terms_version: "2026-11-04.2" } });
 });
 test("the 7-day pass is a plan the site may send, by card only", async () => {
   let call;
   const client = createPurchaseClient("https://api.example.test", async (url, init) => { call = { url, ...init }; return reply({ url: "https://checkout.stripe.com/c/pay/cs_test_pass" }); });
-  await client.checkout("fixture-token", "pass_7d", false, "2026-11-04.2");
+  await client.checkout("fixture-token", "pass_7d", "card", "2026-11-04.2");
   assert.equal(call.url, "https://api.example.test/api/web-checkout");
   assert.deepEqual(JSON.parse(call.body), { product: "pctweaker", plan: "pass_7d", start_trial: false, consent: { accepted: true, terms_version: "2026-11-04.2" } });
-  await assert.rejects(client.checkout("fixture-token", "pass_7d", true), /valid plan/);
+  await assert.rejects(client.checkout("fixture-token", "pass_7d", "crypto"), /valid plan/);
 });
 test("the consent page sends the signed link and the ticked box, never an account token", async () => {
   let call;
@@ -64,11 +64,23 @@ test("rejects incomplete account responses instead of assuming the customer is f
 test("crypto checkout: Lifetime only, on its own route, no trial field", async () => {
   let call;
   const client = createPurchaseClient("https://api.example.test", async (url, init) => { call = { url, ...init }; return reply({ url: "https://checkout.stripe.com/c/pay/cs_test_crypto" }); });
-  assert.equal(await client.checkout("fixture-token", "lifetime", true), "https://checkout.stripe.com/c/pay/cs_test_crypto");
+  assert.equal(await client.checkout("fixture-token", "lifetime", "crypto"), "https://checkout.stripe.com/c/pay/cs_test_crypto");
   assert.equal(call.url, "https://api.example.test/api/web-checkout/crypto");
   assert.deepEqual(JSON.parse(call.body), { product: "pctweaker", plan: "lifetime" });
   call = undefined;
-  await assert.rejects(client.checkout("token", "annual", true), /valid plan/);
+  await assert.rejects(client.checkout("token", "annual", "crypto"), /valid plan/);
+  assert.equal(call, undefined);
+});
+test("PayPal checkout: every plan, on its own route, no trial field", async () => {
+  let call;
+  const client = createPurchaseClient("https://api.example.test", async (url, init) => { call = { url, ...init }; return reply({ url: "https://checkout.stripe.com/c/pay/cs_test_paypal" }); });
+  for (const plan of ["monthly", "annual", "lifetime", "pass_7d"]) {
+    assert.equal(await client.checkout("fixture-token", plan, "paypal", "2026-11-06"), "https://checkout.stripe.com/c/pay/cs_test_paypal");
+    assert.equal(call.url, "https://api.example.test/api/web-checkout/paypal");
+    assert.deepEqual(JSON.parse(call.body), { product: "pctweaker", plan, consent: { accepted: true, terms_version: "2026-11-06" } });
+  }
+  call = undefined;
+  await assert.rejects(client.checkout("token", "annual", "bank"), /valid plan/);
   assert.equal(call, undefined);
 });
 test("rejects an unrecognized plan before making any request", async () => {

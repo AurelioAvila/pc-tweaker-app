@@ -460,6 +460,43 @@
   cursor: not-allowed;
   opacity: 0.5;
 }
+/* Pay with PayPal: PayPal's black button with its white logo (the variant
+   PayPal allows on dark backgrounds), the height of the plan's own button. */
+.pricing-button.paypal-button {
+  margin-top: 8px;
+  padding-inline: 4px;
+  background: #000;
+  border: 1px solid color-mix(in srgb, #fff 22%, transparent);
+  color: #fff;
+}
+.pricing-button.paypal-button:hover:not(:disabled) {
+  background: #141414;
+  border-color: color-mix(in srgb, #fff 45%, transparent);
+}
+.pricing-button.paypal-button:active:not(:disabled) {
+  background: #1f1f1f;
+}
+.paypal-label {
+  white-space: nowrap;
+}
+.paypal-spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid color-mix(in srgb, #fff 30%, transparent);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: paypal-spin 0.7s linear infinite;
+}
+@keyframes paypal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paypal-spinner {
+    animation-duration: 2s;
+  }
+}
 /* Where a plan needs no action (held, or included in the one held), a quiet
    outline the size of a button keeps the three actions on one line. */
 .pricing-plan-status {
@@ -510,6 +547,10 @@
 }
 .pricing-pass .pricing-button {
   min-height: 36px;
+}
+.pricing-pass .paypal-button {
+  margin-top: 6px;
+  padding-block: 7px;
 }
 @container (max-width: 520px) {
   .pricing-pass {

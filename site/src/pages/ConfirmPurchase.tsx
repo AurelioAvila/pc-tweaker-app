@@ -4,6 +4,7 @@ import { createPurchaseClient, PurchaseError } from "../web-purchase-client";
 import { PURCHASE_TERMS_VERSION } from "../purchase-terms";
 import { CONSENT_COPY, CONSENT_LANGS, PurchaseConsent, type ConsentLang } from "../components/PurchaseConsent";
 import { PAYPAL_COPY } from "../../../src/components/paypal-copy";
+import { PaypalButton } from "../components/PaypalButton";
 
 /* /checkout/confirm/: the Terms box for a purchase started in an app. The app opens
    this page with a signed link in the fragment (#t=..., never sent to a server or in
@@ -175,14 +176,18 @@ export function ConfirmPurchasePage() {
                 }}
               />
             </div>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void go()}
-              className="bg-accent mt-4 w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--fg)] disabled:opacity-60"
-            >
-              {CONSENT_COPY[lang].cta}
-            </button>
+            {intent.paypal ? (
+              <PaypalButton label={PAYPAL_COPY[lang].pay} busy={busy} disabled={busy} onClick={() => void go()} className="mt-4" />
+            ) : (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void go()}
+                className="bg-accent mt-4 w-full rounded-xl px-5 py-4 font-bold text-[var(--on-accent)] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--fg)] disabled:opacity-60"
+              >
+                {CONSENT_COPY[lang].cta}
+              </button>
+            )}
             {message && (
               <p role="status" className="mt-4 rounded-lg border border-white/15 p-4 text-sm text-[var(--fg)]">
                 {message}

@@ -150,9 +150,10 @@ for (const lang of Object.keys(PLAN_STATE_COPY)) {
   assert.ok(!k.pro.includes(s.proCurrent) && !k.pro.includes(s.manageBilling) && k.lifetime.includes(s.lifetimeCta), `${lang} plans still on offer to a pass holder`);
   assert.ok(html.includes('class="pricing-period"') && band(html) === null, `${lang} pass holder: period switch, no trial`);
 
-  // PayPal (owner, 6 Nov 2026): a quiet link under each plan the server sells with PayPal, never otherwise.
+  // PayPal (owner, 6-7 Nov 2026): a button with PayPal's logo under each plan the server
+  // sells with PayPal, never otherwise; named "Pay with PayPal" (in the language) for screen readers.
   const pay = PAYPAL_COPY[lang].pay;
-  const paypalLinks = (text) => text.split(`>${pay}<`).length - 1;
+  const paypalLinks = (text) => text.split(`aria-label="${pay}"`).length - 1;
   html = render(lang, { prices: withPass });
   assert.ok(paypalLinks(html) === 0 && !html.includes(PAYPAL_COPY[lang].fine), `${lang} no PayPal while the server has it off`);
   const withPaypal = parsePriceList({ trial_enabled: true, trial_days: 3, prices: [
@@ -164,6 +165,7 @@ for (const lang of Object.keys(PLAN_STATE_COPY)) {
   k = cards(html);
   const lifetimeCard = (text) => cards(text).lifetime.split("</article>")[0];
   assert.ok(paypalLinks(k.pro) === 1 && paypalLinks(lifetimeCard(html)) === 1 && paypalLinks(html) === 3, `${lang} PayPal under Pro, Lifetime and the pass`);
+  assert.equal(html.split('alt="PayPal"').length - 1, 3, `${lang} each PayPal button carries PayPal's logo`);
   assert.ok(html.includes(PAYPAL_COPY[lang].fine), `${lang} the small print says what PayPal costs and who sells`);
   html = render(lang, { prices: { ...withPaypal, paypal: { lifetime: 12078 } } });
   assert.ok(paypalLinks(lifetimeCard(html)) === 1 && paypalLinks(html) === 1, `${lang} PayPal only where the server sells it`);

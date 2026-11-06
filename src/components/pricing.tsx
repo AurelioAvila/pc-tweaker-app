@@ -18,6 +18,7 @@ import {
 import { useLifetimeOffer } from "./use-lifetime-offer";
 import { CryptoLifetimeOption } from "./crypto-pay";
 import { PAYPAL_COPY } from "./paypal-copy";
+import { PaypalText } from "./paypal-mark";
 import { usePromo } from "./use-promo";
 import { readSubscription, type Subscription } from "./subscription";
 import { SUBSCRIPTION_COPY } from "./subscription-copy";
@@ -38,8 +39,9 @@ function compactClock(ms: number, lang: Lang): string {
   return `${d ? `${d}d ` : ""}${h}h ${String(m).padStart(2, "0")}m`;
 }
 
-/** "Pay with PayPal": a quiet link under a plan the server sells with PayPal. */
-function PaypalLink({
+/** "Pay with PayPal": a second button under a plan the server sells with
+ *  PayPal, as tall as the plan's own button, with PayPal's logo. */
+function PaypalButton({
   label,
   busy,
   disabled,
@@ -53,12 +55,19 @@ function PaypalLink({
   return (
     <button
       type="button"
-      className="pricing-link"
+      className="pricing-button paypal-button"
       disabled={disabled}
       aria-busy={busy}
+      aria-label={label}
       onClick={onPay}
     >
-      {busy ? "…" : label}
+      {busy ? (
+        <span className="paypal-spinner" aria-hidden="true" />
+      ) : (
+        <span className="paypal-label">
+          <PaypalText text={label} height="19px" />
+        </span>
+      )}
     </button>
   );
 }
@@ -414,6 +423,14 @@ export function PricingPanel({
                     ? "…"
                     : format(t.start, { days: trial.days })}
                 </button>
+                {paypal?.[period] && (
+                  <PaypalButton
+                    label={PAYPAL_COPY[lang].pay}
+                    busy={busy === `paypal-${period}`}
+                    disabled={busy !== null || previewing}
+                    onPay={() => void act(period, undefined, "paypal")}
+                  />
+                )}
                 <button
                   className="pricing-link"
                   disabled={busy !== null || previewing}
@@ -424,14 +441,24 @@ export function PricingPanel({
                 </button>
               </>
             ) : !planHeld ? (
-              <button
-                className="pricing-button pricing-button-secondary"
-                disabled={busy !== null || previewing}
-                aria-busy={busy === period}
-                onClick={() => void act(period)}
-              >
-                {busy === period ? "…" : trialSpent ? t.subscribe : s.pricing.proCta}
-              </button>
+              <>
+                <button
+                  className="pricing-button pricing-button-secondary"
+                  disabled={busy !== null || previewing}
+                  aria-busy={busy === period}
+                  onClick={() => void act(period)}
+                >
+                  {busy === period ? "…" : trialSpent ? t.subscribe : s.pricing.proCta}
+                </button>
+                {paypal?.[period] && (
+                  <PaypalButton
+                    label={PAYPAL_COPY[lang].pay}
+                    busy={busy === `paypal-${period}`}
+                    disabled={busy !== null || previewing}
+                    onPay={() => void act(period, undefined, "paypal")}
+                  />
+                )}
+              </>
             ) : ownsLifetime || !hasBilling ? (
               <span className="pricing-plan-status">
                 {ownsLifetime ? ps.includedInPlan : s.pricing.proActiveNoBilling}
@@ -445,14 +472,6 @@ export function PricingPanel({
               >
                 {busy === "manage" ? "…" : s.pricing.manageBilling}
               </button>
-            )}
-            {!planHeld && !paymentFailed && paypal?.[period] && (
-              <PaypalLink
-                label={PAYPAL_COPY[lang].pay}
-                busy={busy === `paypal-${period}`}
-                disabled={busy !== null || previewing}
-                onPay={() => void act(period, undefined, "paypal")}
-              />
             )}
           </div>
           {(paymentFailed || left) && (
@@ -540,6 +559,14 @@ export function PricingPanel({
                     : s.pricing.lifetimeCta}
               </button>
             )}
+            {!ownsLifetime && paypal?.lifetime && (
+              <PaypalButton
+                label={PAYPAL_COPY[lang].pay}
+                busy={busy === "paypal-lifetime"}
+                disabled={busy !== null || !campaign.available || previewing}
+                onPay={() => void act("lifetime", undefined, "paypal")}
+              />
+            )}
             {!ownsLifetime && prices?.crypto?.lifetimeUsd && (
               <CryptoLifetimeOption
                 lang={lang}
@@ -547,14 +574,6 @@ export function PricingPanel({
                 disabled={busy !== null || !campaign.available || previewing}
                 busy={busy === "crypto"}
                 onPay={() => void act("lifetime", undefined, "crypto")}
-              />
-            )}
-            {!ownsLifetime && paypal?.lifetime && (
-              <PaypalLink
-                label={PAYPAL_COPY[lang].pay}
-                busy={busy === "paypal-lifetime"}
-                disabled={busy !== null || !campaign.available || previewing}
-                onPay={() => void act("lifetime", undefined, "paypal")}
               />
             )}
           </div>
@@ -600,7 +619,7 @@ export function PricingPanel({
                 : format(onPass ? copy.passAdd : copy.passCta, { days: pass.days })}
             </button>
             {paypal?.pass_7d && (
-              <PaypalLink
+              <PaypalButton
                 label={PAYPAL_COPY[lang].pay}
                 busy={busy === "paypal-pass_7d"}
                 disabled={busy !== null || previewing}
